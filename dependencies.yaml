@@ -1,0 +1,27 @@
+---
+nlohmann_json:
+  git: https://github.com/nlohmann/json
+  git_tag: v3.9.1
+  options: ["JSON_BuildTests OFF"]
+nlohmann_json_schema_validator:
+  git: https://github.com/pboettch/json-schema-validator
+  git_tag: 2.1.0
+  options: ["BUILD_TESTS OFF", "BUILD_EXAMPLES OFF"]
+  alias:
+    name: nlohmann_json_schema_validator::nlohmann_json_schema_validator
+    target: nlohmann_json_schema_validator
+sigslot:
+  git: https://github.com/palacaze/sigslot
+  git_tag: v1.2.0
+mqttc:
+  git: https://github.com/LiamBindle/MQTT-C.git
+  git_tag: 1.1.5
+  options: ["MQTT_C_EXAMPLES OFF"]
+liblog:
+  git: git@github.com:EVerest/liblog.git
+  git_tag: main
+  options: ["BUILD_EXAMPLES OFF"]
+date:
+  git: https://github.com/HowardHinnant/date.git
+  git_tag: v3.0.1
+  options: []
