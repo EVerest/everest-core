@@ -1,0 +1,183 @@
+{
+    "description": "This interface defines the main evse manager",
+    "cmds": {
+        "enable": {
+            "description": "Enables the evse",
+            "result": {
+                "description": "Returns true if evse was enabled (or was enabled before), returns false if enable failed e.g. due to permanent fault.",
+                "type": "boolean"
+            }
+        },
+        "disable": {
+            "description": "Disables the evse",
+            "result": {
+                "description": "Returns true if evse was disabled (or was disabled before), returns false if it could not be disabled (i.e. due to communication error with hardware)",
+                "type": "boolean" 
+            }
+        },
+        "pause_charging": {
+            "description": "Pauses charging",
+            "result": {
+                "description": "Returns true if successfully paused or was already in paused_by_evse mode",
+                "type": "boolean"
+            }
+        },
+        "resume_charging": {
+            "description": "Resumes charging",
+            "result": {
+                "description": "Returns true if resume was successful, false otherwise (e.g. resuming a car pause won't work)",
+                "type": "boolean"
+            }
+        },
+        "cancel_charging": {
+            "description": "Cancels charging, can only be resumed by replugging car",
+            "result": {
+                "description": "Returns true if successful",
+                "type": "boolean"
+            }
+        },
+        "accept_new_session": {
+            "description": "Call when cleanup is done and new cars are allowed to plugin. Do not use multiple cleanup handlers, call from only one module!",
+            "result": {
+                "description": "Returns true if successful",
+                "type": "boolean"
+            }
+        },
+        "reserve_now": {
+            "description": "Reserves this evse for a given auth token",
+            "arguments": {
+                "auth_token": {
+                    "description": "The authentication token that this evse is reserved for",
+                    "type": "string"
+                },
+                "timeout": {
+                    "description": "timeout [s] until this reservation expires",
+                    "type": "number"
+                }
+            },
+            "result": {
+                "description": "Indicates if reservation was successful or not",
+                "type": "boolean"
+            }
+        },
+        "cancel_reservation": {
+            "description": "Cancels current reservation",
+            "result": {
+                "description": "Indicates if cancelling reservation was successful or not",
+                "type": "boolean"
+            }
+        }
+    },
+    "vars": {
+        "session_events":{
+            "description": "Emits all events related to sessions",
+            "type": "object",
+            "required": ["uuid", "event"],
+            "properties": {
+                "uuid": {
+                    "description": "An EVSE generated UUID for this session, can be used e.g. for database storage.",
+                    "type": "string"
+                },
+                "event": {
+                    "description": "Event enum. For some events an additional object is set, see below.",
+                    "type": "string",
+                    "enum": ["Enabled", "Disabled", "SessionStarted", "ChargingStarted", "ChargingPausedEV", "ChargingPausedEVSE", "ChargingResumed", "ChargingFinished", "SessionFinished", "Error", "PermanentFault"]
+                },
+                "session_started": {
+                    "description": "data for SessionStarted event",
+                    "type": "object",
+                    "required": ["timestamp", "energy_Wh_import"],
+                    "properties": {
+                        "timestamp": {
+                            "description": "Session start timestamp",
+                            "type": "number"
+                        },
+                        "energy_Wh_import": {
+                            "description": "Session start Wh",
+                            "type": "number"
+                        },
+                        "energy_Wh_export": {
+                            "description": "Session start Wh",
+                            "type": "number"
+                        },
+                        "signed_meter_value": {
+                            "description": "Signed meter value",
+                            "type": "string"
+                        }
+                    },
+                    "additionalProperties": false      
+                },
+                "session_finished": {
+                    "description": "data for SessionFinished event",
+                    "type": "object",
+                    "required": ["timestamp", "energy_Wh_import"],
+                    "properties": {
+                        "timestamp": {
+                            "description": "Session end timestamp",
+                            "type": "number"
+                        },
+                        "energy_Wh_import": {
+                            "description": "Session end Wh",
+                            "type": "number"
+                        },
+                        "energy_Wh_export": {
+                            "description": "Session end Wh",
+                            "type": "number"
+                        },
+                        "signed_meter_value": {
+                            "description": "Signed meter value",
+                            "type": "string"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "error": {
+                    "description": "Details on error type",
+                    "type": "string",
+                    "enum": ["Car", "CarDiodeFault", "Relais", "RCD", "VentilationNotAvailable", "OverCurrent"]
+                }
+            },
+            "additionalProperties": false
+        },
+        "limits": {
+            "description": "Limits of this evse, published on change",
+            "type": "object",
+            "required": ["max_current", "nr_of_phases_available"],
+            "properties": {
+                "max_current": {
+                    "description": "Instantaneous maximum current available to car",
+                    "type": "number"
+                },
+                "nr_of_phases_available": {
+                    "description": "Instantaneous phase count available to car",
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 3
+                }
+            },
+            "additionalProperties": false
+        },
+        "reservation": {
+            "description": "Current reservation status, published on change",
+            "type": "object",
+            "required": ["reserved", "auth_token", "valid_until"],
+            "properties": {
+                "reserved": {
+                    "description": "true if currently reserved",
+                    "type": "boolean"
+                },
+                "auth_token": {
+                    "description": "token for which evse is reserved for",
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 20
+                },
+                "valid_until": {
+                    "description": "timestamp (abs time) when reservation expires",
+                    "type": "number"
+                }
+            },
+            "additionalProperties": false
+        }
+    }
+}

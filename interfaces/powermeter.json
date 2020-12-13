@@ -1,0 +1,177 @@
+{
+    "description": "This interface defines a generic powermeter for 5 wire TN networks.",
+    "cmds": {
+        "get_signed_meter_value": {
+            "description": "Returns a signed meter value with the given auth token",
+            "arguments": {
+                "auth_token": {
+                    "description": "Auth token",
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength":  20
+                }
+            },
+            "result": {
+                "description": "Signed meter value",
+                "type": "string"
+            }
+        }
+    },
+    "vars": {
+        "powermeter": {
+            "description": "Measured dataset",
+            "type": "object",
+            "required": ["timestamp"],
+            "properties": {
+                "timestamp": {
+                    "description": "Timestamp of measurement",
+                    "type": "number"
+                },
+                "meter_id": {
+                    "description": "A (user defined) meter if (e.g. id printed on the case)",
+                    "type": "string"
+                },
+                "phase_seq_error": {
+                    "description": "true for 3 phase rotation error (ccw)",
+                    "type": "boolean"
+                },
+                "energy_Wh_import": {
+                    "description": "Imported energy in Wh (from grid)",
+                    "type": "object",
+                    "required": ["total"],
+                    "properties": {
+                        "total": {
+                            "description": "Sum value (which is relevant for billing)",
+                            "type": "number"
+                        },
+                        "L1": {
+                            "description": "L1 value only",
+                            "type": "number"
+                        },
+                        "L2": {
+                            "description": "L2 value only",
+                            "type": "number"
+                        },
+                        "L3": {
+                            "description": "L3 value only",
+                            "type": "number"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "energy_Wh_export": {
+                    "description": "Exported energy in Wh (to grid)",
+                    "type": "object",
+                    "required": ["total"],
+                    "properties": {
+                        "total": {
+                            "description": "Sum value (which is relevant for billing)",
+                            "type": "number"
+                        },
+                        "L1": {
+                            "description": "L1 value only",
+                            "type": "number"
+                        },
+                        "L2": {
+                            "description": "L2 value only",
+                            "type": "number"
+                        },
+                        "L3": {
+                            "description": "L3 value only",
+                            "type": "number"
+                        }
+                    },
+                    "additionalProperties": false                },
+                "power_W": {
+                    "description": "Instantaneous power in Watt",
+                    "type": "object",
+                    "required": ["total"],
+                    "properties": {
+                        "total": {
+                            "description": "Sum value",
+                            "type": "number"
+                        },
+                        "L1": {
+                            "description": "L1 value only",
+                            "type": "number"
+                        },
+                        "L2": {
+                            "description": "L2 value only",
+                            "type": "number"
+                        },
+                        "L3": {
+                            "description": "L3 value only",
+                            "type": "number"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "voltage_V": {
+                    "description": "Voltage in Volts",
+                    "type": "object",
+                    "required": ["L1"],
+                    "properties": {
+                        "L1": {
+                            "description": "L1 value only",
+                            "type": "number"
+                        },
+                        "L2": {
+                            "description": "L2 value only",
+                            "type": "number"
+                        },
+                        "L3": {
+                            "description": "L3 value only",
+                            "type": "number"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "current_A": {
+                    "description": "Current in ampere",
+                    "type": "object",
+                    "required": ["L1"],
+                    "properties": {
+                        "L1": {
+                            "description": "L1 value only",
+                            "type": "number"
+                        },
+                        "L2": {
+                            "description": "L2 value only",
+                            "type": "number"
+                        },
+                        "L3": {
+                            "description": "L3 value only",
+                            "type": "number"
+                        },
+                        "N": {
+                            "description": "Neutral value only",
+                            "type": "number"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "frequency_Hz": {
+                    "description": "Grid frequency in Hertz",
+                    "type": "object",
+                    "required": ["L1"],
+                    "properties": {
+                        "L1": {
+                            "description": "L1 value",
+                            "type": "number"
+                        },
+                        "L2": {
+                            "description": "L2 value",
+                            "type": "number"
+                        },
+                        "L3": {
+                            "description": "L3 value",
+                            "type": "number"
+                        }
+                    },
+                    "additionalProperties": false
+                }
+            },
+            "additionalProperties": false
+        }
+    }
+}

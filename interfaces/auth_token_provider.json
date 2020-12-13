@@ -1,0 +1,31 @@
+{
+    "description": "Provide some authentication token",
+    "vars": {
+        "token": {
+            "description": "Arbitrary auth token string and type of token provider (string provided in UI)",
+            "type": "object",
+            "required": ["token", "type"],
+            "properties": {
+                "token": {
+                    "description": "Arbitrary token string: this has to be printable case insensitive ascii: !!!FIXME!!! write a regex to allow only printable ascii",
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 20
+                },
+                "type": {
+                    "description": "Type of token provider",
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 32
+                },
+                "timeout": {
+                    "description": "Time (in s) the token can be considered valid by the auth framework",
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 120
+                }
+            },
+            "additionalProperties": false
+        }
+    }
+}

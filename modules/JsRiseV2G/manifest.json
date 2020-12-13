@@ -1,0 +1,34 @@
+{
+    "description": "This module implements ISO15118 ac and dc charging by proxying everything into a modified RISE-V2G implementation",
+	"provides": {
+		"main": {
+			"interface": "empty",
+			"description": "This module implements a proxy to the RISE-V2G ISO15118-2 implementation in java",
+			"config": {
+                "mqtt_base_path": {
+                    "description": "Base path for the mqtt communication used by the java process",
+                    "type": "string",
+                    "default": "everest_external/iso15118/java"
+                }
+			}
+		},
+        "ac_charger": {
+			"interface": "ISO15118_ac_charger",
+			"description": "This module implements the ISO15118-2 implementation of an AC charger"
+		},
+        "dc_charger": {
+			"interface": "ISO15118_dc_charger",
+			"description": "This module implements the ISO15118-2 implementation of a DC charger"
+		}
+	},
+    "requires": {
+        "optional:slac": {
+			"interface": "ISO15118_3_SLAC"
+		}
+    },
+	"enable_external_mqtt": true,
+	"metadata": {
+		"license": "https://opensource.org/licenses/Apache-2.0",
+		"authors": ["Thilo Molitor"]
+	}
+}

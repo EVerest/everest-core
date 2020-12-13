@@ -1,0 +1,32 @@
+{
+    "description": "Module that collects power and energy measurements from a MODBUS device",
+	"provides": {
+		"main": {
+			"description": "This is the main unit of the module",
+			"interface": "powermeter",
+			"config": {
+				"sim_value": {
+					"description": "asdasd",
+					"type": "number"
+				},
+				"update_interval": {
+				    "description": "Update interval in milliseconds.",
+				    "type": "integer",
+				    "minimum": 1000
+				}
+			}
+		}
+	},
+    "requires": {
+        "yetipowermeter": {
+            "interface": "powermeter"
+        }
+	},
+    "enable_external_mqtt": true,
+	"metadata": {
+		"license": "https://opensource.org/licenses/Apache-2.0",
+		"authors": [
+            "Andreas Heinrich"
+        ]
+	}
+}

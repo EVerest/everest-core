@@ -1,0 +1,9 @@
+{
+    "description": "This interface defines a generic EnergyManager",
+    "vars": {
+        "logging":{
+            "description": "Various data logging",
+            "type": "object"
+        }
+    }
+}

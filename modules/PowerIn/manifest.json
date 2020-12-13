@@ -1,0 +1,27 @@
+{
+    "description": "This module provides the configuration of the physical power connection of the charging station",
+	"provides": {
+		"main": {
+			"interface": "power_in",
+			"description": "This module publishes the properties of the physical power supply",
+			"config": {
+				"max_current": {
+					"description": "The maximum current the physical connector can supply",
+					"type": "number",
+					"minumum": 1,
+					"maximum": 60
+				},
+				"phase_count": {
+					"description": "The number of phases the physical connector supplies",
+					"type": "integer",
+					"minimum": 1,
+					"maximum": 3
+				}
+			}
+		}
+	},
+	"metadata": {
+		"license": "https://opensource.org/licenses/Apache-2.0",
+		"authors": ["Kai-Uwe Hermann", "Thilo Molitor"]
+	}
+}

@@ -1,0 +1,5 @@
+---
+RISE-V2G:
+  git: git@github.com:EVerest/ext-RISE-V2G.git
+  git_tag: master
+  options: ["THIRD_PARTY_APP_DST rise_v2g"]

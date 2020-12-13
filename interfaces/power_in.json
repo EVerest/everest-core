@@ -1,0 +1,12 @@
+{
+    "parent": "power",
+    "description": "This interface defines the interface of a physical power supply",
+    "vars": {
+        "phase_count": {
+            "description": "This is the phase count of the physical power supply",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 3
+        }
+    }
+}

@@ -1,0 +1,112 @@
+{
+    "description": "This defines a HIL simulation interface",
+    "cmds": {
+        "enable": {
+            "description": "Enable/disable the simulation",
+            "arguments": {
+                "value": {
+                    "description": "true to enable, false to disable",
+                    "type": "boolean"
+                }
+            }
+        }, 
+        "setSimulationData": {
+            "description": "Sends a new simulation data object",
+            "arguments": {
+                "value": {
+                    "description": "simulation data",
+                    "type": "object",
+                    "additionalProperties": false,
+                    "minProperties": 8,
+                    "properties": {
+                        "cp_voltage": {
+                          "description": "CP Voltage level [V]",
+                          "type": "number"
+                        },
+                        "pp_resistor": {
+                            "description": "PP resistor value [Ohm]",
+                            "type": "number"
+                        },
+                        "rcd_current": {
+                            "description": "RCD current in mA",
+                            "type": "number"
+                        },
+                        "diode_fail": {
+                            "description": "Set to true to simulate a diode failure",
+                            "type": "boolean"
+                        },
+                        "error_e": {
+                            "description": "Set to true to simulate Error E (CP-PE short)",
+                            "type": "boolean"
+                        },
+                        "currents": {
+                            "description": "Currents in Ampere",
+                            "type": "object",
+                            "additionalProperties": false,
+                            "minProperties": 4,
+                            "properties": {
+                                "L1": {
+                                    "type": "number"
+                                },
+                                "L2": {
+                                    "type": "number"
+                                },
+                                "L3": {
+                                    "type": "number"
+                                },
+                                "N": {
+                                    "type": "number"
+                                }
+                            }
+                        },
+                        "voltages": {
+                            "description": "Voltages in Volt",
+                            "type": "object",
+                            "additionalProperties": false,
+                            "minProperties": 3,
+                            "properties": {
+                                "L1": {
+                                    "type": "number"
+                                },
+                                "L2": {
+                                    "type": "number"
+                                },
+                                "L3": {
+                                    "type": "number"
+                                }
+                            }
+                        },
+                        "frequencies": {
+                            "description": "Frequencies in Hertz",
+                            "type": "object",
+                            "additionalProperties": false,
+                            "minProperties": 3,
+                            "properties": {
+                                "L1": {
+                                    "type": "number"
+                                },
+                                "L2": {
+                                    "type": "number"
+                                },
+                                "L3": {
+                                    "type": "number"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+        } 
+    },
+    "vars": {
+        "enabled":{
+            "description": "Indicates whether simulation interface is currently active or not",
+            "type": "boolean"
+        },
+        "simulation_feedback":{
+            "description": "Feedback from simulation (everything that a car can measure on the CP signal plus the indication whether relais are on or off)",
+            "type": "object"
+        }
+    }
+}

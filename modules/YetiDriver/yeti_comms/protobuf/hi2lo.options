@@ -1,0 +1,3 @@
+SetAuth.userid max_length:50
+KeepAliveHi.sw_version_string max_length:50
+SetCountryCode.iso3166_alpha2_code max_length:10

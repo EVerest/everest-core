@@ -1,0 +1,4 @@
+{
+    "description": "This interface defines the interface of a solar module",
+    "parent": "power"
+}

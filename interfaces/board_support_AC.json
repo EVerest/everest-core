@@ -1,0 +1,80 @@
+{
+    "description": "This interface defines the board support driver for AC power path: ControlPilot, Relais, RCD and motor lock",
+    "cmds": {
+        "setup": {
+            "description": "Setup config options",
+            "arguments": {
+                "three_phases": {
+                    "description": "true: Three phases enabled, false: only single phase",
+                    "type": "boolean"
+                },
+                "has_ventilation": {
+                    "description": "true: Allow mode D charging, false: do not allow mode D charging",
+                    "type": "boolean"
+                },
+                "country_code": {
+                    "description": "A two-letter country code in ISO 3166-1 alpha-2 format",
+                    "type": "string"
+                },
+                "rcd_enabled": {
+                    "description": "true: enable RCD, false: disable RCD",
+                    "type": "boolean"
+                }
+            }
+        },
+        "enable": {
+            "description": "Enables or disables the EVSE. Typically disabled results in control pilot state F. It must not accept cars for new charging sessions if disabled.",
+            "arguments": {
+                "value": {
+                    "description": "True: enabled, false: disabled.",
+                    "type": "boolean"
+                }
+            }
+        },
+        "pwm_on": {
+            "description": "Turns PWM on with duty cycle",
+            "arguments": {
+                "value": {
+                    "description": "PWM duty cycle (>0, <1)",
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                }
+            }
+        },
+        "pwm_off": {
+            "description": "Turns PWM off (constant high voltage)"
+        },
+        "pwm_F": {
+            "description": "Turns PWM off with Error F (constant negative voltage)"
+        },
+        "allow_power_on": {
+            "description": "Sets allow_power_on flag. If false, Relais must never be switched on.",
+            "arguments": {
+                "value": {
+                    "description": "True: allow power on, false: do not allow power on.",
+                    "type": "boolean"
+                }
+            }
+        },
+        "force_unlock": {
+            "description": "Force unlock motor lock"
+        },
+        "switch_three_phases_while_charging": {
+            "description": "Special command to force switching between one and three phases while charging is active. HW must go through some special sequence to ensure safe operation.",
+            "arguments": {
+                "value": {
+                    "description": "True: switch to 3ph, False: switch to 1ph",
+                    "type": "boolean"
+                }
+            }
+        }
+    },
+    "vars": {
+        "event":{
+            "description": "Event from ControlPilot signal/Relais/RCD",
+            "type": "string",
+            "enum": ["CarPluggedIn", "CarRequestedPower", "PowerOn", "PowerOff", "CarRequestedStopPower", "CarUnplugged", "ErrorE", "ErrorDF", "ErrorRelais", "ErrorRCD", "ErrorVentilationNotAvailable", "ErrorOverCurrent", "RestartMatching", "PermanentFault"]
+        }
+    }
+}
