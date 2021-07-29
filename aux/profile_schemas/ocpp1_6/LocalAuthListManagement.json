@@ -1,0 +1,27 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "description": "Json schema for Local Auth List Management Profile config",
+    "type": "object",
+    "required": [
+        "LocalAuthListEnabled",
+        "LocalAuthListMaxLength",
+        "SendLocalListMaxLength"
+    ],
+    "properties": {
+        "LocalAuthListEnabled": {
+            "type": "boolean",
+            "readOnly": false
+        },
+        "LocalAuthListMaxLength": {
+            "type": "integer",
+            "readOnly": true,
+            "minimum": 0
+        },
+        "SendLocalListMaxLength": {
+            "type": "integer",
+            "readOnly": true,
+            "minimum": 0
+        }
+    },
+    "additionalProperties": false
+}

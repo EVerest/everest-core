@@ -1,0 +1,48 @@
+{% if first %}
+#ifndef OCPP1_6_ENUMS_HPP
+#define OCPP1_6_ENUMS_HPP
+
+#include <map>
+#include <string>
+
+namespace ocpp1_6 {
+{% endif %}
+{%- if enum_types|length %}
+{%- for enum_type in enum_types %}
+
+// from: {{action.class_name}}
+enum class {{ enum_type.name }}
+{
+{% for enum in enum_type.enums %}
+    {{ enum.replace('.', '_').replace('-', '_') }},
+{% endfor %}
+};
+namespace conversions {
+    static const std::map<{{ enum_type.name }}, std::string> {{ enum_type.name }}Strings {
+{% for enum in enum_type.enums %}
+        {{'{'+ enum_type.name }}::{{ enum.replace('.', '_').replace('-', '_') }}, "{{enum}}"},
+{% endfor %}
+    };
+    static const std::map<std::string, {{ enum_type.name }}> {{ enum_type.name }}Values {
+{% for enum in enum_type.enums %}
+        {"{{enum}}", {{ enum_type.name }}::{{ enum.replace('.', '_').replace('-', '_') + '}' }},
+{% endfor %}
+    };
+    static const std::string {{ enum_type.name | snake_case }}_to_string({{ enum_type.name }} e) {
+        return {{ enum_type.name }}Strings.at(e);
+    }
+    static const {{ enum_type.name }} string_to_{{ enum_type.name | snake_case }}(std::string s) {
+        return {{ enum_type.name }}Values.at(s);
+    }
+}
+inline std::ostream& operator<<(std::ostream& os, const {{ enum_type.name }}& {{ enum_type.name | snake_case }}) {
+    os << conversions::{{ enum_type.name | snake_case }}_to_string({{ enum_type.name | snake_case }});
+    return os;
+}
+{% endfor %}
+{%- endif %}
+{% if last %}
+} // namespace ocpp1_6
+
+#endif // OCPP1_6_ENUMS_HPP
+{% endif %}
