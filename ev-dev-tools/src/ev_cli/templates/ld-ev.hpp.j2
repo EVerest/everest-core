@@ -1,0 +1,22 @@
+{% from "helper_macros.j2" import print_template_info %}
+#ifndef {{ info.hpp_guard }}
+#define {{ info.hpp_guard }}
+
+{{ print_template_info('0.0.1') }}
+
+#include <framework/ModuleAdapter.hpp>
+#include <framework/everest.hpp>
+
+#include <everest/logging.hpp>
+
+namespace module {
+
+// helper class for invoking private functions on module
+struct LdEverest {
+    static void init(ModuleConfigs module_configs);
+    static void ready();
+};
+
+} // namespace module
+
+#endif // {{ info.hpp_guard }}

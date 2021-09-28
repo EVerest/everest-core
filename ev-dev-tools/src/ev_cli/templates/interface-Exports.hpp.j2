@@ -1,0 +1,63 @@
+{% from "helper_macros.j2" import call_cmd_signature, var_to_any, var_to_cpp, print_template_info, cpp_type %}
+#ifndef {{ info.hpp_guard }}
+#define {{ info.hpp_guard }}
+
+{{ print_template_info('0.0.1') }}
+
+#include <framework/ModuleAdapter.hpp>
+
+class {{ info.class_name }} {
+public:
+    {{ info.class_name }}(Everest::ModuleAdapter* ev, const std::string& name) : _ev(ev), _name(name){};
+
+    {% if not vars %}
+    // this interface does not export any variables to subscribe to
+    {% else %}
+    // variables available for subscription
+    {% for var in vars %}
+    void subscribe_{{ var.name }}(const std::function<void({{ cpp_type(var) }})>& listener) {
+        ValueCallback cb = [listener](const Value& value) {
+            if (value.type() != typeid({{ cpp_type(var) }})) {
+                {# FIXME (aw): shouldn't this check be already made inside everest? #}
+                EVLOG(error) << "Callback for variable '{{ var.name }}' in interface '{{ info.interface }}' has wrong type!";
+            }
+            auto native_value = {{ var_to_cpp(var) }}(value);
+            listener(native_value);
+        };
+        _ev->subscribe(_name, "{{ var.name }}", cb);
+    }
+    {% if not loop.last %}
+
+    {% endif %}
+    {% endfor %}
+    {% endif %}
+
+    {% if not cmds %}
+    // this interface does not export any commands to call
+    {% else %}
+    // commands available to call
+    {% for cmd in cmds %}
+    {{ call_cmd_signature(cmd) }} {
+        Parameters args;
+        {% for arg in cmd.args %}
+        args["{{ arg.name }}"] = {{ var_to_any(arg, arg.name) }};
+        {% endfor %}
+        Result result = _ev->call(_name, "{{ cmd.name }}", args);
+        {% if cmd.result %}
+        auto retval = {{ var_to_cpp(cmd.result) }}(result.get());
+
+        return retval;
+        {% endif %}
+    }
+    {% if not loop.last %}
+
+    {% endif %}
+    {% endfor %}
+    {% endif %}
+
+private:
+    Everest::ModuleAdapter* const _ev;
+    const std::string _name;
+};
+
+#endif // {{ info.hpp_guard }}
