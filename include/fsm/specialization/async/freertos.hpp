@@ -7,18 +7,20 @@ extern "C" {
 #include <freertos/task.h>
 }
 
-#include <fsm/fsm.hpp>
+#include <fsm/async.hpp>
 
 namespace fsm {
+namespace async {
 namespace freertos {
 
-template <typename EventBaseType> class FSMContext : public ::fsm::FSMContext<EventBaseType> {
+template <typename ControllerType, typename EventBaseType>
+class FSMContextCtrlImpl : public FSMContextCtrl<ControllerType, EventBaseType> {
 public:
-    template <typename T> FSMContext(T lambda) : ::fsm::FSMContext<EventBaseType>(lambda) {
+    FSMContextCtrlImpl(ControllerType& ctrl) : FSMContextCtrl<ControllerType, EventBaseType>(ctrl) {
         cv = xSemaphoreCreateBinaryStatic(&cv_buffer);
     }
 
-    void wait() override {
+    void wait() override final {
         if (cancelled) {
             return;
         }
@@ -26,24 +28,24 @@ public:
     }
 
     // wait_for should return true if timeout successful
-    bool wait_for(int timeout_ms) override {
+    bool wait_for(int timeout_ms) override final {
         if (cancelled) {
             return false;
         }
         return xSemaphoreTake(cv, timeout_ms / portTICK_PERIOD_MS) == pdFALSE;
     }
 
-    void reset() override {
+    void reset() override final {
         xSemaphoreTake(cv, 0);
         cancelled = false;
     }
 
-    void cancel() override {
+    void cancel() override final {
         cancelled = true;
         xSemaphoreGive(cv);
     }
 
-    bool got_cancelled() override {
+    bool got_cancelled() override final {
         return cancelled;
     }
 
@@ -183,8 +185,9 @@ private:
 template <typename StateHandleType, int StackSize = 400, const char* Name = nullptr,
           void (*LogFunction)(const std::string&) = nullptr>
 using FreeRTOSController = BasicController<StateHandleType, freertos::PushPullLock, freertos::Thread<StackSize, Name>,
-                                           freertos::FSMContext<typename StateHandleType::EventBaseType>, LogFunction>;
+                                           freertos::FSMContextCtrlImpl, LogFunction>;
 
+} // namespace async
 } // namespace fsm
 
 #endif // FSM_SPECIALIZATION_FREERTOS_HPP

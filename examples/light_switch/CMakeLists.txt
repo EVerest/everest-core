@@ -1,10 +1,19 @@
 find_package(Threads REQUIRED)
 
-add_executable(light_switch_fsm main.cpp fsm.cpp)
+add_executable(ls_async_pthread ls_async_pthread.cpp async_fsm.cpp)
 
-target_compile_features(light_switch_fsm PRIVATE cxx_std_14)
+target_compile_features(ls_async_pthread PRIVATE cxx_std_14)
 
-target_link_libraries(light_switch_fsm PRIVATE
+target_link_libraries(ls_async_pthread PRIVATE
+    Fsm::Fsm
+    Threads::Threads
+)
+
+add_executable(ls_sync_posix ls_sync_posix.cpp sync_fsm.cpp)
+
+target_compile_features(ls_sync_posix PRIVATE cxx_std_14)
+
+target_link_libraries(ls_sync_posix PRIVATE
     Fsm::Fsm
     Threads::Threads
 )
@@ -12,11 +21,11 @@ target_link_libraries(light_switch_fsm PRIVATE
 # build the freertos demo
 
 if(BUILD_EXAMPLES_WITH_FREERTOS_SUPPORT)
-    add_executable(light_switch_fsm_freertos main_freertos.cpp fsm.cpp)
+    add_executable(ls_async_freertos ls_async_freertos.cpp async_fsm.cpp)
 
-    target_compile_features(light_switch_fsm_freertos PRIVATE cxx_std_14)
+    target_compile_features(ls_async_freertos PRIVATE cxx_std_14)
 
-    target_link_libraries(light_switch_fsm_freertos PRIVATE
+    target_link_libraries(ls_async_freertos PRIVATE
         Fsm::Fsm
         freertos
         Threads::Threads

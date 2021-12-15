@@ -1,13 +1,13 @@
 #ifndef FSM_HPP
 #define FSM_HPP
 
-#include <fsm/fsm.hpp>
+#include <fsm/async.hpp>
 
 #include "fsm_defs.hpp"
 
 struct FSM {
     using EventInfoType = fsm::EventInfo<EventBaseType, EventBufferType>;
-    using StateHandleType = fsm::StateHandle<EventInfoType, StateIDType>;
+    using StateHandleType = fsm::async::StateHandle<EventInfoType, StateIDType>;
     using TransitionType = StateHandleType::TransitionWrapperType;
     using FSMContextType = StateHandleType::FSMContextType;
 

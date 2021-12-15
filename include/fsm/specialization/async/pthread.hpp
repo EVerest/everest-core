@@ -1,39 +1,41 @@
 #ifndef FSM_SPECIALIZATION_PTHREAD_HPP
 #define FSM_SPECIALIZATION_PTHREAD_HPP
 
-#include <fsm/fsm.hpp>
+#include <fsm/async.hpp>
 
 #include <condition_variable>
 #include <mutex>
 #include <thread>
 
 namespace fsm {
+namespace async {
+
 namespace pthread {
 
-template <typename EventBaseType> class FSMContext : public ::fsm::FSMContext<EventBaseType> {
+template <typename ControllerType, typename EventBaseType>
+class FSMContextCtrlImpl : public FSMContextCtrl<ControllerType, EventBaseType> {
 public:
-    template <typename T> FSMContext(T lambda) : ::fsm::FSMContext<EventBaseType>(lambda) {
-    }
+    using FSMContextCtrl<ControllerType, EventBaseType>::FSMContextCtrl;
 
-    void wait() override {
+    void wait() override final {
         std::unique_lock<std::mutex> lck(mutex);
 
         cv.wait(lck, [this]() { return cancelled; });
     }
 
     // wait_for should return true if timeout successful
-    bool wait_for(int timeout_ms) override {
+    bool wait_for(int timeout_ms) override final {
         std::unique_lock<std::mutex> lck(mutex);
 
         return !cv.wait_for(lck, std::chrono::milliseconds(timeout_ms), [this]() { return cancelled; });
     }
 
-    void reset() override {
+    void reset() override final {
         std::lock_guard<std::mutex> lck(mutex);
         cancelled = false;
     }
 
-    void cancel() override {
+    void cancel() override final {
         {
             std::lock_guard<std::mutex> lck(mutex);
             cancelled = true;
@@ -41,7 +43,7 @@ public:
         cv.notify_one();
     }
 
-    bool got_cancelled() override {
+    bool got_cancelled() override final {
         std::lock_guard<std::mutex> lck(mutex);
         return cancelled;
     }
@@ -142,9 +144,10 @@ private:
 } // namespace pthread
 
 template <typename StateHandleType, void (*LogFunction)(const std::string&) = nullptr>
-using PThreadController = BasicController<StateHandleType, pthread::PushPullLock, pthread::Thread,
-                                          pthread::FSMContext<typename StateHandleType::EventBaseType>, LogFunction>;
+using PThreadController =
+    BasicController<StateHandleType, pthread::PushPullLock, pthread::Thread, pthread::FSMContextCtrlImpl, LogFunction>;
 
+} // namespace async
 } // namespace fsm
 
 #endif // FSM_SPECIALIZATION_PTHREAD_HPP

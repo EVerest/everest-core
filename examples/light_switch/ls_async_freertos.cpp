@@ -6,9 +6,9 @@ extern "C" {
 #include <freertos/task.h>
 }
 
-#include <fsm/specialization/freertos.hpp>
+#include <fsm/specialization/async/freertos.hpp>
 
-#include "fsm.hpp"
+#include "async_fsm.hpp"
 
 constexpr int STACK_SIZE = 400;
 
@@ -27,7 +27,7 @@ void set_brightness(int value) {
 
 void main_task(void* pvParameters) {
     FSM fsm_desc;
-    fsm::FreeRTOSController<FSM::StateHandleType> fsm_ctrl;
+    fsm::async::FreeRTOSController<FSM::StateHandleType> fsm_ctrl;
     fsm_ctrl.run(fsm_desc.sd_light_off);
 
     fsm_ctrl.submit_event(EventPressedOn(), true);

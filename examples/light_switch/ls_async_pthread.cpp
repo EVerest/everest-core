@@ -1,6 +1,8 @@
-#include <fsm/specialization/pthread.hpp>
+#include <iostream>
 
-#include "fsm.hpp"
+#include <fsm/specialization/async/pthread.hpp>
+
+#include "async_fsm.hpp"
 
 void set_brightness(int value) {
     std::cout << "Set brightness to value: " << value << "\n";
@@ -8,9 +10,9 @@ void set_brightness(int value) {
 
 int main(int argc, char* argv[]) {
     FSM fsm_desc;
-    fsm::PThreadController<FSM::StateHandleType> fsm_ctrl;
+    fsm::async::PThreadController<FSM::StateHandleType> fsm_ctrl;
     fsm_ctrl.run(fsm_desc.sd_light_off);
-    
+
     fsm_ctrl.submit_event(EventPressedOn(), true);
     fsm_ctrl.submit_event(EventPressedOn(), true);
     fsm_ctrl.submit_event(EventPressedOn(), true);
