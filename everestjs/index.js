@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
 const util = require('util');
 const addon = require('./everestjs.node');
 
