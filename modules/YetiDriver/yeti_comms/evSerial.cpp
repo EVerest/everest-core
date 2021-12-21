@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
 #include "evSerial.h"
 #include "hi2lo.pb.h"
 #include "lo2hi.pb.h"

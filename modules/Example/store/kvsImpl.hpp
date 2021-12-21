@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
 #ifndef STORE_KVS_IMPL_HPP
 #define STORE_KVS_IMPL_HPP
 

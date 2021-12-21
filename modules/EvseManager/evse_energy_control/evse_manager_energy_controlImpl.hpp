@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
 #ifndef EVSE_ENERGY_CONTROL_EVSE_MANAGER_ENERGY_CONTROL_IMPL_HPP
 #define EVSE_ENERGY_CONTROL_EVSE_MANAGER_ENERGY_CONTROL_IMPL_HPP
 

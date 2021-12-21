@@ -1,3 +1,7 @@
+##
+## SPDX-License-Identifier: Apache-2.0
+## Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+##
 LD_LIBRARY_PATH=`pwd`/_deps/everest-framework-build/lib \
 dist/bin/manager \
 --log_conf ../config/logging.ini \

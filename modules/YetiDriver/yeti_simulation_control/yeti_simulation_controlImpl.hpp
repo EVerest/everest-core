@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
 #ifndef YETI_SIMULATION_CONTROL_YETI_SIMULATION_CONTROL_IMPL_HPP
 #define YETI_SIMULATION_CONTROL_YETI_SIMULATION_CONTROL_IMPL_HPP
 

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
 #ifndef MAIN_ISO15118_3_SLAC_IMPL_HPP
 #define MAIN_ISO15118_3_SLAC_IMPL_HPP
 

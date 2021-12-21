@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
 #ifndef EXAMPLE_EXAMPLE_CHILD_IMPL_HPP
 #define EXAMPLE_EXAMPLE_CHILD_IMPL_HPP
 
