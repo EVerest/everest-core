@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+#
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+#
 """
 author: aw@pionix.de
 FIXME (aw): Module documentation.
