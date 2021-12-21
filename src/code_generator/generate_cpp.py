@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+#
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+#
 """OCPP JSON schema to cpp converter."""
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 import json
