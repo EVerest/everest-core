@@ -1,7 +1,5 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- * Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
- */
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
 const { evlog, boot_module } = require('everestjs');
 
 let sim_value = 5000;
