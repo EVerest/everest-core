@@ -3,13 +3,14 @@
 # template version 0.0.1
 #
 
-set(MODULE_NAME "ModbusMeter")
+set(MODULE_NAME "SunspecReader")
 set(MOD_MODULE_NAME "mod${MODULE_NAME}")
 add_library(${MOD_MODULE_NAME} SHARED)
 add_dependencies(${MOD_MODULE_NAME} generate_interface_files)
 
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
-list(APPEND ADDITIONAL_MODULE_INCLUDES everest::modbus everest::sunspec)
+# insert your custom targets and additional config variables here
+list(APPEND ADDITIONAL_MODULE_INCLUDES everest::sunspec)
 list(APPEND ADDITIONAL_MODULE_LIBS everest::modbus everest::sunspec)
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 
@@ -25,7 +26,7 @@ target_sources(${MOD_MODULE_NAME}
     PRIVATE
         ${MODULE_NAME}.cpp
         "ld-ev.cpp"
-        "main/powermeterImpl.cpp"
+        "main/sunspec_readerImpl.cpp"
         ${ADDITIONAL_MODULE_SOURCES}
 )
 
@@ -39,14 +40,14 @@ target_link_libraries(${MOD_MODULE_NAME}
 
 target_compile_features(${MOD_MODULE_NAME} PRIVATE cxx_std_14)
 
-set(MODBUSMETER_DEST "modules/${MODULE_NAME}")
+set(SUNSPECREADER_DEST "modules/${MODULE_NAME}")
 install(TARGETS ${MOD_MODULE_NAME}
     LIBRARY
-    DESTINATION ${MODBUSMETER_DEST}
+    DESTINATION ${SUNSPECREADER_DEST}
 )
 
 install(FILES manifest.json
-    DESTINATION ${MODBUSMETER_DEST}
+    DESTINATION ${SUNSPECREADER_DEST}
 )
 
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1
