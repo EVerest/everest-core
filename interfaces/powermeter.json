@@ -83,7 +83,7 @@
                     },
                     "additionalProperties": false                },
                 "power_W": {
-                    "description": "Instantaneous power in Watt",
+                    "description": "Instantaneous power in Watt. Negative values are exported, positive values imported Energy.",
                     "type": "object",
                     "required": ["total"],
                     "properties": {

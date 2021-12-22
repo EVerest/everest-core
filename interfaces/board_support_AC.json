@@ -75,6 +75,12 @@
             "description": "Event from ControlPilot signal/Relais/RCD",
             "type": "string",
             "enum": ["CarPluggedIn", "CarRequestedPower", "PowerOn", "PowerOff", "CarRequestedStopPower", "CarUnplugged", "ErrorE", "ErrorDF", "ErrorRelais", "ErrorRCD", "ErrorVentilationNotAvailable", "ErrorOverCurrent", "RestartMatching", "PermanentFault"]
+        },
+        "nr_of_phases_available": {
+            "description": "Instantaneous phase count available to car",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 3
         }
     }
 }

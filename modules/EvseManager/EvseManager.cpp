@@ -14,14 +14,24 @@ void EvseManager::ready() {
         charger->processEvent(event);
     });
 
-    r_powermeter->subscribe_powermeter([this](json p) {
-        charger->setCurrentDrawnByVehicle(p["current_A"]["L1"], p["current_A"]["L2"], p["current_A"]["L3"]);
+    r_bsp->subscribe_nr_of_phases_available([this](int n) {
+        signalNrOfPhasesAvailable(n);
     });
 
-    charger->setup(config.three_phases, config.has_ventilation, config.country_code, config.rcd_enabled);
+    r_powermeter->subscribe_powermeter([this](json p) {
+        charger->setCurrentDrawnByVehicle(p["current_A"]["L1"], p["current_A"]["L2"], p["current_A"]["L3"]);
+        latest_powermeter_data = p;
+    });
+
     invoke_ready(*p_evse);
+    charger->setup(config.three_phases, config.has_ventilation, config.country_code, config.rcd_enabled);
+    charger->setMaxCurrent(16.0); // FIXME: make configurable
     charger->run();
     charger->enable();
+}
+
+json EvseManager::get_latest_powermeter_data() {
+    return latest_powermeter_data;
 }
 
 } // namespace module
