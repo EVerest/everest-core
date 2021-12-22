@@ -150,7 +150,7 @@
                 },
                 "nr_of_phases_available": {
                     "description": "Instantaneous phase count available to car",
-                    "type": "number",
+                    "type": "integer",
                     "minimum": 1,
                     "maximum": 3
                 }
