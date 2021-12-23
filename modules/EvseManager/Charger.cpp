@@ -166,7 +166,7 @@ void Charger::runStateMachine() {
         // We are temporarily unavailable to avoid that new cars plug in
         // during the cleanup phase. Re-Enable once we are in idle.
         if (new_in_state) {
-            signalEvent(EvseEvent::ChargingFinished);
+            signalEvent(EvseEvent::SessionFinished);
             r_bsp->call_pwm_F();
         }
         // FIXME: this should be done by higher layer.
@@ -569,7 +569,6 @@ bool Charger::restart() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
 
     if (currentState == EvseState::Finished) {
-        signalEvent(EvseEvent::SessionFinished);
         currentState = EvseState::Idle;
         return true;
     }
@@ -631,9 +630,6 @@ std::string Charger::evseEventToString(EvseEvent e) {
         break;
     case EvseEvent::ChargingResumed:
         return("ChargingResumed");
-        break;
-    case EvseEvent::ChargingFinished:
-        return("ChargingFinished");
         break;
     case EvseEvent::SessionFinished:
         return("SessionFinished");

@@ -105,7 +105,6 @@ public:
         ChargingPausedEV,
         ChargingPausedEVSE,
         ChargingResumed,
-        ChargingFinished,
         SessionFinished,
         Error,
         PermanentFault
