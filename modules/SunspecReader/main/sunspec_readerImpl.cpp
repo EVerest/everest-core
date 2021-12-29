@@ -22,12 +22,21 @@ void sunspec_readerImpl::init() {
     }
     catch (std::exception& e) {
         EVLOG(error) << "Error during SunspecReader initialization: " << e.what() << "\n";
+        this->tcp_connection = nullptr;
+        this->mb_client = nullptr;
+        this->sdm = nullptr;
+        this->reader = nullptr;
     }
 
 }
 
 void sunspec_readerImpl::ready() {
-    this->read_loop_thread = std::thread( [this] { run_read_loop(); } );
+    if (this->reader != nullptr) {
+        this->read_loop_thread = std::thread( [this] { run_read_loop(); } );
+    }
+    else {
+        EVLOG(error) << "SunspecReader initialization failed. Skipping read step.";
+    }
 }
 
 void sunspec_readerImpl::run_read_loop() {
