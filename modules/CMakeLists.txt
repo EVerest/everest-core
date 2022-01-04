@@ -23,6 +23,7 @@ list(APPEND EVEREST_MODULES_LIST
     SLAC_openplcutils
     Solar
     SunspecReader
+    SunspecScanner
     Store
     YetiDriver
     EvseManager
