@@ -9,8 +9,8 @@ add_library(${MOD_MODULE_NAME} SHARED)
 add_dependencies(${MOD_MODULE_NAME} generate_interface_files)
 
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
-list(APPEND ADDITIONAL_MODULE_INCLUDES everest_modbus everest_sunspec)
-list(APPEND ADDITIONAL_MODULE_LIBS everest_modbus everest_sunspec)
+list(APPEND ADDITIONAL_MODULE_INCLUDES everest::modbus everest::sunspec)
+list(APPEND ADDITIONAL_MODULE_LIBS everest::modbus everest::sunspec)
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 
 target_include_directories(${MOD_MODULE_NAME}
