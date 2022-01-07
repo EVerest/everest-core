@@ -33,6 +33,7 @@ public:
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here
+    void set_nr_of_phases_available(int n);
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
 
 protected:
@@ -59,6 +60,10 @@ private:
 
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
     // insert your private definitions here
+    json limits;
+
+    std::string generate_session_uuid();
+    std::string session_uuid;
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 

@@ -1,7 +1,5 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- * Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
- */
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
 const { timeEnd } = require('console');
 const { evlog, boot_module } = require('everestjs');
 const { setInterval } = require('timers');
@@ -43,6 +41,7 @@ boot_module(async ({ setup, info, config, mqtt }) => {
     mod.has_ventilation = args.has_ventilation;
     mod.country_code = args.country_code;
     mod.rcd_enabled = args.rcd_enabled;
+    publish_nr_of_phases_available(mod, (mod.use_three_phases_confirmed?3:1));
   });
 
   setup.provides.board_support.register.enable((mod, args) => {
@@ -61,6 +60,7 @@ boot_module(async ({ setup, info, config, mqtt }) => {
   setup.provides.board_support.register.switch_three_phases_while_charging((mod, args) => {
     mod.use_three_phases = args.value; 
     mod.use_three_phases_confirmed = args.value;
+    publish_nr_of_phases_available(mod, (mod.use_three_phases_confirmed?3:1));
   });
 
   // subscribe vars of used modules
@@ -260,6 +260,11 @@ function check_error_rcd(mod) {
 function publish_event(mod, event) {
   //console.log("------------ EVENT PUB "+event);
   mod.provides.board_support.publish.event(event_to_enum(event));
+}
+
+function publish_nr_of_phases_available(mod, n) {
+  //console.log("------------ NR PHASE PUB "+n);
+  mod.provides.board_support.publish.nr_of_phases_available(n);
 }
 
 function event_to_enum(event) {

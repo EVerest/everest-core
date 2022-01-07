@@ -96,6 +96,45 @@ public:
     //bool isPowerOn();
 
     // Public states for Hi Level
+
+    enum class EvseEvent {
+        Enabled,
+        Disabled,
+        SessionStarted,
+        ChargingStarted,
+        ChargingPausedEV,
+        ChargingPausedEVSE,
+        ChargingResumed,
+        SessionFinished,
+        Error,
+        PermanentFault
+    };
+
+    enum class ErrorState {
+        Error_E,
+        Error_DF,
+        Error_Relais,
+        Error_VentilationNotAvailable,
+        Error_RCD,
+        Error_OverCurrent
+    };
+
+    // Signal for EvseEvents
+    sigslot::signal<EvseEvent> signalEvent;
+    std::string evseEventToString(EvseEvent e);
+
+    // Request more details about the error that happend
+    ErrorState getErrorState();
+
+    void processEvent(std::string event);
+
+    void run();
+
+    // Note: Deprecated, do not use EvseState externally.
+    // Kept for compatibility, will be removed from public interface
+    // in the future.
+    // Use new EvseEvent interface instead.
+
     enum class EvseState {
         Disabled,
         Idle,
@@ -108,31 +147,17 @@ public:
         Faulted
     };
 
-    enum class ErrorState {
-        Error_E,
-        Error_F,
-        Error_DF,
-        Error_Relais,
-        Error_VentilationNotAvailable,
-        Error_RCD,
-        Error_OverCurrent
-    };
-
-    // Logical states for Hi Level
-    EvseState getCurrentState();
-    sigslot::signal<EvseState> signalState;
-
-    ErrorState getErrorState();
-    sigslot::signal<ErrorState> signalError;
-
-    void processEvent(std::string event);
-
-    void run();
-
     std::string evseStateToString(EvseState s);
     std::string errorStateToString(ErrorState s);
 
+    EvseState getCurrentState();
+    sigslot::signal<EvseState> signalState;
+    sigslot::signal<ErrorState> signalError;
+    // /Deprecated
+
+
 private:
+
     // main Charger thread
     Everest::Thread mainThreadHandle;
 
@@ -143,10 +168,10 @@ private:
     float maxCurrent;
 
     // This mutex locks all config type members
-    std::mutex configMutex;
+    std::recursive_mutex configMutex;
 
     // This mutex locks all state type members
-    std::mutex stateMutex;
+    std::recursive_mutex stateMutex;
 
     EvseState currentState;
     EvseState lastState;

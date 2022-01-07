@@ -41,6 +41,12 @@ std::string event_to_string(Event e) {
 
 void board_support_ACImpl::init() {
     mod->serial.signalEvent.connect([this](Event e) { publish_event(event_to_string(e)); });
+
+    // FIXME
+    // Everything used here should be moved out of debug update in protobuf
+    mod->serial.signalDebugUpdate.connect([this](DebugUpdate d) {
+         publish_nr_of_phases_available(d.use_three_phases); 
+    });
 }
 
 void board_support_ACImpl::ready() {

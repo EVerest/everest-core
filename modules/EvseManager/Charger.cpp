@@ -22,7 +22,7 @@
 
 namespace module {
 Charger::Charger(const std::unique_ptr<board_support_ACIntf>& r_bsp) : r_bsp(r_bsp) {
-    maxCurrent = 16.0; // FIXME make configurable
+    maxCurrent = 16.0;
     authorized = false;
     r_bsp->call_enable(false);
 
@@ -79,7 +79,10 @@ void Charger::runStateMachine() {
 
     switch (currentState) {
     case EvseState::Disabled:
-        if (new_in_state) r_bsp->call_pwm_F();
+        if (new_in_state) {
+            signalEvent(EvseEvent::Disabled);
+            r_bsp->call_pwm_F();
+        }
         break;
 
     case EvseState::Idle:
@@ -110,6 +113,7 @@ void Charger::runStateMachine() {
 
         // we get Auth (maybe before SLAC matching or during matching)
         if (getAuthorization()) {
+            signalEvent(EvseEvent::ChargingStarted);
             currentState = EvseState::ChargingPausedEV;
         }
 
@@ -123,6 +127,7 @@ void Charger::runStateMachine() {
         checkSoftOverCurrent();
         
         if (new_in_state) {
+            signalEvent(EvseEvent::ChargingResumed);
             r_bsp->call_allow_power_on(true);
             // make sure we are enabling PWM
             update_pwm_now(ampereToDutyCycle(getMaxCurrent()));
@@ -140,6 +145,7 @@ void Charger::runStateMachine() {
         checkSoftOverCurrent();
 
         if (new_in_state) {
+            signalEvent(EvseEvent::ChargingPausedEV);
             r_bsp->call_allow_power_on(true);
             // make sure we are enabling PWM
             r_bsp->call_pwm_on(ampereToDutyCycle(getMaxCurrent()));
@@ -150,23 +156,36 @@ void Charger::runStateMachine() {
         break;
 
     case EvseState::ChargingPausedEVSE:
-        if (new_in_state) r_bsp->call_pwm_off();
+        if (new_in_state) {
+            signalEvent(EvseEvent::ChargingPausedEVSE);
+            r_bsp->call_pwm_off();
+        }
         break;
 
     case EvseState::Finished:
         // We are temporarily unavailable to avoid that new cars plug in
         // during the cleanup phase. Re-Enable once we are in idle.
-        if (new_in_state) r_bsp->call_pwm_F();
-        currentState = EvseState::Idle;
+        if (new_in_state) {
+            signalEvent(EvseEvent::SessionFinished);
+            r_bsp->call_pwm_F();
+        }
+        // FIXME: this should be done by higher layer.
+        restart();
         break;
 
     case EvseState::Error:
-        if (new_in_state) r_bsp->call_pwm_off();
+        if (new_in_state) {
+            signalEvent(EvseEvent::Error);
+            r_bsp->call_pwm_off();
+        }
         // Do not set F here, as F cannot detect unplugging of car!
         break;
 
     case EvseState::Faulted:
-        if (new_in_state) r_bsp->call_pwm_F();
+        if (new_in_state) {
+            signalEvent(EvseEvent::PermanentFault);
+            r_bsp->call_pwm_F();
+        }
         break;
     }
 }
@@ -208,7 +227,7 @@ ControlPilotEvent Charger::string_to_control_pilot_event(std::string event) {
 void Charger::processEvent(std::string event) {
     auto cp_event = string_to_control_pilot_event(event);
 
-    std::lock_guard<std::mutex> lock(stateMutex);
+    std::lock_guard<std::recursive_mutex> lock(stateMutex);
     // Process all event actions that are independent of the current state
     processCPEventsIndependent(cp_event);
 
@@ -221,6 +240,7 @@ void Charger::processCPEventsState(ControlPilotEvent cp_event) {
 
     case EvseState::Idle:
         if (cp_event == ControlPilotEvent::CarPluggedIn) {
+            signalEvent(EvseEvent::SessionStarted);
             // FIXME: Enable SLAC sounding here, as sounding is forbidden before
             // CP state B
             // FIXME: Set cable current limit from PP resistor value for this
@@ -446,7 +466,7 @@ float Charger::ampereToDutyCycle(float ampere) {
 
 bool Charger::setMaxCurrent(float c) {
     if (c > 5.9 && c <= 80) {
-        std::lock_guard<std::mutex> lock(configMutex);
+        std::lock_guard<std::recursive_mutex> lock(configMutex);
         // FIXME: limit to cable limit (PP reading) if that is smaller!
         maxCurrent = c;
         signalMaxCurrent(c);
@@ -458,7 +478,7 @@ bool Charger::setMaxCurrent(float c) {
 
 // pause if currently charging, else do nothing.
 bool Charger::pauseCharging() {
-    std::lock_guard<std::mutex> lock(stateMutex);
+    std::lock_guard<std::recursive_mutex> lock(stateMutex);
     if (currentState == EvseState::Charging) {
         currentState = EvseState::ChargingPausedEVSE;
         return true;
@@ -467,7 +487,7 @@ bool Charger::pauseCharging() {
 }
 
 bool Charger::resumeCharging() {
-    std::lock_guard<std::mutex> lock(stateMutex);
+    std::lock_guard<std::recursive_mutex> lock(stateMutex);
     if (!cancelled && currentState == EvseState::ChargingPausedEVSE) {
         currentState = EvseState::Charging;
         return true;
@@ -476,7 +496,7 @@ bool Charger::resumeCharging() {
 }
 
 bool Charger::cancelCharging() {
-    std::lock_guard<std::mutex> lock(stateMutex);
+    std::lock_guard<std::recursive_mutex> lock(stateMutex);
     if (currentState == EvseState::Charging 
         || currentState == EvseState::ChargingPausedEVSE 
         || currentState == EvseState::ChargingPausedEV) {
@@ -493,17 +513,17 @@ bool Charger::switchThreePhasesWhileCharging(bool n) {
 }
 
 void Charger::setup(bool three_phases, bool has_ventilation, std::string country_code, bool rcd_enabled) {
-    std::lock_guard<std::mutex> lock(configMutex);
+    std::lock_guard<std::recursive_mutex> lock(configMutex);
     r_bsp->call_setup(three_phases, has_ventilation, country_code, rcd_enabled);
 }
 
 Charger::EvseState Charger::getCurrentState() {
-    std::lock_guard<std::mutex> lock(configMutex);
+    std::lock_guard<std::recursive_mutex> lock(configMutex);
     return currentState;
 }
 
 void Charger::Authorize(bool a, const char *userid) {
-    std::lock_guard<std::mutex> lock(configMutex);
+    std::lock_guard<std::recursive_mutex> lock(configMutex);
     authorized = a;
     // FIXME: do sth useful with userid
 #if 0
@@ -516,13 +536,13 @@ if (a) {
 }
 
 bool Charger::getAuthorization() {
-    std::lock_guard<std::mutex> lock(configMutex);
+    std::lock_guard<std::recursive_mutex> lock(configMutex);
     //return authorized;
     return true; // FIXME: do not always return true here...
 }
 
 Charger::ErrorState Charger::getErrorState() {
-    std::lock_guard<std::mutex> lock(stateMutex);
+    std::lock_guard<std::recursive_mutex> lock(stateMutex);
     return errorState;
 }
 
@@ -530,22 +550,23 @@ Charger::ErrorState Charger::getErrorState() {
 
 
 bool Charger::disable() {
-    std::lock_guard<std::mutex> lock(stateMutex);
+    std::lock_guard<std::recursive_mutex> lock(stateMutex);
     currentState = EvseState::Disabled;
     return true;
 }
 
 bool Charger::enable() {
-    std::lock_guard<std::mutex> lock(stateMutex);
+    std::lock_guard<std::recursive_mutex> lock(stateMutex);
     if (currentState == EvseState::Disabled) {
         currentState = EvseState::Idle;
+        signalEvent(EvseEvent::Enabled);
         return true;
     }
     return false;
 }
 
 bool Charger::restart() {
-    std::lock_guard<std::mutex> lock(stateMutex);
+    std::lock_guard<std::recursive_mutex> lock(stateMutex);
 
     if (currentState == EvseState::Finished) {
         currentState = EvseState::Idle;
@@ -587,25 +608,62 @@ std::string Charger::evseStateToString(EvseState s) {
     return "Invalid";
 }
 
+std::string Charger::evseEventToString(EvseEvent e) {
+    switch (e) {
+    case EvseEvent::Enabled:
+        return("Enabled");
+        break;
+    case EvseEvent::Disabled:
+        return("Disabled");
+        break;
+    case EvseEvent::SessionStarted:
+        return("SessionStarted");
+        break;
+    case EvseEvent::ChargingStarted:
+        return("ChargingStarted");
+        break;
+    case EvseEvent::ChargingPausedEV:
+        return("ChargingPausedEV");
+        break;
+    case EvseEvent::ChargingPausedEVSE:
+        return("ChargingPausedEVSE");
+        break;
+    case EvseEvent::ChargingResumed:
+        return("ChargingResumed");
+        break;
+    case EvseEvent::SessionFinished:
+        return("SessionFinished");
+        break;
+    case EvseEvent::Error:
+        return("Error");
+        break;
+    case EvseEvent::PermanentFault:
+        return("PermanentFault");
+        break;        
+    }
+    return "Invalid";
+}
+
+
 std::string Charger::errorStateToString(ErrorState s) {
     switch (s) {
     case ErrorState::Error_E:
-        return("Error E");
+        return("Car");
         break;
-    case ErrorState::Error_F:
-        return("Error F");
+    case ErrorState::Error_OverCurrent:
+        return("OverCurrent");
         break;
     case ErrorState::Error_DF:
-        return("Error DF");
+        return("CarDiodeFault");
         break;
     case ErrorState::Error_Relais:
-        return("Error Relais");
+        return("Relais");
         break;
     case ErrorState::Error_VentilationNotAvailable:
-        return("Error Vent n/a");
+        return("VentilationNotAvailable");
         break;
     case ErrorState::Error_RCD:
-        return("Error RCD");
+        return("RCD");
         break;
     }
     return "Invalid";
@@ -620,12 +678,12 @@ float Charger::getResidualCurrent() {
 
 
 float Charger::getMaxCurrent() {
-    std::lock_guard<std::mutex> lock(configMutex);
+    std::lock_guard<std::recursive_mutex> lock(configMutex);
     return maxCurrent;
 }
 
 void Charger::setCurrentDrawnByVehicle(float l1, float l2, float l3) {
-    std::lock_guard<std::mutex> lock(configMutex);
+    std::lock_guard<std::recursive_mutex> lock(configMutex);
     currentDrawnByVehicle[0] = l1;
     currentDrawnByVehicle[1] = l2;
     currentDrawnByVehicle[2] = l3;

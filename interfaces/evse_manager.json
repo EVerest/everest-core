@@ -81,7 +81,7 @@
                 "event": {
                     "description": "Event enum. For some events an additional object is set, see below.",
                     "type": "string",
-                    "enum": ["Enabled", "Disabled", "SessionStarted", "ChargingStarted", "ChargingPausedEV", "ChargingPausedEVSE", "ChargingResumed", "ChargingFinished", "SessionFinished", "Error", "PermanentFault"]
+                    "enum": ["Enabled", "Disabled", "SessionStarted", "ChargingStarted", "ChargingPausedEV", "ChargingPausedEVSE", "ChargingResumed", "SessionFinished", "Error", "PermanentFault"]
                 },
                 "session_started": {
                     "description": "data for SessionStarted event",
@@ -150,7 +150,7 @@
                 },
                 "nr_of_phases_available": {
                     "description": "Instantaneous phase count available to car",
-                    "type": "number",
+                    "type": "integer",
                     "minimum": 1,
                     "maximum": 3
                 }
