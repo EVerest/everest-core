@@ -11,7 +11,13 @@
 #include "../SunspecScanner.hpp"
 
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
-// insert your custom include headers here
+#include <stdexcept>
+
+#include <utils/thread.hpp>
+#include <connection/connection.hpp>
+#include <connection/exceptions.hpp>
+#include <sunspec/sunspec_device_mapping.hpp>
+#include <sunspec/reader.hpp>
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 
 namespace module {
