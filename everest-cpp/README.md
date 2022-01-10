@@ -1,6 +1,7 @@
 To initialize the EVerest workspace you can source to *[init.sh](./init.sh)* file:
 
 ```bash
+chmod u+x init.sh
 . init.sh
 ```
 
