@@ -6,6 +6,12 @@ This python project currently consists of the following packages
 
 - `ev_cli`: EVerest module auto generation
 
+Install
+-------
+To install `ev_cli`:
+
+    python3 -m pip install .
+
 ev_cli
 ------
 
