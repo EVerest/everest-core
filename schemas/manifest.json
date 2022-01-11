@@ -184,12 +184,12 @@
             ],
             "properties": {
                 "base_license": {
-                    "description": "URI pointing to the base license of this module (e.g. https://opensource.org/licenses/MIT)",
+                    "description": "URI pointing to the base license of this module (e.g. https://opensource.org/licenses/Apache-2.0)",
                     "type": "string",
                     "format": "uri"
                 },
                 "license": {
-                    "description": "URI pointing to the license of this module (e.g. https://opensource.org/licenses/MIT)",
+                    "description": "URI pointing to the license of this module (e.g. https://opensource.org/licenses/Apache-2.0)",
                     "type": "string",
                     "format": "uri"
                 },
