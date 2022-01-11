@@ -3,6 +3,8 @@
 #ifndef OCPP1_6_CHARGE_POINT_CONFIGURATION_HPP
 #define OCPP1_6_CHARGE_POINT_CONFIGURATION_HPP
 
+#include <set>
+
 #include <sqlite3.h>
 
 #include <ocpp1_6/ocpp_types.hpp>
