@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include <everest/logging.hpp>
 
 #include <ocpp1_6/websocket.hpp>
 
 namespace ocpp1_6 {
 
-Websocket::Websocket(ChargePointConfiguration* configuration) :
+Websocket::Websocket(std::shared_ptr<ChargePointConfiguration> configuration) :
     tls(false),
     shutting_down(false),
+    reconnect_timer(nullptr),
     connected_callback(nullptr),
     disconnected_callback(nullptr),
-    message_callback(nullptr),
-    reconnect_timer(nullptr) {
+    message_callback(nullptr) {
     this->reconnect_interval_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                                       std::chrono::seconds(configuration->getWebsocketReconnectInterval()))
                                       .count();

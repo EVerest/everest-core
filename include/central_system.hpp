@@ -32,6 +32,10 @@ typedef std::map<websocketpp::connection_hdl, ocpp1_6::ChargePointConnection,
     connection_map;
 typedef std::map<std::string, websocketpp::connection_hdl> connection_map_rev;
 
+struct ChargePointRequest {
+    std::string charge_point_id;
+    std::string request;
+};
 class CentralSystem {
 private:
     server srv;

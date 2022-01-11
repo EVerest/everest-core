@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include <ocpp1_6/message_queue.hpp>
 
 namespace ocpp1_6 {
 
-MessageQueue::MessageQueue(ChargePointConfiguration* configuration,
+MessageQueue::MessageQueue(std::shared_ptr<ChargePointConfiguration> configuration,
                            const std::function<bool(json message)>& send_callback) :
     paused(true), running(true), new_message(false), uuid_generator(boost::uuids::random_generator()) {
     this->configuration = configuration;
@@ -203,7 +203,7 @@ EnhancedMessage MessageQueue::receive(const std::string& message) {
         enhanced_message.messageTypeId = this->getMessageTypeId(enhanced_message.message);
 
         if (enhanced_message.messageTypeId == MessageTypeId::CALL) {
-            enhanced_message.messageType = Conversions::string_to_messagetype(enhanced_message.message.at(CALL_ACTION));
+            enhanced_message.messageType = conversions::string_to_messagetype(enhanced_message.message.at(CALL_ACTION));
             enhanced_message.call_message = enhanced_message.message;
         }
 
@@ -228,7 +228,7 @@ EnhancedMessage MessageQueue::receive(const std::string& message) {
                 EVLOG(error) << "Received a CALLERROR for message with UID: " << enhanced_message.uniqueId;
 
                 auto message_type =
-                    Conversions::string_to_messagetype(this->in_flight->message.at(CALL_ACTION).get<std::string>());
+                    conversions::string_to_messagetype(this->in_flight->message.at(CALL_ACTION).get<std::string>());
                 if (this->isTransactionMessage(this->in_flight)) {
                     // repeatedly try to send a transaction related message based on the configured retry attempts and
                     // intervals
@@ -286,7 +286,7 @@ EnhancedMessage MessageQueue::receive(const std::string& message) {
                         }
                     }
                     enhanced_message.call_message = this->in_flight->message;
-                    enhanced_message.messageType = Conversions::string_to_messagetype(
+                    enhanced_message.messageType = conversions::string_to_messagetype(
                         this->in_flight->message.at(CALL_ACTION).get<std::string>() + std::string("Response"));
                     this->in_flight->promise.set_value(enhanced_message);
                     this->in_flight = nullptr;

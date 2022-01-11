@@ -12,6 +12,7 @@ import keyword
 from datetime import datetime
 import argparse
 from pathlib import Path
+import subprocess
 
 
 def snake_case(word: str) -> str:
@@ -55,6 +56,7 @@ env = Environment(
 )
 env.filters['snake_case'] = snake_case
 env.globals['timestamp'] = datetime.utcnow
+env.globals['year'] = datetime.utcnow().year
 action_template = env.get_template('action.py.jinja')
 enum_template = env.get_template('enums.py.jinja')
 parsed_types_template = env.get_template('parsed_types.py.jinja')
@@ -314,13 +316,13 @@ def parse_schemas(version: str, schema_dir: Path = Path('schemas/json/'),
 
     enums_fn = Path(generated_dir, 'enums.hpp')
     ocpp_types_fn = Path(generated_dir, 'ocpp_types.hpp')
+    messages_dir = generated_dir / 'messages'
     action_list = dict()
     first = True
     for action, type_of_action in schemas.items():
-        sub_dir = generated_dir / 'messages'
-        action_list[action] = sub_dir
-        if not sub_dir.exists():
-            sub_dir.mkdir(parents=True)
+        action_list[action] = messages_dir
+        if not messages_dir.exists():
+            messages_dir.mkdir(parents=True)
         writemode = dict()
         writemode['req'] = 'w'
         writemode['res'] = 'a+'
@@ -354,7 +356,7 @@ def parse_schemas(version: str, schema_dir: Path = Path('schemas/json/'),
 
                 sorted_types.insert(insert_at, class_type)
 
-            generated_class_fn = Path(sub_dir, action + '.hpp')
+            generated_class_fn = Path(messages_dir, action + '.hpp')
             with open(generated_class_fn, writemode[type_key]) as out:
                 out.write(action_template.render({
                     'types': sorted_types,
@@ -399,6 +401,12 @@ def parse_schemas(version: str, schema_dir: Path = Path('schemas/json/'),
         out.write(parsed_types_template.render({
             'last': True
         }))
+
+    # clang-format generated files
+    subprocess.run(["sh", "-c", "find {} -regex '.*\\.\\(cpp\\|hpp\\)' -exec clang-format -style=file -i {{}} \\;".format(
+        messages_dir)], cwd=messages_dir)
+    subprocess.run(["clang-format", "-style=file",  "-i",
+                   enums_fn, ocpp_types_fn], cwd=generated_dir)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include <chrono>
 #include <condition_variable>
 #include <csignal>
@@ -90,8 +90,8 @@ int main(int argc, char* argv[]) {
 
     json json_config = json::parse(config_file);
 
-    ocpp1_6::ChargePointConfiguration* configuration =
-        new ocpp1_6::ChargePointConfiguration(json_config, schemas_path, database_path);
+    std::shared_ptr<ocpp1_6::ChargePointConfiguration> configuration =
+        std::make_shared<ocpp1_6::ChargePointConfiguration>(json_config, schemas_path, database_path);
 
     charge_point = new ocpp1_6::ChargePoint(configuration);
     charge_point->start();
@@ -100,10 +100,6 @@ int main(int argc, char* argv[]) {
         std::lock_guard<std::mutex> lk(m);
         running = true;
     }
-
-    // FIXME(kai): properly register meter_wh_callback
-    std::function<int32_t(int32_t)> fake_wh_callback = [](int32_t connector) { return 0; };
-    charge_point->register_get_meter_wh_callback(fake_wh_callback);
 
     std::thread t1([&] {
         if (interactive) {
@@ -150,29 +146,8 @@ int main(int argc, char* argv[]) {
                     val.sampledValue.push_back(sample);
                     meter_values[0].push_back(val);
                     meter_values[1].push_back(val);
-
-                    std::function<int32_t(int32_t)> wh_callback = [](int32_t connector) { return 0; };
-                    charge_point->register_get_meter_wh_callback(wh_callback);
-                } else if (command == "plug_connected") {
-                    if (charge_point->plug_connected(1)) {
-                        EVLOG(info) << "plug_connected successful";
-                    } else {
-                        EVLOG(info) << "plug_connected failed";
-                    }
-                } else if (command == "plug_connected_auth") {
-                    if (charge_point->plug_connected_with_authorization(1, std::string("123"))) {
-                        EVLOG(info) << "plug_connected_auth successful";
-                    } else {
-                        EVLOG(info) << "plug_connected_auth failed";
-                    }
                 } else if (command == "start_charging") {
                     if (charge_point->start_charging(1)) {
-                        EVLOG(info) << "start_charging successful";
-                    } else {
-                        EVLOG(info) << "start_charging failed";
-                    }
-                } else if (command == "stop_charging") {
-                    if (charge_point->stop_charging(1)) {
                         EVLOG(info) << "start_charging successful";
                     } else {
                         EVLOG(info) << "start_charging failed";

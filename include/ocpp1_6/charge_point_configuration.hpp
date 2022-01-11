@@ -27,7 +27,7 @@ private:
 
 public:
     ChargePointConfiguration(json config, std::string schemas_path, std::string database_path);
-    void stop();
+    void close();
 
     // Internal config options
     std::string getChargePointId();

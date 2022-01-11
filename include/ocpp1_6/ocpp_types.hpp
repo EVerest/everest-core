@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #ifndef OCPP1_6_OCPP_TYPES_HPP
 #define OCPP1_6_OCPP_TYPES_HPP
 
@@ -20,6 +20,7 @@ struct IdTagInfo {
     boost::optional<DateTime> expiryDate;
     boost::optional<CiString20Type> parentIdTag;
 
+    /// \brief Conversion from a given IdTagInfo \p k to a given json object \p j
     friend void to_json(json& j, const IdTagInfo& k) {
         // the required parts of the message
         j = json{
@@ -34,6 +35,7 @@ struct IdTagInfo {
         }
     }
 
+    /// \brief Conversion from a given json object \p j to a given IdTagInfo \p k
     friend void from_json(const json& j, IdTagInfo& k) {
         // the required parts of the message
         k.status = conversions::string_to_authorization_status(j.at("status"));
@@ -47,6 +49,8 @@ struct IdTagInfo {
         }
     }
 
+    // \brief Writes the string representation of the given IdTagInfo \p k to the given output stream \p os
+    /// \returns an output stream with the IdTagInfo written to
     friend std::ostream& operator<<(std::ostream& os, const IdTagInfo& k) {
         os << json(k).dump(4);
         return os;
@@ -58,6 +62,7 @@ struct ChargingSchedulePeriod {
     float limit;
     boost::optional<int32_t> numberPhases;
 
+    /// \brief Conversion from a given ChargingSchedulePeriod \p k to a given json object \p j
     friend void to_json(json& j, const ChargingSchedulePeriod& k) {
         // the required parts of the message
         j = json{
@@ -70,6 +75,7 @@ struct ChargingSchedulePeriod {
         }
     }
 
+    /// \brief Conversion from a given json object \p j to a given ChargingSchedulePeriod \p k
     friend void from_json(const json& j, ChargingSchedulePeriod& k) {
         // the required parts of the message
         k.startPeriod = j.at("startPeriod");
@@ -81,6 +87,8 @@ struct ChargingSchedulePeriod {
         }
     }
 
+    // \brief Writes the string representation of the given ChargingSchedulePeriod \p k to the given output stream \p os
+    /// \returns an output stream with the ChargingSchedulePeriod written to
     friend std::ostream& operator<<(std::ostream& os, const ChargingSchedulePeriod& k) {
         os << json(k).dump(4);
         return os;
@@ -94,6 +102,7 @@ struct ChargingSchedule {
     boost::optional<DateTime> startSchedule;
     boost::optional<float> minChargingRate;
 
+    /// \brief Conversion from a given ChargingSchedule \p k to a given json object \p j
     friend void to_json(json& j, const ChargingSchedule& k) {
         // the required parts of the message
         j = json{
@@ -112,6 +121,7 @@ struct ChargingSchedule {
         }
     }
 
+    /// \brief Conversion from a given json object \p j to a given ChargingSchedule \p k
     friend void from_json(const json& j, ChargingSchedule& k) {
         // the required parts of the message
         k.chargingRateUnit = conversions::string_to_charging_rate_unit(j.at("chargingRateUnit"));
@@ -131,6 +141,8 @@ struct ChargingSchedule {
         }
     }
 
+    // \brief Writes the string representation of the given ChargingSchedule \p k to the given output stream \p os
+    /// \returns an output stream with the ChargingSchedule written to
     friend std::ostream& operator<<(std::ostream& os, const ChargingSchedule& k) {
         os << json(k).dump(4);
         return os;
@@ -142,6 +154,7 @@ struct KeyValue {
     bool readonly;
     boost::optional<CiString500Type> value;
 
+    /// \brief Conversion from a given KeyValue \p k to a given json object \p j
     friend void to_json(json& j, const KeyValue& k) {
         // the required parts of the message
         j = json{
@@ -154,6 +167,7 @@ struct KeyValue {
         }
     }
 
+    /// \brief Conversion from a given json object \p j to a given KeyValue \p k
     friend void from_json(const json& j, KeyValue& k) {
         // the required parts of the message
         k.key = j.at("key");
@@ -165,6 +179,8 @@ struct KeyValue {
         }
     }
 
+    // \brief Writes the string representation of the given KeyValue \p k to the given output stream \p os
+    /// \returns an output stream with the KeyValue written to
     friend std::ostream& operator<<(std::ostream& os, const KeyValue& k) {
         os << json(k).dump(4);
         return os;
@@ -180,6 +196,7 @@ struct SampledValue {
     boost::optional<Location> location;
     boost::optional<UnitOfMeasure> unit;
 
+    /// \brief Conversion from a given SampledValue \p k to a given json object \p j
     friend void to_json(json& j, const SampledValue& k) {
         // the required parts of the message
         j = json{
@@ -206,6 +223,7 @@ struct SampledValue {
         }
     }
 
+    /// \brief Conversion from a given json object \p j to a given SampledValue \p k
     friend void from_json(const json& j, SampledValue& k) {
         // the required parts of the message
         k.value = j.at("value");
@@ -231,6 +249,8 @@ struct SampledValue {
         }
     }
 
+    // \brief Writes the string representation of the given SampledValue \p k to the given output stream \p os
+    /// \returns an output stream with the SampledValue written to
     friend std::ostream& operator<<(std::ostream& os, const SampledValue& k) {
         os << json(k).dump(4);
         return os;
@@ -241,6 +261,7 @@ struct MeterValue {
     DateTime timestamp;
     std::vector<SampledValue> sampledValue;
 
+    /// \brief Conversion from a given MeterValue \p k to a given json object \p j
     friend void to_json(json& j, const MeterValue& k) {
         // the required parts of the message
         j = json{
@@ -250,6 +271,7 @@ struct MeterValue {
         // the optional parts of the message
     }
 
+    /// \brief Conversion from a given json object \p j to a given MeterValue \p k
     friend void from_json(const json& j, MeterValue& k) {
         // the required parts of the message
         k.timestamp = DateTime(std::string(j.at("timestamp")));
@@ -261,6 +283,8 @@ struct MeterValue {
         // the optional parts of the message
     }
 
+    // \brief Writes the string representation of the given MeterValue \p k to the given output stream \p os
+    /// \returns an output stream with the MeterValue written to
     friend std::ostream& operator<<(std::ostream& os, const MeterValue& k) {
         os << json(k).dump(4);
         return os;
@@ -278,6 +302,7 @@ struct ChargingProfile {
     boost::optional<DateTime> validFrom;
     boost::optional<DateTime> validTo;
 
+    /// \brief Conversion from a given ChargingProfile \p k to a given json object \p j
     friend void to_json(json& j, const ChargingProfile& k) {
         // the required parts of the message
         j = json{
@@ -302,6 +327,7 @@ struct ChargingProfile {
         }
     }
 
+    /// \brief Conversion from a given json object \p j to a given ChargingProfile \p k
     friend void from_json(const json& j, ChargingProfile& k) {
         // the required parts of the message
         k.chargingProfileId = j.at("chargingProfileId");
@@ -325,6 +351,8 @@ struct ChargingProfile {
         }
     }
 
+    // \brief Writes the string representation of the given ChargingProfile \p k to the given output stream \p os
+    /// \returns an output stream with the ChargingProfile written to
     friend std::ostream& operator<<(std::ostream& os, const ChargingProfile& k) {
         os << json(k).dump(4);
         return os;
@@ -335,6 +363,7 @@ struct LocalAuthorizationList {
     CiString20Type idTag;
     boost::optional<IdTagInfo> idTagInfo;
 
+    /// \brief Conversion from a given LocalAuthorizationList \p k to a given json object \p j
     friend void to_json(json& j, const LocalAuthorizationList& k) {
         // the required parts of the message
         j = json{
@@ -346,6 +375,7 @@ struct LocalAuthorizationList {
         }
     }
 
+    /// \brief Conversion from a given json object \p j to a given LocalAuthorizationList \p k
     friend void from_json(const json& j, LocalAuthorizationList& k) {
         // the required parts of the message
         k.idTag = j.at("idTag");
@@ -356,6 +386,8 @@ struct LocalAuthorizationList {
         }
     }
 
+    // \brief Writes the string representation of the given LocalAuthorizationList \p k to the given output stream \p os
+    /// \returns an output stream with the LocalAuthorizationList written to
     friend std::ostream& operator<<(std::ostream& os, const LocalAuthorizationList& k) {
         os << json(k).dump(4);
         return os;
@@ -366,6 +398,7 @@ struct TransactionData {
     DateTime timestamp;
     std::vector<SampledValue> sampledValue;
 
+    /// \brief Conversion from a given TransactionData \p k to a given json object \p j
     friend void to_json(json& j, const TransactionData& k) {
         // the required parts of the message
         j = json{
@@ -375,6 +408,7 @@ struct TransactionData {
         // the optional parts of the message
     }
 
+    /// \brief Conversion from a given json object \p j to a given TransactionData \p k
     friend void from_json(const json& j, TransactionData& k) {
         // the required parts of the message
         k.timestamp = DateTime(std::string(j.at("timestamp")));
@@ -386,6 +420,8 @@ struct TransactionData {
         // the optional parts of the message
     }
 
+    // \brief Writes the string representation of the given TransactionData \p k to the given output stream \p os
+    /// \returns an output stream with the TransactionData written to
     friend std::ostream& operator<<(std::ostream& os, const TransactionData& k) {
         os << json(k).dump(4);
         return os;

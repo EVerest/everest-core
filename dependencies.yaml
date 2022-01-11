@@ -10,6 +10,10 @@ nlohmann_json_schema_validator:
   alias:
     name: nlohmann_json_schema_validator::nlohmann_json_schema_validator
     target: nlohmann_json_schema_validator
+libfsm:
+  git: git@github.com:EVerest/libfsm.git
+  git_tag: main
+  options: ["BUILD_EXAMPLES OFF"]
 liblog:
   git: git@github.com:EVerest/liblog.git
   git_tag: main

@@ -10,6 +10,8 @@ target_sources(ocpp
     PRIVATE
         ocpp1_6/charge_point.cpp
         ocpp1_6/charge_point_configuration.cpp
+        ocpp1_6/charge_point_state_machine.cpp
+        ocpp1_6/charging_session.cpp
         ocpp1_6/message_queue.cpp
         ocpp1_6/schemas.cpp
         ocpp1_6/types_internal.cpp
@@ -24,6 +26,7 @@ target_link_libraries(ocpp
         date
         everest::log
         everest::timer
+        Fsm::Fsm
         nlohmann_json::nlohmann_json
         nlohmann_json_schema_validator::nlohmann_json_schema_validator
         OpenSSL::SSL
@@ -40,6 +43,10 @@ target_link_libraries(ocpp
 INTERFACE
     everest::timer)
 
+# this is important to allow our headers to find the libfsm headers
+target_link_libraries(ocpp
+    INTERFACE
+        Fsm::Fsm)
 # this is important to allow our headers to find the nlohmann_* headers
 target_link_libraries(ocpp
 INTERFACE

@@ -1,4 +1,6 @@
 {% if first %}
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - {{year}} Pionix GmbH and Contributors to EVerest
 #ifndef OCPP1_6_ENUMS_HPP
 #define OCPP1_6_ENUMS_HPP
 
@@ -28,13 +30,22 @@ namespace conversions {
         {"{{enum}}", {{ enum_type.name }}::{{ enum.replace('.', '_').replace('-', '_') + '}' }},
 {% endfor %}
     };
+
+    /// \brief Converts the given {{ enum_type.name }} \p e to human readable string
+    /// \returns a string representation of the {{ enum_type.name }}
     static const std::string {{ enum_type.name | snake_case }}_to_string({{ enum_type.name }} e) {
         return {{ enum_type.name }}Strings.at(e);
     }
+
+    /// \brief Converts the given std::string \p s to {{ enum_type.name }}
+    /// \returns a {{ enum_type.name }} from a string representation
     static const {{ enum_type.name }} string_to_{{ enum_type.name | snake_case }}(std::string s) {
         return {{ enum_type.name }}Values.at(s);
     }
 }
+
+/// \brief Writes the string representation of the given {{ enum_type.name }} \p {{ enum_type.name | snake_case }} to the given output stream \p os
+/// \returns an output stream with the {{ enum_type.name }} written to
 inline std::ostream& operator<<(std::ostream& os, const {{ enum_type.name }}& {{ enum_type.name | snake_case }}) {
     os << conversions::{{ enum_type.name | snake_case }}_to_string({{ enum_type.name | snake_case }});
     return os;

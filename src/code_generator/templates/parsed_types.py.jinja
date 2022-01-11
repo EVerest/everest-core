@@ -1,4 +1,6 @@
 {% if first %}
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - {{year}} Pionix GmbH and Contributors to EVerest
 #ifndef OCPP1_6_OCPP_TYPES_HPP
 #define OCPP1_6_OCPP_TYPES_HPP
 
@@ -26,6 +28,7 @@ struct {{type.name}} {
     {{ ' ' + property.name + ';' }}
 {% endfor %}
 
+    /// \brief Conversion from a given {{ type.name }} \p k to a given json object \p j
     friend void to_json(json& j, const {{ type.name }}& k) {
         // the required parts of the message
 {% if type.properties|selectattr('required')|list|length %}
@@ -86,6 +89,7 @@ j["{{property.name}}"] = k.{{property.name}}.value();
 {% endfor %}
     }
 
+    /// \brief Conversion from a given json object \p j to a given {{ type.name }} \p k
     friend void from_json(const json& j, {{ type.name }}& k) {
         // the required parts of the message
 {% for property in type.properties %}
@@ -128,6 +132,8 @@ j["{{property.name}}"] = k.{{property.name}}.value();
 {% endfor %}
     }
 
+    // \brief Writes the string representation of the given {{ type.name }} \p k to the given output stream \p os
+    /// \returns an output stream with the {{ type.name }} written to
     friend std::ostream& operator<<(std::ostream& os, const {{ type.name }}& k) {
         os << json(k).dump(4);
         return os;

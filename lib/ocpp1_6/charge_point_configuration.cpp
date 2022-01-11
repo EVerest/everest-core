@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include <boost/algorithm/string/join.hpp>
 
 #include <ocpp1_6/charge_point_configuration.hpp>
@@ -128,7 +128,7 @@ ChargePointConfiguration::ChargePointConfiguration(json config, std::string sche
                                   {Measurand::Voltage, {Phase::L1, Phase::L2, Phase::L3}},                       // V
                                   {Measurand::Current_Import, {Phase::L1, Phase::L2, Phase::L3, Phase::N}},      // A
                                   {Measurand::Frequency, {Phase::L1, Phase::L2, Phase::L3}},                     // Hz
-                                  {Measurand::Current_Offered, {}}};
+                                  {Measurand::Current_Offered, {}}};                                             // A
 
     this->supported_message_types_from_charge_point = {
         {SupportedFeatureProfiles::Core,
@@ -179,7 +179,7 @@ ChargePointConfiguration::ChargePointConfiguration(json config, std::string sche
     }
 }
 
-void ChargePointConfiguration::stop() {
+void ChargePointConfiguration::close() {
     EVLOG(info) << "Closing database file...";
     int ret = sqlite3_close(this->db);
     if (ret == SQLITE_OK) {
@@ -604,7 +604,7 @@ boost::optional<KeyValue> ChargePointConfiguration::getAllowOfflineTxForUnknownI
         ocpp1_6::KeyValue kv;
         kv.key = "AllowOfflineTxForUnknownId";
         kv.readonly = false;
-        kv.value.emplace(Conversions::bool_to_string(unknown_offline_auth.value()));
+        kv.value.emplace(conversions::bool_to_string(unknown_offline_auth.value()));
         unknown_offline_auth_kv.emplace(kv);
     }
     return unknown_offline_auth_kv;
@@ -630,7 +630,7 @@ boost::optional<KeyValue> ChargePointConfiguration::getAuthorizationCacheEnabled
         ocpp1_6::KeyValue kv;
         kv.key = "AuthorizationCacheEnabled";
         kv.readonly = false;
-        kv.value.emplace(Conversions::bool_to_string(enabled.value()));
+        kv.value.emplace(conversions::bool_to_string(enabled.value()));
         enabled_kv.emplace(kv);
     }
     return enabled_kv;
@@ -644,7 +644,7 @@ KeyValue ChargePointConfiguration::getAuthorizeRemoteTxRequestsKeyValue() {
     ocpp1_6::KeyValue kv;
     kv.key = "AuthorizeRemoteTxRequests";
     kv.readonly = true; // Could also be RW if we choose so
-    kv.value.emplace(Conversions::bool_to_string(this->getAuthorizeRemoteTxRequests()));
+    kv.value.emplace(conversions::bool_to_string(this->getAuthorizeRemoteTxRequests()));
     return kv;
 }
 
@@ -804,7 +804,7 @@ KeyValue ChargePointConfiguration::getLocalAuthorizeOfflineKeyValue() {
     ocpp1_6::KeyValue kv;
     kv.key = "LocalAuthorizeOffline";
     kv.readonly = false;
-    kv.value.emplace(Conversions::bool_to_string(this->getLocalAuthorizeOffline()));
+    kv.value.emplace(conversions::bool_to_string(this->getLocalAuthorizeOffline()));
     return kv;
 }
 
@@ -819,7 +819,7 @@ KeyValue ChargePointConfiguration::getLocalPreAuthorizeKeyValue() {
     ocpp1_6::KeyValue kv;
     kv.key = "LocalPreAuthorize";
     kv.readonly = false;
-    kv.value.emplace(Conversions::bool_to_string(this->getLocalPreAuthorize()));
+    kv.value.emplace(conversions::bool_to_string(this->getLocalPreAuthorize()));
     return kv;
 }
 
@@ -1014,7 +1014,7 @@ KeyValue ChargePointConfiguration::getStopTransactionOnEVSideDisconnectKeyValue(
     ocpp1_6::KeyValue kv;
     kv.key = "StopTransactionOnEVSideDisconnect";
     kv.readonly = false;
-    kv.value.emplace(Conversions::bool_to_string(this->getStopTransactionOnEVSideDisconnect()));
+    kv.value.emplace(conversions::bool_to_string(this->getStopTransactionOnEVSideDisconnect()));
     return kv;
 }
 
@@ -1029,7 +1029,7 @@ KeyValue ChargePointConfiguration::getStopTransactionOnInvalidIdKeyValue() {
     ocpp1_6::KeyValue kv;
     kv.key = "StopTransactionOnInvalidId";
     kv.readonly = false;
-    kv.value.emplace(Conversions::bool_to_string(this->getStopTransactionOnInvalidId()));
+    kv.value.emplace(conversions::bool_to_string(this->getStopTransactionOnInvalidId()));
     return kv;
 }
 
@@ -1196,7 +1196,7 @@ KeyValue ChargePointConfiguration::getUnlockConnectorOnEVSideDisconnectKeyValue(
     ocpp1_6::KeyValue kv;
     kv.key = "UnlockConnectorOnEVSideDisconnect";
     kv.readonly = false;
-    kv.value.emplace(Conversions::bool_to_string(this->getUnlockConnectorOnEVSideDisconnect()));
+    kv.value.emplace(conversions::bool_to_string(this->getUnlockConnectorOnEVSideDisconnect()));
     return kv;
 }
 
@@ -1268,7 +1268,7 @@ KeyValue ChargePointConfiguration::getConnectorSwitch3to1PhaseSupportedKeyValue(
     ocpp1_6::KeyValue kv;
     kv.key = "ConnectorSwitch3to1PhaseSupported";
     kv.readonly = true;
-    kv.value.emplace(Conversions::bool_to_string(this->getConnectorSwitch3to1PhaseSupported()));
+    kv.value.emplace(conversions::bool_to_string(this->getConnectorSwitch3to1PhaseSupported()));
     return kv;
 }
 
@@ -1428,17 +1428,17 @@ ConfigurationStatus ChargePointConfiguration::set(CiString50Type key, CiString50
         if (this->getAllowOfflineTxForUnknownId() == boost::none) {
             return ConfigurationStatus::NotSupported;
         }
-        this->setAllowOfflineTxForUnknownId(Conversions::string_to_bool(value.get()));
+        this->setAllowOfflineTxForUnknownId(conversions::string_to_bool(value.get()));
     }
     if (key == "AuthorizationCacheEnabled") {
         if (this->getAuthorizationCacheEnabled() == boost::none) {
             return ConfigurationStatus::NotSupported;
         }
-        this->setAuthorizationCacheEnabled(Conversions::string_to_bool(value.get()));
+        this->setAuthorizationCacheEnabled(conversions::string_to_bool(value.get()));
     }
     // TODO(kai): Implementations can choose if the is R or RW, at the moment readonly
     // if (key == "AuthorizeRemoteTxRequests") {
-    //     this->setAuthorizeRemoteTxRequests(Conversions::string_to_bool(value.get()));
+    //     this->setAuthorizeRemoteTxRequests(conversions::string_to_bool(value.get()));
     // }
     if (key == "BlinkRepeat") {
         if (this->getBlinkRepeat() == boost::none) {
@@ -1485,10 +1485,10 @@ ConfigurationStatus ChargePointConfiguration::set(CiString50Type key, CiString50
         this->setLightIntensity(light_intensity);
     }
     if (key == "LocalAuthorizeOffline") {
-        this->setLocalAuthorizeOffline(Conversions::string_to_bool(value.get()));
+        this->setLocalAuthorizeOffline(conversions::string_to_bool(value.get()));
     }
     if (key == "LocalPreAuthorize") {
-        this->setLocalPreAuthorize(Conversions::string_to_bool(value.get()));
+        this->setLocalPreAuthorize(conversions::string_to_bool(value.get()));
     }
     if (key == "MaxEnergyOnInvalidId") {
         if (this->getMaxEnergyOnInvalidId() == boost::none) {
@@ -1527,10 +1527,10 @@ ConfigurationStatus ChargePointConfiguration::set(CiString50Type key, CiString50
         this->setResetRetries(std::stoi(value.get()));
     }
     if (key == "StopTransactionOnEVSideDisconnect") {
-        this->setStopTransactionOnEVSideDisconnect(Conversions::string_to_bool(value.get()));
+        this->setStopTransactionOnEVSideDisconnect(conversions::string_to_bool(value.get()));
     }
     if (key == "StopTransactionOnInvalidId") {
-        this->setStopTransactionOnInvalidId(Conversions::string_to_bool(value.get()));
+        this->setStopTransactionOnInvalidId(conversions::string_to_bool(value.get()));
     }
     if (key == "StopTxnAlignedData") {
         if (!this->setStopTxnAlignedData(value.get())) {
@@ -1549,7 +1549,7 @@ ConfigurationStatus ChargePointConfiguration::set(CiString50Type key, CiString50
         this->setTransactionMessageRetryInterval(std::stoi(value.get()));
     }
     if (key == "UnlockConnectorOnEVSideDisconnect") {
-        this->setUnlockConnectorOnEVSideDisconnect(Conversions::string_to_bool(value.get()));
+        this->setUnlockConnectorOnEVSideDisconnect(conversions::string_to_bool(value.get()));
     }
     if (key == "WebsocketPingInterval") {
         if (this->getWebsocketPingInterval() == boost::none) {
