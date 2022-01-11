@@ -44,6 +44,8 @@ void sunspec_readerImpl::run_read_loop() {
     tp_loop = std::chrono::system_clock::now();
     while(true) {
 
+        if (this->read_loop_thread.shouldExit()) break;
+
         // Reading
         std::this_thread::sleep_until(tp_loop);
         tp_loop += std::chrono::milliseconds(config.read_interval);
