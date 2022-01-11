@@ -40,10 +40,9 @@ private:
 
     json manifests;
     json interfaces;
+    json interface_definitions;
     json base_interfaces;
     schemas _schemas;
-
-    const std::regex optional_requirement_regex = std::regex("^optional:.*$");
 
     ///
     /// \brief loads the contents of the interface file referenced by the give \p intf_name from disk and validates its
@@ -118,6 +117,10 @@ public:
     ///
     /// \returns a json object that contains the available interfaces
     json get_interfaces();
+
+    ///
+    /// \returns a json object that contains the interface definition
+    json get_interface_definition(const std::string& interface_name);
 
     ///
     /// \brief turns then given \p module_id into a printable identifier

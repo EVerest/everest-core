@@ -26,18 +26,34 @@ using ValueCallback = std::function<void(Value)>;
 using ConfigEntry = boost::variant<std::string, double, int, bool>;
 using ConfigMap = std::map<std::string, ConfigEntry>;
 using ModuleConfigs = std::map<std::string, ConfigMap>;
-struct ModuleInfo {
-    std::string name;
-    std::vector<std::string> authors;
-    std::string license;
-    std::string id;
-};
 using Array = json::array_t;
 using Object = json::object_t;
 // TODO (aw): can we pass the handler arguments by const ref?
 using Handler = std::function<void(json)>;
 using StringHandler = std::function<void(std::string)>;
 using Token = std::shared_ptr<Handler>;
+
+struct ModuleInfo {
+    std::string name;
+    std::vector<std::string> authors;
+    std::string license;
+    std::string id;
+};
+
+struct Requirement {
+    Requirement(const std::string& requirement_id, int index) : id(requirement_id), index(index){};
+    bool operator<(const Requirement& rhs) const {
+        if (id < rhs.id) {
+            return true;
+        } else if (id == rhs.id) {
+            return (index < rhs.index);
+        } else {
+            return false;
+        }
+    }
+    std::string id;
+    int index;
+};
 
 #define EVCALLBACK(function) [](auto&& PH1) { function(std::forward<decltype(PH1)>(PH1)); }
 

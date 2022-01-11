@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include <future>
 #include <map>
 #include <set>
@@ -117,15 +117,14 @@ void Everest::disconnect() {
     this->mqtt_abstraction.disconnect();
 }
 
-json Everest::call_cmd(const std::string& requirement_id, const std::string& cmd_name, json json_args) {
+json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json json_args) {
     BOOST_LOG_FUNCTION();
 
     // resolve requirement
-    json connection = this->config.resolve_requirement(this->module_id, requirement_id);
-    if (connection.is_null()) {
-        EVLOG_AND_THROW(EVEXCEPTION(EverestApiError, this->config.printable_identifier(this->module_id),
-                                    " tried to call non-existent command '", cmd_name, "' of optional requirement '",
-                                    requirement_id, "'!"));
+    json connections = this->config.resolve_requirement(this->module_id, req.id);
+    auto& connection = connections; // this is for a min/max == 1 requirement
+    if (connections.is_array()) {   // this is for every other requirement
+        connection = connections[req.index];
     }
 
     // extract manifest definition of this command
@@ -298,9 +297,9 @@ json Everest::call_cmd(const std::string& requirement_id, const std::string& cmd
     return result;
 }
 
-Result Everest::call_cmd(const std::string& requirement_id, const std::string& cmd_name, Parameters args) {
+Result Everest::call_cmd(const Requirement& req, const std::string& cmd_name, Parameters args) {
     BOOST_LOG_FUNCTION();
-    json result = this->call_cmd(requirement_id, cmd_name, convertTo<json>(args));
+    json result = this->call_cmd(req, cmd_name, convertTo<json>(args));
     return convertTo<Result>(result["retval"]); // FIXME: other datatype so we can return the data["origin"] as well
 }
 
@@ -347,28 +346,20 @@ void Everest::publish_var(const std::string& impl_id, const std::string& var_nam
     return this->publish_var(impl_id, var_name, convertTo<json>(value));
 }
 
-void Everest::subscribe_var(const std::string& requirement_id, const std::string& var_name,
-                            const JsonCallback& callback) {
+void Everest::subscribe_var(const Requirement& req, const std::string& var_name, const JsonCallback& callback) {
     BOOST_LOG_FUNCTION();
 
-    EVLOG(debug) << "subscribing to var: " << requirement_id << ":" << var_name;
+    EVLOG(debug) << "subscribing to var: " << req.id << ":" << var_name;
 
     // resolve requirement
-    json connection = this->config.resolve_requirement(this->module_id, requirement_id);
-    if (connection.is_null()) {
-        if (requirement_id.rfind("optional:", 0) == 0) {
-            EVLOG(warning) << "Subscribed to non-existent optional var '" << var_name << "' of requirement '"
-                           << requirement_id << "', ignoring handler";
-            return;
-        }
-        EVLOG_AND_THROW(EVEXCEPTION(EverestApiError, "Subscribed to non-existent var '"
-                                                         << var_name << "' of requirement '" << requirement_id << "'"));
+    json connections = this->config.resolve_requirement(this->module_id, req.id);
+    auto& connection = connections; // this is for a min/max == 1 requirement
+    if (connections.is_array()) {   // this is for every other requirement
+        connection = connections[req.index];
     }
 
-    std::string module_name =
-        this->config.get_main_config()[connection["module_id"].get<std::string>()]["module"].get<std::string>();
-    auto module_manifest = this->config.get_manifests()[module_name];
-    auto requirement_module_id = connection["module_id"];
+    auto requirement_module_id = connection["module_id"].get<std::string>();
+    auto module_name = this->config.get_main_config()[requirement_module_id]["module"].get<std::string>();
     auto requirement_impl_id = connection["implementation_id"].get<std::string>();
     auto requirement_impl_manifest = this->config.get_interfaces()[module_name][requirement_impl_id];
 
@@ -407,10 +398,9 @@ void Everest::subscribe_var(const std::string& requirement_id, const std::string
     Token token = this->mqtt_abstraction.register_handler(topic.str(), handler, true);
 }
 
-void Everest::subscribe_var(const std::string& requirement_id, const std::string& var_name,
-                            const ValueCallback& callback) {
+void Everest::subscribe_var(const Requirement& req, const std::string& var_name, const ValueCallback& callback) {
     BOOST_LOG_FUNCTION();
-    return this->subscribe_var(requirement_id, var_name, [callback](json data) { callback(convertTo<Value>(data)); });
+    return this->subscribe_var(req, var_name, [callback](json data) { callback(convertTo<Value>(data)); });
 }
 
 void Everest::external_mqtt_publish(const std::string& topic, const std::string& data) {
@@ -433,9 +423,9 @@ void Everest::provide_external_mqtt_handler(const std::string& topic, const Stri
 
     if (this->registered_external_mqtt_handlers.count(topic) != 0) {
         EVLOG_AND_THROW(EVEXCEPTION(EverestApiError, this->config.printable_identifier(this->module_id),
-                            "->external_mqtt_handler<", topic,
-                            ">: External MQTT Handler for this topic already registered",
-                            " (you can not register an external MQTT handler twice)!"));
+                                    "->external_mqtt_handler<", topic,
+                                    ">: External MQTT Handler for this topic already registered",
+                                    " (you can not register an external MQTT handler twice)!"));
     }
 
     // check if external mqtt is enabled
@@ -513,8 +503,8 @@ void Everest::provide_cmd(const std::string impl_id, const std::string cmd_name,
 
     if (this->registered_cmds.count(impl_id) != 0 && this->registered_cmds[impl_id].count(cmd_name) != 0) {
         EVLOG_AND_THROW(EVEXCEPTION(EverestApiError, this->config.printable_identifier(this->module_id, impl_id), "->",
-                            cmd_name, "(...): Handler for this cmd already registered",
-                            " (you can not register a cmd handler twice)!"));
+                                    cmd_name, "(...): Handler for this cmd already registered",
+                                    " (you can not register a cmd handler twice)!"));
     }
 
     // define command wrapper

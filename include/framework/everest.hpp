@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #ifndef FRAMEWORK_EVEREST_HPP
 #define FRAMEWORK_EVEREST_HPP
 
@@ -73,10 +73,10 @@ public:
 
     ///
     /// \brief Provides functionality for calling commands of other modules. The module is identified by the given \p
-    /// requirement_id, the command by the given command name \p cmd_name and the needed arguments by \p args
+    /// req, the command by the given command name \p cmd_name and the needed arguments by \p args
     ///
-    json call_cmd(const std::string& requirement_id, const std::string& cmd_name, json json_args);
-    Result call_cmd(const std::string& requirement_id, const std::string& cmd_name, Parameters args);
+    json call_cmd(const Requirement& req, const std::string& cmd_name, json json_args);
+    Result call_cmd(const Requirement& req, const std::string& cmd_name, Parameters args);
 
     ///
     /// \brief Publishes a variable of the given \p impl_id, names \p var_name with the given \p value
@@ -85,11 +85,11 @@ public:
     void publish_var(const std::string& impl_id, const std::string& var_name, Value value);
 
     ///
-    /// \brief Subscribes to a variable of another module identified by the given \p requirement_id and variable name \p
+    /// \brief Subscribes to a variable of another module identified by the given \p req and variable name \p
     /// var_name. The given \p callback is called when a new value becomes available
     ///
-    void subscribe_var(const std::string& requirement_id, const std::string& var_name, const ValueCallback& callback);
-    void subscribe_var(const std::string& requirement_id, const std::string& var_name, const JsonCallback& callback);
+    void subscribe_var(const Requirement& req, const std::string& var_name, const ValueCallback& callback);
+    void subscribe_var(const Requirement& req, const std::string& var_name, const JsonCallback& callback);
 
     ///
     /// \brief publishes the given \p data on the given \p topic

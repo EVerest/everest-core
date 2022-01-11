@@ -90,9 +90,9 @@ protected:
 };
 
 struct ModuleAdapter {
-    using CallFunc = std::function<Result(const std::string&, const std::string&, Parameters)>;
+    using CallFunc = std::function<Result(const Requirement&, const std::string&, Parameters)>;
     using PublishFunc = std::function<void(const std::string&, const std::string&, Value)>;
-    using SubscribeFunc = std::function<void(const std::string&, const std::string&, ValueCallback)>;
+    using SubscribeFunc = std::function<void(const Requirement&, const std::string&, ValueCallback)>;
     using ExtMqttPublishFunc = std::function<void(const std::string&, const std::string&)>;
     using ExtMqttSubscribeFunc = std::function<void(const std::string&, StringHandler)>;
 

@@ -142,12 +142,12 @@ int main(int argc, char* argv[]) {
 
         boost::dll::shared_library lib(path);
 
-        auto everest_register_call_cmd_callback =
-            boost::dll::import_alias<void(std::function<Result(const std::string&, const std::string&, Parameters)>)>(
-                path, "everest_register_call_cmd_callback");
+        auto everest_register_call_cmd_callback = boost::dll::import_alias<void(
+            std::function<Result(const Requirement& req, const std::string&, Parameters)>)>(
+            path, "everest_register_call_cmd_callback");
 
-        auto call_cmd = [&everest](const std::string& param1, const std::string& param2, Parameters param3) {
-            return everest.call_cmd(param1, param2, param3);
+        auto call_cmd = [&everest](const Requirement& req, const std::string& cmd_name, Parameters args) {
+            return everest.call_cmd(req, cmd_name, args);
         };
 
         everest_register_call_cmd_callback(call_cmd);
@@ -162,13 +162,13 @@ int main(int argc, char* argv[]) {
 
         everest_register_publish_var_callback(publish_var);
 
-        auto everest_register_subscribe_var_callback =
-            boost::dll::import_alias<void(std::function<void(const std::string&, const std::string&, ValueCallback)>)>(
-                path, "everest_register_subscribe_var_callback");
+        auto everest_register_subscribe_var_callback = boost::dll::import_alias<void(
+            std::function<void(const Requirement& req, const std::string&, ValueCallback)>)>(
+            path, "everest_register_subscribe_var_callback");
 
-        auto subscribe_var = [&everest](const std::string& param1, const std::string& param2,
-                                        const ValueCallback& param3) {
-            return everest.subscribe_var(param1, param2, param3);
+        auto subscribe_var = [&everest](const Requirement& req, const std::string& var_name,
+                                        const ValueCallback& callback) {
+            return everest.subscribe_var(req, var_name, callback);
         };
 
         everest_register_subscribe_var_callback(subscribe_var);
@@ -193,9 +193,10 @@ int main(int argc, char* argv[]) {
 
         everest_register_external_mqtt_handler_callback(external_mqtt_handler);
 
-        auto everest_register = boost::dll::import_alias<std::vector<Everest::cmd>()>(path, "everest_register");
+        auto everest_register = boost::dll::import_alias<std::vector<Everest::cmd>(json)>(path, "everest_register");
 
-        std::vector<Everest::cmd> cmds = everest_register();
+        // FIXME (aw): would be nice to move this config related thing toward the module_init function
+        std::vector<Everest::cmd> cmds = everest_register(config.get_main_config()[module_id]["connections"]);
 
         for (auto const& command : cmds) {
             everest.provide_cmd(command);

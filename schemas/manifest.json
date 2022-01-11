@@ -147,7 +147,7 @@
             "description": "This describes a list of requirements that must be fulfilled by other modules. The key of this is an arbitrary requirement id that has to be referenced in the connections object by the main config, the values are a list of properties (key-value-pairs) the required module and implementations must have set in their provides section to fulfill this requirement",
             "type": "object",
             "patternProperties": {
-                "^(optional:)?[a-zA-Z_][a-zA-Z0-9_.-]*$": { // requirement id
+                "^[a-zA-Z_][a-zA-Z0-9_.-]*$": { // requirement id
                     "type": "object",
                     "required": [
                         "interface"
@@ -156,17 +156,16 @@
                         "interface": {
                             "type": "string",
                             "pattern": "^[a-zA-Z_][a-zA-Z0-9_.-]*$"
-                        }
-                    },
-                    "patternProperties": {
-                        "^[a-zA-Z_][a-zA-Z0-9_.-]*$": { // allow all sorts of additional properties that can be used to match requirements to
-                            "type": [
-                                "string",
-                                "integer",
-                                "number",
-                                "boolean",
-                                "null"
-                            ] // only allow primitive types in here
+                        },
+                        "min_connections": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 1
+                        },
+                        "max_connections": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "default": 1
                         }
                     },
                     "additionalProperties": false // don't allow arbitrary additional properties

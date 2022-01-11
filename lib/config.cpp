@@ -102,6 +102,7 @@ Config::Config(std::string schemas_dir, std::string config_file, std::string mod
 
     this->manifests = json({});
     this->interfaces = json({});
+    this->interface_definitions = json({});
     this->base_interfaces = json({});
 
     this->_schemas = Config::load_schemas(this->schemas_dir);
@@ -352,6 +353,7 @@ json Config::resolve_interface(const std::string& intf_name, std::set<std::strin
         }
     }
 
+    this->interface_definitions[intf_name] = intf_definition;
     return intf_definition;
 }
 
@@ -379,28 +381,25 @@ json Config::load_interface_file(const std::string& intf_name) {
 json Config::resolve_requirement(const std::string& module_id, const std::string& requirement_id) {
     BOOST_LOG_FUNCTION();
 
-    bool optional_requirement = false;
-    if (std::regex_match(requirement_id, this->optional_requirement_regex)) {
-        optional_requirement = true;
-    }
     if (!this->main.contains(module_id)) {
-        if (!optional_requirement) {
-            EVLOG_AND_THROW(EVEXCEPTION(EverestApiError, "Requested requirement id '", requirement_id, "' of module ",
-                                        printable_identifier(module_id), " not found in manifest!"));
-        }
+        EVLOG_AND_THROW(EVEXCEPTION(EverestApiError, "Requested requirement id '", requirement_id, "' of module ",
+                                    printable_identifier(module_id), " not found in config!"));
     }
+
+    // check for connections for this requirement
     json module_config = this->main[module_id];
+    std::string module_name = module_config["module"].get<std::string>();
+    auto& requirement = this->manifests[module_name]["requires"][requirement_id];
     if (!module_config["connections"].contains(requirement_id)) {
-        if (!optional_requirement) {
-            EVLOG_AND_THROW(EVEXCEPTION(EverestApiError, "Requested requirement id '", requirement_id, "' of module ",
-                                        printable_identifier(module_id), " not found in manifest!"));
-        }
-
-        return json(nullptr); // optional requirement not found
+        return json({}); // return an empty array if our config does not contain any connections for this requirement id
     }
 
-    json connection = module_config["connections"][requirement_id];
-    return connection;
+    // if only one single connection entry was required, return only this one
+    // callers can check with is_array() if this is a single connection (legacy) or a connection list
+    if (requirement["min_connections"] == 1 && requirement["max_connections"] == 1) {
+        return module_config["connections"][requirement_id].at(0);
+    }
+    return module_config["connections"][requirement_id];
 }
 
 bool Config::contains(const std::string& module_id) {
@@ -475,6 +474,11 @@ const json& Config::get_manifests() {
 json Config::get_interfaces() {
     BOOST_LOG_FUNCTION();
     return this->interfaces;
+}
+
+json Config::get_interface_definition(const std::string& interface_name) {
+    BOOST_LOG_FUNCTION();
+    return this->interface_definitions.value(interface_name, json());
 }
 
 json Config::load_schema(const fs::path& path) {
@@ -628,7 +632,7 @@ ModuleInfo Config::get_module_info(const std::string& module_id) {
     module_info.id = module_id;
     module_info.name = this->main[module_id]["module"].get<std::string>();
     auto& module_metadata = this->manifests[module_info.name]["metadata"];
-    for (auto& author: module_metadata["authors"]) {
+    for (auto& author : module_metadata["authors"]) {
         module_info.authors.emplace_back(author.get<std::string>());
     }
     module_info.license = module_metadata["license"].get<std::string>();
@@ -736,13 +740,8 @@ void Config::resolve_all_requirements() {
             const auto& requirement_id = element.key();
             auto& requirement = element.value();
 
-            bool optional_requirement = false;
-            if (std::regex_match(requirement_id, this->optional_requirement_regex)) {
-                optional_requirement = true;
-            }
-
             if (!module_config["connections"].contains(requirement_id)) {
-                if (optional_requirement) {
+                if (requirement["min_connections"] < 1) {
                     EVLOG(info) << "Manifest of " << printable_identifier(module_id) << " lists OPTIONAL requirement '"
                                 << requirement_id
                                 << "' which could not be fulfilled and will be "
@@ -753,80 +752,61 @@ void Config::resolve_all_requirements() {
                                             printable_identifier(module_id), " not fulfilled: requirement id '",
                                             requirement_id, "' not listed in connections!"));
             }
-            json connection = module_config["connections"][requirement_id];
-            std::string connection_module_id = connection["module_id"];
-            if (!this->main.contains(connection["module_id"])) {
-                // TODO(kai): is this really a good idea it can leave dangling connections hanging around and throwing
-                // errors when adding new modules to the config that happen to have the same module id as the dangling
-                // connection points to
-                /*
-                if (optional_requirement) {
-                    EVLOG(info) << "Config of " << printable_identifier(module_id) << " lists OPTIONAL requirement '"
-                                << requirement_id
-                                << "' which could not be fulfilled and will be "
-                                   "ignored: required module id '"
-                                << connection["module_id"] << "' not listed in config...";
-                    // remove not resolved optional connection
-                    module_config["connections"].erase(requirement_id);
-                    continue; // stop here, there is nothing we can do
-                }
-                */
+            json connections = module_config["connections"][requirement_id];
+
+            // check if min_connections and max_connections are fulfilled
+            if (connections.size() < requirement["min_connections"] ||
+                connections.size() > requirement["max_connections"]) {
                 EVLOG_AND_THROW(EVEXCEPTION(EverestConfigError, "Requirement '", requirement_id, "' of module ",
-                                            printable_identifier(module_id), " not fulfilled: module id '",
-                                            connection_module_id,
-                                            "' (configured in connection) not loaded in config!"));
+                                            printable_identifier(module_id), " not fulfilled: requirement list does",
+                                            "not have an entry count between ", requirement["min_connections"], " and ",
+                                            requirement["max_connections"], "!"));
             }
 
-            std::string connection_module_name = this->main[connection_module_id]["module"];
-            std::string connection_impl_id = connection["implementation_id"];
-            json connection_manifest = this->manifests[connection_module_name];
-            if (!connection_manifest["provides"].contains(connection_impl_id)) {
-                EVLOG_AND_THROW(EVEXCEPTION(EverestConfigError, "Requirement '", requirement_id, "' of module ",
-                                            printable_identifier(module_id), " not fulfilled: required module ",
-                                            printable_identifier(connection["module_id"]),
-                                            " does not provide a implementation for '", connection_impl_id, "'!"));
-            }
-
-            json connection_provides = connection_manifest["provides"][connection_impl_id];
-            json connection_provides_intfs = this->base_interfaces[connection_module_name][connection_impl_id];
-            for (auto& req : requirement.items()) {
-                const auto& requirement_type = req.key();
-                auto& requirement_value = req.value();
-
-                if (connection_provides.contains(requirement_type) && requirement_type == "interface") {
-                    std::set<std::string> provided_intfs = connection_provides_intfs;
-                    if (provided_intfs.count(requirement_value) < 1) {
-                        provided_intfs.erase(connection_provides[requirement_type].get<std::string>());
-                        EVLOG_AND_THROW(EVEXCEPTION(
-                            EverestConfigError, "Requirement '", requirement_id, "' of module ",
-                            printable_identifier(module_id), " not fulfilled by connection to module ",
-                            printable_identifier(connection["module_id"], connection_impl_id), ": required interface '",
-                            std::string(requirement_value), "' is not provided by this implementation!",
-                            " Connected implementation provides interface '",
-                            connection_provides[requirement_type].get<std::string>(),
-                            "' with parent interfaces: ", json(provided_intfs)));
-                    }
-                    // other properties (simple comparison)
-                    // FIXME (aw): this behaviour of comparing all sub elements should be dropped
-                } else if (!(connection_provides.contains(requirement_type) &&
-                             connection_provides[requirement_type] == requirement_value)) {
-                    std::string provided_propery = "<unset>";
-                    if (connection_provides.contains(requirement_type)) {
-                        provided_propery = connection_provides[requirement_type];
-                    }
-                    EVLOG_AND_THROW(
-                        EVEXCEPTION(EverestConfigError, "Requirement '", requirement_id, "' of module ",
-                                    printable_identifier(module_id), " not fulfilled by connection to module ",
-                                    printable_identifier(connection["module_id"], connection["implementation_id"]),
-                                    ": provided property '", requirement_type, "' is not ", requirement_value, " but ",
-                                    provided_propery, "!"));
+            for (uint64_t connection_num = 0; connection_num < connections.size(); connection_num++) {
+                auto& connection = connections[connection_num];
+                std::string connection_module_id = connection["module_id"];
+                if (!this->main.contains(connection["module_id"])) {
+                    EVLOG_AND_THROW(EVEXCEPTION(EverestConfigError, "Requirement '", requirement_id, "' of module ",
+                                                printable_identifier(module_id), " not fulfilled: module id '",
+                                                connection_module_id, "' (configured in connection ", connection_num,
+                                                ") not loaded in config!"));
                 }
-            }
 
-            connection["provides"] = connection_provides;
-            EVLOG(info) << "Manifest of" << printable_identifier(module_id) << " lists requirement '" << requirement_id
-                        << "' which will be fulfilled by "
-                        << printable_identifier(connection["module_id"], connection["implementation_id"]) << "...";
+                std::string connection_module_name = this->main[connection_module_id]["module"];
+                std::string connection_impl_id = connection["implementation_id"];
+                auto& connection_manifest = this->manifests[connection_module_name];
+                if (!connection_manifest["provides"].contains(connection_impl_id)) {
+                    EVLOG_AND_THROW(EVEXCEPTION(EverestConfigError, "Requirement '", requirement_id, "' of module ",
+                                                printable_identifier(module_id), " not fulfilled: required module ",
+                                                printable_identifier(connection["module_id"]),
+                                                " does not provide a implementation for '", connection_impl_id, "'!"));
+                }
+
+                auto& connection_provides = connection_manifest["provides"][connection_impl_id];
+                std::set<std::string> provided_intfs =
+                    this->base_interfaces[connection_module_name][connection_impl_id];
+                std::string requirement_interface = requirement["interface"];
+
+                // check interface requirement
+                if (provided_intfs.count(requirement_interface) < 1) {
+                    EVLOG_AND_THROW(EVEXCEPTION(
+                        EverestConfigError, "Requirement '", requirement_id, "' of module ",
+                        printable_identifier(module_id), " not fulfilled by connection to module ",
+                        printable_identifier(connection["module_id"], connection_impl_id), ": required interface '",
+                        requirement_interface, "' is not provided by this implementation!",
+                        " Connected implementation provides interface '",
+                        connection_provides["interface"].get<std::string>(),
+                        "' with parent interfaces: ", json(provided_intfs)));
+                }
+
+                module_config["connections"][requirement_id][connection_num]["provides"] = connection_provides;
+                module_config["connections"][requirement_id][connection_num]["required_interface"] =
+                    requirement_interface;
+                EVLOG(info) << "Manifest of" << printable_identifier(module_id) << " lists requirement '"
+                            << requirement_id << "' which will be fulfilled by "
+                            << printable_identifier(connection["module_id"], connection["implementation_id"]) << "...";
+            }
         }
     }
     EVLOG(info) << "All module requirements resolved successfully...";
