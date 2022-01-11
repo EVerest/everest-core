@@ -18,6 +18,7 @@ list(APPEND EVEREST_MODULES_LIST
     JsTibber
     JsYetiSimulator
     ModbusMeter
+    OCPP
     Power
     PowerIn
     SLAC_openplcutils
