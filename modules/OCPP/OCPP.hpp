@@ -1,0 +1,97 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+#ifndef OCPP_HPP
+#define OCPP_HPP
+
+//
+// AUTO GENERATED - MARKED REGIONS WILL BE KEPT
+// template version 0.0.1
+//
+
+#include "ld-ev.hpp"
+
+// headers for provided interface implementations
+#include <generated/ocpp_1_6_charge_point/Implementation.hpp>
+#include <generated/auth_token_validator/Implementation.hpp>
+
+// headers for required interface implementations
+#include <generated/powermeter/Interface.hpp>
+#include <generated/evse_manager/Interface.hpp>
+
+// ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
+// insert your custom include headers here
+#include <chrono>
+#include <mutex>
+#include <ocpp1_6/charge_point.hpp>
+#include <ocpp1_6/schemas.hpp>
+#include <ocpp1_6/types.hpp>
+struct Session {
+    double energy_Wh_import;
+    ocpp1_6::DateTime timestamp;
+};
+// ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
+
+namespace module {
+
+struct Conf {
+    std::string ChargePointConfigPath;
+    std::string DatabasePath;
+    std::string SchemasPath;
+};
+
+class OCPP : public Everest::ModuleBase {
+public:
+    OCPP() = delete;
+    OCPP(
+        Everest::MqttProvider& mqtt_provider,
+        std::unique_ptr<ocpp_1_6_charge_pointImplBase> p_main,
+        std::unique_ptr<auth_token_validatorImplBase> p_auth_validator,
+        std::unique_ptr<powermeterIntf> r_powermeter,
+        std::unique_ptr<evse_managerIntf> r_evse_manager,
+        Conf& config
+    ) :
+        mqtt(mqtt_provider),
+        p_main(std::move(p_main)),
+        p_auth_validator(std::move(p_auth_validator)),
+        r_powermeter(std::move(r_powermeter)),
+        r_evse_manager(std::move(r_evse_manager)),
+        config(config)
+    {};
+
+    const Conf& config;
+    Everest::MqttProvider& mqtt;
+    const std::unique_ptr<ocpp_1_6_charge_pointImplBase> p_main;
+    const std::unique_ptr<auth_token_validatorImplBase> p_auth_validator;
+    const std::unique_ptr<powermeterIntf> r_powermeter;
+    const std::unique_ptr<evse_managerIntf> r_evse_manager;
+
+    // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
+    // insert your public definitions here
+    ocpp1_6::ChargePoint* charge_point;
+    int32_t connector;
+    // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
+
+protected:
+    // ev@4714b2ab-a24f-4b95-ab81-36439e1478de:v1
+    // insert your protected definitions here
+    // ev@4714b2ab-a24f-4b95-ab81-36439e1478de:v1
+
+private:
+    friend class LdEverest;
+    void init();
+    void ready();
+
+    // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
+    // insert your private definitions here
+    void start_session();
+    // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
+
+};
+
+// ev@087e516b-124c-48df-94fb-109508c7cda9:v1
+// insert other definitions here
+// ev@087e516b-124c-48df-94fb-109508c7cda9:v1
+
+} // namespace module
+
+#endif // OCPP_HPP
