@@ -4,24 +4,23 @@ This is the main part of EVerest containing the actual charge controller logic i
 
 All documentation and the issue tracking can be found in our main repository here: https://github.com/EVerest/everest
 
-## Development tools:
- [Everest Dependency Manager](https://github.com/EVerest/everest-dev-environment/blob/main/dependency_manager/README.md)
-
 ### Prerequisites:
 
 #### Ubuntu
 ```bash
 sudo apt update
-sudo apt install -y git rsync wget cmake doxygen graphwiz build-essential clang-tidy cppcheck maven openjdk-11-jdk npm docker docker-compose libboost-aal-dev jstyleson jsonschema 
+sudo apt install -y git rsync wget cmake doxygen graphwiz build-essential clang-tidy cppcheck maven openjdk-11-jdk npm docker docker-compose libboost-aal-dev jstyleson jsonschema nodejs libssl-dev libsqlite3-dev
 ```
-TODO: nodejs install with correct path to node-api.h to match CMAKEFILE.txt search paths.
 
 #### OpenSuse
 ```bash
 zypper update && zypper install -y sudo shadow
 zypper install -y --type pattern devel_basis
-zypper install -y git rsync wget cmake doxygen graphviz clang-tools cppcheck boost-devel libboost_filesystem-devel libboost_log-devel libboost_program_options-devel libboost_system-devel libboost_thread-devel maven java-11-openjdk java-11-openjdk-devel nodejs nodejs-devel npm python3-pip gcc-c++
+zypper install -y git rsync wget cmake doxygen graphviz clang-tools cppcheck boost-devel libboost_filesystem-devel libboost_log-devel libboost_program_options-devel libboost_system-devel libboost_thread-devel maven java-11-openjdk java-11-openjdk-devel nodejs nodejs-devel npm python3-pip gcc-c++ libopenssl-devel sqlite3-devel
 ```
+
+## Development tools:
+ [Everest Dependency Manager](https://github.com/EVerest/everest-dev-environment/blob/main/dependency_manager/README.md)
 
 ### Build & Install:
 
