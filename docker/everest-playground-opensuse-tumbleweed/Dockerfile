@@ -36,7 +36,9 @@ RUN zypper install -y \
     nodejs-devel \
     npm \
     python3-pip \
-    gcc-c++
+    gcc-c++ \
+    sqlite3-devel \
+    libopenssl-devel
 
 # create workdir and set access rights
 WORKDIR /workspace/everest-cpp

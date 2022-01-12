@@ -27,7 +27,10 @@ RUN apt-get install -y \
     maven \
     openjdk-11-jdk \
     nodejs \
-    npm
+    npm \
+    libsqlite3-dev \
+    python3-pip \
+    libssl-dev
 
 # create workdir and set access rights
 WORKDIR /workspace/everest-cpp
