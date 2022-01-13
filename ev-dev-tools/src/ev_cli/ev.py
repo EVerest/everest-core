@@ -43,7 +43,7 @@ validators = {}
 
 
 def setup_jinja_env():
-    env.globals['timestamp'] = datetime.utcnow
+    env.globals['timestamp'] = datetime.utcnow()
     # FIXME (aw): which repo to use? everest or everest-framework?
     env.globals['git'] = helpers.gather_git_info(everest_dir)
     env.filters['snake_case'] = helpers.snake_case

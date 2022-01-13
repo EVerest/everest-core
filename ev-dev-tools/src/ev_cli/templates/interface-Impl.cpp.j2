@@ -1,4 +1,6 @@
-{% from "helper_macros.j2" import handle_cmd_signature %}
+{% from "helper_macros.j2" import handle_cmd_signature, print_spdx_line %}
+{{ print_spdx_line('Apache-2.0', "%s - %s" % (timestamp.year, timestamp.year)) }}
+
 #include "{{ info.class_name}}.hpp"
 
 namespace module {

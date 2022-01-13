@@ -1,8 +1,9 @@
-{% from "helper_macros.j2" import call_cmd_signature, var_to_any, var_to_cpp, print_template_info, cpp_type %}
+{% from "helper_macros.j2" import call_cmd_signature, var_to_any, var_to_cpp, print_template_info, cpp_type, print_spdx_line %}
+{{ print_spdx_line('Apache-2.0') }}
 #ifndef {{ info.hpp_guard }}
 #define {{ info.hpp_guard }}
 
-{{ print_template_info('0.0.1') }}
+{{ print_template_info('0.0.2') }}
 
 #include <framework/ModuleAdapter.hpp>
 
