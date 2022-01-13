@@ -183,7 +183,7 @@ private:
     ThreadType loop_thread;
 
     PushPullLockType internal_change;
-    InternalState internal_state;
+    InternalState internal_state{InternalState::Idle};
 };
 
 } // namespace async

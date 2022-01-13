@@ -113,7 +113,7 @@ private:
     InternalState state{InternalState::NoCallback};
 
     utils::StaticThisFunctor<void(FSMContext<EventBaseType>&)> cur_callback{};
-    bool single_shot;
+    bool single_shot{true};
 
     RepeatableType interval;
 
