@@ -7,13 +7,36 @@ target_link_libraries(everestjs
         PRIVATE everest everest::log
 )
 
+find_program(
+        NODE
+        node
+        REQUIRED
+)
+
+execute_process(COMMAND ${NODE} --version
+        OUTPUT_VARIABLE NODE_VERSION
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+# We need Node-API version 6 or higher
+set(NODE_API_VERSION_REQUIRED 6)
+include(NodeApiVersion)
+require_node_api_version("${NODE_VERSION}" "${NODE_API_VERSION_REQUIRED}")
+
+find_program(
+        NPM
+        npm
+        REQUIRED
+)
+
 # Include Node-API wrappers
 # FIXME (aw): we want this as an requirement, not implicitely install it by ourself
-execute_process(COMMAND npm install node-addon-api
+execute_process(COMMAND ${NPM} install node-addon-api
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )
 
-execute_process(COMMAND node -p "require('node-addon-api').include"
+
+execute_process(COMMAND ${NODE} -p "require('node-addon-api').include"
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         OUTPUT_VARIABLE NODE_ADDON_API_DIR
 )
@@ -23,8 +46,7 @@ find_path(NODEJS_INCLUDE_DIR "node_api.h"
         PATH_SUFFIXES
         "node"
         "node16"
-        PATHS
-        "/usr/include/nodejs/src"
+        "nodejs/src"
         REQUIRED
 )
 
@@ -39,7 +61,7 @@ target_include_directories(everestjs
 target_compile_features(everestjs PRIVATE cxx_std_14)
 
 # define NAPI_VERSION
-add_definitions(-DNAPI_VERSION=6)
+add_definitions(-DNAPI_VERSION=${NODE_API_VERSION_REQUIRED})
 add_definitions(-DNAPI_CPP_EXCEPTIONS)
 
 install(TARGETS everestjs
