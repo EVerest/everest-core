@@ -4,6 +4,8 @@
 
 #include <chrono>
 
+using namespace everest;
+
 namespace module {
 namespace main {
 
@@ -42,29 +44,29 @@ void powermeterImpl::run_meter_loop() {
 }
 
 void powermeterImpl::init_modbus_client() {
-    this->tcp_conn = std::make_unique<everest::connection::TCPConnection>(config.modbus_ip_address, config.modbus_port);
-    this->modbus_client = std::make_unique<everest::modbus::ModbusTCPClient>(*this->tcp_conn);
+    this->tcp_conn = std::make_unique<connection::TCPConnection>(config.modbus_ip_address, config.modbus_port);
+    this->modbus_client = std::make_unique<modbus::ModbusTCPClient>(*this->tcp_conn);
 }
 
 uint32_t powermeterImpl::read_power_in() {
     std::vector<uint8_t> bytevector = this->modbus_client->read_holding_register(config.power_unit_id, config.power_in_register, config.power_in_length);
-    everest::modbus::utils::print_message_hex(bytevector);
-    return everest::sunspec::conversion::bytevector_to_uint32(bytevector);
+    modbus::utils::print_message_hex(bytevector);
+    return sunspec::conversion::bytevector_to_uint32(bytevector);
 }
 
 uint32_t powermeterImpl::read_power_out() {
     std::vector<uint8_t> bytevector = this->modbus_client->read_holding_register(config.power_unit_id, config.power_out_register, config.power_out_length);
-    return everest::sunspec::conversion::bytevector_to_uint32(bytevector);
+    return sunspec::conversion::bytevector_to_uint32(bytevector);
 }
 
 uint32_t powermeterImpl::read_energy_in() {
     std::vector<uint8_t> bytevector = this->modbus_client->read_holding_register(config.energy_unit_id, config.energy_in_register, config.energy_in_length);
-    return everest::sunspec::conversion::bytevector_to_uint32(bytevector);
+    return sunspec::conversion::bytevector_to_uint32(bytevector);
 }
 
 uint32_t powermeterImpl::read_energy_out() {
     std::vector<uint8_t> bytevector = this->modbus_client->read_holding_register(config.energy_unit_id, config.energy_out_register, config.energy_out_length);
-    return everest::sunspec::conversion::bytevector_to_uint32(bytevector);
+    return sunspec::conversion::bytevector_to_uint32(bytevector);
 }
 
 std::string powermeterImpl::handle_get_signed_meter_value(std::string& auth_token) {
