@@ -134,7 +134,7 @@ function on_set_s(mod, val) {
 }
 
 function on_start(mod, val) {
-    if (true == running) {
+    if (true === running) {
         evlog.info("PID-Controller is already running..");
         return;
     }
