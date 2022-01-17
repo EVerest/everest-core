@@ -25,6 +25,18 @@ let power_msg = {
     power_log: 0
 };
 
+function enable_energy_manager(mod) {
+    running = true;
+    mod.mqtt.publish("/external/emgr/emgr_running", running);
+    mod.provides.main.publish.emgr_running(running);
+}
+
+function disable_energy_manager(mod) {
+    running = false;
+    mod.mqtt.publish("/external/emgr/emgr_running", running);
+    mod.provides.main.publish.emgr_running(running);
+}
+
 function on_session_events(mod, val) {
     //"enum": ["Enabled", "Disabled", "SessionStarted", "ChargingStarted", "ChargingPausedEV", "ChargingPausedEVSE", "ChargingResumed", "ChargingFinished", "SessionFinished", "Error", "PermanentFault"]
     // Decide between charging / not charging
@@ -33,14 +45,14 @@ function on_session_events(mod, val) {
 }
 
 function on_grid_powermeter(mod, pm) {
+    mod.mqtt.publish("/external/emgr/emgr_running", running);
 
-    if (!running) {
+    if (false === running) {
         return;
     }
     
     const input_interval = 1;
     let error = pm.power_W.total - pid_controller.setpoint;
-
 
     // proportional term
     pid_controller.p_term = error;
@@ -122,21 +134,21 @@ function on_set_s(mod, val) {
 }
 
 function on_start(mod, val) {
-    if (running) {
+    if (true == running) {
         evlog.info("PID-Controller is already running..");
         return;
     }
     reset_pid_controller();
-    running = true;
+    enable_energy_manager(mod);
     evlog.debug("PID-Controller is starting..");
 }
 
 function on_stop(mod, val) {
-    if (!running) {
+    if (false === running) {
         evlog.info("PID-Controller is not running..");
         return;
     }
-    running = false;
+    disable_energy_manager(mod);
     charging_power = 0.0;
     set_charging_power(mod);
     evlog.debug("PID-Controller is stopping..");
@@ -147,7 +159,7 @@ function on_reset(mod, val) {
 }
 
 async function set_charging_power(mod) {
-    if (!running) {
+    if (false === running) {
         return;
     }
     if (charging_power > 0) {

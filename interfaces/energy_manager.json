@@ -4,6 +4,10 @@
         "logging":{
             "description": "Various data logging",
             "type": "object"
+        },
+        "emgr_running": {
+            "description": "(read) Status of the module EnergyManager: true -> running; false -> deactivated",
+            "type": "boolean"
         }
     }
 }
