@@ -45,7 +45,7 @@ void board_support_ACImpl::init() {
     // FIXME
     // Everything used here should be moved out of debug update in protobuf
     mod->serial.signalDebugUpdate.connect([this](DebugUpdate d) {
-         publish_nr_of_phases_available(d.use_three_phases); 
+         publish_nr_of_phases_available((d.use_three_phases?3:1)); 
     });
 }
 
