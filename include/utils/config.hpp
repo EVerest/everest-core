@@ -22,9 +22,9 @@ namespace fs = boost::filesystem;
 /// \brief A structure that contains all available schemas
 ///
 struct schemas {
-    json config;     ///< The config schema
-    json manifest;   ///< The manifest scheme
-    json interface;  ///< The interface schema
+    json config;    ///< The config schema
+    json manifest;  ///< The manifest scheme
+    json interface; ///< The interface schema
 };
 
 ///
@@ -78,7 +78,8 @@ public:
     ///
     /// \brief creates a new Config object, looking for the config.json and schemes folder relative to the provided \p
     /// main_dir
-    explicit Config(std::string schemas_dir, std::string config_file, std::string modules_dir, std::string interfaces_dir);
+    explicit Config(std::string schemas_dir, std::string config_file, std::string modules_dir,
+                    std::string interfaces_dir);
 
     ///
     /// \brief checks if the given \p module_id provides the requirement given in \p requirement_id

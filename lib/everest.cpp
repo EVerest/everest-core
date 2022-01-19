@@ -181,8 +181,21 @@ json Everest::call_cmd(const std::string& requirement_id, const std::string& cmd
     if (this->validate_data_with_schema) {
         json_validator validator(Config::loader, Config::format_checker);
         for (auto const& arg_name : arg_names) {
-            validator.set_root_schema(cmd_definition["arguments"][arg_name]);
-            validator.validate(json_args[arg_name]);
+            try {
+                validator.set_root_schema(cmd_definition["arguments"][arg_name]);
+                validator.validate(json_args[arg_name]);
+            } catch (const std::exception& e) {
+                std::ostringstream oss;
+                oss << "Call to "
+                    << this->config.printable_identifier(connection["module_id"], connection["implementation_id"])
+                    << "->" << cmd_name << "(";
+                for (auto const& key : arg_names) {
+                    oss << key << ",";
+                }
+                oss << "): Argument '" << arg_name << "' with value '" << json_args[arg_name]
+                    << "' could not be validated with schema: " << e.what();
+                EVTHROW(EverestApiError(oss.str()));
+            }
         }
     }
 
@@ -313,8 +326,16 @@ void Everest::publish_var(const std::string& impl_id, const std::string& var_nam
         // validate var contents before publishing
         auto var_definition = impl_intf["vars"][var_name];
         json_validator validator(Config::loader, Config::format_checker);
-        validator.set_root_schema(var_definition);
-        validator.validate(json_value);
+        try {
+            validator.set_root_schema(var_definition);
+            validator.validate(json_value);
+        } catch (const std::exception& e) {
+            std::ostringstream oss;
+            oss << "Publish var of " << this->config.printable_identifier(this->module_id, impl_id)
+                << " with variable name '" << var_name << "' with value '" << json_value
+                << "' could not be validated with schema: " << e.what();
+            EVTHROW(EverestApiError(oss.str()));
+        }
     }
 
     std::ostringstream topic;
