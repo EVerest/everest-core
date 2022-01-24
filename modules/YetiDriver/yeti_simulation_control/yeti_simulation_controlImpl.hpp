@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 #ifndef YETI_SIMULATION_CONTROL_YETI_SIMULATION_CONTROL_IMPL_HPP
 #define YETI_SIMULATION_CONTROL_YETI_SIMULATION_CONTROL_IMPL_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 0.0.1
+// template version 0.0.2
 //
 
 #include <generated/yeti_simulation_control/Implementation.hpp>
@@ -19,14 +19,17 @@
 namespace module {
 namespace yeti_simulation_control {
 
-struct Conf {};
+struct Conf {
+};
 
 class yeti_simulation_controlImpl : public yeti_simulation_controlImplBase {
 public:
     yeti_simulation_controlImpl() = delete;
-    yeti_simulation_controlImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<YetiDriver>& mod,
-                                Conf& config) :
-        yeti_simulation_controlImplBase(ev, "yeti_simulation_control"), mod(mod), config(config){};
+    yeti_simulation_controlImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<YetiDriver> &mod, Conf& config) :
+        yeti_simulation_controlImplBase(ev, "yeti_simulation_control"),
+        mod(mod),
+        config(config)
+    {};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here

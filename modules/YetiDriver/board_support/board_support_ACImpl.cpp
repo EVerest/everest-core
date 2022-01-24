@@ -45,8 +45,19 @@ void board_support_ACImpl::init() {
     // FIXME
     // Everything used here should be moved out of debug update in protobuf
     mod->serial.signalDebugUpdate.connect([this](DebugUpdate d) {
-         publish_nr_of_phases_available((d.use_three_phases?3:1)); 
-    });
+        publish_nr_of_phases_available((d.use_three_phases?3:1)); 
+
+        json telemetry;
+        telemetry["temperature"] = d.cpu_temperature;
+        telemetry["fan_rpm"] = 0.;
+        telemetry["supply_voltage_12V"] = d.supply_voltage_12V;
+        telemetry["supply_voltage_minus_12V"] = d.supply_voltage_N12V;
+        telemetry["rcd_current"] = d.rcd_current;
+        telemetry["relais_on"] = d.relais_on;
+
+        publish_telemetry(telemetry);
+   });
+
 }
 
 void board_support_ACImpl::ready() {
@@ -81,8 +92,8 @@ void board_support_ACImpl::handle_allow_power_on(bool& value){
     mod->serial.allowPowerOn(value);
 };
 
-void board_support_ACImpl::handle_force_unlock(){
-    mod->serial.forceUnlock();
+bool board_support_ACImpl::handle_force_unlock(){
+    return mod->serial.forceUnlock();
 };
 
 void board_support_ACImpl::handle_switch_three_phases_while_charging(bool& value){

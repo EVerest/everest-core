@@ -40,7 +40,7 @@ class evSerial {
 
     void setPWM(uint32_t mode, float dc);
     void allowPowerOn(bool p);
-    void forceUnlock();
+    bool forceUnlock();
 
     void enableSimulation(bool s);
     void setSimulationData(SimulationData s);

@@ -682,6 +682,10 @@ float Charger::getMaxCurrent() {
     return maxCurrent;
 }
 
+bool Charger::forceUnlock() {
+    return r_bsp->call_force_unlock();
+}
+
 void Charger::setCurrentDrawnByVehicle(float l1, float l2, float l3) {
     std::lock_guard<std::recursive_mutex> lock(configMutex);
     currentDrawnByVehicle[0] = l1;

@@ -30,6 +30,10 @@
 		"evse_energy_control": {
 			"interface": "evse_manager_energy_control",
 			"description": "Singelton interface: implements energy control interface for energy manager"
+		},
+		"powermeter": {
+			"interface": "powermeter",
+			"description": "Power meter that is used for this EVSE to charge the car"
 		}
 	},
 	"requires": {

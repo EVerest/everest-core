@@ -58,7 +58,11 @@
             }
         },
         "force_unlock": {
-            "description": "Force unlock motor lock"
+            "description": "Force unlock motor lock",
+            "result": {
+                "description": "Returns true if unlocking sequence was successfully executed",
+                "type": "boolean"
+            }
         },
         "switch_three_phases_while_charging": {
             "description": "Special command to force switching between one and three phases while charging is active. HW must go through some special sequence to ensure safe operation.",
@@ -81,6 +85,37 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 3
+        },
+        "telemetry": {
+            "description": "Other telemetry",
+            "type": "object",
+            "properties": {
+                "temperature": {
+                    "description": "Current temperature of the EVSE in degree celsius",
+                    "type": "number"
+                },
+                "fan_rpm": {
+                    "description": "RPM of the fan. 0 if off or no fan available.",
+                    "type": "number"
+                },
+                "supply_voltage_12V": {
+                    "description": "Internal 12V supply voltage",
+                    "type": "number"
+                },
+                "supply_voltage_minus_12V": {
+                    "description": "Internal -12V supply voltage",
+                    "type": "number"
+                },
+                "rcd_current": {
+                    "description": "Residual current in mA",
+                    "type": "number"
+                },
+                "relais_on": {
+                    "description": "true if power to the car is currently on, false if off",
+                    "type": "boolean"
+                }
+            },
+            "additionalProperties": false
         }
     }
 }

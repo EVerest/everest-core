@@ -63,6 +63,10 @@ void evse_managerImpl::ready() {
         }
     });
 
+    mod->r_bsp->subscribe_telemetry([this](json telemetry) {
+        publish_telemetry(telemetry);
+    });
+
     mod->charger->signalEvent.connect([this](const Charger::EvseEvent& e) {
         json se;
 
@@ -145,6 +149,10 @@ bool evse_managerImpl::handle_cancel_charging(){
 
 bool evse_managerImpl::handle_accept_new_session(){
     return mod->charger->restart();
+};
+
+bool evse_managerImpl::handle_force_unlock(){
+    return mod->charger->forceUnlock();
 };
 
 bool evse_managerImpl::handle_reserve_now(std::string& auth_token, double& timeout){

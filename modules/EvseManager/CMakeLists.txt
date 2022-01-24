@@ -32,6 +32,7 @@ target_sources(${MOD_MODULE_NAME}
         "ld-ev.cpp"
         "evse/evse_managerImpl.cpp"
         "evse_energy_control/evse_manager_energy_controlImpl.cpp"
+        "powermeter/powermeterImpl.cpp"
         ${ADDITIONAL_MODULE_SOURCES}
 )
 
