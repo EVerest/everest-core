@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 #ifndef BOARD_SUPPORT_BOARD_SUPPORT_AC_IMPL_HPP
 #define BOARD_SUPPORT_BOARD_SUPPORT_AC_IMPL_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 0.0.1
+// template version 0.0.2
 //
 
 #include <generated/board_support_AC/Implementation.hpp>
@@ -43,7 +43,7 @@ protected:
     virtual void handle_pwm_off() override;
     virtual void handle_pwm_F() override;
     virtual void handle_allow_power_on(bool& value) override;
-    virtual void handle_force_unlock() override;
+    virtual bool handle_force_unlock() override;
     virtual void handle_switch_three_phases_while_charging(bool& value) override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1

@@ -1,32 +1,32 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifndef DEBUG_KEEPALIVE_DEBUG_JSON_IMPL_HPP
-#define DEBUG_KEEPALIVE_DEBUG_JSON_IMPL_HPP
+#ifndef POWERMETER_POWERMETER_IMPL_HPP
+#define POWERMETER_POWERMETER_IMPL_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
 // template version 0.0.2
 //
 
-#include <generated/debug_json/Implementation.hpp>
+#include <generated/powermeter/Implementation.hpp>
 
-#include "../YetiDriver.hpp"
+#include "../EvseManager.hpp"
 
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 // insert your custom include headers here
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 
 namespace module {
-namespace debug_keepalive {
+namespace powermeter {
 
 struct Conf {
 };
 
-class debug_jsonImpl : public debug_jsonImplBase {
+class powermeterImpl : public powermeterImplBase {
 public:
-    debug_jsonImpl() = delete;
-    debug_jsonImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<YetiDriver> &mod, Conf& config) :
-        debug_jsonImplBase(ev, "debug_keepalive"),
+    powermeterImpl() = delete;
+    powermeterImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<EvseManager> &mod, Conf& config) :
+        powermeterImplBase(ev, "powermeter"),
         mod(mod),
         config(config)
     {};
@@ -36,14 +36,15 @@ public:
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
 
 protected:
-    // no commands defined for this interface
+    // command handler functions (virtual)
+    virtual std::string handle_get_signed_meter_value(std::string& auth_token) override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
     // insert your protected definitions here
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
 
 private:
-    const Everest::PtrContainer<YetiDriver>& mod;
+    const Everest::PtrContainer<EvseManager>& mod;
     const Conf& config;
 
     virtual void init() override;
@@ -58,7 +59,7 @@ private:
 // insert other definitions here
 // ev@3d7da0ad-02c2-493d-9920-0bbbd56b9876:v1
 
-} // namespace debug_keepalive
+} // namespace powermeter
 } // namespace module
 
-#endif // DEBUG_KEEPALIVE_DEBUG_JSON_IMPL_HPP
+#endif // POWERMETER_POWERMETER_IMPL_HPP

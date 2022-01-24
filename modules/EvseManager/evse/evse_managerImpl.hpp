@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 #ifndef EVSE_EVSE_MANAGER_IMPL_HPP
 #define EVSE_EVSE_MANAGER_IMPL_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 0.0.1
+// template version 0.0.2
 //
 
 #include <generated/evse_manager/Implementation.hpp>
@@ -46,6 +46,7 @@ protected:
     virtual bool handle_accept_new_session() override;
     virtual bool handle_reserve_now(std::string& auth_token, double& timeout) override;
     virtual bool handle_cancel_reservation() override;
+    virtual bool handle_force_unlock() override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
     // insert your protected definitions here

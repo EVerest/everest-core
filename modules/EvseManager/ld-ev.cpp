@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
-
+// Copyright Pionix GmbH and Contributors to EVerest
 //
 // AUTO GENERATED - DO NOT EDIT!
-// template version 0.0.1
+// template version 0.0.2
 //
 
 #include "ld-ev.hpp"
@@ -11,6 +10,7 @@
 #include "EvseManager.hpp"
 #include "evse/evse_managerImpl.hpp"
 #include "evse_energy_control/evse_manager_energy_controlImpl.hpp"
+#include "powermeter/powermeterImpl.hpp"
 
 #include <boost/dll/alias.hpp>
 
@@ -22,6 +22,7 @@ static Everest::PtrContainer<EvseManager> mod_ptr {};
 // per module configs
 static evse::Conf evse_config;
 static evse_energy_control::Conf evse_energy_control_config;
+static powermeter::Conf powermeter_config;
 static Conf module_conf;
 
 void LdEverest::init(ModuleConfigs module_configs) {
@@ -31,6 +32,8 @@ void LdEverest::init(ModuleConfigs module_configs) {
     auto evse_config_input = std::move(module_configs["evse"]);
 
     auto evse_energy_control_config_input = std::move(module_configs["evse_energy_control"]);
+
+    auto powermeter_config_input = std::move(module_configs["powermeter"]);
 
 
     module_conf.three_phases = boost::get<bool>(module_configs["!module"]["three_phases"]);
@@ -82,12 +85,15 @@ std::vector<Everest::cmd> everest_register() {
     auto p_evse_energy_control = std::make_unique<evse_energy_control::evse_manager_energy_controlImpl>(&adapter, mod_ptr, evse_energy_control_config);
     adapter.gather_cmds(*p_evse_energy_control);
 
+    auto p_powermeter = std::make_unique<powermeter::powermeterImpl>(&adapter, mod_ptr, powermeter_config);
+    adapter.gather_cmds(*p_powermeter);
+
     auto r_bsp = std::make_unique<board_support_ACIntf>(&adapter, "bsp");
     auto r_powermeter = std::make_unique<powermeterIntf>(&adapter, "powermeter");
 
     static Everest::MqttProvider mqtt_provider(adapter);
 
-    static EvseManager module(mqtt_provider, std::move(p_evse), std::move(p_evse_energy_control), std::move(r_bsp), std::move(r_powermeter), module_conf);
+    static EvseManager module(mqtt_provider, std::move(p_evse), std::move(p_evse_energy_control), std::move(p_powermeter), std::move(r_bsp), std::move(r_powermeter), module_conf);
 
     mod_ptr.set(&module);
 

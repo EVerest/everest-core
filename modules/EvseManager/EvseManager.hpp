@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 #ifndef EVSE_MANAGER_HPP
 #define EVSE_MANAGER_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 0.0.1
+// template version 0.0.2
 //
 
 #include "ld-ev.hpp"
@@ -13,6 +13,7 @@
 // headers for provided interface implementations
 #include <generated/evse_manager/Implementation.hpp>
 #include <generated/evse_manager_energy_control/Implementation.hpp>
+#include <generated/powermeter/Implementation.hpp>
 
 // headers for required interface implementations
 #include <generated/board_support_AC/Interface.hpp>
@@ -38,6 +39,7 @@ public:
         Everest::MqttProvider& mqtt_provider,
         std::unique_ptr<evse_managerImplBase> p_evse,
         std::unique_ptr<evse_manager_energy_controlImplBase> p_evse_energy_control,
+        std::unique_ptr<powermeterImplBase> p_powermeter,
         std::unique_ptr<board_support_ACIntf> r_bsp,
         std::unique_ptr<powermeterIntf> r_powermeter,
         Conf& config
@@ -45,6 +47,7 @@ public:
         mqtt(mqtt_provider),
         p_evse(std::move(p_evse)),
         p_evse_energy_control(std::move(p_evse_energy_control)),
+        p_powermeter(std::move(p_powermeter)),
         r_bsp(std::move(r_bsp)),
         r_powermeter(std::move(r_powermeter)),
         config(config)
@@ -54,6 +57,7 @@ public:
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<evse_managerImplBase> p_evse;
     const std::unique_ptr<evse_manager_energy_controlImplBase> p_evse_energy_control;
+    const std::unique_ptr<powermeterImplBase> p_powermeter;
     const std::unique_ptr<board_support_ACIntf> r_bsp;
     const std::unique_ptr<powermeterIntf> r_powermeter;
 

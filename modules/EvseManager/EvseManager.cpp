@@ -5,7 +5,9 @@
 namespace module {
 
 void EvseManager::init() {
-    invoke_init(*p_evse);       
+    invoke_init(*p_evse);
+    invoke_init(*p_evse_energy_control);
+    invoke_init(*p_powermeter);     
 }
 
 void EvseManager::ready() {
@@ -19,11 +21,16 @@ void EvseManager::ready() {
     });
 
     r_powermeter->subscribe_powermeter([this](json p) {
+        // Inform charger about current charging current. This is used for slow OC detection.
         charger->setCurrentDrawnByVehicle(p["current_A"]["L1"], p["current_A"]["L2"], p["current_A"]["L3"]);
+
+        // Store local cache
         latest_powermeter_data = p;
     });
 
     invoke_ready(*p_evse);
+    invoke_ready(*p_evse_energy_control);
+    invoke_ready(*p_powermeter);  
     charger->setup(config.three_phases, config.has_ventilation, config.country_code, config.rcd_enabled);
     charger->setMaxCurrent(16.0); // FIXME: make configurable
     charger->run();

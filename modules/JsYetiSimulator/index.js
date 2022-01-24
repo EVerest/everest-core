@@ -94,6 +94,7 @@ function simulation_loop(mod) {
   switch (mod.pubCnt) {
     case 1:
       publish_powermeter(mod);
+      publish_telemetry(mod);
     break;
     case 2:
       publish_yeti_extras(mod);
@@ -587,6 +588,17 @@ function publish_keepalive(mod) {
     ));
 }
 
+
+function publish_telemetry(mod) {
+  mod.provides.board_support.publish.telemetry({
+    "temperature": mod.powermeter.tempL1,
+    "fan_rpm": 1500.0,
+    "supply_voltage_12V": 12.01,
+    "supply_voltage_minus_12V": -11.8,
+    "rcd_current": mod.rcd_current,
+    "relais_on": mod.relais_on
+  });
+}
 
 function publish_yeti_extras(mod) {
   mod.provides.yeti_extras.publish.time_stamp(Math.round(new Date().getTime()/1000));

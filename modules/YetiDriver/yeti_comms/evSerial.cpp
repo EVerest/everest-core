@@ -377,10 +377,11 @@ void evSerial::allowPowerOn(bool p) {
     linkWrite(&msg_out);
 }
 
-void evSerial::forceUnlock() {
+bool evSerial::forceUnlock() {
     HiToLo msg_out = HiToLo_init_default;
     msg_out.which_payload = HiToLo_force_unlock_tag;
     linkWrite(&msg_out);
+    return true; // FIXME: actuall return success value from uC
 }
 
 void evSerial::enable() {

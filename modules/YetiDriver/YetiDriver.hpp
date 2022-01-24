@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 #ifndef YETI_DRIVER_HPP
 #define YETI_DRIVER_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 0.0.1
+// template version 0.0.2
 //
 
 #include "ld-ev.hpp"
