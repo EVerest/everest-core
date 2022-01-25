@@ -415,7 +415,7 @@ def module_create(args):
             return
 
     for file_info in mod_files['core'] + mod_files['interfaces']:
-        if (args.clang_format_file):
+        if not args.disable_clang_format:
             helpers.clang_format(args.clang_format_file, file_info)
 
         helpers.write_content_to_file(file_info, create_strategy, args.diff)
@@ -441,7 +441,7 @@ def module_update(args):
             print(err)
             return
 
-    if (args.clang_format_file):
+    if not args.disable_clang_format:
         for file_info in mod_files['core'] + mod_files['interfaces']:
             helpers.clang_format(args.clang_format_file, file_info)
 
@@ -470,7 +470,7 @@ def interface_genhdr(args):
     for interface in interfaces:
         if_parts = generate_interface_headers(interface, all_interfaces)
 
-        if (args.clang_format_file):
+        if not args.disable_clang_format:
             helpers.clang_format(args.clang_format_file, if_parts['base'])
             helpers.clang_format(args.clang_format_file, if_parts['exports'])
 
@@ -495,8 +495,10 @@ def main():
                                help='everest directory containing the interface definitions (default: .)', default=str(Path.cwd()))
     common_parser.add_argument("--framework-dir", "-fd", type=str,
                                help='everest framework directory containing the schema definitions (default: ../everest-framework)', default=str(Path.cwd() / '../everest-framework'))
-    common_parser.add_argument("--clang-format-file", type=str, default="",
-                               help='If output should be formatted, set this to the path of the .clang-format file')
+    common_parser.add_argument("--clang-format-file", type=str, default=str(Path.cwd()),
+                               help='Path to the directory, containing the .clang-format file (default: .)')
+    common_parser.add_argument("--disable-clang-format", action='store_true', default=False,
+                               help="Set this flag to disable clang-format")
 
     subparsers = parser.add_subparsers(metavar='<command>', help='available commands', required=True)
     parser_mod = subparsers.add_parser('module', aliases=['mod'], help='module related actions')

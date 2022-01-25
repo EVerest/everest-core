@@ -113,7 +113,7 @@ cpp_type_map = {
 }
 
 
-def clang_format(config_file, file_info):
+def clang_format(config_file_path, file_info):
     # check if we handle cpp and hpp files
     if not file_info['path'].suffix in ('.hpp', '.cpp'):
         return
@@ -122,9 +122,13 @@ def clang_format(config_file, file_info):
     if clang_format_path is None:
         raise RuntimeError('Could not find clang-format executable - needed when passing clang-format config file')
 
-    config_file_path = Path(config_file).parent.resolve()
+    config_file_path = Path(config_file_path)
     if not config_file_path.is_dir():
-        raise RuntimeError(f'Could not determine parent directory of supplied clang-format config file: {config_file}')
+        raise RuntimeError(f'Supplied directory for the clang-format file ({config_file_path}) does not exist')
+
+    if not (config_file_path / '.clang-format').exists():
+        raise RuntimeError(f'Supplied directory for the clang-format file '
+                           f'({config_file_path}) does not contain a .clang-format file')
 
     content = file_info['content']
 
