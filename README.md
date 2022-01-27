@@ -9,8 +9,18 @@ All documentation and the issue tracking can be found in our main repository her
 #### Ubuntu 20.04
 ```bash
 sudo apt update
-sudo apt install -y git rsync wget cmake doxygen graphviz build-essential clang-tidy cppcheck maven openjdk-11-jdk npm docker docker-compose libboost-all-dev jstyleson jsonschema nodejs libssl-dev libsqlite3-dev
+sudo apt install -y git rsync wget cmake doxygen graphviz build-essential clang-tidy cppcheck maven openjdk-11-jdk npm docker docker-compose libboost-all-dev jstyleson jsonschema nodejs libssl-dev libsqlite3-dev clang-format clang-format-12
 ```
+In order to force the use of clang-format version 12 execute:
+```bash
+sudo update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-12 100
+```
+Verify clang-format version:
+```bash
+clang-format --version
+Ubuntu clang-format version 12.0.0-3ubuntu1~20.04.4
+```
+
 
 #### OpenSuse
 ```bash
