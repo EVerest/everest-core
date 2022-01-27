@@ -90,15 +90,9 @@ cd ~/checkout/everest-workspace/everest-utils/docker
 sudo docker-compose up -d
 ```
 
-#### SIL
+#### Software in the loop simulator
 
 ```bash
 cd ~/checkout/everest-workspace/everest-core/build
 .././run_sil.sh
-```
-
-#### HIL (WIP!)
-```bash
-cd ~/checkout/everest-workspace/everest-core/build
-.././run_hil.sh
 ```
