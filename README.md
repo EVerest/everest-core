@@ -6,6 +6,11 @@ All documentation and the issue tracking can be found in our main repository her
 
 ### Prerequisites:
 
+#### Hardware recommendations
+
+It is recommendet to have at least 4GB of RAM available to build EVerest.
+More CPU cores will optionally boost the build process, while requiring more RAM accordingly.
+
 #### Ubuntu 20.04
 ```bash
 sudo apt update
@@ -76,6 +81,15 @@ Build everest:
 cmake ..
 make install
 ```
+
+(Optional) In case you have more than one CPU core and more RAM availble you can use the following command to significantly speed up the build process:
+```bash
+cmake -j$(nproc) ..
+make -j$(nproc) install
+```
+*$(nproc)* puts out the core count of your machine, so it is using all available CPU cores!
+You can also specify any number of CPU cors you like.
+ 
 Done!
 
 <!--- WIP: [everest-cpp - Init Script](https://github.com/EVerest/everest-utils/tree/main/everest-cpp) -->
