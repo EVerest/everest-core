@@ -15,6 +15,7 @@ list(APPEND ADDITIONAL_MODULE_SOURCES
 )
 list(APPEND ADDITIONAL_MODULE_LIBS
     "Pal::Sigslot"
+    date
 )
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 
@@ -31,8 +32,7 @@ target_sources(${MOD_MODULE_NAME}
         ${MODULE_NAME}.cpp
         "${MODULE_LOADER_DIR}/ld-ev.cpp"
         "evse/evse_managerImpl.cpp"
-        "evse_energy_control/evse_manager_energy_controlImpl.cpp"
-        "powermeter/powermeterImpl.cpp"
+        "energy_grid/energyImpl.cpp"
         ${ADDITIONAL_MODULE_SOURCES}
 )
 

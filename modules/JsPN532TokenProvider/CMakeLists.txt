@@ -19,6 +19,7 @@ find_program(
     npm
     REQUIRED
 )
+
 add_custom_target(
     ${MODULE_NAME}_npm_dependencies ALL
     COMMENT "Installing dependencies of module ${MODULE_NAME} from package.json"

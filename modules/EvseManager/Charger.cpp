@@ -6,23 +6,22 @@
  *  Created on: 08.03.2021
  *      Author: cornelius
  *
- * TODO: 
+ * TODO:
  * - way too many calls to bsp (e.g. every 50msecs)!
  * - we need to publish state to external mqtt to make nodered happy
  * - overcurrent: works in uC. in low control mode uc can only verify hard limit, need to test soft limit here!
- * 
+ *
  */
-
 
 #include "Charger.hpp"
 
+#include <chrono>
 #include <math.h>
 #include <string.h>
-#include <chrono>
 
 namespace module {
 Charger::Charger(const std::unique_ptr<board_support_ACIntf>& r_bsp) : r_bsp(r_bsp) {
-    maxCurrent = 16.0;
+    maxCurrent = 6.0;
     authorized = false;
     r_bsp->call_enable(false);
 
@@ -37,8 +36,9 @@ Charger::Charger(const std::unique_ptr<board_support_ACIntf>& r_bsp) : r_bsp(r_b
     currentDrawnByVehicle[2] = 0.;
 }
 
-Charger::~Charger() { r_bsp->call_pwm_F(); }
-
+Charger::~Charger() {
+    r_bsp->call_pwm_F();
+}
 
 void Charger::mainThread() {
 
@@ -52,14 +52,17 @@ void Charger::mainThread() {
     signalState(currentState);
     signalError(errorState);
 
-
     while (true) {
 
-        if (mainThreadHandle.shouldExit()) break;
+        if (mainThreadHandle.shouldExit())
+            break;
 
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
         stateMutex.lock();
+
+        // update power limits
+        powerAvailable();
 
         // Run our own state machine update (i.e. run everything that needs
         // to be done on regular intervals independent from events)
@@ -70,11 +73,12 @@ void Charger::mainThread() {
 }
 
 void Charger::runStateMachine() {
-    bool new_in_state = lastState!=currentState;
+    bool new_in_state = lastState != currentState;
     lastState = currentState;
     if (new_in_state) {
         signalState(currentState);
-        if (currentState==EvseState::Error) signalError(errorState);
+        if (currentState == EvseState::Error)
+            signalError(errorState);
     }
 
     switch (currentState) {
@@ -106,13 +110,14 @@ void Charger::runStateMachine() {
         // Explicitly do not allow to be powered on. This is important
         // to make sure control_pilot does not switch on relais even if
         // we start PWM here
-        if (new_in_state) r_bsp->call_allow_power_on(false);
+        if (new_in_state)
+            r_bsp->call_allow_power_on(false);
 
         // retry on Low level etc until SLAC matched.
         ISO_IEC_Coordination();
 
         // we get Auth (maybe before SLAC matching or during matching)
-        if (getAuthorization()) {
+        if (getAuthorization() && powerAvailable()) {
             signalEvent(EvseEvent::ChargingStarted);
             currentState = EvseState::ChargingPausedEV;
         }
@@ -125,7 +130,12 @@ void Charger::runStateMachine() {
         else*/
 
         checkSoftOverCurrent();
-        
+
+        if (!powerAvailable()) {
+            currentState = EvseState::ChargingPausedEVSE;
+            break;
+        }
+
         if (new_in_state) {
             signalEvent(EvseEvent::ChargingResumed);
             r_bsp->call_allow_power_on(true);
@@ -143,6 +153,11 @@ void Charger::runStateMachine() {
         else*/
 
         checkSoftOverCurrent();
+
+        if (!powerAvailable()) {
+            currentState = EvseState::ChargingPausedEVSE;
+            break;
+        }
 
         if (new_in_state) {
             signalEvent(EvseEvent::ChargingPausedEV);
@@ -220,8 +235,8 @@ ControlPilotEvent Charger::string_to_control_pilot_event(std::string event) {
     } else if (event == "PermanentFault") {
         return ControlPilotEvent::PermanentFault;
     }
-    
-    return ControlPilotEvent::Invalid; 
+
+    return ControlPilotEvent::Invalid;
 }
 
 void Charger::processEvent(std::string event) {
@@ -315,14 +330,14 @@ void Charger::processCPEventsIndependent(ControlPilotEvent cp_event) {
 void Charger::update_pwm_max_every_5seconds(float dc) {
     if (dc != update_pwm_last_dc) {
         auto now = std::chrono::system_clock::now();
-        auto timeSinceLastUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(now-lastPwmUpdate).count();
-        if (timeSinceLastUpdate>=5000)
+        auto timeSinceLastUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastPwmUpdate).count();
+        if (timeSinceLastUpdate >= 5000)
             update_pwm_now(dc);
     }
 }
 
 void Charger::update_pwm_now(float dc) {
-    update_pwm_last_dc = dc; 
+    update_pwm_last_dc = dc;
     r_bsp->call_pwm_on(dc);
     lastPwmUpdate = std::chrono::system_clock::now();
 }
@@ -440,8 +455,6 @@ void Charger::run() {
 float Charger::ampereToDutyCycle(float ampere) {
     float dc = 0;
 
-
-
     // calculate max current
     if (ampere < 5.9) {
         // Invalid argument, switch to error
@@ -464,17 +477,36 @@ float Charger::ampereToDutyCycle(float ampere) {
     return dc;
 }
 
-bool Charger::setMaxCurrent(float c) {
-    if (c > 5.9 && c <= 80) {
+bool Charger::setMaxCurrent(float c, std::chrono::time_point<std::chrono::system_clock> validUntil) {
+    if (c >= 0.0 && c <= 80) {
         std::lock_guard<std::recursive_mutex> lock(configMutex);
         // FIXME: limit to cable limit (PP reading) if that is smaller!
-        maxCurrent = c;
-        signalMaxCurrent(c);
-        return true;
+        // is it still valid?
+        // FIXME this requires local clock to be UTC
+        if (validUntil > std::chrono::system_clock::now()) {
+            maxCurrent = c;
+            maxCurrentValidUntil = validUntil;
+            signalMaxCurrent(c);
+            return true;
+        }
     }
     return false;
 }
 
+bool Charger::setMaxCurrent(float c) {
+    if (c >= 0.0 && c <= 80) {
+        std::lock_guard<std::recursive_mutex> lock(configMutex);
+        // FIXME: limit to cable limit (PP reading) if that is smaller!
+        // is it still valid?
+        // FIXME this requires local clock to be UTC
+        if (maxCurrentValidUntil > std::chrono::system_clock::now()) {
+            maxCurrent = c;
+            signalMaxCurrent(c);
+            return true;
+        }
+    }
+    return false;
+}
 
 // pause if currently charging, else do nothing.
 bool Charger::pauseCharging() {
@@ -488,7 +520,7 @@ bool Charger::pauseCharging() {
 
 bool Charger::resumeCharging() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
-    if (!cancelled && currentState == EvseState::ChargingPausedEVSE) {
+    if (!cancelled && currentState == EvseState::ChargingPausedEVSE && powerAvailable()) {
         currentState = EvseState::Charging;
         return true;
     }
@@ -497,9 +529,8 @@ bool Charger::resumeCharging() {
 
 bool Charger::cancelCharging() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
-    if (currentState == EvseState::Charging 
-        || currentState == EvseState::ChargingPausedEVSE 
-        || currentState == EvseState::ChargingPausedEV) {
+    if (currentState == EvseState::Charging || currentState == EvseState::ChargingPausedEVSE ||
+        currentState == EvseState::ChargingPausedEV) {
         currentState = EvseState::ChargingPausedEVSE;
         cancelled = true;
         return true;
@@ -522,7 +553,7 @@ Charger::EvseState Charger::getCurrentState() {
     return currentState;
 }
 
-void Charger::Authorize(bool a, const char *userid) {
+void Charger::Authorize(bool a, const char* userid) {
     std::lock_guard<std::recursive_mutex> lock(configMutex);
     authorized = a;
     // FIXME: do sth useful with userid
@@ -537,7 +568,7 @@ if (a) {
 
 bool Charger::getAuthorization() {
     std::lock_guard<std::recursive_mutex> lock(configMutex);
-    //return authorized;
+    // return authorized;
     return true; // FIXME: do not always return true here...
 }
 
@@ -546,8 +577,7 @@ Charger::ErrorState Charger::getErrorState() {
     return errorState;
 }
 
-//bool Charger::isPowerOn() { return control_pilot.isPowerOn(); }
-
+// bool Charger::isPowerOn() { return control_pilot.isPowerOn(); }
 
 bool Charger::disable() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
@@ -578,31 +608,31 @@ bool Charger::restart() {
 std::string Charger::evseStateToString(EvseState s) {
     switch (s) {
     case EvseState::Disabled:
-        return("Disabled");
+        return ("Disabled");
         break;
     case EvseState::Idle:
-        return("Idle");
+        return ("Idle");
         break;
     case EvseState::WaitingForAuthentication:
-        return("WaitAuth");
+        return ("WaitAuth");
         break;
     case EvseState::Charging:
-        return("Charging");
+        return ("Charging");
         break;
     case EvseState::ChargingPausedEV:
-        return("Car Paused");
+        return ("Car Paused");
         break;
     case EvseState::ChargingPausedEVSE:
-        return("EVSE Paused");
+        return ("EVSE Paused");
         break;
     case EvseState::Finished:
-        return("Finished");
+        return ("Finished");
         break;
     case EvseState::Error:
-        return("Error");
+        return ("Error");
         break;
     case EvseState::Faulted:
-        return("Faulted");
+        return ("Faulted");
         break;
     }
     return "Invalid";
@@ -611,71 +641,68 @@ std::string Charger::evseStateToString(EvseState s) {
 std::string Charger::evseEventToString(EvseEvent e) {
     switch (e) {
     case EvseEvent::Enabled:
-        return("Enabled");
+        return ("Enabled");
         break;
     case EvseEvent::Disabled:
-        return("Disabled");
+        return ("Disabled");
         break;
     case EvseEvent::SessionStarted:
-        return("SessionStarted");
+        return ("SessionStarted");
         break;
     case EvseEvent::ChargingStarted:
-        return("ChargingStarted");
+        return ("ChargingStarted");
         break;
     case EvseEvent::ChargingPausedEV:
-        return("ChargingPausedEV");
+        return ("ChargingPausedEV");
         break;
     case EvseEvent::ChargingPausedEVSE:
-        return("ChargingPausedEVSE");
+        return ("ChargingPausedEVSE");
         break;
     case EvseEvent::ChargingResumed:
-        return("ChargingResumed");
+        return ("ChargingResumed");
         break;
     case EvseEvent::SessionFinished:
-        return("SessionFinished");
+        return ("SessionFinished");
         break;
     case EvseEvent::Error:
-        return("Error");
+        return ("Error");
         break;
     case EvseEvent::PermanentFault:
-        return("PermanentFault");
-        break;        
+        return ("PermanentFault");
+        break;
     }
     return "Invalid";
 }
-
 
 std::string Charger::errorStateToString(ErrorState s) {
     switch (s) {
     case ErrorState::Error_E:
-        return("Car");
+        return ("Car");
         break;
     case ErrorState::Error_OverCurrent:
-        return("OverCurrent");
+        return ("OverCurrent");
         break;
     case ErrorState::Error_DF:
-        return("CarDiodeFault");
+        return ("CarDiodeFault");
         break;
     case ErrorState::Error_Relais:
-        return("Relais");
+        return ("Relais");
         break;
     case ErrorState::Error_VentilationNotAvailable:
-        return("VentilationNotAvailable");
+        return ("VentilationNotAvailable");
         break;
     case ErrorState::Error_RCD:
-        return("RCD");
+        return ("RCD");
         break;
     }
     return "Invalid";
 }
-
 
 /*
 FIXME
 float Charger::getResidualCurrent() {
     return control_pilot.getResidualCurrent();
 }*/
-
 
 float Charger::getMaxCurrent() {
     std::lock_guard<std::recursive_mutex> lock(configMutex);
@@ -697,22 +724,33 @@ void Charger::checkSoftOverCurrent() {
     // Allow 10% tolerance
     float limit = getMaxCurrent() * 1.1;
 
-    if (currentDrawnByVehicle[0] > limit ||
-        currentDrawnByVehicle[1] > limit ||
-        currentDrawnByVehicle[2] > limit) {
+    if (currentDrawnByVehicle[0] > limit || currentDrawnByVehicle[1] > limit || currentDrawnByVehicle[2] > limit) {
         if (!overCurrent) {
             overCurrent = true;
             // timestamp when over current happend first
             lastOverCurrentEvent = std::chrono::system_clock::now();
         }
-    } else overCurrent = false;
+    } else
+        overCurrent = false;
 
     auto now = std::chrono::system_clock::now();
-    auto timeSinceOverCurrentStarted = std::chrono::duration_cast<std::chrono::milliseconds>(now-lastOverCurrentEvent).count();
-    if (overCurrent && timeSinceOverCurrentStarted>=softOverCurrentTimeout) {
+    auto timeSinceOverCurrentStarted =
+        std::chrono::duration_cast<std::chrono::milliseconds>(now - lastOverCurrentEvent).count();
+    if (overCurrent && timeSinceOverCurrentStarted >= softOverCurrentTimeout) {
         currentState = EvseState::Error;
         errorState = ErrorState::Error_OverCurrent;
     }
 }
 
+// returns whether power is actually available from EnergyManager
+// i.e. maxCurrent is in valid range
+bool Charger::powerAvailable() {
+    if (maxCurrentValidUntil < std::chrono::system_clock::now()) {
+        maxCurrent = 0.;
+        signalMaxCurrent(maxCurrent);
+    }
+
+    return (getMaxCurrent() > 5.9);
 }
+
+} // namespace module

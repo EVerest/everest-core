@@ -8,26 +8,22 @@ list(APPEND EVEREST_MODULES_LIST
     JsCarSimulator
     JsDummyTokenProvider
     JsDummyTokenValidator
-    JsEmgrLogger
-    JsEnergyManager
     JsForecastDotSolar
     JsPN532TokenProvider
-    JsPowerIn
     JsRiseV2G
     JsSimPowerMeter
     JsTibber
     JsYetiSimulator
     ModbusMeter
     OCPP
-    Power
-    PowerIn
     SLAC_openplcutils
-    Solar
     SunspecReader
     SunspecScanner
     Store
     YetiDriver
     EvseManager
+    EnergyNode
+    EnergyManager
 )
 
 set(EVEREST_MODULES "")

@@ -1,0 +1,40 @@
+{
+    "description": "This module is part of the Energy Tree and represents a simple current fuse.",
+    "config": {
+        "fuse_limit_A": {
+            "description": "Fuse limit in ampere for all phases",
+            "type": "number",
+            "minimum": 0.0
+        },
+        "phase_count": {
+            "description": "phase count limit. Omit if not limited in this fuse.",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 3
+        }
+    },
+    "provides": {
+        "energy_grid": {
+            "description": "This is the chain interface to build the energy supply tree",
+            "interface": "energy"
+        }
+    },
+    "requires": {
+        "energy_consumer": {
+            "interface": "energy"
+        },
+        "optional:powermeter": {
+            "interface": "powermeter"
+        },
+        "optional:price_information": {
+            "interface": "energy_price_information"
+        }
+    },
+    "enable_external_mqtt": false,
+    "metadata": {
+        "license": "https://opensource.org/licenses/Apache-2.0",
+        "authors": [
+            "Cornelius Claussen"
+        ]
+    }
+}

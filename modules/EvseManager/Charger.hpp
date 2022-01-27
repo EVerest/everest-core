@@ -29,6 +29,7 @@
 #include "ld-ev.hpp"
 #include <sigslot/signal.hpp>
 #include <generated/board_support_AC/Interface.hpp>
+#include <chrono>
 
 namespace module {
 
@@ -61,7 +62,9 @@ public:
     // least initially once.
     //
 
-    // external input to charger
+    // external input to charger: update max_current and new validUntil
+    bool setMaxCurrent(float ampere, std::chrono::time_point<std::chrono::system_clock> validUntil);
+    // update only max_current but keep the current validUntil
     bool setMaxCurrent(float ampere);
     float getMaxCurrent();
     sigslot::signal<float> signalMaxCurrent;
@@ -168,6 +171,9 @@ private:
     void mainThread();
 
     float maxCurrent;
+    std::chrono::time_point<std::chrono::system_clock> maxCurrentValidUntil;
+
+    bool powerAvailable();
 
     // This mutex locks all config type members
     std::recursive_mutex configMutex;

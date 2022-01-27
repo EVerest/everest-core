@@ -10,6 +10,9 @@ cpp_module_setup()
 
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 # insert your custom targets and additional config variables here
+list(APPEND ADDITIONAL_MODULE_LIBS
+    date
+)
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 
 target_include_directories(${MOD_MODULE_NAME}
@@ -24,7 +27,7 @@ target_sources(${MOD_MODULE_NAME}
     PRIVATE
         ${MODULE_NAME}.cpp
         "${MODULE_LOADER_DIR}/ld-ev.cpp"
-        "main/power_inImpl.cpp"
+        "main/energy_managerImpl.cpp"
         ${ADDITIONAL_MODULE_SOURCES}
 )
 
@@ -38,14 +41,14 @@ target_link_libraries(${MOD_MODULE_NAME}
 
 target_compile_features(${MOD_MODULE_NAME} PRIVATE cxx_std_14)
 
-set(POWERIN_DEST "modules/${MODULE_NAME}")
+set(ENERGYMANAGER_DEST "modules/${MODULE_NAME}")
 install(TARGETS ${MOD_MODULE_NAME}
     LIBRARY
-    DESTINATION ${POWERIN_DEST}
+    DESTINATION ${ENERGYMANAGER_DEST}
 )
 
 install(FILES manifest.json
-    DESTINATION ${POWERIN_DEST}
+    DESTINATION ${ENERGYMANAGER_DEST}
 )
 
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1

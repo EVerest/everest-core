@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifndef EXAMPLE_HPP
-#define EXAMPLE_HPP
+#ifndef ENERGY_NODE_HPP
+#define ENERGY_NODE_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
@@ -11,11 +11,12 @@
 #include "ld-ev.hpp"
 
 // headers for provided interface implementations
-#include <generated/example_child/Implementation.hpp>
-#include <generated/kvs/Implementation.hpp>
+#include <generated/energy/Implementation.hpp>
 
 // headers for required interface implementations
-#include <generated/kvs/Interface.hpp>
+#include <generated/energy/Interface.hpp>
+#include <generated/energy_price_information/Interface.hpp>
+#include <generated/powermeter/Interface.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
@@ -23,26 +24,29 @@
 
 namespace module {
 
-struct Conf {};
+struct Conf {
+    double fuse_limit_A;
+    int phase_count;
+};
 
-class Example : public Everest::ModuleBase {
+class EnergyNode : public Everest::ModuleBase {
 public:
-    Example() = delete;
-    Example(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
-            std::unique_ptr<example_childImplBase> p_example, std::unique_ptr<kvsImplBase> p_store,
-            std::unique_ptr<kvsIntf> r_kvs, Conf& config) :
+    EnergyNode() = delete;
+    EnergyNode(const ModuleInfo& info, std::unique_ptr<energyImplBase> p_energy_grid,
+               std::unique_ptr<energyIntf> r_energy_consumer, std::unique_ptr<powermeterIntf> r_powermeter,
+               std::unique_ptr<energy_price_informationIntf> r_price_information, Conf& config) :
         ModuleBase(info),
-        mqtt(mqtt_provider),
-        p_example(std::move(p_example)),
-        p_store(std::move(p_store)),
-        r_kvs(std::move(r_kvs)),
+        p_energy_grid(std::move(p_energy_grid)),
+        r_energy_consumer(std::move(r_energy_consumer)),
+        ro_powermeter(std::move(r_powermeter)),
+        ro_price_information(std::move(r_price_information)),
         config(config){};
 
     const Conf& config;
-    Everest::MqttProvider& mqtt;
-    const std::unique_ptr<example_childImplBase> p_example;
-    const std::unique_ptr<kvsImplBase> p_store;
-    const std::unique_ptr<kvsIntf> r_kvs;
+    const std::unique_ptr<energyImplBase> p_energy_grid;
+    const std::unique_ptr<energyIntf> r_energy_consumer;
+    const std::unique_ptr<powermeterIntf> ro_powermeter;
+    const std::unique_ptr<energy_price_informationIntf> ro_price_information;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
@@ -69,4 +73,4 @@ private:
 
 } // namespace module
 
-#endif // EXAMPLE_HPP
+#endif // ENERGY_NODE_HPP

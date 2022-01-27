@@ -19,3 +19,7 @@ libsunspec:
 everest-framework:
   git: git@github.com:EVerest/everest-framework.git
   git_tag: main
+date:
+  git: https://github.com/HowardHinnant/date.git
+  git_tag: v3.0.1
+  options: []

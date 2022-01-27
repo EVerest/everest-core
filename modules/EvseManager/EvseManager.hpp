@@ -11,9 +11,8 @@
 #include "ld-ev.hpp"
 
 // headers for provided interface implementations
+#include <generated/energy/Implementation.hpp>
 #include <generated/evse_manager/Implementation.hpp>
-#include <generated/evse_manager_energy_control/Implementation.hpp>
-#include <generated/powermeter/Implementation.hpp>
 
 // headers for required interface implementations
 #include <generated/board_support_AC/Interface.hpp>
@@ -30,21 +29,20 @@ struct Conf {
     bool has_ventilation;
     std::string country_code;
     bool rcd_enabled;
+    double max_current;
 };
 
 class EvseManager : public Everest::ModuleBase {
 public:
     EvseManager() = delete;
     EvseManager(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
-                std::unique_ptr<evse_managerImplBase> p_evse,
-                std::unique_ptr<evse_manager_energy_controlImplBase> p_evse_energy_control,
-                std::unique_ptr<powermeterImplBase> p_powermeter, std::unique_ptr<board_support_ACIntf> r_bsp,
-                std::unique_ptr<powermeterIntf> r_powermeter, Conf& config) :
+                std::unique_ptr<evse_managerImplBase> p_evse, std::unique_ptr<energyImplBase> p_energy_grid,
+                std::unique_ptr<board_support_ACIntf> r_bsp, std::unique_ptr<powermeterIntf> r_powermeter,
+                Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_evse(std::move(p_evse)),
-        p_evse_energy_control(std::move(p_evse_energy_control)),
-        p_powermeter(std::move(p_powermeter)),
+        p_energy_grid(std::move(p_energy_grid)),
         r_bsp(std::move(r_bsp)),
         r_powermeter(std::move(r_powermeter)),
         config(config){};
@@ -52,8 +50,7 @@ public:
     const Conf& config;
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<evse_managerImplBase> p_evse;
-    const std::unique_ptr<evse_manager_energy_controlImplBase> p_evse_energy_control;
-    const std::unique_ptr<powermeterImplBase> p_powermeter;
+    const std::unique_ptr<energyImplBase> p_energy_grid;
     const std::unique_ptr<board_support_ACIntf> r_bsp;
     const std::unique_ptr<powermeterIntf> r_powermeter;
 
@@ -62,6 +59,9 @@ public:
     std::unique_ptr<Charger> charger;
     sigslot::signal<int> signalNrOfPhasesAvailable;
     json get_latest_powermeter_data();
+    json get_hw_capabilities();
+    bool updateLocalMaxCurrentLimit(float max_current);
+    float getLocalMaxCurrentLimit();
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
@@ -76,6 +76,10 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     json latest_powermeter_data;
+    Everest::Thread energyThreadHandle;
+    json hw_capabilities;
+    bool local_three_phases;
+    float local_max_current_limit;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

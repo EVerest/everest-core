@@ -22,6 +22,37 @@
                 }
             }
         },
+        "get_hw_capabilities": {
+            "description": "Get Hardware capability/limits",
+            "result": {
+                "description": "Hardware capability/limits",
+                "type": "object",
+                "max_current_A": {
+                    "description": "Maximum current (ampere) the hardware can handle",
+                    "type": "number"
+                },
+                "min_current_A": {
+                    "description": "Minimum current (ampere) the hardware can use to charge. Values below may be set but may result in pause instead.",
+                    "type": "number"
+                },
+                "max_phase_count": {
+                    "description": "Max nr of phases the hardware can use",
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 3
+                },
+                "min_phase_count": {
+                    "description": "Minimum nr of phases the hardware can use",
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 3
+                },
+                "supports_changing_phases_during_charging": {
+                    "description": "Indicates whether changing number of phases is supported during charging (true) or not (false)",
+                    "type": "boolean"
+                }
+            }
+        },
         "enable": {
             "description": "Enables or disables the EVSE. Typically disabled results in control pilot state F. It must not accept cars for new charging sessions if disabled.",
             "arguments": {
@@ -75,10 +106,25 @@
         }
     },
     "vars": {
-        "event":{
+        "event": {
             "description": "Event from ControlPilot signal/Relais/RCD",
             "type": "string",
-            "enum": ["CarPluggedIn", "CarRequestedPower", "PowerOn", "PowerOff", "CarRequestedStopPower", "CarUnplugged", "ErrorE", "ErrorDF", "ErrorRelais", "ErrorRCD", "ErrorVentilationNotAvailable", "ErrorOverCurrent", "RestartMatching", "PermanentFault"]
+            "enum": [
+                "CarPluggedIn",
+                "CarRequestedPower",
+                "PowerOn",
+                "PowerOff",
+                "CarRequestedStopPower",
+                "CarUnplugged",
+                "ErrorE",
+                "ErrorDF",
+                "ErrorRelais",
+                "ErrorRCD",
+                "ErrorVentilationNotAvailable",
+                "ErrorOverCurrent",
+                "RestartMatching",
+                "PermanentFault"
+            ]
         },
         "nr_of_phases_available": {
             "description": "Instantaneous phase count available to car",
