@@ -6,10 +6,10 @@ All documentation and the issue tracking can be found in our main repository her
 
 ### Prerequisites:
 
-#### Ubuntu
+#### Ubuntu 20.04
 ```bash
 sudo apt update
-sudo apt install -y git rsync wget cmake doxygen graphwiz build-essential clang-tidy cppcheck maven openjdk-11-jdk npm docker docker-compose libboost-aal-dev jstyleson jsonschema nodejs libssl-dev libsqlite3-dev
+sudo apt install -y git rsync wget cmake doxygen graphviz build-essential clang-tidy cppcheck maven openjdk-11-jdk npm docker docker-compose libboost-all-dev jstyleson jsonschema nodejs libssl-dev libsqlite3-dev
 ```
 
 #### OpenSuse
