@@ -96,3 +96,5 @@ sudo docker-compose up -d
 cd ~/checkout/everest-workspace/everest-core/build
 .././run_sil.sh
 ```
+[More info on SIL](https://everest.github.io/doc_sil.html)
+
