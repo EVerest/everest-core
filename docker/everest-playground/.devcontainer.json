@@ -1,5 +1,5 @@
 {
-  "name": "everest playground",
+  "name": "EVerest playground",
   "build": {
     "dockerfile": "Dockerfile"
   },
@@ -21,7 +21,12 @@
   "workspaceFolder": "/workspace/everest-cpp",
   "workspaceMount": "source=${localWorkspaceFolder}/../../,target=/workspace,type=bind",
   "settings": {
-    "terminal.integrated.shell.linux": "/bin/bash",
+    "terminal.integrated.profiles.linux": {
+      "bash": {
+        "path": "/bin/bash"
+      }
+    },
+    "terminal.integrated.defaultProfile.linux": "bash",
     "python.pythonPath": "/usr/bin/python3"
   }
 }

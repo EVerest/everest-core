@@ -1,9 +1,13 @@
-ARG BASE_IMAGE=debian:11.0
-FROM ${BASE_IMAGE}
+ARG BASE_IMAGE=ubuntu
+ARG BASE_IMAGE_VERSION=20.04
+FROM ${BASE_IMAGE}:${BASE_IMAGE_VERSION}
 
-ARG BASE_IMAGE
 ARG USERNAME=docker
 ARG USER_UID=1000
+
+# configure timezone data
+ENV TIMEZONE=Europe/Berlin
+RUN ln -snf /usr/share/zoneinfo/$TIMEZONE /etc/localtime && echo $TIMEZONE > /etc/timezone
 
 # create user and add to sudoers
 RUN useradd -ms /bin/bash -u ${USER_UID} -U ${USERNAME}
@@ -29,11 +33,23 @@ RUN apt-get update \
     libboost-all-dev \
     maven \
     openjdk-11-jdk \
-    nodejs \
-    npm \
     libsqlite3-dev \
     python3-pip \
     libssl-dev \
+    gpg \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# install a modern version of Node.js
+ENV NODE_VERSION=node_16.x
+ENV KEYRING=/usr/share/keyrings/nodesource.gpg
+RUN wget --quiet -O - https://deb.nodesource.com/gpgkey/nodesource.gpg.key | gpg --dearmor | tee "${KEYRING}" >/dev/null
+RUN gpg --no-default-keyring --keyring "${KEYRING}" --list-keys 9FD3B784BC1C6FC31A8A0A1C1655A0AB68576280
+RUN echo "deb [signed-by=${KEYRING}] https://deb.nodesource.com/${NODE_VERSION} focal main" | tee /etc/apt/sources.list.d/nodesource.list
+RUN echo "deb-src [signed-by=${KEYRING}] https://deb.nodesource.com/${NODE_VERSION} focal main" | tee -a /etc/apt/sources.list.d/nodesource.list
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y \
+    nodejs \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

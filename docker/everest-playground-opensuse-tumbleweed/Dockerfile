@@ -6,15 +6,15 @@ ARG USERNAME=docker
 ARG USER_UID=1000
 
 # create user and add to sudoers
-RUN zypper update \
-    && zypper install -y sudo shadow \
+RUN zypper --non-interactive update \
+    && zypper --non-interactive install sudo shadow \
     && useradd -ms /bin/bash -u ${USER_UID} -U ${USERNAME} \
     && echo ${USERNAME} ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/${USERNAME} \
     && chmod 0440 /etc/sudoers.d/${USERNAME}
 
-RUN zypper install -y --type pattern devel_basis
+RUN zypper --non-interactive install --type pattern devel_basis
 
-RUN zypper install -y \
+RUN zypper --non-interactive install \
     git \
     rsync \
     wget \
@@ -52,5 +52,8 @@ RUN ssh-keyscan github.com > ~/.ssh/known_hosts
 
 ENV PATH="/home/$USERNAME/.local/bin:$PATH"
 ENV CPM_SOURCE_CACHE="/home/$USERNAME/cpm_source_cache"
+
+RUN echo "echo \"To initialize the EVerest workspace please run the following command:\"" >> /home/${USERNAME}/.bashrc
+RUN echo "echo \". init.sh\"" >> /home/${USERNAME}/.bashrc
 
 CMD [ "bash" ]
