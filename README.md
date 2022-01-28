@@ -1,6 +1,6 @@
 # everest-core
 
-This is the main part of EVerest containing the actual charge controller logic included in a large set of modules
+This is the main part of EVerest containing the actual charge controller logic included in a large set of modules.
 
 All documentation and the issue tracking can be found in our main repository here: https://github.com/EVerest/everest
 
@@ -8,24 +8,14 @@ All documentation and the issue tracking can be found in our main repository her
 
 #### Hardware recommendations
 
-It is recommendet to have at least 4GB of RAM available to build EVerest.
+It is recommended to have at least 4GB of RAM available to build EVerest.
 More CPU cores will optionally boost the build process, while requiring more RAM accordingly.
 
 #### Ubuntu 20.04
 ```bash
 sudo apt update
-sudo apt install -y git rsync wget cmake doxygen graphviz build-essential clang-tidy cppcheck maven openjdk-11-jdk npm docker docker-compose libboost-all-dev jstyleson jsonschema nodejs libssl-dev libsqlite3-dev clang-format clang-format-12
+sudo apt install -y git rsync wget cmake doxygen graphviz build-essential clang-tidy cppcheck maven openjdk-11-jdk npm docker docker-compose libboost-all-dev jstyleson jsonschema nodejs libssl-dev libsqlite3-dev clang-format
 ```
-In order to force the use of clang-format version 12 execute:
-```bash
-sudo update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-12 100
-```
-Verify clang-format version:
-```bash
-clang-format --version
-Ubuntu clang-format version 12.0.0-3ubuntu1~20.04.4
-```
-
 
 #### OpenSuse
 ```bash
@@ -110,5 +100,41 @@ sudo docker-compose up -d
 cd ~/checkout/everest-workspace/everest-core/build
 .././run_sil.sh
 ```
-[More info on SIL](https://everest.github.io/doc_sil.html)
+[Guide for using EVerest SIL](https://everest.github.io/doc_sil.html)
+
+### Troubleshoot
+
+**1. Problem:** "make install" fails with complaining about missing header files.
+
+**Cause:** Most probably your *clang-format* version is older than 11 and *ev-cli* is not able to generate the header files during the build process.
+
+**Solution:** Install newer clang-format version and make Ubuntu using the new version e.g.:
+```bash
+sudo apt install clang-format-12
+sudo update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-12 100
+```
+Verify clang-format version:
+```bash
+clang-format --version
+Ubuntu clang-format version 12.0.0-3ubuntu1~20.04.4
+```
+To retry building EVerest delete the entire everest-core/**build** folder and recreate it. 
+Start building EVerest using *cmake ..* and *make install* again.
+
+
+**2. Problem:** Build speed is very slow.
+
+**Cause:** *cmake* and *make* are only utilizing one CPU core.
+
+**Solution:** use 
+```bash
+cmake -j$(nproc) .. 
+```
+and 
+```bash
+make -j$(nproc) install
+```
+to use all available CPU cores.
+Be aware that this will need roughly an additional 1-2GB of RAM per core.
+Alternatively you can also use any number between 2 and your maximum core count instead of *$(nproc)*.
 
