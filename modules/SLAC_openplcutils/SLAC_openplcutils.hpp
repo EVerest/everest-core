@@ -5,7 +5,7 @@
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 0.0.3
+// template version 1.0.0
 //
 
 #include "ld-ev.hpp"

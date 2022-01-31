@@ -10,8 +10,10 @@
 		"powerin": {
 			"interface": "power_in"
 		},
-		"optional:solar": {
-			"interface": "power"
+		"solar": {
+			"interface": "power",
+            "min_connections": 0,
+            "max_connections": 128
 		}
 	},
 	"metadata": {

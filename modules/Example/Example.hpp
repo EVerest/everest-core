@@ -5,7 +5,7 @@
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 0.0.3
+// template version 1.0.0
 //
 
 #include "ld-ev.hpp"
@@ -40,7 +40,7 @@ public:
         p_store(std::move(p_store)),
         r_kvs(std::move(r_kvs)),
         r_powerin(std::move(r_powerin)),
-        ro_solar(std::move(r_solar)),
+        r_solar(std::move(r_solar)),
         config(config){};
 
     const Conf& config;
@@ -49,7 +49,7 @@ public:
     const std::unique_ptr<kvsImplBase> p_store;
     const std::unique_ptr<kvsIntf> r_kvs;
     const std::unique_ptr<power_inIntf> r_powerin;
-    const std::unique_ptr<powerIntf> ro_solar;
+    const std::unique_ptr<std::vector<std::shared_ptr<powerIntf>>> r_solar;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
