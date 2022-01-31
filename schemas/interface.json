@@ -2,12 +2,34 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "description": "Json schema for EVerest interface files",
     "$defs": {
-        "varlist_subschema": {
-            "allOf": [
-                {
-                    "$ref": "http://json-schema.org/draft-07/schema#"
+        // all subschemas can not use allOf with the draft-07 schema because that will cause our validator to
+        // add all draft-07 default values which never validate (the {"not": true} default contradicts everything)
+        // --> validating against draft-07 will be done in an extra step in config.cpp
+        "var_subschema": {
+            "type": "object",
+            "required": [
+                "type",
+                "description"
+            ], // require at least a type declaration for this command/result schema
+            "properties": {
+                "type": {
+                    "type": [
+                        "array",
+                        "string"
+                    ]
                 },
-                {
+                "description": {
+                    "type": "string",
+                    "minLength": 2
+                },
+                "default": false            // we don't allow default values
+            },
+            "additionalProperties": true    // allow all sorts of entries (should be a json schema!)
+        },
+        "cmd_arguments_subschema": {
+            "type": "object",
+            "patternProperties": {
+                "^[a-zA-Z_][a-zA-Z0-9_.-]*$": { // arbitrary argument name
                     "type": "object",
                     "required": [
                         "type",
@@ -23,22 +45,39 @@
                         "description": {
                             "type": "string",
                             "minLength": 2
-                        }
+                        },
+                        "default": false            // we don't allow default values
                     },
-                    "additionalProperties": true // allow all sorts of entries (should be a json schema!)
+                    "additionalProperties": true    // allow all sorts of entries (should be a json schema!)
                 }
-            ]
-        },
-        "cmd_arguments_subschema": {
-            "type": "object",
-            "patternProperties": {
-                "^[a-zA-Z_][a-zA-Z0-9_.-]*$": { // arbitrary argument name
-                    "$ref": "#/$defs/varlist_subschema"
-                }
-            }
+            },
+            "additionalProperties": false,          // only allow argument names conforming to our pattern above
+            "default": {}
         },
         "cmd_result_subschema": {
-            "$ref": "#/$defs/varlist_subschema"
+            "type": "object",
+            "required": [
+                "type",
+                "description"
+            ], // require at least a type declaration for this command/result schema
+            "properties": {
+                "type": {
+                    "type": [
+                        "array",
+                        "string"
+                    ]
+                },
+                "description": {
+                    "type": "string",
+                    "minLength": 2
+                },
+                "default": false             // we don't allow default values
+            },
+            "additionalProperties": true,    // allow all sorts of entries (should be a json schema!)
+            "default": {
+                "type": "null",
+                "description": "This returns nothing"
+            }
         }
     },
     "type": "object",
@@ -75,15 +114,10 @@
                         },
                         // default is an empty arguments/result list
                         "arguments": {
-                            "$ref": "#/$defs/cmd_arguments_subschema",
-                            "default": {}
+                            "$ref": "#/$defs/cmd_arguments_subschema"
                         },
                         "result": {
-                            "$ref": "#/$defs/cmd_result_subschema",
-                            "default": {
-                                "type": "null",
-                                "description": "This returns nothing"
-                            }
+                            "$ref": "#/$defs/cmd_result_subschema"
                         }
                     },
                     "default": {},
@@ -99,7 +133,7 @@
             "patternProperties": {
                 "^[a-zA-Z_][a-zA-Z0-9_.-]*$": { // arbitrary variable name
                     "description": "json schema declaring the contents of the variables exported by this unit",
-                    "$ref": "#/$defs/varlist_subschema"
+                    "$ref": "#/$defs/var_subschema"
                 }
             },
             "additionalProperties": false, // don't allow arbitrary additional properties

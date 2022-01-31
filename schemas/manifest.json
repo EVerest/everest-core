@@ -2,33 +2,6 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "description": "Json schema for EVerest manifest files",
     "$defs": {
-        "varlist_subschema": {
-            "allOf": [
-                {
-                    "$ref": "http://json-schema.org/draft-07/schema#"
-                },
-                {
-                    "type": "object",
-                    "required": [
-                        "type",
-                        "description"
-                    ], // require at least a type declaration for this command/result schema
-                    "properties": {
-                        "type": {
-                            "type": [
-                                "array",
-                                "string"
-                            ]
-                        },
-                        "description": {
-                            "type": "string",
-                            "minLength": 2
-                        }
-                    },
-                    "additionalProperties": true // allow all sorts of entries (should be a json schema!)
-                }
-            ]
-        },
         "config_set_schema": {
             "type": "object",
             "patternProperties": {
@@ -58,17 +31,6 @@
             },
             "additionalProperties": false,
             "default": {}
-        },
-        "cmd_arguments_subschema": {
-            "type": "object",
-            "patternProperties": {
-                "^[a-zA-Z_][a-zA-Z0-9_.-]*$": { // arbitrary argument name
-                    "$ref": "#/$defs/varlist_subschema"
-                }
-            }
-        },
-        "cmd_result_subschema": {
-            "$ref": "#/$defs/varlist_subschema"
         }
     },
     "type": "object",
