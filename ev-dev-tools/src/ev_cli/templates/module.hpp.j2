@@ -3,7 +3,7 @@
 #ifndef {{ info.hpp_guard }}
 #define {{ info.hpp_guard }}
 
-{{ print_template_info('0.0.3', 'marked regions will be kept') }}
+{{ print_template_info('1.0.0', 'marked regions will be kept') }}
 
 #include "{{ info.ld_ev_header }}"
 
@@ -42,8 +42,12 @@ public:
         {% for impl in provides %}
         std::unique_ptr<{{ impl.base_class }}> p_{{ impl.id }},
         {% endfor %}
-        {% for interface in requires %}
-        std::unique_ptr<{{ interface.class_name }}> r_{{ interface.id }},
+        {% for requirement in requires %}
+        {% if requirement.is_vector %}
+        std::unique_ptr<std::vector<std::shared_ptr<{{ requirement.class_name }}>>> r_{{ requirement.id }},
+        {% else %}
+        std::unique_ptr<{{ requirement.class_name }}> r_{{ requirement.id }},
+        {% endif %}
         {% endfor %}
         Conf& config
     ) :
@@ -54,8 +58,8 @@ public:
         {% for impl in provides %}
         p_{{ impl.id }}(std::move(p_{{ impl.id }})),
         {% endfor %}
-        {% for interface in requires %}
-        r{{ 'o' if interface.optional }}_{{ interface.id }}(std::move(r_{{ interface.id }})),
+        {% for requirement in requires %}
+        r_{{ requirement.id }}(std::move(r_{{ requirement.id }})),
         {% endfor %}
         config(config)
     {};
@@ -67,8 +71,12 @@ public:
     {% for impl in provides %}
     const std::unique_ptr<{{ impl.base_class }}> p_{{ impl.id }};
     {% endfor %}
-    {% for interface in requires %}
-    const std::unique_ptr<{{ interface.class_name }}> r{{ 'o' if interface.optional }}_{{ interface.id }};
+    {% for requirement in requires %}
+    {% if requirement.is_vector %}
+    const std::unique_ptr<std::vector<std::shared_ptr<{{ requirement.class_name }}>>> r_{{ requirement.id }};
+    {% else %}
+    const std::unique_ptr<{{ requirement.class_name }}> r_{{ requirement.id }};
+    {% endif %}
     {% endfor %}
 
     {{ insert_block(info.blocks.public_defs, indent=4) }}

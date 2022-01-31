@@ -106,16 +106,17 @@ def generate_tmpl_data_for_module(module, module_def):
         })
 
     requires = []
-    for impl, impl_info in module_def.get('requires', {}).items():
-        is_optional = impl.startswith('optional:')
-        if is_optional:
-            impl = impl[9:]
+    for requirement_id, req_info in module_def.get('requires', {}).items():
+        # min_connections=1 and max_connections=1 is the default if not provided otherwise (see manifest meta schema)
+        is_vector = not (
+            ('min_connections' not in req_info or req_info['min_connections'] == 1) and
+            ('max_connections' not in req_info or req_info['max_connections'] == 1))
         requires.append({
-            'id': impl,
-            'optional': is_optional,
-            'type': impl_info['interface'],
-            'class_name': f'{impl_info["interface"]}Intf',
-            'exports_header': f'generated/{impl_info["interface"]}/Interface.hpp'
+            'id': requirement_id,
+            'is_vector': is_vector,
+            'type': req_info['interface'],
+            'class_name': f'{req_info["interface"]}Intf',
+            'exports_header': f'generated/{req_info["interface"]}/Interface.hpp'
         })
 
     module_config = []

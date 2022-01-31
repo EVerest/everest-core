@@ -3,13 +3,13 @@
 #ifndef {{ info.hpp_guard }}
 #define {{ info.hpp_guard }}
 
-{{ print_template_info('0.0.2') }}
+{{ print_template_info('1.0.0') }}
 
 #include <framework/ModuleAdapter.hpp>
 
 class {{ info.class_name }} {
 public:
-    {{ info.class_name }}(Everest::ModuleAdapter* ev, const std::string& name) : _ev(ev), _name(name){};
+    {{ info.class_name }}(Everest::ModuleAdapter* adapter, const std::string& requirement_id, const uint64_t idx) : _adapter(adapter), _requirement_id(requirement_id), _idx(idx){};
 
     {% if not vars %}
     // this interface does not export any variables to subscribe to
@@ -25,7 +25,7 @@ public:
             auto native_value = {{ var_to_cpp(var) }}(value);
             listener(native_value);
         };
-        _ev->subscribe(_name, "{{ var.name }}", cb);
+        _adapter->subscribe(_requirement_id, _idx, "{{ var.name }}", cb);
     }
     {% if not loop.last %}
 
@@ -43,7 +43,7 @@ public:
         {% for arg in cmd.args %}
         args["{{ arg.name }}"] = {{ var_to_any(arg, arg.name) }};
         {% endfor %}
-        Result result = _ev->call(_name, "{{ cmd.name }}", args);
+        Result result = _adapter->call(_requirement_id, _idx, "{{ cmd.name }}", args);
         {% if cmd.result %}
         auto retval = {{ var_to_cpp(cmd.result) }}(result.get());
 
@@ -57,8 +57,9 @@ public:
     {% endif %}
 
 private:
-    Everest::ModuleAdapter* const _ev;
-    const std::string _name;
+    Everest::ModuleAdapter* const _adapter;
+    const std::string _requirement_id;
+    const uint64_t _idx;
 };
 
 #endif // {{ info.hpp_guard }}
