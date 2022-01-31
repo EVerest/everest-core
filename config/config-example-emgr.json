@@ -27,18 +27,24 @@
             }
         },
         "connections": {
-            "emgr": {
-                "module_id": "energy_manager",
-                "implementation_id": "main"
-            },
-            "pm_grid": {
-                "module_id": "sma_modbus_meter",
-                "implementation_id": "main"
-            },
-            "pm_ev": {
-                "module_id": "yeti_driver",
-                "implementation_id": "powermeter"
-            }
+            "emgr": [
+                {
+                    "module_id": "energy_manager",
+                    "implementation_id": "main"
+                }
+            ],
+            "pm_grid": [
+                {
+                    "module_id": "sma_modbus_meter",
+                    "implementation_id": "main"
+                }
+            ],
+            "pm_ev": [
+                {
+                    "module_id": "yeti_driver",
+                    "implementation_id": "powermeter"
+                }
+            ]
         }
     },
     "energy_manager": {
@@ -56,23 +62,28 @@
             }
         },
         "connections": {
-            "chargingdriver": {
-                "module_id": "yeti_driver",
-                "implementation_id": "yeti"
-            },
-            "gridpowermeter": {
-                "module_id": "sma_modbus_meter",
-                "implementation_id": "main"
-            },
-            "chargingdriverpowermeter": {
-                "module_id": "yeti_driver",
-                "implementation_id": "powermeter"
-            }
+            "chargingdriver": [
+                {
+                    "module_id": "yeti_driver",
+                    "implementation_id": "yeti"
+                }
+            ],
+            "gridpowermeter": [
+                {
+                    "module_id": "sma_modbus_meter",
+                    "implementation_id": "main"
+                }
+            ],
+            "chargingdriverpowermeter": [
+                {
+                    "module_id": "yeti_driver",
+                    "implementation_id": "powermeter"
+                }
+            ]
         }
     },
     "iso15118_charger": {
         "module": "JsRiseV2G",
-        "connections": {},
         "config_implementation": {
             "main": {
                 "mqtt_base_path": "everest_external/iso15118/java"

@@ -8,10 +8,12 @@
 			}
 		},
         "connections": {
-            "yetipowermeter": {
-                "module_id": "yeti_driver",
-                "implementation_id": "powermeter"
-            }
+            "yetipowermeter": [
+                {
+                    "module_id": "yeti_driver",
+                    "implementation_id": "powermeter"
+                }
+            ]
         }
 	},
     "emgr_logger": {
@@ -22,18 +24,24 @@
             }
         },
         "connections": {
-            "emgr": {
-                "module_id": "energy_manager",
-                "implementation_id": "main"
-            },
-            "pm_grid": {
-                "module_id": "sma_modbus_meter",
-                "implementation_id": "main"
-            },
-            "pm_ev": {
-                "module_id": "yeti_driver",
-                "implementation_id": "powermeter"
-            }
+            "emgr": [
+                {
+                    "module_id": "energy_manager",
+                    "implementation_id": "main"
+                }
+            ],
+            "pm_grid": [
+                {
+                    "module_id": "sma_modbus_meter",
+                    "implementation_id": "main"
+                }
+            ],
+            "pm_ev": [
+                {
+                    "module_id": "yeti_driver",
+                    "implementation_id": "powermeter"
+                }
+            ]
         }
     },
     "energy_manager": {
@@ -51,22 +59,30 @@
             }
         },
         "connections": {
-            "chargingdriver": {
-                "module_id": "evse_manager",
-                "implementation_id": "evse"
-            },
-            "chargingdriverenergy": {
-                "module_id": "evse_manager",
-                "implementation_id": "evse_energy_control"
-            },
-            "gridpowermeter": {
-                "module_id": "sma_modbus_meter",
-                "implementation_id": "main"
-            },
-            "chargingdriverpowermeter": {
-                "module_id": "yeti_driver",
-                "implementation_id": "powermeter"
-            }
+            "chargingdriver": [
+                {
+                    "module_id": "evse_manager",
+                    "implementation_id": "evse"
+                }
+            ],
+            "chargingdriverenergy": [
+                {
+                    "module_id": "evse_manager",
+                    "implementation_id": "evse_energy_control"
+                }
+            ],
+            "gridpowermeter": [
+                {
+                    "module_id": "sma_modbus_meter",
+                    "implementation_id": "main"
+                }
+            ],
+            "chargingdriverpowermeter": [
+                {
+                    "module_id": "yeti_driver",
+                    "implementation_id": "powermeter"
+                }
+            ]
         }
     },
     "iso15118_charger": {
@@ -107,10 +123,12 @@
     "car_simulator": {
         "module": "JsCarSimulator",
         "connections": {
-            "simulation_control": {
-                "module_id": "yeti_driver",
-                "implementation_id": "yeti_simulation_control"
-            }
+            "simulation_control": [
+                {
+                    "module_id": "yeti_driver",
+                    "implementation_id": "yeti_simulation_control"
+                }
+            ]
         }
     }
 }
