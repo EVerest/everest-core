@@ -9,11 +9,9 @@ boot_module(async ({ setup }) => {
   // subscribe to all token providers and try to validate all new incoming tokens
   // priority of token providers and validators is configured via connection order of this dependency in config.json
 
-  // FIXME: this should be a list of *all* token providers once we have 1-n requirements
-  [setup.uses.tokenProvider].forEach((provider, token_priority) => {
+  setup.uses_list.tokenProvider.forEach((provider, token_priority) => {
     provider.subscribe.token(async (mod, { token, type, timeout }) => {
-      // FIXME: this should be a list of *all* token providers once we have 1-n requirements
-      [mod.uses.tokenValidator].forEach((validator, validator_priority) => {
+      mod.uses_list.tokenValidator.forEach((validator, validator_priority) => {
         const { result, reason } = validator.call.validate_token({ token });
         const token_data = {
           timestamp: Math.floor(Date.now() / 1000),

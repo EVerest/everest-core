@@ -7,15 +7,15 @@
         }
     },
     "requires": {
-        "optional:comment_1": {
-            "description": "FIXME: tokenProvider and tokenVaidator should be 1-n requirements returning an ordered list like it was connected in the config file",
-            "interface": "dummy"
-        },
         "tokenProvider": {
-            "interface": "auth_token_provider"
+            "interface": "auth_token_provider",
+            "min_connections": 1,
+            "max_connections": 128
         },
         "tokenValidator": {
-            "interface": "auth_token_validator"
+            "interface": "auth_token_validator",
+            "min_connections": 1,
+            "max_connections": 128
         }
     },
     "metadata": {

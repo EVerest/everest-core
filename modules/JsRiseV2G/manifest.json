@@ -22,8 +22,9 @@
 		}
 	},
     "requires": {
-        "optional:slac": {
-			"interface": "ISO15118_3_SLAC"
+        "slac": {
+			"interface": "ISO15118_3_SLAC",
+            "min_connections": 0
 		}
     },
 	"enable_external_mqtt": true,
