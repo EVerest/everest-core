@@ -186,6 +186,17 @@ def load_validated_interface_def(if_def_path, validator):
         if_def = jstyleson.loads(if_def_path.read_text())
         # validating interface
         validator.validate(if_def)
+        # validate var/cmd subparts
+        if "vars" in if_def:
+            for _var_name, var_def in if_def["vars"].items():
+                jsonschema.Draft7Validator.check_schema(var_def)
+        if "cmds" in if_def:
+            for _cmd_name, cmd_def in if_def["cmds"].items():
+                if "arguments" in cmd_def:
+                    for _arg_name, arg_def in cmd_def["arguments"].items():
+                        jsonschema.Draft7Validator.check_schema(arg_def)
+                if "result" in cmd_def:
+                    jsonschema.Draft7Validator.check_schema(cmd_def["result"])
     except OSError as err:
         raise Exception(f'Could not open interface definition file {err.filename}: {err.strerror}') from err
     except jsonschema.ValidationError as err:
