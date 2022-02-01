@@ -362,7 +362,7 @@ def load_interface_defintion(interface):
             if_parent_def = helpers.load_validated_interface_def(if_parent_path, validators['interface'])
         except Exception as e:
             raise Exception(
-                f'Failed to load parent interface definition file {if_parent_path} for interface {interface}') from e
+                f'Failed to load parent interface definition file {if_parent_path} for interface {interface}: {e}') from e
 
         last_mtime = max(last_mtime, if_parent_path.stat().st_mtime)
         if_def['vars'].update(if_parent_def.get('vars', {}))

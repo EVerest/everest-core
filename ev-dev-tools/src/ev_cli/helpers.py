@@ -189,7 +189,7 @@ def load_validated_interface_def(if_def_path, validator):
     except OSError as err:
         raise Exception(f'Could not open interface definition file {err.filename}: {err.strerror}') from err
     except jsonschema.ValidationError as err:
-        raise Exception(f'Validation error in interface definition file {if_def_path}') from err
+        raise Exception(f'Validation error in interface definition file {if_def_path}: {err}') from err
     except json.JSONDecodeError as err:
         raise Exception(f'Could not parse json from interface definition file {if_def_path}') from err
 
