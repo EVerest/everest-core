@@ -5,7 +5,7 @@
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 1.0.0
+// template version 1
 //
 
 #include "ld-ev.hpp"
@@ -32,8 +32,8 @@ public:
     Example() = delete;
     Example(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
             std::unique_ptr<example_childImplBase> p_example, std::unique_ptr<kvsImplBase> p_store,
-            std::unique_ptr<kvsIntf> r_kvs, std::unique_ptr<power_inIntf> r_powerin, std::unique_ptr<powerIntf> r_solar,
-            Conf& config) :
+            std::unique_ptr<kvsIntf> r_kvs, std::unique_ptr<power_inIntf> r_powerin,
+            std::vector<std::unique_ptr<powerIntf>> r_solar, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_example(std::move(p_example)),
@@ -49,7 +49,7 @@ public:
     const std::unique_ptr<kvsImplBase> p_store;
     const std::unique_ptr<kvsIntf> r_kvs;
     const std::unique_ptr<power_inIntf> r_powerin;
-    const std::unique_ptr<std::vector<std::shared_ptr<powerIntf>>> r_solar;
+    const std::vector<std::unique_ptr<powerIntf>> r_solar;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here

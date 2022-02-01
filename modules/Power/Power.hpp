@@ -5,7 +5,7 @@
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 1.0.0
+// template version 1
 //
 
 #include "ld-ev.hpp"
@@ -29,17 +29,17 @@ class Power : public Everest::ModuleBase {
 public:
     Power() = delete;
     Power(const ModuleInfo& info, std::unique_ptr<power_resultImplBase> p_main, std::unique_ptr<power_inIntf> r_powerin,
-          std::unique_ptr<powerIntf> r_solar, Conf& config) :
+          std::vector<std::unique_ptr<powerIntf>> r_solar, Conf& config) :
         ModuleBase(info),
         p_main(std::move(p_main)),
         r_powerin(std::move(r_powerin)),
-        ro_solar(std::move(r_solar)),
+        r_solar(std::move(r_solar)),
         config(config){};
 
     const Conf& config;
     const std::unique_ptr<power_resultImplBase> p_main;
     const std::unique_ptr<power_inIntf> r_powerin;
-    const std::unique_ptr<std::vector<std::shared_ptr<powerIntf>>> r_solar;
+    const std::vector<std::unique_ptr<powerIntf>> r_solar;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here

@@ -5,11 +5,7 @@
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-<<<<<<< HEAD
-// template version 0.0.3
-=======
-// template version 1.0.0
->>>>>>> 811b7f8 (Update C++ modules to use requirement_lists)
+// template version 1
 //
 
 #include "ld-ev.hpp"

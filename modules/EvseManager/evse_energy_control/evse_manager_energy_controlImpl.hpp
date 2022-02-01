@@ -5,7 +5,7 @@
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 0.0.2
+// template version 1
 //
 
 #include <generated/evse_manager_energy_control/Implementation.hpp>

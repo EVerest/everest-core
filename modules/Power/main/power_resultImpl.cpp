@@ -20,7 +20,7 @@ void power_resultImpl::init() {
         publish_phase_count(phase_count);
     });
 
-    for(auto& entry : *mod->r_solar) {
+    for(auto& entry : mod->r_solar) {
         entry->subscribe_max_current([this](double max_current) {
             EVLOG(debug) << "Incoming solar current: " << max_current;
             std::unique_lock<std::mutex> lock(max_current_mutex);
