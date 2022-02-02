@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include <iostream>
 #include <sys/prctl.h>
 #include <thread>
@@ -100,7 +100,7 @@ int main(int argc, char* argv[]) {
             return 2;
         }
 
-        std::string module_identifier = config.printable_identifier(module_id);
+        const std::string module_identifier = config.printable_identifier(module_id);
         EVLOG(info) << "Initializing framework for module " << module_identifier << "...";
         EVLOG(debug) << "Setting process name to: '" << module_identifier << "'...";
         int prctl_return = prctl(PR_SET_NAME, module_identifier.c_str());
@@ -126,7 +126,7 @@ int main(int argc, char* argv[]) {
                                                                    mqtt_server_address, mqtt_server_port);
 
         // module import
-        EVLOG(info) << "Initializing module " << config.printable_identifier(module_id) << "...";
+        EVLOG(info) << "Initializing module " << module_identifier << "...";
 
         std::string module_name = config.get_main_config()[module_id]["module"].get<std::string>();
 
@@ -195,8 +195,6 @@ int main(int argc, char* argv[]) {
 
         auto everest_register = boost::dll::import_alias<std::vector<Everest::cmd>()>(path, "everest_register");
 
-        // FIXME (aw): check if moving this everest_register block here breaks anything
-        //             should be here for cleaner initialization
         std::vector<Everest::cmd> cmds = everest_register();
 
         for (auto const& command : cmds) {
@@ -204,9 +202,10 @@ int main(int argc, char* argv[]) {
         }
 
         auto module_configs = config.get_module_configs(module_id);
+        const auto module_info = config.get_module_info(module_id);
 
-        auto module_init = boost::dll::import_alias<void(ModuleConfigs)>(path, "init");
-        module_init(module_configs);
+        auto module_init = boost::dll::import_alias<void(ModuleConfigs, ModuleInfo)>(path, "init");
+        module_init(module_configs, module_info);
 
         std::thread mainloop_thread = std::thread(&Everest::Everest::mainloop, &everest);
 

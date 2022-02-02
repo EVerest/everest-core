@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #ifndef UTILS_CONFIG_HPP
 #define UTILS_CONFIG_HPP
 
@@ -105,8 +105,15 @@ public:
     json get_module_json_config(const std::string& module_id);
 
     ///
+    /// \brief assemble basic information about the module (id, name,
+    /// authors, license)
+    ///
+    /// \returns a ModuleInfo object
+    ModuleInfo get_module_info(const std::string& module_id);
+
+    ///
     /// \returns a json object that contains the manifests
-    json get_manifests();
+    const json& get_manifests();
 
     ///
     /// \returns a json object that contains the available interfaces

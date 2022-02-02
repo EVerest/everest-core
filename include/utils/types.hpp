@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+#ifndef UTILS_TYPES_HPP
+#define UTILS_TYPES_HPP
+
 #include <map>
 #include <string>
 #include <vector>
@@ -23,6 +26,12 @@ using ValueCallback = std::function<void(Value)>;
 using ConfigEntry = boost::variant<std::string, double, int, bool>;
 using ConfigMap = std::map<std::string, ConfigEntry>;
 using ModuleConfigs = std::map<std::string, ConfigMap>;
+struct ModuleInfo {
+    std::string name;
+    std::vector<std::string> authors;
+    std::string license;
+    std::string id;
+};
 using Array = json::array_t;
 using Object = json::object_t;
 // TODO (aw): can we pass the handler arguments by const ref?
@@ -31,3 +40,5 @@ using StringHandler = std::function<void(std::string)>;
 using Token = std::shared_ptr<Handler>;
 
 #define EVCALLBACK(function) [](auto&& PH1) { function(std::forward<decltype(PH1)>(PH1)); }
+
+#endif // UTILS_TYPES_HPP

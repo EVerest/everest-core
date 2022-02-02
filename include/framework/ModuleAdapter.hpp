@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #ifndef MODULE_ADAPTER_HPP
 #define MODULE_ADAPTER_HPP
 
@@ -74,6 +74,11 @@ private:
 };
 
 class ModuleBase {
+public:
+    ModuleBase(const ModuleInfo& info) : info(info){};
+
+    const ModuleInfo& info;
+
 protected:
     void invoke_init(ImplementationBase& impl) {
         impl.init();

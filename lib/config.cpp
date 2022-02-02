@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include <algorithm>
 #include <fstream>
 #include <set>
@@ -467,7 +467,7 @@ ModuleConfigs Config::get_module_configs(const std::string& module_id) {
     return module_configs;
 }
 
-json Config::get_manifests() {
+const json& Config::get_manifests() {
     BOOST_LOG_FUNCTION();
     return this->manifests;
 }
@@ -614,6 +614,26 @@ std::string Config::printable_identifier(const std::string& module_id, const std
     oss << "->" << info["impl_id"].get<std::string>() << ":" << info["impl_intf"].get<std::string>();
 
     return oss.str();
+}
+
+ModuleInfo Config::get_module_info(const std::string& module_id) {
+    BOOST_LOG_FUNCTION();
+    // FIXME (aw): the following if block is used so often, it should be
+    //             refactored into a helper function
+    if (!this->main.contains(module_id)) {
+        EVTHROW(EverestApiError("Module id '" + module_id + "' not found in config!"));
+    }
+
+    ModuleInfo module_info;
+    module_info.id = module_id;
+    module_info.name = this->main[module_id]["module"].get<std::string>();
+    auto& module_metadata = this->manifests[module_info.name]["metadata"];
+    for (auto& author: module_metadata["authors"]) {
+        module_info.authors.emplace_back(author.get<std::string>());
+    }
+    module_info.license = module_metadata["license"].get<std::string>();
+
+    return module_info;
 }
 
 std::string Config::mqtt_prefix(const std::string& module_id, const std::string& impl_id) {
