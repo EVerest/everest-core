@@ -19,17 +19,13 @@
 namespace module {
 namespace debug_state {
 
-struct Conf {
-};
+struct Conf {};
 
 class debug_jsonImpl : public debug_jsonImplBase {
 public:
     debug_jsonImpl() = delete;
-    debug_jsonImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<YetiDriver> &mod, Conf& config) :
-        debug_jsonImplBase(ev, "debug_state"),
-        mod(mod),
-        config(config)
-    {};
+    debug_jsonImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<YetiDriver>& mod, Conf& config) :
+        debug_jsonImplBase(ev, "debug_state"), mod(mod), config(config){};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here

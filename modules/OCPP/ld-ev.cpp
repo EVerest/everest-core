@@ -1,30 +1,31 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
-
+// Copyright Pionix GmbH and Contributors to EVerest
 //
 // AUTO GENERATED - DO NOT EDIT!
-// template version 0.0.1
+// template version 0.0.3
 //
 
 #include "ld-ev.hpp"
 
 #include "OCPP.hpp"
-#include "main/ocpp_1_6_charge_pointImpl.hpp"
 #include "auth_validator/auth_token_validatorImpl.hpp"
+#include "main/ocpp_1_6_charge_pointImpl.hpp"
 
 #include <boost/dll/alias.hpp>
 
 namespace module {
 
-static Everest::ModuleAdapter adapter {};
-static Everest::PtrContainer<OCPP> mod_ptr {};
+// FIXME (aw): could this way of keeping static variables be changed somehow?
+static Everest::ModuleAdapter adapter{};
+static Everest::PtrContainer<OCPP> mod_ptr{};
 
 // per module configs
 static main::Conf main_config;
 static auth_validator::Conf auth_validator_config;
 static Conf module_conf;
+static ModuleInfo module_info;
 
-void LdEverest::init(ModuleConfigs module_configs) {
+void LdEverest::init(ModuleConfigs module_configs, const ModuleInfo& mod_info) {
     EVLOG(debug) << "init() called on module OCPP";
 
     // populate config for provided implementations
@@ -32,10 +33,11 @@ void LdEverest::init(ModuleConfigs module_configs) {
 
     auto auth_validator_config_input = std::move(module_configs["auth_validator"]);
 
-
     module_conf.ChargePointConfigPath = boost::get<std::string>(module_configs["!module"]["ChargePointConfigPath"]);
     module_conf.DatabasePath = boost::get<std::string>(module_configs["!module"]["DatabasePath"]);
     module_conf.SchemasPath = boost::get<std::string>(module_configs["!module"]["SchemasPath"]);
+
+    module_info = mod_info;
 
     mod_ptr->init();
 }
@@ -78,7 +80,8 @@ std::vector<Everest::cmd> everest_register() {
     auto p_main = std::make_unique<main::ocpp_1_6_charge_pointImpl>(&adapter, mod_ptr, main_config);
     adapter.gather_cmds(*p_main);
 
-    auto p_auth_validator = std::make_unique<auth_validator::auth_token_validatorImpl>(&adapter, mod_ptr, auth_validator_config);
+    auto p_auth_validator =
+        std::make_unique<auth_validator::auth_token_validatorImpl>(&adapter, mod_ptr, auth_validator_config);
     adapter.gather_cmds(*p_auth_validator);
 
     auto r_powermeter = std::make_unique<powermeterIntf>(&adapter, "powermeter");
@@ -86,7 +89,8 @@ std::vector<Everest::cmd> everest_register() {
 
     static Everest::MqttProvider mqtt_provider(adapter);
 
-    static OCPP module(mqtt_provider, std::move(p_main), std::move(p_auth_validator), std::move(r_powermeter), std::move(r_evse_manager), module_conf);
+    static OCPP module(module_info, mqtt_provider, std::move(p_main), std::move(p_auth_validator),
+                       std::move(r_powermeter), std::move(r_evse_manager), module_conf);
 
     mod_ptr.set(&module);
 

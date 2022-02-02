@@ -1,9 +1,11 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright Pionix GmbH and Contributors to EVerest
 #ifndef SUNSPEC_SCANNER_HPP
 #define SUNSPEC_SCANNER_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 0.0.1
+// template version 0.0.3
 //
 
 #include "ld-ev.hpp"
@@ -11,28 +13,20 @@
 // headers for provided interface implementations
 #include <generated/sunspec_scanner/Implementation.hpp>
 
-
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
 
-struct Conf {
-};
+struct Conf {};
 
 class SunspecScanner : public Everest::ModuleBase {
 public:
     SunspecScanner() = delete;
-    SunspecScanner(
-        Everest::MqttProvider& mqtt_provider,
-        std::unique_ptr<sunspec_scannerImplBase> p_main,
-        Conf& config
-    ) :
-        mqtt(mqtt_provider),
-        p_main(std::move(p_main)),
-        config(config)
-    {};
+    SunspecScanner(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
+                   std::unique_ptr<sunspec_scannerImplBase> p_main, Conf& config) :
+        ModuleBase(info), mqtt(mqtt_provider), p_main(std::move(p_main)), config(config){};
 
     const Conf& config;
     Everest::MqttProvider& mqtt;
@@ -55,7 +49,6 @@ private:
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
-
 };
 
 // ev@087e516b-124c-48df-94fb-109508c7cda9:v1

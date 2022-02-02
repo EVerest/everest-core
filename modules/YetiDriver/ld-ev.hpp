@@ -5,7 +5,7 @@
 
 //
 // AUTO GENERATED - DO NOT EDIT!
-// template version 0.0.2
+// template version 0.0.3
 //
 
 #include <framework/ModuleAdapter.hpp>
@@ -17,7 +17,7 @@ namespace module {
 
 // helper class for invoking private functions on module
 struct LdEverest {
-    static void init(ModuleConfigs module_configs);
+    static void init(ModuleConfigs module_configs, const ModuleInfo& info);
     static void ready();
 };
 

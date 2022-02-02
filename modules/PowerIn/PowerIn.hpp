@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 #ifndef POWER_IN_HPP
 #define POWER_IN_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 0.0.1
+// template version 0.0.3
 //
 
 #include "ld-ev.hpp"
@@ -24,7 +24,8 @@ struct Conf {};
 class PowerIn : public Everest::ModuleBase {
 public:
     PowerIn() = delete;
-    PowerIn(std::unique_ptr<power_inImplBase> p_main, Conf& config) : p_main(std::move(p_main)), config(config){};
+    PowerIn(const ModuleInfo& info, std::unique_ptr<power_inImplBase> p_main, Conf& config) :
+        ModuleBase(info), p_main(std::move(p_main)), config(config){};
 
     const Conf& config;
     const std::unique_ptr<power_inImplBase> p_main;

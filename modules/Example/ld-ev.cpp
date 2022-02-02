@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
-
+// Copyright Pionix GmbH and Contributors to EVerest
 //
 // AUTO GENERATED - DO NOT EDIT!
-// template version 0.0.1
+// template version 0.0.3
 //
 
 #include "ld-ev.hpp"
@@ -16,6 +15,7 @@
 
 namespace module {
 
+// FIXME (aw): could this way of keeping static variables be changed somehow?
 static Everest::ModuleAdapter adapter{};
 static Everest::PtrContainer<Example> mod_ptr{};
 
@@ -23,8 +23,9 @@ static Everest::PtrContainer<Example> mod_ptr{};
 static example::Conf example_config;
 static store::Conf store_config;
 static Conf module_conf;
+static ModuleInfo module_info;
 
-void LdEverest::init(ModuleConfigs module_configs) {
+void LdEverest::init(ModuleConfigs module_configs, const ModuleInfo& mod_info) {
     EVLOG(debug) << "init() called on module Example";
 
     // populate config for provided implementations
@@ -34,6 +35,8 @@ void LdEverest::init(ModuleConfigs module_configs) {
     example_config.enum_test2 = boost::get<int>(example_config_input["enum_test2"]);
 
     auto store_config_input = std::move(module_configs["store"]);
+
+    module_info = mod_info;
 
     mod_ptr->init();
 }
@@ -85,7 +88,7 @@ std::vector<Everest::cmd> everest_register() {
 
     static Everest::MqttProvider mqtt_provider(adapter);
 
-    static Example module(mqtt_provider, std::move(p_example), std::move(p_store), std::move(r_kvs),
+    static Example module(module_info, mqtt_provider, std::move(p_example), std::move(p_store), std::move(r_kvs),
                           std::move(r_powerin), std::move(r_solar), module_conf);
 
     mod_ptr.set(&module);

@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
-
+// Copyright Pionix GmbH and Contributors to EVerest
 //
 // AUTO GENERATED - DO NOT EDIT!
-// template version 0.0.1
+// template version 0.0.3
 //
 
 #include "ld-ev.hpp"
@@ -15,18 +14,22 @@
 
 namespace module {
 
+// FIXME (aw): could this way of keeping static variables be changed somehow?
 static Everest::ModuleAdapter adapter{};
 static Everest::PtrContainer<ExampleUser> mod_ptr{};
 
 // per module configs
 static example_user::Conf example_user_config;
 static Conf module_conf;
+static ModuleInfo module_info;
 
-void LdEverest::init(ModuleConfigs module_configs) {
+void LdEverest::init(ModuleConfigs module_configs, const ModuleInfo& mod_info) {
     EVLOG(debug) << "init() called on module ExampleUser";
 
     // populate config for provided implementations
     auto example_user_config_input = std::move(module_configs["example_user"]);
+
+    module_info = mod_info;
 
     mod_ptr->init();
 }
@@ -71,7 +74,7 @@ std::vector<Everest::cmd> everest_register() {
 
     auto r_example = std::make_unique<exampleIntf>(&adapter, "example");
 
-    static ExampleUser module(std::move(p_example_user), std::move(r_example), module_conf);
+    static ExampleUser module(module_info, std::move(p_example_user), std::move(r_example), module_conf);
 
     mod_ptr.set(&module);
 

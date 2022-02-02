@@ -19,17 +19,13 @@
 namespace module {
 namespace board_support {
 
-struct Conf {
-};
+struct Conf {};
 
 class board_support_ACImpl : public board_support_ACImplBase {
 public:
     board_support_ACImpl() = delete;
-    board_support_ACImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<YetiDriver> &mod, Conf& config) :
-        board_support_ACImplBase(ev, "board_support"),
-        mod(mod),
-        config(config)
-    {};
+    board_support_ACImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<YetiDriver>& mod, Conf& config) :
+        board_support_ACImplBase(ev, "board_support"), mod(mod), config(config){};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here
@@ -37,7 +33,8 @@ public:
 
 protected:
     // command handler functions (virtual)
-    virtual void handle_setup(bool& three_phases, bool& has_ventilation, std::string& country_code, bool& rcd_enabled) override;
+    virtual void handle_setup(bool& three_phases, bool& has_ventilation, std::string& country_code,
+                              bool& rcd_enabled) override;
     virtual void handle_enable(bool& value) override;
     virtual void handle_pwm_on(double& value) override;
     virtual void handle_pwm_off() override;

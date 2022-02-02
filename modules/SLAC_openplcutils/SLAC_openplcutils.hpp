@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 #ifndef SLAC_OPENPLCUTILS_HPP
 #define SLAC_OPENPLCUTILS_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 0.0.1
+// template version 0.0.3
 //
 
 #include "ld-ev.hpp"
@@ -24,8 +24,8 @@ struct Conf {};
 class SLAC_openplcutils : public Everest::ModuleBase {
 public:
     SLAC_openplcutils() = delete;
-    SLAC_openplcutils(std::unique_ptr<ISO15118_3_SLACImplBase> p_main, Conf& config) :
-        p_main(std::move(p_main)), config(config){};
+    SLAC_openplcutils(const ModuleInfo& info, std::unique_ptr<ISO15118_3_SLACImplBase> p_main, Conf& config) :
+        ModuleBase(info), p_main(std::move(p_main)), config(config){};
 
     const Conf& config;
     const std::unique_ptr<ISO15118_3_SLACImplBase> p_main;

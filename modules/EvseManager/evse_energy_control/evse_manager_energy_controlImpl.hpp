@@ -19,17 +19,14 @@
 namespace module {
 namespace evse_energy_control {
 
-struct Conf {
-};
+struct Conf {};
 
 class evse_manager_energy_controlImpl : public evse_manager_energy_controlImplBase {
 public:
     evse_manager_energy_controlImpl() = delete;
-    evse_manager_energy_controlImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<EvseManager> &mod, Conf& config) :
-        evse_manager_energy_controlImplBase(ev, "evse_energy_control"),
-        mod(mod),
-        config(config)
-    {};
+    evse_manager_energy_controlImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<EvseManager>& mod,
+                                    Conf& config) :
+        evse_manager_energy_controlImplBase(ev, "evse_energy_control"), mod(mod), config(config){};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here

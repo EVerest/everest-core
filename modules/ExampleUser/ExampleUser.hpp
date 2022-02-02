@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 #ifndef EXAMPLE_USER_HPP
 #define EXAMPLE_USER_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 0.0.1
+// template version 0.0.3
 //
 
 #include "ld-ev.hpp"
@@ -27,9 +27,9 @@ struct Conf {};
 class ExampleUser : public Everest::ModuleBase {
 public:
     ExampleUser() = delete;
-    ExampleUser(std::unique_ptr<example_userImplBase> p_example_user, std::unique_ptr<exampleIntf> r_example,
-                Conf& config) :
-        p_example_user(std::move(p_example_user)), r_example(std::move(r_example)), config(config){};
+    ExampleUser(const ModuleInfo& info, std::unique_ptr<example_userImplBase> p_example_user,
+                std::unique_ptr<exampleIntf> r_example, Conf& config) :
+        ModuleBase(info), p_example_user(std::move(p_example_user)), r_example(std::move(r_example)), config(config){};
 
     const Conf& config;
     const std::unique_ptr<example_userImplBase> p_example_user;

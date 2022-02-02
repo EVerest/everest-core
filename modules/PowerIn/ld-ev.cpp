@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
-
+// Copyright Pionix GmbH and Contributors to EVerest
 //
 // AUTO GENERATED - DO NOT EDIT!
-// template version 0.0.1
+// template version 0.0.3
 //
 
 #include "ld-ev.hpp"
@@ -15,20 +14,24 @@
 
 namespace module {
 
+// FIXME (aw): could this way of keeping static variables be changed somehow?
 static Everest::ModuleAdapter adapter{};
 static Everest::PtrContainer<PowerIn> mod_ptr{};
 
 // per module configs
 static main::Conf main_config;
 static Conf module_conf;
+static ModuleInfo module_info;
 
-void LdEverest::init(ModuleConfigs module_configs) {
+void LdEverest::init(ModuleConfigs module_configs, const ModuleInfo& mod_info) {
     EVLOG(debug) << "init() called on module PowerIn";
 
     // populate config for provided implementations
     auto main_config_input = std::move(module_configs["main"]);
     main_config.max_current = boost::get<double>(main_config_input["max_current"]);
     main_config.phase_count = boost::get<int>(main_config_input["phase_count"]);
+
+    module_info = mod_info;
 
     mod_ptr->init();
 }
@@ -71,7 +74,7 @@ std::vector<Everest::cmd> everest_register() {
     auto p_main = std::make_unique<main::power_inImpl>(&adapter, mod_ptr, main_config);
     adapter.gather_cmds(*p_main);
 
-    static PowerIn module(std::move(p_main), module_conf);
+    static PowerIn module(module_info, std::move(p_main), module_conf);
 
     mod_ptr.set(&module);
 
