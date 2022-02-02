@@ -3,7 +3,7 @@
 #ifndef {{ info.hpp_guard }}
 #define {{ info.hpp_guard }}
 
-{{ print_template_info('0.0.2', 'marked regions will be kept') }}
+{{ print_template_info('0.0.3', 'marked regions will be kept') }}
 
 #include "{{ info.ld_ev_header }}"
 
@@ -35,6 +35,7 @@ class {{ info.class_name }} : public Everest::ModuleBase {
 public:
     {{ info.class_name }}() = delete;
     {{ info.class_name }}(
+        const ModuleInfo& info,
         {% if info.enable_external_mqtt %}
         Everest::MqttProvider& mqtt_provider,
         {% endif %}
@@ -46,6 +47,7 @@ public:
         {% endfor %}
         Conf& config
     ) :
+        ModuleBase(info),
         {% if info.enable_external_mqtt %}
         mqtt(mqtt_provider),
         {% endif %}

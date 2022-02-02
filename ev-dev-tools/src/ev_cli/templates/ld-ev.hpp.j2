@@ -3,7 +3,7 @@
 #ifndef {{ info.hpp_guard }}
 #define {{ info.hpp_guard }}
 
-{{ print_template_info('0.0.2') }}
+{{ print_template_info('0.0.3') }}
 
 #include <framework/ModuleAdapter.hpp>
 #include <framework/everest.hpp>
@@ -14,7 +14,7 @@ namespace module {
 
 // helper class for invoking private functions on module
 struct LdEverest {
-    static void init(ModuleConfigs module_configs);
+    static void init(ModuleConfigs module_configs, const ModuleInfo& info);
     static void ready();
 };
 

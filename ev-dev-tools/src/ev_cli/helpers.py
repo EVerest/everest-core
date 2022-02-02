@@ -366,7 +366,7 @@ def filter_mod_files(only, mod_files):
 
     # now do the filtering
     for category, category_files in mod_files.items():
-        mod_files[category] = filter(lambda x: x['abbr'] in filter_files, category_files)
+        mod_files[category] = list(filter(lambda x: x['abbr'] in filter_files, category_files))
 
 
 def print_available_mod_files(mod_files):

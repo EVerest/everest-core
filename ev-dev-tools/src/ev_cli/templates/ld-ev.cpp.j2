@@ -1,6 +1,6 @@
 {% from "helper_macros.j2" import print_template_info, var_to_cpp, print_spdx_line %}
 {{ print_spdx_line('Apache-2.0') }}
-{{ print_template_info('0.0.2') }}
+{{ print_template_info('0.0.3') }}
 
 #include "{{ info.ld_ev_header }}"
 
@@ -13,6 +13,7 @@
 
 namespace module {
 
+// FIXME (aw): could this way of keeping static variables be changed somehow?
 static Everest::ModuleAdapter adapter {};
 static Everest::PtrContainer<{{info.class_name }}> mod_ptr {};
 
@@ -22,8 +23,9 @@ static Everest::PtrContainer<{{info.class_name }}> mod_ptr {};
 static {{ impl.id }}::Conf {{ impl.id }}_config;
 {% endfor %}
 static Conf module_conf;
+static ModuleInfo module_info;
 
-void LdEverest::init(ModuleConfigs module_configs) {
+void LdEverest::init(ModuleConfigs module_configs, const ModuleInfo& mod_info) {
     EVLOG(debug) << "init() called on module {{ info.name }}";
 
     // populate config for provided implementations
@@ -40,6 +42,8 @@ void LdEverest::init(ModuleConfigs module_configs) {
     module_conf.{{ item.name }} = boost::get<{{ item.cpp_type }}>(module_configs["!module"]["{{ item.name }}"]);
     {% endfor %}
     {% endif %}
+
+    module_info = mod_info;
 
     mod_ptr->init();
 }
@@ -93,6 +97,7 @@ std::vector<Everest::cmd> everest_register() {
     {% endif %}
 
     static {{ info.class_name }} module(
+    module_info,
     {%- if info.enable_external_mqtt %}mqtt_provider, {% endif -%}
     {%- for impl in provides -%}
     std::move(p_{{ impl.id }}){{ ', ' }}
