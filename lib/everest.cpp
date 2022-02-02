@@ -332,7 +332,7 @@ void Everest::publish_var(const std::string& impl_id, const std::string& var_nam
         } catch (const std::exception& e) {
             std::ostringstream oss;
             oss << "Publish var of " << this->config.printable_identifier(this->module_id, impl_id)
-                << " with variable name '" << var_name << "' with value '" << json_value
+                << " with variable name '" << var_name << "' with value '" << std::setw(4) << json_value
                 << "' could not be validated with schema: " << e.what();
             EVTHROW(EverestApiError(oss.str()));
         }
