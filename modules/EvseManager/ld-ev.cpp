@@ -2,7 +2,7 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 //
 // AUTO GENERATED - DO NOT EDIT!
-// template version 0.0.2
+// template version 0.0.3
 //
 
 #include "ld-ev.hpp"
@@ -16,16 +16,18 @@
 
 namespace module {
 
-static Everest::ModuleAdapter adapter {};
-static Everest::PtrContainer<EvseManager> mod_ptr {};
+// FIXME (aw): could this way of keeping static variables be changed somehow?
+static Everest::ModuleAdapter adapter{};
+static Everest::PtrContainer<EvseManager> mod_ptr{};
 
 // per module configs
 static evse::Conf evse_config;
 static evse_energy_control::Conf evse_energy_control_config;
 static powermeter::Conf powermeter_config;
 static Conf module_conf;
+static ModuleInfo module_info;
 
-void LdEverest::init(ModuleConfigs module_configs) {
+void LdEverest::init(ModuleConfigs module_configs, const ModuleInfo& mod_info) {
     EVLOG(debug) << "init() called on module EvseManager";
 
     // populate config for provided implementations
@@ -35,11 +37,12 @@ void LdEverest::init(ModuleConfigs module_configs) {
 
     auto powermeter_config_input = std::move(module_configs["powermeter"]);
 
-
     module_conf.three_phases = boost::get<bool>(module_configs["!module"]["three_phases"]);
     module_conf.has_ventilation = boost::get<bool>(module_configs["!module"]["has_ventilation"]);
     module_conf.country_code = boost::get<std::string>(module_configs["!module"]["country_code"]);
     module_conf.rcd_enabled = boost::get<bool>(module_configs["!module"]["rcd_enabled"]);
+
+    module_info = mod_info;
 
     mod_ptr->init();
 }
@@ -82,7 +85,8 @@ std::vector<Everest::cmd> everest_register() {
     auto p_evse = std::make_unique<evse::evse_managerImpl>(&adapter, mod_ptr, evse_config);
     adapter.gather_cmds(*p_evse);
 
-    auto p_evse_energy_control = std::make_unique<evse_energy_control::evse_manager_energy_controlImpl>(&adapter, mod_ptr, evse_energy_control_config);
+    auto p_evse_energy_control = std::make_unique<evse_energy_control::evse_manager_energy_controlImpl>(
+        &adapter, mod_ptr, evse_energy_control_config);
     adapter.gather_cmds(*p_evse_energy_control);
 
     auto p_powermeter = std::make_unique<powermeter::powermeterImpl>(&adapter, mod_ptr, powermeter_config);
@@ -93,7 +97,8 @@ std::vector<Everest::cmd> everest_register() {
 
     static Everest::MqttProvider mqtt_provider(adapter);
 
-    static EvseManager module(mqtt_provider, std::move(p_evse), std::move(p_evse_energy_control), std::move(p_powermeter), std::move(r_bsp), std::move(r_powermeter), module_conf);
+    static EvseManager module(module_info, mqtt_provider, std::move(p_evse), std::move(p_evse_energy_control),
+                              std::move(p_powermeter), std::move(r_bsp), std::move(r_powermeter), module_conf);
 
     mod_ptr.set(&module);
 

@@ -5,21 +5,17 @@
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 0.0.2
+// template version 0.0.3
 //
 
 #include "ld-ev.hpp"
 
 // headers for provided interface implementations
-#include <generated/powermeter/Implementation.hpp>
 #include <generated/board_support_AC/Implementation.hpp>
+#include <generated/debug_json/Implementation.hpp>
+#include <generated/powermeter/Implementation.hpp>
 #include <generated/yeti_extras/Implementation.hpp>
-#include <generated/debug_json/Implementation.hpp>
-#include <generated/debug_json/Implementation.hpp>
-#include <generated/debug_json/Implementation.hpp>
-#include <generated/debug_json/Implementation.hpp>
 #include <generated/yeti_simulation_control/Implementation.hpp>
-
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 #include "yeti_comms/evSerial.h"
@@ -36,18 +32,14 @@ struct Conf {
 class YetiDriver : public Everest::ModuleBase {
 public:
     YetiDriver() = delete;
-    YetiDriver(
-        Everest::MqttProvider& mqtt_provider,
-        std::unique_ptr<powermeterImplBase> p_powermeter,
-        std::unique_ptr<board_support_ACImplBase> p_board_support,
-        std::unique_ptr<yeti_extrasImplBase> p_yeti_extras,
-        std::unique_ptr<debug_jsonImplBase> p_debug_yeti,
-        std::unique_ptr<debug_jsonImplBase> p_debug_powermeter,
-        std::unique_ptr<debug_jsonImplBase> p_debug_state,
-        std::unique_ptr<debug_jsonImplBase> p_debug_keepalive,
-        std::unique_ptr<yeti_simulation_controlImplBase> p_yeti_simulation_control,
-        Conf& config
-    ) :
+    YetiDriver(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
+               std::unique_ptr<powermeterImplBase> p_powermeter,
+               std::unique_ptr<board_support_ACImplBase> p_board_support,
+               std::unique_ptr<yeti_extrasImplBase> p_yeti_extras, std::unique_ptr<debug_jsonImplBase> p_debug_yeti,
+               std::unique_ptr<debug_jsonImplBase> p_debug_powermeter,
+               std::unique_ptr<debug_jsonImplBase> p_debug_state, std::unique_ptr<debug_jsonImplBase> p_debug_keepalive,
+               std::unique_ptr<yeti_simulation_controlImplBase> p_yeti_simulation_control, Conf& config) :
+        ModuleBase(info),
         mqtt(mqtt_provider),
         p_powermeter(std::move(p_powermeter)),
         p_board_support(std::move(p_board_support)),
@@ -57,8 +49,7 @@ public:
         p_debug_state(std::move(p_debug_state)),
         p_debug_keepalive(std::move(p_debug_keepalive)),
         p_yeti_simulation_control(std::move(p_yeti_simulation_control)),
-        config(config)
-    {};
+        config(config){};
 
     const Conf& config;
     Everest::MqttProvider& mqtt;
@@ -88,7 +79,6 @@ private:
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
-
 };
 
 // ev@087e516b-124c-48df-94fb-109508c7cda9:v1

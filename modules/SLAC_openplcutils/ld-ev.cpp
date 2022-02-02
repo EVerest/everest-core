@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
-
+// Copyright Pionix GmbH and Contributors to EVerest
 //
 // AUTO GENERATED - DO NOT EDIT!
-// template version 0.0.1
+// template version 0.0.3
 //
 
 #include "ld-ev.hpp"
@@ -15,14 +14,16 @@
 
 namespace module {
 
+// FIXME (aw): could this way of keeping static variables be changed somehow?
 static Everest::ModuleAdapter adapter{};
 static Everest::PtrContainer<SLAC_openplcutils> mod_ptr{};
 
 // per module configs
 static main::Conf main_config;
 static Conf module_conf;
+static ModuleInfo module_info;
 
-void LdEverest::init(ModuleConfigs module_configs) {
+void LdEverest::init(ModuleConfigs module_configs, const ModuleInfo& mod_info) {
     EVLOG(debug) << "init() called on module SLAC_openplcutils";
 
     // populate config for provided implementations
@@ -34,6 +35,8 @@ void LdEverest::init(ModuleConfigs module_configs) {
     main_config.timeout = boost::get<int>(main_config_input["timeout"]);
     main_config.time_to_sound = boost::get<int>(main_config_input["time_to_sound"]);
     main_config.number_of_sounds = boost::get<int>(main_config_input["number_of_sounds"]);
+
+    module_info = mod_info;
 
     mod_ptr->init();
 }
@@ -76,7 +79,7 @@ std::vector<Everest::cmd> everest_register() {
     auto p_main = std::make_unique<main::ISO15118_3_SLACImpl>(&adapter, mod_ptr, main_config);
     adapter.gather_cmds(*p_main);
 
-    static SLAC_openplcutils module(std::move(p_main), module_conf);
+    static SLAC_openplcutils module(module_info, std::move(p_main), module_conf);
 
     mod_ptr.set(&module);
 

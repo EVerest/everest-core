@@ -43,3 +43,21 @@ message("everest modules: ${EVEREST_MODULES}")
 foreach(EVEREST_MODULE ${EVEREST_MODULES})
     add_subdirectory(${EVEREST_MODULE})
 endforeach()
+
+# FIXME (aw): because force_update_all_modules will be called directly
+#             we might also choose to get all module names by listing
+#             the current directory instead of using EVEREST_MODULES
+#             (could be helpful while developing ...)
+set(FORCE_UPDATE_COMMANDS "")
+foreach(EVEREST_MODULE ${EVEREST_MODULES})
+    if(NOT ${EVEREST_MODULE} MATCHES "^Js")
+        list(APPEND FORCE_UPDATE_COMMANDS
+            COMMAND ${EV_CLI} module update --framework-dir ${everest-framework_SOURCE_DIR} -f ${EVEREST_MODULE}
+        )
+    endif()
+endforeach()
+
+add_custom_target(force_update_all_modules
+    ${FORCE_UPDATE_COMMANDS}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/..
+)

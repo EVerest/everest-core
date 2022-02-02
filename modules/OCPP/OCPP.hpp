@@ -1,22 +1,22 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 #ifndef OCPP_HPP
 #define OCPP_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 0.0.1
+// template version 0.0.3
 //
 
 #include "ld-ev.hpp"
 
 // headers for provided interface implementations
-#include <generated/ocpp_1_6_charge_point/Implementation.hpp>
 #include <generated/auth_token_validator/Implementation.hpp>
+#include <generated/ocpp_1_6_charge_point/Implementation.hpp>
 
 // headers for required interface implementations
-#include <generated/powermeter/Interface.hpp>
 #include <generated/evse_manager/Interface.hpp>
+#include <generated/powermeter/Interface.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
@@ -42,21 +42,17 @@ struct Conf {
 class OCPP : public Everest::ModuleBase {
 public:
     OCPP() = delete;
-    OCPP(
-        Everest::MqttProvider& mqtt_provider,
-        std::unique_ptr<ocpp_1_6_charge_pointImplBase> p_main,
-        std::unique_ptr<auth_token_validatorImplBase> p_auth_validator,
-        std::unique_ptr<powermeterIntf> r_powermeter,
-        std::unique_ptr<evse_managerIntf> r_evse_manager,
-        Conf& config
-    ) :
+    OCPP(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
+         std::unique_ptr<ocpp_1_6_charge_pointImplBase> p_main,
+         std::unique_ptr<auth_token_validatorImplBase> p_auth_validator, std::unique_ptr<powermeterIntf> r_powermeter,
+         std::unique_ptr<evse_managerIntf> r_evse_manager, Conf& config) :
+        ModuleBase(info),
         mqtt(mqtt_provider),
         p_main(std::move(p_main)),
         p_auth_validator(std::move(p_auth_validator)),
         r_powermeter(std::move(r_powermeter)),
         r_evse_manager(std::move(r_evse_manager)),
-        config(config)
-    {};
+        config(config){};
 
     const Conf& config;
     Everest::MqttProvider& mqtt;
@@ -85,7 +81,6 @@ private:
     // insert your private definitions here
     void start_session();
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
-
 };
 
 // ev@087e516b-124c-48df-94fb-109508c7cda9:v1

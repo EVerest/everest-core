@@ -1,6 +1,8 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright Pionix GmbH and Contributors to EVerest
 //
 // AUTO GENERATED - DO NOT EDIT!
-// template version 0.0.1
+// template version 0.0.3
 //
 
 #include "ld-ev.hpp"
@@ -12,14 +14,16 @@
 
 namespace module {
 
-static Everest::ModuleAdapter adapter {};
-static Everest::PtrContainer<SunspecReader> mod_ptr {};
+// FIXME (aw): could this way of keeping static variables be changed somehow?
+static Everest::ModuleAdapter adapter{};
+static Everest::PtrContainer<SunspecReader> mod_ptr{};
 
 // per module configs
 static main::Conf main_config;
 static Conf module_conf;
+static ModuleInfo module_info;
 
-void LdEverest::init(ModuleConfigs module_configs) {
+void LdEverest::init(ModuleConfigs module_configs, const ModuleInfo& mod_info) {
     EVLOG(debug) << "init() called on module SunspecReader";
 
     // populate config for provided implementations
@@ -30,6 +34,7 @@ void LdEverest::init(ModuleConfigs module_configs) {
     main_config.query = boost::get<std::string>(main_config_input["query"]);
     main_config.read_interval = boost::get<int>(main_config_input["read_interval"]);
 
+    module_info = mod_info;
 
     mod_ptr->init();
 }
@@ -72,10 +77,9 @@ std::vector<Everest::cmd> everest_register() {
     auto p_main = std::make_unique<main::sunspec_readerImpl>(&adapter, mod_ptr, main_config);
     adapter.gather_cmds(*p_main);
 
-
     static Everest::MqttProvider mqtt_provider(adapter);
 
-    static SunspecReader module(mqtt_provider, std::move(p_main), module_conf);
+    static SunspecReader module(module_info, mqtt_provider, std::move(p_main), module_conf);
 
     mod_ptr.set(&module);
 

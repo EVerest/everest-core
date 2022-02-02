@@ -1,9 +1,11 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright Pionix GmbH and Contributors to EVerest
 #ifndef MAIN_SUNSPEC_READER_IMPL_HPP
 #define MAIN_SUNSPEC_READER_IMPL_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 0.0.1
+// template version 0.0.2
 //
 
 #include <generated/sunspec_reader/Implementation.hpp>
@@ -13,13 +15,13 @@
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 // insert your custom include headers here
 #include <chrono>
-#include <thread>
-#include <stdexcept>
 #include <memory>
+#include <stdexcept>
+#include <thread>
 
-#include <utils/thread.hpp>
-#include <sunspec/sunspec_device_mapping.hpp>
 #include <sunspec/reader.hpp>
+#include <sunspec/sunspec_device_mapping.hpp>
+#include <utils/thread.hpp>
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 
 namespace module {
@@ -36,12 +38,8 @@ struct Conf {
 class sunspec_readerImpl : public sunspec_readerImplBase {
 public:
     sunspec_readerImpl() = delete;
-    sunspec_readerImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<SunspecReader> &mod, Conf& config) :
-        sunspec_readerImplBase(ev, "main"),
-        mod(mod),
-        config(config)
-    {
-    };
+    sunspec_readerImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<SunspecReader>& mod, Conf& config) :
+        sunspec_readerImplBase(ev, "main"), mod(mod), config(config){};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here

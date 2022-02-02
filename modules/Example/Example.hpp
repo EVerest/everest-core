@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 #ifndef EXAMPLE_HPP
 #define EXAMPLE_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 0.0.1
+// template version 0.0.3
 //
 
 #include "ld-ev.hpp"
@@ -30,9 +30,11 @@ struct Conf {};
 class Example : public Everest::ModuleBase {
 public:
     Example() = delete;
-    Example(Everest::MqttProvider& mqtt_provider, std::unique_ptr<example_childImplBase> p_example,
-            std::unique_ptr<kvsImplBase> p_store, std::unique_ptr<kvsIntf> r_kvs,
-            std::unique_ptr<power_inIntf> r_powerin, std::unique_ptr<powerIntf> r_solar, Conf& config) :
+    Example(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
+            std::unique_ptr<example_childImplBase> p_example, std::unique_ptr<kvsImplBase> p_store,
+            std::unique_ptr<kvsIntf> r_kvs, std::unique_ptr<power_inIntf> r_powerin, std::unique_ptr<powerIntf> r_solar,
+            Conf& config) :
+        ModuleBase(info),
         mqtt(mqtt_provider),
         p_example(std::move(p_example)),
         p_store(std::move(p_store)),

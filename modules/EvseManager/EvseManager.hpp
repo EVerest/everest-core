@@ -5,7 +5,7 @@
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 0.0.2
+// template version 0.0.3
 //
 
 #include "ld-ev.hpp"
@@ -35,23 +35,19 @@ struct Conf {
 class EvseManager : public Everest::ModuleBase {
 public:
     EvseManager() = delete;
-    EvseManager(
-        Everest::MqttProvider& mqtt_provider,
-        std::unique_ptr<evse_managerImplBase> p_evse,
-        std::unique_ptr<evse_manager_energy_controlImplBase> p_evse_energy_control,
-        std::unique_ptr<powermeterImplBase> p_powermeter,
-        std::unique_ptr<board_support_ACIntf> r_bsp,
-        std::unique_ptr<powermeterIntf> r_powermeter,
-        Conf& config
-    ) :
+    EvseManager(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
+                std::unique_ptr<evse_managerImplBase> p_evse,
+                std::unique_ptr<evse_manager_energy_controlImplBase> p_evse_energy_control,
+                std::unique_ptr<powermeterImplBase> p_powermeter, std::unique_ptr<board_support_ACIntf> r_bsp,
+                std::unique_ptr<powermeterIntf> r_powermeter, Conf& config) :
+        ModuleBase(info),
         mqtt(mqtt_provider),
         p_evse(std::move(p_evse)),
         p_evse_energy_control(std::move(p_evse_energy_control)),
         p_powermeter(std::move(p_powermeter)),
         r_bsp(std::move(r_bsp)),
         r_powermeter(std::move(r_powermeter)),
-        config(config)
-    {};
+        config(config){};
 
     const Conf& config;
     Everest::MqttProvider& mqtt;
@@ -81,7 +77,6 @@ private:
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     json latest_powermeter_data;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
-
 };
 
 // ev@087e516b-124c-48df-94fb-109508c7cda9:v1

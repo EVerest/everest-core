@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 #ifndef MAIN_POWERMETER_IMPL_HPP
 #define MAIN_POWERMETER_IMPL_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 0.0.1
+// template version 0.0.2
 //
 
 #include <generated/powermeter/Implementation.hpp>
@@ -16,10 +16,10 @@
 #include <memory>
 #include <vector>
 
-#include <utils/thread.hpp>
-#include <sunspec/conversion.hpp>
 #include <modbus/modbus_client.hpp>
 #include <modbus/utils.hpp>
+#include <sunspec/conversion.hpp>
+#include <utils/thread.hpp>
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 
 namespace module {
@@ -44,11 +44,8 @@ struct Conf {
 class powermeterImpl : public powermeterImplBase {
 public:
     powermeterImpl() = delete;
-    powermeterImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<ModbusMeter> &mod, Conf& config) :
-        powermeterImplBase(ev, "main"),
-        mod(mod),
-        config(config)
-    {};
+    powermeterImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<ModbusMeter>& mod, Conf& config) :
+        powermeterImplBase(ev, "main"), mod(mod), config(config){};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     void run_meter_loop();

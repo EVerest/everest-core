@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 #ifndef POWER_HPP
 #define POWER_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 0.0.1
+// template version 0.0.3
 //
 
 #include "ld-ev.hpp"
@@ -28,9 +28,13 @@ struct Conf {};
 class Power : public Everest::ModuleBase {
 public:
     Power() = delete;
-    Power(std::unique_ptr<power_resultImplBase> p_main, std::unique_ptr<power_inIntf> r_powerin,
+    Power(const ModuleInfo& info, std::unique_ptr<power_resultImplBase> p_main, std::unique_ptr<power_inIntf> r_powerin,
           std::unique_ptr<powerIntf> r_solar, Conf& config) :
-        p_main(std::move(p_main)), r_powerin(std::move(r_powerin)), ro_solar(std::move(r_solar)), config(config){};
+        ModuleBase(info),
+        p_main(std::move(p_main)),
+        r_powerin(std::move(r_powerin)),
+        ro_solar(std::move(r_solar)),
+        config(config){};
 
     const Conf& config;
     const std::unique_ptr<power_resultImplBase> p_main;

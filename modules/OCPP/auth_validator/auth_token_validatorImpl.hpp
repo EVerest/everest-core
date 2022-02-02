@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 #ifndef AUTH_VALIDATOR_AUTH_TOKEN_VALIDATOR_IMPL_HPP
 #define AUTH_VALIDATOR_AUTH_TOKEN_VALIDATOR_IMPL_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 0.0.1
+// template version 0.0.2
 //
 
 #include <generated/auth_token_validator/Implementation.hpp>
@@ -19,17 +19,13 @@
 namespace module {
 namespace auth_validator {
 
-struct Conf {
-};
+struct Conf {};
 
 class auth_token_validatorImpl : public auth_token_validatorImplBase {
 public:
     auth_token_validatorImpl() = delete;
-    auth_token_validatorImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<OCPP> &mod, Conf& config) :
-        auth_token_validatorImplBase(ev, "auth_validator"),
-        mod(mod),
-        config(config)
-    {};
+    auth_token_validatorImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<OCPP>& mod, Conf& config) :
+        auth_token_validatorImplBase(ev, "auth_validator"), mod(mod), config(config){};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here

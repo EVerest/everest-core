@@ -19,17 +19,13 @@
 namespace module {
 namespace yeti_extras {
 
-struct Conf {
-};
+struct Conf {};
 
 class yeti_extrasImpl : public yeti_extrasImplBase {
 public:
     yeti_extrasImpl() = delete;
-    yeti_extrasImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<YetiDriver> &mod, Conf& config) :
-        yeti_extrasImplBase(ev, "yeti_extras"),
-        mod(mod),
-        config(config)
-    {};
+    yeti_extrasImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<YetiDriver>& mod, Conf& config) :
+        yeti_extrasImplBase(ev, "yeti_extras"), mod(mod), config(config){};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here

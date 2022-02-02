@@ -59,6 +59,12 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 find_package(EDM REQUIRED)
 
+# search for ev-cli tool
+find_program(EV_CLI
+    ev-cli
+    REQUIRED
+)
+
 find_package(Boost COMPONENTS filesystem program_options system thread REQUIRED)
 
 # testing

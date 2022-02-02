@@ -2,27 +2,28 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 //
 // AUTO GENERATED - DO NOT EDIT!
-// template version 0.0.2
+// template version 0.0.3
 //
 
 #include "ld-ev.hpp"
 
 #include "YetiDriver.hpp"
-#include "powermeter/powermeterImpl.hpp"
 #include "board_support/board_support_ACImpl.hpp"
-#include "yeti_extras/yeti_extrasImpl.hpp"
-#include "debug_yeti/debug_jsonImpl.hpp"
+#include "debug_keepalive/debug_jsonImpl.hpp"
 #include "debug_powermeter/debug_jsonImpl.hpp"
 #include "debug_state/debug_jsonImpl.hpp"
-#include "debug_keepalive/debug_jsonImpl.hpp"
+#include "debug_yeti/debug_jsonImpl.hpp"
+#include "powermeter/powermeterImpl.hpp"
+#include "yeti_extras/yeti_extrasImpl.hpp"
 #include "yeti_simulation_control/yeti_simulation_controlImpl.hpp"
 
 #include <boost/dll/alias.hpp>
 
 namespace module {
 
-static Everest::ModuleAdapter adapter {};
-static Everest::PtrContainer<YetiDriver> mod_ptr {};
+// FIXME (aw): could this way of keeping static variables be changed somehow?
+static Everest::ModuleAdapter adapter{};
+static Everest::PtrContainer<YetiDriver> mod_ptr{};
 
 // per module configs
 static powermeter::Conf powermeter_config;
@@ -34,8 +35,9 @@ static debug_state::Conf debug_state_config;
 static debug_keepalive::Conf debug_keepalive_config;
 static yeti_simulation_control::Conf yeti_simulation_control_config;
 static Conf module_conf;
+static ModuleInfo module_info;
 
-void LdEverest::init(ModuleConfigs module_configs) {
+void LdEverest::init(ModuleConfigs module_configs, const ModuleInfo& mod_info) {
     EVLOG(debug) << "init() called on module YetiDriver";
 
     // populate config for provided implementations
@@ -55,10 +57,11 @@ void LdEverest::init(ModuleConfigs module_configs) {
 
     auto yeti_simulation_control_config_input = std::move(module_configs["yeti_simulation_control"]);
 
-
     module_conf.serial_port = boost::get<std::string>(module_configs["!module"]["serial_port"]);
     module_conf.baud_rate = boost::get<int>(module_configs["!module"]["baud_rate"]);
     module_conf.control_mode = boost::get<std::string>(module_configs["!module"]["control_mode"]);
+
+    module_info = mod_info;
 
     mod_ptr->init();
 }
@@ -101,7 +104,8 @@ std::vector<Everest::cmd> everest_register() {
     auto p_powermeter = std::make_unique<powermeter::powermeterImpl>(&adapter, mod_ptr, powermeter_config);
     adapter.gather_cmds(*p_powermeter);
 
-    auto p_board_support = std::make_unique<board_support::board_support_ACImpl>(&adapter, mod_ptr, board_support_config);
+    auto p_board_support =
+        std::make_unique<board_support::board_support_ACImpl>(&adapter, mod_ptr, board_support_config);
     adapter.gather_cmds(*p_board_support);
 
     auto p_yeti_extras = std::make_unique<yeti_extras::yeti_extrasImpl>(&adapter, mod_ptr, yeti_extras_config);
@@ -110,22 +114,27 @@ std::vector<Everest::cmd> everest_register() {
     auto p_debug_yeti = std::make_unique<debug_yeti::debug_jsonImpl>(&adapter, mod_ptr, debug_yeti_config);
     adapter.gather_cmds(*p_debug_yeti);
 
-    auto p_debug_powermeter = std::make_unique<debug_powermeter::debug_jsonImpl>(&adapter, mod_ptr, debug_powermeter_config);
+    auto p_debug_powermeter =
+        std::make_unique<debug_powermeter::debug_jsonImpl>(&adapter, mod_ptr, debug_powermeter_config);
     adapter.gather_cmds(*p_debug_powermeter);
 
     auto p_debug_state = std::make_unique<debug_state::debug_jsonImpl>(&adapter, mod_ptr, debug_state_config);
     adapter.gather_cmds(*p_debug_state);
 
-    auto p_debug_keepalive = std::make_unique<debug_keepalive::debug_jsonImpl>(&adapter, mod_ptr, debug_keepalive_config);
+    auto p_debug_keepalive =
+        std::make_unique<debug_keepalive::debug_jsonImpl>(&adapter, mod_ptr, debug_keepalive_config);
     adapter.gather_cmds(*p_debug_keepalive);
 
-    auto p_yeti_simulation_control = std::make_unique<yeti_simulation_control::yeti_simulation_controlImpl>(&adapter, mod_ptr, yeti_simulation_control_config);
+    auto p_yeti_simulation_control = std::make_unique<yeti_simulation_control::yeti_simulation_controlImpl>(
+        &adapter, mod_ptr, yeti_simulation_control_config);
     adapter.gather_cmds(*p_yeti_simulation_control);
-
 
     static Everest::MqttProvider mqtt_provider(adapter);
 
-    static YetiDriver module(mqtt_provider, std::move(p_powermeter), std::move(p_board_support), std::move(p_yeti_extras), std::move(p_debug_yeti), std::move(p_debug_powermeter), std::move(p_debug_state), std::move(p_debug_keepalive), std::move(p_yeti_simulation_control), module_conf);
+    static YetiDriver module(module_info, mqtt_provider, std::move(p_powermeter), std::move(p_board_support),
+                             std::move(p_yeti_extras), std::move(p_debug_yeti), std::move(p_debug_powermeter),
+                             std::move(p_debug_state), std::move(p_debug_keepalive),
+                             std::move(p_yeti_simulation_control), module_conf);
 
     mod_ptr.set(&module);
 
