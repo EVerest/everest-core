@@ -1,12 +1,12 @@
 #
 # AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-# template version 0.0.1
+# template version 0.0.2
 #
 
-set(MODULE_NAME "SLAC_openplcutils")
-set(MOD_MODULE_NAME "mod${MODULE_NAME}")
-add_library(${MOD_MODULE_NAME} SHARED)
-add_dependencies(${MOD_MODULE_NAME} generate_interface_files)
+# module setup:
+#   - ${MOD_MODULE_NAME}: library target
+#   - ${MODULE_NAME}: module name
+cpp_module_setup()
 
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 list(APPEND ADDITIONAL_MODULE_LIBS
@@ -15,17 +15,17 @@ list(APPEND ADDITIONAL_MODULE_LIBS
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 
 target_include_directories(${MOD_MODULE_NAME}
-    PUBLIC
-        "everest"
-        ${GENERATED_HEADER_DIR}
-        ${ADDITIONAL_MODULE_INCLUDES}
+    PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
+        ${GENERATED_HEADER_DIR}
+        ${MODULE_LOADER_DIR}
+        ${ADDITIONAL_MODULE_INCLUDES}
 )
 
 target_sources(${MOD_MODULE_NAME}
     PRIVATE
         ${MODULE_NAME}.cpp
-        "ld-ev.cpp"
+        "${MODULE_LOADER_DIR}/ld-ev.cpp"
         "main/ISO15118_3_SLACImpl.cpp"
         ${ADDITIONAL_MODULE_SOURCES}
 )
