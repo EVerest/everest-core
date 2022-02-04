@@ -28,6 +28,7 @@ RUN apt-get update \
     doxygen \
     graphviz \
     build-essential \
+    clang-format \
     clang-tidy \
     cppcheck \
     libboost-all-dev \

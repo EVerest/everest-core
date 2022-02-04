@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # SPDX-License-Identifier: Apache-2.0
-# Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+# Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #
 """
 author: aw@pionix.de
@@ -88,7 +88,6 @@ def generate_tmpl_data_for_if(interface, if_def):
 
 
 def generate_tmpl_data_for_module(module, module_def):
-
     provides = []
     for impl, impl_info in module_def.get('provides', {}).items():
         config = []
@@ -131,6 +130,7 @@ def generate_tmpl_data_for_module(module, module_def):
             'desc': module_def['description'],
             'module_header': f'{module}.hpp',
             'module_config': module_config,
+            'ld_ev_header': 'ld-ev.hpp',
             'enable_external_mqtt': module_def.get('enable_external_mqtt', False)
         },
         'provides': provides,
@@ -140,14 +140,59 @@ def generate_tmpl_data_for_module(module, module_def):
     return tmpl_data
 
 
+def construct_impl_file_paths(impl):
+    interface = impl['type']
+    common_part = f'{impl["id"]}/{interface}'
+    return (f'{common_part}Impl.hpp', f'{common_part}Impl.cpp')
+
+
+def set_impl_specific_path_vars(tmpl_data, output_path):
+    """Set cpp_file_rel_path and class_header vars to implementation template data."""
+    for impl in tmpl_data['provides']:
+        (impl['class_header'], impl['cpp_file_rel_path']) = construct_impl_file_paths(impl)
+
+
+def generate_module_loader_files(mod, output_dir):
+    loader_files = []
+
+    mod_path = everest_dir / f'modules/{mod}/manifest.json'
+    mod_def = helpers.load_validated_module_def(mod_path, validators['module'])
+    tmpl_data = generate_tmpl_data_for_module(mod, mod_def)
+
+    set_impl_specific_path_vars(tmpl_data, mod_path.parent)
+
+    # ld-ev.hpp
+    tmpl_data['info']['hpp_guard'] = 'LD_EV_HPP'
+
+    loader_files.append({
+        'filename': 'ld-ev.hpp',
+        'path': output_dir / mod / 'ld-ev.hpp',
+        'printable_name': f'{mod}/ld-ev.hpp',
+        'content': templates['ld-ev.hpp'].render(tmpl_data),
+        'last_mtime': mod_path.stat().st_mtime
+    })
+
+    # ld-ev.cpp
+    loader_files.append({
+        'filename': 'ld-ev.cpp',
+        'path': output_dir / mod / 'ld-ev.cpp',
+        'printable_name': f'{mod}/ld-ev.cpp',
+        'content': templates['ld-ev.cpp'].render(tmpl_data),
+        'last_mtime': mod_path.stat().st_mtime
+    })
+
+    return loader_files
+
+
 def generate_module_files(mod, update_flag):
     mod_files = {'core': [], 'interfaces': []}
     mod_path = everest_dir / f'modules/{mod}/manifest.json'
     mod_def = helpers.load_validated_module_def(mod_path, validators['module'])
 
     tmpl_data = generate_tmpl_data_for_module(mod, mod_def)
-
     output_path = mod_path.parent
+    # FIXME (aw): we might move the following function into generate_tmp_data_for_module
+    set_impl_specific_path_vars(tmpl_data, output_path)
 
     cmakelists_blocks = {
         'version': 'v1',
@@ -165,7 +210,7 @@ def generate_module_files(mod, update_flag):
         }
     }
 
-    if_impl_hpp_blocks = {
+    impl_hpp_blocks = {
         'version': 'v1',
         'format_str': '// ev@{uuid}:{version}',
         'regex_str': '^(?P<indent>\s*)// ev@(?P<uuid>[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}):(?P<version>.*)$',
@@ -224,13 +269,7 @@ def generate_module_files(mod, update_flag):
     # provided interface implementations (impl cpp & hpp)
     for impl in tmpl_data['provides']:
         interface = impl['type']
-        impl_output_path = output_path / f'{impl["id"]}'
-        if_impl_hpp_file = impl_output_path / f'{interface}Impl.hpp'
-        if_impl_cpp_file = impl_output_path / f'{interface}Impl.cpp'
-
-        # add module related info to interface implementation
-        impl['cpp_file_rel_path'] = str(if_impl_cpp_file.relative_to(output_path))
-        impl['class_header'] = str(if_impl_hpp_file.relative_to(output_path))
+        (impl_hpp_file, impl_cpp_file) = construct_impl_file_paths(impl)
 
         # load template data for interface
         if_def, last_mtime = load_interface_defintion(interface)
@@ -247,21 +286,22 @@ def generate_module_files(mod, update_flag):
             'interface_implementation_id': impl['id']
         })
 
-        if_tmpl_data['info']['blocks'] = helpers.load_tmpl_blocks(if_impl_hpp_blocks, if_impl_hpp_file, update_flag)
+        if_tmpl_data['info']['blocks'] = helpers.load_tmpl_blocks(
+            impl_hpp_blocks, output_path / impl_hpp_file, update_flag)
 
         # FIXME (aw): time stamp should include parent interfaces modification dates
         mod_files['interfaces'].append({
             'abbr': f'{impl["id"]}.hpp',
-            'path': if_impl_hpp_file,
-            'printable_name': if_impl_hpp_file.relative_to(output_path),
+            'path': output_path / impl_hpp_file,
+            'printable_name': impl_hpp_file,
             'content': templates['interface_impl.hpp'].render(if_tmpl_data),
             'last_mtime': last_mtime
         })
 
         mod_files['interfaces'].append({
             'abbr': f'{impl["id"]}.cpp',
-            'path': if_impl_cpp_file,
-            'printable_name': if_impl_cpp_file.relative_to(output_path),
+            'path': output_path / impl_cpp_file,
+            'printable_name': impl_cpp_file,
             'content': templates['interface_impl.cpp'].render(if_tmpl_data),
             'last_mtime': last_mtime
         })
@@ -272,28 +312,6 @@ def generate_module_files(mod, update_flag):
         'abbr': 'cmakelists',
         'path': cmakelists_file,
         'content': templates['cmakelists'].render(tmpl_data),
-        'last_mtime': mod_path.stat().st_mtime
-    })
-
-    # ld-ev.hpp
-    ld_ev_hpp_file = output_path / 'ld-ev.hpp'
-    tmpl_data['info']['hpp_guard'] = 'LD_EV_HPP'
-    tmpl_data['info']['ld_ev_header'] = 'ld-ev.hpp'
-
-    mod_files['core'].append({
-        'abbr': 'ld-ev.hpp',
-        'path': ld_ev_hpp_file,
-        'content': templates['ld-ev.hpp'].render(tmpl_data),
-        'last_mtime': mod_path.stat().st_mtime
-    })
-
-    # ld-ev.cpp
-    tmpl_data['info']['module_header'] = f'{mod}.hpp'
-    ld_ev_cpp_file = output_path / 'ld-ev.cpp'
-    mod_files['core'].append({
-        'abbr': 'ld-ev.cpp',
-        'path': ld_ev_cpp_file,
-        'content': templates['ld-ev.cpp'].render(tmpl_data),
         'last_mtime': mod_path.stat().st_mtime
     })
 
@@ -353,7 +371,7 @@ def load_interface_defintion(interface):
     return if_def, last_mtime
 
 
-def generate_interface_headers(interface, all_interfaces_flag):
+def generate_interface_headers(interface, all_interfaces_flag, output_dir):
     if_parts = {'base': None, 'exports': None}
 
     try:
@@ -367,7 +385,7 @@ def generate_interface_headers(interface, all_interfaces_flag):
 
     tmpl_data = generate_tmpl_data_for_if(interface, if_def)
 
-    output_path = everest_dir / f'generated/include/generated/{interface}'
+    output_path = output_dir / interface
     output_path.mkdir(parents=True, exist_ok=True)
 
     # generate Base file (providers view)
@@ -424,11 +442,10 @@ def module_create(args):
 def module_update(args):
     primary_update_strategy = 'force-update' if args.force else 'update'
     update_strategy = {'module.cpp': 'update-if-non-existent'}
-    for file_name in ['ld-ev.hpp', 'ld-ev.cpp', 'cmakelists', 'module.hpp']:
+    for file_name in ['cmakelists', 'module.hpp']:
         update_strategy[file_name] = primary_update_strategy
 
     # FIXME (aw): refactor out this only handling and rename it properly
-
     mod_files = generate_module_files(args.module, True)
 
     if args.only == 'which':
@@ -455,20 +472,34 @@ def module_update(args):
             helpers.write_content_to_file(file_info, 'update-if-non-existent', args.diff)
 
 
+def module_genld(args):
+    output_dir = Path(args.output_dir).resolve() if args.output_dir else everest_dir / 'build/generated/modules'
+
+    loader_files = generate_module_loader_files(args.module, output_dir)
+
+    if not args.disable_clang_format:
+        for file_info in loader_files:
+            helpers.clang_format(args.clang_format_file, file_info)
+
+    for file_info in loader_files:
+        helpers.write_content_to_file(file_info, 'force-update')
+
+
 def interface_genhdr(args):
+    output_dir = Path(args.output_dir).resolve() if args.output_dir else everest_dir / \
+        'build/generated/interfaces/generated'
+
     primary_update_strategy = 'force-update' if args.force else 'update'
 
     interfaces = args.interfaces
     all_interfaces = False
     if not interfaces:
-        interfaces = []
         all_interfaces = True
         if_dir = everest_dir / 'interfaces'
-        for if_path in if_dir.iterdir():
-            interfaces.append(if_path.stem)
+        interfaces = [if_path.stem for if_path in if_dir.iterdir() if (if_path.is_file() and if_path.suffix == '.json')]
 
     for interface in interfaces:
-        if_parts = generate_interface_headers(interface, all_interfaces)
+        if_parts = generate_interface_headers(interface, all_interfaces, output_dir)
 
         if not args.disable_clang_format:
             helpers.clang_format(args.clang_format_file, if_parts['base'])
@@ -527,10 +558,20 @@ def main():
                                    'For a list of available files use "--only which".')
     mod_update_parser.set_defaults(action_handler=module_update)
 
+    mod_genld_parser = mod_actions.add_parser(
+        'generate-loader', aliases=['gl'], parents=[common_parser], help='generate everest loader')
+    mod_genld_parser.add_argument(
+        'module', type=str, help='name of the module, for which the loader should be generated')
+    mod_genld_parser.add_argument('-o', '--output-dir', type=str, help='Output directory for generated loader '
+                                  'files (default: {everest-dir}/build/generated/module/)')
+    mod_genld_parser.set_defaults(action_handler=module_genld)
+
     if_actions = parser_if.add_subparsers(metavar='<action>', help='available actions', required=True)
     if_genhdr_parser = if_actions.add_parser(
         'generate-headers', aliases=['gh'], parents=[common_parser], help='generate headers')
     if_genhdr_parser.add_argument('-f', '--force', action='store_true', help='force overwriting')
+    if_genhdr_parser.add_argument('-o', '--output-dir', type=str, help='Output directory for generated interface '
+                                  'headers (default: {everest-dir}/build/generated/include/generated)')
     if_genhdr_parser.add_argument('-d', '--diff', '--dry-run', action='store_true', help='show resulting diff')
     if_genhdr_parser.add_argument('interfaces', nargs='*', help='a list of interfaces, for which header files should '
                                   'be generated - if no interface is given, all will be processed and non-processable '
@@ -544,25 +585,23 @@ def main():
 
     args = parser.parse_args()
 
-    if 'everest_dir' in args:
-        everest_dir = Path(args.everest_dir).resolve()
-        if not (everest_dir / 'interfaces').exists():
-            print('The default (".") xor supplied (via --everest-dir) everest directory\n'
-                  'doesn\'t contain an "interface" directory and therefore does not seem to be valid.\n'
-                  f'dir: {everest_dir}')
-            exit(1)
+    everest_dir = Path(args.everest_dir).resolve()
+    if not (everest_dir / 'interfaces').exists():
+        print('The default (".") xor supplied (via --everest-dir) everest directory\n'
+              'doesn\'t contain an "interface" directory and therefore does not seem to be valid.\n'
+              f'dir: {everest_dir}')
+        exit(1)
 
-        setup_jinja_env()
+    setup_jinja_env()
 
-    if 'framework_dir' in args:
-        framework_dir = Path(args.framework_dir).resolve()
-        if not (framework_dir / 'schemas').exists():
-            print('The default ("../everest-framework") xor supplied (via --framework-dir) everest framework directory\n'
-                  'doesn\'t contain an "schemas" directory and therefore does not seem to be valid.\n'
-                  f'dir: {framework_dir}')
-            exit(1)
+    framework_dir = Path(args.framework_dir).resolve()
+    if not (framework_dir / 'schemas').exists():
+        print('The default ("../everest-framework") xor supplied (via --framework-dir) everest framework directory\n'
+              'doesn\'t contain an "schemas" directory and therefore does not seem to be valid.\n'
+              f'dir: {framework_dir}')
+        exit(1)
 
-        validators = helpers.load_validators(framework_dir / 'schemas')
+    validators = helpers.load_validators(framework_dir / 'schemas')
 
     args.action_handler(args)
 
