@@ -39,15 +39,9 @@ foreach(ENTRY ${EVEREST_MODULES_LIST})
     endif()
 endforeach()
 
-message("everest modules: ${EVEREST_MODULES}")
-foreach(EVEREST_MODULE ${EVEREST_MODULES})
-    add_subdirectory(${EVEREST_MODULE})
-endforeach()
+set(GENERATED_MODULE_DIR ${GENERATED_OUTPUT_DIR}/modules)
 
-# FIXME (aw): because force_update_all_modules will be called directly
-#             we might also choose to get all module names by listing
-#             the current directory instead of using EVEREST_MODULES
-#             (could be helpful while developing ...)
+
 set(FORCE_UPDATE_COMMANDS "")
 foreach(EVEREST_MODULE ${EVEREST_MODULES})
     if(NOT ${EVEREST_MODULE} MATCHES "^Js")
@@ -59,5 +53,35 @@ endforeach()
 
 add_custom_target(force_update_all_modules
     ${FORCE_UPDATE_COMMANDS}
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/..
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
+
+macro(cpp_module_setup)
+    get_filename_component(MODULE_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+    set(MOD_MODULE_NAME mod${MODULE_NAME})
+    set(MODULE_LOADER_DIR ${GENERATED_MODULE_DIR}/${MODULE_NAME})
+    add_library(${MOD_MODULE_NAME} SHARED)
+
+    add_custom_command(
+        OUTPUT
+            ${GENERATED_MODULE_DIR}/${MODULE_NAME}
+        COMMAND
+            ${EV_CLI} module generate-loader --framework-dir ${everest-framework_SOURCE_DIR} --output-dir ${GENERATED_MODULE_DIR} ${MODULE_NAME}
+        BYPRODUCTS
+        ${GENERATED_MODULE_DIR}/${MODULE_NAME}/ld-ev.cpp
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT
+            "Generating ld-ev for module ${MODULE_NAME}"
+    )
+
+    add_custom_target(ld-ev_${MODULE_NAME}
+        DEPENDS ${GENERATED_MODULE_DIR}/${MODULE_NAME}
+    )
+
+    add_dependencies(${MOD_MODULE_NAME} ld-ev_${MODULE_NAME} generate_interface_files)
+endmacro()
+
+message("everest modules: ${EVEREST_MODULES}")
+foreach(EVEREST_MODULE ${EVEREST_MODULES})
+    add_subdirectory(${EVEREST_MODULE})
+endforeach()

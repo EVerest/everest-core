@@ -52,7 +52,6 @@ endif()
 #     message("Doxygen is needed to generate documentation")
 # endif()
 
-# configure conan cmake, please consider adding dependencies to conanfile.txt
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
@@ -64,6 +63,8 @@ find_program(EV_CLI
     ev-cli
     REQUIRED
 )
+
+set(GENERATED_OUTPUT_DIR ${CMAKE_BINARY_DIR}/generated)
 
 find_package(Boost COMPONENTS filesystem program_options system thread REQUIRED)
 
@@ -95,7 +96,8 @@ endif()
 
 
 # auto generate headers
-add_subdirectory(generated)
+set(GENERATED_HEADER_DIR ${GENERATED_OUTPUT_DIR}/interfaces)
+add_subdirectory(interfaces)
 
 # modules
 add_subdirectory(modules)
