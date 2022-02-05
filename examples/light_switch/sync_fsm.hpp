@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #ifndef SYNC_FSM_HPP
 #define SYNC_FSM_HPP
 
@@ -11,6 +11,7 @@ struct FSM {
     using EventInfoType = fsm::EventInfo<EventBaseType, EventBufferType>;
     using StateHandleType = fsm::sync::StateHandle<EventInfoType, StateIDType>;
     using FSMInitContextType = StateHandleType::FSMInitContextType;
+
     using FSMContextType = StateHandleType::FSMContextType;
     using TransitionType = StateHandleType::TransitionWrapperType;
 

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #ifndef FSM_FSM_HPP
 #define FSM_FSM_HPP
 
@@ -92,7 +92,7 @@ public:
         }
     }
 
-private:
+protected:
     enum class WrapType : uint8_t
     {
         None,
@@ -102,9 +102,13 @@ private:
         CtxFnWithoutEvent,
         MemFnWithEvent,
         MemFnWithoutEvent,
-        InstRetVal
+        InstRetVal,
+        Internal
     };
 
+    WrapType wrap_type{WrapType::None};
+
+private:
     template <typename ED, R (*fn)(const ED&)> static R fn_tramp(void* buf) {
         return (*fn)(*reinterpret_cast<ED*>(buf));
     }
@@ -123,9 +127,7 @@ private:
         return (cast_class_inst->*mem_fn)();
     }
 
-    WrapType wrap_type{WrapType::None};
-
-    R (*fn_ptr)(){nullptr};
+        R (*fn_ptr)(){nullptr};
     R (*fn_v_ptr)(void*){nullptr};
     R (*fn_v_v_ptr)(void*, void*){nullptr};
 

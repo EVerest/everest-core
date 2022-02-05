@@ -5,7 +5,7 @@ add_executable(ls_async_pthread ls_async_pthread.cpp async_fsm.cpp)
 target_compile_features(ls_async_pthread PRIVATE cxx_std_14)
 
 target_link_libraries(ls_async_pthread PRIVATE
-    Fsm::Fsm
+    fsm::fsm
     Threads::Threads
 )
 
@@ -14,7 +14,7 @@ add_executable(ls_sync_posix ls_sync_posix.cpp sync_fsm.cpp)
 target_compile_features(ls_sync_posix PRIVATE cxx_std_14)
 
 target_link_libraries(ls_sync_posix PRIVATE
-    Fsm::Fsm
+    fsm::fsm
     Threads::Threads
 )
 
@@ -26,7 +26,7 @@ if(BUILD_EXAMPLES_WITH_FREERTOS_SUPPORT)
     target_compile_features(ls_async_freertos PRIVATE cxx_std_14)
 
     target_link_libraries(ls_async_freertos PRIVATE
-        Fsm::Fsm
+        fsm::fsm
         freertos
         Threads::Threads
     )

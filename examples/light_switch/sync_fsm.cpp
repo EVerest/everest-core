@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include "sync_fsm.hpp"
 
 extern void set_brightness(int value);
@@ -82,6 +82,10 @@ FSM::MotionModeHierarchy::MotionModeHierarchy() {
 
     sd_mm_detect.entry = [this](FSMInitContextType& ctx) {
         set_brightness(3);
-        ctx.set_callback([this](FSMContextType& ctx) { ctx.submit_event(EventMotionDetectTimeout()); }, true, 3000);
+        ctx.set_next_timeout(3000);
+    };
+
+    sd_mm_detect.handler = [this](FSMContextType& ctx) {
+        ctx.submit_event(EventMotionDetectTimeout());
     };
 }

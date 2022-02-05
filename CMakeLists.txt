@@ -13,15 +13,15 @@ if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Build type" FORCE)
 endif()
 
-add_library(Fsm INTERFACE)
-add_library(Fsm::Fsm ALIAS Fsm)
+add_library(fsm INTERFACE)
+add_library(fsm::fsm ALIAS fsm)
 
-target_include_directories(Fsm INTERFACE
+target_include_directories(fsm INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
 
-install(TARGETS Fsm EXPORT FsmTargets
+install(TARGETS fsm EXPORT FsmTargets
     INCLUDES DESTINATION include
 )
 
@@ -29,7 +29,7 @@ install(DIRECTORY include/ TYPE INCLUDE)
 
 install(EXPORT FsmTargets
     FILE FsmTargets.cmake
-    NAMESPACE Fsm::
+    NAMESPACE fsm::
     DESTINATION lib/cmake/fsm
 )
 
