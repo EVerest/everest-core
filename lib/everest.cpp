@@ -100,8 +100,7 @@ void Everest::check_code() {
             for (const auto& cmd : cmds_not_registered) {
                 oss << " '" << cmd << "'";
             }
-            EVLOG(error) << oss.str();
-            EVTHROW(EverestApiError(oss.str()));
+            EVLOG_AND_THROW(EverestApiError(oss.str()));
         }
     }
 }
@@ -145,7 +144,7 @@ json Everest::call_cmd(const std::string& requirement_id, const std::string& cmd
                 oss << key << ",";
             }
             oss << "): Argument count does not match manifest!";
-            EVTHROW(EverestApiError(oss.str()));
+            EVLOG_AND_THROW(EverestApiError(oss.str()));
         }
 
         std::set<std::string> unknown_arguments;
@@ -174,7 +173,7 @@ json Everest::call_cmd(const std::string& requirement_id, const std::string& cmd
                 oss << key << ",";
             }
             oss << "!";
-            EVTHROW(EverestApiError(oss.str()));
+            EVLOG_AND_THROW(EverestApiError(oss.str()));
         }
     }
 
@@ -194,7 +193,7 @@ json Everest::call_cmd(const std::string& requirement_id, const std::string& cmd
                 }
                 oss << "): Argument '" << arg_name << "' with value '" << json_args[arg_name]
                     << "' could not be validated with schema: " << e.what();
-                EVTHROW(EverestApiError(oss.str()));
+                EVLOG_AND_THROW(EverestApiError(oss.str()));
             }
         }
     }
@@ -334,7 +333,7 @@ void Everest::publish_var(const std::string& impl_id, const std::string& var_nam
             oss << "Publish var of " << this->config.printable_identifier(this->module_id, impl_id)
                 << " with variable name '" << var_name << "' with value '" << std::setw(4) << json_value
                 << "' could not be validated with schema: " << e.what();
-            EVTHROW(EverestApiError(oss.str()));
+            EVLOG_AND_THROW(EverestApiError(oss.str()));
         }
     }
 
@@ -433,7 +432,7 @@ void Everest::provide_external_mqtt_handler(const std::string& topic, const Stri
     BOOST_LOG_FUNCTION();
 
     if (this->registered_external_mqtt_handlers.count(topic) != 0) {
-        EVTHROW(EVEXCEPTION(EverestApiError, this->config.printable_identifier(this->module_id),
+        EVLOG_AND_THROW(EVEXCEPTION(EverestApiError, this->config.printable_identifier(this->module_id),
                             "->external_mqtt_handler<", topic,
                             ">: External MQTT Handler for this topic already registered",
                             " (you can not register an external MQTT handler twice)!"));
@@ -513,7 +512,7 @@ void Everest::provide_cmd(const std::string impl_id, const std::string cmd_name,
     json cmd_definition = get_cmd_definition(this->module_id, impl_id, cmd_name, false);
 
     if (this->registered_cmds.count(impl_id) != 0 && this->registered_cmds[impl_id].count(cmd_name) != 0) {
-        EVTHROW(EVEXCEPTION(EverestApiError, this->config.printable_identifier(this->module_id, impl_id), "->",
+        EVLOG_AND_THROW(EVEXCEPTION(EverestApiError, this->config.printable_identifier(this->module_id, impl_id), "->",
                             cmd_name, "(...): Handler for this cmd already registered",
                             " (you can not register a cmd handler twice)!"));
     }
@@ -635,7 +634,7 @@ void Everest::provide_cmd(const cmd& cmd) {
             oss << key << ",";
         }
         oss << "): Argument count of cmd handler does not match manifest!";
-        EVTHROW(EverestApiError(oss.str()));
+        EVLOG_AND_THROW(EverestApiError(oss.str()));
     }
 
     std::set<std::string> unknown_arguments;
@@ -662,7 +661,7 @@ void Everest::provide_cmd(const cmd& cmd) {
             oss << key << ",";
         }
         oss << "!";
-        EVTHROW(EverestApiError(oss.str()));
+        EVLOG_AND_THROW(EverestApiError(oss.str()));
     }
 
     std::string arg_name = check_args(arg_types, cmd_definition["arguments"]);
@@ -679,7 +678,7 @@ void Everest::provide_cmd(const cmd& cmd) {
         }
         oss << "' for '" << arg_name << "' does not match manifest type '"
             << cmd_definition["arguments"][arg_name]["type"] << "'!";
-        EVTHROW(EverestApiError(oss.str()));
+        EVLOG_AND_THROW(EverestApiError(oss.str()));
     }
 
     // validate return value annotations
@@ -695,7 +694,7 @@ void Everest::provide_cmd(const cmd& cmd) {
         }
         oss << "' does not match manifest type '" << cmd_definition["result"] << "'!";
         // FIXME (aw): this gives more output EVLOG(error) << oss.str(); than the EVTHROW, why?
-        EVTHROW(EverestApiError(oss.str()));
+        EVLOG_AND_THROW(EverestApiError(oss.str()));
     }
 
     return this->provide_cmd(impl_id, cmd_name, [handler](json data) {

@@ -93,9 +93,14 @@ static Napi::Value setup_cmd_handler(const std::string& impl_id, const std::stri
                     std::vector<napi_value> args{ctx->cmd_handlers[cmd_key].Value(), ctx->js_module_ref.Value(), arg};
                     return args;
                 },
-                [&result](const Napi::Value& retval, bool) {
-                    // FIXME (aw): we could check the bool for failure ...
-                    result = convertToJson(retval);
+                [&result, &cmd_key](const Napi::CallbackInfo& info, bool err) {
+                    if (err) {
+                        const std::string error_msg =
+                            "Call into " + cmd_key.first + "->" + cmd_key.second + " got rejected";
+                        throw Napi::Error::New(info.Env(), error_msg);
+                    }
+
+                    result = convertToJson(info[0]);
                 });
 
             return result;
@@ -162,6 +167,7 @@ static Napi::Value signal_ready(const Napi::CallbackInfo& info) {
 
 void framework_ready_handler() {
     BOOST_LOG_FUNCTION();
+    // resolving the promise must be done inside the main js context!
     auto handle_ready_js = [](const Napi::CallbackInfo& info) -> Napi::Value {
         ctx->framework_ready_flag = true;
         ctx->framework_ready_deferred.Resolve(ctx->js_module_ref.Value());

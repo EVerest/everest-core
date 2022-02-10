@@ -93,16 +93,24 @@ void MQTTAbstractionImpl::mainloop() {
 void MQTTAbstractionImpl::_mainloop() {
     BOOST_LOG_FUNCTION();
 
-    while (this->mqtt_is_connected) {
-        MQTTErrors error = mqtt_sync(&this->mqtt_client);
-        if (error != MQTT_OK) {
-            EVLOG(error) << "Error during mqtt sync: " << mqtt_error_str(error);
+    try {
+        while (this->mqtt_is_connected) {
+            MQTTErrors error = mqtt_sync(&this->mqtt_client);
+            if (error != MQTT_OK) {
+                EVLOG(error) << "Error during mqtt sync: " << mqtt_error_str(error);
 
-            on_mqtt_disconnect();
+                on_mqtt_disconnect();
 
-            return;
+                return;
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(mqtt_sync_sleep_milliseconds));
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(mqtt_sync_sleep_milliseconds));
+    } catch (boost::exception& e) {
+        EVLOG(critical) << "Caught mqtt mainloop boost::exception:" << std::endl << boost::diagnostic_information(e, true);
+        exit(1);
+    } catch (std::exception& e) {
+        EVLOG(critical) << "Caught mqtt mainloop std::exception:" << std::endl << boost::diagnostic_information(e, true);
+        exit(1);
     }
 }
 
@@ -116,48 +124,55 @@ void MQTTAbstractionImpl::on_mqtt_message(std::string topic, std::string payload
 void MQTTAbstractionImpl::on_mqtt_message_(std::string topic, std::string payload) {
     BOOST_LOG_FUNCTION();
 
-    json data;
-    if (topic.find("everest/") == 0) {
-        EVLOG(debug) << "topic starts with everest/";
-        try {
-            data = json::parse(payload);
-        } catch (nlohmann::detail::parse_error& e) {
-            EVLOG(warning) << "Could not decode json for incoming topic '" << topic << "': " << payload << "";
-            return;
+    try {
+        json data;
+        if (topic.find("everest/") == 0) {
+            EVLOG(debug) << "topic starts with everest/";
+            try {
+                data = json::parse(payload);
+            } catch (nlohmann::detail::parse_error& e) {
+                EVLOG(warning) << "Could not decode json for incoming topic '" << topic << "': " << payload << "";
+                return;
+            }
+        } else {
+            EVLOG(debug) << "Message parsing for topic '" << topic << "' not implemented. Wrapping in json object.";
+            data = json(payload);
         }
-    } else {
-        EVLOG(debug) << "Message parsing for topic '" << topic << "' not implemented. Wrapping in json object.";
-        data = json(payload);
-    }
 
-    bool found = false;
+        bool found = false;
 
-    std::unique_lock<std::mutex> lock(handlers_mutex);
-    std::vector<Handler> local_handlers;
-    for (auto const& ha : this->handlers) {
-        std::string handler_topic = ha.first;
-        if (MQTTAbstractionImpl::check_topic_matches(topic, handler_topic)) {
-            found = true;
-            EVLOG(debug) << "there is a handler! " << ha.first;
-            for (const auto& handler : ha.second) {
-                auto f = *handler;
-                local_handlers.push_back(f);
+        std::unique_lock<std::mutex> lock(handlers_mutex);
+        std::vector<Handler> local_handlers;
+        for (auto const& ha : this->handlers) {
+            std::string handler_topic = ha.first;
+            if (MQTTAbstractionImpl::check_topic_matches(topic, handler_topic)) {
+                found = true;
+                EVLOG(debug) << "there is a handler! " << ha.first;
+                for (const auto& handler : ha.second) {
+                    auto f = *handler;
+                    local_handlers.push_back(f);
+                }
             }
         }
-    }
-    lock.unlock();
+        lock.unlock();
 
-    for (auto const& handler : local_handlers) {
-        EVLOG(debug) << "calling handler: " << &handler;
-        handler(data);
-        EVLOG(debug) << "handler '" << &handler << "' called";
-    }
+        for (auto const& handler : local_handlers) {
+            EVLOG(debug) << "calling handler: " << &handler;
+            handler(data);
+            EVLOG(debug) << "handler '" << &handler << "' called";
+        }
 
-    if (!found) {
-        std::ostringstream oss;
-        oss << "Internal error: topic '" << topic << "' should have a matching handler!";
-        EVLOG(error) << oss.str();
-        EVTHROW(EverestInternalError(oss.str()));
+        if (!found) {
+            std::ostringstream oss;
+            oss << "Internal error: topic '" << topic << "' should have a matching handler!";
+            EVLOG_AND_THROW(EverestInternalError(oss.str()));
+        }
+    } catch (boost::exception& e) {
+        EVLOG(critical) << "Caught mqtt on_message boost::exception:" << std::endl << boost::diagnostic_information(e, true);
+        exit(1);
+    } catch (std::exception& e) {
+        EVLOG(critical) << "Caught mqtt on_message std::exception:" << std::endl << boost::diagnostic_information(e, true);
+        exit(1);
     }
 }
 
@@ -182,7 +197,7 @@ void MQTTAbstractionImpl::on_mqtt_connect() {
 void MQTTAbstractionImpl::on_mqtt_disconnect() {
     BOOST_LOG_FUNCTION();
 
-    EVTHROW(EverestInternalError("Lost connection to mqtt tracker"));
+    EVLOG_AND_THROW(EverestInternalError("Lost connection to mqtt tracker"));
 }
 
 Token MQTTAbstractionImpl::register_handler(const std::string& topic, const Handler& handler,
@@ -197,8 +212,7 @@ Token MQTTAbstractionImpl::register_handler(const std::string& topic, const Hand
         oss << "Can not register handlers for topic " << topic
             << " twice, if optional argument 'allow_multiple_handlers' it not "
                "'true'!";
-        EVLOG(error) << oss.str();
-        EVTHROW(EverestInternalError(oss.str()));
+        EVLOG_AND_THROW(EverestInternalError(oss.str()));
     }
     Token shared_handler = std::make_shared<Handler>(handler);
     this->handlers[topic].push_back(shared_handler);

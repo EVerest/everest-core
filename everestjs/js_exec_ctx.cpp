@@ -22,16 +22,24 @@ void JsExecCtx::tramp(Napi::Env env, Napi::Function callback, std::nullptr_t* co
 
 Napi::Value JsExecCtx::on_fulfill(const Napi::CallbackInfo& info) {
     JsExecCtx* this_ = reinterpret_cast<JsExecCtx*>(info.Data());
-    if (this_->res_func != nullptr)
-        this_->res_func(info[0], false);
+    if (this_->res_func != nullptr) {
+        this_->res_func(info, false);
+    }
     this_->promise.set_value();
     return info.Env().Undefined();
 }
 
 Napi::Value JsExecCtx::on_reject(const Napi::CallbackInfo& info) {
     JsExecCtx* this_ = reinterpret_cast<JsExecCtx*>(info.Data());
-    if (this_->res_func != nullptr)
-        this_->res_func(info[0], true);
+    if (this_->res_func != nullptr) {
+        this_->res_func(info, true);
+    } else {
+        // there is no catch handler registered, so we throw
+        throw Napi::Error::New(
+            info.Env(),
+            "JsExecCtx call into javascript code got rejected and could not be handled (rejection handler not defined");
+    }
+
     this_->promise.set_value();
     return info.Env().Undefined();
 }

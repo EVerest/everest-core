@@ -21,7 +21,7 @@ private:
 public:
     using TsfnType = Napi::TypedThreadSafeFunction<std::nullptr_t, JsExecCtx, JsExecCtx::tramp>;
     using ArgFuncType = std::function<std::vector<napi_value>(Napi::Env&)>;
-    using ResFuncType = std::function<void(const Napi::Value&, bool)>;
+    using ResFuncType = std::function<void(const Napi::CallbackInfo&, bool)>;
 
     // FIXME (aw): proper module_instance handling if nullptr
     JsExecCtx(const Napi::Env& env, const Napi::Function& func, const std::string& res_name = "RequestDispatcher") :

@@ -13,51 +13,41 @@ namespace EverestJs {
     do {                                                                                                               \
         try {                                                                                                          \
             throw;                                                                                                     \
-        } catch (Napi::Error & e) {                                                                                    \
+        } catch (Napi::Error& e) {                                                                                     \
             try {                                                                                                      \
                 BOOST_THROW_EXCEPTION(boost::enable_error_info(e)                                                      \
                                       << boost::log::BOOST_LOG_VERSION_NAMESPACE::current_scope());                    \
-            } catch (std::exception & e) {                                                                             \
+            } catch (boost::exception& ex) {                                                                           \
+                char const * const * f = boost::get_error_info<boost::throw_file>(ex);                                 \
+                int const * l = boost::get_error_info<boost::throw_line>(ex);                                          \
+                char const * const * fn = boost::get_error_info<boost::throw_function>(ex);                            \
                 EVLOG(critical) << "Catched top level Napi::Error, forwarding to javascript..." << std::endl           \
-                                << boost::diagnostic_information(e, true) << std::endl                                 \
+                                << (f ? *f : "") << ":" << (l ? std::to_string(*l) : "") << " in Function "            \
+                                << (fn ? *fn : "") << std::endl                                                        \
+                                << boost::diagnostic_information(e, true)                                              \
+                                << boost::diagnostic_information(ex, false) << std::endl                               \
                                 << "==============================" << std::endl                                       \
                                 << std::endl;                                                                          \
             }                                                                                                          \
-            throw;                                                                                                     \
-        } catch (std::runtime_error & e) {                                                                             \
+            throw;    /* this will forward the exception back to javascript and enable js backtraces */                \
+        } catch (std::exception& e) {                                                                                  \
             try {                                                                                                      \
                 BOOST_THROW_EXCEPTION(boost::enable_error_info(e)                                                      \
                                       << boost::log::BOOST_LOG_VERSION_NAMESPACE::current_scope());                    \
-            } catch (std::exception & e) {                                                                             \
-                EVLOG(critical) << "Catched top level runtime exception, forwarding to javascript..." << std::endl     \
-                                << boost::diagnostic_information(e, true) << std::endl                                 \
-                                << "==============================" << std::endl                                       \
-                                << std::endl;                                                                          \
-                metamacro_if_eq(0, metamacro_argcount(__VA_ARGS__))(throw;)(EVTHROW(Napi::Error::New(                  \
-                    metamacro_at(0, __VA_ARGS__), Napi::String::New(metamacro_at(0, __VA_ARGS__), e.what())));)        \
-            }                                                                                                          \
-        } catch (std::logic_error & e) {                                                                               \
-            try {                                                                                                      \
-                BOOST_THROW_EXCEPTION(boost::enable_error_info(e)                                                      \
-                                      << boost::log::BOOST_LOG_VERSION_NAMESPACE::current_scope());                    \
-            } catch (std::exception & e) {                                                                             \
-                EVLOG(critical) << "Catched top level logic exception, forwarding to javascript..." << std::endl       \
-                                << boost::diagnostic_information(e, true) << std::endl                                 \
-                                << "==============================" << std::endl                                       \
-                                << std::endl;                                                                          \
-                metamacro_if_eq(0, metamacro_argcount(__VA_ARGS__))(throw;)(EVTHROW(Napi::Error::New(                  \
-                    metamacro_at(0, __VA_ARGS__), Napi::String::New(metamacro_at(0, __VA_ARGS__), e.what())));)        \
-            }                                                                                                          \
-        } catch (std::exception & e) {                                                                                 \
-            try {                                                                                                      \
-                BOOST_THROW_EXCEPTION(boost::enable_error_info(e)                                                      \
-                                      << boost::log::BOOST_LOG_VERSION_NAMESPACE::current_scope());                    \
-            } catch (std::exception & e) {                                                                             \
+            } catch (boost::exception & ex) {                                                                          \
+                char const * const * f = boost::get_error_info<boost::throw_file>(ex);                                 \
+                int const * l = boost::get_error_info<boost::throw_line>(ex);                                          \
+                char const * const * fn = boost::get_error_info<boost::throw_function>(ex);                            \
                 EVLOG(critical) << "Catched top level exception, forwarding to javascript..." << std::endl             \
-                                << boost::diagnostic_information(e, true) << std::endl                                 \
+                                << (f ? *f : "") << ":" << (l ? std::to_string(*l) : "") << " in Function "            \
+                                << (fn ? *fn : "") << std::endl                                                        \
+                                << boost::diagnostic_information(e, true)                                              \
+                                << boost::diagnostic_information(ex, false) << std::endl                               \
                                 << "==============================" << std::endl                                       \
                                 << std::endl;                                                                          \
-                throw;                                                                                                 \
+                /* this will forward the exception to javascript and enable js backtraces */                           \
+                metamacro_if_eq(0, metamacro_argcount(__VA_ARGS__))(throw;)(EVTHROW(Napi::Error::New(                  \
+                    metamacro_at(0, __VA_ARGS__), Napi::String::New(metamacro_at(0, __VA_ARGS__), e.what())));)        \
             }                                                                                                          \
         }                                                                                                              \
     } while (0)
