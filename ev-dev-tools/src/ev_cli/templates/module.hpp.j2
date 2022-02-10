@@ -3,7 +3,7 @@
 #ifndef {{ info.hpp_guard }}
 #define {{ info.hpp_guard }}
 
-{{ print_template_info('1.0.0', 'marked regions will be kept') }}
+{{ print_template_info('1', 'marked regions will be kept') }}
 
 #include "{{ info.ld_ev_header }}"
 
@@ -44,7 +44,7 @@ public:
         {% endfor %}
         {% for requirement in requires %}
         {% if requirement.is_vector %}
-        std::unique_ptr<std::vector<std::shared_ptr<{{ requirement.class_name }}>>> r_{{ requirement.id }},
+        std::vector<std::unique_ptr<{{ requirement.class_name }}>> r_{{ requirement.id }},
         {% else %}
         std::unique_ptr<{{ requirement.class_name }}> r_{{ requirement.id }},
         {% endif %}
@@ -73,7 +73,7 @@ public:
     {% endfor %}
     {% for requirement in requires %}
     {% if requirement.is_vector %}
-    const std::unique_ptr<std::vector<std::shared_ptr<{{ requirement.class_name }}>>> r_{{ requirement.id }};
+    const std::vector<std::unique_ptr<{{ requirement.class_name }}>> r_{{ requirement.id }};
     {% else %}
     const std::unique_ptr<{{ requirement.class_name }}> r_{{ requirement.id }};
     {% endif %}

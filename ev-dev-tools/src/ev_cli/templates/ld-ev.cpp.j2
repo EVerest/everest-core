@@ -1,6 +1,6 @@
 {% from "helper_macros.j2" import print_template_info, var_to_cpp, print_spdx_line %}
 {{ print_spdx_line('Apache-2.0') }}
-{{ print_template_info('1.0.0') }}
+{{ print_template_info('1') }}
 
 #include "{{ info.ld_ev_header }}"
 
@@ -91,14 +91,14 @@ std::vector<Everest::cmd> everest_register(const json& connections) {
     {% endfor %}
     {% for requirement in requires %}
     {% if requirement.is_vector %}
-    auto r_{{ requirement.id }} = std::make_unique<std::vector<std::shared_ptr<{{ requirement.class_name }}>>>();
+    auto r_{{ requirement.id }} = std::vector<std::unique_ptr<{{ requirement.class_name }}>>();
     if (connections.contains("{{ requirement.id }}")) {
-        for (uint64_t idx = 0; idx < connections.size(); idx++) {
-            r_{{ requirement.id }}->push_back(std::make_shared<{{ requirement.class_name }}>(&adapter, "{{ requirement.id }}", idx));
+        for (int idx = 0; idx < connections.size(); idx++) {
+            r_{{ requirement.id }}.emplace_back(std::make_unique<{{ requirement.class_name }}>(&adapter, Requirement{"{{ requirement.id }}", idx}));
         }
     }
     {% else %}
-    auto r_{{ requirement.id }} = std::make_unique<{{ requirement.class_name }}>(&adapter, "{{ requirement.id }}", 0);
+    auto r_{{ requirement.id }} = std::make_unique<{{ requirement.class_name }}>(&adapter, Requirement{"{{ requirement.id }}", 0});
     {% endif %}
     {% endfor %}
 
