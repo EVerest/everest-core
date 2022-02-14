@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Zlib
+
 // //////////////////////////////////////////////////////////
 // sha256.cpp
 // Copyright (c) 2014,2015,2021 Stephan Brumme. All rights reserved.
