@@ -26,7 +26,7 @@ target_link_libraries(ocpp
         date
         everest::log
         everest::timer
-        Fsm::Fsm
+        fsm::fsm
         nlohmann_json::nlohmann_json
         nlohmann_json_schema_validator::nlohmann_json_schema_validator
         OpenSSL::SSL
@@ -46,7 +46,7 @@ INTERFACE
 # this is important to allow our headers to find the libfsm headers
 target_link_libraries(ocpp
     INTERFACE
-        Fsm::Fsm)
+        fsm::fsm)
 # this is important to allow our headers to find the nlohmann_* headers
 target_link_libraries(ocpp
 INTERFACE
