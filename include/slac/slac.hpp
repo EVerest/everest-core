@@ -20,6 +20,7 @@ const uint8_t MMV_HOMEPLUG_GREENPHY = 0x01;
 
 const int MME_MIN_LENGTH = 60;
 
+const int STATION_ID_LEN = 17;
 const int NID_LEN = 7;
 const int NID_MOST_SIGNIFANT_BYTE_SHIFT = 4;
 const uint8_t NID_SECURITY_LEVEL_SIMPLE_CONNECT = 0b00;
@@ -150,11 +151,11 @@ private:
 };
 
 const int M_SOUND_TARGET_LEN = 6;
-const int SENDER_ID_LEN = 17;
-const int SOURCE_ID_LEN = 17;
-const int RESP_ID_LEN = 17;
-const int PEV_ID_LEN = 17;
-const int EVSE_ID_LEN = 17;
+const int SENDER_ID_LEN = defs::STATION_ID_LEN;
+const int SOURCE_ID_LEN = defs::STATION_ID_LEN;
+const int RESP_ID_LEN = defs::STATION_ID_LEN;
+const int PEV_ID_LEN = defs::STATION_ID_LEN;
+const int EVSE_ID_LEN = defs::STATION_ID_LEN;
 
 typedef struct {
     uint8_t application_type;         // fixed to 0x00, indicating 'pev-evse matching'
