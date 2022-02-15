@@ -1,0 +1,75 @@
+{
+    "description": "ISO15118-3 SLAC interface",
+    "cmds": {
+        "reset": {
+            "description": "Reset SLAC."
+        },
+        "enter_bcd": {
+            "description": "Signal pilot state change to B/C/D.",
+            "result":{
+                "type": "boolean",
+                "description": "True on success."
+            }
+        },
+        "leave_bcd": {
+            "description": "Signal pilot state change to A/E/F.",
+            "result": {
+                "type": "boolean",
+                "description": "True on success."
+            }
+        },
+        "error_sequence_reset": {
+            "description": "Signal that the error sequence has finished.",
+            "arguments": {
+                "successful": {
+                    "description": "Whether the error sequence could be done and was successful",
+                    "type": "boolean"
+                }
+            },
+            "result": {
+                "type": "boolean",
+                "description": "True on success."
+            }
+        },
+        "dlink_terminate": {
+            "description": "Terminate the data link and become UNMATCHED.",
+            "result": {
+                "type": "boolean",
+                "description": "True on success."
+            }
+        },
+        "dlink_error": {
+            "description": "Terminate the data link and restart the matching process.",
+            "result": {
+                "type": "boolean",
+                "description": "True on success."
+            }
+        },
+        "dlink_pause": {
+            "description": "Request power saving mode, while staying MATCHED.",
+            "result": {
+                "type": "boolean",
+                "description": "True on success."
+            }
+        }
+    },
+    "vars": {
+        "state": {
+            "description": "Provides the state enum.",
+            "type": "string",
+            "enum": [
+                "UNMATCHED",
+                "MATCHING",
+                "MATCHED"
+            ]
+        },
+        "dlink_ready": {
+            "description": "Inform higher layers about a change in data link status. Emits true if link was set up and false when the link is shut down.",
+            "type": "boolean"
+        },
+        "request_error_routine": {
+            "description": "Inform the higher layer to execute the error routine for a SLAC connection retry",
+            "type": "null"
+        }
+    }
+}

@@ -1,0 +1,8 @@
+---
+libslac:
+  git: git@github.com:EVerest/libslac.git
+  git_tag: main
+
+libfsm:
+  git: git@github.com:EVerest/libfsm.git
+  git_tag: main

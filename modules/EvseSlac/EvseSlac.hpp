@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifndef SLAC_OPENPLCUTILS_HPP
-#define SLAC_OPENPLCUTILS_HPP
+#ifndef EVSE_SLAC_HPP
+#define EVSE_SLAC_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
@@ -11,7 +11,7 @@
 #include "ld-ev.hpp"
 
 // headers for provided interface implementations
-#include <generated/ISO15118_3_SLAC/Implementation.hpp>
+#include <generated/slac/Implementation.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
@@ -21,14 +21,14 @@ namespace module {
 
 struct Conf {};
 
-class SLAC_openplcutils : public Everest::ModuleBase {
+class EvseSlac : public Everest::ModuleBase {
 public:
-    SLAC_openplcutils() = delete;
-    SLAC_openplcutils(const ModuleInfo& info, std::unique_ptr<ISO15118_3_SLACImplBase> p_main, Conf& config) :
+    EvseSlac() = delete;
+    EvseSlac(const ModuleInfo& info, std::unique_ptr<slacImplBase> p_main, Conf& config) :
         ModuleBase(info), p_main(std::move(p_main)), config(config){};
 
     const Conf& config;
-    const std::unique_ptr<ISO15118_3_SLACImplBase> p_main;
+    const std::unique_ptr<slacImplBase> p_main;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
@@ -55,4 +55,4 @@ private:
 
 } // namespace module
 
-#endif // SLAC_OPENPLCUTILS_HPP
+#endif // EVSE_SLAC_HPP

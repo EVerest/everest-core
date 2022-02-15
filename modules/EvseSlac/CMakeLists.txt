@@ -10,7 +10,13 @@ cpp_module_setup()
 
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 list(APPEND ADDITIONAL_MODULE_LIBS
-    openplcutils::openplcutils
+    slac::slac
+    fsm::fsm
+    fmt::fmt
+)
+list(APPEND ADDITIONAL_MODULE_SOURCES
+    main/slac_io.cpp
+    main/evse_fsm.cpp
 )
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 
@@ -26,7 +32,7 @@ target_sources(${MOD_MODULE_NAME}
     PRIVATE
         ${MODULE_NAME}.cpp
         "${MODULE_LOADER_DIR}/ld-ev.cpp"
-        "main/ISO15118_3_SLACImpl.cpp"
+        "main/slacImpl.cpp"
         ${ADDITIONAL_MODULE_SOURCES}
 )
 
@@ -40,14 +46,14 @@ target_link_libraries(${MOD_MODULE_NAME}
 
 target_compile_features(${MOD_MODULE_NAME} PRIVATE cxx_std_14)
 
-set(SLAC_OPENPLCUTILS_DEST "modules/${MODULE_NAME}")
+set(EVSESLAC_DEST "modules/${MODULE_NAME}")
 install(TARGETS ${MOD_MODULE_NAME}
     LIBRARY
-    DESTINATION ${SLAC_OPENPLCUTILS_DEST}
+    DESTINATION ${EVSESLAC_DEST}
 )
 
 install(FILES manifest.json
-    DESTINATION ${SLAC_OPENPLCUTILS_DEST}
+    DESTINATION ${EVSESLAC_DEST}
 )
 
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1
