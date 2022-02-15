@@ -3,7 +3,7 @@ find_package(Threads REQUIRED)
 FetchContent_Declare(
     libfsm
     GIT_REPOSITORY https://github.com/EVerest/libfsm
-    GIT_TAG refactor/sync_fsm
+    GIT_TAG main
 )
 
 FetchContent_MakeAvailable(libfsm)
