@@ -760,13 +760,22 @@ std::string Everest::check_args(const Arguments& func_args, json manifest_args) 
 bool Everest::check_arg(ArgumentType arg_types, json manifest_arg) {
     BOOST_LOG_FUNCTION();
 
-    std::ostringstream oss;
+    // FIXME (aw): the error messages here need to be taken into the
+    //             correct context!
 
     if (manifest_arg["type"].is_string()) {
+        if (manifest_arg["type"] == "null") {
+            // arg_types should be empty if the type is null (void)
+            if (arg_types.size()) {
+                EVLOG(error) << "expeceted 'null' type, but got another type";
+                return false;
+            }
+            return true;
+        }
         // direct comparison
         // FIXME (aw): arg_types[0] access should be checked, otherwise core dumps
         if (arg_types[0] != manifest_arg["type"]) {
-            oss << "types do not match: " << arg_types[0] << " != " << manifest_arg["type"];
+            EVLOG(error) << "types do not match: " << arg_types[0] << " != " << manifest_arg["type"];
             return false;
         }
         return true;
@@ -774,7 +783,7 @@ bool Everest::check_arg(ArgumentType arg_types, json manifest_arg) {
 
     for (size_t i = 0; i < arg_types.size(); i++) {
         if (arg_types[i] != manifest_arg["type"][i]) {
-            oss << "types do not match: " << arg_types[i] << " != " << manifest_arg["type"][i];
+            EVLOG(error) << "types do not match: " << arg_types[i] << " != " << manifest_arg["type"][i];
             return false;
         }
     }
