@@ -179,7 +179,7 @@ void MQTTAbstractionImpl::on_mqtt_message_(std::string topic, std::string payloa
 void MQTTAbstractionImpl::on_mqtt_connect() {
     BOOST_LOG_FUNCTION();
 
-    EVLOG(info) << "Connected to mqtt tracker";
+    EVLOG(info) << "Connected to mqtt broker";
 
     // subscribe to all topics needed by currently registered handlers
     EVLOG(info) << "Subscribing to needed mqtt topics...";
@@ -197,7 +197,7 @@ void MQTTAbstractionImpl::on_mqtt_connect() {
 void MQTTAbstractionImpl::on_mqtt_disconnect() {
     BOOST_LOG_FUNCTION();
 
-    EVLOG_AND_THROW(EverestInternalError("Lost connection to mqtt tracker"));
+    EVLOG_AND_THROW(EverestInternalError("Lost connection to mqtt broker"));
 }
 
 Token MQTTAbstractionImpl::register_handler(const std::string& topic, const Handler& handler,
