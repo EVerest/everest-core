@@ -51,7 +51,6 @@ def setup_jinja_env():
 
 
 def generate_tmpl_data_for_if(interface, if_def):
-
     vars = []
     for var, var_info in if_def.get('vars', {}).items():
         type_info = helpers.build_type_info(var, var_info['type'])

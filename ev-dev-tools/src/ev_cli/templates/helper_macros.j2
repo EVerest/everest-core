@@ -1,10 +1,14 @@
 {% macro cpp_type(type) -%}
-{% if type -%}
 {% if type.is_variant -%}
 boost::variant<{{ type.cpp_type|join(', ') }}>
 {%- else -%}
 {{ type.cpp_type }}
 {%- endif %}
+{%- endmacro %}
+
+{% macro result_type(type) -%}
+{% if type -%}
+{{ cpp_type(type) }}
 {%- else -%}
 void
 {%- endif %}
@@ -27,7 +31,7 @@ boost::any_cast<{{ arg.cpp_type }}>
 {%- endmacro %}
 
 {% macro call_cmd_signature(cmd) -%}
-{{ cpp_type(cmd.result) }} call_{{ cmd.name }}(
+{{ result_type(cmd.result) }} call_{{ cmd.name }}(
 {%- for arg in cmd.args -%}
 {{ cpp_type(arg) }} {{ arg.name }}{{ ', ' if not loop.last }}
 {%- endfor -%}
@@ -36,13 +40,19 @@ boost::any_cast<{{ arg.cpp_type }}>
 
 {% macro handle_cmd_signature(cmd, class_name=None) -%}
 {% if not class_name %}virtual {% endif -%}
-{{ cpp_type(cmd.result) }} {% if class_name %}{{ class_name }}::{% endif -%}
+{{ result_type(cmd.result) }} {% if class_name %}{{ class_name }}::{% endif -%}
 handle_{{ cmd.name }}(
 {%- for arg in cmd.args -%}
 {{ cpp_type(arg) }}& {{ arg.name }}{{ ', ' if not loop.last }}
 {%- endfor -%}
 )
 {%- endmacro %}
+
+{% macro publish_var_signature(var) %}
+void publish_{{ var.name }}({% if var.json_type != 'null' %}{{ cpp_type(var) }} value{% endif %}) {
+        _ev->publish(_name, "{{ var.name }}", {% if var.json_type != 'null' %}{{ var_to_any(var, 'value')}}{% else %}boost::blank(){% endif %});
+}
+{% endmacro %}
 
 {% macro list_json_types(json_type) -%}
 {% if json_type is iterable and json_type is not string -%}

@@ -1,4 +1,4 @@
-{% from "helper_macros.j2" import handle_cmd_signature, list_json_types, var_to_cpp, var_to_any, print_template_info, print_spdx_line %}
+{% from "helper_macros.j2" import handle_cmd_signature, publish_var_signature, list_json_types, var_to_cpp, var_to_any, print_template_info, print_spdx_line %}
 {{ print_spdx_line('Apache-2.0') }}
 #ifndef {{ info.hpp_guard }}
 #define {{ info.hpp_guard }}
@@ -17,9 +17,7 @@ protected:
     {% else %}
     // publish functions for variables
     {% for var in vars %}
-    void publish_{{ var.name }}({{ var.cpp_type }} value) {
-        _ev->publish(_name, "{{ var.name }}", value);
-    }
+    {{ publish_var_signature(var) }}
     {% endfor %}
     {% endif %}
 

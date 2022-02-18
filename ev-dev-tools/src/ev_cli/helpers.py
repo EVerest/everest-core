@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # SPDX-License-Identifier: Apache-2.0
-# Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+# Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #
 """
 author: aw@pionix.de
@@ -62,13 +62,11 @@ def create_dummy_result(json_type) -> str:
             return '"everest"'
         elif type == 'object':
             return '{}'
-        elif type == 'null':
-            return 'nullptr'
         else:
             raise Exception(f'This json type "{type}" is not known or not implemented')
 
     if isinstance(json_type, list):
-        return primitive_to_sample_value(json_type[0])
+        return '{}' # default initialization for variant
     else:
         return primitive_to_sample_value(json_type)
 
@@ -103,11 +101,11 @@ def gather_git_info(repo):
 
 
 cpp_type_map = {
+    "null": "boost::blank", # FIXME (aw): check whether boost::blank or boost::none is more appropriate here
     "integer": "int",
     "number": "double",
     "string": "std::string",
     "boolean": "bool",
-    "null": "std::nullptr_t",
     "array": "Array",
     "object": "Object",
 }
@@ -152,8 +150,12 @@ def build_type_info(name, json_type):
 
     if isinstance(json_type, list):
         ti['is_variant'] = True
-        ti['cpp_type'] = [cpp_type_map[e] for e in json_type]
+        ti['cpp_type'] = [cpp_type_map[e] for e in json_type if e != 'null']
         ti['cpp_type'].sort()  # sort, so template generation might get reduced
+        # prepend boost::blank if type 'null' exists, so the variant
+        # gets default initialized with blank
+        if 'null' in json_type:
+            ti['cpp_type'].insert(0, cpp_type_map['null'])
     else:
         ti['cpp_type'] = cpp_type_map[json_type]
 
@@ -161,6 +163,7 @@ def build_type_info(name, json_type):
 
 
 def load_validators(schema_path):
+    # FIXME (aw): we should also patch the schemas like in everest-framework
     validators = {}
     for validator, filename in zip(['interface', 'module', 'config'], ['interface', 'manifest', 'config']):
         try:

@@ -3,7 +3,7 @@
 #ifndef {{ info.hpp_guard }}
 #define {{ info.hpp_guard }}
 
-{{ print_template_info('1') }}
+{{ print_template_info('2') }}
 
 #include <framework/ModuleAdapter.hpp>
 
@@ -16,14 +16,17 @@ public:
     {% else %}
     // variables available for subscription
     {% for var in vars %}
-    void subscribe_{{ var.name }}(const std::function<void({{ cpp_type(var) }})>& listener) {
+    void subscribe_{{ var.name }}(const std::function<void({% if var.json_type != 'null' %}{{ cpp_type(var) }}{% endif %})>& listener) {
         ValueCallback cb = [listener](const Value& value) {
-            if (value.type() != typeid({{ cpp_type(var) }})) {
-                {# FIXME (aw): shouldn't this check be already made inside everest? #}
-                EVLOG(error) << "Callback for variable '{{ var.name }}' in interface '{{ info.interface }}' has wrong type!";
-            }
+            {% if var.json_type != 'null' %}
             auto native_value = {{ var_to_cpp(var) }}(value);
             listener(native_value);
+            {% else %}
+            if (value.type() != typeid({{ cpp_type(var) }})) {
+                EVLOG(error) << "Callback for variable '{{ var.name }}' in interface '{{ info.interface }}' has wrong type!";
+            }
+            listener();
+            {% endif %}
         };
         _adapter->subscribe(_req, "{{ var.name }}", cb);
     }
@@ -43,7 +46,7 @@ public:
         {% for arg in cmd.args %}
         args["{{ arg.name }}"] = {{ var_to_any(arg, arg.name) }};
         {% endfor %}
-        Result result = _adapter->call(_req, "{{ cmd.name }}", args);
+        {% if cmd.result %}Result result = {% endif %}_adapter->call(_req, "{{ cmd.name }}", args);
         {% if cmd.result %}
         auto retval = {{ var_to_cpp(cmd.result) }}(result.get());
 
