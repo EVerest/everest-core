@@ -35,8 +35,8 @@ protected:
     // command handler functions (virtual)
     virtual void
     handle_store(std::string& key,
-                 boost::variant<Array, Object, bool, double, int, std::nullptr_t, std::string>& value) override;
-    virtual boost::variant<Array, Object, bool, double, int, std::nullptr_t, std::string>
+                 boost::variant<boost::blank, Array, Object, bool, double, int, std::string>& value) override;
+    virtual boost::variant<boost::blank, Array, Object, bool, double, int, std::string>
     handle_load(std::string& key) override;
     virtual void handle_delete(std::string& key) override;
     virtual bool handle_exists(std::string& key) override;

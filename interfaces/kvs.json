@@ -11,7 +11,7 @@
                 },
                 "value": {
                     "description": "Value to store",
-                    "type": ["string", "number", "integer", "boolean", "array", "object", "null"]
+                    "type": ["null", "string", "number", "integer", "boolean", "array", "object"]
                 }
             }
         },
@@ -26,7 +26,7 @@
             },
             "result": {
                 "description": "The previously stored value",
-                "type": ["string", "number", "integer", "boolean", "array", "object", "null"]
+                "type": ["null", "string", "number", "integer", "boolean", "array", "object"]
             }
         },
         "delete": {
