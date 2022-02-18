@@ -402,6 +402,10 @@ json Config::load_interface_file(const std::string& intf_name) {
 json Config::resolve_requirement(const std::string& module_id, const std::string& requirement_id) {
     BOOST_LOG_FUNCTION();
 
+    // FIXME (aw): this function should throw, if the requirement id
+    //             isn't even listed in the module manifest
+    // FIXME (aw): the following if doesn't check for the requirement id
+    //             at all
     if (!this->main.contains(module_id)) {
         EVLOG_AND_THROW(EVEXCEPTION(EverestApiError, "Requested requirement id '", requirement_id, "' of module ",
                                     printable_identifier(module_id), " not found in config!"));

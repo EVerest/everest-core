@@ -14,17 +14,21 @@
             "properties": {
                 "type": {
                     "type": [
-                        "array",
-                        "string"
-                    ]
+                        "string",
+                        "array"
+                    ],
+                    "items": {
+                        "type": "string"
+                    },
+                    "uniqueItems": true
                 },
                 "description": {
                     "type": "string",
                     "minLength": 2
                 },
-                "default": false            // we don't allow default values
+                "default": false // we don't allow default values
             },
-            "additionalProperties": true    // allow all sorts of entries (should be a json schema!)
+            "additionalProperties": true // allow all sorts of entries (should be a json schema!)
         },
         "cmd_arguments_subschema": {
             "type": "object",
@@ -40,18 +44,23 @@
                             "type": [
                                 "array",
                                 "string"
-                            ]
+                            ],
+                            "items": {
+                                "type": "string"
+                            },
+                            "uniqueItems": true,
+                            "pattern": "^(?!null).*$"
                         },
                         "description": {
                             "type": "string",
                             "minLength": 2
                         },
-                        "default": false            // we don't allow default values
+                        "default": false // we don't allow default values
                     },
-                    "additionalProperties": true    // allow all sorts of entries (should be a json schema!)
+                    "additionalProperties": true // allow all sorts of entries (should be a json schema!)
                 }
             },
-            "additionalProperties": false,          // only allow argument names conforming to our pattern above
+            "additionalProperties": false, // only allow argument names conforming to our pattern above
             "default": {}
         },
         "cmd_result_subschema": {
@@ -65,15 +74,20 @@
                     "type": [
                         "array",
                         "string"
-                    ]
+                    ],
+                    "items": {
+                        "type": "string"
+                    },
+                    "uniqueItems": true,
+                    "pattern": "^(?!null).*$"
                 },
                 "description": {
                     "type": "string",
                     "minLength": 2
                 },
-                "default": false             // we don't allow default values
+                "default": false // we don't allow default values
             },
-            "additionalProperties": true,    // allow all sorts of entries (should be a json schema!)
+            "additionalProperties": true, // allow all sorts of entries (should be a json schema!)
             "default": {
                 "type": "null",
                 "description": "This returns nothing"

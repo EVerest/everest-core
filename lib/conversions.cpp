@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include <boost/current_function.hpp>
 
 #include <everest/exceptions.hpp>
@@ -15,7 +15,9 @@ template <> json convertTo<json>(Result retval) {
         return json(nullptr);
     } else {
         auto ret_any = retval.get();
-        if (ret_any.type() == typeid(std::string)) {
+        if (ret_any.type() == typeid(boost::blank)) {
+            return json(nullptr);
+        } else if (ret_any.type() == typeid(std::string)) {
             return boost::any_cast<std::string>(ret_any);
         } else if (ret_any.type() == typeid(double)) {
             return boost::any_cast<double>(ret_any);
@@ -49,7 +51,7 @@ template <> Result convertTo<Result>(json data) {
     } else if (data.is_object()) {
         retval = data.get<Object>();
     } else if (data.is_null()) {
-        retval = nullptr;
+        retval = boost::blank();
     } else {
         EVLOG_AND_THROW(EVEXCEPTION(EverestApiError, "WRONG JSON TYPE: ", data.type_name())); // FIXME
     }
@@ -60,7 +62,9 @@ template <> json convertTo<json>(Parameters params) {
     BOOST_LOG_FUNCTION();
     json j = json({});
     for (auto const& param : params) {
-        if (param.second.type() == typeid(std::string)) {
+        if (param.second.type() == typeid(boost::blank)) {
+            j[param.first] = json(nullptr);
+        } else if (param.second.type() == typeid(std::string)) {
             j[param.first] = boost::any_cast<std::string>(param.second);
         } else if (param.second.type() == typeid(double)) {
             j[param.first] = boost::any_cast<double>(param.second);
@@ -97,7 +101,7 @@ template <> Parameters convertTo<Parameters>(json data) {
         } else if (value.is_object()) {
             params[arg.key()] = value.get<Object>();
         } else if (value.is_null()) {
-            params[arg.key()] = nullptr;
+            params[arg.key()] = boost::blank();
         } else {
             EVLOG_AND_THROW(EVEXCEPTION(EverestApiError, "WRONG JSON TYPE: ", value.type_name(),
                                         " FOR ENTRY: ", arg.key())); // FIXME
@@ -108,7 +112,9 @@ template <> Parameters convertTo<Parameters>(json data) {
 
 template <> json convertTo<json>(Value value) {
     BOOST_LOG_FUNCTION();
-    if (value.type() == typeid(std::string)) {
+    if (value.type() == typeid(boost::blank)) {
+        return json(nullptr);
+    } else if (value.type() == typeid(std::string)) {
         return boost::any_cast<std::string>(value);
     } else if (value.type() == typeid(double)) {
         return boost::any_cast<double>(value);
@@ -139,6 +145,8 @@ template <> Value convertTo<Value>(json data) {
         return data.get<Array>();
     } else if (data.is_object()) {
         return data.get<Object>();
+    } else if (data.is_null()) {
+        return boost::blank();
     } else {
         EVLOG_AND_THROW(EVEXCEPTION(EverestApiError, "WRONG JSON TYPE: ", data.type_name())); // FIXME
     }
