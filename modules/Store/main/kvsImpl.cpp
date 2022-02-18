@@ -12,11 +12,11 @@ void kvsImpl::ready() {
 }
 
 void kvsImpl::handle_store(std::string& key,
-                           boost::variant<Array, Object, bool, double, int, std::nullptr_t, std::string>& value) {
+                           boost::variant<boost::blank, Array, Object, bool, double, int, std::string>& value) {
     kvs[key] = value;
 };
 
-boost::variant<Array, Object, bool, double, int, std::nullptr_t, std::string> kvsImpl::handle_load(std::string& key) {
+boost::variant<boost::blank, Array, Object, bool, double, int, std::string> kvsImpl::handle_load(std::string& key) {
     return kvs[key];
 };
 
