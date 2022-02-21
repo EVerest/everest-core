@@ -11,6 +11,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include <everest/logging.hpp>
+#include <fmt/core.h>
 
 #include <framework/everest.hpp>
 #include <utils/config.hpp>
@@ -84,29 +85,29 @@ int main(int argc, char* argv[]) {
     }
     Everest::Logging::init(logging_config, module_id);
 
-    EVLOG(debug) << "module was set to " << module_id;
-    EVLOG(debug) << "maindir was set to " << maindir;
-    EVLOG(debug) << "config was set to " << config_file;
-    EVLOG(debug) << "logging_config was set to " << logging_config;
-    EVLOG(debug) << "schemasdir was set to " << schemasdir;
-    EVLOG(debug) << "modulesdir was set to " << modulesdir;
-    EVLOG(debug) << "classesdir was set to " << classesdir;
+    EVLOG(debug) << fmt::format("module was set to {}", module_id);
+    EVLOG(debug) << fmt::format("maindir was set to {}", maindir);
+    EVLOG(debug) << fmt::format("config was set to {}", config_file);
+    EVLOG(debug) << fmt::format("logging_config was set to {}", logging_config);
+    EVLOG(debug) << fmt::format("schemasdir was set to {}", schemasdir);
+    EVLOG(debug) << fmt::format("modulesdir was set to {}", modulesdir);
+    EVLOG(debug) << fmt::format("classesdir was set to {}", classesdir);
 
     try {
         Everest::Config config = Everest::Config(schemasdir, config_file, modulesdir, classesdir);
 
         if (!config.contains(module_id)) {
-            EVLOG(error) << "Module id '" << module_id << "' not found in config!";
+            EVLOG(error) << fmt::format("Module id '{}' not found in config!", module_id);
             return 2;
         }
 
         const std::string module_identifier = config.printable_identifier(module_id);
-        EVLOG(info) << "Initializing framework for module " << module_identifier << "...";
-        EVLOG(debug) << "Setting process name to: '" << module_identifier << "'...";
+        EVLOG(info) << fmt::format("Initializing framework for module {}...", module_identifier);
+        EVLOG(debug) << fmt::format("Setting process name to: '{}'...", module_identifier);
         int prctl_return = prctl(PR_SET_NAME, module_identifier.c_str());
         if (prctl_return == 1) {
-            EVLOG(warning) << "Could not set process name to '" << module_identifier << "', it remains '" << argv[0]
-                           << "'";
+            EVLOG(warning) << fmt::format("Could not set process name to '{}', it remains '{}'", module_identifier,
+                                          argv[0]);
         }
         Everest::Logging::update_process_name(module_identifier);
 
@@ -126,19 +127,20 @@ int main(int argc, char* argv[]) {
                                                                    mqtt_server_address, mqtt_server_port);
 
         // module import
-        EVLOG(info) << "Initializing module " << module_identifier << "...";
+        EVLOG(info) << fmt::format("Initializing module {}...", module_identifier);
 
         std::string module_name = config.get_main_config()[module_id]["module"].get<std::string>();
 
         if (!everest.connect()) {
-            EVLOG(critical) << "Cannot connect to MQTT broker at " << mqtt_server_address << ":" << mqtt_server_port;
+            EVLOG(critical) << fmt::format("Cannot connect to MQTT broker at {}:{}", mqtt_server_address,
+                                           mqtt_server_port);
             return 1;
         }
 
-        std::string module_file_name = "libmod" + module_name + ".so";
+        std::string module_file_name = fmt::format("libmod{}.so", module_name);
 
         boost::filesystem::path path = boost::filesystem::path(modulesdir) / module_name / module_file_name;
-        EVLOG(info) << "Loading module shared library from " << path;
+        EVLOG(info) << fmt::format("Loading module shared library from {}", path.string());
 
         boost::dll::shared_library lib(path);
 
@@ -223,9 +225,10 @@ int main(int argc, char* argv[]) {
 
         EVLOG(info) << "Exiting...";
     } catch (boost::exception& e) {
-        EVLOG(critical) << "Caught top level boost::exception:" << std::endl << boost::diagnostic_information(e, true);
+        EVLOG(critical) << fmt::format("Caught top level boost::exception:\n{}",
+                                       boost::diagnostic_information(e, true));
     } catch (std::exception& e) {
-        EVLOG(critical) << "Caught top level std::exception:" << std::endl << boost::diagnostic_information(e, true);
+        EVLOG(critical) << fmt::format("Caught top level std::exception:\n{}", boost::diagnostic_information(e, true));
     }
     return 0;
 }

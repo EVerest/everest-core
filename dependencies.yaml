@@ -21,6 +21,9 @@ liblog:
   git: git@github.com:EVerest/liblog.git
   git_tag: main
   options: ["BUILD_EXAMPLES OFF"]
+libfmt:
+  git: https://github.com/fmtlib/fmt.git
+  git_tag: 8.1.1
 date:
   git: https://github.com/HowardHinnant/date.git
   git_tag: v3.0.1

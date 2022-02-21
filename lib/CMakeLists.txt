@@ -29,6 +29,7 @@ target_link_libraries(everest
         Boost::thread
         date
         everest::log
+        fmt::fmt
         mqttc
         nlohmann_json::nlohmann_json
         nlohmann_json_schema_validator::nlohmann_json_schema_validator

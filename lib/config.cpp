@@ -5,6 +5,8 @@
 #include <set>
 #include <sstream>
 
+#include <fmt/format.h>
+
 #include <everest/exceptions.hpp>
 #include <everest/logging.hpp>
 
@@ -47,7 +49,7 @@ static void validate_config_schema(const json& config_map_schema) {
             validator.set_root_schema(config_item.value());
             validator.validate(config_item.value()["default"]);
         } catch (const std::exception& e) {
-            throw std::runtime_error("Config item '" + config_item.key() + "' has issues:\n" + e.what());
+            throw std::runtime_error(fmt::format("Config item '{}' has issues:\n{}", config_item.key(), e.what()));
         }
     }
 }
@@ -117,7 +119,7 @@ Config::Config(std::string schemas_dir, std::string config_file, std::string mod
     fs::path config_path = config_file;
 
     try {
-        EVLOG(info) << "Loading config file at: " << fs::canonical(config_path).c_str();
+        EVLOG(info) << fmt::format("Loading config file at: {}", fs::canonical(config_path).string());
 
         std::ifstream ifs(config_path.c_str());
         std::string config_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
@@ -130,7 +132,7 @@ Config::Config(std::string schemas_dir, std::string config_file, std::string mod
         // TODO(kai): or should we introduce a "meta-config" that references all configs that should be merged here?
         auto user_config_path = config_path.parent_path() / "user-config" / config_path.filename();
         if (fs::exists(user_config_path)) {
-            EVLOG(info) << "Loading user-config file at: " << fs::canonical(user_config_path).c_str();
+            EVLOG(info) << fmt::format("Loading user-config file at: {}", fs::canonical(user_config_path).string());
 
             std::ifstream ifs(user_config_path.c_str());
             std::string user_config_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
@@ -151,7 +153,7 @@ Config::Config(std::string schemas_dir, std::string config_file, std::string mod
             this->main = this->main.patch(patch);
         }
     } catch (const std::exception& e) {
-        EVLOG_AND_THROW(EVEXCEPTION(EverestConfigError, "Failed to load and parse config file: ", e.what()));
+        EVLOG_AND_THROW(EverestConfigError(fmt::format("Failed to load and parse config file: {}", e.what())));
     }
 
     // load manifest files of configured modules
@@ -160,12 +162,13 @@ Config::Config(std::string schemas_dir, std::string config_file, std::string mod
         auto& module_config = element.value();
         std::string module_name = module_config["module"];
 
-        EVLOG(info) << "Found module " << printable_identifier(module_id) << ", loading and verifying manifest...";
+        EVLOG(info) << fmt::format("Found module {}, loading and verifying manifest...",
+                                   printable_identifier(module_id));
 
         // load and validate module manifest.json
         fs::path manifest_path = fs::path(modules_dir) / module_name / "manifest.json";
         try {
-            EVLOG(info) << "Loading module manifest file at: " << fs::canonical(manifest_path).c_str();
+            EVLOG(info) << fmt::format("Loading module manifest file at: {}", fs::canonical(manifest_path).string());
 
             std::ifstream ifs(manifest_path.c_str());
             std::string manifest_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
@@ -180,16 +183,16 @@ Config::Config(std::string schemas_dir, std::string config_file, std::string mod
                 this->manifests[module_name] = this->manifests[module_name].patch(patch);
             }
         } catch (const std::exception& e) {
-            EVLOG_AND_THROW(EVEXCEPTION(EverestConfigError, "Failed to load and parse manifest file: ", e.what()));
+            EVLOG_AND_THROW(EverestConfigError(fmt::format("Failed to load and parse manifest file: {}", e.what())));
         }
 
         // validate user-defined default values for the config meta-schemas
         try {
             validate_config_schema(this->manifests[module_name]["config"]);
         } catch (const std::exception& e) {
-            EVLOG_AND_THROW(EVEXCEPTION(EverestConfigError,
-                                        "Failed to validate the module configuration meta-schema for module '",
-                                        module_name, "'. Reason:\n", e.what()));
+            EVLOG_AND_THROW(EverestConfigError(
+                fmt::format("Failed to validate the module configuration meta-schema for module '{}'. Reason:\n{}",
+                            module_name, e.what())));
         }
 
         for (auto& impl : this->manifests[module_name]["provides"].items()) {
@@ -197,9 +200,9 @@ Config::Config(std::string schemas_dir, std::string config_file, std::string mod
                 validate_config_schema(impl.value()["config"]);
             } catch (const std::exception& e) {
                 EVLOG_AND_THROW(
-                    EVEXCEPTION(EverestConfigError,
-                                "Failed to validate the implementation configuration meta-schema for implementation '",
-                                impl.key(), "' in module '", module_name, "'. Reason:\n", e.what()));
+                    EverestConfigError(fmt::format("Failed to validate the implementation configuration meta-schema "
+                                                   "for implementation '{}' in module '{}'. Reason:\n{}",
+                                                   impl.key(), module_name, e.what())));
             }
         }
 
@@ -209,7 +212,7 @@ Config::Config(std::string schemas_dir, std::string config_file, std::string mod
         this->base_interfaces[module_name] = json({});
 
         for (const auto& impl_id : provided_impls) {
-            EVLOG(info) << "Loading interface for implementation: " << impl_id;
+            EVLOG(info) << fmt::format("Loading interface for implementation: {}", impl_id);
             auto intf_name = this->manifests[module_name]["provides"][impl_id]["interface"].get<std::string>();
             auto seen_interfaces = std::set<std::string>();
             auto interface_definition = resolve_interface(intf_name, seen_interfaces);
@@ -226,20 +229,16 @@ Config::Config(std::string schemas_dir, std::string config_file, std::string mod
                             std::inserter(unknown_impls_in_config, unknown_impls_in_config.end()));
 
         if (!unknown_impls_in_config.empty()) {
-            std::ostringstream oss;
-            oss << "Implemenation id";
-            for (const auto& impl_id : unknown_impls_in_config) {
-                oss << " '" << impl_id << "'";
-            }
-            oss << "mentioned in config but not defined in manifest of module '" << module_config["module"] << "'!";
-            EVLOG(error) << oss.str();
-            EVTHROW(EverestApiError(oss.str()));
+            EVLOG_AND_THROW(EverestApiError(
+                fmt::format("Implementation id(s)[{}] mentioned in config, but not defined in manifest of module '{}'!",
+                            fmt::join(unknown_impls_in_config, " "), module_config["module"])));
         }
 
         // validate config entries against manifest file
         for (const auto& impl_id : provided_impls) {
-            EVLOG(debug) << "Validating implementation config of " << printable_identifier(module_id, impl_id)
-                         << " against json schemas defined in module mainfest...";
+            EVLOG(debug) << fmt::format(
+                "Validating implementation config of {} against json schemas defined in module mainfest...",
+                printable_identifier(module_id, impl_id));
 
             json config_map = module_config["config_implementation"][impl_id];
             json config_map_schema =
@@ -249,17 +248,17 @@ Config::Config(std::string schemas_dir, std::string config_file, std::string mod
                 this->main[module_id]["config_maps"][impl_id] = parse_config_map(config_map_schema, config_map);
             } catch (const ConfigParseException& err) {
                 if (err.err_t == ConfigParseException::NOT_DEFINED) {
-                    EVLOG_AND_THROW(EVEXCEPTION(EverestConfigError, "Config entry '", err.entry, "' of ",
-                                                printable_identifier(module_id, impl_id),
-                                                " not defined in manifest of module '", module_config["module"], "'!"));
+                    EVLOG_AND_THROW(EverestConfigError(
+                        fmt::format("Config entry '{}' of {} not defined in manifest of module '{}'!", err.entry,
+                                    printable_identifier(module_id, impl_id), module_config["module"])));
                 } else if (err.err_t == ConfigParseException::MISSING_ENTRY) {
-                    EVLOG_AND_THROW(EVEXCEPTION(EverestConfigError, "Missing mandatory config entry '", err.entry,
-                                                "' in ", printable_identifier(module_id, impl_id), "!"));
+                    EVLOG_AND_THROW(
+                        EverestConfigError(fmt::format("Missing mandatory config entry '{}' in {}!", err.entry,
+                                                       printable_identifier(module_id, impl_id))));
                 } else if (err.err_t == ConfigParseException::SCHEMA) {
-                    EVLOG_AND_THROW(EVEXCEPTION(EverestConfigError, "Schema validation for config entry '", err.entry,
-                                                "' failed in ", printable_identifier(module_id, impl_id),
-                                                "! Reason:\n"
-                                                    << err.what));
+                    EVLOG_AND_THROW(EverestConfigError(
+                        fmt::format("Schema validation for config entry '{}' failed in {}! Reason:\n{}", err.entry,
+                                    printable_identifier(module_id, impl_id), err.what)));
                 } else {
                     throw err;
                 }
@@ -275,17 +274,17 @@ Config::Config(std::string schemas_dir, std::string config_file, std::string mod
                 this->main[module_id]["config_maps"]["!module"] = parse_config_map(config_map_schema, config_map);
             } catch (const ConfigParseException& err) {
                 if (err.err_t == ConfigParseException::NOT_DEFINED) {
-                    EVLOG_AND_THROW(EVEXCEPTION(EverestConfigError, "Config entry '", err.entry,
-                                                "' for module config not defined in manifest of module '",
-                                                module_config["module"], "'!"));
+                    EVLOG_AND_THROW(EverestConfigError(
+                        fmt::format("Config entry '{}' for module config not defined in manifest of module '{}'!",
+                                    err.entry, module_config["module"])));
                 } else if (err.err_t == ConfigParseException::MISSING_ENTRY) {
-                    EVLOG_AND_THROW(EVEXCEPTION(EverestConfigError, "Missing mandatory config entry '", err.entry,
-                                                "' for module config in module ", module_config["module"], "!"));
+                    EVLOG_AND_THROW(EverestConfigError(
+                        fmt::format("Missing mandatory config entry '{}' for module config in module {}", err.entry,
+                                    module_config["module"])));
                 } else if (err.err_t == ConfigParseException::SCHEMA) {
-                    EVLOG_AND_THROW(EVEXCEPTION(EverestConfigError, "Schema validation for config entry '", err.entry,
-                                                "' failed for module config in module ", module_config["module"],
-                                                "!  Reason:\n"
-                                                    << err.what));
+                    EVLOG_AND_THROW(EverestConfigError(fmt::format(
+                        "Schema validation for config entry '{}' failed for module config in module {}! Reason:\n{}",
+                        err.entry, module_config["module"], err.what)));
                 } else {
                     throw err;
                 }
@@ -305,42 +304,44 @@ json Config::resolve_interface(const std::string& intf_name, std::set<std::strin
         EVLOG(debug) << "interface '" << intf_name << "' has parent '" << intf_definition["parent"] << "'";
         auto parent_name = intf_definition["parent"].get<std::string>();
         if (seen_interfaces.count(parent_name) != 0) {
-            EVLOG_AND_THROW(EVEXCEPTION(EverestConfigError, "Found unallowed inheritance loop: interface '", intf_name,
-                                        "' tries to load already loaded interface '", parent_name, "'!"));
+            EVLOG_AND_THROW(EverestConfigError(fmt::format(
+                "Found unallowed inheritance loop: interface '{}' tries to load already loaded interface '{}'!",
+                intf_name, parent_name)));
         }
         auto parent_definition = resolve_interface(parent_name, seen_interfaces);
 
         // merge interface definitions of parent into child
         if (parent_definition.contains("vars")) {
             if (intf_definition.contains("vars")) {
-                EVLOG(debug)
-                    << "there are vars in the base and child interface definitions, extending child interface '"
-                    << intf_name << "' with base interface '" << parent_name << "'...";
+                EVLOG(debug) << fmt::format("There are vars in the base and child interface definitions, extending "
+                                            "child interface '{}' with base interface '{}'...",
+                                            intf_name, parent_name);
                 for (auto& var : intf_definition["vars"].items()) {
                     if (parent_definition["vars"].contains(var.key())) {
-                        EVLOG_AND_THROW(EVEXCEPTION(
-                            EverestConfigError, "parent interface contains var '"
-                                                    << var.key() << "' that would be overwritten by child interface!"));
+                        EVLOG_AND_THROW(EverestConfigError(fmt::format(
+                            "Parent interface contains var '{}' that would be overwritten by child interface!",
+                            var.key())));
                     }
                 }
                 intf_definition["vars"].update(parent_definition["vars"]);
             } else {
-                EVLOG(debug) << "there are only vars in the base interface definition, copying over base interface '"
-                             << parent_name << "' to child interface '" << intf_name << "'...";
+                EVLOG(debug) << fmt::format("There are only vars in the base interface definition, copying over base "
+                                            "interface '{}' to child interface '{}'...",
+                                            parent_name, intf_name);
                 intf_definition["vars"] = parent_definition["vars"];
             }
         }
 
         if (parent_definition.contains("cmds")) {
             if (intf_definition.contains("cmds")) {
-                EVLOG(debug)
-                    << "there are cmds in the base and child interface definitions, extending child interface '"
-                    << intf_name << "' with base interface '" << parent_name << "'...";
+                EVLOG(debug) << fmt::format("There are cmds in the base and child interface definitions, extending "
+                                            "child interface '{}' with base interface '{}'...",
+                                            intf_name, parent_name);
                 for (auto& cmd : intf_definition["cmds"].items()) {
                     if (parent_definition["cmds"].contains(cmd.key())) {
-                        EVLOG_AND_THROW(EVEXCEPTION(
-                            EverestConfigError, "parent interface contains cmd '"
-                                                    << cmd.key() << "' that would be overwritten by child interface!"));
+                        EVLOG_AND_THROW(EverestConfigError(fmt::format(
+                            "Parent interface contains cmd '{}' that would be overwritten by child interface!",
+                            cmd.key())));
                         // TODO(kai): maybe only throw with identical function signature, otherwise overload
                         // --> no, overloading can't be implemented nicely in javascript and imposes all sorts of corner
                         // cases we don't want to handle
@@ -348,8 +349,9 @@ json Config::resolve_interface(const std::string& intf_name, std::set<std::strin
                 }
                 intf_definition["cmds"].update(parent_definition["cmds"]);
             } else {
-                EVLOG(debug) << "there are only cmds in the base interface definition, copying over base interface '"
-                             << parent_name << "' to child interface '" << intf_name << "'...";
+                EVLOG(debug) << fmt::format("There are only cmds in the base interface definition, copying over base "
+                                            "interface '{}' to child interface '{}'...",
+                                            parent_name, intf_name);
                 intf_definition["cmds"] = parent_definition["cmds"];
             }
         }
@@ -363,7 +365,7 @@ json Config::load_interface_file(const std::string& intf_name) {
     BOOST_LOG_FUNCTION();
     fs::path intf_path = fs::path(this->interfaces_dir) / (intf_name + ".json");
     try {
-        EVLOG(info) << "Loading interface file at: " << fs::canonical(intf_path).c_str();
+        EVLOG(info) << fmt::format("Loading interface file at: {}", fs::canonical(intf_path).string());
 
         std::ifstream ifs(intf_path.c_str());
         std::string intf_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
@@ -395,7 +397,7 @@ json Config::load_interface_file(const std::string& intf_name) {
 
         return interface_json;
     } catch (const std::exception& e) {
-        EVLOG_AND_THROW(EVEXCEPTION(EverestConfigError, "Failed to load and parse interface file: ", e.what()));
+        EVLOG_AND_THROW(EverestConfigError(fmt::format("Failed to load and parse interface file: {}", e.what())));
     }
 }
 
@@ -407,8 +409,8 @@ json Config::resolve_requirement(const std::string& module_id, const std::string
     // FIXME (aw): the following if doesn't check for the requirement id
     //             at all
     if (!this->main.contains(module_id)) {
-        EVLOG_AND_THROW(EVEXCEPTION(EverestApiError, "Requested requirement id '", requirement_id, "' of module ",
-                                    printable_identifier(module_id), " not found in config!"));
+        EVLOG_AND_THROW(EverestApiError(fmt::format("Requested requirement id '{}' of module {} not found in config!",
+                                                    requirement_id, printable_identifier(module_id))));
     }
 
     // check for connections for this requirement
@@ -470,7 +472,6 @@ ModuleConfigs Config::get_module_configs(const std::string& module_id) {
                     value = data.get<double>();
                 } else if (data.is_number_integer()) {
                     if (entry_type == "number") {
-                        EVLOG(debug) << "      (this is provided as an integer but converted to double";
                         value = data.get<double>();
                     } else {
                         value = data.get<int>();
@@ -478,10 +479,10 @@ ModuleConfigs Config::get_module_configs(const std::string& module_id) {
                 } else if (data.is_boolean()) {
                     value = data.get<bool>();
                 } else {
-                    EVLOG_AND_THROW(EVEXCEPTION(EverestInternalError, "Found a config entry: '", entry.key(),
-                                                "' for module type '", module_type,
-                                                "', which has a data type, that is different from ",
-                                                "(bool, integer, number, string)"));
+                    EVLOG_AND_THROW(EverestInternalError(
+                        fmt::format("Found a config entry: '{}' for module type '{}', which has a data type, that is "
+                                    "different from (bool, integer, number, string)",
+                                    entry.key(), module_type)));
                 }
                 processed_conf_map[entry.key()] = value;
             }
@@ -512,10 +513,10 @@ json Config::load_schema(const fs::path& path) {
 
     if (!fs::exists(path)) {
         EVLOG_AND_THROW(
-            EVEXCEPTION(EverestInternalError, "Schema file does not exist at: ", fs::absolute(path).c_str()));
+            EverestInternalError(fmt::format("Schema file does not exist at: {}", fs::absolute(path).string())));
     }
 
-    EVLOG(info) << "Loading schema file at: " << fs::canonical(path).c_str();
+    EVLOG(info) << fmt::format("Loading schema file at: {}", fs::canonical(path).string());
 
     std::ifstream ifs(path.c_str());
     std::string schema_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
@@ -527,7 +528,7 @@ json Config::load_schema(const fs::path& path) {
     try {
         validator.set_root_schema(schema);
     } catch (const std::exception& e) {
-        EVLOG_AND_THROW(EVEXCEPTION(EverestInternalError, "Validation of schema failed, here is why: ", e.what()));
+        EVLOG_AND_THROW(EverestInternalError(fmt::format("Validation of schema failed, here is why: {}", e.what())));
     }
 
     return schema;
@@ -537,7 +538,7 @@ schemas Config::load_schemas(std::string schemas_dir) {
     BOOST_LOG_FUNCTION();
     schemas schemas;
 
-    EVLOG(info) << "Loading base schema files for config and manifests... from:" << schemas_dir;
+    EVLOG(info) << fmt::format("Loading base schema files for config and manifests... from: {}", schemas_dir);
     schemas.config = Config::load_schema(fs::path(schemas_dir) / "config.json");
     schemas.manifest = Config::load_schema(fs::path(schemas_dir) / "manifest.json");
     schemas.interface = Config::load_schema(fs::path(schemas_dir) / "interface.json");
@@ -561,7 +562,7 @@ json Config::load_all_manifests(std::string modules_dir, std::string schemas_dir
         }
 
         std::string module_name = module_path.path().filename().c_str();
-        EVLOG(info) << "Found module " << module_name << ", loading and verifying manifest...";
+        EVLOG(info) << fmt::format("Found module {}, loading and verifying manifest...", module_name);
 
         try {
             std::ifstream ifs(manifest_path.c_str());
@@ -573,8 +574,8 @@ json Config::load_all_manifests(std::string modules_dir, std::string schemas_dir
             validator.set_root_schema(schemas.manifest);
             validator.validate(manifests[module_name]);
         } catch (const std::exception& e) {
-            EVLOG_AND_THROW(EVEXCEPTION(EverestConfigError, "Failed to load and parse module manifest file of module ",
-                                        module_name, ": ", e.what()));
+            EVLOG_AND_THROW(EverestConfigError(
+                fmt::format("Failed to load and parse module manifest file of module {}: {}", module_name, e.what())));
         }
     }
 
@@ -591,7 +592,7 @@ std::set<std::string> Config::keys(json object) {
             return keys;
         }
         EVLOG_AND_THROW(
-            EVEXCEPTION(EverestInternalError, "Provided value is not an object. It is a: ", object.type_name()));
+            EverestInternalError(fmt::format("Provided value is not an object. It is a: {}", object.type_name())));
     }
 
     for (auto& element : object.items()) {
@@ -610,7 +611,7 @@ void Config::loader(const json_uri& uri, json& schema) {
     }
 
     // TODO(kai): think about supporting more urls here
-    EVTHROW(EverestInternalError(uri.url() + " is not supported for schema loading at the moment\n"));
+    EVTHROW(EverestInternalError(fmt::format("{} is not supported for schema loading at the moment\n", uri.url())));
 }
 
 void Config::format_checker(const std::string& format, const std::string& value) {
@@ -636,14 +637,13 @@ std::string Config::printable_identifier(const std::string& module_id, const std
 
     json info = extract_implementation_info(module_id, impl_id);
     // no implementation id yet so only return this kind of string:
-    std::ostringstream oss;
-    oss << info["module_id"].get<std::string>() << ":" << info["module_name"].get<std::string>();
+    const auto module_string =
+        fmt::format("{}:{}", info["module_id"].get<std::string>(), info["module_name"].get<std::string>());
     if (impl_id.empty()) {
-        return oss.str();
+        return module_string;
     }
-    oss << "->" << info["impl_id"].get<std::string>() << ":" << info["impl_intf"].get<std::string>();
-
-    return oss.str();
+    return fmt::format("{}->{}:{}", module_string, info["impl_id"].get<std::string>(),
+                       info["impl_intf"].get<std::string>());
 }
 
 ModuleInfo Config::get_module_info(const std::string& module_id) {
@@ -651,7 +651,7 @@ ModuleInfo Config::get_module_info(const std::string& module_id) {
     // FIXME (aw): the following if block is used so often, it should be
     //             refactored into a helper function
     if (!this->main.contains(module_id)) {
-        EVTHROW(EverestApiError("Module id '" + module_id + "' not found in config!"));
+        EVTHROW(EverestApiError(fmt::format("Module id '{}' not found in config!", module_id)));
     }
 
     ModuleInfo module_info;
@@ -671,11 +671,9 @@ std::string Config::mqtt_prefix(const std::string& module_id, const std::string&
 
     json info = extract_implementation_info(module_id, impl_id);
 
-    std::ostringstream oss;
-    oss << "everest/" << info["module_id"].get<std::string>() << ":" << info["module_name"].get<std::string>() << "/"
-        << info["impl_id"].get<std::string>() << ":" << info["impl_intf"].get<std::string>();
-
-    return oss.str();
+    return fmt::format("everest/{}:{}/{}:{}", info["module_id"].get<std::string>(),
+                       info["module_name"].get<std::string>(), info["impl_id"].get<std::string>(),
+                       info["impl_intf"].get<std::string>());
 }
 
 std::string Config::mqtt_module_prefix(const std::string& module_id) {
@@ -683,19 +681,14 @@ std::string Config::mqtt_module_prefix(const std::string& module_id) {
 
     json info = extract_implementation_info(module_id);
 
-    std::ostringstream oss;
-    oss << "everest/" << info["module_id"].get<std::string>() << ":" << info["module_name"].get<std::string>();
-
-    return oss.str();
+    return fmt::format("everest/{}:{}", info["module_id"].get<std::string>(), info["module_name"].get<std::string>());
 }
 
 json Config::extract_implementation_info(const std::string& module_id, const std::string& impl_id) {
     BOOST_LOG_FUNCTION();
 
     if (!this->main.contains(module_id)) {
-        std::ostringstream oss;
-        oss << "Module id '" << module_id << "' not found in config!";
-        EVTHROW(EverestApiError(oss.str()));
+        EVTHROW(EverestApiError(fmt::format("Module id '{}' not found in config!", module_id)));
     }
 
     json info;
@@ -705,16 +698,12 @@ json Config::extract_implementation_info(const std::string& module_id, const std
     info["impl_intf"] = "";
     if (!impl_id.empty()) {
         if (!this->manifests.contains(info["module_name"])) {
-            std::ostringstream oss;
-            oss << "No known manifest for module name '" << info["module_name"] << "'!";
-            EVTHROW(EverestApiError(oss.str()));
+            EVTHROW(EverestApiError(fmt::format("No known manifest for module name '{}'!", info["module_name"])));
         }
 
         if (!this->manifests[info["module_name"].get<std::string>()]["provides"].contains(impl_id)) {
-            std::ostringstream oss;
-            oss << "Implementaiton id '" << impl_id << "' not defined in manifest of module '" << info["module_name"]
-                << "'!";
-            EVTHROW(EverestApiError(oss.str()));
+            EVTHROW(EverestApiError(fmt::format("Implementaiton id '{}' not defined in manifest of module '{}'!",
+                                                impl_id, info["module_name"])));
         }
 
         info["impl_intf"] = this->manifests[info["module_name"].get<std::string>()]["provides"][impl_id]["interface"];
@@ -737,7 +726,7 @@ void Config::resolve_all_requirements() {
     // manifest metaschemas these have already been checked by schema validation
     for (auto& element : this->main.items()) {
         const auto& module_id = element.key();
-        EVLOG(debug) << "Resolving requirements of module " << printable_identifier(module_id) << "...";
+        EVLOG(debug) << fmt::format("Resolving requirements of module {}...", printable_identifier(module_id));
 
         auto& module_config = element.value();
 
@@ -751,15 +740,10 @@ void Config::resolve_all_requirements() {
                             std::inserter(unknown_requirement_entries, unknown_requirement_entries.end()));
 
         if (!unknown_requirement_entries.empty()) {
-            std::ostringstream oss;
-            oss << "Configured connection for requirement id";
-            for (const auto& requirement_id : unknown_requirement_entries) {
-                oss << " '" << requirement_id << "'";
-            }
-            oss << "of " << printable_identifier(module_id) << " not defined as requirement in manifest of module '"
-                << module_config["module"] << "'!";
-            EVLOG(error) << oss.str();
-            EVTHROW(EverestApiError(oss.str()));
+            EVLOG_AND_THROW(EverestApiError(fmt::format("Configured connection for requirement id(s) [{}] of {} not "
+                                                        "defined as requirement in manifest of module '{}'!",
+                                                        fmt::join(unknown_requirement_entries, " "),
+                                                        printable_identifier(module_id), module_config["module"])));
         }
 
         for (auto& element : this->manifests[module_config["module"].get<std::string>()]["requires"].items()) {
@@ -768,45 +752,46 @@ void Config::resolve_all_requirements() {
 
             if (!module_config["connections"].contains(requirement_id)) {
                 if (requirement["min_connections"] < 1) {
-                    EVLOG(info) << "Manifest of " << printable_identifier(module_id) << " lists OPTIONAL requirement '"
-                                << requirement_id
-                                << "' which could not be fulfilled and will be "
-                                   "ignored...";
+                    EVLOG(info) << fmt::format("Manifest of {} lists OPTIONAL requirement '{}' which could not be "
+                                               "fulfilled and will be ignored...",
+                                               printable_identifier(module_id), requirement_id);
                     continue; // stop here, there is nothing we can do
                 }
-                EVLOG_AND_THROW(EVEXCEPTION(EverestConfigError, "Requirement '", requirement_id, "' of module ",
-                                            printable_identifier(module_id), " not fulfilled: requirement id '",
-                                            requirement_id, "' not listed in connections!"));
+                EVLOG_AND_THROW(EverestConfigError(fmt::format(
+                    "Requirement '{}' of module {} not fulfilled: requirement id '{}' not listed in connections!",
+                    requirement_id, printable_identifier(module_id), requirement_id)));
             }
             json connections = module_config["connections"][requirement_id];
 
             // check if min_connections and max_connections are fulfilled
             if (connections.size() < requirement["min_connections"] ||
                 connections.size() > requirement["max_connections"]) {
-                EVLOG_AND_THROW(EVEXCEPTION(EverestConfigError, "Requirement '", requirement_id, "' of module ",
-                                            printable_identifier(module_id), " not fulfilled: requirement list does",
-                                            "not have an entry count between ", requirement["min_connections"], " and ",
-                                            requirement["max_connections"], "!"));
+                EVLOG_AND_THROW(
+                    EverestConfigError(fmt::format("Requirement '{}' of module {} not fulfilled: requirement list does "
+                                                   "not have an entry count between {} and {}!",
+                                                   requirement_id, printable_identifier(module_id),
+                                                   requirement["min_connections"], requirement["max_connections"])));
             }
 
             for (uint64_t connection_num = 0; connection_num < connections.size(); connection_num++) {
                 auto& connection = connections[connection_num];
                 std::string connection_module_id = connection["module_id"];
                 if (!this->main.contains(connection["module_id"])) {
-                    EVLOG_AND_THROW(EVEXCEPTION(EverestConfigError, "Requirement '", requirement_id, "' of module ",
-                                                printable_identifier(module_id), " not fulfilled: module id '",
-                                                connection_module_id, "' (configured in connection ", connection_num,
-                                                ") not loaded in config!"));
+                    EVLOG_AND_THROW(EverestConfigError(fmt::format(
+                        "Requirement '{}' of module {} not fulfilled: module id '{}' (configured in "
+                        "connection {}) not loaded in config!",
+                        requirement_id, printable_identifier(module_id), connection_module_id, connection_num)));
                 }
 
                 std::string connection_module_name = this->main[connection_module_id]["module"];
                 std::string connection_impl_id = connection["implementation_id"];
                 auto& connection_manifest = this->manifests[connection_module_name];
                 if (!connection_manifest["provides"].contains(connection_impl_id)) {
-                    EVLOG_AND_THROW(EVEXCEPTION(EverestConfigError, "Requirement '", requirement_id, "' of module ",
-                                                printable_identifier(module_id), " not fulfilled: required module ",
-                                                printable_identifier(connection["module_id"]),
-                                                " does not provide a implementation for '", connection_impl_id, "'!"));
+                    EVLOG_AND_THROW(EverestConfigError(
+                        fmt::format("Requirement '{}' of module {} not fulfilled: required module {} does not provide "
+                                    "an implementation for '{}'!",
+                                    requirement_id, printable_identifier(module_id),
+                                    printable_identifier(connection["module_id"]), connection_impl_id)));
                 }
 
                 auto& connection_provides = connection_manifest["provides"][connection_impl_id];
@@ -816,22 +801,22 @@ void Config::resolve_all_requirements() {
 
                 // check interface requirement
                 if (provided_intfs.count(requirement_interface) < 1) {
-                    EVLOG_AND_THROW(EVEXCEPTION(
-                        EverestConfigError, "Requirement '", requirement_id, "' of module ",
-                        printable_identifier(module_id), " not fulfilled by connection to module ",
-                        printable_identifier(connection["module_id"], connection_impl_id), ": required interface '",
-                        requirement_interface, "' is not provided by this implementation!",
-                        " Connected implementation provides interface '",
-                        connection_provides["interface"].get<std::string>(),
-                        "' with parent interfaces: ", json(provided_intfs)));
+                    EVLOG_AND_THROW(EverestConfigError(fmt::format(
+                        "Requirement '{}' of module {} not fulfilled by connection to module {}: required interface "
+                        "'{}' is not provided by this implementation! Connected implementation provides interface '{}' "
+                        "with parent interfaces: {}",
+                        requirement_id, printable_identifier(module_id),
+                        printable_identifier(connection["module_id"], connection_impl_id), requirement_interface,
+                        connection_provides["interface"].get<std::string>(), json(provided_intfs))));
                 }
 
                 module_config["connections"][requirement_id][connection_num]["provides"] = connection_provides;
                 module_config["connections"][requirement_id][connection_num]["required_interface"] =
                     requirement_interface;
-                EVLOG(info) << "Manifest of" << printable_identifier(module_id) << " lists requirement '"
-                            << requirement_id << "' which will be fulfilled by "
-                            << printable_identifier(connection["module_id"], connection["implementation_id"]) << "...";
+                EVLOG(info) << fmt::format(
+                    "Manifest of {} lists requirement '{}' which will be fulfilled by {}...",
+                    printable_identifier(module_id), requirement_id,
+                    printable_identifier(connection["module_id"], connection["implementation_id"]));
             }
         }
     }

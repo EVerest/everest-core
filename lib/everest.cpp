@@ -10,6 +10,7 @@
 #include <boost/uuid/uuid_io.hpp>
 #include <date/date.h>
 #include <everest/logging.hpp>
+#include <fmt/format.h>
 #include <sigslot/signal.hpp>
 
 #include <framework/everest.hpp>
@@ -94,13 +95,9 @@ void Everest::check_code() {
                             registered_cmds_set.end(), std::inserter(cmds_not_registered, cmds_not_registered.end()));
 
         if (!cmds_not_registered.empty()) {
-            std::ostringstream oss;
-            oss << this->config.printable_identifier(module_id, impl_id)
-                << " does not provide all cmds listed in manifest! Missing cmds: ";
-            for (const auto& cmd : cmds_not_registered) {
-                oss << " '" << cmd << "'";
-            }
-            EVLOG_AND_THROW(EverestApiError(oss.str()));
+            EVLOG_AND_THROW(EverestApiError(fmt::format(
+                "{} does not provide all cmds listed in manifest! Missing cmd(s): [{}]",
+                this->config.printable_identifier(module_id, impl_id), fmt::join(cmds_not_registered, " "))));
         }
     }
 }
@@ -135,15 +132,10 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
     // check args against manifest
     if (this->validate_data_with_schema) {
         if (cmd_definition["arguments"].size() != json_args.size()) {
-            std::ostringstream oss;
-            oss << "Call to "
-                << this->config.printable_identifier(connection["module_id"], connection["implementation_id"]) << "->"
-                << cmd_name << "(";
-            for (auto const& key : arg_names) {
-                oss << key << ",";
-            }
-            oss << "): Argument count does not match manifest!";
-            EVLOG_AND_THROW(EverestApiError(oss.str()));
+            EVLOG_AND_THROW(EverestApiError(
+                fmt::format("Call to {}->{}({}): Argument cound does not match manifest!",
+                            this->config.printable_identifier(connection["module_id"], connection["implementation_id"]),
+                            cmd_name, fmt::join(arg_names, ", "))));
         }
 
         std::set<std::string> unknown_arguments;
@@ -156,23 +148,10 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
                             std::inserter(unknown_arguments, unknown_arguments.end()));
 
         if (!unknown_arguments.empty()) {
-            std::ostringstream oss;
-            oss << "Call to "
-                << this->config.printable_identifier(connection["module_id"], connection["implementation_id"]) << "->"
-                << cmd_name << "(";
-            for (auto const& key : arg_names) {
-                oss << key << ",";
-            }
-            oss << "): Argument names do not match manifest: ";
-            for (auto const& key : arg_names) {
-                oss << key << ",";
-            }
-            oss << " != ";
-            for (auto const& key : cmd_arguments) {
-                oss << key << ",";
-            }
-            oss << "!";
-            EVLOG_AND_THROW(EverestApiError(oss.str()));
+            EVLOG_AND_THROW(EverestApiError(fmt::format(
+                "Call to {}->{}({}): Argument names do not match manifest: {} != {}!",
+                this->config.printable_identifier(connection["module_id"], connection["implementation_id"]), cmd_name,
+                fmt::join(arg_names, ","), fmt::join(arg_names, ","), fmt::join(cmd_arguments, ","))));
         }
     }
 
@@ -183,16 +162,10 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
                 validator.set_root_schema(cmd_definition["arguments"][arg_name]);
                 validator.validate(json_args[arg_name]);
             } catch (const std::exception& e) {
-                std::ostringstream oss;
-                oss << "Call to "
-                    << this->config.printable_identifier(connection["module_id"], connection["implementation_id"])
-                    << "->" << cmd_name << "(";
-                for (auto const& key : arg_names) {
-                    oss << key << ",";
-                }
-                oss << "): Argument '" << arg_name << "' with value '" << json_args[arg_name]
-                    << "' could not be validated with schema: " << e.what();
-                EVLOG_AND_THROW(EverestApiError(oss.str()));
+                EVLOG_AND_THROW(EverestApiError(fmt::format(
+                    "Call to {}->{}({}): Argument '{}' with value '{}' could not be validated with schema: {}",
+                    this->config.printable_identifier(connection["module_id"], connection["implementation_id"]),
+                    cmd_name, fmt::join(arg_names, ","), arg_name, json_args[arg_name], e.what())));
             }
         }
     }
@@ -210,13 +183,13 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
 
     Handler ack_handler = [this, &ack_promise, call_id, connection, cmd_name](json data) {
         if (data["id"] != call_id) {
-            EVLOG(debug) << "ACK: data_id != call_id: '" << data["id"] << " != " << call_id;
+            EVLOG(debug) << fmt::format("ACK: data_id != call_id ({} != {})", data["id"], call_id);
             return;
         }
 
-        EVLOG(debug) << "Incoming ack " << data["id"] << " for "
-                     << this->config.printable_identifier(connection["module_id"], connection["implementation_id"])
-                     << "->" << cmd_name << "()";
+        EVLOG(debug) << fmt::format(
+            "Incoming ack {} for {}->{}()", data["id"],
+            this->config.printable_identifier(connection["module_id"], connection["implementation_id"]), cmd_name);
 
         ack_promise.set_value(true);
     };
@@ -233,13 +206,13 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
 
     Handler res_handler = [this, &res_promise, call_id, connection, cmd_name](json data) {
         if (data["id"] != call_id) {
-            EVLOG(debug) << "RES: data_id != call_id: '" << data["id"] << " != " << call_id;
+            EVLOG(debug) << fmt::format("RES: data_id != call_id ({} != {})", data["id"], call_id);
             return;
         }
 
-        EVLOG(debug) << "Incoming res " << data["id"] << " for "
-                     << this->config.printable_identifier(connection["module_id"], connection["implementation_id"])
-                     << "->" << cmd_name << "()";
+        EVLOG(debug) << fmt::format(
+            "Incoming res {} for {}->{}()", data["id"],
+            this->config.printable_identifier(connection["module_id"], connection["implementation_id"]), cmd_name);
 
         // make sure to only return the intended parts of the incoming result to not open up the api to internals
         res_promise.set_value(
@@ -266,10 +239,9 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
         ack_future_status = ack_future.wait_until(ack_wait);
     } while (ack_future_status == std::future_status::deferred);
     if (ack_future_status == std::future_status::timeout) {
-        EVLOG_AND_THROW(
-            EVEXCEPTION(EverestTimeoutError, "Timeout while waiting for ack of ",
-                        this->config.printable_identifier(connection["module_id"], connection["implementation_id"]),
-                        "->", cmd_name, "()"));
+        EVLOG_AND_THROW(EverestTimeoutError(fmt::format(
+            "Timeout while waiting for ack of {}->{}()",
+            this->config.printable_identifier(connection["module_id"], connection["implementation_id"]), cmd_name)));
     } else if (ack_future_status == std::future_status::ready) {
         EVLOG(debug) << "ack future ready";
     }
@@ -284,10 +256,9 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
 
     json result;
     if (res_future_status == std::future_status::timeout) {
-        EVLOG_AND_THROW(
-            EVEXCEPTION(EverestTimeoutError, "Timeout while waiting for result of ",
-                        this->config.printable_identifier(connection["module_id"], connection["implementation_id"]),
-                        "->", cmd_name, "()"));
+        EVLOG_AND_THROW(EverestTimeoutError(fmt::format(
+            "Timeout while waiting for result of {}->{}()",
+            this->config.printable_identifier(connection["module_id"], connection["implementation_id"]), cmd_name)));
     } else if (res_future_status == std::future_status::ready) {
         EVLOG(debug) << "res future ready";
         result = res_future.get();
@@ -311,14 +282,14 @@ void Everest::publish_var(const std::string& impl_id, const std::string& var_nam
         auto impl_intf = this->module_classes[impl_id];
 
         if (!module_manifest["provides"].contains(impl_id)) {
-            EVLOG_AND_THROW(EVEXCEPTION(EverestApiError, "Implementation '", impl_id,
-                                        "' not declared in manifest of module '", this->config.get_main_config(),
-                                        "'!"));
+            EVLOG_AND_THROW(EverestApiError(fmt::format("Implementation '{}' not declared in manifest of module '{}'!",
+                                                        impl_id, this->config.get_main_config())));
         }
 
         if (!impl_intf["vars"].contains(var_name)) {
-            EVLOG_AND_THROW(EVEXCEPTION(EverestApiError, this->config.printable_identifier(this->module_id, impl_id),
-                                        " does not declare var '", var_name, "' in manifest!"));
+            EVLOG_AND_THROW(
+                EverestApiError(fmt::format("{} does not declare var '{}' in manifest!",
+                                            this->config.printable_identifier(this->module_id, impl_id), var_name)));
         }
 
         // validate var contents before publishing
@@ -328,11 +299,9 @@ void Everest::publish_var(const std::string& impl_id, const std::string& var_nam
             validator.set_root_schema(var_definition);
             validator.validate(json_value);
         } catch (const std::exception& e) {
-            std::ostringstream oss;
-            oss << "Publish var of " << this->config.printable_identifier(this->module_id, impl_id)
-                << " with variable name '" << var_name << "' with value '" << std::setw(4) << json_value
-                << "' could not be validated with schema: " << e.what();
-            EVLOG_AND_THROW(EverestApiError(oss.str()));
+            EVLOG_AND_THROW(EverestApiError(fmt::format(
+                "Publish var of {} with variable name '{}' with value: {}\ncould not be validated with schema: {}",
+                this->config.printable_identifier(this->module_id, impl_id), var_name, json_value.dump(2), e.what())));
         }
     }
 
@@ -349,7 +318,7 @@ void Everest::publish_var(const std::string& impl_id, const std::string& var_nam
 void Everest::subscribe_var(const Requirement& req, const std::string& var_name, const JsonCallback& callback) {
     BOOST_LOG_FUNCTION();
 
-    EVLOG(debug) << "subscribing to var: " << req.id << ":" << var_name;
+    EVLOG(debug) << fmt::format("subscribing to var: {}:{}", req.id, var_name);
 
     // resolve requirement
     json connections = this->config.resolve_requirement(this->module_id, req.id);
@@ -364,17 +333,17 @@ void Everest::subscribe_var(const Requirement& req, const std::string& var_name,
     auto requirement_impl_manifest = this->config.get_interfaces()[module_name][requirement_impl_id];
 
     if (!requirement_impl_manifest["vars"].contains(var_name)) {
-        EVLOG_AND_THROW(EVEXCEPTION(EverestApiError,
-                                    this->config.printable_identifier(requirement_module_id, requirement_impl_id), "->",
-                                    var_name, ": Variable not defined in manifest!"));
+        EVLOG_AND_THROW(EverestApiError(
+            fmt::format("{}->{}: Variable not defined in manifest!",
+                        this->config.printable_identifier(requirement_module_id, requirement_impl_id), var_name)));
     }
 
     auto requirement_manifest_vardef = requirement_impl_manifest["vars"][var_name];
 
     Handler handler = [this, requirement_module_id, requirement_impl_id, requirement_manifest_vardef, var_name,
                        callback](json const& data) {
-        EVLOG(debug) << "Incoming " << this->config.printable_identifier(requirement_module_id, requirement_impl_id)
-                     << "->" << var_name;
+        EVLOG(debug) << fmt::format(
+            "Incoming {}->{}", this->config.printable_identifier(requirement_module_id, requirement_impl_id), var_name);
 
         // check data and ignore it if not matching (publishing it should have been prohibited already)
         try {
@@ -382,8 +351,8 @@ void Everest::subscribe_var(const Requirement& req, const std::string& var_name,
             validator.set_root_schema(requirement_manifest_vardef);
             validator.validate(data);
         } catch (const std::exception& e) {
-            EVLOG(warning) << "Ignoring incoming var '" << var_name << "' because not matching manifest schema! "
-                           << e.what();
+            EVLOG(warning) << fmt::format("Ignoring incoming var '{}' because not matching manifest schema: {}",
+                                          var_name, e.what());
             return;
         }
 
@@ -392,7 +361,7 @@ void Everest::subscribe_var(const Requirement& req, const std::string& var_name,
 
     std::ostringstream topic;
     topic << this->config.mqtt_prefix(requirement_module_id, requirement_impl_id) << "/var/" << var_name;
-    EVLOG(debug) << "Registering mqtt var handler for '" << topic.str() << "'...";
+    EVLOG(debug) << fmt::format("Registering mqtt var handler for '{}'...", topic.str());
 
     // TODO(kai): multiple subscription should be perfectly fine here!
     Token token = this->mqtt_abstraction.register_handler(topic.str(), handler, true);
@@ -409,10 +378,9 @@ void Everest::external_mqtt_publish(const std::string& topic, const std::string&
     // check if external mqtt is enabled
     if (!this->module_manifest.contains("enable_external_mqtt") &&
         this->module_manifest["enable_external_mqtt"] == false) {
-        EVLOG_AND_THROW(
-            EVEXCEPTION(EverestApiError, "Module ", this->config.printable_identifier(this->module_id),
-                        " tries to subscribe to an external MQTT topic, but didn't set 'enable_external_mqtt' "
-                        "to 'true' in its manifest"));
+        EVLOG_AND_THROW(EverestApiError(fmt::format("Module {} tries to subscribe to an external MQTT topic, but "
+                                                    "didn't set 'enable_external_mqtt' to 'true' in its manifest",
+                                                    this->config.printable_identifier(this->module_id))));
     }
 
     this->mqtt_abstraction.publish(topic, data);
@@ -422,25 +390,24 @@ void Everest::provide_external_mqtt_handler(const std::string& topic, const Stri
     BOOST_LOG_FUNCTION();
 
     if (this->registered_external_mqtt_handlers.count(topic) != 0) {
-        EVLOG_AND_THROW(EVEXCEPTION(EverestApiError, this->config.printable_identifier(this->module_id),
-                                    "->external_mqtt_handler<", topic,
-                                    ">: External MQTT Handler for this topic already registered",
-                                    " (you can not register an external MQTT handler twice)!"));
+        EVLOG_AND_THROW(
+            EverestApiError(fmt::format("{}->external_mqtt_handler<{}>: External MQTT Handler for this topic already "
+                                        "registered (you can not register an external MQTT handler twice)!",
+                                        this->config.printable_identifier(this->module_id), topic)));
     }
 
     // check if external mqtt is enabled
     if (!this->module_manifest.contains("enable_external_mqtt") &&
         this->module_manifest["enable_external_mqtt"] == false) {
-        EVLOG_AND_THROW(EVEXCEPTION(EverestApiError, "Module ", this->config.printable_identifier(this->module_id),
-                                    " tries to provide an external MQTT handler, but didn't set 'enable_external_mqtt' "
-                                    "to 'true' in its manifest"));
+        EVLOG_AND_THROW(EverestApiError(fmt::format("Module {} tries to provide an external MQTT handler, but didn't "
+                                                    "set 'enable_external_mqtt' to 'true' in its manifest",
+                                                    this->config.printable_identifier(this->module_id))));
     }
 
     Handler external_handler = [this, handler, topic](json const& data) {
-        EVLOG(debug) << "Incoming external mqtt data for topic '" << topic << "'...";
+        EVLOG(debug) << fmt::format("Incoming external mqtt data for topic '{}'...", topic);
         if (!data.is_string()) {
-            EVLOG_AND_THROW(
-                EVEXCEPTION(EverestInternalError, "External mqtt result is not a string (that should never happen)"));
+            EVLOG_AND_THROW(EverestInternalError("External mqtt result is not a string (that should never happen)"));
         }
         handler(data.get<std::string>());
     };
@@ -465,7 +432,7 @@ void Everest::signal_ready() {
 void Everest::handle_ready(json data) {
     BOOST_LOG_FUNCTION();
 
-    EVLOG(debug) << "handle_ready: " << data;
+    EVLOG(debug) << fmt::format("handle_ready: {}", data);
 
     bool ready = false;
 
@@ -502,9 +469,9 @@ void Everest::provide_cmd(const std::string impl_id, const std::string cmd_name,
     json cmd_definition = get_cmd_definition(this->module_id, impl_id, cmd_name, false);
 
     if (this->registered_cmds.count(impl_id) != 0 && this->registered_cmds[impl_id].count(cmd_name) != 0) {
-        EVLOG_AND_THROW(EVEXCEPTION(EverestApiError, this->config.printable_identifier(this->module_id, impl_id), "->",
-                                    cmd_name, "(...): Handler for this cmd already registered",
-                                    " (you can not register a cmd handler twice)!"));
+        EVLOG_AND_THROW(EverestApiError(fmt::format(
+            "{}->{}(...): Handler for this cmd already registered (you can not register a cmd handler twice)!",
+            this->config.printable_identifier(this->module_id, impl_id), cmd_name)));
     }
 
     // define command wrapper
@@ -516,13 +483,9 @@ void Everest::provide_cmd(const std::string impl_id, const std::string cmd_name,
             arg_names = Config::keys(cmd_definition["arguments"]);
         }
 
-        std::ostringstream oss;
-        oss << "Incoming " << this->config.printable_identifier(this->module_id, impl_id) << "->" << cmd_name << "(";
-        for (auto const& key : arg_names) {
-            oss << key << ",";
-        }
-        oss << ") for <handler>";
-        EVLOG(debug) << oss.str();
+        EVLOG(debug) << fmt::format("Incoming {}->{}({}) for <handler>",
+                                    this->config.printable_identifier(this->module_id, impl_id), cmd_name,
+                                    fmt::join(arg_names, ","));
 
         // check data and ignore it if not matching (publishing it should have
         // been prohibited already)
@@ -532,15 +495,16 @@ void Everest::provide_cmd(const std::string impl_id, const std::string cmd_name,
 
                 for (auto const& arg_name : arg_names) {
                     if (!data["args"].contains(arg_name)) {
-                        EVLOG_AND_THROW(EVEXCEPTION(std::invalid_argument, "Missing argument ", arg_name, " for ",
-                                                    this->config.printable_identifier(this->module_id, impl_id), "!"));
+                        EVLOG_AND_THROW(std::invalid_argument(
+                            fmt::format("Missing argument {} for {}!", arg_name,
+                                        this->config.printable_identifier(this->module_id, impl_id))));
                     }
                     validator.set_root_schema(cmd_definition["arguments"][arg_name]);
                     validator.validate(data["args"][arg_name]);
                 }
             } catch (const std::exception& e) {
-                EVLOG(warning) << "Ignoring incoming cmd '" << cmd_name << "' because not matching manifest schema! "
-                               << e.what();
+                EVLOG(warning) << fmt::format("Ignoring incoming cmd '{}' because not matching manifest schema: {}",
+                                              cmd_name, e.what());
                 return;
             }
         }
@@ -575,15 +539,14 @@ void Everest::provide_cmd(const std::string impl_id, const std::string cmd_name,
                 }
 
             } catch (const std::exception& e) {
-                EVLOG(warning) << "Ignoring return value of cmd '" << cmd_name
-                               << "' because the validation of the result failed. " << e.what();
-                EVLOG(warning) << "definition: " << cmd_definition;
-                EVLOG(warning) << "data: " << res_publish_data;
+                EVLOG(warning) << fmt::format("Ignoring return value of cmd '{}' because the validation of the result "
+                                              "failed: {}\ndefinition: {}\ndata: {}",
+                                              cmd_name, e.what(), cmd_definition, res_publish_data);
                 return;
             }
         }
 
-        EVLOG(debug) << "RETVAL: " << res_publish_data["retval"];
+        EVLOG(debug) << fmt::format("RETVAL: {}", res_publish_data["retval"]);
         res_publish_data["origin"] = this->module_id;
         this->mqtt_abstraction.publish(res_topic.str(), res_publish_data);
     };
@@ -591,7 +554,7 @@ void Everest::provide_cmd(const std::string impl_id, const std::string cmd_name,
     std::ostringstream cmd_topic;
     cmd_topic << this->config.mqtt_prefix(this->module_id, impl_id) << "/cmd/" << cmd_name;
     std::string topic_name = cmd_topic.str();
-    EVLOG(debug) << "Registering mqtt cmd handler for '" << topic_name << "'...";
+    EVLOG(debug) << fmt::format("Registering mqtt cmd handler for '{}'...", topic_name);
     registered_handlers.push_back(this->mqtt_abstraction.register_handler(topic_name, wrapper));
 
     // this list of registered cmds will be used later on to check if all cmds
@@ -618,13 +581,9 @@ void Everest::provide_cmd(const cmd& cmd) {
 
     // check arguments of handler against manifest
     if (cmd_definition["arguments"].size() != arg_types.size()) {
-        std::ostringstream oss;
-        oss << this->config.printable_identifier(this->module_id, impl_id) << "->" << cmd_name << "(";
-        for (auto const& key : arg_names) {
-            oss << key << ",";
-        }
-        oss << "): Argument count of cmd handler does not match manifest!";
-        EVLOG_AND_THROW(EverestApiError(oss.str()));
+        EVLOG_AND_THROW(EverestApiError(fmt::format(
+            "{}->{}({}): Argument count of cmd handler does not match manifest!",
+            this->config.printable_identifier(this->module_id, impl_id), cmd_name, fmt::join(arg_names, ","))));
     }
 
     std::set<std::string> unknown_arguments;
@@ -637,54 +596,28 @@ void Everest::provide_cmd(const cmd& cmd) {
                         std::inserter(unknown_arguments, unknown_arguments.end()));
 
     if (!unknown_arguments.empty()) {
-        std::ostringstream oss;
-        oss << this->config.printable_identifier(this->module_id, impl_id) << "->" << cmd_name << "(";
-        for (auto const& key : arg_names) {
-            oss << key << ",";
-        }
-        oss << "): Argument names of cmd handler do not match manifest: ";
-        for (auto const& key : arg_names) {
-            oss << key << ",";
-        }
-        oss << " != ";
-        for (auto const& key : cmd_arguments) {
-            oss << key << ",";
-        }
-        oss << "!";
-        EVLOG_AND_THROW(EverestApiError(oss.str()));
+        EVLOG_AND_THROW(EverestApiError(
+            fmt::format("{}->{}({}): Argument names of cmd handler do not match manifest: {} != {}!",
+                        this->config.printable_identifier(this->module_id, impl_id), cmd_name,
+                        fmt::join(arg_names, ","), fmt::join(arg_names, ","), fmt::join(cmd_arguments, ","))));
     }
 
     std::string arg_name = check_args(arg_types, cmd_definition["arguments"]);
 
     if (!arg_name.empty()) {
-        std::ostringstream oss;
-        oss << this->config.printable_identifier(this->module_id, impl_id) << "->" << cmd_name << "(";
-        for (auto const& key : arg_names) {
-            oss << key << ",";
-        }
-        oss << "): Cmd handler argument type '";
-        for (auto const& element : arg_types[arg_name]) {
-            oss << element << ",";
-        }
-        oss << "' for '" << arg_name << "' does not match manifest type '"
-            << cmd_definition["arguments"][arg_name]["type"] << "'!";
-        EVLOG_AND_THROW(EverestApiError(oss.str()));
+        EVLOG_AND_THROW(EverestApiError(fmt::format(
+            "{}->{}({}): Cmd handler argument type '{}' for '{}' does not match manifest type '{}'!",
+            this->config.printable_identifier(this->module_id, impl_id), cmd_name, fmt::join(arg_names, ","),
+            fmt::join(arg_types[arg_name], ","), arg_name, cmd_definition["arguments"][arg_name]["type"])));
     }
 
     // validate return value annotations
     if (!check_arg(return_type, cmd_definition["result"])) {
-        std::ostringstream oss;
-        oss << this->config.printable_identifier(this->module_id, impl_id) << "->" << cmd_name << "(";
-        for (auto const& key : arg_names) {
-            oss << key << ",";
-        }
-        oss << "): Cmd handler return type '";
-        for (auto const& element : return_type) {
-            oss << element << ",";
-        }
-        oss << "' does not match manifest type '" << cmd_definition["result"] << "'!";
         // FIXME (aw): this gives more output EVLOG(error) << oss.str(); than the EVTHROW, why?
-        EVLOG_AND_THROW(EverestApiError(oss.str()));
+        EVLOG_AND_THROW(EverestApiError(
+            fmt::format("{}->{}({}): Cmd handler return type '{}' does not match manifest type '{}'!",
+                        this->config.printable_identifier(this->module_id, impl_id), cmd_name,
+                        fmt::join(arg_names, ","), fmt::join(return_type, ","), cmd_definition["result"])));
     }
 
     return this->provide_cmd(impl_id, cmd_name, [handler](json data) {
@@ -711,23 +644,24 @@ json Everest::get_cmd_definition(const std::string& module_id, const std::string
 
     if (!module_manifest["provides"].contains(impl_id)) {
         if (!is_call) {
-            EVLOG_AND_THROW(EVEXCEPTION(EverestApiError, "Module ", module_name, " tries to provide implementation '",
-                                        impl_id, "' not declared in manifest!"));
+            EVLOG_AND_THROW(EverestApiError(fmt::format(
+                "Module {} tries to provide implementation '{}' not declared in manifest!", module_name, impl_id)));
         } else {
-            EVLOG_AND_THROW(EVEXCEPTION(EverestApiError, this->config.printable_identifier(module_id),
-                                        " tries to call command '", cmd_name, "' of implementation '", impl_id,
-                                        "' not declared in manifest of ", module_name, "!"));
+            EVLOG_AND_THROW(EverestApiError(
+                fmt::format("{} tries to call command '{}' of implementation '{}' not declared in manifest of {}",
+                            this->config.printable_identifier(module_id), cmd_name, impl_id, module_name)));
         }
     }
 
     if (!impl_intf["cmds"].contains(cmd_name)) {
         if (!is_call) {
-            EVLOG_AND_THROW(EVEXCEPTION(EverestApiError, this->config.printable_identifier(module_id, impl_id),
-                                        " tries to provide cmd '", cmd_name, "' not declared in manifest!"));
+            EVLOG_AND_THROW(
+                EverestApiError(fmt::format("{} tries to provide cmd '{}' not declared in manifest!",
+                                            this->config.printable_identifier(module_id, impl_id), cmd_name)));
         } else {
-            EVLOG_AND_THROW(EVEXCEPTION(EverestApiError, this->config.printable_identifier(module_id),
-                                        " tries to call cmd '", cmd_name, "' not declared in manifest of ",
-                                        this->config.printable_identifier(module_id, impl_id), "!"));
+            EVLOG_AND_THROW(EverestApiError(fmt::format("{} tries to call cmd '{}' not declared in manifest of {}!",
+                                                        this->config.printable_identifier(module_id), cmd_name,
+                                                        this->config.printable_identifier(module_id, impl_id))));
         }
     }
 
@@ -775,7 +709,7 @@ bool Everest::check_arg(ArgumentType arg_types, json manifest_arg) {
         // direct comparison
         // FIXME (aw): arg_types[0] access should be checked, otherwise core dumps
         if (arg_types[0] != manifest_arg["type"]) {
-            EVLOG(error) << "types do not match: " << arg_types[0] << " != " << manifest_arg["type"];
+            EVLOG(error) << fmt::format("types do not match: {} != {}", arg_types[0], manifest_arg["type"]);
             return false;
         }
         return true;
@@ -783,7 +717,7 @@ bool Everest::check_arg(ArgumentType arg_types, json manifest_arg) {
 
     for (size_t i = 0; i < arg_types.size(); i++) {
         if (arg_types[i] != manifest_arg["type"][i]) {
-            EVLOG(error) << "types do not match: " << arg_types[i] << " != " << manifest_arg["type"][i];
+            EVLOG(error) << fmt::format("types do not match: {} != {}", arg_types[i], manifest_arg["type"][i]);
             return false;
         }
     }

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include <iostream>
 #include <map>
 #include <mutex>
@@ -15,6 +15,7 @@
 #include <boost/filesystem/fstream.hpp>
 #include <boost/program_options.hpp>
 #include <everest/logging.hpp>
+#include <fmt/core.h>
 
 #include <framework/everest.hpp>
 #include <utils/config.hpp>
@@ -49,7 +50,7 @@ int main(int argc, char* argv[]) {
     po::notify(vm);
 
     if (vm.count("help") != 0) {
-        std::cout << desc << "\n";
+        desc.print(std::cout);
         return 1;
     }
 
@@ -94,12 +95,12 @@ int main(int argc, char* argv[]) {
         logging_config = vm["log_conf"].as<std::string>();
     }
     Everest::Logging::init(logging_config);
-    EVLOG(debug) << "main_dir was set to " << main_dir;
-    EVLOG(debug) << "main_binary was set to " << main_binary;
+    EVLOG(debug) << fmt::format("main_dir was set to {}", main_dir);
+    EVLOG(debug) << fmt::format("main_binary was set to {}", main_binary);
     // dump all manifests if requested and terminate afterwards
     if (vm.count("dumpmanifests") != 0) {
         boost::filesystem::path dumpmanifests_path = boost::filesystem::path(vm["dumpmanifests"].as<std::string>());
-        EVLOG(info) << "Dumping all known validated manifests into '" << dumpmanifests_path << "'";
+        EVLOG(info) << fmt::format("Dumping all known validated manifests into '{}'", dumpmanifests_path.string());
 
         auto manifests = Everest::Config::load_all_manifests(modules_dir, schemas_dir);
 
@@ -123,22 +124,23 @@ int main(int argc, char* argv[]) {
     try {
         config = new Everest::Config(schemas_dir, config_file, modules_dir, interfaces_dir);
     } catch (Everest::EverestInternalError& e) {
-        EVLOG(error) << "Failed to load and validate config!" << std::endl << boost::diagnostic_information(e, true);
+        EVLOG(error) << fmt::format("Failed to load and validate config!\n{}", boost::diagnostic_information(e, true));
         return 128;
     } catch (boost::exception& e) {
         EVLOG(error) << "Failed to load and validate config!";
-        EVLOG(critical) << "Caught top level boost::exception:" << std::endl << boost::diagnostic_information(e, true);
+        EVLOG(critical) << fmt::format("Caught top level boost::exception:\n{}",
+                                       boost::diagnostic_information(e, true));
         return 1;
     } catch (std::exception& e) {
         EVLOG(error) << "Failed to load and validate config!";
-        EVLOG(critical) << "Caught top level std::exception:" << std::endl << boost::diagnostic_information(e, true);
+        EVLOG(critical) << fmt::format("Caught top level std::exception:\n{}", boost::diagnostic_information(e, true));
         return 1;
     }
 
     // dump config if requested
     if (vm.count("dump") != 0) {
         boost::filesystem::path dump_path = boost::filesystem::path(vm["dump"].as<std::string>());
-        EVLOG(info) << "Dumping validated config and manifests into '" << dump_path << "'";
+        EVLOG(info) << fmt::format("Dumping validated config and manifests into '{}'", dump_path.string());
 
         boost::filesystem::path config_dump_path = dump_path / "config.json";
 
@@ -217,7 +219,7 @@ int main(int argc, char* argv[]) {
         std::string module_name = module.key();
         if (std::any_of(ignored_modules.begin(), ignored_modules.end(),
                         [module_name](const auto& element) { return element == module_name; })) {
-            EVLOG(info) << "Ignoring module: " << module_name;
+            EVLOG(info) << fmt::format("Ignoring module: {}", module_name);
             continue;
         }
         std::string module_class = main_config[module_name]["module"];
@@ -225,7 +227,7 @@ int main(int argc, char* argv[]) {
 
         Handler module_ready_handler = [module_name, &modules_ready, &modules_ready_mutex,
                                         &mqtt_abstraction](nlohmann::json json) {
-            EVLOG(debug) << "received module ready signal for module: " << module_name << "(" << json << ")";
+            EVLOG(debug) << fmt::format("received module ready signal for module: {}({})", module_name, json);
             std::unique_lock<std::mutex> lock(modules_ready_mutex);
             modules_ready[module_name] = json.get<bool>();
             for (const auto& mod : modules_ready) {
@@ -233,7 +235,7 @@ int main(int argc, char* argv[]) {
                 if (!mod.second) {
                     text_ready = "\033[1;31mnot ready\033[0m";
                 }
-                EVLOG(debug) << "  " << mod.first << ": " << text_ready;
+                EVLOG(debug) << fmt::format("  {}: {}", mod.first, text_ready);
             }
             if (std::all_of(modules_ready.begin(), modules_ready.end(),
                             [](const auto& element) { return element.second; })) {
@@ -246,36 +248,37 @@ int main(int argc, char* argv[]) {
 
         std::string module_id = config->printable_identifier(module_name);
 
-        std::string topic = "everest/" + module_id + "/ready";
+        std::string topic = fmt::format("everest/{}/ready", module_id);
 
         Token token = mqtt_abstraction.register_handler(topic, module_ready_handler);
         tokens.push_back(token);
 
         if (std::any_of(standalone_modules.begin(), standalone_modules.end(),
                         [module_name](const auto& element) { return element == module_name; })) {
-            EVLOG(info) << "Not starting standalone module: " << module_name;
+            EVLOG(info) << fmt::format("Not starting standalone module: {}", module_name);
             continue;
         }
 
-        std::string shared_library_filename = "libmod" + module_class + ".so";
+        std::string shared_library_filename = fmt::format("libmod{}.so", module_class);
         std::string javascript_library_filename = "index.js";
         boost::filesystem::path module_path = boost::filesystem::path(modules_dir) / module_class;
         boost::filesystem::path shared_library_path = module_path / shared_library_filename;
         boost::filesystem::path javascript_library_path = module_path / javascript_library_filename;
 
         if (boost::filesystem::exists(shared_library_path)) {
-            EVLOG(debug) << "module: " << module_name << " (" << module_class << ") provided as shared library";
+            EVLOG(debug) << fmt::format("module: {} ({}) provided as shared library", module_name, module_class);
             modules_to_start.emplace_back(module_name, ModuleInfo::Language::cpp, shared_library_path);
         } else if (boost::filesystem::exists(javascript_library_path)) {
-            EVLOG(debug) << "module: " << module_name << " (" << module_class << ") provided as javascript library";
+            EVLOG(debug) << fmt::format("module: {} ({}) provided as javascript library", module_name, module_class);
             modules_to_start.emplace_back(module_name, ModuleInfo::Language::javascript,
                                           boost::filesystem::canonical(javascript_library_path));
         } else {
-            EVLOG(error) << "module: " << module_name << " (" << module_class
-                         << ") cannot be loaded because no C++ or JavaScript library has been found";
-            EVLOG(error) << "  checked paths:";
-            EVLOG(error) << "    cpp: " << shared_library_path;
-            EVLOG(error) << "    js:  " << javascript_library_path;
+            EVLOG(error) << fmt::format(
+                "module: {} ({}) cannot be loaded because no C++ or JavaScript library has been found", module_name,
+                module_class);
+            EVLOG(error) << fmt::format("  checked paths:");
+            EVLOG(error) << fmt::format("    cpp: {}", shared_library_path.string());
+            EVLOG(error) << fmt::format("    js:  {}", javascript_library_path.string());
             // FIXME (aw): 123?
             return 123;
         }
@@ -286,7 +289,7 @@ int main(int argc, char* argv[]) {
     for (const auto& module : modules_to_start) {
         pid_t pid = fork();
         if (pid == 0) {
-            EVLOG(info) << "hello from child: " << module.name;
+            EVLOG(info) << fmt::format("hello from child: {}", module.name);
             char* dontvalidate_schema = nullptr;
             if (!validate_data_with_schema) {
                 dontvalidate_schema = const_cast<char*>("--dontvalidateschema");
@@ -312,7 +315,7 @@ int main(int argc, char* argv[]) {
                     const_cast<char*>("--module"), const_cast<char*>(module.name.c_str()), dontvalidate_schema,
                     nullptr};
                 int ret = execv(main_binary.c_str(), static_cast<char**>(argv_list.data()));
-                EVLOG(error) << "error execv: " << ret;
+                EVLOG(error) << fmt::format("error execv: {}", ret);
                 return 1;
             }
             if (module.language == ModuleInfo::Language::javascript) {
@@ -344,14 +347,14 @@ int main(int argc, char* argv[]) {
                     nullptr,
                 };
                 int ret = execvp("node", static_cast<char**>(argv_list.data()));
-                EVLOG(error) << "error execv: " << ret;
+                EVLOG(error) << fmt::format("error execv: {}", ret);
                 return 1;
             }
 
-            EVLOG(critical) << "Could not start module " << module.name << " of unknown type";
+            EVLOG(critical) << fmt::format("Could not start module {} of unknown type", module.name);
             return 1;
         } else {
-            EVLOG(debug) << "Module " << module.name << " has pid: " << pid;
+            EVLOG(debug) << fmt::format("Module {} has pid: ", module.name, pid);
             children[pid] = module.name;
         }
     }
@@ -364,8 +367,9 @@ int main(int argc, char* argv[]) {
         if (child_pid != -1 && children.count(child_pid) != 0) {
             child_name = children[child_pid];
         }
-        EVLOG(critical) << "Something happened to child: " << child_name << " (pid: " << child_pid
-                        << "). Status: " << status << ". Terminating all children.";
+        EVLOG(critical) << fmt::format(
+            "Something happened to child: {} (pid: {}). Status: {}. Terminating all children.", child_name, child_pid,
+            status);
         running = false;
         for (const auto& child : children) {
             if (child.first == -1) {
@@ -375,19 +379,21 @@ int main(int argc, char* argv[]) {
             }
             int result = kill(child.first, SIGTERM);
             if (result != 0) {
-                EVLOG(critical) << "SIGTERM of child: " << child.second << " (pid: " << child.first
-                                << ") \033[1;31mfailed\033[0m: " << result << ". Escalating to SIGKILL";
+                // FIXME (aw): fixup these color code constants
+                EVLOG(critical) << fmt::format(
+                    "SIGTERM of child: {} (pid: {}) \033[1;31mfailed\033[0m: {}. Escalating to SIGKILL", child.second,
+                    child.first, result);
                 result = kill(child.first, SIGKILL);
                 if (result != 0) {
-                    EVLOG(critical) << "SIGKILL of child: " << child.second << " (pid: " << child.first
-                                    << ") \033[1;31mfailed\033[0m: " << result << ".";
+                    EVLOG(critical) << fmt::format("SIGKILL of child: {} (pid: {}) \033[1;31mfailed\033[0m: {}.",
+                                                   child.second, child.first, result);
                 } else {
-                    EVLOG(info) << "SIGKILL of child: " << child.second << " (pid: " << child.first
-                                << ") \033[1;32msucceeded\033[0m.";
+                    EVLOG(info) << fmt::format("SIGKILL of child: {} (pid: {}) \033[1;32msucceeded\033[0m.",
+                                               child.second, child.first);
                 }
             } else {
-                EVLOG(info) << "SIGTERM of child: " << child.second << " (pid: " << child.first
-                            << ") \033[1;32msucceeded\033[0m.";
+                EVLOG(info) << fmt::format("SIGTERM of child: {} (pid: {}) \033[1;32msucceeded\033[0m.", child.second,
+                                           child.first);
             }
         }
         return 1;

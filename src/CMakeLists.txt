@@ -6,6 +6,7 @@ target_link_libraries(main
         everest::log
         Boost::thread
         Boost::program_options
+        fmt::fmt
         mqttc
 )
 
@@ -20,6 +21,7 @@ target_link_libraries(manager
         everest::log
         Boost::thread
         Boost::program_options
+        fmt::fmt
         mqttc
 )
 
