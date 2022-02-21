@@ -23,10 +23,10 @@
         "energy_consumer": {
             "interface": "energy"
         },
-        "optional:powermeter": {
+        "powermeter": {
             "interface": "powermeter"
         },
-        "optional:price_information": {
+        "price_information": {
             "interface": "energy_price_information"
         }
     },
