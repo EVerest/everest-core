@@ -2,6 +2,7 @@
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include <everest/logging.hpp>
 
+#ifdef WITH_LIBBACKTRACE
 #include <backtrace-supported.h>
 #include <backtrace.h>
 #include <cxxabi.h>
@@ -49,9 +50,12 @@ inline int frame_handler(void* data, uintptr_t pc, const char* filename, int lin
     return 0; // continue backtracing
 }
 
+#endif
+
 namespace Everest {
 namespace Logging {
 std::string trace() {
+#ifdef WITH_LIBBACKTRACE
     {
         std::lock_guard<std::mutex> lck(init_mtx);
         if (!tried_to_initialize) {
@@ -64,7 +68,7 @@ std::string trace() {
     if (bt_state == nullptr) {
         return "Backtrace functionality not available\n";
     }
-    
+
     StackTrace trace;
 
     // FIXME (aw): 1 means we're skipping this functions frame, can this
@@ -73,6 +77,9 @@ std::string trace() {
     backtrace_full(bt_state, 1, frame_handler, nullptr, &trace);
 
     return trace.info;
+#else
+    return "Backtrace functionality not built in\n";
+#endif
 }
 } // namespace Logging
 } // namespace Everest

@@ -21,8 +21,15 @@ target_link_libraries(log
         Boost::filesystem
         Boost::log_setup
         Boost::log
+)
+
+if (BUILD_BACKTRACE_SUPPORT)
+target_link_libraries(log
+    PRIVATE
         backtrace
 )
+target_compile_definitions(log PRIVATE WITH_LIBBACKTRACE)
+endif()
 
 # needs c++ 14
 target_compile_features(log PUBLIC cxx_std_14)
