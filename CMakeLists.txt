@@ -6,8 +6,6 @@ project(log VERSION 0.1
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-option(BUILD_EXAMPLES "Build examples" ON)
-
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Build type" FORCE)
 endif()
@@ -95,7 +93,10 @@ endif()
 # logging library
 add_subdirectory(lib)
 
+option(BUILD_EXAMPLES "Build liblog example binaries." OFF)
 if(BUILD_EXAMPLES)
-    # example code
+    message("Building liblog example binaries.")
     add_subdirectory(examples)
+else()
+    message("Not building liblog example binaries.")
 endif()

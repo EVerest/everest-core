@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #ifndef LOGGING_HPP
 #define LOGGING_HPP
 
@@ -31,6 +31,7 @@ enum severity_level
 void init(const std::string& logconf);
 void init(const std::string& logconf, std::string process_name);
 void update_process_name(std::string process_name);
+std::string trace();
 } // namespace Logging
 
 // clang-format off

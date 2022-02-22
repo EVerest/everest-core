@@ -12,6 +12,7 @@ add_library(everest::log ALIAS log)
 target_sources(log
     PRIVATE
         logging.cpp
+        trace.cpp
 )
 
 target_include_directories(log PUBLIC ${INCLUDE_DIR})
@@ -20,6 +21,7 @@ target_link_libraries(log
         Boost::filesystem
         Boost::log_setup
         Boost::log
+        backtrace
 )
 
 # needs c++ 14
