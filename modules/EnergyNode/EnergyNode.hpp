@@ -5,7 +5,7 @@
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 0.0.3
+// template version 1
 //
 
 #include "ld-ev.hpp"
@@ -33,8 +33,8 @@ class EnergyNode : public Everest::ModuleBase {
 public:
     EnergyNode() = delete;
     EnergyNode(const ModuleInfo& info, std::unique_ptr<energyImplBase> p_energy_grid,
-               std::unique_ptr<energyIntf> r_energy_consumer, std::unique_ptr<powermeterIntf> r_powermeter,
-               std::unique_ptr<energy_price_informationIntf> r_price_information, Conf& config) :
+               std::unique_ptr<energyIntf> r_energy_consumer, std::vector<std::unique_ptr<powermeterIntf>> r_powermeter,
+               std::vector<std::unique_ptr<energy_price_informationIntf>> r_price_information, Conf& config) :
         ModuleBase(info),
         p_energy_grid(std::move(p_energy_grid)),
         r_energy_consumer(std::move(r_energy_consumer)),
@@ -45,8 +45,8 @@ public:
     const Conf& config;
     const std::unique_ptr<energyImplBase> p_energy_grid;
     const std::unique_ptr<energyIntf> r_energy_consumer;
-    const std::unique_ptr<powermeterIntf> r_powermeter;
-    const std::unique_ptr<energy_price_informationIntf> r_price_information;
+    const std::vector<std::unique_ptr<powermeterIntf>> r_powermeter;
+    const std::vector<std::unique_ptr<energy_price_informationIntf>> r_price_information;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here

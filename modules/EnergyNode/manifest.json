@@ -24,10 +24,14 @@
             "interface": "energy"
         },
         "powermeter": {
-            "interface": "powermeter"
+            "interface": "powermeter",
+            "min_connections": 0,
+            "max_connections": 128
         },
         "price_information": {
-            "interface": "energy_price_information"
+            "interface": "energy_price_information",
+            "min_connections": 0,
+            "max_connections": 128
         }
     },
     "enable_external_mqtt": false,
