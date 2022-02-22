@@ -38,15 +38,15 @@ public:
         ModuleBase(info),
         p_energy_grid(std::move(p_energy_grid)),
         r_energy_consumer(std::move(r_energy_consumer)),
-        ro_powermeter(std::move(r_powermeter)),
-        ro_price_information(std::move(r_price_information)),
+        r_powermeter(std::move(r_powermeter)),
+        r_price_information(std::move(r_price_information)),
         config(config){};
 
     const Conf& config;
     const std::unique_ptr<energyImplBase> p_energy_grid;
     const std::unique_ptr<energyIntf> r_energy_consumer;
-    const std::unique_ptr<powermeterIntf> ro_powermeter;
-    const std::unique_ptr<energy_price_informationIntf> ro_price_information;
+    const std::unique_ptr<powermeterIntf> r_powermeter;
+    const std::unique_ptr<energy_price_informationIntf> r_price_information;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here

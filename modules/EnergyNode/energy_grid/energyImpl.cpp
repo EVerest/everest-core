@@ -45,14 +45,14 @@ void energyImpl::init() {
     });
 
     // FIXME this is optional
-    mod->ro_price_information->subscribe_energy_price_schedule([this](json p) {
+    mod->r_price_information->subscribe_energy_price_schedule([this](json p) {
         // std::cout << energy << std::endl;
         energy_price = p;
         publish_complete_energy_object();
     });
 
     // FIXME this is optional
-    mod->ro_powermeter->subscribe_powermeter([this](json p) {
+    mod->r_powermeter->subscribe_powermeter([this](json p) {
         powermeter = p;
         publish_complete_energy_object();
     });
