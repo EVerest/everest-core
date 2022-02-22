@@ -30,32 +30,37 @@ void energyImpl::init() {
 
     mod->r_energy_consumer->subscribe_energy([this](json e) {
         // Received new energy object from a child. Update in the cached object and republish.
-        // FIXME: this will need to handle multiple childs once 1:N requirement support is in framework
+        // FIXME: this will need to handle multiple children once 1:N requirement support is in framework
+        // TODO: LAD : check which elements are present in object "e" -> obtain uuid of child and compare to existing list
         energy["children"] = {e};
 
         json schedule_entry;
         schedule_entry["timestamp"] = to_rfc3339(std::chrono::system_clock::now());
         schedule_entry["capabilities"]["limit_type"] = "Hard";
         schedule_entry["capabilities"]["ac_current_A"] = {{"max_current_A", mod->config.fuse_limit_A},
-                                                   {"max_phase_count", mod->config.phase_count}};
+                                                          {"max_phase_count", mod->config.phase_count}};
 
         energy["schedule_import"] = json::array({schedule_entry});
         // std::cout << energy << std::endl;
         publish_complete_energy_object();
     });
 
-    // FIXME this is optional
-    mod->r_price_information->subscribe_energy_price_schedule([this](json p) {
-        // std::cout << energy << std::endl;
-        energy_price = p;
-        publish_complete_energy_object();
-    });
+    // r_price_information is optional
+    for (auto& entry : mod->r_price_information) {
+        entry->subscribe_energy_price_schedule([this](json p) {
+            EVLOG(debug) << "Incoming price schedule: " << p;
+            energy_price = p;
+            publish_complete_energy_object();
+        });
+    }
 
-    // FIXME this is optional
-    mod->r_powermeter->subscribe_powermeter([this](json p) {
-        powermeter = p;
-        publish_complete_energy_object();
-    });
+    // r_powermeter is optional
+    for (auto& entry : mod->r_powermeter) {
+        entry->subscribe_powermeter([this](json p) {
+            powermeter = p;
+            publish_complete_energy_object();
+        });
+    }
 }
 
 void energyImpl::publish_complete_energy_object() {
@@ -63,12 +68,16 @@ void energyImpl::publish_complete_energy_object() {
 
     json energy_complete = energy;
     // FIXME deal with non set properties!
-    if (!energy["schedule_import"].is_null())
-        energy_complete["schedule_import"] =
-            merge_price_into_schedule(energy["schedule_import"], energy_price["schedule_import"]);
+    if (!energy["schedule_import"].is_null()) {
+        if (!energy_price.is_null()) {
+            energy_complete["schedule_import"] =
+                merge_price_into_schedule(energy["schedule_import"], energy_price["optional:schedule_import"]);
+        }
+    }
 
-    if (!powermeter.is_null())
+    if (!powermeter.is_null()) {
         energy_complete["energy_usage"] = powermeter;
+    }
 
     publish_energy(energy_complete);
 }
