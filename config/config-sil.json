@@ -8,15 +8,16 @@
             }
         },
         "connections": {
-            "yetipowermeter": {
-                "module_id": "yeti_driver",
-                "implementation_id": "powermeter"
-            }
+            "yetipowermeter": [ 
+                {
+                    "module_id": "yeti_driver",
+                    "implementation_id": "powermeter"
+                }
+            ]
         }
     },
     "iso15118_charger": {
         "module": "JsRiseV2G",
-        "connections": {},
         "config_implementation": {
             "main": {
                 "mqtt_base_path": "everest_external/iso15118/java"
@@ -32,14 +33,18 @@
             "rcd_enabled": true
         },
         "connections": {
-            "bsp": {
-                "module_id": "yeti_driver",
-                "implementation_id": "board_support"
-            },
-            "powermeter": {
-                "module_id": "yeti_driver",
-                "implementation_id": "powermeter"
-            }
+            "bsp": [
+                {
+                    "module_id": "yeti_driver",
+                    "implementation_id": "board_support"
+                }
+            ],
+            "powermeter": [
+                {
+                    "module_id": "yeti_driver",
+                    "implementation_id": "powermeter"
+                }
+            ]
         }
     },
     "yeti_driver": {
@@ -48,19 +53,23 @@
     "car_simulator": {
         "module": "JsCarSimulator",
         "connections": {
-            "simulation_control": {
-                "module_id": "yeti_driver",
-                "implementation_id": "yeti_simulation_control"
-            }
+            "simulation_control": [
+                {
+                    "module_id": "yeti_driver",
+                    "implementation_id": "yeti_simulation_control"
+                }
+            ]
         }
     },
     "energy_manager": {
         "module": "EnergyManager",
         "connections": {
-            "energy_trunk": {
-                "module_id": "grid_connection_point",
-                "implementation_id": "energy_grid"
-            }
+            "energy_trunk": [
+                {
+                    "module_id": "grid_connection_point",
+                    "implementation_id": "energy_grid"
+                }
+            ]
         }
     },
     "grid_connection_point": {
@@ -70,10 +79,12 @@
             "phase_count": 3
         },
         "connections": {
-            "energy_consumer": {
-                "module_id": "evse_manager",
-                "implementation_id": "energy_grid"
-            }
+            "energy_consumer": [
+                {
+                    "module_id": "evse_manager",
+                    "implementation_id": "energy_grid"
+                }
+            ]
         }
     }
 }
