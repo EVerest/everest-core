@@ -9,6 +9,7 @@ author: aw@pionix.de
 FIXME (aw): Module documentation.
 """
 
+from . import __version__
 from . import helpers
 
 from datetime import datetime
@@ -519,6 +520,7 @@ def main():
     global validators, everest_dir
 
     parser = argparse.ArgumentParser(description='Everest command line tool')
+    parser.add_argument('--version', action='version', version=f'%(prog)s {__version__}')
 
     common_parser = argparse.ArgumentParser(add_help=False)
     # parser.add_argument("--framework-dir", "-fd", help='directory of everest framework')
