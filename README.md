@@ -53,7 +53,7 @@ export CPM_SOURCE_CACHE=$HOME/.cache/CPM
 ```
 Install [ev-cli](https://github.com/EVerest/everest-utils/tree/main/ev-dev-tools):
 
-Change into the directory and install ev-cli:
+Change the directory and install ev-cli:
 ```bash
 cd ~/checkout/everest-workspace/everest-utils/ev-dev-tools
 python3 -m pip install .
@@ -78,7 +78,7 @@ cmake -j$(nproc) ..
 make -j$(nproc) install
 ```
 *$(nproc)* puts out the core count of your machine, so it is using all available CPU cores!
-You can also specify any number of CPU cors you like.
+You can also specify any number of CPU cores you like.
  
 Done!
 
