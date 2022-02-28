@@ -14,7 +14,7 @@
 class SlacIO {
 public:
     using InputHandlerFnType = void(slac::messages::HomeplugMessage&);
-    SlacIO(const std::string& if_name);
+    explicit SlacIO(const std::string& if_name);
 
     void release_input();
     void run(std::function<InputHandlerFnType> callback);

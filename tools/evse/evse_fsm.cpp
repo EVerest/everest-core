@@ -453,6 +453,8 @@ bool MatchingSessionContext::conforms(const uint8_t ev_mac[], const uint8_t run_
 
 MatchingSessionContext::MatchingSessionContext() {
     memset(captured_aags, 0, sizeof(captured_aags));
+    memset(ev_mac, 0, sizeof(ev_mac));
+    memset(run_id, 0, sizeof(run_id));
 }
 
 slac::messages::cm_atten_char_ind MatchingSessionContext::calculate_avg() const {

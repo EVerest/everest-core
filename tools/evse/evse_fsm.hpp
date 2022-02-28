@@ -94,7 +94,7 @@ public:
     bool received_slac_match();
     void set_nmk(const uint8_t* nmk);
 
-    EvseFSM(SlacIO& slac_io);
+    explicit EvseFSM(SlacIO& slac_io);
 
 private:
     using SlacMsgType = slac::messages::HomeplugMessage;

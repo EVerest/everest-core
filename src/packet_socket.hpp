@@ -11,7 +11,7 @@
 namespace utils {
 class InterfaceInfo {
 public:
-    InterfaceInfo(const std::string& interface_name);
+    explicit InterfaceInfo(const std::string& interface_name);
     bool is_valid() {
         return valid;
     };

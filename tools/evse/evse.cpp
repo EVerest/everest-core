@@ -21,7 +21,7 @@ void logging_callback(const std::string& msg) {
 
 class FSMDriver {
 public:
-    FSMDriver(const std::string& if_name) : slac_io_handle(if_name), evse_fsm(slac_io_handle) {
+    explicit FSMDriver(const std::string& if_name) : slac_io_handle(if_name), evse_fsm(slac_io_handle) {
         fsm_ctrl.reset(evse_fsm.sd_reset);
         running = true;
         loop_thread = std::thread(&FSMDriver::loop, this);

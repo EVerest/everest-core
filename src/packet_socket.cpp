@@ -93,7 +93,7 @@ PacketSocket::IOResult PacketSocket::read(uint8_t* buffer, int timeout) {
         return IOResult::Timeout;
     }
 
-    if (poll_fd.revents & POLLIN == 0) {
+    if ((poll_fd.revents & POLLIN) == 0) {
         error = "poll() set other flag than POLLIN";
         return IOResult::Failure;
     }
@@ -125,7 +125,7 @@ PacketSocket::IOResult PacketSocket::write(const void* buf, size_t size, int tim
         return IOResult::Timeout;
     }
 
-    if (poll_fd.revents & POLLOUT == 0) {
+    if ((poll_fd.revents & POLLOUT) == 0) {
         error = "poll() set other flag than POLLOUT";
         return IOResult::Failure;
     }

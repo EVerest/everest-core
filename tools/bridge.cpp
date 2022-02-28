@@ -136,8 +136,6 @@ void handle_mnbc_sound_ind(PLCDeviceInformation& forward_node, const slac::messa
                            slac::messages::HomeplugMessage& response) {
     slac::messages::cm_atten_profile_ind atten_profile;
 
-    auto mnbc_sound_ind = reinterpret_cast<const slac::messages::cm_mnbc_sound_ind*>(indicate.mmentry);
-
     memcpy(atten_profile.pev_mac, indicate.ethernet_header.ether_shost, sizeof(atten_profile.pev_mac));
     atten_profile.num_groups = slac::defs::AAG_LIST_LEN;
 
@@ -193,9 +191,9 @@ void process_packet(PLCDeviceInformation& in, PLCDeviceInformation& out) {
 
     if (return_dest != NONE) {
         int return_fd = (return_dest == IN) ? in.fd : out.fd;
-        const auto name = (return_dest == IN) ? in.name() : out.name();
         int bytes_written = write(return_fd, &outgoing.get_raw_message(), outgoing.get_raw_msg_len());
         if (bytes_written != outgoing.get_raw_msg_len()) {
+            const auto name = (return_dest == IN) ? in.name() : out.name();
             fmt::print("Failed return processed message to {}\n", name);
             exit(-1);
         }
