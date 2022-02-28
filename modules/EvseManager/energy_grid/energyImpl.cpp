@@ -88,8 +88,6 @@ void energyImpl::handle_enforce_limits(std::string& uuid, Object& limits_import,
 }
 
 void energyImpl::initializeEnergyObject(){
-    energy["children"] = json::array();
-
     energy["node_type"] = "Evse";
     
     // UUID must be unique also beyond this charging station

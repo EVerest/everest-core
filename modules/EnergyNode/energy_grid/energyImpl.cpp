@@ -19,8 +19,6 @@ std::chrono::time_point<std::chrono::system_clock> from_rfc3339(std::string t) {
     std::istringstream infile{t};
     std::chrono::time_point<std::chrono::system_clock> tp;
     infile >> date::parse("%FT%T", tp);
-
-    // std::cout <<"timepoint"<<" "<<t<<" "<< tp.time_since_epoch().count()<<std::endl;
     return tp;
 }
 
@@ -30,9 +28,21 @@ void energyImpl::init() {
 
     mod->r_energy_consumer->subscribe_energy([this](json e) {
         // Received new energy object from a child. Update in the cached object and republish.
-        // FIXME: this will need to handle multiple children once 1:N requirement support is in framework
-        // TODO: LAD : check which elements are present in object "e" -> obtain uuid of child and compare to existing list
-        energy["children"] = {e};
+        if (energy.contains("children")) {
+            bool child_exists = false;
+            for (auto& child : energy["children"]){
+                if (child["uuid"] == e["uuid"]) {
+                    child_exists = true;
+                }
+            }
+            if (child_exists == false) {
+                energy["children"].push_back(e);
+            }
+        }
+        else {
+            energy["children"] = json::array();
+            energy["children"].push_back(e);
+        }
 
         json schedule_entry;
         schedule_entry["timestamp"] = to_rfc3339(std::chrono::system_clock::now());
@@ -41,7 +51,6 @@ void energyImpl::init() {
                                                           {"max_phase_count", mod->config.phase_count}};
 
         energy["schedule_import"] = json::array({schedule_entry});
-        // std::cout << energy << std::endl;
         publish_complete_energy_object();
     });
 
@@ -130,7 +139,7 @@ json energyImpl::merge_price_into_schedule(json schedule, json price) {
             continue;
         }
     }
-    // std::cout << joined_array.dump(4) << std::endl;
+
     return joined_array;
 }
 
@@ -147,14 +156,13 @@ void energyImpl::handle_enforce_limits(std::string& uuid, Object& limits_import,
         EVLOG(error) << "EnergyNode cannot accept limits from EnergyManager";
     }
     // if not, route to children
-    else
+    else {
         mod->r_energy_consumer->call_enforce_limits(uuid, limits_import, limits_export, schedule_import,
                                                     schedule_export);
+    }
 };
 
 void energyImpl::initializeEnergyObject() {
-    energy["children"] = json::array();
-
     energy["node_type"] = "Fuse"; // FIXME: node types need to be figured out
     
     // UUID must be unique also beyond this charging station
