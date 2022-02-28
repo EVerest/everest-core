@@ -79,7 +79,7 @@ public:
     //
 
     // call when in state WaitingForAuthentication
-    void Authorize(bool a, const char *userid);
+    void Authorize(bool a, const std::string& userid);
     bool getAuthorization();
 
     // trigger replug sequence while charging to switch number of phases
@@ -103,6 +103,7 @@ public:
         Enabled,
         Disabled,
         SessionStarted,
+        AuthRequired,
         ChargingStarted,
         ChargingPausedEV,
         ChargingPausedEVSE,
@@ -124,6 +125,8 @@ public:
     // Signal for EvseEvents
     sigslot::signal<EvseEvent> signalEvent;
     std::string evseEventToString(EvseEvent e);
+
+    sigslot::signal<> signalAuthRequired;
 
     // Request more details about the error that happend
     ErrorState getErrorState();
