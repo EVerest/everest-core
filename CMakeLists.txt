@@ -29,7 +29,7 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 endif()
 
 option(BUILD_TESTING "Run unit tests" OFF)
-option(BUILD_BACKTRACE_SUPPORT "Build with backtrace support from libbacktrace" OFF)
+option(BUILD_BACKTRACE_SUPPORT "Build with backtrace support from libbacktrace" ON)
 
 # configure clang-tidy if requested
 option(CMAKE_RUN_CLANG_TIDY "Run clang-tidy" OFF)
