@@ -28,12 +28,14 @@ bool baz(const char* str) {
     return true;
 }
 
-void bar() {
+extern "C" {
+void bar(int) {
     baz("Please trace ...");
+}
 }
 
 void foo() {
-    bar();
+    bar(85);
 }
 
 int main(int argc, char* argv[]) {

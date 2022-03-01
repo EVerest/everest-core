@@ -91,6 +91,9 @@ else()
     message("Not running unit tests")
 endif()
 
+# third party dependencies
+add_subdirectory(3rd_party)
+
 # logging library
 add_subdirectory(lib)
 

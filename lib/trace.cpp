@@ -3,8 +3,8 @@
 #include <everest/logging.hpp>
 
 #ifdef WITH_LIBBACKTRACE
-#include <backtrace-supported.h>
-#include <backtrace.h>
+#include <backtrace/backtrace-supported.h>
+#include <backtrace/backtrace.h>
 #include <cxxabi.h>
 
 #include <mutex>
@@ -14,6 +14,7 @@ static bool tried_to_initialize;
 static std::mutex init_mtx;
 
 struct StackTrace {
+    int frame_count{0};
     std::string info;
 };
 
@@ -42,10 +43,14 @@ inline int frame_handler(void* data, uintptr_t pc, const char* filename, int lin
         }
     }
 
+    trace.info += ("#" + std::to_string(trace.frame_count) + ": ");
+    trace.info += (function_name + " at ");
     trace.info += (filename != nullptr) ? filename : "<filename unknown>";
-    trace.info += (":" + std::to_string(lineno) + " @ ");
-    trace.info += function_name;
+    trace.info += (":" + std::to_string(lineno));
+
     trace.info += "\n";
+
+    trace.frame_count++;
 
     return 0; // continue backtracing
 }
