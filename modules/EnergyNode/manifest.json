@@ -21,7 +21,9 @@
     },
     "requires": {
         "energy_consumer": {
-            "interface": "energy"
+            "interface": "energy",
+            "min_connections": 1,
+            "max_connections": 128
         },
         "powermeter": {
             "interface": "powermeter",
