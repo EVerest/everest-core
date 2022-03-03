@@ -432,7 +432,7 @@ void Everest::signal_ready() {
 void Everest::handle_ready(json data) {
     BOOST_LOG_FUNCTION();
 
-    EVLOG(debug) << fmt::format("handle_ready: {}", data);
+    EVLOG(debug) << fmt::format("handle_ready: {}", data.dump());
 
     bool ready = false;
 

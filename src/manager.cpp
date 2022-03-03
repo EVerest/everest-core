@@ -227,7 +227,7 @@ int main(int argc, char* argv[]) {
 
         Handler module_ready_handler = [module_name, &modules_ready, &modules_ready_mutex,
                                         &mqtt_abstraction](nlohmann::json json) {
-            EVLOG(debug) << fmt::format("received module ready signal for module: {}({})", module_name, json);
+            EVLOG(debug) << fmt::format("received module ready signal for module: {}({})", module_name, json.dump());
             std::unique_lock<std::mutex> lock(modules_ready_mutex);
             modules_ready[module_name] = json.get<bool>();
             for (const auto& mod : modules_ready) {
