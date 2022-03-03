@@ -33,7 +33,8 @@ class EnergyNode : public Everest::ModuleBase {
 public:
     EnergyNode() = delete;
     EnergyNode(const ModuleInfo& info, std::unique_ptr<energyImplBase> p_energy_grid,
-               std::unique_ptr<energyIntf> r_energy_consumer, std::vector<std::unique_ptr<powermeterIntf>> r_powermeter,
+               std::vector<std::unique_ptr<energyIntf>> r_energy_consumer,
+               std::vector<std::unique_ptr<powermeterIntf>> r_powermeter,
                std::vector<std::unique_ptr<energy_price_informationIntf>> r_price_information, Conf& config) :
         ModuleBase(info),
         p_energy_grid(std::move(p_energy_grid)),
@@ -44,7 +45,7 @@ public:
 
     const Conf& config;
     const std::unique_ptr<energyImplBase> p_energy_grid;
-    const std::unique_ptr<energyIntf> r_energy_consumer;
+    const std::vector<std::unique_ptr<energyIntf>> r_energy_consumer;
     const std::vector<std::unique_ptr<powermeterIntf>> r_powermeter;
     const std::vector<std::unique_ptr<energy_price_informationIntf>> r_price_information;
 

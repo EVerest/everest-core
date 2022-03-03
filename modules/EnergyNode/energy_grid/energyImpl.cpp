@@ -26,33 +26,35 @@ void energyImpl::init() {
     energy_price = {};
     initializeEnergyObject();
 
-    mod->r_energy_consumer->subscribe_energy([this](json e) {
-        // Received new energy object from a child. Update in the cached object and republish.
-        if (energy.contains("children")) {
-            bool child_exists = false;
-            for (auto& child : energy["children"]){
-                if (child["uuid"] == e["uuid"]) {
-                    child_exists = true;
+    for (auto& entry : mod->r_energy_consumer) {
+        entry->subscribe_energy([this](json e) {
+            // Received new energy object from a child. Update in the cached object and republish.
+            if (energy.contains("children")) {
+                bool child_exists = false;
+                for (auto& child : energy["children"]){
+                    if (child["uuid"] == e["uuid"]) {
+                        child_exists = true;
+                    }
+                }
+                if (child_exists == false) {
+                    energy["children"].push_back(e);
                 }
             }
-            if (child_exists == false) {
+            else {
+                energy["children"] = json::array();
                 energy["children"].push_back(e);
             }
-        }
-        else {
-            energy["children"] = json::array();
-            energy["children"].push_back(e);
-        }
 
-        json schedule_entry;
-        schedule_entry["timestamp"] = to_rfc3339(std::chrono::system_clock::now());
-        schedule_entry["capabilities"]["limit_type"] = "Hard";
-        schedule_entry["capabilities"]["ac_current_A"] = {{"max_current_A", mod->config.fuse_limit_A},
-                                                          {"max_phase_count", mod->config.phase_count}};
+            json schedule_entry;
+            schedule_entry["timestamp"] = to_rfc3339(std::chrono::system_clock::now());
+            schedule_entry["capabilities"]["limit_type"] = "Hard";
+            schedule_entry["capabilities"]["ac_current_A"] = {{"max_current_A", mod->config.fuse_limit_A},
+                                                            {"max_phase_count", mod->config.phase_count}};
 
-        energy["schedule_import"] = json::array({schedule_entry});
-        publish_complete_energy_object();
-    });
+            energy["schedule_import"] = json::array({schedule_entry});
+            publish_complete_energy_object();
+        });
+    }
 
     // r_price_information is optional
     for (auto& entry : mod->r_price_information) {
@@ -157,8 +159,11 @@ void energyImpl::handle_enforce_limits(std::string& uuid, Object& limits_import,
     }
     // if not, route to children
     else {
-        mod->r_energy_consumer->call_enforce_limits(uuid, limits_import, limits_export, schedule_import,
+        // TODO(LAD): split limits by number of children
+        for (auto& entry : mod->r_energy_consumer) {
+            entry->call_enforce_limits(uuid, limits_import, limits_export, schedule_import,
                                                     schedule_export);
+        }
     }
 };
 
