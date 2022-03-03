@@ -131,7 +131,7 @@ void MQTTAbstractionImpl::on_mqtt_message_(std::string topic, std::string payloa
     try {
         json data;
         if (topic.find("everest/") == 0) {
-            EVLOG(debug) << "topic starts with everest/";
+            EVLOG(debug) << fmt::format("topic {} starts with everest/", topic);
             try {
                 data = json::parse(payload);
             } catch (nlohmann::detail::parse_error& e) {
@@ -169,7 +169,7 @@ void MQTTAbstractionImpl::on_mqtt_message_(std::string topic, std::string payloa
 
         if (!found) {
             EVLOG_AND_THROW(
-                EverestInternalError(fmt::format("Internal error: topic '{}' should have a matching handler!")));
+                EverestInternalError(fmt::format("Internal error: topic '{}' should have a matching handler!", topic)));
         }
     } catch (boost::exception& e) {
         EVLOG(critical) << fmt::format("Caught mqtt on_message boost::exception:\n{}",
@@ -210,7 +210,7 @@ Token MQTTAbstractionImpl::register_handler(const std::string& topic, const Hand
                                             bool allow_multiple_handlers) {
     BOOST_LOG_FUNCTION();
 
-    EVLOG(debug) << fmt::format("Registering handler {} for ", fmt::ptr(&handler), topic);
+    EVLOG(debug) << fmt::format("Registering handler {} for {}", fmt::ptr(&handler), topic);
 
     const std::lock_guard<std::mutex> lock(handlers_mutex);
     if (!this->handlers[topic].empty() && !allow_multiple_handlers) {
