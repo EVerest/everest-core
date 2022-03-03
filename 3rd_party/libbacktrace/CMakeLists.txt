@@ -15,6 +15,8 @@ ExternalProject_Add(
 # make
     BUILD_COMMAND ${MAKE}
     BUILD_ALWAYS false
+# specify byproducts
+    BUILD_BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/lib/libbacktrace.a
 # log options
     LOG_DOWNLOAD true
     LOG_CONFIGURE true
