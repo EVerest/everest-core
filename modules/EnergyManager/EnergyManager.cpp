@@ -86,6 +86,7 @@ void EnergyManager::optimize_one_level(json& energy, Array& results,
         }    
 
         if (n > 0) {
+            EVLOG(error) << "energy[children]: " << energy["children"]; 
             // set limit_from_parent on each child and optimize it
             for (json it : energy["children"]) {
                 it["limit_from_parent"] = max_current / n;

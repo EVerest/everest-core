@@ -25,25 +25,39 @@ std::chrono::time_point<std::chrono::system_clock> from_rfc3339(std::string t) {
 }
 
 void energyImpl::init() {
+    this->energy = json({});
+
+    this->energy["node_type"] = "Evse";
+    
+    // UUID must be unique also beyond this charging station
+    this->energy["uuid"] = mod->info.id + "_" + boost::uuids::to_string(boost::uuids::random_generator()());
     initializeEnergyObject();
 
     mod->r_powermeter->subscribe_powermeter([this](json p) {
         // Received new power meter values, update our energy object.
-        energy["energy_usage"] = p;
+        EVLOG(error) << "1) json object p: " << p;
+        EVLOG(error) << "2) energy: " << this->energy;
+        this->energy["energy_usage"] = p;
+        EVLOG(error) << "3) json object p: " << p;
+        EVLOG(error) << "4) energy: " << this->energy;
 
+        // EVLOG(error) << "energy[] from Evse: " << energy;
         // Publish to the energy tree
-        publish_energy(energy);
+        publish_energy(this->energy);
     });
 }
 
 void energyImpl::ready() {
     json hw_caps = mod->get_hw_capabilities();
-    json schedule_entry;
+    json schedule_entry = json::object();
     schedule_entry["timestamp"] = to_rfc3339(std::chrono::system_clock::now());
+    schedule_entry["capabilities"] = json::object();
     schedule_entry["capabilities"]["limit_type"] = "Hard";
+    schedule_entry["capabilities"]["ac_current_A"] = json::object();
     schedule_entry["capabilities"]["ac_current_A"] = hw_caps;
 
-    energy["schedule_import"] = json::array({schedule_entry});
+    energy["schedule_import"] = json::array({});
+    energy["schedule_import"].push_back({schedule_entry});
 }
 
 void energyImpl::handle_enforce_limits(std::string& uuid, Object& limits_import, Object& limits_export,
@@ -88,10 +102,12 @@ void energyImpl::handle_enforce_limits(std::string& uuid, Object& limits_import,
 }
 
 void energyImpl::initializeEnergyObject(){
-    energy["node_type"] = "Evse";
+
+    // // energy = json({});
+    // energy["node_type"] = "Evse";
     
-    // UUID must be unique also beyond this charging station
-    energy["uuid"] = mod->info.id + "_" + boost::uuids::to_string(boost::uuids::random_generator()());
+    // // UUID must be unique also beyond this charging station
+    // energy["uuid"] = mod->info.id + "_" + boost::uuids::to_string(boost::uuids::random_generator()());
 }
 
 } // namespace energy_grid
