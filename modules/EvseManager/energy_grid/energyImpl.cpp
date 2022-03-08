@@ -57,7 +57,7 @@ void energyImpl::ready() {
     schedule_entry["capabilities"]["ac_current_A"] = hw_caps;
 
     energy["schedule_import"] = json::array({});
-    energy["schedule_import"].push_back({schedule_entry});
+    energy["schedule_import"].push_back(schedule_entry);
 }
 
 void energyImpl::handle_enforce_limits(std::string& uuid, Object& limits_import, Object& limits_export,

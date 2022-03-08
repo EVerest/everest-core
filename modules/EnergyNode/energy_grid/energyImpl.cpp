@@ -63,7 +63,7 @@ void energyImpl::init() {
             EVLOG(error) << "5";
             energy["schedule_import"] = json::array({});
             EVLOG(error) << "6";
-            energy["schedule_import"].push_back({schedule_entry});
+            energy["schedule_import"].push_back(schedule_entry);
 
             EVLOG(error) << "222222 ################### energy[]: " << energy;
             publish_complete_energy_object();
