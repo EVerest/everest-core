@@ -546,7 +546,7 @@ void Everest::provide_cmd(const std::string impl_id, const std::string cmd_name,
             }
         }
 
-        EVLOG(debug) << fmt::format("RETVAL: {}", res_publish_data["retval"]);
+        EVLOG(debug) << fmt::format("RETVAL: {}", res_publish_data["retval"].dump());
         res_publish_data["origin"] = this->module_id;
         this->mqtt_abstraction.publish(res_topic.str(), res_publish_data);
     };
