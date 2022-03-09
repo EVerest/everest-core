@@ -46,26 +46,19 @@ void energyImpl::init() {
                 energy["children"] = json::array();
                 energy["children"].push_back(e);
             }
-            EVLOG(error) << "################### energy[]: " << energy;
-            EVLOG(error) << "################### e[]: " << e;
+            // EVLOG(error) << "################### energy[]: " << energy;
+            // EVLOG(error) << "################### e[]: " << e;
 
             json schedule_entry;
-            EVLOG(error) << "1";
             schedule_entry["timestamp"] = to_rfc3339(std::chrono::system_clock::now());
-            EVLOG(error) << "2";
             schedule_entry["capabilities"] = json::object();
-            EVLOG(error) << "3";
             schedule_entry["capabilities"]["limit_type"] = "Hard";
-            EVLOG(error) << "4";
             schedule_entry["capabilities"]["ac_current_A"] = json::object();
             schedule_entry["capabilities"]["ac_current_A"]["max_current_A"] = mod->config.fuse_limit_A;
             schedule_entry["capabilities"]["ac_current_A"]["max_phase_count"] = mod->config.phase_count;
-            EVLOG(error) << "5";
             energy["schedule_import"] = json::array({});
-            EVLOG(error) << "6";
             energy["schedule_import"].push_back(schedule_entry);
 
-            EVLOG(error) << "222222 ################### energy[]: " << energy;
             publish_complete_energy_object();
         });
     }
@@ -73,7 +66,7 @@ void energyImpl::init() {
     // r_price_information is optional
     for (auto& entry : mod->r_price_information) {
         entry->subscribe_energy_price_schedule([this](json p) {
-            EVLOG(error) << "Incoming price schedule: " << p;
+            EVLOG(debug) << "Incoming price schedule: " << p;
             energy_price = p;
             publish_complete_energy_object();
         });
@@ -82,7 +75,7 @@ void energyImpl::init() {
     // r_powermeter is optional
     for (auto& entry : mod->r_powermeter) {
         entry->subscribe_powermeter([this](json p) {
-            EVLOG(error) << "Powermeter: " << p;
+            EVLOG(debug) << "Incoming powermeter readings: " << p;
             powermeter = p;
             publish_complete_energy_object();
         });
@@ -101,15 +94,11 @@ void energyImpl::publish_complete_energy_object() {
         }
     }
 
-    EVLOG(error) << " 2) Powermeter: " << powermeter;
     if (!powermeter.is_null()) {
         energy_complete["energy_usage"] = powermeter;
     }
 
-    EVLOG(error) << "energy_complete[]: " << energy_complete;
-
     publish_energy(energy_complete);
-    EVLOG(error) << "energy_complete pub done";
 }
 
 json energyImpl::merge_price_into_schedule(json schedule, json price) {

@@ -35,11 +35,9 @@ void energyImpl::init() {
 
     mod->r_powermeter->subscribe_powermeter([this](json p) {
         // Received new power meter values, update our energy object.
-        EVLOG(error) << "1) json object p: " << p;
-        EVLOG(error) << "2) energy: " << this->energy;
+        // EVLOG(error) << "1) json object p: " << p;
+        // EVLOG(error) << "2) energy: " << this->energy;
         this->energy["energy_usage"] = p;
-        EVLOG(error) << "3) json object p: " << p;
-        EVLOG(error) << "4) energy: " << this->energy;
 
         // EVLOG(error) << "energy[] from Evse: " << energy;
         // Publish to the energy tree
