@@ -63,19 +63,18 @@ macro(cpp_module_setup)
     add_library(${MOD_MODULE_NAME} SHARED)
 
     add_custom_command(
-        OUTPUT
-            ${GENERATED_MODULE_DIR}/${MODULE_NAME}
+        OUTPUT ${MODULE_LOADER_DIR}/ld-ev.hpp ${MODULE_LOADER_DIR}/ld-ev.cpp
         COMMAND
             ${EV_CLI} module generate-loader --framework-dir ${everest-framework_SOURCE_DIR} --output-dir ${GENERATED_MODULE_DIR} ${MODULE_NAME}
-        BYPRODUCTS
-        ${GENERATED_MODULE_DIR}/${MODULE_NAME}/ld-ev.cpp
+        DEPENDS
+            manifest.json
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         COMMENT
             "Generating ld-ev for module ${MODULE_NAME}"
     )
 
     add_custom_target(ld-ev_${MODULE_NAME}
-        DEPENDS ${GENERATED_MODULE_DIR}/${MODULE_NAME}
+        DEPENDS ${MODULE_LOADER_DIR}/ld-ev.cpp
     )
 
     add_dependencies(${MOD_MODULE_NAME} ld-ev_${MODULE_NAME} generate_interface_files)
