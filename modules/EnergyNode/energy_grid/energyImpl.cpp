@@ -84,9 +84,8 @@ void energyImpl::init() {
 
 void energyImpl::publish_complete_energy_object() {
     // join the different schedules to the complete array (with resampling)
-
     json energy_complete = energy;
-    // FIXME deal with non set properties!
+    // LAD: FIXME deal with non set properties!
     if (!energy["schedule_import"].is_null()) {
         if (!energy_price.is_null()) {
             energy_complete["schedule_import"] =
@@ -167,7 +166,6 @@ void energyImpl::handle_enforce_limits(std::string& uuid, Object& limits_import,
     }
     // if not, route to children
     else {
-        // TODO(LAD): split limits by number of children
         for (auto& entry : mod->r_energy_consumer) {
             entry->call_enforce_limits(uuid, limits_import, limits_export, schedule_import,
                                                     schedule_export);

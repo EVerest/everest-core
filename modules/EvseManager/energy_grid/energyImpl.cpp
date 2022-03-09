@@ -25,23 +25,14 @@ std::chrono::time_point<std::chrono::system_clock> from_rfc3339(std::string t) {
 }
 
 void energyImpl::init() {
-    this->energy = json({});
-
-    this->energy["node_type"] = "Evse";
-    
-    // UUID must be unique also beyond this charging station
-    this->energy["uuid"] = mod->info.id + "_" + boost::uuids::to_string(boost::uuids::random_generator()());
     initializeEnergyObject();
 
     mod->r_powermeter->subscribe_powermeter([this](json p) {
         // Received new power meter values, update our energy object.
-        // EVLOG(error) << "1) json object p: " << p;
-        // EVLOG(error) << "2) energy: " << this->energy;
-        this->energy["energy_usage"] = p;
+        energy["energy_usage"] = p;
 
-        // EVLOG(error) << "energy[] from Evse: " << energy;
         // Publish to the energy tree
-        publish_energy(this->energy);
+        publish_energy(energy);
     });
 }
 
@@ -66,7 +57,7 @@ void energyImpl::handle_enforce_limits(std::string& uuid, Object& limits_import,
   
         // 3 or one phase only when we have the capability to actually switch during charging?
         // if we have capability we'll switch while charging. otherwise in between sessions.
-        // FIXME implement phase count limiting here
+        // LAD: FIXME implement phase count limiting here
 
         // set import limits
         // load HW/module config limit
@@ -100,12 +91,10 @@ void energyImpl::handle_enforce_limits(std::string& uuid, Object& limits_import,
 }
 
 void energyImpl::initializeEnergyObject(){
-
-    // // energy = json({});
-    // energy["node_type"] = "Evse";
+    energy["node_type"] = "Evse";
     
-    // // UUID must be unique also beyond this charging station
-    // energy["uuid"] = mod->info.id + "_" + boost::uuids::to_string(boost::uuids::random_generator()());
+    // UUID must be unique also beyond this charging station
+    energy["uuid"] = mod->info.id + "_" + boost::uuids::to_string(boost::uuids::random_generator()());
 }
 
 } // namespace energy_grid
