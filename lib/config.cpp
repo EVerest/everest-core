@@ -79,8 +79,10 @@ static json parse_config_map(const json& config_map_schema, const json& config_m
             throw ConfigParseException(ConfigParseException::MISSING_ENTRY, config_entry_name);
         }
 
-        json config_entry_value = config_map[config_entry_name]; // will be null if not present in json
-        if (!config_map.contains(config_entry_name) && config_entry.contains("default")) {
+        json config_entry_value;
+        if (config_map.contains(config_entry_name)) {
+            config_entry_value = config_map[config_entry_name];
+        } else if (config_entry.contains("default")) {
             config_entry_value = config_entry["default"]; // use default value defined in manifest
         }
         json_validator validator(Config::loader, Config::format_checker);

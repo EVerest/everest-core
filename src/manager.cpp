@@ -354,7 +354,7 @@ int main(int argc, char* argv[]) {
             EVLOG(critical) << fmt::format("Could not start module {} of unknown type", module.name);
             return 1;
         } else {
-            EVLOG(debug) << fmt::format("Module {} has pid: ", module.name, pid);
+            EVLOG(debug) << fmt::format("Module {} has pid: {}", module.name, pid);
             children[pid] = module.name;
         }
     }
