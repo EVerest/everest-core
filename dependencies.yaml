@@ -18,7 +18,7 @@ mqttc:
   git_tag: 1.1.5
   options: ["MQTT_C_EXAMPLES OFF"]
 liblog:
-  git: git@github.com:EVerest/liblog.git
+  git: https://github.com/EVerest/liblog.git
   git_tag: main
   options: ["BUILD_EXAMPLES OFF"]
 libfmt:
