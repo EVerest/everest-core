@@ -23,18 +23,29 @@ std::chrono::time_point<std::chrono::system_clock> from_rfc3339(std::string t) {
 }
 
 void energyImpl::init() {
+    EVLOG(error) << "kkkkkkkkkkk";
     energy_price = {};
     initializeEnergyObject();
+    int count = 0;
+    EVLOG(error) << "ööööööööööööö";
 
     for (auto& entry : mod->r_energy_consumer) {
+        EVLOG(error) << "++++++++++++" << count++;
         entry->subscribe_energy([this](json e) {
             // Received new energy object from a child. Update in the cached object and republish.
             if (energy.contains("children")) {
                 bool child_exists = false;
                 for (auto& child : energy["children"]){
                     if (child.contains("uuid")) {
-                        if (child["uuid"] == e["uuid"]) {
-                            child_exists = true;
+                        if (e.contains("uuid")) {
+                            if (child["uuid"] == e.at("uuid")) {
+                                child_exists = true;
+                                // update child information
+                                child = e;
+                            }
+                        }
+                        else {
+                            EVLOG(warning) << "Warning! e[] does not contain element 'uuid': " << e;
                         }
                     }
                 }

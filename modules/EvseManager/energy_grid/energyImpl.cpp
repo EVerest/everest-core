@@ -82,7 +82,25 @@ void energyImpl::handle_enforce_limits(std::string& uuid, Object& limits_import,
         }
 
         // set phase count limits
-        // ---not implemented---
+        auto phase_count_limit = json::object();
+        phase_count_limit["max_phase_count"] = mod->get_hw_capabilities()["max_phase_count"];
+        phase_count_limit["min_phase_count"] = mod->get_hw_capabilities()["min_phase_count"];
+        phase_count_limit["supports_changing_phases_during_charging"] = mod->get_hw_capabilities()["supports_changing_phases_during_charging"];
+        // EVLOG(error) << "phase count limits object: " << phase_count_limit;
+        // EVLOG(error) << "####################: " << energy;
+        if (energy["energy_usage"]["power_W"]["total"] > 0) {
+            if (phase_count_limit["supports_changing_phases_during_charging"] != true) {
+                EVLOG(debug) << "Cannot apply phase limit: Setting during charging not supported!";
+            }
+            else {
+                // set phase count
+                // ---not implemented---
+            }
+        }
+        else {
+            // set phase count
+            // ---not implemented---
+        }
 
         // set export limits
         // ---not implemented---

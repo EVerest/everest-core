@@ -43,6 +43,7 @@ void EvseManager::ready() {
     invoke_ready(*p_evse);
     invoke_ready(*p_energy_grid);
 
+    // TODO(LAD): make control use this section to set limits for car and underlying electronics
     charger->setup(local_three_phases, config.has_ventilation, config.country_code, config.rcd_enabled);
     // charger->setMaxCurrent(hw_capabilities["max_current_A"]);
     //  start with a limit of 0 amps. We will get a budget from EnergyManager that is locally limited by hw caps.

@@ -79,12 +79,6 @@
             "phase_count": 3
         },
         "connections": {
-            "energy_consumer": [
-                {
-                    "module_id": "evse_manager",
-                    "implementation_id": "energy_grid"
-                }
-            ]
         }
     }
 }
