@@ -33,42 +33,43 @@ void energyImpl::init() {
         EVLOG(error) << "++++++++++++" << count++;
         entry->subscribe_energy([this](json e) {
             // Received new energy object from a child. Update in the cached object and republish.
-            if (energy.contains("children")) {
-                bool child_exists = false;
-                for (auto& child : energy["children"]){
-                    if (child.contains("uuid")) {
-                        if (e.contains("uuid")) {
-                            if (child["uuid"] == e.at("uuid")) {
-                                child_exists = true;
-                                // update child information
-                                child = e;
+            {
+                std::lock_guard<std::mutex> lock(this->energy_mutex);
+                if (energy.contains("children")) {
+                    bool child_exists = false;
+                    for (auto& child : energy["children"]) {
+                        if (child.contains("uuid")) {
+                            if (e.contains("uuid")) {
+                                if (child["uuid"] == e.at("uuid")) {
+                                    child_exists = true;
+                                    // update child information
+                                    child = e;
+                                }
+                            } else {
+                                EVLOG(warning) << "Warning! e[] does not contain element 'uuid': " << e;
                             }
                         }
-                        else {
-                            EVLOG(warning) << "Warning! e[] does not contain element 'uuid': " << e;
-                        }
                     }
-                }
-                if (child_exists == false) {
+                    if (child_exists == false) {
+                        energy["children"].push_back(e);
+                    }
+                } else {
+                    energy["children"] = json::array();
                     energy["children"].push_back(e);
                 }
-            }
-            else {
-                energy["children"] = json::array();
-                energy["children"].push_back(e);
-            }
-            // EVLOG(error) << "################### energy[]: " << energy;
-            // EVLOG(error) << "################### e[]: " << e;
+                // EVLOG(error) << "################### energy[]: " << energy;
+                // EVLOG(error) << "################### e[]: " << e;
 
-            json schedule_entry;
-            schedule_entry["timestamp"] = to_rfc3339(std::chrono::system_clock::now());
-            schedule_entry["capabilities"] = json::object();
-            schedule_entry["capabilities"]["limit_type"] = "Hard";
-            schedule_entry["capabilities"]["ac_current_A"] = json::object();
-            schedule_entry["capabilities"]["ac_current_A"]["max_current_A"] = mod->config.fuse_limit_A;
-            schedule_entry["capabilities"]["ac_current_A"]["max_phase_count"] = mod->config.phase_count;
-            energy["schedule_import"] = json::array({});
-            energy["schedule_import"].push_back(schedule_entry);
+                json schedule_entry;
+                schedule_entry["timestamp"] = to_rfc3339(std::chrono::system_clock::now());
+                schedule_entry["capabilities"] = json::object();
+                schedule_entry["capabilities"]["limit_type"] = "Hard";
+                schedule_entry["capabilities"]["ac_current_A"] = json::object();
+                schedule_entry["capabilities"]["ac_current_A"]["max_current_A"] = mod->config.fuse_limit_A;
+                schedule_entry["capabilities"]["ac_current_A"]["max_phase_count"] = mod->config.phase_count;
+                energy["schedule_import"] = json::array({});
+                energy["schedule_import"].push_back(schedule_entry);
+            }
 
             publish_complete_energy_object();
         });
@@ -87,7 +88,10 @@ void energyImpl::init() {
     for (auto& entry : mod->r_powermeter) {
         entry->subscribe_powermeter([this](json p) {
             EVLOG(debug) << "Incoming powermeter readings: " << p;
-            powermeter = p;
+            {
+                std::lock_guard<std::mutex> lock(this->energy_mutex);
+                powermeter = p;
+            }
             publish_complete_energy_object();
         });
     }
@@ -95,19 +99,22 @@ void energyImpl::init() {
 
 void energyImpl::publish_complete_energy_object() {
     // join the different schedules to the complete array (with resampling)
-    json energy_complete = energy;
-    // LAD: FIXME deal with non set properties!
-    if (!energy["schedule_import"].is_null()) {
-        if (!energy_price.is_null()) {
-            energy_complete["schedule_import"] =
-                merge_price_into_schedule(energy["schedule_import"], energy_price["optional:schedule_import"]);
+    json energy_complete;
+    {
+        std::lock_guard<std::mutex> lock(this->energy_mutex);
+        energy_complete = energy;
+        // LAD: FIXME deal with non set properties!
+        if (!energy["schedule_import"].is_null()) {
+            if (!energy_price.is_null()) {
+                energy_complete["schedule_import"] =
+                    merge_price_into_schedule(energy["schedule_import"], energy_price["optional:schedule_import"]);
+            }
+        }
+
+        if (!powermeter.is_null()) {
+            energy_complete["energy_usage"] = powermeter;
         }
     }
-
-    if (!powermeter.is_null()) {
-        energy_complete["energy_usage"] = powermeter;
-    }
-
     publish_energy(energy_complete);
 }
 
@@ -178,15 +185,15 @@ void energyImpl::handle_enforce_limits(std::string& uuid, Object& limits_import,
     // if not, route to children
     else {
         for (auto& entry : mod->r_energy_consumer) {
-            entry->call_enforce_limits(uuid, limits_import, limits_export, schedule_import,
-                                                    schedule_export);
+            entry->call_enforce_limits(uuid, limits_import, limits_export, schedule_import, schedule_export);
         }
     }
 };
 
 void energyImpl::initializeEnergyObject() {
+    std::lock_guard<std::mutex> lock(this->energy_mutex);
     energy["node_type"] = "Fuse"; // FIXME: node types need to be figured out
-    
+
     // UUID must be unique also beyond this charging station
     energy["uuid"] = mod->info.id + "_" + boost::uuids::to_string(boost::uuids::random_generator()());
 }
