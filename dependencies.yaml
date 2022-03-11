@@ -1,7 +1,7 @@
 ---
 nlohmann_json:
   git: https://github.com/nlohmann/json
-  git_tag: v3.10.4
+  git_tag: v3.10.5
   options: ["JSON_BuildTests OFF"]
 nlohmann_json_schema_validator:
   git: https://github.com/pboettch/json-schema-validator
