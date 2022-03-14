@@ -2,6 +2,7 @@ set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined")
 
 list(APPEND EVEREST_MODULES_LIST
     Charger
+    EvseSlac
     Example
     ExampleUser
     JsAuth
@@ -21,7 +22,6 @@ list(APPEND EVEREST_MODULES_LIST
     OCPP
     Power
     PowerIn
-    SLAC_openplcutils
     Solar
     SunspecReader
     SunspecScanner
