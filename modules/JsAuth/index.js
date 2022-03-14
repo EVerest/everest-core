@@ -28,11 +28,12 @@ boot_module(async ({ setup }) => {
           evlog.info(`Accepted auth token of type '${type}': '${token}'`);
           acceptedToken = token_data;
           evlog.debug('Validated incoming auth token: ', acceptedToken);
-          mod.provides.main.publish.authorized(token);
+          mod.provides.main.publish.authorization_available(true);
 
           setTimeout(() => {
             if (acceptedToken === token_data) {
               acceptedToken = null;
+              mod.provides.main.publish.authorization_available(false);
             }
           }, timeout * 1000);
         } else {
@@ -44,13 +45,16 @@ boot_module(async ({ setup }) => {
   });
 
   // API cmd to use by all other modules (auth framework entry point)
-  setup.provides.main.register.authorize(async () => {
+  setup.provides.main.register.get_authorization((mod) => {
     if (acceptedToken === null) {
       evlog.warning("Returning 'null' because no validated token could be found");
       return null;
     }
 
     evlog.info(`Returning validated token: '${acceptedToken.token}'...`);
-    return acceptedToken.token;
+    const t = acceptedToken.token;
+    acceptedToken = null;
+    mod.provides.main.publish.authorization_available(false);
+    return t;
   });
 });

@@ -42,6 +42,9 @@
 		},
 		"powermeter": {
 			"interface": "powermeter"
+		},
+		"auth": {
+			"interface": "auth"
 		}
 	},
 	"enable_external_mqtt": true,

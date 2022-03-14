@@ -1,12 +1,12 @@
 {
-	"sma_modbus_meter": {
-		"module": "JsSimPowerMeter",
-		"config_implementation": {
-			"main": {
+    "sma_modbus_meter": {
+        "module": "JsSimPowerMeter",
+        "config_implementation": {
+            "main": {
                 "sim_value": 5000,
                 "update_interval": 1000
-			}
-		},
+            }
+        },
         "connections": {
             "yetipowermeter": [
                 {
@@ -15,7 +15,7 @@
                 }
             ]
         }
-	},
+    },
     "emgr_logger": {
         "module": "JsEmgrLogger",
         "config_implementation": {
@@ -53,7 +53,7 @@
                 "pid_i_weight": 0.2,
                 "pid_d_weight": 0.5,
                 "pid_output_interval": 5000,
-                "pid_i_limit":-1,
+                "pid_i_limit": -1,
                 "pid_min_output": 1380,
                 "pid_max_output": 7360
             }
@@ -87,7 +87,6 @@
     },
     "iso15118_charger": {
         "module": "JsRiseV2G",
-        "connections": {},
         "config_implementation": {
             "main": {
                 "mqtt_base_path": "everest_external/iso15118/java"
@@ -103,14 +102,24 @@
             "rcd_enabled": true
         },
         "connections": {
-            "bsp": {
-                "module_id": "yeti_driver",
-                "implementation_id": "board_support"
-	        },
-            "powermeter": {
-                "module_id": "yeti_driver",
-                "implementation_id": "powermeter"
-	        }
+            "bsp": [
+                {
+                    "module_id": "yeti_driver",
+                    "implementation_id": "board_support"
+                }
+            ],
+            "powermeter": [
+                {
+                    "module_id": "yeti_driver",
+                    "implementation_id": "powermeter"
+                }
+            ],
+            "auth": [
+                {
+                    "module_id": "auth",
+                    "implementation_id": "main"
+                }
+            ]
         }
     },
     "yeti_driver": {
@@ -129,6 +138,49 @@
                     "implementation_id": "yeti_simulation_control"
                 }
             ]
+        }
+    },
+    "auth": {
+        "module": "JsAuth",
+        "connections": {
+            "tokenProvider": [
+                {
+                    "module_id": "token_provider_1",
+                    "implementation_id": "main"
+                }
+            ],
+            "tokenValidator": [
+                {
+                    "module_id": "token_validator",
+                    "implementation_id": "main"
+                }
+            ]
+        }
+    },
+    "token_provider_1": {
+        "module": "JsDummyTokenProvider",
+        "connections": {
+            "evse": [
+                {
+                    "module_id": "evse_manager",
+                    "implementation_id": "evse"
+                }
+            ]
+        },
+        "config_implementation": {
+            "main": {
+                "type": "dummy"
+            }
+        }
+    },
+    "token_validator": {
+        "module": "JsDummyTokenValidator",
+        "config_implementation": {
+            "main": {
+                "validation_result": "Accepted",
+                "validation_reason": "Token seems valid",
+                "sleep": 0.25
+            }
         }
     }
 }

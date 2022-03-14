@@ -1,5 +1,5 @@
 {
-    "description": "Dummy token provider always returning one configured token",
+    "description": "Dummy token provider that listens to AuthRequired event from evse_manager and then publishes one token",
     "provides": {
         "main": {
             "description": "Main implementation of dummy token provider always returning one configured token",
@@ -10,7 +10,7 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 20,
-                    "default": "DEADC0DE"
+                    "default": "DEADBEEF"
                 },
                 "type": {
                     "description": "Type to report for our dummy token",
@@ -25,19 +25,20 @@
                     "minimum": 0,
                     "maximum": 120,
                     "default": 10
-                },
-                "sleep": {
-                    "description": "Time to wait between every publish of our dummy token string (in s)",
-                    "type": "number",
-                    "minimum": 0,
-                    "maximum": 120,
-                    "default": 15
                 }
             }
         }
     },
+    "requires": {
+        "evse": {
+            "interface": "evse_manager"
+        }
+    },
     "metadata": {
         "license": "https://opensource.org/licenses/Apache-2.0",
-        "authors": ["Thilo Molitor"]
+        "authors": [
+            "Thilo Molitor",
+            "Cornelius Claussen"
+        ]
     }
 }

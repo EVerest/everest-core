@@ -88,7 +88,7 @@
                 "event": {
                     "description": "Event enum. For some events an additional object is set, see below.",
                     "type": "string",
-                    "enum": ["Enabled", "Disabled", "SessionStarted", "ChargingStarted", "ChargingPausedEV", "ChargingPausedEVSE", "ChargingResumed", "SessionFinished", "Error", "PermanentFault"]
+                    "enum": ["Enabled", "Disabled", "SessionStarted", "AuthRequired", "ChargingStarted", "ChargingPausedEV", "ChargingPausedEVSE", "ChargingResumed", "SessionFinished", "Error", "PermanentFault"]
                 },
                 "session_started": {
                     "description": "data for SessionStarted event",

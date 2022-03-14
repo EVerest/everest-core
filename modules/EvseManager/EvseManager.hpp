@@ -16,6 +16,7 @@
 #include <generated/powermeter/Implementation.hpp>
 
 // headers for required interface implementations
+#include <generated/auth/Interface.hpp>
 #include <generated/board_support_AC/Interface.hpp>
 #include <generated/powermeter/Interface.hpp>
 
@@ -39,7 +40,7 @@ public:
                 std::unique_ptr<evse_managerImplBase> p_evse,
                 std::unique_ptr<evse_manager_energy_controlImplBase> p_evse_energy_control,
                 std::unique_ptr<powermeterImplBase> p_powermeter, std::unique_ptr<board_support_ACIntf> r_bsp,
-                std::unique_ptr<powermeterIntf> r_powermeter, Conf& config) :
+                std::unique_ptr<powermeterIntf> r_powermeter, std::unique_ptr<authIntf> r_auth, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_evse(std::move(p_evse)),
@@ -47,6 +48,7 @@ public:
         p_powermeter(std::move(p_powermeter)),
         r_bsp(std::move(r_bsp)),
         r_powermeter(std::move(r_powermeter)),
+        r_auth(std::move(r_auth)),
         config(config){};
 
     const Conf& config;
@@ -56,6 +58,7 @@ public:
     const std::unique_ptr<powermeterImplBase> p_powermeter;
     const std::unique_ptr<board_support_ACIntf> r_bsp;
     const std::unique_ptr<powermeterIntf> r_powermeter;
+    const std::unique_ptr<authIntf> r_auth;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
@@ -76,6 +79,7 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     json latest_powermeter_data;
+    bool authorization_available;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
