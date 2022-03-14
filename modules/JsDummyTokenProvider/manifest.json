@@ -1,5 +1,5 @@
 {
-    "description": "Dummy token provider that listes to AuthRequired event from evse_manager and then publishes one token",
+    "description": "Dummy token provider that listens to AuthRequired event from evse_manager and then publishes one token",
     "provides": {
         "main": {
             "description": "Main implementation of dummy token provider always returning one configured token",
