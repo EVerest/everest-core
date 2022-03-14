@@ -2,17 +2,17 @@
     "description": "ISO15118-3 SLAC interface",
     "cmds": {
         "reset": {
-            "description": "Reset SLAC."
+            "description": "Reset SLAC. Not implemented yet."
         },
         "enter_bcd": {
-            "description": "Signal pilot state change to B/C/D.",
+            "description": "Signal pilot state change to B/C/D from A/E/F.",
             "result":{
                 "type": "boolean",
                 "description": "True on success."
             }
         },
         "leave_bcd": {
-            "description": "Signal pilot state change to A/E/F.",
+            "description": "Signal pilot state change to A/E/F from B/C/D.",
             "result": {
                 "type": "boolean",
                 "description": "True on success."
