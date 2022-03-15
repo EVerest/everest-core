@@ -14,6 +14,7 @@
 // FIXME (aw): could we separate out the internal events, somehow?
 enum class EventID
 {
+    Reset,
     ResetDone,
     EnterBCD,
     LeaveBCD,
@@ -24,17 +25,16 @@ enum class EventID
     FinishSounding,
     AttenCharRspReceived,
     LinkDetected,
-    ErrorSequenceDone,
     MatchingFailed,
 };
 
 using EventTypeFactory = fsm::utils::IdentifiableTypeFactory<EventID>;
 
+using EventReset = EventTypeFactory::Derived<EventID::Reset>;
 using EventEnterBCD = EventTypeFactory::Derived<EventID::EnterBCD>;
 using EventLeaveBCD = EventTypeFactory::Derived<EventID::LeaveBCD>;
 using EventSlacMessage = EventTypeFactory::Derived<EventID::SlacMessage, slac::messages::HomeplugMessage&>;
 using EventLinkDetected = EventTypeFactory::Derived<EventID::LinkDetected>;
-using EventErrorSequenceDone = EventTypeFactory::Derived<EventID::ErrorSequenceDone>;
 
 enum class State
 {
@@ -45,6 +45,7 @@ enum class State
     Sounding,
     DoAttenChar,
     WaitForSlacMatch,
+    ReceivedSlacMatch,
     Matched,
     SignalError,
     NoSlacPerformed,
@@ -71,8 +72,6 @@ struct MatchingSessionContext {
     bool received_mnbc_sound{false};
     std::chrono::time_point<std::chrono::system_clock> tp_sound_start;
 
-    bool received_match_req{false};
-
     slac::messages::cm_atten_char_ind calculate_avg() const;
 };
 
@@ -93,7 +92,6 @@ public:
     }
 
     void set_five_percent_mode(bool value);
-    bool received_slac_match();
     void set_nmk(const uint8_t* nmk);
 
     explicit EvseFSM(SlacIO& slac_io);
@@ -118,6 +116,8 @@ private:
     // FIXME (aw): this state should also handle the CM_VALIDATE.REQ
     StateHandleType sd_wait_for_slac_match{{State::WaitForSlacMatch, "WaitForSlacMatch"}};
 
+    StateHandleType sd_received_slac_match{{State::ReceivedSlacMatch, "ReceivedSlacMatch"}};
+
     StateHandleType sd_matched{{State::Matched, "Matched"}};
 
     StateHandleType sd_signal_error{{State::SignalError, "SignalError"}};
@@ -127,12 +127,14 @@ private:
     // declare transitions
     // StateHandleType& t_init_timeout();
 
+    void default_transition(const EventBaseType& ev, TransitionType& trans);
+
     bool check_valid_slac_parm_req();
     void sd_wait_for_matching_hsm(FSMContextType& ctx, const EventSlacMessage& ev);
     void sd_matching_hsm(FSMContextType& ctx, const EventSlacMessage& ev);
     void sd_sounding_hsm(FSMContextType& ctx, const EventSlacMessage& ev);
     void sd_wait_for_atten_char_rsp_hsm(FSMContextType& ctx, const EventSlacMessage& ev);
-    void sd_wait_for_slac_match_hsm(FSMContextType& ctx, const EventSlacMessage& ev);
+    void sd_wait_for_slac_match_hsm(TransitionType& trans, const EventSlacMessage& ev);
     void sd_reset_hsm(FSMContextType& ctx, const EventSlacMessage& ev);
 
     MatchingSessionContext matching_ctx;

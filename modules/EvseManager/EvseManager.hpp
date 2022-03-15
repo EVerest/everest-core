@@ -15,9 +15,11 @@
 #include <generated/evse_manager/Implementation.hpp>
 
 // headers for required interface implementations
+#include <generated/ISO15118_ac_charger/Interface.hpp>
 #include <generated/auth/Interface.hpp>
 #include <generated/board_support_AC/Interface.hpp>
 #include <generated/powermeter/Interface.hpp>
+#include <generated/slac/Interface.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 #include "Charger.hpp"
@@ -26,11 +28,16 @@
 namespace module {
 
 struct Conf {
+    std::string evse_id;
     bool three_phases;
     bool has_ventilation;
     std::string country_code;
     bool rcd_enabled;
     double max_current;
+    std::string charge_mode;
+    bool ac_hlc_enabled;
+    bool ac_hlc_use_5percent;
+    bool ac_enforce_hlc;
 };
 
 class EvseManager : public Everest::ModuleBase {
@@ -39,7 +46,8 @@ public:
     EvseManager(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
                 std::unique_ptr<evse_managerImplBase> p_evse, std::unique_ptr<energyImplBase> p_energy_grid,
                 std::unique_ptr<board_support_ACIntf> r_bsp, std::unique_ptr<powermeterIntf> r_powermeter,
-                std::unique_ptr<authIntf> r_auth, Conf& config) :
+                std::unique_ptr<authIntf> r_auth, std::vector<std::unique_ptr<slacIntf>> r_slac,
+                std::vector<std::unique_ptr<ISO15118_ac_chargerIntf>> r_hlc, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_evse(std::move(p_evse)),
@@ -47,6 +55,8 @@ public:
         r_bsp(std::move(r_bsp)),
         r_powermeter(std::move(r_powermeter)),
         r_auth(std::move(r_auth)),
+        r_slac(std::move(r_slac)),
+        r_hlc(std::move(r_hlc)),
         config(config){};
 
     const Conf& config;
@@ -56,6 +66,8 @@ public:
     const std::unique_ptr<board_support_ACIntf> r_bsp;
     const std::unique_ptr<powermeterIntf> r_powermeter;
     const std::unique_ptr<authIntf> r_auth;
+    const std::vector<std::unique_ptr<slacIntf>> r_slac;
+    const std::vector<std::unique_ptr<ISO15118_ac_chargerIntf>> r_hlc;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
@@ -84,7 +96,9 @@ private:
     json hw_capabilities;
     bool local_three_phases;
     float local_max_current_limit;
-    const float EVSE_ABSOLUTE_MAX_CURRENT=80.0;
+    const float EVSE_ABSOLUTE_MAX_CURRENT = 80.0;
+    bool slac_enabled;
+    bool hlc_enabled;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

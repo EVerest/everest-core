@@ -25,8 +25,9 @@ const Event_Error_DF = 7;
 const Event_Error_Relais = 8;
 const Event_Error_RCD = 9;
 const Event_Error_VentilationNotAvailable = 10;
-const Event_RestartMatching = 11;
-const Event_PermanentFault = 12;
+const Event_EnterBCD = 11;
+const Event_LeaveBCD = 12;
+const Event_PermanentFault = 13;
 
 
 boot_module(async ({ setup, info, config, mqtt }) => {
@@ -46,7 +47,7 @@ boot_module(async ({ setup, info, config, mqtt }) => {
 
   setup.provides.board_support.register.enable((mod, args) => {
     if (args.value) {
-      if (mod.current_state == STATE_DISABLED) mod.state = STATE_A;
+      if (mod.current_state === STATE_DISABLED) mod.state = STATE_A;
     } else mod.current_state = STATE_DISABLED;
   });
 
@@ -78,6 +79,11 @@ boot_module(async ({ setup, info, config, mqtt }) => {
   clearData(mod);
   setInterval(simulation_loop, 250, mod);
 });
+
+function publish_event(mod, event) {
+  //console.log("------------ EVENT PUB "+event);
+  mod.provides.board_support.publish.event(event_to_enum(event));
+}
 
 function enable_simulation(mod, args) {
   if (mod.simulation_enabled && !args.value) {
@@ -134,6 +140,10 @@ function simulation_statemachine(mod) {
       reset_powermeter(mod);
       mod.simplified_mode = false;
 
+      if (mod.last_state === STATE_B || mod.last_state === STATE_C || mod.last_state === STATE_D) {
+        publish_event(mod, Event_LeaveBCD);
+      }
+
       if (mod.last_state != STATE_A && mod.last_state != STATE_DISABLED &&
         mod.last_state != STATE_F) {
         publish_event(mod, Event_CarRequestedStopPower);
@@ -150,10 +160,6 @@ function simulation_statemachine(mod) {
       // Table A.6: Sequence 8.2 EV supply equipment
       // responds to EV opens S2 (w/o PWM)
 
-      if (mod.last_state == STATE_E || mod.last_state == STATE_F) {
-        publish_event(mod, Event_RestartMatching);
-      }
-
       if (mod.last_state != STATE_A && mod.last_state != STATE_B) {
         publish_event(mod, Event_CarRequestedStopPower);
         // Need to switch off according to Table A.6 Sequence 8.1 within
@@ -161,22 +167,26 @@ function simulation_statemachine(mod) {
       }
 
       // Table A.6: Sequence 1.1 Plug-in
-      if (mod.last_state == STATE_A) {
+      if (mod.last_state === STATE_A) {
         publish_event(mod, Event_CarPluggedIn);
         mod.simplified_mode = false;
+      }
+
+      if (mod.last_state === STATE_A || mod.last_state === STATE_E || mod.last_state === STATE_F) {
+        publish_event(mod, Event_EnterBCD);
       }
       break;
     case STATE_C:
       // Table A.6: Sequence 1.2 Plug-in
-      if (mod.last_state == STATE_A) {
+      if (mod.last_state === STATE_A) {
         publish_event(mod, Event_CarPluggedIn);
         mod.simplified_mode = true;
       }
-      if (mod.last_state == STATE_B) {
+      if (mod.last_state === STATE_B) {
         publish_event(mod, Event_CarRequestedPower);
       }
-      if (mod.last_state == STATE_E || mod.last_state == STATE_F) {
-        publish_event(mod, Event_RestartMatching);
+      if (mod.last_state === STATE_A || mod.last_state === STATE_E || mod.last_state === STATE_F) {
+        publish_event(mod, Event_EnterBCD);
       }
 
       if (!mod.pwm_running) { // C1
@@ -205,16 +215,16 @@ function simulation_statemachine(mod) {
       break;
     case STATE_D:
       // Table A.6: Sequence 1.2 Plug-in (w/ventilation)
-      if (mod.last_state == STATE_A) {
+      if (mod.last_state === STATE_A) {
         publish_event(mod, Event_CarPluggedIn);
         publish_event(mod, Event_CarRequestedPower);
         mod.simplified_mode = true;
       }
-      if (mod.last_state == STATE_B) {
+      if (mod.last_state === STATE_B) {
         publish_event(mod, Event_CarRequestedPower);
       }
-      if (mod.last_state == STATE_E || mod.last_state == STATE_F) {
-        publish_event(mod, Event_RestartMatching);
+      if (mod.last_state === STATE_A || mod.last_state === STATE_E || mod.last_state === STATE_F) {
+        publish_event(mod, Event_EnterBCD);
       }
 
       if (!mod.pwm_running) {
@@ -235,7 +245,7 @@ function simulation_statemachine(mod) {
           else
             powerOn(mod);
         }
-        if (mod.last_state == STATE_C) {
+        if (mod.last_state === STATE_C) {
           // Car switches to ventilation while charging.
           if (!mod.has_ventilation)
             publish_event(mod, Event_Error_VentilationNotAvailable);
@@ -245,15 +255,24 @@ function simulation_statemachine(mod) {
     case STATE_E:
       if (mod.last_state != mod.current_state)
         publish_event(mod, Event_Error_E);
+      if (mod.last_state === STATE_B || mod.last_state === STATE_C || mod.last_state === STATE_D) {
+        publish_event(mod, Event_LeaveBCD);
+      }
       powerOff(mod);
       pwmOff(mod);
       break;
     case STATE_F:
+      if (mod.last_state === STATE_B || mod.last_state === STATE_C || mod.last_state === STATE_D) {
+        publish_event(mod, Event_LeaveBCD);
+      }
       powerOff(mod);
       break;
     case STATE_DF:
       if (mod.last_state != mod.current_state)
         publish_event(mod, Event_Error_DF);
+      if (mod.last_state === STATE_B || mod.last_state === STATE_C || mod.last_state === STATE_D) {
+        publish_event(mod, Event_LeaveBCD);
+      }
       powerOff(mod);
       break;
   }
@@ -267,10 +286,7 @@ function check_error_rcd(mod) {
   }
 }
 
-function publish_event(mod, event) {
-  //console.log("------------ EVENT PUB "+event);
-  mod.provides.board_support.publish.event(event_to_enum(event));
-}
+
 
 function publish_nr_of_phases_available(mod, n) {
   //console.log("------------ NR PHASE PUB "+n);
@@ -301,8 +317,10 @@ function event_to_enum(event) {
       return 'ErrorRCD';
     case Event_Error_VentilationNotAvailable:
       return 'VentilationNotAvailable';
-    case Event_RestartMatching:
-      return 'RestartMatching';
+    case Event_EnterBCD:
+      return 'EnterBCD';
+    case Event_LeaveBCD:
+      return 'LeaveBCD';
     case Event_PermanentFault:
       return 'PermanentFault';
     default:

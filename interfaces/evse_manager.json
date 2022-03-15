@@ -212,7 +212,10 @@
                         "Relais",
                         "RCD",
                         "VentilationNotAvailable",
-                        "OverCurrent"
+                        "OverCurrent",
+                        "Internal",
+                        "SLAC",
+                        "HLC"
                     ]
                 }
             },

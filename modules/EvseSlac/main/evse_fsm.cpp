@@ -34,17 +34,21 @@ EvseFSM::EvseFSM(SlacIO& slac_io) : slac_io(slac_io) {
         switch (ev.id) {
         case EventID::SlacMessage:
             sd_reset_hsm(trans.set_internal(), ev);
-            return;
+            break;
         case EventID::ResetDone:
-            return trans.set(sd_idle);
-        default:
-            return;
+            trans.set(sd_idle);
+            break;
+        case EventID::Reset:
+            trans.set(sd_reset);
+            break;
         }
     };
 
     sd_reset.entry = [this](FSMInitContextType& ctx) {
-        // send our setup message
+        // reset retry counter
+        init_retry_count = 0;
 
+        // send our setup message
         slac::messages::cm_set_key_req set_key_req;
 
         set_key_req.key_type = slac::defs::CM_SET_KEY_REQ_KEY_TYPE_NMK;
@@ -77,9 +81,11 @@ EvseFSM::EvseFSM(SlacIO& slac_io) : slac_io(slac_io) {
     sd_idle.transitions = [this](const EventBaseType& ev, TransitionType& trans) {
         switch (ev.id) {
         case EventID::EnterBCD:
-            return trans.set(sd_wait_for_matching_start);
-        default:
-            return;
+            trans.set(sd_wait_for_matching_start);
+            break;
+        case EventID::Reset:
+            trans.set(sd_reset);
+            break;
         }
     };
 
@@ -87,18 +93,20 @@ EvseFSM::EvseFSM(SlacIO& slac_io) : slac_io(slac_io) {
         switch (ev.id) {
         case EventID::SlacMessage:
             sd_wait_for_matching_hsm(trans.set_internal(), ev);
-            return;
+            break;
         case EventID::StartMatching:
-            return trans.set(sd_matching);
+            trans.set(sd_matching);
+            break;
         case EventID::InitTimout:
             // FIXME (aw): where to put MAX_INIT_RETRIES?
             if (ac_mode_five_percent) {
-                return trans.set(sd_signal_error);
+                trans.set(sd_signal_error);
             } else {
-                return trans.set(sd_no_slac_performed);
+                trans.set(sd_no_slac_performed);
             }
+            break;
         default:
-            return;
+            default_transition(ev, trans);
         }
     };
 
@@ -114,15 +122,17 @@ EvseFSM::EvseFSM(SlacIO& slac_io) : slac_io(slac_io) {
 
     sd_matching.transitions = [this](const EventBaseType& ev, TransitionType& trans) {
         switch (ev.id) {
-        case EventID::LeaveBCD:
-            return trans.set(sd_idle);
         case EventID::SlacMessage:
             sd_matching_hsm(trans.set_internal(), ev);
-            return;
+            break;
         case EventID::StartSounding:
-            return trans.set(sd_sounding);
+            trans.set(sd_sounding);
+            break;
+        case EventID::MatchingFailed:
+            trans.set(sd_matching_failed);
+            break;
         default:
-            return;
+            default_transition(ev, trans);
         }
     };
 
@@ -136,15 +146,14 @@ EvseFSM::EvseFSM(SlacIO& slac_io) : slac_io(slac_io) {
 
     sd_sounding.transitions = [this](const EventBaseType& ev, TransitionType& trans) {
         switch (ev.id) {
-        case EventID::LeaveBCD:
-            return trans.set(sd_idle);
         case EventID::SlacMessage:
             sd_sounding_hsm(trans.set_internal(), ev);
-            return;
+            break;
         case EventID::FinishSounding:
-            return trans.set(sd_do_atten_char);
+            trans.set(sd_do_atten_char);
+            break;
         default:
-            return;
+            default_transition(ev, trans);
         }
     };
 
@@ -160,17 +169,17 @@ EvseFSM::EvseFSM(SlacIO& slac_io) : slac_io(slac_io) {
 
     sd_do_atten_char.transitions = [this](const EventBaseType& ev, TransitionType& trans) {
         switch (ev.id) {
-        case EventID::LeaveBCD:
-            return trans.set(sd_idle);
         case EventID::SlacMessage:
             sd_wait_for_atten_char_rsp_hsm(trans.set_internal(), ev);
-            return;
+            break;
         case EventID::AttenCharRspReceived:
-            return trans.set(sd_wait_for_slac_match);
+            trans.set(sd_wait_for_slac_match);
+            break;
         case EventID::MatchingFailed:
-            return trans.set(sd_matching_failed);
+            trans.set(sd_matching_failed);
+            break;
         default:
-            return;
+            default_transition(ev, trans);
         }
     };
 
@@ -196,20 +205,14 @@ EvseFSM::EvseFSM(SlacIO& slac_io) : slac_io(slac_io) {
 
     sd_wait_for_slac_match.transitions = [this](const EventBaseType& ev, TransitionType& trans) {
         switch (ev.id) {
-        case EventID::LeaveBCD:
-            return trans.set(sd_idle);
         case EventID::SlacMessage:
-            sd_wait_for_slac_match_hsm(trans.set_internal(), ev);
-            return;
+            sd_wait_for_slac_match_hsm(trans, ev);
+            break;
         case EventID::MatchingFailed:
-            return trans.set(sd_matching_failed);
-        case EventID::LinkDetected:
-            if (matching_ctx.received_match_req) {
-                return trans.set(sd_matched);
-            }
-            return;
+            trans.set(sd_matching_failed);
+            break;
         default:
-            return;
+            default_transition(ev, trans);
         }
     };
 
@@ -226,43 +229,79 @@ EvseFSM::EvseFSM(SlacIO& slac_io) : slac_io(slac_io) {
     };
 
     sd_wait_for_slac_match.handler = [this](FSMContextType& ctx) {
-        if (!matching_ctx.received_match_req) {
-            // timeout on waiting for slac_match / validate
-            ctx.submit_event(EventMatchingFailed());
-        } else {
-            // timeout on waiting for logical link establishment
-            ctx.submit_event(EventMatchingFailed());
+        // timeout on waiting for slac_match / validate
+        ctx.submit_event(EventMatchingFailed());
+    };
+
+    sd_received_slac_match.transitions = [this](const EventBaseType& ev, TransitionType& trans) {
+        switch (ev.id) {
+        case EventID::LinkDetected:
+            trans.set(sd_matched);
+            break;
+        case EventID::MatchingFailed:
+            trans.set(sd_matching_failed);
+            break;
+        default:
+            default_transition(ev, trans);
         }
     };
 
+    sd_received_slac_match.entry = [this](FSMInitContextType& ctx) {
+        ctx.set_next_timeout(slac::defs::TT_MATCH_JOIN_MS);
+    };
+
+    sd_received_slac_match.handler = [this](FSMContextType& ctx) {
+        // timeout on waiting for logical link establishment
+        ctx.submit_event(EventMatchingFailed());
+    };
+
+    sd_matched.transitions = [this](const EventBaseType& ev, TransitionType& trans) { default_transition(ev, trans); };
+
     sd_signal_error.transitions = [this](const EventBaseType& ev, TransitionType& trans) {
-        switch (ev.id) {
         // FIXME (aw): what about SLAC messages that we receive while in this mode?
-        case EventID::ErrorSequenceDone:
+        switch (ev.id) {
+        case EventID::LeaveBCD:
             // FIXME (aw): where/when to reset init_retry_count?
             ++init_retry_count;
             if (init_retry_count == MAX_INIT_RETRIES) {
                 // FIXME (aw): we need to signal this to the EvseManager
                 // somehow
-                return trans.set(sd_no_slac_performed);
+                trans.set(sd_no_slac_performed);
             } else {
-                return trans.set(sd_wait_for_matching_start);
+                trans.set(sd_wait_for_matching_start);
             }
+            break;
         default:
-            return;
+            default_transition(ev, trans);
         }
     };
 
-    sd_signal_error.entry = [this](FSMInitContextType& ctx) {
-        // FIXME (aw): how long do we want/need to wait for the
-        //             EventErrorSequenceDone event?
-        //             right now, we're stipulating it by ourself ..
-        ctx.set_next_timeout(30);
+    sd_no_slac_performed.transitions = [this](const EventBaseType& ev, TransitionType& trans) {
+        switch (ev.id) {
+        case EventID::Reset:
+            trans.set(sd_reset);
+            break;
+        }
     };
 
-    sd_signal_error.handler = [this](FSMContextType& ctx) { ctx.submit_event(EventErrorSequenceDone()); };
+    sd_matching_failed.transitions = [this](const EventBaseType& ev, TransitionType& trans) {
+        switch (ev.id) {
+        case EventID::Reset:
+            trans.set(sd_reset);
+            break;
+        }
+    };
+}
 
-    sd_no_slac_performed.transitions = [this](const EventBaseType& ev, TransitionType& trans) { return; };
+void EvseFSM::default_transition(const EventBaseType& ev, TransitionType& trans) {
+    switch (ev.id) {
+    case EventID::LeaveBCD:
+        trans.set(sd_idle);
+        break;
+    case EventID::Reset:
+        trans.set(sd_reset);
+        break;
+    }
 }
 
 void EvseFSM::sd_wait_for_matching_hsm(FSMContextType& ctx, const EventSlacMessage& ev) {
@@ -384,7 +423,7 @@ void EvseFSM::sd_wait_for_atten_char_rsp_hsm(FSMContextType& ctx, const EventSla
     }
 }
 
-void EvseFSM::sd_wait_for_slac_match_hsm(FSMContextType& ctx, const EventSlacMessage& ev) {
+void EvseFSM::sd_wait_for_slac_match_hsm(TransitionType& trans, const EventSlacMessage& ev) {
     auto& msg_in = ev.data;
 
     const auto mmtype = msg_in.get_mmtype();
@@ -400,8 +439,6 @@ void EvseFSM::sd_wait_for_slac_match_hsm(FSMContextType& ctx, const EventSlacMes
         // invalid message, skip it
         return;
     }
-
-    matching_ctx.received_match_req = true;
 
     // reply with CM_SLAC_MATCH.CNF
 
@@ -423,7 +460,7 @@ void EvseFSM::sd_wait_for_slac_match_hsm(FSMContextType& ctx, const EventSlacMes
 
     slac_io.send(msg_out);
 
-    ctx.set_next_timeout(slac::defs::TT_MATCH_JOIN_MS);
+    trans.set(sd_received_slac_match);
 }
 
 void EvseFSM::sd_reset_hsm(FSMContextType& ctx, const EventSlacMessage& ev) {
@@ -438,10 +475,6 @@ void EvseFSM::sd_reset_hsm(FSMContextType& ctx, const EventSlacMessage& ev) {
     }
 
     ctx.submit_event(EventResetDone());
-}
-
-bool EvseFSM::received_slac_match() {
-    return matching_ctx.received_match_req;
 }
 
 void EvseFSM::set_five_percent_mode(bool value) {

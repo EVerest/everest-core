@@ -25,8 +25,8 @@
 
 #include "ld-ev.hpp"
 #include "utils/thread.hpp"
-#include <chrono>
 #include <generated/board_support_AC/Interface.hpp>
+#include <chrono>
 #include <mutex>
 #include <queue>
 #include <sigslot/signal.hpp>
@@ -70,7 +70,8 @@ public:
     float getMaxCurrent();
     sigslot::signal<float> signalMaxCurrent;
 
-    void setup(bool three_phases, bool has_ventilation, std::string country_code, bool rcd_enabled);
+    void setup(bool three_phases, bool has_ventilation, const std::string& country_code, bool rcd_enabled,
+               const std::string& charge_mode, bool ac_hlc_enabled, bool ac_hlc_use_5percent, bool ac_enforce_hlc);
 
     bool enable();
     bool disable();
@@ -83,8 +84,9 @@ public:
     //
 
     // call when in state WaitingForAuthentication
-    void Authorize(bool a, const std::string& userid);
-    bool getAuthorization();
+    void Authorize(bool a, const std::string& userid, bool pnc);
+    bool AuthorizedEIM();
+    bool AuthorizedPnC();
 
     // trigger replug sequence while charging to switch number of phases
     bool switchThreePhasesWhileCharging(bool n);
@@ -127,7 +129,10 @@ public:
         Error_Relais,
         Error_VentilationNotAvailable,
         Error_RCD,
-        Error_OverCurrent
+        Error_OverCurrent,
+        Error_Internal,
+        Error_SLAC,
+        Error_HLC
     };
 
     // Signal for EvseEvents
@@ -142,6 +147,11 @@ public:
     void processEvent(std::string event);
 
     void run();
+
+    void requestErrorSequence();
+
+    void setMatchingStarted(bool m);
+    bool getMatchingStarted();
 
     // Note: Deprecated, do not use EvseState externally.
     // Kept for compatibility, will be removed from public interface
@@ -158,7 +168,9 @@ public:
         ChargingPausedEVSE,
         Finished,
         Error,
-        Faulted
+        Faulted,
+        T_step_EF,
+        T_step_X1,
     };
 
     std::string evseStateToString(EvseState s);
@@ -191,6 +203,7 @@ private:
     EvseState currentState;
     EvseState lastState;
     ErrorState errorState;
+    std::chrono::system_clock::time_point currentStateStarted;
 
     float ampereToDutyCycle(float ampere);
 
@@ -200,16 +213,43 @@ private:
     std::chrono::system_clock::time_point lastOverCurrentEvent;
     const int softOverCurrentTimeout = 7000;
 
-    ControlPilotEvent string_to_control_pilot_event(std::string event);
+    // 4 seconds according to table 3 of ISO15118-3
+    const int t_step_EF = 4000;
+    EvseState t_step_EF_returnState;
+    float t_step_EF_returnPWM;
 
-    void ISO_IEC_Coordination();
+    // 3 seconds according to IEC61851-1
+    const int t_step_X1 = 3000;
+    EvseState t_step_X1_returnState;
+    float t_step_X1_returnPWM;
+
+    const float PWM_5_PERCENT = 0.05;
+
+    bool matching_started;
+
+    ControlPilotEvent string_to_control_pilot_event(std::string event);
 
     void processCPEventsIndependent(ControlPilotEvent cp_event);
     void processCPEventsState(ControlPilotEvent cp_event);
     void runStateMachine();
 
     bool authorized;
+    // set to true if auth is from PnC, otherwise to false (EIM)
+    bool authorized_pnc;
     bool cancelled;
+
+    // AC or DC
+    std::string charge_mode;
+    // Config option
+    bool ac_hlc_enabled;
+    // HLC enabled in current AC session. This can change during the session if e.g. HLC fails.
+    bool ac_hlc_enabled_current_session;
+    // Config option
+    bool ac_hlc_use_5percent;
+    // HLC uses 5 percent signalling. Used both for AC and DC modes.
+    bool hlc_use_5percent_current_session;
+    // non standard compliant option to enforce HLC in AC mode
+    bool ac_enforce_hlc;
 
     std::chrono::system_clock::time_point lastPwmUpdate;
 

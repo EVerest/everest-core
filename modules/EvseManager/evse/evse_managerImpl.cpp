@@ -30,8 +30,9 @@ void evse_managerImpl::init() {
         mod->updateLocalMaxCurrentLimit(std::stof(data));
     });
 
-    mod->mqtt.subscribe("/external/cmd/set_auth",
-                        [&charger = mod->charger](const std::string data) { charger->Authorize(true, data.c_str()); });
+    mod->mqtt.subscribe("/external/cmd/set_auth", [&charger = mod->charger](std::string data) {
+        charger->Authorize(true, data.c_str(), false);
+    });
 
     mod->mqtt.subscribe("/external/cmd/enable", [&charger = mod->charger](const std::string data) { charger->enable(); });
 

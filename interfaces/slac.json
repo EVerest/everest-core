@@ -2,33 +2,26 @@
     "description": "ISO15118-3 SLAC interface",
     "cmds": {
         "reset": {
-            "description": "Reset SLAC. Not implemented yet."
+            "description": "Reset SLAC",
+            "arguments": {
+                "enable": {
+                    "description": "true: start SLAC after reset, false: stop SLAC",
+                    "type": "boolean"
+                }
+            }
         },
         "enter_bcd": {
             "description": "Signal pilot state change to B/C/D from A/E/F.",
             "result":{
                 "type": "boolean",
-                "description": "True on success."
+                "description": "True on success, returns False if transition was unexpected and cannot be handled by SLAC state machine."
             }
         },
         "leave_bcd": {
             "description": "Signal pilot state change to A/E/F from B/C/D.",
             "result": {
                 "type": "boolean",
-                "description": "True on success."
-            }
-        },
-        "error_sequence_reset": {
-            "description": "Signal that the error sequence has finished.",
-            "arguments": {
-                "successful": {
-                    "description": "Whether the error sequence could be done and was successful",
-                    "type": "boolean"
-                }
-            },
-            "result": {
-                "type": "boolean",
-                "description": "True on success."
+                "description": "True on success, returns False if transition was unexpected and cannot be handled by SLAC state machine."
             }
         },
         "dlink_terminate": {

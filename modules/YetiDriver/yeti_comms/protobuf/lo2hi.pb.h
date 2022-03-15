@@ -24,8 +24,9 @@ typedef enum _Event_InterfaceEvent {
     Event_InterfaceEvent_ERROR_RCD = 9, 
     Event_InterfaceEvent_ERROR_VENTILATION_NOT_AVAILABLE = 10, 
     Event_InterfaceEvent_ERROR_OVER_CURRENT = 11, 
-    Event_InterfaceEvent_RESTART_MATCHING = 12, 
-    Event_InterfaceEvent_PERMANENT_FAULT = 13 
+    Event_InterfaceEvent_ENTER_BCD = 12, 
+    Event_InterfaceEvent_LEAVE_BCD = 13, 
+    Event_InterfaceEvent_PERMANENT_FAULT = 14 
 } Event_InterfaceEvent;
 
 typedef enum _StateUpdate_State { 
@@ -111,6 +112,11 @@ typedef struct _KeepAliveLo {
     uint32_t protocol_version_major; 
     uint32_t protocol_version_minor; 
     char sw_version_string[51]; 
+    float hwcap_max_current; 
+    float hwcap_min_current; 
+    uint32_t hwcap_max_phase_count; 
+    uint32_t hwcap_min_phase_count; 
+    bool supports_changing_phases_during_charging; 
 } KeepAliveLo;
 
 typedef struct _PowerMeter { 
@@ -200,7 +206,7 @@ extern "C" {
 #define Event_init_default                       {_Event_InterfaceEvent_MIN}
 #define SimulationFeedback_init_default          {0, 0, 0, 0, 0}
 #define PowerMeter_init_default                  {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-#define KeepAliveLo_init_default                 {0, 0, 0, 0, 0, ""}
+#define KeepAliveLo_init_default                 {0, 0, 0, 0, 0, "", 0, 0, 0, 0, 0}
 #define StateUpdate_init_default                 {0, _StateUpdate_State_MIN, 0, {ErrorFlags_init_default}}
 #define ErrorFlags_init_default                  {_ErrorFlags_ErrorType_MIN}
 #define ChargingFlags_init_default               {0}
@@ -210,7 +216,7 @@ extern "C" {
 #define Event_init_zero                          {_Event_InterfaceEvent_MIN}
 #define SimulationFeedback_init_zero             {0, 0, 0, 0, 0}
 #define PowerMeter_init_zero                     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-#define KeepAliveLo_init_zero                    {0, 0, 0, 0, 0, ""}
+#define KeepAliveLo_init_zero                    {0, 0, 0, 0, 0, "", 0, 0, 0, 0, 0}
 #define StateUpdate_init_zero                    {0, _StateUpdate_State_MIN, 0, {ErrorFlags_init_zero}}
 #define ErrorFlags_init_zero                     {_ErrorFlags_ErrorType_MIN}
 #define ChargingFlags_init_zero                  {0}
@@ -250,6 +256,11 @@ extern "C" {
 #define KeepAliveLo_protocol_version_major_tag   4
 #define KeepAliveLo_protocol_version_minor_tag   5
 #define KeepAliveLo_sw_version_string_tag        6
+#define KeepAliveLo_hwcap_max_current_tag        7
+#define KeepAliveLo_hwcap_min_current_tag        8
+#define KeepAliveLo_hwcap_max_phase_count_tag    9
+#define KeepAliveLo_hwcap_min_phase_count_tag    10
+#define KeepAliveLo_supports_changing_phases_during_charging_tag 11
 #define PowerMeter_time_stamp_tag                1
 #define PowerMeter_vrmsL1_tag                    2
 #define PowerMeter_vrmsL2_tag                    3
@@ -356,7 +367,12 @@ X(a, STATIC,   SINGULAR, UINT32,   hw_type,           2) \
 X(a, STATIC,   SINGULAR, UINT32,   hw_revision,       3) \
 X(a, STATIC,   SINGULAR, UINT32,   protocol_version_major,   4) \
 X(a, STATIC,   SINGULAR, UINT32,   protocol_version_minor,   5) \
-X(a, STATIC,   SINGULAR, STRING,   sw_version_string,   6)
+X(a, STATIC,   SINGULAR, STRING,   sw_version_string,   6) \
+X(a, STATIC,   SINGULAR, FLOAT,    hwcap_max_current,   7) \
+X(a, STATIC,   SINGULAR, FLOAT,    hwcap_min_current,   8) \
+X(a, STATIC,   SINGULAR, UINT32,   hwcap_max_phase_count,   9) \
+X(a, STATIC,   SINGULAR, UINT32,   hwcap_min_phase_count,  10) \
+X(a, STATIC,   SINGULAR, BOOL,     supports_changing_phases_during_charging,  11)
 #define KeepAliveLo_CALLBACK NULL
 #define KeepAliveLo_DEFAULT NULL
 
@@ -440,7 +456,7 @@ extern const pb_msgdesc_t DebugUpdate_msg;
 #define DebugUpdate_size                         92
 #define ErrorFlags_size                          2
 #define Event_size                               2
-#define KeepAliveLo_size                         82
+#define KeepAliveLo_size                         106
 #define LoToHi_size                              123
 #define PowerMeter_size                          121
 #define ResetDone_size                           0

@@ -122,7 +122,8 @@
                 "ErrorRCD",
                 "ErrorVentilationNotAvailable",
                 "ErrorOverCurrent",
-                "RestartMatching",
+                "EnterBCD",
+                "LeaveBCD",
                 "PermanentFault"
             ]
         },

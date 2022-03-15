@@ -38,10 +38,9 @@ public:
 
 protected:
     // command handler functions (virtual)
-    virtual void handle_reset() override;
+    virtual void handle_reset(bool& enable) override;
     virtual bool handle_enter_bcd() override;
     virtual bool handle_leave_bcd() override;
-    virtual bool handle_error_sequence_reset(bool& successful) override;
     virtual bool handle_dlink_terminate() override;
     virtual bool handle_dlink_error() override;
     virtual bool handle_dlink_pause() override;

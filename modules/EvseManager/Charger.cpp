@@ -36,6 +36,11 @@ Charger::Charger(const std::unique_ptr<board_support_ACIntf>& r_bsp) : r_bsp(r_b
     currentDrawnByVehicle[0] = 0.;
     currentDrawnByVehicle[1] = 0.;
     currentDrawnByVehicle[2] = 0.;
+
+    t_step_EF_returnState = EvseState::Faulted;
+    t_step_X1_returnState = EvseState::Faulted;
+
+    matching_started = false;
 }
 
 Charger::~Charger() {
@@ -77,11 +82,16 @@ void Charger::mainThread() {
 void Charger::runStateMachine() {
     bool new_in_state = lastState != currentState;
     lastState = currentState;
+    auto now = std::chrono::system_clock::now();
+
     if (new_in_state) {
+        currentStateStarted = now;
         signalState(currentState);
         if (currentState == EvseState::Error)
             signalError(errorState);
     }
+
+    auto timeInCurrentState = std::chrono::duration_cast<std::chrono::milliseconds>(now - currentStateStarted).count();
 
     switch (currentState) {
     case EvseState::Disabled:
@@ -95,7 +105,7 @@ void Charger::runStateMachine() {
         // make sure we signal availability to potential new cars
         if (new_in_state) {
             r_bsp->call_pwm_off();
-            Authorize(false, "");
+            Authorize(false, "", false);
             cancelled = false;
         }
         // reset 5 percent flag for this session
@@ -114,30 +124,194 @@ void Charger::runStateMachine() {
         // we start PWM here
         if (new_in_state) {
             r_bsp->call_allow_power_on(false);
+            // External signal on MQTT
             signalEvent(EvseEvent::AuthRequired);
+
+            // switch on HLC if configured. May be switched off later on after retries for this session only.
+            if (charge_mode == "AC") {
+                ac_hlc_enabled_current_session = ac_hlc_enabled;
+                if (ac_hlc_enabled_current_session)
+                    hlc_use_5percent_current_session = ac_hlc_use_5percent;
+            } else if (charge_mode == "DC") {
+                hlc_use_5percent_current_session = true;
+            } else {
+                // unsupported charging mode, give up here.
+                currentState = EvseState::Error;
+                errorState = ErrorState::Error_Internal;
+            }
+
+            if (hlc_use_5percent_current_session)
+                update_pwm_now(PWM_5_PERCENT);
         }
 
-        // Signal to module that we need auth
+        // Internal Signal to main module class that we need auth
         signalAuthRequired();
 
-        // retry on Low level etc until SLAC matched.
-        ISO_IEC_Coordination();
+        // SLAC is running in the background trying to setup a PLC connection.
 
         // we get Auth (maybe before SLAC matching or during matching)
-        if (getAuthorization()) {
+        // FIXME: getAuthorization needs to distinguish between EIM and PnC in Auth mananger
+
+        // FIXME: Note Fig 7. is not fully supported here yet (AC Auth before plugin - this overides PnC and always
+        // starts with nominal PWM). Hard to do here at the moment since auth before plugin is cached in auth manager
+        // and is similar to a very quick auth after plugin. We need to support this as this is the only way a user can
+        // skip PnC if he does NOT want to use it for this charging session. This basically works as Auth comes very
+        // fast if it was done before plugin, but we need to ensure that we do not double auth with PnC as well
+
+        // FIXME: In case V2G is not successfull after all, it needs
+        // to send a dlink_error request, which then needs to:
+        // AC mode: fall back to nominal PWM charging etc (not
+        // implemented yet!), it can do so because it is already authorized.
+        // DC mode: go to error_hlc and give up
+
+        // FIXME: if slac reports a dlink_ready=false while we are still waiting for auth we should:
+        // in AC mode: go back to non HLC nominal PWM mode
+        // in DC mode: go to error_slac for this session
+
+        if (AuthorizedEIM()) {
+            EVLOG(info) << "EIM Authorization received";
+
             signalEvent(EvseEvent::ChargingStarted);
+            EvseState targetState;
+
             if (powerAvailable())
-                currentState = EvseState::ChargingPausedEV;
+                targetState = EvseState::ChargingPausedEV;
             else
-                currentState = EvseState::ChargingPausedEVSE;
+                targetState = EvseState::ChargingPausedEVSE;
+
+            // EIM done and matching process not started -> we need to go through t_step_EF and fall back to nominal
+            // PWM. This is a complete waste of 4 precious seconds.
+            if (charge_mode == "AC") {
+                if (ac_hlc_enabled_current_session) {
+                    if (ac_enforce_hlc) {
+                        // non standard compliant mode: we just keep 5 percent running all the time like in DC
+                        EVLOG(info) << "AC mode, HLC enabled(ac_enforce_hlc), keeping 5 percent on until a dlink error "
+                                       "is signalled.";
+                        hlc_use_5percent_current_session = true;
+                        currentState = targetState;
+                    } else {
+                        if (!getMatchingStarted()) {
+                            // SLAC matching was not started when EIM arrived
+                            EVLOG(info) << "AC mode, HLC enabled, matching not started yet. Go through t_step_EF and "
+                                           "disable 5 percent if it was enabled before: "
+                                        << hlc_use_5percent_current_session;
+                            // Figure 3 of ISO15118-3: 5 percent start, PnC and EIM
+                            // Figure 4 of ISO15118-3: X1 start, PnC and EIM
+                            t_step_EF_returnState = targetState;
+                            t_step_EF_returnPWM = 0.;
+                            // fall back to nominal PWM after the t_step_EF break. Note that
+                            // ac_hlc_enabled_current_session remains untouched as HLC can still start later in nominal
+                            // PWM mode
+                            hlc_use_5percent_current_session = false;
+                            currentState = EvseState::T_step_EF;
+                        } else {
+                            // SLAC matching was started already when EIM arrived
+                            if (hlc_use_5percent_current_session) {
+                                // Figure 5 of ISO15118-3: 5 percent start, PnC and EIM, matching already started when
+                                // EIM was done
+                                EVLOG(info) << "AC mode, HLC enabled(5percent), matching already started. Go through "
+                                               "t_step_X1 and disable 5 percent.";
+                                t_step_X1_returnState = targetState;
+                                t_step_X1_returnPWM = 0.;
+                                hlc_use_5percent_current_session = false;
+                                currentState = EvseState::T_step_X1;
+                            } else {
+                                // Figure 6 of ISO15118-3: X1 start, PnC and EIM, matching already started when EIM was
+                                // done. We can go directly to ChargingPausedEV, as we do not need to switch from 5
+                                // percent to nominal first
+                                EVLOG(info)
+                                    << "AC mode, HLC enabled(X1), matching already started. We are in X1 so we can "
+                                       "go directly to nominal PWM.";
+                                currentState = targetState;
+                            }
+                        }
+                    }
+
+                } else {
+                    // HLC is disabled for this session.
+                    // simply proceed to ChargingPausedEV, as we are fully authorized to start charging whenever car
+                    // wants to.
+                    EVLOG(info) << "AC mode, HLC disabled. We are in X1 so we can "
+                                   "go directly to nominal PWM.";
+                    currentState = targetState;
+                }
+            } else if (charge_mode == "DC") {
+                // Figure 8 of ISO15118-3: DC with EIM before or after plugin or PnC
+                // simple here as we always stay within 5 percent mode anyway.
+                EVLOG(info) << "DC mode. We are in 5percent mode so we can continue without further action.";
+                currentState = targetState;
+            } else {
+                // unsupported charging mode, give up here.
+                EVLOG(error) << "Unsupported charging mode.";
+                currentState = EvseState::Error;
+                errorState = ErrorState::Error_Internal;
+            }
+        } else if (AuthorizedPnC()) {
+
+            signalEvent(EvseEvent::ChargingStarted);
+
+            EvseState targetState;
+            if (powerAvailable())
+                targetState = EvseState::ChargingPausedEV;
+            else
+                targetState = EvseState::ChargingPausedEVSE;
+
+            // We got authorization by Plug and Charge
+            EVLOG(info) << "PnC Authorization received";
+            if (charge_mode == "AC") {
+                // Figures 3,4,5,6 of ISO15118-3: Independent on how we started we can continue with 5 percent
+                // signalling once we got PnC authorization without going through t_step_EF or t_step_X1.
+                EVLOG(info) << "AC mode, HLC enabled, PnC auth received. We will continue with 5percent independent on "
+                               "how we started.";
+                hlc_use_5percent_current_session = true;
+                currentState = targetState;
+
+            } else if (charge_mode == "DC") {
+                // Figure 8 of ISO15118-3: DC with EIM before or after plugin or PnC
+                // simple here as we always stay within 5 percent mode anyway.
+                EVLOG(info) << "DC mode. We are in 5percent mode so we can continue without further action.";
+                currentState = targetState;
+            } else {
+                // unsupported charging mode, give up here.
+                EVLOG(error) << "Unsupported charging mode.";
+                currentState = EvseState::Error;
+                errorState = ErrorState::Error_Internal;
+            }
         }
 
         break;
 
+    case EvseState::T_step_EF:
+        if (new_in_state) {
+            EVLOG(info) << "Enter T_step_EF";
+            r_bsp->call_pwm_F();
+        }
+        if (timeInCurrentState >= t_step_EF) {
+            EVLOG(info) << "Exit T_step_EF";
+            if (t_step_EF_returnPWM == 0.)
+                r_bsp->call_pwm_off();
+            else
+                update_pwm_now(t_step_EF_returnPWM);
+            currentState = t_step_EF_returnState;
+        }
+        break;
+
+    case EvseState::T_step_X1:
+        if (new_in_state) {
+            EVLOG(info) << "Enter T_step_X1";
+            r_bsp->call_pwm_off();
+        }
+        if (timeInCurrentState >= t_step_X1) {
+            EVLOG(info) << "Exit T_step_X1";
+            if (t_step_X1_returnPWM == 0.)
+                r_bsp->call_pwm_off();
+            else
+                update_pwm_now(t_step_X1_returnPWM);
+            currentState = t_step_X1_returnState;
+        }
+        break;
+
     case EvseState::Charging:
-        /*if (use_5percent)
-            control_pilot.pwmOn(0.05);
-        else*/
 
         checkSoftOverCurrent();
 
@@ -150,17 +324,18 @@ void Charger::runStateMachine() {
             signalEvent(EvseEvent::ChargingResumed);
             r_bsp->call_allow_power_on(true);
             // make sure we are enabling PWM
-            update_pwm_now(ampereToDutyCycle(getMaxCurrent()));
+            if (hlc_use_5percent_current_session)
+                update_pwm_now(PWM_5_PERCENT);
+            else
+                update_pwm_now(ampereToDutyCycle(getMaxCurrent()));
         } else {
             // update PWM if it has changed and 5 seconds have passed since last update
-            update_pwm_max_every_5seconds(ampereToDutyCycle(getMaxCurrent()));
+            if (!hlc_use_5percent_current_session)
+                update_pwm_max_every_5seconds(ampereToDutyCycle(getMaxCurrent()));
         }
         break;
 
     case EvseState::ChargingPausedEV:
-        /*if (use_5percent)
-            control_pilot.pwmOn(0.05);
-        else*/
 
         checkSoftOverCurrent();
 
@@ -173,10 +348,14 @@ void Charger::runStateMachine() {
             signalEvent(EvseEvent::ChargingPausedEV);
             r_bsp->call_allow_power_on(true);
             // make sure we are enabling PWM
-            r_bsp->call_pwm_on(ampereToDutyCycle(getMaxCurrent()));
+            if (hlc_use_5percent_current_session)
+                update_pwm_now(PWM_5_PERCENT);
+            else
+                update_pwm_now(ampereToDutyCycle(getMaxCurrent()));
         } else {
             // update PWM if it has changed and 5 seconds have passed since last update
-            update_pwm_max_every_5seconds(ampereToDutyCycle(getMaxCurrent()));
+            if (!hlc_use_5percent_current_session)
+                update_pwm_max_every_5seconds(ampereToDutyCycle(getMaxCurrent()));
         }
         break;
 
@@ -266,8 +445,6 @@ void Charger::processCPEventsState(ControlPilotEvent cp_event) {
     case EvseState::Idle:
         if (cp_event == ControlPilotEvent::CarPluggedIn) {
             signalEvent(EvseEvent::SessionStarted);
-            // FIXME: Enable SLAC sounding here, as sounding is forbidden before
-            // CP state B
             // FIXME: Set cable current limit from PP resistor value for this
             // session e.g. readPPAmpacity();
             currentState = EvseState::WaitingForAuthentication;
@@ -350,111 +527,6 @@ void Charger::update_pwm_now(float dc) {
     update_pwm_last_dc = dc;
     r_bsp->call_pwm_on(dc);
     lastPwmUpdate = std::chrono::system_clock::now();
-}
-
-void Charger::ISO_IEC_Coordination() {
-    /*
-     *
-     * ISO15118 / IEC61851 coordination
-     * --------------------------------
-     *
-     * Hi->Lo settings:
-     * ----------------
-     * dc_mode: true (DC), false (AC)
-     * ac_start_with_5percent: true (start with 5% in AC), false
-     * (use only nominal PWM). Note that the internal flag
-     * use_5percent can be disabled by Yeti e.g. on failover.
-     *
-     * ac_enforce_hlc_with_eim: true (non-std; don't shortcut to
-     * nominal if auth arrives before matching), false: conform
-     * to norm
-     *
-     * Hi provides the following information to Lo:
-     * --------------------------------------------
-     * slac state: disabled, unmatched, matching, matched
-     *
-     * Lo can trigger the following commands on Hi:
-     * --------------------------------------------
-     * slac_enable(true/false): enable/disable SLAC to start
-     * matching sessions slac_dlink_terminate: if e.g. car
-     * unplugs or error E is detected from car Yeti can
-     * terminate the Link.
-     *
-     * Disabled: F
-     * Idle: A1
-     * WaitingForAuthAndOrMatching/Setup: B1,B2,E,F
-     * Charging: C2,D2,E,F
-     * PausedByEV: B1,E,F
-     * PausedByEVSE: B1,C1,D1,E,F
-     * Finished: A1
-     * Faulted: F
-     * Error: F, E
-     *
-     * 1) ABCDEF state (PWM output, relais an aus etc)
-     * 2) Logical states / coordination (Disabled ... Charging
-     * etc) 3) SLAC 4) V2G
-     *
-     * ABCDE <> coordiator <> GreenPHY <> V2G
-     *
-     *
-     * terminate: fallback nominal BX1B?
-     *
-     * Hi can trigger the following commands on Lo:
-     * --------------------------------------------
-     * slac_dlink_error: ISO15118-3 Table 6 says "restart
-     * matching by CP transition through E". They probably meant
-     * a BFB sequence, see [V2G3-M07-04]. Initialize a BFB to
-     * WaitingForAuth. IEC requires auth to be kept, so we keep
-     * the authorized flag.
-     *
-     *                   if (use_5percent == true):
-     *                   SLAC sends this command to LO _after_
-     * it left the logical network [V2G3-M07-07]
-     *
-     *                   -> BFB to WaitingForAuth (as this
-     * triggers retries etc). Note that on AC this leads to
-     * immediate progression to BC as auth is still valid and
-     * auth comes before matching started.
-     *
-     *                   if (use_5percent == false):
-     *                   we choose to ignore it here as leaving
-     * the network is handled in SLAC stack [V2G3-M07-12]
-     *
-     *                   Note: don't use dlink_error on AC with
-     * 5% when e.g. tcp connection dies. This will lead to
-     * endless retries and no fallback to nominal.
-     *
-     * (not needed here) slac_dlink_pause: pause is sent to both
-     * ISO and IEC stack, so no communication is needed during
-     * entering pause mode. Unclear how to exit pause mode (i.e.
-     * wake-up sequencing)
-     *
-     *
-     *
-     * dc_mode == false && ac_use_5percent == false: wait for
-     * auth and just continue. ignore matching/matched events.
-     * This mode is typically BC, but matching can occur at any
-     * time during the session (initiated by car).
-     *
-     * dc_mode == false && ac_use_5percent == true: wait for
-     * auth, timeout on matched (3 times). if matching
-     * timeouted, trigger BFB. BFB should end up in auth again!
-     * if all retries exceeded, set ac_use_5percent = false &&
-     * BFB to WaitingForAuth If auth is received &&
-     * !ac_enforce_hlc_with_eim, check if matching was started
-     * -> go through BFB sequence to restart in nominal PWM mode
-     * BFB goes to B1 when finished. set ac_use_5percent to
-     * false. matched was already done -> go through  B2 X1
-     * B2(nominal) to restart in nominal mode BX1B goes to B1
-     * when finished. set ac_use_5percent to false. neither ->
-     * keep 5% on, continue to B1 If 3 retries on trying to
-     * match, restart with B2 X1 B2(nominal)
-     *
-     * dc_mode: use_5percent always true. wait for auth, keep 5%
-     * on, continue to B1. No retries for DC.
-     *
-     * todo: execute DLINK commands etc
-     * */
 }
 
 void Charger::run() {
@@ -575,9 +647,17 @@ bool Charger::switchThreePhasesWhileCharging(bool n) {
     return false; // FIXME: implement real return value when protobuf has sync calls
 }
 
-void Charger::setup(bool three_phases, bool has_ventilation, std::string country_code, bool rcd_enabled) {
+void Charger::setup(bool three_phases, bool has_ventilation, const std::string& country_code, bool rcd_enabled,
+                    const std::string& _charge_mode, bool _ac_hlc_enabled, bool _ac_hlc_use_5percent,
+                    bool _ac_enforce_hlc) {
     std::lock_guard<std::recursive_mutex> lock(configMutex);
+    // set up board support package
     r_bsp->call_setup(three_phases, has_ventilation, country_code, rcd_enabled);
+    // cache our config variables
+    charge_mode = _charge_mode;
+    ac_hlc_enabled_current_session = ac_hlc_enabled = _ac_hlc_enabled;
+    ac_hlc_use_5percent = _ac_hlc_use_5percent;
+    ac_enforce_hlc = _ac_enforce_hlc;
 }
 
 Charger::EvseState Charger::getCurrentState() {
@@ -585,9 +665,10 @@ Charger::EvseState Charger::getCurrentState() {
     return currentState;
 }
 
-void Charger::Authorize(bool a, const std::string& userid) {
+void Charger::Authorize(bool a, const std::string& userid, bool pnc) {
     std::lock_guard<std::recursive_mutex> lock(configMutex);
     authorized = a;
+    authorized_pnc = pnc;
     // FIXME: do sth useful with userid
 #if 0
 if (a) {
@@ -598,9 +679,14 @@ if (a) {
 #endif
 }
 
-bool Charger::getAuthorization() {
+bool Charger::AuthorizedEIM() {
     std::lock_guard<std::recursive_mutex> lock(configMutex);
-    return authorized;
+    return (authorized && !authorized_pnc);
+}
+
+bool Charger::AuthorizedPnC() {
+    std::lock_guard<std::recursive_mutex> lock(configMutex);
+    return (authorized && authorized_pnc);
 }
 
 Charger::ErrorState Charger::getErrorState() {
@@ -665,6 +751,12 @@ std::string Charger::evseStateToString(EvseState s) {
     case EvseState::Faulted:
         return ("Faulted");
         break;
+    case EvseState::T_step_EF:
+        return ("T_step_EF");
+        break;
+    case EvseState::T_step_X1:
+        return ("T_step_X1");
+        break;
     }
     return "Invalid";
 }
@@ -728,6 +820,15 @@ std::string Charger::errorStateToString(ErrorState s) {
     case ErrorState::Error_RCD:
         return ("RCD");
         break;
+    case ErrorState::Error_Internal:
+        return ("Internal");
+        break;
+    case ErrorState::Error_SLAC:
+        return ("SLAC");
+        break;
+    case ErrorState::Error_HLC:
+        return ("HLC");
+        break;
     }
     return "Invalid";
 }
@@ -784,6 +885,28 @@ bool Charger::powerAvailable() {
         signalMaxCurrent(maxCurrent);
     }
     return (getMaxCurrent() > 5.9);
+}
+
+void Charger::requestErrorSequence() {
+    std::lock_guard<std::recursive_mutex> lock(stateMutex);
+    if (currentState == EvseState::WaitingForAuthentication) {
+        t_step_EF_returnState = EvseState::WaitingForAuthentication;
+        currentState = EvseState::T_step_EF;
+        if (ac_hlc_enabled_current_session && hlc_use_5percent_current_session)
+            t_step_EF_returnPWM = PWM_5_PERCENT;
+        else
+            t_step_EF_returnPWM = 0.;
+    }
+}
+
+void Charger::setMatchingStarted(bool m) {
+    std::lock_guard<std::recursive_mutex> lock(configMutex);
+    matching_started = m;
+}
+
+bool Charger::getMatchingStarted() {
+    std::lock_guard<std::recursive_mutex> lock(configMutex);
+    return matching_started;
 }
 
 } // namespace module
