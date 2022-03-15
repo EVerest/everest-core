@@ -51,6 +51,7 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
+    std::chrono::system_clock::time_point lastLimitUpdate;
     Array run_optimizer(json energy);
     void optimize_one_level(json& energy, Array& results, const std::chrono::system_clock::time_point timepoint);
     json get_limit_from_schedule(json s, const std::chrono::system_clock::time_point timepoint);

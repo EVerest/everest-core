@@ -21,6 +21,7 @@ std::chrono::time_point<std::chrono::system_clock> from_rfc3339(std::string t) {
 
 void EnergyManager::init() {
     invoke_init(*p_main);
+    lastLimitUpdate = std::chrono::system_clock::now();
 
     r_energy_trunk->subscribe_energy([this](json e) {
         // Received new energy object from a child.
@@ -28,14 +29,22 @@ void EnergyManager::init() {
         // Re-Run global optimizer and create limits and schedules for each evse type leaf.
         Array results = run_optimizer(e);
 
-        // run enforce_limits commands.
-        for (auto it = results.begin(); it != results.end(); ++it) {
-            sanitize_object(*it);
-            r_energy_trunk->call_enforce_limits((*it)["uuid"], 
-                                                (*it)["limits_import"], 
-                                                (*it)["limits_export"],
-                                                (*it)["schedule_import"], 
-                                                (*it)["schedule_export"]);
+        // rate-limit enforced limit update
+        auto now = std::chrono::system_clock::now();
+        auto timeSinceLastUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastLimitUpdate).count();
+        if (timeSinceLastUpdate >= 5000){
+            EVLOG(debug) << "timeSinceLastUpdate: " << timeSinceLastUpdate;
+            lastLimitUpdate = std::chrono::system_clock::now();
+            // run enforce_limits commands.
+            for (auto it = results.begin(); it != results.end(); ++it) {
+                sanitize_object(*it);
+                r_energy_trunk->call_enforce_limits((*it)["uuid"], 
+                                                    (*it)["limits_import"], 
+                                                    (*it)["limits_export"],
+                                                    (*it)["schedule_import"], 
+                                                    (*it)["schedule_export"]);
+                EVLOG(debug) << "it: " << (*it)["uuid"];
+            }
         }
     });
 }
