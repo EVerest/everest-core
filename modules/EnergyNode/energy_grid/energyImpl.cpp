@@ -23,14 +23,11 @@ std::chrono::time_point<std::chrono::system_clock> from_rfc3339(std::string t) {
 }
 
 void energyImpl::init() {
-    EVLOG(error) << "kkkkkkkkkkk";
     energy_price = {};
     initializeEnergyObject();
     int count = 0;
-    EVLOG(error) << "ööööööööööööö";
 
     for (auto& entry : mod->r_energy_consumer) {
-        EVLOG(error) << "++++++++++++" << count++;
         entry->subscribe_energy([this](json e) {
             // Received new energy object from a child. Update in the cached object and republish.
             {
