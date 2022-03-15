@@ -34,8 +34,9 @@ message Event {
     ERROR_RCD = 9;
     ERROR_VENTILATION_NOT_AVAILABLE = 10;
     ERROR_OVER_CURRENT = 11;
-    RESTART_MATCHING = 12;
-    PERMANENT_FAULT = 13;
+    ENTER_BCD = 12;
+    LEAVE_BCD = 13;
+    PERMANENT_FAULT = 14;
   }
   InterfaceEvent type = 1;
 }
@@ -81,6 +82,11 @@ message KeepAliveLo {
   uint32 protocol_version_major = 4;
   uint32 protocol_version_minor = 5;
   string sw_version_string = 6;
+  float hwcap_max_current = 7;
+  float hwcap_min_current = 8;
+  uint32 hwcap_max_phase_count = 9;
+  uint32 hwcap_min_phase_count = 10;
+  bool supports_changing_phases_during_charging = 11;
 }
 
 message StateUpdate {

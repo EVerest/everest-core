@@ -37,8 +37,7 @@
             "arguments" : {
                 "id": {
                     "description": "EVSE ID",
-                    "type": "string",
-                    "pattern": "^[A-Z]{2}\\*[A-Z0-9]{3}\\*E[A-Z0-9][A-Z0-9\\*]{30}$"
+                    "type": "string"
                 }
             }
         },

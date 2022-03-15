@@ -21,12 +21,6 @@
 			"description": "This module implements the ISO15118-2 implementation of a DC charger"
 		}
 	},
-    "requires": {
-        "slac": {
-			"interface": "ISO15118_3_SLAC",
-            "min_connections": 0
-		}
-    },
 	"enable_external_mqtt": true,
 	"metadata": {
 		"license": "https://opensource.org/licenses/Apache-2.0",

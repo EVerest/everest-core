@@ -13,7 +13,7 @@
 #include "slac_io.hpp"
 
 void fsm_logging_callback(const std::string& msg) {
-    EVLOG(debug) << fmt::format("EvseFSM: {}", msg);
+    EVLOG(debug) << fmt::format("SlacFSM: {}", msg);
 }
 
 static std::mutex comm_mtx;
@@ -83,6 +83,7 @@ void slacImpl::run() {
     EVLOG(info) << "Starting the SLAC state machine";
 
     bool matched = false;
+    auto cur_state_id = fsm.get_initial_state().id.id;
     fsm_ctrl.reset(fsm.get_initial_state());
 
     slac_io.run([this](slac::messages::HomeplugMessage& msg) {
@@ -98,21 +99,48 @@ void slacImpl::run() {
 
     while (true) {
         do {
+            // run the next cycle on the state machine
             next_timeout_in_ms = fsm_ctrl.feed();
+
+            // FIXME (aw): we probably want to react on all state changes
         } while (next_timeout_in_ms == 0);
 
-        // FIMXE (aw): this needs to be implemented in a higher level ->
-        //             stipulate link establishment if appropriate
-        if (fsm_ctrl.current_state()->id.id == State::WaitForSlacMatch) {
-            if (fsm.received_slac_match()) {
+        // FIXME (aw): this simple logic should be implemented in the fsm lib
+        bool changed_state = false;
+        changed_state = (cur_state_id != fsm_ctrl.current_state()->id.id);
+        cur_state_id = fsm_ctrl.current_state()->id.id;
+
+        if (changed_state) {
+            switch (cur_state_id) {
+            case State::Matching:
+                publish_state("MATCHING");
+                break;
+            case State::Matched:
+                matched = true;
+                publish_dlink_ready(true);
+                publish_state("MATCHED");
+                break;
+            case State::SignalError:
+                publish_request_error_routine();
+                break;
+            case State::Idle:
+                publish_state("UNMATCHED");
+                break;
+            case State::ReceivedSlacMatch:
+                // FIXME (aw): we could publish a var, that SLAC should
+                //             be in principle available now
+                // FIMXE (aw): this needs to be implemented in a higher level ->
+                //             stipulate link establishment if appropriate
                 fsm_ctrl.submit_event(EventLinkDetected());
-                continue;
+                break;
+            default:
+                break;
             }
         }
 
-        if ((fsm_ctrl.current_state()->id.id == State::Matched) && !matched) {
-            matched = true;
-            publish_dlink_ready(true);
+        if (matched && (cur_state_id != State::Matched)) {
+            matched = false;
+            publish_dlink_ready(false);
         }
 
         // FIXME (aw): handle disconnection / un-matching etc.
@@ -129,8 +157,9 @@ void slacImpl::run() {
     }
 }
 
-void slacImpl::handle_reset() {
-    EVLOG_AND_THROW(Everest::EverestInternalError("reset() not implemented yet"));
+void slacImpl::handle_reset(bool& enable) {
+    // FIXME (aw): the enable could be used for power saving etc, but it is not implemented yet
+    send_event(EventReset());
 };
 
 bool slacImpl::handle_enter_bcd() {
@@ -139,16 +168,6 @@ bool slacImpl::handle_enter_bcd() {
 
 bool slacImpl::handle_leave_bcd() {
     return send_event(EventLeaveBCD());
-};
-
-bool slacImpl::handle_error_sequence_reset(bool& reset) {
-    if (reset) {
-        return send_event(EventErrorSequenceDone());
-    }
-
-    // otherwise, what should we do?
-    EVLOG_AND_THROW(Everest::EverestInternalError("error_sequence_reset(false) not implemented yet"));
-    return false;
 };
 
 bool slacImpl::handle_dlink_terminate() {

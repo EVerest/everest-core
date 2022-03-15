@@ -1,6 +1,11 @@
 {
 	"description": "EVSE Manager",
 	"config": {
+		"evse_id": {
+			"description": "EVSE ID",
+			"type": "string",
+			"default": "DE*PNX*E1234567*1"
+		},
 		"three_phases": {
 			"description": "Limit to three phases (true) or one phase (false)",
 			"type": "boolean",
@@ -25,6 +30,31 @@
 			"description": "User configurable current limit for this EVSE",
 			"type": "number",
 			"default": 32
+		},
+		"charge_mode": {
+			"description": "Select charging mode",
+			"type": "string",
+			"enum": [
+				"AC",
+				"DC",
+				"AC_withBatteryPercentage"
+			],
+			"default": "AC"
+		},
+		"ac_hlc_enabled": {
+			"description": "Enable or disable HLC (aka ISO15118) for AC mode",
+			"type": "boolean",
+			"default": false
+		},
+		"ac_hlc_use_5percent": {
+			"description": "Use 5 percent PWM signalling to try to enforce HLC on AC. Note that if EIM arrives before SLAC matching, we will fall back to nominal PWM charging. So most cars will never use HLC in this mode, especially on a free service where EIM is always available, but that is what ISO15118-2/-3 requires to be compliant - it wants to use HLC only for PnC and not for EIM.",
+			"type": "boolean",
+			"default": false
+		},
+		"ac_enforce_hlc": {
+			"description": "Combine with 5percent option to really enforce HLC even with EIM. It is not ISO15118-2/-3 compliant as it waits for matching even if EIM is available before SLAC reaches matched state. On cars that do not support ISO15118 on AC this will take a very long time to timeout and fall back to basic nominal PWM charging, but it will eventually.",
+			"type": "boolean",
+			"default": false
 		}
 	},
 	"provides": {
@@ -46,6 +76,16 @@
 		},
 		"auth": {
 			"interface": "auth"
+		},
+		"slac": {
+			"interface": "slac",
+			"min_connections": 0,
+			"max_connections": 1
+		},
+		"hlc": {
+			"interface": "ISO15118_ac_charger",
+			"min_connections": 0,
+			"max_connections": 1
 		}
 	},
 	"enable_external_mqtt": true,

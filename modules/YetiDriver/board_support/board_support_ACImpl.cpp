@@ -31,8 +31,10 @@ std::string event_to_string(Event e) {
         return "ErrorVentilationNotAvailable";
     case Event_InterfaceEvent_ERROR_OVER_CURRENT:
         return "ErrorOverCurrent";
-    case Event_InterfaceEvent_RESTART_MATCHING:
-        return "RestartMatching";
+    case Event_InterfaceEvent_ENTER_BCD:
+        return "EnterBCD";
+    case Event_InterfaceEvent_LEAVE_BCD:
+        return "LeaveBCD";
     case Event_InterfaceEvent_PERMANENT_FAULT:
         return "PermanentFault";
     }
@@ -40,6 +42,16 @@ std::string event_to_string(Event e) {
 }
 
 void board_support_ACImpl::init() {
+    {
+        std::lock_guard<std::mutex> lock(capsMutex);
+
+        caps = {{"min_current_A", 6},
+                {"max_current_A", 6},
+                {"min_phase_count", 1},
+                {"max_phase_count", 3},
+                {"supports_changing_phases_during_charging", false}};
+    }
+
     mod->serial.signalEvent.connect([this](Event e) { publish_event(event_to_string(e)); });
 
     // FIXME
@@ -57,7 +69,17 @@ void board_support_ACImpl::init() {
 
         publish_telemetry(telemetry);
     });
-}
+
+    mod->serial.signalKeepAliveLo.connect([this](KeepAliveLo l) {
+        std::lock_guard<std::mutex> lock(capsMutex);
+
+        caps = {{"min_current_A", l.hwcap_min_current},
+                {"max_current_A", l.hwcap_max_current},
+                {"min_phase_count", l.hwcap_min_phase_count},
+                {"max_phase_count", l.hwcap_max_phase_count},
+                {"supports_changing_phases_during_charging", l.supports_changing_phases_during_charging}};
+    });
+} // namespace board_support
 
 void board_support_ACImpl::ready() {
 }
@@ -102,12 +124,7 @@ void board_support_ACImpl::handle_switch_three_phases_while_charging(bool& value
 };
 
 Object board_support_ACImpl::handle_get_hw_capabilities() {
-    json caps;
-    caps["max_current_A"] = 32.0;
-    caps["min_current_A"] = 6.0;
-    caps["max_phase_count"] = 3;
-    caps["min_phase_count"] = 1;
-    caps["supports_changing_phases_during_charging"] = true;
+    std::lock_guard<std::mutex> lock(capsMutex);
     return caps;
 };
 

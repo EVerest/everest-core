@@ -21,10 +21,11 @@ void YetiDriver::init() {
     invoke_init(*p_yeti_simulation_control);
     invoke_init(*p_board_support);
 
-    serial.signalSpuriousReset.connect([this]() { EVLOG_AND_THROW(EVEXCEPTION(Everest::EverestInternalError, "Yeti uC spurious reset!"));});
-    serial.signalConnectionTimeout.connect([this]() { EVLOG_AND_THROW(EVEXCEPTION(Everest::EverestInternalError, "Yeti UART timeout!"));});
+    serial.signalSpuriousReset.connect(
+        [this]() { EVLOG_AND_THROW(EVEXCEPTION(Everest::EverestInternalError, "Yeti uC spurious reset!")); });
+    serial.signalConnectionTimeout.connect(
+        [this]() { EVLOG_AND_THROW(EVEXCEPTION(Everest::EverestInternalError, "Yeti UART timeout!")); });
 }
-
 
 void YetiDriver::ready() {
     serial.run();
@@ -34,7 +35,7 @@ void YetiDriver::ready() {
     }
 
     serial.setControlMode(str_to_control_mode(config.control_mode));
-    
+
     invoke_ready(*p_powermeter);
     invoke_ready(*p_yeti_extras);
     invoke_ready(*p_debug_yeti);
@@ -172,9 +173,12 @@ Everest::json keep_alive_lo_to_json(const KeepAliveLo& k) {
 }
 
 InterfaceControlMode str_to_control_mode(std::string data) {
-    if (data == "low") return InterfaceControlMode_LOW;
-    else if (data == "high") return InterfaceControlMode_HIGH;
-    else return InterfaceControlMode_NONE;
-    }
+    if (data == "low")
+        return InterfaceControlMode_LOW;
+    else if (data == "high")
+        return InterfaceControlMode_HIGH;
+    else
+        return InterfaceControlMode_NONE;
+}
 
 } // namespace module
