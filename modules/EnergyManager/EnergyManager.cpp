@@ -94,8 +94,7 @@ void EnergyManager::optimize_one_level(json& energy, Array& results,
             n = energy["children"].size();
         }    
 
-        if (n > 0) {
-            // EVLOG(error) << "energy[children]: " << energy["children"]; 
+        if (n > 0) { 
             // set limit_from_parent on each child and optimize it
             for (json it : energy["children"]) {
                 it["limit_from_parent"] = max_current / n;
@@ -113,6 +112,7 @@ void EnergyManager::optimize_one_level(json& energy, Array& results,
             result["limits_import"] = limits_import;
             result["limits_export"] = json::object();
             result["uuid"] = energy["uuid"];
+            // TODO(LAD): add import schedule for currently projected plan
             result["schedule_import"] = json::array();
             result["schedule_export"] = json::array();
 
