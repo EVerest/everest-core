@@ -179,50 +179,6 @@
             ]
         },
         {
-            "name": "(gdb) Launch grid_connection_point",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/build/dist/bin/main",
-            "args": [
-                "--logconf",
-                "${workspaceFolder}/config/logging.ini",
-                "--maindir",
-                "${workspaceFolder}/build/dist",
-                "--schemasdir",
-                "${workspaceFolder}/build/dist/schemas",
-                "--conf",
-                "${workspaceFolder}/config/config-sil.json",
-                "--modulesdir",
-                "${workspaceFolder}/build/dist/modules",
-                "--classesdir",
-                "${workspaceFolder}/build/dist/interfaces",
-                "--module",
-                "grid_connection_point",
-            ],
-            "stopAtEntry": false,
-            "cwd": "${fileDirname}",
-            "environment": [
-                {
-                    "name": "LD_LIBRARY_PATH",
-                    "value": "${workspaceFolder}/build/_deps/everest-framework-build/lib"
-                }
-            ],
-            "externalConsole": false,
-            "MIMode": "gdb",
-            "setupCommands": [
-                {
-                    "description": "Enable pretty-printing for gdb",
-                    "text": "-enable-pretty-printing",
-                    "ignoreFailures": true
-                },
-                {
-                    "description": "Set Disassembly Flavor to Intel",
-                    "text": "-gdb-set disassembly-flavor intel",
-                    "ignoreFailures": true
-                }
-            ]
-        },
-        {
             "name": "(gdb) Launch yeti_driver",
             "type": "cppdbg",
             "request": "launch",
