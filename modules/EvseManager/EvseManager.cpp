@@ -56,16 +56,17 @@ void EvseManager::ready() {
     });
 
     invoke_ready(*p_evse);
-    invoke_ready(*p_evse_energy_control);
-    invoke_ready(*p_powermeter);
-    charger->setup(config.three_phases, config.has_ventilation, config.country_code, config.rcd_enabled);
-    charger->setMaxCurrent(16.0); // FIXME: make configurable
     invoke_ready(*p_energy_grid);
 
     // TODO(LAD): make control use this section to set limits for car and underlying electronics
     charger->setup(local_three_phases, config.has_ventilation, config.country_code, config.rcd_enabled);
     // charger->setMaxCurrent(hw_capabilities["max_current_A"]);
     //  start with a limit of 0 amps. We will get a budget from EnergyManager that is locally limited by hw caps.
+    charger->setMaxCurrent(0., std::chrono::system_clock::now());
+    charger->run();
+    charger->enable();
+}
+
 json EvseManager::get_latest_powermeter_data() {
     return latest_powermeter_data;
 }
@@ -73,6 +74,7 @@ json EvseManager::get_latest_powermeter_data() {
 json EvseManager::get_hw_capabilities() {
     return hw_capabilities;
 }
+
 bool EvseManager::updateLocalMaxCurrentLimit(float max_current) {
     if (max_current >= 0. && max_current < 80.) {
         local_max_current_limit = max_current;
