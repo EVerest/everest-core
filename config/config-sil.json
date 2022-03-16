@@ -147,5 +147,15 @@
                 }
             ]
         }
+    },
+    "tibber": {
+        "module": "JsTibber",
+        "config_implementation": {
+            "main": {
+                "api_key": "",
+                "update_interval": 30,
+                "additional_cost_per_kwh": 0.0
+            }
+        }
     }
 }

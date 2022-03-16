@@ -5,6 +5,10 @@ const axios = require('axios');
 
 async function fetch_tibber_api_data(mod) {
   evlog.info("Fetching update from Tibber");
+  if (mod.config.impl.main.api_key === "") {
+    evlog.error("Stopping request. Please set the api_key in the JsTibber modules userconfig.");
+    return;
+  }
   const graphQLQuery = `{
       viewer {
         homes {
