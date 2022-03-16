@@ -129,10 +129,6 @@
         },
         "connections": {
             "price_information": [
-                {
-                    "module_id": "tibber",
-                    "implementation_id": "main"
-                }
             ],
             "energy_consumer": [
                 {
