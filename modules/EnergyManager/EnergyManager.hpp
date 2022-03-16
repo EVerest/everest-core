@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifndef POWER_HPP
-#define POWER_HPP
+#ifndef ENERGY_MANAGER_HPP
+#define ENERGY_MANAGER_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
@@ -11,11 +11,10 @@
 #include "ld-ev.hpp"
 
 // headers for provided interface implementations
-#include <generated/power_result/Implementation.hpp>
+#include <generated/energy_manager/Implementation.hpp>
 
 // headers for required interface implementations
-#include <generated/power/Interface.hpp>
-#include <generated/power_in/Interface.hpp>
+#include <generated/energy/Interface.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
@@ -25,21 +24,16 @@ namespace module {
 
 struct Conf {};
 
-class Power : public Everest::ModuleBase {
+class EnergyManager : public Everest::ModuleBase {
 public:
-    Power() = delete;
-    Power(const ModuleInfo& info, std::unique_ptr<power_resultImplBase> p_main, std::unique_ptr<power_inIntf> r_powerin,
-          std::vector<std::unique_ptr<powerIntf>> r_solar, Conf& config) :
-        ModuleBase(info),
-        p_main(std::move(p_main)),
-        r_powerin(std::move(r_powerin)),
-        r_solar(std::move(r_solar)),
-        config(config){};
+    EnergyManager() = delete;
+    EnergyManager(const ModuleInfo& info, std::unique_ptr<energy_managerImplBase> p_main,
+                  std::unique_ptr<energyIntf> r_energy_trunk, Conf& config) :
+        ModuleBase(info), p_main(std::move(p_main)), r_energy_trunk(std::move(r_energy_trunk)), config(config){};
 
     const Conf& config;
-    const std::unique_ptr<power_resultImplBase> p_main;
-    const std::unique_ptr<power_inIntf> r_powerin;
-    const std::vector<std::unique_ptr<powerIntf>> r_solar;
+    const std::unique_ptr<energy_managerImplBase> p_main;
+    const std::unique_ptr<energyIntf> r_energy_trunk;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
@@ -57,6 +51,11 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
+    std::chrono::system_clock::time_point lastLimitUpdate;
+    Array run_optimizer(json energy);
+    void optimize_one_level(json& energy, Array& results, const std::chrono::system_clock::time_point timepoint);
+    json get_limit_from_schedule(json s, const std::chrono::system_clock::time_point timepoint);
+    void sanitize_object(json& obj_to_sanitize);
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
@@ -66,4 +65,4 @@ private:
 
 } // namespace module
 
-#endif // POWER_HPP
+#endif // ENERGY_MANAGER_HPP

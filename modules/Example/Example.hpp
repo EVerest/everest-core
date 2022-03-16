@@ -5,7 +5,7 @@
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 1
+// template version 0.0.3
 //
 
 #include "ld-ev.hpp"
@@ -16,8 +16,6 @@
 
 // headers for required interface implementations
 #include <generated/kvs/Interface.hpp>
-#include <generated/power/Interface.hpp>
-#include <generated/power_in/Interface.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
@@ -32,15 +30,12 @@ public:
     Example() = delete;
     Example(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
             std::unique_ptr<example_childImplBase> p_example, std::unique_ptr<kvsImplBase> p_store,
-            std::unique_ptr<kvsIntf> r_kvs, std::unique_ptr<power_inIntf> r_powerin,
-            std::vector<std::unique_ptr<powerIntf>> r_solar, Conf& config) :
+            std::unique_ptr<kvsIntf> r_kvs, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_example(std::move(p_example)),
         p_store(std::move(p_store)),
         r_kvs(std::move(r_kvs)),
-        r_powerin(std::move(r_powerin)),
-        r_solar(std::move(r_solar)),
         config(config){};
 
     const Conf& config;
@@ -48,8 +43,6 @@ public:
     const std::unique_ptr<example_childImplBase> p_example;
     const std::unique_ptr<kvsImplBase> p_store;
     const std::unique_ptr<kvsIntf> r_kvs;
-    const std::unique_ptr<power_inIntf> r_powerin;
-    const std::vector<std::unique_ptr<powerIntf>> r_solar;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here

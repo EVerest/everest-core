@@ -21,7 +21,7 @@
 
 namespace module {
 Charger::Charger(const std::unique_ptr<board_support_ACIntf>& r_bsp) : r_bsp(r_bsp) {
-    maxCurrent = 16.0;
+    maxCurrent = 6.0;
     authorized = false;
     r_bsp->call_enable(false);
 
@@ -60,6 +60,9 @@ void Charger::mainThread() {
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
         stateMutex.lock();
+
+        // update power limits
+        powerAvailable();
 
         // Run our own state machine update (i.e. run everything that needs
         // to be done on regular intervals independent from events)
@@ -119,7 +122,7 @@ void Charger::runStateMachine() {
         ISO_IEC_Coordination();
 
         // we get Auth (maybe before SLAC matching or during matching)
-        if (getAuthorization()) {
+        if (getAuthorization() && powerAvailable()) {
             signalEvent(EvseEvent::ChargingStarted);
             currentState = EvseState::ChargingPausedEV;
         }
@@ -132,6 +135,11 @@ void Charger::runStateMachine() {
         else*/
 
         checkSoftOverCurrent();
+
+        if (!powerAvailable()) {
+            currentState = EvseState::ChargingPausedEVSE;
+            break;
+        }
 
         if (new_in_state) {
             signalEvent(EvseEvent::ChargingResumed);
@@ -150,6 +158,11 @@ void Charger::runStateMachine() {
         else*/
 
         checkSoftOverCurrent();
+
+        if (!powerAvailable()) {
+            currentState = EvseState::ChargingPausedEVSE;
+            break;
+        }
 
         if (new_in_state) {
             signalEvent(EvseEvent::ChargingPausedEV);
@@ -469,13 +482,33 @@ float Charger::ampereToDutyCycle(float ampere) {
     return dc;
 }
 
-bool Charger::setMaxCurrent(float c) {
-    if (c > 5.9 && c <= 80) {
+bool Charger::setMaxCurrent(float c, std::chrono::time_point<std::chrono::system_clock> validUntil) {
+    if (c >= 0.0 && c <= 80) {
         std::lock_guard<std::recursive_mutex> lock(configMutex);
         // FIXME: limit to cable limit (PP reading) if that is smaller!
-        maxCurrent = c;
-        signalMaxCurrent(c);
-        return true;
+        // is it still valid?
+        // FIXME this requires local clock to be UTC
+        if (validUntil > std::chrono::system_clock::now()) {
+            maxCurrent = c;
+            maxCurrentValidUntil = validUntil;
+            signalMaxCurrent(c);
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Charger::setMaxCurrent(float c) {
+    if (c >= 0.0 && c <= 80) {
+        std::lock_guard<std::recursive_mutex> lock(configMutex);
+        // FIXME: limit to cable limit (PP reading) if that is smaller!
+        // is it still valid?
+        // FIXME this requires local clock to be UTC
+        if (maxCurrentValidUntil > std::chrono::system_clock::now()) {
+            maxCurrent = c;
+            signalMaxCurrent(c);
+            return true;
+        }
     }
     return false;
 }
@@ -492,7 +525,7 @@ bool Charger::pauseCharging() {
 
 bool Charger::resumeCharging() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
-    if (!cancelled && currentState == EvseState::ChargingPausedEVSE) {
+    if (!cancelled && currentState == EvseState::ChargingPausedEVSE && powerAvailable()) {
         currentState = EvseState::Charging;
         return true;
     }
@@ -714,6 +747,17 @@ void Charger::checkSoftOverCurrent() {
         currentState = EvseState::Error;
         errorState = ErrorState::Error_OverCurrent;
     }
+}
+
+// returns whether power is actually available from EnergyManager
+// i.e. maxCurrent is in valid range
+bool Charger::powerAvailable() {
+    if (maxCurrentValidUntil < std::chrono::system_clock::now()) {
+        maxCurrent = 0.;
+        signalMaxCurrent(maxCurrent);
+    }
+
+    return (getMaxCurrent() > 5.9);
 }
 
 } // namespace module

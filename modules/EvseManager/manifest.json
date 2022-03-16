@@ -2,7 +2,7 @@
 	"description": "EVSE Manager",
 	"config": {
 		"three_phases": {
-			"description": "Start with three phases enabled or not",
+			"description": "Limit to three phases (true) or one phase (false)",
 			"type": "boolean",
 			"default": true
 		},
@@ -20,6 +20,11 @@
 			"description": "Enable or disable RCD",
 			"type": "boolean",
 			"default": true
+		},
+		"max_current": {
+			"description": "User configurable current limit for this EVSE",
+			"type": "number",
+			"default": 32
 		}
 	},
 	"provides": {
@@ -27,17 +32,13 @@
 			"interface": "evse_manager",
 			"description": "This is the main evsemanager interface"
 		},
-		"evse_energy_control": {
-			"interface": "evse_manager_energy_control",
-			"description": "Singelton interface: implements energy control interface for energy manager"
-		},
-		"powermeter": {
-			"interface": "powermeter",
-			"description": "Power meter that is used for this EVSE to charge the car"
+		"energy_grid": {
+			"description": "This is the tree leaf interface to build the energy supply tree",
+			"interface": "energy"
 		}
 	},
 	"requires": {
-        "bsp": {
+		"bsp": {
 			"interface": "board_support_AC"
 		},
 		"powermeter": {

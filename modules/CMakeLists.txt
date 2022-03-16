@@ -9,11 +9,8 @@ list(APPEND EVEREST_MODULES_LIST
     JsCarSimulator
     JsDummyTokenProvider
     JsDummyTokenValidator
-    JsEmgrLogger
-    JsEnergyManager
     JsForecastDotSolar
     JsPN532TokenProvider
-    JsPowerIn
     JsRiseV2G
     JsSimPowerMeter
     JsTibber
@@ -28,6 +25,8 @@ list(APPEND EVEREST_MODULES_LIST
     Store
     YetiDriver
     EvseManager
+    EnergyNode
+    EnergyManager
 )
 
 set(EVEREST_MODULES "")
