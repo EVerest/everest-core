@@ -1,22 +1,21 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include "evse_managerImpl.hpp"
+#include <utils/date.hpp>
 
 #include <boost/uuid/random_generator.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_io.hpp>
 
+#include <fmt/core.h>
+
+#include "SessionLog.hpp"
+
 namespace module {
+
 namespace evse {
 
-std::chrono::time_point<date::utc_clock> from_rfc3339(std::string t) {
-    std::istringstream infile{t};
-    std::chrono::time_point<date::utc_clock> tp;
-    infile >> date::parse("%FT%T", tp);
-    return tp;
-}
-
-bool str_to_bool(std::string data) {
+bool str_to_bool(const std::string& data) {
     if (data == "true") {
         return true;
     }
@@ -108,17 +107,30 @@ void evse_managerImpl::ready() {
         if (e == Charger::EvseEvent::SessionStarted) {
             se["session_started"]["timestamp"] = std::chrono::seconds(std::time(NULL)).count();
             json p = mod->get_latest_powermeter_data();
-            if (p.contains("energy_Wh_import") && p["energy_Wh_import"].contains("total"))
+            if (p.contains("energy_Wh_import") && p["energy_Wh_import"].contains("total")) {
                 se["session_started"]["energy_Wh_import"] = p["energy_Wh_import"]["total"];
+            }
 
-            if (p.contains("energy_Wh_export") && p["energy_Wh_export"].contains("total"))
+            if (p.contains("energy_Wh_export") && p["energy_Wh_export"].contains("total")) {
                 se["session_started"]["energy_Wh_export"] = p["energy_Wh_export"]["total"];
+            }
 
             if (mod->reservation_valid()) {
                 se["session_started"]["reservation_id"] = mod->get_reservation_id();
             }
 
             set_session_uuid();
+
+            session_log.startSession(session_uuid);
+            session_log.car(false, "Car plugged In");
+
+            double energy_import = 0.;
+            if (se["session_started"].contains("energy_Wh_import")) {
+                energy_import = se["session_started"]["energy_Wh_import"];
+            }
+
+            session_log.evse(false,
+                             fmt::format("Session Started {} ({} kWh)", session_uuid, energy_import / 1000.));
         }
 
         se["uuid"] = session_uuid;
@@ -127,29 +139,48 @@ void evse_managerImpl::ready() {
 
             se["session_finished"]["timestamp"] = std::chrono::seconds(std::time(NULL)).count();
             json p = mod->get_latest_powermeter_data();
-            if (p.contains("energy_Wh_import") && p["energy_Wh_import"].contains("total"))
+            if (p.contains("energy_Wh_import") && p["energy_Wh_import"].contains("total")) {
                 se["session_finished"]["energy_Wh_import"] = p["energy_Wh_import"]["total"];
+            }
 
-            if (p.contains("energy_Wh_export") && p["energy_Wh_export"].contains("total"))
+            if (p.contains("energy_Wh_export") && p["energy_Wh_export"].contains("total")) {
                 se["session_finished"]["energy_Wh_export"] = p["energy_Wh_export"]["total"];
+            }
+
+            double energy_import = 0.;
+            if (se["session_finished"].contains("energy_Wh_import")) {
+                energy_import = se["session_finished"]["energy_Wh_import"];
+            }
+
+            session_log.evse(false, fmt::format("Session Finished ({} kWh)", energy_import / 1000.));
 
             session_uuid = "";
+            session_log.stopSession();
         }
 
         if (e == Charger::EvseEvent::SessionCancelled) {
 
             se["session_cancelled"]["timestamp"] = std::chrono::seconds(std::time(NULL)).count();
             json p = mod->get_latest_powermeter_data();
-            if (p.contains("energy_Wh_import") && p["energy_Wh_import"].contains("total"))
+            if (p.contains("energy_Wh_import") && p["energy_Wh_import"].contains("total")) {
                 se["session_cancelled"]["energy_Wh_import"] = p["energy_Wh_import"]["total"];
+            }
 
-            if (p.contains("energy_Wh_export") && p["energy_Wh_export"].contains("total"))
+            if (p.contains("energy_Wh_export") && p["energy_Wh_export"].contains("total")) {
                 se["session_cancelled"]["energy_Wh_export"] = p["energy_Wh_export"]["total"];
+            }
 
             {
                 std::lock_guard<std::mutex> lock(session_mutex);
                 se["session_cancelled"]["reason"] = cancel_session_reason;
             }
+
+            double energy_import = 0.;
+            if (se["session_cancelled"].contains("energy_Wh_import")) {
+                energy_import = se["session_cancelled"]["energy_Wh_import"];
+            }
+
+            session_log.evse(false, fmt::format("Session Cancelled ({} kWh)", energy_import / 1000.));
         }
 
         if (e == Charger::EvseEvent::Error) {
@@ -217,6 +248,9 @@ bool evse_managerImpl::handle_cancel_charging(std::string& reason) {
         std::lock_guard<std::mutex> lock(session_mutex);
         cancel_session_reason = reason;
     }
+    if (mod->get_hlc_enabled()) {
+        mod->r_hlc[0]->call_stop_charging(true);
+    }
     return mod->charger->cancelCharging();
 };
 
@@ -230,7 +264,7 @@ bool evse_managerImpl::handle_force_unlock() {
 
 std::string evse_managerImpl::handle_reserve_now(int& reservation_id, std::string& auth_token, std::string& expiry_date,
                                                  std::string& parent_id) {
-    return mod->reserve_now(reservation_id, auth_token, from_rfc3339(expiry_date), parent_id);
+    return mod->reserve_now(reservation_id, auth_token, Everest::Date::from_rfc3339(expiry_date), parent_id);
 };
 
 bool evse_managerImpl::handle_cancel_reservation() {
@@ -244,18 +278,20 @@ std::string evse_managerImpl::generate_session_uuid() {
 std::string evse_managerImpl::handle_set_local_max_current(double& max_current) {
     // FIXME this is the same as external mqtt current limit. This needs to set a local limit instead which is
     // advertised in schedule
-    if (mod->updateLocalMaxCurrentLimit(static_cast<float>(max_current)))
+    if (mod->updateLocalMaxCurrentLimit(static_cast<float>(max_current))) {
         return "Success";
-    else
+    } else {
         return "Error_OutOfRange";
+    }
 };
 
 std::string evse_managerImpl::handle_switch_three_phases_while_charging(bool& three_phases) {
     // FIXME implement more sophisticated error code return once feature is really implemented
-    if (mod->charger->switchThreePhasesWhileCharging(three_phases))
+    if (mod->charger->switchThreePhasesWhileCharging(three_phases)) {
         return "Success";
-    else
+    } else {
         return "Error_NotSupported";
+    }
 };
 
 std::string evse_managerImpl::handle_get_signed_meter_value() {

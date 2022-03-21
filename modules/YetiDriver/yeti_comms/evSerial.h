@@ -33,6 +33,7 @@ class evSerial {
     void enable();
     void disable();
     void switchThreePhasesWhileCharging(bool n);
+    void replug(int t);
     void pauseCharging();
     void resumeCharging();
     void restart();

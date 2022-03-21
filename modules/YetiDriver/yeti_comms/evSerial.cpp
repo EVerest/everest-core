@@ -413,6 +413,13 @@ void evSerial::switchThreePhasesWhileCharging(bool n) {
     linkWrite(&msg_out);
 }
 
+void evSerial::replug(int t) {
+    HiToLo msg_out = HiToLo_init_default;
+    msg_out.which_payload = HiToLo_replug_tag;
+    msg_out.payload.replug.time = t;
+    linkWrite(&msg_out);
+}
+
 void evSerial::pauseCharging() {
     HiToLo msg_out = HiToLo_init_default;
     msg_out.which_payload = HiToLo_pause_charging_tag;
