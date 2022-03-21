@@ -16,12 +16,11 @@
 // headers for required interface implementations
 #include <generated/energy/Interface.hpp>
 
+// ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
+// insert your custom include headers here
 #include <chrono>
 #include <date/date.h>
 #include <date/tz.h>
-
-// ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
-// insert your custom include headers here
 #include <mutex>
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
@@ -63,7 +62,8 @@ private:
     static void interval_start(const std::function<void(void)>& func, unsigned int interval_ms);
     void run_enforce_limits();
     Array run_optimizer(json energy);
-    void optimize_one_level(json& energy, json& optimized_values, const std::chrono::time_point<date::utc_clock> timepoint, json price_schedule);
+    void optimize_one_level(json& energy, json& optimized_values,
+                            const std::chrono::time_point<date::utc_clock> timepoint, json price_schedule);
     json get_limit_from_schedule(json s, const std::chrono::time_point<date::utc_clock> timepoint);
     void sanitize_object(json& obj_to_sanitize);
 

@@ -11,11 +11,14 @@ cpp_module_setup()
 # insert your custom targets and additional config variables here
 list(APPEND ADDITIONAL_MODULE_SOURCES
     "Charger.cpp"
+    "SessionLog.cpp"
+    "v2gMessage.cpp"
 )
 list(APPEND ADDITIONAL_MODULE_LIBS
     "Pal::Sigslot"
     date::date
     date::date-tz
+    pugixml
 )
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 

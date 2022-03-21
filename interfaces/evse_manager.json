@@ -192,7 +192,9 @@
                         "PermanentFault",
                         "ReservationStart",
                         "ReservationEnd",
-                        "ReservationAuthtokenMismatch"
+                        "ReservationAuthtokenMismatch",
+                        "ReplugStarted",
+                        "ReplugFinished"
                     ]
                 },
                 "session_started": {

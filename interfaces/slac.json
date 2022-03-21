@@ -1,5 +1,5 @@
 {
-    "description": "ISO15118-3 SLAC interface",
+    "description": "ISO15118-3 SLAC interface for EVSE side",
     "cmds": {
         "reset": {
             "description": "Reset SLAC",
