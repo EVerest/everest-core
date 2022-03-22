@@ -2,6 +2,7 @@
 // Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
 #include "EvseManager.hpp"
 #include <chrono>
+#include <date/date.h>
 
 namespace module {
 
@@ -9,6 +10,9 @@ void EvseManager::init() {
     local_three_phases = config.three_phases;
     invoke_init(*p_evse);
     invoke_init(*p_energy_grid);
+    authorization_available = false;
+    reserved = false;
+    reservation_id = 0;
 }
 
 void EvseManager::ready() {
@@ -75,6 +79,54 @@ json EvseManager::get_hw_capabilities() {
     return hw_capabilities;
 }
 
+std::string EvseManager::reserve_now(const int _reservation_id, const std::string& token,
+                                     const std::chrono::system_clock::time_point& valid_until,
+                                     const std::string& parent_id) {
+
+    // is the evse Unavailable?
+    if (charger->getCurrentState() == Charger::EvseState::Disabled)
+        return "Unavailable";
+
+    // is the evse faulted?
+    if (charger->getCurrentState() == Charger::EvseState::Faulted)
+        return "Faulted";
+
+    // is the reservation still valid in time?
+    if (std::chrono::system_clock::now() > valid_until)
+        return "Rejected";
+
+    // is the connector currently ready to accept a new car?
+    if (charger->getCurrentState() != Charger::EvseState::Idle)
+        return "Occupied";
+
+    // is it already reserved with a different reservation_id?
+    if (reservation_valid() && _reservation_id != reservation_id)
+        return "Rejected";
+
+    // accept new reservation
+    reserved_auth_token = token;
+    reservation_valid_until = valid_until;
+    reserved_auth_token_parent_id = parent_id;
+    reserved = true;
+    return "Accepted";
+
+    // FIXME TODO:
+    /*
+        A reservation SHALL be terminated on the Charge Point when either (1) a transaction is started for the reserved
+    idTag or parent idTag and on the reserved connector or any connector when the reserved connectorId is 0, or (2)
+    when the time specified in expiryDate is reached, or (3) when the Charge Point or connector are set to Faulted or
+    Unavailable.
+
+    If a transaction for the reserved idTag is started, then Charge Point SHALL send the reservationId in the
+    StartTransaction.req PDU (see Start Transaction) to notify the Central System that the reservation is terminated.
+
+
+    When a reservation expires, the Charge Point SHALL terminate the reservation and make the connector
+    available. The Charge Point SHALL send a status notification to notify the Central System that the reserved
+    connector is now available.
+    */
+}
+
 bool EvseManager::updateLocalMaxCurrentLimit(float max_current) {
     if (max_current >= 0. && max_current < 80.) {
         local_max_current_limit = max_current;
@@ -89,8 +141,24 @@ bool EvseManager::updateLocalMaxCurrentLimit(float max_current) {
     return false;
 }
 
+bool EvseManager::cancel_reservation() {
+    if (reservation_valid()) {
+        reserved = false;
+        return true;
+    }
+
+    reserved = false;
+    return false;
+}
+
 float EvseManager::getLocalMaxCurrentLimit() {
     return local_max_current_limit;
+}
+
+bool EvseManager::reservation_valid() {
+    if (reserved && std::chrono::system_clock::now() < reservation_valid_until)
+        return true;
+    return false;
 }
 
 } // namespace module

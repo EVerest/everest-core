@@ -65,6 +65,9 @@ public:
     json get_hw_capabilities();
     bool updateLocalMaxCurrentLimit(float max_current);
     float getLocalMaxCurrentLimit();
+    std::string reserve_now(const int _reservation_id, const std::string& token,
+                            const std::chrono::system_clock::time_point& valid_until, const std::string& parent_id);
+    bool cancel_reservation();
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
@@ -84,6 +87,13 @@ private:
     json hw_capabilities;
     bool local_three_phases;
     float local_max_current_limit;
+    std::string reserved_auth_token;
+    std::string reserved_auth_token_parent_id;
+    std::chrono::system_clock::time_point reservation_valid_until;
+    bool reserved; // internal, use reservation_valid() if you want to find out if it is reserved
+    int reservation_id;
+
+    bool reservation_valid();
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

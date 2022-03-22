@@ -44,26 +44,42 @@
             }
         },
         "reserve_now": {
-            "description": "Reserves this evse for a given auth token",
+            "description": "Reserves this evse for a given auth token. No support for parent id tags or id 0 reservations.",
             "arguments": {
+                "reservation_id": {
+                    "description": "Reservation id for this reservation",
+                    "type": "integer"
+                },
                 "auth_token": {
-                    "description": "The authentication token that this evse is reserved for",
+                    "description": "The authentication token that this evse will be reserved for",
                     "type": "string"
                 },
-                "timeout": {
-                    "description": "timeout [s] until this reservation expires",
-                    "type": "number"
+                "expiry_date": {
+                    "description": "Absolute UTC time point when reservation expires (RFC3339 format)",
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "parent_id": {
+                    "description": "Parent if od the authentication token",
+                    "type": "string"
                 }
             },
             "result": {
-                "description": "Indicates if reservation was successful or not",
-                "type": "boolean"
+                "description": "Returns Accepted if reservation was succesfull or specifies error code.",
+                "type": "string",
+                "enum": [
+                    "Accepted",
+                    "Faulted",
+                    "Occupied",
+                    "Rejected",
+                    "Unavailable"
+                ]
             }
         },
         "cancel_reservation": {
             "description": "Cancels current reservation",
             "result": {
-                "description": "Indicates if cancelling reservation was successful or not",
+                "description": "Returns true if reservation was cancelled. Returns false if there was no reservation to cancel.",
                 "type": "boolean"
             }
         },
@@ -136,16 +152,16 @@
                     "description": "Event enum. For some events an additional object is set, see below.",
                     "type": "string",
                     "enum": [
-                        "Enabled", 
-                        "Disabled", 
-                        "SessionStarted", 
-                        "AuthRequired", 
-                        "ChargingStarted", 
-                        "ChargingPausedEV", 
-                        "ChargingPausedEVSE", 
-                        "ChargingResumed", 
-                        "SessionFinished", 
-                        "Error", 
+                        "Enabled",
+                        "Disabled",
+                        "SessionStarted",
+                        "AuthRequired",
+                        "ChargingStarted",
+                        "ChargingPausedEV",
+                        "ChargingPausedEVSE",
+                        "ChargingResumed",
+                        "SessionFinished",
+                        "Error",
                         "PermanentFault"
                     ]
                 },

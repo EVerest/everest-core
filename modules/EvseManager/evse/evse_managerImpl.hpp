@@ -40,7 +40,8 @@ protected:
     virtual bool handle_resume_charging() override;
     virtual bool handle_cancel_charging() override;
     virtual bool handle_accept_new_session() override;
-    virtual bool handle_reserve_now(std::string& auth_token, double& timeout) override;
+    virtual std::string handle_reserve_now(int& reservation_id, std::string& auth_token, std::string& expiry_date,
+                                           std::string& parent_id) override;
     virtual bool handle_cancel_reservation() override;
     virtual bool handle_force_unlock() override;
     virtual std::string handle_set_local_max_current(double& max_current) override;
