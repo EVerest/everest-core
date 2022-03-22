@@ -55,7 +55,6 @@ add_custom_target(force_update_all_modules
 
 macro(cpp_module_setup)
     get_filename_component(MODULE_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-    set(MOD_MODULE_NAME mod${MODULE_NAME})
     set(MODULE_LOADER_DIR ${GENERATED_MODULE_DIR}/${MODULE_NAME})
 
     add_custom_command(

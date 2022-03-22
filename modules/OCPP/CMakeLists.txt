@@ -53,6 +53,12 @@ install(FILES manifest.json
     DESTINATION ${OCPP_DEST}
 )
 
+target_link_libraries(${MODULE_NAME}
+    PRIVATE
+        date::date
+        date::date-tz
+)
+
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1
 # insert other things like install cmds etc here
 install(PROGRAMS diagnostics_uploader.sh firmware_updater.sh

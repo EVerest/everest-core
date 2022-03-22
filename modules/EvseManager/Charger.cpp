@@ -15,7 +15,6 @@
 
 #include "Charger.hpp"
 
-#include <chrono>
 #include <math.h>
 #include <string.h>
 
@@ -516,7 +515,7 @@ void Charger::processCPEventsIndependent(ControlPilotEvent cp_event) {
 
 void Charger::update_pwm_max_every_5seconds(float dc) {
     if (dc != update_pwm_last_dc) {
-        auto now = std::chrono::system_clock::now();
+        auto now = date::utc_clock::now();
         auto timeSinceLastUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastPwmUpdate).count();
         if (timeSinceLastUpdate >= 5000)
             update_pwm_now(dc);
@@ -526,7 +525,7 @@ void Charger::update_pwm_max_every_5seconds(float dc) {
 void Charger::update_pwm_now(float dc) {
     update_pwm_last_dc = dc;
     r_bsp->call_pwm_on(dc);
-    lastPwmUpdate = std::chrono::system_clock::now();
+    lastPwmUpdate = date::utc_clock::now();
 }
 
 void Charger::run() {
@@ -559,13 +558,13 @@ float Charger::ampereToDutyCycle(float ampere) {
     return dc;
 }
 
-bool Charger::setMaxCurrent(float c, std::chrono::time_point<std::chrono::system_clock> validUntil) {
+bool Charger::setMaxCurrent(float c, std::chrono::time_point<date::utc_clock> validUntil) {
     if (c >= 0.0 && c <= CHARGER_ABSOLUTE_MAX_CURRENT) {
         std::lock_guard<std::recursive_mutex> lock(configMutex);
         // FIXME: limit to cable limit (PP reading) if that is smaller!
         // is it still valid?
         // FIXME this requires local clock to be UTC
-        if (validUntil > std::chrono::system_clock::now()) {
+        if (validUntil > date::utc_clock::now()) {
             maxCurrent = c;
             maxCurrentValidUntil = validUntil;
             signalMaxCurrent(c);
@@ -581,7 +580,7 @@ bool Charger::setMaxCurrent(float c) {
         // FIXME: limit to cable limit (PP reading) if that is smaller!
         // is it still valid?
         // FIXME this requires local clock to be UTC
-        if (maxCurrentValidUntil > std::chrono::system_clock::now()) {
+        if (maxCurrentValidUntil > date::utc_clock::now()) {
             maxCurrent = c;
             signalMaxCurrent(c);
             return true;
@@ -710,6 +709,13 @@ bool Charger::enable() {
         return true;
     }
     return false;
+}
+
+bool Charger::set_faulted() {
+    std::lock_guard<std::recursive_mutex> lock(stateMutex);
+    currentState = EvseState::Faulted;
+    signalEvent(EvseEvent::PermanentFault);
+    return true;
 }
 
 bool Charger::restart() {
@@ -863,12 +869,12 @@ void Charger::checkSoftOverCurrent() {
         if (!overCurrent) {
             overCurrent = true;
             // timestamp when over current happend first
-            lastOverCurrentEvent = std::chrono::system_clock::now();
+            lastOverCurrentEvent = date::utc_clock::now();
         }
     } else
         overCurrent = false;
 
-    auto now = std::chrono::system_clock::now();
+    auto now = date::utc_clock::now();
     auto timeSinceOverCurrentStarted =
         std::chrono::duration_cast<std::chrono::milliseconds>(now - lastOverCurrentEvent).count();
     if (overCurrent && timeSinceOverCurrentStarted >= softOverCurrentTimeout) {
@@ -880,7 +886,7 @@ void Charger::checkSoftOverCurrent() {
 // returns whether power is actually available from EnergyManager
 // i.e. maxCurrent is in valid range
 bool Charger::powerAvailable() {
-    if (maxCurrentValidUntil < std::chrono::system_clock::now()) {
+    if (maxCurrentValidUntil < date::utc_clock::now()) {
         maxCurrent = 0.;
         signalMaxCurrent(maxCurrent);
     }

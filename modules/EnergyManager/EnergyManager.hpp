@@ -16,6 +16,10 @@
 // headers for required interface implementations
 #include <generated/energy/Interface.hpp>
 
+#include <chrono>
+#include <date/date.h>
+#include <date/tz.h>
+
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
 #include <mutex>
@@ -52,22 +56,27 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
+
     std::mutex global_energy_object_mutex;
     json global_energy_object;
-    std::chrono::system_clock::time_point lastLimitUpdate;
-
+    std::chrono::time_point<date::utc_clock> lastLimitUpdate;
+    json si_0_rp_aca(json& child) {
+        auto si_0_rp = child.at("schedule_import").at(0).at("request_parameters");
+        return si_0_rp.at("ac_current_A");
+    }
     static void interval_start(const std::function<void(void)>& func, unsigned int interval_ms);
     void run_enforce_limits();
-    static Array run_optimizer(json energy_object);
-    static void optimize_one_level(json& energy_object, json& results,
-                                   const std::chrono::system_clock::time_point timepoint, const json price_schedule);
-    static json get_sub_element_from_schedule_at_time(json s, const std::chrono::system_clock::time_point timepoint);
-    static void sanitize_object(json& obj_to_sanitize);
+    Array run_optimizer(json energy);
+    void optimize_one_level(json& energy, json& optimized_values, const std::chrono::time_point<date::utc_clock> timepoint, json price_schedule);
+    json get_limit_from_schedule(json s, const std::chrono::time_point<date::utc_clock> timepoint);
+    void sanitize_object(json& obj_to_sanitize);
+
+    static json get_sub_element_from_schedule_at_time(json s, const std::chrono::time_point<date::utc_clock> timepoint);
     static double get_current_limit_from_energy_object(const json& limit_object, const json& energy_object);
     static double get_currently_valid_price_per_kwh(json& energy_object,
-                                                    const std::chrono::system_clock::time_point timepoint_now);
+                                                    const std::chrono::time_point<date::utc_clock> timepoint_now);
     static void check_for_children_requesting_power(json& energy_object, const double current_price_per_kwh);
-    static void scale_and_distribute_power(json& energy_object);
+    void scale_and_distribute_power(json& energy_object);
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

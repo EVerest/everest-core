@@ -20,6 +20,10 @@
 #include <modbus/utils.hpp>
 #include <sunspec/conversion.hpp>
 #include <utils/thread.hpp>
+#include <date/date.h>
+#include <date/tz.h>
+#include <chrono>
+
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 
 namespace module {

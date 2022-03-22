@@ -158,7 +158,7 @@ EvseFSM::EvseFSM(SlacIO& slac_io) : slac_io(slac_io) {
     };
 
     sd_sounding.entry = [this](FSMInitContextType& ctx) {
-        matching_ctx.tp_sound_start = std::chrono::system_clock::now();
+        matching_ctx.tp_sound_start = date::utc_clock::now();
         ctx.set_next_timeout(slac::defs::TT_EVSE_MATCH_MNBC_MS);
     };
 
@@ -223,7 +223,7 @@ EvseFSM::EvseFSM(SlacIO& slac_io) : slac_io(slac_io) {
         auto t_dur =
             matching_ctx.tp_sound_start +
             std::chrono::milliseconds(slac::defs::TT_EVSE_MATCH_MNBC_MS + slac::defs::TT_EVSE_MATCH_SESSION_MS) -
-            std::chrono::system_clock::now();
+            date::utc_clock::now();
 
         ctx.set_next_timeout(std::chrono::duration_cast<std::chrono::milliseconds>(t_dur).count());
     };

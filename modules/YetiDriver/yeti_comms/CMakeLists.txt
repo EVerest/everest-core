@@ -17,4 +17,8 @@ add_library(yeti_comms STATIC evSerial.cpp ../common/evThread.cpp protobuf/hi2lo
 target_include_directories(yeti_comms PUBLIC "${PROJECT_BINARY_DIR}" PUBLIC "nanopb" PUBLIC "protobuf" PUBLIC "../common")
 target_link_libraries(yeti_comms PRIVATE Pal::Sigslot Threads::Threads)
 
-
+target_link_libraries(yeti_comms
+    PRIVATE
+        date::date
+        date::date-tz
+)

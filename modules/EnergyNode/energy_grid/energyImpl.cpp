@@ -4,17 +4,19 @@
 #include "energyImpl.hpp"
 #include <chrono>
 #include <date/date.h>
+#include <date/tz.h>
 
 namespace module {
 namespace energy_grid {
 
-std::string to_rfc3339(std::chrono::time_point<std::chrono::system_clock> t) {
+std::string to_rfc3339(std::chrono::time_point<date::utc_clock> t) {
     return date::format("%FT%TZ", std::chrono::time_point_cast<std::chrono::milliseconds>(t));
 }
 
-std::chrono::time_point<std::chrono::system_clock> from_rfc3339(std::string t) {
+
+std::chrono::time_point<date::utc_clock> from_rfc3339(std::string t) {
     std::istringstream infile{t};
-    std::chrono::time_point<std::chrono::system_clock> tp;
+    std::chrono::time_point<date::utc_clock> tp;
     infile >> date::parse("%FT%T", tp);
     return tp;
 }
@@ -26,7 +28,9 @@ void energyImpl::init() {
     {
        std::lock_guard<std::mutex> lock(this->energy_mutex);
        json schedule_entry;
-       schedule_entry["timestamp"] = to_rfc3339(std::chrono::system_clock::now());
+       std::chrono::time_point<date::utc_clock> nw = date::utc_clock::now();
+       std::string nws = to_rfc3339(nw);
+       schedule_entry["timestamp"] = nws;
        schedule_entry["request_parameters"] = json::object();
        schedule_entry["request_parameters"]["limit_type"] = "Hard";
        schedule_entry["request_parameters"]["ac_current_A"] = json::object();

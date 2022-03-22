@@ -11,6 +11,7 @@
 #include <generated/evse_manager/Implementation.hpp>
 
 #include "../EvseManager.hpp"
+#include <algorithm>
 
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 // insert your custom include headers here
@@ -32,15 +33,20 @@ public:
     void set_nr_of_phases_available(int n);
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
 
+    void set_session_uuid();
+
+
 protected:
     // command handler functions (virtual)
     virtual bool handle_enable() override;
     virtual bool handle_disable() override;
+    virtual bool handle_set_faulted() override;
     virtual bool handle_pause_charging() override;
     virtual bool handle_resume_charging() override;
     virtual bool handle_cancel_charging() override;
     virtual bool handle_accept_new_session() override;
-    virtual bool handle_reserve_now(std::string& auth_token, double& timeout) override;
+    virtual std::string handle_reserve_now(int& reservation_id, std::string& auth_token, std::string& expiry_date,
+                                           std::string& parent_id) override;
     virtual bool handle_cancel_reservation() override;
     virtual bool handle_force_unlock() override;
     virtual std::string handle_set_local_max_current(double& max_current) override;
@@ -63,6 +69,7 @@ private:
     json limits;
 
     std::string generate_session_uuid();
+
     std::string session_uuid;
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };

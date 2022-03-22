@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
 #include "EvseManager.hpp"
-#include <chrono>
 
 namespace module {
 
@@ -16,6 +15,17 @@ void EvseManager::init() {
     if (!config.ac_hlc_enabled)
         slac_enabled = false;
     hlc_enabled = !r_hlc.empty();
+    reserved = false;
+    reservation_id = 0;
+
+    reservationThreadHandle = std::thread([this]() {
+        while (true) {
+            // check reservation status on regular intervals to see if it expires.
+            // This will generate the ReservationEnd event.
+            reservation_valid();
+            sleep(1);
+        }
+    });
 }
 
 void EvseManager::ready() {
@@ -94,6 +104,18 @@ void EvseManager::ready() {
             if (auth.which() == 1) {
                 // FIXME: This is currently only for EIM!
                 charger->Authorize(true, boost::get<std::string>(auth), false);
+                const std::string& token = boost::get<std::string>(auth);
+                // we got an auth token, check if it matches our reservation
+                if (reserved_for_different_token(token)) {
+                    // throw an error event that can e.g. be displayed
+                    json se;
+                    se["event"] = "ReservationAuthtokenMismatch";
+                    signalReservationEvent(se);
+                } else {
+                    // if reserved: signal to the outside world that this reservation ended because it is being used
+                    use_reservation_to_start_charging();
+                    charger->Authorize(true, token);
+                }
             }
         }
     });
@@ -111,14 +133,20 @@ void EvseManager::ready() {
             charger->requestErrorSequence();
         });
 
+    // Cancel reservations if charger is disabled or faulted
+    charger->signalEvent.connect([this](Charger::EvseEvent s) {
+        if (s == Charger::EvseEvent::Disabled || s == Charger::EvseEvent::PermanentFault) {
+            cancel_reservation();
+        }
+    });
+
     invoke_ready(*p_evse);
     invoke_ready(*p_energy_grid);
 
     charger->setup(local_three_phases, config.has_ventilation, config.country_code, config.rcd_enabled,
                    config.charge_mode, slac_enabled, config.ac_hlc_use_5percent, config.ac_enforce_hlc);
     //  start with a limit of 0 amps. We will get a budget from EnergyManager that is locally limited by hw caps.
-    charger->setMaxCurrent(0., std::chrono::system_clock::now());
-
+    charger->setMaxCurrent(0.0F, date::utc_clock::now());
     charger->run();
     charger->enable();
 }
@@ -129,6 +157,61 @@ json EvseManager::get_latest_powermeter_data() {
 
 json EvseManager::get_hw_capabilities() {
     return hw_capabilities;
+}
+
+std::string EvseManager::reserve_now(const int _reservation_id, const std::string& token,
+                                     const std::chrono::time_point<date::utc_clock>& valid_until,
+                                     const std::string& parent_id) {
+
+    // is the evse Unavailable?
+    if (charger->getCurrentState() == Charger::EvseState::Disabled) {
+        return "Unavailable";
+    }
+
+    // is the evse faulted?
+    if (charger->getCurrentState() == Charger::EvseState::Faulted) {
+        return "Faulted";
+    }
+
+    // is the reservation still valid in time?
+    if (date::utc_clock::now() > valid_until) {
+        return "Rejected";
+    }
+
+    // is the connector currently ready to accept a new car?
+    if (charger->getCurrentState() != Charger::EvseState::Idle) {
+        return "Occupied";
+    }
+
+    // is it already reserved with a different reservation_id?
+    if (reservation_valid() && _reservation_id != reservation_id) {
+        return "Rejected";
+    }
+
+    std::lock_guard<std::mutex> lock(reservation_mutex);
+
+    // accept new reservation
+    reserved_auth_token = token;
+    reservation_valid_until = valid_until;
+    reserved_auth_token_parent_id = parent_id;
+    reserved = true;
+
+    // publish event to other modules
+    json se;
+    se["event"] = "ReservationStart";
+    se["reservation_start"]["reservation_id"] = reservation_id;
+    se["reservation_start"]["parent_id"] = parent_id;
+
+    signalReservationEvent(se);
+
+    return "Accepted";
+
+    // FIXME TODO:
+    /*
+    parent_id needs to be implemented in new auth manager arch
+
+    reservationEnd with reason Charging Started with it is not implemented yet
+    */
 }
 
 bool EvseManager::updateLocalMaxCurrentLimit(float max_current) {
@@ -142,8 +225,91 @@ bool EvseManager::updateLocalMaxCurrentLimit(float max_current) {
     return false;
 }
 
+bool EvseManager::cancel_reservation() {
+    bool res_valid = reservation_valid();
+
+    std::lock_guard<std::mutex> lock(reservation_mutex);
+    if (res_valid) {
+        reserved = false;
+
+        // publish event to other modules
+        json se;
+        se["event"] = "ReservationEnd";
+        se["reservation_end"]["reason"] = "Cancelled";
+        se["reservation_end"]["reservation_id"] = reservation_id;
+
+        signalReservationEvent(se);
+
+        return true;
+    }
+
+    reserved = false;
+    return false;
+}
+
+// Signals that reservation was used to start this charging.
+// Does nothing if no reservation is active.
+void EvseManager::use_reservation_to_start_charging() {
+
+    std::lock_guard<std::mutex> lock(reservation_mutex);
+    if (!reserved) {
+        return;
+    }
+
+    // publish event to other modules
+    json se;
+    se["event"] = "ReservationEnd";
+    se["reservation_end"]["reason"] = "UsedToStartCharging";
+    se["reservation_end"]["reservation_id"] = reservation_id;
+
+    signalReservationEvent(se);
+
+    reserved = false;
+}
+
 float EvseManager::getLocalMaxCurrentLimit() {
     return local_max_current_limit;
+}
+
+bool EvseManager::reservation_valid() {
+    std::lock_guard<std::mutex> lock(reservation_mutex);
+    if (reserved) {
+        if (date::utc_clock::now() < reservation_valid_until) {
+            // still valid
+            return true;
+        } else {
+            // expired
+            // publish event to other modules
+            json se;
+            se["event"] = "ReservationEnd";
+            se["reservation_end"]["reason"] = "Expired";
+            se["reservation_end"]["reservation_id"] = reservation_id;
+
+            signalReservationEvent(se);
+            reserved = false;
+        }
+    }
+    // no active reservation
+    return false;
+}
+
+/*
+  Returns false if not reserved or reservation matches the token.
+  Returns true if reserved for a different token.
+*/
+bool EvseManager::reserved_for_different_token(const std::string& token) {
+    std::lock_guard<std::mutex> lock(reservation_mutex);
+    if (!reserved) {
+        return false;
+    }
+
+    if (reserved_auth_token == token) {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
 }
 
 } // namespace module

@@ -15,6 +15,13 @@
                 "type": "boolean"
             }
         },
+        "set_faulted": {
+            "description": "Sets the evse manager to faulted",
+            "result": {
+                "description": "Returns true if evse was set to faulted (or is already in that state)",
+                "type": "boolean"
+            }
+        },
         "pause_charging": {
             "description": "Pauses charging",
             "result": {
@@ -44,26 +51,42 @@
             }
         },
         "reserve_now": {
-            "description": "Reserves this evse for a given auth token",
+            "description": "Reserves this evse for a given auth token. No support for parent id tags or id 0 reservations.",
             "arguments": {
+                "reservation_id": {
+                    "description": "Reservation id for this reservation",
+                    "type": "integer"
+                },
                 "auth_token": {
-                    "description": "The authentication token that this evse is reserved for",
+                    "description": "The authentication token that this evse will be reserved for",
                     "type": "string"
                 },
-                "timeout": {
-                    "description": "timeout [s] until this reservation expires",
-                    "type": "number"
+                "expiry_date": {
+                    "description": "Absolute UTC time point when reservation expires (RFC3339 format)",
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "parent_id": {
+                    "description": "Parent id of the authentication token",
+                    "type": "string"
                 }
             },
             "result": {
-                "description": "Indicates if reservation was successful or not",
-                "type": "boolean"
+                "description": "Returns Accepted if reservation was succesfull or specifies error code.",
+                "type": "string",
+                "enum": [
+                    "Accepted",
+                    "Faulted",
+                    "Occupied",
+                    "Rejected",
+                    "Unavailable"
+                ]
             }
         },
         "cancel_reservation": {
             "description": "Cancels current reservation",
             "result": {
-                "description": "Indicates if cancelling reservation was successful or not",
+                "description": "Returns true if reservation was cancelled. Returns false if there was no reservation to cancel.",
                 "type": "boolean"
             }
         },
@@ -136,17 +159,20 @@
                     "description": "Event enum. For some events an additional object is set, see below.",
                     "type": "string",
                     "enum": [
-                        "Enabled", 
-                        "Disabled", 
-                        "SessionStarted", 
-                        "AuthRequired", 
-                        "ChargingStarted", 
-                        "ChargingPausedEV", 
-                        "ChargingPausedEVSE", 
-                        "ChargingResumed", 
-                        "SessionFinished", 
-                        "Error", 
-                        "PermanentFault"
+                        "Enabled",
+                        "Disabled",
+                        "SessionStarted",
+                        "AuthRequired",
+                        "ChargingStarted",
+                        "ChargingPausedEV",
+                        "ChargingPausedEVSE",
+                        "ChargingResumed",
+                        "SessionFinished",
+                        "Error",
+                        "PermanentFault",
+                        "ReservationStart",
+                        "ReservationEnd",
+                        "ReservationAuthtokenMismatch"
                     ]
                 },
                 "session_started": {
@@ -217,6 +243,46 @@
                         "SLAC",
                         "HLC"
                     ]
+                },
+                "reservation_start": {
+                    "description": "Details on Reservation Start",
+                    "type": "object",
+                    "required": [
+                        "reservation_id"
+                    ],
+                    "properties": {
+                        "reservation_id": {
+                            "description": "reservation_id",
+                            "type": "integer"
+                        },
+                        "parent_id": {
+                            "description": "parent_id",
+                            "type": "string"
+                        }
+                    }
+                },
+                "reservation_end": {
+                    "description": "Details on Reservation End",
+                    "type": "object",
+                    "required": [
+                        "reason",
+                        "reservation_id"
+                    ],
+                    "properties": {
+                        "reason": {
+                            "description": "Reason why reservation ends",
+                            "type": "string",
+                            "enum": [
+                                "Expired",
+                                "Cancelled",
+                                "UsedToStartCharging"
+                            ]
+                        },
+                        "reservation_id": {
+                            "description": "reservation_id",
+                            "type": "integer"
+                        }
+                    }
                 }
             },
             "additionalProperties": false
@@ -242,32 +308,6 @@
                     "type": "integer",
                     "minimum": 1,
                     "maximum": 3
-                }
-            },
-            "additionalProperties": false
-        },
-        "reservation": {
-            "description": "Current reservation status, published on change",
-            "type": "object",
-            "required": [
-                "reserved",
-                "auth_token",
-                "valid_until"
-            ],
-            "properties": {
-                "reserved": {
-                    "description": "true if currently reserved",
-                    "type": "boolean"
-                },
-                "auth_token": {
-                    "description": "token for which evse is reserved for",
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 20
-                },
-                "valid_until": {
-                    "description": "timestamp (abs time) when reservation expires",
-                    "type": "number"
                 }
             },
             "additionalProperties": false
@@ -306,6 +346,10 @@
         "powermeter": {
             "description": "FIXME: use powermeter type here",
             "type": "object"
+        },
+        "evse_id": {
+            "description": "EVSE ID including the connector number, e.g. DE*PNX*E123456*1",
+            "type": "string"
         }
     }
 }
