@@ -45,17 +45,17 @@ async function fetch_tibber_api_data(mod) {
     let tomorrow;
 
     // validate input from tibber
-    if (response.hasOwnProperty('data') &&
-      response.data.hasOwnProperty('data') &&
-      response.data.data.hasOwnProperty('viewer') &&
-      response.data.data.viewer.hasOwnProperty('homes') &&
+    if (Object.prototype.hasOwnProperty.call(response, 'data') &&
+      Object.prototype.hasOwnProperty.call(response.data, 'data') &&
+      Object.prototype.hasOwnProperty.call(response.data.data, 'viewer') &&
+      Object.prototype.hasOwnProperty.call(response.data.data.viewer, 'homes') &&
       Array.isArray(response.data.data.viewer.homes) &&
       !(response.data.data.viewer.homes[0] === 'undefined') &&
-      response.data.data.viewer.homes[0].hasOwnProperty('currentSubscription') &&
-      response.data.data.viewer.homes[0].currentSubscription.hasOwnProperty('priceInfo') &&
-      response.data.data.viewer.homes[0].currentSubscription.priceInfo.hasOwnProperty('today') &&
+      Object.prototype.hasOwnProperty.call(response.data.data.viewer.homes[0], 'currentSubscription') &&
+      Object.prototype.hasOwnProperty.call(response.data.data.viewer.homes[0].currentSubscription, 'priceInfo') &&
+      Object.prototype.hasOwnProperty.call(response.data.data.viewer.homes[0].currentSubscription.priceInfo, 'today') &&
       Array.isArray(response.data.data.viewer.homes[0].currentSubscription.priceInfo.today) &&
-      response.data.data.viewer.homes[0].currentSubscription.priceInfo.hasOwnProperty('tomorrow') &&
+      Object.prototype.hasOwnProperty.call(response.data.data.viewer.homes[0].currentSubscription.priceInfo, 'tomorrow') &&
       Array.isArray(response.data.data.viewer.homes[0].currentSubscription.priceInfo.tomorrow)) {
       today = response.data.data.viewer.homes[0].currentSubscription.priceInfo.today;
       tomorrow = response.data.data.viewer.homes[0].currentSubscription.priceInfo.tomorrow;
@@ -70,9 +70,9 @@ async function fetch_tibber_api_data(mod) {
 
     for (const response_entry of today.concat(tomorrow)) {
       // validate input from tibber
-      if (response_entry.hasOwnProperty('startsAt') &&
-        response_entry.hasOwnProperty('total') &&
-        response_entry.hasOwnProperty('currency') &&
+      if (Object.prototype.hasOwnProperty.call(response_entry, 'startsAt') &&
+        Object.prototype.hasOwnProperty.call(response_entry, 'total') &&
+        Object.prototype.hasOwnProperty.call(response_entry, 'currency') &&
         typeof response_entry.currency === 'string' &&
         response_entry.currency.length == 3 &&
         typeof response_entry.total === 'number' &&
