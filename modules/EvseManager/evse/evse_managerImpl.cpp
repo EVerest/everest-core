@@ -25,25 +25,25 @@ void evse_managerImpl::init() {
     });
 
     mod->mqtt.subscribe("/external/cmd/set_auth",
-                        [&charger = mod->charger](std::string data) { charger->Authorize(true, data.c_str()); });
+                        [&charger = mod->charger](const std::string data) { charger->Authorize(true, data.c_str()); });
 
-    mod->mqtt.subscribe("/external/cmd/enable", [&charger = mod->charger](std::string data) { charger->enable(); });
+    mod->mqtt.subscribe("/external/cmd/enable", [&charger = mod->charger](const std::string data) { charger->enable(); });
 
-    mod->mqtt.subscribe("/external/cmd/disable", [&charger = mod->charger](std::string data) { charger->disable(); });
+    mod->mqtt.subscribe("/external/cmd/disable", [&charger = mod->charger](const std::string data) { charger->disable(); });
 
     mod->mqtt.subscribe(
         "/external/cmd/switch_three_phases_while_charging",
-        [&charger = mod->charger](std::string data) { charger->switchThreePhasesWhileCharging(str_to_bool(data)); });
+        [&charger = mod->charger](const std::string data) { charger->switchThreePhasesWhileCharging(str_to_bool(data)); });
 
     mod->mqtt.subscribe("/external/cmd/pause_charging",
-                        [&charger = mod->charger](std::string data) { charger->pauseCharging(); });
+                        [&charger = mod->charger](const std::string data) { charger->pauseCharging(); });
 
     mod->mqtt.subscribe("/external/cmd/resume_charging",
-                        [&charger = mod->charger](std::string data) { charger->resumeCharging(); });
+                        [&charger = mod->charger](const std::string data) { charger->resumeCharging(); });
 
-    mod->mqtt.subscribe("/external/cmd/restart", [&charger = mod->charger](std::string data) { charger->restart(); });
+    mod->mqtt.subscribe("/external/cmd/restart", [&charger = mod->charger](const std::string data) { charger->restart(); });
 
-    mod->r_powermeter->subscribe_powermeter([this](json p) {
+    mod->r_powermeter->subscribe_powermeter([this](const json p) {
         // Republish data on proxy powermeter struct
         publish_powermeter(p);
     });
