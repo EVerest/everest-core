@@ -7,18 +7,24 @@
             }
         },
         "connections": {
-            "emgr": {
-                "module_id": "energy_manager",
-                "implementation_id": "main"
-            },
-            "pm_grid": {
-                "module_id": "sma_modbus_meter",
-                "implementation_id": "main"
-            },
-            "pm_ev": {
-                "module_id": "yeti_driver",
-                "implementation_id": "powermeter"
-            }
+            "emgr": [
+                {
+                    "module_id": "energy_manager",
+                    "implementation_id": "main"
+                }
+            ],
+            "pm_grid": [
+                {
+                    "module_id": "sma_modbus_meter",
+                    "implementation_id": "main"
+                }
+            ],
+            "pm_ev": [
+                {
+                    "module_id": "yeti_driver",
+                    "implementation_id": "powermeter"
+                }
+            ]
         }
     },
     "energy_manager": {
@@ -36,27 +42,34 @@
             }
         },
         "connections": {
-            "chargingdriver": {
-                "module_id": "evse_manager",
-                "implementation_id": "evse"
-            },
-            "chargingdriverenergy": {
-                "module_id": "evse_manager",
-                "implementation_id": "evse_energy_control"
-            },
-            "gridpowermeter": {
-                "module_id": "sma_modbus_meter",
-                "implementation_id": "main"
-            },
-            "chargingdriverpowermeter": {
-                "module_id": "yeti_driver",
-                "implementation_id": "powermeter"
-            }
+            "chargingdriver": [
+                {
+                    "module_id": "evse_manager",
+                    "implementation_id": "evse"
+                }
+            ],
+            "chargingdriverenergy": [
+                {
+                    "module_id": "evse_manager",
+                    "implementation_id": "evse_energy_control"
+                }
+            ],
+            "gridpowermeter": [
+                {
+                    "module_id": "sma_modbus_meter",
+                    "implementation_id": "main"
+                }
+            ],
+            "chargingdriverpowermeter": [
+                {
+                    "module_id": "yeti_driver",
+                    "implementation_id": "powermeter"
+                }
+            ]
         }
     },
     "iso15118_charger": {
         "module": "JsRiseV2G",
-        "connections": {},
         "config_implementation": {
             "main": {
                 "mqtt_base_path": "everest_external/iso15118/java"
@@ -72,14 +85,24 @@
             "rcd_enabled": true
         },
         "connections": {
-            "bsp": {
-                "module_id": "yeti_driver",
-                "implementation_id": "board_support"
-            },
-            "powermeter": {
-                "module_id": "yeti_driver",
-                "implementation_id": "powermeter"
-            }
+            "bsp": [
+                {
+                    "module_id": "yeti_driver",
+                    "implementation_id": "board_support"
+                }
+            ],
+            "powermeter": [
+                {
+                    "module_id": "yeti_driver",
+                    "implementation_id": "powermeter"
+                }
+            ],
+            "auth": [
+                {
+                    "module_id": "auth",
+                    "implementation_id": "main"
+                }
+            ]
         }
     },
     "yeti_driver": {
@@ -88,10 +111,12 @@
     "car_simulator": {
         "module": "JsCarSimulator",
         "connections": {
-            "simulation_control": {
-                "module_id": "yeti_driver",
-                "implementation_id": "yeti_simulation_control"
-            }
+            "simulation_control": [
+                {
+                    "module_id": "yeti_driver",
+                    "implementation_id": "yeti_simulation_control"
+                }
+            ]
         }
     },
     "charge_point": {
@@ -101,35 +126,51 @@
             "ChargePointConfigPath": "../../libocpp/aux/config-docker-tls.json"
         },
         "connections": {
-            "powermeter": {
-                "module_id": "yeti_driver",
-                "implementation_id": "powermeter"
-            },
-            "evse_manager": {
-                "module_id": "evse_manager",
-                "implementation_id": "evse"
-            }
+            "powermeter": [
+                {
+                    "module_id": "yeti_driver",
+                    "implementation_id": "powermeter"
+                }
+            ],
+            "evse_manager": [
+                {
+                    "module_id": "evse_manager",
+                    "implementation_id": "evse"
+                }
+            ]
         }
     },
     "auth": {
         "module": "JsAuth",
         "connections": {
-            "tokenProvider": {
-                "module_id": "token_provider",
-                "implementation_id": "main"
-            },
-            "tokenValidator": {
-                "module_id": "charge_point",
-                "implementation_id": "auth_validator"
-            }
+            "tokenProvider": [
+                {
+                    "module_id": "token_provider_1",
+                    "implementation_id": "main"
+                }
+            ],
+            "tokenValidator": [
+                {
+                    "module_id": "charge_point",
+                    "implementation_id": "auth_validator"
+                }
+            ]
         }
     },
-    "token_provider": {
+    "token_provider_1": {
         "module": "JsDummyTokenProvider",
+        "connections": {
+            "evse": [
+                {
+                    "module_id": "evse_manager",
+                    "implementation_id": "evse"
+                }
+            ]
+        },
         "config_implementation": {
             "main": {
                 "token": "123",
-                "sleep": 10
+                "type": "dummy"
             }
         }
     }
