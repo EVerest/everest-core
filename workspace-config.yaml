@@ -1,0 +1,26 @@
+local_dependencies:
+  RISE-V2G:
+    git_tag: master
+  everest-core:
+    git_tag: main
+  everest-dev-environment:
+    git_tag: main
+  everest-framework:
+    git_tag: main
+  everest-utils:
+    git_tag: main
+  libfsm:
+    git_tag: main
+  liblog:
+    git_tag: main
+  libmodbus:
+    git_tag: main
+  libocpp:
+    git_tag: main
+  libsunspec:
+    git_tag: main
+  libtimer:
+    git_tag: main
+  open-plc-utils:
+    git_tag: master
+workspace: /workspace
