@@ -41,8 +41,8 @@ async function fetch_tibber_api_data(mod) {
       return;
     }
     //evlog.error(response);
-    var today;
-    var tomorrow;
+    let today;
+    let tomorrow;
 
     // validate input from tibber
     if (response.hasOwnProperty("data") &&
