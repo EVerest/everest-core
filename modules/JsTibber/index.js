@@ -4,7 +4,7 @@ const { evlog, boot_module } = require('everestjs');
 const axios = require('axios');
 
 async function fetch_tibber_api_data(mod) {
-  evlog.info("Fetching update from Tibber");
+  evlog.info('Fetching update from Tibber');
   const graphQLQuery = `{
       viewer {
         homes {
@@ -37,7 +37,7 @@ async function fetch_tibber_api_data(mod) {
   await axios.post("https://api.tibber.com/v1-beta/gql", postData, requestConfig).then((response) => {
 
     if (response === undefined || response.status === undefined || response.status != 200) {
-      evlog.error("Could not retrieve response data from Tibber API");
+      evlog.error('Could not retrieve response data from Tibber API');
       return;
     }
     //evlog.error(response);
@@ -59,7 +59,7 @@ async function fetch_tibber_api_data(mod) {
       today = response.data.data.viewer.homes[0].currentSubscription.priceInfo.today;
       tomorrow = response.data.data.viewer.homes[0].currentSubscription.priceInfo.tomorrow;
     } else {
-      evlog.error("Received malformed reply from Tibber API");
+      evlog.error('Received malformed reply from Tibber API');
       return;
     }
 
@@ -87,13 +87,13 @@ async function fetch_tibber_api_data(mod) {
         // copy into schedule_import array
         schedule["schedule_import"].push(entry);
       } else {
-        evlog.error("Received malformed entry in today from Tibber API");
+        evlog.error('Received malformed entry in today from Tibber API');
       }
     }
 
     mod.provides.main.publish.energy_price_schedule(schedule);
   }).catch(() => {
-    evlog.error("Exception occured when contacting tibber API");
+    evlog.error('Exception occured when contacting tibber API');
   }
   );
 };
@@ -105,7 +105,7 @@ function start_api_loop(mod) {
 }
 
 boot_module(async ({ setup, info, config }) => {
-  evlog.info("Booting JsTibber!");
+  evlog.info('Booting JsTibber!');
 }).then((mod) => {
   // Call API for the first time and then set an interval to fetch the data regularly
   start_api_loop(mod);
