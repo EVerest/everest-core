@@ -48,6 +48,9 @@ private:
     virtual void ready() override;
 
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
+    std::mutex energy_mutex;
+    double _price_limit;
+    double _price_limit_previous_value;
     json energy;
     void initializeEnergyObject();
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1

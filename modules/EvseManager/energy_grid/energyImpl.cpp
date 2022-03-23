@@ -6,7 +6,10 @@
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <chrono>
+#include <cstdint>
+#include <cstdlib>
 #include <date/date.h>
+#include <string>
 
 namespace module {
 namespace energy_grid {
@@ -25,6 +28,8 @@ std::chrono::time_point<std::chrono::system_clock> from_rfc3339(std::string t) {
 }
 
 void energyImpl::init() {
+    _price_limit = 0;
+    _price_limit_previous_value = 0;
     initializeEnergyObject();
 
     mod->r_powermeter->subscribe_powermeter([this](json p) {
@@ -33,6 +38,58 @@ void energyImpl::init() {
 
         // Publish to the energy tree
         publish_energy(energy);
+    });
+
+    mod->mqtt.subscribe("/external/" + mod->info.id + ":" + mod->info.name + "/cmd/set_price_limit", [this](json lim) { 
+        std::string sLim = lim;
+        _price_limit = std::stod(sLim);
+
+        EVLOG(debug) << "price limit changed to: " << _price_limit << " EUR / kWh"; // TODO(LAD): adapt to other currencies
+
+        if (_price_limit > 0.0f) {  // only add price_limit if optimizer mode is set to "price_driven"
+            // save price limit to not be lost on switching to manual limits
+            _price_limit_previous_value = _price_limit;   // TODO(LAD): add storage on more permanent medium (config/hdd?)
+
+            {
+                std::lock_guard<std::mutex> lock(this->energy_mutex);
+                energy["optimizer_target"] = json::object();
+                energy["optimizer_target"]["price_limit"] = _price_limit;
+            }
+
+            // Publish to the energy tree
+            publish_energy(energy);
+        } else {
+            if (energy.contains("optimizer_target")) {
+                {
+                    std::lock_guard<std::mutex> lock(this->energy_mutex);
+                    energy.at("optimizer_target").erase("price_limit");
+                }
+            }
+        }
+    });
+
+    mod->mqtt.subscribe("/external/" + mod->info.id + ":" + mod->info.name + "/cmd/switch_optimizer_mode", [this](json mode) { 
+        std::string sMode = mode;
+        EVLOG(debug) << "optimizer mode set to: " << sMode;
+
+        if (sMode == "manual_limits") {
+            _price_limit = 0.0f;
+            EVLOG(error) << "Manual limits optimizer mode set";
+            if (energy.contains("optimizer_target")) {
+                {
+                    std::lock_guard<std::mutex> lock(this->energy_mutex);
+                    energy.at("optimizer_target").erase("price_limit");
+                }
+            }
+        } else if (sMode == "price_driven") {
+            _price_limit = _price_limit_previous_value;
+            EVLOG(error) << "Price-driven optimizer mode set";
+            {
+                std::lock_guard<std::mutex> lock(this->energy_mutex);
+                energy["optimizer_target"] = json::object();
+                energy["optimizer_target"]["price_limit"] = _price_limit;
+            }
+        }
     });
 }
 
@@ -45,8 +102,11 @@ void energyImpl::ready() {
     schedule_entry["capabilities"]["ac_current_A"] = json::object();
     schedule_entry["capabilities"]["ac_current_A"] = hw_caps;
 
-    energy["schedule_import"] = json::array({});
-    energy["schedule_import"].push_back(schedule_entry);
+    {
+        std::lock_guard<std::mutex> lock(this->energy_mutex);
+        energy["schedule_import"] = json::array({});
+        energy["schedule_import"].push_back(schedule_entry);
+    }
 }
 
 void energyImpl::handle_enforce_limits(std::string& uuid, Object& limits_import, Object& limits_export,

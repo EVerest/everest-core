@@ -25,7 +25,6 @@ std::chrono::time_point<std::chrono::system_clock> from_rfc3339(std::string t) {
 void energyImpl::init() {
     energy_price = {};
     initializeEnergyObject();
-    int count = 0;
 
     {
        std::lock_guard<std::mutex> lock(this->energy_mutex);
@@ -103,11 +102,11 @@ void energyImpl::publish_complete_energy_object() {
     {
         std::lock_guard<std::mutex> lock(this->energy_mutex);
         energy_complete = energy;
-        // LAD: FIXME deal with non set properties!
-        if (!energy["schedule_import"].is_null()) {
-            if (!energy_price.is_null()) {
+
+        if (energy_complete.contains("schedule_import")) {
+            if (energy_price.contains("schedule_import")) {
                 energy_complete["schedule_import"] =
-                    merge_price_into_schedule(energy["schedule_import"], energy_price["optional:schedule_import"]);
+                    merge_price_into_schedule(energy.at("schedule_import"), energy_price.at("schedule_import"));
             }
         }
 
