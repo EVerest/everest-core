@@ -45,18 +45,19 @@ async function fetch_tibber_api_data(mod) {
     let tomorrow;
 
     // validate input from tibber
-    if (Object.prototype.hasOwnProperty.call(response, 'data') &&
-      Object.prototype.hasOwnProperty.call(response.data, 'data') &&
-      Object.prototype.hasOwnProperty.call(response.data.data, 'viewer') &&
-      Object.prototype.hasOwnProperty.call(response.data.data.viewer, 'homes') &&
-      Array.isArray(response.data.data.viewer.homes) &&
-      !(response.data.data.viewer.homes[0] === 'undefined') &&
-      Object.prototype.hasOwnProperty.call(response.data.data.viewer.homes[0], 'currentSubscription') &&
-      Object.prototype.hasOwnProperty.call(response.data.data.viewer.homes[0].currentSubscription, 'priceInfo') &&
-      Object.prototype.hasOwnProperty.call(response.data.data.viewer.homes[0].currentSubscription.priceInfo, 'today') &&
-      Array.isArray(response.data.data.viewer.homes[0].currentSubscription.priceInfo.today) &&
-      Object.prototype.hasOwnProperty.call(response.data.data.viewer.homes[0].currentSubscription.priceInfo, 'tomorrow') &&
-      Array.isArray(response.data.data.viewer.homes[0].currentSubscription.priceInfo.tomorrow)) {
+    if (Object.prototype.hasOwnProperty.call(response, 'data')
+      && Object.prototype.hasOwnProperty.call(response.data, 'data')
+      && Object.prototype.hasOwnProperty.call(response.data.data, 'viewer')
+      && Object.prototype.hasOwnProperty.call(response.data.data.viewer, 'homes')
+      && Array.isArray(response.data.data.viewer.homes)
+      && !(response.data.data.viewer.homes[0] === 'undefined')
+      && Object.prototype.hasOwnProperty.call(response.data.data.viewer.homes[0], 'currentSubscription')
+      && Object.prototype.hasOwnProperty.call(response.data.data.viewer.homes[0].currentSubscription, 'priceInfo')
+      && Object.prototype.hasOwnProperty.call(response.data.data.viewer.homes[0].currentSubscription.priceInfo, 'today')
+      && Array.isArray(response.data.data.viewer.homes[0].currentSubscription.priceInfo.today)
+      && Object.prototype.hasOwnProperty.call(
+        response.data.data.viewer.homes[0].currentSubscription.priceInfo, 'tomorrow')
+      && Array.isArray(response.data.data.viewer.homes[0].currentSubscription.priceInfo.tomorrow)) {
       today = response.data.data.viewer.homes[0].currentSubscription.priceInfo.today;
       tomorrow = response.data.data.viewer.homes[0].currentSubscription.priceInfo.tomorrow;
     } else {
@@ -70,18 +71,19 @@ async function fetch_tibber_api_data(mod) {
 
     for (const response_entry of today.concat(tomorrow)) {
       // validate input from tibber
-      if (Object.prototype.hasOwnProperty.call(response_entry, 'startsAt') &&
-        Object.prototype.hasOwnProperty.call(response_entry, 'total') &&
-        Object.prototype.hasOwnProperty.call(response_entry, 'currency') &&
-        typeof response_entry.currency === 'string' &&
-        response_entry.currency.length === 3 &&
-        typeof response_entry.total === 'number' &&
-        typeof response_entry.startsAt === 'string') {
+      if (Object.prototype.hasOwnProperty.call(response_entry, 'startsAt')
+        && Object.prototype.hasOwnProperty.call(response_entry, 'total')
+        && Object.prototype.hasOwnProperty.call(response_entry, 'currency')
+        && typeof response_entry.currency === 'string'
+        && response_entry.currency.length === 3
+        && typeof response_entry.total === 'number'
+        && typeof response_entry.startsAt === 'string') {
         // create one entry for the schedule
         let entry = {};
         entry['timestamp'] = new Date(response_entry.startsAt).toISOString();
         entry['price_per_kwh'] = {
-          // Tibber returns the total energy cost including taxes and fees. Add constant offset if needed for other costs.
+          // Tibber returns the total energy cost including taxes and fees. 
+          // Add constant offset if needed for other costs.
           value: response_entry.total + mod.config.impl.main.additional_cost_per_kwh,
           currency: response_entry.currency
         }
