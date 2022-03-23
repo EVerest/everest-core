@@ -2,6 +2,9 @@ set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined")
 
 list(APPEND EVEREST_MODULES_LIST
     Charger
+    EnergyManager
+    EnergyNode
+    EvseManager
     EvseSlac
     Example
     ExampleUser
@@ -12,21 +15,14 @@ list(APPEND EVEREST_MODULES_LIST
     JsForecastDotSolar
     JsPN532TokenProvider
     JsRiseV2G
-    JsSimPowerMeter
     JsTibber
     JsYetiSimulator
     ModbusMeter
     OCPP
-    Power
-    PowerIn
-    Solar
+    Store
     SunspecReader
     SunspecScanner
-    Store
     YetiDriver
-    EvseManager
-    EnergyNode
-    EnergyManager
 )
 
 set(EVEREST_MODULES "")
