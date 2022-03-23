@@ -36,12 +36,13 @@ async function fetch_tibber_api_data(mod) {
   }
   await axios.post("https://api.tibber.com/v1-beta/gql", postData, requestConfig).then((response) => {
 
-    if (response === undefined || response.status === undefined || response.status != 200) {
+    if (response === undefined || response.status === undefined || response.status !== 200) {
       evlog.error('Could not retrieve response data from Tibber API');
       return;
     }
     //evlog.error(response);
-    var today, tomorrow;
+    var today;
+    var tomorrow;
 
     // validate input from tibber
     if (response.hasOwnProperty("data") &&
