@@ -55,8 +55,7 @@ async function fetch_tibber_api_data(mod) {
       && Object.prototype.hasOwnProperty.call(response.data.data.viewer.homes[0].currentSubscription, 'priceInfo')
       && Object.prototype.hasOwnProperty.call(response.data.data.viewer.homes[0].currentSubscription.priceInfo, 'today')
       && Array.isArray(response.data.data.viewer.homes[0].currentSubscription.priceInfo.today)
-      && Object.prototype.hasOwnProperty.call(
-        response.data.data.viewer.homes[0].currentSubscription.priceInfo, 'tomorrow')
+      && Object.prototype.hasOwnProperty.call(response.data.data.viewer.homes[0].currentSubscription.priceInfo, 'tomorrow')
       && Array.isArray(response.data.data.viewer.homes[0].currentSubscription.priceInfo.tomorrow)) {
       today = response.data.data.viewer.homes[0].currentSubscription.priceInfo.today;
       tomorrow = response.data.data.viewer.homes[0].currentSubscription.priceInfo.tomorrow;
@@ -82,7 +81,7 @@ async function fetch_tibber_api_data(mod) {
         let entry = {};
         entry['timestamp'] = new Date(response_entry.startsAt).toISOString();
         entry['price_per_kwh'] = {
-          // Tibber returns the total energy cost including taxes and fees. 
+          // Tibber returns the total energy cost including taxes and fees.
           // Add constant offset if needed for other costs.
           value: response_entry.total + mod.config.impl.main.additional_cost_per_kwh,
           currency: response_entry.currency
