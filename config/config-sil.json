@@ -1,21 +1,4 @@
 {
-    "sma_modbus_meter": {
-        "module": "JsSimPowerMeter",
-        "config_implementation": {
-            "main": {
-                "sim_value": 5000,
-                "update_interval": 1000
-            }
-        },
-        "connections": {
-            "yetipowermeter": [ 
-                {
-                    "module_id": "yeti_driver",
-                    "implementation_id": "powermeter"
-                }
-            ]
-        }
-    },
     "iso15118_charger": {
         "module": "JsRiseV2G",
         "config_implementation": {
