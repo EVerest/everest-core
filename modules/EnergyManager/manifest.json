@@ -1,0 +1,21 @@
+{
+    "description": "This module is the global Energy Manager for all EVSE/Charging stations in this building",
+    "provides": {
+        "main": {
+            "description": "Main interface of the energy manager",
+            "interface": "energy_manager"
+        }
+    },
+    "requires": {
+        "energy_trunk": {
+            "interface": "energy"
+        }
+    },
+    "enable_external_mqtt": false,
+    "metadata": {
+        "license": "https://opensource.org/licenses/Apache-2.0",
+        "authors": [
+            "Cornelius Claussen"
+        ]
+    }
+}

@@ -45,7 +45,7 @@ void board_support_ACImpl::init() {
     // FIXME
     // Everything used here should be moved out of debug update in protobuf
     mod->serial.signalDebugUpdate.connect([this](DebugUpdate d) {
-        publish_nr_of_phases_available((d.use_three_phases?3:1)); 
+        publish_nr_of_phases_available((d.use_three_phases ? 3 : 1));
 
         json telemetry;
         telemetry["temperature"] = d.cpu_temperature;
@@ -56,48 +56,59 @@ void board_support_ACImpl::init() {
         telemetry["relais_on"] = d.relais_on;
 
         publish_telemetry(telemetry);
-   });
-
+    });
 }
 
 void board_support_ACImpl::ready() {
-
 }
 
-void board_support_ACImpl::handle_setup(bool& three_phases, bool& has_ventilation, std::string& country_code, bool& rcd_enabled){
+void board_support_ACImpl::handle_setup(bool& three_phases, bool& has_ventilation, std::string& country_code,
+                                        bool& rcd_enabled) {
     mod->serial.setCountryCode(country_code.c_str());
     mod->serial.setHasVentilation(has_ventilation);
     mod->serial.setThreePhases(three_phases);
     mod->serial.enableRCD(rcd_enabled);
 };
 
-void board_support_ACImpl::handle_enable(bool& value){
-    if (value) mod->serial.enable();
-    else mod->serial.disable();
+void board_support_ACImpl::handle_enable(bool& value) {
+    if (value)
+        mod->serial.enable();
+    else
+        mod->serial.disable();
 };
 
-void board_support_ACImpl::handle_pwm_on(double& value){
-    mod->serial.setPWM(1,value);
+void board_support_ACImpl::handle_pwm_on(double& value) {
+    mod->serial.setPWM(1, value);
 };
 
-void board_support_ACImpl::handle_pwm_off(){
-    mod->serial.setPWM(0,0.);
+void board_support_ACImpl::handle_pwm_off() {
+    mod->serial.setPWM(0, 0.);
 };
 
-void board_support_ACImpl::handle_pwm_F(){
-    mod->serial.setPWM(2,0.);
+void board_support_ACImpl::handle_pwm_F() {
+    mod->serial.setPWM(2, 0.);
 };
 
-void board_support_ACImpl::handle_allow_power_on(bool& value){
+void board_support_ACImpl::handle_allow_power_on(bool& value) {
     mod->serial.allowPowerOn(value);
 };
 
-bool board_support_ACImpl::handle_force_unlock(){
+bool board_support_ACImpl::handle_force_unlock() {
     return mod->serial.forceUnlock();
 };
 
-void board_support_ACImpl::handle_switch_three_phases_while_charging(bool& value){
+void board_support_ACImpl::handle_switch_three_phases_while_charging(bool& value) {
     mod->serial.switchThreePhasesWhileCharging(value);
+};
+
+Object board_support_ACImpl::handle_get_hw_capabilities() {
+    json caps;
+    caps["max_current_A"] = 32.0;
+    caps["min_current_A"] = 6.0;
+    caps["max_phase_count"] = 3;
+    caps["min_phase_count"] = 1;
+    caps["supports_changing_phases_during_charging"] = true;
+    return caps;
 };
 
 } // namespace board_support
