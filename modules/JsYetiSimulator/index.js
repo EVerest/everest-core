@@ -64,11 +64,11 @@ boot_module(async ({ setup, info, config, mqtt }) => {
   });
   setup.provides.board_support.register.get_hw_capabilities((mod, args) => {
     return ({
-      "max_current_A": 32.0,
-      "min_current_A": 6.0,
-      "max_phase_count": 3,
-      "min_phase_count": 1,
-      "supports_changing_phases_during_charging": true
+      'max_current_A': 32.0,
+      'min_current_A': 6.0,
+      'max_phase_count': 3,
+      'min_phase_count': 1,
+      'supports_changing_phases_during_charging': true
     });
   });
 
@@ -280,33 +280,33 @@ function publish_nr_of_phases_available(mod, n) {
 function event_to_enum(event) {
   switch (event) {
     case Event_CarPluggedIn:
-      return "CarPluggedIn";
+      return 'CarPluggedIn';
     case Event_CarRequestedPower:
-      return "CarRequestedPower";
+      return 'CarRequestedPower';
     case Event_PowerOn:
-      return "PowerOn";
+      return 'PowerOn';
     case Event_PowerOff:
-      return "PowerOff";
+      return 'PowerOff';
     case Event_CarRequestedStopPower:
-      return "CarRequestedStopPower";
+      return 'CarRequestedStopPower';
     case Event_CarUnplugged:
-      return "CarUnplugged";
+      return 'CarUnplugged';
     case Event_Error_E:
-      return "ErrorE";
+      return 'ErrorE';
     case Event_Error_DF:
-      return "ErrorDF";
+      return 'ErrorDF';
     case Event_Error_Relais:
-      return "ErrorRelais";
+      return 'ErrorRelais';
     case Event_Error_RCD:
-      return "ErrorRCD";
+      return 'ErrorRCD';
     case Event_Error_VentilationNotAvailable:
-      return "VentilationNotAvailable";
+      return 'VentilationNotAvailable';
     case Event_RestartMatching:
-      return "RestartMatching";
+      return 'RestartMatching';
     case Event_PermanentFault:
-      return "PermanentFault";
+      return 'PermanentFault';
     default:
-      return "invalid";
+      return 'invalid';
   }
 }
 
@@ -509,35 +509,35 @@ function reset_powermeter(mod) {
 function stateToString(state) {
   switch (state) {
     case STATE_DISABLED:
-      return "Disabled";
+      return 'Disabled';
     break;
     case STATE_A:
-      return "A";
+      return 'A';
     break;
     case STATE_B:
-      return "B";
+      return 'B';
     break;
     case STATE_C:
-      return "C";
+      return 'C';
     break;
     case STATE_D:
-      return "D";
+      return 'D';
     break;
     case STATE_E:
-      return "E";
+      return 'E';
     break;
     case STATE_F:
-      return "F";
+      return 'F';
     break;
     case STATE_DF:
-      return "DF";
+      return 'DF';
     break;
   }
 }*/
 function power_meter_external(p) {
   return ({
     timestamp: p.time_stamp,
-    meter_id: "YETI_POWERMETER",
+    meter_id: 'YETI_POWERMETER',
     phase_seq_error: false,
     energy_Wh_import: {
       total: p.totalWattHr,
@@ -590,11 +590,11 @@ function publish_powermeter(mod) {
 function publish_keepalive(mod) {
   mod.mqtt.publish('/external/keepalive_json', JSON.stringify(
     {
-      "hw_revision": 0, "hw_type": 0,
-      "protocol_version_major": 0,
-      "protocol_version_minor": 1,
-      "sw_version_string": "simulation",
-      "time_stamp": Math.round(new Date().getTime() / 1000)
+      'hw_revision': 0, 'hw_type': 0,
+      'protocol_version_major': 0,
+      'protocol_version_minor': 1,
+      'sw_version_string': 'simulation',
+      'time_stamp': Math.round(new Date().getTime() / 1000)
     }
   ));
 }
@@ -602,12 +602,12 @@ function publish_keepalive(mod) {
 
 function publish_telemetry(mod) {
   mod.provides.board_support.publish.telemetry({
-    "temperature": mod.powermeter.tempL1,
-    "fan_rpm": 1500.0,
-    "supply_voltage_12V": 12.01,
-    "supply_voltage_minus_12V": -11.8,
-    "rcd_current": mod.rcd_current,
-    "relais_on": mod.relais_on
+    'temperature': mod.powermeter.tempL1,
+    'fan_rpm': 1500.0,
+    'supply_voltage_12V': 12.01,
+    'supply_voltage_minus_12V': -11.8,
+    'rcd_current': mod.rcd_current,
+    'relais_on': mod.relais_on
   });
 }
 
@@ -617,7 +617,7 @@ function publish_yeti_extras(mod) {
   mod.provides.yeti_extras.publish.hw_revision(0);
   mod.provides.yeti_extras.publish.protocol_version_major(0);
   mod.provides.yeti_extras.publish.protocol_version_minor(1);
-  mod.provides.yeti_extras.publish.sw_version_string("simulation");
+  mod.provides.yeti_extras.publish.sw_version_string('simulation');
 }
 
 function publish_yeti_simulation_control(mod) {
