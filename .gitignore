@@ -1,3 +1,4 @@
 *build
 *build-cross
+*.cache
 workspace.yaml

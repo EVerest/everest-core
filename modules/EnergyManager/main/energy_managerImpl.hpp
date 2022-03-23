@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifndef MAIN_POWER_IN_IMPL_HPP
-#define MAIN_POWER_IN_IMPL_HPP
+#ifndef MAIN_ENERGY_MANAGER_IMPL_HPP
+#define MAIN_ENERGY_MANAGER_IMPL_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
 // template version 1
 //
 
-#include <generated/power_in/Implementation.hpp>
+#include <generated/energy_manager/Implementation.hpp>
 
-#include "../PowerIn.hpp"
+#include "../EnergyManager.hpp"
 
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 // insert your custom include headers here
@@ -19,16 +19,13 @@
 namespace module {
 namespace main {
 
-struct Conf {
-    double max_current;
-    int phase_count;
-};
+struct Conf {};
 
-class power_inImpl : public power_inImplBase {
+class energy_managerImpl : public energy_managerImplBase {
 public:
-    power_inImpl() = delete;
-    power_inImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<PowerIn>& mod, Conf& config) :
-        power_inImplBase(ev, "main"), mod(mod), config(config){};
+    energy_managerImpl() = delete;
+    energy_managerImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<EnergyManager>& mod, Conf& config) :
+        energy_managerImplBase(ev, "main"), mod(mod), config(config){};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here
@@ -42,7 +39,7 @@ protected:
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
 
 private:
-    const Everest::PtrContainer<PowerIn>& mod;
+    const Everest::PtrContainer<EnergyManager>& mod;
     const Conf& config;
 
     virtual void init() override;
@@ -60,4 +57,4 @@ private:
 } // namespace main
 } // namespace module
 
-#endif // MAIN_POWER_IN_IMPL_HPP
+#endif // MAIN_ENERGY_MANAGER_IMPL_HPP
