@@ -74,7 +74,7 @@ async function fetch_tibber_api_data(mod) {
         Object.prototype.hasOwnProperty.call(response_entry, 'total') &&
         Object.prototype.hasOwnProperty.call(response_entry, 'currency') &&
         typeof response_entry.currency === 'string' &&
-        response_entry.currency.length == 3 &&
+        response_entry.currency.length === 3 &&
         typeof response_entry.total === 'number' &&
         typeof response_entry.startsAt === 'string') {
         // create one entry for the schedule
