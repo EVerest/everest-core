@@ -27,6 +27,19 @@ void energyImpl::init() {
     initializeEnergyObject();
     int count = 0;
 
+    {
+       std::lock_guard<std::mutex> lock(this->energy_mutex);
+       json schedule_entry;
+       schedule_entry["timestamp"] = to_rfc3339(std::chrono::system_clock::now());
+       schedule_entry["capabilities"] = json::object();
+       schedule_entry["capabilities"]["limit_type"] = "Hard";
+       schedule_entry["capabilities"]["ac_current_A"] = json::object();
+       schedule_entry["capabilities"]["ac_current_A"]["max_current_A"] = mod->config.fuse_limit_A;
+       schedule_entry["capabilities"]["ac_current_A"]["max_phase_count"] = mod->config.phase_count;
+       energy["schedule_import"] = json::array({});
+       energy["schedule_import"].push_back(schedule_entry);
+    }
+
     for (auto& entry : mod->r_energy_consumer) {
         entry->subscribe_energy([this](json e) {
             // Received new energy object from a child. Update in the cached object and republish.
@@ -56,16 +69,6 @@ void energyImpl::init() {
                 }
                 // EVLOG(error) << "################### energy[]: " << energy;
                 // EVLOG(error) << "################### e[]: " << e;
-
-                json schedule_entry;
-                schedule_entry["timestamp"] = to_rfc3339(std::chrono::system_clock::now());
-                schedule_entry["capabilities"] = json::object();
-                schedule_entry["capabilities"]["limit_type"] = "Hard";
-                schedule_entry["capabilities"]["ac_current_A"] = json::object();
-                schedule_entry["capabilities"]["ac_current_A"]["max_current_A"] = mod->config.fuse_limit_A;
-                schedule_entry["capabilities"]["ac_current_A"]["max_phase_count"] = mod->config.phase_count;
-                energy["schedule_import"] = json::array({});
-                energy["schedule_import"].push_back(schedule_entry);
             }
 
             publish_complete_energy_object();
