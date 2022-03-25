@@ -107,6 +107,7 @@ void evse_managerImpl::ready() {
     mod->charger->signalMaxCurrent.connect([this](float c) {
         mod->mqtt.publish("/external/state/max_current", c);
 
+        limits["uuid"] = mod->info.id;
         limits["max_current"] = c;
         publish_limits(limits);
     });

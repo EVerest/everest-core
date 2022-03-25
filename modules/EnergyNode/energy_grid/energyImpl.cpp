@@ -2,9 +2,6 @@
 // Copyright 2022 - 2022 Pionix GmbH and Contributors to EVerest
 
 #include "energyImpl.hpp"
-#include <boost/uuid/random_generator.hpp>
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_io.hpp>
 #include <chrono>
 #include <date/date.h>
 
@@ -194,7 +191,7 @@ void energyImpl::initializeEnergyObject() {
     energy["node_type"] = "Fuse"; // FIXME: node types need to be figured out
 
     // UUID must be unique also beyond this charging station
-    energy["uuid"] = mod->info.id + "_" + boost::uuids::to_string(boost::uuids::random_generator()());
+    energy["uuid"] = mod->info.id;
 }
 
 } // namespace energy_grid
