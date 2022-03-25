@@ -19,5 +19,5 @@ add_custom_command(
         ${EV_CLI} interface generate-headers --framework-dir ${everest-framework_SOURCE_DIR} --output-dir ${GENERATED_HEADER_DIR}/generated
     COMMAND
         ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/.interfaces_generated
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )

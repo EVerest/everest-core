@@ -48,7 +48,7 @@ endforeach()
 
 add_custom_target(force_update_all_modules
     ${FORCE_UPDATE_COMMANDS}
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
 
 macro(cpp_module_setup)
@@ -63,7 +63,7 @@ macro(cpp_module_setup)
             ${EV_CLI} module generate-loader --framework-dir ${everest-framework_SOURCE_DIR} --output-dir ${GENERATED_MODULE_DIR} ${MODULE_NAME}
         DEPENDS
             manifest.json
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
         COMMENT
             "Generating ld-ev for module ${MODULE_NAME}"
     )
