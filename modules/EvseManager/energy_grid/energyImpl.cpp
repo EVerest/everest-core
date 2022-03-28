@@ -94,10 +94,10 @@ void energyImpl::ready() {
     json hw_caps = mod->get_hw_capabilities();
     json schedule_entry = json::object();
     schedule_entry["timestamp"] = to_rfc3339(std::chrono::system_clock::now());
-    schedule_entry["capabilities"] = json::object();
-    schedule_entry["capabilities"]["limit_type"] = "Hard";
-    schedule_entry["capabilities"]["ac_current_A"] = json::object();
-    schedule_entry["capabilities"]["ac_current_A"] = hw_caps;
+    schedule_entry["request_parameters"] = json::object();
+    schedule_entry["request_parameters"]["limit_type"] = "Hard";
+    schedule_entry["request_parameters"]["ac_current_A"] = json::object();
+    schedule_entry["request_parameters"]["ac_current_A"] = hw_caps;
 
     {
         std::lock_guard<std::mutex> lock(this->energy_mutex);

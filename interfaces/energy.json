@@ -269,7 +269,7 @@
                         "type": "object",
                         "required": [
                             "timestamp",
-                            "capabilities"
+                            "request_parameters"
                         ],
                         "properties": {
                             "timestamp": {
@@ -277,7 +277,7 @@
                                 "type": "string",
                                 "format": "date-time"
                             },
-                            "capabilities": {
+                            "request_parameters": {
                                 "description": "Limit for this timestamp",
                                 "type": "object",
                                 "required": [

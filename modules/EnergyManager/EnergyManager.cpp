@@ -168,10 +168,10 @@ float EnergyManager::get_current_limit_from_energy_object(const json& limit_obje
     bool limit_object_is_complete_flag = false;
     float max_current_A = 80.0f;
 
-    if (limit_object.contains("capabilities")) {
-        if (limit_object.at("capabilities").contains("ac_current_A")) {
-            if (limit_object.at("capabilities").at("ac_current_A").contains("max_current_A")) {
-                max_current_A = limit_object.at("capabilities").at("ac_current_A").at("max_current_A");
+    if (limit_object.contains("request_parameters")) {
+        if (limit_object.at("request_parameters").contains("ac_current_A")) {
+            if (limit_object.at("request_parameters").at("ac_current_A").contains("max_current_A")) {
+                max_current_A = limit_object.at("request_parameters").at("ac_current_A").at("max_current_A");
                 limit_object_is_complete_flag = true;
             }
         }
