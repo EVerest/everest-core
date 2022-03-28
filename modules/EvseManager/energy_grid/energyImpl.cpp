@@ -71,7 +71,7 @@ void energyImpl::init() {
 
         if (sMode == "manual_limits") {
             _price_limit = 0.0f;
-            EVLOG(error) << "Manual limits optimizer mode set";
+            EVLOG(debug) << "Manual limits optimizer mode set";
             if (energy.contains("optimizer_target")) {
                 {
                     std::lock_guard<std::mutex> lock(this->energy_mutex);
@@ -80,7 +80,7 @@ void energyImpl::init() {
             }
         } else if (sMode == "price_driven") {
             _price_limit = _price_limit_previous_value;
-            EVLOG(error) << "Price-driven optimizer mode set";
+            EVLOG(debug) << "Price-driven optimizer mode set";
             {
                 std::lock_guard<std::mutex> lock(this->energy_mutex);
                 energy["optimizer_target"] = json::object();
