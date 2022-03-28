@@ -80,57 +80,25 @@ void EnergyManager::optimize_one_level(json& energy, Array& results,
             number_children = energy["children"].size();
         }    
 
-        int children_requesting_power = 0;
         if (number_children > 0) { 
             // EVLOG(error) << "object energy: " << energy; // TODO(LAD): remove me
 
             // get current price / kWh
             double current_price_per_kwh = INVALID_PRICE_PER_KWH;
-            if (energy.contains("schedule_import")) {
-                if (!energy.at("schedule_import").is_null()) {
-                    // get current timeslot from price import schedule
-                    auto schedule_at_current_timeslot = get_sub_element_from_schedule_at_time(energy.at("schedule_import"), timepoint_now);
-                    if (schedule_at_current_timeslot.contains("price_per_kwh")) {
-                        if (schedule_at_current_timeslot.at("price_per_kwh").contains("currency")) {
-                            // currency: EUR
-                            if (schedule_at_current_timeslot.at("price_per_kwh").at("currency") == "EUR") {
-                                if (schedule_at_current_timeslot.at("price_per_kwh").contains("value")) {
-                                    current_price_per_kwh = (double)schedule_at_current_timeslot.at("price_per_kwh").at("value");
-                                }
-                            } else {
-                                // error: wrong currency / currency not (yet) implemented
-                                EVLOG(error) << "Currency \"" << schedule_at_current_timeslot.at("price_per_kwh").at("currency") << "\" not recognized/implemented!!!";
-                            }
-                            // add other currencies here
-                        }
-                    }
-                }
-            }
+            current_price_per_kwh = get_currently_valid_price_per_kwh(energy, timepoint_now);
 
             // check if any children have price_limits set
-            for (json& child : energy["children"]) {
-                // check if this child has price_limits set
-                if (child.contains("optimizer_target")) {
-                    if (child.at("optimizer_target").contains("price_limit")) {
-                        // check if price limits are valid now
-                        if (current_price_per_kwh <= child.at("optimizer_target").at("price_limit")) {
-                            // if price limits are valid now, increase children_requesting_power
-                            children_requesting_power++;
-                            child["requesting_power"] = true;
-                        }
-                        child["optimizer_target_is_set"] = true;
-                    } else {
-                        child["optimizer_target_is_set"] = false;
-                    }
-                } else {
-                    child["optimizer_target_is_set"] = false;
-                }
+            int children_requesting_power = check_for_children_requesting_power(energy, current_price_per_kwh);
 
-                // if child has no optimizer target set, assume that child is requesting power continuously
-                if (child.at("optimizer_target_is_set") == false) {
-                    child["requesting_power"] = true;
-                }
-            }
+            double equal_current_per_child = max_current_for_next_level_A / children_requesting_power;
+            double sum_current_for_non_limited_children = 0;
+
+            // EVLOG(error) << "energy[children]: " << energy["children"];
+            // for (json& child : energy["children"]) {
+            //     if (child.at()) {
+
+            //     }
+            // }
 
             // set limit_from_parent on each child and optimize it
             for (json& child : energy["children"]) {
@@ -220,6 +188,64 @@ float EnergyManager::get_current_limit_from_energy_object(const json& limit_obje
     }
 
     return max_current_A;
+}
+
+double EnergyManager::get_currently_valid_price_per_kwh(json& energy_object, const std::chrono::system_clock::time_point timepoint_now){
+    
+    double currently_valid_price_per_kwh = INVALID_PRICE_PER_KWH;
+
+    if (energy_object.contains("schedule_import")) {
+        if (!energy_object.at("schedule_import").is_null()) {
+            // get current timeslot from price import schedule
+            auto schedule_at_current_timeslot = get_sub_element_from_schedule_at_time(energy_object.at("schedule_import"), timepoint_now);
+            if (schedule_at_current_timeslot.contains("price_per_kwh")) {
+                if (schedule_at_current_timeslot.at("price_per_kwh").contains("currency")) {
+                    // currency: EUR
+                    if (schedule_at_current_timeslot.at("price_per_kwh").at("currency") == "EUR") {
+                        if (schedule_at_current_timeslot.at("price_per_kwh").contains("value")) {
+                            currently_valid_price_per_kwh = (double)schedule_at_current_timeslot.at("price_per_kwh").at("value");
+                        }
+                    } else {
+                        // error: wrong currency / currency not (yet) implemented
+                        EVLOG(error) << "Currency \"" << schedule_at_current_timeslot.at("price_per_kwh").at("currency") << "\" not recognized/implemented!!!";
+                    }
+                    // add other currencies here
+                }
+            }
+        }
+    }
+
+    return currently_valid_price_per_kwh;
+}
+
+int EnergyManager::check_for_children_requesting_power(json& energy_object, const double current_price_per_kwh){
+    int children_requesting_power = 0;
+
+    for (json& child : energy_object["children"]) {
+        // check if this child has price_limits set
+        if (child.contains("optimizer_target")) {
+            if (child.at("optimizer_target").contains("price_limit")) {
+                // check if price limits are valid now
+                if (current_price_per_kwh <= child.at("optimizer_target").at("price_limit")) {
+                    // if price limits are valid now, increase children_requesting_power
+                    children_requesting_power++;
+                    child["requesting_power"] = true;
+                }
+                child["optimizer_target_is_set"] = true;
+            } else {
+                child["optimizer_target_is_set"] = false;
+            }
+        } else {
+            child["optimizer_target_is_set"] = false;
+        }
+
+        // if child has no optimizer target set, assume that child is requesting power continuously (manual limit)
+        if (child.at("optimizer_target_is_set") == false) {
+            child["requesting_power"] = true;
+        }
+    }
+
+    return children_requesting_power;
 }
 
 } // namespace module
