@@ -17,8 +17,6 @@
 #include <utils/conversions.hpp>
 
 namespace Everest {
-sigslot::signal<std::string, json> signalPublish;
-const auto remote_cmd_ack_timeout_seconds = 4;
 const auto remote_cmd_res_timeout_seconds = 300;
 
 Everest::Everest(std::string module_id, Config config, bool validate_data_with_schema,
@@ -26,7 +24,6 @@ Everest::Everest(std::string module_id, Config config, bool validate_data_with_s
     mqtt_abstraction(MQTTAbstraction::get_instance(mqtt_server_address, mqtt_server_port)),
     config(std::move(config)),
     module_id(std::move(module_id)),
-    remote_cmd_ack_timeout(remote_cmd_ack_timeout_seconds),
     remote_cmd_res_timeout(remote_cmd_res_timeout_seconds),
     validate_data_with_schema(validate_data_with_schema) {
     BOOST_LOG_FUNCTION();
@@ -41,10 +38,12 @@ Everest::Everest(std::string module_id, Config config, bool validate_data_with_s
     this->on_ready = nullptr;
 
     // register handler for global ready signal
-    std::shared_ptr<Handler> everest_ready = this->mqtt_abstraction.register_handler(
-        "everest/ready", [this](auto&& PH1) { handle_ready(std::forward<decltype(PH1)>(PH1)); });
+    Handler handle_ready_wrapper = [this](json data) { this->handle_ready(data); };
+    std::shared_ptr<TypedHandler> everest_ready =
+        std::make_shared<TypedHandler>(HandlerType::ExternalMQTT, std::make_shared<Handler>(handle_ready_wrapper));
+    this->mqtt_abstraction.register_handler("everest/ready", everest_ready, false, QOS::QOS2);
 
-    signalPublish.connect(&Everest::internal_publish, this);
+    this->publish_metadata();
 }
 
 void Everest::mainloop() {
@@ -55,18 +54,38 @@ void Everest::mainloop() {
 
 void Everest::heartbeat() {
     BOOST_LOG_FUNCTION();
-    std::ostringstream heartbeat_topic_stream;
-    heartbeat_topic_stream << this->config.mqtt_module_prefix(this->module_id) << "/heartbeat";
-    std::string heartbeat_topic = heartbeat_topic_stream.str();
+    const auto heartbeat_topic = fmt::format("{}/heartbeat", this->config.mqtt_module_prefix(this->module_id));
 
     using namespace date;
 
     while (this->ready_received) {
         std::ostringstream now;
         now << std::chrono::system_clock::now();
-        this->internal_publish(heartbeat_topic, json(now.str()));
+        this->mqtt_abstraction.publish(heartbeat_topic, json(now.str()));
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
+}
+
+void Everest::publish_metadata() {
+    BOOST_LOG_FUNCTION();
+
+    auto module_info = this->config.get_module_info(this->module_id);
+    auto manifest = this->config.get_manifests()[module_info.name];
+
+    json metadata = json({});
+    metadata["module"] = module_info.name;
+    if (manifest.contains("provides")) {
+        metadata["provides"] = json({});
+
+        for (auto& provides : manifest.at("provides").items()) {
+            metadata["provides"][provides.key()] = json({});
+            metadata["provides"][provides.key()]["interface"] = provides.value().at("interface");
+        }
+    }
+
+    const auto metadata_topic = fmt::format("{}/metadata", this->config.mqtt_module_prefix(this->module_id));
+
+    this->mqtt_abstraction.publish(metadata_topic, metadata);
 }
 
 void Everest::register_on_ready_handler(const std::function<void()>& handler) {
@@ -172,37 +191,8 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
 
     std::string call_id = boost::uuids::to_string(boost::uuids::random_generator()());
 
-    // handle acks by registering an mqtt handler on the ack-topic
-    std::ostringstream ack_topic_str;
-    ack_topic_str << this->config.mqtt_prefix(connection["module_id"], connection["implementation_id"]) << "/ack/"
-                  << cmd_name;
-    std::string ack_topic = ack_topic_str.str();
-
-    std::promise<bool> ack_promise;
-    std::future<bool> ack_future = ack_promise.get_future();
-
-    Handler ack_handler = [this, &ack_promise, call_id, connection, cmd_name](json data) {
-        if (data["id"] != call_id) {
-            EVLOG(debug) << fmt::format("ACK: data_id != call_id ({} != {})", data["id"], call_id);
-            return;
-        }
-
-        EVLOG(debug) << fmt::format(
-            "Incoming ack {} for {}->{}()", data["id"],
-            this->config.printable_identifier(connection["module_id"], connection["implementation_id"]), cmd_name);
-
-        ack_promise.set_value(true);
-    };
-
-    Token ack_token = this->mqtt_abstraction.register_handler(ack_topic, ack_handler, true);
-
     std::promise<json> res_promise;
     std::future<json> res_future = res_promise.get_future();
-
-    std::ostringstream res_topic_str;
-    res_topic_str << this->config.mqtt_prefix(connection["module_id"], connection["implementation_id"]) << "/res/"
-                  << cmd_name;
-    std::string res_topic = res_topic_str.str();
 
     Handler res_handler = [this, &res_promise, call_id, connection, cmd_name](json data) {
         if (data["id"] != call_id) {
@@ -219,33 +209,19 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
             json::object({{"retval", data["retval"]}, {"origin", data["origin"]}, {"id", data["id"]}}));
     };
 
-    Token res_token = this->mqtt_abstraction.register_handler(res_topic, res_handler, true);
+    const auto cmd_topic =
+        fmt::format("{}/cmd", this->config.mqtt_prefix(connection["module_id"], connection["implementation_id"]));
 
-    // call cmd (e.g. publish cmd via mqtt on the cmd-topic)
-    std::ostringstream cmd_topic;
-    cmd_topic << this->config.mqtt_prefix(connection["module_id"], connection["implementation_id"]) << "/cmd/"
-              << cmd_name;
-    json cmd_publish_data = json({});
-    cmd_publish_data["id"] = call_id;
-    cmd_publish_data["args"] = json_args;
-    cmd_publish_data["origin"] = this->module_id;
+    std::shared_ptr<TypedHandler> res_token =
+        std::make_shared<TypedHandler>(cmd_name, call_id, HandlerType::Result, std::make_shared<Handler>(res_handler));
+    this->mqtt_abstraction.register_handler(cmd_topic, res_token, true, QOS::QOS2);
 
-    this->mqtt_abstraction.publish(cmd_topic.str(), cmd_publish_data);
+    json cmd_publish_data =
+        json::object({{"name", cmd_name},
+                      {"type", "call"},
+                      {"data", json::object({{"id", call_id}, {"args", json_args}, {"origin", this->module_id}})}});
 
-    // wait for ack future
-    std::chrono::system_clock::time_point ack_wait = std::chrono::system_clock::now() + this->remote_cmd_ack_timeout;
-    std::future_status ack_future_status;
-    do {
-        ack_future_status = ack_future.wait_until(ack_wait);
-    } while (ack_future_status == std::future_status::deferred);
-    if (ack_future_status == std::future_status::timeout) {
-        EVLOG_AND_THROW(EverestTimeoutError(fmt::format(
-            "Timeout while waiting for ack of {}->{}()",
-            this->config.printable_identifier(connection["module_id"], connection["implementation_id"]), cmd_name)));
-    } else if (ack_future_status == std::future_status::ready) {
-        EVLOG(debug) << "ack future ready";
-    }
-    this->mqtt_abstraction.unregister_handler(ack_topic, ack_token);
+    this->mqtt_abstraction.publish(cmd_topic, cmd_publish_data);
 
     // wait for result future
     std::chrono::system_clock::time_point res_wait = std::chrono::system_clock::now() + this->remote_cmd_res_timeout;
@@ -263,7 +239,7 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
         EVLOG(debug) << "res future ready";
         result = res_future.get();
     }
-    this->mqtt_abstraction.unregister_handler(res_topic, res_token);
+    this->mqtt_abstraction.unregister_handler(cmd_topic, res_token);
 
     return result;
 }
@@ -305,9 +281,11 @@ void Everest::publish_var(const std::string& impl_id, const std::string& var_nam
         }
     }
 
-    std::ostringstream topic;
-    topic << this->config.mqtt_prefix(this->module_id, impl_id) << "/var/" << var_name;
-    this->mqtt_abstraction.publish(topic.str(), json_value);
+    const auto var_topic = fmt::format("{}/var", this->config.mqtt_prefix(this->module_id, impl_id));
+
+    json var_publish_data = {{"name", var_name}, {"data", json_value}};
+
+    this->mqtt_abstraction.publish(var_topic, var_publish_data);
 }
 
 void Everest::publish_var(const std::string& impl_id, const std::string& var_name, Value value) {
@@ -359,12 +337,12 @@ void Everest::subscribe_var(const Requirement& req, const std::string& var_name,
         callback(data);
     };
 
-    std::ostringstream topic;
-    topic << this->config.mqtt_prefix(requirement_module_id, requirement_impl_id) << "/var/" << var_name;
-    EVLOG(debug) << fmt::format("Registering mqtt var handler for '{}'...", topic.str());
+    const auto var_topic = fmt::format("{}/var", this->config.mqtt_prefix(requirement_module_id, requirement_impl_id));
 
     // TODO(kai): multiple subscription should be perfectly fine here!
-    Token token = this->mqtt_abstraction.register_handler(topic.str(), handler, true);
+    std::shared_ptr<TypedHandler> token =
+        std::make_shared<TypedHandler>(var_name, HandlerType::SubscribeVar, std::make_shared<Handler>(handler));
+    this->mqtt_abstraction.register_handler(var_topic, token, true, QOS::QOS2);
 }
 
 void Everest::subscribe_var(const Requirement& req, const std::string& var_name, const ValueCallback& callback) {
@@ -389,13 +367,6 @@ void Everest::external_mqtt_publish(const std::string& topic, const std::string&
 void Everest::provide_external_mqtt_handler(const std::string& topic, const StringHandler& handler) {
     BOOST_LOG_FUNCTION();
 
-    if (this->registered_external_mqtt_handlers.count(topic) != 0) {
-        EVLOG_AND_THROW(
-            EverestApiError(fmt::format("{}->external_mqtt_handler<{}>: External MQTT Handler for this topic already "
-                                        "registered (you can not register an external MQTT handler twice)!",
-                                        this->config.printable_identifier(this->module_id), topic)));
-    }
-
     // check if external mqtt is enabled
     if (!this->module_manifest.contains("enable_external_mqtt") &&
         this->module_manifest["enable_external_mqtt"] == false) {
@@ -412,17 +383,18 @@ void Everest::provide_external_mqtt_handler(const std::string& topic, const Stri
         handler(data.get<std::string>());
     };
 
-    Token token = this->mqtt_abstraction.register_handler(topic, external_handler, true);
+    std::shared_ptr<TypedHandler> token =
+        std::make_shared<TypedHandler>(HandlerType::ExternalMQTT, std::make_shared<Handler>(external_handler));
+    this->mqtt_abstraction.register_handler(topic, token, true, QOS::QOS0);
 }
 
 void Everest::signal_ready() {
     BOOST_LOG_FUNCTION();
 
     EVLOG(info) << "Sending out module ready signal...";
-    std::ostringstream oss;
-    oss << this->config.mqtt_module_prefix(this->module_id) << "/ready";
+    const auto ready_topic = fmt::format("{}/ready", this->config.mqtt_module_prefix(this->module_id));
 
-    this->mqtt_abstraction.publish(oss.str(), json(true));
+    this->mqtt_abstraction.publish(ready_topic, json(true));
 }
 
 ///
@@ -459,7 +431,8 @@ void Everest::handle_ready(json data) {
         on_ready_handler();
     }
 
-    this->heartbeat_thread = std::thread(&Everest::heartbeat, this);
+    // TODO(kai): make heartbeat interval configurable, disable it completely until then
+    // this->heartbeat_thread = std::thread(&Everest::heartbeat, this);
 }
 
 void Everest::provide_cmd(const std::string impl_id, const std::string cmd_name, const JsonCommand handler) {
@@ -474,8 +447,10 @@ void Everest::provide_cmd(const std::string impl_id, const std::string cmd_name,
             this->config.printable_identifier(this->module_id, impl_id), cmd_name)));
     }
 
+    const auto cmd_topic = fmt::format("{}/cmd", this->config.mqtt_prefix(this->module_id, impl_id));
+
     // define command wrapper
-    Handler wrapper = [this, impl_id, cmd_name, handler, cmd_definition](json data) {
+    Handler wrapper = [this, cmd_topic, impl_id, cmd_name, handler, cmd_definition](json data) {
         BOOST_LOG_FUNCTION();
 
         std::set<std::string> arg_names;
@@ -509,53 +484,43 @@ void Everest::provide_cmd(const std::string impl_id, const std::string cmd_name,
             }
         }
 
-        // send back cmd ack: this will acknowledge that the command and
-        // arguments were received and validated successfully
-        std::ostringstream ack_topic;
-        ack_topic << this->config.mqtt_prefix(this->module_id, impl_id) << "/ack/" << cmd_name;
-        json ack_publish_data = json({});
-        ack_publish_data["id"] = data["id"];
-        ack_publish_data["origin"] = this->module_id;
-        this->mqtt_abstraction.publish(ack_topic.str(), ack_publish_data);
-
         // publish results
-        std::ostringstream res_topic;
-        res_topic << this->config.mqtt_prefix(this->module_id, impl_id) << "/res/" << cmd_name;
-        json res_publish_data = json({});
-        res_publish_data["id"] = data["id"];
+        json res_data = json({});
+        res_data["id"] = data["id"];
 
         // call real cmd handler
-        res_publish_data["retval"] = handler(data["args"]);
+        res_data["retval"] = handler(data["args"]);
 
         // check retval agains manifest
         if (this->validate_data_with_schema) {
             try {
                 // only use validator on non-null return types
-                if (!(res_publish_data["retval"].is_null() &&
+                if (!(res_data["retval"].is_null() &&
                       (!cmd_definition.contains("result") || cmd_definition["result"].is_null()))) {
                     json_validator validator(Config::loader, Config::format_checker);
                     validator.set_root_schema(cmd_definition["result"]);
-                    validator.validate(res_publish_data["retval"]);
+                    validator.validate(res_data["retval"]);
                 }
 
             } catch (const std::exception& e) {
                 EVLOG(warning) << fmt::format("Ignoring return value of cmd '{}' because the validation of the result "
                                               "failed: {}\ndefinition: {}\ndata: {}",
-                                              cmd_name, e.what(), cmd_definition, res_publish_data);
+                                              cmd_name, e.what(), cmd_definition, res_data);
                 return;
             }
         }
 
-        EVLOG(debug) << fmt::format("RETVAL: {}", res_publish_data["retval"].dump());
-        res_publish_data["origin"] = this->module_id;
-        this->mqtt_abstraction.publish(res_topic.str(), res_publish_data);
+        EVLOG(debug) << fmt::format("RETVAL: {}", res_data["retval"].dump());
+        res_data["origin"] = this->module_id;
+
+        json res_publish_data = json::object({{"name", cmd_name}, {"type", "result"}, {"data", res_data}});
+
+        this->mqtt_abstraction.publish(cmd_topic, res_publish_data);
     };
 
-    std::ostringstream cmd_topic;
-    cmd_topic << this->config.mqtt_prefix(this->module_id, impl_id) << "/cmd/" << cmd_name;
-    std::string topic_name = cmd_topic.str();
-    EVLOG(debug) << fmt::format("Registering mqtt cmd handler for '{}'...", topic_name);
-    registered_handlers.push_back(this->mqtt_abstraction.register_handler(topic_name, wrapper));
+    auto typed_handler =
+        std::make_shared<TypedHandler>(cmd_name, HandlerType::Call, std::make_shared<Handler>(wrapper));
+    this->mqtt_abstraction.register_handler(cmd_topic, typed_handler, false, QOS::QOS2);
 
     // this list of registered cmds will be used later on to check if all cmds
     // defined in manifest are provided by code
@@ -627,12 +592,6 @@ void Everest::provide_cmd(const cmd& cmd) {
     });
 }
 
-void Everest::internal_publish(const std::string& topic, const json& json) {
-    BOOST_LOG_FUNCTION();
-
-    this->mqtt_abstraction.publish(topic, json);
-}
-
 json Everest::get_cmd_definition(const std::string& module_id, const std::string& impl_id, const std::string& cmd_name,
                                  bool is_call) {
     BOOST_LOG_FUNCTION();
@@ -681,7 +640,6 @@ std::string Everest::check_args(const Arguments& func_args, json manifest_args) 
     for (auto const& func_arg : func_args) {
         auto arg_name = func_arg.first;
         auto arg_types = func_arg.second;
-        std::ostringstream oss;
 
         if (!check_arg(arg_types, manifest_args[arg_name])) {
             return arg_name;

@@ -2,6 +2,7 @@ set(HEADERS
     "${PROJECT_SOURCE_DIR}/include/utils/config.hpp"
     "${PROJECT_SOURCE_DIR}/include/utils/exceptions.hpp"
     "${PROJECT_SOURCE_DIR}/include/utils/logging.hpp"
+    "${PROJECT_SOURCE_DIR}/include/utils/message_queue.hpp"
     "${PROJECT_SOURCE_DIR}/include/utils/mqtt_abstraction.hpp"
     "${PROJECT_SOURCE_DIR}/include/utils/types.hpp"
 	"${PROJECT_SOURCE_DIR}/include/utils/conversions.hpp"
@@ -16,6 +17,7 @@ target_sources(everest
     PRIVATE
         config.cpp
         everest.cpp
+        message_queue.cpp
         mqtt_abstraction.cpp
         mqtt_abstraction_impl.cpp
         conversions.cpp

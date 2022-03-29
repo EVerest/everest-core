@@ -32,13 +32,11 @@ struct cmd {
 class Everest {
 
 private:
-    std::string module_id;
+    MQTTAbstraction& mqtt_abstraction;
     Config config;
+    std::string module_id;
     std::map<std::string, std::set<std::string>> registered_cmds;
-    std::map<std::string, Handler> registered_external_mqtt_handlers;
-    std::vector<Token> registered_handlers;
     bool ready_received;
-    std::chrono::seconds remote_cmd_ack_timeout;
     std::chrono::seconds remote_cmd_res_timeout;
     bool validate_data_with_schema;
     std::unique_ptr<std::function<void()>> on_ready;
@@ -49,13 +47,12 @@ private:
 
     Everest(std::string module_id, Config config, bool validate_data_with_schema,
             const std::string& mqtt_server_address, const std::string& mqtt_server_port);
-    MQTTAbstraction& mqtt_abstraction;
-
-    void internal_publish(const std::string& topic, const json& json);
 
     void handle_ready(json data);
 
     void heartbeat();
+
+    void publish_metadata();
 
     static std::string check_args(const Arguments& func_args, json manifest_args);
     static bool check_arg(ArgumentType arg_types, json manifest_arg);

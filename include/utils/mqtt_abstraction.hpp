@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #ifndef UTILS_MQTT_ABSTRACTION_HPP
 #define UTILS_MQTT_ABSTRACTION_HPP
 
@@ -35,12 +35,24 @@ public:
     void publish(const std::string& topic, const json& json);
 
     ///
+    /// \copydoc MQTTAbstractionImpl::publish(const std::string&, const json&, QOS)
+    void publish(const std::string& topic, const json& json, QOS qos);
+
+    ///
     /// \copydoc MQTTAbstractionImpl::publish(const std::string&, const std::string&)
     void publish(const std::string& topic, const std::string& data);
 
     ///
+    /// \copydoc MQTTAbstractionImpl::publish(const std::string&, const std::string&, QOS)
+    void publish(const std::string& topic, const std::string& data, QOS qos);
+
+    ///
     /// \copydoc MQTTAbstractionImpl::subscribe(const std::string&)
     void subscribe(const std::string& topic);
+
+    ///
+    /// \copydoc MQTTAbstractionImpl::subscribe(const std::string&, QOS)
+    void subscribe(const std::string& topic, QOS qos);
 
     ///
     /// \copydoc MQTTAbstractionImpl::unsubscribe(const std::string&)
@@ -51,12 +63,8 @@ public:
     void mainloop();
 
     ///
-    /// \copydoc MQTTAbstractionImpl::register_handler(const std::string&, const Handler&)
-    Token register_handler(const std::string& topic, const Handler& handler);
-
-    ///
-    /// \copydoc MQTTAbstractionImpl::register_handler(const std::string&, const Handler&, bool)
-    Token register_handler(const std::string& topic, const Handler& handler, bool allow_multiple_handlers);
+    /// \copydoc MQTTAbstractionImpl::register_handler(const std::string&, std::shared_ptr<TypedHandler>, QOS)
+    void register_handler(const std::string& topic, std::shared_ptr<TypedHandler> handler, bool allow_multiple_handlers, QOS qos);
 
     ///
     /// \copydoc MQTTAbstractionImpl::unregister_handler(const std::string&, const Token&)

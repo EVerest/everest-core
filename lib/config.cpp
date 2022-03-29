@@ -671,19 +671,13 @@ ModuleInfo Config::get_module_info(const std::string& module_id) {
 std::string Config::mqtt_prefix(const std::string& module_id, const std::string& impl_id) {
     BOOST_LOG_FUNCTION();
 
-    json info = extract_implementation_info(module_id, impl_id);
-
-    return fmt::format("everest/{}:{}/{}:{}", info["module_id"].get<std::string>(),
-                       info["module_name"].get<std::string>(), info["impl_id"].get<std::string>(),
-                       info["impl_intf"].get<std::string>());
+    return fmt::format("everest/{}/{}", module_id, impl_id);
 }
 
 std::string Config::mqtt_module_prefix(const std::string& module_id) {
     BOOST_LOG_FUNCTION();
 
-    json info = extract_implementation_info(module_id);
-
-    return fmt::format("everest/{}:{}", info["module_id"].get<std::string>(), info["module_name"].get<std::string>());
+    return fmt::format("everest/{}", module_id);
 }
 
 json Config::extract_implementation_info(const std::string& module_id, const std::string& impl_id) {
@@ -704,7 +698,7 @@ json Config::extract_implementation_info(const std::string& module_id, const std
         }
 
         if (!this->manifests[info["module_name"].get<std::string>()]["provides"].contains(impl_id)) {
-            EVTHROW(EverestApiError(fmt::format("Implementaiton id '{}' not defined in manifest of module '{}'!",
+            EVTHROW(EverestApiError(fmt::format("Implementation id '{}' not defined in manifest of module '{}'!",
                                                 impl_id, info["module_name"])));
         }
 

@@ -26,14 +26,29 @@ void MQTTAbstraction::publish(const std::string& topic, const json& json) {
     mqtt_abstraction.publish(topic, json);
 }
 
+void MQTTAbstraction::publish(const std::string& topic, const json& json, QOS qos) {
+    BOOST_LOG_FUNCTION();
+    mqtt_abstraction.publish(topic, json, qos);
+}
+
 void MQTTAbstraction::publish(const std::string& topic, const std::string& data) {
     BOOST_LOG_FUNCTION();
     mqtt_abstraction.publish(topic, data);
 }
 
+void MQTTAbstraction::publish(const std::string& topic, const std::string& data, QOS qos) {
+    BOOST_LOG_FUNCTION();
+    mqtt_abstraction.publish(topic, data, qos);
+}
+
 void MQTTAbstraction::subscribe(const std::string& topic) {
     BOOST_LOG_FUNCTION();
     mqtt_abstraction.subscribe(topic);
+}
+
+void MQTTAbstraction::subscribe(const std::string& topic, QOS qos) {
+    BOOST_LOG_FUNCTION();
+    mqtt_abstraction.subscribe(topic, qos);
 }
 
 void MQTTAbstraction::unsubscribe(const std::string& topic) {
@@ -46,15 +61,9 @@ void MQTTAbstraction::mainloop() {
     mqtt_abstraction.mainloop();
 }
 
-Token MQTTAbstraction::register_handler(const std::string& topic, const Handler& handler,
-                                        bool allow_multiple_handlers) {
+void MQTTAbstraction::register_handler(const std::string& topic, std::shared_ptr<TypedHandler> handler,bool allow_multiple_handlers, QOS qos) {
     BOOST_LOG_FUNCTION();
-    return mqtt_abstraction.register_handler(topic, handler, allow_multiple_handlers);
-}
-
-Token MQTTAbstraction::register_handler(const std::string& topic, const Handler& handler) {
-    BOOST_LOG_FUNCTION();
-    return mqtt_abstraction.register_handler(topic, handler);
+    mqtt_abstraction.register_handler(topic, handler, allow_multiple_handlers, qos);
 }
 
 void MQTTAbstraction::unregister_handler(const std::string& topic, const Token& token) {

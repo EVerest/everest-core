@@ -46,9 +46,9 @@ private:
     ResFuncType res_func;
     // FIXME (aw): will the referenced object be GC'd when the references get destroyed?
     //             and is okay to be destroyed in our async thread?
+    TsfnType tsfn;
     Napi::ObjectReference result_handler_ref;
     Napi::FunctionReference func_ref{};
-    TsfnType tsfn;
     std::mutex exec_mutex;
     std::promise<void> promise;
 };
