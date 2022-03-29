@@ -59,7 +59,8 @@ private:
     static void     sanitize_object(json& obj_to_sanitize);
     static float    get_current_limit_from_energy_object(const json& limit_object, const json& energy_object);
     static double   get_currently_valid_price_per_kwh(json& energy_object, const std::chrono::system_clock::time_point timepoint_now);
-    static int      check_for_children_requesting_power(json& energy_object, const double current_price_per_kwh);
+    static void     check_for_children_requesting_power(json& energy_object, const double current_price_per_kwh);
+    static void     scale_and_distribute_power(json& energy_object);
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
