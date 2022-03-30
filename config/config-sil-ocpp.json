@@ -57,12 +57,6 @@
             "ChargePointConfigPath": "../../libocpp/aux/config-docker-tls.json"
         },
         "connections": {
-            "powermeter": [
-                {
-                    "module_id": "yeti_driver",
-                    "implementation_id": "powermeter"
-                }
-            ],
             "evse_manager": [
                 {
                     "module_id": "evse_manager",
