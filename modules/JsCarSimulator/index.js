@@ -9,6 +9,9 @@ boot_module(async ({ setup, info, config, mqtt }) => {
   mqtt.subscribe('/carsim/cmd/enable', (mod, en) => {enable(mod, {value: en})} );
   mqtt.subscribe('/carsim/cmd/execute_charging_session', (mod, str) => {execute_charging_session(mod, {value: str});});
 
+  mqtt.subscribe('/carsim/'+ info.id + '/cmd/enable', (mod, en) => {enable(mod, {value: en})} );
+  mqtt.subscribe('/carsim/'+ info.id + '/cmd/execute_charging_session', (mod, str) => {execute_charging_session(mod, {value: str});});
+
   // register commands
   setup.provides.main.register.enable(enable);
   setup.provides.main.register.executeChargingSession(execute_charging_session);

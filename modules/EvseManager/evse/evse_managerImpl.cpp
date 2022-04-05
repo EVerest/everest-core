@@ -107,6 +107,8 @@ void evse_managerImpl::ready() {
     mod->charger->signalMaxCurrent.connect([this](float c) {
         mod->mqtt.publish("/external/state/max_current", c);
 
+        mod->mqtt.publish("/external/" + mod->info.id + ":" + mod->info.name + "/state/max_current", c);
+
         limits["uuid"] = mod->info.id;
         limits["max_current"] = c;
         publish_limits(limits);
@@ -115,9 +117,15 @@ void evse_managerImpl::ready() {
     mod->charger->signalState.connect([this](Charger::EvseState s) {
         mod->mqtt.publish("/external/state/state_string", mod->charger->evseStateToString(s));
         mod->mqtt.publish("/external/state/state", static_cast<int>(s));
+
+        mod->mqtt.publish("/external/" + mod->info.id + ":" + mod->info.name + "/state/state_string", mod->charger->evseStateToString(s));
+        mod->mqtt.publish("/external/" + mod->info.id + ":" + mod->info.name + "/state/state", static_cast<int>(s));
     });
 
     mod->charger->signalError.connect([this](Charger::ErrorState s) {
+        mod->mqtt.publish("/external/" + mod->info.id + ":" + mod->info.name + "/state/error_type", static_cast<int>(s));
+        mod->mqtt.publish("/external/" + mod->info.id + ":" + mod->info.name + "/state/error_string", mod->charger->errorStateToString(s));
+
         mod->mqtt.publish("/external/state/error_type", static_cast<int>(s));
         mod->mqtt.publish("/external/state/error_string", mod->charger->errorStateToString(s));
     });
