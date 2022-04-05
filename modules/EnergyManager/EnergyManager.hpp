@@ -54,7 +54,7 @@ private:
     std::chrono::system_clock::time_point lastLimitUpdate;
 
     static Array    run_optimizer(json energy_object);
-    static void     optimize_one_level(json& energy_object, Array& results, const std::chrono::system_clock::time_point timepoint);
+    static void     optimize_one_level(json& energy_object, json& results, const std::chrono::system_clock::time_point timepoint);
     static json     get_sub_element_from_schedule_at_time(json s, const std::chrono::system_clock::time_point timepoint);
     static void     sanitize_object(json& obj_to_sanitize);
     static float    get_current_limit_from_energy_object(const json& limit_object, const json& energy_object);

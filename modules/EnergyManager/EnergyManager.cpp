@@ -29,23 +29,24 @@ void EnergyManager::init() {
         // Received new energy object from a child.
 
         // Re-Run global optimizer and create limits and schedules for each evse type leaf.
-        Array results = run_optimizer(e);
+        json optimized_values = run_optimizer(e);
 
         // rate-limit the enforced limit update
         auto now = std::chrono::system_clock::now();
         auto timeSinceLastUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastLimitUpdate).count();
         if (timeSinceLastUpdate >= 5000){
-            EVLOG(debug) << "timeSinceLastUpdate: " << timeSinceLastUpdate;
+            
             lastLimitUpdate = std::chrono::system_clock::now();
+            
             // run enforce_limits commands.
-            for (auto it = results.begin(); it != results.end(); ++it) {
+            for (auto it = optimized_values.begin(); it != optimized_values.end(); ++it) {
                 sanitize_object(*it);
-                r_energy_trunk->call_enforce_limits((*it).at("uuid"), 
-                                                    (*it).at("limits_import"), 
-                                                    (*it).at("limits_export"),
-                                                    (*it).at("schedule_import"), 
-                                                    (*it).at("schedule_export"));
-                EVLOG(debug) << "it: " << (*it).at("uuid");
+                r_energy_trunk->call_enforce_limits((*it)["uuid"], 
+                                                    (*it)["limits_import"], 
+                                                    (*it)["limits_export"],
+                                                    (*it)["schedule_import"], 
+                                                    (*it)["schedule_export"]);
+                EVLOG(warning) << "it: " << (*it);
             }
         }
     });
@@ -57,14 +58,14 @@ void EnergyManager::ready() {
 
 Array EnergyManager::run_optimizer(json energy) {
     // traverse tree, set result limits for each evse node
-    Array results;
+    json optimized_values = json::array();
     auto timepoint = std::chrono::system_clock::now();
-    optimize_one_level(energy, results, timepoint);
-    return results;
+    optimize_one_level(energy, optimized_values, timepoint);
+    return optimized_values;
 }
 
 // recursive optimization of one level
-void EnergyManager::optimize_one_level(json& energy, Array& results,
+void EnergyManager::optimize_one_level(json& energy, json& optimized_values,
                                        const std::chrono::system_clock::time_point timepoint_now) {
     // find max_current limit for this level
     // min of (limit_from_parent, local_limit_from_schedule)
@@ -94,11 +95,11 @@ void EnergyManager::optimize_one_level(json& energy, Array& results,
 
             // optimize each child 
             for (json& child : energy.at("children")) {
-                optimize_one_level(child, results, timepoint_now);
+                optimize_one_level(child, optimized_values, timepoint_now);
             }
         }
 
-        // is this an EVSE? Add to results then.
+        // is this an EVSE? Add to optimized_values then.
         if (energy.at("node_type") == "Evse") {
             json limits_import;
             limits_import["valid_until"] = to_rfc3339( std::chrono::system_clock::now() + std::chrono::seconds(10) );
@@ -114,7 +115,7 @@ void EnergyManager::optimize_one_level(json& energy, Array& results,
             result["schedule_import"] = json::array();
             result["schedule_export"] = json::array();
 
-            results.push_back(result);
+            optimized_values.push_back(result);
         }
     }
 }
@@ -266,6 +267,7 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
         // apply scaling factor to all requesting children
         for (json& child : energy_object["children"]) {
             if (child.contains("requesting_power") && child.at("requesting_power") == true) {
+                // TODO(LAD): insert check for availability of "schedule_import"
                 child.at("schedule_import").at(0).at("request_parameters").at("ac_current_A").at("max_current_A").get_to(child_max_current_A);
                 child["scaled_current"] = current_scaling_factor * child_max_current_A;
             }
@@ -274,6 +276,7 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
         // check if "min_current_A" is breached for any children
         for (json& child : energy_object["children"]) {
             if (child.contains("requesting_power") && child.at("requesting_power") == true) {
+                // TODO(LAD): insert check for availability of "schedule_import"
                 if (child["scaled_current"] <
                     child.at("schedule_import").at(0).at("request_parameters").at("ac_current_A").at("max_current_A")) {
                     // if "min_current_A" breached, drop first child from power request group and recalculate
@@ -296,6 +299,7 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
                         child["limit_from_parent"] = child.at("scaled_current");
                     } else {
                         // ...or assign its requested current (if possible)
+                        // TODO(LAD): insert check for availability of "schedule_import"
                         child["limit_from_parent"] = child.at("schedule_import").at(0).at("request_parameters").at("ac_current_A").at("max_current_A");
                     }
                 } else {
