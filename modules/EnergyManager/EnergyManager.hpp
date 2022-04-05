@@ -28,12 +28,12 @@ class EnergyManager : public Everest::ModuleBase {
 public:
     EnergyManager() = delete;
     EnergyManager(const ModuleInfo& info, std::unique_ptr<energy_managerImplBase> p_main,
-                  std::unique_ptr<energyIntf> r_energy_trunk, Conf& config) :
+                  std::vector<std::unique_ptr<energyIntf>> r_energy_trunk, Conf& config) :
         ModuleBase(info), p_main(std::move(p_main)), r_energy_trunk(std::move(r_energy_trunk)), config(config){};
 
     const Conf& config;
     const std::unique_ptr<energy_managerImplBase> p_main;
-    const std::unique_ptr<energyIntf> r_energy_trunk;
+    const std::vector<std::unique_ptr<energyIntf>> r_energy_trunk;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
@@ -53,14 +53,16 @@ private:
     // insert your private definitions here
     std::chrono::system_clock::time_point lastLimitUpdate;
 
-    static Array    run_optimizer(json energy_object);
-    static void     optimize_one_level(json& energy_object, json& results, const std::chrono::system_clock::time_point timepoint);
-    static json     get_sub_element_from_schedule_at_time(json s, const std::chrono::system_clock::time_point timepoint);
-    static void     sanitize_object(json& obj_to_sanitize);
-    static float    get_current_limit_from_energy_object(const json& limit_object, const json& energy_object);
-    static double   get_currently_valid_price_per_kwh(json& energy_object, const std::chrono::system_clock::time_point timepoint_now);
-    static void     check_for_children_requesting_power(json& energy_object, const double current_price_per_kwh);
-    static void     scale_and_distribute_power(json& energy_object);
+    static Array run_optimizer(json energy_object);
+    static void optimize_one_level(json& energy_object, json& results,
+                                   const std::chrono::system_clock::time_point timepoint);
+    static json get_sub_element_from_schedule_at_time(json s, const std::chrono::system_clock::time_point timepoint);
+    static void sanitize_object(json& obj_to_sanitize);
+    static float get_current_limit_from_energy_object(const json& limit_object, const json& energy_object);
+    static double get_currently_valid_price_per_kwh(json& energy_object,
+                                                    const std::chrono::system_clock::time_point timepoint_now);
+    static void check_for_children_requesting_power(json& energy_object, const double current_price_per_kwh);
+    static void scale_and_distribute_power(json& energy_object);
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

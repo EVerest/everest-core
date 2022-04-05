@@ -25,31 +25,33 @@ void EnergyManager::init() {
     invoke_init(*p_main);
     lastLimitUpdate = std::chrono::system_clock::now();
 
-    r_energy_trunk->subscribe_energy([this](json e) {
-        // Received new energy object from a child.
+    for (auto& entry : r_energy_trunk) {
+        entry->subscribe_energy([this, &entry](json e) {
 
-        // Re-Run global optimizer and create limits and schedules for each evse type leaf.
-        json optimized_values = run_optimizer(e);
+            // Received new energy object from a child.
 
-        // rate-limit the enforced limit update
-        auto now = std::chrono::system_clock::now();
-        auto timeSinceLastUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastLimitUpdate).count();
-        if (timeSinceLastUpdate >= 5000){
-            
-            lastLimitUpdate = std::chrono::system_clock::now();
-            
-            // run enforce_limits commands.
-            for (auto it = optimized_values.begin(); it != optimized_values.end(); ++it) {
-                sanitize_object(*it);
-                r_energy_trunk->call_enforce_limits((*it)["uuid"], 
-                                                    (*it)["limits_import"], 
-                                                    (*it)["limits_export"],
-                                                    (*it)["schedule_import"], 
-                                                    (*it)["schedule_export"]);
-                EVLOG(warning) << "it: " << (*it);
+            // Re-Run global optimizer and create limits and schedules for each evse type leaf.
+            json optimized_values = run_optimizer(e);
+
+            // rate-limit the enforced limit update
+            auto now = std::chrono::system_clock::now();
+            auto timeSinceLastUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastLimitUpdate).count();
+            if (timeSinceLastUpdate >= 5000){
+                
+                lastLimitUpdate = std::chrono::system_clock::now();
+                
+                // run enforce_limits commands.
+                for (auto it = optimized_values.begin(); it != optimized_values.end(); ++it) {
+                    sanitize_object(*it);
+                    entry->call_enforce_limits( (*it)["uuid"], 
+                                                (*it)["limits_import"], 
+                                                (*it)["limits_export"],
+                                                (*it)["schedule_import"], 
+                                                (*it)["schedule_export"]);
+                }
             }
-        }
-    });
+        });
+    }
 }
 
 void EnergyManager::ready() {
@@ -239,6 +241,7 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
     double current_scaling_factor = 1.0;
 
     do {
+        recalculate = false;
         sum_current_requests = 0.0;
 
         // add all children's current requests

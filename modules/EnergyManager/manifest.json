@@ -8,7 +8,9 @@
     },
     "requires": {
         "energy_trunk": {
-            "interface": "energy"
+            "interface": "energy",
+            "min_connections": 1,
+            "max_connections": 12
         }
     },
     "enable_external_mqtt": false,
