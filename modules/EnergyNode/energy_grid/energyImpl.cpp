@@ -27,11 +27,11 @@ void energyImpl::init() {
        std::lock_guard<std::mutex> lock(this->energy_mutex);
        json schedule_entry;
        schedule_entry["timestamp"] = to_rfc3339(std::chrono::system_clock::now());
-       schedule_entry["capabilities"] = json::object();
-       schedule_entry["capabilities"]["limit_type"] = "Hard";
-       schedule_entry["capabilities"]["ac_current_A"] = json::object();
-       schedule_entry["capabilities"]["ac_current_A"]["max_current_A"] = mod->config.fuse_limit_A;
-       schedule_entry["capabilities"]["ac_current_A"]["max_phase_count"] = mod->config.phase_count;
+       schedule_entry["request_parameters"] = json::object();
+       schedule_entry["request_parameters"]["limit_type"] = "Hard";
+       schedule_entry["request_parameters"]["ac_current_A"] = json::object();
+       schedule_entry["request_parameters"]["ac_current_A"]["max_current_A"] = mod->config.fuse_limit_A;
+       schedule_entry["request_parameters"]["ac_current_A"]["max_phase_count"] = mod->config.phase_count;
        energy["schedule_import"] = json::array({});
        energy["schedule_import"].push_back(schedule_entry);
     }
@@ -95,7 +95,7 @@ void energyImpl::init() {
 
 void energyImpl::publish_complete_energy_object() {
     // join the different schedules to the complete array (with resampling)
-    json energy_complete;
+    json energy_complete = json::object();
     {
         std::lock_guard<std::mutex> lock(this->energy_mutex);
         energy_complete = energy;
