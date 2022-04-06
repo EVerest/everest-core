@@ -6,7 +6,7 @@
 
 namespace module {
 
-#define INVALID_PRICE_PER_KWH   (-1.1f)
+#define INVALID_PRICE_PER_KWH (-1.1f)
 
 std::string to_rfc3339(std::chrono::time_point<std::chrono::system_clock> t) {
     return date::format("%FT%TZ", std::chrono::time_point_cast<std::chrono::milliseconds>(t));
@@ -27,7 +27,6 @@ void EnergyManager::init() {
 
     for (auto& entry : r_energy_trunk) {
         entry->subscribe_energy([this, &entry](json e) {
-
             // Received new energy object from a child.
 
             // Re-Run global optimizer and create limits and schedules for each evse type leaf.
@@ -35,11 +34,12 @@ void EnergyManager::init() {
 
             // rate-limit the enforced limit update
             auto now = std::chrono::system_clock::now();
-            auto timeSinceLastUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastLimitUpdate).count();
-            if (timeSinceLastUpdate >= 5000){
-                
+            auto timeSinceLastUpdate =
+                std::chrono::duration_cast<std::chrono::milliseconds>(now - lastLimitUpdate).count();
+            if (timeSinceLastUpdate >= 5000) {
+
                 lastLimitUpdate = std::chrono::system_clock::now();
-                
+
                 // run enforce_limits commands.
                 for (auto it = optimized_values.begin(); it != optimized_values.end(); ++it) {
                     sanitize_object(*it);
@@ -81,9 +81,9 @@ void EnergyManager::optimize_one_level(json& energy, json& optimized_values,
         if (energy.contains("children")) {
             // get number of children
             number_children = energy.at("children").size();
-        }    
+        }
 
-        if (number_children > 0) { 
+        if (number_children > 0) {
             // EVLOG(error) << "object energy: " << energy; // TODO(LAD): remove me
 
             // get current price / kWh
@@ -95,7 +95,7 @@ void EnergyManager::optimize_one_level(json& energy, json& optimized_values,
 
             scale_and_distribute_power(energy);
 
-            // optimize each child 
+            // optimize each child
             for (json& child : energy.at("children")) {
                 optimize_one_level(child, optimized_values, timepoint_now);
             }
@@ -104,7 +104,7 @@ void EnergyManager::optimize_one_level(json& energy, json& optimized_values,
         // is this an EVSE? Add to optimized_values then.
         if (energy.at("node_type") == "Evse") {
             json limits_import;
-            limits_import["valid_until"] = to_rfc3339( std::chrono::system_clock::now() + std::chrono::seconds(10) );
+            limits_import["valid_until"] = to_rfc3339(std::chrono::system_clock::now() + std::chrono::seconds(10));
             limits_import["limit"] = json::object();
             limits_import["limit"]["ac_current_A"] = json::object();
             limits_import["limit"]["ac_current_A"]["current_A"] = max_current_for_next_level_A;
@@ -122,34 +122,31 @@ void EnergyManager::optimize_one_level(json& energy, json& optimized_values,
     }
 }
 
-json EnergyManager::get_sub_element_from_schedule_at_time(json s, const std::chrono::system_clock::time_point timepoint) {
+json EnergyManager::get_sub_element_from_schedule_at_time(json s,
+                                                          const std::chrono::system_clock::time_point timepoint) {
     // first entry is valid now per agreement
     json ret = s[0];
     // walk through schedule to find a better fit
     for (auto it = s.begin(); it != s.end(); ++it) {
-        if (from_rfc3339((*it)["timestamp"]) > timepoint) break;
+        if (from_rfc3339((*it)["timestamp"]) > timepoint) {
+            break;
+        }
         ret = (*it);
     }
     return ret;
 }
 
-void EnergyManager::sanitize_object(json& obj_to_sanitize){
-    if (obj_to_sanitize.contains("schedule_import")) {
-        if (obj_to_sanitize.at("schedule_import").is_null()) {
-            obj_to_sanitize["schedule_import"] = json::array();
-        }
+void EnergyManager::sanitize_object(json& obj_to_sanitize) {
+    if (obj_to_sanitize.contains("schedule_import") && obj_to_sanitize.at("schedule_import").is_null()) {
+        obj_to_sanitize["schedule_import"] = json::array();
     }
 
-    if (obj_to_sanitize.contains("schedule_export")) {
-        if (obj_to_sanitize.at("schedule_export").is_null()) {
-            obj_to_sanitize["schedule_export"] = json::array();
-        }
+    if (obj_to_sanitize.contains("schedule_export") && obj_to_sanitize.at("schedule_export").is_null()) {
+        obj_to_sanitize["schedule_export"] = json::array();
     }
 
-    if (obj_to_sanitize.contains("children")) {
-        if (obj_to_sanitize.at("children").is_null()) {
-            obj_to_sanitize["children"] = json::array();
-        }
+    if (obj_to_sanitize.contains("children") && obj_to_sanitize.at("children").is_null()) {
+        obj_to_sanitize["children"] = json::array();
     }
 }
 
@@ -166,40 +163,40 @@ float EnergyManager::get_current_limit_from_energy_object(const json& limit_obje
         }
     }
     if (limit_object_is_complete_flag == false) {
-        EVLOG(error) << "limit object incomplete: " << limit_object; 
+        EVLOG(error) << "limit object incomplete: " << limit_object;
     }
 
-    if (energy_object.contains("limit_from_parent")) {
-        if (!energy_object.at("limit_from_parent").is_null()) {
-            if (energy_object["limit_from_parent"] < max_current_A)
-                max_current_A = energy_object["limit_from_parent"];
+    if (energy_object.contains("limit_from_parent") && !energy_object.at("limit_from_parent").is_null()) {
+        if (energy_object["limit_from_parent"] < max_current_A) {
+            max_current_A = energy_object["limit_from_parent"];
         }
     }
 
     return max_current_A;
 }
 
-double EnergyManager::get_currently_valid_price_per_kwh(json& energy_object, const std::chrono::system_clock::time_point timepoint_now){
-    
+double EnergyManager::get_currently_valid_price_per_kwh(json& energy_object,
+                                                        const std::chrono::system_clock::time_point timepoint_now) {
+
     double currently_valid_price_per_kwh = INVALID_PRICE_PER_KWH;
 
-    if (energy_object.contains("schedule_import")) {
-        if (!energy_object.at("schedule_import").is_null()) {
-            // get current timeslot from price import schedule
-            auto schedule_at_current_timeslot = get_sub_element_from_schedule_at_time(energy_object["schedule_import"], timepoint_now);
-            if (schedule_at_current_timeslot.contains("price_per_kwh")) {
-                if (schedule_at_current_timeslot.at("price_per_kwh").contains("currency")) {
-                    // currency: EUR
-                    if (schedule_at_current_timeslot["price_per_kwh"]["currency"] == "EUR") {
-                        if (schedule_at_current_timeslot.at("price_per_kwh").contains("value")) {
-                            currently_valid_price_per_kwh = (double)schedule_at_current_timeslot["price_per_kwh"]["value"];
-                        }
-                    } else {
-                        // error: wrong currency / currency not (yet) implemented
-                        EVLOG(error) << "Currency \"" << schedule_at_current_timeslot["price_per_kwh"]["currency"] << "\" not recognized/implemented!!!";
+    if (energy_object.contains("schedule_import") && !energy_object.at("schedule_import").is_null()) {
+        // get current timeslot from price import schedule
+        auto schedule_at_current_timeslot =
+            get_sub_element_from_schedule_at_time(energy_object["schedule_import"], timepoint_now);
+        if (schedule_at_current_timeslot.contains("price_per_kwh")) {
+            if (schedule_at_current_timeslot.at("price_per_kwh").contains("currency")) {
+                // currency: EUR
+                if (schedule_at_current_timeslot["price_per_kwh"]["currency"] == "EUR") {
+                    if (schedule_at_current_timeslot.at("price_per_kwh").contains("value")) {
+                        currently_valid_price_per_kwh = (double)schedule_at_current_timeslot["price_per_kwh"]["value"];
                     }
-                    // add other currencies here
+                } else {
+                    // error: wrong currency / currency not (yet) implemented
+                    EVLOG(error) << "Currency \"" << schedule_at_current_timeslot["price_per_kwh"]["currency"]
+                                 << "\" not recognized/implemented!!!";
                 }
+                // add other currencies here
             }
         }
     }
@@ -207,7 +204,7 @@ double EnergyManager::get_currently_valid_price_per_kwh(json& energy_object, con
     return currently_valid_price_per_kwh;
 }
 
-void EnergyManager::check_for_children_requesting_power(json& energy_object, const double current_price_per_kwh){
+void EnergyManager::check_for_children_requesting_power(json& energy_object, const double current_price_per_kwh) {
 
     for (json& child : energy_object["children"]) {
         // check if this child has price_limits set
@@ -247,23 +244,33 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
         // add all children's current requests
         for (json& child : energy_object["children"]) {
             if (child.contains("requesting_power") && child.at("requesting_power") == true) {
-                if (child.contains("schedule_import")) {
-                    child.at("schedule_import").at(0).at("request_parameters").at("ac_current_A").at("max_current_A").get_to(child_max_current_A);
+                if (child.contains("schedule_import") && !child.at("schedule_import").is_null()) {
+                    child.at("schedule_import")
+                        .at(0)
+                        .at("request_parameters")
+                        .at("ac_current_A")
+                        .at("max_current_A")
+                        .get_to(child_max_current_A);
                     sum_current_requests += child_max_current_A;
                 } else {
-                    // "schedule_import" not yet set, no sense in continuing
+                    // "schedule_import" not yet set, no sense in continuing (fault case: remove this child from request
+                    // group and continue)
+                    child.at("requesting_power") = false;
                     continue;
-                } 
+                }
             }
         }
 
         // divide maximum current available to this level by sum of current requests
-        if (energy_object.contains("schedule_import")) {
-            double current_limit_at_this_level =
-                energy_object.at("schedule_import").at(0).at("request_parameters").at("ac_current_A").at("max_current_A");
+        if (energy_object.contains("schedule_import") && !energy_object.at("schedule_import").is_null()) {
+            double current_limit_at_this_level = energy_object.at("schedule_import")
+                                                              .at(0)
+                                                              .at("request_parameters")
+                                                              .at("ac_current_A")
+                                                              .at("max_current_A");
             current_scaling_factor = current_limit_at_this_level / sum_current_requests;
         } else {
-            // something is wrong, abort
+            // something is wrong, abort (error case: no power available to this level)
             return;
         }
 
@@ -271,7 +278,12 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
         for (json& child : energy_object["children"]) {
             if (child.contains("requesting_power") && child.at("requesting_power") == true) {
                 // TODO(LAD): insert check for availability of "schedule_import"
-                child.at("schedule_import").at(0).at("request_parameters").at("ac_current_A").at("max_current_A").get_to(child_max_current_A);
+                child.at("schedule_import")
+                     .at(0)
+                     .at("request_parameters")
+                     .at("ac_current_A")
+                     .at("max_current_A")
+                     .get_to(child_max_current_A);
                 child["scaled_current"] = current_scaling_factor * child_max_current_A;
             }
         }
@@ -279,9 +291,11 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
         // check if "min_current_A" is breached for any children
         for (json& child : energy_object["children"]) {
             if (child.contains("requesting_power") && child.at("requesting_power") == true) {
-                // TODO(LAD): insert check for availability of "schedule_import"
-                if (child["scaled_current"] <
-                    child.at("schedule_import").at(0).at("request_parameters").at("ac_current_A").at("max_current_A")) {
+                if (child["scaled_current"] < child.at("schedule_import")
+                                                   .at(0)
+                                                   .at("request_parameters")
+                                                   .at("ac_current_A")
+                                                   .at("min_current_A")) {
                     // if "min_current_A" breached, drop first child from power request group and recalculate
                     child["requesting_power"] = false;
                     recalculate = true;
@@ -297,19 +311,24 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
 
                 if (child.contains("requesting_power") && child.at("requesting_power") == true) {
                     // if child is requesting power now
-                    if(child.contains("scaled_current")) {
+                    if (child.contains("scaled_current")) {
                         // assign either scaled_current (if necessary)...
                         child["limit_from_parent"] = child.at("scaled_current");
                     } else {
                         // ...or assign its requested current (if possible)
-                        // TODO(LAD): insert check for availability of "schedule_import"
-                        child["limit_from_parent"] = child.at("schedule_import").at(0).at("request_parameters").at("ac_current_A").at("max_current_A");
+                        child["limit_from_parent"] = child.at("schedule_import")
+                                                         .at(0)
+                                                         .at("request_parameters")
+                                                         .at("ac_current_A")
+                                                         .at("max_current_A");
                     }
                 } else {
                     // child is NOT requesting power, set limit to zero
-                    child["limit_from_parent"] = 0; 
+                    child["limit_from_parent"] = 0;
                 }
+                // EVLOG(critical) << "limit from parent: " << child.dump();
             }
+            // EVLOG(error) << "########################## ";
         }
 
     } while (not_done);
