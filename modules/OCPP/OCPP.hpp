@@ -16,7 +16,6 @@
 
 // headers for required interface implementations
 #include <generated/evse_manager/Interface.hpp>
-#include <generated/powermeter/Interface.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
@@ -44,13 +43,12 @@ public:
     OCPP() = delete;
     OCPP(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
          std::unique_ptr<ocpp_1_6_charge_pointImplBase> p_main,
-         std::unique_ptr<auth_token_validatorImplBase> p_auth_validator, std::unique_ptr<powermeterIntf> r_powermeter,
-         std::unique_ptr<evse_managerIntf> r_evse_manager, Conf& config) :
+         std::unique_ptr<auth_token_validatorImplBase> p_auth_validator,
+         std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_main(std::move(p_main)),
         p_auth_validator(std::move(p_auth_validator)),
-        r_powermeter(std::move(r_powermeter)),
         r_evse_manager(std::move(r_evse_manager)),
         config(config){};
 
@@ -58,13 +56,11 @@ public:
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<ocpp_1_6_charge_pointImplBase> p_main;
     const std::unique_ptr<auth_token_validatorImplBase> p_auth_validator;
-    const std::unique_ptr<powermeterIntf> r_powermeter;
-    const std::unique_ptr<evse_managerIntf> r_evse_manager;
+    const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
     ocpp1_6::ChargePoint* charge_point;
-    int32_t connector;
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
