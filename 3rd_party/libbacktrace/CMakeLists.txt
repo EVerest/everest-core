@@ -6,8 +6,8 @@ ExternalProject_Add(
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}
 # download
     GIT_REPOSITORY https://github.com/ianlancetaylor/libbacktrace
-    GIT_TAG 2446c66076480ce07a6bd868badcbceb3eeecc2e
-    GIT_SHALLOW true
+    GIT_TAG 4d2dd0b172f2c9192f83ba93425f868f2a13c553
+    GIT_SHALLOW false
 # update
     UPDATE_COMMAND ""
 # configure
