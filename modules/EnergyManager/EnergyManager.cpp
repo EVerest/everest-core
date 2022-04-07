@@ -232,16 +232,18 @@ void EnergyManager::check_for_children_requesting_power(json& energy_object, con
 
 void EnergyManager::scale_and_distribute_power(json& energy_object) {
     bool not_done = true;
-    double sum_current_requests = 0.0;
+    double sum_max_current_requests = 0.0F;
+    double sum_min_current_requests = 0.0F;
     bool recalculate = false;
-    double child_max_current_A = 0.0;
-    double current_scaling_factor = 1.0;
+    double child_max_current_A = 0.0F;
+    double child_min_current_A = 0.0F;
+    double current_scaling_factor = 1.0F;
 
     do {
         recalculate = false;
-        sum_current_requests = 0.0;
+        sum_max_current_requests = 0.0;
 
-        // add all children's current requests
+        // add all children's max-/min- current requests
         for (json& child : energy_object["children"]) {
             if (child.contains("requesting_power") && child.at("requesting_power") == true) {
                 if (child.contains("schedule_import") && !child.at("schedule_import").is_null()) {
@@ -251,7 +253,14 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
                         .at("ac_current_A")
                         .at("max_current_A")
                         .get_to(child_max_current_A);
-                    sum_current_requests += child_max_current_A;
+                    child.at("schedule_import")
+                        .at(0)
+                        .at("request_parameters")
+                        .at("ac_current_A")
+                        .at("min_current_A")
+                        .get_to(child_min_current_A);
+                    sum_max_current_requests += child_max_current_A;
+                    sum_min_current_requests += child_min_current_A;
                 } else {
                     // "schedule_import" not yet set, no sense in continuing (fault case: remove this child from request
                     // group and continue)
@@ -261,49 +270,85 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
             }
         }
 
+        double current_limit_at_this_level = energy_object.at("schedule_import")
+                                                          .at(0)
+                                                          .at("request_parameters")
+                                                          .at("ac_current_A")
+                                                          .at("max_current_A");
+
         // divide maximum current available to this level by sum of current requests
         if (energy_object.contains("schedule_import") && !energy_object.at("schedule_import").is_null()) {
-            double current_limit_at_this_level = energy_object.at("schedule_import")
-                                                              .at(0)
-                                                              .at("request_parameters")
-                                                              .at("ac_current_A")
-                                                              .at("max_current_A");
-            current_scaling_factor = current_limit_at_this_level / sum_current_requests;
+            
+            current_scaling_factor = current_limit_at_this_level / sum_max_current_requests;
+
+            // limit scaling factor to 1
+            if (current_scaling_factor > 1.0F) {
+                current_scaling_factor = 1.0F;
+            }
         } else {
             // something is wrong, abort (error case: no power available to this level)
             return;
-        }
+        }  
 
-        // apply scaling factor to all requesting children
-        for (json& child : energy_object["children"]) {
-            if (child.contains("requesting_power") && child.at("requesting_power") == true) {
-                // TODO(LAD): insert check for availability of "schedule_import"
-                child.at("schedule_import")
-                     .at(0)
-                     .at("request_parameters")
-                     .at("ac_current_A")
-                     .at("max_current_A")
-                     .get_to(child_max_current_A);
-                child["scaled_current"] = current_scaling_factor * child_max_current_A;
+        // if the sum of this level's children's minimum current requests is already larger than its current limit, we need to drop requests from children; if not, start scaling 
+        if ( sum_min_current_requests > current_limit_at_this_level ) {
+
+            // drop first child which breaks "min_current_A" requirement and recalculate
+            for (json& child : energy_object["children"]) {
+                if (child.contains("requesting_power") && child.at("requesting_power") == true) {
+                    child.at("schedule_import")
+                        .at(0)
+                        .at("request_parameters")
+                        .at("ac_current_A")
+                        .at("max_current_A")
+                        .get_to(child_max_current_A);
+                    child["scaled_current"] = current_scaling_factor * child_max_current_A;
+
+                    // check if "min_current_A" is breached
+                    if (child["scaled_current"] < child.at("schedule_import")
+                                                    .at(0)
+                                                    .at("request_parameters")
+                                                    .at("ac_current_A")
+                                                    .at("min_current_A")) {
+                        // if "min_current_A" breached, drop first child and recalculate
+                        child["requesting_power"] = false;
+                        recalculate = true;
+                        break;
+                    }
+                }
             }
-        }
+        } else {
+            // apply scaling factor to all requesting children
+            for (json& child : energy_object["children"]) {
+                if (child.contains("requesting_power") && child.at("requesting_power") == true) {
+                    child.at("schedule_import")
+                        .at(0)
+                        .at("request_parameters")
+                        .at("ac_current_A")
+                        .at("max_current_A")
+                        .get_to(child_max_current_A);
+                    child["scaled_current"] = current_scaling_factor * child_max_current_A;
 
-        // check if "min_current_A" is breached for any children
-        for (json& child : energy_object["children"]) {
-            if (child.contains("requesting_power") && child.at("requesting_power") == true) {
-                if (child["scaled_current"] < child.at("schedule_import")
-                                                   .at(0)
-                                                   .at("request_parameters")
-                                                   .at("ac_current_A")
-                                                   .at("min_current_A")) {
-                    // if "min_current_A" breached, drop first child from power request group and recalculate
-                    child["requesting_power"] = false;
-                    recalculate = true;
-                    break;
+                    // check if "min_current_A" is breached
+                    if (child["scaled_current"] < child.at("schedule_import")
+                                                    .at(0)
+                                                    .at("request_parameters")
+                                                    .at("ac_current_A")
+                                                    .at("min_current_A")) {
+                        // if "min_current_A" breached, set minimum current as request and recalculate
+                        child["scaled_current"] = child.at("schedule_import")
+                                                       .at(0)
+                                                       .at("request_parameters")
+                                                       .at("ac_current_A")
+                                                       .at("min_current_A");
+                        // child["requesting_power"] = false;
+                        recalculate = true;
+                        break;
+                    }
                 }
             }
         }
-
+        
         if (recalculate == false) {
             not_done = false;
 
