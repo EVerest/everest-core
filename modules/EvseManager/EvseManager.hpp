@@ -89,6 +89,7 @@ private:
 
 // ev@087e516b-124c-48df-94fb-109508c7cda9:v1
 // insert other definitions here
+#define EVSE_ABSOLUTE_MAX_CURRENT double(80.0F)
 // ev@087e516b-124c-48df-94fb-109508c7cda9:v1
 
 } // namespace module
