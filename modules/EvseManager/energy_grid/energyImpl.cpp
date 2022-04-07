@@ -25,68 +25,54 @@ std::chrono::time_point<std::chrono::system_clock> from_rfc3339(std::string t) {
 }
 
 void energyImpl::init() {
-    _price_limit = 0;
-    _price_limit_previous_value = 0;
+    _price_limit = 0.0F;
+    _price_limit_previous_value = 0.0F;
+    _optimizer_mode = EVSE_OPTIMIZER_MODE_MANUAL_LIMITS;
     initializeEnergyObject();
 
     mod->r_powermeter->subscribe_powermeter([this](json p) {
         // Received new power meter values, update our energy object.
         energy["energy_usage"] = p;
 
-        // Publish to the energy tree
-        publish_energy(energy);
+        updateAndPublishEnergyObject();
     });
 
     mod->mqtt.subscribe("/external/" + mod->info.id + ":" + mod->info.name + "/cmd/set_price_limit", [this](json lim) { 
         std::string sLim = lim;
-        _price_limit = std::stod(sLim);
+        double new_price_limit = std::stod(sLim);
 
-        EVLOG(debug) << "price limit changed to: " << _price_limit << " EUR / kWh"; // TODO(LAD): adapt to other currencies
+        EVLOG(error) << "price limit changed to: " << new_price_limit << " EUR / kWh"; // TODO(LAD): adapt to other currencies
 
-        if (_price_limit > 0.0f) {  // only add price_limit if optimizer mode is set to "price_driven"
+        // update price limits
+        if (new_price_limit > 0.0F) {
             // save price limit to not be lost on switching to manual limits
-            _price_limit_previous_value = _price_limit;   // TODO(LAD): add storage on more permanent medium (config/hdd?)
-
-            {
-                std::lock_guard<std::mutex> lock(this->energy_mutex);
-                energy["optimizer_target"] = json::object();
-                energy["optimizer_target"]["price_limit"] = _price_limit;
-            }
-
-            // Publish to the energy tree
-            publish_energy(energy);
+            _price_limit_previous_value = new_price_limit;   // TODO(LAD): add storage on more permanent medium (config/hdd?)
+            _price_limit = new_price_limit;
+            _optimizer_mode = EVSE_OPTIMIZER_MODE_PRICE_DRIVEN;
+            EVLOG(error) << "switched to \"price_driven\" optimizer mode";
         } else {
-            if (energy.contains("optimizer_target")) {
-                {
-                    std::lock_guard<std::mutex> lock(this->energy_mutex);
-                    energy.at("optimizer_target").erase("price_limit");
-                }
-            }
+            _price_limit = -1.0F;
+            _optimizer_mode = EVSE_OPTIMIZER_MODE_MANUAL_LIMITS;
+            EVLOG(error) << "switched to \"manual_limits\" optimizer mode";
         }
+
+        updateAndPublishEnergyObject();
     });
 
     mod->mqtt.subscribe("/external/" + mod->info.id + ":" + mod->info.name + "/cmd/switch_optimizer_mode", [this](json mode) { 
-        std::string sMode = mode;
-        EVLOG(debug) << "optimizer mode set to: " << sMode;
-
-        if (sMode == "manual_limits") {
-            _price_limit = 0.0f;
-            EVLOG(debug) << "Manual limits optimizer mode set";
-            if (energy.contains("optimizer_target")) {
-                {
-                    std::lock_guard<std::mutex> lock(this->energy_mutex);
-                    energy.at("optimizer_target").erase("price_limit");
-                }
-            }
-        } else if (sMode == "price_driven") {
-            _price_limit = _price_limit_previous_value;
-            EVLOG(debug) << "Price-driven optimizer mode set";
-            {
-                std::lock_guard<std::mutex> lock(this->energy_mutex);
-                energy["optimizer_target"] = json::object();
-                energy["optimizer_target"]["price_limit"] = _price_limit;
-            }
+        if (mode == EVSE_OPTIMIZER_MODE_MANUAL_LIMITS) {
+            _optimizer_mode = EVSE_OPTIMIZER_MODE_MANUAL_LIMITS;
+            EVLOG(error) << "switched to \"manual_limits\" optimizer mode";
+        } else if (mode == EVSE_OPTIMIZER_MODE_PRICE_DRIVEN) {
+            _optimizer_mode = EVSE_OPTIMIZER_MODE_PRICE_DRIVEN;
+            mod->updateLocalMaxCurrentLimit(mod->get_hw_capabilities().at("max_current_A"));
+            EVLOG(error) << "switched to \"price_driven\" optimizer mode";
+        } else {
+            // error
+            EVLOG(error) << "received unknown optimizer mode: " << mode;
         }
+
+        updateAndPublishEnergyObject();
     });
 }
 
@@ -170,6 +156,46 @@ void energyImpl::initializeEnergyObject(){
     
     // UUID must be unique also beyond this charging station -> will be handled on framework level and above later
     energy["uuid"] = mod->info.id;
+}   
+
+void energyImpl::updateAndPublishEnergyObject(){
+
+    // update optimizer mode
+    if (_optimizer_mode == EVSE_OPTIMIZER_MODE_MANUAL_LIMITS) {
+        _price_limit = 0.0F;
+        if (energy.contains("optimizer_target")) {
+            // remove "price_limit" from energy object and switch current limit to manual
+            {
+                std::lock_guard<std::mutex> lock(this->energy_mutex);
+
+                energy.at("optimizer_target").erase("price_limit");
+                energy.erase("optimizer_target");
+
+                EVLOG(error) << " switched to manual_limits: removing price_limit";
+            }
+        }
+        {
+            std::lock_guard<std::mutex> lock(this->energy_mutex);
+            if (energy.contains("schedule_import")) {
+                energy.at("schedule_import").at(0).at("request_parameters").at("ac_current_A").at("max_current_A") = mod->getLocalMaxCurrentLimit();
+            } else {
+                return;
+            }
+        }
+    } else if (_optimizer_mode == EVSE_OPTIMIZER_MODE_PRICE_DRIVEN) {
+        _price_limit = _price_limit_previous_value;
+        {
+            // add "price_limit" to energy object and switch current limit to hardware limit
+            std::lock_guard<std::mutex> lock(this->energy_mutex);
+            energy["optimizer_target"] = json::object();
+            energy["optimizer_target"]["price_limit"] = _price_limit;
+            json hw_caps = mod->get_hw_capabilities();
+            energy.at("schedule_import").at(0).at("request_parameters").at("ac_current_A").at("max_current_A") = hw_caps.at("max_current_A");
+        }
+    }
+
+    // publish to energy tree
+    publish_energy(energy);
 }   
 
 } // namespace energy_grid
