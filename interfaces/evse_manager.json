@@ -60,7 +60,7 @@
                     "format": "date-time"
                 },
                 "parent_id": {
-                    "description": "Parent if od the authentication token",
+                    "description": "Parent id of the authentication token",
                     "type": "string"
                 }
             },

@@ -42,19 +42,44 @@ void OCPP::init() {
             return false;
         }
     });
-    this->charge_point->register_reserve_now_callback(
-        [this](int32_t connector, ocpp1_6::CiString20Type idTag, std::chrono::seconds timeout) {
-            if (connector > 0 && connector <= this->r_evse_manager.size()) {
-                return this->r_evse_manager.at(connector - 1)->call_reserve_now(idTag.get(), timeout.count());
-            } else {
-                return false;
-            }
-        });
-    this->charge_point->register_cancel_reservation_callback([this](int32_t connector) {
+
+
+    // int32_t reservation_id, CiString20Type auth_token, DateTime expiry_date, std::string parent_id
+    this->charge_point->register_reserve_now_callback([this](int32_t reservation_id, int32_t connector,
+                                                             ocpp1_6::DateTime expiryDate,
+                                                             ocpp1_6::CiString20Type idTag, std::string parent_id) {
+            
+        std::map<std::string, ocpp1_6::ReservationStatus> ResStatMap = {
+            { std::string("Accepted"), ocpp1_6::ReservationStatus::Accepted },
+            { std::string("Faulted"), ocpp1_6::ReservationStatus::Faulted },
+            { std::string("Occupied"), ocpp1_6::ReservationStatus::Occupied },
+            { std::string("Rejected"), ocpp1_6::ReservationStatus::Rejected },
+            { std::string("Unavailable"), ocpp1_6::ReservationStatus::Unavailable }
+        };
+
         if (connector > 0 && connector <= this->r_evse_manager.size()) {
-            return this->r_evse_manager.at(connector - 1)->call_cancel_reservation();
+
+            std::string response =
+                this->r_evse_manager.at(connector - 1)
+                    ->call_reserve_now(reservation_id, idTag.get(), expiryDate.to_rfc3339(), parent_id);
+
+            return ResStatMap.at(response);
         } else {
-            return false;
+            return ocpp1_6::ReservationStatus::Unavailable;
+        }
+    });
+
+    this->charge_point->register_cancel_reservation_callback([this](int32_t connector) {
+
+        std::map<bool, ocpp1_6::CancelReservationStatus> CanResStatMap = {
+            { true, ocpp1_6::CancelReservationStatus::Accepted },
+            { false, ocpp1_6::CancelReservationStatus::Rejected }
+        };
+
+        if (connector > 0 && connector <= this->r_evse_manager.size()) {
+            return CanResStatMap.at(this->r_evse_manager.at(connector - 1)->call_cancel_reservation());
+        } else {
+            return CanResStatMap.at(false);
         }
     });
 
