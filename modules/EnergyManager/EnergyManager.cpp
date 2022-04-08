@@ -84,8 +84,6 @@ void EnergyManager::optimize_one_level(json& energy, json& optimized_values,
         }
 
         if (number_children > 0) {
-            // EVLOG(error) << "object energy: " << energy; // TODO(LAD): remove me
-
             // get current price / kWh
             double current_price_per_kwh = INVALID_PRICE_PER_KWH;
             current_price_per_kwh = get_currently_valid_price_per_kwh(energy, timepoint_now);
@@ -239,11 +237,7 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
     double child_min_current_A = 0.0F;
     double current_scaling_factor = 1.0F;
 
-    do {
-        recalculate = false;
-        sum_max_current_requests = 0.0;
-
-        // add all children's max-/min- current requests
+    // prime all children's max-/min- current requests
         for (json& child : energy_object["children"]) {
             if (child.contains("requesting_power") && child.at("requesting_power") == true) {
                 if (child.contains("schedule_import") && !child.at("schedule_import").is_null()) {
@@ -261,20 +255,41 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
                         .get_to(child_min_current_A);
                     sum_max_current_requests += child_max_current_A;
                     sum_min_current_requests += child_min_current_A;
+                child["scaled_current"] = current_scaling_factor * child_max_current_A;
                 } else {
                     // "schedule_import" not yet set, no sense in continuing (fault case: remove this child from request
                     // group and continue)
                     child.at("requesting_power") = false;
                     continue;
                 }
+        } else {
+            child["requesting_power"] = false;
             }
         }
 
-        double current_limit_at_this_level = energy_object.at("schedule_import")
-                                                          .at(0)
-                                                          .at("request_parameters")
-                                                          .at("ac_current_A")
-                                                          .at("max_current_A");
+    // store current level's current limit
+    double current_limit_at_this_level =
+        energy_object.at("schedule_import").at(0).at("request_parameters").at("ac_current_A").at("max_current_A");
+
+    do {
+        recalculate = false;
+        sum_max_current_requests = 0.0;
+        sum_min_current_requests = 0.0;
+
+        // add all children's max-/min- current requests
+        for (json& child : energy_object["children"]) {
+            if (child.at("requesting_power") == true) {
+                child.at("scaled_current").get_to(child_max_current_A);
+                child.at("schedule_import")
+                    .at(0)
+                    .at("request_parameters")
+                    .at("ac_current_A")
+                    .at("min_current_A")
+                    .get_to(child_min_current_A);
+                sum_max_current_requests += child_max_current_A;
+                sum_min_current_requests += child_min_current_A;
+            }
+        }
 
         // divide maximum current available to this level by sum of current requests
         if (energy_object.contains("schedule_import") && !energy_object.at("schedule_import").is_null()) {
@@ -290,26 +305,21 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
             return;
         }  
 
-        // if the sum of this level's children's minimum current requests is already larger than its current limit, we need to drop requests from children; if not, start scaling 
-        if ( sum_min_current_requests > current_limit_at_this_level ) {
-
+        // if the sum of this level's children's minimum current requests is already larger than its current limit, we
+        // need to drop requests from children; if not, start scaling
+        if (sum_min_current_requests > current_limit_at_this_level) {
             // drop first child which breaks "min_current_A" requirement and recalculate
             for (json& child : energy_object["children"]) {
-                if (child.contains("requesting_power") && child.at("requesting_power") == true) {
-                    child.at("schedule_import")
-                        .at(0)
-                        .at("request_parameters")
-                        .at("ac_current_A")
-                        .at("max_current_A")
-                        .get_to(child_max_current_A);
+                if (child.at("requesting_power") == true) {
+                    child.at("scaled_current").get_to(child_max_current_A);
                     child["scaled_current"] = current_scaling_factor * child_max_current_A;
 
                     // check if "min_current_A" is breached
-                    if (child["scaled_current"] < child.at("schedule_import")
-                                                    .at(0)
-                                                    .at("request_parameters")
-                                                    .at("ac_current_A")
-                                                    .at("min_current_A")) {
+                    if (child.at("scaled_current") < child.at("schedule_import")
+                                                        .at(0)
+                                                        .at("request_parameters")
+                                                        .at("ac_current_A")
+                                                        .at("min_current_A")) {
                         // if "min_current_A" breached, drop first child and recalculate
                         child["requesting_power"] = false;
                         recalculate = true;
@@ -317,17 +327,35 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
                     }
                 }
             }
+        } else if (sum_max_current_requests <= current_limit_at_this_level) {
+            // this is the end goal for this level
+            recalculate = false;
         } else {
+            // sum_min_current_requests <= current_limit_at_this_level
             // apply scaling factor to all requesting children
             for (json& child : energy_object["children"]) {
-                if (child.contains("requesting_power") && child.at("requesting_power") == true) {
-                    child.at("schedule_import")
-                        .at(0)
-                        .at("request_parameters")
-                        .at("ac_current_A")
-                        .at("max_current_A")
-                        .get_to(child_max_current_A);
+                if (child.at("requesting_power") == true) {
+                    child.at("scaled_current").get_to(child_max_current_A);
+                    if (child.at("scaled_current") > child.at("schedule_import")
+                                                        .at(0)
+                                                        .at("request_parameters")
+                                                        .at("ac_current_A")
+                                                        .at("min_current_A")) {
+                        // only apply scaling if child is not already at minimum current, then check afterward if
+                        // scaling brought it below threshold
                     child["scaled_current"] = current_scaling_factor * child_max_current_A;
+                    }
+                    // check if child has already been scaled to minimum current
+                    else if (child.at("scaled_current") == child.at("schedule_import")
+                                                               .at(0)
+                                                               .at("request_parameters")
+                                                               .at("ac_current_A")
+                                                               .at("min_current_A")) {
+                        // we have already checked that it is possible to distribute all requests if minimum currents
+                        // are assigned, thus continue with the next child
+                        recalculate = true;
+                        continue;
+                    }
 
                     // check if "min_current_A" is breached
                     if (child["scaled_current"] < child.at("schedule_import")
@@ -341,7 +369,6 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
                                                        .at("request_parameters")
                                                        .at("ac_current_A")
                                                        .at("min_current_A");
-                        // child["requesting_power"] = false;
                         recalculate = true;
                         break;
                     }
@@ -351,29 +378,16 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
         
         if (recalculate == false) {
             not_done = false;
-
             for (json& child : energy_object["children"]) {
 
-                if (child.contains("requesting_power") && child.at("requesting_power") == true) {
-                    // if child is requesting power now
-                    if (child.contains("scaled_current")) {
-                        // assign either scaled_current (if necessary)...
+                if (child.at("requesting_power") == true) {
+                    // if child is requesting power still, assign scaled_current
                         child["limit_from_parent"] = child.at("scaled_current");
-                    } else {
-                        // ...or assign its requested current (if possible)
-                        child["limit_from_parent"] = child.at("schedule_import")
-                                                         .at(0)
-                                                         .at("request_parameters")
-                                                         .at("ac_current_A")
-                                                         .at("max_current_A");
-                    }
                 } else {
                     // child is NOT requesting power, set limit to zero
                     child["limit_from_parent"] = 0;
                 }
-                // EVLOG(critical) << "limit from parent: " << child.dump();
             }
-            // EVLOG(error) << "########################## ";
         }
 
     } while (not_done);
