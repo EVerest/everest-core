@@ -126,5 +126,16 @@
                 }
             ]
         }
+    },
+    "api": {
+        "module": "API",
+        "connections": {
+            "evse_manager": [
+                {
+                    "module_id": "evse_manager",
+                    "implementation_id": "evse"
+                }
+            ]
+        }
     }
 }
