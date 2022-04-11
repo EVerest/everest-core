@@ -214,6 +214,8 @@ private:
     void update_pwm_max_every_5seconds(float dc);
 };
 
+#define CHARGER_ABSOLUTE_MAX_CURRENT double(80.0F)
+
 }
 
 #endif // SRC_EVDRIVERS_CHARGER_H_
