@@ -86,9 +86,9 @@ bool EvseManager::updateLocalMaxCurrentLimit(float max_current) {
         if (current_max_current_A > local_max_current_limit) {
             charger->setMaxCurrent(local_max_current_limit, (std::chrono::system_clock::now() + std::chrono::seconds(10)) );
         } else if (current_max_current_A == 0.0F) {
-            charger->setMaxCurrent(local_max_current_limit, (std::chrono::system_clock::now() + std::chrono::seconds(10)) ); // TODO(LAD): where to get validUntil from???
+            charger->setMaxCurrent(local_max_current_limit, (std::chrono::system_clock::now() + std::chrono::seconds(10)) ); // TODO(LAD): where else to get validUntil from???
         } else {
-            EVLOG(error) << "setting max_current failed! trying to set: " << max_current << "A over: " << current_max_current_A << "A";
+            // wait for EnergyManager to assign optimized current on next opimizer run
         }
         return true;
     }
