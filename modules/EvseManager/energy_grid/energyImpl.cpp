@@ -41,7 +41,7 @@ void energyImpl::init() {
         std::string sLim = lim;
         double new_price_limit = std::stod(sLim);
 
-        EVLOG(error) << "price limit changed to: " << new_price_limit << " EUR / kWh"; // TODO(LAD): adapt to other currencies
+        EVLOG(debug) << "price limit changed to: " << new_price_limit << " EUR / kWh"; // TODO(LAD): adapt to other currencies
 
         // update price limits
         if (new_price_limit > 0.0F) {
@@ -49,11 +49,11 @@ void energyImpl::init() {
             _price_limit_previous_value = new_price_limit;   // TODO(LAD): add storage on more permanent medium (config/hdd?)
             _price_limit = new_price_limit;
             _optimizer_mode = EVSE_OPTIMIZER_MODE_PRICE_DRIVEN;
-            EVLOG(error) << "switched to \"price_driven\" optimizer mode";
+            EVLOG(debug) << "switched to \"price_driven\" optimizer mode";
         } else {
             _price_limit = -1.0F;
             _optimizer_mode = EVSE_OPTIMIZER_MODE_MANUAL_LIMITS;
-            EVLOG(error) << "switched to \"manual_limits\" optimizer mode";
+            EVLOG(debug) << "switched to \"manual_limits\" optimizer mode";
         }
 
         updateAndPublishEnergyObject();
@@ -62,11 +62,11 @@ void energyImpl::init() {
     mod->mqtt.subscribe("/external/" + mod->info.id + ":" + mod->info.name + "/cmd/switch_optimizer_mode", [this](json mode) { 
         if (mode == EVSE_OPTIMIZER_MODE_MANUAL_LIMITS) {
             _optimizer_mode = EVSE_OPTIMIZER_MODE_MANUAL_LIMITS;
-            EVLOG(error) << "switched to \"manual_limits\" optimizer mode";
+            EVLOG(debug) << "switched to \"manual_limits\" optimizer mode";
         } else if (mode == EVSE_OPTIMIZER_MODE_PRICE_DRIVEN) {
             _optimizer_mode = EVSE_OPTIMIZER_MODE_PRICE_DRIVEN;
             mod->updateLocalMaxCurrentLimit(mod->get_hw_capabilities().at("max_current_A"));
-            EVLOG(error) << "switched to \"price_driven\" optimizer mode";
+            EVLOG(debug) << "switched to \"price_driven\" optimizer mode";
         } else {
             // error
             EVLOG(error) << "received unknown optimizer mode: " << mode;
@@ -129,8 +129,7 @@ void energyImpl::handle_enforce_limits(std::string& uuid, Object& limits_import,
         phase_count_limit["max_phase_count"] = mod->get_hw_capabilities()["max_phase_count"];
         phase_count_limit["min_phase_count"] = mod->get_hw_capabilities()["min_phase_count"];
         phase_count_limit["supports_changing_phases_during_charging"] = mod->get_hw_capabilities()["supports_changing_phases_during_charging"];
-        // EVLOG(error) << "phase count limits object: " << phase_count_limit;
-        // EVLOG(error) << "####################: " << energy;
+
         if (energy["energy_usage"]["power_W"]["total"] > 0) {
             if (phase_count_limit["supports_changing_phases_during_charging"] != true) {
                 EVLOG(debug) << "Cannot apply phase limit: Setting during charging not supported!";
@@ -171,7 +170,7 @@ void energyImpl::updateAndPublishEnergyObject(){
                 energy.at("optimizer_target").erase("price_limit");
                 energy.erase("optimizer_target");
 
-                EVLOG(error) << " switched to manual_limits: removing price_limit";
+                EVLOG(debug) << " switched to manual_limits: removing price_limit";
             }
         }
         {
