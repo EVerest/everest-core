@@ -286,8 +286,14 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
                     .at("ac_current_A")
                     .at("min_current_A")
                     .get_to(child_min_current_A);
-                sum_max_current_requests += child_max_current_A;
-                sum_min_current_requests += child_min_current_A;
+                // add to overall max-/min- current tally
+                if (child_max_current_A >= child_min_current_A) {
+                    sum_max_current_requests += child_max_current_A;
+                    sum_min_current_requests += child_min_current_A;
+                } else {
+                    // ... and weed out children with too low current requests
+                    child.at("requesting_power") = false;
+                }
             }
         }
 
