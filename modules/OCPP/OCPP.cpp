@@ -43,35 +43,34 @@ void OCPP::init() {
         }
     });
 
-
     // int32_t reservation_id, CiString20Type auth_token, DateTime expiry_date, std::string parent_id
-    this->charge_point->register_reserve_now_callback([this](int32_t reservation_id, int32_t connector,
-                                                             ocpp1_6::DateTime expiryDate,
-                                                             ocpp1_6::CiString20Type idTag, std::string parent_id) {
+    this->charge_point->register_reserve_now_callback(
+        [this](int32_t reservation_id, int32_t connector, ocpp1_6::DateTime expiryDate, ocpp1_6::CiString20Type idTag,
+               boost::optional<ocpp1_6::CiString20Type> parent_id) {
+            if (ResConnMap.count(reservation_id) == 0) {
+                this->ResConnMap[reservation_id] = connector;
+            } else if (ResConnMap.count(reservation_id) == 1) {
+                std::map<int32_t, int32_t>::iterator it;
+                it = this->ResConnMap.find(reservation_id);
+                this->ResConnMap.erase(it);
+                this->ResConnMap[reservation_id] = connector;
 
-        if (ResConnMap.count(reservation_id) == 0) {
-            this->ResConnMap[reservation_id] = connector;
-        } else if (ResConnMap.count(reservation_id) == 1) {
-            std::map<int32_t, int32_t>::iterator it;
-            it = this->ResConnMap.find(reservation_id);
-            this->ResConnMap.erase(it);
-            this->ResConnMap[reservation_id] = connector;
+            } else {
+                return ocpp1_6::ReservationStatus::Faulted;
+            }
 
-        } else {
-            return ocpp1_6::ReservationStatus::Faulted;
-        }
+            if (connector > 0 && connector <= this->r_evse_manager.size()) {
 
-        if (connector > 0 && connector <= this->r_evse_manager.size()) {
-
-            std::string response =
-                this->r_evse_manager.at(connector - 1)
-                    ->call_reserve_now(reservation_id, idTag.get(), expiryDate.to_rfc3339(), parent_id);
-
-            return this->ResStatMap.at(response);
-        } else {
-            return ocpp1_6::ReservationStatus::Unavailable;
-        }
-    });
+                std::string response =
+                    this->r_evse_manager.at(connector - 1)
+                        ->call_reserve_now(
+                            reservation_id, idTag.get(), expiryDate.to_rfc3339(),
+                            std::string("")); // TODO: replace empty string with parent_id.get() when evse is ready
+                return this->ResStatMap.at(response);
+            } else {
+                return ocpp1_6::ReservationStatus::Unavailable;
+            }
+        });
 
     this->charge_point->register_cancel_reservation_callback([this](int32_t reservationId) {
         int32_t connector = this->ResConnMap[reservationId];
