@@ -1,6 +1,6 @@
 {% from "helper_macros.j2" import print_template_info, var_to_cpp, print_spdx_line %}
 {{ print_spdx_line('Apache-2.0') }}
-{{ print_template_info('2') }}
+{{ print_template_info('3') }}
 
 #include "{{ info.ld_ev_header }}"
 
@@ -90,15 +90,25 @@ std::vector<Everest::cmd> everest_register(const json& connections) {
 
     {% endfor %}
     {% for requirement in requires %}
+    {# FIXME: needs refactoring #}
     {% if requirement.is_vector %}
     auto r_{{ requirement.id }} = std::vector<std::unique_ptr<{{ requirement.class_name }}>>();
     if (connections.contains("{{ requirement.id }}")) {
-        for (int idx = 0; idx < connections["{{ requirement.id }}"].size(); idx++) {
-            r_{{ requirement.id }}.emplace_back(std::make_unique<{{ requirement.class_name }}>(&adapter, Requirement{"{{ requirement.id }}", idx}));
+        auto requirement_connection = connections.at("{{ requirement.id }}");
+        for (size_t idx = 0; idx < requirement_connection.size(); idx++) {
+            auto requirement_module_id = requirement_connection[idx].at("module_id");
+            r_{{ requirement.id }}.emplace_back(std::make_unique<{{ requirement.class_name }}>(&adapter, Requirement{"{{ requirement.id }}", idx}, requirement_module_id));
         }
     }
     {% else %}
-    auto r_{{ requirement.id }} = std::make_unique<{{ requirement.class_name }}>(&adapter, Requirement{"{{ requirement.id }}", 0});
+    std::string r_{{ requirement.id }}_requirement_module_id;
+    if (connections.contains("{{ requirement.id }}")) {
+        auto requirement_connection = connections.at("{{ requirement.id }}");
+        if (requirement_connection.size() > 0) {
+            r_{{ requirement.id }}_requirement_module_id = requirement_connection[0].at("module_id");
+        }
+    }
+    auto r_{{ requirement.id }} = std::make_unique<{{ requirement.class_name }}>(&adapter, Requirement{"{{ requirement.id }}", 0}, r_{{ requirement.id }}_requirement_module_id);
     {% endif %}
     {% endfor %}
 

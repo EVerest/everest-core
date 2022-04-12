@@ -3,13 +3,15 @@
 #ifndef {{ info.hpp_guard }}
 #define {{ info.hpp_guard }}
 
-{{ print_template_info('2') }}
+{{ print_template_info('3') }}
 
 #include <framework/ModuleAdapter.hpp>
 
 class {{ info.class_name }} {
 public:
-    {{ info.class_name }}(Everest::ModuleAdapter* adapter, Requirement req) : _adapter(adapter), _req(req){};
+    {{ info.class_name }}(Everest::ModuleAdapter* adapter, Requirement req, const std::string& module_id) : module_id(module_id), _adapter(adapter), _req(req){};
+
+    const std::string module_id;
 
     {% if not vars %}
     // this interface does not export any variables to subscribe to
