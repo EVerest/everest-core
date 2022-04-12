@@ -37,13 +37,13 @@ private:
     std::chrono::time_point<std::chrono::system_clock> end_time_point;   ///< End of the charging session
     double latest_total_w;                                               ///< Latest total power reading in W
 
-    bool is_state_charging(std::string current_state);
+    bool is_state_charging(const std::string& current_state);
 
 public:
     SessionInfo();
 
     void reset();
-    void set_state(std::string state);
+    void set_state(const std::string& state);
     void set_start_energy_wh(int32_t start_energy_wh);
     void set_end_energy_wh(int32_t end_energy_wh);
     void set_latest_energy_wh(int32_t latest_energy_wh);
@@ -95,7 +95,7 @@ private:
     std::thread datetime_thread;
     bool running = true;
     std::vector<std::unique_ptr<SessionInfo>> info;
-    std::string sanitize_event(std::string event);
+    std::string sanitize_event(const std::string& event);
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

@@ -16,7 +16,7 @@ SessionInfo::SessionInfo() :
     this->end_time_point = this->start_time_point;
 }
 
-bool SessionInfo::is_state_charging(std::string current_state) {
+bool SessionInfo::is_state_charging(const std::string& current_state) {
     if (current_state == "SessionStarted" || current_state == "AuthRequired" || current_state == "ChargingStarted" ||
         current_state == "ChargingPausedEV" || current_state == "ChargingPausedEVSE" ||
         current_state == "ChargingResumed") {
@@ -34,7 +34,7 @@ void SessionInfo::reset() {
     this->latest_total_w = 0;
 }
 
-void SessionInfo::set_state(std::string state) {
+void SessionInfo::set_state(const std::string& state) {
     std::lock_guard<std::mutex> lock(this->session_info_mutex);
     this->state = state;
 }
@@ -142,12 +142,12 @@ void API::init() {
         std::string cmd_base = evse_base + "/cmd/";
 
         std::string cmd_pause_charging = cmd_base + "pause_charging";
-        this->mqtt.subscribe(cmd_pause_charging, [&evse](std::string data) {
+        this->mqtt.subscribe(cmd_pause_charging, [&evse](const std::string& data) {
             evse->call_pause_charging(); //
         });
 
         std::string cmd_resume_charging = cmd_base + "resume_charging";
-        this->mqtt.subscribe(cmd_resume_charging, [&evse](std::string data) {
+        this->mqtt.subscribe(cmd_resume_charging, [&evse](const std::string& data) {
             evse->call_resume_charging(); //
         });
 
@@ -159,7 +159,7 @@ void API::ready() {
     invoke_ready(*p_main);
 }
 
-std::string API::sanitize_event(std::string event) {
+std::string API::sanitize_event(const std::string& event) {
     std::string sanitized_event = "Unknown";
     if (event == "Enabled") {
         sanitized_event = event;
