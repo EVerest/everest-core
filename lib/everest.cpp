@@ -184,7 +184,7 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
                 EVLOG_AND_THROW(EverestApiError(fmt::format(
                     "Call to {}->{}({}): Argument '{}' with value '{}' could not be validated with schema: {}",
                     this->config.printable_identifier(connection["module_id"], connection["implementation_id"]),
-                    cmd_name, fmt::join(arg_names, ","), arg_name, json_args[arg_name], e.what())));
+                    cmd_name, fmt::join(arg_names, ","), arg_name, json_args[arg_name].dump(2), e.what())));
             }
         }
     }
