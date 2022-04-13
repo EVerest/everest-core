@@ -17,7 +17,7 @@
                             "type": "string",
                             "format": "date-time"
                         },
-                        "limit": {
+                        "request_parameters": {
                             "description": "Enforced limits",
                             "type": "object",
                             "ac_current_A": {
@@ -59,7 +59,7 @@
                             "type": "string",
                             "format": "date-time"
                         },
-                        "limit": {
+                        "request_parameters": {
                             "description": "Enforced limits",
                             "type": "object",
                             "ac_current_A": {
@@ -100,7 +100,7 @@
                         "type": "object",
                         "required": [
                             "timestamp",
-                            "limit"
+                            "request_parameters"
                         ],
                         "properties": {
                             "timestamp": {
@@ -108,7 +108,7 @@
                                 "type": "string",
                                 "format": "date-time"
                             },
-                            "limit": {
+                            "request_parameters": {
                                 "description": "Limit for this timestamp",
                                 "type": "object",
                                 "required": [
@@ -140,6 +140,26 @@
                                     "type": "number",
                                     "minimum": 0.0
                                 }
+                            },
+                            "price_per_kwh": {
+                                "description": "Price information for this timepoint",
+                                "type": "object",
+                                "required": [
+                                    "value",
+                                    "currency"
+                                ],
+                                "properties": {
+                                    "value": {
+                                        "description": "Price per kWh (cost)",
+                                        "type": "number"
+                                    },
+                                    "currency": {
+                                        "description": "Currency in 3 digit ISO 4217",
+                                        "type": "string",
+                                        "minLength": 3,
+                                        "maxLength": 3
+                                    }
+                                }
                             }
                         },
                         "additionalProperties": false
@@ -153,7 +173,7 @@
                         "type": "object",
                         "required": [
                             "timestamp",
-                            "limit"
+                            "request_parameters"
                         ],
                         "properties": {
                             "timestamp": {
@@ -161,7 +181,7 @@
                                 "type": "string",
                                 "format": "date-time"
                             },
-                            "limit": {
+                            "request_parameters": {
                                 "description": "Limit for this timestamp",
                                 "type": "object",
                                 "required": [
@@ -192,6 +212,26 @@
                                     "description": "Total power limit in Watt. Can be used for DC or as additional limit for AC.",
                                     "type": "number",
                                     "maximum": 0.0
+                                }
+                            },
+                            "price_per_kwh": {
+                                "description": "Price information for this timepoint",
+                                "type": "object",
+                                "required": [
+                                    "value",
+                                    "currency"
+                                ],
+                                "properties": {
+                                    "value": {
+                                        "description": "Price per kWh (cost)",
+                                        "type": "number"
+                                    },
+                                    "currency": {
+                                        "description": "Currency in 3 digit ISO 4217",
+                                        "type": "string",
+                                        "minLength": 3,
+                                        "maxLength": 3
+                                    }
                                 }
                             }
                         },
@@ -351,8 +391,7 @@
                                         "minLength": 3,
                                         "maxLength": 3
                                     }
-                                },
-                                "additionalProperties": false
+                                }
                             }
                         },
                         "additionalProperties": false
@@ -366,7 +405,7 @@
                         "type": "object",
                         "required": [
                             "timestamp",
-                            "limit"
+                            "request_parameters"
                         ],
                         "properties": {
                             "timestamp": {
@@ -374,7 +413,7 @@
                                 "type": "string",
                                 "format": "date-time"
                             },
-                            "limit": {
+                            "request_parameters": {
                                 "description": "Limit for this timestamp",
                                 "type": "object",
                                 "required": [

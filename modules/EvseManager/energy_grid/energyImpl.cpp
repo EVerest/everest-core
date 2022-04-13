@@ -112,11 +112,11 @@ void energyImpl::handle_enforce_limits(std::string& uuid, Object& limits_import,
         }            
 
         // apply enforced AC current limits
-        if (!limits_import["limit"].is_null() && 
-            !limits_import["limit"]["ac_current_A"].is_null() &&
-            !limits_import["limit"]["ac_current_A"]["current_A"].is_null() &&
-            limits_import["limit"]["ac_current_A"]["current_A"] < limit) {
-            limit = limits_import["limit"]["ac_current_A"]["current_A"];
+        if (!limits_import["request_parameters"].is_null() && 
+            !limits_import["request_parameters"]["ac_current_A"].is_null() &&
+            !limits_import["request_parameters"]["ac_current_A"]["current_A"].is_null() &&
+            limits_import["request_parameters"]["ac_current_A"]["current_A"] < limit) {
+            limit = limits_import["request_parameters"]["ac_current_A"]["current_A"];
         }
 
         // update limit at the charger
