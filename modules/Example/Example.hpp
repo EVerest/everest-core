@@ -11,7 +11,7 @@
 #include "ld-ev.hpp"
 
 // headers for provided interface implementations
-#include <generated/example_child/Implementation.hpp>
+#include <generated/example/Implementation.hpp>
 #include <generated/kvs/Implementation.hpp>
 
 // headers for required interface implementations
@@ -28,9 +28,8 @@ struct Conf {};
 class Example : public Everest::ModuleBase {
 public:
     Example() = delete;
-    Example(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
-            std::unique_ptr<example_childImplBase> p_example, std::unique_ptr<kvsImplBase> p_store,
-            std::unique_ptr<kvsIntf> r_kvs, Conf& config) :
+    Example(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, std::unique_ptr<exampleImplBase> p_example,
+            std::unique_ptr<kvsImplBase> p_store, std::unique_ptr<kvsIntf> r_kvs, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_example(std::move(p_example)),
@@ -40,7 +39,7 @@ public:
 
     const Conf& config;
     Everest::MqttProvider& mqtt;
-    const std::unique_ptr<example_childImplBase> p_example;
+    const std::unique_ptr<exampleImplBase> p_example;
     const std::unique_ptr<kvsImplBase> p_store;
     const std::unique_ptr<kvsIntf> r_kvs;
 

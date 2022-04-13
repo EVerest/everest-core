@@ -1,4 +1,0 @@
-{
-    "description": "This interface defines the interface of an augmented power supply (currently solely conforming to the power_in interface)",
-    "parent": "power_in"
-}
