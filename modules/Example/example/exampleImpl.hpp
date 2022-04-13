@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifndef EXAMPLE_EXAMPLE_CHILD_IMPL_HPP
-#define EXAMPLE_EXAMPLE_CHILD_IMPL_HPP
+#ifndef EXAMPLE_EXAMPLE_IMPL_HPP
+#define EXAMPLE_EXAMPLE_IMPL_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
 // template version 1
 //
 
-#include <generated/example_child/Implementation.hpp>
+#include <generated/example/Implementation.hpp>
 
 #include "../Example.hpp"
 
@@ -25,11 +25,11 @@ struct Conf {
     int enum_test2;
 };
 
-class example_childImpl : public example_childImplBase {
+class exampleImpl : public exampleImplBase {
 public:
-    example_childImpl() = delete;
-    example_childImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<Example>& mod, Conf& config) :
-        example_childImplBase(ev, "example"), mod(mod), config(config){};
+    exampleImpl() = delete;
+    exampleImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<Example>& mod, Conf& config) :
+        exampleImplBase(ev, "example"), mod(mod), config(config){};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here
@@ -62,4 +62,4 @@ private:
 } // namespace example
 } // namespace module
 
-#endif // EXAMPLE_EXAMPLE_CHILD_IMPL_HPP
+#endif // EXAMPLE_EXAMPLE_IMPL_HPP

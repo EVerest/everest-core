@@ -2,7 +2,7 @@
     "description": "Simple example module written in C++",
 	"provides": {
 		"example": {
-			"interface": "example_child",
+			"interface": "example",
 			"description": "This implements an example interface that uses multiple framework features",
 			"config": {
 				"current": {

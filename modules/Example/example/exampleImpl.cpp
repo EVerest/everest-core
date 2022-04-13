@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
-#include "example_childImpl.hpp"
+#include "exampleImpl.hpp"
 
 // initial cpp template for interface example_child
 // this file should not be overwritten by the code generator again
@@ -8,16 +8,16 @@
 namespace module {
 namespace example {
 
-void example_childImpl::init() {
+void exampleImpl::init() {
     mod->mqtt.subscribe("external/a",
                         [](json data) { EVLOG(error) << "received data from external MQTT handler: " << data.dump(); });
 }
 
-void example_childImpl::ready() {
+void exampleImpl::ready() {
     publish_max_current(config.current);
 }
 
-bool example_childImpl::handle_uses_something(std::string& key) {
+bool exampleImpl::handle_uses_something(std::string& key) {
     if (mod->r_kvs->call_exists(key)) {
         EVLOG(debug) << "IT SHOULD NOT AND DOES NOT EXIST";
     }

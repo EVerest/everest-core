@@ -1,4 +1,0 @@
-{
-    "description": "This interface defines an inherited example interface that uses multiple framework features (all inherited from base interface)",
-	"parent": "example"
-}

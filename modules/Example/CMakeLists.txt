@@ -24,7 +24,7 @@ target_sources(${MOD_MODULE_NAME}
     PRIVATE
         ${MODULE_NAME}.cpp
         "${MODULE_LOADER_DIR}/ld-ev.cpp"
-        "example/example_childImpl.cpp"
+        "example/exampleImpl.cpp"
         "store/kvsImpl.cpp"
         ${ADDITIONAL_MODULE_SOURCES}
 )
