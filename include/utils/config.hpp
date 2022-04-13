@@ -41,7 +41,6 @@ private:
     json manifests;
     json interfaces;
     json interface_definitions;
-    json base_interfaces;
     schemas _schemas;
 
     ///
@@ -56,7 +55,7 @@ private:
     /// would be overwritten
     ///
     /// \returns the resulting interface definiion
-    json resolve_interface(const std::string& intf_name, std::set<std::string>& seen_interfaces);
+    json resolve_interface(const std::string& intf_name);
 
     ///
     /// \brief extracts information about the provided module given via \p module_id from the config and manifest

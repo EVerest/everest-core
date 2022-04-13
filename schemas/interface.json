@@ -103,14 +103,6 @@
             "type": "string",
             "minLength": 2
         },
-        "parent": {
-            "description": "This defines the parent interface for inheritance",
-            "type": [
-                "string"
-            ],
-            "pattern": "^[a-zA-Z_][a-zA-Z0-9_.-]*$",
-            "minLength": 3
-        },
         "cmds": {
             "description": "This describes a list of commands for this unit having arguments and result declared as json schema",
             "type": "object",

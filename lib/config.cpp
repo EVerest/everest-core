@@ -113,7 +113,6 @@ Config::Config(std::string schemas_dir, std::string config_file, std::string mod
     this->manifests = json({});
     this->interfaces = json({});
     this->interface_definitions = json({});
-    this->base_interfaces = json({});
 
     this->_schemas = Config::load_schemas(this->schemas_dir);
 
@@ -211,15 +210,12 @@ Config::Config(std::string schemas_dir, std::string config_file, std::string mod
         std::set<std::string> provided_impls = Config::keys(this->manifests[module_name]["provides"]);
 
         this->interfaces[module_name] = json({});
-        this->base_interfaces[module_name] = json({});
 
         for (const auto& impl_id : provided_impls) {
             EVLOG(info) << fmt::format("Loading interface for implementation: {}", impl_id);
             auto intf_name = this->manifests[module_name]["provides"][impl_id]["interface"].get<std::string>();
             auto seen_interfaces = std::set<std::string>();
-            auto interface_definition = resolve_interface(intf_name, seen_interfaces);
-            this->interfaces[module_name][impl_id] = interface_definition;
-            this->base_interfaces[module_name][impl_id] = seen_interfaces;
+            this->interfaces[module_name][impl_id] = resolve_interface(intf_name);
         }
 
         // check if config only contains impl_ids listed in manifest file
@@ -297,67 +293,9 @@ Config::Config(std::string schemas_dir, std::string config_file, std::string mod
     resolve_all_requirements();
 }
 
-json Config::resolve_interface(const std::string& intf_name, std::set<std::string>& seen_interfaces) {
+json Config::resolve_interface(const std::string& intf_name) {
     // load and validate interface.json and mark interface as seen
     auto intf_definition = load_interface_file(intf_name);
-    seen_interfaces.insert(intf_name);
-
-    if (intf_definition["parent"].is_string() && intf_definition["parent"] != "") {
-        EVLOG(debug) << "interface '" << intf_name << "' has parent '" << intf_definition["parent"] << "'";
-        auto parent_name = intf_definition["parent"].get<std::string>();
-        if (seen_interfaces.count(parent_name) != 0) {
-            EVLOG_AND_THROW(EverestConfigError(fmt::format(
-                "Found unallowed inheritance loop: interface '{}' tries to load already loaded interface '{}'!",
-                intf_name, parent_name)));
-        }
-        auto parent_definition = resolve_interface(parent_name, seen_interfaces);
-
-        // merge interface definitions of parent into child
-        if (parent_definition.contains("vars")) {
-            if (intf_definition.contains("vars")) {
-                EVLOG(debug) << fmt::format("There are vars in the base and child interface definitions, extending "
-                                            "child interface '{}' with base interface '{}'...",
-                                            intf_name, parent_name);
-                for (auto& var : intf_definition["vars"].items()) {
-                    if (parent_definition["vars"].contains(var.key())) {
-                        EVLOG_AND_THROW(EverestConfigError(fmt::format(
-                            "Parent interface contains var '{}' that would be overwritten by child interface!",
-                            var.key())));
-                    }
-                }
-                intf_definition["vars"].update(parent_definition["vars"]);
-            } else {
-                EVLOG(debug) << fmt::format("There are only vars in the base interface definition, copying over base "
-                                            "interface '{}' to child interface '{}'...",
-                                            parent_name, intf_name);
-                intf_definition["vars"] = parent_definition["vars"];
-            }
-        }
-
-        if (parent_definition.contains("cmds")) {
-            if (intf_definition.contains("cmds")) {
-                EVLOG(debug) << fmt::format("There are cmds in the base and child interface definitions, extending "
-                                            "child interface '{}' with base interface '{}'...",
-                                            intf_name, parent_name);
-                for (auto& cmd : intf_definition["cmds"].items()) {
-                    if (parent_definition["cmds"].contains(cmd.key())) {
-                        EVLOG_AND_THROW(EverestConfigError(fmt::format(
-                            "Parent interface contains cmd '{}' that would be overwritten by child interface!",
-                            cmd.key())));
-                        // TODO(kai): maybe only throw with identical function signature, otherwise overload
-                        // --> no, overloading can't be implemented nicely in javascript and imposes all sorts of corner
-                        // cases we don't want to handle
-                    }
-                }
-                intf_definition["cmds"].update(parent_definition["cmds"]);
-            } else {
-                EVLOG(debug) << fmt::format("There are only cmds in the base interface definition, copying over base "
-                                            "interface '{}' to child interface '{}'...",
-                                            parent_name, intf_name);
-                intf_definition["cmds"] = parent_definition["cmds"];
-            }
-        }
-    }
 
     this->interface_definitions[intf_name] = intf_definition;
     return intf_definition;
@@ -791,19 +729,16 @@ void Config::resolve_all_requirements() {
                 }
 
                 auto& connection_provides = connection_manifest["provides"][connection_impl_id];
-                std::set<std::string> provided_intfs =
-                    this->base_interfaces[connection_module_name][connection_impl_id];
                 std::string requirement_interface = requirement["interface"];
 
                 // check interface requirement
-                if (provided_intfs.count(requirement_interface) < 1) {
+                if (requirement_interface != connection_provides["interface"]) {
                     EVLOG_AND_THROW(EverestConfigError(fmt::format(
                         "Requirement '{}' of module {} not fulfilled by connection to module {}: required interface "
-                        "'{}' is not provided by this implementation! Connected implementation provides interface '{}' "
-                        "with parent interfaces: {}",
+                        "'{}' is not provided by this implementation! Connected implementation provides interface '{}'.",
                         requirement_id, printable_identifier(module_id),
                         printable_identifier(connection["module_id"], connection_impl_id), requirement_interface,
-                        connection_provides["interface"].get<std::string>(), json(provided_intfs))));
+                        connection_provides["interface"].get<std::string>())));
                 }
 
                 module_config["connections"][requirement_id][connection_num]["provides"] = connection_provides;
