@@ -23,35 +23,24 @@ Schemas::Schemas(std::string main_dir) {
 
 void Schemas::load_root_schema() {
     boost::filesystem::path profile_path = this->profile_schemas_path / "Config.json";
-    std::string profile = profile_path.stem().string();
 
     EVLOG(debug) << "parsing root schema file: " << boost::filesystem::canonical(profile_path);
 
     std::ifstream ifs(profile_path.c_str());
     std::string schema_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-    json schema = json::parse(schema_file);
+    this->profile_schema = json::parse(schema_file);
 
-    this->profile_schemas[profile] = schema;
-
-    this->profile_validators[profile] = std::make_shared<json_validator>(
+    this->profile_validator = std::make_shared<json_validator>(
         [this](const json_uri& uri, json& schema) { this->loader(uri, schema); }, Schemas::format_checker);
-    this->profile_validators[profile]->set_root_schema(schema);
+    this->profile_validator->set_root_schema(this->profile_schema);
 }
 
 json Schemas::get_profile_schema() {
-    std::string profile = "Config";
-    if (this->profile_schemas.count(profile) == 0) {
-        throw std::runtime_error("No schema available for profile: " + profile);
-    }
-    return this->profile_schemas[profile];
+    return this->profile_schema;
 }
 
 std::shared_ptr<json_validator> Schemas::get_profile_validator() {
-    std::string profile = "Config";
-    if (this->profile_validators.count(profile) == 0) {
-        throw std::runtime_error("No validator available for profile: " + profile);
-    }
-    return this->profile_validators[profile];
+    return this->profile_validator;
 }
 
 void Schemas::loader(const json_uri& uri, json& schema) {

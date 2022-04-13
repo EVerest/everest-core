@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+#include <ocpp1_6/charge_point_configuration.hpp>
 #include <ocpp1_6/message_queue.hpp>
+
+#include <everest/logging.hpp>
 
 namespace ocpp1_6 {
 
@@ -133,8 +136,7 @@ MessageQueue::MessageQueue(std::shared_ptr<ChargePointConfiguration> configurati
 }
 
 MessageId MessageQueue::getMessageId(const json::array_t& json_message) {
-    std::string messageId = json_message.at(MESSAGE_ID);
-    return messageId;
+    return MessageId(json_message.at(MESSAGE_ID));
 }
 
 MessageTypeId MessageQueue::getMessageTypeId(const json::array_t& json_message) {

@@ -1,0 +1,46 @@
+{% if first %}
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - {{year}} Pionix GmbH and Contributors to EVerest
+#ifndef OCPP1_6_OCPP_TYPES_HPP
+#define OCPP1_6_OCPP_TYPES_HPP
+
+#include <string>
+
+#include <boost/optional.hpp>
+#include <nlohmann/json.hpp>
+
+#include <ocpp1_6/enums.hpp>
+#include <ocpp1_6/types.hpp>
+
+namespace ocpp1_6 {
+{% endif %}
+{%- if parsed_types|length %}
+{%- for type in parsed_types %}
+{% if not type.name.endswith('Request') and not type.name.endswith('Response') %}
+
+struct {{type.name}} {
+{% for property in type.properties %}
+    {{ 'boost::optional<' if not property.required -}}
+    {{ property.type -}}
+    {{ '>' if not property.required -}}
+    {{ ' ' + property.name + ';' }}
+{% endfor %}
+};
+    /// \brief Conversion from a given {{ type.name }} \p k to a given json object \p j
+    void to_json(json& j, const {{ type.name }}& k);
+
+    /// \brief Conversion from a given json object \p j to a given {{ type.name }} \p k
+    void from_json(const json& j, {{ type.name }}& k);
+
+    // \brief Writes the string representation of the given {{ type.name }} \p k to the given output stream \p os
+    /// \returns an output stream with the {{ type.name }} written to
+    std::ostream& operator<<(std::ostream& os, const {{ type.name }}& k);
+
+{% endif %}
+{% endfor %}
+{%- endif %}
+{% if last %}
+} // namespace ocpp1_6
+
+#endif // OCPP1_6_OCPP_TYPES_HPP
+{% endif %}

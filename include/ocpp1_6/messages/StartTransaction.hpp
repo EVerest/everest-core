@@ -17,47 +17,18 @@ struct StartTransactionRequest : public Message {
 
     /// \brief Provides the type of this StartTransaction message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const {
-        return "StartTransaction";
-    }
-
-    /// \brief Conversion from a given StartTransactionRequest \p k to a given json object \p j
-    friend void to_json(json& j, const StartTransactionRequest& k) {
-        // the required parts of the message
-        j = json{
-            {"connectorId", k.connectorId},
-            {"idTag", k.idTag},
-            {"meterStart", k.meterStart},
-            {"timestamp", k.timestamp.to_rfc3339()},
-        };
-        // the optional parts of the message
-        if (k.reservationId) {
-            j["reservationId"] = k.reservationId.value();
-        }
-    }
-
-    /// \brief Conversion from a given json object \p j to a given StartTransactionRequest \p k
-    friend void from_json(const json& j, StartTransactionRequest& k) {
-        // the required parts of the message
-        k.connectorId = j.at("connectorId");
-        k.idTag = j.at("idTag");
-        k.meterStart = j.at("meterStart");
-        k.timestamp = DateTime(std::string(j.at("timestamp")));
-        ;
-
-        // the optional parts of the message
-        if (j.contains("reservationId")) {
-            k.reservationId.emplace(j.at("reservationId"));
-        }
-    }
-
-    /// \brief Writes the string representation of the given StartTransactionRequest \p k to the given output stream \p
-    /// os \returns an output stream with the StartTransactionRequest written to
-    friend std::ostream& operator<<(std::ostream& os, const StartTransactionRequest& k) {
-        os << json(k).dump(4);
-        return os;
-    }
+    std::string get_type() const;
 };
+
+/// \brief Conversion from a given StartTransactionRequest \p k to a given json object \p j
+void to_json(json& j, const StartTransactionRequest& k);
+
+/// \brief Conversion from a given json object \p j to a given StartTransactionRequest \p k
+void from_json(const json& j, StartTransactionRequest& k);
+
+/// \brief Writes the string representation of the given StartTransactionRequest \p k to the given output stream \p os
+/// \returns an output stream with the StartTransactionRequest written to
+std::ostream& operator<<(std::ostream& os, const StartTransactionRequest& k);
 
 /// \brief Contains a OCPP 1.6 StartTransactionResponse message
 struct StartTransactionResponse : public Message {
@@ -66,36 +37,18 @@ struct StartTransactionResponse : public Message {
 
     /// \brief Provides the type of this StartTransactionResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const {
-        return "StartTransactionResponse";
-    }
-
-    /// \brief Conversion from a given StartTransactionResponse \p k to a given json object \p j
-    friend void to_json(json& j, const StartTransactionResponse& k) {
-        // the required parts of the message
-        j = json{
-            {"idTagInfo", k.idTagInfo},
-            {"transactionId", k.transactionId},
-        };
-        // the optional parts of the message
-    }
-
-    /// \brief Conversion from a given json object \p j to a given StartTransactionResponse \p k
-    friend void from_json(const json& j, StartTransactionResponse& k) {
-        // the required parts of the message
-        k.idTagInfo = j.at("idTagInfo");
-        k.transactionId = j.at("transactionId");
-
-        // the optional parts of the message
-    }
-
-    /// \brief Writes the string representation of the given StartTransactionResponse \p k to the given output stream \p
-    /// os \returns an output stream with the StartTransactionResponse written to
-    friend std::ostream& operator<<(std::ostream& os, const StartTransactionResponse& k) {
-        os << json(k).dump(4);
-        return os;
-    }
+    std::string get_type() const;
 };
+
+/// \brief Conversion from a given StartTransactionResponse \p k to a given json object \p j
+void to_json(json& j, const StartTransactionResponse& k);
+
+/// \brief Conversion from a given json object \p j to a given StartTransactionResponse \p k
+void from_json(const json& j, StartTransactionResponse& k);
+
+/// \brief Writes the string representation of the given StartTransactionResponse \p k to the given output stream \p os
+/// \returns an output stream with the StartTransactionResponse written to
+std::ostream& operator<<(std::ostream& os, const StartTransactionResponse& k);
 
 } // namespace ocpp1_6
 

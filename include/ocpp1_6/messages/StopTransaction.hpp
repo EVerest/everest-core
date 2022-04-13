@@ -18,65 +18,18 @@ struct StopTransactionRequest : public Message {
 
     /// \brief Provides the type of this StopTransaction message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const {
-        return "StopTransaction";
-    }
-
-    /// \brief Conversion from a given StopTransactionRequest \p k to a given json object \p j
-    friend void to_json(json& j, const StopTransactionRequest& k) {
-        // the required parts of the message
-        j = json{
-            {"meterStop", k.meterStop},
-            {"timestamp", k.timestamp.to_rfc3339()},
-            {"transactionId", k.transactionId},
-        };
-        // the optional parts of the message
-        if (k.idTag) {
-            j["idTag"] = k.idTag.value();
-        }
-        if (k.reason) {
-            j["reason"] = conversions::reason_to_string(k.reason.value());
-        }
-        if (k.transactionData) {
-            j["transactionData"] = json::array();
-            for (auto val : k.transactionData.value()) {
-                j["transactionData"].push_back(val);
-            }
-        }
-    }
-
-    /// \brief Conversion from a given json object \p j to a given StopTransactionRequest \p k
-    friend void from_json(const json& j, StopTransactionRequest& k) {
-        // the required parts of the message
-        k.meterStop = j.at("meterStop");
-        k.timestamp = DateTime(std::string(j.at("timestamp")));
-        ;
-        k.transactionId = j.at("transactionId");
-
-        // the optional parts of the message
-        if (j.contains("idTag")) {
-            k.idTag.emplace(j.at("idTag"));
-        }
-        if (j.contains("reason")) {
-            k.reason.emplace(conversions::string_to_reason(j.at("reason")));
-        }
-        if (j.contains("transactionData")) {
-            json arr = j.at("transactionData");
-            std::vector<TransactionData> vec;
-            for (auto val : arr) {
-                vec.push_back(val);
-            }
-            k.transactionData.emplace(vec);
-        }
-    }
-
-    /// \brief Writes the string representation of the given StopTransactionRequest \p k to the given output stream \p
-    /// os \returns an output stream with the StopTransactionRequest written to
-    friend std::ostream& operator<<(std::ostream& os, const StopTransactionRequest& k) {
-        os << json(k).dump(4);
-        return os;
-    }
+    std::string get_type() const;
 };
+
+/// \brief Conversion from a given StopTransactionRequest \p k to a given json object \p j
+void to_json(json& j, const StopTransactionRequest& k);
+
+/// \brief Conversion from a given json object \p j to a given StopTransactionRequest \p k
+void from_json(const json& j, StopTransactionRequest& k);
+
+/// \brief Writes the string representation of the given StopTransactionRequest \p k to the given output stream \p os
+/// \returns an output stream with the StopTransactionRequest written to
+std::ostream& operator<<(std::ostream& os, const StopTransactionRequest& k);
 
 /// \brief Contains a OCPP 1.6 StopTransactionResponse message
 struct StopTransactionResponse : public Message {
@@ -84,37 +37,18 @@ struct StopTransactionResponse : public Message {
 
     /// \brief Provides the type of this StopTransactionResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const {
-        return "StopTransactionResponse";
-    }
-
-    /// \brief Conversion from a given StopTransactionResponse \p k to a given json object \p j
-    friend void to_json(json& j, const StopTransactionResponse& k) {
-        // the required parts of the message
-        j = json({});
-        // the optional parts of the message
-        if (k.idTagInfo) {
-            j["idTagInfo"] = k.idTagInfo.value();
-        }
-    }
-
-    /// \brief Conversion from a given json object \p j to a given StopTransactionResponse \p k
-    friend void from_json(const json& j, StopTransactionResponse& k) {
-        // the required parts of the message
-
-        // the optional parts of the message
-        if (j.contains("idTagInfo")) {
-            k.idTagInfo.emplace(j.at("idTagInfo"));
-        }
-    }
-
-    /// \brief Writes the string representation of the given StopTransactionResponse \p k to the given output stream \p
-    /// os \returns an output stream with the StopTransactionResponse written to
-    friend std::ostream& operator<<(std::ostream& os, const StopTransactionResponse& k) {
-        os << json(k).dump(4);
-        return os;
-    }
+    std::string get_type() const;
 };
+
+/// \brief Conversion from a given StopTransactionResponse \p k to a given json object \p j
+void to_json(json& j, const StopTransactionResponse& k);
+
+/// \brief Conversion from a given json object \p j to a given StopTransactionResponse \p k
+void from_json(const json& j, StopTransactionResponse& k);
+
+/// \brief Writes the string representation of the given StopTransactionResponse \p k to the given output stream \p os
+/// \returns an output stream with the StopTransactionResponse written to
+std::ostream& operator<<(std::ostream& os, const StopTransactionResponse& k);
 
 } // namespace ocpp1_6
 

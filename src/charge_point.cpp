@@ -111,7 +111,7 @@ int main(int argc, char* argv[]) {
                 std::cout << std::endl;
                 if (command == "auth") {
                     EVLOG(info) << "authorize_id_tag command";
-                    auto result = charge_point->authorize_id_tag(std::string("123"));
+                    auto result = charge_point->authorize_id_tag(ocpp1_6::CiString20Type(std::string("123")));
                     if (result == ocpp1_6::AuthorizationStatus::Accepted) {
                         EVLOG(info) << "Authorized";
                     } else {
@@ -120,7 +120,8 @@ int main(int argc, char* argv[]) {
                 } else if (command == "data_transfer") {
                     EVLOG(info) << "data_transfer command";
                     ocpp1_6::DataTransferResponse result =
-                        charge_point->data_transfer(std::string("Pionix"), std::string("Test"), "Hello there");
+                        charge_point->data_transfer(ocpp1_6::CiString255Type(std::string("Pionix")),
+                                                    ocpp1_6::CiString50Type(std::string("Test")), "Hello there");
                     if (result.status == ocpp1_6::DataTransferStatus::Accepted) {
                         EVLOG(info) << "Data transfer accepted";
                     } else {

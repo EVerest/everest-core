@@ -1,0 +1,49 @@
+{% if action.is_request %}
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - {{year}} Pionix GmbH and Contributors to EVerest
+#ifndef OCPP1_6_{{ action.name|upper }}_HPP
+#define OCPP1_6_{{ action.name|upper }}_HPP
+
+#include <ocpp1_6/ocpp_types.hpp>
+
+namespace ocpp1_6 {
+{% endif %}
+{% for type in types %}
+{% if type.name == action.class_name %}
+
+/// \brief Contains a OCPP 1.6 {{ type.name | replace('Request', '') }} message
+struct {{ type.name }} : public Message {
+{% for property in type.properties %}
+    {{ 'boost::optional<' if not property.required -}}
+    {{ property.type -}}
+    {{ '>' if not property.required -}}
+    {{ ' ' + property.name + ';' }}
+{% endfor %}
+
+{% if loop.last %}
+
+    /// \brief Provides the type of this {{ type.name | replace('Request', '') }} message as a human readable string
+    /// \returns the message type as a human readable string
+    std::string get_type() const;
+};
+
+/// \brief Conversion from a given {{ type.name }} \p k to a given json object \p j
+void to_json(json& j, const {{ type.name }}& k);
+
+/// \brief Conversion from a given json object \p j to a given {{ type.name }} \p k
+void from_json(const json& j, {{ type.name }}& k);
+
+/// \brief Writes the string representation of the given {{ type.name }} \p k to the given output stream \p os
+/// \returns an output stream with the {{ type.name }} written to
+std::ostream& operator<<(std::ostream& os, const {{ type.name }}& k);
+
+{% endif %}
+
+{% endif %}
+{% endfor %}
+
+{% if not action.is_request %}
+} // namespace ocpp1_6
+
+#endif // OCPP1_6_{{ action.name|upper }}_HPP
+{% endif %}

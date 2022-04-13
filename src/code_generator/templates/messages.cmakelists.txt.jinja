@@ -1,0 +1,7 @@
+
+target_sources(ocpp
+    PRIVATE
+    {% for message in messages %}
+    {{message}}.cpp
+    {% endfor %}
+)

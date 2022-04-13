@@ -1,35 +1,29 @@
-{% if first %}
+{% if action.is_request %}
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - {{year}} Pionix GmbH and Contributors to EVerest
-#ifndef OCPP1_6_OCPP_TYPES_HPP
-#define OCPP1_6_OCPP_TYPES_HPP
 
-#include <map>
-#include <string>
+#include <ostream>
 
 #include <boost/optional.hpp>
-#include <nlohmann/json-schema.hpp>
 #include <nlohmann/json.hpp>
 
-#include <ocpp1_6/enums.hpp>
-#include <ocpp1_6/types.hpp>
+#include <ocpp1_6/messages/{{action.name}}.hpp>
+#include <ocpp1_6/ocpp_types.hpp>
+
+using json = nlohmann::json;
 
 namespace ocpp1_6 {
 {% endif %}
-{%- if parsed_types|length %}
-{%- for type in parsed_types %}
-{% if not type.name.endswith('Request') and not type.name.endswith('Response') %}
 
-struct {{type.name}} {
-{% for property in type.properties %}
-    {{ 'boost::optional<' if not property.required -}}
-    {{ property.type -}}
-    {{ '>' if not property.required -}}
-    {{ ' ' + property.name + ';' }}
-{% endfor %}
+{% for type in types %}
+{% if type.name == action.class_name %}
 
-    /// \brief Conversion from a given {{ type.name }} \p k to a given json object \p j
-    friend void to_json(json& j, const {{ type.name }}& k) {
+{% if loop.last %}
+    std::string {{ type.name }}::get_type() const {
+        return "{{ type.name | replace('Request', '') }}";
+    }
+
+    void to_json(json& j, const {{ type.name }}& k) {
         // the required parts of the message
 {% if type.properties|selectattr('required')|list|length %}
         j = json{
@@ -73,24 +67,22 @@ if (j.size() == 0) {
                 j["{{property.name}}"].push_back(val);
             }
 {% else %}
-{%- if property.enum %}
+{% if property.enum %}
 j["{{property.name}}"] = conversions::{{- property.type | snake_case}}_to_string(k.{{property.name}}.value());
-    {%- else %}
-        {%- if property.type == 'DateTime' %}
+{% else %}
+{% if property.type == 'DateTime' %}
 j["{{property.name}}"] = k.{{property.name}}.value().to_rfc3339();
-        {%- else %}
+{% else %}
 j["{{property.name}}"] = k.{{property.name}}.value();
-        {%- endif %}
-    {%- endif %}
 {% endif %}
-
+{% endif %}
+{% endif %}
         }
 {% endif %}
 {% endfor %}
     }
 
-    /// \brief Conversion from a given json object \p j to a given {{ type.name }} \p k
-    friend void from_json(const json& j, {{ type.name }}& k) {
+    void from_json(const json& j, {{ type.name }}& k) {
         // the required parts of the message
 {% for property in type.properties %}
 {% if property.required %}
@@ -125,25 +117,34 @@ j["{{property.name}}"] = k.{{property.name}}.value();
             }
             k.{{property.name}}.emplace(vec);
 {% else %}
+{% if property.enum %}
+            k.{{property.name}}.emplace(conversions::string_to_{{- property.type | snake_case}}(j.at("{{property.name}}")));
+{% else %}
+{% if property.type == 'DateTime' %}
+            k.{{property.name}}.emplace(DateTime(std::string(j.at("{{property.name}}"))));
+{% else %}
             k.{{property.name}}.emplace(j.at("{{property.name}}"));
+{% endif %}
+{% endif %}
 {% endif %}
         }
 {% endif %}
 {% endfor %}
     }
 
-    // \brief Writes the string representation of the given {{ type.name }} \p k to the given output stream \p os
-    /// \returns an output stream with the {{ type.name }} written to
-    friend std::ostream& operator<<(std::ostream& os, const {{ type.name }}& k) {
-        os << json(k).dump(4);
-        return os;
-    }
-};
+/// \brief Writes the string representation of the given {{ type.name }} \p k to the given output stream \p os
+/// \returns an output stream with the {{ type.name }} written to
+std::ostream& operator<<(std::ostream& os, const {{ type.name }}& k) {
+    os << json(k).dump(4);
+    return os;
+}
+
+{% endif %}
+
 {% endif %}
 {% endfor %}
-{%- endif %}
-{% if last %}
+
+{% if not action.is_request %}
 } // namespace ocpp1_6
 
-#endif // OCPP1_6_OCPP_TYPES_HPP
 {% endif %}

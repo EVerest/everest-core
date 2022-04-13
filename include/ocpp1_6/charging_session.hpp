@@ -5,7 +5,6 @@
 
 #include <memory>
 
-#include <ocpp1_6/charge_point_configuration.hpp>
 #include <ocpp1_6/ocpp_types.hpp>
 #include <ocpp1_6/types.hpp>
 

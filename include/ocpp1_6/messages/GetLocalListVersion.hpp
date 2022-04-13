@@ -12,31 +12,18 @@ struct GetLocalListVersionRequest : public Message {
 
     /// \brief Provides the type of this GetLocalListVersion message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const {
-        return "GetLocalListVersion";
-    }
-
-    /// \brief Conversion from a given GetLocalListVersionRequest \p k to a given json object \p j
-    friend void to_json(json& j, const GetLocalListVersionRequest& k) {
-        // the required parts of the message
-        j = json({});
-        // the optional parts of the message
-    }
-
-    /// \brief Conversion from a given json object \p j to a given GetLocalListVersionRequest \p k
-    friend void from_json(const json& j, GetLocalListVersionRequest& k) {
-        // the required parts of the message
-
-        // the optional parts of the message
-    }
-
-    /// \brief Writes the string representation of the given GetLocalListVersionRequest \p k to the given output stream
-    /// \p os \returns an output stream with the GetLocalListVersionRequest written to
-    friend std::ostream& operator<<(std::ostream& os, const GetLocalListVersionRequest& k) {
-        os << json(k).dump(4);
-        return os;
-    }
+    std::string get_type() const;
 };
+
+/// \brief Conversion from a given GetLocalListVersionRequest \p k to a given json object \p j
+void to_json(json& j, const GetLocalListVersionRequest& k);
+
+/// \brief Conversion from a given json object \p j to a given GetLocalListVersionRequest \p k
+void from_json(const json& j, GetLocalListVersionRequest& k);
+
+/// \brief Writes the string representation of the given GetLocalListVersionRequest \p k to the given output stream \p
+/// os \returns an output stream with the GetLocalListVersionRequest written to
+std::ostream& operator<<(std::ostream& os, const GetLocalListVersionRequest& k);
 
 /// \brief Contains a OCPP 1.6 GetLocalListVersionResponse message
 struct GetLocalListVersionResponse : public Message {
@@ -44,34 +31,18 @@ struct GetLocalListVersionResponse : public Message {
 
     /// \brief Provides the type of this GetLocalListVersionResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const {
-        return "GetLocalListVersionResponse";
-    }
-
-    /// \brief Conversion from a given GetLocalListVersionResponse \p k to a given json object \p j
-    friend void to_json(json& j, const GetLocalListVersionResponse& k) {
-        // the required parts of the message
-        j = json{
-            {"listVersion", k.listVersion},
-        };
-        // the optional parts of the message
-    }
-
-    /// \brief Conversion from a given json object \p j to a given GetLocalListVersionResponse \p k
-    friend void from_json(const json& j, GetLocalListVersionResponse& k) {
-        // the required parts of the message
-        k.listVersion = j.at("listVersion");
-
-        // the optional parts of the message
-    }
-
-    /// \brief Writes the string representation of the given GetLocalListVersionResponse \p k to the given output stream
-    /// \p os \returns an output stream with the GetLocalListVersionResponse written to
-    friend std::ostream& operator<<(std::ostream& os, const GetLocalListVersionResponse& k) {
-        os << json(k).dump(4);
-        return os;
-    }
+    std::string get_type() const;
 };
+
+/// \brief Conversion from a given GetLocalListVersionResponse \p k to a given json object \p j
+void to_json(json& j, const GetLocalListVersionResponse& k);
+
+/// \brief Conversion from a given json object \p j to a given GetLocalListVersionResponse \p k
+void from_json(const json& j, GetLocalListVersionResponse& k);
+
+/// \brief Writes the string representation of the given GetLocalListVersionResponse \p k to the given output stream \p
+/// os \returns an output stream with the GetLocalListVersionResponse written to
+std::ostream& operator<<(std::ostream& os, const GetLocalListVersionResponse& k);
 
 } // namespace ocpp1_6
 

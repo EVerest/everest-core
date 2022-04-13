@@ -1,5 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+#include <mutex>
+
+#include <everest/logging.hpp>
+#include <everest/timer.hpp>
+
 #include <ocpp1_6/charging_session.hpp>
 
 namespace ocpp1_6 {
@@ -173,26 +178,23 @@ std::vector<MeterValue> ChargingSession::get_clock_aligned_meter_values() {
 }
 
 bool ChargingSessions::valid_connector(int32_t connector) {
-    if (connector < 0 || connector > this->charging_sessions.size()) {
+    if (connector < 0 || connector > static_cast<int32_t>(this->charging_sessions.size())) {
         return false;
     }
     return true;
 }
 
 ChargingSessions::ChargingSessions(int32_t number_of_connectors) : number_of_connectors(number_of_connectors) {
-    for (size_t i = 0; i < number_of_connectors + 1; i++) {
+    for (int32_t i = 0; i < number_of_connectors + 1; i++) {
         this->charging_sessions.push_back(nullptr);
     }
 }
 
 int32_t ChargingSessions::add_authorized_token(CiString20Type idTag, IdTagInfo idTagInfo) {
-    // EVLOG(error) << "add token thingy";
     return this->add_authorized_token(0, idTag, idTagInfo);
 }
 
 int32_t ChargingSessions::add_authorized_token(int32_t connector, CiString20Type idTag, IdTagInfo idTagInfo) {
-    EVLOG(critical) << "add_authorized_token to connector " << connector;
-
     if (!this->valid_connector(connector)) {
         return -1;
     }
@@ -225,7 +227,6 @@ int32_t ChargingSessions::add_authorized_token(int32_t connector, CiString20Type
                 // do not add a authorized token to a running charging session
                 return -1;
             }
-            EVLOG(info) << "Adding authorized token " << authorized_token->idTag;
             this->charging_sessions.at(connector)->add_authorized_token(std::move(authorized_token));
         }
     }

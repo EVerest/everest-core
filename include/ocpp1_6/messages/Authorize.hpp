@@ -13,34 +13,18 @@ struct AuthorizeRequest : public Message {
 
     /// \brief Provides the type of this Authorize message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const {
-        return "Authorize";
-    }
-
-    /// \brief Conversion from a given AuthorizeRequest \p k to a given json object \p j
-    friend void to_json(json& j, const AuthorizeRequest& k) {
-        // the required parts of the message
-        j = json{
-            {"idTag", k.idTag},
-        };
-        // the optional parts of the message
-    }
-
-    /// \brief Conversion from a given json object \p j to a given AuthorizeRequest \p k
-    friend void from_json(const json& j, AuthorizeRequest& k) {
-        // the required parts of the message
-        k.idTag = j.at("idTag");
-
-        // the optional parts of the message
-    }
-
-    /// \brief Writes the string representation of the given AuthorizeRequest \p k to the given output stream \p os
-    /// \returns an output stream with the AuthorizeRequest written to
-    friend std::ostream& operator<<(std::ostream& os, const AuthorizeRequest& k) {
-        os << json(k).dump(4);
-        return os;
-    }
+    std::string get_type() const;
 };
+
+/// \brief Conversion from a given AuthorizeRequest \p k to a given json object \p j
+void to_json(json& j, const AuthorizeRequest& k);
+
+/// \brief Conversion from a given json object \p j to a given AuthorizeRequest \p k
+void from_json(const json& j, AuthorizeRequest& k);
+
+/// \brief Writes the string representation of the given AuthorizeRequest \p k to the given output stream \p os
+/// \returns an output stream with the AuthorizeRequest written to
+std::ostream& operator<<(std::ostream& os, const AuthorizeRequest& k);
 
 /// \brief Contains a OCPP 1.6 AuthorizeResponse message
 struct AuthorizeResponse : public Message {
@@ -48,34 +32,18 @@ struct AuthorizeResponse : public Message {
 
     /// \brief Provides the type of this AuthorizeResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const {
-        return "AuthorizeResponse";
-    }
-
-    /// \brief Conversion from a given AuthorizeResponse \p k to a given json object \p j
-    friend void to_json(json& j, const AuthorizeResponse& k) {
-        // the required parts of the message
-        j = json{
-            {"idTagInfo", k.idTagInfo},
-        };
-        // the optional parts of the message
-    }
-
-    /// \brief Conversion from a given json object \p j to a given AuthorizeResponse \p k
-    friend void from_json(const json& j, AuthorizeResponse& k) {
-        // the required parts of the message
-        k.idTagInfo = j.at("idTagInfo");
-
-        // the optional parts of the message
-    }
-
-    /// \brief Writes the string representation of the given AuthorizeResponse \p k to the given output stream \p os
-    /// \returns an output stream with the AuthorizeResponse written to
-    friend std::ostream& operator<<(std::ostream& os, const AuthorizeResponse& k) {
-        os << json(k).dump(4);
-        return os;
-    }
+    std::string get_type() const;
 };
+
+/// \brief Conversion from a given AuthorizeResponse \p k to a given json object \p j
+void to_json(json& j, const AuthorizeResponse& k);
+
+/// \brief Conversion from a given json object \p j to a given AuthorizeResponse \p k
+void from_json(const json& j, AuthorizeResponse& k);
+
+/// \brief Writes the string representation of the given AuthorizeResponse \p k to the given output stream \p os
+/// \returns an output stream with the AuthorizeResponse written to
+std::ostream& operator<<(std::ostream& os, const AuthorizeResponse& k);
 
 } // namespace ocpp1_6
 

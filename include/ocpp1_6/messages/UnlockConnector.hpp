@@ -13,34 +13,18 @@ struct UnlockConnectorRequest : public Message {
 
     /// \brief Provides the type of this UnlockConnector message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const {
-        return "UnlockConnector";
-    }
-
-    /// \brief Conversion from a given UnlockConnectorRequest \p k to a given json object \p j
-    friend void to_json(json& j, const UnlockConnectorRequest& k) {
-        // the required parts of the message
-        j = json{
-            {"connectorId", k.connectorId},
-        };
-        // the optional parts of the message
-    }
-
-    /// \brief Conversion from a given json object \p j to a given UnlockConnectorRequest \p k
-    friend void from_json(const json& j, UnlockConnectorRequest& k) {
-        // the required parts of the message
-        k.connectorId = j.at("connectorId");
-
-        // the optional parts of the message
-    }
-
-    /// \brief Writes the string representation of the given UnlockConnectorRequest \p k to the given output stream \p
-    /// os \returns an output stream with the UnlockConnectorRequest written to
-    friend std::ostream& operator<<(std::ostream& os, const UnlockConnectorRequest& k) {
-        os << json(k).dump(4);
-        return os;
-    }
+    std::string get_type() const;
 };
+
+/// \brief Conversion from a given UnlockConnectorRequest \p k to a given json object \p j
+void to_json(json& j, const UnlockConnectorRequest& k);
+
+/// \brief Conversion from a given json object \p j to a given UnlockConnectorRequest \p k
+void from_json(const json& j, UnlockConnectorRequest& k);
+
+/// \brief Writes the string representation of the given UnlockConnectorRequest \p k to the given output stream \p os
+/// \returns an output stream with the UnlockConnectorRequest written to
+std::ostream& operator<<(std::ostream& os, const UnlockConnectorRequest& k);
 
 /// \brief Contains a OCPP 1.6 UnlockConnectorResponse message
 struct UnlockConnectorResponse : public Message {
@@ -48,34 +32,18 @@ struct UnlockConnectorResponse : public Message {
 
     /// \brief Provides the type of this UnlockConnectorResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const {
-        return "UnlockConnectorResponse";
-    }
-
-    /// \brief Conversion from a given UnlockConnectorResponse \p k to a given json object \p j
-    friend void to_json(json& j, const UnlockConnectorResponse& k) {
-        // the required parts of the message
-        j = json{
-            {"status", conversions::unlock_status_to_string(k.status)},
-        };
-        // the optional parts of the message
-    }
-
-    /// \brief Conversion from a given json object \p j to a given UnlockConnectorResponse \p k
-    friend void from_json(const json& j, UnlockConnectorResponse& k) {
-        // the required parts of the message
-        k.status = conversions::string_to_unlock_status(j.at("status"));
-
-        // the optional parts of the message
-    }
-
-    /// \brief Writes the string representation of the given UnlockConnectorResponse \p k to the given output stream \p
-    /// os \returns an output stream with the UnlockConnectorResponse written to
-    friend std::ostream& operator<<(std::ostream& os, const UnlockConnectorResponse& k) {
-        os << json(k).dump(4);
-        return os;
-    }
+    std::string get_type() const;
 };
+
+/// \brief Conversion from a given UnlockConnectorResponse \p k to a given json object \p j
+void to_json(json& j, const UnlockConnectorResponse& k);
+
+/// \brief Conversion from a given json object \p j to a given UnlockConnectorResponse \p k
+void from_json(const json& j, UnlockConnectorResponse& k);
+
+/// \brief Writes the string representation of the given UnlockConnectorResponse \p k to the given output stream \p os
+/// \returns an output stream with the UnlockConnectorResponse written to
+std::ostream& operator<<(std::ostream& os, const UnlockConnectorResponse& k);
 
 } // namespace ocpp1_6
 

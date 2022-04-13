@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+#include <future>
+#include <mutex>
+
+#include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/join.hpp>
+#include <boost/algorithm/string/split.hpp>
 
 #include <ocpp1_6/charge_point_configuration.hpp>
 #include <ocpp1_6/schemas.hpp>
@@ -196,52 +201,52 @@ std::string ChargePointConfiguration::getChargePointId() {
 std::string ChargePointConfiguration::getCentralSystemURI() {
     return this->config["Internal"]["CentralSystemURI"];
 }
-boost::optional<std::string> ChargePointConfiguration::getChargeBoxSerialNumber() {
-    boost::optional<std::string> charge_box_serial_number = boost::none;
+boost::optional<CiString25Type> ChargePointConfiguration::getChargeBoxSerialNumber() {
+    boost::optional<CiString25Type> charge_box_serial_number = boost::none;
     if (this->config["Internal"].contains("ChargeBoxSerialNumber")) {
         charge_box_serial_number.emplace(this->config["Internal"]["ChargeBoxSerialNumber"]);
     }
     return charge_box_serial_number;
 }
-std::string ChargePointConfiguration::getChargePointModel() {
-    return this->config["Internal"]["ChargePointModel"];
+CiString20Type ChargePointConfiguration::getChargePointModel() {
+    return CiString20Type(this->config["Internal"]["ChargePointModel"]);
 }
-boost::optional<std::string> ChargePointConfiguration::getChargePointSerialNumber() {
-    boost::optional<std::string> charge_point_serial_number = boost::none;
+boost::optional<CiString25Type> ChargePointConfiguration::getChargePointSerialNumber() {
+    boost::optional<CiString25Type> charge_point_serial_number = boost::none;
     if (this->config["Internal"].contains("ChargePointSerialNumber")) {
         charge_point_serial_number.emplace(this->config["Internal"]["ChargePointSerialNumber"]);
     }
     return charge_point_serial_number;
 }
-std::string ChargePointConfiguration::getChargePointVendor() {
-    return this->config["Internal"]["ChargePointVendor"];
+CiString20Type ChargePointConfiguration::getChargePointVendor() {
+    return CiString20Type(this->config["Internal"]["ChargePointVendor"]);
 }
-std::string ChargePointConfiguration::getFirmwareVersion() {
-    return this->config["Internal"]["FirmwareVersion"];
+CiString50Type ChargePointConfiguration::getFirmwareVersion() {
+    return CiString50Type(this->config["Internal"]["FirmwareVersion"]);
 }
-boost::optional<std::string> ChargePointConfiguration::getICCID() {
-    boost::optional<std::string> iccid = boost::none;
+boost::optional<CiString20Type> ChargePointConfiguration::getICCID() {
+    boost::optional<CiString20Type> iccid = boost::none;
     if (this->config["Internal"].contains("ICCID")) {
         iccid.emplace(this->config["Internal"]["ICCID"]);
     }
     return iccid;
 }
-boost::optional<std::string> ChargePointConfiguration::getIMSI() {
-    boost::optional<std::string> imsi = boost::none;
+boost::optional<CiString20Type> ChargePointConfiguration::getIMSI() {
+    boost::optional<CiString20Type> imsi = boost::none;
     if (this->config["Internal"].contains("IMSI")) {
         imsi.emplace(this->config["Internal"]["IMSI"]);
     }
     return imsi;
 }
-boost::optional<std::string> ChargePointConfiguration::getMeterSerialNumber() {
-    boost::optional<std::string> meter_serial_number = boost::none;
+boost::optional<CiString25Type> ChargePointConfiguration::getMeterSerialNumber() {
+    boost::optional<CiString25Type> meter_serial_number = boost::none;
     if (this->config["Internal"].contains("MeterSerialNumber")) {
         meter_serial_number.emplace(this->config["Internal"]["MeterSerialNumber"]);
     }
     return meter_serial_number;
 }
-boost::optional<std::string> ChargePointConfiguration::getMeterType() {
-    boost::optional<std::string> meter_type = boost::none;
+boost::optional<CiString25Type> ChargePointConfiguration::getMeterType() {
+    boost::optional<CiString25Type> meter_type = boost::none;
     if (this->config["Internal"].contains("MeterType")) {
         meter_type.emplace(this->config["Internal"]["MeterType"]);
     }
@@ -309,7 +314,6 @@ std::vector<MeasurandWithPhase> ChargePointConfiguration::csv_to_measurand_with_
     for (auto m : measurand_with_phase_vector) {
         if (!m.phase) {
             EVLOG(debug) << "measurand without phase: " << m.measurand;
-
         } else {
             EVLOG(debug) << "measurand: " << m.measurand
                          << " with phase: " << ocpp1_6::conversions::phase_to_string(m.phase.value());
@@ -322,7 +326,6 @@ bool ChargePointConfiguration::measurands_supported(std::string csv) {
     auto requested_measurands = this->csv_to_measurand_with_phase_vector(csv);
     // check if the requested measurands are supported, otherwise return false
     for (auto req : requested_measurands) {
-        EVLOG(error) << "requested_measurand: " << conversions::measurand_to_string(req.measurand);
         if (this->supported_measurands.count(req.measurand) == 0) {
             return false;
         }
@@ -330,7 +333,6 @@ bool ChargePointConfiguration::measurands_supported(std::string csv) {
         if (req.phase) {
             auto phase = req.phase.value();
             auto measurand = this->supported_measurands[req.measurand];
-            EVLOG(error) << "  there was specific phase requested...: " << conversions::phase_to_string(phase);
 
             if (std::find(measurand.begin(), measurand.end(), phase) == measurand.end()) {
                 // phase not found, this is an error
@@ -540,7 +542,7 @@ boost::optional<IdTagInfo> ChargePointConfiguration::getAuthorizationCacheEntry(
 
     IdTagInfo idTagInfo;
     std::string auth_status_str = std::string(reinterpret_cast<const char*>(sqlite3_column_text(select_statement, 1)));
-    EVLOG(error) << "auth_status_str: " << auth_status_str;
+
     idTagInfo.status = conversions::string_to_authorization_status(auth_status_str);
     auto expiry_date_ptr = sqlite3_column_text(select_statement, 2);
     if (expiry_date_ptr != nullptr) {
@@ -1249,6 +1251,20 @@ KeyValue ChargePointConfiguration::getChargingScheduleAllowedChargingRateUnitKey
     kv.value.emplace(this->getChargingScheduleAllowedChargingRateUnit());
     return kv;
 }
+std::vector<ChargingRateUnit> ChargePointConfiguration::getChargingScheduleAllowedChargingRateUnitVector() {
+    std::vector<std::string> components;
+    auto csv = this->getChargingScheduleAllowedChargingRateUnit();
+    boost::split(components, csv, boost::is_any_of(","));
+    std::vector<ChargingRateUnit> charging_rate_unit_vector;
+    for (auto component : components) {
+        if (component == "Current") {
+            charging_rate_unit_vector.push_back(ChargingRateUnit::A);
+        } else if (component == "Power") {
+            charging_rate_unit_vector.push_back(ChargingRateUnit::W);
+        }
+    }
+    return charging_rate_unit_vector;
+}
 
 int32_t ChargePointConfiguration::getChargingScheduleMaxPeriods() {
     return this->config["SmartCharging"]["ChargingScheduleMaxPeriods"];
@@ -1261,15 +1277,26 @@ KeyValue ChargePointConfiguration::getChargingScheduleMaxPeriodsKeyValue() {
     return kv;
 }
 
-bool ChargePointConfiguration::getConnectorSwitch3to1PhaseSupported() {
-    return this->config["SmartCharging"]["ConnectorSwitch3to1PhaseSupported"];
+boost::optional<bool> ChargePointConfiguration::getConnectorSwitch3to1PhaseSupported() {
+    boost::optional<bool> connector_switch_3_to_1_phase_supported = boost::none;
+    if (this->config["SmartCharging"].contains("ConnectorSwitch3to1PhaseSupported")) {
+        connector_switch_3_to_1_phase_supported.emplace(
+            this->config["SmartCharging"]["ConnectorSwitch3to1PhaseSupported"]);
+    }
+    return connector_switch_3_to_1_phase_supported;
 }
-KeyValue ChargePointConfiguration::getConnectorSwitch3to1PhaseSupportedKeyValue() {
-    ocpp1_6::KeyValue kv;
-    kv.key = "ConnectorSwitch3to1PhaseSupported";
-    kv.readonly = true;
-    kv.value.emplace(conversions::bool_to_string(this->getConnectorSwitch3to1PhaseSupported()));
-    return kv;
+boost::optional<KeyValue> ChargePointConfiguration::getConnectorSwitch3to1PhaseSupportedKeyValue() {
+    boost::optional<KeyValue> connector_switch_3_to_1_phase_supported_kv = boost::none;
+
+    auto connector_switch_3_to_1_phase_supported = this->getConnectorSwitch3to1PhaseSupported();
+    if (connector_switch_3_to_1_phase_supported != boost::none) {
+        ocpp1_6::KeyValue kv;
+        kv.key = "ConnectorSwitch3to1PhaseSupported";
+        kv.readonly = true;
+        kv.value.emplace(conversions::bool_to_string(connector_switch_3_to_1_phase_supported.value()));
+        connector_switch_3_to_1_phase_supported_kv.emplace(kv);
+    }
+    return connector_switch_3_to_1_phase_supported_kv;
 }
 
 int32_t ChargePointConfiguration::getMaxChargingProfilesInstalled() {
@@ -1284,6 +1311,7 @@ KeyValue ChargePointConfiguration::getMaxChargingProfilesInstalledKeyValue() {
 }
 
 boost::optional<KeyValue> ChargePointConfiguration::get(CiString50Type key) {
+    // Core Profile
     if (key == "AllowOfflineTxForUnknownId") {
         return this->getAllowOfflineTxForUnknownIdKeyValue();
     }
@@ -1386,21 +1414,25 @@ boost::optional<KeyValue> ChargePointConfiguration::get(CiString50Type key) {
     if (key == "WebsocketPingInterval") {
         return this->getWebsocketPingIntervalKeyValue();
     }
-    // if (key == "ChargeProfileMaxStackLevel") {
-    //     return this->getChargeProfileMaxStackLevelKeyValue();
-    // }
-    // if (key == "ChargingScheduleAllowedChargingRateUnit") {
-    //     return this->getChargingScheduleAllowedChargingRateUnitKeyValue();
-    // }
-    // if (key == "ChargingScheduleMaxPeriods") {
-    //     return this->getChargingScheduleMaxPeriodsKeyValue();
-    // }
-    // if (key == "ConnectorSwitch3to1PhaseSupported") {
-    //     return this->getConnectorSwitch3to1PhaseSupportedKeyValue();
-    // }
-    // if (key == "MaxChargingProfilesInstalled") {
-    //     return this->getMaxChargingProfilesInstalledKeyValue();
-    // }
+
+    // Smart Charging
+    if (this->supported_feature_profiles.count(SupportedFeatureProfiles::SmartCharging)) {
+        if (key == "ChargeProfileMaxStackLevel") {
+            return this->getChargeProfileMaxStackLevelKeyValue();
+        }
+        if (key == "ChargingScheduleAllowedChargingRateUnit") {
+            return this->getChargingScheduleAllowedChargingRateUnitKeyValue();
+        }
+        if (key == "ChargingScheduleMaxPeriods") {
+            return this->getChargingScheduleMaxPeriodsKeyValue();
+        }
+        if (key == "ConnectorSwitch3to1PhaseSupported") {
+            return this->getConnectorSwitch3to1PhaseSupportedKeyValue();
+        }
+        if (key == "MaxChargingProfilesInstalled") {
+            return this->getMaxChargingProfilesInstalledKeyValue();
+        }
+    }
 
     return boost::none;
 }

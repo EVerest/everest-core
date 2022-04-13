@@ -23,7 +23,7 @@ public:
     CiString(const std::string& data, size_t length);
 
     /// \brief Creates a case insensitive string from the given maximum \p length
-    CiString(size_t length);
+    explicit CiString(size_t length);
 
     /// \brief A CiString without a maximum length is not allowed
     CiString() = delete;
@@ -75,14 +75,17 @@ public:
     DateTimeImpl();
 
     /// \brief Creates a new DateTimeImpl object from the given \p timepoint
-    DateTimeImpl(std::chrono::time_point<std::chrono::system_clock> timepoint);
+    explicit DateTimeImpl(std::chrono::time_point<std::chrono::system_clock> timepoint);
 
     /// \brief Creates a new DateTimeImpl object from the given \p timepoint_str
-    DateTimeImpl(const std::string& timepoint_str);
+    explicit DateTimeImpl(const std::string& timepoint_str);
 
     /// \brief Converts this DateTimeImpl to a RFC 3339 compatible string
     /// \returns a RFC 3339 compatible string representation of the stored DateTime
     std::string to_rfc3339() const;
+
+    /// \brief Sets the timepoint of this DateTimeImpl to the given \p timepoint_str
+    void from_rfc3339(const std::string& timepoint_str);
 
     /// \brief Converts this DateTimeImpl to a std::chrono::time_point
     /// \returns a std::chrono::time_point
@@ -118,6 +121,11 @@ public:
     /// \brief Comparison operator== between two DateTimeImpl \p lhs and \p rhs
     friend bool operator==(const DateTimeImpl& lhs, const DateTimeImpl& rhs) {
         return lhs.to_rfc3339() == rhs.to_rfc3339();
+    }
+
+    DateTimeImpl& operator=(const DateTimeImpl& dt) {
+        this->timepoint = dt.timepoint;
+        return *this;
     }
 };
 

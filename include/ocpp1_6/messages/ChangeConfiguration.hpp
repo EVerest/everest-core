@@ -14,36 +14,18 @@ struct ChangeConfigurationRequest : public Message {
 
     /// \brief Provides the type of this ChangeConfiguration message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const {
-        return "ChangeConfiguration";
-    }
-
-    /// \brief Conversion from a given ChangeConfigurationRequest \p k to a given json object \p j
-    friend void to_json(json& j, const ChangeConfigurationRequest& k) {
-        // the required parts of the message
-        j = json{
-            {"key", k.key},
-            {"value", k.value},
-        };
-        // the optional parts of the message
-    }
-
-    /// \brief Conversion from a given json object \p j to a given ChangeConfigurationRequest \p k
-    friend void from_json(const json& j, ChangeConfigurationRequest& k) {
-        // the required parts of the message
-        k.key = j.at("key");
-        k.value = j.at("value");
-
-        // the optional parts of the message
-    }
-
-    /// \brief Writes the string representation of the given ChangeConfigurationRequest \p k to the given output stream
-    /// \p os \returns an output stream with the ChangeConfigurationRequest written to
-    friend std::ostream& operator<<(std::ostream& os, const ChangeConfigurationRequest& k) {
-        os << json(k).dump(4);
-        return os;
-    }
+    std::string get_type() const;
 };
+
+/// \brief Conversion from a given ChangeConfigurationRequest \p k to a given json object \p j
+void to_json(json& j, const ChangeConfigurationRequest& k);
+
+/// \brief Conversion from a given json object \p j to a given ChangeConfigurationRequest \p k
+void from_json(const json& j, ChangeConfigurationRequest& k);
+
+/// \brief Writes the string representation of the given ChangeConfigurationRequest \p k to the given output stream \p
+/// os \returns an output stream with the ChangeConfigurationRequest written to
+std::ostream& operator<<(std::ostream& os, const ChangeConfigurationRequest& k);
 
 /// \brief Contains a OCPP 1.6 ChangeConfigurationResponse message
 struct ChangeConfigurationResponse : public Message {
@@ -51,34 +33,18 @@ struct ChangeConfigurationResponse : public Message {
 
     /// \brief Provides the type of this ChangeConfigurationResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const {
-        return "ChangeConfigurationResponse";
-    }
-
-    /// \brief Conversion from a given ChangeConfigurationResponse \p k to a given json object \p j
-    friend void to_json(json& j, const ChangeConfigurationResponse& k) {
-        // the required parts of the message
-        j = json{
-            {"status", conversions::configuration_status_to_string(k.status)},
-        };
-        // the optional parts of the message
-    }
-
-    /// \brief Conversion from a given json object \p j to a given ChangeConfigurationResponse \p k
-    friend void from_json(const json& j, ChangeConfigurationResponse& k) {
-        // the required parts of the message
-        k.status = conversions::string_to_configuration_status(j.at("status"));
-
-        // the optional parts of the message
-    }
-
-    /// \brief Writes the string representation of the given ChangeConfigurationResponse \p k to the given output stream
-    /// \p os \returns an output stream with the ChangeConfigurationResponse written to
-    friend std::ostream& operator<<(std::ostream& os, const ChangeConfigurationResponse& k) {
-        os << json(k).dump(4);
-        return os;
-    }
+    std::string get_type() const;
 };
+
+/// \brief Conversion from a given ChangeConfigurationResponse \p k to a given json object \p j
+void to_json(json& j, const ChangeConfigurationResponse& k);
+
+/// \brief Conversion from a given json object \p j to a given ChangeConfigurationResponse \p k
+void from_json(const json& j, ChangeConfigurationResponse& k);
+
+/// \brief Writes the string representation of the given ChangeConfigurationResponse \p k to the given output stream \p
+/// os \returns an output stream with the ChangeConfigurationResponse written to
+std::ostream& operator<<(std::ostream& os, const ChangeConfigurationResponse& k);
 
 } // namespace ocpp1_6
 

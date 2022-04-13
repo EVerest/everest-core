@@ -34,15 +34,15 @@ public:
     // Internal config options
     std::string getChargePointId();
     std::string getCentralSystemURI();
-    boost::optional<std::string> getChargeBoxSerialNumber();
-    std::string getChargePointModel();
-    boost::optional<std::string> getChargePointSerialNumber();
-    std::string getChargePointVendor();
-    std::string getFirmwareVersion();
-    boost::optional<std::string> getICCID();
-    boost::optional<std::string> getIMSI();
-    boost::optional<std::string> getMeterSerialNumber();
-    boost::optional<std::string> getMeterType();
+    boost::optional<CiString25Type> getChargeBoxSerialNumber();
+    CiString20Type getChargePointModel();
+    boost::optional<CiString25Type> getChargePointSerialNumber();
+    CiString20Type getChargePointVendor();
+    CiString50Type getFirmwareVersion();
+    boost::optional<CiString20Type> getICCID();
+    boost::optional<CiString20Type> getIMSI();
+    boost::optional<CiString25Type> getMeterSerialNumber();
+    boost::optional<CiString25Type> getMeterType();
     int32_t getWebsocketReconnectInterval();
 
     std::string getSupportedCiphers();
@@ -230,20 +230,28 @@ public:
 
     // Core Profile end
 
+    // SmartCharging Profile
     int32_t getChargeProfileMaxStackLevel();
     KeyValue getChargeProfileMaxStackLevelKeyValue();
 
+    // SmartCharging Profile
     std::string getChargingScheduleAllowedChargingRateUnit();
     KeyValue getChargingScheduleAllowedChargingRateUnitKeyValue();
+    std::vector<ChargingRateUnit> getChargingScheduleAllowedChargingRateUnitVector();
 
+    // SmartCharging Profile
     int32_t getChargingScheduleMaxPeriods();
     KeyValue getChargingScheduleMaxPeriodsKeyValue();
 
-    bool getConnectorSwitch3to1PhaseSupported();
-    KeyValue getConnectorSwitch3to1PhaseSupportedKeyValue();
+    // SmartCharging Profile - optional
+    boost::optional<bool> getConnectorSwitch3to1PhaseSupported();
+    boost::optional<KeyValue> getConnectorSwitch3to1PhaseSupportedKeyValue();
 
+    // SmartCharging Profile
     int32_t getMaxChargingProfilesInstalled();
     KeyValue getMaxChargingProfilesInstalledKeyValue();
+
+    // SmartCharging Profile end
 
     boost::optional<KeyValue> get(CiString50Type key);
 

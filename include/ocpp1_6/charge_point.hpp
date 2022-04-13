@@ -32,9 +32,10 @@
 #include <ocpp1_6/messages/StartTransaction.hpp>
 #include <ocpp1_6/messages/StatusNotification.hpp>
 #include <ocpp1_6/messages/StopTransaction.hpp>
+#include <ocpp1_6/messages/TriggerMessage.hpp>
 #include <ocpp1_6/messages/UnlockConnector.hpp>
 #include <ocpp1_6/types.hpp>
-#include <ocpp1_6/websocket.hpp>
+#include <ocpp1_6/websocket/websocket.hpp>
 
 namespace ocpp1_6 {
 
@@ -53,9 +54,6 @@ private:
     std::shared_ptr<ChargePointConfiguration> configuration;
     std::unique_ptr<Everest::SteadyTimer> heartbeat_timer;
     std::unique_ptr<Everest::SteadyTimer> boot_notification_timer;
-    // Everest::SteadyTimer* meter_values_sample_timer; // TODO(kai): decide if we need a continuous sampling of meter
-    // values independent of transactions - maybe on connector 0, but that could be done in the chargingsession as
-    // well...
     std::unique_ptr<Everest::SystemTimer> clock_aligned_meter_values_timer;
     std::chrono::time_point<std::chrono::system_clock> clock_aligned_meter_values_time_point;
     std::map<int32_t, std::vector<MeterValue>> meter_values;
@@ -81,17 +79,24 @@ private:
     std::map<MessageId, std::thread> remote_stop_transaction;  // FIXME: this should be done differently
     std::mutex remote_stop_transaction_mutex;                  // FIXME: this should be done differently
 
+    std::map<std::string, std::map<std::string, std::function<void(const std::string data)>>> data_transfer_callbacks;
+    std::mutex data_transfer_callbacks_mutex;
+
     std::thread reset_thread;
 
     // callbacks
-    std::function<void(int32_t connector)> start_charging_callback;
-    std::function<void(int32_t connector)> stop_charging_callback;
+    std::function<bool(int32_t connector)> enable_evse_callback;
+    std::function<bool(int32_t connector)> disable_evse_callback;
+    std::function<bool(int32_t connector)> pause_charging_callback;
+    std::function<bool(int32_t connector)> resume_charging_callback;
+    std::function<bool(int32_t connector)> cancel_charging_callback;
     std::function<bool(int32_t connector)> unlock_connector_callback;
-    std::function<void(int32_t connector, double max_current)> set_max_current_callback;
+    std::function<bool(int32_t connector, double max_current)> set_max_current_callback;
 
     /// \brief This function is called after a successful connection to the Websocket
     void connected_callback();
     void message_callback(const std::string& message);
+    void handle_message(const json& json_message, MessageType message_type);
     bool allowed_to_send_message(json::array_t message_type);
     template <class T> bool send(Call<T> call);
     template <class T> std::future<EnhancedMessage> send_async(Call<T> call);
@@ -136,6 +141,9 @@ private:
     void handleGetCompositeScheduleRequest(Call<GetCompositeScheduleRequest> call);
     void handleClearChargingProfileRequest(Call<ClearChargingProfileRequest> call);
 
+    // RemoteTrigger profile
+    void handleTriggerMessageRequest(Call<TriggerMessageRequest> call);
+
 public:
     /// \brief Creates a ChargePoint object with the provided \p configuration
     explicit ChargePoint(std::shared_ptr<ChargePointConfiguration> configuration);
@@ -155,7 +163,12 @@ public:
     /// \brief Allows the exchange of arbitrary \p data identified by a \p vendorId and \p messageId with a central
     /// system \returns the DataTransferResponse
     DataTransferResponse data_transfer(const CiString255Type& vendorId, const CiString50Type& messageId,
-                                       const std::string data);
+                                       const std::string& data);
+
+    /// registers a \p callback function that can be used to receive a arbitrary data transfer for the given \p vendorId
+    /// and \p messageId
+    void register_data_transfer_callback(const CiString255Type& vendorId, const CiString50Type& messageId,
+                                         const std::function<void(const std::string data)>& callback);
 
     /// \brief Stores the given \p powermeter values for the given \p connector
     void receive_power_meter(int32_t connector, json powermeter);
@@ -192,8 +205,10 @@ public:
     /// \returns true if this state change was possible
     bool resume_charging(int32_t connector);
 
-    // /// EV/EVSE indicates that charging has finished
-    // bool stop_charging(int32_t connector);
+    /// \brief EV was disconnected
+    /// \returns true if this state change was possible
+    bool plug_disconnected(int32_t connector);
+
     /// EV/EVSE indicates that an error with the given \p error_code occured
     /// \returns true if this state change was possible
     bool error(int32_t connector, ChargePointErrorCode error_code);
@@ -205,6 +220,12 @@ public:
     /// EVSE indicates a permanent fault on the given \p connector
     /// \returns true if this state change was possible
     bool permanent_fault(int32_t connector);
+
+    /// \brief registers a \p callback function that can be used to enable the evse
+    void register_enable_evse_callback(const std::function<bool(int32_t connector)>& callback);
+
+    /// \brief registers a \p callback function that can be used to disable the evse
+    void register_disable_evse_callback(const std::function<bool(int32_t connector)>& callback);
 
     /// \brief registers a \p callback function that can be used to pause charging
     void register_pause_charging_callback(const std::function<bool(int32_t connector)>& callback);
@@ -227,13 +248,11 @@ public:
     void register_unlock_connector_callback(const std::function<bool(int32_t connector)>& callback);
 
     /// registers a \p callback function that can be used to set a max_current on a given connector
-    void register_set_max_current_callback(const std::function<void(int32_t connector, double max_current)>& callback);
+    void register_set_max_current_callback(const std::function<bool(int32_t connector, double max_current)>& callback);
 
     // FIXME: rework the following API functions, do we want to expose them?
     // insert plug
     // bool plug_connected(int32_t connector);
-    // remove plug
-    // bool plug_disconnected(int32_t connector);
 };
 
 } // namespace ocpp1_6

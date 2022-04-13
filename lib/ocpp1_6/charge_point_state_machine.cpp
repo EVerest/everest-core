@@ -8,175 +8,179 @@ ChargePointStateMachine::ChargePointStateMachine(
     status_notification_callback(status_notification_callback) {
     this->sd_available.transitions = [this](const EventBaseType& ev, TransitionType& trans) {
         switch (ev.id) {
-        case ChargePointStatusTransition::A2_UsageInitiated:
+        case ChargePointStatusTransition::UsageInitiated:
             return trans.set(this->sd_preparing);
-        case ChargePointStatusTransition::A3_UsageInitiatedWithoutAuthorization:
+        case ChargePointStatusTransition::StartCharging:
             return trans.set(this->sd_charging);
-        case ChargePointStatusTransition::A4_UsageInitiatedEVDoesNotStartCharging:
+        case ChargePointStatusTransition::PauseChargingEV:
             return trans.set(this->sd_suspended_ev);
-        case ChargePointStatusTransition::A5_UsageInitiatedEVSEDoesNotAllowCharging:
+        case ChargePointStatusTransition::PauseChargingEVSE:
             return trans.set(this->sd_suspended_evse);
-        case ChargePointStatusTransition::A7_ReserveNowReservesConnector:
+        case ChargePointStatusTransition::ReserveConnector:
             return trans.set(this->sd_reserved);
-        case ChargePointStatusTransition::A8_ChangeAvailabilityToUnavailable:
+        case ChargePointStatusTransition::ChangeAvailabilityToUnavailable:
             return trans.set(this->sd_unavailable);
-        case ChargePointStatusTransition::A9_FaultDetected:
+        case ChargePointStatusTransition::FaultDetected:
             return trans.set(this->sd_faulted);
         default:
             return;
         }
     };
     this->sd_available.state_fun = [this](FSMContextType& ctx) {
+        this->state = ChargePointStatus::Available;
         this->status_notification_callback(ChargePointStatus::Available);
     };
 
     this->sd_preparing.transitions = [this](const EventBaseType& ev, TransitionType& trans) {
         switch (ev.id) {
-        case ChargePointStatusTransition::B1_IntendedUsageIsEnded:
+        case ChargePointStatusTransition::BecomeAvailable:
             return trans.set(this->sd_available);
-        case ChargePointStatusTransition::B3_PrerequisitesForChargingMetAndChargingStarts:
+        case ChargePointStatusTransition::StartCharging:
             return trans.set(this->sd_charging);
-        case ChargePointStatusTransition::B4_PrerequisitesForChargingMetEVDoesNotStartCharging:
+        case ChargePointStatusTransition::PauseChargingEV:
             return trans.set(this->sd_suspended_ev);
-        case ChargePointStatusTransition::B5_PrerequisitesForChargingMetEVSEDoesNotAllowCharging:
+        case ChargePointStatusTransition::PauseChargingEVSE:
             return trans.set(this->sd_suspended_evse);
-        case ChargePointStatusTransition::B6_TimedOut:
+        case ChargePointStatusTransition::TransactionStoppedAndUserActionRequired:
             return trans.set(this->sd_finishing);
-        case ChargePointStatusTransition::B9_FaultDetected:
+        case ChargePointStatusTransition::FaultDetected:
             return trans.set(this->sd_faulted);
         default:
             return;
         }
     };
     this->sd_preparing.state_fun = [this](FSMContextType& ctx) {
+        this->state = ChargePointStatus::Preparing;
         this->status_notification_callback(ChargePointStatus::Preparing);
     };
 
     this->sd_charging.transitions = [this](const EventBaseType& ev, TransitionType& trans) {
         switch (ev.id) {
-        case ChargePointStatusTransition::C1_ChargingSessionEndsNoUserActionRequired:
+        case ChargePointStatusTransition::BecomeAvailable:
             return trans.set(this->sd_available);
-        case ChargePointStatusTransition::C4_ChargingStopsUponEVRequest:
+        case ChargePointStatusTransition::PauseChargingEV:
             return trans.set(this->sd_suspended_ev);
-        case ChargePointStatusTransition::C5_ChargingStopsUponEVSERequest:
+        case ChargePointStatusTransition::PauseChargingEVSE:
             return trans.set(this->sd_suspended_evse);
-        case ChargePointStatusTransition::C6_TransactionStoppedAndUserActionRequired:
+        case ChargePointStatusTransition::TransactionStoppedAndUserActionRequired:
             return trans.set(this->sd_finishing);
-        case ChargePointStatusTransition::
-            C8_ChargingSessionEndsNoUserActionRequiredConnectorScheduledToBecomeUnavailable:
+        case ChargePointStatusTransition::ChangeAvailabilityToUnavailable:
             return trans.set(this->sd_unavailable);
-        case ChargePointStatusTransition::C9_FaultDetected:
+        case ChargePointStatusTransition::FaultDetected:
             return trans.set(this->sd_faulted);
         default:
             return;
         }
     };
     this->sd_charging.state_fun = [this](FSMContextType& ctx) {
+        this->state = ChargePointStatus::Charging;
         this->status_notification_callback(ChargePointStatus::Charging);
     };
 
     this->sd_suspended_ev.transitions = [this](const EventBaseType& ev, TransitionType& trans) {
         switch (ev.id) {
-        case ChargePointStatusTransition::D1_ChargingSessionEndsNoUserActionRequired:
+        case ChargePointStatusTransition::BecomeAvailable:
             return trans.set(this->sd_available);
-        case ChargePointStatusTransition::D3_ChargingResumesUponEVRequest:
+        case ChargePointStatusTransition::StartCharging:
             return trans.set(this->sd_charging);
-        case ChargePointStatusTransition::D5_ChargingSuspendedByEVSE:
+        case ChargePointStatusTransition::PauseChargingEVSE:
             return trans.set(this->sd_suspended_evse);
-        case ChargePointStatusTransition::D6_TransactionStoppedNoUserActionRequired:
+        case ChargePointStatusTransition::TransactionStoppedAndUserActionRequired:
             return trans.set(this->sd_finishing);
-        case ChargePointStatusTransition::
-            D8_ChargingSessionEndsNoUserActionRequiredConnectorScheduledToBecomeUnavailable:
+        case ChargePointStatusTransition::ChangeAvailabilityToUnavailable:
             return trans.set(this->sd_unavailable);
-        case ChargePointStatusTransition::D9_FaultDetected:
+        case ChargePointStatusTransition::FaultDetected:
             return trans.set(this->sd_faulted);
         default:
             return;
         }
     };
     this->sd_suspended_ev.state_fun = [this](FSMContextType& ctx) {
+        this->state = ChargePointStatus::SuspendedEV;
         this->status_notification_callback(ChargePointStatus::SuspendedEV);
     };
 
     this->sd_suspended_evse.transitions = [this](const EventBaseType& ev, TransitionType& trans) {
         switch (ev.id) {
-        case ChargePointStatusTransition::E1_ChargingSessionEndsNoUserActionRequired:
+        case ChargePointStatusTransition::BecomeAvailable:
             return trans.set(this->sd_available);
-        case ChargePointStatusTransition::E3_ChargingResumesEVSERestrictionLifted:
+        case ChargePointStatusTransition::StartCharging:
             return trans.set(this->sd_charging);
-        case ChargePointStatusTransition::E4_EVSERestrictionLiftedEVDoesNotStartCharging:
+        case ChargePointStatusTransition::PauseChargingEV:
             return trans.set(this->sd_suspended_ev);
-        case ChargePointStatusTransition::E6_TransactionStoppedAndUserActionRequired:
+        case ChargePointStatusTransition::TransactionStoppedAndUserActionRequired:
             return trans.set(this->sd_finishing);
-        case ChargePointStatusTransition::
-            E8_ChargingSessionEndsNoUserActionRequiredConnectorScheduledToBecomeUnavailable:
+        case ChargePointStatusTransition::ChangeAvailabilityToUnavailable:
             return trans.set(this->sd_unavailable);
-        case ChargePointStatusTransition::E9_FaultDetected:
+        case ChargePointStatusTransition::FaultDetected:
             return trans.set(this->sd_faulted);
         default:
             return;
         }
     };
     this->sd_suspended_evse.state_fun = [this](FSMContextType& ctx) {
+        this->state = ChargePointStatus::SuspendedEVSE;
         this->status_notification_callback(ChargePointStatus::SuspendedEVSE);
     };
 
     this->sd_finishing.transitions = [this](const EventBaseType& ev, TransitionType& trans) {
         switch (ev.id) {
-        case ChargePointStatusTransition::F1_AllUserActionsCompleted:
+        case ChargePointStatusTransition::BecomeAvailable:
             return trans.set(this->sd_available);
-        case ChargePointStatusTransition::F2_UsersRestartChargingSession:
+        case ChargePointStatusTransition::UsageInitiated: // user restarts charging session
             return trans.set(this->sd_preparing);
-        case ChargePointStatusTransition::F8_AllUserActionsCompletedConnectorScheduledToBecomeUnavailable:
+        case ChargePointStatusTransition::ChangeAvailabilityToUnavailable:
             return trans.set(this->sd_unavailable);
-        case ChargePointStatusTransition::F9_FaultDetected:
+        case ChargePointStatusTransition::FaultDetected:
             return trans.set(this->sd_faulted);
         default:
             return;
         }
     };
     this->sd_finishing.state_fun = [this](FSMContextType& ctx) {
+        this->state = ChargePointStatus::Finishing;
         this->status_notification_callback(ChargePointStatus::Finishing);
     };
 
     this->sd_reserved.transitions = [this](const EventBaseType& ev, TransitionType& trans) {
         switch (ev.id) {
-        case ChargePointStatusTransition::G1_ReservationExpiresOrCancelReservationReceived:
+        case ChargePointStatusTransition::BecomeAvailable:
             return trans.set(this->sd_available);
-        case ChargePointStatusTransition::G2_ReservationIdentityPresented:
+        case ChargePointStatusTransition::UsageInitiated:
             return trans.set(this->sd_preparing);
-        case ChargePointStatusTransition::
-            G8_ReservationExpiresOrCancelReservationReceivedConnectorScheduledToBecomeUnavailable:
+        case ChargePointStatusTransition::ChangeAvailabilityToUnavailable:
             return trans.set(this->sd_unavailable);
-        case ChargePointStatusTransition::G9_FaultDetected:
+        case ChargePointStatusTransition::FaultDetected:
             return trans.set(this->sd_faulted);
         default:
             return;
         }
     };
     this->sd_reserved.state_fun = [this](FSMContextType& ctx) {
+        this->state = ChargePointStatus::Reserved;
         this->status_notification_callback(ChargePointStatus::Reserved);
     };
 
     this->sd_unavailable.transitions = [this](const EventBaseType& ev, TransitionType& trans) {
         switch (ev.id) {
-        case ChargePointStatusTransition::H1_ConnectorSetAvailableByChangeAvailability:
+        case ChargePointStatusTransition::BecomeAvailable:
             return trans.set(this->sd_available);
-        case ChargePointStatusTransition::H2_ConnectorSetAvailableAfterUserInteractedWithChargePoint:
+        case ChargePointStatusTransition::UsageInitiated:
             return trans.set(this->sd_preparing);
-        case ChargePointStatusTransition::H3_ConnectorSetAvailableNoUserActionRequiredToStartCharging:
+        case ChargePointStatusTransition::StartCharging:
             return trans.set(this->sd_charging);
-        case ChargePointStatusTransition::H4_ConnectorSetAvailableNoUserActionRequiredEVDoesNotStartCharging:
+        case ChargePointStatusTransition::PauseChargingEV:
             return trans.set(this->sd_suspended_ev);
-        case ChargePointStatusTransition::H5_ConnectorSetAvailableNoUserActionRequiredEVSEDoesNotAllowCharging:
+        case ChargePointStatusTransition::PauseChargingEVSE:
             return trans.set(this->sd_suspended_evse);
-        case ChargePointStatusTransition::H9_FaultDetected:
+        case ChargePointStatusTransition::FaultDetected:
             return trans.set(this->sd_faulted);
         default:
             return;
         }
     };
     this->sd_unavailable.state_fun = [this](FSMContextType& ctx) {
+        this->state = ChargePointStatus::Unavailable;
         this->status_notification_callback(ChargePointStatus::Unavailable);
     };
 
@@ -203,8 +207,13 @@ ChargePointStateMachine::ChargePointStateMachine(
         }
     };
     this->sd_faulted.state_fun = [this](FSMContextType& ctx) {
+        this->state = ChargePointStatus::Faulted;
         this->status_notification_callback(ChargePointStatus::Faulted);
     };
+}
+
+ChargePointStatus ChargePointStateMachine::get_state() {
+    return this->state;
 }
 
 ChargePointStates::ChargePointStates(
@@ -212,7 +221,7 @@ ChargePointStates::ChargePointStates(
     const std::function<void(int32_t connector, ChargePointErrorCode errorCode, ChargePointStatus status)>&
         status_notification_callback) :
     status_notification_callback(status_notification_callback) {
-    for (size_t connector = 0; connector < number_of_connectors + 1; connector++) {
+    for (int32_t connector = 0; connector < number_of_connectors + 1; connector++) {
         // TODO special state machine for connector 0
         auto state_machine = std::make_shared<ChargePointStateMachine>([this, connector](ChargePointStatus status) {
             this->status_notification_callback(connector, ChargePointErrorCode::NoError, status);
@@ -240,9 +249,18 @@ void ChargePointStates::run(std::map<int32_t, ocpp1_6::AvailabilityType> connect
 }
 
 void ChargePointStates::submit_event(int32_t connector, EventBaseType event) {
-    if (connector > 0 && connector < this->state_machines.size()) {
+    if (connector > 0 && connector < static_cast<int32_t>(this->state_machines.size())) {
         this->state_machines.at(connector)->controller->submit_event(event);
     }
+}
+
+ChargePointStatus ChargePointStates::get_state(int32_t connector) {
+    if (connector > 0 && connector < static_cast<int32_t>(this->state_machines.size())) {
+        return this->state_machines.at(connector)->state_machine->get_state();
+    }else if (connector == 0) {
+        return ChargePointStatus::Available;
+    }
+    return ChargePointStatus::Unavailable;
 }
 
 } // namespace ocpp1_6

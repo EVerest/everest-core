@@ -13,65 +13,36 @@ struct FirmwareStatusNotificationRequest : public Message {
 
     /// \brief Provides the type of this FirmwareStatusNotification message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const {
-        return "FirmwareStatusNotification";
-    }
-
-    /// \brief Conversion from a given FirmwareStatusNotificationRequest \p k to a given json object \p j
-    friend void to_json(json& j, const FirmwareStatusNotificationRequest& k) {
-        // the required parts of the message
-        j = json{
-            {"status", conversions::firmware_status_to_string(k.status)},
-        };
-        // the optional parts of the message
-    }
-
-    /// \brief Conversion from a given json object \p j to a given FirmwareStatusNotificationRequest \p k
-    friend void from_json(const json& j, FirmwareStatusNotificationRequest& k) {
-        // the required parts of the message
-        k.status = conversions::string_to_firmware_status(j.at("status"));
-
-        // the optional parts of the message
-    }
-
-    /// \brief Writes the string representation of the given FirmwareStatusNotificationRequest \p k to the given output
-    /// stream \p os \returns an output stream with the FirmwareStatusNotificationRequest written to
-    friend std::ostream& operator<<(std::ostream& os, const FirmwareStatusNotificationRequest& k) {
-        os << json(k).dump(4);
-        return os;
-    }
+    std::string get_type() const;
 };
+
+/// \brief Conversion from a given FirmwareStatusNotificationRequest \p k to a given json object \p j
+void to_json(json& j, const FirmwareStatusNotificationRequest& k);
+
+/// \brief Conversion from a given json object \p j to a given FirmwareStatusNotificationRequest \p k
+void from_json(const json& j, FirmwareStatusNotificationRequest& k);
+
+/// \brief Writes the string representation of the given FirmwareStatusNotificationRequest \p k to the given output
+/// stream \p os \returns an output stream with the FirmwareStatusNotificationRequest written to
+std::ostream& operator<<(std::ostream& os, const FirmwareStatusNotificationRequest& k);
 
 /// \brief Contains a OCPP 1.6 FirmwareStatusNotificationResponse message
 struct FirmwareStatusNotificationResponse : public Message {
 
     /// \brief Provides the type of this FirmwareStatusNotificationResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const {
-        return "FirmwareStatusNotificationResponse";
-    }
-
-    /// \brief Conversion from a given FirmwareStatusNotificationResponse \p k to a given json object \p j
-    friend void to_json(json& j, const FirmwareStatusNotificationResponse& k) {
-        // the required parts of the message
-        j = json({});
-        // the optional parts of the message
-    }
-
-    /// \brief Conversion from a given json object \p j to a given FirmwareStatusNotificationResponse \p k
-    friend void from_json(const json& j, FirmwareStatusNotificationResponse& k) {
-        // the required parts of the message
-
-        // the optional parts of the message
-    }
-
-    /// \brief Writes the string representation of the given FirmwareStatusNotificationResponse \p k to the given output
-    /// stream \p os \returns an output stream with the FirmwareStatusNotificationResponse written to
-    friend std::ostream& operator<<(std::ostream& os, const FirmwareStatusNotificationResponse& k) {
-        os << json(k).dump(4);
-        return os;
-    }
+    std::string get_type() const;
 };
+
+/// \brief Conversion from a given FirmwareStatusNotificationResponse \p k to a given json object \p j
+void to_json(json& j, const FirmwareStatusNotificationResponse& k);
+
+/// \brief Conversion from a given json object \p j to a given FirmwareStatusNotificationResponse \p k
+void from_json(const json& j, FirmwareStatusNotificationResponse& k);
+
+/// \brief Writes the string representation of the given FirmwareStatusNotificationResponse \p k to the given output
+/// stream \p os \returns an output stream with the FirmwareStatusNotificationResponse written to
+std::ostream& operator<<(std::ostream& os, const FirmwareStatusNotificationResponse& k);
 
 } // namespace ocpp1_6
 

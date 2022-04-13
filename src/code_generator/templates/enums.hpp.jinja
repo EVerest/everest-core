@@ -4,7 +4,6 @@
 #ifndef OCPP1_6_ENUMS_HPP
 #define OCPP1_6_ENUMS_HPP
 
-#include <map>
 #include <string>
 
 namespace ocpp1_6 {
@@ -19,37 +18,20 @@ enum class {{ enum_type.name }}
     {{ enum.replace('.', '_').replace('-', '_') }},
 {% endfor %}
 };
-namespace conversions {
-    static const std::map<{{ enum_type.name }}, std::string> {{ enum_type.name }}Strings {
-{% for enum in enum_type.enums %}
-        {{'{'+ enum_type.name }}::{{ enum.replace('.', '_').replace('-', '_') }}, "{{enum}}"},
-{% endfor %}
-    };
-    static const std::map<std::string, {{ enum_type.name }}> {{ enum_type.name }}Values {
-{% for enum in enum_type.enums %}
-        {"{{enum}}", {{ enum_type.name }}::{{ enum.replace('.', '_').replace('-', '_') + '}' }},
-{% endfor %}
-    };
 
+namespace conversions {
     /// \brief Converts the given {{ enum_type.name }} \p e to human readable string
     /// \returns a string representation of the {{ enum_type.name }}
-    static const std::string {{ enum_type.name | snake_case }}_to_string({{ enum_type.name }} e) {
-        return {{ enum_type.name }}Strings.at(e);
-    }
+    std::string {{ enum_type.name | snake_case }}_to_string({{ enum_type.name }} e);
 
     /// \brief Converts the given std::string \p s to {{ enum_type.name }}
     /// \returns a {{ enum_type.name }} from a string representation
-    static const {{ enum_type.name }} string_to_{{ enum_type.name | snake_case }}(std::string s) {
-        return {{ enum_type.name }}Values.at(s);
-    }
+    {{ enum_type.name }} string_to_{{ enum_type.name | snake_case }}(const std::string& s);
 }
 
 /// \brief Writes the string representation of the given {{ enum_type.name }} \p {{ enum_type.name | snake_case }} to the given output stream \p os
 /// \returns an output stream with the {{ enum_type.name }} written to
-inline std::ostream& operator<<(std::ostream& os, const {{ enum_type.name }}& {{ enum_type.name | snake_case }}) {
-    os << conversions::{{ enum_type.name | snake_case }}_to_string({{ enum_type.name | snake_case }});
-    return os;
-}
+std::ostream& operator<<(std::ostream& os, const {{ enum_type.name }}& {{ enum_type.name | snake_case }});
 {% endfor %}
 {%- endif %}
 {% if last %}

@@ -48,6 +48,14 @@ DateTimeImpl::DateTimeImpl(std::chrono::time_point<std::chrono::system_clock> ti
 }
 
 DateTimeImpl::DateTimeImpl(const std::string& timepoint_str) {
+    this->from_rfc3339(timepoint_str);
+}
+
+std::string DateTimeImpl::to_rfc3339() const {
+    return date::format("%FT%TZ", std::chrono::time_point_cast<std::chrono::milliseconds>(this->timepoint));
+}
+
+void DateTimeImpl::from_rfc3339(const std::string& timepoint_str) {
     std::istringstream in{timepoint_str};
     in >> date::parse("%FT%T%Ez", this->timepoint);
     if (in.fail()) {
@@ -55,13 +63,14 @@ DateTimeImpl::DateTimeImpl(const std::string& timepoint_str) {
         in.seekg(0);
         in >> date::parse("%FT%TZ", this->timepoint);
         if (in.fail()) {
-            EVLOG(error) << "timepoint string parsing failed";
+            in.clear();
+            in.seekg(0);
+            in >> date::parse("%FT%T", this->timepoint);
+            if (in.fail()) {
+                EVLOG(error) << "timepoint string parsing failed";
+            }
         }
     }
-}
-
-std::string DateTimeImpl::to_rfc3339() const {
-    return date::format("%FT%TZ", std::chrono::time_point_cast<std::chrono::milliseconds>(this->timepoint));
 }
 
 std::chrono::time_point<std::chrono::system_clock> DateTimeImpl::to_time_point() {
