@@ -65,7 +65,7 @@ void energyImpl::init() {
             EVLOG(debug) << "switched to \"manual_limits\" optimizer mode";
         } else if (mode == EVSE_OPTIMIZER_MODE_PRICE_DRIVEN) {
             _optimizer_mode = EVSE_OPTIMIZER_MODE_PRICE_DRIVEN;
-            mod->updateLocalMaxCurrentLimit(mod->get_hw_capabilities().at("max_current_A"));
+            // mod->updateLocalMaxCurrentLimit(mod->get_hw_capabilities().at("max_current_A"));
             EVLOG(debug) << "switched to \"price_driven\" optimizer mode";
         } else {
             // error
