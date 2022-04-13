@@ -4,6 +4,11 @@ project(EVerest VERSION 0.1
                 DESCRIPTION "The open operating system for e-mobility charging stations"
 		LANGUAGES CXX C)
 
+# enable compiler warnings
+add_compile_options(-Wall -Wextra -pedantic)
+# unused functions in a library should not be problematic
+add_compile_options(-Wno-unused)
+
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 if (NOT CMAKE_BUILD_TYPE)

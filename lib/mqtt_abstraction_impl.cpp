@@ -354,7 +354,7 @@ bool MQTTAbstractionImpl::connectBroker(const char* host, const char* port) {
 int MQTTAbstractionImpl::open_nb_socket(const char* addr, const char* port) {
     BOOST_LOG_FUNCTION();
 
-    struct addrinfo hints = {0};
+    struct addrinfo hints = {0,0,0,0,0,0,0,0};
 
     hints.ai_family = AF_UNSPEC;     /* IPv4 or IPv6 */
     hints.ai_socktype = SOCK_STREAM; /* Must be TCP */

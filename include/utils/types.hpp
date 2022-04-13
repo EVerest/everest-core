@@ -77,7 +77,7 @@ struct ModuleInfo {
 };
 
 struct Requirement {
-    Requirement(const std::string& requirement_id, int index) : id(requirement_id), index(index){};
+    Requirement(const std::string& requirement_id, size_t index) : id(requirement_id), index(index){};
     bool operator<(const Requirement& rhs) const {
         if (id < rhs.id) {
             return true;
@@ -88,7 +88,7 @@ struct Requirement {
         }
     }
     std::string id;
-    int index;
+    size_t index;
 };
 
 #define EVCALLBACK(function) [](auto&& PH1) { function(std::forward<decltype(PH1)>(PH1)); }
