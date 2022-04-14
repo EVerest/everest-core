@@ -8,6 +8,8 @@ namespace module {
 
 #define INVALID_PRICE_PER_KWH (-1.1f)
 
+static json global_energy_object = json::array();
+
 std::string to_rfc3339(std::chrono::time_point<std::chrono::system_clock> t) {
     return date::format("%FT%TZ", std::chrono::time_point_cast<std::chrono::milliseconds>(t));
 }
@@ -23,39 +25,45 @@ std::chrono::time_point<std::chrono::system_clock> from_rfc3339(std::string t) {
 
 void EnergyManager::init() {
     invoke_init(*p_main);
-    lastLimitUpdate = std::chrono::system_clock::now();
-
-    for (auto& entry : r_energy_trunk) {
-        entry->subscribe_energy([this, &entry](json e) {
+    
+    for (int entry = 0; entry < r_energy_trunk.size(); entry++) {
+        r_energy_trunk[entry]->subscribe_energy([this, entry](json e) {
             // Received new energy object from a child.
-
-            // Re-Run global optimizer and create limits and schedules for each evse type leaf.
-            json optimized_values = run_optimizer(e);
-
-            // rate-limit the enforced limit update
-            auto now = std::chrono::system_clock::now();
-            auto timeSinceLastUpdate =
-                std::chrono::duration_cast<std::chrono::milliseconds>(now - lastLimitUpdate).count();
-            if (timeSinceLastUpdate >= 5000) {
-
-                lastLimitUpdate = std::chrono::system_clock::now();
-
-                // run enforce_limits commands.
-                for (auto it = optimized_values.begin(); it != optimized_values.end(); ++it) {
-                    sanitize_object(*it);
-                    entry->call_enforce_limits( (*it).at("uuid"), 
-                                                (*it).at("limits_import"), 
-                                                (*it).at("limits_export"),
-                                                (*it).at("schedule_import"),
-                                                (*it).at("schedule_export"));
-                }
-            }
+            global_energy_object[entry] = e;
         });
     }
 }
 
 void EnergyManager::ready() {
     invoke_ready(*p_main);
+
+    interval_start([this](){this->run_enforce_limits();}, ENERGY_MANAGER_OPTIMIZER_INTERVAL_MS);
+}
+
+void EnergyManager::interval_start(const std::function<void(void)>& func, unsigned int interval_ms) {
+    std::thread([func, interval_ms]() { 
+        while (true) { 
+            auto next_interval_time = std::chrono::steady_clock::now() + std::chrono::milliseconds(interval_ms);
+            func();
+            std::this_thread::sleep_until(next_interval_time);
+        }
+    }).detach();
+}
+
+void EnergyManager::run_enforce_limits() {
+    for (int entry = 0; entry < this->r_energy_trunk.size(); entry++) {
+
+        json optimized_values = run_optimizer(global_energy_object[entry]);
+
+        for (auto it = optimized_values.begin(); it != optimized_values.end(); ++it) {
+            sanitize_object(*it);
+            this->r_energy_trunk[entry]->call_enforce_limits( (*it).at("uuid"), 
+                                        (*it).at("limits_import"), 
+                                        (*it).at("limits_export"),
+                                        (*it).at("schedule_import"),
+                                        (*it).at("schedule_export"));
+        }
+    }
 }
 
 Array EnergyManager::run_optimizer(json energy) {
