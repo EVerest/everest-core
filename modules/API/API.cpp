@@ -58,8 +58,6 @@ void SessionInfo::update_state(const std::string& event) {
         this->state = "Error";
     } else if (event == "PermanentFault") {
         this->state = "PermanentFault";
-    } else {
-        this->state = "Unknown";
     }
 }
 
