@@ -84,12 +84,12 @@ private:
     json hw_capabilities;
     bool local_three_phases;
     float local_max_current_limit;
+    const float EVSE_ABSOLUTE_MAX_CURRENT=80.0;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
 // ev@087e516b-124c-48df-94fb-109508c7cda9:v1
 // insert other definitions here
-#define EVSE_ABSOLUTE_MAX_CURRENT double(80.0F)
 // ev@087e516b-124c-48df-94fb-109508c7cda9:v1
 
 } // namespace module
