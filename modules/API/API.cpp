@@ -93,7 +93,7 @@ void API::init() {
     for (auto& evse : this->r_evse_manager) {
         this->info.push_back(std::make_unique<SessionInfo>());
         auto& session_info = this->info.back();
-        std::string evse_base = api_base + "evse_" + std::to_string(count);
+        std::string evse_base = api_base + evse->module_id;
 
         // API variables
         std::string var_base = evse_base + "/var/";
