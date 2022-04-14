@@ -10,8 +10,7 @@ std::string to_rfc3339(std::chrono::time_point<std::chrono::system_clock> t) {
     return date::format("%FT%TZ", std::chrono::time_point_cast<std::chrono::milliseconds>(t));
 }
 
-SessionInfo::SessionInfo() :
-    state("Unknown"), start_energy_wh(0), end_energy_wh(0), latest_total_w(0) {
+SessionInfo::SessionInfo() : state("Unknown"), start_energy_wh(0), end_energy_wh(0), latest_total_w(0) {
     this->start_time_point = std::chrono::system_clock::now();
     this->end_time_point = this->start_time_point;
 }
@@ -34,9 +33,34 @@ void SessionInfo::reset() {
     this->latest_total_w = 0;
 }
 
-void SessionInfo::set_state(const std::string& state) {
+void SessionInfo::update_state(const std::string& event) {
     std::lock_guard<std::mutex> lock(this->session_info_mutex);
-    this->state = state;
+
+    if (event == "Enabled") {
+        this->state = "Unplugged";
+    } else if (event == "Disabled") {
+        this->state = "Disabled";
+    } else if (event == "SessionStarted") {
+        this->state = "PluggedIn";
+    } else if (event == "AuthRequired") {
+        this->state = "AuthRequired";
+    } else if (event == "ChargingStarted") {
+        this->state = "Charging";
+    } else if (event == "ChargingPausedEV") {
+        this->state = "ChargingPausedEV";
+    } else if (event == "ChargingPausedEVSE") {
+        this->state = "ChargingPausedEVSE";
+    } else if (event == "ChargingResumed") {
+        this->state = "Charging";
+    } else if (event == "SessionFinished") {
+        this->state = "Unplugged";
+    } else if (event == "Error") {
+        this->state = "Error";
+    } else if (event == "PermanentFault") {
+        this->state = "PermanentFault";
+    } else {
+        this->state = "Unknown";
+    }
 }
 
 void SessionInfo::set_start_energy_wh(int32_t start_energy_wh) {
@@ -120,16 +144,14 @@ void API::init() {
             }
         });
 
-        std::string var_events = var_base + "events";
-        evse->subscribe_session_events([this, var_events, var_session_info, &session_info](Object session_events) {
-            auto state = this->sanitize_event(session_events["event"].get<std::string>());
-            this->mqtt.publish(var_events, state);
-            session_info->set_state(state);
-            if (state == "SessionStarted") {
+        evse->subscribe_session_events([this, var_session_info, &session_info](Object session_events) {
+            auto event = session_events["event"].get<std::string>();
+            session_info->update_state(event);
+            if (event == "SessionStarted") {
                 auto session_started = session_events["session_started"];
                 auto energy_Wh_import = session_started["energy_Wh_import"].get<double>();
                 session_info->set_start_energy_wh(energy_Wh_import);
-            } else if (state == "SessionFinished") {
+            } else if (event == "SessionFinished") {
                 auto session_finished = session_events["session_finished"];
                 auto energy_Wh_import = session_finished["energy_Wh_import"].get<double>();
                 session_info->set_end_energy_wh(energy_Wh_import);
@@ -157,35 +179,6 @@ void API::init() {
 
 void API::ready() {
     invoke_ready(*p_main);
-}
-
-std::string API::sanitize_event(const std::string& event) {
-    std::string sanitized_event = "Unknown";
-    if (event == "Enabled") {
-        sanitized_event = event;
-    } else if (event == "Disabled") {
-        sanitized_event = event;
-    } else if (event == "SessionStarted") {
-        sanitized_event = event;
-    } else if (event == "AuthRequired") {
-        sanitized_event = event;
-    } else if (event == "ChargingStarted") {
-        sanitized_event = event;
-    } else if (event == "ChargingPausedEV") {
-        sanitized_event = event;
-    } else if (event == "ChargingPausedEVSE") {
-        sanitized_event = event;
-    } else if (event == "ChargingResumed") {
-        sanitized_event = event;
-    } else if (event == "SessionFinished") {
-        sanitized_event = event;
-    } else if (event == "Error") {
-        sanitized_event = event;
-    } else if (event == "PermanentFault") {
-        sanitized_event = event;
-    }
-
-    return sanitized_event;
 }
 
 } // namespace module
