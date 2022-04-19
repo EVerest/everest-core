@@ -56,7 +56,6 @@ macro(cpp_module_setup)
     get_filename_component(MODULE_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
     set(MOD_MODULE_NAME mod${MODULE_NAME})
     set(MODULE_LOADER_DIR ${GENERATED_MODULE_DIR}/${MODULE_NAME})
-    add_library(${MOD_MODULE_NAME} SHARED)
 
     add_custom_command(
         OUTPUT ${MODULE_LOADER_DIR}/ld-ev.hpp ${MODULE_LOADER_DIR}/ld-ev.cpp
@@ -73,7 +72,16 @@ macro(cpp_module_setup)
         DEPENDS ${MODULE_LOADER_DIR}/ld-ev.cpp
     )
 
-    add_dependencies(${MOD_MODULE_NAME} ld-ev_${MODULE_NAME} generate_interface_files)
+    if(BUILD_MODULE_SHARED_LIBRARIES)
+        add_library(${MOD_MODULE_NAME} SHARED)
+        add_dependencies(${MOD_MODULE_NAME} ld-ev_${MODULE_NAME} generate_interface_files)
+    endif()
+
+    if(BUILD_MODULE_BINARIES)
+        add_executable(${MODULE_NAME})
+        add_dependencies(${MODULE_NAME} ld-ev_${MODULE_NAME} generate_interface_files)
+    endif()
+
 endmacro()
 
 message("everest modules: ${EVEREST_MODULES}")
