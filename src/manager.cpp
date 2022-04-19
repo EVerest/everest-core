@@ -15,6 +15,7 @@
 #include <boost/filesystem/fstream.hpp>
 #include <boost/program_options.hpp>
 #include <everest/logging.hpp>
+#include <fmt/color.h>
 #include <fmt/core.h>
 
 #include <framework/everest.hpp>
@@ -22,6 +23,9 @@
 #include <utils/mqtt_abstraction.hpp>
 
 namespace po = boost::program_options;
+
+const auto TERMINAL_STYLE_ERROR = fmt::emphasis::bold | fg(fmt::terminal_color::red);
+const auto TERMINAL_STYLE_OK = fmt::emphasis::bold | fg(fmt::terminal_color::green);
 
 int main(int argc, char* argv[]) {
     po::options_description desc("EVerest manager");
@@ -231,10 +235,7 @@ int main(int argc, char* argv[]) {
             std::unique_lock<std::mutex> lock(modules_ready_mutex);
             modules_ready[module_name] = json.get<bool>();
             for (const auto& mod : modules_ready) {
-                std::string text_ready = "\033[1;32mready\033[0m";
-                if (!mod.second) {
-                    text_ready = "\033[1;31mnot ready\033[0m";
-                }
+                std::string text_ready = fmt::format((mod.second) ? TERMINAL_STYLE_OK : TERMINAL_STYLE_ERROR, "ready");
                 EVLOG(debug) << fmt::format("  {}: {}", mod.first, text_ready);
             }
             if (std::all_of(modules_ready.begin(), modules_ready.end(),
@@ -248,7 +249,8 @@ int main(int argc, char* argv[]) {
 
         std::string topic = fmt::format("{}/ready", config->mqtt_module_prefix(module_name));
 
-        auto token = std::make_shared<TypedHandler>(HandlerType::ExternalMQTT, std::make_shared<Handler>(module_ready_handler));
+        auto token =
+            std::make_shared<TypedHandler>(HandlerType::ExternalMQTT, std::make_shared<Handler>(module_ready_handler));
 
         mqtt_abstraction.register_handler(topic, token, false, QOS::QOS2);
         tokens.push_back(token);
@@ -379,21 +381,20 @@ int main(int argc, char* argv[]) {
             }
             int result = kill(child.first, SIGTERM);
             if (result != 0) {
-                // FIXME (aw): fixup these color code constants
-                EVLOG(critical) << fmt::format(
-                    "SIGTERM of child: {} (pid: {}) \033[1;31mfailed\033[0m: {}. Escalating to SIGKILL", child.second,
-                    child.first, result);
+                EVLOG(critical) << fmt::format("SIGTERM of child: {} (pid: {}) {}: {}. Escalating to SIGKILL",
+                                               child.second, child.first, fmt::format(TERMINAL_STYLE_ERROR, "failed"),
+                                               result);
                 result = kill(child.first, SIGKILL);
                 if (result != 0) {
-                    EVLOG(critical) << fmt::format("SIGKILL of child: {} (pid: {}) \033[1;31mfailed\033[0m: {}.",
-                                                   child.second, child.first, result);
+                    EVLOG(critical) << fmt::format("SIGKILL of child: {} (pid: {}) {}: {}.", child.second, child.first,
+                                                   fmt::format(TERMINAL_STYLE_ERROR, "failed"), result);
                 } else {
-                    EVLOG(info) << fmt::format("SIGKILL of child: {} (pid: {}) \033[1;32msucceeded\033[0m.",
-                                               child.second, child.first);
+                    EVLOG(info) << fmt::format("SIGKILL of child: {} (pid: {}) {}.", child.second, child.first,
+                                               fmt::format(TERMINAL_STYLE_OK, "succeeded"));
                 }
             } else {
-                EVLOG(info) << fmt::format("SIGTERM of child: {} (pid: {}) \033[1;32msucceeded\033[0m.", child.second,
-                                           child.first);
+                EVLOG(info) << fmt::format("SIGTERM of child: {} (pid: {}) {}.", child.second, child.first,
+                                           fmt::format(TERMINAL_STYLE_OK, "succeeded"));
             }
         }
         return 1;
