@@ -72,15 +72,8 @@ macro(cpp_module_setup)
         DEPENDS ${MODULE_LOADER_DIR}/ld-ev.cpp
     )
 
-    if(BUILD_MODULE_SHARED_LIBRARIES)
-        add_library(${MOD_MODULE_NAME} SHARED)
-        add_dependencies(${MOD_MODULE_NAME} ld-ev_${MODULE_NAME} generate_interface_files)
-    endif()
-
-    if(BUILD_MODULE_BINARIES)
-        add_executable(${MODULE_NAME})
-        add_dependencies(${MODULE_NAME} ld-ev_${MODULE_NAME} generate_interface_files)
-    endif()
+    add_executable(${MODULE_NAME})
+    add_dependencies(${MODULE_NAME} ld-ev_${MODULE_NAME} generate_interface_files)
 
 endmacro()
 
