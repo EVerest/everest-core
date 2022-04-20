@@ -3,7 +3,7 @@
 #ifndef {{ info.hpp_guard }}
 #define {{ info.hpp_guard }}
 
-{{ print_template_info('1') }}
+{{ print_template_info('2') }}
 
 #include <framework/ModuleAdapter.hpp>
 
@@ -11,7 +11,6 @@ class {{ info.class_name }} : public Everest::ImplementationBase {
 public:
     {{ info.class_name }}(Everest::ModuleAdapter* ev, const std::string& name) : Everest::ImplementationBase(), _ev(ev), _name(name) {};
 
-protected:
     {% if not vars %}
     // no variables defined for this interface
     {% else %}
@@ -21,6 +20,7 @@ protected:
     {% endfor %}
     {% endif %}
 
+protected:
     {% if not cmds %}
     // no commands defined for this interface
     {% else %}
