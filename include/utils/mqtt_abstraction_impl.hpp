@@ -4,6 +4,7 @@
 #define UTILS_MQTT_ABSTRACTION_IMPL_HPP
 
 #include <functional>
+#include <future>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -50,10 +51,10 @@ private:
     uint8_t recvbuf[MQTT_BUF_SIZE];
 
     MQTTAbstractionImpl(std::string mqtt_server_address, std::string mqtt_server_port);
+    ~MQTTAbstractionImpl();
 
     static int open_nb_socket(const char* addr, const char* port);
     bool connectBroker(const char* host, const char* port);
-    void _mainloop();
     void on_mqtt_message(std::shared_ptr<Message> message);
     void on_mqtt_connect();
     static void on_mqtt_disconnect();
@@ -96,8 +97,9 @@ public:
     void unsubscribe(const std::string& topic);
 
     ///
-    /// \brief starts the mqtt main loop in its own tread and immediately joins it, making this a blocking operation
-    void mainloop();
+    /// \brief Spawn a thread running the mqtt main loop
+    /// \returns a future, which will be fulfilled on thread termination
+    std::future<void> spawn_main_loop_thread();
 
     ///
     /// \brief subscribes to the given \p topic and registers a callback \p handler that is called when a message

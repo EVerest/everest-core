@@ -210,7 +210,7 @@ int main(int argc, char* argv[]) {
         auto module_init = boost::dll::import_alias<void(ModuleConfigs, ModuleInfo)>(path, "init");
         module_init(module_configs, module_info);
 
-        std::thread mainloop_thread = std::thread(&Everest::Everest::mainloop, &everest);
+        everest.spawn_main_loop_thread();
 
         auto module_ready = boost::dll::import_alias<void()>(path, "ready");
 
@@ -221,7 +221,7 @@ int main(int argc, char* argv[]) {
         // the module should now be ready
         everest.signal_ready();
 
-        mainloop_thread.join();
+        everest.wait_for_main_loop_end();
 
         EVLOG(info) << "Exiting...";
     } catch (boost::exception& e) {

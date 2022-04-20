@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include <everest/logging.hpp>
 
 #include <utils/mqtt_abstraction.hpp>
@@ -56,9 +56,9 @@ void MQTTAbstraction::unsubscribe(const std::string& topic) {
     mqtt_abstraction.unsubscribe(topic);
 }
 
-void MQTTAbstraction::mainloop() {
+std::future<void> MQTTAbstraction::spawn_main_loop_thread() {
     BOOST_LOG_FUNCTION();
-    mqtt_abstraction.mainloop();
+    return mqtt_abstraction.spawn_main_loop_thread();
 }
 
 void MQTTAbstraction::register_handler(const std::string& topic, std::shared_ptr<TypedHandler> handler,bool allow_multiple_handlers, QOS qos) {

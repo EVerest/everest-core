@@ -3,6 +3,8 @@
 #ifndef UTILS_MQTT_ABSTRACTION_HPP
 #define UTILS_MQTT_ABSTRACTION_HPP
 
+#include <future>
+
 #include <nlohmann/json.hpp>
 
 #include <utils/types.hpp>
@@ -59,12 +61,13 @@ public:
     void unsubscribe(const std::string& topic);
 
     ///
-    /// \copydoc MQTTAbstractionImpl::mainloop()
-    void mainloop();
+    /// \copydoc MQTTAbstractionImpl::spawn_main_loop_thread()
+    std::future<void> spawn_main_loop_thread();
 
     ///
     /// \copydoc MQTTAbstractionImpl::register_handler(const std::string&, std::shared_ptr<TypedHandler>, QOS)
-    void register_handler(const std::string& topic, std::shared_ptr<TypedHandler> handler, bool allow_multiple_handlers, QOS qos);
+    void register_handler(const std::string& topic, std::shared_ptr<TypedHandler> handler, bool allow_multiple_handlers,
+                          QOS qos);
 
     ///
     /// \copydoc MQTTAbstractionImpl::unregister_handler(const std::string&, const Token&)

@@ -32,7 +32,7 @@ class MessageQueue {
 private:
     std::thread worker_thread;
     std::queue<std::shared_ptr<Message>> message_queue;
-    std::mutex message_mutex;
+    std::mutex queue_ctrl_mutex;
     std::function<void(std::shared_ptr<Message> message)> message_callback;
     std::condition_variable cv;
     bool running;
@@ -40,6 +40,7 @@ private:
 public:
     /// \brief Creates a message queue with the provided \p message_callback
     explicit MessageQueue(const std::function<void(std::shared_ptr<Message> message)>& message_callback);
+    ~MessageQueue();
 
     /// \brief Adds a \p message to the message queue which will then be delivered to the message callback
     void add(std::shared_ptr<Message> message);
@@ -54,14 +55,17 @@ private:
     std::unordered_set<std::shared_ptr<TypedHandler>> handlers;
     std::thread handler_thread;
     std::queue<std::shared_ptr<json>> message_queue;
-    std::mutex message_mutex;
-    std::mutex handlers_mutex;
+    std::mutex handler_ctrl_mutex;
+    std::mutex handler_list_mutex;
     std::condition_variable cv;
     bool running;
 
 public:
     /// \brief Creates the message handler
     MessageHandler();
+
+    /// \brief Destructor
+    ~MessageHandler();
 
     /// \brief Adds a \p message to the message queue which will be delivered to the registered handlers
     void add(std::shared_ptr<json> message);

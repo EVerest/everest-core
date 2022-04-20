@@ -43,6 +43,14 @@ MQTTAbstractionImpl::MQTTAbstractionImpl(std::string mqtt_server_address, std::s
     this->mqtt_client.publish_response_callback_state = &this->message_queue;
 }
 
+MQTTAbstractionImpl::~MQTTAbstractionImpl() {
+    // FIXME (aw): verify that disconnecting is thread-safe!
+    if (this->mqtt_is_connected) {
+        disconnect();
+    }
+    this->mqtt_mainloop_thread.join();
+}
+
 bool MQTTAbstractionImpl::connect() {
     BOOST_LOG_FUNCTION();
 
@@ -144,37 +152,36 @@ void MQTTAbstractionImpl::unsubscribe(const std::string& topic) {
     mqtt_unsubscribe(&this->mqtt_client, topic.c_str());
 }
 
-void MQTTAbstractionImpl::mainloop() {
+std::future<void> MQTTAbstractionImpl::spawn_main_loop_thread() {
     BOOST_LOG_FUNCTION();
 
-    this->mqtt_mainloop_thread = std::thread(&MQTTAbstractionImpl::_mainloop, this);
-    this->mqtt_mainloop_thread.join();
-}
+    std::packaged_task<void(void)> task([this]() {
+        try {
+            while (this->mqtt_is_connected) {
+                MQTTErrors error = mqtt_sync(&this->mqtt_client);
+                if (error != MQTT_OK) {
+                    EVLOG(error) << fmt::format("Error during MQTT sync: {}", mqtt_error_str(error));
 
-void MQTTAbstractionImpl::_mainloop() {
-    BOOST_LOG_FUNCTION();
+                    on_mqtt_disconnect();
 
-    try {
-        while (this->mqtt_is_connected) {
-            MQTTErrors error = mqtt_sync(&this->mqtt_client);
-            if (error != MQTT_OK) {
-                EVLOG(error) << fmt::format("Error during MQTT sync: {}", mqtt_error_str(error));
-
-                on_mqtt_disconnect();
-
-                return;
+                    return;
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(mqtt_sync_sleep_milliseconds));
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds(mqtt_sync_sleep_milliseconds));
+        } catch (boost::exception& e) {
+            EVLOG(critical) << fmt::format("Caught MQTT mainloop boost::exception:\n{}",
+                                           boost::diagnostic_information(e, true));
+            exit(1);
+        } catch (std::exception& e) {
+            EVLOG(critical) << fmt::format("Caught MQTT mainloop std::exception:\n{}",
+                                           boost::diagnostic_information(e, true));
+            exit(1);
         }
-    } catch (boost::exception& e) {
-        EVLOG(critical) << fmt::format("Caught MQTT mainloop boost::exception:\n{}",
-                                       boost::diagnostic_information(e, true));
-        exit(1);
-    } catch (std::exception& e) {
-        EVLOG(critical) << fmt::format("Caught MQTT mainloop std::exception:\n{}",
-                                       boost::diagnostic_information(e, true));
-        exit(1);
-    }
+    });
+
+    auto future = task.get_future();
+    this->mqtt_mainloop_thread = std::thread(std::move(task));
+    return future;
 }
 
 void MQTTAbstractionImpl::on_mqtt_message(std::shared_ptr<Message> message) {

@@ -310,7 +310,7 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
 
         ctx->js_module_ref = Napi::Persistent(module_this);
 
-        std::thread([]() { ctx->everest.mainloop(); }).detach();
+        ctx->everest.spawn_main_loop_thread();
 
         ctx->js_cb = std::make_unique<JsExecCtx>(env, callback_wrapper);
 

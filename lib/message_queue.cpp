@@ -16,10 +16,13 @@ Message::Message(const std::string& topic, const std::string& payload) : topic(t
 MessageQueue::MessageQueue(const std::function<void(std::shared_ptr<Message> message)>& message_callback) :
     message_callback(message_callback), running(true) {
     this->worker_thread = std::thread([this]() {
-        while (this->running) {
+        while (true) {
             std::shared_ptr<Message> message;
-            std::unique_lock<std::mutex> lock(this->message_mutex);
-            this->cv.wait(lock, [this]() { return !this->message_queue.empty(); });
+            std::unique_lock<std::mutex> lock(this->queue_ctrl_mutex);
+            this->cv.wait(lock, [this]() { return !this->message_queue.empty() || this->running == false; });
+            if (!this->running) {
+                return;
+            }
 
             message = this->message_queue.front();
             this->message_queue.pop();
@@ -33,22 +36,34 @@ MessageQueue::MessageQueue(const std::function<void(std::shared_ptr<Message> mes
 
 void MessageQueue::add(std::shared_ptr<Message> message) {
     {
-        std::lock_guard<std::mutex> lock(this->message_mutex);
+        std::lock_guard<std::mutex> lock(this->queue_ctrl_mutex);
         this->message_queue.push(message);
     }
     this->cv.notify_all();
 }
 
 void MessageQueue::stop() {
-    this->running = false;
+    {
+        std::lock_guard<std::mutex> lock(this->queue_ctrl_mutex);
+        this->running = false;
+    }
+    this->cv.notify_all();
+}
+
+MessageQueue::~MessageQueue() {
+    stop();
+    worker_thread.join();
 }
 
 MessageHandler::MessageHandler() : running(true) {
     this->handler_thread = std::thread([this]() {
-        while (this->running) {
+        while (true) {
             std::shared_ptr<json> message;
-            std::unique_lock<std::mutex> lock(this->message_mutex);
-            this->cv.wait(lock, [this]() { return !this->message_queue.empty(); });
+            std::unique_lock<std::mutex> lock(this->handler_ctrl_mutex);
+            this->cv.wait(lock, [this]() { return !this->message_queue.empty() || this->running == false; });
+            if (!this->running) {
+                return;
+            }
 
             message = this->message_queue.front();
             this->message_queue.pop();
@@ -59,7 +74,7 @@ MessageHandler::MessageHandler() : running(true) {
             // get the registered handlers
             std::vector<std::shared_ptr<TypedHandler>> local_handlers;
             {
-                const std::lock_guard<std::mutex> handlers_lock(handlers_mutex);
+                const std::lock_guard<std::mutex> handlers_lock(handler_list_mutex);
                 for (auto handler : this->handlers) {
                     local_handlers.push_back(handler);
                 }
@@ -105,26 +120,30 @@ MessageHandler::MessageHandler() : running(true) {
 
 void MessageHandler::add(std::shared_ptr<json> message) {
     {
-        std::lock_guard<std::mutex> lock(this->message_mutex);
+        std::lock_guard<std::mutex> lock(this->handler_ctrl_mutex);
         this->message_queue.push(message);
     }
     this->cv.notify_all();
 }
 
 void MessageHandler::stop() {
-    this->running = false;
+    {
+        std::lock_guard<std::mutex> lock(this->handler_ctrl_mutex);
+        this->running = false;
+    }
+    this->cv.notify_all();
 }
 
 void MessageHandler::add_handler(std::shared_ptr<TypedHandler> handler) {
     {
-        std::lock_guard<std::mutex> lock(this->handlers_mutex);
+        std::lock_guard<std::mutex> lock(this->handler_list_mutex);
         this->handlers.insert(handler);
     }
 }
 
 void MessageHandler::remove_handler(std::shared_ptr<TypedHandler> handler) {
     {
-        std::lock_guard<std::mutex> lock(this->handlers_mutex);
+        std::lock_guard<std::mutex> lock(this->handler_list_mutex);
         auto it = std::find(this->handlers.begin(), this->handlers.end(), handler);
         this->handlers.erase(it);
     }
@@ -133,10 +152,15 @@ void MessageHandler::remove_handler(std::shared_ptr<TypedHandler> handler) {
 size_t MessageHandler::count_handlers() {
     size_t count = 0;
     {
-        std::lock_guard<std::mutex> lock(this->handlers_mutex);
+        std::lock_guard<std::mutex> lock(this->handler_list_mutex);
         count = this->handlers.size();
     }
     return count;
+}
+
+MessageHandler::~MessageHandler() {
+    stop();
+    handler_thread.join();
 }
 
 } // namespace Everest

@@ -4,6 +4,7 @@
 #define FRAMEWORK_EVEREST_HPP
 
 #include <chrono>
+#include <future>
 #include <map>
 #include <set>
 #include <thread>
@@ -42,6 +43,7 @@ private:
     std::unique_ptr<std::function<void()>> on_ready;
     std::thread heartbeat_thread;
     std::string module_name;
+    std::future<void> main_loop_end{};
     json module_manifest;
     json module_classes;
 
@@ -114,9 +116,14 @@ public:
     void disconnect();
 
     ///
-    /// \brief Calls the mainloop method of the MQTTAbstraction to start the MQTT mainloop
+    /// \brief Initiates spawning the MQTT main loop thread
     ///
-    void mainloop();
+    void spawn_main_loop_thread();
+
+    ///
+    /// \brief Wait for main loop thread to end
+    ///
+    void wait_for_main_loop_end();
 
     ///
     /// \brief Ready Handler for local readyness (e.g. this module is now ready)

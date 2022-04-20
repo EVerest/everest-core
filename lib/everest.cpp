@@ -45,10 +45,21 @@ Everest::Everest(std::string module_id, Config config, bool validate_data_with_s
     this->publish_metadata();
 }
 
-void Everest::mainloop() {
+void Everest::spawn_main_loop_thread() {
     BOOST_LOG_FUNCTION();
 
-    this->mqtt_abstraction.mainloop();
+    // FIXME (aw): check if mainloop has not been started yet
+    assert(!this->main_loop_end.valid());
+    this->main_loop_end = this->mqtt_abstraction.spawn_main_loop_thread();
+}
+
+void Everest::wait_for_main_loop_end() {
+    BOOST_LOG_FUNCTION();
+
+    // FIXME (aw): check if mainloop has been started, simple assert for now
+    assert(this->main_loop_end.valid());
+
+    this->main_loop_end.get();
 }
 
 void Everest::heartbeat() {
