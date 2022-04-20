@@ -11,8 +11,6 @@
 #include <vector>
 
 #include <mqtt.h>
-#include <sigslot/signal.hpp>
-
 #include <nlohmann/json.hpp>
 
 #include <utils/message_queue.hpp>

@@ -35,7 +35,6 @@ target_link_libraries(everest
         mqttc
         nlohmann_json::nlohmann_json
         nlohmann_json_schema_validator::nlohmann_json_schema_validator
-        Pal::Sigslot
 )
 
 # this is important to allow our headers to find the nlohmann_* headers

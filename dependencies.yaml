@@ -10,9 +10,6 @@ nlohmann_json_schema_validator:
   alias:
     name: nlohmann_json_schema_validator::nlohmann_json_schema_validator
     target: nlohmann_json_schema_validator
-sigslot:
-  git: https://github.com/palacaze/sigslot
-  git_tag: v1.2.0
 mqttc:
   git: https://github.com/LiamBindle/MQTT-C.git
   git_tag: 1.1.5

@@ -20,7 +20,6 @@
 #include <utils/mqtt_abstraction_impl.hpp>
 
 namespace Everest {
-sigslot::signal<std::shared_ptr<Message>> signalReceived;
 const auto mqtt_sync_sleep_milliseconds = 10;
 const auto mqtt_keep_alive = 400;
 
@@ -41,7 +40,7 @@ MQTTAbstractionImpl::MQTTAbstractionImpl(std::string mqtt_server_address, std::s
 
     this->mqtt_is_connected = false;
 
-    signalReceived.connect(&MessageQueue::add, &this->message_queue);
+    this->mqtt_client.publish_response_callback_state = &this->message_queue;
 }
 
 bool MQTTAbstractionImpl::connect() {
@@ -354,7 +353,7 @@ bool MQTTAbstractionImpl::connectBroker(const char* host, const char* port) {
 int MQTTAbstractionImpl::open_nb_socket(const char* addr, const char* port) {
     BOOST_LOG_FUNCTION();
 
-    struct addrinfo hints = {0,0,0,0,0,0,0,0};
+    struct addrinfo hints = {0, 0, 0, 0, 0, 0, 0, 0};
 
     hints.ai_family = AF_UNSPEC;     /* IPv4 or IPv6 */
     hints.ai_socktype = SOCK_STREAM; /* Must be TCP */
@@ -448,18 +447,15 @@ bool MQTTAbstractionImpl::check_topic_matches(std::string full_topic, std::strin
     return full_split.size() == wildcard_split.size();
 }
 
-void MQTTAbstractionImpl::publish_callback(void** /*unused*/, struct mqtt_response_publish* published) {
+void MQTTAbstractionImpl::publish_callback(void** state, struct mqtt_response_publish* published) {
     BOOST_LOG_FUNCTION();
 
-    mqtt_response_publish message = *published;
+    auto message_queue = static_cast<MessageQueue*>(*state);
 
-    // note that message.topic_name is NOT null-terminated
-    // (here we'll change it to a std::string which will take care of this particular conversion)
-
-    // emit a copy of published results
-    signalReceived(std::make_shared<Message>(
-        std::string(static_cast<const char*>(message.topic_name), message.topic_name_size),
-        std::string(static_cast<const char*>(message.application_message), message.application_message_size)));
+    // topic_name and application_message are NOT null-terminated, hence copy construct strings
+    message_queue->add(std::make_shared<Message>(
+        std::string(static_cast<const char*>(published->topic_name), published->topic_name_size),
+        std::string(static_cast<const char*>(published->application_message), published->application_message_size)));
 }
 
 } // namespace Everest

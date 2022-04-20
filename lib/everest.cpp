@@ -11,7 +11,6 @@
 #include <date/date.h>
 #include <everest/logging.hpp>
 #include <fmt/format.h>
-#include <sigslot/signal.hpp>
 
 #include <framework/everest.hpp>
 #include <utils/conversions.hpp>
