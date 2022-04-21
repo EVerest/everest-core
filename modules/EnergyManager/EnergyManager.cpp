@@ -57,11 +57,15 @@ void EnergyManager::run_enforce_limits() {
 
         for (auto it = optimized_values.begin(); it != optimized_values.end(); ++it) {
             sanitize_object(*it);
-            this->r_energy_trunk[entry]->call_enforce_limits( (*it).at("uuid"), 
+            try {
+                this->r_energy_trunk[entry]->call_enforce_limits( (*it).at("uuid"), 
                                         (*it).at("limits_import"), 
                                         (*it).at("limits_export"),
                                         (*it).at("schedule_import"),
                                         (*it).at("schedule_export"));
+            } catch (const std::exception& e) {
+                EVLOG(error) << "Cannot enforce limits: Exception occurred: " << e.what();
+            }
         }
     }
 }
@@ -72,7 +76,7 @@ Array EnergyManager::run_optimizer(json energy) {
     auto timepoint = std::chrono::system_clock::now();
     json price_schedule = json::array();
 
-    if (energy.contains("schedule_import") && !energy.at("schedule_import").is_null()) {
+    if (energy.contains("schedule_import") && !energy["schedule_import"].is_null() ) {  // need "[]" to prevent nlohmann error 304: cannot use at() with null
         price_schedule = energy.at("schedule_import");
     }
     optimize_one_level(energy, optimized_values, timepoint, price_schedule);
@@ -85,7 +89,7 @@ void EnergyManager::optimize_one_level(json& energy, json& optimized_values,
                                        const json price_schedule) {
     // find max_current limit for this level
     // min of (limit_from_parent, local_limit_from_schedule)
-    if (energy.contains("schedule_import")) {
+    if (energy.contains("schedule_import") && !energy["schedule_import"].is_null() ) {  // need "[]" to prevent nlohmann error 304: cannot use at() with null
         json grid_import_limit = get_sub_element_from_schedule_at_time(energy.at("schedule_import"), timepoint_now);
 
         // choose max current
@@ -145,24 +149,39 @@ json EnergyManager::get_sub_element_from_schedule_at_time(json s,
     json ret = s[0];
     // walk through schedule to find a better fit
     for (auto it = s.begin(); it != s.end(); ++it) {
-        if (from_rfc3339((*it).at("timestamp")) > timepoint) {
-            break;
+        try {
+            if ((*it).contains("timestamp") && !(*it)["timestamp"].is_null()) {  // need "[]" to prevent nlohmann error 304: cannot use at()}
+                if (from_rfc3339((*it).at("timestamp")) > timepoint) {
+                    break;
+                }
+                ret = (*it);
+            }
+        } catch (const std::exception& e) {
+            EVLOG(error) << "Exception occurred: (no timestamp available)" << e.what();
+            continue;
         }
-        ret = (*it);
     }
     return ret;
 }
 
 void EnergyManager::sanitize_object(json& obj_to_sanitize) {
-    if (obj_to_sanitize.contains("schedule_import") && obj_to_sanitize.at("schedule_import").is_null()) {
+    if (obj_to_sanitize.contains("limits_import") && obj_to_sanitize["limits_import"].is_null()) { // need "[]" to prevent nlohmann error 304: cannot use at() with null
+        obj_to_sanitize["limits_import"] = json::array();
+    }
+
+    if (obj_to_sanitize.contains("limits_export") && obj_to_sanitize["limits_export"].is_null()) {  // need "[]" to prevent nlohmann error 304: cannot use at() with null
+        obj_to_sanitize["limits_export"] = json::array();
+    }
+
+    if (obj_to_sanitize.contains("schedule_import") && obj_to_sanitize["schedule_import"].is_null()) {  // need "[]" to prevent nlohmann error 304: cannot use at() with null
         obj_to_sanitize["schedule_import"] = json::array();
     }
 
-    if (obj_to_sanitize.contains("schedule_export") && obj_to_sanitize.at("schedule_export").is_null()) {
+    if (obj_to_sanitize.contains("schedule_export") && obj_to_sanitize["schedule_export"].is_null()) {  // need "[]" to prevent nlohmann error 304: cannot use at() with null
         obj_to_sanitize["schedule_export"] = json::array();
     }
 
-    if (obj_to_sanitize.contains("children") && obj_to_sanitize.at("children").is_null()) {
+    if (obj_to_sanitize.contains("children") && obj_to_sanitize["children"].is_null()) {  // need "[]" to prevent nlohmann error 304: cannot use at() with null
         obj_to_sanitize["children"] = json::array();
     }
 }
@@ -183,7 +202,7 @@ float EnergyManager::get_current_limit_from_energy_object(const json& limit_obje
         EVLOG(error) << "limit object incomplete: " << limit_object;
     }
 
-    if (energy_object.contains("limit_from_parent") && !energy_object.at("limit_from_parent").is_null()) {
+    if (energy_object.contains("limit_from_parent") && !energy_object["limit_from_parent"].is_null()) {  // need "[]" to prevent nlohmann error 304: cannot use at() with null
         if (energy_object.at("limit_from_parent") < max_current_A) {
             max_current_A = energy_object.at("limit_from_parent");
         }
@@ -197,7 +216,7 @@ double EnergyManager::get_currently_valid_price_per_kwh(json& energy_object,
 
     double currently_valid_price_per_kwh = INVALID_PRICE_PER_KWH;
 
-    if (energy_object.contains("schedule_import") && !energy_object.at("schedule_import").is_null()) {
+    if (energy_object.contains("schedule_import") && !energy_object["schedule_import"].is_null()) {  // need "[]" to prevent nlohmann error 304: cannot use at() with null
         // get current timeslot from price import schedule
         auto schedule_at_current_timeslot =
             get_sub_element_from_schedule_at_time(energy_object.at("schedule_import"), timepoint_now);
@@ -225,7 +244,7 @@ void EnergyManager::check_for_children_requesting_power(json& energy_object, con
 
     for (json& child : energy_object["children"]) {
         // check if this child has price_limits set
-        if (child.contains("optimizer_target")) {
+        if (child.contains("optimizer_target") && !child["optimizer_target"].is_null()) {  // need "[]" to prevent nlohmann error 304: cannot use at() with null
             if (child.at("optimizer_target").contains("price_limit")) {
                 // check if price limits are valid now
                 if (current_price_per_kwh <= child.at("optimizer_target").at("price_limit")) {
@@ -259,7 +278,7 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
     // prime all children's max-/min- current requests
     for (json& child : energy_object["children"]) {
         if (child.contains("requesting_power") && child.at("requesting_power") == true) {
-            if (child.contains("schedule_import") && !child.at("schedule_import").is_null()) {
+            if (child.contains("schedule_import") && !child["schedule_import"].is_null()) {  // need "[]" to prevent nlohmann error 304: cannot use at() with null
                 child.at("schedule_import")
                     .at(0)
                     .at("request_parameters")
@@ -286,9 +305,16 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
         }
     }
 
-    // store current level's current limit
-    double current_limit_at_this_level =
-        energy_object.at("schedule_import").at(0).at("request_parameters").at("ac_current_A").at("max_current_A");
+    double current_limit_at_this_level = 0.0F;
+
+    try {
+        // store current level's current limit
+        current_limit_at_this_level =
+            energy_object.at("schedule_import").at(0).at("request_parameters").at("ac_current_A").at("max_current_A");
+    } catch (const std::exception& e) {
+        EVLOG(error) << "energy object has no current limit for this level! " << e.what();
+        return;
+    }
 
     do {
         recalculate = false;
@@ -317,7 +343,7 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
         }
 
         // divide maximum current available to this level by sum of current requests
-        if (energy_object.contains("schedule_import") && !energy_object.at("schedule_import").is_null()) {
+        if (energy_object.contains("schedule_import") && !energy_object["schedule_import"].is_null()) {  // need "[]" to prevent nlohmann error 304: cannot use at() with null
 
             current_scaling_factor = current_limit_at_this_level / sum_max_current_requests;
 
