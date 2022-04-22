@@ -22,6 +22,7 @@ target_sources(everest
         mqtt_abstraction_impl.cpp
         conversions.cpp
         thread.cpp
+        runtime.cpp
 )
 target_include_directories(everest PUBLIC ${INCLUDE_DIR})
 target_link_libraries(everest
@@ -29,6 +30,7 @@ target_link_libraries(everest
         Boost::filesystem
         Boost::system
         Boost::thread
+        Boost::program_options
         date
         everest::log
         fmt::fmt

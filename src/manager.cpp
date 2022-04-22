@@ -22,21 +22,14 @@
 #include <fmt/core.h>
 
 #include <framework/everest.hpp>
+#include <framework/runtime.hpp>
 #include <utils/config.hpp>
 #include <utils/mqtt_abstraction.hpp>
 
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 
-// FIXME (aw): should be everest wide or defined in liblog
-const int DUMP_INDENT = 4;
-
-// FIXME (aw): we should also define all other config keys and default
-//             values here as string literals
-const char MAIN_BIN_PATH[] = "bin/main";
-
-const auto TERMINAL_STYLE_ERROR = fmt::emphasis::bold | fg(fmt::terminal_color::red);
-const auto TERMINAL_STYLE_OK = fmt::emphasis::bold | fg(fmt::terminal_color::green);
+using namespace Everest;
 
 const auto PARENT_DIED_SIGNAL = SIGTERM;
 
@@ -146,63 +139,6 @@ struct ModuleStartInfo {
     boost::filesystem::path path;
 };
 
-struct RuntimeSettings {
-    RuntimeSettings(const po::variables_map& vm) : main_dir(vm["main_dir"].as<std::string>()) {
-        main_binary = main_dir / MAIN_BIN_PATH;
-
-        if (vm.count("schemas_dir")) {
-            schemas_dir = vm["schemas_dir"].as<std::string>();
-        } else {
-            schemas_dir = main_dir / "schemas";
-        }
-
-        if (vm.count("modules_dir")) {
-            modules_dir = vm["modules_dir"].as<std::string>();
-        } else {
-            modules_dir = main_dir / "modules";
-        }
-
-        if (vm.count("intefaces_dir")) {
-            interfaces_dir = vm["interfaces_dir"].as<std::string>();
-        } else {
-            interfaces_dir = main_dir / "interfaces";
-        }
-
-        if (vm.count("log_conf")) {
-            logging_config = vm["log_conf"].as<std::string>();
-        } else {
-            logging_config = main_dir / "conf/logging.ini";
-        }
-
-        if (vm.count("conf")) {
-            config_file = vm["conf"].as<std::string>();
-        } else {
-            config_file = main_dir / "conf/config.json";
-        }
-
-        validate_schema = (vm.count("dontvalidateschema") != 0);
-
-        // make all paths canonical
-        std::reference_wrapper<fs::path> list[] = {
-            main_dir, main_binary, configs_dir, schemas_dir, modules_dir, interfaces_dir, logging_config, config_file,
-        };
-
-        for (auto ref_wrapped_item : list) {
-            auto& item = ref_wrapped_item.get();
-            item = fs::canonical(item);
-        }
-    }
-    fs::path main_dir;
-    fs::path main_binary;
-    fs::path configs_dir;
-    fs::path schemas_dir;
-    fs::path modules_dir;
-    fs::path interfaces_dir;
-    fs::path logging_config;
-    fs::path config_file;
-    bool validate_schema;
-};
-
 static std::vector<char*> arguments_to_exec_argv(std::vector<std::string>& arguments) {
     std::vector<char*> argv_list(arguments.size() + 1);
     std::transform(arguments.begin(), arguments.end(), argv_list.begin(),
@@ -215,13 +151,17 @@ static std::vector<char*> arguments_to_exec_argv(std::vector<std::string>& argum
 
 static SubprocessHandle exec_cpp_module(const ModuleStartInfo& module_info, const RuntimeSettings& rs) {
 
-    const auto exec_binary = rs.main_binary.c_str();
-    std::vector<std::string> arguments = {
-        module_info.printable_name, "--maindir",    rs.main_dir.string(),       "--schemasdir",
-        rs.schemas_dir.string(),    "--modulesdir", rs.modules_dir.string(),    "--classesdir",
-        rs.interfaces_dir.string(), "--logconf",    rs.logging_config.string(), "--conf",
-        rs.config_file.string(),    "--module",     module_info.name,
-    };
+    const auto exec_binary = module_info.path.string().c_str();
+    std::vector<std::string> arguments = {module_info.printable_name,
+                                          "--main_dir",
+                                          rs.main_dir.string(),
+                                          rs.interfaces_dir.string(),
+                                          "--log_conf",
+                                          rs.logging_config.string(),
+                                          "--conf",
+                                          rs.config_file.string(),
+                                          "--module",
+                                          module_info.name};
 
     auto handle = create_subprocess();
     if (handle.is_child()) {
@@ -460,17 +400,17 @@ int boot(const po::variables_map& vm) {
             continue;
         }
 
-        std::string shared_library_filename = fmt::format("libmod{}.so", module_type);
+        std::string binary_filename = fmt::format("{}", module_type);
         std::string javascript_library_filename = "index.js";
         boost::filesystem::path module_path = rs.modules_dir / module_type;
         const auto printable_module_name = config->printable_identifier(module_name);
-        boost::filesystem::path shared_library_path = module_path / shared_library_filename;
+        boost::filesystem::path binary_path = module_path / binary_filename;
         boost::filesystem::path javascript_library_path = module_path / javascript_library_filename;
 
-        if (boost::filesystem::exists(shared_library_path)) {
-            EVLOG(debug) << fmt::format("module: {} ({}) provided as shared library", module_name, module_type);
+        if (boost::filesystem::exists(binary_path)) {
+            EVLOG(debug) << fmt::format("module: {} ({}) provided as binary", module_name, module_type);
             modules_to_start.emplace_back(module_name, printable_module_name, ModuleStartInfo::Language::cpp,
-                                          shared_library_path);
+                                          binary_path);
         } else if (boost::filesystem::exists(javascript_library_path)) {
             EVLOG(debug) << fmt::format("module: {} ({}) provided as javascript library", module_name, module_type);
             modules_to_start.emplace_back(module_name, printable_module_name, ModuleStartInfo::Language::javascript,
@@ -480,7 +420,7 @@ int boot(const po::variables_map& vm) {
                 "module: {} ({}) cannot be loaded because no C++ or JavaScript library has been found", module_name,
                 module_type);
             EVLOG(error) << fmt::format("  checked paths:");
-            EVLOG(error) << fmt::format("    cpp: {}", shared_library_path.string());
+            EVLOG(error) << fmt::format("    cpp: {}", binary_path.string());
             EVLOG(error) << fmt::format("    js:  {}", javascript_library_path.string());
 
             return EXIT_FAILURE;
@@ -525,8 +465,10 @@ int boot(const po::variables_map& vm) {
                                            fmt::format(TERMINAL_STYLE_OK, "succeeded"));
             }
         }
-        return 1;
+        return EXIT_FAILURE;
     }
+
+    return EXIT_SUCCESS;
 }
 
 int main(int argc, char* argv[]) {
