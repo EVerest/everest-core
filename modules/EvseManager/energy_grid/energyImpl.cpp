@@ -188,8 +188,11 @@ void energyImpl::updateAndPublishEnergyObject(){
             std::lock_guard<std::mutex> lock(this->energy_mutex);
             energy["optimizer_target"] = json::object();
             energy["optimizer_target"]["price_limit"] = _price_limit;
-            json hw_caps = mod->get_hw_capabilities();
-            energy.at("schedule_import").at(0).at("request_parameters").at("ac_current_A").at("max_current_A") = hw_caps.at("max_current_A");
+            if (energy.contains("schedule_import")) {
+                energy.at("schedule_import").at(0).at("request_parameters").at("ac_current_A").at("max_current_A") = mod->getLocalMaxCurrentLimit();
+            } else {
+                return;
+            }
         }
     }
 
