@@ -1,10 +1,9 @@
 #
 # AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-# template version 1
+# template version 2
 #
 
 # module setup:
-#   - ${MOD_MODULE_NAME}: library target
 #   - ${MODULE_NAME}: module name
 cpp_module_setup()
 
@@ -19,7 +18,7 @@ list(APPEND ADDITIONAL_MODULE_LIBS
 )
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 
-target_include_directories(${MOD_MODULE_NAME}
+target_include_directories(${MODULE_NAME}
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${GENERATED_HEADER_DIR}
@@ -27,7 +26,7 @@ target_include_directories(${MOD_MODULE_NAME}
         ${ADDITIONAL_MODULE_INCLUDES}
 )
 
-target_sources(${MOD_MODULE_NAME}
+target_sources(${MODULE_NAME}
     PRIVATE
         ${MODULE_NAME}.cpp
         "${MODULE_LOADER_DIR}/ld-ev.cpp"
@@ -36,19 +35,23 @@ target_sources(${MOD_MODULE_NAME}
         ${ADDITIONAL_MODULE_SOURCES}
 )
 
-target_link_libraries(${MOD_MODULE_NAME}
+target_link_libraries(${MODULE_NAME}
     PRIVATE
         everest ${CMAKE_DL_LIBS}
         everest::log
+        Boost::thread
+        Boost::program_options
+        fmt::fmt
+        mqttc
         nlohmann_json::nlohmann_json
         ${ADDITIONAL_MODULE_LIBS}
 )
 
-target_compile_features(${MOD_MODULE_NAME} PRIVATE cxx_std_14)
+target_compile_features(${MODULE_NAME} PRIVATE cxx_std_14)
 
 set(EVSEMANAGER_DEST "modules/${MODULE_NAME}")
-install(TARGETS ${MOD_MODULE_NAME}
-    LIBRARY
+
+install(TARGETS ${MODULE_NAME}
     DESTINATION ${EVSEMANAGER_DEST}
 )
 
