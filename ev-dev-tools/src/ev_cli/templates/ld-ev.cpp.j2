@@ -1,6 +1,6 @@
 {% from "helper_macros.j2" import print_template_info, var_to_cpp, print_spdx_line %}
 {{ print_spdx_line('Apache-2.0') }}
-{{ print_template_info('3') }}
+{{ print_template_info('4') }}
 
 #include "{{ info.ld_ev_header }}"
 
@@ -9,7 +9,7 @@
 #include "{{ impl.class_header }}"
 {% endfor %}
 
-#include <boost/dll/alias.hpp>
+#include <framework/runtime.hpp>
 #include <utils/types.hpp>
 
 namespace module {
@@ -54,29 +54,8 @@ void LdEverest::ready() {
     mod_ptr->ready();
 }
 
-void register_call_handler(Everest::ModuleAdapter::CallFunc call) {
-    EVLOG(debug) << "registering call_cmd callback for {{ info.name }}";
-    adapter.call = std::move(call);
-}
-
-void register_publish_handler(Everest::ModuleAdapter::PublishFunc publish) {
-    EVLOG(debug) << "registering publish_var callback for {{ info.name }}";
-    adapter.publish = std::move(publish);
-}
-
-void register_subscribe_handler(Everest::ModuleAdapter::SubscribeFunc subscribe) {
-    EVLOG(debug) << "registering subscribe_var callback for {{ info.name }}";
-    adapter.subscribe = std::move(subscribe);
-}
-
-void register_ext_mqtt_publish_handler(Everest::ModuleAdapter::ExtMqttPublishFunc ext_mqtt_publish) {
-    EVLOG(debug) << "registering external_mqtt_publish callback for {{ info.name }}";
-    adapter.ext_mqtt_publish = std::move(ext_mqtt_publish);
-}
-
-void register_ext_mqtt_subscribe_handler(Everest::ModuleAdapter::ExtMqttSubscribeFunc ext_mqtt_subscribe) {
-    EVLOG(debug) << "registering external_mqtt_handler callback for {{ info.name }}";
-    adapter.ext_mqtt_subscribe = std::move(ext_mqtt_subscribe);
+void register_module_adapter(Everest::ModuleAdapter module_adapter) {
+    adapter = std::move(module_adapter);
 }
 
 std::vector<Everest::cmd> everest_register(const json& connections) {
@@ -134,19 +113,10 @@ std::vector<Everest::cmd> everest_register(const json& connections) {
 
 } // namespace module
 
-// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr,cppcoreguidelines-avoid-non-const-global-variables)
-BOOST_DLL_ALIAS(module::LdEverest::init, init)
-// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr,cppcoreguidelines-avoid-non-const-global-variables)
-BOOST_DLL_ALIAS(module::LdEverest::ready, ready)
-// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr,cppcoreguidelines-avoid-non-const-global-variables)
-BOOST_DLL_ALIAS(module::everest_register, everest_register)
-// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr,cppcoreguidelines-avoid-non-const-global-variables)
-BOOST_DLL_ALIAS(module::register_call_handler, everest_register_call_cmd_callback)
-// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr,cppcoreguidelines-avoid-non-const-global-variables)
-BOOST_DLL_ALIAS(module::register_publish_handler, everest_register_publish_var_callback)
-// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr,cppcoreguidelines-avoid-non-const-global-variables)
-BOOST_DLL_ALIAS(module::register_subscribe_handler, everest_register_subscribe_var_callback)
-// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr,cppcoreguidelines-avoid-non-const-global-variables)
-BOOST_DLL_ALIAS(module::register_ext_mqtt_publish_handler, everest_register_external_mqtt_publish_callback)
-// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr,cppcoreguidelines-avoid-non-const-global-variables)
-BOOST_DLL_ALIAS(module::register_ext_mqtt_subscribe_handler, everest_register_external_mqtt_handler_callback)
+int main(int argc, char* argv[]) {
+    auto module_loader = Everest::ModuleLoader(argc, argv, Everest::ModuleCallbacks(
+        module::register_module_adapter, module::everest_register,
+        module::LdEverest::init, module::LdEverest::ready));
+
+    return module_loader.initialize();
+}
