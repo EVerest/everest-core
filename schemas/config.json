@@ -79,7 +79,8 @@
                     },
                     "default": {}, // add empty config if not already present
                     "additionalProperties": false // don't allow arbitrary additional properties
-                }
+                },
+                "x-view-model": {}
             },
             "additionalProperties": false // don't allow arbitrary additional properties
         }

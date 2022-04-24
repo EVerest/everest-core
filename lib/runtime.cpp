@@ -39,13 +39,17 @@ RuntimeSettings::RuntimeSettings(const po::variables_map& vm) : main_dir(vm["mai
 
     // make all paths canonical
     std::reference_wrapper<fs::path> list[] = {
-        main_dir, configs_dir, schemas_dir, modules_dir, interfaces_dir, logging_config, config_file,
+        main_dir, schemas_dir, modules_dir, interfaces_dir, logging_config, config_file,
     };
 
     for (auto ref_wrapped_item : list) {
         auto& item = ref_wrapped_item.get();
         item = fs::canonical(item);
     }
+
+    // FIXME (aw): we don't have a way yet, to specify to configs dir, so by default we're using the folder, which
+    // contains the config file
+    configs_dir = config_file.parent_path();
 }
 
 ModuleCallbacks::ModuleCallbacks(const std::function<void(ModuleAdapter module_adapter)>& register_module_adapter,
