@@ -2,6 +2,8 @@
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include "OCPP.hpp"
 
+#include <fstream>
+
 namespace module {
 
 void OCPP::init() {
