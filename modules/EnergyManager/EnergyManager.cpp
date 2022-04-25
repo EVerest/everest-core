@@ -218,7 +218,7 @@ double EnergyManager::get_currently_valid_price_per_kwh(json& energy_object,
 
     if (energy_object.contains("schedule_import") && !energy_object["schedule_import"].is_null()) {  // need "[]" to prevent nlohmann error 304: cannot use at() with null
         // get current timeslot from price import schedule
-        auto schedule_at_current_timeslot =
+        json schedule_at_current_timeslot =
             get_sub_element_from_schedule_at_time(energy_object.at("schedule_import"), timepoint_now);
         if (schedule_at_current_timeslot.contains("price_per_kwh")) {
             if (schedule_at_current_timeslot.at("price_per_kwh").contains("currency")) {

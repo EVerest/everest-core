@@ -122,6 +122,7 @@ void energyImpl::handle_enforce_limits(std::string& uuid, Object& limits_import,
         // update limit at the charger
         if (!limits_import["valid_until"].is_null()) {
             mod->charger->setMaxCurrent(limit, from_rfc3339(limits_import["valid_until"]));
+            mod->charger->resumeCharging();
         }
 
         // set phase count limits
