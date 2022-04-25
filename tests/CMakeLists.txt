@@ -1,16 +1,17 @@
+list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/contrib)
+include(Catch)
+
 add_executable(test_config test_config.cpp)
-target_include_directories(test_config PRIVATE)
-find_package(Boost COMPONENTS log_setup log thread program_options)
+
 target_link_libraries(test_config
     PRIVATE
         everest ${CMAKE_DL_LIBS}
         everest::log
-        Boost::thread
-        Boost::program_options
-        mqttc
+        Catch2::Catch2
 )
 
-add_test(NAME test_config COMMAND test_config)
+catch_discover_tests(test_config)
+
 configure_file(test_configs/valid_config.json ${CMAKE_CURRENT_BINARY_DIR}/valid/config.json COPYONLY)
 configure_file(${PROJECT_SOURCE_DIR}/schemas/config.json ${CMAKE_CURRENT_BINARY_DIR}/valid/schemes/config.json COPYONLY)
 configure_file(${PROJECT_SOURCE_DIR}/schemas/manifest.json ${CMAKE_CURRENT_BINARY_DIR}/valid/schemes/manifest.json COPYONLY)
