@@ -53,8 +53,8 @@
     "charge_point": {
         "module": "OCPP",
         "config_module": {
-            "SchemasPath": "dist/ocpp",
-            "ChargePointConfigPath": "../../libocpp/aux/config-docker-tls.json"
+            "SchemasPath": "ocpp",
+            "ChargePointConfigPath": "../../../libocpp/aux/config-docker-tls.json"
         },
         "connections": {
             "evse_manager": [
