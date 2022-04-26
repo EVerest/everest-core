@@ -4,7 +4,17 @@
 #ifndef OCPP1_6_{{ action.name|upper }}_HPP
 #define OCPP1_6_{{ action.name|upper }}_HPP
 
+{% if uses_optional %}
+#include <boost/optional.hpp>
+{% endif %}
+
+{% if needs_enums %}
+#include <ocpp1_6/enums.hpp>
+{% endif %}
 #include <ocpp1_6/ocpp_types.hpp>
+{% if needs_types %}
+#include <ocpp1_6/types.hpp>
+{% endif %}
 
 namespace ocpp1_6 {
 {% endif %}

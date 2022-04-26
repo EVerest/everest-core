@@ -2,6 +2,7 @@
 // Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
 #include <ocpp1_6/schemas.hpp>
 
+#include <fstream>
 #include <stdexcept>
 
 #include <everest/logging.hpp>

@@ -3,7 +3,11 @@
 #ifndef OCPP1_6_BOOTNOTIFICATION_HPP
 #define OCPP1_6_BOOTNOTIFICATION_HPP
 
+#include <boost/optional.hpp>
+
+#include <ocpp1_6/enums.hpp>
 #include <ocpp1_6/ocpp_types.hpp>
+#include <ocpp1_6/types.hpp>
 
 namespace ocpp1_6 {
 

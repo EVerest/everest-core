@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include <string>
+#include <boost/optional/optional.hpp>
+#include <chrono>
+#include <sstream>
+#include <stdexcept>
 
-#include <boost/optional.hpp>
 #include <nlohmann/json.hpp>
 
-#include <ocpp1_6/enums.hpp>
 #include <ocpp1_6/types.hpp>
+#include <ocpp1_6/types_internal.hpp>
 
 namespace ocpp1_6 {
 

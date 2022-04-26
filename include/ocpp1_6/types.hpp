@@ -314,6 +314,8 @@ public:
     /// \brief Creates a new DateTime object with the current system time
     DateTime();
 
+    ~DateTime() = default;
+
     /// \brief Creates a new DateTime object from the given \p timepoint
     explicit DateTime(std::chrono::time_point<std::chrono::system_clock> timepoint);
 

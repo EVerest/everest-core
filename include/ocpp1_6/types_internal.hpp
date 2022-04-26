@@ -74,6 +74,8 @@ public:
     /// \brief Creates a new DateTimeImpl object with the current system time
     DateTimeImpl();
 
+    ~DateTimeImpl() = default;
+
     /// \brief Creates a new DateTimeImpl object from the given \p timepoint
     explicit DateTimeImpl(std::chrono::time_point<std::chrono::system_clock> timepoint);
 

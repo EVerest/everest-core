@@ -3,6 +3,7 @@
 #ifndef OCPP1_6_ENUMS_HPP
 #define OCPP1_6_ENUMS_HPP
 
+#include <iosfwd>
 #include <string>
 
 namespace ocpp1_6 {

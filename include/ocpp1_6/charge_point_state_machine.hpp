@@ -3,12 +3,21 @@
 #ifndef OCPP1_6_CHARGE_POINT_STATE_MACHINE_HPP
 #define OCPP1_6_CHARGE_POINT_STATE_MACHINE_HPP
 
+#include <stdint.h>
+#include <functional>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <type_traits>
+#include <vector>
+
 #include <fsm/async.hpp>
+#include <fsm/fsm.hpp>
 #include <fsm/specialization/async/pthread.hpp>
 #include <fsm/utils/Identifiable.hpp>
 
-#include <ocpp1_6/ocpp_types.hpp>
-#include <ocpp1_6/types.hpp>
+#include <ocpp1_6/enums.hpp>
 
 namespace ocpp1_6 {
 

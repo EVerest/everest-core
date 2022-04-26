@@ -3,12 +3,21 @@
 // Copyright 2020 - {{year}} Pionix GmbH and Contributors to EVerest
 
 #include <ostream>
+#include <string>
 
-#include <boost/optional.hpp>
+{% if uses_optional %}
+#include <boost/optional/optional.hpp>
+{% endif %}
 #include <nlohmann/json.hpp>
 
+{% if needs_enums %}
+#include <ocpp1_6/enums.hpp>
+{% endif %}
 #include <ocpp1_6/messages/{{action.name}}.hpp>
 #include <ocpp1_6/ocpp_types.hpp>
+{% if needs_types %}
+#include <ocpp1_6/types.hpp>
+{% endif %}
 
 using json = nlohmann::json;
 

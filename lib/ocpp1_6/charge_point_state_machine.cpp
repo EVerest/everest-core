@@ -1,6 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include <ocpp1_6/charge_point_state_machine.hpp>
+#include <ocpp1_6/enums.hpp>
+
+#include <stddef.h>
+#include <cstdint>
+#include <stdexcept>
+#include <utility>
+
+#include <fsm/async.hpp>
 
 namespace ocpp1_6 {
 ChargePointStateMachine::ChargePointStateMachine(

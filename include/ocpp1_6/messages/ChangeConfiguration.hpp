@@ -3,7 +3,9 @@
 #ifndef OCPP1_6_CHANGECONFIGURATION_HPP
 #define OCPP1_6_CHANGECONFIGURATION_HPP
 
+#include <ocpp1_6/enums.hpp>
 #include <ocpp1_6/ocpp_types.hpp>
+#include <ocpp1_6/types.hpp>
 
 namespace ocpp1_6 {
 

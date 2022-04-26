@@ -46,6 +46,30 @@ def snake_case(word: str) -> str:
     return out
 
 
+def uses_optional(types):
+    for t in types:
+        for property in t['properties']:
+            if not property['required']:
+                return True
+    return False
+
+
+def needs_enums(types):
+    for t in types:
+        for property in t['properties']:
+            if property['enum']:
+                return True
+    return False
+
+
+def needs_types(types):
+    type_list = ['CiString20Type', 'CiString25Type', 'CiString50Type', 'CiString255Type', 'CiString500Type','DateTime']
+    for t in types:
+        for property in t['properties']:
+            if property['type'] in type_list:
+                return True
+    return False
+
 # jinja template environment and global variable
 relative_tmpl_path = Path(__file__).resolve().parent / "templates"
 env = Environment(
@@ -345,6 +369,51 @@ def parse_schemas(version: str, schema_dir: Path = Path('schemas/json/'),
         writemode = dict()
         writemode['req'] = 'w'
         writemode['res'] = 'a+'
+
+        message_uses_optional = False
+        message_needs_enums = False
+        message_needs_types = False
+
+        for (type_name, type_key) in (('Request', 'req'), ('Response', 'res')):
+            parsed_types.clear()
+            parsed_enums.clear()
+
+            # FIXME!
+            current_defs.clear()
+            current_defs.update(
+                type_of_action[type_key].get('definitions', {}))
+
+            action_class_name: str = action + type_name
+
+            root_schema = type_of_action[type_key]
+
+            parse_object(action_class_name, root_schema)
+
+            for e in parsed_enums:
+                parsed_enums_unique.remove(e)
+
+            # sort types, so no foward declaration is necessary
+
+            sorted_types: List = []
+            for class_type in parsed_types:
+                insert_at: int = 0
+                for dep_class_type in class_type['depends_on']:
+
+                    for i in range(len(sorted_types)):
+                        # the new one depends on the current
+                        if sorted_types[i]['name'] == dep_class_type:
+                            insert_at = max(insert_at, i + 1)
+                            break
+
+                sorted_types.insert(insert_at, class_type)
+
+            if not message_uses_optional:
+                message_uses_optional = uses_optional(sorted_types)
+            if not message_needs_enums:
+                message_needs_enums = needs_enums(sorted_types)
+            if not message_needs_types:
+                message_needs_types = needs_types(sorted_types)
+
         for (type_name, type_key) in (('Request', 'req'), ('Response', 'res')):
             parsed_types.clear()
             parsed_enums.clear()
@@ -380,6 +449,9 @@ def parse_schemas(version: str, schema_dir: Path = Path('schemas/json/'),
                 out.write(message_hpp_template.render({
                     'types': sorted_types,
                     'enum_types': parsed_enums,
+                    'uses_optional': message_uses_optional,
+                    'needs_enums': message_needs_enums,
+                    'needs_types': message_needs_types,
                     'action': {
                         'name': action,
                         'class_name': action_class_name,
@@ -392,6 +464,9 @@ def parse_schemas(version: str, schema_dir: Path = Path('schemas/json/'),
                 out.write(message_cpp_template.render({
                     'types': sorted_types,
                     'enum_types': parsed_enums,
+                    'uses_optional': message_uses_optional,
+                    'needs_enums': message_needs_enums,
+                    'needs_types': message_needs_types,
                     'action': {
                         'name': action,
                         'class_name': action_class_name,

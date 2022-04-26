@@ -2,12 +2,13 @@
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 
 #include <ostream>
+#include <string>
 
-#include <boost/optional.hpp>
 #include <nlohmann/json.hpp>
 
 #include <ocpp1_6/messages/Heartbeat.hpp>
 #include <ocpp1_6/ocpp_types.hpp>
+#include <ocpp1_6/types.hpp>
 
 using json = nlohmann::json;
 

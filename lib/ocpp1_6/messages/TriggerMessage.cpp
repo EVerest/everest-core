@@ -2,10 +2,12 @@
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 
 #include <ostream>
+#include <string>
 
-#include <boost/optional.hpp>
+#include <boost/optional/optional.hpp>
 #include <nlohmann/json.hpp>
 
+#include <ocpp1_6/enums.hpp>
 #include <ocpp1_6/messages/TriggerMessage.hpp>
 #include <ocpp1_6/ocpp_types.hpp>
 
