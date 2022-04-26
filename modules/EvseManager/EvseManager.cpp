@@ -78,7 +78,6 @@ json EvseManager::get_hw_capabilities() {
 bool EvseManager::updateLocalMaxCurrentLimit(float max_current) {
     if (max_current >= 0.0F && max_current < EVSE_ABSOLUTE_MAX_CURRENT) {
         local_max_current_limit = max_current;
-        double current_max_current_A = charger->getMaxCurrent();
         
         // wait for EnergyManager to assign optimized current on next opimizer run
 
