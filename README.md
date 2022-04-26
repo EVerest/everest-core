@@ -7,7 +7,7 @@ The following table shows the current support for the listed feature profiles an
 | Feature-Profile | Supported |
 | --- | --- |
 | Core | :heavy_check_mark: yes |
-| Firmware Management | :x: |
+| Firmware Management | :heavy_check_mark: yes |
 | Local Auth List Management | :x: |
 | Reservation | :x: |
 | Smart Charging | :yellow_circle: partially |

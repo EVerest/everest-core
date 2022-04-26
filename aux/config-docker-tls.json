@@ -24,9 +24,12 @@
         "StopTransactionOnInvalidId": true,
         "StopTxnAlignedData": "Energy.Active.Import.Register",
         "StopTxnSampledData": "Energy.Active.Import.Register",
-        "SupportedFeatureProfiles": "Core,RemoteTrigger",
+        "SupportedFeatureProfiles": "Core,FirmwareManagement,RemoteTrigger",
         "TransactionMessageAttempts": 1,
         "TransactionMessageRetryInterval": 10,
         "UnlockConnectorOnEVSideDisconnect": true
+    },
+    "FirmwareManagement": {
+        "SupportedFileTransferProtocols": "FTP"
     }
 }

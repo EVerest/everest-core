@@ -3,6 +3,7 @@ set(OCPP1_6_PROFILE_SCHEMAS_DIR "profile_schemas/ocpp1_6/")
 list(APPEND OCPP1_6_PROFILE_SCHEMAS
      Config.json
      Core.json
+     FirmwareManagement.json
      Internal.json
      LocalAuthListManagement.json
      Reservation.json

@@ -21,8 +21,11 @@
 #include <ocpp1_6/messages/ClearCache.hpp>
 #include <ocpp1_6/messages/ClearChargingProfile.hpp>
 #include <ocpp1_6/messages/DataTransfer.hpp>
+#include <ocpp1_6/messages/DiagnosticsStatusNotification.hpp>
+#include <ocpp1_6/messages/FirmwareStatusNotification.hpp>
 #include <ocpp1_6/messages/GetCompositeSchedule.hpp>
 #include <ocpp1_6/messages/GetConfiguration.hpp>
+#include <ocpp1_6/messages/GetDiagnostics.hpp>
 #include <ocpp1_6/messages/Heartbeat.hpp>
 #include <ocpp1_6/messages/MeterValues.hpp>
 #include <ocpp1_6/messages/RemoteStartTransaction.hpp>
@@ -34,6 +37,7 @@
 #include <ocpp1_6/messages/StopTransaction.hpp>
 #include <ocpp1_6/messages/TriggerMessage.hpp>
 #include <ocpp1_6/messages/UnlockConnector.hpp>
+#include <ocpp1_6/messages/UpdateFirmware.hpp>
 #include <ocpp1_6/types.hpp>
 #include <ocpp1_6/websocket/websocket.hpp>
 
@@ -83,6 +87,8 @@ private:
     std::mutex data_transfer_callbacks_mutex;
 
     std::thread reset_thread;
+    DiagnosticsStatus diagnostics_status;
+    FirmwareStatus firmware_status;
 
     // callbacks
     std::function<bool(int32_t connector)> enable_evse_callback;
@@ -92,6 +98,8 @@ private:
     std::function<bool(int32_t connector)> cancel_charging_callback;
     std::function<bool(int32_t connector)> unlock_connector_callback;
     std::function<bool(int32_t connector, double max_current)> set_max_current_callback;
+    std::function<std::string(std::string location)> upload_diagnostics_callback;
+    std::function<void(std::string location)> update_firmware_callback;
 
     /// \brief This function is called after a successful connection to the Websocket
     void connected_callback();
@@ -143,6 +151,10 @@ private:
 
     // RemoteTrigger profile
     void handleTriggerMessageRequest(Call<TriggerMessageRequest> call);
+
+    // FirmwareManagement profile
+    void handleGetDiagnosticsRequest(Call<GetDiagnosticsRequest> call);
+    void handleUpdateFirmwareRequest(Call<UpdateFirmwareRequest> call);
 
 public:
     /// \brief Creates a ChargePoint object with the provided \p configuration
@@ -221,6 +233,9 @@ public:
     /// \returns true if this state change was possible
     bool permanent_fault(int32_t connector);
 
+    void send_diagnostic_status_notification(DiagnosticsStatus status);
+    void send_firmware_status_notification(FirmwareStatus status);
+
     /// \brief registers a \p callback function that can be used to enable the evse
     void register_enable_evse_callback(const std::function<bool(int32_t connector)>& callback);
 
@@ -249,6 +264,12 @@ public:
 
     /// registers a \p callback function that can be used to set a max_current on a given connector
     void register_set_max_current_callback(const std::function<bool(int32_t connector, double max_current)>& callback);
+
+    /// registers a \p callback function that can be used to trigger an upload of diagnostics
+    void register_upload_diagnostics_callback(const std::function<std::string(std::string location)>& callback);
+
+    /// registers a \p callback function that can be used to trigger a firmware update
+    void register_update_firmware_callback(const std::function<void(std::string location)>& callback);
 
     // FIXME: rework the following API functions, do we want to expose them?
     // insert plug
