@@ -121,8 +121,6 @@ void Charger::runStateMachine() {
         // retry on Low level etc until SLAC matched.
         ISO_IEC_Coordination();
 
-        // EVLOG(warning) << "getAuthorization(): " << getAuthorization() << "; powerAvailable(): " << powerAvailable();
-
         // we get Auth (maybe before SLAC matching or during matching)
         if (getAuthorization() && powerAvailable()) {
             signalEvent(EvseEvent::ChargingStarted);
@@ -754,22 +752,10 @@ void Charger::checkSoftOverCurrent() {
 // returns whether power is actually available from EnergyManager
 // i.e. maxCurrent is in valid range
 bool Charger::powerAvailable() {
-    
-    
-    // std::chrono::system_clock::time_point now = maxCurrentValidUntil;
-    // std::time_t now_c = std::chrono::system_clock::to_time_t(now);
-    // std::tm now_tm = *std::localtime(&now_c);
-    // std::stringstream ss;
-    // ss << std::put_time(&now_tm, std::string("UTC: %Y-%m-%d %H:%M:%S").c_str());
-    // EVLOG(warning) << "maxCurrentValidUntil: " << ss.str();
-
     if (maxCurrentValidUntil < std::chrono::system_clock::now()) {
         maxCurrent = 0.;
         signalMaxCurrent(maxCurrent);
-        //EVLOG(warning) << "maxCurrentValidUntil is in the past!";
     }
-
-    // EVLOG(warning) << "getMaxCurrent(): " << getMaxCurrent();
     return (getMaxCurrent() > 5.9);
 }
 
