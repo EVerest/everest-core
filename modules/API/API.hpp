@@ -53,7 +53,6 @@ public:
     operator std::string();
 };
 } // namespace module
-
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
