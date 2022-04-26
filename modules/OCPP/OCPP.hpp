@@ -76,6 +76,8 @@ private:
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
     void start_session();
+    std::thread upload_diagnostics_thread;
+    std::thread update_firmware_thread;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

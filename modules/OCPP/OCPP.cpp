@@ -4,6 +4,9 @@
 
 #include <fstream>
 
+#include <boost/filesystem.hpp>
+#include <boost/process.hpp>
+
 namespace module {
 
 void OCPP::init() {
@@ -58,6 +61,72 @@ void OCPP::init() {
         } else {
             return false;
         }
+    });
+    this->charge_point->register_upload_diagnostics_callback([this](std::string location) {
+        // create temporary file
+        std::string date_time = "DATETIME"; // FIXME
+        std::string file_name = "diagnostics-" + date_time + "-%%%%-%%%%-%%%%-%%%%";
+
+        auto diagnostics_file_name = boost::filesystem::unique_path(boost::filesystem::path(file_name));
+        auto diagnostics_file_path = boost::filesystem::temp_directory_path() / diagnostics_file_name;
+
+        auto diagnostics = json::object({{"diagnostics", json::object({{"key", "value"}})}});
+        std::ofstream diagnostics_file(diagnostics_file_path.c_str());
+        diagnostics_file << diagnostics.dump();
+        this->upload_diagnostics_thread = std::thread([this, location, diagnostics_file_name, diagnostics_file_path]() {
+            auto diagnostics_uploader = boost::filesystem::path("bin/diagnostics_uploader.sh");
+
+            boost::process::ipstream stream;
+            std::vector<std::string> args = {location, diagnostics_file_name.string(), diagnostics_file_path.string()};
+            boost::process::child cmd(diagnostics_uploader, boost::process::args(args),
+                                      boost::process::std_out > stream);
+            std::string temp;
+            while (std::getline(stream, temp)) {
+                if (temp == "uploaded") {
+                    this->charge_point->send_diagnostic_status_notification(ocpp1_6::DiagnosticsStatus::Uploaded);
+                } else if (temp == "failed") {
+                    this->charge_point->send_diagnostic_status_notification(ocpp1_6::DiagnosticsStatus::UploadFailed);
+                } else {
+                    this->charge_point->send_diagnostic_status_notification(ocpp1_6::DiagnosticsStatus::Uploading);
+                }
+            }
+            cmd.wait();
+        });
+
+        return diagnostics_file_name.string();
+    });
+    this->charge_point->register_update_firmware_callback([this](std::string location) {
+        // // create temporary file
+        std::string date_time = "DATETIME"; // FIXME
+        std::string file_name = "firmware-" + date_time + "-%%%%-%%%%-%%%%-%%%%";
+
+        auto firmware_file_name = boost::filesystem::unique_path(boost::filesystem::path(file_name));
+        auto firmware_file_path = boost::filesystem::temp_directory_path() / firmware_file_name;
+
+        this->update_firmware_thread = std::thread([this, location, firmware_file_path]() {
+            auto firmware_updater = boost::filesystem::path("bin/firmware_updater.sh");
+
+            boost::process::ipstream stream;
+            std::vector<std::string> args = {location, firmware_file_path.string()};
+            boost::process::child cmd(firmware_updater, boost::process::args(args), boost::process::std_out > stream);
+            std::string temp;
+            while (std::getline(stream, temp)) {
+                if (temp == "downloaded") {
+                    this->charge_point->send_firmware_status_notification(ocpp1_6::FirmwareStatus::Downloaded);
+                } else if (temp == "download_failed") {
+                    this->charge_point->send_firmware_status_notification(ocpp1_6::FirmwareStatus::DownloadFailed);
+                } else if (temp == "installing") {
+                    this->charge_point->send_firmware_status_notification(ocpp1_6::FirmwareStatus::Installing);
+                } else if (temp == "installed") {
+                    this->charge_point->send_firmware_status_notification(ocpp1_6::FirmwareStatus::Installed);
+                } else if (temp == "installation_failed") {
+                    this->charge_point->send_firmware_status_notification(ocpp1_6::FirmwareStatus::InstallationFailed);
+                } else {
+                    this->charge_point->send_firmware_status_notification(ocpp1_6::FirmwareStatus::Downloading);
+                }
+            }
+            cmd.wait();
+        });
     });
 
     this->charge_point->start();
