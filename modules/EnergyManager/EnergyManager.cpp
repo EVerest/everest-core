@@ -269,7 +269,6 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
     bool not_done = true;
     double sum_max_current_requests = 0.0F;
     double sum_min_current_requests = 0.0F;
-    bool recalculate = false;
     double child_max_current_A = 0.0F;
     double child_min_current_A = 0.0F;
     double current_scaling_factor = 1.0F;
@@ -316,7 +315,7 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
     }
 
     do {
-        recalculate = false;
+        bool recalculate = false;
         sum_max_current_requests = 0.0;
         sum_min_current_requests = 0.0;
 
