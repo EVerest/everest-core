@@ -55,7 +55,6 @@ public:
         std::string message(MAX_PIPE_MESSAGE_SIZE, 0);
 
         auto retval = read(fd, message.data(), MAX_PIPE_MESSAGE_SIZE);
-        EVLOG(error) << "Got to read: " << retval;
         if (retval == -1) {
             throw std::runtime_error(fmt::format(
                 "Failed to communicate via pipe with forked child process. Syscall to read() failed ({}), exiting",
@@ -277,7 +276,7 @@ int boot(const po::variables_map& vm) {
     try {
         // FIXME (aw): we should also use boost::filesystem::path here as argument types
         config = new ::Everest::Config(rs.schemas_dir.string(), rs.config_file.string(), rs.modules_dir.string(),
-                                     rs.interfaces_dir.string());
+                                       rs.interfaces_dir.string());
     } catch (::Everest::EverestInternalError& e) {
         EVLOG(error) << fmt::format("Failed to load and validate config!\n{}", boost::diagnostic_information(e, true));
         return EXIT_FAILURE;
@@ -347,8 +346,6 @@ int boot(const po::variables_map& vm) {
     mqtt_abstraction.connect();
 
     mqtt_abstraction.spawn_main_loop_thread();
-
-    // throw std::runtime_error("Fail");
 
     std::vector<ModuleStartInfo> modules_to_start;
     std::map<std::string, bool> modules_ready;
