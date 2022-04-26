@@ -1,16 +1,16 @@
 list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/contrib)
 include(Catch)
 
-add_executable(test_config test_config.cpp)
+add_executable(tests main.cpp test_config.cpp)
 
-target_link_libraries(test_config
+target_link_libraries(tests
     PRIVATE
         everest ${CMAKE_DL_LIBS}
         everest::log
         Catch2::Catch2
 )
 
-catch_discover_tests(test_config)
+catch_discover_tests(tests)
 
 configure_file(test_configs/valid_config.json ${CMAKE_CURRENT_BINARY_DIR}/valid/config.json COPYONLY)
 configure_file(${PROJECT_SOURCE_DIR}/schemas/config.json ${CMAKE_CURRENT_BINARY_DIR}/valid/schemes/config.json COPYONLY)

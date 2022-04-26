@@ -77,14 +77,16 @@ if(BUILD_TESTING)
 
     setup_target_for_coverage_gcovr_html(
         NAME gcovr_coverage
-        EXECUTABLE test_config
-        DEPENDENCIES test_config everest
+        EXECUTABLE ctest --output-on-failure
+        EXCLUDE "${CMAKE_SOURCE_DIR}/tests" "${CMAKE_BINARY_DIR}"
+        DEPENDENCIES tests everest
     )
 
     setup_target_for_coverage_lcov(
         NAME lcov_coverage
-        EXECUTABLE test_config
-        DEPENDENCIES test_config everest
+        EXECUTABLE ctest --output-on-failure
+        EXCLUDE "${CMAKE_SOURCE_DIR}/tests" "${CMAKE_BINARY_DIR}"
+        DEPENDENCIES tests everest
     )
 else()
     message("Not running unit tests")
