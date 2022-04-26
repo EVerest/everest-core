@@ -79,25 +79,9 @@ bool EvseManager::updateLocalMaxCurrentLimit(float max_current) {
     if (max_current >= 0.0F && max_current < EVSE_ABSOLUTE_MAX_CURRENT) {
         local_max_current_limit = max_current;
         double current_max_current_A = charger->getMaxCurrent();
-        /*
-        // update charger limit only if it further reduces current limit
-        // i.e. act now instead of waiting for energy manager to react.
-        // when increasing the limit we need to wait for energy manager.
-        if (current_max_current_A > local_max_current_limit) {
-            charger->setMaxCurrent(local_max_current_limit,
-                                   (std::chrono::system_clock::now() + std::chrono::seconds(10)));
-        } else if (current_max_current_A == 0.0F) {
-            charger->setMaxCurrent(local_max_current_limit,
-                                   (std::chrono::system_clock::now() + std::chrono::seconds(10)));
-            // TODO(LAD): where else to get validUntil from???
-            // CC: We cannot get a new validUntil here, only the energy_manager can give us more time. We can however
-            // update the max current and not update the validUntil.
-            // To keep things simple I'd comment this shortcut out and always go through EM as this potentially hides
-            // bugs. It can be readded once everything is stable
-        } else {
-            // wait for EnergyManager to assign optimized current on next opimizer run
-        }
-        */
+        
+        // wait for EnergyManager to assign optimized current on next opimizer run
+
         return true;
     }
     return false;

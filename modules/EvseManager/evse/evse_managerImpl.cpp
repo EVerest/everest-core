@@ -20,6 +20,8 @@ void evse_managerImpl::init() {
     limits["nr_of_phases_available"] = 1;
     limits["max_current"] = 0.;
 
+    // Note: Deprecated. Only kept for Node red compatibility, will be removed in the future
+    // Legacy external mqtt pubs
     mod->mqtt.subscribe("/external/cmd/set_max_current", [&charger = mod->charger, this](std::string data) {
         mod->updateLocalMaxCurrentLimit(std::stof(data));
     });
@@ -46,6 +48,7 @@ void evse_managerImpl::init() {
                         [&charger = mod->charger](const std::string data) { charger->resumeCharging(); });
 
     mod->mqtt.subscribe("/external/cmd/restart", [&charger = mod->charger](const std::string data) { charger->restart(); });
+    // /Deprecated
 
     mod->r_powermeter->subscribe_powermeter([this](const json p) {
         // Republish data on proxy powermeter struct

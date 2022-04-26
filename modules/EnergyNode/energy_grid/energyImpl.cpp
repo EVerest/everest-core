@@ -63,8 +63,6 @@ void energyImpl::init() {
                     energy["children"] = json::array();
                     energy["children"].push_back(e);
                 }
-                // EVLOG(error) << "################### energy[]: " << energy;
-                // EVLOG(error) << "################### e[]: " << e;
             }
 
             publish_complete_energy_object();
@@ -167,7 +165,7 @@ json energyImpl::merge_price_into_schedule(json schedule, json price) {
 }
 
 void energyImpl::ready() {
-    // publish my own limits at least once
+    // publish own limits at least once
     publish_energy(energy);
 }
 
