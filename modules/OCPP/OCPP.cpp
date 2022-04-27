@@ -70,7 +70,7 @@ void OCPP::init() {
         auto diagnostics_file_name = boost::filesystem::unique_path(boost::filesystem::path(file_name));
         auto diagnostics_file_path = boost::filesystem::temp_directory_path() / diagnostics_file_name;
 
-        auto diagnostics = json::object({{"diagnostics", json::object({{"key", "value"}})}});
+        auto diagnostics = json({{"diagnostics", {{"key", "value"}}}});
         std::ofstream diagnostics_file(diagnostics_file_path.c_str());
         diagnostics_file << diagnostics.dump();
         this->upload_diagnostics_thread = std::thread([this, location, diagnostics_file_name, diagnostics_file_path]() {
