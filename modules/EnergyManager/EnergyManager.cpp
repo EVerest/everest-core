@@ -50,22 +50,26 @@ void EnergyManager::interval_start(const std::function<void(void)>& func, unsign
 }
 
 void EnergyManager::run_enforce_limits() {
-    for (int entry = 0; entry < this->r_energy_trunk.size(); entry++) {
+    try {
+        for (int entry = 0; entry < this->r_energy_trunk.size(); entry++) {
 
-        json optimized_values = run_optimizer(global_energy_object[entry]);
+            json optimized_values = run_optimizer(global_energy_object[entry]);
 
-        for (auto it = optimized_values.begin(); it != optimized_values.end(); ++it) {
-            sanitize_object(*it);
-            try {
-                this->r_energy_trunk[entry]->call_enforce_limits( (*it).at("uuid"), 
-                                        (*it).at("limits_import"), 
-                                        (*it).at("limits_export"),
-                                        (*it).at("schedule_import"),
-                                        (*it).at("schedule_export"));
-            } catch (const std::exception& e) {
-                EVLOG(error) << "Cannot enforce limits: Exception occurred: " << e.what();
+            for (auto it = optimized_values.begin(); it != optimized_values.end(); ++it) {
+                sanitize_object(*it);
+                try {
+                    this->r_energy_trunk[entry]->call_enforce_limits( (*it).at("uuid"), 
+                                            (*it).at("limits_import"), 
+                                            (*it).at("limits_export"),
+                                            (*it).at("schedule_import"),
+                                            (*it).at("schedule_export"));
+                } catch (const std::exception& e) {
+                    EVLOG(error) << "Cannot enforce limits: Exception occurred: optimized object faulty: " << e.what();
+                }
             }
         }
+    } catch (const std::exception& e) {
+        EVLOG(error) << "Cannot enforce limits: Exception occurred: r_energy_trunk connection faulty " << e.what();
     }
 }
 
@@ -75,10 +79,20 @@ Array EnergyManager::run_optimizer(json energy) {
     auto timepoint = std::chrono::system_clock::now();
     json price_schedule = json::array();
 
-    if (energy.contains("schedule_import") && !energy["schedule_import"].is_null() ) {  // need "[]" to prevent nlohmann error 304: cannot use at() with null
-        price_schedule = energy.at("schedule_import");
+    try {
+        if (energy.contains("schedule_import") && !energy["schedule_import"].is_null() ) {  // need "[]" to prevent nlohmann error 304: cannot use at() with null
+            price_schedule = energy.at("schedule_import");
+        }
+    } catch (const std::exception& e) {
+        EVLOG(error) << "run_optimizer: Exception occurred: energy object does not have an import schedule: " << e.what();
     }
-    optimize_one_level(energy, optimized_values, timepoint, price_schedule);
+    
+    try {
+        optimize_one_level(energy, optimized_values, timepoint, price_schedule);
+    } catch (const std::exception& e) {
+        EVLOG(error) << "run_optimizer: Exception occurred: calling optimizer for next level failed: " << e.what();
+    }
+
     return optimized_values;
 }
 
@@ -86,13 +100,26 @@ Array EnergyManager::run_optimizer(json energy) {
 void EnergyManager::optimize_one_level(json& energy, json& optimized_values,
                                        const std::chrono::system_clock::time_point timepoint_now,
                                        const json price_schedule) {
+
     // find max_current limit for this level
     // min of (limit_from_parent, local_limit_from_schedule)
     if (energy.contains("schedule_import") && !energy["schedule_import"].is_null() ) {  // need "[]" to prevent nlohmann error 304: cannot use at() with null
-        json grid_import_limit = get_sub_element_from_schedule_at_time(energy.at("schedule_import"), timepoint_now);
+        json grid_import_limit = {};
+        try {
+            grid_import_limit = get_sub_element_from_schedule_at_time(energy.at("schedule_import"), timepoint_now);
+        } catch (const std::exception& e) {
+            EVLOG(error) << "optimize_one_level: Exception occurred: failed to get schedule item for timepoint_now: " << e.what();
+            return;
+        }
 
-        // choose max current
-        float max_current_for_next_level_A = get_current_limit_from_energy_object(grid_import_limit, energy);
+        double max_current_for_next_level_A = 0.0F;
+        try {
+            // choose max current
+            double max_current_for_next_level_A = get_current_limit_from_energy_object(grid_import_limit, energy);
+        } catch (const std::exception& e) {
+            EVLOG(error) << "optimize_one_level: Exception occurred: failed to get current limit for next level: " << e.what();
+            return;
+        }
 
         int number_children = 0;
         if (energy.contains("children")) {
@@ -117,27 +144,31 @@ void EnergyManager::optimize_one_level(json& energy, json& optimized_values,
         }
 
         // is this an EVSE? Add to optimized_values then.
-        if (energy.at("node_type") == "Evse") {
-            json limits_import;
-            limits_import["valid_until"] = to_rfc3339(std::chrono::system_clock::now() + std::chrono::seconds(10));
-            limits_import["request_parameters"] = json::object();
-            limits_import["request_parameters"]["ac_current_A"] = json::object();
-            limits_import["request_parameters"]["ac_current_A"]["current_A"] = max_current_for_next_level_A;
+        try {
+            if (energy.at("node_type") == "Evse") {
+                json limits_import;
+                limits_import["valid_until"] = to_rfc3339(std::chrono::system_clock::now() + std::chrono::seconds(10));
+                limits_import["request_parameters"] = json::object();
+                limits_import["request_parameters"]["ac_current_A"] = json::object();
+                limits_import["request_parameters"]["ac_current_A"]["current_A"] = max_current_for_next_level_A;
 
-            json result;
-            result["limits_import"] = limits_import;
-            result["limits_export"] = json::object();
-            result["uuid"] = energy.at("uuid");
+                json result;
+                result["limits_import"] = limits_import;
+                result["limits_export"] = json::object();
+                result["uuid"] = energy.at("uuid");
 
-            // add import schedule for currently projected plan
-            if (!price_schedule.is_null()) {
-                result["schedule_import"] = price_schedule;
-            } else {
-                result["schedule_import"] = json::array();
+                // add import schedule for currently projected plan
+                if (!price_schedule.is_null()) {
+                    result["schedule_import"] = price_schedule;
+                } else {
+                    result["schedule_import"] = json::array();
+                }
+                result["schedule_export"] = json::array();
+
+                optimized_values.push_back(result);
             }
-            result["schedule_export"] = json::array();
-
-            optimized_values.push_back(result);
+        } catch (const std::exception& e) {
+            EVLOG(error) << "optimize_one_level: Exception occurred: energy object faulty: " << e.what();
         }
     }
 }
@@ -185,9 +216,9 @@ void EnergyManager::sanitize_object(json& obj_to_sanitize) {
     }
 }
 
-float EnergyManager::get_current_limit_from_energy_object(const json& limit_object, const json& energy_object) {
+double EnergyManager::get_current_limit_from_energy_object(const json& limit_object, const json& energy_object) {
     bool limit_object_is_complete_flag = false;
-    float max_current_A = ENERGY_MANAGER_ABSOLUTE_MAX_CURRENT;
+    double max_current_A = ENERGY_MANAGER_ABSOLUTE_MAX_CURRENT;
 
     if (limit_object.contains("request_parameters")) {
         if (limit_object.at("request_parameters").contains("ac_current_A")) {
@@ -314,132 +345,137 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
         return;
     }
 
-    do {
-        bool recalculate = false;
-        sum_max_current_requests = 0.0;
-        sum_min_current_requests = 0.0;
+    try {
+        do {
+            bool recalculate = false;
+            sum_max_current_requests = 0.0;
+            sum_min_current_requests = 0.0;
 
-        // add all children's max-/min- current requests
-        for (json& child : energy_object["children"]) {
-            if (child.at("requesting_power") == true) {
-                child.at("scaled_current").get_to(child_max_current_A);
-                child.at("schedule_import")
-                    .at(0)
-                    .at("request_parameters")
-                    .at("ac_current_A")
-                    .at("min_current_A")
-                    .get_to(child_min_current_A);
-                // add to overall max-/min- current tally
-                if (child_max_current_A >= child_min_current_A) {
-                    sum_max_current_requests += child_max_current_A;
-                    sum_min_current_requests += child_min_current_A;
-                } else {
-                    // ... and weed out children with too low current requests
-                    child.at("requesting_power") = false;
-                }
-            }
-        }
-
-        // divide maximum current available to this level by sum of current requests
-        if (energy_object.contains("schedule_import") && !energy_object["schedule_import"].is_null()) {  // need "[]" to prevent nlohmann error 304: cannot use at() with null
-
-            current_scaling_factor = current_limit_at_this_level / sum_max_current_requests;
-
-            // limit scaling factor to 1
-            if (current_scaling_factor > 1.0F) {
-                current_scaling_factor = 1.0F;
-            }
-        } else {
-            // something is wrong, abort (error case: no power available to this level)
-            return;
-        }
-
-        // if the sum of this level's children's minimum current requests is already larger than its current limit, we
-        // need to drop requests from children; if not, start scaling
-        if (sum_min_current_requests > current_limit_at_this_level) {
-            // drop first child which breaks "min_current_A" requirement and recalculate
+            // add all children's max-/min- current requests
             for (json& child : energy_object["children"]) {
                 if (child.at("requesting_power") == true) {
                     child.at("scaled_current").get_to(child_max_current_A);
-                    child["scaled_current"] = current_scaling_factor * child_max_current_A;
-
-                    // check if "min_current_A" is breached
-                    if (child.at("scaled_current") < child.at("schedule_import")
-                                                         .at(0)
-                                                         .at("request_parameters")
-                                                         .at("ac_current_A")
-                                                         .at("min_current_A")) {
-                        // if "min_current_A" breached, drop first child and recalculate
-                        child["requesting_power"] = false;
-                        recalculate = true;
-                        break;
+                    child.at("schedule_import")
+                        .at(0)
+                        .at("request_parameters")
+                        .at("ac_current_A")
+                        .at("min_current_A")
+                        .get_to(child_min_current_A);
+                    // add to overall max-/min- current tally
+                    if (child_max_current_A >= child_min_current_A) {
+                        sum_max_current_requests += child_max_current_A;
+                        sum_min_current_requests += child_min_current_A;
+                    } else {
+                        // ... and weed out children with too low current requests
+                        child.at("requesting_power") = false;
                     }
                 }
             }
-        } else if (sum_max_current_requests <= current_limit_at_this_level) {
-            // this is the end goal for this level
-            recalculate = false;
-        } else {
-            // sum_min_current_requests <= current_limit_at_this_level
-            // apply scaling factor to all requesting children
-            for (json& child : energy_object["children"]) {
-                if (child.at("requesting_power") == true) {
-                    child.at("scaled_current").get_to(child_max_current_A);
-                    if (child.at("scaled_current") > child.at("schedule_import")
-                                                         .at(0)
-                                                         .at("request_parameters")
-                                                         .at("ac_current_A")
-                                                         .at("min_current_A")) {
-                        // only apply scaling if child is not already at minimum current, then check afterward if
-                        // scaling brought it below threshold
+
+            // divide maximum current available to this level by sum of current requests
+            if (energy_object.contains("schedule_import") && !energy_object["schedule_import"].is_null()) {  // need "[]" to prevent nlohmann error 304: cannot use at() with null
+
+                current_scaling_factor = current_limit_at_this_level / sum_max_current_requests;
+
+                // limit scaling factor to 1
+                if (current_scaling_factor > 1.0F) {
+                    current_scaling_factor = 1.0F;
+                }
+            } else {
+                // something is wrong, abort (error case: no power available to this level)
+                return;
+            }
+
+            // if the sum of this level's children's minimum current requests is already larger than its current limit, we
+            // need to drop requests from children; if not, start scaling
+            if (sum_min_current_requests > current_limit_at_this_level) {
+                // drop first child which breaks "min_current_A" requirement and recalculate
+                for (json& child : energy_object["children"]) {
+                    if (child.at("requesting_power") == true) {
+                        child.at("scaled_current").get_to(child_max_current_A);
                         child["scaled_current"] = current_scaling_factor * child_max_current_A;
-                    }
-                    // check if child has already been scaled to minimum current
-                    else if (child.at("scaled_current") == child.at("schedule_import")
-                                                               .at(0)
-                                                               .at("request_parameters")
-                                                               .at("ac_current_A")
-                                                               .at("min_current_A")) {
-                        // we have already checked that it is possible to distribute all requests if minimum currents
-                        // are assigned, thus continue with the next child
-                        recalculate = true;
-                        continue;
-                    }
 
-                    // check if "min_current_A" is breached
-                    if (child["scaled_current"] < child.at("schedule_import")
-                                                      .at(0)
-                                                      .at("request_parameters")
-                                                      .at("ac_current_A")
-                                                      .at("min_current_A")) {
-                        // if "min_current_A" breached, set minimum current as request and recalculate
-                        child["scaled_current"] = child.at("schedule_import")
-                                                      .at(0)
-                                                      .at("request_parameters")
-                                                      .at("ac_current_A")
-                                                      .at("min_current_A");
-                        recalculate = true;
-                        break;
+                        // check if "min_current_A" is breached
+                        if (child.at("scaled_current") < child.at("schedule_import")
+                                                            .at(0)
+                                                            .at("request_parameters")
+                                                            .at("ac_current_A")
+                                                            .at("min_current_A")) {
+                            // if "min_current_A" breached, drop first child and recalculate
+                            child["requesting_power"] = false;
+                            recalculate = true;
+                            break;
+                        }
+                    }
+                }
+            } else if (sum_max_current_requests <= current_limit_at_this_level) {
+                // this is the end goal for this level
+                recalculate = false;
+            } else {
+                // sum_min_current_requests <= current_limit_at_this_level
+                // apply scaling factor to all requesting children
+                for (json& child : energy_object["children"]) {
+                    if (child.at("requesting_power") == true) {
+                        child.at("scaled_current").get_to(child_max_current_A);
+                        if (child.at("scaled_current") > child.at("schedule_import")
+                                                            .at(0)
+                                                            .at("request_parameters")
+                                                            .at("ac_current_A")
+                                                            .at("min_current_A")) {
+                            // only apply scaling if child is not already at minimum current, then check afterward if
+                            // scaling brought it below threshold
+                            child["scaled_current"] = current_scaling_factor * child_max_current_A;
+                        }
+                        // check if child has already been scaled to minimum current
+                        else if (child.at("scaled_current") == child.at("schedule_import")
+                                                                .at(0)
+                                                                .at("request_parameters")
+                                                                .at("ac_current_A")
+                                                                .at("min_current_A")) {
+                            // we have already checked that it is possible to distribute all requests if minimum currents
+                            // are assigned, thus continue with the next child
+                            recalculate = true;
+                            continue;
+                        }
+
+                        // check if "min_current_A" is breached
+                        if (child["scaled_current"] < child.at("schedule_import")
+                                                        .at(0)
+                                                        .at("request_parameters")
+                                                        .at("ac_current_A")
+                                                        .at("min_current_A")) {
+                            // if "min_current_A" breached, set minimum current as request and recalculate
+                            child["scaled_current"] = child.at("schedule_import")
+                                                        .at(0)
+                                                        .at("request_parameters")
+                                                        .at("ac_current_A")
+                                                        .at("min_current_A");
+                            recalculate = true;
+                            break;
+                        }
                     }
                 }
             }
-        }
 
-        if (recalculate == false) {
-            not_done = false;
-            for (json& child : energy_object["children"]) {
+            if (recalculate == false) {
+                not_done = false;
+                for (json& child : energy_object["children"]) {
 
-                if (child.at("requesting_power") == true) {
-                    // if child is requesting power still, assign scaled_current
-                    child["limit_from_parent"] = child.at("scaled_current");
-                } else {
-                    // child is NOT requesting power, set limit to zero
-                    child["limit_from_parent"] = 0;
+                    if (child.at("requesting_power") == true) {
+                        // if child is requesting power still, assign scaled_current
+                        child["limit_from_parent"] = child.at("scaled_current");
+                    } else {
+                        // child is NOT requesting power, set limit to zero
+                        child["limit_from_parent"] = 0;
+                    }
                 }
             }
-        }
 
-    } while (not_done);
+        } while (not_done);
+    } catch (const std::exception& e) {
+        EVLOG(error) << "scale_and_distribute_power: Exception occurred: failed to calculate current distribution: " << e.what();
+        return;
+    }
 }
 
 } // namespace module
