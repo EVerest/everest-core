@@ -122,9 +122,10 @@ void Charger::runStateMachine() {
         ISO_IEC_Coordination();
 
         // we get Auth (maybe before SLAC matching or during matching)
-        if (getAuthorization() && powerAvailable()) {
+        if (getAuthorization()) {
             signalEvent(EvseEvent::ChargingStarted);
-            currentState = EvseState::ChargingPausedEV;
+            if (powerAvailable()) currentState = EvseState::ChargingPausedEV;
+	    else currentState = EvseState::ChargingPausedEVSE;
         }
 
         break;
