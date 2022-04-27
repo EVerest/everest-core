@@ -1306,7 +1306,7 @@ void ChargePoint::handleTriggerMessageRequest(Call<TriggerMessageRequest> call) 
 }
 
 void ChargePoint::handleGetDiagnosticsRequest(Call<GetDiagnosticsRequest> call) {
-    EVLOG(critical) << "Received GetDiagnosticsRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
+    EVLOG(debug) << "Received GetDiagnosticsRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
     GetDiagnosticsResponse response;
     if (this->upload_diagnostics_callback) {
         response.fileName.emplace(this->upload_diagnostics_callback(call.msg.location));
@@ -1316,7 +1316,7 @@ void ChargePoint::handleGetDiagnosticsRequest(Call<GetDiagnosticsRequest> call) 
 }
 
 void ChargePoint::handleUpdateFirmwareRequest(Call<UpdateFirmwareRequest> call) {
-    EVLOG(critical) << "Received UpdateFirmwareRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
+    EVLOG(debug) << "Received UpdateFirmwareRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
     UpdateFirmwareResponse response;
     if (this->upload_diagnostics_callback) {
         // FIXME(kai): respect call.msg.retrieveDate and only then trigger this callback
