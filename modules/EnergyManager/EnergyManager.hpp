@@ -60,7 +60,7 @@ private:
                                    const std::chrono::system_clock::time_point timepoint, const json price_schedule);
     static json get_sub_element_from_schedule_at_time(json s, const std::chrono::system_clock::time_point timepoint);
     static void sanitize_object(json& obj_to_sanitize);
-    static float get_current_limit_from_energy_object(const json& limit_object, const json& energy_object);
+    static double get_current_limit_from_energy_object(const json& limit_object, const json& energy_object);
     static double get_currently_valid_price_per_kwh(json& energy_object,
                                                     const std::chrono::system_clock::time_point timepoint_now);
     static void check_for_children_requesting_power(json& energy_object, const double current_price_per_kwh);
