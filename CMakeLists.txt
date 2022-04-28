@@ -64,6 +64,16 @@ find_program(EV_CLI
     REQUIRED
 )
 
+execute_process(COMMAND ${EV_CLI} --version
+        OUTPUT_VARIABLE EV_CLI_VERSION
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+# ensure that the installed version of ev-cli is compatible
+set(EV_CLI_VERSION_REQUIRED "0.0.10")
+include(EvCliVersion)
+require_ev_cli_version("${EV_CLI_VERSION}" "${EV_CLI_VERSION_REQUIRED}")
+
 set(GENERATED_OUTPUT_DIR ${CMAKE_BINARY_DIR}/generated)
 
 find_package(Boost COMPONENTS filesystem program_options system thread REQUIRED)
