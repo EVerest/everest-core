@@ -1,5 +1,10 @@
-// SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+/**
+ * Macros for metaprogramming
+ * ExtendedC
+ *
+ * Copyright (C) 2012 Justin Spahr-Summers
+ * Released under the MIT license
+ */
 
 #ifndef EXTC_METAMACROS_H
 #define EXTC_METAMACROS_H
