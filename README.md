@@ -14,7 +14,8 @@ More CPU cores will optionally boost the build process, while requiring more RAM
 #### Ubuntu 20.04
 ```bash
 sudo apt update
-sudo apt install -y git rsync wget cmake doxygen graphviz build-essential clang-tidy cppcheck maven openjdk-11-jdk npm docker docker-compose libboost-all-dev jstyleson jsonschema nodejs libssl-dev libsqlite3-dev clang-format
+sudo apt install -y git rsync wget cmake doxygen graphviz build-essential clang-tidy cppcheck maven openjdk-11-jdk npm docker docker-compose libboost-all-dev nodejs libssl-dev libsqlite3-dev clang-format clang-format-12
+sudo update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-12 100
 ```
 
 #### OpenSuse
@@ -32,7 +33,7 @@ To install the [Everest Dependency Manager](https://github.com/EVerest/everest-d
 
 Install required python packages:
 ```bash
-python3 -m pip install --upgrade pip setuptools wheel
+python3 -m pip install --upgrade pip setuptools wheel jstyleson jsonschema
 ```
 Get EDM source files and change into the directory:
 ```bash
