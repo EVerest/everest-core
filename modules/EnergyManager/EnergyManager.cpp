@@ -115,7 +115,7 @@ void EnergyManager::optimize_one_level(json& energy, json& optimized_values,
         double max_current_for_next_level_A = 0.0F;
         try {
             // choose max current
-            double max_current_for_next_level_A = get_current_limit_from_energy_object(grid_import_limit, energy);
+            max_current_for_next_level_A = get_current_limit_from_energy_object(grid_import_limit, energy);
         } catch (const std::exception& e) {
             EVLOG(error) << "optimize_one_level: Exception occurred: failed to get current limit for next level: " << e.what();
             return;
