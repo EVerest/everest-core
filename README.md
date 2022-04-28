@@ -14,8 +14,27 @@ More CPU cores will optionally boost the build process, while requiring more RAM
 #### Ubuntu 20.04
 ```bash
 sudo apt update
-sudo apt install -y git rsync wget cmake doxygen graphviz build-essential clang-tidy cppcheck maven openjdk-11-jdk npm docker docker-compose libboost-all-dev nodejs libssl-dev libsqlite3-dev clang-format clang-format-12
+sudo apt install -y python3-pip git rsync wget cmake doxygen graphviz build-essential clang-tidy cppcheck maven openjdk-11-jdk npm docker docker-compose libboost-all-dev nodejs libssl-dev libsqlite3-dev clang-format 
+```
+In order to build EVerest, we need clang-format version greater than 11. To date *apt* does only install an older version, so we install version 12 manually:
+```bash
+sudo apt install clang-format-12
+```
+Then make Ubuntu use version 12:
+``` bash
 sudo update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-12 100
+```
+Also, *apt* does only install *nodejs* version 10.x, we need to manually install e.g. version 18:
+Follow the install instructions for *nvm* here: [https://github.com/nvm-sh/nvm#installing-and-updating](https://github.com/nvm-sh/nvm#installing-and-updating)
+
+Then, install nodejs version 18:
+```bash
+nvm install 18
+```
+
+And make Ubuntu use version 18:
+```bash
+nvm use 18
 ```
 
 #### OpenSuse
