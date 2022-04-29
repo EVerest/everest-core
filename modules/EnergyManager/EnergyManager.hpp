@@ -18,6 +18,7 @@
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
+#include <mutex>
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -28,12 +29,12 @@ class EnergyManager : public Everest::ModuleBase {
 public:
     EnergyManager() = delete;
     EnergyManager(const ModuleInfo& info, std::unique_ptr<energy_managerImplBase> p_main,
-                  std::vector<std::unique_ptr<energyIntf>> r_energy_trunk, Conf& config) :
+                  std::unique_ptr<energyIntf> r_energy_trunk, Conf& config) :
         ModuleBase(info), p_main(std::move(p_main)), r_energy_trunk(std::move(r_energy_trunk)), config(config){};
 
     const Conf& config;
     const std::unique_ptr<energy_managerImplBase> p_main;
-    const std::vector<std::unique_ptr<energyIntf>> r_energy_trunk;
+    const std::unique_ptr<energyIntf> r_energy_trunk;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
@@ -51,6 +52,8 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
+    std::mutex global_energy_object_mutex;
+    json global_energy_object;
     std::chrono::system_clock::time_point lastLimitUpdate;
 
     static void interval_start(const std::function<void(void)>& func, unsigned int interval_ms);

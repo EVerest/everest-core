@@ -8,8 +8,6 @@ namespace module {
 
 #define INVALID_PRICE_PER_KWH (-1.1f)
 
-static json global_energy_object = json::array();
-
 std::string to_rfc3339(std::chrono::time_point<std::chrono::system_clock> t) {
     return date::format("%FT%TZ", std::chrono::time_point_cast<std::chrono::milliseconds>(t));
 }
@@ -25,12 +23,13 @@ std::chrono::time_point<std::chrono::system_clock> from_rfc3339(std::string t) {
 void EnergyManager::init() {
     invoke_init(*p_main);
     
-    for (int entry = 0; entry < r_energy_trunk.size(); entry++) {
-        r_energy_trunk[entry]->subscribe_energy([this, entry](json e) {
-            // Received new energy object from a child.
-            global_energy_object[entry] = e;
-        });
-    }
+    r_energy_trunk->subscribe_energy([this](json e) {
+        // Received new energy object from a child.
+        {
+            std::lock_guard<std::mutex> lock(this->global_energy_object_mutex);
+            global_energy_object = e;
+        }
+    });
 }
 
 void EnergyManager::ready() {
@@ -51,23 +50,26 @@ void EnergyManager::interval_start(const std::function<void(void)>& func, unsign
 
 void EnergyManager::run_enforce_limits() {
     try {
-        for (int entry = 0; entry < this->r_energy_trunk.size(); entry++) {
 
-            json optimized_values = run_optimizer(global_energy_object[entry]);
+        json optimized_values = json::object();
+        {
+            std::lock_guard<std::mutex> lock(this->global_energy_object_mutex);
+            optimized_values = run_optimizer(this->global_energy_object);
+        }
 
-            for (auto it = optimized_values.begin(); it != optimized_values.end(); ++it) {
-                sanitize_object(*it);
-                try {
-                    this->r_energy_trunk[entry]->call_enforce_limits( (*it).at("uuid"), 
-                                            (*it).at("limits_import"), 
-                                            (*it).at("limits_export"),
-                                            (*it).at("schedule_import"),
-                                            (*it).at("schedule_export"));
-                } catch (const std::exception& e) {
-                    EVLOG(error) << "Cannot enforce limits: Exception occurred: optimized object faulty: " << e.what();
-                }
+        for (auto it = optimized_values.begin(); it != optimized_values.end(); ++it) {
+            sanitize_object(*it);
+            try {
+                this->r_energy_trunk->call_enforce_limits( (*it).at("uuid"), 
+                                        (*it).at("limits_import"), 
+                                        (*it).at("limits_export"),
+                                        (*it).at("schedule_import"),
+                                        (*it).at("schedule_export"));
+            } catch (const std::exception& e) {
+                EVLOG(error) << "Cannot enforce limits: Exception occurred: optimized object faulty: " << e.what();
             }
         }
+
     } catch (const std::exception& e) {
         EVLOG(error) << "Cannot enforce limits: Exception occurred: r_energy_trunk connection faulty " << e.what();
     }
