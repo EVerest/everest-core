@@ -14,7 +14,7 @@ More CPU cores will optionally boost the build process, while requiring more RAM
 #### Ubuntu 20.04
 ```bash
 sudo apt update
-sudo apt install -y python3-pip git rsync wget cmake doxygen graphviz build-essential clang-tidy cppcheck maven openjdk-11-jdk npm docker docker-compose libboost-all-dev nodejs libssl-dev libsqlite3-dev clang-format 
+sudo apt install -y python3-pip git rsync wget cmake doxygen graphviz build-essential clang-tidy cppcheck maven openjdk-11-jdk npm docker docker-compose libboost-all-dev nodejs libssl-dev libsqlite3-dev clang-format curl
 ```
 In order to build EVerest, we need clang-format version greater than 11. To date *apt* does only install an older version, so we install version 12 manually:
 ```bash
@@ -24,18 +24,10 @@ Then make Ubuntu use version 12:
 ``` bash
 sudo update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-12 100
 ```
-Also, *apt* does only install *nodejs* version 10.x, we need to manually install e.g. version 18:
-Follow the install instructions for *nvm* here: [https://github.com/nvm-sh/nvm#installing-and-updating](https://github.com/nvm-sh/nvm#installing-and-updating)
+EVerest requires nodejs version >10.20 for node_api version 6+. as Ubuntu 20.4 only installs v10.19 including node_api version <6 by default we need to install a newer version.
 
-Then, install nodejs version 18:
-```bash
-nvm install 18
-```
-
-And make Ubuntu use version 18:
-```bash
-nvm use 18
-```
+Follow [**these instructions**](https://github.com/nodesource/distributions/blob/master/README.md#installation-instructions)
+to install a newer version, minimum v12.
 
 #### OpenSuse
 ```bash
@@ -63,14 +55,19 @@ Install EDM:
 ```bash
 python3 -m pip install .
 ```
-Setup Everest workspace: 
+We need to add */home/USER/.local/bin* and *CPM_SOURCE_CACHE* to *$PATH*:
 ```bash
+echo "export PATH=$PATH:/home/$(whoami)/.local/bin" >> ~/.bashrc
+echo "export CPM_SOURCE_CACHE=$HOME/.cache/CPM" >> ~/.bashrc
+```
+**Important:** Restart the current bash command prompt to let the changes take effect.
+
+Now setup EVerest workspace: 
+```bash
+cd everest-dev-environment/dependency_manager
 edm --register-cmake-module --config ../everest-complete.yaml --workspace ~/checkout/everest-workspace
 ```
-Set environmental variable for [CPM](https://github.com/cpm-cmake/CPM.cmake/blob/master/README.md#CPM_SOURCE_CACHE) cache:
-```bash
-export CPM_SOURCE_CACHE=$HOME/.cache/CPM
-```
+
 Install [ev-cli](https://github.com/EVerest/everest-utils/tree/main/ev-dev-tools):
 
 Change the directory and install ev-cli:
@@ -79,15 +76,11 @@ cd ~/checkout/everest-workspace/everest-utils/ev-dev-tools
 python3 -m pip install .
 ```
 
-Now we can build everest!
+Now we can build EVerest!
 
-Create build directory and change directory:
 ```bash
 mkdir -p ~/checkout/everest-workspace/everest-core/build
 cd ~/checkout/everest-workspace/everest-core/build
-```
-Build everest:
-```bash
 cmake ..
 make install
 ```
@@ -108,19 +101,8 @@ Done!
 
 In order to test your build of Everest you can simulate the code on your local machine!
 
-Docker container for local MQTT broker, node-red etc.
-```bash
-cd ~/checkout/everest-workspace/everest-utils/docker
-sudo docker-compose up -d
-```
+ Check out this [guide for using EVerest SIL](https://everest.github.io/doc_sil.html)
 
-#### Software in the loop simulator
-
-```bash
-cd ~/checkout/everest-workspace/everest-core/build
-.././run_sil.sh
-```
-[Guide for using EVerest SIL](https://everest.github.io/doc_sil.html)
 
 ### Troubleshoot
 
