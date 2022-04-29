@@ -92,6 +92,7 @@ void OCPP::init() {
             }
             cmd.wait();
         });
+        this->upload_diagnostics_thread.detach();
 
         return diagnostics_file_name.string();
     });
@@ -128,6 +129,7 @@ void OCPP::init() {
             cmd.wait();
         });
     });
+    this->update_firmware_thread.detach();
 
     this->charge_point->start();
 
