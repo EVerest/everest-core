@@ -253,18 +253,8 @@ double EnergyManager::get_currently_valid_price_per_kwh(json& energy_object,
         json schedule_at_current_timeslot =
             get_sub_element_from_schedule_at_time(energy_object.at("schedule_import"), timepoint_now);
         if (schedule_at_current_timeslot.contains("price_per_kwh")) {
-            if (schedule_at_current_timeslot.at("price_per_kwh").contains("currency")) {
-                // currency: EUR
-                if (schedule_at_current_timeslot.at("price_per_kwh").at("currency") == "EUR") {
-                    if (schedule_at_current_timeslot.at("price_per_kwh").contains("value")) {
-                        currently_valid_price_per_kwh = (double)schedule_at_current_timeslot.at("price_per_kwh").at("value");
-                    }
-                } else {
-                    // error: wrong currency / currency not (yet) implemented
-                    EVLOG(error) << "Currency \"" << schedule_at_current_timeslot.at("price_per_kwh").at("currency")
-                                 << "\" not recognized/implemented!!!";
-                }
-                // add other currencies here
+            if (schedule_at_current_timeslot.at("price_per_kwh").contains("value")) {
+                currently_valid_price_per_kwh = (double)schedule_at_current_timeslot.at("price_per_kwh").at("value");
             }
         }
     }
