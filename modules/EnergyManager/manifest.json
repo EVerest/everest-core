@@ -10,14 +10,15 @@
         "energy_trunk": {
             "interface": "energy",
             "min_connections": 1,
-            "max_connections": 12
+            "max_connections": 1
         }
     },
     "enable_external_mqtt": false,
     "metadata": {
         "license": "https://opensource.org/licenses/Apache-2.0",
         "authors": [
-            "Cornelius Claussen"
+            "Cornelius Claussen",
+            "Lars Dieckmann"
         ]
     }
 }
