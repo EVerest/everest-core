@@ -585,6 +585,10 @@ function publish_powermeter(mod) {
   mod.mqtt.publish('/external/powermeter/totalKw', (mod.powermeter.wattL1 + mod.powermeter.wattL2 + mod.powermeter.wattL3) / 1000.);
   mod.mqtt.publish('/external/powermeter/totalKWattHr', (mod.powermeter.wattHrL1 + mod.powermeter.wattHrL2 + mod.powermeter.wattHrL3) / 1000.);
   mod.mqtt.publish('/external/powermeter_json', JSON.stringify(mod.powermeter));
+
+  mod.mqtt.publish('/external/' + mod.info.id + '/powermeter/tempL1', mod.powermeter.tempL1);
+  mod.mqtt.publish('/external/' + mod.info.id + '/powermeter/totalKw', (mod.powermeter.wattL1 + mod.powermeter.wattL2 + mod.powermeter.wattL3) / 1000.);
+  mod.mqtt.publish('/external/' + mod.info.id + '/powermeter/totalKWattHr', (mod.powermeter.wattHrL1 + mod.powermeter.wattHrL2 + mod.powermeter.wattHrL3) / 1000.);
 }
 
 function publish_keepalive(mod) {

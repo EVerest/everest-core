@@ -48,13 +48,22 @@ private:
     virtual void ready() override;
 
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
+    std::mutex energy_mutex;
+    double _price_limit;
+    double _price_limit_previous_value;
+    std::string _optimizer_mode;
+    double _manual_current_limit_A;
     json energy;
+
     void initializeEnergyObject();
+    void updateAndPublishEnergyObject();
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 
 // ev@3d7da0ad-02c2-493d-9920-0bbbd56b9876:v1
 // insert other definitions here
+#define EVSE_OPTIMIZER_MODE_MANUAL_LIMITS std::string("manual_limits")
+#define EVSE_OPTIMIZER_MODE_PRICE_DRIVEN  std::string("price_driven")
 // ev@3d7da0ad-02c2-493d-9920-0bbbd56b9876:v1
 
 } // namespace energy_grid

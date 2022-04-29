@@ -122,9 +122,10 @@ void Charger::runStateMachine() {
         ISO_IEC_Coordination();
 
         // we get Auth (maybe before SLAC matching or during matching)
-        if (getAuthorization() && powerAvailable()) {
+        if (getAuthorization()) {
             signalEvent(EvseEvent::ChargingStarted);
-            currentState = EvseState::ChargingPausedEV;
+            if (powerAvailable()) currentState = EvseState::ChargingPausedEV;
+	    else currentState = EvseState::ChargingPausedEVSE;
         }
 
         break;
@@ -483,7 +484,7 @@ float Charger::ampereToDutyCycle(float ampere) {
 }
 
 bool Charger::setMaxCurrent(float c, std::chrono::time_point<std::chrono::system_clock> validUntil) {
-    if (c >= 0.0 && c <= 80) {
+    if (c >= 0.0 && c <= CHARGER_ABSOLUTE_MAX_CURRENT) {
         std::lock_guard<std::recursive_mutex> lock(configMutex);
         // FIXME: limit to cable limit (PP reading) if that is smaller!
         // is it still valid?
@@ -756,7 +757,6 @@ bool Charger::powerAvailable() {
         maxCurrent = 0.;
         signalMaxCurrent(maxCurrent);
     }
-
     return (getMaxCurrent() > 5.9);
 }
 

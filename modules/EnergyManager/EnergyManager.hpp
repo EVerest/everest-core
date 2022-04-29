@@ -18,6 +18,7 @@
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
+#include <mutex>
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -51,16 +52,29 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
+    std::mutex global_energy_object_mutex;
+    json global_energy_object;
     std::chrono::system_clock::time_point lastLimitUpdate;
-    Array run_optimizer(json energy);
-    void optimize_one_level(json& energy, Array& results, const std::chrono::system_clock::time_point timepoint);
-    json get_limit_from_schedule(json s, const std::chrono::system_clock::time_point timepoint);
-    void sanitize_object(json& obj_to_sanitize);
+
+    static void interval_start(const std::function<void(void)>& func, unsigned int interval_ms);
+    void run_enforce_limits();
+    static Array run_optimizer(json energy_object);
+    static void optimize_one_level(json& energy_object, json& results,
+                                   const std::chrono::system_clock::time_point timepoint, const json price_schedule);
+    static json get_sub_element_from_schedule_at_time(json s, const std::chrono::system_clock::time_point timepoint);
+    static void sanitize_object(json& obj_to_sanitize);
+    static double get_current_limit_from_energy_object(const json& limit_object, const json& energy_object);
+    static double get_currently_valid_price_per_kwh(json& energy_object,
+                                                    const std::chrono::system_clock::time_point timepoint_now);
+    static void check_for_children_requesting_power(json& energy_object, const double current_price_per_kwh);
+    static void scale_and_distribute_power(json& energy_object);
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
 // ev@087e516b-124c-48df-94fb-109508c7cda9:v1
 // insert other definitions here
+#define ENERGY_MANAGER_ABSOLUTE_MAX_CURRENT  double(80.0F)
+#define ENERGY_MANAGER_OPTIMIZER_INTERVAL_MS int(1000)
 // ev@087e516b-124c-48df-94fb-109508c7cda9:v1
 
 } // namespace module

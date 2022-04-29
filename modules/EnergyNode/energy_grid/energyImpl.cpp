@@ -2,9 +2,6 @@
 // Copyright 2022 - 2022 Pionix GmbH and Contributors to EVerest
 
 #include "energyImpl.hpp"
-#include <boost/uuid/random_generator.hpp>
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_io.hpp>
 #include <chrono>
 #include <date/date.h>
 
@@ -25,17 +22,16 @@ std::chrono::time_point<std::chrono::system_clock> from_rfc3339(std::string t) {
 void energyImpl::init() {
     energy_price = {};
     initializeEnergyObject();
-    int count = 0;
 
     {
        std::lock_guard<std::mutex> lock(this->energy_mutex);
        json schedule_entry;
        schedule_entry["timestamp"] = to_rfc3339(std::chrono::system_clock::now());
-       schedule_entry["capabilities"] = json::object();
-       schedule_entry["capabilities"]["limit_type"] = "Hard";
-       schedule_entry["capabilities"]["ac_current_A"] = json::object();
-       schedule_entry["capabilities"]["ac_current_A"]["max_current_A"] = mod->config.fuse_limit_A;
-       schedule_entry["capabilities"]["ac_current_A"]["max_phase_count"] = mod->config.phase_count;
+       schedule_entry["request_parameters"] = json::object();
+       schedule_entry["request_parameters"]["limit_type"] = "Hard";
+       schedule_entry["request_parameters"]["ac_current_A"] = json::object();
+       schedule_entry["request_parameters"]["ac_current_A"]["max_current_A"] = mod->config.fuse_limit_A;
+       schedule_entry["request_parameters"]["ac_current_A"]["max_phase_count"] = mod->config.phase_count;
        energy["schedule_import"] = json::array({});
        energy["schedule_import"].push_back(schedule_entry);
     }
@@ -67,8 +63,6 @@ void energyImpl::init() {
                     energy["children"] = json::array();
                     energy["children"].push_back(e);
                 }
-                // EVLOG(error) << "################### energy[]: " << energy;
-                // EVLOG(error) << "################### e[]: " << e;
             }
 
             publish_complete_energy_object();
@@ -99,15 +93,15 @@ void energyImpl::init() {
 
 void energyImpl::publish_complete_energy_object() {
     // join the different schedules to the complete array (with resampling)
-    json energy_complete;
+    json energy_complete = json::object();
     {
         std::lock_guard<std::mutex> lock(this->energy_mutex);
         energy_complete = energy;
-        // LAD: FIXME deal with non set properties!
-        if (!energy["schedule_import"].is_null()) {
-            if (!energy_price.is_null()) {
+
+        if (energy_complete.contains("schedule_import")) {
+            if (energy_price.contains("schedule_import")) {
                 energy_complete["schedule_import"] =
-                    merge_price_into_schedule(energy["schedule_import"], energy_price["optional:schedule_import"]);
+                    merge_price_into_schedule(energy.at("schedule_import"), energy_price.at("schedule_import"));
             }
         }
 
@@ -171,7 +165,7 @@ json energyImpl::merge_price_into_schedule(json schedule, json price) {
 }
 
 void energyImpl::ready() {
-    // publish my own limits at least once
+    // publish own limits at least once
     publish_energy(energy);
 }
 
@@ -195,7 +189,7 @@ void energyImpl::initializeEnergyObject() {
     energy["node_type"] = "Fuse"; // FIXME: node types need to be figured out
 
     // UUID must be unique also beyond this charging station
-    energy["uuid"] = mod->info.id + "_" + boost::uuids::to_string(boost::uuids::random_generator()());
+    energy["uuid"] = mod->info.id;
 }
 
 } // namespace energy_grid

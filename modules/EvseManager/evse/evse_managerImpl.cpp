@@ -20,7 +20,13 @@ void evse_managerImpl::init() {
     limits["nr_of_phases_available"] = 1;
     limits["max_current"] = 0.;
 
+    // Note: Deprecated. Only kept for Node red compatibility, will be removed in the future
+    // Legacy external mqtt pubs
     mod->mqtt.subscribe("/external/cmd/set_max_current", [&charger = mod->charger, this](std::string data) {
+        mod->updateLocalMaxCurrentLimit(std::stof(data));
+    });
+
+    mod->mqtt.subscribe("/external/" + mod->info.id + ":" + mod->info.name + "/cmd/set_max_current", [&charger = mod->charger, this](std::string data) {
         mod->updateLocalMaxCurrentLimit(std::stof(data));
     });
 
@@ -42,6 +48,7 @@ void evse_managerImpl::init() {
                         [&charger = mod->charger](const std::string data) { charger->resumeCharging(); });
 
     mod->mqtt.subscribe("/external/cmd/restart", [&charger = mod->charger](const std::string data) { charger->restart(); });
+    // /Deprecated
 
     mod->r_powermeter->subscribe_powermeter([this](const json p) {
         // Republish data on proxy powermeter struct
@@ -103,6 +110,9 @@ void evse_managerImpl::ready() {
     mod->charger->signalMaxCurrent.connect([this](float c) {
         mod->mqtt.publish("/external/state/max_current", c);
 
+        mod->mqtt.publish("/external/" + mod->info.id + ":" + mod->info.name + "/state/max_current", c);
+
+        limits["uuid"] = mod->info.id;
         limits["max_current"] = c;
         publish_limits(limits);
     });
@@ -110,9 +120,15 @@ void evse_managerImpl::ready() {
     mod->charger->signalState.connect([this](Charger::EvseState s) {
         mod->mqtt.publish("/external/state/state_string", mod->charger->evseStateToString(s));
         mod->mqtt.publish("/external/state/state", static_cast<int>(s));
+
+        mod->mqtt.publish("/external/" + mod->info.id + ":" + mod->info.name + "/state/state_string", mod->charger->evseStateToString(s));
+        mod->mqtt.publish("/external/" + mod->info.id + ":" + mod->info.name + "/state/state", static_cast<int>(s));
     });
 
     mod->charger->signalError.connect([this](Charger::ErrorState s) {
+        mod->mqtt.publish("/external/" + mod->info.id + ":" + mod->info.name + "/state/error_type", static_cast<int>(s));
+        mod->mqtt.publish("/external/" + mod->info.id + ":" + mod->info.name + "/state/error_string", mod->charger->errorStateToString(s));
+
         mod->mqtt.publish("/external/state/error_type", static_cast<int>(s));
         mod->mqtt.publish("/external/state/error_string", mod->charger->errorStateToString(s));
     });

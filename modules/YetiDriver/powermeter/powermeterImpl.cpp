@@ -49,6 +49,10 @@ void powermeterImpl::init() {
         mod->mqtt.publish("/external/powermeter/totalKw", (p.wattL1 + p.wattL2 + p.wattL3) / 1000., 1);
         mod->mqtt.publish("/external/powermeter/totalKWattHr", p.totalWattHr / 1000., 2);
         mod->mqtt.publish("/external/powermeter_json", power_meter_data_to_json(p).dump());
+
+        mod->mqtt.publish("/external/" + mod->info.id + "/powermeter/tempL1", p.tempL1);
+        mod->mqtt.publish("/external/" + mod->info.id + "/powermeter/totalKw", (p.wattL1 + p.wattL2 + p.wattL3) / 1000., 1);
+        mod->mqtt.publish("/external/" + mod->info.id + "/powermeter/totalKWattHr", p.totalWattHr / 1000., 2);
     });
 }
 
