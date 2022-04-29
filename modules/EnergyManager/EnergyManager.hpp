@@ -74,7 +74,7 @@ private:
 // ev@087e516b-124c-48df-94fb-109508c7cda9:v1
 // insert other definitions here
 #define ENERGY_MANAGER_ABSOLUTE_MAX_CURRENT  double(80.0F)
-#define ENERGY_MANAGER_OPTIMIZER_INTERVAL_MS int(5000)
+#define ENERGY_MANAGER_OPTIMIZER_INTERVAL_MS int(1000)
 // ev@087e516b-124c-48df-94fb-109508c7cda9:v1
 
 } // namespace module
