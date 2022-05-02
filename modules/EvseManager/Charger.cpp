@@ -31,6 +31,8 @@ Charger::Charger(const std::unique_ptr<board_support_ACIntf>& r_bsp) : r_bsp(r_b
     currentState = EvseState::Disabled;
     lastState = EvseState::Disabled;
 
+    paused_by_user = false;
+
     currentDrawnByVehicle[0] = 0.;
     currentDrawnByVehicle[1] = 0.;
     currentDrawnByVehicle[2] = 0.;
@@ -124,8 +126,10 @@ void Charger::runStateMachine() {
         // we get Auth (maybe before SLAC matching or during matching)
         if (getAuthorization()) {
             signalEvent(EvseEvent::ChargingStarted);
-            if (powerAvailable()) currentState = EvseState::ChargingPausedEV;
-	    else currentState = EvseState::ChargingPausedEVSE;
+            if (powerAvailable())
+                currentState = EvseState::ChargingPausedEV;
+            else
+                currentState = EvseState::ChargingPausedEVSE;
         }
 
         break;
@@ -138,7 +142,7 @@ void Charger::runStateMachine() {
         checkSoftOverCurrent();
 
         if (!powerAvailable()) {
-            currentState = EvseState::ChargingPausedEVSE;
+            pauseChargingWaitForPower();
             break;
         }
 
@@ -161,7 +165,7 @@ void Charger::runStateMachine() {
         checkSoftOverCurrent();
 
         if (!powerAvailable()) {
-            currentState = EvseState::ChargingPausedEVSE;
+            pauseChargingWaitForPower();
             break;
         }
 
@@ -518,6 +522,7 @@ bool Charger::setMaxCurrent(float c) {
 bool Charger::pauseCharging() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
     if (currentState == EvseState::Charging) {
+        paused_by_user = true;
         currentState = EvseState::ChargingPausedEVSE;
         return true;
     }
@@ -527,6 +532,27 @@ bool Charger::pauseCharging() {
 bool Charger::resumeCharging() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
     if (!cancelled && currentState == EvseState::ChargingPausedEVSE && powerAvailable()) {
+        currentState = EvseState::Charging;
+        return true;
+    }
+    return false;
+}
+
+// pause charging since no power is available at the moment
+bool Charger::pauseChargingWaitForPower() {
+    std::lock_guard<std::recursive_mutex> lock(stateMutex);
+    if (currentState == EvseState::Charging) {
+        paused_by_user = false;
+        currentState = EvseState::ChargingPausedEVSE;
+        return true;
+    }
+    return false;
+}
+
+// resume charging since power became available. Does not resume if user paused charging.
+bool Charger::resumeChargingPowerAvailable() {
+    std::lock_guard<std::recursive_mutex> lock(stateMutex);
+    if (!cancelled && currentState == EvseState::ChargingPausedEVSE && powerAvailable() && !paused_by_user) {
         currentState = EvseState::Charging;
         return true;
     }

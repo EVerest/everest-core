@@ -23,17 +23,18 @@
 #ifndef SRC_EVDRIVERS_CHARGER_H_
 #define SRC_EVDRIVERS_CHARGER_H_
 
-#include <queue>
-#include <mutex>
-#include "utils/thread.hpp"
 #include "ld-ev.hpp"
-#include <sigslot/signal.hpp>
-#include <generated/board_support_AC/Interface.hpp>
+#include "utils/thread.hpp"
 #include <chrono>
+#include <generated/board_support_AC/Interface.hpp>
+#include <mutex>
+#include <queue>
+#include <sigslot/signal.hpp>
 
 namespace module {
 
-enum class ControlPilotEvent {
+enum class ControlPilotEvent
+{
     CarPluggedIn,
     CarRequestedPower,
     PowerOn,
@@ -89,7 +90,9 @@ public:
     bool switchThreePhasesWhileCharging(bool n);
 
     bool pauseCharging();
+    bool pauseChargingWaitForPower();
     bool resumeCharging();
+    bool resumeChargingPowerAvailable();
     bool cancelCharging();
     bool getPausedByEVSE();
 
@@ -97,12 +100,13 @@ public:
 
     bool forceUnlock();
 
-    //float getResidualCurrent();
-    //bool isPowerOn();
+    // float getResidualCurrent();
+    // bool isPowerOn();
 
     // Public states for Hi Level
 
-    enum class EvseEvent {
+    enum class EvseEvent
+    {
         Enabled,
         Disabled,
         SessionStarted,
@@ -116,7 +120,8 @@ public:
         PermanentFault
     };
 
-    enum class ErrorState {
+    enum class ErrorState
+    {
         Error_E,
         Error_DF,
         Error_Relais,
@@ -143,7 +148,8 @@ public:
     // in the future.
     // Use new EvseEvent interface instead.
 
-    enum class EvseState {
+    enum class EvseState
+    {
         Disabled,
         Idle,
         WaitingForAuthentication,
@@ -163,9 +169,7 @@ public:
     sigslot::signal<ErrorState> signalError;
     // /Deprecated
 
-
 private:
-
     // main Charger thread
     Everest::Thread mainThreadHandle;
 
@@ -208,14 +212,16 @@ private:
     bool cancelled;
 
     std::chrono::system_clock::time_point lastPwmUpdate;
-    
+
     float update_pwm_last_dc;
     void update_pwm_now(float dc);
     void update_pwm_max_every_5seconds(float dc);
+
+    bool paused_by_user;
 };
 
 #define CHARGER_ABSOLUTE_MAX_CURRENT double(80.0F)
 
-}
+} // namespace module
 
 #endif // SRC_EVDRIVERS_CHARGER_H_
