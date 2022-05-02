@@ -8,6 +8,7 @@ boot_module(async ({ setup, info, config, mqtt }) => {
   // Subscribe external cmds
   mqtt.subscribe('/carsim/cmd/enable', (mod, en) => {enable(mod, {value: en})} );
   mqtt.subscribe('/carsim/cmd/execute_charging_session', (mod, str) => {execute_charging_session(mod, {value: str});});
+  mqtt.subscribe('/carsim/cmd/modify_charging_session', (mod, str) => {modify_charging_session(mod, {value: str});});
 
   mqtt.subscribe('/carsim/'+ info.id + '/cmd/enable', (mod, en) => {enable(mod, {value: en})} );
   mqtt.subscribe('/carsim/'+ info.id + '/cmd/execute_charging_session', (mod, str) => {execute_charging_session(mod, {value: str});});
@@ -112,6 +113,25 @@ function execute_charging_session(mod, args) {
   // start values
   simdata_reset_defaults(mod);
   addNoise(mod);
+
+  mod.simCommands = parseSimCommands(mod,str);
+  mod.loopCurrentCommand = -1;
+  if (next_command(mod)) mod.executionActive = true;
+}
+
+// Command modify_charging_session
+function modify_charging_session(mod, args) {
+  if (mod === undefined) {
+    evlog.warning('Already received data, but framework is not ready yet');
+    return;
+  }
+
+  if (!mod.enabled) {
+    evlog.warning('Simulation disabled, cannot execute charging simulation.');
+    return;
+  }
+
+  let str = args.value;
 
   mod.simCommands = parseSimCommands(mod,str);
   mod.loopCurrentCommand = -1;
