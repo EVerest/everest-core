@@ -16,9 +16,8 @@ SessionInfo::SessionInfo() : state("Unknown"), start_energy_wh(0), end_energy_wh
 }
 
 bool SessionInfo::is_state_charging(const std::string& current_state) {
-    if (current_state == "SessionStarted" || current_state == "AuthRequired" || current_state == "ChargingStarted" ||
-        current_state == "ChargingPausedEV" || current_state == "ChargingPausedEVSE" ||
-        current_state == "ChargingResumed") {
+    if (current_state == "PluggedIn" || current_state == "AuthRequired" || current_state == "Charging" ||
+        current_state == "ChargingPausedEV" || current_state == "ChargingPausedEVSE") {
         return true;
     }
     return false;
