@@ -1,12 +1,13 @@
 get_filename_component(MODULE_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 add_custom_target(${MODULE_NAME} ALL)
-add_dependencies(${MODULE_NAME} everestjs)
+add_dependencies(${MODULE_NAME} everestjs ${MODULE_NAME}_INSTALL_NODE_MODULES)
+
 set(EVEREST_MOD_DESTINATION "modules/${MODULE_NAME}")
 
-add_custom_target(
-    ${MODULE_NAME}_package_json ALL
-    COMMENT "Copy package.json of module ${MODULE_NAME} to build dir"
-    COMMAND ${RSYNC} -av ${CMAKE_CURRENT_SOURCE_DIR}/package.json ${CMAKE_CURRENT_BINARY_DIR}/package.json
+find_program(
+    RSYNC
+    rsync
+    REQUIRED
 )
 
 find_program(
@@ -15,12 +16,27 @@ find_program(
     REQUIRED
 )
 
-add_custom_target(
-    ${MODULE_NAME}_npm_dependencies ALL
+add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/package.json
+    MAIN_DEPENDENCY package.json
+    COMMENT "Copy package.json of module ${MODULE_NAME} to build dir"
+    COMMAND ${RSYNC} -avq ${CMAKE_CURRENT_SOURCE_DIR}/package.json ${CMAKE_CURRENT_BINARY_DIR}/package.json
+)
+
+add_custom_command(
+    OUTPUT .installed
+    MAIN_DEPENDENCY ${CMAKE_CURRENT_BINARY_DIR}/package.json
     COMMENT "Installing dependencies of module ${MODULE_NAME} from package.json"
-    COMMAND ${NPM} install
+    COMMAND ${NPM} install > npm.log 2>&1 || ${CMAKE_COMMAND} -E cat ${CMAKE_CURRENT_BINARY_DIR}/npm.log
+    COMMAND ${CMAKE_COMMAND} -E touch .installed
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
+
+add_custom_target(
+    ${MODULE_NAME}_INSTALL_NODE_MODULES
+    DEPENDS .installed
+)
+
 
 install(
     DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/node_modules
