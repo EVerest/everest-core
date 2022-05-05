@@ -4,6 +4,11 @@ project(log VERSION 0.1
             DESCRIPTION "EVerest logging library"
             LANGUAGES CXX C)
 
+# enable compiler warnings
+add_compile_options(-Wall -Wextra -pedantic)
+# unused functions in a library should not be problematic
+add_compile_options(-Wno-unused)
+
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 if (NOT CMAKE_BUILD_TYPE)

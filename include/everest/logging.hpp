@@ -62,6 +62,6 @@ std::string trace();
 
 BOOST_LOG_INLINE_GLOBAL_LOGGER_DEFAULT(
     global_logger,
-    boost::log::BOOST_LOG_VERSION_NAMESPACE::sources::severity_logger_mt<Everest::Logging::severity_level>);
+    boost::log::BOOST_LOG_VERSION_NAMESPACE::sources::severity_logger_mt<Everest::Logging::severity_level>)
 
 #endif // LOGGING_HPP
