@@ -15,9 +15,9 @@ The following table shows the current support for the listed feature profiles an
 
 | Application Note | Supported |
 | --- | --- |
-| OCPP 1.6 Security Whitepaper (3rd edition) | :yellow_circle: partially<br>Supported: Security Profiles 1 & 2 (TLS with HTTP Basic Authentication)<br>No support yet for Profile 3 (TLS with Client Side Certificates)|
-| Using [ISO 15118 Plug & Charge with OCPP 1.6]  (https://www.openchargealliance.org/uploads/files/ocpp_1_6_ISO_15118_v10.pdf)| :x: |
-| Using [Autocharge]  (https://github.com/openfastchargingalliance/openfastchargingalliance/blob/master/autocharge-final.pdf)| :x: |
+| [OCPP 1.6 Security Whitepaper (3rd edition)](https://www.openchargealliance.org/uploads/files/OCPP-1.6-security-whitepaper-edition-3.zip) | :yellow_circle: partially<br>Supported: Security Profiles 1 & 2 (TLS with HTTP Basic Authentication)<br>No support yet for Profile 3 (TLS with Client Side Certificates)|
+| [Using ISO 15118 Plug & Charge with OCPP 1.6](https://www.openchargealliance.org/uploads/files/ocpp_1_6_ISO_15118_v10.pdf)| :x: |
+| [Autocharge](https://github.com/openfastchargingalliance/openfastchargingalliance/blob/master/autocharge-final.pdf)| :x: |
 
 
 All documentation and the issue tracking can be found in our main repository here: https://github.com/EVerest/everest
