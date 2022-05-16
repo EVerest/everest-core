@@ -56,3 +56,9 @@ install(TARGETS everest
     LIBRARY
     DESTINATION lib
 )
+
+target_link_libraries(everest
+    PRIVATE
+        date::date
+        date::date-tz
+)

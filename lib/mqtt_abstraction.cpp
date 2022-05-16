@@ -61,7 +61,8 @@ std::future<void> MQTTAbstraction::spawn_main_loop_thread() {
     return mqtt_abstraction.spawn_main_loop_thread();
 }
 
-void MQTTAbstraction::register_handler(const std::string& topic, std::shared_ptr<TypedHandler> handler,bool allow_multiple_handlers, QOS qos) {
+void MQTTAbstraction::register_handler(const std::string& topic, std::shared_ptr<TypedHandler> handler,
+                                       bool allow_multiple_handlers, QOS qos) {
     BOOST_LOG_FUNCTION();
     mqtt_abstraction.register_handler(topic, handler, allow_multiple_handlers, qos);
 }

@@ -8,10 +8,11 @@
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
-#include <date/date.h>
 #include <everest/logging.hpp>
 #include <fmt/format.h>
 
+#include <date/date.h>
+#include <date/tz.h>
 #include <framework/everest.hpp>
 #include <utils/conversions.hpp>
 
@@ -70,7 +71,7 @@ void Everest::heartbeat() {
 
     while (this->ready_received) {
         std::ostringstream now;
-        now << std::chrono::system_clock::now();
+        now << date::utc_clock::now();
         this->mqtt_abstraction.publish(heartbeat_topic, json(now.str()));
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
@@ -234,7 +235,7 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
     this->mqtt_abstraction.publish(cmd_topic, cmd_publish_data);
 
     // wait for result future
-    std::chrono::system_clock::time_point res_wait = std::chrono::system_clock::now() + this->remote_cmd_res_timeout;
+    std::chrono::time_point<date::utc_clock> res_wait = date::utc_clock::now() + this->remote_cmd_res_timeout;
     std::future_status res_future_status;
     do {
         res_future_status = res_future.wait_until(res_wait);

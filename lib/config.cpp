@@ -735,7 +735,8 @@ void Config::resolve_all_requirements() {
                 if (requirement_interface != connection_provides["interface"]) {
                     EVLOG_AND_THROW(EverestConfigError(fmt::format(
                         "Requirement '{}' of module {} not fulfilled by connection to module {}: required interface "
-                        "'{}' is not provided by this implementation! Connected implementation provides interface '{}'.",
+                        "'{}' is not provided by this implementation! Connected implementation provides interface "
+                        "'{}'.",
                         requirement_id, printable_identifier(module_id),
                         printable_identifier(connection["module_id"], connection_impl_id), requirement_interface,
                         connection_provides["interface"].get<std::string>())));

@@ -234,8 +234,7 @@ static Napi::Value mqtt_subscribe(const Napi::CallbackInfo& info) {
     return env.Undefined();
 }
 
-static Napi::Value call_cmd(const Requirement& req, const std::string& cmd_name,
-                            const Napi::CallbackInfo& info) {
+static Napi::Value call_cmd(const Requirement& req, const std::string& cmd_name, const Napi::CallbackInfo& info) {
     BOOST_LOG_FUNCTION();
 
     const auto& env = info.Env();
@@ -540,26 +539,32 @@ static Napi::Object Init(Napi::Env env, Napi::Object exports) {
     // setup logging functions
     //
     Napi::Object log = Napi::Object::New(env);
+
     log.DefineProperty(Napi::PropertyDescriptor::Value(
         "debug",
         Napi::Function::New(env, [](const Napi::CallbackInfo& info) { EVLOG(debug) << extract_logstring(info); }),
         napi_enumerable));
+
     log.DefineProperty(Napi::PropertyDescriptor::Value(
         "info",
         Napi::Function::New(env, [](const Napi::CallbackInfo& info) { EVLOG(info) << extract_logstring(info); }),
         napi_enumerable));
+
     log.DefineProperty(Napi::PropertyDescriptor::Value(
         "warning",
         Napi::Function::New(env, [](const Napi::CallbackInfo& info) { EVLOG(warning) << extract_logstring(info); }),
         napi_enumerable));
+
     log.DefineProperty(Napi::PropertyDescriptor::Value(
         "error",
         Napi::Function::New(env, [](const Napi::CallbackInfo& info) { EVLOG(error) << extract_logstring(info); }),
         napi_enumerable));
+
     log.DefineProperty(Napi::PropertyDescriptor::Value(
         "critical",
         Napi::Function::New(env, [](const Napi::CallbackInfo& info) { EVLOG(critical) << extract_logstring(info); }),
         napi_enumerable));
+
     exports.DefineProperty(Napi::PropertyDescriptor::Value("log", log, napi_enumerable));
 
     exports.DefineProperty(
