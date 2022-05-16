@@ -138,5 +138,8 @@
                 }
             ]
         }
+    },
+    "setup": {
+        "module": "Setup"
     }
 }
