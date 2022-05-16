@@ -24,7 +24,7 @@
         "StopTransactionOnInvalidId": true,
         "StopTxnAlignedData": "Energy.Active.Import.Register",
         "StopTxnSampledData": "Energy.Active.Import.Register",
-        "SupportedFeatureProfiles": "Core,FirmwareManagement,RemoteTrigger",
+        "SupportedFeatureProfiles": "Core,FirmwareManagement,Reservation,RemoteTrigger",
         "TransactionMessageAttempts": 1,
         "TransactionMessageRetryInterval": 10,
         "UnlockConnectorOnEVSideDisconnect": true

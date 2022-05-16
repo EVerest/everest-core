@@ -408,7 +408,7 @@ AvailabilityType ChargePointConfiguration::getConnectorAvailability(int32_t conn
         },
         (void*)sql_promise, &error);
 
-    std::chrono::system_clock::time_point sql_wait = std::chrono::system_clock::now() + ocpp1_6::future_wait_seconds;
+    std::chrono::time_point<date::utc_clock> sql_wait = date::utc_clock::now() + ocpp1_6::future_wait_seconds;
     std::future_status sql_future_status;
     do {
         sql_future_status = sql_future.wait_until(sql_wait);
@@ -446,7 +446,7 @@ std::map<int32_t, ocpp1_6::AvailabilityType> ChargePointConfiguration::getConnec
         },
         (void*)sql_promise, &error);
 
-    std::chrono::system_clock::time_point sql_wait = std::chrono::system_clock::now() + ocpp1_6::future_wait_seconds;
+    std::chrono::time_point<date::utc_clock> sql_wait = date::utc_clock::now() + ocpp1_6::future_wait_seconds;
     std::future_status sql_future_status;
     do {
         sql_future_status = sql_future.wait_until(sql_wait);

@@ -8,6 +8,8 @@
 #include <boost/optional.hpp>
 #include <nlohmann/json.hpp>
 
+#include <date/date.h>
+#include <date/tz.h>
 #include <ocpp1_6/enums.hpp>
 #include <ocpp1_6/types_internal.hpp>
 
@@ -317,7 +319,7 @@ public:
     ~DateTime() = default;
 
     /// \brief Creates a new DateTime object from the given \p timepoint
-    explicit DateTime(std::chrono::time_point<std::chrono::system_clock> timepoint);
+    explicit DateTime(std::chrono::time_point<date::utc_clock> timepoint);
 
     /// \brief Creates a new DateTime object from the given \p timepoint_str
     explicit DateTime(const std::string& timepoint_str);

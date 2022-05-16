@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+#include <everest/logging.hpp>
 #include <iostream>
 #include <ocpp1_6/types_internal.hpp>
 #include <sstream>
 #include <stdexcept>
-
-#include <date/date.h>
-#include <everest/logging.hpp>
 
 namespace ocpp1_6 {
 CiString::CiString(const std::string& data, size_t length) : length(length) {
@@ -41,10 +39,10 @@ std::ostream& operator<<(std::ostream& os, const CiString& str) {
 }
 
 DateTimeImpl::DateTimeImpl() {
-    this->timepoint = std::chrono::system_clock::now();
+    this->timepoint = date::utc_clock::now();
 }
 
-DateTimeImpl::DateTimeImpl(std::chrono::time_point<std::chrono::system_clock> timepoint) : timepoint(timepoint) {
+DateTimeImpl::DateTimeImpl(std::chrono::time_point<date::utc_clock> timepoint) : timepoint(timepoint) {
 }
 
 DateTimeImpl::DateTimeImpl(const std::string& timepoint_str) {
@@ -73,7 +71,7 @@ void DateTimeImpl::from_rfc3339(const std::string& timepoint_str) {
     }
 }
 
-std::chrono::time_point<std::chrono::system_clock> DateTimeImpl::to_time_point() {
+std::chrono::time_point<date::utc_clock> DateTimeImpl::to_time_point() {
     return this->timepoint;
 }
 

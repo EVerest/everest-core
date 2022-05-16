@@ -2,7 +2,6 @@
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include <thread>
 
-#include <date/date.h>
 #include <everest/logging.hpp>
 
 #include <ocpp1_6/charge_point.hpp>
@@ -119,7 +118,7 @@ void ChargePoint::update_clock_aligned_meter_values_interval() {
         return;
     }
     auto seconds_in_a_day = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::hours(24)).count();
-    auto now = std::chrono::system_clock::now();
+    auto now = date::utc_clock::now();
     auto midnight = date::floor<date::days>(now);
     auto diff = now - midnight;
     auto start = std::chrono::duration_cast<std::chrono::seconds>(diff / clock_aligned_data_interval) *
@@ -153,7 +152,7 @@ MeterValue ChargePoint::get_latest_meter_value(int32_t connector, std::vector<Me
     if (this->power_meter.count(connector) != 0) {
         auto power_meter_value = this->power_meter[connector];
         auto timestamp =
-            std::chrono::system_clock::time_point(std::chrono::seconds(power_meter_value["timestamp"].get<int>()));
+            std::chrono::time_point<date::utc_clock>(std::chrono::seconds(power_meter_value["timestamp"].get<int>()));
         filtered_meter_value.timestamp = DateTime(timestamp);
         EVLOG(debug) << "PowerMeter value for connector: " << connector << ": " << power_meter_value;
 
@@ -573,6 +572,14 @@ void ChargePoint::handle_message(const json& json_message, MessageType message_t
         this->handleUpdateFirmwareRequest(json_message);
         break;
 
+    case MessageType::ReserveNow:
+        this->handleReserveNowRequest(json_message);
+        break;
+
+    case MessageType::CancelReservation:
+        this->handleCancelReservationRequest(json_message);
+        break;
+
     default:
         // TODO(kai): not implemented error?
         break;
@@ -585,7 +592,7 @@ void ChargePoint::handleBootNotificationResponse(CallResult<BootNotificationResp
 
     this->registration_status = call_result.msg.status;
     this->initialized = true;
-    this->boot_time = std::chrono::system_clock::now();
+    this->boot_time = date::utc_clock::now();
     if (call_result.msg.interval > 0) {
         this->configuration->setHeartbeatInterval(call_result.msg.interval);
     }
@@ -986,7 +993,7 @@ void ChargePoint::handleSetChargingProfileRequest(Call<SetChargingProfileRequest
                             // we only accept recurring schedules with a recurrency kind
                             // here we don't neccesarily need a startSchedule, but if it is missing we just assume
                             // 0:00:00 UTC today
-                            auto midnight = date::floor<date::days>(std::chrono::system_clock::now());
+                            auto midnight = date::floor<date::days>(date::utc_clock::now());
                             auto start_schedule = DateTime(midnight);
                             if (!call.msg.csChargingProfiles.chargingSchedule.startSchedule) {
                                 EVLOG(debug)
@@ -1051,7 +1058,7 @@ void ChargePoint::handleGetCompositeScheduleRequest(Call<GetCompositeScheduleReq
     if (call.msg.connectorId > number_of_connectors || call.msg.connectorId < 0) {
         response.status = GetCompositeScheduleStatus::Rejected;
     } else {
-        auto start_time = std::chrono::system_clock::now();
+        auto start_time = date::utc_clock::now();
         auto start_datetime = DateTime(start_time);
         auto midnight_of_start_time = date::floor<date::days>(start_time);
         auto duration = std::chrono::seconds(call.msg.duration);
@@ -1326,6 +1333,27 @@ void ChargePoint::handleUpdateFirmwareRequest(Call<UpdateFirmwareRequest> call) 
     this->send<UpdateFirmwareResponse>(call_result);
 }
 
+void ChargePoint::handleReserveNowRequest(Call<ReserveNowRequest> call) {
+    ReserveNowResponse response;
+    response.status = ReservationStatus::Rejected;
+    if (this->reserve_now_callback != nullptr) {
+        response.status = this->reserve_now_callback(call.msg.reservationId, call.msg.connectorId, call.msg.expiryDate,
+                                                     call.msg.idTag, call.msg.parentIdTag);
+    }
+    CallResult<ReserveNowResponse> call_result(response, call.uniqueId);
+    this->send<ReserveNowResponse>(call_result);
+}
+
+void ChargePoint::handleCancelReservationRequest(Call<CancelReservationRequest> call) {
+    CancelReservationResponse response;
+    response.status = CancelReservationStatus::Rejected;
+    if (this->cancel_reservation_callback != nullptr) {
+        response.status = this->cancel_reservation_callback(call.msg.reservationId);
+    }
+    CallResult<CancelReservationResponse> call_result(response, call.uniqueId);
+    this->send<CancelReservationResponse>(call_result);
+}
+
 bool ChargePoint::allowed_to_send_message(json::array_t message) {
     auto message_type = conversions::string_to_messagetype(message.at(CALL_ACTION));
 
@@ -1337,9 +1365,9 @@ bool ChargePoint::allowed_to_send_message(json::array_t message) {
     }
 
     if (this->registration_status == RegistrationStatus::Rejected) {
-        std::chrono::system_clock::time_point retry_time =
+        std::chrono::time_point<date::utc_clock> retry_time =
             this->boot_time + std::chrono::seconds(this->configuration->getHeartbeatInterval());
-        if (std::chrono::system_clock::now() < retry_time) {
+        if (date::utc_clock::now() < retry_time) {
             using date::operator<<;
             std::ostringstream oss;
             oss << "status is rejected and retry time not reached. Messages can be sent again at: " << retry_time;
@@ -1462,8 +1490,8 @@ DataTransferResponse ChargePoint::data_transfer(const CiString255Type& vendorId,
     }
     if (enhanced_message.offline) {
         // The charge point is offline or has a bad connection.
-        response.status = DataTransferStatus::Rejected; // Rejected is not completely correct, but the best we have to
-                                                        // indicate an error
+        response.status = DataTransferStatus::Rejected; // Rejected is not completely correct, but the best we have
+                                                        // to indicate an error
     }
 
     return response;
@@ -1483,22 +1511,22 @@ void ChargePoint::receive_power_meter(int32_t connector, json powermeter) {
 
 void ChargePoint::receive_max_current_offered(int32_t connector, double max_current) {
     std::lock_guard<std::mutex> lock(power_meter_mutex);
-    // TODO(kai): uses power meter mutex because the reading context is similar, think about storing this information in
-    // a unified struct
+    // TODO(kai): uses power meter mutex because the reading context is similar, think about storing this
+    // information in a unified struct
     this->max_current_offered[connector] = max_current;
 }
 
 void ChargePoint::receive_number_of_phases_available(int32_t connector, double number_of_phases) {
     std::lock_guard<std::mutex> lock(power_meter_mutex);
-    // TODO(kai): uses power meter mutex because the reading context is similar, think about storing this information in
-    // a unified struct
+    // TODO(kai): uses power meter mutex because the reading context is similar, think about storing this
+    // information in a unified struct
     this->number_of_phases_available[connector] = number_of_phases;
 }
 
 bool ChargePoint::start_transaction(int32_t connector) {
     AvailabilityType connector_availability = this->configuration->getConnectorAvailability(connector);
     if (connector_availability == AvailabilityType::Inoperative) {
-        EVLOG(error) << "Connector " << connector << " is unavailable.";
+        EVLOG(error) << "Connector " << connector << " is inoperative.";
         return false;
     }
 
@@ -1782,12 +1810,15 @@ void ChargePoint::register_cancel_charging_callback(const std::function<bool(int
 }
 
 void ChargePoint::register_reserve_now_callback(
-    const std::function<bool(int32_t connector, CiString20Type idTag, std::chrono::seconds timeout)>& callback) {
-    // FIXME(kai): implement
+    const std::function<ReservationStatus(int32_t reservation_id, int32_t connector, ocpp1_6::DateTime expiryDate,
+                                          ocpp1_6::CiString20Type idTag,
+                                          boost::optional<ocpp1_6::CiString20Type> parent_id)>& callback) {
+    this->reserve_now_callback = callback;
 }
 
-void ChargePoint::register_cancel_reservation_callback(const std::function<bool(int32_t connector)>& callback) {
-    // FIXME(kai): implement
+void ChargePoint::register_cancel_reservation_callback(
+    const std::function<CancelReservationStatus(int32_t connector)>& callback) {
+    this->cancel_reservation_callback = callback;
 }
 
 void ChargePoint::register_unlock_connector_callback(const std::function<bool(int32_t connector)>& callback) {

@@ -3,8 +3,8 @@
 #include <ocpp1_6/charge_point_state_machine.hpp>
 #include <ocpp1_6/enums.hpp>
 
-#include <stddef.h>
 #include <cstdint>
+#include <stddef.h>
 #include <stdexcept>
 #include <utility>
 
@@ -265,7 +265,7 @@ void ChargePointStates::submit_event(int32_t connector, EventBaseType event) {
 ChargePointStatus ChargePointStates::get_state(int32_t connector) {
     if (connector > 0 && connector < static_cast<int32_t>(this->state_machines.size())) {
         return this->state_machines.at(connector)->state_machine->get_state();
-    }else if (connector == 0) {
+    } else if (connector == 0) {
         return ChargePointStatus::Available;
     }
     return ChargePointStatus::Unavailable;

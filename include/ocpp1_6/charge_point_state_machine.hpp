@@ -3,11 +3,11 @@
 #ifndef OCPP1_6_CHARGE_POINT_STATE_MACHINE_HPP
 #define OCPP1_6_CHARGE_POINT_STATE_MACHINE_HPP
 
-#include <stdint.h>
 #include <functional>
 #include <map>
 #include <memory>
 #include <mutex>
+#include <stdint.h>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -21,7 +21,8 @@
 
 namespace ocpp1_6 {
 
-enum class ChargePointStatusTransition {
+enum class ChargePointStatusTransition
+{
     BecomeAvailable,
     UsageInitiated,
     StartCharging,
@@ -44,14 +45,10 @@ enum class ChargePointStatusTransition {
 using EventTypeFactory = fsm::utils::IdentifiableTypeFactory<ChargePointStatusTransition>;
 
 using Event_UsageInitiated = EventTypeFactory::Derived<ChargePointStatusTransition::UsageInitiated>;
-using Event_StartCharging =
-    EventTypeFactory::Derived<ChargePointStatusTransition::StartCharging>;
-using Event_PauseChargingEV =
-    EventTypeFactory::Derived<ChargePointStatusTransition::PauseChargingEV>;
-using Event_PauseChargingEVSE =
-    EventTypeFactory::Derived<ChargePointStatusTransition::PauseChargingEVSE>;
-using Event_ReserveConnector =
-    EventTypeFactory::Derived<ChargePointStatusTransition::ReserveConnector>;
+using Event_StartCharging = EventTypeFactory::Derived<ChargePointStatusTransition::StartCharging>;
+using Event_PauseChargingEV = EventTypeFactory::Derived<ChargePointStatusTransition::PauseChargingEV>;
+using Event_PauseChargingEVSE = EventTypeFactory::Derived<ChargePointStatusTransition::PauseChargingEVSE>;
+using Event_ReserveConnector = EventTypeFactory::Derived<ChargePointStatusTransition::ReserveConnector>;
 using Event_ChangeAvailabilityToUnavailable =
     EventTypeFactory::Derived<ChargePointStatusTransition::ChangeAvailabilityToUnavailable>;
 using Event_FaultDetected = EventTypeFactory::Derived<ChargePointStatusTransition::FaultDetected>;
@@ -70,7 +67,8 @@ using Event_I8_ReturnToUnavailable = EventTypeFactory::Derived<ChargePointStatus
 using EventBufferType = std::aligned_union_t<0, Event_UsageInitiated>;
 using EventBaseType = EventTypeFactory::Base;
 
-enum class State {
+enum class State
+{
     Available,
     Preparing,
     Charging,

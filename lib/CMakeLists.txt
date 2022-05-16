@@ -29,7 +29,8 @@ target_link_libraries(ocpp
         Boost::filesystem
         Boost::system
         Boost::thread
-        date
+        date::date
+        date::date-tz
         everest::log
         everest::timer
         fsm::fsm

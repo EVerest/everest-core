@@ -5,6 +5,8 @@
 
 #include <chrono>
 #include <cstddef>
+#include <date/date.h>
+#include <date/tz.h>
 #include <iostream>
 #include <string>
 
@@ -68,16 +70,16 @@ public:
 /// \brief Contains a DateTime implementation that can parse and create RFC 3339 compatible strings
 class DateTimeImpl {
 private:
-    std::chrono::time_point<std::chrono::system_clock> timepoint;
+    std::chrono::time_point<date::utc_clock> timepoint;
 
 public:
-    /// \brief Creates a new DateTimeImpl object with the current system time
+    /// \brief Creates a new DateTimeImpl object with the current utc time
     DateTimeImpl();
 
     ~DateTimeImpl() = default;
 
     /// \brief Creates a new DateTimeImpl object from the given \p timepoint
-    explicit DateTimeImpl(std::chrono::time_point<std::chrono::system_clock> timepoint);
+    explicit DateTimeImpl(std::chrono::time_point<date::utc_clock> timepoint);
 
     /// \brief Creates a new DateTimeImpl object from the given \p timepoint_str
     explicit DateTimeImpl(const std::string& timepoint_str);
@@ -91,7 +93,7 @@ public:
 
     /// \brief Converts this DateTimeImpl to a std::chrono::time_point
     /// \returns a std::chrono::time_point
-    std::chrono::time_point<std::chrono::system_clock> to_time_point();
+    std::chrono::time_point<date::utc_clock> to_time_point();
 
     /// \brief Writes the given DateTimeImpl \p dt to the given output stream \p os as a RFC 3339 compatible string
     /// \returns an output stream with the DateTimeImpl as a RFC 3339 compatible string written to

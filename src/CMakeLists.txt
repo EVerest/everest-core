@@ -5,6 +5,8 @@ target_link_libraries(charge_point
         ocpp ${CMAKE_DL_LIBS}
         Boost::thread
         Boost::program_options
+        date::date
+        date::date-tz
         everest::log
         sqlite3
 )

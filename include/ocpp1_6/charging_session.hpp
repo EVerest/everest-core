@@ -268,15 +268,6 @@ public:
     std::vector<MeterValue> get_clock_aligned_meter_values(int32_t connector);
 };
 
-// this manages reservations, while they are tied to a connector, this could still be connector 0 (if the appropriate
-// config key is set) aka any connector on the charge point a reservation can also be tied to a specific connector, but
-// there can be some "mobility" when the same reservation (with the identical id) changes to a different one
-class Reservations {
-private:
-public:
-    Reservations();
-};
-
 } // namespace ocpp1_6
 
 #endif // OCPP1_6_CHARGING_SESSION_HPP

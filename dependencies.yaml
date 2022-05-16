@@ -25,7 +25,8 @@ libtimer:
 date:
   git: https://github.com/HowardHinnant/date.git
   git_tag: v3.0.1
-  options: []
+  options: ["BUILD_TZ_LIB ON", "HAS_REMOTE_API 0", "USE_AUTOLOAD 0", "USE_OS_TZDB 1"]
+
 websocketpp:
   git: https://github.com/zaphoyd/websocketpp.git
   git_tag: 0.8.2

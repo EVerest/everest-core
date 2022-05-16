@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
-#include <string>
 #include <boost/optional/optional.hpp>
 #include <chrono>
 #include <sstream>
 #include <stdexcept>
+#include <string>
 
 #include <nlohmann/json.hpp>
 
@@ -539,7 +539,7 @@ void from_json(const json& j, MessageId& k) {
 DateTime::DateTime() : DateTimeImpl() {
 }
 
-DateTime::DateTime(std::chrono::time_point<std::chrono::system_clock> timepoint) : DateTimeImpl(timepoint) {
+DateTime::DateTime(std::chrono::time_point<date::utc_clock> timepoint) : DateTimeImpl(timepoint) {
 }
 
 DateTime::DateTime(const std::string& timepoint_str) : DateTimeImpl(timepoint_str) {
@@ -568,7 +568,7 @@ bool MeasurandWithPhase::operator==(MeasurandWithPhase measurand_with_phase) {
         }
     }
     return false;
-};
+}
 
 CallError::CallError() {
 }

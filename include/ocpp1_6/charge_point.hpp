@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include <chrono>
+#include <date/date.h>
+#include <date/tz.h>
 #include <future>
 #include <iostream>
 #include <mutex>
@@ -16,6 +18,7 @@
 #include <ocpp1_6/message_queue.hpp>
 #include <ocpp1_6/messages/Authorize.hpp>
 #include <ocpp1_6/messages/BootNotification.hpp>
+#include <ocpp1_6/messages/CancelReservation.hpp>
 #include <ocpp1_6/messages/ChangeAvailability.hpp>
 #include <ocpp1_6/messages/ChangeConfiguration.hpp>
 #include <ocpp1_6/messages/ClearCache.hpp>
@@ -30,6 +33,7 @@
 #include <ocpp1_6/messages/MeterValues.hpp>
 #include <ocpp1_6/messages/RemoteStartTransaction.hpp>
 #include <ocpp1_6/messages/RemoteStopTransaction.hpp>
+#include <ocpp1_6/messages/ReserveNow.hpp>
 #include <ocpp1_6/messages/Reset.hpp>
 #include <ocpp1_6/messages/SetChargingProfile.hpp>
 #include <ocpp1_6/messages/StartTransaction.hpp>
@@ -50,7 +54,7 @@ private:
     std::unique_ptr<MessageQueue> message_queue;
     int32_t heartbeat_interval;
     bool initialized;
-    std::chrono::system_clock::time_point boot_time;
+    std::chrono::time_point<date::utc_clock> boot_time;
     std::set<MessageType> allowed_message_types;
     std::mutex allowed_message_types_mutex;
     RegistrationStatus registration_status;
@@ -59,7 +63,7 @@ private:
     std::unique_ptr<Everest::SteadyTimer> heartbeat_timer;
     std::unique_ptr<Everest::SteadyTimer> boot_notification_timer;
     std::unique_ptr<Everest::SystemTimer> clock_aligned_meter_values_timer;
-    std::chrono::time_point<std::chrono::system_clock> clock_aligned_meter_values_time_point;
+    std::chrono::time_point<date::utc_clock> clock_aligned_meter_values_time_point;
     std::map<int32_t, std::vector<MeterValue>> meter_values;
     std::mutex meter_values_mutex;
     std::map<int32_t, json> power_meter;
@@ -100,6 +104,10 @@ private:
     std::function<bool(int32_t connector, double max_current)> set_max_current_callback;
     std::function<std::string(std::string location)> upload_diagnostics_callback;
     std::function<void(std::string location)> update_firmware_callback;
+    std::function<ReservationStatus(int32_t reservation_id, int32_t connector, ocpp1_6::DateTime expiryDate,
+                                    ocpp1_6::CiString20Type idTag, boost::optional<ocpp1_6::CiString20Type> parent_id)>
+        reserve_now_callback;
+    std::function<CancelReservationStatus(int32_t reservationId)> cancel_reservation_callback;
 
     /// \brief This function is called after a successful connection to the Websocket
     void connected_callback();
@@ -148,6 +156,14 @@ private:
     void handleSetChargingProfileRequest(Call<SetChargingProfileRequest> call);
     void handleGetCompositeScheduleRequest(Call<GetCompositeScheduleRequest> call);
     void handleClearChargingProfileRequest(Call<ClearChargingProfileRequest> call);
+
+    /// \brief ReserveNow.req(connectorId, expiryDate, idTag, reservationId, [parentIdTag]): tries to perform the
+    /// reservation and sends a reservation response. The reservation response: ReserveNow::Status
+    void handleReserveNowRequest(Call<ReserveNowRequest> call);
+
+    /// \brief Receives CancelReservation.req(reservationId)
+    /// The reservation response:  CancelReservationStatus: `Accepted` if the reservationId was found, else `Rejected`
+    void handleCancelReservationRequest(Call<CancelReservationRequest> call);
 
     // RemoteTrigger profile
     void handleTriggerMessageRequest(Call<TriggerMessageRequest> call);
@@ -221,6 +237,9 @@ public:
     /// \returns true if this state change was possible
     bool plug_disconnected(int32_t connector);
 
+    // /// EV/EVSE indicates that charging has finished
+    // bool stop_charging(int32_t connector);
+
     /// EV/EVSE indicates that an error with the given \p error_code occured
     /// \returns true if this state change was possible
     bool error(int32_t connector, ChargePointErrorCode error_code);
@@ -254,10 +273,13 @@ public:
     /// \brief registers a \p callback function that can be used to reserve a connector for a idTag until a timeout is
     /// reached
     void register_reserve_now_callback(
-        const std::function<bool(int32_t connector, CiString20Type idTag, std::chrono::seconds timeout)>& callback);
+        const std::function<ReservationStatus(int32_t reservation_id, int32_t connector, ocpp1_6::DateTime expiryDate,
+                                              ocpp1_6::CiString20Type idTag,
+                                              boost::optional<ocpp1_6::CiString20Type> parent_id)>& callback);
 
     /// \brief registers a \p callback function that can be used to cancel a reservation on a connector
-    void register_cancel_reservation_callback(const std::function<bool(int32_t connector)>& callback);
+    void
+    register_cancel_reservation_callback(const std::function<CancelReservationStatus(int32_t connector)>& callback);
 
     /// registers a \p callback function that can be used to unlock the connector
     void register_unlock_connector_callback(const std::function<bool(int32_t connector)>& callback);
