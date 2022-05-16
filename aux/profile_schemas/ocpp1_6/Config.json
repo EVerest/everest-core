@@ -18,6 +18,10 @@
         "SmartCharging": {
             "type": "object",
             "$ref": "SmartCharging.json"
+        },
+        "FirmwareManagement": {
+            "type": "object",
+            "$ref": "FirmwareManagement.json"
         }
     },
     "additionalProperties": false

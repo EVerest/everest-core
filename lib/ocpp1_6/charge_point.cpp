@@ -14,7 +14,9 @@ namespace ocpp1_6 {
 ChargePoint::ChargePoint(std::shared_ptr<ChargePointConfiguration> configuration) :
     heartbeat_interval(configuration->getHeartbeatInterval()),
     initialized(false),
-    registration_status(RegistrationStatus::Pending) {
+    registration_status(RegistrationStatus::Pending),
+    diagnostics_status(DiagnosticsStatus::Idle),
+    firmware_status(FirmwareStatus::Idle) {
 
     this->configuration = configuration;
     this->connection_state = ChargePointConnectionState::Disconnected;
@@ -561,6 +563,14 @@ void ChargePoint::handle_message(const json& json_message, MessageType message_t
 
     case MessageType::TriggerMessage:
         this->handleTriggerMessageRequest(json_message);
+        break;
+
+    case MessageType::GetDiagnostics:
+        this->handleGetDiagnosticsRequest(json_message);
+        break;
+
+    case MessageType::UpdateFirmware:
+        this->handleUpdateFirmwareRequest(json_message);
         break;
 
     default:
@@ -1240,10 +1250,10 @@ void ChargePoint::handleTriggerMessageRequest(Call<TriggerMessageRequest> call) 
         response.status = TriggerMessageStatus::Accepted;
         break;
     case MessageTrigger::DiagnosticsStatusNotification:
-        response.status = TriggerMessageStatus::NotImplemented;
+        response.status = TriggerMessageStatus::Accepted;
         break;
     case MessageTrigger::FirmwareStatusNotification:
-        response.status = TriggerMessageStatus::NotImplemented;
+        response.status = TriggerMessageStatus::Accepted;
         break;
     case MessageTrigger::Heartbeat:
         response.status = TriggerMessageStatus::Accepted;
@@ -1274,6 +1284,12 @@ void ChargePoint::handleTriggerMessageRequest(Call<TriggerMessageRequest> call) 
     case MessageTrigger::BootNotification:
         this->boot_notification();
         break;
+    case MessageTrigger::DiagnosticsStatusNotification:
+        this->send_diagnostic_status_notification(this->diagnostics_status);
+        break;
+    case MessageTrigger::FirmwareStatusNotification:
+        this->send_firmware_status_notification(this->firmware_status);
+        break;
     case MessageTrigger::Heartbeat:
         this->heartbeat();
         break;
@@ -1287,6 +1303,27 @@ void ChargePoint::handleTriggerMessageRequest(Call<TriggerMessageRequest> call) 
         this->status_notification(connector, ChargePointErrorCode::NoError, this->status->get_state(connector));
         break;
     }
+}
+
+void ChargePoint::handleGetDiagnosticsRequest(Call<GetDiagnosticsRequest> call) {
+    EVLOG(debug) << "Received GetDiagnosticsRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
+    GetDiagnosticsResponse response;
+    if (this->upload_diagnostics_callback) {
+        response.fileName.emplace(this->upload_diagnostics_callback(call.msg.location));
+    }
+    CallResult<GetDiagnosticsResponse> call_result(response, call.uniqueId);
+    this->send<GetDiagnosticsResponse>(call_result);
+}
+
+void ChargePoint::handleUpdateFirmwareRequest(Call<UpdateFirmwareRequest> call) {
+    EVLOG(debug) << "Received UpdateFirmwareRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
+    UpdateFirmwareResponse response;
+    if (this->upload_diagnostics_callback) {
+        // FIXME(kai): respect call.msg.retrieveDate and only then trigger this callback
+        this->update_firmware_callback(call.msg.location);
+    }
+    CallResult<UpdateFirmwareResponse> call_result(response, call.uniqueId);
+    this->send<UpdateFirmwareResponse>(call_result);
 }
 
 bool ChargePoint::allowed_to_send_message(json::array_t message) {
@@ -1706,6 +1743,24 @@ bool ChargePoint::permanent_fault(int32_t connector) {
     return false;
 }
 
+void ChargePoint::send_diagnostic_status_notification(DiagnosticsStatus status) {
+    DiagnosticsStatusNotificationRequest req;
+    req.status = status;
+    this->diagnostics_status = status;
+
+    Call<DiagnosticsStatusNotificationRequest> call(req, this->message_queue->createMessageId());
+    this->send_async<DiagnosticsStatusNotificationRequest>(call);
+}
+
+void ChargePoint::send_firmware_status_notification(FirmwareStatus status) {
+    FirmwareStatusNotificationRequest req;
+    req.status = status;
+    this->firmware_status = status;
+
+    Call<FirmwareStatusNotificationRequest> call(req, this->message_queue->createMessageId());
+    this->send_async<FirmwareStatusNotificationRequest>(call);
+}
+
 void ChargePoint::register_enable_evse_callback(const std::function<bool(int32_t connector)>& callback) {
     this->enable_evse_callback = callback;
 }
@@ -1743,4 +1798,13 @@ void ChargePoint::register_set_max_current_callback(
     const std::function<bool(int32_t connector, double max_current)>& callback) {
     this->set_max_current_callback = callback;
 }
+void ChargePoint::register_upload_diagnostics_callback(
+    const std::function<std::string(std::string location)>& callback) {
+    this->upload_diagnostics_callback = callback;
+}
+
+void ChargePoint::register_update_firmware_callback(const std::function<void(std::string location)>& callback) {
+    this->update_firmware_callback = callback;
+}
+
 } // namespace ocpp1_6
