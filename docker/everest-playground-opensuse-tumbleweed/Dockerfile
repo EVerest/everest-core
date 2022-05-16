@@ -38,7 +38,8 @@ RUN zypper --non-interactive install \
     python3-pip \
     gcc-c++ \
     sqlite3-devel \
-    libopenssl-devel
+    libopenssl-devel \
+    libcurl-devel
 
 # create workdir and set access rights
 WORKDIR /workspace/everest-cpp

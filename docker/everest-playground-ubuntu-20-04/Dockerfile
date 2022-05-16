@@ -38,6 +38,7 @@ RUN apt-get update \
     python3-pip \
     libssl-dev \
     gpg \
+    libcurl4-openssl-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

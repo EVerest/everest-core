@@ -35,6 +35,7 @@ RUN apt-get update \
     libsqlite3-dev \
     python3-pip \
     libssl-dev \
+    libcurl4-openssl-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
