@@ -114,7 +114,7 @@ void EvseManager::ready() {
                 } else {
                     // if reserved: signal to the outside world that this reservation ended because it is being used
                     use_reservation_to_start_charging();
-                    charger->Authorize(true, token);
+                    charger->Authorize(true, token, false);
                 }
             }
         }

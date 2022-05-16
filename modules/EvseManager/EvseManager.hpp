@@ -43,7 +43,6 @@ struct Conf {
     bool ac_hlc_enabled;
     bool ac_hlc_use_5percent;
     bool ac_enforce_hlc;
-    std::string evse_id;
 };
 
 class EvseManager : public Everest::ModuleBase {
@@ -121,7 +120,6 @@ private:
     bool reserved_for_different_token(const std::string& token);
     Everest::Thread reservationThreadHandle;
     std::mutex reservation_mutex;
-    const float EVSE_ABSOLUTE_MAX_CURRENT=80.0;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
