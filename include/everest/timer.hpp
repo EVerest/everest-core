@@ -6,12 +6,15 @@
 #include <boost/asio.hpp>
 #include <chrono>
 #include <condition_variable>
+#include <date/date.h>
+#include <date/tz.h>
 #include <functional>
 #include <mutex>
 #include <thread>
 
 namespace Everest {
-template <typename TimerClock = std::chrono::steady_clock> class Timer {
+// template <typename TimerClock = date::steady_clock> class Timer {
+template <typename TimerClock = date::utc_clock> class Timer {
 private:
     boost::asio::basic_waitable_timer<TimerClock>* timer = nullptr;
     std::function<void()> callback;
@@ -166,8 +169,8 @@ public:
     }
 };
 
-using SteadyTimer = Timer<std::chrono::steady_clock>;
-using SystemTimer = Timer<std::chrono::system_clock>;
+using SteadyTimer = Timer<date::utc_clock>;
+using SystemTimer = Timer<date::utc_clock>;
 } // namespace Everest
 
 #endif // EVEREST_TIMER_HPP
