@@ -13,7 +13,8 @@
             "three_phases": true,
             "has_ventilation": true,
             "country_code": "DE",
-            "rcd_enabled": true
+            "rcd_enabled": true,
+            "evse_id": "1"
         },
         "connections": {
             "bsp": [

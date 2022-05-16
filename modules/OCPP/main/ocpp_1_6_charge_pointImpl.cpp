@@ -6,12 +6,11 @@ namespace module {
 namespace main {
 
 void ocpp_1_6_charge_pointImpl::init() {
-
 }
 
 void ocpp_1_6_charge_pointImpl::ready() {
-
 }
+
 
 } // namespace main
 } // namespace module

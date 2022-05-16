@@ -30,6 +30,8 @@
 #include <mutex>
 #include <queue>
 #include <sigslot/signal.hpp>
+#include <date/date.h>
+#include <date/tz.h>
 
 namespace module {
 
@@ -64,7 +66,7 @@ public:
     //
 
     // external input to charger: update max_current and new validUntil
-    bool setMaxCurrent(float ampere, std::chrono::time_point<std::chrono::system_clock> validUntil);
+    bool setMaxCurrent(float ampere, std::chrono::time_point<date::utc_clock> validUntil);
     // update only max_current but keep the current validUntil
     bool setMaxCurrent(float ampere);
     float getMaxCurrent();
@@ -75,6 +77,7 @@ public:
 
     bool enable();
     bool disable();
+    bool set_faulted();
     // switch to next charging session after Finished
     bool restart();
 
@@ -122,8 +125,7 @@ public:
         PermanentFault
     };
 
-    enum class ErrorState
-    {
+    enum class ErrorState {
         Error_E,
         Error_DF,
         Error_Relais,
@@ -190,7 +192,7 @@ private:
     void mainThread();
 
     float maxCurrent;
-    std::chrono::time_point<std::chrono::system_clock> maxCurrentValidUntil;
+    std::chrono::time_point<date::utc_clock> maxCurrentValidUntil;
 
     bool powerAvailable();
 
@@ -210,7 +212,7 @@ private:
     void checkSoftOverCurrent();
     float currentDrawnByVehicle[3];
     bool overCurrent;
-    std::chrono::system_clock::time_point lastOverCurrentEvent;
+    std::chrono::time_point<date::utc_clock> lastOverCurrentEvent;
     const int softOverCurrentTimeout = 7000;
 
     // 4 seconds according to table 3 of ISO15118-3
@@ -251,7 +253,7 @@ private:
     // non standard compliant option to enforce HLC in AC mode
     bool ac_enforce_hlc;
 
-    std::chrono::system_clock::time_point lastPwmUpdate;
+    std::chrono::time_point<date::utc_clock> lastPwmUpdate;
 
     float update_pwm_last_dc;
     void update_pwm_now(float dc);

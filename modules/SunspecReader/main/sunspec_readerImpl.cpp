@@ -40,8 +40,8 @@ void sunspec_readerImpl::ready() {
 }
 
 void sunspec_readerImpl::run_read_loop() {
-    std::chrono::system_clock::time_point tp_loop;
-    tp_loop = std::chrono::system_clock::now();
+    std::chrono::time_point<date::utc_clock> tp_loop;
+    tp_loop = date::utc_clock::now();
     while(true) {
 
         if (this->read_loop_thread.shouldExit()) break;
@@ -51,7 +51,7 @@ void sunspec_readerImpl::run_read_loop() {
         tp_loop += std::chrono::milliseconds(config.read_interval);
         uint16_t read_value = this->reader->read();
         double converted_read_value = sunspec::utils::apply_scale_factor(read_value, reader->get_scale_factor());
-        uint64_t timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        uint64_t timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(date::utc_clock::now().time_since_epoch()).count();
 
         // Publishing
         Everest::json j;

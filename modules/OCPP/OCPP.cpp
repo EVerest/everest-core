@@ -47,19 +47,39 @@ void OCPP::init() {
             return false;
         }
     });
+
+    // int32_t reservation_id, CiString20Type auth_token, DateTime expiry_date, std::string parent_id
     this->charge_point->register_reserve_now_callback(
-        [this](int32_t connector, ocpp1_6::CiString20Type idTag, std::chrono::seconds timeout) {
-            if (connector > 0 && connector <= this->r_evse_manager.size()) {
-                return this->r_evse_manager.at(connector - 1)->call_reserve_now(idTag.get(), timeout.count());
+        [this](int32_t reservation_id, int32_t connector, ocpp1_6::DateTime expiryDate, ocpp1_6::CiString20Type idTag,
+               boost::optional<ocpp1_6::CiString20Type> parent_id) {
+            if (res_conn_map.count(reservation_id) == 0) {
+                this->res_conn_map[reservation_id] = connector;
+            } else if (res_conn_map.count(reservation_id) == 1) {
+                std::map<int32_t, int32_t>::iterator it;
+                it = this->res_conn_map.find(reservation_id);
+                this->res_conn_map.erase(it);
+                this->res_conn_map[reservation_id] = connector;
+
             } else {
-                return false;
+                return ocpp1_6::ReservationStatus::Faulted;
+            }
+
+            if (connector > 0 && connector <= this->r_evse_manager.size()) {
+                std::string response = this->r_evse_manager.at(connector - 1)
+                                           ->call_reserve_now(reservation_id, idTag.get(), expiryDate.to_rfc3339(),
+                                                              parent_id.value_or(ocpp1_6::CiString20Type(std::string(""))).get());
+                return this->ResStatMap.at(response);
+            } else {
+                return ocpp1_6::ReservationStatus::Unavailable;
             }
         });
-    this->charge_point->register_cancel_reservation_callback([this](int32_t connector) {
+
+    this->charge_point->register_cancel_reservation_callback([this](int32_t reservationId) {
+        int32_t connector = this->res_conn_map[reservationId];
         if (connector > 0 && connector <= this->r_evse_manager.size()) {
-            return this->r_evse_manager.at(connector - 1)->call_cancel_reservation();
+            return this->can_res_stat_map.at(this->r_evse_manager.at(connector - 1)->call_cancel_reservation());
         } else {
-            return false;
+            return this->can_res_stat_map.at(false);
         }
     });
     this->charge_point->register_upload_diagnostics_callback([this](std::string location) {
@@ -155,7 +175,7 @@ void OCPP::init() {
                 // TODO(kai): decide if we need to inform libocpp about such an event
             } else if (event == "SessionStarted") {
                 auto session_started = session_events["session_started"];
-                auto timestamp = ocpp1_6::DateTime(std::chrono::system_clock::time_point(
+                auto timestamp = ocpp1_6::DateTime(std::chrono::time_point<date::utc_clock>(
                     std::chrono::seconds(session_started["timestamp"].get<int>())));
                 auto energy_Wh_import = session_started["energy_Wh_import"].get<double>();
                 this->charge_point->start_session(connector, timestamp, energy_Wh_import);
@@ -169,7 +189,7 @@ void OCPP::init() {
                 this->charge_point->resume_charging(connector);
             } else if (event == "SessionFinished") {
                 auto session_finished = session_events["session_finished"];
-                auto timestamp = std::chrono::system_clock::time_point(
+                auto timestamp = std::chrono::time_point<date::utc_clock>(
                     std::chrono::seconds(session_finished["timestamp"].get<int>()));
                 auto energy_Wh_import = session_finished["energy_Wh_import"].get<double>();
                 this->charge_point->stop_session(connector, ocpp1_6::DateTime(timestamp), energy_Wh_import);

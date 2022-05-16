@@ -23,6 +23,11 @@
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 #include "Charger.hpp"
+#include <iostream>
+#include <ctime>
+#include <chrono>
+#include <date/date.h>
+#include <date/tz.h>
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -77,6 +82,10 @@ public:
     json get_hw_capabilities();
     bool updateLocalMaxCurrentLimit(float max_current);
     float getLocalMaxCurrentLimit();
+    std::string reserve_now(const int _reservation_id, const std::string& token,
+                            const std::chrono::time_point<date::utc_clock>& valid_until, const std::string& parent_id);
+    bool cancel_reservation();
+    sigslot::signal<json> signalReservationEvent;
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
@@ -99,6 +108,18 @@ private:
     const float EVSE_ABSOLUTE_MAX_CURRENT = 80.0;
     bool slac_enabled;
     bool hlc_enabled;
+
+    // Reservations
+    std::string reserved_auth_token;
+    std::string reserved_auth_token_parent_id;
+    std::chrono::time_point<date::utc_clock> reservation_valid_until;
+    bool reserved; // internal, use reservation_valid() if you want to find out if it is reserved
+    int reservation_id;
+    bool reservation_valid();
+    void use_reservation_to_start_charging();
+    bool reserved_for_different_token(const std::string& token);
+    Everest::Thread reservationThreadHandle;
+    std::mutex reservation_mutex;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

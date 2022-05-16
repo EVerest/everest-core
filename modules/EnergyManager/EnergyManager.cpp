@@ -1,20 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2022 - 2022 Pionix GmbH and Contributors to EVerest
 #include "EnergyManager.hpp"
-#include <chrono>
-#include <date/date.h>
 
 namespace module {
 
 #define INVALID_PRICE_PER_KWH (-1.1f)
 
-std::string to_rfc3339(std::chrono::time_point<std::chrono::system_clock> t) {
+std::string to_rfc3339(std::chrono::time_point<date::utc_clock> t) {
     return date::format("%FT%TZ", std::chrono::time_point_cast<std::chrono::milliseconds>(t));
 }
 
-std::chrono::time_point<std::chrono::system_clock> from_rfc3339(std::string t) {
+std::chrono::time_point<date::utc_clock> from_rfc3339(std::string t) {
     std::istringstream infile{t};
-    std::chrono::time_point<std::chrono::system_clock> tp;
+    std::chrono::time_point<date::utc_clock> tp;
     infile >> date::parse("%FT%T", tp);
 
     return tp;
@@ -22,7 +20,8 @@ std::chrono::time_point<std::chrono::system_clock> from_rfc3339(std::string t) {
 
 void EnergyManager::init() {
     invoke_init(*p_main);
-    
+    lastLimitUpdate = date::utc_clock::now();
+
     r_energy_trunk->subscribe_energy([this](json e) {
         // Received new energy object from a child.
         {
@@ -35,12 +34,12 @@ void EnergyManager::init() {
 void EnergyManager::ready() {
     invoke_ready(*p_main);
 
-    interval_start([this](){this->run_enforce_limits();}, ENERGY_MANAGER_OPTIMIZER_INTERVAL_MS);
+    interval_start([this]() { this->run_enforce_limits(); }, ENERGY_MANAGER_OPTIMIZER_INTERVAL_MS);
 }
 
 void EnergyManager::interval_start(const std::function<void(void)>& func, unsigned int interval_ms) {
-    std::thread([func, interval_ms]() { 
-        while (true) { 
+    std::thread([func, interval_ms]() {
+        while (true) {
             auto next_interval_time = std::chrono::steady_clock::now() + std::chrono::milliseconds(interval_ms);
             func();
             std::this_thread::sleep_until(next_interval_time);
@@ -60,11 +59,9 @@ void EnergyManager::run_enforce_limits() {
         for (auto it = optimized_values.begin(); it != optimized_values.end(); ++it) {
             sanitize_object(*it);
             try {
-                this->r_energy_trunk->call_enforce_limits( (*it).at("uuid"), 
-                                        (*it).at("limits_import"), 
-                                        (*it).at("limits_export"),
-                                        (*it).at("schedule_import"),
-                                        (*it).at("schedule_export"));
+                this->r_energy_trunk->call_enforce_limits((*it).at("uuid"), (*it).at("limits_import"),
+                                                          (*it).at("limits_export"), (*it).at("schedule_import"),
+                                                          (*it).at("schedule_export"));
             } catch (const std::exception& e) {
                 EVLOG(error) << "Cannot enforce limits: Exception occurred: optimized object faulty: " << e.what();
             }
@@ -78,17 +75,20 @@ void EnergyManager::run_enforce_limits() {
 Array EnergyManager::run_optimizer(json energy) {
     // traverse tree, set result limits for each evse node
     json optimized_values = json::array();
-    auto timepoint = std::chrono::system_clock::now();
+    auto timepoint = date::utc_clock::now();
     json price_schedule = json::array();
 
     try {
-        if (energy.contains("schedule_import") && !energy["schedule_import"].is_null() ) {  // need "[]" to prevent nlohmann error 304: cannot use at() with null
+        if (energy.contains("schedule_import") &&
+            !energy["schedule_import"]
+                 .is_null()) { // need "[]" to prevent nlohmann error 304: cannot use at() with null
             price_schedule = energy.at("schedule_import");
         }
     } catch (const std::exception& e) {
-        EVLOG(error) << "run_optimizer: Exception occurred: energy object does not have an import schedule: " << e.what();
+        EVLOG(error) << "run_optimizer: Exception occurred: energy object does not have an import schedule: "
+                     << e.what();
     }
-    
+
     try {
         optimize_one_level(energy, optimized_values, timepoint, price_schedule);
     } catch (const std::exception& e) {
@@ -100,17 +100,18 @@ Array EnergyManager::run_optimizer(json energy) {
 
 // recursive optimization of one level
 void EnergyManager::optimize_one_level(json& energy, json& optimized_values,
-                                       const std::chrono::system_clock::time_point timepoint_now,
-                                       const json price_schedule) {
-
+                                       const std::chrono::time_point<date::utc_clock> timepoint_now,
+                                       json price_schedule) {
     // find max_current limit for this level
     // min of (limit_from_parent, local_limit_from_schedule)
-    if (energy.contains("schedule_import") && !energy["schedule_import"].is_null() ) {  // need "[]" to prevent nlohmann error 304: cannot use at() with null
+    if (energy.contains("schedule_import") &&
+        !energy["schedule_import"].is_null()) { // need "[]" to prevent nlohmann error 304: cannot use at() with null
         json grid_import_limit = {};
         try {
             grid_import_limit = get_sub_element_from_schedule_at_time(energy.at("schedule_import"), timepoint_now);
         } catch (const std::exception& e) {
-            EVLOG(error) << "optimize_one_level: Exception occurred: failed to get schedule item for timepoint_now: " << e.what();
+            EVLOG(error) << "optimize_one_level: Exception occurred: failed to get schedule item for timepoint_now: "
+                         << e.what();
             return;
         }
 
@@ -119,7 +120,8 @@ void EnergyManager::optimize_one_level(json& energy, json& optimized_values,
             // choose max current
             max_current_for_next_level_A = get_current_limit_from_energy_object(grid_import_limit, energy);
         } catch (const std::exception& e) {
-            EVLOG(error) << "optimize_one_level: Exception occurred: failed to get current limit for next level: " << e.what();
+            EVLOG(error) << "optimize_one_level: Exception occurred: failed to get current limit for next level: "
+                         << e.what();
             return;
         }
 
@@ -149,7 +151,7 @@ void EnergyManager::optimize_one_level(json& energy, json& optimized_values,
         try {
             if (energy.at("node_type") == "Evse") {
                 json limits_import;
-                limits_import["valid_until"] = to_rfc3339(std::chrono::system_clock::now() + std::chrono::seconds(10));
+                limits_import["valid_until"] = to_rfc3339(date::utc_clock::now() + std::chrono::seconds(10));
                 limits_import["request_parameters"] = json::object();
                 limits_import["request_parameters"]["ac_current_A"] = json::object();
                 limits_import["request_parameters"]["ac_current_A"]["current_A"] = max_current_for_next_level_A;
@@ -166,7 +168,6 @@ void EnergyManager::optimize_one_level(json& energy, json& optimized_values,
                     result["schedule_import"] = json::array();
                 }
                 result["schedule_export"] = json::array();
-
                 optimized_values.push_back(result);
             }
         } catch (const std::exception& e) {
@@ -176,13 +177,14 @@ void EnergyManager::optimize_one_level(json& energy, json& optimized_values,
 }
 
 json EnergyManager::get_sub_element_from_schedule_at_time(json s,
-                                                          const std::chrono::system_clock::time_point timepoint) {
+                                                          const std::chrono::time_point<date::utc_clock> timepoint) {
     // first entry is valid now per agreement
     json ret = s[0];
     // walk through schedule to find a better fit
     for (auto it = s.begin(); it != s.end(); ++it) {
         try {
-            if ((*it).contains("timestamp") && !(*it)["timestamp"].is_null()) {  // need "[]" to prevent nlohmann error 304: cannot use at()}
+            if ((*it).contains("timestamp") &&
+                !(*it)["timestamp"].is_null()) { // need "[]" to prevent nlohmann error 304: cannot use at()}
                 if (from_rfc3339((*it).at("timestamp")) > timepoint) {
                     break;
                 }
@@ -197,23 +199,32 @@ json EnergyManager::get_sub_element_from_schedule_at_time(json s,
 }
 
 void EnergyManager::sanitize_object(json& obj_to_sanitize) {
-    if (obj_to_sanitize.contains("limits_import") && obj_to_sanitize["limits_import"].is_null()) { // need "[]" to prevent nlohmann error 304: cannot use at() with null
+    if (obj_to_sanitize.contains("limits_import") &&
+        obj_to_sanitize["limits_import"]
+            .is_null()) { // need "[]" to prevent nlohmann error 304: cannot use at() with null
         obj_to_sanitize["limits_import"] = json::array();
     }
 
-    if (obj_to_sanitize.contains("limits_export") && obj_to_sanitize["limits_export"].is_null()) {  // need "[]" to prevent nlohmann error 304: cannot use at() with null
+    if (obj_to_sanitize.contains("limits_export") &&
+        obj_to_sanitize["limits_export"]
+            .is_null()) { // need "[]" to prevent nlohmann error 304: cannot use at() with null
         obj_to_sanitize["limits_export"] = json::array();
     }
 
-    if (obj_to_sanitize.contains("schedule_import") && obj_to_sanitize["schedule_import"].is_null()) {  // need "[]" to prevent nlohmann error 304: cannot use at() with null
+    if (obj_to_sanitize.contains("schedule_import") &&
+        obj_to_sanitize["schedule_import"]
+            .is_null()) { // need "[]" to prevent nlohmann error 304: cannot use at() with null
         obj_to_sanitize["schedule_import"] = json::array();
     }
 
-    if (obj_to_sanitize.contains("schedule_export") && obj_to_sanitize["schedule_export"].is_null()) {  // need "[]" to prevent nlohmann error 304: cannot use at() with null
+    if (obj_to_sanitize.contains("schedule_export") &&
+        obj_to_sanitize["schedule_export"]
+            .is_null()) { // need "[]" to prevent nlohmann error 304: cannot use at() with null
         obj_to_sanitize["schedule_export"] = json::array();
     }
 
-    if (obj_to_sanitize.contains("children") && obj_to_sanitize["children"].is_null()) {  // need "[]" to prevent nlohmann error 304: cannot use at() with null
+    if (obj_to_sanitize.contains("children") &&
+        obj_to_sanitize["children"].is_null()) { // need "[]" to prevent nlohmann error 304: cannot use at() with null
         obj_to_sanitize["children"] = json::array();
     }
 }
@@ -234,21 +245,17 @@ double EnergyManager::get_current_limit_from_energy_object(const json& limit_obj
         EVLOG(error) << "limit object incomplete: " << limit_object;
     }
 
-    if (energy_object.contains("limit_from_parent") && !energy_object["limit_from_parent"].is_null()) {  // need "[]" to prevent nlohmann error 304: cannot use at() with null
-        if (energy_object.at("limit_from_parent") < max_current_A) {
-            max_current_A = energy_object.at("limit_from_parent");
-        }
-    }
-
     return max_current_A;
 }
 
 double EnergyManager::get_currently_valid_price_per_kwh(json& energy_object,
-                                                        const std::chrono::system_clock::time_point timepoint_now) {
+                                                        const std::chrono::time_point<date::utc_clock> timepoint_now) {
 
     double currently_valid_price_per_kwh = INVALID_PRICE_PER_KWH;
 
-    if (energy_object.contains("schedule_import") && !energy_object["schedule_import"].is_null()) {  // need "[]" to prevent nlohmann error 304: cannot use at() with null
+    if (energy_object.contains("schedule_import") &&
+        !energy_object["schedule_import"]
+             .is_null()) { // need "[]" to prevent nlohmann error 304: cannot use at() with null
         // get current timeslot from price import schedule
         json schedule_at_current_timeslot =
             get_sub_element_from_schedule_at_time(energy_object.at("schedule_import"), timepoint_now);
@@ -266,7 +273,9 @@ void EnergyManager::check_for_children_requesting_power(json& energy_object, con
 
     for (json& child : energy_object["children"]) {
         // check if this child has price_limits set
-        if (child.contains("optimizer_target") && !child["optimizer_target"].is_null()) {  // need "[]" to prevent nlohmann error 304: cannot use at() with null
+        if (child.contains("optimizer_target") &&
+            !child["optimizer_target"]
+                 .is_null()) { // need "[]" to prevent nlohmann error 304: cannot use at() with null
             if (child.at("optimizer_target").contains("price_limit")) {
                 // check if price limits are valid now
                 if (current_price_per_kwh <= child.at("optimizer_target").at("price_limit")) {
@@ -288,6 +297,7 @@ void EnergyManager::check_for_children_requesting_power(json& energy_object, con
     }
 }
 
+
 void EnergyManager::scale_and_distribute_power(json& energy_object) {
     bool not_done = true;
     double sum_max_current_requests = 0.0F;
@@ -299,19 +309,9 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
     // prime all children's max-/min- current requests
     for (json& child : energy_object["children"]) {
         if (child.contains("requesting_power") && child.at("requesting_power") == true) {
-            if (child.contains("schedule_import") && !child["schedule_import"].is_null()) {  // need "[]" to prevent nlohmann error 304: cannot use at() with null
-                child.at("schedule_import")
-                    .at(0)
-                    .at("request_parameters")
-                    .at("ac_current_A")
-                    .at("max_current_A")
-                    .get_to(child_max_current_A);
-                child.at("schedule_import")
-                    .at(0)
-                    .at("request_parameters")
-                    .at("ac_current_A")
-                    .at("min_current_A")
-                    .get_to(child_min_current_A);
+            if (child.contains("schedule_import") && !child["schedule_import"].is_null()) {
+                // need "[]" to prevent nlohmann error 304: cannot use at() with null
+                this->si_0_rp_aca(child).at("max_current_A").get_to(child_max_current_A);
                 sum_max_current_requests += child_max_current_A;
                 sum_min_current_requests += child_min_current_A;
                 child["scaled_current"] = current_scaling_factor * child_max_current_A;
@@ -330,8 +330,7 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
 
     try {
         // store current level's current limit
-        current_limit_at_this_level =
-            energy_object.at("schedule_import").at(0).at("request_parameters").at("ac_current_A").at("max_current_A");
+        current_limit_at_this_level = this->si_0_rp_aca(energy_object).at("max_current_A");
     } catch (const std::exception& e) {
         EVLOG(error) << "energy object has no current limit for this level! " << e.what();
         return;
@@ -347,12 +346,7 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
             for (json& child : energy_object["children"]) {
                 if (child.at("requesting_power") == true) {
                     child.at("scaled_current").get_to(child_max_current_A);
-                    child.at("schedule_import")
-                        .at(0)
-                        .at("request_parameters")
-                        .at("ac_current_A")
-                        .at("min_current_A")
-                        .get_to(child_min_current_A);
+                    this->si_0_rp_aca(child).at("min_current_A").get_to(child_min_current_A);
                     // add to overall max-/min- current tally
                     if (child_max_current_A >= child_min_current_A) {
                         sum_max_current_requests += child_max_current_A;
@@ -365,7 +359,9 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
             }
 
             // divide maximum current available to this level by sum of current requests
-            if (energy_object.contains("schedule_import") && !energy_object["schedule_import"].is_null()) {  // need "[]" to prevent nlohmann error 304: cannot use at() with null
+            if (energy_object.contains("schedule_import") &&
+                !energy_object["schedule_import"]
+                     .is_null()) { // need "[]" to prevent nlohmann error 304: cannot use at() with null
 
                 current_scaling_factor = current_limit_at_this_level / sum_max_current_requests;
 
@@ -378,8 +374,8 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
                 return;
             }
 
-            // if the sum of this level's children's minimum current requests is already larger than its current limit, we
-            // need to drop requests from children; if not, start scaling
+            // if the sum of this level's children's minimum current requests is already larger than its current limit,
+            // we need to drop requests from children; if not, start scaling
             if (sum_min_current_requests > current_limit_at_this_level) {
                 // drop first child which breaks "min_current_A" requirement and recalculate
                 for (json& child : energy_object["children"]) {
@@ -388,11 +384,7 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
                         child["scaled_current"] = current_scaling_factor * child_max_current_A;
 
                         // check if "min_current_A" is breached
-                        if (child.at("scaled_current") < child.at("schedule_import")
-                                                            .at(0)
-                                                            .at("request_parameters")
-                                                            .at("ac_current_A")
-                                                            .at("min_current_A")) {
+                        if (child.at("scaled_current") < this->si_0_rp_aca(child).at("min_current_A")) {
                             // if "min_current_A" breached, drop first child and recalculate
                             child["requesting_power"] = false;
                             recalculate = true;
@@ -409,39 +401,23 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
                 for (json& child : energy_object["children"]) {
                     if (child.at("requesting_power") == true) {
                         child.at("scaled_current").get_to(child_max_current_A);
-                        if (child.at("scaled_current") > child.at("schedule_import")
-                                                            .at(0)
-                                                            .at("request_parameters")
-                                                            .at("ac_current_A")
-                                                            .at("min_current_A")) {
+                        if (child.at("scaled_current") > this->si_0_rp_aca(child).at("min_current_A")) {
                             // only apply scaling if child is not already at minimum current, then check afterward if
                             // scaling brought it below threshold
                             child["scaled_current"] = current_scaling_factor * child_max_current_A;
                         }
                         // check if child has already been scaled to minimum current
-                        else if (child.at("scaled_current") == child.at("schedule_import")
-                                                                .at(0)
-                                                                .at("request_parameters")
-                                                                .at("ac_current_A")
-                                                                .at("min_current_A")) {
-                            // we have already checked that it is possible to distribute all requests if minimum currents
-                            // are assigned, thus continue with the next child
+                        else if (child.at("scaled_current") == this->si_0_rp_aca(child).at("min_current_A")) {
+                            // we have already checked that it is possible to distribute all requests if minimum
+                            // currents are assigned, thus continue with the next child
                             recalculate = true;
                             continue;
                         }
 
                         // check if "min_current_A" is breached
-                        if (child["scaled_current"] < child.at("schedule_import")
-                                                        .at(0)
-                                                        .at("request_parameters")
-                                                        .at("ac_current_A")
-                                                        .at("min_current_A")) {
+                        if (child["scaled_current"] < this->si_0_rp_aca(child).at("min_current_A")) {
                             // if "min_current_A" breached, set minimum current as request and recalculate
-                            child["scaled_current"] = child.at("schedule_import")
-                                                        .at(0)
-                                                        .at("request_parameters")
-                                                        .at("ac_current_A")
-                                                        .at("min_current_A");
+                            child["scaled_current"] = this->si_0_rp_aca(child).at("min_current_A");
                             recalculate = true;
                             break;
                         }
@@ -465,7 +441,8 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
 
         } while (not_done);
     } catch (const std::exception& e) {
-        EVLOG(error) << "scale_and_distribute_power: Exception occurred: failed to calculate current distribution: " << e.what();
+        EVLOG(error) << "scale_and_distribute_power: Exception occurred: failed to calculate current distribution: "
+                     << e.what();
         return;
     }
 }

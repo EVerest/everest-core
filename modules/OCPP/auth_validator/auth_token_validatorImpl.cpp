@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include "auth_token_validatorImpl.hpp"
+#include <ocpp1_6/types.hpp>
 
 namespace module {
 namespace auth_validator {
@@ -34,7 +35,6 @@ Object auth_token_validatorImpl::handle_validate_token(std::string& token) {
     }
 
     result["reason"] = "Validation by OCPP 1.6 Central System";
-
     return result;
 };
 

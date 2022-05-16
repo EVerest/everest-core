@@ -2,7 +2,6 @@
 // Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
 #include "powermeterImpl.hpp"
 
-#include <chrono>
 
 using namespace everest;
 
@@ -28,7 +27,7 @@ void powermeterImpl::run_meter_loop() {
         energy_in = (uint32_t) this->read_energy_in();
         energy_out = (uint32_t) this->read_energy_out();
 
-        uint64_t timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        uint64_t timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(date::utc_clock::now().time_since_epoch()).count();
 
         // Publishing relevant vars
         json j;

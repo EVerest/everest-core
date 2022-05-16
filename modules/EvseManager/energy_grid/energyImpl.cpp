@@ -11,15 +11,14 @@
 namespace module {
 namespace energy_grid {
 
-std::string to_rfc3339(std::chrono::time_point<std::chrono::system_clock> t) {
+std::string to_rfc3339(std::chrono::time_point<date::utc_clock> t) {
     return date::format("%FT%TZ", std::chrono::time_point_cast<std::chrono::milliseconds>(t));
 }
 
-std::chrono::time_point<std::chrono::system_clock> from_rfc3339(std::string t) {
+std::chrono::time_point<date::utc_clock> from_rfc3339(std::string t) {
     std::istringstream infile{t};
-    std::chrono::time_point<std::chrono::system_clock> tp;
+    std::chrono::time_point<date::utc_clock> tp;
     infile >> date::parse("%FT%T", tp);
-
     return tp;
 }
 
@@ -80,7 +79,7 @@ void energyImpl::init() {
 void energyImpl::ready() {
     json hw_caps = mod->get_hw_capabilities();
     json schedule_entry = json::object();
-    schedule_entry["timestamp"] = to_rfc3339(std::chrono::system_clock::now());
+    schedule_entry["timestamp"] = to_rfc3339(date::utc_clock::now());
     schedule_entry["request_parameters"] = json::object();
     schedule_entry["request_parameters"]["limit_type"] = "Hard";
     schedule_entry["request_parameters"]["ac_current_A"] = json::object();
