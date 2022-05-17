@@ -105,6 +105,8 @@ struct ModuleCallbacks {
     std::function<void(ModuleConfigs module_configs, const ModuleInfo& info)> init;
     std::function<void()> ready;
 
+    ModuleCallbacks() = default;
+
     ModuleCallbacks(const std::function<void(ModuleAdapter module_adapter)>& register_module_adapter,
                     const std::function<std::vector<cmd>(const json& connections)>& everest_register,
                     const std::function<void(ModuleConfigs module_configs, const ModuleInfo& info)>& init,

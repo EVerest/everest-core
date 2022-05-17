@@ -14,6 +14,8 @@ find_package(everest-cmake 0.1 REQUIRED
 option(BUILD_TESTING "Run unit tests" OFF)
 option(FRAMEWORK_INSTALL "Install the library (shared data might be installed anyway)" ${EVC_MAIN_PROJECT})
 option(CMAKE_RUN_CLANG_TIDY "Run clang-tidy" OFF)
+option(EVEREST_ENABLE_JS_SUPPORT "Enable everestjs for JavaScript modules" ON)
+option(EVEREST_ENABLE_PY_SUPPORT "Enable everestpy for Python modules" ON)
 
 # make own cmake modules available
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
@@ -79,7 +81,14 @@ add_subdirectory(src)
 add_subdirectory(schemas)
 
 # everest javascript wrapper
-add_subdirectory(everestjs)
+if (EVEREST_ENABLE_JS_SUPPORT)
+    add_subdirectory(everestjs)
+endif()
+
+# everest python wrapper
+if (EVEREST_ENABLE_PY_SUPPORT)
+    add_subdirectory(everestpy)
+endif()
 
 # FIXME (aw): should this be installed or not?  Right now it is needed for the
 #             current packaging approach

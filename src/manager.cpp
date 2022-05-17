@@ -156,7 +156,8 @@ SubprocessHandle create_subprocess(bool set_pdeathsig = true) {
 struct ModuleStartInfo {
     enum class Language {
         cpp,
-        javascript
+        javascript,
+        python
     };
     ModuleStartInfo(const std::string& name, const std::string& printable_name, Language lang, const fs::path& path) :
         name(name), printable_name(printable_name), language(lang), path(path) {
@@ -232,9 +233,43 @@ static SubprocessHandle exec_javascript_module(const ModuleStartInfo& module_inf
     return handle;
 }
 
+static SubprocessHandle exec_python_module(const ModuleStartInfo& module_info, const RuntimeSettings& rs) {
+    // instead of using setenv, using execvpe might be a better way for a controlled environment!
+
+    const auto pythonpath = rs.prefix / defaults::LIB_DIR / defaults::NAMESPACE / "everestpy";
+    auto python_loader_path = pythonpath / "everest.py";
+
+    setenv("EV_MODULE", module_info.name.c_str(), 1);
+    setenv("EV_PYTHON_MODULE", module_info.path.c_str(), 1);
+    setenv("EV_PREFIX", rs.prefix.c_str(), 0);
+    setenv("EV_CONF_FILE", rs.config_file.c_str(), 0);
+    setenv("PYTHONPATH", pythonpath.c_str(), 0);
+
+    if (!rs.validate_schema) {
+        setenv("EV_DONT_VALIDATE_SCHEMA", "", 0);
+    }
+
+    const auto python_binary = "python3";
+
+    std::vector<std::string> arguments = {python_binary, python_loader_path.string()};
+
+    auto handle = create_subprocess();
+    if (handle.is_child()) {
+        auto argv_list = arguments_to_exec_argv(arguments);
+        execvp(python_binary, argv_list.data());
+
+        // exec failed
+        handle.send_error_and_exit(fmt::format("Syscall to execv() with \"{} {}\" failed ({})", python_binary,
+                                               fmt::join(arguments.begin() + 1, arguments.end(), " "),
+                                               strerror(errno)));
+    }
+    return handle;
+}
+
 static std::map<pid_t, std::string> spawn_modules(const std::vector<ModuleStartInfo>& modules,
                                                   const RuntimeSettings& rs) {
     std::map<pid_t, std::string> started_modules;
+
     for (const auto& module : modules) {
 
         auto handle = [&module, &rs]() -> SubprocessHandle {
@@ -244,6 +279,8 @@ static std::map<pid_t, std::string> spawn_modules(const std::vector<ModuleStartI
                 return exec_cpp_module(module, rs);
             case ModuleStartInfo::Language::javascript:
                 return exec_javascript_module(module, rs);
+            case ModuleStartInfo::Language::python:
+                return exec_python_module(module, rs);
             default:
                 throw std::logic_error("Module language not in enum");
                 break;
@@ -323,10 +360,12 @@ static std::map<pid_t, std::string> start_modules(Config& config, MQTTAbstractio
 
         std::string binary_filename = fmt::format("{}", module_type);
         std::string javascript_library_filename = "index.js";
+        std::string python_filename = "module.py";
         auto module_path = rs.modules_dir / module_type;
         const auto printable_module_name = config.printable_identifier(module_name);
         auto binary_path = module_path / binary_filename;
         auto javascript_library_path = module_path / javascript_library_filename;
+        auto python_module_path = module_path / python_filename;
 
         if (fs::exists(binary_path)) {
             EVLOG_debug << fmt::format("module: {} ({}) provided as binary", module_name, module_type);
@@ -336,14 +375,19 @@ static std::map<pid_t, std::string> start_modules(Config& config, MQTTAbstractio
             EVLOG_debug << fmt::format("module: {} ({}) provided as javascript library", module_name, module_type);
             modules_to_spawn.emplace_back(module_name, printable_module_name, ModuleStartInfo::Language::javascript,
                                           fs::canonical(javascript_library_path));
+        } else if (fs::exists(python_module_path)) {
+            EVLOG_verbose << fmt::format("module: {} ({}) provided as python module", module_name, module_type);
+            modules_to_spawn.emplace_back(module_name, printable_module_name, ModuleStartInfo::Language::python,
+                                          fs::canonical(python_module_path));
         } else {
             throw std::runtime_error(fmt::format("module: {} ({}) cannot be loaded because no C++ or JavaScript "
                                                  "library has been found\n"
                                                  "  checked paths:\n"
                                                  "    cpp: {}\n"
                                                  "    js:  {}\n",
+                                                 "    py:  {}\n",
                                                  module_name, module_type, binary_path.string(),
-                                                 javascript_library_path.string()));
+                                                 javascript_library_path.string(), python_module_path.string()));
         }
     }
 
