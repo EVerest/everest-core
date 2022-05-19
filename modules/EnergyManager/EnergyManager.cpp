@@ -236,7 +236,9 @@ double EnergyManager::get_current_limit_from_energy_object(const json& limit_obj
     if (limit_object.contains("request_parameters")) {
         if (limit_object.at("request_parameters").contains("ac_current_A")) {
             if (limit_object.at("request_parameters").at("ac_current_A").contains("max_current_A")) {
-                max_current_A = limit_object.at("request_parameters").at("ac_current_A").at("max_current_A");
+                max_current_A = limit_object.at("request_parameters")
+                                            .at("ac_current_A")
+                                            .at("max_current_A");
                 limit_object_is_complete_flag = true;
             }
         }
@@ -311,7 +313,12 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
         if (child.contains("requesting_power") && child.at("requesting_power") == true) {
             if (child.contains("schedule_import") && !child["schedule_import"].is_null()) {
                 // need "[]" to prevent nlohmann error 304: cannot use at() with null
-                this->si_0_rp_aca(child).at("max_current_A").get_to(child_max_current_A);
+                child.at("schedule_import")
+                    .at(0)
+                    .at("request_parameters")
+                    .at("ac_current_A")
+                    .at("max_current_A")
+                    .get_to(child_max_current_A);
                 sum_max_current_requests += child_max_current_A;
                 sum_min_current_requests += child_min_current_A;
                 child["scaled_current"] = current_scaling_factor * child_max_current_A;
@@ -330,7 +337,11 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
 
     try {
         // store current level's current limit
-        current_limit_at_this_level = this->si_0_rp_aca(energy_object).at("max_current_A");
+        current_limit_at_this_level = energy_object.at("schedule_import")
+                                                    .at(0)
+                                                    .at("request_parameters")
+                                                    .at("ac_current_A")
+                                                    .at("max_current_A");
     } catch (const std::exception& e) {
         EVLOG(error) << "energy object has no current limit for this level! " << e.what();
         return;
@@ -346,7 +357,12 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
             for (json& child : energy_object["children"]) {
                 if (child.at("requesting_power") == true) {
                     child.at("scaled_current").get_to(child_max_current_A);
-                    this->si_0_rp_aca(child).at("min_current_A").get_to(child_min_current_A);
+                    child.at("schedule_import")
+                        .at(0)
+                        .at("request_parameters")
+                        .at("ac_current_A")
+                        .at("min_current_A")
+                        .get_to(child_min_current_A);
                     // add to overall max-/min- current tally
                     if (child_max_current_A >= child_min_current_A) {
                         sum_max_current_requests += child_max_current_A;
@@ -384,7 +400,11 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
                         child["scaled_current"] = current_scaling_factor * child_max_current_A;
 
                         // check if "min_current_A" is breached
-                        if (child.at("scaled_current") < this->si_0_rp_aca(child).at("min_current_A")) {
+                        if (child.at("scaled_current") < child.at("schedule_import")
+                                                                .at(0)
+                                                                .at("request_parameters")
+                                                                .at("ac_current_A")
+                                                                .at("min_current_A")) {
                             // if "min_current_A" breached, drop first child and recalculate
                             child["requesting_power"] = false;
                             recalculate = true;
@@ -401,13 +421,21 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
                 for (json& child : energy_object["children"]) {
                     if (child.at("requesting_power") == true) {
                         child.at("scaled_current").get_to(child_max_current_A);
-                        if (child.at("scaled_current") > this->si_0_rp_aca(child).at("min_current_A")) {
+                        if (child.at("scaled_current") > child.at("schedule_import")
+                                                                .at(0)
+                                                                .at("request_parameters")
+                                                                .at("ac_current_A")
+                                                                .at("min_current_A")) {
                             // only apply scaling if child is not already at minimum current, then check afterward if
                             // scaling brought it below threshold
                             child["scaled_current"] = current_scaling_factor * child_max_current_A;
                         }
                         // check if child has already been scaled to minimum current
-                        else if (child.at("scaled_current") == this->si_0_rp_aca(child).at("min_current_A")) {
+                        else if (child.at("scaled_current") == child.at("schedule_import")
+                                                                    .at(0)
+                                                                    .at("request_parameters")
+                                                                    .at("ac_current_A")
+                                                                    .at("min_current_A")) {
                             // we have already checked that it is possible to distribute all requests if minimum
                             // currents are assigned, thus continue with the next child
                             recalculate = true;
@@ -415,9 +443,17 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
                         }
 
                         // check if "min_current_A" is breached
-                        if (child["scaled_current"] < this->si_0_rp_aca(child).at("min_current_A")) {
+                        if (child["scaled_current"] < child.at("schedule_import")
+                                                            .at(0)
+                                                            .at("request_parameters")
+                                                            .at("ac_current_A")
+                                                            .at("min_current_A")) {
                             // if "min_current_A" breached, set minimum current as request and recalculate
-                            child["scaled_current"] = this->si_0_rp_aca(child).at("min_current_A");
+                            child["scaled_current"] = child.at("schedule_import")
+                                                            .at(0)
+                                                            .at("request_parameters")
+                                                            .at("ac_current_A")
+                                                            .at("min_current_A");
                             recalculate = true;
                             break;
                         }
