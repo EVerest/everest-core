@@ -60,10 +60,6 @@ private:
     std::mutex global_energy_object_mutex;
     json global_energy_object;
     std::chrono::time_point<date::utc_clock> lastLimitUpdate;
-    json si_0_rp_aca(json& child) {
-        auto si_0_rp = child.at("schedule_import").at(0).at("request_parameters");
-        return si_0_rp.at("ac_current_A");
-    }
     static void interval_start(const std::function<void(void)>& func, unsigned int interval_ms);
     void run_enforce_limits();
     Array run_optimizer(json energy);
