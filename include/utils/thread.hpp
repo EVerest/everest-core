@@ -13,6 +13,8 @@ public:
     Thread();
     ~Thread();
 
+    void stop();
+
     bool shouldExit();
     void operator=(std::thread&&);
 

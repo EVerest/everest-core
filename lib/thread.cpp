@@ -8,6 +8,10 @@ Thread::Thread() {
 }
 
 Thread::~Thread() {
+    stop();
+}
+
+void Thread::stop() {
     exitSignal.set_value();
     if (handle.joinable())
         handle.join();
