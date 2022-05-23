@@ -21,8 +21,8 @@ void OCPP::init() {
     json_config.at("Core").at("NumberOfConnectors") = this->r_evse_manager.size();
 
     std::shared_ptr<ocpp1_6::ChargePointConfiguration> configuration =
-        std::make_shared<ocpp1_6::ChargePointConfiguration>(json_config, this->config.SchemasPath,
-                                                            this->config.DatabasePath);
+        std::make_shared<ocpp1_6::ChargePointConfiguration>(json_config, config_path.parent_path().string(),
+                                                            this->config.SchemasPath, this->config.DatabasePath);
 
     this->charge_point = new ocpp1_6::ChargePoint(configuration);
     // TODO(kai): select appropriate EVSE based on connector
@@ -125,7 +125,7 @@ void OCPP::init() {
         auto log_file_name = boost::filesystem::unique_path(boost::filesystem::path(file_name));
         auto log_file_path = boost::filesystem::temp_directory_path() / log_file_name;
 
-        auto diagnostics = json({{"diagnostics", {{"key", "value"}}}});
+        auto diagnostics = json({{"logs", {{"key", "value"}}}});
         std::ofstream log_file(log_file_path.c_str());
         log_file << diagnostics.dump();
         this->upload_logs_thread = std::thread([this, location, log_file_name, log_file_path]() {
@@ -139,11 +139,11 @@ void OCPP::init() {
             std::string temp;
             while (std::getline(stream, temp)) {
                 if (temp == "uploaded") {
-                    this->charge_point->send_diagnostic_status_notification(ocpp1_6::DiagnosticsStatus::Uploaded);
+                    this->charge_point->logStatusNotification(UploadLogStatusEnumType::Uploaded, msg.requestId);
                 } else if (temp == "failed") {
-                    this->charge_point->send_diagnostic_status_notification(ocpp1_6::DiagnosticsStatus::UploadFailed);
+                    this->charge_point->logStatusNotification(UploadLogStatusEnumType::Failed, msg.requestId);
                 } else {
-                    this->charge_point->send_diagnostic_status_notification(ocpp1_6::DiagnosticsStatus::Uploading);
+                    this->charge_point->logStatusNotification(UploadLogStatusEnumType::Uploading, msg.requestId);
                 }
             }
             cmd.wait();
