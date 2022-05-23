@@ -65,9 +65,10 @@ void OCPP::init() {
             }
 
             if (connector > 0 && connector <= this->r_evse_manager.size()) {
-                std::string response = this->r_evse_manager.at(connector - 1)
-                                           ->call_reserve_now(reservation_id, idTag.get(), expiryDate.to_rfc3339(),
-                                                              parent_id.value_or(ocpp1_6::CiString20Type(std::string(""))).get());
+                std::string response =
+                    this->r_evse_manager.at(connector - 1)
+                        ->call_reserve_now(reservation_id, idTag.get(), expiryDate.to_rfc3339(),
+                                           parent_id.value_or(ocpp1_6::CiString20Type(std::string(""))).get());
                 return this->ResStatMap.at(response);
             } else {
                 return ocpp1_6::ReservationStatus::Unavailable;
@@ -115,6 +116,41 @@ void OCPP::init() {
         this->upload_diagnostics_thread.detach();
 
         return diagnostics_file_name.string();
+    });
+    this->charge_point->register_upload_logs_callback([this](ocpp1_6::GetLogRequest msg) {
+        // create temporary file
+        std::string date_time = "DATETIME"; // FIXME
+        std::string file_name = type "-" + date_time + "-%%%%-%%%%-%%%%-%%%%";
+
+        auto log_file_name = boost::filesystem::unique_path(boost::filesystem::path(file_name));
+        auto log_file_path = boost::filesystem::temp_directory_path() / log_file_name;
+
+        auto diagnostics = json({{"diagnostics", {{"key", "value"}}}});
+        std::ofstream log_file(log_file_path.c_str());
+        log_file << diagnostics.dump();
+        this->upload_logs_thread = std::thread([this, location, log_file_name, log_file_path]() {
+            auto diagnostics_uploader = boost::filesystem::path("bin/diagnostics_uploader.sh");
+
+            boost::process::ipstream stream;
+            std::vector<std::string> args = {location, log_file_name.string(), log_file_path.string()};
+            boost::process::child cmd(diagnostics_uploader, boost::process::args(args),
+                                      boost::process::std_out > stream);
+
+            std::string temp;
+            while (std::getline(stream, temp)) {
+                if (temp == "uploaded") {
+                    this->charge_point->send_diagnostic_status_notification(ocpp1_6::DiagnosticsStatus::Uploaded);
+                } else if (temp == "failed") {
+                    this->charge_point->send_diagnostic_status_notification(ocpp1_6::DiagnosticsStatus::UploadFailed);
+                } else {
+                    this->charge_point->send_diagnostic_status_notification(ocpp1_6::DiagnosticsStatus::Uploading);
+                }
+            }
+            cmd.wait();
+        });
+        this->upload_diagnostics_thread.detach();
+
+        return log_file_name.string();
     });
     this->charge_point->register_update_firmware_callback([this](std::string location) {
         // // create temporary file
