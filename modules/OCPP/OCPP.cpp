@@ -189,8 +189,8 @@ void OCPP::init() {
             }
             cmd.wait();
         });
+        this->update_firmware_thread.detach();
     });
-    this->update_firmware_thread.detach();
 
     this->charge_point->register_signed_update_firmware_request([this](ocpp1_6::SignedUpdateFirmwareRequest req) {
         // // create temporary file
@@ -224,8 +224,8 @@ void OCPP::init() {
             }
             cmd.wait();
         });
+        this->signed_update_firmware_thread.detach();
     });
-    this->signed_update_firmware_thread.detach();
 
     this->charge_point->start();
 
