@@ -61,17 +61,14 @@ public:
     const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;
     std::map<int32_t, int32_t> res_conn_map;
     std::map<std::string, ocpp1_6::ReservationStatus> ResStatMap = {
-        { std::string("Accepted"), ocpp1_6::ReservationStatus::Accepted },
-        { std::string("Faulted"), ocpp1_6::ReservationStatus::Faulted },
-        { std::string("Occupied"), ocpp1_6::ReservationStatus::Occupied },
-        { std::string("Rejected"), ocpp1_6::ReservationStatus::Rejected },
-        { std::string("Unavailable"), ocpp1_6::ReservationStatus::Unavailable }
-    };
+        {std::string("Accepted"), ocpp1_6::ReservationStatus::Accepted},
+        {std::string("Faulted"), ocpp1_6::ReservationStatus::Faulted},
+        {std::string("Occupied"), ocpp1_6::ReservationStatus::Occupied},
+        {std::string("Rejected"), ocpp1_6::ReservationStatus::Rejected},
+        {std::string("Unavailable"), ocpp1_6::ReservationStatus::Unavailable}};
     std::map<bool, ocpp1_6::CancelReservationStatus> can_res_stat_map = {
-        { true, ocpp1_6::CancelReservationStatus::Accepted },
-        { false, ocpp1_6::CancelReservationStatus::Rejected }
-    };
-    
+        {true, ocpp1_6::CancelReservationStatus::Accepted}, {false, ocpp1_6::CancelReservationStatus::Rejected}};
+
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
     ocpp1_6::ChargePoint* charge_point;
@@ -93,6 +90,7 @@ private:
     std::thread upload_diagnostics_thread;
     std::thread upload_logs_thread;
     std::thread update_firmware_thread;
+    std::thread signed_update_firmware_thread;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
