@@ -1,0 +1,18 @@
+{
+    "description": "The EVerest Setup module for setting up a LAN or WIFI network connection. This module needs privileged access and should not run during normal operations",
+    "config": {},
+    "provides": {
+        "main": {
+            "description": "EVerest Setup",
+            "interface": "empty"
+        }
+    },
+    "requires": {},
+    "enable_external_mqtt": true,
+    "metadata": {
+        "license": "https://opensource.org/licenses/Apache-2.0",
+        "authors": [
+            "Kai-Uwe Hermann"
+        ]
+    }
+}
