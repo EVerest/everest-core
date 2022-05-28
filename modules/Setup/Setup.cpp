@@ -6,6 +6,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/process.hpp>
 #include <cstdlib>
+#include <fmt/core.h>
 #include <fstream>
 
 namespace module {
@@ -156,7 +157,7 @@ std::vector<NetworkDeviceInfo> Setup::get_network_devices() {
 }
 
 void Setup::populate_rfkill_status(std::vector<NetworkDeviceInfo>& device_info) {
-    auto rfkill_output = this->run_application(fs::path("/usr/sbin/rfkill"), {"--json"});
+    auto rfkill_output = this->run_application("rfkill", {"--json"});
     if (rfkill_output.exit_code != 0) {
         return;
     }
@@ -194,7 +195,7 @@ bool Setup::rfkill_unblock(std::string rfkill_id) {
         return false;
     }
 
-    auto rfkill_output = this->run_application(fs::path("/usr/sbin/rfkill"), {"unblock", rfkill_id});
+    auto rfkill_output = this->run_application("rfkill", {"unblock", rfkill_id});
     if (rfkill_output.exit_code != 0) {
         return false;
     }
@@ -220,7 +221,7 @@ bool Setup::rfkill_block(std::string rfkill_id) {
         return false;
     }
 
-    auto rfkill_output = this->run_application(fs::path("/usr/sbin/rfkill"), {"block", rfkill_id});
+    auto rfkill_output = this->run_application("rfkill", {"block", rfkill_id});
     if (rfkill_output.exit_code != 0) {
         return false;
     }
@@ -247,7 +248,7 @@ std::vector<WifiList> Setup::list_configured_networks(std::string interface) {
     }
 
     // use wpa_cli to query wifi info
-    auto wpa_cli_list_networks_output = this->run_application("/usr/sbin/wpa_cli", {"-i", interface, "list_networks"});
+    auto wpa_cli_list_networks_output = this->run_application("wpa_cli", {"-i", interface, "list_networks"});
     if (wpa_cli_list_networks_output.exit_code != 0) {
         return {};
     }
@@ -293,7 +294,7 @@ int Setup::add_network(std::string interface) {
         return -1;
     }
 
-    auto wpa_cli_output = this->run_application("/usr/sbin/wpa_cli", {"-i", interface, "add_network"});
+    auto wpa_cli_output = this->run_application("wpa_cli", {"-i", interface, "add_network"});
     if (wpa_cli_output.exit_code != 0) {
         return -1;
     }
@@ -346,13 +347,13 @@ bool Setup::set_network(std::string interface, int network_id, std::string ssid,
     auto ssid_parameter = "\"" + ssid + "\"";
 
     auto wpa_cli_set_ssid_output = this->run_application(
-        "/usr/sbin/wpa_cli", {"-i", interface, "set_network", network_id_string, "ssid", ssid_parameter});
+        "wpa_cli", {"-i", interface, "set_network", network_id_string, "ssid", ssid_parameter});
     if (wpa_cli_set_ssid_output.exit_code != 0) {
         return false;
     }
 
     auto wpa_cli_set_psk_output =
-        this->run_application("/usr/sbin/wpa_cli", {"-i", interface, "set_network", network_id_string, "psk", psk});
+        this->run_application("wpa_cli", {"-i", interface, "set_network", network_id_string, "psk", psk});
 
     if (wpa_cli_set_psk_output.exit_code != 0) {
         return false;
@@ -369,7 +370,7 @@ bool Setup::enable_network(std::string interface, int network_id) {
     auto network_id_string = std::to_string(network_id);
 
     auto wpa_cli_enable_network_output =
-        this->run_application("/usr/sbin/wpa_cli", {"-i", interface, "enable_network", network_id_string});
+        this->run_application("wpa_cli", {"-i", interface, "enable_network", network_id_string});
     if (wpa_cli_enable_network_output.exit_code != 0) {
         return false;
     }
@@ -385,7 +386,7 @@ bool Setup::disable_network(std::string interface, int network_id) {
     auto network_id_string = std::to_string(network_id);
 
     auto wpa_cli_disable_network_output =
-        this->run_application("/usr/sbin/wpa_cli", {"-i", interface, "disable_network", network_id_string});
+        this->run_application("wpa_cli", {"-i", interface, "disable_network", network_id_string});
     if (wpa_cli_disable_network_output.exit_code != 0) {
         return false;
     }
@@ -399,7 +400,7 @@ bool Setup::remove_network(std::string interface, int network_id) {
     auto network_id_string = std::to_string(network_id);
 
     auto wpa_cli_remove_network_output =
-        this->run_application("/usr/sbin/wpa_cli", {"-i", interface, "remove_network", network_id_string});
+        this->run_application("wpa_cli", {"-i", interface, "remove_network", network_id_string});
     if (wpa_cli_remove_network_output.exit_code != 0) {
         return false;
     }
@@ -417,7 +418,7 @@ bool Setup::remove_networks(std::string interface) {
         auto network_id_string = std::to_string(network.network_id);
 
         auto wpa_cli_remove_network_output =
-            this->run_application("/usr/sbin/wpa_cli", {"-i", interface, "remove_network", network_id_string});
+            this->run_application("wpa_cli", {"-i", interface, "remove_network", network_id_string});
         if (wpa_cli_remove_network_output.exit_code != 0) {
             success = false;
         }
@@ -443,7 +444,7 @@ bool Setup::remove_all_networks() {
 }
 
 void Setup::populate_ip_addresses(std::vector<NetworkDeviceInfo>& device_info) {
-    auto ip_output = this->run_application(fs::path("/usr/bin/ip"), {"--json", "address", "show"});
+    auto ip_output = this->run_application("ip", {"--json", "address", "show"});
     if (ip_output.exit_code != 0) {
         return;
     }
@@ -471,7 +472,7 @@ std::vector<WifiInfo> Setup::scan_wifi(const std::vector<NetworkDeviceInfo>& dev
             continue;
         }
         // use wpa_cli to query wifi info
-        auto wpa_cli_scan_output = this->run_application("/usr/sbin/wpa_cli", {"-i", device.interface, "scan"});
+        auto wpa_cli_scan_output = this->run_application("wpa_cli", {"-i", device.interface, "scan"});
         if (wpa_cli_scan_output.exit_code != 0) {
             continue;
         }
@@ -479,7 +480,7 @@ std::vector<WifiInfo> Setup::scan_wifi(const std::vector<NetworkDeviceInfo>& dev
         // FIXME: is there a proper signal to check if the scan is ready? Maybe in the socket based interface
         std::this_thread::sleep_for(std::chrono::seconds(3));
         auto wpa_cli_scan_results_output =
-            this->run_application("/usr/sbin/wpa_cli", {"-i", device.interface, "scan_results"});
+            this->run_application("wpa_cli", {"-i", device.interface, "scan_results"});
         if (wpa_cli_scan_results_output.exit_code != 0) {
             continue;
         }
@@ -508,9 +509,11 @@ std::vector<WifiInfo> Setup::scan_wifi(const std::vector<NetworkDeviceInfo>& dev
     return wifi_info;
 }
 
-CmdOutput Setup::run_application(boost::filesystem::path path, std::vector<std::string> args) {
-    if (!path.is_absolute()) {
-        EVLOG(error) << "Provided path MUST be absolute, but is not: " << path.string();
+CmdOutput Setup::run_application(boost::filesystem::path file, std::vector<std::string> args) {
+    const auto path = boost::process::search_path(file);
+
+    if (!boost::filesystem::exists(path)) {
+        EVLOG(error) << fmt::format("The provided file '{}' does not exist", file.string());
         return CmdOutput{"", {}, 1};
     }
 
