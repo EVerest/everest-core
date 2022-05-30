@@ -138,6 +138,7 @@ private:
     std::string var_base = api_base + "var/";
     std::string cmd_base = api_base + "cmd/";
     std::thread discover_network_thread;
+    void publish_supported_features();
     void discover_network();
     std::vector<NetworkDeviceInfo> get_network_devices();
     void populate_rfkill_status(std::vector<NetworkDeviceInfo>& device_info);
