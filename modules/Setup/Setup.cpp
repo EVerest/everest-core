@@ -47,6 +47,11 @@ void to_json(json& j, const WifiList& k) {
     j = json::object({{"interface", k.interface}, {"network_id", k.network_id}, {"ssid", k.ssid}});
 }
 
+void to_json(json& j, const SupportedSetupFeatures& k) {
+    j = json::object(
+        {{"setup_wifi", k.setup_wifi}, {"localization", k.localization}, {"setup_simulation", k.setup_simulation}});
+}
+
 void Setup::init() {
     invoke_init(*p_main);
 
@@ -68,28 +73,41 @@ void Setup::ready() {
         }
     });
 
-    std::string rfkill_unblock_cmd = this->cmd_base + "rfkill_unblock";
-    this->mqtt.subscribe(rfkill_unblock_cmd, [this](const std::string& data) { this->rfkill_unblock(data); });
+    if (this->config.setup_wifi) {
+        std::string rfkill_unblock_cmd = this->cmd_base + "rfkill_unblock";
+        this->mqtt.subscribe(rfkill_unblock_cmd, [this](const std::string& data) { this->rfkill_unblock(data); });
 
-    std::string rfkill_block_cmd = this->cmd_base + "rfkill_block";
-    this->mqtt.subscribe(rfkill_block_cmd, [this](const std::string& data) { this->rfkill_block(data); });
+        std::string rfkill_block_cmd = this->cmd_base + "rfkill_block";
+        this->mqtt.subscribe(rfkill_block_cmd, [this](const std::string& data) { this->rfkill_block(data); });
 
-    std::string list_configured_networks_cmd = this->cmd_base + "list_configured_networks";
-    this->mqtt.subscribe(list_configured_networks_cmd,
-                         [this](const std::string& data) { this->publish_configured_networks(); });
+        std::string list_configured_networks_cmd = this->cmd_base + "list_configured_networks";
+        this->mqtt.subscribe(list_configured_networks_cmd,
+                             [this](const std::string& data) { this->publish_configured_networks(); });
 
-    std::string add_network_cmd = this->cmd_base + "add_network";
-    this->mqtt.subscribe(add_network_cmd, [this](const std::string& data) {
-        WifiCredentials wifi_credentials = json::parse(data);
-        this->add_and_enable_network(wifi_credentials);
-        this->publish_configured_networks();
-    });
+        std::string add_network_cmd = this->cmd_base + "add_network";
+        this->mqtt.subscribe(add_network_cmd, [this](const std::string& data) {
+            WifiCredentials wifi_credentials = json::parse(data);
+            this->add_and_enable_network(wifi_credentials);
+            this->publish_configured_networks();
+        });
 
-    std::string remove_all_networks_cmd = this->cmd_base + "remove_all_networks";
-    this->mqtt.subscribe(remove_all_networks_cmd, [this](const std::string& data) {
-        this->remove_all_networks();
-        this->publish_configured_networks();
-    });
+        std::string remove_all_networks_cmd = this->cmd_base + "remove_all_networks";
+        this->mqtt.subscribe(remove_all_networks_cmd, [this](const std::string& data) {
+            this->remove_all_networks();
+            this->publish_configured_networks();
+        });
+    }
+
+    SupportedSetupFeatures supported_setup_features;
+    supported_setup_features.setup_wifi = this->config.setup_wifi;
+    supported_setup_features.localization = this->config.localization;
+    supported_setup_features.setup_simulation = this->config.setup_simulation;
+
+    std::string supported_setup_features_var = this->var_base + "supported_setup_features";
+
+    json supported_setup_features_json = supported_setup_features;
+
+    this->mqtt.publish(supported_setup_features_var, supported_setup_features_json.dump());
 }
 
 void Setup::discover_network() {
@@ -354,8 +372,8 @@ bool Setup::set_network(std::string interface, int network_id, std::string ssid,
 
     auto ssid_parameter = "\"" + ssid + "\"";
 
-    auto wpa_cli_set_ssid_output = this->run_application(
-        "wpa_cli", {"-i", interface, "set_network", network_id_string, "ssid", ssid_parameter});
+    auto wpa_cli_set_ssid_output =
+        this->run_application("wpa_cli", {"-i", interface, "set_network", network_id_string, "ssid", ssid_parameter});
     if (wpa_cli_set_ssid_output.exit_code != 0) {
         return false;
     }
@@ -491,8 +509,7 @@ std::vector<WifiInfo> Setup::scan_wifi(const std::vector<NetworkDeviceInfo>& dev
 
         // FIXME: is there a proper signal to check if the scan is ready? Maybe in the socket based interface
         std::this_thread::sleep_for(std::chrono::seconds(3));
-        auto wpa_cli_scan_results_output =
-            this->run_application("wpa_cli", {"-i", device.interface, "scan_results"});
+        auto wpa_cli_scan_results_output = this->run_application("wpa_cli", {"-i", device.interface, "scan_results"});
         if (wpa_cli_scan_results_output.exit_code != 0) {
             continue;
         }

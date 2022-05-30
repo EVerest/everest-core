@@ -140,6 +140,11 @@
         }
     },
     "setup": {
-        "module": "Setup"
+        "module": "Setup",
+        "config_module": {
+            "setup_wifi": true,
+            "localization": true,
+            "setup_simulation": true
+        }
     }
 }
