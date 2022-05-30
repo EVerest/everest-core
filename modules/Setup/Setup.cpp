@@ -398,6 +398,8 @@ bool Setup::disable_network(std::string interface, int network_id) {
     if (wpa_cli_disable_network_output.exit_code != 0) {
         return false;
     }
+
+    return true;
 }
 
 bool Setup::remove_network(std::string interface, int network_id) {
@@ -412,6 +414,8 @@ bool Setup::remove_network(std::string interface, int network_id) {
     if (wpa_cli_remove_network_output.exit_code != 0) {
         return false;
     }
+
+    return true;
 }
 
 bool Setup::remove_networks(std::string interface) {
