@@ -78,6 +78,19 @@ struct NetworkDeviceInfo {
 };
 void to_json(json& j, const NetworkDeviceInfo& k);
 
+struct SupportedSetupFeatures {
+    bool setup_wifi;
+    bool localization;
+    bool setup_simulation;
+
+    operator std::string() {
+        json supported_setup_features = *this;
+
+        return supported_setup_features.dump();
+    }
+};
+void to_json(json& j, const SupportedSetupFeatures& k);
+
 struct CmdOutput {
     std::string output;
     std::vector<std::string> split_output;
@@ -88,7 +101,11 @@ struct CmdOutput {
 
 namespace module {
 
-struct Conf {};
+struct Conf {
+    bool setup_wifi;
+    bool localization;
+    bool setup_simulation;
+};
 
 class Setup : public Everest::ModuleBase {
 public:

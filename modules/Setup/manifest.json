@@ -1,6 +1,22 @@
 {
     "description": "The EVerest Setup module for setting up a LAN or WIFI network connection. This module needs privileged access and should not run during normal operations",
-    "config": {},
+    "config": {
+        "setup_wifi": {
+            "description": "Allow wifi setup",
+            "type": "boolean",
+            "default": false
+        },
+        "localization": {
+            "description": "Enable localization support",
+            "type": "boolean",
+            "default": false
+        },
+        "setup_simulation": {
+            "description": "Allow simulation setup",
+            "type": "boolean",
+            "default": false
+        }
+    },
     "provides": {
         "main": {
             "description": "EVerest Setup",
