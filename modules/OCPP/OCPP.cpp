@@ -189,7 +189,7 @@ void OCPP::init() {
     this->charge_point->register_signed_update_firmware_request([this](ocpp1_6::SignedUpdateFirmwareRequest req) {
         // // create temporary file
         std::string date_time = ocpp1_6::DateTime().to_rfc3339();
-        std::string file_name = "signed_firmware-" + date_time + "-%%%%-%%%%-%%%%-%%%%";
+        std::string file_name = "signed_firmware-" + date_time + "-%%%%-%%%%-%%%%-%%%%" + ".pnx";
 
         auto firmware_file_name = boost::filesystem::unique_path(boost::filesystem::path(file_name));
         auto firmware_file_path = boost::filesystem::temp_directory_path() / firmware_file_name;
@@ -199,17 +199,21 @@ void OCPP::init() {
             auto firmware_updater = boost::filesystem::path("bin/signed_firmware_updater.sh");
 
             boost::process::ipstream stream;
-            std::vector<std::string> args = {req.firmware.location.get(), firmware_file_path.string()};
+            std::vector<std::string> args = {req.firmware.location.get(), firmware_file_path.string(),
+                                             req.firmware.signature.get(), req.firmware.signingCertificate.get()};
             boost::process::child cmd(firmware_updater, boost::process::args(args), boost::process::std_out > stream);
             std::string temp;
             while (std::getline(stream, temp)) {
+                EVLOG(debug) << "Update Status: " << temp;
                 ocpp1_6::FirmwareStatusEnumType status =
                     ocpp1_6::conversions::string_to_firmware_status_enum_type(temp);
                 this->charge_point->signedFirmwareUpdateStatusNotification(status, req.requestId);
             }
             cmd.wait();
             // FIXME(piet): This can be removed when we actually update the firmware and reboot
-            this->charge_point->trigger_boot_notification(); // to make OCTT happy
+            if (temp == "Installed") {
+                this->charge_point->trigger_boot_notification(); // to make OCTT happy
+            }
         });
         EVLOG(info) << "Finished signed firmware update callback";
         this->signed_update_firmware_thread.detach();
