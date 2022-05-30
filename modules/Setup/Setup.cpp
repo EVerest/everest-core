@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <fmt/core.h>
 #include <fstream>
+#include <locale>
 
 namespace module {
 
@@ -48,6 +49,13 @@ void to_json(json& j, const WifiList& k) {
 
 void Setup::init() {
     invoke_init(*p_main);
+
+    // Set default locale "C" when no locale is set at all
+    try {
+        std::locale loc("");
+    } catch (const std::runtime_error& e) {
+        setenv("LC_ALL", "C", 1);
+    }
 }
 
 void Setup::ready() {
