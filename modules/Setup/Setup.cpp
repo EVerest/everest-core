@@ -69,6 +69,7 @@ void Setup::ready() {
     this->discover_network_thread = std::thread([this]() {
         while (true) {
             this->discover_network();
+            this->publish_supported_features();
             std::this_thread::sleep_for(std::chrono::seconds(5));
         }
     });
@@ -97,7 +98,9 @@ void Setup::ready() {
             this->publish_configured_networks();
         });
     }
+}
 
+void Setup::publish_supported_features() {
     SupportedSetupFeatures supported_setup_features;
     supported_setup_features.setup_wifi = this->config.setup_wifi;
     supported_setup_features.localization = this->config.localization;
