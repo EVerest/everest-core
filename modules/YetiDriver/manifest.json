@@ -16,8 +16,19 @@
 		"control_mode": {
 			"description": "none, high or low",
 			"type": "string",
-			"enum": ["none", "high", "low"],
+			"enum": [
+				"none",
+				"high",
+				"low"
+			],
 			"default": "low"
+		},
+		"reset_gpio": {
+			"description": "Reset GPIO number to use to HW reset Yeti. If set <0 it is disabled.",
+			"type": "integer",
+			"minimum": -1,
+			"maximum": 1000,
+			"default": -1
 		}
 	},
 	"provides": {
