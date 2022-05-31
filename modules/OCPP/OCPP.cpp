@@ -146,6 +146,7 @@ void OCPP::init() {
                 this->charge_point->logStatusNotification(log_status, msg.requestId);
             }
             cmd.wait();
+            this->charge_point->logStatusNotification(ocpp1_6::UploadLogStatusEnumType::Idle, msg.requestId);
         });
         this->upload_logs_thread.detach();
 

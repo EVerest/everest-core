@@ -29,4 +29,4 @@ else
     echo "DownloadFailed"
 fi
 
-#rm -rf /tmp/signature_validation
+rm -rf /tmp/signature_validation
