@@ -89,6 +89,7 @@ void Setup::ready() {
         this->mqtt.subscribe(add_network_cmd, [this](const std::string& data) {
             WifiCredentials wifi_credentials = json::parse(data);
             this->add_and_enable_network(wifi_credentials);
+            this->save_config(wifi_credentials.interface);
             this->publish_configured_networks();
         });
 
@@ -471,8 +472,18 @@ bool Setup::remove_all_networks() {
         if (!this->remove_networks(device.interface)) {
             success = false;
         }
+        this->save_config(device.interface);
     }
 
+    return success;
+}
+
+bool Setup::save_config(std::string interface) {
+    bool success = true;
+    auto wpa_cli_save_config_output = this->run_application("wpa_cli", {"-i", interface, "save_config"});
+    if (wpa_cli_save_config_output.exit_code != 0) {
+        success = false;
+    }
     return success;
 }
 
