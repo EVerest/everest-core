@@ -119,6 +119,7 @@ void OCPP::init() {
         return diagnostics_file_name.string();
     });
     this->charge_point->register_upload_logs_callback([this](ocpp1_6::GetLogRequest msg) {
+        EVLOG(debug) << "Executing callback for log upload with requestId: " << msg.requestId;
         // create temporary file
         std::string date_time = ocpp1_6::DateTime().to_rfc3339();
         std::string file_name =
@@ -140,13 +141,25 @@ void OCPP::init() {
                                       boost::process::std_out > stream);
 
             std::string temp;
-            while (std::getline(stream, temp)) {
+            while (std::getline(stream, temp) && !this->charge_point->interrupt_log_upload) {
                 ocpp1_6::UploadLogStatusEnumType log_status =
                     ocpp1_6::conversions::string_to_upload_log_status_enum_type(temp);
                 this->charge_point->logStatusNotification(log_status, msg.requestId);
             }
-            cmd.wait();
+
+            if (this->charge_point->interrupt_log_upload) {
+                EVLOG(debug) << "Uploading Logs was interrupted, terminating upload script, requestId: "
+                             << msg.requestId;
+                cmd.terminate();
+            } else {
+                EVLOG(debug) << "Uploading Logs finished without interruption, requestId: " << msg.requestId;
+            }
             this->charge_point->logStatusNotification(ocpp1_6::UploadLogStatusEnumType::Idle, msg.requestId);
+            {
+                std::lock_guard<std::mutex> lk(this->charge_point->log_upload_mutex);
+                this->charge_point->interrupt_log_upload.exchange(false);
+            }
+            this->charge_point->cv.notify_one();
         });
         this->upload_logs_thread.detach();
 
@@ -188,35 +201,64 @@ void OCPP::init() {
     });
 
     this->charge_point->register_signed_update_firmware_request([this](ocpp1_6::SignedUpdateFirmwareRequest req) {
-        // // create temporary file
-        std::string date_time = ocpp1_6::DateTime().to_rfc3339();
-        std::string file_name = "signed_firmware-" + date_time + "-%%%%-%%%%-%%%%-%%%%" + ".pnx";
+        EVLOG(debug) << "Executing signed firmware update callback";
 
-        auto firmware_file_name = boost::filesystem::unique_path(boost::filesystem::path(file_name));
-        auto firmware_file_path = boost::filesystem::temp_directory_path() / firmware_file_name;
+        this->signed_update_firmware_thread = std::thread([this, req]() {
+            ocpp1_6::FirmwareStatusEnumType status;
+            if (req.firmware.retrieveDateTime.to_time_point() - std::chrono::seconds(7200) > date::utc_clock::now()) {
+                EVLOG(debug) << "DownloadScheduled for: " << req.firmware.retrieveDateTime.to_rfc3339();
+                status = ocpp1_6::FirmwareStatusEnumType::DownloadScheduled;
+                this->charge_point->signedFirmwareUpdateStatusNotification(status, req.requestId);
+                std::this_thread::sleep_until(req.firmware.retrieveDateTime.to_time_point() -
+                                              std::chrono::seconds(7200));
+            }
+            // // create temporary file
+            std::string date_time = ocpp1_6::DateTime().to_rfc3339();
+            std::string file_name = "signed_firmware-" + date_time + "-%%%%-%%%%-%%%%-%%%%" + ".pnx";
 
-        this->signed_update_firmware_thread = std::thread([this, req, firmware_file_path]() {
-            EVLOG(info) << "Executing signed firmware update callback";
-            auto firmware_updater = boost::filesystem::path("bin/signed_firmware_updater.sh");
+            auto firmware_file_name = boost::filesystem::unique_path(boost::filesystem::path(file_name));
+            auto firmware_file_path = boost::filesystem::temp_directory_path() / firmware_file_name;
 
-            boost::process::ipstream stream;
-            std::vector<std::string> args = {req.firmware.location.get(), firmware_file_path.string(),
-                                             req.firmware.signature.get(), req.firmware.signingCertificate.get()};
-            boost::process::child cmd(firmware_updater, boost::process::args(args), boost::process::std_out > stream);
+            auto firmware_downloader = boost::filesystem::path("bin/signed_firmware_downloader.sh");
+
+            boost::process::ipstream download_stream;
+            std::vector<std::string> download_args = {req.firmware.location.get(), firmware_file_path.string(),
+                                                      req.firmware.signature.get(),
+                                                      req.firmware.signingCertificate.get()};
+            boost::process::child download_cmd(firmware_downloader, boost::process::args(download_args),
+                                               boost::process::std_out > download_stream);
             std::string temp;
-            while (std::getline(stream, temp)) {
-                EVLOG(debug) << "Update Status: " << temp;
-                ocpp1_6::FirmwareStatusEnumType status =
-                    ocpp1_6::conversions::string_to_firmware_status_enum_type(temp);
+            while (std::getline(download_stream, temp)) {
+                status = ocpp1_6::conversions::string_to_firmware_status_enum_type(temp);
                 this->charge_point->signedFirmwareUpdateStatusNotification(status, req.requestId);
             }
-            cmd.wait();
             // FIXME(piet): This can be removed when we actually update the firmware and reboot
-            if (temp == "Installed") {
-                this->charge_point->trigger_boot_notification(); // to make OCTT happy
+            if (status == ocpp1_6::FirmwareStatusEnumType::SignatureVerified) {
+                if (req.firmware.installDateTime != boost::none &&
+                    req.firmware.installDateTime.value().to_time_point() - std::chrono::seconds(7200) >
+                        date::utc_clock::now()) {
+                    EVLOG(debug) << "InstallScheduled for: " << req.firmware.installDateTime.value().to_rfc3339();
+                    status = ocpp1_6::FirmwareStatusEnumType::InstallScheduled;
+                    this->charge_point->signedFirmwareUpdateStatusNotification(status, req.requestId);
+                    std::this_thread::sleep_until(req.firmware.installDateTime.value().to_time_point() -
+                                                  std::chrono::seconds(7200));
+                }
+                boost::process::ipstream install_stream;
+                auto firmware_installer = boost::filesystem::path("bin/signed_firmware_installer.sh");
+                std::vector<std::string> install_args = {};
+                boost::process::child install_cmd(firmware_installer, boost::process::args(install_args),
+                                                  boost::process::std_out > install_stream);
+                while (std::getline(install_stream, temp)) {
+                    status = ocpp1_6::conversions::string_to_firmware_status_enum_type(temp);
+                    this->charge_point->signedFirmwareUpdateStatusNotification(status, req.requestId);
+                }
+
+                if (status == ocpp1_6::FirmwareStatusEnumType::Installed) {
+                    this->charge_point->trigger_boot_notification(); // to make OCTT happy
+                }
             }
+            this->charge_point->set_signed_firmware_update_running(false);
         });
-        EVLOG(info) << "Finished signed firmware update callback";
         this->signed_update_firmware_thread.detach();
     });
 

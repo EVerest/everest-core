@@ -18,10 +18,6 @@ if [[ $curl_exit_code -eq 0 ]]; then
 
     if [ "$r" = "Verified OK" ]; then
         echo "SignatureVerified"
-        sleep 2
-        echo "Installing"
-        sleep 2
-        echo "Installed"
     else
         echo "InvalidSignature"
     fi
