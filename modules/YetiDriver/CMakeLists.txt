@@ -20,6 +20,8 @@ list(APPEND ADDITIONAL_MODULE_INCLUDES
 list(APPEND ADDITIONAL_MODULE_LIBS
     Pal::Sigslot
     yeti_comms
+    date::date
+    date::date-tz
 )
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 
@@ -68,12 +70,6 @@ install(TARGETS ${MODULE_NAME}
 
 install(FILES manifest.json
     DESTINATION ${YETIDRIVER_DEST}
-)
-
-target_link_libraries(${MODULE_NAME}
-    PRIVATE
-        date::date
-        date::date-tz
 )
 
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1

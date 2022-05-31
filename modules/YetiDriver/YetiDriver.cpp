@@ -5,6 +5,18 @@
 namespace module {
 
 void YetiDriver::init() {
+    // configure GPIOs for Yeti Reset Pin
+    int reset_pin = config.reset_gpio;
+    if (reset_pin > 0) {
+        char cmd[100];
+        sprintf(cmd, "echo %i >/sys/class/gpio/export", reset_pin);
+        system(cmd);
+        sprintf(cmd, "echo out > /sys/class/gpio/gpio%i/direction", reset_pin);
+        system(cmd);
+        sprintf(cmd, "echo 1 > /sys/class/gpio/gpio%i/value", reset_pin);
+        system(cmd);
+    }
+
     // initialize serial driver
     if (!serial.openDevice(config.serial_port.c_str(), config.baud_rate)) {
         EVLOG_AND_THROW(EVEXCEPTION(Everest::EverestConfigError, "Could not open serial port ", config.serial_port,
