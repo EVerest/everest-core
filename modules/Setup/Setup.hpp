@@ -157,6 +157,7 @@ private:
     bool remove_network(std::string interface, int network_id);
     bool remove_networks(std::string interface);
     bool remove_all_networks();
+    bool save_config(std::string interface);
 
     void populate_ip_addresses(std::vector<NetworkDeviceInfo>& device_info);
     std::vector<WifiInfo> scan_wifi(const std::vector<NetworkDeviceInfo>& device_info);
