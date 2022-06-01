@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
 #include "evSerial.h"
+#include "common.pb.h"
 #include "hi2lo.pb.h"
 #include "lo2hi.pb.h"
-#include "common.pb.h"
 #include "pb_decode.h"
 #include "pb_encode.h"
 #include <fstream>
@@ -37,31 +37,31 @@ bool evSerial::openDevice(const char* device, int _baud) {
     if (fd < 0) {
         printf("Serial: error %d opening %s: %s\n", errno, device, strerror(errno));
         return false;
-    } //else printf ("Serial: opened %s as %i\n", device, fd);
+    } // else printf ("Serial: opened %s as %i\n", device, fd);
     cobsDecodeReset();
 
     switch (_baud) {
-        case 9600:
-            baud = B9600;
-            break;
-        case 19200:
-            baud = B19200;
-            break;
-        case 38400:
-            baud = B38400;
-            break;
-        case 57600:
-            baud = B57600;
-            break;
-        case 115200:
-            baud = B115200;
-            break;
-        case 230400:
-            baud = B230400;
-            break;
-        default:
-            baud = 0;
-            return false;
+    case 9600:
+        baud = B9600;
+        break;
+    case 19200:
+        baud = B19200;
+        break;
+    case 38400:
+        baud = B38400;
+        break;
+    case 57600:
+        baud = B57600;
+        break;
+    case 115200:
+        baud = B115200;
+        break;
+    case 230400:
+        baud = B230400;
+        break;
+    default:
+        baud = 0;
+        return false;
     }
 
     return setSerialAttributes();
@@ -97,7 +97,7 @@ bool evSerial::setSerialAttributes() {
         printf("Serial: error %d from tcsetattr\n", errno);
         return false;
     }
-    //printf ("Success setting tcsetattr\n");
+    // printf ("Success setting tcsetattr\n");
     return true;
 }
 
@@ -127,7 +127,7 @@ uint32_t evSerial::crc32(uint8_t* buf, int len) {
 }
 
 void evSerial::handlePacket(uint8_t* buf, int len) {
-    //printf ("packet received len %u\n", len);
+    // printf ("packet received len %u\n", len);
 
     // Check CRC32 (last 4 bytes)
     //  uint32_t crc = calculateCrc(rx_packet_buf, rx_packet_len);
@@ -167,26 +167,27 @@ void evSerial::handlePacket(uint8_t* buf, int len) {
             signalSimulationFeedback(msg_in.payload.simulation_feedback);
             break;
         case LoToHi_event_tag:
-            //printf("Received event %i\n",msg_in.payload.event);
+            // printf("Received event %i\n",msg_in.payload.event);
             signalEvent(msg_in.payload.event);
             break;
         case LoToHi_reset_done_tag:
-            //printf("Received reset_done\n");
+            // printf("Received reset_done\n");
             reset_done_flag = true;
-            if (!forced_reset) signalSpuriousReset();
+            if (!forced_reset)
+                signalSpuriousReset();
             break;
         }
 }
 
 void evSerial::cobsDecode(uint8_t* buf, int len) {
-    for (int i=0;i<len;i++)
+    for (int i = 0; i < len; i++)
         cobsDecodeByte(buf[i]);
 }
 
 void evSerial::cobsDecodeByte(uint8_t byte) {
     // check max length
     if ((decode - msg == 2048 - 1) && byte != 0x00) {
-        printf ("cobsDecode: Buffer overflow\n");
+        printf("cobsDecode: Buffer overflow\n");
         cobsDecodeReset();
     }
 
@@ -194,7 +195,7 @@ void evSerial::cobsDecodeByte(uint8_t byte) {
         // we're currently decoding and should not get a 0
         if (byte == 0x00) {
             // probably found some garbage -> reset
-            printf ("cobsDecode: Garbage detected\n");
+            printf("cobsDecode: Garbage detected\n");
             cobsDecodeReset();
             return;
         }
@@ -208,7 +209,7 @@ void evSerial::cobsDecodeByte(uint8_t byte) {
             // we're finished, reset everything and commit
             if (decode == msg) {
                 // we received nothing, just a 0x00
-                printf ("cobsDecode: Received nothing\n");
+                printf("cobsDecode: Received nothing\n");
             } else {
                 // set back decode with one, as it gets post-incremented
                 handlePacket(msg, decode - 1 - msg);
@@ -225,13 +226,13 @@ void evSerial::run() {
     timeoutDetectionThreadHandle.handle = std::thread(&evSerial::timeoutDetectionThread, this);
 }
 
-
 void evSerial::timeoutDetectionThread() {
     while (true) {
         sleep(1);
         if (timeoutDetectionThreadHandle.shouldExit())
             break;
-        if (serial_timed_out()) signalConnectionTimeout();
+        if (serial_timed_out())
+            signalConnectionTimeout();
     }
 }
 
@@ -244,7 +245,7 @@ void evSerial::readThread() {
         if (readThreadHandle.shouldExit())
             break;
         n = read(fd, buf, sizeof buf);
-        //printf ("read %u bytes.\n", n);
+        // printf ("read %u bytes.\n", n);
         cobsDecode(buf, n);
     }
 }
@@ -272,7 +273,7 @@ bool evSerial::linkWrite(HiToLo* m) {
     }
 
     size_t tx_encode_len = cobsEncode(tx_packet_buf, tx_payload_len, encode_buf);
-    //std::cout << "Write "<<tx_encode_len<<" bytes to serial port." << std::endl;
+    // std::cout << "Write "<<tx_encode_len<<" bytes to serial port." << std::endl;
     write(fd, encode_buf, tx_encode_len);
     return true;
 }
@@ -303,8 +304,10 @@ size_t evSerial::cobsEncode(const void* data, size_t length, uint8_t* buffer) {
 
 bool evSerial::serial_timed_out() {
     auto now = date::utc_clock::now();
-    auto timeSinceLastKeepAlive = std::chrono::duration_cast<std::chrono::milliseconds>(now-last_keep_alive_lo_timestamp).count();
-    if (timeSinceLastKeepAlive>=5000) return true;
+    auto timeSinceLastKeepAlive =
+        std::chrono::duration_cast<std::chrono::milliseconds>(now - last_keep_alive_lo_timestamp).count();
+    if (timeSinceLastKeepAlive >= 5000)
+        return true;
     return false;
 }
 
@@ -328,7 +331,6 @@ void evSerial::enableRCD(bool e) {
     msg_out.payload.enable_rcd.e = e;
     linkWrite(&msg_out);
 }
-
 
 void evSerial::setHasVentilation(bool v) {
     HiToLo msg_out = HiToLo_init_default;
@@ -421,27 +423,40 @@ void evSerial::restart() {
     linkWrite(&msg_out);
 }
 
-bool evSerial::reset() {
+bool evSerial::reset(const int reset_pin) {
 
-    // Try to soft reset Yeti controller to be in a known state
     reset_done_flag = false;
     forced_reset = true;
 
-    HiToLo msg_out = HiToLo_init_default;
-    msg_out.which_payload = HiToLo_reset_tag;
-    linkWrite(&msg_out);
+    if (reset_pin > 0) {
+        // Try to hardware reset Yeti controller to be in a known state
+        char cmd[100];
+        sprintf(cmd, "echo %i >/sys/class/gpio/export", reset_pin);
+        system(cmd);
+        sprintf(cmd, "echo out > /sys/class/gpio/gpio%i/direction", reset_pin);
+        system(cmd);
+        sprintf(cmd, "echo 0 > /sys/class/gpio/gpio%i/value", reset_pin);
+        system(cmd);
+        sprintf(cmd, "echo 1 > /sys/class/gpio/gpio%i/value", reset_pin);
+        system(cmd);
+    } else {
+        // Try to soft reset Yeti controller to be in a known state
+        HiToLo msg_out = HiToLo_init_default;
+        msg_out.which_payload = HiToLo_reset_tag;
+        linkWrite(&msg_out);
+    }
 
     bool success = false;
 
     // Wait for reset done message from uC
-    for (int i=0; i<20; i++) {
+    for (int i = 0; i < 20; i++) {
         if (reset_done_flag) {
             success = true;
             break;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
-    
+
     // Reset flag to detect run time spurious resets of uC from now on
     reset_done_flag = false;
     forced_reset = false;

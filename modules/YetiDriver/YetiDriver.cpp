@@ -5,17 +5,6 @@
 namespace module {
 
 void YetiDriver::init() {
-    // configure GPIOs for Yeti Reset Pin
-    int reset_pin = config.reset_gpio;
-    if (reset_pin > 0) {
-        char cmd[100];
-        sprintf(cmd, "echo %i >/sys/class/gpio/export", reset_pin);
-        system(cmd);
-        sprintf(cmd, "echo out > /sys/class/gpio/gpio%i/direction", reset_pin);
-        system(cmd);
-        sprintf(cmd, "echo 1 > /sys/class/gpio/gpio%i/value", reset_pin);
-        system(cmd);
-    }
 
     // initialize serial driver
     if (!serial.openDevice(config.serial_port.c_str(), config.baud_rate)) {
@@ -32,19 +21,19 @@ void YetiDriver::init() {
     invoke_init(*p_debug_keepalive);
     invoke_init(*p_yeti_simulation_control);
     invoke_init(*p_board_support);
-
-    serial.signalSpuriousReset.connect(
-        [this]() { EVLOG_AND_THROW(EVEXCEPTION(Everest::EverestInternalError, "Yeti uC spurious reset!")); });
-    serial.signalConnectionTimeout.connect(
-        [this]() { EVLOG_AND_THROW(EVEXCEPTION(Everest::EverestInternalError, "Yeti UART timeout!")); });
 }
 
 void YetiDriver::ready() {
     serial.run();
 
-    if (!serial.reset()) {
+    if (!serial.reset(config.reset_gpio)) {
         EVLOG_AND_THROW(EVEXCEPTION(Everest::EverestInternalError, "Yeti reset not successful."));
     }
+
+    serial.signalSpuriousReset.connect(
+        [this]() { EVLOG_AND_THROW(EVEXCEPTION(Everest::EverestInternalError, "Yeti uC spurious reset!")); });
+    serial.signalConnectionTimeout.connect(
+        [this]() { EVLOG_AND_THROW(EVEXCEPTION(Everest::EverestInternalError, "Yeti UART timeout!")); });
 
     serial.setControlMode(str_to_control_mode(config.control_mode));
 

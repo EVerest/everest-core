@@ -36,7 +36,7 @@ class evSerial {
     void pauseCharging();
     void resumeCharging();
     void restart();
-    bool reset();
+    bool reset(const int reset_pin);
     void firmwareUpdate(bool rom);
     void keepAlive();
 
