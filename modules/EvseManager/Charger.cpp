@@ -40,6 +40,7 @@ Charger::Charger(const std::unique_ptr<board_support_ACIntf>& r_bsp) : r_bsp(r_b
     t_step_X1_returnState = EvseState::Faulted;
 
     matching_started = false;
+    hlc_use_5percent_current_session = false;
 }
 
 Charger::~Charger() {
@@ -125,6 +126,7 @@ void Charger::runStateMachine() {
             r_bsp->call_allow_power_on(false);
             // External signal on MQTT
             signalEvent(EvseEvent::AuthRequired);
+            hlc_use_5percent_current_session = false;
 
             // switch on HLC if configured. May be switched off later on after retries for this session only.
             if (charge_mode == "AC") {
