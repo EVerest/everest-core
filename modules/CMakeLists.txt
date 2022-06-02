@@ -12,6 +12,7 @@ list(APPEND EVEREST_MODULES_LIST
     JsAuth
     JsCarSimulator
     JsDummyTokenProvider
+    JsDummyTokenProviderManual
     JsDummyTokenValidator
     JsForecastDotSolar
     JsPN532TokenProvider

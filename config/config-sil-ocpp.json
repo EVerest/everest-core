@@ -14,7 +14,7 @@
             "has_ventilation": true,
             "country_code": "DE",
             "rcd_enabled": true,
-	        "evse_id": "1"
+            "evse_id": "1"
         },
         "connections": {
             "bsp": [
@@ -71,7 +71,7 @@
         "connections": {
             "tokenProvider": [
                 {
-                    "module_id": "token_provider_1",
+                    "module_id": "token_provider_manual",
                     "implementation_id": "main"
                 }
             ],
@@ -83,16 +83,9 @@
             ]
         }
     },
-    "token_provider_1": {
-        "module": "JsDummyTokenProvider",
-        "connections": {
-            "evse": [
-                {
-                    "module_id": "evse_manager",
-                    "implementation_id": "evse"
-                }
-            ]
-        },
+    "token_provider_manual": {
+        "module": "JsDummyTokenProviderManual",
+        "connections": {},
         "config_implementation": {
             "main": {
                 "token": "123",
