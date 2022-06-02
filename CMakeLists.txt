@@ -26,8 +26,6 @@ else()
     add_definitions(-DBOOST_LOG_DYN_LINK)
 endif()
 
-#add_definitions(-DEVEREST_SRC_DIR=${PROJECT_SOURCE_DIR})
-
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/dist" CACHE PATH "..." FORCE)
 endif()
