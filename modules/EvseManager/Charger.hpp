@@ -121,6 +121,7 @@ public:
         ChargingPausedEVSE,
         ChargingResumed,
         SessionFinished,
+        SessionCancelled,
         Error,
         PermanentFault
     };

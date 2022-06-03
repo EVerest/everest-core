@@ -37,32 +37,31 @@ void evse_managerImpl::init() {
         "/external/" + mod->info.id + ":" + mod->info.name + "/cmd/set_max_current",
         [&charger = mod->charger, this](std::string data) { mod->updateLocalMaxCurrentLimit(std::stof(data)); });
 
-    mod->mqtt.subscribe("/external/cmd/set_auth", [&charger = mod->charger](std::string data) {
-        charger->Authorize(true, data.c_str(), false);
-    });
+    mod->mqtt.subscribe("/external/cmd/set_auth",
+                        [&charger = mod->charger](std::string data) { charger->Authorize(true, data.c_str(), false); });
 
     mod->mqtt.subscribe("/external/cmd/enable",
-                        [&charger = mod->charger](const std::string &data) { charger->enable(); });
+                        [&charger = mod->charger](const std::string& data) { charger->enable(); });
 
     mod->mqtt.subscribe("/external/cmd/disable",
-                        [&charger = mod->charger](const std::string &data) { charger->disable(); });
+                        [&charger = mod->charger](const std::string& data) { charger->disable(); });
 
     mod->mqtt.subscribe("/external/cmd/faulted",
-                        [&charger = mod->charger](const std::string &data) { charger->set_faulted(); });
+                        [&charger = mod->charger](const std::string& data) { charger->set_faulted(); });
 
     mod->mqtt.subscribe("/external/cmd/switch_three_phases_while_charging",
-                        [&charger = mod->charger](const std::string &data) {
+                        [&charger = mod->charger](const std::string& data) {
                             charger->switchThreePhasesWhileCharging(str_to_bool(data));
                         });
 
     mod->mqtt.subscribe("/external/cmd/pause_charging",
-                        [&charger = mod->charger](const std::string &data) { charger->pauseCharging(); });
+                        [&charger = mod->charger](const std::string& data) { charger->pauseCharging(); });
 
     mod->mqtt.subscribe("/external/cmd/resume_charging",
-                        [&charger = mod->charger](const std::string &data) { charger->resumeCharging(); });
+                        [&charger = mod->charger](const std::string& data) { charger->resumeCharging(); });
 
     mod->mqtt.subscribe("/external/cmd/restart",
-                        [&charger = mod->charger](const std::string &data) { charger->restart(); });
+                        [&charger = mod->charger](const std::string& data) { charger->restart(); });
     // /Deprecated
 
     mod->r_powermeter->subscribe_powermeter([this](const json p) {
@@ -121,6 +120,7 @@ void evse_managerImpl::ready() {
         se["uuid"] = session_uuid;
 
         if (e == Charger::EvseEvent::SessionFinished) {
+
             se["session_finished"]["timestamp"] = std::chrono::seconds(std::time(NULL)).count();
             json p = mod->get_latest_powermeter_data();
             if (p.contains("energy_Wh_import") && p["energy_Wh_import"].contains("total"))
@@ -130,6 +130,18 @@ void evse_managerImpl::ready() {
                 se["session_finished"]["energy_Wh_export"] = p["energy_Wh_export"]["total"];
 
             session_uuid = "";
+        }
+
+        if (e == Charger::EvseEvent::SessionCancelled) {
+
+            se["session_cancelled"]["timestamp"] = std::chrono::seconds(std::time(NULL)).count();
+            json p = mod->get_latest_powermeter_data();
+            if (p.contains("energy_Wh_import") && p["energy_Wh_import"].contains("total"))
+                se["session_cancelled"]["energy_Wh_import"] = p["energy_Wh_import"]["total"];
+
+            if (p.contains("energy_Wh_export") && p["energy_Wh_export"].contains("total"))
+                se["session_cancelled"]["energy_Wh_export"] = p["energy_Wh_export"]["total"];
+                
         }
 
         if (e == Charger::EvseEvent::Error) {

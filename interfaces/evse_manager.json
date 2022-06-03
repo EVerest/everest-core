@@ -168,6 +168,7 @@
                         "ChargingPausedEVSE",
                         "ChargingResumed",
                         "SessionFinished",
+                        "SessionCancelled",
                         "Error",
                         "PermanentFault",
                         "ReservationStart",
@@ -203,7 +204,7 @@
                     "additionalProperties": false
                 },
                 "session_finished": {
-                    "description": "data for SessionFinished event",
+                    "description": "data for SessionFinished event that happens when car is plugged out",
                     "type": "object",
                     "required": [
                         "timestamp",
@@ -220,6 +221,33 @@
                         },
                         "energy_Wh_export": {
                             "description": "Session end Wh",
+                            "type": "number"
+                        },
+                        "signed_meter_value": {
+                            "description": "Signed meter value",
+                            "type": "string"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "session_cancelled": {
+                    "description": "data for SessionCancelled event that happens when e.g. user cancels charging before plug out. Note that SessionFinished will always be generated on plugout.",
+                    "type": "object",
+                    "required": [
+                        "timestamp",
+                        "energy_Wh_import"
+                    ],
+                    "properties": {
+                        "timestamp": {
+                            "description": "Session cancel timestamp",
+                            "type": "number"
+                        },
+                        "energy_Wh_import": {
+                            "description": "Session cancel Wh",
+                            "type": "number"
+                        },
+                        "energy_Wh_export": {
+                            "description": "Session cancel Wh",
                             "type": "number"
                         },
                         "signed_meter_value": {
