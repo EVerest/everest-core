@@ -638,6 +638,7 @@ bool Charger::cancelCharging() {
         currentState == EvseState::ChargingPausedEV) {
         currentState = EvseState::ChargingPausedEVSE;
         cancelled = true;
+        signalEvent(EvseEvent::SessionCancelled);
         return true;
     }
     return false;
@@ -797,6 +798,9 @@ std::string Charger::evseEventToString(EvseEvent e) {
         break;
     case EvseEvent::SessionFinished:
         return ("SessionFinished");
+        break;
+    case EvseEvent::SessionCancelled:
+        return ("SessionCancelled");
         break;
     case EvseEvent::Error:
         return ("Error");
