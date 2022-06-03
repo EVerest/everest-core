@@ -12,6 +12,7 @@ namespace module {
 void OCPP::init() {
     invoke_init(*p_main);
     invoke_init(*p_auth_validator);
+    invoke_init(*p_auth_provider);
 
     boost::filesystem::path config_path = boost::filesystem::path(this->config.ChargePointConfigPath);
 
@@ -65,9 +66,10 @@ void OCPP::init() {
             }
 
             if (connector > 0 && connector <= this->r_evse_manager.size()) {
-                std::string response = this->r_evse_manager.at(connector - 1)
-                                           ->call_reserve_now(reservation_id, idTag.get(), expiryDate.to_rfc3339(),
-                                                              parent_id.value_or(ocpp1_6::CiString20Type(std::string(""))).get());
+                std::string response =
+                    this->r_evse_manager.at(connector - 1)
+                        ->call_reserve_now(reservation_id, idTag.get(), expiryDate.to_rfc3339(),
+                                           parent_id.value_or(ocpp1_6::CiString20Type(std::string(""))).get());
                 return this->ResStatMap.at(response);
             } else {
                 return ocpp1_6::ReservationStatus::Unavailable;
@@ -148,8 +150,8 @@ void OCPP::init() {
             }
             cmd.wait();
         });
+        this->update_firmware_thread.detach();
     });
-    this->update_firmware_thread.detach();
 
     this->charge_point->start();
 
@@ -173,6 +175,15 @@ void OCPP::init() {
                 // TODO(kai): decide if we need to inform libocpp about such an event
             } else if (event == "Disabled") {
                 // TODO(kai): decide if we need to inform libocpp about such an event
+            } else if (event == "AuthRequired") {
+                auto authorized_id_tag = this->charge_point->get_authorized_id_tag(connector);
+                if (authorized_id_tag != boost::none) {
+                    Object id_tag;
+                    id_tag["token"] = authorized_id_tag.get();
+                    id_tag["type"] = "ocpp_authorized";
+                    id_tag["timeout"] = 10;
+                    this->p_auth_provider->publish_token(id_tag);
+                }
             } else if (event == "SessionStarted") {
                 auto session_started = session_events["session_started"];
                 auto timestamp = ocpp1_6::DateTime(std::chrono::time_point<date::utc_clock>(
@@ -218,6 +229,7 @@ void OCPP::init() {
 void OCPP::ready() {
     invoke_ready(*p_main);
     invoke_ready(*p_auth_validator);
+    invoke_ready(*p_auth_provider);
 }
 
 } // namespace module

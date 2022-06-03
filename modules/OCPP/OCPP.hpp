@@ -11,6 +11,7 @@
 #include "ld-ev.hpp"
 
 // headers for provided interface implementations
+#include <generated/auth_token_provider/Implementation.hpp>
 #include <generated/auth_token_validator/Implementation.hpp>
 #include <generated/ocpp_1_6_charge_point/Implementation.hpp>
 
@@ -46,11 +47,13 @@ public:
     OCPP(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
          std::unique_ptr<ocpp_1_6_charge_pointImplBase> p_main,
          std::unique_ptr<auth_token_validatorImplBase> p_auth_validator,
+         std::unique_ptr<auth_token_providerImplBase> p_auth_provider,
          std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_main(std::move(p_main)),
         p_auth_validator(std::move(p_auth_validator)),
+        p_auth_provider(std::move(p_auth_provider)),
         r_evse_manager(std::move(r_evse_manager)),
         config(config){};
 
@@ -58,23 +61,21 @@ public:
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<ocpp_1_6_charge_pointImplBase> p_main;
     const std::unique_ptr<auth_token_validatorImplBase> p_auth_validator;
+    const std::unique_ptr<auth_token_providerImplBase> p_auth_provider;
     const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;
-    std::map<int32_t, int32_t> res_conn_map;
-    std::map<std::string, ocpp1_6::ReservationStatus> ResStatMap = {
-        { std::string("Accepted"), ocpp1_6::ReservationStatus::Accepted },
-        { std::string("Faulted"), ocpp1_6::ReservationStatus::Faulted },
-        { std::string("Occupied"), ocpp1_6::ReservationStatus::Occupied },
-        { std::string("Rejected"), ocpp1_6::ReservationStatus::Rejected },
-        { std::string("Unavailable"), ocpp1_6::ReservationStatus::Unavailable }
-    };
-    std::map<bool, ocpp1_6::CancelReservationStatus> can_res_stat_map = {
-        { true, ocpp1_6::CancelReservationStatus::Accepted },
-        { false, ocpp1_6::CancelReservationStatus::Rejected }
-    };
-    
+
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
     ocpp1_6::ChargePoint* charge_point;
+    std::map<int32_t, int32_t> res_conn_map;
+    std::map<std::string, ocpp1_6::ReservationStatus> ResStatMap = {
+        {std::string("Accepted"), ocpp1_6::ReservationStatus::Accepted},
+        {std::string("Faulted"), ocpp1_6::ReservationStatus::Faulted},
+        {std::string("Occupied"), ocpp1_6::ReservationStatus::Occupied},
+        {std::string("Rejected"), ocpp1_6::ReservationStatus::Rejected},
+        {std::string("Unavailable"), ocpp1_6::ReservationStatus::Unavailable}};
+    std::map<bool, ocpp1_6::CancelReservationStatus> can_res_stat_map = {
+        {true, ocpp1_6::CancelReservationStatus::Accepted}, {false, ocpp1_6::CancelReservationStatus::Rejected}};
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:

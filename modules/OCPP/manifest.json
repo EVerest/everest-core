@@ -25,6 +25,10 @@
         "auth_validator": {
             "description": "Validates the provided auth token with OCPP",
             "interface": "auth_token_validator"
+        },
+        "auth_provider": {
+            "description": "Provides auth tokens from OCPP",
+            "interface": "auth_token_provider"
         }
     },
     "requires": {
