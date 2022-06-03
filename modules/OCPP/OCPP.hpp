@@ -77,16 +77,6 @@ public:
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
     ocpp1_6::ChargePoint* charge_point;
-    std::map<int32_t, int32_t> res_conn_map;
-    std::map<std::string, ocpp1_6::ReservationStatus> ResStatMap = {
-        {std::string("Accepted"), ocpp1_6::ReservationStatus::Accepted},
-        {std::string("Faulted"), ocpp1_6::ReservationStatus::Faulted},
-        {std::string("Occupied"), ocpp1_6::ReservationStatus::Occupied},
-        {std::string("Rejected"), ocpp1_6::ReservationStatus::Rejected},
-        {std::string("Unavailable"), ocpp1_6::ReservationStatus::Unavailable}};
-    std::map<bool, ocpp1_6::CancelReservationStatus> can_res_stat_map = {
-        {true, ocpp1_6::CancelReservationStatus::Accepted}, {false, ocpp1_6::CancelReservationStatus::Rejected}};
-    // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
     // ev@4714b2ab-a24f-4b95-ab81-36439e1478de:v1
