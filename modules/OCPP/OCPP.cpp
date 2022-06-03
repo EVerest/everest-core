@@ -187,6 +187,12 @@ void OCPP::init() {
                 this->charge_point->suspend_charging_evse(connector);
             } else if (event == "ChargingResumed") {
                 this->charge_point->resume_charging(connector);
+            } else if (event == "SessionCancelled") {
+                auto session_cancelled = session_events["session_cancelled"];
+                auto timestamp = std::chrono::time_point<date::utc_clock>(
+                    std::chrono::seconds(session_cancelled["timestamp"].get<int>()));
+                auto energy_Wh_import = session_cancelled["energy_Wh_import"].get<double>();
+                this->charge_point->stop_session(connector, ocpp1_6::DateTime(timestamp), energy_Wh_import);
             } else if (event == "SessionFinished") {
                 auto session_finished = session_events["session_finished"];
                 auto timestamp = std::chrono::time_point<date::utc_clock>(
