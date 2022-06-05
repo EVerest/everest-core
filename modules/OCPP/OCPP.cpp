@@ -260,6 +260,15 @@ void OCPP::init() {
             this->signed_update_firmware_thread.detach();
         });
 
+    this->charge_point->register_remote_start_transaction_callback(
+        [this](int32_t connector, ocpp1_6::CiString20Type idTag) {
+            Object id_tag;
+            id_tag["token"] = idTag;
+            id_tag["type"] = "ocpp_authorized";
+            id_tag["timeout"] = 10;
+            this->p_auth_provider->publish_token(id_tag);
+        });
+
     this->charge_point->start();
 
     int32_t connector = 1;
