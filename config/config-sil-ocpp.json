@@ -73,6 +73,10 @@
                 {
                     "module_id": "token_provider_manual",
                     "implementation_id": "main"
+                },
+                {
+                    "module_id": "charge_point",
+                    "implementation_id": "auth_provider"
                 }
             ],
             "tokenValidator": [
