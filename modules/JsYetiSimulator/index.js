@@ -57,7 +57,7 @@ boot_module(async ({ setup, info, config, mqtt }) => {
   setup.provides.board_support.register.allow_power_on((mod, args) => {
     mod.power_on_allowed = args.value;
   });
-  setup.provides.board_support.register.force_unlock((mod, args) => {/* lock/unlock not implemented */ });
+  setup.provides.board_support.register.force_unlock((mod, args) => {/* lock/unlock not implemented */ return true; });
   setup.provides.board_support.register.switch_three_phases_while_charging((mod, args) => {
     mod.use_three_phases = args.value;
     mod.use_three_phases_confirmed = args.value;
