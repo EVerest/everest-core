@@ -12,8 +12,19 @@ boot_module(async ({ setup }) => {
   setup.uses_list.tokenProvider.forEach((provider, token_priority) => {
     provider.subscribe.token(async (mod, { token, type, timeout }) => {
       mod.uses_list.tokenValidator.forEach((validator, validator_priority) => {
-        if (type == "ocpp_authorized") {
+        if (type == 'ocpp_authorized') {
           evlog.error("already validated");
+          const token_data = {
+            timestamp: Math.floor(Date.now() / 1000),
+            type,
+            token,
+            token_priority,
+            validator_priority,
+            result: 'Accepted',
+            reason: 'Already authorized',
+            timeout,
+          };
+          acceptedToken = token_data;
           mod.provides.main.publish.authorization_available(true);
           return;
         }
