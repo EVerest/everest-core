@@ -26,6 +26,13 @@ boot_module(async ({ setup }) => {
           };
           acceptedToken = token_data;
           mod.provides.main.publish.authorization_available(true);
+
+          setTimeout(() => {
+            if (acceptedToken === token_data) {
+              acceptedToken = null;
+              mod.provides.main.publish.authorization_available(false);
+            }
+          }, timeout * 1000);
           return;
         }
         const { result, reason } = validator.call.validate_token({ token });
