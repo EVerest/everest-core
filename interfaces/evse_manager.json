@@ -38,6 +38,25 @@
         },
         "cancel_charging": {
             "description": "Cancels charging, can only be resumed by replugging car",
+            "arguments": {
+                "reason": {
+                    "description": "Reason for session cancellation",
+                    "type": "string",
+                    "enum": [
+                        "EmergencyStop",
+                        "EVDisconnected",
+                        "HardReset",
+                        "Local",
+                        "Other",
+                        "PowerLoss",
+                        "Reboot",
+                        "Remote",
+                        "SoftReset",
+                        "UnlockCommand",
+                        "DeAuthorized"
+                    ]
+                }
+            },
             "result": {
                 "description": "Returns true if successful",
                 "type": "boolean"
@@ -253,6 +272,23 @@
                         "signed_meter_value": {
                             "description": "Signed meter value",
                             "type": "string"
+                        },
+                        "reason": {
+                            "description": "Reason for session cancellation",
+                            "type": "string",
+                            "enum": [
+                                "EmergencyStop",
+                                "EVDisconnected",
+                                "HardReset",
+                                "Local",
+                                "Other",
+                                "PowerLoss",
+                                "Reboot",
+                                "Remote",
+                                "SoftReset",
+                                "UnlockCommand",
+                                "DeAuthorized"
+                            ]
                         }
                     },
                     "additionalProperties": false

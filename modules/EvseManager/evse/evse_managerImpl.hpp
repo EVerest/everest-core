@@ -39,7 +39,7 @@ protected:
     virtual bool handle_set_faulted() override;
     virtual bool handle_pause_charging() override;
     virtual bool handle_resume_charging() override;
-    virtual bool handle_cancel_charging() override;
+    virtual bool handle_cancel_charging(std::string& reason) override;
     virtual bool handle_accept_new_session() override;
     virtual std::string handle_reserve_now(int& reservation_id, std::string& auth_token, std::string& expiry_date,
                                            std::string& parent_id) override;
@@ -68,6 +68,9 @@ private:
     void set_session_uuid();
 
     std::string session_uuid;
+
+    std::mutex session_mutex;
+    std::string cancel_session_reason;
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 
