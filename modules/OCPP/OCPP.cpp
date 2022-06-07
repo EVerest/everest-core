@@ -78,7 +78,6 @@ void OCPP::init() {
                     this->r_evse_manager.at(connector - 1)
                         ->call_reserve_now(reservation_id, idTag.get(), expiryDate.to_rfc3339(),
                                            parent_id.value_or(ocpp1_6::CiString20Type(std::string(""))).get());
-                EVLOG(critical) << "call reserve now response: " << response;
                 return this->ResStatMap.at(response);
             } else {
                 return ocpp1_6::ReservationStatus::Unavailable;
@@ -325,7 +324,6 @@ void OCPP::init() {
             } else if (event == "ChargingResumed") {
                 this->charge_point->resume_charging(connector);
             } else if (event == "SessionCancelled") {
-                EVLOG(critical) << "Session Cancelled called...";
                 auto session_cancelled = session_events["session_cancelled"];
                 auto timestamp = std::chrono::time_point<date::utc_clock>(
                     std::chrono::seconds(session_cancelled["timestamp"].get<int>()));
@@ -334,7 +332,6 @@ void OCPP::init() {
                 this->charge_point->stop_session(connector, ocpp1_6::DateTime(timestamp), energy_Wh_import,
                                                  ocpp1_6::Reason::Local);
             } else if (event == "SessionFinished") {
-                EVLOG(critical) << "Session Finished called...";
                 // ev side disconnect
                 auto session_finished = session_events["session_finished"];
                 auto timestamp = std::chrono::time_point<date::utc_clock>(
