@@ -51,6 +51,7 @@ void OCPP::init() {
 
     this->charge_point->register_unlock_connector_callback([this](int32_t connector) {
         if (connector > 0 && connector <= this->r_evse_manager.size()) {
+            EVLOG(info) << "Executing unlock connector callback";
             return this->r_evse_manager.at(connector - 1)->call_force_unlock();
         } else {
             return false;
