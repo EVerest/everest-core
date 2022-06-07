@@ -41,9 +41,10 @@ void OCPP::init() {
             return false;
         }
     });
-    this->charge_point->register_cancel_charging_callback([this](int32_t connector) {
+    this->charge_point->register_cancel_charging_callback([this](int32_t connector, ocpp1_6::Reason reason) {
         if (connector > 0 && connector <= this->r_evse_manager.size()) {
-            return this->r_evse_manager.at(connector - 1)->call_cancel_charging();
+            return this->r_evse_manager.at(connector - 1)
+                ->call_cancel_charging(ocpp1_6::conversions::reason_to_string(reason));
         } else {
             return false;
         }
@@ -329,9 +330,10 @@ void OCPP::init() {
                 auto timestamp = std::chrono::time_point<date::utc_clock>(
                     std::chrono::seconds(session_cancelled["timestamp"].get<int>()));
                 auto energy_Wh_import = session_cancelled["energy_Wh_import"].get<double>();
+                auto reason = session_cancelled["reason"].get<std::string>();
                 // aus der ocpp library ausgelöst
                 this->charge_point->stop_session(connector, ocpp1_6::DateTime(timestamp), energy_Wh_import,
-                                                 ocpp1_6::Reason::Local);
+                                                 ocpp1_6::conversions::string_to_reason(reason));
             } else if (event == "SessionFinished") {
                 // ev side disconnect
                 auto session_finished = session_events["session_finished"];
