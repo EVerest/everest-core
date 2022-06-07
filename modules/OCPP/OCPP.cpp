@@ -49,6 +49,14 @@ void OCPP::init() {
         }
     });
 
+    this->charge_point->register_unlock_connector_callback([this](int32_t connector) {
+        if (connector > 0 && connector <= this->r_evse_manager.size()) {
+            return this->r_evse_manager.at(connector - 1)->call_force_unlock();
+        } else {
+            return false;
+        }
+    });
+
     // int32_t reservation_id, CiString20Type auth_token, DateTime expiry_date, std::string parent_id
     this->charge_point->register_reserve_now_callback(
         [this](int32_t reservation_id, int32_t connector, ocpp1_6::DateTime expiryDate, ocpp1_6::CiString20Type idTag,
@@ -70,6 +78,7 @@ void OCPP::init() {
                     this->r_evse_manager.at(connector - 1)
                         ->call_reserve_now(reservation_id, idTag.get(), expiryDate.to_rfc3339(),
                                            parent_id.value_or(ocpp1_6::CiString20Type(std::string(""))).get());
+                EVLOG(critical) << "call reserve now response: " << response;
                 return this->ResStatMap.at(response);
             } else {
                 return ocpp1_6::ReservationStatus::Unavailable;
@@ -84,6 +93,7 @@ void OCPP::init() {
             return this->can_res_stat_map.at(false);
         }
     });
+
     this->charge_point->register_upload_diagnostics_callback([this](std::string location) {
         // create temporary file
         std::string date_time = ocpp1_6::DateTime().to_rfc3339();
@@ -315,17 +325,23 @@ void OCPP::init() {
             } else if (event == "ChargingResumed") {
                 this->charge_point->resume_charging(connector);
             } else if (event == "SessionCancelled") {
+                EVLOG(critical) << "Session Cancelled called...";
                 auto session_cancelled = session_events["session_cancelled"];
                 auto timestamp = std::chrono::time_point<date::utc_clock>(
                     std::chrono::seconds(session_cancelled["timestamp"].get<int>()));
                 auto energy_Wh_import = session_cancelled["energy_Wh_import"].get<double>();
-                this->charge_point->stop_session(connector, ocpp1_6::DateTime(timestamp), energy_Wh_import);
+                // aus der ocpp library ausgelöst
+                this->charge_point->stop_session(connector, ocpp1_6::DateTime(timestamp), energy_Wh_import,
+                                                 ocpp1_6::Reason::Local);
             } else if (event == "SessionFinished") {
+                EVLOG(critical) << "Session Finished called...";
+                // ev side disconnect
                 auto session_finished = session_events["session_finished"];
                 auto timestamp = std::chrono::time_point<date::utc_clock>(
                     std::chrono::seconds(session_finished["timestamp"].get<int>()));
                 auto energy_Wh_import = session_finished["energy_Wh_import"].get<double>();
-                this->charge_point->stop_session(connector, ocpp1_6::DateTime(timestamp), energy_Wh_import);
+                this->charge_point->stop_session(connector, ocpp1_6::DateTime(timestamp), energy_Wh_import,
+                                                 ocpp1_6::Reason::EVDisconnected);
             } else if (event == "Error") {
                 auto error = session_events["error"];
                 if (error == "OverCurrent") {
