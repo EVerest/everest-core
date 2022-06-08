@@ -114,6 +114,10 @@ void evse_managerImpl::ready() {
             if (p.contains("energy_Wh_export") && p["energy_Wh_export"].contains("total"))
                 se["session_started"]["energy_Wh_export"] = p["energy_Wh_export"]["total"];
 
+            if (mod->reservation_valid()) {
+                se["session_started"]["reservation_id"] = mod->get_reservation_id();
+            }
+
             set_session_uuid();
         }
 

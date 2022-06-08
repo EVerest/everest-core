@@ -64,7 +64,6 @@ public:
     const std::unique_ptr<auth_token_providerImplBase> p_auth_provider;
     const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;
 
-    std::map<int32_t, int32_t> res_conn_map;
     std::map<std::string, ocpp1_6::ReservationStatus> ResStatMap = {
         {std::string("Accepted"), ocpp1_6::ReservationStatus::Accepted},
         {std::string("Faulted"), ocpp1_6::ReservationStatus::Faulted},

@@ -63,18 +63,6 @@ void OCPP::init() {
     this->charge_point->register_reserve_now_callback(
         [this](int32_t reservation_id, int32_t connector, ocpp1_6::DateTime expiryDate, ocpp1_6::CiString20Type idTag,
                boost::optional<ocpp1_6::CiString20Type> parent_id) {
-            if (res_conn_map.count(reservation_id) == 0) {
-                this->res_conn_map[reservation_id] = connector;
-            } else if (res_conn_map.count(reservation_id) == 1) {
-                std::map<int32_t, int32_t>::iterator it;
-                it = this->res_conn_map.find(reservation_id);
-                this->res_conn_map.erase(it);
-                this->res_conn_map[reservation_id] = connector;
-
-            } else {
-                return ocpp1_6::ReservationStatus::Faulted;
-            }
-
             if (connector > 0 && connector <= this->r_evse_manager.size()) {
                 std::string response =
                     this->r_evse_manager.at(connector - 1)
@@ -86,8 +74,7 @@ void OCPP::init() {
             }
         });
 
-    this->charge_point->register_cancel_reservation_callback([this](int32_t reservationId) {
-        int32_t connector = this->res_conn_map[reservationId];
+    this->charge_point->register_cancel_reservation_callback([this](int32_t connector) {
         if (connector > 0 && connector <= this->r_evse_manager.size()) {
             return this->can_res_stat_map.at(this->r_evse_manager.at(connector - 1)->call_cancel_reservation());
         } else {
@@ -316,7 +303,12 @@ void OCPP::init() {
                 auto timestamp = ocpp1_6::DateTime(std::chrono::time_point<date::utc_clock>(
                     std::chrono::seconds(session_started["timestamp"].get<int>())));
                 auto energy_Wh_import = session_started["energy_Wh_import"].get<double>();
-                this->charge_point->start_session(connector, timestamp, energy_Wh_import);
+                boost::optional<int32_t> reservation_id_opt = boost::none;
+                auto it = session_started.find("reservation_id");
+                if (it != session_started.end()) {
+                    reservation_id_opt.emplace(session_started["reservation_id"].get<int>());
+                }
+                this->charge_point->start_session(connector, timestamp, energy_Wh_import, reservation_id_opt);
             } else if (event == "ChargingStarted") {
                 this->charge_point->start_charging(connector);
             } else if (event == "ChargingPausedEV") {
@@ -351,6 +343,17 @@ void OCPP::init() {
                 }
             } else if (event == "PermanentFault") {
                 this->charge_point->permanent_fault(connector);
+            } else if (event == "ReservationStart") {
+                auto reservation_start = session_events["reservation_start"];
+                auto reservation_id = reservation_start["reservation_id"].get<int>();
+                auto id_tag = reservation_start["id_tag"].get<std::string>();
+                this->charge_point->reservation_start(connector, reservation_id, id_tag);
+            } else if (event == "ReservationEnd") {
+                auto reservation_end = session_events["reservation_end"];
+                auto reservation_id = reservation_end["reservation_id"].get<int>();
+                auto reason = reservation_end["reason"].get<std::string>();
+                this->charge_point->reservation_end(connector, reservation_id, reason);
+            } else if (event == "ReservationAuthtokenMismatch") {
             }
         });
 

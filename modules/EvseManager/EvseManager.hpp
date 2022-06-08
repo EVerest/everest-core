@@ -85,6 +85,8 @@ public:
     std::string reserve_now(const int _reservation_id, const std::string& token,
                             const std::chrono::time_point<date::utc_clock>& valid_until, const std::string& parent_id);
     bool cancel_reservation();
+    bool reservation_valid();
+    int32_t get_reservation_id();
     sigslot::signal<json> signalReservationEvent;
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
@@ -115,7 +117,6 @@ private:
     std::chrono::time_point<date::utc_clock> reservation_valid_until;
     bool reserved; // internal, use reservation_valid() if you want to find out if it is reserved
     int reservation_id;
-    bool reservation_valid();
     void use_reservation_to_start_charging();
     bool reserved_for_different_token(const std::string& token);
     Everest::Thread reservationThreadHandle;

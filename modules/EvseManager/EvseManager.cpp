@@ -159,6 +159,10 @@ json EvseManager::get_hw_capabilities() {
     return hw_capabilities;
 }
 
+int32_t EvseManager::get_reservation_id() {
+    return reservation_id;
+}
+
 std::string EvseManager::reserve_now(const int _reservation_id, const std::string& token,
                                      const std::chrono::time_point<date::utc_clock>& valid_until,
                                      const std::string& parent_id) {
@@ -191,6 +195,7 @@ std::string EvseManager::reserve_now(const int _reservation_id, const std::strin
     std::lock_guard<std::mutex> lock(reservation_mutex);
 
     // accept new reservation
+    reservation_id = _reservation_id;
     reserved_auth_token = token;
     reservation_valid_until = valid_until;
     reserved_auth_token_parent_id = parent_id;
@@ -200,6 +205,7 @@ std::string EvseManager::reserve_now(const int _reservation_id, const std::strin
     json se;
     se["event"] = "ReservationStart";
     se["reservation_start"]["reservation_id"] = reservation_id;
+    se["reservation_start"]["id_tag"] = reserved_auth_token;
     se["reservation_start"]["parent_id"] = parent_id;
 
     signalReservationEvent(se);
@@ -217,7 +223,7 @@ std::string EvseManager::reserve_now(const int _reservation_id, const std::strin
 bool EvseManager::updateLocalMaxCurrentLimit(float max_current) {
     if (max_current >= 0.0F && max_current < EVSE_ABSOLUTE_MAX_CURRENT) {
         local_max_current_limit = max_current;
-        
+
         // wait for EnergyManager to assign optimized current on next opimizer run
 
         return true;
@@ -239,10 +245,8 @@ bool EvseManager::cancel_reservation() {
         se["reservation_end"]["reservation_id"] = reservation_id;
 
         signalReservationEvent(se);
-
         return true;
     }
-
     reserved = false;
     return false;
 }
@@ -305,9 +309,7 @@ bool EvseManager::reserved_for_different_token(const std::string& token) {
 
     if (reserved_auth_token == token) {
         return false;
-    }
-    else
-    {
+    } else {
         return true;
     }
 }
