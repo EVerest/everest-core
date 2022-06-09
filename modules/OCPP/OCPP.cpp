@@ -334,6 +334,7 @@ void OCPP::init() {
                 auto energy_Wh_import = session_finished["energy_Wh_import"].get<double>();
                 this->charge_point->stop_session(connector, ocpp1_6::DateTime(timestamp), energy_Wh_import,
                                                  ocpp1_6::Reason::EVDisconnected);
+                this->charge_point->plug_disconnected(connector);
             } else if (event == "Error") {
                 auto error = session_events["error"];
                 if (error == "OverCurrent") {
