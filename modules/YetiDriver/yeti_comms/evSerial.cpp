@@ -18,6 +18,9 @@
 
 #include <thread>
 
+#include <date/date.h>
+#include <date/tz.h>
+
 evSerial::evSerial() {
     fd = 0;
     baud = 0;
@@ -160,6 +163,11 @@ void evSerial::handlePacket(uint8_t* buf, int len) {
             break;
         case LoToHi_power_meter_tag:
             // printf("Received power_meter\n");
+            // FIXME: in the long run we could set the clock in the uC. But for now we just fix the timestamp here...
+            {
+                auto unix_timestamp = std::chrono::seconds(std::time(NULL));
+                msg_in.payload.power_meter.time_stamp = std::chrono::milliseconds(unix_timestamp).count();
+            }
             signalPowerMeter(msg_in.payload.power_meter);
             break;
         case LoToHi_simulation_feedback_tag:
