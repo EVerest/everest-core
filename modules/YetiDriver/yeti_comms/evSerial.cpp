@@ -166,7 +166,7 @@ void evSerial::handlePacket(uint8_t* buf, int len) {
             // FIXME: in the long run we could set the clock in the uC. But for now we just fix the timestamp here...
             {
                 auto unix_timestamp = std::chrono::seconds(std::time(NULL));
-                msg_in.payload.power_meter.time_stamp = std::chrono::milliseconds(unix_timestamp).count();
+                msg_in.payload.power_meter.time_stamp = unix_timestamp.count();
             }
             signalPowerMeter(msg_in.payload.power_meter);
             break;
