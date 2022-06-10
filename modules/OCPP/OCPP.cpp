@@ -195,6 +195,7 @@ void OCPP::init() {
                 }
             }
             cmd.wait();
+            this->charge_point->send_firmware_status_notification(ocpp1_6::FirmwareStatus::Idle);
         });
         this->update_firmware_thread.detach();
     });
