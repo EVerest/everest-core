@@ -86,6 +86,21 @@ void EvseManager::ready() {
     r_auth->subscribe_authorization_available([this](bool a) {
         // Listen to authorize events and cache locally.
         authorization_available = a;
+        bool res_valid = reservation_valid();
+        std::lock_guard<std::mutex> lock(reservation_mutex);
+        if (res_valid) {
+            EVLOG(info) << "Reservation ends because the id tag was presented";
+            reserved = false;
+
+            // publish event to other modules
+            json se;
+            se["event"] = "ReservationEnd";
+            se["reservation_end"]["reason"] = "UsedToStartCharging";
+            se["reservation_end"]["reservation_id"] = reservation_id;
+
+            signalReservationEvent(se);
+        }
+        reserved = false;
     });
 
     if (slac_enabled)
@@ -112,8 +127,6 @@ void EvseManager::ready() {
                     se["event"] = "ReservationAuthtokenMismatch";
                     signalReservationEvent(se);
                 } else {
-                    // if reserved: signal to the outside world that this reservation ended because it is being used
-                    use_reservation_to_start_charging();
                     charger->Authorize(true, token, false);
                 }
             }
@@ -187,9 +200,9 @@ std::string EvseManager::reserve_now(const int _reservation_id, const std::strin
         return "Occupied";
     }
 
-    // is it already reserved with a different reservation_id?
-    if (reservation_valid() && _reservation_id != reservation_id) {
-        return "Rejected";
+    // is it already reserved
+    if (reservation_valid()) {
+        return "Occupied";
     }
 
     std::lock_guard<std::mutex> lock(reservation_mutex);
@@ -249,26 +262,6 @@ bool EvseManager::cancel_reservation() {
     }
     reserved = false;
     return false;
-}
-
-// Signals that reservation was used to start this charging.
-// Does nothing if no reservation is active.
-void EvseManager::use_reservation_to_start_charging() {
-
-    std::lock_guard<std::mutex> lock(reservation_mutex);
-    if (!reserved) {
-        return;
-    }
-
-    // publish event to other modules
-    json se;
-    se["event"] = "ReservationEnd";
-    se["reservation_end"]["reason"] = "UsedToStartCharging";
-    se["reservation_end"]["reservation_id"] = reservation_id;
-
-    signalReservationEvent(se);
-
-    reserved = false;
 }
 
 float EvseManager::getLocalMaxCurrentLimit() {

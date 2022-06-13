@@ -701,6 +701,7 @@ Charger::ErrorState Charger::getErrorState() {
 bool Charger::disable() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
     currentState = EvseState::Disabled;
+    signalEvent(EvseEvent::Disabled);
     return true;
 }
 
