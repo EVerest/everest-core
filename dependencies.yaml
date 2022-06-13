@@ -11,22 +11,21 @@ nlohmann_json_schema_validator:
     name: nlohmann_json_schema_validator::nlohmann_json_schema_validator
     target: nlohmann_json_schema_validator
 libfsm:
-  git: git@github.com:EVerest/libfsm.git
+  git: https://github.com/EVerest/libfsm.git
   git_tag: main
   options: ["BUILD_EXAMPLES OFF"]
 liblog:
-  git: git@github.com:EVerest/liblog.git
+  git: https://github.com/EVerest/liblog.git
   git_tag: main
   options: ["BUILD_EXAMPLES OFF"]
 libtimer:
-  git: git@github.com:EVerest/libtimer.git
+  git: https://github.com/EVerest/libtimer.git
   git_tag: main
   options: ["BUILD_EXAMPLES OFF"]
 date:
   git: https://github.com/HowardHinnant/date.git
   git_tag: v3.0.1
   options: ["BUILD_TZ_LIB ON", "HAS_REMOTE_API 0", "USE_AUTOLOAD 0", "USE_SYSTEM_TZ_DB ON"]
-
 websocketpp:
   git: https://github.com/zaphoyd/websocketpp.git
   git_tag: 0.8.2
