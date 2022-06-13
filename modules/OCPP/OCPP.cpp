@@ -32,7 +32,7 @@ void OCPP::init() {
         EVLOG(info) << "Augmenting chargepoint config with user_config entries";
         json_config.merge_patch(user_config);
     } else {
-        EVLOG(debug) << "No user-config provided. Creatung user config file";
+        EVLOG(debug) << "No user-config provided. Creating user config file";
         boost::filesystem::create_directory(user_config_path.parent_path());
         std::ofstream fs(user_config_path.c_str());
         json user_config = json({});
