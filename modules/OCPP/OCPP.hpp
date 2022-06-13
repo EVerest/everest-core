@@ -36,9 +36,11 @@ struct Session {
 namespace module {
 
 struct Conf {
+    std::string OcppMainPath;
     std::string ChargePointConfigPath;
     std::string DatabasePath;
     std::string SchemasPath;
+    std::string ScriptsPath;
 };
 
 class OCPP : public Everest::ModuleBase {

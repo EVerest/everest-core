@@ -1,6 +1,11 @@
 {
     "description": "A OCPP charge point / charging station module, currently targeting OCPP-J 1.6",
     "config": {
+        "OcppMainPath": {
+            "description": "Main path of OCPP module",
+            "type": "string",
+            "default": "dist/ocpp"
+        },
         "ChargePointConfigPath": {
             "description": "Path to the configuration file",
             "type": "string",
@@ -15,6 +20,11 @@
             "description": "Path to the schemas folder in which the OCPP 1.6 schemas reside",
             "type": "string",
             "default": "/tmp/ocpp_1_6_charge_point"
+        },
+        "ScriptsPath": {
+            "description": "Path to the script folder in which the OCPP 1.6 scripts for firmware update und log upload reside",
+            "type": "string",
+            "default": "dist/bin"
         }
     },
     "provides": {

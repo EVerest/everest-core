@@ -15,11 +15,30 @@ void OCPP::init() {
     invoke_init(*p_auth_provider);
 
     boost::filesystem::path config_path = boost::filesystem::path(this->config.ChargePointConfigPath);
+    boost::filesystem::path user_config_path =
+        boost::filesystem::path(this->config.OcppMainPath) / "user_config" / "user_config.json";
 
     std::ifstream ifs(config_path.c_str());
     std::string config_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
     json json_config = json::parse(config_file);
     json_config.at("Core").at("NumberOfConnectors") = this->r_evse_manager.size();
+
+    if (boost::filesystem::exists(user_config_path)) {
+        std::ifstream ifs(user_config_path.c_str());
+        std::string user_config_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+
+        auto user_config = json::parse(user_config_file);
+
+        EVLOG(info) << "Augmenting chargepoint config with user_config entries";
+        json_config.merge_patch(user_config);
+    } else {
+        EVLOG(debug) << "No user-config provided. Creatung user config file";
+        boost::filesystem::create_directory(user_config_path.parent_path());
+        std::ofstream fs(user_config_path.c_str());
+        json user_config = json({});
+        fs << user_config << std::endl;
+        fs.close();
+    }
 
     std::shared_ptr<ocpp1_6::ChargePointConfiguration> configuration =
         std::make_shared<ocpp1_6::ChargePointConfiguration>(json_config, this->config.SchemasPath,
@@ -94,7 +113,7 @@ void OCPP::init() {
         std::ofstream diagnostics_file(diagnostics_file_path.c_str());
         diagnostics_file << diagnostics.dump();
         this->upload_diagnostics_thread = std::thread([this, location, diagnostics_file_name, diagnostics_file_path]() {
-            auto diagnostics_uploader = boost::filesystem::path("bin/diagnostics_uploader.sh");
+            auto diagnostics_uploader = boost::filesystem::path(this->config.ScriptsPath) / "diagnostics_uploader.sh";
 
             boost::process::ipstream stream;
             std::vector<std::string> args = {location, diagnostics_file_name.string(), diagnostics_file_path.string()};
@@ -131,7 +150,7 @@ void OCPP::init() {
         std::ofstream log_file(log_file_path.c_str());
         log_file << diagnostics.dump();
         this->upload_logs_thread = std::thread([this, msg, log_file_name, log_file_path]() {
-            auto diagnostics_uploader = boost::filesystem::path("bin/diagnostics_uploader.sh");
+            auto diagnostics_uploader = boost::filesystem::path(this->config.ScriptsPath) / "diagnostics_uploader.sh";
 
             boost::process::ipstream stream;
             std::vector<std::string> args = {msg.log.remoteLocation.get(), log_file_name.string(),
@@ -173,7 +192,7 @@ void OCPP::init() {
         auto firmware_file_path = boost::filesystem::temp_directory_path() / firmware_file_name;
 
         this->update_firmware_thread = std::thread([this, location, firmware_file_path]() {
-            auto firmware_updater = boost::filesystem::path("bin/firmware_updater.sh");
+            auto firmware_updater = boost::filesystem::path(this->config.ScriptsPath) / "firmware_updater.sh";
 
             boost::process::ipstream stream;
             std::vector<std::string> args = {location, firmware_file_path.string()};
@@ -213,7 +232,8 @@ void OCPP::init() {
                 auto firmware_file_name = boost::filesystem::unique_path(boost::filesystem::path(file_name));
                 auto firmware_file_path = boost::filesystem::temp_directory_path() / firmware_file_name;
 
-                auto firmware_downloader = boost::filesystem::path("bin/signed_firmware_downloader.sh");
+                auto firmware_downloader =
+                    boost::filesystem::path(this->config.ScriptsPath) / "signed_firmware_downloader.sh";
 
                 boost::process::ipstream download_stream;
                 std::vector<std::string> download_args = {req.firmware.location.get(), firmware_file_path.string(),
@@ -267,6 +287,22 @@ void OCPP::init() {
             id_tag["timeout"] = 10;
             this->p_auth_provider->publish_token(id_tag);
         });
+
+    this->charge_point->register_disable_evse_callback([this](int32_t connector) {
+        if (connector > 0 && connector <= this->r_evse_manager.size()) {
+            return this->r_evse_manager.at(connector - 1)->call_disable();
+        } else {
+            return false;
+        }
+    });
+
+    this->charge_point->register_enable_evse_callback([this](int32_t connector) {
+        if (connector > 0 && connector <= this->r_evse_manager.size()) {
+            return this->r_evse_manager.at(connector - 1)->call_enable();
+        } else {
+            return false;
+        }
+    });
 
     this->charge_point->start();
 
