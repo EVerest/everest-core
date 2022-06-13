@@ -1,5 +1,5 @@
 ---
 libocpp:
-  git: git@github.com:EVerest/libocpp.git
+  git: https://github.com/EVerest/libocpp.git
   git_tag: main
   options: []
