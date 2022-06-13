@@ -37,7 +37,7 @@ target_link_libraries(ocpp
         nlohmann_json::nlohmann_json
         nlohmann_json_schema_validator::nlohmann_json_schema_validator
         OpenSSL::SSL
-        sqlite3
+        SQLite::SQLite3
 )
 
 # this is important to allow our headers to find the everest::log headers
