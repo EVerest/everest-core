@@ -53,6 +53,7 @@ struct WifiList {
     std::string interface;
     int network_id;
     std::string ssid;
+    bool connected;
 
     operator std::string() {
         json wifi_list = *this;
@@ -61,6 +62,19 @@ struct WifiList {
     }
 };
 void to_json(json& j, const WifiList& k);
+
+struct RemoveWifi {
+    std::string interface;
+    int network_id;
+
+    operator std::string() {
+        json remove_wifi = *this;
+
+        return remove_wifi.dump();
+    }
+};
+void to_json(json& j, const RemoveWifi& k);
+void from_json(const json& j, RemoveWifi& k);
 
 struct NetworkDeviceInfo {
     std::string interface;
@@ -138,6 +152,7 @@ private:
     std::string var_base = api_base + "var/";
     std::string cmd_base = api_base + "cmd/";
     std::thread discover_network_thread;
+    bool wifi_scan_enabled = false;
     void publish_supported_features();
     void discover_network();
     std::vector<NetworkDeviceInfo> get_network_devices();
@@ -158,6 +173,7 @@ private:
     bool remove_networks(std::string interface);
     bool remove_all_networks();
     bool save_config(std::string interface);
+    bool reboot();
 
     void populate_ip_addresses(std::vector<NetworkDeviceInfo>& device_info);
     std::vector<WifiInfo> scan_wifi(const std::vector<NetworkDeviceInfo>& device_info);
