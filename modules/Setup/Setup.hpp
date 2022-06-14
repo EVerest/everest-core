@@ -119,6 +119,7 @@ struct Conf {
     bool setup_wifi;
     bool localization;
     bool setup_simulation;
+    std::string online_check_host;
 };
 
 class Setup : public Everest::ModuleBase {
@@ -174,6 +175,8 @@ private:
     bool remove_all_networks();
     bool save_config(std::string interface);
     bool reboot();
+    bool is_online();
+    void check_online_status();
 
     void populate_ip_addresses(std::vector<NetworkDeviceInfo>& device_info);
     std::vector<WifiInfo> scan_wifi(const std::vector<NetworkDeviceInfo>& device_info);

@@ -130,6 +130,9 @@ void Setup::ready() {
 
         std::string reboot_cmd = this->cmd_base + "reboot";
         this->mqtt.subscribe(reboot_cmd, [this](const std::string& data) { this->reboot(); });
+
+        std::string check_online_status_cmd = this->cmd_base + "check_online_status";
+        this->mqtt.subscribe(check_online_status_cmd, [this](const std::string& data) { this->check_online_status(); });
     }
 }
 
@@ -552,6 +555,26 @@ bool Setup::reboot() {
         success = false;
     }
     return success;
+}
+
+bool Setup::is_online() {
+    bool success = true;
+    auto reboot_output = this->run_application("ping", {"-c", "1", this->config.online_check_host});
+    if (reboot_output.exit_code != 0) {
+        success = false;
+    }
+    return success;
+}
+
+void Setup::check_online_status() {
+    std::string online_status_var = this->var_base + "online_status";
+
+    if (this->is_online()) {
+
+        this->mqtt.publish(online_status_var, "online");
+    } else {
+        this->mqtt.publish(online_status_var, "offline");
+    }
 }
 
 void Setup::populate_ip_addresses(std::vector<NetworkDeviceInfo>& device_info) {

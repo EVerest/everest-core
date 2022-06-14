@@ -15,6 +15,11 @@
             "description": "Allow simulation setup",
             "type": "boolean",
             "default": false
+        },
+        "online_check_host": {
+            "description": "Hostname or IP to use to check for internet connectivity",
+            "type": "string",
+            "default": "lfenergy.org"
         }
     },
     "provides": {
