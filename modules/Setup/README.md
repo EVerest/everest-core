@@ -147,5 +147,11 @@ To remove a wifi network a payload with the following format must be published t
 ### everest_api/setup/cmd/remove_all_networks
 If any arbitrary payload is published to this topic all wifi networks will be removed.
 
+### everest_api/setup/cmd/check_online_status
+If any arbitrary payload is published to this topic a ping will be sent to the host configured in the configuration key "online_check_host". Depending on the success of this ping a status of "online" or "offline" will be reported on the following topic:
+
+__everest_api/setup/var/online_status__
+
+
 ### everest_api/setup/cmd/reboot
 If any arbitrary payload is published to this topic the system will reboot.
