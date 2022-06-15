@@ -170,7 +170,7 @@ void Charger::runStateMachine() {
         // in DC mode: go to error_slac for this session
 
         if (AuthorizedEIM()) {
-            EVLOG(info) << "EIM Authorization received";
+            EVLOG_info << "EIM Authorization received";
 
             signalEvent(EvseEvent::ChargingStarted);
             EvseState targetState;
@@ -186,14 +186,14 @@ void Charger::runStateMachine() {
                 if (ac_hlc_enabled_current_session) {
                     if (ac_enforce_hlc) {
                         // non standard compliant mode: we just keep 5 percent running all the time like in DC
-                        EVLOG(info) << "AC mode, HLC enabled(ac_enforce_hlc), keeping 5 percent on until a dlink error "
+                        EVLOG_info << "AC mode, HLC enabled(ac_enforce_hlc), keeping 5 percent on until a dlink error "
                                        "is signalled.";
                         hlc_use_5percent_current_session = true;
                         currentState = targetState;
                     } else {
                         if (!getMatchingStarted()) {
                             // SLAC matching was not started when EIM arrived
-                            EVLOG(info) << "AC mode, HLC enabled, matching not started yet. Go through t_step_EF and "
+                            EVLOG_info << "AC mode, HLC enabled, matching not started yet. Go through t_step_EF and "
                                            "disable 5 percent if it was enabled before: "
                                         << hlc_use_5percent_current_session;
                             // Figure 3 of ISO15118-3: 5 percent start, PnC and EIM
@@ -210,7 +210,7 @@ void Charger::runStateMachine() {
                             if (hlc_use_5percent_current_session) {
                                 // Figure 5 of ISO15118-3: 5 percent start, PnC and EIM, matching already started when
                                 // EIM was done
-                                EVLOG(info) << "AC mode, HLC enabled(5percent), matching already started. Go through "
+                                EVLOG_info << "AC mode, HLC enabled(5percent), matching already started. Go through "
                                                "t_step_X1 and disable 5 percent.";
                                 t_step_X1_returnState = targetState;
                                 t_step_X1_returnPWM = 0.;
@@ -220,7 +220,7 @@ void Charger::runStateMachine() {
                                 // Figure 6 of ISO15118-3: X1 start, PnC and EIM, matching already started when EIM was
                                 // done. We can go directly to ChargingPausedEV, as we do not need to switch from 5
                                 // percent to nominal first
-                                EVLOG(info)
+                                EVLOG_info
                                     << "AC mode, HLC enabled(X1), matching already started. We are in X1 so we can "
                                        "go directly to nominal PWM.";
                                 currentState = targetState;
@@ -232,18 +232,18 @@ void Charger::runStateMachine() {
                     // HLC is disabled for this session.
                     // simply proceed to ChargingPausedEV, as we are fully authorized to start charging whenever car
                     // wants to.
-                    EVLOG(info) << "AC mode, HLC disabled. We are in X1 so we can "
+                    EVLOG_info << "AC mode, HLC disabled. We are in X1 so we can "
                                    "go directly to nominal PWM.";
                     currentState = targetState;
                 }
             } else if (charge_mode == "DC") {
                 // Figure 8 of ISO15118-3: DC with EIM before or after plugin or PnC
                 // simple here as we always stay within 5 percent mode anyway.
-                EVLOG(info) << "DC mode. We are in 5percent mode so we can continue without further action.";
+                EVLOG_info << "DC mode. We are in 5percent mode so we can continue without further action.";
                 currentState = targetState;
             } else {
                 // unsupported charging mode, give up here.
-                EVLOG(error) << "Unsupported charging mode.";
+                EVLOG_error << "Unsupported charging mode.";
                 currentState = EvseState::Error;
                 errorState = ErrorState::Error_Internal;
             }
@@ -258,11 +258,11 @@ void Charger::runStateMachine() {
                 targetState = EvseState::ChargingPausedEVSE;
 
             // We got authorization by Plug and Charge
-            EVLOG(info) << "PnC Authorization received";
+            EVLOG_info << "PnC Authorization received";
             if (charge_mode == "AC") {
                 // Figures 3,4,5,6 of ISO15118-3: Independent on how we started we can continue with 5 percent
                 // signalling once we got PnC authorization without going through t_step_EF or t_step_X1.
-                EVLOG(info) << "AC mode, HLC enabled, PnC auth received. We will continue with 5percent independent on "
+                EVLOG_info << "AC mode, HLC enabled, PnC auth received. We will continue with 5percent independent on "
                                "how we started.";
                 hlc_use_5percent_current_session = true;
                 currentState = targetState;
@@ -270,11 +270,11 @@ void Charger::runStateMachine() {
             } else if (charge_mode == "DC") {
                 // Figure 8 of ISO15118-3: DC with EIM before or after plugin or PnC
                 // simple here as we always stay within 5 percent mode anyway.
-                EVLOG(info) << "DC mode. We are in 5percent mode so we can continue without further action.";
+                EVLOG_info << "DC mode. We are in 5percent mode so we can continue without further action.";
                 currentState = targetState;
             } else {
                 // unsupported charging mode, give up here.
-                EVLOG(error) << "Unsupported charging mode.";
+                EVLOG_error << "Unsupported charging mode.";
                 currentState = EvseState::Error;
                 errorState = ErrorState::Error_Internal;
             }
@@ -284,11 +284,11 @@ void Charger::runStateMachine() {
 
     case EvseState::T_step_EF:
         if (new_in_state) {
-            EVLOG(info) << "Enter T_step_EF";
+            EVLOG_info << "Enter T_step_EF";
             r_bsp->call_pwm_F();
         }
         if (timeInCurrentState >= t_step_EF) {
-            EVLOG(info) << "Exit T_step_EF";
+            EVLOG_info << "Exit T_step_EF";
             if (t_step_EF_returnPWM == 0.)
                 r_bsp->call_pwm_off();
             else
@@ -299,11 +299,11 @@ void Charger::runStateMachine() {
 
     case EvseState::T_step_X1:
         if (new_in_state) {
-            EVLOG(info) << "Enter T_step_X1";
+            EVLOG_info << "Enter T_step_X1";
             r_bsp->call_pwm_off();
         }
         if (timeInCurrentState >= t_step_X1) {
-            EVLOG(info) << "Exit T_step_X1";
+            EVLOG_info << "Exit T_step_X1";
             if (t_step_X1_returnPWM == 0.)
                 r_bsp->call_pwm_off();
             else

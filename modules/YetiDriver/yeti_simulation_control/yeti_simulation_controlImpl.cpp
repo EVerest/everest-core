@@ -51,7 +51,7 @@ void yeti_simulation_controlImpl::ready() {
 }
 
 void yeti_simulation_controlImpl::handle_enable(bool& value) {
-    EVLOG(info) << "void YetiDriverModule::Yeti_simulation_control::enable: " << value;
+    EVLOG_info << "void YetiDriverModule::Yeti_simulation_control::enable: " << value;
     mod->serial.enableSimulation(value);
 };
 

@@ -63,12 +63,12 @@ void EnergyManager::run_enforce_limits() {
                                                           (*it).at("limits_export"), (*it).at("schedule_import"),
                                                           (*it).at("schedule_export"));
             } catch (const std::exception& e) {
-                EVLOG(error) << "Cannot enforce limits: Exception occurred: optimized object faulty: " << e.what();
+                EVLOG_error << "Cannot enforce limits: Exception occurred: optimized object faulty: " << e.what();
             }
         }
 
     } catch (const std::exception& e) {
-        EVLOG(error) << "Cannot enforce limits: Exception occurred: r_energy_trunk connection faulty " << e.what();
+        EVLOG_error << "Cannot enforce limits: Exception occurred: r_energy_trunk connection faulty " << e.what();
     }
 }
 
@@ -85,14 +85,14 @@ Array EnergyManager::run_optimizer(json energy) {
             price_schedule = energy.at("schedule_import");
         }
     } catch (const std::exception& e) {
-        EVLOG(error) << "run_optimizer: Exception occurred: energy object does not have an import schedule: "
+        EVLOG_error << "run_optimizer: Exception occurred: energy object does not have an import schedule: "
                      << e.what();
     }
 
     try {
         optimize_one_level(energy, optimized_values, timepoint, price_schedule);
     } catch (const std::exception& e) {
-        EVLOG(error) << "run_optimizer: Exception occurred: calling optimizer for next level failed: " << e.what();
+        EVLOG_error << "run_optimizer: Exception occurred: calling optimizer for next level failed: " << e.what();
     }
 
     return optimized_values;
@@ -110,7 +110,7 @@ void EnergyManager::optimize_one_level(json& energy, json& optimized_values,
         try {
             grid_import_limit = get_sub_element_from_schedule_at_time(energy.at("schedule_import"), timepoint_now);
         } catch (const std::exception& e) {
-            EVLOG(error) << "optimize_one_level: Exception occurred: failed to get schedule item for timepoint_now: "
+            EVLOG_error << "optimize_one_level: Exception occurred: failed to get schedule item for timepoint_now: "
                          << e.what();
             return;
         }
@@ -120,7 +120,7 @@ void EnergyManager::optimize_one_level(json& energy, json& optimized_values,
             // choose max current
             max_current_for_next_level_A = get_current_limit_from_energy_object(grid_import_limit, energy);
         } catch (const std::exception& e) {
-            EVLOG(error) << "optimize_one_level: Exception occurred: failed to get current limit for next level: "
+            EVLOG_error << "optimize_one_level: Exception occurred: failed to get current limit for next level: "
                          << e.what();
             return;
         }
@@ -171,7 +171,7 @@ void EnergyManager::optimize_one_level(json& energy, json& optimized_values,
                 optimized_values.push_back(result);
             }
         } catch (const std::exception& e) {
-            EVLOG(error) << "optimize_one_level: Exception occurred: energy object faulty: " << e.what();
+            EVLOG_error << "optimize_one_level: Exception occurred: energy object faulty: " << e.what();
         }
     }
 }
@@ -191,7 +191,7 @@ json EnergyManager::get_sub_element_from_schedule_at_time(json s,
                 ret = (*it);
             }
         } catch (const std::exception& e) {
-            EVLOG(error) << "Exception occurred: (no timestamp available)" << e.what();
+            EVLOG_error << "Exception occurred: (no timestamp available)" << e.what();
             continue;
         }
     }
@@ -244,7 +244,7 @@ double EnergyManager::get_current_limit_from_energy_object(const json& limit_obj
         }
     }
     if (limit_object_is_complete_flag == false) {
-        EVLOG(error) << "limit object incomplete: " << limit_object;
+        EVLOG_error << "limit object incomplete: " << limit_object;
     }
 
     return max_current_A;
@@ -343,7 +343,7 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
                                                     .at("ac_current_A")
                                                     .at("max_current_A");
     } catch (const std::exception& e) {
-        EVLOG(error) << "energy object has no current limit for this level! " << e.what();
+        EVLOG_error << "energy object has no current limit for this level! " << e.what();
         return;
     }
 
@@ -477,7 +477,7 @@ void EnergyManager::scale_and_distribute_power(json& energy_object) {
 
         } while (not_done);
     } catch (const std::exception& e) {
-        EVLOG(error) << "scale_and_distribute_power: Exception occurred: failed to calculate current distribution: "
+        EVLOG_error << "scale_and_distribute_power: Exception occurred: failed to calculate current distribution: "
                      << e.what();
         return;
     }

@@ -341,7 +341,7 @@ bool Setup::add_and_enable_network(WifiCredentials wifi_credentials) {
 
 bool Setup::add_and_enable_network(std::string interface, std::string ssid, std::string psk) {
     if (interface.empty()) {
-        EVLOG(warning) << "Attempting to add a network without an interface, attempting to use the first one";
+        EVLOG_warning << "Attempting to add a network without an interface, attempting to use the first one";
         auto network_devices = this->get_network_devices();
         for (auto device : network_devices) {
             if (device.wireless) {
@@ -556,7 +556,7 @@ CmdOutput Setup::run_application(boost::filesystem::path file, std::vector<std::
     const auto path = boost::process::search_path(file);
 
     if (!boost::filesystem::exists(path)) {
-        EVLOG(error) << fmt::format("The provided file '{}' does not exist", file.string());
+        EVLOG_debug << fmt::format("The provided file '{}' does not exist", file.string());
         return CmdOutput{"", {}, 1};
     }
 

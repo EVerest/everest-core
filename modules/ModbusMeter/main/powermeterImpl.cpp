@@ -17,7 +17,7 @@ void powermeterImpl::ready() {
 }
 
 void powermeterImpl::run_meter_loop() {
-    EVLOG(debug) << "Starting ModbusMeter loop";
+    EVLOG_debug << "Starting ModbusMeter loop";
     int32_t power_in, power_out, energy_in, energy_out, power_surplus, energy_surplus;
     while (true) {
 

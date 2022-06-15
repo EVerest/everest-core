@@ -13,7 +13,7 @@
 #include "slac_io.hpp"
 
 void fsm_logging_callback(const std::string& msg) {
-    EVLOG(debug) << fmt::format("SlacFSM: {}", msg);
+    EVLOG_verbose << fmt::format("SlacFSM: {}", msg);
 }
 
 static std::mutex comm_mtx;
@@ -80,7 +80,7 @@ void slacImpl::run() {
 
     EvseFSM fsm(slac_io);
 
-    EVLOG(info) << "Starting the SLAC state machine";
+    EVLOG_debug << "Starting the SLAC state machine";
 
     bool matched = false;
     auto cur_state_id = fsm.get_initial_state().id.id;
@@ -91,7 +91,7 @@ void slacImpl::run() {
             return;
         }
 
-        EVLOG(info) << fmt::format("No SLAC message handler for current state: {}", fsm_ctrl.current_state()->id.name);
+        EVLOG_debug << fmt::format("No SLAC message handler for current state: {}", fsm_ctrl.current_state()->id.name);
     });
 
     std::unique_lock<std::mutex> feed_lck(comm_mtx);

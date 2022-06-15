@@ -21,11 +21,11 @@ void kvsImpl::init() {
     int ret = sqlite3_open(sqlite_db_path.c_str(), &this->db);
 
     if (ret != SQLITE_OK) {
-        EVLOG(error) << "Error opening PersistentStore database '" << sqlite_db_path << "': " << sqlite3_errmsg(db);
+        EVLOG_error << "Error opening PersistentStore database '" << sqlite_db_path << "': " << sqlite3_errmsg(db);
         throw std::runtime_error("Could not open PersistentStore database at provided path.");
     }
 
-    EVLOG(debug) << "Using SQLite version " << sqlite3_libversion();
+    EVLOG_debug << "Using SQLite version " << sqlite3_libversion();
 
     // prepare the database
     std::string create_sql = "CREATE TABLE IF NOT EXISTS KVS ("
@@ -37,12 +37,12 @@ void kvsImpl::init() {
     sqlite3_prepare_v2(this->db, create_sql.c_str(), create_sql.size(), &create_statement, NULL);
     int res = sqlite3_step(create_statement);
     if (res != SQLITE_DONE) {
-        EVLOG(error) << "Could not create KVS table: " << res << sqlite3_errmsg(this->db);
+        EVLOG_error << "Could not create KVS table: " << res << sqlite3_errmsg(this->db);
         throw std::runtime_error("PersistentStore db access error");
     }
 
     if (sqlite3_finalize(create_statement) != SQLITE_OK) {
-        EVLOG(error) << "Error creating KVS table";
+        EVLOG_error << "Error creating KVS table";
         throw std::runtime_error("PersistentStore db access error");
     }
 }
@@ -134,12 +134,12 @@ void kvsImpl::handle_store(std::string& key,
 
     int res = sqlite3_step(insert_statement);
     if (res != SQLITE_DONE) {
-        EVLOG(error) << "Could not insert into KVS table: " << res << sqlite3_errmsg(db);
+        EVLOG_error << "Could not insert into KVS table: " << res << sqlite3_errmsg(db);
         throw std::runtime_error("PersistentStore db access error");
     }
 
     if (sqlite3_finalize(insert_statement) != SQLITE_OK) {
-        EVLOG(error) << "Error inserting into KVS table";
+        EVLOG_error << "Error inserting into KVS table";
         throw std::runtime_error("PersistentStore db access error");
     }
 };
@@ -188,7 +188,7 @@ boost::variant<boost::blank, Array, Object, bool, double, int, std::string> kvsI
     }
 
     if (sqlite3_finalize(select_statement) != SQLITE_OK) {
-        EVLOG(error) << "Error selecting from KVS table";
+        EVLOG_error << "Error selecting from KVS table";
         throw std::runtime_error("PersistentStore db access error");
     }
 
@@ -204,12 +204,12 @@ void kvsImpl::handle_delete(std::string& key) {
 
     int res = sqlite3_step(delete_statement);
     if (res != SQLITE_DONE) {
-        EVLOG(error) << "Could not delete from KVS table: " << res << sqlite3_errmsg(db);
+        EVLOG_error << "Could not delete from KVS table: " << res << sqlite3_errmsg(db);
         throw std::runtime_error("PersistentStore db access error");
     }
 
     if (sqlite3_finalize(delete_statement) != SQLITE_OK) {
-        EVLOG(error) << "Error deleting from KVS table";
+        EVLOG_error << "Error deleting from KVS table";
         throw std::runtime_error("PersistentStore db access error");
     }
 };

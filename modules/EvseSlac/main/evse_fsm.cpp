@@ -75,7 +75,7 @@ EvseFSM::EvseFSM(SlacIO& slac_io) : slac_io(slac_io) {
 
     sd_reset.handler = [this](FSMContextType& ctx) {
         // FIXME (aw): what to do here? should fail hard with IOError
-        EVLOG(info) << "Failed to setup NMK key";
+        EVLOG_warning << "Failed to setup NMK key";
     };
 
     sd_idle.transitions = [this](const EventBaseType& ev, TransitionType& trans) {
@@ -163,7 +163,7 @@ EvseFSM::EvseFSM(SlacIO& slac_io) : slac_io(slac_io) {
     };
 
     sd_sounding.handler = [this](FSMContextType& ctx) {
-        EVLOG(info) << "Timeout in sounding, send results";
+        EVLOG_warning << "Timeout in sounding, send results";
         ctx.submit_event(EventFinishSounding());
     };
 
@@ -193,7 +193,7 @@ EvseFSM::EvseFSM(SlacIO& slac_io) : slac_io(slac_io) {
     sd_do_atten_char.handler = [this](FSMContextType& ctx) {
         // got a time out, retry if possible
         if (sd_do_atten_char.ind_msg_count == slac::defs::C_EV_MATCH_RETRY) {
-            EVLOG(info) << fmt::format("No response to CM_ATTEN_CHAR.IND after {} retries",
+            EVLOG_warning << fmt::format("No response to CM_ATTEN_CHAR.IND after {} retries",
                                        slac::defs::C_EV_MATCH_RETRY);
             ctx.submit_event(EventMatchingFailed());
         }
@@ -308,7 +308,7 @@ void EvseFSM::sd_wait_for_matching_hsm(FSMContextType& ctx, const EventSlacMessa
     auto& msg_in = ev.data;
 
     if (msg_in.get_mmtype() != (slac::defs::MMTYPE_CM_SLAC_PARAM | slac::defs::MMTYPE_MODE_REQ)) {
-        EVLOG(debug) << fmt::format("Received non-expected message of type {:#06x}", msg_in.get_mmtype());
+        EVLOG_debug << fmt::format("Received non-expected message of type {:#06x}", msg_in.get_mmtype());
         return;
     }
 
@@ -344,7 +344,7 @@ void EvseFSM::sd_matching_hsm(FSMContextType& ctx, const EventSlacMessage& ev) {
 
     // FIXME (aw): we should also deal with the CM_SLAC_PARAM_REQ, right?
     if (msg_in.get_mmtype() != (slac::defs::MMTYPE_CM_START_ATTEN_CHAR | slac::defs::MMTYPE_MODE_IND)) {
-        EVLOG(debug) << fmt::format("Received non-expected message of type {:#06x}", msg_in.get_mmtype());
+        EVLOG_debug << fmt::format("Received non-expected message of type {:#06x}", msg_in.get_mmtype());
         return;
     }
 
@@ -380,7 +380,7 @@ void EvseFSM::sd_sounding_hsm(FSMContextType& ctx, const EventSlacMessage& ev) {
         }
 
         if (atten_profile.num_groups != slac::defs::AAG_LIST_LEN) {
-            EVLOG(error) << "Mismatch in number of AAG groups";
+            EVLOG_error << "Mismatch in number of AAG groups";
             return;
         }
 
@@ -395,12 +395,12 @@ void EvseFSM::sd_sounding_hsm(FSMContextType& ctx, const EventSlacMessage& ev) {
     } else if (mmtype == (slac::defs::MMTYPE_CM_SLAC_PARAM | slac::defs::MMTYPE_MODE_IND)) {
         // FIXME (aw): how should this be handled?
     } else {
-        EVLOG(debug) << fmt::format("Received non-expected message of type {:#06x}", msg_in.get_mmtype());
+        EVLOG_debug << fmt::format("Received non-expected message of type {:#06x}", msg_in.get_mmtype());
         return;
     }
 
     if (matching_ctx.captured_sounds == slac::defs::CM_SLAC_PARM_CNF_NUM_SOUNDS) {
-        EVLOG(debug) << fmt::format("Received all sounds");
+        EVLOG_debug << fmt::format("Received all sounds");
         ctx.submit_event(EventFinishSounding());
     }
 }
@@ -487,12 +487,12 @@ void EvseFSM::set_nmk(const uint8_t* nmk) {
 
 bool MatchingSessionContext::conforms(const uint8_t ev_mac[], const uint8_t run_id[]) const {
     if (run_id && memcmp(run_id, this->run_id, sizeof(this->run_id))) {
-        EVLOG(info) << "Received START_ATTEN_CHAR.IND with mismatching run_id";
+        EVLOG_warning << "Received START_ATTEN_CHAR.IND with mismatching run_id";
         return false;
     }
 
     if (ev_mac && memcmp(ev_mac, this->ev_mac, sizeof(this->ev_mac))) {
-        EVLOG(info) << "EV MAC mismatch for current matching session";
+        EVLOG_warning << "EV MAC mismatch for current matching session";
         return false;
     }
 

@@ -40,7 +40,7 @@ json get_sunspec_device_mapping_information(const sunspec::SunspecDeviceMapping&
         }
 
         result["message"] = result_message.str();
-        EVLOG(debug) << "Returning result from SunspecScanner callback: " << result;
+        EVLOG_debug << "Returning result from SunspecScanner callback: " << result;
 
         return result;
 }
@@ -55,23 +55,23 @@ json scan_unit(const std::string& ip_address, const int& port, const int& unit) 
         connection::TCPConnection connection_(ip_address, port);
         modbus::ModbusIPClient modbus_client(connection_);
         sunspec::SunspecDeviceMapping sdm(modbus_client, unit);
-        EVLOG(debug) << "Trying to scan SunspecDeviceMapping...";
+        EVLOG_debug << "Trying to scan SunspecDeviceMapping...";
         sdm.scan();
-        EVLOG(debug) << "Trying to obtain scanned device mapping information...";
+        EVLOG_debug << "Trying to obtain scanned device mapping information...";
         return get_sunspec_device_mapping_information(sdm, ip_address, port, unit);
     }
 
     catch (connection::exceptions::connection_error& e) {
         result_message << "No device found in the specified given IP address and port. " << e.what();
         result["message"] = result_message.str();
-        EVLOG(error) << result["message"];
+        EVLOG_error << result["message"];
         result["success"] = false;
         return result;
     }
     catch (std::exception& e) {
         result_message << e.what();
         result["message"] = result_message.str();
-        EVLOG(error) << result["message"];
+        EVLOG_error << result["message"];
         result["success"] = false;
         return result;
     }
