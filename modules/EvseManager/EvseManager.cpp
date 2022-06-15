@@ -89,7 +89,7 @@ void EvseManager::ready() {
         bool res_valid = reservation_valid();
         std::lock_guard<std::mutex> lock(reservation_mutex);
         if (res_valid) {
-            EVLOG(info) << "Reservation ends because the id tag was presented";
+            EVLOG_info << "Reservation ends because the id tag was presented";
             reserved = false;
 
             // publish event to other modules

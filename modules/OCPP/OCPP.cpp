@@ -29,10 +29,10 @@ void OCPP::init() {
 
         auto user_config = json::parse(user_config_file);
 
-        EVLOG(info) << "Augmenting chargepoint config with user_config entries";
+        EVLOG_info << "Augmenting chargepoint config with user_config entries";
         json_config.merge_patch(user_config);
     } else {
-        EVLOG(debug) << "No user-config provided. Creating user config file";
+        EVLOG_debug << "No user-config provided. Creating user config file";
         boost::filesystem::create_directory(user_config_path.parent_path());
         std::ofstream fs(user_config_path.c_str());
         json user_config = json({});
@@ -71,7 +71,7 @@ void OCPP::init() {
 
     this->charge_point->register_unlock_connector_callback([this](int32_t connector) {
         if (connector > 0 && connector <= this->r_evse_manager.size()) {
-            EVLOG(info) << "Executing unlock connector callback";
+            EVLOG_info << "Executing unlock connector callback";
             return this->r_evse_manager.at(connector - 1)->call_force_unlock();
         } else {
             return false;
@@ -137,7 +137,7 @@ void OCPP::init() {
         return diagnostics_file_name.string();
     });
     this->charge_point->register_upload_logs_callback([this](ocpp1_6::GetLogRequest msg) {
-        EVLOG(debug) << "Executing callback for log upload with requestId: " << msg.requestId;
+        EVLOG_debug << "Executing callback for log upload with requestId: " << msg.requestId;
         // create temporary file
         std::string date_time = ocpp1_6::DateTime().to_rfc3339();
         std::string file_name =
@@ -166,11 +166,11 @@ void OCPP::init() {
             }
 
             if (this->charge_point->interrupt_log_upload) {
-                EVLOG(debug) << "Uploading Logs was interrupted, terminating upload script, requestId: "
-                             << msg.requestId;
+                EVLOG_debug << "Uploading Logs was interrupted, terminating upload script, requestId: "
+                            << msg.requestId;
                 cmd.terminate();
             } else {
-                EVLOG(debug) << "Uploading Logs finished without interruption, requestId: " << msg.requestId;
+                EVLOG_debug << "Uploading Logs finished without interruption, requestId: " << msg.requestId;
             }
             this->charge_point->logStatusNotification(ocpp1_6::UploadLogStatusEnumType::Idle, msg.requestId);
             {
@@ -221,7 +221,7 @@ void OCPP::init() {
 
     this->charge_point->register_signed_update_firmware_download_callback(
         [this](ocpp1_6::SignedUpdateFirmwareRequest req) {
-            EVLOG(debug) << "Executing signed firmware update download callback";
+            EVLOG_debug << "Executing signed firmware update download callback";
 
             this->signed_update_firmware_thread = std::thread([this, req]() {
                 ocpp1_6::FirmwareStatusEnumType status;
