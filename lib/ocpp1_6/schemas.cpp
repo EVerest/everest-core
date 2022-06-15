@@ -12,7 +12,7 @@ Schemas::Schemas(std::string main_dir) {
     this->profile_schemas_path = boost::filesystem::path(main_dir) / "profile_schemas" / "ocpp1_6";
     if (!boost::filesystem::exists(this->profile_schemas_path) ||
         !boost::filesystem::is_directory(this->profile_schemas_path)) {
-        EVLOG(error) << this->profile_schemas_path << " does not exist";
+        EVLOG_error << this->profile_schemas_path << " does not exist";
         // FIXME(kai): exception?
     } else {
         for (auto file : boost::filesystem::directory_iterator(this->profile_schemas_path)) {
@@ -25,7 +25,7 @@ Schemas::Schemas(std::string main_dir) {
 void Schemas::load_root_schema() {
     boost::filesystem::path profile_path = this->profile_schemas_path / "Config.json";
 
-    EVLOG(debug) << "parsing root schema file: " << boost::filesystem::canonical(profile_path);
+    EVLOG_debug << "parsing root schema file: " << boost::filesystem::canonical(profile_path);
 
     std::ifstream ifs(profile_path.c_str());
     std::string schema_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));

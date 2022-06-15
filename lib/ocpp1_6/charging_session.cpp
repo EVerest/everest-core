@@ -294,7 +294,7 @@ std::shared_ptr<StampedEnergyWh> ChargingSessions::get_stop_energy_wh(int32_t co
 bool ChargingSessions::initiate_session(int32_t connector) {
     // TODO(kai): think about supporting connector 0 here, meaning "any connector"
     if (connector == 0) {
-        EVLOG(warning) << "Attempting to start a charging session on connector 0, this is not supported at the moment";
+        EVLOG_warning << "Attempting to start a charging session on connector 0, this is not supported at the moment";
         return false;
     }
     if (!this->valid_connector(connector)) {
@@ -319,7 +319,7 @@ bool ChargingSessions::initiate_session(int32_t connector) {
 
 bool ChargingSessions::remove_session(int32_t connector) {
     if (connector == 0) {
-        EVLOG(warning) << "Attempting to remove a charging session on connector 0, this is not supported.";
+        EVLOG_warning << "Attempting to remove a charging session on connector 0, this is not supported.";
         return false;
     }
     if (!this->valid_connector(connector)) {

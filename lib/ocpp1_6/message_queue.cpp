@@ -16,7 +16,7 @@ MessageQueue::MessageQueue(std::shared_ptr<ChargePointConfiguration> configurati
     this->worker_thread = std::thread([this]() {
         // TODO(kai): implement message timeout
         while (this->running) {
-            EVLOG(debug) << "Waiting for a message from the message queue";
+            EVLOG_debug << "Waiting for a message from the message queue";
 
             std::unique_lock<std::mutex> lk(this->message_mutex);
             using namespace std::chrono_literals;
@@ -27,9 +27,9 @@ MessageQueue::MessageQueue(std::shared_ptr<ChargePointConfiguration> configurati
                 // There is nothing in the message queue, not progressing further
                 continue;
             }
-            EVLOG(debug) << "There are " << this->normal_message_queue.size()
+            EVLOG_debug << "There are " << this->normal_message_queue.size()
                          << " messages in the normal message queue.";
-            EVLOG(debug) << "There are " << this->transaction_message_queue.size()
+            EVLOG_debug << "There are " << this->transaction_message_queue.size()
                          << " messages in the transaction message queue.";
 
             if (this->paused) {
@@ -41,7 +41,7 @@ MessageQueue::MessageQueue(std::shared_ptr<ChargePointConfiguration> configurati
                 // There already is a message in flight, not progressing further
                 continue;
             } else {
-                EVLOG(debug) << "There is no message in flight, checking message queue for a new message.";
+                EVLOG_debug << "There is no message in flight, checking message queue for a new message.";
             }
 
             // prioritize the message with the oldest timestamp
@@ -51,57 +51,57 @@ MessageQueue::MessageQueue(std::shared_ptr<ChargePointConfiguration> configurati
 
             if (!this->normal_message_queue.empty()) {
                 auto& normal_message = this->normal_message_queue.front();
-                EVLOG(debug) << "normal msg timestamp: " << normal_message->timestamp;
+                EVLOG_debug << "normal msg timestamp: " << normal_message->timestamp;
                 if (normal_message->timestamp <= now) {
-                    EVLOG(debug) << "normal message timestamp <= now";
+                    EVLOG_debug << "normal message timestamp <= now";
                     message = normal_message;
                     queue_type = QueueType::Normal;
                 } else {
-                    EVLOG(error) << "A normal message should not have a timestamp in the future: "
+                    EVLOG_error << "A normal message should not have a timestamp in the future: "
                                  << normal_message->timestamp << " now: " << now;
                 }
             }
 
             if (!this->transaction_message_queue.empty()) {
                 auto& transaction_message = this->transaction_message_queue.front();
-                EVLOG(debug) << "transaction msg timestamp: " << transaction_message->timestamp;
+                EVLOG_debug << "transaction msg timestamp: " << transaction_message->timestamp;
                 if (message == nullptr) {
                     if (transaction_message->timestamp <= now) {
-                        EVLOG(debug) << "transaction message timestamp <= now";
+                        EVLOG_debug << "transaction message timestamp <= now";
                         message = transaction_message;
                         queue_type = QueueType::Transaction;
                     } else {
-                        // EVLOG(critical) << "WAITING FOR REPEAT";
+                        // EVLOG_critical << "WAITING FOR REPEAT";
                     }
                 } else {
                     if (transaction_message->timestamp <= message->timestamp) {
-                        EVLOG(debug) << "transaction message timestamp <= normal message timestamp";
+                        EVLOG_debug << "transaction message timestamp <= normal message timestamp";
                         message = transaction_message;
                         queue_type = QueueType::Transaction;
                     } else {
-                        EVLOG(debug) << "Prioritizing newer normal message over older transaction message";
+                        EVLOG_debug << "Prioritizing newer normal message over older transaction message";
                     }
                 }
             }
 
             if (message == nullptr) {
-                EVLOG(debug) << "No message in queue ready to be sent yet";
+                EVLOG_debug << "No message in queue ready to be sent yet";
                 continue;
             }
 
-            EVLOG(debug) << "Attempting to send message to central system. UID: " << message->uniqueId()
+            EVLOG_debug << "Attempting to send message to central system. UID: " << message->uniqueId()
                          << " attempt#: " << message->message_attempts;
             this->in_flight = message;
 
             if (!this->send_callback(this->in_flight->message)) {
                 this->paused = true;
-                EVLOG(error) << "Could not send message, this is most likely because the charge point is offline.";
+                EVLOG_error << "Could not send message, this is most likely because the charge point is offline.";
                 if (this->isTransactionMessage(this->in_flight)) {
-                    EVLOG(info) << "The message in flight is transaction related and will be sent again once the "
+                    EVLOG_info << "The message in flight is transaction related and will be sent again once the "
                                    "connection can be established again.";
                     this->in_flight = nullptr;
                 } else {
-                    EVLOG(info) << "The message in flight is not transaction related and will be dropped";
+                    EVLOG_info << "The message in flight is not transaction related and will be dropped";
                     if (queue_type == QueueType::Normal) {
                         EnhancedMessage enhanced_message;
                         enhanced_message.offline = true;
@@ -112,7 +112,7 @@ MessageQueue::MessageQueue(std::shared_ptr<ChargePointConfiguration> configurati
                 }
 
             } else {
-                EVLOG(debug) << "Successfully sent message. UID: " << this->in_flight->uniqueId();
+                EVLOG_debug << "Successfully sent message. UID: " << this->in_flight->uniqueId();
                 switch (queue_type) {
                 case QueueType::Normal:
                     this->normal_message_queue.pop();
@@ -131,7 +131,7 @@ MessageQueue::MessageQueue(std::shared_ptr<ChargePointConfiguration> configurati
             lk.unlock();
             cv.notify_one();
         }
-        EVLOG(info) << "Message queue stopped processing messages";
+        EVLOG_info << "Message queue stopped processing messages";
     });
 }
 
@@ -175,25 +175,25 @@ bool MessageQueue::isTransactionMessage(ControlMessage* message) {
 }
 
 void MessageQueue::add_to_normal_message_queue(ControlMessage* message) {
-    EVLOG(debug) << "Adding message to normal message queue";
+    EVLOG_debug << "Adding message to normal message queue";
     {
         std::lock_guard<std::mutex> lk(this->message_mutex);
         this->normal_message_queue.push(message);
         this->new_message = true;
     }
     this->cv.notify_all();
-    EVLOG(debug) << "Notified message queue worker";
+    EVLOG_debug << "Notified message queue worker";
 }
 
 void MessageQueue::add_to_transaction_message_queue(ControlMessage* message) {
-    EVLOG(debug) << "Adding message to transaction message queue";
+    EVLOG_debug << "Adding message to transaction message queue";
     {
         std::lock_guard<std::mutex> lk(this->message_mutex);
         this->transaction_message_queue.push_back(message);
         this->new_message = true;
     }
     this->cv.notify_all();
-    EVLOG(debug) << "Notified message queue worker";
+    EVLOG_debug << "Notified message queue worker";
 }
 
 EnhancedMessage MessageQueue::receive(const std::string& message) {
@@ -217,17 +217,17 @@ EnhancedMessage MessageQueue::receive(const std::string& message) {
             // TODO(kai): we need to do some error handling in the CallError case
             std::unique_lock<std::mutex> lk(this->message_mutex);
             if (this->in_flight == nullptr) {
-                EVLOG(error)
+                EVLOG_error
                     << "Received a CALLRESULT OR CALLERROR without a message in flight, this should not happen";
                 return enhanced_message;
             }
             if (this->in_flight->uniqueId() != enhanced_message.uniqueId) {
-                EVLOG(error) << "Received a CALLRESULT OR CALLERROR with mismatching uid: "
+                EVLOG_error << "Received a CALLRESULT OR CALLERROR with mismatching uid: "
                              << this->in_flight->uniqueId() << " != " << enhanced_message.uniqueId;
                 return enhanced_message;
             }
             if (enhanced_message.messageTypeId == MessageTypeId::CALLERROR) {
-                EVLOG(error) << "Received a CALLERROR for message with UID: " << enhanced_message.uniqueId;
+                EVLOG_error << "Received a CALLERROR for message with UID: " << enhanced_message.uniqueId;
 
                 auto message_type =
                     conversions::string_to_messagetype(this->in_flight->message.at(CALL_ACTION).get<std::string>());
@@ -237,9 +237,9 @@ EnhancedMessage MessageQueue::receive(const std::string& message) {
 
                     // compare message attempts to number of attempted transmissions
                     auto message_attempts = this->configuration->getTransactionMessageAttempts();
-                    EVLOG(debug) << "allowed message attempts: " << message_attempts;
+                    EVLOG_debug << "allowed message attempts: " << message_attempts;
                     if (this->in_flight->message_attempts >= message_attempts) {
-                        EVLOG(error)
+                        EVLOG_error
                             << "Could not deliver message within the configured amount of attempts, dropping message";
                         this->in_flight->promise.set_value(enhanced_message);
                         this->transaction_message_queue.pop_front();
@@ -256,12 +256,12 @@ EnhancedMessage MessageQueue::receive(const std::string& message) {
                             this->in_flight->timestamp =
                                 DateTime(this->in_flight->timestamp.to_time_point() +
                                          std::chrono::seconds(retry_interval) * this->in_flight->message_attempts);
-                            EVLOG(debug) << "Retry interval > 0: " << retry_interval
+                            EVLOG_debug << "Retry interval > 0: " << retry_interval
                                          << " attempting to retry message at: " << this->in_flight->timestamp;
                         } else {
                             // immediate retry
                             this->in_flight->timestamp = DateTime();
-                            EVLOG(debug) << "Retry interval of 0 means immediate retry";
+                            EVLOG_debug << "Retry interval of 0 means immediate retry";
                         }
 
                         this->transaction_message_queue.pop_front();
@@ -274,7 +274,7 @@ EnhancedMessage MessageQueue::receive(const std::string& message) {
                     // this->in_flight->promise.set_value(enhanced_message);
                 } else {
                     // not a transaction related message, just dropping it
-                    EVLOG(error) << "Not a transaction related message, dropping it.";
+                    EVLOG_error << "Not a transaction related message, dropping it.";
                 }
                 this->in_flight = nullptr;
                 this->cv.notify_one();
@@ -298,7 +298,7 @@ EnhancedMessage MessageQueue::receive(const std::string& message) {
         }
 
     } catch (const std::exception& e) {
-        EVLOG(error) << "json parse failed because: "
+        EVLOG_error << "json parse failed because: "
                      << "(" << e.what() << ")";
     }
 
@@ -306,28 +306,28 @@ EnhancedMessage MessageQueue::receive(const std::string& message) {
 }
 
 void MessageQueue::stop() {
-    EVLOG(debug) << "stop()";
+    EVLOG_debug << "stop()";
     // stop the running thread
     this->running = false;
     this->cv.notify_one();
-    EVLOG(debug) << "stop() notified message queue";
+    EVLOG_debug << "stop() notified message queue";
 }
 
 void MessageQueue::pause() {
-    EVLOG(debug) << "pause()";
+    EVLOG_debug << "pause()";
     std::lock_guard<std::mutex> lk(this->message_mutex);
     this->paused = true;
     this->cv.notify_one();
-    EVLOG(debug) << "pause() notified message queue";
+    EVLOG_debug << "pause() notified message queue";
 }
 
 void MessageQueue::resume() {
-    EVLOG(debug) << "resume()";
+    EVLOG_debug << "resume()";
     std::lock_guard<std::mutex> lk(this->message_mutex);
     this->paused = false;
     this->new_message = true;
     this->cv.notify_one();
-    EVLOG(debug) << "resume() notified message queue";
+    EVLOG_debug << "resume() notified message queue";
 }
 
 MessageId MessageQueue::createMessageId() {

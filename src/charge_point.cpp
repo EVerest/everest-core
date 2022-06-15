@@ -30,9 +30,9 @@ std::condition_variable cv;
 void signal_handler(int sig) {
     if (sig == SIGINT) {
         if (charge_point != nullptr) {
-            EVLOG(info) << "Stopping websocket connection...";
+            EVLOG_info << "Stopping websocket connection...";
             charge_point->stop();
-            EVLOG(info) << "Successfully stopped websocket connection";
+            EVLOG_info << "Successfully stopped websocket connection";
             {
                 std::lock_guard<std::mutex> lk(m);
                 running = false;
@@ -113,33 +113,33 @@ int main(int argc, char* argv[]) {
                 std::cin >> command;
                 std::cout << std::endl;
                 if (command == "auth") {
-                    EVLOG(info) << "authorize_id_tag command";
+                    EVLOG_info << "authorize_id_tag command";
                     auto result = charge_point->authorize_id_tag(ocpp1_6::CiString20Type(std::string("123")));
                     if (result == ocpp1_6::AuthorizationStatus::Accepted) {
-                        EVLOG(info) << "Authorized";
+                        EVLOG_info << "Authorized";
                     } else {
-                        EVLOG(info) << "Not authorized";
+                        EVLOG_info << "Not authorized";
                     }
                 } else if (command == "data_transfer") {
-                    EVLOG(info) << "data_transfer command";
+                    EVLOG_info << "data_transfer command";
                     ocpp1_6::DataTransferResponse result =
                         charge_point->data_transfer(ocpp1_6::CiString255Type(std::string("Pionix")),
                                                     ocpp1_6::CiString50Type(std::string("Test")), "Hello there");
                     if (result.status == ocpp1_6::DataTransferStatus::Accepted) {
-                        EVLOG(info) << "Data transfer accepted";
+                        EVLOG_info << "Data transfer accepted";
                     } else {
-                        EVLOG(info) << "Data transfer not accepted:"
+                        EVLOG_info << "Data transfer not accepted:"
                                     << ocpp1_6::conversions::data_transfer_status_to_string(result.status);
                     }
                 } else if (command == "meter") {
-                    EVLOG(info) << "meter values command";
+                    EVLOG_info << "meter values command";
 
                     std::map<int32_t, std::vector<ocpp1_6::MeterValue>> meter_values;
                     ocpp1_6::MeterValue val;
                     val.timestamp = ocpp1_6::DateTime();
                     ocpp1_6::SampledValue sample;
                     sample.value = std::to_string(value);
-                    EVLOG(info) << "sample value: " << sample.value;
+                    EVLOG_info << "sample value: " << sample.value;
                     value += 1;
                     sample.context.emplace(ocpp1_6::ReadingContext::Sample_Periodic);
                     sample.format.emplace(ocpp1_6::ValueFormat::Raw);
@@ -152,12 +152,12 @@ int main(int argc, char* argv[]) {
                     meter_values[1].push_back(val);
                 } else if (command == "start_charging") {
                     if (charge_point->start_charging(1)) {
-                        EVLOG(info) << "start_charging successful";
+                        EVLOG_info << "start_charging successful";
                     } else {
-                        EVLOG(info) << "start_charging failed";
+                        EVLOG_info << "start_charging failed";
                     }
                 } else {
-                    EVLOG(info) << "unknown command, not doing anything";
+                    EVLOG_info << "unknown command, not doing anything";
                 }
             } while (!std::cin.fail() && running);
         } else {
@@ -170,6 +170,6 @@ int main(int argc, char* argv[]) {
     });
     t1.join();
 
-    EVLOG(info) << "Goodbye";
+    EVLOG_info << "Goodbye";
     return 0;
 }

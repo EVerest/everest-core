@@ -11,11 +11,11 @@ Websocket::Websocket(std::shared_ptr<ChargePointConfiguration> configuration) : 
 
     auto uri = configuration->getCentralSystemURI();
     if (uri.find("ws://") == 0) {
-        EVLOG(debug) << "Creating plaintext websocket based on the provided URI: " << uri;
+        EVLOG_debug << "Creating plaintext websocket based on the provided URI: " << uri;
         this->websocket = std::make_unique<WebsocketPlain>(configuration);
     }
     if (uri.find("wss://") == 0) {
-        EVLOG(debug) << "Creating TLS websocket based on the provided URI: " << uri;
+        EVLOG_debug << "Creating TLS websocket based on the provided URI: " << uri;
         this->websocket = std::make_unique<WebsocketTLS>(configuration);
     }
 }

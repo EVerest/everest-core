@@ -29,19 +29,19 @@ void WebsocketBase::register_message_callback(const std::function<void(const std
 
 bool WebsocketBase::initialized() {
     if (this->shutting_down) {
-        EVLOG(error) << "Not properly initialized: websocket already shutdown.";
+        EVLOG_error << "Not properly initialized: websocket already shutdown.";
         return false;
     }
     if (this->connected_callback == nullptr) {
-        EVLOG(error) << "Not properly initialized: please register connected callback.";
+        EVLOG_error << "Not properly initialized: please register connected callback.";
         return false;
     }
     if (this->disconnected_callback == nullptr) {
-        EVLOG(error) << "Not properly initialized: please register disconnected callback.";
+        EVLOG_error << "Not properly initialized: please register disconnected callback.";
         return false;
     }
     if (this->message_callback == nullptr) {
-        EVLOG(error) << "Not properly initialized: please register message callback.";
+        EVLOG_error << "Not properly initialized: please register message callback.";
         return false;
     }
 
