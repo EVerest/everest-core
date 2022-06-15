@@ -32,7 +32,8 @@ namespace attrs = logging::attributes;
 
 namespace Everest {
 namespace Logging {
-std::array<std::string, 5> severity_strings = {
+std::array<std::string, 6> severity_strings = {
+    "VERBOSE",  //
     "DEBUG",    //
     "INFO",     //
     "WARNING",  //
@@ -40,7 +41,8 @@ std::array<std::string, 5> severity_strings = {
     "CRITICAL", //
 };
 
-std::array<std::string, 5> severity_strings_colors = {
+std::array<std::string, 6> severity_strings_colors = {
+    "", //
     "", //
     "", //
     "", //
@@ -89,6 +91,7 @@ void init(const std::string& logconf, std::string process_name) {
 
     // add useful attributes
     logging::add_common_attributes();
+
     logging::core::get()->add_global_attribute("Process", current_process_name);
     if (!process_name.empty()) {
         current_process_name.set(process_name);
@@ -112,6 +115,8 @@ void init(const std::string& logconf, std::string process_name) {
 
     auto sink = settings["Sinks.Console"].get_section();
 
+    severity_strings_colors[severity_level::verbose] =
+        sink["SeverityStringColorTrace"].get<std::string>().get_value_or("");
     severity_strings_colors[severity_level::debug] =
         sink["SeverityStringColorDebug"].get<std::string>().get_value_or("");
     severity_strings_colors[severity_level::info] = sink["SeverityStringColorInfo"].get<std::string>().get_value_or("");
@@ -124,7 +129,7 @@ void init(const std::string& logconf, std::string process_name) {
 
     logging::init_from_settings(settings);
 
-    EVLOG(info) << "Logger initialized (using " << logconf << ")...";
+    EVLOG_debug << "Logger initialized (using " << logconf << ")...";
 }
 
 void update_process_name(std::string process_name) {

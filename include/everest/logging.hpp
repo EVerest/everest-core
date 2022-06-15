@@ -19,8 +19,8 @@
 namespace Everest {
 namespace Logging {
 
-enum severity_level
-{
+enum severity_level {
+    verbose,
     debug,
     info,
     warning,
@@ -35,10 +35,29 @@ std::string trace();
 } // namespace Logging
 
 // clang-format off
-#define EVLOG(severity)                                                                                                \
-    BOOST_LOG_SEV(::global_logger::get(), ::Everest::Logging::severity)                                                \
+#define EVLOG_verbose                                                                                                  \
+    BOOST_LOG_SEV(::global_logger::get(), ::Everest::Logging::verbose)                                                 \
         << boost::log::BOOST_LOG_VERSION_NAMESPACE::add_value("file", __FILE__)                                        \
         << boost::log::BOOST_LOG_VERSION_NAMESPACE::add_value("line", __LINE__)                                        \
+        << boost::log::BOOST_LOG_VERSION_NAMESPACE::add_value("function", BOOST_CURRENT_FUNCTION)
+
+#define EVLOG_debug                                                                                                    \
+    BOOST_LOG_SEV(::global_logger::get(), ::Everest::Logging::debug)                                                   \
+        << boost::log::BOOST_LOG_VERSION_NAMESPACE::add_value("function", BOOST_CURRENT_FUNCTION)
+
+#define EVLOG_info                                                                                                     \
+    BOOST_LOG_SEV(::global_logger::get(), ::Everest::Logging::info)
+
+#define EVLOG_warning                                                                                                  \
+    BOOST_LOG_SEV(::global_logger::get(), ::Everest::Logging::warning)                                                 \
+        << boost::log::BOOST_LOG_VERSION_NAMESPACE::add_value("function", BOOST_CURRENT_FUNCTION)
+
+#define EVLOG_error                                                                                                    \
+    BOOST_LOG_SEV(::global_logger::get(), ::Everest::Logging::error)                                                   \
+        << boost::log::BOOST_LOG_VERSION_NAMESPACE::add_value("function", BOOST_CURRENT_FUNCTION)
+
+#define EVLOG_critical                                                                                                 \
+    BOOST_LOG_SEV(::global_logger::get(), ::Everest::Logging::critical)                                                \
         << boost::log::BOOST_LOG_VERSION_NAMESPACE::add_value("function", BOOST_CURRENT_FUNCTION)
 // clang-format on
 
@@ -48,7 +67,7 @@ std::string trace();
             BOOST_THROW_EXCEPTION(boost::enable_error_info(ex)                                                         \
                                   << boost::log::BOOST_LOG_VERSION_NAMESPACE::current_scope());                        \
         } catch (std::exception & e) {                                                                                 \
-            EVLOG(error) << e.what();                                                                                  \
+            EVLOG_error << e.what();                                                                                   \
             throw;                                                                                                     \
         }                                                                                                              \
     } while (0)

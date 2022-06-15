@@ -30,13 +30,14 @@ int main(int argc, char* argv[]) {
     }
     Everest::Logging::init(logging_config, "hello there");
 
-    EVLOG(debug) << "logging_config was set to " << logging_config;
+    EVLOG_debug << "logging_config was set to " << logging_config;
 
-    EVLOG(debug) << "This is a DEBUG message.";
-    EVLOG(info) << "This is a INFO message.";
-    EVLOG(warning) << "This is a WARNING message.";
-    EVLOG(error) << "This is a ERROR message.";
-    EVLOG(critical) << "This is a CRITICAL message.";
+    EVLOG_verbose << "This is a VERBOSE message.";
+    EVLOG_debug << "This is a DEBUG message.";
+    EVLOG_info << "This is a INFO message.";
+    EVLOG_warning << "This is a WARNING message.";
+    EVLOG_error << "This is a ERROR message.";
+    EVLOG_critical << "This is a CRITICAL message.";
 
     return 0;
 }
