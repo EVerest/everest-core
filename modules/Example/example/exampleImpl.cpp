@@ -10,7 +10,7 @@ namespace example {
 
 void exampleImpl::init() {
     mod->mqtt.subscribe("external/a",
-                        [](json data) { EVLOG(error) << "received data from external MQTT handler: " << data.dump(); });
+                        [](json data) { EVLOG_error << "received data from external MQTT handler: " << data.dump(); });
 }
 
 void exampleImpl::ready() {
@@ -19,7 +19,7 @@ void exampleImpl::ready() {
 
 bool exampleImpl::handle_uses_something(std::string& key) {
     if (mod->r_kvs->call_exists(key)) {
-        EVLOG(debug) << "IT SHOULD NOT AND DOES NOT EXIST";
+        EVLOG_debug << "IT SHOULD NOT AND DOES NOT EXIST";
     }
 
     Array test_array = {1, 2, 3};
@@ -28,14 +28,14 @@ bool exampleImpl::handle_uses_something(std::string& key) {
     bool exi = mod->r_kvs->call_exists(key);
 
     if (exi) {
-        EVLOG(debug) << "IT ACTUALLY EXISTS";
+        EVLOG_debug << "IT ACTUALLY EXISTS";
     }
 
     auto ret = mod->r_kvs->call_load(key);
 
     Array arr = boost::get<Array>(ret);
 
-    EVLOG(debug) << "loaded array: " << arr << ", original array: " << test_array;
+    EVLOG_debug << "loaded array: " << arr << ", original array: " << test_array;
 
     return exi;
 };

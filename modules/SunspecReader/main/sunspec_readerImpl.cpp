@@ -7,21 +7,21 @@ namespace main {
 
 void sunspec_readerImpl::init() {
 
-    EVLOG(debug) << "Initializing SunspecReader module...";
+    EVLOG_debug << "Initializing SunspecReader module...";
     try {
-          EVLOG(debug) << "Trying to make TCP connection...";
+          EVLOG_debug << "Trying to make TCP connection...";
           this->tcp_connection = std::make_unique<connection::TCPConnection>(config.ip_address, config.port);
-          EVLOG(debug) << "Trying to initialize MODBUS TCP client...";
+          EVLOG_debug << "Trying to initialize MODBUS TCP client...";
           this->mb_client = std::make_unique<modbus::ModbusTCPClient>(*this->tcp_connection);
-          EVLOG(debug) << "Trying to initialize Sunspec device mapping...";
+          EVLOG_debug << "Trying to initialize Sunspec device mapping...";
           this->sdm = std::make_unique<sunspec::SunspecDeviceMapping>(*this->mb_client, config.unit);
-          EVLOG(debug) << "Trying to scan SunspecDeviceMapping...";
+          EVLOG_debug << "Trying to scan SunspecDeviceMapping...";
           this->sdm->scan();
-          EVLOG(debug) << "Initializing reader after scan...";
+          EVLOG_debug << "Initializing reader after scan...";
           this->reader = std::make_unique<sunspec::SunspecReader<double>>(config.query, *this->sdm);
     }
     catch (std::exception& e) {
-        EVLOG(error) << "Error during SunspecReader initialization: " << e.what() << "\n";
+        EVLOG_error << "Error during SunspecReader initialization: " << e.what() << "\n";
         this->tcp_connection = nullptr;
         this->mb_client = nullptr;
         this->sdm = nullptr;
@@ -35,7 +35,7 @@ void sunspec_readerImpl::ready() {
         this->read_loop_thread = std::thread( [this] { run_read_loop(); } );
     }
     else {
-        EVLOG(error) << "SunspecReader initialization failed. Skipping read step.";
+        EVLOG_error << "SunspecReader initialization failed. Skipping read step.";
     }
 }
 
@@ -57,7 +57,7 @@ void sunspec_readerImpl::run_read_loop() {
         Everest::json j;
         j["timestamp"] = timestamp;
         j["value"] = converted_read_value;
-        EVLOG(debug) << "SunspecReader::run_read_loop() - Publishing: " << j;
+        EVLOG_debug << "SunspecReader::run_read_loop() - Publishing: " << j;
         publish_measurement(j);
 
     }

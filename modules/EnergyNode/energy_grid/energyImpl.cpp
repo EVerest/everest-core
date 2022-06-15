@@ -56,7 +56,7 @@ void energyImpl::init() {
                                     child = e;
                                 }
                             } else {
-                                EVLOG(warning) << "Warning! e[] does not contain element 'uuid': " << e;
+                                EVLOG_warning << "Warning! e[] does not contain element 'uuid': " << e;
                             }
                         }
                     }
@@ -76,7 +76,7 @@ void energyImpl::init() {
     // r_price_information is optional
     for (auto& entry : mod->r_price_information) {
         entry->subscribe_energy_price_schedule([this](json p) {
-            EVLOG(debug) << "Incoming price schedule: " << p;
+            EVLOG_debug << "Incoming price schedule: " << p;
             energy_price = p;
             publish_complete_energy_object();
         });
@@ -85,7 +85,7 @@ void energyImpl::init() {
     // r_powermeter is optional
     for (auto& entry : mod->r_powermeter) {
         entry->subscribe_powermeter([this](json p) {
-            EVLOG(debug) << "Incoming powermeter readings: " << p;
+            EVLOG_debug << "Incoming powermeter readings: " << p;
             {
                 std::lock_guard<std::mutex> lock(this->energy_mutex);
                 powermeter = p;
@@ -178,7 +178,7 @@ void energyImpl::handle_enforce_limits(std::string& uuid, Object& limits_import,
     // is it for me?
     if (uuid == energy["uuid"]) {
         // as a generic node we cannot do much about limits.
-        EVLOG(error) << "EnergyNode cannot accept limits from EnergyManager";
+        EVLOG_error << "EnergyNode cannot accept limits from EnergyManager";
     }
     // if not, route to children
     else {
