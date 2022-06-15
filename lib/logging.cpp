@@ -33,12 +33,12 @@ namespace attrs = logging::attributes;
 namespace Everest {
 namespace Logging {
 std::array<std::string, 6> severity_strings = {
-    "VERBOSE",  //
-    "DEBUG",    //
-    "INFO",     //
-    "WARNING",  //
-    "ERROR",    //
-    "CRITICAL", //
+    "VERB", //
+    "DEBG", //
+    "INFO", //
+    "WARN", //
+    "ERRO", //
+    "CRIT", //
 };
 
 std::array<std::string, 6> severity_strings_colors = {
@@ -50,7 +50,17 @@ std::array<std::string, 6> severity_strings_colors = {
     "", //
 };
 
-attrs::mutable_constant<std::string> current_process_name(logging::aux::get_process_name());
+std::string process_name_padding(const std::string& process_name) {
+    const unsigned int process_name_padding_length = 15;
+    std::string padded_process_name = process_name;
+    if (process_name_padding_length > padded_process_name.size())
+        padded_process_name.insert(padded_process_name.size(), process_name_padding_length, ' ');
+    if (padded_process_name.size() > process_name_padding_length)
+        padded_process_name = padded_process_name.substr(0, process_name_padding_length);
+    return padded_process_name;
+}
+
+attrs::mutable_constant<std::string> current_process_name(process_name_padding(logging::aux::get_process_name()));
 
 // The operator puts a human-friendly representation of the severity level to the stream
 std::ostream& operator<<(std::ostream& strm, severity_level level) {
@@ -92,9 +102,15 @@ void init(const std::string& logconf, std::string process_name) {
     // add useful attributes
     logging::add_common_attributes();
 
-    logging::core::get()->add_global_attribute("Process", current_process_name);
+    std::string padded_process_name;
+
     if (!process_name.empty()) {
-        current_process_name.set(process_name);
+        padded_process_name = process_name_padding(process_name);
+    }
+
+    logging::core::get()->add_global_attribute("Process", current_process_name);
+    if (!padded_process_name.empty()) {
+        current_process_name.set(padded_process_name);
     }
     logging::core::get()->add_global_attribute("Scope", attrs::named_scope());
 
@@ -134,7 +150,10 @@ void init(const std::string& logconf, std::string process_name) {
 
 void update_process_name(std::string process_name) {
     if (!process_name.empty()) {
-        current_process_name.set(process_name);
+        std::string padded_process_name;
+
+        padded_process_name = process_name_padding(process_name);
+        current_process_name.set(padded_process_name);
     }
 }
 } // namespace Logging
