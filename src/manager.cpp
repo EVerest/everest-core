@@ -251,6 +251,7 @@ int boot(const po::variables_map& vm) {
 
     ::Everest::Logging::init(rs.logging_config.string());
 
+    EVLOG_info << "8< 8< 8< ------------------------------------------------------------------------------ 8< 8< 8<";
     EVLOG_info << "EVerest manager starting using " << rs.config_file.string();
 
     EVLOG_verbose << fmt::format("main_dir was set to {}", rs.main_dir.string());
@@ -378,7 +379,7 @@ int boot(const po::variables_map& vm) {
             }
             if (std::all_of(modules_ready.begin(), modules_ready.end(),
                             [](const auto& element) { return element.second; })) {
-                EVLOG_info << "All modules are ready. EVerest up and running.";
+                EVLOG_info << ">>> All modules are initialized. EVerest up and running <<<";
                 mqtt_abstraction.publish("everest/ready", nlohmann::json(true));
             }
             // FIXME (aw): this unlock shouldn't be necessary because lock will get destroyed here anyway

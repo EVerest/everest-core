@@ -402,7 +402,7 @@ void Everest::provide_external_mqtt_handler(const std::string& topic, const Stri
 void Everest::signal_ready() {
     BOOST_LOG_FUNCTION();
 
-    EVLOG_info << "Module ready.";
+    EVLOG_info << "Module "<< this->module_id <<" initialized.";
     const auto ready_topic = fmt::format("{}/ready", this->config.mqtt_module_prefix(this->module_id));
 
     this->mqtt_abstraction.publish(ready_topic, json(true));

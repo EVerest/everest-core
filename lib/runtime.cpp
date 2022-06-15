@@ -106,7 +106,7 @@ int ModuleLoader::initialize() {
                                                           mqtt_server_address, mqtt_server_port);
 
         // module import
-        EVLOG_info << fmt::format("Initializing module {}...", module_identifier);
+        EVLOG_debug << fmt::format("Initializing module {}...", module_identifier);
 
         if (!everest.connect()) {
             EVLOG_critical << fmt::format("Cannot connect to MQTT broker at {}:{}", mqtt_server_address,
