@@ -25,7 +25,7 @@ public:
             listener(native_value);
             {% else %}
             if (value.type() != typeid({{ cpp_type(var) }})) {
-                EVLOG(error) << "Callback for variable '{{ var.name }}' in interface '{{ info.interface }}' has wrong type!";
+                EVLOG_error << "Callback for variable '{{ var.name }}' in interface '{{ info.interface }}' has wrong type!";
             }
             listener();
             {% endif %}
