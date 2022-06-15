@@ -293,10 +293,10 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
 
         // initialize everest framework
         const auto& module_identifier = config->printable_identifier(module_id);
-        EVLOG(info) << "Initializing framework for module " << module_identifier << "...";
-        EVLOG(debug) << "Trying to set process name to: '" << module_identifier << "'...";
+        EVLOG_debug << "Initializing framework for module " << module_identifier << "...";
+        EVLOG_debug << "Trying to set process name to: '" << module_identifier << "'...";
         if (prctl(PR_SET_NAME, module_identifier.c_str())) {
-            EVLOG(warning) << "Could not set process name to '" << module_identifier << "'";
+            EVLOG_warning << "Could not set process name to '" << module_identifier << "'";
         }
 
         Everest::Logging::update_process_name(module_identifier);
@@ -542,27 +542,27 @@ static Napi::Object Init(Napi::Env env, Napi::Object exports) {
 
     log.DefineProperty(Napi::PropertyDescriptor::Value(
         "debug",
-        Napi::Function::New(env, [](const Napi::CallbackInfo& info) { EVLOG(debug) << extract_logstring(info); }),
+        Napi::Function::New(env, [](const Napi::CallbackInfo& info) { EVLOG_debug << extract_logstring(info); }),
         napi_enumerable));
 
     log.DefineProperty(Napi::PropertyDescriptor::Value(
         "info",
-        Napi::Function::New(env, [](const Napi::CallbackInfo& info) { EVLOG(info) << extract_logstring(info); }),
+        Napi::Function::New(env, [](const Napi::CallbackInfo& info) { EVLOG_info << extract_logstring(info); }),
         napi_enumerable));
 
     log.DefineProperty(Napi::PropertyDescriptor::Value(
         "warning",
-        Napi::Function::New(env, [](const Napi::CallbackInfo& info) { EVLOG(warning) << extract_logstring(info); }),
+        Napi::Function::New(env, [](const Napi::CallbackInfo& info) { EVLOG_warning << extract_logstring(info); }),
         napi_enumerable));
 
     log.DefineProperty(Napi::PropertyDescriptor::Value(
         "error",
-        Napi::Function::New(env, [](const Napi::CallbackInfo& info) { EVLOG(error) << extract_logstring(info); }),
+        Napi::Function::New(env, [](const Napi::CallbackInfo& info) { EVLOG_error << extract_logstring(info); }),
         napi_enumerable));
 
     log.DefineProperty(Napi::PropertyDescriptor::Value(
         "critical",
-        Napi::Function::New(env, [](const Napi::CallbackInfo& info) { EVLOG(critical) << extract_logstring(info); }),
+        Napi::Function::New(env, [](const Napi::CallbackInfo& info) { EVLOG_critical << extract_logstring(info); }),
         napi_enumerable));
 
     exports.DefineProperty(Napi::PropertyDescriptor::Value("log", log, napi_enumerable));

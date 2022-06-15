@@ -76,16 +76,16 @@ int ModuleLoader::initialize() {
                                rs->interfaces_dir.string());
 
         if (!config.contains(this->module_id)) {
-            EVLOG(error) << fmt::format("Module id '{}' not found in config!", this->module_id);
+            EVLOG_error << fmt::format("Module id '{}' not found in config!", this->module_id);
             return 2;
         }
 
         const std::string module_identifier = config.printable_identifier(this->module_id);
-        EVLOG(info) << fmt::format("Initializing framework for module {}...", module_identifier);
-        EVLOG(debug) << fmt::format("Setting process name to: '{}'...", module_identifier);
+        EVLOG_debug << fmt::format("Initializing framework for module {}...", module_identifier);
+        EVLOG_verbose << fmt::format("Setting process name to: '{}'...", module_identifier);
         int prctl_return = prctl(PR_SET_NAME, module_identifier.c_str());
         if (prctl_return == 1) {
-            EVLOG(warning) << fmt::format("Could not set process name to '{}', it remains '{}'", module_identifier,
+            EVLOG_warning << fmt::format("Could not set process name to '{}', it remains '{}'", module_identifier,
                                           this->original_process_name);
         }
         Logging::update_process_name(module_identifier);
@@ -106,10 +106,10 @@ int ModuleLoader::initialize() {
                                                           mqtt_server_address, mqtt_server_port);
 
         // module import
-        EVLOG(info) << fmt::format("Initializing module {}...", module_identifier);
+        EVLOG_info << fmt::format("Initializing module {}...", module_identifier);
 
         if (!everest.connect()) {
-            EVLOG(critical) << fmt::format("Cannot connect to MQTT broker at {}:{}", mqtt_server_address,
+            EVLOG_critical << fmt::format("Cannot connect to MQTT broker at {}:{}", mqtt_server_address,
                                            mqtt_server_port);
             return 1;
         }
@@ -163,12 +163,12 @@ int ModuleLoader::initialize() {
 
         everest.wait_for_main_loop_end();
 
-        EVLOG(info) << "Exiting...";
+        EVLOG_info << "Exiting...";
     } catch (boost::exception& e) {
-        EVLOG(critical) << fmt::format("Caught top level boost::exception:\n{}",
+        EVLOG_critical << fmt::format("Caught top level boost::exception:\n{}",
                                        boost::diagnostic_information(e, true));
     } catch (std::exception& e) {
-        EVLOG(critical) << fmt::format("Caught top level std::exception:\n{}", boost::diagnostic_information(e, true));
+        EVLOG_critical << fmt::format("Caught top level std::exception:\n{}", boost::diagnostic_information(e, true));
     }
 
     return 0;

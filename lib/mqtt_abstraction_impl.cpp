@@ -36,7 +36,7 @@ MQTTAbstractionImpl::MQTTAbstractionImpl(std::string mqtt_server_address, std::s
     recvbuf{} {
     BOOST_LOG_FUNCTION();
 
-    EVLOG(debug) << "Initializing MQTT abstraction layer...";
+    EVLOG_debug << "Initializing MQTT abstraction layer...";
 
     this->mqtt_is_connected = false;
 
@@ -54,7 +54,7 @@ MQTTAbstractionImpl::~MQTTAbstractionImpl() {
 bool MQTTAbstractionImpl::connect() {
     BOOST_LOG_FUNCTION();
 
-    EVLOG(info) << fmt::format("Connecting to MQTT broker: {}:{}", this->mqtt_server_address, this->mqtt_server_port);
+    EVLOG_debug << fmt::format("Connecting to MQTT broker: {}:{}", this->mqtt_server_address, this->mqtt_server_port);
 
     return connectBroker(this->mqtt_server_address.c_str(), this->mqtt_server_port.c_str());
 }
@@ -113,10 +113,10 @@ void MQTTAbstractionImpl::publish(const std::string& topic, const std::string& d
 
     MQTTErrors error = mqtt_publish(&this->mqtt_client, topic.c_str(), data.c_str(), data.size(), publish_flags);
     if (error != MQTT_OK) {
-        EVLOG(error) << fmt::format("MQTT Error {}", mqtt_error_str(error));
+        EVLOG_error << fmt::format("MQTT Error {}", mqtt_error_str(error));
     }
 
-    EVLOG(debug) << fmt::format("publishing to {}", topic);
+    EVLOG_debug << fmt::format("publishing to {}", topic);
 }
 
 void MQTTAbstractionImpl::subscribe(const std::string& topic) {
@@ -160,7 +160,7 @@ std::future<void> MQTTAbstractionImpl::spawn_main_loop_thread() {
             while (this->mqtt_is_connected) {
                 MQTTErrors error = mqtt_sync(&this->mqtt_client);
                 if (error != MQTT_OK) {
-                    EVLOG(error) << fmt::format("Error during MQTT sync: {}", mqtt_error_str(error));
+                    EVLOG_error << fmt::format("Error during MQTT sync: {}", mqtt_error_str(error));
 
                     on_mqtt_disconnect();
 
@@ -169,11 +169,11 @@ std::future<void> MQTTAbstractionImpl::spawn_main_loop_thread() {
                 std::this_thread::sleep_for(std::chrono::milliseconds(mqtt_sync_sleep_milliseconds));
             }
         } catch (boost::exception& e) {
-            EVLOG(critical) << fmt::format("Caught MQTT mainloop boost::exception:\n{}",
+            EVLOG_critical << fmt::format("Caught MQTT mainloop boost::exception:\n{}",
                                            boost::diagnostic_information(e, true));
             exit(1);
         } catch (std::exception& e) {
-            EVLOG(critical) << fmt::format("Caught MQTT mainloop std::exception:\n{}",
+            EVLOG_critical << fmt::format("Caught MQTT mainloop std::exception:\n{}",
                                            boost::diagnostic_information(e, true));
             exit(1);
         }
@@ -193,15 +193,15 @@ void MQTTAbstractionImpl::on_mqtt_message(std::shared_ptr<Message> message) {
     try {
         std::shared_ptr<json> data;
         if (topic.find("everest/") == 0) {
-            EVLOG(debug) << fmt::format("topic {} starts with everest/", topic);
+            EVLOG_debug << fmt::format("topic {} starts with everest/", topic);
             try {
                 data = std::make_shared<json>(json::parse(payload));
             } catch (nlohmann::detail::parse_error& e) {
-                EVLOG(warning) << fmt::format("Could not decode json for incoming topic '{}': {}", topic, payload);
+                EVLOG_warning << fmt::format("Could not decode json for incoming topic '{}': {}", topic, payload);
                 return;
             }
         } else {
-            EVLOG(debug) << fmt::format("Message parsing for topic '{}' not implemented. Wrapping in json object.",
+            EVLOG_debug << fmt::format("Message parsing for topic '{}' not implemented. Wrapping in json object.",
                                         topic);
             data = std::make_shared<json>(json(payload));
         }
@@ -224,11 +224,11 @@ void MQTTAbstractionImpl::on_mqtt_message(std::shared_ptr<Message> message) {
                 EverestInternalError(fmt::format("Internal error: topic '{}' should have a matching handler!", topic)));
         }
     } catch (boost::exception& e) {
-        EVLOG(critical) << fmt::format("Caught MQTT on_message boost::exception:\n{}",
+        EVLOG_critical << fmt::format("Caught MQTT on_message boost::exception:\n{}",
                                        boost::diagnostic_information(e, true));
         exit(1);
     } catch (std::exception& e) {
-        EVLOG(critical) << fmt::format("Caught MQTT on_message std::exception:\n{}",
+        EVLOG_critical << fmt::format("Caught MQTT on_message std::exception:\n{}",
                                        boost::diagnostic_information(e, true));
         exit(1);
     }
@@ -237,14 +237,14 @@ void MQTTAbstractionImpl::on_mqtt_message(std::shared_ptr<Message> message) {
 void MQTTAbstractionImpl::on_mqtt_connect() {
     BOOST_LOG_FUNCTION();
 
-    EVLOG(info) << "Connected to MQTT broker";
+    EVLOG_debug << "Connected to MQTT broker";
 
     // subscribe to all topics needed by currently registered handlers
-    EVLOG(info) << "Subscribing to needed MQTT topics...";
+    EVLOG_debug << "Subscribing to needed MQTT topics...";
     const std::lock_guard<std::mutex> lock(handlers_mutex);
     for (auto const& ha : this->message_handlers) {
         std::string topic = ha.first;
-        EVLOG(info) << fmt::format("Subscribing to {}", topic);
+        EVLOG_debug << fmt::format("Subscribing to {}", topic);
         subscribe(topic); // FIXME(kai): get QOS from handler
     }
 
@@ -271,23 +271,23 @@ void MQTTAbstractionImpl::register_handler(const std::string& topic, std::shared
 
     switch (handler->type) {
     case HandlerType::Call:
-        EVLOG(debug) << fmt::format("Registering call handler {} for command {} on topic {}",
+        EVLOG_debug << fmt::format("Registering call handler {} for command {} on topic {}",
                                     fmt::ptr(&handler->handler), handler->name, topic);
         break;
     case HandlerType::Result:
-        EVLOG(debug) << fmt::format("Registering result handler {} for command {} on topic {}",
+        EVLOG_debug << fmt::format("Registering result handler {} for command {} on topic {}",
                                     fmt::ptr(&handler->handler), handler->name, topic);
         break;
     case HandlerType::SubscribeVar:
-        EVLOG(debug) << fmt::format("Registering subscribe handler {} for variable {} on topic {}",
+        EVLOG_debug << fmt::format("Registering subscribe handler {} for variable {} on topic {}",
                                     fmt::ptr(&handler->handler), handler->name, topic);
         break;
     case HandlerType::ExternalMQTT:
-        EVLOG(debug) << fmt::format("Registering external MQTT handler {} on topic {}", fmt::ptr(&handler->handler),
+        EVLOG_debug << fmt::format("Registering external MQTT handler {} on topic {}", fmt::ptr(&handler->handler),
                                     topic);
         break;
     default:
-        EVLOG(warning) << fmt::format("Registering unknown handler {} on topic {}", fmt::ptr(&handler->handler), topic);
+        EVLOG_warning << fmt::format("Registering unknown handler {} on topic {}", fmt::ptr(&handler->handler), topic);
         break;
     }
 
@@ -301,16 +301,16 @@ void MQTTAbstractionImpl::register_handler(const std::string& topic, std::shared
     // only subscribe for this topic if we aren't already and the mqtt client is connected
     // if we are not connected the on_mqtt_connect() callback will subscribe to the topic
     if (this->mqtt_is_connected && this->message_handlers[topic].count_handlers() == 1) {
-        EVLOG(debug) << fmt::format("Subscribing to {}", topic);
+        EVLOG_debug << fmt::format("Subscribing to {}", topic);
         this->subscribe(topic, qos);
     }
-    EVLOG(debug) << fmt::format("#handler[{}] = {}", topic, this->message_handlers[topic].count_handlers());
+    EVLOG_debug << fmt::format("#handler[{}] = {}", topic, this->message_handlers[topic].count_handlers());
 }
 
 void MQTTAbstractionImpl::unregister_handler(const std::string& topic, const Token& token) {
     BOOST_LOG_FUNCTION();
 
-    EVLOG(debug) << fmt::format("Unregistering handler {} for {}", fmt::ptr(&token), topic);
+    EVLOG_debug << fmt::format("Unregistering handler {} for {}", fmt::ptr(&token), topic);
 
     const std::lock_guard<std::mutex> lock(handlers_mutex);
     auto number_of_handlers = 0;
@@ -323,13 +323,13 @@ void MQTTAbstractionImpl::unregister_handler(const std::string& topic, const Tok
     if (number_of_handlers == 0) {
         // TODO(kai): should we throw/log an error if we are not connected?
         if (this->mqtt_is_connected) {
-            EVLOG(debug) << fmt::format("Unsubscribing from {}", topic);
+            EVLOG_debug << fmt::format("Unsubscribing from {}", topic);
             this->unsubscribe(topic);
         }
     }
 
     const std::string handler_count = (number_of_handlers == 0) ? "None" : std::to_string(number_of_handlers);
-    EVLOG(debug) << fmt::format("#handler[{}] = {}", topic, handler_count);
+    EVLOG_debug << fmt::format("#handler[{}] = {}", topic, handler_count);
 }
 
 bool MQTTAbstractionImpl::connectBroker(const char* host, const char* port) {

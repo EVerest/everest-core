@@ -21,7 +21,7 @@ namespace EverestJs {
                 char const* const* f = boost::get_error_info<boost::throw_file>(ex);                                   \
                 int const* l = boost::get_error_info<boost::throw_line>(ex);                                           \
                 char const* const* fn = boost::get_error_info<boost::throw_function>(ex);                              \
-                EVLOG(critical) << "Catched top level Napi::Error, forwarding to javascript..." << std::endl           \
+                EVLOG_critical  << "Catched top level Napi::Error, forwarding to javascript..." << std::endl           \
                                 << (f ? *f : "") << ":" << (l ? std::to_string(*l) : "") << " in Function "            \
                                 << (fn ? *fn : "") << std::endl                                                        \
                                 << boost::diagnostic_information(e, true) << boost::diagnostic_information(ex, false)  \
@@ -38,7 +38,7 @@ namespace EverestJs {
                 char const* const* f = boost::get_error_info<boost::throw_file>(ex);                                   \
                 int const* l = boost::get_error_info<boost::throw_line>(ex);                                           \
                 char const* const* fn = boost::get_error_info<boost::throw_function>(ex);                              \
-                EVLOG(critical) << "Catched top level exception, forwarding to javascript..." << std::endl             \
+                EVLOG_critical  << "Catched top level exception, forwarding to javascript..." << std::endl             \
                                 << (f ? *f : "") << ":" << (l ? std::to_string(*l) : "") << " in Function "            \
                                 << (fn ? *fn : "") << std::endl                                                        \
                                 << boost::diagnostic_information(e, true) << boost::diagnostic_information(ex, false)  \

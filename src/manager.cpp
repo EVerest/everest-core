@@ -238,7 +238,7 @@ static const std::map<pid_t, std::string> start_modules(const std::vector<Module
         // we can only come here, if we're the parent!
         auto child_pid = handle.check_child_executed();
 
-        EVLOG(debug) << fmt::format("Forked module {} with pid: {}", module.name, child_pid);
+        EVLOG_verbose << fmt::format("Forked module {} with pid: {}", module.name, child_pid);
         children[child_pid] = module.name;
     }
 
@@ -251,13 +251,15 @@ int boot(const po::variables_map& vm) {
 
     ::Everest::Logging::init(rs.logging_config.string());
 
-    EVLOG(debug) << fmt::format("main_dir was set to {}", rs.main_dir.string());
-    EVLOG(debug) << fmt::format("main_binary was set to {}", rs.main_binary.string());
+    EVLOG_info << "EVerest manager starting using " << rs.config_file.string();
+
+    EVLOG_verbose << fmt::format("main_dir was set to {}", rs.main_dir.string());
+    EVLOG_verbose << fmt::format("main_binary was set to {}", rs.main_binary.string());
 
     // dump all manifests if requested and terminate afterwards
     if (vm.count("dumpmanifests")) {
         boost::filesystem::path dumpmanifests_path = boost::filesystem::path(vm["dumpmanifests"].as<std::string>());
-        EVLOG(info) << fmt::format("Dumping all known validated manifests into '{}'", dumpmanifests_path.string());
+        EVLOG_debug << fmt::format("Dumping all known validated manifests into '{}'", dumpmanifests_path.string());
 
         auto manifests = ::Everest::Config::load_all_manifests(rs.modules_dir.string(), rs.schemas_dir.string());
 
@@ -278,23 +280,23 @@ int boot(const po::variables_map& vm) {
         config = new ::Everest::Config(rs.schemas_dir.string(), rs.config_file.string(), rs.modules_dir.string(),
                                        rs.interfaces_dir.string());
     } catch (::Everest::EverestInternalError& e) {
-        EVLOG(error) << fmt::format("Failed to load and validate config!\n{}", boost::diagnostic_information(e, true));
+        EVLOG_error << fmt::format("Failed to load and validate config!\n{}", boost::diagnostic_information(e, true));
         return EXIT_FAILURE;
     } catch (boost::exception& e) {
-        EVLOG(error) << "Failed to load and validate config!";
-        EVLOG(critical) << fmt::format("Caught top level boost::exception:\n{}",
+        EVLOG_error << "Failed to load and validate config!";
+        EVLOG_critical << fmt::format("Caught top level boost::exception:\n{}",
                                        boost::diagnostic_information(e, true));
         return EXIT_FAILURE;
     } catch (std::exception& e) {
-        EVLOG(error) << "Failed to load and validate config!";
-        EVLOG(critical) << fmt::format("Caught top level std::exception:\n{}", boost::diagnostic_information(e, true));
+        EVLOG_error << "Failed to load and validate config!";
+        EVLOG_critical << fmt::format("Caught top level std::exception:\n{}", boost::diagnostic_information(e, true));
         return EXIT_FAILURE;
     }
 
     // dump config if requested
     if (vm.count("dump")) {
         boost::filesystem::path dump_path = boost::filesystem::path(vm["dump"].as<std::string>());
-        EVLOG(info) << fmt::format("Dumping validated config and manifests into '{}'", dump_path.string());
+        EVLOG_debug << fmt::format("Dumping validated config and manifests into '{}'", dump_path.string());
 
         boost::filesystem::path config_dump_path = dump_path / "config.json";
 
@@ -315,7 +317,7 @@ int boot(const po::variables_map& vm) {
 
     // only config check (and or config dumping) was requested, log check result and exit
     if (check) {
-        EVLOG(info) << "Config is valid, terminating as requested";
+        EVLOG_debug << "Config is valid, terminating as requested";
         return EXIT_SUCCESS;
     }
 
@@ -359,7 +361,7 @@ int boot(const po::variables_map& vm) {
         std::string module_name = module.key();
         if (std::any_of(ignored_modules.begin(), ignored_modules.end(),
                         [module_name](const auto& element) { return element == module_name; })) {
-            EVLOG(info) << fmt::format("Ignoring module: {}", module_name);
+            EVLOG_info << fmt::format("Ignoring module: {}", module_name);
             continue;
         }
         std::string module_type = main_config[module_name]["module"];
@@ -367,16 +369,16 @@ int boot(const po::variables_map& vm) {
 
         Handler module_ready_handler = [module_name, &modules_ready, &modules_ready_mutex,
                                         &mqtt_abstraction](nlohmann::json json) {
-            EVLOG(debug) << fmt::format("received module ready signal for module: {}({})", module_name, json.dump());
+            EVLOG_verbose << fmt::format("received module ready signal for module: {}({})", module_name, json.dump());
             std::unique_lock<std::mutex> lock(modules_ready_mutex);
             modules_ready[module_name] = json.get<bool>();
             for (const auto& mod : modules_ready) {
                 std::string text_ready = fmt::format((mod.second) ? TERMINAL_STYLE_OK : TERMINAL_STYLE_ERROR, "ready");
-                EVLOG(debug) << fmt::format("  {}: {}", mod.first, text_ready);
+                EVLOG_verbose << fmt::format("  {}: {}", mod.first, text_ready);
             }
             if (std::all_of(modules_ready.begin(), modules_ready.end(),
                             [](const auto& element) { return element.second; })) {
-                EVLOG(info) << "all modules are ready";
+                EVLOG_info << "All modules are ready. EVerest up and running.";
                 mqtt_abstraction.publish("everest/ready", nlohmann::json(true));
             }
             // FIXME (aw): this unlock shouldn't be necessary because lock will get destroyed here anyway
@@ -393,7 +395,7 @@ int boot(const po::variables_map& vm) {
 
         if (std::any_of(standalone_modules.begin(), standalone_modules.end(),
                         [module_name](const auto& element) { return element == module_name; })) {
-            EVLOG(info) << fmt::format("Not starting standalone module: {}", module_name);
+            EVLOG_info << fmt::format("Not starting standalone module: {}", module_name);
             continue;
         }
 
@@ -405,20 +407,20 @@ int boot(const po::variables_map& vm) {
         boost::filesystem::path javascript_library_path = module_path / javascript_library_filename;
 
         if (boost::filesystem::exists(binary_path)) {
-            EVLOG(debug) << fmt::format("module: {} ({}) provided as binary", module_name, module_type);
+            EVLOG_verbose << fmt::format("module: {} ({}) provided as binary", module_name, module_type);
             modules_to_start.emplace_back(module_name, printable_module_name, ModuleStartInfo::Language::cpp,
                                           binary_path);
         } else if (boost::filesystem::exists(javascript_library_path)) {
-            EVLOG(debug) << fmt::format("module: {} ({}) provided as javascript library", module_name, module_type);
+            EVLOG_verbose << fmt::format("module: {} ({}) provided as javascript library", module_name, module_type);
             modules_to_start.emplace_back(module_name, printable_module_name, ModuleStartInfo::Language::javascript,
                                           boost::filesystem::canonical(javascript_library_path));
         } else {
-            EVLOG(error) << fmt::format(
+            EVLOG_error << fmt::format(
                 "module: {} ({}) cannot be loaded because no C++ or JavaScript library has been found", module_name,
                 module_type);
-            EVLOG(error) << fmt::format("  checked paths:");
-            EVLOG(error) << fmt::format("    cpp: {}", binary_path.string());
-            EVLOG(error) << fmt::format("    js:  {}", javascript_library_path.string());
+            EVLOG_error << fmt::format("  checked paths:");
+            EVLOG_error << fmt::format("    cpp: {}", binary_path.string());
+            EVLOG_error << fmt::format("    js:  {}", javascript_library_path.string());
 
             return EXIT_FAILURE;
         }
@@ -434,31 +436,31 @@ int boot(const po::variables_map& vm) {
         if (child_pid != -1 && children.count(child_pid) != 0) {
             child_name = children.at(child_pid);
         }
-        EVLOG(critical) << fmt::format(
+        EVLOG_critical << fmt::format(
             "Something happened to child: {} (pid: {}). Status: {}. Terminating all children.", child_name, child_pid,
             status);
         running = false;
         for (const auto& child : children) {
             if (child.first == -1) {
-                EVLOG(error) << "Child with pid -1 in list of children, this cannot be correct and won't be "
+                EVLOG_error << "Child with pid -1 in list of children, this cannot be correct and won't be "
                                 "terminated.";
                 continue;
             }
             int result = kill(child.first, SIGTERM);
             if (result != 0) {
-                EVLOG(critical) << fmt::format("SIGTERM of child: {} (pid: {}) {}: {}. Escalating to SIGKILL",
+                EVLOG_critical << fmt::format("SIGTERM of child: {} (pid: {}) {}: {}. Escalating to SIGKILL",
                                                child.second, child.first, fmt::format(TERMINAL_STYLE_ERROR, "failed"),
                                                result);
                 result = kill(child.first, SIGKILL);
                 if (result != 0) {
-                    EVLOG(critical) << fmt::format("SIGKILL of child: {} (pid: {}) {}: {}.", child.second, child.first,
+                    EVLOG_critical << fmt::format("SIGKILL of child: {} (pid: {}) {}: {}.", child.second, child.first,
                                                    fmt::format(TERMINAL_STYLE_ERROR, "failed"), result);
                 } else {
-                    EVLOG(info) << fmt::format("SIGKILL of child: {} (pid: {}) {}.", child.second, child.first,
+                    EVLOG_info << fmt::format("SIGKILL of child: {} (pid: {}) {}.", child.second, child.first,
                                                fmt::format(TERMINAL_STYLE_OK, "succeeded"));
                 }
             } else {
-                EVLOG(info) << fmt::format("SIGTERM of child: {} (pid: {}) {}.", child.second, child.first,
+                EVLOG_info << fmt::format("SIGTERM of child: {} (pid: {}) {}.", child.second, child.first,
                                            fmt::format(TERMINAL_STYLE_OK, "succeeded"));
             }
         }
@@ -505,7 +507,7 @@ int main(int argc, char* argv[]) {
         return boot(vm);
 
     } catch (const std::exception& e) {
-        EVLOG(error) << "Main manager process exits because of caught exception:\n" << e.what();
+        EVLOG_error << "Main manager process exits because of caught exception:\n" << e.what();
         return EXIT_FAILURE;
     }
 }

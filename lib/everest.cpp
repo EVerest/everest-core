@@ -28,7 +28,7 @@ Everest::Everest(std::string module_id, Config config, bool validate_data_with_s
     validate_data_with_schema(validate_data_with_schema) {
     BOOST_LOG_FUNCTION();
 
-    EVLOG(debug) << "Initializing EVerest framework...";
+    EVLOG_debug << "Initializing EVerest framework...";
 
     this->module_name = this->config.get_main_config()[this->module_id]["module"].get<std::string>();
     this->module_manifest = this->config.get_manifests()[this->module_name];
@@ -207,11 +207,11 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
 
     Handler res_handler = [this, &res_promise, call_id, connection, cmd_name](json data) {
         if (data["id"] != call_id) {
-            EVLOG(debug) << fmt::format("RES: data_id != call_id ({} != {})", data["id"], call_id);
+            EVLOG_debug << fmt::format("RES: data_id != call_id ({} != {})", data["id"], call_id);
             return;
         }
 
-        EVLOG(debug) << fmt::format(
+        EVLOG_debug << fmt::format(
             "Incoming res {} for {}->{}()", data["id"],
             this->config.printable_identifier(connection["module_id"], connection["implementation_id"]), cmd_name);
 
@@ -247,7 +247,7 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
             "Timeout while waiting for result of {}->{}()",
             this->config.printable_identifier(connection["module_id"], connection["implementation_id"]), cmd_name)));
     } else if (res_future_status == std::future_status::ready) {
-        EVLOG(debug) << "res future ready";
+        EVLOG_debug << "res future ready";
         result = res_future.get();
     }
     this->mqtt_abstraction.unregister_handler(cmd_topic, res_token);
@@ -307,7 +307,7 @@ void Everest::publish_var(const std::string& impl_id, const std::string& var_nam
 void Everest::subscribe_var(const Requirement& req, const std::string& var_name, const JsonCallback& callback) {
     BOOST_LOG_FUNCTION();
 
-    EVLOG(debug) << fmt::format("subscribing to var: {}:{}", req.id, var_name);
+    EVLOG_debug << fmt::format("subscribing to var: {}:{}", req.id, var_name);
 
     // resolve requirement
     json connections = this->config.resolve_requirement(this->module_id, req.id);
@@ -331,7 +331,7 @@ void Everest::subscribe_var(const Requirement& req, const std::string& var_name,
 
     Handler handler = [this, requirement_module_id, requirement_impl_id, requirement_manifest_vardef, var_name,
                        callback](json const& data) {
-        EVLOG(debug) << fmt::format(
+        EVLOG_debug << fmt::format(
             "Incoming {}->{}", this->config.printable_identifier(requirement_module_id, requirement_impl_id), var_name);
 
         // check data and ignore it if not matching (publishing it should have been prohibited already)
@@ -340,7 +340,7 @@ void Everest::subscribe_var(const Requirement& req, const std::string& var_name,
             validator.set_root_schema(requirement_manifest_vardef);
             validator.validate(data);
         } catch (const std::exception& e) {
-            EVLOG(warning) << fmt::format("Ignoring incoming var '{}' because not matching manifest schema: {}",
+            EVLOG_warning << fmt::format("Ignoring incoming var '{}' because not matching manifest schema: {}",
                                           var_name, e.what());
             return;
         }
@@ -387,7 +387,7 @@ void Everest::provide_external_mqtt_handler(const std::string& topic, const Stri
     }
 
     Handler external_handler = [this, handler, topic](json const& data) {
-        EVLOG(debug) << fmt::format("Incoming external mqtt data for topic '{}'...", topic);
+        EVLOG_debug << fmt::format("Incoming external mqtt data for topic '{}'...", topic);
         if (!data.is_string()) {
             EVLOG_AND_THROW(EverestInternalError("External mqtt result is not a string (that should never happen)"));
         }
@@ -402,7 +402,7 @@ void Everest::provide_external_mqtt_handler(const std::string& topic, const Stri
 void Everest::signal_ready() {
     BOOST_LOG_FUNCTION();
 
-    EVLOG(info) << "Sending out module ready signal...";
+    EVLOG_info << "Module ready.";
     const auto ready_topic = fmt::format("{}/ready", this->config.mqtt_module_prefix(this->module_id));
 
     this->mqtt_abstraction.publish(ready_topic, json(true));
@@ -415,7 +415,7 @@ void Everest::signal_ready() {
 void Everest::handle_ready(json data) {
     BOOST_LOG_FUNCTION();
 
-    EVLOG(debug) << fmt::format("handle_ready: {}", data.dump());
+    EVLOG_debug << fmt::format("handle_ready: {}", data.dump());
 
     bool ready = false;
 
@@ -429,14 +429,14 @@ void Everest::handle_ready(json data) {
     }
 
     if (this->ready_received) {
-        EVLOG(warning) << "Ignoring repeated everest ready signal (possibly triggered by "
+        EVLOG_warning << "Ignoring repeated everest ready signal (possibly triggered by "
                           "restarting a standalone module)!";
         return;
     }
     this->ready_received = true;
 
     // call module ready handler
-    EVLOG(info) << "Framework now ready to process events, calling module ready handler";
+    EVLOG_debug << "Framework now ready to process events, calling module ready handler";
     if (this->on_ready != nullptr) {
         auto on_ready_handler = *on_ready;
         on_ready_handler();
@@ -469,7 +469,7 @@ void Everest::provide_cmd(const std::string impl_id, const std::string cmd_name,
             arg_names = Config::keys(cmd_definition["arguments"]);
         }
 
-        EVLOG(debug) << fmt::format("Incoming {}->{}({}) for <handler>",
+        EVLOG_debug << fmt::format("Incoming {}->{}({}) for <handler>",
                                     this->config.printable_identifier(this->module_id, impl_id), cmd_name,
                                     fmt::join(arg_names, ","));
 
@@ -489,7 +489,7 @@ void Everest::provide_cmd(const std::string impl_id, const std::string cmd_name,
                     validator.validate(data["args"][arg_name]);
                 }
             } catch (const std::exception& e) {
-                EVLOG(warning) << fmt::format("Ignoring incoming cmd '{}' because not matching manifest schema: {}",
+                EVLOG_warning << fmt::format("Ignoring incoming cmd '{}' because not matching manifest schema: {}",
                                               cmd_name, e.what());
                 return;
             }
@@ -514,14 +514,14 @@ void Everest::provide_cmd(const std::string impl_id, const std::string cmd_name,
                 }
 
             } catch (const std::exception& e) {
-                EVLOG(warning) << fmt::format("Ignoring return value of cmd '{}' because the validation of the result "
+                EVLOG_warning << fmt::format("Ignoring return value of cmd '{}' because the validation of the result "
                                               "failed: {}\ndefinition: {}\ndata: {}",
                                               cmd_name, e.what(), cmd_definition, res_data);
                 return;
             }
         }
 
-        EVLOG(debug) << fmt::format("RETVAL: {}", res_data["retval"].dump());
+        EVLOG_debug << fmt::format("RETVAL: {}", res_data["retval"].dump());
         res_data["origin"] = this->module_id;
 
         json res_publish_data = json::object({{"name", cmd_name}, {"type", "result"}, {"data", res_data}});
@@ -670,7 +670,7 @@ bool Everest::check_arg(ArgumentType arg_types, json manifest_arg) {
         if (manifest_arg["type"] == "null") {
             // arg_types should be empty if the type is null (void)
             if (arg_types.size()) {
-                EVLOG(error) << "expeceted 'null' type, but got another type";
+                EVLOG_error << "expeceted 'null' type, but got another type";
                 return false;
             }
             return true;
@@ -678,7 +678,7 @@ bool Everest::check_arg(ArgumentType arg_types, json manifest_arg) {
         // direct comparison
         // FIXME (aw): arg_types[0] access should be checked, otherwise core dumps
         if (arg_types[0] != manifest_arg["type"]) {
-            EVLOG(error) << fmt::format("types do not match: {} != {}", arg_types[0], manifest_arg["type"]);
+            EVLOG_error << fmt::format("types do not match: {} != {}", arg_types[0], manifest_arg["type"]);
             return false;
         }
         return true;
@@ -686,7 +686,7 @@ bool Everest::check_arg(ArgumentType arg_types, json manifest_arg) {
 
     for (size_t i = 0; i < arg_types.size(); i++) {
         if (arg_types[i] != manifest_arg["type"][i]) {
-            EVLOG(error) << fmt::format("types do not match: {} != {}", arg_types[i], manifest_arg["type"][i]);
+            EVLOG_error << fmt::format("types do not match: {} != {}", arg_types[i], manifest_arg["type"][i]);
             return false;
         }
     }

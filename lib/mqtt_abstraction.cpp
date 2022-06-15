@@ -8,7 +8,7 @@
 namespace Everest {
 MQTTAbstraction::MQTTAbstraction(const std::string& mqtt_server_address, const std::string& mqtt_server_port) :
     mqtt_abstraction(MQTTAbstractionImpl::get_instance(mqtt_server_address, mqtt_server_port)) {
-    EVLOG(debug) << "initialized mqtt_abstraction";
+    EVLOG_debug << "initialized mqtt_abstraction";
 }
 
 bool MQTTAbstraction::connect() {

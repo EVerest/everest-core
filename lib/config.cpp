@@ -120,7 +120,7 @@ Config::Config(std::string schemas_dir, std::string config_file, std::string mod
     fs::path config_path = config_file;
 
     try {
-        EVLOG(info) << fmt::format("Loading config file at: {}", fs::canonical(config_path).string());
+        EVLOG_debug << fmt::format("Loading config file at: {}", fs::canonical(config_path).string());
 
         std::ifstream ifs(config_path.c_str());
         std::string config_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
@@ -133,17 +133,17 @@ Config::Config(std::string schemas_dir, std::string config_file, std::string mod
         // TODO(kai): or should we introduce a "meta-config" that references all configs that should be merged here?
         auto user_config_path = config_path.parent_path() / "user-config" / config_path.filename();
         if (fs::exists(user_config_path)) {
-            EVLOG(info) << fmt::format("Loading user-config file at: {}", fs::canonical(user_config_path).string());
+            EVLOG_debug << fmt::format("Loading user-config file at: {}", fs::canonical(user_config_path).string());
 
             std::ifstream ifs(user_config_path.c_str());
             std::string user_config_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
             auto user_config = json::parse(user_config_file);
 
-            EVLOG(info) << "Augmenting main config with user-config entries";
+            EVLOG_debug << "Augmenting main config with user-config entries";
             this->main.merge_patch(user_config);
         } else {
-            EVLOG(debug) << "No user-config provided.";
+            EVLOG_verbose << "No user-config provided.";
         }
 
         json_validator validator(Config::loader);
@@ -163,13 +163,13 @@ Config::Config(std::string schemas_dir, std::string config_file, std::string mod
         auto& module_config = element.value();
         std::string module_name = module_config["module"];
 
-        EVLOG(info) << fmt::format("Found module {}, loading and verifying manifest...",
+        EVLOG_debug << fmt::format("Found module {}, loading and verifying manifest...",
                                    printable_identifier(module_id));
 
         // load and validate module manifest.json
         fs::path manifest_path = fs::path(modules_dir) / module_name / "manifest.json";
         try {
-            EVLOG(info) << fmt::format("Loading module manifest file at: {}", fs::canonical(manifest_path).string());
+            EVLOG_debug << fmt::format("Loading module manifest file at: {}", fs::canonical(manifest_path).string());
 
             std::ifstream ifs(manifest_path.c_str());
             std::string manifest_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
@@ -212,7 +212,7 @@ Config::Config(std::string schemas_dir, std::string config_file, std::string mod
         this->interfaces[module_name] = json({});
 
         for (const auto& impl_id : provided_impls) {
-            EVLOG(info) << fmt::format("Loading interface for implementation: {}", impl_id);
+            EVLOG_debug << fmt::format("Loading interface for implementation: {}", impl_id);
             auto intf_name = this->manifests[module_name]["provides"][impl_id]["interface"].get<std::string>();
             auto seen_interfaces = std::set<std::string>();
             this->interfaces[module_name][impl_id] = resolve_interface(intf_name);
@@ -234,7 +234,7 @@ Config::Config(std::string schemas_dir, std::string config_file, std::string mod
 
         // validate config entries against manifest file
         for (const auto& impl_id : provided_impls) {
-            EVLOG(debug) << fmt::format(
+            EVLOG_verbose << fmt::format(
                 "Validating implementation config of {} against json schemas defined in module mainfest...",
                 printable_identifier(module_id, impl_id));
 
@@ -305,7 +305,7 @@ json Config::load_interface_file(const std::string& intf_name) {
     BOOST_LOG_FUNCTION();
     fs::path intf_path = fs::path(this->interfaces_dir) / (intf_name + ".json");
     try {
-        EVLOG(info) << fmt::format("Loading interface file at: {}", fs::canonical(intf_path).string());
+        EVLOG_debug << fmt::format("Loading interface file at: {}", fs::canonical(intf_path).string());
 
         std::ifstream ifs(intf_path.c_str());
         std::string intf_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
@@ -456,7 +456,7 @@ json Config::load_schema(const fs::path& path) {
             EverestInternalError(fmt::format("Schema file does not exist at: {}", fs::absolute(path).string())));
     }
 
-    EVLOG(info) << fmt::format("Loading schema file at: {}", fs::canonical(path).string());
+    EVLOG_debug << fmt::format("Loading schema file at: {}", fs::canonical(path).string());
 
     std::ifstream ifs(path.c_str());
     std::string schema_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
@@ -478,7 +478,7 @@ schemas Config::load_schemas(std::string schemas_dir) {
     BOOST_LOG_FUNCTION();
     schemas schemas;
 
-    EVLOG(info) << fmt::format("Loading base schema files for config and manifests... from: {}", schemas_dir);
+    EVLOG_debug << fmt::format("Loading base schema files for config and manifests... from: {}", schemas_dir);
     schemas.config = Config::load_schema(fs::path(schemas_dir) / "config.json");
     schemas.manifest = Config::load_schema(fs::path(schemas_dir) / "manifest.json");
     schemas.interface = Config::load_schema(fs::path(schemas_dir) / "interface.json");
@@ -502,7 +502,7 @@ json Config::load_all_manifests(std::string modules_dir, std::string schemas_dir
         }
 
         std::string module_name = module_path.path().filename().c_str();
-        EVLOG(info) << fmt::format("Found module {}, loading and verifying manifest...", module_name);
+        EVLOG_debug << fmt::format("Found module {}, loading and verifying manifest...", module_name);
 
         try {
             std::ifstream ifs(manifest_path.c_str());
@@ -655,12 +655,12 @@ json Config::extract_implementation_info(const std::string& module_id) {
 void Config::resolve_all_requirements() {
     BOOST_LOG_FUNCTION();
 
-    EVLOG(info) << "Resolving module reguirements...";
+    EVLOG_debug << "Resolving module reguirements...";
     // this whole code will not check existence of keys defined by config or
     // manifest metaschemas these have already been checked by schema validation
     for (auto& element : this->main.items()) {
         const auto& module_id = element.key();
-        EVLOG(debug) << fmt::format("Resolving requirements of module {}...", printable_identifier(module_id));
+        EVLOG_verbose << fmt::format("Resolving requirements of module {}...", printable_identifier(module_id));
 
         auto& module_config = element.value();
 
@@ -686,7 +686,7 @@ void Config::resolve_all_requirements() {
 
             if (!module_config["connections"].contains(requirement_id)) {
                 if (requirement["min_connections"] < 1) {
-                    EVLOG(info) << fmt::format("Manifest of {} lists OPTIONAL requirement '{}' which could not be "
+                    EVLOG_debug << fmt::format("Manifest of {} lists OPTIONAL requirement '{}' which could not be "
                                                "fulfilled and will be ignored...",
                                                printable_identifier(module_id), requirement_id);
                     continue; // stop here, there is nothing we can do
@@ -745,13 +745,13 @@ void Config::resolve_all_requirements() {
                 module_config["connections"][requirement_id][connection_num]["provides"] = connection_provides;
                 module_config["connections"][requirement_id][connection_num]["required_interface"] =
                     requirement_interface;
-                EVLOG(info) << fmt::format(
+                EVLOG_debug << fmt::format(
                     "Manifest of {} lists requirement '{}' which will be fulfilled by {}...",
                     printable_identifier(module_id), requirement_id,
                     printable_identifier(connection["module_id"], connection["implementation_id"]));
             }
         }
     }
-    EVLOG(info) << "All module requirements resolved successfully...";
+    EVLOG_debug << "All module requirements resolved successfully...";
 }
 } // namespace Everest
