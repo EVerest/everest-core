@@ -48,7 +48,7 @@ MQTTAbstractionImpl::~MQTTAbstractionImpl() {
     if (this->mqtt_is_connected) {
         disconnect();
     }
-    this->mqtt_mainloop_thread.join();
+    //this->mqtt_mainloop_thread.join();
 }
 
 bool MQTTAbstractionImpl::connect() {
@@ -339,7 +339,7 @@ bool MQTTAbstractionImpl::connectBroker(const char* host, const char* port) {
     int sockfd = open_nb_socket(host, port);
 
     if (sockfd == -1) {
-        perror("Failed to open socket: ");
+        EVLOG_error << fmt::format("Failed to open socket: {}", strerror(errno));
         return false;
     }
 

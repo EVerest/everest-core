@@ -123,8 +123,7 @@ SubprocessHandle create_subprocess(bool set_pdeathsig = true) {
 
 // Helper struct keeping information on how to start module
 struct ModuleStartInfo {
-    enum class Language
-    {
+    enum class Language {
         cpp,
         javascript
     };
@@ -285,8 +284,7 @@ int boot(const po::variables_map& vm) {
         return EXIT_FAILURE;
     } catch (boost::exception& e) {
         EVLOG_error << "Failed to load and validate config!";
-        EVLOG_critical << fmt::format("Caught top level boost::exception:\n{}",
-                                       boost::diagnostic_information(e, true));
+        EVLOG_critical << fmt::format("Caught top level boost::exception:\n{}", boost::diagnostic_information(e, true));
         return EXIT_FAILURE;
     } catch (std::exception& e) {
         EVLOG_error << "Failed to load and validate config!";
@@ -346,7 +344,10 @@ int boot(const po::variables_map& vm) {
 
     ::Everest::MQTTAbstraction& mqtt_abstraction =
         ::Everest::MQTTAbstraction::get_instance(mqtt_server_address, mqtt_server_port);
-    mqtt_abstraction.connect();
+    if (!mqtt_abstraction.connect()) {
+        EVLOG_error << fmt::format("Cannot connect to MQTT broker at {}:{}", mqtt_server_address, mqtt_server_port);
+        return EXIT_FAILURE;
+    }
 
     mqtt_abstraction.spawn_main_loop_thread();
 
@@ -379,7 +380,7 @@ int boot(const po::variables_map& vm) {
             }
             if (std::all_of(modules_ready.begin(), modules_ready.end(),
                             [](const auto& element) { return element.second; })) {
-                EVLOG_info << ">>> All modules are initialized. EVerest up and running <<<";
+                EVLOG_info << ">>> \033[1;32mAll modules are initialized. EVerest up and running\033[1;0m <<<";
                 mqtt_abstraction.publish("everest/ready", nlohmann::json(true));
             }
             // FIXME (aw): this unlock shouldn't be necessary because lock will get destroyed here anyway
@@ -437,31 +438,35 @@ int boot(const po::variables_map& vm) {
         if (child_pid != -1 && children.count(child_pid) != 0) {
             child_name = children.at(child_pid);
         }
-        EVLOG_critical << fmt::format(
-            "Something happened to child: {} (pid: {}). Status: {}. Terminating all children.", child_name, child_pid,
-            status);
+        EVLOG_critical << fmt::format("Something happened to child: {} (pid: {}). Status: {}. EVerest exiting...",
+                                      child_name, child_pid, status);
         running = false;
         for (const auto& child : children) {
             if (child.first == -1) {
                 EVLOG_error << "Child with pid -1 in list of children, this cannot be correct and won't be "
-                                "terminated.";
+                               "terminated.";
                 continue;
             }
+
+            // don't try to kill the child that is already dead
+            if (child.first == child_pid)
+                continue;
+
             int result = kill(child.first, SIGTERM);
             if (result != 0) {
                 EVLOG_critical << fmt::format("SIGTERM of child: {} (pid: {}) {}: {}. Escalating to SIGKILL",
-                                               child.second, child.first, fmt::format(TERMINAL_STYLE_ERROR, "failed"),
-                                               result);
+                                              child.second, child.first, fmt::format(TERMINAL_STYLE_ERROR, "failed"),
+                                              result);
                 result = kill(child.first, SIGKILL);
                 if (result != 0) {
                     EVLOG_critical << fmt::format("SIGKILL of child: {} (pid: {}) {}: {}.", child.second, child.first,
-                                                   fmt::format(TERMINAL_STYLE_ERROR, "failed"), result);
+                                                  fmt::format(TERMINAL_STYLE_ERROR, "failed"), result);
                 } else {
                     EVLOG_info << fmt::format("SIGKILL of child: {} (pid: {}) {}.", child.second, child.first,
-                                               fmt::format(TERMINAL_STYLE_OK, "succeeded"));
+                                              fmt::format(TERMINAL_STYLE_OK, "succeeded"));
                 }
             } else {
-                EVLOG_info << fmt::format("SIGTERM of child: {} (pid: {}) {}.", child.second, child.first,
+                EVLOG_debug << fmt::format("SIGTERM of child: {} (pid: {}) {}.", child.second, child.first,
                                            fmt::format(TERMINAL_STYLE_OK, "succeeded"));
             }
         }

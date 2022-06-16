@@ -17,6 +17,8 @@
 #include <utils/message_queue.hpp>
 #include <utils/types.hpp>
 
+#include <utils/thread.hpp>
+
 #define MQTT_BUF_SIZE 150 * 1024
 
 namespace Everest {
@@ -42,7 +44,8 @@ private:
     std::vector<std::shared_ptr<MessageWithQOS>> messages_before_connected;
     std::mutex messages_before_connected_mutex;
 
-    std::thread mqtt_mainloop_thread;
+    //std::thread mqtt_mainloop_thread;
+    Thread mqtt_mainloop_thread;
 
     std::string mqtt_server_address;
     std::string mqtt_server_port;

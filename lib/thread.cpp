@@ -5,6 +5,7 @@
 namespace Everest {
 Thread::Thread() {
     exitFuture = exitSignal.get_future();
+    started = false;
 }
 
 Thread::~Thread() {
@@ -12,9 +13,11 @@ Thread::~Thread() {
 }
 
 void Thread::stop() {
-    exitSignal.set_value();
-    if (handle.joinable())
-        handle.join();
+    if (started) {
+        exitSignal.set_value();
+        if (handle.joinable())
+            handle.join();
+    }
 }
 
 bool Thread::shouldExit() {
@@ -25,6 +28,7 @@ bool Thread::shouldExit() {
 
 void Thread::operator=(std::thread&& t) {
     handle = std::move(t);
+    started = true;
 }
 
 } // namespace Everest
