@@ -114,6 +114,10 @@ void evse_managerImpl::ready() {
             if (p.contains("energy_Wh_export") && p["energy_Wh_export"].contains("total"))
                 se["session_started"]["energy_Wh_export"] = p["energy_Wh_export"]["total"];
 
+            if (mod->reservation_valid()) {
+                se["session_started"]["reservation_id"] = mod->get_reservation_id();
+            }
+
             set_session_uuid();
         }
 
@@ -141,7 +145,11 @@ void evse_managerImpl::ready() {
 
             if (p.contains("energy_Wh_export") && p["energy_Wh_export"].contains("total"))
                 se["session_cancelled"]["energy_Wh_export"] = p["energy_Wh_export"]["total"];
-                
+
+            {
+                std::lock_guard<std::mutex> lock(session_mutex);
+                se["session_cancelled"]["reason"] = cancel_session_reason;
+            }
         }
 
         if (e == Charger::EvseEvent::Error) {
@@ -204,7 +212,11 @@ bool evse_managerImpl::handle_resume_charging() {
     return mod->charger->resumeCharging();
 };
 
-bool evse_managerImpl::handle_cancel_charging() {
+bool evse_managerImpl::handle_cancel_charging(std::string& reason) {
+    {
+        std::lock_guard<std::mutex> lock(session_mutex);
+        cancel_session_reason = reason;
+    }
     return mod->charger->cancelCharging();
 };
 

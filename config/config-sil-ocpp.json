@@ -54,8 +54,9 @@
     "charge_point": {
         "module": "OCPP",
         "config_module": {
-            "SchemasPath": "ocpp",
-            "ChargePointConfigPath": "../../../libocpp/aux/config-docker-tls.json"
+            "SchemasPath": "dist/ocpp",
+            "ChargePointConfigPath": "../../libocpp/aux/config-docker.json",
+            "ScriptsPath": "dist/bin"
         },
         "connections": {
             "evse_manager": [
@@ -73,6 +74,10 @@
                 {
                     "module_id": "token_provider_manual",
                     "implementation_id": "main"
+                },
+                {
+                    "module_id": "charge_point",
+                    "implementation_id": "auth_provider"
                 }
             ],
             "tokenValidator": [

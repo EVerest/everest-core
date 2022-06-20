@@ -38,6 +38,25 @@
         },
         "cancel_charging": {
             "description": "Cancels charging, can only be resumed by replugging car",
+            "arguments": {
+                "reason": {
+                    "description": "Reason for session cancellation",
+                    "type": "string",
+                    "enum": [
+                        "EmergencyStop",
+                        "EVDisconnected",
+                        "HardReset",
+                        "Local",
+                        "Other",
+                        "PowerLoss",
+                        "Reboot",
+                        "Remote",
+                        "SoftReset",
+                        "UnlockCommand",
+                        "DeAuthorized"
+                    ]
+                }
+            },
             "result": {
                 "description": "Returns true if successful",
                 "type": "boolean"
@@ -199,6 +218,10 @@
                         "signed_meter_value": {
                             "description": "Signed meter value",
                             "type": "string"
+                        },
+                        "reservation_id": {
+                            "description": "Reservation Id",
+                            "type": "number"
                         }
                     },
                     "additionalProperties": false
@@ -253,6 +276,23 @@
                         "signed_meter_value": {
                             "description": "Signed meter value",
                             "type": "string"
+                        },
+                        "reason": {
+                            "description": "Reason for session cancellation",
+                            "type": "string",
+                            "enum": [
+                                "EmergencyStop",
+                                "EVDisconnected",
+                                "HardReset",
+                                "Local",
+                                "Other",
+                                "PowerLoss",
+                                "Reboot",
+                                "Remote",
+                                "SoftReset",
+                                "UnlockCommand",
+                                "DeAuthorized"
+                            ]
                         }
                     },
                     "additionalProperties": false
@@ -276,12 +316,17 @@
                     "description": "Details on Reservation Start",
                     "type": "object",
                     "required": [
-                        "reservation_id"
+                        "reservation_id",
+                        "id_tag"
                     ],
                     "properties": {
                         "reservation_id": {
                             "description": "reservation_id",
                             "type": "integer"
+                        },
+                        "id_tag": {
+                            "description": "id tag of the reservation",
+                            "type": "string"
                         },
                         "parent_id": {
                             "description": "parent_id",

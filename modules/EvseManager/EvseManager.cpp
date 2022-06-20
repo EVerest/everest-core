@@ -86,6 +86,21 @@ void EvseManager::ready() {
     r_auth->subscribe_authorization_available([this](bool a) {
         // Listen to authorize events and cache locally.
         authorization_available = a;
+        bool res_valid = reservation_valid();
+        std::lock_guard<std::mutex> lock(reservation_mutex);
+        if (res_valid) {
+            EVLOG_info << "Reservation ends because the id tag was presented";
+            reserved = false;
+
+            // publish event to other modules
+            json se;
+            se["event"] = "ReservationEnd";
+            se["reservation_end"]["reason"] = "UsedToStartCharging";
+            se["reservation_end"]["reservation_id"] = reservation_id;
+
+            signalReservationEvent(se);
+        }
+        reserved = false;
     });
 
     if (slac_enabled)
@@ -112,8 +127,6 @@ void EvseManager::ready() {
                     se["event"] = "ReservationAuthtokenMismatch";
                     signalReservationEvent(se);
                 } else {
-                    // if reserved: signal to the outside world that this reservation ended because it is being used
-                    use_reservation_to_start_charging();
                     charger->Authorize(true, token, false);
                 }
             }
@@ -159,6 +172,10 @@ json EvseManager::get_hw_capabilities() {
     return hw_capabilities;
 }
 
+int32_t EvseManager::get_reservation_id() {
+    return reservation_id;
+}
+
 std::string EvseManager::reserve_now(const int _reservation_id, const std::string& token,
                                      const std::chrono::time_point<date::utc_clock>& valid_until,
                                      const std::string& parent_id) {
@@ -183,14 +200,15 @@ std::string EvseManager::reserve_now(const int _reservation_id, const std::strin
         return "Occupied";
     }
 
-    // is it already reserved with a different reservation_id?
-    if (reservation_valid() && _reservation_id != reservation_id) {
-        return "Rejected";
+    // is it already reserved
+    if (reservation_valid()) {
+        return "Occupied";
     }
 
     std::lock_guard<std::mutex> lock(reservation_mutex);
 
     // accept new reservation
+    reservation_id = _reservation_id;
     reserved_auth_token = token;
     reservation_valid_until = valid_until;
     reserved_auth_token_parent_id = parent_id;
@@ -200,6 +218,7 @@ std::string EvseManager::reserve_now(const int _reservation_id, const std::strin
     json se;
     se["event"] = "ReservationStart";
     se["reservation_start"]["reservation_id"] = reservation_id;
+    se["reservation_start"]["id_tag"] = reserved_auth_token;
     se["reservation_start"]["parent_id"] = parent_id;
 
     signalReservationEvent(se);
@@ -217,7 +236,7 @@ std::string EvseManager::reserve_now(const int _reservation_id, const std::strin
 bool EvseManager::updateLocalMaxCurrentLimit(float max_current) {
     if (max_current >= 0.0F && max_current < EVSE_ABSOLUTE_MAX_CURRENT) {
         local_max_current_limit = max_current;
-        
+
         // wait for EnergyManager to assign optimized current on next opimizer run
 
         return true;
@@ -239,32 +258,10 @@ bool EvseManager::cancel_reservation() {
         se["reservation_end"]["reservation_id"] = reservation_id;
 
         signalReservationEvent(se);
-
         return true;
     }
-
     reserved = false;
     return false;
-}
-
-// Signals that reservation was used to start this charging.
-// Does nothing if no reservation is active.
-void EvseManager::use_reservation_to_start_charging() {
-
-    std::lock_guard<std::mutex> lock(reservation_mutex);
-    if (!reserved) {
-        return;
-    }
-
-    // publish event to other modules
-    json se;
-    se["event"] = "ReservationEnd";
-    se["reservation_end"]["reason"] = "UsedToStartCharging";
-    se["reservation_end"]["reservation_id"] = reservation_id;
-
-    signalReservationEvent(se);
-
-    reserved = false;
 }
 
 float EvseManager::getLocalMaxCurrentLimit() {
@@ -305,9 +302,7 @@ bool EvseManager::reserved_for_different_token(const std::string& token) {
 
     if (reserved_auth_token == token) {
         return false;
-    }
-    else
-    {
+    } else {
         return true;
     }
 }
