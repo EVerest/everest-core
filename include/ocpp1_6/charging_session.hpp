@@ -256,6 +256,10 @@ public:
     /// \returns true if a transaction exists
     bool transaction_active(int32_t connector);
 
+    /// \brief Indicates if there is an active transaction for all connectors
+    /// \returns true if all connectors have active transactions
+    bool all_connectors_have_active_transaction();
+
     /// \brief Provides the connector on which a transaction with the given \p transaction_id is running
     /// \returns The connector or -1 if the transaction_id is unknown
     int32_t get_connector_from_transaction_id(int32_t transaction_id);
