@@ -9,6 +9,7 @@
 //
 
 #include <generated/auth_token_validator/Implementation.hpp>
+
 #include "../OCPP.hpp"
 
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1

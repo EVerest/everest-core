@@ -66,6 +66,10 @@ public:
     const std::unique_ptr<auth_token_providerImplBase> p_auth_provider;
     const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;
 
+    // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
+    // insert your public definitions here
+    ocpp1_6::ChargePoint* charge_point;
+
     std::map<std::string, ocpp1_6::ReservationStatus> ResStatMap = {
         {std::string("Accepted"), ocpp1_6::ReservationStatus::Accepted},
         {std::string("Faulted"), ocpp1_6::ReservationStatus::Faulted},
@@ -74,10 +78,7 @@ public:
         {std::string("Unavailable"), ocpp1_6::ReservationStatus::Unavailable}};
     std::map<bool, ocpp1_6::CancelReservationStatus> can_res_stat_map = {
         {true, ocpp1_6::CancelReservationStatus::Accepted}, {false, ocpp1_6::CancelReservationStatus::Rejected}};
-
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
-    // insert your public definitions here
-    ocpp1_6::ChargePoint* charge_point;
 
 protected:
     // ev@4714b2ab-a24f-4b95-ab81-36439e1478de:v1
