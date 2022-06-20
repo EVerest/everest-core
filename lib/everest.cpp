@@ -157,6 +157,8 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
     // extract manifest definition of this command
     json cmd_definition = get_cmd_definition(connection["module_id"], connection["implementation_id"], cmd_name, true);
 
+    json return_type = cmd_definition.at("result").at("type");
+
     std::set<std::string> arg_names = Config::keys(json_args);
 
     // check args against manifest
@@ -205,7 +207,7 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
     std::promise<json> res_promise;
     std::future<json> res_future = res_promise.get_future();
 
-    Handler res_handler = [this, &res_promise, call_id, connection, cmd_name](json data) {
+    Handler res_handler = [this, &res_promise, call_id, connection, cmd_name, return_type](json data) {
         if (data["id"] != call_id) {
             EVLOG_debug << fmt::format("RES: data_id != call_id ({} != {})", data["id"], call_id);
             return;
@@ -216,8 +218,10 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
             this->config.printable_identifier(connection["module_id"], connection["implementation_id"]), cmd_name);
 
         // make sure to only return the intended parts of the incoming result to not open up the api to internals
-        res_promise.set_value(
-            json::object({{"retval", data["retval"]}, {"origin", data["origin"]}, {"id", data["id"]}}));
+        res_promise.set_value(json::object({{"retval", data["retval"]},
+                                            {"return_type", return_type},
+                                            {"origin", data["origin"]},
+                                            {"id", data["id"]}}));
     };
 
     const auto cmd_topic =
@@ -258,7 +262,9 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
 Result Everest::call_cmd(const Requirement& req, const std::string& cmd_name, Parameters args) {
     BOOST_LOG_FUNCTION();
     json result = this->call_cmd(req, cmd_name, convertTo<json>(args));
-    return convertTo<Result>(result["retval"]); // FIXME: other datatype so we can return the data["origin"] as well
+    return convertTo<Result>(
+        result["retval"],
+        result["return_type"]); // FIXME: other datatype so we can return the data["origin"] as well
 }
 
 void Everest::publish_var(const std::string& impl_id, const std::string& var_name, json json_value) {
@@ -341,7 +347,7 @@ void Everest::subscribe_var(const Requirement& req, const std::string& var_name,
             validator.validate(data);
         } catch (const std::exception& e) {
             EVLOG_warning << fmt::format("Ignoring incoming var '{}' because not matching manifest schema: {}",
-                                          var_name, e.what());
+                                         var_name, e.what());
             return;
         }
 
@@ -358,7 +364,26 @@ void Everest::subscribe_var(const Requirement& req, const std::string& var_name,
 
 void Everest::subscribe_var(const Requirement& req, const std::string& var_name, const ValueCallback& callback) {
     BOOST_LOG_FUNCTION();
-    return this->subscribe_var(req, var_name, [callback](json data) { callback(convertTo<Value>(data)); });
+    // resolve requirement
+    json connections = this->config.resolve_requirement(this->module_id, req.id);
+    auto& connection = connections; // this is for a min/max == 1 requirement
+    if (connections.is_array()) {   // this is for every other requirement
+        connection = connections[req.index];
+    }
+
+    auto requirement_module_id = connection["module_id"].get<std::string>();
+    auto module_name = this->config.get_main_config()[requirement_module_id]["module"].get<std::string>();
+    auto requirement_impl_id = connection["implementation_id"].get<std::string>();
+    auto requirement_impl_manifest = this->config.get_interfaces()[module_name][requirement_impl_id];
+
+    if (!requirement_impl_manifest["vars"].contains(var_name)) {
+        EVLOG_AND_THROW(EverestApiError(
+            fmt::format("{}->{}: Variable not defined in manifest!",
+                        this->config.printable_identifier(requirement_module_id, requirement_impl_id), var_name)));
+    }
+    std::string var_type = requirement_impl_manifest["vars"].at(var_name).at("type").get<std::string>();
+    return this->subscribe_var(req, var_name,
+                               [callback, var_type](json data) { callback(convertTo<Value>(data, var_type)); });
 }
 
 void Everest::external_mqtt_publish(const std::string& topic, const std::string& data) {
@@ -402,7 +427,7 @@ void Everest::provide_external_mqtt_handler(const std::string& topic, const Stri
 void Everest::signal_ready() {
     BOOST_LOG_FUNCTION();
 
-    EVLOG_info << "Module "<< this->module_id <<" initialized.";
+    EVLOG_info << "Module " << this->module_id << " initialized.";
     const auto ready_topic = fmt::format("{}/ready", this->config.mqtt_module_prefix(this->module_id));
 
     this->mqtt_abstraction.publish(ready_topic, json(true));
@@ -430,7 +455,7 @@ void Everest::handle_ready(json data) {
 
     if (this->ready_received) {
         EVLOG_warning << "Ignoring repeated everest ready signal (possibly triggered by "
-                          "restarting a standalone module)!";
+                         "restarting a standalone module)!";
         return;
     }
     this->ready_received = true;
@@ -470,8 +495,8 @@ void Everest::provide_cmd(const std::string impl_id, const std::string cmd_name,
         }
 
         EVLOG_debug << fmt::format("Incoming {}->{}({}) for <handler>",
-                                    this->config.printable_identifier(this->module_id, impl_id), cmd_name,
-                                    fmt::join(arg_names, ","));
+                                   this->config.printable_identifier(this->module_id, impl_id), cmd_name,
+                                   fmt::join(arg_names, ","));
 
         // check data and ignore it if not matching (publishing it should have
         // been prohibited already)
@@ -490,7 +515,7 @@ void Everest::provide_cmd(const std::string impl_id, const std::string cmd_name,
                 }
             } catch (const std::exception& e) {
                 EVLOG_warning << fmt::format("Ignoring incoming cmd '{}' because not matching manifest schema: {}",
-                                              cmd_name, e.what());
+                                             cmd_name, e.what());
                 return;
             }
         }
@@ -515,8 +540,8 @@ void Everest::provide_cmd(const std::string impl_id, const std::string cmd_name,
 
             } catch (const std::exception& e) {
                 EVLOG_warning << fmt::format("Ignoring return value of cmd '{}' because the validation of the result "
-                                              "failed: {}\ndefinition: {}\ndata: {}",
-                                              cmd_name, e.what(), cmd_definition, res_data);
+                                             "failed: {}\ndefinition: {}\ndata: {}",
+                                             cmd_name, e.what(), cmd_definition, res_data);
                 return;
             }
         }
@@ -596,10 +621,10 @@ void Everest::provide_cmd(const cmd& cmd) {
                         fmt::join(arg_names, ","), fmt::join(return_type, ","), cmd_definition["result"])));
     }
 
-    return this->provide_cmd(impl_id, cmd_name, [handler](json data) {
+    return this->provide_cmd(impl_id, cmd_name, [handler, cmd_definition](json data) {
         // call cmd handlers (handle async or normal handlers being both:
         // methods or functions)
-        return convertTo<json>(handler(convertTo<Parameters>(data)));
+        return convertTo<json>(handler(convertTo<Parameters>(data, cmd_definition["arguments"])));
     });
 }
 

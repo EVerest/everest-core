@@ -36,15 +36,35 @@ template <> json convertTo<json>(Result retval) {
     }
 }
 
-template <> Result convertTo<Result>(json data) {
+template <> Result convertTo<Result>(json data, json type_hints) {
     BOOST_LOG_FUNCTION();
     Result retval;
     if (data.is_string()) {
         retval = data.get<std::string>();
     } else if (data.is_number_float()) {
+        // result must always be double
         retval = data.get<double>();
     } else if (data.is_number_integer()) {
-        retval = data.get<int>();
+        bool is_double = false;
+        if (type_hints.is_array()) {
+            // consult type hints if it's really an integer or double:
+            for (auto type_hint : type_hints) {
+                if (type_hint == "number") {
+                    is_double = true;
+                }
+            }
+        } else {
+            if (type_hints.get<std::string>() == "number") {
+                is_double = true;
+            }
+        }
+
+        if (is_double) {
+            // parameter is actually a double, not an integer
+            retval = data.get<double>();
+        } else {
+            retval = data.get<int>();
+        }
     } else if (data.is_boolean()) {
         retval = data.get<bool>();
     } else if (data.is_array()) {
@@ -84,7 +104,7 @@ template <> json convertTo<json>(Parameters params) {
     return j;
 }
 
-template <> Parameters convertTo<Parameters>(json data) {
+template <> Parameters convertTo<Parameters>(json data, json type_hints) {
     BOOST_LOG_FUNCTION();
     Parameters params;
     for (auto const& arg : data.items()) {
@@ -92,9 +112,21 @@ template <> Parameters convertTo<Parameters>(json data) {
         if (value.is_string()) {
             params[arg.key()] = value.get<std::string>();
         } else if (value.is_number_float()) {
-            params[arg.key()] = value.get<double>();
+            // consult type hints if it's really an integer:
+            if (type_hints.at(arg.key()).at("type") == "number") {
+                // parameter is actually a double, not an integer
+                params[arg.key()] = value.get<double>();
+            } else {
+                params[arg.key()] = value.get<int>();
+            }
         } else if (value.is_number_integer()) {
-            params[arg.key()] = value.get<int>();
+            // consult type hints if it's really an integer:
+            if (type_hints.at(arg.key()).at("type") == "number") {
+                // parameter is actually a double, not an integer
+                params[arg.key()] = value.get<double>();
+            } else {
+                params[arg.key()] = value.get<int>();
+            }
         } else if (value.is_boolean()) {
             params[arg.key()] = value.get<bool>();
         } else if (value.is_array()) {
@@ -132,14 +164,26 @@ template <> json convertTo<json>(Value value) {
     }
 }
 
-template <> Value convertTo<Value>(json data) {
+template <> Value convertTo<Value>(json data, const std::string& type_hint) {
     BOOST_LOG_FUNCTION();
     if (data.is_string()) {
         return data.get<std::string>();
     } else if (data.is_number_float()) {
-        return data.get<double>();
+        // consult type hints if it's really an integer:
+        if (type_hint == "number") {
+            // parameter is actually a double, not an integer
+            return data.get<double>();
+        } else {
+            return data.get<int>();
+        }
     } else if (data.is_number_integer()) {
-        return data.get<int>();
+        // consult type hints if it's really an integer:
+        if (type_hint == "number") {
+            // parameter is actually a double, not an integer
+            return data.get<double>();
+        } else {
+            return data.get<int>();
+        }
     } else if (data.is_boolean()) {
         return data.get<bool>();
     } else if (data.is_array()) {
