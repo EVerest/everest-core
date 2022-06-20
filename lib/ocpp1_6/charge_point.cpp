@@ -2133,6 +2133,11 @@ AuthorizationStatus ChargePoint::authorize_id_tag(CiString20Type idTag) {
         }
     }
 
+    // check if all connectors have active transactions
+    if (this->charging_sessions->all_connectors_have_active_transaction()) {
+        return AuthorizationStatus::Invalid;
+    }
+
     int32_t connector = 1;
 
     // dont authorize if state is Unavailable
