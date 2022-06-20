@@ -93,7 +93,7 @@ public:
 
     /// \brief Converts this DateTimeImpl to a std::chrono::time_point
     /// \returns a std::chrono::time_point
-    std::chrono::time_point<date::utc_clock> to_time_point();
+    std::chrono::time_point<date::utc_clock> to_time_point() const;
 
     /// \brief Writes the given DateTimeImpl \p dt to the given output stream \p os as a RFC 3339 compatible string
     /// \returns an output stream with the DateTimeImpl as a RFC 3339 compatible string written to

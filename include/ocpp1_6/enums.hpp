@@ -854,6 +854,471 @@ UnlockStatus string_to_unlock_status(const std::string& s);
 /// \brief Writes the string representation of the given UnlockStatus \p unlock_status to the given output stream \p os
 /// \returns an output stream with the UnlockStatus written to
 std::ostream& operator<<(std::ostream& os, const UnlockStatus& unlock_status);
+
+// from: CertificateSignedResponse
+enum class CertificateSignedStatusEnumType
+{
+    Accepted,
+    Rejected,
+};
+
+namespace conversions {
+/// \brief Converts the given CertificateSignedStatusEnumType \p e to human readable string
+/// \returns a string representation of the CertificateSignedStatusEnumType
+std::string certificate_signed_status_enum_type_to_string(CertificateSignedStatusEnumType e);
+
+/// \brief Converts the given std::string \p s to CertificateSignedStatusEnumType
+/// \returns a CertificateSignedStatusEnumType from a string representation
+CertificateSignedStatusEnumType string_to_certificate_signed_status_enum_type(const std::string& s);
+} // namespace conversions
+
+/// \brief Writes the string representation of the given CertificateSignedStatusEnumType \p
+/// certificate_signed_status_enum_type to the given output stream \p os \returns an output stream with the
+/// CertificateSignedStatusEnumType written to
+std::ostream& operator<<(std::ostream& os, const CertificateSignedStatusEnumType& certificate_signed_status_enum_type);
+
+// from: DeleteCertificateRequest
+enum class HashAlgorithmEnumType
+{
+    SHA256,
+    SHA384,
+    SHA512,
+};
+
+namespace conversions {
+/// \brief Converts the given HashAlgorithmEnumType \p e to human readable string
+/// \returns a string representation of the HashAlgorithmEnumType
+std::string hash_algorithm_enum_type_to_string(HashAlgorithmEnumType e);
+
+/// \brief Converts the given std::string \p s to HashAlgorithmEnumType
+/// \returns a HashAlgorithmEnumType from a string representation
+HashAlgorithmEnumType string_to_hash_algorithm_enum_type(const std::string& s);
+} // namespace conversions
+
+/// \brief Writes the string representation of the given HashAlgorithmEnumType \p hash_algorithm_enum_type to the given
+/// output stream \p os \returns an output stream with the HashAlgorithmEnumType written to
+std::ostream& operator<<(std::ostream& os, const HashAlgorithmEnumType& hash_algorithm_enum_type);
+
+// from: DeleteCertificateResponse
+enum class DeleteCertificateStatusEnumType
+{
+    Accepted,
+    Failed,
+    NotFound,
+};
+
+namespace conversions {
+/// \brief Converts the given DeleteCertificateStatusEnumType \p e to human readable string
+/// \returns a string representation of the DeleteCertificateStatusEnumType
+std::string delete_certificate_status_enum_type_to_string(DeleteCertificateStatusEnumType e);
+
+/// \brief Converts the given std::string \p s to DeleteCertificateStatusEnumType
+/// \returns a DeleteCertificateStatusEnumType from a string representation
+DeleteCertificateStatusEnumType string_to_delete_certificate_status_enum_type(const std::string& s);
+} // namespace conversions
+
+/// \brief Writes the string representation of the given DeleteCertificateStatusEnumType \p
+/// delete_certificate_status_enum_type to the given output stream \p os \returns an output stream with the
+/// DeleteCertificateStatusEnumType written to
+std::ostream& operator<<(std::ostream& os, const DeleteCertificateStatusEnumType& delete_certificate_status_enum_type);
+
+// from: ExtendedTriggerMessageRequest
+enum class MessageTriggerEnumType
+{
+    BootNotification,
+    LogStatusNotification,
+    FirmwareStatusNotification,
+    Heartbeat,
+    MeterValues,
+    SignChargePointCertificate,
+    StatusNotification,
+};
+
+namespace conversions {
+/// \brief Converts the given MessageTriggerEnumType \p e to human readable string
+/// \returns a string representation of the MessageTriggerEnumType
+std::string message_trigger_enum_type_to_string(MessageTriggerEnumType e);
+
+/// \brief Converts the given std::string \p s to MessageTriggerEnumType
+/// \returns a MessageTriggerEnumType from a string representation
+MessageTriggerEnumType string_to_message_trigger_enum_type(const std::string& s);
+} // namespace conversions
+
+/// \brief Writes the string representation of the given MessageTriggerEnumType \p message_trigger_enum_type to the
+/// given output stream \p os \returns an output stream with the MessageTriggerEnumType written to
+std::ostream& operator<<(std::ostream& os, const MessageTriggerEnumType& message_trigger_enum_type);
+
+// from: ExtendedTriggerMessageResponse
+enum class TriggerMessageStatusEnumType
+{
+    Accepted,
+    Rejected,
+    NotImplemented,
+};
+
+namespace conversions {
+/// \brief Converts the given TriggerMessageStatusEnumType \p e to human readable string
+/// \returns a string representation of the TriggerMessageStatusEnumType
+std::string trigger_message_status_enum_type_to_string(TriggerMessageStatusEnumType e);
+
+/// \brief Converts the given std::string \p s to TriggerMessageStatusEnumType
+/// \returns a TriggerMessageStatusEnumType from a string representation
+TriggerMessageStatusEnumType string_to_trigger_message_status_enum_type(const std::string& s);
+} // namespace conversions
+
+/// \brief Writes the string representation of the given TriggerMessageStatusEnumType \p
+/// trigger_message_status_enum_type to the given output stream \p os \returns an output stream with the
+/// TriggerMessageStatusEnumType written to
+std::ostream& operator<<(std::ostream& os, const TriggerMessageStatusEnumType& trigger_message_status_enum_type);
+
+// from: GetInstalledCertificateIdsRequest
+enum class CertificateUseEnumType
+{
+    CentralSystemRootCertificate,
+    ManufacturerRootCertificate,
+};
+
+namespace conversions {
+/// \brief Converts the given CertificateUseEnumType \p e to human readable string
+/// \returns a string representation of the CertificateUseEnumType
+std::string certificate_use_enum_type_to_string(CertificateUseEnumType e);
+
+/// \brief Converts the given std::string \p s to CertificateUseEnumType
+/// \returns a CertificateUseEnumType from a string representation
+CertificateUseEnumType string_to_certificate_use_enum_type(const std::string& s);
+} // namespace conversions
+
+/// \brief Writes the string representation of the given CertificateUseEnumType \p certificate_use_enum_type to the
+/// given output stream \p os \returns an output stream with the CertificateUseEnumType written to
+std::ostream& operator<<(std::ostream& os, const CertificateUseEnumType& certificate_use_enum_type);
+
+// from: GetInstalledCertificateIdsResponse
+enum class GetInstalledCertificateStatusEnumType
+{
+    Accepted,
+    NotFound,
+};
+
+namespace conversions {
+/// \brief Converts the given GetInstalledCertificateStatusEnumType \p e to human readable string
+/// \returns a string representation of the GetInstalledCertificateStatusEnumType
+std::string get_installed_certificate_status_enum_type_to_string(GetInstalledCertificateStatusEnumType e);
+
+/// \brief Converts the given std::string \p s to GetInstalledCertificateStatusEnumType
+/// \returns a GetInstalledCertificateStatusEnumType from a string representation
+GetInstalledCertificateStatusEnumType string_to_get_installed_certificate_status_enum_type(const std::string& s);
+} // namespace conversions
+
+/// \brief Writes the string representation of the given GetInstalledCertificateStatusEnumType \p
+/// get_installed_certificate_status_enum_type to the given output stream \p os \returns an output stream with the
+/// GetInstalledCertificateStatusEnumType written to
+std::ostream& operator<<(std::ostream& os,
+                         const GetInstalledCertificateStatusEnumType& get_installed_certificate_status_enum_type);
+
+// from: GetLogRequest
+enum class LogEnumType
+{
+    DiagnosticsLog,
+    SecurityLog,
+};
+
+namespace conversions {
+/// \brief Converts the given LogEnumType \p e to human readable string
+/// \returns a string representation of the LogEnumType
+std::string log_enum_type_to_string(LogEnumType e);
+
+/// \brief Converts the given std::string \p s to LogEnumType
+/// \returns a LogEnumType from a string representation
+LogEnumType string_to_log_enum_type(const std::string& s);
+} // namespace conversions
+
+/// \brief Writes the string representation of the given LogEnumType \p log_enum_type to the given output stream \p os
+/// \returns an output stream with the LogEnumType written to
+std::ostream& operator<<(std::ostream& os, const LogEnumType& log_enum_type);
+
+// from: GetLogResponse
+enum class LogStatusEnumType
+{
+    Accepted,
+    Rejected,
+    AcceptedCanceled,
+};
+
+namespace conversions {
+/// \brief Converts the given LogStatusEnumType \p e to human readable string
+/// \returns a string representation of the LogStatusEnumType
+std::string log_status_enum_type_to_string(LogStatusEnumType e);
+
+/// \brief Converts the given std::string \p s to LogStatusEnumType
+/// \returns a LogStatusEnumType from a string representation
+LogStatusEnumType string_to_log_status_enum_type(const std::string& s);
+} // namespace conversions
+
+/// \brief Writes the string representation of the given LogStatusEnumType \p log_status_enum_type to the given output
+/// stream \p os \returns an output stream with the LogStatusEnumType written to
+std::ostream& operator<<(std::ostream& os, const LogStatusEnumType& log_status_enum_type);
+
+// from: InstallCertificateResponse
+enum class InstallCertificateStatusEnumType
+{
+    Accepted,
+    Failed,
+    Rejected,
+};
+
+namespace conversions {
+/// \brief Converts the given InstallCertificateStatusEnumType \p e to human readable string
+/// \returns a string representation of the InstallCertificateStatusEnumType
+std::string install_certificate_status_enum_type_to_string(InstallCertificateStatusEnumType e);
+
+/// \brief Converts the given std::string \p s to InstallCertificateStatusEnumType
+/// \returns a InstallCertificateStatusEnumType from a string representation
+InstallCertificateStatusEnumType string_to_install_certificate_status_enum_type(const std::string& s);
+} // namespace conversions
+
+/// \brief Writes the string representation of the given InstallCertificateStatusEnumType \p
+/// install_certificate_status_enum_type to the given output stream \p os \returns an output stream with the
+/// InstallCertificateStatusEnumType written to
+std::ostream& operator<<(std::ostream& os,
+                         const InstallCertificateStatusEnumType& install_certificate_status_enum_type);
+
+// from: LogStatusNotificationRequest
+enum class UploadLogStatusEnumType
+{
+    BadMessage,
+    Idle,
+    NotSupportedOperation,
+    PermissionDenied,
+    Uploaded,
+    UploadFailure,
+    Uploading,
+};
+
+namespace conversions {
+/// \brief Converts the given UploadLogStatusEnumType \p e to human readable string
+/// \returns a string representation of the UploadLogStatusEnumType
+std::string upload_log_status_enum_type_to_string(UploadLogStatusEnumType e);
+
+/// \brief Converts the given std::string \p s to UploadLogStatusEnumType
+/// \returns a UploadLogStatusEnumType from a string representation
+UploadLogStatusEnumType string_to_upload_log_status_enum_type(const std::string& s);
+} // namespace conversions
+
+/// \brief Writes the string representation of the given UploadLogStatusEnumType \p upload_log_status_enum_type to the
+/// given output stream \p os \returns an output stream with the UploadLogStatusEnumType written to
+std::ostream& operator<<(std::ostream& os, const UploadLogStatusEnumType& upload_log_status_enum_type);
+
+// from: SignCertificateResponse
+enum class GenericStatusEnumType
+{
+    Accepted,
+    Rejected,
+};
+
+namespace conversions {
+/// \brief Converts the given GenericStatusEnumType \p e to human readable string
+/// \returns a string representation of the GenericStatusEnumType
+std::string generic_status_enum_type_to_string(GenericStatusEnumType e);
+
+/// \brief Converts the given std::string \p s to GenericStatusEnumType
+/// \returns a GenericStatusEnumType from a string representation
+GenericStatusEnumType string_to_generic_status_enum_type(const std::string& s);
+} // namespace conversions
+
+/// \brief Writes the string representation of the given GenericStatusEnumType \p generic_status_enum_type to the given
+/// output stream \p os \returns an output stream with the GenericStatusEnumType written to
+std::ostream& operator<<(std::ostream& os, const GenericStatusEnumType& generic_status_enum_type);
+
+// from: SignedFirmwareStatusNotificationRequest
+enum class FirmwareStatusEnumType
+{
+    Downloaded,
+    DownloadFailed,
+    Downloading,
+    DownloadScheduled,
+    DownloadPaused,
+    Idle,
+    InstallationFailed,
+    Installing,
+    Installed,
+    InstallRebooting,
+    InstallScheduled,
+    InstallVerificationFailed,
+    InvalidSignature,
+    SignatureVerified,
+};
+
+namespace conversions {
+/// \brief Converts the given FirmwareStatusEnumType \p e to human readable string
+/// \returns a string representation of the FirmwareStatusEnumType
+std::string firmware_status_enum_type_to_string(FirmwareStatusEnumType e);
+
+/// \brief Converts the given std::string \p s to FirmwareStatusEnumType
+/// \returns a FirmwareStatusEnumType from a string representation
+FirmwareStatusEnumType string_to_firmware_status_enum_type(const std::string& s);
+} // namespace conversions
+
+/// \brief Writes the string representation of the given FirmwareStatusEnumType \p firmware_status_enum_type to the
+/// given output stream \p os \returns an output stream with the FirmwareStatusEnumType written to
+std::ostream& operator<<(std::ostream& os, const FirmwareStatusEnumType& firmware_status_enum_type);
+
+// from: SignedUpdateFirmwareResponse
+enum class UpdateFirmwareStatusEnumType
+{
+    Accepted,
+    Rejected,
+    AcceptedCanceled,
+    InvalidCertificate,
+    RevokedCertificate,
+};
+
+namespace conversions {
+/// \brief Converts the given UpdateFirmwareStatusEnumType \p e to human readable string
+/// \returns a string representation of the UpdateFirmwareStatusEnumType
+std::string update_firmware_status_enum_type_to_string(UpdateFirmwareStatusEnumType e);
+
+/// \brief Converts the given std::string \p s to UpdateFirmwareStatusEnumType
+/// \returns a UpdateFirmwareStatusEnumType from a string representation
+UpdateFirmwareStatusEnumType string_to_update_firmware_status_enum_type(const std::string& s);
+} // namespace conversions
+
+/// \brief Writes the string representation of the given UpdateFirmwareStatusEnumType \p
+/// update_firmware_status_enum_type to the given output stream \p os \returns an output stream with the
+/// UpdateFirmwareStatusEnumType written to
+std::ostream& operator<<(std::ostream& os, const UpdateFirmwareStatusEnumType& update_firmware_status_enum_type);
+
+// from SecurityEventNotificationRequest
+enum class SecurityEvent
+{
+    FirmwareUpdated,
+    FailedToAuthenticateAtCentralSystem,
+    CentralSystemFailedToAuthenticate,
+    SettingSystemTime,
+    StartupOfTheDevice,
+    ResetOrReboot,
+    SecurityLogWasCleared,
+    ReconfigurationOfSecurityParameters,
+    MemoryExhaustion,
+    InvalidMessages,
+    AttemptedReplayAttacks,
+    TamperDetectionActivated,
+    InvalidFirmwareSignature,
+    InvalidFirmwareSigningCertificate,
+    InvalidCentralSystemCertificate,
+    InvalidChargePointCertificate,
+    InvalidTLSVersion,
+    InvalidTLSCipherSuite
+};
+
+namespace conversions {
+/// \brief Converts the given SecurityEvent \p e to human readable string
+/// \returns a string representation of the SecurityEvent
+std::string security_event_to_string(SecurityEvent e);
+
+/// \brief Converts the given std::string \p s to SecurityEvent
+/// \returns a SecurityEvent from a string representation
+SecurityEvent string_to_security_event(const std::string& s);
+} // namespace conversions
+
+/// \brief Writes the string representation of the given SecurityEvent \p
+/// security_event to the given output stream \p os \returns an output stream with the
+/// SecurityEvent written to
+std::ostream& operator<<(std::ostream& os, const SecurityEvent& security_event);
+
+enum class CertificateType
+{
+    CentralSystemRootCertificate,
+    ManufacturerRootCertificate,
+    ClientCertificate
+};
+
+namespace conversions {
+/// \brief Converts the given CertificateType \p e to human readable string
+/// \returns a string representation of the CertificateType
+std::string certificate_type_to_string(CertificateType e);
+
+/// \brief Converts the given std::string \p s to CertificateType
+/// \returns a CertificateType from a string representation
+CertificateType string_to_certificate_type(const std::string& s);
+} // namespace conversions
+
+/// \brief Writes the string representation of the given CertificateType \p
+/// certificate_type to the given output stream \p os \returns an output stream with the
+/// CertificateType written to
+std::ostream& operator<<(std::ostream& os, const CertificateType& certificate_type);
+
+enum class CertificateVerificationResult
+{
+    Expired,
+    InvalidSignature,
+    InvalidCertificateChain,
+    InvalidCommonName,
+    NoRootCertificateInstalled,
+    Valid
+};
+
+namespace conversions {
+/// \brief Converts the given CertificateVerificationResult \p e to human readable string
+/// \returns a string representation of the CertificateVerificationResult
+std::string certificate_verification_result_to_string(CertificateVerificationResult e);
+
+/// \brief Converts the given std::string \p s to CertificateVerificationResult
+/// \returns a CertificateVerificationResult from a string representation
+CertificateVerificationResult string_to_certificate_verification_result(const std::string& s);
+} // namespace conversions
+
+/// \brief Writes the string representation of the given CertificateVerificationResult \p
+/// certificate_verification_result to the given output stream \p os \returns an output stream with the
+/// CertificateVerificationResult written to
+std::ostream& operator<<(std::ostream& os, const CertificateVerificationResult& certificate_verification_result);
+
+enum class InstallCertificateResult
+{
+    InvalidSignature,
+    InvalidCertificateChain,
+    InvalidFormat,
+    Valid,
+    Ok,
+    CertificateStoreMaxLengthExceeded,
+    WriteError
+};
+
+namespace conversions {
+/// \brief Converts the given InstallCertificateResult \p e to human readable string
+/// \returns a string representation of the InstallCertificateResult
+std::string install_certificate_result_to_string(InstallCertificateResult e);
+
+/// \brief Converts the given std::string \p s to InstallCertificateResult
+/// \returns a InstallCertificateResult from a string representation
+InstallCertificateResult string_to_install_certificate_result(const std::string& s);
+} // namespace conversions
+
+/// \brief Writes the string representation of the given InstallCertificateResult \p
+/// install_certificate_result to the given output stream \p os \returns an output stream with the
+/// InstallCertificateResult written to
+std::ostream& operator<<(std::ostream& os, const InstallCertificateResult& install_certificate_result);
+
+enum class ScheduledCallbackType
+{
+    DownloadFirmwareCallback,
+    InstallFirmwareCallback
+};
+
+namespace conversions {
+/// \brief Converts the given ScheduledCallbackType \p e to human readable string
+/// \returns a string representation of the ScheduledCallbackType
+std::string scheduled_callback_type_to_string(ScheduledCallbackType e);
+
+/// \brief Converts the given std::string \p s to ScheduledCallbackType
+/// \returns a ScheduledCallbackType from a string representation
+ScheduledCallbackType string_to_scheduled_callback_type(const std::string& s);
+} // namespace conversions
+
+/// \brief Writes the string representation of the given ScheduledCallbackType \p
+/// scheduled_callback_type to the given output stream \p os \returns an output stream with the
+/// ScheduledCallbackType written to
+std::ostream& operator<<(std::ostream& os, const ScheduledCallbackType& scheduled_callback_type);
+
 } // namespace ocpp1_6
 
 #endif // OCPP1_6_ENUMS_HPP

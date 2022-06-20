@@ -21,8 +21,8 @@ std::string CiString::get() const {
 void CiString::set(const std::string& data) {
     if (data.length() <= this->length) {
         for (const char& character : data) {
-            // printable ASCII starts at code 0x20 (space) and ends with code 0x7e (tilde)
-            if (character < 0x20 || character > 0x7e) {
+            // printable ASCII starts at code 0x20 (space) and ends with code 0x7e (tilde) and 0xa (\n)
+            if ((character < 0x20 || character > 0x7e) && character != 0xa) {
                 throw std::runtime_error("CiString can only contain printable ASCII characters");
             }
         }
@@ -71,7 +71,7 @@ void DateTimeImpl::from_rfc3339(const std::string& timepoint_str) {
     }
 }
 
-std::chrono::time_point<date::utc_clock> DateTimeImpl::to_time_point() {
+std::chrono::time_point<date::utc_clock> DateTimeImpl::to_time_point() const {
     return this->timepoint;
 }
 

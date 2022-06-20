@@ -157,6 +157,54 @@ void from_json(const json& j, TransactionData& k);
 /// \returns an output stream with the TransactionData written to
 std::ostream& operator<<(std::ostream& os, const TransactionData& k);
 
+struct CertificateHashDataType {
+    HashAlgorithmEnumType hashAlgorithm;
+    CiString128Type issuerNameHash;
+    CiString128Type issuerKeyHash;
+    CiString40Type serialNumber;
+};
+/// \brief Conversion from a given CertificateHashDataType \p k to a given json object \p j
+void to_json(json& j, const CertificateHashDataType& k);
+
+/// \brief Conversion from a given json object \p j to a given CertificateHashDataType \p k
+void from_json(const json& j, CertificateHashDataType& k);
+
+// \brief Writes the string representation of the given CertificateHashDataType \p k to the given output stream \p os
+/// \returns an output stream with the CertificateHashDataType written to
+std::ostream& operator<<(std::ostream& os, const CertificateHashDataType& k);
+
+struct LogParametersType {
+    CiString512Type remoteLocation;
+    boost::optional<DateTime> oldestTimestamp;
+    boost::optional<DateTime> latestTimestamp;
+};
+/// \brief Conversion from a given LogParametersType \p k to a given json object \p j
+void to_json(json& j, const LogParametersType& k);
+
+/// \brief Conversion from a given json object \p j to a given LogParametersType \p k
+void from_json(const json& j, LogParametersType& k);
+
+// \brief Writes the string representation of the given LogParametersType \p k to the given output stream \p os
+/// \returns an output stream with the LogParametersType written to
+std::ostream& operator<<(std::ostream& os, const LogParametersType& k);
+
+struct FirmwareType {
+    CiString512Type location;
+    DateTime retrieveDateTime;
+    CiString5500Type signingCertificate;
+    CiString800Type signature;
+    boost::optional<DateTime> installDateTime;
+};
+/// \brief Conversion from a given FirmwareType \p k to a given json object \p j
+void to_json(json& j, const FirmwareType& k);
+
+/// \brief Conversion from a given json object \p j to a given FirmwareType \p k
+void from_json(const json& j, FirmwareType& k);
+
+// \brief Writes the string representation of the given FirmwareType \p k to the given output stream \p os
+/// \returns an output stream with the FirmwareType written to
+std::ostream& operator<<(std::ostream& os, const FirmwareType& k);
+
 } // namespace ocpp1_6
 
 #endif // OCPP1_6_OCPP_TYPES_HPP

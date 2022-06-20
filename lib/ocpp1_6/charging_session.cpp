@@ -66,11 +66,35 @@ void Transaction::stop() {
     this->active = false;
 }
 
-ChargingSession::ChargingSession() : authorized_token(nullptr), plug_connected(false), transaction(nullptr) {
+void Transaction::set_charging_profile(ChargingProfile charging_profile) {
+    std::lock_guard<std::mutex> charge_point_max_profiles_lock(tx_charging_profiles_mutex);
+    this->tx_charging_profiles[charging_profile.stackLevel] = charging_profile;
+}
+
+void Transaction::remove_charging_profile(int32_t stack_level) {
+    std::lock_guard<std::mutex> charge_point_max_profiles_lock(tx_charging_profiles_mutex);
+    this->tx_charging_profiles.erase(stack_level);
+}
+
+void Transaction::remove_charging_profiles() {
+    std::lock_guard<std::mutex> charge_point_max_profiles_lock(tx_charging_profiles_mutex);
+    this->tx_charging_profiles.clear();
+}
+
+std::map<int32_t, ChargingProfile> Transaction::get_charging_profiles() {
+    std::lock_guard<std::mutex> charge_point_max_profiles_lock(tx_charging_profiles_mutex);
+    return this->tx_charging_profiles;
+}
+
+ChargingSession::ChargingSession() :
+    authorized_token(nullptr), plug_connected(false), transaction(nullptr), reservation_id(boost::none) {
 }
 
 ChargingSession::ChargingSession(std::unique_ptr<AuthorizedToken> authorized_token) :
-    authorized_token(std::move(authorized_token)), plug_connected(false), transaction(nullptr) {
+    authorized_token(std::move(authorized_token)),
+    plug_connected(false),
+    transaction(nullptr),
+    reservation_id(boost::none) {
 }
 
 void ChargingSession::connect_plug() {
@@ -175,6 +199,17 @@ std::vector<MeterValue> ChargingSession::get_clock_aligned_meter_values() {
         return {};
     }
     return this->transaction->get_clock_aligned_meter_values();
+}
+
+void ChargingSession::add_reservation_id(int32_t reservation_id) {
+    this->reservation_id.emplace(reservation_id);
+}
+
+boost::optional<int32_t> ChargingSession::get_reservation_id() {
+    if (this->reservation_id == boost::none) {
+        return boost::none;
+    }
+    return this->reservation_id;
 }
 
 bool ChargingSessions::valid_connector(int32_t connector) {
@@ -463,6 +498,28 @@ std::vector<MeterValue> ChargingSessions::get_clock_aligned_meter_values(int32_t
         return {};
     }
     return this->charging_sessions.at(connector)->get_clock_aligned_meter_values();
+}
+
+void ChargingSessions::add_reservation_id(int32_t connector, int32_t reservation_id) {
+    if (!this->valid_connector(connector)) {
+        return;
+    }
+    std::lock_guard<std::mutex> lock(this->charging_sessions_mutex);
+    if (this->charging_sessions.at(connector) == nullptr) {
+        return;
+    }
+    this->charging_sessions.at(connector)->add_reservation_id(reservation_id);
+}
+
+boost::optional<int32_t> ChargingSessions::get_reservation_id(int32_t connector) {
+    if (!this->valid_connector(connector)) {
+        return boost::none;
+    }
+    std::lock_guard<std::mutex> lock(this->charging_sessions_mutex);
+    if (this->charging_sessions.at(connector) == nullptr) {
+        return boost::none;
+    }
+    return this->charging_sessions.at(connector)->get_reservation_id();
 }
 
 } // namespace ocpp1_6

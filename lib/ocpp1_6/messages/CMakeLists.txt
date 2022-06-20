@@ -29,4 +29,15 @@ target_sources(ocpp
         TriggerMessage.cpp
         UnlockConnector.cpp
         UpdateFirmware.cpp
+        CertificateSigned.cpp
+        DeleteCertificate.cpp
+        ExtendedTriggerMessage.cpp
+        GetInstalledCertificateIds.cpp
+        GetLog.cpp
+        InstallCertificate.cpp
+        LogStatusNotification.cpp
+        SecurityEventNotification.cpp
+        SignCertificate.cpp
+        SignedFirmwareStatusNotification.cpp
+        SignedUpdateFirmware.cpp
     )

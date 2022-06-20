@@ -8,6 +8,7 @@
 #include <sqlite3.h>
 
 #include <ocpp1_6/ocpp_types.hpp>
+#include <ocpp1_6/pki_handler.hpp>
 #include <ocpp1_6/types.hpp>
 
 namespace ocpp1_6 {
@@ -17,6 +18,9 @@ class ChargePointConfiguration {
 private:
     json config;
     sqlite3* db;
+    std::string configs_path;
+    std::shared_ptr<PkiHandler> pki_handler;
+
     std::set<SupportedFeatureProfiles> supported_feature_profiles;
     std::map<Measurand, std::vector<Phase>> supported_measurands;
     std::map<SupportedFeatureProfiles, std::set<MessageType>> supported_message_types_from_charge_point;
@@ -26,15 +30,24 @@ private:
 
     std::vector<MeasurandWithPhase> csv_to_measurand_with_phase_vector(std::string csv);
     bool measurands_supported(std::string csv);
+    json get_user_config();
+    void setInUserConfig(std::string profile, std::string key, json value);
+
+    static std::string hexToString(std::string const& s);
+    static bool isHexNotation(std::string const& s);
 
 public:
-    ChargePointConfiguration(json config, std::string schemas_path, std::string database_path);
+    ChargePointConfiguration(json config, std::string configs_path, std::string schemas_path,
+                             std::string database_path);
     void close();
+
+    std::string getConfigsPath();
+    std::shared_ptr<PkiHandler> getPkiHandler();
 
     // Internal config options
     std::string getChargePointId();
     std::string getCentralSystemURI();
-    boost::optional<CiString25Type> getChargeBoxSerialNumber();
+    std::string getChargeBoxSerialNumber();
     CiString20Type getChargePointModel();
     boost::optional<CiString25Type> getChargePointSerialNumber();
     CiString20Type getChargePointVendor();
@@ -44,10 +57,11 @@ public:
     boost::optional<CiString25Type> getMeterSerialNumber();
     boost::optional<CiString25Type> getMeterType();
     int32_t getWebsocketReconnectInterval();
+    bool getAuthorizeConnectorZeroOnConnectorOne();
+    bool getLogMessages();
 
-    std::string getSupportedCiphers();
-    // move this to a new "Security" profile with the other OCPP 1.6 security extension config options?
-    boost::optional<std::string> getAuthorizationKey();
+    std::string getSupportedCiphers12();
+    std::string getSupportedCiphers13();
 
     // Internal
     std::set<MessageType> getSupportedMessageTypesSending();
@@ -164,6 +178,10 @@ public:
     int32_t getNumberOfConnectors();
     KeyValue getNumberOfConnectorsKeyValue();
 
+    // Reservation Profile
+    boost::optional<bool> getReserveConnectorZeroSupported();
+    boost::optional<KeyValue> getReserveConnectorZeroSupportedKeyValue();
+
     // Core Profile
     int32_t getResetRetries();
     void setResetRetries(int32_t retries);
@@ -253,11 +271,61 @@ public:
 
     // SmartCharging Profile end
 
+    // Security profile - optional
+    boost::optional<bool> getAdditionalRootCertificateCheck();
+    boost::optional<KeyValue> getAdditionalRootCertificateCheckKeyValue();
+
+    // Security profile - optional
+    boost::optional<std::string> getAuthorizationKey();
+    void setAuthorizationKey(std::string authorization_key);
+    boost::optional<KeyValue> getAuthorizationKeyKeyValue();
+
+    // Security profile - optional
+    boost::optional<int32_t> getCertificateSignedMaxChainSize();
+    boost::optional<KeyValue> getCertificateSignedMaxChainSizeKeyValue();
+
+    // Security profile - optional
+    boost::optional<int32_t> getCertificateStoreMaxLength();
+    boost::optional<KeyValue> getCertificateStoreMaxLengthKeyValue();
+
+    // Security profile - optional
+    boost::optional<std::string> getCpoName();
+    void setCpoName(std::string cpo_name);
+    boost::optional<KeyValue> getCpoNameKeyValue();
+
+    // // Security profile - optional in ocpp but mandatory websocket connection
+    int32_t getSecurityProfile();
+    void setSecurityProfile(int32_t security_profile);
+    KeyValue getSecurityProfileKeyValue();
+
+    // Local Auth List Management Profile
+    bool getLocalAuthListEnabled();
+    void setLocalAuthListEnabled(bool local_auth_list_enabled);
+    KeyValue getLocalAuthListEnabledKeyValue();
+
+    // Local Auth List Management Profile
+    int32_t getLocalAuthListMaxLength();
+    KeyValue getLocalAuthListMaxLengthKeyValue();
+
+    // Local Auth List Management Profile
+    int32_t getSendLocalListMaxLength();
+    KeyValue getSendLocalListMaxLengthKeyValue();
+
+    int32_t getLocalListVersion();
+
+    bool updateLocalAuthorizationListVersion(int32_t list_version);
+    bool updateLocalAuthorizationList(std::vector<LocalAuthorizationList> local_authorization_list);
+    bool clearLocalAuthorizationList();
+    boost::optional<IdTagInfo> getLocalAuthorizationListEntry(CiString20Type idTag);
+
     boost::optional<KeyValue> get(CiString50Type key);
 
     std::vector<KeyValue> get_all_key_value();
 
     ConfigurationStatus set(CiString50Type key, CiString500Type value);
+
+    std::vector<ScheduledCallback> getScheduledCallbacks();
+    void insertScheduledCallback(ScheduledCallbackType, std::string datetime, std::string args);
 };
 } // namespace ocpp1_6
 

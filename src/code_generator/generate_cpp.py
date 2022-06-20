@@ -63,12 +63,14 @@ def needs_enums(types):
 
 
 def needs_types(types):
-    type_list = ['CiString20Type', 'CiString25Type', 'CiString50Type', 'CiString255Type', 'CiString500Type','DateTime']
+    type_list = ['CiString20Type', 'CiString25Type', 'CiString50Type',
+                 'CiString255Type', 'CiString500Type', 'DateTime']
     for t in types:
         for property in t['properties']:
             if property['type'] in type_list:
                 return True
     return False
+
 
 # jinja template environment and global variable
 relative_tmpl_path = Path(__file__).resolve().parent / "templates"
@@ -83,7 +85,8 @@ env.globals['timestamp'] = datetime.utcnow
 env.globals['year'] = datetime.utcnow().year
 message_hpp_template = env.get_template('message.hpp.jinja')
 message_cpp_template = env.get_template('message.cpp.jinja')
-messages_cmakelists_txt_template = env.get_template('messages.cmakelists.txt.jinja')
+messages_cmakelists_txt_template = env.get_template(
+    'messages.cmakelists.txt.jinja')
 enums_hpp_template = env.get_template('enums.hpp.jinja')
 enums_cpp_template = env.get_template('enums.cpp.jinja')
 ocpp_types_hpp_template = env.get_template('ocpp_types.hpp.jinja')
@@ -95,10 +98,11 @@ parsed_types_unique: List = []
 parsed_enums: List = []
 parsed_enums_unique: List = []
 current_defs: Dict = {}
+unique_types = set()
 
 format_types = dict()
 format_types['date-time'] = 'DateTime'
-format_types['uri'] = 'std::string' # FIXME(kai): add proper URI type
+format_types['uri'] = 'std::string'  # FIXME(kai): add proper URI type
 
 enum_types = dict()
 
@@ -174,7 +178,10 @@ enum_types['TriggerMessageResponse'] = dict()
 enum_types['TriggerMessageResponse']['status'] = 'TriggerMessageStatus'
 enum_types['UnlockConnectorResponse'] = dict()
 enum_types['UnlockConnectorResponse']['status'] = 'UnlockStatus'
-
+enum_types['ExtendedTriggerMessageRequest'] = dict()
+enum_types['ExtendedTriggerMessageRequest']['requestedMessage'] = 'MessageTriggerEnumType'
+enum_types['ExtendedTriggerMessageResponse'] = dict()
+enum_types['ExtendedTriggerMessageResponse']['status'] = 'TriggerMessageStatusEnumType'
 
 def object_exists(name: str) -> bool:
     """Check if an object (i.e. dataclass) already exists."""
@@ -273,6 +280,10 @@ def parse_property(prop_name: str, prop: Dict, depends_on: List[str], ob_name=No
             prop_type = 'ChargingProfile'
             print(
                 "Changed prop type from CsChargingProfiles to ChargingProfile according to spec")
+        if prop_type == 'CertificateHashData':
+            prop_type = 'CertificateHashDataType'
+            print(
+                "Changed prop type from CertificateHashData to CertificateHashDataType according to spec")
         depends_on.append(prop_type)
         if not object_exists(prop_type):
             parse_object(prop_type, prop)
@@ -290,17 +301,24 @@ def parse_object(ob_name: str, json_schema: Dict):
 
     ob_dict = {'name': ob_name, 'properties': [], 'depends_on': []}
     parsed_types.insert(0, ob_dict)
-
+    if not 'properties' in json_schema:
+        return
     for prop_name, prop in json_schema['properties'].items():
         if not prop_name.isidentifier() or keyword.iskeyword(prop_name):
             raise Exception(prop_name + ' can\'t be used as an identifier!')
         prop_type = parse_property(
             prop_name, prop, ob_dict['depends_on'], ob_name)
+
+        is_enum = 'enum' in prop
+        for parsed_enum in parsed_enums:
+            if parsed_enum['name'] == prop_type:
+                is_enum = True
+                break
         ob_dict['properties'].append({
             'name': prop_name,
             'json_name': prop_name,
             'type': prop_type,
-            'enum': 'enum' in prop,
+            'enum': is_enum,
             'required': prop_name in json_schema.get('required', {})
         })
 
@@ -496,7 +514,9 @@ def parse_schemas(version: str, schema_dir: Path = Path('schemas/json/'),
             for parsed_type in parsed_types:
                 if parsed_type not in parsed_types_unique:
                     parsed_types_unique.append(parsed_type)
-                    parsed_types_.append(parsed_type)
+                    if parsed_type['name'] not in unique_types:
+                        parsed_types_.append(parsed_type)
+                        unique_types.add(parsed_type['name'])
             with open(ocpp_types_hpp_fn, 'w' if first else 'a+') as out:
                 out.write(ocpp_types_hpp_template.render({
                     'parsed_types': parsed_types_,

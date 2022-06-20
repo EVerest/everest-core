@@ -2,6 +2,7 @@
     "Internal": {
         "ChargePointId": "",
         "CentralSystemURI": "",
+        "ChargeBoxSerialNumber": "",
         "ChargePointModel": "Yeti",
         "ChargePointVendor": "Pionix",
         "FirmwareVersion": "0.1"
@@ -24,12 +25,23 @@
         "StopTransactionOnInvalidId": true,
         "StopTxnAlignedData": "Energy.Active.Import.Register",
         "StopTxnSampledData": "Energy.Active.Import.Register",
-        "SupportedFeatureProfiles": "Core,FirmwareManagement,RemoteTrigger,Reservation",
+        "SupportedFeatureProfiles": "Core,FirmwareManagement,RemoteTrigger,Reservation,LocalAuthListManagement,SmartCharging",
         "TransactionMessageAttempts": 1,
         "TransactionMessageRetryInterval": 10,
         "UnlockConnectorOnEVSideDisconnect": true
     },
     "FirmwareManagement": {
         "SupportedFileTransferProtocols": "FTP"
+    },
+    "LocalAuthListManagement": {
+        "LocalAuthListEnabled": true,
+        "LocalAuthListMaxLength": 42,
+        "SendLocalListMaxLength": 42
+    },
+    "SmartCharging": {
+        "ChargeProfileMaxStackLevel": 42,
+        "ChargingScheduleAllowedChargingRateUnit": "Current",
+        "ChargingScheduleMaxPeriods": 42,
+        "MaxChargingProfilesInstalled": 42
     }
 }

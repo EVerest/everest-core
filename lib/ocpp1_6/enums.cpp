@@ -1619,4 +1619,855 @@ std::ostream& operator<<(std::ostream& os, const UnlockStatus& unlock_status) {
     return os;
 }
 
+// from: CertificateSignedResponse
+namespace conversions {
+std::string certificate_signed_status_enum_type_to_string(CertificateSignedStatusEnumType e) {
+    switch (e) {
+    case CertificateSignedStatusEnumType::Accepted:
+        return "Accepted";
+    case CertificateSignedStatusEnumType::Rejected:
+        return "Rejected";
+    }
+
+    throw std::out_of_range("No known string conversion for provided enum of type CertificateSignedStatusEnumType");
+}
+
+CertificateSignedStatusEnumType string_to_certificate_signed_status_enum_type(const std::string& s) {
+    if (s == "Accepted") {
+        return CertificateSignedStatusEnumType::Accepted;
+    }
+    if (s == "Rejected") {
+        return CertificateSignedStatusEnumType::Rejected;
+    }
+
+    throw std::out_of_range("Provided string " + s +
+                            " could not be converted to enum of type CertificateSignedStatusEnumType");
+}
+} // namespace conversions
+
+std::ostream& operator<<(std::ostream& os, const CertificateSignedStatusEnumType& certificate_signed_status_enum_type) {
+    os << conversions::certificate_signed_status_enum_type_to_string(certificate_signed_status_enum_type);
+    return os;
+}
+
+// from: DeleteCertificateRequest
+namespace conversions {
+std::string hash_algorithm_enum_type_to_string(HashAlgorithmEnumType e) {
+    switch (e) {
+    case HashAlgorithmEnumType::SHA256:
+        return "SHA256";
+    case HashAlgorithmEnumType::SHA384:
+        return "SHA384";
+    case HashAlgorithmEnumType::SHA512:
+        return "SHA512";
+    }
+
+    throw std::out_of_range("No known string conversion for provided enum of type HashAlgorithmEnumType");
+}
+
+HashAlgorithmEnumType string_to_hash_algorithm_enum_type(const std::string& s) {
+    if (s == "SHA256") {
+        return HashAlgorithmEnumType::SHA256;
+    }
+    if (s == "SHA384") {
+        return HashAlgorithmEnumType::SHA384;
+    }
+    if (s == "SHA512") {
+        return HashAlgorithmEnumType::SHA512;
+    }
+
+    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type HashAlgorithmEnumType");
+}
+} // namespace conversions
+
+std::ostream& operator<<(std::ostream& os, const HashAlgorithmEnumType& hash_algorithm_enum_type) {
+    os << conversions::hash_algorithm_enum_type_to_string(hash_algorithm_enum_type);
+    return os;
+}
+
+// from: DeleteCertificateResponse
+namespace conversions {
+std::string delete_certificate_status_enum_type_to_string(DeleteCertificateStatusEnumType e) {
+    switch (e) {
+    case DeleteCertificateStatusEnumType::Accepted:
+        return "Accepted";
+    case DeleteCertificateStatusEnumType::Failed:
+        return "Failed";
+    case DeleteCertificateStatusEnumType::NotFound:
+        return "NotFound";
+    }
+
+    throw std::out_of_range("No known string conversion for provided enum of type DeleteCertificateStatusEnumType");
+}
+
+DeleteCertificateStatusEnumType string_to_delete_certificate_status_enum_type(const std::string& s) {
+    if (s == "Accepted") {
+        return DeleteCertificateStatusEnumType::Accepted;
+    }
+    if (s == "Failed") {
+        return DeleteCertificateStatusEnumType::Failed;
+    }
+    if (s == "NotFound") {
+        return DeleteCertificateStatusEnumType::NotFound;
+    }
+
+    throw std::out_of_range("Provided string " + s +
+                            " could not be converted to enum of type DeleteCertificateStatusEnumType");
+}
+} // namespace conversions
+
+std::ostream& operator<<(std::ostream& os, const DeleteCertificateStatusEnumType& delete_certificate_status_enum_type) {
+    os << conversions::delete_certificate_status_enum_type_to_string(delete_certificate_status_enum_type);
+    return os;
+}
+
+// from: ExtendedTriggerMessageRequest
+namespace conversions {
+std::string message_trigger_enum_type_to_string(MessageTriggerEnumType e) {
+    switch (e) {
+    case MessageTriggerEnumType::BootNotification:
+        return "BootNotification";
+    case MessageTriggerEnumType::LogStatusNotification:
+        return "LogStatusNotification";
+    case MessageTriggerEnumType::FirmwareStatusNotification:
+        return "FirmwareStatusNotification";
+    case MessageTriggerEnumType::Heartbeat:
+        return "Heartbeat";
+    case MessageTriggerEnumType::MeterValues:
+        return "MeterValues";
+    case MessageTriggerEnumType::SignChargePointCertificate:
+        return "SignChargePointCertificate";
+    case MessageTriggerEnumType::StatusNotification:
+        return "StatusNotification";
+    }
+
+    throw std::out_of_range("No known string conversion for provided enum of type MessageTriggerEnumType");
+}
+
+MessageTriggerEnumType string_to_message_trigger_enum_type(const std::string& s) {
+    if (s == "BootNotification") {
+        return MessageTriggerEnumType::BootNotification;
+    }
+    if (s == "LogStatusNotification") {
+        return MessageTriggerEnumType::LogStatusNotification;
+    }
+    if (s == "FirmwareStatusNotification") {
+        return MessageTriggerEnumType::FirmwareStatusNotification;
+    }
+    if (s == "Heartbeat") {
+        return MessageTriggerEnumType::Heartbeat;
+    }
+    if (s == "MeterValues") {
+        return MessageTriggerEnumType::MeterValues;
+    }
+    if (s == "SignChargePointCertificate") {
+        return MessageTriggerEnumType::SignChargePointCertificate;
+    }
+    if (s == "StatusNotification") {
+        return MessageTriggerEnumType::StatusNotification;
+    }
+
+    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type MessageTriggerEnumType");
+}
+} // namespace conversions
+
+std::ostream& operator<<(std::ostream& os, const MessageTriggerEnumType& message_trigger_enum_type) {
+    os << conversions::message_trigger_enum_type_to_string(message_trigger_enum_type);
+    return os;
+}
+
+// from: ExtendedTriggerMessageResponse
+namespace conversions {
+std::string trigger_message_status_enum_type_to_string(TriggerMessageStatusEnumType e) {
+    switch (e) {
+    case TriggerMessageStatusEnumType::Accepted:
+        return "Accepted";
+    case TriggerMessageStatusEnumType::Rejected:
+        return "Rejected";
+    case TriggerMessageStatusEnumType::NotImplemented:
+        return "NotImplemented";
+    }
+
+    throw std::out_of_range("No known string conversion for provided enum of type TriggerMessageStatusEnumType");
+}
+
+TriggerMessageStatusEnumType string_to_trigger_message_status_enum_type(const std::string& s) {
+    if (s == "Accepted") {
+        return TriggerMessageStatusEnumType::Accepted;
+    }
+    if (s == "Rejected") {
+        return TriggerMessageStatusEnumType::Rejected;
+    }
+    if (s == "NotImplemented") {
+        return TriggerMessageStatusEnumType::NotImplemented;
+    }
+
+    throw std::out_of_range("Provided string " + s +
+                            " could not be converted to enum of type TriggerMessageStatusEnumType");
+}
+} // namespace conversions
+
+std::ostream& operator<<(std::ostream& os, const TriggerMessageStatusEnumType& trigger_message_status_enum_type) {
+    os << conversions::trigger_message_status_enum_type_to_string(trigger_message_status_enum_type);
+    return os;
+}
+
+// from: GetInstalledCertificateIdsRequest
+namespace conversions {
+std::string certificate_use_enum_type_to_string(CertificateUseEnumType e) {
+    switch (e) {
+    case CertificateUseEnumType::CentralSystemRootCertificate:
+        return "CentralSystemRootCertificate";
+    case CertificateUseEnumType::ManufacturerRootCertificate:
+        return "ManufacturerRootCertificate";
+    }
+
+    throw std::out_of_range("No known string conversion for provided enum of type CertificateUseEnumType");
+}
+
+CertificateUseEnumType string_to_certificate_use_enum_type(const std::string& s) {
+    if (s == "CentralSystemRootCertificate") {
+        return CertificateUseEnumType::CentralSystemRootCertificate;
+    }
+    if (s == "ManufacturerRootCertificate") {
+        return CertificateUseEnumType::ManufacturerRootCertificate;
+    }
+
+    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type CertificateUseEnumType");
+}
+} // namespace conversions
+
+std::ostream& operator<<(std::ostream& os, const CertificateUseEnumType& certificate_use_enum_type) {
+    os << conversions::certificate_use_enum_type_to_string(certificate_use_enum_type);
+    return os;
+}
+
+// from: GetInstalledCertificateIdsResponse
+namespace conversions {
+std::string get_installed_certificate_status_enum_type_to_string(GetInstalledCertificateStatusEnumType e) {
+    switch (e) {
+    case GetInstalledCertificateStatusEnumType::Accepted:
+        return "Accepted";
+    case GetInstalledCertificateStatusEnumType::NotFound:
+        return "NotFound";
+    }
+
+    throw std::out_of_range(
+        "No known string conversion for provided enum of type GetInstalledCertificateStatusEnumType");
+}
+
+GetInstalledCertificateStatusEnumType string_to_get_installed_certificate_status_enum_type(const std::string& s) {
+    if (s == "Accepted") {
+        return GetInstalledCertificateStatusEnumType::Accepted;
+    }
+    if (s == "NotFound") {
+        return GetInstalledCertificateStatusEnumType::NotFound;
+    }
+
+    throw std::out_of_range("Provided string " + s +
+                            " could not be converted to enum of type GetInstalledCertificateStatusEnumType");
+}
+} // namespace conversions
+
+std::ostream& operator<<(std::ostream& os,
+                         const GetInstalledCertificateStatusEnumType& get_installed_certificate_status_enum_type) {
+    os << conversions::get_installed_certificate_status_enum_type_to_string(get_installed_certificate_status_enum_type);
+    return os;
+}
+
+// from: GetLogRequest
+namespace conversions {
+std::string log_enum_type_to_string(LogEnumType e) {
+    switch (e) {
+    case LogEnumType::DiagnosticsLog:
+        return "DiagnosticsLog";
+    case LogEnumType::SecurityLog:
+        return "SecurityLog";
+    }
+
+    throw std::out_of_range("No known string conversion for provided enum of type LogEnumType");
+}
+
+LogEnumType string_to_log_enum_type(const std::string& s) {
+    if (s == "DiagnosticsLog") {
+        return LogEnumType::DiagnosticsLog;
+    }
+    if (s == "SecurityLog") {
+        return LogEnumType::SecurityLog;
+    }
+
+    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type LogEnumType");
+}
+} // namespace conversions
+
+std::ostream& operator<<(std::ostream& os, const LogEnumType& log_enum_type) {
+    os << conversions::log_enum_type_to_string(log_enum_type);
+    return os;
+}
+
+// from: GetLogResponse
+namespace conversions {
+std::string log_status_enum_type_to_string(LogStatusEnumType e) {
+    switch (e) {
+    case LogStatusEnumType::Accepted:
+        return "Accepted";
+    case LogStatusEnumType::Rejected:
+        return "Rejected";
+    case LogStatusEnumType::AcceptedCanceled:
+        return "AcceptedCanceled";
+    }
+
+    throw std::out_of_range("No known string conversion for provided enum of type LogStatusEnumType");
+}
+
+LogStatusEnumType string_to_log_status_enum_type(const std::string& s) {
+    if (s == "Accepted") {
+        return LogStatusEnumType::Accepted;
+    }
+    if (s == "Rejected") {
+        return LogStatusEnumType::Rejected;
+    }
+    if (s == "AcceptedCanceled") {
+        return LogStatusEnumType::AcceptedCanceled;
+    }
+
+    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type LogStatusEnumType");
+}
+} // namespace conversions
+
+std::ostream& operator<<(std::ostream& os, const LogStatusEnumType& log_status_enum_type) {
+    os << conversions::log_status_enum_type_to_string(log_status_enum_type);
+    return os;
+}
+
+// from: InstallCertificateResponse
+namespace conversions {
+std::string install_certificate_status_enum_type_to_string(InstallCertificateStatusEnumType e) {
+    switch (e) {
+    case InstallCertificateStatusEnumType::Accepted:
+        return "Accepted";
+    case InstallCertificateStatusEnumType::Failed:
+        return "Failed";
+    case InstallCertificateStatusEnumType::Rejected:
+        return "Rejected";
+    }
+
+    throw std::out_of_range("No known string conversion for provided enum of type InstallCertificateStatusEnumType");
+}
+
+InstallCertificateStatusEnumType string_to_install_certificate_status_enum_type(const std::string& s) {
+    if (s == "Accepted") {
+        return InstallCertificateStatusEnumType::Accepted;
+    }
+    if (s == "Failed") {
+        return InstallCertificateStatusEnumType::Failed;
+    }
+    if (s == "Rejected") {
+        return InstallCertificateStatusEnumType::Rejected;
+    }
+
+    throw std::out_of_range("Provided string " + s +
+                            " could not be converted to enum of type InstallCertificateStatusEnumType");
+}
+} // namespace conversions
+
+std::ostream& operator<<(std::ostream& os,
+                         const InstallCertificateStatusEnumType& install_certificate_status_enum_type) {
+    os << conversions::install_certificate_status_enum_type_to_string(install_certificate_status_enum_type);
+    return os;
+}
+
+// from: LogStatusNotificationRequest
+namespace conversions {
+std::string upload_log_status_enum_type_to_string(UploadLogStatusEnumType e) {
+    switch (e) {
+    case UploadLogStatusEnumType::BadMessage:
+        return "BadMessage";
+    case UploadLogStatusEnumType::Idle:
+        return "Idle";
+    case UploadLogStatusEnumType::NotSupportedOperation:
+        return "NotSupportedOperation";
+    case UploadLogStatusEnumType::PermissionDenied:
+        return "PermissionDenied";
+    case UploadLogStatusEnumType::Uploaded:
+        return "Uploaded";
+    case UploadLogStatusEnumType::UploadFailure:
+        return "UploadFailure";
+    case UploadLogStatusEnumType::Uploading:
+        return "Uploading";
+    }
+
+    throw std::out_of_range("No known string conversion for provided enum of type UploadLogStatusEnumType");
+}
+
+UploadLogStatusEnumType string_to_upload_log_status_enum_type(const std::string& s) {
+    if (s == "BadMessage") {
+        return UploadLogStatusEnumType::BadMessage;
+    }
+    if (s == "Idle") {
+        return UploadLogStatusEnumType::Idle;
+    }
+    if (s == "NotSupportedOperation") {
+        return UploadLogStatusEnumType::NotSupportedOperation;
+    }
+    if (s == "PermissionDenied") {
+        return UploadLogStatusEnumType::PermissionDenied;
+    }
+    if (s == "Uploaded") {
+        return UploadLogStatusEnumType::Uploaded;
+    }
+    if (s == "UploadFailure") {
+        return UploadLogStatusEnumType::UploadFailure;
+    }
+    if (s == "Uploading") {
+        return UploadLogStatusEnumType::Uploading;
+    }
+
+    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type UploadLogStatusEnumType");
+}
+} // namespace conversions
+
+std::ostream& operator<<(std::ostream& os, const UploadLogStatusEnumType& upload_log_status_enum_type) {
+    os << conversions::upload_log_status_enum_type_to_string(upload_log_status_enum_type);
+    return os;
+}
+
+// from: SignCertificateResponse
+namespace conversions {
+std::string generic_status_enum_type_to_string(GenericStatusEnumType e) {
+    switch (e) {
+    case GenericStatusEnumType::Accepted:
+        return "Accepted";
+    case GenericStatusEnumType::Rejected:
+        return "Rejected";
+    }
+
+    throw std::out_of_range("No known string conversion for provided enum of type GenericStatusEnumType");
+}
+
+GenericStatusEnumType string_to_generic_status_enum_type(const std::string& s) {
+    if (s == "Accepted") {
+        return GenericStatusEnumType::Accepted;
+    }
+    if (s == "Rejected") {
+        return GenericStatusEnumType::Rejected;
+    }
+
+    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type GenericStatusEnumType");
+}
+} // namespace conversions
+
+std::ostream& operator<<(std::ostream& os, const GenericStatusEnumType& generic_status_enum_type) {
+    os << conversions::generic_status_enum_type_to_string(generic_status_enum_type);
+    return os;
+}
+
+// from: SignedFirmwareStatusNotificationRequest
+namespace conversions {
+std::string firmware_status_enum_type_to_string(FirmwareStatusEnumType e) {
+    switch (e) {
+    case FirmwareStatusEnumType::Downloaded:
+        return "Downloaded";
+    case FirmwareStatusEnumType::DownloadFailed:
+        return "DownloadFailed";
+    case FirmwareStatusEnumType::Downloading:
+        return "Downloading";
+    case FirmwareStatusEnumType::DownloadScheduled:
+        return "DownloadScheduled";
+    case FirmwareStatusEnumType::DownloadPaused:
+        return "DownloadPaused";
+    case FirmwareStatusEnumType::Idle:
+        return "Idle";
+    case FirmwareStatusEnumType::InstallationFailed:
+        return "InstallationFailed";
+    case FirmwareStatusEnumType::Installing:
+        return "Installing";
+    case FirmwareStatusEnumType::Installed:
+        return "Installed";
+    case FirmwareStatusEnumType::InstallRebooting:
+        return "InstallRebooting";
+    case FirmwareStatusEnumType::InstallScheduled:
+        return "InstallScheduled";
+    case FirmwareStatusEnumType::InstallVerificationFailed:
+        return "InstallVerificationFailed";
+    case FirmwareStatusEnumType::InvalidSignature:
+        return "InvalidSignature";
+    case FirmwareStatusEnumType::SignatureVerified:
+        return "SignatureVerified";
+    }
+
+    throw std::out_of_range("No known string conversion for provided enum of type FirmwareStatusEnumType");
+}
+
+FirmwareStatusEnumType string_to_firmware_status_enum_type(const std::string& s) {
+    if (s == "Downloaded") {
+        return FirmwareStatusEnumType::Downloaded;
+    }
+    if (s == "DownloadFailed") {
+        return FirmwareStatusEnumType::DownloadFailed;
+    }
+    if (s == "Downloading") {
+        return FirmwareStatusEnumType::Downloading;
+    }
+    if (s == "DownloadScheduled") {
+        return FirmwareStatusEnumType::DownloadScheduled;
+    }
+    if (s == "DownloadPaused") {
+        return FirmwareStatusEnumType::DownloadPaused;
+    }
+    if (s == "Idle") {
+        return FirmwareStatusEnumType::Idle;
+    }
+    if (s == "InstallationFailed") {
+        return FirmwareStatusEnumType::InstallationFailed;
+    }
+    if (s == "Installing") {
+        return FirmwareStatusEnumType::Installing;
+    }
+    if (s == "Installed") {
+        return FirmwareStatusEnumType::Installed;
+    }
+    if (s == "InstallRebooting") {
+        return FirmwareStatusEnumType::InstallRebooting;
+    }
+    if (s == "InstallScheduled") {
+        return FirmwareStatusEnumType::InstallScheduled;
+    }
+    if (s == "InstallVerificationFailed") {
+        return FirmwareStatusEnumType::InstallVerificationFailed;
+    }
+    if (s == "InvalidSignature") {
+        return FirmwareStatusEnumType::InvalidSignature;
+    }
+    if (s == "SignatureVerified") {
+        return FirmwareStatusEnumType::SignatureVerified;
+    }
+
+    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type FirmwareStatusEnumType");
+}
+} // namespace conversions
+
+std::ostream& operator<<(std::ostream& os, const FirmwareStatusEnumType& firmware_status_enum_type) {
+    os << conversions::firmware_status_enum_type_to_string(firmware_status_enum_type);
+    return os;
+}
+
+// from: SignedUpdateFirmwareResponse
+namespace conversions {
+std::string update_firmware_status_enum_type_to_string(UpdateFirmwareStatusEnumType e) {
+    switch (e) {
+    case UpdateFirmwareStatusEnumType::Accepted:
+        return "Accepted";
+    case UpdateFirmwareStatusEnumType::Rejected:
+        return "Rejected";
+    case UpdateFirmwareStatusEnumType::AcceptedCanceled:
+        return "AcceptedCanceled";
+    case UpdateFirmwareStatusEnumType::InvalidCertificate:
+        return "InvalidCertificate";
+    case UpdateFirmwareStatusEnumType::RevokedCertificate:
+        return "RevokedCertificate";
+    }
+
+    throw std::out_of_range("No known string conversion for provided enum of type UpdateFirmwareStatusEnumType");
+}
+
+UpdateFirmwareStatusEnumType string_to_update_firmware_status_enum_type(const std::string& s) {
+    if (s == "Accepted") {
+        return UpdateFirmwareStatusEnumType::Accepted;
+    }
+    if (s == "Rejected") {
+        return UpdateFirmwareStatusEnumType::Rejected;
+    }
+    if (s == "AcceptedCanceled") {
+        return UpdateFirmwareStatusEnumType::AcceptedCanceled;
+    }
+    if (s == "InvalidCertificate") {
+        return UpdateFirmwareStatusEnumType::InvalidCertificate;
+    }
+    if (s == "RevokedCertificate") {
+        return UpdateFirmwareStatusEnumType::RevokedCertificate;
+    }
+
+    throw std::out_of_range("Provided string " + s +
+                            " could not be converted to enum of type UpdateFirmwareStatusEnumType");
+}
+} // namespace conversions
+
+std::ostream& operator<<(std::ostream& os, const UpdateFirmwareStatusEnumType& update_firmware_status_enum_type) {
+    os << conversions::update_firmware_status_enum_type_to_string(update_firmware_status_enum_type);
+    return os;
+}
+namespace conversions {
+std::string security_event_to_string(SecurityEvent e) {
+    switch (e) {
+    case SecurityEvent::AttemptedReplayAttacks:
+        return "AttemptedReplayAttacks";
+    case SecurityEvent::FirmwareUpdated:
+        return "FirmwareUpdated";
+    case SecurityEvent::FailedToAuthenticateAtCentralSystem:
+        return "FailedToAuthenticateAtCentralSystem";
+    case SecurityEvent::CentralSystemFailedToAuthenticate:
+        return "CentralSystemFailedToAuthenticate";
+    case SecurityEvent::SettingSystemTime:
+        return "SettingSystemTime";
+    case SecurityEvent::StartupOfTheDevice:
+        return "StartupOfTheDevice";
+    case SecurityEvent::ResetOrReboot:
+        return "ResetOrReboot";
+    case SecurityEvent::SecurityLogWasCleared:
+        return "SecurityLogWasCleared";
+    case SecurityEvent::ReconfigurationOfSecurityParameters:
+        return "ReconfigurationOfSecurityParameters";
+    case SecurityEvent::MemoryExhaustion:
+        return "MemoryExhaustion";
+    case SecurityEvent::InvalidMessages:
+        return "InvalidMessages";
+    case SecurityEvent::TamperDetectionActivated:
+        return "TamperDetectionActivated";
+    case SecurityEvent::InvalidFirmwareSignature:
+        return "InvalidFirmwareSignature";
+    case SecurityEvent::InvalidFirmwareSigningCertificate:
+        return "InvalidFirmwareSigningCertificate";
+    case SecurityEvent::InvalidCentralSystemCertificate:
+        return "InvalidCentralSystemCertificate";
+    case SecurityEvent::InvalidChargePointCertificate:
+        return "InvalidChargePointCertificate";
+    case SecurityEvent::InvalidTLSVersion:
+        return "InvalidTLSVersion";
+    case SecurityEvent::InvalidTLSCipherSuite:
+        return "InvalidTLSCipherSuite";
+    }
+
+    throw std::out_of_range("No known string conversion for provided enum of type SecurityEvent");
+}
+
+SecurityEvent string_to_security_event(const std::string& s) {
+    if (s == "FirmwareUpdated") {
+        return SecurityEvent::FirmwareUpdated;
+    }
+    if (s == "FailedToAuthenticateAtCentralSystem") {
+        return SecurityEvent::FailedToAuthenticateAtCentralSystem;
+    }
+    if (s == "CentralSystemFailedToAuthenticate") {
+        return SecurityEvent::CentralSystemFailedToAuthenticate;
+    }
+    if (s == "SettingSystemTime") {
+        return SecurityEvent::SettingSystemTime;
+    }
+    if (s == "StartupOfTheDevice") {
+        return SecurityEvent::StartupOfTheDevice;
+    }
+    if (s == "ResetOrReboot") {
+        return SecurityEvent::ResetOrReboot;
+    }
+    if (s == "SecurityLogWasCleared") {
+        return SecurityEvent::SecurityLogWasCleared;
+    }
+    if (s == "ReconfigurationOfSecurityParameters") {
+        return SecurityEvent::ReconfigurationOfSecurityParameters;
+    }
+    if (s == "MemoryExhaustion") {
+        return SecurityEvent::MemoryExhaustion;
+    }
+    if (s == "InvalidMessages") {
+        return SecurityEvent::InvalidMessages;
+    }
+    if (s == "AttemptedReplayAttacks") {
+        return SecurityEvent::AttemptedReplayAttacks;
+    }
+    if (s == "TamperDetectionActivated") {
+        return SecurityEvent::TamperDetectionActivated;
+    }
+    if (s == "InvalidFirmwareSignature") {
+        return SecurityEvent::InvalidFirmwareSignature;
+    }
+    if (s == "InvalidFirmwareSigningCertificate") {
+        return SecurityEvent::InvalidFirmwareSigningCertificate;
+    }
+    if (s == "InvalidCentralSystemCertificate") {
+        return SecurityEvent::InvalidCentralSystemCertificate;
+    }
+    if (s == "InvalidChargePointCertificate") {
+        return SecurityEvent::InvalidChargePointCertificate;
+    }
+    if (s == "InvalidTLSVersion") {
+        return SecurityEvent::InvalidTLSVersion;
+    }
+    if (s == "InvalidTLSCipherSuite") {
+        return SecurityEvent::InvalidTLSCipherSuite;
+    }
+    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type SecurityEvent");
+}
+} // namespace conversions
+
+std::ostream& operator<<(std::ostream& os, const SecurityEvent& security_event) {
+    os << conversions::security_event_to_string(security_event);
+    return os;
+}
+
+namespace conversions {
+std::string certificate_type_to_string(CertificateType e) {
+    switch (e) {
+    case CertificateType::CentralSystemRootCertificate:
+        return "CentralSystemRootCertificate";
+    case CertificateType::ClientCertificate:
+        return "ClientCertificate";
+    case CertificateType::ManufacturerRootCertificate:
+        return "ManufacturerRootCertificate";
+    }
+
+    throw std::out_of_range("No known string conversion for provided enum of type UpdateFirmwareStatusEnumType");
+}
+
+CertificateType string_to_certificate_type(const std::string& s) {
+    if (s == "CentralSystemRootCertificate") {
+        return CertificateType::CentralSystemRootCertificate;
+    }
+    if (s == "ClientCertificate") {
+        return CertificateType::ClientCertificate;
+    }
+    if (s == "ManufacturerRootCertificate") {
+        return CertificateType::ManufacturerRootCertificate;
+    }
+    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type CertificateType");
+}
+} // namespace conversions
+
+std::ostream& operator<<(std::ostream& os, const CertificateType& certificate_type) {
+    os << conversions::certificate_type_to_string(certificate_type);
+    return os;
+}
+
+namespace conversions {
+std::string certificate_verification_result_to_string(CertificateVerificationResult e) {
+    switch (e) {
+    case CertificateVerificationResult::Expired:
+        return "Expired";
+    case CertificateVerificationResult::InvalidCertificateChain:
+        return "InvalidCertificateChain";
+    case CertificateVerificationResult::InvalidCommonName:
+        return "InvalidCommonName";
+    case CertificateVerificationResult::InvalidSignature:
+        return "InvalidSignature";
+    case CertificateVerificationResult::NoRootCertificateInstalled:
+        return "NoRootCertificateInstalled";
+    case CertificateVerificationResult::Valid:
+        return "Valid";
+    }
+
+    throw std::out_of_range("No known string conversion for provided enum of type UpdateFirmwareStatusEnumType");
+}
+
+CertificateVerificationResult string_to_certificate_verification_result(const std::string& s) {
+    if (s == "Expired") {
+        return CertificateVerificationResult::Expired;
+    }
+    if (s == "InvalidCertificateChain") {
+        return CertificateVerificationResult::InvalidCertificateChain;
+    }
+    if (s == "InvalidCommonName") {
+        return CertificateVerificationResult::InvalidCommonName;
+    }
+    if (s == "InvalidSignature") {
+        return CertificateVerificationResult::InvalidSignature;
+    }
+    if (s == "NoRootCertificateInstalled") {
+        return CertificateVerificationResult::NoRootCertificateInstalled;
+    }
+    if (s == "Valid") {
+        return CertificateVerificationResult::Valid;
+    }
+    throw std::out_of_range("Provided string " + s +
+                            " could not be converted to enum of type CertificateVerificationResult");
+}
+} // namespace conversions
+
+std::ostream& operator<<(std::ostream& os, const CertificateVerificationResult& certificate_verification_result) {
+    os << conversions::certificate_verification_result_to_string(certificate_verification_result);
+    return os;
+}
+
+namespace conversions {
+std::string install_certificate_result_to_string(InstallCertificateResult e) {
+    switch (e) {
+    case InstallCertificateResult::CertificateStoreMaxLengthExceeded:
+        return "CertificateStoreMaxLengthExceeded";
+    case InstallCertificateResult::InvalidCertificateChain:
+        return "InvalidCertificateChain";
+    case InstallCertificateResult::InvalidSignature:
+        return "InvalidSignature";
+    case InstallCertificateResult::InvalidFormat:
+        return "InvalidFormat";
+    case InstallCertificateResult::Ok:
+        return "Ok";
+    case InstallCertificateResult::Valid:
+        return "Valid";
+    case InstallCertificateResult::WriteError:
+        return "WriteError";
+    }
+
+    throw std::out_of_range("No known string conversion for provided enum of type UpdateFirmwareStatusEnumType");
+}
+
+InstallCertificateResult string_to_install_certificate_result(const std::string& s) {
+    if (s == "CertificateStoreMaxLengthExceeded") {
+        return InstallCertificateResult::CertificateStoreMaxLengthExceeded;
+    }
+    if (s == "InvalidCertificateChain") {
+        return InstallCertificateResult::InvalidCertificateChain;
+    }
+    if (s == "InvalidFormat") {
+        return InstallCertificateResult::InvalidFormat;
+    }
+    if (s == "InvalidSignature") {
+        return InstallCertificateResult::InvalidSignature;
+    }
+    if (s == "Ok") {
+        return InstallCertificateResult::Ok;
+    }
+    if (s == "Valid") {
+        return InstallCertificateResult::Valid;
+    }
+    if (s == "WriteError") {
+        return InstallCertificateResult::WriteError;
+    }
+    throw std::out_of_range("Provided string " + s +
+                            " could not be converted to enum of type CertificateVerificationResult");
+}
+} // namespace conversions
+
+std::ostream& operator<<(std::ostream& os, const InstallCertificateResult& install_certificate_result) {
+    os << conversions::install_certificate_result_to_string(install_certificate_result);
+    return os;
+}
+
+namespace conversions {
+std::string scheduled_callback_type_to_string(ScheduledCallbackType e) {
+    switch (e) {
+    case ScheduledCallbackType::DownloadFirmwareCallback:
+        return "DownloadFirmwareCallback";
+    case ScheduledCallbackType::InstallFirmwareCallback:
+        return "InstallFirmwareCallback";
+    }
+
+    throw std::out_of_range("No known string conversion for provided enum of type UpdateFirmwareStatusEnumType");
+}
+
+ScheduledCallbackType string_to_scheduled_callback_type(const std::string& s) {
+    if (s == "DownloadFirmwareCallback") {
+        return ScheduledCallbackType::DownloadFirmwareCallback;
+    }
+    if (s == "InstallFirmwareCallback") {
+        return ScheduledCallbackType::InstallFirmwareCallback;
+    }
+    throw std::out_of_range("Provided string " + s +
+                            " could not be converted to enum of type CertificateVerificationResult");
+}
+} // namespace conversions
+
+std::ostream& operator<<(std::ostream& os, const ScheduledCallbackType& scheduled_callback_type) {
+    os << conversions::scheduled_callback_type_to_string(scheduled_callback_type);
+    return os;
+}
+
 } // namespace ocpp1_6

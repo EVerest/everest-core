@@ -84,6 +84,7 @@ int main(int argc, char* argv[]) {
         interactive = true;
     }
 
+    auto configs_path = maindir;
     auto schemas_path = maindir;
     auto database_path = maindir;
 
@@ -92,9 +93,23 @@ int main(int argc, char* argv[]) {
     std::string config_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     json json_config = json::parse(config_file);
+    auto user_config_path = boost::filesystem::path(configs_path) / "user_config" / "user_config.json";
+
+    if (boost::filesystem::exists(user_config_path)) {
+
+        std::ifstream ifs(user_config_path.c_str());
+        std::string user_config_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+
+        auto user_config = json::parse(user_config_file);
+
+        EVLOG(info) << "Augmenting main config with user-config entries";
+        json_config.merge_patch(user_config);
+    } else {
+        EVLOG(debug) << "No user-config provided.";
+    }
 
     std::shared_ptr<ocpp1_6::ChargePointConfiguration> configuration =
-        std::make_shared<ocpp1_6::ChargePointConfiguration>(json_config, schemas_path, database_path);
+        std::make_shared<ocpp1_6::ChargePointConfiguration>(json_config, configs_path, schemas_path, database_path);
 
     charge_point = new ocpp1_6::ChargePoint(configuration);
     charge_point->start();

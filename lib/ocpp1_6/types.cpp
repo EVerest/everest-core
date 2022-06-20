@@ -28,6 +28,10 @@ std::string messagetype_to_string(MessageType m) {
         return "CancelReservation";
     case MessageType::CancelReservationResponse:
         return "CancelReservationResponse";
+    case MessageType::CertificateSigned:
+        return "CertificateSigned";
+    case MessageType::CertificateSignedResponse:
+        return "CertificateSignedResponse";
     case MessageType::ChangeAvailability:
         return "ChangeAvailability";
     case MessageType::ChangeAvailabilityResponse:
@@ -48,10 +52,18 @@ std::string messagetype_to_string(MessageType m) {
         return "DataTransfer";
     case MessageType::DataTransferResponse:
         return "DataTransferResponse";
+    case MessageType::DeleteCertificate:
+        return "DeleteCertificate";
+    case MessageType::DeleteCertificateResponse:
+        return "DeleteCertificateResponse";
     case MessageType::DiagnosticsStatusNotification:
         return "DiagnosticsStatusNotification";
     case MessageType::DiagnosticsStatusNotificationResponse:
         return "DiagnosticsStatusNotificationResponse";
+    case MessageType::ExtendedTriggerMessage:
+        return "ExtendedTriggerMessage";
+    case MessageType::ExtendedTriggerMessageResponse:
+        return "ExtendedTriggerMessageResponse";
     case MessageType::FirmwareStatusNotification:
         return "FirmwareStatusNotification";
     case MessageType::FirmwareStatusNotificationResponse:
@@ -68,14 +80,30 @@ std::string messagetype_to_string(MessageType m) {
         return "GetDiagnostics";
     case MessageType::GetDiagnosticsResponse:
         return "GetDiagnosticsResponse";
+    case MessageType::GetInstalledCertificateIds:
+        return "GetInstalledCertificateIds";
+    case MessageType::GetInstalledCertificateIdsResponse:
+        return "GetInstalledCertificateIdsResponse";
     case MessageType::GetLocalListVersion:
         return "GetLocalListVersion";
     case MessageType::GetLocalListVersionResponse:
         return "GetLocalListVersionResponse";
+    case MessageType::GetLog:
+        return "GetLog";
+    case MessageType::GetLogResponse:
+        return "GetLogResponse";
     case MessageType::Heartbeat:
         return "Heartbeat";
     case MessageType::HeartbeatResponse:
         return "HeartbeatResponse";
+    case MessageType::InstallCertificate:
+        return "InstallCertificate";
+    case MessageType::InstallCertificateResponse:
+        return "InstallCertificateResponse";
+    case MessageType::LogStatusNotification:
+        return "LogStatusNotification";
+    case MessageType::LogStatusNotificationResponse:
+        return "LogStatusNotificationResponse";
     case MessageType::MeterValues:
         return "MeterValues";
     case MessageType::MeterValuesResponse:
@@ -96,6 +124,10 @@ std::string messagetype_to_string(MessageType m) {
         return "Reset";
     case MessageType::ResetResponse:
         return "ResetResponse";
+    case MessageType::SecurityEventNotification:
+        return "SecurityEventNotification";
+    case MessageType::SecurityEventNotificationResponse:
+        return "SecurityEventNotificationResponse";
     case MessageType::SendLocalList:
         return "SendLocalList";
     case MessageType::SendLocalListResponse:
@@ -104,6 +136,18 @@ std::string messagetype_to_string(MessageType m) {
         return "SetChargingProfile";
     case MessageType::SetChargingProfileResponse:
         return "SetChargingProfileResponse";
+    case MessageType::SignCertificate:
+        return "SignCertificate";
+    case MessageType::SignCertificateResponse:
+        return "SignCertificateResponse";
+    case MessageType::SignedFirmwareStatusNotification:
+        return "SignedFirmwareStatusNotification";
+    case MessageType::SignedFirmwareStatusNotificationResponse:
+        return "SignedFirmwareStatusNotificationResponse";
+    case MessageType::SignedUpdateFirmware:
+        return "SignedUpdateFirmware";
+    case MessageType::SignedUpdateFirmwareResponse:
+        return "SignedUpdateFirmwareResponse";
     case MessageType::StartTransaction:
         return "StartTransaction";
     case MessageType::StartTransactionResponse:
@@ -129,7 +173,8 @@ std::string messagetype_to_string(MessageType m) {
     case MessageType::UpdateFirmwareResponse:
         return "UpdateFirmwareResponse";
     case MessageType::InternalError:
-        throw std::out_of_range("No known string conversion for InternalError MessageType");
+        EVLOG_error << "No known string conversion for InternalError MessageType";
+        return "InternalError";
     }
 
     throw std::out_of_range("No known string conversion for provided enum of type MessageType");
@@ -153,6 +198,12 @@ MessageType string_to_messagetype(const std::string& s) {
     }
     if (s == "CancelReservationResponse") {
         return MessageType::CancelReservationResponse;
+    }
+    if (s == "CertificateSigned") {
+        return MessageType::CertificateSigned;
+    }
+    if (s == "CertificateSignedResponse") {
+        return MessageType::CertificateSignedResponse;
     }
     if (s == "ChangeAvailability") {
         return MessageType::ChangeAvailability;
@@ -184,11 +235,23 @@ MessageType string_to_messagetype(const std::string& s) {
     if (s == "DataTransferResponse") {
         return MessageType::DataTransferResponse;
     }
+    if (s == "DeleteCertificate") {
+        return MessageType::DeleteCertificate;
+    }
+    if (s == "DeleteCertificateResponse") {
+        return MessageType::DeleteCertificateResponse;
+    }
     if (s == "DiagnosticsStatusNotification") {
         return MessageType::DiagnosticsStatusNotification;
     }
     if (s == "DiagnosticsStatusNotificationResponse") {
         return MessageType::DiagnosticsStatusNotificationResponse;
+    }
+    if (s == "ExtendedTriggerMessage") {
+        return MessageType::ExtendedTriggerMessage;
+    }
+    if (s == "ExtendedTriggerMessageResponse") {
+        return MessageType::ExtendedTriggerMessageResponse;
     }
     if (s == "FirmwareStatusNotification") {
         return MessageType::FirmwareStatusNotification;
@@ -214,17 +277,41 @@ MessageType string_to_messagetype(const std::string& s) {
     if (s == "GetDiagnosticsResponse") {
         return MessageType::GetDiagnosticsResponse;
     }
+    if (s == "GetInstalledCertificateIds") {
+        return MessageType::GetInstalledCertificateIds;
+    }
+    if (s == "GetInstalledCertificateIdsResponse") {
+        return MessageType::GetInstalledCertificateIdsResponse;
+    }
     if (s == "GetLocalListVersion") {
         return MessageType::GetLocalListVersion;
     }
     if (s == "GetLocalListVersionResponse") {
         return MessageType::GetLocalListVersionResponse;
     }
+    if (s == "GetLog") {
+        return MessageType::GetLog;
+    }
+    if (s == "GetLogResponse") {
+        return MessageType::GetLogResponse;
+    }
     if (s == "Heartbeat") {
         return MessageType::Heartbeat;
     }
     if (s == "HeartbeatResponse") {
         return MessageType::HeartbeatResponse;
+    }
+    if (s == "InstallCertificate") {
+        return MessageType::InstallCertificate;
+    }
+    if (s == "InstallCertificateResponse") {
+        return MessageType::InstallCertificateResponse;
+    }
+    if (s == "LogStatusNotification") {
+        return MessageType::LogStatusNotification;
+    }
+    if (s == "LogStatusNotificationResponse") {
+        return MessageType::LogStatusNotificationResponse;
     }
     if (s == "MeterValues") {
         return MessageType::MeterValues;
@@ -256,6 +343,12 @@ MessageType string_to_messagetype(const std::string& s) {
     if (s == "ResetResponse") {
         return MessageType::ResetResponse;
     }
+    if (s == "SecurityEventNotification") {
+        return MessageType::SecurityEventNotification;
+    }
+    if (s == "SecurityEventNotificationResponse") {
+        return MessageType::SecurityEventNotificationResponse;
+    }
     if (s == "SendLocalList") {
         return MessageType::SendLocalList;
     }
@@ -267,6 +360,24 @@ MessageType string_to_messagetype(const std::string& s) {
     }
     if (s == "SetChargingProfileResponse") {
         return MessageType::SetChargingProfileResponse;
+    }
+    if (s == "SignCertificate") {
+        return MessageType::SignCertificate;
+    }
+    if (s == "SignCertificateResponse") {
+        return MessageType::SignCertificateResponse;
+    }
+    if (s == "SignedFirmwareStatusNotification") {
+        return MessageType::SignedFirmwareStatusNotification;
+    }
+    if (s == "SignedFirmwareStatusNotificationResponse") {
+        return MessageType::SignedFirmwareStatusNotificationResponse;
+    }
+    if (s == "SignedUpdateFirmware") {
+        return MessageType::SignedUpdateFirmware;
+    }
+    if (s == "SignedUpdateFirmwareResponse") {
+        return MessageType::SignedUpdateFirmwareResponse;
     }
     if (s == "StartTransaction") {
         return MessageType::StartTransaction;
@@ -403,6 +514,38 @@ void from_json(const json& j, CiString25Type& k) {
     k.set(j);
 }
 
+CiString40Type::CiString40Type(const std::string& data) : CiString(data, 40) {
+}
+
+CiString40Type::CiString40Type(const json& data) : CiString(data.get<std::string>(), 40) {
+}
+
+CiString40Type::CiString40Type() : CiString(40) {
+}
+
+CiString40Type& CiString40Type::operator=(const std::string& s) {
+    this->set(s);
+    return *this;
+}
+
+CiString40Type& CiString40Type::operator=(const char* c) {
+    this->set(std::string(c));
+    return *this;
+}
+
+CiString40Type& CiString40Type::operator=(const json& j) {
+    this->set(j.get<std::string>());
+    return *this;
+}
+
+void to_json(json& j, const CiString40Type& k) {
+    j = json(k.get());
+}
+
+void from_json(const json& j, CiString40Type& k) {
+    k.set(j);
+}
+
 CiString50Type::CiString50Type(const std::string& data) : CiString(data, 50) {
 }
 
@@ -432,6 +575,38 @@ void to_json(json& j, const CiString50Type& k) {
 }
 
 void from_json(const json& j, CiString50Type& k) {
+    k.set(j);
+}
+
+CiString128Type::CiString128Type(const std::string& data) : CiString(data, 128) {
+}
+
+CiString128Type::CiString128Type(const json& data) : CiString(data.get<std::string>(), 128) {
+}
+
+CiString128Type::CiString128Type() : CiString(128) {
+}
+
+CiString128Type& CiString128Type::operator=(const std::string& s) {
+    this->set(s);
+    return *this;
+}
+
+CiString128Type& CiString128Type::operator=(const char* c) {
+    this->set(std::string(c));
+    return *this;
+}
+
+CiString128Type& CiString128Type::operator=(const json& j) {
+    this->set(j.get<std::string>());
+    return *this;
+}
+
+void to_json(json& j, const CiString128Type& k) {
+    j = json(k.get());
+}
+
+void from_json(const json& j, CiString128Type& k) {
     k.set(j);
 }
 
@@ -496,6 +671,134 @@ void to_json(json& j, const CiString500Type& k) {
 }
 
 void from_json(const json& j, CiString500Type& k) {
+    k.set(j);
+}
+
+CiString512Type::CiString512Type(const std::string& data) : CiString(data, 512) {
+}
+
+CiString512Type::CiString512Type(const json& data) : CiString(data.get<std::string>(), 512) {
+}
+
+CiString512Type::CiString512Type() : CiString(512) {
+}
+
+CiString512Type& CiString512Type::operator=(const std::string& s) {
+    this->set(s);
+    return *this;
+}
+
+CiString512Type& CiString512Type::operator=(const char* c) {
+    this->set(std::string(c));
+    return *this;
+}
+
+CiString512Type& CiString512Type::operator=(const json& j) {
+    this->set(j.get<std::string>());
+    return *this;
+}
+
+void to_json(json& j, const CiString512Type& k) {
+    j = json(k.get());
+}
+
+void from_json(const json& j, CiString512Type& k) {
+    k.set(j);
+}
+
+CiString800Type::CiString800Type(const std::string& data) : CiString(data, 800) {
+}
+
+CiString800Type::CiString800Type(const json& data) : CiString(data.get<std::string>(), 800) {
+}
+
+CiString800Type::CiString800Type() : CiString(800) {
+}
+
+CiString800Type& CiString800Type::operator=(const std::string& s) {
+    this->set(s);
+    return *this;
+}
+
+CiString800Type& CiString800Type::operator=(const char* c) {
+    this->set(std::string(c));
+    return *this;
+}
+
+CiString800Type& CiString800Type::operator=(const json& j) {
+    this->set(j.get<std::string>());
+    return *this;
+}
+
+void to_json(json& j, const CiString800Type& k) {
+    j = json(k.get());
+}
+
+void from_json(const json& j, CiString800Type& k) {
+    k.set(j);
+}
+
+CiString5500Type::CiString5500Type(const std::string& data) : CiString(data, 5500) {
+}
+
+CiString5500Type::CiString5500Type(const json& data) : CiString(data.get<std::string>(), 5500) {
+}
+
+CiString5500Type::CiString5500Type() : CiString(5500) {
+}
+
+CiString5500Type& CiString5500Type::operator=(const std::string& s) {
+    this->set(s);
+    return *this;
+}
+
+CiString5500Type& CiString5500Type::operator=(const char* c) {
+    this->set(std::string(c));
+    return *this;
+}
+
+CiString5500Type& CiString5500Type::operator=(const json& j) {
+    this->set(j.get<std::string>());
+    return *this;
+}
+
+void to_json(json& j, const CiString5500Type& k) {
+    j = json(k.get());
+}
+
+void from_json(const json& j, CiString5500Type& k) {
+    k.set(j);
+}
+
+CiString10000Type::CiString10000Type(const std::string& data) : CiString(data, 10000) {
+}
+
+CiString10000Type::CiString10000Type(const json& data) : CiString(data.get<std::string>(), 10000) {
+}
+
+CiString10000Type::CiString10000Type() : CiString(10000) {
+}
+
+CiString10000Type& CiString10000Type::operator=(const std::string& s) {
+    this->set(s);
+    return *this;
+}
+
+CiString10000Type& CiString10000Type::operator=(const char* c) {
+    this->set(std::string(c));
+    return *this;
+}
+
+CiString10000Type& CiString10000Type::operator=(const json& j) {
+    this->set(j.get<std::string>());
+    return *this;
+}
+
+void to_json(json& j, const CiString10000Type& k) {
+    j = json(k.get());
+}
+
+void from_json(const json& j, CiString10000Type& k) {
     k.set(j);
 }
 
@@ -665,6 +968,8 @@ std::string supported_feature_profiles_to_string(SupportedFeatureProfiles e) {
         return "SmartCharging";
     case SupportedFeatureProfiles::RemoteTrigger:
         return "RemoteTrigger";
+    case SupportedFeatureProfiles::Security:
+        return "Security";
     }
 
     throw std::out_of_range("No known string conversion for provided enum of type SupportedFeatureProfiles");
@@ -691,6 +996,9 @@ SupportedFeatureProfiles string_to_supported_feature_profiles(const std::string&
     if (s == "RemoteTrigger") {
         return SupportedFeatureProfiles::RemoteTrigger;
     }
+    if (s == "Security") {
+        return SupportedFeatureProfiles::Security;
+    }
 
     throw std::out_of_range("Provided string " + s +
                             " could not be converted to enum of type SupportedFeatureProfiles");
@@ -702,6 +1010,13 @@ SupportedFeatureProfiles string_to_supported_feature_profiles(const std::string&
 std::ostream& operator<<(std::ostream& os, const SupportedFeatureProfiles& supported_feature_profiles) {
     os << conversions::supported_feature_profiles_to_string(supported_feature_profiles);
     return os;
+}
+
+ScheduledCallback::ScheduledCallback(ScheduledCallbackType callbackType, std::string datetime,
+                                     std::vector<std::string> args) {
+    this->callbackType = callbackType;
+    this->datetime = datetime;
+    this->args = args;
 }
 
 } // namespace ocpp1_6

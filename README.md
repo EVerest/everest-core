@@ -8,14 +8,14 @@ The following table shows the current support for the listed feature profiles an
 | --- | --- |
 | Core | :heavy_check_mark: yes |
 | Firmware Management | :heavy_check_mark: yes |
-| Local Auth List Management | :x: |
+| Local Auth List Management | :heavy_check_mark: yes |
 | Reservation | :heavy_check_mark: yes |
 | Smart Charging | :yellow_circle: partially |
 | Remote Trigger | :heavy_check_mark: yes |
 
 | Application Note | Supported |
 | --- | --- |
-| [OCPP 1.6 Security Whitepaper (3rd edition)](https://www.openchargealliance.org/uploads/files/OCPP-1.6-security-whitepaper-edition-3.zip) | :yellow_circle: partially<br>Supported: Security Profiles 1 & 2 (TLS with HTTP Basic Authentication)<br>No support yet for Profile 3 (TLS with Client Side Certificates)|
+| [OCPP 1.6 Security Whitepaper (3rd edition)](https://www.openchargealliance.org/uploads/files/OCPP-1.6-security-whitepaper-edition-3.zip) | :heavy_check_mark: yes |
 | [Using ISO 15118 Plug & Charge with OCPP 1.6](https://www.openchargealliance.org/uploads/files/ocpp_1_6_ISO_15118_v10.pdf)| :x: |
 | [Autocharge](https://github.com/openfastchargingalliance/openfastchargingalliance/blob/master/autocharge-final.pdf)| :x: |
 
@@ -35,7 +35,7 @@ Execute cmake and then make install:
 
 ```bash
   mkdir build && cd build
-  cmake ..
+  cmake -DLIBOCPP_BUILD_EXAMPLES=ON ..
   make install
 ```
 

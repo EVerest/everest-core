@@ -15,6 +15,10 @@
             "type": "object",
             "$ref": "Core.json"
         },
+        "LocalAuthListManagement": {
+            "type": "object",
+            "$ref": "LocalAuthListManagement.json"
+        },
         "SmartCharging": {
             "type": "object",
             "$ref": "SmartCharging.json"
@@ -22,6 +26,14 @@
         "FirmwareManagement": {
             "type": "object",
             "$ref": "FirmwareManagement.json"
+        },
+        "Reservation": {
+            "type": "object",
+            "$ref": "Reservation.json"
+        },
+        "Security": {
+            "type": "object",
+            "$ref": "Security.json"
         }
     },
     "additionalProperties": false

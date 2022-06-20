@@ -5,6 +5,7 @@
     "required": [
         "ChargePointId",
         "CentralSystemURI",
+        "ChargeBoxSerialNumber",
         "ChargePointModel",
         "ChargePointVendor",
         "FirmwareVersion"
@@ -74,18 +75,31 @@
             "minLength": 1,
             "maxLength": 25
         },
-        "AuthorizationKey": {
-            "type": "string",
-            "$comment": "FIXME: we should support a string here for convenience, but also support the bytearray!",
-            "readOnly": true
-        },
-        "SupportedCiphers": {
+        "SupportedCiphers12": {
             "type": "array",
             "items": {
                 "type": "string"
             },
             "readOnly": true,
-            "default": ["ECDHE-ECDSA-AES128-GCM-SHA256", "ECDHE-ECDSA-AES256-GCM-SHA384"]
+            "default": [
+                "ECDHE-ECDSA-AES128-GCM-SHA256",
+                "ECDHE-ECDSA-AES256-GCM-SHA384",
+                "AES128-GCM-SHA256",
+                "AES256-GCM-SHA384",
+                "TLS_AES_256_GCM_SHA384",
+                "TLS_AES_128_GCM_SHA256"
+            ]
+        },
+        "SupportedCiphers13": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "readOnly": true,
+            "default": [
+                "TLS_AES_256_GCM_SHA384",
+                "TLS_AES_128_GCM_SHA256"
+            ]
         },
         "WebsocketReconnectInterval": {
             "$comment": "The reconnect interval of the websocket in seconds",
@@ -93,6 +107,18 @@
             "readOnly": true,
             "minimum": 0,
             "default": 10
+        },
+        "AuthorizeConnectorZeroOnConnectorOne": {
+            "$comment": "Automatically authorize id tags on connector 1 when there is only one connector",
+            "type": "boolean",
+            "readOnly": true,
+            "default": true
+        },
+        "LogMessages": {
+            "$comment": "Automatically log all sent and received messages to a temporary file at /tmp/libocpp_messages_<LIBOCPP_START_TIMESTAMP>.txt",
+            "type": "boolean",
+            "readOnly": true,
+            "default": true
         }
     },
     "additionalProperties": false

@@ -5,6 +5,8 @@
 
 #include <thread>
 
+#include <everest/timer.hpp>
+
 #include <websocketpp/client.hpp>
 #include <websocketpp/config/asio_client.hpp>
 
@@ -26,19 +28,8 @@ using websocketpp::lib::placeholders::_2;
 ///
 class WebsocketTLS : public WebsocketBase {
 private:
-    websocketpp::lib::shared_ptr<websocketpp::lib::thread> websocket_thread;
     tls_client wss_client;
-    std::string uri;
-    websocketpp::connection_hdl handle;
-    websocketpp::lib::shared_ptr<websocketpp::lib::thread> ws_thread;
-    std::mutex reconnect_mutex;
-    long reconnect_interval_ms;
-    websocketpp::transport::timer_handler reconnect_callback;
-    websocketpp::lib::shared_ptr<boost::asio::steady_timer> reconnect_timer;
-
-    /// \brief Reconnects the websocket using the reconnect timer, a reason for this reconnect can be provided with the
-    /// \p reason parameter
-    void reconnect(std::error_code reason);
+    std::unique_ptr<Everest::SteadyTimer> client_certificate_timer;
 
     /// \brief Extracts the hostname from the provided \p uri
     /// FIXME(kai): this only works with a very limited subset of hostnames and should be extended to work spec conform
@@ -52,14 +43,14 @@ private:
 
     /// \brief Called when a TLS websocket connection gets initialized, manages the supported TLS versions, cipher lists
     /// and how verification of the server certificate is handled
-    tls_context on_tls_init(std::string hostname, websocketpp::connection_hdl hdl);
+    tls_context on_tls_init(std::string hostname, websocketpp::connection_hdl hdl, int32_t security_profile);
 
     /// \brief Connect to a TLS websocket, if the provided \p authorization_header is not empty use it to add a HTTP
     /// Authorization header
-    void connect_tls(std::string authorization_header);
+    void connect_tls(int32_t security_profile);
 
     /// \brief Called when a TLS websocket connection is established, calls the connected callback
-    void on_open_tls(tls_client* c, websocketpp::connection_hdl hdl);
+    void on_open_tls(tls_client* c, websocketpp::connection_hdl hdl, int32_t security_profile);
 
     /// \brief Called when a message is received over the TLS websocket, calls the message callback
     void on_message_tls(websocketpp::connection_hdl hdl, tls_client::message_ptr msg);
@@ -68,10 +59,7 @@ private:
     void on_close_tls(tls_client* c, websocketpp::connection_hdl hdl);
 
     /// \brief Called when a TLS websocket connection fails to be established, tries to reconnect
-    void on_fail_tls(tls_client* c, websocketpp::connection_hdl hdl);
-
-    /// \brief Closes a TLS websocket connection
-    void close_tls(websocketpp::close::status::value code, const std::string& reason);
+    void on_fail_tls(tls_client* c, websocketpp::connection_hdl hdl, bool try_once);
 
 public:
     /// \brief Creates a new Websocket object with the providede \p configuration
@@ -79,10 +67,14 @@ public:
 
     /// \brief connect to a TLS websocket
     /// \returns true if the websocket is initialized and a connection attempt is made
-    bool connect() override;
+    bool connect(int32_t security_profile) override;
 
-    /// \brief disconnect the websocket
-    void disconnect() override;
+    /// \brief Reconnects the websocket using the delay, a reason for this reconnect can be provided with the
+    /// \p reason parameter
+    void reconnect(std::error_code reason, long delay);
+
+    /// \brief closes the websocket
+    void close(websocketpp::close::status::value code, const std::string& reason) override;
 
     /// \brief send a \p message over the websocket
     /// \returns true if the message was sent successfully

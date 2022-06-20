@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+#include <fstream>
 #include <future>
 #include <mutex>
 
@@ -12,7 +13,12 @@
 #include <ocpp1_6/types.hpp>
 
 namespace ocpp1_6 {
-ChargePointConfiguration::ChargePointConfiguration(json config, std::string schemas_path, std::string database_path) {
+ChargePointConfiguration::ChargePointConfiguration(json config, std::string configs_path, std::string schemas_path,
+                                                   std::string database_path) {
+
+    this->configs_path = configs_path;
+    this->pki_handler = std::make_shared<PkiHandler>(configs_path);
+
     // validate config entries
     Schemas schemas = Schemas(schemas_path);
     auto patch = schemas.get_profile_validator()->validate(config);
@@ -44,6 +50,11 @@ ChargePointConfiguration::ChargePointConfiguration(json config, std::string sche
                     EVLOG_error << "Feature profile: \"" << component << "\" not recognized";
                     throw std::runtime_error("Unknown component in SupportedFeatureProfiles config option.");
                 }
+            }
+            // add Security behind the scenes as supported feature profile
+            this->supported_feature_profiles.insert(conversions::string_to_supported_feature_profiles("Security"));
+            if (!this->config.contains("Security")) {
+                this->config["Security"] = json({});
             }
         }
     }
@@ -126,6 +137,63 @@ ChargePointConfiguration::ChargePointConfiguration(json config, std::string sche
         throw std::runtime_error("db access error");
     }
 
+    // prepare local auth list
+    std::string create_auth_list_version_sql = "CREATE TABLE IF NOT EXISTS AUTH_LIST_VERSION ("
+                                               "ID INT PRIMARY KEY     NOT NULL,"
+                                               "VERSION INT);";
+
+    sqlite3_stmt* create_auth_list_version_statement;
+    sqlite3_prepare_v2(this->db, create_auth_list_version_sql.c_str(), create_auth_list_version_sql.size(),
+                       &create_auth_list_version_statement, NULL);
+    int create_auth_list_version_res = sqlite3_step(create_auth_list_version_statement);
+    if (create_auth_list_version_res != SQLITE_DONE) {
+        EVLOG_error << "Could not create table AUTH_LIST_VERSION: " << create_auth_list_version_res
+                    << sqlite3_errmsg(this->db);
+        throw std::runtime_error("db access error");
+    }
+
+    if (sqlite3_finalize(create_auth_list_version_statement) != SQLITE_OK) {
+        EVLOG_error << "Error creating table AUTH_LIST_VERSION";
+        throw std::runtime_error("db access error");
+    }
+
+    std::ostringstream insert_auth_list_version_sql;
+    insert_auth_list_version_sql << "INSERT OR IGNORE INTO AUTH_LIST_VERSION (ID, VERSION) VALUES (0,0)";
+    std::string insert_auth_list_version_sql_str = insert_auth_list_version_sql.str();
+    sqlite3_stmt* insert_auth_list_version_statement;
+    sqlite3_prepare_v2(this->db, insert_auth_list_version_sql_str.c_str(), insert_auth_list_version_sql_str.size(),
+                       &insert_auth_list_version_statement, NULL);
+    int res_auth_list_version = sqlite3_step(insert_auth_list_version_statement);
+    if (res_auth_list_version != SQLITE_DONE) {
+        EVLOG_error << "Could not insert into table: " << res_auth_list_version << sqlite3_errmsg(this->db);
+        throw std::runtime_error("db access error");
+    }
+
+    if (sqlite3_finalize(insert_auth_list_version_statement) != SQLITE_OK) {
+        EVLOG_error << "Error inserting into table";
+        throw std::runtime_error("db access error");
+    }
+
+    std::string create_auth_list_sql = "CREATE TABLE IF NOT EXISTS AUTH_LIST ("
+                                       "ID_TAG TEXT PRIMARY KEY     NOT NULL,"
+                                       "AUTH_STATUS TEXT NOT NULL,"
+                                       "EXPIRY_DATE TEXT,"
+                                       "PARENT_ID_TAG TEXT);";
+
+    sqlite3_stmt* create_auth_list_statement;
+    sqlite3_prepare_v2(this->db, create_auth_list_sql.c_str(), create_auth_list_sql.size(), &create_auth_list_statement,
+                       NULL);
+    int create_auth_list_res = sqlite3_step(create_auth_list_statement);
+    if (create_auth_list_res != SQLITE_DONE) {
+        EVLOG_error << "Could not create table AUTH_LIST: " << create_auth_list_res << sqlite3_errmsg(this->db);
+        throw std::runtime_error("db access error");
+    }
+
+    if (sqlite3_finalize(create_auth_list_statement) != SQLITE_OK) {
+        EVLOG_error << "Error creating table AUTH_LIST";
+        throw std::runtime_error("db access error");
+    }
+
     // TODO(kai): get this from config
     this->supported_measurands = {{Measurand::Energy_Active_Import_Register, {Phase::L1, Phase::L2, Phase::L3}}, // Wh
                                   {Measurand::Energy_Active_Export_Register, {Phase::L1, Phase::L2, Phase::L3}}, // Wh
@@ -153,7 +221,13 @@ ChargePointConfiguration::ChargePointConfiguration(json config, std::string sche
          {MessageType::CancelReservationResponse, MessageType::ReserveNowResponse}},
         {SupportedFeatureProfiles::SmartCharging,
          {MessageType::ClearChargingProfileResponse, MessageType::GetCompositeScheduleResponse,
-          MessageType::SetChargingProfileResponse}}};
+          MessageType::SetChargingProfileResponse}},
+        {SupportedFeatureProfiles::Security,
+         {MessageType::CertificateSignedResponse, MessageType::DeleteCertificateResponse,
+          MessageType::ExtendedTriggerMessageResponse, MessageType::GetInstalledCertificateIdsResponse,
+          MessageType::GetLogResponse, MessageType::InstallCertificateResponse, MessageType::LogStatusNotification,
+          MessageType::SecurityEventNotification, MessageType::SignCertificate,
+          MessageType::SignedFirmwareStatusNotification, MessageType::SignedUpdateFirmwareResponse}}};
 
     this->supported_message_types_from_central_system = {
         {SupportedFeatureProfiles::Core,
@@ -171,7 +245,13 @@ ChargePointConfiguration::ChargePointConfiguration(json config, std::string sche
         {SupportedFeatureProfiles::RemoteTrigger, {MessageType::TriggerMessage}},
         {SupportedFeatureProfiles::Reservation, {MessageType::CancelReservation, MessageType::ReserveNow}},
         {SupportedFeatureProfiles::SmartCharging,
-         {MessageType::ClearChargingProfile, MessageType::GetCompositeSchedule, MessageType::SetChargingProfile}}};
+         {MessageType::ClearChargingProfile, MessageType::GetCompositeSchedule, MessageType::SetChargingProfile}},
+        {SupportedFeatureProfiles::Security,
+         {MessageType::CertificateSigned, MessageType::DeleteCertificate, MessageType::ExtendedTriggerMessage,
+          MessageType::GetInstalledCertificateIds, MessageType::GetLog, MessageType::InstallCertificate,
+          MessageType::LogStatusNotificationResponse, MessageType::SecurityEventNotificationResponse,
+          MessageType::SignCertificateResponse, MessageType::SignedFirmwareStatusNotificationResponse,
+          MessageType::SignedUpdateFirmware}}};
 
     for (auto feature_profile : this->supported_feature_profiles) {
         this->supported_message_types_sending.insert(
@@ -182,6 +262,12 @@ ChargePointConfiguration::ChargePointConfiguration(json config, std::string sche
             this->supported_message_types_from_central_system[feature_profile].begin(),
             this->supported_message_types_from_central_system[feature_profile].end());
     }
+
+    // those MessageTypes should still be accepted and implement their individual handling in case the feature profile
+    // is not supported
+    this->supported_message_types_receiving.insert(MessageType::GetLocalListVersion);
+    this->supported_message_types_receiving.insert(MessageType::SendLocalList);
+    this->supported_message_types_receiving.insert(MessageType::ReserveNow);
 }
 
 void ChargePointConfiguration::close() {
@@ -194,6 +280,36 @@ void ChargePointConfiguration::close() {
     }
 }
 
+std::string ChargePointConfiguration::getConfigsPath() {
+    return this->configs_path;
+}
+
+std::shared_ptr<PkiHandler> ChargePointConfiguration::getPkiHandler() {
+    return this->pki_handler;
+}
+
+json ChargePointConfiguration::get_user_config() {
+    auto user_config_path = boost::filesystem::path(this->getConfigsPath()) / "user_config" / "user_config.json";
+    if (boost::filesystem::exists(user_config_path)) {
+        // reading from and overriding to existing user config
+        std::fstream ifs(user_config_path.c_str());
+        std::string user_config_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+        ifs.close();
+        return json::parse(user_config_file);
+    }
+
+    return json({});
+}
+
+void ChargePointConfiguration::setInUserConfig(std::string profile, std::string key, const json value) {
+    auto user_config_path = boost::filesystem::path(this->getConfigsPath()) / "user_config" / "user_config.json";
+    json user_config = this->get_user_config();
+    user_config[profile][key] = value;
+    std::ofstream ofs(user_config_path.c_str());
+    ofs << user_config << std::endl;
+    ofs.close();
+}
+
 // Internal config options
 std::string ChargePointConfiguration::getChargePointId() {
     return this->config["Internal"]["ChargePointId"];
@@ -201,13 +317,10 @@ std::string ChargePointConfiguration::getChargePointId() {
 std::string ChargePointConfiguration::getCentralSystemURI() {
     return this->config["Internal"]["CentralSystemURI"];
 }
-boost::optional<CiString25Type> ChargePointConfiguration::getChargeBoxSerialNumber() {
-    boost::optional<CiString25Type> charge_box_serial_number = boost::none;
-    if (this->config["Internal"].contains("ChargeBoxSerialNumber")) {
-        charge_box_serial_number.emplace(this->config["Internal"]["ChargeBoxSerialNumber"]);
-    }
-    return charge_box_serial_number;
+std::string ChargePointConfiguration::getChargeBoxSerialNumber() {
+    return this->config["Internal"]["ChargeBoxSerialNumber"];
 }
+
 CiString20Type ChargePointConfiguration::getChargePointModel() {
     return CiString20Type(this->config["Internal"]["ChargePointModel"]);
 }
@@ -218,6 +331,7 @@ boost::optional<CiString25Type> ChargePointConfiguration::getChargePointSerialNu
     }
     return charge_point_serial_number;
 }
+
 CiString20Type ChargePointConfiguration::getChargePointVendor() {
     return CiString20Type(this->config["Internal"]["ChargePointVendor"]);
 }
@@ -255,17 +369,26 @@ boost::optional<CiString25Type> ChargePointConfiguration::getMeterType() {
 int32_t ChargePointConfiguration::getWebsocketReconnectInterval() {
     return this->config["Internal"]["WebsocketReconnectInterval"];
 }
-std::string ChargePointConfiguration::getSupportedCiphers() {
+bool ChargePointConfiguration::getAuthorizeConnectorZeroOnConnectorOne() {
+    if (this->getNumberOfConnectors() == 1) {
+        return this->config["Internal"]["AuthorizeConnectorZeroOnConnectorOne"];
+    }
+    return false;
+}
+bool ChargePointConfiguration::getLogMessages() {
+    return this->config["Internal"]["LogMessages"];
+}
 
-    std::vector<std::string> supported_ciphers = this->config["Internal"]["SupportedCiphers"];
+std::string ChargePointConfiguration::getSupportedCiphers12() {
+
+    std::vector<std::string> supported_ciphers = this->config["Internal"]["SupportedCiphers12"];
     return boost::algorithm::join(supported_ciphers, ":");
 }
-boost::optional<std::string> ChargePointConfiguration::getAuthorizationKey() {
-    boost::optional<std::string> authorization_key = boost::none;
-    if (this->config["Internal"].contains("AuthorizationKey")) {
-        authorization_key.emplace(this->config["Internal"]["AuthorizationKey"]);
-    }
-    return authorization_key;
+
+std::string ChargePointConfiguration::getSupportedCiphers13() {
+
+    std::vector<std::string> supported_ciphers = this->config["Internal"]["SupportedCiphers13"];
+    return boost::algorithm::join(supported_ciphers, ":");
 }
 
 std::vector<MeasurandWithPhase> ChargePointConfiguration::csv_to_measurand_with_phase_vector(std::string csv) {
@@ -316,7 +439,7 @@ std::vector<MeasurandWithPhase> ChargePointConfiguration::csv_to_measurand_with_
             EVLOG_debug << "measurand without phase: " << m.measurand;
         } else {
             EVLOG_debug << "measurand: " << m.measurand
-                         << " with phase: " << ocpp1_6::conversions::phase_to_string(m.phase.value());
+                        << " with phase: " << ocpp1_6::conversions::phase_to_string(m.phase.value());
         }
     }
     return measurand_with_phase_vector;
@@ -355,7 +478,7 @@ bool ChargePointConfiguration::setConnectorAvailability(int32_t connectorId, Ava
     int32_t number_of_connectors = this->getNumberOfConnectors();
     if (connectorId > number_of_connectors) {
         EVLOG_warning << "trying to set the availability of a connector that does not exist: " << connectorId
-                       << ", there are only " << number_of_connectors << " connectors.";
+                      << ", there are only " << number_of_connectors << " connectors.";
         return false;
     }
     std::vector<int32_t> connectors;
@@ -574,9 +697,222 @@ boost::optional<IdTagInfo> ChargePointConfiguration::getAuthorizationCacheEntry(
             auto now = DateTime();
             if (idTagInfo.expiryDate.get() <= now) {
                 EVLOG_info << "IdTag " << idTag
-                            << " in auth cache has expiry date in the past, setting entry to expired.";
+                           << " in auth cache has expiry date in the past, setting entry to expired.";
                 idTagInfo.status = AuthorizationStatus::Expired;
                 this->updateAuthorizationCacheEntry(idTag, idTagInfo);
+            }
+        }
+    }
+
+    return idTagInfo;
+}
+
+// Local Auth List Management
+
+int32_t ChargePointConfiguration::getLocalListVersion() {
+    std::promise<int32_t>* sql_promise = new std::promise<int32_t>();
+    std::future<int32_t> sql_future = sql_promise->get_future();
+
+    std::string select_sql_str = "SELECT VERSION FROM AUTH_LIST_VERSION WHERE ID = 0;";
+    char* error = nullptr;
+    int res = sqlite3_exec(
+        db, select_sql_str.c_str(),
+        [](void* sql_promise, int count, char** results, char** column_name) -> int {
+            if (count == 1) {
+                static_cast<std::promise<int32_t>*>(sql_promise)->set_value(std::stoi(results[0]));
+            }
+            return 0;
+        },
+        (void*)sql_promise, &error);
+
+    std::chrono::time_point<date::utc_clock> sql_wait = date::utc_clock::now() + ocpp1_6::future_wait_seconds;
+    std::future_status sql_future_status;
+    do {
+        sql_future_status = sql_future.wait_until(sql_wait);
+    } while (sql_future_status == std::future_status::deferred);
+    if (sql_future_status == std::future_status::timeout) {
+        EVLOG_debug << "sql future timeout";
+    } else if (sql_future_status == std::future_status::ready) {
+        EVLOG_debug << "sql future ready";
+    }
+
+    int32_t response = sql_future.get();
+    return response;
+}
+
+bool ChargePointConfiguration::updateLocalAuthorizationListVersion(int32_t list_version) {
+    std::ostringstream insert_sql;
+    insert_sql << "INSERT OR REPLACE INTO AUTH_LIST_VERSION (ID, VERSION) VALUES (0, \"" << std::to_string(list_version)
+               << "\")";
+    std::string insert_sql_str = insert_sql.str();
+    sqlite3_stmt* insert_statement;
+    sqlite3_prepare_v2(db, insert_sql_str.c_str(), insert_sql_str.size(), &insert_statement, NULL);
+    int res = sqlite3_step(insert_statement);
+    if (res != SQLITE_DONE) {
+        EVLOG_error << "Could not insert into table: " << res << sqlite3_errmsg(db);
+        throw std::runtime_error("db access error");
+    }
+
+    if (sqlite3_finalize(insert_statement) != SQLITE_OK) {
+        EVLOG_error << "Error inserting into table";
+        throw std::runtime_error("db access error");
+    }
+
+    return true;
+}
+
+bool ChargePointConfiguration::updateLocalAuthorizationList(
+    std::vector<LocalAuthorizationList> local_authorization_list) {
+    if (!this->getLocalAuthListEnabled()) {
+        return false;
+    }
+
+    for (auto& authorization_data : local_authorization_list) {
+        auto idTag = authorization_data.idTag;
+        if (authorization_data.idTagInfo) {
+            // add or replace
+            auto idTagInfo = authorization_data.idTagInfo.get();
+            std::ostringstream insert_sql;
+            insert_sql << "INSERT OR REPLACE INTO AUTH_LIST (ID_TAG, AUTH_STATUS, EXPIRY_DATE, PARENT_ID_TAG) VALUES "
+                          "(@id_tag, @auth_status, @expiry_date, @parent_id_tag)";
+            std::string insert_sql_str = insert_sql.str();
+            sqlite3_stmt* insert_statement;
+            sqlite3_prepare_v2(db, insert_sql_str.c_str(), insert_sql_str.size(), &insert_statement, NULL);
+
+            auto idTag_str = idTag.get();
+            auto idTagInfo_str = ocpp1_6::conversions::authorization_status_to_string(idTagInfo.status);
+            sqlite3_bind_text(insert_statement, 1, idTag_str.c_str(), -1, NULL);
+            sqlite3_bind_text(insert_statement, 2, idTagInfo_str.c_str(), -1, NULL);
+            if (idTagInfo.expiryDate) {
+                auto expiryDate_str = idTagInfo.expiryDate.value().to_rfc3339();
+                sqlite3_bind_text(insert_statement, 3, expiryDate_str.c_str(), -1, SQLITE_TRANSIENT);
+            }
+            if (idTagInfo.parentIdTag) {
+                auto parentIdTag_str = idTagInfo.parentIdTag.value().get();
+                sqlite3_bind_text(insert_statement, 4, parentIdTag_str.c_str(), -1, SQLITE_TRANSIENT);
+            }
+
+            int res = sqlite3_step(insert_statement);
+            if (res != SQLITE_DONE) {
+                EVLOG_error << "Could not insert into table: " << res << sqlite3_errmsg(db);
+                throw std::runtime_error("db access error");
+            }
+
+            if (sqlite3_finalize(insert_statement) != SQLITE_OK) {
+                EVLOG_error << "Error inserting into table";
+                throw std::runtime_error("db access error");
+            }
+        } else {
+            // remove
+            std::ostringstream delete_sql;
+            delete_sql << "DELETE FROM AUTH_LIST WHERE ID_TAG = @id_tag;";
+            std::string delete_sql_str = delete_sql.str();
+            sqlite3_stmt* delete_statement;
+            sqlite3_prepare_v2(db, delete_sql_str.c_str(), delete_sql_str.size(), &delete_statement, NULL);
+
+            auto idTag_str = idTag.get();
+            sqlite3_bind_text(delete_statement, 1, idTag_str.c_str(), -1, NULL);
+
+            int res = sqlite3_step(delete_statement);
+            if (res != SQLITE_DONE) {
+                EVLOG_error << "Could not delete from table: " << res << sqlite3_errmsg(db);
+                throw std::runtime_error("db access error");
+            }
+
+            if (sqlite3_finalize(delete_statement) != SQLITE_OK) {
+                EVLOG_error << "Error deleting from table";
+                throw std::runtime_error("db access error");
+            }
+        }
+    }
+
+    return true;
+}
+
+bool ChargePointConfiguration::clearLocalAuthorizationList() {
+    if (!this->getLocalAuthListEnabled()) {
+        return false;
+    }
+
+    std::string clear_sql_str = "DELETE FROM AUTH_LIST;";
+    sqlite3_stmt* clear_statement;
+    sqlite3_prepare_v2(db, clear_sql_str.c_str(), clear_sql_str.size(), &clear_statement, NULL);
+    int res = sqlite3_step(clear_statement);
+    if (res != SQLITE_DONE) {
+        EVLOG_error << "Could not clear AUTH_LIST table: " << res << sqlite3_errmsg(db);
+        return false;
+    }
+
+    if (sqlite3_finalize(clear_statement) != SQLITE_OK) {
+        EVLOG_error << "Error clearing table";
+        throw std::runtime_error("db access error");
+    }
+
+    return true;
+}
+
+boost::optional<IdTagInfo> ChargePointConfiguration::getLocalAuthorizationListEntry(CiString20Type idTag) {
+    if (!this->getLocalAuthListEnabled()) {
+        return boost::none;
+    }
+    std::ostringstream select_sql;
+    select_sql << "SELECT ID_TAG, AUTH_STATUS, EXPIRY_DATE, PARENT_ID_TAG FROM AUTH_LIST WHERE ID_TAG = @id_tag";
+    std::string select_sql_str = select_sql.str();
+    sqlite3_stmt* select_statement;
+    sqlite3_prepare_v2(db, select_sql_str.c_str(), select_sql_str.size(), &select_statement, NULL);
+
+    auto idTag_str = idTag.get();
+    sqlite3_bind_text(select_statement, 1, idTag_str.c_str(), -1, NULL);
+
+    int res = sqlite3_step(select_statement);
+    if (res != SQLITE_ROW) {
+        // no idTag with that name exists in the list
+        return boost::none;
+    }
+
+    IdTagInfo idTagInfo;
+    std::string auth_status_str = std::string(reinterpret_cast<const char*>(sqlite3_column_text(select_statement, 1)));
+
+    idTagInfo.status = conversions::string_to_authorization_status(auth_status_str);
+    auto expiry_date_ptr = sqlite3_column_text(select_statement, 2);
+    if (expiry_date_ptr != nullptr) {
+        std::string expiry_date_str = std::string(reinterpret_cast<const char*>(expiry_date_ptr));
+        EVLOG_debug << "expiry_date_str available: " << expiry_date_str;
+        auto expiry_date = DateTime(expiry_date_str);
+        idTagInfo.expiryDate.emplace(expiry_date);
+    } else {
+        EVLOG_debug << "expiry_date_str not available";
+    }
+
+    auto parent_id_tag_ptr = sqlite3_column_text(select_statement, 3);
+    if (parent_id_tag_ptr != nullptr) {
+        std::string parent_id_tag_str = std::string(reinterpret_cast<const char*>(parent_id_tag_ptr));
+        EVLOG_debug << "parent_id_tag_str available: " << parent_id_tag_str;
+        idTagInfo.parentIdTag.emplace(parent_id_tag_str);
+    } else {
+        EVLOG_debug << "parent_id_tag_str not available";
+    }
+
+    if (sqlite3_finalize(select_statement) != SQLITE_OK) {
+        EVLOG_error << "Error selecting from table";
+        throw std::runtime_error("db access error");
+    }
+
+    // check if expiry date is set and the entry should be set to Expired
+    // FIXME: should this really be done with an authorization list?
+    if (idTagInfo.status != AuthorizationStatus::Expired) {
+        if (idTagInfo.expiryDate) {
+            auto now = DateTime();
+            if (idTagInfo.expiryDate.get() <= now) {
+                EVLOG_info << "IdTag " << idTag
+                           << " in auth list has expiry date in the past, setting entry to expired.";
+                idTagInfo.status = AuthorizationStatus::Expired;
+                std::vector<LocalAuthorizationList> local_auth_list;
+                LocalAuthorizationList local_auth_list_entry;
+                local_auth_list_entry.idTag = idTag;
+                local_auth_list_entry.idTagInfo.emplace(idTagInfo);
+                local_auth_list.push_back(local_auth_list_entry);
+                this->updateLocalAuthorizationList(local_auth_list);
             }
         }
     }
@@ -597,6 +933,7 @@ boost::optional<bool> ChargePointConfiguration::getAllowOfflineTxForUnknownId() 
 void ChargePointConfiguration::setAllowOfflineTxForUnknownId(bool enabled) {
     if (this->getAllowOfflineTxForUnknownId() != boost::none) {
         this->config["Core"]["AllowOfflineTxForUnknownId"] = enabled;
+        this->setInUserConfig("Core", "AllowOfflineTxForUnknownId", enabled);
     }
 }
 boost::optional<KeyValue> ChargePointConfiguration::getAllowOfflineTxForUnknownIdKeyValue() {
@@ -623,6 +960,7 @@ boost::optional<bool> ChargePointConfiguration::getAuthorizationCacheEnabled() {
 void ChargePointConfiguration::setAuthorizationCacheEnabled(bool enabled) {
     if (this->getAuthorizationCacheEnabled() != boost::none) {
         this->config["Core"]["AuthorizationCacheEnabled"] = enabled;
+        this->setInUserConfig("Core", "AuthorizationCacheEnabled", enabled);
     }
 }
 boost::optional<KeyValue> ChargePointConfiguration::getAuthorizationCacheEnabledKeyValue() {
@@ -661,6 +999,7 @@ boost::optional<int32_t> ChargePointConfiguration::getBlinkRepeat() {
 void ChargePointConfiguration::setBlinkRepeat(int32_t blink_repeat) {
     if (this->getBlinkRepeat() != boost::none) {
         this->config["Core"]["BlinkRepeat"] = blink_repeat;
+        this->setInUserConfig("Core", "BlinkRepeat", blink_repeat);
     }
 }
 boost::optional<KeyValue> ChargePointConfiguration::getBlinkRepeatKeyValue() {
@@ -682,6 +1021,7 @@ int32_t ChargePointConfiguration::getClockAlignedDataInterval() {
 }
 void ChargePointConfiguration::setClockAlignedDataInterval(int32_t interval) {
     this->config["Core"]["ClockAlignedDataInterval"] = interval;
+    this->setInUserConfig("Core", "ClockAlignedDataInterval", interval);
 }
 KeyValue ChargePointConfiguration::getClockAlignedDataIntervalKeyValue() {
     ocpp1_6::KeyValue kv;
@@ -697,6 +1037,7 @@ int32_t ChargePointConfiguration::getConnectionTimeOut() {
 }
 void ChargePointConfiguration::setConnectionTimeOut(int32_t timeout) {
     this->config["Core"]["ConnectionTimeOut"] = timeout;
+    this->setInUserConfig("Core", "ConnectionTimeOut", timeout);
 }
 KeyValue ChargePointConfiguration::getConnectionTimeOutKeyValue() {
     ocpp1_6::KeyValue kv;
@@ -712,6 +1053,7 @@ std::string ChargePointConfiguration::getConnectorPhaseRotation() {
 }
 void ChargePointConfiguration::setConnectorPhaseRotation(std::string connector_phase_rotation) {
     this->config["Core"]["ConnectorPhaseRotation"] = connector_phase_rotation;
+    this->setInUserConfig("Core", "ConnectorPhaseRotation", connector_phase_rotation);
 }
 KeyValue ChargePointConfiguration::getConnectorPhaseRotationKeyValue() {
     ocpp1_6::KeyValue kv;
@@ -760,6 +1102,7 @@ int32_t ChargePointConfiguration::getHeartbeatInterval() {
 }
 void ChargePointConfiguration::setHeartbeatInterval(int32_t interval) {
     this->config["Core"]["HeartbeatInterval"] = interval;
+    this->setInUserConfig("Core", "HeartbeatInterval", interval);
 }
 KeyValue ChargePointConfiguration::getHeartbeatIntervalKeyValue() {
     ocpp1_6::KeyValue kv;
@@ -780,6 +1123,7 @@ boost::optional<int32_t> ChargePointConfiguration::getLightIntensity() {
 void ChargePointConfiguration::setLightIntensity(int32_t light_intensity) {
     if (this->getLightIntensity() != boost::none) {
         this->config["Core"]["LightIntensity"] = light_intensity;
+        this->setInUserConfig("Core", "LightIntensity", light_intensity);
     }
 }
 boost::optional<KeyValue> ChargePointConfiguration::getLightIntensityKeyValue() {
@@ -801,6 +1145,7 @@ bool ChargePointConfiguration::getLocalAuthorizeOffline() {
 }
 void ChargePointConfiguration::setLocalAuthorizeOffline(bool local_authorize_offline) {
     this->config["Core"]["LocalAuthorizeOffline"] = local_authorize_offline;
+    this->setInUserConfig("Core", "LocalAuthorizeOffline", local_authorize_offline);
 }
 KeyValue ChargePointConfiguration::getLocalAuthorizeOfflineKeyValue() {
     ocpp1_6::KeyValue kv;
@@ -816,6 +1161,7 @@ bool ChargePointConfiguration::getLocalPreAuthorize() {
 }
 void ChargePointConfiguration::setLocalPreAuthorize(bool local_pre_authorize) {
     this->config["Core"]["LocalPreAuthorize"] = local_pre_authorize;
+    this->setInUserConfig("Core", "LocalPreAuthorize", local_pre_authorize);
 }
 KeyValue ChargePointConfiguration::getLocalPreAuthorizeKeyValue() {
     ocpp1_6::KeyValue kv;
@@ -836,6 +1182,7 @@ boost::optional<int32_t> ChargePointConfiguration::getMaxEnergyOnInvalidId() {
 void ChargePointConfiguration::setMaxEnergyOnInvalidId(int32_t max_energy) {
     if (this->getMaxEnergyOnInvalidId() != boost::none) {
         this->config["Core"]["MaxEnergyOnInvalidId"] = max_energy;
+        this->setInUserConfig("Core", "MaxEnergyOnInvalidId", max_energy);
     }
 }
 boost::optional<KeyValue> ChargePointConfiguration::getMaxEnergyOnInvalidIdKeyValue() {
@@ -860,6 +1207,7 @@ bool ChargePointConfiguration::setMeterValuesAlignedData(std::string meter_value
         return false;
     }
     this->config["Core"]["MeterValuesAlignedData"] = meter_values_aligned_data;
+    this->setInUserConfig("Core", "MeterValuesAlignedData", meter_values_aligned_data);
     return true;
 }
 KeyValue ChargePointConfiguration::getMeterValuesAlignedDataKeyValue() {
@@ -903,6 +1251,7 @@ bool ChargePointConfiguration::setMeterValuesSampledData(std::string meter_value
         return false;
     }
     this->config["Core"]["MeterValuesSampledData"] = meter_values_sampled_data;
+    this->setInUserConfig("Core", "MeterValuesSampledData", meter_values_sampled_data);
     return true;
 }
 KeyValue ChargePointConfiguration::getMeterValuesSampledDataKeyValue() {
@@ -943,6 +1292,7 @@ int32_t ChargePointConfiguration::getMeterValueSampleInterval() {
 }
 void ChargePointConfiguration::setMeterValueSampleInterval(int32_t interval) {
     this->config["Core"]["MeterValueSampleInterval"] = interval;
+    this->setInUserConfig("Core", "MeterValueSampleInterval", interval);
 }
 KeyValue ChargePointConfiguration::getMeterValueSampleIntervalKeyValue() {
     ocpp1_6::KeyValue kv;
@@ -963,6 +1313,7 @@ boost::optional<int32_t> ChargePointConfiguration::getMinimumStatusDuration() {
 void ChargePointConfiguration::setMinimumStatusDuration(int32_t minimum_status_duration) {
     if (this->getMinimumStatusDuration() != boost::none) {
         this->config["Core"]["MinimumStatusDuration"] = minimum_status_duration;
+        this->setInUserConfig("Core", "MinimumStatusDuration", minimum_status_duration);
     }
 }
 boost::optional<KeyValue> ChargePointConfiguration::getMinimumStatusDurationKeyValue() {
@@ -990,12 +1341,35 @@ KeyValue ChargePointConfiguration::getNumberOfConnectorsKeyValue() {
     return kv;
 }
 
+// Reservation Profile
+boost::optional<bool> ChargePointConfiguration::getReserveConnectorZeroSupported() {
+    boost::optional<bool> reserve_connector_zero_supported = boost::none;
+    if (this->config.contains("Reservation") && this->config["Reservation"].contains("ReserveConnectorZeroSupported")) {
+        reserve_connector_zero_supported.emplace(this->config["Reservation"]["ReserveConnectorZeroSupported"]);
+    }
+    return reserve_connector_zero_supported;
+}
+
+boost::optional<KeyValue> ChargePointConfiguration::getReserveConnectorZeroSupportedKeyValue() {
+    boost::optional<KeyValue> reserve_connector_zero_supported_kv = boost::none;
+    auto reserve_connector_zero_supported = this->getReserveConnectorZeroSupported();
+    if (reserve_connector_zero_supported != boost::none) {
+        ocpp1_6::KeyValue kv;
+        kv.key = "ReserveConnectorZeroSupported";
+        kv.readonly = true;
+        kv.value.emplace(std::to_string(reserve_connector_zero_supported.value()));
+        reserve_connector_zero_supported_kv.emplace(kv);
+    }
+    return reserve_connector_zero_supported_kv;
+}
+
 // Core Profile
 int32_t ChargePointConfiguration::getResetRetries() {
     return this->config["Core"]["ResetRetries"];
 }
 void ChargePointConfiguration::setResetRetries(int32_t retries) {
     this->config["Core"]["ResetRetries"] = retries;
+    this->setInUserConfig("Core", "ResetRetries", retries);
 }
 KeyValue ChargePointConfiguration::getResetRetriesKeyValue() {
     ocpp1_6::KeyValue kv;
@@ -1011,6 +1385,7 @@ bool ChargePointConfiguration::getStopTransactionOnEVSideDisconnect() {
 }
 void ChargePointConfiguration::setStopTransactionOnEVSideDisconnect(bool stop_transaction_on_ev_side_disconnect) {
     this->config["Core"]["StopTransactionOnEVSideDisconnect"] = stop_transaction_on_ev_side_disconnect;
+    this->setInUserConfig("Core", "StopTransactionOnEVSideDisconnect", stop_transaction_on_ev_side_disconnect);
 }
 KeyValue ChargePointConfiguration::getStopTransactionOnEVSideDisconnectKeyValue() {
     ocpp1_6::KeyValue kv;
@@ -1026,6 +1401,7 @@ bool ChargePointConfiguration::getStopTransactionOnInvalidId() {
 }
 void ChargePointConfiguration::setStopTransactionOnInvalidId(bool stop_transaction_on_invalid_id) {
     this->config["Core"]["StopTransactionOnInvalidId"] = stop_transaction_on_invalid_id;
+    this->setInUserConfig("Core", "StopTransactionOnInvalidId", stop_transaction_on_invalid_id);
 }
 KeyValue ChargePointConfiguration::getStopTransactionOnInvalidIdKeyValue() {
     ocpp1_6::KeyValue kv;
@@ -1044,6 +1420,7 @@ bool ChargePointConfiguration::setStopTxnAlignedData(std::string stop_txn_aligne
         return false;
     }
     this->config["Core"]["StopTxnAlignedData"] = stop_txn_aligned_data;
+    this->setInUserConfig("Core", "StopTxnAlignedData", stop_txn_aligned_data);
     return true;
 }
 KeyValue ChargePointConfiguration::getStopTxnAlignedDataKeyValue() {
@@ -1087,6 +1464,8 @@ bool ChargePointConfiguration::setStopTxnSampledData(std::string stop_txn_sample
         return false;
     }
     this->config["Core"]["StopTxnSampledData"] = stop_txn_sampled_data;
+    this->setInUserConfig("Core", "StopTxnSampledData", stop_txn_sampled_data);
+
     return true;
 }
 KeyValue ChargePointConfiguration::getStopTxnSampledDataKeyValue() {
@@ -1163,6 +1542,7 @@ int32_t ChargePointConfiguration::getTransactionMessageAttempts() {
 }
 void ChargePointConfiguration::setTransactionMessageAttempts(int32_t attempts) {
     this->config["Core"]["TransactionMessageAttempts"] = attempts;
+    this->setInUserConfig("Core", "TransactionMessageAttempts", attempts);
 }
 KeyValue ChargePointConfiguration::getTransactionMessageAttemptsKeyValue() {
     ocpp1_6::KeyValue kv;
@@ -1178,6 +1558,7 @@ int32_t ChargePointConfiguration::getTransactionMessageRetryInterval() {
 }
 void ChargePointConfiguration::setTransactionMessageRetryInterval(int32_t retry_interval) {
     this->config["Core"]["TransactionMessageRetryInterval"] = retry_interval;
+    this->setInUserConfig("Core", "TransactionMessageRetryInterval", retry_interval);
 }
 KeyValue ChargePointConfiguration::getTransactionMessageRetryIntervalKeyValue() {
     ocpp1_6::KeyValue kv;
@@ -1193,6 +1574,7 @@ bool ChargePointConfiguration::getUnlockConnectorOnEVSideDisconnect() {
 }
 void ChargePointConfiguration::setUnlockConnectorOnEVSideDisconnect(bool unlock_connector_on_ev_side_disconnect) {
     this->config["Core"]["UnlockConnectorOnEVSideDisconnect"] = unlock_connector_on_ev_side_disconnect;
+    this->setInUserConfig("Core", "UnlockConnectorOnEVSideDisconnect", unlock_connector_on_ev_side_disconnect);
 }
 KeyValue ChargePointConfiguration::getUnlockConnectorOnEVSideDisconnectKeyValue() {
     ocpp1_6::KeyValue kv;
@@ -1213,6 +1595,7 @@ boost::optional<int32_t> ChargePointConfiguration::getWebsocketPingInterval() {
 void ChargePointConfiguration::setWebsocketPingInterval(int32_t websocket_ping_interval) {
     if (this->getWebsocketPingInterval() != boost::none) {
         this->config["Core"]["WebsocketPingInterval"] = websocket_ping_interval;
+        this->setInUserConfig("Core", "WebsocketPingInterval", websocket_ping_interval);
     }
 }
 boost::optional<KeyValue> ChargePointConfiguration::getWebsocketPingIntervalKeyValue() {
@@ -1310,6 +1693,210 @@ KeyValue ChargePointConfiguration::getMaxChargingProfilesInstalledKeyValue() {
     return kv;
 }
 
+// Security profile - optional
+boost::optional<bool> ChargePointConfiguration::getAdditionalRootCertificateCheck() {
+    boost::optional<bool> additional_root_certificate_check = boost::none;
+    if (this->config["Security"].contains("AdditionalRootCertificateCheck")) {
+        additional_root_certificate_check.emplace(this->config["Security"]["AdditionalRootCertificateCheck"]);
+    }
+    return additional_root_certificate_check;
+}
+
+boost::optional<KeyValue> ChargePointConfiguration::getAdditionalRootCertificateCheckKeyValue() {
+    ocpp1_6::KeyValue kv;
+    kv.key = "AdditionalRootCertificateCheck";
+    kv.readonly = true;
+    kv.value.emplace(conversions::bool_to_string(this->getAdditionalRootCertificateCheck().value()));
+    return kv;
+}
+
+// Security Profile - optional
+boost::optional<std::string> ChargePointConfiguration::getAuthorizationKey() {
+    boost::optional<std::string> authorization_key = boost::none;
+    if (this->config["Security"].contains("AuthorizationKey")) {
+        authorization_key.emplace(this->config["Security"]["AuthorizationKey"]);
+    }
+    return authorization_key;
+}
+
+void ChargePointConfiguration::setAuthorizationKey(std::string authorization_key) {
+
+    // TODO(piet): SecurityLog entry
+
+    std::string str;
+    if (isHexNotation(authorization_key)) {
+        str = hexToString(authorization_key);
+    } else {
+        str = authorization_key;
+    }
+
+    this->config["Security"]["AuthorizationKey"] = str;
+    this->setInUserConfig("Security", "AuthorizationKey", str);
+}
+
+std::string ChargePointConfiguration::hexToString(std::string const& s) {
+    std::string str;
+    for (size_t i = 0; i < s.length(); i += 2) {
+        std::string byte = s.substr(i, 2);
+        char chr = (char)(int)strtol(byte.c_str(), NULL, 16);
+        str.push_back(chr);
+    }
+    return str;
+}
+
+bool ChargePointConfiguration::isHexNotation(std::string const& s) {
+    return s.size() > 2 && s.find_first_not_of("0123456789abcdefABCDEF", 2) == std::string::npos;
+}
+
+boost::optional<KeyValue> ChargePointConfiguration::getAuthorizationKeyKeyValue() {
+    boost::optional<KeyValue> enabled_kv = boost::none;
+    boost::optional<std::string> enabled = boost::none;
+
+    ocpp1_6::KeyValue kv;
+    kv.key = "AuthorizationKey";
+    kv.readonly = false;
+
+    if (this->config["Security"].contains("AuthorizationKey")) {
+        // AuthorizationKey is writeOnly so we return a dummy
+        enabled.emplace("DummyAuthorizationKey");
+        kv.value.emplace(enabled.value());
+    }
+    enabled_kv.emplace(kv);
+    return enabled_kv;
+}
+
+// Security profile - optional
+boost::optional<int32_t> ChargePointConfiguration::getCertificateSignedMaxChainSize() {
+    boost::optional<int32_t> certificate_max_chain_size = boost::none;
+    if (this->config["Core"].contains("CertificateMaxChainSize")) {
+        certificate_max_chain_size.emplace(this->config["Security"]["CertificateMaxChainSize"]);
+    }
+    return certificate_max_chain_size;
+}
+
+boost::optional<KeyValue> ChargePointConfiguration::getCertificateSignedMaxChainSizeKeyValue() {
+    boost::optional<KeyValue> certificate_max_chain_size_kv = boost::none;
+    auto certificate_max_chain_size = this->getCertificateSignedMaxChainSize();
+    if (certificate_max_chain_size != boost::none) {
+        ocpp1_6::KeyValue kv;
+        kv.key = "CertificateMaxChainSize";
+        kv.readonly = true;
+        kv.value.emplace(std::to_string(certificate_max_chain_size.value()));
+        certificate_max_chain_size_kv.emplace(kv);
+    }
+    return certificate_max_chain_size_kv;
+}
+
+// Security profile - optional
+boost::optional<int32_t> ChargePointConfiguration::getCertificateStoreMaxLength() {
+    boost::optional<int32_t> certificate_store_max_length = boost::none;
+    if (this->config["Core"].contains("CertificateStoreMaxLength")) {
+        certificate_store_max_length.emplace(this->config["Security"]["CertificateStoreMaxLength"]);
+    }
+    return certificate_store_max_length;
+}
+
+boost::optional<KeyValue> ChargePointConfiguration::getCertificateStoreMaxLengthKeyValue() {
+    boost::optional<KeyValue> certificate_store_max_length_kv = boost::none;
+    auto certificate_store_max_length = this->getCertificateStoreMaxLength();
+    if (certificate_store_max_length != boost::none) {
+        ocpp1_6::KeyValue kv;
+        kv.key = "CertificateStoreMaxLength";
+        kv.readonly = true;
+        kv.value.emplace(std::to_string(certificate_store_max_length.value()));
+        certificate_store_max_length_kv.emplace(kv);
+    }
+    return certificate_store_max_length_kv;
+}
+
+// Security Profile - optional
+boost::optional<std::string> ChargePointConfiguration::getCpoName() {
+    boost::optional<std::string> cpo_name = boost::none;
+    if (this->config["Security"].contains("CpoName")) {
+        cpo_name.emplace(this->config["Security"]["CpoName"]);
+    }
+    return cpo_name;
+}
+
+void ChargePointConfiguration::setCpoName(std::string cpoName) {
+    this->config["Security"]["CpoName"] = cpoName;
+    this->setInUserConfig("Security", "CpoName", cpoName);
+}
+
+boost::optional<KeyValue> ChargePointConfiguration::getCpoNameKeyValue() {
+    boost::optional<KeyValue> cpo_name_kv = boost::none;
+    auto cpo_name = this->getCpoName();
+    ocpp1_6::KeyValue kv;
+    kv.key = "CpoName";
+    kv.readonly = false;
+    if (cpo_name != boost::none) {
+        kv.value.emplace(cpo_name.value());
+    }
+    cpo_name_kv.emplace(kv);
+    return cpo_name_kv;
+}
+
+// Security profile - optional in ocpp but mandatory websocket connection
+int32_t ChargePointConfiguration::getSecurityProfile() {
+    return this->config["Security"]["SecurityProfile"];
+}
+
+void ChargePointConfiguration::setSecurityProfile(int32_t security_profile) {
+    // TODO(piet): add boundaries for value of security profile
+    this->config["Security"]["SecurityProfile"] = security_profile;
+    // set security profile in user config
+    this->setInUserConfig("Security", "SecurityProfile", security_profile);
+}
+
+KeyValue ChargePointConfiguration::getSecurityProfileKeyValue() {
+    ocpp1_6::KeyValue kv;
+    auto security_profile = this->getSecurityProfile();
+    kv.key = "SecurityProfile";
+    kv.readonly = false;
+    kv.value.emplace(std::to_string(security_profile));
+    return kv;
+}
+
+// Local Auth List Management Profile
+bool ChargePointConfiguration::getLocalAuthListEnabled() {
+    return this->config["LocalAuthListManagement"]["LocalAuthListEnabled"];
+}
+void ChargePointConfiguration::setLocalAuthListEnabled(bool local_auth_list_enabled) {
+    this->config["LocalAuthListManagement"]["LocalAuthListEnabled"] = local_auth_list_enabled;
+    this->setInUserConfig("LocalAuthListManagement", "LocalAuthListEnabled", local_auth_list_enabled);
+}
+KeyValue ChargePointConfiguration::getLocalAuthListEnabledKeyValue() {
+    ocpp1_6::KeyValue kv;
+    kv.key = "LocalAuthListEnabled";
+    kv.readonly = false;
+    kv.value.emplace(conversions::bool_to_string(this->getLocalAuthListEnabled()));
+    return kv;
+}
+
+// Local Auth List Management Profile
+int32_t ChargePointConfiguration::getLocalAuthListMaxLength() {
+    return this->config["LocalAuthListManagement"]["LocalAuthListMaxLength"];
+}
+KeyValue ChargePointConfiguration::getLocalAuthListMaxLengthKeyValue() {
+    ocpp1_6::KeyValue kv;
+    kv.key = "LocalAuthListMaxLength";
+    kv.readonly = true;
+    kv.value.emplace(std::to_string(this->getLocalAuthListMaxLength()));
+    return kv;
+}
+
+// Local Auth List Management Profile
+int32_t ChargePointConfiguration::getSendLocalListMaxLength() {
+    return this->config["LocalAuthListManagement"]["SendLocalListMaxLength"];
+}
+KeyValue ChargePointConfiguration::getSendLocalListMaxLengthKeyValue() {
+    ocpp1_6::KeyValue kv;
+    kv.key = "SendLocalListMaxLength";
+    kv.readonly = true;
+    kv.value.emplace(std::to_string(this->getSendLocalListMaxLength()));
+    return kv;
+}
+
 boost::optional<KeyValue> ChargePointConfiguration::get(CiString50Type key) {
     // Core Profile
     if (key == "AllowOfflineTxForUnknownId") {
@@ -1318,6 +1905,10 @@ boost::optional<KeyValue> ChargePointConfiguration::get(CiString50Type key) {
     if (key == "AuthorizationCacheEnabled") {
         return this->getAuthorizationCacheEnabledKeyValue();
     }
+    // we should not return an AuthorizationKey because it's readonly
+    // if (key == "AuthorizationKey") {
+    //     return this->getAuthorizationKeyKeyValue();
+    // }
     if (key == "AuthorizeRemoteTxRequests") {
         return this->getAuthorizeRemoteTxRequestsKeyValue();
     }
@@ -1335,6 +1926,9 @@ boost::optional<KeyValue> ChargePointConfiguration::get(CiString50Type key) {
     }
     if (key == "ConnectorPhaseRotationMaxLength") {
         return this->getConnectorPhaseRotationMaxLengthKeyValue();
+    }
+    if (key == "CpoName") {
+        return this->getCpoNameKeyValue();
     }
     if (key == "GetConfigurationMaxKeys") {
         return this->getGetConfigurationMaxKeysKeyValue();
@@ -1375,8 +1969,14 @@ boost::optional<KeyValue> ChargePointConfiguration::get(CiString50Type key) {
     if (key == "NumberOfConnectors") {
         return this->getNumberOfConnectorsKeyValue();
     }
+    if (key == "ReserveConnectorZeroSupported") {
+        return this->getReserveConnectorZeroSupportedKeyValue();
+    }
     if (key == "ResetRetries") {
         return this->getResetRetriesKeyValue();
+    }
+    if (key == "SecurityProfile") {
+        return this->getSecurityProfileKeyValue();
     }
     if (key == "StopTransactionOnEVSideDisconnect") {
         return this->getStopTransactionOnEVSideDisconnectKeyValue();
@@ -1434,6 +2034,19 @@ boost::optional<KeyValue> ChargePointConfiguration::get(CiString50Type key) {
         }
     }
 
+    // Local Auth List Managementg
+    if (this->supported_feature_profiles.count(SupportedFeatureProfiles::LocalAuthListManagement)) {
+        if (key == "LocalAuthListEnabled") {
+            return this->getLocalAuthListEnabledKeyValue();
+        }
+        if (key == "LocalAuthListMaxLength") {
+            return this->getLocalAuthListMaxLengthKeyValue();
+        }
+        if (key == "SendLocalListMaxLength") {
+            return this->getSendLocalListMaxLengthKeyValue();
+        }
+    }
+
     return boost::none;
 }
 
@@ -1468,6 +2081,16 @@ ConfigurationStatus ChargePointConfiguration::set(CiString50Type key, CiString50
         }
         this->setAuthorizationCacheEnabled(conversions::string_to_bool(value.get()));
     }
+    if (key == "AuthorizationKey") {
+        std::string authorization_key = value.get();
+        if (authorization_key.length() >= 16) {
+            this->setAuthorizationKey(value.get());
+            return ConfigurationStatus::Accepted;
+        } else {
+            EVLOG_debug << "AuthorizationKey is < 16 bytes";
+            return ConfigurationStatus::Rejected;
+        }
+    }
     // TODO(kai): Implementations can choose if the is R or RW, at the moment readonly
     // if (key == "AuthorizeRemoteTxRequests") {
     //     this->setAuthorizeRemoteTxRequests(conversions::string_to_bool(value.get()));
@@ -1498,6 +2121,9 @@ ConfigurationStatus ChargePointConfiguration::set(CiString50Type key, CiString50
     }
     if (key == "ConnectorPhaseRotation") {
         this->setConnectorPhaseRotation(value.get());
+    }
+    if (key == "CpoName") {
+        this->setCpoName(value.get());
     }
     if (key == "HeartbeatInterval") {
         auto interval = std::stoi(value.get());
@@ -1558,6 +2184,30 @@ ConfigurationStatus ChargePointConfiguration::set(CiString50Type key, CiString50
     if (key == "ResetRetries") {
         this->setResetRetries(std::stoi(value.get()));
     }
+    if (key == "SecurityProfile") {
+        auto security_profile = std::stoi(value.get());
+        auto current_security_profile = this->getSecurityProfile();
+        if (security_profile <= current_security_profile) {
+            EVLOG_warning << "New security profile is <= current security profile. Rejecting request.";
+            return ConfigurationStatus::Rejected;
+        } else if ((security_profile == 1 || security_profile == 2) && this->getAuthorizationKey() == boost::none) {
+            EVLOG_warning << "New security level set to 1 or 2 but no authorization key is set. Rejecting request.";
+            return ConfigurationStatus::Rejected;
+        } else if ((security_profile == 2 || security_profile == 3) &&
+                   !this->pki_handler->isCentralSystemRootCertificateInstalled()) {
+            EVLOG_warning << "New security level set to 2 or 3 but no CentralSystemRootCertificateInstalled";
+            return ConfigurationStatus::Rejected;
+        } else if (security_profile == 3 && !this->pki_handler->isClientCertificateInstalled()) {
+            EVLOG_warning << "New security level set to 3 but no Client Certificate is installed";
+        }
+
+        else if (security_profile > 3) {
+            return ConfigurationStatus::Rejected;
+        } else {
+            // security profile is set during actual connection
+            return ConfigurationStatus::Accepted;
+        }
+    }
     if (key == "StopTransactionOnEVSideDisconnect") {
         this->setStopTransactionOnEVSideDisconnect(conversions::string_to_bool(value.get()));
     }
@@ -1594,6 +2244,26 @@ ConfigurationStatus ChargePointConfiguration::set(CiString50Type key, CiString50
         this->setWebsocketPingInterval(interval);
     }
 
+    // Local Auth List Management
+    if (key == "LocalAuthListEnabled") {
+        if (this->supported_feature_profiles.count(SupportedFeatureProfiles::LocalAuthListManagement)) {
+            this->setLocalAuthListEnabled(conversions::string_to_bool(value.get()));
+        } else {
+            return ConfigurationStatus::NotSupported;
+        }
+    }
+
     return ConfigurationStatus::Accepted;
 }
+
+std::vector<ScheduledCallback> ChargePointConfiguration::getScheduledCallbacks() {
+    // TODO(piet): Implement this
+    std::vector<ScheduledCallback> callbacks;
+    return callbacks;
+}
+
+void ChargePointConfiguration::insertScheduledCallback(ScheduledCallbackType, std::string datetime, std::string args) {
+    // TODO(piet): Implement this
+}
+
 } // namespace ocpp1_6

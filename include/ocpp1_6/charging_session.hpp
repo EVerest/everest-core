@@ -20,7 +20,8 @@ private:
     std::vector<MeterValue> sampled_meter_values;
     std::mutex clock_aligned_meter_values_mutex;
     std::vector<MeterValue> clock_aligned_meter_values;
-    boost::optional<ChargingProfile> tx_charging_profile; // TODO(kai): connect to charging profile handling
+    std::mutex tx_charging_profiles_mutex;
+    std::map<int32_t, ChargingProfile> tx_charging_profiles;
 
 public:
     /// \brief Creates a new Transaction object, taking ownership of the provided \p meter_values_sample_timer
@@ -54,6 +55,18 @@ public:
 
     /// \brief Marks the transaction as stopped/inactive
     void stop();
+
+    /// \brief Set a \p charging_profile
+    void set_charging_profile(ChargingProfile charging_profile);
+
+    /// \brief Remove the charging profile at the provided \p stack_level
+    void remove_charging_profile(int32_t stack_level);
+
+    /// \brief Remove all charging profiles
+    void remove_charging_profiles();
+
+    /// \brief \returns all charging profiles of this transaction
+    std::map<int32_t, ChargingProfile> get_charging_profiles();
 };
 
 /// \brief A structure that contains a idTag and its corresponding idTagInfo
@@ -84,6 +97,7 @@ private:
     std::unique_ptr<AuthorizedToken> authorized_token; // the presented authentication
     std::shared_ptr<StampedEnergyWh> start_energy_wh;
     std::shared_ptr<StampedEnergyWh> stop_energy_wh;
+    boost::optional<int32_t> reservation_id;
     bool plug_connected;                      // if the EV is plugged in or not
     std::shared_ptr<Transaction> transaction; // once all conditions for charging are met this contains the transaction
 
@@ -166,6 +180,13 @@ public:
     /// \brief Provides a list of clock aligned meter values
     /// \returns A vector of associated clock aligned meter values
     std::vector<MeterValue> get_clock_aligned_meter_values();
+
+    /// \brief Adds the given \p reservation_id to the charging session
+    void add_reservation_id(int32_t reservation_id);
+
+    /// \brief Provides the reservation id of the charging session
+    /// \returns the reservation id if it is available, boost::none otherwise
+    boost::optional<int32_t> get_reservation_id();
 };
 
 /// \brief Contains charging sessions for all available connectors and manages access to these charging sessions
@@ -266,6 +287,13 @@ public:
     /// \brief Provides a list of clock aligned meter values from the given \p connector
     /// \returns A vector of associated clock aligned meter values
     std::vector<MeterValue> get_clock_aligned_meter_values(int32_t connector);
+
+    /// \brief Adds a \p reservation_id to the charging session on the provided \p connector
+    void add_reservation_id(int32_t connector, int32_t reservation_id);
+
+    /// \brief Provides the reservation id from the given \p connector
+    /// \returns the reservation id if it is available, boost::none otherwise
+    boost::optional<int32_t> get_reservation_id(int32_t connector);
 };
 
 } // namespace ocpp1_6

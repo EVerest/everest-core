@@ -325,7 +325,6 @@ void MessageQueue::resume() {
     EVLOG_debug << "resume()";
     std::lock_guard<std::mutex> lk(this->message_mutex);
     this->paused = false;
-    this->new_message = true;
     this->cv.notify_one();
     EVLOG_debug << "resume() notified message queue";
 }

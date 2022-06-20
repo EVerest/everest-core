@@ -362,4 +362,107 @@ std::ostream& operator<<(std::ostream& os, const TransactionData& k) {
     return os;
 }
 
+/// \brief Conversion from a given CertificateHashDataType \p k to a given json object \p j
+void to_json(json& j, const CertificateHashDataType& k) {
+    // the required parts of the message
+    j = json{
+        {"hashAlgorithm", conversions::hash_algorithm_enum_type_to_string(k.hashAlgorithm)},
+        {"issuerNameHash", k.issuerNameHash},
+        {"issuerKeyHash", k.issuerKeyHash},
+        {"serialNumber", k.serialNumber},
+    };
+    // the optional parts of the message
+}
+
+/// \brief Conversion from a given json object \p j to a given CertificateHashDataType \p k
+void from_json(const json& j, CertificateHashDataType& k) {
+    // the required parts of the message
+    k.hashAlgorithm = conversions::string_to_hash_algorithm_enum_type(j.at("hashAlgorithm"));
+    k.issuerNameHash = j.at("issuerNameHash");
+    k.issuerKeyHash = j.at("issuerKeyHash");
+    k.serialNumber = j.at("serialNumber");
+
+    // the optional parts of the message
+}
+
+// \brief Writes the string representation of the given CertificateHashDataType \p k to the given output stream \p os
+/// \returns an output stream with the CertificateHashDataType written to
+std::ostream& operator<<(std::ostream& os, const CertificateHashDataType& k) {
+    os << json(k).dump(4);
+    return os;
+}
+
+/// \brief Conversion from a given LogParametersType \p k to a given json object \p j
+void to_json(json& j, const LogParametersType& k) {
+    // the required parts of the message
+    j = json{
+        {"remoteLocation", k.remoteLocation},
+    };
+    // the optional parts of the message
+    if (k.oldestTimestamp) {
+        j["oldestTimestamp"] = k.oldestTimestamp.value().to_rfc3339();
+    }
+    if (k.latestTimestamp) {
+        j["latestTimestamp"] = k.latestTimestamp.value().to_rfc3339();
+    }
+}
+
+/// \brief Conversion from a given json object \p j to a given LogParametersType \p k
+void from_json(const json& j, LogParametersType& k) {
+    // the required parts of the message
+    k.remoteLocation = j.at("remoteLocation");
+
+    // the optional parts of the message
+    if (j.contains("oldestTimestamp")) {
+        k.oldestTimestamp.emplace(j.at("oldestTimestamp"));
+    }
+    if (j.contains("latestTimestamp")) {
+        k.latestTimestamp.emplace(j.at("latestTimestamp"));
+    }
+}
+
+// \brief Writes the string representation of the given LogParametersType \p k to the given output stream \p os
+/// \returns an output stream with the LogParametersType written to
+std::ostream& operator<<(std::ostream& os, const LogParametersType& k) {
+    os << json(k).dump(4);
+    return os;
+}
+
+/// \brief Conversion from a given FirmwareType \p k to a given json object \p j
+void to_json(json& j, const FirmwareType& k) {
+    // the required parts of the message
+    j = json{
+        {"location", k.location},
+        {"retrieveDateTime", k.retrieveDateTime.to_rfc3339()},
+        {"signingCertificate", k.signingCertificate},
+        {"signature", k.signature},
+    };
+    // the optional parts of the message
+    if (k.installDateTime) {
+        j["installDateTime"] = k.installDateTime.value().to_rfc3339();
+    }
+}
+
+/// \brief Conversion from a given json object \p j to a given FirmwareType \p k
+void from_json(const json& j, FirmwareType& k) {
+    // the required parts of the message
+    k.location = j.at("location");
+    k.retrieveDateTime = DateTime(std::string(j.at("retrieveDateTime")));
+    ;
+    k.signingCertificate = j.at("signingCertificate");
+    k.signature = j.at("signature");
+
+    // the optional parts of the message
+    if (j.contains("installDateTime")) {
+        k.installDateTime.emplace(j.at("installDateTime"));
+    }
+}
+
+// \brief Writes the string representation of the given FirmwareType \p k to the given output stream \p os
+/// \returns an output stream with the FirmwareType written to
+std::ostream& operator<<(std::ostream& os, const FirmwareType& k) {
+    os << json(k).dump(4);
+    return os;
+}
+
 } // namespace ocpp1_6

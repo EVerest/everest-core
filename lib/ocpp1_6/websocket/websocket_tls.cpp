@@ -3,45 +3,49 @@
 #include <everest/logging.hpp>
 
 #include <ocpp1_6/charge_point_configuration.hpp>
+#include <ocpp1_6/pki_handler.hpp>
 #include <ocpp1_6/websocket/websocket_tls.hpp>
 
 namespace ocpp1_6 {
 
-WebsocketTLS::WebsocketTLS(std::shared_ptr<ChargePointConfiguration> configuration) :
-    WebsocketBase(configuration), reconnect_timer(nullptr) {
+WebsocketTLS::WebsocketTLS(std::shared_ptr<ChargePointConfiguration> configuration) : WebsocketBase(configuration) {
     this->reconnect_interval_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                                       std::chrono::seconds(configuration->getWebsocketReconnectInterval()))
                                       .count();
+    this->client_certificate_timer = std::make_unique<Everest::SteadyTimer>();
 }
 
-bool WebsocketTLS::connect() {
+bool WebsocketTLS::connect(int32_t security_profile) {
     if (!this->initialized()) {
         return false;
     }
-    this->uri = this->configuration->getCentralSystemURI();
-    EVLOG_info << "Connecting to uri: " << this->uri;
-
+    this->uri = this->configuration->getCentralSystemURI().insert(0, "wss://");
+    EVLOG_info << "Connecting TLS websocket to uri: " << this->uri;
     EVLOG_info << "Connecting TLS websocket, hostname: " << this->get_hostname(uri);
     this->wss_client.clear_access_channels(websocketpp::log::alevel::all);
     this->wss_client.clear_error_channels(websocketpp::log::elevel::all);
     this->wss_client.init_asio();
     this->wss_client.start_perpetual();
 
-    this->wss_client.set_tls_init_handler(websocketpp::lib::bind(
-        &WebsocketTLS::on_tls_init, this, this->get_hostname(this->uri), websocketpp::lib::placeholders::_1));
-
-    std::string authentication_header = "";
-    auto authorization_key = this->configuration->getAuthorizationKey();
-    if (authorization_key != boost::none) {
-        EVLOG_debug << "AuthorizationKey present, encoding authentication header";
-        std::string auth_header = this->configuration->getChargePointId() + ":" + authorization_key.value();
-        authentication_header = std::string("Basic ") + websocketpp::base64_encode(auth_header);
-    }
+    this->wss_client.set_tls_init_handler(websocketpp::lib::bind(&WebsocketTLS::on_tls_init, this,
+                                                                 this->get_hostname(this->uri),
+                                                                 websocketpp::lib::placeholders::_1, security_profile));
 
     websocket_thread.reset(new websocketpp::lib::thread(&tls_client::run, &this->wss_client));
 
-    this->reconnect_callback = [this, authentication_header](const websocketpp::lib::error_code& ec) {
+    this->reconnect_callback = [this, security_profile](const websocketpp::lib::error_code& ec) {
         EVLOG_info << "Reconnecting TLS websocket...";
+
+        // close connection before reconnecting
+        if (this->is_connected) {
+            try {
+                EVLOG_debug << "Closing websocket connection";
+                this->wss_client.close(this->handle, websocketpp::close::status::normal, "");
+            } catch (std::exception& e) {
+                EVLOG_error << "Error on TLS close: " << e.what();
+            }
+        }
+
         {
             std::lock_guard<std::mutex> lk(this->reconnect_mutex);
             if (this->reconnect_timer) {
@@ -49,26 +53,11 @@ bool WebsocketTLS::connect() {
             }
             this->reconnect_timer = nullptr;
         }
-        this->connect_tls(authentication_header);
+        this->connect_tls(security_profile);
     };
 
-    this->connect_tls(authentication_header);
+    this->connect_tls(security_profile);
     return true;
-}
-
-void WebsocketTLS::disconnect() {
-    if (!this->initialized()) {
-        EVLOG_error << "Cannot disconnect a websocket that was not initialized";
-        return;
-    }
-    this->shutting_down = true; // FIXME(kai): this makes the websocket inoperable after a disconnect, however this
-                                // might not be a bad thing.
-    if (this->reconnect_timer) {
-        this->reconnect_timer.get()->cancel();
-    }
-    EVLOG_info << "Disconnecting TLS websocket...";
-
-    this->close_tls(websocketpp::close::status::normal, "");
 }
 
 bool WebsocketTLS::send(const std::string& message) {
@@ -83,7 +72,7 @@ bool WebsocketTLS::send(const std::string& message) {
     if (ec) {
         EVLOG_error << "Error sending message over TLS websocket: " << ec.message();
 
-        this->reconnect(ec);
+        this->reconnect(ec, this->reconnect_interval_ms);
         EVLOG_info << "(TLS) Called reconnect()";
         return false;
     }
@@ -93,7 +82,7 @@ bool WebsocketTLS::send(const std::string& message) {
     return true;
 }
 
-void WebsocketTLS::reconnect(std::error_code reason) {
+void WebsocketTLS::reconnect(std::error_code reason, long delay) {
     if (this->shutting_down) {
         EVLOG_info << "Not reconnecting because the websocket is being shutdown.";
         return;
@@ -103,8 +92,8 @@ void WebsocketTLS::reconnect(std::error_code reason) {
     {
         std::lock_guard<std::mutex> lk(this->reconnect_mutex);
         if (!this->reconnect_timer) {
-            EVLOG_info << "Reconnecting in: " << this->reconnect_interval_ms << "ms";
-            this->reconnect_timer = this->wss_client.set_timer(this->reconnect_interval_ms, this->reconnect_callback);
+            EVLOG_info << "Reconnecting in: " << delay << "ms";
+            this->reconnect_timer = this->wss_client.set_timer(delay, this->reconnect_callback);
         } else {
             EVLOG_debug << "Reconnect timer already running";
         }
@@ -141,52 +130,57 @@ std::string WebsocketTLS::get_hostname(std::string uri) {
     return hostname_with_port;
 }
 
-// TLS
-bool WebsocketTLS::verify_certificate(std::string hostname, bool preverified,
-                                      boost::asio::ssl::verify_context& context) {
-    // FIXME(kai): this does not verify anything at the moment!
-
-    EVLOG_critical << "Faking certificate verification, always returning true";
-
-    return true;
-}
-tls_context WebsocketTLS::on_tls_init(std::string hostname, websocketpp::connection_hdl hdl) {
+tls_context WebsocketTLS::on_tls_init(std::string hostname, websocketpp::connection_hdl hdl, int32_t security_profile) {
     tls_context context = websocketpp::lib::make_shared<boost::asio::ssl::context>(boost::asio::ssl::context::sslv23);
 
     try {
         // FIXME(kai): choose reasonable defaults, they can probably be stricter than this set of options!
         // it is recommended to only accept TLSv1.2+
-        context->set_options(boost::asio::ssl::context::default_workarounds | //
-                             boost::asio::ssl::context::no_sslv2 |            //
-                             boost::asio::ssl::context::no_sslv3 |            //
-                             boost::asio::ssl::context::no_tlsv1 |            //
-                             boost::asio::ssl::context::no_tlsv1_1 |          //
+        context->set_options(boost::asio::ssl::context::default_workarounds |                                    //
+                             boost::asio::ssl::context::no_sslv2 |                                               //
+                             boost::asio::ssl::context::no_sslv3 |                                               //
+                             boost::asio::ssl::context::no_tlsv1 |                                               //
+                             boost::asio::ssl::context::no_tlsv1_1 | boost::asio::ssl::context::no_compression | //
                              boost::asio::ssl::context::single_dh_use);
 
         EVLOG_debug << "List of ciphers that will be accepted by this TLS connection: "
-                     << this->configuration->getSupportedCiphers();
+                    << this->configuration->getSupportedCiphers12() << ":"
+                    << this->configuration->getSupportedCiphers13();
 
-        // FIXME(kai): the following only applies to TSLv1.2, we should support TLSv1.3 here as well
-        // FIXME(kai): use SSL_CTX_set_ciphersuites for TLSv1.3
-        auto set_cipher_list_ret =
-            SSL_CTX_set_cipher_list(context->native_handle(), this->configuration->getSupportedCiphers().c_str());
-        if (set_cipher_list_ret != 1) {
-            EVLOG_critical << "SSL_CTX_set_cipher_list return value: " << set_cipher_list_ret;
+        auto rc =
+            SSL_CTX_set_cipher_list(context->native_handle(), this->configuration->getSupportedCiphers12().c_str());
+        if (rc != 1) {
+            EVLOG_debug << "SSL_CTX_set_cipher_list return value: " << rc;
             throw std::runtime_error("Could not set TLSv1.2 cipher list");
         }
 
+        rc = SSL_CTX_set_ciphersuites(context->native_handle(), this->configuration->getSupportedCiphers13().c_str());
+        if (rc != 1) {
+            EVLOG_debug << "SSL_CTX_set_cipher_list return value: " << rc;
+            std::shared_ptr<X509Certificate> cert = this->configuration->getPkiHandler()->getClientCertificate();
+            if (cert == nullptr) {
+                throw std::runtime_error(
+                    "Connecting with security profile 3 but no client side certificate is present or valid");
+            }
+            SSL_CTX_use_certificate(context->native_handle(), cert->x509);
+        }
+
         context->set_verify_mode(boost::asio::ssl::verify_peer);
-        context->set_verify_callback(websocketpp::lib::bind(&WebsocketTLS::verify_certificate, this, hostname,
-                                                            websocketpp::lib::placeholders::_1,
-                                                            websocketpp::lib::placeholders::_2));
-        context->set_default_verify_paths();
+        rc = SSL_CTX_load_verify_locations(
+            context->native_handle(), this->configuration->getPkiHandler()->getFile(CS_ROOT_CA_FILE).c_str(), NULL);
+        rc = SSL_CTX_set_default_verify_paths(context->native_handle());
+        if (rc != 1) {
+            EVLOG_error << "Could not load CA verify locations, error: " << ERR_error_string(ERR_get_error(), NULL);
+            throw std::runtime_error("Could not load CA verify locations");
+        }
+
     } catch (std::exception& e) {
         EVLOG_error << "Error on TLS init: " << e.what();
         throw std::runtime_error("Could not properly initialize TLS connection.");
     }
     return context;
 }
-void WebsocketTLS::connect_tls(std::string authorization_header) {
+void WebsocketTLS::connect_tls(int32_t security_profile) {
     EVLOG_info << "Connecting to TLS websocket at: " << this->uri;
     websocketpp::lib::error_code ec;
 
@@ -197,12 +191,27 @@ void WebsocketTLS::connect_tls(std::string authorization_header) {
         return;
     }
 
+    if (security_profile == 2) {
+        EVLOG_debug << "Connecting with security profile: 2";
+        boost::optional<std::string> authorization_header = this->getAuthorizationHeader();
+        if (authorization_header != boost::none) {
+            con->append_header("Authorization", authorization_header.get());
+        } else {
+            throw std::runtime_error("No authorization key provided when connecting with security profile 2 or 3.");
+        }
+    } else if (security_profile == 3) {
+        EVLOG_debug << "Connecting with security profile: 3";
+    } else {
+        throw std::runtime_error("Can not connect with TLS websocket with security profile not being 2 or 3.");
+    }
+
     this->handle = con->get_handle();
 
     con->set_open_handler(websocketpp::lib::bind(&WebsocketTLS::on_open_tls, this, &this->wss_client,
-                                                 websocketpp::lib::placeholders::_1));
+                                                 websocketpp::lib::placeholders::_1, security_profile));
     con->set_fail_handler(websocketpp::lib::bind(&WebsocketTLS::on_fail_tls, this, &this->wss_client,
-                                                 websocketpp::lib::placeholders::_1));
+                                                 websocketpp::lib::placeholders::_1,
+                                                 security_profile != this->configuration->getSecurityProfile()));
     con->set_close_handler(websocketpp::lib::bind(&WebsocketTLS::on_close_tls, this, &this->wss_client,
                                                   websocketpp::lib::placeholders::_1));
     con->set_message_handler(websocketpp::lib::bind(
@@ -210,15 +219,25 @@ void WebsocketTLS::connect_tls(std::string authorization_header) {
 
     con->add_subprotocol("ocpp1.6");
 
-    if (!authorization_header.empty()) {
-        EVLOG_debug << "Authorization header provided, appending to HTTP header: " << authorization_header;
-        con->append_header("Authorization", authorization_header);
-    }
-
     this->wss_client.connect(con);
 }
-void WebsocketTLS::on_open_tls(tls_client* c, websocketpp::connection_hdl hdl) {
-    EVLOG_info << "Connected to TLS websocket successfully. Executing connected callback";
+void WebsocketTLS::on_open_tls(tls_client* c, websocketpp::connection_hdl hdl, int32_t security_profile) {
+    EVLOG_info << "Connected to TLS websocket successfully";
+    this->is_connected = true;
+    this->configuration->setSecurityProfile(security_profile);
+    if (security_profile == 3) {
+        this->client_certificate_timer->interval(
+            [this]() {
+                EVLOG_debug << "Checking expiry date of client certificate";
+                int daysLeft = this->configuration->getPkiHandler()->getDaysUntilClientCertificateExpires();
+                if (daysLeft < 30) {
+                    EVLOG_info << "Certificate is invalid in " << daysLeft
+                               << " days. Requesting new certificate with certificate signing request";
+                    this->sign_certificate_callback();
+                }
+            },
+            std::chrono::hours(24));
+    }
     this->connected_callback();
 }
 void WebsocketTLS::on_message_tls(websocketpp::connection_hdl hdl, tls_client::message_ptr msg) {
@@ -234,30 +253,60 @@ void WebsocketTLS::on_message_tls(websocketpp::connection_hdl hdl, tls_client::m
     }
 }
 void WebsocketTLS::on_close_tls(tls_client* c, websocketpp::connection_hdl hdl) {
+    this->is_connected = false;
     tls_client::connection_ptr con = c->get_con_from_hdl(hdl);
     auto error_code = con->get_ec();
+
     EVLOG_info << "Closed TLS websocket connection with code: " << error_code << " ("
-                << websocketpp::close::status::get_string(con->get_remote_close_code())
-                << "), reason: " << con->get_remote_close_reason();
-    this->reconnect(error_code);
+               << websocketpp::close::status::get_string(con->get_remote_close_code())
+               << "), reason: " << con->get_remote_close_reason();
+    // dont reconnect on normal close
+    if (con->get_remote_close_code() != websocketpp::close::status::service_restart) {
+        this->reconnect(error_code, this->reconnect_interval_ms);
+    }
+    this->disconnected_callback();
 }
-void WebsocketTLS::on_fail_tls(tls_client* c, websocketpp::connection_hdl hdl) {
+void WebsocketTLS::on_fail_tls(tls_client* c, websocketpp::connection_hdl hdl, bool try_once) {
     tls_client::connection_ptr con = c->get_con_from_hdl(hdl);
     auto error_code = con->get_ec();
+    auto transport_ec = con->get_transport_ec();
     EVLOG_error << "Failed to connect to TLS websocket server " << con->get_response_header("Server")
-                 << ", code: " << error_code.value() << ", reason: " << error_code.message();
-    this->reconnect(error_code);
+                << ", code: " << error_code.value() << ", reason: " << error_code.message()
+                << ", response code: " << con->get_response_code();
+    EVLOG_error << "Failed to connect to TLS websocket server "
+                << ", code: " << transport_ec.value() << ", reason: " << transport_ec.message()
+                << ", category: " << transport_ec.category().name();
+    EVLOG_error << "Close code: " << con->get_local_close_code() << ", close reason: " << con->get_local_close_reason();
+
+    // TODO(piet): Trigger SecurityEvent in case InvalidCentralSystemCertificate
+
+    // move fallback ca to /certs if it exists
+    if (boost::filesystem::exists(CS_ROOT_CA_FILE_BACKUP_FILE)) {
+        EVLOG_debug << "Connection with new CA was not successful - Including fallback CA";
+        boost::filesystem::path new_path =
+            CS_ROOT_CA_FILE_BACKUP_FILE.parent_path() / CS_ROOT_CA_FILE_BACKUP_FILE.filename();
+        std::rename(CS_ROOT_CA_FILE_BACKUP_FILE.c_str(), new_path.c_str());
+    }
+
+    if (!try_once) {
+        this->reconnect(error_code, this->reconnect_interval_ms);
+    } else {
+        this->disconnected_callback();
+    }
 }
-void WebsocketTLS::close_tls(websocketpp::close::status::value code, const std::string& reason) {
+
+void WebsocketTLS::close(websocketpp::close::status::value code, const std::string& reason) {
+
     EVLOG_info << "Closing TLS websocket.";
+
     websocketpp::lib::error_code ec;
 
     this->wss_client.stop_perpetual();
     this->wss_client.close(this->handle, code, reason, ec);
+
     if (ec) {
         EVLOG_error << "Error initiating close of TLS websocket: " << ec.message();
     }
-
     EVLOG_info << "Closed TLS websocket successfully.";
 }
 
