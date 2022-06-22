@@ -397,6 +397,16 @@ void OCPP::init() {
 
         connector += 1;
     }
+
+    if (this->config.EnableExternalWebsocketControl) {
+        const std::string connect_topic = "everest_api/ocpp/cmd/connect";
+        this->mqtt.subscribe(connect_topic,
+                             [this](const std::string& data) { this->charge_point->connect_websocket(); });
+
+        const std::string disconnect_topic = "everest_api/ocpp/cmd/disconnect";
+        this->mqtt.subscribe(disconnect_topic,
+                             [this](const std::string& data) { this->charge_point->disconnect_websocket(); });
+    }
 }
 
 void OCPP::ready() {
