@@ -246,6 +246,13 @@ public:
     /// \brief Stops the ChargePoint, stopping timers, transactions and disconnecting from the Websocket
     void stop();
 
+    /// \brief connects the websocket if it is not yet connected
+    void connect_websocket();
+
+    /// \brief Disconnects the the websocket if it is connected
+    void disconnect_websocket();
+
+
     // public API for Core profile
 
     /// \brief Authorizes the provided \p idTag with the central system

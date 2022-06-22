@@ -37,7 +37,7 @@ bool WebsocketTLS::connect(int32_t security_profile) {
         EVLOG_info << "Reconnecting TLS websocket...";
 
         // close connection before reconnecting
-        if (this->is_connected) {
+        if (this->m_is_connected) {
             try {
                 EVLOG_debug << "Closing websocket connection";
                 this->wss_client.close(this->handle, websocketpp::close::status::normal, "");
@@ -223,7 +223,7 @@ void WebsocketTLS::connect_tls(int32_t security_profile) {
 }
 void WebsocketTLS::on_open_tls(tls_client* c, websocketpp::connection_hdl hdl, int32_t security_profile) {
     EVLOG_info << "Connected to TLS websocket successfully";
-    this->is_connected = true;
+    this->m_is_connected = true;
     this->configuration->setSecurityProfile(security_profile);
     if (security_profile == 3) {
         this->client_certificate_timer->interval(
@@ -253,7 +253,7 @@ void WebsocketTLS::on_message_tls(websocketpp::connection_hdl hdl, tls_client::m
     }
 }
 void WebsocketTLS::on_close_tls(tls_client* c, websocketpp::connection_hdl hdl) {
-    this->is_connected = false;
+    this->m_is_connected = false;
     tls_client::connection_ptr con = c->get_con_from_hdl(hdl);
     auto error_code = con->get_ec();
 

@@ -97,6 +97,19 @@ void ChargePoint::init_websocket(int32_t security_profile) {
     }
 }
 
+void ChargePoint::connect_websocket() {
+    if (this->websocket->is_connected()) {
+        this->init_websocket(this->configuration->getSecurityProfile());
+        this->websocket->connect(this->configuration->getSecurityProfile());
+    }
+}
+
+void ChargePoint::disconnect_websocket() {
+    if (this->websocket->is_connected()) {
+        this->websocket->disconnect(websocketpp::close::status::going_away);
+    }
+}
+
 void ChargePoint::heartbeat() {
     EVLOG_debug << "Sending heartbeat";
     HeartbeatRequest req;
