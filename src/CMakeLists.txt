@@ -8,7 +8,7 @@ target_link_libraries(charge_point
         date::date
         date::date-tz
         everest::log
-        sqlite3
+        SQLite::SQLite3
 )
 
 # needs c++ 14
