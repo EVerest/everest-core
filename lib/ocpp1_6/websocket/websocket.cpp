@@ -45,6 +45,10 @@ void Websocket::reconnect(std::error_code reason, long delay) {
     this->websocket->reconnect(reason, delay);
 }
 
+bool Websocket::is_connected() {
+    return this->websocket->is_connected();
+}
+
 void Websocket::register_connected_callback(const std::function<void()>& callback) {
     this->connected_callback = callback;
     this->websocket->register_connected_callback(callback);

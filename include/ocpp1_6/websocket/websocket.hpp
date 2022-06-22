@@ -3,8 +3,8 @@
 #ifndef OCPP_WEBSOCKET_HPP
 #define OCPP_WEBSOCKET_HPP
 
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <thread>
 
 #include <ocpp1_6/websocket/websocket_plain.hpp>
@@ -43,6 +43,9 @@ public:
 
     // \brief reconnects the websocket after the delay
     void reconnect(std::error_code reason, long delay);
+
+    /// \brief indicates if the websocket is connected
+    bool is_connected();
 
     /// \brief register a \p callback that is called when the websocket is connected successfully
     void register_connected_callback(const std::function<void()>& callback);

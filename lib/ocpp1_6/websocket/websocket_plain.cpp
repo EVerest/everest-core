@@ -32,7 +32,7 @@ bool WebsocketPlain::connect(int32_t security_profile) {
         EVLOG_info << "Reconnecting plain websocket...";
 
         // close connection before reconnecting
-        if (this->is_connected) {
+        if (this->m_is_connected) {
             try {
                 EVLOG_debug << "Closing websocket connection";
                 this->ws_client.close(this->handle, websocketpp::close::status::normal, "");
@@ -156,7 +156,7 @@ void WebsocketPlain::connect_plain(int32_t security_profile) {
 
 void WebsocketPlain::on_open_plain(client* c, websocketpp::connection_hdl hdl, int32_t security_profile) {
     EVLOG_info << "Connected to plain websocket successfully. Executing connected callback";
-    this->is_connected = true;
+    this->m_is_connected = true;
     this->configuration->setSecurityProfile(security_profile);
     this->connected_callback();
 }
@@ -175,7 +175,7 @@ void WebsocketPlain::on_message_plain(websocketpp::connection_hdl hdl, client::m
 }
 
 void WebsocketPlain::on_close_plain(client* c, websocketpp::connection_hdl hdl) {
-    this->is_connected = false;
+    this->m_is_connected = false;
     client::connection_ptr con = c->get_con_from_hdl(hdl);
     auto error_code = con->get_ec();
     EVLOG_info << "Closed plain websocket connection with code: " << error_code << " ("
