@@ -2507,6 +2507,9 @@ bool ChargePoint::suspend_charging_ev(int32_t connector) {
 }
 
 bool ChargePoint::suspend_charging_evse(int32_t connector) {
+    if (this->cancel_charging_callback != nullptr) {
+        this->cancel_charging_callback(connector, Reason::DeAuthorized);
+    }
     this->status->submit_event(connector, Event_PauseChargingEVSE());
     return true;
 }
