@@ -190,6 +190,7 @@ private:
     void handleRemoteStartTransactionRequest(Call<RemoteStartTransactionRequest> call);
     void handleRemoteStopTransactionRequest(Call<RemoteStopTransactionRequest> call);
     void handleResetRequest(Call<ResetRequest> call);
+    void handleStartTransactionResponse(CallResult<StartTransactionResponse> call_result);
     void handleUnlockConnectorRequest(Call<UnlockConnectorRequest> call);
 
     // smart charging profile

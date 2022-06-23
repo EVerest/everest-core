@@ -583,7 +583,7 @@ void ChargePoint::handle_message(const json& json_message, MessageType message_t
         break;
 
     case MessageType::StartTransactionResponse:
-        // handled by start_transaction future
+        this->handleStartTransactionResponse(json_message);
         break;
 
     case MessageType::StopTransactionResponse:
@@ -1075,6 +1075,51 @@ void ChargePoint::handleResetRequest(Call<ResetRequest> call) {
             kill(getpid(), SIGINT); // FIXME(kai): this leads to a somewhat dirty reset
         });
     }
+}
+
+void ChargePoint::handleStartTransactionResponse(CallResult<StartTransactionResponse> call_result) {
+
+    StartTransactionResponse start_transaction_response = call_result.msg;
+    // update authorization cache
+
+    // TODO(piet): Fix this for multiple connectors;
+    int32_t connector = 1;
+    auto idTag = this->charging_sessions->get_authorized_id_tag(connector).value();
+
+    this->configuration->updateAuthorizationCacheEntry(idTag, start_transaction_response.idTagInfo);
+    this->charging_sessions->add_authorized_token(connector, idTag, start_transaction_response.idTagInfo);
+
+    if (start_transaction_response.idTagInfo.status != AuthorizationStatus::Accepted) {
+        // FIXME(kai): libfsm        this->status_notification(connector, ChargePointErrorCode::NoError,
+        // this->status[connector]->suspended_evse());
+        if (this->configuration->getStopTransactionOnInvalidId()) {
+            this->stop_transaction(connector, Reason::DeAuthorized);
+        } else {
+            this->suspend_charging_ev(connector);
+        }
+    }
+    if (start_transaction_response.idTagInfo.status == AuthorizationStatus::ConcurrentTx) {
+        return;
+    }
+    auto meter_values_sample_timer = std::make_unique<Everest::SteadyTimer>(&this->io_service, [this, connector]() {
+        auto meter_value = this->get_latest_meter_value(
+            connector, this->configuration->getMeterValuesSampledDataVector(), ReadingContext::Sample_Periodic);
+        this->charging_sessions->add_sampled_meter_value(connector, meter_value);
+        this->send_meter_value(connector, meter_value);
+    });
+    auto transaction =
+        std::make_unique<Transaction>(start_transaction_response.transactionId, std::move(meter_values_sample_timer));
+    if (!this->charging_sessions->add_transaction(connector, std::move(transaction))) {
+        EVLOG_error << "could not add_transaction";
+    }
+    this->charging_sessions->change_meter_values_sample_interval(connector,
+                                                                 this->configuration->getMeterValueSampleInterval());
+
+    if (this->resume_charging_callback != nullptr) {
+        this->resume_charging_callback(connector);
+    }
+
+    EVLOG_critical << "Start Transaction Response finished";
 }
 
 void ChargePoint::handleUnlockConnectorRequest(Call<UnlockConnectorRequest> call) {
@@ -2157,6 +2202,7 @@ AuthorizationStatus ChargePoint::authorize_id_tag(CiString20Type idTag) {
     auto authorize_future = this->send_async<AuthorizeRequest>(call);
 
     auto enhanced_message = authorize_future.get();
+
     if (enhanced_message.messageType == MessageType::AuthorizeResponse) {
         CallResult<AuthorizeResponse> call_result = enhanced_message.message;
         AuthorizeResponse authorize_response = call_result.msg;
@@ -2176,14 +2222,19 @@ AuthorizationStatus ChargePoint::authorize_id_tag(CiString20Type idTag) {
             this->connection_timeout_timer.at(connector)->timeout(
                 std::chrono::seconds(this->configuration->getConnectionTimeOut()));
             this->status->submit_event(connector, Event_UsageInitiated());
-            if (connector > 0) {
-                this->start_transaction(connector);
-            }
         } else {
             return auth_status;
         }
     }
     if (enhanced_message.offline) {
+        // if chargepoint is offline and allowing transactions for unknown id
+        if (this->configuration->getAllowOfflineTxForUnknownId() != boost::none &&
+            this->configuration->getAllowOfflineTxForUnknownId().value()) {
+            IdTagInfo id_tag_info = {AuthorizationStatus::Accepted, boost::none, boost::none};
+            this->charging_sessions->add_authorized_token(connector, idTag, id_tag_info);
+            auth_status = AuthorizationStatus::Accepted;
+        }
+
         // The charge point is offline or has a bad connection.
         // Check if local authorization via the authorization cache is allowed:
         if (this->configuration->getAuthorizationCacheEnabled() && this->configuration->getLocalAuthorizeOffline()) {
@@ -2191,14 +2242,16 @@ AuthorizationStatus ChargePoint::authorize_id_tag(CiString20Type idTag) {
                           "IdTag is valid";
             auto idTagInfo = this->configuration->getAuthorizationCacheEntry(idTag);
             if (idTagInfo) {
-                auto connector = this->charging_sessions->add_authorized_token(idTag, idTagInfo.get());
-                if (connector > 0) {
-                    this->start_transaction(connector);
-                }
+                this->charging_sessions->add_authorized_token(connector, idTag, idTagInfo.get());
                 auth_status = idTagInfo.get().status;
             }
         }
     }
+
+    if (connector > 0 && auth_status == AuthorizationStatus::Accepted) {
+        this->start_transaction(connector);
+    }
+
     return auth_status;
 }
 
@@ -2300,47 +2353,7 @@ bool ChargePoint::start_transaction(int32_t connector) {
         call.msg.reservationId = this->charging_sessions->get_reservation_id(connector).value();
     }
 
-    auto start_transaction_future = this->send_async<StartTransactionRequest>(call);
-
-    auto enhanced_message = start_transaction_future.get();
-    if (enhanced_message.messageType != MessageType::StartTransactionResponse) {
-        return false;
-    }
-
-    CallResult<StartTransactionResponse> call_result = enhanced_message.message;
-    StartTransactionResponse start_transaction_response = call_result.msg;
-
-    // update authorization cache
-    this->configuration->updateAuthorizationCacheEntry(idTag, start_transaction_response.idTagInfo);
-    this->charging_sessions->add_authorized_token(connector, idTag, start_transaction_response.idTagInfo);
-
-    if (this->configuration->getStopTransactionOnInvalidId() &&
-        start_transaction_response.idTagInfo.status != AuthorizationStatus::Accepted) {
-        // FIXME(kai): libfsm        this->status_notification(connector, ChargePointErrorCode::NoError,
-        // this->status[connector]->suspended_evse());
-        return false;
-    }
-    if (start_transaction_response.idTagInfo.status == AuthorizationStatus::ConcurrentTx) {
-        return false;
-    }
-    auto meter_values_sample_timer = std::make_unique<Everest::SteadyTimer>(&this->io_service, [this, connector]() {
-        auto meter_value = this->get_latest_meter_value(
-            connector, this->configuration->getMeterValuesSampledDataVector(), ReadingContext::Sample_Periodic);
-        this->charging_sessions->add_sampled_meter_value(connector, meter_value);
-        this->send_meter_value(connector, meter_value);
-    });
-    auto transaction =
-        std::make_unique<Transaction>(start_transaction_response.transactionId, std::move(meter_values_sample_timer));
-    if (!this->charging_sessions->add_transaction(connector, std::move(transaction))) {
-        EVLOG_error << "could not add_transaction";
-    }
-    this->charging_sessions->change_meter_values_sample_interval(connector,
-                                                                 this->configuration->getMeterValueSampleInterval());
-
-    if (this->resume_charging_callback != nullptr) {
-        this->resume_charging_callback(connector);
-    }
-
+    this->send<StartTransactionRequest>(call);
     return true;
 }
 
