@@ -1089,15 +1089,6 @@ void ChargePoint::handleStartTransactionResponse(CallResult<StartTransactionResp
     this->configuration->updateAuthorizationCacheEntry(idTag, start_transaction_response.idTagInfo);
     this->charging_sessions->add_authorized_token(connector, idTag, start_transaction_response.idTagInfo);
 
-    if (start_transaction_response.idTagInfo.status != AuthorizationStatus::Accepted) {
-        // FIXME(kai): libfsm        this->status_notification(connector, ChargePointErrorCode::NoError,
-        // this->status[connector]->suspended_evse());
-        if (this->configuration->getStopTransactionOnInvalidId()) {
-            this->stop_transaction(connector, Reason::DeAuthorized);
-        } else {
-            this->suspend_charging_evse(connector);
-        }
-    }
     if (start_transaction_response.idTagInfo.status == AuthorizationStatus::ConcurrentTx) {
         return;
     }
@@ -1117,6 +1108,15 @@ void ChargePoint::handleStartTransactionResponse(CallResult<StartTransactionResp
 
     if (this->resume_charging_callback != nullptr) {
         this->resume_charging_callback(connector);
+    }
+
+    if (start_transaction_response.idTagInfo.status != AuthorizationStatus::Accepted) {
+        // FIXME(kai): libfsm        this->status_notification(connector, ChargePointErrorCode::NoError,
+        // this->status[connector]->suspended_evse());
+        this->suspend_charging_evse(connector);
+        if (this->configuration->getStopTransactionOnInvalidId()) {
+            this->stop_transaction(connector, Reason::DeAuthorized);
+        }
     }
 
     EVLOG_critical << "Start Transaction Response finished";
