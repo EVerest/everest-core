@@ -1058,7 +1058,6 @@ void ChargePoint::handleRemoteStopTransactionRequest(Call<RemoteStopTransactionR
     this->send<RemoteStopTransactionResponse>(call_result);
 
     if (connector > 0) {
-        this->status->submit_event(connector, Event_TransactionStoppedAndUserActionRequired());
         this->cancel_charging_callback(connector, Reason::Remote);
     }
 }
@@ -1126,9 +1125,10 @@ void ChargePoint::handleStartTransactionResponse(CallResult<StartTransactionResp
     if (start_transaction_response.idTagInfo.status != AuthorizationStatus::Accepted) {
         // FIXME(kai): libfsm        this->status_notification(connector, ChargePointErrorCode::NoError,
         // this->status[connector]->suspended_evse());
-        this->suspend_charging_evse(connector);
         if (this->configuration->getStopTransactionOnInvalidId()) {
-            this->stop_transaction(connector, Reason::DeAuthorized);
+            this->cancel_charging_callback(connector, Reason::DeAuthorized);
+        } else {
+            this->suspend_charging_evse(connector);
         }
     }
 
@@ -1149,7 +1149,6 @@ void ChargePoint::handleUnlockConnectorRequest(Call<UnlockConnectorRequest> call
         int32_t transactionId;
         if (this->charging_sessions->transaction_active(connector)) {
             EVLOG_info << "Received unlock connector request with active session for this connector.";
-            this->status->submit_event(connector, Event_TransactionStoppedAndUserActionRequired());
             this->cancel_charging_callback(connector, Reason::UnlockCommand);
         }
 
@@ -2183,7 +2182,6 @@ AuthorizationStatus ChargePoint::authorize_id_tag(CiString20Type idTag) {
                 auto transaction = this->charging_sessions->get_transaction(connector);
                 if (transaction != nullptr) {
                     // stop charging, this will stop the session as well
-                    this->status->submit_event(connector, Event_TransactionStoppedAndUserActionRequired());
                     this->cancel_charging_callback(connector, Reason::Local);
                     return AuthorizationStatus::Invalid;
                 }
@@ -2502,19 +2500,38 @@ bool ChargePoint::stop_transaction(int32_t connector, Reason reason) {
         }
     }
 
+    this->charging_sessions->remove_session(connector);
     return true;
 }
 
-bool ChargePoint::stop_session(int32_t connector, DateTime timestamp, double energy_Wh_import, Reason reason) {
+bool ChargePoint::cancel_session(int32_t connector, DateTime timestamp, double energy_Wh_import, Reason reason) {
+    EVLOG_debug << "Cancelling session on connector " << connector
+                << " with reason: " << conversions::reason_to_string(reason);
     this->charging_sessions->add_stop_energy_wh(connector,
                                                 std::make_shared<StampedEnergyWh>(timestamp, energy_Wh_import));
     if (this->charging_sessions->get_transaction(connector) == nullptr) {
-        EVLOG_info << "Stopped a session without a transaction";
-    } else if (!this->stop_transaction(connector, reason)) {
-        EVLOG_error << "Something went wrong stopping the transaction a connector " << connector;
+        EVLOG_info << "Cancelled a session without a transaction";
     }
-    this->charging_sessions->remove_session(connector);
 
+    if (reason != Reason::DeAuthorized || this->configuration->getStopTransactionOnInvalidId()) {
+        this->status->submit_event(connector, Event_TransactionStoppedAndUserActionRequired());
+        bool success = this->stop_transaction(connector, reason);
+        if (!success) {
+            EVLOG_error << "Something went wrong stopping the transaction a connector " << connector;
+        }
+    }
+    return true; // FIXME
+}
+
+bool ChargePoint::stop_session(int32_t connector, DateTime timestamp, double energy_Wh_import) {
+    EVLOG_debug << "Stopping session on connector " << connector;
+    this->charging_sessions->add_stop_energy_wh(connector,
+                                                std::make_shared<StampedEnergyWh>(timestamp, energy_Wh_import));
+    EVLOG_debug << "Stopped a session without a transaction";
+    if (this->stop_transaction(connector, Reason::EVDisconnected)) {
+    } else {
+        EVLOG_error << "Something went wrong stopping the transaction at connector " << connector;
+    }
     return true; // FIXME
 }
 
