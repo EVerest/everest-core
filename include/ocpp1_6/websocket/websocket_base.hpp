@@ -21,7 +21,7 @@ class ChargePointConfiguration;
 class WebsocketBase {
 protected:
     bool shutting_down;
-    bool is_connected;
+    bool m_is_connected;
     std::shared_ptr<ChargePointConfiguration> configuration;
     std::function<void()> connected_callback;
     std::function<void()> disconnected_callback;
@@ -57,6 +57,9 @@ public:
 
     /// \brief disconnect the websocket
     void disconnect(websocketpp::close::status::value code);
+
+    /// \brief indicates if the websocket is connected
+    bool is_connected();
 
     /// \brief closes the websocket
     virtual void close(websocketpp::close::status::value code, const std::string& reason) = 0;

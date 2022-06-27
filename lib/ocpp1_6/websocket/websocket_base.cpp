@@ -9,7 +9,7 @@ namespace ocpp1_6 {
 
 WebsocketBase::WebsocketBase(std::shared_ptr<ChargePointConfiguration> configuration) :
     shutting_down(false),
-    is_connected(false),
+    m_is_connected(false),
     configuration(configuration),
     connected_callback(nullptr),
     disconnected_callback(nullptr),
@@ -71,6 +71,10 @@ void WebsocketBase::disconnect(websocketpp::close::status::value code) {
 
     EVLOG_info << "Disconnecting websocket...";
     this->close(code, "");
+}
+
+bool WebsocketBase::is_connected() {
+    return this->m_is_connected;
 }
 
 boost::optional<std::string> WebsocketBase::getAuthorizationHeader() {
