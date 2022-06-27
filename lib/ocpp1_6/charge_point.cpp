@@ -2146,6 +2146,11 @@ AuthorizationStatus ChargePoint::authorize_id_tag(CiString20Type idTag) {
         }
     }
 
+    // check if all connectors have active transactions
+    if (this->charging_sessions->all_connectors_have_active_transaction()) {
+        return AuthorizationStatus::Invalid;
+    }
+
     int32_t connector = 1;
 
     // dont authorize if state is Unavailable
@@ -2416,6 +2421,10 @@ bool ChargePoint::stop_transaction(int32_t connector, Reason reason) {
     assert(transaction != nullptr);
 
     req.transactionId = transaction->get_transaction_id();
+
+    if (this->charging_sessions->get_authorized_id_tag(connector) != boost::none) {
+        req.idTag = this->charging_sessions->get_authorized_id_tag(connector).value();
+    }
 
     std::vector<TransactionData> transaction_data_vec = transaction->get_transaction_data();
     if (!transaction_data_vec.empty()) {
