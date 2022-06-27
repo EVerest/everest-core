@@ -98,7 +98,7 @@ void ChargePoint::init_websocket(int32_t security_profile) {
 }
 
 void ChargePoint::connect_websocket() {
-    if (this->websocket->is_connected()) {
+    if (!this->websocket->is_connected()) {
         this->init_websocket(this->configuration->getSecurityProfile());
         this->websocket->connect(this->configuration->getSecurityProfile());
     }
