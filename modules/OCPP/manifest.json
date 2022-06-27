@@ -25,6 +25,11 @@
             "description": "Path to the script folder in which the OCPP 1.6 scripts for firmware update und log upload reside",
             "type": "string",
             "default": "dist/bin"
+        },
+        "EnableExternalWebsocketControl": {
+            "description": "If true websocket can be disconnected and connected externally",
+            "type": "boolean",
+            "default": false
         }
     },
     "provides": {
