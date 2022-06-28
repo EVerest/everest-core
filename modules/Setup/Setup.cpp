@@ -48,10 +48,10 @@ void to_json(json& j, const WifiList& k) {
         {{"interface", k.interface}, {"network_id", k.network_id}, {"ssid", k.ssid}, {"connected", k.connected}});
 }
 
-void to_json(json& j, const RemoveWifi& k) {
+void to_json(json& j, const InterfaceAndNetworkId& k) {
     j = json::object({{"interface", k.interface}, {"network_id", k.network_id}});
 }
-void from_json(const json& j, RemoveWifi& k) {
+void from_json(const json& j, InterfaceAndNetworkId& k) {
     k.interface = j.at("interface");
     k.network_id = j.at("network_id");
 }
@@ -104,9 +104,30 @@ void Setup::ready() {
             this->publish_configured_networks();
         });
 
+        std::string enable_network_cmd = this->cmd_base + "enable_network";
+        this->mqtt.subscribe(enable_network_cmd, [this](const std::string& data) {
+            InterfaceAndNetworkId wifi = json::parse(data);
+            this->enable_network(wifi.interface, wifi.network_id);
+            this->publish_configured_networks();
+        });
+
+        std::string disable_network_cmd = this->cmd_base + "disable_network";
+        this->mqtt.subscribe(disable_network_cmd, [this](const std::string& data) {
+            InterfaceAndNetworkId wifi = json::parse(data);
+            this->disable_network(wifi.interface, wifi.network_id);
+            this->publish_configured_networks();
+        });
+
+        std::string select_network_cmd = this->cmd_base + "select_network";
+        this->mqtt.subscribe(select_network_cmd, [this](const std::string& data) {
+            InterfaceAndNetworkId wifi = json::parse(data);
+            this->select_network(wifi.interface, wifi.network_id);
+            this->publish_configured_networks();
+        });
+
         std::string remove_network_cmd = this->cmd_base + "remove_network";
         this->mqtt.subscribe(remove_network_cmd, [this](const std::string& data) {
-            RemoveWifi wifi = json::parse(data);
+            InterfaceAndNetworkId wifi = json::parse(data);
             this->remove_network(wifi.interface, wifi.network_id);
             this->publish_configured_networks();
         });
@@ -478,6 +499,22 @@ bool Setup::disable_network(std::string interface, int network_id) {
 
     auto wpa_cli_disable_network_output =
         this->run_application("wpa_cli", {"-i", interface, "disable_network", network_id_string});
+    if (wpa_cli_disable_network_output.exit_code != 0) {
+        return false;
+    }
+
+    return true;
+}
+
+bool Setup::select_network(std::string interface, int network_id) {
+    if (!this->is_wifi_interface(interface)) {
+        return false;
+    }
+
+    auto network_id_string = std::to_string(network_id);
+
+    auto wpa_cli_disable_network_output =
+        this->run_application("wpa_cli", {"-i", interface, "select_network", network_id_string});
     if (wpa_cli_disable_network_output.exit_code != 0) {
         return false;
     }

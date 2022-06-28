@@ -135,6 +135,33 @@ To add a wifi network a payload with the following format must be published to t
 }
 ```
 
+### everest_api/setup/cmd/enable_network
+To enable a wifi network a payload with the following format must be published to this topic:
+```json
+{
+    "interface": "wlan0",
+    "network_id": 0
+}
+```
+
+### everest_api/setup/cmd/disable_network
+To disable a wifi network a payload with the following format must be published to this topic:
+```json
+{
+    "interface": "wlan0",
+    "network_id": 0
+}
+```
+
+### everest_api/setup/cmd/select_network
+To select a wifi network a payload with the following format must be published to this topic:
+```json
+{
+    "interface": "wlan0",
+    "network_id": 0
+}
+```
+
 ### everest_api/setup/cmd/remove_network
 To remove a wifi network a payload with the following format must be published to this topic:
 ```json

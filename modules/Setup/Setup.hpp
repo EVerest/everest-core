@@ -63,7 +63,7 @@ struct WifiList {
 };
 void to_json(json& j, const WifiList& k);
 
-struct RemoveWifi {
+struct InterfaceAndNetworkId {
     std::string interface;
     int network_id;
 
@@ -73,8 +73,8 @@ struct RemoveWifi {
         return remove_wifi.dump();
     }
 };
-void to_json(json& j, const RemoveWifi& k);
-void from_json(const json& j, RemoveWifi& k);
+void to_json(json& j, const InterfaceAndNetworkId& k);
+void from_json(const json& j, InterfaceAndNetworkId& k);
 
 struct NetworkDeviceInfo {
     std::string interface;
@@ -170,6 +170,7 @@ private:
     bool set_network(std::string interface, int network_id, std::string ssid, std::string psk);
     bool enable_network(std::string interface, int network_id);
     bool disable_network(std::string interface, int network_id);
+    bool select_network(std::string interface, int network_id);
     bool remove_network(std::string interface, int network_id);
     bool remove_networks(std::string interface);
     bool remove_all_networks();
