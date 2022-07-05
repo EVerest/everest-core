@@ -64,13 +64,13 @@ public:
     int32_t get_transaction_id();
 
     /// \brief Sets the start transaction message id using the provides \p message_id
-    void set_start_transaction_message_id(const std::string message_id);
+    void set_start_transaction_message_id(const std::string& message_id);
 
     /// \brief Provides the start transaction message id
     std::string get_start_transaction_message_id();
 
     /// \brief Sets the stop transaction message id using the provides \p message_id
-    void set_stop_transaction_message_id(const std::string message_id);
+    void set_stop_transaction_message_id(const std::string& message_id);
 
     /// \brief Provides the stop transaction message id
     std::string get_stop_transaction_message_id();
@@ -298,7 +298,7 @@ public:
     /// \brief Returns the transaction associated with the charging session with the provided
     /// \p start_transaction_message_id
     /// \returns The associated transaction if available or nullptr if not
-    std::shared_ptr<Transaction> get_transaction(const std::string start_transaction_message_id);
+    std::shared_ptr<Transaction> get_transaction(const std::string& start_transaction_message_id);
 
     /// \brief Indicates if there is an active transaction at the proveded \p connector
     /// \returns true if a transaction exists

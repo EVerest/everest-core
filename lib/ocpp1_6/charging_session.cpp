@@ -49,7 +49,7 @@ int32_t Transaction::get_transaction_id() {
     return this->transactionId;
 }
 
-void Transaction::set_start_transaction_message_id(const std::string message_id) {
+void Transaction::set_start_transaction_message_id(const std::string& message_id) {
     this->start_transaction_message_id = message_id;
 }
 
@@ -57,7 +57,7 @@ std::string Transaction::get_start_transaction_message_id() {
     return this->start_transaction_message_id;
 }
 
-void Transaction::set_stop_transaction_message_id(const std::string message_id) {
+void Transaction::set_stop_transaction_message_id(const std::string& message_id) {
     this->stop_transaction_message_id = message_id;
 }
 
@@ -434,7 +434,7 @@ std::shared_ptr<Transaction> ChargingSessionHandler::get_transaction(int32_t con
     return this->active_charging_sessions.at(connector)->get_transaction();
 }
 
-std::shared_ptr<Transaction> ChargingSessionHandler::get_transaction(const std::string start_transaction_message_id) {
+std::shared_ptr<Transaction> ChargingSessionHandler::get_transaction(const std::string& start_transaction_message_id) {
 
     for (const auto& session : this->active_charging_sessions) {
         if (session->get_transaction() != nullptr &&
