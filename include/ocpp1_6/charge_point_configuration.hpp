@@ -35,6 +35,8 @@ private:
 
     static std::string hexToString(std::string const& s);
     static bool isHexNotation(std::string const& s);
+    bool isConnectorPhaseRotationValid(const std::string& str);
+    bool isBool(const std::string& str);
 
 public:
     ChargePointConfiguration(json config, std::string configs_path, std::string schemas_path,
