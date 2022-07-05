@@ -1748,16 +1748,12 @@ bool ChargePointConfiguration::isHexNotation(std::string const& s) {
     return s.size() > 2 && s.find_first_not_of("0123456789abcdefABCDEF", 2) == std::string::npos;
 }
 
-bool ChargePointConfiguration::isConnectorPhaseRotationValid(const std::string& str) {
+bool ChargePointConfiguration::isConnectorPhaseRotationValid(std::string str) {
     std::stringstream ss(str);
     std::vector<std::string> elements;
 
-    while (ss.good()) {
-        std::string substr;
-        std::getline(ss, substr, ',');
-        substr.erase(std::remove_if(substr.begin(), substr.end(), isspace), substr.end());
-        elements.push_back(substr);
-    }
+    str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+    boost::split(elements, str, boost::is_any_of(","));
 
     for (const std::string& e : elements) {
         if (e.size() != 5) {
