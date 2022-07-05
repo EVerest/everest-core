@@ -360,17 +360,16 @@ void OCPP::init() {
                     std::chrono::seconds(session_cancelled["timestamp"].get<int>()));
                 auto energy_Wh_import = session_cancelled["energy_Wh_import"].get<double>();
                 auto reason = session_cancelled["reason"].get<std::string>();
-                // aus der ocpp library ausgelöst
-                this->charge_point->stop_session(connector, ocpp1_6::DateTime(timestamp), energy_Wh_import,
-                                                 ocpp1_6::conversions::string_to_reason(reason));
+                // always triggered by libocpp
+                this->charge_point->cancel_session(connector, ocpp1_6::DateTime(timestamp), energy_Wh_import,
+                                                   ocpp1_6::conversions::string_to_reason(reason));
             } else if (event == "SessionFinished") {
                 // ev side disconnect
                 auto session_finished = session_events["session_finished"];
                 auto timestamp = std::chrono::time_point<date::utc_clock>(
                     std::chrono::seconds(session_finished["timestamp"].get<int>()));
                 auto energy_Wh_import = session_finished["energy_Wh_import"].get<double>();
-                this->charge_point->stop_session(connector, ocpp1_6::DateTime(timestamp), energy_Wh_import,
-                                                 ocpp1_6::Reason::EVDisconnected);
+                this->charge_point->stop_session(connector, ocpp1_6::DateTime(timestamp), energy_Wh_import);
                 this->charge_point->plug_disconnected(connector);
             } else if (event == "Error") {
                 auto error = session_events["error"];
