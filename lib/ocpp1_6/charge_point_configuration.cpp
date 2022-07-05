@@ -1748,6 +1748,38 @@ bool ChargePointConfiguration::isHexNotation(std::string const& s) {
     return s.size() > 2 && s.find_first_not_of("0123456789abcdefABCDEF", 2) == std::string::npos;
 }
 
+bool ChargePointConfiguration::isConnectorPhaseRotationValid(std::string str) {
+    std::stringstream ss(str);
+    std::vector<std::string> elements;
+
+    str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+    boost::split(elements, str, boost::is_any_of(","));
+
+    for (const std::string& e : elements) {
+        if (e.size() != 5) {
+            return false;
+        }
+        try {
+            auto connector = std::stoi(e.substr(0, 1));
+            if (connector < 0 || connector > this->getNumberOfConnectors()) {
+                return false;
+            }
+        } catch (const std::invalid_argument& e) {
+            return false;
+        }
+        std::string phase_rotation = e.substr(2, 5);
+        if (phase_rotation != "RST" && phase_rotation != "RTS" && phase_rotation != "SRT" && phase_rotation != "STR" &&
+            phase_rotation != "TRS" && phase_rotation != "TSR") {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool ChargePointConfiguration::isBool(const std::string& str) {
+    return str == "true" || str == "false";
+}
+
 boost::optional<KeyValue> ChargePointConfiguration::getAuthorizationKeyKeyValue() {
     boost::optional<KeyValue> enabled_kv = boost::none;
     boost::optional<std::string> enabled = boost::none;
@@ -2073,13 +2105,21 @@ ConfigurationStatus ChargePointConfiguration::set(CiString50Type key, CiString50
         if (this->getAllowOfflineTxForUnknownId() == boost::none) {
             return ConfigurationStatus::NotSupported;
         }
-        this->setAllowOfflineTxForUnknownId(conversions::string_to_bool(value.get()));
+        if (this->isBool(value.get())) {
+            this->setAllowOfflineTxForUnknownId(conversions::string_to_bool(value.get()));
+        } else {
+            return ConfigurationStatus::Rejected;
+        }
     }
     if (key == "AuthorizationCacheEnabled") {
         if (this->getAuthorizationCacheEnabled() == boost::none) {
             return ConfigurationStatus::NotSupported;
         }
-        this->setAuthorizationCacheEnabled(conversions::string_to_bool(value.get()));
+        if (this->isBool(value.get())) {
+            this->setAuthorizationCacheEnabled(conversions::string_to_bool(value.get()));
+        } else {
+            return ConfigurationStatus::Rejected;
+        }
     }
     if (key == "AuthorizationKey") {
         std::string authorization_key = value.get();
@@ -2099,64 +2139,100 @@ ConfigurationStatus ChargePointConfiguration::set(CiString50Type key, CiString50
         if (this->getBlinkRepeat() == boost::none) {
             return ConfigurationStatus::NotSupported;
         }
-        auto blink_repeat = std::stoi(value.get());
-        if (blink_repeat < 0) {
+        try {
+            auto blink_repeat = std::stoi(value.get());
+            if (blink_repeat < 0) {
+                return ConfigurationStatus::Rejected;
+            }
+            this->setBlinkRepeat(blink_repeat);
+        } catch (const std::invalid_argument& e) {
             return ConfigurationStatus::Rejected;
         }
-        this->setBlinkRepeat(blink_repeat);
     }
     if (key == "ClockAlignedDataInterval") {
-        auto interval = std::stoi(value.get());
-        if (interval < 0) {
+        try {
+            auto interval = std::stoi(value.get());
+            if (interval < 0) {
+                return ConfigurationStatus::Rejected;
+            }
+            this->setClockAlignedDataInterval(interval);
+        } catch (const std::invalid_argument& e) {
             return ConfigurationStatus::Rejected;
         }
-        this->setClockAlignedDataInterval(interval);
     }
     if (key == "ConnectionTimeOut") {
-        auto interval = std::stoi(value.get());
-        if (interval < 0) {
+        try {
+            auto interval = std::stoi(value.get());
+            if (interval < 0) {
+                return ConfigurationStatus::Rejected;
+            }
+            this->setConnectionTimeOut(interval);
+        } catch (const std::invalid_argument& e) {
             return ConfigurationStatus::Rejected;
         }
-        this->setConnectionTimeOut(interval);
     }
     if (key == "ConnectorPhaseRotation") {
-        this->setConnectorPhaseRotation(value.get());
+        if (this->isConnectorPhaseRotationValid(value.get())) {
+            this->setConnectorPhaseRotation(value.get());
+        } else {
+            return ConfigurationStatus::Rejected;
+        }
     }
     if (key == "CpoName") {
         this->setCpoName(value.get());
     }
     if (key == "HeartbeatInterval") {
-        auto interval = std::stoi(value.get());
-        if (interval < 0) {
+        try {
+            auto interval = std::stoi(value.get());
+            if (interval < 0) {
+                return ConfigurationStatus::Rejected;
+            }
+            this->setHeartbeatInterval(interval);
+        } catch (const std::invalid_argument& e) {
             return ConfigurationStatus::Rejected;
         }
-        this->setHeartbeatInterval(interval);
     }
     if (key == "LightIntensity") {
         if (this->getLightIntensity() == boost::none) {
             return ConfigurationStatus::NotSupported;
         }
-        auto light_intensity = std::stoi(value.get());
-        if (light_intensity < 0 || light_intensity > 100) {
+        try {
+            auto light_intensity = std::stoi(value.get());
+            if (light_intensity < 0 || light_intensity > 100) {
+                return ConfigurationStatus::Rejected;
+            }
+            this->setLightIntensity(light_intensity);
+        } catch (const std::invalid_argument& e) {
             return ConfigurationStatus::Rejected;
         }
-        this->setLightIntensity(light_intensity);
     }
     if (key == "LocalAuthorizeOffline") {
-        this->setLocalAuthorizeOffline(conversions::string_to_bool(value.get()));
+        if (this->isBool(value.get())) {
+            this->setLocalAuthorizeOffline(conversions::string_to_bool(value.get()));
+        } else {
+            return ConfigurationStatus::Rejected;
+        }
     }
     if (key == "LocalPreAuthorize") {
-        this->setLocalPreAuthorize(conversions::string_to_bool(value.get()));
+        if (this->isBool(value.get())) {
+            this->setLocalPreAuthorize(conversions::string_to_bool(value.get()));
+        } else {
+            return ConfigurationStatus::Rejected;
+        }
     }
     if (key == "MaxEnergyOnInvalidId") {
         if (this->getMaxEnergyOnInvalidId() == boost::none) {
             return ConfigurationStatus::NotSupported;
         }
-        auto max_energy = std::stoi(value.get());
-        if (max_energy < 0) {
+        try {
+            auto max_energy = std::stoi(value.get());
+            if (max_energy < 0) {
+                return ConfigurationStatus::Rejected;
+            }
+            this->setMaxEnergyOnInvalidId(max_energy);
+        } catch (const std::invalid_argument& e) {
             return ConfigurationStatus::Rejected;
         }
-        this->setMaxEnergyOnInvalidId(max_energy);
     }
     if (key == "MeterValuesAlignedData") {
         if (!this->setMeterValuesAlignedData(value.get())) {
@@ -2169,50 +2245,82 @@ ConfigurationStatus ChargePointConfiguration::set(CiString50Type key, CiString50
         }
     }
     if (key == "MeterValueSampleInterval") {
-        this->setMeterValueSampleInterval(std::stoi(value.get()));
+        try {
+            auto meter_value_sample_interval = std::stoi(value.get());
+            if (meter_value_sample_interval < 0) {
+                return ConfigurationStatus::Rejected;
+            }
+            this->setMeterValueSampleInterval(meter_value_sample_interval);
+        } catch (const std::invalid_argument& e) {
+            return ConfigurationStatus::Rejected;
+        }
     }
     if (key == "MinimumStatusDuration") {
         if (this->getMinimumStatusDuration() == boost::none) {
             return ConfigurationStatus::NotSupported;
         }
-        auto duration = std::stoi(value.get());
-        if (duration < 0) {
+        try {
+            auto duration = std::stoi(value.get());
+            if (duration < 0) {
+                return ConfigurationStatus::Rejected;
+            }
+            this->setMinimumStatusDuration(duration);
+        } catch (const std::invalid_argument& e) {
             return ConfigurationStatus::Rejected;
         }
-        this->setMinimumStatusDuration(duration);
     }
     if (key == "ResetRetries") {
-        this->setResetRetries(std::stoi(value.get()));
+        try {
+            auto reset_retries = std::stoi(value.get());
+            if (reset_retries < 0) {
+                return ConfigurationStatus::Rejected;
+            }
+            this->setResetRetries(reset_retries);
+        } catch (const std::invalid_argument& e) {
+            return ConfigurationStatus::Rejected;
+        }
     }
     if (key == "SecurityProfile") {
-        auto security_profile = std::stoi(value.get());
-        auto current_security_profile = this->getSecurityProfile();
-        if (security_profile <= current_security_profile) {
-            EVLOG_warning << "New security profile is <= current security profile. Rejecting request.";
-            return ConfigurationStatus::Rejected;
-        } else if ((security_profile == 1 || security_profile == 2) && this->getAuthorizationKey() == boost::none) {
-            EVLOG_warning << "New security level set to 1 or 2 but no authorization key is set. Rejecting request.";
-            return ConfigurationStatus::Rejected;
-        } else if ((security_profile == 2 || security_profile == 3) &&
-                   !this->pki_handler->isCentralSystemRootCertificateInstalled()) {
-            EVLOG_warning << "New security level set to 2 or 3 but no CentralSystemRootCertificateInstalled";
-            return ConfigurationStatus::Rejected;
-        } else if (security_profile == 3 && !this->pki_handler->isClientCertificateInstalled()) {
-            EVLOG_warning << "New security level set to 3 but no Client Certificate is installed";
-        }
+        try {
+            auto security_profile = std::stoi(value.get());
+            auto current_security_profile = this->getSecurityProfile();
+            if (security_profile <= current_security_profile) {
+                EVLOG_warning << "New security profile is <= current security profile. Rejecting request.";
+                return ConfigurationStatus::Rejected;
+            } else if ((security_profile == 1 || security_profile == 2) && this->getAuthorizationKey() == boost::none) {
+                EVLOG_warning << "New security level set to 1 or 2 but no authorization key is set. Rejecting request.";
+                return ConfigurationStatus::Rejected;
+            } else if ((security_profile == 2 || security_profile == 3) &&
+                       !this->pki_handler->isCentralSystemRootCertificateInstalled()) {
+                EVLOG_warning << "New security level set to 2 or 3 but no CentralSystemRootCertificateInstalled";
+                return ConfigurationStatus::Rejected;
+            } else if (security_profile == 3 && !this->pki_handler->isClientCertificateInstalled()) {
+                EVLOG_warning << "New security level set to 3 but no Client Certificate is installed";
+            }
 
-        else if (security_profile > 3) {
+            else if (security_profile > 3) {
+                return ConfigurationStatus::Rejected;
+            } else {
+                // security profile is set during actual connection
+                return ConfigurationStatus::Accepted;
+            }
+        } catch (const std::invalid_argument& e) {
             return ConfigurationStatus::Rejected;
-        } else {
-            // security profile is set during actual connection
-            return ConfigurationStatus::Accepted;
         }
     }
     if (key == "StopTransactionOnEVSideDisconnect") {
-        this->setStopTransactionOnEVSideDisconnect(conversions::string_to_bool(value.get()));
+        if (this->isBool(value.get())) {
+            this->setStopTransactionOnEVSideDisconnect(conversions::string_to_bool(value.get()));
+        } else {
+            return ConfigurationStatus::Rejected;
+        }
     }
     if (key == "StopTransactionOnInvalidId") {
-        this->setStopTransactionOnInvalidId(conversions::string_to_bool(value.get()));
+        if (this->isBool(value.get())) {
+            this->setStopTransactionOnInvalidId(conversions::string_to_bool(value.get()));
+        } else {
+            return ConfigurationStatus::Rejected;
+        }
     }
     if (key == "StopTxnAlignedData") {
         if (!this->setStopTxnAlignedData(value.get())) {
@@ -2225,29 +2333,57 @@ ConfigurationStatus ChargePointConfiguration::set(CiString50Type key, CiString50
         }
     }
     if (key == "TransactionMessageAttempts") {
-        this->setTransactionMessageAttempts(std::stoi(value.get()));
+        try {
+            auto message_attempts = std::stoi(value.get());
+            if (message_attempts < 0) {
+                return ConfigurationStatus::Rejected;
+            }
+            this->setTransactionMessageAttempts(message_attempts);
+        } catch (const std::invalid_argument& e) {
+            return ConfigurationStatus::Rejected;
+        }
     }
     if (key == "TransactionMessageRetryInterval") {
-        this->setTransactionMessageRetryInterval(std::stoi(value.get()));
+        try {
+            auto retry_inverval = std::stoi(value.get());
+            if (retry_inverval < 0) {
+                return ConfigurationStatus::Rejected;
+            }
+            this->setTransactionMessageRetryInterval(retry_inverval);
+        } catch (const std::invalid_argument& e) {
+            return ConfigurationStatus::Rejected;
+        }
     }
     if (key == "UnlockConnectorOnEVSideDisconnect") {
-        this->setUnlockConnectorOnEVSideDisconnect(conversions::string_to_bool(value.get()));
+        if (this->isBool(value.get())) {
+            this->setUnlockConnectorOnEVSideDisconnect(conversions::string_to_bool(value.get()));
+        } else {
+            return ConfigurationStatus::Rejected;
+        }
     }
     if (key == "WebsocketPingInterval") {
         if (this->getWebsocketPingInterval() == boost::none) {
             return ConfigurationStatus::NotSupported;
         }
-        auto interval = std::stoi(value.get());
-        if (interval < 0) {
+        try {
+            auto interval = std::stoi(value.get());
+            if (interval < 0) {
+                return ConfigurationStatus::Rejected;
+            }
+            this->setWebsocketPingInterval(interval);
+        } catch (const std::invalid_argument& e) {
             return ConfigurationStatus::Rejected;
         }
-        this->setWebsocketPingInterval(interval);
     }
 
     // Local Auth List Management
     if (key == "LocalAuthListEnabled") {
         if (this->supported_feature_profiles.count(SupportedFeatureProfiles::LocalAuthListManagement)) {
-            this->setLocalAuthListEnabled(conversions::string_to_bool(value.get()));
+            if (this->isBool(value.get())) {
+                this->setLocalAuthListEnabled(conversions::string_to_bool(value.get()));
+            } else {
+                return ConfigurationStatus::Rejected;
+            }
         } else {
             return ConfigurationStatus::NotSupported;
         }
