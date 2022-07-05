@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
-#include "evSerial.h"
+#include "PN532Serial.h"
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -13,90 +13,17 @@
 
 #include <thread>
 
-evSerial::evSerial() {
-    fd = 0;
-    baud = 0;
+PN532Serial::PN532Serial() {
 }
 
-evSerial::~evSerial() {
-    if (fd)
-        close(fd);
+PN532Serial::~PN532Serial() {
 }
 
-bool evSerial::openDevice(const char* device, int _baud) {
-
-    fd = open(device, O_RDWR | O_NOCTTY | O_SYNC);
-    if (fd < 0) {
-        printf("Serial: error %d opening %s: %s\n", errno, device, strerror(errno));
-        return false;
-    } // else printf ("Serial: opened %s as %i\n", device, fd);
-
-    switch (_baud) {
-    case 9600:
-        baud = B9600;
-        break;
-    case 19200:
-        baud = B19200;
-        break;
-    case 38400:
-        baud = B38400;
-        break;
-    case 57600:
-        baud = B57600;
-        break;
-    case 115200:
-        baud = B115200;
-        break;
-    case 230400:
-        baud = B230400;
-        break;
-    default:
-        baud = 0;
-        return false;
-    }
-
-    return setSerialAttributes();
+void PN532Serial::run() {
+    readThreadHandle = std::thread(&PN532Serial::readThread, this);
 }
 
-bool evSerial::setSerialAttributes() {
-    struct termios tty;
-    if (tcgetattr(fd, &tty) != 0) {
-        printf("Serial: error %d from tcgetattr\n", errno);
-        return false;
-    }
-
-    cfsetospeed(&tty, baud);
-    cfsetispeed(&tty, baud);
-
-    tty.c_cflag = (tty.c_cflag & ~CSIZE) | CS8; // 8-bit chars
-    // disable IGNBRK for mismatched speed tests; otherwise receive break
-    // as \000 chars
-    tty.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON | IXOFF | IXANY);
-    tty.c_lflag = 0;     // no signaling chars, no echo,
-                         // no canonical processing
-    tty.c_oflag = 0;     // no remapping, no delays
-    tty.c_cc[VMIN] = 0;  // read blocks
-    tty.c_cc[VTIME] = 5; // 0.5 seconds read timeout
-
-    tty.c_cflag |= (CLOCAL | CREAD);   // ignore modem controls,
-                                       // enable reading
-    tty.c_cflag &= ~(PARENB | PARODD); // shut off parity
-    tty.c_cflag &= ~CSTOPB;
-    tty.c_cflag &= ~CRTSCTS;
-
-    if (tcsetattr(fd, TCSANOW, &tty) != 0) {
-        printf("Serial: error %d from tcsetattr\n", errno);
-        return false;
-    }
-    // printf ("Success setting tcsetattr\n");
-    return true;
-}
-
-void evSerial::run() {
-    readThreadHandle.handle = std::thread(&evSerial::readThread, this);
-}
-
-void evSerial::resetDataRead() {
+void PN532Serial::resetDataRead() {
     start_of_packet = 0;
     packet_length = 0;
     data_received = 0;
@@ -109,7 +36,7 @@ void evSerial::resetDataRead() {
     data.clear();
 }
 
-void evSerial::readThread() {
+void PN532Serial::readThread() {
     uint8_t buf[2048];
     int n;
 
@@ -272,19 +199,19 @@ void evSerial::readThread() {
     }
 }
 
-std::future<bool> evSerial::configureSAM() {
+std::future<bool> PN532Serial::configureSAM() {
     this->configure_sam_promise = std::make_unique<std::promise<bool>>();
     this->serialWriteCommand({0x14, 0x01, 0x00, 0x01});
     return this->configure_sam_promise->get_future();
 }
 
-std::future<PN532Response> evSerial::getFirmwareVersion() {
+std::future<PN532Response> PN532Serial::getFirmwareVersion() {
     this->get_firmware_version_promise = std::make_unique<std::promise<PN532Response>>();
     this->serialWriteCommand({0x02});
     return this->get_firmware_version_promise->get_future();
 }
 
-std::future<PN532Response> evSerial::inListPassiveTarget() {
+std::future<PN532Response> PN532Serial::inListPassiveTarget() {
     this->in_list_passive_target_promise = std::make_unique<std::promise<PN532Response>>();
     this->serialWriteCommand({
         0x4a, // command code
@@ -294,7 +221,7 @@ std::future<PN532Response> evSerial::inListPassiveTarget() {
     return this->in_list_passive_target_promise->get_future();
 }
 
-bool evSerial::serialWrite(std::vector<uint8_t> data) {
+bool PN532Serial::serialWrite(std::vector<uint8_t> data) {
     // std::cerr << "serial write: " << std::endl;
     // for (auto d : data) {
     //     std::cerr << "0x" << std::setfill('0') << std::setw(2) << std::right << std::hex << (int)d << std::endl;
@@ -304,7 +231,7 @@ bool evSerial::serialWrite(std::vector<uint8_t> data) {
     return true;
 }
 
-bool evSerial::serialWriteCommand(std::vector<uint8_t> data) {
+bool PN532Serial::serialWriteCommand(std::vector<uint8_t> data) {
     std::vector<uint8_t> data_copy = data;
     data_copy.push_back(host_to_pn532);
     uint8_t sum = 0;
@@ -330,7 +257,7 @@ bool evSerial::serialWriteCommand(std::vector<uint8_t> data) {
     return this->serialWrite(serial_data);
 }
 
-bool evSerial::reset() {
+bool PN532Serial::reset() {
     bool success = true;
     this->serialWrite({0x55, 0x55, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00});
 

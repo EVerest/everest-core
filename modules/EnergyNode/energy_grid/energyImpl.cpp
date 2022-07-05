@@ -5,38 +5,28 @@
 #include <chrono>
 #include <date/date.h>
 #include <date/tz.h>
+#include <utils/date.hpp>
 
 namespace module {
 namespace energy_grid {
-
-std::string to_rfc3339(std::chrono::time_point<date::utc_clock> t) {
-    return date::format("%FT%TZ", std::chrono::time_point_cast<std::chrono::milliseconds>(t));
-}
-
-std::chrono::time_point<date::utc_clock> from_rfc3339(std::string t) {
-    std::istringstream infile{t};
-    std::chrono::time_point<date::utc_clock> tp;
-    infile >> date::parse("%FT%T", tp);
-    return tp;
-}
 
 void energyImpl::init() {
     energy_price = {};
     initializeEnergyObject();
 
     {
-        std::lock_guard<std::mutex> lock(this->energy_mutex);
-        json schedule_entry;
-        std::chrono::time_point<date::utc_clock> nw = date::utc_clock::now();
-        std::string nws = to_rfc3339(nw);
-        schedule_entry["timestamp"] = nws;
-        schedule_entry["request_parameters"] = json::object();
-        schedule_entry["request_parameters"]["limit_type"] = "Hard";
-        schedule_entry["request_parameters"]["ac_current_A"] = json::object();
-        schedule_entry["request_parameters"]["ac_current_A"]["max_current_A"] = mod->config.fuse_limit_A;
-        schedule_entry["request_parameters"]["ac_current_A"]["max_phase_count"] = mod->config.phase_count;
-        energy["schedule_import"] = json::array({});
-        energy["schedule_import"].push_back(schedule_entry);
+       std::lock_guard<std::mutex> lock(this->energy_mutex);
+       json schedule_entry;
+       std::chrono::time_point<date::utc_clock> nw = date::utc_clock::now();
+       std::string nws = Everest::Date::to_rfc3339(nw);
+       schedule_entry["timestamp"] = nws;
+       schedule_entry["request_parameters"] = json::object();
+       schedule_entry["request_parameters"]["limit_type"] = "Hard";
+       schedule_entry["request_parameters"]["ac_current_A"] = json::object();
+       schedule_entry["request_parameters"]["ac_current_A"]["max_current_A"] = mod->config.fuse_limit_A;
+       schedule_entry["request_parameters"]["ac_current_A"]["max_phase_count"] = mod->config.phase_count;
+       energy["schedule_import"] = json::array({});
+       energy["schedule_import"].push_back(schedule_entry);
     }
 
     for (auto& entry : mod->r_energy_consumer) {
@@ -135,8 +125,8 @@ json energyImpl::merge_price_into_schedule(json schedule, json price) {
         if (it_schedule == schedule.end() && it_price == price.end())
             break;
 
-        auto tp_schedule = from_rfc3339(next_entry_schedule["timestamp"]);
-        auto tp_price = from_rfc3339(next_entry_price["timestamp"]);
+        auto tp_schedule = Everest::Date::from_rfc3339(next_entry_schedule["timestamp"]);
+        auto tp_price = Everest::Date::from_rfc3339(next_entry_price["timestamp"]);
 
         if (tp_schedule < tp_price && it_schedule != schedule.end() || it_price == price.end()) {
             currently_valid_entry_schedule = next_entry_schedule;

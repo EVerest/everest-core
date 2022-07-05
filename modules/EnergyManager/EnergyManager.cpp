@@ -6,18 +6,6 @@ namespace module {
 
 #define INVALID_PRICE_PER_KWH (-1.1f)
 
-std::string to_rfc3339(std::chrono::time_point<date::utc_clock> t) {
-    return date::format("%FT%TZ", std::chrono::time_point_cast<std::chrono::milliseconds>(t));
-}
-
-std::chrono::time_point<date::utc_clock> from_rfc3339(std::string t) {
-    std::istringstream infile{t};
-    std::chrono::time_point<date::utc_clock> tp;
-    infile >> date::parse("%FT%T", tp);
-
-    return tp;
-}
-
 void EnergyManager::init() {
     invoke_init(*p_main);
     lastLimitUpdate = date::utc_clock::now();
@@ -156,7 +144,7 @@ void EnergyManager::optimize_one_level(json& energy, json& optimized_values,
         try {
             if (energy.at("node_type") == "Evse") {
                 json limits_import;
-                limits_import["valid_until"] = to_rfc3339(date::utc_clock::now() + std::chrono::seconds(10));
+                limits_import["valid_until"] = Everest::Date::to_rfc3339(date::utc_clock::now() + std::chrono::seconds(10));
                 limits_import["request_parameters"] = json::object();
                 limits_import["request_parameters"]["ac_current_A"] = json::object();
                 limits_import["request_parameters"]["ac_current_A"]["current_A"] = max_current_for_next_level_A;
@@ -190,7 +178,7 @@ json EnergyManager::get_sub_element_from_schedule_at_time(json s,
         try {
             if ((*it).contains("timestamp") &&
                 !(*it)["timestamp"].is_null()) { // need "[]" to prevent nlohmann error 304: cannot use at()}
-                if (from_rfc3339((*it).at("timestamp")) > timepoint) {
+                if (Everest::Date::from_rfc3339((*it).at("timestamp")) > timepoint) {
                     break;
                 }
                 ret = (*it);

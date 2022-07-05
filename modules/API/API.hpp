@@ -21,10 +21,10 @@
 #include <memory>
 #include <mutex>
 #include <sstream>
+#include <date/date.h>
+#include <date/tz.h>
 
 namespace module {
-
-std::string to_rfc3339(std::chrono::time_point<std::chrono::system_clock> t);
 
 class SessionInfo {
 private:
@@ -33,8 +33,8 @@ private:
     std::string state;       ///< Latest state of the EVSE
     int32_t start_energy_wh; ///< Energy reading at the beginning of this charging session in Wh
     int32_t end_energy_wh;   ///< Energy reading at the end of this charging session in Wh
-    std::chrono::time_point<std::chrono::system_clock> start_time_point; ///< Start of the charging session
-    std::chrono::time_point<std::chrono::system_clock> end_time_point;   ///< End of the charging session
+    std::chrono::time_point<date::utc_clock> start_time_point; ///< Start of the charging session
+    std::chrono::time_point<date::utc_clock> end_time_point;   ///< End of the charging session
     double latest_total_w;                                               ///< Latest total power reading in W
 
     bool is_state_charging(const std::string& current_state);

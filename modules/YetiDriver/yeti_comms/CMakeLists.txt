@@ -16,7 +16,6 @@ add_library(yeti_comms STATIC)
 target_sources(yeti_comms
     PRIVATE
         evSerial.cpp
-        ../common/evThread.cpp
         protobuf/hi2lo.pb.c
         protobuf/lo2hi.pb.c
         nanopb/pb_decode.c
@@ -32,4 +31,5 @@ target_link_libraries(yeti_comms
     PRIVATE
         Threads::Threads
         Pal::Sigslot
+        everest::framework
 )

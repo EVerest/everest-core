@@ -1,17 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include "API.hpp"
-#include <chrono>
-#include <date/date.h>
+#include <utils/date.hpp>
 
 namespace module {
 
-std::string to_rfc3339(std::chrono::time_point<std::chrono::system_clock> t) {
-    return date::format("%FT%TZ", std::chrono::time_point_cast<std::chrono::milliseconds>(t));
-}
-
 SessionInfo::SessionInfo() : state("Unknown"), start_energy_wh(0), end_energy_wh(0), latest_total_w(0) {
-    this->start_time_point = std::chrono::system_clock::now();
+    this->start_time_point = date::utc_clock::now();
     this->end_time_point = this->start_time_point;
 }
 
@@ -28,7 +23,7 @@ void SessionInfo::reset() {
     this->state = "Unknown";
     this->start_energy_wh = 0;
     this->end_energy_wh = 0;
-    this->start_time_point = std::chrono::system_clock::now();
+    this->start_time_point = date::utc_clock::now();
     this->latest_total_w = 0;
 }
 
@@ -64,20 +59,20 @@ void SessionInfo::set_start_energy_wh(int32_t start_energy_wh) {
     std::lock_guard<std::mutex> lock(this->session_info_mutex);
     this->start_energy_wh = start_energy_wh;
     this->end_energy_wh = start_energy_wh;
-    this->start_time_point = std::chrono::system_clock::now();
+    this->start_time_point = date::utc_clock::now();
     this->end_time_point = this->start_time_point;
 }
 
 void SessionInfo::set_end_energy_wh(int32_t end_energy_wh) {
     std::lock_guard<std::mutex> lock(this->session_info_mutex);
     this->end_energy_wh = end_energy_wh;
-    this->end_time_point = std::chrono::system_clock::now();
+    this->end_time_point = date::utc_clock::now();
 }
 
 void SessionInfo::set_latest_energy_wh(int32_t latest_energy_wh) {
     std::lock_guard<std::mutex> lock(this->session_info_mutex);
     if (this->is_state_charging(this->state)) {
-        this->end_time_point = std::chrono::system_clock::now();
+        this->end_time_point = date::utc_clock::now();
         this->end_energy_wh = latest_energy_wh;
     }
 }
@@ -91,7 +86,7 @@ SessionInfo::operator std::string() {
     std::lock_guard<std::mutex> lock(this->session_info_mutex);
 
     auto charged_energy_wh = this->end_energy_wh - this->start_energy_wh;
-    auto now = std::chrono::system_clock::now();
+    auto now = date::utc_clock::now();
 
     auto charging_duration_s =
         std::chrono::duration_cast<std::chrono::seconds>(this->end_time_point - this->start_time_point);
@@ -100,7 +95,7 @@ SessionInfo::operator std::string() {
                                       {"charged_energy_wh", charged_energy_wh},
                                       {"latest_total_w", this->latest_total_w},
                                       {"charging_duration_s", charging_duration_s.count()},
-                                      {"datetime", to_rfc3339(now)}});
+                                      {"datetime", Everest::Date::to_rfc3339(now)}});
 
     return session_info.dump();
 }
@@ -144,7 +139,7 @@ void API::init() {
         this->datetime_thread = std::thread([this, var_datetime, var_session_info, &session_info]() {
             auto next_tick = std::chrono::steady_clock::now();
             while (this->running) {
-                std::string datetime_str = to_rfc3339(std::chrono::system_clock::now());
+                std::string datetime_str = Everest::Date::to_rfc3339(date::utc_clock::now());
                 this->mqtt.publish(var_datetime, datetime_str);
                 this->mqtt.publish(var_session_info, *session_info);
 
