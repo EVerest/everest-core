@@ -13,10 +13,10 @@ Transaction::Transaction(int32_t transactionId, int32_t connector,
                          std::string start_transaction_message_id) :
     transactionId(transactionId),
     connector(connector),
-    idTag(idTag),
     start_transaction_message_id(start_transaction_message_id),
     active(true),
     finished(false),
+    idTag(idTag),
     meter_values_sample_timer(std::move(meter_values_sample_timer)) {
 }
 
@@ -117,14 +117,14 @@ std::map<int32_t, ChargingProfile> Transaction::get_charging_profiles() {
 }
 
 ChargingSession::ChargingSession() :
-    authorized_token(nullptr), plug_connected(false), transaction(nullptr), reservation_id(boost::none) {
+    authorized_token(nullptr), reservation_id(boost::none), plug_connected(false), transaction(nullptr) {
 }
 
 ChargingSession::ChargingSession(std::unique_ptr<AuthorizedToken> authorized_token) :
     authorized_token(std::move(authorized_token)),
+    reservation_id(boost::none),
     plug_connected(false),
-    transaction(nullptr),
-    reservation_id(boost::none) {
+    transaction(nullptr) {
 }
 
 void ChargingSession::connect_plug() {
