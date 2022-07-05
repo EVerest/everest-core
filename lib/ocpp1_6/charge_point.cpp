@@ -21,7 +21,6 @@ ChargePoint::ChargePoint(std::shared_ptr<ChargePointConfiguration> configuration
     signed_firmware_update_running(false),
     switch_security_profile_callback(nullptr),
     interrupt_log_upload(false) {
-    //comment
     this->configuration = configuration;
     // TODO(piet): this->register_scheduled_callbacks();
     this->connection_state = ChargePointConnectionState::Disconnected;
@@ -399,6 +398,11 @@ MeterValue ChargePoint::get_latest_meter_value(int32_t connector, std::vector<Me
 }
 
 void ChargePoint::send_meter_value(int32_t connector, MeterValue meter_value) {
+
+    if (meter_value.sampledValue.size() == 0) {
+        return;
+    }
+
     MeterValuesRequest req;
     // connector = 0 designates the main powermeter
     // connector > 0 designates a connector of the charge point
