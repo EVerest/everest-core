@@ -8,20 +8,36 @@
 #include <ocpp1_6/charging_session.hpp>
 
 namespace ocpp1_6 {
-Transaction::Transaction(int32_t transactionId, std::unique_ptr<Everest::SteadyTimer> meter_values_sample_timer) :
-    transactionId(transactionId), active(true), meter_values_sample_timer(std::move(meter_values_sample_timer)) {
+Transaction::Transaction(int32_t transactionId, int32_t connector,
+                         std::unique_ptr<Everest::SteadyTimer> meter_values_sample_timer, CiString20Type idTag,
+                         std::string start_transaction_message_id) :
+    transactionId(transactionId),
+    connector(connector),
+    start_transaction_message_id(start_transaction_message_id),
+    active(true),
+    finished(false),
+    idTag(idTag),
+    meter_values_sample_timer(std::move(meter_values_sample_timer)) {
 }
 
-void Transaction::add_sampled_meter_value(MeterValue meter_value) {
+int32_t Transaction::get_connector() {
+    return this->connector;
+}
+
+CiString20Type Transaction::get_id_tag() {
+    return this->idTag;
+}
+
+void Transaction::add_meter_value(MeterValue meter_value) {
     if (this->active) {
-        std::lock_guard<std::mutex> lock(this->sampled_meter_values_mutex);
-        this->sampled_meter_values.push_back(meter_value);
+        std::lock_guard<std::mutex> lock(this->meter_values_mutex);
+        this->meter_values.push_back(meter_value);
     }
 }
 
-std::vector<MeterValue> Transaction::get_sampled_meter_values() {
-    std::lock_guard<std::mutex> lock(this->sampled_meter_values_mutex);
-    return this->sampled_meter_values;
+std::vector<MeterValue> Transaction::get_meter_values() {
+    std::lock_guard<std::mutex> lock(this->meter_values_mutex);
+    return this->meter_values;
 }
 
 bool Transaction::change_meter_values_sample_interval(int32_t interval) {
@@ -29,31 +45,33 @@ bool Transaction::change_meter_values_sample_interval(int32_t interval) {
     return true;
 }
 
-void Transaction::add_clock_aligned_meter_value(MeterValue meter_value) {
-    if (this->active) {
-        std::lock_guard<std::mutex> lock(this->clock_aligned_meter_values_mutex);
-        this->clock_aligned_meter_values.push_back(meter_value);
-    }
-}
-
-std::vector<MeterValue> Transaction::get_clock_aligned_meter_values() {
-    std::lock_guard<std::mutex> lock(this->clock_aligned_meter_values_mutex);
-    return this->clock_aligned_meter_values;
-}
-
 int32_t Transaction::get_transaction_id() {
     return this->transactionId;
 }
 
+void Transaction::set_start_transaction_message_id(const std::string& message_id) {
+    this->start_transaction_message_id = message_id;
+}
+
+std::string Transaction::get_start_transaction_message_id() {
+    return this->start_transaction_message_id;
+}
+
+void Transaction::set_stop_transaction_message_id(const std::string& message_id) {
+    this->stop_transaction_message_id = message_id;
+}
+
+std::string Transaction::get_stop_transaction_message_id() {
+    return this->stop_transaction_message_id;
+}
+
+void Transaction::set_transaction_id(int32_t transaction_id) {
+    this->transactionId = transaction_id;
+}
+
 std::vector<TransactionData> Transaction::get_transaction_data() {
     std::vector<TransactionData> transaction_data_vec;
-    for (auto meter_value : this->get_sampled_meter_values()) {
-        TransactionData transaction_data;
-        transaction_data.timestamp = meter_value.timestamp;
-        transaction_data.sampledValue = meter_value.sampledValue;
-        transaction_data_vec.push_back(transaction_data);
-    }
-    for (auto meter_value : this->get_clock_aligned_meter_values()) {
+    for (auto meter_value : this->get_meter_values()) {
         TransactionData transaction_data;
         transaction_data.timestamp = meter_value.timestamp;
         transaction_data.sampledValue = meter_value.sampledValue;
@@ -69,6 +87,18 @@ void Transaction::stop() {
 void Transaction::set_charging_profile(ChargingProfile charging_profile) {
     std::lock_guard<std::mutex> charge_point_max_profiles_lock(tx_charging_profiles_mutex);
     this->tx_charging_profiles[charging_profile.stackLevel] = charging_profile;
+}
+
+bool Transaction::transaction_active() {
+    return this->active;
+}
+
+bool Transaction::is_finished() {
+    return this->finished;
+}
+
+void Transaction::set_finished() {
+    this->finished = true;
 }
 
 void Transaction::remove_charging_profile(int32_t stack_level) {
@@ -87,14 +117,14 @@ std::map<int32_t, ChargingProfile> Transaction::get_charging_profiles() {
 }
 
 ChargingSession::ChargingSession() :
-    authorized_token(nullptr), plug_connected(false), transaction(nullptr), reservation_id(boost::none) {
+    authorized_token(nullptr), reservation_id(boost::none), plug_connected(false), transaction(nullptr) {
 }
 
 ChargingSession::ChargingSession(std::unique_ptr<AuthorizedToken> authorized_token) :
     authorized_token(std::move(authorized_token)),
+    reservation_id(boost::none),
     plug_connected(false),
-    transaction(nullptr),
-    reservation_id(boost::none) {
+    transaction(nullptr) {
 }
 
 void ChargingSession::connect_plug() {
@@ -146,7 +176,7 @@ bool ChargingSession::ready() {
 }
 
 bool ChargingSession::running() {
-    return this->transaction != nullptr;
+    return this->transaction != nullptr && this->transaction->transaction_active();
 }
 
 boost::optional<CiString20Type> ChargingSession::get_authorized_id_tag() {
@@ -175,30 +205,17 @@ bool ChargingSession::change_meter_values_sample_interval(int32_t interval) {
     return this->transaction->change_meter_values_sample_interval(interval);
 }
 
-void ChargingSession::add_sampled_meter_value(MeterValue meter_value) {
-    if (transaction != nullptr) {
-        this->transaction->add_sampled_meter_value(meter_value);
+void ChargingSession::add_meter_value(MeterValue meter_value) {
+    if (this->transaction != nullptr) {
+        this->transaction->add_meter_value(meter_value);
     }
 }
 
-std::vector<MeterValue> ChargingSession::get_sampled_meter_values() {
+std::vector<MeterValue> ChargingSession::get_meter_values() {
     if (this->transaction == nullptr) {
         return {};
     }
-    return this->transaction->get_sampled_meter_values();
-}
-
-void ChargingSession::add_clock_aligned_meter_value(MeterValue meter_value) {
-    if (transaction != nullptr) {
-        this->transaction->add_clock_aligned_meter_value(meter_value);
-    }
-}
-
-std::vector<MeterValue> ChargingSession::get_clock_aligned_meter_values() {
-    if (this->transaction == nullptr) {
-        return {};
-    }
-    return this->transaction->get_clock_aligned_meter_values();
+    return this->transaction->get_meter_values();
 }
 
 void ChargingSession::add_reservation_id(int32_t reservation_id) {
@@ -212,24 +229,29 @@ boost::optional<int32_t> ChargingSession::get_reservation_id() {
     return this->reservation_id;
 }
 
-bool ChargingSessions::valid_connector(int32_t connector) {
-    if (connector < 0 || connector > static_cast<int32_t>(this->charging_sessions.size())) {
+bool ChargingSessionHandler::valid_connector(int32_t connector) {
+    if (connector < 0 || connector > static_cast<int32_t>(this->active_charging_sessions.size())) {
         return false;
     }
     return true;
 }
 
-ChargingSessions::ChargingSessions(int32_t number_of_connectors) : number_of_connectors(number_of_connectors) {
+ChargingSessionHandler::ChargingSessionHandler(int32_t number_of_connectors) :
+    number_of_connectors(number_of_connectors) {
     for (int32_t i = 0; i < number_of_connectors + 1; i++) {
-        this->charging_sessions.push_back(nullptr);
+        this->active_charging_sessions.push_back(nullptr);
     }
 }
 
-int32_t ChargingSessions::add_authorized_token(CiString20Type idTag, IdTagInfo idTagInfo) {
+void ChargingSessionHandler::add_stopped_transaction(std::shared_ptr<Transaction> stopped_transaction) {
+    this->stopped_transactions.push_back(stopped_transaction);
+}
+
+int32_t ChargingSessionHandler::add_authorized_token(CiString20Type idTag, IdTagInfo idTagInfo) {
     return this->add_authorized_token(0, idTag, idTagInfo);
 }
 
-int32_t ChargingSessions::add_authorized_token(int32_t connector, CiString20Type idTag, IdTagInfo idTagInfo) {
+int32_t ChargingSessionHandler::add_authorized_token(int32_t connector, CiString20Type idTag, IdTagInfo idTagInfo) {
     if (!this->valid_connector(connector)) {
         return -1;
     }
@@ -237,11 +259,11 @@ int32_t ChargingSessions::add_authorized_token(int32_t connector, CiString20Type
     auto authorized_token = std::make_unique<AuthorizedToken>(idTag, idTagInfo);
 
     if (connector == 0) {
-        std::lock_guard<std::mutex> lock(this->charging_sessions_mutex);
+        std::lock_guard<std::mutex> lock(this->active_charging_sessions_mutex);
         // check if a charging session is missing an authorized token
         bool moved = false;
         int32_t index = 0;
-        for (auto& charging_session : this->charging_sessions) {
+        for (auto& charging_session : this->active_charging_sessions) {
             if (charging_session != nullptr && charging_session->get_authorized_id_tag() == boost::none) {
                 charging_session->add_authorized_token(std::move(authorized_token));
                 moved = true;
@@ -251,82 +273,83 @@ int32_t ChargingSessions::add_authorized_token(int32_t connector, CiString20Type
             index += 1;
         }
         if (!moved) {
-            this->charging_sessions.at(0) = std::make_unique<ChargingSession>(std::move(authorized_token));
+            this->active_charging_sessions.at(0) = std::make_unique<ChargingSession>(std::move(authorized_token));
         }
     } else {
-        std::lock_guard<std::mutex> lock(this->charging_sessions_mutex);
-        if (this->charging_sessions.at(connector) == nullptr) {
-            this->charging_sessions.at(connector) = std::make_unique<ChargingSession>(std::move(authorized_token));
+        std::lock_guard<std::mutex> lock(this->active_charging_sessions_mutex);
+        if (this->active_charging_sessions.at(connector) == nullptr) {
+            this->active_charging_sessions.at(connector) =
+                std::make_unique<ChargingSession>(std::move(authorized_token));
         } else {
-            if (this->charging_sessions.at(connector)->running()) {
+            if (this->active_charging_sessions.at(connector)->running()) {
                 // do not add a authorized token to a running charging session
                 return -1;
             }
-            this->charging_sessions.at(connector)->add_authorized_token(std::move(authorized_token));
+            this->active_charging_sessions.at(connector)->add_authorized_token(std::move(authorized_token));
         }
     }
     return connector;
 }
 
-bool ChargingSessions::add_start_energy_wh(int32_t connector, std::shared_ptr<StampedEnergyWh> start_energy_wh) {
+bool ChargingSessionHandler::add_start_energy_wh(int32_t connector, std::shared_ptr<StampedEnergyWh> start_energy_wh) {
     if (!this->valid_connector(connector)) {
         return false;
     }
     if (connector == 0) {
         return false;
     }
-    std::lock_guard<std::mutex> lock(this->charging_sessions_mutex);
-    if (this->charging_sessions.at(connector) == nullptr) {
+    std::lock_guard<std::mutex> lock(this->active_charging_sessions_mutex);
+    if (this->active_charging_sessions.at(connector) == nullptr) {
         return false;
     }
-    this->charging_sessions.at(connector)->add_start_energy_wh(start_energy_wh);
+    this->active_charging_sessions.at(connector)->add_start_energy_wh(start_energy_wh);
     return true;
 }
 
-std::shared_ptr<StampedEnergyWh> ChargingSessions::get_start_energy_wh(int32_t connector) {
+std::shared_ptr<StampedEnergyWh> ChargingSessionHandler::get_start_energy_wh(int32_t connector) {
     if (!this->valid_connector(connector)) {
         return nullptr;
     }
     if (connector == 0) {
         return nullptr;
     }
-    std::lock_guard<std::mutex> lock(this->charging_sessions_mutex);
-    if (this->charging_sessions.at(connector) == nullptr) {
+    std::lock_guard<std::mutex> lock(this->active_charging_sessions_mutex);
+    if (this->active_charging_sessions.at(connector) == nullptr) {
         return nullptr;
     }
-    return this->charging_sessions.at(connector)->get_start_energy_wh();
+    return this->active_charging_sessions.at(connector)->get_start_energy_wh();
 }
 
-bool ChargingSessions::add_stop_energy_wh(int32_t connector, std::shared_ptr<StampedEnergyWh> stop_energy_wh) {
+bool ChargingSessionHandler::add_stop_energy_wh(int32_t connector, std::shared_ptr<StampedEnergyWh> stop_energy_wh) {
     if (!this->valid_connector(connector)) {
         return false;
     }
     if (connector == 0) {
         return false;
     }
-    std::lock_guard<std::mutex> lock(this->charging_sessions_mutex);
-    if (this->charging_sessions.at(connector) == nullptr) {
+    std::lock_guard<std::mutex> lock(this->active_charging_sessions_mutex);
+    if (this->active_charging_sessions.at(connector) == nullptr) {
         return false;
     }
-    this->charging_sessions.at(connector)->add_stop_energy_wh(stop_energy_wh);
+    this->active_charging_sessions.at(connector)->add_stop_energy_wh(stop_energy_wh);
     return true;
 }
 
-std::shared_ptr<StampedEnergyWh> ChargingSessions::get_stop_energy_wh(int32_t connector) {
+std::shared_ptr<StampedEnergyWh> ChargingSessionHandler::get_stop_energy_wh(int32_t connector) {
     if (!this->valid_connector(connector)) {
         return nullptr;
     }
     if (connector == 0) {
         return nullptr;
     }
-    std::lock_guard<std::mutex> lock(this->charging_sessions_mutex);
-    if (this->charging_sessions.at(connector) == nullptr) {
+    std::lock_guard<std::mutex> lock(this->active_charging_sessions_mutex);
+    if (this->active_charging_sessions.at(connector) == nullptr) {
         return nullptr;
     }
-    return this->charging_sessions.at(connector)->get_stop_energy_wh();
+    return this->active_charging_sessions.at(connector)->get_stop_energy_wh();
 }
 
-bool ChargingSessions::initiate_session(int32_t connector) {
+bool ChargingSessionHandler::initiate_session(int32_t connector) {
     // TODO(kai): think about supporting connector 0 here, meaning "any connector"
     if (connector == 0) {
         EVLOG_warning << "Attempting to start a charging session on connector 0, this is not supported at the moment";
@@ -336,23 +359,23 @@ bool ChargingSessions::initiate_session(int32_t connector) {
         return false;
     }
     {
-        std::lock_guard<std::mutex> lock(this->charging_sessions_mutex);
-        if (this->charging_sessions.at(connector) == nullptr) {
-            if (this->charging_sessions.at(0) != nullptr) {
-                this->charging_sessions.at(connector) = std::move(this->charging_sessions.at(0));
+        std::lock_guard<std::mutex> lock(this->active_charging_sessions_mutex);
+        if (this->active_charging_sessions.at(connector) == nullptr) {
+            if (this->active_charging_sessions.at(0) != nullptr) {
+                this->active_charging_sessions.at(connector) = std::move(this->active_charging_sessions.at(0));
             } else {
-                this->charging_sessions.at(connector) = std::make_unique<ChargingSession>();
+                this->active_charging_sessions.at(connector) = std::make_unique<ChargingSession>();
             }
         }
-        if (this->charging_sessions.at(connector)->running()) {
+        if (this->active_charging_sessions.at(connector)->running()) {
             return false;
         }
-        this->charging_sessions.at(connector)->connect_plug();
+        this->active_charging_sessions.at(connector)->connect_plug();
     }
     return true;
 }
 
-bool ChargingSessions::remove_session(int32_t connector) {
+bool ChargingSessionHandler::remove_active_session(int32_t connector) {
     if (connector == 0) {
         EVLOG_warning << "Attempting to remove a charging session on connector 0, this is not supported.";
         return false;
@@ -361,62 +384,90 @@ bool ChargingSessions::remove_session(int32_t connector) {
         return false;
     }
     {
-        std::lock_guard<std::mutex> lock(this->charging_sessions_mutex);
-        this->charging_sessions.at(connector) = nullptr;
+        std::lock_guard<std::mutex> lock(this->active_charging_sessions_mutex);
+        this->active_charging_sessions.at(connector) = nullptr;
     }
     return true;
 }
 
-bool ChargingSessions::ready(int32_t connector) {
+bool ChargingSessionHandler::remove_stopped_transaction(std::string stop_transaction_message_id) {
+    int32_t index = 0;
+    for (size_t i = 0; i < this->stopped_transactions.size(); i++) {
+        if (this->stopped_transactions.at(i)->get_stop_transaction_message_id() == stop_transaction_message_id) {
+            index = i;
+        }
+    }
+    this->stopped_transactions.erase(this->stopped_transactions.begin() + index);
+    return true;
+}
+
+bool ChargingSessionHandler::ready(int32_t connector) {
     if (!this->valid_connector(connector)) {
         return false;
     }
-    std::lock_guard<std::mutex> lock(this->charging_sessions_mutex);
-    if (this->charging_sessions.at(connector) != nullptr) {
-        return this->charging_sessions.at(connector)->ready();
+    std::lock_guard<std::mutex> lock(this->active_charging_sessions_mutex);
+    if (this->active_charging_sessions.at(connector) != nullptr) {
+        return this->active_charging_sessions.at(connector)->ready();
     }
     return false;
 }
 
-bool ChargingSessions::add_transaction(int32_t connector, std::shared_ptr<Transaction> transaction) {
+bool ChargingSessionHandler::add_transaction(int32_t connector, std::shared_ptr<Transaction> transaction) {
     if (!this->valid_connector(connector)) {
         return false;
     }
-    std::lock_guard<std::mutex> lock(this->charging_sessions_mutex);
-    if (this->charging_sessions.at(connector) == nullptr) {
+    std::lock_guard<std::mutex> lock(this->active_charging_sessions_mutex);
+    if (this->active_charging_sessions.at(connector) == nullptr) {
         return false;
     }
-    return this->charging_sessions.at(connector)->add_transaction(transaction);
+    return this->active_charging_sessions.at(connector)->add_transaction(transaction);
 }
 
-std::shared_ptr<Transaction> ChargingSessions::get_transaction(int32_t connector) {
+std::shared_ptr<Transaction> ChargingSessionHandler::get_transaction(int32_t connector) {
     if (!this->valid_connector(connector)) {
         return nullptr;
     }
-    std::lock_guard<std::mutex> lock(this->charging_sessions_mutex);
-    if (this->charging_sessions.at(connector) == nullptr) {
+    std::lock_guard<std::mutex> lock(this->active_charging_sessions_mutex);
+    if (this->active_charging_sessions.at(connector) == nullptr) {
         return nullptr;
     }
-    return this->charging_sessions.at(connector)->get_transaction();
+    return this->active_charging_sessions.at(connector)->get_transaction();
 }
 
-bool ChargingSessions::transaction_active(int32_t connector) {
-    return this->get_transaction(connector) != nullptr;
+std::shared_ptr<Transaction> ChargingSessionHandler::get_transaction(const std::string& start_transaction_message_id) {
+
+    for (const auto& session : this->active_charging_sessions) {
+        if (session->get_transaction() != nullptr &&
+            session->get_transaction()->get_start_transaction_message_id() == start_transaction_message_id) {
+            return session->get_transaction();
+        }
+    }
+
+    for (const auto transaction : this->stopped_transactions) {
+        if (transaction->get_start_transaction_message_id() == start_transaction_message_id) {
+            return transaction;
+        }
+    }
+    return nullptr;
 }
 
-bool ChargingSessions::all_connectors_have_active_transaction() {
+bool ChargingSessionHandler::transaction_active(int32_t connector) {
+    return this->get_transaction(connector) != nullptr && this->get_transaction(connector)->transaction_active();
+}
+
+bool ChargingSessionHandler::all_connectors_have_active_transaction() {
     for (int connector = 1; connector <= this->number_of_connectors; connector++) {
-        if (!this->transaction_active(connector)) {
+        if (this->get_transaction(connector) == nullptr || !this->transaction_active(connector)) {
             return false;
         }
     }
     return true;
 }
 
-int32_t ChargingSessions::get_connector_from_transaction_id(int32_t transaction_id) {
-    std::lock_guard<std::mutex> lock(this->charging_sessions_mutex);
+int32_t ChargingSessionHandler::get_connector_from_transaction_id(int32_t transaction_id) {
+    std::lock_guard<std::mutex> lock(this->active_charging_sessions_mutex);
     int32_t index = 0;
-    for (auto& charging_session : this->charging_sessions) {
+    for (auto& charging_session : this->active_charging_sessions) {
         if (charging_session != nullptr) {
             auto transaction = charging_session->get_transaction();
             if (transaction != nullptr) {
@@ -430,21 +481,21 @@ int32_t ChargingSessions::get_connector_from_transaction_id(int32_t transaction_
     return -1;
 }
 
-bool ChargingSessions::change_meter_values_sample_interval(int32_t connector, int32_t interval) {
+bool ChargingSessionHandler::change_meter_values_sample_interval(int32_t connector, int32_t interval) {
     if (!this->valid_connector(connector)) {
         return false;
     }
-    std::lock_guard<std::mutex> lock(this->charging_sessions_mutex);
-    if (this->charging_sessions.at(connector) == nullptr) {
+    std::lock_guard<std::mutex> lock(this->active_charging_sessions_mutex);
+    if (this->active_charging_sessions.at(connector) == nullptr) {
         return false;
     }
-    return this->charging_sessions.at(connector)->change_meter_values_sample_interval(interval);
+    return this->active_charging_sessions.at(connector)->change_meter_values_sample_interval(interval);
 }
 
-bool ChargingSessions::change_meter_values_sample_intervals(int32_t interval) {
-    std::lock_guard<std::mutex> lock(this->charging_sessions_mutex);
+bool ChargingSessionHandler::change_meter_values_sample_intervals(int32_t interval) {
+    std::lock_guard<std::mutex> lock(this->active_charging_sessions_mutex);
     bool success = true;
-    for (auto& charging_session : this->charging_sessions) {
+    for (auto& charging_session : this->active_charging_sessions) {
         if (charging_session != nullptr && charging_session->running()) {
             if (!charging_session->change_meter_values_sample_interval(interval)) {
                 success = false;
@@ -454,81 +505,68 @@ bool ChargingSessions::change_meter_values_sample_intervals(int32_t interval) {
     return success;
 }
 
-boost::optional<CiString20Type> ChargingSessions::get_authorized_id_tag(int32_t connector) {
+boost::optional<CiString20Type> ChargingSessionHandler::get_authorized_id_tag(int32_t connector) {
     if (!this->valid_connector(connector)) {
         return boost::none;
     }
-    std::lock_guard<std::mutex> lock(this->charging_sessions_mutex);
-    if (this->charging_sessions.at(connector) == nullptr) {
+    std::lock_guard<std::mutex> lock(this->active_charging_sessions_mutex);
+    if (this->active_charging_sessions.at(connector) == nullptr) {
         return boost::none;
     }
-    return this->charging_sessions.at(connector)->get_authorized_id_tag();
+    return this->active_charging_sessions.at(connector)->get_authorized_id_tag();
 }
 
-void ChargingSessions::add_sampled_meter_value(int32_t connector, MeterValue meter_value) {
+boost::optional<CiString20Type> ChargingSessionHandler::get_authorized_id_tag(std::string stop_transaction_message_id) {
+    for (const auto& transaction : this->stopped_transactions) {
+        if (transaction->get_stop_transaction_message_id() == stop_transaction_message_id) {
+            transaction->get_id_tag();
+        }
+    }
+    return boost::none;
+}
+
+void ChargingSessionHandler::add_meter_value(int32_t connector, MeterValue meter_value) {
     if (!this->valid_connector(connector)) {
         return;
     }
-    std::lock_guard<std::mutex> lock(this->charging_sessions_mutex);
-    if (this->charging_sessions.at(connector) == nullptr) {
+    std::lock_guard<std::mutex> lock(this->active_charging_sessions_mutex);
+    if (this->active_charging_sessions.at(connector) == nullptr) {
         return;
     }
-    this->charging_sessions.at(connector)->add_sampled_meter_value(meter_value);
+    this->active_charging_sessions.at(connector)->add_meter_value(meter_value);
 }
 
-std::vector<MeterValue> ChargingSessions::get_sampled_meter_values(int32_t connector) {
-    if (!this->valid_connector(connector)) {
-        return {};
-    }
-    std::lock_guard<std::mutex> lock(this->charging_sessions_mutex);
-    if (this->charging_sessions.at(connector) == nullptr) {
-        return {};
-    }
-    return this->charging_sessions.at(connector)->get_sampled_meter_values();
-}
-
-void ChargingSessions::add_clock_aligned_meter_value(int32_t connector, MeterValue meter_value) {
-    if (!this->valid_connector(connector)) {
-        return;
-    }
-    std::lock_guard<std::mutex> lock(this->charging_sessions_mutex);
-    if (this->charging_sessions.at(connector) == nullptr) {
-        return;
-    }
-    this->charging_sessions.at(connector)->add_clock_aligned_meter_value(meter_value);
-}
-
-std::vector<MeterValue> ChargingSessions::get_clock_aligned_meter_values(int32_t connector) {
+std::vector<MeterValue> ChargingSessionHandler::get_meter_values(int32_t connector) {
     if (!this->valid_connector(connector)) {
         return {};
     }
-    std::lock_guard<std::mutex> lock(this->charging_sessions_mutex);
-    if (this->charging_sessions.at(connector) == nullptr) {
+    std::lock_guard<std::mutex> lock(this->active_charging_sessions_mutex);
+    if (this->active_charging_sessions.at(connector) == nullptr) {
         return {};
     }
-    return this->charging_sessions.at(connector)->get_clock_aligned_meter_values();
+    return this->active_charging_sessions.at(connector)->get_meter_values();
 }
 
-void ChargingSessions::add_reservation_id(int32_t connector, int32_t reservation_id) {
+void ChargingSessionHandler::add_reservation_id(int32_t connector, int32_t reservation_id) {
     if (!this->valid_connector(connector)) {
         return;
     }
-    std::lock_guard<std::mutex> lock(this->charging_sessions_mutex);
-    if (this->charging_sessions.at(connector) == nullptr) {
+    std::lock_guard<std::mutex> lock(this->active_charging_sessions_mutex);
+    if (this->active_charging_sessions.at(connector) == nullptr) {
         return;
     }
-    this->charging_sessions.at(connector)->add_reservation_id(reservation_id);
+    this->active_charging_sessions.at(connector)->add_reservation_id(reservation_id);
 }
 
-boost::optional<int32_t> ChargingSessions::get_reservation_id(int32_t connector) {
+boost::optional<int32_t> ChargingSessionHandler::get_reservation_id(int32_t connector) {
     if (!this->valid_connector(connector)) {
         return boost::none;
     }
-    std::lock_guard<std::mutex> lock(this->charging_sessions_mutex);
-    if (this->charging_sessions.at(connector) == nullptr) {
+    std::lock_guard<std::mutex> lock(this->active_charging_sessions_mutex);
+    if (this->active_charging_sessions.at(connector) == nullptr) {
         return boost::none;
     }
-    return this->charging_sessions.at(connector)->get_reservation_id();
+    return this->active_charging_sessions.at(connector)->get_reservation_id();
 }
 
 } // namespace ocpp1_6

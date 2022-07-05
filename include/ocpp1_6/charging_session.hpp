@@ -8,31 +8,49 @@
 #include <ocpp1_6/ocpp_types.hpp>
 #include <ocpp1_6/types.hpp>
 
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
+
 namespace ocpp1_6 {
 
 /// \brief Contains all transaction related data, such as the ID and power meter values
 class Transaction {
 private:
     int32_t transactionId;
+    int32_t connector;
+    std::string start_transaction_message_id;
+    std::string stop_transaction_message_id;
     bool active;
+    bool finished;
+    CiString20Type idTag;
     std::unique_ptr<Everest::SteadyTimer> meter_values_sample_timer;
-    std::mutex sampled_meter_values_mutex;
-    std::vector<MeterValue> sampled_meter_values;
-    std::mutex clock_aligned_meter_values_mutex;
-    std::vector<MeterValue> clock_aligned_meter_values;
+    std::mutex meter_values_mutex;
+    std::vector<MeterValue> meter_values;
     std::mutex tx_charging_profiles_mutex;
     std::map<int32_t, ChargingProfile> tx_charging_profiles;
 
 public:
     /// \brief Creates a new Transaction object, taking ownership of the provided \p meter_values_sample_timer
-    Transaction(int32_t transactionId, std::unique_ptr<Everest::SteadyTimer> meter_values_sample_timer);
+    /// on the provided \p connector
+    Transaction(int32_t transactionId, int32_t connector,
+                std::unique_ptr<Everest::SteadyTimer> meter_values_sample_timer, CiString20Type idTag,
+                std::string start_transaction_message_id);
 
-    /// \brief Adds the provided \p meter_value to a chronological list of sampled powermeter values
-    void add_sampled_meter_value(MeterValue meter_value);
+    /// \brief Provides the connector of this transaction
+    /// \returns the connector
+    int32_t get_connector();
 
-    /// \brief Provides all recorded sampled powermeter values
-    /// \returns a vector of sampled powermeter values
-    std::vector<MeterValue> get_sampled_meter_values();
+    /// \brief Provides the authorized id tag of this Transaction
+    /// \returns the authorized id tag
+    CiString20Type get_id_tag();
+
+    /// \brief Adds the provided \p meter_value to a chronological list of powermeter values
+    void add_meter_value(MeterValue meter_value);
+
+    /// \brief Provides all recorded powermeter values
+    /// \returns a vector of powermeter values
+    std::vector<MeterValue> get_meter_values();
 
     /// \brief Changes the sample \p interval of the powermeter values sampling timer
     /// \returns true if successful
@@ -41,13 +59,24 @@ public:
     /// \brief Adds the provided \p meter_value to a chronological list of clock aligned powermeter values
     void add_clock_aligned_meter_value(MeterValue meter_value);
 
-    /// \brief Provides all recorded clock aligned powermeter values
-    /// \returns a vector of clock aligned powermeter values
-    std::vector<MeterValue> get_clock_aligned_meter_values();
-
     /// \brief Provides the id of this transaction
     /// \returns the transaction id
     int32_t get_transaction_id();
+
+    /// \brief Sets the start transaction message id using the provides \p message_id
+    void set_start_transaction_message_id(const std::string& message_id);
+
+    /// \brief Provides the start transaction message id
+    std::string get_start_transaction_message_id();
+
+    /// \brief Sets the stop transaction message id using the provides \p message_id
+    void set_stop_transaction_message_id(const std::string& message_id);
+
+    /// \brief Provides the stop transaction message id
+    std::string get_stop_transaction_message_id();
+
+    /// \brief Sets the transaction id
+    void set_transaction_id(int32_t transaction_id);
 
     /// \brief Provides all recorded sampled and clock aligned powermeter values
     /// \returns a vector of sampled and clock aligned powermeter values packaged into a TransactionData object
@@ -58,6 +87,17 @@ public:
 
     /// \brief Set a \p charging_profile
     void set_charging_profile(ChargingProfile charging_profile);
+
+    /// \brief Indicates if the transaction is active. Active means that the transaction for this session is not null
+    /// and no StopTransaction.req has been pushed to the message queue yet
+    bool transaction_active();
+
+    /// \brief Indicates if a StopTransaction.req for this transaction has already been pushed to the message queue
+    bool is_finished();
+
+    /// \brief Sets the finished flag for this transaction. This is done when a StopTransaction.req has been pushed to
+    /// the message queue
+    void set_finished();
 
     /// \brief Remove the charging profile at the provided \p stack_level
     void remove_charging_profile(int32_t stack_level);
@@ -167,19 +207,12 @@ public:
     /// given in seconds. \returns true if the change was successful
     bool change_meter_values_sample_interval(int32_t interval);
 
-    /// \brief Adds a sampled \p meter_value to the charging session
-    void add_sampled_meter_value(MeterValue meter_value);
+    /// \brief Adds a \p meter_value to the charging session
+    void add_meter_value(MeterValue meter_value);
 
-    /// \brief Provides a list of sampled meter values
-    /// \returns A vector of associated sampled meter values
-    std::vector<MeterValue> get_sampled_meter_values();
-
-    /// \brief Adds a clock aligned \p meter_value to the charging session
-    void add_clock_aligned_meter_value(MeterValue meter_value);
-
-    /// \brief Provides a list of clock aligned meter values
-    /// \returns A vector of associated clock aligned meter values
-    std::vector<MeterValue> get_clock_aligned_meter_values();
+    /// \brief Provides a list of meter values
+    /// \returns A vector of associated meter values
+    std::vector<MeterValue> get_meter_values();
 
     /// \brief Adds the given \p reservation_id to the charging session
     void add_reservation_id(int32_t reservation_id);
@@ -190,11 +223,14 @@ public:
 };
 
 /// \brief Contains charging sessions for all available connectors and manages access to these charging sessions
-class ChargingSessions {
+class ChargingSessionHandler {
 private:
     int32_t number_of_connectors;
-    std::mutex charging_sessions_mutex;
-    std::vector<std::unique_ptr<ChargingSession>> charging_sessions;
+    std::mutex active_charging_sessions_mutex;
+    // size is equal to the number of connectors
+    std::vector<std::unique_ptr<ChargingSession>> active_charging_sessions;
+    // size does not depend on the number of connectors
+    std::vector<std::shared_ptr<Transaction>> stopped_transactions;
 
     /// \brief Indicates if the given \p connector is in the valid range between 0 and the number of connectors
     /// \returns true if the connector is within the valid range
@@ -202,7 +238,10 @@ private:
 
 public:
     /// \brief Creates and manages charging sessions for the provided \p number_of_connectors
-    explicit ChargingSessions(int32_t number_of_connectors);
+    explicit ChargingSessionHandler(int32_t number_of_connectors);
+
+    /// \brief Adds the given \p stopped_transaction to the vector of stopped transactions
+    void add_stopped_transaction(std::shared_ptr<Transaction> stopped_transaction);
 
     /// \brief Adds an authorized token, created from the provided \p idTag and \p idTagInfo to any connector that is in
     /// need of a token
@@ -238,7 +277,11 @@ public:
 
     /// \brief Removes a charging session from the provided \p connector
     /// \returns true if successful
-    bool remove_session(int32_t connector);
+    bool remove_active_session(int32_t connector);
+
+    /// \brief Removes a charging session with the provided \p stop_transaction_message_i
+    /// \returns true if successful
+    bool remove_stopped_transaction(std::string stop_transaction_message_id);
 
     /// \brief Indicates if the charging session on the provided \p connector is ready
     /// \returns true if the charging session is ready, false if not
@@ -251,6 +294,11 @@ public:
     /// \brief Returns the transaction associated with the charging session at the provided \p connector
     /// \returns The associated transaction if available or nullptr if not
     std::shared_ptr<Transaction> get_transaction(int32_t connector);
+
+    /// \brief Returns the transaction associated with the charging session with the provided
+    /// \p start_transaction_message_id
+    /// \returns The associated transaction if available or nullptr if not
+    std::shared_ptr<Transaction> get_transaction(const std::string& start_transaction_message_id);
 
     /// \brief Indicates if there is an active transaction at the proveded \p connector
     /// \returns true if a transaction exists
@@ -278,19 +326,17 @@ public:
     /// \returns the IdTag if it is available, boost::none otherwise
     boost::optional<CiString20Type> get_authorized_id_tag(int32_t connector);
 
-    /// \brief Adds a sampled \p meter_value to the charging session at the given \p connector
-    void add_sampled_meter_value(int32_t connector, MeterValue meter_value);
+    /// \brief Provides the IdTag that was associated with the charging session with the provided
+    /// \p stop_transaction_message_id
+    /// \returns the IdTag if it is available, boost::none otherwise
+    boost::optional<CiString20Type> get_authorized_id_tag(std::string stop_transaction_message_id);
 
-    /// \brief Provides a list of sampled meter values from the given \p connector
-    /// \returns A vector of associated sampled meter values
-    std::vector<MeterValue> get_sampled_meter_values(int32_t connector);
+    /// \brief Provides a list of meter values from the given \p connector
+    /// \returns A vector of associated meter values
+    std::vector<MeterValue> get_meter_values(int32_t connector);
 
     /// \brief Adds a clock aligned \p meter_value to the charging session on the provided \p connector
-    void add_clock_aligned_meter_value(int32_t connector, MeterValue meter_value);
-
-    /// \brief Provides a list of clock aligned meter values from the given \p connector
-    /// \returns A vector of associated clock aligned meter values
-    std::vector<MeterValue> get_clock_aligned_meter_values(int32_t connector);
+    void add_meter_value(int32_t connector, MeterValue meter_value);
 
     /// \brief Adds a \p reservation_id to the charging session on the provided \p connector
     void add_reservation_id(int32_t connector, int32_t reservation_id);

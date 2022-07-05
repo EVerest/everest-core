@@ -28,9 +28,9 @@ MessageQueue::MessageQueue(std::shared_ptr<ChargePointConfiguration> configurati
                 continue;
             }
             EVLOG_debug << "There are " << this->normal_message_queue.size()
-                         << " messages in the normal message queue.";
+                        << " messages in the normal message queue.";
             EVLOG_debug << "There are " << this->transaction_message_queue.size()
-                         << " messages in the transaction message queue.";
+                        << " messages in the transaction message queue.";
 
             if (this->paused) {
                 // Message queue is paused, not progressing further
@@ -58,7 +58,7 @@ MessageQueue::MessageQueue(std::shared_ptr<ChargePointConfiguration> configurati
                     queue_type = QueueType::Normal;
                 } else {
                     EVLOG_error << "A normal message should not have a timestamp in the future: "
-                                 << normal_message->timestamp << " now: " << now;
+                                << normal_message->timestamp << " now: " << now;
                 }
             }
 
@@ -90,15 +90,22 @@ MessageQueue::MessageQueue(std::shared_ptr<ChargePointConfiguration> configurati
             }
 
             EVLOG_debug << "Attempting to send message to central system. UID: " << message->uniqueId()
-                         << " attempt#: " << message->message_attempts;
+                        << " attempt#: " << message->message_attempts;
             this->in_flight = message;
+
+            if (this->message_id_transaction_id_map.count(this->in_flight->message.at(1))) {
+                EVLOG_critical << "Replacing transaction id";
+                this->in_flight->message.at(3)["transactionId"] =
+                    this->message_id_transaction_id_map.at(this->in_flight->message.at(1));
+                this->message_id_transaction_id_map.erase(this->in_flight->message.at(1));
+            }
 
             if (!this->send_callback(this->in_flight->message)) {
                 this->paused = true;
                 EVLOG_error << "Could not send message, this is most likely because the charge point is offline.";
                 if (this->isTransactionMessage(this->in_flight)) {
                     EVLOG_info << "The message in flight is transaction related and will be sent again once the "
-                                   "connection can be established again.";
+                                  "connection can be established again.";
                     this->in_flight = nullptr;
                 } else {
                     EVLOG_info << "The message in flight is not transaction related and will be dropped";
@@ -217,13 +224,12 @@ EnhancedMessage MessageQueue::receive(const std::string& message) {
             // TODO(kai): we need to do some error handling in the CallError case
             std::unique_lock<std::mutex> lk(this->message_mutex);
             if (this->in_flight == nullptr) {
-                EVLOG_error
-                    << "Received a CALLRESULT OR CALLERROR without a message in flight, this should not happen";
+                EVLOG_error << "Received a CALLRESULT OR CALLERROR without a message in flight, this should not happen";
                 return enhanced_message;
             }
             if (this->in_flight->uniqueId() != enhanced_message.uniqueId) {
                 EVLOG_error << "Received a CALLRESULT OR CALLERROR with mismatching uid: "
-                             << this->in_flight->uniqueId() << " != " << enhanced_message.uniqueId;
+                            << this->in_flight->uniqueId() << " != " << enhanced_message.uniqueId;
                 return enhanced_message;
             }
             if (enhanced_message.messageTypeId == MessageTypeId::CALLERROR) {
@@ -257,7 +263,7 @@ EnhancedMessage MessageQueue::receive(const std::string& message) {
                                 DateTime(this->in_flight->timestamp.to_time_point() +
                                          std::chrono::seconds(retry_interval) * this->in_flight->message_attempts);
                             EVLOG_debug << "Retry interval > 0: " << retry_interval
-                                         << " attempting to retry message at: " << this->in_flight->timestamp;
+                                        << " attempting to retry message at: " << this->in_flight->timestamp;
                         } else {
                             // immediate retry
                             this->in_flight->timestamp = DateTime();
@@ -299,7 +305,7 @@ EnhancedMessage MessageQueue::receive(const std::string& message) {
 
     } catch (const std::exception& e) {
         EVLOG_error << "json parse failed because: "
-                     << "(" << e.what() << ")";
+                    << "(" << e.what() << ")";
     }
 
     return enhanced_message;
@@ -333,6 +339,12 @@ MessageId MessageQueue::createMessageId() {
     std::stringstream s;
     s << this->uuid_generator();
     return MessageId(s.str());
+}
+
+void MessageQueue::add_stopped_transaction_id(std::string stop_transaction_message_id, int32_t transaction_id) {
+
+    EVLOG_critical << "adding " << stop_transaction_message_id << " for transaction " << transaction_id;
+    this->message_id_transaction_id_map[stop_transaction_message_id] = transaction_id;
 }
 
 } // namespace ocpp1_6
