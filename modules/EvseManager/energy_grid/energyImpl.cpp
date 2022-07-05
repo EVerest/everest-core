@@ -6,21 +6,12 @@
 #include <cstdint>
 #include <cstdlib>
 #include <date/date.h>
+#include <date/tz.h>
 #include <string>
+#include <utils/date.hpp>
 
 namespace module {
 namespace energy_grid {
-
-std::string to_rfc3339(std::chrono::time_point<date::utc_clock> t) {
-    return date::format("%FT%TZ", std::chrono::time_point_cast<std::chrono::milliseconds>(t));
-}
-
-std::chrono::time_point<date::utc_clock> from_rfc3339(std::string t) {
-    std::istringstream infile{t};
-    std::chrono::time_point<date::utc_clock> tp;
-    infile >> date::parse("%FT%T", tp);
-    return tp;
-}
 
 void energyImpl::init() {
     _price_limit = 0.0F;
@@ -79,7 +70,7 @@ void energyImpl::init() {
 void energyImpl::ready() {
     types::board_support::HardwareCapabilities hw_caps = mod->get_hw_capabilities();
     json schedule_entry = json::object();
-    schedule_entry["timestamp"] = to_rfc3339(date::utc_clock::now());
+    schedule_entry["timestamp"] = Everest::Date::to_rfc3339(date::utc_clock::now());
     schedule_entry["request_parameters"] = json::object();
     schedule_entry["request_parameters"]["limit_type"] = "Hard";
     schedule_entry["request_parameters"]["ac_current_A"] = json::object();
@@ -125,7 +116,7 @@ void energyImpl::handle_enforce_limits(std::string& uuid, types::energy::Limits&
 
         // update limit at the charger
         if (!limits_import_json["valid_until"].is_null()) {
-            mod->charger->setMaxCurrent(limit, from_rfc3339(limits_import_json["valid_until"]));
+            mod->charger->setMaxCurrent(limit, Everest::Date::from_rfc3339(limits_import_json["valid_until"]));
             if (limit > 0)
                 mod->charger->resumeChargingPowerAvailable();
         }
