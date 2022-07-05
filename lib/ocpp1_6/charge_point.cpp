@@ -18,10 +18,10 @@ ChargePoint::ChargePoint(std::shared_ptr<ChargePointConfiguration> configuration
     diagnostics_status(DiagnosticsStatus::Idle),
     firmware_status(FirmwareStatus::Idle),
     log_status(UploadLogStatusEnumType::Idle),
+    signed_firmware_update_running(false),
     switch_security_profile_callback(nullptr),
-    interrupt_log_upload(false),
-    signed_firmware_update_running(false) {
-
+    interrupt_log_upload(false) {
+    //comment
     this->configuration = configuration;
     // TODO(piet): this->register_scheduled_callbacks();
     this->connection_state = ChargePointConnectionState::Disconnected;
