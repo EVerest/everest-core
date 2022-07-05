@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
-#ifndef YETI_SERIAL
-#define YETI_SERIAL
+#ifndef PN532_SERIAL
+#define PN532_SERIAL
 
-#include "evThread.h"
 #include <future>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <stdint.h>
 #include <termios.h>
+#include <utils/thread.hpp>
+#include <utils/serial.hpp>
 #include <vector>
 
 enum class PN532Command {
@@ -58,16 +59,14 @@ struct InListPassiveTargetResponse : public PN532Message {
     std::vector<TargetData> target_data;
 };
 
-class evSerial {
+class PN532Serial : public Everest::Serial {
 
 public:
-    evSerial();
-    ~evSerial();
-
-    bool openDevice(const char* device, int baud);
+    PN532Serial();
+    ~PN532Serial();
 
     void readThread();
-    void run();
+    void run() override;
     bool reset();
     bool serialWrite(std::vector<uint8_t> data);
     bool serialWriteCommand(std::vector<uint8_t> data);
@@ -95,13 +94,8 @@ private:
 
     void resetDataRead();
 
-    // Serial interface
-    bool setSerialAttributes();
-    int fd;
-    int baud;
-
     // Read thread for serial port
-    evThread readThreadHandle;
+    Everest::Thread readThreadHandle;
 };
 
 #endif

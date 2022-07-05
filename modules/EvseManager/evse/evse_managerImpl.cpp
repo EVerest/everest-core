@@ -5,16 +5,12 @@
 #include <boost/uuid/random_generator.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include <date/date.h>
+#include <date/tz.h>
+#include <utils/date.hpp>
 
 namespace module {
 namespace evse {
-
-std::chrono::time_point<date::utc_clock> from_rfc3339(std::string t) {
-    std::istringstream infile{t};
-    std::chrono::time_point<date::utc_clock> tp;
-    infile >> date::parse("%FT%T", tp);
-    return tp;
-}
 
 bool str_to_bool(std::string data) {
     if (data == "true") {
@@ -230,7 +226,7 @@ bool evse_managerImpl::handle_force_unlock() {
 
 std::string evse_managerImpl::handle_reserve_now(int& reservation_id, std::string& auth_token, std::string& expiry_date,
                                                  std::string& parent_id) {
-    return mod->reserve_now(reservation_id, auth_token, from_rfc3339(expiry_date), parent_id);
+    return mod->reserve_now(reservation_id, auth_token, Everest::Date::from_rfc3339(expiry_date), parent_id);
 };
 
 bool evse_managerImpl::handle_cancel_reservation() {

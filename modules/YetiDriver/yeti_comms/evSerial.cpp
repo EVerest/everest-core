@@ -230,8 +230,8 @@ void evSerial::cobsDecodeByte(uint8_t byte) {
 }
 
 void evSerial::run() {
-    readThreadHandle.handle = std::thread(&evSerial::readThread, this);
-    timeoutDetectionThreadHandle.handle = std::thread(&evSerial::timeoutDetectionThread, this);
+    readThreadHandle = std::thread(&evSerial::readThread, this);
+    timeoutDetectionThreadHandle = std::thread(&evSerial::timeoutDetectionThread, this);
 }
 
 void evSerial::timeoutDetectionThread() {
