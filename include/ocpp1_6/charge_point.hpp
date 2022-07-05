@@ -88,7 +88,7 @@ private:
     std::mutex power_meter_mutex;
     std::map<int32_t, AvailabilityType> change_availability_queue; // TODO: move to Connectors
     std::mutex change_availability_mutex;                          // TODO: move to Connectors
-    std::unique_ptr<ChargingSessions> charging_sessions;
+    std::unique_ptr<ChargingSessionHandler> charging_session_handler;
     std::map<int32_t, ChargingProfile> charge_point_max_profiles;
     std::mutex charge_point_max_profiles_mutex;
     std::map<int32_t, std::map<int32_t, ChargingProfile>> tx_default_profiles;
@@ -111,6 +111,8 @@ private:
 
     std::map<std::string, std::map<std::string, std::function<void(const std::string data)>>> data_transfer_callbacks;
     std::mutex data_transfer_callbacks_mutex;
+
+    std::mutex stop_transaction_mutex;
 
     std::thread reset_thread;
     DiagnosticsStatus diagnostics_status;
@@ -191,6 +193,7 @@ private:
     void handleRemoteStopTransactionRequest(Call<RemoteStopTransactionRequest> call);
     void handleResetRequest(Call<ResetRequest> call);
     void handleStartTransactionResponse(CallResult<StartTransactionResponse> call_result);
+    void handleStopTransactionResponse(CallResult<StopTransactionResponse> call_result);
     void handleUnlockConnectorRequest(Call<UnlockConnectorRequest> call);
 
     // smart charging profile
@@ -251,7 +254,6 @@ public:
 
     /// \brief Disconnects the the websocket if it is connected
     void disconnect_websocket();
-
 
     // public API for Core profile
 

@@ -32,8 +32,7 @@ struct EnhancedMessage {
 };
 
 /// \brief This can be used to distinguish the different queue types
-enum class QueueType
-{
+enum class QueueType {
     Normal,
     Transaction,
     None,
@@ -78,6 +77,12 @@ private:
     bool running;
     bool new_message;
     boost::uuids::random_generator uuid_generator;
+
+    // key is the message id of the stop transaction and the value is the transaction id
+    // this map is used for StopTransaction.req that have been put on the message queue without having received a
+    // transactionId from the backend (e.g. when offline) it is used to replace the transactionId in the
+    // StopTransaction.req
+    std::map<std::string, int32_t> message_id_transaction_id_map;
 
     MessageId getMessageId(const json::array_t& json_message);
     MessageTypeId getMessageTypeId(const json::array_t& json_message);
@@ -149,6 +154,10 @@ public:
     /// \brief Creates a unique message ID
     /// \returns the unique message ID
     MessageId createMessageId();
+
+    /// \brief Adds the given \p transaction_id to the message_id_transaction_id_map using the key \p
+    /// stop_transaction_message_id
+    void add_stopped_transaction_id(std::string stop_transaction_message_id, int32_t transaction_id);
 };
 
 } // namespace ocpp1_6
