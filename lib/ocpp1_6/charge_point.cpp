@@ -1098,7 +1098,7 @@ void ChargePoint::handleStartTransactionResponse(CallResult<StartTransactionResp
     StartTransactionResponse start_transaction_response = call_result.msg;
     // TODO(piet): Fix this for multiple connectors;
 
-    auto transaction = this->charging_session_handler->get_transaction(start_transaction_response.transactionId);
+    auto transaction = this->charging_session_handler->get_transaction(call_result.uniqueId);
     int32_t connector = transaction->get_connector();
     transaction->set_transaction_id(start_transaction_response.transactionId);
 
@@ -2379,6 +2379,11 @@ bool ChargePoint::start_transaction(int32_t connector) {
     AvailabilityType connector_availability = this->configuration->getConnectorAvailability(connector);
     if (connector_availability == AvailabilityType::Inoperative) {
         EVLOG_error << "Connector " << connector << " is inoperative.";
+        return false;
+    }
+
+    if (this->charging_session_handler->get_transaction(connector) != nullptr) {
+        EVLOG_debug << "Transaction has already been started";
         return false;
     }
 
