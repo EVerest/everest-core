@@ -373,11 +373,7 @@ void OCPP::init() {
                 this->charge_point->plug_disconnected(connector);
             } else if (event == "Error") {
                 auto error = session_events["error"];
-                if (error == "OverCurrent") {
-                    this->charge_point->error(connector, ocpp1_6::ChargePointErrorCode::OverCurrentFailure);
-                } else {
-                    this->charge_point->vendor_error(connector, error);
-                }
+                this->charge_point->error(connector, error);
             } else if (event == "PermanentFault") {
                 this->charge_point->permanent_fault(connector);
             } else if (event == "ReservationStart") {
