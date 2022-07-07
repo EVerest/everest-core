@@ -2059,8 +2059,11 @@ void ChargePoint::signedFirmwareUpdateStatusNotification(FirmwareStatusEnumType 
 void ChargePoint::handleReserveNowRequest(Call<ReserveNowRequest> call) {
     ReserveNowResponse response;
     response.status = ReservationStatus::Rejected;
-    if (this->reserve_now_callback != nullptr &&
-        this->configuration->getSupportedFeatureProfiles().find("Reservation") != std::string::npos) {
+
+    if (this->status->get_state(call.msg.connectorId) == ChargePointStatus::Faulted) {
+        response.status = ReservationStatus::Faulted;
+    } else if (this->reserve_now_callback != nullptr &&
+               this->configuration->getSupportedFeatureProfiles().find("Reservation") != std::string::npos) {
         response.status = this->reserve_now_callback(call.msg.reservationId, call.msg.connectorId, call.msg.expiryDate,
                                                      call.msg.idTag, call.msg.parentIdTag);
     }
