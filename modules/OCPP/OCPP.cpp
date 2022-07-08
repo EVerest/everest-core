@@ -371,8 +371,8 @@ void OCPP::init() {
                 this->charge_point->stop_session(connector, ocpp1_6::DateTime(timestamp), energy_Wh_import);
                 this->charge_point->plug_disconnected(connector);
             } else if (event == "Error") {
-                auto evse_error = session_events["error"];
-                ocpp1_6::ChargePointErrorCode ocpp_error_code = this->getOcppErrorCode(evse_error);
+                const auto evse_error = session_events["error"];
+                ocpp1_6::ChargePointErrorCode ocpp_error_code = get_ocpp_error_code(evse_error);
                 this->charge_point->error(connector, ocpp_error_code);
             } else if (event == "PermanentFault") {
                 this->charge_point->permanent_fault(connector);
@@ -410,7 +410,7 @@ void OCPP::ready() {
     invoke_ready(*p_auth_provider);
 }
 
-ocpp1_6::ChargePointErrorCode OCPP::getOcppErrorCode(json evse_error) {
+static ocpp1_6::ChargePointErrorCode get_ocpp_error_code(const Object& evse_error) {
     if (evse_error == "Car") {
         return ocpp1_6::ChargePointErrorCode::OtherError;
     } else if (evse_error == "CarDiodeFault") {
