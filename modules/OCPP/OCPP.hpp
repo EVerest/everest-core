@@ -91,6 +91,8 @@ private:
     void init();
     void ready();
 
+    ocpp1_6::ChargePointErrorCode getOcppErrorCode(json evse_error);
+
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
     void start_session();
