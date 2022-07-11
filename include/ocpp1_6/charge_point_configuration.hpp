@@ -33,10 +33,7 @@ private:
     json get_user_config();
     void setInUserConfig(std::string profile, std::string key, json value);
 
-    static std::string hexToString(std::string const& s);
-    static bool isHexNotation(std::string const& s);
     bool isConnectorPhaseRotationValid(std::string str);
-    bool isBool(const std::string& str);
 
 public:
     ChargePointConfiguration(json config, std::string configs_path, std::string schemas_path,

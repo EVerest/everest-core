@@ -1719,6 +1719,34 @@ boost::optional<std::string> ChargePointConfiguration::getAuthorizationKey() {
     return authorization_key;
 }
 
+std::string hexToString(std::string const& s) {
+    std::string str;
+    for (size_t i = 0; i < s.length(); i += 2) {
+        std::string byte = s.substr(i, 2);
+        char chr = (char)(int)strtol(byte.c_str(), NULL, 16);
+        str.push_back(chr);
+    }
+    return str;
+}
+
+bool isHexNotation(std::string const& s) {
+    bool is_hex = s.size() > 2 && s.find_first_not_of("0123456789abcdefABCDEF", 2) == std::string::npos;
+
+    if (is_hex) {
+        // check if every char is printable
+        for (size_t i = 0; i < s.length(); i += 2) {
+            std::string byte = s.substr(i, 2);
+            char chr = (char)(int)strtol(byte.c_str(), NULL, 16);
+            if ((chr < 0x20 || chr > 0x7e) && chr != 0xa) {
+                return false;
+            }
+        }
+    } else {
+        return false;
+    }
+    return true;
+}
+
 void ChargePointConfiguration::setAuthorizationKey(std::string authorization_key) {
 
     // TODO(piet): SecurityLog entry
@@ -1732,20 +1760,6 @@ void ChargePointConfiguration::setAuthorizationKey(std::string authorization_key
 
     this->config["Security"]["AuthorizationKey"] = str;
     this->setInUserConfig("Security", "AuthorizationKey", str);
-}
-
-std::string ChargePointConfiguration::hexToString(std::string const& s) {
-    std::string str;
-    for (size_t i = 0; i < s.length(); i += 2) {
-        std::string byte = s.substr(i, 2);
-        char chr = (char)(int)strtol(byte.c_str(), NULL, 16);
-        str.push_back(chr);
-    }
-    return str;
-}
-
-bool ChargePointConfiguration::isHexNotation(std::string const& s) {
-    return s.size() > 2 && s.find_first_not_of("0123456789abcdefABCDEF", 2) == std::string::npos;
 }
 
 bool ChargePointConfiguration::isConnectorPhaseRotationValid(std::string str) {
@@ -1776,7 +1790,7 @@ bool ChargePointConfiguration::isConnectorPhaseRotationValid(std::string str) {
     return true;
 }
 
-bool ChargePointConfiguration::isBool(const std::string& str) {
+bool isBool(const std::string& str) {
     return str == "true" || str == "false";
 }
 
@@ -2105,7 +2119,7 @@ ConfigurationStatus ChargePointConfiguration::set(CiString50Type key, CiString50
         if (this->getAllowOfflineTxForUnknownId() == boost::none) {
             return ConfigurationStatus::NotSupported;
         }
-        if (this->isBool(value.get())) {
+        if (isBool(value.get())) {
             this->setAllowOfflineTxForUnknownId(conversions::string_to_bool(value.get()));
         } else {
             return ConfigurationStatus::Rejected;
@@ -2115,7 +2129,7 @@ ConfigurationStatus ChargePointConfiguration::set(CiString50Type key, CiString50
         if (this->getAuthorizationCacheEnabled() == boost::none) {
             return ConfigurationStatus::NotSupported;
         }
-        if (this->isBool(value.get())) {
+        if (isBool(value.get())) {
             this->setAuthorizationCacheEnabled(conversions::string_to_bool(value.get()));
         } else {
             return ConfigurationStatus::Rejected;
@@ -2207,14 +2221,14 @@ ConfigurationStatus ChargePointConfiguration::set(CiString50Type key, CiString50
         }
     }
     if (key == "LocalAuthorizeOffline") {
-        if (this->isBool(value.get())) {
+        if (isBool(value.get())) {
             this->setLocalAuthorizeOffline(conversions::string_to_bool(value.get()));
         } else {
             return ConfigurationStatus::Rejected;
         }
     }
     if (key == "LocalPreAuthorize") {
-        if (this->isBool(value.get())) {
+        if (isBool(value.get())) {
             this->setLocalPreAuthorize(conversions::string_to_bool(value.get()));
         } else {
             return ConfigurationStatus::Rejected;
@@ -2309,14 +2323,14 @@ ConfigurationStatus ChargePointConfiguration::set(CiString50Type key, CiString50
         }
     }
     if (key == "StopTransactionOnEVSideDisconnect") {
-        if (this->isBool(value.get())) {
+        if (isBool(value.get())) {
             this->setStopTransactionOnEVSideDisconnect(conversions::string_to_bool(value.get()));
         } else {
             return ConfigurationStatus::Rejected;
         }
     }
     if (key == "StopTransactionOnInvalidId") {
-        if (this->isBool(value.get())) {
+        if (isBool(value.get())) {
             this->setStopTransactionOnInvalidId(conversions::string_to_bool(value.get()));
         } else {
             return ConfigurationStatus::Rejected;
@@ -2355,7 +2369,7 @@ ConfigurationStatus ChargePointConfiguration::set(CiString50Type key, CiString50
         }
     }
     if (key == "UnlockConnectorOnEVSideDisconnect") {
-        if (this->isBool(value.get())) {
+        if (isBool(value.get())) {
             this->setUnlockConnectorOnEVSideDisconnect(conversions::string_to_bool(value.get()));
         } else {
             return ConfigurationStatus::Rejected;
@@ -2379,7 +2393,7 @@ ConfigurationStatus ChargePointConfiguration::set(CiString50Type key, CiString50
     // Local Auth List Management
     if (key == "LocalAuthListEnabled") {
         if (this->supported_feature_profiles.count(SupportedFeatureProfiles::LocalAuthListManagement)) {
-            if (this->isBool(value.get())) {
+            if (isBool(value.get())) {
                 this->setLocalAuthListEnabled(conversions::string_to_bool(value.get()));
             } else {
                 return ConfigurationStatus::Rejected;

@@ -35,7 +35,7 @@ bool WebsocketPlain::connect(int32_t security_profile) {
         if (this->m_is_connected) {
             try {
                 EVLOG_debug << "Closing websocket connection";
-                this->ws_client.close(this->handle, websocketpp::close::status::normal, "");
+                this->ws_client.close(this->handle, websocketpp::close::status::service_restart, "");
             } catch (std::exception& e) {
                 EVLOG_error << "Error on plain close: " << e.what();
             }
@@ -86,6 +86,16 @@ void WebsocketPlain::reconnect(std::error_code reason, long delay) {
     // TODO(kai): notify message queue that connection is down and a reconnect is imminent?
     {
         std::lock_guard<std::mutex> lk(this->reconnect_mutex);
+
+        if (this->m_is_connected) {
+            try {
+                EVLOG_debug << "Closing websocket connection";
+                this->ws_client.close(this->handle, websocketpp::close::status::service_restart, "");
+            } catch (std::exception& e) {
+                EVLOG_error << "Error on plain close: " << e.what();
+            }
+        }
+
         if (!this->reconnect_timer) {
             EVLOG_info << "Reconnecting in: " << delay << "ms";
 
