@@ -1,13 +1,36 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include "OCPP.hpp"
-
 #include <fstream>
 
 #include <boost/filesystem.hpp>
 #include <boost/process.hpp>
 
 namespace module {
+
+static ocpp1_6::ChargePointErrorCode get_ocpp_error_code(const Object& evse_error) {
+    if (evse_error == "Car") {
+        return ocpp1_6::ChargePointErrorCode::OtherError;
+    } else if (evse_error == "CarDiodeFault") {
+        return ocpp1_6::ChargePointErrorCode::EVCommunicationError;
+    } else if (evse_error == "Relais") {
+        return ocpp1_6::ChargePointErrorCode::OtherError;
+    } else if (evse_error == "RCD") {
+        return ocpp1_6::ChargePointErrorCode::GroundFailure;
+    } else if (evse_error == "VentilationNotAvailable") {
+        return ocpp1_6::ChargePointErrorCode::OtherError;
+    } else if (evse_error == "OverCurrent") {
+        return ocpp1_6::ChargePointErrorCode::OverCurrentFailure;
+    } else if (evse_error == "Internal") {
+        return ocpp1_6::ChargePointErrorCode::OtherError;
+    } else if (evse_error == "SLAC") {
+        return ocpp1_6::ChargePointErrorCode::EVCommunicationError;
+    } else if (evse_error == "HLC") {
+        return ocpp1_6::ChargePointErrorCode::EVCommunicationError;
+    } else {
+        return ocpp1_6::ChargePointErrorCode::OtherError;
+    }
+}
 
 void OCPP::init() {
     invoke_init(*p_main);
@@ -372,12 +395,9 @@ void OCPP::init() {
                 this->charge_point->stop_session(connector, ocpp1_6::DateTime(timestamp), energy_Wh_import);
                 this->charge_point->plug_disconnected(connector);
             } else if (event == "Error") {
-                auto error = session_events["error"];
-                if (error == "OverCurrent") {
-                    this->charge_point->error(connector, ocpp1_6::ChargePointErrorCode::OverCurrentFailure);
-                } else {
-                    this->charge_point->vendor_error(connector, error);
-                }
+                const auto evse_error = session_events["error"];
+                ocpp1_6::ChargePointErrorCode ocpp_error_code = get_ocpp_error_code(evse_error);
+                this->charge_point->error(connector, ocpp_error_code);
             } else if (event == "PermanentFault") {
                 this->charge_point->permanent_fault(connector);
             } else if (event == "ReservationStart") {
