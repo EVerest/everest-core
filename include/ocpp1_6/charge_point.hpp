@@ -328,7 +328,7 @@ public:
 
     /// EV/EVSE indicates that an error with the given \p error_code occured
     /// \returns true if this state change was possible
-    bool error(int32_t connector, ChargePointErrorCode error_code);
+    bool error(int32_t connector, const ChargePointErrorCode& error);
 
     /// EV/EVSE indicates that a vendor specific error with the given \p vendor_error_code occured on the given \p
     /// connector \returns true if this state change was possible

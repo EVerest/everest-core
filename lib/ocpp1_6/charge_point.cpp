@@ -2567,17 +2567,20 @@ bool ChargePoint::resume_charging(int32_t connector) {
 }
 
 bool ChargePoint::plug_disconnected(int32_t connector) {
-    if (this->status->get_state(connector) != ChargePointStatus::Reserved &&
-        this->status->get_state(connector) != ChargePointStatus::Unavailable) {
+    // TODO(piet) fix this when evse manager signals clearance of an error
+    if (this->status->get_state(connector) == ChargePointStatus::Faulted) {
+        this->status->submit_event(connector, Event_I1_ReturnToAvailable());
+    } else if (this->status->get_state(connector) != ChargePointStatus::Reserved &&
+               this->status->get_state(connector) != ChargePointStatus::Unavailable) {
         this->status->submit_event(connector, Event_BecomeAvailable());
     }
     return true;
 }
 
-bool ChargePoint::error(int32_t connector, ChargePointErrorCode error_code) {
-    // FIXME(kai): implement
-    // FIXME(kai): libfsm
-    return false;
+bool ChargePoint::error(int32_t connector, const ChargePointErrorCode& error) {
+
+    this->status->submit_event(connector, Event_FaultDetected(ChargePointErrorCode(error)));
+    return true;
 }
 
 bool ChargePoint::vendor_error(int32_t connector, CiString50Type vendor_error_code) {

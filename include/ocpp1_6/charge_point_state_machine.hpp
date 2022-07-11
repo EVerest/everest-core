@@ -21,8 +21,7 @@
 
 namespace ocpp1_6 {
 
-enum class ChargePointStatusTransition
-{
+enum class ChargePointStatusTransition {
     BecomeAvailable,
     UsageInitiated,
     StartCharging,
@@ -51,7 +50,7 @@ using Event_PauseChargingEVSE = EventTypeFactory::Derived<ChargePointStatusTrans
 using Event_ReserveConnector = EventTypeFactory::Derived<ChargePointStatusTransition::ReserveConnector>;
 using Event_ChangeAvailabilityToUnavailable =
     EventTypeFactory::Derived<ChargePointStatusTransition::ChangeAvailabilityToUnavailable>;
-using Event_FaultDetected = EventTypeFactory::Derived<ChargePointStatusTransition::FaultDetected>;
+using Event_FaultDetected = EventTypeFactory::Derived<ChargePointStatusTransition::FaultDetected, ChargePointErrorCode>;
 using Event_BecomeAvailable = EventTypeFactory::Derived<ChargePointStatusTransition::BecomeAvailable>;
 using Event_TransactionStoppedAndUserActionRequired =
     EventTypeFactory::Derived<ChargePointStatusTransition::TransactionStoppedAndUserActionRequired>;
@@ -64,11 +63,10 @@ using Event_I6_ReturnToFinishing = EventTypeFactory::Derived<ChargePointStatusTr
 using Event_I7_ReturnToReserved = EventTypeFactory::Derived<ChargePointStatusTransition::I7_ReturnToReserved>;
 using Event_I8_ReturnToUnavailable = EventTypeFactory::Derived<ChargePointStatusTransition::I8_ReturnToUnavailable>;
 
-using EventBufferType = std::aligned_union_t<0, Event_UsageInitiated>;
+using EventBufferType = std::aligned_union_t<0, Event_FaultDetected>;
 using EventBaseType = EventTypeFactory::Base;
 
-enum class State
-{
+enum class State {
     Available,
     Preparing,
     Charging,
@@ -100,14 +98,21 @@ struct ChargePointStateMachine {
     StateHandleType sd_finishing{{State::Finishing, "Finishing"}};
     StateHandleType sd_reserved{{State::Reserved, "Reserved"}};
     StateHandleType sd_unavailable{{State::Unavailable, "Unavailable"}};
-    StateHandleType sd_faulted{{State::Faulted, "Faulted"}};
+
+    struct FaultedStateType : public StateHandleType {
+        using StateHandleType::StateHandleType;
+        ChargePointErrorCode error_code{ChargePointErrorCode::NoError};
+    } sd_faulted{{State::Faulted, "Faulted"}};
+
+    StateHandleType& t_faulted(const Event_FaultDetected& fault_ev);
 
     // track current state
     ChargePointStatus state;
 
-    std::function<void(ChargePointStatus status)> status_notification_callback;
+    using StatusNotificationCallback = std::function<void(ChargePointStatus status, ChargePointErrorCode error_code)>;
+    StatusNotificationCallback status_notification_callback;
 
-    explicit ChargePointStateMachine(const std::function<void(ChargePointStatus status)>& status_notification_callback);
+    explicit ChargePointStateMachine(const StatusNotificationCallback& status_notification_callback);
 
     ChargePointStatus get_state();
 };
@@ -138,7 +143,7 @@ public:
                                                ChargePointStatus status)>& status_notification_callback);
     void run(std::map<int32_t, ocpp1_6::AvailabilityType> connector_availability);
 
-    void submit_event(int32_t connector, EventBaseType event);
+    void submit_event(int32_t connector, const EventBaseType& event);
 
     ChargePointStatus get_state(int32_t connector);
 };
