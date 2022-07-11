@@ -22,6 +22,8 @@ target_sources(everest
         mqtt_abstraction_impl.cpp
         conversions.cpp
         thread.cpp
+        serial.cpp
+        date.cpp
         runtime.cpp
 )
 target_include_directories(everest PUBLIC ${INCLUDE_DIR})
