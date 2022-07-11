@@ -435,15 +435,17 @@ std::shared_ptr<Transaction> ChargingSessionHandler::get_transaction(int32_t con
 }
 
 std::shared_ptr<Transaction> ChargingSessionHandler::get_transaction(const std::string& start_transaction_message_id) {
-
+    std::lock_guard<std::mutex> lock(this->active_charging_sessions_mutex);
     for (const auto& session : this->active_charging_sessions) {
-        if (session->get_transaction() != nullptr &&
-            session->get_transaction()->get_start_transaction_message_id() == start_transaction_message_id) {
-            return session->get_transaction();
+        if (session != nullptr) {
+            auto transaction = session->get_transaction();
+            if (transaction != nullptr &&
+                transaction->get_start_transaction_message_id() == start_transaction_message_id) {
+                return transaction;
+            }
         }
     }
-
-    for (const auto transaction : this->stopped_transactions) {
+    for (auto transaction : this->stopped_transactions) {
         if (transaction->get_start_transaction_message_id() == start_transaction_message_id) {
             return transaction;
         }
