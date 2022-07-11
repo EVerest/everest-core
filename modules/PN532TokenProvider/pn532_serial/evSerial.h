@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
-#ifndef YETI_SERIAL
-#define YETI_SERIAL
+#ifndef PN532_SERIAL
+#define PN532_SERIAL
 
 #include "evThread.h"
 #include <future>
