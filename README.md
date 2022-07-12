@@ -29,23 +29,17 @@ The following table shows CSMS whose compatibility has been tested or will be te
 
 | CSMS              | Compatible                       |
 | ----------------- | -------------------------------- |
-| ABB               | :x: not yet tested               |
-| be.ENERGISED      | :x: not yet tested               |
-| Bosch             | :x: not yet tested               |
 | chargecloud       | :heavy_check_mark: yes           |
-| chargeIQ          | :x: not yet tested               |
+| chargeIQ          | :yellow_circle: wip              |
 | Current           | :yellow_circle: partially tested |
 | ev.energy         | :yellow_circle: partially tested |
 | Fastned           | :yellow_circle: partially tested |
 | Green Motion      | :yellow_circle: partially tested |
 | gridundco         | :heavy_check_mark: yes           |
 | ihomer            | :yellow_circle: partially tested |
-| LastMileSolutions | :x: not yet tested               |
 | SteVe             | :heavy_check_mark: yes           |
-| TheMobilityHouse  | :x: not yet tested               |
 | Trialog           | :yellow_circle: partially tested |
 | ubitricity        | :yellow_circle: partially tested |
-| Virta             | :x: not yet tested               |
 | Weev Energy       | :yellow_circle: partially tested |
 
 ## Build instructions
