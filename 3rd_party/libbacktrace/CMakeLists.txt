@@ -1,5 +1,10 @@
 include(ExternalProject)
 
+set(LIBBACKTRACE_HOST "")
+if(LIBLOG_CROSS_COMPILE)
+    set(LIBBACKTRACE_HOST "--host=arm-linux")
+endif()
+
 ExternalProject_Add(
     libbacktrace
 # prefix
@@ -11,7 +16,7 @@ ExternalProject_Add(
 # update
     UPDATE_COMMAND ""
 # configure
-    CONFIGURE_COMMAND env CC=${CMAKE_C_COMPILER} ../libbacktrace/configure --prefix=${CMAKE_CURRENT_BINARY_DIR} --includedir=${CMAKE_CURRENT_BINARY_DIR}/include/backtrace --libdir=${CMAKE_CURRENT_BINARY_DIR}/lib --enable-static=yes --disable-shared
+    CONFIGURE_COMMAND env CC=${CMAKE_C_COMPILER} ../libbacktrace/configure --prefix=${CMAKE_CURRENT_BINARY_DIR} --includedir=${CMAKE_CURRENT_BINARY_DIR}/include/backtrace --libdir=${CMAKE_CURRENT_BINARY_DIR}/lib --enable-static=yes --disable-shared ${LIBBACKTRACE_HOST}
 # make
     BUILD_COMMAND ${MAKE}
     BUILD_ALWAYS false
