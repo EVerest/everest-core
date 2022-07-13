@@ -40,6 +40,7 @@ boot_module(async ({
   });
 
   setup.provides.yeti_extras.register.firmware_update((mod, args) => { });
+  setup.provides.powermeter.register.get_signed_meter_value((mod, args) => { return "NOT_IMPLEMENTED"; });
 
   setup.provides.board_support.register.setup((mod, args) => {
     mod.three_phases = args.three_phases;
