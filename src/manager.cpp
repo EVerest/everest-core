@@ -315,7 +315,8 @@ static std::map<pid_t, std::string> start_modules(Config& config, MQTTAbstractio
             }
             if (std::all_of(modules_ready.begin(), modules_ready.end(),
                             [](const auto& element) { return element.second.ready; })) {
-                EVLOG_info << "all modules are ready";
+                EVLOG_info << fmt::format(TERMINAL_STYLE_OK,
+                                          ">>> All modules are initialized. EVerest up and running <<<");
                 mqtt_abstraction.publish("everest/ready", nlohmann::json(true));
             }
         };
@@ -473,8 +474,8 @@ int boot(const po::variables_map& vm) {
     std::unique_ptr<Config> config;
     try {
         // FIXME (aw): we should also use boost::filesystem::path here as argument types
-        config = std::make_unique<Config>(rs.schemas_dir.string(), rs.config_file.string(),
-                                                   rs.modules_dir.string(), rs.interfaces_dir.string());
+        config = std::make_unique<Config>(rs.schemas_dir.string(), rs.config_file.string(), rs.modules_dir.string(),
+                                          rs.interfaces_dir.string());
     } catch (EverestInternalError& e) {
         EVLOG_error << fmt::format("Failed to load and validate config!\n{}", boost::diagnostic_information(e, true));
         return EXIT_FAILURE;
@@ -538,8 +539,7 @@ int boot(const po::variables_map& vm) {
         mqtt_server_port = "1883";
     }
 
-    MQTTAbstraction& mqtt_abstraction =
-        MQTTAbstraction::get_instance(mqtt_server_address, mqtt_server_port);
+    MQTTAbstraction& mqtt_abstraction = MQTTAbstraction::get_instance(mqtt_server_address, mqtt_server_port);
     if (!mqtt_abstraction.connect()) {
         EVLOG_error << fmt::format("Cannot connect to MQTT broker at {}:{}", mqtt_server_address, mqtt_server_port);
         return EXIT_FAILURE;
@@ -601,7 +601,7 @@ int boot(const po::variables_map& vm) {
             if (payload.at("method") == "restart_modules") {
                 shutdown_modules(module_handles, *config, mqtt_abstraction);
                 config = std::make_unique<Config>(rs.schemas_dir.string(), rs.config_file.string(),
-                                                           rs.modules_dir.string(), rs.interfaces_dir.string());
+                                                  rs.modules_dir.string(), rs.interfaces_dir.string());
                 modules_started = false;
                 restart_modules = true;
             } else if (payload.at("method") == "check_config") {
@@ -610,7 +610,7 @@ int boot(const po::variables_map& vm) {
                 try {
                     // check the config
                     Config(rs.schemas_dir.string(), check_config_file_path, rs.modules_dir.string(),
-                                    rs.interfaces_dir.string());
+                           rs.interfaces_dir.string());
                     controller_handle.send_message({{"id", payload.at("id")}});
                 } catch (const std::exception& e) {
                     controller_handle.send_message({{"result", e.what()}, {"id", payload.at("id")}});
