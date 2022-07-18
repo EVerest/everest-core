@@ -1905,8 +1905,13 @@ KeyValue ChargePointConfiguration::getSecurityProfileKeyValue() {
 
 // Local Auth List Management Profile
 bool ChargePointConfiguration::getLocalAuthListEnabled() {
-    return this->config["LocalAuthListManagement"]["LocalAuthListEnabled"];
+    if (this->config.contains("LocalAuthListManagement")) {
+        return this->config["LocalAuthListManagement"]["LocalAuthListEnabled"];
+    } else {
+        return false;
+    }
 }
+
 void ChargePointConfiguration::setLocalAuthListEnabled(bool local_auth_list_enabled) {
     this->config["LocalAuthListManagement"]["LocalAuthListEnabled"] = local_auth_list_enabled;
     this->setInUserConfig("LocalAuthListManagement", "LocalAuthListEnabled", local_auth_list_enabled);
