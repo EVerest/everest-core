@@ -323,11 +323,15 @@ InstallCertificateResult PkiHandler::installRootCertificate(InstallCertificateRe
         }
         if (!this->verifyCertificateChain(root_cert, cert)) {
             installCertificateResult = InstallCertificateResult::InvalidCertificateChain;
-            cert->path = root_cert->path;
-            std::rename(this->getFile(CS_ROOT_CA_FILE).c_str(), (this->getFile(CS_ROOT_CA_FILE_BACKUP_FILE)).c_str());
         }
     } else {
-        cert->path = this->getFile(CS_ROOT_CA_FILE);
+        if (msg.certificateType == CertificateUseEnumType::CentralSystemRootCertificate) {
+            std::rename(this->getFile(CS_ROOT_CA_FILE).c_str(), (this->getFile(CS_ROOT_CA_FILE_BACKUP_FILE)).c_str());
+            cert->path = this->getFile(CS_ROOT_CA_FILE);
+        } else if (msg.certificateType == CertificateUseEnumType::ManufacturerRootCertificate) {
+            cert->path = this->getFile(MF_ROOT_CA_FILE);
+        }
+
         installCertificateResult = InstallCertificateResult::Ok;
     }
 
