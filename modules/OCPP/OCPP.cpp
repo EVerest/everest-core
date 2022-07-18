@@ -8,7 +8,7 @@
 
 namespace module {
 
-static ocpp1_6::ChargePointErrorCode get_ocpp_error_code(const Object& evse_error) {
+static ocpp1_6::ChargePointErrorCode get_ocpp_error_code(const std::string& evse_error) {
     if (evse_error == "Car") {
         return ocpp1_6::ChargePointErrorCode::OtherError;
     } else if (evse_error == "CarDiodeFault") {
@@ -32,6 +32,14 @@ static ocpp1_6::ChargePointErrorCode get_ocpp_error_code(const Object& evse_erro
     }
 }
 
+void create_user_config(const boost::filesystem::path& user_config_path) {
+    boost::filesystem::create_directory(user_config_path.parent_path());
+    std::ofstream fs(user_config_path.c_str());
+    json user_config = json({});
+    fs << user_config << std::endl;
+    fs.close();
+}
+
 void OCPP::init() {
     invoke_init(*p_main);
     invoke_init(*p_auth_validator);
@@ -50,17 +58,17 @@ void OCPP::init() {
         std::ifstream ifs(user_config_path.c_str());
         std::string user_config_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-        auto user_config = json::parse(user_config_file);
-
-        EVLOG_info << "Augmenting chargepoint config with user_config entries";
-        json_config.merge_patch(user_config);
+        try {
+            auto user_config = json::parse(user_config_file);
+            EVLOG_info << "Augmenting chargepoint config with user_config entries";
+            json_config.merge_patch(user_config);
+        } catch (json::parse_error e) {
+            // rewrite empty user config if it is not parsable
+            create_user_config(user_config_path);
+        }
     } else {
         EVLOG_debug << "No user-config provided. Creating user config file";
-        boost::filesystem::create_directory(user_config_path.parent_path());
-        std::ofstream fs(user_config_path.c_str());
-        json user_config = json({});
-        fs << user_config << std::endl;
-        fs.close();
+        create_user_config(user_config_path);
     }
 
     std::shared_ptr<ocpp1_6::ChargePointConfiguration> configuration =
@@ -283,7 +291,8 @@ void OCPP::init() {
         [this](ocpp1_6::SignedUpdateFirmwareRequest req, boost::filesystem::path file_path) {
             this->signed_update_firmware_thread = std::thread([this, req]() {
                 boost::process::ipstream install_stream;
-                auto firmware_installer = boost::filesystem::path("bin/signed_firmware_installer.sh");
+                auto firmware_installer =
+                    boost::filesystem::path(this->config.ScriptsPath) / "signed_firmware_installer.sh";
                 std::vector<std::string> install_args = {};
                 boost::process::child install_cmd(firmware_installer, boost::process::args(install_args),
                                                   boost::process::std_out > install_stream);
