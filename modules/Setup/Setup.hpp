@@ -13,6 +13,9 @@
 // headers for provided interface implementations
 #include <generated/interfaces/empty/Implementation.hpp>
 
+// headers for required interface implementations
+#include <generated/kvs/Interface.hpp>
+
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
 #include <regex>
@@ -105,6 +108,20 @@ struct SupportedSetupFeatures {
 };
 void to_json(json& j, const SupportedSetupFeatures& k);
 
+struct ApplicationInfo {
+    bool initialized;
+    std::string mode;
+    std::string default_language;
+    std::string current_language;
+
+    operator std::string() {
+        json application_info = *this;
+
+        return application_info.dump();
+    }
+};
+void to_json(json& j, const ApplicationInfo& k);
+
 struct CmdOutput {
     std::string output;
     std::vector<std::string> split_output;
@@ -120,18 +137,20 @@ struct Conf {
     bool localization;
     bool setup_simulation;
     std::string online_check_host;
+    bool initialized_by_default;
 };
 
 class Setup : public Everest::ModuleBase {
 public:
     Setup() = delete;
     Setup(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, std::unique_ptr<emptyImplBase> p_main,
-          Conf& config) :
-        ModuleBase(info), mqtt(mqtt_provider), p_main(std::move(p_main)), config(config){};
+          std::unique_ptr<kvsIntf> r_store, Conf& config) :
+        ModuleBase(info), mqtt(mqtt_provider), p_main(std::move(p_main)), r_store(std::move(r_store)), config(config){};
 
     const Conf& config;
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<emptyImplBase> p_main;
+    const std::unique_ptr<kvsIntf> r_store;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
@@ -153,8 +172,19 @@ private:
     std::string var_base = api_base + "var/";
     std::string cmd_base = api_base + "cmd/";
     std::thread discover_network_thread;
+    std::thread publish_application_info_thread;
     bool wifi_scan_enabled = false;
     void publish_supported_features();
+    void publish_application_info();
+    void set_default_language(std::string language);
+    std::string get_default_language();
+    std::string current_language;
+    void set_current_language(std::string language);
+    std::string get_current_language();
+    void set_mode(std::string mode);
+    std::string get_mode();
+    void set_initialized(bool initialized);
+    bool get_initialized();
     void discover_network();
     std::vector<NetworkDeviceInfo> get_network_devices();
     void populate_rfkill_status(std::vector<NetworkDeviceInfo>& device_info);
