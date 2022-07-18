@@ -713,6 +713,7 @@ void ChargePoint::handleBootNotificationResponse(CallResult<BootNotificationResp
         this->connection_state = ChargePointConnectionState::Pending;
 
         EVLOG_debug << "BootNotification response is pending.";
+        this->boot_notification_timer->timeout(std::chrono::seconds(call_result.msg.interval));
         break;
     default:
         this->connection_state = ChargePointConnectionState::Rejected;
@@ -722,7 +723,7 @@ void ChargePoint::handleBootNotificationResponse(CallResult<BootNotificationResp
         EVLOG_debug << "BootNotification was rejected, trying again in " << this->configuration->getHeartbeatInterval()
                     << "s";
 
-        this->boot_notification_timer->timeout(std::chrono::seconds(this->configuration->getHeartbeatInterval()));
+        this->boot_notification_timer->timeout(std::chrono::seconds(call_result.msg.interval));
 
         break;
     }
@@ -1797,8 +1798,8 @@ void ChargePoint::handleExtendedTriggerMessageRequest(Call<ExtendedTriggerMessag
         if (this->configuration->getCpoName() != boost::none) {
             response.status = TriggerMessageStatusEnumType::Accepted;
         } else {
-            EVLOG_debug << "Received ExtendedTriggerMessage with SignChargePointCertificate but no "
-                           "CpoName is set.";
+            EVLOG_warning << "Received ExtendedTriggerMessage with SignChargePointCertificate but no "
+                             "CpoName is set.";
         }
         break;
     case MessageTriggerEnumType::StatusNotification:
