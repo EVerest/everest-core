@@ -30,6 +30,8 @@ list(APPEND EVEREST_MODULES_LIST
     SunspecReader
     SunspecScanner
     YetiDriver
+    PyTestModule
+    PyTestModuleCaller
 )
 
 set(EVEREST_MODULES "")
