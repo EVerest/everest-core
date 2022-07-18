@@ -4,6 +4,12 @@
     },
     "setup": {
         "module": "Setup",
+        "config_module": {
+            "setup_wifi": true,
+            "localization": true,
+            "setup_simulation": true,
+            "initialized_by_default": false
+        },
         "connections": {
             "store": [
                 {
