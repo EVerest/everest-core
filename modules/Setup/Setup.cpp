@@ -61,6 +61,13 @@ void to_json(json& j, const SupportedSetupFeatures& k) {
         {{"setup_wifi", k.setup_wifi}, {"localization", k.localization}, {"setup_simulation", k.setup_simulation}});
 }
 
+void to_json(json& j, const ApplicationInfo& k) {
+    j = json::object({{"initialized", k.initialized},
+                      {"mode", k.mode},
+                      {"default_language", k.default_language},
+                      {"current_language", k.current_language}});
+}
+
 void Setup::init() {
     invoke_init(*p_main);
 
@@ -80,10 +87,37 @@ void Setup::ready() {
             if (wifi_scan_enabled) {
                 this->discover_network();
             }
-            this->publish_supported_features();
             std::this_thread::sleep_for(std::chrono::seconds(5));
         }
     });
+
+    this->publish_application_info_thread = std::thread([this]() {
+        while (true) {
+            this->publish_supported_features();
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
+    });
+
+    std::string set_mode_cmd = this->cmd_base + "set_mode";
+    this->mqtt.subscribe(set_mode_cmd, [this](const std::string& data) { this->set_mode(data); });
+
+    std::string set_initialized_cmd = this->cmd_base + "set_initialized";
+    this->mqtt.subscribe(set_initialized_cmd, [this](const std::string& data) { this->set_initialized(true); });
+
+    std::string reset_initialized_cmd = this->cmd_base + "reset_initialized";
+    this->mqtt.subscribe(reset_initialized_cmd, [this](const std::string& data) { this->set_initialized(false); });
+
+    std::string change_default_language_cmd = this->cmd_base + "change_default_language";
+    this->mqtt.subscribe(change_default_language_cmd,
+                         [this](const std::string& data) { this->set_default_language(data); });
+
+    std::string change_current_language_cmd = this->cmd_base + "change_current_language";
+    this->mqtt.subscribe(change_current_language_cmd,
+                         [this](const std::string& data) { this->set_current_language(data); });
+
+    std::string get_application_info_cmd = this->cmd_base + "get_application_info";
+    this->mqtt.subscribe(get_application_info_cmd,
+                         [this](const std::string& data) { this->publish_application_info(); });
 
     if (this->config.setup_wifi) {
         std::string rfkill_unblock_cmd = this->cmd_base + "rfkill_unblock";
@@ -168,6 +202,71 @@ void Setup::publish_supported_features() {
     json supported_setup_features_json = supported_setup_features;
 
     this->mqtt.publish(supported_setup_features_var, supported_setup_features_json.dump());
+}
+
+void Setup::publish_application_info() {
+    ApplicationInfo application_info;
+    application_info.initialized = this->get_initialized();
+    application_info.mode = this->get_mode();
+    application_info.default_language = this->get_default_language();
+    application_info.current_language = this->get_current_language();
+
+    std::string application_info_var = this->var_base + "application_info";
+
+    json application_info_json = application_info;
+
+    this->mqtt.publish(application_info_var, application_info_json.dump());
+}
+
+void Setup::set_default_language(std::string language) {
+    this->r_store->call_store("everest_localization_default_language", language);
+}
+
+std::string Setup::get_default_language() {
+    auto language = this->r_store->call_load("everest_localization_default_language");
+    if (language.which() == 0) {
+        return "unknown";
+    }
+    return boost::get<std::string>(language);
+}
+
+void Setup::set_current_language(std::string language) {
+    this->current_language = language;
+}
+
+std::string Setup::get_current_language() {
+    if (this->current_language.empty()) {
+        this->current_language = this->get_default_language();
+    }
+
+    return this->current_language;
+}
+
+void Setup::set_mode(std::string mode) {
+    this->r_store->call_store("everest_mode", mode);
+}
+
+std::string Setup::get_mode() {
+    auto mode = this->r_store->call_load("everest_mode");
+    if (mode.which() == 0) {
+        return "unknown";
+    }
+    return boost::get<std::string>(mode);
+}
+
+void Setup::set_initialized(bool initialized) {
+    this->r_store->call_store("everest_initialized", initialized);
+}
+
+bool Setup::get_initialized() {
+    if (this->config.initialized_by_default) {
+        return true;
+    }
+    auto initialized = this->r_store->call_load("everest_initialized");
+    if (initialized.which() == 0) {
+        return false;
+    }
+    return boost::get<bool>(initialized);
 }
 
 void Setup::discover_network() {

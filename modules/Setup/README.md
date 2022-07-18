@@ -182,3 +182,36 @@ __everest_api/setup/var/online_status__
 
 ### everest_api/setup/cmd/reboot
 If any arbitrary payload is published to this topic the system will reboot.
+
+
+## Application Info / Localization
+
+### everest_api/setup/cmd/set_mode
+If a mode _private_ or _public_ is published to this topic it will be stored permanently.
+
+### everest_api/setup/cmd/set_initialized
+If any arbitrary payload is published to this topic the system will be marked as "initialized" permanently.
+
+### everest_api/setup/cmd/reset_initialized
+If any arbitrary payload is published to this topic the system will be marked as "uninitialized" permanently.
+
+### everest_api/setup/cmd/change_default_language
+You can set a [three-letter language code](https://en.wikipedia.org/wiki/List_of_ISO_639-2_codes) to be set as the default language which will be stored permanently.
+
+### everest_api/setup/cmd/change_current_language
+You can set a [three-letter language code](https://en.wikipedia.org/wiki/List_of_ISO_639-2_codes) to be set as the current language.
+
+### everest_api/setup/cmd/get_application_info
+If any arbitrary payload is published to this topic a application info object is published to the following topic:
+
+__everest_api/setup/var/application_info__
+
+with the following payload format:
+```json
+{
+    "initialized": true,
+    "mode": "private",
+    "default_language": "eng",
+    "current_language": "ger"
+}
+```

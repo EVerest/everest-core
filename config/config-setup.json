@@ -1,5 +1,16 @@
 {
+    "persistent_store": {
+        "module": "PersistentStore"
+    },
     "setup": {
-        "module": "Setup"
+        "module": "Setup",
+        "connections": {
+            "store": [
+                {
+                    "module_id": "persistent_store",
+                    "implementation_id": "main"
+                }
+            ]
+        }
     }
 }

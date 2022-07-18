@@ -20,6 +20,11 @@
             "description": "Hostname or IP to use to check for internet connectivity",
             "type": "string",
             "default": "lfenergy.org"
+        },
+        "initialized_by_default": {
+            "description": "Always report as if the charger was initialized",
+            "type": "boolean",
+            "default": true
         }
     },
     "provides": {
@@ -28,7 +33,11 @@
             "interface": "empty"
         }
     },
-    "requires": {},
+    "requires": {
+        "store": {
+            "interface": "kvs"
+        }
+    },
     "enable_external_mqtt": true,
     "metadata": {
         "license": "https://opensource.org/licenses/Apache-2.0",
