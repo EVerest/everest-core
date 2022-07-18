@@ -1,0 +1,184 @@
+active_modules:
+  iso15118_charger:
+    module: JsRiseV2G
+    config_implementation:
+      main:
+        mqtt_base_path: everest_external/iso15118/java
+        device: eth0
+  iso15118_car:
+    module: JsCarV2G
+    config_implementation:
+      main:
+        stack_implementation: RISE-V2G
+        mqtt_base_path: everest_external/iso15118/ev
+        device: eth0
+  evse_manager:
+    module: EvseManager
+    config_module:
+      ac_enforce_hlc: false
+      ac_hlc_enabled: false
+      ac_hlc_use_5percent: false
+      ac_nominal_voltage: 230
+      ac_with_soc: false
+      charge_mode: AC
+      connector_id: 1
+      country_code: DE
+      dbg_hlc_auth_after_tstep: false
+      dc_current_regulation_tolerance: 5
+      dc_peak_current_ripple: 5
+      ev_receipt_required: false
+      evse_id: '1'
+      has_ventilation: true
+      max_current: 32
+      payment_enable_contract: true
+      payment_enable_eim: true
+      rcd_enabled: true
+      session_logging: true
+      session_logging_path: /tmp
+      session_logging_xml: false
+      three_phases: true
+    connections:
+      bsp:
+        - module_id: yeti_driver
+          implementation_id: board_support
+      powermeter:
+        - module_id: yeti_driver
+          implementation_id: powermeter
+      slac:
+        - module_id: slac
+          implementation_id: evse
+      hlc:
+        - module_id: iso15118_charger
+          implementation_id: charger
+  yeti_driver:
+    module: JsYetiSimulator
+  slac:
+    module: JsSlacSimulator
+  car_simulator:
+    module: JsCarSimulator
+    config_module:
+      auto_enable: true
+      auto_exec: false
+      auto_exec_commands: sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 30;unplug
+      connector_id: 1
+    connections:
+      simulation_control:
+        - module_id: yeti_driver
+          implementation_id: yeti_simulation_control
+      ev:
+        - module_id: iso15118_car
+          implementation_id: ev
+      slac:
+        - module_id: slac
+          implementation_id: ev
+  auth:
+    module: Auth
+    config_module:
+      connection_timeout: 10
+      prioritize_authorization_over_stopping_transaction: true
+      selection_algorithm: PlugEvents
+    connections:
+      evse_manager:
+        - implementation_id: evse
+          module_id: evse_manager
+      token_provider:
+        - module_id: token_provider_1
+          implementation_id: main
+      token_validator:
+        - module_id: token_validator
+          implementation_id: main
+  token_provider_1:
+    module: JsDummyTokenProvider
+    connections:
+      evse:
+        - module_id: evse_manager
+          implementation_id: evse
+    config_implementation:
+      main:
+        type: dummy
+  token_validator:
+    module: JsDummyTokenValidator
+    config_implementation:
+      main:
+        validation_result: Accepted
+        validation_reason: Token seems valid
+        sleep: 0.25
+  energy_manager:
+    module: EnergyManager
+    connections:
+      energy_trunk:
+        - module_id: grid_connection_point
+          implementation_id: energy_grid
+  grid_connection_point:
+    module: EnergyNode
+    config_module:
+      fuse_limit_A: 63.0
+      phase_count: 3
+    connections:
+      price_information: []
+      energy_consumer:
+        - module_id: evse_manager
+          implementation_id: energy_grid
+      powermeter:
+        - module_id: yeti_driver
+          implementation_id: powermeter
+  api:
+    module: API
+    connections:
+      evse_manager:
+        - module_id: evse_manager
+          implementation_id: evse
+  evse_manager2:
+    module: EvseManager
+    config_module:
+      ac_enforce_hlc: false
+      ac_hlc_enabled: false
+      ac_hlc_use_5percent: false
+      ac_nominal_voltage: 230
+      ac_with_soc: false
+      charge_mode: AC
+      connector_id: 1
+      country_code: DE
+      dbg_hlc_auth_after_tstep: false
+      dc_current_regulation_tolerance: 5
+      dc_peak_current_ripple: 5
+      ev_receipt_required: false
+      evse_id: '1'
+      has_ventilation: true
+      max_current: 32
+      payment_enable_contract: true
+      payment_enable_eim: true
+      rcd_enabled: true
+      session_logging: true
+      session_logging_path: /tmp
+      session_logging_xml: false
+      three_phases: true
+    connections:
+      bsp:
+        - module_id: yeti_driver
+          implementation_id: board_support
+      powermeter:
+        - module_id: yeti_driver
+          implementation_id: powermeter
+      slac:
+        - module_id: slac
+          implementation_id: evse
+      hlc:
+        - module_id: iso15118_charger
+          implementation_id: charger
+  test_module:
+    module: PyTestModule
+    connections:
+      evse_manager:
+        - module_id: evse_manager
+          implementation_id: evse
+  test_module2:
+    module: PyTestModuleCaller
+    connections:
+      yeti_extras:
+        - module_id: test_module
+          implementation_id: yeti_extras
+      evse_manager:
+        - module_id: test_module
+          implementation_id: evse_manager
+x-module-layout: {}

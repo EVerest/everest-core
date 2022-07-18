@@ -1,0 +1,20 @@
+description: A python test module caller
+config: {}
+provides:
+  main:
+    description: EVerest API
+    interface: empty
+requires:
+  yeti_extras:
+    interface: yeti_extras
+    min_connections: 1
+    max_connections: 128
+  evse_manager:
+    interface: evse_manager
+    min_connections: 1
+    max_connections: 128
+enable_external_mqtt: true
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Kai-Uwe Hermann

@@ -23,6 +23,9 @@ ev_add_modules(
     OCPP
     PersistentStore
     PN532TokenProvider
+    PowermeterBSM
+    PyTestModule
+    PyTestModuleCaller
     Setup
     SerialCommHub
     Store
@@ -30,5 +33,4 @@ ev_add_modules(
     SunspecScanner
     System
     YetiDriver
-    PowermeterBSM
 )
