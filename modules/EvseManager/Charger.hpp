@@ -29,7 +29,7 @@
 #include <chrono>
 #include <date/date.h>
 #include <date/tz.h>
-#include <generated/board_support_AC/Interface.hpp>
+#include <generated/interfaces/board_support_AC/Interface.hpp>
 #include <mutex>
 #include <queue>
 #include <sigslot/signal.hpp>

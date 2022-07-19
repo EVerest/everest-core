@@ -5,10 +5,10 @@
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 1
+// template version 3
 //
 
-#include <generated/sunspec_scanner/Implementation.hpp>
+#include <generated/interfaces/sunspec_scanner/Implementation.hpp>
 
 #include "../SunspecScanner.hpp"
 

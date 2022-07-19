@@ -5,10 +5,10 @@
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 1
+// template version 3
 //
 
-#include <generated/ocpp_1_6_charge_point/Implementation.hpp>
+#include <generated/interfaces/ocpp_1_6_charge_point/Implementation.hpp>
 
 #include "../OCPP.hpp"
 

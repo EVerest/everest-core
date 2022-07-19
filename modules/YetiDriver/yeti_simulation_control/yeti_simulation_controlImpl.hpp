@@ -5,10 +5,10 @@
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 1
+// template version 3
 //
 
-#include <generated/yeti_simulation_control/Implementation.hpp>
+#include <generated/interfaces/yeti_simulation_control/Implementation.hpp>
 
 #include "../YetiDriver.hpp"
 
@@ -35,7 +35,7 @@ public:
 protected:
     // command handler functions (virtual)
     virtual void handle_enable(bool& value) override;
-    virtual void handle_setSimulationData(Object& value) override;
+    virtual void handle_setSimulationData(types::yeti::SimulationData& value) override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
     // insert your protected definitions here

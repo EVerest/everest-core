@@ -11,16 +11,16 @@
 #include "ld-ev.hpp"
 
 // headers for provided interface implementations
-#include <generated/energy/Implementation.hpp>
-#include <generated/evse_manager/Implementation.hpp>
+#include <generated/interfaces/energy/Implementation.hpp>
+#include <generated/interfaces/evse_manager/Implementation.hpp>
 
 // headers for required interface implementations
-#include <generated/ISO15118_charger/Interface.hpp>
-#include <generated/auth/Interface.hpp>
-#include <generated/board_support_AC/Interface.hpp>
-#include <generated/isolation_monitor/Interface.hpp>
-#include <generated/powermeter/Interface.hpp>
-#include <generated/slac/Interface.hpp>
+#include <generated/interfaces/ISO15118_charger/Interface.hpp>
+#include <generated/interfaces/auth/Interface.hpp>
+#include <generated/interfaces/board_support_AC/Interface.hpp>
+#include <generated/interfaces/isolation_monitor/Interface.hpp>
+#include <generated/interfaces/powermeter/Interface.hpp>
+#include <generated/interfaces/slac/Interface.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 #include "Charger.hpp"

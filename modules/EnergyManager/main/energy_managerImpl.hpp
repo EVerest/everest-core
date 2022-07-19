@@ -5,10 +5,10 @@
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 1
+// template version 3
 //
 
-#include <generated/energy_manager/Implementation.hpp>
+#include <generated/interfaces/energy_manager/Implementation.hpp>
 
 #include "../EnergyManager.hpp"
 

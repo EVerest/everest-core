@@ -55,8 +55,10 @@ void yeti_simulation_controlImpl::handle_enable(bool& value) {
     mod->serial.enableSimulation(value);
 };
 
-void yeti_simulation_controlImpl::handle_setSimulationData(Object& value) {
-    mod->serial.setSimulationData(json_to_simulation_data(value));
+void yeti_simulation_controlImpl::handle_setSimulationData(::types::yeti::SimulationData& value) {
+    json j_value = value;
+    Object o_value = j_value;
+    mod->serial.setSimulationData(json_to_simulation_data(o_value));
 };
 
 } // namespace yeti_simulation_control

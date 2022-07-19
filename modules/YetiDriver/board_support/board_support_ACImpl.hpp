@@ -5,10 +5,10 @@
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 1
+// template version 3
 //
 
-#include <generated/board_support_AC/Implementation.hpp>
+#include <generated/interfaces/board_support_AC/Implementation.hpp>
 
 #include "../YetiDriver.hpp"
 
