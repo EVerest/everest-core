@@ -1,0 +1,59 @@
+{
+    "description": "Unit types",
+    "types": {
+        "Currents": {
+            "description": "Currents in Ampere",
+            "type": "object",
+            "additionalProperties": false,
+            "minProperties": 4,
+            "properties": {
+                "L1": {
+                    "type": "number"
+                },
+                "L2": {
+                    "type": "number"
+                },
+                "L3": {
+                    "type": "number"
+                },
+                "N": {
+                    "type": "number"
+                }
+            }
+        },
+        "Voltages": {
+            "description": "Voltages in Volt",
+            "type": "object",
+            "additionalProperties": false,
+            "minProperties": 3,
+            "properties": {
+                "L1": {
+                    "type": "number"
+                },
+                "L2": {
+                    "type": "number"
+                },
+                "L3": {
+                    "type": "number"
+                }
+            }
+        },
+        "Frequencies": {
+            "description": "Frequencies in Hertz",
+            "type": "object",
+            "additionalProperties": false,
+            "minProperties": 3,
+            "properties": {
+                "L1": {
+                    "type": "number"
+                },
+                "L2": {
+                    "type": "number"
+                },
+                "L3": {
+                    "type": "number"
+                }
+            }
+        }
+    }
+}
