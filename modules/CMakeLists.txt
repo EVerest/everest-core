@@ -79,6 +79,7 @@ macro(cpp_module_setup)
     )
 
     add_executable(${MODULE_NAME})
+    add_dependencies(${MODULE_NAME} ld-ev_${MODULE_NAME} generate_type_files)
     add_dependencies(${MODULE_NAME} ld-ev_${MODULE_NAME} generate_interface_files)
 
 endmacro()
