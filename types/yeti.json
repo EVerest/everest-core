@@ -30,22 +30,7 @@
                 "currents": {
                     "description": "Currents in Ampere",
                     "type": "object",
-                    "additionalProperties": false,
-                    "minProperties": 4,
-                    "properties": {
-                        "L1": {
-                            "type": "number"
-                        },
-                        "L2": {
-                            "type": "number"
-                        },
-                        "L3": {
-                            "type": "number"
-                        },
-                        "N": {
-                            "type": "number"
-                        }
-                    }
+                    "$ref": "/units#/Currents"
                 },
                 "voltages": {
                     "description": "Voltages in Volt",
