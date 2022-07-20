@@ -2,6 +2,7 @@
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 const { spawn } = require('child_process');
 const { evlog, boot_module } = require('everestjs');
+const os = require('os');
 
 let network_interface;
 
@@ -65,6 +66,19 @@ function JavaStartedDeferred(mqtt_base_path, module_name, mod) {
   });
 }
 
+function check_network_interface(network_iface) {
+  let networkfound = false;
+  const net_init = os.networkInterfaces();
+
+  for (const key of Object.keys(net_init)) {
+    if (key === network_iface) {
+      networkfound = true;
+    }
+  }
+
+  return networkfound;
+}
+
 const mqtt_paths = {
   state: 'state',
   cmds: 'cmd',
@@ -75,12 +89,16 @@ const mqtt_paths = {
 boot_module(async ({
   setup, info, config, mqtt,
 }) => {
+
+  network_interface = config.impl.main.device;
+  if (check_network_interface(network_interface) === false) {
+    evlog.warning(`The network interface ${network_interface} was not found!`);
+  }
+
   // setup correct mqtt paths
   Object.keys(mqtt_paths).forEach((key) => {
     mqtt_paths[key] = `${config.impl.main.mqtt_base_path}/${mqtt_paths[key]}`;
   });
-
-  network_interface = config.impl.main.device;
 
   mqtt.subscribe(mqtt_paths.vars, (mod, raw_data) => {
     if (mod === undefined) {
