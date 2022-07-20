@@ -62,7 +62,7 @@ void OCPP::init() {
             auto user_config = json::parse(user_config_file);
             EVLOG_info << "Augmenting chargepoint config with user_config entries";
             json_config.merge_patch(user_config);
-        } catch (json::parse_error e) {
+        } catch (const json::parse_error& e) {
             // rewrite empty user config if it is not parsable
             EVLOG_warning << "Could not parse user config file. Creating new user config file.";
             create_empty_user_config(user_config_path);
