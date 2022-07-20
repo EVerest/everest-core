@@ -86,7 +86,7 @@ void OCPP::init() {
     this->charge_point->register_cancel_charging_callback([this](int32_t connector, ocpp1_6::Reason reason) {
         if (connector > 0 && connector <= this->r_evse_manager.size()) {
             return this->r_evse_manager.at(connector - 1)
-                ->call_cancel_charging(ocpp1_6::conversions::reason_to_string(reason));
+                ->call_cancel_charging(types::evse_manager::string_to_session_cancellation_reason(ocpp1_6::conversions::reason_to_string(reason)));
         } else {
             return false;
         }

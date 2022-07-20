@@ -243,10 +243,10 @@ bool evse_managerImpl::handle_resume_charging() {
     return mod->charger->resumeCharging();
 };
 
-bool evse_managerImpl::handle_cancel_charging(std::string& reason) {
+bool evse_managerImpl::handle_cancel_charging(types::evse_manager::SessionCancellationReason& reason) {
     {
         std::lock_guard<std::mutex> lock(session_mutex);
-        cancel_session_reason = reason;
+        cancel_session_reason = types::evse_manager::session_cancellation_reason_to_string(reason);
     }
     if (mod->get_hlc_enabled()) {
         mod->r_hlc[0]->call_stop_charging(true);

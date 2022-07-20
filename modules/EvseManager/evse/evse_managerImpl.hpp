@@ -39,7 +39,7 @@ protected:
     virtual bool handle_set_faulted() override;
     virtual bool handle_pause_charging() override;
     virtual bool handle_resume_charging() override;
-    virtual bool handle_cancel_charging(std::string& reason) override;
+    virtual bool handle_cancel_charging(types::evse_manager::SessionCancellationReason& reason) override;
     virtual bool handle_accept_new_session() override;
     virtual std::string handle_reserve_now(int& reservation_id, std::string& auth_token, std::string& expiry_date,
                                            std::string& parent_id) override;

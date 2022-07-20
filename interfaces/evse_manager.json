@@ -42,19 +42,7 @@
                 "reason": {
                     "description": "Reason for session cancellation",
                     "type": "string",
-                    "enum": [
-                        "EmergencyStop",
-                        "EVDisconnected",
-                        "HardReset",
-                        "Local",
-                        "Other",
-                        "PowerLoss",
-                        "Reboot",
-                        "Remote",
-                        "SoftReset",
-                        "UnlockCommand",
-                        "DeAuthorized"
-                    ]
+                    "$ref": "/evse_manager#/SessionCancellationReason"
                 }
             },
             "result": {

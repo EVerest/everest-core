@@ -1,0 +1,22 @@
+{
+    "description": "EVSE manager types",
+    "types": {
+        "SessionCancellationReason": {
+            "description": "Reason for session cancellation",
+            "type": "string",
+            "enum": [
+                "EmergencyStop",
+                "EVDisconnected",
+                "HardReset",
+                "Local",
+                "Other",
+                "PowerLoss",
+                "Reboot",
+                "Remote",
+                "SoftReset",
+                "UnlockCommand",
+                "DeAuthorized"
+            ]
+        }
+    }
+}
