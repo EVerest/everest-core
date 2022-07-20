@@ -1,5 +1,7 @@
 #!/bin/bash
 
-echo "Installing"
+. ${1}
+
+echo $INSTALLING
 sleep 2
-echo "Installed"
+echo $INSTALLED

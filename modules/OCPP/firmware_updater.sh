@@ -1,16 +1,18 @@
 #!/bin/bash
 
-echo "downloading"
-curl --progress-bar --connect-timeout 20 "${1}" -o "${2}"
+. ${1}
+
+echo $DOWNLOADING
+curl --progress-bar --connect-timeout 20 "${2}" -o "${3}"
 curl_exit_code=$?
 sleep 2
 if [[ $curl_exit_code -eq 0 ]]; then
-    echo "downloaded"
+    echo $DOWNLOADED
 else
-    echo "download_failed"
+    echo $DOWNLOAD_FAILED
 fi
 sleep 2
-echo "installing"
+echo $INSTALLING
 sleep 2
-echo "installed"
+echo $INSTALLED
 sleep 2
