@@ -32,10 +32,10 @@ static ocpp1_6::ChargePointErrorCode get_ocpp_error_code(const std::string& evse
     }
 }
 
-void create_user_config(const boost::filesystem::path& user_config_path) {
+void create_empty_user_config(const boost::filesystem::path& user_config_path) {
     boost::filesystem::create_directory(user_config_path.parent_path());
     std::ofstream fs(user_config_path.c_str());
-    json user_config = json({});
+    auto user_config = json::object();
     fs << user_config << std::endl;
     fs.close();
 }
@@ -64,11 +64,12 @@ void OCPP::init() {
             json_config.merge_patch(user_config);
         } catch (json::parse_error e) {
             // rewrite empty user config if it is not parsable
-            create_user_config(user_config_path);
+            EVLOG_warning << "Could not parse user config file. Creating new user config file.";
+            create_empty_user_config(user_config_path);
         }
     } else {
         EVLOG_debug << "No user-config provided. Creating user config file";
-        create_user_config(user_config_path);
+        create_empty_user_config(user_config_path);
     }
 
     std::shared_ptr<ocpp1_6::ChargePointConfiguration> configuration =
@@ -145,9 +146,11 @@ void OCPP::init() {
         diagnostics_file << diagnostics.dump();
         this->upload_diagnostics_thread = std::thread([this, location, diagnostics_file_name, diagnostics_file_path]() {
             auto diagnostics_uploader = boost::filesystem::path(this->config.ScriptsPath) / "diagnostics_uploader.sh";
+            auto constants = boost::filesystem::path(this->config.ScriptsPath) / "constants.env";
 
             boost::process::ipstream stream;
-            std::vector<std::string> args = {location, diagnostics_file_name.string(), diagnostics_file_path.string()};
+            std::vector<std::string> args = {constants.string(), location, diagnostics_file_name.string(),
+                                             diagnostics_file_path.string()};
             boost::process::child cmd(diagnostics_uploader, boost::process::args(args),
                                       boost::process::std_out > stream);
             std::string temp;
@@ -176,23 +179,23 @@ void OCPP::init() {
 
         auto log_file_name = boost::filesystem::unique_path(boost::filesystem::path(file_name));
         auto log_file_path = boost::filesystem::temp_directory_path() / log_file_name;
+        auto constants = boost::filesystem::path(this->config.ScriptsPath) / "constants.env";
 
         auto diagnostics = json({{"logs", {{"key", "value"}}}});
         std::ofstream log_file(log_file_path.c_str());
         log_file << diagnostics.dump();
-        this->upload_logs_thread = std::thread([this, msg, log_file_name, log_file_path]() {
+        this->upload_logs_thread = std::thread([this, msg, log_file_name, log_file_path, constants]() {
             auto diagnostics_uploader = boost::filesystem::path(this->config.ScriptsPath) / "diagnostics_uploader.sh";
 
             boost::process::ipstream stream;
-            std::vector<std::string> args = {msg.log.remoteLocation.get(), log_file_name.string(),
+            std::vector<std::string> args = {constants.string(), msg.log.remoteLocation.get(), log_file_name.string(),
                                              log_file_path.string()};
             boost::process::child cmd(diagnostics_uploader, boost::process::args(args),
                                       boost::process::std_out > stream);
 
             std::string temp;
             while (std::getline(stream, temp) && !this->charge_point->interrupt_log_upload) {
-                ocpp1_6::UploadLogStatusEnumType log_status =
-                    ocpp1_6::conversions::string_to_upload_log_status_enum_type(temp);
+                auto log_status = ocpp1_6::conversions::string_to_upload_log_status_enum_type(temp);
                 this->charge_point->logStatusNotification(log_status, msg.requestId);
             }
 
@@ -221,8 +224,9 @@ void OCPP::init() {
 
         auto firmware_file_name = boost::filesystem::unique_path(boost::filesystem::path(file_name));
         auto firmware_file_path = boost::filesystem::temp_directory_path() / firmware_file_name;
+        auto constants = boost::filesystem::path(this->config.ScriptsPath) / "constants.env";
 
-        this->update_firmware_thread = std::thread([this, location, firmware_file_path]() {
+        this->update_firmware_thread = std::thread([this, location, firmware_file_path, constants]() {
             auto firmware_updater = boost::filesystem::path(this->config.ScriptsPath) / "firmware_updater.sh";
 
             boost::process::ipstream stream;
@@ -230,19 +234,8 @@ void OCPP::init() {
             boost::process::child cmd(firmware_updater, boost::process::args(args), boost::process::std_out > stream);
             std::string temp;
             while (std::getline(stream, temp)) {
-                if (temp == "downloaded") {
-                    this->charge_point->send_firmware_status_notification(ocpp1_6::FirmwareStatus::Downloaded);
-                } else if (temp == "download_failed") {
-                    this->charge_point->send_firmware_status_notification(ocpp1_6::FirmwareStatus::DownloadFailed);
-                } else if (temp == "installing") {
-                    this->charge_point->send_firmware_status_notification(ocpp1_6::FirmwareStatus::Installing);
-                } else if (temp == "installed") {
-                    this->charge_point->send_firmware_status_notification(ocpp1_6::FirmwareStatus::Installed);
-                } else if (temp == "installation_failed") {
-                    this->charge_point->send_firmware_status_notification(ocpp1_6::FirmwareStatus::InstallationFailed);
-                } else {
-                    this->charge_point->send_firmware_status_notification(ocpp1_6::FirmwareStatus::Downloading);
-                }
+                auto firmware_status = ocpp1_6::conversions::string_to_firmware_status(temp);
+                this->charge_point->send_firmware_status_notification(firmware_status);
             }
             cmd.wait();
             this->charge_point->send_firmware_status_notification(ocpp1_6::FirmwareStatus::Idle);
@@ -265,10 +258,11 @@ void OCPP::init() {
 
                 auto firmware_downloader =
                     boost::filesystem::path(this->config.ScriptsPath) / "signed_firmware_downloader.sh";
+                auto constants = boost::filesystem::path(this->config.ScriptsPath) / "constants.env";
 
                 boost::process::ipstream download_stream;
-                std::vector<std::string> download_args = {req.firmware.location.get(), firmware_file_path.string(),
-                                                          req.firmware.signature.get(),
+                std::vector<std::string> download_args = {constants.string(), req.firmware.location.get(),
+                                                          firmware_file_path.string(), req.firmware.signature.get(),
                                                           req.firmware.signingCertificate.get()};
                 boost::process::child download_cmd(firmware_downloader, boost::process::args(download_args),
                                                    boost::process::std_out > download_stream);
@@ -293,7 +287,8 @@ void OCPP::init() {
                 boost::process::ipstream install_stream;
                 auto firmware_installer =
                     boost::filesystem::path(this->config.ScriptsPath) / "signed_firmware_installer.sh";
-                std::vector<std::string> install_args = {};
+                const auto constants = boost::filesystem::path(this->config.ScriptsPath) / "constants.env";
+                std::vector<std::string> install_args = {constants.string()};
                 boost::process::child install_cmd(firmware_installer, boost::process::args(install_args),
                                                   boost::process::std_out > install_stream);
                 std::string temp;
