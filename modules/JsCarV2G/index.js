@@ -68,9 +68,9 @@ function JavaStartedDeferred(mqtt_base_path, module_name, mod) {
 
 function check_network_interface(network_iface) {
   let networkfound = false;
-  let net_init = os.networkInterfaces();
+  const net_init = os.networkInterfaces();
 
-  for (let key of Object.keys(net_init)) {
+  for (const key of Object.keys(net_init)) {
     if (key === network_iface) {
       networkfound = true;
     }
