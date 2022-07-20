@@ -2,6 +2,6 @@
 
 . ${1}
 
-echo $INSTALLING
+echo "$INSTALLING"
 sleep 2
-echo $INSTALLED
+echo "$INSTALLED"
