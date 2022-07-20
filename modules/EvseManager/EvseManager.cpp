@@ -428,33 +428,33 @@ void EvseManager::setup_AC_mode() {
     r_hlc[0]->call_set_SupportedEnergyTransferMode(transfer_modes);
 }
 
-std::string EvseManager::reserve_now(const int _reservation_id, const std::string& token,
-                                     const std::chrono::time_point<date::utc_clock>& valid_until,
-                                     const std::string& parent_id) {
+types::evse_manager::ReservationResult
+EvseManager::reserve_now(const int _reservation_id, const std::string& token,
+                         const std::chrono::time_point<date::utc_clock>& valid_until, const std::string& parent_id) {
 
     // is the evse Unavailable?
     if (charger->getCurrentState() == Charger::EvseState::Disabled) {
-        return "Unavailable";
+        return types::evse_manager::ReservationResult::Unavailable;
     }
 
     // is the evse faulted?
     if (charger->getCurrentState() == Charger::EvseState::Faulted) {
-        return "Faulted";
+        return types::evse_manager::ReservationResult::Faulted;
     }
 
     // is the reservation still valid in time?
     if (date::utc_clock::now() > valid_until) {
-        return "Rejected";
+        return types::evse_manager::ReservationResult::Rejected;
     }
 
     // is the connector currently ready to accept a new car?
     if (charger->getCurrentState() != Charger::EvseState::Idle) {
-        return "Occupied";
+        return types::evse_manager::ReservationResult::Occupied;
     }
 
     // is it already reserved
     if (reservation_valid()) {
-        return "Occupied";
+        return types::evse_manager::ReservationResult::Occupied;
     }
 
     std::lock_guard<std::mutex> lock(reservation_mutex);
@@ -475,7 +475,7 @@ std::string EvseManager::reserve_now(const int _reservation_id, const std::strin
 
     signalReservationEvent(se);
 
-    return "Accepted";
+    return types::evse_manager::ReservationResult::Accepted;
 
     // FIXME TODO:
     /*

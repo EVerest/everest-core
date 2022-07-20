@@ -106,11 +106,11 @@ void OCPP::init() {
         [this](int32_t reservation_id, int32_t connector, ocpp1_6::DateTime expiryDate, ocpp1_6::CiString20Type idTag,
                boost::optional<ocpp1_6::CiString20Type> parent_id) {
             if (connector > 0 && connector <= this->r_evse_manager.size()) {
-                std::string response =
+                auto response =
                     this->r_evse_manager.at(connector - 1)
                         ->call_reserve_now(reservation_id, idTag.get(), expiryDate.to_rfc3339(),
                                            parent_id.value_or(ocpp1_6::CiString20Type(std::string(""))).get());
-                return this->ResStatMap.at(response);
+                return this->ResStatMap.at(types::evse_manager::reservation_result_to_string(response));
             } else {
                 return ocpp1_6::ReservationStatus::Unavailable;
             }

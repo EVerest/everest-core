@@ -262,7 +262,7 @@ bool evse_managerImpl::handle_force_unlock() {
     return mod->charger->forceUnlock();
 };
 
-std::string evse_managerImpl::handle_reserve_now(int& reservation_id, std::string& auth_token, std::string& expiry_date,
+types::evse_manager::ReservationResult evse_managerImpl::handle_reserve_now(int& reservation_id, std::string& auth_token, std::string& expiry_date,
                                                  std::string& parent_id) {
     return mod->reserve_now(reservation_id, auth_token, Everest::Date::from_rfc3339(expiry_date), parent_id);
 };

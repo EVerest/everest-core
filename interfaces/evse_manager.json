@@ -81,13 +81,7 @@
             "result": {
                 "description": "Returns Accepted if reservation was succesfull or specifies error code.",
                 "type": "string",
-                "enum": [
-                    "Accepted",
-                    "Faulted",
-                    "Occupied",
-                    "Rejected",
-                    "Unavailable"
-                ]
+                "$ref": "/evse_manager#/ReservationResult"
             }
         },
         "cancel_reservation": {

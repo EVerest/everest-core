@@ -17,6 +17,17 @@
                 "UnlockCommand",
                 "DeAuthorized"
             ]
+        },
+        "ReservationResult": {
+            "description": "Result of an attempted reservation",
+            "type": "string",
+            "enum": [
+                "Accepted",
+                "Faulted",
+                "Occupied",
+                "Rejected",
+                "Unavailable"
+            ]
         }
     }
 }

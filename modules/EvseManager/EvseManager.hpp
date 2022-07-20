@@ -98,8 +98,9 @@ public:
     json get_hw_capabilities();
     bool updateLocalMaxCurrentLimit(float max_current);
     float getLocalMaxCurrentLimit();
-    std::string reserve_now(const int _reservation_id, const std::string& token,
-                            const std::chrono::time_point<date::utc_clock>& valid_until, const std::string& parent_id);
+    types::evse_manager::ReservationResult reserve_now(const int _reservation_id, const std::string& token,
+                                                       const std::chrono::time_point<date::utc_clock>& valid_until,
+                                                       const std::string& parent_id);
     bool cancel_reservation();
     bool reservation_valid();
     int32_t get_reservation_id();
