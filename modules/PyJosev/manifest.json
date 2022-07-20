@@ -1,0 +1,18 @@
+{
+    "description": "This module includes a DIN70121, ISO15118-2 and ISO15118-20 implementation by the Josev project",
+    "config": {
+    },
+    "provides": {
+        "main": {
+            "description": "EVerest API",
+            "interface": "empty"
+        }
+    },
+    "enable_external_mqtt": true,
+    "metadata": {
+        "license": "https://opensource.org/licenses/Apache-2.0",
+        "authors": [
+            "Sebastian Lukas"
+        ]
+    }
+}

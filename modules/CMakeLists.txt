@@ -25,6 +25,7 @@ list(APPEND EVEREST_MODULES_LIST
     ModbusMeter
     OCPP
     PersistentStore
+    PyJosev
     Setup
     Store
     SunspecReader
