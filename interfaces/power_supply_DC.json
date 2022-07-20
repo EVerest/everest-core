@@ -1,0 +1,66 @@
+{
+    "description": "Interface for power supplies used for DC charging",
+    "cmds": {
+        "getCapabilities": {
+            "description": "Get capabilities of power supply",
+            "result": {
+                "description": "Capabilities",
+                "type": "object",
+                "$ref": "/power_supply_DC#/Capabilities"
+            }
+        },
+        "setMode": {
+            "description": "Set operation mode of the bidirectional DC power supply",
+            "arguments": {
+                "value": {
+                    "description": "Operation mode of power supply",
+                    "type": "string",
+                    "$ref": "/power_supply_DC#/Mode"
+                }
+            }
+        },
+        "setExportVoltageCurrent": {
+            "description": "Set output target voltage limit. Must be within reported limits.",
+            "arguments": {
+                "voltage": {
+                    "description": "Output voltage in Volt",
+                    "type": "number"
+                },
+                "current": {
+                    "description": "Output current limit in Ampere",
+                    "type": "number"
+                }
+            }
+        },
+        "setImportVoltageCurrent": {
+            "description": "Set minimal import voltage and current limit.  Must be within reported limits.",
+            "arguments": {
+                "voltage": {
+                    "description": "Current will be drawn if input is above this voltage (in Volt)",
+                    "type": "number"
+                },
+                "current": {
+                    "description": "Input current limit in Ampere",
+                    "type": "number"
+                }
+            }
+        }
+    },
+    "vars": {
+        "voltage_current": {
+            "description": "Voltage/Current at the input/output",
+            "type": "object",
+            "$ref": "/power_supply_DC#/VoltageCurrent"
+        },
+        "mode": {
+            "description": "Current mode. Published on change.",
+            "type": "string",
+            "$ref": "/power_supply_DC#/Mode"
+        },
+        "fault_code": {
+            "description": "Fault code. Published when fault happens.",
+            "type": "string",
+            "$ref": "/power_supply_DC#/FaultCode"
+        }
+    }
+}

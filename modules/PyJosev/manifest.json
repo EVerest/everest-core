@@ -1,0 +1,58 @@
+{
+    "description": "This module includes a DIN70121, ISO15118-2 and ISO15118-20 implementation by the Josev project",
+    "config": {
+        "device": {
+            "description": "Ethernet device used for HLC. Any local interface that has an ipv6 link-local and a MAC addr will work.",
+            "type": "string",
+            "default": "eth0"
+        },
+        "enforce_tls": {
+            "description": "The SECC will enforce a TLS connection",
+            "type": "boolean",
+            "default": false
+        },
+        "supported_DIN70121": {
+            "description": "The EVSE supports the DIN SPEC",
+            "type": "boolean",
+            "default": false
+        },
+        "supported_ISO15118_2": {
+            "description": "The EVSE supports ISO15118-2",
+            "type": "boolean",
+            "default": true
+        },
+        "supported_ISO15118_20_AC": {
+            "description": "The EVSE supports ISO15118-20 AC",
+            "type": "boolean",
+            "default": false
+        },
+        "supported_ISO15118_20_DC": {
+            "description": "The EVSE supports ISO15118-20 DC",
+            "type": "boolean",
+            "default": false
+        },
+        "free_cert_install_service": {
+            "description": "The certificate install service is free",
+            "type": "boolean",
+            "default": false
+        },
+        "allow_cert_install_service": {
+            "description": "The SECC allows the car to install certificates when necessary",
+            "type": "boolean",
+            "default": false
+        }
+    },
+    "provides": {
+        "charger": {
+			"interface": "ISO15118_charger",
+			"description": "This module implements the ISO15118-2 implementation of an AC or DC charger"
+		}
+    },
+    "enable_external_mqtt": true,
+    "metadata": {
+        "license": "https://opensource.org/licenses/Apache-2.0",
+        "authors": [
+            "Sebastian Lukas"
+        ]
+    }
+}

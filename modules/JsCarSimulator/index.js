@@ -86,7 +86,6 @@ function modify_charging_session(mod, args) {
 boot_module(async ({
   setup, info, config, mqtt,
 }) => {
-
   // Subscribe external cmds for nodered
   mqtt.subscribe(`everest_external/nodered/${config.module.connector_id}/carsim/cmd/enable`, (mod, en) => { enable(mod, { value: en }); });
   mqtt.subscribe(`everest_external/nodered/${config.module.connector_id}/carsim/cmd/execute_charging_session`, (mod, str) => {

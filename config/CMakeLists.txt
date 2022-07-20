@@ -1,5 +1,7 @@
 generate_config_run_script(CONFIG sil)
 generate_config_run_script(CONFIG sil-two-evse)
+generate_config_run_script(CONFIG sil-four-evse)
+generate_config_run_script(CONFIG sil-two-evse-dc)
 generate_config_run_script(CONFIG hil)
 generate_config_run_script(CONFIG auth)
 generate_config_run_script(CONFIG sil-ocpp)
@@ -18,3 +20,4 @@ install(
 )
 
 add_subdirectory(nodered)
+generate_config_run_script(CONFIG sil-dc)

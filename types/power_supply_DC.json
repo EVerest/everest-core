@@ -1,0 +1,126 @@
+{
+    "description": "Power supply DC types",
+    "types": {
+        "Mode": {
+            "description": "Operation mode of power supply. Power supply delivers power in Export mode and draws power in Import mode.",
+            "type": "string",
+            "enum": [
+                "Off",
+                "Export",
+                "Import",
+                "Fault"
+            ]
+        },
+        "VoltageCurrent": {
+            "description": "Voltage (V) and Current (A) at the input/output of the power supply",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "voltage_V",
+                "current_A"
+            ],
+            "properties": {
+                "voltage_V": {
+                    "description": "Voltage in V",
+                    "type": "number"
+                },
+                "current_A": {
+                    "description": "Current in A",
+                    "type": "number"
+                }
+            }
+        },
+        "Capabilities": {
+            "description": "Capabilities for this power supply.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "bidirectional",
+                "max_export_voltage_V",
+                "min_export_voltage_V",
+                "max_export_current_A",
+                "min_export_current_A",
+                "max_export_power_W",
+                "current_regulation_tolerance_A",
+                "peak_current_ripple_A"
+            ],
+            "properties": {
+                "bidirectional": {
+                    "description": "true: support bidirectional energy flow, false: support only Export mode (output)",
+                    "type": "boolean"
+                },
+                "current_regulation_tolerance_A": {
+                    "description": "Absolute magnitude of the regulation tolerance in Ampere",
+                    "type": "number"
+                },
+                "peak_current_ripple_A": {
+                    "description": "Peak-to-peak magnitude of the current ripple in Ampere",
+                    "type": "number"
+                },
+                "max_export_voltage_V": {
+                    "description": "Maximum voltage that the power supply can output in Volt",
+                    "type": "number"
+                },
+                "min_export_voltage_V": {
+                    "description": "Minimum voltage that the power supply can output in Volt",
+                    "type": "number"
+                },
+                "max_export_current_A": {
+                    "description": "Maximum current that the power supply can output in Ampere",
+                    "type": "number"
+                },
+                "min_export_current_A": {
+                    "description": "Minimum current limit that the power supply can set in Ampere",
+                    "type": "number"
+                },
+                "max_import_voltage_V": {
+                    "description": "Maximum voltage that the power supply supports to import energy in Volt",
+                    "type": "number"
+                },
+                "min_import_voltage_V": {
+                    "description": "Minimum voltage that the power supply requires to import energy in Volt",
+                    "type": "number"
+                },
+                "max_import_current_A": {
+                    "description": "Maximum current that the power supply can output in Ampere",
+                    "type": "number"
+                },
+                "min_import_current_A": {
+                    "description": "Minimum current limit that the power supply can set in Ampere",
+                    "type": "number"
+                },
+                "max_export_power_W": {
+                    "description": "Maximum export power that the power supply can output in Watt",
+                    "type": "number"
+                },
+                "max_import_power_W": {
+                    "description": "Maximum import power that the power supply can sink in Watt",
+                    "type": "number"
+                }
+            }
+        },
+        "FaultCode": {
+            "description": "Fault codes",
+            "type": "string",
+            "enum": [
+                "CommunicationFailure",
+                "ConfigurationError",
+                "HardwareFault",
+                "OverTemperature",
+                "UnderTemperature",
+                "UnderVoltageAC",
+                "OverVoltageAC",
+                "UnderVoltageDC",
+                "OverVoltageDC",
+                "UnderVoltageBattery",
+                "OverVoltageBattery",
+                "OverCurrentAC",
+                "OverCurrentBattery",
+                "OverCurrentDC",
+                "WrongCabling",
+                "Other",
+                "NoError"
+            ]
+        }
+    }
+}

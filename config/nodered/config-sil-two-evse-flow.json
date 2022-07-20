@@ -44,7 +44,9 @@
             "1295e032d7ddbc20"
         ],
         "x": 1114,
-        "y": 439
+        "y": 439,
+        "w": 152,
+        "h": 82
     },
     {
         "id": "6459c14573f03fd2",
@@ -63,7 +65,9 @@
             "22139ab4759c1b51"
         ],
         "x": 1094,
-        "y": 419
+        "y": 419,
+        "w": 152,
+        "h": 82
     },
     {
         "id": "7140803fb3989089",
@@ -252,7 +256,7 @@
     {
         "id": "b364f7eb4621082b",
         "type": "ui_group",
-        "name": "Connector 1",
+        "name": "Connector 1 [ISO15118]",
         "tab": "d3ada9fa4cf6ac53",
         "order": 2,
         "disp": true,
@@ -272,29 +276,12 @@
     {
         "id": "21e40a4a97a50168",
         "type": "ui_group",
-        "name": "Connector 2",
+        "name": "Connector 2 [Basic Charging]",
         "tab": "d3ada9fa4cf6ac53",
         "order": 3,
         "disp": true,
         "width": "6",
         "collapse": false
-    },
-    {
-        "id": "84ddb762.5129f8",
-        "type": "ui_tab",
-        "name": "Home",
-        "icon": "dashboard",
-        "disabled": false,
-        "hidden": false
-    },
-    {
-        "id": "427a83e7f6d33afc",
-        "type": "ui_tab",
-        "name": "Home",
-        "icon": "dashboard",
-        "order": 1,
-        "disabled": false,
-        "hidden": false
     },
     {
         "id": "50c487c1.27e508",
@@ -308,15 +295,6 @@
         "id": "d3ada9fa4cf6ac53",
         "type": "ui_tab",
         "name": "Home",
-        "icon": "dashboard",
-        "order": 1,
-        "disabled": false,
-        "hidden": false
-    },
-    {
-        "id": "3c7214a9dd24b0ad",
-        "type": "ui_tab",
-        "name": "EVSE Configuration",
         "icon": "dashboard",
         "order": 1,
         "disabled": false,
@@ -1646,8 +1624,7 @@
         "y": 840,
         "wires": [
             [
-                "f96ccb60614f9f18",
-                "fb1511183c9a660f"
+                "f96ccb60614f9f18"
             ]
         ]
     },
@@ -2052,7 +2029,7 @@
         "color": "",
         "bgcolor": "",
         "icon": "",
-        "payload": "sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 36000;unplug",
+        "payload": "start",
         "payloadType": "str",
         "topic": "everest_external/nodered/#/carsim/cmd/execute_charging_session",
         "topicType": "str",
@@ -2074,20 +2051,20 @@
         "width": "3",
         "height": "1",
         "passthru": false,
-        "label": "Car unplug",
+        "label": "Stop & Unplug",
         "tooltip": "",
         "color": "",
         "bgcolor": "",
         "icon": "",
-        "payload": "unplug",
+        "payload": "stop",
         "payloadType": "str",
         "topic": "everest_external/nodered/#/carsim/cmd/modify_charging_session",
         "topicType": "str",
-        "x": 170,
+        "x": 180,
         "y": 940,
         "wires": [
             [
-                "361b3d846c4e6673"
+                "620b0d248a89ece0"
             ]
         ]
     },
@@ -2107,7 +2084,7 @@
         "topic": "everest_external/nodered/#/cmd/set_max_current",
         "topicType": "str",
         "min": "6",
-        "max": "16",
+        "max": "32",
         "step": "0.1",
         "x": 450,
         "y": 700,
@@ -2122,7 +2099,7 @@
         "type": "ui_dropdown",
         "z": "ed603c51db9dcbb9",
         "name": "",
-        "label": "Simulation",
+        "label": "Car Simulation",
         "tooltip": "",
         "place": "Select option",
         "group": "b364f7eb4621082b",
@@ -2134,34 +2111,39 @@
         "options": [
             {
                 "label": "AC 3ph 16A",
-                "value": "sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 36000;unplug",
+                "value": "sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 36000#unplug",
                 "type": "str"
             },
             {
                 "label": "AC 1ph 32A",
-                "value": "sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 32,1;sleep 36000;unplug",
+                "value": "sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 32,1;sleep 36000#unplug",
                 "type": "str"
             },
             {
                 "label": "AC Diode Fail",
-                "value": "sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 32,3;sleep 5;diode_fail;sleep 36000;unplug",
+                "value": "sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 32,3;sleep 5;diode_fail;sleep 36000#unplug",
                 "type": "str"
             },
             {
                 "label": "AC Error E",
-                "value": "sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 3;error_e;sleep 36000;unplug",
+                "value": "sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 3;error_e;sleep 36000#unplug",
                 "type": "str"
             },
             {
                 "label": "AC RCD Error",
-                "value": "sleep 1;rcd_current 10.3;sleep 10;rcd_current 0.1;unplug",
+                "value": "sleep 1;rcd_current 10.3;sleep 10;rcd_current 0.1#unplug",
+                "type": "str"
+            },
+            {
+                "label": "AC ISO15118-2",
+                "value": "sleep 1;iso_wait_slac_matched;iso_start_v2g_session ExternalPayment,AC_three_phase_core;iso_wait_pwr_ready;iso_draw_power_regulated 16,3;sleep 36000#iso_stop_charging;iso_wait_v2g_session_stopped;unplug",
                 "type": "str"
             }
         ],
         "payload": "",
         "topic": "sim_commands",
         "topicType": "str",
-        "x": 170,
+        "x": 180,
         "y": 1040,
         "wires": [
             [
@@ -2174,7 +2156,7 @@
         "type": "function",
         "z": "ed603c51db9dcbb9",
         "name": "Buffer sim commands",
-        "func": "if (msg.topic.indexOf('sim_commands') > -1) {\n    flow.set('sim_commands', msg.payload);\n} else {\n    msg.payload = flow.get('sim_commands');\n    return msg;\n}\n",
+        "func": "if (msg.topic.indexOf('sim_commands') > -1) {\n    const s = msg.payload.split('#');\n    flow.set('sim_commands_start', s[0]);\n    flow.set('sim_commands_stop', s[1]);\n} else if (msg.payload == 'start') {\n    msg.payload = flow.get('sim_commands_start');\n    return msg;\n} else if (msg.payload == 'stop') {\n    msg.payload = flow.get('sim_commands_stop');\n    return msg;\n} else {\n    msg.payload = 'NONE';\n    return msg;\n}\n",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
@@ -2184,7 +2166,9 @@
         "y": 960,
         "wires": [
             [
-                "361b3d846c4e6673"
+                "361b3d846c4e6673",
+                "cc42c210398a8d50",
+                "fb1511183c9a660f"
             ]
         ]
     },
@@ -2197,7 +2181,8 @@
         "tosidebar": true,
         "console": false,
         "tostatus": false,
-        "complete": "false",
+        "complete": "payload",
+        "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
         "x": 910,
@@ -2223,7 +2208,7 @@
         "once": true,
         "onceDelay": "1",
         "topic": "sim_commands",
-        "payload": "sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 36000;unplug",
+        "payload": "sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 36000#unplug",
         "payloadType": "str",
         "x": 150,
         "y": 1100,
@@ -2864,7 +2849,7 @@
         "topic": "everest_external/nodered/#/cmd/set_max_current",
         "topicType": "str",
         "min": "6",
-        "max": "16",
+        "max": "32",
         "step": "0.1",
         "x": 450,
         "y": 680,
@@ -2989,5 +2974,22 @@
                 "3ce436b7f3df46a5"
             ]
         ]
+    },
+    {
+        "id": "cc42c210398a8d50",
+        "type": "debug",
+        "z": "ed603c51db9dcbb9",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "topic",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 900,
+        "y": 960,
+        "wires": []
     }
 ]

@@ -19,6 +19,7 @@
 #include <generated/interfaces/ISO15118_charger/Interface.hpp>
 #include <generated/interfaces/board_support_AC/Interface.hpp>
 #include <generated/interfaces/isolation_monitor/Interface.hpp>
+#include <generated/interfaces/power_supply_DC/Interface.hpp>
 #include <generated/interfaces/powermeter/Interface.hpp>
 #include <generated/interfaces/slac/Interface.hpp>
 
@@ -26,10 +27,14 @@
 // insert your custom include headers here
 #include "Charger.hpp"
 #include "SessionLog.hpp"
+#include "VarContainer.hpp"
+#include <atomic>
 #include <chrono>
+#include <condition_variable>
 #include <ctime>
 #include <date/date.h>
 #include <date/tz.h>
+#include <future>
 #include <iostream>
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
@@ -68,7 +73,8 @@ public:
                 std::unique_ptr<auth_token_providerImplBase> p_token_provider,
                 std::unique_ptr<board_support_ACIntf> r_bsp, std::vector<std::unique_ptr<powermeterIntf>> r_powermeter,
                 std::vector<std::unique_ptr<slacIntf>> r_slac, std::vector<std::unique_ptr<ISO15118_chargerIntf>> r_hlc,
-                std::vector<std::unique_ptr<isolation_monitorIntf>> r_imd, Conf& config) :
+                std::vector<std::unique_ptr<isolation_monitorIntf>> r_imd,
+                std::vector<std::unique_ptr<power_supply_DCIntf>> r_powersupply_DC, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_evse(std::move(p_evse)),
@@ -79,6 +85,7 @@ public:
         r_slac(std::move(r_slac)),
         r_hlc(std::move(r_hlc)),
         r_imd(std::move(r_imd)),
+        r_powersupply_DC(std::move(r_powersupply_DC)),
         config(config){};
 
     const Conf& config;
@@ -91,6 +98,7 @@ public:
     const std::vector<std::unique_ptr<slacIntf>> r_slac;
     const std::vector<std::unique_ptr<ISO15118_chargerIntf>> r_hlc;
     const std::vector<std::unique_ptr<isolation_monitorIntf>> r_imd;
+    const std::vector<std::unique_ptr<power_supply_DCIntf>> r_powersupply_DC;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
@@ -108,6 +116,8 @@ public:
 
     bool get_hlc_enabled();
     sigslot::signal<json> signalReservationEvent;
+
+    void charger_was_authorized();
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
@@ -123,7 +133,7 @@ private:
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
     json latest_powermeter_data;
-    bool authorization_available;
+
     Everest::Thread energyThreadHandle;
     types::board_support::HardwareCapabilities hw_capabilities;
     bool local_three_phases;
@@ -131,12 +141,21 @@ private:
     const float EVSE_ABSOLUTE_MAX_CURRENT = 80.0;
     bool slac_enabled;
 
+    std::atomic_bool contactor_open{false};
+
     std::mutex hlc_mutex;
 
     bool hlc_enabled;
 
     bool hlc_waiting_for_auth_eim;
     bool hlc_waiting_for_auth_pnc;
+
+    types::power_supply_DC::Capabilities powersupply_capabilities;
+    VarContainer<types::isolation_monitor::IsolationMeasurement> isolation_measurement;
+    VarContainer<types::power_supply_DC::VoltageCurrent> powersupply_measurement;
+
+    double latest_target_voltage;
+    double latest_target_current;
 
     void log_v2g_message(Object m);
 
@@ -146,11 +165,21 @@ private:
     std::mutex reservation_mutex;
 
     void setup_AC_mode();
-    void setup_DC_mode();
+    void setup_fake_DC_mode();
 
     // special funtion to switch mode while session is active
     void switch_AC_mode();
     void switch_DC_mode();
+
+    // DC handlers
+    void cable_check();
+
+    void powersupply_DC_on();
+    bool powersupply_DC_set(double voltage, double current);
+    void powersupply_DC_off();
+    bool wait_powersupply_DC_voltage_reached(double target_voltage);
+    bool wait_powersupply_DC_below_voltage(double target_voltage);
+
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

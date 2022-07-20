@@ -102,12 +102,12 @@ void evse_managerImpl::ready() {
         publish_session_event(j);
     });
 
-    mod->charger->signalEvent.connect([this](const Charger::EvseEvent& e) {
+    mod->charger->signalEvent.connect([this](const types::evse_manager::SessionEventEnum& e) {
         types::evse_manager::SessionEvent se;
 
-        se.event = types::evse_manager::string_to_session_event_enum(mod->charger->evseEventToString(e));
+        se.event = e;
 
-        if (e == Charger::EvseEvent::SessionStarted) {
+        if (e == types::evse_manager::SessionEventEnum::SessionStarted) {
             types::evse_manager::SessionStarted session_started;
 
             session_started.timestamp =
@@ -127,11 +127,11 @@ void evse_managerImpl::ready() {
             se.session_started = session_started;
         }
 
-        if (e == Charger::EvseEvent::SessionFinished) {
+        if (e == types::evse_manager::SessionEventEnum::SessionFinished) {
             session_log.evse(false, fmt::format("Session Finished"));
         }
 
-        if (e == Charger::EvseEvent::TransactionStarted) {
+        if (e == types::evse_manager::SessionEventEnum::TransactionStarted) {
             types::evse_manager::TransactionStarted transaction_started;
             transaction_started.timestamp =
                 date::format("%FT%TZ", std::chrono::time_point_cast<std::chrono::milliseconds>(date::utc_clock::now()));
@@ -161,7 +161,7 @@ void evse_managerImpl::ready() {
 
         se.uuid = session_uuid;
 
-        if (e == Charger::EvseEvent::TransactionFinished) {
+        if (e == types::evse_manager::SessionEventEnum::TransactionFinished) {
             types::evse_manager::TransactionFinished transaction_finished;
 
             transaction_finished.timestamp =
@@ -197,9 +197,8 @@ void evse_managerImpl::ready() {
             se.transaction_finished.emplace(transaction_finished);
         }
 
-        if (e == Charger::EvseEvent::Error) {
-            se.error.emplace(
-                types::evse_manager::string_to_error(mod->charger->errorStateToString(mod->charger->getErrorState())));
+        if (e == types::evse_manager::SessionEventEnum::Error) {
+            se.error = mod->charger->getErrorState();
         }
 
         publish_session_event(se);
@@ -222,11 +221,11 @@ void evse_managerImpl::ready() {
                           static_cast<int>(s));
     });
 
-    mod->charger->signalError.connect([this](Charger::ErrorState s) {
+    mod->charger->signalError.connect([this](types::evse_manager::Error s) {
         mod->mqtt.publish(fmt::format("everest_external/nodered/{}/state/error_type", mod->config.connector_id),
                           static_cast<int>(s));
         mod->mqtt.publish(fmt::format("everest_external/nodered/{}/state/error_string", mod->config.connector_id),
-                          mod->charger->errorStateToString(s));
+                          types::evse_manager::error_to_string(s));
     });
     // /Deprecated
 }
@@ -239,8 +238,10 @@ bool evse_managerImpl::handle_enable() {
     return mod->charger->enable();
 };
 
-void evse_managerImpl::handle_authorize(std::string& id_tag) {
-    this->mod->charger->Authorize(true, id_tag, false);
+void evse_managerImpl::handle_authorize(std::string& id_tag, bool& pnc) {
+    this->mod->charger->Authorize(true, id_tag, pnc);
+    // maybe we need to inform HLC layer as well in case it is waiting for auth
+    mod->charger_was_authorized();
 };
 
 void evse_managerImpl::handle_withdraw_authorization() {

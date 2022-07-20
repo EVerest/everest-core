@@ -108,14 +108,14 @@ void Charger::runStateMachine() {
     switch (currentState) {
     case EvseState::Disabled:
         if (new_in_state) {
-            signalEvent(EvseEvent::Disabled);
+            signalEvent(types::evse_manager::SessionEventEnum::Disabled);
             pwm_F();
         }
         break;
 
     case EvseState::Replug:
         if (new_in_state) {
-            signalEvent(EvseEvent::ReplugStarted);
+            signalEvent(types::evse_manager::SessionEventEnum::ReplugStarted);
             // start timer in case we need to
             if (ac_with_soc_timeout)
                 ac_with_soc_timer = 120000;
@@ -141,28 +141,28 @@ void Charger::runStateMachine() {
             r_bsp->call_allow_power_on(false);
 
             if (lastState == EvseState::Replug) {
-                signalEvent(EvseEvent::ReplugFinished);
+                signalEvent(types::evse_manager::SessionEventEnum::ReplugFinished);
             } else {
                 // First user interaction was plug in of car? Start session here.
                 if (!sessionActive())
                     startSession(false);
                 // External signal on MQTT
-                signalEvent(EvseEvent::AuthRequired);
+                signalEvent(types::evse_manager::SessionEventEnum::AuthRequired);
             }
             hlc_use_5percent_current_session = false;
 
             // switch on HLC if configured. May be switched off later on after retries for this session only.
-            if (charge_mode == "AC") {
+            if (charge_mode == ChargeMode::AC) {
                 ac_hlc_enabled_current_session = ac_hlc_enabled;
                 if (ac_hlc_enabled_current_session) {
                     hlc_use_5percent_current_session = ac_hlc_use_5percent;
                 }
-            } else if (charge_mode == "DC") {
+            } else if (charge_mode == ChargeMode::DC) {
                 hlc_use_5percent_current_session = true;
             } else {
                 // unsupported charging mode, give up here.
                 currentState = EvseState::Error;
-                errorState = ErrorState::Error_Internal;
+                errorState = types::evse_manager::Error::Internal;
             }
 
             if (hlc_use_5percent_current_session) {
@@ -176,10 +176,8 @@ void Charger::runStateMachine() {
         // FIXME: getAuthorization needs to distinguish between EIM and PnC in Auth mananger
 
         // FIXME: Note Fig 7. is not fully supported here yet (AC Auth before plugin - this overides PnC and always
-        // starts with nominal PWM). Hard to do here at the moment since auth before plugin is cached in auth manager
-        // and is similar to a very quick auth after plugin. We need to support this as this is the only way a user can
-        // skip PnC if he does NOT want to use it for this charging session. This basically works as Auth comes very
-        // fast if it was done before plugin, but we need to ensure that we do not double auth with PnC as well
+        // starts with nominal PWM). We need to support this as this is the only way a user can
+        // skip PnC if he does NOT want to use it for this charging session.
 
         // FIXME: In case V2G is not successfull after all, it needs
         // to send a dlink_error request, which then needs to:
@@ -195,16 +193,12 @@ void Charger::runStateMachine() {
             session_log.evse(false, "EIM Authorization received");
 
             startTransaction();
-            EvseState targetState;
 
-            if (powerAvailable()) {
-                targetState = EvseState::ChargingPausedEV;
-            } else {
-                targetState = EvseState::ChargingPausedEVSE;
-            }
+            const EvseState targetState(EvseState::PrepareCharging);
+
             // EIM done and matching process not started -> we need to go through t_step_EF and fall back to nominal
             // PWM. This is a complete waste of 4 precious seconds.
-            if (charge_mode == "AC") {
+            if (charge_mode == ChargeMode::AC) {
                 if (ac_hlc_enabled_current_session) {
                     if (ac_enforce_hlc) {
                         // non standard compliant mode: we just keep 5 percent running all the time like in DC
@@ -246,7 +240,7 @@ void Charger::runStateMachine() {
                                 currentState = EvseState::T_step_X1;
                             } else {
                                 // Figure 6 of ISO15118-3: X1 start, PnC and EIM, matching already started when EIM was
-                                // done. We can go directly to ChargingPausedEV, as we do not need to switch from 5
+                                // done. We can go directly to PrepareCharging, as we do not need to switch from 5
                                 // percent to nominal first
                                 session_log.evse(
                                     false, "AC mode, HLC enabled(X1), matching already started. We are in X1 so we can "
@@ -258,13 +252,13 @@ void Charger::runStateMachine() {
 
                 } else {
                     // HLC is disabled for this session.
-                    // simply proceed to ChargingPausedEV, as we are fully authorized to start charging whenever car
+                    // simply proceed to PrepareCharging, as we are fully authorized to start charging whenever car
                     // wants to.
                     session_log.evse(false, "AC mode, HLC disabled. We are in X1 so we can "
                                             "go directly to nominal PWM.");
                     currentState = targetState;
                 }
-            } else if (charge_mode == "DC") {
+            } else if (charge_mode == ChargeMode::DC) {
                 // Figure 8 of ISO15118-3: DC with EIM before or after plugin or PnC
                 // simple here as we always stay within 5 percent mode anyway.
                 session_log.evse(false, "DC mode. We are in 5percent mode so we can continue without further action.");
@@ -273,21 +267,17 @@ void Charger::runStateMachine() {
                 // unsupported charging mode, give up here.
                 EVLOG_error << "Unsupported charging mode.";
                 currentState = EvseState::Error;
-                errorState = ErrorState::Error_Internal;
+                errorState = types::evse_manager::Error::Internal;
             }
         } else if (AuthorizedPnC()) {
 
             startTransaction();
 
-            EvseState targetState;
-            if (powerAvailable()) {
-                targetState = EvseState::ChargingPausedEV;
-            } else {
-                targetState = EvseState::ChargingPausedEVSE;
-            }
+            const EvseState targetState(EvseState::PrepareCharging);
+
             // We got authorization by Plug and Charge
             session_log.evse(false, "PnC Authorization received");
-            if (charge_mode == "AC") {
+            if (charge_mode == ChargeMode::AC) {
                 // Figures 3,4,5,6 of ISO15118-3: Independent on how we started we can continue with 5 percent
                 // signalling once we got PnC authorization without going through t_step_EF or t_step_X1.
 
@@ -297,7 +287,7 @@ void Charger::runStateMachine() {
                 hlc_use_5percent_current_session = true;
                 currentState = targetState;
 
-            } else if (charge_mode == "DC") {
+            } else if (charge_mode == ChargeMode::DC) {
                 // Figure 8 of ISO15118-3: DC with EIM before or after plugin or PnC
                 // simple here as we always stay within 5 percent mode anyway.
                 session_log.evse(false, "DC mode. We are in 5percent mode so we can continue without further action.");
@@ -306,7 +296,7 @@ void Charger::runStateMachine() {
                 // unsupported charging mode, give up here.
                 EVLOG_error << "Unsupported charging mode.";
                 currentState = EvseState::Error;
-                errorState = ErrorState::Error_Internal;
+                errorState = types::evse_manager::Error::Internal;
             }
         }
 
@@ -342,11 +332,32 @@ void Charger::runStateMachine() {
         }
         break;
 
+    case EvseState::PrepareCharging:
+
+        if (new_in_state) {
+            signalEvent(types::evse_manager::SessionEventEnum::PrepareCharging);
+            r_bsp->call_allow_power_on(true);
+            // make sure we are enabling PWM
+            if (hlc_use_5percent_current_session)
+                update_pwm_now(PWM_5_PERCENT);
+            else
+                update_pwm_now(ampereToDutyCycle(getMaxCurrent()));
+        }
+
+        // if (charge_mode == ChargeMode::DC) {
+        //  DC: wait until car requests power on CP (B->C/D).
+        //  Then we close contactor and wait for instructions from HLC.
+        //  HLC will perform CableCheck, PreCharge, and PowerDelivery.
+        //  These are all controlled from the handlers directly, so there is nothing we need to do here.
+        //  Once HLC informs us about CurrentDemand has started, we will go to Charging in the handler.
+        //}
+
+        break;
+
     case EvseState::Charging:
-        if (charge_mode == "DC") {
-            if (new_in_state) {
-                r_bsp->call_allow_power_on(false);
-            }
+        if (charge_mode == ChargeMode::DC) {
+            // FIXME: handle DC pause/resume here
+            // FIXME: handle DC no power available from Energy management
         } else {
             checkSoftOverCurrent();
 
@@ -355,8 +366,8 @@ void Charger::runStateMachine() {
                 break;
             }
 
-            if (new_in_state) {
-                signalEvent(EvseEvent::ChargingResumed);
+            if (new_in_state && lastState != EvseState::PrepareCharging) {
+                signalEvent(types::evse_manager::SessionEventEnum::ChargingResumed);
                 r_bsp->call_allow_power_on(true);
                 // make sure we are enabling PWM
                 if (hlc_use_5percent_current_session)
@@ -372,12 +383,13 @@ void Charger::runStateMachine() {
         break;
 
     case EvseState::ChargingPausedEV:
-        if (charge_mode == "DC") {
+        if (charge_mode == ChargeMode::DC) {
             if (new_in_state) {
                 r_bsp->call_allow_power_on(false);
-                EVLOG_info << "Charger reached ChargingPausedEV for DC. Stopping here.";
+                // Assume C->B is always the end of charging for DC.
+                // Pauses needs to be fixed later
+                currentState = EvseState::StoppingCharging;
             }
-
         } else {
             checkSoftOverCurrent();
 
@@ -387,7 +399,7 @@ void Charger::runStateMachine() {
             }
 
             if (new_in_state) {
-                signalEvent(EvseEvent::ChargingPausedEV);
+                signalEvent(types::evse_manager::SessionEventEnum::ChargingPausedEV);
                 r_bsp->call_allow_power_on(true);
                 // make sure we are enabling PWM
                 if (hlc_use_5percent_current_session) {
@@ -406,8 +418,22 @@ void Charger::runStateMachine() {
 
     case EvseState::ChargingPausedEVSE:
         if (new_in_state) {
-            signalEvent(EvseEvent::ChargingPausedEVSE);
+            signalEvent(types::evse_manager::SessionEventEnum::ChargingPausedEVSE);
             pwm_off();
+        }
+        break;
+
+    case EvseState::StoppingCharging:
+        if (charge_mode == ChargeMode::DC) {
+        } else {
+            if (new_in_state) {
+                signalEvent(types::evse_manager::SessionEventEnum::StoppingCharging);
+                // DC supply off - actually this is after relais switched off.
+                // this is a backup switch off, normally it should be switched off earlier by ISO protocol.
+                signal_DC_supply_off();
+                pwm_off();
+                currentState = EvseState::Finished;
+            }
         }
         break;
 
@@ -428,7 +454,7 @@ void Charger::runStateMachine() {
 
     case EvseState::Error:
         if (new_in_state) {
-            signalEvent(EvseEvent::Error);
+            signalEvent(types::evse_manager::SessionEventEnum::Error);
             pwm_off();
         }
         // Do not set F here, as F cannot detect unplugging of car!
@@ -436,7 +462,7 @@ void Charger::runStateMachine() {
 
     case EvseState::Faulted:
         if (new_in_state) {
-            signalEvent(EvseEvent::PermanentFault);
+            signalEvent(types::evse_manager::SessionEventEnum::PermanentFault);
             pwm_F();
         }
         break;
@@ -542,6 +568,20 @@ void Charger::processCPEventsState(ControlPilotEvent cp_event) {
         }
         break;
 
+    case EvseState::PrepareCharging:
+        if (charge_mode == ChargeMode::AC) {
+            // AC: once the car requests power (B->C/D), we can switch to charging.
+            if (cp_event == ControlPilotEvent::CarRequestedPower) {
+                if (powerAvailable()) {
+                    currentState = EvseState::Charging;
+                } else {
+                    currentState = EvseState::Charging;
+                    pauseChargingWaitForPower();
+                }
+            }
+        }
+        break;
+
     case EvseState::Charging:
         if (cp_event == ControlPilotEvent::CarRequestedStopPower) {
             currentState = EvseState::ChargingPausedEV;
@@ -553,6 +593,7 @@ void Charger::processCPEventsState(ControlPilotEvent cp_event) {
             currentState = EvseState::Charging;
         }
         break;
+
     default:
         break;
     }
@@ -568,31 +609,33 @@ void Charger::processCPEventsIndependent(ControlPilotEvent cp_event) {
         currentState = EvseState::WaitingForAuthentication;
         break;
     case ControlPilotEvent::CarUnplugged:
-        currentState = EvseState::Finished;
+        if (currentState == EvseState::Error)
+            signalEvent(types::evse_manager::SessionEventEnum::AllErrorsCleared);
+        currentState = EvseState::StoppingCharging;
         break;
     case ControlPilotEvent::Error_E:
         currentState = EvseState::Error;
-        errorState = ErrorState::Error_E;
+        errorState = types::evse_manager::Error::Car;
         break;
     case ControlPilotEvent::Error_DF:
         currentState = EvseState::Error;
-        errorState = ErrorState::Error_DF;
+        errorState = types::evse_manager::Error::CarDiodeFault;
         break;
     case ControlPilotEvent::Error_Relais:
         currentState = EvseState::Error;
-        errorState = ErrorState::Error_Relais;
+        errorState = types::evse_manager::Error::Relais;
         break;
     case ControlPilotEvent::Error_RCD:
         currentState = EvseState::Error;
-        errorState = ErrorState::Error_RCD;
+        errorState = types::evse_manager::Error::RCD;
         break;
     case ControlPilotEvent::Error_VentilationNotAvailable:
         currentState = EvseState::Error;
-        errorState = ErrorState::Error_VentilationNotAvailable;
+        errorState = types::evse_manager::Error::VentilationNotAvailable;
         break;
     case ControlPilotEvent::Error_OverCurrent:
         currentState = EvseState::Error;
-        errorState = ErrorState::Error_OverCurrent;
+        errorState = types::evse_manager::Error::OverCurrent;
         break;
     default:
         break;
@@ -753,7 +796,7 @@ bool Charger::cancelTransaction(const types::evse_manager::StopTransactionReques
         if (request.id_tag) {
             stop_transaction_id_tag = request.id_tag.value();
         }
-        signalEvent(EvseEvent::TransactionFinished);
+        signalEvent(types::evse_manager::SessionEventEnum::TransactionFinished);
 
         return true;
     }
@@ -778,28 +821,28 @@ void Charger::startSession(bool authfirst) {
         last_start_session_reason = types::evse_manager::StartSessionReason::Authorized;
     else
         last_start_session_reason = types::evse_manager::StartSessionReason::EVConnected;
-    signalEvent(EvseEvent::SessionStarted);
+    signalEvent(types::evse_manager::SessionEventEnum::SessionStarted);
 }
 
 void Charger::stopSession() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
     session_active = false;
     authorized = false;
-    signalEvent(EvseEvent::SessionFinished);
+    signalEvent(types::evse_manager::SessionEventEnum::SessionFinished);
 }
 
 void Charger::startTransaction() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
     stop_transaction_id_tag.clear();
     transaction_active = true;
-    signalEvent(EvseEvent::TransactionStarted);
+    signalEvent(types::evse_manager::SessionEventEnum::TransactionStarted);
 }
 
 void Charger::stopTransaction() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
     transaction_active = false;
     last_stop_transaction_reason = types::evse_manager::StopTransactionReason::EVDisconnected;
-    signalEvent(EvseEvent::TransactionFinished);
+    signalEvent(types::evse_manager::SessionEventEnum::TransactionFinished);
 }
 
 std::string Charger::getStopTransactionIdTag() {
@@ -823,7 +866,7 @@ bool Charger::switchThreePhasesWhileCharging(bool n) {
 }
 
 void Charger::setup(bool three_phases, bool has_ventilation, const std::string& country_code, bool rcd_enabled,
-                    const std::string& _charge_mode, bool _ac_hlc_enabled, bool _ac_hlc_use_5percent,
+                    const ChargeMode _charge_mode, bool _ac_hlc_enabled, bool _ac_hlc_use_5percent,
                     bool _ac_enforce_hlc, bool _ac_with_soc_timeout) {
     std::lock_guard<std::recursive_mutex> lock(configMutex);
     // set up board support package
@@ -937,7 +980,7 @@ bool Charger::DeAuthorize() {
     return false;
 }
 
-Charger::ErrorState Charger::getErrorState() {
+types::evse_manager::Error Charger::getErrorState() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
     return errorState;
 }
@@ -947,7 +990,7 @@ Charger::ErrorState Charger::getErrorState() {
 bool Charger::disable() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
     currentState = EvseState::Disabled;
-    signalEvent(EvseEvent::Disabled);
+    signalEvent(types::evse_manager::SessionEventEnum::Disabled);
     return true;
 }
 
@@ -955,7 +998,7 @@ bool Charger::enable() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
     if (currentState == EvseState::Disabled) {
         currentState = EvseState::Idle;
-        signalEvent(EvseEvent::Enabled);
+        signalEvent(types::evse_manager::SessionEventEnum::Enabled);
         return true;
     }
     return false;
@@ -964,7 +1007,7 @@ bool Charger::enable() {
 void Charger::set_faulted() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
     currentState = EvseState::Faulted;
-    signalEvent(EvseEvent::PermanentFault);
+    signalEvent(types::evse_manager::SessionEventEnum::PermanentFault);
 }
 
 bool Charger::restart() {
@@ -1015,96 +1058,15 @@ std::string Charger::evseStateToString(EvseState s) {
     case EvseState::Replug:
         return ("Replug");
         break;
-    }
-    return "Invalid";
-}
-
-std::string Charger::evseEventToString(EvseEvent e) {
-    switch (e) {
-    case EvseEvent::Enabled:
-        return ("Enabled");
+    case EvseState::PrepareCharging:
+        return ("PrepareCharging");
         break;
-    case EvseEvent::Disabled:
-        return ("Disabled");
-        break;
-    case EvseEvent::SessionStarted:
-        return ("SessionStarted");
-        break;
-    case EvseEvent::TransactionStarted:
-        return ("TransactionStarted");
-        break;
-    case EvseEvent::AuthRequired:
-        return ("AuthRequired");
-        break;
-    case EvseEvent::ChargingPausedEV:
-        return ("ChargingPausedEV");
-        break;
-    case EvseEvent::ChargingPausedEVSE:
-        return ("ChargingPausedEVSE");
-        break;
-    case EvseEvent::ChargingResumed:
-        return ("ChargingResumed");
-        break;
-    case EvseEvent::SessionFinished:
-        return ("SessionFinished");
-        break;
-    case EvseEvent::TransactionFinished:
-        return ("TransactionFinished");
-        break;
-    case EvseEvent::Error:
-        return ("Error");
-        break;
-    case EvseEvent::PermanentFault:
-        return ("PermanentFault");
-        break;
-    case EvseEvent::ReplugStarted:
-        return ("ReplugStarted");
-        break;
-    case EvseEvent::ReplugFinished:
-        return ("ReplugFinished");
+    case EvseState::StoppingCharging:
+        return ("StoppingCharging");
         break;
     }
     return "Invalid";
 }
-
-std::string Charger::errorStateToString(ErrorState s) {
-    switch (s) {
-    case ErrorState::Error_E:
-        return ("Car");
-        break;
-    case ErrorState::Error_OverCurrent:
-        return ("OverCurrent");
-        break;
-    case ErrorState::Error_DF:
-        return ("CarDiodeFault");
-        break;
-    case ErrorState::Error_Relais:
-        return ("Relais");
-        break;
-    case ErrorState::Error_VentilationNotAvailable:
-        return ("VentilationNotAvailable");
-        break;
-    case ErrorState::Error_RCD:
-        return ("RCD");
-        break;
-    case ErrorState::Error_Internal:
-        return ("Internal");
-        break;
-    case ErrorState::Error_SLAC:
-        return ("SLAC");
-        break;
-    case ErrorState::Error_HLC:
-        return ("HLC");
-        break;
-    }
-    return "Invalid";
-}
-
-/*
-FIXME
-float Charger::getResidualCurrent() {
-    return control_pilot.getResidualCurrent();
-}*/
 
 float Charger::getMaxCurrent() {
     std::lock_guard<std::recursive_mutex> lock(configMutex);
@@ -1140,7 +1102,7 @@ void Charger::checkSoftOverCurrent() {
         std::chrono::duration_cast<std::chrono::milliseconds>(now - lastOverCurrentEvent).count();
     if (overCurrent && timeSinceOverCurrentStarted >= softOverCurrentTimeout) {
         currentState = EvseState::Error;
-        errorState = ErrorState::Error_OverCurrent;
+        errorState = types::evse_manager::Error::OverCurrent;
     }
 }
 
@@ -1175,6 +1137,12 @@ void Charger::setMatchingStarted(bool m) {
 bool Charger::getMatchingStarted() {
     std::lock_guard<std::recursive_mutex> lock(configMutex);
     return matching_started;
+}
+
+void Charger::notifyCurrentDemandStarted() {
+    std::lock_guard<std::recursive_mutex> lock(stateMutex);
+    if (currentState == EvseState::PrepareCharging)
+        currentState = EvseState::Charging;
 }
 
 } // namespace module

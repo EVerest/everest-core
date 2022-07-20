@@ -1,0 +1,359 @@
+{
+    "description": "ISO15118 charger types",
+    "types": {
+        "PaymentOption": {
+            "description": "Payment options for the SECC and EVCC",
+            "type": "string",
+            "enum": [
+                "Contract",
+                "ExternalPayment"
+            ]
+        },
+        "EnergyTransferMode": {
+            "description": "Possible energy transfer modes",
+            "type": "string",
+            "enum": [
+                "AC_single_phase_core",
+                "AC_three_phase_core",
+                "DC_core",
+                "DC_extended",
+                "DC_combo_core",
+                "DC_unique"
+            ]
+        },
+        "DebugMode": {
+            "description": "The different debug modes",
+            "type": "string",
+            "enum": [
+                "None",
+                "Lite",
+                "Full"
+            ]
+        },
+        "IsolationStatus": {
+            "description": "The different charger isolation status",
+            "type": "string",
+            "enum": [
+                "Invalid",
+                "Valid",
+                "Warning",
+                "Fault",
+                "No_IMD"
+            ]
+        },
+        "DC_EVErrorCode": {
+            "description": "Indicates the DC EV internal status",
+            "type": "string",
+            "enum": [
+                "NO_ERROR",
+                "FAILED_RESSTemperatureInhibit",
+                "FAILED_EVShiftPosition",
+                "FAILED_ChargerConnectorLockFault",
+                "FAILED_EVRESSMalfunction",
+                "FAILED_ChargingCurrentdifferentia",
+                "FAILED_ChargingVoltageOutOfRange",
+                "Reserved_A",
+                "Reserved_B",
+                "Reserved_C",
+                "FAILED_ChargingSystemIncompatibility",
+                "NoData"
+            ]
+        },
+        "ChargingSession": {
+            "description": "ChargingSession indicates the intention of the EVCC to either pause or terminate a V2G Communication Session",
+            "type": "string",
+            "enum": [
+                "Terminate",
+                "Pause"
+            ]
+        },
+        "V2G_Message_ID": {
+            "description": "This element contains the id of the v2g message body",
+            "type": "string",
+            "enum": [
+                "SupportedAppProtocolReq",
+                "SupportedAppProtocolRes",
+                "SessionSetupReq",
+                "SessionSetupRes",
+                "ServiceDiscoveryReq",
+                "ServiceDiscoveryRes",
+                "ServiceDetailReq",
+                "ServiceDetailRes",
+                "PaymentServiceSelectionReq",
+                "PaymentServiceSelectionRes",
+                "ServicePaymentSelectionReq",
+                "ServicePaymentSelectionRes",
+                "AuthorizationReq",
+                "AuthorizationRes",
+                "ContractAuthenticationReq",
+                "ContractAuthenticationRes",
+                "ChargeParameterDiscoveryReq",
+                "ChargeParameterDiscoveryRes",
+                "ChargingStatusReq",
+                "ChargingStatusRes",
+                "PowerDeliveryReq",
+                "PowerDeliveryRes",
+                "CableCheckReq",
+                "CableCheckRes",
+                "PreChargeReq",
+                "PreChargeRes",
+                "CurrentDemandReq",
+                "CurrentDemandRes",
+                "WeldingDetectionReq",
+                "WeldingDetectionRes",
+                "SessionStopReq",
+                "SessionStopRes"
+            ]
+        },
+        "DC_EVSEMaximumLimits": {
+            "description": "Maximum Values (current, power and voltage) the EVSE can deliver",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "EVSEMaximumCurrentLimit",
+                "EVSEMaximumPowerLimit",
+                "EVSEMaximumVoltageLimit"
+            ],
+            "properties": {
+                "EVSEMaximumCurrentLimit": {
+                    "description": "[A] Maximum current the EVSE can deliver",
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 400
+                },
+                "EVSEMaximumPowerLimit": {
+                    "description": "[W] Maximum power the EVSE can deliver",
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 200000
+                },
+                "EVSEMaximumVoltageLimit": {
+                    "description": "[V] Maximum voltage the EVSE can deliver",
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1000
+                }
+            }
+        },
+        "DC_EVSEMinimumLimits": {
+            "description": "Minimum Values (current and voltage) the EVSE can deliver",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "EVSEMinimumCurrentLimit",
+                "EVSEMinimumVoltageLimit"
+            ],
+            "properties": {
+                "EVSEMinimumCurrentLimit": {
+                    "description": "[A] Minimum current the EVSE can deliver with the expected accuracy",
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 400
+                },
+                "EVSEMinimumVoltageLimit": {
+                    "description": "[V] Minimum voltage the EVSE can deliver with the expected accuracy",
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1000
+                }
+            }
+        },
+        "DC_EVStatusType": {
+            "description": "Current status of the EV",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "DC_EVReady",
+                "DC_EVErrorCode",
+                "DC_EVRESSSOC"
+            ],
+            "properties": {
+                "DC_EVReady": {
+                    "description": "If set to TRUE, the EV is ready to charge",
+                    "type": "boolean"
+                },
+                "DC_EVErrorCode": {
+                    "description": "Indicates the EV internal status",
+                    "type": "string",
+                    "$ref": "/iso15118_charger#/DC_EVErrorCode"
+                },
+                "DC_EVRESSSOC": {
+                    "description": "State of charge of the EVs battery (RESS)",
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                },
+                "DC_EVCabinConditioning": {
+                    "description": "DIN70121 only: The EV is using energy from the DC supply toheat or cool the passenger compartment.",
+                    "type":"boolean"
+                },
+                "DC_EVRESSConiditioning": {
+                    "description": "DIN70121 only: The vehicle is using energy from the DC charger to condition the RESS to a target temperature.",
+                    "type":"boolean"
+                }
+            }
+        },
+        "DC_EVTargetValues": {
+            "description": "Target voltage and current requested by the EV",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "DC_EVTargetVoltage",
+                "DC_EVTargetCurrent"
+            ],
+            "properties": {
+                "DC_EVTargetVoltage": {
+                    "description": "[V] Target Voltage requested by EV",
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1000
+                },
+                "DC_EVTargetCurrent": {
+                    "description": "[A] Current demanded by EV",
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 400
+                }
+            }
+        },
+        "DC_EVMaximumLimits": {
+            "description": "Maximum Values (current, power and voltage) supported and allowed by the EV",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "DC_EVMaximumCurrentLimit": {
+                    "description": "[A] Maximum current supported and allowed by the EV",
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 400
+                },
+                "DC_EVMaximumPowerLimit": {
+                    "description": "Optional: [W] Maximum power supported and allowed by the EV",
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 200000
+                },
+                "DC_EVMaximumVoltageLimit": {
+                    "description": "[V] Maximum voltage supported and allowed by the EV",
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1000
+                }
+            }
+        },
+        "DC_EVRemainingTime": {
+            "description": "Estimated or calculated time until bulk and full charge is complete",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "EV_RemainingTimeToFullSoC": {
+                    "description": "[RFC3339 UTC] Estimated or calculated time until full charge (100% SOC) is complete",
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "EV_RemainingTimeToBulkSoC": {
+                    "description": "[RFC3339 UTC] Estimated or calculated time until bulk charge (approx. 80% SOC) is complete",
+                    "type": "string",
+                    "format": "date-time"
+                }
+            }
+        },
+        "AppProtocol": {
+            "description": "This message element is used by the EVCC for transmitting the list of supported protocols",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "ProtocolNamespace",
+                "VersionNumberMajor",
+                "VersionNumberMinor",
+                "SchemaID",
+                "Priority"
+            ],
+            "properties": {
+                "ProtocolNamespace": {
+                    "description": "This message element is used by the EVCC to uniquely identify the Namespace URI of a specific protocol supported by the EVCC",
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                },
+                "VersionNumberMajor": {
+                    "description": "This message element is used by the EVCC to indicate the major version number of the protocol",
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "VersionNumberMinor": {
+                    "description": "This message element is used by the EVCC to indicate the minor version number of the protocol",
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "SchemaID": {
+                    "description": "This message element is used by the EVCC to indicate the SchemaID assigned by the EVCC to the protocol",
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 255
+                },
+                "Priority": {
+                    "description": "This message element is used by the EVCC for indicating the protocol priority of a specific protocol allowing the SECC to select a protocol based on priorities",
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 20
+                }
+            } 
+        },
+        "AppProtocols": {
+            "description": "This message element is used by the EVCC for transmitting the list of supported protocols",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "Protocols"
+            ],
+            "properties": {
+                "Protocols": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "$ref": "/iso15118_charger#/AppProtocol",
+                        "additionalProperties": false
+                    },
+                    "minItems": 1,
+                    "maxItems": 20
+                }
+            }
+        },
+        "V2G_Messages": {
+            "description": "This element contains all V2G elements",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "V2G_Message_ID"
+            ],
+            "properties": {
+                "V2G_Message_ID": {
+                    "description": "This element contains the id of the v2g message body",
+                    "type": "string",
+                    "$ref": "/iso15118_charger#/V2G_Message_ID"
+                },
+                "V2G_Message_XML": {
+                    "description": "Contains the decoded EXI stream as V2G message XML file",
+                    "type": "string",
+                    "minLength": 0
+                },
+                "V2G_Message_JSON": {
+                    "description": "Contains the decoded EXI stream as V2G message JSON file",
+                    "type": "string",
+                    "minLength": 0
+                },
+                "V2G_Message_EXI_Hex": {
+                    "description": "Contains the EXI stream as hex string",
+                    "type": "string",
+                    "minLength": 0
+                },
+                "V2G_Message_EXI_Base64": {
+                    "description": "Contains the EXI stream as base64 string",
+                    "type": "string",
+                    "minLength": 0
+                }
+            }
+        }
+    }
+}

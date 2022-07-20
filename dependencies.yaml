@@ -1,7 +1,7 @@
 ---
 everest-framework:
   git: https://github.com/EVerest/everest-framework.git
-  git_tag: main
+  git_tag: kh-add-python-interface
 sigslot:
   git: https://github.com/palacaze/sigslot
   git_tag: v1.2.0
@@ -33,3 +33,8 @@ RISE-V2G:
 libocpp:
   git: https://github.com/EVerest/libocpp.git
   git_tag: main
+
+# Josev
+Josev:
+  git: git@github.com:EVerest/ext-switchev-iso15118.git
+  git_tag: sl-integrate-to-everest

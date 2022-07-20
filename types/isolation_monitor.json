@@ -1,0 +1,28 @@
+{
+    "description": "Isolation monitor types",
+    "types": {
+        "IsolationMeasurement": {
+            "description": "Results of an isolation measurement",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "resistance_P_Ohm",
+                "resistance_N_Ohm"
+            ],
+            "properties": {
+                "resistance_P_Ohm": {
+                    "description": "Isolation resistance of positive terminal to PE in Ohm",
+                    "type": "number"
+                },
+                "resistance_N_Ohm": {
+                    "description": "Isolation resistance of negative terminal to PE in Ohm",
+                    "type": "number"
+                },
+                "voltage_V": {
+                    "description": "DC voltage between positive and negative terminal in Volt",
+                    "type": "number"
+                }
+            }
+        }
+    }
+}

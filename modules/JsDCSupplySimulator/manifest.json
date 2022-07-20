@@ -1,0 +1,48 @@
+{
+	"description": "SIL Implementation of a programmable power supply for DC charging",
+	"provides": {
+		"main": {
+			"interface": "power_supply_DC",
+			"description": "Main interface for the power supply",
+			"config": {
+				"bidirectional": {
+					"description": "Set to true to for bidirectional supply",
+					"type": "boolean",
+					"default": true
+				},
+				"max_power": {
+					"description": "Max supported power in watt",
+					"type": "number",
+					"default": 150000
+				},
+				"min_voltage": {
+					"description": "Min supported voltage",
+					"type": "number",
+					"default": 200.0
+				},
+				"max_voltage": {
+					"description": "Max supported voltage",
+					"type": "number",
+					"default": 900.0
+				},
+				"min_current": {
+					"description": "Min supported current",
+					"type": "number",
+					"default": 1.0
+				},
+				"max_current": {
+					"description": "Max supported current",
+					"type": "number",
+					"default": 200.0
+				}
+			}
+		}
+	},
+	"enable_external_mqtt": true,
+	"metadata": {
+		"license": "https://opensource.org/licenses/Apache-2.0",
+		"authors": [
+			"Cornelius Claussen (Pionix GmbH)"
+		]
+	}
+}

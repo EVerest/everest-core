@@ -545,8 +545,9 @@ function stateToString(state) {
   }
 } */
 function power_meter_external(p) {
+  const date = new Date();
   return ({
-    timestamp: p.time_stamp,
+    timestamp: date.toISOString(),
     meter_id: 'YETI_POWERMETER',
     phase_seq_error: false,
     energy_Wh_import: {
@@ -671,9 +672,9 @@ function simulate_powermeter(mod) {
 
   const wattL1 = mod.simulation_data.voltages.L1 * mod.simulation_data.currents.L1 * (mod.relais_on ? 1 : 0);
   const wattL2 = mod.simulation_data.voltages.L2 * mod.simulation_data.currents.L2
-  * (mod.relais_on && mod.use_three_phases_confirmed ? 1 : 0);
+    * (mod.relais_on && mod.use_three_phases_confirmed ? 1 : 0);
   const wattL3 = mod.simulation_data.voltages.L3 * mod.simulation_data.currents.L3
-  * (mod.relais_on && mod.use_three_phases_confirmed ? 1 : 0);
+    * (mod.relais_on && mod.use_three_phases_confirmed ? 1 : 0);
 
   mod.wattHr.L1 += wattL1 * deltat / 1000.0 / 3600.0;
   mod.wattHr.L2 += wattL2 * deltat / 1000.0 / 3600.0;
