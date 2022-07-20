@@ -61,12 +61,12 @@ function JavaStartedDeferred(mqtt_base_path, module_name) {
   });
 }
 
-function check_network_interface(network_interface) {
-  var networkfound = false;
-  var net_init = os.networkInterfaces();
+function check_network_interface(network_iface) {
+  let networkfound = false;
+  let net_init = os.networkInterfaces();
 
-  for (var key in net_init) {
-    if (key === network_interface) {
+  for (let key of Object.keys(net_init)) {
+    if (key === network_iface) {
       networkfound = true;
     }
   }
@@ -84,7 +84,6 @@ const mqtt_paths = {
 boot_module(async ({
   setup, info, config, mqtt,
 }) => {
-  
   network_interface = config.impl.main.device;
   if (check_network_interface(network_interface) === false) {
     evlog.warning(`The network interface ${network_interface} was not found!`);
