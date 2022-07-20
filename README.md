@@ -81,6 +81,13 @@ cd ~/checkout/everest-workspace/everest-utils/ev-dev-tools
 python3 -m pip install .
 ```
 
+Change the directory and install the required packages for ISO15118 communication:
+
+```bash
+cd ~/checkout/everest-workspace/Josev
+python3 -m pip install -r requirements.txt
+```
+
 Now we can build EVerest!
 
 ```bash

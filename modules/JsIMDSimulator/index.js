@@ -2,25 +2,40 @@
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 const { evlog, boot_module } = require('everestjs');
 const { setInterval } = require('timers');
-const { inherits } = require('util');
 
-let config_status;
-let config_duration;
+let config_resistance_N_Ohm;
+let config_resistance_P_Ohm;
+let config_interval;
+let intervalID;
+let interval_running;
 
 boot_module(async ({
-  setup, info, config, mqtt,
+  setup, config,
 }) => {
-  config_status = config.impl.main.status;
-  config_duration = config.impl.main.duration;
+  config_resistance_N_Ohm = config.impl.main.resistance_N_Ohm;
+  config_resistance_P_Ohm = config.impl.main.resistance_P_Ohm;
+  config_interval = config.impl.main.interval;
 
   // register commands
-  setup.provides.main.register.startIsolationTest((mod, args) => {
-    evlog.debug(`Start simulated isolation test with ${config_duration}s delay`);
-    setTimeout((mod) => {
-      evlog.debug('Simulated isolation test finished');
-      mod.provides.main.publish.IsolationStatus(config_status);
-    }, config_duration * 1000, mod);
-  });
-}).then((mod) => {
+  setup.provides.main.register.start((mod) => {
+    evlog.debug(`Started simulated isolation monitoring with ${config_interval}ms interval`);
 
-});
+    intervalID = setInterval(() => {
+      evlog.debug('Simulated isolation test finished');
+      mod.provides.main.publish.IsolationMeasurement({
+        resistance_P_Ohm: config_resistance_P_Ohm,
+        resistance_N_Ohm: config_resistance_N_Ohm,
+      });
+    }, config_interval, mod);
+    interval_running = true;
+  });
+
+  // register commands
+  setup.provides.main.register.stop(() => {
+    if (interval_running) {
+      evlog.debug('Stopped simulated isolation monitoring.');
+      clearInterval(intervalID);
+      interval_running = false;
+    }
+  });
+}).then(() => {});

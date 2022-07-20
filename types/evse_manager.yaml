@@ -81,13 +81,19 @@ types:
         Enabled: Signaled when the EVSE is enabled (e.g. after an enable command)
         Disabled: Signaled when the EVSE is disabled (e.g. after a disable command)
         SessionStarted: Signaled when a session has been started. A session has been started either when an EV is plugged in or the user has been authorized to start a transaction (e.g. after an authorize command)
-        TransactionStarted: Signaled when a transaction has been started. Transaction starts at the point that all conditions for charging are met: EV is connected and user has been authorized.
         AuthRequired: Signaled when an EVSE needs authorization to start a transaction
+        TransactionStarted: Signaled when a transaction has been started. Transaction starts at the point that all conditions for charging are met: EV is connected and user has been authorized
+        PrepareCharging: EVSE started to prepare for charging. DC: CableCheck, PreCharge, PowerDelivery. AC: wait for the car to proceed to state C/D
+        ChargingStarted: DC: CurrentDemand has started. AC: Auth is ok and car requested power (state C/D)
         ChargingPausedEV: Signaled when charging is paused by the EV
         ChargingPausedEVSE: Signaled when charging is paused by the EVSE
+        ChargingResumed: Charging has resumed from a pause
+        StoppingCharging: EVSE has started to stop the charging process. DC: CurrentDemand has finished, now doing WeldingCheck etc, AC: Wait for car to return to state B or A
+        ChargingFinished: Charging is finished. Essentially the same as TransactionFinished, but emitted for clarity
         TransactionFinished: Signaled when the transaction finished. Transaction finishes at the point where one of the preconditions for charging irrevocably becomes false: When a user swipes to stop the transaction and the stop is authorized.
-        SessionFinished: Signaled when the transaction finished. Session finishes at the point that the EVSE is available again (no cable plugged)
+        SessionFinished: Session finishes at the point that the EVSE is available again (no cable plugged)
         Error: Signaled when an error occured
+        AllErrorsCleared: Signalled when all errors are cleared
         PermanentFault: Signaled when there is a permanent fault at the EVSE
         ReservationStart: Signaled when a reservation starts
         ReservationEnd: Signaled when a reservation ends
@@ -98,14 +104,19 @@ types:
       - Enabled
       - Disabled
       - SessionStarted
-      - TransactionStarted
       - AuthRequired
+      - TransactionStarted
+      - PrepareCharging
+      - ChargingStarted
       - ChargingPausedEV
       - ChargingPausedEVSE
       - ChargingResumed
+      - StoppingCharging
+      - ChargingFinished
       - TransactionFinished
       - SessionFinished
       - Error
+      - AllErrorsCleared
       - PermanentFault
       - ReservationStart
       - ReservationEnd
@@ -262,3 +273,69 @@ types:
         type: integer
         minimum: 1
         maximum: 3
+  EVInfo:
+    description: Information about the connected EV if available
+    type: object
+    additionalProperties: false
+    properties:
+      soc:
+        description: State of charge of the vehicle's battery in percent
+        type: number
+        minimum: 0
+        maximum: 100
+      present_voltage:
+        description: Current voltage of the vehicles battery [V]
+        type: number
+      present_current:
+        description: Current current of the vehicles battery [A]
+        type: number
+      target_voltage:
+        description: Target voltage that the vehicle requested [V]
+        type: number
+      target_current:
+        description: Target current that the vehicle requested [A]
+        type: number
+      maximum_current_limit:
+        description: Maximum current that the vehicle supports [A]
+        type: number
+      minimum_current_limit:
+        description: Charging below this limit is not energy efficient [A]
+        type: number
+      maximum_voltage_limit:
+        description: Maximum voltage that the vehicle supports [V]
+        type: number
+      maximum_power_limit:
+        description: Maximum power that the vehicle supports [W]
+        type: number
+      estimated_time_full:
+        description: Estimated time when the vehicle is fully charged
+        type: string
+        format: date-time
+      departure_time:
+        description: Time when the vehicle intends to depart (If set by the user)
+        type: string
+        format: date-time
+      estimated_time_bulk:
+        description: Estimated time when the vehicle finished bulk charging (e.g. 80%)
+        type: string
+        format: date-time
+      evcc_id:
+        description: EVCC ID (typically MAC address)
+        type: string
+        pattern: ^[A-Fa-f0-9]{2}(:[A-Fa-f0-9]{2}){5}$
+      remaining_energy_needed:
+        description: Remaining energy needed to fulfill charging goal [Wh]
+        type: number
+      battery_capacity:
+        description: Vehicle's battery capacity [Wh]
+        type: number
+      battery_full_soc:
+        description: SoC which the vehicle considers fully charged [%]
+        type: number
+        minimum: 0
+        maximum: 100
+      battery_bulk_soc:
+        description: SoC which the vehicle considers bulk charging reached [%]
+        type: number
+        minimum: 0
+        maximum: 100

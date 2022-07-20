@@ -33,7 +33,8 @@ void Auth::ready() {
         int32_t connector_id = evse_manager->call_get_id();
         this->auth_handler->init_connector(connector_id, evse_index);
         this->auth_handler->register_authorize_callback([this](const int32_t evse_index, const std::string& id_token) {
-            this->r_evse_manager.at(evse_index)->call_authorize(id_token);
+            this->r_evse_manager.at(evse_index)
+                ->call_authorize(id_token, false); // FIXME: this defaults to EIM, needs fixing for PnC support
         });
         this->auth_handler->register_withdraw_authorization_callback(
             [this](const int32_t evse_index) { this->r_evse_manager.at(evse_index)->call_withdraw_authorization(); });
@@ -51,13 +52,12 @@ void Auth::ready() {
         evse_manager->subscribe_session_event([this, connector_id](SessionEvent session_event) {
             this->auth_handler->handle_session_event(connector_id, session_event);
         });
-        this->auth_handler->register_reserved_callback(
-            [this](const int32_t evse_index, const int32_t& reservation_id) {
-                this->r_evse_manager.at(evse_index)->call_reserve(reservation_id);
-            });
+        this->auth_handler->register_reserved_callback([this](const int32_t evse_index, const int32_t& reservation_id) {
+            this->r_evse_manager.at(evse_index)->call_reserve(reservation_id);
+        });
         this->auth_handler->register_reservation_cancelled_callback(
             [this](const int32_t evse_index) { this->r_evse_manager.at(evse_index)->call_cancel_reservation(); });
-        
+
         evse_index++;
     }
 }

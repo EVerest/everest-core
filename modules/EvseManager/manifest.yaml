@@ -1,4 +1,7 @@
-description: EVSE Manager
+description: >-
+  EVSE Manager. Grid side power meter: Will be used for energy management.
+  Will also be used for billing if no car side power meter connected. Car side powermeter:
+  Will be used for billing if present.
 config:
   connector_id:
     description: Connector id of this evse manager
@@ -7,6 +10,10 @@ config:
     description: EVSE ID
     type: string
     default: DE*PNX*E1234567*1
+  evse_id_din:
+    description: EVSE ID DIN after DIN SPEC 91286
+    type: string
+    default: 49A80737A45678
   payment_enable_eim:
     description: Set to true to enable EIM (e.g. RFID card or mobile app) authorization
     type: boolean
@@ -19,16 +26,8 @@ config:
     description: Nominal AC voltage between phase and neutral in Volt
     type: number
     default: 230
-  dc_current_regulation_tolerance:
-    description: DC current regulation tolerance in Ampere
-    type: number
-    default: 5
-  dc_peak_current_ripple:
-    description: DC peal current ripple in Ampere
-    type: number
-    default: 5
   ev_receipt_required:
-    description: 'Unsupported: request receipt from EV with HLC'
+    description: "Unsupported: request receipt from EV with HLC"
     type: boolean
     default: false
   session_logging:
@@ -94,11 +93,38 @@ config:
       Special mode that switches between AC and DC charging to get SoC percentage with AC charging
     type: boolean
     default: false
+  dc_isolation_voltage:
+    description: DC voltage used to test isolation in CableCheck.
+      Set to 500V.
+    type: integer
+    default: 500
   dbg_hlc_auth_after_tstep:
     description: >-
       Special mode: send HLC auth ok only after t_step_XX is finished (true) or directly when available (false)
     type: boolean
     default: false
+  hack_sleep_in_cable_check:
+    description: "Hack: Sleep for n seconds at the end of cable check."
+    type: integer
+    default: 0
+  switch_to_minimum_voltage_after_cable_check:
+    description:
+      When cable check is completed, switch to minimal voltage of DC output.
+      Normally disabled.
+    type: boolean
+    default: false
+  hack_skoda_enyaq:
+    description:
+      Skoda Enyaq requests DC charging voltages below its battery level or even below 0 initially.
+      Set to true to enable dirty workaround.
+    type: boolean
+    default: false
+  hack_present_current_offset:
+    description:
+      Adds an offset [A] to the present current reported to the car on HLC.
+      Set to 0 unless you really know what you are doing.
+    type: integer
+    default: 0
 provides:
   evse:
     interface: evse_manager
@@ -112,7 +138,11 @@ provides:
 requires:
   bsp:
     interface: board_support_AC
-  powermeter:
+  powermeter_grid_side:
+    interface: powermeter
+    min_connections: 0
+    max_connections: 1
+  powermeter_car_side:
     interface: powermeter
     min_connections: 0
     max_connections: 1
@@ -128,9 +158,13 @@ requires:
     interface: isolation_monitor
     min_connections: 0
     max_connections: 1
+  powersupply_DC:
+    interface: power_supply_DC
+    min_connections: 0
+    max_connections: 1
 enable_external_mqtt: true
 metadata:
   license: https://spdx.org/licenses/Apache-2.0.html
   authors:
     - Cornelius Claussen
-    - Anton Wöllert
+    - Anton Woellert
