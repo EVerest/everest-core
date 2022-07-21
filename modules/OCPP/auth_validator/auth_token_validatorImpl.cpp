@@ -12,29 +12,29 @@ void auth_token_validatorImpl::init() {
 void auth_token_validatorImpl::ready() {
 }
 
-Object auth_token_validatorImpl::handle_validate_token(std::string& token) {
+types::auth_token_validator::Result auth_token_validatorImpl::handle_validate_token(std::string& token) {
     auto auth_status = mod->charge_point->authorize_id_tag(ocpp1_6::CiString20Type(token));
-    Object result;
+    types::auth_token_validator::Result result;
     switch (auth_status) {
     case ocpp1_6::AuthorizationStatus::Accepted:
-        result["result"] = "Accepted";
+        result.result = types::auth_token_validator::ValidationResult::Accepted;
         break;
     case ocpp1_6::AuthorizationStatus::Blocked:
-        result["result"] = "Blocked";
+        result.result = types::auth_token_validator::ValidationResult::Blocked;
         break;
     case ocpp1_6::AuthorizationStatus::Expired:
-        result["result"] = "Expired";
+        result.result = types::auth_token_validator::ValidationResult::Expired;
         break;
     case ocpp1_6::AuthorizationStatus::Invalid:
-        result["result"] = "Invalid";
+        result.result = types::auth_token_validator::ValidationResult::Invalid;
         break;
 
     default:
-        result["result"] = "Invalid";
+        result.result = types::auth_token_validator::ValidationResult::Invalid;
         break;
     }
 
-    result["reason"] = "Validation by OCPP 1.6 Central System";
+    result.reason = "Validation by OCPP 1.6 Central System";
     return result;
 };
 

@@ -1,0 +1,33 @@
+{
+    "description": "Auth token validator types",
+    "types": {
+        "ValidationResult": {
+            "description": "Validation result enum",
+            "type": "string",
+            "enum": [
+                "Accepted",
+                "Blocked",
+                "Expired",
+                "Invalid"
+            ]
+        },
+        "Result": {
+            "description": "Result object containing validation result enum value (key: result) and optional reason string (key: reason)",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "result"
+            ],
+            "properties": {
+                "result": {
+                    "type": "string",
+                    "$ref": "/auth_token_validator#/ValidationResult"
+                },
+                "reason": {
+                    "type": "string",
+                    "minLength": 5
+                }
+            }
+        }
+    }
+}
