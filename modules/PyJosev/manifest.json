@@ -6,7 +6,11 @@
         "main": {
             "description": "EVerest API",
             "interface": "empty"
-        }
+        },
+        "charger": {
+			"interface": "ISO15118_charger",
+			"description": "This module implements the ISO15118-2 implementation of an AC or DC charger"
+		}
     },
     "enable_external_mqtt": true,
     "metadata": {
