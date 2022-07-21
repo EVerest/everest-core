@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. ${1}
+. "${1}"
 
 mkdir /tmp/signature_validation
 sleep 2
