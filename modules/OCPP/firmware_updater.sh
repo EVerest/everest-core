@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. ${1}
+. "${1}"
 
 echo "$DOWNLOADING"
 curl --progress-bar --connect-timeout "$CONNECTION_TIMEOUT" "${2}" -o "${3}"

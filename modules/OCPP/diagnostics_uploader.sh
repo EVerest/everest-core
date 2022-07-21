@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. ${1}
+. "${1}"
 
 echo "$UPLOADING"
 sleep 2
