@@ -28,19 +28,19 @@
                     "type": "boolean"
                 },
                 "currents": {
-                    "description": "Currents in Ampere",
+                    "description": "Current in Ampere",
                     "type": "object",
-                    "$ref": "/units#/Currents"
+                    "$ref": "/units#/Current"
                 },
                 "voltages": {
-                    "description": "Voltages in Volt",
+                    "description": "Voltage in Volt",
                     "type": "object",
-                    "$ref": "/units#/Voltages"
+                    "$ref": "/units#/Voltage"
                 },
                 "frequencies": {
-                    "description": "Frequencies in Hertz",
+                    "description": "Frequency in Hertz",
                     "type": "object",
-                    "$ref": "/units#/Frequencies"
+                    "$ref": "/units#/Frequency"
                 }
             }
         }

@@ -1,56 +1,90 @@
 {
     "description": "Unit types",
     "types": {
-        "Currents": {
-            "description": "Currents in Ampere",
+        "Current": {
+            "description": "Current in Ampere",
             "type": "object",
             "additionalProperties": false,
-            "minProperties": 4,
+            "required": ["L1"],
             "properties": {
                 "L1": {
+                    "description": "L1 value only",
                     "type": "number"
                 },
                 "L2": {
+                    "description": "L2 value only",
                     "type": "number"
                 },
                 "L3": {
+                    "description": "L3 value only",
                     "type": "number"
                 },
                 "N": {
+                    "description": "Neutral value only",
                     "type": "number"
                 }
             }
         },
-        "Voltages": {
-            "description": "Voltages in Volt",
+        "Voltage": {
+            "description": "Voltage in Volt",
             "type": "object",
             "additionalProperties": false,
-            "minProperties": 3,
+            "required": ["L1"],
             "properties": {
                 "L1": {
+                    "description": "L1 value only",
                     "type": "number"
                 },
                 "L2": {
+                    "description": "L2 value only",
                     "type": "number"
                 },
                 "L3": {
+                    "description": "L3 value only",
                     "type": "number"
                 }
             }
         },
-        "Frequencies": {
-            "description": "Frequencies in Hertz",
+        "Frequency": {
+            "description": "Frequency in Hertz",
             "type": "object",
             "additionalProperties": false,
-            "minProperties": 3,
+            "required": ["L1"],
             "properties": {
                 "L1": {
+                    "description": "L1 value",
                     "type": "number"
                 },
                 "L2": {
+                    "description": "L2 value",
                     "type": "number"
                 },
                 "L3": {
+                    "description": "L3 value",
+                    "type": "number"
+                }
+            }
+        },
+        "Power": {
+            "description": "Instantaneous power in Watt. Negative values are exported, positive values imported Energy.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["total"],
+            "properties": {
+                "total": {
+                    "description": "Sum value",
+                    "type": "number"
+                },
+                "L1": {
+                    "description": "L1 value only",
+                    "type": "number"
+                },
+                "L2": {
+                    "description": "L2 value only",
+                    "type": "number"
+                },
+                "L3": {
+                    "description": "L3 value only",
                     "type": "number"
                 }
             }
