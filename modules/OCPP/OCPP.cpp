@@ -8,7 +8,7 @@
 
 namespace module {
 
-static ocpp1_6::ChargePointErrorCode get_ocpp_error_code(const Object& evse_error) {
+static ocpp1_6::ChargePointErrorCode get_ocpp_error_code(const std::string& evse_error) {
     if (evse_error == "Car") {
         return ocpp1_6::ChargePointErrorCode::OtherError;
     } else if (evse_error == "CarDiodeFault") {
@@ -343,8 +343,8 @@ void OCPP::init() {
             this->charge_point->receive_number_of_phases_available(connector, number_of_phases);
         });
 
-        evse->subscribe_session_events([this, connector](Object session_events) {
-            auto event = session_events["event"];
+        evse->subscribe_session_events([this, connector](types::evse_manager::SessionEvents session_events) {
+            auto event = types::evse_manager::session_event_to_string(session_events.event);
             if (event == "Enabled") {
                 // TODO(kai): decide if we need to inform libocpp about such an event
             } else if (event == "Disabled") {
@@ -359,14 +359,13 @@ void OCPP::init() {
                     this->p_auth_provider->publish_token(id_tag);
                 }
             } else if (event == "SessionStarted") {
-                auto session_started = session_events["session_started"];
+                auto session_started = session_events.session_started.value();
                 auto timestamp = ocpp1_6::DateTime(std::chrono::time_point<date::utc_clock>(
-                    std::chrono::seconds(session_started["timestamp"].get<int>())));
-                auto energy_Wh_import = session_started["energy_Wh_import"].get<double>();
+                    std::chrono::seconds(static_cast<int>(session_started.timestamp))));
+                auto energy_Wh_import = session_started.energy_Wh_import;
                 boost::optional<int32_t> reservation_id_opt = boost::none;
-                auto it = session_started.find("reservation_id");
-                if (it != session_started.end()) {
-                    reservation_id_opt.emplace(session_started["reservation_id"].get<int>());
+                if (session_started.reservation_id) {
+                    reservation_id_opt.emplace(session_started.reservation_id.value());
                 }
                 this->charge_point->start_session(connector, timestamp, energy_Wh_import, reservation_id_opt);
             } else if (event == "ChargingStarted") {
@@ -378,37 +377,37 @@ void OCPP::init() {
             } else if (event == "ChargingResumed") {
                 this->charge_point->resume_charging(connector);
             } else if (event == "SessionCancelled") {
-                auto session_cancelled = session_events["session_cancelled"];
+                auto session_cancelled = session_events.session_cancelled.value();
                 auto timestamp = std::chrono::time_point<date::utc_clock>(
-                    std::chrono::seconds(session_cancelled["timestamp"].get<int>()));
-                auto energy_Wh_import = session_cancelled["energy_Wh_import"].get<double>();
-                auto reason = session_cancelled["reason"].get<std::string>();
+                    std::chrono::seconds(static_cast<int>(session_cancelled.timestamp)));
+                auto energy_Wh_import = session_cancelled.energy_Wh_import;
+                auto reason = types::evse_manager::session_cancellation_reason_to_string(session_cancelled.reason.value());
                 // always triggered by libocpp
                 this->charge_point->cancel_session(connector, ocpp1_6::DateTime(timestamp), energy_Wh_import,
                                                    ocpp1_6::conversions::string_to_reason(reason));
             } else if (event == "SessionFinished") {
                 // ev side disconnect
-                auto session_finished = session_events["session_finished"];
+                auto session_finished = session_events.session_finished.value();
                 auto timestamp = std::chrono::time_point<date::utc_clock>(
-                    std::chrono::seconds(session_finished["timestamp"].get<int>()));
-                auto energy_Wh_import = session_finished["energy_Wh_import"].get<double>();
+                    std::chrono::seconds(static_cast<int>(session_finished.timestamp)));
+                auto energy_Wh_import = session_finished.energy_Wh_import;
                 this->charge_point->stop_session(connector, ocpp1_6::DateTime(timestamp), energy_Wh_import);
                 this->charge_point->plug_disconnected(connector);
             } else if (event == "Error") {
-                const auto evse_error = session_events["error"];
+                const auto evse_error = types::evse_manager::error_to_string(session_events.error.value());
                 ocpp1_6::ChargePointErrorCode ocpp_error_code = get_ocpp_error_code(evse_error);
                 this->charge_point->error(connector, ocpp_error_code);
             } else if (event == "PermanentFault") {
                 this->charge_point->permanent_fault(connector);
             } else if (event == "ReservationStart") {
-                auto reservation_start = session_events["reservation_start"];
-                auto reservation_id = reservation_start["reservation_id"].get<int>();
-                auto id_tag = reservation_start["id_tag"].get<std::string>();
+                auto reservation_start = session_events.reservation_start.value();
+                auto reservation_id = reservation_start.reservation_id;
+                auto id_tag = reservation_start.id_tag;
                 this->charge_point->reservation_start(connector, reservation_id, id_tag);
             } else if (event == "ReservationEnd") {
-                auto reservation_end = session_events["reservation_end"];
-                auto reservation_id = reservation_end["reservation_id"].get<int>();
-                auto reason = reservation_end["reason"].get<std::string>();
+                auto reservation_end = session_events.reservation_end.value();
+                auto reservation_id = reservation_end.reservation_id;
+                auto reason = types::evse_manager::reservation_end_reason_to_string(reservation_end.reason);
                 this->charge_point->reservation_end(connector, reservation_id, reason);
             } else if (event == "ReservationAuthtokenMismatch") {
             }

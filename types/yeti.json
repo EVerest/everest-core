@@ -35,36 +35,12 @@
                 "voltages": {
                     "description": "Voltages in Volt",
                     "type": "object",
-                    "additionalProperties": false,
-                    "minProperties": 3,
-                    "properties": {
-                        "L1": {
-                            "type": "number"
-                        },
-                        "L2": {
-                            "type": "number"
-                        },
-                        "L3": {
-                            "type": "number"
-                        }
-                    }
+                    "$ref": "/units#/Voltages"
                 },
                 "frequencies": {
                     "description": "Frequencies in Hertz",
                     "type": "object",
-                    "additionalProperties": false,
-                    "minProperties": 3,
-                    "properties": {
-                        "L1": {
-                            "type": "number"
-                        },
-                        "L2": {
-                            "type": "number"
-                        },
-                        "L3": {
-                            "type": "number"
-                        }
-                    }
+                    "$ref": "/units#/Frequencies"
                 }
             }
         }

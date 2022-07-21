@@ -46,8 +46,9 @@ protected:
                                                                       std::string& parent_id) override;
     virtual bool handle_cancel_reservation() override;
     virtual bool handle_force_unlock() override;
-    virtual std::string handle_set_local_max_current(double& max_current) override;
-    virtual std::string handle_switch_three_phases_while_charging(bool& three_phases) override;
+    virtual types::evse_manager::SetLocalMaxCurrentResult handle_set_local_max_current(double& max_current) override;
+    virtual types::evse_manager::SwitchThreePhasesWhileChargingResult
+    handle_switch_three_phases_while_charging(bool& three_phases) override;
     virtual std::string handle_get_signed_meter_value() override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
@@ -71,7 +72,7 @@ private:
     std::string session_uuid;
 
     std::mutex session_mutex;
-    std::string cancel_session_reason;
+    types::evse_manager::SessionCancellationReason cancel_session_reason;
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 
