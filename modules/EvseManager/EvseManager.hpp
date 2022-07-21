@@ -95,7 +95,7 @@ public:
     std::unique_ptr<Charger> charger;
     sigslot::signal<int> signalNrOfPhasesAvailable;
     json get_latest_powermeter_data();
-    json get_hw_capabilities();
+    types::board_support::HardwareCapabilities get_hw_capabilities();
     bool updateLocalMaxCurrentLimit(float max_current);
     float getLocalMaxCurrentLimit();
     types::evse_manager::ReservationResult reserve_now(const int _reservation_id, const std::string& token,
@@ -122,7 +122,7 @@ private:
     json latest_powermeter_data;
     bool authorization_available;
     Everest::Thread energyThreadHandle;
-    json hw_capabilities;
+    types::board_support::HardwareCapabilities hw_capabilities;
     bool local_three_phases;
     float local_max_current_limit;
     const float EVSE_ABSOLUTE_MAX_CURRENT = 80.0;

@@ -87,7 +87,7 @@ void evse_managerImpl::ready() {
         }
     });
 
-    mod->r_bsp->subscribe_telemetry([this](json telemetry) { publish_telemetry(telemetry); });
+    mod->r_bsp->subscribe_telemetry([this](types::board_support::Telemetry telemetry) { publish_telemetry(telemetry); });
 
     // The module code generates the reservation events and we merely publish them here
     mod->signalReservationEvent.connect([this](json j) {

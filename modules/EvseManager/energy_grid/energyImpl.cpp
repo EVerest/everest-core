@@ -77,7 +77,7 @@ void energyImpl::init() {
 }
 
 void energyImpl::ready() {
-    json hw_caps = mod->get_hw_capabilities();
+    types::board_support::HardwareCapabilities hw_caps = mod->get_hw_capabilities();
     json schedule_entry = json::object();
     schedule_entry["timestamp"] = to_rfc3339(date::utc_clock::now());
     schedule_entry["request_parameters"] = json::object();
@@ -104,7 +104,7 @@ void energyImpl::handle_enforce_limits(std::string& uuid, Object& limits_import,
 
         // set import limits
         // load HW/module config limit
-        float limit = mod->get_hw_capabilities()["max_current_A"];
+        float limit = mod->get_hw_capabilities().max_current_A;
 
         // apply local limit
         if (mod->getLocalMaxCurrentLimit() < limit) {
@@ -128,10 +128,10 @@ void energyImpl::handle_enforce_limits(std::string& uuid, Object& limits_import,
 
         // set phase count limits
         auto phase_count_limit = json::object();
-        phase_count_limit["max_phase_count"] = mod->get_hw_capabilities()["max_phase_count"];
-        phase_count_limit["min_phase_count"] = mod->get_hw_capabilities()["min_phase_count"];
+        phase_count_limit["max_phase_count"] = mod->get_hw_capabilities().max_phase_count;
+        phase_count_limit["min_phase_count"] = mod->get_hw_capabilities().min_phase_count;
         phase_count_limit["supports_changing_phases_during_charging"] =
-            mod->get_hw_capabilities()["supports_changing_phases_during_charging"];
+            mod->get_hw_capabilities().supports_changing_phases_during_charging;
 
         if (energy["energy_usage"]["power_W"]["total"] > 0) {
             if (phase_count_limit["supports_changing_phases_during_charging"] != true) {

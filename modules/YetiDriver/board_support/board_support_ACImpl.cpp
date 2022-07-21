@@ -49,11 +49,11 @@ void board_support_ACImpl::init() {
     {
         std::lock_guard<std::mutex> lock(capsMutex);
 
-        caps = {{"min_current_A", 6},
-                {"max_current_A", 6},
-                {"min_phase_count", 1},
-                {"max_phase_count", 3},
-                {"supports_changing_phases_during_charging", false}};
+        caps.min_current_A = 6;
+        caps.max_current_A = 6;
+        caps.min_phase_count = 1;
+        caps.max_phase_count = 3;
+        caps.supports_changing_phases_during_charging = false;
     }
 
     mod->serial.signalEvent.connect([this](Event e) { publish_event(event_to_string(e)); });
@@ -63,13 +63,13 @@ void board_support_ACImpl::init() {
     mod->serial.signalDebugUpdate.connect([this](DebugUpdate d) {
         publish_nr_of_phases_available((d.use_three_phases ? 3 : 1));
 
-        json telemetry;
-        telemetry["temperature"] = d.cpu_temperature;
-        telemetry["fan_rpm"] = 0.;
-        telemetry["supply_voltage_12V"] = d.supply_voltage_12V;
-        telemetry["supply_voltage_minus_12V"] = d.supply_voltage_N12V;
-        telemetry["rcd_current"] = d.rcd_current;
-        telemetry["relais_on"] = d.relais_on;
+        types::board_support::Telemetry telemetry;
+        telemetry.temperature = d.cpu_temperature;
+        telemetry.fan_rpm = 0.;
+        telemetry.supply_voltage_12V = d.supply_voltage_12V;
+        telemetry.supply_voltage_minus_12V = d.supply_voltage_N12V;
+        telemetry.rcd_current = d.rcd_current;
+        telemetry.relais_on = d.relais_on;
 
         publish_telemetry(telemetry);
     });
@@ -77,11 +77,11 @@ void board_support_ACImpl::init() {
     mod->serial.signalKeepAliveLo.connect([this](KeepAliveLo l) {
         std::lock_guard<std::mutex> lock(capsMutex);
 
-        caps = {{"min_current_A", l.hwcap_min_current},
-                {"max_current_A", l.hwcap_max_current},
-                {"min_phase_count", l.hwcap_min_phase_count},
-                {"max_phase_count", l.hwcap_max_phase_count},
-                {"supports_changing_phases_during_charging", l.supports_changing_phases_during_charging}};
+        caps.min_current_A = l.hwcap_min_current;
+        caps.max_current_A = l.hwcap_max_current;
+        caps.min_phase_count = l.hwcap_min_phase_count;
+        caps.max_phase_count = l.hwcap_max_phase_count;
+        caps.supports_changing_phases_during_charging = l.supports_changing_phases_during_charging;
     });
 } // namespace board_support
 
@@ -131,7 +131,7 @@ void board_support_ACImpl::handle_evse_replug(int& value) {
     mod->serial.replug(value);
 };
 
-Object board_support_ACImpl::handle_get_hw_capabilities() {
+types::board_support::HardwareCapabilities board_support_ACImpl::handle_get_hw_capabilities() {
     std::lock_guard<std::mutex> lock(capsMutex);
     return caps;
 };

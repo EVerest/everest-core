@@ -27,30 +27,7 @@
             "result": {
                 "description": "Hardware capability/limits",
                 "type": "object",
-                "max_current_A": {
-                    "description": "Maximum current (ampere) the hardware can handle",
-                    "type": "number"
-                },
-                "min_current_A": {
-                    "description": "Minimum current (ampere) the hardware can use to charge. Values below may be set but may result in pause instead.",
-                    "type": "number"
-                },
-                "max_phase_count": {
-                    "description": "Max nr of phases the hardware can use",
-                    "type": "integer",
-                    "minimum": 1,
-                    "maximum": 3
-                },
-                "min_phase_count": {
-                    "description": "Minimum nr of phases the hardware can use",
-                    "type": "integer",
-                    "minimum": 1,
-                    "maximum": 3
-                },
-                "supports_changing_phases_during_charging": {
-                    "description": "Indicates whether changing number of phases is supported during charging (true) or not (false)",
-                    "type": "boolean"
-                }
+                "$ref": "/board_support#/HardwareCapabilities"
             }
         },
         "enable": {
@@ -118,25 +95,7 @@
         "event": {
             "description": "Event from ControlPilot signal/Relais/RCD",
             "type": "string",
-            "enum": [
-                "CarPluggedIn",
-                "CarRequestedPower",
-                "PowerOn",
-                "PowerOff",
-                "CarRequestedStopPower",
-                "CarUnplugged",
-                "ErrorE",
-                "ErrorDF",
-                "ErrorRelais",
-                "ErrorRCD",
-                "ErrorVentilationNotAvailable",
-                "ErrorOverCurrent",
-                "EnterBCD",
-                "LeaveBCD",
-                "PermanentFault",
-                "EvseReplugStarted",
-                "EvseReplugFinished"
-            ]
+            "$ref": "/board_support#/Event"
         },
         "nr_of_phases_available": {
             "description": "Instantaneous phase count available to car",
@@ -147,33 +106,7 @@
         "telemetry": {
             "description": "Other telemetry",
             "type": "object",
-            "properties": {
-                "temperature": {
-                    "description": "Current temperature of the EVSE in degree celsius",
-                    "type": "number"
-                },
-                "fan_rpm": {
-                    "description": "RPM of the fan. 0 if off or no fan available.",
-                    "type": "number"
-                },
-                "supply_voltage_12V": {
-                    "description": "Internal 12V supply voltage",
-                    "type": "number"
-                },
-                "supply_voltage_minus_12V": {
-                    "description": "Internal -12V supply voltage",
-                    "type": "number"
-                },
-                "rcd_current": {
-                    "description": "Residual current in mA",
-                    "type": "number"
-                },
-                "relais_on": {
-                    "description": "true if power to the car is currently on, false if off",
-                    "type": "boolean"
-                }
-            },
-            "additionalProperties": false
+            "$ref": "/board_support#/Telemetry"
         }
     }
 }
