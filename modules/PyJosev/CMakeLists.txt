@@ -4,6 +4,6 @@ add_custom_target(${MODULE_NAME} ALL)
 set(EVEREST_MOD_DESTINATION "modules/${MODULE_NAME}")
 
 # install the whole python project
-install(FILES module.py manifest.json
+install(FILES module.py everest_iso15118.py manifest.json
     DESTINATION ${EVEREST_MOD_DESTINATION}
 )
