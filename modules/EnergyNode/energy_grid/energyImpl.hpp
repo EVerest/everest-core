@@ -34,8 +34,10 @@ public:
 
 protected:
     // command handler functions (virtual)
-    virtual void handle_enforce_limits(std::string& uuid, Object& limits_import, Object& limits_export,
-                                       Array& schedule_import, Array& schedule_export) override;
+    virtual void handle_enforce_limits(std::string& uuid, types::energy::Limits& limits_import,
+                                       types::energy::Limits& limits_export,
+                                       std::vector<types::energy::TimeSeriesEntry>& schedule_import,
+                                       std::vector<types::energy::TimeSeriesEntry>& schedule_export) override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
     // insert your protected definitions here
