@@ -19,7 +19,7 @@
 
 #include <utils/thread.hpp>
 
-#define MQTT_BUF_SIZE 150 * 1024
+#define MQTT_BUF_SIZE 500 * 1024
 
 namespace Everest {
 using json = nlohmann::json;
