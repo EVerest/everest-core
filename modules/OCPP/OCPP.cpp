@@ -64,8 +64,8 @@ void OCPP::init() {
             json_config.merge_patch(user_config);
         } catch (const json::parse_error& e) {
             // rewrite empty user config if it is not parsable
-            EVLOG_warning << "Could not parse user config file. Creating new user config file.";
-            create_empty_user_config(user_config_path);
+            EVLOG_error << "Error while parsing user config file.";
+            throw;
         }
     } else {
         EVLOG_debug << "No user-config provided. Creating user config file";
