@@ -119,6 +119,10 @@
 		"energy_grid": {
 			"description": "This is the tree leaf interface to build the energy supply tree",
 			"interface": "energy"
+		},
+		"token_provider": {
+			"description": "Provides authtokens for autocharge or plug and charge",
+			"interface": "auth_token_provider"
 		}
 	},
 	"requires": {
