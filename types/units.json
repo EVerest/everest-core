@@ -88,6 +88,30 @@
                     "type": "number"
                 }
             }
+        },
+        "Energy": {
+            "description": "Energy in Wh.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["total"],
+            "properties": {
+                "total": {
+                    "description": "Sum value (which is relevant for billing)",
+                    "type": "number"
+                },
+                "L1": {
+                    "description": "L1 value only",
+                    "type": "number"
+                },
+                "L2": {
+                    "description": "L2 value only",
+                    "type": "number"
+                },
+                "L3": {
+                    "description": "L3 value only",
+                    "type": "number"
+                }
+            }
         }
     }
 }
