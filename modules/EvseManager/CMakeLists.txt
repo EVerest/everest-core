@@ -36,6 +36,7 @@ target_sources(${MODULE_NAME}
         "${MODULE_LOADER_DIR}/ld-ev.cpp"
         "evse/evse_managerImpl.cpp"
         "energy_grid/energyImpl.cpp"
+        "token_provider/auth_token_providerImpl.cpp"
         ${ADDITIONAL_MODULE_SOURCES}
 )
 

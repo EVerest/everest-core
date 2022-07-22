@@ -19,6 +19,7 @@ void EvseManager::init() {
     authorization_available = false;
     // check if a slac module is connected to the optional requirement
     slac_enabled = !r_slac.empty();
+
     // if hlc is disabled in config, disable slac even if requirement is connected
     if (!(config.ac_hlc_enabled || config.ac_with_soc || config.charge_mode == "DC")) {
         slac_enabled = false;
@@ -131,6 +132,17 @@ void EvseManager::ready() {
                 (!config.dbg_hlc_auth_after_tstep && charger->Authorized_EIM())) {
                 r_hlc[0]->call_set_Auth_Okay_EIM(true);
             }
+        });
+
+        // implement Auth handlers
+        r_hlc[0]->subscribe_EVCCIDD([this](const std::string& token) {
+            json autocharge_token;
+
+            autocharge_token["token"] = "VID:" + token;
+            autocharge_token["type"] = "autocharge";
+            autocharge_token["timeout"] = 60;
+
+            p_token_provider->publish_token(autocharge_token);
         });
 
         r_hlc[0]->subscribe_Require_Auth_PnC([this]() {

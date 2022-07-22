@@ -11,6 +11,7 @@
 #include "ld-ev.hpp"
 
 // headers for provided interface implementations
+#include <generated/auth_token_provider/Implementation.hpp>
 #include <generated/energy/Implementation.hpp>
 #include <generated/evse_manager/Implementation.hpp>
 
@@ -63,6 +64,7 @@ public:
     EvseManager() = delete;
     EvseManager(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
                 std::unique_ptr<evse_managerImplBase> p_evse, std::unique_ptr<energyImplBase> p_energy_grid,
+                std::unique_ptr<auth_token_providerImplBase> p_token_provider,
                 std::unique_ptr<board_support_ACIntf> r_bsp, std::unique_ptr<powermeterIntf> r_powermeter,
                 std::unique_ptr<authIntf> r_auth, std::vector<std::unique_ptr<slacIntf>> r_slac,
                 std::vector<std::unique_ptr<ISO15118_chargerIntf>> r_hlc,
@@ -71,6 +73,7 @@ public:
         mqtt(mqtt_provider),
         p_evse(std::move(p_evse)),
         p_energy_grid(std::move(p_energy_grid)),
+        p_token_provider(std::move(p_token_provider)),
         r_bsp(std::move(r_bsp)),
         r_powermeter(std::move(r_powermeter)),
         r_auth(std::move(r_auth)),
@@ -83,6 +86,7 @@ public:
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<evse_managerImplBase> p_evse;
     const std::unique_ptr<energyImplBase> p_energy_grid;
+    const std::unique_ptr<auth_token_providerImplBase> p_token_provider;
     const std::unique_ptr<board_support_ACIntf> r_bsp;
     const std::unique_ptr<powermeterIntf> r_powermeter;
     const std::unique_ptr<authIntf> r_auth;
