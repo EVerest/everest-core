@@ -331,8 +331,9 @@ void OCPP::init() {
 
     int32_t connector = 1;
     for (auto& evse : this->r_evse_manager) {
-        evse->subscribe_powermeter([this, connector](Object powermeter) {
-            this->charge_point->receive_power_meter(connector, powermeter); //
+        evse->subscribe_powermeter([this, connector](types::powermeter::Powermeter powermeter) {
+            json powermeter_json = powermeter;
+            this->charge_point->receive_power_meter(connector, powermeter_json); //
         });
 
         evse->subscribe_limits([this, connector](Object limits) {

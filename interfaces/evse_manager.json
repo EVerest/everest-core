@@ -171,8 +171,9 @@
             "$ref": "/board_support#/Telemetry"
         },
         "powermeter": {
-            "description": "FIXME: use powermeter type here",
-            "type": "object"
+            "description": "Measured dataset",
+            "type": "object",
+            "$ref": "/powermeter#/Powermeter"
         },
         "evse_id": {
             "description": "EVSE ID including the connector number, e.g. DE*PNX*E123456*1",
