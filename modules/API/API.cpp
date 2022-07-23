@@ -130,7 +130,7 @@ void API::init() {
         std::string var_datetime = var_base + "datetime";
         std::string var_session_info = var_base + "session_info";
         this->datetime_thread = std::thread([this, var_datetime, var_session_info, &session_info]() {
-            auto next_tick = std::chrono::system_clock::now();
+            auto next_tick = std::chrono::steady_clock::now();
             while (this->running) {
                 std::string datetime_str = to_rfc3339(std::chrono::system_clock::now());
                 this->mqtt.publish(var_datetime, datetime_str);
