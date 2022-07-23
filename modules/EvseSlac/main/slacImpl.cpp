@@ -124,7 +124,7 @@ void slacImpl::run() {
                 publish_state("MATCHED");
                 break;
             case State::SignalError:
-                publish_request_error_routine();
+                publish_request_error_routine(boost::blank());
                 break;
             case State::Idle:
                 publish_state("UNMATCHED");

@@ -40,7 +40,7 @@ void energyImpl::init() {
         double new_price_limit = std::stod(sLim);
 
         EVLOG_debug << "price limit changed to: " << new_price_limit
-                     << " EUR / kWh"; // TODO(LAD): adapt to other currencies
+                    << " EUR / kWh"; // TODO(LAD): adapt to other currencies
 
         // update price limits
         if (new_price_limit > 0.0F) {
@@ -77,7 +77,7 @@ void energyImpl::init() {
 }
 
 void energyImpl::ready() {
-    json hw_caps = mod->get_hw_capabilities();
+    types::board_support::HardwareCapabilities hw_caps = mod->get_hw_capabilities();
     json schedule_entry = json::object();
     schedule_entry["timestamp"] = to_rfc3339(date::utc_clock::now());
     schedule_entry["request_parameters"] = json::object();
@@ -92,8 +92,10 @@ void energyImpl::ready() {
     }
 }
 
-void energyImpl::handle_enforce_limits(std::string& uuid, Object& limits_import, Object& limits_export,
-                                       Array& schedule_import, Array& schedule_export) {
+void energyImpl::handle_enforce_limits(std::string& uuid, types::energy::Limits& limits_import,
+                                       types::energy::Limits& limits_export,
+                                       std::vector<types::energy::TimeSeriesEntry>& schedule_import,
+                                       std::vector<types::energy::TimeSeriesEntry>& schedule_export) {
     // is it for me?
     if (uuid == energy["uuid"]) {
         // apply enforced limits
@@ -104,34 +106,36 @@ void energyImpl::handle_enforce_limits(std::string& uuid, Object& limits_import,
 
         // set import limits
         // load HW/module config limit
-        float limit = mod->get_hw_capabilities()["max_current_A"];
+        float limit = mod->get_hw_capabilities().max_current_A;
 
         // apply local limit
         if (mod->getLocalMaxCurrentLimit() < limit) {
             limit = mod->getLocalMaxCurrentLimit();
         }
 
+        json limits_import_json = limits_import;
+
         // apply enforced AC current limits
-        if (!limits_import["request_parameters"].is_null() &&
-            !limits_import["request_parameters"]["ac_current_A"].is_null() &&
-            !limits_import["request_parameters"]["ac_current_A"]["current_A"].is_null() &&
-            limits_import["request_parameters"]["ac_current_A"]["current_A"] < limit) {
-            limit = limits_import["request_parameters"]["ac_current_A"]["current_A"];
+        if (!limits_import_json["request_parameters"].is_null() &&
+            !limits_import_json["request_parameters"]["ac_current_A"].is_null() &&
+            !limits_import_json["request_parameters"]["ac_current_A"]["current_A"].is_null() &&
+            limits_import_json["request_parameters"]["ac_current_A"]["current_A"] < limit) {
+            limit = limits_import_json["request_parameters"]["ac_current_A"]["current_A"];
         }
 
         // update limit at the charger
-        if (!limits_import["valid_until"].is_null()) {
-            mod->charger->setMaxCurrent(limit, from_rfc3339(limits_import["valid_until"]));
+        if (!limits_import_json["valid_until"].is_null()) {
+            mod->charger->setMaxCurrent(limit, from_rfc3339(limits_import_json["valid_until"]));
             if (limit > 0)
                 mod->charger->resumeChargingPowerAvailable();
         }
 
         // set phase count limits
         auto phase_count_limit = json::object();
-        phase_count_limit["max_phase_count"] = mod->get_hw_capabilities()["max_phase_count"];
-        phase_count_limit["min_phase_count"] = mod->get_hw_capabilities()["min_phase_count"];
+        phase_count_limit["max_phase_count"] = mod->get_hw_capabilities().max_phase_count;
+        phase_count_limit["min_phase_count"] = mod->get_hw_capabilities().min_phase_count;
         phase_count_limit["supports_changing_phases_during_charging"] =
-            mod->get_hw_capabilities()["supports_changing_phases_during_charging"];
+            mod->get_hw_capabilities().supports_changing_phases_during_charging;
 
         if (energy["energy_usage"]["power_W"]["total"] > 0) {
             if (phase_count_limit["supports_changing_phases_during_charging"] != true) {

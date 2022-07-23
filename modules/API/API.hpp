@@ -11,10 +11,10 @@
 #include "ld-ev.hpp"
 
 // headers for provided interface implementations
-#include <generated/empty/Implementation.hpp>
+#include <generated/interfaces/empty/Implementation.hpp>
 
 // headers for required interface implementations
-#include <generated/evse_manager/Interface.hpp>
+#include <generated/interfaces/evse_manager/Interface.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here

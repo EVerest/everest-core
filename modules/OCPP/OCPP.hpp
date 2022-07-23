@@ -11,12 +11,12 @@
 #include "ld-ev.hpp"
 
 // headers for provided interface implementations
-#include <generated/auth_token_provider/Implementation.hpp>
-#include <generated/auth_token_validator/Implementation.hpp>
-#include <generated/ocpp_1_6_charge_point/Implementation.hpp>
+#include <generated/interfaces/auth_token_provider/Implementation.hpp>
+#include <generated/interfaces/auth_token_validator/Implementation.hpp>
+#include <generated/interfaces/ocpp_1_6_charge_point/Implementation.hpp>
 
 // headers for required interface implementations
-#include <generated/evse_manager/Interface.hpp>
+#include <generated/interfaces/evse_manager/Interface.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here

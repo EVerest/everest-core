@@ -5,10 +5,10 @@
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 1
+// template version 3
 //
 
-#include <generated/auth_token_validator/Implementation.hpp>
+#include <generated/interfaces/auth_token_validator/Implementation.hpp>
 
 #include "../OCPP.hpp"
 
@@ -33,7 +33,7 @@ public:
 
 protected:
     // command handler functions (virtual)
-    virtual Object handle_validate_token(std::string& token) override;
+    virtual types::auth_token_validator::Result handle_validate_token(std::string& token) override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
     // insert your protected definitions here

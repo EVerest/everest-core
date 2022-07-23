@@ -1,0 +1,234 @@
+{
+    "description": "Powermeter types",
+    "types": {
+        "Powermeter": {
+            "description": "Measured dataset",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "timestamp",
+                "energy_Wh_import"
+            ],
+            "properties": {
+                "timestamp": {
+                    "description": "Timestamp of measurement",
+                    "type": "number"
+                },
+                "meter_id": {
+                    "description": "A (user defined) meter if (e.g. id printed on the case)",
+                    "type": "string"
+                },
+                "phase_seq_error": {
+                    "description": "true for 3 phase rotation error (ccw)",
+                    "type": "boolean"
+                },
+                "energy_Wh_import": {
+                    "description": "Imported energy in Wh (from grid)",
+                    "type": "object",
+                    "$ref": "/units#/Energy"
+                },
+                "energy_Wh_export": {
+                    "description": "Exported energy in Wh (to grid)",
+                    "type": "object",
+                    "$ref": "/units#/Energy"
+                },
+                "power_W": {
+                    "description": "Instantaneous power in Watt. Negative values are exported, positive values imported Energy.",
+                    "type": "object",
+                    "$ref": "/units#/Power"
+                },
+                "voltage_V": {
+                    "description": "Voltage in Volts",
+                    "type": "object",
+                    "$ref": "/units#/Voltage"
+                },
+                "current_A": {
+                    "description": "Current in ampere",
+                    "type": "object",
+                    "$ref": "/units#/Current"
+                },
+                "frequency_Hz": {
+                    "description": "Grid frequency in Hertz",
+                    "type": "object",
+                    "$ref": "/units#/Frequency"
+                }
+            }
+        },
+        "SessionFinished": {
+            "description": "data for SessionFinished event that happens when car is plugged out",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "timestamp",
+                "energy_Wh_import"
+            ],
+            "properties": {
+                "timestamp": {
+                    "description": "Session end timestamp",
+                    "type": "number"
+                },
+                "energy_Wh_import": {
+                    "description": "Session end Wh",
+                    "type": "number"
+                },
+                "energy_Wh_export": {
+                    "description": "Session end Wh",
+                    "type": "number"
+                },
+                "signed_meter_value": {
+                    "description": "Signed meter value",
+                    "type": "string"
+                }
+            }
+        },
+        "SessionCancelled": {
+            "description": "data for SessionCancelled event that happens when e.g. user cancels charging before plug out. Note that SessionFinished will always be generated on plugout.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "timestamp",
+                "energy_Wh_import"
+            ],
+            "properties": {
+                "timestamp": {
+                    "description": "Session cancel timestamp",
+                    "type": "number"
+                },
+                "energy_Wh_import": {
+                    "description": "Session cancel Wh",
+                    "type": "number"
+                },
+                "energy_Wh_export": {
+                    "description": "Session cancel Wh",
+                    "type": "number"
+                },
+                "signed_meter_value": {
+                    "description": "Signed meter value",
+                    "type": "string"
+                },
+                "reason": {
+                    "description": "Reason for session cancellation",
+                    "type": "string",
+                    "$ref": "/evse_manager#/SessionCancellationReason"
+                }
+            }
+        },
+        "Error": {
+            "description": "Details on error type",
+            "type": "string",
+            "enum": [
+                "Car",
+                "CarDiodeFault",
+                "Relais",
+                "RCD",
+                "VentilationNotAvailable",
+                "OverCurrent",
+                "Internal",
+                "SLAC",
+                "HLC"
+            ]
+        },
+        "ReservationStart": {
+            "description": "Details on Reservation Start",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "reservation_id",
+                "id_tag"
+            ],
+            "properties": {
+                "reservation_id": {
+                    "description": "reservation_id",
+                    "type": "integer"
+                },
+                "id_tag": {
+                    "description": "id tag of the reservation",
+                    "type": "string"
+                },
+                "parent_id": {
+                    "description": "parent_id",
+                    "type": "string"
+                }
+            }
+        },
+        "ReservationEndReason": {
+            "description": "Reason why reservation ends",
+            "type": "string",
+            "enum": [
+                "Expired",
+                "Cancelled",
+                "UsedToStartCharging"
+            ]
+        },
+        "ReservationEnd": {
+            "description": "Details on Reservation End",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "reason",
+                "reservation_id"
+            ],
+            "properties": {
+                "reason": {
+                    "description": "Reason why reservation ends",
+                    "type": "string",
+                    "$ref": "/evse_manager#/ReservationEndReason"
+                },
+                "reservation_id": {
+                    "description": "reservation_id",
+                    "type": "integer"
+                }
+            }
+        },
+        "SessionEvents": {
+            "description": "Emits all events related to sessions",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "uuid",
+                "event"
+            ],
+            "properties": {
+                "uuid": {
+                    "description": "An EVSE generated UUID for this session, can be used e.g. for database storage.",
+                    "type": "string"
+                },
+                "event": {
+                    "description": "Event enum. For some events an additional object is set, see below.",
+                    "type": "string",
+                    "$ref": "/evse_manager#/SessionEvent"
+                },
+                "session_started": {
+                    "description": "data for SessionStarted event",
+                    "type": "object",
+                    "$ref": "/evse_manager#/SessionStarted"
+                },
+                "session_finished": {
+                    "description": "data for SessionFinished event that happens when car is plugged out",
+                    "type": "object",
+                    "$ref": "/evse_manager#/SessionFinished"
+                },
+                "session_cancelled": {
+                    "description": "data for SessionCancelled event that happens when e.g. user cancels charging before plug out. Note that SessionFinished will always be generated on plugout.",
+                    "type": "object",
+                    "$ref": "/evse_manager#/SessionCancelled"
+                },
+                "error": {
+                    "description": "Details on error type",
+                    "type": "string",
+                    "$ref": "/evse_manager#/Error"
+                },
+                "reservation_start": {
+                    "description": "Details on Reservation Start",
+                    "type": "object",
+                    "$ref": "/evse_manager#/ReservationStart"
+                },
+                "reservation_end": {
+                    "description": "Details on Reservation End",
+                    "type": "object",
+                    "$ref": "/evse_manager#/ReservationEnd"
+                }
+            }
+        }
+    }
+}

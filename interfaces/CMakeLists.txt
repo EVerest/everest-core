@@ -16,7 +16,7 @@ add_custom_command(
     COMMENT
         "Generating/updating interface files ..."
     COMMAND
-        ${EV_CLI} interface generate-headers --framework-dir ${everest-framework_SOURCE_DIR} --output-dir ${GENERATED_HEADER_DIR}/generated
+        ${EV_CLI} interface generate-headers --framework-dir ${everest-framework_SOURCE_DIR} --output-dir ${GENERATED_OUTPUT_DIR}/interfaces
     COMMAND
         ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/.interfaces_generated
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}

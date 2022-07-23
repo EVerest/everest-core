@@ -5,10 +5,10 @@
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 1
+// template version 3
 //
 
-#include <generated/board_support_AC/Implementation.hpp>
+#include <generated/interfaces/board_support_AC/Implementation.hpp>
 
 #include "../YetiDriver.hpp"
 
@@ -35,7 +35,7 @@ protected:
     // command handler functions (virtual)
     virtual void handle_setup(bool& three_phases, bool& has_ventilation, std::string& country_code,
                               bool& rcd_enabled) override;
-    virtual Object handle_get_hw_capabilities() override;
+    virtual types::board_support::HardwareCapabilities handle_get_hw_capabilities() override;
     virtual void handle_enable(bool& value) override;
     virtual void handle_pwm_on(double& value) override;
     virtual void handle_pwm_off() override;
@@ -58,7 +58,7 @@ private:
 
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
     // insert your private definitions here
-    json caps;
+    types::board_support::HardwareCapabilities caps;
     std::mutex capsMutex;
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };

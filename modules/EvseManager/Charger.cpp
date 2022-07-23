@@ -444,47 +444,47 @@ void Charger::runStateMachine() {
     }
 }
 
-ControlPilotEvent Charger::string_to_control_pilot_event(const std::string& event) {
-    if (event == "CarPluggedIn") {
+ControlPilotEvent Charger::string_to_control_pilot_event(const types::board_support::Event& event) {
+    if (event == types::board_support::Event::CarPluggedIn) {
         return ControlPilotEvent::CarPluggedIn;
-    } else if (event == "CarRequestedPower") {
+    } else if (event == types::board_support::Event::CarRequestedPower) {
         return ControlPilotEvent::CarRequestedPower;
-    } else if (event == "PowerOn") {
+    } else if (event == types::board_support::Event::PowerOn) {
         return ControlPilotEvent::PowerOn;
-    } else if (event == "PowerOff") {
+    } else if (event == types::board_support::Event::PowerOff) {
         return ControlPilotEvent::PowerOff;
-    } else if (event == "CarRequestedStopPower") {
+    } else if (event == types::board_support::Event::CarRequestedStopPower) {
         return ControlPilotEvent::CarRequestedStopPower;
-    } else if (event == "CarUnplugged") {
+    } else if (event == types::board_support::Event::CarUnplugged) {
         return ControlPilotEvent::CarUnplugged;
-    } else if (event == "ErrorE") {
+    } else if (event == types::board_support::Event::ErrorE) {
         return ControlPilotEvent::Error_E;
-    } else if (event == "ErrorDF") {
+    } else if (event == types::board_support::Event::ErrorDF) {
         return ControlPilotEvent::Error_DF;
-    } else if (event == "ErrorRelais") {
+    } else if (event == types::board_support::Event::ErrorRelais) {
         return ControlPilotEvent::Error_Relais;
-    } else if (event == "ErrorRCD") {
+    } else if (event == types::board_support::Event::ErrorRCD) {
         return ControlPilotEvent::Error_RCD;
-    } else if (event == "ErrorVentilationNotAvailable") {
+    } else if (event == types::board_support::Event::ErrorVentilationNotAvailable) {
         return ControlPilotEvent::Error_VentilationNotAvailable;
-    } else if (event == "ErrorOverCurrent") {
+    } else if (event == types::board_support::Event::ErrorOverCurrent) {
         return ControlPilotEvent::Error_OverCurrent;
-    } else if (event == "LeaveBCD") {
+    } else if (event == types::board_support::Event::LeaveBCD) {
         return ControlPilotEvent::LeaveBCD;
-    } else if (event == "EnterBCD") {
+    } else if (event == types::board_support::Event::EnterBCD) {
         return ControlPilotEvent::EnterBCD;
-    } else if (event == "PermanentFault") {
+    } else if (event == types::board_support::Event::PermanentFault) {
         return ControlPilotEvent::PermanentFault;
-    } else if (event == "EvseReplugStarted") {
+    } else if (event == types::board_support::Event::EvseReplugStarted) {
         return ControlPilotEvent::EvseReplugStarted;
-    } else if (event == "EvseReplugFinished") {
+    } else if (event == types::board_support::Event::EvseReplugFinished) {
         return ControlPilotEvent::EvseReplugFinished;
     }
 
     return ControlPilotEvent::Invalid;
 }
 
-void Charger::processEvent(std::string event) {
+void Charger::processEvent(types::board_support::Event event) {
     auto cp_event = string_to_control_pilot_event(event);
 
     switch (cp_event) {
@@ -496,7 +496,7 @@ void Charger::processEvent(std::string event) {
     case ControlPilotEvent::Error_E:
     case ControlPilotEvent::LeaveBCD:
     case ControlPilotEvent::EnterBCD:
-        session_log.car(false, fmt::format("Event {}", event));
+        session_log.car(false, fmt::format("Event {}", types::board_support::event_to_string(event)));
         break;
     case ControlPilotEvent::Error_OverCurrent:
     case ControlPilotEvent::Error_RCD:
@@ -509,7 +509,7 @@ void Charger::processEvent(std::string event) {
     case ControlPilotEvent::EvseReplugFinished:
 
     default:
-        session_log.evse(false, fmt::format("Event {}", event));
+        session_log.evse(false, fmt::format("Event {}", types::board_support::event_to_string(event)));
         break;
     }
 
