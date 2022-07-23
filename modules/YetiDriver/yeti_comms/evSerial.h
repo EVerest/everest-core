@@ -5,7 +5,7 @@
 
 #include <stdint.h>
 #include <termios.h>
-#include "evThread.h"
+#include <utils/thread.hpp>
 #include <sigslot/signal.hpp>
 #include "lo2hi.pb.h"
 #include "hi2lo.pb.h"
@@ -78,8 +78,8 @@ class evSerial {
     uint32_t crc32(uint8_t *buf, int len);
 
     // Read thread for serial port
-    evThread readThreadHandle;
-    evThread timeoutDetectionThreadHandle;
+    Everest::Thread readThreadHandle;
+    Everest::Thread timeoutDetectionThreadHandle;
 
     bool linkWrite(HiToLo *m);
     volatile bool reset_done_flag;

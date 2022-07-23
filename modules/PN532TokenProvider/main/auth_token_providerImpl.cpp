@@ -8,7 +8,6 @@ namespace main {
 
 void auth_token_providerImpl::init() {
     // initialize serial driver
-    std::cerr << "port: " << config.serial_port << " baud: " << config.baud_rate;
     if (!serial.openDevice(config.serial_port.c_str(), config.baud_rate)) {
         EVLOG_AND_THROW(EVEXCEPTION(Everest::EverestConfigError, "Could not open serial port ", config.serial_port,
                                     " with baud rate ", config.baud_rate));
@@ -20,6 +19,7 @@ void auth_token_providerImpl::ready() {
     serial.run();
 
     serial.reset();
+
     // configure Secure Access Module (SAM)
     auto configure_sam = serial.configureSAM();
     if (configure_sam.get()) {
