@@ -55,7 +55,7 @@ void SessionLog::startSession(const std::string& session_id) {
             EVLOG_error << fmt::format("Cannot open {} of {} for writing", fn, fnhtml);
             session_active = false;
         }
-        logfile_html << fmt::format("<html><head><title>EVerses log Session {}</title>\n", session_id);
+        logfile_html << fmt::format("<html><head><title>EVerest log session {}</title>\n", session_id);
         logfile_html << "<style>"
                         ".log {"
                         "  font-family: Arial, Helvetica, sans-serif;"
