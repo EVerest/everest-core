@@ -30,6 +30,9 @@ PB_BIND(KeepAliveHi, KeepAliveHi, AUTO)
 PB_BIND(SetMaxCurrent, SetMaxCurrent, AUTO)
 
 
+PB_BIND(Replug, Replug, AUTO)
+
+
 PB_BIND(SetThreePhases, SetThreePhases, AUTO)
 
 

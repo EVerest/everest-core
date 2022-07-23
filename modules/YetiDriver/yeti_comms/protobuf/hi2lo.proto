@@ -31,6 +31,7 @@ message HiToLo {
     EnableSimulation enable_simulation = 17;
     SimulationData simulation_data = 18;
     Reset reset = 23;
+    Replug replug = 24;
   }
 }
 
@@ -82,6 +83,10 @@ message KeepAliveHi {
 
 message SetMaxCurrent {
   float ampere = 1;
+}
+
+message Replug {
+  uint32 time = 1;
 }
 
 message SetThreePhases {

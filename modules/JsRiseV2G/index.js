@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 const { spawn } = require('child_process');
 const { evlog, boot_module } = require('everestjs');
+const os = require('os');
+
+let network_interface;
 
 function JavaStartedDeferred(mqtt_base_path, module_name) {
   const self = this;
@@ -17,10 +20,10 @@ function JavaStartedDeferred(mqtt_base_path, module_name) {
     const args = [
       '-Djava.net.preferIPv4Stack=false', '-Djava.net.prefecom.v2gclarity.rrIPv6Addresses=true',
       '-cp', 'rise-v2g-secc-1.2.6.jar', 'com.v2gclarity.risev2g.secc.main.StartSECC',
-      mqttServerAddress, mqttServerPort, mqtt_base_path,
+      mqttServerAddress, mqttServerPort, mqtt_base_path, network_interface,
     ];
 
-    evlog.info(`Starting java subprocess: '${cmd}' with args ${args} in cwd '${cwd}'`);
+    evlog.debug(`Starting java subprocess: '${cmd}' with args ${args} in cwd '${cwd}'`);
     // Workaround for IPv6 unavailable in java child when spawned from nodejs:
     // https://stackoverflow.com/questions/34108124/ip-addresses-of-network-interfaces-in-a-java-process-spawned-by-nodejs/52573455
     // STDIN must be disabled because otherwise it is connected to fd 0 which disables ipv6 in jave (wtf)
@@ -39,7 +42,8 @@ function JavaStartedDeferred(mqtt_base_path, module_name) {
     });
 
     java.on('close', (code, signal) => {
-      evlog.error(`Java child process exited with code '${code}' and signal '${signal}', terminating proxy module ${module_name}`);
+      evlog.error(`Java child process exited with code '${code}' and signal '${signal}',`
+                  + ` terminating proxy module ${module_name}`);
       process.exit(1);
     });
 
@@ -57,6 +61,19 @@ function JavaStartedDeferred(mqtt_base_path, module_name) {
   });
 }
 
+function check_network_interface(network_iface) {
+  let networkfound = false;
+  const net_init = os.networkInterfaces();
+
+  for (const key of Object.keys(net_init)) {
+    if (key === network_iface) {
+      networkfound = true;
+    }
+  }
+
+  return networkfound;
+}
+
 const mqtt_paths = {
   state: 'state',
   cmds: 'cmd',
@@ -67,6 +84,11 @@ const mqtt_paths = {
 boot_module(async ({
   setup, info, config, mqtt,
 }) => {
+  network_interface = config.impl.main.device;
+  if (check_network_interface(network_interface) === false) {
+    evlog.warning(`The network interface ${network_interface} was not found!`);
+  }
+
   // setup correct mqtt paths
   Object.keys(mqtt_paths).forEach((key) => {
     mqtt_paths[key] = `${config.impl.main.mqtt_base_path}/${mqtt_paths[key]}`;
@@ -83,29 +105,17 @@ boot_module(async ({
     evlog.debug(`raw data: ${raw_data}`);
     const data = JSON.parse(raw_data);
     evlog.debug(`stringified data: ${data}`);
-    if (data.impl_id === 'ac_charger') mod.provides.ac_charger.publish[data.var](data.val);
-    else if (data.impl_id === 'dc_charger') mod.provides.dc_charger.publish[data.var](data.val);
+    if (data.impl_id === 'charger') mod.provides.charger.publish[data.var](data.val);
     else {
       evlog.error(`Java RiseV2G tried to access unknown implementation with id ${data.impl_id}, ignoring!`);
     }
   });
 
-  Object.keys(setup.provides.ac_charger.register).forEach((key) => {
-    evlog.debug(`Providing cmd '${key}' on 'ac_charger' implementation ...`);
-    setup.provides.ac_charger.register[key]((mod, arg) => {
+  Object.keys(setup.provides.charger.register).forEach((key) => {
+    evlog.debug(`Providing cmd '${key}' on 'charger' implementation ...`);
+    setup.provides.charger.register[key]((mod, arg) => {
       mod.mqtt.publish(mqtt_paths.cmds, JSON.stringify({
-        impl_id: 'ac_charger',
-        cmd: key,
-        args: arg,
-      }));
-    });
-  });
-
-  Object.keys(setup.provides.dc_charger.register).forEach((key) => {
-    evlog.debug(`Providing cmd '${key}' on 'dc_charger' implementation ...`);
-    setup.provides.dc_charger.register[key]((mod, arg) => {
-      mod.mqtt.publish(mqtt_paths.cmds, JSON.stringify({
-        impl_id: 'dc_charger',
+        impl_id: 'charger',
         cmd: key,
         args: arg,
       }));
@@ -119,7 +129,7 @@ boot_module(async ({
   });
 
   java_started.promise.then(() => {
-    evlog.info(`proxy module ${info.printable_identifier} now started...`);
+    evlog.debug(`proxy module ${info.printable_identifier} now started...`);
   });
 
   return java_started.promise;

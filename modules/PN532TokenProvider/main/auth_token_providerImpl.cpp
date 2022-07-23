@@ -19,6 +19,8 @@ void auth_token_providerImpl::ready() {
     serial.run();
 
     serial.reset();
+
+    // configure Secure Access Module (SAM)
     auto configure_sam = serial.configureSAM();
     if (configure_sam.get()) {
         EVLOG_debug << "Configured SAM" << std::endl;

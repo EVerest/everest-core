@@ -1,0 +1,36 @@
+{
+    "description": "This module implements an ISO15118 ev by proxying everything into modified implementations",
+	"provides": {
+		"main": {
+			"interface": "empty",
+			"description": "This module implements a proxy to the different ISO15118-2 implementations",
+			"config": {
+                "stack_implementation": {
+                    "description": "The different ISO15118 software stacks",
+                    "type": "string",
+                    "enum": ["RISE-V2G", "Josev", "OpenV2G"],
+                    "default": "RISE-V2G"
+                },
+                "mqtt_base_path": {
+                    "description": "Base path for the mqtt communication used by the java process",
+                    "type": "string",
+                    "default": "everest_external/iso15118/ev"
+                },
+				"device": {
+					"description": "Ethernet device used for HLC. Any local interface that has an ipv6 link-local and a MAC addr will work.",
+					"type": "string",
+					"default": "eth0"
+				}
+			}
+		},
+        "ev": {
+			"interface": "ISO15118_ev",
+			"description": "This module implements the ISO15118-2 implementation of an EV"
+		}
+	},
+	"enable_external_mqtt": true,
+	"metadata": {
+		"license": "https://opensource.org/licenses/Apache-2.0",
+		"authors": ["Sebastian Lukas"]
+	}
+}

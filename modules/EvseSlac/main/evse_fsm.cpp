@@ -451,6 +451,8 @@ void EvseFSM::sd_wait_for_slac_match_hsm(TransitionType& trans, const EventSlacM
     memcpy(match_cnf.evse_id, match_req.evse_id, sizeof(match_cnf.evse_id));
     memcpy(match_cnf.evse_mac, match_req.evse_mac, sizeof(match_cnf.evse_mac));
     memcpy(match_cnf.run_id, match_req.run_id, sizeof(match_cnf.run_id));
+    memset(match_cnf._rerserved, 0, 8);
+    match_cnf._reserved2 = 0;
     slac::utils::generate_nid_from_nmk(match_cnf.nid, session_nmk);
     memcpy(match_cnf.nmk, session_nmk, sizeof(match_cnf.nmk));
 

@@ -37,6 +37,10 @@ std::string event_to_string(Event e) {
         return "LeaveBCD";
     case Event_InterfaceEvent_PERMANENT_FAULT:
         return "PermanentFault";
+    case Event_InterfaceEvent_EVSE_REPLUG_STARTED:
+        return "EvseReplugStarted";
+    case Event_InterfaceEvent_EVSE_REPLUG_FINISHED:
+        return "EvseReplugFinished";
     }
     return "";
 }
@@ -121,6 +125,10 @@ bool board_support_ACImpl::handle_force_unlock() {
 
 void board_support_ACImpl::handle_switch_three_phases_while_charging(bool& value) {
     mod->serial.switchThreePhasesWhileCharging(value);
+};
+
+void board_support_ACImpl::handle_evse_replug(int& value) {
+    mod->serial.replug(value);
 };
 
 Object board_support_ACImpl::handle_get_hw_capabilities() {

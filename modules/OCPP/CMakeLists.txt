@@ -9,10 +9,13 @@ cpp_module_setup()
 
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 # insert your custom targets and additional config variables here
+find_package(OpenSSL REQUIRED)
 list(APPEND ADDITIONAL_MODULE_LIBS
     ocpp
     date::date
     date::date-tz
+    OpenSSL::SSL
+    OpenSSL::Crypto
 )
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 
@@ -60,7 +63,7 @@ install(FILES manifest.json
 
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1
 # insert other things like install cmds etc here
-install(PROGRAMS diagnostics_uploader.sh firmware_updater.sh signed_firmware_downloader.sh signed_firmware_installer.sh
+install(PROGRAMS constants.env diagnostics_uploader.sh firmware_updater.sh signed_firmware_downloader.sh signed_firmware_installer.sh
         DESTINATION bin
 )
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1

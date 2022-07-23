@@ -103,6 +103,15 @@
                     "type": "boolean"
                 }
             }
+        },
+        "evse_replug": {
+            "description": "Special command initiate a virtual replug sequence without restarting session. Emits a EvseReplugStarted event if supported and started. BSP will take care to not emit other events such as CarPluggedIn/Out during that time. Once finished it will emit a EvseReplugFinished.",
+            "arguments": {
+                "value": {
+                    "description": "Time in ms for the duration of the replug sequence",
+                    "type": "integer"
+                }
+            }
         }
     },
     "vars": {
@@ -124,7 +133,9 @@
                 "ErrorOverCurrent",
                 "EnterBCD",
                 "LeaveBCD",
-                "PermanentFault"
+                "PermanentFault",
+                "EvseReplugStarted",
+                "EvseReplugFinished"
             ]
         },
         "nr_of_phases_available": {

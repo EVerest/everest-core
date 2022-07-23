@@ -23,20 +23,20 @@
 #ifndef SRC_EVDRIVERS_CHARGER_H_
 #define SRC_EVDRIVERS_CHARGER_H_
 
+#include "SessionLog.hpp"
 #include "ld-ev.hpp"
 #include "utils/thread.hpp"
-#include <generated/board_support_AC/Interface.hpp>
 #include <chrono>
+#include <date/date.h>
+#include <date/tz.h>
+#include <generated/board_support_AC/Interface.hpp>
 #include <mutex>
 #include <queue>
 #include <sigslot/signal.hpp>
-#include <date/date.h>
-#include <date/tz.h>
 
 namespace module {
 
-enum class ControlPilotEvent
-{
+enum class ControlPilotEvent {
     CarPluggedIn,
     CarRequestedPower,
     PowerOn,
@@ -49,8 +49,11 @@ enum class ControlPilotEvent
     Error_RCD,
     Error_VentilationNotAvailable,
     Error_OverCurrent,
-    RestartMatching,
+    EnterBCD,
+    LeaveBCD,
     PermanentFault,
+    EvseReplugStarted,
+    EvseReplugFinished,
     Invalid
 };
 
@@ -73,7 +76,8 @@ public:
     sigslot::signal<float> signalMaxCurrent;
 
     void setup(bool three_phases, bool has_ventilation, const std::string& country_code, bool rcd_enabled,
-               const std::string& charge_mode, bool ac_hlc_enabled, bool ac_hlc_use_5percent, bool ac_enforce_hlc);
+               const std::string& charge_mode, bool ac_hlc_enabled, bool ac_hlc_use_5percent, bool ac_enforce_hlc,
+               bool ac_with_soc_timeout);
 
     bool enable();
     bool disable();
@@ -88,8 +92,13 @@ public:
 
     // call when in state WaitingForAuthentication
     void Authorize(bool a, const std::string& userid, bool pnc);
-    bool AuthorizedEIM();
-    bool AuthorizedPnC();
+
+    bool Authorized_PnC();
+    bool Authorized_EIM();
+
+    // this indicates the charger is done with all of its t_step_XX routines and HLC can now also start charging
+    bool Authorized_EIM_ready_for_HLC();
+    bool Authorized_PnC_ready_for_HLC();
 
     // trigger replug sequence while charging to switch number of phases
     bool switchThreePhasesWhileCharging(bool n);
@@ -101,6 +110,11 @@ public:
     bool cancelCharging();
     bool getPausedByEVSE();
 
+    // execute a virtual replug sequence. Does NOT generate a Car plugged in event etc,
+    // since the session is not restarted. It can be used to e.g. restart the ISO session
+    // and switch between AC and DC mode within a session.
+    bool evseReplug();
+
     void setCurrentDrawnByVehicle(float l1, float l2, float l3);
 
     bool forceUnlock();
@@ -110,8 +124,7 @@ public:
 
     // Public states for Hi Level
 
-    enum class EvseEvent
-    {
+    enum class EvseEvent {
         Enabled,
         Disabled,
         SessionStarted,
@@ -123,7 +136,9 @@ public:
         SessionFinished,
         SessionCancelled,
         Error,
-        PermanentFault
+        PermanentFault,
+        ReplugStarted,
+        ReplugFinished
     };
 
     enum class ErrorState {
@@ -143,6 +158,7 @@ public:
     std::string evseEventToString(EvseEvent e);
 
     sigslot::signal<> signalAuthRequired;
+    sigslot::signal<> signalACWithSoCTimeout;
 
     // Request more details about the error that happend
     ErrorState getErrorState();
@@ -161,8 +177,7 @@ public:
     // in the future.
     // Use new EvseEvent interface instead.
 
-    enum class EvseState
-    {
+    enum class EvseState {
         Disabled,
         Idle,
         WaitingForAuthentication,
@@ -174,6 +189,7 @@ public:
         Faulted,
         T_step_EF,
         T_step_X1,
+        Replug
     };
 
     std::string evseStateToString(EvseState s);
@@ -196,6 +212,9 @@ private:
     std::chrono::time_point<date::utc_clock> maxCurrentValidUntil;
 
     bool powerAvailable();
+
+    bool AuthorizedEIM();
+    bool AuthorizedPnC();
 
     // This mutex locks all config type members
     std::recursive_mutex configMutex;
@@ -228,9 +247,11 @@ private:
 
     const float PWM_5_PERCENT = 0.05;
 
+    const int t_replug_ms = 4000;
+
     bool matching_started;
 
-    ControlPilotEvent string_to_control_pilot_event(std::string event);
+    ControlPilotEvent string_to_control_pilot_event(const std::string& event);
 
     void processCPEventsIndependent(ControlPilotEvent cp_event);
     void processCPEventsState(ControlPilotEvent cp_event);
@@ -253,12 +274,17 @@ private:
     bool hlc_use_5percent_current_session;
     // non standard compliant option to enforce HLC in AC mode
     bool ac_enforce_hlc;
+    // non standard compliant option: time out after a while and switch back to DC to get SoC update
+    bool ac_with_soc_timeout;
+    int ac_with_soc_timer;
 
     std::chrono::time_point<date::utc_clock> lastPwmUpdate;
 
     float update_pwm_last_dc;
     void update_pwm_now(float dc);
     void update_pwm_max_every_5seconds(float dc);
+    void pwm_off();
+    void pwm_F();
 
     bool paused_by_user;
 };

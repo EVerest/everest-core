@@ -11,7 +11,7 @@ cpp_module_setup()
 # insert your custom targets and additional config variables here
 find_package(SQLite3 REQUIRED)
 
-list(APPEND ADDITIONAL_MODULE_LIBS sqlite3)
+list(APPEND ADDITIONAL_MODULE_LIBS SQLite::SQLite3)
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 
 target_include_directories(${MODULE_NAME}

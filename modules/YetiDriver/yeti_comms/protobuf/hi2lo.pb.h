@@ -64,6 +64,10 @@ typedef struct _KeepAliveHi {
     char sw_version_string[51]; 
 } KeepAliveHi;
 
+typedef struct _Replug { 
+    uint32_t time; 
+} Replug;
+
 typedef struct _SetAuth { 
     char userid[51]; 
 } SetAuth;
@@ -141,6 +145,7 @@ typedef struct _HiToLo {
         AllowPowerOn allow_power_on;
         ForceUnlock force_unlock;
         Reset reset;
+        Replug replug;
     } payload; 
 } HiToLo;
 
@@ -158,6 +163,7 @@ extern "C" {
 #define SimulationData_init_default              {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 #define KeepAliveHi_init_default                 {0, 0, 0, 0, 0, ""}
 #define SetMaxCurrent_init_default               {0}
+#define Replug_init_default                      {0}
 #define SetThreePhases_init_default              {0}
 #define EnableRCD_init_default                   {0}
 #define SetHasVentilation_init_default           {0}
@@ -180,6 +186,7 @@ extern "C" {
 #define SimulationData_init_zero                 {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 #define KeepAliveHi_init_zero                    {0, 0, 0, 0, 0, ""}
 #define SetMaxCurrent_init_zero                  {0}
+#define Replug_init_zero                         {0}
 #define SetThreePhases_init_zero                 {0}
 #define EnableRCD_init_zero                      {0}
 #define SetHasVentilation_init_zero              {0}
@@ -206,6 +213,7 @@ extern "C" {
 #define KeepAliveHi_protocol_version_major_tag   4
 #define KeepAliveHi_protocol_version_minor_tag   5
 #define KeepAliveHi_sw_version_string_tag        6
+#define Replug_time_tag                          1
 #define SetAuth_userid_tag                       1
 #define SetControlMode_control_mode_tag          1
 #define SetCountryCode_iso3166_alpha2_code_tag   1
@@ -251,6 +259,7 @@ extern "C" {
 #define HiToLo_allow_power_on_tag                21
 #define HiToLo_force_unlock_tag                  22
 #define HiToLo_reset_tag                         23
+#define HiToLo_replug_tag                        24
 
 /* Struct field encoding specification for nanopb */
 #define HiToLo_FIELDLIST(X, a) \
@@ -274,7 +283,8 @@ X(a, STATIC,   ONEOF,    MESSAGE,  (payload,set_control_mode,payload.set_control
 X(a, STATIC,   ONEOF,    MESSAGE,  (payload,set_pwm,payload.set_pwm),  20) \
 X(a, STATIC,   ONEOF,    MESSAGE,  (payload,allow_power_on,payload.allow_power_on),  21) \
 X(a, STATIC,   ONEOF,    MESSAGE,  (payload,force_unlock,payload.force_unlock),  22) \
-X(a, STATIC,   ONEOF,    MESSAGE,  (payload,reset,payload.reset),  23)
+X(a, STATIC,   ONEOF,    MESSAGE,  (payload,reset,payload.reset),  23) \
+X(a, STATIC,   ONEOF,    MESSAGE,  (payload,replug,payload.replug),  24)
 #define HiToLo_CALLBACK NULL
 #define HiToLo_DEFAULT NULL
 #define HiToLo_payload_set_max_current_MSGTYPE SetMaxCurrent
@@ -298,6 +308,7 @@ X(a, STATIC,   ONEOF,    MESSAGE,  (payload,reset,payload.reset),  23)
 #define HiToLo_payload_allow_power_on_MSGTYPE AllowPowerOn
 #define HiToLo_payload_force_unlock_MSGTYPE ForceUnlock
 #define HiToLo_payload_reset_MSGTYPE Reset
+#define HiToLo_payload_replug_MSGTYPE Replug
 
 #define AllowPowerOn_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, BOOL,     p,                 1)
@@ -353,6 +364,11 @@ X(a, STATIC,   SINGULAR, STRING,   sw_version_string,   6)
 X(a, STATIC,   SINGULAR, FLOAT,    ampere,            1)
 #define SetMaxCurrent_CALLBACK NULL
 #define SetMaxCurrent_DEFAULT NULL
+
+#define Replug_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, UINT32,   time,              1)
+#define Replug_CALLBACK NULL
+#define Replug_DEFAULT NULL
 
 #define SetThreePhases_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, BOOL,     n,                 1)
@@ -432,6 +448,7 @@ extern const pb_msgdesc_t EnableSimulation_msg;
 extern const pb_msgdesc_t SimulationData_msg;
 extern const pb_msgdesc_t KeepAliveHi_msg;
 extern const pb_msgdesc_t SetMaxCurrent_msg;
+extern const pb_msgdesc_t Replug_msg;
 extern const pb_msgdesc_t SetThreePhases_msg;
 extern const pb_msgdesc_t EnableRCD_msg;
 extern const pb_msgdesc_t SetHasVentilation_msg;
@@ -456,6 +473,7 @@ extern const pb_msgdesc_t ForceUnlock_msg;
 #define SimulationData_fields &SimulationData_msg
 #define KeepAliveHi_fields &KeepAliveHi_msg
 #define SetMaxCurrent_fields &SetMaxCurrent_msg
+#define Replug_fields &Replug_msg
 #define SetThreePhases_fields &SetThreePhases_msg
 #define EnableRCD_fields &EnableRCD_msg
 #define SetHasVentilation_fields &SetHasVentilation_msg
@@ -482,6 +500,7 @@ extern const pb_msgdesc_t ForceUnlock_msg;
 #define HiToLo_size                              84
 #define KeepAliveHi_size                         82
 #define PauseCharging_size                       0
+#define Replug_size                              6
 #define Reset_size                               0
 #define Restart_size                             0
 #define ResumeCharging_size                      0

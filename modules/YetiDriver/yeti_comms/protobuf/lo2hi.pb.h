@@ -26,7 +26,9 @@ typedef enum _Event_InterfaceEvent {
     Event_InterfaceEvent_ERROR_OVER_CURRENT = 11, 
     Event_InterfaceEvent_ENTER_BCD = 12, 
     Event_InterfaceEvent_LEAVE_BCD = 13, 
-    Event_InterfaceEvent_PERMANENT_FAULT = 14 
+    Event_InterfaceEvent_PERMANENT_FAULT = 14, 
+    Event_InterfaceEvent_EVSE_REPLUG_STARTED = 15, 
+    Event_InterfaceEvent_EVSE_REPLUG_FINISHED = 16 
 } Event_InterfaceEvent;
 
 typedef enum _StateUpdate_State { 
@@ -181,8 +183,8 @@ typedef struct _LoToHi {
 
 /* Helper constants for enums */
 #define _Event_InterfaceEvent_MIN Event_InterfaceEvent_CAR_PLUGGED_IN
-#define _Event_InterfaceEvent_MAX Event_InterfaceEvent_PERMANENT_FAULT
-#define _Event_InterfaceEvent_ARRAYSIZE ((Event_InterfaceEvent)(Event_InterfaceEvent_PERMANENT_FAULT+1))
+#define _Event_InterfaceEvent_MAX Event_InterfaceEvent_EVSE_REPLUG_FINISHED
+#define _Event_InterfaceEvent_ARRAYSIZE ((Event_InterfaceEvent)(Event_InterfaceEvent_EVSE_REPLUG_FINISHED+1))
 
 #define _StateUpdate_State_MIN StateUpdate_State_DISABLED
 #define _StateUpdate_State_MAX StateUpdate_State_FAULTED

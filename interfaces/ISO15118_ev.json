@@ -1,0 +1,51 @@
+{
+    "description": "This interface defines a simple ISO15118 ev.",
+    "cmds": {
+        "start_charging": {
+            "description": "Start the ev charging process",
+            "arguments": {
+                "PaymentOption": {
+                    "description": "This element is used for indicating the payment type",
+                    "type": "string",
+                    "enum": ["Contract", "ExternalPayment"]
+                },
+                "EnergyTransferMode": {
+                    "description": "Selected energy transfer mode for charging that is requested by the EVCC",
+                    "type": "string",
+                    "enum": ["AC_single_phase_core", "AC_three_phase_core", "DC_core",
+                        "DC_extended", "DC_combo_core", "DC_unique"]
+                }
+            },
+            "result": {
+                "description": "Returns true if the evcc simulation started",
+                "type": "boolean"
+            }
+        },
+        "stop_charging": {
+            "description": "Stop the ev charging communication process"
+        },
+        "set_fault": {
+            "description": "TODO_SL: Set the different ev faults to communicate these errors to the charging station"
+        }
+    },
+    "vars": {
+        "V2G_Session_Finished": {
+            "description": "The v2g session between the charger and the car is finished",
+            "type": "null"
+        },
+        "AC_EVPowerReady": {
+            "description": "The car is ready for power (HLC)",
+            "type": "boolean"
+        },
+        "AC_EVSEMaxCurrent": {
+            "description": "EVSE max current per phase",
+            "type": "number",
+            "minimum": 0,
+            "maximum": 400
+        },
+        "AC_StopFromCharger": {
+            "description": "The charger wants to stop the charging process",
+            "type": "null"
+        }
+    }
+}

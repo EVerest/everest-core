@@ -37,6 +37,8 @@ message Event {
     ENTER_BCD = 12;
     LEAVE_BCD = 13;
     PERMANENT_FAULT = 14;
+    EVSE_REPLUG_STARTED = 15;
+    EVSE_REPLUG_FINISHED = 16;
   }
   InterfaceEvent type = 1;
 }

@@ -6,6 +6,51 @@
 			"type": "string",
 			"default": "DE*PNX*E1234567*1"
 		},
+		"payment_enable_eim": {
+			"description": "Set to true to enable EIM (e.g. RFID card or mobile app) authorization",
+			"type": "boolean",
+			"default": true
+		},
+		"payment_enable_contract": {
+			"description": "Set to true to enable contract (aka plug and charge) authorization",
+			"type": "boolean",
+			"default": true
+		},
+		"ac_nominal_voltage": {
+			"description": "Nominal AC voltage between phase and neutral in Volt",
+			"type": "number",
+			"default": 230
+		},
+		"dc_current_regulation_tolerance": {
+			"description": "DC current regulation tolerance in Ampere",
+			"type": "number",
+			"default": 5
+		},
+		"dc_peak_current_ripple": {
+			"description": "DC peal current ripple in Ampere",
+			"type": "number",
+			"default": 5
+		},
+		"ev_receipt_required": {
+			"description": "Unsupported: request receipt from EV with HLC",
+			"type": "boolean",
+			"default": false
+		},
+		"session_logging": {
+			"description": "Enable/Disable session log file output",
+			"type": "boolean",
+			"default": false
+		},
+		"session_logging_path": {
+			"description": "Output directory for session log files",
+			"type": "string",
+			"default": "/tmp"
+		},
+		"session_logging_xml": {
+			"description": "Log full XML messages for HLC",
+			"type": "boolean",
+			"default": true
+		},
 		"three_phases": {
 			"description": "Limit to three phases (true) or one phase (false)",
 			"type": "boolean",
@@ -36,8 +81,7 @@
 			"type": "string",
 			"enum": [
 				"AC",
-				"DC",
-				"AC_withBatteryPercentage"
+				"DC"
 			],
 			"default": "AC"
 		},
@@ -53,6 +97,16 @@
 		},
 		"ac_enforce_hlc": {
 			"description": "Combine with 5percent option to really enforce HLC even with EIM. It is not ISO15118-2/-3 compliant as it waits for matching even if EIM is available before SLAC reaches matched state. On cars that do not support ISO15118 on AC this will take a very long time to timeout and fall back to basic nominal PWM charging, but it will eventually.",
+			"type": "boolean",
+			"default": false
+		},
+		"ac_with_soc": {
+			"description": "Special mode that switches between AC and DC charging to get SoC percentage with AC charging",
+			"type": "boolean",
+			"default": false
+		},
+		"dbg_hlc_auth_after_tstep": {
+			"description": "Special mode: send HLC auth ok only after t_step_XX is finished (true) or directly when available (false)",
 			"type": "boolean",
 			"default": false
 		}
@@ -83,7 +137,12 @@
 			"max_connections": 1
 		},
 		"hlc": {
-			"interface": "ISO15118_ac_charger",
+			"interface": "ISO15118_charger",
+			"min_connections": 0,
+			"max_connections": 1
+		},
+		"imd": {
+			"interface": "isolation_monitor",
 			"min_connections": 0,
 			"max_connections": 1
 		}

@@ -11,6 +11,8 @@ list(APPEND EVEREST_MODULES_LIST
     ExampleUser
     JsAuth
     JsCarSimulator
+    JsCarV2G
+    JsIMDSimulator
     JsDummyTokenProvider
     JsDummyTokenProviderManual
     JsDummyTokenValidator
@@ -19,6 +21,7 @@ list(APPEND EVEREST_MODULES_LIST
     JsRiseV2G
     JsTibber
     JsYetiSimulator
+    JsSlacSimulator
     ModbusMeter
     OCPP
     PersistentStore
