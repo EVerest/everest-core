@@ -127,9 +127,11 @@ void EvseManager::ready() {
         });
 
         // implement Auth handlers
-        r_hlc[0]->subscribe_EVCCIDD([this](const std::string& token) {
+        r_hlc[0]->subscribe_EVCCIDD([this](const std::string& _token) {
             json autocharge_token;
 
+            std::string token = _token;
+            token.erase(remove(token.begin(), token.end(), ':'), token.end());
             autocharge_token["id_token"] = "VID:" + token;
             autocharge_token["type"] = "autocharge";
             autocharge_token["timeout"] = 60;
