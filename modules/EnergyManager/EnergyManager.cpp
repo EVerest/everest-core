@@ -59,9 +59,11 @@ void EnergyManager::run_enforce_limits() {
         for (auto it = optimized_values.begin(); it != optimized_values.end(); ++it) {
             sanitize_object(*it);
             try {
-                this->r_energy_trunk->call_enforce_limits((*it).at("uuid"), (*it).at("limits_import"),
-                                                          (*it).at("limits_export"), (*it).at("schedule_import"),
-                                                          (*it).at("schedule_export"));
+                this->r_energy_trunk->call_enforce_limits(  (*it).at("uuid"), 
+                                                            (*it).at("limits_import"),
+                                                            (*it).at("limits_export"), 
+                                                            (*it).at("schedule_import"),
+                                                            (*it).at("schedule_export"));
             } catch (const std::exception& e) {
                 EVLOG_error << "Cannot enforce limits: Exception occurred: optimized object faulty: " << e.what();
             }
@@ -233,6 +235,7 @@ double EnergyManager::get_current_limit_from_energy_object(const json& limit_obj
     bool limit_object_is_complete_flag = false;
     double max_current_A = ENERGY_MANAGER_ABSOLUTE_MAX_CURRENT;
 
+    // use the maximum assignable current as default...
     if (limit_object.contains("request_parameters")) {
         if (limit_object.at("request_parameters").contains("ac_current_A")) {
             if (limit_object.at("request_parameters").at("ac_current_A").contains("max_current_A")) {
@@ -245,6 +248,14 @@ double EnergyManager::get_current_limit_from_energy_object(const json& limit_obj
     }
     if (limit_object_is_complete_flag == false) {
         EVLOG_error << "limit object incomplete: " << limit_object;
+    }
+
+    // ...and further limit the current according to calculated value (if available)
+    if (energy_object.contains("limit_from_parent") && !energy_object["limit_from_parent"]
+            .is_null()) {  // need "[]" to prevent nlohmann error 304: cannot use at() with null
+        if (energy_object.at("limit_from_parent") < max_current_A) {
+            max_current_A = energy_object.at("limit_from_parent");
+        }
     }
 
     return max_current_A;
