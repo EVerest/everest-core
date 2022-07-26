@@ -19,7 +19,7 @@ The following table shows the current support for the listed feature profiles an
 | ----------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
 | [OCPP 1.6 Security Whitepaper (3rd edition)](https://www.openchargealliance.org/uploads/files/OCPP-1.6-security-whitepaper-edition-3.zip) | :heavy_check_mark: yes |
 | [Using ISO 15118 Plug & Charge with OCPP 1.6](https://www.openchargealliance.org/uploads/files/ocpp_1_6_ISO_15118_v10.pdf)                | :x:                    |
-| [Autocharge](https://github.com/openfastchargingalliance/openfastchargingalliance/blob/master/autocharge-final.pdf)                       | :yellow_circle: wip    |
+| [Autocharge](https://github.com/openfastchargingalliance/openfastchargingalliance/blob/master/autocharge-final.pdf)                       | :heavy_check_mark: yes    |
 
 All documentation and the issue tracking can be found in our main repository here: https://github.com/EVerest/
 
