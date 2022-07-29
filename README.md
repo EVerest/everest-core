@@ -44,7 +44,23 @@ The following table shows CSMS whose compatibility has been tested or will be te
 
 ## Build instructions
 
-Clone the repository:
+### Install dependencies
+
+For Debian GNU/Linux 11 you will need the following dependencies:
+
+```bash
+  sudo apt install python3-pip libboost-all-dev libsqlite3-dev libssl-dev
+```
+
+You will need the EVerest build environment
+```bash
+  git clone https://github.com/EVerest/everest-dev-environment.git
+  cd everest-dev-environment/dependency_manager
+  python3 -m pip install .
+  edm --register-cmake-module
+```
+
+### Clone the repository
 
 ```bash
   git clone https://github.com/EVerest/libocpp
