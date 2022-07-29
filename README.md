@@ -57,10 +57,9 @@ python3 -m pip install .
 ```
 We need to add */home/USER/.local/bin* and *CPM_SOURCE_CACHE* to *$PATH*:
 ```bash
-echo "export PATH=$PATH:/home/$(whoami)/.local/bin" >> ~/.bashrc
-echo "export CPM_SOURCE_CACHE=$HOME/.cache/CPM" >> ~/.bashrc
+export PATH=$PATH:/home/$(whoami)/.local/bin
+export CPM_SOURCE_CACHE=$HOME/.cache/CPM
 ```
-**Important:** Restart the current bash command prompt to let the changes take effect.
 
 Now setup EVerest workspace: 
 ```bash
