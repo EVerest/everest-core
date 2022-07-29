@@ -102,10 +102,10 @@ int main(int argc, char* argv[]) {
 
         auto user_config = json::parse(user_config_file);
 
-        EVLOG(info) << "Augmenting main config with user-config entries";
+        EVLOG_info << "Augmenting main config with user-config entries";
         json_config.merge_patch(user_config);
     } else {
-        EVLOG(debug) << "No user-config provided.";
+        EVLOG_debug << "No user-config provided.";
     }
 
     std::shared_ptr<ocpp1_6::ChargePointConfiguration> configuration =
@@ -144,7 +144,7 @@ int main(int argc, char* argv[]) {
                         EVLOG_info << "Data transfer accepted";
                     } else {
                         EVLOG_info << "Data transfer not accepted:"
-                                    << ocpp1_6::conversions::data_transfer_status_to_string(result.status);
+                                   << ocpp1_6::conversions::data_transfer_status_to_string(result.status);
                     }
                 } else if (command == "meter") {
                     EVLOG_info << "meter values command";
