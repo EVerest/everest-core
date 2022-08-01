@@ -42,6 +42,8 @@ struct Conf {
     std::string SchemasPath;
     std::string ScriptsPath;
     bool EnableExternalWebsocketControl;
+    int32_t DefaultRetries;
+    int32_t DefaultRetryInterval;
 };
 
 class OCPP : public Everest::ModuleBase {

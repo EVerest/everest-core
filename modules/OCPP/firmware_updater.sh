@@ -12,7 +12,10 @@ else
     echo "$DOWNLOAD_FAILED"
 fi
 sleep 2
-echo "$INSTALLING"
-sleep 2
-echo "$INSTALLED"
-sleep 2
+
+if [[ $curl_exit_code -eq 0 ]]; then
+    echo "$INSTALLING"
+    sleep 2
+    echo "$INSTALLED"
+    sleep 2
+fi

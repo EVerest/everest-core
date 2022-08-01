@@ -30,6 +30,16 @@
             "description": "If true websocket can be disconnected and connected externally",
             "type": "boolean",
             "default": false
+        },
+        "DefaultRetries": {
+            "description": "Specifies how many times Charge Point tries to upload or download files on previous failure.",
+            "type": "number",
+            "default": 1
+        },
+        "DefaultRetryInterval": {
+            "description": "Specifies in seconds after which time a retry of an upload or download on previous failure may be attempted.",
+            "type": "number",
+            "default": 1
         }
     },
     "provides": {

@@ -133,38 +133,53 @@ void OCPP::init() {
         }
     });
 
-    this->charge_point->register_upload_diagnostics_callback([this](std::string location) {
-        // create temporary file
+    this->charge_point->register_upload_diagnostics_callback([this](const ocpp1_6::GetDiagnosticsRequest& msg) {
         std::string date_time = ocpp1_6::DateTime().to_rfc3339();
+
+        // TODO(piet): consider start time and end time
         std::string file_name = "diagnostics-" + date_time + "-%%%%-%%%%-%%%%-%%%%";
 
-        auto diagnostics_file_name = boost::filesystem::unique_path(boost::filesystem::path(file_name));
-        auto diagnostics_file_path = boost::filesystem::temp_directory_path() / diagnostics_file_name;
+        const auto diagnostics_file_name = boost::filesystem::unique_path(boost::filesystem::path(file_name));
+        const auto diagnostics_file_path = boost::filesystem::temp_directory_path() / diagnostics_file_name;
 
-        auto diagnostics = json({{"diagnostics", {{"key", "value"}}}});
+        const auto diagnostics = json({{"diagnostics", {{"key", "value"}}}});
         std::ofstream diagnostics_file(diagnostics_file_path.c_str());
         diagnostics_file << diagnostics.dump();
-        this->upload_diagnostics_thread = std::thread([this, location, diagnostics_file_name, diagnostics_file_path]() {
-            auto diagnostics_uploader = boost::filesystem::path(this->config.ScriptsPath) / "diagnostics_uploader.sh";
-            auto constants = boost::filesystem::path(this->config.ScriptsPath) / "constants.env";
+        this->upload_diagnostics_thread = std::thread([this, msg, diagnostics_file_name, diagnostics_file_path]() {
+            const auto diagnostics_uploader =
+                boost::filesystem::path(this->config.ScriptsPath) / "diagnostics_uploader.sh";
+            const auto constants = boost::filesystem::path(this->config.ScriptsPath) / "constants.env";
 
-            boost::process::ipstream stream;
-            std::vector<std::string> args = {constants.string(), location, diagnostics_file_name.string(),
+            std::vector<std::string> args = {constants.string(), msg.location, diagnostics_file_name.string(),
                                              diagnostics_file_path.string()};
-            boost::process::child cmd(diagnostics_uploader, boost::process::args(args),
-                                      boost::process::std_out > stream);
-            std::string temp;
-            while (std::getline(stream, temp)) {
-                if (temp == "Uploaded") {
-                    this->charge_point->send_diagnostic_status_notification(ocpp1_6::DiagnosticsStatus::Uploaded);
-                } else if (temp == "UploadFailure" || temp == "PermissionDenied" || temp == "BadMessage" ||
-                           temp == "NotSupportedOperation") {
-                    this->charge_point->send_diagnostic_status_notification(ocpp1_6::DiagnosticsStatus::UploadFailed);
-                } else {
-                    this->charge_point->send_diagnostic_status_notification(ocpp1_6::DiagnosticsStatus::Uploading);
+            bool upload_failed = true;
+            int32_t retries = 0;
+            const auto total_retries = msg.retries.get_value_or(this->config.DefaultRetries);
+            const auto retry_interval = msg.retryInterval.get_value_or(this->config.DefaultRetryInterval);
+
+            while (upload_failed && retries <= total_retries) {
+                boost::process::ipstream stream;
+                boost::process::child cmd(diagnostics_uploader, boost::process::args(args),
+                                          boost::process::std_out > stream);
+                std::string temp;
+                retries += 1;
+                while (std::getline(stream, temp)) {
+                    if (temp == "Uploaded") {
+                        this->charge_point->send_diagnostic_status_notification(ocpp1_6::DiagnosticsStatus::Uploaded);
+                        upload_failed = false;
+                    } else if (temp == "UploadFailure" || temp == "PermissionDenied" || temp == "BadMessage" ||
+                               temp == "NotSupportedOperation") {
+                        this->charge_point->send_diagnostic_status_notification(
+                            ocpp1_6::DiagnosticsStatus::UploadFailed);
+                        if (retries <= total_retries) {
+                            std::this_thread::sleep_for(std::chrono::seconds(retry_interval));
+                        }
+                    } else {
+                        this->charge_point->send_diagnostic_status_notification(ocpp1_6::DiagnosticsStatus::Uploading);
+                    }
                 }
+                cmd.wait();
             }
-            cmd.wait();
         });
         this->upload_diagnostics_thread.detach();
 
@@ -177,34 +192,49 @@ void OCPP::init() {
         std::string file_name =
             ocpp1_6::conversions::log_enum_type_to_string(msg.logType) + "-" + date_time + "-%%%%-%%%%-%%%%-%%%%";
 
-        auto log_file_name = boost::filesystem::unique_path(boost::filesystem::path(file_name));
-        auto log_file_path = boost::filesystem::temp_directory_path() / log_file_name;
-        auto constants = boost::filesystem::path(this->config.ScriptsPath) / "constants.env";
+        const auto log_file_name = boost::filesystem::unique_path(boost::filesystem::path(file_name));
+        const auto log_file_path = boost::filesystem::temp_directory_path() / log_file_name;
+        const auto constants = boost::filesystem::path(this->config.ScriptsPath) / "constants.env";
 
-        auto diagnostics = json({{"logs", {{"key", "value"}}}});
+        const auto diagnostics = json({{"logs", {{"key", "value"}}}});
         std::ofstream log_file(log_file_path.c_str());
         log_file << diagnostics.dump();
         this->upload_logs_thread = std::thread([this, msg, log_file_name, log_file_path, constants]() {
-            auto diagnostics_uploader = boost::filesystem::path(this->config.ScriptsPath) / "diagnostics_uploader.sh";
+            const auto diagnostics_uploader =
+                boost::filesystem::path(this->config.ScriptsPath) / "diagnostics_uploader.sh";
 
-            boost::process::ipstream stream;
             std::vector<std::string> args = {constants.string(), msg.log.remoteLocation.get(), log_file_name.string(),
                                              log_file_path.string()};
-            boost::process::child cmd(diagnostics_uploader, boost::process::args(args),
-                                      boost::process::std_out > stream);
 
-            std::string temp;
-            while (std::getline(stream, temp) && !this->charge_point->interrupt_log_upload) {
-                auto log_status = ocpp1_6::conversions::string_to_upload_log_status_enum_type(temp);
-                this->charge_point->logStatusNotification(log_status, msg.requestId);
-            }
+            bool terminated = false;
+            int32_t retries = 0;
+            const auto total_retries = msg.retries.get_value_or(this->config.DefaultRetries);
+            const auto retry_interval = msg.retryInterval.get_value_or(this->config.DefaultRetryInterval);
+            ocpp1_6::UploadLogStatusEnumType log_status = ocpp1_6::UploadLogStatusEnumType::UploadFailure;
 
-            if (this->charge_point->interrupt_log_upload) {
-                EVLOG_debug << "Uploading Logs was interrupted, terminating upload script, requestId: "
-                            << msg.requestId;
-                cmd.terminate();
-            } else {
-                EVLOG_debug << "Uploading Logs finished without interruption, requestId: " << msg.requestId;
+            while (log_status != ocpp1_6::UploadLogStatusEnumType::Uploaded && retries <= total_retries &&
+                   !terminated) {
+                boost::process::ipstream stream;
+                boost::process::child cmd(diagnostics_uploader, boost::process::args(args),
+                                          boost::process::std_out > stream);
+                std::string temp;
+                retries += 1;
+                while (std::getline(stream, temp) && !this->charge_point->interrupt_log_upload) {
+                    log_status = ocpp1_6::conversions::string_to_upload_log_status_enum_type(temp);
+                    this->charge_point->logStatusNotification(log_status, msg.requestId);
+                }
+
+                if (this->charge_point->interrupt_log_upload) {
+                    EVLOG_debug << "Uploading Logs was interrupted, terminating upload script, requestId: "
+                                << msg.requestId;
+                    cmd.terminate();
+                    terminated = true;
+                } else {
+                    EVLOG_debug << "Uploading Logs finished without interruption, requestId: " << msg.requestId;
+                    if (log_status != ocpp1_6::UploadLogStatusEnumType::Uploaded) {
+                        std::this_thread::sleep_for(std::chrono::seconds(retry_interval));
+                    }
+                }
             }
             this->charge_point->logStatusNotification(ocpp1_6::UploadLogStatusEnumType::Idle, msg.requestId);
             {
@@ -217,63 +247,84 @@ void OCPP::init() {
 
         return log_file_name.string();
     });
-    this->charge_point->register_update_firmware_callback([this](std::string location) {
+    this->charge_point->register_update_firmware_callback([this](const ocpp1_6::UpdateFirmwareRequest msg) {
         // // create temporary file
-        std::string date_time = ocpp1_6::DateTime().to_rfc3339();
-        std::string file_name = "firmware-" + date_time + "-%%%%-%%%%-%%%%-%%%%";
+        const auto date_time = ocpp1_6::DateTime().to_rfc3339();
+        const auto file_name = "firmware-" + date_time + "-%%%%-%%%%-%%%%-%%%%";
 
-        auto firmware_file_name = boost::filesystem::unique_path(boost::filesystem::path(file_name));
-        auto firmware_file_path = boost::filesystem::temp_directory_path() / firmware_file_name;
-        auto constants = boost::filesystem::path(this->config.ScriptsPath) / "constants.env";
+        const auto firmware_file_name = boost::filesystem::unique_path(boost::filesystem::path(file_name));
+        const auto firmware_file_path = boost::filesystem::temp_directory_path() / firmware_file_name;
+        const auto constants = boost::filesystem::path(this->config.ScriptsPath) / "constants.env";
 
-        this->update_firmware_thread = std::thread([this, location, firmware_file_path, constants]() {
+        this->update_firmware_thread = std::thread([this, msg, firmware_file_path, constants]() {
             auto firmware_updater = boost::filesystem::path(this->config.ScriptsPath) / "firmware_updater.sh";
 
-            boost::process::ipstream stream;
-            std::vector<std::string> args = {location, firmware_file_path.string()};
-            boost::process::child cmd(firmware_updater, boost::process::args(args), boost::process::std_out > stream);
-            std::string temp;
-            while (std::getline(stream, temp)) {
-                auto firmware_status = ocpp1_6::conversions::string_to_firmware_status(temp);
-                this->charge_point->send_firmware_status_notification(firmware_status);
+            const std::vector<std::string> args = {constants.string(), msg.location, firmware_file_path.string()};
+            int32_t retries = 0;
+            const auto total_retries = msg.retries.get_value_or(this->config.DefaultRetries);
+            const auto retry_interval = msg.retryInterval.get_value_or(this->config.DefaultRetryInterval);
+            ocpp1_6::FirmwareStatus firmware_status = ocpp1_6::FirmwareStatus::DownloadFailed;
+
+            while (firmware_status == ocpp1_6::FirmwareStatus::DownloadFailed && retries <= total_retries) {
+                boost::process::ipstream stream;
+                boost::process::child cmd(firmware_updater, boost::process::args(args),
+                                          boost::process::std_out > stream);
+                std::string temp;
+                retries += 1;
+                while (std::getline(stream, temp)) {
+                    firmware_status = ocpp1_6::conversions::string_to_firmware_status(temp);
+                    this->charge_point->send_firmware_status_notification(firmware_status);
+                }
+                if (firmware_status == ocpp1_6::FirmwareStatus::DownloadFailed) {
+                    std::this_thread::sleep_for(std::chrono::seconds(retry_interval));
+                }
+                cmd.wait();
             }
-            cmd.wait();
-            this->charge_point->send_firmware_status_notification(ocpp1_6::FirmwareStatus::Idle);
         });
         this->update_firmware_thread.detach();
     });
 
     this->charge_point->register_signed_update_firmware_download_callback(
-        [this](ocpp1_6::SignedUpdateFirmwareRequest req) {
+        [this](ocpp1_6::SignedUpdateFirmwareRequest msg) {
             EVLOG_debug << "Executing signed firmware update download callback";
 
-            this->signed_update_firmware_thread = std::thread([this, req]() {
-                ocpp1_6::FirmwareStatusEnumType status;
+            this->signed_update_firmware_thread = std::thread([this, msg]() {
                 // // create temporary file
-                std::string date_time = ocpp1_6::DateTime().to_rfc3339();
-                std::string file_name = "signed_firmware-" + date_time + "-%%%%-%%%%-%%%%-%%%%" + ".pnx";
+                const std::string date_time = ocpp1_6::DateTime().to_rfc3339();
+                const std::string file_name = "signed_firmware-" + date_time + "-%%%%-%%%%-%%%%-%%%%" + ".pnx";
 
-                auto firmware_file_name = boost::filesystem::unique_path(boost::filesystem::path(file_name));
-                auto firmware_file_path = boost::filesystem::temp_directory_path() / firmware_file_name;
+                const auto firmware_file_name = boost::filesystem::unique_path(boost::filesystem::path(file_name));
+                const auto firmware_file_path = boost::filesystem::temp_directory_path() / firmware_file_name;
 
-                auto firmware_downloader =
+                const auto firmware_downloader =
                     boost::filesystem::path(this->config.ScriptsPath) / "signed_firmware_downloader.sh";
-                auto constants = boost::filesystem::path(this->config.ScriptsPath) / "constants.env";
+                const auto constants = boost::filesystem::path(this->config.ScriptsPath) / "constants.env";
 
-                boost::process::ipstream download_stream;
-                std::vector<std::string> download_args = {constants.string(), req.firmware.location.get(),
-                                                          firmware_file_path.string(), req.firmware.signature.get(),
-                                                          req.firmware.signingCertificate.get()};
-                boost::process::child download_cmd(firmware_downloader, boost::process::args(download_args),
-                                                   boost::process::std_out > download_stream);
-                std::string temp;
-                while (std::getline(download_stream, temp)) {
-                    status = ocpp1_6::conversions::string_to_firmware_status_enum_type(temp);
-                    this->charge_point->signedFirmwareUpdateStatusNotification(status, req.requestId);
+                const std::vector<std::string> download_args = {
+                    constants.string(), msg.firmware.location.get(), firmware_file_path.string(),
+                    msg.firmware.signature.get(), msg.firmware.signingCertificate.get()};
+                int32_t retries = 0;
+                const auto total_retries = msg.retries.get_value_or(this->config.DefaultRetries);
+                const auto retry_interval = msg.retryInterval.get_value_or(this->config.DefaultRetryInterval);
+                ocpp1_6::FirmwareStatusEnumType status = ocpp1_6::FirmwareStatusEnumType::DownloadFailed;
+
+                while (status == ocpp1_6::FirmwareStatusEnumType::DownloadFailed && retries <= total_retries) {
+                    boost::process::ipstream download_stream;
+                    boost::process::child download_cmd(firmware_downloader, boost::process::args(download_args),
+                                                       boost::process::std_out > download_stream);
+                    std::string temp;
+                    retries += 1;
+                    while (std::getline(download_stream, temp)) {
+                        status = ocpp1_6::conversions::string_to_firmware_status_enum_type(temp);
+                        this->charge_point->signedFirmwareUpdateStatusNotification(status, msg.requestId);
+                    }
+                    if (status == ocpp1_6::FirmwareStatusEnumType::DownloadFailed) {
+                        std::this_thread::sleep_for(std::chrono::seconds(retry_interval));
+                    }
                 }
                 // FIXME(piet): This can be removed when we actually update the firmware and reboot
                 if (status == ocpp1_6::FirmwareStatusEnumType::SignatureVerified) {
-                    this->charge_point->notify_signed_firmware_update_downloaded(req, firmware_file_path);
+                    this->charge_point->notify_signed_firmware_update_downloaded(msg, firmware_file_path);
                 } else {
                     this->charge_point->set_signed_firmware_update_running(false);
                 }
@@ -282,13 +333,13 @@ void OCPP::init() {
         });
 
     this->charge_point->register_signed_update_firmware_install_callback(
-        [this](ocpp1_6::SignedUpdateFirmwareRequest req, boost::filesystem::path file_path) {
-            this->signed_update_firmware_thread = std::thread([this, req]() {
+        [this](ocpp1_6::SignedUpdateFirmwareRequest msg, boost::filesystem::path file_path) {
+            this->signed_update_firmware_thread = std::thread([this, msg]() {
                 boost::process::ipstream install_stream;
-                auto firmware_installer =
+                const auto firmware_installer =
                     boost::filesystem::path(this->config.ScriptsPath) / "signed_firmware_installer.sh";
                 const auto constants = boost::filesystem::path(this->config.ScriptsPath) / "constants.env";
-                std::vector<std::string> install_args = {constants.string()};
+                const std::vector<std::string> install_args = {constants.string()};
                 boost::process::child install_cmd(firmware_installer, boost::process::args(install_args),
                                                   boost::process::std_out > install_stream);
                 std::string temp;
@@ -296,7 +347,7 @@ void OCPP::init() {
 
                 while (std::getline(install_stream, temp)) {
                     status = ocpp1_6::conversions::string_to_firmware_status_enum_type(temp);
-                    this->charge_point->signedFirmwareUpdateStatusNotification(status, req.requestId);
+                    this->charge_point->signedFirmwareUpdateStatusNotification(status, msg.requestId);
                 }
                 if (status == ocpp1_6::FirmwareStatusEnumType::Installed) {
                     this->charge_point->trigger_boot_notification(); // to make OCTT happy
