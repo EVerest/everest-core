@@ -690,6 +690,27 @@ SupportedFeatureProfiles string_to_supported_feature_profiles(const std::string&
 /// \returns an output stream with the SupportedFeatureProfiles written to
 std::ostream& operator<<(std::ostream& os, const SupportedFeatureProfiles& supported_feature_profiles);
 
+/// \brief Contains the different connection states of the charge point
+enum SessionStartedReason
+{
+    EVConnected,
+    Authorized
+};
+namespace conversions {
+/// \brief Converts the given SessionStartedReason \p e to std::string
+/// \returns a string representation of the SessionStartedReason
+std::string session_started_reason_to_string(SessionStartedReason e);
+
+/// \brief Converts the given std::string \p s to SessionStartedReason
+/// \returns a SessionStartedReason from a string representation
+SessionStartedReason string_to_session_started_reason(const std::string& s);
+} // namespace conversions
+
+/// \brief Writes the string representation of the given \p session_started_reason
+/// to the given output stream \p os \returns an output stream with the SessionStartedReason written to
+std::ostream& operator<<(std::ostream& os, const SessionStartedReason& session_started_reason);
+
+
 /// \brief struct for a scheduled callback
 struct ScheduledCallback {
     ScheduledCallbackType callbackType;

@@ -86,7 +86,7 @@ int main(int argc, char* argv[]) {
 
     auto configs_path = maindir;
     auto schemas_path = maindir;
-    auto database_path = maindir;
+    auto database_path = "/tmp/ocpp";
 
     boost::filesystem::path config_path = boost::filesystem::path(maindir) / conf;
     std::ifstream ifs(config_path.c_str());
@@ -129,8 +129,8 @@ int main(int argc, char* argv[]) {
                 std::cout << std::endl;
                 if (command == "auth") {
                     EVLOG_info << "authorize_id_tag command";
-                    auto result = charge_point->authorize_id_tag(ocpp1_6::CiString20Type(std::string("123")));
-                    if (result == ocpp1_6::AuthorizationStatus::Accepted) {
+                    auto result = charge_point->authorize_id_token(ocpp1_6::CiString20Type(std::string("123")));
+                    if (result.status == ocpp1_6::AuthorizationStatus::Accepted) {
                         EVLOG_info << "Authorized";
                     } else {
                         EVLOG_info << "Not authorized";
@@ -165,13 +165,7 @@ int main(int argc, char* argv[]) {
                     val.sampledValue.push_back(sample);
                     meter_values[0].push_back(val);
                     meter_values[1].push_back(val);
-                } else if (command == "start_charging") {
-                    if (charge_point->start_charging(1)) {
-                        EVLOG_info << "start_charging successful";
-                    } else {
-                        EVLOG_info << "start_charging failed";
-                    }
-                } else {
+                }  else {
                     EVLOG_info << "unknown command, not doing anything";
                 }
             } while (!std::cin.fail() && running);

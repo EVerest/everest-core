@@ -18,23 +18,13 @@ ChargePoint::ChargePoint(std::shared_ptr<ChargePointConfiguration> configuration
     diagnostics_status(DiagnosticsStatus::Idle),
     firmware_status(FirmwareStatus::Idle),
     log_status(UploadLogStatusEnumType::Idle),
-    signed_firmware_update_running(false),
-    switch_security_profile_callback(nullptr),
-    interrupt_log_upload(false) {
+    switch_security_profile_callback(nullptr) {
     this->configuration = configuration;
     // TODO(piet): this->register_scheduled_callbacks();
     this->connection_state = ChargePointConnectionState::Disconnected;
-    this->charging_session_handler =
-        std::make_unique<ChargingSessionHandler>(this->configuration->getNumberOfConnectors());
-    for (int32_t connector = 0; connector < this->configuration->getNumberOfConnectors() + 1; connector++) {
-        this->connection_timeout_timer.push_back(
-            std::make_unique<Everest::SteadyTimer>(&this->io_service, [this, connector]() {
-                EVLOG_info << "Removing session at connector: " << connector
-                           << " because the car was not plugged-in in time.";
-                this->charging_session_handler->remove_active_session(connector);
-                this->status->submit_event(connector, Event_BecomeAvailable());
-            }));
-    }
+    this->transaction_handler = std::make_unique<TransactionHandler>(this->configuration->getNumberOfConnectors());
+
+    this->init_websocket(this->configuration->getSecurityProfile());
     this->message_queue = std::make_unique<MessageQueue>(
         this->configuration, [this](json message) -> bool { return this->websocket->send(message.dump()); });
 
@@ -46,11 +36,6 @@ ChargePoint::ChargePoint(std::shared_ptr<ChargePointConfiguration> configuration
     this->clock_aligned_meter_values_timer = std::make_unique<Everest::SystemTimer>(
         &this->io_service, [this]() { this->clock_aligned_meter_values_sample(); });
 
-    this->signed_firmware_update_download_timer =
-        std::make_unique<Everest::SteadyTimer>(&this->io_service, [this]() {});
-
-    this->signed_firmware_update_install_timer = std::make_unique<Everest::SteadyTimer>(&this->io_service, [this]() {});
-
     this->work = boost::make_shared<boost::asio::io_service::work>(this->io_service);
 
     this->io_service_thread = std::thread([this]() { this->io_service.run(); });
@@ -60,17 +45,6 @@ ChargePoint::ChargePoint(std::shared_ptr<ChargePointConfiguration> configuration
         [this](int32_t connector, ChargePointErrorCode errorCode, ChargePointStatus status) {
             this->status_notification(connector, errorCode, status);
         });
-}
-
-void ChargePoint::register_scheduled_callbacks() {
-
-    // std::vector<ScheduledCallback> callbacks = this->configuration->getScheduledCallbacks();
-
-    // SignedFirmwareUpdateRequest req = json::parse(args[0]);
-    // json j = req;
-    // j.dump();
-
-    // iterate over callbacks and register them
 }
 
 void ChargePoint::init_websocket(int32_t security_profile) {
@@ -86,13 +60,11 @@ void ChargePoint::init_websocket(int32_t security_profile) {
         }
     });
 
-    this->websocket->register_message_callback([this](const std::string& message) {
-        this->message_callback(message); //
-    });
+    this->websocket->register_message_callback([this](const std::string& message) { this->message_callback(message); });
 
     if (security_profile == 3) {
         EVLOG_debug << "Registerung certificate timer";
-        this->websocket->register_sign_certificate_callback([this]() { this->signCertificate(); });
+        this->websocket->register_sign_certificate_callback([this]() { this->sign_certificate(); });
     }
 }
 
@@ -140,8 +112,10 @@ void ChargePoint::clock_aligned_meter_values_sample() {
         for (int32_t connector = 1; connector < this->configuration->getNumberOfConnectors() + 1; connector++) {
             auto meter_value = this->get_latest_meter_value(
                 connector, this->configuration->getMeterValuesAlignedDataVector(), ReadingContext::Sample_Clock);
-            this->charging_session_handler->add_meter_value(connector, meter_value);
-            this->send_meter_value(connector, meter_value);
+            if (this->transaction_handler->transaction_active(connector)) {
+                this->transaction_handler->get_transaction(connector)->add_meter_value(meter_value);
+                this->send_meter_value(connector, meter_value);
+            }
         }
 
         this->update_clock_aligned_meter_values_interval();
@@ -162,7 +136,7 @@ void ChargePoint::update_heartbeat_interval() {
 void ChargePoint::update_meter_values_sample_interval() {
     // TODO(kai): should we update the meter values for continuous monitoring here too?
     int32_t interval = this->configuration->getMeterValueSampleInterval();
-    this->charging_session_handler->change_meter_values_sample_intervals(interval);
+    this->transaction_handler->change_meter_values_sample_intervals(interval);
 }
 
 void ChargePoint::update_clock_aligned_meter_values_interval() {
@@ -176,7 +150,7 @@ void ChargePoint::update_clock_aligned_meter_values_interval() {
     auto diff = now - midnight;
     auto start = std::chrono::duration_cast<std::chrono::seconds>(diff / clock_aligned_data_interval) *
                      clock_aligned_data_interval +
-                 std::chrono::seconds(clock_aligned_data_interval);
+                 std::chrono::seconds(clock_aligned_data_interval + date::get_tzdb().leap_seconds.size());
     this->clock_aligned_meter_values_time_point = midnight + start;
     using date::operator<<;
     std::ostringstream oss;
@@ -409,7 +383,7 @@ void ChargePoint::send_meter_value(int32_t connector, MeterValue meter_value) {
     std::ostringstream oss;
     oss << "Gathering measurands of connector: " << connector;
     if (connector > 0) {
-        auto transaction = this->charging_session_handler->get_transaction(connector);
+        auto transaction = this->transaction_handler->get_transaction(connector);
         if (transaction != nullptr && transaction->get_transaction_id() != -1) {
             auto transaction_id = transaction->get_transaction_id();
             req.transactionId.emplace(transaction_id);
@@ -455,11 +429,11 @@ void ChargePoint::stop_all_transactions() {
 void ChargePoint::stop_all_transactions(Reason reason) {
     int32_t number_of_connectors = this->configuration->getNumberOfConnectors();
     for (int32_t connector = 1; connector <= number_of_connectors; connector++) {
-        if (this->charging_session_handler->transaction_active(connector)) {
-            this->charging_session_handler->add_stop_energy_wh(
-                connector, std::make_shared<StampedEnergyWh>(DateTime(), this->get_meter_wh(connector)));
-            this->stop_transaction(connector, reason);
-            this->charging_session_handler->remove_active_session(connector);
+        if (this->transaction_handler->transaction_active(connector)) {
+            this->transaction_handler->get_transaction(connector)->add_stop_energy_wh(
+                std::make_shared<StampedEnergyWh>(DateTime(), this->get_meter_wh(connector)));
+            this->stop_transaction_callback(connector, reason);
+            this->transaction_handler->remove_active_transaction(connector);
         }
     }
 }
@@ -769,7 +743,7 @@ void ChargePoint::handleChangeAvailabilityRequest(Call<ChangeAvailabilityRequest
         if (call.msg.connectorId == 0) {
             int32_t number_of_connectors = this->configuration->getNumberOfConnectors();
             for (int32_t connector = 1; connector <= number_of_connectors; connector++) {
-                if (this->charging_session_handler->transaction_active(connector)) {
+                if (this->transaction_handler->transaction_active(connector)) {
                     transaction_running = true;
                     std::lock_guard<std::mutex> change_availability_lock(change_availability_mutex);
                     this->change_availability_queue[connector] = call.msg.type;
@@ -778,7 +752,7 @@ void ChargePoint::handleChangeAvailabilityRequest(Call<ChangeAvailabilityRequest
                 }
             }
         } else {
-            if (this->charging_session_handler->transaction_active(call.msg.connectorId)) {
+            if (this->transaction_handler->transaction_active(call.msg.connectorId)) {
                 transaction_running = true;
             } else {
                 connectors.push_back(call.msg.connectorId);
@@ -868,10 +842,13 @@ void ChargePoint::handleChangeConfigurationRequest(Call<ChangeConfigurationReque
                     this->send<ChangeConfigurationResponse>(call_result);
                     int32_t security_profile = std::stoi(call.msg.value);
                     responded = true;
-                    this->registerSwitchSecurityProfileCallback(
-                        [this, security_profile]() { this->switchSecurityProfile(security_profile); });
+                    this->switch_security_profile_callback =
+                        [this, security_profile]() { this->switchSecurityProfile(security_profile); };
                     // disconnected_callback will trigger security_profile_callback when it is set
                     this->websocket->disconnect(websocketpp::close::status::service_restart);
+                }
+                if (call.msg.key == "ConnectionTimeout") {
+                    this->set_connection_timeout_callback(this->configuration->getConnectionTimeOut());
                 }
             }
         }
@@ -890,10 +867,10 @@ void ChargePoint::switchSecurityProfile(int32_t new_security_profile) {
                 << new_security_profile;
 
     this->init_websocket(new_security_profile);
-    this->registerSwitchSecurityProfileCallback([this]() {
+    this->switch_security_profile_callback = [this]() {
         EVLOG_warning << "Switching security profile back to fallback because new profile couldnt connect";
         this->switchSecurityProfile(this->configuration->getSecurityProfile());
-    });
+    };
 
     this->websocket->connect(new_security_profile);
 }
@@ -1005,18 +982,8 @@ void ChargePoint::handleRemoteStartTransactionRequest(Call<RemoteStartTransactio
         this->send<RemoteStartTransactionResponse>(call_result);
         return;
     }
-    if (this->charging_session_handler->get_transaction(connector) != nullptr) {
-        EVLOG_debug << "Received RemoteStartTransactionRequest for a connector with an active session.";
-        response.status = RemoteStartStopStatus::Rejected;
-        CallResult<RemoteStartTransactionResponse> call_result(response, call.uniqueId);
-        this->send<RemoteStartTransactionResponse>(call_result);
-        return;
-    }
-
-    // check if connector is reserved and tagId matches the reserved tag
-    if (this->reserved_id_tag_map.find(connector) != this->reserved_id_tag_map.end() &&
-        call.msg.idTag.get() != this->reserved_id_tag_map[connector]) {
-        EVLOG_warning << "Received RemoteStartTransactionRequest for a reserved connector with wrong idTag.";
+    if (this->transaction_handler->get_transaction(connector) != nullptr) {
+        EVLOG_debug << "Received RemoteStartTransactionRequest for a connector with an active transaction.";
         response.status = RemoteStartStopStatus::Rejected;
         CallResult<RemoteStartTransactionResponse> call_result(response, call.uniqueId);
         this->send<RemoteStartTransactionResponse>(call_result);
@@ -1025,51 +992,64 @@ void ChargePoint::handleRemoteStartTransactionRequest(Call<RemoteStartTransactio
 
     if (call.msg.chargingProfile) {
         // TODO(kai): A charging profile was provided, forward to the charger
+        if (call.msg.chargingProfile.get().chargingProfilePurpose != ChargingProfilePurposeType::TxProfile) {
+            response.status = RemoteStartStopStatus::Rejected;
+            CallResult<RemoteStartTransactionResponse> call_result(response, call.uniqueId);
+            this->send<RemoteStartTransactionResponse>(call_result);
+            return;
+        }
     }
-
-    response.status = RemoteStartStopStatus::Accepted;
-    CallResult<RemoteStartTransactionResponse> call_result(response, call.uniqueId);
-    this->send<RemoteStartTransactionResponse>(call_result);
-
-    this->status->submit_event(connector, Event_UsageInitiated());
 
     {
         std::lock_guard<std::mutex> lock(remote_start_transaction_mutex);
 
-        this->remote_start_transaction[call.uniqueId] = std::thread([this, call, connector]() {
-            bool authorized = true;
-            int32_t connector = 0;
-            if (!call.msg.connectorId) {
-                connector = 0;
-            } else {
-                connector = call.msg.connectorId.value();
-            }
+        int32_t connector = call.msg.connectorId.value();
+        IdTagInfo id_tag_info;
+        id_tag_info.status = AuthorizationStatus::Accepted;
+        // check if connector is reserved and tagId matches the reserved tag
+        response.status = RemoteStartStopStatus::Accepted;
+        CallResult<RemoteStartTransactionResponse> call_result(response, call.uniqueId);
+        this->send<RemoteStartTransactionResponse>(call_result);
 
-            if (this->configuration->getAuthorizeConnectorZeroOnConnectorOne() && connector == 0) {
-                connector = 1;
-            }
-            if (this->configuration->getAuthorizeRemoteTxRequests()) {
-                // need to authorize first
-                authorized = (this->authorize_id_tag(call.msg.idTag) == AuthorizationStatus::Accepted);
-            } else {
-                // no explicit authorization is requested, implicitly authorizing this idTag internally
-                IdTagInfo idTagInfo;
-                idTagInfo.status = AuthorizationStatus::Accepted;
-                this->charging_session_handler->add_authorized_token(connector, call.msg.idTag, idTagInfo);
-                this->connection_timeout_timer.at(connector)->timeout(
-                    std::chrono::seconds(this->configuration->getConnectionTimeOut()));
-            }
-            if (authorized) {
-                // FIXME(kai): this probably needs to be signalled to the evse_manager in some way? we at least need the
-                // start_energy and start_timestamp from the evse manager to properly start the transaction
-                if (this->remote_start_transaction_callback != nullptr) {
-                    this->remote_start_transaction_callback(connector, call.msg.idTag);
-                    this->start_transaction(connector);
-                } else {
-                    EVLOG_error << "Could not start a remotely requested transaction on connector: " << connector;
+        if (this->configuration->getAuthorizeRemoteTxRequests()) {
+            bool prevalidated = false;
+            if (this->configuration->getAuthorizationCacheEnabled()) {
+                if (this->validate_against_cache_entries(call.msg.idTag) &&
+                    this->status->get_state(connector) != ChargePointStatus::Reserved) {
+                    prevalidated = true;
                 }
             }
-        });
+            this->provide_token_callback(call.msg.idTag.get(), connector, prevalidated);
+        } else {
+            this->provide_token_callback(call.msg.idTag.get(), connector, true); // prevalidated
+        }
+    };
+}
+
+bool ChargePoint::validate_against_cache_entries(CiString20Type id_tag) {
+    const auto cache_entry_opt = this->configuration->getAuthorizationCacheEntry(id_tag);
+    if (cache_entry_opt.has_value()) {
+        auto cache_entry = cache_entry_opt.value();
+        const auto expiry_date_opt = cache_entry.expiryDate;
+
+        if (cache_entry.status == AuthorizationStatus::Accepted) {
+            if (expiry_date_opt.has_value()) {
+                const auto expiry_date = expiry_date_opt.value();
+                if (expiry_date < DateTime()) {
+                    cache_entry.status = AuthorizationStatus::Expired;
+                    this->configuration->updateAuthorizationCacheEntry(id_tag, cache_entry);
+                    return false;
+                } else {
+                    return true;
+                }
+            } else {
+                return true;
+            }
+        } else {
+            return false;
+        }
+    } else {
+        return false;
     }
 }
 
@@ -1079,7 +1059,7 @@ void ChargePoint::handleRemoteStopTransactionRequest(Call<RemoteStopTransactionR
     RemoteStopTransactionResponse response;
     response.status = RemoteStartStopStatus::Rejected;
 
-    auto connector = this->charging_session_handler->get_connector_from_transaction_id(call.msg.transactionId);
+    auto connector = this->transaction_handler->get_connector_from_transaction_id(call.msg.transactionId);
     if (connector > 0) {
         response.status = RemoteStartStopStatus::Accepted;
     }
@@ -1088,7 +1068,7 @@ void ChargePoint::handleRemoteStopTransactionRequest(Call<RemoteStopTransactionR
     this->send<RemoteStopTransactionResponse>(call_result);
 
     if (connector > 0) {
-        this->cancel_charging_callback(connector, Reason::Remote);
+        this->stop_transaction_callback(connector, Reason::Remote);
     }
 }
 
@@ -1124,7 +1104,7 @@ void ChargePoint::handleStartTransactionResponse(CallResult<StartTransactionResp
     StartTransactionResponse start_transaction_response = call_result.msg;
     // TODO(piet): Fix this for multiple connectors;
 
-    auto transaction = this->charging_session_handler->get_transaction(call_result.uniqueId);
+    const auto transaction = this->transaction_handler->get_transaction(call_result.uniqueId);
     int32_t connector = transaction->get_connector();
     transaction->set_transaction_id(start_transaction_response.transactionId);
 
@@ -1133,10 +1113,8 @@ void ChargePoint::handleStartTransactionResponse(CallResult<StartTransactionResp
                                                         start_transaction_response.transactionId);
     }
 
-    auto idTag = transaction->get_id_tag();
-    this->configuration->updateAuthorizationCacheEntry(idTag, start_transaction_response.idTagInfo);
-    this->charging_session_handler->add_authorized_token(connector, idTag, start_transaction_response.idTagInfo);
-
+    const auto id_tag = transaction->get_id_tag();
+    this->configuration->updateAuthorizationCacheEntry(id_tag, start_transaction_response.idTagInfo);
     if (start_transaction_response.idTagInfo.status == AuthorizationStatus::ConcurrentTx) {
         return;
     }
@@ -1148,7 +1126,10 @@ void ChargePoint::handleStartTransactionResponse(CallResult<StartTransactionResp
     if (start_transaction_response.idTagInfo.status != AuthorizationStatus::Accepted) {
         // FIXME(kai): libfsm        this->status_notification(connector, ChargePointErrorCode::NoError,
         // this->status[connector]->suspended_evse());
-        this->cancel_charging_callback(connector, Reason::DeAuthorized);
+        this->pause_charging_callback(connector);
+        if (this->configuration->getStopTransactionOnInvalidId()) {
+            this->stop_transaction_callback(connector, Reason::DeAuthorized);
+        }
     }
 }
 
@@ -1160,9 +1141,9 @@ void ChargePoint::handleStopTransactionResponse(CallResult<StopTransactionRespon
     int32_t connector = 1;
 
     if (stop_transaction_response.idTagInfo) {
-        auto idTag = this->charging_session_handler->get_authorized_id_tag(call_result.uniqueId.get());
-        if (idTag) {
-            this->configuration->updateAuthorizationCacheEntry(idTag.value(),
+        auto id_tag = this->transaction_handler->get_authorized_id_tag(call_result.uniqueId.get());
+        if (id_tag) {
+            this->configuration->updateAuthorizationCacheEntry(id_tag.value(),
                                                                stop_transaction_response.idTagInfo.value());
         }
     }
@@ -1205,7 +1186,7 @@ void ChargePoint::handleStopTransactionResponse(CallResult<StopTransactionRespon
             EVLOG_error << oss.str();
         }
     }
-    this->charging_session_handler->remove_stopped_transaction(call_result.uniqueId.get());
+    this->transaction_handler->remove_stopped_transaction(call_result.uniqueId.get());
 }
 
 void ChargePoint::handleUnlockConnectorRequest(Call<UnlockConnectorRequest> call) {
@@ -1221,9 +1202,9 @@ void ChargePoint::handleUnlockConnectorRequest(Call<UnlockConnectorRequest> call
         // advised to stop it first
         CiString20Type idTag;
         int32_t transactionId;
-        if (this->charging_session_handler->transaction_active(connector)) {
+        if (this->transaction_handler->transaction_active(connector)) {
             EVLOG_info << "Received unlock connector request with active session for this connector.";
-            this->cancel_charging_callback(connector, Reason::UnlockCommand);
+            this->stop_transaction_callback(connector, Reason::UnlockCommand);
         }
 
         if (this->unlock_connector_callback != nullptr) {
@@ -1320,7 +1301,7 @@ void ChargePoint::handleSetChargingProfileRequest(Call<SetChargingProfileRequest
             } else {
                 // shall overrule a TxDefaultProfile for the duration of the running transaction
                 // if there is no running transaction on the specified connector this change shall be discarded
-                auto transaction = this->charging_session_handler->get_transaction(call.msg.connectorId);
+                auto transaction = this->transaction_handler->get_transaction(call.msg.connectorId);
                 if (transaction != nullptr) {
                     if (call.msg.csChargingProfiles.transactionId) {
                         auto transaction_id = call.msg.csChargingProfiles.transactionId.get();
@@ -1627,9 +1608,9 @@ void ChargePoint::handleGetCompositeScheduleRequest(Call<GetCompositeScheduleReq
         if (call.msg.connectorId > 0) {
             // TODO: this should probably be done additionally to the composite schedule == 0
             // see if there's a transaction running and a tx_charging_profile installed
-            auto transaction = this->charging_session_handler->get_transaction(call.msg.connectorId);
+            auto transaction = this->transaction_handler->get_transaction(call.msg.connectorId);
             if (transaction != nullptr) {
-                auto start_energy_stamped = this->charging_session_handler->get_start_energy_wh(call.msg.connectorId);
+                auto start_energy_stamped = transaction->get_start_energy_wh();
                 auto start_timestamp = start_energy_stamped->timestamp;
                 auto tx_charging_profiles = transaction->get_charging_profiles();
 
@@ -1698,12 +1679,10 @@ void ChargePoint::handleClearChargingProfileRequest(Call<ClearChargingProfileReq
         // clear tx_profile of every charging session
         auto number_of_connectors = this->configuration->getNumberOfConnectors();
         for (int32_t connector = 1; connector <= number_of_connectors; connector++) {
-            auto transaction = this->charging_session_handler->get_transaction(connector);
-            if (transaction == nullptr) {
-                continue;
+            auto transaction = this->transaction_handler->get_transaction(connector);
+            if (transaction != nullptr) {
+                transaction->remove_charging_profiles();
             }
-
-            transaction->remove_charging_profiles();
         }
 
         response.status = ClearChargingProfileStatus::Accepted;
@@ -1758,10 +1737,10 @@ void ChargePoint::handleTriggerMessageRequest(Call<TriggerMessageRequest> call) 
         this->boot_notification();
         break;
     case MessageTrigger::DiagnosticsStatusNotification:
-        this->send_diagnostic_status_notification(this->diagnostics_status);
+        this->diagnostic_status_notification(this->diagnostics_status);
         break;
     case MessageTrigger::FirmwareStatusNotification:
-        this->send_firmware_status_notification(this->firmware_status);
+        this->firmware_status_notification(this->firmware_status);
         break;
     case MessageTrigger::Heartbeat:
         this->heartbeat();
@@ -1781,7 +1760,10 @@ void ChargePoint::handleGetDiagnosticsRequest(Call<GetDiagnosticsRequest> call) 
     EVLOG_debug << "Received GetDiagnosticsRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
     GetDiagnosticsResponse response;
     if (this->upload_diagnostics_callback) {
-        response.fileName.emplace(this->upload_diagnostics_callback(call.msg.location));
+        const auto get_log_response = this->upload_diagnostics_callback(call.msg);
+        if (get_log_response.filename.has_value()) {
+            response.fileName = get_log_response.filename.value();
+        }
     }
     CallResult<GetDiagnosticsResponse> call_result(response, call.uniqueId);
     this->send<GetDiagnosticsResponse>(call_result);
@@ -1791,8 +1773,7 @@ void ChargePoint::handleUpdateFirmwareRequest(Call<UpdateFirmwareRequest> call) 
     EVLOG_debug << "Received UpdateFirmwareRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
     UpdateFirmwareResponse response;
     if (this->update_firmware_callback) {
-        // FIXME(kai): respect call.msg.retrieveDate and only then trigger this callback
-        this->update_firmware_callback(call.msg.location);
+        this->update_firmware_callback(call.msg);
     }
     CallResult<UpdateFirmwareResponse> call_result(response, call.uniqueId);
     this->send<UpdateFirmwareResponse>(call_result);
@@ -1852,14 +1833,14 @@ void ChargePoint::handleExtendedTriggerMessageRequest(Call<ExtendedTriggerMessag
         this->boot_notification();
         break;
     case MessageTriggerEnumType::FirmwareStatusNotification:
-        this->signedFirmwareUpdateStatusNotification(this->signed_firmware_status,
+        this->signed_firmware_update_status_notification(this->signed_firmware_status,
                                                      this->signed_firmware_status_request_id);
         break;
     case MessageTriggerEnumType::Heartbeat:
         this->heartbeat();
         break;
     case MessageTriggerEnumType::LogStatusNotification:
-        this->logStatusNotification(this->log_status, this->log_status_request_id);
+        this->log_status_notification(this->log_status, this->log_status_request_id);
         break;
     case MessageTriggerEnumType::MeterValues:
         this->send_meter_value(
@@ -1867,7 +1848,7 @@ void ChargePoint::handleExtendedTriggerMessageRequest(Call<ExtendedTriggerMessag
                                                     ReadingContext::Trigger));
         break;
     case MessageTriggerEnumType::SignChargePointCertificate:
-        this->signCertificate();
+        this->sign_certificate();
         break;
     case MessageTriggerEnumType::StatusNotification:
         this->status_notification(connector, ChargePointErrorCode::NoError, this->status->get_state(connector));
@@ -1875,7 +1856,7 @@ void ChargePoint::handleExtendedTriggerMessageRequest(Call<ExtendedTriggerMessag
     }
 }
 
-void ChargePoint::signCertificate() {
+void ChargePoint::sign_certificate() {
 
     SignCertificateRequest req;
 
@@ -1978,18 +1959,11 @@ void ChargePoint::handleInstallCertificateRequest(Call<InstallCertificateRequest
 void ChargePoint::handleGetLogRequest(Call<GetLogRequest> call) {
     GetLogResponse response;
 
-    if (this->log_status == UploadLogStatusEnumType::Idle) {
-        response.status = LogStatusEnumType::Accepted;
-    } else {
-        response.status = LogStatusEnumType::AcceptedCanceled;
-        this->interrupt_log_upload = true;
-    }
-
     if (this->upload_logs_callback) {
-        // wait for current log upload to finish if running
-        std::unique_lock<std::mutex> lock(this->log_upload_mutex);
-        this->cv.wait(lock, [this]() { return !this->interrupt_log_upload.load(); });
-        response.filename.emplace(this->upload_logs_callback(call.msg));
+
+        const auto get_log_response = this->upload_logs_callback(call.msg);
+        response.status = get_log_response.status;
+        response.filename = get_log_response.filename;
     }
 
     CallResult<GetLogResponse> call_result(response, call.uniqueId);
@@ -2000,42 +1974,18 @@ void ChargePoint::handleSignedUpdateFirmware(Call<SignedUpdateFirmwareRequest> c
     EVLOG_debug << "Received SignedUpdateFirmwareRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
     SignedUpdateFirmwareResponse response;
 
-    if (this->configuration->getPkiHandler()->verifyFirmwareCertificate(call.msg.firmware.signingCertificate)) {
-        response.status = UpdateFirmwareStatusEnumType::Accepted;
-    } else {
-        EVLOG_warning << "Certificate of firmware update is not valid";
+    if (!this->configuration->getPkiHandler()->verifyFirmwareCertificate(call.msg.firmware.signingCertificate.get())) {
         response.status = UpdateFirmwareStatusEnumType::InvalidCertificate;
-    }
-
-    {
-        std::lock_guard<std::mutex> lock(this->signed_firmware_update_mutex);
-
-        if (this->signed_firmware_update_running) {
-            EVLOG_debug << "Rejecting signed firmware update request because other update is in progress";
-            response.status = UpdateFirmwareStatusEnumType::Rejected;
-        }
-
         CallResult<SignedUpdateFirmwareResponse> call_result(response, call.uniqueId);
         this->send<SignedUpdateFirmwareResponse>(call_result);
+    } else {
+        response.status = this->signed_update_firmware_callback(call.msg);
+        CallResult<SignedUpdateFirmwareResponse> call_result(response, call.uniqueId);
+        this->send<SignedUpdateFirmwareResponse>(call_result);
+    }
 
-        if (response.status == UpdateFirmwareStatusEnumType::InvalidCertificate) {
-            this->securityEventNotification(SecurityEvent::InvalidFirmwareSigningCertificate,
-                                            "Certificate is invalid.");
-        }
-
-        if (response.status == UpdateFirmwareStatusEnumType::Accepted) {
-            this->signed_firmware_update_running = true;
-            if (call.msg.firmware.retrieveDateTime.to_time_point() > date::utc_clock::now()) {
-                this->signed_firmware_update_download_timer->at(
-                    [this, call]() { this->signed_update_firmware_download_callback(call.msg); },
-                    call.msg.firmware.retrieveDateTime.to_time_point());
-                EVLOG_debug << "DownloadScheduled for: " << call.msg.firmware.retrieveDateTime.to_rfc3339();
-                this->signedFirmwareUpdateStatusNotification(FirmwareStatusEnumType::DownloadScheduled,
-                                                             call.msg.requestId);
-            } else {
-                this->signed_update_firmware_download_callback(call.msg);
-            }
-        }
+    if (response.status == UpdateFirmwareStatusEnumType::InvalidCertificate) {
+        this->securityEventNotification(SecurityEvent::InvalidFirmwareSigningCertificate, "Certificate is invalid.");
     }
 }
 
@@ -2050,9 +2000,9 @@ void ChargePoint::securityEventNotification(const SecurityEvent& type, const std
     this->send<SecurityEventNotificationRequest>(call);
 }
 
-void ChargePoint::logStatusNotification(UploadLogStatusEnumType status, int requestId) {
+void ChargePoint::log_status_notification(UploadLogStatusEnumType status, int requestId) {
 
-    EVLOG_debug << "Sending logStatusNotification with status: " << status << ", requestId: " << requestId;
+    EVLOG_debug << "Sending log_status_notification with status: " << status << ", requestId: " << requestId;
 
     LogStatusNotificationRequest req;
     req.status = status;
@@ -2065,7 +2015,7 @@ void ChargePoint::logStatusNotification(UploadLogStatusEnumType status, int requ
     this->send<LogStatusNotificationRequest>(call);
 }
 
-void ChargePoint::signedFirmwareUpdateStatusNotification(FirmwareStatusEnumType status, int requestId) {
+void ChargePoint::signed_firmware_update_status_notification(FirmwareStatusEnumType status, int requestId) {
     EVLOG_debug << "Sending FirmwareUpdateStatusNotification";
     SignedFirmwareStatusNotificationRequest req;
     req.status = status;
@@ -2096,26 +2046,19 @@ void ChargePoint::handleReserveNowRequest(Call<ReserveNowRequest> call) {
 
     CallResult<ReserveNowResponse> call_result(response, call.uniqueId);
     this->send<ReserveNowResponse>(call_result);
-
-    if (response.status == ReservationStatus::Accepted) {
-        this->status->submit_event(call.msg.connectorId, Event_ReserveConnector());
-    }
 }
 
 void ChargePoint::handleCancelReservationRequest(Call<CancelReservationRequest> call) {
     CancelReservationResponse response;
     response.status = CancelReservationStatus::Rejected;
 
-    int32_t connector = this->res_conn_map[call.msg.reservationId];
     if (this->cancel_reservation_callback != nullptr) {
-        response.status = this->cancel_reservation_callback(connector);
+        if (this->cancel_reservation_callback(call.msg.reservationId)) {
+            response.status = CancelReservationStatus::Accepted;
+        }
     }
     CallResult<CancelReservationResponse> call_result(response, call.uniqueId);
     this->send<CancelReservationResponse>(call_result);
-
-    if (response.status == CancelReservationStatus::Accepted) {
-        this->status->submit_event(connector, Event_BecomeAvailable());
-    }
 }
 
 void ChargePoint::handleSendLocalListRequest(Call<SendLocalListRequest> call) {
@@ -2245,45 +2188,21 @@ void ChargePoint::status_notification(int32_t connector, ChargePointErrorCode er
 
 // public API for Core profile
 
-AuthorizationStatus ChargePoint::authorize_id_tag(CiString20Type idTag) {
-    auto auth_status = AuthorizationStatus::Invalid;
+IdTagInfo ChargePoint::authorize_id_token(CiString20Type idTag) {
+    // only do authorize req when authorization locally not enabled or fails
+    // proritize auth list over auth cache for same idTags
 
-    // TODO(kai): implement local authorization (this is optional)
-
-    // check if a session is running with this idTag associated
-    for (int32_t connector = 1; connector < this->configuration->getNumberOfConnectors() + 1; connector++) {
-        auto authorized_id_tag = this->charging_session_handler->get_authorized_id_tag(connector);
-        if (authorized_id_tag != boost::none) {
-            if (authorized_id_tag.get() == idTag) {
-                // get transaction
-                auto transaction = this->charging_session_handler->get_transaction(connector);
-                if (transaction != nullptr) {
-                    // stop charging, this will stop the session as well
-                    this->cancel_charging_callback(connector, Reason::Local);
-                    return AuthorizationStatus::Invalid;
-                }
-            }
+    if (this->configuration->getLocalAuthListEnabled()) {
+        const auto auth_list_entry_opt = this->configuration->getLocalAuthorizationListEntry(idTag);
+        if (auth_list_entry_opt.has_value()) {
+            EVLOG_info << "Found id_tag " << idTag.get() << " in AuthorizationList";
+            return auth_list_entry_opt.value();
         }
     }
-
-    // check if all connectors have active transactions
-    if (this->charging_session_handler->all_connectors_have_active_transaction()) {
-        return AuthorizationStatus::Invalid;
-    }
-
-    int32_t connector = 1;
-
-    // dont authorize if state is Unavailable
-    if (this->status->get_state(connector) == ChargePointStatus::Unavailable) {
-        return AuthorizationStatus::Invalid;
-    }
-
-    // check if connector is reserved and tagId matches the reserved tag
-    if (this->reserved_id_tag_map.find(connector) != this->reserved_id_tag_map.end()) {
-        if (idTag.get() == this->reserved_id_tag_map[connector]) {
-            auth_status = AuthorizationStatus::Accepted;
-        } else {
-            return AuthorizationStatus::Invalid;
+    if (this->configuration->getAuthorizationCacheEnabled()) {
+        if (this->validate_against_cache_entries(idTag)) {
+            EVLOG_info << "Found vlaid id_tag " << idTag.get() << " in AuthorizationCache";
+            return this->configuration->getAuthorizationCacheEntry(idTag).value();
         }
     }
 
@@ -2293,63 +2212,24 @@ AuthorizationStatus ChargePoint::authorize_id_tag(CiString20Type idTag) {
     Call<AuthorizeRequest> call(req, this->message_queue->createMessageId());
 
     auto authorize_future = this->send_async<AuthorizeRequest>(call);
-
     auto enhanced_message = authorize_future.get();
 
+    IdTagInfo id_tag_info;
     if (enhanced_message.messageType == MessageType::AuthorizeResponse) {
         CallResult<AuthorizeResponse> call_result = enhanced_message.message;
-        AuthorizeResponse authorize_response = call_result.msg;
-
-        auth_status = authorize_response.idTagInfo.status;
-
-        if (auth_status == AuthorizationStatus::Accepted) {
+        if (call_result.msg.idTagInfo.status == AuthorizationStatus::Accepted) {
             this->configuration->updateAuthorizationCacheEntry(idTag, call_result.msg.idTagInfo);
-            if (!this->configuration->getAuthorizeConnectorZeroOnConnectorOne()) {
-                connector = this->charging_session_handler->add_authorized_token(idTag, authorize_response.idTagInfo);
-            } else {
-                EVLOG_info << "Automatically authorizing idTag on connector 1 because there is only "
-                              "one connector";
-                connector = this->charging_session_handler->add_authorized_token(connector, idTag,
-                                                                                 authorize_response.idTagInfo);
-            }
-            this->connection_timeout_timer.at(connector)->timeout(
-                std::chrono::seconds(this->configuration->getConnectionTimeOut()));
-            this->status->submit_event(connector, Event_UsageInitiated());
-        } else {
-            return auth_status;
         }
-    }
-    if (enhanced_message.offline) {
-        // if chargepoint is offline and allowing transactions for unknown id
+        return call_result.msg.idTagInfo;
+    } else if (enhanced_message.offline) {
         if (this->configuration->getAllowOfflineTxForUnknownId() != boost::none &&
             this->configuration->getAllowOfflineTxForUnknownId().value()) {
-            IdTagInfo id_tag_info = {AuthorizationStatus::Accepted, boost::none, boost::none};
-            this->charging_session_handler->add_authorized_token(connector, idTag, id_tag_info);
-            auth_status = AuthorizationStatus::Accepted;
-        }
-
-        // The charge point is offline or has a bad connection.
-        // Check if local authorization via the authorization cache is allowed:
-        if (this->configuration->getAuthorizationCacheEnabled() && this->configuration->getLocalAuthorizeOffline()) {
-            EVLOG_info << "Charge point appears to be offline, using authorization cache to check if "
-                          "IdTag is valid";
-            auto idTagInfo = this->configuration->getAuthorizationCacheEntry(idTag);
-            if (idTagInfo) {
-                this->charging_session_handler->add_authorized_token(connector, idTag, idTagInfo.get());
-                auth_status = idTagInfo.get().status;
-            }
+            id_tag_info = {AuthorizationStatus::Accepted, boost::none, boost::none};
+            return id_tag_info;
         }
     }
-
-    if (connector > 0 && auth_status == AuthorizationStatus::Accepted) {
-        this->start_transaction(connector);
-    }
-
-    return auth_status;
-}
-
-boost::optional<CiString20Type> ChargePoint::get_authorized_id_tag(int32_t connector) {
-    return this->charging_session_handler->get_authorized_id_tag(connector);
+    id_tag_info = {AuthorizationStatus::Invalid, boost::none, boost::none};
+    return id_tag_info;
 }
 
 DataTransferResponse ChargePoint::data_transfer(const CiString255Type& vendorId, const CiString50Type& messageId,
@@ -2384,119 +2264,101 @@ void ChargePoint::register_data_transfer_callback(const CiString255Type& vendorI
     this->data_transfer_callbacks[vendorId.get()][messageId.get()] = callback;
 }
 
-void ChargePoint::receive_power_meter(int32_t connector, json powermeter) {
+void ChargePoint::on_meter_values(int32_t connector, json powermeter) {
     EVLOG_debug << "updating power meter for connector: " << connector;
     std::lock_guard<std::mutex> lock(power_meter_mutex);
     this->power_meter[connector] = powermeter;
 }
 
-void ChargePoint::receive_max_current_offered(int32_t connector, double max_current) {
+void ChargePoint::on_max_current_offered(int32_t connector, int32_t max_current) {
     std::lock_guard<std::mutex> lock(power_meter_mutex);
     // TODO(kai): uses power meter mutex because the reading context is similar, think about storing
     // this information in a unified struct
     this->max_current_offered[connector] = max_current;
 }
 
-void ChargePoint::receive_number_of_phases_available(int32_t connector, double number_of_phases) {
-    std::lock_guard<std::mutex> lock(power_meter_mutex);
-    // TODO(kai): uses power meter mutex because the reading context is similar, think about storing
-    // this information in a unified struct
-    this->number_of_phases_available[connector] = number_of_phases;
-}
-
-bool ChargePoint::start_transaction(int32_t connector) {
-    AvailabilityType connector_availability = this->configuration->getConnectorAvailability(connector);
-    if (connector_availability == AvailabilityType::Inoperative) {
-        EVLOG_error << "Connector " << connector << " is inoperative.";
-        return false;
-    }
-
-    if (this->charging_session_handler->get_transaction(connector) != nullptr) {
-        EVLOG_debug << "Transaction has already been started";
-        return false;
-    }
-
-    if (!this->charging_session_handler->ready(connector)) {
-        EVLOG_debug << "Could not start charging session on connector '" << connector << "', session not yet ready.";
-        return false;
-    }
-
-    auto idTag_option = this->charging_session_handler->get_authorized_id_tag(connector);
-    auto idTag = idTag_option.get();
-    auto energyWhStamped = this->charging_session_handler->get_start_energy_wh(connector);
-
-    // stop connection timeout timer, car is obviously plugged-in now
-    this->connection_timeout_timer.at(connector)->stop();
+void ChargePoint::start_transaction(std::shared_ptr<Transaction> transaction) {
 
     StartTransactionRequest req;
-    req.connectorId = connector;
-    req.idTag = idTag;
-    // rounding is necessary here
-    req.meterStart = std::round(energyWhStamped->energy_Wh);
-    req.timestamp = energyWhStamped->timestamp;
-
-    auto message_id = this->message_queue->createMessageId();
+    req.connectorId = transaction->get_connector();
+    req.idTag = transaction->get_id_tag();
+    req.meterStart = std::round(transaction->get_start_energy_wh()->energy_Wh);
+    req.timestamp = transaction->get_start_energy_wh()->timestamp;
+    const auto message_id = this->message_queue->createMessageId();
     Call<StartTransactionRequest> call(req, message_id);
 
-    if (this->charging_session_handler->get_reservation_id(connector) != boost::none) {
-        call.msg.reservationId = this->charging_session_handler->get_reservation_id(connector).value();
+    if (transaction->get_reservation_id()) {
+        call.msg.reservationId = transaction->get_reservation_id().value();
+    }
+
+    transaction->set_start_transaction_message_id(message_id.get());
+    transaction->change_meter_values_sample_interval(this->configuration->getMeterValueSampleInterval());
+
+    this->send<StartTransactionRequest>(call);
+}
+
+void ChargePoint::on_session_started(int32_t connector, const std::string& session_id, const std::string& reason) {
+
+    EVLOG_debug << "Session on connector#" << connector << " started with reason " << reason;
+
+    const auto session_started_reason = conversions::string_to_session_started_reason(reason);
+
+    // dont change to preparing when in reserved
+    if ((this->status->get_state(connector) == ChargePointStatus::Reserved &&
+         session_started_reason == SessionStartedReason::Authorized) ||
+        this->status->get_state(connector) != ChargePointStatus::Reserved) {
+        this->status->submit_event(connector, Event_UsageInitiated());
+    }
+}
+
+void ChargePoint::on_session_stopped(const int32_t connector) {
+    EVLOG_debug << "Session stopped on connector " << connector;
+    // TODO(piet) fix this when evse manager signals clearance of an error
+    if (this->status->get_state(connector) == ChargePointStatus::Faulted) {
+        this->status->submit_event(connector, Event_I1_ReturnToAvailable());
+    } else if (this->status->get_state(connector) != ChargePointStatus::Reserved &&
+               this->status->get_state(connector) != ChargePointStatus::Unavailable) {
+        this->status->submit_event(connector, Event_BecomeAvailable());
+    }
+}
+
+void ChargePoint::on_transaction_started(const int32_t& connector, const std::string& session_id,
+                                         const std::string& id_token, const int32_t& meter_start,
+                                         boost::optional<int32_t> reservation_id, const DateTime& timestamp) {
+    if (this->status->get_state(connector) == ChargePointStatus::Reserved) {
+        this->status->submit_event(connector, Event_UsageInitiated());
     }
 
     auto meter_values_sample_timer = std::make_unique<Everest::SteadyTimer>(&this->io_service, [this, connector]() {
         auto meter_value = this->get_latest_meter_value(
             connector, this->configuration->getMeterValuesSampledDataVector(), ReadingContext::Sample_Periodic);
-        this->charging_session_handler->add_meter_value(connector, meter_value);
+        this->transaction_handler->add_meter_value(connector, meter_value);
         this->send_meter_value(connector, meter_value);
     });
-    auto transaction =
-        std::make_unique<Transaction>(-1, connector, std::move(meter_values_sample_timer), idTag, message_id.get());
-    if (!this->charging_session_handler->add_transaction(connector, std::move(transaction))) {
-        EVLOG_error << "could not add_transaction";
-    }
-
-    this->charging_session_handler->change_meter_values_sample_interval(
-        connector, this->configuration->getMeterValueSampleInterval());
-
-    this->send<StartTransactionRequest>(call);
-    return true;
+    std::shared_ptr<Transaction> transaction =
+        std::make_shared<Transaction>(connector, session_id, CiString20Type(id_token), meter_start, reservation_id,
+                                      timestamp, std::move(meter_values_sample_timer));
+    this->start_transaction(transaction);
+    this->transaction_handler->add_transaction(std::move(transaction));
 }
 
-bool ChargePoint::start_session(int32_t connector, DateTime timestamp, double energy_Wh_import,
-                                boost::optional<int32_t> reservation_id) {
-
-    // dont start session if connector is unavailable
-    if (this->status->get_state(connector) == ChargePointStatus::Unavailable) {
-        EVLOG_warning << "Connector is inoperative and can't start a session";
-        return false;
-    }
-
-    if (!this->charging_session_handler->initiate_session(connector)) {
-        EVLOG_error << "Could not initiate charging session on connector '" << connector << "'";
-        return false;
-    }
-
-    // dont change to preparing when in reserved
-    if (this->status->get_state(connector) != ChargePointStatus::Reserved) {
-        this->status->submit_event(connector, Event_UsageInitiated());
-    }
-
-    this->charging_session_handler->add_start_energy_wh(connector,
-                                                        std::make_shared<StampedEnergyWh>(timestamp, energy_Wh_import));
-    if (reservation_id != boost::none) {
-        this->charging_session_handler->add_reservation_id(connector, reservation_id.value());
-    }
-
-    return this->start_transaction(connector);
+void ChargePoint::on_transaction_stopped(const int32_t connector, const Reason& reason, DateTime timestamp,
+                                         float energy_wh_import) {
+    const auto stop_energy_wh = std::make_shared<StampedEnergyWh>(timestamp, energy_wh_import);
+    this->transaction_handler->get_transaction(connector)->add_stop_energy_wh(stop_energy_wh);
+    this->status->submit_event(connector, Event_TransactionStoppedAndUserActionRequired());
+    this->stop_transaction(connector, reason);
+    this->transaction_handler->remove_active_transaction(connector);
 }
 
-bool ChargePoint::stop_transaction(int32_t connector, Reason reason) {
+void ChargePoint::stop_transaction(int32_t connector, Reason reason) {
     EVLOG_debug << "Called stop transaction with reason: " << conversions::reason_to_string(reason);
     StopTransactionRequest req;
     // TODO(kai): allow a new id tag to be presented
     // req.idTag-emplace(idTag);
     // rounding is necessary here
-    auto transaction = this->charging_session_handler->get_transaction(connector);
-    auto energyWhStamped = this->charging_session_handler->get_stop_energy_wh(connector);
+    auto transaction = this->transaction_handler->get_transaction(connector);
+    auto energyWhStamped = transaction->get_stop_energy_wh();
 
     // TODO(kai): are there other status notifications that should be sent here?
 
@@ -2517,9 +2379,8 @@ bool ChargePoint::stop_transaction(int32_t connector, Reason reason) {
     req.reason.emplace(reason);
     req.transactionId = transaction->get_transaction_id();
 
-    if (this->charging_session_handler->get_authorized_id_tag(connector) != boost::none) {
-        req.idTag = this->charging_session_handler->get_authorized_id_tag(connector).value();
-    }
+    const auto id_tag = this->transaction_handler->get_transaction(connector)->get_id_tag();
+    req.idTag.emplace(id_tag);
 
     std::vector<TransactionData> transaction_data_vec = transaction->get_transaction_data();
     if (!transaction_data_vec.empty()) {
@@ -2536,99 +2397,49 @@ bool ChargePoint::stop_transaction(int32_t connector, Reason reason) {
 
     transaction->set_finished();
     transaction->set_stop_transaction_message_id(message_id.get());
-    this->charging_session_handler->add_stopped_transaction(transaction);
-    return true;
+    this->transaction_handler->add_stopped_transaction(transaction->get_connector());
 }
 
-bool ChargePoint::cancel_session(int32_t connector, DateTime timestamp, double energy_Wh_import, Reason reason) {
-    this->charging_session_handler->add_stop_energy_wh(connector,
-                                                       std::make_shared<StampedEnergyWh>(timestamp, energy_Wh_import));
-
-    EVLOG_debug << "Cancelling Session on connector " << connector;
-
-    if (this->charging_session_handler->get_transaction(connector) == nullptr) {
-        EVLOG_info << "Cancelled a session without a transaction";
-    }
-
-    if (reason != Reason::DeAuthorized || this->configuration->getStopTransactionOnInvalidId()) {
-        this->status->submit_event(connector, Event_TransactionStoppedAndUserActionRequired());
-        bool success = this->stop_transaction(connector, reason);
-        if (!success) {
-            EVLOG_error << "Something went wrong stopping the transaction a connector " << connector;
-            return false;
-        }
-    }
-    return true; // FIXME
-}
-
-bool ChargePoint::stop_session(int32_t connector, DateTime timestamp, double energy_Wh_import) {
-    EVLOG_debug << "Stopping session on connector " << connector;
-    this->charging_session_handler->add_stop_energy_wh(connector,
-                                                       std::make_shared<StampedEnergyWh>(timestamp, energy_Wh_import));
-
-    auto transaction = this->charging_session_handler->get_transaction(connector);
-    if (transaction == nullptr || transaction->is_finished()) {
-        EVLOG_debug << "Transaction has already finished, not sending stop_transaction";
-    } else {
-        if (this->stop_transaction(connector, Reason::EVDisconnected)) {
-        } else {
-            EVLOG_error << "Something went wrong stopping the transaction at connector " << connector;
-        }
-    }
-
-    this->charging_session_handler->remove_active_session(connector);
-    return true; // FIXME
-}
-
-bool ChargePoint::start_charging(int32_t connector) {
-    this->status->submit_event(connector, Event_StartCharging());
-    return true;
-}
-
-bool ChargePoint::suspend_charging_ev(int32_t connector) {
+void ChargePoint::on_suspend_charging_ev(int32_t connector) {
     this->status->submit_event(connector, Event_PauseChargingEV());
-    return true;
 }
 
-bool ChargePoint::suspend_charging_evse(int32_t connector) {
+void ChargePoint::on_suspend_charging_evse(int32_t connector) {
     this->status->submit_event(connector, Event_PauseChargingEVSE());
-    return true;
 }
 
-bool ChargePoint::resume_charging(int32_t connector) {
+void ChargePoint::on_resume_charging(int32_t connector) {
     this->status->submit_event(connector, Event_StartCharging());
-    return true;
 }
 
-bool ChargePoint::plug_disconnected(int32_t connector) {
-    // TODO(piet) fix this when evse manager signals clearance of an error
-    if (this->status->get_state(connector) == ChargePointStatus::Faulted) {
-        this->status->submit_event(connector, Event_I1_ReturnToAvailable());
-    } else if (this->status->get_state(connector) != ChargePointStatus::Reserved &&
-               this->status->get_state(connector) != ChargePointStatus::Unavailable) {
-        this->status->submit_event(connector, Event_BecomeAvailable());
-    }
-    return true;
-}
-
-bool ChargePoint::error(int32_t connector, const ChargePointErrorCode& error) {
-
+void ChargePoint::on_error(int32_t connector, const ChargePointErrorCode& error) {
     this->status->submit_event(connector, Event_FaultDetected(ChargePointErrorCode(error)));
-    return true;
 }
 
-bool ChargePoint::vendor_error(int32_t connector, CiString50Type vendor_error_code) {
-    // FIXME(kai): implement
-    return false;
+void ChargePoint::on_log_status_notification(int32_t request_id, std::string log_status) {
+    // request id of -1 indicates a diagnostics status notification, else log status notification
+    if (request_id != -1) {
+        this->log_status_notification(conversions::string_to_upload_log_status_enum_type(log_status), request_id);
+    } else {
+        // In OCPP enum DiagnosticsStatus it is called UploadFailed, in UploadLogStatusEnumType of Security Whitepaper
+        // it is called UploadFailure
+        if (log_status == "UploadFailure") {
+            log_status = "UploadFailed";
+        }
+        this->diagnostic_status_notification(conversions::string_to_diagnostics_status(log_status));
+    }
 }
 
-bool ChargePoint::permanent_fault(int32_t connector) {
-    // FIXME(kai): implement
-
-    return false;
+void ChargePoint::on_firmware_update_status_notification(int32_t request_id, std::string firmware_update_status) {
+    if (request_id != -1) {
+        this->signed_firmware_update_status_notification(
+            conversions::string_to_firmware_status_enum_type(firmware_update_status), request_id);
+    } else {
+        this->firmware_status_notification(conversions::string_to_firmware_status(firmware_update_status));
+    }
 }
 
-void ChargePoint::send_diagnostic_status_notification(DiagnosticsStatus status) {
+void ChargePoint::diagnostic_status_notification(DiagnosticsStatus status) {
     DiagnosticsStatusNotificationRequest req;
     req.status = status;
     this->diagnostics_status = status;
@@ -2637,7 +2448,7 @@ void ChargePoint::send_diagnostic_status_notification(DiagnosticsStatus status) 
     this->send_async<DiagnosticsStatusNotificationRequest>(call);
 }
 
-void ChargePoint::send_firmware_status_notification(FirmwareStatus status) {
+void ChargePoint::firmware_status_notification(FirmwareStatus status) {
     FirmwareStatusNotificationRequest req;
     req.status = status;
     this->firmware_status = status;
@@ -2662,14 +2473,14 @@ void ChargePoint::register_resume_charging_callback(const std::function<bool(int
     this->resume_charging_callback = callback;
 }
 
-void ChargePoint::register_cancel_charging_callback(
-    const std::function<bool(int32_t connector, ocpp1_6::Reason reason)>& callback) {
-    this->cancel_charging_callback = callback;
+void ChargePoint::register_provide_token_callback(
+    const std::function<void(const std::string& id_token, int32_t connector, bool prevalidated)>& callback) {
+    this->provide_token_callback = callback;
 }
 
-void ChargePoint::register_remote_start_transaction_callback(
-    const std::function<void(int32_t connector, ocpp1_6::CiString20Type idTag)>& callback) {
-    this->remote_start_transaction_callback = callback;
+void ChargePoint::register_stop_transaction_callback(
+    const std::function<bool(int32_t connector, ocpp1_6::Reason reason)>& callback) {
+    this->stop_transaction_callback = callback;
 }
 
 void ChargePoint::register_reserve_now_callback(
@@ -2679,8 +2490,7 @@ void ChargePoint::register_reserve_now_callback(
     this->reserve_now_callback = callback;
 }
 
-void ChargePoint::register_cancel_reservation_callback(
-    const std::function<CancelReservationStatus(int32_t connector)>& callback) {
+void ChargePoint::register_cancel_reservation_callback(const std::function<bool(int32_t connector)>& callback) {
     this->cancel_reservation_callback = callback;
 }
 
@@ -2693,83 +2503,47 @@ void ChargePoint::register_set_max_current_callback(
     this->set_max_current_callback = callback;
 }
 
+void ChargePoint::register_reset_callback(const std::function<bool(const ResetType& reset_type)>& callback) {
+    this->reset_callback = callback;
+}
+
+void ChargePoint::register_set_system_time_callback(
+    const std::function<void(const std::string& system_time)>& callback) {
+    this->set_system_time_callback = callback;
+}
+
 void ChargePoint::register_upload_diagnostics_callback(
-    const std::function<std::string(std::string location)>& callback) {
+    const std::function<ocpp1_6::GetLogResponse(const ocpp1_6::GetDiagnosticsRequest& request)>& callback) {
     this->upload_diagnostics_callback = callback;
 }
 
-void ChargePoint::register_update_firmware_callback(const std::function<void(std::string location)>& callback) {
+void ChargePoint::register_update_firmware_callback(
+    const std::function<void(const ocpp1_6::UpdateFirmwareRequest msg)>& callback) {
     this->update_firmware_callback = callback;
 }
 
-void ChargePoint::registerSwitchSecurityProfileCallback(const std::function<void()>& callback) {
-    this->switch_security_profile_callback = callback;
+void ChargePoint::register_signed_update_firmware_callback(
+    const std::function<ocpp1_6::UpdateFirmwareStatusEnumType(const ocpp1_6::SignedUpdateFirmwareRequest msg)>&
+        callback) {
+    this->signed_update_firmware_callback = callback;
 }
 
-void ChargePoint::register_upload_logs_callback(const std::function<std::string(GetLogRequest req)>& callback) {
+void ChargePoint::register_upload_logs_callback(
+    const std::function<ocpp1_6::GetLogResponse(GetLogRequest req)>& callback) {
     this->upload_logs_callback = callback;
 }
 
-void ChargePoint::register_signed_update_firmware_download_callback(
-    const std::function<void(SignedUpdateFirmwareRequest req)>& callback) {
-    this->signed_update_firmware_download_callback = callback;
+void ChargePoint::register_set_connection_timeout_callback(
+    const std::function<void(int32_t connection_timeout)>& callback) {
+    this->set_connection_timeout_callback = callback;
 }
 
-void ChargePoint::register_signed_update_firmware_install_callback(
-    const std::function<void(SignedUpdateFirmwareRequest req, boost::filesystem::path file_path)>& callback) {
-    this->signed_update_firmware_install_callback = callback;
+void ChargePoint::on_reservation_start(int32_t connector) {
+    this->status->submit_event(connector, Event_ReserveConnector());
 }
 
-void ChargePoint::notify_signed_firmware_update_downloaded(SignedUpdateFirmwareRequest req,
-                                                           boost::filesystem::path file_path) {
-    if (req.firmware.installDateTime != boost::none &&
-        req.firmware.installDateTime.value().to_time_point() > date::utc_clock::now()) {
-        // TODO(piet): put cb into database
-        this->signed_firmware_update_install_timer->at(
-            [this, req, file_path]() { this->signed_update_firmware_install_callback(req, file_path); },
-            req.firmware.installDateTime.value().to_time_point());
-        EVLOG_debug << "InstallScheduled for: " << req.firmware.installDateTime.value().to_rfc3339();
-        this->signedFirmwareUpdateStatusNotification(ocpp1_6::FirmwareStatusEnumType::InstallScheduled, req.requestId);
-    } else {
-        this->signed_update_firmware_install_callback(req, file_path);
-    }
-}
-
-void ChargePoint::trigger_boot_notification() {
-    this->boot_notification();
-}
-
-bool ChargePoint::is_signed_firmware_update_running() {
-    return this->signed_firmware_update_running;
-}
-
-void ChargePoint::set_signed_firmware_update_running(bool b) {
-    this->signed_firmware_update_running = b;
-}
-
-void ChargePoint::reservation_start(int32_t connector, int32_t reservation_id, std::string id_tag) {
-    this->reserved_id_tag_map[connector] = id_tag;
-
-    if (res_conn_map.count(reservation_id) == 0) {
-        this->res_conn_map[reservation_id] = connector;
-    } else if (res_conn_map.count(reservation_id) == 1) {
-        std::map<int32_t, int32_t>::iterator it;
-        it = this->res_conn_map.find(reservation_id);
-        this->res_conn_map.erase(it);
-        this->res_conn_map[reservation_id] = connector;
-    }
-}
-
-void ChargePoint::reservation_end(int32_t connector, int32_t reservation_id, std::string reason) {
-    if (reason == "Expired") {
-        this->status->submit_event(connector, Event_BecomeAvailable());
-    }
-    // delete reservation in res con map
-    std::map<int32_t, int32_t>::iterator res_con_map_it;
-    res_con_map_it = this->res_conn_map.find(reservation_id);
-    this->res_conn_map.erase(res_con_map_it);
-
-    this->reserved_id_tag_map.erase(connector);
+void ChargePoint::on_reservation_end(int32_t connector) {
+    this->status->submit_event(connector, Event_BecomeAvailable());
 }
 
 } // namespace ocpp1_6

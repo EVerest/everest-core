@@ -7,3 +7,6 @@ target_link_libraries(charge_point
         nlohmann_json::nlohmann_json
         ocpp
 )
+
+install(TARGETS charge_point
+        RUNTIME)

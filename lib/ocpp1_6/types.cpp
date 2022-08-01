@@ -1012,6 +1012,36 @@ std::ostream& operator<<(std::ostream& os, const SupportedFeatureProfiles& suppo
     return os;
 }
 
+namespace conversions {
+
+std::string session_started_reason_to_string(SessionStartedReason e) {
+    switch (e){
+        case SessionStartedReason::Authorized:
+            return "Authorized";
+        case SessionStartedReason::EVConnected:
+            return "EVConnected";
+    }
+    throw std::out_of_range("No known string conversion for provided enum of type SessionStartedReason");
+}
+
+
+SessionStartedReason string_to_session_started_reason(const std::string& s) {
+    if (s == "Authorized") {
+        return SessionStartedReason::Authorized;
+    }
+    if (s == "EVConnected") {
+        return SessionStartedReason::EVConnected;
+    }
+    throw std::out_of_range("Provided string " + s +
+                            " could not be converted to enum of type SessionStartedReason");
+}
+} // namespace conversions
+
+std::ostream& operator<<(std::ostream& os, const SessionStartedReason& session_started_reason) {
+    os << conversions::session_started_reason_to_string(session_started_reason);
+    return os;
+}
+
 ScheduledCallback::ScheduledCallback(ScheduledCallbackType callbackType, std::string datetime,
                                      std::vector<std::string> args) {
     this->callbackType = callbackType;

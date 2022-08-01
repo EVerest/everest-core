@@ -564,41 +564,28 @@ AvailabilityType ChargePointConfiguration::getConnectorAvailability(int32_t conn
 }
 
 std::map<int32_t, ocpp1_6::AvailabilityType> ChargePointConfiguration::getConnectorAvailability() {
-    std::ostringstream select_sql;
-    std::promise<std::map<int32_t, ocpp1_6::AvailabilityType>>* sql_promise =
-        new std::promise<std::map<int32_t, ocpp1_6::AvailabilityType>>();
-    std::future<std::map<int32_t, ocpp1_6::AvailabilityType>> sql_future = sql_promise->get_future();
+    std::map<int32_t, AvailabilityType> availability_map;
+    const std::string sql = "SELECT ID, AVAILABILITY FROM CONNECTORS";
 
-    select_sql << "SELECT AVAILABILITY FROM CONNECTORS";
-    std::string select_sql_str = select_sql.str();
-    char* error = nullptr;
-    int res = sqlite3_exec(
-        db, select_sql_str.c_str(),
-        [](void* sql_promise, int count, char** results, char** column_name) -> int {
-            std::map<int32_t, ocpp1_6::AvailabilityType> connector_availability;
-            for (int connector = 0; connector < count; connector++) {
-                connector_availability[connector + 1] =
-                    ocpp1_6::conversions::string_to_availability_type(results[connector]);
-            }
-            static_cast<std::promise<std::map<int32_t, ocpp1_6::AvailabilityType>>*>(sql_promise)
-                ->set_value(connector_availability);
-            return 0;
-        },
-        (void*)sql_promise, &error);
+    sqlite3_stmt* stmt;
 
-    std::chrono::time_point<date::utc_clock> sql_wait = date::utc_clock::now() + ocpp1_6::future_wait_seconds;
-    std::future_status sql_future_status;
-    do {
-        sql_future_status = sql_future.wait_until(sql_wait);
-    } while (sql_future_status == std::future_status::deferred);
-    if (sql_future_status == std::future_status::timeout) {
-        EVLOG_debug << "sql future timeout";
-    } else if (sql_future_status == std::future_status::ready) {
-        EVLOG_debug << "sql future ready";
+    if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
+        EVLOG_error << "Could not prepare insert statement";
+        throw std::runtime_error("Database access error");
     }
 
-    std::map<int32_t, ocpp1_6::AvailabilityType> response = sql_future.get();
-    return response;
+    while (sqlite3_step(stmt) != SQLITE_DONE) {
+        auto connector = sqlite3_column_int(stmt, 0);
+        auto availability_str = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1)));
+        availability_map[connector] = conversions::string_to_availability_type(availability_str);
+    }
+
+    if (sqlite3_finalize(stmt) != SQLITE_OK) {
+        EVLOG_error << "Error selecting from table" << std::endl;
+        throw std::runtime_error("db access error");
+    }
+
+    return availability_map;
 }
 
 bool ChargePointConfiguration::updateAuthorizationCacheEntry(CiString20Type idTag, IdTagInfo idTagInfo) {
