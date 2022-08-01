@@ -11,7 +11,7 @@ SessionInfo::SessionInfo() : state("Unknown"), start_energy_wh(0), end_energy_wh
 }
 
 bool SessionInfo::is_state_charging(const std::string& current_state) {
-    if (current_state == "PluggedIn" || current_state == "AuthRequired" || current_state == "Charging" ||
+    if (current_state == "AuthRequired" || current_state == "Charging" ||
         current_state == "ChargingPausedEV" || current_state == "ChargingPausedEVSE") {
         return true;
     }
@@ -35,10 +35,14 @@ void SessionInfo::update_state(const std::string& event) {
     } else if (event == "Disabled") {
         this->state = "Disabled";
     } else if (event == "SessionStarted") {
-        this->state = "PluggedIn";
+        this->state = "Preparing";
+    } else if (event == "ReservationStart") {
+        this->state = "Reserved";
+    } else if (event == "ReservationEnd") {
+        this->state = "Unplugged";
     } else if (event == "AuthRequired") {
         this->state = "AuthRequired";
-    } else if (event == "ChargingStarted") {
+    } else if (event == "TransactionStarted") {
         this->state = "Charging";
     } else if (event == "ChargingPausedEV") {
         this->state = "ChargingPausedEV";
@@ -46,6 +50,8 @@ void SessionInfo::update_state(const std::string& event) {
         this->state = "ChargingPausedEVSE";
     } else if (event == "ChargingResumed") {
         this->state = "Charging";
+    } else if (event == "TransactionFinished") {
+        this->state = "Finished";
     } else if (event == "SessionFinished") {
         this->state = "Unplugged";
     } else if (event == "Error") {
@@ -148,21 +154,22 @@ void API::init() {
             }
         });
 
-        evse->subscribe_session_events([this, var_session_info, &session_info](types::evse_manager::SessionEvents session_events) {
-            auto event = types::evse_manager::session_event_to_string(session_events.event);
-            session_info->update_state(event);
-            if (event == "SessionStarted") {
-                auto session_started = session_events.session_started.value();
-                auto energy_Wh_import = session_started.energy_Wh_import;
-                session_info->set_start_energy_wh(energy_Wh_import);
-            } else if (event == "SessionFinished") {
-                auto session_finished = session_events.session_finished.value();
-                auto energy_Wh_import = session_finished.energy_Wh_import;
-                session_info->set_end_energy_wh(energy_Wh_import);
-            }
+        evse->subscribe_session_event(
+            [this, var_session_info, &session_info](types::evse_manager::SessionEvent session_event) {
+                auto event = types::evse_manager::session_event_enum_to_string(session_event.event);
+                session_info->update_state(event);
+                if (event == "TransactionStarted") {
+                    auto session_started = session_event.transaction_started.value();
+                    auto energy_Wh_import = session_started.energy_Wh_import;
+                    session_info->set_start_energy_wh(energy_Wh_import);
+                } else if (event == "TransactionFinished") {
+                    auto session_finished = session_event.transaction_finished.value();
+                    auto energy_Wh_import = session_finished.energy_Wh_import;
+                    session_info->set_end_energy_wh(energy_Wh_import);
+                }
 
-            this->mqtt.publish(var_session_info, *session_info);
-        });
+                this->mqtt.publish(var_session_info, *session_info);
+            });
 
         // API commands
         std::string cmd_base = evse_base + "/cmd/";

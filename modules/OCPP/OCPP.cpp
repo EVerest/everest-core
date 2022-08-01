@@ -46,6 +46,7 @@ void OCPP::init() {
     invoke_init(*p_auth_provider);
 
     boost::filesystem::path config_path = boost::filesystem::path(this->config.ChargePointConfigPath);
+
     boost::filesystem::path user_config_path =
         boost::filesystem::path(this->config.OcppMainPath) / "user_config" / "user_config.json";
 
@@ -92,10 +93,11 @@ void OCPP::init() {
             return false;
         }
     });
-    this->charge_point->register_cancel_charging_callback([this](int32_t connector, ocpp1_6::Reason reason) {
+    this->charge_point->register_stop_transaction_callback([this](int32_t connector, ocpp1_6::Reason reason) {
         if (connector > 0 && connector <= this->r_evse_manager.size()) {
             return this->r_evse_manager.at(connector - 1)
-                ->call_cancel_charging(types::evse_manager::string_to_session_cancellation_reason(ocpp1_6::conversions::reason_to_string(reason)));
+                ->call_stop_transaction(types::evse_manager::string_to_stop_transaction_reason(
+                    ocpp1_6::conversions::reason_to_string(reason)));
         } else {
             return false;
         }
@@ -110,210 +112,140 @@ void OCPP::init() {
         }
     });
 
-    // int32_t reservation_id, CiString20Type auth_token, DateTime expiry_date, std::string parent_id
+    // int32_t reservation_id, CiString20Type auth_token, DateTime expiry_time, std::string parent_id
     this->charge_point->register_reserve_now_callback(
         [this](int32_t reservation_id, int32_t connector, ocpp1_6::DateTime expiryDate, ocpp1_6::CiString20Type idTag,
                boost::optional<ocpp1_6::CiString20Type> parent_id) {
-            if (connector > 0 && connector <= this->r_evse_manager.size()) {
-                auto response =
-                    this->r_evse_manager.at(connector - 1)
-                        ->call_reserve_now(reservation_id, idTag.get(), expiryDate.to_rfc3339(),
-                                           parent_id.value_or(ocpp1_6::CiString20Type(std::string(""))).get());
-                return this->ResStatMap.at(types::evse_manager::reservation_result_to_string(response));
-            } else {
-                return ocpp1_6::ReservationStatus::Unavailable;
+            types::reservation::Reservation reservation;
+            reservation.id_token = idTag.get();
+            reservation.reservation_id = reservation_id;
+            reservation.expiry_time = expiryDate.to_rfc3339();
+            if (parent_id) {
+                reservation.parent_id_token.emplace(parent_id.value().get());
             }
+            auto response = this->r_reservation->call_reserve_now(connector, reservation);
+            return ocpp1_6::conversions::string_to_reservation_status(
+                types::reservation::reservation_result_to_string(response));
         });
 
-    this->charge_point->register_cancel_reservation_callback([this](int32_t connector) {
-        if (connector > 0 && connector <= this->r_evse_manager.size()) {
-            return this->can_res_stat_map.at(this->r_evse_manager.at(connector - 1)->call_cancel_reservation());
-        } else {
-            return this->can_res_stat_map.at(false);
+    this->charge_point->register_upload_diagnostics_callback([this](const ocpp1_6::GetDiagnosticsRequest& msg) {
+        types::system::UploadLogsRequest upload_logs_request;
+        upload_logs_request.location = msg.location;
+
+        if (msg.stopTime.has_value()) {
+            upload_logs_request.latest_timestamp.emplace(msg.stopTime.value().to_rfc3339());
         }
+        if (msg.startTime.has_value()) {
+            upload_logs_request.oldest_timestamp.emplace(msg.startTime.value().to_rfc3339());
+        }
+        if (msg.retries.has_value()) {
+            upload_logs_request.retries.emplace(msg.retries.value());
+        }
+        if (msg.retryInterval.has_value()) {
+            upload_logs_request.retry_interval_s.emplace(msg.retryInterval.value());
+        }
+        const auto upload_logs_response = this->r_system->call_upload_logs(upload_logs_request);
+        ocpp1_6::GetLogResponse response;
+        if (upload_logs_response.file_name.has_value()) {
+            response.filename.emplace(ocpp1_6::CiString255Type(upload_logs_response.file_name.value()));
+        }
+        response.status = ocpp1_6::conversions::string_to_log_status_enum_type(
+            types::system::upload_logs_status_to_string(upload_logs_response.upload_logs_status));
+        return response;
     });
 
-    this->charge_point->register_upload_diagnostics_callback([this](std::string location) {
-        // create temporary file
-        std::string date_time = ocpp1_6::DateTime().to_rfc3339();
-        std::string file_name = "diagnostics-" + date_time + "-%%%%-%%%%-%%%%-%%%%";
-
-        auto diagnostics_file_name = boost::filesystem::unique_path(boost::filesystem::path(file_name));
-        auto diagnostics_file_path = boost::filesystem::temp_directory_path() / diagnostics_file_name;
-
-        auto diagnostics = json({{"diagnostics", {{"key", "value"}}}});
-        std::ofstream diagnostics_file(diagnostics_file_path.c_str());
-        diagnostics_file << diagnostics.dump();
-        this->upload_diagnostics_thread = std::thread([this, location, diagnostics_file_name, diagnostics_file_path]() {
-            auto diagnostics_uploader = boost::filesystem::path(this->config.ScriptsPath) / "diagnostics_uploader.sh";
-            auto constants = boost::filesystem::path(this->config.ScriptsPath) / "constants.env";
-
-            boost::process::ipstream stream;
-            std::vector<std::string> args = {constants.string(), location, diagnostics_file_name.string(),
-                                             diagnostics_file_path.string()};
-            boost::process::child cmd(diagnostics_uploader, boost::process::args(args),
-                                      boost::process::std_out > stream);
-            std::string temp;
-            while (std::getline(stream, temp)) {
-                if (temp == "Uploaded") {
-                    this->charge_point->send_diagnostic_status_notification(ocpp1_6::DiagnosticsStatus::Uploaded);
-                } else if (temp == "UploadFailure" || temp == "PermissionDenied" || temp == "BadMessage" ||
-                           temp == "NotSupportedOperation") {
-                    this->charge_point->send_diagnostic_status_notification(ocpp1_6::DiagnosticsStatus::UploadFailed);
-                } else {
-                    this->charge_point->send_diagnostic_status_notification(ocpp1_6::DiagnosticsStatus::Uploading);
-                }
-            }
-            cmd.wait();
-        });
-        this->upload_diagnostics_thread.detach();
-
-        return diagnostics_file_name.string();
-    });
     this->charge_point->register_upload_logs_callback([this](ocpp1_6::GetLogRequest msg) {
-        EVLOG_debug << "Executing callback for log upload with requestId: " << msg.requestId;
-        // create temporary file
-        std::string date_time = ocpp1_6::DateTime().to_rfc3339();
-        std::string file_name =
-            ocpp1_6::conversions::log_enum_type_to_string(msg.logType) + "-" + date_time + "-%%%%-%%%%-%%%%-%%%%";
+        types::system::UploadLogsRequest upload_logs_request;
+        upload_logs_request.location = msg.log.remoteLocation;
+        upload_logs_request.request_id = msg.requestId;
+        upload_logs_request.type = ocpp1_6::conversions::log_enum_type_to_string(msg.logType);
 
-        auto log_file_name = boost::filesystem::unique_path(boost::filesystem::path(file_name));
-        auto log_file_path = boost::filesystem::temp_directory_path() / log_file_name;
-        auto constants = boost::filesystem::path(this->config.ScriptsPath) / "constants.env";
+        if (msg.log.latestTimestamp.has_value()) {
+            upload_logs_request.latest_timestamp.emplace(msg.log.latestTimestamp.value().to_rfc3339());
+        }
+        if (msg.log.oldestTimestamp.has_value()) {
+            upload_logs_request.oldest_timestamp.emplace(msg.log.oldestTimestamp.value().to_rfc3339());
+        }
+        if (msg.retries.has_value()) {
+            upload_logs_request.retries.emplace(msg.retries.value());
+        }
+        if (msg.retryInterval.has_value()) {
+            upload_logs_request.retry_interval_s.emplace(msg.retryInterval.value());
+        }
 
-        auto diagnostics = json({{"logs", {{"key", "value"}}}});
-        std::ofstream log_file(log_file_path.c_str());
-        log_file << diagnostics.dump();
-        this->upload_logs_thread = std::thread([this, msg, log_file_name, log_file_path, constants]() {
-            auto diagnostics_uploader = boost::filesystem::path(this->config.ScriptsPath) / "diagnostics_uploader.sh";
+        const auto upload_logs_response = this->r_system->call_upload_logs(upload_logs_request);
 
-            boost::process::ipstream stream;
-            std::vector<std::string> args = {constants.string(), msg.log.remoteLocation.get(), log_file_name.string(),
-                                             log_file_path.string()};
-            boost::process::child cmd(diagnostics_uploader, boost::process::args(args),
-                                      boost::process::std_out > stream);
-
-            std::string temp;
-            while (std::getline(stream, temp) && !this->charge_point->interrupt_log_upload) {
-                auto log_status = ocpp1_6::conversions::string_to_upload_log_status_enum_type(temp);
-                this->charge_point->logStatusNotification(log_status, msg.requestId);
-            }
-
-            if (this->charge_point->interrupt_log_upload) {
-                EVLOG_debug << "Uploading Logs was interrupted, terminating upload script, requestId: "
-                            << msg.requestId;
-                cmd.terminate();
-            } else {
-                EVLOG_debug << "Uploading Logs finished without interruption, requestId: " << msg.requestId;
-            }
-            this->charge_point->logStatusNotification(ocpp1_6::UploadLogStatusEnumType::Idle, msg.requestId);
-            {
-                std::lock_guard<std::mutex> lk(this->charge_point->log_upload_mutex);
-                this->charge_point->interrupt_log_upload.exchange(false);
-            }
-            this->charge_point->cv.notify_one();
-        });
-        this->upload_logs_thread.detach();
-
-        return log_file_name.string();
+        ocpp1_6::GetLogResponse response;
+        if (upload_logs_response.file_name.has_value()) {
+            response.filename.emplace(ocpp1_6::CiString255Type(upload_logs_response.file_name.value()));
+        }
+        response.status = ocpp1_6::conversions::string_to_log_status_enum_type(
+            types::system::upload_logs_status_to_string(upload_logs_response.upload_logs_status));
+        return response;
     });
-    this->charge_point->register_update_firmware_callback([this](std::string location) {
-        // // create temporary file
-        std::string date_time = ocpp1_6::DateTime().to_rfc3339();
-        std::string file_name = "firmware-" + date_time + "-%%%%-%%%%-%%%%-%%%%";
-
-        auto firmware_file_name = boost::filesystem::unique_path(boost::filesystem::path(file_name));
-        auto firmware_file_path = boost::filesystem::temp_directory_path() / firmware_file_name;
-        auto constants = boost::filesystem::path(this->config.ScriptsPath) / "constants.env";
-
-        this->update_firmware_thread = std::thread([this, location, firmware_file_path, constants]() {
-            auto firmware_updater = boost::filesystem::path(this->config.ScriptsPath) / "firmware_updater.sh";
-
-            boost::process::ipstream stream;
-            std::vector<std::string> args = {location, firmware_file_path.string()};
-            boost::process::child cmd(firmware_updater, boost::process::args(args), boost::process::std_out > stream);
-            std::string temp;
-            while (std::getline(stream, temp)) {
-                auto firmware_status = ocpp1_6::conversions::string_to_firmware_status(temp);
-                this->charge_point->send_firmware_status_notification(firmware_status);
-            }
-            cmd.wait();
-            this->charge_point->send_firmware_status_notification(ocpp1_6::FirmwareStatus::Idle);
-        });
-        this->update_firmware_thread.detach();
+    this->charge_point->register_update_firmware_callback([this](const ocpp1_6::UpdateFirmwareRequest msg) {
+        types::system::FirmwareUpdateRequest firmware_update_request;
+        firmware_update_request.location = msg.location;
+        firmware_update_request.request_id = -1;
+        firmware_update_request.retrieve_timestamp.emplace(msg.retrieveDate.to_rfc3339());
+        if (msg.retries.has_value()) {
+            firmware_update_request.retries.emplace(msg.retries.value());
+        }
+        if (msg.retryInterval.has_value()) {
+            firmware_update_request.retry_interval_s.emplace(msg.retryInterval.value());
+        }
+        this->r_system->call_update_firmware(firmware_update_request);
     });
 
-    this->charge_point->register_signed_update_firmware_download_callback(
-        [this](ocpp1_6::SignedUpdateFirmwareRequest req) {
-            EVLOG_debug << "Executing signed firmware update download callback";
+    this->charge_point->register_signed_update_firmware_callback([this](ocpp1_6::SignedUpdateFirmwareRequest msg) {
+        types::system::FirmwareUpdateRequest firmware_update_request;
+        firmware_update_request.request_id = msg.requestId;
+        firmware_update_request.location = msg.firmware.location;
+        firmware_update_request.retrieve_timestamp.emplace(msg.firmware.retrieveDateTime.to_rfc3339());
+        firmware_update_request.signature.emplace(msg.firmware.signature.get());
+        firmware_update_request.signing_certificate.emplace(msg.firmware.signingCertificate.get());
 
-            this->signed_update_firmware_thread = std::thread([this, req]() {
-                ocpp1_6::FirmwareStatusEnumType status;
-                // // create temporary file
-                std::string date_time = ocpp1_6::DateTime().to_rfc3339();
-                std::string file_name = "signed_firmware-" + date_time + "-%%%%-%%%%-%%%%-%%%%" + ".pnx";
+        if (msg.firmware.installDateTime.has_value()) {
+            firmware_update_request.install_timestamp.emplace(msg.firmware.installDateTime.value());
+        }
+        if (msg.retries.has_value()) {
+            firmware_update_request.retries.emplace(msg.retries.value());
+        }
+        if (msg.retryInterval.has_value()) {
+            firmware_update_request.retry_interval_s.emplace(msg.retryInterval.value());
+        }
 
-                auto firmware_file_name = boost::filesystem::unique_path(boost::filesystem::path(file_name));
-                auto firmware_file_path = boost::filesystem::temp_directory_path() / firmware_file_name;
+        const auto system_response = this->r_system->call_update_firmware(firmware_update_request);
 
-                auto firmware_downloader =
-                    boost::filesystem::path(this->config.ScriptsPath) / "signed_firmware_downloader.sh";
-                auto constants = boost::filesystem::path(this->config.ScriptsPath) / "constants.env";
+        return ocpp1_6::conversions::string_to_update_firmware_status_enum_type(
+            types::system::update_firmware_response_to_string(system_response));
+    });
 
-                boost::process::ipstream download_stream;
-                std::vector<std::string> download_args = {constants.string(), req.firmware.location.get(),
-                                                          firmware_file_path.string(), req.firmware.signature.get(),
-                                                          req.firmware.signingCertificate.get()};
-                boost::process::child download_cmd(firmware_downloader, boost::process::args(download_args),
-                                                   boost::process::std_out > download_stream);
-                std::string temp;
-                while (std::getline(download_stream, temp)) {
-                    status = ocpp1_6::conversions::string_to_firmware_status_enum_type(temp);
-                    this->charge_point->signedFirmwareUpdateStatusNotification(status, req.requestId);
-                }
-                // FIXME(piet): This can be removed when we actually update the firmware and reboot
-                if (status == ocpp1_6::FirmwareStatusEnumType::SignatureVerified) {
-                    this->charge_point->notify_signed_firmware_update_downloaded(req, firmware_file_path);
-                } else {
-                    this->charge_point->set_signed_firmware_update_running(false);
-                }
-            });
-            this->signed_update_firmware_thread.detach();
+    this->r_system->subscribe_log_status([this](types::system::LogStatus log_status) {
+        this->charge_point->on_log_status_notification(log_status.request_id,
+                                                       types::system::log_status_enum_to_string(log_status.log_status));
+    });
+
+    this->r_system->subscribe_firmware_update_status(
+        [this](types::system::FirmwareUpdateStatus firmware_update_status) {
+            this->charge_point->on_firmware_update_status_notification(
+                firmware_update_status.request_id,
+                types::system::firmware_update_status_enum_to_string(firmware_update_status.firmware_update_status));
         });
 
-    this->charge_point->register_signed_update_firmware_install_callback(
-        [this](ocpp1_6::SignedUpdateFirmwareRequest req, boost::filesystem::path file_path) {
-            this->signed_update_firmware_thread = std::thread([this, req]() {
-                boost::process::ipstream install_stream;
-                auto firmware_installer =
-                    boost::filesystem::path(this->config.ScriptsPath) / "signed_firmware_installer.sh";
-                const auto constants = boost::filesystem::path(this->config.ScriptsPath) / "constants.env";
-                std::vector<std::string> install_args = {constants.string()};
-                boost::process::child install_cmd(firmware_installer, boost::process::args(install_args),
-                                                  boost::process::std_out > install_stream);
-                std::string temp;
-                ocpp1_6::FirmwareStatusEnumType status;
-
-                while (std::getline(install_stream, temp)) {
-                    status = ocpp1_6::conversions::string_to_firmware_status_enum_type(temp);
-                    this->charge_point->signedFirmwareUpdateStatusNotification(status, req.requestId);
-                }
-                if (status == ocpp1_6::FirmwareStatusEnumType::Installed) {
-                    this->charge_point->trigger_boot_notification(); // to make OCTT happy
-                }
-                this->charge_point->set_signed_firmware_update_running(false);
-            });
-            this->signed_update_firmware_thread.detach();
+    this->charge_point->register_provide_token_callback(
+        [this](const std::string& id_token, int32_t connector, bool prevalidated) {
+            types::authorization::ProvidedIdToken provided_token;
+            provided_token.id_token = id_token;
+            provided_token.type = "OCPP_AUTHORIZED";
+            const std::vector<int32_t> connectors{connector};
+            provided_token.connectors.emplace(connectors);
+            provided_token.prevalidated.emplace(prevalidated);
+            this->p_auth_provider->publish_provided_token(provided_token);
         });
 
-    this->charge_point->register_remote_start_transaction_callback(
-        [this](int32_t connector, ocpp1_6::CiString20Type idTag) {
-            Object id_tag;
-            id_tag["token"] = idTag;
-            id_tag["type"] = "ocpp_authorized";
-            id_tag["timeout"] = 10;
-            this->p_auth_provider->publish_token(id_tag);
-        });
+    this->charge_point->register_set_connection_timeout_callback(
+        [this](int32_t connection_timeout) { this->r_auth->call_set_connection_timeout(connection_timeout); });
 
     this->charge_point->register_disable_evse_callback([this](int32_t connector) {
         if (connector > 0 && connector <= this->r_evse_manager.size()) {
@@ -331,95 +263,8 @@ void OCPP::init() {
         }
     });
 
-    this->charge_point->start();
-
-    int32_t connector = 1;
-    for (auto& evse : this->r_evse_manager) {
-        evse->subscribe_powermeter([this, connector](types::powermeter::Powermeter powermeter) {
-            json powermeter_json = powermeter;
-            this->charge_point->receive_power_meter(connector, powermeter_json); //
-        });
-
-        evse->subscribe_limits([this, connector](types::evse_manager::Limits limits) {
-            double max_current = limits.max_current;
-            this->charge_point->receive_max_current_offered(connector, max_current);
-
-            auto number_of_phases = limits.nr_of_phases_available;
-            this->charge_point->receive_number_of_phases_available(connector, number_of_phases);
-        });
-
-        evse->subscribe_session_events([this, connector](types::evse_manager::SessionEvents session_events) {
-            auto event = types::evse_manager::session_event_to_string(session_events.event);
-            if (event == "Enabled") {
-                // TODO(kai): decide if we need to inform libocpp about such an event
-            } else if (event == "Disabled") {
-                // TODO(kai): decide if we need to inform libocpp about such an event
-            } else if (event == "AuthRequired") {
-                auto authorized_id_tag = this->charge_point->get_authorized_id_tag(connector);
-                if (authorized_id_tag != boost::none) {
-                    Object id_tag;
-                    id_tag["token"] = authorized_id_tag.get();
-                    id_tag["type"] = "ocpp_authorized";
-                    id_tag["timeout"] = 10;
-                    this->p_auth_provider->publish_token(id_tag);
-                }
-            } else if (event == "SessionStarted") {
-                auto session_started = session_events.session_started.value();
-                auto timestamp = ocpp1_6::DateTime(std::chrono::time_point<date::utc_clock>(
-                    std::chrono::seconds(static_cast<int>(session_started.timestamp))));
-                auto energy_Wh_import = session_started.energy_Wh_import;
-                boost::optional<int32_t> reservation_id_opt = boost::none;
-                if (session_started.reservation_id) {
-                    reservation_id_opt.emplace(session_started.reservation_id.value());
-                }
-                this->charge_point->start_session(connector, timestamp, energy_Wh_import, reservation_id_opt);
-            } else if (event == "ChargingStarted") {
-                this->charge_point->start_charging(connector);
-            } else if (event == "ChargingPausedEV") {
-                this->charge_point->suspend_charging_ev(connector);
-            } else if (event == "ChargingPausedEVSE") {
-                this->charge_point->suspend_charging_evse(connector);
-            } else if (event == "ChargingResumed") {
-                this->charge_point->resume_charging(connector);
-            } else if (event == "SessionCancelled") {
-                auto session_cancelled = session_events.session_cancelled.value();
-                auto timestamp = std::chrono::time_point<date::utc_clock>(
-                    std::chrono::seconds(static_cast<int>(session_cancelled.timestamp)));
-                auto energy_Wh_import = session_cancelled.energy_Wh_import;
-                auto reason = types::evse_manager::session_cancellation_reason_to_string(session_cancelled.reason.value());
-                // always triggered by libocpp
-                this->charge_point->cancel_session(connector, ocpp1_6::DateTime(timestamp), energy_Wh_import,
-                                                   ocpp1_6::conversions::string_to_reason(reason));
-            } else if (event == "SessionFinished") {
-                // ev side disconnect
-                auto session_finished = session_events.session_finished.value();
-                auto timestamp = std::chrono::time_point<date::utc_clock>(
-                    std::chrono::seconds(static_cast<int>(session_finished.timestamp)));
-                auto energy_Wh_import = session_finished.energy_Wh_import;
-                this->charge_point->stop_session(connector, ocpp1_6::DateTime(timestamp), energy_Wh_import);
-                this->charge_point->plug_disconnected(connector);
-            } else if (event == "Error") {
-                const auto evse_error = types::evse_manager::error_to_string(session_events.error.value());
-                ocpp1_6::ChargePointErrorCode ocpp_error_code = get_ocpp_error_code(evse_error);
-                this->charge_point->error(connector, ocpp_error_code);
-            } else if (event == "PermanentFault") {
-                this->charge_point->permanent_fault(connector);
-            } else if (event == "ReservationStart") {
-                auto reservation_start = session_events.reservation_start.value();
-                auto reservation_id = reservation_start.reservation_id;
-                auto id_tag = reservation_start.id_tag;
-                this->charge_point->reservation_start(connector, reservation_id, id_tag);
-            } else if (event == "ReservationEnd") {
-                auto reservation_end = session_events.reservation_end.value();
-                auto reservation_id = reservation_end.reservation_id;
-                auto reason = types::evse_manager::reservation_end_reason_to_string(reservation_end.reason);
-                this->charge_point->reservation_end(connector, reservation_id, reason);
-            } else if (event == "ReservationAuthtokenMismatch") {
-            }
-        });
-
-        connector += 1;
-    }
+    this->charge_point->register_cancel_reservation_callback(
+        [this](int32_t reservation_id) { return this->r_reservation->call_cancel_reservation(reservation_id); });
 
     if (this->config.EnableExternalWebsocketControl) {
         const std::string connect_topic = "everest_api/ocpp/cmd/connect";
@@ -436,6 +281,99 @@ void OCPP::ready() {
     invoke_ready(*p_main);
     invoke_ready(*p_auth_validator);
     invoke_ready(*p_auth_provider);
+
+    int32_t connector = 1;
+    for (auto& evse : this->r_evse_manager) {
+        if (connector != evse->call_get_id()) {
+            EVLOG_AND_THROW(std::runtime_error("Connector Ids of EVSE manager are not configured in ascending order "
+                                               "starting with 1. This is mandatory when using the OCPP module"));
+        }
+
+        evse->subscribe_powermeter([this, connector](types::powermeter::Powermeter powermeter) {
+            json powermeter_json = powermeter;
+            this->charge_point->on_meter_values(connector, powermeter_json); //
+        });
+
+        evse->subscribe_limits([this, connector](types::evse_manager::Limits limits) {
+            double max_current = limits.max_current;
+            this->charge_point->on_max_current_offered(connector, max_current);
+        });
+
+        evse->subscribe_session_event([this, connector](types::evse_manager::SessionEvent session_event) {
+            auto event = types::evse_manager::session_event_enum_to_string(session_event.event);
+
+            if (event == "Enabled") {
+                EVLOG_debug << "Connector#" << connector << ": "
+                           << "Received Enabled";
+            } else if (event == "Disabled") {
+                EVLOG_debug << "Connector#" << connector << ": "
+                           << "Received Disabled";
+            } else if (event == "TransactionStarted") {
+                EVLOG_debug << "Connector#" << connector << ": "
+                           << "Received TransactionStarted";
+                const auto transaction_started = session_event.transaction_started.value();
+
+                const auto timestamp = ocpp1_6::DateTime(transaction_started.timestamp);
+                const auto energy_Wh_import = transaction_started.energy_Wh_import;
+                const auto session_id = session_event.uuid;
+                const auto id_token = transaction_started.id_tag;
+                boost::optional<int32_t> reservation_id_opt = boost::none;
+                if (transaction_started.reservation_id) {
+                    reservation_id_opt.emplace(transaction_started.reservation_id.value());
+                }
+                this->charge_point->on_transaction_started(connector, session_event.uuid, id_token, energy_Wh_import,
+                                                           reservation_id_opt, timestamp);
+            } else if (event == "ChargingPausedEV") {
+                EVLOG_debug << "Connector#" << connector << ": "
+                           << "Received ChargingPausedEV";
+                this->charge_point->on_suspend_charging_ev(connector);
+            } else if (event == "ChargingPausedEVSE") {
+                EVLOG_debug << "Connector#" << connector << ": "
+                           << "Received ChargingPausedEVSE";
+                this->charge_point->on_suspend_charging_evse(connector);
+            } else if (event == "ChargingStarted" || event == "ChargingResumed") {
+                EVLOG_debug << "Connector#" << connector << ": "
+                           << "Received ChargingResumed";
+                this->charge_point->on_resume_charging(connector);
+            } else if (event == "TransactionFinished") {
+                EVLOG_debug << "Connector#" << connector << ": "
+                           << "Received TransactionFinished";
+                auto transaction_finished = session_event.transaction_finished.value();
+                auto timestamp = ocpp1_6::DateTime(transaction_finished.timestamp);
+                auto energy_Wh_import = transaction_finished.energy_Wh_import;
+                auto reason = ocpp1_6::conversions::string_to_reason(
+                    types::evse_manager::stop_transaction_reason_to_string(transaction_finished.reason.value()));
+                this->charge_point->on_transaction_stopped(connector, reason, timestamp, energy_Wh_import);
+                // always triggered by libocpp
+            } else if (event == "SessionStarted") {
+                EVLOG_debug << "Connector#" << connector << ": "
+                           << "Received SessionStarted";
+                // ev side disconnect
+                auto session_started = session_event.session_started.value();
+                this->charge_point->on_session_started(
+                    connector, session_event.uuid,
+                    types::evse_manager::start_session_reason_to_string(session_started.reason));
+            } else if (event == "SessionFinished") {
+                EVLOG_debug << "Connector#" << connector << ": "
+                           << "Received SessionFinished";
+                // ev side disconnect
+                this->charge_point->on_session_stopped(connector);
+            } else if (event == "Error") {
+                EVLOG_debug << "Connector#" << connector << ": "
+                           << "Received Error";
+                const auto evse_error = types::evse_manager::error_to_string(session_event.error.value());
+                ocpp1_6::ChargePointErrorCode ocpp_error_code = get_ocpp_error_code(evse_error);
+                this->charge_point->on_error(connector, ocpp_error_code);
+            } else if (event == "ReservationStart") {
+                this->charge_point->on_reservation_start(connector);
+            } else if (event == "ReservationEnd") {
+                this->charge_point->on_reservation_end(connector);
+            } else if (event == "ReservationAuthtokenMismatch") {
+            }
+        });
+        connector++;
+    }
+    this->charge_point->start();
 }
 
 } // namespace module

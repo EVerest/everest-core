@@ -51,6 +51,21 @@
             "interface": "evse_manager",
             "min_connections": 1,
             "max_connections": 128
+        },
+        "reservation": {
+            "interface": "reservation",
+            "min_connections": 1,
+            "max_connections": 1
+        },
+        "auth": {
+            "interface": "auth",
+            "min_connections": 1,
+            "max_connections": 1
+        },
+        "system": {
+            "interface": "system",
+            "min_connections": 1,
+            "max_connections": 1
         }
     },
     "enable_external_mqtt": true,

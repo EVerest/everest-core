@@ -5,8 +5,7 @@
 namespace module {
 namespace powermeter {
 
-
-static Everest::json yeti_to_everest (const PowerMeter& p) {
+static Everest::json yeti_to_everest(const PowerMeter& p) {
     Everest::json j;
 
     j["timestamp"] = p.time_stamp;
@@ -18,7 +17,7 @@ static Everest::json yeti_to_everest (const PowerMeter& p) {
     j["energy_Wh_import"]["L2"] = p.wattHrL2;
     j["energy_Wh_import"]["L3"] = p.wattHrL3;
 
-    j["power_W"]["total"] = p.wattL1+p.wattL2+p.wattL3;
+    j["power_W"]["total"] = p.wattL1 + p.wattL2 + p.wattL3;
     j["power_W"]["L1"] = p.wattL1;
     j["power_W"]["L2"] = p.wattL2;
     j["power_W"]["L3"] = p.wattL3;
@@ -42,17 +41,6 @@ static Everest::json yeti_to_everest (const PowerMeter& p) {
 void powermeterImpl::init() {
     mod->serial.signalPowerMeter.connect([this](const PowerMeter& p) {
         publish_powermeter(yeti_to_everest(p));
-
-        mod->mqtt.publish("/external/powermeter/phaseSeqError", p.phaseSeqError);
-        mod->mqtt.publish("/external/powermeter/time_stamp", (int)p.time_stamp);
-        mod->mqtt.publish("/external/powermeter/tempL1", p.tempL1);
-        mod->mqtt.publish("/external/powermeter/totalKw", (p.wattL1 + p.wattL2 + p.wattL3) / 1000., 1);
-        mod->mqtt.publish("/external/powermeter/totalKWattHr", p.totalWattHr / 1000., 2);
-        mod->mqtt.publish("/external/powermeter_json", power_meter_data_to_json(p).dump());
-
-        mod->mqtt.publish("/external/" + mod->info.id + "/powermeter/tempL1", p.tempL1);
-        mod->mqtt.publish("/external/" + mod->info.id + "/powermeter/totalKw", (p.wattL1 + p.wattL2 + p.wattL3) / 1000., 1);
-        mod->mqtt.publish("/external/" + mod->info.id + "/powermeter/totalKWattHr", p.totalWattHr / 1000., 2);
     });
 }
 
@@ -62,8 +50,6 @@ void powermeterImpl::ready() {
 std::string powermeterImpl::handle_get_signed_meter_value(std::string& auth_token) {
     return "NOT_AVAILABLE";
 }
-
-
 
 } // namespace powermeter
 } // namespace module

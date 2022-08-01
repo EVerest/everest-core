@@ -9,14 +9,14 @@ function wait(time) {
 }
 
 boot_module(async ({ setup, config }) => {
-  setup.provides.main.register.validate_token(async (mod, { token }) => {
-    evlog.info(`Got validation request for token '${token}'...`);
+  setup.provides.main.register.validate_token(async (mod, provided_token) => {
+    evlog.info(`Got validation request for token '${provided_token.id_token}'...`);
     await wait(config.impl.main.sleep * 1000);
     const retval = {
-      result: config.impl.main.validation_result,
+      authorization_status: config.impl.main.validation_result,
       reason: config.impl.main.validation_reason,
     };
-    evlog.info(`Returning validation result for token '${token}': `, retval);
+    evlog.info(`Returning validation result for token '${provided_token.id_token}': `, retval);
     return retval;
   });
 });

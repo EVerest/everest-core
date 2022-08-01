@@ -1,6 +1,10 @@
 {
 	"description": "EVSE Manager",
 	"config": {
+        "connector_id": {
+            "description": "Connector id of this evse manager",
+            "type": "integer"
+        },
 		"evse_id": {
 			"description": "EVSE ID",
 			"type": "string",
@@ -131,9 +135,6 @@
 		},
 		"powermeter": {
 			"interface": "powermeter"
-		},
-		"auth": {
-			"interface": "auth"
 		},
 		"slac": {
 			"interface": "slac",

@@ -1,5 +1,6 @@
 ev_add_modules(
     API
+    Auth
     EnergyManager
     EnergyNode
     EvseManager
@@ -27,5 +28,6 @@ ev_add_modules(
     Store
     SunspecReader
     SunspecScanner
+    System
     YetiDriver
 )

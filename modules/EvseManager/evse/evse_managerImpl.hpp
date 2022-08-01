@@ -34,17 +34,17 @@ public:
 
 protected:
     // command handler functions (virtual)
+    virtual int handle_get_id() override;
     virtual bool handle_enable() override;
     virtual bool handle_disable() override;
-    virtual bool handle_set_faulted() override;
+    virtual void handle_authorize(std::string& id_tag) override;
+    virtual void handle_withdraw_authorization() override;
+    virtual bool handle_reserve(int& reservation_id) override;
+    virtual void handle_cancel_reservation() override;
+    virtual void handle_set_faulted() override;
     virtual bool handle_pause_charging() override;
     virtual bool handle_resume_charging() override;
-    virtual bool handle_cancel_charging(types::evse_manager::SessionCancellationReason& reason) override;
-    virtual bool handle_accept_new_session() override;
-    virtual types::evse_manager::ReservationResult handle_reserve_now(int& reservation_id, std::string& auth_token,
-                                                                      std::string& expiry_date,
-                                                                      std::string& parent_id) override;
-    virtual bool handle_cancel_reservation() override;
+    virtual bool handle_stop_transaction(types::evse_manager::StopTransactionReason& reason) override;
     virtual bool handle_force_unlock() override;
     virtual types::evse_manager::SetLocalMaxCurrentResult handle_set_local_max_current(double& max_current) override;
     virtual types::evse_manager::SwitchThreePhasesWhileChargingResult
@@ -70,9 +70,6 @@ private:
     void set_session_uuid();
 
     std::string session_uuid;
-
-    std::mutex session_mutex;
-    types::evse_manager::SessionCancellationReason cancel_session_reason;
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 
