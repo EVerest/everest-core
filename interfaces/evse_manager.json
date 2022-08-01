@@ -1,98 +1,88 @@
 {
-    "description": "This interface defines the main evse manager",
+    "description": "This interface defines the evse manager. An evse manager represents the charging kernel of one physical connector.",
     "cmds": {
+        "get_id": {
+            "description": "Call to get the connector id of the evse manager",
+            "result": {
+                "description": "Returns the connector id of the evse manager",
+                "type": "integer"
+            }
+        },
         "enable": {
-            "description": "Enables the evse",
+            "description": "Enables the evse. EVSE is available for charging after this operation",
             "result": {
                 "description": "Returns true if evse was enabled (or was enabled before), returns false if enable failed e.g. due to permanent fault.",
                 "type": "boolean"
             }
         },
         "disable": {
-            "description": "Disables the evse",
+            "description": "Disables the evse. EVSE is not available for charging after this operation",
             "result": {
                 "description": "Returns true if evse was disabled (or was disabled before), returns false if it could not be disabled (i.e. due to communication error with hardware)",
                 "type": "boolean"
             }
         },
-        "set_faulted": {
-            "description": "Sets the evse manager to faulted",
+        "authorize": {
+            "description": "Authorizes the evse manager to start a transaction using the given id tag.",
+            "arguments": {
+                "id_tag": {
+                    "description": "The authorized id tag",
+                    "type": "string"
+                }
+            }
+        },
+        "withdraw_authorization": {
+            "description": "Call to signals that EVSE is not further authorized to start a transaction (e.g. on a connection_timeout)"
+        },
+        "reserve": {
+            "description": "Call to signal that EVSE is reserved. This can be used to e.g. change the color of the HMI LEDs to indicate reservation.",
+            "arguments": {
+                "reservation_id": {
+                    "description": "The reservation id (should be added to the TransactionStarted event)",
+                    "type": "integer"
+                }
+            },
             "result": {
-                "description": "Returns true if evse was set to faulted (or is already in that state)",
+                "description": "Returns true if the EVSE accepted the reservation, else false.",
                 "type": "boolean"
             }
         },
+        "cancel_reservation": {
+            "description": "Call to signal that EVSE is not reserved anymore"
+        },
+        "set_faulted": {
+            "description": "Sets the evse manager to faulted externally. It may also switch to faulted itself if it detects an internal error."
+        },
         "pause_charging": {
-            "description": "Pauses charging",
+            "description": "Call to signal EVSE to pause charging",
             "result": {
                 "description": "Returns true if successfully paused or was already in paused_by_evse mode",
                 "type": "boolean"
             }
         },
         "resume_charging": {
-            "description": "Resumes charging",
+            "description": "Call to signal EVSE to resume charging",
             "result": {
                 "description": "Returns true if resume was successful, false otherwise (e.g. resuming a car pause won't work)",
                 "type": "boolean"
             }
         },
-        "cancel_charging": {
-            "description": "Cancels charging, can only be resumed by replugging car",
+        "stop_transaction": {
+            "description": "Stops transaction and cancels charging externally, charging can only be resumed by replugging car. EVSE will also stop transaction automatically e.g. on disconnect, so this only needs to be called if the transaction should end before.",
             "arguments": {
                 "reason": {
-                    "description": "Reason for session cancellation",
+                    "description": "Reason for stopping the transaction",
                     "type": "string",
-                    "$ref": "/evse_manager#/SessionCancellationReason"
+                    "$ref": "/evse_manager#/StopTransactionReason"
                 }
             },
             "result": {
                 "description": "Returns true if successful",
-                "type": "boolean"
-            }
-        },
-        "accept_new_session": {
-            "description": "Call when cleanup is done and new cars are allowed to plugin. Do not use multiple cleanup handlers, call from only one module!",
-            "result": {
-                "description": "Returns true if successful",
-                "type": "boolean"
-            }
-        },
-        "reserve_now": {
-            "description": "Reserves this evse for a given auth token. No support for parent id tags or id 0 reservations.",
-            "arguments": {
-                "reservation_id": {
-                    "description": "Reservation id for this reservation",
-                    "type": "integer"
-                },
-                "auth_token": {
-                    "description": "The authentication token that this evse will be reserved for",
-                    "type": "string"
-                },
-                "expiry_date": {
-                    "description": "Absolute UTC time point when reservation expires (RFC3339 format)",
-                    "type": "string",
-                    "format": "date-time"
-                },
-                "parent_id": {
-                    "description": "Parent id of the authentication token",
-                    "type": "string"
-                }
-            },
-            "result": {
-                "description": "Returns Accepted if reservation was succesfull or specifies error code.",
-                "type": "string",
-                "$ref": "/evse_manager#/ReservationResult"
-            }
-        },
-        "cancel_reservation": {
-            "description": "Cancels current reservation",
-            "result": {
-                "description": "Returns true if reservation was cancelled. Returns false if there was no reservation to cancel.",
                 "type": "boolean"
             }
         },
         "force_unlock": {
-            "description": "Force unlock connector now. During normal operation, connector will be locked/unlocked in the correct sequence. Do not use this function except if explicitly requested by e.g. management cloud.",
+            "description": "Forces EVSE to unlock connector now. During normal operation, connector will be locked/unlocked in the correct sequence. Do not use this function except if explicitly requested by e.g. management cloud.",
             "result": {
                 "description": "Returns true if unlocking sequence was successfully executed",
                 "type": "boolean"
@@ -116,7 +106,7 @@
             "description": "Switch three phases while charging",
             "arguments": {
                 "three_phases": {
-                    "description": "True if switching three phases whilst charging, false if not",
+                    "description": "True: switch to three phases, false: switch to single phase",
                     "type": "boolean"
                 }
             },
@@ -127,7 +117,7 @@
             }
         },
         "get_signed_meter_value": {
-            "description": "Returns a signed meter value. Includes current auth token if session is running.",
+            "description": "Returns a signed meter value. Includes current id_token if session is running.",
             "result": {
                 "description": "Signed meter value",
                 "type": "string"
@@ -135,10 +125,10 @@
         }
     },
     "vars": {
-        "session_events": {
+        "session_event": {
             "description": "Emits all events related to sessions",
             "type": "object",
-            "$ref": "/evse_manager#/SessionEvents"
+            "$ref": "/evse_manager#/SessionEvent"
         },
         "limits": {
             "description": "Limits of this evse, published on change",

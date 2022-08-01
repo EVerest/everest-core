@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 #include "EvseManager.hpp"
 #include <fmt/core.h>
 
@@ -16,6 +16,7 @@ void EvseManager::init() {
 
     invoke_init(*p_evse);
     invoke_init(*p_energy_grid);
+    invoke_init(*p_token_provider);
     authorization_available = false;
     // check if a slac module is connected to the optional requirement
     slac_enabled = !r_slac.empty();
@@ -30,15 +31,6 @@ void EvseManager::init() {
 
     hlc_waiting_for_auth_eim = false;
     hlc_waiting_for_auth_pnc = false;
-
-    reservationThreadHandle = std::thread([this]() {
-        while (true) {
-            // check reservation status on regular intervals to see if it expires.
-            // This will generate the ReservationEnd event.
-            reservation_valid();
-            sleep(1);
-        }
-    });
 }
 
 void EvseManager::ready() {
@@ -138,11 +130,11 @@ void EvseManager::ready() {
         r_hlc[0]->subscribe_EVCCIDD([this](const std::string& token) {
             json autocharge_token;
 
-            autocharge_token["token"] = "VID:" + token;
+            autocharge_token["id_token"] = "VID:" + token;
             autocharge_token["type"] = "autocharge";
             autocharge_token["timeout"] = 60;
 
-            p_token_provider->publish_token(autocharge_token);
+            p_token_provider->publish_provided_token(autocharge_token);
         });
 
         r_hlc[0]->subscribe_Require_Auth_PnC([this]() {
@@ -280,26 +272,19 @@ void EvseManager::ready() {
 
         // Store local cache
         latest_powermeter_data = p;
-    });
 
-    r_auth->subscribe_authorization_available([this](bool a) {
-        // Listen to authorize events and cache locally.
-        authorization_available = a;
-        bool res_valid = reservation_valid();
-        std::lock_guard<std::mutex> lock(reservation_mutex);
-        if (res_valid) {
-            EVLOG_info << "Reservation ends because the id tag was presented";
-            reserved = false;
-
-            // publish event to other modules
-            json se;
-            se["event"] = "ReservationEnd";
-            se["reservation_end"]["reason"] = "UsedToStartCharging";
-            se["reservation_end"]["reservation_id"] = reservation_id;
-
-            signalReservationEvent(se);
-        }
-        reserved = false;
+        // External Nodered interface
+        mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter/phaseSeqError", config.connector_id),
+                     powermeter.phase_seq_error.get());
+        mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter/time_stamp", config.connector_id),
+                     (int)powermeter.timestamp);
+        mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter/totalKw", config.connector_id),
+                     (powermeter.power_W.get().L1.get() + powermeter.power_W.get().L2.get() + powermeter.power_W.get().L3.get()) / 1000., 1);
+        mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter/totalKWattHr", config.connector_id),
+                     powermeter.energy_Wh_import.total / 1000.);
+        mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter_json", config.connector_id),
+                     p.dump());
+        // /External Nodered interface
     });
 
     if (slac_enabled) {
@@ -313,38 +298,6 @@ void EvseManager::ready() {
             }
         });
     }
-
-    charger->signalAuthRequired.connect([this]() {
-        // The charger indicates it requires auth now. It will retry if we cannot give auth right now.
-        if (authorization_available) {
-            boost::variant<boost::blank, std::string> auth = r_auth->call_get_authorization();
-            if (auth.which() == 1) {
-                // FIXME: This is currently only for EIM!
-                // charger->Authorize(true, boost::get<std::string>(auth), false);
-                const std::string& token = boost::get<std::string>(auth);
-                // we got an auth token, check if it matches our reservation
-                if (reserved_for_different_token(token)) {
-                    // throw an error event that can e.g. be displayed
-                    json se;
-                    se["event"] = "ReservationAuthtokenMismatch";
-                    signalReservationEvent(se);
-                    session_log.evse(false, fmt::format("Reservation does not match Auth token {}", token));
-                } else {
-                    // if reserved: signal to the outside world that this reservation ended because it is being
-                    // used
-                    use_reservation_to_start_charging();
-                    // notify charger about the authorization
-                    charger->Authorize(true, token, false);
-                    // notify HLC if it was waiting for it as well FIXME: if we notify here, charger is actually not
-                    // ready as it is going through t_step_X1 or so
-                    /*if (get_hlc_waiting_for_auth_eim() && get_hlc_enabled()) {
-                        r_hlc[0]->call_set_Auth_Okay_EIM(true);
-                    }*/
-                    //  FIXME: PnC not supported here!
-                }
-            }
-        }
-    });
 
     charger->signalMaxCurrent.connect([this](float ampere) {
         // The charger changed the max current setting. Forward to HLC
@@ -368,6 +321,7 @@ void EvseManager::ready() {
 
     invoke_ready(*p_evse);
     invoke_ready(*p_energy_grid);
+    invoke_ready(*p_token_provider);
     if (config.ac_with_soc) {
         setup_DC_mode();
     } else {
@@ -390,6 +344,7 @@ types::board_support::HardwareCapabilities EvseManager::get_hw_capabilities() {
 }
 
 int32_t EvseManager::get_reservation_id() {
+    std::lock_guard<std::mutex> lock(reservation_mutex);
     return reservation_id;
 }
 
@@ -441,63 +396,6 @@ void EvseManager::setup_AC_mode() {
     r_hlc[0]->call_set_SupportedEnergyTransferMode(transfer_modes);
 }
 
-types::evse_manager::ReservationResult
-EvseManager::reserve_now(const int _reservation_id, const std::string& token,
-                         const std::chrono::time_point<date::utc_clock>& valid_until, const std::string& parent_id) {
-
-    // is the evse Unavailable?
-    if (charger->getCurrentState() == Charger::EvseState::Disabled) {
-        return types::evse_manager::ReservationResult::Unavailable;
-    }
-
-    // is the evse faulted?
-    if (charger->getCurrentState() == Charger::EvseState::Faulted) {
-        return types::evse_manager::ReservationResult::Faulted;
-    }
-
-    // is the reservation still valid in time?
-    if (date::utc_clock::now() > valid_until) {
-        return types::evse_manager::ReservationResult::Rejected;
-    }
-
-    // is the connector currently ready to accept a new car?
-    if (charger->getCurrentState() != Charger::EvseState::Idle) {
-        return types::evse_manager::ReservationResult::Occupied;
-    }
-
-    // is it already reserved
-    if (reservation_valid()) {
-        return types::evse_manager::ReservationResult::Occupied;
-    }
-
-    std::lock_guard<std::mutex> lock(reservation_mutex);
-
-    // accept new reservation
-    reservation_id = _reservation_id;
-    reserved_auth_token = token;
-    reservation_valid_until = valid_until;
-    reserved_auth_token_parent_id = parent_id;
-    reserved = true;
-
-    // publish event to other modules
-    json se;
-    se["event"] = "ReservationStart";
-    se["reservation_start"]["reservation_id"] = reservation_id;
-    se["reservation_start"]["id_tag"] = reserved_auth_token;
-    se["reservation_start"]["parent_id"] = parent_id;
-
-    signalReservationEvent(se);
-
-    return types::evse_manager::ReservationResult::Accepted;
-
-    // FIXME TODO:
-    /*
-    parent_id needs to be implemented in new auth manager arch
-
-    reservationEnd with reason Charging Started with it is not implemented yet
-    */
-}
-
 bool EvseManager::updateLocalMaxCurrentLimit(float max_current) {
     if (max_current >= 0.0F && max_current < EVSE_ABSOLUTE_MAX_CURRENT) {
         local_max_current_limit = max_current;
@@ -509,88 +407,62 @@ bool EvseManager::updateLocalMaxCurrentLimit(float max_current) {
     return false;
 }
 
-bool EvseManager::cancel_reservation() {
-    bool res_valid = reservation_valid();
+bool EvseManager::reserve(int32_t id) {
+
+    // is the evse Unavailable?
+    if (charger->getCurrentState() == Charger::EvseState::Disabled) {
+        return false;
+    }
+
+    // is the evse faulted?
+    if (charger->getCurrentState() == Charger::EvseState::Faulted) {
+        return false;
+    }
+
+    // is the connector currently ready to accept a new car?
+    if (charger->getCurrentState() != Charger::EvseState::Idle) {
+        return false;
+    }
 
     std::lock_guard<std::mutex> lock(reservation_mutex);
-    if (res_valid) {
-        reserved = false;
+
+    if (!reserved) {
+        reserved = true;
+        reservation_id = id;
 
         // publish event to other modules
         json se;
-        se["event"] = "ReservationEnd";
-        se["reservation_end"]["reason"] = "Cancelled";
-        se["reservation_end"]["reservation_id"] = reservation_id;
+        se["event"] = "ReservationStart";
 
         signalReservationEvent(se);
         return true;
     }
-    reserved = false;
+
     return false;
 }
 
-// Signals that reservation was used to start this charging.
-// Does nothing if no reservation is active.
-void EvseManager::use_reservation_to_start_charging() {
+void EvseManager::cancel_reservation() {
 
     std::lock_guard<std::mutex> lock(reservation_mutex);
-    if (!reserved) {
-        return;
+    if (reserved) {
+        reserved = false;
+        reservation_id = 0;
+
+        // publish event to other modules
+        json se;
+        se["event"] = "ReservationEnd";
+
+        signalReservationEvent(se);
     }
+}
 
-    session_log.evse(false, fmt::format("Reservation token used to start charging"));
-    // publish event to other modules
-    json se;
-    se["event"] = "ReservationEnd";
-    se["reservation_end"]["reason"] = "UsedToStartCharging";
-    se["reservation_end"]["reservation_id"] = reservation_id;
-
-    signalReservationEvent(se);
-
-    reserved = false;
+bool EvseManager::is_reserved() {
+    std::lock_guard<std::mutex> lock(reservation_mutex);
+    return reserved;
 }
 
 float EvseManager::getLocalMaxCurrentLimit() {
     return local_max_current_limit;
-}
-
-bool EvseManager::reservation_valid() {
-    std::lock_guard<std::mutex> lock(reservation_mutex);
-    if (reserved) {
-        if (date::utc_clock::now() < reservation_valid_until) {
-            // still valid
-            return true;
-        } else {
-            // expired
-            // publish event to other modules
-            json se;
-            se["event"] = "ReservationEnd";
-            se["reservation_end"]["reason"] = "Expired";
-            se["reservation_end"]["reservation_id"] = reservation_id;
-
-            signalReservationEvent(se);
-            reserved = false;
-        }
-    }
-    // no active reservation
-    return false;
-}
-
-/*
-  Returns false if not reserved or reservation matches the token.
-  Returns true if reserved for a different token.
-*/
-bool EvseManager::reserved_for_different_token(const std::string& token) {
-    std::lock_guard<std::mutex> lock(reservation_mutex);
-    if (!reserved) {
-        return false;
-    }
-
-    if (reserved_auth_token == token) {
-        return false;
-    } else {
-        return true;
-    }
 }
 
 bool EvseManager::get_hlc_enabled() {

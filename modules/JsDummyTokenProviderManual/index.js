@@ -3,14 +3,9 @@
 const { evlog, boot_module } = require('everestjs');
 
 boot_module(async ({ setup, info, config, mqtt }) => {
-  mqtt.subscribe('everest_api/dummy_token_provider/cmd/provide', (mod, token) => {
-
-    const data = {
-      token: token,
-      type: mod.config.impl.main.type,
-      timeout: mod.config.impl.main.timeout,
-    };
+  mqtt.subscribe('everest_api/dummy_token_provider/cmd/provide', (mod, raw_data) => {
+    const data = JSON.parse(raw_data);
     evlog.info('Publishing new dummy token: ', data);
-    mod.provides.main.publish.token(data);
+    mod.provides.main.publish.provided_token(data);
   });
 });

@@ -1,0 +1,31 @@
+{
+    "description": "This module implements system wide operations",
+    "config": {
+        "DefaultRetries": {
+            "description": "Specifies how many times Charge Point tries to upload or download files on previous failure.",
+            "type": "number",
+            "default": 1
+        },
+        "DefaultRetryInterval": {
+            "description": "Specifies in seconds after which time a retry of an upload or download on previous failure may be attempted.",
+            "type": "number",
+            "default": 1
+        }
+    },
+    "provides": {
+        "main": {
+            "description": "Implements the system interface",
+            "interface": "system"
+        }
+    },
+    "requires": {
+
+    },
+    "enable_external_mqtt": false,
+    "metadata": {
+        "license": "https://opensource.org/licenses/Apache-2.0",
+        "authors": [
+            "Piet Gömpel"
+        ]
+    }
+}

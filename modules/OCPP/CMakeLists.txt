@@ -27,13 +27,4 @@ target_sources(${MODULE_NAME}
 )
 
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1
-install(
-    PROGRAMS
-        constants.env
-        diagnostics_uploader.sh
-        firmware_updater.sh
-        signed_firmware_downloader.sh
-        signed_firmware_installer.sh
-    DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
-)
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1

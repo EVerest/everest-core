@@ -21,6 +21,7 @@
     "evse_manager": {
         "module": "EvseManager",
         "config_module": {
+            "connector_id": 1,
             "three_phases": true,
             "has_ventilation": true,
             "country_code": "DE",
@@ -46,12 +47,6 @@
                     "implementation_id": "powermeter"
                 }
             ],
-            "auth": [
-                {
-                    "module_id": "auth",
-                    "implementation_id": "main"
-                }
-            ],
             "slac": [
                 {
                     "module_id": "slac",
@@ -74,6 +69,12 @@
     },
     "car_simulator": {
         "module": "JsCarSimulator",
+        "config_module": {
+            "connector_id": 1,
+            "auto_enable": true,
+	    "auto_exec": false,
+	    "auto_exec_commands": "sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 30;unplug"
+        },
         "connections": {
             "simulation_control": [
                 {
@@ -96,23 +97,33 @@
         }
     },
     "auth": {
-        "module": "JsAuth",
+        "module": "Auth",
+        "config_module": {
+            "connection_timeout": 10,
+            "selection_algorithm": "PlugEvents"
+        },
         "connections": {
-            "tokenProvider": [
+            "token_provider": [
                 {
-                    "module_id": "token_provider_1",
+                    "module_id": "token_provider",
                     "implementation_id": "main"
                 }
             ],
-            "tokenValidator": [
+            "token_validator": [
                 {
                     "module_id": "token_validator",
                     "implementation_id": "main"
                 }
+            ],
+            "evse_manager": [
+                {
+                    "module_id": "evse_manager",
+                    "implementation_id": "evse"
+                }
             ]
         }
     },
-    "token_provider_1": {
+    "token_provider": {
         "module": "JsDummyTokenProvider",
         "connections": {
             "evse": [
@@ -152,7 +163,7 @@
     "grid_connection_point": {
         "module": "EnergyNode",
         "config_module": {
-            "fuse_limit_A": 63.0,
+            "fuse_limit_A": 40.0,
             "phase_count": 3
         },
         "connections": {

@@ -1,8 +1,22 @@
 {
     "description": "EVSE manager types",
     "types": {
-        "SessionCancellationReason": {
-            "description": "Reason for session cancellation",
+        "StopTransactionReason": {
+            "description": "Reason for stopping transaction",
+            "documenation": [
+                "Reason for stopping the transaction:",
+                "EmergencyStop: Emergency stop button was used",
+                "EVDisconnected: Disconnecting of cable, vehicle moved away from inductive charge unit.",
+                "HardReset: A hard reset command was received previously",
+                "Local: Stopped locally on request of the user at the Charge Point. This is a regular termination of a transaction. Examples: presenting an RFID tag, pressing a button to stop.",
+                "Other: Any other reason.",
+                "PowerLoss: Complete loss of power.",
+                "Reboot: A locally initiated reset/reboot occurred.",
+                "Remote: Stopped remotely on request of the user. This is a regular termination of a transaction. Examples: termination using a smartphone app, exceeding a (non local) prepaid credit",
+                "SoftReset: A soft reset command was received.",
+                "UnlockCommand: Central System sent an Unlock Connector command.",
+                "DeAuthorized: The transaction was stopped because of the authorization status in a StartTransaction.conf"
+            ],
             "type": "string",
             "enum": [
                 "EmergencyStop",
@@ -18,19 +32,27 @@
                 "DeAuthorized"
             ]
         },
-        "ReservationResult": {
-            "description": "Result of an attempted reservation",
+        "StartSessionReason": {
+            "description": "Reason for session start",
+            "documentation": [
+                    "Reason for starting the session:",
+                    "EVConnected: Session was started because an EV was plugged in",
+                    "Authorized: Session was started because a valid authorization was presented and the EVSE is authorized to start a transaction immediately when an EV is plugged in"
+                    ],
             "type": "string",
             "enum": [
-                "Accepted",
-                "Faulted",
-                "Occupied",
-                "Rejected",
-                "Unavailable"
+                "EVConnected",
+                "Authorized"
             ]
         },
         "SetLocalMaxCurrentResult": {
-            "description": "Returns success or error code",
+            "description": "Result for set_local_max_current command",
+            "documentation": [
+                "Result of Setting local max current:",
+                "Success: LocalMaxCurrent was set successfully",
+                "Error_OutOfRange: The LocalMaxCurrent that was set is not in range of the EVSE capabilities",
+                "Error_Hardware: There was a hardware error on setting the LocalMaxCurrent"
+            ],
             "type": "string",
             "enum": [
                 "Success",
@@ -40,6 +62,13 @@
         },
         "SwitchThreePhasesWhileChargingResult": {
             "description": "Returns success or error code",
+            "documentation": [
+                "Result of switching phases while charging:",
+                "Success: Switching phases was successful",
+                "Error_NotSupported: Switching phases is not supported",
+                "Error_NotCharging: EVSE is not charging",
+                "Error_Hardware: There was a hardware error on switching phases"
+            ],
             "type": "string",
             "enum": [
                 "Success",
@@ -48,48 +77,92 @@
                 "Error_Hardware"
             ]
         },
-        "SessionEvent": {
-            "description": "Event enum",
+        "SessionEventEnum": {
+            "description": "Session Event enum",
+            "documentation": [
+                "Events that the EVSE signals: ",
+                "Enabled: Signaled when the EVSE is enabled (e.g. after an enable command)",
+                "Disabled: Signaled when the EVSE is disabled (e.g. after a disable command)",
+                "SessionStarted: Signaled when a session has been started. A session has been started either when an EV is plugged in or the user has been authorized to start a transaction (e.g. after an authorize command)",
+                "TransactionStarted: Signaled when a transaction has been started. Transaction starts at the point that all conditions for charging are met: EV is connected and user has been authorized.",
+                "AuthRequired: Signaled when an EVSE needs authorization to start a transaction",
+                "ChargingPausedEV: Signaled when charging is paused by the EV",
+                "ChargingPausedEVSE: Signaled when charging is paused by the EVSE",
+                "TransactionFinished: Signaled when the transaction finished. Transaction finishes at the point where one of the preconditions for charging irrevocably becomes false: When a user swipes to stop the transaction and the stop is authorized.",
+                "SessionFinished: Signaled when the transaction finished. Session finishes at the point that the EVSE is available again (no cable plugged)",
+                "Error: Signaled when an error occured",
+                "PermanentFault: Signaled when there is a permanent fault at the EVSE",
+                "ReservationStart: Signaled when a reservation starts",
+                "ReservationEnd: Signaled when a reservation ends",
+                "ReplugStarted: Signaled when the EVSE Manager virtually replugs without interrupting the session or transaction",
+                "ReplugFinished: Signaled when the virtual replug process has finished"
+            ],  
             "type": "string",
             "enum": [
                 "Enabled",
                 "Disabled",
                 "SessionStarted",
+                "TransactionStarted",
                 "AuthRequired",
-                "ChargingStarted",
                 "ChargingPausedEV",
                 "ChargingPausedEVSE",
                 "ChargingResumed",
+                "TransactionFinished",
                 "SessionFinished",
-                "SessionCancelled",
                 "Error",
                 "PermanentFault",
                 "ReservationStart",
                 "ReservationEnd",
-                "ReservationAuthtokenMismatch",
                 "ReplugStarted",
                 "ReplugFinished"
             ]
         },
         "SessionStarted": {
-            "description": "data for SessionStarted event",
+            "description": "Data for the SessionStarted event",
             "type": "object",
             "additionalProperties": false,
             "required": [
                 "timestamp",
-                "energy_Wh_import"
+                "reason"
             ],
             "properties": {
                 "timestamp": {
-                    "description": "Session start timestamp",
-                    "type": "number"
+                    "description": "Session start time in RFC3339 format",
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "reason": {
+                    "description": "Reason for session start",
+                    "type": "string",
+                    "$ref": "/evse_manager#/StartSessionReason"
+                }
+            }
+        },
+        "TransactionStarted": {
+            "description": "Data for the TransactionStarted event",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "timestamp",
+                "energy_Wh_import",
+                "id_tag"
+            ],
+            "properties": {
+                "timestamp": {
+                    "description": "Transaction start time in RFC3339 format",
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "energy_Wh_import": {
-                    "description": "Session start Wh",
+                    "description": "Transaction start imported meter value in Wh",
                     "type": "number"
                 },
+                "id_tag": {
+                    "description": "The id tag assigned to this transaction",
+                    "type": "string"
+                },
                 "energy_Wh_export": {
-                    "description": "Session start Wh",
+                    "description": "Transaction start exported meter value Wh",
                     "type": "number"
                 },
                 "signed_meter_value": {
@@ -97,13 +170,13 @@
                     "type": "string"
                 },
                 "reservation_id": {
-                    "description": "Reservation Id",
+                    "description": "Id of the reservation",
                     "type": "number"
                 }
             }
         },
-        "SessionFinished": {
-            "description": "data for SessionFinished event that happens when car is plugged out",
+        "TransactionFinished": {
+            "description": "Data for TransactionFinished event",
             "type": "object",
             "additionalProperties": false,
             "required": [
@@ -112,42 +185,16 @@
             ],
             "properties": {
                 "timestamp": {
-                    "description": "Session end timestamp",
-                    "type": "number"
+                    "description": "Transaction end time in RFC3339 format",
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "energy_Wh_import": {
-                    "description": "Session end Wh",
+                    "description": "Transaction finished imported meter value in Wh",
                     "type": "number"
                 },
                 "energy_Wh_export": {
-                    "description": "Session end Wh",
-                    "type": "number"
-                },
-                "signed_meter_value": {
-                    "description": "Signed meter value",
-                    "type": "string"
-                }
-            }
-        },
-        "SessionCancelled": {
-            "description": "data for SessionCancelled event that happens when e.g. user cancels charging before plug out. Note that SessionFinished will always be generated on plugout.",
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-                "timestamp",
-                "energy_Wh_import"
-            ],
-            "properties": {
-                "timestamp": {
-                    "description": "Session cancel timestamp",
-                    "type": "number"
-                },
-                "energy_Wh_import": {
-                    "description": "Session cancel Wh",
-                    "type": "number"
-                },
-                "energy_Wh_export": {
-                    "description": "Session cancel Wh",
+                    "description": "Transaction finished exported meter value in Wh",
                     "type": "number"
                 },
                 "signed_meter_value": {
@@ -155,14 +202,26 @@
                     "type": "string"
                 },
                 "reason": {
-                    "description": "Reason for session cancellation",
+                    "description": "Reason for stopping transaction",
                     "type": "string",
-                    "$ref": "/evse_manager#/SessionCancellationReason"
+                    "$ref": "/evse_manager#/StopTransactionReason"
                 }
             }
         },
         "Error": {
             "description": "Details on error type",
+            "documentation": [
+                "Error that the EVSE signals: ",
+                "Car: Signals a car error",
+                "CarDiodeFault: Signals a car diode fault",
+                "Relais: Signals a relais error",
+                "RCD: Signals an RCD error",
+                "VentilationNotAvailable: Signals that ventilation is not available",
+                "OverCurrent: Signals an overcurrent error",
+                "Internal: Signals an internal error",
+                "SLAC: Signals a SLAC communication error",
+                "HLC: Signals a HLC error"
+            ],
             "type": "string",
             "enum": [
                 "Car",
@@ -176,59 +235,7 @@
                 "HLC"
             ]
         },
-        "ReservationStart": {
-            "description": "Details on Reservation Start",
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-                "reservation_id",
-                "id_tag"
-            ],
-            "properties": {
-                "reservation_id": {
-                    "description": "reservation_id",
-                    "type": "integer"
-                },
-                "id_tag": {
-                    "description": "id tag of the reservation",
-                    "type": "string"
-                },
-                "parent_id": {
-                    "description": "parent_id",
-                    "type": "string"
-                }
-            }
-        },
-        "ReservationEndReason": {
-            "description": "Reason why reservation ends",
-            "type": "string",
-            "enum": [
-                "Expired",
-                "Cancelled",
-                "UsedToStartCharging"
-            ]
-        },
-        "ReservationEnd": {
-            "description": "Details on Reservation End",
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-                "reason",
-                "reservation_id"
-            ],
-            "properties": {
-                "reason": {
-                    "description": "Reason why reservation ends",
-                    "type": "string",
-                    "$ref": "/evse_manager#/ReservationEndReason"
-                },
-                "reservation_id": {
-                    "description": "reservation_id",
-                    "type": "integer"
-                }
-            }
-        },
-        "SessionEvents": {
+        "SessionEvent": {
             "description": "Emits all events related to sessions",
             "type": "object",
             "additionalProperties": false,
@@ -244,37 +251,51 @@
                 "event": {
                     "description": "Event enum. For some events an additional object is set, see below.",
                     "type": "string",
-                    "$ref": "/evse_manager#/SessionEvent"
+                    "$ref": "/evse_manager#/SessionEventEnum"
                 },
                 "session_started": {
                     "description": "data for SessionStarted event",
                     "type": "object",
                     "$ref": "/evse_manager#/SessionStarted"
                 },
-                "session_finished": {
-                    "description": "data for SessionFinished event that happens when car is plugged out",
+                "transaction_started": {
+                    "description": "data for TransactionStarted event",
                     "type": "object",
-                    "$ref": "/evse_manager#/SessionFinished"
+                    "$ref": "/evse_manager#/TransactionStarted"
                 },
-                "session_cancelled": {
-                    "description": "data for SessionCancelled event that happens when e.g. user cancels charging before plug out. Note that SessionFinished will always be generated on plugout.",
+                "transaction_finished": {
+                    "description": "data for TransactionFinished event that happens when car is plugged out",
                     "type": "object",
-                    "$ref": "/evse_manager#/SessionCancelled"
+                    "$ref": "/evse_manager#/TransactionFinished"
                 },
                 "error": {
                     "description": "Details on error type",
                     "type": "string",
                     "$ref": "/evse_manager#/Error"
+                }
+            }
+        },
+        "Limits": {
+            "description": "Limits type of this EVSE",
+            "type": "object",
+            "required": [
+                "max_current",
+                "nr_of_phases_available"
+            ],
+            "properties": {
+                "uuid": {
+                    "description": "This module's UUID for global identification",
+                    "type": "string"
                 },
-                "reservation_start": {
-                    "description": "Details on Reservation Start",
-                    "type": "object",
-                    "$ref": "/evse_manager#/ReservationStart"
+                "max_current": {
+                    "description": "Instantaneous maximum current available to car",
+                    "type": "number"
                 },
-                "reservation_end": {
-                    "description": "Details on Reservation End",
-                    "type": "object",
-                    "$ref": "/evse_manager#/ReservationEnd"
+                "nr_of_phases_available": {
+                    "description": "Instantaneous phase count available to car",
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 3
                 }
             }
         },

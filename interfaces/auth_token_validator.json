@@ -4,8 +4,8 @@
         "validate_token": {
             "description": "Validate auth token and return result (with optional reason string)",
             "arguments": {
-                "token": {
-                    "description": "Arbitrary token string: this has to be printable case insensitive ascii: !!!FIXME!!! write a regex to allow only printable ascii",
+                "id_token": {
+                    "description": "Arbitrary id token string: this has to be printable case insensitive ascii: !!!FIXME!!! write a regex to allow only printable ascii",
                     "type": "string",
                     "minLength": 1,
                     "maxLength":  20
@@ -14,7 +14,7 @@
             "result": {
                 "description": "Result object containing validation result enum value (key: result) and optional reason string (key: reason)",
                 "type": "object",
-                "$ref": "/auth_token_validator#/Result"
+                "$ref": "/authorization#/ValidationResult"
             }
         }
     }

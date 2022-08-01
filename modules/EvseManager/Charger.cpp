@@ -6,11 +6,6 @@
  *  Created on: 08.03.2021
  *      Author: cornelius
  *
- * TODO:
- * - way too many calls to bsp (e.g. every 50msecs)!
- * - we need to publish state to external mqtt to make nodered happy
- * - overcurrent: works in uC. in low control mode uc can only verify hard limit, need to test soft limit here!
- *
  */
 
 #include "Charger.hpp"
@@ -28,7 +23,6 @@ Charger::Charger(const std::unique_ptr<board_support_ACIntf>& r_bsp) : r_bsp(r_b
     r_bsp->call_enable(false);
 
     update_pwm_last_dc = 0.;
-    cancelled = false;
 
     currentState = EvseState::Disabled;
     lastState = EvseState::Disabled;
@@ -43,6 +37,9 @@ Charger::Charger(const std::unique_ptr<board_support_ACIntf>& r_bsp) : r_bsp(r_b
     t_step_X1_returnState = EvseState::Faulted;
 
     matching_started = false;
+
+    transaction_active = false;
+    session_active = false;
 
     hlc_use_5percent_current_session = false;
 }
@@ -95,7 +92,7 @@ void Charger::runStateMachine() {
         ac_with_soc_timeout = false;
         ac_with_soc_timer = 3600000;
         signalACWithSoCTimeout();
-	return;
+        return;
     }
 
     if (new_in_state) {
@@ -131,7 +128,7 @@ void Charger::runStateMachine() {
         if (new_in_state) {
             pwm_off();
             Authorize(false, "", false);
-            cancelled = false;
+            transaction_active = false;
         }
         break;
 
@@ -146,6 +143,9 @@ void Charger::runStateMachine() {
             if (lastState == EvseState::Replug) {
                 signalEvent(EvseEvent::ReplugFinished);
             } else {
+                // First user interaction was plug in of car? Start session here.
+                if (!sessionActive())
+                    startSession(false);
                 // External signal on MQTT
                 signalEvent(EvseEvent::AuthRequired);
             }
@@ -168,11 +168,6 @@ void Charger::runStateMachine() {
             if (hlc_use_5percent_current_session) {
                 update_pwm_now(PWM_5_PERCENT);
             }
-        }
-
-        // Internal Signal to main module class that we need auth
-        if (!(AuthorizedEIM() || AuthorizedPnC())) {
-            signalAuthRequired();
         }
 
         // SLAC is running in the background trying to setup a PLC connection.
@@ -199,7 +194,7 @@ void Charger::runStateMachine() {
         if (AuthorizedEIM()) {
             session_log.evse(false, "EIM Authorization received");
 
-            signalEvent(EvseEvent::ChargingStarted);
+            startTransaction();
             EvseState targetState;
 
             if (powerAvailable()) {
@@ -282,7 +277,7 @@ void Charger::runStateMachine() {
             }
         } else if (AuthorizedPnC()) {
 
-            signalEvent(EvseEvent::ChargingStarted);
+            startTransaction();
 
             EvseState targetState;
             if (powerAvailable()) {
@@ -420,10 +415,14 @@ void Charger::runStateMachine() {
         // We are temporarily unavailable to avoid that new cars plug in
         // during the cleanup phase. Re-Enable once we are in idle.
         if (new_in_state) {
-            signalEvent(EvseEvent::SessionFinished);
+            // Transaction may already be stopped when it was cancelled earlier.
+            // In that case, do not sent a second transactionFinished event.
+            if (transactionActive())
+                stopTransaction();
+            stopSession();
             pwm_F();
         }
-        // FIXME: this should be done by higher layer.
+
         restart();
         break;
 
@@ -526,7 +525,6 @@ void Charger::processCPEventsState(ControlPilotEvent cp_event) {
 
     case EvseState::Idle:
         if (cp_event == ControlPilotEvent::CarPluggedIn) {
-            signalEvent(EvseEvent::SessionStarted);
             // FIXME: Set cable current limit from PP resistor value for this
             // session e.g. readPPAmpacity();
             currentState = EvseState::WaitingForAuthentication;
@@ -704,7 +702,7 @@ bool Charger::pauseCharging() {
 
 bool Charger::resumeCharging() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
-    if (!cancelled && currentState == EvseState::ChargingPausedEVSE && powerAvailable()) {
+    if (transactionActive() && currentState == EvseState::ChargingPausedEVSE && powerAvailable()) {
         currentState = EvseState::Charging;
         return true;
     }
@@ -725,7 +723,7 @@ bool Charger::pauseChargingWaitForPower() {
 // resume charging since power became available. Does not resume if user paused charging.
 bool Charger::resumeChargingPowerAvailable() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
-    if (!cancelled && currentState == EvseState::ChargingPausedEVSE && powerAvailable() && !paused_by_user) {
+    if (transactionActive() && currentState == EvseState::ChargingPausedEVSE && powerAvailable() && !paused_by_user) {
         currentState = EvseState::Charging;
         return true;
     }
@@ -744,16 +742,70 @@ bool Charger::evseReplug() {
     return true;
 }
 
-bool Charger::cancelCharging() {
+bool Charger::cancelTransaction(const types::evse_manager::StopTransactionReason& reason) {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
     if (currentState == EvseState::Charging || currentState == EvseState::ChargingPausedEVSE ||
         currentState == EvseState::ChargingPausedEV) {
+
         currentState = EvseState::ChargingPausedEVSE;
-        cancelled = true;
-        signalEvent(EvseEvent::SessionCancelled);
+        transaction_active = false;
+        last_stop_transaction_reason = reason;
+        signalEvent(EvseEvent::TransactionFinished);
+
         return true;
     }
     return false;
+}
+
+bool Charger::transactionActive() {
+    std::lock_guard<std::recursive_mutex> lock(stateMutex);
+    return transaction_active;
+}
+
+bool Charger::sessionActive() {
+    std::lock_guard<std::recursive_mutex> lock(stateMutex);
+    return session_active;
+}
+
+void Charger::startSession(bool authfirst) {
+    std::lock_guard<std::recursive_mutex> lock(stateMutex);
+    session_active = true;
+    authorized = false;
+    if (authfirst)
+        last_start_session_reason = types::evse_manager::StartSessionReason::Authorized;
+    else
+        last_start_session_reason = types::evse_manager::StartSessionReason::EVConnected;
+    signalEvent(EvseEvent::SessionStarted);
+}
+
+void Charger::stopSession() {
+    std::lock_guard<std::recursive_mutex> lock(stateMutex);
+    session_active = false;
+    authorized = false;
+    signalEvent(EvseEvent::SessionFinished);
+}
+
+void Charger::startTransaction() {
+    std::lock_guard<std::recursive_mutex> lock(stateMutex);
+    transaction_active = true;
+    signalEvent(EvseEvent::TransactionStarted);
+}
+
+void Charger::stopTransaction() {
+    std::lock_guard<std::recursive_mutex> lock(stateMutex);
+    transaction_active = false;
+    last_stop_transaction_reason = types::evse_manager::StopTransactionReason::EVDisconnected;
+    signalEvent(EvseEvent::TransactionFinished);
+}
+
+types::evse_manager::StopTransactionReason Charger::getTransactionFinishedReason() {
+    std::lock_guard<std::recursive_mutex> lock(stateMutex);
+    return last_stop_transaction_reason;
+}
+
+types::evse_manager::StartSessionReason Charger::getSessionStartedReason() {
+    std::lock_guard<std::recursive_mutex> lock(stateMutex);
+    return last_start_session_reason;
 }
 
 bool Charger::switchThreePhasesWhileCharging(bool n) {
@@ -820,18 +872,27 @@ bool Charger::Authorized_EIM_ready_for_HLC() {
 }
 
 void Charger::Authorize(bool a, const std::string& userid, bool pnc) {
-    std::lock_guard<std::recursive_mutex> lock(configMutex);
-    authorized = a;
-    authorized_pnc = pnc;
+    if (a) {
+        // First user interaction was auth? Then start session already here and not at plug in
+        if (!sessionActive())
+            startSession(true);
+        std::lock_guard<std::recursive_mutex> lock(configMutex);
+        authorized = true;
+        authorized_pnc = pnc;
 
-    // FIXME: do sth useful with userid
-#if 0
-if (a) {
-    // copy to local user id
-} else {
-    // clear local userid
+        auth_tag = userid;
+    } else {
+        std::lock_guard<std::recursive_mutex> lock(configMutex);
+        authorized = false;
+    }
 }
-#endif
+
+std::string Charger::getAuthTag() {
+    std::lock_guard<std::recursive_mutex> lock(configMutex);
+    if (authorized) {
+        return auth_tag;
+    } else
+        return "";
 }
 
 bool Charger::AuthorizedEIM() {
@@ -842,6 +903,26 @@ bool Charger::AuthorizedEIM() {
 bool Charger::AuthorizedPnC() {
     std::lock_guard<std::recursive_mutex> lock(configMutex);
     return (authorized && authorized_pnc);
+}
+
+bool Charger::DeAuthorize() {
+
+    if (sessionActive()) {
+        auto s = getCurrentState();
+
+        if (s == EvseState::Disabled || s == EvseState::Idle || s == EvseState::WaitingForAuthentication ||
+            s == EvseState::Error || s == EvseState::Faulted) {
+
+            // We can safely remove auth as it is not in use right now
+            std::lock_guard<std::recursive_mutex> lock(configMutex);
+            if (!authorized)
+                return false;
+            authorized = false;
+            stopSession();
+            return true;
+        }
+    }
+    return false;
 }
 
 Charger::ErrorState Charger::getErrorState() {
@@ -868,11 +949,10 @@ bool Charger::enable() {
     return false;
 }
 
-bool Charger::set_faulted() {
+void Charger::set_faulted() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
     currentState = EvseState::Faulted;
     signalEvent(EvseEvent::PermanentFault);
-    return true;
 }
 
 bool Charger::restart() {
@@ -938,11 +1018,11 @@ std::string Charger::evseEventToString(EvseEvent e) {
     case EvseEvent::SessionStarted:
         return ("SessionStarted");
         break;
+    case EvseEvent::TransactionStarted:
+        return ("TransactionStarted");
+        break;
     case EvseEvent::AuthRequired:
         return ("AuthRequired");
-        break;
-    case EvseEvent::ChargingStarted:
-        return ("ChargingStarted");
         break;
     case EvseEvent::ChargingPausedEV:
         return ("ChargingPausedEV");
@@ -956,8 +1036,8 @@ std::string Charger::evseEventToString(EvseEvent e) {
     case EvseEvent::SessionFinished:
         return ("SessionFinished");
         break;
-    case EvseEvent::SessionCancelled:
-        return ("SessionCancelled");
+    case EvseEvent::TransactionFinished:
+        return ("TransactionFinished");
         break;
     case EvseEvent::Error:
         return ("Error");
@@ -1067,7 +1147,7 @@ void Charger::requestErrorSequence() {
     if (currentState == EvseState::WaitingForAuthentication) {
         t_step_EF_returnState = EvseState::WaitingForAuthentication;
         currentState = EvseState::T_step_EF;
-        if (ac_hlc_enabled_current_session && hlc_use_5percent_current_session){
+        if (ac_hlc_enabled_current_session && hlc_use_5percent_current_session) {
             t_step_EF_returnPWM = PWM_5_PERCENT;
         } else {
             t_step_EF_returnPWM = 0.;

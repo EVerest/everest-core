@@ -30,6 +30,7 @@
 #include <date/date.h>
 #include <date/tz.h>
 #include <generated/interfaces/board_support_AC/Interface.hpp>
+#include <generated/types/evse_manager.hpp>
 #include <mutex>
 #include <queue>
 #include <sigslot/signal.hpp>
@@ -81,7 +82,7 @@ public:
 
     bool enable();
     bool disable();
-    bool set_faulted();
+    void set_faulted();
     // switch to next charging session after Finished
     bool restart();
 
@@ -92,6 +93,8 @@ public:
 
     // call when in state WaitingForAuthentication
     void Authorize(bool a, const std::string& userid, bool pnc);
+    bool DeAuthorize();
+    std::string getAuthTag();
 
     bool Authorized_PnC();
     bool Authorized_EIM();
@@ -107,8 +110,11 @@ public:
     bool pauseChargingWaitForPower();
     bool resumeCharging();
     bool resumeChargingPowerAvailable();
-    bool cancelCharging();
     bool getPausedByEVSE();
+
+    bool cancelTransaction(const types::evse_manager::StopTransactionReason& reason); // cancel transaction ahead of time when car is still plugged
+    types::evse_manager::StopTransactionReason getTransactionFinishedReason(); // get reason for last finished event
+    types::evse_manager::StartSessionReason getSessionStartedReason(); // get reason for last session start event
 
     // execute a virtual replug sequence. Does NOT generate a Car plugged in event etc,
     // since the session is not restarted. It can be used to e.g. restart the ISO session
@@ -128,13 +134,13 @@ public:
         Enabled,
         Disabled,
         SessionStarted,
+        TransactionStarted,
         AuthRequired,
-        ChargingStarted,
         ChargingPausedEV,
         ChargingPausedEVSE,
         ChargingResumed,
         SessionFinished,
-        SessionCancelled,
+        TransactionFinished,
         Error,
         PermanentFault,
         ReplugStarted,
@@ -157,7 +163,6 @@ public:
     sigslot::signal<EvseEvent> signalEvent;
     std::string evseEventToString(EvseEvent e);
 
-    sigslot::signal<> signalAuthRequired;
     sigslot::signal<> signalACWithSoCTimeout;
 
     // Request more details about the error that happend
@@ -216,6 +221,18 @@ private:
     bool AuthorizedEIM();
     bool AuthorizedPnC();
 
+    void startSession(bool authfirst);
+    void stopSession();
+    bool sessionActive();
+
+    void startTransaction();
+    void stopTransaction();
+    bool transactionActive();
+    bool transaction_active;
+    bool session_active;
+    types::evse_manager::StopTransactionReason last_stop_transaction_reason;
+    types::evse_manager::StartSessionReason last_start_session_reason;
+
     // This mutex locks all config type members
     std::recursive_mutex configMutex;
 
@@ -260,7 +277,7 @@ private:
     bool authorized;
     // set to true if auth is from PnC, otherwise to false (EIM)
     bool authorized_pnc;
-    bool cancelled;
+    std::string auth_tag;
 
     // AC or DC
     std::string charge_mode;

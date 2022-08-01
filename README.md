@@ -104,7 +104,7 @@ Done!
 
 ### Simulation
 
-In order to test your build of Everest you can simulate the code on your local machine!
+In order to test your build of Everest you can simulate the code on your local machine! Check out the different configuration files to run EVerest and the corresponding nodered flows in the [config folder](config/).
 
  Check out this [guide for using EVerest SIL](https://everest.github.io/doc_sil.html)
 

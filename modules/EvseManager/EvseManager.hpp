@@ -17,13 +17,13 @@
 
 // headers for required interface implementations
 #include <generated/interfaces/ISO15118_charger/Interface.hpp>
-#include <generated/interfaces/auth/Interface.hpp>
 #include <generated/interfaces/board_support_AC/Interface.hpp>
 #include <generated/interfaces/isolation_monitor/Interface.hpp>
 #include <generated/interfaces/powermeter/Interface.hpp>
 #include <generated/interfaces/slac/Interface.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
+// insert your custom include headers here
 #include "Charger.hpp"
 #include "SessionLog.hpp"
 #include <chrono>
@@ -36,6 +36,7 @@
 namespace module {
 
 struct Conf {
+    int connector_id;
     std::string evse_id;
     bool payment_enable_eim;
     bool payment_enable_contract;
@@ -66,8 +67,7 @@ public:
                 std::unique_ptr<evse_managerImplBase> p_evse, std::unique_ptr<energyImplBase> p_energy_grid,
                 std::unique_ptr<auth_token_providerImplBase> p_token_provider,
                 std::unique_ptr<board_support_ACIntf> r_bsp, std::unique_ptr<powermeterIntf> r_powermeter,
-                std::unique_ptr<authIntf> r_auth, std::vector<std::unique_ptr<slacIntf>> r_slac,
-                std::vector<std::unique_ptr<ISO15118_chargerIntf>> r_hlc,
+                std::vector<std::unique_ptr<slacIntf>> r_slac, std::vector<std::unique_ptr<ISO15118_chargerIntf>> r_hlc,
                 std::vector<std::unique_ptr<isolation_monitorIntf>> r_imd, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
@@ -76,7 +76,6 @@ public:
         p_token_provider(std::move(p_token_provider)),
         r_bsp(std::move(r_bsp)),
         r_powermeter(std::move(r_powermeter)),
-        r_auth(std::move(r_auth)),
         r_slac(std::move(r_slac)),
         r_hlc(std::move(r_hlc)),
         r_imd(std::move(r_imd)),
@@ -89,7 +88,6 @@ public:
     const std::unique_ptr<auth_token_providerImplBase> p_token_provider;
     const std::unique_ptr<board_support_ACIntf> r_bsp;
     const std::unique_ptr<powermeterIntf> r_powermeter;
-    const std::unique_ptr<authIntf> r_auth;
     const std::vector<std::unique_ptr<slacIntf>> r_slac;
     const std::vector<std::unique_ptr<ISO15118_chargerIntf>> r_hlc;
     const std::vector<std::unique_ptr<isolation_monitorIntf>> r_imd;
@@ -102,12 +100,12 @@ public:
     types::board_support::HardwareCapabilities get_hw_capabilities();
     bool updateLocalMaxCurrentLimit(float max_current);
     float getLocalMaxCurrentLimit();
-    types::evse_manager::ReservationResult reserve_now(const int _reservation_id, const std::string& token,
-                                                       const std::chrono::time_point<date::utc_clock>& valid_until,
-                                                       const std::string& parent_id);
-    bool cancel_reservation();
-    bool reservation_valid();
+
+    void cancel_reservation();
+    bool is_reserved();
+    bool reserve(int32_t id);
     int32_t get_reservation_id();
+
     bool get_hlc_enabled();
     sigslot::signal<json> signalReservationEvent;
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
@@ -123,6 +121,7 @@ private:
     void ready();
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
+    // insert your private definitions here
     json latest_powermeter_data;
     bool authorization_available;
     Everest::Thread energyThreadHandle;
@@ -142,14 +141,8 @@ private:
     void log_v2g_message(Object m);
 
     // Reservations
-    std::string reserved_auth_token;
-    std::string reserved_auth_token_parent_id;
-    std::chrono::time_point<date::utc_clock> reservation_valid_until;
-    bool reserved; // internal, use reservation_valid() if you want to find out if it is reserved
-    int reservation_id;
-    void use_reservation_to_start_charging();
-    bool reserved_for_different_token(const std::string& token);
-    Everest::Thread reservationThreadHandle;
+    bool reserved;
+    int32_t reservation_id;
     std::mutex reservation_mutex;
 
     void setup_AC_mode();

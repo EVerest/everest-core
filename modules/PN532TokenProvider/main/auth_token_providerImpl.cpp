@@ -55,12 +55,11 @@ void auth_token_providerImpl::ready() {
             auto target_data = in_list_passive_target_response_message->target_data;
             for (auto entry : target_data) {
                 EVLOG_debug << "Got raw rfid/nfc tag: " << entry.getNFCID();
-                Object rfid_token;
-                rfid_token["token"] = entry.getNFCID();
-                rfid_token["type"] = "rfid";
-                rfid_token["timeout"] = config.timeout;
-                EVLOG_debug << "Publishing new rfid/nfc token: " << rfid_token;
-                this->publish_token(rfid_token);
+                types::authorization::ProvidedIdToken provided_token;
+                provided_token.id_token = entry.getNFCID();
+                provided_token.type = "rfid";
+                EVLOG_debug << "Publishing new rfid/nfc token: " << provided_token;
+                this->publish_provided_token(provided_token);
             }
         }
 

@@ -1,44 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 const { evlog, boot_module } = require('everestjs');
+const { config } = require('process');
 const { setInterval } = require('timers');
 
-boot_module(async ({
-  setup, info, config, mqtt,
-}) => {
-  // Subscribe external cmds
-  mqtt.subscribe('/carsim/cmd/enable', (mod, en) => { enable(mod, { value: en }); });
-  mqtt.subscribe('/carsim/cmd/execute_charging_session', (mod, str) => {
-    execute_charging_session(mod, { value: str });
-  });
-  mqtt.subscribe('/carsim/cmd/modify_charging_session', (mod, str) => {
-    modify_charging_session(mod, { value: str });
-  });
-
-  mqtt.subscribe(`/carsim/${info.id}/cmd/enable`, (mod, en) => { enable(mod, { value: en }); });
-  mqtt.subscribe(`/carsim/${info.id}/cmd/execute_charging_session`, (mod, str) => {
-    execute_charging_session(mod, { value: str });
-  });
-
-  // register commands
-  setup.provides.main.register.enable(enable);
-  setup.provides.main.register.executeChargingSession(execute_charging_session);
-
-  // subscribe vars of used modules
-  setup.uses.simulation_control.subscribe.simulation_feedback((mod, args) => { mod.simulation_feedback = args; });
-  setup.uses.slac.subscribe.state((mod, args) => { mod.slac_state = args; });
-
-  // ISO15118 ev setup
-  setup.uses.ev.subscribe.AC_EVPowerReady((mod, value) => { mod.iso_pwr_ready = value; });
-  setup.uses.ev.subscribe.AC_EVSEMaxCurrent((mod, value) => { mod.evse_maxcurrent = value; });
-  setup.uses.ev.subscribe.AC_StopFromCharger((mod) => { mod.iso_stopped = true; });
-  setup.uses.ev.subscribe.V2G_Session_Finished((mod) => { mod.v2g_finished = true; });
-}).then((mod) => {
-  registerAllCmds(mod);
-  mod.enabled = false;
-  // enable(true);
-  // execute_charging_session(mod, {value: "cp 12;sleep 2;cp 9;sleep 1;cp 6;sleep 10;cp 12"});
-});
+let globalconf;
 
 // Command enable
 function enable(mod, raw_data) {
@@ -68,49 +34,6 @@ function enable(mod, raw_data) {
 
   // Publish new simualtion enabled/disabled
   mod.provides.main.publish.enabled(en);
-}
-
-function simdata_reset_defaults(mod) {
-  mod.simdata = {
-    pp_resistor: 220.1,
-    diode_fail: false,
-    error_e: false,
-    cp_voltage: 12.0,
-    rcd_current: 0.1,
-    voltages: { L1: 230.0, L2: 230.0, L3: 230.0 },
-    currents: {
-      L1: 0.0, L2: 0.0, L3: 0.0, N: 0.0,
-    },
-    frequencies: { L1: 50.0, L2: 50.0, L3: 50.0 },
-  };
-
-  mod.simdata_setting = {
-    cp_voltage: 12.0,
-    pp_resistor: 220.1,
-    impedance: 500.0,
-    rcd_current: 0.1,
-    voltages: { L1: 230.0, L2: 230.0, L3: 230.0 },
-    currents: {
-      L1: 0.0, L2: 0.0, L3: 0.0, N: 0.0,
-    },
-    frequencies: { L1: 50.0, L2: 50.0, L3: 50.0 },
-  };
-
-  mod.simCommands = [];
-  mod.loopCurrentCommand = 0;
-  mod.executionActive = false;
-
-  mod.state = 'unplugged';
-
-  mod.v2g_finished = false;
-  mod.iso_stopped = false;
-  mod.evse_maxcurrent = 0;
-  mod.maxCurrent = 0;
-  mod.payment = 'ExternalPayment';
-  mod.energymode = 'AC_single_phase_core';
-  mod.iso_pwr_ready = false;
-
-  mod.uses.simulation_control.call.setSimulationData({ value: mod.simdata });
 }
 
 // Command execute_charging_session
@@ -158,6 +81,84 @@ function modify_charging_session(mod, args) {
   mod.simCommands = parseSimCommands(mod, str);
   mod.loopCurrentCommand = -1;
   if (next_command(mod)) mod.executionActive = true;
+}
+
+boot_module(async ({
+  setup, info, config, mqtt,
+}) => {
+
+  // Subscribe external cmds for nodered
+  mqtt.subscribe(`everest_external/nodered/${config.module.connector_id}/carsim/cmd/enable`, (mod, en) => { enable(mod, { value: en }); });
+  mqtt.subscribe(`everest_external/nodered/${config.module.connector_id}/carsim/cmd/execute_charging_session`, (mod, str) => {
+    execute_charging_session(mod, { value: str });
+  });
+  mqtt.subscribe(`everest_external/nodered/${config.module.connector_id}/carsim/cmd/modify_charging_session`, (mod, str) => {
+    modify_charging_session(mod, { value: str });
+  });
+
+  // register commands
+  setup.provides.main.register.enable(enable);
+  setup.provides.main.register.executeChargingSession(execute_charging_session);
+
+  // subscribe vars of used modules
+  setup.uses.simulation_control.subscribe.simulation_feedback((mod, args) => { mod.simulation_feedback = args; });
+  setup.uses.slac.subscribe.state((mod, args) => { mod.slac_state = args; });
+
+  // ISO15118 ev setup
+  setup.uses.ev.subscribe.AC_EVPowerReady((mod, value) => { mod.iso_pwr_ready = value; });
+  setup.uses.ev.subscribe.AC_EVSEMaxCurrent((mod, value) => { mod.evse_maxcurrent = value; });
+  setup.uses.ev.subscribe.AC_StopFromCharger((mod) => { mod.iso_stopped = true; });
+  setup.uses.ev.subscribe.V2G_Session_Finished((mod) => { mod.v2g_finished = true; });
+
+  globalconf = config;
+}).then((mod) => {
+  registerAllCmds(mod);
+  mod.enabled = false;
+  if (globalconf.module.auto_enable) enable(mod, { value: 'true' });
+  if (globalconf.module.auto_exec) execute_charging_session(mod, { value: globalconf.module.auto_exec_commands });
+});
+
+function simdata_reset_defaults(mod) {
+  mod.simdata = {
+    pp_resistor: 220.1,
+    diode_fail: false,
+    error_e: false,
+    cp_voltage: 12.0,
+    rcd_current: 0.1,
+    voltages: { L1: 230.0, L2: 230.0, L3: 230.0 },
+    currents: {
+      L1: 0.0, L2: 0.0, L3: 0.0, N: 0.0,
+    },
+    frequencies: { L1: 50.0, L2: 50.0, L3: 50.0 },
+  };
+
+  mod.simdata_setting = {
+    cp_voltage: 12.0,
+    pp_resistor: 220.1,
+    impedance: 500.0,
+    rcd_current: 0.1,
+    voltages: { L1: 230.0, L2: 230.0, L3: 230.0 },
+    currents: {
+      L1: 0.0, L2: 0.0, L3: 0.0, N: 0.0,
+    },
+    frequencies: { L1: 50.0, L2: 50.0, L3: 50.0 },
+  };
+
+  mod.simCommands = [];
+  mod.loopCurrentCommand = 0;
+  mod.executionActive = false;
+
+  mod.state = 'unplugged';
+
+  mod.v2g_finished = false;
+  mod.iso_stopped = false;
+  mod.evse_maxcurrent = 0;
+  mod.maxCurrent = 0;
+  mod.payment = 'ExternalPayment';
+  mod.energymode = 'AC_single_phase_core';
+  mod.iso_pwr_ready = false;
+
+  mod.uses.simulation_control.call.setSimulationData({ value: mod.simdata });
 }
 
 // Prepare next command
@@ -384,7 +385,7 @@ function registerAllCmds(mod) {
     mod.state = 'pluggedin';
     if (mod.simulation_feedback === undefined) return false;
     if (mod.simulation_feedback.evse_pwm_running && mod.simulation_feedback.pwm_duty_cycle > 0.04
-        && mod.simulation_feedback.pwm_duty_cycle < 0.06) {
+      && mod.simulation_feedback.pwm_duty_cycle < 0.06) {
       return true;
     }
     return false;
