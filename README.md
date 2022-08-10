@@ -36,6 +36,12 @@ zypper install -y --type pattern devel_basis
 zypper install -y git rsync wget cmake doxygen graphviz clang-tools cppcheck boost-devel libboost_filesystem-devel libboost_log-devel libboost_program_options-devel libboost_system-devel libboost_thread-devel maven java-11-openjdk java-11-openjdk-devel nodejs nodejs-devel npm python3-pip gcc-c++ libopenssl-devel sqlite3-devel
 ```
 
+#### Fedora 36
+```bash
+sudo dnf update
+sudo dnf install make automake gcc gcc-c++ kernel-devel python3-pip git rsync wget cmake doxygen graphviz clang-tools-extra cppcheck maven java-11-openjdk java-11-openjdk-devel boost-devel nodejs nodejs-devel npm openssl-devel libsqlite3x-devel curl rfkill
+```
+
 ### Build & Install:
 
 It is required that you have uploaded your public [ssh key](https://www.atlassian.com/git/tutorials/git-ssh) to [github](https://github.com/settings/keys).
