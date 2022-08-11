@@ -316,6 +316,7 @@ void MessageQueue::stop() {
     // stop the running thread
     this->running = false;
     this->cv.notify_one();
+    this->worker_thread.join();
     EVLOG_debug << "stop() notified message queue";
 }
 

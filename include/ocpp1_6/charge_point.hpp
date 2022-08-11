@@ -68,6 +68,7 @@ private:
     std::unique_ptr<MessageQueue> message_queue;
     int32_t heartbeat_interval;
     bool initialized;
+    bool stopped;
     std::chrono::time_point<date::utc_clock> boot_time;
     std::set<MessageType> allowed_message_types;
     std::mutex allowed_message_types_mutex;
@@ -243,11 +244,15 @@ public:
     /// \brief Creates a ChargePoint object with the provided \p configuration
     explicit ChargePoint(std::shared_ptr<ChargePointConfiguration> configuration);
 
-    /// \brief Starts the ChargePoint, connecting to the Websocket
-    void start();
+    /// \brief Starts the ChargePoint, initializes and connects to the Websocket endpoint
+    bool start();
 
-    /// \brief Stops the ChargePoint, stopping timers, transactions and disconnecting from the Websocket
-    void stop();
+    /// \brief Restarts the ChargePoint if it has been stopped before. The ChargePoint reinitialized, connects to the
+    /// websocket and starts to communicate OCPP messages again.
+    bool restart();
+
+    /// \brief Stops the ChargePoint, stops timers, transactions and the message queue, disconnects from the websocket
+    bool stop();
 
     /// \brief connects the websocket if it is not yet connected
     void connect_websocket();

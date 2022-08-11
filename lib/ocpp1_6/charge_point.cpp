@@ -35,7 +35,6 @@ ChargePoint::ChargePoint(std::shared_ptr<ChargePointConfiguration> configuration
                 this->status->submit_event(connector, Event_BecomeAvailable());
             }));
     }
-    this->init_websocket(this->configuration->getSecurityProfile());
     this->message_queue = std::make_unique<MessageQueue>(
         this->configuration, [this](json message) -> bool { return this->websocket->send(message.dump()); });
 
@@ -425,8 +424,28 @@ void ChargePoint::send_meter_value(int32_t connector, MeterValue meter_value) {
     this->send<MeterValuesRequest>(call);
 }
 
-void ChargePoint::start() {
+bool ChargePoint::start() {
+    this->init_websocket(this->configuration->getSecurityProfile());
     this->websocket->connect(this->configuration->getSecurityProfile());
+    this->stopped = false;
+    return true;
+}
+
+bool ChargePoint::restart() {
+    if (this->stopped) {
+        EVLOG_info << "Restarting OCPP Chargepoint";
+        this->configuration->restart();
+        // instantiating new message queue on restart
+        this->message_queue = std::make_unique<MessageQueue>(
+            this->configuration, [this](json message) -> bool { return this->websocket->send(message.dump()); });
+        this->work = boost::make_shared<boost::asio::io_service::work>(this->io_service);
+        this->io_service_thread = std::thread([this]() { this->io_service.run(); });
+        this->initialized = true;
+        return this->start();
+    } else {
+        EVLOG_warning << "Attempting to restart Chargepoint while it has not been stopped before";
+        return false;
+    }
 }
 
 void ChargePoint::stop_all_transactions() {
@@ -445,30 +464,36 @@ void ChargePoint::stop_all_transactions(Reason reason) {
     }
 }
 
-void ChargePoint::stop() {
-    EVLOG_info << "Closing";
-    this->initialized = false;
-    if (this->boot_notification_timer != nullptr) {
-        this->boot_notification_timer->stop();
+bool ChargePoint::stop() {
+    if (!this->stopped) {
+        EVLOG_info << "Stopping OCPP Chargepoint";
+        this->initialized = false;
+        if (this->boot_notification_timer != nullptr) {
+            this->boot_notification_timer->stop();
+        }
+        if (this->heartbeat_timer != nullptr) {
+            this->heartbeat_timer->stop();
+        }
+        if (this->clock_aligned_meter_values_timer != nullptr) {
+            this->clock_aligned_meter_values_timer->stop();
+        }
+
+        this->stop_all_transactions();
+
+        this->websocket->disconnect(websocketpp::close::status::going_away);
+        this->message_queue->stop();
+        this->work.reset();
+        this->io_service.stop();
+        this->io_service_thread.join();
+
+        this->configuration->close();
+        this->stopped = true;
+        EVLOG_info << "Terminating...";
+        return true;
+    } else {
+        EVLOG_warning << "Attempting to stop Chargepoint while it has been stopped before";
+        return false;
     }
-    if (this->heartbeat_timer != nullptr) {
-        this->heartbeat_timer->stop();
-    }
-    if (this->clock_aligned_meter_values_timer != nullptr) {
-        this->clock_aligned_meter_values_timer->stop();
-    }
-
-    this->stop_all_transactions();
-
-    this->message_queue->stop();
-
-    this->websocket->disconnect(websocketpp::close::status::going_away);
-    this->work.reset();
-    this->io_service.stop();
-    this->io_service_thread.join();
-
-    this->configuration->close();
-    EVLOG_info << "Terminating...";
 }
 
 void ChargePoint::connected_callback() {

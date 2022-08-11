@@ -18,7 +18,8 @@ class ChargePointConfiguration {
 private:
     json config;
     sqlite3* db;
-    std::string configs_path;
+    const std::string &configs_path;
+    const std::string &database_path;
     std::shared_ptr<PkiHandler> pki_handler;
 
     std::set<SupportedFeatureProfiles> supported_feature_profiles;
@@ -36,8 +37,9 @@ private:
     bool isConnectorPhaseRotationValid(std::string str);
 
 public:
-    ChargePointConfiguration(json config, std::string configs_path, std::string schemas_path,
-                             std::string database_path);
+    ChargePointConfiguration(json config, const std::string& configs_path, const std::string& schemas_path,
+                             const std::string& database_path);
+    void restart();
     void close();
 
     std::string getConfigsPath();

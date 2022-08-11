@@ -38,10 +38,6 @@ void WebsocketBase::register_sign_certificate_callback(const std::function<void(
 }
 
 bool WebsocketBase::initialized() {
-    if (this->shutting_down) {
-        EVLOG_error << "Not properly initialized: websocket already shutdown.";
-        return false;
-    }
     if (this->connected_callback == nullptr) {
         EVLOG_error << "Not properly initialized: please register connected callback.";
         return false;
@@ -63,8 +59,7 @@ void WebsocketBase::disconnect(websocketpp::close::status::value code) {
         EVLOG_error << "Cannot disconnect a websocket that was not initialized";
         return;
     }
-    this->shutting_down = true; // FIXME(kai): this makes the websocket inoperable after a disconnect, however this
-                                // might not be a bad thing.
+    this->shutting_down = true;
     if (this->reconnect_timer) {
         this->reconnect_timer.get()->cancel();
     }

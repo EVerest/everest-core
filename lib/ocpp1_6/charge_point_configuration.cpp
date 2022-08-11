@@ -13,10 +13,10 @@
 #include <ocpp1_6/types.hpp>
 
 namespace ocpp1_6 {
-ChargePointConfiguration::ChargePointConfiguration(json config, std::string configs_path, std::string schemas_path,
-                                                   std::string database_path) {
+ChargePointConfiguration::ChargePointConfiguration(json config, const std::string& configs_path,
+                                                   const std::string& schemas_path, const std::string& database_path)
+                                                   : configs_path(configs_path), database_path(database_path) {
 
-    this->configs_path = configs_path;
     this->pki_handler = std::make_shared<PkiHandler>(configs_path);
 
     // validate config entries
@@ -268,6 +268,23 @@ ChargePointConfiguration::ChargePointConfiguration(json config, std::string conf
     this->supported_message_types_receiving.insert(MessageType::GetLocalListVersion);
     this->supported_message_types_receiving.insert(MessageType::SendLocalList);
     this->supported_message_types_receiving.insert(MessageType::ReserveNow);
+}
+
+void ChargePointConfiguration::restart() {
+    // open and initialize database
+    std::string sqlite_db_filename = this->config["Internal"]["ChargePointId"].get<std::string>() + ".db";
+    boost::filesystem::path database_directory = boost::filesystem::path(this->database_path);
+    if (!boost::filesystem::exists(database_directory)) {
+        boost::filesystem::create_directories(database_directory);
+    }
+    boost::filesystem::path sqlite_db_path = database_directory / sqlite_db_filename;
+
+    int ret = sqlite3_open(sqlite_db_path.c_str(), &this->db);
+
+    if (ret != SQLITE_OK) {
+        EVLOG_error << "Error opening database '" << sqlite_db_path << "': " << sqlite3_errmsg(db);
+        throw std::runtime_error("Could not open database at provided path.");
+    }
 }
 
 void ChargePointConfiguration::close() {
