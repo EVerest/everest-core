@@ -11,6 +11,12 @@ void ocpp_1_6_charge_pointImpl::init() {
 void ocpp_1_6_charge_pointImpl::ready() {
 }
 
+bool ocpp_1_6_charge_pointImpl::handle_stop() {
+    return mod->charge_point->stop();
+}
+bool ocpp_1_6_charge_pointImpl::handle_restart() {
+    return mod->charge_point->restart();
+}
 
 } // namespace main
 } // namespace module

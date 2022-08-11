@@ -32,7 +32,9 @@ public:
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
 
 protected:
-    // no commands defined for this interface
+    // command handler functions (virtual)
+    virtual bool handle_stop() override;
+    virtual bool handle_restart() override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
     // insert your protected definitions here
