@@ -1,33 +1,97 @@
-cmake_minimum_required(VERSION 3.14.7)
+cmake_minimum_required(VERSION 3.11)
 
-project(log VERSION 0.1
-            DESCRIPTION "EVerest logging library"
-            LANGUAGES CXX C)
+project(everest-log
+    VERSION 0.1
+    DESCRIPTION "EVerest logging library"
+    LANGUAGES CXX C
+)
 
-# enable compiler warnings
-add_compile_options(-Wall -Wextra -pedantic)
-# unused functions in a library should not be problematic
-add_compile_options(-Wno-unused)
+find_package(everest-cmake 0.1 REQUIRED
+    PATHS ../everest-cmake
+)
 
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
-if (NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Build type" FORCE)
-endif()
-
-option(LIBLOG_CROSS_COMPILE "Cross compile the EVerest logging framework" OFF)
-
-add_definitions(-DBOOST_LOG_DYN_LINK)
-
-if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/dist" CACHE PATH "..." FORCE)
-endif()
-
+# options
+option(BUILD_BACKTRACE_SUPPORT "Build with backtrace support from libbacktrace" OFF)
 option(BUILD_TESTING "Run unit tests" OFF)
-option(BUILD_BACKTRACE_SUPPORT "Build with backtrace support from libbacktrace" ON)
+option(BUILD_EXAMPLES "Build liblog example binaries." OFF)
+option(LOG_INSTALL "Install the library (shared data might be installed anyway)" ${EVC_MAIN_PROJECT})
+option(CMAKE_RUN_CLANG_TIDY "Run clang-tidy" OFF)
+
+
+# library dependencies
+find_package(Boost COMPONENTS log_setup log filesystem REQUIRED)
+
+
+# third party dependencies
+add_subdirectory(3rd_party)
+
+# logging library
+add_subdirectory(lib)
+
+# packaging
+install(
+    FILES examples/logging.ini
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/log
+    RENAME example-config.ini
+)
+
+if (LOG_INSTALL)
+    install(
+        TARGETS log
+        EXPORT log-targets
+    )
+
+    install(
+        DIRECTORY include/
+        TYPE INCLUDE
+    )
+
+    if (BUILD_BACKTRACE_SUPPORT)
+    #   FIXME (aw): if statically build, we would need to install libbacktrace too
+    endif()
+
+    evc_setup_package(
+        NAME everest-log
+        NAMESPACE everest
+        EXPORT log-targets
+        ADDITIONAL_CONTENT
+            "find_dependency(Boost COMPONENTS log_setup log)"
+    )
+endif()
+
+
+# testing
+if(BUILD_TESTING)
+    include(CTest)
+    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+
+    evc_include(CodeCoverage)
+
+    append_coverage_compiler_flags()
+
+    setup_target_for_coverage_gcovr_html(
+        NAME gcovr_coverage_liblog
+        EXECUTABLE test_config
+        DEPENDENCIES test_config everest
+    )
+
+    setup_target_for_coverage_lcov(
+        NAME lcov_coverage_liblog
+        EXECUTABLE test_config
+        DEPENDENCIES test_config everest
+    )
+else()
+    message("Not running unit tests")
+endif()
+
+if(BUILD_EXAMPLES)
+    message("Building liblog example binaries.")
+    add_subdirectory(examples)
+else()
+    message("Not building liblog example binaries.")
+endif()
 
 # configure clang-tidy if requested
-option(CMAKE_RUN_CLANG_TIDY "Run clang-tidy" OFF)
 if(CMAKE_RUN_CLANG_TIDY)
     message("Running clang-tidy")
     string(CONCAT CLANG_TIDY_CHECKS "*,"
@@ -50,52 +114,7 @@ endif()
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
     set( DOXYGEN_OUTPUT_DIRECTORY dist/docs )
-    doxygen_add_docs(${PROJECT_NAME}doxygen include lib src)
+    doxygen_add_docs(doxygen-${PROJECT_NAME} include lib src)
 else()
     message("Doxygen is needed to generate documentation")
-endif()
-
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
-list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
-
-
-find_package(Boost COMPONENTS log_setup log filesystem program_options REQUIRED)
-
-# testing
-if(BUILD_TESTING)
-    include(CTest)
-    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
-
-    include(CodeCoverage)
-
-    append_coverage_compiler_flags()
-
-    setup_target_for_coverage_gcovr_html(
-        NAME gcovr_coverage_liblog
-        EXECUTABLE test_config
-        DEPENDENCIES test_config everest
-    )
-
-    setup_target_for_coverage_lcov(
-        NAME lcov_coverage_liblog
-        EXECUTABLE test_config
-        DEPENDENCIES test_config everest
-    )
-else()
-    message("Not running unit tests")
-endif()
-
-# third party dependencies
-add_subdirectory(3rd_party)
-
-# logging library
-add_subdirectory(lib)
-
-option(BUILD_EXAMPLES "Build liblog example binaries." OFF)
-if(BUILD_EXAMPLES)
-    message("Building liblog example binaries.")
-    add_subdirectory(examples)
-else()
-    message("Not building liblog example binaries.")
 endif()

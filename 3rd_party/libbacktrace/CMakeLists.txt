@@ -1,14 +1,22 @@
 include(ExternalProject)
 
-set(LIBBACKTRACE_HOST "")
-if(LIBLOG_CROSS_COMPILE)
-    set(LIBBACKTRACE_HOST "--host=arm-linux")
-endif()
+# set flags correct configure flags if cross compiling
+if (CMAKE_CROSSCOMPILING)
+    if (ENV{CONFIGURE_FLAGS})
+        separate_arguments(CONFIGURE_FLAGS UNIX_COMMAND $ENV{CONFIGURE_FLAGS})
+    else ()
+        string(TOLOWER "${CMAKE_HOST_SYSTEM_PROCESSOR}-${CMAKE_HOST_SYSTEM_NAME}" CONFIGURE_BUILD_SYSTEM)
+        string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}-${CMAKE_SYSTEM_NAME}" CONFIGURE_HOST_SYSTEM)
+        list(APPEND CONFIGURE_FLAGS "--host=${CONFIGURE_HOST_SYSTEM}" "--build=${CONFIGURE_BUILD_SYSTEM}")
+    endif()
+
+    if (NOT ENV{CC})
+        set (CONFIGURE_ENV "CC=${CMAKE_C_COMPILER}")
+    endif ()
+endif ()
 
 ExternalProject_Add(
     libbacktrace
-# prefix
-    PREFIX ${CMAKE_CURRENT_BINARY_DIR}
 # download
     GIT_REPOSITORY https://github.com/ianlancetaylor/libbacktrace
     GIT_TAG 4d2dd0b172f2c9192f83ba93425f868f2a13c553
@@ -16,12 +24,19 @@ ExternalProject_Add(
 # update
     UPDATE_COMMAND ""
 # configure
-    CONFIGURE_COMMAND env CC=${CMAKE_C_COMPILER} ../libbacktrace/configure --prefix=${CMAKE_CURRENT_BINARY_DIR} --includedir=${CMAKE_CURRENT_BINARY_DIR}/include/backtrace --libdir=${CMAKE_CURRENT_BINARY_DIR}/lib --enable-static=yes --disable-shared ${LIBBACKTRACE_HOST}
-# make
-    BUILD_COMMAND ${MAKE}
+    CONFIGURE_COMMAND
+        ${CMAKE_COMMAND} -E env ${CONFIGURE_ENV}
+        <SOURCE_DIR>/configure
+            ${CONFIGURE_FLAGS}
+            --prefix=<INSTALL_DIR>
+            --includedir=<INSTALL_DIR>/include/backtrace
+            --libdir=<INSTALL_DIR>/lib
+            --enable-static=yes
+            --disable-shared
+# build options
     BUILD_ALWAYS false
 # specify byproducts
-    BUILD_BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/lib/libbacktrace.a
+    BUILD_BYPRODUCTS <INSTALL_DIR>/lib/libbacktrace.a
 # log options
     LOG_DOWNLOAD true
     LOG_CONFIGURE true

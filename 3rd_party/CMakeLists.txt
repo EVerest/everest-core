@@ -1,3 +1,3 @@
 if (BUILD_BACKTRACE_SUPPORT)
-add_subdirectory(libbacktrace)
+    add_subdirectory(libbacktrace)
 endif()

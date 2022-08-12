@@ -1,12 +1,4 @@
-set(HEADERS
-    "${PROJECT_SOURCE_DIR}/include/everest/exceptions.hpp"
-    "${PROJECT_SOURCE_DIR}/include/everest/logging.hpp"
-)
-
-set(INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include")
-
-# EVerest framework
-add_library(log STATIC)
+add_library(log)
 add_library(everest::log ALIAS log)
 
 target_sources(log
@@ -15,26 +7,37 @@ target_sources(log
         trace.cpp
 )
 
-target_include_directories(log PUBLIC ${INCLUDE_DIR})
+target_include_directories(log
+    PUBLIC
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+
 target_link_libraries(log
     PUBLIC
+        Boost::log
+    PRIVATE
         Boost::filesystem
         Boost::log_setup
-        Boost::log
 )
 
-if (BUILD_BACKTRACE_SUPPORT)
-target_link_libraries(log
-    PRIVATE
-        backtrace
-)
-target_compile_definitions(log PRIVATE WITH_LIBBACKTRACE)
+# FIXME (aw): in case FindBoost.cmake was used we need to add things
+#             this should be removed no support for Boost < 1.74 is needed
+if (NOT Boost_DIR)
+    target_compile_definitions(log
+        PUBLIC
+            BOOST_LOG_DYN_LINK
+    )
+    target_link_libraries(log
+        PUBLIC
+            rt dl
+    )
 endif()
 
-# needs c++ 14
-target_compile_features(log PUBLIC cxx_std_14)
-
-source_group(
-    TREE "${INCLUDE_DIR}"
-    PREFIX "Headers"
-    FILES ${HEADERS})
+if (BUILD_BACKTRACE_SUPPORT)
+    target_link_libraries(log
+        PRIVATE
+            backtrace
+    )
+    target_compile_definitions(log PRIVATE WITH_LIBBACKTRACE)
+endif()
