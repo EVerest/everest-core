@@ -1,8 +1,0 @@
----
-libslac:
-  git: https://github.com/EVerest/libslac.git
-  git_tag: main
-
-libfsm:
-  git: https://github.com/EVerest/libfsm.git
-  git_tag: main

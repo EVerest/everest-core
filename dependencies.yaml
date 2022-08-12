@@ -1,31 +1,35 @@
 ---
-cmake_ccache:
-  git: https://github.com/TheLartians/Ccache.cmake
-  git_tag: v1.2.3
-nlohmann_json:
-  git: https://github.com/nlohmann/json
-  git_tag: v3.10.5
-  options: ["JSON_BuildTests OFF"]
+everest-framework:
+  git: https://github.com/EVerest/everest-framework.git
+  git_tag: main
 sigslot:
   git: https://github.com/palacaze/sigslot
   git_tag: v1.2.0
-liblog:
-  git: https://github.com/EVerest/liblog.git
-  git_tag: main
-  options: ["BUILD_EXAMPLES OFF"]
+  options: ["SIGSLOT_COMPILE_EXAMPLES OFF"]
 libmodbus:
   git: https://github.com/EVerest/libmodbus.git
   git_tag: main
 libsunspec:
   git: https://github.com/EVerest/libsunspec.git
   git_tag: main
-everest-framework:
-  git: https://github.com/EVerest/everest-framework.git
-  git_tag: main
-date:
-  git: https://github.com/HowardHinnant/date.git
-  git_tag: v3.0.1
-  options: ["BUILD_TZ_LIB ON", "HAS_REMOTE_API 0", "USE_AUTOLOAD 0", "USE_SYSTEM_TZ_DB ON"]
 pugixml:
   git: https://github.com/zeux/pugixml
   git_tag: v1.12.1
+
+# slac module
+libslac:
+  git: https://github.com/EVerest/libslac.git
+  git_tag: main
+libfsm:
+  git: https://github.com/EVerest/libfsm.git
+  git_tag: main
+
+# JsCarV2G and JsRiseV2G module
+RISE-V2G:
+  git: https://github.com/EVerest/ext-RISE-V2G.git
+  git_tag: master
+
+# OCPP
+libocpp:
+  git: https://github.com/EVerest/libocpp.git
+  git_tag: main

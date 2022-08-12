@@ -1,0 +1,11 @@
+LD_LIBRARY_PATH=@LD_LIBRARY_VAR@:$LD_LIBRARY_PATH \
+PATH=@PATH_VAR@:$PATH \
+manager \
+    --main_dir @CMAKE_INSTALL_PREFIX@ \
+    --schemas_dir @SCHEMA_DIR@ \
+    --log_conf @LOGGING_CONFIG_FILE@ \
+    --conf @CONFIG_FILE@ \
+    --modules_dir @MODULES_DIR@ \
+    --interfaces_dir @INTERFACE_DIR@ \
+    @ADDITIONAL_ARGUMENTS@
+    $@

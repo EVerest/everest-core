@@ -12,13 +12,24 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
 # add the executable
-add_library(yeti_comms STATIC evSerial.cpp ../common/evThread.cpp protobuf/hi2lo.pb.c protobuf/lo2hi.pb.c nanopb/pb_decode.c nanopb/pb_encode.c nanopb/pb_common.c)
+add_library(yeti_comms STATIC)
+target_sources(yeti_comms
+    PRIVATE
+        evSerial.cpp
+        ../common/evThread.cpp
+        protobuf/hi2lo.pb.c
+        protobuf/lo2hi.pb.c
+        nanopb/pb_decode.c
+        nanopb/pb_encode.c
+        nanopb/pb_common.c
+)
 
 target_include_directories(yeti_comms PUBLIC "${PROJECT_BINARY_DIR}" PUBLIC "nanopb" PUBLIC "protobuf" PUBLIC "../common")
-target_link_libraries(yeti_comms PRIVATE Pal::Sigslot Threads::Threads)
 
 target_link_libraries(yeti_comms
-    PRIVATE
-        date::date
+    PUBLIC
         date::date-tz
+    PRIVATE
+        Threads::Threads
+        Pal::Sigslot
 )
