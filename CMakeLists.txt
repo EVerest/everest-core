@@ -1,63 +1,106 @@
-cmake_minimum_required(VERSION 3.14.7)
+cmake_minimum_required(VERSION 3.14)
 
-project(EVerest VERSION 0.1
-                DESCRIPTION "The open operating system for e-mobility charging stations"
-		LANGUAGES CXX C)
+project(everest-framework
+    VERSION 0.1
+    DESCRIPTION "The open operating system for e-mobility charging stations"
+	LANGUAGES CXX C
+)
 
-# enable compiler warnings
-add_compile_options(-Wall -Wextra -pedantic)
-# unused functions in a library should not be problematic
-add_compile_options(-Wno-unused)
+find_package(everest-cmake 0.1 REQUIRED
+    PATHS ../everest-cmake
+)
 
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
-if (NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Build type" FORCE)
-endif()
-
-add_definitions(-DBOOST_LOG_DYN_LINK)
-
-add_definitions(-DEVEREST_SRC_DIR=${PROJECT_SOURCE_DIR})
-
-if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/dist" CACHE PATH "..." FORCE)
-endif()
-
-option(CREATE_SYMLINKS "Create symlinks to javascript modules and auxillary files - for development purposes" OFF)
-
+# options
 option(BUILD_TESTING "Run unit tests" OFF)
-
-# configure clang-tidy if requested
+option(FRAMEWORK_INSTALL "Install the library (shared data might be installed anyway)" ${EVC_MAIN_PROJECT})
 option(CMAKE_RUN_CLANG_TIDY "Run clang-tidy" OFF)
-if(CMAKE_RUN_CLANG_TIDY)
-    message("Enabling clang-tidy")
-    set(CMAKE_CXX_CLANG_TIDY clang-tidy)
-endif()
 
-# build doxygen documentation if doxygen is available
-find_package(Doxygen)
-if(DOXYGEN_FOUND)
-    set( DOXYGEN_OUTPUT_DIRECTORY dist/docs )
-    doxygen_add_docs(doxygen everest.js include lib src)
+# make own cmake modules available
+list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
+# dependencies
+find_package(Boost
+    COMPONENTS
+        filesystem
+        program_options
+        system
+        thread
+    REQUIRED
+)
+
+if(NOT DISABLE_EDM)
+    evc_setup_edm()
+
+    # In EDM mode, we can't install exports (because the dependencies usually do not install their exports)
+    set(FRAMEWORK_INSTALL OFF)
+
+    # FIXME (aw): websocketpp doesn't play well with EDM/CPM
+    add_library(websocketpp::websocketpp INTERFACE IMPORTED)
+    set_target_properties(websocketpp::websocketpp PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${websocketpp_SOURCE_DIR}")
+
+    # FIXME (aw): pboetch json validator doesn't want to install itself :(
+    install(TARGETS nlohmann_json_schema_validator
+        EXPORT nlohmann_json_schema_validatorTargets
+    )
+
 else()
-    message("Doxygen is needed to generate documentation")
+    find_package(date REQUIRED)
+    find_package(nlohmann_json REQUIRED)
+    find_package(nlohmann_json_schema_validator REQUIRED)
+    find_package(websocketpp REQUIRED)
+    find_package(fmt REQUIRED)
+    find_package(everest-log REQUIRED)
+
+    include(find-mqttc)
 endif()
 
-# configure conan cmake, please consider adding dependencies to conanfile.txt
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
-list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
-list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+# library code
+add_subdirectory(lib)
 
-find_package(EDM REQUIRED)
+# executable code
+add_subdirectory(src)
 
-find_package(Boost COMPONENTS filesystem program_options system thread REQUIRED)
+# auxillary files
+add_subdirectory(schemas)
+
+# everest javascript wrapper
+add_subdirectory(everestjs)
+
+# FIXME (aw): should this be installed or not?  Right now it is needed for the
+#             current packaging approach
+install(TARGETS framework
+    EXPORT framework-targets
+    LIBRARY
+)
+
+# packaging
+if (FRAMEWORK_INSTALL)
+    install(
+        DIRECTORY include/
+        DESTINATION include/everest
+    )
+
+    evc_setup_package(
+        NAME everest-framework
+        EXPORT framework-targets
+        NAMESPACE everest
+        ADDITIONAL_CONTENT
+            "set_target_properties(everest::framework PROPERTIES EVEREST_DATADIR \"@PACKAGE_EVEREST_DATADIR@\")"
+            "set(EVEREST_DATADIR \"@PACKAGE_EVEREST_DATADIR@\")"
+        PATH_VARS
+            EVEREST_DATADIR "${CMAKE_INSTALL_DATADIR}/everest"
+    )
+endif ()
 
 # testing
-include(CTest)
+# FIXME (aw): move testing logic into tests/CMakeLists.txt
 if(BUILD_TESTING)
+    find_package(Catch2 REQUIRED)
+
+    include(CTest)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
 
-    include(CodeCoverage)
+    evc_include(CodeCoverage)
 
     append_coverage_compiler_flags()
 
@@ -80,18 +123,17 @@ else()
     message("Not running unit tests")
 endif()
 
-# API header
-add_subdirectory(include)
+# configure clang-tidy if requested
+if(CMAKE_RUN_CLANG_TIDY)
+    message("Enabling clang-tidy")
+    set(CMAKE_CXX_CLANG_TIDY clang-tidy)
+endif()
 
-# library code
-add_subdirectory(lib)
-
-# executable code
-add_subdirectory(src)
-
-# auxillary files
-add_subdirectory(schemas)
-
-# everest javascript wrapper
-add_subdirectory(everestjs)
-
+# build doxygen documentation if doxygen is available
+find_package(Doxygen)
+if(DOXYGEN_FOUND)
+    set( DOXYGEN_OUTPUT_DIRECTORY dist/docs )
+    doxygen_add_docs(doxygen-${PROJECT_NAME} everest.js include lib src)
+else()
+    message("Doxygen is needed to generate documentation")
+endif()

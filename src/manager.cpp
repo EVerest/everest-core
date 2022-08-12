@@ -206,7 +206,8 @@ static SubprocessHandle exec_cpp_module(const ModuleStartInfo& module_info, cons
 static SubprocessHandle exec_javascript_module(const ModuleStartInfo& module_info, const RuntimeSettings& rs) {
     // instead of using setenv, using execvpe might be a better way for a controlled environment!
 
-    auto node_modules_path = rs.main_dir / "everestjs" / "node_modules";
+    // FIXME (aw): everest directory layout
+    const auto node_modules_path = boost::filesystem::canonical(rs.main_dir / "lib/everest/node_modules");
     setenv("NODE_PATH", node_modules_path.c_str(), 0);
 
     setenv("EV_MODULE", module_info.name.c_str(), 1);
@@ -221,6 +222,7 @@ static SubprocessHandle exec_javascript_module(const ModuleStartInfo& module_inf
         setenv("EV_DONT_VALIDATE_SCHEMA", "", 0);
     }
 
+    // FIXME (aw): what is the design behind this decision?
     chdir(rs.main_dir.c_str());
 
     const auto node_binary = "node";
@@ -409,7 +411,10 @@ static ControllerHandle start_controller(const RuntimeSettings& rs) {
 
     auto handle = create_subprocess();
 
-    auto controller_binary = rs.main_dir / "bin/controller";
+    // FIXME (aw): hack to get the correct directory of the controller
+    const auto bin_dir = boost::filesystem::canonical("/proc/self/exe").parent_path();
+
+    auto controller_binary = bin_dir / "controller";
 
     if (handle.is_child()) {
         close(manager_socket);

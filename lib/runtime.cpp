@@ -8,25 +8,26 @@ RuntimeSettings::RuntimeSettings(const po::variables_map& vm) : main_dir(vm["mai
     if (vm.count("schemas_dir")) {
         schemas_dir = vm["schemas_dir"].as<std::string>();
     } else {
-        schemas_dir = main_dir / "schemas";
+        // FIXME (aw): what default directory layout will we choose?
+        schemas_dir = main_dir / "share/everest/schemas";
     }
 
     if (vm.count("modules_dir")) {
         modules_dir = vm["modules_dir"].as<std::string>();
     } else {
-        modules_dir = main_dir / "modules";
+        modules_dir = main_dir / "libexec/everest/modules";
     }
 
     if (vm.count("interfaces_dir")) {
         interfaces_dir = vm["interfaces_dir"].as<std::string>();
     } else {
-        interfaces_dir = main_dir / "interfaces";
+        interfaces_dir = main_dir / "share/everest/interfaces";
     }
 
     if (vm.count("types_dir")) {
         types_dir = vm["types_dir"].as<std::string>();
     } else {
-        types_dir = main_dir / "types";
+        types_dir = main_dir / "share/everest/types";
     }
 
     if (vm.count("log_conf")) {
@@ -188,6 +189,7 @@ bool ModuleLoader::parse_command_line(int argc, char* argv[]) {
     po::options_description desc("EVerest");
     desc.add_options()("help,h", "produce help message");
     desc.add_options()("main_dir", po::value<std::string>(), "Set main EVerest directory");
+    desc.add_options()("schemas_dir", po::value<std::string>(), "Set framework schema directory");
     desc.add_options()("module,m", po::value<std::string>(),
                        "Which module should be executed (module id from config file)");
     desc.add_options()("log_conf", po::value<std::string>(), "The path to a custom logging.ini");

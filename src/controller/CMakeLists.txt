@@ -20,12 +20,17 @@ target_include_directories(controller PRIVATE
     ${websocketpp_SOURCE_DIR}
 )
 
-target_link_libraries(controller PRIVATE
-    Threads::Threads
-    nlohmann_json::nlohmann_json
-    ${Boost_FILESYSTEM_LIBRARY}
-    fmt::fmt
-    everest::log
+target_link_libraries(controller
+    PRIVATE
+        Threads::Threads
+        Boost::filesystem
+
+        nlohmann_json::nlohmann_json
+
+        websocketpp::websocketpp
+        fmt::fmt
+
+        everest::log
 )
 
 target_compile_features(controller PRIVATE cxx_std_14)
