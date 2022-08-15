@@ -1,0 +1,41 @@
+{
+    "description": "Hub to communicate with attached serial devices",
+    "provides": {
+        "main": {
+            "description": "Implementation of serial communication hub",
+            "interface": "serial_communication_hub",
+            "config": {
+                "serial_port": {
+                    "description": "Serial port the hardware is connected to",
+                    "type": "string",
+                    "default": "/dev/ttyUSB0"
+                },
+                "baudrate": {
+                    "description": "Baudrate",
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 230400,
+                    "default": 9600
+                },
+                "parity": {
+                    "description": "Parity bit: 0: None, 1: Odd, 2: Even",
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2,
+                    "default": 0
+                },
+                "rs485_direction_gpio": {
+                    "description": "GPIO to use for direction switching. Set to -1 to disable.",
+                    "type": "integer",
+                    "default": -1
+                }
+            }
+        }
+    },
+    "metadata": {
+        "license": "https://opensource.org/licenses/Apache-2.0",
+        "authors": [
+            "Lars Dieckmann"
+        ]
+    }
+}
