@@ -25,6 +25,7 @@ ev_add_modules(
     PersistentStore
     PN532TokenProvider
     Setup
+    SerialCommHub
     Store
     SunspecReader
     SunspecScanner
