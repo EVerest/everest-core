@@ -3,7 +3,18 @@
         "module": "JsRiseV2G",
         "config_implementation": {
             "main": {
-                "mqtt_base_path": "everest_external/iso15118/java"
+                "mqtt_base_path": "everest_external/iso15118/java",
+                "device": "wlan0"
+            }
+        }
+    },
+    "iso15118_car": {
+        "module": "JsCarV2G",
+        "config_implementation": {
+            "main": {
+                "stack_implementation": "RISE-V2G",
+                "mqtt_base_path": "everest_external/iso15118/ev",
+                "device": "wlan0"
             }
         }
     },
@@ -34,11 +45,26 @@
                     "module_id": "auth",
                     "implementation_id": "main"
                 }
+            ],
+            "slac": [
+                {
+                    "module_id": "slac",
+                    "implementation_id": "evse"
+                }
+            ],
+            "hlc": [
+                {
+                    "module_id": "iso15118_charger",
+                    "implementation_id": "charger"
+                }
             ]
         }
     },
     "yeti_driver": {
         "module": "JsYetiSimulator"
+    },
+    "slac": {
+        "module": "JsSlacSimulator"
     },
     "car_simulator": {
         "module": "JsCarSimulator",
@@ -47,6 +73,18 @@
                 {
                     "module_id": "yeti_driver",
                     "implementation_id": "yeti_simulation_control"
+                }
+            ],
+            "ev": [
+                {
+                    "module_id": "iso15118_car",
+                    "implementation_id": "ev"
+                }
+            ],
+            "slac": [
+                {
+                    "module_id": "slac",
+                    "implementation_id": "ev"
                 }
             ]
         }
