@@ -112,7 +112,8 @@ public:
     bool resumeChargingPowerAvailable();
     bool getPausedByEVSE();
 
-    bool cancelTransaction(const types::evse_manager::StopTransactionReason& reason); // cancel transaction ahead of time when car is still plugged
+    bool cancelTransaction(const types::evse_manager::StopTransactionRequest& request); // cancel transaction ahead of time when car is still plugged
+    std::string getStopTransactionIdTag();
     types::evse_manager::StopTransactionReason getTransactionFinishedReason(); // get reason for last finished event
     types::evse_manager::StartSessionReason getSessionStartedReason(); // get reason for last session start event
 
@@ -230,6 +231,7 @@ private:
     bool transactionActive();
     bool transaction_active;
     bool session_active;
+    std::string stop_transaction_id_tag;
     types::evse_manager::StopTransactionReason last_stop_transaction_reason;
     types::evse_manager::StartSessionReason last_start_session_reason;
 

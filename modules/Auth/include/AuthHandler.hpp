@@ -152,7 +152,7 @@ public:
      * @param callback
      */
     void register_stop_transaction_callback(
-        const std::function<void(const int evse_index, const StopTransactionReason& reason)>& callback);
+        const std::function<void(const int evse_index, const StopTransactionRequest& request)>& callback);
 
     /**
      * @brief Registers the given \p callback to signal a reservation to an EvseManager.
@@ -188,7 +188,7 @@ private:
     std::function<void(const int evse_index, const std::string& id_token)> authorize_callback;
     std::function<void(const int evse_index)> withdraw_authorization_callback;
     std::function<std::vector<ValidationResult>(const std::string& id_token)> validate_token_callback;
-    std::function<void(const int evse_index, const StopTransactionReason& reason)> stop_transaction_callback;
+    std::function<void(const int evse_index, const StopTransactionRequest& request)> stop_transaction_callback;
     std::function<void(const Array& reservations)> reservation_update_callback;
     std::function<void(const int& evse_index, const int& reservation_id)> reserved_callback;
     std::function<void(const int& evse_index)> reservation_cancelled_callback;

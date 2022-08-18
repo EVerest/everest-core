@@ -1,6 +1,25 @@
 {
     "description": "EVSE manager types",
     "types": {
+        "StopTransactionRequest": {
+            "description": "Request for a stop transaction containing the reason and an optional id tag",
+            "type": "object",
+            "required": [
+                "reason"
+            ],
+            "properties": {
+                "reason": {
+                    "description": "Reason for stopping the transaction",
+                    "type": "string",
+                    "$ref": "/evse_manager#/StopTransactionReason"
+                },
+                "id_tag": {
+                    "description": "Id tag that was used to stop the transaction.",
+                    "type": "string"
+                }
+            }
+            
+        },
         "StopTransactionReason": {
             "description": "Reason for stopping transaction",
             "documenation": [
@@ -205,6 +224,10 @@
                     "description": "Reason for stopping transaction",
                     "type": "string",
                     "$ref": "/evse_manager#/StopTransactionReason"
+                },
+                "id_tag": {
+                    "description": "Id tag that was used to stop the transaction",
+                    "type": "string"
                 }
             }
         },

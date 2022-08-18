@@ -45,8 +45,8 @@ void Auth::ready() {
             return validation_results;
         });
         this->auth_handler->register_stop_transaction_callback(
-            [this](const int32_t evse_index, const StopTransactionReason& reason) {
-                this->r_evse_manager.at(evse_index)->call_stop_transaction(reason);
+            [this](const int32_t evse_index, const StopTransactionRequest& request) {
+                this->r_evse_manager.at(evse_index)->call_stop_transaction(request);
             });
         evse_manager->subscribe_session_event([this, connector_id](SessionEvent session_event) {
             this->auth_handler->handle_session_event(connector_id, session_event);

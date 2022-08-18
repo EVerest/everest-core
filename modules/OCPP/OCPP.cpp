@@ -75,9 +75,10 @@ void OCPP::init() {
 
     std::shared_ptr<ocpp1_6::ChargePointConfiguration> configuration =
         std::make_shared<ocpp1_6::ChargePointConfiguration>(json_config, this->config.SchemasPath,
-                                                            this->config.SchemasPath, this->config.DatabasePath);
+                                                         this->config.SchemasPath);
 
-    this->charge_point = new ocpp1_6::ChargePoint(configuration);
+    const boost::filesystem::path sql_init_path = boost::filesystem::path(this->config.OcppMainPath) / "init.sql";
+    this->charge_point = new ocpp1_6::ChargePoint(configuration, this->config.DatabasePath, sql_init_path.string());
     // TODO(kai): select appropriate EVSE based on connector
     this->charge_point->register_pause_charging_callback([this](int32_t connector) {
         if (connector > 0 && connector <= this->r_evse_manager.size()) {
@@ -95,9 +96,10 @@ void OCPP::init() {
     });
     this->charge_point->register_stop_transaction_callback([this](int32_t connector, ocpp1_6::Reason reason) {
         if (connector > 0 && connector <= this->r_evse_manager.size()) {
-            return this->r_evse_manager.at(connector - 1)
-                ->call_stop_transaction(types::evse_manager::string_to_stop_transaction_reason(
-                    ocpp1_6::conversions::reason_to_string(reason)));
+            types::evse_manager::StopTransactionRequest req;
+            req.reason =
+                types::evse_manager::string_to_stop_transaction_reason(ocpp1_6::conversions::reason_to_string(reason));
+            return this->r_evse_manager.at(connector - 1)->call_stop_transaction(req);
         } else {
             return false;
         }
@@ -343,7 +345,12 @@ void OCPP::ready() {
                 auto energy_Wh_import = transaction_finished.energy_Wh_import;
                 auto reason = ocpp1_6::conversions::string_to_reason(
                     types::evse_manager::stop_transaction_reason_to_string(transaction_finished.reason.value()));
-                this->charge_point->on_transaction_stopped(connector, reason, timestamp, energy_Wh_import);
+                boost::optional<ocpp1_6::CiString20Type> id_tag_opt = boost::none;
+                if (transaction_finished.id_tag) {
+                    id_tag_opt.emplace(ocpp1_6::CiString20Type(transaction_finished.id_tag.value()));
+                }
+                this->charge_point->on_transaction_stopped(connector, session_event.uuid, reason, timestamp,
+                                                           energy_Wh_import, id_tag_opt);
                 // always triggered by libocpp
             } else if (event == "SessionStarted") {
                 EVLOG_debug << "Connector#" << connector << ": "

@@ -44,7 +44,7 @@ protected:
     virtual void handle_set_faulted() override;
     virtual bool handle_pause_charging() override;
     virtual bool handle_resume_charging() override;
-    virtual bool handle_stop_transaction(types::evse_manager::StopTransactionReason& reason) override;
+    virtual bool handle_stop_transaction(types::evse_manager::StopTransactionRequest& request) override;
     virtual bool handle_force_unlock() override;
     virtual types::evse_manager::SetLocalMaxCurrentResult handle_set_local_max_current(double& max_current) override;
     virtual types::evse_manager::SwitchThreePhasesWhileChargingResult

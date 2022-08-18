@@ -174,8 +174,12 @@ void evse_managerImpl::ready() {
             }
 
             auto reason = mod->charger->getTransactionFinishedReason();
+            const auto id_tag = mod->charger->getStopTransactionIdTag();
 
             transaction_finished.reason.emplace(reason);
+            if (!id_tag.empty()) {
+                transaction_finished.id_tag.emplace(id_tag);
+            }
 
             double energy_import = transaction_finished.energy_Wh_import;
 
@@ -263,12 +267,12 @@ bool evse_managerImpl::handle_resume_charging() {
     return mod->charger->resumeCharging();
 };
 
-bool evse_managerImpl::handle_stop_transaction(types::evse_manager::StopTransactionReason& reason) {
+bool evse_managerImpl::handle_stop_transaction(types::evse_manager::StopTransactionRequest& request) {
 
     if (mod->get_hlc_enabled()) {
         mod->r_hlc[0]->call_stop_charging(true);
     }
-    return mod->charger->cancelTransaction(reason);
+    return mod->charger->cancelTransaction(request);
 };
 
 bool evse_managerImpl::handle_force_unlock() {
