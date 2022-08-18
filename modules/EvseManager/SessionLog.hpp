@@ -22,17 +22,17 @@ public:
     void stopSession();
 
     void car(bool iso15118, const std::string& msg);
-    void car(bool iso15118, const std::string& msg, const std::string& xml, const std::string& xml_hex, const std::string& xml_base64);
+    void car(bool iso15118, const std::string& msg, const std::string& xml, const std::string& xml_hex, const std::string& xml_base64, const std::string& json_str);
 
     void evse(bool iso15118, const std::string& msg);
-    void evse(bool iso15118, const std::string& msg, const std::string& xml, const std::string& xml_hex, const std::string& xml_base64);
+    void evse(bool iso15118, const std::string& msg, const std::string& xml, const std::string& xml_hex, const std::string& xml_base64, const std::string& json_str);
 
     void xmlOutput(bool e);
 
     void sys(const std::string& msg);
 
 private:
-    void output(unsigned int evse, bool iso15118, const std::string& msg, const std::string& xml, const std::string& xml_hex, const std::string& xml_base64);
+    void output(unsigned int evse, bool iso15118, const std::string& msg, const std::string& xml, const std::string& xml_hex, const std::string& xml_base64, const std::string& json_str);
     std::string html_encode(const std::string& msg);
     bool xmloutput;
     bool session_active;

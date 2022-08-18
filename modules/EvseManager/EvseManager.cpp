@@ -600,13 +600,21 @@ bool EvseManager::get_hlc_enabled() {
 void EvseManager::log_v2g_message(Object m) {
     std::string msg = m["V2G_Message_ID"];
 
+    std::string xml = "";
+    std::string json_str = "";
+    if (m["V2G_Message_XML"].is_null() && m["V2G_Message_JSON"].is_string()) {
+        json_str = m["V2G_Message_JSON"];
+    } else if (m["V2G_Message_XML"].is_string()) {
+        xml = m["V2G_Message_XML"];
+    }
+
     // All messages from EVSE contain Req and all originating from Car contain Res
     if (msg.find("Res") == std::string::npos) {
-        session_log.car(true, fmt::format("V2G {}", msg), m["V2G_Message_XML"], m["V2G_Message_EXI_Hex"],
-                        m["V2G_Message_EXI_Base64"]);
+        session_log.car(true, fmt::format("V2G {}", msg), xml, m["V2G_Message_EXI_Hex"],
+                        m["V2G_Message_EXI_Base64"], json_str);
     } else {
-        session_log.evse(true, fmt::format("V2G {}", msg), m["V2G_Message_XML"], m["V2G_Message_EXI_Hex"],
-                         m["V2G_Message_EXI_Base64"]);
+        session_log.evse(true, fmt::format("V2G {}", msg), xml, m["V2G_Message_EXI_Hex"],
+                         m["V2G_Message_EXI_Base64"], json_str);
     }
 }
 
