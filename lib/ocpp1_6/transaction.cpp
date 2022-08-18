@@ -51,6 +51,10 @@ int32_t Transaction::get_transaction_id() {
     return this->transaction_id;
 }
 
+std::string Transaction::get_session_id() {
+    return this->session_id;
+}
+
 void Transaction::set_start_transaction_message_id(const std::string& message_id) {
     this->start_transaction_message_id = message_id;
 }
@@ -163,14 +167,10 @@ bool TransactionHandler::remove_active_transaction(int32_t connector) {
 }
 
 bool TransactionHandler::remove_stopped_transaction(std::string stop_transaction_message_id) {
-    int32_t index = 0;
-    for (size_t i = 0; i < this->stopped_transactions.size(); i++) {
-        if (this->stopped_transactions.at(i)->get_stop_transaction_message_id() == stop_transaction_message_id) {
-            index = i;
-        }
-    }
-    this->stopped_transactions.erase(this->stopped_transactions.begin() + index);
-    return true;
+    return std::remove_if(this->stopped_transactions.begin(), this->stopped_transactions.end(),
+                          [stop_transaction_message_id](std::shared_ptr<ocpp1_6::Transaction>& transaction) {
+                              return transaction->get_stop_transaction_message_id() == stop_transaction_message_id;
+                          }) != this->stopped_transactions.end();
 }
 
 std::shared_ptr<Transaction> TransactionHandler::get_transaction(int32_t connector) {
@@ -210,7 +210,7 @@ int32_t TransactionHandler::get_connector_from_transaction_id(int32_t transactio
     return -1;
 }
 
-void TransactionHandler::add_meter_value(int32_t connector, const MeterValue &meter_value) {
+void TransactionHandler::add_meter_value(int32_t connector, const MeterValue& meter_value) {
     std::lock_guard<std::mutex> lock(this->active_transactions_mutex);
     if (this->active_transactions.at(connector) == nullptr) {
         return;

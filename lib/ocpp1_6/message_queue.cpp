@@ -49,6 +49,7 @@ MessageQueue::MessageQueue(std::shared_ptr<ChargePointConfiguration> configurati
             ControlMessage* message = nullptr;
             QueueType queue_type = QueueType::None;
 
+            // send normal messages first
             if (!this->normal_message_queue.empty()) {
                 auto& normal_message = this->normal_message_queue.front();
                 EVLOG_debug << "normal msg timestamp: " << normal_message->timestamp;
@@ -62,7 +63,8 @@ MessageQueue::MessageQueue(std::shared_ptr<ChargePointConfiguration> configurati
                 }
             }
 
-            if (!this->transaction_message_queue.empty()) {
+            // send transaction messages when normal message queue is empty
+            if (!this->transaction_message_queue.empty() && message == nullptr) {
                 auto& transaction_message = this->transaction_message_queue.front();
                 EVLOG_debug << "transaction msg timestamp: " << transaction_message->timestamp;
                 if (message == nullptr) {
@@ -94,7 +96,7 @@ MessageQueue::MessageQueue(std::shared_ptr<ChargePointConfiguration> configurati
             this->in_flight = message;
 
             if (this->message_id_transaction_id_map.count(this->in_flight->message.at(1))) {
-                EVLOG_critical << "Replacing transaction id";
+                EVLOG_debug << "Replacing transaction id";
                 this->in_flight->message.at(3)["transactionId"] =
                     this->message_id_transaction_id_map.at(this->in_flight->message.at(1));
                 this->message_id_transaction_id_map.erase(this->in_flight->message.at(1));

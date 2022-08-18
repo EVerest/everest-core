@@ -101,6 +101,10 @@ if(CMAKE_RUN_CLANG_TIDY)
     -export-fixes=clang-tidy-fixes.yaml)
 endif()
 
+if(BUILD_TESTING)
+    add_subdirectory(tests)
+endif()
+
 # build doxygen documentation if doxygen is available
 find_package(Doxygen)
 if(DOXYGEN_FOUND)

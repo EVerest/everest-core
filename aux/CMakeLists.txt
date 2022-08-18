@@ -1,5 +1,6 @@
 set(OCPP1_6_PROFILE_SCHEMAS_DIR "profile_schemas/ocpp1_6/")
 set(USER_CONFIG_FILE "${CMAKE_CURRENT_SOURCE_DIR}/user_config/user_config.json")
+set(SQL_INIT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/init.sql")
 set(CERTS_DIR "certs/")
 
 list(APPEND OCPP1_6_PROFILE_SCHEMAS
@@ -36,6 +37,8 @@ install(
 install(
      DIRECTORY ${CERTS_DIR}
      DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/ocpp/certs)
+
+install(FILES ${SQL_INIT_FILE} DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/ocpp)
 
 if(EXISTS ${USER_CONFIG_FILE})
      install(

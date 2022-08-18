@@ -132,6 +132,22 @@ enum class MessageType
     InternalError, // not in spec, for internal use
 };
 
+/// \brief Struct that contains all attributes of a transaction entry in the database
+struct TransactionEntry {
+    std::string session_id;
+    int32_t connector;
+    std::string id_tag_start;
+    std::string time_start;
+    int32_t meter_start;
+    boost::optional<int32_t> reservation_id = boost::none;
+    boost::optional<int32_t> transaction_id = boost::none;
+    boost::optional<std::string> parent_id_tag = boost::none;
+    boost::optional<int32_t> meter_stop = boost::none;
+    boost::optional<std::string> time_end = boost::none;
+    boost::optional<std::string> id_tag_end = boost::none;
+    boost::optional<std::string> stop_reason = boost::none;
+};
+
 namespace conversions {
 /// \brief Converts the given MessageType \p m to std::string
 /// \returns a string representation of the MessageType

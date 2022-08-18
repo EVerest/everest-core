@@ -5,8 +5,6 @@
 
 #include <set>
 
-#include <sqlite3.h>
-
 #include <ocpp1_6/ocpp_types.hpp>
 #include <ocpp1_6/pki_handler.hpp>
 #include <ocpp1_6/types.hpp>
@@ -17,9 +15,7 @@ namespace ocpp1_6 {
 class ChargePointConfiguration {
 private:
     json config;
-    sqlite3* db;
-    const std::string &configs_path;
-    const std::string &database_path;
+    std::string configs_path;
     std::shared_ptr<PkiHandler> pki_handler;
 
     std::set<SupportedFeatureProfiles> supported_feature_profiles;
@@ -37,10 +33,7 @@ private:
     bool isConnectorPhaseRotationValid(std::string str);
 
 public:
-    ChargePointConfiguration(json config, const std::string& configs_path, const std::string& schemas_path,
-                             const std::string& database_path);
-    void restart();
-    void close();
+    ChargePointConfiguration(json config, std::string configs_path, std::string schemas_path);
 
     std::string getConfigsPath();
     std::shared_ptr<PkiHandler> getPkiHandler();
@@ -68,15 +61,6 @@ public:
     std::set<MessageType> getSupportedMessageTypesSending();
     std::set<MessageType> getSupportedMessageTypesReceiving();
 
-    bool setConnectorAvailability(int32_t connectorId, AvailabilityType availability);
-    AvailabilityType getConnectorAvailability(int32_t connectorId);
-
-    std::map<int32_t, ocpp1_6::AvailabilityType> getConnectorAvailability();
-
-    // Core Profile - Authorization Cache
-    bool updateAuthorizationCacheEntry(CiString20Type idTag, IdTagInfo idTagInfo);
-    bool clearAuthorizationCache();
-    boost::optional<IdTagInfo> getAuthorizationCacheEntry(CiString20Type idTag);
 
     // Core Profile - optional
     boost::optional<bool> getAllowOfflineTxForUnknownId();
@@ -311,13 +295,6 @@ public:
     // Local Auth List Management Profile
     int32_t getSendLocalListMaxLength();
     KeyValue getSendLocalListMaxLengthKeyValue();
-
-    int32_t getLocalListVersion();
-
-    bool updateLocalAuthorizationListVersion(int32_t list_version);
-    bool updateLocalAuthorizationList(std::vector<LocalAuthorizationList> local_authorization_list);
-    bool clearLocalAuthorizationList();
-    boost::optional<IdTagInfo> getLocalAuthorizationListEntry(CiString20Type idTag);
 
     boost::optional<KeyValue> get(CiString50Type key);
 

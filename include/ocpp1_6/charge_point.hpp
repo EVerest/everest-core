@@ -15,6 +15,7 @@
 
 #include <ocpp1_6/charge_point_configuration.hpp>
 #include <ocpp1_6/charge_point_state_machine.hpp>
+#include <ocpp1_6/database_handler.hpp>
 #include <ocpp1_6/message_queue.hpp>
 #include <ocpp1_6/messages/Authorize.hpp>
 #include <ocpp1_6/messages/BootNotification.hpp>
@@ -75,6 +76,7 @@ private:
     RegistrationStatus registration_status;
     std::unique_ptr<ChargePointStates> status;
     std::shared_ptr<ChargePointConfiguration> configuration;
+    std::unique_ptr<DatabaseHandler> database_handler;
     std::unique_ptr<Everest::SteadyTimer> heartbeat_timer;
     std::unique_ptr<Everest::SteadyTimer> boot_notification_timer;
     std::unique_ptr<Everest::SystemTimer> clock_aligned_meter_values_timer;
@@ -129,11 +131,11 @@ private:
     std::function<bool(const ResetType& reset_type)> reset_callback;
     std::function<void(const std::string& system_time)> set_system_time_callback;
     std::function<ocpp1_6::GetLogResponse(const ocpp1_6::GetDiagnosticsRequest& request)> upload_diagnostics_callback;
-    std::function<void(const ocpp1_6::UpdateFirmwareRequest msg)>
-        update_firmware_callback;
+    std::function<void(const ocpp1_6::UpdateFirmwareRequest msg)> update_firmware_callback;
 
-    std::function<ocpp1_6::UpdateFirmwareStatusEnumType(const ocpp1_6::SignedUpdateFirmwareRequest msg)> signed_update_firmware_callback;
-    
+    std::function<ocpp1_6::UpdateFirmwareStatusEnumType(const ocpp1_6::SignedUpdateFirmwareRequest msg)>
+        signed_update_firmware_callback;
+
     std::function<ReservationStatus(int32_t reservation_id, int32_t connector, ocpp1_6::DateTime expiryDate,
                                     ocpp1_6::CiString20Type idTag, boost::optional<ocpp1_6::CiString20Type> parent_id)>
         reserve_now_callback;
@@ -177,7 +179,11 @@ private:
     // new transaction handling:
     void start_transaction(std::shared_ptr<Transaction> transaction);
     int32_t get_meter_wh(int32_t connector);
-    void stop_transaction(int32_t connector, Reason reason);
+
+    /// \brief Sends StopTransaction.req for all transactions for which meter_stop or time_end is not set in the
+    /// database's Transaction table
+    void stop_pending_transactions();
+    void stop_transaction(int32_t connector, Reason reason, boost::optional<CiString20Type> id_tag_end);
 
     // security
     /// \brief Creates a new public/private key pair and sends a certificate signing request to the central system
@@ -242,7 +248,8 @@ private:
 
 public:
     /// \brief Creates a ChargePoint object with the provided \p configuration
-    explicit ChargePoint(std::shared_ptr<ChargePointConfiguration> configuration);
+    explicit ChargePoint(std::shared_ptr<ChargePointConfiguration> configuration, const std::string& database_path,
+                         const std::string &sql_init_path);
 
     /// \brief Starts the ChargePoint, initializes and connects to the Websocket endpoint
     bool start();
@@ -293,8 +300,8 @@ public:
 
     /// \brief Notifies chargepoint that the transaction on the given \p connector with the given \p reason has been
     /// stopped.
-    void on_transaction_stopped(const int32_t connector, const Reason& reason, DateTime timestamp,
-                                float energy_wh_import);
+    void on_transaction_stopped(const int32_t connector, const std::string& session_id, const Reason& reason,
+                                DateTime timestamp, float energy_wh_import, boost::optional<CiString20Type> id_tag_end);
 
     /// \brief EV indicates that it suspends charging on the given \p connector
     /// \returns true if this state change was possible
@@ -374,13 +381,13 @@ public:
         const std::function<ocpp1_6::GetLogResponse(const ocpp1_6::GetDiagnosticsRequest& request)>& callback);
 
     /// \brief registers a \p callback function that can be used to trigger a firmware update
-    void register_update_firmware_callback(
-        const std::function<void(const ocpp1_6::UpdateFirmwareRequest msg)>& callback);
+    void
+    register_update_firmware_callback(const std::function<void(const ocpp1_6::UpdateFirmwareRequest msg)>& callback);
 
     /// \brief registers a \p callback function that can be used to trigger a firmware update
     void register_signed_update_firmware_callback(
-        const std::function<ocpp1_6::UpdateFirmwareStatusEnumType(const ocpp1_6::SignedUpdateFirmwareRequest msg)>& callback);
-
+        const std::function<ocpp1_6::UpdateFirmwareStatusEnumType(const ocpp1_6::SignedUpdateFirmwareRequest msg)>&
+            callback);
 
     /// \brief registers a \p callback function that can be used to upload logfiles
     void register_upload_logs_callback(const std::function<ocpp1_6::GetLogResponse(GetLogRequest req)>& callback);
@@ -393,7 +400,6 @@ public:
 
     /// \brief registera \p callback function that can be used to set the system time of the chargepoint
     void register_set_system_time_callback(const std::function<void(const std::string& system_time)>& callback);
-
 };
 
 } // namespace ocpp1_6

@@ -20,6 +20,8 @@
 
 #include <ocpp1_6/charge_point.hpp>
 
+#include <ocpp1_6/database_handler.hpp>
+
 namespace po = boost::program_options;
 
 ocpp1_6::ChargePoint* charge_point;
@@ -109,9 +111,11 @@ int main(int argc, char* argv[]) {
     }
 
     std::shared_ptr<ocpp1_6::ChargePointConfiguration> configuration =
-        std::make_shared<ocpp1_6::ChargePointConfiguration>(json_config, configs_path, schemas_path, database_path);
+        std::make_shared<ocpp1_6::ChargePointConfiguration>(json_config, configs_path, schemas_path);
 
-    charge_point = new ocpp1_6::ChargePoint(configuration);
+
+    const boost::filesystem::path sql_init_path = boost::filesystem::path(configs_path) / "init.sql";
+    charge_point = new ocpp1_6::ChargePoint(configuration, database_path, sql_init_path.string());
     charge_point->start();
 
     {

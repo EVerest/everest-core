@@ -12,6 +12,7 @@ target_sources(ocpp
         ocpp1_6/ocpp_types.cpp
         ocpp1_6/pki_handler.cpp
         ocpp1_6/schemas.cpp
+        ocpp1_6/database_handler.cpp
         ocpp1_6/types.cpp
         ocpp1_6/types_internal.cpp
 )

@@ -94,6 +94,10 @@ public:
     /// \returns the transaction id
     int32_t get_transaction_id();
 
+    /// \brief Provides the id of this session
+    /// \returns the session_id
+    std::string get_session_id();
+
     /// \brief Sets the start transaction message id using the provides \p message_id
     void set_start_transaction_message_id(const std::string& message_id);
 
