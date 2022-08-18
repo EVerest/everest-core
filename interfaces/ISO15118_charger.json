@@ -769,6 +769,11 @@
                     "type": "string",
                     "minLength": 0
                 },
+                "V2G_Message_JSON": {
+                    "description": "Contains the decoded EXI stream as V2G message JSON file",
+                    "type": "string",
+                    "minLength": 0
+                },
                 "V2G_Message_EXI_Hex": {
                     "description": "Contains the EXI stream as hex string",
                     "type": "string",
