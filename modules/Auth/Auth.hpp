@@ -65,7 +65,7 @@ public:
 
     /**
      * @brief Set the connection timeout for the auth handler
-     * 
+     *
      * @param connection_timeout timeout in seconds
      */
     void set_connection_timeout(int& connection_timeout);

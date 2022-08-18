@@ -70,10 +70,10 @@
         "stop_transaction": {
             "description": "Stops transaction and cancels charging externally, charging can only be resumed by replugging car. EVSE will also stop transaction automatically e.g. on disconnect, so this only needs to be called if the transaction should end before.",
             "arguments": {
-                "reason": {
-                    "description": "Reason for stopping the transaction",
-                    "type": "string",
-                    "$ref": "/evse_manager#/StopTransactionReason"
+                "request": {
+                    "description": "Request to stop the transaction.",
+                    "type": "object",
+                    "$ref": "/evse_manager#/StopTransactionRequest"
                 }
             },
             "result": {

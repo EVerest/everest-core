@@ -742,14 +742,17 @@ bool Charger::evseReplug() {
     return true;
 }
 
-bool Charger::cancelTransaction(const types::evse_manager::StopTransactionReason& reason) {
+bool Charger::cancelTransaction(const types::evse_manager::StopTransactionRequest& request) {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
     if (currentState == EvseState::Charging || currentState == EvseState::ChargingPausedEVSE ||
         currentState == EvseState::ChargingPausedEV) {
 
         currentState = EvseState::ChargingPausedEVSE;
         transaction_active = false;
-        last_stop_transaction_reason = reason;
+        last_stop_transaction_reason = request.reason;
+        if (request.id_tag) {
+            stop_transaction_id_tag = request.id_tag.value();
+        }
         signalEvent(EvseEvent::TransactionFinished);
 
         return true;
@@ -787,6 +790,7 @@ void Charger::stopSession() {
 
 void Charger::startTransaction() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
+    stop_transaction_id_tag.clear();
     transaction_active = true;
     signalEvent(EvseEvent::TransactionStarted);
 }
@@ -796,6 +800,11 @@ void Charger::stopTransaction() {
     transaction_active = false;
     last_stop_transaction_reason = types::evse_manager::StopTransactionReason::EVDisconnected;
     signalEvent(EvseEvent::TransactionFinished);
+}
+
+std::string Charger::getStopTransactionIdTag() {
+    std::lock_guard<std::recursive_mutex> lock(stateMutex);
+    return stop_transaction_id_tag;
 }
 
 types::evse_manager::StopTransactionReason Charger::getTransactionFinishedReason() {

@@ -85,8 +85,11 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
     const auto connector_used_for_transaction =
         this->used_for_transaction(referenced_connectors, provided_token.id_token);
     if (connector_used_for_transaction != -1) {
+        StopTransactionRequest req;
+        req.reason = StopTransactionReason::Local;
+        req.id_tag.emplace(provided_token.id_token);
         this->stop_transaction_callback(this->connectors.at(connector_used_for_transaction)->evse_index,
-                                        StopTransactionReason::Local);
+                                        req);
         EVLOG_info << "Transaction was stopped because id_token was used for transaction";
         return TokenHandlingResult::USED_TO_STOP_TRANSACTION;
     }
@@ -124,8 +127,11 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
                     if (!connector.transaction_active) {
                         return TokenHandlingResult::ALREADY_IN_PROCESS;
                     } else {
+                        StopTransactionRequest req;
+                        req.reason = StopTransactionReason::Local;
+                        req.id_tag.emplace(provided_token.id_token);
                         this->stop_transaction_callback(this->connectors.at(connector_used_for_transaction)->evse_index,
-                                                        StopTransactionReason::Local);
+                                                        req);
                         EVLOG_info << "Transaction was stopped because parent_id_token was used for transaction";
                         return TokenHandlingResult::USED_TO_STOP_TRANSACTION;
                     }
@@ -438,7 +444,7 @@ void AuthHandler::register_validate_token_callback(
     this->validate_token_callback = callback;
 }
 void AuthHandler::register_stop_transaction_callback(
-    const std::function<void(const int evse_index, const StopTransactionReason& reason)>& callback) {
+    const std::function<void(const int evse_index, const StopTransactionRequest& request)>& callback) {
     this->stop_transaction_callback = callback;
 }
 
