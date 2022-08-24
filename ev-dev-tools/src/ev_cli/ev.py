@@ -11,11 +11,14 @@ FIXME (aw): Module documentation.
 
 from . import __version__
 from . import helpers
+from .type_parsing import TypeParser
 
 from datetime import datetime
 from pathlib import Path
 import jinja2 as j2
 import argparse
+import stringcase
+from typing import List
 
 
 # Global variables
@@ -25,12 +28,14 @@ everest_dir = None
 env = j2.Environment(loader=j2.FileSystemLoader(Path(__file__).parent / 'templates'),
                      lstrip_blocks=True, trim_blocks=True, undefined=j2.StrictUndefined,
                      keep_trailing_newline=True)
+env.filters['snake_case'] = helpers.snake_case
 
 templates = {
     'interface_base': env.get_template('interface-Base.hpp.j2'),
     'interface_exports': env.get_template('interface-Exports.hpp.j2'),
     'interface_impl.hpp': env.get_template('interface-Impl.hpp.j2'),
     'interface_impl.cpp': env.get_template('interface-Impl.cpp.j2'),
+    'types.hpp': env.get_template('types.hpp.j2'),
     'module.hpp': env.get_template('module.hpp.j2'),
     'module.cpp': env.get_template('module.cpp.j2'),
     'ld-ev.hpp': env.get_template('ld-ev.hpp.j2'),
@@ -47,14 +52,20 @@ def setup_jinja_env():
     env.globals['timestamp'] = datetime.utcnow()
     # FIXME (aw): which repo to use? everest or everest-framework?
     env.globals['git'] = helpers.gather_git_info(everest_dir)
-    env.filters['snake_case'] = helpers.snake_case
     env.filters['create_dummy_result'] = helpers.create_dummy_result
 
 
-def generate_tmpl_data_for_if(interface, if_def):
+def generate_tmpl_data_for_if(interface, if_def, type_file):
+    helpers.parsed_enums.clear()
+    helpers.parsed_types.clear()
+    helpers.type_headers.clear()
+    types = []
+    enums = []
     vars = []
     for var, var_info in if_def.get('vars', {}).items():
-        type_info = helpers.build_type_info(var, var_info['type'])
+        (type_info, enum_info) = helpers.extended_build_type_info(var, var_info, type_file)
+        if enum_info and type_file:
+            enums.append(enum_info)
 
         vars.append(type_info)
 
@@ -62,7 +73,9 @@ def generate_tmpl_data_for_if(interface, if_def):
     for cmd, cmd_info in if_def.get('cmds', {}).items():
         args = []
         for arg, arg_info in cmd_info.get('arguments', {}).items():
-            type_info = helpers.build_type_info(arg, arg_info['type'])
+            (type_info, enum_info) = helpers.extended_build_type_info(arg, arg_info, type_file)
+            if enum_info and type_file:
+                enums.append(enum_info)
 
             args.append(type_info)
 
@@ -70,16 +83,44 @@ def generate_tmpl_data_for_if(interface, if_def):
         if 'result' in cmd_info:
             result_info = cmd_info['result']
 
-            result_type_info = helpers.build_type_info(None, result_info['type'])
+            (result_type_info, enum_info) = helpers.extended_build_type_info('result', result_info, type_file)
+            if enum_info and type_file:
+                enums.append(enum_info)
 
         cmds.append({'name': cmd, 'args': args, 'result': result_type_info})
 
+    if type_file:
+        for parsed_enum in helpers.parsed_enums:
+            enum_info = {
+                'name': parsed_enum['name'],
+                'description': parsed_enum['description'],
+                'enum_type': stringcase.capitalcase(parsed_enum['name']),
+                'enum': parsed_enum['enums']
+            }
+            enums.append(enum_info)
+
+    type_headers = helpers.type_headers
+    if type_file:
+        for parsed_type in helpers.parsed_types:
+            parsed_type['name'] = stringcase.capitalcase(parsed_type['name'])
+            if 'properties' in parsed_type:
+                for prop in parsed_type['properties']:
+                    if 'type_dict' in prop['info']:
+                        path = Path('generated/types') / \
+                            prop['info']['type_dict']['type_relative_path'].with_suffix('.hpp')
+                        type_headers.add(path.as_posix())
+
+            types.append(parsed_type)
+
     tmpl_data = {
         'info': {
-            'base_class_header': f'generated/{interface}/Implementation.hpp',
+            'base_class_header': f'generated/interfaces/{interface}/Implementation.hpp',
             'interface': interface,
             'desc': if_def['description'],
+            'type_headers': type_headers
         },
+        'enums': enums,
+        'types': types,
         'vars': vars,
         'cmds': cmds
     }
@@ -102,7 +143,7 @@ def generate_tmpl_data_for_module(module, module_def):
             'config': config,
             'class_name': f'{impl_info["interface"]}Impl',
             'base_class': f'{impl_info["interface"]}ImplBase',
-            'base_class_header': f'generated/{impl_info["interface"]}/Implementation.hpp'
+            'base_class_header': f'generated/interfaces/{impl_info["interface"]}/Implementation.hpp'
         })
 
     requires = []
@@ -116,7 +157,7 @@ def generate_tmpl_data_for_module(module, module_def):
             'is_vector': is_vector,
             'type': req_info['interface'],
             'class_name': f'{req_info["interface"]}Intf',
-            'exports_header': f'generated/{req_info["interface"]}/Interface.hpp'
+            'exports_header': f'generated/interfaces/{req_info["interface"]}/Interface.hpp'
         })
 
     module_config = []
@@ -273,9 +314,9 @@ def generate_module_files(mod, update_flag):
         (impl_hpp_file, impl_cpp_file) = construct_impl_file_paths(impl)
 
         # load template data for interface
-        if_def, last_mtime = load_interface_defintion(interface)
+        if_def, last_mtime = load_interface_definition(interface)
 
-        if_tmpl_data = generate_tmpl_data_for_if(interface, if_def)
+        if_tmpl_data = generate_tmpl_data_for_if(interface, if_def, False)
 
         if_tmpl_data['info'].update({
             'hpp_guard': helpers.snake_case(f'{impl["id"]}_{interface}').upper() + '_IMPL_HPP',
@@ -342,7 +383,7 @@ def generate_module_files(mod, update_flag):
     return mod_files
 
 
-def load_interface_defintion(interface):
+def load_interface_definition(interface):
     if_path = everest_dir / f'interfaces/{interface}.json'
 
     if_def = helpers.load_validated_interface_def(if_path, validators['interface'])
@@ -358,10 +399,10 @@ def load_interface_defintion(interface):
 
 
 def generate_interface_headers(interface, all_interfaces_flag, output_dir):
-    if_parts = {'base': None, 'exports': None}
+    if_parts = {'base': None, 'exports': None, 'types': None}
 
     try:
-        if_def, last_mtime = load_interface_defintion(interface)
+        if_def, last_mtime = load_interface_definition(interface)
     except Exception as e:
         if not all_interfaces_flag:
             raise
@@ -369,10 +410,13 @@ def generate_interface_headers(interface, all_interfaces_flag, output_dir):
             print(f'Ignoring interface {interface} with reason: {e}')
             return
 
-    tmpl_data = generate_tmpl_data_for_if(interface, if_def)
+    tmpl_data = generate_tmpl_data_for_if(interface, if_def, False)
 
     output_path = output_dir / interface
     output_path.mkdir(parents=True, exist_ok=True)
+
+    tmpl_data['info']['interface_name'] = f'{interface}'
+    tmpl_data['info']['namespace'] = [f'{interface}']
 
     # generate Base file (providers view)
     tmpl_data['info']['hpp_guard'] = helpers.snake_case(interface).upper() + '_IMPLEMENTATION_HPP'
@@ -398,6 +442,18 @@ def generate_interface_headers(interface, all_interfaces_flag, output_dir):
         'content': templates['interface_exports'].render(tmpl_data),
         'last_mtime': last_mtime,
         'printable_name': exports_file.relative_to(output_path.parent)
+    }
+
+    # generate Types file
+    tmpl_data['info']['hpp_guard'] = helpers.snake_case(interface).upper() + '_TYPES_HPP'
+
+    types_file = output_path / 'Types.hpp'
+
+    if_parts['types'] = {
+        'path': types_file,
+        'content': templates['types.hpp'].render(tmpl_data),
+        'last_mtime': last_mtime,
+        'printable_name': types_file.relative_to(output_path.parent)
     }
 
     return if_parts
@@ -426,6 +482,10 @@ def module_create(args):
 
 
 def module_update(args):
+    # Always generate type info before updating module
+    for type_with_namespace in list_types_with_namespace():
+        _tmpl_data, _last_mtime = TypeParser.generate_type_info(type_with_namespace, all_types=True)
+
     primary_update_strategy = 'force-update' if args.force else 'update'
     update_strategy = {'module.cpp': 'update-if-non-existent'}
     for file_name in ['cmakelists', 'module.hpp']:
@@ -459,7 +519,8 @@ def module_update(args):
 
 
 def module_genld(args):
-    output_dir = Path(args.output_dir).resolve() if args.output_dir else everest_dir / 'build/generated/modules'
+    output_dir = Path(args.output_dir).resolve() if args.output_dir else everest_dir / \
+        'build/generated/generated/modules'
 
     loader_files = generate_module_loader_files(args.module, output_dir)
 
@@ -472,9 +533,12 @@ def module_genld(args):
 
 
 def interface_genhdr(args):
-    output_dir = Path(args.output_dir).resolve() if args.output_dir else everest_dir / \
-        'build/generated/interfaces/generated'
+    # Always generate type info before generating interfaces
+    for type_with_namespace in list_types_with_namespace():
+        _tmpl_data, _last_mtime = TypeParser.generate_type_info(type_with_namespace, all_types=True)
 
+    output_dir = Path(args.output_dir).resolve() if args.output_dir else everest_dir / \
+        'build/generated/generated/interfaces'
     primary_update_strategy = 'force-update' if args.force else 'update'
 
     interfaces = args.interfaces
@@ -490,15 +554,66 @@ def interface_genhdr(args):
         if not args.disable_clang_format:
             helpers.clang_format(args.clang_format_file, if_parts['base'])
             helpers.clang_format(args.clang_format_file, if_parts['exports'])
+            helpers.clang_format(args.clang_format_file, if_parts['types'])
 
         helpers.write_content_to_file(if_parts['base'], primary_update_strategy, args.diff)
         helpers.write_content_to_file(if_parts['exports'], primary_update_strategy, args.diff)
+        helpers.write_content_to_file(if_parts['types'], primary_update_strategy, args.diff)
 
 
 def helpers_genuuids(args):
     if (args.count <= 0):
         raise Exception(f'Invalid number ("{args.count}") of uuids to generate')
     helpers.generate_some_uuids(args.count)
+
+
+def list_types_with_namespace(types=None) -> List:
+    if not types:
+        types_dir = everest_dir / 'types'
+        types = list(types_dir.glob("**/*.json"))
+
+    types_with_namespace = []
+    for type_path in types:
+        relative_path = type_path.relative_to(types_dir).with_suffix('')
+        uppercase_path = []
+        for part in relative_path.parts:
+            uppercase_path.append(stringcase.capitalcase(part))
+        namespace = '::'.join(relative_path.parts)
+        type_with_namespace = {
+            'path': type_path,
+            'relative_path': relative_path,
+            'namespace': namespace,
+            'uppercase_path': uppercase_path,
+        }
+
+        types_with_namespace.append(type_with_namespace)
+
+    return types_with_namespace
+
+
+def types_genhdr(args):
+    print("Generating global type headers.")
+    output_dir = Path(args.output_dir).resolve() if args.output_dir else everest_dir / \
+        'build/generated/generated/types'
+
+    primary_update_strategy = 'force-update' if args.force else 'update'
+
+    types = None
+    all_types = False
+    if 'types' not in args:
+        all_types = True
+    else:
+        types = args.types
+
+    types_with_namespace = list_types_with_namespace(types=types)
+
+    for type_with_namespace in types_with_namespace:
+        type_parts = TypeParser.generate_type_headers(type_with_namespace, all_types, output_dir)
+
+        if not args.disable_clang_format:
+            helpers.clang_format(args.clang_format_file, type_parts['types'])
+
+        helpers.write_content_to_file(type_parts['types'], primary_update_strategy, args.diff)
 
 
 def main():
@@ -522,6 +637,7 @@ def main():
     parser_mod = subparsers.add_parser('module', aliases=['mod'], help='module related actions')
     parser_if = subparsers.add_parser('interface', aliases=['if'], help='interface related actions')
     parser_hlp = subparsers.add_parser('helpers', aliases=['hlp'], help='helper actions')
+    parser_types = subparsers.add_parser('types', aliases=['ty'], help='type related actions')
 
     mod_actions = parser_mod.add_subparsers(metavar='<action>', help='available actions', required=True)
     mod_create_parser = mod_actions.add_parser('create', aliases=['c'], parents=[
@@ -550,7 +666,7 @@ def main():
     mod_genld_parser.add_argument(
         'module', type=str, help='name of the module, for which the loader should be generated')
     mod_genld_parser.add_argument('-o', '--output-dir', type=str, help='Output directory for generated loader '
-                                  'files (default: {everest-dir}/build/generated/module/)')
+                                  'files (default: {everest-dir}/build/generated/generated/modules)')
     mod_genld_parser.set_defaults(action_handler=module_genld)
 
     if_actions = parser_if.add_subparsers(metavar='<action>', help='available actions', required=True)
@@ -558,7 +674,7 @@ def main():
         'generate-headers', aliases=['gh'], parents=[common_parser], help='generate headers')
     if_genhdr_parser.add_argument('-f', '--force', action='store_true', help='force overwriting')
     if_genhdr_parser.add_argument('-o', '--output-dir', type=str, help='Output directory for generated interface '
-                                  'headers (default: {everest-dir}/build/generated/include/generated)')
+                                  'headers (default: {everest-dir}/build/generated/generated/interfaces)')
     if_genhdr_parser.add_argument('-d', '--diff', '--dry-run', action='store_true', help='show resulting diff')
     if_genhdr_parser.add_argument('interfaces', nargs='*', help='a list of interfaces, for which header files should '
                                   'be generated - if no interface is given, all will be processed and non-processable '
@@ -570,12 +686,30 @@ def main():
     hlp_genuuid_parser.add_argument('count', type=int, default=3)
     hlp_genuuid_parser.set_defaults(action_handler=helpers_genuuids)
 
+    types_actions = parser_types.add_subparsers(metavar='<action>', help='available actions', required=True)
+    types_genhdr_parser = types_actions.add_parser(
+        'generate-headers', aliases=['gh'], parents=[common_parser], help='generete type headers')
+    types_genhdr_parser.add_argument('-f', '--force', action='store_true', help='force overwriting')
+    types_genhdr_parser.add_argument('-o', '--output-dir', type=str, help='Output directory for generated type '
+                                     'headers (default: {everest-dir}/build/generated/generated/types)')
+    types_genhdr_parser.add_argument('-d', '--diff', '--dry-run', action='store_true', help='show resulting diff')
+    types_genhdr_parser.add_argument('types', nargs='*', help='a list of types, for which header files should '
+                                     'be generated - if no type is given, all will be processed and non-processable '
+                                     'will be skipped')
+    types_genhdr_parser.set_defaults(action_handler=types_genhdr)
+
     args = parser.parse_args()
 
     everest_dir = Path(args.everest_dir).resolve()
+    helpers.everest_dir = everest_dir
     if not (everest_dir / 'interfaces').exists():
         print('The default (".") xor supplied (via --everest-dir) everest directory\n'
               'doesn\'t contain an "interface" directory and therefore does not seem to be valid.\n'
+              f'dir: {everest_dir}')
+        exit(1)
+    if not (everest_dir / 'types').exists():
+        print('The default (".") xor supplied (via --everest-dir) everest directory\n'
+              'doesn\'t contain a "types" directory and therefore does not seem to be valid.\n'
               f'dir: {everest_dir}')
         exit(1)
 
@@ -589,6 +723,9 @@ def main():
         exit(1)
 
     validators = helpers.load_validators(framework_dir / 'schemas')
+
+    TypeParser.validators = validators
+    TypeParser.templates = templates
 
     args.action_handler(args)
 

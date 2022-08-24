@@ -1,4 +1,4 @@
-{% from "helper_macros.j2" import call_cmd_signature, var_to_any, var_to_cpp, print_template_info, cpp_type, print_spdx_line %}
+{% from "helper_macros.j2" import call_cmd_signature, var_to_any, var_to_cpp, print_template_info, cpp_type, result_type, print_spdx_line, string_to_enum, enum_to_string %}
 {{ print_spdx_line('Apache-2.0') }}
 #ifndef {{ info.hpp_guard }}
 #define {{ info.hpp_guard }}
@@ -6,6 +6,8 @@
 {{ print_template_info('3') }}
 
 #include <framework/ModuleAdapter.hpp>
+
+#include "Types.hpp"
 
 class {{ info.class_name }} {
 public:
@@ -20,15 +22,23 @@ public:
     {% for var in vars %}
     void subscribe_{{ var.name }}(const std::function<void({% if var.json_type != 'null' %}{{ cpp_type(var) }}{% endif %})>& listener) {
         ValueCallback cb = [listener](const Value& value) {
-            {% if var.json_type != 'null' %}
+        {% if 'object_type' in var %}
+            json json_object = boost::any_cast<Object>(value);
+            {{ var.object_type }} native_value = json_object;
+            listener(native_value);
+        {% elif 'enum_type' in var %}
+            auto string_value = {{ var_to_cpp(var) }}(value);
+            auto native_value = {{ string_to_enum(var.enum_type) }}(string_value);
+            listener(native_value);
+        {% elif var.json_type != 'null' %}
             auto native_value = {{ var_to_cpp(var) }}(value);
             listener(native_value);
-            {% else %}
+        {% else %}
             if (value.type() != typeid({{ cpp_type(var) }})) {
                 EVLOG_error << "Callback for variable '{{ var.name }}' in interface '{{ info.interface }}' has wrong type!";
             }
             listener();
-            {% endif %}
+        {% endif %}
         };
         _adapter->subscribe(_req, "{{ var.name }}", cb);
     }
@@ -43,15 +53,35 @@ public:
     {% else %}
     // commands available to call
     {% for cmd in cmds %}
-    {{ call_cmd_signature(cmd) }} {
+    {{ call_cmd_signature(cmd, info.interface_name) }} {
         Parameters args;
         {% for arg in cmd.args %}
+        {% if 'enum_type' in arg %}
+        auto {{ arg.name }}_string = {{ enum_to_string(arg.enum_type) }}({{ arg.name }});
+        args["{{ arg.name }}"] = {{ var_to_any(arg, arg.name + '_string') }};
+        {% elif 'object_type' in arg %}
+        json {{ arg.name }}_json = {{ arg.name }};
+        Object {{ arg.name }}_object = {{ arg.name }}_json;
+        args["{{ arg.name }}"] = {{ var_to_any(arg, arg.name + '_object') }};
+        {% elif 'array_type' in arg %}
+        json {{ arg.name }}_json = {{ arg.name }};
+        Array {{ arg.name }}_array = {{ arg.name }}_json;
+        args["{{ arg.name }}"] = {{ var_to_any(arg, arg.name + '_array') }};
+        {% else %}
         args["{{ arg.name }}"] = {{ var_to_any(arg, arg.name) }};
+        {% endif%}
         {% endfor %}
         {% if cmd.result %}Result result = {% endif %}_adapter->call(_req, "{{ cmd.name }}", args);
         {% if cmd.result %}
+        {% if 'enum_type' in cmd.result %}
+        auto retval = {{ string_to_enum(cmd.result.enum_type) }}({{ var_to_cpp(cmd.result) }}(result.get()));
+        {% elif 'object_type' in cmd.result %}
+        auto retval_object = boost::any_cast<Object>(result.get());
+        json retval_json = retval_object;
+        {{ result_type(cmd.result) }} retval = retval_json;
+        {% else %}
         auto retval = {{ var_to_cpp(cmd.result) }}(result.get());
-
+        {% endif %}
         return retval;
         {% endif %}
     }

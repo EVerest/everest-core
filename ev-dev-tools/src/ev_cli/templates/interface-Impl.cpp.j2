@@ -1,5 +1,5 @@
 {% from "helper_macros.j2" import handle_cmd_signature, print_spdx_line %}
-{{ print_spdx_line('Apache-2.0', "%s - %s" % (timestamp.year, timestamp.year)) }}
+{{ print_spdx_line('Apache-2.0') }}
 
 #include "{{ info.class_name}}.hpp"
 
@@ -15,7 +15,7 @@ void {{ info.class_name }}::ready() {
 }
 {% for cmd in cmds %}
 
-{{ handle_cmd_signature(cmd, info.class_name) }}{
+{{ handle_cmd_signature(cmd, info.class_name, '::'+info.interface) }}{
     // your code for cmd {{ cmd.name }} goes here
     {% if cmd.result %}
     return {{ cmd.result.json_type|create_dummy_result }};

@@ -1,11 +1,13 @@
-{% from "helper_macros.j2" import handle_cmd_signature, publish_var_signature, list_json_types, var_to_cpp, var_to_any, print_template_info, print_spdx_line %}
+{% from "helper_macros.j2" import handle_cmd_signature, publish_var_signature, list_json_types, var_to_cpp, var_to_any, print_template_info, print_spdx_line, string_to_enum, enum_to_string %}
 {{ print_spdx_line('Apache-2.0') }}
 #ifndef {{ info.hpp_guard }}
 #define {{ info.hpp_guard }}
 
-{{ print_template_info('2') }}
+{{ print_template_info('3') }}
 
 #include <framework/ModuleAdapter.hpp>
+
+#include "Types.hpp"
 
 class {{ info.class_name }} : public Everest::ImplementationBase {
 public:
@@ -16,7 +18,21 @@ public:
     {% else %}
     // publish functions for variables
     {% for var in vars %}
-    {{ publish_var_signature(var) }}
+    void publish_{{ var.name }}(
+    {% if 'object_type' in var %}
+        {{  var.object_type }}
+    {% else %}
+        {{  var.cpp_type }}
+    {% endif %}
+     value) {
+    {% if 'object_type' in var %}
+        json json_value = value;
+        Object object_value = json_value;
+        _ev->publish(_name, "{{ var.name }}", object_value);
+    {% else %}
+        _ev->publish(_name, "{{ var.name }}", value);
+    {% endif %}
+    }
     {% endfor %}
     {% endif %}
 
@@ -26,7 +42,7 @@ protected:
     {% else %}
     // command handler functions (virtual)
     {% for cmd in cmds %}
-    {{ handle_cmd_signature(cmd) }} = 0;
+    {{ handle_cmd_signature(cmd, none, info.interface_name) }} = 0;
     {% endfor %}
     {% endif %}
 
@@ -55,7 +71,18 @@ private:
         {% endif %}
         {{ cmd.name }}_cmd.cmd = [this](Parameters args) -> Result {
             {% for arg in cmd.args %}
-            auto {{ arg.name }} = {{ var_to_cpp(arg) }}(args["{{ arg.name }}"]);
+                {% if 'object_type' in arg %}
+                    json {{ arg.name }}_json_object = boost::any_cast<Object>(args["{{ arg.name }}"]);
+                    {{ arg.object_type }} {{ arg.name }} = {{ arg.name }}_json_object;
+                {% elif 'enum_type' in arg %}
+                    auto {{ arg.name }}_string = {{ var_to_cpp(arg) }}(args["{{ arg.name }}"]);
+                    auto {{ arg.name }} = {{ string_to_enum(arg.enum_type) }}({{ arg.name }}_string);
+                {% elif 'array_type' in arg %}
+                    json {{ arg.name }}_json_array = boost::any_cast<Array>(args["{{ arg.name }}"]);
+                    std::vector<{{ arg.array_type }}> {{ arg.name }} = {{ arg.name }}_json_array;
+                {% else %}
+                    auto {{ arg.name }} = {{ var_to_cpp(arg) }}(args["{{ arg.name }}"]);
+                {% endif %}
             {% endfor %}
 
             {{ 'auto result = ' if cmd.result }}this->handle_{{ cmd.name }}(
@@ -63,7 +90,17 @@ private:
                 {{ arg.name }}{{ ', ' if not loop.last }}
                 {%- endfor -%}
             );
-            return {{ var_to_any(cmd.result, 'result') if cmd.result else 'boost::none'}};
+            {% if cmd.result and 'object_type' in cmd.result %}
+                json json_result = result;
+                Object object_result = json_result;
+                return boost::any(object_result);
+            {% elif cmd.result and 'enum_type' in cmd.result %}
+                auto result_string = {{ enum_to_string(cmd.result.enum_type) }}(result);
+                return boost::any(result_string);
+            {% else %}
+                return {{ var_to_any(cmd.result, 'result') if cmd.result else 'boost::none'}};
+            {% endif %}
+
         };
         {% if cmd.result %}
         {{ cmd.name }}_cmd.return_type = {{ list_json_types(cmd.result.json_type) }};

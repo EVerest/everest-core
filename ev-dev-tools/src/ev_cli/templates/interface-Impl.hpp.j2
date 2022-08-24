@@ -3,7 +3,7 @@
 #ifndef {{ info.hpp_guard }}
 #define {{ info.hpp_guard }}
 
-{{ print_template_info('1', 'marked regions will be kept') }}
+{{ print_template_info('3', 'marked regions will be kept') }}
 
 #include <{{ info.base_class_header }}>
 
@@ -37,7 +37,7 @@ protected:
     {% else %}
     // command handler functions (virtual)
     {% for cmd in cmds %}
-    {{ handle_cmd_signature(cmd) }} override;
+    {{ handle_cmd_signature(cmd, none, '::'+info.interface) }} override;
     {% endfor %}
     {% endif %}
 

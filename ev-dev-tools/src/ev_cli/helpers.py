@@ -8,16 +8,25 @@ author: aw@pionix.de
 FIXME (aw): Module documentation.
 """
 
+from .type_parsing import TypeParser
+
 from pathlib import Path
 import shutil
 import subprocess
 import re
+from typing import Dict, List, Tuple
+import keyword
 
 import json
 import jstyleson
 import jsonschema
 
 from uuid import uuid4
+
+import stringcase
+
+
+everest_dir = None
 
 
 def snake_case(word: str) -> str:
@@ -66,7 +75,7 @@ def create_dummy_result(json_type) -> str:
             raise Exception(f'This json type "{type}" is not known or not implemented')
 
     if isinstance(json_type, list):
-        return '{}' # default initialization for variant
+        return '{}'  # default initialization for variant
     else:
         return primitive_to_sample_value(json_type)
 
@@ -101,7 +110,7 @@ def gather_git_info(repo):
 
 
 cpp_type_map = {
-    "null": "boost::blank", # FIXME (aw): check whether boost::blank or boost::none is more appropriate here
+    "null": "boost::blank",  # FIXME (aw): check whether boost::blank or boost::none is more appropriate here
     "integer": "int",
     "number": "double",
     "string": "std::string",
@@ -162,10 +171,230 @@ def build_type_info(name, json_type):
     return ti
 
 
+type_headers = set()
+parsed_types: List = []
+parsed_enums: List = []
+current_defs: Dict = {}
+
+format_types = dict()
+# format_types['date-time'] = 'DateTime'
+
+
+def object_exists(name: str) -> bool:
+    """Check if an object already exists."""
+    for el in parsed_types:
+        if el['name'] == name:
+            return True
+
+    return False
+
+
+def add_enum_type(name: str, enums: Tuple[str], description: str):
+    """Add enum type to parsed_types."""
+    for el in parsed_enums:
+        if el['name'] == name:
+            raise Exception('Warning: enum ' + name + ' already exists')
+    parsed_enums.append({
+        'name': name,
+        'enums': enums,
+        'description': description
+    })
+
+
+def parse_ref(ref: str, prop_type, prop_info: Dict) -> Tuple[str, dict]:
+    if ref not in TypeParser.all_types:
+        TypeParser.all_types[ref] = TypeParser.parse_type_url(type_url=ref)
+    type_dict = TypeParser.all_types[ref]
+    type_path = everest_dir / 'types' / type_dict['type_relative_path'] .with_suffix('.json')
+    if not type_path.exists():
+        raise Exception('$ref: ' + ref + f' referenced type file "{type_path} does not exist.')
+    (td, _mod) = TypeParser.load_type_definition(type_path)
+    if 'types' in td and type_dict['type_name'] in td['types']:
+        local_type_info = td['types'][type_dict['type_name']]
+        if local_type_info['type'] == 'string' and 'enum' in local_type_info:
+            prop_info['enum'] = True
+    prop_type = type_dict['namespaced_type']
+    prop_info['prop']['type'] = prop_type
+    prop_info['type_dict'] = type_dict
+
+    path = Path('generated/types') / \
+        type_dict['type_relative_path'].with_suffix('.hpp')
+    type_headers.add(path.as_posix())
+
+    return (prop_type, prop_info)
+
+
+def parse_property(prop_name: str, prop: Dict, depends_on: List[str], type_file: bool) -> Tuple[str, dict]:
+    """Determine type of property and proceed with it.
+    In case it is a $ref, look it up in the TypeParser
+    Currently, the following property types are supported:
+    - string (and enum as a special case)
+    - integer
+    - number
+    - boolean
+    - array
+    - object (will be parsed recursivly)
+    """
+
+    prop_type = None
+    prop_info = {
+        'description': prop.get('description', 'TODO: description'),
+        'prop': prop,
+        'enum': False
+    }
+    if '$ref' in prop:
+        return parse_ref(prop['$ref'], prop_type, prop_info)
+
+    if prop['type'] == 'string':
+        if 'enum' in prop and type_file:
+            prop_type = stringcase.capitalcase(prop_name)
+            add_enum_type(prop_type, prop['enum'], prop_info['description'])
+        elif 'format' in prop:
+            if prop['format'] in format_types:
+                prop_type = format_types[prop['format']]
+            else:
+                # unsupported format type
+                prop_type = 'std::string'
+                prop_info['unsupported_format'] = True
+        else:
+            prop_type = 'std::string'
+    elif prop['type'] == 'integer':
+        prop_type = 'int32_t'
+    elif prop['type'] == 'number':
+        prop_type = 'float'
+    elif prop['type'] == 'boolean':
+        prop_type = 'bool'
+    elif prop['type'] == 'array':
+        if 'items' in prop:
+            prop_type = 'std::vector<' + parse_property(prop_name, prop['items'], depends_on, type_file)[0] + '>'
+        else:
+            prop_type = 'std::vector<Array>'
+    elif prop['type'] == 'object':
+        prop_type = stringcase.capitalcase(prop_name)
+        depends_on.append(prop_type)
+        if not object_exists(prop_type):
+            parse_object(prop_type, prop, type_file)
+    else:
+        raise Exception('Unknown type: ' + prop['type'])
+
+    return (prop_type, prop_info)
+
+
+def parse_object(ob_name: str, json_schema: Dict, type_file: bool):
+    """Parse a JSON object.
+    Iterates over the properties of this object, parses their type
+    and puts these information into the global dict parsed_types.
+    """
+
+    ob_dict = {'name': ob_name, 'properties': [], 'depends_on': []}
+    parsed_types.append(ob_dict)
+
+    if 'properties' not in json_schema:
+        # object has no properties, probably not a complex object
+        if '$ref' in json_schema:
+            if json_schema['$ref'] not in TypeParser.all_types:
+                TypeParser.all_types[json_schema['$ref']] = TypeParser.parse_type_url(type_url=json_schema['$ref'])
+            type_dict = TypeParser.all_types[json_schema['$ref']]
+            type_path = everest_dir / 'types' / type_dict['type_relative_path'] .with_suffix('.json')
+            if not type_path.exists():
+                raise Exception('$ref: ' + json_schema['$ref'] + f' referenced type file "{type_path} does not exist.')
+
+            prop_type = type_dict['namespaced_type']
+            ob_dict['name'] = prop_type
+            path = Path('generated/types') / \
+                type_dict['type_relative_path'].with_suffix('.hpp')
+            type_headers.add(path.as_posix())
+            return ob_dict
+        return
+
+    if not type_file:
+        return
+
+    for prop_name, prop in json_schema['properties'].items():
+        if not prop_name.isidentifier() or keyword.iskeyword(prop_name):
+            raise Exception(prop_name + ' can\'t be used as an identifier!')
+        (prop_type, prop_info) = parse_property(prop_name, prop, ob_dict['depends_on'], type_file)
+        ob_dict['properties'].append({
+            'name': prop_name,
+            'json_name': prop_name,
+            'type': prop_type,
+            'info': prop_info,
+            'enum': 'enum' in prop or prop_info['enum'],
+            'required': prop_name in json_schema.get('required', {}),
+        })
+
+    ob_dict['properties'].sort(key=lambda x: x.get('required'), reverse=True)
+
+    return ob_dict
+
+
+def extended_build_type_info(name: str, info: dict, type_file=False) -> Tuple[dict, dict]:
+    """Extend build_type_info with enum and object type handling."""
+    type_info = build_type_info(name, info['type'])
+    enum_info = None
+
+    if type_info['json_type'] == 'string':
+        if 'enum' in info and type_file:
+            enum_info = {
+                'name': name,
+                'description': info.get('description', 'TODO: description'),
+                'enum_type': stringcase.capitalcase(name),
+                'enum': info['enum']
+            }
+
+            type_info['enum_type'] = enum_info['enum_type']
+        elif '$ref' in info:
+            if info['$ref'] not in TypeParser.all_types:
+                TypeParser.all_types[info['$ref']] = TypeParser.parse_type_url(type_url=info['$ref'])
+            type_dict = TypeParser.all_types[info['$ref']]
+            type_path = everest_dir / 'types' / type_dict['type_relative_path'] .with_suffix('.json')
+            if not type_path.exists():
+                raise Exception('$ref: ' + info['$ref'] + f' referenced type file "{type_path} does not exist.')
+            (td, _mod) = TypeParser.load_type_definition(type_path)
+            if 'types' in td and type_dict['type_name'] in td['types']:
+                local_type_info = td['types'][type_dict['type_name']]
+                if local_type_info['type'] == 'string' and 'enum' in local_type_info:
+                    enum_info = {
+                        'name': name,
+                        'description': local_type_info.get('description', 'TODO: description'),
+                        'enum_type': type_dict['namespaced_type'],
+                        'enum': local_type_info['enum']
+                    }
+
+                    type_info['enum_type'] = enum_info['enum_type']
+            path = Path('generated/types') / \
+                type_dict['type_relative_path'].with_suffix('.hpp')
+            type_headers.add(path.as_posix())
+    elif type_info['json_type'] == 'object':
+        ob = parse_object(name, info, type_file)
+        if ob and 'name' in ob:
+            type_info['object_type'] = ob['name']
+    elif type_info['json_type'] == 'array':
+        if '$ref' in info['items']:
+            if info['items']['$ref'] not in TypeParser.all_types:
+                TypeParser.all_types[info['items']['$ref']] = TypeParser.parse_type_url(type_url=info['items']['$ref'])
+            type_dict = TypeParser.all_types[info['items']['$ref']]
+            type_path = everest_dir / 'types' / type_dict['type_relative_path'] .with_suffix('.json')
+            if not type_path.exists():
+                raise Exception('$ref: ' + info['items']['$ref'] + f' referenced type file "{type_path} does not exist.')
+            (td, _mod) = TypeParser.load_type_definition(type_path)
+            if 'types' in td and type_dict['type_name'] in td['types']:
+                local_type_info = td['types'][type_dict['type_name']]
+
+                type_info['array_type'] = type_dict['namespaced_type']
+            path = Path('generated/types') / \
+                type_dict['type_relative_path'].with_suffix('.hpp')
+            type_headers.add(path.as_posix())
+
+    return (type_info, enum_info)
+
+
 def load_validators(schema_path):
     # FIXME (aw): we should also patch the schemas like in everest-framework
     validators = {}
-    for validator, filename in zip(['interface', 'module', 'config'], ['interface', 'manifest', 'config']):
+    for validator, filename in zip(
+        ['interface', 'module', 'config', 'type'],
+            ['interface', 'manifest', 'config', 'type']):
         try:
             schema = jstyleson.loads((schema_path / f'{filename}.json').read_text())
             jsonschema.Draft7Validator.check_schema(schema)
@@ -208,6 +437,23 @@ def load_validated_interface_def(if_def_path, validator):
         raise Exception(f'Could not parse json from interface definition file {if_def_path}') from err
 
     return if_def
+
+
+def load_validated_type_def(type_def_path, validator):
+    """Load a type definition from the provided path and validate it with the provided validator."""
+    type_def = {}
+    try:
+        type_def = jstyleson.loads(type_def_path.read_text())
+        # validating type definition
+        validator.validate(type_def)
+    except OSError as err:
+        raise Exception(f'Could not open type definition file {err.filename}: {err.strerror}') from err
+    except jsonschema.ValidationError as err:
+        raise Exception(f'Validation error in type definition file {type_def_path}') from err
+    except json.JSONDecodeError as err:
+        raise Exception(f'Could not parse json from type definition file {type_def_path}') from err
+
+    return type_def
 
 
 def load_validated_module_def(module_path, validator):

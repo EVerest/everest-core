@@ -1,0 +1,208 @@
+{% from "helper_macros.j2" import print_template_info, print_spdx_line, string_to_enum, enum_to_string %}
+{{ print_spdx_line('Apache-2.0') }}
+#ifndef {{ info.hpp_guard }}
+#define {{ info.hpp_guard }}
+
+{{ print_template_info('1') }}
+
+{% if 'type_headers' in info %}
+{% for type_header in info.type_headers %}
+#include <{{type_header}}>
+{% endfor %}
+{% else %}
+{%endif%}
+{% if not enums %}
+// no enums defined for this interface
+{% else %}
+#include <map>
+#include <string>
+
+// enums of {{ info.interface_name }}
+
+{% for enum in enums %}
+{% for namespace in info.namespace %}
+namespace {{ namespace }} {
+{% endfor %}
+enum class {{ enum.enum_type}}
+{
+    {% for e in enum.enum %}
+    {{e}},
+    {% endfor %}
+};
+
+static const std::map<{{ enum.enum_type }}, std::string> {{ enum.enum_type }}Strings {
+{% for e in enum.enum %}
+    {{'{'+ info.interface_name + '::' + enum.enum_type }}::{{ e }}, "{{e}}"},
+{% endfor %}
+};
+static const std::map<std::string, {{ enum.enum_type }}> {{ enum.enum_type }}Values {
+{% for e in enum.enum %}
+    {"{{e}}", {{ info.interface_name + '::' + enum.enum_type }}::{{ e + '}' }},
+{% endfor %}
+};
+
+/// \brief Converts the given {{ enum.enum_type }} \p e to human readable string
+/// \returns a string representation of the {{ enum.enum_type }}
+static const std::string {{ enum.enum_type | snake_case }}_to_string({{ enum.enum_type }} e) {
+    return {{ enum.enum_type }}Strings.at(e);
+}
+
+/// \brief Converts the given std::string \p s to {{ enum.enum_type }}
+/// \returns a {{ enum.enum_type }} from a string representation
+static const {{ enum.enum_type }} string_to_{{ enum.enum_type | snake_case }}(std::string s) {
+    return {{ enum.enum_type }}Values.at(s);
+}
+{% for namespace in info.namespace|reverse %}
+} // namespace {{namespace}}
+{% endfor %}
+
+/// \brief Writes the string representation of the given {{ enum.enum_type }} \p {{ enum.enum_type | snake_case }} to the given output stream \p os
+/// \returns an output stream with the {{ enum.enum_type }} written to
+inline std::ostream& operator<<(std::ostream& os, const types::{{ info.interface_name }}::{{ enum.enum_type }}& {{ enum.enum_type | snake_case }}) {
+    os << types::{{info.interface_name}}::{{ enum.enum_type | snake_case }}_to_string({{ enum.enum_type | snake_case }});
+    return os;
+}
+
+{% endfor %}
+{% endif%}
+
+{% if not types %}
+// no types defined for this interface
+{% else %}
+// types of {{ info.interface_name }}
+{% for namespace in info.namespace %}
+namespace {{ namespace }} {
+{% endfor %}
+
+{% for parsed_type in types %}
+{% if parsed_type.properties|length > 0 %}
+struct {{ parsed_type.name }} {
+    {% for property in parsed_type.properties %}
+        {# Constraints will be checked by the framework #}
+        {{ 'boost::optional<' if not property.required -}}
+        {{ property.type -}}
+        {{ '>' if not property.required -}}
+        {{ ' ' + property.name + ';' }} ///< {{ property.info.description }}
+    {% endfor %}
+
+    /// \brief Conversion from a given {{ parsed_type.name }} \p k to a given json object \p j
+    friend void to_json(json& j, const {{ parsed_type.name }}& k) {
+        // the required parts of the type
+        {% if parsed_type.properties|selectattr('required')|list|length %}
+                j = json{
+        {%- endif %}
+        {%- for property in parsed_type.properties %}
+        {%- if property.required %}{"{{property.name}}",
+            {%- if property.enum %}
+                {{ enum_to_string(property.type) }}(k.{{ property.name }})
+            {%- else %}
+                {%- if property.type == 'DateTime' %}
+        k.{{property.name}}.to_rfc3339()
+                {%- else %}
+        k.{{property.name}}
+                {%- endif %}
+            {%- endif %}},
+        {%- endif %}
+        {%- endfor %}
+        {% if not parsed_type.properties|selectattr('required')|list|length %}
+                j = json ({});
+        {%- else %}
+        };
+        {%- endif %}
+
+                // the optional parts of the type
+        {% for property in parsed_type.properties %}
+        {% if not property.required %}
+                if (k.{{property.name}}) {
+                    {% if property.type.startswith('std::vector<') %}
+                    {%- if parsed_type.properties|selectattr('required')|list|length %}
+        j["{{property.name}}"] = json::array();
+                    {%- else %}
+        {#only optional keys in json#}
+        {#TODO: add key to json when there are no required keys but multiple optional keys#}
+        if (j.size() == 0) {
+                        j = json{{'{{"'+property.name+'", json::array()}};'}}
+                    } else {
+                        j["{{property.name}}"] = json::array();
+                    }
+        {% endif %}
+                    for (auto val : k.{{property.name}}.value()) {
+                        j["{{property.name}}"].push_back(val);
+                    }
+        {% else %}
+        {%- if property.enum %}
+        {{ enum_to_string(property.type) }}(k.{{ property.name }}.value());
+            {%- else %}
+                {%- if property.type == 'DateTime' %}
+        j["{{property.name}}"] = k.{{property.name}}.value().to_rfc3339();
+                {%- else %}
+        j["{{property.name}}"] = k.{{property.name}}.value();
+                {%- endif %}
+            {%- endif %}
+        {% endif %}
+
+                }
+        {% endif %}
+        {% endfor %}
+    }
+
+    /// \brief Conversion from a given json object \p j to a given {{ parsed_type.name }} \p k
+    friend void from_json(const json& j, {{ parsed_type.name }}& k) {
+        // the required parts of the type
+        {% for property in parsed_type.properties %}
+            {% if property.required %}
+                {% if property.type.startswith('std::vector<') %}
+                    for (auto val : j.at("{{property.name}}")) {
+                        k.{{property.name}}.push_back(val);
+                    }
+                {% else %}
+                    k.{{property.name}} =
+                    {%- if property.enum %}
+                        {{ string_to_enum(property.type) }}(j.at("{{property.name}}"))
+                    {%- else %}
+                        {%- if property.type == 'DateTime' %}
+                            DateTime(std::string(j.at("{{property.name}}")));
+                        {%- else %}
+                            j.at("{{property.name}}")
+                        {%- endif %}
+                    {%- endif %};
+                {% endif %}
+            {% endif %}
+        {%- endfor %}
+
+        // the optional parts of the type
+        {% for property in parsed_type.properties %}
+            {% if not property.required %}
+            if (j.contains("{{property.name}}")) {
+                {% if property.type.startswith('std::vector<') %}
+                    json arr = j.at("{{property.name}}");
+                    {{property.type}} vec;
+                    for (auto val : arr) {
+                        vec.push_back(val);
+                    }
+                    k.{{property.name}}.emplace(vec);
+                {% else %}
+                    k.{{property.name}}.emplace(j.at("{{property.name}}"));
+                {% endif %}
+            }
+            {% endif %}
+        {% endfor %}
+    }
+
+    // \brief Writes the string representation of the given {{ parsed_type.name }} \p k to the given output stream \p os
+    /// \returns an output stream with the {{ parsed_type.name }} written to
+    friend std::ostream& operator<<(std::ostream& os, const {{ parsed_type.name }}& k) {
+        os << json(k).dump(4);
+        return os;
+    }
+
+};
+{% endif %}
+{% endfor %}
+{% for namespace in info.namespace|reverse %}
+} // namespace {{namespace}}
+{% endfor %}
+{% endif %}
+
+
+#endif // {{ info.hpp_guard }}
