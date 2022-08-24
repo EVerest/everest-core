@@ -11,10 +11,10 @@
 #include "ld-ev.hpp"
 
 // headers for provided interface implementations
-#include <generated/energy_manager/Implementation.hpp>
+#include <generated/interfaces/energy_manager/Implementation.hpp>
 
 // headers for required interface implementations
-#include <generated/energy/Interface.hpp>
+#include <generated/interfaces/energy/Interface.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here

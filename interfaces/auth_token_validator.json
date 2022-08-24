@@ -14,18 +14,7 @@
             "result": {
                 "description": "Result object containing validation result enum value (key: result) and optional reason string (key: reason)",
                 "type": "object",
-                "required": ["result"],
-                "properties": {
-                    "result": {
-                        "type": "string",
-                        "enum": ["Accepted", "Blocked", "Expired", "Invalid"]
-                    },
-                    "reason": {
-                        "type": "string",
-                        "minLength": 5
-                    }
-                },
-                "additionalProperties": false
+                "$ref": "/auth_token_validator#/Result"
             }
         }
     }

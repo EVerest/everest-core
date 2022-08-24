@@ -120,7 +120,7 @@ void API::init() {
         std::string var_base = evse_base + "/var/";
 
         std::string var_powermeter = var_base + "powermeter";
-        evse->subscribe_powermeter([this, var_powermeter, &session_info](Object powermeter) {
+        evse->subscribe_powermeter([this, var_powermeter, &session_info](types::powermeter::Powermeter powermeter) {
             json powermeter_json = powermeter;
             this->mqtt.publish(var_powermeter, powermeter_json.dump());
             session_info->set_latest_energy_wh(powermeter_json.at("energy_Wh_import").at("total"));
@@ -141,16 +141,16 @@ void API::init() {
             }
         });
 
-        evse->subscribe_session_events([this, var_session_info, &session_info](Object session_events) {
-            auto event = session_events["event"].get<std::string>();
+        evse->subscribe_session_events([this, var_session_info, &session_info](types::evse_manager::SessionEvents session_events) {
+            auto event = types::evse_manager::session_event_to_string(session_events.event);
             session_info->update_state(event);
             if (event == "SessionStarted") {
-                auto session_started = session_events["session_started"];
-                auto energy_Wh_import = session_started["energy_Wh_import"].get<double>();
+                auto session_started = session_events.session_started.value();
+                auto energy_Wh_import = session_started.energy_Wh_import;
                 session_info->set_start_energy_wh(energy_Wh_import);
             } else if (event == "SessionFinished") {
-                auto session_finished = session_events["session_finished"];
-                auto energy_Wh_import = session_finished["energy_Wh_import"].get<double>();
+                auto session_finished = session_events.session_finished.value();
+                auto energy_Wh_import = session_finished.energy_Wh_import;
                 session_info->set_end_energy_wh(energy_Wh_import);
             }
 

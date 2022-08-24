@@ -29,7 +29,7 @@
 #include <chrono>
 #include <date/date.h>
 #include <date/tz.h>
-#include <generated/board_support_AC/Interface.hpp>
+#include <generated/interfaces/board_support_AC/Interface.hpp>
 #include <mutex>
 #include <queue>
 #include <sigslot/signal.hpp>
@@ -163,7 +163,7 @@ public:
     // Request more details about the error that happend
     ErrorState getErrorState();
 
-    void processEvent(std::string event);
+    void processEvent(types::board_support::Event event);
 
     void run();
 
@@ -251,7 +251,7 @@ private:
 
     bool matching_started;
 
-    ControlPilotEvent string_to_control_pilot_event(const std::string& event);
+    ControlPilotEvent string_to_control_pilot_event(const types::board_support::Event& event);
 
     void processCPEventsIndependent(ControlPilotEvent cp_event);
     void processCPEventsState(ControlPilotEvent cp_event);

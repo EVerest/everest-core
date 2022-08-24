@@ -5,10 +5,10 @@
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 1
+// template version 3
 //
 
-#include <generated/empty/Implementation.hpp>
+#include <generated/interfaces/empty/Implementation.hpp>
 
 #include "../Setup.hpp"
 
