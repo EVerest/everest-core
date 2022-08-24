@@ -188,9 +188,11 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
     }
 
     if (this->validate_data_with_schema) {
-        json_validator validator(Config::loader, Config::format_checker);
         for (auto const& arg_name : arg_names) {
             try {
+                json_validator validator(
+                    [this](const json_uri& uri, json& schema) { this->config.ref_loader(uri, schema); },
+                    Config::format_checker);
                 validator.set_root_schema(cmd_definition["arguments"][arg_name]);
                 validator.validate(json_args[arg_name]);
             } catch (const std::exception& e) {
@@ -287,8 +289,10 @@ void Everest::publish_var(const std::string& impl_id, const std::string& var_nam
 
         // validate var contents before publishing
         auto var_definition = impl_intf["vars"][var_name];
-        json_validator validator(Config::loader, Config::format_checker);
         try {
+            json_validator validator(
+                [this](const json_uri& uri, json& schema) { this->config.ref_loader(uri, schema); },
+                Config::format_checker);
             validator.set_root_schema(var_definition);
             validator.validate(json_value);
         } catch (const std::exception& e) {
@@ -342,7 +346,9 @@ void Everest::subscribe_var(const Requirement& req, const std::string& var_name,
 
         // check data and ignore it if not matching (publishing it should have been prohibited already)
         try {
-            json_validator validator(Config::loader, Config::format_checker);
+            json_validator validator(
+                [this](const json_uri& uri, json& schema) { this->config.ref_loader(uri, schema); },
+                Config::format_checker);
             validator.set_root_schema(requirement_manifest_vardef);
             validator.validate(data);
         } catch (const std::exception& e) {
@@ -502,14 +508,15 @@ void Everest::provide_cmd(const std::string impl_id, const std::string cmd_name,
         // been prohibited already)
         if (this->validate_data_with_schema) {
             try {
-                json_validator validator(Config::loader, Config::format_checker);
-
                 for (auto const& arg_name : arg_names) {
                     if (!data["args"].contains(arg_name)) {
                         EVLOG_AND_THROW(std::invalid_argument(
                             fmt::format("Missing argument {} for {}!", arg_name,
                                         this->config.printable_identifier(this->module_id, impl_id))));
                     }
+                    json_validator validator(
+                        [this](const json_uri& uri, json& schema) { this->config.ref_loader(uri, schema); },
+                        Config::format_checker);
                     validator.set_root_schema(cmd_definition["arguments"][arg_name]);
                     validator.validate(data["args"][arg_name]);
                 }
@@ -533,7 +540,9 @@ void Everest::provide_cmd(const std::string impl_id, const std::string cmd_name,
                 // only use validator on non-null return types
                 if (!(res_data["retval"].is_null() &&
                       (!cmd_definition.contains("result") || cmd_definition["result"].is_null()))) {
-                    json_validator validator(Config::loader, Config::format_checker);
+                    json_validator validator(
+                        [this](const json_uri& uri, json& schema) { this->config.ref_loader(uri, schema); },
+                        Config::format_checker);
                     validator.set_root_schema(cmd_definition["result"]);
                     validator.validate(res_data["retval"]);
                 }

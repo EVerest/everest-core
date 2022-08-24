@@ -103,16 +103,18 @@ static json parse_config_map(const json& config_map_schema, const json& config_m
     return parsed_config_map;
 }
 
-Config::Config(std::string schemas_dir, std::string config_file, std::string modules_dir, std::string interfaces_dir) {
+Config::Config(std::string schemas_dir, std::string config_file, std::string modules_dir, std::string interfaces_dir, std::string types_dir) {
     BOOST_LOG_FUNCTION();
 
     this->schemas_dir = schemas_dir;
     this->modules_dir = modules_dir;
     this->interfaces_dir = interfaces_dir;
+    this->types_dir = types_dir;
 
     this->manifests = json({});
     this->interfaces = json({});
     this->interface_definitions = json({});
+    this->types = json({});
 
     this->_schemas = Config::load_schemas(this->schemas_dir);
 
@@ -155,6 +157,31 @@ Config::Config(std::string schemas_dir, std::string config_file, std::string mod
         }
     } catch (const std::exception& e) {
         EVLOG_AND_THROW(EverestConfigError(fmt::format("Failed to load and parse config file: {}", e.what())));
+    }
+
+    // load type files
+    auto types_path = fs::path(this->types_dir);
+    for (auto const& types_entry : fs::recursive_directory_iterator(types_path))
+    {
+        auto const& type_file_path = types_entry.path();
+        if (fs::is_regular_file(type_file_path) && type_file_path.extension() == ".json") {
+            auto type_path = std::string("/") + fs::relative(type_file_path, types_path).stem().string();
+            try {
+                // load and validate type file, store validated result in this->types
+                EVLOG_verbose << fmt::format("Loading type file at: {}", fs::canonical(type_file_path).c_str());
+
+                std::ifstream ifs(type_file_path.c_str());
+                std::string type_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+                json type_json = json::parse(type_file);
+                json_validator validator(Config::loader, Config::format_checker);
+                validator.set_root_schema(this->_schemas.type);
+                validator.validate(type_json);
+
+                this->types[type_path] = type_json["types"];
+            } catch (const std::exception& e) {
+                EVLOG_AND_THROW(EverestConfigError(fmt::format("Failed to load and parse type file: {}", e.what())));
+            }
+        }
     }
 
     // load manifest files of configured modules
@@ -482,6 +509,7 @@ schemas Config::load_schemas(std::string schemas_dir) {
     schemas.config = Config::load_schema(fs::path(schemas_dir) / "config.json");
     schemas.manifest = Config::load_schema(fs::path(schemas_dir) / "manifest.json");
     schemas.interface = Config::load_schema(fs::path(schemas_dir) / "interface.json");
+    schemas.type = Config::load_schema(fs::path(schemas_dir) / "type.json");
 
     return schemas;
 }
@@ -554,12 +582,37 @@ void Config::loader(const json_uri& uri, json& schema) {
     EVTHROW(EverestInternalError(fmt::format("{} is not supported for schema loading at the moment\n", uri.url())));
 }
 
+void Config::ref_loader(const json_uri& uri, json& schema) {
+    BOOST_LOG_FUNCTION();
+
+    if (uri.location() == "http://json-schema.org/draft-07/schema") {
+        schema = nlohmann::json_schema::draft7_schema_builtin;
+        return;
+    } else {
+        auto path = uri.path();
+        if (this->types.contains(path)) {
+            schema = this->types[path];
+            EVLOG_verbose << fmt::format("ref path \"{}\" schema has been found.", path);
+            return;
+        } else {
+            EVLOG_verbose << fmt::format("ref path \"{}\" schema has not been found.", path);
+        }
+    }
+
+    // TODO(kai): think about supporting more urls here
+    EVTHROW(EverestInternalError(fmt::format("{} is not supported for schema loading at the moment\n", uri.url())));
+}
+
 void Config::format_checker(const std::string& format, const std::string& value) {
     BOOST_LOG_FUNCTION();
 
     if (format == "uri") {
         if (value.find("://") == std::string::npos) {
             EVTHROW(std::invalid_argument("URI does not contain :// - invalid"));
+        }
+    } else if (format == "uri-reference") {
+        if(!std::regex_match(value, type_uri_regex)) {
+            EVTHROW(std::invalid_argument("Type URI is malformed."));
         }
     } else {
         nlohmann::json_schema::default_string_format_check(format, value);

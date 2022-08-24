@@ -182,7 +182,6 @@ static SubprocessHandle exec_cpp_module(const ModuleStartInfo& module_info, cons
     std::vector<std::string> arguments = {module_info.printable_name,
                                           "--main_dir",
                                           rs.main_dir.string(),
-                                          rs.interfaces_dir.string(),
                                           "--log_conf",
                                           rs.logging_config.string(),
                                           "--conf",
@@ -475,7 +474,7 @@ int boot(const po::variables_map& vm) {
     try {
         // FIXME (aw): we should also use boost::filesystem::path here as argument types
         config = std::make_unique<Config>(rs.schemas_dir.string(), rs.config_file.string(), rs.modules_dir.string(),
-                                          rs.interfaces_dir.string());
+                                          rs.interfaces_dir.string(), rs.types_dir.string());
     } catch (EverestInternalError& e) {
         EVLOG_error << fmt::format("Failed to load and validate config!\n{}", boost::diagnostic_information(e, true));
         return EXIT_FAILURE;
@@ -601,7 +600,7 @@ int boot(const po::variables_map& vm) {
             if (payload.at("method") == "restart_modules") {
                 shutdown_modules(module_handles, *config, mqtt_abstraction);
                 config = std::make_unique<Config>(rs.schemas_dir.string(), rs.config_file.string(),
-                                                  rs.modules_dir.string(), rs.interfaces_dir.string());
+                                                  rs.modules_dir.string(), rs.interfaces_dir.string(), rs.types_dir.string());
                 modules_started = false;
                 restart_modules = true;
             } else if (payload.at("method") == "check_config") {
@@ -610,7 +609,7 @@ int boot(const po::variables_map& vm) {
                 try {
                     // check the config
                     Config(rs.schemas_dir.string(), check_config_file_path, rs.modules_dir.string(),
-                           rs.interfaces_dir.string());
+                           rs.interfaces_dir.string(), rs.types_dir.string());
                     controller_handle.send_message({{"id", payload.at("id")}});
                 } catch (const std::exception& e) {
                     controller_handle.send_message({{"result", e.what()}, {"id", payload.at("id")}});
@@ -644,6 +643,7 @@ int main(int argc, char* argv[]) {
     desc.add_options()("schemas_dir", po::value<std::string>(), "set dir in which the schemes folder resides");
     desc.add_options()("modules_dir", po::value<std::string>(), "set dir in which the modules reside ");
     desc.add_options()("interfaces_dir", po::value<std::string>(), "set dir in which the classes reside ");
+    desc.add_options()("types_dir", po::value<std::string>(), "set dir in which the types reside ");
     desc.add_options()("standalone,s", po::value<std::vector<std::string>>()->multitoken(),
                        "Module ID(s) to not automatically start child processes for (those must be started manually to "
                        "make the framework start!).");

@@ -23,6 +23,12 @@ RuntimeSettings::RuntimeSettings(const po::variables_map& vm) : main_dir(vm["mai
         interfaces_dir = main_dir / "interfaces";
     }
 
+    if (vm.count("types_dir")) {
+        types_dir = vm["types_dir"].as<std::string>();
+    } else {
+        types_dir = main_dir / "types";
+    }
+
     if (vm.count("log_conf")) {
         logging_config = vm["log_conf"].as<std::string>();
     } else {
@@ -77,7 +83,7 @@ int ModuleLoader::initialize() {
 
     try {
         Config config = Config(rs->schemas_dir.string(), rs->config_file.string(), rs->modules_dir.string(),
-                               rs->interfaces_dir.string());
+                               rs->interfaces_dir.string(), rs->types_dir.string());
 
         if (!config.contains(this->module_id)) {
             EVLOG_error << fmt::format("Module id '{}' not found in config!", this->module_id);

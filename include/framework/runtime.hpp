@@ -30,6 +30,7 @@ struct RuntimeSettings {
     fs::path schemas_dir;
     fs::path modules_dir;
     fs::path interfaces_dir;
+    fs::path types_dir;
     fs::path logging_config;
     fs::path config_file;
     bool validate_schema;

@@ -25,7 +25,13 @@ struct schemas {
     json config;    ///< The config schema
     json manifest;  ///< The manifest scheme
     json interface; ///< The interface schema
+    json type;      ///< The type schema
 };
+
+///
+/// \brief Allowed format of a type URI, which are of a format like this /type_file_name#/TypeName
+///
+const static std::regex type_uri_regex{R"(^((?:\/[a-zA-Z0-9\-\_]+)+#\/[a-zA-Z0-9\-\_]+)$)"};
 
 ///
 /// \brief Contains config and manifest parsing
@@ -35,12 +41,14 @@ private:
     std::string schemas_dir;
     std::string modules_dir;
     std::string interfaces_dir;
+    std::string types_dir;
 
     json main;
 
     json manifests;
     json interfaces;
     json interface_definitions;
+    json types;
     schemas _schemas;
 
     ///
@@ -77,7 +85,7 @@ public:
     /// \brief creates a new Config object, looking for the config.json and schemes folder relative to the provided \p
     /// main_dir
     explicit Config(std::string schemas_dir, std::string config_file, std::string modules_dir,
-                    std::string interfaces_dir);
+                    std::string interfaces_dir, std::string types_dir);
 
     ///
     /// \brief checks if the given \p module_id provides the requirement given in \p requirement_id
@@ -142,6 +150,13 @@ public:
     /// \brief turns the given \p module_id into a mqtt prefix
     ///
     std::string mqtt_module_prefix(const std::string& module_id);
+
+    ///
+    /// \brief A json schema loader that can handle type refs and otherwise uses the builtin draft7 schema of
+    /// the json schema validator when it encounters it. Throws an exception
+    /// otherwise
+    ///
+    void ref_loader(const json_uri& uri, json& schema);
 
     ///
     /// \brief loads the config.json and manifest.json in the schemes subfolder of
