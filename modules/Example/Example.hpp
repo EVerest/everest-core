@@ -11,11 +11,11 @@
 #include "ld-ev.hpp"
 
 // headers for provided interface implementations
-#include <generated/example/Implementation.hpp>
-#include <generated/kvs/Implementation.hpp>
+#include <generated/interfaces/example/Implementation.hpp>
+#include <generated/interfaces/kvs/Implementation.hpp>
 
 // headers for required interface implementations
-#include <generated/kvs/Interface.hpp>
+#include <generated/interfaces/kvs/Interface.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here

@@ -159,8 +159,8 @@ void EvseManager::ready() {
         // switch to DC mode for first session for AC with SoC
         if (config.ac_with_soc) {
 
-            r_bsp->subscribe_event([this](const std::string& event) {
-                if (event == "CarUnplugged") {
+            r_bsp->subscribe_event([this](const types::board_support::Event& event) {
+                if (event == types::board_support::Event::CarUnplugged) {
                     // configure for DC again for next session. Will reset to AC when SoC is received
                     switch_DC_mode();
                 }
@@ -186,29 +186,29 @@ void EvseManager::ready() {
     hw_capabilities = r_bsp->call_get_hw_capabilities();
 
     // Maybe override with user setting for this EVSE
-    if (config.max_current < hw_capabilities.at("max_current_A")) {
-        hw_capabilities.at("max_current_A") = config.max_current;
+    if (config.max_current < hw_capabilities.max_current_A) {
+        hw_capabilities.max_current_A = config.max_current;
     }
 
-    local_max_current_limit = hw_capabilities.at("max_current_A");
+    local_max_current_limit = hw_capabilities.max_current_A;
 
     // Maybe limit to single phase by user setting if possible with HW
-    if (!config.three_phases && hw_capabilities.at("min_phase_count") == 1) {
-        hw_capabilities.at("max_phase_count") = 1;
+    if (!config.three_phases && hw_capabilities.min_phase_count == 1) {
+        hw_capabilities.max_phase_count = 1;
         local_three_phases = false;
-    } else if (hw_capabilities.at("max_phase_count") == 3) {
+    } else if (hw_capabilities.max_phase_count == 3) {
         local_three_phases = true; // other configonfigurations currently not supported by HW
     }
 
     charger = std::unique_ptr<Charger>(new Charger(r_bsp));
 
-    r_bsp->subscribe_event([this](std::string event) {
+    r_bsp->subscribe_event([this](const types::board_support::Event event) {
         charger->processEvent(event);
 
         // Forward some events to HLC
         if (get_hlc_enabled()) {
             // Reset HLC auth waiting flags on new session
-            if (event == "CarPluggedIn") {
+            if (event == types::board_support::Event::CarPluggedIn) {
                 r_hlc[0]->call_set_FAILED_ContactorError(false);
                 r_hlc[0]->call_set_RCD_Error(false);
                 r_hlc[0]->call_set_EVSE_Malfunction(false);
@@ -217,44 +217,44 @@ void EvseManager::ready() {
                 r_hlc[0]->call_stop_charging(false);
             }
 
-            if (event == "ErrorRelais") {
+            if (event == types::board_support::Event::ErrorRelais) {
                 session_log.evse(false, "Error Relais");
                 r_hlc[0]->call_set_FAILED_ContactorError(true);
             }
 
-            if (event == "ErrorRCD") {
+            if (event == types::board_support::Event::ErrorRCD) {
                 session_log.evse(false, "Error RCD");
                 r_hlc[0]->call_set_RCD_Error(true);
             }
 
-            if (event == "PermanentFault") {
+            if (event == types::board_support::Event::PermanentFault) {
                 session_log.evse(false, "Error Permanent Fault");
                 r_hlc[0]->call_set_EVSE_Malfunction(true);
             }
 
-            if (event == "ErrorOverCurrent") {
+            if (event == types::board_support::Event::ErrorOverCurrent) {
                 session_log.evse(false, "Error Over Current");
                 r_hlc[0]->call_set_EVSE_EmergencyShutdown(true);
             }
 
-            if (event == "PowerOn") {
+            if (event == types::board_support::Event::PowerOn) {
                 r_hlc[0]->call_contactor_closed(true);
             }
 
-            if (event == "PowerOff") {
+            if (event == types::board_support::Event::PowerOff) {
                 r_hlc[0]->call_contactor_open(true);
             }
         }
 
         // Forward events from BSP to SLAC module
         if (slac_enabled) {
-            if (event == "EnterBCD") {
+            if (event == types::board_support::Event::EnterBCD) {
                 r_slac[0]->call_enter_bcd();
-            } else if (event == "LeaveBCD") {
+            } else if (event == types::board_support::Event::LeaveBCD) {
                 r_slac[0]->call_leave_bcd();
-            } else if (event == "CarPluggedIn") {
+            } else if (event == types::board_support::Event::CarPluggedIn) {
                 r_slac[0]->call_reset(true);
-            } else if (event == "CarUnplugged") {
+            } else if (event == types::board_support::Event::CarUnplugged) {
                 r_slac[0]->call_reset(false);
             }
         }
@@ -268,7 +268,8 @@ void EvseManager::ready() {
 
     r_bsp->subscribe_nr_of_phases_available([this](int n) { signalNrOfPhasesAvailable(n); });
 
-    r_powermeter->subscribe_powermeter([this](json p) {
+    r_powermeter->subscribe_powermeter([this](types::powermeter::Powermeter powermeter) {
+        json p = powermeter;
         // Inform charger about current charging current. This is used for slow OC detection.
         charger->setCurrentDrawnByVehicle(p["current_A"]["L1"], p["current_A"]["L2"], p["current_A"]["L3"]);
 
@@ -384,7 +385,7 @@ json EvseManager::get_latest_powermeter_data() {
     return latest_powermeter_data;
 }
 
-json EvseManager::get_hw_capabilities() {
+types::board_support::HardwareCapabilities EvseManager::get_hw_capabilities() {
     return hw_capabilities;
 }
 
@@ -440,33 +441,33 @@ void EvseManager::setup_AC_mode() {
     r_hlc[0]->call_set_SupportedEnergyTransferMode(transfer_modes);
 }
 
-std::string EvseManager::reserve_now(const int _reservation_id, const std::string& token,
-                                     const std::chrono::time_point<date::utc_clock>& valid_until,
-                                     const std::string& parent_id) {
+types::evse_manager::ReservationResult
+EvseManager::reserve_now(const int _reservation_id, const std::string& token,
+                         const std::chrono::time_point<date::utc_clock>& valid_until, const std::string& parent_id) {
 
     // is the evse Unavailable?
     if (charger->getCurrentState() == Charger::EvseState::Disabled) {
-        return "Unavailable";
+        return types::evse_manager::ReservationResult::Unavailable;
     }
 
     // is the evse faulted?
     if (charger->getCurrentState() == Charger::EvseState::Faulted) {
-        return "Faulted";
+        return types::evse_manager::ReservationResult::Faulted;
     }
 
     // is the reservation still valid in time?
     if (date::utc_clock::now() > valid_until) {
-        return "Rejected";
+        return types::evse_manager::ReservationResult::Rejected;
     }
 
     // is the connector currently ready to accept a new car?
     if (charger->getCurrentState() != Charger::EvseState::Idle) {
-        return "Occupied";
+        return types::evse_manager::ReservationResult::Occupied;
     }
 
     // is it already reserved
     if (reservation_valid()) {
-        return "Occupied";
+        return types::evse_manager::ReservationResult::Occupied;
     }
 
     std::lock_guard<std::mutex> lock(reservation_mutex);
@@ -487,7 +488,7 @@ std::string EvseManager::reserve_now(const int _reservation_id, const std::strin
 
     signalReservationEvent(se);
 
-    return "Accepted";
+    return types::evse_manager::ReservationResult::Accepted;
 
     // FIXME TODO:
     /*

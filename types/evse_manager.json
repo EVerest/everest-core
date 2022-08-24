@@ -1,0 +1,282 @@
+{
+    "description": "EVSE manager types",
+    "types": {
+        "SessionCancellationReason": {
+            "description": "Reason for session cancellation",
+            "type": "string",
+            "enum": [
+                "EmergencyStop",
+                "EVDisconnected",
+                "HardReset",
+                "Local",
+                "Other",
+                "PowerLoss",
+                "Reboot",
+                "Remote",
+                "SoftReset",
+                "UnlockCommand",
+                "DeAuthorized"
+            ]
+        },
+        "ReservationResult": {
+            "description": "Result of an attempted reservation",
+            "type": "string",
+            "enum": [
+                "Accepted",
+                "Faulted",
+                "Occupied",
+                "Rejected",
+                "Unavailable"
+            ]
+        },
+        "SetLocalMaxCurrentResult": {
+            "description": "Returns success or error code",
+            "type": "string",
+            "enum": [
+                "Success",
+                "Error_OutOfRange",
+                "Error_Hardware"
+            ]
+        },
+        "SwitchThreePhasesWhileChargingResult": {
+            "description": "Returns success or error code",
+            "type": "string",
+            "enum": [
+                "Success",
+                "Error_NotSupported",
+                "Error_NotCharging",
+                "Error_Hardware"
+            ]
+        },
+        "SessionEvent": {
+            "description": "Event enum",
+            "type": "string",
+            "enum": [
+                "Enabled",
+                "Disabled",
+                "SessionStarted",
+                "AuthRequired",
+                "ChargingStarted",
+                "ChargingPausedEV",
+                "ChargingPausedEVSE",
+                "ChargingResumed",
+                "SessionFinished",
+                "SessionCancelled",
+                "Error",
+                "PermanentFault",
+                "ReservationStart",
+                "ReservationEnd",
+                "ReservationAuthtokenMismatch",
+                "ReplugStarted",
+                "ReplugFinished"
+            ]
+        },
+        "SessionStarted": {
+            "description": "data for SessionStarted event",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "timestamp",
+                "energy_Wh_import"
+            ],
+            "properties": {
+                "timestamp": {
+                    "description": "Session start timestamp",
+                    "type": "number"
+                },
+                "energy_Wh_import": {
+                    "description": "Session start Wh",
+                    "type": "number"
+                },
+                "energy_Wh_export": {
+                    "description": "Session start Wh",
+                    "type": "number"
+                },
+                "signed_meter_value": {
+                    "description": "Signed meter value",
+                    "type": "string"
+                },
+                "reservation_id": {
+                    "description": "Reservation Id",
+                    "type": "number"
+                }
+            }
+        },
+        "SessionFinished": {
+            "description": "data for SessionFinished event that happens when car is plugged out",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "timestamp",
+                "energy_Wh_import"
+            ],
+            "properties": {
+                "timestamp": {
+                    "description": "Session end timestamp",
+                    "type": "number"
+                },
+                "energy_Wh_import": {
+                    "description": "Session end Wh",
+                    "type": "number"
+                },
+                "energy_Wh_export": {
+                    "description": "Session end Wh",
+                    "type": "number"
+                },
+                "signed_meter_value": {
+                    "description": "Signed meter value",
+                    "type": "string"
+                }
+            }
+        },
+        "SessionCancelled": {
+            "description": "data for SessionCancelled event that happens when e.g. user cancels charging before plug out. Note that SessionFinished will always be generated on plugout.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "timestamp",
+                "energy_Wh_import"
+            ],
+            "properties": {
+                "timestamp": {
+                    "description": "Session cancel timestamp",
+                    "type": "number"
+                },
+                "energy_Wh_import": {
+                    "description": "Session cancel Wh",
+                    "type": "number"
+                },
+                "energy_Wh_export": {
+                    "description": "Session cancel Wh",
+                    "type": "number"
+                },
+                "signed_meter_value": {
+                    "description": "Signed meter value",
+                    "type": "string"
+                },
+                "reason": {
+                    "description": "Reason for session cancellation",
+                    "type": "string",
+                    "$ref": "/evse_manager#/SessionCancellationReason"
+                }
+            }
+        },
+        "Error": {
+            "description": "Details on error type",
+            "type": "string",
+            "enum": [
+                "Car",
+                "CarDiodeFault",
+                "Relais",
+                "RCD",
+                "VentilationNotAvailable",
+                "OverCurrent",
+                "Internal",
+                "SLAC",
+                "HLC"
+            ]
+        },
+        "ReservationStart": {
+            "description": "Details on Reservation Start",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "reservation_id",
+                "id_tag"
+            ],
+            "properties": {
+                "reservation_id": {
+                    "description": "reservation_id",
+                    "type": "integer"
+                },
+                "id_tag": {
+                    "description": "id tag of the reservation",
+                    "type": "string"
+                },
+                "parent_id": {
+                    "description": "parent_id",
+                    "type": "string"
+                }
+            }
+        },
+        "ReservationEndReason": {
+            "description": "Reason why reservation ends",
+            "type": "string",
+            "enum": [
+                "Expired",
+                "Cancelled",
+                "UsedToStartCharging"
+            ]
+        },
+        "ReservationEnd": {
+            "description": "Details on Reservation End",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "reason",
+                "reservation_id"
+            ],
+            "properties": {
+                "reason": {
+                    "description": "Reason why reservation ends",
+                    "type": "string",
+                    "$ref": "/evse_manager#/ReservationEndReason"
+                },
+                "reservation_id": {
+                    "description": "reservation_id",
+                    "type": "integer"
+                }
+            }
+        },
+        "SessionEvents": {
+            "description": "Emits all events related to sessions",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "uuid",
+                "event"
+            ],
+            "properties": {
+                "uuid": {
+                    "description": "An EVSE generated UUID for this session, can be used e.g. for database storage.",
+                    "type": "string"
+                },
+                "event": {
+                    "description": "Event enum. For some events an additional object is set, see below.",
+                    "type": "string",
+                    "$ref": "/evse_manager#/SessionEvent"
+                },
+                "session_started": {
+                    "description": "data for SessionStarted event",
+                    "type": "object",
+                    "$ref": "/evse_manager#/SessionStarted"
+                },
+                "session_finished": {
+                    "description": "data for SessionFinished event that happens when car is plugged out",
+                    "type": "object",
+                    "$ref": "/evse_manager#/SessionFinished"
+                },
+                "session_cancelled": {
+                    "description": "data for SessionCancelled event that happens when e.g. user cancels charging before plug out. Note that SessionFinished will always be generated on plugout.",
+                    "type": "object",
+                    "$ref": "/evse_manager#/SessionCancelled"
+                },
+                "error": {
+                    "description": "Details on error type",
+                    "type": "string",
+                    "$ref": "/evse_manager#/Error"
+                },
+                "reservation_start": {
+                    "description": "Details on Reservation Start",
+                    "type": "object",
+                    "$ref": "/evse_manager#/ReservationStart"
+                },
+                "reservation_end": {
+                    "description": "Details on Reservation End",
+                    "type": "object",
+                    "$ref": "/evse_manager#/ReservationEnd"
+                }
+            }
+        }
+    }
+}

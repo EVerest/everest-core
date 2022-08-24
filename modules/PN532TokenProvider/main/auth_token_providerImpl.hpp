@@ -8,7 +8,7 @@
 // template version 1
 //
 
-#include <generated/auth_token_provider/Implementation.hpp>
+#include <generated/interfaces/auth_token_provider/Implementation.hpp>
 
 #include "../PN532TokenProvider.hpp"
 

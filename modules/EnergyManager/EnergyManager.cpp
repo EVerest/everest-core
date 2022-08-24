@@ -59,11 +59,14 @@ void EnergyManager::run_enforce_limits() {
         for (auto it = optimized_values.begin(); it != optimized_values.end(); ++it) {
             sanitize_object(*it);
             try {
-                this->r_energy_trunk->call_enforce_limits(  (*it).at("uuid"), 
-                                                            (*it).at("limits_import"),
-                                                            (*it).at("limits_export"), 
-                                                            (*it).at("schedule_import"),
-                                                            (*it).at("schedule_export"));
+                types::energy::Limits limits_import = (*it).at("limits_import");
+                types::energy::Limits limits_export = (*it).at("limits_export");
+                std::vector<types::energy::TimeSeriesEntry> schedule_import = (*it).at("schedule_import");
+                std::vector<types::energy::TimeSeriesEntry> schedule_export = (*it).at("schedule_export");
+
+                this->r_energy_trunk->call_enforce_limits((*it).at("uuid"), limits_import,
+                                                          limits_export, schedule_import,
+                                                          schedule_export);
             } catch (const std::exception& e) {
                 EVLOG_error << "Cannot enforce limits: Exception occurred: optimized object faulty: " << e.what();
             }

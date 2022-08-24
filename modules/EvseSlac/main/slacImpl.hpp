@@ -5,10 +5,10 @@
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 1
+// template version 3
 //
 
-#include <generated/slac/Implementation.hpp>
+#include <generated/interfaces/slac/Implementation.hpp>
 
 #include "../EvseSlac.hpp"
 

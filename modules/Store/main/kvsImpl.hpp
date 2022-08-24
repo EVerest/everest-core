@@ -5,10 +5,10 @@
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 1
+// template version 3
 //
 
-#include <generated/kvs/Implementation.hpp>
+#include <generated/interfaces/kvs/Implementation.hpp>
 
 #include "../Store.hpp"
 

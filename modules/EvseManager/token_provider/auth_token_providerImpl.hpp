@@ -5,10 +5,10 @@
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 1
+// template version 3
 //
 
-#include <generated/auth_token_provider/Implementation.hpp>
+#include <generated/interfaces/auth_token_provider/Implementation.hpp>
 
 #include "../EvseManager.hpp"
 

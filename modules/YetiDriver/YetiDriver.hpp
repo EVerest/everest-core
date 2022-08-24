@@ -11,11 +11,11 @@
 #include "ld-ev.hpp"
 
 // headers for provided interface implementations
-#include <generated/board_support_AC/Implementation.hpp>
-#include <generated/debug_json/Implementation.hpp>
-#include <generated/powermeter/Implementation.hpp>
-#include <generated/yeti_extras/Implementation.hpp>
-#include <generated/yeti_simulation_control/Implementation.hpp>
+#include <generated/interfaces/board_support_AC/Implementation.hpp>
+#include <generated/interfaces/debug_json/Implementation.hpp>
+#include <generated/interfaces/powermeter/Implementation.hpp>
+#include <generated/interfaces/yeti_extras/Implementation.hpp>
+#include <generated/interfaces/yeti_simulation_control/Implementation.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 #include "yeti_comms/evSerial.h"

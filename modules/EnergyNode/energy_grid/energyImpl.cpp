@@ -13,7 +13,6 @@ std::string to_rfc3339(std::chrono::time_point<date::utc_clock> t) {
     return date::format("%FT%TZ", std::chrono::time_point_cast<std::chrono::milliseconds>(t));
 }
 
-
 std::chrono::time_point<date::utc_clock> from_rfc3339(std::string t) {
     std::istringstream infile{t};
     std::chrono::time_point<date::utc_clock> tp;
@@ -26,18 +25,18 @@ void energyImpl::init() {
     initializeEnergyObject();
 
     {
-       std::lock_guard<std::mutex> lock(this->energy_mutex);
-       json schedule_entry;
-       std::chrono::time_point<date::utc_clock> nw = date::utc_clock::now();
-       std::string nws = to_rfc3339(nw);
-       schedule_entry["timestamp"] = nws;
-       schedule_entry["request_parameters"] = json::object();
-       schedule_entry["request_parameters"]["limit_type"] = "Hard";
-       schedule_entry["request_parameters"]["ac_current_A"] = json::object();
-       schedule_entry["request_parameters"]["ac_current_A"]["max_current_A"] = mod->config.fuse_limit_A;
-       schedule_entry["request_parameters"]["ac_current_A"]["max_phase_count"] = mod->config.phase_count;
-       energy["schedule_import"] = json::array({});
-       energy["schedule_import"].push_back(schedule_entry);
+        std::lock_guard<std::mutex> lock(this->energy_mutex);
+        json schedule_entry;
+        std::chrono::time_point<date::utc_clock> nw = date::utc_clock::now();
+        std::string nws = to_rfc3339(nw);
+        schedule_entry["timestamp"] = nws;
+        schedule_entry["request_parameters"] = json::object();
+        schedule_entry["request_parameters"]["limit_type"] = "Hard";
+        schedule_entry["request_parameters"]["ac_current_A"] = json::object();
+        schedule_entry["request_parameters"]["ac_current_A"]["max_current_A"] = mod->config.fuse_limit_A;
+        schedule_entry["request_parameters"]["ac_current_A"]["max_phase_count"] = mod->config.phase_count;
+        energy["schedule_import"] = json::array({});
+        energy["schedule_import"].push_back(schedule_entry);
     }
 
     for (auto& entry : mod->r_energy_consumer) {
@@ -75,9 +74,9 @@ void energyImpl::init() {
 
     // r_price_information is optional
     for (auto& entry : mod->r_price_information) {
-        entry->subscribe_energy_price_schedule([this](json p) {
-            EVLOG_debug << "Incoming price schedule: " << p;
+        entry->subscribe_energy_price_schedule([this](types::energy_price_information::EnergyPriceSchedule p) {
             energy_price = p;
+            EVLOG_debug << "Incoming price schedule: " << energy_price;
             publish_complete_energy_object();
         });
     }
@@ -173,8 +172,10 @@ void energyImpl::ready() {
     publish_energy(energy);
 }
 
-void energyImpl::handle_enforce_limits(std::string& uuid, Object& limits_import, Object& limits_export,
-                                       Array& schedule_import, Array& schedule_export) {
+void energyImpl::handle_enforce_limits(std::string& uuid, types::energy::Limits& limits_import,
+                                       types::energy::Limits& limits_export,
+                                       std::vector<types::energy::TimeSeriesEntry>& schedule_import,
+                                       std::vector<types::energy::TimeSeriesEntry>& schedule_export) {
     // is it for me?
     if (uuid == energy["uuid"]) {
         // as a generic node we cannot do much about limits.

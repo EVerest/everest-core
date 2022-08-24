@@ -11,17 +11,17 @@
 #include "ld-ev.hpp"
 
 // headers for provided interface implementations
-#include <generated/auth_token_provider/Implementation.hpp>
-#include <generated/energy/Implementation.hpp>
-#include <generated/evse_manager/Implementation.hpp>
+#include <generated/interfaces/auth_token_provider/Implementation.hpp>
+#include <generated/interfaces/energy/Implementation.hpp>
+#include <generated/interfaces/evse_manager/Implementation.hpp>
 
 // headers for required interface implementations
-#include <generated/ISO15118_charger/Interface.hpp>
-#include <generated/auth/Interface.hpp>
-#include <generated/board_support_AC/Interface.hpp>
-#include <generated/isolation_monitor/Interface.hpp>
-#include <generated/powermeter/Interface.hpp>
-#include <generated/slac/Interface.hpp>
+#include <generated/interfaces/ISO15118_charger/Interface.hpp>
+#include <generated/interfaces/auth/Interface.hpp>
+#include <generated/interfaces/board_support_AC/Interface.hpp>
+#include <generated/interfaces/isolation_monitor/Interface.hpp>
+#include <generated/interfaces/powermeter/Interface.hpp>
+#include <generated/interfaces/slac/Interface.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 #include "Charger.hpp"
@@ -99,11 +99,12 @@ public:
     std::unique_ptr<Charger> charger;
     sigslot::signal<int> signalNrOfPhasesAvailable;
     json get_latest_powermeter_data();
-    json get_hw_capabilities();
+    types::board_support::HardwareCapabilities get_hw_capabilities();
     bool updateLocalMaxCurrentLimit(float max_current);
     float getLocalMaxCurrentLimit();
-    std::string reserve_now(const int _reservation_id, const std::string& token,
-                            const std::chrono::time_point<date::utc_clock>& valid_until, const std::string& parent_id);
+    types::evse_manager::ReservationResult reserve_now(const int _reservation_id, const std::string& token,
+                                                       const std::chrono::time_point<date::utc_clock>& valid_until,
+                                                       const std::string& parent_id);
     bool cancel_reservation();
     bool reservation_valid();
     int32_t get_reservation_id();
@@ -125,7 +126,7 @@ private:
     json latest_powermeter_data;
     bool authorization_available;
     Everest::Thread energyThreadHandle;
-    json hw_capabilities;
+    types::board_support::HardwareCapabilities hw_capabilities;
     bool local_three_phases;
     float local_max_current_limit;
     const float EVSE_ABSOLUTE_MAX_CURRENT = 80.0;

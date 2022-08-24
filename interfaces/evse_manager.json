@@ -42,19 +42,7 @@
                 "reason": {
                     "description": "Reason for session cancellation",
                     "type": "string",
-                    "enum": [
-                        "EmergencyStop",
-                        "EVDisconnected",
-                        "HardReset",
-                        "Local",
-                        "Other",
-                        "PowerLoss",
-                        "Reboot",
-                        "Remote",
-                        "SoftReset",
-                        "UnlockCommand",
-                        "DeAuthorized"
-                    ]
+                    "$ref": "/evse_manager#/SessionCancellationReason"
                 }
             },
             "result": {
@@ -93,13 +81,7 @@
             "result": {
                 "description": "Returns Accepted if reservation was succesfull or specifies error code.",
                 "type": "string",
-                "enum": [
-                    "Accepted",
-                    "Faulted",
-                    "Occupied",
-                    "Rejected",
-                    "Unavailable"
-                ]
+                "$ref": "/evse_manager#/ReservationResult"
             }
         },
         "cancel_reservation": {
@@ -127,11 +109,7 @@
             "result": {
                 "description": "Returns success or error code",
                 "type": "string",
-                "enum": [
-                    "Success",
-                    "Error_OutOfRange",
-                    "Error_Hardware"
-                ]
+                "$ref": "/evse_manager#/SetLocalMaxCurrentResult"
             }
         },
         "switch_three_phases_while_charging": {
@@ -145,12 +123,7 @@
             "result": {
                 "description": "Returns success or error code",
                 "type": "string",
-                "enum": [
-                    "Success",
-                    "Error_NotSupported",
-                    "Error_NotCharging",
-                    "Error_Hardware"
-                ]
+                "$ref": "/evse_manager#/SwitchThreePhasesWhileChargingResult"
             }
         },
         "get_signed_meter_value": {
@@ -165,202 +138,7 @@
         "session_events": {
             "description": "Emits all events related to sessions",
             "type": "object",
-            "required": [
-                "uuid",
-                "event"
-            ],
-            "properties": {
-                "uuid": {
-                    "description": "An EVSE generated UUID for this session, can be used e.g. for database storage.",
-                    "type": "string"
-                },
-                "event": {
-                    "description": "Event enum. For some events an additional object is set, see below.",
-                    "type": "string",
-                    "enum": [
-                        "Enabled",
-                        "Disabled",
-                        "SessionStarted",
-                        "AuthRequired",
-                        "ChargingStarted",
-                        "ChargingPausedEV",
-                        "ChargingPausedEVSE",
-                        "ChargingResumed",
-                        "SessionFinished",
-                        "SessionCancelled",
-                        "Error",
-                        "PermanentFault",
-                        "ReservationStart",
-                        "ReservationEnd",
-                        "ReservationAuthtokenMismatch",
-                        "ReplugStarted",
-                        "ReplugFinished"
-                    ]
-                },
-                "session_started": {
-                    "description": "data for SessionStarted event",
-                    "type": "object",
-                    "required": [
-                        "timestamp",
-                        "energy_Wh_import"
-                    ],
-                    "properties": {
-                        "timestamp": {
-                            "description": "Session start timestamp",
-                            "type": "number"
-                        },
-                        "energy_Wh_import": {
-                            "description": "Session start Wh",
-                            "type": "number"
-                        },
-                        "energy_Wh_export": {
-                            "description": "Session start Wh",
-                            "type": "number"
-                        },
-                        "signed_meter_value": {
-                            "description": "Signed meter value",
-                            "type": "string"
-                        },
-                        "reservation_id": {
-                            "description": "Reservation Id",
-                            "type": "number"
-                        }
-                    },
-                    "additionalProperties": false
-                },
-                "session_finished": {
-                    "description": "data for SessionFinished event that happens when car is plugged out",
-                    "type": "object",
-                    "required": [
-                        "timestamp",
-                        "energy_Wh_import"
-                    ],
-                    "properties": {
-                        "timestamp": {
-                            "description": "Session end timestamp",
-                            "type": "number"
-                        },
-                        "energy_Wh_import": {
-                            "description": "Session end Wh",
-                            "type": "number"
-                        },
-                        "energy_Wh_export": {
-                            "description": "Session end Wh",
-                            "type": "number"
-                        },
-                        "signed_meter_value": {
-                            "description": "Signed meter value",
-                            "type": "string"
-                        }
-                    },
-                    "additionalProperties": false
-                },
-                "session_cancelled": {
-                    "description": "data for SessionCancelled event that happens when e.g. user cancels charging before plug out. Note that SessionFinished will always be generated on plugout.",
-                    "type": "object",
-                    "required": [
-                        "timestamp",
-                        "energy_Wh_import"
-                    ],
-                    "properties": {
-                        "timestamp": {
-                            "description": "Session cancel timestamp",
-                            "type": "number"
-                        },
-                        "energy_Wh_import": {
-                            "description": "Session cancel Wh",
-                            "type": "number"
-                        },
-                        "energy_Wh_export": {
-                            "description": "Session cancel Wh",
-                            "type": "number"
-                        },
-                        "signed_meter_value": {
-                            "description": "Signed meter value",
-                            "type": "string"
-                        },
-                        "reason": {
-                            "description": "Reason for session cancellation",
-                            "type": "string",
-                            "enum": [
-                                "EmergencyStop",
-                                "EVDisconnected",
-                                "HardReset",
-                                "Local",
-                                "Other",
-                                "PowerLoss",
-                                "Reboot",
-                                "Remote",
-                                "SoftReset",
-                                "UnlockCommand",
-                                "DeAuthorized"
-                            ]
-                        }
-                    },
-                    "additionalProperties": false
-                },
-                "error": {
-                    "description": "Details on error type",
-                    "type": "string",
-                    "enum": [
-                        "Car",
-                        "CarDiodeFault",
-                        "Relais",
-                        "RCD",
-                        "VentilationNotAvailable",
-                        "OverCurrent",
-                        "Internal",
-                        "SLAC",
-                        "HLC"
-                    ]
-                },
-                "reservation_start": {
-                    "description": "Details on Reservation Start",
-                    "type": "object",
-                    "required": [
-                        "reservation_id",
-                        "id_tag"
-                    ],
-                    "properties": {
-                        "reservation_id": {
-                            "description": "reservation_id",
-                            "type": "integer"
-                        },
-                        "id_tag": {
-                            "description": "id tag of the reservation",
-                            "type": "string"
-                        },
-                        "parent_id": {
-                            "description": "parent_id",
-                            "type": "string"
-                        }
-                    }
-                },
-                "reservation_end": {
-                    "description": "Details on Reservation End",
-                    "type": "object",
-                    "required": [
-                        "reason",
-                        "reservation_id"
-                    ],
-                    "properties": {
-                        "reason": {
-                            "description": "Reason why reservation ends",
-                            "type": "string",
-                            "enum": [
-                                "Expired",
-                                "Cancelled",
-                                "UsedToStartCharging"
-                            ]
-                        },
-                        "reservation_id": {
-                            "description": "reservation_id",
-                            "type": "integer"
-                        }
-                    }
-                }
-            },
-            "additionalProperties": false
+            "$ref": "/evse_manager#/SessionEvents"
         },
         "limits": {
             "description": "Limits of this evse, published on change",
@@ -390,37 +168,12 @@
         "telemetry": {
             "description": "Other telemetry",
             "type": "object",
-            "properties": {
-                "temperature": {
-                    "description": "Current temperature of the EVSE in degree celsius",
-                    "type": "number"
-                },
-                "fan_rpm": {
-                    "description": "RPM of the fan. 0 if off or no fan available.",
-                    "type": "number"
-                },
-                "supply_voltage_12V": {
-                    "description": "Internal 12V supply voltage",
-                    "type": "number"
-                },
-                "supply_voltage_minus_12V": {
-                    "description": "Internal -12V supply voltage",
-                    "type": "number"
-                },
-                "rcd_current": {
-                    "description": "Residual current in mA",
-                    "type": "number"
-                },
-                "relais_on": {
-                    "description": "true if power to the car is currently on, false if off",
-                    "type": "boolean"
-                }
-            },
-            "additionalProperties": false
+            "$ref": "/board_support#/Telemetry"
         },
         "powermeter": {
-            "description": "FIXME: use powermeter type here",
-            "type": "object"
+            "description": "Measured dataset",
+            "type": "object",
+            "$ref": "/powermeter#/Powermeter"
         },
         "evse_id": {
             "description": "EVSE ID including the connector number, e.g. DE*PNX*E123456*1",
