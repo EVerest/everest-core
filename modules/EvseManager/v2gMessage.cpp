@@ -24,4 +24,12 @@ std::string v2g_message::to_xml() {
     return ss.str();
 }
 
+void v2g_message::from_json(const std::string& json_str) {
+    j = nlohmann::json::parse(json_str);
+}
+
+std::string v2g_message::to_json() {
+    return j.dump(4);
+}
+
 } // namespace module

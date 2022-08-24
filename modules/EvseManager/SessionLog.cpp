@@ -102,30 +102,33 @@ void SessionLog::stopSession() {
 }
 
 void SessionLog::evse(bool iso15118, const std::string& msg) {
-    evse(iso15118, msg, "", "", "");
+    evse(iso15118, msg, "", "", "", "");
 }
 
 void SessionLog::car(bool iso15118, const std::string& msg) {
-    car(iso15118, msg, "", "", "");
+    car(iso15118, msg, "", "", "", "");
 }
 
-void SessionLog::evse(bool iso15118, const std::string& msg, const std::string& xml, const std::string& xml_hex, const std::string& xml_base64) {
-    output(0, iso15118, msg, xml, xml_hex, xml_base64);
+void SessionLog::evse(bool iso15118, const std::string& msg, const std::string& xml, const std::string& xml_hex, const std::string& xml_base64, const std::string& json_str) {
+    output(0, iso15118, msg, xml, xml_hex, xml_base64, json_str);
 }
 
-void SessionLog::car(bool iso15118, const std::string& msg, const std::string& xml, const std::string& xml_hex, const std::string& xml_base64) {
-    output(1, iso15118, msg, xml, xml_hex, xml_base64);
+void SessionLog::car(bool iso15118, const std::string& msg, const std::string& xml, const std::string& xml_hex, const std::string& xml_base64, const std::string& json_str) {
+    output(1, iso15118, msg, xml, xml_hex, xml_base64, json_str);
 }
 
-void SessionLog::output(unsigned int typ, bool iso15118, const std::string& msg, const std::string& xml, const std::string& xml_hex, const std::string& xml_base64) {
+void SessionLog::output(unsigned int typ, bool iso15118, const std::string& msg, const std::string& xml, const std::string& xml_hex, const std::string& xml_base64, const std::string& json_str) {
     if (enabled && session_active) {
         std::string ts = Everest::Date::to_rfc3339(date::utc_clock::now());
 
         std::string xml_pretty;
+        v2g_message v2g;
         if (!xml.empty()) {
-            v2g_message v2g;
             v2g.from_xml(xml);
             xml_pretty = v2g.to_xml();
+        } else if (!json_str.empty()) {
+            v2g.from_json(json_str);
+            xml_pretty = v2g.to_json();
         }
 
         // output to EVerest log
@@ -167,7 +170,7 @@ void SessionLog::xmlOutput(bool e) {
 }
 
 void SessionLog::sys(const std::string& msg) {
-    output(2, false, msg, "", "", "");
+    output(2, false, msg, "", "", "", "");
 }
 
 std::string SessionLog::html_encode(const std::string& msg) {

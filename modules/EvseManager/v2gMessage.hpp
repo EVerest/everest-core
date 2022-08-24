@@ -5,6 +5,7 @@
 
 #include <string>
 #include <pugixml.hpp>
+#include <nlohmann/json.hpp>
 
 namespace module {
 /*
@@ -16,9 +17,12 @@ public:
     v2g_message();
     bool from_xml(const std::string& xml);
     std::string to_xml();
+    void from_json(const std::string& json_str);
+    std::string to_json();
 
 private:
     pugi::xml_document doc;
+    nlohmann::json j;
 };
 
 } // namespace module
