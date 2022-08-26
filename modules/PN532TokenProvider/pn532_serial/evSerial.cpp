@@ -323,9 +323,7 @@ bool evSerial::serialWriteCommand(std::vector<uint8_t> data) {
     serial_data.push_back(inverse);
     serial_data.push_back(postamble);
 
-    write(fd, serial_data.data(), serial_data.size());
-
-    return true;
+    return this->serialWrite(serial_data);
 }
 
 bool evSerial::reset() {
