@@ -295,6 +295,10 @@ std::future<PN532Response> evSerial::inListPassiveTarget() {
 }
 
 bool evSerial::serialWrite(std::vector<uint8_t> data) {
+    // std::cerr << "serial write: " << std::endl;
+    // for (auto d : data) {
+    //     std::cerr << "0x" << std::setfill('0') << std::setw(2) << std::right << std::hex << (int)d << std::endl;
+    // }
     write(fd, data.data(), data.size());
 
     return true;
@@ -323,14 +327,12 @@ bool evSerial::serialWriteCommand(std::vector<uint8_t> data) {
     serial_data.push_back(inverse);
     serial_data.push_back(postamble);
 
-    write(fd, serial_data.data(), serial_data.size());
-
-    return true;
+    return this->serialWrite(serial_data);
 }
 
 bool evSerial::reset() {
     bool success = true;
-    this->serialWrite({0x55, 0x55, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00});
+    this->serialWrite({0x55, 0x55, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00});
 
     return success;
 }
