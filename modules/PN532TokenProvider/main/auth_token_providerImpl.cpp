@@ -43,7 +43,12 @@ void auth_token_providerImpl::ready() {
     }
 
     while (true) {
-        auto in_list_passive_target_response = serial.inListPassiveTarget().get();
+        auto in_list_passive_target_response_future = serial.inListPassiveTarget();
+        while (in_list_passive_target_response_future.wait_for(std::chrono::seconds(5)) != std::future_status::ready) {
+            EVLOG_verbose << "Retrying to get target";
+            in_list_passive_target_response_future = serial.inListPassiveTarget();
+        }
+        auto in_list_passive_target_response = in_list_passive_target_response_future.get();
         if (in_list_passive_target_response.valid) {
             std::shared_ptr<InListPassiveTargetResponse> in_list_passive_target_response_message =
                 std::dynamic_pointer_cast<InListPassiveTargetResponse>(in_list_passive_target_response.message);
