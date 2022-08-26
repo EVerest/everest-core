@@ -295,6 +295,10 @@ std::future<PN532Response> evSerial::inListPassiveTarget() {
 }
 
 bool evSerial::serialWrite(std::vector<uint8_t> data) {
+    // std::cerr << "serial write: " << std::endl;
+    // for (auto d : data) {
+    //     std::cerr << "0x" << std::setfill('0') << std::setw(2) << std::right << std::hex << (int)d << std::endl;
+    // }
     write(fd, data.data(), data.size());
 
     return true;
