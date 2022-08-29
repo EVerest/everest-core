@@ -4,18 +4,20 @@ file(GLOB TYPES_FILES
 
 add_custom_target(generate_type_files
     DEPENDS
-        ${GENERATED_OUTPUT_DIR}/types
+        .types_generated
 )
 
 # FIXME (aw): right now, the header files are generated in-source for convenience
 add_custom_command(
     OUTPUT
-        ${GENERATED_OUTPUT_DIR}/types
+        .types_generated
     DEPENDS
         ${TYPES_FILES}
     COMMENT
         "Generating/updating type files ..."
     COMMAND
         ${EV_CLI} types generate-headers --framework-dir ${everest-framework_SOURCE_DIR} --output-dir ${GENERATED_OUTPUT_DIR}/types
+    COMMAND
+        ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/.types_generated
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
