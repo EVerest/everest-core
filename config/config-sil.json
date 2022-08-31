@@ -29,9 +29,9 @@
             "session_logging": true,
             "session_logging_xml": false,
             "session_logging_path": "/tmp",
-            "ac_hlc_enabled": true,
-            "ac_hlc_use_5percent": true,
-            "ac_enforce_hlc": true
+            "ac_hlc_enabled": false,
+            "ac_hlc_use_5percent": false,
+            "ac_enforce_hlc": false
         },
         "connections": {
             "bsp": [
