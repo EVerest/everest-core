@@ -3,7 +3,7 @@
 #ifndef {{ info.hpp_guard }}
 #define {{ info.hpp_guard }}
 
-{{ print_template_info('1') }}
+{{ print_template_info('2') }}
 
 {% if 'type_headers' in info %}
 {% for type_header in info.type_headers %}
@@ -131,7 +131,7 @@ struct {{ parsed_type.name }} {
                     }
         {% else %}
         {%- if property.enum %}
-        {{ enum_to_string(property.type) }}(k.{{ property.name }}.value());
+        j["{{property.name}}"] = {{ enum_to_string(property.type) }}(k.{{ property.name }}.value());
             {%- else %}
                 {%- if property.type == 'DateTime' %}
         j["{{property.name}}"] = k.{{property.name}}.value().to_rfc3339();
@@ -182,7 +182,11 @@ struct {{ parsed_type.name }} {
                     }
                     k.{{property.name}}.emplace(vec);
                 {% else %}
+                    {%- if property.enum %}
+                    k.{{property.name}}.emplace({{ string_to_enum(property.type) }}(j.at("{{property.name}}")));
+                    {%- else %}
                     k.{{property.name}}.emplace(j.at("{{property.name}}"));
+                    {% endif %}
                 {% endif %}
             }
             {% endif %}
