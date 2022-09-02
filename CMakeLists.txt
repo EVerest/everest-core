@@ -56,7 +56,7 @@ execute_process(COMMAND ${EV_CLI} --version
 )
 
 # ensure that the installed version of ev-cli is compatible
-set(EV_CLI_VERSION_REQUIRED "0.0.11")
+set(EV_CLI_VERSION_REQUIRED "0.0.12")
 include(EvCliVersion)
 require_ev_cli_version("${EV_CLI_VERSION}" "${EV_CLI_VERSION_REQUIRED}")
 
