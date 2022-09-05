@@ -16,8 +16,10 @@ list(APPEND OCPP1_6_PROFILE_SCHEMAS
 list(TRANSFORM OCPP1_6_PROFILE_SCHEMAS
      PREPEND ${OCPP1_6_PROFILE_SCHEMAS_DIR})
 
-install(FILES ${OCPP1_6_PROFILE_SCHEMAS}
-        DESTINATION ocpp/profile_schemas/ocpp1_6)
+install(
+     FILES ${OCPP1_6_PROFILE_SCHEMAS}
+     DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/ocpp/profile_schemas/ocpp1_6
+)
 
 list(APPEND CONFIGS
      config.json
@@ -26,11 +28,17 @@ list(APPEND CONFIGS
      logging.ini
 )
 
-install(FILES ${CONFIGS}
-        DESTINATION ocpp)
+install(
+     FILES ${CONFIGS}
+     DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/ocpp
+)
 
-install (DIRECTORY ${CERTS_DIR} DESTINATION ocpp/certs)
+install(
+     DIRECTORY ${CERTS_DIR}
+     DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/ocpp/certs)
 
 if(EXISTS ${USER_CONFIG_FILE})
-     install(FILES ${USER_CONFIG_FILE} DESTINATION ocpp/user_config)
+     install(
+          FILES ${USER_CONFIG_FILE}
+          DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/ocpp/user_config)
 endif()

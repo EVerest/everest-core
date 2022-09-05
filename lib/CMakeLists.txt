@@ -1,11 +1,6 @@
-set(HEADERS
-    "${PROJECT_SOURCE_DIR}/include/ocpp.hpp"
-)
-
-set(INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include")
-
 # OCPP library
-add_library(ocpp STATIC)
+add_library(ocpp)
+add_library(everest::ocpp ALIAS ocpp)
 target_sources(ocpp
     PRIVATE
         ocpp1_6/charge_point.cpp
@@ -24,48 +19,31 @@ target_sources(ocpp
 add_subdirectory(ocpp1_6/messages)
 add_subdirectory(ocpp1_6/websocket)
 
-target_include_directories(ocpp PUBLIC ${INCLUDE_DIR} ${websocketpp_SOURCE_DIR})
+target_include_directories(ocpp
+    PUBLIC
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+
 target_link_libraries(ocpp
-    PRIVATE
-        Boost::filesystem
-        Boost::system
-        Boost::thread
-        date::date
-        date::date-tz
+    PUBLIC
         everest::log
         everest::timer
         fsm::fsm
-        nlohmann_json::nlohmann_json
-        nlohmann_json_schema_validator::nlohmann_json_schema_validator
+        websocketpp::websocketpp
+    PRIVATE
+        Boost::filesystem
         OpenSSL::SSL
         OpenSSL::Crypto
         SQLite::SQLite3
         Threads::Threads
+
+        nlohmann_json::nlohmann_json
+        nlohmann_json_schema_validator
+        date::date-tz
 )
 
-# this is important to allow our headers to find the everest::log headers
-target_link_libraries(ocpp
-    INTERFACE
-        everest::log)
-
-# this is important to allow our headers to find the everest::timer headers
-target_link_libraries(ocpp
-INTERFACE
-    everest::timer)
-
-# this is important to allow our headers to find the libfsm headers
-target_link_libraries(ocpp
-    INTERFACE
-        fsm::fsm)
-# this is important to allow our headers to find the nlohmann_* headers
-target_link_libraries(ocpp
-INTERFACE
-    nlohmann_json_schema_validator::nlohmann_json_schema_validator)
-
-# needs c++ 14
-target_compile_features(ocpp PUBLIC cxx_std_14)
-
-source_group(
-    TREE "${INCLUDE_DIR}"
-    PREFIX "Headers"
-    FILES ${HEADERS})
+# FIXME (aw): right now nlohmann_json and boost::optional don't compile
+#             with gcc 10.x and C++11/14, so we need to publish the
+#             C++17 standard
+target_compile_features(ocpp PUBLIC cxx_std_17)

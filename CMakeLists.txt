@@ -1,28 +1,87 @@
-cmake_minimum_required(VERSION 3.14.7)
+cmake_minimum_required(VERSION 3.14)
 
-project(OCPP VERSION 0.1
-             DESCRIPTION "A C++ implementation of the Open Charge Point Protocol"
-             LANGUAGES CXX)
+project(ocpp
+    VERSION 0.1
+    DESCRIPTION "A C++ implementation of the Open Charge Point Protocol"
+    LANGUAGES CXX
+)
 
-# enable compiler warnings
-add_compile_options(-Wall -Wextra -pedantic)
-# unused functions in a library should not be problematic
-add_compile_options(-Wno-unused)
+find_package(everest-cmake 0.1 REQUIRED
+    PATHS ../everest-cmake
+)
 
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
-if (NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Build type" FORCE)
-endif()
-
-if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/dist" CACHE PATH "..." FORCE)
-endif()
-
+# options
 option(BUILD_TESTING "Run unit tests" OFF)
+option(CMAKE_RUN_CLANG_TIDY "Run clang-tidy" OFF)
+option(LIBOCPP_BUILD_EXAMPLES "Build charge_point and central_system binaries." OFF)
+option(OCPP_INSTALL "Install the library (shared data might be installed anyway)" ${EVC_MAIN_PROJECT})
+
+# dependencies
+find_package(Boost COMPONENTS filesystem program_options regex system thread REQUIRED)
+find_package(SQLite3 REQUIRED)
+find_package(OpenSSL REQUIRED)
+
+if(NOT DISABLE_EDM)
+    evc_setup_edm()
+
+    # In EDM mode, we can't install exports (because the dependencies usually do not install their exports)
+    set(OCPP_INSTALL OFF)
+
+    # FIXME (aw): websocketpp doesn't play well with EDM/CPM
+    add_library(websocketpp::websocketpp INTERFACE IMPORTED)
+    set_target_properties(websocketpp::websocketpp PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${websocketpp_SOURCE_DIR}")
+
+else()
+    find_package(date REQUIRED)
+    find_package(nlohmann_json REQUIRED)
+    find_package(nlohmann_json_schema_validator REQUIRED)
+    find_package(websocketpp REQUIRED)
+    
+    find_package(fsm REQUIRED)
+    find_package(everest-timer REQUIRED)
+    find_package(everest-log REQUIRED)
+endif()
+
+# library code
+add_subdirectory(lib)
+
+# auxillary files
+add_subdirectory(aux)
+
+
+# packaging
+if (OCPP_INSTALL)
+    install(
+        TARGETS ocpp
+        EXPORT ocpp-targets
+    )
+
+    install(
+        DIRECTORY include/
+        TYPE INCLUDE
+    )
+
+    evc_setup_package(
+        NAME everest-ocpp
+        NAMESPACE everest
+        EXPORT ocpp-targets
+        ADDITIONAL_CONTENT
+            "find_dependency(OpenSSL)"
+            "find_dependency(SQLite3)"
+            "find_dependency(websocketpp)"
+            "find_dependency(everest-timer)"
+    )
+endif()
+
+
+if(LIBOCPP_BUILD_EXAMPLES)
+    message("Building libocpp example binaries.")
+    add_subdirectory(src)
+else()
+    message("Not building libocpp example binaries.")
+endif()
 
 # configure clang-tidy if requested
-option(CMAKE_RUN_CLANG_TIDY "Run clang-tidy" OFF)
 if(CMAKE_RUN_CLANG_TIDY)
     message("Running clang-tidy")
     string(CONCAT CLANG_TIDY_CHECKS "*,"
@@ -47,32 +106,7 @@ find_package(Doxygen)
 if(DOXYGEN_FOUND)
     set(DOXYGEN_OUTPUT_DIRECTORY dist/docs)
     set(DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md)
-    doxygen_add_docs(${PROJECT_NAME}doxygen README.md include lib src)
+    doxygen_add_docs(doxygen-${PROJECT_NAME} README.md include lib src)
 else()
     message("Doxygen is needed to generate documentation")
 endif()
-
-add_definitions(-DBOOST_LOG_DYN_LINK)
-
-find_package(EDM REQUIRED)
-
-find_package(Boost COMPONENTS filesystem program_options regex system thread REQUIRED)
-
-find_package(SQLite3 REQUIRED)
-
-find_package(OpenSSL REQUIRED)
-
-# library code
-add_subdirectory(lib)
-
-# executable code
-option(LIBOCPP_BUILD_EXAMPLES "Build charge_point and central_system binaries." OFF)
-if(LIBOCPP_BUILD_EXAMPLES)
-    message("Building libocpp example binaries.")
-    add_subdirectory(src)
-else()
-    message("Not building libocpp example binaries.")
-endif()
-
-# auxillary files
-add_subdirectory(aux)

@@ -7,9 +7,6 @@ nlohmann_json_schema_validator:
   git: https://github.com/pboettch/json-schema-validator
   git_tag: 2.1.0
   options: ["BUILD_TESTS OFF", "BUILD_EXAMPLES OFF"]
-  alias:
-    name: nlohmann_json_schema_validator::nlohmann_json_schema_validator
-    target: nlohmann_json_schema_validator
 libfsm:
   git: https://github.com/EVerest/libfsm.git
   git_tag: main
@@ -29,4 +26,3 @@ date:
 websocketpp:
   git: https://github.com/zaphoyd/websocketpp.git
   git_tag: 0.8.2
-  options: []
