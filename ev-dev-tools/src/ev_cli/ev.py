@@ -623,11 +623,12 @@ def main():
     parser.add_argument('--version', action='version', version=f'%(prog)s {__version__}')
 
     common_parser = argparse.ArgumentParser(add_help=False)
-    # parser.add_argument("--framework-dir", "-fd", help='directory of everest framework')
+
     common_parser.add_argument("--everest-dir", "-ed", type=str,
                                help='everest directory containing the interface definitions (default: .)', default=str(Path.cwd()))
-    common_parser.add_argument("--framework-dir", "-fd", type=str,
-                               help='everest framework directory containing the schema definitions (default: ../everest-framework)', default=str(Path.cwd() / '../everest-framework'))
+    common_parser.add_argument("--schemas-dir", "-sd", type=str,
+                               help='everest framework directory containing the schema definitions (default: ../everest-framework/schemas)',
+                               default=str(Path.cwd() / '../everest-framework/schemas'))
     common_parser.add_argument("--clang-format-file", type=str, default=str(Path.cwd()),
                                help='Path to the directory, containing the .clang-format file (default: .)')
     common_parser.add_argument("--disable-clang-format", action='store_true', default=False,
@@ -715,14 +716,14 @@ def main():
 
     setup_jinja_env()
 
-    framework_dir = Path(args.framework_dir).resolve()
-    if not (framework_dir / 'schemas').exists():
-        print('The default ("../everest-framework") xor supplied (via --framework-dir) everest framework directory\n'
-              'doesn\'t contain an "schemas" directory and therefore does not seem to be valid.\n'
-              f'dir: {framework_dir}')
+    schemas_dir = Path(args.schemas_dir).resolve()
+    if not schemas_dir.exists():
+        print('The default ("../everest-framework/schemas") xor supplied (via --schemas-dir) schemas directory\n'
+              'doesn\'t exist.\n'
+              f'dir: {schemas_dir}')
         exit(1)
 
-    validators = helpers.load_validators(framework_dir / 'schemas')
+    validators = helpers.load_validators(schemas_dir)
 
     TypeParser.validators = validators
     TypeParser.templates = templates
