@@ -1,8 +1,6 @@
 get_filename_component(MODULE_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 add_custom_target(${MODULE_NAME} ALL)
-add_dependencies(${MODULE_NAME} everestjs ${MODULE_NAME}_INSTALL_NODE_MODULES)
-
-set(EVEREST_MOD_DESTINATION "modules/${MODULE_NAME}")
+add_dependencies(${MODULE_NAME} ${MODULE_NAME}_INSTALL_NODE_MODULES)
 
 find_program(
     RSYNC
@@ -40,7 +38,7 @@ add_custom_target(
 
 install(
     DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/node_modules
-    DESTINATION ${EVEREST_MOD_DESTINATION}
+    DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
 )
 
 # install the whole js project
@@ -49,7 +47,7 @@ if(CREATE_SYMLINKS)
 else()
     install(
         DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
-        DESTINATION ${EVEREST_MOD_DESTINATION}
+        DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
         PATTERN "CMakeLists.txt" EXCLUDE
         PATTERN "CMakeFiles" EXCLUDE)
 endif()

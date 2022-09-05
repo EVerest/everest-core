@@ -1,0 +1,57 @@
+function(generate_config_run_script)
+
+    set(options "")
+    set(one_value_args
+        CONFIG
+        LOGGING_CONFIG
+        OUTPUT
+    )
+    set(multi_value_args
+        ADDITIONAL_ARGUMENTS
+    )
+
+    cmake_parse_arguments(OPTNS "${options}" "${one_value_args}" "${multi_value_args}" ${ARGN})
+
+    if (OPTNS_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION} got unknown argument(s): ${OPTNS_UNPARSED_ARGUMENTS}")
+    endif()
+
+    if (NOT OPTNS_CONFIG)
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION} requires CONFIG parameter for the config name")
+    endif()
+
+    set(CONFIG_FILE "${CMAKE_CURRENT_SOURCE_DIR}/config-${OPTNS_CONFIG}.json")
+    if (NOT EXISTS ${CONFIG_FILE})
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: config file '${CONFIG_FILE}' does not exist")
+    endif()
+
+    set(LOGGING_CONFIG_FILE "${CMAKE_CURRENT_SOURCE_DIR}/logging.ini")
+    if (OPTNS_LOGGING_CONFIG)
+        set(LOGGING_CONFIG_FILE "${CMAKE_CURRENT_SOURCE_DIR}/${OPTNS_LOGGING_CONFIG}.ini")
+    endif()
+
+    if (NOT EXISTS ${LOGGING_CONFIG_FILE})
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: logging config file '${LOGGING_CONFIG_FILE}' does not exist")
+    endif()
+
+    foreach (ARG ${OPTNS_ADDITIONAL_ARGUMENTS})
+        string(APPEND ADDITIONAL_ARGUMENTS "${ARG} ")
+    endforeach()
+
+    string(APPEND ADDITIONAL_ARGUMENTS "\\")
+
+    set(SCRIPT_OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/run-${OPTNS_CONFIG}.sh")
+    if (OPTNS_OUTPUT)
+        set(SCRIPT_OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/run-${OPTNS_OUTPUT}.sh")
+    endif()
+
+    # other necessary variables
+    set(LD_LIBRARY_VAR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+    set(PATH_VAR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}")
+    set(MODULES_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBEXECDIR}/everest/modules")
+    set(INTERFACE_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/everest/interfaces")
+    set(SCHEMA_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/everest/schemas")
+
+    configure_file("run_template.sh.in" ${SCRIPT_OUTPUT_FILE})
+
+endfunction()
