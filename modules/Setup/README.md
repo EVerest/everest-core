@@ -101,7 +101,6 @@ If a rfkill_id is published to this topic the wifi interface with this id will b
 
 ### everest_api/setup/cmd/list_configured_networks
 If any arbitrary payload is published to this topic the list of configured wifi networks is published to the following topic:
-
 __everest_api/setup/var/configured_networks__
 
 with the following payload format:
@@ -174,7 +173,6 @@ If any arbitrary payload is published to this topic all wifi networks will be re
 ### everest_api/setup/cmd/check_online_status
 If any arbitrary payload is published to this topic a ping will be sent to the host configured in the configuration key "online_check_host". Depending on the success of this ping a status of "online" or "offline" will be reported on the following topic:
 __everest_api/setup/var/online_status__
-
 
 ### everest_api/setup/cmd/reboot
 If any arbitrary payload is published to this topic the system will reboot.
