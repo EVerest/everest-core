@@ -127,6 +127,18 @@ void API::init() {
             session_info->set_latest_total_w(powermeter_json.at("power_W").at("total"));
         });
 
+        std::string var_limits = var_base + "limits";
+        evse->subscribe_limits([this, var_limits](types::evse_manager::Limits limits) {
+            json limits_json = limits;
+            this->mqtt.publish(var_limits, limits_json.dump());
+        });
+
+        std::string var_telemetry = var_base + "telemetry";
+        evse->subscribe_telemetry([this, var_telemetry](types::board_support::Telemetry telemetry) {
+            json telemetry_json = telemetry;
+            this->mqtt.publish(var_telemetry, telemetry_json.dump());
+        });
+
         std::string var_datetime = var_base + "datetime";
         std::string var_session_info = var_base + "session_info";
         this->datetime_thread = std::thread([this, var_datetime, var_session_info, &session_info]() {
