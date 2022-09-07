@@ -70,7 +70,7 @@ export CPM_SOURCE_CACHE=$HOME/.cache/CPM
 Now setup EVerest workspace: 
 ```bash
 cd everest-dev-environment/dependency_manager
-edm --register-cmake-module --config ../everest-complete.yaml --workspace ~/checkout/everest-workspace
+edm --config ../everest-complete.yaml --workspace ~/checkout/everest-workspace
 ```
 
 Install [ev-cli](https://github.com/EVerest/everest-utils/tree/main/ev-dev-tools):
