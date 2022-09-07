@@ -14,7 +14,6 @@ This variable is published periodically and contains a JSON object with the supp
 ## Commands and variables published in response
 ### everest_api/setup/cmd/scan_wifi
 If any arbitrary payload is published to this topic a list of available wifi networks is published on the following topic:
-
 __everest_api/setup/var/wifi_info__
 
 with the following payload format:
@@ -43,7 +42,6 @@ with the following payload format:
 ]
 ```
 additionally general network device information is published on the following topic:
-
 __everest_api/setup/var/network_device_info__
 
 with the following payload format:
@@ -69,7 +67,6 @@ with the following payload format:
 ```
 
 additionally the list of configured wifi networks is published to the following topic:
-
 __everest_api/setup/var/configured_networks__
 
 with the following payload format:
@@ -176,16 +173,13 @@ If any arbitrary payload is published to this topic all wifi networks will be re
 
 ### everest_api/setup/cmd/check_online_status
 If any arbitrary payload is published to this topic a ping will be sent to the host configured in the configuration key "online_check_host". Depending on the success of this ping a status of "online" or "offline" will be reported on the following topic:
-
 __everest_api/setup/var/online_status__
 
 
 ### everest_api/setup/cmd/reboot
 If any arbitrary payload is published to this topic the system will reboot.
 
-
 ## Application Info / Localization
-
 ### everest_api/setup/cmd/set_mode
 If a mode _private_ or _public_ is published to this topic it will be stored permanently.
 
@@ -203,7 +197,6 @@ You can set a [three-letter language code](https://en.wikipedia.org/wiki/List_of
 
 ### everest_api/setup/cmd/get_application_info
 If any arbitrary payload is published to this topic a application info object is published to the following topic:
-
 __everest_api/setup/var/application_info__
 
 with the following payload format:
