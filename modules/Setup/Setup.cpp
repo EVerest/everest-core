@@ -230,7 +230,7 @@ std::string Setup::get_default_language() {
     return boost::get<std::string>(language);
 }
 
-void Setup::set_current_language(std::string language) {
+void Setup::set_current_language(const std::string& language) {
     this->current_language = language;
 }
 

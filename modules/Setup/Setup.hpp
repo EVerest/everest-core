@@ -179,7 +179,7 @@ private:
     void set_default_language(std::string language);
     std::string get_default_language();
     std::string current_language;
-    void set_current_language(std::string language);
+    void set_current_language(const std::string& language);
     std::string get_current_language();
     void set_mode(std::string mode);
     std::string get_mode();
