@@ -1,4 +1,5 @@
 # Setup module API documentation
+This module is responsible for setup tasks that might need privileged access, for example wifi configuration.
 
 ## Periodically published variables
 ### everest_api/setup/var/supported_setup_features
