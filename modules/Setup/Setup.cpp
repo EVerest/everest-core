@@ -44,12 +44,28 @@ void from_json(const json& j, WifiCredentials& k) {
 }
 
 void to_json(json& j, const WifiList& k) {
-    j = json::object({{"interface", k.interface}, {"network_id", k.network_id}, {"ssid", k.ssid}});
+    j = json::object(
+        {{"interface", k.interface}, {"network_id", k.network_id}, {"ssid", k.ssid}, {"connected", k.connected}});
+}
+
+void to_json(json& j, const InterfaceAndNetworkId& k) {
+    j = json::object({{"interface", k.interface}, {"network_id", k.network_id}});
+}
+void from_json(const json& j, InterfaceAndNetworkId& k) {
+    k.interface = j.at("interface");
+    k.network_id = j.at("network_id");
 }
 
 void to_json(json& j, const SupportedSetupFeatures& k) {
     j = json::object(
         {{"setup_wifi", k.setup_wifi}, {"localization", k.localization}, {"setup_simulation", k.setup_simulation}});
+}
+
+void to_json(json& j, const ApplicationInfo& k) {
+    j = json::object({{"initialized", k.initialized},
+                      {"mode", k.mode},
+                      {"default_language", k.default_language},
+                      {"current_language", k.current_language}});
 }
 
 void Setup::init() {
@@ -68,11 +84,40 @@ void Setup::ready() {
 
     this->discover_network_thread = std::thread([this]() {
         while (true) {
-            this->discover_network();
-            this->publish_supported_features();
+            if (wifi_scan_enabled) {
+                this->discover_network();
+            }
             std::this_thread::sleep_for(std::chrono::seconds(5));
         }
     });
+
+    this->publish_application_info_thread = std::thread([this]() {
+        while (true) {
+            this->publish_supported_features();
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
+    });
+
+    std::string set_mode_cmd = this->cmd_base + "set_mode";
+    this->mqtt.subscribe(set_mode_cmd, [this](const std::string& data) { this->set_mode(data); });
+
+    std::string set_initialized_cmd = this->cmd_base + "set_initialized";
+    this->mqtt.subscribe(set_initialized_cmd, [this](const std::string& data) { this->set_initialized(true); });
+
+    std::string reset_initialized_cmd = this->cmd_base + "reset_initialized";
+    this->mqtt.subscribe(reset_initialized_cmd, [this](const std::string& data) { this->set_initialized(false); });
+
+    std::string change_default_language_cmd = this->cmd_base + "change_default_language";
+    this->mqtt.subscribe(change_default_language_cmd,
+                         [this](const std::string& data) { this->set_default_language(data); });
+
+    std::string change_current_language_cmd = this->cmd_base + "change_current_language";
+    this->mqtt.subscribe(change_current_language_cmd,
+                         [this](const std::string& data) { this->set_current_language(data); });
+
+    std::string get_application_info_cmd = this->cmd_base + "get_application_info";
+    this->mqtt.subscribe(get_application_info_cmd,
+                         [this](const std::string& data) { this->publish_application_info(); });
 
     if (this->config.setup_wifi) {
         std::string rfkill_unblock_cmd = this->cmd_base + "rfkill_unblock";
@@ -93,11 +138,56 @@ void Setup::ready() {
             this->publish_configured_networks();
         });
 
+        std::string enable_network_cmd = this->cmd_base + "enable_network";
+        this->mqtt.subscribe(enable_network_cmd, [this](const std::string& data) {
+            InterfaceAndNetworkId wifi = json::parse(data);
+            this->enable_network(wifi.interface, wifi.network_id);
+            this->publish_configured_networks();
+        });
+
+        std::string disable_network_cmd = this->cmd_base + "disable_network";
+        this->mqtt.subscribe(disable_network_cmd, [this](const std::string& data) {
+            InterfaceAndNetworkId wifi = json::parse(data);
+            this->disable_network(wifi.interface, wifi.network_id);
+            this->publish_configured_networks();
+        });
+
+        std::string select_network_cmd = this->cmd_base + "select_network";
+        this->mqtt.subscribe(select_network_cmd, [this](const std::string& data) {
+            InterfaceAndNetworkId wifi = json::parse(data);
+            this->select_network(wifi.interface, wifi.network_id);
+            this->publish_configured_networks();
+        });
+
+        std::string remove_network_cmd = this->cmd_base + "remove_network";
+        this->mqtt.subscribe(remove_network_cmd, [this](const std::string& data) {
+            InterfaceAndNetworkId wifi = json::parse(data);
+            this->remove_network(wifi.interface, wifi.network_id);
+            this->publish_configured_networks();
+        });
+
+        std::string scan_wifi_cmd = this->cmd_base + "scan_wifi";
+        this->mqtt.subscribe(scan_wifi_cmd, [this](const std::string& data) { this->discover_network(); });
+
+        std::string enable_wifi_scanning_cmd = this->cmd_base + "enable_wifi_scanning";
+        this->mqtt.subscribe(enable_wifi_scanning_cmd,
+                             [this](const std::string& data) { this->wifi_scan_enabled = true; });
+
+        std::string disable_wifi_scanning_cmd = this->cmd_base + "disable_wifi_scanning";
+        this->mqtt.subscribe(disable_wifi_scanning_cmd,
+                             [this](const std::string& data) { this->wifi_scan_enabled = false; });
+
         std::string remove_all_networks_cmd = this->cmd_base + "remove_all_networks";
         this->mqtt.subscribe(remove_all_networks_cmd, [this](const std::string& data) {
             this->remove_all_networks();
             this->publish_configured_networks();
         });
+
+        std::string reboot_cmd = this->cmd_base + "reboot";
+        this->mqtt.subscribe(reboot_cmd, [this](const std::string& data) { this->reboot(); });
+
+        std::string check_online_status_cmd = this->cmd_base + "check_online_status";
+        this->mqtt.subscribe(check_online_status_cmd, [this](const std::string& data) { this->check_online_status(); });
     }
 }
 
@@ -112,6 +202,71 @@ void Setup::publish_supported_features() {
     json supported_setup_features_json = supported_setup_features;
 
     this->mqtt.publish(supported_setup_features_var, supported_setup_features_json.dump());
+}
+
+void Setup::publish_application_info() {
+    ApplicationInfo application_info;
+    application_info.initialized = this->get_initialized();
+    application_info.mode = this->get_mode();
+    application_info.default_language = this->get_default_language();
+    application_info.current_language = this->get_current_language();
+
+    std::string application_info_var = this->var_base + "application_info";
+
+    json application_info_json = application_info;
+
+    this->mqtt.publish(application_info_var, application_info_json.dump());
+}
+
+void Setup::set_default_language(std::string language) {
+    this->r_store->call_store("everest_localization_default_language", language);
+}
+
+std::string Setup::get_default_language() {
+    auto language = this->r_store->call_load("everest_localization_default_language");
+    if (language.which() == 0) {
+        return "unknown";
+    }
+    return boost::get<std::string>(language);
+}
+
+void Setup::set_current_language(const std::string& language) {
+    this->current_language = language;
+}
+
+std::string Setup::get_current_language() {
+    if (this->current_language.empty()) {
+        this->current_language = this->get_default_language();
+    }
+
+    return this->current_language;
+}
+
+void Setup::set_mode(std::string mode) {
+    this->r_store->call_store("everest_mode", mode);
+}
+
+std::string Setup::get_mode() {
+    auto mode = this->r_store->call_load("everest_mode");
+    if (mode.which() == 0) {
+        return "unknown";
+    }
+    return boost::get<std::string>(mode);
+}
+
+void Setup::set_initialized(bool initialized) {
+    this->r_store->call_store("everest_initialized", initialized);
+}
+
+bool Setup::get_initialized() {
+    if (this->config.initialized_by_default) {
+        return true;
+    }
+    auto initialized = this->r_store->call_load("everest_initialized");
+    if (initialized.which() == 0) {
+        return false;
+    }
+    return boost::get<bool>(initialized);
 }
 
 void Setup::discover_network() {
@@ -131,6 +286,8 @@ void Setup::discover_network() {
     json wifi_info_json = json::array();
     wifi_info_json = wifi_info;
     this->mqtt.publish(wifi_info_var, wifi_info_json.dump());
+
+    this->publish_configured_networks();
 }
 
 std::vector<NetworkDeviceInfo> Setup::get_network_devices() {
@@ -284,6 +441,20 @@ std::vector<WifiList> Setup::list_configured_networks(std::string interface) {
     }
 
     std::vector<WifiList> configured_networks;
+    std::map<std::string, std::string> wpa_cli_status_map;
+
+    auto wpa_cli_status_output = this->run_application("wpa_cli", {"-i", interface, "status"});
+    if (wpa_cli_status_output.exit_code == 0) {
+        for (auto wpa_cli_status_it = wpa_cli_status_output.split_output.begin();
+             wpa_cli_status_it != wpa_cli_status_output.split_output.end(); ++wpa_cli_status_it) {
+            std::vector<std::string> wpa_cli_status_columns;
+            // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks)
+            boost::split(wpa_cli_status_columns, *wpa_cli_status_it, boost::is_any_of("="));
+            if (wpa_cli_status_columns.size() == 2) {
+                wpa_cli_status_map[wpa_cli_status_columns.at(0)] = wpa_cli_status_columns.at(1);
+            }
+        }
+    }
 
     auto list_networks_results = wpa_cli_list_networks_output.split_output;
     if (list_networks_results.size() >= 2) {
@@ -298,6 +469,16 @@ std::vector<WifiList> Setup::list_configured_networks(std::string interface) {
             wifi_list.interface = interface;
             wifi_list.network_id = std::stoi(list_networks_results_columns.at(0));
             wifi_list.ssid = list_networks_results_columns.at(1);
+            wifi_list.connected = false;
+            if (wpa_cli_status_map.count("id") && wpa_cli_status_map.count("ssid") &&
+                wpa_cli_status_map.count("wpa_state")) {
+                if (wpa_cli_status_map.at("id") == list_networks_results_columns.at(0) &&
+                    wpa_cli_status_map.at("ssid") == wifi_list.ssid &&
+                    wpa_cli_status_map.at("wpa_state") == "COMPLETED") {
+                    wifi_list.connected = true;
+                }
+            }
+
             configured_networks.push_back(wifi_list);
         }
     }
@@ -424,6 +605,22 @@ bool Setup::disable_network(std::string interface, int network_id) {
     return true;
 }
 
+bool Setup::select_network(std::string interface, int network_id) {
+    if (!this->is_wifi_interface(interface)) {
+        return false;
+    }
+
+    auto network_id_string = std::to_string(network_id);
+
+    auto wpa_cli_disable_network_output =
+        this->run_application("wpa_cli", {"-i", interface, "select_network", network_id_string});
+    if (wpa_cli_disable_network_output.exit_code != 0) {
+        return false;
+    }
+
+    return true;
+}
+
 bool Setup::remove_network(std::string interface, int network_id) {
     if (!this->is_wifi_interface(interface)) {
         return false;
@@ -485,6 +682,35 @@ bool Setup::save_config(std::string interface) {
         success = false;
     }
     return success;
+}
+
+bool Setup::reboot() {
+    bool success = true;
+    auto reboot_output = this->run_application("sudo", {"reboot"});
+    if (reboot_output.exit_code != 0) {
+        success = false;
+    }
+    return success;
+}
+
+bool Setup::is_online() {
+    bool success = true;
+    auto reboot_output = this->run_application("ping", {"-c", "1", this->config.online_check_host});
+    if (reboot_output.exit_code != 0) {
+        success = false;
+    }
+    return success;
+}
+
+void Setup::check_online_status() {
+    std::string online_status_var = this->var_base + "online_status";
+
+    if (this->is_online()) {
+
+        this->mqtt.publish(online_status_var, "online");
+    } else {
+        this->mqtt.publish(online_status_var, "offline");
+    }
 }
 
 void Setup::populate_ip_addresses(std::vector<NetworkDeviceInfo>& device_info) {
