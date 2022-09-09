@@ -21,6 +21,8 @@ public:
     void publish_{{ var.name }}(
     {% if 'object_type' in var %}
         {{  var.object_type }}
+    {% elif 'enum_type' in var %}
+        {{  var.enum_type }}
     {% else %}
         {{  var.cpp_type }}
     {% endif %}
@@ -29,6 +31,9 @@ public:
         json json_value = value;
         Object object_value = json_value;
         _ev->publish(_name, "{{ var.name }}", object_value);
+    {% elif 'enum_type' in var %}
+        auto value_string = {{ enum_to_string(var.enum_type) }}(value);
+        _ev->publish(_name, "{{ var.name }}", value_string);
     {% else %}
         _ev->publish(_name, "{{ var.name }}", value);
     {% endif %}
