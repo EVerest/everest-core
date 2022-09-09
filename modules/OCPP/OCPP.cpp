@@ -340,11 +340,11 @@ void OCPP::init() {
             this->charge_point->receive_power_meter(connector, powermeter_json); //
         });
 
-        evse->subscribe_limits([this, connector](Object limits) {
-            auto max_current = limits["max_current"].get<double>();
+        evse->subscribe_limits([this, connector](types::evse_manager::Limits limits) {
+            double max_current = limits.max_current;
             this->charge_point->receive_max_current_offered(connector, max_current);
 
-            auto number_of_phases = limits["nr_of_phases_available"].get<int32_t>();
+            auto number_of_phases = limits.nr_of_phases_available;
             this->charge_point->receive_number_of_phases_available(connector, number_of_phases);
         });
 
