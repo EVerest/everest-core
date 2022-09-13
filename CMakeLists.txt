@@ -20,7 +20,7 @@ option(CMAKE_RUN_CLANG_TIDY "Run clang-tidy" OFF)
 option(BUILD_TESTING "Run unit tests" OFF)
 
 # dependencies
-require_ev_cli_version("0.0.13")
+require_ev_cli_version("0.0.14")
 
 find_package(Boost
     COMPONENTS
