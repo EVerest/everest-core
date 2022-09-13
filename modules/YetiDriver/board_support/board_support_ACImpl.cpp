@@ -5,44 +5,45 @@
 namespace module {
 namespace board_support {
 
-std::string event_to_string(Event e) {
+types::board_support::Event cast_event_type(const Event& e) {
     switch (e.type) {
     case Event_InterfaceEvent_CAR_PLUGGED_IN:
-        return "CarPluggedIn";
+        return types::board_support::Event::CarPluggedIn;
     case Event_InterfaceEvent_CAR_REQUESTED_POWER:
-        return "CarRequestedPower";
+        return types::board_support::Event::CarRequestedPower;
     case Event_InterfaceEvent_POWER_ON:
-        return "PowerOn";
+        return types::board_support::Event::PowerOn;
     case Event_InterfaceEvent_POWER_OFF:
-        return "PowerOff";
+        return types::board_support::Event::PowerOff;
     case Event_InterfaceEvent_CAR_REQUESTED_STOP_POWER:
-        return "CarRequestedStopPower";
+        return types::board_support::Event::CarRequestedStopPower;
     case Event_InterfaceEvent_CAR_UNPLUGGED:
-        return "CarUnplugged";
+        return types::board_support::Event::CarUnplugged;
     case Event_InterfaceEvent_ERROR_E:
-        return "ErrorE";
+        return types::board_support::Event::ErrorE;
     case Event_InterfaceEvent_ERROR_DF:
-        return "ErrorDF";
+        return types::board_support::Event::ErrorDF;
     case Event_InterfaceEvent_ERROR_RELAIS:
-        return "ErrorRelais";
+        return types::board_support::Event::ErrorRelais;
     case Event_InterfaceEvent_ERROR_RCD:
-        return "ErrorRCD";
+        return types::board_support::Event::ErrorRCD;
     case Event_InterfaceEvent_ERROR_VENTILATION_NOT_AVAILABLE:
-        return "ErrorVentilationNotAvailable";
+        return types::board_support::Event::ErrorVentilationNotAvailable;
     case Event_InterfaceEvent_ERROR_OVER_CURRENT:
-        return "ErrorOverCurrent";
+        return types::board_support::Event::ErrorOverCurrent;
     case Event_InterfaceEvent_ENTER_BCD:
-        return "EnterBCD";
+        return types::board_support::Event::EnterBCD;
     case Event_InterfaceEvent_LEAVE_BCD:
-        return "LeaveBCD";
+        return types::board_support::Event::LeaveBCD;
     case Event_InterfaceEvent_PERMANENT_FAULT:
-        return "PermanentFault";
+        return types::board_support::Event::PermanentFault;
     case Event_InterfaceEvent_EVSE_REPLUG_STARTED:
-        return "EvseReplugStarted";
+        return types::board_support::Event::EvseReplugStarted;
     case Event_InterfaceEvent_EVSE_REPLUG_FINISHED:
-        return "EvseReplugFinished";
+        return types::board_support::Event::EvseReplugFinished;
     }
-    return "";
+
+    EVLOG_AND_THROW(Everest::EverestConfigError("Received an unknown interface event from Yeti"));
 }
 
 void board_support_ACImpl::init() {
@@ -56,7 +57,7 @@ void board_support_ACImpl::init() {
         caps.supports_changing_phases_during_charging = false;
     }
 
-    mod->serial.signalEvent.connect([this](Event e) { publish_event(event_to_string(e)); });
+    mod->serial.signalEvent.connect([this](Event e) { publish_event(cast_event_type(e)); });
 
     // FIXME
     // Everything used here should be moved out of debug update in protobuf
