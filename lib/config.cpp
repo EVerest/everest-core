@@ -364,7 +364,7 @@ json Config::load_interface_file(const std::string& intf_name) {
 
         return interface_json;
     } catch (const std::exception& e) {
-        EVLOG_AND_THROW(EverestConfigError(fmt::format("Failed to load and parse interface file: {}", e.what())));
+        EVLOG_AND_THROW(EverestConfigError(fmt::format("Failed to load and parse interface file {}: {}", fs::canonical(intf_path).string(), e.what())));
     }
 }
 
