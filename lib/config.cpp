@@ -211,7 +211,7 @@ Config::Config(std::string schemas_dir, std::string config_file, std::string mod
                 this->manifests[module_name] = this->manifests[module_name].patch(patch);
             }
         } catch (const std::exception& e) {
-            EVLOG_AND_THROW(EverestConfigError(fmt::format("Failed to load and parse manifest file: {}", e.what())));
+            EVLOG_AND_THROW(EverestConfigError(fmt::format("Failed to load and parse manifest file {}: {}", fs::canonical(manifest_path).string(), e.what())));
         }
 
         // validate user-defined default values for the config meta-schemas
