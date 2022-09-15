@@ -586,6 +586,10 @@ int boot(const po::variables_map& vm) {
                                               module_name, pid, wstatus);
                 shutdown_modules(module_handles, *config, mqtt_abstraction);
                 modules_started = false;
+
+		// Exit if a module died, this gives systemd a change to restart manager
+                EVLOG_critical << "Exiting manager.";
+                return EXIT_FAILURE;
             } else {
                 EVLOG_info << fmt::format("Module {} (pid: {}) exited with status: {}.", module_name, pid, wstatus);
             }
