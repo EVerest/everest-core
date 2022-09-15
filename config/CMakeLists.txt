@@ -3,6 +3,7 @@ include(config-run-script)
 generate_config_run_script(CONFIG sil)
 generate_config_run_script(CONFIG hil)
 generate_config_run_script(CONFIG auth)
+generate_config_run_script(CONFIG sil_SCH)
 
 generate_config_run_script(
     CONFIG sil-ocpp
