@@ -73,7 +73,7 @@ add_subdirectory(interfaces)
 add_subdirectory(config)
 
 # modules
-if (EVC_MAIN_PROJECT)
+if (EVC_MAIN_PROJECT OR EVEREST_BUILD_ALL_MODULES)
     add_subdirectory(modules)
 endif()
 
