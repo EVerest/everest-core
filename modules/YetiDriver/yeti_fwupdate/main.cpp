@@ -99,16 +99,23 @@ void recvKeepAliveLo(KeepAliveLo s) {
 }
 
 void help() {
-    printf("\nUsage: ./yeti_fwupdate /dev/ttyXXX firmware.bin\n\n");
+    printf("\nUsage: ./yeti_fwupdate /dev/ttyXXX firmware.bin [--force]\n\n");
     printf("This tool uses stm32flash (version 0.6 and above) which needs to be installed.\n");
+    printf("Installs Yeti FW over UART if the version is higher then the one currently installed. Use --force to downgrade.\n");
 }
 
 int main(int argc, char* argv[]) {
     printf("Yeti ROM Bootloader Firmware Updater %i.%i\n", yeti_fwupdate_VERSION_MAJOR, yeti_fwupdate_VERSION_MINOR);
-    if (argc != 3) {
+    if (!(argc ==3 || argc ==4)) {
         help();
         exit(0);
     }
+
+    bool force_update = false;
+    if (argc ==4 && strcmp(argv[3], "--force")==0) {
+	force_update = true;
+    }
+
     const char* device = argv[1];
     const char* filename = argv[2];
 
@@ -128,12 +135,12 @@ int main(int argc, char* argv[]) {
         std::string availableYetiVersion = getVersionFromFile(std::string(filename));
 
         if (availableYetiVersion.empty()) {
-            std::cout << "Cannot parse version from filename " << fw_file_name << std::endl;
+            std::cout << "Cannot parse version from filename " << std::string(filename) << std::endl;
         } else {
             std::cout << "Bundled YetiFW version " << availableYetiVersion << std::endl;
 
             // Check if version of update file is higher than currently installed version
-            if (compareVersionStrings(availableYetiVersion, currentYetiVersion) == 1) {
+            if (compareVersionStrings(availableYetiVersion, currentYetiVersion) == 1 || force_update) {
                 std::cout << "Currently installed: " << currentYetiVersion << " - Installing " << availableYetiVersion
                           << std::endl;
 
@@ -154,7 +161,9 @@ int main(int argc, char* argv[]) {
                 system(cmd);
 
                 // printf ("Joining\n");
-            }
+            } else {
+                std::cout << "Skipping installation." << std::endl;
+	    }
         }
     } else {
         printf("Cannot open device \"%s\"\n", device);
