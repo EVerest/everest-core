@@ -66,9 +66,24 @@ function JavaStartedDeferred(mqtt_base_path, module_name, mod) {
   });
 }
 
+const net_init = os.networkInterfaces();
+
+function choose_first_network_iface() {
+  for (let iface in net_init) {
+    for (let element of net_init[iface]) {
+      if (element.hasOwnProperty("address")) {
+        if (element.address.includes('fe80')) {
+          return iface
+        }
+      }
+    }
+  }
+  evlog.warning(`No necessary IPv6 link-local address was found!`)
+  return "eth0"
+}
+
 function check_network_interface(network_iface) {
   let networkfound = false;
-  const net_init = os.networkInterfaces();
 
   for (const key of Object.keys(net_init)) {
     if (key === network_iface) {
@@ -91,7 +106,9 @@ boot_module(async ({
 }) => {
 
   network_interface = config.impl.main.device;
-  if (check_network_interface(network_interface) === false) {
+  if (network_interface === "auto") {
+    network_interface = choose_first_network_iface();
+  } else if (check_network_interface(network_interface) === false) {
     evlog.warning(`The network interface ${network_interface} was not found!`);
   }
 

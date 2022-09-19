@@ -4,7 +4,7 @@
         "config_implementation": {
             "main": {
                 "mqtt_base_path": "everest_external/iso15118/java",
-                "device": "eth0"
+                "device": "auto"
             }
         }
     },
@@ -14,7 +14,7 @@
             "main": {
                 "stack_implementation": "RISE-V2G",
                 "mqtt_base_path": "everest_external/iso15118/ev",
-                "device": "eth0"
+                "device": "auto"
             }
         }
     },
