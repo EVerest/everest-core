@@ -16,8 +16,7 @@ namespace Everest {
 
 class ConfigParseException : public std::exception {
 public:
-    enum ParseErrorType
-    {
+    enum ParseErrorType {
         NOT_DEFINED,
         MISSING_ENTRY,
         SCHEMA
@@ -103,7 +102,8 @@ static json parse_config_map(const json& config_map_schema, const json& config_m
     return parsed_config_map;
 }
 
-Config::Config(std::string schemas_dir, std::string config_file, std::string modules_dir, std::string interfaces_dir, std::string types_dir) {
+Config::Config(std::string schemas_dir, std::string config_file, std::string modules_dir, std::string interfaces_dir,
+               std::string types_dir) {
     BOOST_LOG_FUNCTION();
 
     this->schemas_dir = schemas_dir;
@@ -161,8 +161,7 @@ Config::Config(std::string schemas_dir, std::string config_file, std::string mod
 
     // load type files
     auto types_path = fs::path(this->types_dir);
-    for (auto const& types_entry : fs::recursive_directory_iterator(types_path))
-    {
+    for (auto const& types_entry : fs::recursive_directory_iterator(types_path)) {
         auto const& type_file_path = types_entry.path();
         if (fs::is_regular_file(type_file_path) && type_file_path.extension() == ".json") {
             auto type_path = std::string("/") + fs::relative(type_file_path, types_path).stem().string();
@@ -211,7 +210,8 @@ Config::Config(std::string schemas_dir, std::string config_file, std::string mod
                 this->manifests[module_name] = this->manifests[module_name].patch(patch);
             }
         } catch (const std::exception& e) {
-            EVLOG_AND_THROW(EverestConfigError(fmt::format("Failed to load and parse manifest file {}: {}", fs::canonical(manifest_path).string(), e.what())));
+            EVLOG_AND_THROW(EverestConfigError(fmt::format("Failed to load and parse manifest file {}: {}",
+                                                           fs::weakly_canonical(manifest_path).string(), e.what())));
         }
 
         // validate user-defined default values for the config meta-schemas
@@ -364,7 +364,8 @@ json Config::load_interface_file(const std::string& intf_name) {
 
         return interface_json;
     } catch (const std::exception& e) {
-        EVLOG_AND_THROW(EverestConfigError(fmt::format("Failed to load and parse interface file {}: {}", fs::canonical(intf_path).string(), e.what())));
+        EVLOG_AND_THROW(EverestConfigError(fmt::format("Failed to load and parse interface file {}: {}",
+                                                       fs::weakly_canonical(intf_path).string(), e.what())));
     }
 }
 
@@ -611,7 +612,7 @@ void Config::format_checker(const std::string& format, const std::string& value)
             EVTHROW(std::invalid_argument("URI does not contain :// - invalid"));
         }
     } else if (format == "uri-reference") {
-        if(!std::regex_match(value, type_uri_regex)) {
+        if (!std::regex_match(value, type_uri_regex)) {
             EVTHROW(std::invalid_argument("Type URI is malformed."));
         }
     } else {

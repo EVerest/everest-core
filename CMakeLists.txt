@@ -43,6 +43,8 @@ if(NOT DISABLE_EDM)
         EXPORT nlohmann_json_schema_validatorTargets
     )
 
+    # FIXME (aw): add catch2's cmake folder
+    list(APPEND CMAKE_MODULE_PATH "${Catch2_SOURCE_DIR}/contrib")
 else()
     find_package(date REQUIRED)
     find_package(nlohmann_json REQUIRED)
@@ -50,6 +52,10 @@ else()
     find_package(websocketpp REQUIRED)
     find_package(fmt REQUIRED)
     find_package(everest-log REQUIRED)
+
+    if (BUILD_TESTING)
+        find_package(Catch2 REQUIRED)
+    endif()
 
     include(find-mqttc)
 endif()
@@ -95,8 +101,6 @@ endif ()
 # testing
 # FIXME (aw): move testing logic into tests/CMakeLists.txt
 if(BUILD_TESTING)
-    find_package(Catch2 REQUIRED)
-
     include(CTest)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
 
