@@ -16,7 +16,7 @@ function JavaStartedDeferred(mqtt_base_path, module_name, mod) {
 
     // FIXME: the path hierarchy should be well defined,
     //        i.e where to find 3rd party things
-    const cwd = `${process.cwd()}/rise_v2g`;
+    const cwd = `${process.cwd()}/libexec/everest/3rd_party/rise_v2g`;
     const args = [
       '-Djava.net.preferIPv4Stack=false', '-Djava.net.prefecom.v2gclarity.rrIPv6Addresses=true',
       '-cp', 'rise-v2g-evcc-1.2.6.jar', 'com.v2gclarity.risev2g.evcc.main.StartEVCC',
