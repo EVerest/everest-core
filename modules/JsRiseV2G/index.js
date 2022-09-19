@@ -100,7 +100,7 @@ boot_module(async ({
 }) => {
   network_interface = config.impl.main.device;
 
-  if (network_interface === "auto") {
+  if (network_interface === 'auto') {
     network_interface = choose_first_ipv6_local();
   } else if (check_network_interface(network_interface) === false) {
     evlog.warning(`The network interface ${network_interface} was not found!`);
