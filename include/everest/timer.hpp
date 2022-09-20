@@ -54,6 +54,11 @@ public:
         if (this->timer != nullptr) {
             // stop asio timer
             this->timer->cancel();
+
+            if (this->timer_thread != nullptr) {
+                this->io_context.stop();
+                this->timer_thread->join();
+            }
         }
     }
 
