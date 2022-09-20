@@ -59,6 +59,9 @@ public:
                 this->io_context.stop();
                 this->timer_thread->join();
             }
+
+            delete this->timer;
+            delete this->timer_thread;
         }
     }
 
