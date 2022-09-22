@@ -21,11 +21,6 @@
             "type": "string",
             "default": "/tmp/ocpp_1_6_charge_point"
         },
-        "ScriptsPath": {
-            "description": "Path to the script folder in which the OCPP 1.6 scripts for firmware update und log upload reside",
-            "type": "string",
-            "default": "dist/bin"
-        },
         "EnableExternalWebsocketControl": {
             "description": "If true websocket can be disconnected and connected externally",
             "type": "boolean",
