@@ -15,11 +15,13 @@
 namespace module {
 
 struct Connector {
-    explicit Connector(int id) : id(id), reserved(false), is_reservable(true) {
+    explicit Connector(int id) : id(id), transaction_active(false), reserved(false), is_reservable(true) {
         this->state_machine.controller->run(this->state_machine.sd_available);
     };
 
     int id;
+
+    bool transaction_active;
     ConnectorStateMachine state_machine;
 
     // identifier is set when transaction is running and none if not

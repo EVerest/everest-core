@@ -17,7 +17,7 @@ const static std::string VALID_TOKEN_2 = "VALID_RFID_2";
 const static std::string VALID_TOKEN_3 = "VALID_RFID_3"; // SAME PARENT_ID
 const static std::string INVALID_TOKEN = "INVALID_RFID";
 const static std::string PARENT_ID_TOKEN = "PARENT_RFID";
-const static int32_t CONNECTION_TIMEOUT = 2;
+const static int32_t CONNECTION_TIMEOUT = 3;
 
 static SessionEvent get_session_started_event() {
     SessionEvent session_event;
@@ -110,8 +110,9 @@ TEST_F(AuthTest, test_simple_authorization) {
     std::vector<int32_t> connectors{1};
     ProvidedIdToken provided_token = get_provided_token(VALID_TOKEN_1, connectors);
 
-    this->auth_handler->on_token(provided_token);
+    const auto result = this->auth_handler->on_token(provided_token);
 
+    ASSERT_TRUE(result == TokenHandlingResult::ACCEPTED);
     ASSERT_TRUE(this->auth_receiver->get_authorization(0));
     ASSERT_FALSE(this->auth_receiver->get_authorization(1));
 }
@@ -126,26 +127,42 @@ TEST_F(AuthTest, test_two_referenced_connectors) {
     std::vector<int32_t> connectors{1, 2};
     ProvidedIdToken provided_token = get_provided_token(VALID_TOKEN_1, connectors);
 
-    this->auth_handler->on_token(provided_token);
+    const auto result = this->auth_handler->on_token(provided_token);
+    ASSERT_TRUE(result == TokenHandlingResult::ACCEPTED);
     ASSERT_TRUE(this->auth_receiver->get_authorization(1));
     ASSERT_FALSE(this->auth_receiver->get_authorization(0));
 }
 
 /// \brief Test if a transaction is stopped when an id_token is swiped twice
 TEST_F(AuthTest, test_stop_transaction) {
-    SessionEvent session_event;
-    session_event.event = SessionEventEnum::SessionStarted;
-    this->auth_handler->handle_session_event(1, session_event);
-
     std::vector<int32_t> connectors{1};
     ProvidedIdToken provided_token = get_provided_token(VALID_TOKEN_1, connectors);
+    
+    SessionEvent session_event1;
+    session_event1.event = SessionEventEnum::SessionStarted;
 
-    this->auth_handler->on_token(provided_token);
+    SessionEvent session_event2;
+    session_event2.event = SessionEventEnum::TransactionStarted;
+    TransactionStarted transaction_event;
+    transaction_event.energy_Wh_import = 0;
+    transaction_event.id_tag = provided_token.id_token;
+    transaction_event.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
+    session_event2.transaction_started = transaction_event;
+
+    this->auth_handler->handle_session_event(1, session_event1);
+
+    auto result = this->auth_handler->on_token(provided_token);
+    ASSERT_TRUE(result == TokenHandlingResult::ACCEPTED);
     ASSERT_TRUE(this->auth_receiver->get_authorization(0));
     ASSERT_FALSE(this->auth_receiver->get_authorization(1));
 
+    this->auth_handler->handle_session_event(1, session_event2);
+    // wait for state machine to process event
+    std::this_thread::sleep_for(std::chrono::milliseconds(25));
+
     // second swipe to finish transaction
-    this->auth_handler->on_token(provided_token);
+    result = this->auth_handler->on_token(provided_token);
+    ASSERT_TRUE(result == TokenHandlingResult::USED_TO_STOP_TRANSACTION);
     ASSERT_FALSE(this->auth_receiver->get_authorization(0));
     ASSERT_FALSE(this->auth_receiver->get_authorization(1));
 }
@@ -156,7 +173,9 @@ TEST_F(AuthTest, test_authorize_first) {
     std::vector<int32_t> connectors{1, 2};
     ProvidedIdToken provided_token = get_provided_token(VALID_TOKEN_1, connectors);
 
-    std::thread t1([this, provided_token]() { this->auth_handler->on_token(provided_token); });
+    TokenHandlingResult result;
+
+    std::thread t1([this, provided_token, &result]() { result = this->auth_handler->on_token(provided_token); });
 
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
@@ -168,6 +187,7 @@ TEST_F(AuthTest, test_authorize_first) {
     t1.join();
     t2.join();
 
+    ASSERT_TRUE(result == TokenHandlingResult::ACCEPTED);
     ASSERT_TRUE(this->auth_receiver->get_authorization(0));
     ASSERT_FALSE(this->auth_receiver->get_authorization(1));
 }
@@ -177,10 +197,20 @@ TEST_F(AuthTest, test_swipe_multiple_times_with_timeout) {
     std::vector<int32_t> connectors{1, 2};
     ProvidedIdToken provided_token = get_provided_token(VALID_TOKEN_1, connectors);
 
-    std::thread t1([this, provided_token]() { this->auth_handler->on_token(provided_token); });
-    std::thread t2([this, provided_token]() { this->auth_handler->on_token(provided_token); });
-    std::thread t3([this, provided_token]() { this->auth_handler->on_token(provided_token); });
-    std::thread t4([this, provided_token]() { this->auth_handler->on_token(provided_token); });
+    TokenHandlingResult result1;
+    TokenHandlingResult result2;
+    TokenHandlingResult result3;
+    TokenHandlingResult result4;
+    TokenHandlingResult result5;
+
+    std::thread t1([this, provided_token, &result1]() { result1 = this->auth_handler->on_token(provided_token); });
+
+    // wait so that there is no race condition between the threads
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    
+    std::thread t2([this, provided_token, &result2]() { result2 = this->auth_handler->on_token(provided_token); });
+    std::thread t3([this, provided_token, &result3]() { result3 = this->auth_handler->on_token(provided_token); });
+    std::thread t4([this, provided_token, &result4]() { result4 = this->auth_handler->on_token(provided_token); });
 
     // wait for timeout
     std::this_thread::sleep_for(std::chrono::seconds(CONNECTION_TIMEOUT + 1));
@@ -190,10 +220,16 @@ TEST_F(AuthTest, test_swipe_multiple_times_with_timeout) {
     t3.join();
     t4.join();
 
+    ASSERT_TRUE(result1 == TokenHandlingResult::TIMEOUT);
+    ASSERT_TRUE(result2 == TokenHandlingResult::ALREADY_IN_PROCESS);
+    ASSERT_TRUE(result3 == TokenHandlingResult::ALREADY_IN_PROCESS);
+
+    ASSERT_TRUE(result4 == TokenHandlingResult::ALREADY_IN_PROCESS);
+
     ASSERT_FALSE(this->auth_receiver->get_authorization(0));
     ASSERT_FALSE(this->auth_receiver->get_authorization(1));
 
-    std::thread t5([this, provided_token]() { this->auth_handler->on_token(provided_token); });
+    std::thread t5([this, provided_token, &result5]() { result5 = this->auth_handler->on_token(provided_token); });
 
     SessionEvent session_event;
     session_event.event = SessionEventEnum::SessionStarted;
@@ -202,6 +238,7 @@ TEST_F(AuthTest, test_swipe_multiple_times_with_timeout) {
     t5.join();
     t6.join();
 
+    ASSERT_TRUE(result5 == TokenHandlingResult::ACCEPTED);
     ASSERT_FALSE(this->auth_receiver->get_authorization(0));
     ASSERT_TRUE(this->auth_receiver->get_authorization(1));
 }
@@ -212,8 +249,11 @@ TEST_F(AuthTest, test_two_id_tokens) {
     ProvidedIdToken provided_token_1 = get_provided_token(VALID_TOKEN_1, connectors);
     ProvidedIdToken provided_token_2 = get_provided_token(VALID_TOKEN_2, connectors);
 
-    std::thread t1([this, provided_token_1]() { this->auth_handler->on_token(provided_token_1); });
-    std::thread t2([this, provided_token_2]() { this->auth_handler->on_token(provided_token_2); });
+    TokenHandlingResult result1;
+    TokenHandlingResult result2;
+
+    std::thread t1([this, provided_token_1, &result1]() { result1 = this->auth_handler->on_token(provided_token_1); });
+    std::thread t2([this, provided_token_2, &result2]() { result2 = this->auth_handler->on_token(provided_token_2); });
 
     SessionEvent session_event;
     session_event.event = SessionEventEnum::SessionStarted;
@@ -226,12 +266,17 @@ TEST_F(AuthTest, test_two_id_tokens) {
     t3.join();
     t4.join();
 
+    ASSERT_TRUE(result1 == TokenHandlingResult::ACCEPTED);
+    ASSERT_TRUE(result2 == TokenHandlingResult::ACCEPTED);
     ASSERT_TRUE(this->auth_receiver->get_authorization(0));
     ASSERT_TRUE(this->auth_receiver->get_authorization(1));
 }
 
 /// \brief Test if two transactions can be started for two succeeding plugins before two card swipes
 TEST_F(AuthTest, test_two_plugins) {
+
+    TokenHandlingResult result1;
+    TokenHandlingResult result2;
 
     SessionEvent session_event;
     session_event.event = SessionEventEnum::SessionStarted;
@@ -243,20 +288,25 @@ TEST_F(AuthTest, test_two_plugins) {
     ProvidedIdToken provided_token_1 = get_provided_token(VALID_TOKEN_1, connectors);
     ProvidedIdToken provided_token_2 = get_provided_token(VALID_TOKEN_2, connectors);
 
-    std::thread t3([this, provided_token_1]() { this->auth_handler->on_token(provided_token_1); });
-    std::thread t4([this, provided_token_2]() { this->auth_handler->on_token(provided_token_2); });
+    std::thread t3([this, provided_token_1, &result1]() { result1 = this->auth_handler->on_token(provided_token_1); });
+    std::thread t4([this, provided_token_2, &result2]() { result2 = this->auth_handler->on_token(provided_token_2); });
 
     t1.join();
     t2.join();
     t3.join();
     t4.join();
 
+    ASSERT_TRUE(result1 == TokenHandlingResult::ACCEPTED);
+    ASSERT_TRUE(result2 == TokenHandlingResult::ACCEPTED);
     ASSERT_TRUE(this->auth_receiver->get_authorization(0));
     ASSERT_TRUE(this->auth_receiver->get_authorization(1));
 }
 
-/// \brief Test if ne transactions can be started for two succeeding plugins before one valid and one invalid card swipe
+/// \brief Test if transactions can be started for two succeeding plugins before one valid and one invalid card swipe
 TEST_F(AuthTest, test_two_plugins_with_invalid_rfid) {
+
+    TokenHandlingResult result1;
+    TokenHandlingResult result2;
 
     SessionEvent session_event;
     session_event.event = SessionEventEnum::SessionStarted;
@@ -268,14 +318,16 @@ TEST_F(AuthTest, test_two_plugins_with_invalid_rfid) {
     ProvidedIdToken provided_token_1 = get_provided_token(VALID_TOKEN_1, connectors);
     ProvidedIdToken provided_token_2 = get_provided_token(INVALID_TOKEN, connectors);
 
-    std::thread t3([this, provided_token_1]() { this->auth_handler->on_token(provided_token_1); });
-    std::thread t4([this, provided_token_2]() { this->auth_handler->on_token(provided_token_2); });
+    std::thread t3([this, provided_token_1, &result1]() { result1 = this->auth_handler->on_token(provided_token_1); });
+    std::thread t4([this, provided_token_2, &result2]() { result2 = this->auth_handler->on_token(provided_token_2); });
 
     t1.join();
     t2.join();
     t3.join();
     t4.join();
 
+    ASSERT_TRUE(result1 == TokenHandlingResult::ACCEPTED);
+    ASSERT_TRUE(result2 == TokenHandlingResult::REJECTED);
     ASSERT_TRUE(this->auth_receiver->get_authorization(0));
     ASSERT_FALSE(this->auth_receiver->get_authorization(1));
 }
@@ -283,24 +335,31 @@ TEST_F(AuthTest, test_two_plugins_with_invalid_rfid) {
 /// \brief Test if state permanent fault leads to not provide authorization
 TEST_F(AuthTest, test_faulted_state) {
 
+    TokenHandlingResult result1;
+    TokenHandlingResult result2;
+
     SessionEvent session_event;
     session_event.event = SessionEventEnum::PermanentFault;
     std::thread t1([this, session_event]() { this->auth_handler->handle_session_event(1, session_event); });
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     std::thread t2([this, session_event]() { this->auth_handler->handle_session_event(2, session_event); });
 
     std::vector<int32_t> connectors{1, 2};
     ProvidedIdToken provided_token_1 = get_provided_token(VALID_TOKEN_1, connectors);
     ProvidedIdToken provided_token_2 = get_provided_token(VALID_TOKEN_2, connectors);
 
-    std::thread t3([this, provided_token_1]() { this->auth_handler->on_token(provided_token_1); });
-    std::thread t4([this, provided_token_2]() { this->auth_handler->on_token(provided_token_2); });
+    // wait until state faulted events arrive at auth module
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    std::thread t3([this, provided_token_1, &result1]() { result1 = this->auth_handler->on_token(provided_token_1); });
+    std::thread t4([this, provided_token_2, &result2]() { result2 = this->auth_handler->on_token(provided_token_2); });
 
     t1.join();
     t2.join();
     t3.join();
     t4.join();
 
+    ASSERT_TRUE(result1 == TokenHandlingResult::NO_CONNECTOR_AVAILABLE);
+    ASSERT_TRUE(result2 == TokenHandlingResult::NO_CONNECTOR_AVAILABLE);
     ASSERT_FALSE(this->auth_receiver->get_authorization(0));
     ASSERT_FALSE(this->auth_receiver->get_authorization(1));
 }
@@ -308,33 +367,63 @@ TEST_F(AuthTest, test_faulted_state) {
 /// \brief Test if transaction can be stopped by swiping the card twice
 TEST_F(AuthTest, test_transaction_finish) {
 
-    SessionEvent session_event;
-    session_event.event = SessionEventEnum::SessionStarted;
-    std::thread t1([this, session_event]() { this->auth_handler->handle_session_event(1, session_event); });
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    std::thread t2([this, session_event]() { this->auth_handler->handle_session_event(2, session_event); });
-
+    TokenHandlingResult result1;
+    TokenHandlingResult result2;
+    
     std::vector<int32_t> connectors{1, 2};
     ProvidedIdToken provided_token_1 = get_provided_token(VALID_TOKEN_1, connectors);
     ProvidedIdToken provided_token_2 = get_provided_token(VALID_TOKEN_2, connectors);
 
-    std::thread t3([this, provided_token_1]() { this->auth_handler->on_token(provided_token_1); });
-    std::thread t4([this, provided_token_2]() { this->auth_handler->on_token(provided_token_2); });
+    SessionEvent session_event1;
+    session_event1.event = SessionEventEnum::SessionStarted;
+
+    SessionEvent session_event2;
+    session_event2.event = SessionEventEnum::TransactionStarted;
+    TransactionStarted transaction_event1;
+    transaction_event1.energy_Wh_import = 0;
+    transaction_event1.id_tag = provided_token_1.id_token;
+    transaction_event1.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
+    session_event2.transaction_started = transaction_event1;
+
+    SessionEvent session_event3;
+    session_event3.event = SessionEventEnum::TransactionStarted;
+    TransactionStarted transaction_event2;
+    transaction_event2.energy_Wh_import = 0;
+    transaction_event2.id_tag = provided_token_2.id_token;
+    transaction_event2.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
+    session_event3.transaction_started = transaction_event2;
+
+    std::thread t1([this, session_event1]() { this->auth_handler->handle_session_event(1, session_event1); });
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::thread t2([this, session_event1]() { this->auth_handler->handle_session_event(2, session_event1); });
+
+    std::thread t3([this, provided_token_1, &result1]() { result1 = this->auth_handler->on_token(provided_token_1); });
+    std::thread t4([this, provided_token_2, &result2]() { result2 = this->auth_handler->on_token(provided_token_2); });
+
+    std::thread t5([this, session_event2]() { this->auth_handler->handle_session_event(1, session_event2); });
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::thread t6([this, session_event3]() { this->auth_handler->handle_session_event(2, session_event3); });
 
     t1.join();
     t2.join();
     t3.join();
     t4.join();
-
-    ASSERT_TRUE(this->auth_receiver->get_authorization(0));
-    ASSERT_TRUE(this->auth_receiver->get_authorization(1));
-
-    std::thread t5([this, provided_token_1]() { this->auth_handler->on_token(provided_token_1); });
-    std::thread t6([this, provided_token_2]() { this->auth_handler->on_token(provided_token_2); });
-
     t5.join();
     t6.join();
 
+    ASSERT_TRUE(result1 == TokenHandlingResult::ACCEPTED);
+    ASSERT_TRUE(result2 == TokenHandlingResult::ACCEPTED);
+    ASSERT_TRUE(this->auth_receiver->get_authorization(0));
+    ASSERT_TRUE(this->auth_receiver->get_authorization(1));
+
+    std::thread t7([this, provided_token_1, &result1]() { result1 = this->auth_handler->on_token(provided_token_1); });
+    std::thread t8([this, provided_token_2, &result2]() { result2 = this->auth_handler->on_token(provided_token_2); });
+
+    t7.join();
+    t8.join();
+
+    ASSERT_TRUE(result1 == TokenHandlingResult::USED_TO_STOP_TRANSACTION);
+    ASSERT_TRUE(result2 == TokenHandlingResult::USED_TO_STOP_TRANSACTION);
     ASSERT_FALSE(this->auth_receiver->get_authorization(0));
     ASSERT_FALSE(this->auth_receiver->get_authorization(1));
 }
@@ -342,28 +431,44 @@ TEST_F(AuthTest, test_transaction_finish) {
 /// \brief Test if transaction can be finished with parent_id when prioritize_authorization_over_stopping_transaction is
 /// false
 TEST_F(AuthTest, test_parent_id_finish) {
-    SessionEvent session_event;
-    session_event.event = SessionEventEnum::SessionStarted;
-    std::thread t1([this, session_event]() { this->auth_handler->handle_session_event(1, session_event); });
+
+    TokenHandlingResult result;
 
     std::vector<int32_t> connectors{1, 2};
     ProvidedIdToken provided_token_1 = get_provided_token(VALID_TOKEN_1, connectors);
     ProvidedIdToken provided_token_2 = get_provided_token(VALID_TOKEN_3, connectors);
 
+    SessionEvent session_event1;
+    session_event1.event = SessionEventEnum::SessionStarted;
+    std::thread t1([this, session_event1]() { this->auth_handler->handle_session_event(1, session_event1); });
+
+    SessionEvent session_event2;
+    session_event2.event = SessionEventEnum::TransactionStarted;
+    TransactionStarted transaction_event1;
+    transaction_event1.energy_Wh_import = 0;
+    transaction_event1.id_tag = provided_token_1.id_token;
+    transaction_event1.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
+    session_event2.transaction_started = transaction_event1;
+
     // swipe VALID_TOKEN_1
-    std::thread t2([this, provided_token_1]() { this->auth_handler->on_token(provided_token_1); });
+    std::thread t2([this, provided_token_1, &result]() { result = this->auth_handler->on_token(provided_token_1); });
+
+    std::thread t3([this, session_event2]() { this->auth_handler->handle_session_event(1, session_event2); });
 
     t1.join();
     t2.join();
+    t3.join();
 
+    ASSERT_TRUE(result == TokenHandlingResult::ACCEPTED);
     ASSERT_TRUE(this->auth_receiver->get_authorization(0));
     ASSERT_FALSE(this->auth_receiver->get_authorization(1));
 
     // swipe VALID_TOKEN_3 to finish transaction
-    std::thread t3([this, provided_token_2]() { this->auth_handler->on_token(provided_token_2); });
+    std::thread t4([this, provided_token_2, &result]() { result = this->auth_handler->on_token(provided_token_2); });
 
-    t3.join();
+    t4.join();
 
+    ASSERT_TRUE(result == TokenHandlingResult::USED_TO_STOP_TRANSACTION);
     ASSERT_FALSE(this->auth_receiver->get_authorization(0));
     ASSERT_FALSE(this->auth_receiver->get_authorization(1));
 }
@@ -371,6 +476,8 @@ TEST_F(AuthTest, test_parent_id_finish) {
 /// \brief Test if transaction doenst finished with parent_id when prioritize_authorization_over_stopping_transaction is
 /// true. Instead: Authorization should be given to connector#2
 TEST_F(AuthTest, test_parent_id_no_finish) {
+
+    TokenHandlingResult result;
 
     // this changes the behavior compared to previous test
     this->auth_handler->set_prioritize_authorization_over_stopping_transaction(true);
@@ -384,30 +491,33 @@ TEST_F(AuthTest, test_parent_id_no_finish) {
     ProvidedIdToken provided_token_2 = get_provided_token(VALID_TOKEN_3, connectors);
 
     // swipe VALID_TOKEN_1
-    std::thread t2([this, provided_token_1]() { this->auth_handler->on_token(provided_token_1); });
+    std::thread t2([this, provided_token_1, &result]() { result = this->auth_handler->on_token(provided_token_1); });
 
     t1.join();
     t2.join();
 
+    ASSERT_TRUE(result == TokenHandlingResult::ACCEPTED);
     ASSERT_TRUE(this->auth_receiver->get_authorization(0));
     ASSERT_FALSE(this->auth_receiver->get_authorization(1));
 
     // swipe VALID_TOKEN_3. This does not finish transaction but will provide authorization to connector#2 after plugin
-    std::thread t3([this, provided_token_2]() { this->auth_handler->on_token(provided_token_2); });
+    std::thread t3([this, provided_token_2, &result]() { result = this->auth_handler->on_token(provided_token_2); });
     std::thread t4([this, session_event]() { this->auth_handler->handle_session_event(2, session_event); });
 
     t3.join();
     t4.join();
 
+    ASSERT_TRUE(result == TokenHandlingResult::ACCEPTED);
     ASSERT_TRUE(this->auth_receiver->get_authorization(0));
     ASSERT_TRUE(this->auth_receiver->get_authorization(1));
 }
 
-/// \brief Test if transaction doenst finish with parent_id when prioritize_authorization_over_stopping_transaction is
+/// \brief Test if transaction doesnt finish with parent_id when prioritize_authorization_over_stopping_transaction is
 /// true. Instead: Authorization should be given to connector#2
 TEST_F(AuthTest, test_parent_id_finish_because_no_available_connector) {
 
-    // this changes the behavior compared to previous test
+    TokenHandlingResult result;
+
     this->auth_handler->set_prioritize_authorization_over_stopping_transaction(true);
 
     SessionEvent session_event_1;
@@ -423,11 +533,13 @@ TEST_F(AuthTest, test_parent_id_finish_because_no_available_connector) {
     ProvidedIdToken provided_token_2 = get_provided_token(VALID_TOKEN_3, connectors);
 
     // swipe VALID_TOKEN_1
-    std::thread t3([this, provided_token_1]() { this->auth_handler->on_token(provided_token_1); });
+    std::thread t3([this, provided_token_1, &result]() { result = this->auth_handler->on_token(provided_token_1); });
 
     t1.join();
     t2.join();
     t3.join();
+
+    ASSERT_TRUE(result == TokenHandlingResult::ACCEPTED);
 
     SessionEvent session_event_3;
     session_event_3.event = SessionEventEnum::TransactionStarted;
@@ -435,6 +547,7 @@ TEST_F(AuthTest, test_parent_id_finish_because_no_available_connector) {
     transaction_event.energy_Wh_import = 0;
     transaction_event.id_tag = provided_token_1.id_token;
     transaction_event.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
+    session_event_3.transaction_started = transaction_event;
     std::thread t4([this, session_event_3]() { this->auth_handler->handle_session_event(1, session_event_3); });
 
     t4.join();
@@ -443,10 +556,11 @@ TEST_F(AuthTest, test_parent_id_finish_because_no_available_connector) {
     ASSERT_FALSE(this->auth_receiver->get_authorization(1));
 
     // swipe VALID_TOKEN_3. This does finish transaction because no connector is available
-    std::thread t5([this, provided_token_2]() { this->auth_handler->on_token(provided_token_2); });
+    std::thread t5([this, provided_token_2, &result]() { result = this->auth_handler->on_token(provided_token_2); });
 
     t5.join();
 
+    ASSERT_TRUE(result == TokenHandlingResult::USED_TO_STOP_TRANSACTION);
     ASSERT_FALSE(this->auth_receiver->get_authorization(0));
     ASSERT_FALSE(this->auth_receiver->get_authorization(1));
 }
@@ -479,6 +593,9 @@ TEST_F(AuthTest, test_reservation_in_past) {
 
 /// \brief Test if a token that is not reserved gets rejected and a token that is reserved gets accepted
 TEST_F(AuthTest, test_reservation_with_authorization) {
+
+    TokenHandlingResult result;
+
     Reservation reservation;
     reservation.id_token = VALID_TOKEN_2;
     reservation.reservation_id = 1;
@@ -505,22 +622,26 @@ TEST_F(AuthTest, test_reservation_with_authorization) {
     ProvidedIdToken provided_token_2 = get_provided_token(VALID_TOKEN_2, connectors);
 
     // this token is not valid for the reservation
-    std::thread t3([this, provided_token_1]() { this->auth_handler->on_token(provided_token_1); });
+    std::thread t3([this, provided_token_1, &result]() { result = this->auth_handler->on_token(provided_token_1); });
     t3.join();
 
+    ASSERT_TRUE(result == TokenHandlingResult::REJECTED);
     ASSERT_FALSE(this->auth_receiver->get_authorization(0));
     ASSERT_FALSE(this->auth_receiver->get_authorization(1));
 
     // this token is valid for the reservation
-    std::thread t4([this, provided_token_2]() { this->auth_handler->on_token(provided_token_2); });
+    std::thread t4([this, provided_token_2, &result]() { result = this->auth_handler->on_token(provided_token_2); });
     t4.join();
 
+    ASSERT_TRUE(result == TokenHandlingResult::ACCEPTED);
     ASSERT_TRUE(this->auth_receiver->get_authorization(0));
     ASSERT_FALSE(this->auth_receiver->get_authorization(1));
 }
 
 /// \brief Test complete happy event flow of a session
 TEST_F(AuthTest, test_complete_event_flow) {
+
+    TokenHandlingResult result;
 
     std::vector<int32_t> connectors{1};
     ProvidedIdToken provided_token = get_provided_token(VALID_TOKEN_1, connectors);
@@ -554,26 +675,38 @@ TEST_F(AuthTest, test_complete_event_flow) {
 
     this->auth_handler->handle_session_event(1, session_event_1);
 
-    this->auth_handler->on_token(provided_token);
+    result = this->auth_handler->on_token(provided_token);
+
+    ASSERT_TRUE(result == TokenHandlingResult::ACCEPTED);
     ASSERT_TRUE(this->auth_receiver->get_authorization(0));
     ASSERT_FALSE(this->auth_receiver->get_authorization(1));
 
+    // wait for state machine to process session finished event
     this->auth_handler->handle_session_event(1, session_event_2);
+    std::this_thread::sleep_for(std::chrono::milliseconds(25));
     this->auth_handler->handle_session_event(1, session_event_3);
+    std::this_thread::sleep_for(std::chrono::milliseconds(25));
     this->auth_handler->handle_session_event(1, session_event_4);
+    std::this_thread::sleep_for(std::chrono::milliseconds(25));
     this->auth_handler->handle_session_event(1, session_event_5);
+    std::this_thread::sleep_for(std::chrono::milliseconds(25));
     this->auth_handler->handle_session_event(1, session_event_6);
-
+    std::this_thread::sleep_for(std::chrono::milliseconds(25));
     this->auth_receiver->reset();
 
     this->auth_handler->handle_session_event(1, session_event_1);
-    this->auth_handler->on_token(provided_token);
+    result = this->auth_handler->on_token(provided_token);
+    
+    ASSERT_TRUE(result == TokenHandlingResult::ACCEPTED);
     ASSERT_TRUE(this->auth_receiver->get_authorization(0));
     ASSERT_FALSE(this->auth_receiver->get_authorization(1));
 }
 
 /// \brief Test if a token that is not reserved gets rejected and a parent_id_token that is reserved gets accepted
 TEST_F(AuthTest, test_reservation_with_parent_id_tag) {
+    
+    TokenHandlingResult result;
+    
     Reservation reservation;
     reservation.id_token = VALID_TOKEN_1;
     reservation.reservation_id = 1;
@@ -601,18 +734,76 @@ TEST_F(AuthTest, test_reservation_with_parent_id_tag) {
     ProvidedIdToken provided_token_2 = get_provided_token(VALID_TOKEN_3, connectors);
 
     // this token is not valid for the reservation
-    std::thread t3([this, provided_token_1]() { this->auth_handler->on_token(provided_token_1); });
+    std::thread t3([this, provided_token_1, &result]() { result = this->auth_handler->on_token(provided_token_1); });
     t3.join();
 
+    ASSERT_TRUE(result == TokenHandlingResult::REJECTED);
     ASSERT_FALSE(this->auth_receiver->get_authorization(0));
     ASSERT_FALSE(this->auth_receiver->get_authorization(1));
 
     // this token is valid for the reservation because the parent id tags match
-    std::thread t4([this, provided_token_2]() { this->auth_handler->on_token(provided_token_2); });
+    std::thread t4([this, provided_token_2, &result]() { result = this->auth_handler->on_token(provided_token_2); });
     t4.join();
 
+    ASSERT_TRUE(result == TokenHandlingResult::ACCEPTED);
     ASSERT_TRUE(this->auth_receiver->get_authorization(0));
     ASSERT_FALSE(this->auth_receiver->get_authorization(1));
+}
+
+/// \brief Test if authorization is withdrawn after a timeout and new authorization is provided after the next swipe
+TEST_F(AuthTest, test_authorization_timeout_and_reswipe) {
+
+    std::vector<int32_t> connectors{1, 2};
+    ProvidedIdToken provided_token = get_provided_token(VALID_TOKEN_1, connectors);
+
+    TokenHandlingResult result;
+    std::thread t1([this, provided_token, &result]() { result = this->auth_handler->on_token(provided_token); });
+
+    t1.join();
+    ASSERT_TRUE(result == TokenHandlingResult::TIMEOUT);
+    ASSERT_FALSE(this->auth_receiver->get_authorization(0));
+
+    std::thread t2([this, provided_token, &result]() { result = this->auth_handler->on_token(provided_token); });
+
+    SessionEvent session_event;
+    session_event.event = SessionEventEnum::SessionStarted;
+    std::thread t3([this, session_event]() { this->auth_handler->handle_session_event(1, session_event); });
+
+    t2.join();
+    t3.join();
+
+    ASSERT_TRUE(result == TokenHandlingResult::ACCEPTED);
+    ASSERT_TRUE(this->auth_receiver->get_authorization(0));
+}
+
+/// \brief Test if response is ALREADY_IN_PROCESS with authorization was provided but transaction has not yet been started
+TEST_F(AuthTest, test_authorization_without_transaction) {
+
+    std::vector<int32_t> connectors{1};
+    ProvidedIdToken provided_token = get_provided_token(VALID_TOKEN_1, connectors);
+
+    TokenHandlingResult result;
+    std::thread t1([this, provided_token, &result]() { result = this->auth_handler->on_token(provided_token); });
+    t1.join();
+    
+    ASSERT_TRUE(result == TokenHandlingResult::ACCEPTED);
+    ASSERT_TRUE(this->auth_receiver->get_authorization(0));
+
+    std::thread t2([this, provided_token, &result]() { result = this->auth_handler->on_token(provided_token); });
+    t2.join();
+
+    ASSERT_TRUE(result == TokenHandlingResult::ALREADY_IN_PROCESS);
+    ASSERT_TRUE(this->auth_receiver->get_authorization(0));
+
+    // wait for timeout
+    std::this_thread::sleep_for(std::chrono::seconds(CONNECTION_TIMEOUT + 1));
+
+    std::thread t3([this, provided_token, &result]() { result = this->auth_handler->on_token(provided_token); });
+    t3.join();
+
+    ASSERT_TRUE(result == TokenHandlingResult::ACCEPTED);
+    ASSERT_TRUE(this->auth_receiver->get_authorization(0));
+
 }
 
 } // namespace module
