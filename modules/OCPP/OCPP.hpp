@@ -43,7 +43,6 @@ struct Conf {
     std::string ChargePointConfigPath;
     std::string DatabasePath;
     std::string SchemasPath;
-    std::string ScriptsPath;
     bool EnableExternalWebsocketControl;
 };
 
