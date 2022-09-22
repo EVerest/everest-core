@@ -13,7 +13,6 @@ ev_setup_cpp_module()
 target_link_libraries(${MODULE_NAME}
     PRIVATE
     everest::modbus
-    date::date
 )
 
 target_compile_features(${MODULE_NAME} PUBLIC cxx_std_17)

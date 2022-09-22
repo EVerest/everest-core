@@ -76,11 +76,6 @@ private:
     std::unique_ptr<everest::modbus::ModbusRTUClient> modbus_client;
     std::mutex serial_mutex;
 
-    everest::connection::SerialDeviceConfiguration::BaudRate baudrate_from_int(int baudrate);
-    template <typename T, typename U> void append_array(std::vector<T>& m, const std::vector<U>& a);
-    bool check_crc(const uint8_t* buffer, size_t len);
-    std::vector<uint16_t> toLittleEndian16(const std::vector<uint8_t> response);
-    std::vector<int> toLittleEndianInt(const std::vector<uint8_t> response);
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 
