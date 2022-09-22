@@ -26,6 +26,19 @@ using namespace types::reservation;
 
 namespace module {
 
+enum class TokenHandlingResult {
+    ACCEPTED,
+    ALREADY_IN_PROCESS,
+    REJECTED,
+    USED_TO_STOP_TRANSACTION,
+    TIMEOUT,
+    NO_CONNECTOR_AVAILABLE
+};
+
+namespace conversions {
+std::string token_handling_result_to_string(const TokenHandlingResult& result);
+} // namespace conversions
+
 /**
  * @brief This class handles authorization and reservation requests. It keeps track of the state of each connector and
  * validates incoming token and reservation requests accordingly.
@@ -52,7 +65,7 @@ public:
      *
      * @param provided_token
      */
-    void on_token(const ProvidedIdToken& provided_token);
+    TokenHandlingResult on_token(const ProvidedIdToken& provided_token);
 
     /**
      * @brief Handler for new incoming \p reservation for the given \p connector . Places the reservation if possible.
@@ -182,10 +195,10 @@ private:
 
     std::vector<int> get_referenced_connectors(const ProvidedIdToken& provided_token);
     int used_for_transaction(const std::vector<int>& connectors, const std::string& id_token);
-    bool is_token_already_in_process(const std::string& id_token);
+    bool is_token_already_in_process(const std::string& id_token, const std::vector<int> &referenced_connectors);
     bool any_connector_available(const std::vector<int>& connectors);
 
-    void handle_token(const ProvidedIdToken& provided_token);
+    TokenHandlingResult handle_token(const ProvidedIdToken& provided_token);
 
     /**
      * @brief Method selects a connector based on the configured selection algorithm. It might block until an event

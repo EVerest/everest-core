@@ -6,6 +6,27 @@
 
 namespace module {
 
+namespace conversions {
+std::string token_handling_result_to_string(const TokenHandlingResult& result) {
+    switch (result) {
+    case TokenHandlingResult::ACCEPTED:
+        return "ACCEPTED";
+    case TokenHandlingResult::ALREADY_IN_PROCESS:
+        return "ALREADY_IN_PROCESS";
+    case TokenHandlingResult::NO_CONNECTOR_AVAILABLE:
+        return "NO_CONNECTOR_AVAILABLE";
+    case TokenHandlingResult::REJECTED:
+        return "REJECTED";
+    case TokenHandlingResult::TIMEOUT:
+        return "TIMEOUT";
+    case TokenHandlingResult::USED_TO_STOP_TRANSACTION:
+        return "USED_TO_STOP_TRANSACTION";
+    default:
+        throw std::runtime_error("No known conversion for the given token handling result");
+    }
+}
+} // namespace conversions
+
 AuthHandler::AuthHandler(const SelectionAlgorithm& selection_algorithm, const int connection_timeout,
                          bool prioritize_authorization_over_stopping_transaction) :
     selection_algorithm(selection_algorithm),
@@ -25,29 +46,39 @@ void AuthHandler::init_connector(const int connector_id, const int evse_index) {
     this->reservation_handler.init_connector(connector_id);
 }
 
-void AuthHandler::on_token(const ProvidedIdToken& provided_token) {
+TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token) {
+
+    TokenHandlingResult result;
+
     // check if token is already currently processed
     EVLOG_info << "Received new token: " << provided_token;
+    const auto referenced_connectors = this->get_referenced_connectors(provided_token);
     this->token_in_process_mutex.lock();
-    if (!this->is_token_already_in_process(provided_token.id_token)) {
+    if (!this->is_token_already_in_process(provided_token.id_token, referenced_connectors)) {
         // process token if not already in process
-        const auto referenced_connectors = this->get_referenced_connectors(provided_token);
         this->tokens_in_process.insert(provided_token.id_token);
         this->token_in_process_mutex.unlock();
-        this->handle_token(provided_token);
+        result = this->handle_token(provided_token);
         this->unlock_referenced_connectors(referenced_connectors);
     } else {
         // do nothing if token is currently processed
         EVLOG_info << "Received token " << provided_token.id_token << " repeatedly while still processing it";
         this->token_in_process_mutex.unlock();
-        return;
+        result = TokenHandlingResult::ALREADY_IN_PROCESS;
     }
-    this->token_in_process_mutex.lock();
-    this->tokens_in_process.erase(provided_token.id_token);
-    this->token_in_process_mutex.unlock();
+
+    if (result != TokenHandlingResult::ALREADY_IN_PROCESS) {
+        this->token_in_process_mutex.lock();
+        this->tokens_in_process.erase(provided_token.id_token);
+        this->token_in_process_mutex.unlock();
+    }
+
+    EVLOG_info << "Result for token: " << provided_token.id_token << ": "
+               << conversions::token_handling_result_to_string(result);
+    return result;
 }
 
-void AuthHandler::handle_token(const ProvidedIdToken& provided_token) {
+TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_token) {
     std::vector<int> referenced_connectors = this->get_referenced_connectors(provided_token);
 
     // check if id_token is used for an active transaction
@@ -57,7 +88,7 @@ void AuthHandler::handle_token(const ProvidedIdToken& provided_token) {
         this->stop_transaction_callback(this->connectors.at(connector_used_for_transaction)->evse_index,
                                         StopTransactionReason::Local);
         EVLOG_info << "Transaction was stopped because id_token was used for transaction";
-        return;
+        return TokenHandlingResult::USED_TO_STOP_TRANSACTION;
     }
 
     // validate
@@ -88,10 +119,16 @@ void AuthHandler::handle_token(const ProvidedIdToken& provided_token) {
                 const auto connector_used_for_transaction =
                     this->used_for_transaction(referenced_connectors, validation_result.parent_id_token.value());
                 if (connector_used_for_transaction != -1) {
-                    this->stop_transaction_callback(this->connectors.at(connector_used_for_transaction)->evse_index,
-                                                    StopTransactionReason::Local);
-                    EVLOG_info << "Transaction was stopped because parent_id_token was used for transaction";
-                    return;
+                    const auto connector = this->connectors.at(connector_used_for_transaction)->connector;
+                    // only stop transaction if a transaction is active
+                    if (!connector.transaction_active) {
+                        return TokenHandlingResult::ALREADY_IN_PROCESS;
+                    } else {
+                        this->stop_transaction_callback(this->connectors.at(connector_used_for_transaction)->evse_index,
+                                                        StopTransactionReason::Local);
+                        EVLOG_info << "Transaction was stopped because parent_id_token was used for transaction";
+                        return TokenHandlingResult::USED_TO_STOP_TRANSACTION;
+                    }
                 }
             }
         }
@@ -99,7 +136,7 @@ void AuthHandler::handle_token(const ProvidedIdToken& provided_token) {
 
     // check if any connector is available
     if (!this->any_connector_available(referenced_connectors)) {
-        return;
+        return TokenHandlingResult::NO_CONNECTOR_AVAILABLE;
     }
 
     if (!validation_results.empty()) {
@@ -131,16 +168,20 @@ void AuthHandler::handle_token(const ProvidedIdToken& provided_token) {
                     }
                 } else {
                     EVLOG_info << "Timeout while selecting connector for provided token: " << provided_token;
-                    return;
+                    return TokenHandlingResult::TIMEOUT;
                 }
             }
             i++;
         }
-        if (!authorized) {
+        if (authorized) {
+            return TokenHandlingResult::ACCEPTED;
+        } else {
             EVLOG_debug << "id_token could not be validated by any validator";
+            return TokenHandlingResult::REJECTED;
         }
     } else {
         EVLOG_warning << "No validation result was received by any validator.";
+        return TokenHandlingResult::REJECTED;
     }
 }
 
@@ -187,9 +228,23 @@ int AuthHandler::used_for_transaction(const std::vector<int>& connector_ids, con
     return -1;
 }
 
-bool AuthHandler::is_token_already_in_process(const std::string& id_token) {
+bool AuthHandler::is_token_already_in_process(const std::string& id_token,
+                                              const std::vector<int> &referenced_connectors) {
+
     // checks if the token is currently already processed by the module (because already swiped)
-    return this->tokens_in_process.find(id_token) != this->tokens_in_process.end();
+    if (this->tokens_in_process.find(id_token) != this->tokens_in_process.end()) {
+        return true;
+    } else {
+        // check if id_token was already used to authorize evse but no transaction has been started yet
+        for (const auto connector_id : referenced_connectors) {
+            const auto connector = this->connectors.at(connector_id)->connector;
+            if (connector.identifier.has_value() && connector.identifier.value().id_token == id_token &&
+                !connector.transaction_active) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 bool AuthHandler::any_connector_available(const std::vector<int>& connector_ids) {
@@ -269,8 +324,9 @@ void AuthHandler::authorize_evse(int connector_id, const Identifier& identifier)
     this->connectors.at(connector_id)->timeout_timer.stop();
     this->connectors.at(connector_id)
         ->timeout_timer.timeout(
-            [this, evse_index]() {
+            [this, evse_index, connector_id]() {
                 EVLOG_info << "Authorization timeout for evse#" << evse_index;
+                this->connectors.at(connector_id)->connector.identifier = boost::none;
                 this->withdraw_authorization_callback(evse_index);
             },
             std::chrono::seconds(this->connection_timeout));
@@ -321,10 +377,12 @@ void AuthHandler::handle_session_event(const int connector_id, const SessionEven
                 std::chrono::seconds(this->connection_timeout));
         break;
     case SessionEventEnum::TransactionStarted:
+        this->connectors.at(connector_id)->connector.transaction_active = true;
         this->connectors.at(connector_id)->connector.submit_event(Event_Transaction_Started());
         this->connectors.at(connector_id)->timeout_timer.stop();
         break;
     case SessionEventEnum::TransactionFinished:
+        this->connectors.at(connector_id)->connector.transaction_active = false;
         this->connectors.at(connector_id)->connector.identifier = boost::none;
         break;
     case SessionEventEnum::SessionFinished:
