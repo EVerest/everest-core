@@ -32,6 +32,7 @@ function (ev_add_interfaces)
             "Generating/updating interface files ..."
         COMMAND
             ${EV_CLI} interface generate-headers
+                --disable-clang-format
                 --schemas-dir "$<TARGET_PROPERTY:generate_cpp_files,EVEREST_SCHEMA_DIR>"
                 --output-dir "$<TARGET_PROPERTY:generate_cpp_files,EVEREST_GENERATED_INCLUDE_DIR>/generated/interfaces"
         COMMAND
@@ -66,6 +67,7 @@ function (ev_add_types)
             "Generating/updating type files ..."
         COMMAND
             ${EV_CLI} types generate-headers
+                --disable-clang-format
                 --schemas-dir "$<TARGET_PROPERTY:generate_cpp_files,EVEREST_SCHEMA_DIR>"
                 --output-dir "$<TARGET_PROPERTY:generate_cpp_files,EVEREST_GENERATED_INCLUDE_DIR>/generated/types"
         COMMAND
@@ -119,6 +121,7 @@ function(ev_setup_cpp_module)
             ${MODULE_LOADER_DIR}/ld-ev.cpp
         COMMAND
             ${EV_CLI} module generate-loader
+                --disable-clang-format
                 --schemas-dir "$<TARGET_PROPERTY:generate_cpp_files,EVEREST_SCHEMA_DIR>"
                 --output-dir ${GENERATED_MODULE_DIR}
                 ${MODULE_NAME}
