@@ -276,30 +276,6 @@
             }
         },
         "Limits": {
-            "description": "Limits type of this EVSE",
-            "type": "object",
-            "required": [
-                "max_current",
-                "nr_of_phases_available"
-            ],
-            "properties": {
-                "uuid": {
-                    "description": "This module's UUID for global identification",
-                    "type": "string"
-                },
-                "max_current": {
-                    "description": "Instantaneous maximum current available to car",
-                    "type": "number"
-                },
-                "nr_of_phases_available": {
-                    "description": "Instantaneous phase count available to car",
-                    "type": "integer",
-                    "minimum": 1,
-                    "maximum": 3
-                }
-            }
-        },
-        "Limits": {
             "description": "Limits of this EVSE",
             "type": "object",
             "additionalProperties": false,
