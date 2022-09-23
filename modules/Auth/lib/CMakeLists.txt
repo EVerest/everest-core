@@ -11,10 +11,12 @@ target_sources(auth_handler PRIVATE
 
 get_target_property(GENERATED_INCLUDE_DIR generate_cpp_files EVEREST_GENERATED_INCLUDE_DIR)
 
-target_include_directories(auth_handler PRIVATE 
+target_include_directories(auth_handler PRIVATE
     ${INCLUDE_DIR}
     ${GENERATED_INCLUDE_DIR}
 )
+
+add_dependencies(auth_handler generate_cpp_files)
 
 target_link_libraries(auth_handler
 PUBLIC

@@ -320,7 +320,7 @@ void AuthHandler::authorize_evse(int connector_id, const Identifier& identifier)
     this->connectors.at(connector_id)->connector.identifier.emplace(identifier);
     this->authorize_callback(evse_index, identifier.id_token);
 
-    std::lock_guard lk(this->timer_mutex);
+    std::lock_guard<std::mutex> lk(this->timer_mutex);
     this->connectors.at(connector_id)->timeout_timer.stop();
     this->connectors.at(connector_id)
         ->timeout_timer.timeout(
@@ -361,7 +361,7 @@ void AuthHandler::call_reservation_cancelled(const int& connector_id) {
 
 void AuthHandler::handle_session_event(const int connector_id, const SessionEvent& event) {
     const auto event_type = event.event;
-    std::lock_guard lk(this->timer_mutex);
+    std::lock_guard<std::mutex> lk(this->timer_mutex);
     switch (event_type) {
     case SessionEventEnum::SessionStarted:
         this->connectors.at(connector_id)->connector.is_reservable = false;

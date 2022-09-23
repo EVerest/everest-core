@@ -55,6 +55,7 @@ else()
     find_package(everest-sunspec REQUIRED)
     find_package(everest-modbus REQUIRED)
     find_package(everest-ocpp REQUIRED)
+    find_package(everest-timer REQUIRED)
 
     find_package(pugixml REQUIRED)
 

@@ -45,7 +45,7 @@ types::reservation::ReservationResult ReservationHandler::reserve(int connector,
 
     if (!this->reservations.count(connector)) {
         this->reservations[connector] = reservation;
-        std::lock_guard lk(this->timer_mutex);
+        std::lock_guard<std::mutex> lk(this->timer_mutex);
         this->connector_to_reservation_timeout_timer_map[connector]->at(
             [this, reservation, connector]() {
                 EVLOG_info << "Reservation expired for connector#" << connector;
@@ -68,7 +68,7 @@ int ReservationHandler::cancel_reservation(int reservation_id) {
         }
     }
     if (connector != -1) {
-        std::lock_guard lk(this->timer_mutex);
+        std::lock_guard<std::mutex> lk(this->timer_mutex);
         this->connector_to_reservation_timeout_timer_map[connector]->stop();
         auto it = this->reservations.find(connector);
         this->reservations.erase(it);
