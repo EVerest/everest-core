@@ -137,12 +137,12 @@ void systemImpl::download_signed_firmware(const types::system::FirmwareUpdateReq
             << "Received Firmware update request and firmware update already running - cancelling firmware update";
         this->interrupt_firmware_download.exchange(true);
         EVLOG_info << "Waiting for other firmware download to finish...";
-        std::unique_lock lk(this->firmware_update_mutex);
+        std::unique_lock<std::mutex> lk(this->firmware_update_mutex);
         this->firmware_update_cv.wait(lk, [this]() { return !this->firmware_download_running; });
         EVLOG_info << "Previous Firmware download finished!";
     }
 
-    std::lock_guard lg(this->firmware_update_mutex);
+    std::lock_guard<std::mutex> lg(this->firmware_update_mutex);
     EVLOG_info << "Starting Firmware update";
     this->interrupt_firmware_download.exchange(false);
     this->firmware_download_running = true;
@@ -290,12 +290,12 @@ systemImpl::handle_upload_logs(types::system::UploadLogsRequest& upload_logs_req
             EVLOG_info << "Received Log upload request and log upload already running - cancelling current upload";
             this->interrupt_log_upload.exchange(true);
             EVLOG_info << "Waiting for other log upload to finish...";
-            std::unique_lock lk(this->log_upload_mutex);
+            std::unique_lock<std::mutex> lk(this->log_upload_mutex);
             this->log_upload_cv.wait(lk, [this]() { return !this->log_upload_running; });
             EVLOG_info << "Previous Log upload finished!";
         }
 
-        std::lock_guard lg(this->log_upload_mutex);
+        std::lock_guard<std::mutex> lg(this->log_upload_mutex);
         EVLOG_info << "Starting upload of log file";
         this->interrupt_log_upload.exchange(false);
         this->log_upload_running = true;
