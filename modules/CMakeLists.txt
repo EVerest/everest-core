@@ -20,7 +20,6 @@ ev_add_modules(
     JsTibber
     JsYetiSimulator
     JsSlacSimulator
-    ModbusMeter
     OCPP
     PersistentStore
     PN532TokenProvider

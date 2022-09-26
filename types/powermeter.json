@@ -2,7 +2,7 @@
     "description": "Powermeter types",
     "types": {
         "Powermeter": {
-            "description": "Measured dataset",
+            "description": "Measured dataset (AC or DC)",
             "type": "object",
             "additionalProperties": false,
             "required": [
@@ -12,14 +12,15 @@
             "properties": {
                 "timestamp": {
                     "description": "Timestamp of measurement",
-                    "type": "number"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "meter_id": {
                     "description": "A (user defined) meter if (e.g. id printed on the case)",
                     "type": "string"
                 },
                 "phase_seq_error": {
-                    "description": "true for 3 phase rotation error (ccw)",
+                    "description": "AC only: true for 3 phase rotation error (ccw)",
                     "type": "boolean"
                 },
                 "energy_Wh_import": {

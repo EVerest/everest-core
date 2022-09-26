@@ -277,13 +277,15 @@ void EvseManager::ready() {
         mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter/phaseSeqError", config.connector_id),
                      powermeter.phase_seq_error.get());
         mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter/time_stamp", config.connector_id),
-                     (int)powermeter.timestamp);
+                     powermeter.timestamp);
         mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter/totalKw", config.connector_id),
-                     (powermeter.power_W.get().L1.get() + powermeter.power_W.get().L2.get() + powermeter.power_W.get().L3.get()) / 1000., 1);
+                     (powermeter.power_W.get().L1.get() + powermeter.power_W.get().L2.get() +
+                      powermeter.power_W.get().L3.get()) /
+                         1000.,
+                     1);
         mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter/totalKWattHr", config.connector_id),
                      powermeter.energy_Wh_import.total / 1000.);
-        mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter_json", config.connector_id),
-                     p.dump());
+        mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter_json", config.connector_id), p.dump());
         // /External Nodered interface
     });
 
@@ -483,11 +485,11 @@ void EvseManager::log_v2g_message(Object m) {
 
     // All messages from EVSE contain Req and all originating from Car contain Res
     if (msg.find("Res") == std::string::npos) {
-        session_log.car(true, fmt::format("V2G {}", msg), xml, m["V2G_Message_EXI_Hex"],
-                        m["V2G_Message_EXI_Base64"], json_str);
+        session_log.car(true, fmt::format("V2G {}", msg), xml, m["V2G_Message_EXI_Hex"], m["V2G_Message_EXI_Base64"],
+                        json_str);
     } else {
-        session_log.evse(true, fmt::format("V2G {}", msg), xml, m["V2G_Message_EXI_Hex"],
-                         m["V2G_Message_EXI_Base64"], json_str);
+        session_log.evse(true, fmt::format("V2G {}", msg), xml, m["V2G_Message_EXI_Hex"], m["V2G_Message_EXI_Base64"],
+                         json_str);
     }
 }
 
