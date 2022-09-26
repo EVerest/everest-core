@@ -94,6 +94,7 @@ void Setup::ready() {
     this->publish_application_info_thread = std::thread([this]() {
         while (true) {
             this->publish_supported_features();
+            this->publish_application_info();
             std::this_thread::sleep_for(std::chrono::seconds(1));
         }
     });
