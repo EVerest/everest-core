@@ -260,7 +260,7 @@ void EvseManager::ready() {
 
     r_bsp->subscribe_nr_of_phases_available([this](int n) { signalNrOfPhasesAvailable(n); });
 
-    r_powermeter->subscribe_powermeter([this](types::powermeter::Powermeter powermeter) {
+    r_powermeter->subscribe_powermeter([this](types::powermeter::PowermeterAC powermeter) {
         json p = powermeter;
         // Inform charger about current charging current. This is used for slow OC detection.
         charger->setCurrentDrawnByVehicle(p["current_A"]["L1"], p["current_A"]["L2"], p["current_A"]["L3"]);

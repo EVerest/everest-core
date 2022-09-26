@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifndef POWERMETER_POWERMETER_IMPL_HPP
-#define POWERMETER_POWERMETER_IMPL_HPP
+#ifndef POWERMETER_POWERMETER_AC_IMPL_HPP
+#define POWERMETER_POWERMETER_AC_IMPL_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
 // template version 3
 //
 
-#include <generated/interfaces/powermeter/Implementation.hpp>
+#include <generated/interfaces/powermeter_AC/Implementation.hpp>
 
 #include "../YetiDriver.hpp"
 
@@ -21,11 +21,11 @@ namespace powermeter {
 
 struct Conf {};
 
-class powermeterImpl : public powermeterImplBase {
+class powermeter_ACImpl : public powermeter_ACImplBase {
 public:
-    powermeterImpl() = delete;
-    powermeterImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<YetiDriver>& mod, Conf& config) :
-        powermeterImplBase(ev, "powermeter"), mod(mod), config(config){};
+    powermeter_ACImpl() = delete;
+    powermeter_ACImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<YetiDriver>& mod, Conf& config) :
+        powermeter_ACImplBase(ev, "powermeter"), mod(mod), config(config){};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here
@@ -58,4 +58,4 @@ private:
 } // namespace powermeter
 } // namespace module
 
-#endif // POWERMETER_POWERMETER_IMPL_HPP
+#endif // POWERMETER_POWERMETER_AC_IMPL_HPP

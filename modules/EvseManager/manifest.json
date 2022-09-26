@@ -134,7 +134,7 @@
 			"interface": "board_support_AC"
 		},
 		"powermeter": {
-			"interface": "powermeter"
+			"interface": "powermeter_AC"
 		},
 		"slac": {
 			"interface": "slac",

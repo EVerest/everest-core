@@ -121,7 +121,7 @@ void API::init() {
         std::string var_base = evse_base + "/var/";
 
         std::string var_powermeter = var_base + "powermeter";
-        evse->subscribe_powermeter([this, var_powermeter, &session_info](types::powermeter::Powermeter powermeter) {
+        evse->subscribe_powermeter([this, var_powermeter, &session_info](types::powermeter::PowermeterAC powermeter) {
             json powermeter_json = powermeter;
             this->mqtt.publish(var_powermeter, powermeter_json.dump());
             session_info->set_latest_energy_wh(powermeter_json.at("energy_Wh_import").at("total"));

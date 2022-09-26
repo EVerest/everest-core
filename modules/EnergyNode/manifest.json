@@ -26,7 +26,7 @@
             "max_connections": 128
         },
         "powermeter": {
-            "interface": "powermeter",
+            "interface": "powermeter_AC",
             "min_connections": 0,
             "max_connections": 128
         },

@@ -3,7 +3,7 @@
 	"provides": {
 		"main": {
 			"description": "This is the main unit of the module",
-			"interface": "powermeter",
+			"interface": "powermeter_AC",
 			"config": {
 				"modbus_ip_address": {
 				    "description": "The ip address which should be used to get the modbus values",

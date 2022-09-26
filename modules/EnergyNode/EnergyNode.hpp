@@ -16,7 +16,7 @@
 // headers for required interface implementations
 #include <generated/interfaces/energy/Interface.hpp>
 #include <generated/interfaces/energy_price_information/Interface.hpp>
-#include <generated/interfaces/powermeter/Interface.hpp>
+#include <generated/interfaces/powermeter_AC/Interface.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
@@ -34,7 +34,7 @@ public:
     EnergyNode() = delete;
     EnergyNode(const ModuleInfo& info, std::unique_ptr<energyImplBase> p_energy_grid,
                std::vector<std::unique_ptr<energyIntf>> r_energy_consumer,
-               std::vector<std::unique_ptr<powermeterIntf>> r_powermeter,
+               std::vector<std::unique_ptr<powermeter_ACIntf>> r_powermeter,
                std::vector<std::unique_ptr<energy_price_informationIntf>> r_price_information, Conf& config) :
         ModuleBase(info),
         p_energy_grid(std::move(p_energy_grid)),
@@ -46,7 +46,7 @@ public:
     const Conf& config;
     const std::unique_ptr<energyImplBase> p_energy_grid;
     const std::vector<std::unique_ptr<energyIntf>> r_energy_consumer;
-    const std::vector<std::unique_ptr<powermeterIntf>> r_powermeter;
+    const std::vector<std::unique_ptr<powermeter_ACIntf>> r_powermeter;
     const std::vector<std::unique_ptr<energy_price_informationIntf>> r_price_information;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1

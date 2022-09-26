@@ -289,7 +289,7 @@ void OCPP::ready() {
                                                "starting with 1. This is mandatory when using the OCPP module"));
         }
 
-        evse->subscribe_powermeter([this, connector](types::powermeter::Powermeter powermeter) {
+        evse->subscribe_powermeter([this, connector](types::powermeter::PowermeterAC powermeter) {
             json powermeter_json = powermeter;
             this->charge_point->on_meter_values(connector, powermeter_json); //
         });

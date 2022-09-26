@@ -11,7 +11,7 @@
 #include "ld-ev.hpp"
 
 // headers for provided interface implementations
-#include <generated/interfaces/powermeter/Implementation.hpp>
+#include <generated/interfaces/powermeter_AC/Implementation.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
@@ -25,12 +25,12 @@ class ModbusMeter : public Everest::ModuleBase {
 public:
     ModbusMeter() = delete;
     ModbusMeter(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
-                std::unique_ptr<powermeterImplBase> p_main, Conf& config) :
+                std::unique_ptr<powermeter_ACImplBase> p_main, Conf& config) :
         ModuleBase(info), mqtt(mqtt_provider), p_main(std::move(p_main)), config(config){};
 
     const Conf& config;
     Everest::MqttProvider& mqtt;
-    const std::unique_ptr<powermeterImplBase> p_main;
+    const std::unique_ptr<powermeter_ACImplBase> p_main;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here

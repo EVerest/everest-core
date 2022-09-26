@@ -28,7 +28,7 @@ target_link_libraries(${MODULE_NAME}
 
 target_sources(${MODULE_NAME}
     PRIVATE
-        "powermeter/powermeterImpl.cpp"
+        "powermeter/powermeter_ACImpl.cpp"
         "board_support/board_support_ACImpl.cpp"
         "yeti_extras/yeti_extrasImpl.cpp"
         "debug_yeti/debug_jsonImpl.cpp"

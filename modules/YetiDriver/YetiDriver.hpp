@@ -13,7 +13,7 @@
 // headers for provided interface implementations
 #include <generated/interfaces/board_support_AC/Implementation.hpp>
 #include <generated/interfaces/debug_json/Implementation.hpp>
-#include <generated/interfaces/powermeter/Implementation.hpp>
+#include <generated/interfaces/powermeter_AC/Implementation.hpp>
 #include <generated/interfaces/yeti_extras/Implementation.hpp>
 #include <generated/interfaces/yeti_simulation_control/Implementation.hpp>
 
@@ -34,7 +34,7 @@ class YetiDriver : public Everest::ModuleBase {
 public:
     YetiDriver() = delete;
     YetiDriver(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
-               std::unique_ptr<powermeterImplBase> p_powermeter,
+               std::unique_ptr<powermeter_ACImplBase> p_powermeter,
                std::unique_ptr<board_support_ACImplBase> p_board_support,
                std::unique_ptr<yeti_extrasImplBase> p_yeti_extras, std::unique_ptr<debug_jsonImplBase> p_debug_yeti,
                std::unique_ptr<debug_jsonImplBase> p_debug_powermeter,
@@ -54,7 +54,7 @@ public:
 
     const Conf& config;
     Everest::MqttProvider& mqtt;
-    const std::unique_ptr<powermeterImplBase> p_powermeter;
+    const std::unique_ptr<powermeter_ACImplBase> p_powermeter;
     const std::unique_ptr<board_support_ACImplBase> p_board_support;
     const std::unique_ptr<yeti_extrasImplBase> p_yeti_extras;
     const std::unique_ptr<debug_jsonImplBase> p_debug_yeti;

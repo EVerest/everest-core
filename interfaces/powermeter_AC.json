@@ -1,0 +1,27 @@
+{
+    "description": "This interface defines a generic powermeter for 5 wire TN networks.",
+    "cmds": {
+        "get_signed_meter_value": {
+            "description": "Returns a signed meter value with the given auth token",
+            "arguments": {
+                "auth_token": {
+                    "description": "Auth token",
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 20
+                }
+            },
+            "result": {
+                "description": "Signed meter value",
+                "type": "string"
+            }
+        }
+    },
+    "vars": {
+        "powermeter": {
+            "description": "Measured dataset",
+            "type": "object",
+            "$ref": "/powermeter#/PowermeterAC"
+        }
+    }
+}

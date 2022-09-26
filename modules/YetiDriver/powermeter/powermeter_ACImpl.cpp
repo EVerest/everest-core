@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
-#include "powermeterImpl.hpp"
+// Copyright Pionix GmbH and Contributors to EVerest
+
+#include "powermeter_ACImpl.hpp"
 
 namespace module {
 namespace powermeter {
@@ -38,18 +39,17 @@ static Everest::json yeti_to_everest(const PowerMeter& p) {
     return j;
 }
 
-void powermeterImpl::init() {
-    mod->serial.signalPowerMeter.connect([this](const PowerMeter& p) {
-        publish_powermeter(yeti_to_everest(p));
-    });
+void powermeter_ACImpl::init() {
+    mod->serial.signalPowerMeter.connect([this](const PowerMeter& p) { publish_powermeter(yeti_to_everest(p)); });
 }
 
-void powermeterImpl::ready() {
+void powermeter_ACImpl::ready() {
 }
 
-std::string powermeterImpl::handle_get_signed_meter_value(std::string& auth_token) {
+std::string powermeter_ACImpl::handle_get_signed_meter_value(std::string& auth_token) {
+    // your code for cmd get_signed_meter_value goes here
     return "NOT_AVAILABLE";
-}
+};
 
 } // namespace powermeter
 } // namespace module

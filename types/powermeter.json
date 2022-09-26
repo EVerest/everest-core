@@ -1,8 +1,8 @@
 {
     "description": "Powermeter types",
     "types": {
-        "Powermeter": {
-            "description": "Measured dataset",
+        "PowermeterAC": {
+            "description": "Measured dataset (AC)",
             "type": "object",
             "additionalProperties": false,
             "required": [
@@ -38,12 +38,12 @@
                     "$ref": "/units#/Power"
                 },
                 "voltage_V": {
-                    "description": "Voltage in Volts",
+                    "description": "AC voltage in Volts",
                     "type": "object",
                     "$ref": "/units#/Voltage"
                 },
                 "current_A": {
-                    "description": "Current in ampere",
+                    "description": "AC current in Ampere",
                     "type": "object",
                     "$ref": "/units#/Current"
                 },
@@ -51,6 +51,46 @@
                     "description": "Grid frequency in Hertz",
                     "type": "object",
                     "$ref": "/units#/Frequency"
+                }
+            }
+        },
+        "PowermeterDC": {
+            "description": "Measured dataset (DC)",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "timestamp",
+                "energy_Wh_import"
+            ],
+            "properties": {
+                "timestamp": {
+                    "description": "Timestamp of measurement",
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "meter_id": {
+                    "description": "Serial number of the meter, if available",
+                    "type": "string"
+                },
+                "energy_Wh_import": {
+                    "description": "Imported energy in Wh (from local DC grid/storage)",
+                    "type": "number"
+                },
+                "energy_Wh_export": {
+                    "description": "Exported energy in Wh (to local DC grid/storage)",
+                    "type": "number"
+                },
+                "power_W": {
+                    "description": "Instantaneous power in Watt. Negative values are exported, positive values imported Energy. (to local DC grid/storage)",
+                    "type": "number"
+                },
+                "voltage_V": {
+                    "description": "DC voltage in Volts",
+                    "type": "number"
+                },
+                "current_A": {
+                    "description": "DC current in Ampere",
+                    "type": "number"
                 }
             }
         }

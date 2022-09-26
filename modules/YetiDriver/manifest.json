@@ -33,7 +33,7 @@
 	},
 	"provides": {
 		"powermeter": {
-			"interface": "powermeter",
+			"interface": "powermeter_AC",
 			"description": "provides the Yeti Internal Power Meter"
 		},
 		"board_support": {
