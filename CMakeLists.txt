@@ -15,6 +15,7 @@ find_package(everest-cmake 0.10 REQUIRED
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(ev-cli)
 include(config-run-script)
+include(config-run-nodered-script)
 
 option(CREATE_SYMLINKS "Create symlinks to javascript modules and auxillary files - for development purposes" OFF)
 option(CMAKE_RUN_CLANG_TIDY "Run clang-tidy" OFF)
@@ -89,6 +90,12 @@ install(
     DIRECTORY "interfaces"
     DESTINATION "${CMAKE_INSTALL_DATADIR}/everest"
     FILES_MATCHING PATTERN "*.json"
+)
+
+# install docker related files
+install(
+    DIRECTORY "cmake/assets/docker"
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/everest"
 )
 
 # configure clang-tidy if requested
