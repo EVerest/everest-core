@@ -7,7 +7,6 @@ ev_add_modules(
     EvseSlac
     Example
     ExampleUser
-    JsAuth
     JsCarSimulator
     JsCarV2G
     JsIMDSimulator
