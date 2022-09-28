@@ -34,6 +34,8 @@ void EvseManager::init() {
 }
 
 void EvseManager::ready() {
+    charger = std::unique_ptr<Charger>(new Charger(r_bsp));
+
     if (get_hlc_enabled()) {
 
         // Set up EVSE ID
@@ -193,8 +195,6 @@ void EvseManager::ready() {
     } else if (hw_capabilities.max_phase_count == 3) {
         local_three_phases = true; // other configonfigurations currently not supported by HW
     }
-
-    charger = std::unique_ptr<Charger>(new Charger(r_bsp));
 
     r_bsp->subscribe_event([this](const types::board_support::Event event) {
         charger->processEvent(event);
