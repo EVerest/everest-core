@@ -145,7 +145,7 @@ MessageQueue::MessageQueue(std::shared_ptr<ChargePointConfiguration> configurati
 }
 
 MessageId MessageQueue::getMessageId(const json::array_t& json_message) {
-    return MessageId(json_message.at(MESSAGE_ID));
+    return MessageId(json_message.at(MESSAGE_ID).get<std::string>());
 }
 
 MessageTypeId MessageQueue::getMessageTypeId(const json::array_t& json_message) {

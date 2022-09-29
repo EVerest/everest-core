@@ -34,7 +34,7 @@ void from_json(const json& j, IdTagInfo& k) {
 
     // the optional parts of the message
     if (j.contains("expiryDate")) {
-        k.expiryDate.emplace(j.at("expiryDate"));
+        k.expiryDate.emplace(j.at("expiryDate").get<std::string>());
     }
     if (j.contains("parentIdTag")) {
         k.parentIdTag.emplace(j.at("parentIdTag"));
@@ -112,7 +112,7 @@ void from_json(const json& j, ChargingSchedule& k) {
         k.duration.emplace(j.at("duration"));
     }
     if (j.contains("startSchedule")) {
-        k.startSchedule.emplace(j.at("startSchedule"));
+        k.startSchedule.emplace(j.at("startSchedule").get<std::string>());
     }
     if (j.contains("minChargingRate")) {
         k.minChargingRate.emplace(j.at("minChargingRate"));
@@ -289,10 +289,10 @@ void from_json(const json& j, ChargingProfile& k) {
         k.recurrencyKind.emplace(j.at("recurrencyKind"));
     }
     if (j.contains("validFrom")) {
-        k.validFrom.emplace(j.at("validFrom"));
+        k.validFrom.emplace(j.at("validFrom").get<std::string>());
     }
     if (j.contains("validTo")) {
-        k.validTo.emplace(j.at("validTo"));
+        k.validTo.emplace(j.at("validTo").get<std::string>());
     }
 }
 
@@ -414,10 +414,10 @@ void from_json(const json& j, LogParametersType& k) {
 
     // the optional parts of the message
     if (j.contains("oldestTimestamp")) {
-        k.oldestTimestamp.emplace(j.at("oldestTimestamp"));
+        k.oldestTimestamp.emplace(j.at("oldestTimestamp").get<std::string>());
     }
     if (j.contains("latestTimestamp")) {
-        k.latestTimestamp.emplace(j.at("latestTimestamp"));
+        k.latestTimestamp.emplace(j.at("latestTimestamp").get<std::string>());
     }
 }
 
@@ -454,7 +454,7 @@ void from_json(const json& j, FirmwareType& k) {
 
     // the optional parts of the message
     if (j.contains("installDateTime")) {
-        k.installDateTime.emplace(j.at("installDateTime"));
+        k.installDateTime.emplace(j.at("installDateTime").get<std::string>());
     }
 }
 
