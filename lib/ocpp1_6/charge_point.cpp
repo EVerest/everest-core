@@ -22,7 +22,6 @@ ChargePoint::ChargePoint(std::shared_ptr<ChargePointConfiguration> configuration
     log_status(UploadLogStatusEnumType::Idle),
     switch_security_profile_callback(nullptr) {
     this->configuration = configuration;
-    // TODO(piet): this->register_scheduled_callbacks();
     this->connection_state = ChargePointConnectionState::Disconnected;
     this->database_handler = std::make_unique<DatabaseHandler>(this->configuration->getChargePointId(),
                                                                boost::filesystem::path(database_path),
