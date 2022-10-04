@@ -41,8 +41,8 @@ namespace module {
 struct Conf {
     std::string OcppMainPath;
     std::string ChargePointConfigPath;
+    std::string UserConfigPath;
     std::string DatabasePath;
-    std::string SchemasPath;
     bool EnableExternalWebsocketControl;
 };
 
