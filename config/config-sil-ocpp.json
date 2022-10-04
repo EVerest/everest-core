@@ -209,7 +209,6 @@
     "module": "OCPP",
     "config_module": {
       "OcppMainPath": "share/everest/ocpp",
-      "SchemasPath": "share/everest/ocpp",
       "ChargePointConfigPath": "../../../libocpp/aux/config-docker.json"
     },
     "connections": {

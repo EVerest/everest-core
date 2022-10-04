@@ -33,11 +33,14 @@ static ocpp1_6::ChargePointErrorCode get_ocpp_error_code(const std::string& evse
 }
 
 void create_empty_user_config(const boost::filesystem::path& user_config_path) {
-    boost::filesystem::create_directory(user_config_path.parent_path());
-    std::ofstream fs(user_config_path.c_str());
-    auto user_config = json::object();
-    fs << user_config << std::endl;
-    fs.close();
+    if (boost::filesystem::exists(user_config_path.parent_path())) {
+        std::ofstream fs(user_config_path.c_str());
+        auto user_config = json::object();
+        fs << user_config << std::endl;
+        fs.close();
+    } else {
+        EVLOG_AND_THROW(std::runtime_error("Provided UserConfigPath is invalid"));
+    }
 }
 
 void OCPP::init() {
@@ -47,8 +50,7 @@ void OCPP::init() {
 
     boost::filesystem::path config_path = boost::filesystem::path(this->config.ChargePointConfigPath);
 
-    boost::filesystem::path user_config_path =
-        boost::filesystem::path(this->config.OcppMainPath) / "user_config" / "user_config.json";
+    boost::filesystem::path user_config_path = boost::filesystem::path(this->config.UserConfigPath);
 
     std::ifstream ifs(config_path.c_str());
     std::string config_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
@@ -74,8 +76,8 @@ void OCPP::init() {
     }
 
     std::shared_ptr<ocpp1_6::ChargePointConfiguration> configuration =
-        std::make_shared<ocpp1_6::ChargePointConfiguration>(json_config, this->config.SchemasPath,
-                                                         this->config.SchemasPath);
+        std::make_shared<ocpp1_6::ChargePointConfiguration>(json_config, this->config.OcppMainPath,
+                                                            this->config.UserConfigPath);
 
     const boost::filesystem::path sql_init_path = boost::filesystem::path(this->config.OcppMainPath) / "init.sql";
     this->charge_point = new ocpp1_6::ChargePoint(configuration, this->config.DatabasePath, sql_init_path.string());
@@ -306,13 +308,13 @@ void OCPP::ready() {
 
             if (event == "Enabled") {
                 EVLOG_debug << "Connector#" << connector << ": "
-                           << "Received Enabled";
+                            << "Received Enabled";
             } else if (event == "Disabled") {
                 EVLOG_debug << "Connector#" << connector << ": "
-                           << "Received Disabled";
+                            << "Received Disabled";
             } else if (event == "TransactionStarted") {
                 EVLOG_debug << "Connector#" << connector << ": "
-                           << "Received TransactionStarted";
+                            << "Received TransactionStarted";
                 const auto transaction_started = session_event.transaction_started.value();
 
                 const auto timestamp = ocpp1_6::DateTime(transaction_started.timestamp);
@@ -327,19 +329,19 @@ void OCPP::ready() {
                                                            reservation_id_opt, timestamp);
             } else if (event == "ChargingPausedEV") {
                 EVLOG_debug << "Connector#" << connector << ": "
-                           << "Received ChargingPausedEV";
+                            << "Received ChargingPausedEV";
                 this->charge_point->on_suspend_charging_ev(connector);
             } else if (event == "ChargingPausedEVSE") {
                 EVLOG_debug << "Connector#" << connector << ": "
-                           << "Received ChargingPausedEVSE";
+                            << "Received ChargingPausedEVSE";
                 this->charge_point->on_suspend_charging_evse(connector);
             } else if (event == "ChargingStarted" || event == "ChargingResumed") {
                 EVLOG_debug << "Connector#" << connector << ": "
-                           << "Received ChargingResumed";
+                            << "Received ChargingResumed";
                 this->charge_point->on_resume_charging(connector);
             } else if (event == "TransactionFinished") {
                 EVLOG_debug << "Connector#" << connector << ": "
-                           << "Received TransactionFinished";
+                            << "Received TransactionFinished";
                 auto transaction_finished = session_event.transaction_finished.value();
                 auto timestamp = ocpp1_6::DateTime(transaction_finished.timestamp);
                 auto energy_Wh_import = transaction_finished.energy_Wh_import;
@@ -354,7 +356,7 @@ void OCPP::ready() {
                 // always triggered by libocpp
             } else if (event == "SessionStarted") {
                 EVLOG_debug << "Connector#" << connector << ": "
-                           << "Received SessionStarted";
+                            << "Received SessionStarted";
                 // ev side disconnect
                 auto session_started = session_event.session_started.value();
                 this->charge_point->on_session_started(
@@ -362,12 +364,12 @@ void OCPP::ready() {
                     types::evse_manager::start_session_reason_to_string(session_started.reason));
             } else if (event == "SessionFinished") {
                 EVLOG_debug << "Connector#" << connector << ": "
-                           << "Received SessionFinished";
+                            << "Received SessionFinished";
                 // ev side disconnect
                 this->charge_point->on_session_stopped(connector);
             } else if (event == "Error") {
                 EVLOG_debug << "Connector#" << connector << ": "
-                           << "Received Error";
+                            << "Received Error";
                 const auto evse_error = types::evse_manager::error_to_string(session_event.error.value());
                 ocpp1_6::ChargePointErrorCode ocpp_error_code = get_ocpp_error_code(evse_error);
                 this->charge_point->on_error(connector, ocpp_error_code);

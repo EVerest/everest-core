@@ -4,20 +4,20 @@
         "OcppMainPath": {
             "description": "Main path of OCPP module",
             "type": "string",
-            "default": "dist/ocpp"
+            "default": "share/everest/ocpp"
         },
         "ChargePointConfigPath": {
             "description": "Path to the configuration file",
             "type": "string",
             "default": "charge_point_config.json"
         },
+        "UserConfigPath": {
+            "description": "Path to the file of the OCPP user config",
+            "type": "string",
+            "default": "share/everest/ocpp/user_config.json"
+        },
         "DatabasePath": {
             "description": "Path to the persistent SQLite database folder",
-            "type": "string",
-            "default": "/tmp/ocpp_1_6_charge_point"
-        },
-        "SchemasPath": {
-            "description": "Path to the schemas folder in which the OCPP 1.6 schemas reside",
             "type": "string",
             "default": "/tmp/ocpp_1_6_charge_point"
         },
