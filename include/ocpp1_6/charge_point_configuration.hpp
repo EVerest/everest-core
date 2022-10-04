@@ -15,7 +15,7 @@ namespace ocpp1_6 {
 class ChargePointConfiguration {
 private:
     json config;
-    std::string configs_path;
+    boost::filesystem::path user_config_path;
     std::shared_ptr<PkiHandler> pki_handler;
 
     std::set<SupportedFeatureProfiles> supported_feature_profiles;
@@ -33,9 +33,9 @@ private:
     bool isConnectorPhaseRotationValid(std::string str);
 
 public:
-    ChargePointConfiguration(json config, std::string configs_path, std::string schemas_path);
+    ChargePointConfiguration(const json& config, const std::string& ocpp_main_path,
+                             const std::string& user_config_path);
 
-    std::string getConfigsPath();
     std::shared_ptr<PkiHandler> getPkiHandler();
 
     // Internal config options

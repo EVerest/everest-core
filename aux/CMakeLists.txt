@@ -43,5 +43,5 @@ install(FILES ${SQL_INIT_FILE} DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/ocpp
 if(EXISTS ${USER_CONFIG_FILE})
      install(
           FILES ${USER_CONFIG_FILE}
-          DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/ocpp/user_config)
+          DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/ocpp)
 endif()

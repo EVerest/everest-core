@@ -75,7 +75,7 @@ private:
     std::shared_ptr<X509Certificate> getRootCertificate(CertificateUseEnumType type);
 
 public:
-    explicit PkiHandler(std::string maindir);
+    explicit PkiHandler(const std::string &maindir);
     /// \brief Verifies the given \p certificateChain and the \p charge_box_serial_number.
     /// This method verifies the certificate chain, the signature, and the period when the certificate is valid
     CertificateVerificationResult verifyChargepointCertificate(const std::string& certificateChain,

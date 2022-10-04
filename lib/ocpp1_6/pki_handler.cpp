@@ -65,7 +65,7 @@ bool X509Certificate::write() {
     return true;
 }
 
-PkiHandler::PkiHandler(std::string maindir) : maindir(boost::filesystem::path(maindir)) {
+PkiHandler::PkiHandler(const std::string &maindir) : maindir(boost::filesystem::path(maindir)) {
 }
 
 CertificateVerificationResult PkiHandler::verifyChargepointCertificate(const std::string& certificateChain,

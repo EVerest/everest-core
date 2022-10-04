@@ -13,12 +13,18 @@
 #include <ocpp1_6/types.hpp>
 
 namespace ocpp1_6 {
-ChargePointConfiguration::ChargePointConfiguration(json config, std::string configs_path, std::string schemas_path) {
+ChargePointConfiguration::ChargePointConfiguration(const json& config, const std::string& ocpp_main_path,
+                                                   const std::string& user_config_path) {
 
-    this->pki_handler = std::make_shared<PkiHandler>(configs_path);
+    this->user_config_path = boost::filesystem::path(user_config_path);
+    if (!boost::filesystem::exists(this->user_config_path)) {
+        EVLOG_critical << "User config file does not exist";
+        throw std::runtime_error("User config file does not exist");
+    }
+    this->pki_handler = std::make_shared<PkiHandler>(ocpp_main_path);
 
     // validate config entries
-    Schemas schemas = Schemas(schemas_path);
+    Schemas schemas = Schemas(ocpp_main_path);
     auto patch = schemas.get_profile_validator()->validate(config);
     if (patch.is_null()) {
         // no defaults substituted
@@ -136,17 +142,12 @@ ChargePointConfiguration::ChargePointConfiguration(json config, std::string conf
     this->supported_message_types_receiving.insert(MessageType::ReserveNow);
 }
 
-std::string ChargePointConfiguration::getConfigsPath() {
-    return this->configs_path;
-}
-
 std::shared_ptr<PkiHandler> ChargePointConfiguration::getPkiHandler() {
     return this->pki_handler;
 }
 
 json ChargePointConfiguration::get_user_config() {
-    auto user_config_path = boost::filesystem::path(this->getConfigsPath()) / "user_config" / "user_config.json";
-    if (boost::filesystem::exists(user_config_path)) {
+    if (boost::filesystem::exists(this->user_config_path)) {
         // reading from and overriding to existing user config
         std::fstream ifs(user_config_path.c_str());
         std::string user_config_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
@@ -158,10 +159,9 @@ json ChargePointConfiguration::get_user_config() {
 }
 
 void ChargePointConfiguration::setInUserConfig(std::string profile, std::string key, const json value) {
-    auto user_config_path = boost::filesystem::path(this->getConfigsPath()) / "user_config" / "user_config.json";
     json user_config = this->get_user_config();
     user_config[profile][key] = value;
-    std::ofstream ofs(user_config_path.c_str());
+    std::ofstream ofs(this->user_config_path.c_str());
     ofs << user_config << std::endl;
     ofs.close();
 }
