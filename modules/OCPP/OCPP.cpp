@@ -321,12 +321,13 @@ void OCPP::ready() {
                 const auto energy_Wh_import = transaction_started.energy_Wh_import;
                 const auto session_id = session_event.uuid;
                 const auto id_token = transaction_started.id_tag;
+                const auto signed_meter_value = transaction_started.signed_meter_value;
                 boost::optional<int32_t> reservation_id_opt = boost::none;
                 if (transaction_started.reservation_id) {
                     reservation_id_opt.emplace(transaction_started.reservation_id.value());
                 }
                 this->charge_point->on_transaction_started(connector, session_event.uuid, id_token, energy_Wh_import,
-                                                           reservation_id_opt, timestamp);
+                                                           reservation_id_opt, timestamp, signed_meter_value);
             } else if (event == "ChargingPausedEV") {
                 EVLOG_debug << "Connector#" << connector << ": "
                             << "Received ChargingPausedEV";
@@ -342,17 +343,18 @@ void OCPP::ready() {
             } else if (event == "TransactionFinished") {
                 EVLOG_debug << "Connector#" << connector << ": "
                             << "Received TransactionFinished";
-                auto transaction_finished = session_event.transaction_finished.value();
-                auto timestamp = ocpp1_6::DateTime(transaction_finished.timestamp);
-                auto energy_Wh_import = transaction_finished.energy_Wh_import;
-                auto reason = ocpp1_6::conversions::string_to_reason(
+                const auto transaction_finished = session_event.transaction_finished.value();
+                const auto timestamp = ocpp1_6::DateTime(transaction_finished.timestamp);
+                const auto energy_Wh_import = transaction_finished.energy_Wh_import;
+                const auto reason = ocpp1_6::conversions::string_to_reason(
                     types::evse_manager::stop_transaction_reason_to_string(transaction_finished.reason.value()));
+                const auto signed_meter_value = transaction_finished.signed_meter_value;
                 boost::optional<ocpp1_6::CiString20Type> id_tag_opt = boost::none;
                 if (transaction_finished.id_tag) {
                     id_tag_opt.emplace(ocpp1_6::CiString20Type(transaction_finished.id_tag.value()));
                 }
                 this->charge_point->on_transaction_stopped(connector, session_event.uuid, reason, timestamp,
-                                                           energy_Wh_import, id_tag_opt);
+                                                           energy_Wh_import, id_tag_opt, signed_meter_value);
                 // always triggered by libocpp
             } else if (event == "SessionStarted") {
                 EVLOG_debug << "Connector#" << connector << ": "
