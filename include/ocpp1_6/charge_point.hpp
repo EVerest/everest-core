@@ -163,6 +163,8 @@ private:
     void update_clock_aligned_meter_values_interval();
     MeterValue get_latest_meter_value(int32_t connector, std::vector<MeasurandWithPhase> values_of_interest,
                                       ReadingContext context);
+    MeterValue get_signed_meter_value(const std::string& signed_value, const ReadingContext& context,
+                                      const DateTime& datetime);
     void send_meter_value(int32_t connector, MeterValue meter_value);
     void status_notification(int32_t connector, ChargePointErrorCode errorCode, CiString50Type info,
                              ChargePointStatus status, DateTime timestamp);
@@ -296,12 +298,13 @@ public:
     /// started
     void on_transaction_started(const int32_t& connector, const std::string& session_id, const std::string& id_token,
                                 const int32_t& meter_start, boost::optional<int32_t> reservation_id,
-                                const DateTime& timestamp);
+                                const DateTime& timestamp, boost::optional<std::string> signed_meter_value);
 
     /// \brief Notifies chargepoint that the transaction on the given \p connector with the given \p reason has been
     /// stopped.
     void on_transaction_stopped(const int32_t connector, const std::string& session_id, const Reason& reason,
-                                DateTime timestamp, float energy_wh_import, boost::optional<CiString20Type> id_tag_end);
+                                DateTime timestamp, float energy_wh_import, boost::optional<CiString20Type> id_tag_end,
+                                boost::optional<std::string> signed_meter_value);
 
     /// \brief EV indicates that it suspends charging on the given \p connector
     /// \returns true if this state change was possible

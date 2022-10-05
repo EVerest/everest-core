@@ -394,6 +394,19 @@ MeterValue ChargePoint::get_latest_meter_value(int32_t connector, std::vector<Me
     return filtered_meter_value;
 }
 
+MeterValue ChargePoint::get_signed_meter_value(const std::string& signed_value, const ReadingContext& context,
+                                               const DateTime& timestamp) {
+    MeterValue meter_value;
+    meter_value.timestamp = timestamp;
+    SampledValue sampled_value;
+    sampled_value.context = context;
+    sampled_value.value = signed_value;
+    sampled_value.format = ValueFormat::SignedData;
+
+    meter_value.sampledValue.push_back(sampled_value);
+    return meter_value;
+}
+
 void ChargePoint::send_meter_value(int32_t connector, MeterValue meter_value) {
 
     if (meter_value.sampledValue.size() == 0) {
@@ -2353,7 +2366,8 @@ void ChargePoint::on_session_stopped(const int32_t connector) {
 
 void ChargePoint::on_transaction_started(const int32_t& connector, const std::string& session_id,
                                          const std::string& id_token, const int32_t& meter_start,
-                                         boost::optional<int32_t> reservation_id, const DateTime& timestamp) {
+                                         boost::optional<int32_t> reservation_id, const DateTime& timestamp,
+                                         boost::optional<std::string> signed_meter_value) {
     if (this->status->get_state(connector) == ChargePointStatus::Reserved) {
         this->status->submit_event(connector, Event_UsageInitiated());
     }
@@ -2367,6 +2381,11 @@ void ChargePoint::on_transaction_started(const int32_t& connector, const std::st
     std::shared_ptr<Transaction> transaction =
         std::make_shared<Transaction>(connector, session_id, CiString20Type(id_token), meter_start, reservation_id,
                                       timestamp, std::move(meter_values_sample_timer));
+    if (signed_meter_value) {
+        const auto meter_value =
+            this->get_signed_meter_value(signed_meter_value.value(), ReadingContext::Transaction_Begin, timestamp);
+        transaction->add_meter_value(meter_value);
+    }
 
     this->database_handler->insert_transaction(session_id, connector, id_token, timestamp.to_rfc3339(), meter_start,
                                                reservation_id);
@@ -2376,9 +2395,16 @@ void ChargePoint::on_transaction_started(const int32_t& connector, const std::st
 
 void ChargePoint::on_transaction_stopped(const int32_t connector, const std::string& session_id, const Reason& reason,
                                          DateTime timestamp, float energy_wh_import,
-                                         boost::optional<CiString20Type> id_tag_end) {
+                                         boost::optional<CiString20Type> id_tag_end,
+                                         boost::optional<std::string> signed_meter_value) {
+    if (signed_meter_value) {
+        const auto meter_value =
+            this->get_signed_meter_value(signed_meter_value.value(), ReadingContext::Transaction_End, timestamp);
+        this->transaction_handler->get_transaction(connector)->add_meter_value(meter_value);
+    }
     const auto stop_energy_wh = std::make_shared<StampedEnergyWh>(timestamp, energy_wh_import);
     this->transaction_handler->get_transaction(connector)->add_stop_energy_wh(stop_energy_wh);
+
     this->status->submit_event(connector, Event_TransactionStoppedAndUserActionRequired());
     this->stop_transaction(connector, reason, id_tag_end);
     this->database_handler->update_transaction(session_id, energy_wh_import, timestamp.to_rfc3339(), id_tag_end,
