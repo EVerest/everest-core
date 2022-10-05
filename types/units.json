@@ -112,6 +112,30 @@
                     "type": "number"
                 }
             }
+        },
+        "ReactivePower": {
+            "description" : "Reactive power VAR",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["total"],
+            "properties" : {
+                "total": {
+                    "description" : "VAR total",
+                    "type": "number"
+                },
+                "VARphA": {
+                    "description" : "VAR phase A",
+                    "type" : "number"
+                },
+                "VARphB": {
+                    "description" : "VAR phase B",
+                    "type" : "number"
+                 },
+                "VARphC": {
+                    "description" : "VAR phase C",
+                    "type" : "number"
+                 }
+             }
         }
     }
 }

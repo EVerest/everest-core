@@ -1,5 +1,13 @@
 {
-    "iso15118_charger": {
+    "bsm_power_meter" : {
+        "module": "PowermeterBSM",
+        "config_module": {
+            "power_unit_id" : 42,
+            "update_interval" : 5,
+            "serial_device" : "/dev/ttyUSB0"
+        }
+    },
+   "iso15118_charger": {
         "module": "JsRiseV2G",
         "config_implementation": {
             "main": {
