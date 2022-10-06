@@ -19,12 +19,13 @@ void energyImpl::init() {
     _optimizer_mode = EVSE_OPTIMIZER_MODE_MANUAL_LIMITS;
     initializeEnergyObject();
 
-    mod->r_powermeter->subscribe_powermeter([this](json p) {
-        // Received new power meter values, update our energy object.
-        energy["energy_usage"] = p;
-
-        updateAndPublishEnergyObject();
-    });
+    if (mod->r_powermeter.size() > 0) {
+        mod->r_powermeter[0]->subscribe_powermeter([this](json p) {
+            // Received new power meter values, update our energy object.
+            std::lock_guard<std::mutex> lock(this->energy_mutex);
+            energy["energy_usage"] = p;
+        });
+    }
 
     mod->mqtt.subscribe("/external/" + mod->info.id + ":" + mod->info.name + "/cmd/set_price_limit", [this](json lim) {
         std::string sLim = lim;
@@ -81,6 +82,14 @@ void energyImpl::ready() {
         energy["schedule_import"] = json::array({});
         energy["schedule_import"].push_back(schedule_entry);
     }
+
+    // start thread to publish our energy object
+    std::thread([this] {
+        while (true) {
+            updateAndPublishEnergyObject();
+            sleep(1);
+        }
+    }).detach();
 }
 
 void energyImpl::handle_enforce_limits(std::string& uuid, types::energy::Limits& limits_import,

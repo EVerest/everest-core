@@ -58,10 +58,12 @@ void evse_managerImpl::init() {
 
     // /Interface to Node-RED debug UI
 
-    mod->r_powermeter->subscribe_powermeter([this](const json p) {
-        // Republish data on proxy powermeter struct
-        publish_powermeter(p);
-    });
+    if (mod->r_powermeter.size() > 0) {
+        mod->r_powermeter[0]->subscribe_powermeter([this](const json p) {
+            // Republish data on proxy powermeter struct
+            publish_powermeter(p);
+        });
+    }
 }
 
 void evse_managerImpl::set_session_uuid() {
@@ -131,7 +133,8 @@ void evse_managerImpl::ready() {
 
         if (e == Charger::EvseEvent::TransactionStarted) {
             types::evse_manager::TransactionStarted transaction_started;
-            transaction_started.timestamp = date::format("%FT%TZ", std::chrono::time_point_cast<std::chrono::milliseconds>(date::utc_clock::now()));
+            transaction_started.timestamp =
+                date::format("%FT%TZ", std::chrono::time_point_cast<std::chrono::milliseconds>(date::utc_clock::now()));
             json p = mod->get_latest_powermeter_data();
             if (p.contains("energy_Wh_import") && p["energy_Wh_import"].contains("total")) {
                 transaction_started.energy_Wh_import = p["energy_Wh_import"]["total"];
@@ -161,7 +164,8 @@ void evse_managerImpl::ready() {
         if (e == Charger::EvseEvent::TransactionFinished) {
             types::evse_manager::TransactionFinished transaction_finished;
 
-            transaction_finished.timestamp = date::format("%FT%TZ", std::chrono::time_point_cast<std::chrono::milliseconds>(date::utc_clock::now()));
+            transaction_finished.timestamp =
+                date::format("%FT%TZ", std::chrono::time_point_cast<std::chrono::milliseconds>(date::utc_clock::now()));
             json p = mod->get_latest_powermeter_data();
             if (p.contains("energy_Wh_import") && p["energy_Wh_import"].contains("total")) {
                 transaction_finished.energy_Wh_import = p["energy_Wh_import"]["total"];
@@ -302,7 +306,11 @@ evse_managerImpl::handle_switch_three_phases_while_charging(bool& three_phases) 
 };
 
 std::string evse_managerImpl::handle_get_signed_meter_value() {
-    return mod->r_powermeter->call_get_signed_meter_value("FIXME");
+    if (mod->r_powermeter.size() > 0) {
+        return mod->r_powermeter[0]->call_get_signed_meter_value("FIXME");
+    } else {
+        return "NOT_AVAILABLE";
+    }
 }
 
 } // namespace evse

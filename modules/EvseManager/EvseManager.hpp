@@ -66,7 +66,7 @@ public:
     EvseManager(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
                 std::unique_ptr<evse_managerImplBase> p_evse, std::unique_ptr<energyImplBase> p_energy_grid,
                 std::unique_ptr<auth_token_providerImplBase> p_token_provider,
-                std::unique_ptr<board_support_ACIntf> r_bsp, std::unique_ptr<powermeterIntf> r_powermeter,
+                std::unique_ptr<board_support_ACIntf> r_bsp, std::vector<std::unique_ptr<powermeterIntf>> r_powermeter,
                 std::vector<std::unique_ptr<slacIntf>> r_slac, std::vector<std::unique_ptr<ISO15118_chargerIntf>> r_hlc,
                 std::vector<std::unique_ptr<isolation_monitorIntf>> r_imd, Conf& config) :
         ModuleBase(info),
@@ -87,7 +87,7 @@ public:
     const std::unique_ptr<energyImplBase> p_energy_grid;
     const std::unique_ptr<auth_token_providerImplBase> p_token_provider;
     const std::unique_ptr<board_support_ACIntf> r_bsp;
-    const std::unique_ptr<powermeterIntf> r_powermeter;
+    const std::vector<std::unique_ptr<powermeterIntf>> r_powermeter;
     const std::vector<std::unique_ptr<slacIntf>> r_slac;
     const std::vector<std::unique_ptr<ISO15118_chargerIntf>> r_hlc;
     const std::vector<std::unique_ptr<isolation_monitorIntf>> r_imd;

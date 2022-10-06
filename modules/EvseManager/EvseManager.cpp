@@ -262,32 +262,36 @@ void EvseManager::ready() {
 
     r_bsp->subscribe_nr_of_phases_available([this](int n) { signalNrOfPhasesAvailable(n); });
 
-    r_powermeter->subscribe_powermeter([this](types::powermeter::Powermeter powermeter) {
-        json p = powermeter;
-        // Inform charger about current charging current. This is used for slow OC detection.
-        charger->setCurrentDrawnByVehicle(p["current_A"]["L1"], p["current_A"]["L2"], p["current_A"]["L3"]);
+    if (r_powermeter.size() > 0) {
+        r_powermeter[0]->subscribe_powermeter([this](types::powermeter::Powermeter powermeter) {
+            json p = powermeter;
+            // Inform charger about current charging current. This is used for slow OC detection.
+            charger->setCurrentDrawnByVehicle(p["current_A"]["L1"], p["current_A"]["L2"], p["current_A"]["L3"]);
 
-        // Inform HLC about the power meter data
-        if (get_hlc_enabled()) {
-            r_hlc[0]->call_set_MeterInfo(p);
-        }
+            // Inform HLC about the power meter data
+            if (get_hlc_enabled()) {
+                r_hlc[0]->call_set_MeterInfo(p);
+            }
 
-        // Store local cache
-        latest_powermeter_data = p;
+            // Store local cache
+            latest_powermeter_data = p;
 
-        // External Nodered interface
-        mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter/phaseSeqError", config.connector_id),
-                     powermeter.phase_seq_error.get());
-        mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter/time_stamp", config.connector_id),
-                     (int)powermeter.timestamp);
-        mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter/totalKw", config.connector_id),
-                     (powermeter.power_W.get().L1.get() + powermeter.power_W.get().L2.get() + powermeter.power_W.get().L3.get()) / 1000., 1);
-        mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter/totalKWattHr", config.connector_id),
-                     powermeter.energy_Wh_import.total / 1000.);
-        mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter_json", config.connector_id),
-                     p.dump());
-        // /External Nodered interface
-    });
+            // External Nodered interface
+            mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter/phaseSeqError", config.connector_id),
+                         powermeter.phase_seq_error.get());
+            mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter/time_stamp", config.connector_id),
+                         (int)powermeter.timestamp);
+            mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter/totalKw", config.connector_id),
+                         (powermeter.power_W.get().L1.get() + powermeter.power_W.get().L2.get() +
+                          powermeter.power_W.get().L3.get()) /
+                             1000.,
+                         1);
+            mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter/totalKWattHr", config.connector_id),
+                         powermeter.energy_Wh_import.total / 1000.);
+            mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter_json", config.connector_id), p.dump());
+            // /External Nodered interface
+        });
+    }
 
     if (slac_enabled) {
         r_slac[0]->subscribe_state([this](const std::string& s) {
@@ -485,11 +489,11 @@ void EvseManager::log_v2g_message(Object m) {
 
     // All messages from EVSE contain Req and all originating from Car contain Res
     if (msg.find("Res") == std::string::npos) {
-        session_log.car(true, fmt::format("V2G {}", msg), xml, m["V2G_Message_EXI_Hex"],
-                        m["V2G_Message_EXI_Base64"], json_str);
+        session_log.car(true, fmt::format("V2G {}", msg), xml, m["V2G_Message_EXI_Hex"], m["V2G_Message_EXI_Base64"],
+                        json_str);
     } else {
-        session_log.evse(true, fmt::format("V2G {}", msg), xml, m["V2G_Message_EXI_Hex"],
-                         m["V2G_Message_EXI_Base64"], json_str);
+        session_log.evse(true, fmt::format("V2G {}", msg), xml, m["V2G_Message_EXI_Hex"], m["V2G_Message_EXI_Base64"],
+                         json_str);
     }
 }
 
