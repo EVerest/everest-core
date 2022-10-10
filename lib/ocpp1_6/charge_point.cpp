@@ -1369,6 +1369,10 @@ void ChargePoint::handleSetChargingProfileRequest(Call<SetChargingProfileRequest
 
     CallResult<SetChargingProfileResponse> call_result(response, call.uniqueId);
     this->send<SetChargingProfileResponse>(call_result);
+
+    if (response.status == ChargingProfileStatus::Accepted) {
+        this->signal_set_charging_profiles_callback();
+    }
 }
 
 std::vector<ChargingProfile> ChargePoint::get_valid_profiles(std::map<int32_t, ocpp1_6::ChargingProfile> profiles,
@@ -1418,6 +1422,74 @@ std::vector<ChargingProfile> ChargePoint::get_valid_profiles(std::map<int32_t, o
         valid_profiles.push_back(profile.second);
     }
     return valid_profiles;
+}
+
+std::vector<ChargingProfile> ChargePoint::get_all_valid_profiles(const date::utc_clock::time_point& start_time,
+                                                                 const date::utc_clock::time_point& end_time,
+                                                                 const int32_t connector_id) {
+    // charge point max profiles
+    std::unique_lock<std::mutex> charge_point_max_profiles_lock(charge_point_max_profiles_mutex);
+    std::vector<ChargingProfile> valid_profiles =
+        this->get_valid_profiles(this->charge_point_max_profiles, start_time, end_time);
+    charge_point_max_profiles_lock.unlock();
+
+    if (connector_id > 0) {
+        // TODO: this should probably be done additionally to the composite schedule == 0
+        // see if there's a transaction running and a tx_charging_profile installed
+        auto transaction = this->transaction_handler->get_transaction(connector_id);
+        if (transaction != nullptr) {
+            auto start_energy_stamped = transaction->get_start_energy_wh();
+            auto start_timestamp = start_energy_stamped->timestamp;
+            auto tx_charging_profiles = transaction->get_charging_profiles();
+
+            if (tx_charging_profiles.size() > 0) {
+                auto valid_tx_charging_profiles = this->get_valid_profiles(tx_charging_profiles, start_time, end_time);
+                valid_profiles.insert(valid_profiles.end(), valid_tx_charging_profiles.begin(),
+                                      valid_tx_charging_profiles.end());
+            } else {
+                std::map<int32_t, ocpp1_6::ChargingProfile> connector_tx_default_profiles;
+                {
+                    std::lock_guard<std::mutex> tx_default_profiles_lock(tx_default_profiles_mutex);
+                    if (this->tx_default_profiles.count(connector_id) > 0) {
+                        connector_tx_default_profiles = tx_default_profiles[connector_id];
+                    }
+                }
+                auto valid_tx_default_profiles =
+                    this->get_valid_profiles(connector_tx_default_profiles, start_time, end_time);
+                valid_profiles.insert(valid_profiles.end(), valid_tx_default_profiles.begin(),
+                                      valid_tx_default_profiles.end());
+            }
+        } else {
+            // TODO: is it needed to check for the tx_default_profiles when no transaction is running?
+        }
+    }
+
+    // sort by start time
+    // TODO: is this really needed or just useful for some future optimization?
+    std::sort(valid_profiles.begin(), valid_profiles.end(), [](ChargingProfile a, ChargingProfile b) {
+        // FIXME(kai): at the moment we only expect Absolute charging profiles
+        // that means a startSchedule is always present
+        return a.chargingSchedule.startSchedule.value() < b.chargingSchedule.startSchedule.value();
+    });
+    return valid_profiles;
+}
+
+std::map<int32_t, ChargingSchedule> ChargePoint::get_all_composite_charging_schedules(const int32_t duration_s) {
+
+    std::map<int32_t, ChargingSchedule> charging_schedules;
+
+    for (int connector_id = 0; connector_id < this->configuration->getNumberOfConnectors(); connector_id++) {
+        auto start_time = date::utc_clock::now();
+        auto duration = std::chrono::seconds(duration_s);
+        auto end_time = start_time + duration;
+
+        const auto valid_profiles = this->get_all_valid_profiles(start_time, end_time, connector_id);
+
+        auto composite_schedule = this->create_composite_schedule(valid_profiles, start_time, end_time, duration_s);
+        charging_schedules[connector_id] = composite_schedule;
+    }
+
+    return charging_schedules;
 }
 
 ChargingSchedule ChargePoint::create_composite_schedule(std::vector<ChargingProfile> charging_profiles,
@@ -1644,51 +1716,7 @@ void ChargePoint::handleGetCompositeScheduleRequest(Call<GetCompositeScheduleReq
         EVLOG_debug << "Calculate expected consumption for the grid connection";
         response.scheduleStart.emplace(start_datetime);
 
-        // charge point max profiles
-        std::unique_lock<std::mutex> charge_point_max_profiles_lock(charge_point_max_profiles_mutex);
-        std::vector<ChargingProfile> valid_profiles =
-            this->get_valid_profiles(this->charge_point_max_profiles, start_time, end_time);
-        charge_point_max_profiles_lock.unlock();
-
-        if (call.msg.connectorId > 0) {
-            // TODO: this should probably be done additionally to the composite schedule == 0
-            // see if there's a transaction running and a tx_charging_profile installed
-            auto transaction = this->transaction_handler->get_transaction(call.msg.connectorId);
-            if (transaction != nullptr) {
-                auto start_energy_stamped = transaction->get_start_energy_wh();
-                auto start_timestamp = start_energy_stamped->timestamp;
-                auto tx_charging_profiles = transaction->get_charging_profiles();
-
-                if (tx_charging_profiles.size() > 0) {
-                    auto valid_tx_charging_profiles =
-                        this->get_valid_profiles(tx_charging_profiles, start_time, end_time);
-                    valid_profiles.insert(valid_profiles.end(), valid_tx_charging_profiles.begin(),
-                                          valid_tx_charging_profiles.end());
-                } else {
-                    std::map<int32_t, ocpp1_6::ChargingProfile> connector_tx_default_profiles;
-                    {
-                        std::lock_guard<std::mutex> tx_default_profiles_lock(tx_default_profiles_mutex);
-                        if (this->tx_default_profiles.count(call.msg.connectorId) > 0) {
-                            connector_tx_default_profiles = tx_default_profiles[call.msg.connectorId];
-                        }
-                    }
-                    auto valid_tx_default_profiles =
-                        this->get_valid_profiles(connector_tx_default_profiles, start_time, end_time);
-                    valid_profiles.insert(valid_profiles.end(), valid_tx_default_profiles.begin(),
-                                          valid_tx_default_profiles.end());
-                }
-            } else {
-                // TODO: is it needed to check for the tx_default_profiles when no transaction is running?
-            }
-        }
-
-        // sort by start time
-        // TODO: is this really needed or just useful for some future optimization?
-        std::sort(valid_profiles.begin(), valid_profiles.end(), [](ChargingProfile a, ChargingProfile b) {
-            // FIXME(kai): at the moment we only expect Absolute charging profiles
-            // that means a startSchedule is always present
-            return a.chargingSchedule.startSchedule.value() < b.chargingSchedule.startSchedule.value();
-        });
+        const auto valid_profiles = this->get_all_valid_profiles(start_time, end_time, call.msg.connectorId);
 
         ChargingSchedule composite_schedule =
             this->create_composite_schedule(valid_profiles, start_time, end_time, call.msg.duration);
@@ -2568,6 +2596,10 @@ void ChargePoint::register_reset_callback(const std::function<bool(const ResetTy
 void ChargePoint::register_set_system_time_callback(
     const std::function<void(const std::string& system_time)>& callback) {
     this->set_system_time_callback = callback;
+}
+
+void ChargePoint::register_signal_set_charging_profiles_callback(const std::function<void()>& callback) {
+    this->signal_set_charging_profiles_callback = callback;
 }
 
 void ChargePoint::register_upload_diagnostics_callback(

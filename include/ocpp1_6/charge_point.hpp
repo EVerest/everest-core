@@ -130,6 +130,8 @@ private:
     std::function<bool(int32_t connector, int32_t max_current)> set_max_current_callback;
     std::function<bool(const ResetType& reset_type)> reset_callback;
     std::function<void(const std::string& system_time)> set_system_time_callback;
+    std::function<void()> signal_set_charging_profiles_callback;
+
     std::function<ocpp1_6::GetLogResponse(const ocpp1_6::GetDiagnosticsRequest& request)> upload_diagnostics_callback;
     std::function<void(const ocpp1_6::UpdateFirmwareRequest msg)> update_firmware_callback;
 
@@ -210,6 +212,10 @@ private:
     void handleSetChargingProfileRequest(Call<SetChargingProfileRequest> call);
     void handleGetCompositeScheduleRequest(Call<GetCompositeScheduleRequest> call);
     void handleClearChargingProfileRequest(Call<ClearChargingProfileRequest> call);
+
+    std::vector<ChargingProfile> get_all_valid_profiles(const date::utc_clock::time_point& start_time,
+                                                        const date::utc_clock::time_point& end_time,
+                                                        const int32_t connector_id);
     std::vector<ChargingProfile> get_valid_profiles(std::map<int32_t, ocpp1_6::ChargingProfile> profiles,
                                                     date::utc_clock::time_point start_time,
                                                     date::utc_clock::time_point end_time);
@@ -279,6 +285,10 @@ public:
     /// system \returns the DataTransferResponse
     DataTransferResponse data_transfer(const CiString255Type& vendorId, const CiString50Type& messageId,
                                        const std::string& data);
+
+    /// \brief Calculates placed ChargingProfiles of all connectors from now until now + given \p duration_s
+    /// \returns ChargingSchedules of all connectors
+    std::map<int32_t, ChargingSchedule> get_all_composite_charging_schedules(const int32_t duration_s);
 
     /// \brief Stores the given \p powermeter values for the given \p connector
     void on_meter_values(int32_t connector, json powermeter);
@@ -401,8 +411,12 @@ public:
     /// \brief registers a \p callback function that can be used to trigger a reset of the chargepoint
     void register_reset_callback(const std::function<bool(const ResetType& reset_type)>& callback);
 
-    /// \brief registera \p callback function that can be used to set the system time of the chargepoint
+    /// \brief registers a \p callback function that can be used to set the system time of the chargepoint
     void register_set_system_time_callback(const std::function<void(const std::string& system_time)>& callback);
+
+    /// \brief registers a \p callback function that can be used to signal that the chargepoint received a
+    /// SetChargingProfile.req
+    void register_signal_set_charging_profiles_callback(const std::function<void()>& callback);
 };
 
 } // namespace ocpp1_6
