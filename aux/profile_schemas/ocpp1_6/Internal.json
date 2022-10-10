@@ -119,6 +119,19 @@
             "type": "boolean",
             "readOnly": true,
             "default": true
+        },
+        "SupportedChargingProfilePurposeTypes": {
+            "$comment": "Indicates which ChargingProfilePurposeTypes are supported. SetChargingProfile.req for profiles not listed will be rejected.",
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "readOnly": true,
+            "default": [
+                "ChargePointMaxProfile",
+                "TxDefaultProfile",
+                "TxProfile"
+            ]
         }
     },
     "additionalProperties": false

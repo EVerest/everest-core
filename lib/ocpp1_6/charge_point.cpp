@@ -1270,9 +1270,14 @@ void ChargePoint::handleSetChargingProfileRequest(Call<SetChargingProfileRequest
     SetChargingProfileResponse response;
     response.status = ChargingProfileStatus::Rejected;
     auto number_of_connectors = this->configuration->getNumberOfConnectors();
+    const auto supported_purpose_types = this->configuration->getSupportedChargingProfilePurposeTypes();
     if (call.msg.connectorId > number_of_connectors || call.msg.connectorId < 0 ||
         call.msg.csChargingProfiles.stackLevel < 0 ||
         call.msg.csChargingProfiles.stackLevel > this->configuration->getChargeProfileMaxStackLevel()) {
+        response.status = ChargingProfileStatus::Rejected;
+    } else if (std::find(supported_purpose_types.begin(), supported_purpose_types.end(),
+                         call.msg.csChargingProfiles.chargingProfilePurpose) == supported_purpose_types.end()) {
+        EVLOG_debug << "Rejecting SetChargingProfileRequest because purpose type is not supported: " << call.msg.csChargingProfiles.chargingProfilePurpose;
         response.status = ChargingProfileStatus::Rejected;
     } else {
         // to avoid conflicts, the existence of multiple charging profiles with the same purpose and stack level is not

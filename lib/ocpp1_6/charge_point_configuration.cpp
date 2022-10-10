@@ -235,6 +235,15 @@ bool ChargePointConfiguration::getLogMessages() {
     return this->config["Internal"]["LogMessages"];
 }
 
+std::vector<ChargingProfilePurposeType> ChargePointConfiguration::getSupportedChargingProfilePurposeTypes() {
+    std::vector<ChargingProfilePurposeType> supported_purpose_types;
+    const auto str_list = this->config["Internal"]["SupportedChargingProfilePurposeTypes"];
+    for (const auto &str : str_list) {
+        supported_purpose_types.push_back(conversions::string_to_charging_profile_purpose_type(str));
+    }
+    return supported_purpose_types;
+}
+
 std::string ChargePointConfiguration::getSupportedCiphers12() {
 
     std::vector<std::string> supported_ciphers = this->config["Internal"]["SupportedCiphers12"];
