@@ -72,7 +72,7 @@ void Everest::heartbeat() {
     while (this->ready_received) {
         std::ostringstream now;
         now << date::utc_clock::now();
-        this->mqtt_abstraction.publish(heartbeat_topic, json(now.str()));
+        this->mqtt_abstraction.publish(heartbeat_topic, json(now.str()), QOS::QOS0);
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 }
@@ -96,7 +96,7 @@ void Everest::publish_metadata() {
 
     const auto metadata_topic = fmt::format("{}/metadata", this->config.mqtt_module_prefix(this->module_id));
 
-    this->mqtt_abstraction.publish(metadata_topic, metadata);
+    this->mqtt_abstraction.publish(metadata_topic, metadata, QOS::QOS2);
 }
 
 void Everest::register_on_ready_handler(const std::function<void()>& handler) {
@@ -238,7 +238,7 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
                       {"type", "call"},
                       {"data", json::object({{"id", call_id}, {"args", json_args}, {"origin", this->module_id}})}});
 
-    this->mqtt_abstraction.publish(cmd_topic, cmd_publish_data);
+    this->mqtt_abstraction.publish(cmd_topic, cmd_publish_data, QOS::QOS2);
 
     // wait for result future
     std::chrono::time_point<date::utc_clock> res_wait = date::utc_clock::now() + this->remote_cmd_res_timeout;
@@ -306,7 +306,8 @@ void Everest::publish_var(const std::string& impl_id, const std::string& var_nam
 
     json var_publish_data = {{"name", var_name}, {"data", json_value}};
 
-    this->mqtt_abstraction.publish(var_topic, var_publish_data);
+    // FIXME(kai): implement an efficient way of choosing qos for each variable
+    this->mqtt_abstraction.publish(var_topic, var_publish_data, QOS::QOS2);
 }
 
 void Everest::publish_var(const std::string& impl_id, const std::string& var_name, Value value) {

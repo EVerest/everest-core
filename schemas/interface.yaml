@@ -21,6 +21,11 @@ $defs:
       description:
         type: string
         minLength: 2
+      qos:
+        "type": "integer"
+        "minimum": 0
+        "maximum": 2
+        "default": 2
       # we don't allow default values
       default: false
     # allow all sorts of entries (should be a json schema!)
