@@ -244,7 +244,7 @@ void evse_managerImpl::handle_authorize(std::string& id_tag) {
 };
 
 void evse_managerImpl::handle_withdraw_authorization() {
-    this->mod->charger->DeAuthorize();
+    this->mod->charger->Authorize(false, "", false);
 };
 
 bool evse_managerImpl::handle_reserve(int& reservation_id) {
