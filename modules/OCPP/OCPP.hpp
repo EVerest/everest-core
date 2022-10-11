@@ -26,6 +26,7 @@
 #include <chrono>
 #include <date/date.h>
 #include <date/tz.h>
+#include <everest/timer.hpp>
 #include <mutex>
 #include <ocpp1_6/charge_point.hpp>
 #include <ocpp1_6/schemas.hpp>
@@ -44,6 +45,8 @@ struct Conf {
     std::string UserConfigPath;
     std::string DatabasePath;
     bool EnableExternalWebsocketControl;
+    int PublishChargingScheduleIntervalS;
+    int PublishChargingScheduleDurationS;
 };
 
 class OCPP : public Everest::ModuleBase {
@@ -79,6 +82,7 @@ public:
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
     ocpp1_6::ChargePoint* charge_point;
+    std::unique_ptr<Everest::SteadyTimer> charging_schedules_timer;
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
@@ -93,7 +97,7 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
-    void start_session();
+    void publish_charging_schedules();
     std::thread upload_diagnostics_thread;
     std::thread upload_logs_thread;
     std::thread update_firmware_thread;
