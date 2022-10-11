@@ -52,14 +52,15 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
 
     // check if token is already currently processed
     EVLOG_info << "Received new token: " << provided_token;
-    const auto referenced_connectors = this->get_referenced_connectors(provided_token);
     this->token_in_process_mutex.lock();
+    const auto referenced_connectors = this->get_referenced_connectors(provided_token);
+    
     if (!this->is_token_already_in_process(provided_token.id_token, referenced_connectors)) {
         // process token if not already in process
         this->tokens_in_process.insert(provided_token.id_token);
         this->token_in_process_mutex.unlock();
         result = this->handle_token(provided_token);
-        this->unlock_referenced_connectors(referenced_connectors);
+        this->unlock_plug_in_mutex(referenced_connectors);
     } else {
         // do nothing if token is currently processed
         EVLOG_info << "Received token " << provided_token.id_token << " repeatedly while still processing it";
@@ -68,9 +69,8 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
     }
 
     if (result != TokenHandlingResult::ALREADY_IN_PROCESS) {
-        this->token_in_process_mutex.lock();
+        std::lock_guard lk(this->token_in_process_mutex);
         this->tokens_in_process.erase(provided_token.id_token);
-        this->token_in_process_mutex.unlock();
     }
 
     EVLOG_info << "Result for token: " << provided_token.id_token << ": "
@@ -88,8 +88,7 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
         StopTransactionRequest req;
         req.reason = StopTransactionReason::Local;
         req.id_tag.emplace(provided_token.id_token);
-        this->stop_transaction_callback(this->connectors.at(connector_used_for_transaction)->evse_index,
-                                        req);
+        this->stop_transaction_callback(this->connectors.at(connector_used_for_transaction)->evse_index, req);
         EVLOG_info << "Transaction was stopped because id_token was used for transaction";
         return TokenHandlingResult::USED_TO_STOP_TRANSACTION;
     }
@@ -268,6 +267,7 @@ bool AuthHandler::any_connector_available(const std::vector<int>& connector_ids)
 }
 
 int AuthHandler::get_latest_plugin(const std::vector<int>& connectors) {
+    std::lock_guard<std::mutex> lk(this->plug_in_queue_mutex);
     for (const auto connector : this->plug_in_queue) {
         if (std::find(connectors.begin(), connectors.end(), connector) != connectors.end()) {
             return connector;
@@ -276,15 +276,15 @@ int AuthHandler::get_latest_plugin(const std::vector<int>& connectors) {
     return -1;
 }
 
-void AuthHandler::lock_referenced_connectors(const std::vector<int>& connectors) {
+void AuthHandler::lock_plug_in_mutex(const std::vector<int>& connectors) {
     for (const auto connector_id : connectors) {
-        this->connectors.at(connector_id)->mutex.lock();
+        this->connectors.at(connector_id)->plug_in_mutex.lock();
     }
 }
 
-void AuthHandler::unlock_referenced_connectors(const std::vector<int>& connectors) {
+void AuthHandler::unlock_plug_in_mutex(const std::vector<int>& connectors) {
     for (const auto connector_id : connectors) {
-        this->connectors.at(connector_id)->mutex.unlock();
+        this->connectors.at(connector_id)->plug_in_mutex.unlock();
     }
 }
 
@@ -295,16 +295,16 @@ int AuthHandler::select_connector(const std::vector<int>& connectors) {
     }
 
     if (this->selection_algorithm == SelectionAlgorithm::PlugEvents) {
-        this->lock_referenced_connectors(connectors);
+        this->lock_plug_in_mutex(connectors);
         if (this->get_latest_plugin(connectors) == -1) {
-            this->unlock_referenced_connectors(connectors);
+            this->unlock_plug_in_mutex(connectors);
             EVLOG_debug << "No connector in authorization queue. Waiting for a plug in...";
-            std::unique_lock<std::mutex> lk(this->auth_queue_mutex);
+            std::unique_lock<std::mutex> lk(this->plug_in_mutex);
             if (!this->cv.wait_for(lk, std::chrono::seconds(this->connection_timeout),
                                    [this, connectors] { return this->get_latest_plugin(connectors) != -1; })) {
                 return -1;
             }
-            this->lock_referenced_connectors(connectors);
+            this->lock_plug_in_mutex(connectors);
             EVLOG_debug << "Plug in at connector occured";
         }
         const auto connector_id = this->get_latest_plugin(connectors);
@@ -326,7 +326,7 @@ void AuthHandler::authorize_evse(int connector_id, const Identifier& identifier)
     this->connectors.at(connector_id)->connector.identifier.emplace(identifier);
     this->authorize_callback(evse_index, identifier.id_token);
 
-    std::lock_guard<std::mutex> lk(this->timer_mutex);
+    std::lock_guard<std::mutex> timer_lk(this->timer_mutex);
     this->connectors.at(connector_id)->timeout_timer.stop();
     this->connectors.at(connector_id)
         ->timeout_timer.timeout(
@@ -336,6 +336,7 @@ void AuthHandler::authorize_evse(int connector_id, const Identifier& identifier)
                 this->withdraw_authorization_callback(evse_index);
             },
             std::chrono::seconds(this->connection_timeout));
+    std::lock_guard<std::mutex> plug_in_lk(this->plug_in_queue_mutex);
     this->plug_in_queue.remove_if([connector_id](int value) { return value == connector_id; });
 }
 
@@ -366,19 +367,27 @@ void AuthHandler::call_reservation_cancelled(const int& connector_id) {
 }
 
 void AuthHandler::handle_session_event(const int connector_id, const SessionEvent& event) {
-    const auto event_type = event.event;
+
     std::lock_guard<std::mutex> lk(this->timer_mutex);
+    this->connectors.at(connector_id)->event_mutex.lock();
+    const auto event_type = event.event;
+
     switch (event_type) {
     case SessionEventEnum::SessionStarted:
         this->connectors.at(connector_id)->connector.is_reservable = false;
-        this->plug_in_queue.push_back(connector_id);
+        {
+            std::lock_guard<std::mutex> lk(this->plug_in_queue_mutex);
+            this->plug_in_queue.push_back(connector_id);
+        }
         this->cv.notify_one();
         this->connectors.at(connector_id)
             ->timeout_timer.timeout(
                 [this, connector_id]() {
-                    EVLOG_debug << "Plug In timeout for connector#" << connector_id;
-                    this->plug_in_queue.remove_if([connector_id](int value) { return value == connector_id; });
-                    this->withdraw_authorization_callback(this->connectors.at(connector_id)->evse_index);
+                    EVLOG_info << "Plug In timeout for connector#" << connector_id;
+                    {
+                        std::lock_guard<std::mutex> lk(this->plug_in_queue_mutex);
+                        this->plug_in_queue.remove_if([connector_id](int value) { return value == connector_id; });
+                    }
                 },
                 std::chrono::seconds(this->connection_timeout));
         break;
@@ -418,10 +427,8 @@ void AuthHandler::handle_session_event(const int connector_id, const SessionEven
         this->connectors.at(connector_id)->connector.is_reservable = true;
         this->connectors.at(connector_id)->connector.reserved = false;
         break;
-
-    default:
-        return;
     }
+    this->connectors.at(connector_id)->event_mutex.unlock();
 }
 
 void AuthHandler::set_connection_timeout(const int connection_timeout) {

@@ -55,7 +55,8 @@ struct ConnectorContext {
     int evse_index;
     Connector connector;
     Everest::SteadyTimer timeout_timer;
-    std::mutex mutex;
+    std::mutex plug_in_mutex;
+    std::mutex event_mutex;
 };
 
 namespace conversions {
