@@ -43,6 +43,16 @@ void create_empty_user_config(const boost::filesystem::path& user_config_path) {
     }
 }
 
+void OCPP::publish_charging_schedules() {
+    const auto charging_schedules =
+        this->charge_point->get_all_composite_charging_schedules(this->config.PublishChargingScheduleDurationS);
+    Object j;
+    for (const auto charging_schedule : charging_schedules) {
+        j[std::to_string(charging_schedule.first)] = charging_schedule.second;
+    }
+    this->p_main->publish_charging_schedules(j);
+}
+
 void OCPP::init() {
     invoke_init(*p_main);
     invoke_init(*p_auth_validator);
@@ -279,6 +289,13 @@ void OCPP::init() {
         this->mqtt.subscribe(disconnect_topic,
                              [this](const std::string& data) { this->charge_point->disconnect_websocket(); });
     }
+
+    this->charging_schedules_timer =
+        std::make_unique<Everest::SteadyTimer>([this]() { this->publish_charging_schedules(); });
+    this->charging_schedules_timer->interval(std::chrono::seconds(this->config.PublishChargingScheduleIntervalS));
+
+    this->charge_point->register_signal_set_charging_profiles_callback(
+        [this]() { this->publish_charging_schedules(); });
 }
 
 void OCPP::ready() {

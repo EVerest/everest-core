@@ -15,5 +15,11 @@
                 "description": "Returns true if the service could be restarted successfully, else false"
             }
         }
+    },
+    "vars": {
+        "charging_schedules": {
+            "description": "Object that contains OCPP charging schedules of all connectors. The object contains one composite charging schedule for each connector id starting from connector 0. Connector 0 contains a schedule for the whole charging station.",
+            "type": "object"
+        }
     }
 }

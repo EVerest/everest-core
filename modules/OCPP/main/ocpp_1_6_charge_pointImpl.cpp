@@ -12,9 +12,11 @@ void ocpp_1_6_charge_pointImpl::ready() {
 }
 
 bool ocpp_1_6_charge_pointImpl::handle_stop() {
+    mod->charging_schedules_timer->stop();
     return mod->charge_point->stop();
 }
 bool ocpp_1_6_charge_pointImpl::handle_restart() {
+    mod->charging_schedules_timer->interval(std::chrono::seconds(this->mod->config.PublishChargingScheduleIntervalS));
     return mod->charge_point->restart();
 }
 

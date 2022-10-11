@@ -25,6 +25,16 @@
             "description": "If true websocket can be disconnected and connected externally",
             "type": "boolean",
             "default": false
+        },
+        "PublishChargingScheduleIntervalS": {
+            "description": "Interval in seconds in which charging schedules received from OCPP are be published",
+            "type": "integer",
+            "default": 30
+        },
+        "PublishChargingScheduleDurationS": {
+            "description": "Duration in seconds that defines the duration of the requested charging schedules starting from now",
+            "type": "integer",
+            "default": 600
         }
     },
     "provides": {
