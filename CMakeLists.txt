@@ -6,10 +6,24 @@ project(everest-core
 	LANGUAGES CXX C
 )
 
-find_package(everest-cmake 0.10 REQUIRED
+find_package(everest-cmake 0.10
     COMPONENTS bundling
     PATHS ../everest-cmake
 )
+
+if (NOT everest-cmake_FOUND)
+    message(STATUS "Retreiving everest-cmake using FetchContent")
+    include(FetchContent)
+    FetchContent_Declare(
+        everest-cmake
+        GIT_REPOSITORY https://github.com/EVerest/everest-cmake.git
+        GIT_TAG        main
+    )
+    FetchContent_MakeAvailable(everest-cmake)
+    set(everest-cmake_DIR "${everest-cmake_SOURCE_DIR}")
+    set(everest-cmake_FIND_COMPONENTS "bundling")
+    include("${everest-cmake_SOURCE_DIR}/everest-cmake-config.cmake")
+endif()
 
 # make own cmake modules available
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
