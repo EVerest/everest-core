@@ -61,9 +61,9 @@ protected:
             this->auth_receiver->deauthorize(evse_index);
         });
         this->auth_handler->register_stop_transaction_callback(
-            [this](int32_t evse_index, const StopTransactionReason& reason) {
+            [this](int32_t evse_index, const StopTransactionRequest& request) {
                 EVLOG_debug << "Stop transaction called with evse_index#" << evse_index << " and reason "
-                            << stop_transaction_reason_to_string(reason);
+                            << stop_transaction_reason_to_string(request.reason);
                 this->auth_receiver->deauthorize(evse_index);
             });
 
@@ -803,7 +803,77 @@ TEST_F(AuthTest, test_authorization_without_transaction) {
 
     ASSERT_TRUE(result == TokenHandlingResult::ACCEPTED);
     ASSERT_TRUE(this->auth_receiver->get_authorization(0));
-
 }
+
+/// \brief Test if two transactions can be started for two succeeding plugins before two card swipes
+TEST_F(AuthTest, test_two_transactions_start_stop) {
+
+    TokenHandlingResult result1;
+    TokenHandlingResult result2;
+    TokenHandlingResult result3;
+    TokenHandlingResult result4;
+
+    SessionEvent session_event1;
+    session_event1.event = SessionEventEnum::SessionStarted;
+
+    std::thread t1([this, session_event1]() { this->auth_handler->handle_session_event(1, session_event1); });
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::thread t2([this, session_event1]() { this->auth_handler->handle_session_event(2, session_event1); });
+
+    std::vector<int32_t> connectors{1, 2};
+    ProvidedIdToken provided_token_1 = get_provided_token(VALID_TOKEN_1, connectors);
+    ProvidedIdToken provided_token_2 = get_provided_token(VALID_TOKEN_2, connectors);
+
+    SessionEvent session_event2;
+    session_event2.event = SessionEventEnum::TransactionStarted;
+    TransactionStarted transaction_event_1;
+    transaction_event_1.energy_Wh_import = 0;
+    transaction_event_1.id_tag = provided_token_1.id_token;
+    transaction_event_1.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
+    session_event2.transaction_started = transaction_event_1;
+
+    SessionEvent session_event3;
+    session_event3.event = SessionEventEnum::TransactionStarted;
+    TransactionStarted transaction_event_2;
+    transaction_event_2.energy_Wh_import = 0;
+    transaction_event_2.id_tag = provided_token_2.id_token;
+    transaction_event_2.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
+    session_event3.transaction_started = transaction_event_2;
+
+    std::thread t3([this, provided_token_1, &result1]() { result1 = this->auth_handler->on_token(provided_token_1); });
+    std::thread t4([this, provided_token_2, &result2]() { result2 = this->auth_handler->on_token(provided_token_2); });
+
+    t1.join();
+    t2.join();
+    t3.join();
+    t4.join();
+
+    ASSERT_TRUE(result1 == TokenHandlingResult::ACCEPTED);
+    ASSERT_TRUE(result2 == TokenHandlingResult::ACCEPTED);
+    ASSERT_TRUE(this->auth_receiver->get_authorization(0));
+    ASSERT_TRUE(this->auth_receiver->get_authorization(1));
+
+    std::thread t5([this, session_event2]() { this->auth_handler->handle_session_event(1, session_event2); });
+    std::thread t6([this, session_event3]() { this->auth_handler->handle_session_event(2, session_event3); });
+
+    // sleeping because the order of t5,t6 happening before t7,t8 must be preserved
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+
+    std::thread t7([this, provided_token_2, &result3]() { result3 = this->auth_handler->on_token(provided_token_2); });
+    std::thread t8([this, provided_token_1, &result4]() { result4 = this->auth_handler->on_token(provided_token_1); });
+
+    t5.join();
+    t6.join();
+    t7.join();
+    t8.join();
+
+    ASSERT_TRUE(result3 == TokenHandlingResult::USED_TO_STOP_TRANSACTION);
+    ASSERT_TRUE(result4 == TokenHandlingResult::USED_TO_STOP_TRANSACTION);
+    ASSERT_FALSE(this->auth_receiver->get_authorization(0));
+    ASSERT_FALSE(this->auth_receiver->get_authorization(1));
+}
+
+
 
 } // namespace module

@@ -179,7 +179,8 @@ private:
 
     std::mutex timer_mutex;
     std::list<int> plug_in_queue;
-    std::mutex auth_queue_mutex;
+    std::mutex plug_in_queue_mutex;
+    std::mutex plug_in_mutex;
     std::set<std::string> tokens_in_process;
     std::mutex token_in_process_mutex;
     std::condition_variable cv;
@@ -209,8 +210,8 @@ private:
      */
     int select_connector(const std::vector<int>& connectors);
 
-    void lock_referenced_connectors(const std::vector<int>& connectors);
-    void unlock_referenced_connectors(const std::vector<int>& connectors);
+    void lock_plug_in_mutex(const std::vector<int>& connectors);
+    void unlock_plug_in_mutex(const std::vector<int>& connectors);
     int get_latest_plugin(const std::vector<int>& connectors);
     void authorize_evse(int connector, const Identifier& identifier);
     Identifier get_identifier(const ValidationResult& validation_result, const std::string& id_token);
