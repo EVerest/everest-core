@@ -302,9 +302,6 @@ public:
     std::vector<KeyValue> get_all_key_value();
 
     ConfigurationStatus set(CiString50Type key, CiString500Type value);
-
-    std::vector<ScheduledCallback> getScheduledCallbacks();
-    void insertScheduledCallback(ScheduledCallbackType, std::string datetime, std::string args);
 };
 } // namespace ocpp1_6
 

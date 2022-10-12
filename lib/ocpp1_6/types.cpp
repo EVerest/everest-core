@@ -1041,12 +1041,4 @@ std::ostream& operator<<(std::ostream& os, const SessionStartedReason& session_s
     os << conversions::session_started_reason_to_string(session_started_reason);
     return os;
 }
-
-ScheduledCallback::ScheduledCallback(ScheduledCallbackType callbackType, std::string datetime,
-                                     std::vector<std::string> args) {
-    this->callbackType = callbackType;
-    this->datetime = datetime;
-    this->args = args;
-}
-
 } // namespace ocpp1_6

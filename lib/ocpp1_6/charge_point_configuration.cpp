@@ -1827,15 +1827,4 @@ ConfigurationStatus ChargePointConfiguration::set(CiString50Type key, CiString50
 
     return ConfigurationStatus::Accepted;
 }
-
-std::vector<ScheduledCallback> ChargePointConfiguration::getScheduledCallbacks() {
-    // TODO(piet): Implement this
-    std::vector<ScheduledCallback> callbacks;
-    return callbacks;
-}
-
-void ChargePointConfiguration::insertScheduledCallback(ScheduledCallbackType, std::string datetime, std::string args) {
-    // TODO(piet): Implement this
-}
-
 } // namespace ocpp1_6

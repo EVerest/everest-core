@@ -725,15 +725,5 @@ SessionStartedReason string_to_session_started_reason(const std::string& s);
 /// \brief Writes the string representation of the given \p session_started_reason
 /// to the given output stream \p os \returns an output stream with the SessionStartedReason written to
 std::ostream& operator<<(std::ostream& os, const SessionStartedReason& session_started_reason);
-
-
-/// \brief struct for a scheduled callback
-struct ScheduledCallback {
-    ScheduledCallbackType callbackType;
-    DateTime datetime;
-    std::vector<std::string> args;
-    ScheduledCallback(ScheduledCallbackType callbackType, std::string datetime, std::vector<std::string> args);
-};
-
 } // namespace ocpp1_6
 #endif // OCPP1_6_TYPES_HPP
