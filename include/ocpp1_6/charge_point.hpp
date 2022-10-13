@@ -83,10 +83,10 @@ private:
     std::chrono::time_point<date::utc_clock> clock_aligned_meter_values_time_point;
     std::map<int32_t, std::vector<MeterValue>> meter_values;
     std::mutex meter_values_mutex;
-    std::map<int32_t, json> power_meter;
+    std::map<int32_t, Powermeter> power_meters;
     std::map<int32_t, double> max_current_offered;
     std::map<int32_t, int32_t> number_of_phases_available;
-    std::mutex power_meter_mutex;
+    std::mutex power_meters_mutex;
     std::map<int32_t, AvailabilityType> change_availability_queue; // TODO: move to Connectors
     std::mutex change_availability_mutex;                          // TODO: move to Connectors
     std::unique_ptr<TransactionHandler> transaction_handler;
@@ -291,7 +291,7 @@ public:
     std::map<int32_t, ChargingSchedule> get_all_composite_charging_schedules(const int32_t duration_s);
 
     /// \brief Stores the given \p powermeter values for the given \p connector
-    void on_meter_values(int32_t connector, json powermeter);
+    void on_meter_values(int32_t connector, const Powermeter &powermeter);
 
     /// \brief Stores the given \p max_current for the given \p connector
     void on_max_current_offered(int32_t connector, int32_t max_current);

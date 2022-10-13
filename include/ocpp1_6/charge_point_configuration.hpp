@@ -26,6 +26,7 @@ private:
     std::set<MessageType> supported_message_types_receiving;
 
     std::vector<MeasurandWithPhase> csv_to_measurand_with_phase_vector(std::string csv);
+    bool validate_measurands(const json &config);
     bool measurands_supported(std::string csv);
     json get_user_config();
     void setInUserConfig(std::string profile, std::string key, json value);

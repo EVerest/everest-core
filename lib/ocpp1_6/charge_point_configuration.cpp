@@ -75,6 +75,10 @@ ChargePointConfiguration::ChargePointConfiguration(const json& config, const std
                                   {Measurand::Frequency, {Phase::L1, Phase::L2, Phase::L3}},                     // Hz
                                   {Measurand::Current_Offered, {}}};                                             // A
 
+    if(!this->validate_measurands(config)) {
+        EVLOG_AND_THROW(std::runtime_error("Given Measurands are invalid"));
+    }
+    
     this->supported_message_types_from_charge_point = {
         {SupportedFeatureProfiles::Core,
          {MessageType::Authorize, MessageType::BootNotification, MessageType::ChangeAvailabilityResponse,
@@ -238,7 +242,7 @@ bool ChargePointConfiguration::getLogMessages() {
 std::vector<ChargingProfilePurposeType> ChargePointConfiguration::getSupportedChargingProfilePurposeTypes() {
     std::vector<ChargingProfilePurposeType> supported_purpose_types;
     const auto str_list = this->config["Internal"]["SupportedChargingProfilePurposeTypes"];
-    for (const auto &str : str_list) {
+    for (const auto& str : str_list) {
         supported_purpose_types.push_back(conversions::string_to_charging_profile_purpose_type(str));
     }
     return supported_purpose_types;
@@ -263,36 +267,24 @@ std::vector<MeasurandWithPhase> ChargePointConfiguration::csv_to_measurand_with_
     std::vector<MeasurandWithPhase> measurand_with_phase_vector;
     for (auto component : components) {
         MeasurandWithPhase measurand_with_phase;
-        try {
-            Measurand measurand = ocpp1_6::conversions::string_to_measurand(component);
-            // check if this measurand can be provided on multiple phases
-            if (this->supported_measurands[measurand].size() > 0) {
-                // multiple phases are available
-                // also add the measurand without a phase as a total value
-                measurand_with_phase.measurand = measurand;
-                measurand_with_phase_vector.push_back(measurand_with_phase);
+        Measurand measurand = ocpp1_6::conversions::string_to_measurand(component);
+        // check if this measurand can be provided on multiple phases
+        if (this->supported_measurands[measurand].size() > 0) {
+            // multiple phases are available
+            // also add the measurand without a phase as a total value
+            measurand_with_phase.measurand = measurand;
+            measurand_with_phase_vector.push_back(measurand_with_phase);
 
-                for (auto phase : this->supported_measurands[measurand]) {
-                    measurand_with_phase.phase.emplace(phase);
-                    if (std::find(measurand_with_phase_vector.begin(), measurand_with_phase_vector.end(),
-                                  measurand_with_phase) == measurand_with_phase_vector.end()) {
-                        measurand_with_phase_vector.push_back(measurand_with_phase);
-                    }
-                }
-            } else {
-                // this is a measurand without any phase support
-                measurand_with_phase.measurand = measurand;
+            for (auto phase : this->supported_measurands[measurand]) {
+                measurand_with_phase.phase.emplace(phase);
                 if (std::find(measurand_with_phase_vector.begin(), measurand_with_phase_vector.end(),
                               measurand_with_phase) == measurand_with_phase_vector.end()) {
                     measurand_with_phase_vector.push_back(measurand_with_phase);
                 }
             }
-        } catch (std::out_of_range& o) {
-            std::vector<std::string> measurand_with_phase_vec;
-            iter_split(measurand_with_phase_vec, component, boost::algorithm::last_finder("."));
-            measurand_with_phase.measurand = ocpp1_6::conversions::string_to_measurand(measurand_with_phase_vec.at(0));
-            measurand_with_phase.phase.emplace(ocpp1_6::conversions::string_to_phase(measurand_with_phase_vec.at(1)));
-
+        } else {
+            // this is a measurand without any phase support
+            measurand_with_phase.measurand = measurand;
             if (std::find(measurand_with_phase_vector.begin(), measurand_with_phase_vector.end(),
                           measurand_with_phase) == measurand_with_phase_vector.end()) {
                 measurand_with_phase_vector.push_back(measurand_with_phase);
@@ -310,7 +302,37 @@ std::vector<MeasurandWithPhase> ChargePointConfiguration::csv_to_measurand_with_
     return measurand_with_phase_vector;
 }
 
+bool ChargePointConfiguration::validate_measurands(const json &config) {
+    std::vector<std::string> measurands_vector;
+    
+    // validate measurands of all these configuration keys
+    measurands_vector.push_back(config["Core"]["MeterValuesAlignedData"]);
+    measurands_vector.push_back(config["Core"]["MeterValuesSampledData"]);
+    measurands_vector.push_back(config["Core"]["StopTxnAlignedData"]);
+    measurands_vector.push_back(config["Core"]["StopTxnSampledData"]);
+
+    for (const auto &measurands : measurands_vector) {
+        if (!this->measurands_supported(measurands)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 bool ChargePointConfiguration::measurands_supported(std::string csv) {
+
+    std::vector<std::string> components;
+
+    boost::split(components, csv, boost::is_any_of(","));
+    for (auto component : components) {
+        try {
+            conversions::string_to_measurand(component);
+        } catch (std::out_of_range& o) {
+            EVLOG_warning << "Measurand: " << component << " is not supported!";
+            return false;
+        }
+    }
+
     auto requested_measurands = this->csv_to_measurand_with_phase_vector(csv);
     // check if the requested measurands are supported, otherwise return false
     for (auto req : requested_measurands) {

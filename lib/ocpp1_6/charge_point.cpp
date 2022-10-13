@@ -13,7 +13,7 @@
 namespace ocpp1_6 {
 
 ChargePoint::ChargePoint(std::shared_ptr<ChargePointConfiguration> configuration, const std::string& database_path,
-                         const std::string &sql_init_path) :
+                         const std::string& sql_init_path) :
     heartbeat_interval(configuration->getHeartbeatInterval()),
     initialized(false),
     registration_status(RegistrationStatus::Pending),
@@ -117,10 +117,9 @@ void ChargePoint::clock_aligned_meter_values_sample() {
                 connector, this->configuration->getMeterValuesAlignedDataVector(), ReadingContext::Sample_Clock);
             if (this->transaction_handler->transaction_active(connector)) {
                 this->transaction_handler->get_transaction(connector)->add_meter_value(meter_value);
-                this->send_meter_value(connector, meter_value);
             }
+            this->send_meter_value(connector, meter_value);
         }
-
         this->update_clock_aligned_meter_values_interval();
     }
 }
@@ -149,29 +148,29 @@ void ChargePoint::update_clock_aligned_meter_values_interval() {
     }
     auto seconds_in_a_day = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::hours(24)).count();
     auto now = date::utc_clock::now();
-    auto midnight = date::floor<date::days>(now);
+    auto midnight = date::floor<date::days>(now) + std::chrono::seconds(date::get_tzdb().leap_seconds.size());
     auto diff = now - midnight;
     auto start = std::chrono::duration_cast<std::chrono::seconds>(diff / clock_aligned_data_interval) *
                      clock_aligned_data_interval +
-                 std::chrono::seconds(clock_aligned_data_interval + date::get_tzdb().leap_seconds.size());
+                 std::chrono::seconds(clock_aligned_data_interval);
     this->clock_aligned_meter_values_time_point = midnight + start;
     using date::operator<<;
     std::ostringstream oss;
-    oss << "Sending clock aligned meter values every " << clock_aligned_data_interval << " seconds, starting at "
-        << DateTime(this->clock_aligned_meter_values_time_point) << ". This amounts to "
-        << seconds_in_a_day / clock_aligned_data_interval << " samples per day.";
+    EVLOG_debug << "Sending clock aligned meter values every " << clock_aligned_data_interval
+                << " seconds, starting at " << DateTime(this->clock_aligned_meter_values_time_point)
+                << ". This amounts to " << seconds_in_a_day / clock_aligned_data_interval << " samples per day.";
     EVLOG_debug << oss.str();
 
     this->clock_aligned_meter_values_timer->at(this->clock_aligned_meter_values_time_point);
 }
 
 int32_t ChargePoint::get_meter_wh(int32_t connector) {
-    if (this->power_meter.count(connector) == 0) {
+    if (this->power_meters.count(connector) == 0) {
         EVLOG_error << "No power meter entry for connector " << connector << " available. Returning 0.";
         return 0;
     }
-    auto power_meter_value = this->power_meter[connector];
-    return std::round((double)power_meter_value["energy_Wh_import"]["total"]);
+    const auto power_meter_value = this->power_meters[connector];
+    return std::round((double)power_meter_value.energy_Wh_import.total);
 }
 
 void ChargePoint::stop_pending_transactions() {
@@ -197,15 +196,15 @@ void ChargePoint::stop_pending_transactions() {
 
 MeterValue ChargePoint::get_latest_meter_value(int32_t connector, std::vector<MeasurandWithPhase> values_of_interest,
                                                ReadingContext context) {
-    std::lock_guard<std::mutex> lock(power_meter_mutex);
+    std::lock_guard<std::mutex> lock(power_meters_mutex);
     MeterValue filtered_meter_value;
     // TODO(kai): also support readings from the charge point powermeter at "connector 0"
-    if (this->power_meter.count(connector) != 0) {
-        auto power_meter_value = this->power_meter[connector];
-        auto timestamp =
-            std::chrono::time_point<date::utc_clock>(std::chrono::seconds(power_meter_value["timestamp"].get<int>()));
+    if (this->power_meters.count(connector) != 0) {
+        const auto power_meter = this->power_meters[connector];
+        const auto timestamp =
+            std::chrono::time_point<date::utc_clock>(std::chrono::seconds(static_cast<int>(power_meter.timestamp)));
         filtered_meter_value.timestamp = DateTime(timestamp);
-        EVLOG_debug << "PowerMeter value for connector: " << connector << ": " << power_meter_value;
+        EVLOG_debug << "PowerMeter value for connector: " << connector << ": " << power_meter;
 
         for (auto configured_measurand : values_of_interest) {
             EVLOG_debug << "Value of interest: " << conversions::measurand_to_string(configured_measurand.measurand);
@@ -221,7 +220,9 @@ MeterValue ChargePoint::get_latest_meter_value(int32_t connector, std::vector<Me
                             << conversions::phase_to_string(configured_measurand.phase.value());
             }
             switch (configured_measurand.measurand) {
-            case Measurand::Energy_Active_Import_Register:
+            case Measurand::Energy_Active_Import_Register: {
+                const auto energy_Wh_import = power_meter.energy_Wh_import;
+
                 // Imported energy in Wh (from grid)
                 sample.unit.emplace(UnitOfMeasure::Wh);
                 sample.location.emplace(Location::Outlet);
@@ -231,147 +232,217 @@ MeterValue ChargePoint::get_latest_meter_value(int32_t connector, std::vector<Me
                     auto phase = configured_measurand.phase.value();
                     sample.phase.emplace(phase);
                     if (phase == Phase::L1) {
-                        sample.value =
-                            conversions::double_to_string((double)power_meter_value["energy_Wh_import"]["L1"]);
+                        if (energy_Wh_import.L1) {
+                            sample.value = conversions::double_to_string((double)energy_Wh_import.L1.value());
+                        } else {
+                            EVLOG_debug
+                                << "Power meter does not contain energy_Wh_import configured measurand for phase L1";
+                        }
+                    } else if (phase == Phase::L2) {
+                        if (energy_Wh_import.L2) {
+                            sample.value = conversions::double_to_string((double)energy_Wh_import.L2.value());
+                        } else {
+                            EVLOG_debug
+                                << "Power meter does not contain energy_Wh_import configured measurand for phase L2";
+                        }
+                    } else if (phase == Phase::L3) {
+                        if (energy_Wh_import.L3) {
+                            sample.value = conversions::double_to_string((double)energy_Wh_import.L3.value());
+                        } else {
+                            EVLOG_debug
+                                << "Power meter does not contain energy_Wh_import configured measurand for phase L3";
+                        }
                     }
-                    if (phase == Phase::L2) {
-                        sample.value =
-                            conversions::double_to_string((double)power_meter_value["energy_Wh_import"]["L2"]);
-                    }
-                    if (phase == Phase::L3) {
-                        sample.value =
-                            conversions::double_to_string((double)power_meter_value["energy_Wh_import"]["L3"]);
-                    }
-                    filtered_meter_value.sampledValue.push_back(sample);
                 } else {
                     // store total value
-                    sample.value =
-                        conversions::double_to_string((double)power_meter_value["energy_Wh_import"]["total"]);
-                    filtered_meter_value.sampledValue.push_back(sample);
+                    sample.value = conversions::double_to_string((double)energy_Wh_import.total);
                 }
                 break;
-            case Measurand::Energy_Active_Export_Register:
+            }
+            case Measurand::Energy_Active_Export_Register: {
+                const auto energy_Wh_export = power_meter.energy_Wh_export;
                 // Exported energy in Wh (to grid)
                 sample.unit.emplace(UnitOfMeasure::Wh);
                 // TODO: which location is appropriate here? Inlet?
                 // sample.location.emplace(Location::Outlet);
-
-                if (configured_measurand.phase) {
-                    // phase available and it makes sense here
-                    auto phase = configured_measurand.phase.value();
-                    sample.phase.emplace(phase);
-                    if (phase == Phase::L1) {
-                        sample.value =
-                            conversions::double_to_string((double)power_meter_value["energy_Wh_export"]["L1"]);
+                if (energy_Wh_export) {
+                    if (configured_measurand.phase) {
+                        // phase available and it makes sense here
+                        auto phase = configured_measurand.phase.value();
+                        sample.phase.emplace(phase);
+                        if (phase == Phase::L1) {
+                            if (energy_Wh_export.value().L1) {
+                                sample.value =
+                                    conversions::double_to_string((double)energy_Wh_export.value().L1.value());
+                            } else {
+                                EVLOG_debug << "Power meter does not contain energy_Wh_export configured measurand "
+                                               "for phase L1";
+                            }
+                        } else if (phase == Phase::L2) {
+                            if (energy_Wh_export.value().L2) {
+                                sample.value =
+                                    conversions::double_to_string((double)energy_Wh_export.value().L2.value());
+                            } else {
+                                EVLOG_debug << "Power meter does not contain energy_Wh_export configured measurand "
+                                               "for phase L2";
+                            }
+                        } else if (phase == Phase::L3) {
+                            if (energy_Wh_export.value().L3) {
+                                sample.value =
+                                    conversions::double_to_string((double)energy_Wh_export.value().L3.value());
+                            } else {
+                                EVLOG_debug << "Power meter does not contain energy_Wh_export configured measurand "
+                                               "for phase L3";
+                            }
+                        }
+                    } else {
+                        // store total value
+                        sample.value = conversions::double_to_string((double)energy_Wh_export.value().total);
                     }
-                    if (phase == Phase::L2) {
-                        sample.value =
-                            conversions::double_to_string((double)power_meter_value["energy_Wh_export"]["L2"]);
-                    }
-                    if (phase == Phase::L3) {
-                        sample.value =
-                            conversions::double_to_string((double)power_meter_value["energy_Wh_export"]["L3"]);
-                    }
-                    filtered_meter_value.sampledValue.push_back(sample);
                 } else {
-                    // store total value
-                    sample.value =
-                        conversions::double_to_string((double)power_meter_value["energy_Wh_export"]["total"]);
-                    filtered_meter_value.sampledValue.push_back(sample);
+                    EVLOG_debug << "Power meter does not contain energy_Wh_export configured measurand";
                 }
                 break;
-            case Measurand::Power_Active_Import:
+            }
+            case Measurand::Power_Active_Import: {
+                const auto power_W = power_meter.power_W;
                 // power flow to EV, Instantaneous power in Watt
                 sample.unit.emplace(UnitOfMeasure::W);
                 sample.location.emplace(Location::Outlet);
-
-                if (configured_measurand.phase) {
-                    // phase available and it makes sense here
-                    auto phase = configured_measurand.phase.value();
-                    sample.phase.emplace(phase);
-                    if (phase == Phase::L1) {
-                        sample.value = conversions::double_to_string((double)power_meter_value["power_W"]["L1"]);
+                if (power_W) {
+                    if (configured_measurand.phase) {
+                        // phase available and it makes sense here
+                        auto phase = configured_measurand.phase.value();
+                        sample.phase.emplace(phase);
+                        if (phase == Phase::L1) {
+                            if (power_W.value().L1) {
+                                sample.value = conversions::double_to_string((double)power_W.value().L1.value());
+                            } else {
+                                EVLOG_debug << "Power meter does not contain power_W configured measurand for phase L1";
+                            }
+                        } else if (phase == Phase::L2) {
+                            if (power_W.value().L2) {
+                                sample.value = conversions::double_to_string((double)power_W.value().L2.value());
+                            } else {
+                                EVLOG_debug << "Power meter does not contain power_W configured measurand for phase L2";
+                            }
+                        } else if (phase == Phase::L3) {
+                            if (power_W.value().L3) {
+                                sample.value = conversions::double_to_string((double)power_W.value().L3.value());
+                            } else {
+                                EVLOG_debug << "Power meter does not contain power_W configured measurand for phase L3";
+                            }
+                        }
+                    } else {
+                        // store total value
+                        sample.value = conversions::double_to_string((double)power_W.value().total);
                     }
-                    if (phase == Phase::L2) {
-                        sample.value = conversions::double_to_string((double)power_meter_value["power_W"]["L2"]);
-                    }
-                    if (phase == Phase::L3) {
-                        sample.value = conversions::double_to_string((double)power_meter_value["power_W"]["L3"]);
-                    }
-                    filtered_meter_value.sampledValue.push_back(sample);
                 } else {
-                    // store total value
-                    sample.value = conversions::double_to_string((double)power_meter_value["power_W"]["total"]);
-                    filtered_meter_value.sampledValue.push_back(sample);
+                    EVLOG_debug << "Power meter does not contain power_W configured measurand";
                 }
                 break;
-            case Measurand::Voltage:
+            }
+            case Measurand::Voltage: {
+                const auto voltage_V = power_meter.voltage_V;
                 // AC supply voltage, Voltage in Volts
                 sample.unit.emplace(UnitOfMeasure::V);
                 sample.location.emplace(Location::Outlet);
-
-                if (configured_measurand.phase) {
-                    // phase available and it makes sense here
-                    auto phase = configured_measurand.phase.value();
-                    sample.phase.emplace(phase);
-                    if (phase == Phase::L1) {
-                        sample.value = conversions::double_to_string((double)power_meter_value["voltage_V"]["L1"]);
+                if (voltage_V) {
+                    if (configured_measurand.phase) {
+                        // phase available and it makes sense here
+                        auto phase = configured_measurand.phase.value();
+                        sample.phase.emplace(phase);
+                        if (phase == Phase::L1) {
+                            sample.value = conversions::double_to_string((double)voltage_V.value().L1);
+                        } else if (phase == Phase::L2) {
+                            if (voltage_V.value().L2) {
+                                sample.value = conversions::double_to_string((double)voltage_V.value().L2.value());
+                            } else {
+                                EVLOG_debug
+                                    << "Power meter does not contain voltage_V configured measurand for phase L2";
+                            }
+                        } else if (phase == Phase::L3) {
+                            if (voltage_V.value().L3) {
+                                sample.value = conversions::double_to_string((double)voltage_V.value().L3.value());
+                            } else {
+                                EVLOG_debug
+                                    << "Power meter does not contain voltage_V configured measurand for phase L3";
+                            }
+                        }
                     }
-                    if (phase == Phase::L2) {
-                        sample.value = conversions::double_to_string((double)power_meter_value["voltage_V"]["L2"]);
-                    }
-                    if (phase == Phase::L3) {
-                        sample.value = conversions::double_to_string((double)power_meter_value["voltage_V"]["L3"]);
-                    }
-                    filtered_meter_value.sampledValue.push_back(sample);
+                } else {
+                    EVLOG_debug << "Power meter does not contain voltage_V configured measurand";
                 }
                 break;
-            case Measurand::Current_Import:
+            }
+            case Measurand::Current_Import: {
+                const auto current_A = power_meter.current_A;
                 // current flow to EV in A
                 sample.unit.emplace(UnitOfMeasure::A);
                 sample.location.emplace(Location::Outlet);
-
-                if (configured_measurand.phase) {
-                    // phase available and it makes sense here
-                    auto phase = configured_measurand.phase.value();
-                    sample.phase.emplace(phase);
-                    if (phase == Phase::L1) {
-                        sample.value = conversions::double_to_string((double)power_meter_value["current_A"]["L1"]);
+                if (current_A) {
+                    if (configured_measurand.phase) {
+                        // phase available and it makes sense here
+                        auto phase = configured_measurand.phase.value();
+                        sample.phase.emplace(phase);
+                        if (phase == Phase::L1) {
+                            sample.value = conversions::double_to_string((double)current_A.value().L1);
+                        } else if (phase == Phase::L2) {
+                            if (current_A.value().L2) {
+                                sample.value = conversions::double_to_string((double)current_A.value().L2.value());
+                            } else {
+                                EVLOG_debug
+                                    << "Power meter does not contain current_A configured measurand for phase L2";
+                            }
+                        } else if (phase == Phase::L3) {
+                            if (current_A.value().L3) {
+                                sample.value = conversions::double_to_string((double)current_A.value().L3.value());
+                            } else {
+                                EVLOG_debug
+                                    << "Power meter does not contain current_A configured measurand for phase L3";
+                            }
+                        }
                     }
-                    if (phase == Phase::L2) {
-                        sample.value = conversions::double_to_string((double)power_meter_value["current_A"]["L2"]);
-                    }
-                    if (phase == Phase::L3) {
-                        sample.value = conversions::double_to_string((double)power_meter_value["current_A"]["L3"]);
-                    }
-                    if (phase == Phase::N) {
-                        sample.value = conversions::double_to_string((double)power_meter_value["current_A"]["N"]);
-                    }
-                    filtered_meter_value.sampledValue.push_back(sample);
+                } else {
+                    EVLOG_debug << "Power meter does not contain current_A configured measurand";
                 }
+
                 break;
-            case Measurand::Frequency:
+            }
+            case Measurand::Frequency: {
+                const auto frequency_Hz = power_meter.frequency_Hz;
                 // Grid frequency in Hertz
                 // TODO: which location is appropriate here? Inlet?
                 // sample.location.emplace(Location::Outlet);
-
-                if (configured_measurand.phase) {
-                    // phase available and it makes sense here
-                    auto phase = configured_measurand.phase.value();
-                    sample.phase.emplace(phase);
-                    if (phase == Phase::L1) {
-                        sample.value = conversions::double_to_string((double)power_meter_value["frequency_Hz"]["L1"]);
+                if (frequency_Hz) {
+                    if (configured_measurand.phase) {
+                        // phase available and it makes sense here
+                        auto phase = configured_measurand.phase.value();
+                        sample.phase.emplace(phase);
+                        if (phase == Phase::L1) {
+                            sample.value = conversions::double_to_string((double)frequency_Hz.value().L1);
+                        } else if (phase == Phase::L2) {
+                            if (frequency_Hz.value().L2) {
+                                sample.value = conversions::double_to_string((double)frequency_Hz.value().L2.value());
+                            } else {
+                                EVLOG_debug
+                                    << "Power meter does not contain frequency_Hz configured measurand for phase L2";
+                            }
+                        } else if (phase == Phase::L3) {
+                            if (frequency_Hz.value().L3) {
+                                sample.value = conversions::double_to_string((double)frequency_Hz.value().L3.value());
+                            } else {
+                                EVLOG_debug
+                                    << "Power meter does not contain frequency_Hz configured measurand for phase L3";
+                            }
+                        }
                     }
-                    if (phase == Phase::L2) {
-                        sample.value = conversions::double_to_string((double)power_meter_value["frequency_Hz"]["L2"]);
-                    }
-                    if (phase == Phase::L3) {
-                        sample.value = conversions::double_to_string((double)power_meter_value["frequency_Hz"]["L3"]);
-                    }
-                    filtered_meter_value.sampledValue.push_back(sample);
+                } else {
+                    EVLOG_debug << "Power meter does not contain frequency_Hz configured measurand";
                 }
                 break;
-            case Measurand::Current_Offered:
+            }
+            case Measurand::Current_Offered: {
                 // current offered to EV
                 sample.unit.emplace(UnitOfMeasure::A);
                 sample.location.emplace(Location::Outlet);
@@ -382,12 +453,14 @@ MeterValue ChargePoint::get_latest_meter_value(int32_t connector, std::vector<Me
                 }
 
                 sample.value = conversions::double_to_string(this->max_current_offered[connector]);
-
-                filtered_meter_value.sampledValue.push_back(sample);
                 break;
-
+            }
             default:
                 break;
+            }
+            // only add if value is set
+            if (!sample.value.empty()) {
+                filtered_meter_value.sampledValue.push_back(sample);
             }
         }
     }
@@ -1277,7 +1350,8 @@ void ChargePoint::handleSetChargingProfileRequest(Call<SetChargingProfileRequest
         response.status = ChargingProfileStatus::Rejected;
     } else if (std::find(supported_purpose_types.begin(), supported_purpose_types.end(),
                          call.msg.csChargingProfiles.chargingProfilePurpose) == supported_purpose_types.end()) {
-        EVLOG_debug << "Rejecting SetChargingProfileRequest because purpose type is not supported: " << call.msg.csChargingProfiles.chargingProfilePurpose;
+        EVLOG_debug << "Rejecting SetChargingProfileRequest because purpose type is not supported: "
+                    << call.msg.csChargingProfiles.chargingProfilePurpose;
         response.status = ChargingProfileStatus::Rejected;
     } else {
         // to avoid conflicts, the existence of multiple charging profiles with the same purpose and stack level is not
@@ -2339,14 +2413,14 @@ void ChargePoint::register_data_transfer_callback(const CiString255Type& vendorI
     this->data_transfer_callbacks[vendorId.get()][messageId.get()] = callback;
 }
 
-void ChargePoint::on_meter_values(int32_t connector, json powermeter) {
+void ChargePoint::on_meter_values(int32_t connector, const Powermeter& power_meter) {
     EVLOG_debug << "updating power meter for connector: " << connector;
-    std::lock_guard<std::mutex> lock(power_meter_mutex);
-    this->power_meter[connector] = powermeter;
+    std::lock_guard<std::mutex> lock(power_meters_mutex);
+    this->power_meters[connector] = power_meter;
 }
 
 void ChargePoint::on_max_current_offered(int32_t connector, int32_t max_current) {
-    std::lock_guard<std::mutex> lock(power_meter_mutex);
+    std::lock_guard<std::mutex> lock(power_meters_mutex);
     // TODO(kai): uses power meter mutex because the reading context is similar, think about storing
     // this information in a unified struct
     this->max_current_offered[connector] = max_current;
@@ -2411,6 +2485,7 @@ void ChargePoint::on_transaction_started(const int32_t& connector, const std::st
         this->transaction_handler->add_meter_value(connector, meter_value);
         this->send_meter_value(connector, meter_value);
     });
+    meter_values_sample_timer->interval(std::chrono::seconds(this->configuration->getMeterValueSampleInterval()));
     std::shared_ptr<Transaction> transaction =
         std::make_shared<Transaction>(connector, session_id, CiString20Type(id_token), meter_start, reservation_id,
                                       timestamp, std::move(meter_values_sample_timer));
