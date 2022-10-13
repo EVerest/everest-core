@@ -1220,19 +1220,20 @@ void ChargePoint::handleResetRequest(Call<ResetRequest> call) {
 void ChargePoint::handleStartTransactionResponse(CallResult<StartTransactionResponse> call_result) {
 
     StartTransactionResponse start_transaction_response = call_result.msg;
-    // TODO(piet): Fix this for multiple connectors;
 
     const auto transaction = this->transaction_handler->get_transaction(call_result.uniqueId);
+    
+    // this can happen when a chargepoint was offline during transaction and StopTransaction.req is already queued
+    if (transaction->is_finished()) {
+        this->message_queue->add_stopped_transaction_id(transaction->get_stop_transaction_message_id(),
+                                                        start_transaction_response.transactionId);
+    }
+    this->message_queue->notify_start_transaction_handled();
     int32_t connector = transaction->get_connector();
     transaction->set_transaction_id(start_transaction_response.transactionId);
 
     this->database_handler->update_transaction(transaction->get_session_id(), start_transaction_response.transactionId,
                                                call_result.msg.idTagInfo.parentIdTag);
-
-    if (transaction->is_finished()) {
-        this->message_queue->add_stopped_transaction_id(transaction->get_stop_transaction_message_id(),
-                                                        start_transaction_response.transactionId);
-    }
 
     auto idTag = transaction->get_id_tag();
     this->database_handler->insert_or_update_authorization_cache_entry(idTag, start_transaction_response.idTagInfo);

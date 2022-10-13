@@ -158,6 +158,7 @@ public:
     /// \brief Adds the given \p transaction_id to the message_id_transaction_id_map using the key \p
     /// stop_transaction_message_id
     void add_stopped_transaction_id(std::string stop_transaction_message_id, int32_t transaction_id);
+    void notify_start_transaction_handled();
 };
 
 } // namespace ocpp1_6
