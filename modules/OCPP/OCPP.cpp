@@ -296,20 +296,9 @@ void OCPP::init() {
 
     this->charge_point->register_signal_set_charging_profiles_callback(
         [this]() { this->publish_charging_schedules(); });
-}
-
-void OCPP::ready() {
-    invoke_ready(*p_main);
-    invoke_ready(*p_auth_validator);
-    invoke_ready(*p_auth_provider);
 
     int32_t connector = 1;
     for (auto& evse : this->r_evse_manager) {
-        if (connector != evse->call_get_id()) {
-            EVLOG_AND_THROW(std::runtime_error("Connector Ids of EVSE manager are not configured in ascending order "
-                                               "starting with 1. This is mandatory when using the OCPP module"));
-        }
-
         evse->subscribe_powermeter([this, connector](types::powermeter::Powermeter powermeter) {
             json powermeter_json = powermeter;
             this->charge_point->on_meter_values(connector, powermeter_json); //
@@ -402,6 +391,21 @@ void OCPP::ready() {
         connector++;
     }
     this->charge_point->start();
+}
+
+void OCPP::ready() {
+    invoke_ready(*p_main);
+    invoke_ready(*p_auth_validator);
+    invoke_ready(*p_auth_provider);
+
+    int connector = 1;
+    for (const auto& evse : this->r_evse_manager) {
+        if (connector != evse->call_get_id()) {
+            EVLOG_AND_THROW(std::runtime_error("Connector Ids of EVSE manager are not configured in ascending order "
+                                               "starting with 1. This is mandatory when using the OCPP module"));
+        }
+        connector++;
+    }
 }
 
 } // namespace module
