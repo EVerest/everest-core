@@ -509,10 +509,6 @@ void ChargePoint::send_meter_value(int32_t connector, MeterValue meter_value) {
 }
 
 bool ChargePoint::start() {
-    // deny all charging services until BootNotification.conf with status Accepted
-    for (int connector = 1; connector < this->configuration->getNumberOfConnectors(); connector++) {
-        this->disable_evse_callback(connector);
-    }
     this->init_websocket(this->configuration->getSecurityProfile());
     this->websocket->connect(this->configuration->getSecurityProfile());
     this->boot_notification();
@@ -809,10 +805,6 @@ void ChargePoint::handleBootNotificationResponse(CallResult<BootNotificationResp
     }
     switch (call_result.msg.status) {
     case RegistrationStatus::Accepted: {
-        // enable all evse on Accepted
-        for (int connector = 1; connector < this->configuration->getNumberOfConnectors(); connector++) {
-            this->enable_evse_callback(connector);
-        }
         this->connection_state = ChargePointConnectionState::Booted;
         // we are allowed to send messages to the central system
         // activate heartbeat
