@@ -297,7 +297,7 @@ boost::optional<IdTagInfo> DatabaseHandler::get_authorization_cache_entry(const 
     sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
         EVLOG_error << "Could not prepare insert statement" << std::endl;
-        throw std::runtime_error("Database access error");
+        return boost::none;
     }
 
     const auto id_tag_str = id_tag.get();
@@ -544,7 +544,7 @@ boost::optional<IdTagInfo> DatabaseHandler::get_local_authorization_list_entry(c
     sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
         EVLOG_error << "Could not prepare insert statement" << std::endl;
-        throw std::runtime_error("Database access error");
+        return boost::none;
     }
 
     const auto id_tag_str = id_tag.get();
