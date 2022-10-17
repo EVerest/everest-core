@@ -41,12 +41,16 @@ void SessionLog::startSession(const std::string& session_id) {
             stopSession();
         }
 
+        // create log directory if it does not exist
+        if (!std::filesystem::exists(logpath))
+            std::filesystem::create_directory(logpath);
+
         // open new file
         std::string ts = Everest::Date::to_rfc3339(date::utc_clock::now());
         const std::string fn = fmt::format("{}/everest-session-{}.log", logpath, session_id);
         const std::string fnhtml = fmt::format("{}/everest-session-{}.html", logpath, session_id);
-        //const std::string fn = fmt::format("{}/everest-session.log", logpath);
-        //const std::string fnhtml = fmt::format("{}/everest-session.html", logpath);
+        // const std::string fn = fmt::format("{}/everest-session.log", logpath);
+        // const std::string fnhtml = fmt::format("{}/everest-session.html", logpath);
         try {
             logfile_csv.open(fn);
             logfile_html.open(fnhtml);
@@ -109,15 +113,18 @@ void SessionLog::car(bool iso15118, const std::string& msg) {
     car(iso15118, msg, "", "", "", "");
 }
 
-void SessionLog::evse(bool iso15118, const std::string& msg, const std::string& xml, const std::string& xml_hex, const std::string& xml_base64, const std::string& json_str) {
+void SessionLog::evse(bool iso15118, const std::string& msg, const std::string& xml, const std::string& xml_hex,
+                      const std::string& xml_base64, const std::string& json_str) {
     output(0, iso15118, msg, xml, xml_hex, xml_base64, json_str);
 }
 
-void SessionLog::car(bool iso15118, const std::string& msg, const std::string& xml, const std::string& xml_hex, const std::string& xml_base64, const std::string& json_str) {
+void SessionLog::car(bool iso15118, const std::string& msg, const std::string& xml, const std::string& xml_hex,
+                     const std::string& xml_base64, const std::string& json_str) {
     output(1, iso15118, msg, xml, xml_hex, xml_base64, json_str);
 }
 
-void SessionLog::output(unsigned int typ, bool iso15118, const std::string& msg, const std::string& xml, const std::string& xml_hex, const std::string& xml_base64, const std::string& json_str) {
+void SessionLog::output(unsigned int typ, bool iso15118, const std::string& msg, const std::string& xml,
+                        const std::string& xml_hex, const std::string& xml_base64, const std::string& json_str) {
     if (enabled && session_active) {
         std::string ts = Everest::Date::to_rfc3339(date::utc_clock::now());
 
@@ -158,9 +165,10 @@ void SessionLog::output(unsigned int typ, bool iso15118, const std::string& msg,
 
         // output to session html file
         logfile_html << fmt::format("<tr class=\"{}\"> <td>{}</td> <td>{}</td> <td><b>{}</b></td><td><b>{}</b></td> "
-                                    "<td><pre lang=\"xml\">{}</pre></td> <td><pre lang=\"xml\">{}</pre></td> <td><pre lang=\"xml\">{}</pre></td> </tr>\n",
-                                    origin, ts, origin + "&gt;" + target, (typ==0||typ==2 ? msg : ""), (typ == 1 ? msg:""),
-                                    html_encode(xml_pretty), xml_hex, xml_base64);
+                                    "<td><pre lang=\"xml\">{}</pre></td> <td><pre lang=\"xml\">{}</pre></td> <td><pre "
+                                    "lang=\"xml\">{}</pre></td> </tr>\n",
+                                    origin, ts, origin + "&gt;" + target, (typ == 0 || typ == 2 ? msg : ""),
+                                    (typ == 1 ? msg : ""), html_encode(xml_pretty), xml_hex, xml_base64);
         logfile_html.flush();
     }
 }
