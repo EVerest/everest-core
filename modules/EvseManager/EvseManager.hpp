@@ -104,7 +104,7 @@ public:
     // insert your public definitions here
     std::unique_ptr<Charger> charger;
     sigslot::signal<int> signalNrOfPhasesAvailable;
-    json get_latest_powermeter_data();
+    types::powermeter::Powermeter get_latest_powermeter_data();
     types::board_support::HardwareCapabilities get_hw_capabilities();
     bool updateLocalMaxCurrentLimit(float max_current);
     float getLocalMaxCurrentLimit();
@@ -115,7 +115,7 @@ public:
     int32_t get_reservation_id();
 
     bool get_hlc_enabled();
-    sigslot::signal<json> signalReservationEvent;
+    sigslot::signal<types::evse_manager::SessionEvent> signalReservationEvent;
 
     void charger_was_authorized();
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
@@ -132,7 +132,7 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
-    json latest_powermeter_data;
+    types::powermeter::Powermeter latest_powermeter_data;
 
     Everest::Thread energyThreadHandle;
     types::board_support::HardwareCapabilities hw_capabilities;

@@ -26,8 +26,8 @@ bool str_to_bool(const std::string& data) {
 }
 
 void evse_managerImpl::init() {
-    limits["nr_of_phases_available"] = 1;
-    limits["max_current"] = 0.;
+    limits.nr_of_phases_available = 1;
+    limits.max_current = 0.;
 
     // Interface to Node-RED debug UI
 
@@ -59,7 +59,7 @@ void evse_managerImpl::init() {
     // /Interface to Node-RED debug UI
 
     if (mod->r_powermeter.size() > 0) {
-        mod->r_powermeter[0]->subscribe_powermeter([this](const json p) {
+        mod->r_powermeter[0]->subscribe_powermeter([this](const types::powermeter::Powermeter p) {
             // Republish data on proxy powermeter struct
             publish_powermeter(p);
         });
@@ -79,7 +79,7 @@ void evse_managerImpl::ready() {
 
     mod->signalNrOfPhasesAvailable.connect([this](const int n) {
         if (n >= 1 && n <= 3) {
-            limits["nr_of_phases_available"] = n;
+            limits.nr_of_phases_available = n;
             publish_limits(limits);
         }
     });
@@ -93,12 +93,12 @@ void evse_managerImpl::ready() {
     });
 
     // The module code generates the reservation events and we merely publish them here
-    mod->signalReservationEvent.connect([this](json j) {
-        if (j["event"] == "ReservationStart") {
+    mod->signalReservationEvent.connect([this](types::evse_manager::SessionEvent j) {
+        if (j.event == types::evse_manager::SessionEventEnum::ReservationStart) {
             set_session_uuid();
         }
 
-        j["uuid"] = session_uuid;
+        j.uuid = session_uuid;
         publish_session_event(j);
     });
 
@@ -135,15 +135,11 @@ void evse_managerImpl::ready() {
             types::evse_manager::TransactionStarted transaction_started;
             transaction_started.timestamp =
                 date::format("%FT%TZ", std::chrono::time_point_cast<std::chrono::milliseconds>(date::utc_clock::now()));
-            json p = mod->get_latest_powermeter_data();
-            if (p.contains("energy_Wh_import") && p["energy_Wh_import"].contains("total")) {
-                transaction_started.energy_Wh_import = p["energy_Wh_import"]["total"];
-            } else {
-                transaction_started.energy_Wh_import = 0;
-            }
 
-            if (p.contains("energy_Wh_export") && p["energy_Wh_export"].contains("total")) {
-                transaction_started.energy_Wh_export.emplace(p["energy_Wh_export"]["total"]);
+            auto p = mod->get_latest_powermeter_data();
+            transaction_started.energy_Wh_import = p.energy_Wh_import.total;
+            if (p.energy_Wh_export.is_initialized()) {
+                transaction_started.energy_Wh_export.emplace(p.energy_Wh_export.get().total);
             }
 
             if (mod->is_reserved()) {
@@ -166,15 +162,11 @@ void evse_managerImpl::ready() {
 
             transaction_finished.timestamp =
                 date::format("%FT%TZ", std::chrono::time_point_cast<std::chrono::milliseconds>(date::utc_clock::now()));
-            json p = mod->get_latest_powermeter_data();
-            if (p.contains("energy_Wh_import") && p["energy_Wh_import"].contains("total")) {
-                transaction_finished.energy_Wh_import = p["energy_Wh_import"]["total"];
-            } else {
-                transaction_finished.energy_Wh_import = 0;
-            }
 
-            if (p.contains("energy_Wh_export") && p["energy_Wh_export"].contains("total")) {
-                transaction_finished.energy_Wh_export.emplace(p["energy_Wh_export"]["total"]);
+            auto p = mod->get_latest_powermeter_data();
+            transaction_finished.energy_Wh_import = p.energy_Wh_import.total;
+            if (p.energy_Wh_export.is_initialized()) {
+                transaction_finished.energy_Wh_export.emplace(p.energy_Wh_export.get().total);
             }
 
             auto reason = mod->charger->getTransactionFinishedReason();
@@ -209,8 +201,8 @@ void evse_managerImpl::ready() {
     mod->charger->signalMaxCurrent.connect([this](float c) {
         mod->mqtt.publish(fmt::format("everest_external/nodered/{}/state/max_current", mod->config.connector_id), c);
 
-        limits["uuid"] = mod->info.id;
-        limits["max_current"] = c;
+        limits.uuid = mod->info.id;
+        limits.max_current = c;
         publish_limits(limits);
     });
 

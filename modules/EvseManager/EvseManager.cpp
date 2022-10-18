@@ -230,13 +230,12 @@ void EvseManager::ready() {
 
         // implement Auth handlers
         r_hlc[0]->subscribe_EVCCIDD([this](const std::string& _token) {
-            json autocharge_token;
+            types::authorization::ProvidedIdToken autocharge_token;
 
             std::string token = _token;
             token.erase(remove(token.begin(), token.end(), ':'), token.end());
-            autocharge_token["id_token"] = "VID:" + token;
-            autocharge_token["type"] = "autocharge";
-            autocharge_token["timeout"] = 60;
+            autocharge_token.id_token = "VID:" + token;
+            autocharge_token.type = "autocharge";
 
             p_token_provider->publish_provided_token(autocharge_token);
         });
@@ -378,10 +377,13 @@ void EvseManager::ready() {
     r_bsp->subscribe_nr_of_phases_available([this](int n) { signalNrOfPhasesAvailable(n); });
 
     if (r_powermeter.size() > 0) {
-        r_powermeter[0]->subscribe_powermeter([this](types::powermeter::Powermeter powermeter) {
-            json p = powermeter;
+        r_powermeter[0]->subscribe_powermeter([this](types::powermeter::Powermeter p) {
             // Inform charger about current charging current. This is used for slow OC detection.
-            charger->setCurrentDrawnByVehicle(p["current_A"]["L1"], p["current_A"]["L2"], p["current_A"]["L3"]);
+            if (p.current_A.is_initialized() && p.current_A.get().L1.is_initialized() &&
+                p.current_A.get().L2.is_initialized() && p.current_A.get().L3.is_initialized()) {
+                charger->setCurrentDrawnByVehicle(p.current_A.get().L1.get(), p.current_A.get().L2.get(),
+                                                  p.current_A.get().L3.get());
+            }
 
             // Inform HLC about the power meter data
             if (get_hlc_enabled()) {
@@ -392,18 +394,24 @@ void EvseManager::ready() {
             latest_powermeter_data = p;
 
             // External Nodered interface
-            mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter/phaseSeqError", config.connector_id),
-                         powermeter.phase_seq_error.get());
+            if (p.phase_seq_error.is_initialized()) {
+                mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter/phaseSeqError", config.connector_id),
+                             p.phase_seq_error.get());
+            }
+
             mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter/time_stamp", config.connector_id),
-                         powermeter.timestamp);
-            mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter/totalKw", config.connector_id),
-                         (powermeter.power_W.get().L1.get() + powermeter.power_W.get().L2.get() +
-                          powermeter.power_W.get().L3.get()) /
-                             1000.,
-                         1);
+                         p.timestamp);
+
+            if (p.power_W.is_initialized()) {
+                mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter/totalKw", config.connector_id),
+                             p.power_W.get().total / 1000., 1);
+            }
+
             mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter/totalKWattHr", config.connector_id),
-                         powermeter.energy_Wh_import.total / 1000.);
-            mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter_json", config.connector_id), p.dump());
+                         p.energy_Wh_import.total / 1000.);
+            json j;
+            to_json(j, p);
+            mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter_json", config.connector_id), j.dump());
             // /External Nodered interface
         });
     }
@@ -460,7 +468,7 @@ void EvseManager::ready() {
     EVLOG_info << fmt::format(fmt::emphasis::bold | fg(fmt::terminal_color::green), ">>> Ready to start charging <<<");
 }
 
-json EvseManager::get_latest_powermeter_data() {
+types::powermeter::Powermeter EvseManager::get_latest_powermeter_data() {
     return latest_powermeter_data;
 }
 
@@ -565,8 +573,8 @@ bool EvseManager::reserve(int32_t id) {
         reservation_id = id;
 
         // publish event to other modules
-        json se;
-        se["event"] = "ReservationStart";
+        types::evse_manager::SessionEvent se;
+        se.event = types::evse_manager::SessionEventEnum::ReservationStart;
 
         signalReservationEvent(se);
         return true;
@@ -583,8 +591,8 @@ void EvseManager::cancel_reservation() {
         reservation_id = 0;
 
         // publish event to other modules
-        json se;
-        se["event"] = "ReservationEnd";
+        types::evse_manager::SessionEvent se;
+        se.event = types::evse_manager::SessionEventEnum::ReservationEnd;
 
         signalReservationEvent(se);
     }
