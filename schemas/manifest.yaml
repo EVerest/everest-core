@@ -1,0 +1,154 @@
+$schema: http://json-schema.org/draft-07/schema#
+description: Json schema for EVerest manifest files
+$defs:
+  config_set_schema:
+    type: object
+    patternProperties:
+      ^[a-zA-Z_][a-zA-Z0-9_.-]*$:
+        type: object
+        required:
+          - type
+          - description
+        properties:
+          type:
+            type: string
+            enum:
+              - boolean
+              - integer
+              - number
+              - string
+          description:
+            type: string
+            minLength: 2
+        additionalProperties: true
+    additionalProperties: false
+    default: {}
+type: object
+required:
+  - description
+  - provides
+  - metadata
+properties:
+  description:
+    type: string
+    minLength: 2
+  capabilities:
+    description: linux capabilities this module should have (whitelist)
+    type: array
+    minItems: 0
+    items:
+      type: string
+      minLength: 6
+    default: []
+  config:
+    description: >-
+      Config set for this module (and possibly default values) declared
+      as json schema
+    $ref: '#/$defs/config_set_schema'
+  provides:
+    description: >-
+      this configures a list of implementations this module provides along
+      with their api, provided vars and config
+    type: object
+    # at least one implementation is required
+    minProperties: 1
+    patternProperties:
+      # arbitrary implementation id
+      ^[a-zA-Z_][a-zA-Z0-9_.-]*$:
+        description: This defines api, provided vars and config of this implementation
+        type: object
+        required:
+          - description
+          - interface
+        # sadly the schema validates properties from "properties" against matching "patternProperties", too
+        # --> we have to prevent this matching to not double validate against competing schemes
+        patternProperties:
+          # allow all sorts of additional properties that can be used to match requirements to
+          ^(?!interface|config|cmds|vars$)[a-zA-Z_][a-zA-Z0-9_.-]*$:
+            # only allow primitive types in here
+            type:
+              - string
+              - integer
+              - number
+              - boolean
+              - 'null'
+        properties:
+          description:
+            type: string
+            minLength: 2
+          interface:
+            description: this defines the interface to be implemented
+            type: string
+            pattern: ^[a-zA-Z_][a-zA-Z0-9_.-]*$
+            minLength: 3
+          config:
+            description: >-
+              Config set for this implementation (and possibly default
+              values) declared as json schema
+            $ref: '#/$defs/config_set_schema'
+        additionalProperties: false
+    # add empty provides if not already present
+    default: {}
+    # don't allow arbitrary additional properties
+    additionalProperties: false
+  requires:
+    description: >-
+      This describes a list of requirements that must be fulfilled by other
+      modules. The key of this is an arbitrary requirement id that has to be referenced
+      in the connections object by the main config, the values are a list of properties
+      (key-value-pairs) the required module and implementations must have set in their
+      provides section to fulfill this requirement
+    type: object
+    patternProperties:
+      # requirement id
+      ^[a-zA-Z_][a-zA-Z0-9_.-]*$:
+        type: object
+        required:
+          - interface
+        properties:
+          interface:
+            type: string
+            pattern: ^[a-zA-Z_][a-zA-Z0-9_.-]*$
+          min_connections:
+            type: integer
+            minimum: 0
+            default: 1
+          max_connections:
+            type: integer
+            minimum: 1
+            default: 1
+        # don't allow arbitrary additional properties
+        additionalProperties: false
+    # don't allow arbitrary additional properties
+    additionalProperties: false
+    default: {}
+  metadata:
+    description: this describes some metadata for this module
+    type: object
+    required:
+      - license
+      - authors
+    properties:
+      base_license:
+        description: URI pointing to the base license of this module (e.g. https://opensource.org/licenses/Apache-2.0)
+        type: string
+        format: uri
+      license:
+        description: URI pointing to the license of this module (e.g. https://opensource.org/licenses/Apache-2.0)
+        type: string
+        format: uri
+      authors:
+        description: Author(s) of this module (an array of strings)
+        type: array
+        minItems: 1
+        items:
+          type: string
+          minLength: 2
+    # allow all sorts of additional properties
+    additionalProperties: true
+    default: {}
+  enable_external_mqtt:
+    description: this requests access to the external mqtt publishing interface
+    type: boolean
+    default: false
+additionalProperties: false

@@ -11,6 +11,7 @@
 #include <everest/logging.hpp>
 
 #include <utils/config.hpp>
+#include <utils/yaml_loader.hpp>
 
 namespace Everest {
 
@@ -124,10 +125,7 @@ Config::Config(std::string schemas_dir, std::string config_file, std::string mod
     try {
         EVLOG_debug << fmt::format("Loading config file at: {}", fs::canonical(config_path).string());
 
-        std::ifstream ifs(config_path.c_str());
-        std::string config_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-
-        this->main = json::parse(config_file);
+        this->main = load_yaml(config_path);
 
         // try to load user config from a directory "user-config" that might be in the same parent directory as the
         // config_file. The config is supposed to have the same name as the parent config.
@@ -137,10 +135,7 @@ Config::Config(std::string schemas_dir, std::string config_file, std::string mod
         if (fs::exists(user_config_path)) {
             EVLOG_debug << fmt::format("Loading user-config file at: {}", fs::canonical(user_config_path).string());
 
-            std::ifstream ifs(user_config_path.c_str());
-            std::string user_config_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-
-            auto user_config = json::parse(user_config_file);
+            auto user_config = load_yaml(user_config_path);
 
             EVLOG_debug << "Augmenting main config with user-config entries";
             this->main.merge_patch(user_config);
@@ -163,15 +158,13 @@ Config::Config(std::string schemas_dir, std::string config_file, std::string mod
     auto types_path = fs::path(this->types_dir);
     for (auto const& types_entry : fs::recursive_directory_iterator(types_path)) {
         auto const& type_file_path = types_entry.path();
-        if (fs::is_regular_file(type_file_path) && type_file_path.extension() == ".json") {
+        if (fs::is_regular_file(type_file_path) && type_file_path.extension() == ".yaml") {
             auto type_path = std::string("/") + fs::relative(type_file_path, types_path).stem().string();
             try {
                 // load and validate type file, store validated result in this->types
                 EVLOG_verbose << fmt::format("Loading type file at: {}", fs::canonical(type_file_path).c_str());
 
-                std::ifstream ifs(type_file_path.c_str());
-                std::string type_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-                json type_json = json::parse(type_file);
+                json type_json = load_yaml(type_file_path);
                 json_validator validator(Config::loader, Config::format_checker);
                 validator.set_root_schema(this->_schemas.type);
                 validator.validate(type_json);
@@ -193,14 +186,11 @@ Config::Config(std::string schemas_dir, std::string config_file, std::string mod
                                    printable_identifier(module_id));
 
         // load and validate module manifest.json
-        fs::path manifest_path = fs::path(modules_dir) / module_name / "manifest.json";
+        fs::path manifest_path = fs::path(modules_dir) / module_name / "manifest.yaml";
         try {
             EVLOG_debug << fmt::format("Loading module manifest file at: {}", fs::canonical(manifest_path).string());
 
-            std::ifstream ifs(manifest_path.c_str());
-            std::string manifest_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-
-            this->manifests[module_name] = json::parse(manifest_file);
+            this->manifests[module_name] = load_yaml(manifest_path);
 
             json_validator validator(Config::loader, Config::format_checker);
             validator.set_root_schema(this->_schemas.manifest);
@@ -330,14 +320,11 @@ json Config::resolve_interface(const std::string& intf_name) {
 
 json Config::load_interface_file(const std::string& intf_name) {
     BOOST_LOG_FUNCTION();
-    fs::path intf_path = fs::path(this->interfaces_dir) / (intf_name + ".json");
+    fs::path intf_path = fs::path(this->interfaces_dir) / (intf_name + ".yaml");
     try {
         EVLOG_debug << fmt::format("Loading interface file at: {}", fs::canonical(intf_path).string());
 
-        std::ifstream ifs(intf_path.c_str());
-        std::string intf_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-
-        json interface_json = json::parse(intf_file);
+        json interface_json = load_yaml(intf_path);
 
         // this subschema can not use allOf with the draft-07 schema because that will cause our validator to
         // add all draft-07 default values which never validate (the {"not": true} default contradicts everything)
@@ -486,10 +473,7 @@ json Config::load_schema(const fs::path& path) {
 
     EVLOG_debug << fmt::format("Loading schema file at: {}", fs::canonical(path).string());
 
-    std::ifstream ifs(path.c_str());
-    std::string schema_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-
-    json schema = json::parse(schema_file, nullptr, true, true);
+    json schema = load_yaml(path);
 
     json_validator validator(Config::loader);
 
@@ -507,10 +491,10 @@ schemas Config::load_schemas(std::string schemas_dir) {
     schemas schemas;
 
     EVLOG_debug << fmt::format("Loading base schema files for config and manifests... from: {}", schemas_dir);
-    schemas.config = Config::load_schema(fs::path(schemas_dir) / "config.json");
-    schemas.manifest = Config::load_schema(fs::path(schemas_dir) / "manifest.json");
-    schemas.interface = Config::load_schema(fs::path(schemas_dir) / "interface.json");
-    schemas.type = Config::load_schema(fs::path(schemas_dir) / "type.json");
+    schemas.config = Config::load_schema(fs::path(schemas_dir) / "config.yaml");
+    schemas.manifest = Config::load_schema(fs::path(schemas_dir) / "manifest.yaml");
+    schemas.interface = Config::load_schema(fs::path(schemas_dir) / "interface.yaml");
+    schemas.type = Config::load_schema(fs::path(schemas_dir) / "type.yaml");
 
     return schemas;
 }
@@ -525,19 +509,16 @@ json Config::load_all_manifests(std::string modules_dir, std::string schemas_dir
     fs::path modules_path = fs::path(modules_dir);
 
     for (auto&& module_path : fs::directory_iterator(modules_path)) {
-        fs::path manifest_path = module_path.path() / "manifest.json";
+        fs::path manifest_path = module_path.path() / "manifest.yaml";
         if (!fs::exists(manifest_path)) {
             continue;
         }
 
-        std::string module_name = module_path.path().filename().c_str();
+        std::string module_name = module_path.path().filename().string();
         EVLOG_debug << fmt::format("Found module {}, loading and verifying manifest...", module_name);
 
         try {
-            std::ifstream ifs(manifest_path.c_str());
-            std::string manifest_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-
-            manifests[module_name] = json::parse(manifest_file);
+            manifests[module_name] = load_yaml(manifest_path);
 
             json_validator validator(Config::loader, Config::format_checker);
             validator.set_root_schema(schemas.manifest);

@@ -8,6 +8,8 @@
 
 #include "rpc.hpp"
 
+#include <utils/yaml_loader.hpp>
+
 using json = nlohmann::json;
 namespace fs = boost::filesystem;
 
@@ -28,12 +30,12 @@ nlohmann::json CommandApi::handle(const std::string& cmd, const json& params) {
             const auto module_name = module_path.filename().string();
 
             // fetch the manifest
-            const auto manifest_path = module_path / "manifest.json";
+            const auto manifest_path = module_path / "manifest.yaml";
             if (!fs::is_regular_file(manifest_path)) {
                 continue;
             }
 
-            modules_list[module_name] = json::parse(std::ifstream(manifest_path.string()));
+            modules_list[module_name] = Everest::load_yaml(manifest_path);
         }
 
         return modules_list;
@@ -44,13 +46,13 @@ nlohmann::json CommandApi::handle(const std::string& cmd, const json& params) {
             if (!fs::is_regular_file(item)) {
                 continue;
             }
-            if (item.path().extension() != std::string(".json")) {
+            if (item.path().extension() != std::string(".yaml")) {
                 continue;
             }
 
             const auto config_name = item.path().stem().string();
 
-            config_list[config_name] = json::parse(std::ifstream(item.path().string()));
+            config_list[config_name] = Everest::load_yaml(item.path());
         }
 
         return config_list;
@@ -62,13 +64,13 @@ nlohmann::json CommandApi::handle(const std::string& cmd, const json& params) {
             if (!fs::is_regular_file(item)) {
                 continue;
             }
-            if (item.path().extension() != std::string(".json")) {
+            if (item.path().extension() != std::string(".yaml")) {
                 continue;
             }
 
             const auto interface_name = item.path().stem().string();
 
-            interface_list[interface_name] = json::parse(std::ifstream(item.path().string()));
+            interface_list[interface_name] = Everest::load_yaml(item.path());
         }
 
         return interface_list;
@@ -80,7 +82,7 @@ nlohmann::json CommandApi::handle(const std::string& cmd, const json& params) {
 
         auto config_json = params.value("config", json::object());
         const auto configs_path = fs::path(this->config.config_dir);
-        auto check_config_file_path = configs_path / fmt::format("_{}.json", params.at("name"));
+        auto check_config_file_path = configs_path / fmt::format("_{}.yaml", params.at("name"));
         std::ofstream(check_config_file_path.string()) << config_json.dump(2);
 
         auto result = this->rpc.ipc_request("check_config", check_config_file_path.string(), false);
@@ -90,7 +92,7 @@ nlohmann::json CommandApi::handle(const std::string& cmd, const json& params) {
             throw CommandApiParamsError(result);
         }
 
-        fs::rename(check_config_file_path, configs_path / fmt::format("{}.json", params.at("name")));
+        fs::rename(check_config_file_path, configs_path / fmt::format("{}.yaml", params.at("name")));
 
         return true;
     } else if (cmd == "restart_modules") {

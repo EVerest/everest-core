@@ -24,6 +24,7 @@ target_sources(framework
         serial.cpp
         date.cpp
         runtime.cpp
+        yaml_loader.cpp
 )
 
 target_include_directories(framework
@@ -47,4 +48,5 @@ target_link_libraries(framework
         Boost::program_options
 
         mqttc
+        ryml::ryml
 )

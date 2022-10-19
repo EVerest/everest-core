@@ -8,15 +8,18 @@ target_link_libraries(controller-ipc
 find_package(Threads REQUIRED)
 find_package(Boost COMPONENTS filesystem REQUIRED)
 
+# FIXME (aw): refactor the yaml_loader into on lib, so it can be shared somehow, similar to the controller-ipc
 add_executable(controller 
     controller.cpp
     command_api.cpp
     rpc.cpp
     server.cpp
+    ${PROJECT_SOURCE_DIR}/lib/yaml_loader.cpp
     $<TARGET_OBJECTS:controller-ipc>
 )
 
 target_include_directories(controller PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
     ${websocketpp_SOURCE_DIR}
 )
 
@@ -31,6 +34,8 @@ target_link_libraries(controller
         fmt::fmt
 
         everest::log
+
+        ryml::ryml
 )
 
 target_compile_features(controller PRIVATE cxx_std_14)
