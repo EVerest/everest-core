@@ -1,0 +1,41 @@
+description: >-
+  This module implements a Car simulator that can execute charging sessions using the yeti-simulation-control interface
+config:
+  connector_id:
+    description: Connector id of the evse manager to which this simulator is connected to
+    type: integer
+  auto_enable:
+    description: >-
+      Enable this simulation directly at start. Set to true for pure SIL configs, set to false for HIL.
+    type: boolean
+    default: false
+  auto_exec:
+    description: >-
+      Enable automatic execution of simulation commands at startup from auto_exec_commands config option.
+    type: boolean
+    default: false
+  auto_exec_commands:
+    description: >-
+      Simulation commands, e.g. sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 30;unplug
+    type: string
+    default: ''
+provides:
+  main:
+    interface: car_simulator
+    description: This implements the car simulator
+requires:
+  simulation_control:
+    interface: yeti_simulation_control
+  ev:
+    interface: ISO15118_ev
+    min_connections: 0
+    max_connections: 1
+  slac:
+    interface: slac
+    min_connections: 0
+    max_connections: 1
+enable_external_mqtt: true
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Cornelius Claussen

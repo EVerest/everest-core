@@ -1,0 +1,45 @@
+description: Powermeter types
+types:
+  Powermeter:
+    description: Measured dataset
+    type: object
+    additionalProperties: false
+    required:
+      - timestamp
+      - energy_Wh_import
+    properties:
+      timestamp:
+        description: Timestamp of measurement
+        type: number
+      meter_id:
+        description: A (user defined) meter if (e.g. id printed on the case)
+        type: string
+      phase_seq_error:
+        description: true for 3 phase rotation error (ccw)
+        type: boolean
+      energy_Wh_import:
+        description: Imported energy in Wh (from grid)
+        type: object
+        $ref: /units#/Energy
+      energy_Wh_export:
+        description: Exported energy in Wh (to grid)
+        type: object
+        $ref: /units#/Energy
+      power_W:
+        description: >-
+          Instantaneous power in Watt. Negative values are exported, positive
+          values imported Energy.
+        type: object
+        $ref: /units#/Power
+      voltage_V:
+        description: Voltage in Volts
+        type: object
+        $ref: /units#/Voltage
+      current_A:
+        description: Current in ampere
+        type: object
+        $ref: /units#/Current
+      frequency_Hz:
+        description: Grid frequency in Hertz
+        type: object
+        $ref: /units#/Frequency

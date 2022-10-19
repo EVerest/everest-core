@@ -1,0 +1,25 @@
+description: SIL Implementation of an Isolation Monitoring Device (IMD) for DC charging
+provides:
+  main:
+    interface: isolation_monitor
+    description: Main interface for the IMD
+    config:
+      status:
+        description: Status to return after simulated measurement
+        type: string
+        enum:
+          - Invalid
+          - Valid
+          - Warning
+          - Fault
+          - No_IMD
+        default: Valid
+      duration:
+        description: Measurement duration in seconds
+        type: integer
+        default: 5
+enable_external_mqtt: true
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Cornelius Claussen (Pionix GmbH)

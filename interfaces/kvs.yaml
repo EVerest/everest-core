@@ -1,0 +1,55 @@
+description: This interface defines a simple key-value-store interface
+cmds:
+  store:
+    description: This command stores a value under a given key
+    arguments:
+      key:
+        description: Key to store the value for
+        type: string
+        pattern: ^[A-Za-z0-9_.]*$
+      value:
+        description: Value to store
+        type:
+          - 'null'
+          - string
+          - number
+          - integer
+          - boolean
+          - array
+          - object
+  load:
+    description: >-
+      This command loads the previously stored value for a given key (it
+      will return null if the key does not exist)
+    arguments:
+      key:
+        description: Key to load the value for
+        type: string
+        pattern: ^[A-Za-z0-9_.]+$
+    result:
+      description: The previously stored value
+      type:
+        - 'null'
+        - string
+        - number
+        - integer
+        - boolean
+        - array
+        - object
+  delete:
+    description: This command removes the value stored under a given key
+    arguments:
+      key:
+        description: Key to delete the value for
+        type: string
+        pattern: ^[A-Za-z0-9_.]+$
+  exists:
+    description: This command checks if something is stored under a given key
+    arguments:
+      key:
+        description: Key to check the existence for
+        type: string
+        pattern: ^[A-Za-z0-9_.]+$
+    result:
+      description: Returns 'True' if something was stored for this key
+      type: boolean

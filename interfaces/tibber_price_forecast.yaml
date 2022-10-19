@@ -1,0 +1,5 @@
+description: This interface defines the interface for an energy price forecast
+vars:
+  forecast:
+    description: Forecast JSON Object containing a timestamp and the price forecast
+    type: object

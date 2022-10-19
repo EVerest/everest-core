@@ -126,7 +126,7 @@ function(ev_setup_cpp_module)
                 --output-dir ${GENERATED_MODULE_DIR}
                 ${MODULE_NAME}
         DEPENDS
-            manifest.json
+            manifest.yaml
         WORKING_DIRECTORY
             ${PROJECT_SOURCE_DIR}
         COMMENT
@@ -163,7 +163,7 @@ function(ev_setup_cpp_module)
         DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
     )
 
-    install(FILES manifest.json
+    install(FILES manifest.yaml
         DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
     )
 

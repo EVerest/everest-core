@@ -1,0 +1,213 @@
+description: Energy import/export capability/limit types
+types:
+  AcCurrentLimit:
+    description: AC current limit object
+    type: object
+    additionalProperties: false
+    properties:
+      current_A:
+        description: AC current limit per phase in Ampere
+        type: number
+        minimum: 0.0
+      phase_count:
+        description: Limit to number of phases. Omit if number of phases are not limited.
+        type: integer
+        minimum: 1
+        maximum: 3
+  EnforcedLimits:
+    description: Enforced limits
+    type: object
+    additionalProperties: false
+    properties:
+      ac_current_A:
+        description: AC current limit object
+        type: object
+        $ref: /energy#/AcCurrentLimit
+      total_power_W:
+        description: >-
+          Total power limit in Watt. Can be used for DC or as additional
+          limit for AC.
+        type: number
+        minimum: 0.0
+  Limits:
+    description: Enforced limits that must be respected.
+    type: object
+    additionalProperties: false
+    properties:
+      valid_until:
+        description: >-
+          Limits are valid until this timepoint in RFC3339 UTC. If no new
+          update is received, power consumption must be stopped afer that timepoint.
+        type: string
+        format: date-time
+      request_parameters:
+        description: Enforced limits
+        type: object
+        $ref: /energy#/EnforcedLimits
+  LimitType:
+    description: >-
+      Hard limits need to be enforced by EnergyManager, Soft limits may
+      be ignored.
+    type: string
+    enum:
+      - Hard
+      - Soft
+  LimitWithType:
+    description: Limit for this timestamp
+    type: object
+    additionalProperties: false
+    required:
+      - limit_type
+    properties:
+      limit_type:
+        description: >-
+          Hard limits need to be enforced by EnergyManager, Soft limits
+          may be ignored.
+        type: string
+        $ref: /energy#/LimitType
+      ac_current_A:
+        description: AC current limit object
+        type: object
+        $ref: /energy#/AcCurrentLimit
+      total_power_W:
+        description: >-
+          Total power limit in Watt. Can be used for DC or as additional
+          limit for AC.
+        type: number
+        minimum: 0.0
+  TimeSeriesEntry:
+    description: One entry for the time series
+    type: object
+    additionalProperties: false
+    required:
+      - timestamp
+      - request_parameters
+    properties:
+      timestamp:
+        description: Absolute timestamp for this sample in RFC3339 UTC format https://datatracker.ietf.org/doc/html/rfc3339#section-5.6
+        type: string
+        format: date-time
+      request_parameters:
+        description: Limit for this timestamp
+        type: object
+        $ref: /energy#/LimitWithType
+      price_per_kwh:
+        description: Price information for this timepoint
+        type: object
+        $ref: /energy_price_information#/PricePerkWh
+  NodeType:
+    description: >-
+      Type of energy source/sink. Use Limit if this purely enforces limits
+      but is not a physical energy source/sink.
+    type: string
+    enum:
+      - Grid
+      - GridConnection
+      - Solar
+      - Battery
+      - Fuse
+      - Evse
+  OptimizerTarget:
+    description: User defined optimizer targets for this evse
+    type: object
+    additionalProperties: false
+    properties:
+      energy_amount_needed:
+        description: Amount of kwh the car needs to fulfill its charging target
+        type: number
+      charge_to_max_percent:
+        description: Charge car battery to max NN percent
+        type: number
+      car_battery_soc:
+        description: Car battery State Of Charge in percent
+        type: number
+      leave_time:
+        description: >-
+          RFC3339 UTC format time when the car needs to drive away with
+          charging targets fullfilled. Will charge cheapest within this timeframe.
+        type: string
+      price_limit:
+        description: >-
+          Always charge if price below this limit. This includes solar
+          charging and price for solar energy if price levels set correctly.
+        type: number
+      full_autonomy:
+        description: >-
+          Only charge from locally generated energy. Do not draw power
+          from grid for charging.
+        type: boolean
+  AcCurrentLimitExtended:
+    description: AC current limit object
+    type: object
+    additionalProperties: false
+    required:
+      - max_current_A
+    properties:
+      max_current_A:
+        description: Max AC current limit per phase in Ampere
+        type: number
+        minimum: 0.0
+      min_current_A:
+        description: Minimal AC current limit per phase in Ampere to be able to charge
+        type: number
+        minimum: 0.0
+      max_phase_count:
+        description: >-
+          Max Limit of number of phases. Omit if number of phases are not
+          limited.
+        type: integer
+        minimum: 1
+        maximum: 3
+      min_phase_count:
+        description: Minimum number of phases that can be used for proper operation.
+        type: integer
+        minimum: 1
+        maximum: 3
+      supports_changing_phases_during_charging:
+        description: >-
+          Indicate whether phase switching is allowed during charging or
+          not
+        type: boolean
+  LimitWithTypeExtended:
+    description: Limit for this timestamp
+    type: object
+    additionalProperties: false
+    required:
+      - limit_type
+    properties:
+      limit_type:
+        description: >-
+          Hard limits need to be enforced by EnergyManager, Soft limits
+          may be ignored.
+        type: string
+        $ref: /energy#/LimitType
+      ac_current_A:
+        description: AC current limit object
+        type: object
+        $ref: /energy#/AcCurrentLimitExtended
+      total_power_W:
+        description: >-
+          Total power limit in Watt. Can be used for DC or as additional
+          limit for AC.
+        type: number
+        minimum: 0.0
+  TimeSeriesEntryExtended:
+    description: One entry for the time series
+    type: object
+    additionalProperties: false
+    required:
+      - timestamp
+      - request_parameters
+    properties:
+      timestamp:
+        description: Absolute timestamp for this sample in RFC3339 UTC format https://datatracker.ietf.org/doc/html/rfc3339#section-5.6
+        type: string
+        format: date-time
+      request_parameters:
+        description: Limit for this timestamp
+        type: object
+        $ref: /energy#/LimitWithTypeExtended
+      price_per_kwh:
+        description: Price information for this timepoint
+        type: object
+        $ref: /energy_price_information#/PricePerkWh
