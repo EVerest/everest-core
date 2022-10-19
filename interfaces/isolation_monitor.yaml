@@ -1,0 +1,17 @@
+description: >-
+  This interface defines an isolation monitoring device (IMD) according
+  to IEC 61557-8 for DC charging. This is used to verify isolation of the DC lines
+  before starting high voltage charging.
+cmds:
+  startIsolationTest:
+    description: start a single isolation measurement
+vars:
+  IsolationStatus:
+    description: Publishes the isolation status after measurement
+    type: string
+    enum:
+      - Invalid
+      - Valid
+      - Warning
+      - Fault
+      - No_IMD

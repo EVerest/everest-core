@@ -1,0 +1,136 @@
+description: EVSE Manager
+config:
+  connector_id:
+    description: Connector id of this evse manager
+    type: integer
+  evse_id:
+    description: EVSE ID
+    type: string
+    default: DE*PNX*E1234567*1
+  payment_enable_eim:
+    description: Set to true to enable EIM (e.g. RFID card or mobile app) authorization
+    type: boolean
+    default: true
+  payment_enable_contract:
+    description: Set to true to enable contract (aka plug and charge) authorization
+    type: boolean
+    default: true
+  ac_nominal_voltage:
+    description: Nominal AC voltage between phase and neutral in Volt
+    type: number
+    default: 230
+  dc_current_regulation_tolerance:
+    description: DC current regulation tolerance in Ampere
+    type: number
+    default: 5
+  dc_peak_current_ripple:
+    description: DC peal current ripple in Ampere
+    type: number
+    default: 5
+  ev_receipt_required:
+    description: 'Unsupported: request receipt from EV with HLC'
+    type: boolean
+    default: false
+  session_logging:
+    description: Enable/Disable session log file output
+    type: boolean
+    default: false
+  session_logging_path:
+    description: Output directory for session log files
+    type: string
+    default: /tmp
+  session_logging_xml:
+    description: Log full XML messages for HLC
+    type: boolean
+    default: true
+  three_phases:
+    description: Limit to three phases (true) or one phase (false)
+    type: boolean
+    default: true
+  has_ventilation:
+    description: Allow ventilated charging or not
+    type: boolean
+    default: true
+  country_code:
+    description: Country Code
+    type: string
+    default: DE
+  rcd_enabled:
+    description: Enable or disable RCD
+    type: boolean
+    default: true
+  max_current:
+    description: User configurable current limit for this EVSE
+    type: number
+    default: 32
+  charge_mode:
+    description: Select charging mode
+    type: string
+    enum:
+      - AC
+      - DC
+    default: AC
+  ac_hlc_enabled:
+    description: Enable or disable HLC (aka ISO15118) for AC mode
+    type: boolean
+    default: false
+  ac_hlc_use_5percent:
+    description: >-
+      Use 5 percent PWM signalling to try to enforce HLC on AC. Note that if EIM arrives before SLAC matching, we will
+      fall back to nominal PWM charging. So most cars will never use HLC in this mode, especially on a free service
+      where EIM is always available, but that is what ISO15118-2/-3 requires to be compliant - it wants to use HLC only
+      for PnC and not for EIM.
+    type: boolean
+    default: false
+  ac_enforce_hlc:
+    description: >-
+      Combine with 5percent option to really enforce HLC even with EIM. It is not ISO15118-2/-3 compliant as it waits
+      for matching even if EIM is available before SLAC reaches matched state. On cars that do not support ISO15118 on
+      AC this will take a very long time to timeout and fall back to basic nominal PWM charging, but it will eventually.
+    type: boolean
+    default: false
+  ac_with_soc:
+    description: >-
+      Special mode that switches between AC and DC charging to get SoC percentage with AC charging
+    type: boolean
+    default: false
+  dbg_hlc_auth_after_tstep:
+    description: >-
+      Special mode: send HLC auth ok only after t_step_XX is finished (true) or directly when available (false)
+    type: boolean
+    default: false
+provides:
+  evse:
+    interface: evse_manager
+    description: This is the main evsemanager interface
+  energy_grid:
+    description: This is the tree leaf interface to build the energy supply tree
+    interface: energy
+  token_provider:
+    description: Provides authtokens for autocharge or plug and charge
+    interface: auth_token_provider
+requires:
+  bsp:
+    interface: board_support_AC
+  powermeter:
+    interface: powermeter
+    min_connections: 0
+    max_connections: 1
+  slac:
+    interface: slac
+    min_connections: 0
+    max_connections: 1
+  hlc:
+    interface: ISO15118_charger
+    min_connections: 0
+    max_connections: 1
+  imd:
+    interface: isolation_monitor
+    min_connections: 0
+    max_connections: 1
+enable_external_mqtt: true
+metadata:
+  license: https://spdx.org/licenses/Apache-2.0.html
+  authors:
+    - Cornelius Claussen
+    - Anton Wöllert

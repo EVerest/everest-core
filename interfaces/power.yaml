@@ -1,0 +1,7 @@
+description: This interface defines the interface of a power supply
+vars:
+  max_current:
+    description: This is the maximum current of the power supply
+    type: number
+    minimum: 1
+    maximum: 60

@@ -1,0 +1,6 @@
+description: Interface to provide a token
+vars:
+  provided_token:
+    description: The provided token
+    type: object
+    $ref: /authorization#/ProvidedIdToken

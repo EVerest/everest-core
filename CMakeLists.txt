@@ -36,7 +36,7 @@ option(CMAKE_RUN_CLANG_TIDY "Run clang-tidy" OFF)
 option(BUILD_TESTING "Run unit tests" OFF)
 
 # dependencies
-require_ev_cli_version("0.0.14")
+require_ev_cli_version("0.0.16")
 
 find_package(Boost
     COMPONENTS
@@ -98,12 +98,12 @@ endif()
 install(
     DIRECTORY "types" 
     DESTINATION "${CMAKE_INSTALL_DATADIR}/everest"
-    FILES_MATCHING PATTERN "*.json"
+    FILES_MATCHING PATTERN "*.yaml"
 )
 install(
     DIRECTORY "interfaces"
     DESTINATION "${CMAKE_INSTALL_DATADIR}/everest"
-    FILES_MATCHING PATTERN "*.json"
+    FILES_MATCHING PATTERN "*.yaml"
 )
 
 # install docker related files

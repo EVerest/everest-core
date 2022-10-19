@@ -1,0 +1,264 @@
+description: EVSE manager types
+types:
+  StopTransactionRequest:
+    description: >-
+      Request for a stop transaction containing the reason and an optional
+      id tag
+    type: object
+    required:
+      - reason
+    properties:
+      reason:
+        description: Reason for stopping the transaction
+        type: string
+        $ref: /evse_manager#/StopTransactionReason
+      id_tag:
+        description: Id tag that was used to stop the transaction.
+        type: string
+  StopTransactionReason:
+    description: >-
+      Reason for stopping transaction
+        EmergencyStop: Emergency stop button was used
+        EVDisconnected: Disconnecting of cable, vehicle moved away from inductive charge unit
+        HardReset: A hard reset command was received previously
+        Local: Stopped locally on request of the user at the Charge Point. This is a regular termination of a transaction. Examples: presenting an RFID tag, pressing a button to stop
+        Other: Any other reason
+        PowerLoss: Complete loss of power
+        Reboot: A locally initiated reset/reboot occurred
+        Remote: Stopped remotely on request of the user. This is a regular termination of a transaction. Examples: termination using a smartphone app, exceeding a (non local) prepaid credit
+        SoftReset: A soft reset command was received
+        UnlockCommand: Central System sent an Unlock Connector command
+        DeAuthorized: The transaction was stopped because of the authorization status in a StartTransaction.conf
+    type: string
+    enum:
+      - EmergencyStop
+      - EVDisconnected
+      - HardReset
+      - Local
+      - Other
+      - PowerLoss
+      - Reboot
+      - Remote
+      - SoftReset
+      - UnlockCommand
+      - DeAuthorized
+  StartSessionReason:
+    description: >-
+      Reason for session start
+        EVConnected: Session was started because an EV was plugged in
+        Authorized: Session was started because a valid authorization was presented and the EVSE is authorized to start a transaction immediately when an EV is plugged in
+    type: string
+    enum:
+      - EVConnected
+      - Authorized
+  SetLocalMaxCurrentResult:
+    description: >-
+      Result for set_local_max_current command
+        Success: LocalMaxCurrent was set successfully
+        Error_OutOfRange: The LocalMaxCurrent that was set is not in range of the EVSE capabilities
+        Error_Hardware: There was a hardware error on setting the LocalMaxCurrent
+    type: string
+    enum:
+      - Success
+      - Error_OutOfRange
+      - Error_Hardware
+  SwitchThreePhasesWhileChargingResult:
+    description: >-
+      Returns success or error code
+        Success: Switching phases was successful
+        Error_NotSupported: Switching phases is not supported
+        Error_NotCharging: EVSE is not charging
+        Error_Hardware: There was a hardware error on switching phases
+    type: string
+    enum:
+      - Success
+      - Error_NotSupported
+      - Error_NotCharging
+      - Error_Hardware
+  SessionEventEnum:
+    description: >-
+      Session Event enum
+        Enabled: Signaled when the EVSE is enabled (e.g. after an enable command)
+        Disabled: Signaled when the EVSE is disabled (e.g. after a disable command)
+        SessionStarted: Signaled when a session has been started. A session has been started either when an EV is plugged in or the user has been authorized to start a transaction (e.g. after an authorize command)
+        TransactionStarted: Signaled when a transaction has been started. Transaction starts at the point that all conditions for charging are met: EV is connected and user has been authorized.
+        AuthRequired: Signaled when an EVSE needs authorization to start a transaction
+        ChargingPausedEV: Signaled when charging is paused by the EV
+        ChargingPausedEVSE: Signaled when charging is paused by the EVSE
+        TransactionFinished: Signaled when the transaction finished. Transaction finishes at the point where one of the preconditions for charging irrevocably becomes false: When a user swipes to stop the transaction and the stop is authorized.
+        SessionFinished: Signaled when the transaction finished. Session finishes at the point that the EVSE is available again (no cable plugged)
+        Error: Signaled when an error occured
+        PermanentFault: Signaled when there is a permanent fault at the EVSE
+        ReservationStart: Signaled when a reservation starts
+        ReservationEnd: Signaled when a reservation ends
+        ReplugStarted: Signaled when the EVSE Manager virtually replugs without interrupting the session or transaction
+        ReplugFinished: Signaled when the virtual replug process has finished
+    type: string
+    enum:
+      - Enabled
+      - Disabled
+      - SessionStarted
+      - TransactionStarted
+      - AuthRequired
+      - ChargingPausedEV
+      - ChargingPausedEVSE
+      - ChargingResumed
+      - TransactionFinished
+      - SessionFinished
+      - Error
+      - PermanentFault
+      - ReservationStart
+      - ReservationEnd
+      - ReplugStarted
+      - ReplugFinished
+  SessionStarted:
+    description: Data for the SessionStarted event
+    type: object
+    additionalProperties: false
+    required:
+      - timestamp
+      - reason
+    properties:
+      timestamp:
+        description: Session start time in RFC3339 format
+        type: string
+        format: date-time
+      reason:
+        description: Reason for session start
+        type: string
+        $ref: /evse_manager#/StartSessionReason
+  TransactionStarted:
+    description: Data for the TransactionStarted event
+    type: object
+    additionalProperties: false
+    required:
+      - timestamp
+      - energy_Wh_import
+      - id_tag
+    properties:
+      timestamp:
+        description: Transaction start time in RFC3339 format
+        type: string
+        format: date-time
+      energy_Wh_import:
+        description: Transaction start imported meter value in Wh
+        type: number
+      id_tag:
+        description: The id tag assigned to this transaction
+        type: string
+      energy_Wh_export:
+        description: Transaction start exported meter value Wh
+        type: number
+      signed_meter_value:
+        description: Signed meter value
+        type: string
+      reservation_id:
+        description: Id of the reservation
+        type: number
+  TransactionFinished:
+    description: Data for TransactionFinished event
+    type: object
+    additionalProperties: false
+    required:
+      - timestamp
+      - energy_Wh_import
+    properties:
+      timestamp:
+        description: Transaction end time in RFC3339 format
+        type: string
+        format: date-time
+      energy_Wh_import:
+        description: Transaction finished imported meter value in Wh
+        type: number
+      energy_Wh_export:
+        description: Transaction finished exported meter value in Wh
+        type: number
+      signed_meter_value:
+        description: Signed meter value
+        type: string
+      reason:
+        description: Reason for stopping transaction
+        type: string
+        $ref: /evse_manager#/StopTransactionReason
+      id_tag:
+        description: Id tag that was used to stop the transaction
+        type: string
+  Error:
+    description: >-
+      Details on error type
+        Car: Signals a car error
+        CarDiodeFault: Signals a car diode fault
+        Relais: Signals a relais error
+        RCD: Signals an RCD error
+        VentilationNotAvailable: Signals that ventilation is not available
+        OverCurrent: Signals an overcurrent error
+        Internal: Signals an internal error
+        SLAC: Signals a SLAC communication error
+        HLC: Signals a HLC error
+    type: string
+    enum:
+      - Car
+      - CarDiodeFault
+      - Relais
+      - RCD
+      - VentilationNotAvailable
+      - OverCurrent
+      - Internal
+      - SLAC
+      - HLC
+  SessionEvent:
+    description: Emits all events related to sessions
+    type: object
+    additionalProperties: false
+    required:
+      - uuid
+      - event
+    properties:
+      uuid:
+        description: >-
+          An EVSE generated UUID for this session, can be used e.g. for
+          database storage.
+        type: string
+      event:
+        description: >-
+          Event enum. For some events an additional object is set, see
+          below.
+        type: string
+        $ref: /evse_manager#/SessionEventEnum
+      session_started:
+        description: data for SessionStarted event
+        type: object
+        $ref: /evse_manager#/SessionStarted
+      transaction_started:
+        description: data for TransactionStarted event
+        type: object
+        $ref: /evse_manager#/TransactionStarted
+      transaction_finished:
+        description: >-
+          data for TransactionFinished event that happens when car is plugged
+          out
+        type: object
+        $ref: /evse_manager#/TransactionFinished
+      error:
+        description: Details on error type
+        type: string
+        $ref: /evse_manager#/Error
+  Limits:
+    description: Limits of this EVSE
+    type: object
+    additionalProperties: false
+    required:
+      - max_current
+      - nr_of_phases_available
+    properties:
+      uuid:
+        description: This module's UUID for global identification
+        type: string
+      max_current:
+        description: Instantaneous maximum current available to car
+        type: number
+      nr_of_phases_available:
+        description: Instantaneous phase count available to car
+        type: integer
+        minimum: 1
+        maximum: 3

@@ -1,0 +1,143 @@
+description: >-
+  This interface defines the evse manager. An evse manager represents the
+  charging kernel of one physical connector.
+cmds:
+  get_id:
+    description: Call to get the connector id of the evse manager
+    result:
+      description: Returns the connector id of the evse manager
+      type: integer
+  enable:
+    description: Enables the evse. EVSE is available for charging after this operation
+    result:
+      description: >-
+        Returns true if evse was enabled (or was enabled before), returns
+        false if enable failed e.g. due to permanent fault.
+      type: boolean
+  disable:
+    description: >-
+      Disables the evse. EVSE is not available for charging after this
+      operation
+    result:
+      description: >-
+        Returns true if evse was disabled (or was disabled before), returns
+        false if it could not be disabled (i.e. due to communication error with hardware)
+      type: boolean
+  authorize:
+    description: >-
+      Authorizes the evse manager to start a transaction using the given
+      id tag.
+    arguments:
+      id_tag:
+        description: The authorized id tag
+        type: string
+  withdraw_authorization:
+    description: >-
+      Call to signals that EVSE is not further authorized to start a transaction
+      (e.g. on a connection_timeout)
+  reserve:
+    description: >-
+      Call to signal that EVSE is reserved. This can be used to e.g. change
+      the color of the HMI LEDs to indicate reservation.
+    arguments:
+      reservation_id:
+        description: >-
+          The reservation id (should be added to the TransactionStarted
+          event)
+        type: integer
+    result:
+      description: Returns true if the EVSE accepted the reservation, else false.
+      type: boolean
+  cancel_reservation:
+    description: Call to signal that EVSE is not reserved anymore
+  set_faulted:
+    description: >-
+      Sets the evse manager to faulted externally. It may also switch to
+      faulted itself if it detects an internal error.
+  pause_charging:
+    description: Call to signal EVSE to pause charging
+    result:
+      description: >-
+        Returns true if successfully paused or was already in paused_by_evse
+        mode
+      type: boolean
+  resume_charging:
+    description: Call to signal EVSE to resume charging
+    result:
+      description: >-
+        Returns true if resume was successful, false otherwise (e.g. resuming
+        a car pause won't work)
+      type: boolean
+  stop_transaction:
+    description: >-
+      Stops transaction and cancels charging externally, charging can only
+      be resumed by replugging car. EVSE will also stop transaction automatically
+      e.g. on disconnect, so this only needs to be called if the transaction should
+      end before.
+    arguments:
+      request:
+        description: Request to stop the transaction.
+        type: object
+        $ref: /evse_manager#/StopTransactionRequest
+    result:
+      description: Returns true if successful
+      type: boolean
+  force_unlock:
+    description: >-
+      Forces EVSE to unlock connector now. During normal operation, connector
+      will be locked/unlocked in the correct sequence. Do not use this function except
+      if explicitly requested by e.g. management cloud.
+    result:
+      description: Returns true if unlocking sequence was successfully executed
+      type: boolean
+  set_local_max_current:
+    description: Sets the local maximum current limit for any phase.
+    arguments:
+      max_current:
+        description: maximum current
+        type: number
+    result:
+      description: Returns success or error code
+      type: string
+      $ref: /evse_manager#/SetLocalMaxCurrentResult
+  switch_three_phases_while_charging:
+    description: Switch three phases while charging
+    arguments:
+      three_phases:
+        description: 'True: switch to three phases, false: switch to single phase'
+        type: boolean
+    result:
+      description: Returns success or error code
+      type: string
+      $ref: /evse_manager#/SwitchThreePhasesWhileChargingResult
+  get_signed_meter_value:
+    description: >-
+      Returns a signed meter value. Includes current id_token if session
+      is running.
+    result:
+      description: Signed meter value
+      type: string
+vars:
+  session_event:
+    description: Emits all events related to sessions
+    type: object
+    $ref: /evse_manager#/SessionEvent
+  limits:
+    description: Limits of this evse, published on change
+    type: object
+    $ref: /evse_manager#/Limits
+  telemetry:
+    description: Other telemetry
+    type: object
+    $ref: /board_support#/Telemetry
+  powermeter:
+    description: Measured dataset
+    type: object
+    $ref: /powermeter#/Powermeter
+  evse_id:
+    description: EVSE ID including the connector number, e.g. DE*PNX*E123456*1
+    type: string
+  hw_capabilities:
+    description: ' Hardware capability/limits'
+    type: object
+    $ref: /board_support#/HardwareCapabilities

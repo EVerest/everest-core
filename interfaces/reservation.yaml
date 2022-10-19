@@ -1,0 +1,32 @@
+description: Interface for reservations
+cmds:
+  reserve_now:
+    description: Reserves this evse.
+    arguments:
+      connector_id:
+        description: >-
+          The id of the connector to be reserved. A value of 0 means that
+          the reservation is not for a specific connector
+        type: integer
+      reservation:
+        description: The information about the Reservation to be placed
+        type: object
+        $ref: /reservation#/Reservation
+    result:
+      description: >-
+        Returns Accepted if reservation was succesfull or specifies error
+        code.
+      type: string
+      $ref: /reservation#/ReservationResult
+  cancel_reservation:
+    description: Cancels the reservation with the given reservation_id
+    arguments:
+      reservation_id:
+        description: Id of the reservation
+        type: integer
+    result:
+      description: >-
+        Returns true if reservation was cancelled. Returns false if there
+        was no reservation to cancel.
+      type: boolean
+vars: {}
