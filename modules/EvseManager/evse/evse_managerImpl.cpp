@@ -58,8 +58,8 @@ void evse_managerImpl::init() {
 
     // /Interface to Node-RED debug UI
 
-    if (mod->r_powermeter.size() > 0) {
-        mod->r_powermeter[0]->subscribe_powermeter([this](const types::powermeter::Powermeter p) {
+    if (mod->r_powermeter_billing().size() > 0) {
+        mod->r_powermeter_billing()[0]->subscribe_powermeter([this](const types::powermeter::Powermeter p) {
             // Republish data on proxy powermeter struct
             publish_powermeter(p);
         });
@@ -136,7 +136,7 @@ void evse_managerImpl::ready() {
             transaction_started.timestamp =
                 date::format("%FT%TZ", std::chrono::time_point_cast<std::chrono::milliseconds>(date::utc_clock::now()));
 
-            auto p = mod->get_latest_powermeter_data();
+            auto p = mod->get_latest_powermeter_data_billing();
             transaction_started.energy_Wh_import = p.energy_Wh_import.total;
             if (p.energy_Wh_export.is_initialized()) {
                 transaction_started.energy_Wh_export.emplace(p.energy_Wh_export.get().total);
@@ -163,7 +163,7 @@ void evse_managerImpl::ready() {
             transaction_finished.timestamp =
                 date::format("%FT%TZ", std::chrono::time_point_cast<std::chrono::milliseconds>(date::utc_clock::now()));
 
-            auto p = mod->get_latest_powermeter_data();
+            auto p = mod->get_latest_powermeter_data_billing();
             transaction_finished.energy_Wh_import = p.energy_Wh_import.total;
             if (p.energy_Wh_export.is_initialized()) {
                 transaction_finished.energy_Wh_export.emplace(p.energy_Wh_export.get().total);
@@ -299,8 +299,8 @@ evse_managerImpl::handle_switch_three_phases_while_charging(bool& three_phases) 
 };
 
 std::string evse_managerImpl::handle_get_signed_meter_value() {
-    if (mod->r_powermeter.size() > 0) {
-        return mod->r_powermeter[0]->call_get_signed_meter_value("FIXME");
+    if (mod->r_powermeter_billing().size() > 0) {
+        return mod->r_powermeter_billing()[0]->call_get_signed_meter_value("FIXME");
     } else {
         return "NOT_AVAILABLE";
     }

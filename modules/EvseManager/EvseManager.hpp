@@ -36,6 +36,7 @@
 #include <date/tz.h>
 #include <future>
 #include <iostream>
+#include <optional>
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -46,8 +47,6 @@ struct Conf {
     bool payment_enable_eim;
     bool payment_enable_contract;
     double ac_nominal_voltage;
-    double dc_current_regulation_tolerance;
-    double dc_peak_current_ripple;
     bool ev_receipt_required;
     bool session_logging;
     std::string session_logging_path;
@@ -71,7 +70,9 @@ public:
     EvseManager(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
                 std::unique_ptr<evse_managerImplBase> p_evse, std::unique_ptr<energyImplBase> p_energy_grid,
                 std::unique_ptr<auth_token_providerImplBase> p_token_provider,
-                std::unique_ptr<board_support_ACIntf> r_bsp, std::vector<std::unique_ptr<powermeterIntf>> r_powermeter,
+                std::unique_ptr<board_support_ACIntf> r_bsp,
+                std::vector<std::unique_ptr<powermeterIntf>> r_powermeter_grid_side,
+                std::vector<std::unique_ptr<powermeterIntf>> r_powermeter_car_side,
                 std::vector<std::unique_ptr<slacIntf>> r_slac, std::vector<std::unique_ptr<ISO15118_chargerIntf>> r_hlc,
                 std::vector<std::unique_ptr<isolation_monitorIntf>> r_imd,
                 std::vector<std::unique_ptr<power_supply_DCIntf>> r_powersupply_DC, Conf& config) :
@@ -81,7 +82,8 @@ public:
         p_energy_grid(std::move(p_energy_grid)),
         p_token_provider(std::move(p_token_provider)),
         r_bsp(std::move(r_bsp)),
-        r_powermeter(std::move(r_powermeter)),
+        r_powermeter_grid_side(std::move(r_powermeter_grid_side)),
+        r_powermeter_car_side(std::move(r_powermeter_car_side)),
         r_slac(std::move(r_slac)),
         r_hlc(std::move(r_hlc)),
         r_imd(std::move(r_imd)),
@@ -94,7 +96,8 @@ public:
     const std::unique_ptr<energyImplBase> p_energy_grid;
     const std::unique_ptr<auth_token_providerImplBase> p_token_provider;
     const std::unique_ptr<board_support_ACIntf> r_bsp;
-    const std::vector<std::unique_ptr<powermeterIntf>> r_powermeter;
+    const std::vector<std::unique_ptr<powermeterIntf>> r_powermeter_grid_side;
+    const std::vector<std::unique_ptr<powermeterIntf>> r_powermeter_car_side;
     const std::vector<std::unique_ptr<slacIntf>> r_slac;
     const std::vector<std::unique_ptr<ISO15118_chargerIntf>> r_hlc;
     const std::vector<std::unique_ptr<isolation_monitorIntf>> r_imd;
@@ -104,7 +107,7 @@ public:
     // insert your public definitions here
     std::unique_ptr<Charger> charger;
     sigslot::signal<int> signalNrOfPhasesAvailable;
-    types::powermeter::Powermeter get_latest_powermeter_data();
+    types::powermeter::Powermeter get_latest_powermeter_data_billing();
     types::board_support::HardwareCapabilities get_hw_capabilities();
     bool updateLocalMaxCurrentLimit(float max_current);
     float getLocalMaxCurrentLimit();
@@ -118,6 +121,10 @@ public:
     sigslot::signal<types::evse_manager::SessionEvent> signalReservationEvent;
 
     void charger_was_authorized();
+
+    const std::vector<std::unique_ptr<powermeterIntf>>& r_powermeter_billing();
+    const std::vector<std::unique_ptr<powermeterIntf>>& r_powermeter_energy_management();
+
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
@@ -132,7 +139,8 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
-    types::powermeter::Powermeter latest_powermeter_data;
+    std::mutex power_mutex;
+    types::powermeter::Powermeter latest_powermeter_data_billing;
 
     Everest::Thread energyThreadHandle;
     types::board_support::HardwareCapabilities hw_capabilities;
@@ -179,7 +187,6 @@ private:
     void powersupply_DC_off();
     bool wait_powersupply_DC_voltage_reached(double target_voltage);
     bool wait_powersupply_DC_below_voltage(double target_voltage);
-
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
