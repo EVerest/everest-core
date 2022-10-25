@@ -69,7 +69,7 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
     }
 
     if (result != TokenHandlingResult::ALREADY_IN_PROCESS) {
-        std::lock_guard lk(this->token_in_process_mutex);
+        std::lock_guard<std::mutex> lk(this->token_in_process_mutex);
         this->tokens_in_process.erase(provided_token.id_token);
     }
 
