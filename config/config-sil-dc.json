@@ -34,7 +34,7 @@
                     "implementation_id": "board_support"
                 }
             ],
-            "powermeter": [
+            "powermeter_grid_side": [
                 {
                     "module_id": "yeti_driver",
                     "implementation_id": "powermeter"
