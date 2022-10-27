@@ -56,6 +56,7 @@
 #include <ocpp1_6/messages/TriggerMessage.hpp>
 #include <ocpp1_6/messages/UnlockConnector.hpp>
 #include <ocpp1_6/messages/UpdateFirmware.hpp>
+#include <ocpp1_6/ocpp_logging.hpp>
 #include <ocpp1_6/transaction.hpp>
 #include <ocpp1_6/types.hpp>
 #include <ocpp1_6/websocket/websocket.hpp>
@@ -96,6 +97,8 @@ private:
     std::mutex tx_default_profiles_mutex;
 
     std::unique_ptr<Websocket> websocket;
+    std::string message_log_path;
+    std::shared_ptr<MessageLogging> logging;
     boost::shared_ptr<boost::asio::io_service::work> work;
     boost::asio::io_service io_service;
     std::thread io_service_thread;
@@ -257,7 +260,7 @@ private:
 public:
     /// \brief Creates a ChargePoint object with the provided \p configuration
     explicit ChargePoint(std::shared_ptr<ChargePointConfiguration> configuration, const std::string& database_path,
-                         const std::string &sql_init_path);
+                         const std::string& sql_init_path, const std::string& message_log_path);
 
     /// \brief Starts the ChargePoint, initializes and connects to the Websocket endpoint
     bool start();
@@ -291,7 +294,7 @@ public:
     std::map<int32_t, ChargingSchedule> get_all_composite_charging_schedules(const int32_t duration_s);
 
     /// \brief Stores the given \p powermeter values for the given \p connector
-    void on_meter_values(int32_t connector, const Powermeter &powermeter);
+    void on_meter_values(int32_t connector, const Powermeter& powermeter);
 
     /// \brief Stores the given \p max_current for the given \p connector
     void on_max_current_offered(int32_t connector, int32_t max_current);

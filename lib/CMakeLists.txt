@@ -10,6 +10,7 @@ target_sources(ocpp
         ocpp1_6/enums.cpp
         ocpp1_6/message_queue.cpp
         ocpp1_6/ocpp_types.cpp
+        ocpp1_6/ocpp_logging.cpp
         ocpp1_6/pki_handler.cpp
         ocpp1_6/schemas.cpp
         ocpp1_6/database_handler.cpp

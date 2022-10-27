@@ -120,6 +120,18 @@
             "readOnly": true,
             "default": true
         },
+        "LogMessagesFormat": {
+            "$comment": "Supported log formats are console, log, html and console_detailed",
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "readOnly": true,
+            "default": [
+                "log",
+                "html"
+            ]
+        },
         "SupportedChargingProfilePurposeTypes": {
             "$comment": "Indicates which ChargingProfilePurposeTypes are supported. SetChargingProfile.req for profiles not listed will be rejected.",
             "type": "array",

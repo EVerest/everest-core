@@ -7,6 +7,7 @@
 #include <iostream>
 #include <thread>
 
+#include <ocpp1_6/ocpp_logging.hpp>
 #include <ocpp1_6/websocket/websocket_plain.hpp>
 #include <ocpp1_6/websocket/websocket_tls.hpp>
 
@@ -20,18 +21,17 @@ class ChargePointConfiguration;
 class Websocket {
 private:
     std::unique_ptr<WebsocketBase> websocket;
-    std::string uri;
+    std::shared_ptr<ChargePointConfiguration> configuration;
     std::function<void()> connected_callback;
     std::function<void()> disconnected_callback;
     std::function<void(const std::string& message)> message_callback;
     std::function<void()> sign_certificate_callback;
-    std::ofstream output_file;
-    std::mutex output_file_mutex;
-    bool log_messages;
+    std::shared_ptr<MessageLogging> logging;
 
 public:
     /// \brief Creates a new Websocket object with the providede \p configuration
-    explicit Websocket(std::shared_ptr<ChargePointConfiguration> configuration, int32_t security_profile);
+    explicit Websocket(std::shared_ptr<ChargePointConfiguration> configuration, int32_t security_profile,
+                       std::shared_ptr<MessageLogging> logging);
     ~Websocket();
 
     /// \brief connect to a websocket (TLS or non-TLS depending on the central system uri in the configuration)

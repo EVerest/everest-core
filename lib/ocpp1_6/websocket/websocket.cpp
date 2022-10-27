@@ -6,18 +6,19 @@
 #include <ocpp1_6/types.hpp>
 #include <ocpp1_6/websocket/websocket.hpp>
 
+#include <boost/algorithm/string.hpp>
+
+using json = nlohmann::json;
+
 namespace ocpp1_6 {
 
-Websocket::Websocket(std::shared_ptr<ChargePointConfiguration> configuration, int32_t security_profile) {
+Websocket::Websocket(std::shared_ptr<ChargePointConfiguration> configuration, int32_t security_profile,
+                     std::shared_ptr<MessageLogging> logging) {
 
-    auto uri = configuration->getCentralSystemURI();
+    this->configuration = configuration;
+    this->logging = logging;
 
-    this->log_messages = configuration->getLogMessages();
-    if (this->log_messages) {
-        std::string output_file_name = "/tmp/libocpp_messages_" + DateTime().to_rfc3339() + ".txt";
-        this->output_file.open(output_file_name);
-    }
-
+    auto uri = this->configuration->getCentralSystemURI();
     if (security_profile <= 1) {
         EVLOG_debug << "Creating plaintext websocket based on the provided URI: " << uri;
         this->websocket = std::make_unique<WebsocketPlain>(configuration);
@@ -28,20 +29,21 @@ Websocket::Websocket(std::shared_ptr<ChargePointConfiguration> configuration, in
 }
 
 Websocket::~Websocket() {
-    if (this->log_messages) {
-        this->output_file.close();
-    }
 }
 
 bool Websocket::connect(int32_t security_profile) {
+    this->logging->sys("Connecting to: " + this->configuration->getCentralSystemURI() +
+                       " with security_profile: " + std::to_string(security_profile));
     return this->websocket->connect(security_profile);
 }
 
 void Websocket::disconnect(websocketpp::close::status::value code) {
+    this->logging->sys("Disconnecting");
     this->websocket->disconnect(code);
 }
 
 void Websocket::reconnect(std::error_code reason, long delay) {
+    this->logging->sys("Reconnecting");
     this->websocket->reconnect(reason, delay);
 }
 
@@ -51,24 +53,23 @@ bool Websocket::is_connected() {
 
 void Websocket::register_connected_callback(const std::function<void()>& callback) {
     this->connected_callback = callback;
-    this->websocket->register_connected_callback(callback);
+
+    this->websocket->register_connected_callback([this]() {
+        this->logging->sys("Connected");
+        this->connected_callback();
+    });
 }
 void Websocket::register_disconnected_callback(const std::function<void()>& callback) {
     this->disconnected_callback = callback;
-    this->websocket->register_disconnected_callback(callback);
+    this->websocket->register_disconnected_callback([this]() {
+        this->logging->sys("Disconnected");
+        this->disconnected_callback();
+    });
 }
 void Websocket::register_message_callback(const std::function<void(const std::string& message)>& callback) {
     this->message_callback = callback;
 
-    this->websocket->register_message_callback([this](const std::string& message) {
-        if (this->log_messages) {
-            {
-                std::lock_guard<std::mutex> lock(this->output_file_mutex);
-                this->output_file << "Received @ " << DateTime().to_rfc3339() << ":\n" << message << std::endl;
-            }
-        }
-        this->message_callback(message);
-    });
+    this->websocket->register_message_callback([this](const std::string& message) { this->message_callback(message); });
 }
 
 void Websocket::register_sign_certificate_callback(const std::function<void()>& callback) {
@@ -77,12 +78,7 @@ void Websocket::register_sign_certificate_callback(const std::function<void()>& 
 }
 
 bool Websocket::send(const std::string& message) {
-    if (this->log_messages) {
-        {
-            std::lock_guard<std::mutex> lock(this->output_file_mutex);
-            this->output_file << "Sending @ " << DateTime().to_rfc3339() << ":\n" << message << std::endl;
-        }
-    }
+    this->logging->charge_point("Unknown", message);
     return this->websocket->send(message);
 }
 

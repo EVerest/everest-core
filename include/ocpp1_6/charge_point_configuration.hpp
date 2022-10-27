@@ -54,6 +54,7 @@ public:
     int32_t getWebsocketReconnectInterval();
     bool getAuthorizeConnectorZeroOnConnectorOne();
     bool getLogMessages();
+    std::vector<std::string> getLogMessagesFormat();
     std::vector<ChargingProfilePurposeType> getSupportedChargingProfilePurposeTypes();
 
     std::string getSupportedCiphers12();

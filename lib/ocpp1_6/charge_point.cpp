@@ -13,15 +13,24 @@
 namespace ocpp1_6 {
 
 ChargePoint::ChargePoint(std::shared_ptr<ChargePointConfiguration> configuration, const std::string& database_path,
-                         const std::string& sql_init_path) :
+                         const std::string& sql_init_path, const std::string& message_log_path) :
     heartbeat_interval(configuration->getHeartbeatInterval()),
     initialized(false),
     registration_status(RegistrationStatus::Pending),
     diagnostics_status(DiagnosticsStatus::Idle),
     firmware_status(FirmwareStatus::Idle),
     log_status(UploadLogStatusEnumType::Idle),
-    switch_security_profile_callback(nullptr) {
+    switch_security_profile_callback(nullptr),
+    message_log_path(message_log_path) {
     this->configuration = configuration;
+    auto log_formats = this->configuration->getLogMessagesFormat();
+    bool log_to_console = std::find(log_formats.begin(), log_formats.end(), "console") != log_formats.end();
+    bool detailed_log_to_console = std::find(log_formats.begin(), log_formats.end(), "console_detailed") != log_formats.end();
+    bool log_to_file = std::find(log_formats.begin(), log_formats.end(), "log") != log_formats.end();
+    bool log_to_html = std::find(log_formats.begin(), log_formats.end(), "html") != log_formats.end();
+
+    this->logging = std::make_shared<MessageLogging>(this->configuration->getLogMessages(), message_log_path,
+                                                     log_to_console, detailed_log_to_console, log_to_file, log_to_html);
     this->connection_state = ChargePointConnectionState::Disconnected;
     this->database_handler = std::make_unique<DatabaseHandler>(this->configuration->getChargePointId(),
                                                                boost::filesystem::path(database_path),
@@ -51,7 +60,7 @@ ChargePoint::ChargePoint(std::shared_ptr<ChargePointConfiguration> configuration
 }
 
 void ChargePoint::init_websocket(int32_t security_profile) {
-    this->websocket = std::make_unique<Websocket>(this->configuration, security_profile);
+    this->websocket = std::make_unique<Websocket>(this->configuration, security_profile, this->logging);
     this->websocket->register_connected_callback([this]() {
         this->message_queue->resume(); //
         this->connected_callback();    //
@@ -610,6 +619,7 @@ void ChargePoint::message_callback(const std::string& message) {
     // EVLOG_debug << "json message: " << json_message;
     auto enhanced_message = this->message_queue->receive(message);
     auto json_message = enhanced_message.message;
+    this->logging->central_system(conversions::messagetype_to_string(enhanced_message.messageType), message);
     // reject unsupported messages
     if (this->configuration->getSupportedMessageTypesReceiving().count(enhanced_message.messageType) == 0) {
         EVLOG_warning << "Received an unsupported message: " << enhanced_message.messageType;
@@ -1214,7 +1224,7 @@ void ChargePoint::handleStartTransactionResponse(CallResult<StartTransactionResp
     StartTransactionResponse start_transaction_response = call_result.msg;
 
     const auto transaction = this->transaction_handler->get_transaction(call_result.uniqueId);
-    
+
     // this can happen when a chargepoint was offline during transaction and StopTransaction.req is already queued
     if (transaction->is_finished()) {
         this->message_queue->add_stopped_transaction_id(transaction->get_stop_transaction_message_id(),

@@ -75,10 +75,10 @@ ChargePointConfiguration::ChargePointConfiguration(const json& config, const std
                                   {Measurand::Frequency, {Phase::L1, Phase::L2, Phase::L3}},                     // Hz
                                   {Measurand::Current_Offered, {}}};                                             // A
 
-    if(!this->validate_measurands(config)) {
+    if (!this->validate_measurands(config)) {
         EVLOG_AND_THROW(std::runtime_error("Given Measurands are invalid"));
     }
-    
+
     this->supported_message_types_from_charge_point = {
         {SupportedFeatureProfiles::Core,
          {MessageType::Authorize, MessageType::BootNotification, MessageType::ChangeAvailabilityResponse,
@@ -238,6 +238,9 @@ bool ChargePointConfiguration::getAuthorizeConnectorZeroOnConnectorOne() {
 bool ChargePointConfiguration::getLogMessages() {
     return this->config["Internal"]["LogMessages"];
 }
+std::vector<std::string> ChargePointConfiguration::getLogMessagesFormat() {
+    return this->config["Internal"]["LogMessagesFormat"];
+}
 
 std::vector<ChargingProfilePurposeType> ChargePointConfiguration::getSupportedChargingProfilePurposeTypes() {
     std::vector<ChargingProfilePurposeType> supported_purpose_types;
@@ -302,16 +305,16 @@ std::vector<MeasurandWithPhase> ChargePointConfiguration::csv_to_measurand_with_
     return measurand_with_phase_vector;
 }
 
-bool ChargePointConfiguration::validate_measurands(const json &config) {
+bool ChargePointConfiguration::validate_measurands(const json& config) {
     std::vector<std::string> measurands_vector;
-    
+
     // validate measurands of all these configuration keys
     measurands_vector.push_back(config["Core"]["MeterValuesAlignedData"]);
     measurands_vector.push_back(config["Core"]["MeterValuesSampledData"]);
     measurands_vector.push_back(config["Core"]["StopTxnAlignedData"]);
     measurands_vector.push_back(config["Core"]["StopTxnSampledData"]);
 
-    for (const auto &measurands : measurands_vector) {
+    for (const auto& measurands : measurands_vector) {
         if (!this->measurands_supported(measurands)) {
             return false;
         }
