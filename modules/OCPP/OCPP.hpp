@@ -47,6 +47,7 @@ struct Conf {
     bool EnableExternalWebsocketControl;
     int PublishChargingScheduleIntervalS;
     int PublishChargingScheduleDurationS;
+    std::string MessageLogPath;
 };
 
 class OCPP : public Everest::ModuleBase {
