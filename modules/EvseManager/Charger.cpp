@@ -891,6 +891,9 @@ void Charger::Authorize(bool a, const std::string& userid, bool pnc) {
 
         auth_tag = userid;
     } else {
+        if (sessionActive()) {
+            stopSession();
+        }
         std::lock_guard<std::recursive_mutex> lock(configMutex);
         authorized = false;
     }

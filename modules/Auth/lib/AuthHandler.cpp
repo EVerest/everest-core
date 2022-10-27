@@ -54,7 +54,7 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
     EVLOG_info << "Received new token: " << provided_token;
     this->token_in_process_mutex.lock();
     const auto referenced_connectors = this->get_referenced_connectors(provided_token);
-    
+
     if (!this->is_token_already_in_process(provided_token.id_token, referenced_connectors)) {
         // process token if not already in process
         this->tokens_in_process.insert(provided_token.id_token);
@@ -234,7 +234,7 @@ int AuthHandler::used_for_transaction(const std::vector<int>& connector_ids, con
 }
 
 bool AuthHandler::is_token_already_in_process(const std::string& id_token,
-                                              const std::vector<int> &referenced_connectors) {
+                                              const std::vector<int>& referenced_connectors) {
 
     // checks if the token is currently already processed by the module (because already swiped)
     if (this->tokens_in_process.find(id_token) != this->tokens_in_process.end()) {
@@ -380,16 +380,20 @@ void AuthHandler::handle_session_event(const int connector_id, const SessionEven
             this->plug_in_queue.push_back(connector_id);
         }
         this->cv.notify_one();
-        this->connectors.at(connector_id)
-            ->timeout_timer.timeout(
-                [this, connector_id]() {
-                    EVLOG_info << "Plug In timeout for connector#" << connector_id;
-                    {
-                        std::lock_guard<std::mutex> lk(this->plug_in_queue_mutex);
-                        this->plug_in_queue.remove_if([connector_id](int value) { return value == connector_id; });
-                    }
-                },
-                std::chrono::seconds(this->connection_timeout));
+
+        // only set plug in timeout when SessionStart is caused by plug in 
+        if (event.session_started.value().reason == StartSessionReason::EVConnected) {
+            this->connectors.at(connector_id)
+                ->timeout_timer.timeout(
+                    [this, connector_id]() {
+                        EVLOG_info << "Plug In timeout for connector#" << connector_id;
+                        {
+                            std::lock_guard<std::mutex> lk(this->plug_in_queue_mutex);
+                            this->plug_in_queue.remove_if([connector_id](int value) { return value == connector_id; });
+                        }
+                    },
+                    std::chrono::seconds(this->connection_timeout));
+        }
         break;
     case SessionEventEnum::TransactionStarted:
         this->connectors.at(connector_id)->connector.transaction_active = true;
@@ -404,6 +408,7 @@ void AuthHandler::handle_session_event(const int connector_id, const SessionEven
         this->connectors.at(connector_id)->connector.is_reservable = true;
         this->connectors.at(connector_id)->connector.identifier = boost::none;
         this->connectors.at(connector_id)->connector.submit_event(Event_Session_Finished());
+        this->connectors.at(connector_id)->timeout_timer.stop();
         break;
     case SessionEventEnum::PermanentFault:
         this->connectors.at(connector_id)->connector.submit_event(Event_Faulted());
