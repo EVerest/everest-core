@@ -30,6 +30,10 @@ config:
     description:  Duration in seconds that defines the duration of the requested charging schedules starting from now
     type: integer
     default: 600
+  MessageLogPath:
+    description: Path to a folger where logs of all OCPP messages get written to.
+    type: string
+    default: /tmp/everest_ocpp_logs
 provides:
   main:
     description: This is a OCPP 1.6 charge point
