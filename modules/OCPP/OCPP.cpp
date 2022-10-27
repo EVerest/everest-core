@@ -256,12 +256,11 @@ void OCPP::init() {
         });
 
     this->charge_point->register_provide_token_callback(
-        [this](const std::string& id_token, int32_t connector, bool prevalidated) {
+        [this](const std::string& id_token, std::vector<int32_t> referenced_connectors, bool prevalidated) {
             types::authorization::ProvidedIdToken provided_token;
             provided_token.id_token = id_token;
             provided_token.type = "OCPP_AUTHORIZED";
-            const std::vector<int32_t> connectors{connector};
-            provided_token.connectors.emplace(connectors);
+            provided_token.connectors.emplace(referenced_connectors);
             provided_token.prevalidated.emplace(prevalidated);
             this->p_auth_provider->publish_provided_token(provided_token);
         });
