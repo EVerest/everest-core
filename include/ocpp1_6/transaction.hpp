@@ -169,9 +169,8 @@ public:
     /// \returns true if successful
     bool remove_active_transaction(int32_t connector);
 
-    /// \brief Removes a transaction with the provided \p stop_transaction_message_id
-    /// \returns true if successful
-    bool remove_stopped_transaction(std::string stop_transaction_message_id);
+    /// \brief Erases a transaction with the provided \p stop_transaction_message_id
+    void erase_stopped_transaction(std::string stop_transaction_message_id);
 
     /// \brief Returns the transaction associated with the transaction at the provided \p connector
     /// \returns The associated transaction if available or nullptr if not

@@ -77,6 +77,7 @@ public:
 
     // Core Profile
     bool getAuthorizeRemoteTxRequests();
+    void setAuthorizeRemoteTxRequests(bool enabled);
     KeyValue getAuthorizeRemoteTxRequestsKeyValue();
 
     // Core Profile - optional

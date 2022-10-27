@@ -11,7 +11,7 @@
     "Core": {
         "AuthorizeRemoteTxRequests": false,
         "ClockAlignedDataInterval": 900,
-        "ConnectionTimeOut": 10,
+        "ConnectionTimeOut": 30,
         "ConnectorPhaseRotation": "0.RST,1.RST",
         "GetConfigurationMaxKeys": 100,
         "HeartbeatInterval": 86400,

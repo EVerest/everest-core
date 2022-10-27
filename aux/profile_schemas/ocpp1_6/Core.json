@@ -38,7 +38,7 @@
         },
         "AuthorizeRemoteTxRequests": {
             "type": "boolean",
-            "readOnly": true,
+            "readOnly": false,
             "description": "Authorize a RemoteStartTransaction request like a local StartTransaction. Readonly setting is up to the implementation."
         },
         "BlinkRepeat": {

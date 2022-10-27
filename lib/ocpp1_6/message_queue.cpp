@@ -49,7 +49,6 @@ MessageQueue::MessageQueue(std::shared_ptr<ChargePointConfiguration> configurati
             ControlMessage* message = nullptr;
             QueueType queue_type = QueueType::None;
 
-            // send normal messages first
             if (!this->normal_message_queue.empty()) {
                 auto& normal_message = this->normal_message_queue.front();
                 EVLOG_debug << "normal msg timestamp: " << normal_message->timestamp;
@@ -63,8 +62,7 @@ MessageQueue::MessageQueue(std::shared_ptr<ChargePointConfiguration> configurati
                 }
             }
 
-            // send transaction messages when normal message queue is empty
-            if (!this->transaction_message_queue.empty() && message == nullptr) {
+            if (!this->transaction_message_queue.empty()) {
                 auto& transaction_message = this->transaction_message_queue.front();
                 EVLOG_debug << "transaction msg timestamp: " << transaction_message->timestamp;
                 if (message == nullptr) {

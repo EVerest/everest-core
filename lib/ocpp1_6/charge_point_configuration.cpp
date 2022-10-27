@@ -422,10 +422,14 @@ boost::optional<KeyValue> ChargePointConfiguration::getAuthorizationCacheEnabled
 bool ChargePointConfiguration::getAuthorizeRemoteTxRequests() {
     return this->config["Core"]["AuthorizeRemoteTxRequests"];
 }
+void ChargePointConfiguration::setAuthorizeRemoteTxRequests(bool enabled) {
+    this->config["Core"]["AuthorizeRemoteTxRequests"] = enabled;
+    this->setInUserConfig("Core", "AuthorizeRemoteTxRequests", enabled);
+}
 KeyValue ChargePointConfiguration::getAuthorizeRemoteTxRequestsKeyValue() {
     ocpp1_6::KeyValue kv;
     kv.key = "AuthorizeRemoteTxRequests";
-    kv.readonly = true; // Could also be RW if we choose so
+    kv.readonly = false;
     kv.value.emplace(conversions::bool_to_string(this->getAuthorizeRemoteTxRequests()));
     return kv;
 }
@@ -1592,10 +1596,9 @@ ConfigurationStatus ChargePointConfiguration::set(CiString50Type key, CiString50
             return ConfigurationStatus::Rejected;
         }
     }
-    // TODO(kai): Implementations can choose if the is R or RW, at the moment readonly
-    // if (key == "AuthorizeRemoteTxRequests") {
-    //     this->setAuthorizeRemoteTxRequests(conversions::string_to_bool(value.get()));
-    // }
+    if (key == "AuthorizeRemoteTxRequests") {
+        this->setAuthorizeRemoteTxRequests(conversions::string_to_bool(value.get()));
+    }
     if (key == "BlinkRepeat") {
         if (this->getBlinkRepeat() == boost::none) {
             return ConfigurationStatus::NotSupported;

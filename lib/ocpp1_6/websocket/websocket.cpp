@@ -13,11 +13,8 @@ using json = nlohmann::json;
 namespace ocpp1_6 {
 
 Websocket::Websocket(std::shared_ptr<ChargePointConfiguration> configuration, int32_t security_profile,
-                     std::shared_ptr<MessageLogging> logging) {
-
-    this->configuration = configuration;
-    this->logging = logging;
-
+                     std::shared_ptr<MessageLogging> logging) :
+    configuration(configuration), logging(logging) {
     auto uri = this->configuration->getCentralSystemURI();
     if (security_profile <= 1) {
         EVLOG_debug << "Creating plaintext websocket based on the provided URI: " << uri;

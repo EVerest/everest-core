@@ -154,7 +154,7 @@ void DatabaseHandler::update_transaction(const std::string& session_id, int32_t 
     }
 
     if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error inserting into table" << std::endl;
+        EVLOG_error << "Error updating table" << std::endl;
         throw std::runtime_error("db access error");
     }
 }
@@ -189,7 +189,7 @@ void DatabaseHandler::update_transaction(const std::string& session_id, int32_t 
     }
 
     if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error inserting into table" << std::endl;
+        EVLOG_error << "Error updating table" << std::endl;
         throw std::runtime_error("db access error");
     }
 }

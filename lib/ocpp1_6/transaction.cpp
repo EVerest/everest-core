@@ -166,11 +166,13 @@ bool TransactionHandler::remove_active_transaction(int32_t connector) {
     return true;
 }
 
-bool TransactionHandler::remove_stopped_transaction(std::string stop_transaction_message_id) {
-    return std::remove_if(this->stopped_transactions.begin(), this->stopped_transactions.end(),
-                          [stop_transaction_message_id](std::shared_ptr<ocpp1_6::Transaction>& transaction) {
-                              return transaction->get_stop_transaction_message_id() == stop_transaction_message_id;
-                          }) != this->stopped_transactions.end();
+void TransactionHandler::erase_stopped_transaction(std::string stop_transaction_message_id) {
+    this->stopped_transactions.erase(
+        std::remove_if(this->stopped_transactions.begin(), this->stopped_transactions.end(),
+                       [stop_transaction_message_id](std::shared_ptr<ocpp1_6::Transaction>& transaction) {
+                           return transaction->get_stop_transaction_message_id() == stop_transaction_message_id;
+                       }),
+        this->stopped_transactions.end());
 }
 
 std::shared_ptr<Transaction> TransactionHandler::get_transaction(int32_t connector) {

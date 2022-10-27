@@ -65,7 +65,7 @@ bool X509Certificate::write() {
     return true;
 }
 
-PkiHandler::PkiHandler(const std::string &maindir) : maindir(boost::filesystem::path(maindir)) {
+PkiHandler::PkiHandler(const std::string& maindir) : maindir(boost::filesystem::path(maindir)) {
 }
 
 CertificateVerificationResult PkiHandler::verifyChargepointCertificate(const std::string& certificateChain,
@@ -275,7 +275,6 @@ PkiHandler::getRootCertificateHashData(CertificateUseEnumType type) {
 DeleteCertificateStatusEnumType PkiHandler::deleteRootCertificate(CertificateHashDataType certificate_hash_data,
                                                                   int32_t security_profile) {
     std::vector<std::shared_ptr<X509Certificate>> caCertificates = this->getCaCertificates();
-    DeleteCertificateStatusEnumType status = DeleteCertificateStatusEnumType::NotFound;
 
     for (std::shared_ptr<X509Certificate> cert : caCertificates) {
         std::string issuerNameHash = this->getIssuerNameHash(cert);
@@ -290,15 +289,15 @@ DeleteCertificateStatusEnumType PkiHandler::deleteRootCertificate(CertificateHas
                 security_profile >= 2) {
                 return DeleteCertificateStatusEnumType::Failed;
             }
-        }
-        bool success = boost::filesystem::remove(cert->path);
-        if (success) {
-            status = DeleteCertificateStatusEnumType::Accepted;
-        } else {
-            status = DeleteCertificateStatusEnumType::Failed;
+            bool success = boost::filesystem::remove(cert->path);
+            if (success) {
+                return DeleteCertificateStatusEnumType::Accepted;
+            } else {
+                return DeleteCertificateStatusEnumType::Failed;
+            }
         }
     }
-    return status;
+    return DeleteCertificateStatusEnumType::NotFound;
 }
 
 InstallCertificateResult PkiHandler::installRootCertificate(InstallCertificateRequest msg,

@@ -81,6 +81,7 @@ private:
     std::unique_ptr<Everest::SteadyTimer> heartbeat_timer;
     std::unique_ptr<Everest::SteadyTimer> boot_notification_timer;
     std::unique_ptr<Everest::SystemTimer> clock_aligned_meter_values_timer;
+    std::vector<std::unique_ptr<Everest::SteadyTimer>> status_notification_timers;
     std::chrono::time_point<date::utc_clock> clock_aligned_meter_values_time_point;
     std::map<int32_t, std::vector<MeterValue>> meter_values;
     std::mutex meter_values_mutex;
@@ -112,6 +113,7 @@ private:
     std::mutex data_transfer_callbacks_mutex;
 
     std::mutex stop_transaction_mutex;
+    std::condition_variable stop_transaction_cv;
 
     std::thread reset_thread;
     DiagnosticsStatus diagnostics_status;
@@ -127,7 +129,8 @@ private:
     std::function<bool(int32_t connector)> disable_evse_callback;
     std::function<bool(int32_t connector)> pause_charging_callback;
     std::function<bool(int32_t connector)> resume_charging_callback;
-    std::function<void(const std::string& id_token, int32_t connector, bool prevalidated)> provide_token_callback;
+    std::function<void(const std::string& id_token, std::vector<int32_t> referenced_connectors, bool prevalidated)>
+        provide_token_callback;
     std::function<bool(int32_t connector, Reason reason)> stop_transaction_callback;
     std::function<bool(int32_t connector)> unlock_connector_callback;
     std::function<bool(int32_t connector, int32_t max_current)> set_max_current_callback;
@@ -364,11 +367,12 @@ public:
     /// \brief registers a \p callback function that can be used to resume charging
     void register_resume_charging_callback(const std::function<bool(int32_t connector)>& callback);
 
-    /// \brief registers a \p callback function that can be used to provide an \p id_token for the given \p connector to
-    /// an authorization handler. \p prevalidated signals to the authorization handler that no further authorization is
-    /// necessary
+    /// \brief registers a \p callback function that can be used to provide an \p id_token for the given \p
+    /// referenced_connectors to an authorization handler. \p prevalidated signals to the authorization handler that no
+    /// further authorization is necessary
     void register_provide_token_callback(
-        const std::function<void(const std::string& id_token, int32_t connector, bool prevalidated)>& callback);
+        const std::function<void(const std::string& id_token, std::vector<int32_t> referenced_connectors,
+                                 bool prevalidated)>& callback);
 
     /// \brief registers a \p callback function that can be used to stop a transaction
     void

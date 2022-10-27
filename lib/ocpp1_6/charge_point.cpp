@@ -45,6 +45,10 @@ ChargePoint::ChargePoint(std::shared_ptr<ChargePointConfiguration> configuration
 
     this->heartbeat_timer = std::make_unique<Everest::SteadyTimer>(&this->io_service, [this]() { this->heartbeat(); });
 
+    for (int32_t connector = 0; connector < this->configuration->getNumberOfConnectors() + 1; connector++) {
+        this->status_notification_timers.push_back(std::make_unique<Everest::SteadyTimer>(&this->io_service));
+    }
+
     this->clock_aligned_meter_values_timer = std::make_unique<Everest::SystemTimer>(
         &this->io_service, [this]() { this->clock_aligned_meter_values_sample(); });
 
@@ -55,7 +59,10 @@ ChargePoint::ChargePoint(std::shared_ptr<ChargePointConfiguration> configuration
     this->status = std::make_unique<ChargePointStates>(
         this->configuration->getNumberOfConnectors(),
         [this](int32_t connector, ChargePointErrorCode errorCode, ChargePointStatus status) {
-            this->status_notification(connector, errorCode, status);
+            this->status_notification_timers.at(connector)->stop();
+            this->status_notification_timers.at(connector)->timeout(
+                [this, connector, errorCode, status]() { this->status_notification(connector, errorCode, status); },
+                std::chrono::seconds(this->configuration->getMinimumStatusDuration().get_value_or(0)));
         });
 }
 
@@ -551,10 +558,7 @@ void ChargePoint::stop_all_transactions(Reason reason) {
     int32_t number_of_connectors = this->configuration->getNumberOfConnectors();
     for (int32_t connector = 1; connector <= number_of_connectors; connector++) {
         if (this->transaction_handler->transaction_active(connector)) {
-            this->transaction_handler->get_transaction(connector)->add_stop_energy_wh(
-                std::make_shared<StampedEnergyWh>(DateTime(), this->get_meter_wh(connector)));
             this->stop_transaction_callback(connector, reason);
-            this->transaction_handler->remove_active_transaction(connector);
         }
     }
 }
@@ -604,6 +608,10 @@ void ChargePoint::connected_callback() {
     case ChargePointConnectionState::Booted: {
         // on_open in a Booted state can happen after a successful reconnect.
         // according to spec, a charge point should not send a BootNotification after a reconnect
+        // still we send StatusNotification.req for all connectors after a reconnect
+        for (int32_t connector = 0; connector <= this->configuration->getNumberOfConnectors(); connector++) {
+            this->status_notification(connector, ChargePointErrorCode::NoError, this->status->get_state(connector));
+        }
         break;
     }
     default:
@@ -1086,30 +1094,32 @@ void ChargePoint::handleRemoteStartTransactionRequest(Call<RemoteStartTransactio
     // a charge point may reject a remote start transaction request without a connectorId
     // TODO(kai): what is our policy here? reject for now
     RemoteStartTransactionResponse response;
-    if (!call.msg.connectorId || call.msg.connectorId.get() == 0) {
-        EVLOG_warning << "RemoteStartTransactionRequest without a connector id or connector id = 0 is not supported "
-                         "at the moment.";
-        response.status = RemoteStartStopStatus::Rejected;
-        CallResult<RemoteStartTransactionResponse> call_result(response, call.uniqueId);
-        this->send<RemoteStartTransactionResponse>(call_result);
-        return;
+    if (call.msg.connectorId) {
+        if (call.msg.connectorId.get() == 0) {
+            EVLOG_warning << "Received RemoteStartTransactionRequest with connector id 0";
+            response.status = RemoteStartStopStatus::Rejected;
+            CallResult<RemoteStartTransactionResponse> call_result(response, call.uniqueId);
+            this->send<RemoteStartTransactionResponse>(call_result);
+            return;
+        }
+        int32_t connector = call.msg.connectorId.value();
+        if (this->database_handler->get_connector_availability(connector) == AvailabilityType::Inoperative) {
+            EVLOG_warning << "Received RemoteStartTransactionRequest for inoperative connector";
+            response.status = RemoteStartStopStatus::Rejected;
+            CallResult<RemoteStartTransactionResponse> call_result(response, call.uniqueId);
+            this->send<RemoteStartTransactionResponse>(call_result);
+            return;
+        }
+        if (this->transaction_handler->get_transaction(connector) != nullptr ||
+            this->status->get_state(connector) == ChargePointStatus::Finishing) {
+            EVLOG_debug
+                << "Received RemoteStartTransactionRequest for a connector with an active or finished transaction.";
+            response.status = RemoteStartStopStatus::Rejected;
+            CallResult<RemoteStartTransactionResponse> call_result(response, call.uniqueId);
+            this->send<RemoteStartTransactionResponse>(call_result);
+            return;
+        }
     }
-    int32_t connector = call.msg.connectorId.value();
-    if (this->database_handler->get_connector_availability(connector) == AvailabilityType::Inoperative) {
-        EVLOG_warning << "Received RemoteStartTransactionRequest for inoperative connector";
-        response.status = RemoteStartStopStatus::Rejected;
-        CallResult<RemoteStartTransactionResponse> call_result(response, call.uniqueId);
-        this->send<RemoteStartTransactionResponse>(call_result);
-        return;
-    }
-    if (this->transaction_handler->get_transaction(connector) != nullptr) {
-        EVLOG_debug << "Received RemoteStartTransactionRequest for a connector with an active transaction.";
-        response.status = RemoteStartStopStatus::Rejected;
-        CallResult<RemoteStartTransactionResponse> call_result(response, call.uniqueId);
-        this->send<RemoteStartTransactionResponse>(call_result);
-        return;
-    }
-
     if (call.msg.chargingProfile) {
         // TODO(kai): A charging profile was provided, forward to the charger
         if (call.msg.chargingProfile.get().chargingProfilePurpose != ChargingProfilePurposeType::TxProfile) {
@@ -1122,26 +1132,20 @@ void ChargePoint::handleRemoteStartTransactionRequest(Call<RemoteStartTransactio
 
     {
         std::lock_guard<std::mutex> lock(remote_start_transaction_mutex);
+        std::vector<int32_t> referenced_connectors;
 
-        int32_t connector = call.msg.connectorId.value();
-        IdTagInfo id_tag_info;
-        id_tag_info.status = AuthorizationStatus::Accepted;
-        // check if connector is reserved and tagId matches the reserved tag
+        for (int connector = 1; connector <= this->configuration->getNumberOfConnectors(); connector++) {
+            referenced_connectors.push_back(connector);
+        }
+
         response.status = RemoteStartStopStatus::Accepted;
         CallResult<RemoteStartTransactionResponse> call_result(response, call.uniqueId);
         this->send<RemoteStartTransactionResponse>(call_result);
 
         if (this->configuration->getAuthorizeRemoteTxRequests()) {
-            bool prevalidated = false;
-            if (this->configuration->getAuthorizationCacheEnabled()) {
-                if (this->validate_against_cache_entries(call.msg.idTag) &&
-                    this->status->get_state(connector) != ChargePointStatus::Reserved) {
-                    prevalidated = true;
-                }
-            }
-            this->provide_token_callback(call.msg.idTag.get(), connector, prevalidated);
+            this->provide_token_callback(call.msg.idTag.get(), referenced_connectors, false);
         } else {
-            this->provide_token_callback(call.msg.idTag.get(), connector, true); // prevalidated
+            this->provide_token_callback(call.msg.idTag.get(), referenced_connectors, true); // prevalidated
         }
     };
 }
@@ -1200,22 +1204,26 @@ void ChargePoint::handleResetRequest(Call<ResetRequest> call) {
 
     CallResult<ResetResponse> call_result(response, call.uniqueId);
     this->send<ResetResponse>(call_result);
-
-    if (call.msg.type == ResetType::Hard) {
-        // TODO(kai): implement hard reset, if possible send StopTransaction for any running
-        // transactions This type of reset should restart all hardware!
-        this->reset_thread = std::thread([this]() {
-            this->stop_all_transactions(Reason::HardReset);
-            kill(getpid(), SIGINT); // FIXME(kai): this leads to a somewhat dirty reset
+    // TODO(kai): gracefully stop all transactions and send StopTransaction. Restart software
+    // afterwards
+    this->reset_thread = std::thread([this]() {
+        EVLOG_debug << "Waiting until all transactions are stopped...";
+        std::unique_lock lk(this->stop_transaction_mutex);
+        this->stop_transaction_cv.wait_for(lk, std::chrono::seconds(5), [this] {
+            for (int32_t connector = 1; connector <= this->configuration->getNumberOfConnectors(); connector++) {
+                if (this->transaction_handler->transaction_active(connector)) {
+                    return false;
+                }
+            }
+            return true;
         });
-    }
+        this->stop();
+        kill(getpid(), SIGINT); // FIXME(kai): this leads to a somewhat dirty reset
+    });
     if (call.msg.type == ResetType::Soft) {
-        // TODO(kai): gracefully stop all transactions and send StopTransaction. Restart software
-        // afterwards
-        this->reset_thread = std::thread([this]() {
-            this->stop_all_transactions(Reason::SoftReset);
-            kill(getpid(), SIGINT); // FIXME(kai): this leads to a somewhat dirty reset
-        });
+        this->stop_all_transactions(Reason::SoftReset);
+    } else {
+        this->stop_all_transactions(Reason::HardReset);
     }
 }
 
@@ -1302,7 +1310,9 @@ void ChargePoint::handleStopTransactionResponse(CallResult<StopTransactionRespon
             this->status->submit_event(connector, Event_ChangeAvailabilityToUnavailable());
         }
     }
-    this->transaction_handler->remove_stopped_transaction(call_result.uniqueId.get());
+    this->transaction_handler->erase_stopped_transaction(call_result.uniqueId.get());
+    // when this transaction was stopped because of a Reset.req this signals that StopTransaction.conf has been received
+    this->stop_transaction_cv.notify_one();
 }
 
 void ChargePoint::handleUnlockConnectorRequest(Call<UnlockConnectorRequest> call) {
@@ -2344,17 +2354,24 @@ IdTagInfo ChargePoint::authorize_id_token(CiString20Type idTag) {
     // only do authorize req when authorization locally not enabled or fails
     // proritize auth list over auth cache for same idTags
 
-    if (this->configuration->getLocalAuthListEnabled()) {
-        const auto auth_list_entry_opt = this->database_handler->get_local_authorization_list_entry(idTag);
-        if (auth_list_entry_opt.has_value()) {
-            EVLOG_info << "Found id_tag " << idTag.get() << " in AuthorizationList";
-            return auth_list_entry_opt.value();
+    // Authorize locally (cache or local list) if
+    // - LocalPreAuthorize is true and CP is online
+    // OR
+    // - LocalAuthorizeOffline is true and CP is offline
+    if ((this->configuration->getLocalPreAuthorize() && this->websocket->is_connected()) ||
+        this->configuration->getLocalAuthorizeOffline() && !this->websocket->is_connected()) {
+        if (this->configuration->getLocalAuthListEnabled()) {
+            const auto auth_list_entry_opt = this->database_handler->get_local_authorization_list_entry(idTag);
+            if (auth_list_entry_opt.has_value()) {
+                EVLOG_info << "Found id_tag " << idTag.get() << " in AuthorizationList";
+                return auth_list_entry_opt.value();
+            }
         }
-    }
-    if (this->configuration->getAuthorizationCacheEnabled()) {
-        if (this->validate_against_cache_entries(idTag)) {
-            EVLOG_info << "Found vlaid id_tag " << idTag.get() << " in AuthorizationCache";
-            return this->database_handler->get_authorization_cache_entry(idTag).value();
+        if (this->configuration->getAuthorizationCacheEnabled()) {
+            if (this->validate_against_cache_entries(idTag)) {
+                EVLOG_info << "Found vlaid id_tag " << idTag.get() << " in AuthorizationCache";
+                return this->database_handler->get_authorization_cache_entry(idTag).value();
+            }
         }
     }
 
@@ -2638,7 +2655,8 @@ void ChargePoint::register_resume_charging_callback(const std::function<bool(int
 }
 
 void ChargePoint::register_provide_token_callback(
-    const std::function<void(const std::string& id_token, int32_t connector, bool prevalidated)>& callback) {
+    const std::function<void(const std::string& id_token, std::vector<int32_t> referenced_connectors,
+                             bool prevalidated)>& callback) {
     this->provide_token_callback = callback;
 }
 

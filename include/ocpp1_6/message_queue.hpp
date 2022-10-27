@@ -109,7 +109,9 @@ public:
         } else {
             // all other messages are allowed to "jump the queue" to improve user experience
             // TODO: decide if we only want to allow this for a subset of messages
-            this->add_to_normal_message_queue(message);
+            if (!this->paused || message->messageType == MessageType::BootNotification) {
+                this->add_to_normal_message_queue(message);
+            }
         }
         this->cv.notify_all();
     }
