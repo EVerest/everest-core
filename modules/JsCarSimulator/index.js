@@ -102,13 +102,15 @@ boot_module(async ({
 
   // subscribe vars of used modules
   setup.uses.simulation_control.subscribe.simulation_feedback((mod, args) => { mod.simulation_feedback = args; });
-  setup.uses.slac.subscribe.state((mod, args) => { mod.slac_state = args; });
+  if (setup.uses_list.slac.length > 0) setup.uses_list.slac[0].subscribe.state((mod, args) => { mod.slac_state = args; });
 
   // ISO15118 ev setup
-  setup.uses.ev.subscribe.AC_EVPowerReady((mod, value) => { mod.iso_pwr_ready = value; });
-  setup.uses.ev.subscribe.AC_EVSEMaxCurrent((mod, value) => { mod.evse_maxcurrent = value; });
-  setup.uses.ev.subscribe.AC_StopFromCharger((mod) => { mod.iso_stopped = true; });
-  setup.uses.ev.subscribe.V2G_Session_Finished((mod) => { mod.v2g_finished = true; });
+  if (setup.uses_list.ev.length > 0) {
+    setup.uses_list.ev[0].subscribe.AC_EVPowerReady((mod, value) => { mod.iso_pwr_ready = value; });
+    setup.uses_list.ev[0].subscribe.AC_EVSEMaxCurrent((mod, value) => { mod.evse_maxcurrent = value; });
+    setup.uses_list.ev[0].subscribe.AC_StopFromCharger((mod) => { mod.iso_stopped = true; });
+    setup.uses_list.ev[0].subscribe.V2G_Session_Finished((mod) => { mod.v2g_finished = true; });
+  }
 
   globalconf = config;
 }).then((mod) => {
@@ -438,12 +440,12 @@ function registerAllCmds(mod) {
   registerCmd(mod, 'iso_wait_slac_matched', 0, (mod, c) => {
     mod.state = 'pluggedin';
     if (mod.slac_state === undefined) return false;
-    if (mod.slac_state === 'UNMATCHED') mod.uses.slac.call.enter_bcd();
+    if (mod.slac_state === 'UNMATCHED') if (mod.uses_list.slac.length > 0) mod.uses_list.slac[0].call.enter_bcd();
     if (mod.slac_state === 'MATCHED') return true;
   });
   // --- wip
 
-  registerCmd(mod, 'iso_start_v2g_session', 2, (mod, c) => {
+  if (mod.uses_list.ev.length > 0) registerCmd(mod, 'iso_start_v2g_session', 2, (mod, c) => {
     if (c.args[0] === 'externalpayment') mod.payment = 'ExternalPayment';
     else if (c.args[0] === 'contract') mod.payment = 'Contract';
     else return false;
@@ -461,7 +463,7 @@ function registerAllCmds(mod) {
 
     args = { PaymentOption: mod.payment, EnergyTransferMode: mod.energymode };
 
-    if (mod.uses.ev.call.start_charging(args) === true) {
+    if (mod.uses_list.ev[0].call.start_charging(args) === true) {
       return true;
     }
     return false; // TODO:SL: Bleibt ewig in einer Schleife hängen, weil es nicht weiter geht
@@ -484,27 +486,29 @@ function registerAllCmds(mod) {
     return true;
   });
 
-  registerCmd(mod, 'iso_stop_charging', 0, (mod, c) => {
-    mod.uses.ev.call.stop_charging();
-    mod.state = 'pluggedin';
-    return true;
-  });
+  if (mod.uses_list.ev.length > 0)
+    registerCmd(mod, 'iso_stop_charging', 0, (mod, c) => {
+      mod.uses_list.ev[0].call.stop_charging();
+      mod.state = 'pluggedin';
+      return true;
+    });
 
-  registerCmd(mod, 'iso_wait_for_stop', 1, (mod, c) => {
-    if (c.timeLeft === undefined) {
-      c.timeLeft = c.args[0] * 4 + 1; // First time set the timer
-    }
-    if (!(c.timeLeft-- > 0)) {
-      mod.uses.ev.call.stop_charging();
-      mod.state = 'pluggedin';
-      return true;
-    }
-    if (mod.iso_stopped === true) {
-      mod.state = 'pluggedin';
-      return true;
-    }
-    return false;
-  });
+  if (mod.uses_list.ev.length > 0)
+    registerCmd(mod, 'iso_wait_for_stop', 1, (mod, c) => {
+      if (c.timeLeft === undefined) {
+        c.timeLeft = c.args[0] * 4 + 1; // First time set the timer
+      }
+      if (!(c.timeLeft-- > 0)) {
+        mod.uses_list.ev[0].call.stop_charging();
+        mod.state = 'pluggedin';
+        return true;
+      }
+      if (mod.iso_stopped === true) {
+        mod.state = 'pluggedin';
+        return true;
+      }
+      return false;
+    });
 
   registerCmd(mod, 'iso_wait_v2g_session_stopped', 0, (mod, c) => {
     if (mod.v2g_finished === true) {
