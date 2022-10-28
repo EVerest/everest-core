@@ -148,6 +148,11 @@
         "evse_id": {
             "description": "EVSE ID including the connector number, e.g. DE*PNX*E123456*1",
             "type": "string"
+        },
+        "hw_capabilities": {
+            "description": " Hardware capability/limits",
+            "type": "object",
+            "$ref": "/board_support#/HardwareCapabilities"
         }
     }
 }

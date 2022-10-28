@@ -10,6 +10,18 @@ This variable is published every second and contains a string representation of 
 2022-10-11T16:18:57.746Z
 ```
 
+### everest_api/evse_manager/var/hardware_capabilities
+This variable is published every second and contains the hardware capabilities in the following format:
+```json
+    {
+        "max_current_A": 32.0,
+        "max_phase_count": 3,
+        "min_current_A": 6.0,
+        "min_phase_count": 1,
+        "supports_changing_phases_during_charging": true
+    }
+```
+
 ### everest_api/evse_manager/var/session_info
 This variable is published every second and contains a json object with information relating to the current charging session in the following format:
 ```json

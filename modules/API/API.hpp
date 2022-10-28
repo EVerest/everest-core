@@ -92,9 +92,10 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
-    std::thread datetime_thread;
+    std::vector<std::thread> datetime_threads;
     bool running = true;
     std::vector<std::unique_ptr<SessionInfo>> info;
+    std::vector<json> hw_capabilities_json;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

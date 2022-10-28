@@ -111,17 +111,25 @@ SessionInfo::operator std::string() {
 
 void API::init() {
     invoke_init(*p_main);
-
     std::string api_base = "everest_api/";
 
     int32_t count = 0;
     for (auto& evse : this->r_evse_manager) {
         this->info.push_back(std::make_unique<SessionInfo>());
         auto& session_info = this->info.back();
+        this->hw_capabilities_json.push_back(json{});
+        auto& hw_caps = this->hw_capabilities_json.back();
         std::string evse_base = api_base + evse->module_id;
 
         // API variables
         std::string var_base = evse_base + "/var/";
+
+        std::string var_hw_caps = var_base + "hardware_capabilities";
+        evse->subscribe_hw_capabilities(
+            [this, var_hw_caps, &hw_caps](types::board_support::HardwareCapabilities hw_capabilities) {
+                hw_caps = hw_capabilities;
+                this->mqtt.publish(var_hw_caps, hw_caps.dump());
+            });
 
         std::string var_powermeter = var_base + "powermeter";
         evse->subscribe_powermeter([this, var_powermeter, &session_info](types::powermeter::Powermeter powermeter) {
@@ -145,17 +153,19 @@ void API::init() {
 
         std::string var_datetime = var_base + "datetime";
         std::string var_session_info = var_base + "session_info";
-        this->datetime_thread = std::thread([this, var_datetime, var_session_info, &session_info]() {
-            auto next_tick = std::chrono::steady_clock::now();
-            while (this->running) {
-                std::string datetime_str = Everest::Date::to_rfc3339(date::utc_clock::now());
-                this->mqtt.publish(var_datetime, datetime_str);
-                this->mqtt.publish(var_session_info, *session_info);
+        this->datetime_threads.push_back(
+            std::thread([this, var_datetime, var_session_info, var_hw_caps, &session_info, &hw_caps]() {
+                auto next_tick = std::chrono::steady_clock::now();
+                while (this->running) {
+                    std::string datetime_str = Everest::Date::to_rfc3339(date::utc_clock::now());
+                    this->mqtt.publish(var_datetime, datetime_str);
+                    this->mqtt.publish(var_session_info, *session_info);
+                    this->mqtt.publish(var_hw_caps, hw_caps.dump());
 
-                next_tick += std::chrono::seconds(1);
-                std::this_thread::sleep_until(next_tick);
-            }
-        });
+                    next_tick += std::chrono::seconds(1);
+                    std::this_thread::sleep_until(next_tick);
+                }
+            }));
 
         evse->subscribe_session_event([this, var_session_info,
                                        &session_info](types::evse_manager::SessionEvent session_event) {
