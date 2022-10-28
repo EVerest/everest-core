@@ -18,11 +18,11 @@
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
+#include <date/date.h>
+#include <date/tz.h>
 #include <memory>
 #include <mutex>
 #include <sstream>
-#include <date/date.h>
-#include <date/tz.h>
 
 namespace module {
 
@@ -31,11 +31,12 @@ private:
     std::mutex session_info_mutex;
 
     std::string state;       ///< Latest state of the EVSE
+    std::string state_info;  ///< Additional information of this state
     int32_t start_energy_wh; ///< Energy reading at the beginning of this charging session in Wh
     int32_t end_energy_wh;   ///< Energy reading at the end of this charging session in Wh
     std::chrono::time_point<date::utc_clock> start_time_point; ///< Start of the charging session
     std::chrono::time_point<date::utc_clock> end_time_point;   ///< End of the charging session
-    double latest_total_w;                                               ///< Latest total power reading in W
+    double latest_total_w;                                     ///< Latest total power reading in W
 
     bool is_state_charging(const std::string& current_state);
 
@@ -43,7 +44,7 @@ public:
     SessionInfo();
 
     void reset();
-    void update_state(const std::string& event);
+    void update_state(const std::string& event, const std::string& state_info);
     void set_start_energy_wh(int32_t start_energy_wh);
     void set_end_energy_wh(int32_t end_energy_wh);
     void set_latest_energy_wh(int32_t latest_energy_wh);

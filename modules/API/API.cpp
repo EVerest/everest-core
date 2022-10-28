@@ -11,8 +11,8 @@ SessionInfo::SessionInfo() : state("Unknown"), start_energy_wh(0), end_energy_wh
 }
 
 bool SessionInfo::is_state_charging(const std::string& current_state) {
-    if (current_state == "AuthRequired" || current_state == "Charging" ||
-        current_state == "ChargingPausedEV" || current_state == "ChargingPausedEVSE") {
+    if (current_state == "AuthRequired" || current_state == "Charging" || current_state == "ChargingPausedEV" ||
+        current_state == "ChargingPausedEVSE") {
         return true;
     }
     return false;
@@ -21,15 +21,17 @@ bool SessionInfo::is_state_charging(const std::string& current_state) {
 void SessionInfo::reset() {
     std::lock_guard<std::mutex> lock(this->session_info_mutex);
     this->state = "Unknown";
+    this->state_info = "";
     this->start_energy_wh = 0;
     this->end_energy_wh = 0;
     this->start_time_point = date::utc_clock::now();
     this->latest_total_w = 0;
 }
 
-void SessionInfo::update_state(const std::string& event) {
+void SessionInfo::update_state(const std::string& event, const std::string& state_info) {
     std::lock_guard<std::mutex> lock(this->session_info_mutex);
 
+    this->state_info = state_info;
     if (event == "Enabled") {
         this->state = "Unplugged";
     } else if (event == "Disabled") {
@@ -98,6 +100,7 @@ SessionInfo::operator std::string() {
         std::chrono::duration_cast<std::chrono::seconds>(this->end_time_point - this->start_time_point);
 
     json session_info = json::object({{"state", this->state},
+                                      {"state_info", this->state_info},
                                       {"charged_energy_wh", charged_energy_wh},
                                       {"latest_total_w", this->latest_total_w},
                                       {"charging_duration_s", charging_duration_s.count()},
@@ -154,22 +157,26 @@ void API::init() {
             }
         });
 
-        evse->subscribe_session_event(
-            [this, var_session_info, &session_info](types::evse_manager::SessionEvent session_event) {
-                auto event = types::evse_manager::session_event_enum_to_string(session_event.event);
-                session_info->update_state(event);
-                if (event == "TransactionStarted") {
-                    auto session_started = session_event.transaction_started.value();
-                    auto energy_Wh_import = session_started.energy_Wh_import;
-                    session_info->set_start_energy_wh(energy_Wh_import);
-                } else if (event == "TransactionFinished") {
-                    auto session_finished = session_event.transaction_finished.value();
-                    auto energy_Wh_import = session_finished.energy_Wh_import;
-                    session_info->set_end_energy_wh(energy_Wh_import);
-                }
+        evse->subscribe_session_event([this, var_session_info,
+                                       &session_info](types::evse_manager::SessionEvent session_event) {
+            auto event = types::evse_manager::session_event_enum_to_string(session_event.event);
+            if (session_event.error) {
+                session_info->update_state(event, types::evse_manager::error_to_string(session_event.error.value()));
+            } else {
+                session_info->update_state(event, "");
+            }
+            if (event == "TransactionStarted") {
+                auto session_started = session_event.transaction_started.value();
+                auto energy_Wh_import = session_started.energy_Wh_import;
+                session_info->set_start_energy_wh(energy_Wh_import);
+            } else if (event == "TransactionFinished") {
+                auto session_finished = session_event.transaction_finished.value();
+                auto energy_Wh_import = session_finished.energy_Wh_import;
+                session_info->set_end_energy_wh(energy_Wh_import);
 
                 this->mqtt.publish(var_session_info, *session_info);
-            });
+            }
+        });
 
         // API commands
         std::string cmd_base = evse_base + "/cmd/";
