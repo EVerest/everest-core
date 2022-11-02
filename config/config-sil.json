@@ -64,6 +64,29 @@
     "yeti_driver": {
         "module": "JsYetiSimulator"
     },
+    "setup": {
+        "config_module": {
+            "localization": true,
+            "setup_simulation": true,
+            "setup_wifi": true
+        },
+        "connections": {
+            "store": [
+                {
+                    "module_id": "persistent_store",
+                    "implementation_id": "main"
+                }
+            ]
+        },
+        "module": "Setup"
+    },
+    "persistent_store": {
+        "module": "PersistentStore",
+        "config_module": {
+            "sqlite_db_file_path": "everest_persistent_store.db"
+        },
+        "connections": {}
+    },
     "slac": {
         "module": "JsSlacSimulator"
     },
@@ -72,8 +95,8 @@
         "config_module": {
             "connector_id": 1,
             "auto_enable": true,
-	    "auto_exec": false,
-	    "auto_exec_commands": "sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 30;unplug"
+            "auto_exec": false,
+            "auto_exec_commands": "sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 30;unplug"
         },
         "connections": {
             "simulation_control": [
