@@ -51,6 +51,8 @@ This variable is published every second and contains a json object with informat
     - Finished
     - Error
     - PermanentFault
+
+
 - **state_info** contains additional information for the current state, at the moment this is only set to a meaningful value in the Error state. Here it can have the following values:
     - Car
     - CarDiodeFault
