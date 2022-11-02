@@ -196,6 +196,8 @@ void EvseManager::ready() {
         local_three_phases = true; // other configonfigurations currently not supported by HW
     }
 
+    p_evse->publish_hw_capabilities(hw_capabilities);
+
     r_bsp->subscribe_event([this](const types::board_support::Event event) {
         charger->processEvent(event);
 

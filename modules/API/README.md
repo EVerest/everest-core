@@ -10,6 +10,18 @@ This variable is published every second and contains a string representation of 
 2022-10-11T16:18:57.746Z
 ```
 
+### everest_api/evse_manager/var/hardware_capabilities
+This variable is published every second and contains the hardware capabilities in the following format:
+```json
+    {
+        "max_current_A": 32.0,
+        "max_phase_count": 3,
+        "min_current_A": 6.0,
+        "min_phase_count": 1,
+        "supports_changing_phases_during_charging": true
+    }
+```
+
 ### everest_api/evse_manager/var/session_info
 This variable is published every second and contains a json object with information relating to the current charging session in the following format:
 ```json
@@ -18,7 +30,8 @@ This variable is published every second and contains a json object with informat
         "charging_duration_s": 84,
         "datetime": "2022-10-11T16:48:35.747Z",
         "latest_total_w": 0.0,
-        "state": "Unplugged"
+        "state": "Unplugged",
+        "state_info": ""
     }
 ```
 
@@ -38,6 +51,18 @@ This variable is published every second and contains a json object with informat
     - Finished
     - Error
     - PermanentFault
+
+
+- **state_info** contains additional information for the current state, at the moment this is only set to a meaningful value in the Error state. Here it can have the following values:
+    - Car
+    - CarDiodeFault
+    - Relais
+    - RCD
+    - VentilationNotAvailable
+    - OverCurrent
+    - Internal
+    - SLAC
+    - HLC
 
 ### everest_api/evse_manager/var/limits
 This variable is published every second and contains a json object with information relating to the current limits of this EVSE.
