@@ -26,6 +26,7 @@ boot_module(async ({
   config_max_power = config.impl.main.max_power;
 
   connector_voltage = 0.0;
+  mode = "Off";
 
   // register commands
   setup.provides.main.register.getCapabilities((mod, args) => {
@@ -48,10 +49,10 @@ boot_module(async ({
   });
 
   setup.provides.main.register.setMode((mod, args) => {
-    if (args.value == "Off") { connector_voltage = 0.0; }
-    else if (args.value == "Export") { connector_voltage = settings_connector_export_voltage; }
-    else if (args.value == "Import") { connector_voltage = settings_connector_import_voltage; }
-    else if (args.value == "Fault") { connector_voltage = 0.0; }
+    if (args.value == "Off") { mode = "Off"; connector_voltage = 0.0; }
+    else if (args.value == "Export") { mode = "Export"; connector_voltage = settings_connector_export_voltage; }
+    else if (args.value == "Import") { mode = "Import"; connector_voltage = settings_connector_import_voltage; }
+    else if (args.value == "Fault") { mode = "Fault"; connector_voltage = 0.0; }
     mod.provides.main.publish.mode(args.value);
   });
 
@@ -63,8 +64,10 @@ boot_module(async ({
     if (args.voltage > config_max_voltage) args.voltage = config_max_voltage;
     if (args.current > config_max_current) args.current = config_max_current;
 
-    settings_connector_max_export_current = args.value;
-    settings_connector_export_voltage = args.value;
+    settings_connector_max_export_current = args.current;
+    settings_connector_export_voltage = args.voltage;
+
+    if (mode == "Export") { connector_voltage = settings_connector_export_voltage; }
   });
 
   setup.provides.main.register.setImportVoltageCurrent((mod, args) => {
@@ -75,8 +78,10 @@ boot_module(async ({
     if (args.voltage > config_max_voltage) args.voltage = config_max_voltage;
     if (args.current > config_max_current) args.current = config_max_current;
 
-    settings_connector_import_voltage = args.value;
-    settings_connector_max_import_current = args.value;
+    settings_connector_import_voltage = args.voltage;
+    settings_connector_max_import_current = args.current;
+
+    if (mode == "Import") { connector_voltage = settings_connector_import_voltage; }
   });
 
 }).then((mod) => {
