@@ -88,8 +88,12 @@ void EvseManager::ready() {
             r_hlc[0]->call_set_DC_EVSECurrentRegulationTolerance(
                 powersupply_capabilities.current_regulation_tolerance_A);
             r_hlc[0]->call_set_DC_EVSEPeakCurrentRipple(powersupply_capabilities.peak_current_ripple_A);
-            r_hlc[0]->call_set_DC_EVSEPresentVoltage(0);
-            r_hlc[0]->call_set_DC_EVSEPresentCurrent(0);
+            
+            types::iso15118_charger::DC_EVSEPresentVoltage_Current present_values;
+            present_values.EVSEPresentVoltage = 0;
+            present_values.EVSEPresentCurrent = 0;
+            r_hlc[0]->call_set_DC_EVSEPresentVoltageCurrent(present_values);
+            
             r_hlc[0]->call_set_EVSEEnergyToBeDelivered(10000);
 
             types::iso15118_charger::DC_EVSEMaximumLimits evseMaxLimits;
@@ -123,8 +127,10 @@ void EvseManager::ready() {
             if (!r_powersupply_DC.empty()) {
                 r_powersupply_DC[0]->subscribe_voltage_current([this](types::power_supply_DC::VoltageCurrent m) {
                     powersupply_measurement = m;
-                    r_hlc[0]->call_set_DC_EVSEPresentCurrent((m.current_A > 0 ? m.current_A : 0.0));
-                    r_hlc[0]->call_set_DC_EVSEPresentVoltage((m.voltage_V > 0 ? m.voltage_V : 0.0));
+                    types::iso15118_charger::DC_EVSEPresentVoltage_Current present_values;
+                    present_values.EVSEPresentVoltage = (m.voltage_V > 0 ? m.voltage_V : 0.0);
+                    present_values.EVSEPresentCurrent = (m.current_A > 0 ? m.current_A : 0.0);
+                    r_hlc[0]->call_set_DC_EVSEPresentVoltageCurrent(present_values);
                 });
             }
 
@@ -509,8 +515,11 @@ void EvseManager::setup_fake_DC_mode() {
     transfer_modes.insert(transfer_modes.end(), "DC_unique");
     r_hlc[0]->call_set_DC_EVSECurrentRegulationTolerance(powersupply_capabilities.current_regulation_tolerance_A);
     r_hlc[0]->call_set_DC_EVSEPeakCurrentRipple(powersupply_capabilities.peak_current_ripple_A);
-    r_hlc[0]->call_set_DC_EVSEPresentVoltage(400); // FIXME: set a correct values
-    r_hlc[0]->call_set_DC_EVSEPresentCurrent(0);
+    
+    types::iso15118_charger::DC_EVSEPresentVoltage_Current present_values;
+    present_values.EVSEPresentVoltage = 400; // FIXME: set a correct values
+    present_values.EVSEPresentCurrent = 0;
+    r_hlc[0]->call_set_DC_EVSEPresentVoltageCurrent(present_values);
 
     types::iso15118_charger::DC_EVSEMaximumLimits evseMaxLimits;
     evseMaxLimits.EVSEMaximumCurrentLimit = 400;

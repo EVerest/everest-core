@@ -106,11 +106,9 @@ def charger_set_RCD_Error(RCD: bool):
 def charger_stop_charging(stop_charging: bool):
     ChargerWrapper.set_stop_charging(stop_charging)
 
-def charger_set_DC_EVSEPresentVoltage(EVSEPresentVoltage: float):
-    ChargerWrapper.set_DC_EVSEPresentVoltage(EVSEPresentVoltage)
-
-def charger_set_DC_EVSEPresentCurrent(EVSEPresentCurrent: float):
-    ChargerWrapper.set_DC_EVSEPresentCurrent(EVSEPresentCurrent)
+def charger_set_DC_EVSEPresentVoltageCurrent(EVSEPresentVoltage_Current: dict):
+    ChargerWrapper.set_DC_EVSEPresentVoltage(EVSEPresentVoltage_Current["EVSEPresentVoltage"])
+    ChargerWrapper.set_DC_EVSEPresentCurrent(EVSEPresentVoltage_Current["EVSEPresentCurrent"])
 
 def charger_set_AC_EVSEMaxCurrent(EVSEMaxCurrent: float):
     ChargerWrapper.set_AC_EVSEMaxCurrent(EVSEMaxCurrent)

@@ -105,6 +105,28 @@
                 "SessionStopRes"
             ]
         },
+        "DC_EVSEPresentVoltage_Current": {
+            "description": "Set the present voltage and current for the EVSE",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "EVSEPresentVoltage"
+            ],
+            "properties": {
+                "EVSEPresentVoltage": {
+                    "description": "[V] Output voltage of the EVSE as defined in IEC CDV 61851-23",
+                    "type": "number",
+                    "minumum": 0,
+                    "maximum": 1000
+                },
+                "EVSEPresentCurrent": {
+                    "description": "[A] Present output current of the EVSE",
+                    "type": "number",
+                    "minumum": 0,
+                    "maximum": 400
+                }
+            }
+        },
         "DC_EVSEMaximumLimits": {
             "description": "Maximum Values (current, power and voltage) the EVSE can deliver",
             "type": "object",
