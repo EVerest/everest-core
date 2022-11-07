@@ -22,6 +22,13 @@ target_link_libraries(${MODULE_NAME}
         pugixml::pugixml
 )
 
+if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9)
+target_link_libraries(${MODULE_NAME}
+    PRIVATE
+        stdc++fs
+)
+endif()
+
 # needed for std::filesystem
 target_compile_features(${MODULE_NAME} PUBLIC cxx_std_17)
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
