@@ -64,8 +64,15 @@ public:
         Object {{ arg.name }}_object = {{ arg.name }}_json;
         args["{{ arg.name }}"] = {{ var_to_any(arg, arg.name + '_object') }};
         {% elif 'array_type' in arg %}
+        {% if 'array_type_contains_enum' in arg %}
+        Array {{ arg.name }}_array;
+        for (auto {{ arg.name }}_entry : {{ arg.name }}) {
+            {{ arg.name }}_array.push_back({{ enum_to_string(arg.array_type) }}({{ arg.name }}_entry));
+        }
+        {% else %}
         json {{ arg.name }}_json = {{ arg.name }};
         Array {{ arg.name }}_array = {{ arg.name }}_json;
+        {% endif %}
         args["{{ arg.name }}"] = {{ var_to_any(arg, arg.name + '_array') }};
         {% else %}
         args["{{ arg.name }}"] = {{ var_to_any(arg, arg.name) }};

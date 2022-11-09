@@ -98,9 +98,17 @@ void publish_{{ var.name }}({% if var.json_type != 'null' %}{{ cpp_type(var) }} 
 {%- endmacro %}
 
 {% macro string_to_enum(enum_type) %}
+{% if '::' not in enum_type %}
+string_to_{{ enum_type | snake_case }}
+{% else %}
 {{ enum_type[:enum_type.rfind('::')] }}::string_to_{{ enum_type[(enum_type.rfind('::')+2):] | snake_case }}
+{% endif %}
 {%- endmacro %}
 
 {% macro enum_to_string(enum_type) %}
+{% if '::' not in enum_type %}
+{{ enum_type | snake_case }}_to_string
+{% else %}
 {{ enum_type[:enum_type.rfind('::')] }}::{{ enum_type[(enum_type.rfind('::')+2):] | snake_case }}_to_string
+{% endif %}
 {%- endmacro %}

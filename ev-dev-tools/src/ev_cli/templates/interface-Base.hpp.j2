@@ -84,7 +84,14 @@ private:
                     auto {{ arg.name }} = {{ string_to_enum(arg.enum_type) }}({{ arg.name }}_string);
                 {% elif 'array_type' in arg %}
                     json {{ arg.name }}_json_array = boost::any_cast<Array>(args["{{ arg.name }}"]);
-                    std::vector<{{ arg.array_type }}> {{ arg.name }} = {{ arg.name }}_json_array;
+                    {% if 'array_type_contains_enum' in arg %}
+                        std::vector<{{ arg.array_type }}> {{ arg.name }};
+                        for (auto {{ arg.name }}_entry : {{ arg.name }}_json_array) {
+                            {{ arg.name }}.push_back({{ string_to_enum(arg.array_type) }}({{ arg.name }}_entry));
+                        }
+                    {% else %}
+                        std::vector<{{ arg.array_type }}> {{ arg.name }} = {{ arg.name }}_json_array;
+                    {% endif %}
                 {% else %}
                     auto {{ arg.name }} = {{ var_to_cpp(arg) }}(args["{{ arg.name }}"]);
                 {% endif %}

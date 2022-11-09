@@ -11,7 +11,7 @@ author: kai-uwe.hermann@pionix.de
 from . import helpers
 
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 
 
 import stringcase
@@ -22,6 +22,7 @@ class TypeParser:
     validators = None
     templates = None
     all_types = {}
+    validated_type_defs = {}
 
     @classmethod
     def parse_type_url(cls, type_url: str) -> Dict:
@@ -48,6 +49,32 @@ class TypeParser:
         return type_dict
 
     @classmethod
+    def does_type_exist(cls, type_url: str, json_type: str):
+        """Checks if the referenced type exists"""
+        if type_url not in TypeParser.all_types:
+            TypeParser.all_types[type_url] = TypeParser.parse_type_url(type_url=type_url)
+        type_dict = TypeParser.all_types[type_url]
+        type_path = helpers.resolve_everest_dir_path('types' / type_dict['type_relative_path'] .with_suffix('.json'))
+        if not type_path or not type_path.exists():
+            raise helpers.EVerestParsingException(
+                '$ref: ' + type_url + f' referenced type file "{type_path} does not exist.')
+        if type_path not in TypeParser.validated_type_defs:
+            TypeParser.validated_type_defs[type_path] = helpers.load_validated_type_def(
+                type_path, TypeParser.validators['type'])
+
+        if type_dict['type_name'] not in TypeParser.validated_type_defs[type_path]['types']:
+            raise helpers.EVerestParsingException('$ref: ' + type_url + ' referenced type "' +
+                                                  type_dict['type_name'] + f'" does not exist in type file "{type_path}".')
+
+        type_schema = TypeParser.validated_type_defs[type_path]['types'][type_dict['type_name']]
+
+        if json_type != type_schema['type']:
+            raise helpers.EVerestParsingException('$ref: ' + type_url + ' referenced type "' +
+                                                  type_dict['type_name'] + f'" in type file "{type_path}"' +
+                                                  f' should be of type "{json_type}" but is of type: "' +
+                                                  type_schema['type'] + '".')
+
+    @classmethod
     def generate_tmpl_data_for_type(cls, type_with_namespace, type_def):
         """Generate template data based on the provided type and type definition."""
         helpers.parsed_enums.clear()
@@ -60,9 +87,12 @@ class TypeParser:
         for type_name, type_properties in type_def.get('types', {}).items():
             type_url = f'/{type_with_namespace["relative_path"]}#/{type_name}'
             TypeParser.all_types[type_url] = TypeParser.parse_type_url(type_url=type_url)
-            (_type_info, enum_info) = helpers.extended_build_type_info(type_name, type_properties, type_file=True)
-            if enum_info:
-                enums.append(enum_info)
+            try:
+                (_type_info, enum_info) = helpers.extended_build_type_info(type_name, type_properties, type_file=True)
+                if enum_info:
+                    enums.append(enum_info)
+            except helpers.EVerestParsingException as e:
+                raise helpers.EVerestParsingException(f'Error parsing type {type_name}: {e}')
 
         for parsed_enum in helpers.parsed_enums:
             enum_info = {
@@ -80,6 +110,20 @@ class TypeParser:
         for type_header in helpers.type_headers:
             type_headers.append(type_header)
 
+        # sort types, so no forward declaration is necessary
+        sorted_types: List = []
+        for struct_type in types:
+            insert_at: int = 0
+            for dep_struct_type in struct_type['depends_on']:
+
+                for i, _entry in enumerate(sorted_types):
+                    # the new one depends on the current
+                    if sorted_types[i]['name'] == dep_struct_type:
+                        insert_at = max(insert_at, i + 1)
+                        break
+
+            sorted_types.insert(insert_at, struct_type)
+
         tmpl_data = {
             'info': {
                 'type': type_with_namespace['namespace'],
@@ -87,7 +131,7 @@ class TypeParser:
                 'type_headers': type_headers,
             },
             'enums': enums,
-            'types': types,
+            'types': sorted_types,
         }
 
         return tmpl_data

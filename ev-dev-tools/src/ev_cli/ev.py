@@ -22,7 +22,8 @@ from typing import List
 
 
 # Global variables
-everest_dir = None
+everest_dirs = []
+work_dir = None
 
 # jinja template environment and global variable
 env = j2.Environment(loader=j2.FileSystemLoader(Path(__file__).parent / 'templates'),
@@ -51,7 +52,7 @@ validators = {}
 def setup_jinja_env():
     env.globals['timestamp'] = datetime.utcnow()
     # FIXME (aw): which repo to use? everest or everest-framework?
-    env.globals['git'] = helpers.gather_git_info(everest_dir)
+    env.globals['git'] = helpers.gather_git_info(work_dir)
     env.filters['create_dummy_result'] = helpers.create_dummy_result
 
 
@@ -197,7 +198,7 @@ def set_impl_specific_path_vars(tmpl_data, output_path):
 def generate_module_loader_files(mod, output_dir):
     loader_files = []
 
-    mod_path = everest_dir / f'modules/{mod}/manifest.json'
+    mod_path = work_dir / f'modules/{mod}/manifest.json'
     mod_def = helpers.load_validated_module_def(mod_path, validators['module'])
     tmpl_data = generate_tmpl_data_for_module(mod, mod_def)
 
@@ -228,7 +229,7 @@ def generate_module_loader_files(mod, output_dir):
 
 def generate_module_files(mod, update_flag):
     mod_files = {'core': [], 'interfaces': []}
-    mod_path = everest_dir / f'modules/{mod}/manifest.json'
+    mod_path = work_dir / f'modules/{mod}/manifest.json'
     mod_def = helpers.load_validated_module_def(mod_path, validators['module'])
 
     tmpl_data = generate_tmpl_data_for_module(mod, mod_def)
@@ -384,7 +385,7 @@ def generate_module_files(mod, update_flag):
 
 
 def load_interface_definition(interface):
-    if_path = everest_dir / f'interfaces/{interface}.json'
+    if_path = helpers.resolve_everest_dir_path(f'interfaces/{interface}.json')
 
     if_def = helpers.load_validated_interface_def(if_path, validators['interface'])
 
@@ -519,7 +520,7 @@ def module_update(args):
 
 
 def module_genld(args):
-    output_dir = Path(args.output_dir).resolve() if args.output_dir else everest_dir / \
+    output_dir = Path(args.output_dir).resolve() if args.output_dir else work_dir / \
         'build/generated/generated/modules'
 
     loader_files = generate_module_loader_files(args.module, output_dir)
@@ -537,7 +538,7 @@ def interface_genhdr(args):
     for type_with_namespace in list_types_with_namespace():
         _tmpl_data, _last_mtime = TypeParser.generate_type_info(type_with_namespace, all_types=True)
 
-    output_dir = Path(args.output_dir).resolve() if args.output_dir else everest_dir / \
+    output_dir = Path(args.output_dir).resolve() if args.output_dir else work_dir / \
         'build/generated/generated/interfaces'
     primary_update_strategy = 'force-update' if args.force else 'update'
 
@@ -545,8 +546,11 @@ def interface_genhdr(args):
     all_interfaces = False
     if not interfaces:
         all_interfaces = True
-        if_dir = everest_dir / 'interfaces'
-        interfaces = [if_path.stem for if_path in if_dir.iterdir() if (if_path.is_file() and if_path.suffix == '.json')]
+        interfaces = []
+        for everest_dir in everest_dirs:
+            if_dir = everest_dir / 'interfaces'
+            interfaces += [if_path.stem for if_path in if_dir.iterdir() if (if_path.is_file()
+                                                                            and if_path.suffix == '.json')]
 
     for interface in interfaces:
         if_parts = generate_interface_headers(interface, all_interfaces, output_dir)
@@ -569,12 +573,21 @@ def helpers_genuuids(args):
 
 def list_types_with_namespace(types=None) -> List:
     if not types:
-        types_dir = everest_dir / 'types'
-        types = list(types_dir.glob("**/*.json"))
+        types = []
+        for everest_dir in everest_dirs:
+            types_dir = everest_dir / 'types'
+            types += list(types_dir.glob("**/*.json"))
 
     types_with_namespace = []
     for type_path in types:
-        relative_path = type_path.relative_to(types_dir).with_suffix('')
+        relative_path = None
+        for everest_dir in everest_dirs:
+            types_dir = everest_dir / 'types'
+            try:
+                relative_path = type_path.relative_to(types_dir).with_suffix('')
+                break
+            except ValueError:
+                pass
         uppercase_path = []
         for part in relative_path.parts:
             uppercase_path.append(stringcase.capitalcase(part))
@@ -593,7 +606,7 @@ def list_types_with_namespace(types=None) -> List:
 
 def types_genhdr(args):
     print("Generating global type headers.")
-    output_dir = Path(args.output_dir).resolve() if args.output_dir else everest_dir / \
+    output_dir = Path(args.output_dir).resolve() if args.output_dir else work_dir / \
         'build/generated/generated/types'
 
     primary_update_strategy = 'force-update' if args.force else 'update'
@@ -617,15 +630,17 @@ def types_genhdr(args):
 
 
 def main():
-    global validators, everest_dir
+    global validators, everest_dirs, work_dir
 
     parser = argparse.ArgumentParser(description='Everest command line tool')
     parser.add_argument('--version', action='version', version=f'%(prog)s {__version__}')
 
     common_parser = argparse.ArgumentParser(add_help=False)
 
-    common_parser.add_argument("--everest-dir", "-ed", type=str,
-                               help='everest directory containing the interface definitions (default: .)', default=str(Path.cwd()))
+    common_parser.add_argument("--work-dir", "-wd", type=str,
+                               help='work directory containing the manifest definitions (default: .)', default=str(Path.cwd()))
+    common_parser.add_argument("--everest-dir", "-ed", nargs='*',
+                               help='everest directory containing the interface definitions (default: .)', default=[str(Path.cwd())])
     common_parser.add_argument("--schemas-dir", "-sd", type=str,
                                help='everest framework directory containing the schema definitions (default: ../everest-framework/schemas)',
                                default=str(Path.cwd() / '../everest-framework/schemas'))
@@ -701,18 +716,21 @@ def main():
 
     args = parser.parse_args()
 
-    everest_dir = Path(args.everest_dir).resolve()
-    helpers.everest_dir = everest_dir
-    if not (everest_dir / 'interfaces').exists():
-        print('The default (".") xor supplied (via --everest-dir) everest directory\n'
-              'doesn\'t contain an "interface" directory and therefore does not seem to be valid.\n'
-              f'dir: {everest_dir}')
-        exit(1)
-    if not (everest_dir / 'types').exists():
-        print('The default (".") xor supplied (via --everest-dir) everest directory\n'
-              'doesn\'t contain a "types" directory and therefore does not seem to be valid.\n'
-              f'dir: {everest_dir}')
-        exit(1)
+    for entry in args.everest_dir:
+        everest_dir = Path(entry).resolve()
+        if not (everest_dir / 'interfaces').exists():
+            print('The default (".") xor supplied (via --everest-dir) everest directory\n'
+                  'doesn\'t contain an "interface" directory and therefore does not seem to be valid.\n'
+                  f'dir: {everest_dir}')
+            exit(1)
+        if not (everest_dir / 'types').exists():
+            print('The default (".") xor supplied (via --everest-dir) everest directory\n'
+                  'doesn\'t contain a "types" directory and therefore does not seem to be valid.\n'
+                  f'dir: {everest_dir}')
+            exit(1)
+        everest_dirs.append(everest_dir)
+    work_dir = Path(args.work_dir).resolve()
+    helpers.everest_dirs = everest_dirs
 
     setup_jinja_env()
 
@@ -732,4 +750,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except helpers.EVerestParsingException as e:
+        raise SystemExit(e)

@@ -3,7 +3,7 @@
 #ifndef {{ info.hpp_guard }}
 #define {{ info.hpp_guard }}
 
-{{ print_template_info('2') }}
+{{ print_template_info('3') }}
 
 {% if 'type_headers' in info %}
 {% for type_header in info.type_headers %}
@@ -30,27 +30,28 @@ enum class {{ enum.enum_type}}
     {% endfor %}
 };
 
-static const std::map<{{ enum.enum_type }}, std::string> {{ enum.enum_type }}Strings {
-{% for e in enum.enum %}
-    {{'{'+ info.interface_name + '::' + enum.enum_type }}::{{ e }}, "{{e}}"},
-{% endfor %}
-};
-static const std::map<std::string, {{ enum.enum_type }}> {{ enum.enum_type }}Values {
-{% for e in enum.enum %}
-    {"{{e}}", {{ info.interface_name + '::' + enum.enum_type }}::{{ e + '}' }},
-{% endfor %}
-};
-
 /// \brief Converts the given {{ enum.enum_type }} \p e to human readable string
 /// \returns a string representation of the {{ enum.enum_type }}
 static const std::string {{ enum.enum_type | snake_case }}_to_string({{ enum.enum_type }} e) {
-    return {{ enum.enum_type }}Strings.at(e);
+    switch (e) {
+        {% for e in enum.enum %}
+        case {{ enum.enum_type }}::{{ e }}: return "{{e}}";
+        {% endfor %}
+    }
+
+    throw std::out_of_range("No known string conversion for provided enum of type {{ enum.enum_type }}");
 }
 
 /// \brief Converts the given std::string \p s to {{ enum.enum_type }}
 /// \returns a {{ enum.enum_type }} from a string representation
 static const {{ enum.enum_type }} string_to_{{ enum.enum_type | snake_case }}(std::string s) {
-    return {{ enum.enum_type }}Values.at(s);
+    {% for e in enum.enum %}
+    if(s == "{{e}}") {
+        return {{ enum.enum_type }}::{{ e }};
+    }
+    {% endfor %}
+
+    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type {{ enum.enum_type }}");
 }
 {% for namespace in info.namespace|reverse %}
 } // namespace {{namespace}}

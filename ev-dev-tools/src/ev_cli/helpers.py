@@ -26,7 +26,11 @@ from uuid import uuid4
 import stringcase
 
 
-everest_dir = None
+everest_dirs = []
+
+
+class EVerestParsingException(SystemExit):
+    pass
 
 
 def snake_case(word: str) -> str:
@@ -149,6 +153,21 @@ def clang_format(config_file_path, file_info):
     file_info['content'] = format_cmd.stdout
 
 
+def resolve_everest_dir_path(postfix):
+    resolved_path = None
+    for everest_dir in everest_dirs:
+        path = everest_dir / postfix
+        if path.exists():
+            resolved_path = path
+            break
+
+    if not resolved_path:
+        raise EVerestParsingException(
+            f'Could not resolve "{postfix}" in any of the provided everest-dir ({everest_dirs}).')
+
+    return resolved_path
+
+
 def build_type_info(name, json_type):
     ti = {
         'name': name,
@@ -205,9 +224,9 @@ def parse_ref(ref: str, prop_type, prop_info: Dict) -> Tuple[str, dict]:
     if ref not in TypeParser.all_types:
         TypeParser.all_types[ref] = TypeParser.parse_type_url(type_url=ref)
     type_dict = TypeParser.all_types[ref]
-    type_path = everest_dir / 'types' / type_dict['type_relative_path'] .with_suffix('.json')
-    if not type_path.exists():
-        raise Exception('$ref: ' + ref + f' referenced type file "{type_path} does not exist.')
+    type_path = resolve_everest_dir_path('types' / type_dict['type_relative_path'] .with_suffix('.json'))
+    if not type_path or not type_path.exists():
+        raise EVerestParsingException('$ref: ' + ref + f' referenced type file "{type_path} does not exist.')
     (td, _mod) = TypeParser.load_type_definition(type_path)
     if 'types' in td and type_dict['type_name'] in td['types']:
         local_type_info = td['types'][type_dict['type_name']]
@@ -245,6 +264,9 @@ def parse_property(prop_name: str, prop: Dict, depends_on: List[str], type_file:
     if '$ref' in prop:
         return parse_ref(prop['$ref'], prop_type, prop_info)
 
+    if 'type' not in prop:
+        raise EVerestParsingException(f'{prop_name} does not contain a type property')
+
     if prop['type'] == 'string':
         if 'enum' in prop and type_file:
             prop_type = stringcase.capitalcase(prop_name)
@@ -268,7 +290,7 @@ def parse_property(prop_name: str, prop: Dict, depends_on: List[str], type_file:
         if 'items' in prop:
             prop_type = 'std::vector<' + parse_property(prop_name, prop['items'], depends_on, type_file)[0] + '>'
         else:
-            prop_type = 'std::vector<Array>'
+            raise EVerestParsingException(f'Property items of array {prop_name} does not contain a type property')
     elif prop['type'] == 'object':
         prop_type = stringcase.capitalcase(prop_name)
         depends_on.append(prop_type)
@@ -287,7 +309,7 @@ def parse_object(ob_name: str, json_schema: Dict, type_file: bool):
     """
 
     ob_dict = {'name': ob_name, 'properties': [], 'depends_on': []}
-    parsed_types.append(ob_dict)
+    parsed_types.insert(0, ob_dict)
 
     if 'properties' not in json_schema:
         # object has no properties, probably not a complex object
@@ -295,10 +317,11 @@ def parse_object(ob_name: str, json_schema: Dict, type_file: bool):
             if json_schema['$ref'] not in TypeParser.all_types:
                 TypeParser.all_types[json_schema['$ref']] = TypeParser.parse_type_url(type_url=json_schema['$ref'])
             type_dict = TypeParser.all_types[json_schema['$ref']]
-            type_path = everest_dir / 'types' / type_dict['type_relative_path'] .with_suffix('.json')
-            if not type_path.exists():
-                raise Exception('$ref: ' + json_schema['$ref'] + f' referenced type file "{type_path} does not exist.')
-
+            type_path = resolve_everest_dir_path('types' / type_dict['type_relative_path'] .with_suffix('.json'))
+            if not type_path or not type_path.exists():
+                raise EVerestParsingException(
+                    '$ref: ' + json_schema['$ref'] + f' referenced type file "{type_path} does not exist.')
+            TypeParser.does_type_exist(type_url=json_schema['$ref'], json_type=json_schema['type'])
             prop_type = type_dict['namespaced_type']
             ob_dict['name'] = prop_type
             path = Path('generated/types') / \
@@ -347,9 +370,10 @@ def extended_build_type_info(name: str, info: dict, type_file=False) -> Tuple[di
             if info['$ref'] not in TypeParser.all_types:
                 TypeParser.all_types[info['$ref']] = TypeParser.parse_type_url(type_url=info['$ref'])
             type_dict = TypeParser.all_types[info['$ref']]
-            type_path = everest_dir / 'types' / type_dict['type_relative_path'] .with_suffix('.json')
-            if not type_path.exists():
-                raise Exception('$ref: ' + info['$ref'] + f' referenced type file "{type_path} does not exist.')
+            type_path = resolve_everest_dir_path('types' / type_dict['type_relative_path'] .with_suffix('.json'))
+            if not type_path or not type_path.exists():
+                raise EVerestParsingException('$ref: ' + info['$ref'] +
+                                              f' referenced type file "{type_path} does not exist.')
             (td, _mod) = TypeParser.load_type_definition(type_path)
             if 'types' in td and type_dict['type_name'] in td['types']:
                 local_type_info = td['types'][type_dict['type_name']]
@@ -366,21 +390,26 @@ def extended_build_type_info(name: str, info: dict, type_file=False) -> Tuple[di
                 type_dict['type_relative_path'].with_suffix('.hpp')
             type_headers.add(path.as_posix())
     elif type_info['json_type'] == 'object':
-        ob = parse_object(name, info, type_file)
-        if ob and 'name' in ob:
-            type_info['object_type'] = ob['name']
+        try:
+            ob = parse_object(name, info, type_file)
+            if ob and 'name' in ob:
+                type_info['object_type'] = ob['name']
+        except EVerestParsingException as e:
+            raise EVerestParsingException(f'Error parsing object {name}: {e}')
     elif type_info['json_type'] == 'array':
         if '$ref' in info['items']:
             if info['items']['$ref'] not in TypeParser.all_types:
                 TypeParser.all_types[info['items']['$ref']] = TypeParser.parse_type_url(type_url=info['items']['$ref'])
             type_dict = TypeParser.all_types[info['items']['$ref']]
-            type_path = everest_dir / 'types' / type_dict['type_relative_path'] .with_suffix('.json')
-            if not type_path.exists():
-                raise Exception('$ref: ' + info['items']['$ref'] + f' referenced type file "{type_path} does not exist.')
+            type_path = resolve_everest_dir_path('types' / type_dict['type_relative_path'] .with_suffix('.json'))
+            if not type_path or not type_path.exists():
+                raise EVerestParsingException(
+                    '$ref: ' + info['items']['$ref'] + f' referenced type file "{type_path} does not exist.')
             (td, _mod) = TypeParser.load_type_definition(type_path)
             if 'types' in td and type_dict['type_name'] in td['types']:
                 local_type_info = td['types'][type_dict['type_name']]
-
+                if 'enum' in local_type_info:
+                    type_info['array_type_contains_enum'] = True
                 type_info['array_type'] = type_dict['namespaced_type']
             path = Path('generated/types') / \
                 type_dict['type_relative_path'].with_suffix('.hpp')
