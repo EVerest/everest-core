@@ -22,7 +22,7 @@
         },
         "StopTransactionReason": {
             "description": "Reason for stopping transaction",
-            "documenation": [
+            "documentation": [
                 "Reason for stopping the transaction:",
                 "EmergencyStop: Emergency stop button was used",
                 "EVDisconnected: Disconnecting of cable, vehicle moved away from inductive charge unit.",
