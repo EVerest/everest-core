@@ -1,0 +1,111 @@
+description: Unit types
+types:
+  Current:
+    description: Current in Ampere
+    type: object
+    additionalProperties: false
+    required:
+      - L1
+    properties:
+      L1:
+        description: L1 value only
+        type: number
+      L2:
+        description: L2 value only
+        type: number
+      L3:
+        description: L3 value only
+        type: number
+      N:
+        description: Neutral value only
+        type: number
+  Voltage:
+    description: Voltage in Volt
+    type: object
+    additionalProperties: false
+    required:
+      - L1
+    properties:
+      L1:
+        description: L1 value only
+        type: number
+      L2:
+        description: L2 value only
+        type: number
+      L3:
+        description: L3 value only
+        type: number
+  Frequency:
+    description: Frequency in Hertz
+    type: object
+    additionalProperties: false
+    required:
+      - L1
+    properties:
+      L1:
+        description: L1 value
+        type: number
+      L2:
+        description: L2 value
+        type: number
+      L3:
+        description: L3 value
+        type: number
+  Power:
+    description: Instantaneous power in Watt. Negative values are exported, positive
+      values imported Energy.
+    type: object
+    additionalProperties: false
+    required:
+      - total
+    properties:
+      total:
+        description: Sum value
+        type: number
+      L1:
+        description: L1 value only
+        type: number
+      L2:
+        description: L2 value only
+        type: number
+      L3:
+        description: L3 value only
+        type: number
+  Energy:
+    description: Energy in Wh.
+    type: object
+    additionalProperties: false
+    required:
+      - total
+    properties:
+      total:
+        description: Sum value (which is relevant for billing)
+        type: number
+      L1:
+        description: L1 value only
+        type: number
+      L2:
+        description: L2 value only
+        type: number
+      L3:
+        description: L3 value only
+        type: number
+  ReactivePower:
+    description: Reactive power VAR
+    type: object
+    additionalProperties: false
+    required:
+      - total
+    properties:
+      total:
+        description: VAR total
+        type: number
+      VARphA:
+        description: VAR phase A
+        type: number
+      VARphB:
+        description: VAR phase B
+        type: number
+      VARphC:
+        description: VAR phase C
+        type: number

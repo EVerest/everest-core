@@ -40,7 +40,7 @@ public:
     PowermeterBSM() = delete;
     PowermeterBSM(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
                   std::unique_ptr<powermeterImplBase> p_main, std::unique_ptr<sunspec_ac_meterImplBase> p_ac_meter,
-                  std::unique_ptr<serial_communication_hubIntf> r_serial_com_0_connection, Conf& config) :
+                  std::vector<std::unique_ptr<serial_communication_hubIntf>> r_serial_com_0_connection, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_main(std::move(p_main)),
@@ -52,7 +52,7 @@ public:
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<powermeterImplBase> p_main;
     const std::unique_ptr<sunspec_ac_meterImplBase> p_ac_meter;
-    const std::unique_ptr<serial_communication_hubIntf> r_serial_com_0_connection;
+    const std::vector<std::unique_ptr<serial_communication_hubIntf>> r_serial_com_0_connection;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here

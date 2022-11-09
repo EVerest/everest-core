@@ -1,0 +1,10 @@
+description: Interface of authentication framework
+cmds:
+  set_connection_timeout:
+    description: Sets the connection timeout
+    arguments:
+      connection_timeout:
+        description: Connection timeout in seconds
+        type: integer
+        minimum: 10
+        maximum: 300

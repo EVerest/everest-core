@@ -22,7 +22,7 @@ function(generate_config_run_script)
         message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION} requires CONFIG parameter for the config name")
     endif()
 
-    set(CONFIG_FILE "${CMAKE_CURRENT_SOURCE_DIR}/config-${OPTNS_CONFIG}.json")
+    set(CONFIG_FILE "${CMAKE_CURRENT_SOURCE_DIR}/config-${OPTNS_CONFIG}.yaml")
     if (NOT EXISTS ${CONFIG_FILE})
         message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: config file '${CONFIG_FILE}' does not exist")
     endif()

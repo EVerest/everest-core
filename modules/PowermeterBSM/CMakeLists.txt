@@ -20,6 +20,8 @@ add_library(sunspec_framework_object_lib
 
 target_include_directories( sunspec_framework_object_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} )
 target_include_directories( sunspec_framework_object_lib PUBLIC ${CMAKE_BINARY_DIR}/generated/include )
+add_dependencies( sunspec_framework_object_lib generate_cpp_files )
+
 target_link_libraries( sunspec_framework_object_lib
     PUBLIC
     everest::modbus

@@ -11,8 +11,8 @@ SessionInfo::SessionInfo() : state("Unknown"), start_energy_wh(0), end_energy_wh
 }
 
 bool SessionInfo::is_state_charging(const std::string& current_state) {
-    if (current_state == "AuthRequired" || current_state == "Charging" ||
-        current_state == "ChargingPausedEV" || current_state == "ChargingPausedEVSE") {
+    if (current_state == "AuthRequired" || current_state == "Charging" || current_state == "ChargingPausedEV" ||
+        current_state == "ChargingPausedEVSE") {
         return true;
     }
     return false;
@@ -21,15 +21,17 @@ bool SessionInfo::is_state_charging(const std::string& current_state) {
 void SessionInfo::reset() {
     std::lock_guard<std::mutex> lock(this->session_info_mutex);
     this->state = "Unknown";
+    this->state_info = "";
     this->start_energy_wh = 0;
     this->end_energy_wh = 0;
     this->start_time_point = date::utc_clock::now();
     this->latest_total_w = 0;
 }
 
-void SessionInfo::update_state(const std::string& event) {
+void SessionInfo::update_state(const std::string& event, const std::string& state_info) {
     std::lock_guard<std::mutex> lock(this->session_info_mutex);
 
+    this->state_info = state_info;
     if (event == "Enabled") {
         this->state = "Unplugged";
     } else if (event == "Disabled") {
@@ -98,6 +100,7 @@ SessionInfo::operator std::string() {
         std::chrono::duration_cast<std::chrono::seconds>(this->end_time_point - this->start_time_point);
 
     json session_info = json::object({{"state", this->state},
+                                      {"state_info", this->state_info},
                                       {"charged_energy_wh", charged_energy_wh},
                                       {"latest_total_w", this->latest_total_w},
                                       {"charging_duration_s", charging_duration_s.count()},
@@ -108,17 +111,25 @@ SessionInfo::operator std::string() {
 
 void API::init() {
     invoke_init(*p_main);
-
     std::string api_base = "everest_api/";
 
     int32_t count = 0;
     for (auto& evse : this->r_evse_manager) {
         this->info.push_back(std::make_unique<SessionInfo>());
         auto& session_info = this->info.back();
+        this->hw_capabilities_json.push_back(json{});
+        auto& hw_caps = this->hw_capabilities_json.back();
         std::string evse_base = api_base + evse->module_id;
 
         // API variables
         std::string var_base = evse_base + "/var/";
+
+        std::string var_hw_caps = var_base + "hardware_capabilities";
+        evse->subscribe_hw_capabilities(
+            [this, var_hw_caps, &hw_caps](types::board_support::HardwareCapabilities hw_capabilities) {
+                hw_caps = hw_capabilities;
+                this->mqtt.publish(var_hw_caps, hw_caps.dump());
+            });
 
         std::string var_powermeter = var_base + "powermeter";
         evse->subscribe_powermeter([this, var_powermeter, &session_info](types::powermeter::Powermeter powermeter) {
@@ -142,34 +153,40 @@ void API::init() {
 
         std::string var_datetime = var_base + "datetime";
         std::string var_session_info = var_base + "session_info";
-        this->datetime_thread = std::thread([this, var_datetime, var_session_info, &session_info]() {
-            auto next_tick = std::chrono::steady_clock::now();
-            while (this->running) {
-                std::string datetime_str = Everest::Date::to_rfc3339(date::utc_clock::now());
-                this->mqtt.publish(var_datetime, datetime_str);
-                this->mqtt.publish(var_session_info, *session_info);
+        this->datetime_threads.push_back(
+            std::thread([this, var_datetime, var_session_info, var_hw_caps, &session_info, &hw_caps]() {
+                auto next_tick = std::chrono::steady_clock::now();
+                while (this->running) {
+                    std::string datetime_str = Everest::Date::to_rfc3339(date::utc_clock::now());
+                    this->mqtt.publish(var_datetime, datetime_str);
+                    this->mqtt.publish(var_session_info, *session_info);
+                    this->mqtt.publish(var_hw_caps, hw_caps.dump());
 
-                next_tick += std::chrono::seconds(1);
-                std::this_thread::sleep_until(next_tick);
+                    next_tick += std::chrono::seconds(1);
+                    std::this_thread::sleep_until(next_tick);
+                }
+            }));
+
+        evse->subscribe_session_event([this, var_session_info,
+                                       &session_info](types::evse_manager::SessionEvent session_event) {
+            auto event = types::evse_manager::session_event_enum_to_string(session_event.event);
+            if (session_event.error) {
+                session_info->update_state(event, types::evse_manager::error_to_string(session_event.error.value()));
+            } else {
+                session_info->update_state(event, "");
+            }
+            if (event == "TransactionStarted") {
+                auto session_started = session_event.transaction_started.value();
+                auto energy_Wh_import = session_started.energy_Wh_import;
+                session_info->set_start_energy_wh(energy_Wh_import);
+            } else if (event == "TransactionFinished") {
+                auto session_finished = session_event.transaction_finished.value();
+                auto energy_Wh_import = session_finished.energy_Wh_import;
+                session_info->set_end_energy_wh(energy_Wh_import);
+
+                this->mqtt.publish(var_session_info, *session_info);
             }
         });
-
-        evse->subscribe_session_event(
-            [this, var_session_info, &session_info](types::evse_manager::SessionEvent session_event) {
-                auto event = types::evse_manager::session_event_enum_to_string(session_event.event);
-                session_info->update_state(event);
-                if (event == "TransactionStarted") {
-                    auto session_started = session_event.transaction_started.value();
-                    auto energy_Wh_import = session_started.energy_Wh_import;
-                    session_info->set_start_energy_wh(energy_Wh_import);
-                } else if (event == "TransactionFinished") {
-                    auto session_finished = session_event.transaction_finished.value();
-                    auto energy_Wh_import = session_finished.energy_Wh_import;
-                    session_info->set_end_energy_wh(energy_Wh_import);
-                }
-
-                this->mqtt.publish(var_session_info, *session_info);
-            });
 
         // API commands
         std::string cmd_base = evse_base + "/cmd/";

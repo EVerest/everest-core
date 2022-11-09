@@ -90,7 +90,15 @@ void OCPP::init() {
                                                             this->config.UserConfigPath);
 
     const boost::filesystem::path sql_init_path = boost::filesystem::path(this->config.OcppMainPath) / "init.sql";
-    this->charge_point = new ocpp1_6::ChargePoint(configuration, this->config.DatabasePath, sql_init_path.string());
+    if (!std::filesystem::exists(this->config.MessageLogPath)) {
+        try {
+            std::filesystem::create_directory(this->config.MessageLogPath);
+        } catch (std::filesystem::filesystem_error const& e) {
+            EVLOG_AND_THROW(e);
+        }
+    }
+    this->charge_point = new ocpp1_6::ChargePoint(configuration, this->config.DatabasePath, sql_init_path.string(),
+                                                  this->config.MessageLogPath);
     // TODO(kai): select appropriate EVSE based on connector
     this->charge_point->register_pause_charging_callback([this](int32_t connector) {
         if (connector > 0 && connector <= this->r_evse_manager.size()) {

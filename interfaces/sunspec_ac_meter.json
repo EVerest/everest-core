@@ -1,5 +1,5 @@
 {
-    "description": "get sunspec ac meter measurement",
+    "description": "Get sunspec ac meter measurement",
     "cmds": {
         "get_sunspec_ac_meter_value" : {
             "description": "Returns a sunspec ac meter model",
@@ -12,7 +12,7 @@
                 }
             },
             "result": {
-                "description": "sunspec ac meter model",
+                "description": "Sunspec ac meter model",
                 "type": "object",
                 "$ref": "/sunspec_ac_meter#/Result"
             }

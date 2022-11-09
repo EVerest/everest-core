@@ -211,7 +211,7 @@ private:
 
     void populate_ip_addresses(std::vector<NetworkDeviceInfo>& device_info);
     std::vector<WifiInfo> scan_wifi(const std::vector<NetworkDeviceInfo>& device_info);
-    CmdOutput run_application(boost::filesystem::path path, std::vector<std::string> args);
+    CmdOutput run_application(const std::string& name, std::vector<std::string> args);
     std::vector<std::string> parse_wpa_cli_flags(std::string flags);
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };

@@ -1,0 +1,696 @@
+description: This interface defines a ISO15118 charger.
+cmds:
+  set_EVSEID:
+    description: >-
+      One Time Setup at Boot - Set an ID that uniquely identifies the EVSE
+      and the power outlet the vehicle is connected to
+    arguments:
+      EVSEID:
+        description: EVSE ID
+        type: string
+  set_PaymentOptions:
+    description: >-
+      One Time Setup at Boot - Providing a list of payment options to
+      the EVCC
+    arguments:
+      PaymentOptions:
+        description: An array of payment options
+        type: array
+        items:
+          description: These are the payment options an SECC offers to the EVCC
+          type: string
+          enum:
+            - Contract
+            - ExternalPayment
+        minItems: 1
+        maxItems: 2
+  set_SupportedEnergyTransferMode:
+    description: >-
+      One Time Setup at Boot - Available energy transfer modes supported
+      by the EVSE
+    arguments:
+      SupportedEnergyTransferMode:
+        description: An array of supported engery modes
+        type: array
+        items:
+          description: The single modes
+          type: string
+          enum:
+            - AC_single_phase_core
+            - AC_three_phase_core
+            - DC_core
+            - DC_extended
+            - DC_combo_core
+            - DC_unique
+        minItems: 1
+        maxItems: 6
+  set_AC_EVSENominalVoltage:
+    description: >-
+      One Time Setup at Boot - Set Line voltage supported by the EVSE.
+      This is the voltage measured between one phases and neutral
+    arguments:
+      EVSENominalVoltage:
+        description: '[V] Nominal Voltage'
+        type: number
+        minimum: 0
+        maximum: 1000
+  set_DC_EVSECurrentRegulationTolerance:
+    description: >-
+      One Time Setup at Boot (Optional) - Set the absolute magnitude of
+      the regulation tolerance of the EVSA
+    arguments:
+      EVSECurrentRegulationTolerance:
+        description: Set EVSECurrentRegulationTolerance [A]
+        type: number
+        minimum: 0
+        maximum: 400
+  set_DC_EVSEPeakCurrentRipple:
+    description: >-
+      One Time Setup at Boot - Set the peak-to-peak magnitude of the current
+      ripple of the EVSE
+    arguments:
+      EVSEPeakCurrentRipple:
+        description: Set EVSEPeakCurrentRipple [A]
+        type: number
+        minimum: 0
+        maximum: 400
+  set_ReceiptRequired:
+    description: >-
+      One Time Setup at Boot (Optional) - This element is used by the SECC
+      to indicate that the EVCC is required to send a MeteringReceiptReq message for
+      the purpose of signing the meter info record
+    arguments:
+      ReceiptRequired:
+        description: 'True: Receipt is required, False: Receipt is not required'
+        type: boolean
+  set_FreeService:
+    description: >-
+      On Session Setup - Set FreeService so the EVCC can use the service
+      free of charge or not
+    arguments:
+      FreeService:
+        description: 'True: Charging is free, False: Charging is not free'
+        type: boolean
+  set_EVSEEnergyToBeDelivered:
+    description: >-
+      On Session Setup (Optional) - Set the Amount of energy to be delivered
+      by the EVSE
+    arguments:
+      EVSEEnergyToBeDelivered:
+        description: Set EVSEEnergyToBeDelivered [Wh]
+        type: number
+        minimum: 0
+        maximum: 200000
+  enable_debug_mode:
+    description: 'On Session Setup - Set different modes for the debug mode.'
+    arguments:
+      debug_mode:
+        description: The various debug modes
+        type: string
+        enum:
+          - None
+          - Lite
+          - Full
+  set_Auth_Okay_EIM:
+    description: >-
+      Response on Require_Auth_EIM - Set this element if the authorization
+      was either successful or unsuccessful
+    arguments:
+      auth_okay_eim:
+        description: 'True: Authentication is okay'
+        type: boolean
+  set_Auth_Okay_PnC:
+    description: >-
+      Response on Require_Auth_PnC - Set this element if the authorization
+      was either successful or unsuccessful
+    arguments:
+      auth_okay_pnc:
+        description: 'True: Authentication is okay'
+        type: boolean
+  set_FAILED_ContactorError:
+    description: >-
+      Any Time - Set this error when the contactor is opened or closed
+      at the wrong moment
+    arguments:
+      ContactorError:
+        description: 'True: ContactError happend'
+        type: boolean
+  set_RCD_Error:
+    description: >-
+      Any Time - Indicates the current status of the Residual Current Device
+      (RCD)
+    arguments:
+      RCD:
+        description: >-
+          If RCD is equal to true, the RCD has detected an error. If RCD
+          is equal to false, the RCD has not detected an error
+        type: boolean
+  stop_charging:
+    description: During charging - Stops the charging process
+    arguments:
+      stop_charging:
+        description: 'True: Stop, False: Continue'
+        type: boolean
+  set_DC_EVSEPresentVoltage:
+    description: >-
+      Starting from PowerDelivery to WeldingDetection - Set the present
+      voltage for the EVSE
+    arguments:
+      EVSEPresentVoltage:
+        description: '[V] Output voltage of the EVSE as defined in IEC CDV 61851-23'
+        type: number
+        minumum: 0
+        maximum: 1000
+  set_DC_EVSEPresentCurrent:
+    description: During charging - Set the present current for the EVSE
+    arguments:
+      EVSEPresentCurrent:
+        description: '[A] Present output current of the EVSE'
+        type: number
+        minumum: 0
+        maximum: 400
+  set_AC_EVSEMaxCurrent:
+    description: >-
+      ChargeParameterDiscovery and during charging - Set the Maximum allowed
+      line current restriction per phase
+    arguments:
+      EVSEMaxCurrent:
+        description: '[A] Max current'
+        type: number
+        minimum: 0
+        maximum: 400
+  set_DC_EVSEMaximumCurrentLimit:
+    description: >-
+      ChargeParameterDiscovery and during charging - Set the maximum current
+      for the EVSE
+    arguments:
+      EVSEMaximumCurrentLimit:
+        description: '[A] Maximum current the EVSE can deliver'
+        type: number
+        minimum: 0
+        maximum: 400
+  set_DC_EVSEMaximumPowerLimit:
+    description: >-
+      ChargeParameterDiscovery and during charging - Set the maximum power
+      for the EVSE
+    arguments:
+      EVSEMaximumPowerLimit:
+        description: '[W] Maximum power the EVSE can deliver'
+        type: number
+        minimum: 0
+        maximum: 200000
+  set_DC_EVSEMaximumVoltageLimit:
+    description: >-
+      ChargeParameterDiscovery and during charging - Set the maximum voltage
+      for the EVSE
+    arguments:
+      EVSEMaximumVoltageLimit:
+        description: '[V] Maximum voltage the EVSE can deliver'
+        type: number
+        minimum: 0
+        maximum: 1000
+  set_DC_EVSEMinimumCurrentLimit:
+    description: ChargeParameterDiscovery - Set the minimum current for the EVSE
+    arguments:
+      EVSEMinimumCurrentLimit:
+        description: '[A] Minimum current the EVSE can deliver with the expected accuracy'
+        type: number
+        minimum: 0
+        maximum: 400
+  set_DC_EVSEMinimumVoltageLimit:
+    description: ChargeParameterDiscovery - Set the minimum voltage for the EVSE
+    arguments:
+      EVSEMinimumVoltageLimit:
+        description: '[V] Minimum voltage the EVSE can deliver with the expected accuracy'
+        type: number
+        minimum: 0
+        maximum: 1000
+  set_EVSEIsolationStatus:
+    description: >-
+      From ChargeParameterDiscovery to WeldingDetection (Optional) - Set
+      the isolation condition (result of the isolation monitoring)
+    arguments:
+      EVSEIsolationStatus:
+        description: Set the isolation status
+        type: string
+        enum:
+          - Invalid
+          - Valid
+          - Warning
+          - Fault
+          - No_IMD
+  set_EVSE_UtilityInterruptEvent:
+    description: >-
+      From ChargeParameterDiscovery to WeldingDetection - Utility Interrupt
+      Event, Utility or Equipment operator has requested a temporary reduction in
+      load
+    arguments:
+      EVSE_UtilityInterruptEvent:
+        description: 'True: Interrupt Event happend'
+        type: boolean
+  set_EVSE_Malfunction:
+    description: >-
+      Any Time - A non-recoverable charger fault has occurred (Isolation
+      Failure, ...). It is permanently faulted
+    arguments:
+      EVSE_Malfunction:
+        description: 'True: Malfunction fault'
+        type: boolean
+  set_EVSE_EmergencyShutdown:
+    description: >-
+      Any Time - Charging System Incompatibility, Emergency Shutdown or
+      'E-Stop' button pressed at charging station
+    arguments:
+      EVSE_EmergencyShutdown:
+        description: 'True: Emergency Stop'
+        type: boolean
+  set_MeterInfo:
+    description: >-
+      During charging (Optional) - Includes the meterInfo record containing
+      the latest meter reading and other meter relevant data
+    arguments:
+      powermeter:
+        description: Measured dataset
+        type: object
+        required:
+          - timestamp
+        properties:
+          timestamp:
+            description: Timestamp of measurement
+            type: number
+          meter_id:
+            description: A (user defined) meter if (e.g. id printed on the case)
+            type: string
+          phase_seq_error:
+            description: true for 3 phase rotation error (ccw)
+            type: boolean
+          energy_Wh_import:
+            description: Imported energy in Wh (from grid)
+            type: object
+            required:
+              - total
+            properties:
+              total:
+                description: Sum value (which is relevant for billing)
+                type: number
+              L1:
+                description: L1 value only
+                type: number
+              L2:
+                description: L2 value only
+                type: number
+              L3:
+                description: L3 value only
+                type: number
+            additionalProperties: false
+          energy_Wh_export:
+            description: Exported energy in Wh (to grid)
+            type: object
+            required:
+              - total
+            properties:
+              total:
+                description: Sum value (which is relevant for billing)
+                type: number
+              L1:
+                description: L1 value only
+                type: number
+              L2:
+                description: L2 value only
+                type: number
+              L3:
+                description: L3 value only
+                type: number
+            additionalProperties: false
+          power_W:
+            description: >-
+              Instantaneous power in Watt. Negative values are exported,
+              positive values imported Energy.
+            type: object
+            required:
+              - total
+            properties:
+              total:
+                description: Sum value
+                type: number
+              L1:
+                description: L1 value only
+                type: number
+              L2:
+                description: L2 value only
+                type: number
+              L3:
+                description: L3 value only
+                type: number
+            additionalProperties: false
+          voltage_V:
+            description: Voltage in Volts
+            type: object
+            required:
+              - L1
+            properties:
+              L1:
+                description: L1 value only
+                type: number
+              L2:
+                description: L2 value only
+                type: number
+              L3:
+                description: L3 value only
+                type: number
+            additionalProperties: false
+          current_A:
+            description: Current in ampere
+            type: object
+            required:
+              - L1
+            properties:
+              L1:
+                description: L1 value only
+                type: number
+              L2:
+                description: L2 value only
+                type: number
+              L3:
+                description: L3 value only
+                type: number
+              N:
+                description: Neutral value only
+                type: number
+            additionalProperties: false
+          frequency_Hz:
+            description: Grid frequency in Hertz
+            type: object
+            required:
+              - L1
+            properties:
+              L1:
+                description: L1 value
+                type: number
+              L2:
+                description: L2 value
+                type: number
+              L3:
+                description: L3 value
+                type: number
+            additionalProperties: false
+        additionalProperties: false
+  contactor_closed:
+    description: >-
+      Response on AC_Close_Contactor - Set this element if the contactor
+      is closed
+    arguments:
+      status:
+        description: 'True: Contactor is closed'
+        type: boolean
+  contactor_open:
+    description: >-
+      Response on AC_Open_Contactor - Set this element if the contactor
+      is open
+    arguments:
+      status:
+        description: 'True: Contactor is open'
+        type: boolean
+vars:
+  Require_Auth_EIM:
+    description: An EIM authorization is requiered
+    type: 'null'
+  Require_Auth_PnC:
+    description: An PnC authorization is requiered
+    type: 'null'
+  Require_EVSEIsolationCheck:
+    description: An insulation check of the DC cable of the EVSE is necessary
+    type: 'null'
+  AC_Close_Contactor:
+    description: If true, the contactor should be closed
+    type: boolean
+  AC_Open_Contactor:
+    description: If true, the contactor should be opened
+    type: boolean
+  V2G_Setup_Finished:
+    description: >-
+      V2G_Setup_Finished from ISO15118-3. Trigger when EV sends a PowerDeliveryReq
+      message with ChargeProgess equals Start or Stop
+    type: 'null'
+  EVCCIDD:
+    description: >-
+      Specifies the EVs identification in a readable format. It contains
+      the MAC address of the EVCC
+    type: string
+    pattern: ^[A-Fa-f0-9]{2}(:[A-Fa-f0-9]{2}){5}$
+  SelectedPaymentOption:
+    description: This element is used for indicating the payment type
+    type: string
+    enum:
+      - Contract
+      - ExternalPayment
+  RequestedEnergyTransferMode:
+    description: >-
+      Selected energy transfer mode for charging that is requested by the
+      EVCC.
+    type: string
+    enum:
+      - AC_single_phase_core
+      - AC_three_phase_core
+      - DC_core
+      - DC_extended
+      - DC_combo_core
+      - DC_unique
+  DepartureTime:
+    description: >-
+      Optional: [RFC3339 UTC] This element is used to indicate when the
+      vehicle intends to finish the charging process
+    type: string
+    format: date-time
+  AC_EAmount:
+    description: >-
+      [Wh] Amount of energy reflecting the EV's estimate how much energy
+      is needed to fulfill the user configured charging goal for the current charging
+      session
+    type: number
+    minimum: 0
+    maximum: 200000
+  AC_EVMaxVoltage:
+    description: >-
+      [V] The RMS of the maximal nominal voltage the vehicle can accept,
+      measured between one phase and neutral
+    type: number
+    minimum: 0
+    maximum: 1000
+  AC_EVMaxCurrent:
+    description: '[A] Maximum current supported by the EV per phase'
+    type: number
+    minimum: 0
+    maximum: 400
+  AC_EVMinCurrent:
+    description: >-
+      [A] EVMinCurrent is used to indicate to the SECC that charging below
+      this minimum is not energy/cost efficient for the EV
+    type: number
+    minimum: 0
+    maximum: 400
+  DC_EVEnergyCapacity:
+    description: 'Optional: [Wh] Energy capacity of the EV'
+    type: number
+    minimum: 0
+    maximum: 200000
+  DC_EVEnergyRequest:
+    description: 'Optional: [Wh] Amount of energy the EV requests from the EVSE'
+    type: number
+    minimum: 0
+    maximum: 200000
+  DC_FullSOC:
+    description: >-
+      Optional: [%] SOC at which the EV considers the battery to be fully
+      charged
+    type: number
+    minimum: 0
+    maximum: 100
+  DC_BulkSOC:
+    description: >-
+      Optional: [%] SOC at which the EV considers a fast charge process
+      to end
+    type: number
+    minimum: 0
+    maximum: 100
+  DC_EVReady:
+    description: If set to TRUE, the EV is ready to charge
+    type: boolean
+  DC_EVErrorCode:
+    description: Indicates the EV internal status
+    type: string
+    enum:
+      - NO_ERROR
+      - FAILED_RESSTemperatureInhibit
+      - FAILED_EVShiftPosition
+      - FAILED_ChargerConnectorLockFault
+      - FAILED_EVRESSMalfunction
+      - FAILED_ChargingCurrentdifferentia
+      - FAILED_ChargingVoltageOutOfRange
+      - Reserved_A
+      - Reserved_B
+      - Reserved_C
+      - FAILED_ChargingSystemIncompatibility
+      - NoData
+  DC_EVRESSSOC:
+    description: State of charge of the EVs battery (RESS)
+    type: number
+    minimum: 0
+    maximum: 100
+  EV_ChargingSession:
+    description: >-
+      ChargingSession indicates the intention of the EVCC to either pause
+      or terminate a V2G Communication Session
+    type: string
+    enum:
+      - Terminate
+      - Pause
+  DC_BulkChargingComplete:
+    description: >-
+      Optional: If set to TRUE, the EV indicates that bulk charge (approx.
+      80% SOC) is complete
+    type: boolean
+  DC_ChargingComplete:
+    description: >-
+      Optional: If set to TRUE, the EV indicates that full charge (100%
+      SOC) is complete
+    type: boolean
+  DC_EVTargetVoltage:
+    description: '[V] Target Voltage requested by EV'
+    type: number
+    minimum: 0
+    maximum: 1000
+  DC_EVTargetCurrent:
+    description: '[A] Current demanded by EV'
+    type: number
+    minimum: 0
+    maximum: 400
+  DC_EVMaximumCurrentLimit:
+    description: '[A] Maximum current supported and allowed by the EV'
+    type: number
+    minimum: 0
+    maximum: 400
+  DC_EVMaximumPowerLimit:
+    description: 'Optional: [W] Maximum power supported and allowed by the EV'
+    type: number
+    minimum: 0
+    maximum: 200000
+  DC_EVMaximumVoltageLimit:
+    description: '[V] Maximum voltage supported and allowed by the EV'
+    type: number
+    minimum: 0
+    maximum: 1000
+  EV_RemainingTimeToFullSoC:
+    description: >-
+      [RFC3339 UTC] Estimated or calculated time until full charge (100%
+      SOC) is complete
+    type: string
+    format: date-time
+  EV_RemainingTimeToBulkSoC:
+    description: >-
+      [RFC3339 UTC] Estimated or calculated time until bulk charge (approx.
+      80% SOC) is complete
+    type: string
+    format: date-time
+  EV_AppProtocol:
+    description: >-
+      Debug_Lite - This request message provides a list of charging protocols
+      supported by the EVCC
+    type: array
+    items:
+      description: >-
+        This message element is used by the EVCC for transmitting the list
+        of supported protocols
+      type: object
+      properties:
+        ProtocolNamespace:
+          description: >-
+            This message element is used by the EVCC to uniquely identify
+            the Namespace URI of a specific protocol supported by the EVCC
+          type: string
+          minLength: 1
+          maxLength: 100
+        VersionNumberMajor:
+          description: >-
+            This message element is used by the EVCC to indicate the major
+            version number of the protocol
+          type: integer
+          minimum: 0
+        VersionNumberMinor:
+          description: >-
+            This message element is used by the EVCC to indicate the minor
+            version number of the protocol
+          type: integer
+          minimum: 0
+        SchemaID:
+          description: >-
+            This message element is used by the EVCC to indicate the SchemaID
+            assigned by the EVCC to the protocol
+          type: integer
+          minimum: 0
+          maximum: 255
+        Priority:
+          description: >-
+            This message element is used by the EVCC for indicating the
+            protocol priority of a specific protocol allowing the SECC to select a
+            protocol based on priorities
+          type: integer
+          minimum: 1
+          maximum: 20
+      additionalProperties: false
+    minItems: 1
+    maxItems: 20
+  V2G_Messages:
+    description: >-
+      Debug - This element contains all V2G elements and should be used
+      for debug purposes only
+    type: object
+    properties:
+      V2G_Message_ID:
+        description: This element contains the id of the v2g message body
+        type: string
+        enum:
+          - SupportedAppProtocolReq
+          - SupportedAppProtocolRes
+          - SessionSetupReq
+          - SessionSetupRes
+          - ServiceDiscoveryReq
+          - ServiceDiscoveryRes
+          - ServiceDetailReq
+          - ServiceDetailRes
+          - PaymentServiceSelectionReq
+          - PaymentServiceSelectionRes
+          - AuthorizationReq
+          - AuthorizationRes
+          - ChargeParameterDiscoveryReq
+          - ChargeParameterDiscoveryRes
+          - ChargingStatusReq
+          - ChargingStatusRes
+          - PowerDeliveryReq
+          - PowerDeliveryRes
+          - CableCheckReq
+          - CableCheckRes
+          - PreChargeReq
+          - PreChargeRes
+          - CurrentDemandReq
+          - CurrentDemandRes
+          - WeldingDetectionReq
+          - WeldingDetectionRes
+          - SessionStopReq
+          - SessionStopRes
+      V2G_Message_XML:
+        description: Contains the decoded EXI stream as V2G message XML file
+        type: string
+        minLength: 0
+      V2G_Message_JSON:
+        description: Contains the decoded EXI stream as V2G message JSON file
+        type: string
+        minLength: 0
+      V2G_Message_EXI_Hex:
+        description: Contains the EXI stream as hex string
+        type: string
+        minLength: 0
+      V2G_Message_EXI_Base64:
+        description: Contains the EXI stream as base64 string
+        type: string
+        minLength: 0

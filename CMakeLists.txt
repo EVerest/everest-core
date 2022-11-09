@@ -22,10 +22,10 @@ if (NOT everest-cmake_FOUND)
     FetchContent_MakeAvailable(everest-cmake)
     set(everest-cmake_DIR "${everest-cmake_SOURCE_DIR}")
     set(everest-cmake_FIND_COMPONENTS "bundling")
-    include("${everest-cmake_SOURCE_DIR}/everest-cmake-coes/Powermetefig.cmake")
+    include("${everest-cmake_SOURCE_DIR}/everest-cmake-config.cmake")
 endif()
 
-# make own cmake modules availables/Powermetee
+# make own cmake modules available
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(ev-cli)
 include(config-run-script)
@@ -40,7 +40,7 @@ option(BUILD_TESTING "Run unit tests" OFF)
 option(BUILD_DEV_TESTS "Build dev tests" OFF)
 
 # dependencies
-require_ev_cli_version("0.0.14")
+require_ev_cli_version("0.0.16")
 
 find_package(Boost
     COMPONENTS
@@ -102,12 +102,12 @@ endif()
 install(
     DIRECTORY "types" 
     DESTINATION "${CMAKE_INSTALL_DATADIR}/everest"
-    FILES_MATCHING PATTERN "*.json"
+    FILES_MATCHING PATTERN "*.yaml"
 )
 install(
     DIRECTORY "interfaces"
     DESTINATION "${CMAKE_INSTALL_DATADIR}/everest"
-    FILES_MATCHING PATTERN "*.json"
+    FILES_MATCHING PATTERN "*.yaml"
 )
 
 # install docker related files

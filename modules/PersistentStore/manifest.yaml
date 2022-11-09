@@ -1,0 +1,14 @@
+description: Simple implementation of a SQLite backed persistent key-value store
+config:
+  sqlite_db_file_path:
+    description: Path to the SQLite db file.
+    type: string
+    default: everest_persistent_store.db
+provides:
+  main:
+    interface: kvs
+    description: This implements a persistent key-value store
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Kai-Uwe Hermann

@@ -41,7 +41,8 @@ std::string powermeterImpl::handle_get_signed_meter_value(std::string& auth_toke
 
         transport::AbstractDataTransport::Spt transport = mod->get_data_transport();
 
-        transport->trigger_snapshot_generation_BSM_OCMF();
+        if ( not transport->trigger_snapshot_generation_BSM_OCMF() )
+            EVLOG_debug << __PRETTY_FUNCTION__ << " trigger for OCMF signed snapshot failed! " << std::endl;
 
         transport::DataVector data = transport->fetch(known_model::BSM_OCMF_CurrentSnapshot);
 

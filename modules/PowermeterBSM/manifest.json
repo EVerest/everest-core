@@ -59,7 +59,7 @@
 	"requires": {
 		"serial_com_0_connection": {
 			"interface": "serial_communication_hub",
-			"min_connections": 1,
+			"min_connections": 0,
 			"max_connections": 1
 		}
 	},

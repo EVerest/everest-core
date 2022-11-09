@@ -3,14 +3,39 @@
 
 #include "systemImpl.hpp"
 
+#include <cstdlib>
+#include <fstream>
+#include <vector>
+
+#include <unistd.h>
+
 #include <utils/date.hpp>
 
-#include <fstream>
-#include <boost/filesystem.hpp>
 #include <boost/process.hpp>
 
 namespace module {
 namespace main {
+
+namespace fs = std::filesystem;
+
+// FIXME (aw): this function needs to be refactored into some kind of utility library
+fs::path create_temp_file(const fs::path& dir, const std::string& prefix) {
+    const std::string fn_template = (dir / prefix).string() + "XXXXXX" + std::string(1, '\0');
+    std::vector<char> fn_template_buffer{fn_template.begin(), fn_template.end()};
+
+    // mkstemp needs to have at least 6 XXXXXX at the end and it will replace these
+    // with a valid file name
+    auto fd = mkstemp(fn_template_buffer.data());
+
+    if (fd == -1) {
+        EVLOG_AND_THROW(Everest::EverestBaseRuntimeError("Failed to create temporary file at: " + fn_template));
+    }
+
+    // close the file descriptor
+    close(fd);
+
+    return fn_template_buffer.data();
+}
 
 void systemImpl::init() {
     this->log_upload_running = false;
@@ -28,14 +53,12 @@ void systemImpl::standard_firmware_update(const types::system::FirmwareUpdateReq
     EVLOG_info << "Starting firmware update";
     // create temporary file
     const auto date_time = Everest::Date::to_rfc3339(date::utc_clock::now());
-    const auto file_name = "firmware-" + date_time + "-%%%%-%%%%-%%%%-%%%%";
 
-    const auto firmware_file_name = boost::filesystem::unique_path(boost::filesystem::path(file_name));
-    const auto firmware_file_path = boost::filesystem::temp_directory_path() / firmware_file_name;
-    const auto constants = boost::filesystem::path("libexec/everest/modules/System/constants.env");
+    const auto firmware_file_path = create_temp_file(fs::temp_directory_path(), "firmware-" + date_time);
+    const auto constants = fs::path("libexec/everest/modules/System/constants.env");
 
     this->update_firmware_thread = std::thread([this, firmware_update_request, firmware_file_path, constants]() {
-        const auto firmware_updater = boost::filesystem::path("libexec/everest/modules/System/firmware_updater.sh");
+        const auto firmware_updater = "libexec/everest/modules/System/firmware_updater.sh";
 
         const std::vector<std::string> args = {constants.string(), firmware_update_request.location,
                                                firmware_file_path.string()};
@@ -149,14 +172,10 @@ void systemImpl::download_signed_firmware(const types::system::FirmwareUpdateReq
 
     // // create temporary file
     const auto date_time = Everest::Date::to_rfc3339(date::utc_clock::now());
-    const std::string file_name = "signed_firmware-" + date_time + "-%%%%-%%%%-%%%%-%%%%" + ".pnx";
+    const auto firmware_file_path = create_temp_file(fs::temp_directory_path(), "signed_firmware-" + date_time);
 
-    const auto firmware_file_name = boost::filesystem::unique_path(boost::filesystem::path(file_name));
-    const auto firmware_file_path = boost::filesystem::temp_directory_path() / firmware_file_name;
-
-    const auto firmware_downloader =
-        boost::filesystem::path("libexec/everest/modules/System/signed_firmware_downloader.sh");
-    const auto constants = boost::filesystem::path("libexec/everest/modules/System/constants.env");
+    const auto firmware_downloader = "libexec/everest/modules/System/signed_firmware_downloader.sh";
+    const auto constants = fs::path("libexec/everest/modules/System/constants.env");
 
     const std::vector<std::string> download_args = {
         constants.string(), firmware_update_request.location, firmware_file_path.string(),
@@ -202,7 +221,7 @@ void systemImpl::download_signed_firmware(const types::system::FirmwareUpdateReq
 }
 
 void systemImpl::initialize_firmware_installation(const types::system::FirmwareUpdateRequest& firmware_update_request,
-                                                  const boost::filesystem::path& firmware_file_path) {
+                                                  const fs::path& firmware_file_path) {
     if (firmware_update_request.install_timestamp.has_value() &&
         Everest::Date::from_rfc3339(firmware_update_request.install_timestamp.value()) > date::utc_clock::now()) {
         const auto install_timestamp = Everest::Date::from_rfc3339(firmware_update_request.retrieve_timestamp.value());
@@ -226,7 +245,7 @@ void systemImpl::initialize_firmware_installation(const types::system::FirmwareU
 }
 
 void systemImpl::install_signed_firmware(const types::system::FirmwareUpdateRequest& firmware_update_request,
-                                         const boost::filesystem::path& firmware_file_path) {
+                                         const fs::path& firmware_file_path) {
     auto firmware_status_enum = types::system::FirmwareUpdateStatusEnum::Installing;
     types::system::FirmwareUpdateStatus firmware_status;
     firmware_status.request_id = firmware_update_request.request_id;
@@ -234,9 +253,8 @@ void systemImpl::install_signed_firmware(const types::system::FirmwareUpdateRequ
     if (!this->firmware_installation_running) {
         this->firmware_installation_running = true;
         boost::process::ipstream install_stream;
-        const auto firmware_installer =
-            boost::filesystem::path("libexec/everest/modules/System/signed_firmware_installer.sh");
-        const auto constants = boost::filesystem::path("libexec/everest/modules/System/constants.env");
+        const auto firmware_installer = "libexec/everest/modules/System/signed_firmware_installer.sh";
+        const auto constants = fs::path("libexec/everest/modules/System/constants.env");
         const std::vector<std::string> install_args = {constants.string()};
         boost::process::child install_cmd(firmware_installer, boost::process::args(install_args),
                                           boost::process::std_out > install_stream);
@@ -273,13 +291,11 @@ systemImpl::handle_upload_logs(types::system::UploadLogsRequest& upload_logs_req
 
     const auto date_time = Everest::Date::to_rfc3339(date::utc_clock::now());
     // TODO(piet): consider start time and end time
-    const std::string file_name = "diagnostics-" + date_time + "-%%%%-%%%%-%%%%-%%%%";
-
-    const auto diagnostics_file_name = boost::filesystem::unique_path(boost::filesystem::path(file_name));
-    const auto diagnostics_file_path = boost::filesystem::temp_directory_path() / diagnostics_file_name;
+    const auto diagnostics_file_path = create_temp_file(fs::temp_directory_path(), "diagnostics-" + date_time);
+    const auto diagnostics_file_name = diagnostics_file_path.filename().string();
 
     response.upload_logs_status = types::system::UploadLogsStatus::Accepted;
-    response.file_name = diagnostics_file_name.string();
+    response.file_name = diagnostics_file_name;
 
     const auto fake_diagnostics_file = json({{"diagnostics", {{"key", "value"}}}});
     std::ofstream diagnostics_file(diagnostics_file_path.c_str());
@@ -299,12 +315,11 @@ systemImpl::handle_upload_logs(types::system::UploadLogsRequest& upload_logs_req
         EVLOG_info << "Starting upload of log file";
         this->interrupt_log_upload.exchange(false);
         this->log_upload_running = true;
-        const auto diagnostics_uploader =
-            boost::filesystem::path("libexec/everest/modules/System/diagnostics_uploader.sh");
-        const auto constants = boost::filesystem::path("libexec/everest/modules/System/constants.env");
+        const auto diagnostics_uploader = "libexec/everest/modules/System/diagnostics_uploader.sh";
+        const auto constants = fs::path("libexec/everest/modules/System/constants.env");
 
-        std::vector<std::string> args = {constants.string(), upload_logs_request.location,
-                                         diagnostics_file_name.string(), diagnostics_file_path.string()};
+        std::vector<std::string> args = {constants.string(), upload_logs_request.location, diagnostics_file_name,
+                                         diagnostics_file_path.string()};
         bool uploaded = false;
         int32_t retries = 0;
         const auto total_retries = upload_logs_request.retries.get_value_or(this->mod->config.DefaultRetries);

@@ -29,8 +29,7 @@ bool ModbusTransport::trigger_snapshot_generation(
     everest::modbus::ModbusDataContainerUint16 outgoing(everest::modbus::ByteOrder::LittleEndian,
                                                         bsm_powermeter_create_snapshot_command);
 
-    transport::DataVector write_response =
-        m_modbus_client.write_multiple_registers(m_unit_id, snapshot_trigger_register.val, 1, outgoing, false);
+    m_modbus_client.write_multiple_registers(m_unit_id, snapshot_trigger_register.val, 1, outgoing, false);
 
     std::uint16_t response_status{};
 
@@ -165,7 +164,7 @@ bool SerialCommHubTransport::trigger_snapshot_generation(
 
     if (not(types::serial_comm_hub_requests::StatusCodeEnum::Success == write_result))
         throw(""s + __PRETTY_FUNCTION__ + " SerialCommHub error : "s +
-              types::serial_comm_hub_requests::StatusCodeEnumStrings.at(write_result));
+              types::serial_comm_hub_requests::status_code_enum_to_string( write_result ) );
 
     std::size_t counter = 10;
 
