@@ -1,0 +1,5 @@
+.vscode
+build/
+!build/Makefile
+source/ext_*
+ext/

@@ -1,0 +1,33 @@
+{
+	"name": "everest documentation container",
+	"build": {
+		"dockerfile": "Dockerfile"
+	},
+	"extensions": [
+		"ms-python.python",
+		"stkb.rewrap",
+		"lextudio.restructuredtext",
+		"trond-snekvik.simple-rst",
+		"ritwickdey.liveserver"
+
+	],
+	// "mounts": [
+	// 	{
+	// 		"source": "/path/to/some/local/folder",
+	// 		"target": "/ext_source/",
+	// 		"type": "bind"
+	// 	}
+	// ],
+	"settings": {
+		"python.defaultInterpreterPath": "/usr/bin/python3",
+		"editor.rulers": [
+			79,
+			120
+		],
+		"esbonio.sphinx.buildDir": "${workspaceFolder}/build",
+		"esbonio.sphinx.confDir": "${workspaceFolder}/source",
+		"restructuredtext.preview.scrollEditorWithPreview": false,
+		"restructuredtext.pythonRecommendation.disabled": true,
+		"liveServer.settings.root": "build/html"
+	}
+}
