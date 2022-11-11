@@ -61,8 +61,9 @@ def ready():
 
 ### Charger Command Callbacks ###
 
-def charger_set_EVSEID(EVSEID: str): 
+def charger_set_EVSEID(EVSEID: str, EVSEID_DIN: str): 
     ChargerWrapper.set_EVSEID(EVSEID)
+    ChargerWrapper.set_EVSEID_DIN(EVSEID_DIN)   
 
 def charger_set_PaymentOptions(PaymentOptions: list):
     ChargerWrapper.set_PaymentOptions(PaymentOptions)

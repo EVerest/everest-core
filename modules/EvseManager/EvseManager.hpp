@@ -44,6 +44,7 @@ namespace module {
 struct Conf {
     int connector_id;
     std::string evse_id;
+    std::string evse_id_din;
     bool payment_enable_eim;
     bool payment_enable_contract;
     double ac_nominal_voltage;

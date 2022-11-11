@@ -15,6 +15,7 @@ class Charger_Wrapper(object):
     def __init__(self) -> None:
         # Common
         self.EVSEID = ""
+        self.EVSEID_DIN = ""
         self.PaymentOptions = []
         self.SupportedEnergyTransferMode = []
         self.ReceiptRequired = False
@@ -75,7 +76,13 @@ class Charger_Wrapper(object):
         self.EVSEID = EVSEID
     def get_EVSEID(self) -> str:
         return self.EVSEID
-    
+
+    # SessionSetup, CurrentDemand, ChargingStatus
+    def set_EVSEID_DIN(self, EVSEID_DIN: str):
+        self.EVSEID_DIN = EVSEID_DIN
+    def get_EVSEID_DIN(self) -> str:
+        return self.EVSEID_DIN
+
     # ServiceDiscovery, PaymentServiceSelection
     def set_PaymentOptions(self, PaymentOptions: list):
         self.PaymentOptions = PaymentOptions

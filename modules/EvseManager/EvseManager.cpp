@@ -56,7 +56,7 @@ void EvseManager::ready() {
     if (get_hlc_enabled()) {
 
         // Set up EVSE ID
-        r_hlc[0]->call_set_EVSEID(config.evse_id);
+        r_hlc[0]->call_set_EVSEID(config.evse_id, config.evse_id_din);
 
         // Set up auth options for HLC
         Array payment_options;
