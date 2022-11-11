@@ -17,7 +17,6 @@
 using json = nlohmann::json;
 
 int main(int argc, char* argv[]) {
-    namespace fs = std::filesystem;
 
     if (strcmp(argv[0], MAGIC_CONTROLLER_ARG0)) {
         fmt::print(stderr, "This binary does not yet support to be started manually\n");
@@ -35,31 +34,24 @@ int main(int argc, char* argv[]) {
     // FIXME (aw): validation
     const auto config_params = message.json.at("params");
 
-    const std::string module_dir = config_params.at("module_dir");
-    const std::string interface_dir = config_params.at("interface_dir");
-    const std::string config_dir = config_params.at("config_dir");
-    const std::string logging_config_file = config_params.at("logging_config_file");
-
-    // if (!fs::is_directory(module_dir) || !fs::is_directory(config_dir) || !fs::is_directory(interface_dir)) {
-    //     throw std::runtime_error("One or more of the passed directories are not valid");
-    // }
-
-    Everest::Logging::init(logging_config_file, "everest_ctrl");
+    Everest::Logging::init(config_params.at("logging_config_file"), "everest_ctrl");
 
     EVLOG_info << "everest controller process started ...";
 
     CommandApi::Config config{
-        module_dir,
-        interface_dir,
-        config_dir,
+        config_params.at("module_dir"),
+        config_params.at("interface_dir"),
+        config_params.at("configs_dir"),
     };
 
     RPC rpc(socket_fd, config);
     Server backend;
 
-    std::thread(&Server::run, &backend, [&rpc](const nlohmann::json& request) {
-        return rpc.handle_json_rpc(request);
-    }).detach();
+    // FIXME (aw): don't use hard-coded path!
+    std::thread(
+        &Server::run, &backend, [&rpc](const nlohmann::json& request) { return rpc.handle_json_rpc(request); },
+        config_params.at("www_dir"))
+        .detach();
 
     while (true) {
         rpc.run([&backend](const nlohmann::json& notification) { backend.push(notification); });

@@ -3,8 +3,10 @@
 #include "command_api.hpp"
 
 #include <fstream>
+#include <filesystem>
 
-#include "fmt/core.h"
+#include <fmt/core.h>
+
 #include <ryml.hpp>
 #include <ryml_std.hpp>
 
@@ -14,6 +16,7 @@
 
 using json = nlohmann::json;
 namespace fs = std::filesystem;
+
 
 static void clear_quote_flags(ryml::NodeRef& root) {
     if (root.has_val() && root.val().is_number()) {
@@ -57,7 +60,7 @@ nlohmann::json CommandApi::handle(const std::string& cmd, const json& params) {
     } else if (cmd == "get_configs") {
         auto config_list = json::object();
 
-        for (auto item : fs::directory_iterator(this->config.config_dir)) {
+        for (auto item : fs::directory_iterator(this->config.configs_dir)) {
             if (!fs::is_regular_file(item)) {
                 continue;
             }
@@ -96,7 +99,7 @@ nlohmann::json CommandApi::handle(const std::string& cmd, const json& params) {
         }
 
         auto config_json = params.value("config", json::object());
-        const auto configs_path = fs::path(this->config.config_dir);
+        const auto configs_path = fs::path(this->config.configs_dir);
         auto check_config_file_path = configs_path / fmt::format("_{}.yaml", params.at("name"));
 
         const auto json_serialized = config_json.dump();

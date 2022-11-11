@@ -2,154 +2,263 @@
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include "server.hpp"
 
+#include <cstring>
+
 #include <fstream>
+#include <mutex>
+#include <queue>
 #include <set>
 #include <sstream>
 
 #include <fmt/core.h>
 
-#include <websocketpp/config/asio_no_tls.hpp>
-#include <websocketpp/server.hpp>
+#include <libwebsockets.h>
 
 #include <everest/logging.hpp>
 
-class Server::Impl {
+// FIXME (aw): naming
+class WebsocketSession {
 public:
-    using ConnectionHandle = websocketpp::connection_hdl;
-    using WSServer = websocketpp::server<websocketpp::config::asio>;
-    using MessagePtr = WSServer::message_ptr;
+    enum class OutputState {
+        EMPTY,
+        LAST_DATA,
+        MORE_DATA,
+    };
+    class Output {
+    public:
+        OutputState state{OutputState::EMPTY};
+        unsigned char* buffer{nullptr};
+        size_t len{0};
 
-    Impl() {
-        endpoint.init_asio();
-        endpoint.set_reuse_addr(true);
-        endpoint.set_http_handler([this](ConnectionHandle handle) { on_http(handle); });
-        endpoint.set_message_handler(
-            [this](ConnectionHandle handle, MessagePtr msg_ptr) { on_message(handle, msg_ptr); });
-        endpoint.set_open_handler([this](ConnectionHandle handle) { on_open(handle); });
-        endpoint.set_close_handler([this](ConnectionHandle handle) { on_close(handle); });
-        endpoint.clear_access_channels(websocketpp::log::alevel::all);
-    }
-
-    void run(const Server::IncomingMessageHandler& handler) {
-        if (!handler) {
-            throw std::runtime_error("Could not run the the server with a null incoming message handler");
+        void set_data(const std::string& data) {
+            len = data.size();
+            d.resize(LWS_PRE + len);
+            buffer = d.data() + LWS_PRE;
+            memcpy(buffer, data.data(), len);
         }
 
-        this->message_in_handler = handler;
-        uint16_t port = 8849;
-        EVLOG_info << fmt::format("Running controller service on port {}\n", port);
+    private:
+        std::vector<unsigned char> d{};
+    };
 
-        endpoint.listen(port);
-        endpoint.start_accept();
-
-        try {
-            endpoint.run();
-        } catch (websocketpp::exception const& e) {
-            EVLOG_error << fmt::format("websocketpp exception: {}", e.what());
-        }
-    }
-
-    void push(const nlohmann::json& msg) {
-        for (auto& connection : connections) {
-            endpoint.send(connection, msg.dump(), websocketpp::frame::opcode::text);
-        }
-    }
+    void push_output_data(std::string data);
+    Output pop_output();
+    void add_input(const char*, size_t len);
+    std::string finish_input();
 
 private:
-    using ConnectionList = std::set<ConnectionHandle, std::owner_less<ConnectionHandle>>;
-    using ConnectionPtr = WSServer::connection_ptr;
+    std::string input;
+    std::queue<std::string> output_queue;
+    std::mutex output_mtx;
+};
 
-    void on_message(ConnectionHandle handle, MessagePtr msg) {
-        const auto retval = this->message_in_handler(msg->get_payload());
-        if (!retval.is_null()) {
-            endpoint.send(handle, retval.dump(), websocketpp::frame::opcode::text);
-        }
+void WebsocketSession::add_input(const char* in, size_t len) {
+    input.append(in, len);
+}
+
+std::string WebsocketSession::finish_input() {
+    auto data = std::move(input);
+    input.clear();
+    return data;
+}
+
+void WebsocketSession::push_output_data(std::string data) {
+    const std::lock_guard<std::mutex> lock(output_mtx);
+    output_queue.emplace(std::move(data));
+}
+
+WebsocketSession::Output WebsocketSession::pop_output() {
+    const std::lock_guard<std::mutex> lock(output_mtx);
+    WebsocketSession::Output output;
+    if (output_queue.empty()) {
+        // output is empty by default
+        return output;
     }
 
-    void on_open(ConnectionHandle handle) {
-        connections.insert(handle);
+    output.set_data(output_queue.front());
+    output_queue.pop();
+
+    output.state = output_queue.empty() ? OutputState::LAST_DATA : OutputState::MORE_DATA;
+
+    return output;
+}
+
+class Server::Impl {
+public:
+    Impl() {
+        memset(&info, 0, sizeof(info));
     }
 
-    void on_close(ConnectionHandle handle) {
-        connections.erase(handle);
-    }
+    void run(const Server::IncomingMessageHandler& handler, const std::string& html_origin);
+    void push(const nlohmann::json& msg);
 
-    // FIXME (aw): hack for getting correct content type
-    static void add_content_type(ConnectionPtr& conn, const std::string& filename) {
-        auto ends_with = [](const std::string& filename, const std::string& ending) -> bool {
-            if (ending.size() > filename.size()) {
-                return false;
-            }
-            return std::equal(filename.begin() + filename.size() - ending.size(), filename.end(), ending.begin());
-        };
+private:
+    static const lws_protocol_vhost_options pvo_opt;
+    static const lws_protocol_vhost_options pvo;
 
-        if (ends_with(filename, ".js")) {
-            conn->append_header("Content-Type", "application/javascript; charset=utf-8");
-        }
-    }
+    static const lws_protocol_vhost_options pvo_mime;
+    static lws_http_mount mount;
 
-    void on_http(ConnectionHandle handle) {
-        auto connection = endpoint.get_con_from_hdl(handle);
-        auto resource = connection->get_resource();
+    lws_context_creation_info info;
+    lws_context* context{nullptr};
 
-        if (resource == "/") {
-            resource = "index.html";
-        } else {
-            resource = resource.substr(1);
-        }
+    std::mutex context_mtx;
 
-        std::ifstream file;
-        std::stringstream response;
+    static int callback(struct lws* wsi, lws_callback_reasons reason, void* user, void* in, size_t len);
 
-        auto accept_header = connection->get_request_header("Accept-encoding");
-        if (accept_header.compare("gzip, deflate") == 0) {
-            // check if we have the file gzipped
-            auto gz_resource = resource + ".gz";
-            file.open(gz_resource.c_str(), std::ios::in);
-        }
-
-        if (file) {
-            response << file.rdbuf();
-            add_content_type(connection, resource);
-            connection->append_header("Content-Encoding", "gzip");
-            connection->set_body(response.str());
-            connection->set_status(websocketpp::http::status_code::ok);
-            return;
-        }
-
-        file.open(resource.c_str(), std::ios::in);
-        if (!file) {
-            connection->set_body(fmt::format("<!doctype html><html><head>"
-                                             "<title>Error 404 (Resource not found)</title><body>"
-                                             "<h1>Error 404</h1>"
-                                             "<p>The requested URL {} was not found on this server.</p>"
-                                             "</body></head></html>",
-                                             resource));
-            connection->set_status(websocketpp::http::status_code::not_found);
-            return;
-        }
-
-        response << file.rdbuf();
-        add_content_type(connection, resource);
-        connection->set_body(response.str());
-        connection->set_status(websocketpp::http::status_code::ok);
-    }
+    void create_session(WebsocketSession* session);
+    void destroy_session(WebsocketSession* session);
 
     IncomingMessageHandler message_in_handler;
 
-    WSServer endpoint;
-    ConnectionList connections;
-
-    WSServer::timer_ptr timer;
+    std::set<WebsocketSession*> sessions{};
 };
+
+const lws_protocol_vhost_options Server::Impl::pvo_opt = {nullptr, nullptr, "default", "1"};
+const lws_protocol_vhost_options Server::Impl::pvo = {nullptr, &pvo_opt, "everest-controller", ""};
+
+const lws_protocol_vhost_options Server::Impl::pvo_mime = {nullptr, nullptr, ".mp4", "application/x-mp4"};
+
+lws_http_mount Server::Impl::mount = {
+    .mountpoint = "/",
+    .origin = "/",
+    .def = "index.html",
+    .extra_mimetypes = &pvo_mime,
+    .origin_protocol = LWSMPRO_FILE,
+    .mountpoint_len = 1,
+};
+
+int Server::Impl::callback(struct lws* wsi, lws_callback_reasons reason, void* user, void* in, size_t len) {
+    auto session = static_cast<WebsocketSession*>(user);
+
+    auto& instance = *static_cast<Server::Impl*>(lws_get_protocol(wsi)->user);
+
+    if (LWS_CALLBACK_PROTOCOL_INIT == reason) {
+    } else if (LWS_CALLBACK_ESTABLISHED == reason) {
+        instance.create_session(session);
+
+    } else if (LWS_CALLBACK_SERVER_WRITEABLE == reason) {
+        using State = WebsocketSession::OutputState;
+        auto output = session->pop_output();
+
+        if (output.state == State::EMPTY) {
+            return 0;
+        }
+
+        lws_write(wsi, output.buffer, output.len, LWS_WRITE_TEXT);
+
+        if (output.state == State::MORE_DATA) {
+            // more to write
+            lws_callback_on_writable(wsi);
+        }
+
+    } else if (LWS_CALLBACK_RECEIVE == reason) {
+        session->add_input(static_cast<char*>(in), len);
+
+        if (!lws_is_final_fragment(wsi)) {
+            return 0;
+        }
+
+        auto input = session->finish_input();
+
+        const auto& retval = instance.message_in_handler(input);
+        // FIXME (aw): this is blocking - do we want that?
+        if (!retval.is_null()) {
+            session->push_output_data(retval.dump());
+
+            lws_callback_on_writable(wsi);
+        }
+
+        return 0;
+    } else if (LWS_CALLBACK_CLOSED == reason) {
+        instance.destroy_session(session);
+    } else {
+        return lws_callback_http_dummy(wsi, reason, user, in, len);
+    }
+
+    return 0;
+}
+
+void Server::Impl::create_session(WebsocketSession* session) {
+    new (session) WebsocketSession();
+    const std::lock_guard<std::mutex> lock(context_mtx);
+    sessions.insert(session);
+}
+
+void Server::Impl::destroy_session(WebsocketSession* session) {
+    {
+        const std::lock_guard<std::mutex> lock(context_mtx);
+        sessions.erase(session);
+    }
+
+    session->~WebsocketSession();
+}
+
+void Server::Impl::run(const Server::IncomingMessageHandler& handler, const std::string& html_origin) {
+    if (!handler) {
+        throw std::runtime_error("Could not run the server with a null incoming message handler");
+    }
+    this->message_in_handler = handler;
+
+    static struct lws_protocols protocols[] = {
+        {"http", lws_callback_http_dummy, 0, 0, 0, NULL, 0},
+        {"everest-controller", Server::Impl::callback, sizeof(WebsocketSession), 1024, 0, this, 0},
+        LWS_PROTOCOL_LIST_TERM,
+    };
+
+    mount.origin = html_origin.c_str();
+    info.port = 8849;
+    info.mounts = &mount;
+    info.protocols = protocols;
+    info.pvo = &pvo;
+
+    lws_set_log_level(LLL_ERR | LLL_WARN | LLL_NOTICE, [](int level, const char* line) {
+        if (level == LLL_NOTICE) {
+            EVLOG_debug << line;
+        } else {
+            // should be LLL_ERR or LLL_WARN
+            EVLOG_info << line;
+        }
+        });
+
+    EVLOG_info << fmt::format("Launching controller service on port {}\n", info.port);
+
+    {
+        std::lock_guard<std::mutex> lck(context_mtx);
+        context = lws_create_context(&info);
+    }
+
+    while (lws_service(context, 0) >= 0) {
+    }
+
+    // FIXME (aw): check for errors and log them somehow ...
+    {
+        std::lock_guard<std::mutex> lck(context_mtx);
+        lws_context_destroy(context);
+        context = nullptr;
+    }
+}
+
+void Server::Impl::push(const nlohmann::json& msg) {
+    const std::lock_guard<std::mutex> lock(context_mtx);
+    if (context == nullptr) {
+        // context does not exist, nothing to do
+        return;
+    }
+
+    for (auto session : sessions) {
+        session->push_output_data(std::move(msg.dump()));
+    }
+    lws_cancel_service(context);
+}
 
 Server::Server() : pimpl(std::make_unique<Impl>()) {
 }
 
 Server::~Server() = default;
 
-void Server::run(const IncomingMessageHandler& handler) {
-    pimpl->run(handler);
+void Server::run(const IncomingMessageHandler& handler, const std::string& html_origin) {
+    pimpl->run(handler, html_origin);
 }
 
 void Server::push(const nlohmann::json& msg) {

@@ -16,7 +16,7 @@ public:
     using IncomingMessageHandler = std::function<nlohmann::json(const nlohmann::json&)>;
     Server();
     ~Server();
-    void run(const IncomingMessageHandler& handler);
+    void run(const IncomingMessageHandler& handler, const std::string& html_origin);
     void push(const nlohmann::json& msg);
 
 private:

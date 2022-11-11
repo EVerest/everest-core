@@ -423,7 +423,8 @@ static ControllerHandle start_controller(const RuntimeSettings& rs) {
                                                       {
                                                           {"module_dir", rs.modules_dir.string()},
                                                           {"interface_dir", rs.interfaces_dir.string()},
-                                                          {"config_dir", rs.configs_dir.string()},
+                                                          {"www_dir", rs.www_dir.string()},
+                                                          {"configs_dir", rs.configs_dir.string()},
                                                           {"logging_config_file", rs.logging_config_file.string()},
                                                       }},
                                                  });

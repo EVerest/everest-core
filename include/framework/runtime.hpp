@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <string>
 
+
 #include <everest/logging.hpp>
 #include <fmt/color.h>
 #include <fmt/core.h>
@@ -67,6 +68,8 @@ inline constexpr auto SCHEMAS_DIR = "schemas";
 inline constexpr auto CONFIG_NAME = "default.yaml";
 inline constexpr auto LOGGING_CONFIG_NAME = "default_logging.cfg";
 
+inline constexpr auto WWW_DIR = "www";
+
 } // namespace defaults
 
 std::string parse_string_option(const boost::program_options::variables_map& vm, const char* option);
@@ -87,6 +90,7 @@ struct RuntimeSettings {
     fs::path types_dir;
     fs::path logging_config_file;
     fs::path config_file;
+    fs::path www_dir;
 
     nlohmann::json config;
 

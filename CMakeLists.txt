@@ -33,9 +33,12 @@ if(NOT DISABLE_EDM)
     # In EDM mode, we can't install exports (because the dependencies usually do not install their exports)
     set(FRAMEWORK_INSTALL OFF)
 
-    # FIXME (aw): websocketpp doesn't play well with EDM/CPM
-    add_library(websocketpp::websocketpp INTERFACE IMPORTED)
-    set_target_properties(websocketpp::websocketpp PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${websocketpp_SOURCE_DIR}")
+    # FIXME (aw): libwebsockets/ninja clean doesn't delete recursivly ..
+    set_property(
+        TARGET websockets_shared
+        APPEND
+        PROPERTY ADDITIONAL_CLEAN_FILES "${libwebsockets_BINARY_DIR}/include/libwebsockets"
+    )
 
     # FIXME (aw): pboetch json validator doesn't want to install itself :(
     install(TARGETS nlohmann_json_schema_validator

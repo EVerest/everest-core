@@ -207,6 +207,8 @@ RuntimeSettings::RuntimeSettings(const std::string& prefix_, const std::string& 
 
         logging_config_file = assert_file(default_logging_config_file, "Default logging config");
     }
+
+    www_dir = prefix / defaults::DATAROOT_DIR / defaults::NAMESPACE / defaults::WWW_DIR;
 }
 
 ModuleCallbacks::ModuleCallbacks(const std::function<void(ModuleAdapter module_adapter)>& register_module_adapter,

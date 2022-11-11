@@ -23,7 +23,7 @@ public:
     struct Config {
         std::string module_dir;
         std::string interface_dir;
-        std::string config_dir;
+        std::string configs_dir;
     };
 
     CommandApi(const Config& config, RPC& rpc);

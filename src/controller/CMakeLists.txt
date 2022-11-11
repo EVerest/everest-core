@@ -28,7 +28,7 @@ target_link_libraries(controller
 
         nlohmann_json::nlohmann_json
 
-        websocketpp::websocketpp
+        websockets_shared
         fmt::fmt
 
         everest::log
@@ -37,5 +37,17 @@ target_link_libraries(controller
 )
 
 target_compile_features(controller PRIVATE cxx_std_17)
+
+if (NOT NO_FETCH_CONTENT)
+    message(STATUS "Fetching everest-admin-panel")
+    FetchContent_Declare(admin-panel
+        URL https://github.com/EVerest/everest-admin-panel/releases/download/manually_dispatched/everest-admin-panel.tar.gz
+    )
+    FetchContent_Populate(admin-panel)
+    install(
+        DIRECTORY ${admin-panel_SOURCE_DIR}/
+        DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/everest/www"
+    )
+endif ()
 
 install(TARGETS controller RUNTIME)
