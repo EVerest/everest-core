@@ -39,7 +39,7 @@ public:
         uint16_t port = 8849;
         EVLOG_info << fmt::format("Running controller service on port {}\n", port);
 
-        endpoint.listen("0.0.0.0", std::to_string(port));
+        endpoint.listen(port);
         endpoint.start_accept();
 
         try {
