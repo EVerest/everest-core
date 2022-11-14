@@ -1,0 +1,17 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+#ifndef FRAMEWORK_COMPILE_TIME_SETTINGS_HPP
+#define FRAMEWORK_COMPILE_TIME_SETTINGS_HPP
+
+#cmakedefine CMAKE_INSTALL_PREFIX "@CMAKE_INSTALL_PREFIX@"
+
+#ifndef CMAKE_INSTALL_PREFIX
+#define EVEREST_INSTALL_PREFIX ("/usr")
+#else
+#define EVEREST_INSTALL_PREFIX (CMAKE_INSTALL_PREFIX)
+#endif
+
+// FIXME (aw): this could be also compile time selectable
+#define EVEREST_NAMESPACE ("everest")
+
+#endif // FRAMEWORK_COMPILE_TIME_SETTINGS_HPP

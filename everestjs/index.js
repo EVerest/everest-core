@@ -27,13 +27,8 @@ const helpers = {
 const EverestModule = function EverestModule(handler_setup, user_settings) {
   const env_settings = {
     module: process.env.EV_MODULE,
-    main_dir: process.env.EV_MAIN_DIR,
-    schemas_dir: process.env.EV_SCHEMAS_DIR,
-    modules_dir: process.env.EV_MODULES_DIR,
-    interfaces_dir: process.env.EV_INTERFACES_DIR,
-    types_dir: process.env.EV_TYPES_DIR,
+    prefix: process.env.EV_PREFIX,
     config_file: process.env.EV_CONF_FILE,
-    log_config_file: process.env.EV_LOG_CONF_FILE,
     mqtt_server_address: process.env.MQTT_SERVER_ADDRESS,
     mqtt_server_port: process.env.MQTT_SERVER_PORT,
   };
@@ -44,16 +39,10 @@ const EverestModule = function EverestModule(handler_setup, user_settings) {
     throw new Error('parameter "module" is missing');
   }
 
-  const main_dir = helpers.get_default(settings, 'main_dir', './');
   const config = {
     module: settings.module,
-    main_dir,
-    schemas_dir: helpers.get_default(settings, 'schemas_dir', `${main_dir}/share/everest/schemas`),
-    modules_dir: helpers.get_default(settings, 'modules_dir', `${main_dir}/libexec/everest/modules`),
-    interfaces_dir: helpers.get_default(settings, 'interfaces_dir', `${main_dir}/share/everest/interfaces`),
-    types_dir: helpers.get_default(settings, 'types_dir', `${main_dir}/share/everest/types`),
-    config_file: helpers.get_default(settings, 'config_file', `${main_dir}/conf/config.json`),
-    log_config_file: helpers.get_default(settings, 'log_config_file', `${main_dir}/conf/logging.ini`),
+    prefix: settings.prefix,
+    config_file: settings.config_file,
     validate_schema: helpers.get_default(settings, 'validate_schema', true),
     mqtt_server_address: helpers.get_default(settings, 'mqtt_server_address', 'localhost'),
     mqtt_server_port: helpers.get_default(settings, 'mqtt_server_port', '1883'),

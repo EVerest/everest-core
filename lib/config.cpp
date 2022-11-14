@@ -125,7 +125,7 @@ Config::Config(std::string schemas_dir, std::string config_file, std::string mod
     try {
         EVLOG_debug << fmt::format("Loading config file at: {}", fs::canonical(config_path).string());
 
-        this->main = load_yaml(config_path);
+        auto complete_config = load_yaml(config_path);
 
         // try to load user config from a directory "user-config" that might be in the same parent directory as the
         // config_file. The config is supposed to have the same name as the parent config.
@@ -138,18 +138,21 @@ Config::Config(std::string schemas_dir, std::string config_file, std::string mod
             auto user_config = load_yaml(user_config_path);
 
             EVLOG_debug << "Augmenting main config with user-config entries";
-            this->main.merge_patch(user_config);
+            complete_config.merge_patch(user_config);
         } else {
             EVLOG_verbose << "No user-config provided.";
         }
 
         json_validator validator(Config::loader);
         validator.set_root_schema(this->_schemas.config);
-        auto patch = validator.validate(this->main);
+        auto patch = validator.validate(complete_config);
         if (!patch.is_null()) {
             // extend config with default values
-            this->main = this->main.patch(patch);
+            complete_config = complete_config.patch(patch);
         }
+
+        this->main = complete_config.at("active_modules");
+
     } catch (const std::exception& e) {
         EVLOG_AND_THROW(EverestConfigError(fmt::format("Failed to load and parse config file: {}", e.what())));
     }

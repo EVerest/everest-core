@@ -4,6 +4,7 @@
 #include <everest/logging.hpp>
 
 #include <framework/everest.hpp>
+#include <framework/runtime.hpp>
 
 #include <napi.h>
 
@@ -266,22 +267,21 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
         const Napi::Function& callback_wrapper = info[1].As<Napi::Function>();
 
         const auto& module_id = settings.Get("module").ToString().Utf8Value();
-        const auto& main_dir = settings.Get("main_dir").ToString().Utf8Value();
-        const auto& schemas_dir = settings.Get("schemas_dir").ToString().Utf8Value();
-        const auto& modules_dir = settings.Get("modules_dir").ToString().Utf8Value();
-        const auto& interfaces_dir = settings.Get("interfaces_dir").ToString().Utf8Value();
-        const auto& types_dir = settings.Get("types_dir").ToString().Utf8Value();
+        const auto& prefix = settings.Get("prefix").ToString().Utf8Value();
         const auto& config_file = settings.Get("config_file").ToString().Utf8Value();
-        const auto& log_config_file = settings.Get("log_config_file").ToString().Utf8Value();
         const bool validate_schema = settings.Get("validate_schema").ToBoolean().Value();
 
         const auto& mqtt_server_address = settings.Get("mqtt_server_address").ToString().Utf8Value();
         const auto& mqtt_server_port = settings.Get("mqtt_server_port").ToString().Utf8Value();
 
-        // initialize logging as early as possible
-        Everest::Logging::init(log_config_file, module_id);
+        Everest::RuntimeSettings rs(prefix, config_file);
 
-        auto config = std::make_unique<Everest::Config>(schemas_dir, config_file, modules_dir, interfaces_dir, types_dir);
+        // initialize logging as early as possible
+        Everest::Logging::init(rs.logging_config_file, module_id);
+
+        auto config =
+            std::make_unique<Everest::Config>(rs.schemas_dir.string(), rs.config_file.string(), rs.modules_dir.string(),
+                                              rs.interfaces_dir.string(), rs.types_dir.string());
         if (!config->contains(module_id)) {
             EVTHROW(EVEXCEPTION(Everest::EverestConfigError,
                                 "Module with identifier '" << module_id << "' not found in config!"));
@@ -547,8 +547,7 @@ static Napi::Object Init(Napi::Env env, Napi::Object exports) {
         napi_enumerable));
 
     log.DefineProperty(Napi::PropertyDescriptor::Value(
-        "info",
-        Napi::Function::New(env, [](const Napi::CallbackInfo& info) { EVLOG_info << extract_logstring(info); }),
+        "info", Napi::Function::New(env, [](const Napi::CallbackInfo& info) { EVLOG_info << extract_logstring(info); }),
         napi_enumerable));
 
     log.DefineProperty(Napi::PropertyDescriptor::Value(

@@ -3,60 +3,210 @@
 
 #include <framework/runtime.hpp>
 
+#include <algorithm>
+
+#include <boost/program_options.hpp>
+
 namespace Everest {
-RuntimeSettings::RuntimeSettings(const po::variables_map& vm) : main_dir(vm["main_dir"].as<std::string>()) {
-    if (vm.count("schemas_dir")) {
-        schemas_dir = vm["schemas_dir"].as<std::string>();
+
+namespace po = boost::program_options;
+
+std::string parse_string_option(const po::variables_map& vm, const char* option) {
+    if (vm.count(option) == 0) {
+        return "";
+    }
+
+    return vm[option].as<std::string>();
+}
+
+static fs::path assert_dir(const std::string& path, const std::string& path_alias = "The") {
+    auto fs_path = fs::path(path);
+
+    if (!fs::exists(fs_path)) {
+        throw BootException(fmt::format("{} path '{}' does not exist", path_alias, path));
+    }
+
+    fs_path = fs::canonical(fs_path);
+
+    if (!fs::is_directory(fs_path)) {
+        throw BootException(fmt::format("{} path '{}' is not a directory", path_alias, path));
+    }
+
+    return fs_path;
+}
+
+static fs::path assert_file(const std::string& path, const std::string& file_alias = "The") {
+    auto fs_file = fs::path(path);
+
+    if (!fs::exists(fs_file)) {
+        throw BootException(fmt::format("{} file '{}' does not exist", file_alias, path));
+    }
+
+    fs_file = fs::canonical(fs_file);
+
+    if (!fs::is_regular_file(fs_file)) {
+        throw BootException(fmt::format("{} file '{}' is not a regular file", file_alias, path));
+    }
+
+    return fs_file;
+}
+
+static bool has_extension(const std::string& path, const std::string& ext) {
+    auto path_ext = fs::path(path).stem().string();
+
+    // lowercase the string
+    std::transform(path_ext.begin(), path_ext.end(), path_ext.begin(), [](unsigned char c) { return std::tolower(c); });
+
+    return path_ext == ext;
+}
+
+static std::string get_prefixed_path_from_json(const nlohmann::json& value, const fs::path& prefix) {
+    auto settings_configs_dir = value.get<std::string>();
+    if (fs::path(settings_configs_dir).is_relative()) {
+        settings_configs_dir = (prefix / settings_configs_dir).string();
+    }
+    return settings_configs_dir;
+}
+
+RuntimeSettings::RuntimeSettings(const std::string& prefix_, const std::string& config_) {
+    // if prefix or config is empty, we assume they have not been set!
+    // if they have been set, check their validity, otherwise bail out!
+
+    if (config_.length() != 0) {
+        try {
+            config_file = assert_file(config_, "User profided config");
+        } catch (const BootException& e) {
+            if (has_extension(config_file, ".yaml")) {
+                throw;
+            }
+
+            // otherwise, we propbably got a simple config file name
+        }
+    }
+
+    if (prefix_.length() != 0) {
+        // user provided
+        prefix = assert_dir(prefix_, "User provided prefix");
+    }
+
+    if (config_file.empty()) {
+        auto config_file_prefix = prefix;
+        if (config_file_prefix.empty()) {
+            config_file_prefix = assert_dir(defaults::PREFIX, "Default prefix");
+        }
+
+        if (config_file_prefix.string() == "/usr") {
+            // we're going to look in /etc, which isn't prefixed by /usr
+            config_file_prefix = "/";
+        }
+
+        if (config_.length() != 0) {
+            // user provided short form
+
+            const auto user_config_file =
+                config_file_prefix / defaults::SYSCONF_DIR / defaults::NAMESPACE / fmt::format("{}.yaml", config_);
+
+            const auto short_form_alias = fmt::format("User provided (by using short form: '{}')", config_);
+
+            config_file = assert_file(user_config_file, short_form_alias);
+        } else {
+            // default
+            config_file =
+                assert_file(config_file_prefix / defaults::SYSCONF_DIR / defaults::NAMESPACE / defaults::CONFIG_NAME,
+                            "Default config");
+        }
+    }
+
+    // now the config file should have been found
+    if (config_file.empty()) {
+        throw std::runtime_error("Assertion for found config file failed");
+    }
+
+    config = load_yaml(config_file);
+
+    const auto settings = config.value("settings", json::object());
+
+    if (prefix.empty()) {
+        const auto settings_prefix_it = settings.find("prefix");
+        if (settings_prefix_it != settings.end()) {
+            const auto settings_prefix = settings_prefix_it->get<std::string>();
+            if (!fs::path(settings_prefix).is_absolute()) {
+                throw BootException("Setting a non-absolute directory for the prefix is not allowed");
+            }
+
+            prefix = assert_dir(settings_prefix, "Config provided prefix");
+        } else {
+            prefix = assert_dir(defaults::PREFIX, "Default prefix");
+        }
+    }
+
+    const auto settings_configs_dir_it = settings.find("configs_dir");
+    if (settings_configs_dir_it != settings.end()) {
+        auto settings_configs_dir = get_prefixed_path_from_json(*settings_configs_dir_it, prefix);
+        configs_dir = assert_dir(settings_configs_dir, "Config provided configs directory");
     } else {
-        // FIXME (aw): what default directory layout will we choose?
-        schemas_dir = main_dir / "share/everest/schemas";
+        auto default_configs_dir = fs::path(defaults::SYSCONF_DIR) / defaults::NAMESPACE;
+        if (prefix.string() != "/usr") {
+            default_configs_dir = prefix / default_configs_dir;
+        } else {
+            default_configs_dir = fs::path("/") / default_configs_dir;
+        }
+
+        configs_dir = assert_dir(default_configs_dir.string(), "Default configs directory");
     }
 
-    if (vm.count("modules_dir")) {
-        modules_dir = vm["modules_dir"].as<std::string>();
+    const auto settings_schemas_dir_it = settings.find("schemas_dir");
+    if (settings_schemas_dir_it != settings.end()) {
+        const auto settings_schemas_dir = get_prefixed_path_from_json(*settings_schemas_dir_it, prefix);
+        schemas_dir = assert_dir(settings_schemas_dir, "Config provided schema directory");
     } else {
-        modules_dir = main_dir / "libexec/everest/modules";
+        const auto default_schemas_dir = prefix / defaults::DATAROOT_DIR / defaults::NAMESPACE / defaults::SCHEMAS_DIR;
+        schemas_dir = assert_dir(default_schemas_dir.string(), "Default schema directory");
     }
 
-    if (vm.count("interfaces_dir")) {
-        interfaces_dir = vm["interfaces_dir"].as<std::string>();
+    const auto settings_interfaces_dir_it = settings.find("interfaces_dir");
+    if (settings_interfaces_dir_it != settings.end()) {
+        const auto settings_interfaces_dir = get_prefixed_path_from_json(*settings_interfaces_dir_it, prefix);
+        interfaces_dir = assert_dir(settings_interfaces_dir, "Config provided interface directory");
     } else {
-        interfaces_dir = main_dir / "share/everest/interfaces";
+        const auto default_interfaces_dir =
+            prefix / defaults::DATAROOT_DIR / defaults::NAMESPACE / defaults::INTERFACES_DIR;
+        interfaces_dir = assert_dir(default_interfaces_dir, "Default interface directory");
     }
 
-    if (vm.count("types_dir")) {
-        types_dir = vm["types_dir"].as<std::string>();
+    const auto settings_modules_dir_it = settings.find("modules_dir");
+    if (settings_modules_dir_it != settings.end()) {
+        const auto settings_modules_dir = get_prefixed_path_from_json(*settings_modules_dir_it, prefix);
+        modules_dir = assert_dir(settings_modules_dir, "Config provided module directory");
     } else {
-        types_dir = main_dir / "share/everest/types";
+        const auto default_modules_dir = prefix / defaults::LIBEXEC_DIR / defaults::NAMESPACE / defaults::MODULES_DIR;
+        modules_dir = assert_dir(default_modules_dir, "Default module directory");
     }
 
-    if (vm.count("log_conf")) {
-        logging_config = vm["log_conf"].as<std::string>();
+    const auto settings_types_dir_it = settings.find("types_dir");
+    if (settings_types_dir_it != settings.end()) {
+        const auto settings_types_dir = get_prefixed_path_from_json(*settings_types_dir_it, prefix);
+        types_dir = assert_dir(settings_types_dir, "Config provided type directory");
     } else {
-        logging_config = main_dir / "conf/logging.ini";
+        const auto default_types_dir = prefix / defaults::DATAROOT_DIR / defaults::NAMESPACE / defaults::TYPES_DIR;
+        types_dir = assert_dir(default_types_dir, "Default type directory");
     }
 
-    if (vm.count("conf")) {
-        config_file = vm["conf"].as<std::string>();
+    const auto settings_logging_config_file_it = settings.find("logging_config_file");
+    if (settings_logging_config_file_it != settings.end()) {
+        const auto settings_logging_config_file = get_prefixed_path_from_json(*settings_logging_config_file_it, prefix);
+        logging_config_file = assert_file(settings_logging_config_file, "Config provided logging config");
     } else {
-        config_file = main_dir / "conf/config.json";
+        auto default_logging_config_file =
+            fs::path(defaults::SYSCONF_DIR) / defaults::NAMESPACE / defaults::LOGGING_CONFIG_NAME;
+        if (prefix.string() != "/usr") {
+            default_logging_config_file = prefix / default_logging_config_file;
+        } else {
+            default_logging_config_file = fs::path("/") / default_logging_config_file;
+        }
+
+        logging_config_file = assert_file(default_logging_config_file, "Default logging config");
     }
-
-    validate_schema = (vm.count("dontvalidateschema") != 0);
-
-    // make all paths canonical
-    std::reference_wrapper<fs::path> list[] = {
-        main_dir, schemas_dir, modules_dir, interfaces_dir, logging_config, config_file,
-    };
-
-    for (auto ref_wrapped_item : list) {
-        auto& item = ref_wrapped_item.get();
-        item = fs::canonical(item);
-    }
-
-    // FIXME (aw): we don't have a way yet, to specify to configs dir, so by default we're using the folder, which
-    // contains the config file
-    configs_dir = config_file.parent_path();
 }
 
 ModuleCallbacks::ModuleCallbacks(const std::function<void(ModuleAdapter module_adapter)>& register_module_adapter,
@@ -80,7 +230,7 @@ int ModuleLoader::initialize() {
 
     auto& rs = this->runtime_settings;
 
-    Logging::init(rs->logging_config.string(), this->module_id);
+    Logging::init(rs->logging_config_file.string(), this->module_id);
 
     try {
         Config config = Config(rs->schemas_dir.string(), rs->config_file.string(), rs->modules_dir.string(),
@@ -97,7 +247,7 @@ int ModuleLoader::initialize() {
         int prctl_return = prctl(PR_SET_NAME, module_identifier.c_str());
         if (prctl_return == 1) {
             EVLOG_warning << fmt::format("Could not set process name to '{}', it remains '{}'", module_identifier,
-                                          this->original_process_name);
+                                         this->original_process_name);
         }
         Logging::update_process_name(module_identifier);
 
@@ -120,8 +270,7 @@ int ModuleLoader::initialize() {
         EVLOG_debug << fmt::format("Initializing module {}...", module_identifier);
 
         if (!everest.connect()) {
-            EVLOG_error << fmt::format("Cannot connect to MQTT broker at {}:{}", mqtt_server_address,
-                                           mqtt_server_port);
+            EVLOG_error << fmt::format("Cannot connect to MQTT broker at {}:{}", mqtt_server_address, mqtt_server_port);
             return 1;
         }
 
@@ -176,8 +325,7 @@ int ModuleLoader::initialize() {
 
         EVLOG_info << "Exiting...";
     } catch (boost::exception& e) {
-        EVLOG_critical << fmt::format("Caught top level boost::exception:\n{}",
-                                       boost::diagnostic_information(e, true));
+        EVLOG_critical << fmt::format("Caught top level boost::exception:\n{}", boost::diagnostic_information(e, true));
     } catch (std::exception& e) {
         EVLOG_critical << fmt::format("Caught top level std::exception:\n{}", boost::diagnostic_information(e, true));
     }
@@ -188,13 +336,11 @@ int ModuleLoader::initialize() {
 bool ModuleLoader::parse_command_line(int argc, char* argv[]) {
     po::options_description desc("EVerest");
     desc.add_options()("help,h", "produce help message");
-    desc.add_options()("main_dir", po::value<std::string>(), "Set main EVerest directory");
-    desc.add_options()("schemas_dir", po::value<std::string>(), "Set framework schema directory");
+    desc.add_options()("prefix", po::value<std::string>(), "Set main EVerest directory");
     desc.add_options()("module,m", po::value<std::string>(),
                        "Which module should be executed (module id from config file)");
-    desc.add_options()("log_conf", po::value<std::string>(), "The path to a custom logging.ini");
     desc.add_options()("dontvalidateschema", "Don't validate json schema on every message");
-    desc.add_options()("conf", po::value<std::string>(), "The path to a custom config.json");
+    desc.add_options()("config", po::value<std::string>(), "The path to a custom config.json");
 
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -205,11 +351,9 @@ bool ModuleLoader::parse_command_line(int argc, char* argv[]) {
         return false;
     }
 
-    if (vm.count("main_dir") == 0) {
-        EVTHROW(EVEXCEPTION(EverestApiError, "--main_dir parameter is required"));
-    }
-
-    this->runtime_settings = std::make_unique<RuntimeSettings>(vm);
+    const auto prefix_opt = parse_string_option(vm, "prefix");
+    const auto config_opt = parse_string_option(vm, "config");
+    this->runtime_settings = std::make_unique<RuntimeSettings>(prefix_opt, config_opt);
     this->original_process_name = argv[0];
 
     if (vm.count("module") != 0) {

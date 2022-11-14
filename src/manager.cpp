@@ -179,15 +179,8 @@ static std::vector<char*> arguments_to_exec_argv(std::vector<std::string>& argum
 
 static SubprocessHandle exec_cpp_module(const ModuleStartInfo& module_info, const RuntimeSettings& rs) {
     const auto exec_binary = module_info.path.c_str();
-    std::vector<std::string> arguments = {module_info.printable_name,
-                                          "--main_dir",
-                                          rs.main_dir.string(),
-                                          "--log_conf",
-                                          rs.logging_config.string(),
-                                          "--conf",
-                                          rs.config_file.string(),
-                                          "--module",
-                                          module_info.name};
+    std::vector<std::string> arguments = {module_info.printable_name, "--prefix", rs.prefix.string(), "--conf",
+                                          rs.config_file.string(),    "--module", module_info.name};
 
     auto handle = create_subprocess();
     if (handle.is_child()) {
@@ -207,23 +200,16 @@ static SubprocessHandle exec_javascript_module(const ModuleStartInfo& module_inf
     // instead of using setenv, using execvpe might be a better way for a controlled environment!
 
     // FIXME (aw): everest directory layout
-    const auto node_modules_path = fs::canonical(rs.main_dir / "lib/everest/node_modules");
+    const auto node_modules_path = rs.prefix / defaults::LIB_DIR / defaults::NAMESPACE / "node_modules";
     setenv("NODE_PATH", node_modules_path.c_str(), 0);
 
     setenv("EV_MODULE", module_info.name.c_str(), 1);
-    setenv("EV_MAIN_DIR", rs.main_dir.c_str(), 0);
-    setenv("EV_SCHEMAS_DIR", rs.schemas_dir.c_str(), 0);
-    setenv("EV_MODULES_DIR", rs.modules_dir.c_str(), 0);
-    setenv("EV_INTERFACES_DIR", rs.interfaces_dir.c_str(), 0);
+    setenv("EV_PREFIX", rs.prefix.c_str(), 0);
     setenv("EV_CONF_FILE", rs.config_file.c_str(), 0);
-    setenv("EV_LOG_CONF_FILE", rs.logging_config.c_str(), 0);
 
     if (!rs.validate_schema) {
         setenv("EV_DONT_VALIDATE_SCHEMA", "", 0);
     }
-
-    // FIXME (aw): what is the design behind this decision?
-    chdir(rs.main_dir.c_str());
 
     const auto node_binary = "node";
 
@@ -438,7 +424,7 @@ static ControllerHandle start_controller(const RuntimeSettings& rs) {
                                                           {"module_dir", rs.modules_dir.string()},
                                                           {"interface_dir", rs.interfaces_dir.string()},
                                                           {"config_dir", rs.configs_dir.string()},
-                                                          {"logging_config_file", rs.logging_config.string()},
+                                                          {"logging_config_file", rs.logging_config_file.string()},
                                                       }},
                                                  });
 
@@ -447,15 +433,18 @@ static ControllerHandle start_controller(const RuntimeSettings& rs) {
 
 int boot(const po::variables_map& vm) {
     bool check = (vm.count("check") != 0);
-    RuntimeSettings rs(vm);
 
-    Logging::init(rs.logging_config.string());
+    const auto prefix_opt = parse_string_option(vm, "prefix");
+    const auto config_opt = parse_string_option(vm, "config");
+
+    RuntimeSettings rs(prefix_opt, config_opt);
+
+    Logging::init(rs.logging_config_file.string());
 
     EVLOG_info << "8< 8< 8< ------------------------------------------------------------------------------ 8< 8< 8<";
     EVLOG_info << "EVerest manager starting using " << rs.config_file.string();
 
-    EVLOG_verbose << fmt::format("main_dir was set to {}", rs.main_dir.string());
-    EVLOG_verbose << fmt::format("main_binary was set to {}", rs.main_binary.string());
+    EVLOG_verbose << fmt::format("EVerest prefix was set to {}", rs.prefix.string());
 
     // dump all manifests if requested and terminate afterwards
     if (vm.count("dumpmanifests")) {
@@ -650,12 +639,7 @@ int main(int argc, char* argv[]) {
                        "Dump validated and augmented main config and all used module manifests into dir");
     desc.add_options()("dumpmanifests", po::value<std::string>(),
                        "Dump manifests of all modules into dir (even modules not used in config) and exit");
-    desc.add_options()("main_dir", po::value<std::string>()->default_value("/usr/lib/everest"),
-                       "set dir in which the main binaries reside");
-    desc.add_options()("schemas_dir", po::value<std::string>(), "set dir in which the schemes folder resides");
-    desc.add_options()("modules_dir", po::value<std::string>(), "set dir in which the modules reside ");
-    desc.add_options()("interfaces_dir", po::value<std::string>(), "set dir in which the classes reside ");
-    desc.add_options()("types_dir", po::value<std::string>(), "set dir in which the types reside ");
+    desc.add_options()("prefix", po::value<std::string>(), "Prefix path of everest installation");
     desc.add_options()("standalone,s", po::value<std::vector<std::string>>()->multitoken(),
                        "Module ID(s) to not automatically start child processes for (those must be started manually to "
                        "make the framework start!).");
@@ -663,8 +647,9 @@ int main(int argc, char* argv[]) {
                        "Module ID(s) to ignore: Do not automatically start child processes and do not require that "
                        "they are started.");
     desc.add_options()("dontvalidateschema", "Don't validate json schema on every message");
-    desc.add_options()("log_conf", po::value<std::string>(), "The path to a custom logging.ini");
-    desc.add_options()("conf", po::value<std::string>(), "The path to a custom config.json");
+    desc.add_options()("config", po::value<std::string>(),
+                       "Full path to a config file.  If the file does not exist and has no extension, it will be "
+                       "looked up in the default config directory");
 
     po::variables_map vm;
 
@@ -679,6 +664,9 @@ int main(int argc, char* argv[]) {
 
         return boot(vm);
 
+    } catch (const BootException& e) {
+        EVLOG_error << "Failed to start up everest:\n" << e.what();
+        return EXIT_FAILURE;
     } catch (const std::exception& e) {
         EVLOG_error << "Main manager process exits because of caught exception:\n" << e.what();
         return EXIT_FAILURE;

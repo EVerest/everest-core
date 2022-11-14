@@ -60,6 +60,12 @@ else()
     include(find-mqttc)
 endif()
 
+set(EVEREST_FRAMEWORK_GENERATED_INC_DIR ${PROJECT_BINARY_DIR}/generated)
+configure_file(
+    include/compile_time_settings.hpp.in
+    ${EVEREST_FRAMEWORK_GENERATED_INC_DIR}/everest/compile_time_settings.hpp
+)
+
 # library code
 add_subdirectory(lib)
 

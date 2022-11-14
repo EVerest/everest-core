@@ -29,6 +29,7 @@ target_sources(framework
 
 target_include_directories(framework
     PUBLIC
+        $<BUILD_INTERFACE:${EVEREST_FRAMEWORK_GENERATED_INC_DIR}>
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/everest>
 )
