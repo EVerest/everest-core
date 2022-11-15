@@ -275,7 +275,7 @@ public:
     /// \brief Stops the ChargePoint, stops timers, transactions and the message queue, disconnects from the websocket
     bool stop();
 
-    /// \brief connects the websocket if it is not yet connected
+    /// \brief Connects the websocket if it is not yet connected
     void connect_websocket();
 
     /// \brief Disconnects the the websocket if it is connected
@@ -283,7 +283,9 @@ public:
 
     // public API for Core profile
 
-    /// \brief Authorizes the provided \p id_token against the central system
+    /// \brief Authorizes the provided \p id_token against the central system, LocalAuthorizationList or
+    /// AuthorizationCache depending on the values of the ConfigurationKeys LocalPreAuthorize, LocalAuthorizeOffline,
+    /// LocalAuthListEnabled and AuthorizationCacheEnabled
     /// \returns the IdTagInfo
     IdTagInfo authorize_id_token(CiString20Type id_token);
 
@@ -299,7 +301,7 @@ public:
     /// \brief Stores the given \p powermeter values for the given \p connector
     void on_meter_values(int32_t connector, const Powermeter& powermeter);
 
-    /// \brief Stores the given \p max_current for the given \p connector
+    /// \brief Stores the given \p max_current for the given \p connector offered to the EV
     void on_max_current_offered(int32_t connector, int32_t max_current);
 
     /// \brief Notifies chargepoint that a new session with the given \p session_id has been started at the given \p
