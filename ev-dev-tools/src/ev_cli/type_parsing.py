@@ -54,7 +54,7 @@ class TypeParser:
         if type_url not in TypeParser.all_types:
             TypeParser.all_types[type_url] = TypeParser.parse_type_url(type_url=type_url)
         type_dict = TypeParser.all_types[type_url]
-        type_path = helpers.resolve_everest_dir_path('types' / type_dict['type_relative_path'] .with_suffix('.json'))
+        type_path = helpers.resolve_everest_dir_path('types' / type_dict['type_relative_path'].with_suffix('.yaml'))
         if not type_path or not type_path.exists():
             raise helpers.EVerestParsingException(
                 '$ref: ' + type_url + f' referenced type file "{type_path} does not exist.')

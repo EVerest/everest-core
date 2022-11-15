@@ -22,8 +22,8 @@ from typing import List
 
 
 # Global variables
-everest_dirs = []
-work_dir = None
+everest_dirs: List[Path] = []
+work_dir: Path = None
 
 # jinja template environment and global variable
 env = j2.Environment(loader=j2.FileSystemLoader(Path(__file__).parent / 'templates'),
@@ -198,7 +198,10 @@ def set_impl_specific_path_vars(tmpl_data, output_path):
 def generate_module_loader_files(mod, output_dir):
     loader_files = []
 
-    mod_path = work_dir / f'modules/{mod}/manifest.json'
+    mod_path = work_dir / f'modules/{mod}/manifest.yaml'
+    if not mod_path.exists():
+        raise Exception(f'Could not find module manifest ({mod_path}')
+
     mod_def = helpers.load_validated_module_def(mod_path, validators['module'])
     tmpl_data = generate_tmpl_data_for_module(mod, mod_def)
 
@@ -229,7 +232,7 @@ def generate_module_loader_files(mod, output_dir):
 
 def generate_module_files(mod, update_flag):
     mod_files = {'core': [], 'interfaces': []}
-    mod_path = work_dir / f'modules/{mod}/manifest.json'
+    mod_path = work_dir / f'modules/{mod}/manifest.yaml'
     mod_def = helpers.load_validated_module_def(mod_path, validators['module'])
 
     tmpl_data = generate_tmpl_data_for_module(mod, mod_def)
@@ -385,7 +388,7 @@ def generate_module_files(mod, update_flag):
 
 
 def load_interface_definition(interface):
-    if_path = helpers.resolve_everest_dir_path(f'interfaces/{interface}.json')
+    if_path = helpers.resolve_everest_dir_path(f'interfaces/{interface}.yaml')
 
     if_def = helpers.load_validated_interface_def(if_path, validators['interface'])
 
@@ -408,6 +411,7 @@ def generate_interface_headers(interface, all_interfaces_flag, output_dir):
         if not all_interfaces_flag:
             raise
         else:
+            # FIXME (aw): should we really silently ignore that?
             print(f'Ignoring interface {interface} with reason: {e}')
             return
 
@@ -539,7 +543,7 @@ def interface_genhdr(args):
         _tmpl_data, _last_mtime = TypeParser.generate_type_info(type_with_namespace, all_types=True)
 
     output_dir = Path(args.output_dir).resolve() if args.output_dir else work_dir / \
-        'build/generated/generated/interfaces'
+        'build/generated/include/generated/interfaces'
     primary_update_strategy = 'force-update' if args.force else 'update'
 
     interfaces = args.interfaces
@@ -550,12 +554,13 @@ def interface_genhdr(args):
         for everest_dir in everest_dirs:
             if_dir = everest_dir / 'interfaces'
             interfaces += [if_path.stem for if_path in if_dir.iterdir() if (if_path.is_file()
-                                                                            and if_path.suffix == '.json')]
+                                                                            and if_path.suffix == '.yaml')]
 
     for interface in interfaces:
         if_parts = generate_interface_headers(interface, all_interfaces, output_dir)
 
         if not args.disable_clang_format:
+            # FIXME (aw): this broken, because in case all_interfaces is true, if_parts might be none for invalid interface files
             helpers.clang_format(args.clang_format_file, if_parts['base'])
             helpers.clang_format(args.clang_format_file, if_parts['exports'])
             helpers.clang_format(args.clang_format_file, if_parts['types'])
@@ -571,12 +576,20 @@ def helpers_genuuids(args):
     helpers.generate_some_uuids(args.count)
 
 
+def helpers_yaml2json(args):
+    helpers.yaml2json(Path(args.input).resolve(), Path(args.output).resolve())
+
+
+def helpers_json2yaml(args):
+    helpers.json2yaml(Path(args.input).resolve(), Path(args.output).resolve())
+
+
 def list_types_with_namespace(types=None) -> List:
     if not types:
         types = []
         for everest_dir in everest_dirs:
             types_dir = everest_dir / 'types'
-            types += list(types_dir.glob("**/*.json"))
+            types += list(types_dir.glob("**/*.yaml"))
 
     types_with_namespace = []
     for type_path in types:
@@ -702,6 +715,16 @@ def main():
     hlp_genuuid_parser.add_argument('count', type=int, default=3)
     hlp_genuuid_parser.set_defaults(action_handler=helpers_genuuids)
 
+    hlp_yaml2json_parser = hlp_actions.add_parser('yaml2json', help='convert yaml into json')
+    hlp_yaml2json_parser.add_argument('input', type=str, help='path to yaml input file')
+    hlp_yaml2json_parser.add_argument('output', type=str, help='path to json output file')
+    hlp_yaml2json_parser.set_defaults(action_handler=helpers_yaml2json)
+
+    hlp_json2yaml_parser = hlp_actions.add_parser('json2yaml', help='convert json into yaml')
+    hlp_json2yaml_parser.add_argument('input', type=str, help='path to json input file')
+    hlp_json2yaml_parser.add_argument('output', type=str, help='path to yaml output file')
+    hlp_json2yaml_parser.set_defaults(action_handler=helpers_json2yaml)
+
     types_actions = parser_types.add_subparsers(metavar='<action>', help='available actions', required=True)
     types_genhdr_parser = types_actions.add_parser(
         'generate-headers', aliases=['gh'], parents=[common_parser], help='generete type headers')
@@ -716,35 +739,42 @@ def main():
 
     args = parser.parse_args()
 
-    for entry in args.everest_dir:
-        everest_dir = Path(entry).resolve()
-        if not (everest_dir / 'interfaces').exists():
-            print('The default (".") xor supplied (via --everest-dir) everest directory\n'
-                  'doesn\'t contain an "interface" directory and therefore does not seem to be valid.\n'
-                  f'dir: {everest_dir}')
+    if 'everest_dir' in args:
+        # FIXME (aw): the helper commands do not set everest_dir, work_dir and schema_dirs, but the following common
+        #             code has to run for all other commands - we need some better check here than just checking for
+        #             'everest_dir' in args!
+        for entry in args.everest_dir:
+            everest_dir = Path(entry).resolve()
+            if not (everest_dir / 'interfaces').exists():
+                print('The default (".") xor supplied (via --everest-dir) everest directory\n'
+                      'doesn\'t contain an "interface" directory and therefore does not seem to be valid.\n'
+                      f'dir: {everest_dir}')
+                exit(1)
+            if not (everest_dir / 'types').exists():
+                print('The default (".") xor supplied (via --everest-dir) everest directory\n'
+                      'doesn\'t contain a "types" directory and therefore does not seem to be valid.\n'
+                      f'dir: {everest_dir}')
+                exit(1)
+            everest_dirs.append(everest_dir)
+
+        helpers.everest_dirs = everest_dirs
+
+        work_dir = Path(args.work_dir).resolve()
+
+        setup_jinja_env()
+
+
+        schemas_dir = Path(args.schemas_dir).resolve()
+        if not schemas_dir.exists():
+            print('The default ("../everest-framework/schemas") xor supplied (via --schemas-dir) schemas directory\n'
+                'doesn\'t exist.\n'
+                f'dir: {schemas_dir}')
             exit(1)
-        if not (everest_dir / 'types').exists():
-            print('The default (".") xor supplied (via --everest-dir) everest directory\n'
-                  'doesn\'t contain a "types" directory and therefore does not seem to be valid.\n'
-                  f'dir: {everest_dir}')
-            exit(1)
-        everest_dirs.append(everest_dir)
-    work_dir = Path(args.work_dir).resolve()
-    helpers.everest_dirs = everest_dirs
 
-    setup_jinja_env()
+        validators = helpers.load_validators(schemas_dir)
 
-    schemas_dir = Path(args.schemas_dir).resolve()
-    if not schemas_dir.exists():
-        print('The default ("../everest-framework/schemas") xor supplied (via --schemas-dir) schemas directory\n'
-              'doesn\'t exist.\n'
-              f'dir: {schemas_dir}')
-        exit(1)
-
-    validators = helpers.load_validators(schemas_dir)
-
-    TypeParser.validators = validators
-    TypeParser.templates = templates
+        TypeParser.validators = validators
+        TypeParser.templates = templates
 
     args.action_handler(args)
 

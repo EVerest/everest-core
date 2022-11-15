@@ -18,15 +18,16 @@ from typing import Dict, List, Tuple
 import keyword
 
 import json
-import jstyleson
 import jsonschema
+
+import yaml
 
 from uuid import uuid4
 
 import stringcase
 
 
-everest_dirs = []
+everest_dirs: List[Path] = []
 
 
 class EVerestParsingException(SystemExit):
@@ -224,9 +225,11 @@ def parse_ref(ref: str, prop_type, prop_info: Dict) -> Tuple[str, dict]:
     if ref not in TypeParser.all_types:
         TypeParser.all_types[ref] = TypeParser.parse_type_url(type_url=ref)
     type_dict = TypeParser.all_types[ref]
-    type_path = resolve_everest_dir_path('types' / type_dict['type_relative_path'] .with_suffix('.json'))
+
+    type_path = resolve_everest_dir_path('types' / type_dict['type_relative_path'] .with_suffix('.yaml'))
     if not type_path or not type_path.exists():
         raise EVerestParsingException('$ref: ' + ref + f' referenced type file "{type_path} does not exist.')
+
     (td, _mod) = TypeParser.load_type_definition(type_path)
     if 'types' in td and type_dict['type_name'] in td['types']:
         local_type_info = td['types'][type_dict['type_name']]
@@ -317,11 +320,13 @@ def parse_object(ob_name: str, json_schema: Dict, type_file: bool):
             if json_schema['$ref'] not in TypeParser.all_types:
                 TypeParser.all_types[json_schema['$ref']] = TypeParser.parse_type_url(type_url=json_schema['$ref'])
             type_dict = TypeParser.all_types[json_schema['$ref']]
-            type_path = resolve_everest_dir_path('types' / type_dict['type_relative_path'] .with_suffix('.json'))
+
+            type_path = resolve_everest_dir_path('types' / type_dict['type_relative_path'].with_suffix('.yaml'))
             if not type_path or not type_path.exists():
                 raise EVerestParsingException(
                     '$ref: ' + json_schema['$ref'] + f' referenced type file "{type_path} does not exist.')
             TypeParser.does_type_exist(type_url=json_schema['$ref'], json_type=json_schema['type'])
+
             prop_type = type_dict['namespaced_type']
             ob_dict['name'] = prop_type
             path = Path('generated/types') / \
@@ -370,10 +375,12 @@ def extended_build_type_info(name: str, info: dict, type_file=False) -> Tuple[di
             if info['$ref'] not in TypeParser.all_types:
                 TypeParser.all_types[info['$ref']] = TypeParser.parse_type_url(type_url=info['$ref'])
             type_dict = TypeParser.all_types[info['$ref']]
-            type_path = resolve_everest_dir_path('types' / type_dict['type_relative_path'] .with_suffix('.json'))
+
+            type_path = resolve_everest_dir_path('types' / type_dict['type_relative_path'] .with_suffix('.yaml'))
             if not type_path or not type_path.exists():
                 raise EVerestParsingException('$ref: ' + info['$ref'] +
                                               f' referenced type file "{type_path} does not exist.')
+
             (td, _mod) = TypeParser.load_type_definition(type_path)
             if 'types' in td and type_dict['type_name'] in td['types']:
                 local_type_info = td['types'][type_dict['type_name']]
@@ -401,10 +408,12 @@ def extended_build_type_info(name: str, info: dict, type_file=False) -> Tuple[di
             if info['items']['$ref'] not in TypeParser.all_types:
                 TypeParser.all_types[info['items']['$ref']] = TypeParser.parse_type_url(type_url=info['items']['$ref'])
             type_dict = TypeParser.all_types[info['items']['$ref']]
-            type_path = resolve_everest_dir_path('types' / type_dict['type_relative_path'] .with_suffix('.json'))
+
+            type_path = resolve_everest_dir_path('types' / type_dict['type_relative_path'] .with_suffix('.yaml'))
             if not type_path or not type_path.exists():
                 raise EVerestParsingException(
                     '$ref: ' + info['items']['$ref'] + f' referenced type file "{type_path} does not exist.')
+
             (td, _mod) = TypeParser.load_type_definition(type_path)
             if 'types' in td and type_dict['type_name'] in td['types']:
                 local_type_info = td['types'][type_dict['type_name']]
@@ -418,33 +427,32 @@ def extended_build_type_info(name: str, info: dict, type_file=False) -> Tuple[di
     return (type_info, enum_info)
 
 
-def load_validators(schema_path):
+def load_validators(schema_path: Path):
     # FIXME (aw): we should also patch the schemas like in everest-framework
     validators = {}
     for validator, filename in zip(
         ['interface', 'module', 'config', 'type'],
             ['interface', 'manifest', 'config', 'type']):
         try:
-            schema = jstyleson.loads((schema_path / f'{filename}.json').read_text())
+            schema = yaml.safe_load((schema_path / f'{filename}.yaml').read_text())
             jsonschema.Draft7Validator.check_schema(schema)
             validators[validator] = jsonschema.Draft7Validator(schema)
         except OSError as err:
             print(f'Could not open schema file {err.filename}: {err.strerror}')
             exit(1)
         except jsonschema.SchemaError as err:
-            print(f'Schema error in schema file {filename}.json')
+            print(f'Schema error in schema file {filename}.yaml')
             raise
-        except json.JSONDecodeError as err:
-            print(f'Could not parse json from file {filename}.json')
-            raise
+        except yaml.YAMLError as err:
+            raise Exception(f'Could not parse interface definition file {schema_path}') from err
 
     return validators
 
 
-def load_validated_interface_def(if_def_path, validator):
+def load_validated_interface_def(if_def_path: Path, validator):
     if_def = {}
     try:
-        if_def = jstyleson.loads(if_def_path.read_text())
+        if_def = yaml.safe_load(if_def_path.read_text())
         # validating interface
         validator.validate(if_def)
         # validate var/cmd subparts
@@ -462,43 +470,41 @@ def load_validated_interface_def(if_def_path, validator):
         raise Exception(f'Could not open interface definition file {err.filename}: {err.strerror}') from err
     except jsonschema.ValidationError as err:
         raise Exception(f'Validation error in interface definition file {if_def_path}: {err}') from err
-    except json.JSONDecodeError as err:
-        raise Exception(f'Could not parse json from interface definition file {if_def_path}') from err
+    except yaml.YAMLError as err:
+        raise Exception(f'Could not parse interface definition file {if_def_path}') from err
 
     return if_def
 
 
-def load_validated_type_def(type_def_path, validator):
+def load_validated_type_def(type_def_path: Path, validator):
     """Load a type definition from the provided path and validate it with the provided validator."""
-    type_def = {}
+
     try:
-        type_def = jstyleson.loads(type_def_path.read_text())
+        type_def = yaml.safe_load(type_def_path.read_text())
         # validating type definition
         validator.validate(type_def)
+
+        return type_def
     except OSError as err:
         raise Exception(f'Could not open type definition file {err.filename}: {err.strerror}') from err
     except jsonschema.ValidationError as err:
         raise Exception(f'Validation error in type definition file {type_def_path}') from err
-    except json.JSONDecodeError as err:
-        raise Exception(f'Could not parse json from type definition file {type_def_path}') from err
+    except yaml.YAMLError as err:
+        raise Exception(f'Could not parse interface definition file {type_def_path}') from err
 
     return type_def
 
 
-def load_validated_module_def(module_path, validator):
-    module_def = {}
+def load_validated_module_def(module_path: Path, validator):
     try:
-        module_def = jstyleson.loads(module_path.read_text())
+        module_def = yaml.safe_load(module_path.read_text())
         validator.validate(module_def)
     except OSError as err:
-        print(f'Could not open module definition file {err.filename}: {err.strerror}')
-        exit(1)
+        raise Exception(f'Could not open type definition file {err.filename}: {err.strerror}') from err
     except jsonschema.ValidationError as err:
-        print(f'Validation error in module definition file {module_path}')
-        raise
-    except json.JSONDecodeError as err:
-        print(f'Could not parse json from module definition file {module_path}')
-        raise
+        raise Exception(f'Validation error in module definition file {module_path}') from err
+    except yaml.YAMLError as err:
+        raise Exception(f'Could not parse interface definition file {module_path}') from err
 
     return module_def
 
@@ -507,6 +513,28 @@ def generate_some_uuids(count):
     for i in range(count):
         print(uuid4())
 
+
+def yaml2json(yaml_file: Path, json_file: Path):
+    if not yaml_file.exists():
+        print(f'The input file ({yaml_file}) does not exist')
+        exit(1)
+
+    with open(yaml_file, 'r') as yaml_content:
+        content_as_dict = yaml.safe_load(yaml_content)
+
+    with open(json_file, 'w') as json_content:
+        json.dump(content_as_dict, json_content, indent=2)
+
+def json2yaml(json_file: Path, yaml_file: Path):
+    if not json_file.exists():
+        print(f'The input file ({json_file}) does not exist')
+        exit(1)
+
+    with open(json_file, 'r') as json_content:
+        content_as_dict = json.load(json_content)
+
+    with open(yaml_file, 'w') as yaml_content:
+        yaml.safe_dump(content_as_dict, yaml_content, indent=2, sort_keys=False)
 
 def __check_for_match(blocks_def, line, line_no, file_path):
     match = re.search(blocks_def['regex_str'], line)
