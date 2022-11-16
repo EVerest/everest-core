@@ -14,6 +14,8 @@
 
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 // insert your custom include headers here
+#include <filesystem>
+
 #include <everest/timer.hpp>
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 
@@ -119,16 +121,16 @@ private:
      * @param firmware_file_path
      */
     void initialize_firmware_installation(const types::system::FirmwareUpdateRequest& firmware_update_request,
-                                          const boost::filesystem::path& firmware_file_path);
-    
+                                          const std::filesystem::path& firmware_file_path);
+
     /**
-     * @brief Executes the installation of the firmware specified in the given \p firmware_update_request . 
-     * 
-     * @param firmware_update_reqeust 
-     * @param firmware_file_path 
+     * @brief Executes the installation of the firmware specified in the given \p firmware_update_request .
+     *
+     * @param firmware_update_reqeust
+     * @param firmware_file_path
      */
     void install_signed_firmware(const types::system::FirmwareUpdateRequest& firmware_update_reqeust,
-                                 const boost::filesystem::path& firmware_file_path);
+                                 const std::filesystem::path& firmware_file_path);
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 

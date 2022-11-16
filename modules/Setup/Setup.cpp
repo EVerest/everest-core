@@ -3,16 +3,17 @@
 #include "Setup.hpp"
 
 #include <algorithm>
-#include <boost/filesystem.hpp>
-#include <boost/process.hpp>
 #include <cstdlib>
-#include <fmt/core.h>
 #include <fstream>
 #include <locale>
 
+#include <boost/process.hpp>
+
+#include <fmt/core.h>
+
 namespace module {
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 void to_json(json& j, const NetworkDeviceInfo& k) {
     j = json::object({{"interface", k.interface},
@@ -779,11 +780,11 @@ std::vector<WifiInfo> Setup::scan_wifi(const std::vector<NetworkDeviceInfo>& dev
     return wifi_info;
 }
 
-CmdOutput Setup::run_application(boost::filesystem::path file, std::vector<std::string> args) {
-    const auto path = boost::process::search_path(file);
+CmdOutput Setup::run_application(const std::string& name, std::vector<std::string> args) {
+    const auto path = boost::process::search_path(name);
 
-    if (!boost::filesystem::exists(path)) {
-        EVLOG_debug << fmt::format("The provided file '{}' does not exist", file.string());
+    if (path.empty()) {
+        EVLOG_debug << fmt::format("The application '{}' could not be found", name);
         return CmdOutput{"", {}, 1};
     }
 
