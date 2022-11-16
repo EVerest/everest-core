@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+
+#include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <map>
 #include <mutex>
@@ -15,8 +18,7 @@
 #include <unistd.h>
 
 #include <boost/exception/diagnostic_information.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/fstream.hpp>
+
 #include <boost/program_options.hpp>
 #include <everest/logging.hpp>
 #include <fmt/color.h>
@@ -30,7 +32,7 @@
 #include "controller/ipc.hpp"
 
 namespace po = boost::program_options;
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 using namespace Everest;
 
@@ -156,14 +158,13 @@ struct ModuleStartInfo {
         cpp,
         javascript
     };
-    ModuleStartInfo(const std::string& name, const std::string& printable_name, Language lang,
-                    const boost::filesystem::path& path) :
+    ModuleStartInfo(const std::string& name, const std::string& printable_name, Language lang, const fs::path& path) :
         name(name), printable_name(printable_name), language(lang), path(path) {
     }
     std::string name;
     std::string printable_name;
     Language language;
-    boost::filesystem::path path;
+    fs::path path;
 };
 
 static std::vector<char*> arguments_to_exec_argv(std::vector<std::string>& arguments) {
@@ -177,8 +178,7 @@ static std::vector<char*> arguments_to_exec_argv(std::vector<std::string>& argum
 }
 
 static SubprocessHandle exec_cpp_module(const ModuleStartInfo& module_info, const RuntimeSettings& rs) {
-
-    const auto exec_binary = module_info.path.string().c_str();
+    const auto exec_binary = module_info.path.c_str();
     std::vector<std::string> arguments = {module_info.printable_name,
                                           "--main_dir",
                                           rs.main_dir.string(),
@@ -207,7 +207,7 @@ static SubprocessHandle exec_javascript_module(const ModuleStartInfo& module_inf
     // instead of using setenv, using execvpe might be a better way for a controlled environment!
 
     // FIXME (aw): everest directory layout
-    const auto node_modules_path = boost::filesystem::canonical(rs.main_dir / "lib/everest/node_modules");
+    const auto node_modules_path = fs::canonical(rs.main_dir / "lib/everest/node_modules");
     setenv("NODE_PATH", node_modules_path.c_str(), 0);
 
     setenv("EV_MODULE", module_info.name.c_str(), 1);
@@ -337,19 +337,19 @@ static std::map<pid_t, std::string> start_modules(Config& config, MQTTAbstractio
 
         std::string binary_filename = fmt::format("{}", module_type);
         std::string javascript_library_filename = "index.js";
-        boost::filesystem::path module_path = rs.modules_dir / module_type;
+        auto module_path = rs.modules_dir / module_type;
         const auto printable_module_name = config.printable_identifier(module_name);
-        boost::filesystem::path binary_path = module_path / binary_filename;
-        boost::filesystem::path javascript_library_path = module_path / javascript_library_filename;
+        auto binary_path = module_path / binary_filename;
+        auto javascript_library_path = module_path / javascript_library_filename;
 
-        if (boost::filesystem::exists(binary_path)) {
+        if (fs::exists(binary_path)) {
             EVLOG_debug << fmt::format("module: {} ({}) provided as binary", module_name, module_type);
             modules_to_spawn.emplace_back(module_name, printable_module_name, ModuleStartInfo::Language::cpp,
                                           binary_path);
-        } else if (boost::filesystem::exists(javascript_library_path)) {
+        } else if (fs::exists(javascript_library_path)) {
             EVLOG_debug << fmt::format("module: {} ({}) provided as javascript library", module_name, module_type);
             modules_to_spawn.emplace_back(module_name, printable_module_name, ModuleStartInfo::Language::javascript,
-                                          boost::filesystem::canonical(javascript_library_path));
+                                          fs::canonical(javascript_library_path));
         } else {
             throw std::runtime_error(fmt::format("module: {} ({}) cannot be loaded because no C++ or JavaScript "
                                                  "library has been found\n"
@@ -412,7 +412,7 @@ static ControllerHandle start_controller(const RuntimeSettings& rs) {
     auto handle = create_subprocess();
 
     // FIXME (aw): hack to get the correct directory of the controller
-    const auto bin_dir = boost::filesystem::canonical("/proc/self/exe").parent_path();
+    const auto bin_dir = fs::canonical("/proc/self/exe").parent_path();
 
     auto controller_binary = bin_dir / "controller";
 
@@ -459,16 +459,18 @@ int boot(const po::variables_map& vm) {
 
     // dump all manifests if requested and terminate afterwards
     if (vm.count("dumpmanifests")) {
-        boost::filesystem::path dumpmanifests_path = boost::filesystem::path(vm["dumpmanifests"].as<std::string>());
+        auto dumpmanifests_path = fs::path(vm["dumpmanifests"].as<std::string>());
         EVLOG_debug << fmt::format("Dumping all known validated manifests into '{}'", dumpmanifests_path.string());
 
         auto manifests = Config::load_all_manifests(rs.modules_dir.string(), rs.schemas_dir.string());
 
         for (const auto& module : manifests.items()) {
-            std::string filename = module.key() + ".json";
-            boost::filesystem::path module_output_path = dumpmanifests_path / filename;
-            boost::filesystem::ofstream output_stream(module_output_path);
+            std::string filename = module.key() + ".yaml";
+            auto module_output_path = dumpmanifests_path / filename;
+            // FIXME (aw): should we check if the directory exists?
+            std::ofstream output_stream(module_output_path);
 
+            // FIXME (aw): this should be either YAML prettyfied, or better, directly copied
             output_stream << module.value().dump(DUMP_INDENT);
         }
 
@@ -477,7 +479,7 @@ int boot(const po::variables_map& vm) {
 
     std::unique_ptr<Config> config;
     try {
-        // FIXME (aw): we should also use boost::filesystem::path here as argument types
+        // FIXME (aw): we should also use std::filesystem::path here as argument types
         config = std::make_unique<Config>(rs.schemas_dir.string(), rs.config_file.string(), rs.modules_dir.string(),
                                           rs.interfaces_dir.string(), rs.types_dir.string());
     } catch (EverestInternalError& e) {
@@ -495,12 +497,12 @@ int boot(const po::variables_map& vm) {
 
     // dump config if requested
     if (vm.count("dump")) {
-        boost::filesystem::path dump_path = boost::filesystem::path(vm["dump"].as<std::string>());
+        auto dump_path = fs::path(vm["dump"].as<std::string>());
         EVLOG_debug << fmt::format("Dumping validated config and manifests into '{}'", dump_path.string());
 
-        boost::filesystem::path config_dump_path = dump_path / "config.json";
+        auto config_dump_path = dump_path / "config.json";
 
-        boost::filesystem::ofstream output_config_stream(config_dump_path);
+        std::ofstream output_config_stream(config_dump_path);
 
         output_config_stream << config->get_main_config().dump(DUMP_INDENT);
 
@@ -508,8 +510,8 @@ int boot(const po::variables_map& vm) {
 
         for (const auto& module : manifests.items()) {
             std::string filename = module.key() + ".json";
-            boost::filesystem::path module_output_path = dump_path / filename;
-            boost::filesystem::ofstream output_stream(module_output_path);
+            auto module_output_path = dump_path / filename;
+            std::ofstream output_stream(module_output_path);
 
             output_stream << module.value().dump(DUMP_INDENT);
         }
@@ -587,7 +589,7 @@ int boot(const po::variables_map& vm) {
                 shutdown_modules(module_handles, *config, mqtt_abstraction);
                 modules_started = false;
 
-		// Exit if a module died, this gives systemd a change to restart manager
+                // Exit if a module died, this gives systemd a change to restart manager
                 EVLOG_critical << "Exiting manager.";
                 return EXIT_FAILURE;
             } else {
@@ -608,8 +610,9 @@ int boot(const po::variables_map& vm) {
             const auto& payload = msg.json;
             if (payload.at("method") == "restart_modules") {
                 shutdown_modules(module_handles, *config, mqtt_abstraction);
-                config = std::make_unique<Config>(rs.schemas_dir.string(), rs.config_file.string(),
-                                                  rs.modules_dir.string(), rs.interfaces_dir.string(), rs.types_dir.string());
+                config =
+                    std::make_unique<Config>(rs.schemas_dir.string(), rs.config_file.string(), rs.modules_dir.string(),
+                                             rs.interfaces_dir.string(), rs.types_dir.string());
                 modules_started = false;
                 restart_modules = true;
             } else if (payload.at("method") == "check_config") {

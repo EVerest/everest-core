@@ -1,7 +1,8 @@
 #ifndef FRAMEWORK_EVEREST_RUNTIME_HPP
 #define FRAMEWORK_EVEREST_RUNTIME_HPP
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
+
 #include <boost/program_options.hpp>
 #include <everest/logging.hpp>
 #include <fmt/color.h>
@@ -12,7 +13,7 @@
 namespace Everest {
 
 namespace po = boost::program_options;
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 // FIXME (aw): should be everest wide or defined in liblog
 const int DUMP_INDENT = 4;

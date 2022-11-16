@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 
+#include <filesystem>
 #include <thread>
 
-#include <boost/filesystem.hpp>
 #include <fmt/format.h>
 #include <nlohmann/json.hpp>
 
@@ -17,7 +17,7 @@
 using json = nlohmann::json;
 
 int main(int argc, char* argv[]) {
-    namespace fs = boost::filesystem;
+    namespace fs = std::filesystem;
 
     if (strcmp(argv[0], MAGIC_CONTROLLER_ARG0)) {
         fmt::print(stderr, "This binary does not yet support to be started manually\n");

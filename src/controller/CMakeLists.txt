@@ -6,7 +6,6 @@ target_link_libraries(controller-ipc
 )
 
 find_package(Threads REQUIRED)
-find_package(Boost COMPONENTS filesystem REQUIRED)
 
 # FIXME (aw): refactor the yaml_loader into on lib, so it can be shared somehow, similar to the controller-ipc
 add_executable(controller 
@@ -26,7 +25,6 @@ target_include_directories(controller PRIVATE
 target_link_libraries(controller
     PRIVATE
         Threads::Threads
-        Boost::filesystem
 
         nlohmann_json::nlohmann_json
 
@@ -38,6 +36,6 @@ target_link_libraries(controller
         ryml::ryml
 )
 
-target_compile_features(controller PRIVATE cxx_std_14)
+target_compile_features(controller PRIVATE cxx_std_17)
 
 install(TARGETS controller RUNTIME)

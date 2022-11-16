@@ -21,7 +21,6 @@ list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 # dependencies
 find_package(Boost
     COMPONENTS
-        filesystem
         program_options
         system
         thread

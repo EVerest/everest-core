@@ -3,11 +3,11 @@
 #ifndef UTILS_CONFIG_HPP
 #define UTILS_CONFIG_HPP
 
+#include <filesystem>
 #include <regex>
 #include <set>
 #include <string>
 
-#include <boost/filesystem.hpp>
 #include <nlohmann/json-schema.hpp>
 
 #include <utils/types.hpp>
@@ -16,7 +16,7 @@ namespace Everest {
 using json = nlohmann::json;
 using json_uri = nlohmann::json_uri;
 using json_validator = nlohmann::json_schema::json_validator;
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 ///
 /// \brief A structure that contains all available schemas

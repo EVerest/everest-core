@@ -9,8 +9,6 @@ target_link_libraries(manager
         Boost::program_options
 )
 
-# FIXME (aw): only necessary due to invalid conversion from
-#             'const char*' to 'char*'
 target_compile_features(manager PRIVATE cxx_std_17)
 
 install(

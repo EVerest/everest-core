@@ -3,12 +3,13 @@
 #ifndef UTILS_YAML_LOADER_HPP
 #define UTILS_YAML_LOADER_HPP
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
+
 #include <nlohmann/json.hpp>
 
 namespace Everest {
 
-nlohmann::ordered_json load_yaml(const boost::filesystem::path& path);
+nlohmann::ordered_json load_yaml(const std::filesystem::path& path);
 
 }
 

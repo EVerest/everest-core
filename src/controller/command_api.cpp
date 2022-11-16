@@ -11,7 +11,7 @@
 #include <utils/yaml_loader.hpp>
 
 using json = nlohmann::json;
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 CommandApi::CommandApi(const Config& config, RPC& rpc) : config(config), rpc(rpc) {
 }

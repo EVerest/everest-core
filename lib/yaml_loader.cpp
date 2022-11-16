@@ -49,8 +49,8 @@ static nlohmann::ordered_json ryml_to_nlohmann_json(const c4::yml::NodeRef& ryml
     }
 }
 
-static std::string load_yaml_content(boost::filesystem::path path) {
-    namespace fs = boost::filesystem;
+static std::string load_yaml_content(std::filesystem::path path) {
+    namespace fs = std::filesystem;
 
     if (path.extension().string() == ".json") {
         EVLOG_info << fmt::format("Deprecated: called load_yaml() with .json extension ('{}')", path.string());
@@ -81,7 +81,7 @@ static std::string load_yaml_content(boost::filesystem::path path) {
 
 namespace Everest {
 
-nlohmann::ordered_json load_yaml(const boost::filesystem::path& path) {
+nlohmann::ordered_json load_yaml(const std::filesystem::path& path) {
     const auto content = load_yaml_content(path);
     // FIXME (aw): using parse_in_place would be faster but that will need the file as a whole char buffer
     const auto tree = ryml::parse_in_arena(ryml::to_csubstr(content));

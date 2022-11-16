@@ -10,8 +10,6 @@
 #include <random>
 #include <unordered_map>
 
-#include <boost/filesystem.hpp>
-
 #include <nlohmann/json.hpp>
 
 #include "command_api.hpp"

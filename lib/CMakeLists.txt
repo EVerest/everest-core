@@ -42,7 +42,6 @@ target_link_libraries(framework
 
         everest::log
     PRIVATE
-        Boost::filesystem
         Boost::system
         Boost::thread
         Boost::program_options
@@ -50,3 +49,7 @@ target_link_libraries(framework
         mqttc
         ryml::ryml
 )
+
+# FIXME (aw): c++17 doesn't need necessarily to be public, but our
+#             headers are messed up
+target_compile_features(framework PUBLIC cxx_std_17)
