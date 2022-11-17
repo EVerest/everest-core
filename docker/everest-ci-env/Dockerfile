@@ -16,4 +16,5 @@ RUN pip install \
     setproctitle \
     jsonschema \
     commentjson \
-    coloredlogs
+    coloredlogs \
+    pyyaml
