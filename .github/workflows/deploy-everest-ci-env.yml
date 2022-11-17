@@ -4,17 +4,19 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - main
+      - '**'
     tags:
       - 'v*'
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: everest/everest-ci-env
 
 jobs:
   build-and-push:
     runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        image_name: [everest-ci-env, everest-docu]
     steps:
     - name: Checkout Dockerfile
       uses: actions/checkout@v2
@@ -24,11 +26,22 @@ jobs:
         ref: ${{github.ref}}
         token: ${{secrets.SA_GITHUB_PAT}}
         fetch-depth: 0
+    - name: Get context / Path of Dockerfile
+      id: get-context
+      run: |
+        if [ -f everest-utils/docker/${{matrix.image_name}}/Dockerfile ]; then
+          echo "::set-output name=path::everest-utils/docker/${{matrix.image_name}}/"
+        elif [ -f everest-utils/docker/${{matrix.image_name}}/.devcontainer/Dockerfile ]; then
+          echo "::set-output name=path::everest-utils/docker/${{matrix.image_name}}/.devcontainer/"
+        else
+          echo "No Dockerfile found for image ${{matrix.image_name}}!"
+          exit 1
+        fi
     - name: Extract metadata
       id: meta
       uses: docker/metadata-action@v3
       with:
-        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        images: ${{ env.REGISTRY }}/everest/${{ matrix.image_name }}
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v1
       with:
@@ -45,7 +58,7 @@ jobs:
     - name: Build and push
       uses: docker/build-push-action@v3
       with:
-        context: everest-utils/docker/everest-ci-env
+        context: ${{ steps.get-context.outputs.path }}
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}    
