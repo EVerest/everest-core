@@ -31,7 +31,7 @@ config:
     type: integer
     default: 600
   MessageLogPath:
-    description: Path to a folger where logs of all OCPP messages get written to.
+    description: Path to folder where logs of all OCPP messages get written to
     type: string
     default: /tmp/everest_ocpp_logs
 provides:
