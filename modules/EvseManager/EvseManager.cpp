@@ -698,7 +698,9 @@ void EvseManager::cable_check() {
                     ok = false;
                 } else {
                     // wait until the voltage is back to safe level
-                    float minvoltage = powersupply_capabilities.min_export_voltage_V;
+                    float minvoltage = (config.switch_to_minimum_voltage_after_cable_check
+                                            ? powersupply_capabilities.min_export_voltage_V
+                                            : 500);
 
                     // We do not want to shut down power supply
                     if (minvoltage < 60) {

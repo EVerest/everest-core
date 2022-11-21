@@ -64,6 +64,7 @@ struct Conf {
     bool ac_with_soc;
     bool dbg_hlc_auth_after_tstep;
     int hack_sleep_in_cable_check;
+    bool switch_to_minimum_voltage_after_cable_check;
 };
 
 class EvseManager : public Everest::ModuleBase {
