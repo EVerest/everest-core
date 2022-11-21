@@ -88,12 +88,12 @@ void EvseManager::ready() {
             r_hlc[0]->call_set_DC_EVSECurrentRegulationTolerance(
                 powersupply_capabilities.current_regulation_tolerance_A);
             r_hlc[0]->call_set_DC_EVSEPeakCurrentRipple(powersupply_capabilities.peak_current_ripple_A);
-            
+
             types::iso15118_charger::DC_EVSEPresentVoltage_Current present_values;
             present_values.EVSEPresentVoltage = 0;
             present_values.EVSEPresentCurrent = 0;
             r_hlc[0]->call_set_DC_EVSEPresentVoltageCurrent(present_values);
-            
+
             r_hlc[0]->call_set_EVSEEnergyToBeDelivered(10000);
 
             types::iso15118_charger::DC_EVSEMaximumLimits evseMaxLimits;
@@ -382,7 +382,7 @@ void EvseManager::ready() {
 
     r_bsp->subscribe_nr_of_phases_available([this](int n) { signalNrOfPhasesAvailable(n); });
 
-    if (r_powermeter_billing().size()>0) {
+    if (r_powermeter_billing().size() > 0) {
         r_powermeter_billing()[0]->subscribe_powermeter([this](types::powermeter::Powermeter p) {
             // Inform charger about current charging current. This is used for slow OC detection.
             if (p.current_A.is_initialized() && p.current_A.get().L1.is_initialized() &&
@@ -515,7 +515,7 @@ void EvseManager::setup_fake_DC_mode() {
     transfer_modes.insert(transfer_modes.end(), "DC_unique");
     r_hlc[0]->call_set_DC_EVSECurrentRegulationTolerance(powersupply_capabilities.current_regulation_tolerance_A);
     r_hlc[0]->call_set_DC_EVSEPeakCurrentRipple(powersupply_capabilities.peak_current_ripple_A);
-    
+
     types::iso15118_charger::DC_EVSEPresentVoltage_Current present_values;
     present_values.EVSEPresentVoltage = 400; // FIXME: set a correct values
     present_values.EVSEPresentCurrent = 0;
@@ -737,6 +737,10 @@ void EvseManager::cable_check() {
                 }
             }
         }
+
+        // Sleep before submitting result to spend more time in cable check. This is needed for some solar inverters
+        // used as DC chargers for them to warm up.
+        sleep(config.hack_sleep_in_cable_check);
 
         // submit result to HLC
         r_hlc[0]->call_cableCheck_Finished(ok);

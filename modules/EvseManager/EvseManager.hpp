@@ -63,6 +63,7 @@ struct Conf {
     bool ac_enforce_hlc;
     bool ac_with_soc;
     bool dbg_hlc_auth_after_tstep;
+    int hack_sleep_in_cable_check;
 };
 
 class EvseManager : public Everest::ModuleBase {
@@ -125,7 +126,6 @@ public:
 
     const std::vector<std::unique_ptr<powermeterIntf>>& r_powermeter_billing();
     const std::vector<std::unique_ptr<powermeterIntf>>& r_powermeter_energy_management();
-
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
