@@ -30,4 +30,5 @@ ev_add_modules(
     SunspecScanner
     System
     YetiDriver
+    PowermeterBSM
 )

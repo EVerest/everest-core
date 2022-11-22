@@ -35,6 +35,10 @@ option(CREATE_SYMLINKS "Create symlinks to javascript modules and auxillary file
 option(CMAKE_RUN_CLANG_TIDY "Run clang-tidy" OFF)
 option(BUILD_TESTING "Run unit tests" OFF)
 
+# This is a flag for building development tests, but not necessarily to run them, for expample in case
+# tests requires hardware.
+option(BUILD_DEV_TESTS "Build dev tests" OFF)
+
 # dependencies
 require_ev_cli_version("0.0.16")
 
