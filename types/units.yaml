@@ -52,8 +52,7 @@ types:
         description: L3 value
         type: number
   Power:
-    description: >-
-      Instantaneous power in Watt. Negative values are exported, positive
+    description: Instantaneous power in Watt. Negative values are exported, positive
       values imported Energy.
     type: object
     additionalProperties: false
@@ -91,3 +90,23 @@ types:
       L3:
         description: L3 value only
         type: number
+  ReactivePower:
+    description: Reactive power VAR
+    type: object
+    additionalProperties: false
+    required:
+      - total
+    properties:
+      total:
+        description: VAR total
+        type: number
+      VARphA:
+        description: VAR phase A
+        type: number
+      VARphB:
+        description: VAR phase B
+        type: number
+      VARphC:
+        description: VAR phase C
+        type: number
+

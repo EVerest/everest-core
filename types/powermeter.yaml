@@ -11,6 +11,9 @@ types:
       timestamp:
         description: Timestamp of measurement
         type: number
+      timestamp_RFC3339_UTC:
+        description: Timepoint when reached the everest module.
+        type: string
       meter_id:
         description: A (user defined) meter if (e.g. id printed on the case)
         type: string
@@ -26,8 +29,7 @@ types:
         type: object
         $ref: /units#/Energy
       power_W:
-        description: >-
-          Instantaneous power in Watt. Negative values are exported, positive
+        description: Instantaneous power in Watt. Negative values are exported, positive
           values imported Energy.
         type: object
         $ref: /units#/Power
@@ -35,6 +37,10 @@ types:
         description: Voltage in Volts
         type: object
         $ref: /units#/Voltage
+      VAR:
+        description: Reactive power VAR
+        type: object
+        $ref: /units#/ReactivePower
       current_A:
         description: Current in ampere
         type: object
