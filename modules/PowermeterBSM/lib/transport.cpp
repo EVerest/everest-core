@@ -58,7 +58,8 @@ bool ModbusTransport::trigger_snapshot_generation_BSM() {
 
 bool ModbusTransport::trigger_snapshot_generation_BSM_OCMF() {
 
-    return trigger_snapshot_generation(protocol_related_types::ModbusRegisterAddress(41795_sma));
+    return trigger_snapshot_generation(protocol_related_types::ModbusRegisterAddress(40525_sma));
+    // return trigger_snapshot_generation(protocol_related_types::ModbusRegisterAddress(41795_sma));
 }
 
 transport::DataVector ModbusTransport::fetch(const known_model::AddressData& ad) {
