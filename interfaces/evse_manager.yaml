@@ -31,6 +31,9 @@ cmds:
       id_tag:
         description: The authorized id tag
         type: string
+      pnc:
+        description: true Pnc auth, false EIM auth
+        type: boolean
   withdraw_authorization:
     description: >-
       Call to signals that EVSE is not further authorized to start a transaction

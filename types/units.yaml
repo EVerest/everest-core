@@ -4,52 +4,54 @@ types:
     description: Current in Ampere
     type: object
     additionalProperties: false
-    required:
-      - L1
     properties:
+      DC:
+        description: DC current
+        type: number
       L1:
-        description: L1 value only
+        description: AC L1 value only
         type: number
       L2:
-        description: L2 value only
+        description: AC L2 value only
         type: number
       L3:
-        description: L3 value only
+        description: AC L3 value only
         type: number
       N:
-        description: Neutral value only
+        description: AC Neutral value only
         type: number
   Voltage:
     description: Voltage in Volt
     type: object
     additionalProperties: false
-    required:
-      - L1
     properties:
+      DC:
+        description: DC voltage
+        type: number
       L1:
-        description: L1 value only
+        description: AC L1 value only
         type: number
       L2:
-        description: L2 value only
+        description: AC L2 value only
         type: number
       L3:
-        description: L3 value only
+        description: AC L3 value only
         type: number
   Frequency:
-    description: Frequency in Hertz
+    description: 'AC only: Frequency in Hertz'
     type: object
     additionalProperties: false
     required:
-      - L1
+    - L1
     properties:
       L1:
-        description: L1 value
+        description: AC L1 value
         type: number
       L2:
-        description: L2 value
+        description: AC L2 value
         type: number
       L3:
-        description: L3 value
+        description: AC L3 value
         type: number
   Power:
     description: Instantaneous power in Watt. Negative values are exported, positive
@@ -57,38 +59,38 @@ types:
     type: object
     additionalProperties: false
     required:
-      - total
+    - total
     properties:
       total:
-        description: Sum value
+        description: DC / AC Sum value
         type: number
       L1:
-        description: L1 value only
+        description: AC L1 value only
         type: number
       L2:
-        description: L2 value only
+        description: AC L2 value only
         type: number
       L3:
-        description: L3 value only
+        description: AC L3 value only
         type: number
   Energy:
     description: Energy in Wh.
     type: object
     additionalProperties: false
     required:
-      - total
+    - total
     properties:
       total:
-        description: Sum value (which is relevant for billing)
+        description: DC / AC Sum value (which is relevant for billing)
         type: number
       L1:
-        description: L1 value only
+        description: AC L1 value only
         type: number
       L2:
-        description: L2 value only
+        description: AC L2 value only
         type: number
       L3:
-        description: L3 value only
+        description: AC L3 value only
         type: number
   ReactivePower:
     description: Reactive power VAR
@@ -110,3 +112,4 @@ types:
         description: VAR phase C
         type: number
 
+        

@@ -6,7 +6,7 @@ types:
       id tag
     type: object
     required:
-      - reason
+    - reason
     properties:
       reason:
         description: Reason for stopping the transaction
@@ -31,17 +31,17 @@ types:
         DeAuthorized: The transaction was stopped because of the authorization status in a StartTransaction.conf
     type: string
     enum:
-      - EmergencyStop
-      - EVDisconnected
-      - HardReset
-      - Local
-      - Other
-      - PowerLoss
-      - Reboot
-      - Remote
-      - SoftReset
-      - UnlockCommand
-      - DeAuthorized
+    - EmergencyStop
+    - EVDisconnected
+    - HardReset
+    - Local
+    - Other
+    - PowerLoss
+    - Reboot
+    - Remote
+    - SoftReset
+    - UnlockCommand
+    - DeAuthorized
   StartSessionReason:
     description: >-
       Reason for session start
@@ -49,8 +49,8 @@ types:
         Authorized: Session was started because a valid authorization was presented and the EVSE is authorized to start a transaction immediately when an EV is plugged in
     type: string
     enum:
-      - EVConnected
-      - Authorized
+    - EVConnected
+    - Authorized
   SetLocalMaxCurrentResult:
     description: >-
       Result for set_local_max_current command
@@ -59,9 +59,9 @@ types:
         Error_Hardware: There was a hardware error on setting the LocalMaxCurrent
     type: string
     enum:
-      - Success
-      - Error_OutOfRange
-      - Error_Hardware
+    - Success
+    - Error_OutOfRange
+    - Error_Hardware
   SwitchThreePhasesWhileChargingResult:
     description: >-
       Returns success or error code
@@ -71,23 +71,29 @@ types:
         Error_Hardware: There was a hardware error on switching phases
     type: string
     enum:
-      - Success
-      - Error_NotSupported
-      - Error_NotCharging
-      - Error_Hardware
+    - Success
+    - Error_NotSupported
+    - Error_NotCharging
+    - Error_Hardware
   SessionEventEnum:
     description: >-
       Session Event enum
         Enabled: Signaled when the EVSE is enabled (e.g. after an enable command)
         Disabled: Signaled when the EVSE is disabled (e.g. after a disable command)
         SessionStarted: Signaled when a session has been started. A session has been started either when an EV is plugged in or the user has been authorized to start a transaction (e.g. after an authorize command)
-        TransactionStarted: Signaled when a transaction has been started. Transaction starts at the point that all conditions for charging are met: EV is connected and user has been authorized.
         AuthRequired: Signaled when an EVSE needs authorization to start a transaction
+        TransactionStarted: Signaled when a transaction has been started. Transaction starts at the point that all conditions for charging are met: EV is connected and user has been authorized
+        PrepareCharging: EVSE started to prepare for charging. DC: CableCheck, PreCharge, PowerDelivery. AC: wait for the car to proceed to state C/D
+        ChargingStarted: DC: CurrentDemand has started. AC: Auth is ok and car requested power (state C/D)
         ChargingPausedEV: Signaled when charging is paused by the EV
         ChargingPausedEVSE: Signaled when charging is paused by the EVSE
+        ChargingResumed: Charging has resumed from a pause
+        StoppingCharging: EVSE has started to stop the charging process. DC: CurrentDemand has finished, now doing WeldingCheck etc, AC: Wait for car to return to state B or A
+        ChargingFinished: Charging is finished. Essentially the same as TransactionFinished, but emitted for clariy
         TransactionFinished: Signaled when the transaction finished. Transaction finishes at the point where one of the preconditions for charging irrevocably becomes false: When a user swipes to stop the transaction and the stop is authorized.
         SessionFinished: Signaled when the transaction finished. Session finishes at the point that the EVSE is available again (no cable plugged)
         Error: Signaled when an error occured
+        AllErrorsCleared: Signalled when all errors are cleared
         PermanentFault: Signaled when there is a permanent fault at the EVSE
         ReservationStart: Signaled when a reservation starts
         ReservationEnd: Signaled when a reservation ends
@@ -95,29 +101,34 @@ types:
         ReplugFinished: Signaled when the virtual replug process has finished
     type: string
     enum:
-      - Enabled
-      - Disabled
-      - SessionStarted
-      - TransactionStarted
-      - AuthRequired
-      - ChargingPausedEV
-      - ChargingPausedEVSE
-      - ChargingResumed
-      - TransactionFinished
-      - SessionFinished
-      - Error
-      - PermanentFault
-      - ReservationStart
-      - ReservationEnd
-      - ReplugStarted
-      - ReplugFinished
+    - Enabled
+    - Disabled
+    - SessionStarted
+    - AuthRequired
+    - TransactionStarted
+    - PrepareCharging
+    - ChargingStarted
+    - ChargingPausedEV
+    - ChargingPausedEVSE
+    - ChargingResumed
+    - StoppingCharging
+    - ChargingFinished
+    - TransactionFinished
+    - SessionFinished
+    - Error
+    - AllErrorsCleared
+    - PermanentFault
+    - ReservationStart
+    - ReservationEnd
+    - ReplugStarted
+    - ReplugFinished
   SessionStarted:
     description: Data for the SessionStarted event
     type: object
     additionalProperties: false
     required:
-      - timestamp
-      - reason
+    - timestamp
+    - reason
     properties:
       timestamp:
         description: Session start time in RFC3339 format
@@ -132,9 +143,9 @@ types:
     type: object
     additionalProperties: false
     required:
-      - timestamp
-      - energy_Wh_import
-      - id_tag
+    - timestamp
+    - energy_Wh_import
+    - id_tag
     properties:
       timestamp:
         description: Transaction start time in RFC3339 format
@@ -160,8 +171,8 @@ types:
     type: object
     additionalProperties: false
     required:
-      - timestamp
-      - energy_Wh_import
+    - timestamp
+    - energy_Wh_import
     properties:
       timestamp:
         description: Transaction end time in RFC3339 format
@@ -197,22 +208,22 @@ types:
         HLC: Signals a HLC error
     type: string
     enum:
-      - Car
-      - CarDiodeFault
-      - Relais
-      - RCD
-      - VentilationNotAvailable
-      - OverCurrent
-      - Internal
-      - SLAC
-      - HLC
+    - Car
+    - CarDiodeFault
+    - Relais
+    - RCD
+    - VentilationNotAvailable
+    - OverCurrent
+    - Internal
+    - SLAC
+    - HLC
   SessionEvent:
     description: Emits all events related to sessions
     type: object
     additionalProperties: false
     required:
-      - uuid
-      - event
+    - uuid
+    - event
     properties:
       uuid:
         description: >-
@@ -248,8 +259,8 @@ types:
     type: object
     additionalProperties: false
     required:
-      - max_current
-      - nr_of_phases_available
+    - max_current
+    - nr_of_phases_available
     properties:
       uuid:
         description: This module's UUID for global identification

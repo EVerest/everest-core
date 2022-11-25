@@ -105,8 +105,7 @@ void powermeterImpl::worker() {
                 sunspec_model::ACMeter acmeter(data);
                 types::powermeter::Powermeter result;
 
-                result.timestamp = 0; // FIXME: current implementation is a float that cant store a 32/31 bit
-                result.timestamp_RFC3339_UTC = Everest::Date::to_rfc3339(date::utc_clock::now());
+                result.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
 
                 result.meter_id = mod->config.meter_id;
 

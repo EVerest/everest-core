@@ -47,18 +47,14 @@ active_modules:
   evse_manager:
     config_module:
       ac_enforce_hlc: false
-      ac_hlc_enabled: false
+      ac_hlc_enabled: true
       ac_hlc_use_5percent: false
       ac_nominal_voltage: 230
-      ac_with_soc: false
       charge_mode: AC
       connector_id: 1
       country_code: DE
-      dbg_hlc_auth_after_tstep: false
-      dc_current_regulation_tolerance: 5
-      dc_peak_current_ripple: 5
       ev_receipt_required: false
-      evse_id: '1'
+      evse_id: DE*PNX*E12345*1
       has_ventilation: true
       max_current: 32
       payment_enable_contract: true
@@ -70,17 +66,17 @@ active_modules:
       three_phases: true
     connections:
       bsp:
-        - implementation_id: board_support
-          module_id: yeti_driver
+      - implementation_id: board_support
+        module_id: yeti_driver
       hlc:
-        - implementation_id: charger
-          module_id: iso15118_charger
+      - implementation_id: charger
+        module_id: iso15118_charger
       powermeter:
-        - implementation_id: powermeter
-          module_id: yeti_driver
+      - implementation_id: powermeter
+        module_id: yeti_driver
       slac:
-        - implementation_id: evse
-          module_id: slac
+      - implementation_id: evse
+        module_id: slac
     module: EvseManager
   grid_connection_point:
     config_module:
@@ -100,12 +96,10 @@ active_modules:
     connections: {}
     module: JsCarV2G
   iso15118_charger:
-    config_implementation:
-      main:
-        device: auto
-        mqtt_base_path: everest_external/iso15118/java
+    config_module:
+      device: auto
     connections: {}
-    module: JsRiseV2G
+    module: PyJosev
   persistent_store:
     config_module:
       sqlite_db_file_path: everest_persistent_store.db

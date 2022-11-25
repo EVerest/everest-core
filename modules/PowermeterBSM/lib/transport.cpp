@@ -103,7 +103,7 @@ transport::DataVector SerialCommHubTransport::fetch(protocol_related_types::Suns
             remaining_register_to_read > max_regiser_read ? max_regiser_read : remaining_register_to_read;
 
         types::serial_comm_hub_requests::Result serial_com_hub_result =
-            m_serial_hub.call_modbus_read_holding_registers(m_unit_id, read_address.val, register_to_read);
+            m_serial_hub.call_modbus_read_holding_registers(m_unit_id, read_address.val, register_to_read, 0);
 
         if (not serial_com_hub_result.value.has_value())
             throw std::runtime_error("no result from serial com hub!");
@@ -157,7 +157,7 @@ bool SerialCommHubTransport::trigger_snapshot_generation(
     types::serial_comm_hub_requests::VectorUint16 trigger_create_snapshot_command{{0x0002}};
 
     types::serial_comm_hub_requests::StatusCodeEnum write_result =
-        m_serial_hub.call_modbus_write_multiple_registers(m_unit_id, snapshot_trigger_register.val, trigger_create_snapshot_command);
+        m_serial_hub.call_modbus_write_multiple_registers(m_unit_id, snapshot_trigger_register.val, trigger_create_snapshot_command, 0);
 
     if (not(types::serial_comm_hub_requests::StatusCodeEnum::Success == write_result))
         throw(""s + __PRETTY_FUNCTION__ + " SerialCommHub error : "s +
@@ -168,7 +168,7 @@ bool SerialCommHubTransport::trigger_snapshot_generation(
     while (counter-- > 0) {
 
         types::serial_comm_hub_requests::Result serial_com_hub_result =
-            m_serial_hub.call_modbus_read_holding_registers(m_unit_id, snapshot_trigger_register.val, true);
+            m_serial_hub.call_modbus_read_holding_registers(m_unit_id, snapshot_trigger_register.val, true, 0);
 
         if (not serial_com_hub_result.value.has_value())
             throw std::runtime_error("no result from serial com hub!");

@@ -1,14 +1,15 @@
 active_modules:
-  iso15118_charger:
+  iso15118_charger_1:
     module: PyJosev
     config_module:
       device: auto
-  iso15118_car:
+      supported_DIN70121: true
+  iso15118_car_1:
     module: JsCarV2G
     config_implementation:
       main:
         stack_implementation: RISE-V2G
-        mqtt_base_path: everest_external/iso15118/ev
+        mqtt_base_path: everest_external/iso15118/ev_1
         device: auto
   evse_manager_1:
     module: EvseManager
@@ -19,12 +20,11 @@ active_modules:
       country_code: DE
       rcd_enabled: true
       evse_id: DE*PNX*E12345*1
+      evse_id_din: 49A80737A45678
       session_logging: true
       session_logging_xml: false
       session_logging_path: /tmp
-      ac_hlc_enabled: true
-      ac_hlc_use_5percent: false
-      ac_enforce_hlc: false
+      charge_mode: DC
     connections:
       bsp:
         - module_id: yeti_driver_1
@@ -33,11 +33,17 @@ active_modules:
         - module_id: yeti_driver_1
           implementation_id: powermeter
       slac:
-        - module_id: slac
+        - module_id: slac_1
           implementation_id: evse
       hlc:
-        - module_id: iso15118_charger
+        - module_id: iso15118_charger_1
           implementation_id: charger
+      powersupply_DC:
+        - module_id: powersupply_dc
+          implementation_id: main
+      imd:
+        - module_id: imd
+          implementation_id: main
   evse_manager_2:
     module: EvseManager
     config_module:
@@ -64,8 +70,12 @@ active_modules:
     module: JsYetiSimulator
   yeti_driver_2:
     module: JsYetiSimulator
-  slac:
+  slac_1:
     module: JsSlacSimulator
+  powersupply_dc:
+    module: JsDCSupplySimulator
+  imd:
+    module: JsIMDSimulator
   car_simulator_1:
     module: JsCarSimulator
     config_module:
@@ -78,10 +88,10 @@ active_modules:
         - module_id: yeti_driver_1
           implementation_id: yeti_simulation_control
       ev:
-        - module_id: iso15118_car
+        - module_id: iso15118_car_1
           implementation_id: ev
       slac:
-        - module_id: slac
+        - module_id: slac_1
           implementation_id: ev
   car_simulator_2:
     module: JsCarSimulator

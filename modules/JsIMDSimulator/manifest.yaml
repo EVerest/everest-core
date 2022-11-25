@@ -4,22 +4,20 @@ provides:
     interface: isolation_monitor
     description: Main interface for the IMD
     config:
-      status:
-        description: Status to return after simulated measurement
-        type: string
-        enum:
-          - Invalid
-          - Valid
-          - Warning
-          - Fault
-          - No_IMD
-        default: Valid
-      duration:
-        description: Measurement duration in seconds
+      resistance_N_Ohm:
+        description: Resistance to return for the simulated measurements in Ohm
+        type: number
+        default: 900000
+      resistance_P_Ohm:
+        description: Resistance to return for the simulated measurements in Ohm
+        type: number
+        default: 910000
+      interval:
+        description: Measurement update interval in milliseconds
         type: integer
-        default: 5
+        default: 1000
 enable_external_mqtt: true
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
   authors:
-    - Cornelius Claussen (Pionix GmbH)
+  - Cornelius Claussen (Pionix GmbH)

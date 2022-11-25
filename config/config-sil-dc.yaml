@@ -10,27 +10,23 @@ active_modules:
         stack_implementation: RISE-V2G
         mqtt_base_path: everest_external/iso15118/ev
         device: auto
-  evse_manager_1:
+  evse_manager:
     module: EvseManager
     config_module:
       connector_id: 1
-      three_phases: true
-      has_ventilation: true
       country_code: DE
       rcd_enabled: true
-      evse_id: DE*PNX*E12345*1
+      evse_id: DE*PNX*E12345
       session_logging: true
       session_logging_xml: false
       session_logging_path: /tmp
-      ac_hlc_enabled: true
-      ac_hlc_use_5percent: false
-      ac_enforce_hlc: false
+      charge_mode: DC
     connections:
       bsp:
-        - module_id: yeti_driver_1
+        - module_id: yeti_driver
           implementation_id: board_support
       powermeter_grid_side:
-        - module_id: yeti_driver_1
+        - module_id: yeti_driver
           implementation_id: powermeter
       slac:
         - module_id: slac
@@ -38,35 +34,16 @@ active_modules:
       hlc:
         - module_id: iso15118_charger
           implementation_id: charger
-  evse_manager_2:
-    module: EvseManager
-    config_module:
-      connector_id: 2
-      three_phases: true
-      has_ventilation: true
-      country_code: DE
-      rcd_enabled: true
-      evse_id: DE*PNX*E12345*2
-      session_logging: true
-      session_logging_xml: false
-      session_logging_path: /tmp
-      ac_hlc_enabled: false
-      ac_hlc_use_5percent: false
-      ac_enforce_hlc: false
-    connections:
-      bsp:
-        - module_id: yeti_driver_2
-          implementation_id: board_support
-      powermeter_grid_side:
-        - module_id: yeti_driver_2
-          implementation_id: powermeter
-  yeti_driver_1:
-    module: JsYetiSimulator
-  yeti_driver_2:
+      powersupply_DC:
+        - module_id: powersupply_dc
+          implementation_id: main
+  powersupply_dc:
+    module: JsDCSupplySimulator
+  yeti_driver:
     module: JsYetiSimulator
   slac:
     module: JsSlacSimulator
-  car_simulator_1:
+  car_simulator:
     module: JsCarSimulator
     config_module:
       connector_id: 1
@@ -75,7 +52,7 @@ active_modules:
       auto_exec_commands: sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 30;unplug
     connections:
       simulation_control:
-        - module_id: yeti_driver_1
+        - module_id: yeti_driver
           implementation_id: yeti_simulation_control
       ev:
         - module_id: iso15118_car
@@ -83,16 +60,6 @@ active_modules:
       slac:
         - module_id: slac
           implementation_id: ev
-  car_simulator_2:
-    module: JsCarSimulator
-    config_module:
-      connector_id: 2
-      auto_enable: true
-      auto_exec: false
-    connections:
-      simulation_control:
-        - module_id: yeti_driver_2
-          implementation_id: yeti_simulation_control
   auth:
     module: Auth
     config_module:
@@ -100,19 +67,20 @@ active_modules:
       selection_algorithm: PlugEvents
     connections:
       token_provider:
-        - module_id: token_provider_1
+        - module_id: token_provider
           implementation_id: main
       token_validator:
         - module_id: token_validator
           implementation_id: main
       evse_manager:
-        - module_id: evse_manager_1
+        - module_id: evse_manager
           implementation_id: evse
-        - module_id: evse_manager_2
+  token_provider:
+    module: JsDummyTokenProvider
+    connections:
+      evse:
+        - module_id: evse_manager
           implementation_id: evse
-  token_provider_1:
-    module: JsDummyTokenProviderManual
-    connections: {}
     config_implementation:
       main:
         type: dummy
@@ -137,17 +105,15 @@ active_modules:
     connections:
       price_information: []
       energy_consumer:
-        - module_id: evse_manager_1
-          implementation_id: energy_grid
-        - module_id: evse_manager_2
+        - module_id: evse_manager
           implementation_id: energy_grid
       powermeter:
-        - module_id: yeti_driver_1
+        - module_id: yeti_driver
           implementation_id: powermeter
   api:
     module: API
     connections:
       evse_manager:
-        - module_id: evse_manager_1
+        - module_id: evse_manager
           implementation_id: evse
 x-module-layout: {}

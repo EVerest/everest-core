@@ -8,6 +8,6 @@ install(
     FILES 
         module.py
         everest_iso15118.py
-        manifest.json
+        manifest.yaml
     DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
 )
