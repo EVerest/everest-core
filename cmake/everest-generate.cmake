@@ -16,12 +16,24 @@ set_target_properties(generate_cpp_files
 )
 
 #
+# out-of-tree interfaces/types/modules support
+#
+
+function(ev_add_project)
+    message(STATUS "APPENDING ${PROJECT_SOURCE_DIR} to EVEREST_PROJECT_DIRS")
+    set_property(TARGET generate_cpp_files
+        APPEND PROPERTY EVEREST_PROJECT_DIRS "${PROJECT_SOURCE_DIR}"
+    )
+endfunction()
+
+#
 # interfaces
 #
 
 function (ev_add_interfaces)
     get_target_property(GENERATED_OUTPUT_DIR generate_cpp_files EVEREST_GENERATED_OUTPUT_DIR)
     set(CHECK_DONE_FILE "${GENERATED_OUTPUT_DIR}/.interfaces_generated_${PROJECT_NAME}")
+    get_target_property(EVEREST_PROJECT_DIRS generate_cpp_files EVEREST_PROJECT_DIRS)
 
     add_custom_command(
         OUTPUT
@@ -35,6 +47,7 @@ function (ev_add_interfaces)
                 --disable-clang-format
                 --schemas-dir "$<TARGET_PROPERTY:generate_cpp_files,EVEREST_SCHEMA_DIR>"
                 --output-dir "$<TARGET_PROPERTY:generate_cpp_files,EVEREST_GENERATED_INCLUDE_DIR>/generated/interfaces"
+                --everest-dir ${EVEREST_PROJECT_DIRS}
         COMMAND
             ${CMAKE_COMMAND} -E touch "${CHECK_DONE_FILE}"
         WORKING_DIRECTORY
@@ -57,6 +70,7 @@ endfunction()
 function (ev_add_types)
     get_target_property(GENERATED_OUTPUT_DIR generate_cpp_files EVEREST_GENERATED_OUTPUT_DIR)
     set(CHECK_DONE_FILE "${GENERATED_OUTPUT_DIR}/.types_generated_${PROJECT_NAME}")
+    get_target_property(EVEREST_PROJECT_DIRS generate_cpp_files EVEREST_PROJECT_DIRS)
 
     add_custom_command(
         OUTPUT
@@ -70,6 +84,7 @@ function (ev_add_types)
                 --disable-clang-format
                 --schemas-dir "$<TARGET_PROPERTY:generate_cpp_files,EVEREST_SCHEMA_DIR>"
                 --output-dir "$<TARGET_PROPERTY:generate_cpp_files,EVEREST_GENERATED_INCLUDE_DIR>/generated/types"
+                --everest-dir ${EVEREST_PROJECT_DIRS}
         COMMAND
             ${CMAKE_COMMAND} -E touch "${CHECK_DONE_FILE}"
         WORKING_DIRECTORY 
@@ -184,3 +199,6 @@ endfunction()
 #    ${FORCE_UPDATE_COMMANDS}
 #    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 #)
+
+# make types and interfaces known to ev-cli
+ev_add_project()
