@@ -27,6 +27,7 @@ endif()
 
 # make own cmake modules available
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+# FIXME (aw): clean up this inclusion chain
 include(ev-cli)
 include(config-run-script)
 include(config-run-nodered-script)

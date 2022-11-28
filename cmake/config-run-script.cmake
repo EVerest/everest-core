@@ -51,9 +51,6 @@ function(generate_config_run_script)
     # other necessary variables
     set(LD_LIBRARY_VAR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
     set(PATH_VAR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}")
-    set(MODULES_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBEXECDIR}/everest/modules")
-    set(INTERFACE_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/everest/interfaces")
-    set(SCHEMA_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/everest/schemas")
 
     configure_file("${EVEREST_CONFIG_ASSET_DIR}/run_template.sh.in" ${SCRIPT_OUTPUT_FILE})
 
