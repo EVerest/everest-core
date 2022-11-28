@@ -2,14 +2,16 @@ from everestpy import log
 import asyncio
 import logging
 import netifaces
+from pathlib import Path
 
 import sys, os
-JOSEV_WORK_DIR = str(os.getcwd() + '/libexec/everest/3rd_party/josev')
-sys.path.append(JOSEV_WORK_DIR)
+JOSEV_WORK_DIR = Path(__file__).parent / '../../3rd_party/josev'
+sys.path.append(JOSEV_WORK_DIR.resolve())
 
 from iso15118.secc import SECCHandler
 from iso15118.secc.controller.simulator import SimEVSEController
 from iso15118.shared.exificient_exi_codec import ExificientEXICodec
+from iso15118.secc.secc_settings import Config
 
 from everest_iso15118 import init_Setup
 from everest_iso15118 import ChargerWrapper
@@ -21,10 +23,13 @@ async def main():
     Entrypoint function that starts the ISO 15118 code running on
     the SECC (Supply Equipment Communication Controller)
     """
+    config = Config()
+    config.load_everest_config(module_config_)
+
     sim_evse_controller = await SimEVSEController.create()
     await SECCHandler(
-        exi_codec=ExificientEXICodec(), evse_controller=sim_evse_controller, everest_config=module_config_
-    ).start()
+        exi_codec=ExificientEXICodec(), evse_controller=sim_evse_controller, config=config
+    ).start(config.iface)
 
 
 def run():
