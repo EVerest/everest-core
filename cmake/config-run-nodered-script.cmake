@@ -1,5 +1,3 @@
-set(EVEREST_CONFIG_ASSET_DIR "${CMAKE_CURRENT_LIST_DIR}" CACHE INTERNAL "")
-
 function(generate_nodered_run_script)
 
     set(options "")

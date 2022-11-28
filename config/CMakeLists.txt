@@ -4,4 +4,17 @@ generate_config_run_script(CONFIG hil)
 generate_config_run_script(CONFIG auth)
 generate_config_run_script(CONFIG sil-ocpp)
 
+# install configs
+install(
+    DIRECTORY "."
+    DESTINATION "${CMAKE_INSTALL_SYSCONFDIR}/everest"
+    FILES_MATCHING PATTERN "*.yaml"
+)
+
+install(
+    FILES "${EVEREST_CONFIG_ASSET_DIR}/logging.ini"
+    DESTINATION "${CMAKE_INSTALL_SYSCONFDIR}/everest"
+    RENAME "default_logging.cfg"
+)
+
 add_subdirectory(nodered)
