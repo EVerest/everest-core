@@ -59,7 +59,6 @@ bool ModbusTransport::trigger_snapshot_generation_BSM() {
 bool ModbusTransport::trigger_snapshot_generation_BSM_OCMF() {
 
     return trigger_snapshot_generation(protocol_related_types::ModbusRegisterAddress(40525_sma));
-    // return trigger_snapshot_generation(protocol_related_types::ModbusRegisterAddress(41795_sma));
 }
 
 transport::DataVector ModbusTransport::fetch(const known_model::AddressData& ad) {
@@ -157,12 +156,12 @@ bool SerialCommHubTransport::trigger_snapshot_generation(
 
     types::serial_comm_hub_requests::VectorUint16 trigger_create_snapshot_command{{0x0002}};
 
-    types::serial_comm_hub_requests::StatusCodeEnum write_result =
-        m_serial_hub.call_modbus_write_multiple_registers(m_unit_id, snapshot_trigger_register.val, trigger_create_snapshot_command);
+    types::serial_comm_hub_requests::StatusCodeEnum write_result = m_serial_hub.call_modbus_write_multiple_registers(
+        m_unit_id, snapshot_trigger_register.val, trigger_create_snapshot_command);
 
     if (not(types::serial_comm_hub_requests::StatusCodeEnum::Success == write_result))
         throw(""s + __PRETTY_FUNCTION__ + " SerialCommHub error : "s +
-              types::serial_comm_hub_requests::status_code_enum_to_string( write_result ) );
+              types::serial_comm_hub_requests::status_code_enum_to_string(write_result));
 
     std::size_t counter = 10;
 
@@ -192,7 +191,7 @@ bool SerialCommHubTransport::trigger_snapshot_generation_BSM() {
 
 bool SerialCommHubTransport::trigger_snapshot_generation_BSM_OCMF() {
 
-    return trigger_snapshot_generation(protocol_related_types::ModbusRegisterAddress(41795_sma));
+    return trigger_snapshot_generation(protocol_related_types::ModbusRegisterAddress(40525_sma));
 }
 
 } // namespace transport
