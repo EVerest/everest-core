@@ -3,7 +3,6 @@
 #include <mutex>
 
 #include <everest/logging.hpp>
-#include <everest/timer.hpp>
 
 #include <ocpp1_6/transaction.hpp>
 
@@ -90,11 +89,6 @@ void Transaction::stop() {
     this->active = false;
 }
 
-void Transaction::set_charging_profile(ChargingProfile charging_profile) {
-    std::lock_guard<std::mutex> charge_point_max_profiles_lock(tx_charging_profiles_mutex);
-    this->tx_charging_profiles[charging_profile.stackLevel] = charging_profile;
-}
-
 bool Transaction::is_active() {
     return this->active;
 }
@@ -105,21 +99,6 @@ bool Transaction::is_finished() {
 
 void Transaction::set_finished() {
     this->finished = true;
-}
-
-void Transaction::remove_charging_profile(int32_t stack_level) {
-    std::lock_guard<std::mutex> charge_point_max_profiles_lock(tx_charging_profiles_mutex);
-    this->tx_charging_profiles.erase(stack_level);
-}
-
-void Transaction::remove_charging_profiles() {
-    std::lock_guard<std::mutex> charge_point_max_profiles_lock(tx_charging_profiles_mutex);
-    this->tx_charging_profiles.clear();
-}
-
-std::map<int32_t, ChargingProfile> Transaction::get_charging_profiles() {
-    std::lock_guard<std::mutex> charge_point_max_profiles_lock(tx_charging_profiles_mutex);
-    return this->tx_charging_profiles;
 }
 
 std::shared_ptr<StampedEnergyWh> Transaction::get_start_energy_wh() {

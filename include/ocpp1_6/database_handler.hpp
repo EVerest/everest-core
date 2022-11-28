@@ -93,7 +93,7 @@ public:
     /// \brief Inserts or updates a local authorization list entries \p local_authorization_list to the AUTH_LIST table.
     void insert_or_update_local_authorization_list(std::vector<LocalAuthorizationList> local_authorization_list);
 
-    /// \brief Delets the authorization list entry with the given \p id_tag
+    /// \brief Deletes the authorization list entry with the given \p id_tag
     void delete_local_authorization_list_entry(const std::string& id_tag);
 
     /// \brief Returns the IdTagInfo of the given \p id_tag if it exists in the AUTH_LIST table, else boost::none.
@@ -101,6 +101,21 @@ public:
 
     /// \brief Deletes all entries of the AUTH_LIST table.
     bool clear_local_authorization_list();
+
+    /// \brief Inserts or updates the given \p profile to CHARGING_PROFILES table
+    void insert_or_update_charging_profile(const int connector_id, const ChargingProfile& profile);
+
+    /// \brief Deletes the profile with the given \p profile_id
+    void delete_charging_profile(const int profile_id);
+
+    /// \brief Deletes all profiles from table CHARGING_PROFILES
+    void delete_charging_profiles();
+
+    /// \brief Returns a list of all charging profiles in the CHARGING_PROFILES table
+    std::vector<ChargingProfile> get_charging_profiles();
+
+    /// \brief Returns the connector_id of the given \p profile_id
+    int get_connector_id(const int profile_id);
 };
 
 } // namespace ocpp1_6

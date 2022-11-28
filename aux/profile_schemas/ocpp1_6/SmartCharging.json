@@ -16,12 +16,14 @@
         },
         "ChargingScheduleAllowedChargingRateUnit": {
             "type": "string",
-            "readOnly": true
+            "readOnly": true,
+            "default": "Current,Power"
         },
         "ChargingScheduleMaxPeriods": {
             "type": "integer",
             "readOnly": true,
-            "minimum": 0
+            "minimum": 0,
+            "default": 1440
         },
         "ConnectorSwitch3to1PhaseSupported": {
             "type": "boolean",
@@ -30,7 +32,8 @@
         "MaxChargingProfilesInstalled": {
             "type": "integer",
             "readOnly": true,
-            "minimum": 0
+            "minimum": 0,
+            "default": 500
         }
     },
     "additionalProperties": false

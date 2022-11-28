@@ -144,6 +144,12 @@
                 "TxDefaultProfile",
                 "TxProfile"
             ]
+        },
+        "MaxCompositeScheduleDuration": {
+            "$comment": "Maximum duration in seconds of GetCompositeSchedule.req. For GetCompositeSchedule.req with a greater duration the schedule for only the MaxCompositeScheduleDuration will be calculated",
+            "type": "integer",
+            "readOnly": true,
+            "default": 31536000
         }
     },
     "additionalProperties": false

@@ -286,7 +286,7 @@ void from_json(const json& j, ChargingProfile& k) {
         k.transactionId.emplace(j.at("transactionId"));
     }
     if (j.contains("recurrencyKind")) {
-        k.recurrencyKind.emplace(j.at("recurrencyKind"));
+        k.recurrencyKind.emplace(conversions::string_to_recurrency_kind_type(j.at("recurrencyKind")));
     }
     if (j.contains("validFrom")) {
         k.validFrom.emplace(j.at("validFrom").get<std::string>());

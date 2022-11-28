@@ -4,6 +4,7 @@ add_library(everest::ocpp ALIAS ocpp)
 target_sources(ocpp
     PRIVATE
         ocpp1_6/charge_point.cpp
+        ocpp1_6/smart_charging.cpp
         ocpp1_6/charge_point_configuration.cpp
         ocpp1_6/charge_point_state_machine.cpp
         ocpp1_6/transaction.cpp

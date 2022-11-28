@@ -33,7 +33,7 @@ ChargePoint::ChargePoint(std::shared_ptr<ChargePointConfiguration> configuration
     this->logging = std::make_shared<MessageLogging>(this->configuration->getLogMessages(), message_log_path,
                                                      log_to_console, detailed_log_to_console, log_to_file, log_to_html);
     this->connection_state = ChargePointConnectionState::Disconnected;
-    this->database_handler = std::make_unique<DatabaseHandler>(this->configuration->getChargePointId(),
+    this->database_handler = std::make_shared<DatabaseHandler>(this->configuration->getChargePointId(),
                                                                boost::filesystem::path(database_path),
                                                                boost::filesystem::path(sql_init_path));
     this->database_handler->open_db_connection(this->configuration->getNumberOfConnectors());
@@ -65,6 +65,12 @@ ChargePoint::ChargePoint(std::shared_ptr<ChargePointConfiguration> configuration
                 [this, connector, errorCode, status]() { this->status_notification(connector, errorCode, status); },
                 std::chrono::seconds(this->configuration->getMinimumStatusDuration().get_value_or(0)));
         });
+
+    for (int id = 0; id <= this->configuration->getNumberOfConnectors(); id++) {
+        this->connectors.insert(std::make_pair(id, std::make_shared<Connector>(id)));
+    }
+
+    this->smart_charging_handler = std::make_unique<SmartChargingHandler>(this->connectors, this->database_handler);
 }
 
 void ChargePoint::init_websocket(int32_t security_profile) {
@@ -186,15 +192,6 @@ void ChargePoint::update_clock_aligned_meter_values_interval() {
     this->clock_aligned_meter_values_timer->at(this->clock_aligned_meter_values_time_point);
 }
 
-int32_t ChargePoint::get_meter_wh(int32_t connector) {
-    if (this->power_meters.count(connector) == 0) {
-        EVLOG_error << "No power meter entry for connector " << connector << " available. Returning 0.";
-        return 0;
-    }
-    const auto power_meter_value = this->power_meters[connector];
-    return std::round((double)power_meter_value.energy_Wh_import.total);
-}
-
 void ChargePoint::stop_pending_transactions() {
     const auto transactions = this->database_handler->get_transactions(true);
     for (const auto& transaction_entry : transactions) {
@@ -216,13 +213,38 @@ void ChargePoint::stop_pending_transactions() {
     }
 }
 
+void ChargePoint::load_charging_profiles() {
+    auto profiles = this->database_handler->get_charging_profiles();
+    EVLOG_info << "Found " << profiles.size() << " charging profile(s) in the database";
+    for (auto& profile : profiles) {
+        const auto connector_id = this->database_handler->get_connector_id(profile.chargingProfileId);
+        if (this->smart_charging_handler->validate_profile(
+                profile, connector_id, false, this->configuration->getChargeProfileMaxStackLevel(),
+                this->configuration->getMaxChargingProfilesInstalled(),
+                this->configuration->getChargingScheduleMaxPeriods(),
+                this->configuration->getChargingScheduleAllowedChargingRateUnitVector())) {
+
+            if (profile.chargingProfilePurpose == ChargingProfilePurposeType::ChargePointMaxProfile) {
+                this->smart_charging_handler->add_charge_point_max_profile(profile);
+            } else if (profile.chargingProfilePurpose == ChargingProfilePurposeType::TxDefaultProfile) {
+                this->smart_charging_handler->add_tx_default_profile(profile, connector_id);
+            } else if (profile.chargingProfilePurpose == ChargingProfilePurposeType::TxProfile) {
+                this->smart_charging_handler->add_tx_profile(profile, connector_id);
+            }
+        } else {
+            // delete if not valid anymore
+            this->database_handler->delete_charging_profile(profile.chargingProfileId);
+        }
+    }
+}
+
 MeterValue ChargePoint::get_latest_meter_value(int32_t connector, std::vector<MeasurandWithPhase> values_of_interest,
                                                ReadingContext context) {
     std::lock_guard<std::mutex> lock(power_meters_mutex);
     MeterValue filtered_meter_value;
     // TODO(kai): also support readings from the charge point powermeter at "connector 0"
-    if (this->power_meters.count(connector) != 0) {
-        const auto power_meter = this->power_meters[connector];
+    if (this->connectors.find(connector) != this->connectors.end()) {
+        const auto power_meter = this->connectors.at(connector)->powermeter;
         const auto timestamp =
             std::chrono::time_point<date::utc_clock>(std::chrono::seconds(static_cast<int>(power_meter.timestamp)));
         filtered_meter_value.timestamp = DateTime(timestamp);
@@ -468,13 +490,8 @@ MeterValue ChargePoint::get_latest_meter_value(int32_t connector, std::vector<Me
                 // current offered to EV
                 sample.unit.emplace(UnitOfMeasure::A);
                 sample.location.emplace(Location::Outlet);
-                if (this->max_current_offered.count(connector) == 0) {
-                    // something went wrong
-                    EVLOG_error << "No max current offered for connector " << connector << " yet, skipping meter value";
-                    break;
-                }
 
-                sample.value = conversions::double_to_string(this->max_current_offered[connector]);
+                sample.value = conversions::double_to_string(this->connectors.at(connector)->max_current_offered);
                 break;
             }
             default:
@@ -535,6 +552,7 @@ bool ChargePoint::start() {
     this->websocket->connect(this->configuration->getSecurityProfile());
     this->boot_notification();
     this->stop_pending_transactions();
+    this->load_charging_profiles();
     this->stopped = false;
     return true;
 }
@@ -838,9 +856,9 @@ void ChargePoint::handleBootNotificationResponse(CallResult<BootNotificationResp
         this->update_clock_aligned_meter_values_interval();
 
         auto connector_availability = this->database_handler->get_connector_availability();
-        connector_availability[0] =
-            AvailabilityType::Operative; // FIXME(kai): fix internal representation in charge point states, we need a
-                                         // different kind of state machine for connector 0 anyway (with reduced states)
+        connector_availability[0] = AvailabilityType::Operative; // FIXME(kai): fix internal representation in charge
+                                                                 // point states, we need a different kind of state
+                                                                 // machine for connector 0 anyway (with reduced states)
         this->status->run(connector_availability);
         break;
     }
@@ -1128,7 +1146,17 @@ void ChargePoint::handleRemoteStartTransactionRequest(Call<RemoteStartTransactio
     }
     if (call.msg.chargingProfile) {
         // TODO(kai): A charging profile was provided, forward to the charger
-        if (call.msg.chargingProfile.get().chargingProfilePurpose != ChargingProfilePurposeType::TxProfile) {
+        if (call.msg.connectorId &&
+            call.msg.chargingProfile.value().chargingProfilePurpose == ChargingProfilePurposeType::TxProfile &&
+            this->smart_charging_handler->validate_profile(
+                call.msg.chargingProfile.value(), call.msg.connectorId.value(), true,
+                this->configuration->getChargeProfileMaxStackLevel(),
+                this->configuration->getMaxChargingProfilesInstalled(),
+                this->configuration->getChargingScheduleMaxPeriods(),
+                this->configuration->getChargingScheduleAllowedChargingRateUnitVector())) {
+            this->smart_charging_handler->add_tx_profile(call.msg.chargingProfile.value(),
+                                                         call.msg.connectorId.value());
+        } else {
             response.status = RemoteStartStopStatus::Rejected;
             CallResult<RemoteStartTransactionResponse> call_result(response, call.uniqueId);
             this->send<RemoteStartTransactionResponse>(call_result);
@@ -1367,103 +1395,37 @@ void ChargePoint::handleSetChargingProfileRequest(Call<SetChargingProfileRequest
 
     SetChargingProfileResponse response;
     response.status = ChargingProfileStatus::Rejected;
-    auto number_of_connectors = this->configuration->getNumberOfConnectors();
-    const auto supported_purpose_types = this->configuration->getSupportedChargingProfilePurposeTypes();
-    if (call.msg.connectorId > number_of_connectors || call.msg.connectorId < 0 ||
-        call.msg.csChargingProfiles.stackLevel < 0 ||
-        call.msg.csChargingProfiles.stackLevel > this->configuration->getChargeProfileMaxStackLevel()) {
-        response.status = ChargingProfileStatus::Rejected;
-    } else if (std::find(supported_purpose_types.begin(), supported_purpose_types.end(),
-                         call.msg.csChargingProfiles.chargingProfilePurpose) == supported_purpose_types.end()) {
-        EVLOG_debug << "Rejecting SetChargingProfileRequest because purpose type is not supported: "
-                    << call.msg.csChargingProfiles.chargingProfilePurpose;
-        response.status = ChargingProfileStatus::Rejected;
-    } else {
-        // to avoid conflicts, the existence of multiple charging profiles with the same purpose and stack level is not
-        // allowed, when we receive such a request we have to replace the existing one with the new one
-        if (call.msg.csChargingProfiles.chargingProfilePurpose == ChargingProfilePurposeType::ChargePointMaxProfile) {
-            if (call.msg.connectorId != 0) {
-                response.status = ChargingProfileStatus::Rejected;
 
-            } else {
-                // ChargePointMaxProfile can only be set for the whole charge point (connector = 0)
-                EVLOG_debug << "Received ChargePointMaxProfile Charging Profile:\n    " << call.msg.csChargingProfiles;
-                if (call.msg.csChargingProfiles.chargingProfileKind == ChargingProfileKindType::Relative) {
-                    response.status = ChargingProfileStatus::Rejected;
-                } else {
-                    // FIXME(kai): only allow absolute or recurring profiles here
-                    if (call.msg.csChargingProfiles.chargingProfileKind == ChargingProfileKindType::Absolute) {
-                        // FIXME(kai): hint: without a start schedule this absolute schedule is relative to start of
-                        // charging
-                        std::lock_guard<std::mutex> charge_point_max_profiles_lock(charge_point_max_profiles_mutex);
-                        this->charge_point_max_profiles[call.msg.csChargingProfiles.stackLevel] =
-                            call.msg.csChargingProfiles;
-                        response.status = ChargingProfileStatus::Accepted;
-                    } else if (call.msg.csChargingProfiles.chargingProfileKind == ChargingProfileKindType::Recurring) {
-                        if (!call.msg.csChargingProfiles.recurrencyKind) {
-                            response.status = ChargingProfileStatus::Rejected;
-                        } else {
-                            // we only accept recurring schedules with a recurrency kind
-                            // here we don't neccesarily need a startSchedule, but if it is missing we just assume
-                            // 0:00:00 UTC today
-                            auto midnight = date::floor<date::days>(date::utc_clock::now());
-                            auto start_schedule = DateTime(midnight);
-                            if (!call.msg.csChargingProfiles.chargingSchedule.startSchedule) {
-                                EVLOG_debug << "No startSchedule provided for a recurring charging profile, setting to "
-                                            << start_schedule << " (midnight today)";
-                                call.msg.csChargingProfiles.chargingSchedule.startSchedule.emplace(start_schedule);
-                            }
-                            std::lock_guard<std::mutex> charge_point_max_profiles_lock(charge_point_max_profiles_mutex);
-                            this->charge_point_max_profiles[call.msg.csChargingProfiles.stackLevel] =
-                                call.msg.csChargingProfiles;
-                            response.status = ChargingProfileStatus::Accepted;
-                        }
-                    }
-                }
-            }
+    auto profile = call.msg.csChargingProfiles;
+    const int connector_id = call.msg.connectorId;
+
+    const auto supported_purpose_types = this->configuration->getSupportedChargingProfilePurposeTypes();
+    if (std::find(supported_purpose_types.begin(), supported_purpose_types.end(),
+                  call.msg.csChargingProfiles.chargingProfilePurpose) == supported_purpose_types.end()) {
+        EVLOG_warning << "Rejecting SetChargingProfileRequest because purpose type is not supported: "
+                      << call.msg.csChargingProfiles.chargingProfilePurpose;
+        response.status = ChargingProfileStatus::Rejected;
+    } else if (this->smart_charging_handler->validate_profile(
+                   profile, connector_id, false, this->configuration->getChargeProfileMaxStackLevel(),
+                   this->configuration->getMaxChargingProfilesInstalled(),
+                   this->configuration->getChargingScheduleMaxPeriods(),
+                   this->configuration->getChargingScheduleAllowedChargingRateUnitVector())) {
+        response.status = ChargingProfileStatus::Accepted;
+        // If a charging profile with the same chargingProfileId, or the same combination of stackLevel /
+        // ChargingProfilePurpose, exists on the Charge Point, the new charging profile SHALL replace the
+        // existing charging profile, otherwise it SHALL be added.
+        this->smart_charging_handler->clear_all_profiles_with_filter(profile.chargingProfileId, boost::none,
+                                                                     boost::none, boost::none, true);
+        if (profile.chargingProfilePurpose == ChargingProfilePurposeType::ChargePointMaxProfile) {
+            this->smart_charging_handler->add_charge_point_max_profile(profile);
+        } else if (profile.chargingProfilePurpose == ChargingProfilePurposeType::TxDefaultProfile) {
+            this->smart_charging_handler->add_tx_default_profile(profile, connector_id);
+        } else if (profile.chargingProfilePurpose == ChargingProfilePurposeType::TxProfile) {
+            this->smart_charging_handler->add_tx_profile(profile, connector_id);
         }
-        if (call.msg.csChargingProfiles.chargingProfilePurpose == ChargingProfilePurposeType::TxDefaultProfile) {
-            // can be used for charging policies, like disabling charging during specific times
-            // connector = 0 applies to all connectors
-            // connector > 1 applies only to that connector, if a default profile for connector = 0 is already installed
-            // the one for a specific connector overwrites that one!
-            std::lock_guard<std::mutex> tx_default_profiles_lock(tx_default_profiles_mutex);
-            if (call.msg.connectorId == 0) {
-                for (int32_t connector = 1; connector <= number_of_connectors; connector++) {
-                    this->tx_default_profiles[connector][call.msg.csChargingProfiles.stackLevel] =
-                        call.msg.csChargingProfiles;
-                }
-            } else {
-                this->tx_default_profiles[call.msg.connectorId][call.msg.csChargingProfiles.stackLevel] =
-                    call.msg.csChargingProfiles;
-            }
-            response.status = ChargingProfileStatus::Accepted;
-        }
-        if (call.msg.csChargingProfiles.chargingProfilePurpose == ChargingProfilePurposeType::TxProfile) {
-            if (call.msg.connectorId == 0) {
-                response.status = ChargingProfileStatus::Rejected;
-            } else {
-                // shall overrule a TxDefaultProfile for the duration of the running transaction
-                // if there is no running transaction on the specified connector this change shall be discarded
-                auto transaction = this->transaction_handler->get_transaction(call.msg.connectorId);
-                if (transaction != nullptr) {
-                    if (call.msg.csChargingProfiles.transactionId) {
-                        auto transaction_id = call.msg.csChargingProfiles.transactionId.get();
-                        if (transaction_id != transaction->get_transaction_id()) {
-                            response.status = ChargingProfileStatus::Rejected;
-                        } else {
-                            transaction->set_charging_profile(call.msg.csChargingProfiles);
-                            response.status = ChargingProfileStatus::Accepted;
-                        }
-                    } else {
-                        transaction->set_charging_profile(call.msg.csChargingProfiles);
-                        response.status = ChargingProfileStatus::Accepted;
-                    }
-                } else {
-                    response.status = ChargingProfileStatus::Rejected;
-                }
-            }
-        }
+        response.status = ChargingProfileStatus::Accepted;
+    } else {
+        response.status = ChargingProfileStatus::Rejected;
     }
 
     CallResult<SetChargingProfileResponse> call_result(response, call.uniqueId);
@@ -1474,356 +1436,39 @@ void ChargePoint::handleSetChargingProfileRequest(Call<SetChargingProfileRequest
     }
 }
 
-std::vector<ChargingProfile> ChargePoint::get_valid_profiles(std::map<int32_t, ocpp1_6::ChargingProfile> profiles,
-                                                             date::utc_clock::time_point start_time,
-                                                             date::utc_clock::time_point end_time) {
-    auto start_datetime = DateTime(start_time);
-    auto end_datetime = DateTime(end_time);
-
-    std::vector<ChargingProfile> valid_profiles;
-
-    for (auto profile : profiles) {
-        // profile.second.chargingSchedule.chargingRateUnit // TODO: collect and convert these
-        auto profile_start = start_time;
-        auto profile_end = end_time;
-        if (profile.second.validFrom) {
-            // check if this profile is even valid
-            if (profile.second.validFrom.value() > end_datetime) {
-                // profile only valid after the requested duration
-                continue;
-            } else {
-                if (profile.second.validFrom.value() < start_datetime) {
-                    profile_start = start_time;
-                } else {
-                    profile_start = profile.second.validFrom.value().to_time_point();
-                }
-            }
-        }
-        if (profile.second.validTo) {
-            // check if this profile is even valid
-            if (start_time > profile.second.validTo.value().to_time_point()) {
-                // profile only valid before the requested duration
-                continue;
-            } else {
-                if (profile.second.validTo.value() > end_datetime) {
-                    profile_end = end_time;
-                } else {
-                    profile_end = profile.second.validTo.value().to_time_point();
-                }
-            }
-        }
-
-        // now we know the validity range of this profile:
-        std::ostringstream validity_oss;
-        validity_oss << "charge point max profile is valid from " << profile_start << " to " << profile_end;
-        EVLOG_debug << validity_oss.str();
-
-        valid_profiles.push_back(profile.second);
-    }
-    return valid_profiles;
-}
-
-std::vector<ChargingProfile> ChargePoint::get_all_valid_profiles(const date::utc_clock::time_point& start_time,
-                                                                 const date::utc_clock::time_point& end_time,
-                                                                 const int32_t connector_id) {
-    // charge point max profiles
-    std::unique_lock<std::mutex> charge_point_max_profiles_lock(charge_point_max_profiles_mutex);
-    std::vector<ChargingProfile> valid_profiles =
-        this->get_valid_profiles(this->charge_point_max_profiles, start_time, end_time);
-    charge_point_max_profiles_lock.unlock();
-
-    if (connector_id > 0) {
-        // TODO: this should probably be done additionally to the composite schedule == 0
-        // see if there's a transaction running and a tx_charging_profile installed
-        auto transaction = this->transaction_handler->get_transaction(connector_id);
-        if (transaction != nullptr) {
-            auto start_energy_stamped = transaction->get_start_energy_wh();
-            auto start_timestamp = start_energy_stamped->timestamp;
-            auto tx_charging_profiles = transaction->get_charging_profiles();
-
-            if (tx_charging_profiles.size() > 0) {
-                auto valid_tx_charging_profiles = this->get_valid_profiles(tx_charging_profiles, start_time, end_time);
-                valid_profiles.insert(valid_profiles.end(), valid_tx_charging_profiles.begin(),
-                                      valid_tx_charging_profiles.end());
-            } else {
-                std::map<int32_t, ocpp1_6::ChargingProfile> connector_tx_default_profiles;
-                {
-                    std::lock_guard<std::mutex> tx_default_profiles_lock(tx_default_profiles_mutex);
-                    if (this->tx_default_profiles.count(connector_id) > 0) {
-                        connector_tx_default_profiles = tx_default_profiles[connector_id];
-                    }
-                }
-                auto valid_tx_default_profiles =
-                    this->get_valid_profiles(connector_tx_default_profiles, start_time, end_time);
-                valid_profiles.insert(valid_profiles.end(), valid_tx_default_profiles.begin(),
-                                      valid_tx_default_profiles.end());
-            }
-        } else {
-            // TODO: is it needed to check for the tx_default_profiles when no transaction is running?
-        }
-    }
-
-    // sort by start time
-    // TODO: is this really needed or just useful for some future optimization?
-    std::sort(valid_profiles.begin(), valid_profiles.end(), [](ChargingProfile a, ChargingProfile b) {
-        // FIXME(kai): at the moment we only expect Absolute charging profiles
-        // that means a startSchedule is always present
-        return a.chargingSchedule.startSchedule.value() < b.chargingSchedule.startSchedule.value();
-    });
-    return valid_profiles;
-}
-
-std::map<int32_t, ChargingSchedule> ChargePoint::get_all_composite_charging_schedules(const int32_t duration_s) {
-
-    std::map<int32_t, ChargingSchedule> charging_schedules;
-
-    for (int connector_id = 0; connector_id < this->configuration->getNumberOfConnectors(); connector_id++) {
-        auto start_time = date::utc_clock::now();
-        auto duration = std::chrono::seconds(duration_s);
-        auto end_time = start_time + duration;
-
-        const auto valid_profiles = this->get_all_valid_profiles(start_time, end_time, connector_id);
-
-        auto composite_schedule = this->create_composite_schedule(valid_profiles, start_time, end_time, duration_s);
-        charging_schedules[connector_id] = composite_schedule;
-    }
-
-    return charging_schedules;
-}
-
-ChargingSchedule ChargePoint::create_composite_schedule(std::vector<ChargingProfile> charging_profiles,
-                                                        date::utc_clock::time_point start_time,
-                                                        date::utc_clock::time_point end_time, int32_t duration_s) {
-    auto start_datetime = DateTime(start_time);
-    auto midnight_of_start_time = date::floor<date::days>(start_time);
-
-    ChargingSchedule composite_schedule; // = get_composite_schedule(start_time, duration,
-                                         // call.msg.chargingRateUnit); // TODO
-    composite_schedule.duration.emplace(duration_s);
-    composite_schedule.startSchedule.emplace(start_datetime);
-    // FIXME: conversions!
-    // if (call.msg.chargingRateUnit) {
-    //     composite_schedule.chargingRateUnit = call.msg.chargingRateUnit.value();
-    // } else {
-    //     composite_schedule.chargingRateUnit = ChargingRateUnit::A; // TODO default & conversion
-    // }
-    composite_schedule.chargingRateUnit = ChargingRateUnit::A; // TODO default & conversion
-
-    // FIXME: a default limit of 0 is very conservative but there should always be a profile installed
-    const int32_t default_limit = 0;
-    for (int32_t delta = 0; delta < duration_s; delta++) {
-        auto delta_duration = std::chrono::seconds(delta);
-        // assemble all profiles that are valid at start_time + delta:
-        ChargingSchedulePeriod delta_period;
-        delta_period.startPeriod = delta;
-        delta_period.limit = default_limit; // FIXME?
-        int32_t current_stack_level = 0;
-
-        auto sample_time = start_time + delta_duration;
-        auto sample_time_datetime = DateTime(sample_time);
-
-        ChargingSchedulePeriod max_delta_period;
-        max_delta_period.startPeriod = delta;
-        max_delta_period.limit = default_limit; // FIXME?
-        bool max_charging_profile_exists = false;
-        // first pass to establish a baseline with charge point max profiles:
-        for (auto p : charging_profiles) {
-            if (p.chargingProfilePurpose == ChargingProfilePurposeType::ChargePointMaxProfile &&
-                p.stackLevel >= current_stack_level) {
-                // get limit at this point in time:
-                if (p.validFrom && p.validFrom.value() > sample_time_datetime) {
-                    // only valid in the future
-                    continue;
-                }
-                if (p.validTo && sample_time_datetime > p.validTo.value()) {
-                    // only valid in the past
-                    continue;
-                }
-                // profile is valid right now
-                // one last check for a start schedule:
-                if (p.chargingProfileKind == ChargingProfileKindType::Absolute && !p.chargingSchedule.startSchedule) {
-                    EVLOG_error << "ERROR we do not know when the schedule should start, this should not be "
-                                   "possible...";
-                    continue;
-                }
-
-                auto start_schedule = p.chargingSchedule.startSchedule.value().to_time_point();
-                if (p.chargingProfileKind == ChargingProfileKindType::Recurring) {
-                    // TODO(kai): special handling of recurring charging profiles!
-                    if (!p.recurrencyKind) {
-                        EVLOG_warning << "Recurring charging profile without a recurreny kind is not supported";
-                        continue;
-                    }
-                    if (!p.chargingSchedule.startSchedule) {
-                        EVLOG_warning << "Recurring charging profile without a start schedule is not supported";
-                        continue;
-                    }
-
-                    if (p.recurrencyKind.value() == RecurrencyKindType::Daily) {
-                        auto midnight_of_start_schedule = date::floor<date::days>(start_schedule);
-                        auto diff = start_schedule - midnight_of_start_schedule;
-                        auto daily_start_schedule = midnight_of_start_time + diff;
-                        if (daily_start_schedule > start_time) {
-                            start_schedule = daily_start_schedule - date::days(1);
-                        } else {
-                            start_schedule = daily_start_schedule;
-                        }
-                    } else if (p.recurrencyKind.value() == RecurrencyKindType::Weekly) {
-                        // TODO: compute weekly profile
-                    }
-                }
-                if (p.chargingProfileKind == ChargingProfileKindType::Relative) {
-                    if (p.chargingProfilePurpose == ChargingProfilePurposeType::ChargePointMaxProfile) {
-                        EVLOG_error << "ERROR relative charging profiles are not supported as ChargePointMaxProfile "
-                                       "(at least for now)";
-                        continue;
-                    } else {
-                        // FIXME: relative charging profiles are possible here
-                    }
-                }
-
-                // FIXME: fix this for recurring charging profiles!
-                if (p.chargingSchedule.duration &&
-                    sample_time > p.chargingSchedule.startSchedule.value().to_time_point() +
-                                      std::chrono::seconds(p.chargingSchedule.duration.value())) {
-                    continue;
-                }
-                for (auto period : p.chargingSchedule.chargingSchedulePeriod) {
-                    auto period_time = std::chrono::seconds(period.startPeriod) + start_schedule;
-                    if (period_time <= sample_time) {
-                        max_delta_period.limit = period.limit;
-                        max_delta_period.numberPhases = period.numberPhases;
-                        max_charging_profile_exists = true;
-                    } else {
-                        break; // this should speed things up a little bit...
-                    }
-                }
-            }
-        }
-        current_stack_level = 0;
-        delta_period.limit = max_delta_period.limit; // FIXME?
-        for (auto p : charging_profiles) {
-            if (p.stackLevel >= current_stack_level) {
-                // get limit at this point in time:
-                if (p.validFrom && p.validFrom.value() > sample_time_datetime) {
-                    // only valid in the future
-                    continue;
-                }
-                if (p.validTo && sample_time_datetime > p.validTo.value()) {
-                    // only valid in the past
-                    continue;
-                }
-                // profile is valid right now
-                // one last check for a start schedule:
-                if (p.chargingProfileKind == ChargingProfileKindType::Absolute && !p.chargingSchedule.startSchedule) {
-                    EVLOG_error << "ERROR we do not know when the schedule should start, this should not be "
-                                   "possible...";
-                    continue;
-                }
-
-                auto start_schedule = p.chargingSchedule.startSchedule.value().to_time_point();
-                if (p.chargingProfileKind == ChargingProfileKindType::Recurring) {
-                    // TODO(kai): special handling of recurring charging profiles!
-                    if (!p.recurrencyKind) {
-                        EVLOG_warning << "Recurring charging profile without a recurreny kind is not supported";
-                        continue;
-                    }
-                    if (!p.chargingSchedule.startSchedule) {
-                        EVLOG_warning << "Recurring charging profile without a start schedule is not supported";
-                        continue;
-                    }
-
-                    if (p.recurrencyKind.value() == RecurrencyKindType::Daily) {
-                        auto midnight_of_start_schedule = date::floor<date::days>(start_schedule);
-                        auto diff = start_schedule - midnight_of_start_schedule;
-                        auto daily_start_schedule = midnight_of_start_time + diff;
-                        if (daily_start_schedule > start_time) {
-                            start_schedule = daily_start_schedule - date::days(1);
-                        } else {
-                            start_schedule = daily_start_schedule;
-                        }
-                    } else if (p.recurrencyKind.value() == RecurrencyKindType::Weekly) {
-                        // TODO: compute weekly profile
-                    }
-                }
-                if (p.chargingProfileKind == ChargingProfileKindType::Relative) {
-                    if (p.chargingProfilePurpose == ChargingProfilePurposeType::ChargePointMaxProfile) {
-                        EVLOG_error << "ERROR relative charging profiles are not supported as ChargePointMaxProfile "
-                                       "(at least for now)";
-                        continue;
-                    } else {
-                        // FIXME: relative charging profiles are possible here
-                    }
-                }
-
-                // FIXME: fix this for recurring charging profiles!
-                if (p.chargingSchedule.duration &&
-                    sample_time > p.chargingSchedule.startSchedule.value().to_time_point() +
-                                      std::chrono::seconds(p.chargingSchedule.duration.value())) {
-                    // charging schedule duration expired
-                    continue;
-                }
-                for (auto period : p.chargingSchedule.chargingSchedulePeriod) {
-                    auto period_time = std::chrono::seconds(period.startPeriod) + start_schedule;
-                    if (period_time <= sample_time) {
-                        if (max_charging_profile_exists) {
-                            if (period.limit < max_delta_period.limit && period.limit < delta_period.limit) {
-                                delta_period.limit = period.limit;
-                                delta_period.numberPhases = period.numberPhases;
-                            } else {
-                                delta_period.limit = max_delta_period.limit;
-                            }
-                        } else {
-                            delta_period.limit = period.limit;
-                            delta_period.numberPhases = period.numberPhases;
-                        }
-                    } else {
-                        break; // this should speed things up a little bit...
-                    }
-                }
-            }
-        }
-        if (composite_schedule.chargingSchedulePeriod.size() == 0 ||
-            (composite_schedule.chargingSchedulePeriod.back().limit != delta_period.limit ||
-             composite_schedule.chargingSchedulePeriod.back().numberPhases != delta_period.numberPhases)) {
-            composite_schedule.chargingSchedulePeriod.push_back(delta_period);
-        }
-    }
-
-    return composite_schedule;
-}
-
 void ChargePoint::handleGetCompositeScheduleRequest(Call<GetCompositeScheduleRequest> call) {
     EVLOG_debug << "Received GetCompositeScheduleRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
 
     GetCompositeScheduleResponse response;
 
-    auto number_of_connectors = this->configuration->getNumberOfConnectors();
-    if (call.msg.connectorId > number_of_connectors || call.msg.connectorId < 0) {
+    const auto connector_id = call.msg.connectorId;
+    const auto allowed_charging_rate_units = this->configuration->getChargingScheduleAllowedChargingRateUnitVector();
+
+    if (connector_id >= this->connectors.size() or connector_id < 0) {
+        response.status = GetCompositeScheduleStatus::Rejected;
+    } else if (call.msg.chargingRateUnit and
+               std::find(allowed_charging_rate_units.begin(), allowed_charging_rate_units.end(),
+                         call.msg.chargingRateUnit.value()) == allowed_charging_rate_units.end()) {
+        EVLOG_warning << "GetCompositeScheduleRequest: ChargingRateUnit not allowed";
         response.status = GetCompositeScheduleStatus::Rejected;
     } else {
-        auto start_time = date::utc_clock::now();
-        auto start_datetime = DateTime(start_time);
-        auto duration = std::chrono::seconds(call.msg.duration);
-        auto end_time = start_time + duration;
-        auto end_datetime = DateTime(end_time);
+        const auto start_time = DateTime(std::chrono::floor<std::chrono::seconds>(date::utc_clock::now()));
+        if (call.msg.duration > this->configuration->getMaxCompositeScheduleDuration()) {
+            EVLOG_warning << "GetCompositeScheduleRequest: Requested duration of " << call.msg.duration << "s"
+                          << " is bigger than configured maximum value of "
+                          << this->configuration->getMaxCompositeScheduleDuration() << "s";
+        }
+        const auto duration = std::min(this->configuration->getMaxCompositeScheduleDuration(), call.msg.duration);
+        const auto end_time = DateTime(start_time.to_time_point() + std::chrono::seconds(duration));
+        const auto valid_profiles =
+            this->smart_charging_handler->get_valid_profiles(start_time, end_time, connector_id);
 
-        using date::operator<<;
-        std::ostringstream oss;
-        oss << "Calculating composite schedule from " << start_time << " to " << end_time;
-        EVLOG_debug << oss.str();
-        EVLOG_debug << "Calculate expected consumption for the grid connection";
-        response.scheduleStart.emplace(start_datetime);
-
-        const auto valid_profiles = this->get_all_valid_profiles(start_time, end_time, call.msg.connectorId);
-
-        ChargingSchedule composite_schedule =
-            this->create_composite_schedule(valid_profiles, start_time, end_time, call.msg.duration);
-
+        const auto composite_schedule = this->smart_charging_handler->calculate_composite_schedule(
+            valid_profiles, start_time, end_time, connector_id, call.msg.chargingRateUnit);
         response.status = GetCompositeScheduleStatus::Accepted;
-        response.scheduleStart.emplace(start_datetime);
-        response.connectorId = 0;
-        response.chargingSchedule.emplace(composite_schedule);
+        response.connectorId = connector_id;
+        response.scheduleStart = start_time;
+        response.chargingSchedule = composite_schedule;
     }
 
     CallResult<GetCompositeScheduleResponse> call_result(response, call.uniqueId);
@@ -1840,23 +1485,15 @@ void ChargePoint::handleClearChargingProfileRequest(Call<ClearChargingProfileReq
 
     // clear all charging profiles
     if (!call.msg.id && !call.msg.connectorId && !call.msg.chargingProfilePurpose && !call.msg.stackLevel) {
-        {
-            std::lock_guard<std::mutex> charge_point_max_profiles_lock(charge_point_max_profiles_mutex);
-            this->charge_point_max_profiles.clear();
-        }
-        {
-            std::lock_guard<std::mutex> tx_default_profiles_lock(tx_default_profiles_mutex);
-            this->tx_default_profiles.clear();
-        }
-        // clear tx_profile of every charging session
-        auto number_of_connectors = this->configuration->getNumberOfConnectors();
-        for (int32_t connector = 1; connector <= number_of_connectors; connector++) {
-            auto transaction = this->transaction_handler->get_transaction(connector);
-            if (transaction != nullptr) {
-                transaction->remove_charging_profiles();
-            }
-        }
+        this->smart_charging_handler->clear_all_profiles();
+        response.status = ClearChargingProfileStatus::Accepted;
+    } else if (call.msg.id &&
+               this->smart_charging_handler->clear_all_profiles_with_filter(
+                   call.msg.id, call.msg.connectorId, call.msg.stackLevel, call.msg.chargingProfilePurpose, true)) {
+        response.status = ClearChargingProfileStatus::Accepted;
 
+    } else if (this->smart_charging_handler->clear_all_profiles_with_filter(
+                   call.msg.id, call.msg.connectorId, call.msg.stackLevel, call.msg.chargingProfilePurpose, false)) {
         response.status = ClearChargingProfileStatus::Accepted;
     }
 
@@ -2413,6 +2050,25 @@ IdTagInfo ChargePoint::authorize_id_token(CiString20Type idTag) {
     return id_tag_info;
 }
 
+std::map<int32_t, ChargingSchedule> ChargePoint::get_all_composite_charging_schedules(const int32_t duration_s) {
+
+    std::map<int32_t, ChargingSchedule> charging_schedules;
+
+    for (int connector_id = 0; connector_id < this->configuration->getNumberOfConnectors(); connector_id++) {
+        const auto start_time = DateTime();
+        const auto duration = std::chrono::seconds(duration_s);
+        const auto end_time = DateTime(start_time.to_time_point() + duration);
+
+        const auto valid_profiles =
+            this->smart_charging_handler->get_valid_profiles(start_time, end_time, connector_id);
+        const auto composite_schedule = this->smart_charging_handler->calculate_composite_schedule(
+            valid_profiles, start_time, end_time, connector_id, ChargingRateUnit::A);
+        charging_schedules[connector_id] = composite_schedule;
+    }
+
+    return charging_schedules;
+}
+
 DataTransferResponse ChargePoint::data_transfer(const CiString255Type& vendorId, const CiString50Type& messageId,
                                                 const std::string& data) {
     DataTransferRequest req;
@@ -2448,14 +2104,14 @@ void ChargePoint::register_data_transfer_callback(const CiString255Type& vendorI
 void ChargePoint::on_meter_values(int32_t connector, const Powermeter& power_meter) {
     EVLOG_debug << "updating power meter for connector: " << connector;
     std::lock_guard<std::mutex> lock(power_meters_mutex);
-    this->power_meters[connector] = power_meter;
+    this->connectors.at(connector)->powermeter = power_meter;
 }
 
 void ChargePoint::on_max_current_offered(int32_t connector, int32_t max_current) {
     std::lock_guard<std::mutex> lock(power_meters_mutex);
     // TODO(kai): uses power meter mutex because the reading context is similar, think about storing
     // this information in a unified struct
-    this->max_current_offered[connector] = max_current;
+    this->connectors.at(connector)->max_current_offered = max_current;
 }
 
 void ChargePoint::start_transaction(std::shared_ptr<Transaction> transaction) {
@@ -2493,7 +2149,6 @@ void ChargePoint::on_session_started(int32_t connector, const std::string& sessi
 }
 
 void ChargePoint::on_session_stopped(const int32_t connector) {
-    EVLOG_debug << "Session stopped on connector " << connector;
     // TODO(piet) fix this when evse manager signals clearance of an error
     if (this->status->get_state(connector) == ChargePointStatus::Faulted) {
         this->status->submit_event(connector, Event_I1_ReturnToAvailable());
@@ -2530,6 +2185,8 @@ void ChargePoint::on_transaction_started(const int32_t& connector, const std::st
     this->database_handler->insert_transaction(session_id, transaction->get_transaction_id(), connector, id_token,
                                                timestamp.to_rfc3339(), meter_start, reservation_id);
     this->transaction_handler->add_transaction(transaction);
+    this->connectors.at(connector)->transaction = transaction;
+
     this->start_transaction(transaction);
 }
 
@@ -2550,6 +2207,8 @@ void ChargePoint::on_transaction_stopped(const int32_t connector, const std::str
     this->database_handler->update_transaction(session_id, energy_wh_import, timestamp.to_rfc3339(), id_tag_end,
                                                reason);
     this->transaction_handler->remove_active_transaction(connector);
+    this->smart_charging_handler->clear_all_profiles_with_filter(boost::none, connector, boost::none,
+                                                                 ChargingProfilePurposeType::TxProfile, false);
 }
 
 void ChargePoint::stop_transaction(int32_t connector, Reason reason, boost::optional<CiString20Type> id_tag_end) {

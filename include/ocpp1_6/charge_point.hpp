@@ -15,6 +15,7 @@
 
 #include <ocpp1_6/charge_point_configuration.hpp>
 #include <ocpp1_6/charge_point_state_machine.hpp>
+#include <ocpp1_6/connector.hpp>
 #include <ocpp1_6/database_handler.hpp>
 #include <ocpp1_6/message_queue.hpp>
 #include <ocpp1_6/messages/Authorize.hpp>
@@ -60,12 +61,15 @@
 #include <ocpp1_6/transaction.hpp>
 #include <ocpp1_6/types.hpp>
 #include <ocpp1_6/websocket/websocket.hpp>
+#include <ocpp1_6/smart_charging.hpp>
 
 namespace ocpp1_6 {
 
 /// \brief Contains a ChargePoint implementation compatible with OCPP-J 1.6
 class ChargePoint {
 private:
+    std::map<int32_t, std::shared_ptr<Connector>> connectors;
+    std::unique_ptr<SmartChargingHandler> smart_charging_handler;
     ChargePointConnectionState connection_state;
     std::unique_ptr<MessageQueue> message_queue;
     int32_t heartbeat_interval;
@@ -77,25 +81,17 @@ private:
     RegistrationStatus registration_status;
     std::unique_ptr<ChargePointStates> status;
     std::shared_ptr<ChargePointConfiguration> configuration;
-    std::unique_ptr<DatabaseHandler> database_handler;
+    std::shared_ptr<DatabaseHandler> database_handler;
     std::unique_ptr<Everest::SteadyTimer> heartbeat_timer;
     std::unique_ptr<Everest::SteadyTimer> boot_notification_timer;
     std::unique_ptr<Everest::SystemTimer> clock_aligned_meter_values_timer;
     std::vector<std::unique_ptr<Everest::SteadyTimer>> status_notification_timers;
     std::chrono::time_point<date::utc_clock> clock_aligned_meter_values_time_point;
-    std::map<int32_t, std::vector<MeterValue>> meter_values;
     std::mutex meter_values_mutex;
-    std::map<int32_t, Powermeter> power_meters;
-    std::map<int32_t, double> max_current_offered;
-    std::map<int32_t, int32_t> number_of_phases_available;
     std::mutex power_meters_mutex;
     std::map<int32_t, AvailabilityType> change_availability_queue; // TODO: move to Connectors
     std::mutex change_availability_mutex;                          // TODO: move to Connectors
     std::unique_ptr<TransactionHandler> transaction_handler;
-    std::map<int32_t, ChargingProfile> charge_point_max_profiles;
-    std::mutex charge_point_max_profiles_mutex;
-    std::map<int32_t, std::map<int32_t, ChargingProfile>> tx_default_profiles;
-    std::mutex tx_default_profiles_mutex;
 
     std::unique_ptr<Websocket> websocket;
     std::string message_log_path;
@@ -189,12 +185,14 @@ private:
 
     // new transaction handling:
     void start_transaction(std::shared_ptr<Transaction> transaction);
-    int32_t get_meter_wh(int32_t connector);
 
     /// \brief Sends StopTransaction.req for all transactions for which meter_stop or time_end is not set in the
     /// database's Transaction table
     void stop_pending_transactions();
     void stop_transaction(int32_t connector, Reason reason, boost::optional<CiString20Type> id_tag_end);
+
+    /// \brief Load charging profiles if present in database
+    void load_charging_profiles();
 
     // security
     /// \brief Creates a new public/private key pair and sends a certificate signing request to the central system
@@ -219,17 +217,6 @@ private:
     void handleSetChargingProfileRequest(Call<SetChargingProfileRequest> call);
     void handleGetCompositeScheduleRequest(Call<GetCompositeScheduleRequest> call);
     void handleClearChargingProfileRequest(Call<ClearChargingProfileRequest> call);
-
-    std::vector<ChargingProfile> get_all_valid_profiles(const date::utc_clock::time_point& start_time,
-                                                        const date::utc_clock::time_point& end_time,
-                                                        const int32_t connector_id);
-    std::vector<ChargingProfile> get_valid_profiles(std::map<int32_t, ocpp1_6::ChargingProfile> profiles,
-                                                    date::utc_clock::time_point start_time,
-                                                    date::utc_clock::time_point end_time);
-
-    ChargingSchedule create_composite_schedule(std::vector<ChargingProfile> charging_profiles,
-                                               date::utc_clock::time_point start_time,
-                                               date::utc_clock::time_point end_time, int32_t duration_s);
 
     /// \brief ReserveNow.req(connectorId, expiryDate, idTag, reservationId, [parentIdTag]): tries to perform the
     /// reservation and sends a reservation response. The reservation response: ReserveNow::Status

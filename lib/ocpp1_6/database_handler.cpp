@@ -607,4 +607,95 @@ bool DatabaseHandler::clear_local_authorization_list() {
     return this->clear_table("AUTH_LIST");
 }
 
+void DatabaseHandler::insert_or_update_charging_profile(const int connector_id, const ChargingProfile& profile) {
+    // add or replace
+    std::string insert_sql = "INSERT OR REPLACE INTO CHARGING_PROFILES (ID, CONNECTOR_ID, PROFILE) VALUES "
+                             "(@id, @connector_id, @profile)";
+    sqlite3_stmt* stmt;
+    if (sqlite3_prepare_v2(this->db, insert_sql.c_str(), insert_sql.size(), &stmt, NULL) != SQLITE_OK) {
+        EVLOG_error << "Could not prepare insert statement";
+        throw std::runtime_error("Database access error");
+    }
+
+    json json_profile(profile);
+
+    sqlite3_bind_int(stmt, 1, profile.chargingProfileId);
+    sqlite3_bind_int(stmt, 2, connector_id);
+    sqlite3_bind_text(stmt, 3, json_profile.dump().c_str(), json_profile.dump().length(), SQLITE_TRANSIENT);
+
+    if (sqlite3_step(stmt) != SQLITE_DONE) {
+        EVLOG_error << "Could not insert into table: " << sqlite3_errmsg(db);
+        throw std::runtime_error("db access error");
+    }
+
+    if (sqlite3_finalize(stmt) != SQLITE_OK) {
+        EVLOG_error << "Error inserting into table";
+        throw std::runtime_error("db access error");
+    }
+}
+
+void DatabaseHandler::delete_charging_profile(const int profile_id) {
+    std::string delete_sql = "DELETE FROM CHARGING_PROFILES WHERE ID = @id;";
+    sqlite3_stmt* stmt;
+    if (sqlite3_prepare_v2(this->db, delete_sql.c_str(), delete_sql.size(), &stmt, NULL) != SQLITE_OK) {
+        EVLOG_warning << "Could not prepare insert statement";
+        return;
+    }
+    sqlite3_bind_int(stmt, 1, profile_id);
+    if (sqlite3_step(stmt) != SQLITE_DONE) {
+        EVLOG_error << "Could not delete from table: " << sqlite3_errmsg(db);
+    }
+    if (sqlite3_finalize(stmt) != SQLITE_OK) {
+        EVLOG_error << "Error deleting from table";
+    }
+}
+
+void DatabaseHandler::delete_charging_profiles() {
+    this->clear_table("CHARGING_PROFILES");
+}
+
+std::vector<ChargingProfile> DatabaseHandler::get_charging_profiles() {
+
+    std::vector<ChargingProfile> profiles;
+    std::string sql = "SELECT * FROM CHARGING_PROFILES";
+
+    sqlite3_stmt* stmt;
+    if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
+        EVLOG_warning << "Could not prepare insert statement" << std::endl;
+        return profiles;
+    }
+
+    while (sqlite3_step(stmt) != SQLITE_DONE) {
+        ChargingProfile profile(json::parse(std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2)))));
+        profiles.push_back(profile);
+    }
+
+    if (sqlite3_finalize(stmt) != SQLITE_OK) {
+        EVLOG_warning << "Error selecting from table" << std::endl;
+        return profiles;
+    }
+    return profiles;
+}
+
+int DatabaseHandler::get_connector_id(const int profile_id) {
+
+    std::string sql = "SELECT CONNECTOR_ID FROM CHARGING_PROFILES WHERE ID = @profile_id";
+
+    sqlite3_stmt* stmt;
+    if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
+        EVLOG_warning << "Could not prepare select statement" << std::endl;
+        return -1;
+    }
+
+    sqlite3_bind_int(stmt, 1, profile_id);
+
+    if (sqlite3_step(stmt) != SQLITE_ROW) {
+        EVLOG_warning << "Requesting an unknown profile_id from database";
+        return -1;
+    }
+
+    const auto connector_id = sqlite3_column_int(stmt, 0);
+    return connector_id;
+}
+
 } // namespace ocpp1_6

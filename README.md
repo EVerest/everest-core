@@ -14,7 +14,7 @@ The following table shows the current support for the listed feature profiles an
 | Firmware Management        | :heavy_check_mark: yes    |
 | Local Auth List Management | :heavy_check_mark: yes    |
 | Reservation                | :heavy_check_mark: yes    |
-| Smart Charging             | :yellow_circle: partially |
+| Smart Charging             | :heavy_check_mark: yes    |
 | Remote Trigger             | :heavy_check_mark: yes    |
 
 | Whitepapers                                                                                                                               | Supported              |

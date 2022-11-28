@@ -1,13 +1,52 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 
+#include <boost/optional/optional_io.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
 #include <ocpp1_6/database_handler.hpp>
-#include <boost/optional/optional_io.hpp>
 #include <thread>
 
 namespace ocpp1_6 {
+
+ocpp1_6::ChargingProfile get_sample_charging_profile() {
+    ocpp1_6::ChargingSchedulePeriod period1;
+    period1.startPeriod = 0;
+    period1.limit = 10;
+    period1.numberPhases.emplace(3);
+
+    ocpp1_6::ChargingSchedulePeriod period2;
+    period2.startPeriod = 30;
+    period2.limit = 16;
+    period2.numberPhases.emplace(3);
+
+    std::vector<ocpp1_6::ChargingSchedulePeriod> periods;
+    periods.push_back(period1);
+    periods.push_back(period2);
+
+    ocpp1_6::ChargingSchedule schedule;
+    schedule.chargingRateUnit = ocpp1_6::ChargingRateUnit::A;
+    schedule.chargingSchedulePeriod = periods;
+    schedule.duration = 100;
+    schedule.startSchedule.emplace(ocpp1_6::DateTime(date::utc_clock::now()));
+    schedule.minChargingRate.emplace(6.4);
+
+    DateTime valid_from = ocpp1_6::DateTime(date::utc_clock::now());
+    DateTime valid_to = ocpp1_6::DateTime(valid_from.to_time_point() + std::chrono::hours(3600));
+
+    ocpp1_6::ChargingProfile profile;
+    profile.chargingProfileId = 1;
+    profile.stackLevel = 2;
+    profile.chargingProfilePurpose = ocpp1_6::ChargingProfilePurposeType::TxProfile;
+    profile.chargingProfileKind = ocpp1_6::ChargingProfileKindType::Recurring;
+    profile.recurrencyKind.emplace(ocpp1_6::RecurrencyKindType::Daily);
+    profile.validFrom.emplace(valid_from);
+    profile.validTo.emplace(valid_to);
+    profile.chargingSchedule = schedule;
+
+    return profile;
+}
+
 class DatabaseTest : public ::testing::Test {
 protected:
     void SetUp() override {
@@ -266,5 +305,73 @@ TEST_F(DatabaseTest, test_insert_and_get_transaction_without_id_tag) {
     ASSERT_FALSE(transaction.id_tag_end);
 }
 
-} // namespace ocpp1_6
+TEST_F(DatabaseTest, test_insert_and_get_profiles) {
 
+    const auto profile = get_sample_charging_profile();
+
+    this->db_handler->insert_or_update_charging_profile(1, profile);
+
+    const auto profiles = this->db_handler->get_charging_profiles();
+
+    ASSERT_EQ(profiles.size(), 1);
+    const auto db_profile = profiles.at(0);
+
+    ASSERT_EQ(db_profile.chargingProfileId, profile.chargingProfileId);
+    ASSERT_EQ(db_profile.stackLevel, profile.stackLevel);
+    ASSERT_EQ(db_profile.chargingProfilePurpose, profile.chargingProfilePurpose);
+    ASSERT_EQ(db_profile.chargingProfileKind, profile.chargingProfileKind);
+    ASSERT_EQ(db_profile.recurrencyKind.value(), profile.recurrencyKind.value());
+    ASSERT_EQ(db_profile.validFrom.value(), profile.validFrom.value());
+    ASSERT_EQ(db_profile.validTo.value(), profile.validTo.value());
+
+    ASSERT_EQ(db_profile.chargingSchedule.chargingRateUnit, ocpp1_6::ChargingRateUnit::A);
+    ASSERT_EQ(db_profile.chargingSchedule.duration, profile.chargingSchedule.duration);
+    ASSERT_EQ(db_profile.chargingSchedule.startSchedule.value(), profile.chargingSchedule.startSchedule.value());
+    ASSERT_EQ(db_profile.chargingSchedule.minChargingRate.value(), profile.chargingSchedule.minChargingRate.value());
+
+    for (size_t i = 0; i < profile.chargingSchedule.chargingSchedulePeriod.size(); i++) {
+        ASSERT_EQ(db_profile.chargingSchedule.chargingSchedulePeriod.at(i).startPeriod,
+                  profile.chargingSchedule.chargingSchedulePeriod.at(i).startPeriod);
+        ASSERT_EQ(db_profile.chargingSchedule.chargingSchedulePeriod.at(i).limit,
+                  profile.chargingSchedule.chargingSchedulePeriod.at(i).limit);
+        ASSERT_EQ(db_profile.chargingSchedule.chargingSchedulePeriod.at(i).numberPhases.value(),
+                  profile.chargingSchedule.chargingSchedulePeriod.at(i).numberPhases.value());
+    }
+}
+
+TEST_F(DatabaseTest, test_update_profile_same_profile_id) {
+    const auto profile1 = get_sample_charging_profile();
+    const auto profile2 = get_sample_charging_profile();
+
+    this->db_handler->insert_or_update_charging_profile(1, profile1);
+    this->db_handler->insert_or_update_charging_profile(2, profile2);
+
+    const auto profiles = this->db_handler->get_charging_profiles();
+
+    ASSERT_EQ(profiles.size(), 1);
+}
+
+TEST_F(DatabaseTest, test_delete_profile) {
+    const auto profile1 = get_sample_charging_profile();
+    auto profile2 = get_sample_charging_profile();
+
+    profile2.chargingProfileId = 2;
+
+    this->db_handler->insert_or_update_charging_profile(1, profile1);
+    this->db_handler->insert_or_update_charging_profile(2, profile2);
+
+    auto profiles = this->db_handler->get_charging_profiles();
+    ASSERT_EQ(profiles.size(), 2);
+
+    this->db_handler->delete_charging_profile(1);
+
+    profiles = this->db_handler->get_charging_profiles();
+    ASSERT_EQ(profiles.size(), 1);
+
+    this->db_handler->delete_charging_profiles();
+
+    profiles = this->db_handler->get_charging_profiles();
+    ASSERT_EQ(profiles.size(), 0);
+}
+
+} // namespace ocpp1_6

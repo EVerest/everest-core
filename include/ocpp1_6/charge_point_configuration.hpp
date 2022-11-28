@@ -56,11 +56,11 @@ public:
     bool getLogMessages();
     std::vector<std::string> getLogMessagesFormat();
     std::vector<ChargingProfilePurposeType> getSupportedChargingProfilePurposeTypes();
+    int32_t getMaxCompositeScheduleDuration();
 
     std::string getSupportedCiphers12();
     std::string getSupportedCiphers13();
 
-    // Internal
     std::set<MessageType> getSupportedMessageTypesSending();
     std::set<MessageType> getSupportedMessageTypesReceiving();
 

@@ -251,6 +251,10 @@ std::vector<ChargingProfilePurposeType> ChargePointConfiguration::getSupportedCh
     return supported_purpose_types;
 }
 
+int32_t ChargePointConfiguration::getMaxCompositeScheduleDuration() {
+    return this->config["Internal"]["MaxCompositeScheduleDuration"];
+}
+
 std::string ChargePointConfiguration::getSupportedCiphers12() {
 
     std::vector<std::string> supported_ciphers = this->config["Internal"]["SupportedCiphers12"];

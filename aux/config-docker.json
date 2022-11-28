@@ -44,7 +44,7 @@
     },
     "SmartCharging": {
         "ChargeProfileMaxStackLevel": 42,
-        "ChargingScheduleAllowedChargingRateUnit": "Current",
+        "ChargingScheduleAllowedChargingRateUnit": "Current,Power",
         "ChargingScheduleMaxPeriods": 42,
         "MaxChargingProfilesInstalled": 42
     }
