@@ -534,7 +534,7 @@ def json2yaml(json_file: Path, yaml_file: Path):
         content_as_dict = json.load(json_content)
 
     with open(yaml_file, 'w') as yaml_content:
-        yaml.safe_dump(content_as_dict, yaml_content, indent=2, sort_keys=False)
+        yaml.safe_dump(content_as_dict, yaml_content, indent=2, sort_keys=False, width=120)
 
 def __check_for_match(blocks_def, line, line_no, file_path):
     match = re.search(blocks_def['regex_str'], line)
