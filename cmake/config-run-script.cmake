@@ -1,4 +1,4 @@
-set(EVEREST_CONFIG_ASSET_DIR "${CMAKE_CURRENT_LIST_DIR}" CACHE INTERNAL "")
+set(EVEREST_CONFIG_ASSET_DIR "${CMAKE_CURRENT_LIST_DIR}/assets" CACHE INTERNAL "")
 
 function(generate_config_run_script)
 
@@ -27,7 +27,7 @@ function(generate_config_run_script)
         message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: config file '${CONFIG_FILE}' does not exist")
     endif()
 
-    set(LOGGING_CONFIG_FILE "${EVEREST_CONFIG_ASSET_DIR}/assets/logging.ini")
+    set(LOGGING_CONFIG_FILE "${EVEREST_CONFIG_ASSET_DIR}/logging.ini")
     if (OPTNS_LOGGING_CONFIG)
         set(LOGGING_CONFIG_FILE "${CMAKE_CURRENT_SOURCE_DIR}/${OPTNS_LOGGING_CONFIG}.ini")
     endif()
@@ -55,6 +55,6 @@ function(generate_config_run_script)
     set(INTERFACE_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/everest/interfaces")
     set(SCHEMA_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/everest/schemas")
 
-    configure_file("${EVEREST_CONFIG_ASSET_DIR}/assets/run_template.sh.in" ${SCRIPT_OUTPUT_FILE})
+    configure_file("${EVEREST_CONFIG_ASSET_DIR}/run_template.sh.in" ${SCRIPT_OUTPUT_FILE})
 
 endfunction()
