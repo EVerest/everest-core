@@ -4,9 +4,9 @@ import logging
 import netifaces
 from pathlib import Path
 
-import sys, os
+import sys
 JOSEV_WORK_DIR = Path(__file__).parent / '../../3rd_party/josev'
-sys.path.append(JOSEV_WORK_DIR.resolve())
+sys.path.append(JOSEV_WORK_DIR.as_posix())
 
 from iso15118.secc import SECCHandler
 from iso15118.secc.controller.simulator import SimEVSEController
