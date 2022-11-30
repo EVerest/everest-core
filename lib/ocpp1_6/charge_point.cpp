@@ -217,9 +217,8 @@ MeterValue ChargePoint::get_latest_meter_value(int32_t connector, std::vector<Me
     // TODO(kai): also support readings from the charge point powermeter at "connector 0"
     if (this->power_meters.count(connector) != 0) {
         const auto power_meter = this->power_meters[connector];
-        const auto timestamp =
-            std::chrono::time_point<date::utc_clock>(std::chrono::seconds(static_cast<int>(power_meter.timestamp)));
-        filtered_meter_value.timestamp = DateTime(timestamp);
+        const auto timestamp = DateTime(power_meter.timestamp);
+        filtered_meter_value.timestamp = timestamp;
         EVLOG_debug << "PowerMeter value for connector: " << connector << ": " << power_meter;
 
         for (auto configured_measurand : values_of_interest) {
