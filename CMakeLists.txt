@@ -92,6 +92,11 @@ if (FRAMEWORK_INSTALL)
         DESTINATION include/everest
     )
 
+    install(
+        FILES ${EVEREST_FRAMEWORK_GENERATED_INC_DIR}/everest/compile_time_settings.hpp
+        DESTINATION include/everest
+    )
+
     evc_setup_package(
         NAME everest-framework
         EXPORT framework-targets
