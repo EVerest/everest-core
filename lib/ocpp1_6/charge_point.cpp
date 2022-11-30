@@ -1248,17 +1248,7 @@ void ChargePoint::handleStartTransactionResponse(CallResult<StartTransactionResp
     auto idTag = transaction->get_id_tag();
     this->database_handler->insert_or_update_authorization_cache_entry(idTag, start_transaction_response.idTagInfo);
 
-    if (start_transaction_response.idTagInfo.status == AuthorizationStatus::ConcurrentTx) {
-        return;
-    }
-
-    if (this->resume_charging_callback != nullptr) {
-        this->resume_charging_callback(connector);
-    }
-
     if (start_transaction_response.idTagInfo.status != AuthorizationStatus::Accepted) {
-        // FIXME(kai): libfsm        this->status_notification(connector, ChargePointErrorCode::NoError,
-        // this->status[connector]->suspended_evse());
         this->pause_charging_callback(connector);
         if (this->configuration->getStopTransactionOnInvalidId()) {
             this->stop_transaction_callback(connector, Reason::DeAuthorized);
