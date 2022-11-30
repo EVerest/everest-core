@@ -189,6 +189,11 @@ private:
     void powersupply_DC_off();
     bool wait_powersupply_DC_voltage_reached(double target_voltage);
     bool wait_powersupply_DC_below_voltage(double target_voltage);
+
+
+    // EV information
+    std::mutex ev_info_mutex;
+    types::evse_manager::EVInfo ev_info;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

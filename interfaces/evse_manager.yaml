@@ -129,6 +129,10 @@ vars:
     description: Limits of this evse, published on change
     type: object
     $ref: /evse_manager#/Limits
+  ev_info:
+    description: More details about the EV if available
+    type: object
+    $ref: /evse_manager#/EVInfo
   telemetry:
     description: Other telemetry
     type: object
@@ -144,3 +148,4 @@ vars:
     description: ' Hardware capability/limits'
     type: object
     $ref: /board_support#/HardwareCapabilities
+    

@@ -143,10 +143,18 @@ void EvseManager::ready() {
                     latest_target_current = v.DC_EVTargetCurrent;
                     target_changed = true;
                 }
+
                 if (target_changed) {
                     powersupply_DC_set(v.DC_EVTargetVoltage, v.DC_EVTargetCurrent);
                     if (!contactor_open) {
                         powersupply_DC_on();
+                    }
+
+                    {
+                        std::scoped_lock lock(ev_info_mutex);
+                        ev_info.target_voltage = v.DC_EVTargetVoltage;
+                        ev_info.target_current = v.DC_EVTargetCurrent;
+                        p_evse->publish_ev_info(ev_info);
                     }
                 }
             });
@@ -169,8 +177,92 @@ void EvseManager::ready() {
             // Current demand has finished - switch off DC supply
             r_hlc[0]->subscribe_currentDemand_Finished([this] { powersupply_DC_off(); });
 
+            r_hlc[0]->subscribe_DC_EVMaximumLimits([this](types::iso15118_charger::DC_EVMaximumLimits l) {
+                std::scoped_lock lock(ev_info_mutex);
+                ev_info.maximum_current_limit = l.DC_EVMaximumCurrentLimit;
+                ev_info.maximum_power_limit = l.DC_EVMaximumPowerLimit;
+                ev_info.maximum_voltage_limit = l.DC_EVMaximumVoltageLimit;
+                p_evse->publish_ev_info(ev_info);
+            });
+
+            r_hlc[0]->subscribe_DepartureTime([this](std::string t) {
+                std::scoped_lock lock(ev_info_mutex);
+                ev_info.departure_time = t;
+                p_evse->publish_ev_info(ev_info);
+            });
+
+            r_hlc[0]->subscribe_AC_EAmount([this](double e) {
+                // FIXME send only on change / throttle messages
+                std::scoped_lock lock(ev_info_mutex);
+                ev_info.remaining_energy_needed = e;
+                p_evse->publish_ev_info(ev_info);
+            });
+
+            r_hlc[0]->subscribe_AC_EVMaxVoltage([this](double v) {
+                // FIXME send only on change / throttle messages
+                std::scoped_lock lock(ev_info_mutex);
+                ev_info.maximum_voltage_limit = v;
+                p_evse->publish_ev_info(ev_info);
+            });
+
+            r_hlc[0]->subscribe_AC_EVMaxCurrent([this](double c) {
+                // FIXME send only on change / throttle messages
+                std::scoped_lock lock(ev_info_mutex);
+                ev_info.maximum_current_limit = c;
+                p_evse->publish_ev_info(ev_info);
+            });
+
+            r_hlc[0]->subscribe_AC_EVMinCurrent([this](double c) {
+                // FIXME send only on change / throttle messages
+                std::scoped_lock lock(ev_info_mutex);
+                ev_info.minimum_current_limit = c;
+                p_evse->publish_ev_info(ev_info);
+            });
+
+            r_hlc[0]->subscribe_DC_EVEnergyCapacity([this](double c) {
+                // FIXME send only on change / throttle messages
+                std::scoped_lock lock(ev_info_mutex);
+                ev_info.battery_capacity = c;
+                p_evse->publish_ev_info(ev_info);
+            });
+
+            r_hlc[0]->subscribe_DC_EVEnergyRequest([this](double c) {
+                // FIXME send only on change / throttle messages
+                std::scoped_lock lock(ev_info_mutex);
+                ev_info.remaining_energy_needed = c;
+                p_evse->publish_ev_info(ev_info);
+            });
+
+            r_hlc[0]->subscribe_DC_FullSOC([this](double c) {
+                // FIXME send only on change / throttle messages
+                std::scoped_lock lock(ev_info_mutex);
+                ev_info.battery_full_soc = c;
+                p_evse->publish_ev_info(ev_info);
+            });
+
+            r_hlc[0]->subscribe_DC_BulkSOC([this](double c) {
+                // FIXME send only on change / throttle messages
+                std::scoped_lock lock(ev_info_mutex);
+                ev_info.battery_bulk_soc = c;
+                p_evse->publish_ev_info(ev_info);
+            });
+
+            r_hlc[0]->subscribe_DC_EVRemainingTime([this](types::iso15118_charger::DC_EVRemainingTime t) {
+                // FIXME send only on change / throttle messages
+                std::scoped_lock lock(ev_info_mutex);
+                ev_info.estimated_time_full = t.EV_RemainingTimeToFullSoC;
+                ev_info.estimated_time_bulk = t.EV_RemainingTimeToBulkSoC;
+                p_evse->publish_ev_info(ev_info);
+            });
+
+            r_hlc[0]->subscribe_DC_EVStatus([this](types::iso15118_charger::DC_EVStatusType s) {
+                // FIXME send only on change / throttle messages
+                std::scoped_lock lock(ev_info_mutex);
+                ev_info.soc = s.DC_EVRESSSOC;
+                p_evse->publish_ev_info(ev_info);
+            });
+
             // unused vars of HLC for now:
-            // DC_EVMaximumLimits
 
             // AC_Close_Contactor
             // AC_Open_Contactor
@@ -178,20 +270,10 @@ void EvseManager::ready() {
             // V2G_Setup_Finished
             // SelectedPaymentOption
             // RequestedEnergyTransferMode
-            // DepartureTime
-            // AC_EAmount
-            // AC_EVMaxVoltage
-            // AC_EVMaxCurrent
-            // AC_EVMinCurrent
-            // DC_EVEnergyCapacity
-            // DC_EVEnergyRequest
-            // DC_FullSOC
-            // DC_BulkSOC
-            // DC_EVStatus
+
             // EV_ChargingSession
             // DC_BulkChargingComplete
             // DC_ChargingComplete
-            // DC_EVRemainingTime
 
         } else {
             EVLOG_error << "Unsupported charging mode.";
@@ -244,6 +326,12 @@ void EvseManager::ready() {
             autocharge_token.type = "autocharge";
 
             p_token_provider->publish_provided_token(autocharge_token);
+
+            {
+                std::scoped_lock lock(ev_info_mutex);
+                ev_info.evcc_id = _token;
+                p_evse->publish_ev_info(ev_info);
+            }
         });
 
         r_hlc[0]->subscribe_Require_Auth_PnC([this]() {
@@ -450,11 +538,17 @@ void EvseManager::ready() {
             charger->requestErrorSequence();
         });
     }
+
     charger->signalEvent.connect([this](types::evse_manager::SessionEventEnum s) {
         // Cancel reservations if charger is disabled or faulted
         if (s == types::evse_manager::SessionEventEnum::Disabled ||
             s == types::evse_manager::SessionEventEnum::PermanentFault) {
             cancel_reservation();
+        }
+        if (s == types::evse_manager::SessionEventEnum::SessionStarted ||
+            s == types::evse_manager::SessionEventEnum::SessionFinished) {
+            // Reset EV information on Session start and end
+            ev_info = types::evse_manager::EVInfo();
         }
     });
 
