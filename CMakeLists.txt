@@ -6,7 +6,7 @@ project(everest-core
 	LANGUAGES CXX C
 )
 
-find_package(everest-cmake 0.10
+find_package(everest-cmake 0.1
     COMPONENTS bundling
     PATHS ../everest-cmake
 )
