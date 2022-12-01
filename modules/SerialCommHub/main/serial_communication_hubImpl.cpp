@@ -149,7 +149,7 @@ void serial_communication_hubImpl::init() {
 
     modbus_connection = std::make_unique<everest::connection::RTUConnection>(*serial_device);
 
-    modbus_client = std::make_unique<everest::modbus::ModbusRTUClient>(*modbus_connection);
+    modbus_client = std::make_unique<everest::modbus::ModbusRTUClient>(*modbus_connection, config.ignore_echo);
 }
 
 void serial_communication_hubImpl::ready() {
@@ -282,6 +282,71 @@ types::serial_comm_hub_requests::Result serial_communication_hubImpl::handle_mod
 
             try {
                 response = modbus_client->read_holding_register(
+                    (uint8_t)target_device_id, (uint16_t)first_register_address, (uint16_t)num_registers_to_read, true);
+
+            } catch (const everest::modbus::exceptions::unmatched_response& e) {
+                EVLOG_error << "Unmatched response error: " << e.what() << "\n";
+                result.status_code = types::serial_comm_hub_requests::StatusCodeEnum::RxWrongDevice;
+                retry_counter--;
+                continue;
+            } catch (const everest::modbus::exceptions::checksum_error& e) {
+                EVLOG_error << "Checksum error: " << e.what() << "\n";
+                result.status_code = types::serial_comm_hub_requests::StatusCodeEnum::RxCRCMismatch;
+                retry_counter--;
+                continue;
+            } catch (const everest::modbus::exceptions::empty_response& e) {
+                EVLOG_error << "Empty response error: " << e.what() << "\n";
+                result.status_code = types::serial_comm_hub_requests::StatusCodeEnum::RxBrokenReply;
+                retry_counter--;
+                continue;
+            } catch (const everest::modbus::exceptions::modbus_exception& e) {
+                EVLOG_error << "Modbus exception: " << e.what() << "\n";
+                result.status_code = types::serial_comm_hub_requests::StatusCodeEnum::ModbusException;
+                retry_counter--;
+                continue;
+            }
+            done = true;
+        } while (!done);
+
+        last_message_end_time = std::chrono::steady_clock::now();
+    }
+
+    EVLOG_debug << fmt::format("Process response (size {})", response.size());
+    // process response
+    if (response.size() > 1) {
+        result.status_code = types::serial_comm_hub_requests::StatusCodeEnum::Success;
+        result.value = to_little_endian_int(response);
+    }
+    return result;
+}
+
+
+types::serial_comm_hub_requests::Result serial_communication_hubImpl::handle_modbus_read_input_registers(
+    int& target_device_id, int& first_register_address, int& num_registers_to_read, int& pause_between_messages) {
+    std::vector<std::uint8_t> response;
+    types::serial_comm_hub_requests::Result result;
+    result.status_code = types::serial_comm_hub_requests::StatusCodeEnum::ModbusException;
+
+    {
+        std::scoped_lock lock(serial_mutex);
+        auto time_since_last_message = std::chrono::steady_clock::now() - last_message_end_time;
+        auto pause_time = std::chrono::milliseconds(pause_between_messages);
+        if (time_since_last_message < pause_time)
+            std::this_thread::sleep_for(pause_time - time_since_last_message);
+
+        bool done{false};
+        uint8_t retry_counter{this->num_resends_on_error};
+        do {
+            if (retry_counter < 1) {
+                return result;
+            }
+
+            EVLOG_debug << fmt::format("Try {} Call modbus_client->read_input_register(id {} addr {} len {})",
+                                       (int)num_resends_on_error, (uint8_t)target_device_id,
+                                       (uint16_t)first_register_address, (uint16_t)num_registers_to_read);
+
+            try {
+                response = modbus_client->read_input_register(
                     (uint8_t)target_device_id, (uint16_t)first_register_address, (uint16_t)num_registers_to_read, true);
 
             } catch (const everest::modbus::exceptions::unmatched_response& e) {

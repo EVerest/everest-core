@@ -8,7 +8,7 @@ sigslot:
   options: ["SIGSLOT_COMPILE_EXAMPLES OFF"]
 libmodbus:
   git: https://github.com/EVerest/libmodbus.git
-  git_tag: v0.1.0
+  git_tag: v0.2.0
 libsunspec:
   git: https://github.com/EVerest/libsunspec.git
   git_tag: v0.1.0
