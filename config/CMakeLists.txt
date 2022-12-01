@@ -5,6 +5,7 @@ generate_config_run_script(CONFIG sil-ocpp201)
 generate_config_run_script(CONFIG sil-dc)
 generate_config_run_script(CONFIG sil-two-evse-dc)
 generate_config_run_script(CONFIG hil)
+generate_config_run_script(CONFIG sil-gen-pm)
 
 # install configs
 install(

@@ -78,6 +78,34 @@ cmds:
       description: Result of the transfer
       type: object
       $ref: /serial_comm_hub_requests#/Result
+  modbus_read_input_registers:
+    description: 'Send a Modbus RTU ''read input registers'' command via serial
+      interface to the target hardware. (return value: response)'
+    arguments:
+      target_device_id:
+        description: ID (1 byte) of the device to send the commands to
+        type: integer
+        minimum: 0
+        maximum: 255
+      first_register_address:
+        description: Start address for read operation (16 bit address)
+        type: integer
+        minimum: 0
+        maximum: 65535
+      num_registers_to_read:
+        description: Number of registers to read (16 bit each)
+        type: integer
+        minimum: 1
+      pause_between_messages:
+        description: Ensure a pause between packets on the wire in ms. Some Modbus
+          devices require a minimal pause between the last message and this message.
+          Set to 0 if not needed.
+        type: integer
+        minimum: 0
+    result:
+      description: Result of the transfer
+      type: object
+      $ref: /serial_comm_hub_requests#/Result
   modbus_write_multiple_registers:
     description: >-
       Send a Modbus RTU 'write multiple registers' command via serial
