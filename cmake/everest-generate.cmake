@@ -18,12 +18,12 @@ set_target_properties(generate_cpp_files
 #
 # out-of-tree interfaces/types/modules support
 #
+# FIXME(kai): DO THIS WITH A CHECK BASED ON "use edm / use cmake" !
+set(EVEREST_PROJECT_DIRS "." CACHE STRING "")
 
 function(ev_add_project)
     message(STATUS "APPENDING ${PROJECT_SOURCE_DIR} to EVEREST_PROJECT_DIRS")
-    set_property(TARGET generate_cpp_files
-        APPEND PROPERTY EVEREST_PROJECT_DIRS "${PROJECT_SOURCE_DIR}"
-    )
+    list(APPEND EVEREST_PROJECT_DIRS "${PROJECT_SOURCE_DIR}")
 endfunction()
 
 #
@@ -33,7 +33,6 @@ endfunction()
 function (ev_add_interfaces)
     get_target_property(GENERATED_OUTPUT_DIR generate_cpp_files EVEREST_GENERATED_OUTPUT_DIR)
     set(CHECK_DONE_FILE "${GENERATED_OUTPUT_DIR}/.interfaces_generated_${PROJECT_NAME}")
-    get_target_property(EVEREST_PROJECT_DIRS generate_cpp_files EVEREST_PROJECT_DIRS)
 
     add_custom_command(
         OUTPUT
@@ -70,7 +69,6 @@ endfunction()
 function (ev_add_types)
     get_target_property(GENERATED_OUTPUT_DIR generate_cpp_files EVEREST_GENERATED_OUTPUT_DIR)
     set(CHECK_DONE_FILE "${GENERATED_OUTPUT_DIR}/.types_generated_${PROJECT_NAME}")
-    get_target_property(EVEREST_PROJECT_DIRS generate_cpp_files EVEREST_PROJECT_DIRS)
 
     add_custom_command(
         OUTPUT
