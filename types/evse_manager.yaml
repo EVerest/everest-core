@@ -283,6 +283,12 @@ types:
         type: number
         minimum: 0
         maximum: 100
+      present_voltage:
+        description: Current voltage of the vehicles battery [V]
+        type: number
+      present_current:
+        description: Current current of the vehicles battery [A]
+        type: number
       target_voltage:
         description: Target voltage that the vehicle requested [V]
         type: number

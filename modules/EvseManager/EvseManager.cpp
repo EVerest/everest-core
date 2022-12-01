@@ -131,6 +131,13 @@ void EvseManager::ready() {
                     present_values.EVSEPresentVoltage = (m.voltage_V > 0 ? m.voltage_V : 0.0);
                     present_values.EVSEPresentCurrent = (m.current_A > 0 ? m.current_A : 0.0);
                     r_hlc[0]->call_set_DC_EVSEPresentVoltageCurrent(present_values);
+                    // publish EV_info
+                    {
+                        std::scoped_lock lock(ev_info_mutex);
+                        ev_info.present_voltage = present_values.EVSEPresentVoltage;
+                        ev_info.present_current = present_values.EVSEPresentCurrent;
+                        // p_evse->publish_ev_info(ev_info);
+                    }
                 });
             }
 
@@ -549,6 +556,7 @@ void EvseManager::ready() {
             s == types::evse_manager::SessionEventEnum::SessionFinished) {
             // Reset EV information on Session start and end
             ev_info = types::evse_manager::EVInfo();
+            p_evse->publish_ev_info(ev_info);
         }
     });
 
