@@ -1,7 +1,7 @@
 ---
 everest-framework:
   git: https://github.com/EVerest/everest-framework.git
-  git_tag: kh-add-python-interface
+  git_tag: feature/python-bindings-compressed
 sigslot:
   git: https://github.com/palacaze/sigslot
   git_tag: v1.2.0
