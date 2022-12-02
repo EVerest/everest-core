@@ -19,6 +19,10 @@ requires:
     interface: energy
     min_connections: 1
     max_connections: 128
+  external_limits:
+    interface: energy
+    min_connections: 0
+    max_connections: 1
   powermeter:
     interface: powermeter
     min_connections: 0
