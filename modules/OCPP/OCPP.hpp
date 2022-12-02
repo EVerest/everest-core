@@ -13,6 +13,7 @@
 // headers for provided interface implementations
 #include <generated/interfaces/auth_token_provider/Implementation.hpp>
 #include <generated/interfaces/auth_token_validator/Implementation.hpp>
+#include <generated/interfaces/energy/Implementation.hpp>
 #include <generated/interfaces/ocpp_1_6_charge_point/Implementation.hpp>
 
 // headers for required interface implementations
@@ -57,6 +58,7 @@ public:
          std::unique_ptr<ocpp_1_6_charge_pointImplBase> p_main,
          std::unique_ptr<auth_token_validatorImplBase> p_auth_validator,
          std::unique_ptr<auth_token_providerImplBase> p_auth_provider,
+         std::unique_ptr<energyImplBase> p_energy_source_and_sink,
          std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager, std::unique_ptr<reservationIntf> r_reservation,
          std::unique_ptr<authIntf> r_auth, std::unique_ptr<systemIntf> r_system, Conf& config) :
         ModuleBase(info),
@@ -64,6 +66,7 @@ public:
         p_main(std::move(p_main)),
         p_auth_validator(std::move(p_auth_validator)),
         p_auth_provider(std::move(p_auth_provider)),
+        p_energy_source_and_sink(std::move(p_energy_source_and_sink)),
         r_evse_manager(std::move(r_evse_manager)),
         r_reservation(std::move(r_reservation)),
         r_auth(std::move(r_auth)),
@@ -75,6 +78,7 @@ public:
     const std::unique_ptr<ocpp_1_6_charge_pointImplBase> p_main;
     const std::unique_ptr<auth_token_validatorImplBase> p_auth_validator;
     const std::unique_ptr<auth_token_providerImplBase> p_auth_provider;
+    const std::unique_ptr<energyImplBase> p_energy_source_and_sink;
     const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;
     const std::unique_ptr<reservationIntf> r_reservation;
     const std::unique_ptr<authIntf> r_auth;

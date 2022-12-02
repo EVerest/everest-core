@@ -40,6 +40,9 @@ active_modules:
       hlc:
         - module_id: iso15118_charger
           implementation_id: charger
+      external_limits:
+        - module_id: ocpp
+          implementation_id: energy_source_and_sink
   evse_manager_2:
     module: EvseManager
     config_module:
@@ -68,6 +71,9 @@ active_modules:
       hlc:
         - module_id: iso15118_charger
           implementation_id: charger
+      external_limits:
+        - module_id: ocpp
+          implementation_id: energy_source_and_sink
   yeti_driver_1:
     module: JsYetiSimulator
   yeti_driver_2:
@@ -173,6 +179,9 @@ active_modules:
       powermeter:
         - module_id: yeti_driver_1
           implementation_id: powermeter
+      external_limits:
+        - module_id: ocpp
+          implementation_id: energy_source_and_sink
   api:
     module: API
     connections:

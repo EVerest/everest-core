@@ -44,6 +44,9 @@ provides:
   auth_provider:
     description: Provides auth tokens from OCPP
     interface: auth_token_provider
+  energy_source_and_sink:
+    description: Energy interface to set ChargingProfiles and receive CompositeSchedules
+    interface: energy
 requires:
   evse_manager:
     interface: evse_manager
