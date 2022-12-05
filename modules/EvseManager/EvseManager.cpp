@@ -145,6 +145,12 @@ void EvseManager::ready() {
             r_hlc[0]->subscribe_DC_EVTargetVoltageCurrent([this](types::iso15118_charger::DC_EVTargetValues v) {
                 bool target_changed = false;
 
+                // Hack for Skoda Enyaq that should be fixed in a different way
+                //if (v.DC_EVTargetVoltage<300) return;
+
+                // Some power supplies don't really like 0 current limits
+                if (v.DC_EVTargetCurrent<2) v.DC_EVTargetCurrent = 2;
+
                 if (v.DC_EVTargetVoltage != latest_target_voltage || v.DC_EVTargetCurrent != latest_target_current) {
                     latest_target_voltage = v.DC_EVTargetVoltage;
                     latest_target_current = v.DC_EVTargetCurrent;
@@ -575,7 +581,6 @@ void EvseManager::ready() {
     charger->setMaxCurrent(0.0F, date::utc_clock::now());
     charger->run();
     charger->enable();
-
     EVLOG_info << fmt::format(fmt::emphasis::bold | fg(fmt::terminal_color::green), ">>> Ready to start charging <<<");
 }
 
