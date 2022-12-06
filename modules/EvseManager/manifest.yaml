@@ -107,6 +107,11 @@ config:
       Normally disabled.
     type: boolean
     default: false
+  hack_skoda_enyaq:
+    description: Skoda Enyaq requests DC charging voltages below its battery level or even below 0 initially. 
+      Set to true to enable dirty workaround.
+    type: boolean
+    default: false
 provides:
   evse:
     interface: evse_manager

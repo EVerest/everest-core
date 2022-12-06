@@ -65,6 +65,7 @@ struct Conf {
     bool dbg_hlc_auth_after_tstep;
     int hack_sleep_in_cable_check;
     bool switch_to_minimum_voltage_after_cable_check;
+    bool hack_skoda_enyaq;
 };
 
 class EvseManager : public Everest::ModuleBase {
@@ -189,7 +190,6 @@ private:
     void powersupply_DC_off();
     bool wait_powersupply_DC_voltage_reached(double target_voltage);
     bool wait_powersupply_DC_below_voltage(double target_voltage);
-
 
     // EV information
     std::mutex ev_info_mutex;
