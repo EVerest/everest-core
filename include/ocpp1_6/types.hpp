@@ -954,7 +954,7 @@ struct Energy {
 };
 
 struct Powermeter {
-    std::string timestamp;                                        ///< Timestamp of measurement
+    float timestamp;                                        ///< Timestamp of measurement
     Energy energy_Wh_import;                  ///< Imported energy in Wh (from grid)
     boost::optional<std::string> meter_id;                  ///< A (user defined) meter if (e.g. id printed on the case)
     boost::optional<bool> phase_seq_error;                  ///< true for 3 phase rotation error (ccw)
