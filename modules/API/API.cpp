@@ -151,6 +151,12 @@ void API::init() {
             this->mqtt.publish(var_telemetry, telemetry_json.dump());
         });
 
+        std::string var_ev_info = var_base + "ev_info";
+        evse->subscribe_ev_info([this, var_ev_info](types::evse_manager::EVInfo ev_info) {
+            json ev_info_json = ev_info;
+            this->mqtt.publish(var_ev_info, ev_info_json.dump());
+        });
+        
         std::string var_datetime = var_base + "datetime";
         std::string var_session_info = var_base + "session_info";
         this->datetime_threads.push_back(
@@ -204,7 +210,6 @@ void API::init() {
         std::string cmd_set_limit = cmd_base + "set_limit";
         this->mqtt.subscribe(cmd_set_limit, [&evse](const std::string& data) {
             try {
-                EVLOG_critical << "called set limit with " << data;
                 evse->call_set_local_max_current(std::stof(data));
             } catch (const std::invalid_argument &e) {
                 EVLOG_warning << "Invalid limit: No conversion of given input could be performed.";
