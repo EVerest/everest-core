@@ -201,6 +201,19 @@ void API::init() {
             evse->call_resume_charging(); //
         });
 
+        std::string cmd_set_limit = cmd_base + "set_limit";
+        this->mqtt.subscribe(cmd_set_limit, [&evse](const std::string& data) {
+            try {
+                EVLOG_critical << "called set limit with " << data;
+                evse->call_set_local_max_current(std::stof(data));
+            } catch (const std::invalid_argument &e) {
+                EVLOG_warning << "Invalid limit: No conversion of given input could be performed.";
+            } catch (const std::out_of_range &e) {
+                EVLOG_warning << "Invalid limit: Out of range.";
+            }
+            
+        });
+
         count += 1;
     }
 }
