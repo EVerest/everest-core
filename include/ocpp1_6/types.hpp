@@ -727,18 +727,23 @@ SessionStartedReason string_to_session_started_reason(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const SessionStartedReason& session_started_reason);
 
 struct Current {
-    float L1;                  ///< L1 value only
-    boost::optional<float> L2; ///< L2 value only
-    boost::optional<float> L3; ///< L3 value only
-    boost::optional<float> N;  ///< Neutral value only
+    boost::optional<float> DC; ///< DC current
+    boost::optional<float> L1; ///< AC L1 value only
+    boost::optional<float> L2; ///< AC L2 value only
+    boost::optional<float> L3; ///< AC L3 value only
+    boost::optional<float> N;  ///< AC Neutral value only
 
     /// \brief Conversion from a given Current \p k to a given json object \p j
     friend void to_json(json& j, const Current& k) {
         // the required parts of the type
-        j = json{
-            {"L1", k.L1},
-        };
+        j = json({});
         // the optional parts of the type
+        if (k.DC) {
+            j["DC"] = k.DC.value();
+        }
+        if (k.L1) {
+            j["L1"] = k.L1.value();
+        }
         if (k.L2) {
             j["L2"] = k.L2.value();
         }
@@ -753,9 +758,14 @@ struct Current {
     /// \brief Conversion from a given json object \p j to a given Current \p k
     friend void from_json(const json& j, Current& k) {
         // the required parts of the type
-        k.L1 = j.at("L1");
 
         // the optional parts of the type
+        if (j.contains("DC")) {
+            k.DC.emplace(j.at("DC"));
+        }
+        if (j.contains("L1")) {
+            k.L1.emplace(j.at("L1"));
+        }
         if (j.contains("L2")) {
             k.L2.emplace(j.at("L2"));
         }
@@ -775,17 +785,22 @@ struct Current {
     }
 };
 struct Voltage {
-    float L1;                  ///< L1 value only
-    boost::optional<float> L2; ///< L2 value only
-    boost::optional<float> L3; ///< L3 value only
+    boost::optional<float> DC; ///< DC voltage
+    boost::optional<float> L1; ///< AC L1 value only
+    boost::optional<float> L2; ///< AC L2 value only
+    boost::optional<float> L3; ///< AC L3 value only
 
     /// \brief Conversion from a given Voltage \p k to a given json object \p j
     friend void to_json(json& j, const Voltage& k) {
         // the required parts of the type
-        j = json{
-            {"L1", k.L1},
-        };
+        j = json({});
         // the optional parts of the type
+        if (k.DC) {
+            j["DC"] = k.DC.value();
+        }
+        if (k.L1) {
+            j["L1"] = k.L1.value();
+        }
         if (k.L2) {
             j["L2"] = k.L2.value();
         }
@@ -797,9 +812,14 @@ struct Voltage {
     /// \brief Conversion from a given json object \p j to a given Voltage \p k
     friend void from_json(const json& j, Voltage& k) {
         // the required parts of the type
-        k.L1 = j.at("L1");
 
         // the optional parts of the type
+        if (j.contains("DC")) {
+            k.DC.emplace(j.at("DC"));
+        }
+        if (j.contains("L1")) {
+            k.L1.emplace(j.at("L1"));
+        }
         if (j.contains("L2")) {
             k.L2.emplace(j.at("L2"));
         }
@@ -816,9 +836,9 @@ struct Voltage {
     }
 };
 struct Frequency {
-    float L1;                  ///< L1 value
-    boost::optional<float> L2; ///< L2 value
-    boost::optional<float> L3; ///< L3 value
+    float L1;                  ///< AC L1 value
+    boost::optional<float> L2; ///< AC L2 value
+    boost::optional<float> L3; ///< AC L3 value
 
     /// \brief Conversion from a given Frequency \p k to a given json object \p j
     friend void to_json(json& j, const Frequency& k) {
@@ -857,10 +877,10 @@ struct Frequency {
     }
 };
 struct Power {
-    float total;               ///< Sum value
-    boost::optional<float> L1; ///< L1 value only
-    boost::optional<float> L2; ///< L2 value only
-    boost::optional<float> L3; ///< L3 value only
+    float total;               ///< DC / AC Sum value
+    boost::optional<float> L1; ///< AC L1 value only
+    boost::optional<float> L2; ///< AC L2 value only
+    boost::optional<float> L3; ///< AC L3 value only
 
     /// \brief Conversion from a given Power \p k to a given json object \p j
     friend void to_json(json& j, const Power& k) {
@@ -905,10 +925,10 @@ struct Power {
     }
 };
 struct Energy {
-    float total;               ///< Sum value (which is relevant for billing)
-    boost::optional<float> L1; ///< L1 value only
-    boost::optional<float> L2; ///< L2 value only
-    boost::optional<float> L3; ///< L3 value only
+    float total;               ///< DC / AC Sum value (which is relevant for billing)
+    boost::optional<float> L1; ///< AC L1 value only
+    boost::optional<float> L2; ///< AC L2 value only
+    boost::optional<float> L3; ///< AC L3 value only
 
     /// \brief Conversion from a given Energy \p k to a given json object \p j
     friend void to_json(json& j, const Energy& k) {
@@ -952,16 +972,65 @@ struct Energy {
         return os;
     }
 };
+struct ReactivePower {
+    float total;                   ///< VAR total
+    boost::optional<float> VARphA; ///< VAR phase A
+    boost::optional<float> VARphB; ///< VAR phase B
+    boost::optional<float> VARphC; ///< VAR phase C
+
+    /// \brief Conversion from a given ReactivePower \p k to a given json object \p j
+    friend void to_json(json& j, const ReactivePower& k) {
+        // the required parts of the type
+        j = json{
+            {"total", k.total},
+        };
+        // the optional parts of the type
+        if (k.VARphA) {
+            j["VARphA"] = k.VARphA.value();
+        }
+        if (k.VARphB) {
+            j["VARphB"] = k.VARphB.value();
+        }
+        if (k.VARphC) {
+            j["VARphC"] = k.VARphC.value();
+        }
+    }
+
+    /// \brief Conversion from a given json object \p j to a given ReactivePower \p k
+    friend void from_json(const json& j, ReactivePower& k) {
+        // the required parts of the type
+        k.total = j.at("total");
+
+        // the optional parts of the type
+        if (j.contains("VARphA")) {
+            k.VARphA.emplace(j.at("VARphA"));
+        }
+        if (j.contains("VARphB")) {
+            k.VARphB.emplace(j.at("VARphB"));
+        }
+        if (j.contains("VARphC")) {
+            k.VARphC.emplace(j.at("VARphC"));
+        }
+    }
+
+    // \brief Writes the string representation of the given ReactivePower \p k to the given output stream \p os
+    /// \returns an output stream with the ReactivePower written to
+    friend std::ostream& operator<<(std::ostream& os, const ReactivePower& k) {
+        os << json(k).dump(4);
+        return os;
+    }
+};
 
 struct Powermeter {
-    float timestamp;                                        ///< Timestamp of measurement
+    std::string timestamp;                                  ///< Timestamp of measurement
     Energy energy_Wh_import;                  ///< Imported energy in Wh (from grid)
     boost::optional<std::string> meter_id;                  ///< A (user defined) meter if (e.g. id printed on the case)
-    boost::optional<bool> phase_seq_error;                  ///< true for 3 phase rotation error (ccw)
+    boost::optional<bool> phase_seq_error;                  ///< AC only: true for 3 phase rotation error (ccw)
     boost::optional<Energy> energy_Wh_export; ///< Exported energy in Wh (to grid)
     boost::optional<Power>
         power_W; ///< Instantaneous power in Watt. Negative values are exported, positive values imported Energy.
     boost::optional<Voltage> voltage_V;      ///< Voltage in Volts
+    boost::optional<ReactivePower> VAR;      ///< Reactive power VAR
     boost::optional<Current> current_A;      ///< Current in ampere
     boost::optional<Frequency> frequency_Hz; ///< Grid frequency in Hertz
 
@@ -987,6 +1056,9 @@ struct Powermeter {
         }
         if (k.voltage_V) {
             j["voltage_V"] = k.voltage_V.value();
+        }
+        if (k.VAR) {
+            j["VAR"] = k.VAR.value();
         }
         if (k.current_A) {
             j["current_A"] = k.current_A.value();
@@ -1017,6 +1089,9 @@ struct Powermeter {
         }
         if (j.contains("voltage_V")) {
             k.voltage_V.emplace(j.at("voltage_V"));
+        }
+        if (j.contains("VAR")) {
+            k.VAR.emplace(j.at("VAR"));
         }
         if (j.contains("current_A")) {
             k.current_A.emplace(j.at("current_A"));

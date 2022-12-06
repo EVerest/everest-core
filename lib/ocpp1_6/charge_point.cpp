@@ -397,7 +397,12 @@ MeterValue ChargePoint::get_latest_meter_value(int32_t connector, std::vector<Me
                         auto phase = configured_measurand.phase.value();
                         sample.phase.emplace(phase);
                         if (phase == Phase::L1) {
-                            sample.value = conversions::double_to_string((double)voltage_V.value().L1);
+                            if (voltage_V.value().L1) {
+                                sample.value = conversions::double_to_string((double)voltage_V.value().L1.value());
+                            } else {
+                                EVLOG_debug
+                                    << "Power meter does not contain voltage_V configured measurand for phase L1";
+                            }
                         } else if (phase == Phase::L2) {
                             if (voltage_V.value().L2) {
                                 sample.value = conversions::double_to_string((double)voltage_V.value().L2.value());
@@ -430,7 +435,12 @@ MeterValue ChargePoint::get_latest_meter_value(int32_t connector, std::vector<Me
                         auto phase = configured_measurand.phase.value();
                         sample.phase.emplace(phase);
                         if (phase == Phase::L1) {
-                            sample.value = conversions::double_to_string((double)current_A.value().L1);
+                            if (current_A.value().L1) {
+                                sample.value = conversions::double_to_string((double)current_A.value().L1.value());
+                            } else {
+                                EVLOG_debug
+                                    << "Power meter does not contain current_A configured measurand for phase L1";
+                            }
                         } else if (phase == Phase::L2) {
                             if (current_A.value().L2) {
                                 sample.value = conversions::double_to_string((double)current_A.value().L2.value());
@@ -2102,6 +2112,7 @@ void ChargePoint::register_data_transfer_callback(const CiString255Type& vendorI
 }
 
 void ChargePoint::on_meter_values(int32_t connector, const Powermeter& power_meter) {
+    // FIXME: fix power meter to also work with dc
     EVLOG_debug << "updating power meter for connector: " << connector;
     std::lock_guard<std::mutex> lock(power_meters_mutex);
     this->connectors.at(connector)->powermeter = power_meter;
