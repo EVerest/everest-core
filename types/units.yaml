@@ -102,13 +102,13 @@ types:
       total:
         description: VAR total
         type: number
-      VARphA:
+      L1:
         description: VAR phase A
         type: number
-      VARphB:
+      L2:
         description: VAR phase B
         type: number
-      VARphC:
+      L3:
         description: VAR phase C
         type: number
 

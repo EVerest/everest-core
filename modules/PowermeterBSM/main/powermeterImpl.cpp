@@ -131,9 +131,9 @@ void powermeterImpl::worker() {
                 float scale_factor_reactive_power = pow(10, acmeter.VAR_SF());
                 result.VAR = types::units::ReactivePower{
                     .total = static_cast<float>(acmeter.VAR() * scale_factor_reactive_power),
-                    .VARphA = static_cast<float>(acmeter.VARphA() * scale_factor_reactive_power),
-                    .VARphB = static_cast<float>(acmeter.VARphB() * scale_factor_reactive_power),
-                    .VARphC = static_cast<float>(acmeter.VARphC() * scale_factor_reactive_power)};
+                    .L1 = static_cast<float>(acmeter.VARphA() * scale_factor_reactive_power),
+                    .L2 = static_cast<float>(acmeter.VARphB() * scale_factor_reactive_power),
+                    .L3 = static_cast<float>(acmeter.VARphC() * scale_factor_reactive_power)};
 
                 publish_powermeter(result);
 
