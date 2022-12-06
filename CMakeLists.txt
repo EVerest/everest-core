@@ -27,10 +27,7 @@ endif()
 
 # make own cmake modules available
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-# FIXME (aw): clean up this inclusion chain
-include(ev-cli)
-include(config-run-script)
-include(config-run-nodered-script)
+
 
 option(CREATE_SYMLINKS "Create symlinks to javascript modules and auxillary files - for development purposes" OFF)
 option(CMAKE_RUN_CLANG_TIDY "Run clang-tidy" OFF)
@@ -40,8 +37,6 @@ option(BUILD_TESTING "Run unit tests" OFF)
 # tests requires hardware.
 option(BUILD_DEV_TESTS "Build dev tests" OFF)
 
-# dependencies
-require_ev_cli_version("0.0.16")
 
 find_package(Boost
     COMPONENTS
@@ -61,61 +56,34 @@ if(NOT DISABLE_EDM)
     # FIXME (aw): we need to set this by hand due to edm
     set(EVEREST_SCHEMA_DIR ${everest-framework_SOURCE_DIR}/schemas)
 else()
-    find_package(date REQUIRED)
-    find_package(nlohmann_json REQUIRED)
-    find_package(nlohmann_json_schema_validator REQUIRED)
-    find_package(PalSigslot REQUIRED)
-
-    find_package(fmt REQUIRED)
-    find_package(fsm REQUIRED)
-    find_package(slac REQUIRED)
-
     find_package(everest-framework REQUIRED)
-    find_package(everest-log REQUIRED)
     find_package(everest-sunspec REQUIRED)
     find_package(everest-modbus REQUIRED)
     find_package(everest-ocpp REQUIRED)
-    find_package(everest-timer REQUIRED)
+
+    find_package(PalSigslot REQUIRED)
+
+    find_package(fsm REQUIRED)
+    find_package(slac REQUIRED)
 
     find_package(pugixml REQUIRED)
-
-    get_target_property(EVEREST_SCHEMA_DIR everest::framework EVEREST_DATADIR)
-    set(EVEREST_SCHEMA_DIR "${EVEREST_SCHEMA_DIR}/schemas")
 endif()
 
-# source generate scripts / setup
-include(everest-generate)
+include(ev-project-bootstrap)
 
-# auto generate headers
-add_subdirectory(types)
-add_subdirectory(interfaces)
+ev_add_project()
 
 # config
 # FIXME (aw): this should be optional
 add_subdirectory(config)
-
-# modules
-if (EVC_MAIN_PROJECT OR EVEREST_BUILD_ALL_MODULES)
-    add_subdirectory(modules)
-endif()
-
-# install types and interfaces
-install(
-    DIRECTORY "types" 
-    DESTINATION "${CMAKE_INSTALL_DATADIR}/everest"
-    FILES_MATCHING PATTERN "*.yaml"
-)
-install(
-    DIRECTORY "interfaces"
-    DESTINATION "${CMAKE_INSTALL_DATADIR}/everest"
-    FILES_MATCHING PATTERN "*.yaml"
-)
 
 # install docker related files
 install(
     DIRECTORY "cmake/assets/docker"
     DESTINATION "${CMAKE_INSTALL_DATADIR}/everest"
 )
+
+ev_install_project()
 
 # configure clang-tidy if requested
 if(CMAKE_RUN_CLANG_TIDY)
