@@ -104,8 +104,8 @@ void DatabaseHandler::insert_transaction(const std::string& session_id, const in
         "(@session_id, @transaction_id, @connector, @id_tag_start, @time_start, @meter_start, @reservation_id)";
     sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_error << "Could not prepare insert statement" << std::endl;
-        throw std::runtime_error("Database access error");
+        EVLOG_warning << "Could not prepare insert statement" << std::endl;
+        return;
     }
 
     sqlite3_bind_text(stmt, 1, session_id.c_str(), session_id.length(), NULL);
@@ -140,8 +140,8 @@ void DatabaseHandler::update_transaction(const std::string& session_id, int32_t 
 
     sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_error << "Could not prepare insert statement" << std::endl;
-        throw std::runtime_error("Database access error");
+        EVLOG_warning << "Could not prepare insert statement" << std::endl;
+        return;
     }
 
     // bindings
@@ -171,8 +171,8 @@ void DatabaseHandler::update_transaction(const std::string& session_id, int32_t 
 
     sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_error << "Could not prepare insert statement" << std::endl;
-        throw std::runtime_error("Database access error");
+        EVLOG_warning << "Could not prepare insert statement" << std::endl;
+        return;
     }
 
     sqlite3_bind_int(stmt, 1, meter_stop);
@@ -268,7 +268,7 @@ void DatabaseHandler::insert_or_update_authorization_cache_entry(const CiString2
     sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
         EVLOG_error << "Could not prepare insert statement" << std::endl;
-        throw std::runtime_error("Database access error");
+        return;
     }
 
     const auto id_tag_str = id_tag.get();

@@ -86,6 +86,7 @@ std::vector<TransactionData> Transaction::get_transaction_data() {
 }
 
 void Transaction::stop() {
+    this->meter_values_sample_timer->stop();
     this->active = false;
 }
 

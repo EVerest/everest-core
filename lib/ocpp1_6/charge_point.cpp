@@ -245,8 +245,7 @@ MeterValue ChargePoint::get_latest_meter_value(int32_t connector, std::vector<Me
     // TODO(kai): also support readings from the charge point powermeter at "connector 0"
     if (this->connectors.find(connector) != this->connectors.end()) {
         const auto power_meter = this->connectors.at(connector)->powermeter;
-        const auto timestamp =
-            std::chrono::time_point<date::utc_clock>(std::chrono::seconds(static_cast<int>(power_meter.timestamp)));
+        const auto timestamp = power_meter.timestamp;
         filtered_meter_value.timestamp = DateTime(timestamp);
         EVLOG_debug << "PowerMeter value for connector: " << connector << ": " << power_meter;
 
@@ -574,8 +573,6 @@ bool ChargePoint::restart() {
         // instantiating new message queue on restart
         this->message_queue = std::make_unique<MessageQueue>(
             this->configuration, [this](json message) -> bool { return this->websocket->send(message.dump()); });
-        this->work = boost::make_shared<boost::asio::io_service::work>(this->io_service);
-        this->io_service_thread = std::thread([this]() { this->io_service.run(); });
         this->initialized = true;
         return this->start();
     } else {
@@ -616,9 +613,6 @@ bool ChargePoint::stop() {
         this->database_handler->close_db_connection();
         this->websocket->disconnect(websocketpp::close::status::going_away);
         this->message_queue->stop();
-        this->work.reset();
-        this->io_service.stop();
-        this->io_service_thread.join();
 
         this->stopped = true;
         EVLOG_info << "Terminating...";
