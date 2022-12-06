@@ -39,6 +39,7 @@ target_link_libraries(controller
 target_compile_features(controller PRIVATE cxx_std_17)
 
 if (NOT NO_FETCH_CONTENT)
+    include(FetchContent)
     message(STATUS "Fetching everest-admin-panel")
     FetchContent_Declare(admin-panel
         URL https://github.com/EVerest/everest-admin-panel/releases/download/manually_dispatched/everest-admin-panel.tar.gz

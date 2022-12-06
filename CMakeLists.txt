@@ -52,7 +52,7 @@ else()
     find_package(ryml REQUIRED)
     find_package(nlohmann_json REQUIRED)
     find_package(nlohmann_json_schema_validator REQUIRED)
-    find_package(websocketpp REQUIRED)
+    find_package(libwebsockets REQUIRED)
     find_package(fmt REQUIRED)
     find_package(everest-log REQUIRED)
 
