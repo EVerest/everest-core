@@ -82,8 +82,7 @@ void slacImpl::run() {
 
     EVLOG_debug << "Starting the SLAC state machine";
 
-    // FIXME: need to set different session key for each session!
-    fsm.set_nmk((uint8_t*)"1234567890ABCDEF");
+    fsm.generate_nmk();
 
     bool matched = false;
     auto cur_state_id = fsm.get_initial_state().id.id;
