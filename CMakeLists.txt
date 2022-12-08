@@ -117,6 +117,10 @@ install(
     DESTINATION "${CMAKE_INSTALL_DATADIR}/everest"
 )
 
+if(BELAY_BOX)
+    install(CODE "execute_process(COMMAND /usr/bin/rsync -avh ${CMAKE_INSTALL_PREFIX}/ everest@${BELAY_BOX}:/mnt/user_data/opt/everest)")
+endif()
+
 # configure clang-tidy if requested
 if(CMAKE_RUN_CLANG_TIDY)
     message("Enabling clang-tidy")
