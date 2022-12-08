@@ -304,6 +304,17 @@ void OCPP::init() {
     this->charge_point->register_signal_set_charging_profiles_callback(
         [this]() { this->publish_charging_schedules(); });
 
+
+    this->charge_point->register_is_reset_allowed_callback([this](ocpp1_6::ResetType type) {
+        const auto reset_type = types::system::string_to_reset_type(ocpp1_6::conversions::reset_type_to_string(type));
+        return this->r_system->call_is_reset_allowed(reset_type);
+    });
+
+    this->charge_point->register_reset_callback([this](ocpp1_6::ResetType type) {
+        const auto reset_type = types::system::string_to_reset_type(ocpp1_6::conversions::reset_type_to_string(type));
+        this->r_system->call_reset(reset_type);
+    });
+
     int32_t connector = 1;
     for (auto& evse : this->r_evse_manager) {
         evse->subscribe_powermeter([this, connector](types::powermeter::Powermeter powermeter) {
