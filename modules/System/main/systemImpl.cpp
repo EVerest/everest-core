@@ -366,6 +366,21 @@ systemImpl::handle_upload_logs(types::system::UploadLogsRequest& upload_logs_req
     return response;
 };
 
+bool systemImpl::handle_is_reset_allowed(types::system::ResetType& type) {
+    // Right now we dont want to reject a reset ever
+    return true;
+}
+
+void systemImpl::handle_reset(types::system::ResetType& type) {
+    if (type == types::system::ResetType::Soft) {
+        EVLOG_info << "Performing soft reset";
+        kill(getpid(), SIGINT);
+    } else {
+        EVLOG_info << "Performing hard reset";
+        kill(getpid(), SIGINT); // FIXME(piet): Define appropriate behavior for hard reset
+    }
+}
+
 bool systemImpl::handle_set_system_time(std::string& timestamp) {
     // your code for cmd set_system_time goes here
     return true;

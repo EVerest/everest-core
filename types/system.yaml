@@ -203,3 +203,9 @@ types:
       request_id:
         description: Id of the request
         type: integer
+  ResetType:
+    description: Enum defining the type of a reset
+    type: string
+    enum:
+      - Soft
+      - Hard

@@ -22,6 +22,24 @@ cmds:
       description: Returns the result of the attempt to upload the logs
       type: object
       $ref: /system#/UploadLogsResponse
+  is_reset_allowed:
+    description: Call to determine if a reset of the system is allowed
+    arguments:
+      type:
+        description: Type of the reset (Soft or Hard)
+        type: string
+        $ref: /system#/ResetType
+    result:
+      description: >-
+        Indicates if the system can be reset
+      type: boolean
+  reset:
+    description: Call to reset the system
+    arguments:
+      type:
+        description: Type of the reset (Soft or Hard)
+        type: string
+        $ref: /system#/ResetType
   set_system_time:
     description: Call to set the system time of EVerest
     arguments:
