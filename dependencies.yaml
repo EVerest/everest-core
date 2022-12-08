@@ -32,4 +32,4 @@ RISE-V2G:
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: v0.1.0
+  git_tag: v0.2.0
