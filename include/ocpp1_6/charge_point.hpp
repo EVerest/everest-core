@@ -134,7 +134,8 @@ private:
     std::function<bool(int32_t connector, Reason reason)> stop_transaction_callback;
     std::function<bool(int32_t connector)> unlock_connector_callback;
     std::function<bool(int32_t connector, int32_t max_current)> set_max_current_callback;
-    std::function<bool(const ResetType& reset_type)> reset_callback;
+    std::function<bool(const ResetType& reset_type)> is_reset_allowed_callback;
+    std::function<void(const ResetType& reset_type)> reset_callback;
     std::function<void(const std::string& system_time)> set_system_time_callback;
     std::function<void()> signal_set_charging_profiles_callback;
 
@@ -417,8 +418,11 @@ public:
     /// \brief registers a \p callback function that can be used to set that authorization or plug in connection timeout
     void register_set_connection_timeout_callback(const std::function<void(int32_t connection_timeout)>& callback);
 
+    /// \brief registers a \p callback function that can be used to check if a reset is allowed
+    void register_is_reset_allowed_callback(const std::function<bool(const ResetType& reset_type)>& callback);
+
     /// \brief registers a \p callback function that can be used to trigger a reset of the chargepoint
-    void register_reset_callback(const std::function<bool(const ResetType& reset_type)>& callback);
+    void register_reset_callback(const std::function<void(const ResetType& reset_type)>& callback);
 
     /// \brief registers a \p callback function that can be used to set the system time of the chargepoint
     void register_set_system_time_callback(const std::function<void(const std::string& system_time)>& callback);

@@ -25,7 +25,8 @@ ChargePoint::ChargePoint(std::shared_ptr<ChargePointConfiguration> configuration
     this->configuration = configuration;
     auto log_formats = this->configuration->getLogMessagesFormat();
     bool log_to_console = std::find(log_formats.begin(), log_formats.end(), "console") != log_formats.end();
-    bool detailed_log_to_console = std::find(log_formats.begin(), log_formats.end(), "console_detailed") != log_formats.end();
+    bool detailed_log_to_console =
+        std::find(log_formats.begin(), log_formats.end(), "console_detailed") != log_formats.end();
     bool log_to_file = std::find(log_formats.begin(), log_formats.end(), "log") != log_formats.end();
     bool log_to_html = std::find(log_formats.begin(), log_formats.end(), "html") != log_formats.end();
 
@@ -1199,31 +1200,43 @@ void ChargePoint::handleRemoteStopTransactionRequest(Call<RemoteStopTransactionR
 void ChargePoint::handleResetRequest(Call<ResetRequest> call) {
     EVLOG_debug << "Received ResetRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
 
+    const auto reset_type = call.msg.type;
     ResetResponse response;
-    response.status = ResetStatus::Accepted;
 
+    if (this->is_reset_allowed_callback == nullptr || this->reset_callback == nullptr ||
+        !this->is_reset_allowed_callback(reset_type)) {
+        response.status = ResetStatus::Rejected;
+    } else {
+        // reset is allowed
+        response.status = ResetStatus::Accepted;
+    }
+
+    // send response
     CallResult<ResetResponse> call_result(response, call.uniqueId);
     this->send<ResetResponse>(call_result);
-    // TODO(kai): gracefully stop all transactions and send StopTransaction. Restart software
-    // afterwards
-    this->reset_thread = std::thread([this]() {
-        EVLOG_debug << "Waiting until all transactions are stopped...";
-        std::unique_lock lk(this->stop_transaction_mutex);
-        this->stop_transaction_cv.wait_for(lk, std::chrono::seconds(5), [this] {
-            for (int32_t connector = 1; connector <= this->configuration->getNumberOfConnectors(); connector++) {
-                if (this->transaction_handler->transaction_active(connector)) {
-                    return false;
+
+    if (response.status == ResetStatus::Accepted) {
+        // gracefully stop all transactions and send StopTransaction. Restart software afterwards
+        this->reset_thread = std::thread([this, reset_type]() {
+            EVLOG_debug << "Waiting until all transactions are stopped...";
+            std::unique_lock lk(this->stop_transaction_mutex);
+            this->stop_transaction_cv.wait_for(lk, std::chrono::seconds(5), [this] {
+                for (int32_t connector = 1; connector <= this->configuration->getNumberOfConnectors(); connector++) {
+                    if (this->transaction_handler->transaction_active(connector)) {
+                        return false;
+                    }
                 }
-            }
-            return true;
+                return true;
+            });
+            // this is executed after all transactions have been stopped
+            this->stop();
+            this->reset_callback(reset_type);
         });
-        this->stop();
-        kill(getpid(), SIGINT); // FIXME(kai): this leads to a somewhat dirty reset
-    });
-    if (call.msg.type == ResetType::Soft) {
-        this->stop_all_transactions(Reason::SoftReset);
-    } else {
-        this->stop_all_transactions(Reason::HardReset);
+        if (call.msg.type == ResetType::Soft) {
+            this->stop_all_transactions(Reason::SoftReset);
+        } else {
+            this->stop_all_transactions(Reason::HardReset);
+        }
     }
 }
 
@@ -2675,7 +2688,11 @@ void ChargePoint::register_set_max_current_callback(
     this->set_max_current_callback = callback;
 }
 
-void ChargePoint::register_reset_callback(const std::function<bool(const ResetType& reset_type)>& callback) {
+void ChargePoint::register_is_reset_allowed_callback(const std::function<bool(const ResetType& reset_type)>& callback) {
+    this->is_reset_allowed_callback = callback;
+}
+
+void ChargePoint::register_reset_callback(const std::function<void(const ResetType& reset_type)>& callback) {
     this->reset_callback = callback;
 }
 
