@@ -101,6 +101,12 @@ void ChargePoint::disconnect_websocket() {
     }
 }
 
+void ChargePoint::call_set_connection_timeout() {
+    if (this->set_connection_timeout_callback != nullptr) {
+        this->set_connection_timeout_callback(this->configuration->getConnectionTimeOut());
+    }
+}
+
 void ChargePoint::heartbeat() {
     EVLOG_debug << "Sending heartbeat";
     HeartbeatRequest req;
@@ -138,13 +144,6 @@ void ChargePoint::clock_aligned_meter_values_sample() {
             this->send_meter_value(connector, meter_value);
         }
         this->update_clock_aligned_meter_values_interval();
-    }
-}
-
-void ChargePoint::connection_timeout(int32_t connector) {
-    if (this->initialized) {
-        // FIXME(kai): libfsm this->status_notification(connector, ChargePointErrorCode::NoError,
-        // this->status[connector]->timeout());
     }
 }
 
@@ -1135,8 +1134,12 @@ void ChargePoint::handleRemoteStartTransactionRequest(Call<RemoteStartTransactio
         std::lock_guard<std::mutex> lock(remote_start_transaction_mutex);
         std::vector<int32_t> referenced_connectors;
 
-        for (int connector = 1; connector <= this->configuration->getNumberOfConnectors(); connector++) {
-            referenced_connectors.push_back(connector);
+        if (!call.msg.connectorId) {
+            for (int connector = 1; connector <= this->configuration->getNumberOfConnectors(); connector++) {
+                referenced_connectors.push_back(connector);
+            }
+        } else {
+            referenced_connectors.push_back(call.msg.connectorId.value());
         }
 
         response.status = RemoteStartStopStatus::Accepted;

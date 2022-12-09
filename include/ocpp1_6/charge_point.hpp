@@ -166,7 +166,6 @@ private:
     void heartbeat();
     void boot_notification();
     void clock_aligned_meter_values_sample();
-    void connection_timeout(int32_t connector);
     void update_heartbeat_interval();
     void update_meter_values_sample_interval();
     void update_clock_aligned_meter_values_interval();
@@ -281,6 +280,9 @@ public:
 
     /// \brief Disconnects the the websocket if it is connected
     void disconnect_websocket();
+
+    /// \brief Calls the set_connection_timeout_callback
+    void call_set_connection_timeout();
 
     // public API for Core profile
 
