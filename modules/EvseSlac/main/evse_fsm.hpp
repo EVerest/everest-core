@@ -94,7 +94,7 @@ public:
     }
 
     void set_five_percent_mode(bool value);
-    void set_nmk(const uint8_t* nmk);
+    void generate_nmk();
 
     explicit EvseFSM(SlacIO& slac_io);
 

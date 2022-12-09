@@ -3,6 +3,7 @@
 #include "evse_fsm.hpp"
 
 #include <chrono>
+#include <random>
 
 #include <everest/logging.hpp>
 
@@ -255,7 +256,10 @@ EvseFSM::EvseFSM(SlacIO& slac_io) : slac_io(slac_io) {
         ctx.submit_event(EventMatchingFailed());
     };
 
-    sd_matched.transitions = [this](const EventBaseType& ev, TransitionType& trans) { default_transition(ev, trans); };
+    sd_matched.transitions = [this](const EventBaseType& ev, TransitionType& trans) { 
+        this->generate_nmk();
+        default_transition(ev, trans);
+    };
 
     sd_signal_error.transitions = [this](const EventBaseType& ev, TransitionType& trans) {
         // FIXME (aw): what about SLAC messages that we receive while in this mode?
@@ -483,8 +487,18 @@ void EvseFSM::set_five_percent_mode(bool value) {
     ac_mode_five_percent = value;
 }
 
-void EvseFSM::set_nmk(const uint8_t* nmk) {
-    memcpy(session_nmk, nmk, sizeof(session_nmk));
+void EvseFSM::generate_nmk() {
+
+    const std::string CHARACTERS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+    std::random_device random_device;
+    std::mt19937 generator(random_device());
+    std::uniform_int_distribution<> distribution(0, CHARACTERS.size() - 1);
+
+    for (std::size_t i = 0; i < slac::defs::NMK_LEN; ++i)
+    {
+        session_nmk[i] = (uint8_t)CHARACTERS[distribution(generator)];
+    }
 }
 
 bool MatchingSessionContext::conforms(const uint8_t ev_mac[], const uint8_t run_id[]) const {
