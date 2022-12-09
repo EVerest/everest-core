@@ -415,6 +415,7 @@ void OCPP::ready() {
     invoke_ready(*p_auth_validator);
     invoke_ready(*p_auth_provider);
 
+    this->charge_point->call_set_connection_timeout();
     int connector = 1;
     for (const auto& evse : this->r_evse_manager) {
         if (connector != evse->call_get_id()) {
