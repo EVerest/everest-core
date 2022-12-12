@@ -16,7 +16,7 @@ provides:
         type: string
         minLength: 2
         maxLength: 32
-        default: dummy
+        default: RFID
       timeout:
         description: Time our dummy token is valid (in s)
         type: number

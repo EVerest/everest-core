@@ -14,6 +14,7 @@ types:
     additionalProperties: false
     required:
       - id_token
+      - type
     properties:
       id_token:
         description: >-
@@ -22,6 +23,11 @@ types:
         type: string
         minLength: 1
         maxLength: 20
+      type:
+        description: >-
+          Type of the provider of the identifier
+        type: string
+        $ref: /authorization#/TokenType
       authorization_status:
         type: string
         $ref: /authorization#/AuthorizationStatus
@@ -48,8 +54,9 @@ types:
         minLength: 1
         maxLength: 20
       type:
-        description: Type of token provider
+        description: Type of the token
         type: string
+        $ref: /authorization#/TokenType
         minLength: 2
         maxLength: 32
       connectors:
@@ -97,3 +104,12 @@ types:
     enum:
       - UserInput
       - PlugEvents
+  TokenType:
+    description: >-
+      Type of the provided token
+    type: string
+    enum:
+      - OCPP
+      - RFID
+      - Autocharge
+      - PlugAndCharge

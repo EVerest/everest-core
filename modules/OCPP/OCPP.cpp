@@ -259,7 +259,7 @@ void OCPP::init() {
         [this](const std::string& id_token, std::vector<int32_t> referenced_connectors, bool prevalidated) {
             types::authorization::ProvidedIdToken provided_token;
             provided_token.id_token = id_token;
-            provided_token.type = "OCPP_AUTHORIZED";
+            provided_token.type = types::authorization::TokenType::OCPP;
             provided_token.connectors.emplace(referenced_connectors);
             provided_token.prevalidated.emplace(prevalidated);
             this->p_auth_provider->publish_provided_token(provided_token);
@@ -303,7 +303,6 @@ void OCPP::init() {
 
     this->charge_point->register_signal_set_charging_profiles_callback(
         [this]() { this->publish_charging_schedules(); });
-
 
     this->charge_point->register_is_reset_allowed_callback([this](ocpp1_6::ResetType type) {
         const auto reset_type = types::system::string_to_reset_type(ocpp1_6::conversions::reset_type_to_string(type));
