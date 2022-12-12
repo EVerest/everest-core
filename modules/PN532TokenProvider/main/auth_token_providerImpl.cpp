@@ -57,7 +57,7 @@ void auth_token_providerImpl::ready() {
                 EVLOG_debug << "Got raw rfid/nfc tag: " << entry.getNFCID();
                 types::authorization::ProvidedIdToken provided_token;
                 provided_token.id_token = entry.getNFCID();
-                provided_token.type = "rfid";
+                provided_token.type = types::authorization::TokenType::RFID;
                 EVLOG_debug << "Publishing new rfid/nfc token: " << provided_token;
                 this->publish_provided_token(provided_token);
             }

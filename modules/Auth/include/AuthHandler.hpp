@@ -128,8 +128,8 @@ public:
      *
      * @param callback
      */
-    void register_authorize_callback(
-        const std::function<void(const int evse_index, const std::string& id_token)>& callback);
+    void
+    register_authorize_callback(const std::function<void(const int evse_index, const std::string& id_token)>& callback);
 
     /**
      * @brief Registers the given \p callback to withdraw authorization.
@@ -159,8 +159,8 @@ public:
      *
      * @param callback
      */
-    void register_reserved_callback(
-        const std::function<void(const int& evse_index, const int& reservation_id)>& callback);
+    void
+    register_reserved_callback(const std::function<void(const int& evse_index, const int& reservation_id)>& callback);
 
     /**
      * @brief Registers the given \p callback to signal a reservation has been cancelled to the EvseManager.
@@ -196,7 +196,7 @@ private:
 
     std::vector<int> get_referenced_connectors(const ProvidedIdToken& provided_token);
     int used_for_transaction(const std::vector<int>& connectors, const std::string& id_token);
-    bool is_token_already_in_process(const std::string& id_token, const std::vector<int> &referenced_connectors);
+    bool is_token_already_in_process(const std::string& id_token, const std::vector<int>& referenced_connectors);
     bool any_connector_available(const std::vector<int>& connectors);
 
     TokenHandlingResult handle_token(const ProvidedIdToken& provided_token);
@@ -214,7 +214,8 @@ private:
     void unlock_plug_in_mutex(const std::vector<int>& connectors);
     int get_latest_plugin(const std::vector<int>& connectors);
     void authorize_evse(int connector, const Identifier& identifier);
-    Identifier get_identifier(const ValidationResult& validation_result, const std::string& id_token);
+    Identifier get_identifier(const ValidationResult& validation_result, const std::string& id_token,
+                              const TokenType& type);
 };
 
 } // namespace module

@@ -81,16 +81,19 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
 TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_token) {
     std::vector<int> referenced_connectors = this->get_referenced_connectors(provided_token);
 
-    // check if id_token is used for an active transaction
-    const auto connector_used_for_transaction =
-        this->used_for_transaction(referenced_connectors, provided_token.id_token);
-    if (connector_used_for_transaction != -1) {
-        StopTransactionRequest req;
-        req.reason = StopTransactionReason::Local;
-        req.id_tag.emplace(provided_token.id_token);
-        this->stop_transaction_callback(this->connectors.at(connector_used_for_transaction)->evse_index, req);
-        EVLOG_info << "Transaction was stopped because id_token was used for transaction";
-        return TokenHandlingResult::USED_TO_STOP_TRANSACTION;
+    // Only provided token with type RFID can be used to stop a transaction
+    if (provided_token.type == TokenType::RFID) {
+        // check if id_token is used for an active transaction
+        const auto connector_used_for_transaction =
+            this->used_for_transaction(referenced_connectors, provided_token.id_token);
+        if (connector_used_for_transaction != -1) {
+            StopTransactionRequest req;
+            req.reason = StopTransactionReason::Local;
+            req.id_tag.emplace(provided_token.id_token);
+            this->stop_transaction_callback(this->connectors.at(connector_used_for_transaction)->evse_index, req);
+            EVLOG_info << "Transaction was stopped because id_token was used for transaction";
+            return TokenHandlingResult::USED_TO_STOP_TRANSACTION;
+        }
     }
 
     // validate
@@ -154,7 +157,8 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
                 int connector_id = this->select_connector(referenced_connectors); // might block
                 EVLOG_debug << "Selected connector#" << connector_id << " for token: " << provided_token.id_token;
                 if (connector_id != -1) { // indicates timeout
-                    const auto identifier = this->get_identifier(validation_result, provided_token.id_token);
+                    const auto identifier =
+                        this->get_identifier(validation_result, provided_token.id_token, provided_token.type);
                     if (!this->connectors.at(connector_id)->connector.reserved) {
                         EVLOG_info << "Providing authorization to connector#" << connector_id;
                         this->authorize_evse(connector_id, identifier);
@@ -340,12 +344,14 @@ void AuthHandler::authorize_evse(int connector_id, const Identifier& identifier)
     this->plug_in_queue.remove_if([connector_id](int value) { return value == connector_id; });
 }
 
-Identifier AuthHandler::get_identifier(const ValidationResult& validation_result, const std::string& id_token) {
+Identifier AuthHandler::get_identifier(const ValidationResult& validation_result, const std::string& id_token,
+                                       const TokenType& type) {
     Identifier identifier;
     identifier.id_token = id_token;
     identifier.authorization_status = validation_result.authorization_status;
     identifier.expiry_time = validation_result.expiry_time;
     identifier.parent_id_token = validation_result.parent_id_token;
+    identifier.type = type;
     return identifier;
 }
 
@@ -381,7 +387,7 @@ void AuthHandler::handle_session_event(const int connector_id, const SessionEven
         }
         this->cv.notify_one();
 
-        // only set plug in timeout when SessionStart is caused by plug in 
+        // only set plug in timeout when SessionStart is caused by plug in
         if (event.session_started.value().reason == StartSessionReason::EVConnected) {
             this->connectors.at(connector_id)
                 ->timeout_timer.timeout(
