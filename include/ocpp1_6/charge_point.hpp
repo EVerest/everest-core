@@ -138,6 +138,7 @@ private:
     std::function<void(const ResetType& reset_type)> reset_callback;
     std::function<void(const std::string& system_time)> set_system_time_callback;
     std::function<void()> signal_set_charging_profiles_callback;
+    std::function<void(bool is_connected)> connection_state_changed_callback;
 
     std::function<ocpp1_6::GetLogResponse(const ocpp1_6::GetDiagnosticsRequest& request)> upload_diagnostics_callback;
     std::function<void(const ocpp1_6::UpdateFirmwareRequest msg)> update_firmware_callback;
@@ -432,6 +433,8 @@ public:
     /// \brief registers a \p callback function that can be used to signal that the chargepoint received a
     /// SetChargingProfile.req
     void register_signal_set_charging_profiles_callback(const std::function<void()>& callback);
+
+    void register_connection_state_changed_callback(const std::function<void(bool is_connected)>& callback);
 };
 
 } // namespace ocpp1_6

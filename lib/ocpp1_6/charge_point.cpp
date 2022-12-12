@@ -70,10 +70,16 @@ ChargePoint::ChargePoint(std::shared_ptr<ChargePointConfiguration> configuration
 void ChargePoint::init_websocket(int32_t security_profile) {
     this->websocket = std::make_unique<Websocket>(this->configuration, security_profile, this->logging);
     this->websocket->register_connected_callback([this]() {
+        if (this->connection_state_changed_callback != nullptr) {
+            this->connection_state_changed_callback(true);
+        }
         this->message_queue->resume(); //
         this->connected_callback();    //
     });
     this->websocket->register_disconnected_callback([this]() {
+        if (this->connection_state_changed_callback != nullptr) {
+            this->connection_state_changed_callback(false);
+        }
         this->message_queue->pause(); //
         if (this->switch_security_profile_callback != nullptr) {
             this->switch_security_profile_callback();
@@ -2732,6 +2738,10 @@ void ChargePoint::register_upload_logs_callback(
 void ChargePoint::register_set_connection_timeout_callback(
     const std::function<void(int32_t connection_timeout)>& callback) {
     this->set_connection_timeout_callback = callback;
+}
+
+void ChargePoint::register_connection_state_changed_callback(const std::function<void(bool is_connected)>& callback) {
+    this->connection_state_changed_callback = callback;
 }
 
 void ChargePoint::on_reservation_start(int32_t connector) {
