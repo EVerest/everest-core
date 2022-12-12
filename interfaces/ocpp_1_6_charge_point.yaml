@@ -25,3 +25,6 @@ vars:
       object contains one composite charging schedule for each connector id starting
       from connector 0. Connector 0 contains a schedule for the whole charging station.
     type: object
+  is_connected:
+    description: Indicates if chargepoint is connected to CSMS
+    type: boolean
