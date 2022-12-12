@@ -314,6 +314,10 @@ void OCPP::init() {
         this->r_system->call_reset(reset_type);
     });
 
+    this->charge_point->register_connection_state_changed_callback([this](bool is_connected) {
+        this->p_main->publish_is_connected(is_connected);
+    });
+
     int32_t connector = 1;
     for (auto& evse : this->r_evse_manager) {
         evse->subscribe_powermeter([this, connector](types::powermeter::Powermeter powermeter) {
