@@ -148,10 +148,6 @@ active_modules:
           implementation_id: main
   token_provider_1:
     module: JsDummyTokenProviderManual
-    connections: {}
-    config_implementation:
-      main:
-        type: dummy
   energy_manager:
     module: EnergyManager
     connections:

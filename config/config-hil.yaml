@@ -87,9 +87,6 @@ active_modules:
       evse:
         - module_id: evse_manager
           implementation_id: evse
-    config_implementation:
-      main:
-        type: dummy
   token_validator:
     module: JsDummyTokenValidator
     config_implementation:

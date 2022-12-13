@@ -138,7 +138,6 @@ active_modules:
       main:
         timeout: 10
         token: DEADBEEF
-        type: dummy
     connections:
       evse:
         - implementation_id: evse

@@ -1334,7 +1334,7 @@
         "once": true,
         "onceDelay": "1",
         "topic": "token_type",
-        "payload": "ManualProvider",
+        "payload": "RFID",
         "payloadType": "str",
         "x": 200,
         "y": 160,
