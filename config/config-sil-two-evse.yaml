@@ -126,10 +126,6 @@ active_modules:
           implementation_id: evse
   token_provider_1:
     module: JsDummyTokenProviderManual
-    connections: {}
-    config_implementation:
-      main:
-        type: dummy
   token_validator:
     module: JsDummyTokenValidator
     config_implementation:
