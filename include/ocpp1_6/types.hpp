@@ -139,8 +139,8 @@ struct TransactionEntry {
     std::string id_tag_start;
     std::string time_start;
     int32_t meter_start;
+    int32_t transaction_id;
     boost::optional<int32_t> reservation_id = boost::none;
-    boost::optional<int32_t> transaction_id = boost::none;
     boost::optional<std::string> parent_id_tag = boost::none;
     boost::optional<int32_t> meter_stop = boost::none;
     boost::optional<std::string> time_end = boost::none;

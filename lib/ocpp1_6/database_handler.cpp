@@ -94,11 +94,14 @@ bool DatabaseHandler::clear_table(const std::string& table_name) {
 }
 
 // transactions
-void DatabaseHandler::insert_transaction(const std::string& session_id, int32_t connector,
-                                         const std::string& id_tag_start, const std::string& time_start,
-                                         int32_t meter_start, boost::optional<int32_t> reservation_id) {
-    std::string sql = "INSERT INTO TRANSACTIONS (ID, CONNECTOR, ID_TAG_START, TIME_START, METER_START, RESERVATION_ID) VALUES "
-                      "(@session_id, @connector, @id_tag_start, @time_start, @meter_start, @reservation_id)";
+void DatabaseHandler::insert_transaction(const std::string& session_id, const int32_t transaction_id,
+                                         const int32_t connector, const std::string& id_tag_start,
+                                         const std::string& time_start, const int32_t meter_start,
+                                         const boost::optional<int32_t> reservation_id) {
+    std::string sql =
+        "INSERT INTO TRANSACTIONS (ID, TRANSACTION_ID, CONNECTOR, ID_TAG_START, TIME_START, METER_START, "
+        "RESERVATION_ID) VALUES "
+        "(@session_id, @transaction_id, @connector, @id_tag_start, @time_start, @meter_start, @reservation_id)";
     sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
         EVLOG_error << "Could not prepare insert statement" << std::endl;
@@ -106,15 +109,16 @@ void DatabaseHandler::insert_transaction(const std::string& session_id, int32_t 
     }
 
     sqlite3_bind_text(stmt, 1, session_id.c_str(), session_id.length(), NULL);
-    sqlite3_bind_int(stmt, 2, connector);
-    sqlite3_bind_text(stmt, 3, id_tag_start.c_str(), id_tag_start.length(), NULL);
-    sqlite3_bind_text(stmt, 4, time_start.c_str(), time_start.length(), NULL);
-    sqlite3_bind_int(stmt, 5, meter_start);
+    sqlite3_bind_int(stmt, 2, transaction_id);
+    sqlite3_bind_int(stmt, 3, connector);
+    sqlite3_bind_text(stmt, 4, id_tag_start.c_str(), id_tag_start.length(), NULL);
+    sqlite3_bind_text(stmt, 5, time_start.c_str(), time_start.length(), NULL);
+    sqlite3_bind_int(stmt, 6, meter_start);
 
     if (reservation_id) {
-        sqlite3_bind_int(stmt, 6, reservation_id.value());
+        sqlite3_bind_int(stmt, 7, reservation_id.value());
     } else {
-        sqlite3_bind_null(stmt, 6);
+        sqlite3_bind_null(stmt, 7);
     }
 
     if (sqlite3_step(stmt) != SQLITE_DONE) {
@@ -198,7 +202,7 @@ std::vector<TransactionEntry> DatabaseHandler::get_transactions(bool filter_inco
     std::vector<TransactionEntry> transactions;
 
     std::string sql = "SELECT * FROM TRANSACTIONS";
-    
+
     if (filter_incomplete) {
         sql += " WHERE METER_STOP IS NULL OR TIME_END IS NULL";
     }
@@ -211,9 +215,7 @@ std::vector<TransactionEntry> DatabaseHandler::get_transactions(bool filter_inco
     while (sqlite3_step(stmt) != SQLITE_DONE) {
         TransactionEntry transaction_entry;
         transaction_entry.session_id = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)));
-        if (sqlite3_column_type(stmt, 1) != SQLITE_NULL) {
-            transaction_entry.transaction_id = sqlite3_column_int(stmt, 1);
-        }
+        transaction_entry.transaction_id = sqlite3_column_int(stmt, 1);
         transaction_entry.connector = sqlite3_column_int(stmt, 2);
         transaction_entry.id_tag_start = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3)));
         transaction_entry.time_start = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4)));
@@ -223,19 +225,23 @@ std::vector<TransactionEntry> DatabaseHandler::get_transactions(bool filter_inco
             transaction_entry.reservation_id.emplace(sqlite3_column_int(stmt, 6));
         }
         if (sqlite3_column_type(stmt, 7) != SQLITE_NULL) {
-            transaction_entry.parent_id_tag.emplace(std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 7))));
+            transaction_entry.parent_id_tag.emplace(
+                std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 7))));
         }
         if (sqlite3_column_type(stmt, 8) != SQLITE_NULL) {
-            transaction_entry.id_tag_end.emplace(std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 8))));
+            transaction_entry.id_tag_end.emplace(
+                std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 8))));
         }
         if (sqlite3_column_type(stmt, 9) != SQLITE_NULL) {
-            transaction_entry.time_end.emplace(std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 9))));
+            transaction_entry.time_end.emplace(
+                std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 9))));
         }
         if (sqlite3_column_type(stmt, 10) != SQLITE_NULL) {
             transaction_entry.meter_stop.emplace(sqlite3_column_int(stmt, 10));
         }
         if (sqlite3_column_type(stmt, 11) != SQLITE_NULL) {
-            transaction_entry.stop_reason.emplace(std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 11))));
+            transaction_entry.stop_reason.emplace(
+                std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 11))));
         }
         if (sqlite3_column_type(stmt, 12) != SQLITE_NULL) {
             transaction_entry.reservation_id.emplace(sqlite3_column_int(stmt, 12));
@@ -247,7 +253,7 @@ std::vector<TransactionEntry> DatabaseHandler::get_transactions(bool filter_inco
         EVLOG_error << "Error selecting from table" << std::endl;
         throw std::runtime_error("db access error");
     }
-    
+
     return transactions;
 }
 
@@ -349,7 +355,8 @@ bool DatabaseHandler::clear_authorization_cache() {
     return this->clear_table("AUTH_CACHE");
 }
 
-void DatabaseHandler::insert_or_update_connector_availability(int32_t connector, const AvailabilityType &availability_type) {
+void DatabaseHandler::insert_or_update_connector_availability(int32_t connector,
+                                                              const AvailabilityType& availability_type) {
     std::string sql = "INSERT OR REPLACE INTO CONNECTORS (ID, AVAILABILITY) VALUES (@id, @availability)";
     sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
@@ -372,8 +379,8 @@ void DatabaseHandler::insert_or_update_connector_availability(int32_t connector,
 }
 
 // connector availability
-void DatabaseHandler::insert_or_update_connector_availability(const std::vector<int32_t> &connectors,
-                                                              const AvailabilityType &availability_type) {
+void DatabaseHandler::insert_or_update_connector_availability(const std::vector<int32_t>& connectors,
+                                                              const AvailabilityType& availability_type) {
     for (const auto connector : connectors) {
         this->insert_or_update_connector_availability(connector, availability_type);
     }

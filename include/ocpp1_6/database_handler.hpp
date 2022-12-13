@@ -39,8 +39,10 @@ public:
 
     // transactions
     /// \brief Inserts a transaction with the given parameter to the TRANSACTIONS table.
-    void insert_transaction(const std::string& session_id, int32_t connector, const std::string& id_tag_start,
-                            const std::string& time_start, int32_t meter_start, boost::optional<int32_t> reservation_id);
+    void insert_transaction(const std::string& session_id, const int32_t transaction_id, const int32_t connector,
+                            const std::string& id_tag_start, const std::string& time_start, const int32_t meter_start,
+                            const boost::optional<int32_t> reservation_id);
+
     /// \brief Updates the given parameters for the transaction with the given \p session_id in the TRANSACTIONS table.
     void update_transaction(const std::string& session_id, int32_t transaction_id,
                             boost::optional<CiString20Type> parent_id_tag = boost::none);
@@ -65,11 +67,11 @@ public:
 
     // connector availability
     /// \brief Inserts or updates the given \p availability_type of the given \p connector to the CONNECTORS table.
-    void insert_or_update_connector_availability(int32_t connector, const AvailabilityType &availability_type);
+    void insert_or_update_connector_availability(int32_t connector, const AvailabilityType& availability_type);
 
     /// \brief Inserts or updates the given \p availability_type of the given \p connectors to the CONNECTORS table.
-    void insert_or_update_connector_availability(const std::vector<int32_t> &connectors,
-                                                 const AvailabilityType &availability_type);
+    void insert_or_update_connector_availability(const std::vector<int32_t>& connectors,
+                                                 const AvailabilityType& availability_type);
 
     /// \brief Returns the AvailabilityType of the given \p connector of the CONNECTORS table.
     AvailabilityType get_connector_availability(int32_t connector);

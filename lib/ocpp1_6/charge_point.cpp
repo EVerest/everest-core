@@ -201,8 +201,8 @@ void ChargePoint::stop_pending_transactions() {
         StopTransactionRequest req;
         req.meterStop = transaction_entry.meter_start; // FIXME(piet): Get latest meter value here
         req.timestamp = DateTime();
-        req.transactionId = transaction_entry.transaction_id.value();
         req.reason = Reason::PowerLoss;
+        req.transactionId = transaction_entry.transaction_id;
 
         auto message_id = this->message_queue->createMessageId();
         Call<StopTransactionRequest> call(req, message_id);
@@ -2527,8 +2527,8 @@ void ChargePoint::on_transaction_started(const int32_t& connector, const std::st
         transaction->add_meter_value(meter_value);
     }
 
-    this->database_handler->insert_transaction(session_id, connector, id_token, timestamp.to_rfc3339(), meter_start,
-                                               reservation_id);
+    this->database_handler->insert_transaction(session_id, transaction->get_transaction_id(), connector, id_token,
+                                               timestamp.to_rfc3339(), meter_start, reservation_id);
     this->transaction_handler->add_transaction(transaction);
     this->start_transaction(transaction);
 }
