@@ -119,7 +119,7 @@ int main(int argc, char* argv[]) {
     });
 
     charge_point->register_provide_token_callback(
-        [](const std::string& id_token, int32_t connector, bool prevalidated) {
+        [](const std::string& id_token, const std::vector<int32_t> &referenced_connectors, bool prevalidated) {
             std::cout << "Callback: "
                        << "Received token " << id_token << " for further validation" << std::endl;
         });
