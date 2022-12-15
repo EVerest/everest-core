@@ -1,17 +1,13 @@
 description: A OCPP charge point / charging station module, currently targeting OCPP-J 1.6
 config:
-  OcppMainPath:
-    description: Main path of OCPP module
-    type: string
-    default: share/everest/ocpp
   ChargePointConfigPath:
     description: Path to the configuration file
     type: string
-    default: charge_point_config.json
+    default: ocpp-config.json
   UserConfigPath:
     description: Path to the file of the OCPP user config
     type: string
-    default: share/everest/ocpp/user_config.json
+    default: user_config.json
   DatabasePath:
     description: Path to the persistent SQLite database folder
     type: string

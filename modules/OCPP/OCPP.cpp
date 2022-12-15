@@ -1,12 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include "OCPP.hpp"
+#include <fmt/core.h>
 #include <fstream>
 
-#include <boost/filesystem.hpp>
 #include <boost/process.hpp>
 
 namespace module {
+
+const std::string EVEREST_OCPP_SHARE_PATH = "share/everest/ocpp";
+const std::string INIT_SQL = "init.sql";
+
+namespace fs = std::filesystem;
 
 static ocpp1_6::ChargePointErrorCode get_ocpp_error_code(const std::string& evse_error) {
     if (evse_error == "Car") {
@@ -32,14 +37,15 @@ static ocpp1_6::ChargePointErrorCode get_ocpp_error_code(const std::string& evse
     }
 }
 
-void create_empty_user_config(const boost::filesystem::path& user_config_path) {
-    if (boost::filesystem::exists(user_config_path.parent_path())) {
+void create_empty_user_config(const fs::path& user_config_path) {
+    if (fs::exists(user_config_path.parent_path())) {
         std::ofstream fs(user_config_path.c_str());
         auto user_config = json::object();
         fs << user_config << std::endl;
         fs.close();
     } else {
-        EVLOG_AND_THROW(std::runtime_error("Provided UserConfigPath is invalid"));
+        EVLOG_AND_THROW(
+            std::runtime_error(fmt::format("Provided UserConfigPath is invalid: {}", user_config_path.string())));
     }
 }
 
@@ -58,42 +64,60 @@ void OCPP::init() {
     invoke_init(*p_auth_validator);
     invoke_init(*p_auth_provider);
 
-    boost::filesystem::path config_path = boost::filesystem::path(this->config.ChargePointConfigPath);
+    this->ocpp_share_path = fs::path(this->info.everest_prefix) / EVEREST_OCPP_SHARE_PATH;
 
-    boost::filesystem::path user_config_path = boost::filesystem::path(this->config.UserConfigPath);
+    auto configured_config_path = fs::path(this->config.ChargePointConfigPath);
+
+    // try to find the config file if it has been provided as a relative path
+    if (!fs::exists(configured_config_path) && configured_config_path.is_relative()) {
+        configured_config_path = this->ocpp_share_path / configured_config_path;
+    }
+    if (!fs::exists(configured_config_path)) {
+        EVLOG_AND_THROW(Everest::EverestConfigError(
+            fmt::format("OCPP config file is not available at given path: {} which was resolved to: {}",
+                        this->config.ChargePointConfigPath, configured_config_path.string())));
+    }
+    const auto config_path = configured_config_path;
+    EVLOG_info << "OCPP config: " << config_path.string();
+
+    auto configured_user_config_path = fs::path(this->config.UserConfigPath);
+    // try to find the user config file if it has been provided as a relative path
+    if (!fs::exists(configured_user_config_path) && configured_user_config_path.is_relative()) {
+        configured_user_config_path = this->ocpp_share_path / configured_user_config_path;
+    }
+    const auto user_config_path = configured_user_config_path;
+    EVLOG_info << "OCPP user config: " << user_config_path.string();
 
     std::ifstream ifs(config_path.c_str());
     std::string config_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-    json json_config = json::parse(config_file);
+    auto json_config = json::parse(config_file);
     json_config.at("Core").at("NumberOfConnectors") = this->r_evse_manager.size();
 
-    if (boost::filesystem::exists(user_config_path)) {
+    if (fs::exists(user_config_path)) {
         std::ifstream ifs(user_config_path.c_str());
         std::string user_config_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
         try {
-            auto user_config = json::parse(user_config_file);
+            const auto user_config = json::parse(user_config_file);
             EVLOG_info << "Augmenting chargepoint config with user_config entries";
             json_config.merge_patch(user_config);
         } catch (const json::parse_error& e) {
-            // rewrite empty user config if it is not parsable
             EVLOG_error << "Error while parsing user config file.";
-            throw;
+            EVLOG_AND_THROW(e);
         }
     } else {
         EVLOG_debug << "No user-config provided. Creating user config file";
         create_empty_user_config(user_config_path);
     }
 
-    std::shared_ptr<ocpp1_6::ChargePointConfiguration> configuration =
-        std::make_shared<ocpp1_6::ChargePointConfiguration>(json_config, this->config.OcppMainPath,
-                                                            this->config.UserConfigPath);
+    const auto configuration = std::make_shared<ocpp1_6::ChargePointConfiguration>(
+        json_config, this->ocpp_share_path.string(), user_config_path.string());
 
-    const boost::filesystem::path sql_init_path = boost::filesystem::path(this->config.OcppMainPath) / "init.sql";
-    if (!std::filesystem::exists(this->config.MessageLogPath)) {
+    const auto sql_init_path = this->ocpp_share_path / INIT_SQL;
+    if (!fs::exists(this->config.MessageLogPath)) {
         try {
-            std::filesystem::create_directory(this->config.MessageLogPath);
-        } catch (std::filesystem::filesystem_error const& e) {
+            fs::create_directory(this->config.MessageLogPath);
+        } catch (const fs::filesystem_error& e) {
             EVLOG_AND_THROW(e);
         }
     }
@@ -314,9 +338,8 @@ void OCPP::init() {
         this->r_system->call_reset(reset_type);
     });
 
-    this->charge_point->register_connection_state_changed_callback([this](bool is_connected) {
-        this->p_main->publish_is_connected(is_connected);
-    });
+    this->charge_point->register_connection_state_changed_callback(
+        [this](bool is_connected) { this->p_main->publish_is_connected(is_connected); });
 
     int32_t connector = 1;
     for (auto& evse : this->r_evse_manager) {

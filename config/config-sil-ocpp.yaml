@@ -129,8 +129,7 @@ active_modules:
   ocpp:
     module: OCPP
     config_module:
-      OcppMainPath: share/everest/ocpp
-      ChargePointConfigPath: ../../../libocpp/aux/config-docker.json
+      ChargePointConfigPath: config-docker.json
     connections:
       evse_manager:
         - module_id: evse_manager_1
@@ -177,4 +176,5 @@ active_modules:
           implementation_id: evse
   system:
     module: System
+
 x-module-layout: {}
