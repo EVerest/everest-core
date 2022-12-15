@@ -74,6 +74,7 @@ struct ModuleInfo {
     std::vector<std::string> authors;
     std::string license;
     std::string id;
+    std::string everest_prefix;
 };
 
 struct Requirement {

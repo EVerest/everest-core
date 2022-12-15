@@ -310,7 +310,8 @@ int ModuleLoader::initialize() {
         }
 
         auto module_configs = config.get_module_configs(this->module_id);
-        const auto module_info = config.get_module_info(this->module_id);
+        auto module_info = config.get_module_info(this->module_id);
+        module_info.everest_prefix = rs->prefix.string();
 
         this->callbacks.init(module_configs, module_info);
 
