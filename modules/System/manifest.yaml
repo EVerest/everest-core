@@ -9,6 +9,11 @@ config:
       Specifies in seconds after which time a retry of an upload or download on previous failure may be attempted.
     type: number
     default: 1
+  ScriptsPath:
+    description: >-
+      Path where shell scripts are located
+    type: string
+    default: libexec/everest/modules/System
 provides:
   main:
     description: Implements the system interface

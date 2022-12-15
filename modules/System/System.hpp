@@ -22,6 +22,7 @@ namespace module {
 struct Conf {
     double DefaultRetries;
     double DefaultRetryInterval;
+    std::string ScriptsPath;
 };
 
 class System : public Everest::ModuleBase {

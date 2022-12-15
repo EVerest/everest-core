@@ -16,6 +16,12 @@
 namespace module {
 namespace main {
 
+const std::string CONSTANTS = "constants.env";
+const std::string DIAGNOSTICS_UPLOADER = "diagnostics_uploader.sh";
+const std::string FIRMWARE_UPDATER = "firmware_updater.sh";
+const std::string SIGNED_FIRMWARE_DOWNLOADER = "signed_firmware_downloader.sh";
+const std::string SIGNED_FIRMWARE_INSTALLER = "signed_firmware_installer.sh";
+
 namespace fs = std::filesystem;
 
 // FIXME (aw): this function needs to be refactored into some kind of utility library
@@ -38,6 +44,7 @@ fs::path create_temp_file(const fs::path& dir, const std::string& prefix) {
 }
 
 void systemImpl::init() {
+    this->scripts_path = fs::path(this->mod->config.ScriptsPath);
     this->log_upload_running = false;
     this->firmware_download_running = false;
     this->firmware_installation_running = false;
@@ -55,10 +62,10 @@ void systemImpl::standard_firmware_update(const types::system::FirmwareUpdateReq
     const auto date_time = Everest::Date::to_rfc3339(date::utc_clock::now());
 
     const auto firmware_file_path = create_temp_file(fs::temp_directory_path(), "firmware-" + date_time);
-    const auto constants = fs::path("libexec/everest/modules/System/constants.env");
+    const auto constants = this->scripts_path / CONSTANTS;
 
     this->update_firmware_thread = std::thread([this, firmware_update_request, firmware_file_path, constants]() {
-        const auto firmware_updater = "libexec/everest/modules/System/firmware_updater.sh";
+        const auto firmware_updater = this->scripts_path / FIRMWARE_UPDATER;
 
         const std::vector<std::string> args = {constants.string(), firmware_update_request.location,
                                                firmware_file_path.string()};
@@ -75,7 +82,7 @@ void systemImpl::standard_firmware_update(const types::system::FirmwareUpdateReq
         while (firmware_status.firmware_update_status == types::system::FirmwareUpdateStatusEnum::DownloadFailed &&
                retries <= total_retries) {
             boost::process::ipstream stream;
-            boost::process::child cmd(firmware_updater, boost::process::args(args), boost::process::std_out > stream);
+            boost::process::child cmd(firmware_updater.string(), boost::process::args(args), boost::process::std_out > stream);
             std::string temp;
             retries += 1;
             while (std::getline(stream, temp)) {
@@ -174,8 +181,8 @@ void systemImpl::download_signed_firmware(const types::system::FirmwareUpdateReq
     const auto date_time = Everest::Date::to_rfc3339(date::utc_clock::now());
     const auto firmware_file_path = create_temp_file(fs::temp_directory_path(), "signed_firmware-" + date_time);
 
-    const auto firmware_downloader = "libexec/everest/modules/System/signed_firmware_downloader.sh";
-    const auto constants = fs::path("libexec/everest/modules/System/constants.env");
+    const auto firmware_downloader = this->scripts_path / SIGNED_FIRMWARE_DOWNLOADER;
+    const auto constants = this->scripts_path / CONSTANTS;
 
     const std::vector<std::string> download_args = {
         constants.string(), firmware_update_request.location, firmware_file_path.string(),
@@ -193,7 +200,7 @@ void systemImpl::download_signed_firmware(const types::system::FirmwareUpdateReq
     while (firmware_status.firmware_update_status == types::system::FirmwareUpdateStatusEnum::DownloadFailed &&
            retries <= total_retries && !this->interrupt_firmware_download) {
         boost::process::ipstream download_stream;
-        boost::process::child download_cmd(firmware_downloader, boost::process::args(download_args),
+        boost::process::child download_cmd(firmware_downloader.string(), boost::process::args(download_args),
                                            boost::process::std_out > download_stream);
         std::string temp;
         retries += 1;
@@ -253,10 +260,10 @@ void systemImpl::install_signed_firmware(const types::system::FirmwareUpdateRequ
     if (!this->firmware_installation_running) {
         this->firmware_installation_running = true;
         boost::process::ipstream install_stream;
-        const auto firmware_installer = "libexec/everest/modules/System/signed_firmware_installer.sh";
-        const auto constants = fs::path("libexec/everest/modules/System/constants.env");
+        const auto firmware_installer = this->scripts_path / SIGNED_FIRMWARE_INSTALLER;
+        const auto constants = this->scripts_path / CONSTANTS;
         const std::vector<std::string> install_args = {constants.string()};
-        boost::process::child install_cmd(firmware_installer, boost::process::args(install_args),
+        boost::process::child install_cmd(firmware_installer.string(), boost::process::args(install_args),
                                           boost::process::std_out > install_stream);
         std::string temp;
         while (std::getline(install_stream, temp)) {
@@ -315,8 +322,8 @@ systemImpl::handle_upload_logs(types::system::UploadLogsRequest& upload_logs_req
         EVLOG_info << "Starting upload of log file";
         this->interrupt_log_upload.exchange(false);
         this->log_upload_running = true;
-        const auto diagnostics_uploader = "libexec/everest/modules/System/diagnostics_uploader.sh";
-        const auto constants = fs::path("libexec/everest/modules/System/constants.env");
+        const auto diagnostics_uploader = this->scripts_path / DIAGNOSTICS_UPLOADER;
+        const auto constants = this->scripts_path / CONSTANTS;
 
         std::vector<std::string> args = {constants.string(), upload_logs_request.location, diagnostics_file_name,
                                          diagnostics_file_path.string()};
@@ -330,7 +337,7 @@ systemImpl::handle_upload_logs(types::system::UploadLogsRequest& upload_logs_req
         while (!uploaded && retries <= total_retries && !this->interrupt_log_upload) {
 
             boost::process::ipstream stream;
-            boost::process::child cmd(diagnostics_uploader, boost::process::args(args),
+            boost::process::child cmd(diagnostics_uploader.string(), boost::process::args(args),
                                       boost::process::std_out > stream);
             std::string temp;
             retries += 1;
