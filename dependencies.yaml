@@ -1,7 +1,7 @@
 ---
 everest-framework:
   git: https://github.com/EVerest/everest-framework.git
-  git_tag: v0.1.0
+  git_tag: v0.2.0
 sigslot:
   git: https://github.com/palacaze/sigslot
   git_tag: v1.2.0
@@ -32,4 +32,4 @@ RISE-V2G:
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: v0.3.0
+  git_tag: v0.4.0

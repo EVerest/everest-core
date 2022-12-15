@@ -23,6 +23,7 @@
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
+#include <filesystem>
 #include <chrono>
 #include <date/date.h>
 #include <date/tz.h>
@@ -98,6 +99,7 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
+    std::filesystem::path ocpp_share_path;
     void publish_charging_schedules();
     std::thread upload_diagnostics_thread;
     std::thread upload_logs_thread;

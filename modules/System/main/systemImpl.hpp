@@ -58,6 +58,8 @@ private:
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
     // insert your private definitions here
 
+    std::filesystem::path scripts_path;
+
     std::atomic<bool> interrupt_firmware_download;
     std::atomic<bool> interrupt_log_upload;
 
