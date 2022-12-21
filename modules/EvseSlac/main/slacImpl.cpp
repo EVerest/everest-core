@@ -84,6 +84,8 @@ void slacImpl::run() {
 
     fsm.generate_nmk();
 
+    fsm.set_five_percent_mode(config.ac_mode_five_percent);
+
     bool matched = false;
     auto cur_state_id = fsm.get_initial_state().id.id;
     fsm_ctrl.reset(fsm.get_initial_state());
@@ -161,7 +163,13 @@ void slacImpl::run() {
 
 void slacImpl::handle_reset(bool& enable) {
     // FIXME (aw): the enable could be used for power saving etc, but it is not implemented yet
-    send_event(EventReset());
+    // CC: as power saving is not implemented, we actually don't need to reset at beginning of session (enable=true): At
+    // start of everest it is being reset once and then it is enough to reset at the end of each session. This saves
+    // some hundreds of msecs at the beginning of the charging session as we do not need to set up keys. Then
+    // EvseManager can switch on 5% PWM basically immediately as SLAC is already ready.
+    if (!enable) {
+        send_event(EventReset());
+    }
 };
 
 bool slacImpl::handle_enter_bcd() {

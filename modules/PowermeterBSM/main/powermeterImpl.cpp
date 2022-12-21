@@ -105,8 +105,7 @@ void powermeterImpl::worker() {
                 sunspec_model::ACMeter acmeter(data);
                 types::powermeter::Powermeter result;
 
-                result.timestamp = 0; // FIXME: current implementation is a float that cant store a 32/31 bit
-                result.timestamp_RFC3339_UTC = Everest::Date::to_rfc3339(date::utc_clock::now());
+                result.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
 
                 result.meter_id = mod->config.meter_id;
 
@@ -132,9 +131,9 @@ void powermeterImpl::worker() {
                 float scale_factor_reactive_power = pow(10, acmeter.VAR_SF());
                 result.VAR = types::units::ReactivePower{
                     .total = static_cast<float>(acmeter.VAR() * scale_factor_reactive_power),
-                    .VARphA = static_cast<float>(acmeter.VARphA() * scale_factor_reactive_power),
-                    .VARphB = static_cast<float>(acmeter.VARphB() * scale_factor_reactive_power),
-                    .VARphC = static_cast<float>(acmeter.VARphC() * scale_factor_reactive_power)};
+                    .L1 = static_cast<float>(acmeter.VARphA() * scale_factor_reactive_power),
+                    .L2 = static_cast<float>(acmeter.VARphB() * scale_factor_reactive_power),
+                    .L3 = static_cast<float>(acmeter.VARphC() * scale_factor_reactive_power)};
 
                 publish_powermeter(result);
 

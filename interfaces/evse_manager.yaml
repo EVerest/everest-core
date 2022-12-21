@@ -31,6 +31,9 @@ cmds:
       id_tag:
         description: The authorized id tag
         type: string
+      pnc:
+        description: true Pnc auth, false EIM auth
+        type: boolean
   withdraw_authorization:
     description: >-
       Call to signals that EVSE is not further authorized to start a transaction
@@ -104,7 +107,7 @@ cmds:
     description: Switch three phases while charging
     arguments:
       three_phases:
-        description: 'True: switch to three phases, false: switch to single phase'
+        description: "True: switch to three phases, false: switch to single phase"
         type: boolean
     result:
       description: Returns success or error code
@@ -126,6 +129,10 @@ vars:
     description: Limits of this evse, published on change
     type: object
     $ref: /evse_manager#/Limits
+  ev_info:
+    description: More details about the EV if available
+    type: object
+    $ref: /evse_manager#/EVInfo
   telemetry:
     description: Other telemetry
     type: object
@@ -138,6 +145,6 @@ vars:
     description: EVSE ID including the connector number, e.g. DE*PNX*E123456*1
     type: string
   hw_capabilities:
-    description: ' Hardware capability/limits'
+    description: "Hardware capability/limits"
     type: object
     $ref: /board_support#/HardwareCapabilities

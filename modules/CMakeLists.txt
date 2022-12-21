@@ -10,6 +10,7 @@ ev_add_modules(
     JsCarSimulator
     JsCarV2G
     JsIMDSimulator
+    JsDCSupplySimulator
     JsDummyTokenProvider
     JsDummyTokenProviderManual
     JsDummyTokenValidator
@@ -19,10 +20,10 @@ ev_add_modules(
     JsTibber
     JsYetiSimulator
     JsSlacSimulator
-    ModbusMeter
     OCPP
     PersistentStore
     PN532TokenProvider
+    PyJosev
     Setup
     SerialCommHub
     Store

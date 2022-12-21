@@ -19,6 +19,7 @@
 #include <generated/interfaces/ISO15118_charger/Interface.hpp>
 #include <generated/interfaces/board_support_AC/Interface.hpp>
 #include <generated/interfaces/isolation_monitor/Interface.hpp>
+#include <generated/interfaces/power_supply_DC/Interface.hpp>
 #include <generated/interfaces/powermeter/Interface.hpp>
 #include <generated/interfaces/slac/Interface.hpp>
 
@@ -26,11 +27,16 @@
 // insert your custom include headers here
 #include "Charger.hpp"
 #include "SessionLog.hpp"
+#include "VarContainer.hpp"
+#include <atomic>
 #include <chrono>
+#include <condition_variable>
 #include <ctime>
 #include <date/date.h>
 #include <date/tz.h>
+#include <future>
 #include <iostream>
+#include <optional>
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -38,11 +44,10 @@ namespace module {
 struct Conf {
     int connector_id;
     std::string evse_id;
+    std::string evse_id_din;
     bool payment_enable_eim;
     bool payment_enable_contract;
     double ac_nominal_voltage;
-    double dc_current_regulation_tolerance;
-    double dc_peak_current_ripple;
     bool ev_receipt_required;
     bool session_logging;
     std::string session_logging_path;
@@ -57,7 +62,12 @@ struct Conf {
     bool ac_hlc_use_5percent;
     bool ac_enforce_hlc;
     bool ac_with_soc;
+    int dc_isolation_voltage;
     bool dbg_hlc_auth_after_tstep;
+    int hack_sleep_in_cable_check;
+    bool switch_to_minimum_voltage_after_cable_check;
+    bool hack_skoda_enyaq;
+    int hack_present_current_offset;
 };
 
 class EvseManager : public Everest::ModuleBase {
@@ -66,19 +76,24 @@ public:
     EvseManager(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
                 std::unique_ptr<evse_managerImplBase> p_evse, std::unique_ptr<energyImplBase> p_energy_grid,
                 std::unique_ptr<auth_token_providerImplBase> p_token_provider,
-                std::unique_ptr<board_support_ACIntf> r_bsp, std::vector<std::unique_ptr<powermeterIntf>> r_powermeter,
+                std::unique_ptr<board_support_ACIntf> r_bsp,
+                std::vector<std::unique_ptr<powermeterIntf>> r_powermeter_grid_side,
+                std::vector<std::unique_ptr<powermeterIntf>> r_powermeter_car_side,
                 std::vector<std::unique_ptr<slacIntf>> r_slac, std::vector<std::unique_ptr<ISO15118_chargerIntf>> r_hlc,
-                std::vector<std::unique_ptr<isolation_monitorIntf>> r_imd, Conf& config) :
+                std::vector<std::unique_ptr<isolation_monitorIntf>> r_imd,
+                std::vector<std::unique_ptr<power_supply_DCIntf>> r_powersupply_DC, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_evse(std::move(p_evse)),
         p_energy_grid(std::move(p_energy_grid)),
         p_token_provider(std::move(p_token_provider)),
         r_bsp(std::move(r_bsp)),
-        r_powermeter(std::move(r_powermeter)),
+        r_powermeter_grid_side(std::move(r_powermeter_grid_side)),
+        r_powermeter_car_side(std::move(r_powermeter_car_side)),
         r_slac(std::move(r_slac)),
         r_hlc(std::move(r_hlc)),
         r_imd(std::move(r_imd)),
+        r_powersupply_DC(std::move(r_powersupply_DC)),
         config(config){};
 
     const Conf& config;
@@ -87,16 +102,18 @@ public:
     const std::unique_ptr<energyImplBase> p_energy_grid;
     const std::unique_ptr<auth_token_providerImplBase> p_token_provider;
     const std::unique_ptr<board_support_ACIntf> r_bsp;
-    const std::vector<std::unique_ptr<powermeterIntf>> r_powermeter;
+    const std::vector<std::unique_ptr<powermeterIntf>> r_powermeter_grid_side;
+    const std::vector<std::unique_ptr<powermeterIntf>> r_powermeter_car_side;
     const std::vector<std::unique_ptr<slacIntf>> r_slac;
     const std::vector<std::unique_ptr<ISO15118_chargerIntf>> r_hlc;
     const std::vector<std::unique_ptr<isolation_monitorIntf>> r_imd;
+    const std::vector<std::unique_ptr<power_supply_DCIntf>> r_powersupply_DC;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
     std::unique_ptr<Charger> charger;
     sigslot::signal<int> signalNrOfPhasesAvailable;
-    json get_latest_powermeter_data();
+    types::powermeter::Powermeter get_latest_powermeter_data_billing();
     types::board_support::HardwareCapabilities get_hw_capabilities();
     bool updateLocalMaxCurrentLimit(float max_current);
     float getLocalMaxCurrentLimit();
@@ -107,7 +124,12 @@ public:
     int32_t get_reservation_id();
 
     bool get_hlc_enabled();
-    sigslot::signal<json> signalReservationEvent;
+    sigslot::signal<types::evse_manager::SessionEvent> signalReservationEvent;
+
+    void charger_was_authorized();
+
+    const std::vector<std::unique_ptr<powermeterIntf>>& r_powermeter_billing();
+    const std::vector<std::unique_ptr<powermeterIntf>>& r_powermeter_energy_management();
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
@@ -122,8 +144,9 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
-    json latest_powermeter_data;
-    bool authorization_available;
+    std::mutex power_mutex;
+    types::powermeter::Powermeter latest_powermeter_data_billing;
+
     Everest::Thread energyThreadHandle;
     types::board_support::HardwareCapabilities hw_capabilities;
     bool local_three_phases;
@@ -131,12 +154,21 @@ private:
     const float EVSE_ABSOLUTE_MAX_CURRENT = 80.0;
     bool slac_enabled;
 
+    std::atomic_bool contactor_open{false};
+
     std::mutex hlc_mutex;
 
     bool hlc_enabled;
 
     bool hlc_waiting_for_auth_eim;
     bool hlc_waiting_for_auth_pnc;
+
+    types::power_supply_DC::Capabilities powersupply_capabilities;
+    VarContainer<types::isolation_monitor::IsolationMeasurement> isolation_measurement;
+    VarContainer<types::power_supply_DC::VoltageCurrent> powersupply_measurement;
+
+    double latest_target_voltage;
+    double latest_target_current;
 
     void log_v2g_message(Object m);
 
@@ -146,11 +178,24 @@ private:
     std::mutex reservation_mutex;
 
     void setup_AC_mode();
-    void setup_DC_mode();
+    void setup_fake_DC_mode();
 
     // special funtion to switch mode while session is active
     void switch_AC_mode();
     void switch_DC_mode();
+
+    // DC handlers
+    void cable_check();
+
+    void powersupply_DC_on();
+    bool powersupply_DC_set(double voltage, double current);
+    void powersupply_DC_off();
+    bool wait_powersupply_DC_voltage_reached(double target_voltage);
+    bool wait_powersupply_DC_below_voltage(double target_voltage);
+
+    // EV information
+    std::mutex ev_info_mutex;
+    types::evse_manager::EVInfo ev_info;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

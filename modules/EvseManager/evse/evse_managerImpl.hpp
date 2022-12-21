@@ -37,7 +37,7 @@ protected:
     virtual int handle_get_id() override;
     virtual bool handle_enable() override;
     virtual bool handle_disable() override;
-    virtual void handle_authorize(std::string& id_tag) override;
+    virtual void handle_authorize(std::string& id_tag, bool& pnc) override;
     virtual void handle_withdraw_authorization() override;
     virtual bool handle_reserve(int& reservation_id) override;
     virtual void handle_cancel_reservation() override;
@@ -64,7 +64,7 @@ private:
 
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
     // insert your private definitions here
-    json limits;
+    types::evse_manager::Limits limits;
 
     std::string generate_session_uuid();
     void set_session_uuid();

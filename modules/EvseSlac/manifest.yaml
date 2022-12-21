@@ -20,6 +20,10 @@ provides:
         description: SLAC number of sounds.
         type: integer
         default: 10
+      ac_mode_five_percent:
+        description: Use 5% mode in AC (true). Set to false for DC. The only difference is the handling of retries.
+        type: boolean
+        default: false
 metadata:
   base_license: https://directory.fsf.org/wiki/License:BSD-3-Clause-Clear
   license: https://opensource.org/licenses/Apache-2.0

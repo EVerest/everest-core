@@ -76,8 +76,13 @@ public:
     float getMaxCurrent();
     sigslot::signal<float> signalMaxCurrent;
 
+    enum class ChargeMode {
+        AC,
+        DC
+    };
+
     void setup(bool three_phases, bool has_ventilation, const std::string& country_code, bool rcd_enabled,
-               const std::string& charge_mode, bool ac_hlc_enabled, bool ac_hlc_use_5percent, bool ac_enforce_hlc,
+               const ChargeMode charge_mode, bool ac_hlc_enabled, bool ac_hlc_use_5percent, bool ac_enforce_hlc,
                bool ac_with_soc_timeout);
 
     bool enable();
@@ -126,48 +131,15 @@ public:
 
     bool forceUnlock();
 
-    // float getResidualCurrent();
-    // bool isPowerOn();
-
-    // Public states for Hi Level
-
-    enum class EvseEvent {
-        Enabled,
-        Disabled,
-        SessionStarted,
-        TransactionStarted,
-        AuthRequired,
-        ChargingPausedEV,
-        ChargingPausedEVSE,
-        ChargingResumed,
-        SessionFinished,
-        TransactionFinished,
-        Error,
-        PermanentFault,
-        ReplugStarted,
-        ReplugFinished
-    };
-
-    enum class ErrorState {
-        Error_E,
-        Error_DF,
-        Error_Relais,
-        Error_VentilationNotAvailable,
-        Error_RCD,
-        Error_OverCurrent,
-        Error_Internal,
-        Error_SLAC,
-        Error_HLC
-    };
-
     // Signal for EvseEvents
-    sigslot::signal<EvseEvent> signalEvent;
-    std::string evseEventToString(EvseEvent e);
+    sigslot::signal<types::evse_manager::SessionEventEnum> signalEvent;
 
     sigslot::signal<> signalACWithSoCTimeout;
 
+    sigslot::signal<> signal_DC_supply_off;
+
     // Request more details about the error that happend
-    ErrorState getErrorState();
+    types::evse_manager::Error getErrorState();
 
     void processEvent(types::board_support::Event event);
 
@@ -178,6 +150,8 @@ public:
     void setMatchingStarted(bool m);
     bool getMatchingStarted();
 
+    void notifyCurrentDemandStarted();
+
     // Note: Deprecated, do not use EvseState externally.
     // Kept for compatibility, will be removed from public interface
     // in the future.
@@ -187,9 +161,11 @@ public:
         Disabled,
         Idle,
         WaitingForAuthentication,
+        PrepareCharging,
         Charging,
         ChargingPausedEV,
         ChargingPausedEVSE,
+        StoppingCharging,
         Finished,
         Error,
         Faulted,
@@ -199,11 +175,10 @@ public:
     };
 
     std::string evseStateToString(EvseState s);
-    std::string errorStateToString(ErrorState s);
 
     EvseState getCurrentState();
     sigslot::signal<EvseState> signalState;
-    sigslot::signal<ErrorState> signalError;
+    sigslot::signal<types::evse_manager::Error> signalError;
     // /Deprecated
 
 private:
@@ -243,7 +218,7 @@ private:
 
     EvseState currentState;
     EvseState lastState;
-    ErrorState errorState;
+    types::evse_manager::Error errorState{types::evse_manager::Error::Internal};
     std::chrono::system_clock::time_point currentStateStarted;
 
     float ampereToDutyCycle(float ampere);
@@ -282,7 +257,7 @@ private:
     std::string auth_tag;
 
     // AC or DC
-    std::string charge_mode;
+    ChargeMode charge_mode{0};
     // Config option
     bool ac_hlc_enabled;
     // HLC enabled in current AC session. This can change during the session if e.g. HLC fails.

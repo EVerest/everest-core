@@ -97,12 +97,11 @@ static std::vector<uint16_t> to_little_endian_16(const std::vector<uint8_t>& res
 
 static std::vector<int> to_little_endian_int(const std::vector<uint8_t>& response) {
     std::vector<int> r;
-    uint8_t hi, lo;
     for (auto it = response.begin(); it != response.end();) {
-        hi = *it++;
+        uint8_t hi = *it++;
         if (it == response.end())
             break;
-        lo = *it++;
+        uint8_t lo = *it++;
         r.push_back((uint16_t)((hi << 8) | lo));
     }
     return r;
@@ -120,6 +119,8 @@ static void add_crc(std::vector<uint8_t>& message) {
 // Implementation
 
 void serial_communication_hubImpl::init() {
+
+    last_message_end_time = std::chrono::steady_clock::now();
 
     everest::connection::SerialDeviceConfiguration cfg(config.serial_port);
     cfg.set_sensible_defaults();
@@ -178,6 +179,7 @@ serial_communication_hubImpl::handle_send_raw(int& target_device_id,
 
         bytes_written = serial_device->write(message.data(), message.size());
         serial_device->drain();
+        last_message_end_time = std::chrono::steady_clock::now();
     }
 
     // check if all bytes were written
@@ -220,6 +222,7 @@ types::serial_comm_hub_requests::ResultRaw serial_communication_hubImpl::handle_
 
         // Receive reply with timeout
         bytes_received = serial_device->read(receive_buffer, sizeof(receive_buffer));
+        last_message_end_time = std::chrono::steady_clock::now();
     }
 
     // check if timed out
@@ -253,15 +256,18 @@ types::serial_comm_hub_requests::ResultRaw serial_communication_hubImpl::handle_
     return status;
 }
 
-types::serial_comm_hub_requests::Result
-serial_communication_hubImpl::handle_modbus_read_holding_registers(int& target_device_id, int& first_register_address,
-                                                                   int& num_registers_to_read) {
+types::serial_comm_hub_requests::Result serial_communication_hubImpl::handle_modbus_read_holding_registers(
+    int& target_device_id, int& first_register_address, int& num_registers_to_read, int& pause_between_messages) {
     std::vector<std::uint8_t> response;
     types::serial_comm_hub_requests::Result result;
     result.status_code = types::serial_comm_hub_requests::StatusCodeEnum::ModbusException;
 
     {
         std::scoped_lock lock(serial_mutex);
+        auto time_since_last_message = std::chrono::steady_clock::now() - last_message_end_time;
+        auto pause_time = std::chrono::milliseconds(pause_between_messages);
+        if (time_since_last_message < pause_time)
+            std::this_thread::sleep_for(pause_time - time_since_last_message);
 
         bool done{false};
         uint8_t retry_counter{this->num_resends_on_error};
@@ -301,6 +307,8 @@ serial_communication_hubImpl::handle_modbus_read_holding_registers(int& target_d
             }
             done = true;
         } while (!done);
+
+        last_message_end_time = std::chrono::steady_clock::now();
     }
 
     EVLOG_debug << fmt::format("Process response (size {})", response.size());
@@ -313,7 +321,8 @@ serial_communication_hubImpl::handle_modbus_read_holding_registers(int& target_d
 }
 
 types::serial_comm_hub_requests::StatusCodeEnum serial_communication_hubImpl::handle_modbus_write_multiple_registers(
-    int& target_device_id, int& first_register_address, types::serial_comm_hub_requests::VectorUint16& data_raw) {
+    int& target_device_id, int& first_register_address, types::serial_comm_hub_requests::VectorUint16& data_raw,
+    int& pause_between_messages) {
     std::vector<uint16_t> raw_message;
     append_array<uint16_t, int>(raw_message, data_raw.data);
 
@@ -326,6 +335,11 @@ types::serial_comm_hub_requests::StatusCodeEnum serial_communication_hubImpl::ha
     {
         std::scoped_lock lock(serial_mutex);
 
+        auto time_since_last_message = std::chrono::steady_clock::now() - last_message_end_time;
+        auto pause_time = std::chrono::milliseconds(pause_between_messages);
+        if (time_since_last_message < pause_time)
+            std::this_thread::sleep_for(pause_time - time_since_last_message);
+
         bool done{false};
         uint8_t retry_counter{this->num_resends_on_error};
         do {
@@ -334,8 +348,8 @@ types::serial_comm_hub_requests::StatusCodeEnum serial_communication_hubImpl::ha
             }
 
             EVLOG_debug << fmt::format("Try {} Call modbus_client->write_multiple_registers(id {} addr {} len {})",
-                                       (int)num_resends_on_error, (uint8_t)target_device_id,
-                                       (uint16_t)first_register_address, (uint16_t)payload.size());
+                                       (int)retry_counter, (uint8_t)target_device_id, (uint16_t)first_register_address,
+                                       (uint16_t)payload.size());
 
             try {
                 response =
@@ -364,6 +378,8 @@ types::serial_comm_hub_requests::StatusCodeEnum serial_communication_hubImpl::ha
             }
             done = true;
         } while (!done);
+
+        last_message_end_time = std::chrono::steady_clock::now();
     }
 
     EVLOG_debug << fmt::format("Done writing");

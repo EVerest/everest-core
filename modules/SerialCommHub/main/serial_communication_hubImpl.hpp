@@ -20,6 +20,7 @@
 #include <termios.h>
 #include <utils/thread.hpp>
 #include <vector>
+#include <chrono>
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 
 namespace module {
@@ -40,6 +41,7 @@ public:
         serial_communication_hubImplBase(ev, "main"), mod(mod), config(config){};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
+    // insert your public definitions here
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
 
 protected:
@@ -51,11 +53,12 @@ protected:
     handle_send_raw_wait_reply(int& target_device_id, types::serial_comm_hub_requests::VectorUint8& data_raw,
                                bool& add_crc16) override;
     virtual types::serial_comm_hub_requests::Result
-    handle_modbus_read_holding_registers(int& target_device_id, int& first_register_address,
-                                         int& num_registers_to_read) override;
+    handle_modbus_read_holding_registers(int& target_device_id, int& first_register_address, int& num_registers_to_read,
+                                         int& pause_between_messages) override;
     virtual types::serial_comm_hub_requests::StatusCodeEnum
     handle_modbus_write_multiple_registers(int& target_device_id, int& first_register_address,
-                                           types::serial_comm_hub_requests::VectorUint16& data_raw) override;
+                                           types::serial_comm_hub_requests::VectorUint16& data_raw,
+                                           int& pause_between_messages) override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
     // insert your protected definitions here
@@ -75,7 +78,7 @@ private:
     std::unique_ptr<everest::connection::RTUConnection> modbus_connection;
     std::unique_ptr<everest::modbus::ModbusRTUClient> modbus_client;
     std::mutex serial_mutex;
-
+    std::chrono::time_point<std::chrono::steady_clock> last_message_end_time;
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 

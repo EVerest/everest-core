@@ -1,7 +1,7 @@
 description: Powermeter types
 types:
   Powermeter:
-    description: Measured dataset
+    description: Measured dataset (AC or DC)
     type: object
     additionalProperties: false
     required:
@@ -10,15 +10,13 @@ types:
     properties:
       timestamp:
         description: Timestamp of measurement
-        type: number
-      timestamp_RFC3339_UTC:
-        description: Timepoint when reached the everest module.
         type: string
+        format: date-time
       meter_id:
         description: A (user defined) meter if (e.g. id printed on the case)
         type: string
       phase_seq_error:
-        description: true for 3 phase rotation error (ccw)
+        description: "AC only: true for 3 phase rotation error (ccw)"
         type: boolean
       energy_Wh_import:
         description: Imported energy in Wh (from grid)
@@ -29,7 +27,8 @@ types:
         type: object
         $ref: /units#/Energy
       power_W:
-        description: Instantaneous power in Watt. Negative values are exported, positive
+        description:
+          Instantaneous power in Watt. Negative values are exported, positive
           values imported Energy.
         type: object
         $ref: /units#/Power

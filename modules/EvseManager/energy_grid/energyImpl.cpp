@@ -19,8 +19,8 @@ void energyImpl::init() {
     _optimizer_mode = EVSE_OPTIMIZER_MODE_MANUAL_LIMITS;
     initializeEnergyObject();
 
-    if (mod->r_powermeter.size() > 0) {
-        mod->r_powermeter[0]->subscribe_powermeter([this](json p) {
+    if (mod->r_powermeter_energy_management().size()) {
+        mod->r_powermeter_energy_management()[0]->subscribe_powermeter([this](json p) {
             // Received new power meter values, update our energy object.
             std::lock_guard<std::mutex> lock(this->energy_mutex);
             energy["energy_usage"] = p;
