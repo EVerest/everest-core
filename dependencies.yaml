@@ -35,5 +35,5 @@ libocpp:
   git_tag: v0.4.1
 # Josev
 Josev:
-  git: git@github.com:EVerest/ext-switchev-iso15118.git
+  git: https://github.com/EVerest/ext-switchev-iso15118.git
   git_tag: 2022.12.0
