@@ -1,18 +1,22 @@
 {% if first %}
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - {{year}} Pionix GmbH and Contributors to EVerest
-#ifndef OCPP1_6_OCPP_TYPES_HPP
-#define OCPP1_6_OCPP_TYPES_HPP
+#ifndef OCPP_{{namespace | upper}}_OCPP_TYPES_HPP
+#define OCPP_{{namespace | upper}}_OCPP_TYPES_HPP
 
 #include <string>
 
 #include <boost/optional.hpp>
 #include <nlohmann/json.hpp>
 
-#include <ocpp1_6/enums.hpp>
-#include <ocpp1_6/types.hpp>
+#include <ocpp/{{namespace}}/enums.hpp>
+{% if namespace == "v16" %}
+    #include <ocpp/v16/types.hpp>
+{% endif %}
+#include <ocpp/common/types.hpp>
 
-namespace ocpp1_6 {
+namespace ocpp {
+namespace {{namespace}} {
 {% endif %}
 {%- if parsed_types|length %}
 {%- for type in parsed_types %}
@@ -40,7 +44,8 @@ struct {{type.name}} {
 {% endfor %}
 {%- endif %}
 {% if last %}
-} // namespace ocpp1_6
+} // namespace {{namespace}}
+} // namespace ocpp
 
-#endif // OCPP1_6_OCPP_TYPES_HPP
+#endif // OCPP_{{namespace | upper}}_OCPP_TYPES_HPP
 {% endif %}

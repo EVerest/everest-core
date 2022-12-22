@@ -1,0 +1,61 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+#ifndef OCPP_V201_GETREPORT_HPP
+#define OCPP_V201_GETREPORT_HPP
+
+#include <boost/optional.hpp>
+
+#include <ocpp/common/types.hpp>
+#include <ocpp/v201/enums.hpp>
+#include <ocpp/v201/ocpp_types.hpp>
+
+namespace ocpp {
+namespace v201 {
+
+/// \brief Contains a OCPP GetReport message
+struct GetReportRequest : public ocpp::Message {
+    int32_t requestId;
+    boost::optional<CustomData> customData;
+    boost::optional<std::vector<ComponentVariable>> componentVariable;
+    boost::optional<std::vector<ComponentCriterionEnum>> componentCriteria;
+
+    /// \brief Provides the type of this GetReport message as a human readable string
+    /// \returns the message type as a human readable string
+    std::string get_type() const;
+};
+
+/// \brief Conversion from a given GetReportRequest \p k to a given json object \p j
+void to_json(json& j, const GetReportRequest& k);
+
+/// \brief Conversion from a given json object \p j to a given GetReportRequest \p k
+void from_json(const json& j, GetReportRequest& k);
+
+/// \brief Writes the string representation of the given GetReportRequest \p k to the given output stream \p os
+/// \returns an output stream with the GetReportRequest written to
+std::ostream& operator<<(std::ostream& os, const GetReportRequest& k);
+
+/// \brief Contains a OCPP GetReportResponse message
+struct GetReportResponse : public ocpp::Message {
+    GenericDeviceModelStatusEnum status;
+    boost::optional<CustomData> customData;
+    boost::optional<StatusInfo> statusInfo;
+
+    /// \brief Provides the type of this GetReportResponse message as a human readable string
+    /// \returns the message type as a human readable string
+    std::string get_type() const;
+};
+
+/// \brief Conversion from a given GetReportResponse \p k to a given json object \p j
+void to_json(json& j, const GetReportResponse& k);
+
+/// \brief Conversion from a given json object \p j to a given GetReportResponse \p k
+void from_json(const json& j, GetReportResponse& k);
+
+/// \brief Writes the string representation of the given GetReportResponse \p k to the given output stream \p os
+/// \returns an output stream with the GetReportResponse written to
+std::ostream& operator<<(std::ostream& os, const GetReportResponse& k);
+
+} // namespace v201
+} // namespace ocpp
+
+#endif // OCPP_V201_GETREPORT_HPP

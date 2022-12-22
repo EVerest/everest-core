@@ -1,0 +1,80 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Schema for Connector",
+  "type": "object",
+  "properties": {
+    "AvailabilityState": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "OptionList"
+      },
+      "attributes": [
+        {
+          "type": "Actual"
+        }
+      ],
+      "description": "This variable reports current availability state for the Connector. Optional",
+      "type": "string"
+    },
+    "Available": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Component exists",
+      "type": "boolean"
+    },
+    "ChargeProtocol": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual"
+        }
+      ],
+      "description": "The Charging Control Protocol applicable to a Connector. CHAdeMO: CHAdeMO protocol",
+      "type": "string"
+    },
+    "ConnectorType": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "A value of ConnectorEnumType (See part 2) plus additionally: cGBT",
+      "type": "string"
+    },
+    "SupplyPhases": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Number of alternating current phases connected/available.",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "Available",
+    "ConnectorType",
+    "SupplyPhases"
+  ]
+}

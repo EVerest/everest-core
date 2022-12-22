@@ -3,24 +3,32 @@ add_library(ocpp)
 add_library(everest::ocpp ALIAS ocpp)
 target_sources(ocpp
     PRIVATE
-        ocpp1_6/charge_point.cpp
-        ocpp1_6/smart_charging.cpp
-        ocpp1_6/charge_point_configuration.cpp
-        ocpp1_6/charge_point_state_machine.cpp
-        ocpp1_6/transaction.cpp
-        ocpp1_6/enums.cpp
-        ocpp1_6/message_queue.cpp
-        ocpp1_6/ocpp_types.cpp
-        ocpp1_6/ocpp_logging.cpp
-        ocpp1_6/pki_handler.cpp
-        ocpp1_6/schemas.cpp
-        ocpp1_6/database_handler.cpp
-        ocpp1_6/types.cpp
-        ocpp1_6/types_internal.cpp
+        ocpp/common/charge_point.cpp
+        ocpp/common/database_handler.cpp
+        ocpp/common/message_queue.cpp
+        ocpp/common/ocpp_logging.cpp
+        ocpp/common/pki_handler.cpp
+        ocpp/common/schemas.cpp
+        ocpp/common/types.cpp
+        ocpp/v16/charge_point.cpp
+        ocpp/v16/smart_charging.cpp
+        ocpp/v16/charge_point_configuration.cpp
+        ocpp/v16/charge_point_state_machine.cpp
+        ocpp/v16/transaction.cpp
+        ocpp/v16/enums.cpp
+        ocpp/v16/ocpp_types.cpp
+        ocpp/v16/types.cpp
+        ocpp/v201/charge_point.cpp
+        ocpp/v201/charge_point_configuration.cpp
+        ocpp/v201/enums.cpp
+        ocpp/v201/ocpp_types.cpp
+        ocpp/v201/types.cpp
 )
 
-add_subdirectory(ocpp1_6/messages)
-add_subdirectory(ocpp1_6/websocket)
+add_subdirectory(ocpp/common/websocket)
+add_subdirectory(ocpp/v16/messages)
+add_subdirectory(ocpp/v201/messages)
+
 
 target_include_directories(ocpp
     PUBLIC

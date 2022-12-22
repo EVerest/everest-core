@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #
 # SPDX-License-Identifier: Apache-2.0
-# Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+# Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 #
 """OCPP JSON schema to cpp converter."""
 from jinja2 import Environment, FileSystemLoader, select_autoescape
@@ -63,8 +63,8 @@ def needs_enums(types):
 
 
 def needs_types(types):
-    type_list = ['CiString20Type', 'CiString25Type', 'CiString50Type',
-                 'CiString255Type', 'CiString500Type', 'DateTime']
+    type_list = ['CiString<6>', 'CiString<8>', 'CiString<16>', 'CiString<20>', 'CiString<25>', 'CiString<32>', 'CiString<36>',
+                 'CiString<50>', 'CiString<64>', 'CiString<255>', 'CiString<500>', 'CiString<1000>', 'CiString<2500>', 'CiString<5600>' 'DateTime']
     for t in types:
         for property in t['properties']:
             if property['type'] in type_list:
@@ -101,7 +101,7 @@ current_defs: Dict = {}
 unique_types = set()
 
 format_types = dict()
-format_types['date-time'] = 'DateTime'
+format_types['date-time'] = 'ocpp::DateTime'
 format_types['uri'] = 'std::string'  # FIXME(kai): add proper URI type
 
 enum_types = dict()
@@ -182,6 +182,9 @@ enum_types['ExtendedTriggerMessageRequest'] = dict()
 enum_types['ExtendedTriggerMessageRequest']['requestedMessage'] = 'MessageTriggerEnumType'
 enum_types['ExtendedTriggerMessageResponse'] = dict()
 enum_types['ExtendedTriggerMessageResponse']['status'] = 'TriggerMessageStatusEnumType'
+enum_types['SecurityEventNotificationRequest'] = dict()
+enum_types['SecurityEventNotificationRequest']['type'] = 'SecurityEvent'
+
 
 def object_exists(name: str) -> bool:
     """Check if an object (i.e. dataclass) already exists."""
@@ -214,7 +217,7 @@ def add_enum_type(name: str, enums: Tuple[str]):
     })
 
 
-def parse_property(prop_name: str, prop: Dict, depends_on: List[str], ob_name=None) -> str:
+def parse_property(prop_name: str, prop: Dict, depends_on: List[str], ob_name=None) -> Tuple[str, bool]:
     """Determine type of property and proceed with it.
     In case it is a $ref, look it up in the current_defs dict and parse
     it again.
@@ -228,6 +231,7 @@ def parse_property(prop_name: str, prop: Dict, depends_on: List[str], ob_name=No
     """
 
     prop_type = None
+    is_enum = False
     if 'type' not in prop:
         if '$ref' in prop:
             prop_type = prop['$ref'].split('/')[-1]
@@ -239,7 +243,7 @@ def parse_property(prop_name: str, prop: Dict, depends_on: List[str], ob_name=No
             return parse_property(prop_type, def_prop, depends_on)
         else:
             # if not defined, propably any
-            return 'any'
+            return ('std::string', False)
     if prop['type'] == 'string':
         if 'enum' in prop:
             prop_type = stringcase.capitalcase(prop_name)
@@ -249,9 +253,10 @@ def parse_property(prop_name: str, prop: Dict, depends_on: List[str], ob_name=No
                 prop_type = enum_types[ob_name][prop_name]
             print("obname: %s, prop_type: %s" % (ob_name, prop_type))
             add_enum_type(prop_type, prop['enum'])
+            is_enum = True
         else:
             if 'maxLength' in prop:
-                prop_type = 'CiString{}Type'.format(prop['maxLength'])
+                prop_type = 'CiString<{}>'.format(prop['maxLength'])
             else:
                 if 'format' in prop:
                     if prop['format'] in format_types:
@@ -269,7 +274,7 @@ def parse_property(prop_name: str, prop: Dict, depends_on: List[str], ob_name=No
         prop_type = 'bool'
     elif prop['type'] == 'array':
         prop_type = 'std::vector<' + \
-            parse_property(prop_name, prop['items'], depends_on) + '>'
+            parse_property(prop_name, prop['items'], depends_on)[0] + '>'
     elif prop['type'] == 'object':
         prop_type = stringcase.capitalcase(prop_name)
         print("!!! prop_type: %s" % prop_type)
@@ -290,7 +295,7 @@ def parse_property(prop_name: str, prop: Dict, depends_on: List[str], ob_name=No
     else:
         raise Exception('Unknown type: ' + prop['type'])
 
-    return prop_type
+    return (prop_type, is_enum)
 
 
 def parse_object(ob_name: str, json_schema: Dict):
@@ -306,10 +311,10 @@ def parse_object(ob_name: str, json_schema: Dict):
     for prop_name, prop in json_schema['properties'].items():
         if not prop_name.isidentifier() or keyword.iskeyword(prop_name):
             raise Exception(prop_name + ' can\'t be used as an identifier!')
-        prop_type = parse_property(
+        prop_type, is_enum = parse_property(
             prop_name, prop, ob_dict['depends_on'], ob_name)
-
-        is_enum = 'enum' in prop
+        if not is_enum:
+            is_enum = 'enum' in prop
         for parsed_enum in parsed_enums:
             if parsed_enum['name'] == prop_type:
                 is_enum = True
@@ -335,7 +340,8 @@ def parse_schemas(version: str, schema_dir: Path = Path('schemas/json/'),
     """
     schemas = dict()
     schema_files = list(schema_dir.glob('*.json'))
-    for schema_file in schema_files:
+    for schema_file in sorted(schema_files):
+        print(f"Schema file: {schema_file}")
         with open(schema_file, 'r') as schema_dump:
             schema = json.load(schema_dump)
             stripped_fn = schema_file.stem
@@ -361,8 +367,8 @@ def parse_schemas(version: str, schema_dir: Path = Path('schemas/json/'),
             raise Exception(
                 'Either response or request is missing for action: ' + key)
 
-    generated_header_dir = generated_dir / 'include' / 'ocpp1_6'
-    generated_source_dir = generated_dir / 'lib' / 'ocpp1_6'
+    generated_header_dir = generated_dir / 'include' / 'ocpp' / version
+    generated_source_dir = generated_dir / 'lib' / 'ocpp' / version
 
     if not generated_header_dir.exists():
         generated_header_dir.mkdir(parents=True)
@@ -416,7 +422,6 @@ def parse_schemas(version: str, schema_dir: Path = Path('schemas/json/'),
             for class_type in parsed_types:
                 insert_at: int = 0
                 for dep_class_type in class_type['depends_on']:
-
                     for i in range(len(sorted_types)):
                         # the new one depends on the current
                         if sorted_types[i]['name'] == dep_class_type:
@@ -453,7 +458,6 @@ def parse_schemas(version: str, schema_dir: Path = Path('schemas/json/'),
             for class_type in parsed_types:
                 insert_at: int = 0
                 for dep_class_type in class_type['depends_on']:
-
                     for i in range(len(sorted_types)):
                         # the new one depends on the current
                         if sorted_types[i]['name'] == dep_class_type:
@@ -466,6 +470,7 @@ def parse_schemas(version: str, schema_dir: Path = Path('schemas/json/'),
             with open(generated_class_hpp_fn, writemode[type_key]) as out:
                 out.write(message_hpp_template.render({
                     'types': sorted_types,
+                    'namespace': version_path,
                     'enum_types': parsed_enums,
                     'uses_optional': message_uses_optional,
                     'needs_enums': message_needs_enums,
@@ -481,6 +486,7 @@ def parse_schemas(version: str, schema_dir: Path = Path('schemas/json/'),
             with open(generated_class_cpp_fn, writemode[type_key]) as out:
                 out.write(message_cpp_template.render({
                     'types': sorted_types,
+                    'namespace': version_path,
                     'enum_types': parsed_enums,
                     'uses_optional': message_uses_optional,
                     'needs_enums': message_needs_enums,
@@ -495,6 +501,7 @@ def parse_schemas(version: str, schema_dir: Path = Path('schemas/json/'),
             with open(enums_hpp_fn, 'w' if first else 'a+') as out:
                 out.write(enums_hpp_template.render({
                     'enum_types': parsed_enums,
+                    'namespace': version_path,
                     'first': first,
                     'action': {
                         'name': action,
@@ -504,6 +511,7 @@ def parse_schemas(version: str, schema_dir: Path = Path('schemas/json/'),
             with open(enums_cpp_fn, 'w' if first else 'a+') as out:
                 out.write(enums_cpp_template.render({
                     'enum_types': parsed_enums,
+                    'namespace': version_path,
                     'first': first,
                     'action': {
                         'name': action,
@@ -511,7 +519,7 @@ def parse_schemas(version: str, schema_dir: Path = Path('schemas/json/'),
                     }
                 }))
             parsed_types_ = []
-            for parsed_type in parsed_types:
+            for parsed_type in sorted_types:
                 if parsed_type not in parsed_types_unique:
                     parsed_types_unique.append(parsed_type)
                     if parsed_type['name'] not in unique_types:
@@ -520,6 +528,7 @@ def parse_schemas(version: str, schema_dir: Path = Path('schemas/json/'),
             with open(ocpp_types_hpp_fn, 'w' if first else 'a+') as out:
                 out.write(ocpp_types_hpp_template.render({
                     'parsed_types': parsed_types_,
+                    'namespace': version_path,
                     'first': first,
                     'action': {
                         'name': action,
@@ -529,6 +538,7 @@ def parse_schemas(version: str, schema_dir: Path = Path('schemas/json/'),
             with open(ocpp_types_cpp_fn, 'w' if first else 'a+') as out:
                 out.write(ocpp_types_cpp_template.render({
                     'parsed_types': parsed_types_,
+                    'namespace': version_path,
                     'first': first,
                     'action': {
                         'name': action,
@@ -539,23 +549,27 @@ def parse_schemas(version: str, schema_dir: Path = Path('schemas/json/'),
 
     with open(messages_cmakelists_txt_fn, 'w') as out:
         out.write(messages_cmakelists_txt_template.render({
-            'messages': message_files
+            'messages': sorted(message_files)
         }))
     with open(enums_hpp_fn, 'a+') as out:
         out.write(enums_hpp_template.render({
-            'last': True
+            'last': True,
+            'namespace': version_path
         }))
     with open(enums_cpp_fn, 'a+') as out:
         out.write(enums_cpp_template.render({
-            'last': True
+            'last': True,
+            'namespace': version_path
         }))
     with open(ocpp_types_hpp_fn, 'a+') as out:
         out.write(ocpp_types_hpp_template.render({
-            'last': True
+            'last': True,
+            'namespace': version_path
         }))
     with open(ocpp_types_cpp_fn, 'a+') as out:
         out.write(ocpp_types_cpp_template.render({
-            'last': True
+            'last': True,
+            'namespace': version_path
         }))
 
     # clang-format generated files
@@ -578,9 +592,21 @@ if __name__ == "__main__":
                         help="Directory in which the OCPP 1.6 schemas reside", required=True)
     parser.add_argument("--out", metavar='OUT',
                         help="Dir in which the generated code will be put", required=True)
+    parser.add_argument("--version", metavar='VERSION',
+                        help="Version of OCPP [1.6 or 2.0.1]", required=True)
 
     args = parser.parse_args()
-    ocpp_1_6_schema_dir = Path(args.schemas).resolve() / "json"
-    ocpp_1_6_generated_dir = Path(args.out).resolve()
-    parse_schemas(version='1.6', schema_dir=ocpp_1_6_schema_dir,
-                  generated_dir=ocpp_1_6_generated_dir)
+    version = args.version
+
+    if version == '1.6' or version == '16' or version == 'v16':
+        version_path = 'v16'
+    elif version == '2.0.1' or version == '201' or version == 'v201':
+        version_path = 'v201'
+    else:
+        raise ValueError(f"Version {version} not a valid ocpp version")
+
+    schema_dir = Path(args.schemas).resolve()
+    generated_dir = Path(args.out).resolve()
+
+    parse_schemas(version=version_path, schema_dir=schema_dir,
+                  generated_dir=generated_dir)

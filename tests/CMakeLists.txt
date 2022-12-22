@@ -2,8 +2,6 @@ add_executable(database_tests database_tests.cpp)
 
 target_include_directories(database_tests PUBLIC ${GTEST_INCLUDE_DIRS})
 
-target_compile_options(database_tests PUBLIC -Wall -Wextra -Werror)
-
 find_package(GTest REQUIRED)
 
 target_link_libraries(database_tests PRIVATE

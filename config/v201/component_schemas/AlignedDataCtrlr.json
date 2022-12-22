@@ -1,0 +1,127 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Schema for AlignedDataCtrlr",
+  "type": "object",
+  "properties": {
+    "Available": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "If this variable reports a value of true",
+      "type": "boolean"
+    },
+    "Enabled": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "If this variable reports a value of true",
+      "type": "boolean"
+    },
+    "Interval": {
+      "characteristics": {
+        "unit": "s",
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Size (in seconds) of the clock-aligned data interval",
+      "type": "integer"
+    },
+    "Measurands": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "MemberList"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Clock-aligned measurand(s) to be included in MeterValuesRequest",
+      "type": "string"
+    },
+    "SendDuringIdle": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "If set to true",
+      "type": "boolean"
+    },
+    "SignReadings": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "If set to true",
+      "type": "boolean"
+    },
+    "TxEndedInterval": {
+      "characteristics": {
+        "unit": "s",
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Size (in seconds) of the clock-aligned data interval",
+      "type": "integer"
+    },
+    "TxEndedMeasurands": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "MemberList"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Clock-aligned measurands to be included in the meterValues element of TransactionEventRequest (eventType = Ended)",
+      "type": "string"
+    }
+  },
+  "required": [
+    "Interval",
+    "Measurands",
+    "TxEndedInterval",
+    "TxEndedMeasurands"
+  ]
+}

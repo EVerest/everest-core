@@ -1,0 +1,142 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Schema for SampledDataCtrlr",
+  "type": "object",
+  "properties": {
+    "Available": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "If this variable reports a value of true",
+      "type": "boolean"
+    },
+    "Enabled": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "If this variable reports a value of true",
+      "type": "boolean"
+    },
+    "SignReadings": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "If set to true",
+      "type": "boolean"
+    },
+    "TxEndedInterval": {
+      "characteristics": {
+        "unit": "s",
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Interval between sampling of metering (or other) data",
+      "type": "integer"
+    },
+    "TxEndedMeasurands": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "MemberList"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Sampled measurands to be included in the meterValues element of TransactionEventRequest (eventType = Ended)",
+      "type": "string"
+    },
+    "TxStartedMeasurands": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "MemberList"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Sampled measurand(s) to be taken at the start of any transaction to be included in the meterValues field of the first TransactionEventRequest message send at the start of a transaction (eventType = Started)",
+      "type": "string"
+    },
+    "TxUpdatedInterval": {
+      "characteristics": {
+        "unit": "s",
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Interval between sampling of metering (or other) data",
+      "type": "integer"
+    },
+    "TxUpdatedMeasurands": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "MemberList"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Sampled measurands to be included in the meterValues element of TransactionEventRequest (eventType = Ended)",
+      "type": "string"
+    },
+    "RegisterValuesWithoutPhases": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "If this variable reports a value of true",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "TxEndedInterval",
+    "TxEndedMeasurands",
+    "TxStartedMeasurands",
+    "TxUpdatedInterval",
+    "TxUpdatedMeasurands"
+  ]
+}

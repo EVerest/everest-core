@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Schema for CustomizationCtrlr",
+  "type": "object",
+  "properties": {
+    "CustomImplementationEnabled<vendorId>": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Custom implementation <vendorId> has been enabled.",
+      "type": "boolean"
+    }
+  },
+  "required": []
+}

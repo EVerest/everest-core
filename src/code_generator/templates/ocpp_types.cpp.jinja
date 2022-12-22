@@ -6,12 +6,13 @@
 #include <boost/optional.hpp>
 #include <nlohmann/json.hpp>
 
-#include <ocpp1_6/enums.hpp>
-#include <ocpp1_6/types.hpp>
+#include <ocpp/{{namespace}}/enums.hpp>
+#include <ocpp/common/types.hpp>
 
-#include <ocpp1_6/ocpp_types.hpp>
+#include <ocpp/{{namespace}}/ocpp_types.hpp>
 
-namespace ocpp1_6 {
+namespace ocpp {
+namespace {{namespace}} {
 {% endif %}
 {%- if parsed_types|length %}
 {%- for type in parsed_types %}
@@ -28,7 +29,7 @@ namespace ocpp1_6 {
     {%- if property.enum %}
  conversions::{{- property.type | snake_case}}_to_string(k.{{property.name}})
     {%- else %}
-        {%- if property.type == 'DateTime' %}
+        {%- if property.type == 'ocpp::DateTime' %}
 k.{{property.name}}.to_rfc3339()
         {%- else %}
 k.{{property.name}}
@@ -65,7 +66,7 @@ if (j.size() == 0) {
 {%- if property.enum %}
 j["{{property.name}}"] = conversions::{{- property.type | snake_case}}_to_string(k.{{property.name}}.value());
     {%- else %}
-        {%- if property.type == 'DateTime' %}
+        {%- if property.type == 'ocpp::DateTime' %}
 j["{{property.name}}"] = k.{{property.name}}.value().to_rfc3339();
         {%- else %}
 j["{{property.name}}"] = k.{{property.name}}.value();
@@ -92,8 +93,8 @@ j["{{property.name}}"] = k.{{property.name}}.value();
     {%- if property.enum %}
  conversions::string_to_{{- property.type | snake_case}}(j.at("{{property.name}}"))
     {%- else %}
-        {%- if property.type == 'DateTime' %}
- DateTime(std::string(j.at("{{property.name}}")));
+        {%- if property.type == 'ocpp::DateTime' %}
+ ocpp::DateTime(std::string(j.at("{{property.name}}")));
         {%- else %}
  j.at("{{property.name}}")
         {%- endif %}
@@ -114,7 +115,15 @@ j["{{property.name}}"] = k.{{property.name}}.value();
             }
             k.{{property.name}}.emplace(vec);
 {% else %}
+{% if property.enum %}
+            k.{{property.name}}.emplace(conversions::string_to_{{- property.type | snake_case}}(j.at("{{property.name}}")));
+{% else %}
+        {%- if property.type == 'ocpp::DateTime' %}
+            k.{{property.name}}.emplace(j.at("{{property.name}}").get<std::string>());
+        {%- else %}
             k.{{property.name}}.emplace(j.at("{{property.name}}"));
+        {%- endif %}
+{% endif %}
 {% endif %}
         }
 {% endif %}
@@ -132,6 +141,7 @@ j["{{property.name}}"] = k.{{property.name}}.value();
 {% endfor %}
 {%- endif %}
 {% if last %}
-} // namespace ocpp1_6
+} // namespace {{namespace}}
+} // namespace ocpp
 
 {% endif %}

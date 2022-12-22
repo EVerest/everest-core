@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Schema for TokenReader",
+  "type": "object",
+  "properties": {
+    "Token": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual"
+        }
+      ],
+      "description": "String of bytes representing an ID token.",
+      "type": "string"
+    },
+    "TokenType": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "OptionList"
+      },
+      "attributes": [
+        {
+          "type": "Actual"
+        }
+      ],
+      "description": "Type of Token. Value is one of IdTokenEnumType.",
+      "type": "string"
+    }
+  },
+  "required": []
+}

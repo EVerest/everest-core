@@ -1,0 +1,169 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Schema for SmartChargingCtrlr",
+  "type": "object",
+  "properties": {
+    "ACPhaseSwitchingSupported": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "This variable can be used to indicate an on-load/in-transaction capability. If defined and true",
+      "type": "boolean"
+    },
+    "Available": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Whether smart charging is supported.",
+      "type": "boolean"
+    },
+    "Enabled": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Whether smart charging is enabled.",
+      "type": "boolean"
+    },
+    "EntriesChargingProfiles": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Entries(ChargingProfiles) is the amount of Charging profiles currently installed on the Charging Station",
+      "type": "integer"
+    },
+    "ExternalControlSignalsEnabled": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Indicates whether a Charging Station should respond to external control signals that influence charging.",
+      "type": "boolean"
+    },
+    "LimitChangeSignificance": {
+      "characteristics": {
+        "unit": "Percent",
+        "supportsMonitoring": true,
+        "dataType": "decimal"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "If at the Charging Station side a change in the limit in a ChargingProfile is lower than this percentage",
+      "type": "number"
+    },
+    "NotifyChargingLimitWithSchedules": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Indicates if the Charging Station should include the externally set charging limit/schedule in the message when it sends a NotifyChargingLimitRequest message.",
+      "type": "boolean"
+    },
+    "PeriodsPerSchedule": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Maximum number of periods that may be defined per ChargingSchedule.",
+      "type": "integer"
+    },
+    "Phases3to1": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "If defined and true",
+      "type": "boolean"
+    },
+    "ProfileStackLevel": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Maximum acceptable value for stackLevel in a ChargingProfile. Since the lowest stackLevel is 0",
+      "type": "integer"
+    },
+    "RateUnit": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "MemberList"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "A list of supported quantities for use in a ChargingSchedule. Allowed values: 'A' and 'W",
+      "type": "string"
+    }
+  },
+  "required": [
+    "EntriesChargingProfiles",
+    "LimitChangeSignificance",
+    "PeriodsPerSchedule",
+    "ProfileStackLevel",
+    "RateUnit"
+  ]
+}

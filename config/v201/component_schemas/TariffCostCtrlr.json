@@ -1,0 +1,110 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Schema for TariffCostCtrlr",
+  "type": "object",
+  "properties": {
+    "AvailableTariff": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Instance Tariff: Whether tariffs are supported.",
+      "type": "boolean"
+    },
+    "AvailableCost": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Instance Cost: Wheter costs are supported.",
+      "type": "boolean"
+    },
+    "Currency": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Currency used by this Charging Station in a ISO 4217 [ISO4217] formatted currency code.",
+      "type": "string"
+    },
+    "EnabledTariff": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Instance Tariff: Whether tariffs are enabled.",
+      "type": "boolean"
+    },
+    "EnabledCost": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Instance Cost: Wheter costs are enabled.",
+      "type": "boolean"
+    },
+    "TariffFallbackMessage": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Message (and/or tariff information) to be shown to an EV Driver when there is no driver specific tariff information available.",
+      "type": "string"
+    },
+    "TotalCostFallbackMessage": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Message to be shown to an EV Driver when the Charging Station cannot retrieve the cost for a transaction at the end of the transaction.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "Currency",
+    "TariffFallbackMessage",
+    "TotalCostFallbackMessage"
+  ]
+}

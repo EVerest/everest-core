@@ -1,0 +1,64 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Schema for FiscalMetering",
+  "type": "object",
+  "properties": {
+    "EnergyExport": {
+      "characteristics": {
+        "unit": "Wh",
+        "supportsMonitoring": true,
+        "dataType": "decimal"
+      },
+      "attributes": [
+        {
+          "type": "Actual"
+        }
+      ],
+      "description": " kWh",
+      "type": "number"
+    },
+    "EnergyExportRegister": {
+      "characteristics": {
+        "unit": "Wh",
+        "supportsMonitoring": true,
+        "dataType": "decimal"
+      },
+      "attributes": [
+        {
+          "type": "Actual"
+        }
+      ],
+      "description": " kWh",
+      "type": "number"
+    },
+    "EnergyImport": {
+      "characteristics": {
+        "unit": "Wh",
+        "supportsMonitoring": true,
+        "dataType": "decimal"
+      },
+      "attributes": [
+        {
+          "type": "Actual"
+        }
+      ],
+      "description": " kWh",
+      "type": "number"
+    },
+    "EnergyImportRegister": {
+      "characteristics": {
+        "unit": "Wh",
+        "supportsMonitoring": true,
+        "dataType": "decimal"
+      },
+      "attributes": [
+        {
+          "type": "Actual"
+        }
+      ],
+      "description": " kWh",
+      "type": "number"
+    }
+  },
+  "required": []
+}

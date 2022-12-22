@@ -1,13 +1,14 @@
 {% if first %}
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - {{year}} Pionix GmbH and Contributors to EVerest
-#ifndef OCPP1_6_ENUMS_HPP
-#define OCPP1_6_ENUMS_HPP
+#ifndef OCPP_{{namespace | upper}}_ENUMS_HPP
+#define OCPP_{{namespace | upper}}_ENUMS_HPP
 
 #include <iosfwd>
 #include <string>
 
-namespace ocpp1_6 {
+namespace ocpp {
+namespace {{namespace}} {
 {% endif %}
 {%- if enum_types|length %}
 {%- for enum_type in enum_types %}
@@ -36,7 +37,9 @@ std::ostream& operator<<(std::ostream& os, const {{ enum_type.name }}& {{ enum_t
 {% endfor %}
 {%- endif %}
 {% if last %}
-} // namespace ocpp1_6
 
-#endif // OCPP1_6_ENUMS_HPP
+} // namespace {{namespace}}
+} // namespace ocpp
+
+#endif // OCPP_{{namespace | upper}}_ENUMS_HPP
 {% endif %}

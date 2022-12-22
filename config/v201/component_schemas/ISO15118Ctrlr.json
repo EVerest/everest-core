@@ -1,0 +1,162 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Schema for ISO15118Ctrlr",
+  "type": "object",
+  "properties": {
+    "CentralContractValidationAllowed": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "If this variable exists and has the value true",
+      "type": "boolean"
+    },
+    "ContractValidationOffline": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "If this variable is true",
+      "type": "boolean"
+    },
+    "SeccId": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "The ID of the SECC in string format as defined by ISO15118.",
+      "type": "string"
+    },
+    "MaxScheduleEntries": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual"
+        }
+      ],
+      "description": "Maximum number of allowed schedule periods.",
+      "type": "integer"
+    },
+    "RequestedEnergyTransferMode": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "OptionList"
+      },
+      "attributes": [
+        {
+          "type": "Actual"
+        }
+      ],
+      "description": "The requested energy transfer mode.",
+      "type": "string"
+    },
+    "RequestMeteringReceipt": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "If true",
+      "type": "boolean"
+    },
+    "CountryName": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "The countryName of the SECC in the ISO 3166-1 format. It is used as the countryName (C) of the SECC leaf certificate. Example: \"DE\"",
+      "type": "string"
+    },
+    "OrganizationName": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "The organizationName of the CSO operating the charging station. It is used as the organizationName (O) of the SECC leaf certificate. Example: \"John Doe Charging Services Ltd\" Note: This value will usually be identical to SecurityCtrlr.OrganizationName, but it does not have to be.",
+      "type": "string"
+    },
+    "PnCEnabled": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "If this variable is true",
+      "type": "boolean"
+    },
+    "V2GCertificateInstallationEnabled": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "If this variable is true",
+      "type": "boolean"
+    },
+    "ContractCertificateInstallationEnabled": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "If this variable is true",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "ContractValidationOffline"
+  ]
+}

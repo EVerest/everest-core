@@ -1,0 +1,48 @@
+{
+    "InternalCtrlr": {
+        "ChargePointId": "cp001",
+        "CentralSystemURI": "localhost:9000/cp001",
+        "ChargeBoxSerialNumber": "cp001",
+        "ChargePointModel": "Yeti",
+        "ChargePointVendor": "Pionix",
+        "FirmwareVersion": "0.4",
+        "SupportedCiphers12": "ECDHE-ECDSA-AES128-GCM-SHA256,ECDHE-ECDSA-AES256,GCM-SHA384,AES128-GCM-SHA256,AES256-GCM-SHA384,TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256",
+        "SupportedCiphers13": "TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256",
+        "WebsocketReconnectInterval": 30
+    },
+    "AuthCtrlr": {
+        "AuthorizeRemoteStart": true,
+        "LocalAuthorizeOffline": true,
+        "LocalPreAuthorize": true
+    },
+    "TxCtrlr": {
+        "EVConnectionTimeOut": 42,
+        "StopTxOnEVSideDisconnect": true,
+        "StopTxOnInvalidId": true,
+        "TxStartPoint": "",
+        "TxStopPoint": ""
+    },
+    "OCPPCommCtrlr": {
+        "FileTransferProtocols": "",
+        "MessageTimeoutDefault": 42,
+        "MessageAttemptIntervalTransactionEvent": 42,
+        "MessageAttemptsTransactionEvent": 42,
+        "NetworkConfigurationPriority": "dummy",
+        "NetworkProfileConnectionAttempts": 42,
+        "OfflineThreshold": 42,
+        "ResetRetries": 42,
+        "UnlockOnEVSideDisconnect": true
+    },
+    "SampledDataCtrlr": {
+        "TxEndedInterval": 42,
+        "TxEndedMeasurands": "",
+        "TxStartedMeasurands": "",
+        "TxUpdatedInterval": 42,
+        "TxUpdatedMeasurands": ""
+    },
+    "SecurityCtrlr": {
+        "SecurityProfile": 0,
+        "OrganizationName": "Pionix",
+        "CertificateEntries": 100
+    }
+}

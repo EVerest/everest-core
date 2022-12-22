@@ -1,0 +1,111 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Schema for EVSE",
+  "type": "object",
+  "properties": {
+    "AllowReset": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Can be used to announce that an EVSE can be reset individually",
+      "type": "boolean"
+    },
+    "AvailabilityState": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "OptionList"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "This variable reports current availability state for the EVSE",
+      "type": "string"
+    },
+    "Available": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Component exists",
+      "type": "boolean"
+    },
+    "EvseId": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual"
+        }
+      ],
+      "description": "The name of the EVSE in the string format as required by ISO 15118 and IEC 63119-2.",
+      "type": "string"
+    },
+    "Power": {
+      "characteristics": {
+        "unit": "W",
+        "supportsMonitoring": true,
+        "dataType": "decimal"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": " kW",
+      "type": "number"
+    },
+    "SupplyPhases": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Number of alternating current phases connected/available.",
+      "type": "integer"
+    },
+    "ISO15118EvseId": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "The name of the EVSE in the string format as required by ISO 15118 and IEC 63119-2. Example: \"DE*ICE*E*1234567890*1\"",
+      "type": "string"
+    }
+  },
+  "required": [
+    "AvailabilityState",
+    "Available",
+    "Power",
+    "SupplyPhases"
+  ]
+}

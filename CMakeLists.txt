@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 
 project(ocpp
-    VERSION 0.4.1
+    VERSION 0.5
     DESCRIPTION "A C++ implementation of the Open Charge Point Protocol"
     LANGUAGES CXX
 )
@@ -45,8 +45,8 @@ endif()
 # library code
 add_subdirectory(lib)
 
-# auxillary files
-add_subdirectory(aux)
+# config and auxillary files
+add_subdirectory(config)
 
 
 # packaging
@@ -74,11 +74,11 @@ if (OCPP_INSTALL)
 endif()
 
 
-if(LIBOCPP_BUILD_EXAMPLES)
-    message("Building libocpp example binaries.")
+if(LIBOCPP16_BUILD_EXAMPLES)
+    message("Building libocpp 1.6 example binaries.")
     add_subdirectory(src)
 else()
-    message("Not building libocpp example binaries.")
+    message("Not building libocpp 1.6 example binaries.")
 endif()
 
 # configure clang-tidy if requested

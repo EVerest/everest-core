@@ -3,9 +3,10 @@
 // Copyright 2020 - {{year}} Pionix GmbH and Contributors to EVerest
 #include <stdexcept>
 #include <string>
-#include <ocpp1_6/enums.hpp>
+#include <ocpp/{{namespace}}/enums.hpp>
 
-namespace ocpp1_6 {
+namespace ocpp {
+namespace {{namespace}} {
 {% endif %}
 {%- if enum_types|length %}
 {%- for enum_type in enum_types %}
@@ -41,6 +42,7 @@ std::ostream& operator<<(std::ostream& os, const {{ enum_type.name }}& {{ enum_t
 {% endfor %}
 {%- endif %}
 {% if last %}
-} // namespace ocpp1_6
+} // namespace {{namespace}}
+} // namespace ocpp
 
 {% endif %}

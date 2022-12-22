@@ -1,45 +1,46 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
 #include <boost/optional/optional_io.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
-#include <ocpp1_6/database_handler.hpp>
+#include <ocpp/common/database_handler.hpp>
 #include <thread>
 
-namespace ocpp1_6 {
+namespace ocpp {
+namespace v16 {
 
-ocpp1_6::ChargingProfile get_sample_charging_profile() {
-    ocpp1_6::ChargingSchedulePeriod period1;
+ChargingProfile get_sample_charging_profile() {
+    ChargingSchedulePeriod period1;
     period1.startPeriod = 0;
     period1.limit = 10;
     period1.numberPhases.emplace(3);
 
-    ocpp1_6::ChargingSchedulePeriod period2;
+    ChargingSchedulePeriod period2;
     period2.startPeriod = 30;
     period2.limit = 16;
     period2.numberPhases.emplace(3);
 
-    std::vector<ocpp1_6::ChargingSchedulePeriod> periods;
+    std::vector<ChargingSchedulePeriod> periods;
     periods.push_back(period1);
     periods.push_back(period2);
 
-    ocpp1_6::ChargingSchedule schedule;
-    schedule.chargingRateUnit = ocpp1_6::ChargingRateUnit::A;
+    ChargingSchedule schedule;
+    schedule.chargingRateUnit = ChargingRateUnit::A;
     schedule.chargingSchedulePeriod = periods;
     schedule.duration = 100;
-    schedule.startSchedule.emplace(ocpp1_6::DateTime(date::utc_clock::now()));
+    schedule.startSchedule.emplace(DateTime(date::utc_clock::now()));
     schedule.minChargingRate.emplace(6.4);
 
-    DateTime valid_from = ocpp1_6::DateTime(date::utc_clock::now());
-    DateTime valid_to = ocpp1_6::DateTime(valid_from.to_time_point() + std::chrono::hours(3600));
+    DateTime valid_from = DateTime(date::utc_clock::now());
+    DateTime valid_to = DateTime(valid_from.to_time_point() + std::chrono::hours(3600));
 
-    ocpp1_6::ChargingProfile profile;
+    ChargingProfile profile;
     profile.chargingProfileId = 1;
     profile.stackLevel = 2;
-    profile.chargingProfilePurpose = ocpp1_6::ChargingProfilePurposeType::TxProfile;
-    profile.chargingProfileKind = ocpp1_6::ChargingProfileKindType::Recurring;
-    profile.recurrencyKind.emplace(ocpp1_6::RecurrencyKindType::Daily);
+    profile.chargingProfilePurpose = ChargingProfilePurposeType::TxProfile;
+    profile.chargingProfileKind = ChargingProfileKindType::Recurring;
+    profile.recurrencyKind.emplace(RecurrencyKindType::Daily);
     profile.validFrom.emplace(valid_from);
     profile.validTo.emplace(valid_to);
     profile.chargingSchedule = schedule;
@@ -51,7 +52,7 @@ class DatabaseTest : public ::testing::Test {
 protected:
     void SetUp() override {
         this->db_handler = std::make_unique<DatabaseHandler>(CP_ID, boost::filesystem::path("/tmp"),
-                                                             boost::filesystem::path("../aux/init.sql"));
+                                                             boost::filesystem::path("../config/v16/init.sql"));
         this->db_handler->open_db_connection(2);
     }
 
@@ -86,8 +87,8 @@ TEST_F(DatabaseTest, test_list_version) {
 
 TEST_F(DatabaseTest, test_local_authorization_list_entry_1) {
 
-    const auto id_tag = CiString20Type(std::string("DEADBEEF"));
-    const auto unknown_id_tag = CiString20Type(std::string("BEEFBEEF"));
+    const auto id_tag = CiString<20>("DEADBEEF");
+    const auto unknown_id_tag = CiString<20>("BEEFBEEF");
 
     IdTagInfo exp_id_tag_info;
     exp_id_tag_info.status = AuthorizationStatus::Accepted;
@@ -102,9 +103,9 @@ TEST_F(DatabaseTest, test_local_authorization_list_entry_1) {
 
 TEST_F(DatabaseTest, test_local_authorization_list_entry_2) {
 
-    const auto id_tag = CiString20Type(std::string("DEADBEEF"));
-    const auto unknown_id_tag = CiString20Type(std::string("BEEFBEEF"));
-    const auto parent_id_tag = CiString20Type(std::string("PARENT"));
+    const auto id_tag = CiString<20>("DEADBEEF");
+    const auto unknown_id_tag = CiString<20>("BEEFBEEF");
+    const auto parent_id_tag = CiString<20>("PARENT");
 
     IdTagInfo exp_id_tag_info;
     exp_id_tag_info.status = AuthorizationStatus::Accepted;
@@ -122,8 +123,8 @@ TEST_F(DatabaseTest, test_local_authorization_list) {
 
     std::vector<LocalAuthorizationList> local_authorization_list;
 
-    const auto id_tag_1 = CiString20Type(std::string("DEADBEEF"));
-    const auto id_tag_2 = CiString20Type(std::string("BEEFBEEF"));
+    const auto id_tag_1 = CiString<20>("DEADBEEF");
+    const auto id_tag_2 = CiString<20>("BEEFBEEF");
 
     IdTagInfo id_tag_info;
     id_tag_info.status = AuthorizationStatus::Accepted;
@@ -157,8 +158,8 @@ TEST_F(DatabaseTest, test_local_authorization_list) {
 
 TEST_F(DatabaseTest, test_clear_authorization_list) {
 
-    const auto id_tag = CiString20Type(std::string("DEADBEEF"));
-    const auto parent_id_tag = CiString20Type(std::string("PARENT"));
+    const auto id_tag = CiString<20>("DEADBEEF");
+    const auto parent_id_tag = CiString<20>("PARENT");
 
     IdTagInfo exp_id_tag_info;
     exp_id_tag_info.status = AuthorizationStatus::Accepted;
@@ -179,8 +180,8 @@ TEST_F(DatabaseTest, test_clear_authorization_list) {
 
 TEST_F(DatabaseTest, test_authorization_cache_entry) {
 
-    const auto id_tag = CiString20Type(std::string("DEADBEEF"));
-    const auto unknown_id_tag = CiString20Type(std::string("BEEFBEEF"));
+    const auto id_tag = CiString<20>("DEADBEEF");
+    const auto unknown_id_tag = CiString<20>("BEEFBEEF");
 
     IdTagInfo exp_id_tag_info;
     exp_id_tag_info.status = AuthorizationStatus::Accepted;
@@ -195,9 +196,9 @@ TEST_F(DatabaseTest, test_authorization_cache_entry) {
 
 TEST_F(DatabaseTest, test_authorization_cache_entry_2) {
 
-    const auto id_tag = CiString20Type(std::string("DEADBEEF"));
-    const auto unknown_id_tag = CiString20Type(std::string("BEEFBEEF"));
-    const auto parent_id_tag = CiString20Type(std::string("PARENT"));
+    const auto id_tag = CiString<20>("DEADBEEF");
+    const auto unknown_id_tag = CiString<20>("BEEFBEEF");
+    const auto parent_id_tag = CiString<20>("PARENT");
 
     IdTagInfo exp_id_tag_info;
     exp_id_tag_info.status = AuthorizationStatus::Accepted;
@@ -213,8 +214,8 @@ TEST_F(DatabaseTest, test_authorization_cache_entry_2) {
 
 TEST_F(DatabaseTest, test_clear_authorization_cache) {
 
-    const auto id_tag = CiString20Type(std::string("DEADBEEF"));
-    const auto parent_id_tag = CiString20Type(std::string("PARENT"));
+    const auto id_tag = CiString<20>("DEADBEEF");
+    const auto parent_id_tag = CiString<20>("PARENT");
 
     IdTagInfo exp_id_tag_info;
     exp_id_tag_info.status = AuthorizationStatus::Accepted;
@@ -250,16 +251,14 @@ TEST_F(DatabaseTest, test_connector_availability) {
 
 TEST_F(DatabaseTest, test_insert_and_get_transaction) {
 
-    boost::optional<CiString20Type> id_tag;
-    id_tag.emplace(CiString20Type(std::string("DEADBEEF")));
+    boost::optional<CiString<20>> id_tag;
+    id_tag.emplace(CiString<20>("DEADBEEF"));
 
     this->db_handler->insert_transaction("id-42", -1, 1, "DEADBEEF", "2022-08-18T09:42:41", 42, 42);
     this->db_handler->update_transaction("id-42", 42);
-    this->db_handler->update_transaction("id-42", 5000, "2022-08-18T10:42:41", id_tag,
-                                         Reason::EVDisconnected);
-    
+    this->db_handler->update_transaction("id-42", 5000, "2022-08-18T10:42:41", id_tag, Reason::EVDisconnected);
+
     this->db_handler->insert_transaction("id-43", -1, 1, "BEEFDEAD", "2022-08-18T09:42:41", 43, 43);
-    
 
     auto incomplete_transactions = this->db_handler->get_transactions(true);
 
@@ -282,14 +281,13 @@ TEST_F(DatabaseTest, test_insert_and_get_transaction) {
 
 TEST_F(DatabaseTest, test_insert_and_get_transaction_without_id_tag) {
 
-    boost::optional<ocpp1_6::CiString20Type> id_tag;
+    boost::optional<CiString<20>> id_tag;
     this->db_handler->insert_transaction("id-42", -1, 1, "DEADBEEF", "2022-08-18T09:42:41", 42, 42);
     this->db_handler->update_transaction("id-42", 42);
-    this->db_handler->update_transaction("id-42", 5000, "2022-08-18T10:42:41", id_tag,
-                                         Reason::EVDisconnected);
-    
+    this->db_handler->update_transaction("id-42", 5000, "2022-08-18T10:42:41", id_tag, Reason::EVDisconnected);
+
     this->db_handler->insert_transaction("id-43", -1, 1, "BEEFDEAD", "2022-08-18T09:42:41", 43, 43);
-    
+
     auto incomplete_transactions = this->db_handler->get_transactions(true);
 
     ASSERT_EQ(incomplete_transactions.size(), 1);
@@ -324,7 +322,7 @@ TEST_F(DatabaseTest, test_insert_and_get_profiles) {
     ASSERT_EQ(db_profile.validFrom.value(), profile.validFrom.value());
     ASSERT_EQ(db_profile.validTo.value(), profile.validTo.value());
 
-    ASSERT_EQ(db_profile.chargingSchedule.chargingRateUnit, ocpp1_6::ChargingRateUnit::A);
+    ASSERT_EQ(db_profile.chargingSchedule.chargingRateUnit, ChargingRateUnit::A);
     ASSERT_EQ(db_profile.chargingSchedule.duration, profile.chargingSchedule.duration);
     ASSERT_EQ(db_profile.chargingSchedule.startSchedule.value(), profile.chargingSchedule.startSchedule.value());
     ASSERT_EQ(db_profile.chargingSchedule.minChargingRate.value(), profile.chargingSchedule.minChargingRate.value());
@@ -374,4 +372,5 @@ TEST_F(DatabaseTest, test_delete_profile) {
     ASSERT_EQ(profiles.size(), 0);
 }
 
-} // namespace ocpp1_6
+} // namespace v16
+} // namespace ocpp
