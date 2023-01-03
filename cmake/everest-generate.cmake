@@ -125,6 +125,9 @@ endfunction()
 
 function(ev_setup_cpp_module)
     get_filename_component(MODULE_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+
+    message(STATUS "Setting up C++ module ${MODULE_NAME}")
+
     get_target_property(GENERATED_OUTPUT_DIR generate_cpp_files EVEREST_GENERATED_OUTPUT_DIR)
 
     set(GENERATED_MODULE_DIR "${GENERATED_OUTPUT_DIR}/modules")
@@ -184,6 +187,87 @@ function(ev_setup_cpp_module)
 
     set(MODULE_NAME ${MODULE_NAME} PARENT_SCOPE)
 endfunction()
+
+function(ev_setup_js_module)
+    get_filename_component(MODULE_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+
+    message(STATUS "Setting up JavaScript module ${MODULE_NAME}")
+
+    add_custom_target(${MODULE_NAME} ALL)
+
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/package.json")
+        message(STATUS "JavaScript module ${MODULE_NAME} contains a package.json file with dependencies that will be installed")
+
+        add_dependencies(${MODULE_NAME} ${MODULE_NAME}_INSTALL_NODE_MODULES)
+
+        find_program(
+            RSYNC
+            rsync
+            REQUIRED
+        )
+
+        find_program(
+            NPM
+            npm
+            REQUIRED
+        )
+
+        add_custom_command(
+            OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/package.json
+            MAIN_DEPENDENCY package.json
+            COMMENT "Copy package.json of module ${MODULE_NAME} to build dir"
+            COMMAND ${RSYNC} -avq ${CMAKE_CURRENT_SOURCE_DIR}/package.json ${CMAKE_CURRENT_BINARY_DIR}/package.json
+        )
+
+        add_custom_command(
+            OUTPUT .installed
+            MAIN_DEPENDENCY ${CMAKE_CURRENT_BINARY_DIR}/package.json
+            COMMENT "Installing dependencies of module ${MODULE_NAME} from package.json"
+            COMMAND ${NPM} install > npm.log 2>&1 || ${CMAKE_COMMAND} -E cat ${CMAKE_CURRENT_BINARY_DIR}/npm.log
+            COMMAND ${CMAKE_COMMAND} -E touch .installed
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        )
+
+        add_custom_target(
+            ${MODULE_NAME}_INSTALL_NODE_MODULES
+            DEPENDS .installed
+        )
+
+        install(
+            DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/node_modules
+            DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
+        )
+    endif()
+
+    # install the whole js project
+    if(CREATE_SYMLINKS)
+        include("CreateModuleSymlink")
+    else()
+        install(
+            DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
+            DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
+            PATTERN "CMakeLists.txt" EXCLUDE
+            PATTERN "CMakeFiles" EXCLUDE)
+    endif()
+endfunction()
+
+function(ev_setup_py_module)
+    get_filename_component(MODULE_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+
+    message(STATUS "Setting up Python module ${MODULE_NAME}")
+
+    add_custom_target(${MODULE_NAME} ALL)
+
+    # TODO: figure out how to properly install python dependencies
+
+    # install the whole python project
+    install(
+        DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
+        DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
+        PATTERN "CMakeLists.txt" EXCLUDE
+        PATTERN "CMakeFiles" EXCLUDE)
+endfunction()
+
 
 # FIXME (aw): this needs to be done
 #set(FORCE_UPDATE_COMMANDS "")
