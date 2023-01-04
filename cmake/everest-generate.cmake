@@ -127,8 +127,19 @@ function (ev_add_modules)
     )
 endfunction()
 
-function(ev_setup_cpp_module)
+
+#
+# ev_setup_cpp_module, ev_setup_js_module and ev_setup_js_module are macros not functions for a deliberate reason:
+# calling return() in them allows us to stop processing the calling CMakeLists.txt
+#
+
+macro(ev_setup_cpp_module)
     get_filename_component(MODULE_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+
+    if(${EVEREST_EXCLUDE_CPP_MODULES})
+        message(STATUS "Excluding C++ module ${MODULE_NAME} because EVEREST_EXCLUDE_CPP_MODULES=${EVEREST_EXCLUDE_CPP_MODULES}")
+        return()
+    endif()
 
     message(STATUS "Setting up C++ module ${MODULE_NAME}")
 
@@ -190,10 +201,15 @@ function(ev_setup_cpp_module)
     )
 
     set(MODULE_NAME ${MODULE_NAME} PARENT_SCOPE)
-endfunction()
+endmacro()
 
-function(ev_setup_js_module)
+macro(ev_setup_js_module)
     get_filename_component(MODULE_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+
+    if(NOT ${EVEREST_ENABLE_JS_SUPPORT})
+        message(STATUS "Excluding JavaScript module ${MODULE_NAME} because EVEREST_ENABLE_JS_SUPPORT=${EVEREST_ENABLE_JS_SUPPORT}")
+        return()
+    endif()
 
     message(STATUS "Setting up JavaScript module ${MODULE_NAME}")
 
@@ -253,10 +269,15 @@ function(ev_setup_js_module)
             PATTERN "CMakeLists.txt" EXCLUDE
             PATTERN "CMakeFiles" EXCLUDE)
     endif()
-endfunction()
+endmacro()
 
-function(ev_setup_py_module)
+macro(ev_setup_py_module)
     get_filename_component(MODULE_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+
+    if(NOT ${EVEREST_ENABLE_PY_SUPPORT})
+        message(STATUS "Excluding Python module ${MODULE_NAME} because EVEREST_ENABLE_PY_SUPPORT=${EVEREST_ENABLE_PY_SUPPORT}")
+        return()
+    endif()
 
     message(STATUS "Setting up Python module ${MODULE_NAME}")
 
@@ -270,7 +291,7 @@ function(ev_setup_py_module)
         DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
         PATTERN "CMakeLists.txt" EXCLUDE
         PATTERN "CMakeFiles" EXCLUDE)
-endfunction()
+endmacro()
 
 
 # FIXME (aw): this needs to be done
@@ -290,4 +311,6 @@ endfunction()
 
 # make types and interfaces known to ev-cli
 ev_add_project()
+
 set(EVEREST_EXCLUDE_MODULES "" CACHE STRING "A list of modules that will not be built")
+option(EVEREST_EXCLUDE_CPP_MODULES "Exclude all C++ modules from the build" OFF)
