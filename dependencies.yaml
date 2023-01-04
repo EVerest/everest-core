@@ -16,7 +16,13 @@ pugixml:
   git: https://github.com/zeux/pugixml
   git_tag: v1.12.1
 
-# slac module
+# Auth module
+libtimer:
+  git: https://github.com/EVerest/libtimer.git
+  git_tag: v0.1.0
+  options: ["BUILD_EXAMPLES OFF"]
+
+# Slac module
 libslac:
   git: https://github.com/EVerest/libslac.git
   git_tag: v0.1.0
