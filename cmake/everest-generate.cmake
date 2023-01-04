@@ -111,8 +111,12 @@ function (ev_add_modules)
     # NOTE (aw): this logic could be customized in future
     foreach(MODULE ${ARGV})
         if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${ENTRY})
-            list(APPEND MODULES ${MODULE})
-            add_subdirectory(${MODULE})
+            if("${MODULE}" IN_LIST EVEREST_EXCLUDE_MODULES)
+                message(STATUS "Excluding module ${MODULE}")
+            else()
+                list(APPEND MODULES ${MODULE})
+                add_subdirectory(${MODULE})
+            endif()
         endif()
     endforeach()
 
@@ -286,3 +290,4 @@ endfunction()
 
 # make types and interfaces known to ev-cli
 ev_add_project()
+set(EVEREST_EXCLUDE_MODULES "" CACHE STRING "A list of modules that will not be built")
