@@ -22,6 +22,7 @@ ev_add_js_module(JsYetiSimulator)
 ev_add_js_module(JsSlacSimulator)
 
 ev_add_cpp_module(OCPP)
+ev_add_cpp_module(OCPP201)
 ev_add_cpp_module(PersistentStore)
 ev_add_cpp_module(PN532TokenProvider)
 

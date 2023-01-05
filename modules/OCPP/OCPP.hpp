@@ -29,13 +29,11 @@
 #include <date/tz.h>
 #include <everest/timer.hpp>
 #include <mutex>
-#include <ocpp1_6/charge_point.hpp>
-#include <ocpp1_6/schemas.hpp>
-#include <ocpp1_6/types.hpp>
-struct Session {
-    double energy_Wh_import;
-    ocpp1_6::DateTime timestamp;
-};
+#include <ocpp/v16/charge_point.hpp>
+#include <ocpp/common/schemas.hpp>
+#include <ocpp/common/types.hpp>
+#include <ocpp/v16/types.hpp>
+
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -83,7 +81,7 @@ public:
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
-    ocpp1_6::ChargePoint* charge_point;
+    std::unique_ptr<ocpp::v16::ChargePoint> charge_point;
     std::unique_ptr<Everest::SteadyTimer> charging_schedules_timer;
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 

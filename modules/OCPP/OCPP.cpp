@@ -13,27 +13,27 @@ const std::string INIT_SQL = "init.sql";
 
 namespace fs = std::filesystem;
 
-static ocpp1_6::ChargePointErrorCode get_ocpp_error_code(const std::string& evse_error) {
+static ocpp::v16::ChargePointErrorCode get_ocpp_error_code(const std::string& evse_error) {
     if (evse_error == "Car") {
-        return ocpp1_6::ChargePointErrorCode::OtherError;
+        return ocpp::v16::ChargePointErrorCode::OtherError;
     } else if (evse_error == "CarDiodeFault") {
-        return ocpp1_6::ChargePointErrorCode::EVCommunicationError;
+        return ocpp::v16::ChargePointErrorCode::EVCommunicationError;
     } else if (evse_error == "Relais") {
-        return ocpp1_6::ChargePointErrorCode::OtherError;
+        return ocpp::v16::ChargePointErrorCode::OtherError;
     } else if (evse_error == "RCD") {
-        return ocpp1_6::ChargePointErrorCode::GroundFailure;
+        return ocpp::v16::ChargePointErrorCode::GroundFailure;
     } else if (evse_error == "VentilationNotAvailable") {
-        return ocpp1_6::ChargePointErrorCode::OtherError;
+        return ocpp::v16::ChargePointErrorCode::OtherError;
     } else if (evse_error == "OverCurrent") {
-        return ocpp1_6::ChargePointErrorCode::OverCurrentFailure;
+        return ocpp::v16::ChargePointErrorCode::OverCurrentFailure;
     } else if (evse_error == "Internal") {
-        return ocpp1_6::ChargePointErrorCode::OtherError;
+        return ocpp::v16::ChargePointErrorCode::OtherError;
     } else if (evse_error == "SLAC") {
-        return ocpp1_6::ChargePointErrorCode::EVCommunicationError;
+        return ocpp::v16::ChargePointErrorCode::EVCommunicationError;
     } else if (evse_error == "HLC") {
-        return ocpp1_6::ChargePointErrorCode::EVCommunicationError;
+        return ocpp::v16::ChargePointErrorCode::EVCommunicationError;
     } else {
-        return ocpp1_6::ChargePointErrorCode::OtherError;
+        return ocpp::v16::ChargePointErrorCode::OtherError;
     }
 }
 
@@ -110,9 +110,6 @@ void OCPP::init() {
         create_empty_user_config(user_config_path);
     }
 
-    const auto configuration = std::make_shared<ocpp1_6::ChargePointConfiguration>(
-        json_config, this->ocpp_share_path.string(), user_config_path.string());
-
     const auto sql_init_path = this->ocpp_share_path / INIT_SQL;
     if (!fs::exists(this->config.MessageLogPath)) {
         try {
@@ -121,8 +118,9 @@ void OCPP::init() {
             EVLOG_AND_THROW(e);
         }
     }
-    this->charge_point = new ocpp1_6::ChargePoint(configuration, this->config.DatabasePath, sql_init_path.string(),
-                                                  this->config.MessageLogPath);
+    this->charge_point =
+        std::make_unique<ocpp::v16::ChargePoint>(json_config, this->ocpp_share_path.string(), user_config_path.string(),
+                                   this->config.DatabasePath, sql_init_path.string(), this->config.MessageLogPath);
     // TODO(kai): select appropriate EVSE based on connector
     this->charge_point->register_pause_charging_callback([this](int32_t connector) {
         if (connector > 0 && connector <= this->r_evse_manager.size()) {
@@ -138,11 +136,11 @@ void OCPP::init() {
             return false;
         }
     });
-    this->charge_point->register_stop_transaction_callback([this](int32_t connector, ocpp1_6::Reason reason) {
+    this->charge_point->register_stop_transaction_callback([this](int32_t connector, ocpp::v16::Reason reason) {
         if (connector > 0 && connector <= this->r_evse_manager.size()) {
             types::evse_manager::StopTransactionRequest req;
-            req.reason =
-                types::evse_manager::string_to_stop_transaction_reason(ocpp1_6::conversions::reason_to_string(reason));
+            req.reason = types::evse_manager::string_to_stop_transaction_reason(
+                ocpp::v16::conversions::reason_to_string(reason));
             return this->r_evse_manager.at(connector - 1)->call_stop_transaction(req);
         } else {
             return false;
@@ -158,23 +156,23 @@ void OCPP::init() {
         }
     });
 
-    // int32_t reservation_id, CiString20Type auth_token, DateTime expiry_time, std::string parent_id
-    this->charge_point->register_reserve_now_callback(
-        [this](int32_t reservation_id, int32_t connector, ocpp1_6::DateTime expiryDate, ocpp1_6::CiString20Type idTag,
-               boost::optional<ocpp1_6::CiString20Type> parent_id) {
-            types::reservation::Reservation reservation;
-            reservation.id_token = idTag.get();
-            reservation.reservation_id = reservation_id;
-            reservation.expiry_time = expiryDate.to_rfc3339();
-            if (parent_id) {
-                reservation.parent_id_token.emplace(parent_id.value().get());
-            }
-            auto response = this->r_reservation->call_reserve_now(connector, reservation);
-            return ocpp1_6::conversions::string_to_reservation_status(
-                types::reservation::reservation_result_to_string(response));
-        });
+    // int32_t reservation_id, CiString<20> auth_token, DateTime expiry_time, std::string parent_id
+    this->charge_point->register_reserve_now_callback([this](int32_t reservation_id, int32_t connector,
+                                                             ocpp::DateTime expiryDate, ocpp::CiString<20> idTag,
+                                                             boost::optional<ocpp::CiString<20>> parent_id) {
+        types::reservation::Reservation reservation;
+        reservation.id_token = idTag.get();
+        reservation.reservation_id = reservation_id;
+        reservation.expiry_time = expiryDate.to_rfc3339();
+        if (parent_id) {
+            reservation.parent_id_token.emplace(parent_id.value().get());
+        }
+        auto response = this->r_reservation->call_reserve_now(connector, reservation);
+        return ocpp::v16::conversions::string_to_reservation_status(
+            types::reservation::reservation_result_to_string(response));
+    });
 
-    this->charge_point->register_upload_diagnostics_callback([this](const ocpp1_6::GetDiagnosticsRequest& msg) {
+    this->charge_point->register_upload_diagnostics_callback([this](const ocpp::v16::GetDiagnosticsRequest& msg) {
         types::system::UploadLogsRequest upload_logs_request;
         upload_logs_request.location = msg.location;
 
@@ -191,20 +189,20 @@ void OCPP::init() {
             upload_logs_request.retry_interval_s.emplace(msg.retryInterval.value());
         }
         const auto upload_logs_response = this->r_system->call_upload_logs(upload_logs_request);
-        ocpp1_6::GetLogResponse response;
+        ocpp::v16::GetLogResponse response;
         if (upload_logs_response.file_name.has_value()) {
-            response.filename.emplace(ocpp1_6::CiString255Type(upload_logs_response.file_name.value()));
+            response.filename.emplace(ocpp::CiString<255>(upload_logs_response.file_name.value()));
         }
-        response.status = ocpp1_6::conversions::string_to_log_status_enum_type(
+        response.status = ocpp::v16::conversions::string_to_log_status_enum_type(
             types::system::upload_logs_status_to_string(upload_logs_response.upload_logs_status));
         return response;
     });
 
-    this->charge_point->register_upload_logs_callback([this](ocpp1_6::GetLogRequest msg) {
+    this->charge_point->register_upload_logs_callback([this](ocpp::v16::GetLogRequest msg) {
         types::system::UploadLogsRequest upload_logs_request;
         upload_logs_request.location = msg.log.remoteLocation;
         upload_logs_request.request_id = msg.requestId;
-        upload_logs_request.type = ocpp1_6::conversions::log_enum_type_to_string(msg.logType);
+        upload_logs_request.type = ocpp::v16::conversions::log_enum_type_to_string(msg.logType);
 
         if (msg.log.latestTimestamp.has_value()) {
             upload_logs_request.latest_timestamp.emplace(msg.log.latestTimestamp.value().to_rfc3339());
@@ -221,15 +219,15 @@ void OCPP::init() {
 
         const auto upload_logs_response = this->r_system->call_upload_logs(upload_logs_request);
 
-        ocpp1_6::GetLogResponse response;
+        ocpp::v16::GetLogResponse response;
         if (upload_logs_response.file_name.has_value()) {
-            response.filename.emplace(ocpp1_6::CiString255Type(upload_logs_response.file_name.value()));
+            response.filename.emplace(ocpp::CiString<255>(upload_logs_response.file_name.value()));
         }
-        response.status = ocpp1_6::conversions::string_to_log_status_enum_type(
+        response.status = ocpp::v16::conversions::string_to_log_status_enum_type(
             types::system::upload_logs_status_to_string(upload_logs_response.upload_logs_status));
         return response;
     });
-    this->charge_point->register_update_firmware_callback([this](const ocpp1_6::UpdateFirmwareRequest msg) {
+    this->charge_point->register_update_firmware_callback([this](const ocpp::v16::UpdateFirmwareRequest msg) {
         types::system::FirmwareUpdateRequest firmware_update_request;
         firmware_update_request.location = msg.location;
         firmware_update_request.request_id = -1;
@@ -243,7 +241,7 @@ void OCPP::init() {
         this->r_system->call_update_firmware(firmware_update_request);
     });
 
-    this->charge_point->register_signed_update_firmware_callback([this](ocpp1_6::SignedUpdateFirmwareRequest msg) {
+    this->charge_point->register_signed_update_firmware_callback([this](ocpp::v16::SignedUpdateFirmwareRequest msg) {
         types::system::FirmwareUpdateRequest firmware_update_request;
         firmware_update_request.request_id = msg.requestId;
         firmware_update_request.location = msg.firmware.location;
@@ -263,7 +261,7 @@ void OCPP::init() {
 
         const auto system_response = this->r_system->call_update_firmware(firmware_update_request);
 
-        return ocpp1_6::conversions::string_to_update_firmware_status_enum_type(
+        return ocpp::v16::conversions::string_to_update_firmware_status_enum_type(
             types::system::update_firmware_response_to_string(system_response));
     });
 
@@ -328,13 +326,13 @@ void OCPP::init() {
     this->charge_point->register_signal_set_charging_profiles_callback(
         [this]() { this->publish_charging_schedules(); });
 
-    this->charge_point->register_is_reset_allowed_callback([this](ocpp1_6::ResetType type) {
-        const auto reset_type = types::system::string_to_reset_type(ocpp1_6::conversions::reset_type_to_string(type));
+    this->charge_point->register_is_reset_allowed_callback([this](ocpp::v16::ResetType type) {
+        const auto reset_type = types::system::string_to_reset_type(ocpp::v16::conversions::reset_type_to_string(type));
         return this->r_system->call_is_reset_allowed(reset_type);
     });
 
-    this->charge_point->register_reset_callback([this](ocpp1_6::ResetType type) {
-        const auto reset_type = types::system::string_to_reset_type(ocpp1_6::conversions::reset_type_to_string(type));
+    this->charge_point->register_reset_callback([this](ocpp::v16::ResetType type) {
+        const auto reset_type = types::system::string_to_reset_type(ocpp::v16::conversions::reset_type_to_string(type));
         this->r_system->call_reset(reset_type);
     });
 
@@ -367,7 +365,7 @@ void OCPP::init() {
                             << "Received TransactionStarted";
                 const auto transaction_started = session_event.transaction_started.value();
 
-                const auto timestamp = ocpp1_6::DateTime(transaction_started.timestamp);
+                const auto timestamp = ocpp::DateTime(transaction_started.timestamp);
                 const auto energy_Wh_import = transaction_started.energy_Wh_import;
                 const auto session_id = session_event.uuid;
                 const auto id_token = transaction_started.id_tag;
@@ -394,14 +392,14 @@ void OCPP::init() {
                 EVLOG_debug << "Connector#" << connector << ": "
                             << "Received TransactionFinished";
                 const auto transaction_finished = session_event.transaction_finished.value();
-                const auto timestamp = ocpp1_6::DateTime(transaction_finished.timestamp);
+                const auto timestamp = ocpp::DateTime(transaction_finished.timestamp);
                 const auto energy_Wh_import = transaction_finished.energy_Wh_import;
-                const auto reason = ocpp1_6::conversions::string_to_reason(
+                const auto reason = ocpp::v16::conversions::string_to_reason(
                     types::evse_manager::stop_transaction_reason_to_string(transaction_finished.reason.value()));
                 const auto signed_meter_value = transaction_finished.signed_meter_value;
-                boost::optional<ocpp1_6::CiString20Type> id_tag_opt = boost::none;
+                boost::optional<ocpp::CiString<20>> id_tag_opt = boost::none;
                 if (transaction_finished.id_tag) {
-                    id_tag_opt.emplace(ocpp1_6::CiString20Type(transaction_finished.id_tag.value()));
+                    id_tag_opt.emplace(ocpp::CiString<20>(transaction_finished.id_tag.value()));
                 }
                 this->charge_point->on_transaction_stopped(connector, session_event.uuid, reason, timestamp,
                                                            energy_Wh_import, id_tag_opt, signed_meter_value);
@@ -423,7 +421,7 @@ void OCPP::init() {
                 EVLOG_debug << "Connector#" << connector << ": "
                             << "Received Error";
                 const auto evse_error = types::evse_manager::error_to_string(session_event.error.value());
-                ocpp1_6::ChargePointErrorCode ocpp_error_code = get_ocpp_error_code(evse_error);
+                ocpp::v16::ChargePointErrorCode ocpp_error_code = get_ocpp_error_code(evse_error);
                 this->charge_point->on_error(connector, ocpp_error_code);
             } else if (event == "ReservationStart") {
                 this->charge_point->on_reservation_start(connector);
