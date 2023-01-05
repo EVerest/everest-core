@@ -1,0 +1,25 @@
+description: A OCPP charge point / charging station module for OCPP 2.0.1
+config:
+  ChargePointConfigPath:
+    description: Path to the configuration file
+    type: string
+    default: ocpp-config.json
+  MessageLogPath:
+    description: Path to folder where logs of all OCPP messages get written to
+    type: string
+    default: /tmp/everest_ocpp_logs
+provides:
+  main:
+    description: This is a OCPP 2.0.1 charge point
+    interface: empty
+requires:
+  evse_manager:
+    interface: evse_manager
+    min_connections: 1
+    max_connections: 128
+enable_external_mqtt: false
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Piet Gömpel
+    - Kai-Uwe Hermann
