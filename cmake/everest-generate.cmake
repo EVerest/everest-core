@@ -114,8 +114,14 @@ function (ev_add_modules)
             if("${MODULE}" IN_LIST EVEREST_EXCLUDE_MODULES)
                 message(STATUS "Excluding module ${MODULE}")
             else()
-                list(APPEND MODULES ${MODULE})
-                add_subdirectory(${MODULE})
+                message(WARNING "ev_add_modules is deprecated in favor of ev_add_<cpp/js/py>_module()")
+                if("${MODULE}" MATCHES "^Js*")
+                    ev_add_js_module(${MODULE})
+                elseif("${MODULE}" MATCHES "^Py*")
+                    ev_add_py_module(${MODULE})
+                else()
+                    ev_add_cpp_module(${MODULE})
+                endif()
             endif()
         endif()
     endforeach()
@@ -127,171 +133,229 @@ function (ev_add_modules)
     )
 endfunction()
 
+function(ev_setup_cpp_module)
+    # no-op to not break API
+endfunction()
 
-#
-# ev_setup_cpp_module, ev_setup_js_module and ev_setup_js_module are macros not functions for a deliberate reason:
-# calling return() in them allows us to stop processing the calling CMakeLists.txt
-#
+function (ev_add_cpp_module MODULE_NAME)
+    set(EVEREST_MODULE_INSTALL_PREFIX "${CMAKE_INSTALL_LIBEXECDIR}/everest/modules")
 
-macro(ev_setup_cpp_module)
-    get_filename_component(MODULE_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+    set(MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}")
 
-    if(${EVEREST_EXCLUDE_CPP_MODULES})
-        message(STATUS "Excluding C++ module ${MODULE_NAME} because EVEREST_EXCLUDE_CPP_MODULES=${EVEREST_EXCLUDE_CPP_MODULES}")
-        return()
-    endif()
+    if(IS_DIRECTORY ${MODULE_PATH})
+        if(${EVEREST_EXCLUDE_CPP_MODULES})
+            message(STATUS "Excluding C++ module ${MODULE_NAME} because EVEREST_EXCLUDE_CPP_MODULES=${EVEREST_EXCLUDE_CPP_MODULES}")
+            return()
+        elseif("${MODULE_NAME}" IN_LIST EVEREST_EXCLUDE_MODULES)
+            message(STATUS "Excluding module ${MODULE}")
+            return()
+        else()
+            message(STATUS "Setting up C++ module ${MODULE_NAME}")
 
-    message(STATUS "Setting up C++ module ${MODULE_NAME}")
+            get_target_property(GENERATED_OUTPUT_DIR generate_cpp_files EVEREST_GENERATED_OUTPUT_DIR)
 
-    get_target_property(GENERATED_OUTPUT_DIR generate_cpp_files EVEREST_GENERATED_OUTPUT_DIR)
+            set(GENERATED_MODULE_DIR "${GENERATED_OUTPUT_DIR}/modules")
+            set(MODULE_LOADER_DIR ${GENERATED_MODULE_DIR}/${MODULE_NAME})
 
-    set(GENERATED_MODULE_DIR "${GENERATED_OUTPUT_DIR}/modules")
-    set(MODULE_LOADER_DIR ${GENERATED_MODULE_DIR}/${MODULE_NAME})
+            add_custom_command(
+                OUTPUT
+                    ${MODULE_LOADER_DIR}/ld-ev.hpp
+                    ${MODULE_LOADER_DIR}/ld-ev.cpp
+                COMMAND
+                    ${EV_CLI} module generate-loader
+                        --disable-clang-format
+                        --schemas-dir "$<TARGET_PROPERTY:generate_cpp_files,EVEREST_SCHEMA_DIR>"
+                        --output-dir ${GENERATED_MODULE_DIR}
+                        ${MODULE_NAME}
+                DEPENDS
+                    ${MODULE_PATH}/manifest.yaml
+                WORKING_DIRECTORY
+                    ${PROJECT_SOURCE_DIR}
+                COMMENT
+                    "Generating ld-ev for module ${MODULE_NAME}"
+            )
 
-    add_custom_command(
-        OUTPUT
-            ${MODULE_LOADER_DIR}/ld-ev.hpp
-            ${MODULE_LOADER_DIR}/ld-ev.cpp
-        COMMAND
-            ${EV_CLI} module generate-loader
-                --disable-clang-format
-                --schemas-dir "$<TARGET_PROPERTY:generate_cpp_files,EVEREST_SCHEMA_DIR>"
-                --output-dir ${GENERATED_MODULE_DIR}
-                ${MODULE_NAME}
-        DEPENDS
-            manifest.yaml
-        WORKING_DIRECTORY
-            ${PROJECT_SOURCE_DIR}
-        COMMENT
-            "Generating ld-ev for module ${MODULE_NAME}"
-    )
+            add_custom_target(ld-ev_${MODULE_NAME}
+                DEPENDS ${MODULE_LOADER_DIR}/ld-ev.cpp
+            )
 
-    add_custom_target(ld-ev_${MODULE_NAME}
-        DEPENDS ${MODULE_LOADER_DIR}/ld-ev.cpp
-    )
+            add_executable(${MODULE_NAME})
 
-    add_executable(${MODULE_NAME})
+            set_target_properties(${MODULE_NAME}
+                PROPERTIES
+                    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}"
+            )
 
-    target_include_directories(${MODULE_NAME}
-        PRIVATE
-            ${CMAKE_CURRENT_SOURCE_DIR}
-            "$<TARGET_PROPERTY:generate_cpp_files,EVEREST_GENERATED_INCLUDE_DIR>"
-            ${MODULE_LOADER_DIR}
-    )
+            target_include_directories(${MODULE_NAME}
+                PRIVATE
+                    ${MODULE_PATH}
+                    "$<TARGET_PROPERTY:generate_cpp_files,EVEREST_GENERATED_INCLUDE_DIR>"
+                    ${MODULE_LOADER_DIR}
+            )
 
-    target_sources(${MODULE_NAME}
-        PRIVATE
-            ${MODULE_NAME}.cpp
-            "${MODULE_LOADER_DIR}/ld-ev.cpp"
-    )
+            target_sources(${MODULE_NAME}
+                PRIVATE
+                    ${MODULE_PATH}/${MODULE_NAME}.cpp
+                    "${MODULE_LOADER_DIR}/ld-ev.cpp"
+            )
 
-    target_link_libraries(${MODULE_NAME}
-        PRIVATE
-            everest::framework
-    )
+            target_link_libraries(${MODULE_NAME}
+                PRIVATE
+                    everest::framework
+            )
 
-    add_dependencies(${MODULE_NAME} ld-ev_${MODULE_NAME} generate_cpp_files)
+            add_dependencies(${MODULE_NAME} ld-ev_${MODULE_NAME} generate_cpp_files)
 
-    install(TARGETS ${MODULE_NAME}
-        DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
-    )
+            install(TARGETS ${MODULE_NAME}
+                DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
+            )
 
-    install(FILES manifest.yaml
-        DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
-    )
+            install(FILES ${MODULE_PATH}/manifest.yaml
+                DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
+            )
 
-    set(MODULE_NAME ${MODULE_NAME} PARENT_SCOPE)
-endmacro()
-
-macro(ev_setup_js_module)
-    get_filename_component(MODULE_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-
-    if(NOT ${EVEREST_ENABLE_JS_SUPPORT})
-        message(STATUS "Excluding JavaScript module ${MODULE_NAME} because EVEREST_ENABLE_JS_SUPPORT=${EVEREST_ENABLE_JS_SUPPORT}")
-        return()
-    endif()
-
-    message(STATUS "Setting up JavaScript module ${MODULE_NAME}")
-
-    add_custom_target(${MODULE_NAME} ALL)
-
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/package.json")
-        message(STATUS "JavaScript module ${MODULE_NAME} contains a package.json file with dependencies that will be installed")
-
-        add_dependencies(${MODULE_NAME} ${MODULE_NAME}_INSTALL_NODE_MODULES)
-
-        find_program(
-            RSYNC
-            rsync
-            REQUIRED
-        )
-
-        find_program(
-            NPM
-            npm
-            REQUIRED
-        )
-
-        add_custom_command(
-            OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/package.json
-            MAIN_DEPENDENCY package.json
-            COMMENT "Copy package.json of module ${MODULE_NAME} to build dir"
-            COMMAND ${RSYNC} -avq ${CMAKE_CURRENT_SOURCE_DIR}/package.json ${CMAKE_CURRENT_BINARY_DIR}/package.json
-        )
-
-        add_custom_command(
-            OUTPUT .installed
-            MAIN_DEPENDENCY ${CMAKE_CURRENT_BINARY_DIR}/package.json
-            COMMENT "Installing dependencies of module ${MODULE_NAME} from package.json"
-            COMMAND ${NPM} install > npm.log 2>&1 || ${CMAKE_COMMAND} -E cat ${CMAKE_CURRENT_BINARY_DIR}/npm.log
-            COMMAND ${CMAKE_COMMAND} -E touch .installed
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-        )
-
-        add_custom_target(
-            ${MODULE_NAME}_INSTALL_NODE_MODULES
-            DEPENDS .installed
-        )
-
-        install(
-            DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/node_modules
-            DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
-        )
-    endif()
-
-    # install the whole js project
-    if(CREATE_SYMLINKS)
-        include("CreateModuleSymlink")
+            list(APPEND MODULES ${MODULE_NAME})
+            add_subdirectory(${MODULE_PATH})
+        endif()
     else()
-        install(
-            DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
-            DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
-            PATTERN "CMakeLists.txt" EXCLUDE
-            PATTERN "CMakeFiles" EXCLUDE)
-    endif()
-endmacro()
-
-macro(ev_setup_py_module)
-    get_filename_component(MODULE_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-
-    if(NOT ${EVEREST_ENABLE_PY_SUPPORT})
-        message(STATUS "Excluding Python module ${MODULE_NAME} because EVEREST_ENABLE_PY_SUPPORT=${EVEREST_ENABLE_PY_SUPPORT}")
+        message(WARNING "C++ module ${MODULE_NAME} does not exist at ${MODULE_PATH}")
         return()
     endif()
 
-    message(STATUS "Setting up Python module ${MODULE_NAME}")
+    # FIXME (aw): this will override EVEREST_MODULES, might not what we want
+    set_property(
+        GLOBAL
+        PROPERTY EVEREST_MODULES ${EVEREST_MODULES}
+    )
+endfunction()
 
-    add_custom_target(${MODULE_NAME} ALL)
+function (ev_add_js_module MODULE_NAME)
+    set(EVEREST_MODULE_INSTALL_PREFIX "${CMAKE_INSTALL_LIBEXECDIR}/everest/modules")
 
-    # TODO: figure out how to properly install python dependencies
+    set(MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}")
 
-    # install the whole python project
-    install(
-        DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
-        DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
-        PATTERN "CMakeLists.txt" EXCLUDE
-        PATTERN "CMakeFiles" EXCLUDE)
-endmacro()
+    if(IS_DIRECTORY ${MODULE_PATH})
+        if(NOT ${EVEREST_ENABLE_JS_SUPPORT})
+            message(STATUS "Excluding JavaScript module ${MODULE_NAME} because EVEREST_ENABLE_JS_SUPPORT=${EVEREST_ENABLE_JS_SUPPORT}")
+            return()
+        elseif("${MODULE_NAME}" IN_LIST EVEREST_EXCLUDE_MODULES)
+            message(STATUS "Excluding module ${MODULE}")
+            return()
+        else()
+            message(STATUS "Setting up JavaScript module ${MODULE_NAME}")
+
+            add_custom_target(${MODULE_NAME} ALL)
+
+            if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/package.json")
+                message(STATUS "JavaScript module ${MODULE_NAME} contains a package.json file with dependencies that will be installed")
+
+                add_dependencies(${MODULE_NAME} ${MODULE_NAME}_INSTALL_NODE_MODULES)
+
+                find_program(
+                    RSYNC
+                    rsync
+                    REQUIRED
+                )
+
+                find_program(
+                    NPM
+                    npm
+                    REQUIRED
+                )
+
+                add_custom_command(
+                    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/package.json
+                    MAIN_DEPENDENCY package.json
+                    COMMENT "Copy package.json of module ${MODULE_NAME} to build dir"
+                    COMMAND ${RSYNC} -avq ${MODULE_PATH}/package.json ${CMAKE_CURRENT_BINARY_DIR}/package.json
+                )
+
+                add_custom_command(
+                    OUTPUT .installed
+                    MAIN_DEPENDENCY ${CMAKE_CURRENT_BINARY_DIR}/package.json
+                    COMMENT "Installing dependencies of module ${MODULE_NAME} from package.json"
+                    COMMAND ${NPM} install > npm.log 2>&1 || ${CMAKE_COMMAND} -E cat ${CMAKE_CURRENT_BINARY_DIR}/npm.log
+                    COMMAND ${CMAKE_COMMAND} -E touch .installed
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                )
+
+                add_custom_target(
+                    ${MODULE_NAME}_INSTALL_NODE_MODULES
+                    DEPENDS .installed
+                )
+
+                install(
+                    DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/node_modules
+                    DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
+                )
+            endif()
+
+            # install the whole js project
+            if(CREATE_SYMLINKS)
+                include("CreateModuleSymlink")
+            else()
+                install(
+                    DIRECTORY ${MODULE_PATH}/
+                    DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
+                    PATTERN "CMakeLists.txt" EXCLUDE
+                    PATTERN "CMakeFiles" EXCLUDE)
+            endif()
+
+            list(APPEND MODULES ${MODULE_NAME})
+            add_subdirectory(${MODULE_PATH})
+        endif()
+    else()
+        message(WARNING "C++ module ${MODULE_NAME} does not exist at ${MODULE_PATH}")
+        return()
+    endif()
+
+    # FIXME (aw): this will override EVEREST_MODULES, might not what we want
+    set_property(
+        GLOBAL
+        PROPERTY EVEREST_MODULES ${EVEREST_MODULES}
+    )
+endfunction()
+
+function (ev_add_py_module MODULE_NAME)
+    set(EVEREST_MODULE_INSTALL_PREFIX "${CMAKE_INSTALL_LIBEXECDIR}/everest/modules")
+
+    set(MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}")
+
+    if(IS_DIRECTORY ${MODULE_PATH})
+        if(NOT ${EVEREST_ENABLE_PY_SUPPORT})
+            message(STATUS "Excluding Python module ${MODULE_NAME} because EVEREST_ENABLE_PY_SUPPORT=${EVEREST_ENABLE_PY_SUPPORT}")
+            return()
+        elseif("${MODULE_NAME}" IN_LIST EVEREST_EXCLUDE_MODULES)
+            message(STATUS "Excluding module ${MODULE}")
+            return()
+        else()
+            message(STATUS "Setting up Python module ${MODULE_NAME}")
+
+            add_custom_target(${MODULE_NAME} ALL)
+
+            # TODO: figure out how to properly install python dependencies
+
+            # install the whole python project
+            install(
+                DIRECTORY ${MODULE_PATH}/
+                DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
+                PATTERN "CMakeLists.txt" EXCLUDE
+                PATTERN "CMakeFiles" EXCLUDE)
+
+            list(APPEND MODULES ${MODULE_NAME})
+            add_subdirectory(${MODULE_PATH})
+        endif()
+    else()
+        message(WARNING "C++ module ${MODULE_NAME} does not exist at ${MODULE_PATH}")
+        return()
+    endif()
+
+    # FIXME (aw): this will override EVEREST_MODULES, might not what we want
+    set_property(
+        GLOBAL
+        PROPERTY EVEREST_MODULES ${EVEREST_MODULES}
+    )
+endfunction()
 
 
 # FIXME (aw): this needs to be done
