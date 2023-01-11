@@ -114,10 +114,15 @@ if (FRAMEWORK_INSTALL)
         EXPORT framework-targets
         NAMESPACE everest
         ADDITIONAL_CONTENT
-            "set_target_properties(everest::framework PROPERTIES EVEREST_DATADIR \"@PACKAGE_EVEREST_DATADIR@\")"
-            "set(EVEREST_DATADIR \"@PACKAGE_EVEREST_DATADIR@\")"
+            "find_package(nlohmann_json REQUIRED)"
+            "find_package(nlohmann_json_schema_validator REQUIRED)"
+            "find_package(everest-timer REQUIRED)"
+            "find_package(everest-log REQUIRED)"
+            "find_package(fmt REQUIRED)"
+            "find_package(date REQUIRED)"
+            "set(EVEREST_SCHEMA_DIR \"@PACKAGE_EVEREST_SCHEMA_DIR@\")"
         PATH_VARS
-            EVEREST_DATADIR "${CMAKE_INSTALL_DATADIR}/everest"
+            EVEREST_SCHEMA_DIR "${CMAKE_INSTALL_DATADIR}/everest/schemas"
     )
 endif ()
 
