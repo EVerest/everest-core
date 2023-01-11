@@ -745,16 +745,6 @@ def main():
         #             'everest_dir' in args!
         for entry in args.everest_dir:
             everest_dir = Path(entry).resolve()
-            if not (everest_dir / 'interfaces').exists():
-                print('The default (".") xor supplied (via --everest-dir) everest directory\n'
-                      'doesn\'t contain an "interface" directory and therefore does not seem to be valid.\n'
-                      f'dir: {everest_dir}')
-                exit(1)
-            if not (everest_dir / 'types').exists():
-                print('The default (".") xor supplied (via --everest-dir) everest directory\n'
-                      'doesn\'t contain a "types" directory and therefore does not seem to be valid.\n'
-                      f'dir: {everest_dir}')
-                exit(1)
             everest_dirs.append(everest_dir)
 
         helpers.everest_dirs = everest_dirs
