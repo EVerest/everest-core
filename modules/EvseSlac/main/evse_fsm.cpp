@@ -29,7 +29,7 @@ using EventMatchingFailed = EventTypeFactory::Derived<EventID::MatchingFailed>;
 using EventFinishSounding = EventTypeFactory::Derived<EventID::FinishSounding>;
 using EventAttenCharRspReceived = EventTypeFactory::Derived<EventID::AttenCharRspReceived>;
 
-EvseFSM::EvseFSM(SlacIO& slac_io) : slac_io(slac_io) {
+EvseFSM::EvseFSM(SlacIO& slac_io, int _set_key_timeout) : slac_io(slac_io), set_key_timeout(_set_key_timeout) {
     // define transitions
     sd_reset.transitions = [this](const EventBaseType& ev, TransitionType& trans) {
         switch (ev.id) {
@@ -70,8 +70,9 @@ EvseFSM::EvseFSM(SlacIO& slac_io) : slac_io(slac_io) {
 
         this->slac_io.send(msg_out);
 
-        // FIXME (aw): timemout for correct response
-        ctx.set_next_timeout(100);
+        // configurable timemout for correct response, seems to be undefined in HPGP standard
+        // and varies between chips (e.g. CG5317 takes longer to answer then QCA7000)
+        ctx.set_next_timeout(set_key_timeout);
     };
 
     sd_reset.handler = [this](FSMContextType& ctx) {
@@ -195,7 +196,7 @@ EvseFSM::EvseFSM(SlacIO& slac_io) : slac_io(slac_io) {
         // got a time out, retry if possible
         if (sd_do_atten_char.ind_msg_count == slac::defs::C_EV_MATCH_RETRY) {
             EVLOG_warning << fmt::format("No response to CM_ATTEN_CHAR.IND after {} retries",
-                                       slac::defs::C_EV_MATCH_RETRY);
+                                         slac::defs::C_EV_MATCH_RETRY);
             ctx.submit_event(EventMatchingFailed());
         }
 
@@ -256,7 +257,7 @@ EvseFSM::EvseFSM(SlacIO& slac_io) : slac_io(slac_io) {
         ctx.submit_event(EventMatchingFailed());
     };
 
-    sd_matched.transitions = [this](const EventBaseType& ev, TransitionType& trans) { 
+    sd_matched.transitions = [this](const EventBaseType& ev, TransitionType& trans) {
         this->generate_nmk();
         default_transition(ev, trans);
     };
@@ -355,6 +356,7 @@ void EvseFSM::sd_matching_hsm(FSMContextType& ctx, const EventSlacMessage& ev) {
     auto& start_atten = msg_in.get_payload<slac::messages::cm_start_atten_char_ind>();
 
     if (!matching_ctx.conforms(msg_in.get_src_mac(), start_atten.run_id)) {
+        EVLOG_warning << "Ignoring CM_START_ATTEN_CHAR";
         // invalid message, skip it
         return;
     }
@@ -371,6 +373,7 @@ void EvseFSM::sd_sounding_hsm(FSMContextType& ctx, const EventSlacMessage& ev) {
     if (mmtype == (slac::defs::MMTYPE_CM_MNBC_SOUND | slac::defs::MMTYPE_MODE_IND)) {
         auto& mnbc_sound = msg_in.get_payload<slac::messages::cm_mnbc_sound_ind>();
         if (!matching_ctx.conforms(msg_in.get_src_mac(), mnbc_sound.run_id)) {
+            EVLOG_warning << "Ignoring CM_MNBC_SOUND";
             // invalid message, skip it
             return;
         }
@@ -379,6 +382,7 @@ void EvseFSM::sd_sounding_hsm(FSMContextType& ctx, const EventSlacMessage& ev) {
     } else if (mmtype == (slac::defs::MMTYPE_CM_ATTEN_PROFILE | slac::defs::MMTYPE_MODE_IND)) {
         auto& atten_profile = msg_in.get_payload<slac::messages::cm_atten_profile_ind>();
         if (!matching_ctx.conforms(atten_profile.pev_mac, nullptr)) {
+            EVLOG_warning << "Ignoring CM_ATTEN_PROFILE";
             // invalid message, skip it
             return;
         }
@@ -417,6 +421,7 @@ void EvseFSM::sd_wait_for_atten_char_rsp_hsm(FSMContextType& ctx, const EventSla
     if (mmtype == (slac::defs::MMTYPE_CM_ATTEN_CHAR | slac::defs::MMTYPE_MODE_RSP)) {
         auto& atten_char_rsp = msg_in.get_payload<slac::messages::cm_atten_char_rsp>();
         if (!matching_ctx.conforms(msg_in.get_src_mac(), atten_char_rsp.run_id)) {
+            EVLOG_warning << "Ignoring CM_ATTEN_CHAR";
             // invalid message, skip it
             return;
         }
@@ -440,6 +445,7 @@ void EvseFSM::sd_wait_for_slac_match_hsm(TransitionType& trans, const EventSlacM
 
     auto& match_req = msg_in.get_payload<slac::messages::cm_slac_match_req>();
     if (!matching_ctx.conforms(msg_in.get_src_mac(), match_req.run_id)) {
+        EVLOG_warning << "Ignoring CM_SLAC_MATCH";
         // invalid message, skip it
         return;
     }
@@ -495,8 +501,7 @@ void EvseFSM::generate_nmk() {
     std::mt19937 generator(random_device());
     std::uniform_int_distribution<> distribution(0, CHARACTERS.size() - 1);
 
-    for (std::size_t i = 0; i < slac::defs::NMK_LEN; ++i)
-    {
+    for (std::size_t i = 0; i < slac::defs::NMK_LEN; ++i) {
         session_nmk[i] = (uint8_t)CHARACTERS[distribution(generator)];
     }
 }

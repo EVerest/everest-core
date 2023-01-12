@@ -25,6 +25,7 @@ struct Conf {
     std::string nid;
     int number_of_sounds;
     bool ac_mode_five_percent;
+    int set_key_timeout_ms;
 };
 
 class slacImpl : public slacImplBase {
