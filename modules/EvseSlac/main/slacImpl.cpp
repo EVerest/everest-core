@@ -78,7 +78,7 @@ void slacImpl::run() {
             fmt::format("Couldn't open device {} for SLAC communication. Reason: {}", config.device, e.what())));
     }
 
-    EvseFSM fsm(slac_io);
+    EvseFSM fsm(slac_io, config.set_key_timeout_ms);
 
     EVLOG_debug << "Starting the SLAC state machine";
 

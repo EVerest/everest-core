@@ -14,8 +14,7 @@
 #include "slac_io.hpp"
 
 // FIXME (aw): could we separate out the internal events, somehow?
-enum class EventID
-{
+enum class EventID {
     Reset,
     ResetDone,
     EnterBCD,
@@ -38,8 +37,7 @@ using EventLeaveBCD = EventTypeFactory::Derived<EventID::LeaveBCD>;
 using EventSlacMessage = EventTypeFactory::Derived<EventID::SlacMessage, slac::messages::HomeplugMessage&>;
 using EventLinkDetected = EventTypeFactory::Derived<EventID::LinkDetected>;
 
-enum class State
-{
+enum class State {
     Reset,
     Idle,
     WaitForMatchingStart,
@@ -96,7 +94,7 @@ public:
     void set_five_percent_mode(bool value);
     void generate_nmk();
 
-    explicit EvseFSM(SlacIO& slac_io);
+    explicit EvseFSM(SlacIO& slac_io, int _set_key_timeout);
 
 private:
     using SlacMsgType = slac::messages::HomeplugMessage;
@@ -150,6 +148,7 @@ private:
     int init_retry_count = 0;
 
     SlacIO& slac_io;
+    int set_key_timeout;
 };
 
 #endif // EVSE_FSM_HPP
