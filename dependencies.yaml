@@ -53,3 +53,9 @@ date:
 catch2:
   git: https://github.com/catchorg/Catch2.git
   git_tag: v2.13.9
+pybind11:
+  git: https://github.com/pybind/pybind11.git
+  git_tag: v2.9.2
+pybind11_json:
+  git: https://github.com/pybind/pybind11_json.git
+  git_tag: 0.2.12

@@ -15,17 +15,10 @@ find_program(
     REQUIRED
 )
 
-CPMAddPackage(
-    NAME pybind11
-    GIT_REPOSITORY https://github.com/pybind/pybind11.git
-    GIT_TAG v2.9.2
-)
-
-CPMAddPackage(
-    NAME pybind11_json
-    GIT_REPOSITORY https://github.com/pybind/pybind11_json.git
-    GIT_TAG 0.2.12
-)
+if (DISABLE_EDM)
+    find_package(pybind11 REQUIRED)
+    find_package(pybind11_json REQUIRED)
+endif()
 
 pybind11_add_module(everestpy everestpy.cpp)
 
