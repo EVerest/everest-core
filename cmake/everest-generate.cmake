@@ -457,7 +457,5 @@ function(ev_install_project)
     )
 endfunction()
 
-# make types and interfaces known to ev-cli
-
 set(EVEREST_EXCLUDE_MODULES "" CACHE STRING "A list of modules that will not be built")
 option(EVEREST_EXCLUDE_CPP_MODULES "Exclude all C++ modules from the build" OFF)
