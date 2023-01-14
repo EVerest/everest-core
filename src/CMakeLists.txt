@@ -5,7 +5,7 @@ add_executable(manager manager.cpp)
 target_link_libraries(manager
     PRIVATE
         everest::framework
-        $<TARGET_OBJECTS:controller-ipc>
+        controller-ipc
         Boost::program_options
 )
 

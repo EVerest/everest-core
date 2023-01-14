@@ -14,7 +14,6 @@ add_executable(controller
     rpc.cpp
     server.cpp
     ${PROJECT_SOURCE_DIR}/lib/yaml_loader.cpp
-    $<TARGET_OBJECTS:controller-ipc>
 )
 
 target_include_directories(controller PRIVATE
@@ -26,7 +25,7 @@ target_link_libraries(controller
     PRIVATE
         Threads::Threads
 
-        nlohmann_json::nlohmann_json
+        controller-ipc
 
         websockets_shared
         fmt::fmt
