@@ -339,3 +339,77 @@ types:
         description: Contains the EXI stream as base64 string
         type: string
         minLength: 0
+  Response_Exi_Stream_Status:
+    description: The response raw exi stream and the status from the CSMS system
+    type: object
+    additionalProperties: false
+    required:
+      - status
+    properties:
+      status:
+        description: >-
+          Indicates whether the message was processed properly
+          Accepted - The message was processed properly, exiResponse included
+          Failed - Processing of the message was not successful, no exiResponse included
+        type: string
+        enum:
+          - Accepted
+          - Failed
+      exiResponse:
+        description: >-
+          Raw CertificateInstallationRes or CertificateUpdateRes message
+          as exi stream (Base64 encoded)
+        type: string
+        maxLength: 5600
+  Request_Exi_Stream_Schema:
+    description: The request raw exi stream and the schema version for the CSMS system
+    type: object
+    additionalProperties: false
+    required:
+      - exiRequest
+      - iso15118SchemaVersion
+    properties:
+      exiRequest:
+        description: >-
+          Raw CertificateInstallationReq or CertificateUpdateReq message as
+          exi stream (Base64 encoded)
+        type: string
+        maxLength: 5600
+      iso15118SchemaVersion:
+        description: Schema Version used for CertificateReq message between EV and Charger
+        type: string
+        maxLength: 50 
+  CertificateHashDataInfo:
+    description: Contains the certificate information
+    type: object
+    additionalProperties: false
+    required:
+      - hashAlgorithm
+      - issuerNameHash
+      - issuerKeyHash
+      - serialNumber
+      - responderURL
+    properties:
+      hashAlgorithm:
+        description: Used algorithms for the hashes provided
+        type: string
+        enum:
+          - SHA256
+          - SHA384
+          - SHA512
+      issuerNameHash:
+        description: Hashed value of the Issuer Distinguished Name
+        type: string
+        maxLength: 128
+      issuerKeyHash:
+        description: Hashed value of the issuers public key
+        type: string
+        maxLength: 128
+      serialNumber:
+        description: The serial number of the certificate
+        type: string
+        maxLength: 40
+      responderURL:
+        description: This contains the responder URL
+        type: string
+        maxLength: 512

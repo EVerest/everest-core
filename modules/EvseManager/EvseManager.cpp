@@ -355,7 +355,7 @@ void EvseManager::ready() {
             }
         });
 
-        r_hlc[0]->subscribe_Require_Auth_PnC([this]() {
+        r_hlc[0]->subscribe_Require_Auth_PnC([this](types::authorization::ProvidedIdToken _token) {
             // Do we have auth already (i.e. delayed HLC after charging already running)?
             if (charger->Authorized_PnC()) {
                 {
@@ -363,7 +363,8 @@ void EvseManager::ready() {
                     hlc_waiting_for_auth_eim = false;
                     hlc_waiting_for_auth_pnc = false;
                 }
-                r_hlc[0]->call_set_Auth_Okay_PnC(true);
+                r_hlc[0]->call_set_Auth_Okay_PnC(types::authorization::AuthorizationStatus::Accepted,
+                                                types::authorization::CertificateStatus::Accepted);
             } else {
                 std::scoped_lock lock(hlc_mutex);
                 hlc_waiting_for_auth_eim = false;
@@ -778,7 +779,8 @@ void EvseManager::charger_was_authorized() {
 
     std::scoped_lock lock(hlc_mutex);
     if (hlc_waiting_for_auth_pnc && charger->Authorized_PnC()) {
-        r_hlc[0]->call_set_Auth_Okay_PnC(true);
+        r_hlc[0]->call_set_Auth_Okay_PnC(types::authorization::AuthorizationStatus::Accepted,
+                                        types::authorization::CertificateStatus::Accepted);
         hlc_waiting_for_auth_eim = false;
         hlc_waiting_for_auth_pnc = false;
     }

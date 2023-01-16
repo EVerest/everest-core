@@ -121,12 +121,17 @@ cmds:
         type: boolean
   set_Auth_Okay_PnC:
     description: >-
-      Response on Require_Auth_PnC - Set this element if the authorization
-      was either successful or unsuccessful
+      PaymentDetails - With this message the SECC informs the EVCC whether the previously provided
+      payment details were accepted or not
     arguments:
-      auth_okay_pnc:
-        description: "True: Authentication is okay"
-        type: boolean
+      status:
+        description: Authorization status of the ID Token
+        type: string
+        $ref: /authorization#/AuthorizationStatus
+      certificateStatus:
+        description: Certificate status information
+        type: string
+        $ref: /authorization#/CertificateStatus
   set_FAILED_ContactorError:
     description: >-
       Any Time - Set this error when the contactor is opened or closed
@@ -255,13 +260,41 @@ cmds:
       status:
         description: "True: Cable check is okay"
         type: boolean
+  set_Certificate_Service_Supported:
+    description: >-
+      ServiceDiscoveryRes - The charger supports the certificate installation/update
+      service and has a connection to an SA for this purpose
+    arguments:
+      status:
+        description: "True: The service is supported"
+        type: boolean
+  set_Response_Certificate_Install:
+    description: >-
+      CertificateInstallationRes - The new Contract Certificate (including the certificate chain)
+      and the corresponding encrypted private key are sent via the SECC to the vehicle
+    arguments:
+      Existream_Status:
+        description: The response raw exi stream and the status from the CSMS system
+        type: object
+        $ref: /iso15118_charger#/Response_Exi_Stream_Status
+  set_Response_Certificate_Update:
+    description: CertificateUpdateRes - The updated Contract Certificate (including the certificate chain)
+      and the corresponding encrypted private key are sent via the SECC to the vehicle
+    arguments:
+      Existream_Status:
+        description: The response raw exi stream and the status n from the CSMS system
+        type: object
+        $ref: /iso15118_charger#/Response_Exi_Stream_Status
 vars:
   Require_Auth_EIM:
     description: An EIM authorization is requiered
     type: "null"
   Require_Auth_PnC:
-    description: An PnC authorization is requiered
-    type: "null"
+    description: >- 
+      The EVCC provides the payment details for a PnC authorization by sending
+      the signature certificate chain and eMAID.
+    type: object
+    $ref: /authorization#/ProvidedIdToken
   AC_Close_Contactor:
     description: If true, the contactor should be closed
     type: boolean
@@ -392,6 +425,18 @@ vars:
     description: Estimated or calculated time until bulk and full charge is complete
     type: object
     $ref: /iso15118_charger#/DC_EVRemainingTime
+  Install_Request_Certificate:
+    description: >-
+      The vehicle requests the SECC to deliver the certificate that belong 
+      to the currently valid contract of the vehicle.
+    type: object
+    $ref: /iso15118_charger#/Request_Exi_Stream_Schema
+  Update_Request_Certificate:
+    description: >-
+      The vehicle requests the SECC to deliver new certificate that belongs to
+      the currently valid contract of the vehicle.
+    type: object
+    $ref: /iso15118_charger#/Request_Exi_Stream_Schema
   EV_AppProtocol:
     description: >-
       Debug_Lite - This request message provides a list of charging protocols
