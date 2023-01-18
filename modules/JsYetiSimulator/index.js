@@ -25,8 +25,8 @@ const Event_Error_DF = 7;
 const Event_Error_Relais = 8;
 const Event_Error_RCD = 9;
 const Event_Error_VentilationNotAvailable = 10;
-const Event_EnterBCD = 11;
-const Event_LeaveBCD = 12;
+const Event_EFtoBCD = 11;
+const Event_BCDtoEF = 12;
 const Event_PermanentFault = 13;
 
 boot_module(async ({
@@ -144,7 +144,7 @@ function simulation_statemachine(mod) {
       mod.simplified_mode = false;
 
       if (mod.last_state === STATE_B || mod.last_state === STATE_C || mod.last_state === STATE_D) {
-        publish_event(mod, Event_LeaveBCD);
+        publish_event(mod, Event_BCDtoEF);
       }
 
       if (mod.last_state != STATE_A && mod.last_state != STATE_DISABLED
@@ -175,8 +175,8 @@ function simulation_statemachine(mod) {
         mod.simplified_mode = false;
       }
 
-      if (mod.last_state === STATE_A || mod.last_state === STATE_E || mod.last_state === STATE_F) {
-        publish_event(mod, Event_EnterBCD);
+      if (mod.last_state === STATE_E || mod.last_state === STATE_F) {
+        publish_event(mod, Event_EFtoBCD);
       }
       break;
     case STATE_C:
@@ -188,8 +188,8 @@ function simulation_statemachine(mod) {
       if (mod.last_state === STATE_B) {
         publish_event(mod, Event_CarRequestedPower);
       }
-      if (mod.last_state === STATE_A || mod.last_state === STATE_E || mod.last_state === STATE_F) {
-        publish_event(mod, Event_EnterBCD);
+      if (mod.last_state === STATE_E || mod.last_state === STATE_F) {
+        publish_event(mod, Event_EFtoBCD);
       }
 
       if (!mod.pwm_running) { // C1
@@ -225,8 +225,8 @@ function simulation_statemachine(mod) {
       if (mod.last_state === STATE_B) {
         publish_event(mod, Event_CarRequestedPower);
       }
-      if (mod.last_state === STATE_A || mod.last_state === STATE_E || mod.last_state === STATE_F) {
-        publish_event(mod, Event_EnterBCD);
+      if (mod.last_state === STATE_E || mod.last_state === STATE_F) {
+        publish_event(mod, Event_EFtoBCD);
       }
 
       if (!mod.pwm_running) {
@@ -254,21 +254,21 @@ function simulation_statemachine(mod) {
     case STATE_E:
       if (mod.last_state != mod.current_state) publish_event(mod, Event_Error_E);
       if (mod.last_state === STATE_B || mod.last_state === STATE_C || mod.last_state === STATE_D) {
-        publish_event(mod, Event_LeaveBCD);
+        publish_event(mod, Event_BCDtoEF);
       }
       powerOff(mod);
       pwmOff(mod);
       break;
     case STATE_F:
       if (mod.last_state === STATE_B || mod.last_state === STATE_C || mod.last_state === STATE_D) {
-        publish_event(mod, Event_LeaveBCD);
+        publish_event(mod, Event_BCDtoEF);
       }
       powerOff(mod);
       break;
     case STATE_DF:
       if (mod.last_state != mod.current_state) publish_event(mod, Event_Error_DF);
       if (mod.last_state === STATE_B || mod.last_state === STATE_C || mod.last_state === STATE_D) {
-        publish_event(mod, Event_LeaveBCD);
+        publish_event(mod, Event_BCDtoEF);
       }
       powerOff(mod);
       break;
@@ -312,10 +312,10 @@ function event_to_enum(event) {
       return 'ErrorRCD';
     case Event_Error_VentilationNotAvailable:
       return 'VentilationNotAvailable';
-    case Event_EnterBCD:
-      return 'EnterBCD';
-    case Event_LeaveBCD:
-      return 'LeaveBCD';
+    case Event_EFtoBCD:
+      return 'EFtoBCD';
+    case Event_BCDtoEF:
+      return 'BCDtoEF';
     case Event_PermanentFault:
       return 'PermanentFault';
     default:

@@ -32,9 +32,9 @@ types::board_support::Event cast_event_type(const Event& e) {
     case Event_InterfaceEvent_ERROR_OVER_CURRENT:
         return types::board_support::Event::ErrorOverCurrent;
     case Event_InterfaceEvent_ENTER_BCD:
-        return types::board_support::Event::EnterBCD;
+        return types::board_support::Event::EFtoBCD;
     case Event_InterfaceEvent_LEAVE_BCD:
-        return types::board_support::Event::LeaveBCD;
+        return types::board_support::Event::BCDtoEF;
     case Event_InterfaceEvent_PERMANENT_FAULT:
         return types::board_support::Event::PermanentFault;
     case Event_InterfaceEvent_EVSE_REPLUG_STARTED:
