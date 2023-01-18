@@ -50,8 +50,8 @@ types:
       - ErrorRCD
       - ErrorVentilationNotAvailable
       - ErrorOverCurrent
-      - EnterBCD
-      - LeaveBCD
+      - EFtoBCD
+      - BCDtoEF
       - PermanentFault
       - EvseReplugStarted
       - EvseReplugFinished

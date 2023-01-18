@@ -504,10 +504,10 @@ ControlPilotEvent Charger::string_to_control_pilot_event(const types::board_supp
         return ControlPilotEvent::Error_VentilationNotAvailable;
     } else if (event == types::board_support::Event::ErrorOverCurrent) {
         return ControlPilotEvent::Error_OverCurrent;
-    } else if (event == types::board_support::Event::LeaveBCD) {
-        return ControlPilotEvent::LeaveBCD;
-    } else if (event == types::board_support::Event::EnterBCD) {
-        return ControlPilotEvent::EnterBCD;
+    } else if (event == types::board_support::Event::BCDtoEF) {
+        return ControlPilotEvent::BCDtoEF;
+    } else if (event == types::board_support::Event::EFtoBCD) {
+        return ControlPilotEvent::EFtoBCD;
     } else if (event == types::board_support::Event::PermanentFault) {
         return ControlPilotEvent::PermanentFault;
     } else if (event == types::board_support::Event::EvseReplugStarted) {
@@ -529,8 +529,8 @@ void Charger::processEvent(types::board_support::Event event) {
     case ControlPilotEvent::CarUnplugged:
     case ControlPilotEvent::Error_DF:
     case ControlPilotEvent::Error_E:
-    case ControlPilotEvent::LeaveBCD:
-    case ControlPilotEvent::EnterBCD:
+    case ControlPilotEvent::BCDtoEF:
+    case ControlPilotEvent::EFtoBCD:
         session_log.car(false, fmt::format("Event {}", types::board_support::event_to_string(event)));
         break;
     case ControlPilotEvent::Error_OverCurrent:

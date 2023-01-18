@@ -417,6 +417,28 @@ void EvseManager::ready() {
     p_evse->publish_hw_capabilities(hw_capabilities);
 
     r_bsp->subscribe_event([this](const types::board_support::Event event) {
+        // Forward events from BSP to SLAC module before we process the events in the charger
+        if (slac_enabled) {
+            if (event == types::board_support::Event::EFtoBCD) {
+                // his means entering BCD from E|F
+                r_slac[0]->call_enter_bcd();
+            } else if (event == types::board_support::Event::BCDtoEF) {
+                r_slac[0]->call_leave_bcd();
+            } else if (event == types::board_support::Event::CarPluggedIn) {
+                // CC: right now we dont support energy saving mode, so no need to reset slac here.
+                // It is more important to start slac as early as possible to avoid unneccesary retries
+                // e.g. by Tesla cars which send the first SLAC_PARM_REQ directly after plugin.
+                // If we start slac too late, Tesla will do a B->C->DF->B sequence for each retry which
+                // may confuse the PWM state machine in some implementations.
+                // r_slac[0]->call_reset(true);
+                // This is entering BCD from state A
+                r_slac[0]->call_enter_bcd();
+            } else if (event == types::board_support::Event::CarUnplugged) {
+                r_slac[0]->call_leave_bcd();
+                r_slac[0]->call_reset(false);
+            }
+        }
+
         charger->processEvent(event);
 
         // Forward some events to HLC
@@ -466,19 +488,6 @@ void EvseManager::ready() {
             if (event == types::board_support::Event::PowerOff) {
                 contactor_open = true;
                 r_hlc[0]->call_contactor_open(true);
-            }
-        }
-
-        // Forward events from BSP to SLAC module
-        if (slac_enabled) {
-            if (event == types::board_support::Event::EnterBCD) {
-                r_slac[0]->call_enter_bcd();
-            } else if (event == types::board_support::Event::LeaveBCD) {
-                r_slac[0]->call_leave_bcd();
-            } else if (event == types::board_support::Event::CarPluggedIn) {
-                r_slac[0]->call_reset(true);
-            } else if (event == types::board_support::Event::CarUnplugged) {
-                r_slac[0]->call_reset(false);
             }
         }
 
