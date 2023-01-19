@@ -114,7 +114,8 @@ public:
     /// \param component_variables optionally specifies std::vector<ComponentVariables> that should be included in the
     /// result
     /// \param component_criteria optionally specifies std::vector<ComponentCriterionEnum> that should be
-    /// included in the result \return std::vector<ReportData>
+    /// included in the result
+    /// \return std::vector<ReportData>
     std::vector<ReportData>
     get_report_data(const boost::optional<ReportBaseEnum>& report_base = boost::none,
                     const boost::optional<std::vector<ComponentVariable>>& component_variables = boost::none,

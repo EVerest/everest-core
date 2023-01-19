@@ -28,8 +28,7 @@ class WebsocketTLS : public WebsocketBase {
 private:
     tls_client wss_client;
     std::shared_ptr<PkiHandler> pki_handler;
-    std::unique_ptr<Everest::SteadyTimer> client_certificate_timer;
-
+    
     /// \brief Extracts the hostname from the provided \p uri
     /// FIXME(kai): this only works with a very limited subset of hostnames and should be extended to work spec conform
     /// \returns the extracted hostname

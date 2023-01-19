@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Json schema for ISO15118 PnC extension",
+  "type": "object",
+  "required": ["ISO15118PnCEnabled", "ContractValidationOffline"],
+  "properties": {
+    "ISO15118PnCEnabled": {
+      "type": "boolean",
+      "description": "If this variable set to true, then the Charge Point supports ISO 15118 plug and charge messages via the DataTransfer mechanism as described in this application note.",
+      "readOnly": false
+    },
+    "CentralContractValidationAllowed": {
+      "type": "boolean",
+      "description": "If this variable exists and has the value true, then the Charge Point can provide a contract certificate that it cannot validate to the Central System for validation as part of the Authorize.req.",
+      "readOnly": false
+    },
+    "CertificateSignedMaxChainSize": {
+      "type": "integer",
+      "description": "This configuration key can be used to limit the size of the 'certificateChain' field from the CertificateSigned.req PDU",
+      "maximum": 10000,
+      "minimum": 0,
+      "readOnly": true
+    },
+    "CertSigningWaitMinimum": {
+      "type": "integer",
+      "description": "This configuration key defines how long the Charge Point has to wait (in seconds) before generating another CSR, in the case the Central System accepts the SignCertificate.req, but never returns the signed certificate back.",
+      "minimum": 0,
+      "readOnly": false
+    },
+    "CertSigningRepeatTimes": {
+      "type": "integer",
+      "description": "This configuration key can be used to configure the amount of times the Charge Point SHALL double the previous back-off time",
+      "minimum": 0,
+      "readOnly": false
+    },
+    "CertificateStoreMaxLength": {
+      "type": "integer",
+      "description": "Maximum number of Root/CA certificates that can be installed in the Charge Point.",
+      "minimum": 1,
+      "readOnly": true
+    },
+    "ContractValidationOffline": {
+      "type": "boolean",
+      "description": "If this variable is true, then the Charge Point will try to validate a contract certificate when it is offline.",
+      "readOnly": false
+    }
+  }
+}

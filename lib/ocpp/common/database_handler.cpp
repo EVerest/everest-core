@@ -699,4 +699,44 @@ int DatabaseHandler::get_connector_id(const int profile_id) {
     return connector_id;
 }
 
+void DatabaseHandler::insert_ocsp_update() {
+    std::string insert_sql = "INSERT OR REPLACE INTO OCSP_REQUEST (LAST_UPDATE) VALUES "
+                             "(@last_update)";
+    sqlite3_stmt* stmt;
+    if (sqlite3_prepare_v2(this->db, insert_sql.c_str(), insert_sql.size(), &stmt, NULL) != SQLITE_OK) {
+        EVLOG_error << "Could not prepare insert statement";
+        throw std::runtime_error("Database access error");
+    }
+
+    const auto now = DateTime().to_rfc3339();
+    sqlite3_bind_text(stmt, 1, now.c_str(), now.length(), SQLITE_TRANSIENT);
+
+    if (sqlite3_step(stmt) != SQLITE_DONE) {
+        EVLOG_error << "Could not insert into table: " << sqlite3_errmsg(db);
+        throw std::runtime_error("db access error");
+    }
+
+    if (sqlite3_finalize(stmt) != SQLITE_OK) {
+        EVLOG_error << "Error inserting into table";
+        throw std::runtime_error("db access error");
+    }
+}
+
+boost::optional<DateTime> DatabaseHandler::get_last_ocsp_update() {
+    std::string sql = "SELECT LAST_UPDATE FROM OCSP_REQUEST";
+
+    sqlite3_stmt* stmt;
+    if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
+        EVLOG_warning << "Could not prepare select statement" << std::endl;
+        return boost::none;
+    }
+
+    if (sqlite3_step(stmt) != SQLITE_ROW) {
+        return boost::none;
+    }
+
+    const auto now = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)));
+    return DateTime(now);
+}
+
 } // namespace ocpp

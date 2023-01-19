@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
 
     const boost::filesystem::path sql_init_path = boost::filesystem::path(configs_path) / "init.sql";
     charge_point = new ocpp::v16::ChargePoint(json_config, share_path, user_config_path.string(), database_path,
-                                              sql_init_path.string(), "/tmp");
+                                              sql_init_path.string(), "/tmp", "/tmp");
 
     /************************************** START REGISTERING CALLBACKS /**************************************/
 

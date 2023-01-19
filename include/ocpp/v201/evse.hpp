@@ -33,9 +33,10 @@ public:
     /// \return ConnectorStatusEnum
     ConnectorStatusEnum get_state(const int32_t connector_id);
 
-    /// \brief Submits the given \p event to the state machine controller of the connector with the given \p
-    /// connector_id
-    /// \param connector_id id of the connector of the evse \param event
+    /// \brief Submits the given \p event to the state machine controller of the connector with the given
+    /// \p connector_id
+    /// \param connector_id id of the connector of the evse
+    /// \param event
     void submit_event(const int32_t connector_id, ConnectorEvent event);
 
     /// \brief Triggers status notification callback for all connectors of the evse

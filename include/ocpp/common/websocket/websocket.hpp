@@ -22,7 +22,6 @@ private:
     std::function<void(const int security_profile)> connected_callback;
     std::function<void()> disconnected_callback;
     std::function<void(const std::string& message)> message_callback;
-    std::function<void()> sign_certificate_callback;
     std::shared_ptr<MessageLogging> logging;
 
 public:
@@ -54,9 +53,6 @@ public:
 
     /// \brief register a \p callback that is called when the websocket receives a message
     void register_message_callback(const std::function<void(const std::string& message)>& callback);
-
-    /// \brief register a \p callback that is called when the chargepoint should send a certificate signing request
-    void register_sign_certificate_callback(const std::function<void()>& callback);
 
     /// \brief send a \p message over the websocket
     /// \returns true if the message was sent successfully

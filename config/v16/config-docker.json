@@ -35,7 +35,8 @@
         "SupportedFileTransferProtocols": "FTP"
     },
     "Security": {
-        "SecurityProfile": 0
+        "SecurityProfile": 0,
+        "CpoName": "Pionix"
     },
     "LocalAuthListManagement": {
         "LocalAuthListEnabled": true,
@@ -47,5 +48,9 @@
         "ChargingScheduleAllowedChargingRateUnit": "Current,Power",
         "ChargingScheduleMaxPeriods": 42,
         "MaxChargingProfilesInstalled": 42
+    },
+    "PnC": {
+        "ISO15118PnCEnabled": true,
+        "ContractValidationOffline": true
     }
 }

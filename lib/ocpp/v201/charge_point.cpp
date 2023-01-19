@@ -12,8 +12,8 @@ ChargePoint::ChargePoint(const json& config, const std::string& ocpp_main_path, 
     ocpp::ChargingStationBase(),
     registration_status(RegistrationStatusEnum::Rejected),
     websocket_connection_status(WebsocketConnectionStatusEnum::Disconnected) {
-    this->pki_handler = std::make_shared<ocpp::PkiHandler>(ocpp_main_path);
     this->device_model_manager = std::make_shared<DeviceModelManager>(config, ocpp_main_path);
+    this->pki_handler = std::make_shared<ocpp::PkiHandler>(ocpp_main_path, false); //FIXME(piet): Fix second parameter
 
     for (int evse_id = 1; evse_id <= this->device_model_manager->get_number_of_connectors(); evse_id++) {
         this->evses.insert(std::make_pair(
@@ -90,7 +90,11 @@ void ChargePoint::init_websocket() {
                                                   basic_auth_password,
                                                   this->device_model_manager->get_websocket_reconnect_interval(),
                                                   this->device_model_manager->get_supported_ciphers12(),
-                                                  this->device_model_manager->get_supported_ciphers13()};
+                                                  this->device_model_manager->get_supported_ciphers13(),
+                                                  0,
+                                                  "payload",
+                                                  true,
+                                                  false}; //TOD(Piet): fix this hard coded params
 
     this->websocket = std::make_unique<Websocket>(connection_options, this->pki_handler, this->logging);
     this->websocket->register_connected_callback([this](const int security_profile) {

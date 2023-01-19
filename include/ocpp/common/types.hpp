@@ -659,7 +659,13 @@ struct Powermeter {
 enum class CertificateType {
     CentralSystemRootCertificate,
     ManufacturerRootCertificate,
-    ClientCertificate
+    CSMSRootCertificate,
+    MORootCertificate,
+    ClientCertificate,
+    V2GRootCertificate,
+    V2GCertificateChain,
+    CertificateProvisioningServiceRootCertificate,
+    OEMRootCertificate
 };
 
 namespace conversions {
@@ -721,6 +727,12 @@ std::string install_certificate_result_to_string(InstallCertificateResult e);
 InstallCertificateResult string_to_install_certificate_result(const std::string& s);
 } // namespace conversions
 
+/// \brief Writes the string representation of the given InstallCertificateResult \p
+/// install_certificate_result to the given output stream \p os \returns an output stream with the
+/// InstallCertificateResult written to
+std::ostream& operator<<(std::ostream& os, const InstallCertificateResult& install_certificate_result);
+
+
 enum class DeleteCertificateResult {
     Accepted,
     Failed,
@@ -779,10 +791,20 @@ void from_json(const json& j, CertificateHashDataType& k);
 /// \returns an output stream with the CertificateHashDataType written to
 std::ostream& operator<<(std::ostream& os, const CertificateHashDataType& k);
 
-/// \brief Writes the string representation of the given InstallCertificateResult \p
-/// install_certificate_result to the given output stream \p os \returns an output stream with the
-/// InstallCertificateResult written to
-std::ostream& operator<<(std::ostream& os, const InstallCertificateResult& install_certificate_result);
+struct CertificateHashDataChain {
+    CertificateHashDataType certificateHashData;
+    CertificateType certificateType;
+    boost::optional<std::vector<CertificateHashDataType>> childCertificateHashData;
+};
+/// \brief Conversion from a given CertificateHashDataChain \p k to a given json object \p j
+void to_json(json& j, const CertificateHashDataChain& k);
+
+/// \brief Conversion from a given json object \p j to a given CertificateHashDataChain \p k
+void from_json(const json& j, CertificateHashDataChain& k);
+
+// \brief Writes the string representation of the given CertificateHashDataChain \p k to the given output stream \p os
+/// \returns an output stream with the CertificateHashDataChain written to
+std::ostream& operator<<(std::ostream& os, const CertificateHashDataChain& k);
 
 enum class OcppProtocolVersion {
     v16,
@@ -803,6 +825,25 @@ OcppProtocolVersion string_to_ocpp_protocol_version(const std::string& s);
 /// ocpp_protocol_version to the given output stream \p os \returns an output stream with the
 /// OcppProtocolVersion written to
 std::ostream& operator<<(std::ostream& os, const OcppProtocolVersion& ocpp_protocol_version);
+
+enum class CertificateSigningUseEnum {
+    ChargingStationCertificate,
+    V2GCertificate,
+};
+
+namespace conversions {
+/// \brief Converts the given CertificateSigningUseEnum \p e to human readable string
+/// \returns a string representation of the CertificateSigningUseEnum
+std::string certificate_signing_use_enum_to_string(CertificateSigningUseEnum e);
+
+/// \brief Converts the given std::string \p s to CertificateSigningUseEnum
+/// \returns a CertificateSigningUseEnum from a string representation
+CertificateSigningUseEnum string_to_certificate_signing_use_enum(const std::string& s);
+} // namespace conversions
+
+/// \brief Writes the string representation of the given CertificateSigningUseEnum \p certificate_signing_use_enum to
+/// the given output stream \p os \returns an output stream with the CertificateSigningUseEnum written to
+std::ostream& operator<<(std::ostream& os, const CertificateSigningUseEnum& certificate_signing_use_enum);
 
 namespace conversions {
 /// \brief Converts the given bool \p b to a string representation of "true" or "false"

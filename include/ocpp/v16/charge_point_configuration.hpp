@@ -5,7 +5,6 @@
 
 #include <set>
 
-#include <ocpp/common/pki_handler.hpp>
 #include <ocpp/v16/ocpp_types.hpp>
 #include <ocpp/v16/types.hpp>
 
@@ -17,7 +16,6 @@ class ChargePointConfiguration {
 private:
     json config;
     boost::filesystem::path user_config_path;
-    std::shared_ptr<ocpp::PkiHandler> pki_handler;
 
     std::set<SupportedFeatureProfiles> supported_feature_profiles;
     std::map<Measurand, std::vector<Phase>> supported_measurands;
@@ -35,8 +33,7 @@ private:
     bool isConnectorPhaseRotationValid(std::string str);
 
 public:
-    ChargePointConfiguration(const json& config, const std::string& ocpp_main_path, const std::string& user_config_path,
-                             std::shared_ptr<ocpp::PkiHandler> pki_handler);
+    ChargePointConfiguration(const json& config, const std::string& ocpp_main_path, const std::string& user_config_path);
 
     // Internal config options
     std::string getChargePointId();
@@ -59,6 +56,7 @@ public:
 
     std::string getSupportedCiphers12();
     std::string getSupportedCiphers13();
+    bool getUseSslDefaultVerifyPaths();
 
     std::set<MessageType> getSupportedMessageTypesSending();
     std::set<MessageType> getSupportedMessageTypesReceiving();
@@ -299,6 +297,31 @@ public:
     // Local Auth List Management Profile
     int32_t getSendLocalListMaxLength();
     KeyValue getSendLocalListMaxLengthKeyValue();
+
+    // PnC
+    bool getISO15118PnCEnabled();
+    void setISO15118PnCEnabled(const bool iso15118_pnc_enabled);
+    KeyValue getISO15118PnCEnabledKeyValue();
+
+    boost::optional<bool> getCentralContractValidationAllowed();
+    void setCentralContractValidationAllowed(const bool central_contract_validation_allowed);
+    boost::optional<KeyValue> getCentralContractValidationAllowedKeyValue();
+     
+    boost::optional<int32_t> getCertSigningWaitMinimum();
+    void setCertSigningWaitMinimum(const int32_t cert_signing_wait_minimum);
+    boost::optional<KeyValue> getCertSigningWaitMinimumKeyValue();
+
+    boost::optional<int32_t> getCertSigningRepeatTimes();
+    void setCertSigningRepeatTimes(const int32_t cert_signing_repeat_times);
+    boost::optional<KeyValue> getCertSigningRepeatTimesKeyValue();
+    
+    bool getContractValidationOffline();
+    void setContractValidationOffline(const bool contract_validation_offline);
+    KeyValue getContractValidationOfflineKeyValue();
+
+    int32_t getOcspRequestInterval();
+    void setOcspRequestInterval(const int32_t ocsp_request_interval);
+    KeyValue getOcspRequestIntervalKeyValue();
 
     boost::optional<KeyValue> get(CiString<50> key);
 

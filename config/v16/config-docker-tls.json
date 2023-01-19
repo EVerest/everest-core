@@ -47,5 +47,9 @@
         "ChargingScheduleAllowedChargingRateUnit": "Current",
         "ChargingScheduleMaxPeriods": 42,
         "MaxChargingProfilesInstalled": 42
+    },
+    "PnC": {
+        "ISO15118PnCEnabled": true,
+        "ContractValidationOffline": true
     }
 }

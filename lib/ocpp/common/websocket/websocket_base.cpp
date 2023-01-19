@@ -33,10 +33,6 @@ void WebsocketBase::register_message_callback(const std::function<void(const std
     this->message_callback = callback;
 }
 
-void WebsocketBase::register_sign_certificate_callback(const std::function<void()>& callback) {
-    this->sign_certificate_callback = callback;
-}
-
 bool WebsocketBase::initialized() {
     if (this->connected_callback == nullptr) {
         EVLOG_error << "Not properly initialized: please register connected callback.";

@@ -133,6 +133,12 @@ public:
 
     /// \brief Returns the connector_id of the given \p profile_id
     int get_connector_id(const int profile_id);
+
+    /// \brief Updates the ocsp entry in the OCSP_REQUEST table
+    void insert_ocsp_update();
+
+    /// \brief Gets the only entry in the OCSP_REQUEST table
+    boost::optional<DateTime> get_last_ocsp_update();
 };
 
 } // namespace ocpp

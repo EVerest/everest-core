@@ -25,7 +25,7 @@ All documentation and the issue tracking can be found in our main repository her
 | Whitepapers                                                                                                                               | Supported              |
 | ----------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
 | [OCPP 1.6 Security Whitepaper (3rd edition)](https://www.openchargealliance.org/uploads/files/OCPP-1.6-security-whitepaper-edition-3.zip) | :heavy_check_mark: yes |
-| [Using ISO 15118 Plug & Charge with OCPP 1.6](https://www.openchargealliance.org/uploads/files/ocpp_1_6_ISO_15118_v10.pdf)                | :x:                    |
+| [Using ISO 15118 Plug & Charge with OCPP 1.6](https://www.openchargealliance.org/uploads/files/ocpp_1_6_ISO_15118_v10.pdf)                | :heavy_check_mark: yes                    |
 | [Autocharge](https://github.com/openfastchargingalliance/openfastchargingalliance/blob/master/autocharge-final.pdf)                       | :heavy_check_mark: yes |
 
 ### Functional Block support OCPP 2.0.1

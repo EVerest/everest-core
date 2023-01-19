@@ -4,7 +4,8 @@
     "type": "object",
     "required": [
         "Internal",
-        "Core"
+        "Core",
+        "Security"
     ],
     "properties": {
         "Internal": {
@@ -34,6 +35,10 @@
         "Security": {
             "type": "object",
             "$ref": "Security.json"
+        },
+        "PnC": {
+            "type": "object",
+            "$ref": "PnC.json"
         }
     },
     "additionalProperties": false

@@ -16,9 +16,7 @@ namespace ocpp {
 namespace v16 {
 
 ChargePointConfiguration::ChargePointConfiguration(const json& config, const std::string& ocpp_main_path,
-                                                   const std::string& user_config_path,
-                                                   std::shared_ptr<ocpp::PkiHandler> pki_handler) :
-    pki_handler(pki_handler) {
+                                                   const std::string& user_config_path) {
 
     this->user_config_path = boost::filesystem::path(user_config_path);
     if (!boost::filesystem::exists(this->user_config_path)) {
@@ -66,8 +64,10 @@ ChargePointConfiguration::ChargePointConfiguration(const json& config, const std
             }
             // add Security behind the scenes as supported feature profile
             this->supported_feature_profiles.insert(conversions::string_to_supported_feature_profiles("Security"));
-            if (!this->config.contains("Security")) {
-                this->config["Security"] = json({});
+
+            if (this->config.contains("PnC")) {
+                // add PnC behind the scenes as supported feature profile
+                this->supported_feature_profiles.insert(conversions::string_to_supported_feature_profiles("PnC"));
             }
         }
     }
@@ -270,6 +270,10 @@ std::string ChargePointConfiguration::getSupportedCiphers13() {
 
     std::vector<std::string> supported_ciphers = this->config["Internal"]["SupportedCiphers13"];
     return boost::algorithm::join(supported_ciphers, ":");
+}
+
+bool ChargePointConfiguration::getUseSslDefaultVerifyPaths() {
+    return this->config["Internal"]["UseSslDefaultVerifyPaths"];
 }
 
 std::vector<MeasurandWithPhase> ChargePointConfiguration::csv_to_measurand_with_phase_vector(std::string csv) {
@@ -1407,6 +1411,139 @@ KeyValue ChargePointConfiguration::getSendLocalListMaxLengthKeyValue() {
     return kv;
 }
 
+bool ChargePointConfiguration::getISO15118PnCEnabled() {
+    return this->config["PnC"]["ISO15118PnCEnabled"];
+}
+
+void ChargePointConfiguration::setISO15118PnCEnabled(const bool iso15118_pnc_enabled) {
+    this->config["PnC"]["ISO15118PnCEnabled"] = iso15118_pnc_enabled;
+    this->setInUserConfig("PnC", "ISO15118PnCEnabled", iso15118_pnc_enabled);
+}
+
+KeyValue ChargePointConfiguration::getISO15118PnCEnabledKeyValue() {
+    KeyValue kv;
+    kv.key = "ISO15118PnCEnabled";
+    kv.readonly = false;
+    kv.value.emplace(ocpp::conversions::bool_to_string(this->getISO15118PnCEnabled()));
+    return kv;
+}
+
+boost::optional<bool> ChargePointConfiguration::getCentralContractValidationAllowed() {
+    boost::optional<bool> central_contract_validation_allowed = boost::none;
+    if (this->config["PnC"].contains("CentralContractValidationAllowed")) {
+        central_contract_validation_allowed.emplace(this->config["PnC"]["CentralContractValidationAllowed"]);
+    }
+    return central_contract_validation_allowed;
+}
+
+void ChargePointConfiguration::setCentralContractValidationAllowed(const bool central_contract_validation_allowed) {
+    if (this->getCentralContractValidationAllowed() != boost::none) {
+        this->config["PnC"]["CentralContractValidationAllowed"] = central_contract_validation_allowed;
+        this->setInUserConfig("PnC", "CentralContractValidationAllowed", central_contract_validation_allowed);
+    }
+}
+boost::optional<KeyValue> ChargePointConfiguration::getCentralContractValidationAllowedKeyValue() {
+    boost::optional<KeyValue> central_contract_validation_allowed_kv = boost::none;
+    auto central_contract_validation_allowed = this->getCentralContractValidationAllowed();
+    if (central_contract_validation_allowed != boost::none) {
+        KeyValue kv;
+        kv.key = "CentralContractValidationAllowed";
+        kv.readonly = false;
+        kv.value.emplace(ocpp::conversions::bool_to_string(central_contract_validation_allowed.value()));
+        central_contract_validation_allowed_kv.emplace(kv);
+    }
+    return central_contract_validation_allowed_kv;
+}
+
+boost::optional<int32_t> ChargePointConfiguration::getCertSigningWaitMinimum() {
+    boost::optional<int32_t> cert_signing_wait_minimum = boost::none;
+    if (this->config["PnC"].contains("CertSigningWaitMinimum")) {
+        cert_signing_wait_minimum.emplace(this->config["PnC"]["CertSigningWaitMinimum"]);
+    }
+    return cert_signing_wait_minimum;
+}
+
+void ChargePointConfiguration::setCertSigningWaitMinimum(const int32_t cert_signing_wait_minimum) {
+    if (this->getCertSigningWaitMinimum() != boost::none) {
+        this->config["PnC"]["CertSigningWaitMinimum"] = cert_signing_wait_minimum;
+        this->setInUserConfig("PnC", "CertSigningWaitMinimum", cert_signing_wait_minimum);
+    }
+}
+
+boost::optional<KeyValue> ChargePointConfiguration::getCertSigningWaitMinimumKeyValue() {
+    boost::optional<KeyValue> cert_signing_wait_minimum_kv = boost::none;
+    auto cert_signing_wait_minimum = this->getCertSigningWaitMinimum();
+    if (cert_signing_wait_minimum != boost::none) {
+        KeyValue kv;
+        kv.key = "CertSigningWaitMinimum";
+        kv.readonly = false;
+        kv.value.emplace(std::to_string(cert_signing_wait_minimum.value()));
+        cert_signing_wait_minimum_kv.emplace(kv);
+    }
+    return cert_signing_wait_minimum_kv;
+}
+
+boost::optional<int32_t> ChargePointConfiguration::getCertSigningRepeatTimes() {
+    boost::optional<int32_t> get_cert_signing_repeat_times = boost::none;
+    if (this->config["PnC"].contains("CertSigningRepeatTimes")) {
+        get_cert_signing_repeat_times.emplace(this->config["PnC"]["CertSigningRepeatTimes"]);
+    }
+    return get_cert_signing_repeat_times;
+}
+void ChargePointConfiguration::setCertSigningRepeatTimes(const int32_t cert_signing_repeat_times) {
+    if (this->getCertSigningRepeatTimes() != boost::none) {
+        this->config["PnC"]["CertSigningRepeatTimes"] = cert_signing_repeat_times;
+        this->setInUserConfig("PnC", "CertSigningRepeatTimes", cert_signing_repeat_times);
+    }
+}
+
+boost::optional<KeyValue> ChargePointConfiguration::getCertSigningRepeatTimesKeyValue() {
+    boost::optional<KeyValue> cert_signing_repeat_times_kv = boost::none;
+    auto cert_signing_repeat_times = this->getCertSigningRepeatTimes();
+    if (cert_signing_repeat_times != boost::none) {
+        KeyValue kv;
+        kv.key = "CertSigningRepeatTimes";
+        kv.readonly = false;
+        kv.value.emplace(std::to_string(cert_signing_repeat_times.value()));
+        cert_signing_repeat_times_kv.emplace(kv);
+    }
+    return cert_signing_repeat_times_kv;
+}
+
+bool ChargePointConfiguration::getContractValidationOffline() {
+    return this->config["PnC"]["ContractValidationOffline"];
+}
+
+void ChargePointConfiguration::setContractValidationOffline(const bool contract_validation_offline) {
+    this->config["PnC"]["ContractValidationOffline"] = contract_validation_offline;
+    this->setInUserConfig("PnC", "ContractValidationOffline", contract_validation_offline);
+}
+
+KeyValue ChargePointConfiguration::getContractValidationOfflineKeyValue() {
+    KeyValue kv;
+    kv.key = "ContractValidationOffline";
+    kv.readonly = false;
+    kv.value.emplace(ocpp::conversions::bool_to_string(this->getContractValidationOffline()));
+    return kv;
+}
+
+int32_t ChargePointConfiguration::getOcspRequestInterval() {
+    return this->config["Internal"]["OcspRequestInterval"];
+}
+
+void ChargePointConfiguration::setOcspRequestInterval(const int32_t ocsp_request_interval) {
+    this->config["Internal"]["OcspRequestInterval"] = ocsp_request_interval;
+    this->setInUserConfig("Internal", "OcspRequestInterval", ocsp_request_interval);
+}
+
+KeyValue ChargePointConfiguration::getOcspRequestIntervalKeyValue() {
+    KeyValue kv;
+    kv.key = "OcspRequestInterval";
+    kv.readonly = false;
+    kv.value.emplace(std::to_string(this->getOcspRequestInterval()));
+    return kv;
+}
+
 boost::optional<KeyValue> ChargePointConfiguration::get(CiString<50> key) {
     // Core Profile
     if (key == "AllowOfflineTxForUnknownId") {
@@ -1479,6 +1616,9 @@ boost::optional<KeyValue> ChargePointConfiguration::get(CiString<50> key) {
     if (key == "NumberOfConnectors") {
         return this->getNumberOfConnectorsKeyValue();
     }
+    if (key == "OcspRequestInterval") {
+        return this->getOcspRequestIntervalKeyValue();
+    }
     if (key == "ReserveConnectorZeroSupported") {
         return this->getReserveConnectorZeroSupportedKeyValue();
     }
@@ -1523,6 +1663,25 @@ boost::optional<KeyValue> ChargePointConfiguration::get(CiString<50> key) {
     }
     if (key == "WebsocketPingInterval") {
         return this->getWebsocketPingIntervalKeyValue();
+    }
+
+    // PnC
+    if (this->supported_feature_profiles.count(SupportedFeatureProfiles::PnC)) {
+        if (key == "ISO15118PnCEnabled") {
+            return this->getISO15118PnCEnabledKeyValue();
+        }
+        if (key == "CentralContractValidationAllowed") {
+            return this->getCentralContractValidationAllowedKeyValue();
+        }
+        if (key == "CertSigningWaitMinimum") {
+            return this->getCertSigningWaitMinimumKeyValue();
+        }
+        if (key == "CertSigningRepeatTimes") {
+            return this->getCertSigningRepeatTimesKeyValue();
+        }
+        if (key == "ContractValidationOffline") {
+            return this->getContractValidationOfflineKeyValue();
+        }
     }
 
     // Smart Charging
@@ -1655,6 +1814,46 @@ ConfigurationStatus ChargePointConfiguration::set(CiString<50> key, CiString<500
             return ConfigurationStatus::Rejected;
         }
     }
+    if (key == "CentralContractValidationAllowed") {
+        if (this->getCentralContractValidationAllowed() == boost::none) {
+            return ConfigurationStatus::NotSupported;
+        } else {
+            this->setContractValidationOffline(ocpp::conversions::string_to_bool(value.get()));
+        }
+    }
+    if (key == "CertSigningWaitMinimum") {
+        if (this->getCertSigningWaitMinimum() == boost::none) {
+            return ConfigurationStatus::NotSupported;
+        } else {
+            try {
+                auto cert_signing_wait_minimum = std::stoi(value.get());
+                if (cert_signing_wait_minimum < 0) {
+                    return ConfigurationStatus::Rejected;
+                }
+                this->setCertSigningWaitMinimum(cert_signing_wait_minimum);
+            } catch (const std::invalid_argument& e) {
+                return ConfigurationStatus::Rejected;
+            }
+        }
+    }
+    if (key == "CertSigningRepeatTimes") {
+        if (this->getCertSigningRepeatTimes() == boost::none) {
+            return ConfigurationStatus::NotSupported;
+        } else {
+            try {
+                auto cert_signing_repeat_times = std::stoi(value.get());
+                if (cert_signing_repeat_times < 0) {
+                    return ConfigurationStatus::Rejected;
+                }
+                this->setCertSigningRepeatTimes(cert_signing_repeat_times);
+            } catch (const std::invalid_argument& e) {
+                return ConfigurationStatus::Rejected;
+            }
+        }
+    }
+    if (key == "ContractValidationOffline") {
+        this->setContractValidationOffline(ocpp::conversions::string_to_bool(value.get()));
+    }
     if (key == "CpoName") {
         this->setCpoName(value.get());
     }
@@ -1668,6 +1867,9 @@ ConfigurationStatus ChargePointConfiguration::set(CiString<50> key, CiString<500
         } catch (const std::invalid_argument& e) {
             return ConfigurationStatus::Rejected;
         }
+    }
+    if (key == "ISO15118PnCEnabled") {
+        this->setISO15118PnCEnabled(ocpp::conversions::string_to_bool(value.get()));
     }
     if (key == "LightIntensity") {
         if (this->getLightIntensity() == boost::none) {
@@ -1746,6 +1948,17 @@ ConfigurationStatus ChargePointConfiguration::set(CiString<50> key, CiString<500
             return ConfigurationStatus::Rejected;
         }
     }
+    if (key == "OcspRequestInterval") {
+        try {
+            auto ocsp_request_interval = std::stoi(value.get());
+            if (ocsp_request_interval < 86400) {
+                return ConfigurationStatus::Rejected;
+            }
+            this->setOcspRequestInterval(ocsp_request_interval);
+        } catch (const std::invalid_argument& e) {
+            return ConfigurationStatus::Rejected;
+        }
+    }
     if (key == "ResetRetries") {
         try {
             auto reset_retries = std::stoi(value.get());
@@ -1753,34 +1966,6 @@ ConfigurationStatus ChargePointConfiguration::set(CiString<50> key, CiString<500
                 return ConfigurationStatus::Rejected;
             }
             this->setResetRetries(reset_retries);
-        } catch (const std::invalid_argument& e) {
-            return ConfigurationStatus::Rejected;
-        }
-    }
-    if (key == "SecurityProfile") {
-        try {
-            auto security_profile = std::stoi(value.get());
-            auto current_security_profile = this->getSecurityProfile();
-            if (security_profile <= current_security_profile) {
-                EVLOG_warning << "New security profile is <= current security profile. Rejecting request.";
-                return ConfigurationStatus::Rejected;
-            } else if ((security_profile == 1 || security_profile == 2) && this->getAuthorizationKey() == boost::none) {
-                EVLOG_warning << "New security level set to 1 or 2 but no authorization key is set. Rejecting request.";
-                return ConfigurationStatus::Rejected;
-            } else if ((security_profile == 2 || security_profile == 3) &&
-                       !this->pki_handler->isCentralSystemRootCertificateInstalled()) {
-                EVLOG_warning << "New security level set to 2 or 3 but no CentralSystemRootCertificateInstalled";
-                return ConfigurationStatus::Rejected;
-            } else if (security_profile == 3 && !this->pki_handler->isClientCertificateInstalled()) {
-                EVLOG_warning << "New security level set to 3 but no Client Certificate is installed";
-            }
-
-            else if (security_profile > 3) {
-                return ConfigurationStatus::Rejected;
-            } else {
-                // security profile is set during actual connection
-                return ConfigurationStatus::Accepted;
-            }
         } catch (const std::invalid_argument& e) {
             return ConfigurationStatus::Rejected;
         }

@@ -123,7 +123,8 @@ enum SupportedFeatureProfiles {
     Reservation,
     SmartCharging,
     RemoteTrigger,
-    Security
+    Security,
+    PnC
 };
 namespace conversions {
 /// \brief Converts the given SupportedFeatureProfiles \p e to std::string

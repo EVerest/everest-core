@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 
 project(ocpp
-    VERSION 0.5.3
+    VERSION 0.6.0
     DESCRIPTION "A C++ implementation of the Open Charge Point Protocol"
     LANGUAGES CXX
 )
@@ -101,7 +101,7 @@ if(CMAKE_RUN_CLANG_TIDY)
     -export-fixes=clang-tidy-fixes.yaml)
 endif()
 
-if(BUILD_TESTING)
+if(BUILD_TESTING_LIBOCPP)
     add_subdirectory(tests)
 endif()
 

@@ -66,6 +66,17 @@
 #include <ocpp/v16/transaction.hpp>
 #include <ocpp/v16/types.hpp>
 
+// for OCPP1.6 PnC
+#include <ocpp/v201/messages/Authorize.hpp>
+#include <ocpp/v201/messages/CertificateSigned.hpp>
+#include <ocpp/v201/messages/DeleteCertificate.hpp>
+#include <ocpp/v201/messages/Get15118EVCertificate.hpp>
+#include <ocpp/v201/messages/GetCertificateStatus.hpp>
+#include <ocpp/v201/messages/GetInstalledCertificateIds.hpp>
+#include <ocpp/v201/messages/InstallCertificate.hpp>
+#include <ocpp/v201/messages/SignCertificate.hpp>
+#include <ocpp/v201/messages/TriggerMessage.hpp>
+
 namespace ocpp {
 namespace v16 {
 
@@ -90,6 +101,9 @@ private:
     std::unique_ptr<Everest::SteadyTimer> heartbeat_timer;
     std::unique_ptr<Everest::SystemTimer> clock_aligned_meter_values_timer;
     std::vector<std::unique_ptr<Everest::SteadyTimer>> status_notification_timers;
+    std::unique_ptr<Everest::SteadyTimer> ocsp_request_timer;
+    std::unique_ptr<Everest::SteadyTimer> client_certificate_timer;
+    std::unique_ptr<Everest::SteadyTimer> v2g_certificate_timer;
     std::chrono::time_point<date::utc_clock> clock_aligned_meter_values_time_point;
     std::mutex meter_values_mutex;
     std::mutex power_meters_mutex;
@@ -105,7 +119,9 @@ private:
     std::map<MessageId, std::thread> stop_transaction_thread;
     std::mutex remote_stop_transaction_mutex; // FIXME: this should be done differently
 
-    std::map<std::string, std::map<std::string, std::function<void(const std::string data)>>> data_transfer_callbacks;
+    std::map<std::string, std::map<std::string, std::function<DataTransferResponse(const boost::optional<std::string>& msg)>>>
+        data_transfer_callbacks;
+    std::map<std::string, std::function<void(Call<DataTransferRequest> call)>> data_transfer_pnc_callbacks;
     std::mutex data_transfer_callbacks_mutex;
 
     std::mutex stop_transaction_mutex;
@@ -149,6 +165,11 @@ private:
     std::function<GetLogResponse(GetLogRequest msg)> upload_logs_callback;
     std::function<void(int32_t connection_timeout)> set_connection_timeout_callback;
 
+    // iso15118 callback
+    std::function<void(const int32_t connector, const ocpp::v201::Get15118EVCertificateResponse& certificate_response,
+                       const ocpp::v201::CertificateActionEnum& certificate_action)>
+        get_15118_ev_certificate_response_callback;
+
     /// \brief This function is called after a successful connection to the Websocket
     void connected_callback();
     void init_websocket(int32_t security_profile);
@@ -165,8 +186,9 @@ private:
     void update_heartbeat_interval();
     void update_meter_values_sample_interval();
     void update_clock_aligned_meter_values_interval();
-    boost::optional<MeterValue> get_latest_meter_value(int32_t connector, std::vector<MeasurandWithPhase> values_of_interest,
-                                      ReadingContext context);
+    boost::optional<MeterValue> get_latest_meter_value(int32_t connector,
+                                                       std::vector<MeasurandWithPhase> values_of_interest,
+                                                       ReadingContext context);
     MeterValue get_signed_meter_value(const std::string& signed_value, const ReadingContext& context,
                                       const ocpp::DateTime& datetime);
     void send_meter_value(int32_t connector, MeterValue meter_value);
@@ -194,8 +216,12 @@ private:
     void load_charging_profiles();
 
     // security
-    /// \brief Creates a new public/private key pair and sends a certificate signing request to the central system
-    void sign_certificate();
+    /// \brief Creates a new public/private key pair and sends a certificate signing request to the central system for
+    /// the given \p certificate_signing_use
+    void sign_certificate(const ocpp::CertificateSigningUseEnum& certificate_signing_use);
+
+    /// \brief Checks if OCSP cache needs to be updated and executes update if necessary by using DataTransfer(GetCertificateStatus.req)
+    void update_ocsp_cache();
 
     // core profile
     void handleBootNotificationResponse(
@@ -216,6 +242,17 @@ private:
     void handleSetChargingProfileRequest(Call<SetChargingProfileRequest> call);
     void handleGetCompositeScheduleRequest(Call<GetCompositeScheduleRequest> call);
     void handleClearChargingProfileRequest(Call<ClearChargingProfileRequest> call);
+
+    // plug&charge for 1.6 whitepaper
+    bool is_pnc_enabled();
+    void data_transfer_pnc_sign_certificate();
+    void data_transfer_pnc_get_certificate_status(const ocpp::v201::OCSPRequestData& ocsp_request_data);
+
+    void handle_data_transfer_pnc_trigger_message(Call<DataTransferRequest> call);
+    void handle_data_transfer_pnc_certificate_signed(Call<DataTransferRequest> call);
+    void handle_data_transfer_pnc_get_installed_certificates(Call<DataTransferRequest> call);
+    void handle_data_transfer_delete_certificate(Call<DataTransferRequest> call);
+    void handle_data_transfer_install_certificate(Call<DataTransferRequest> call);
 
     /// \brief ReserveNow.req(connectorId, expiryDate, idTag, reservationId, [parentIdTag]): tries to perform the
     /// reservation and sends a reservation response. The reservation response: ReserveNow::Status
@@ -251,7 +288,7 @@ public:
     /// \brief Creates a ChargePoint object with the provided \p configuration
     explicit ChargePoint(const json& config, const std::string& share_path, const std::string& user_config_path,
                          const std::string& database_path, const std::string& sql_init_path,
-                         const std::string& message_log_path);
+                         const std::string& message_log_path, const std::string& certs_path);
 
     /// \brief Starts the ChargePoint, initializes and connects to the Websocket endpoint
     bool start();
@@ -280,6 +317,18 @@ public:
     /// \returns the IdTagInfo
     IdTagInfo authorize_id_token(CiString<20> id_token);
 
+    // for plug&charge 1.6 whitepaper
+    /// \brief Uses data_transfer mechanism to authorize given \p emaid and \p certificate locally or by requesting
+    /// authorzation at CSMS
+    ocpp::v201::AuthorizeResponse data_transfer_pnc_authorize(
+        const std::string& emaid, const boost::optional<std::string>& certificate,
+        const boost::optional<std::vector<ocpp::v201::OCSPRequestData>>& iso15118_certificate_hash_data);
+
+    /// \brief  Uses data transfer mechanism to get 15118 ev certificate from CSMS
+    void data_transfer_pnc_get_15118_ev_certificate(const int32_t connector_id, const std::string& exi_request,
+                                                    const std::string& iso15118_schema_version,
+                                                    const ocpp::v201::CertificateActionEnum& certificate_action);
+
     /// \brief Allows the exchange of arbitrary \p data identified by a \p vendorId and \p messageId with a central
     /// system \returns the DataTransferResponse
     DataTransferResponse data_transfer(const CiString<255>& vendorId, const CiString<50>& messageId,
@@ -299,7 +348,7 @@ public:
     /// connector with the given \p reason . The logs of the session will be written into \p session_logging_path if
     /// present
     void on_session_started(int32_t connector, const std::string& session_id, const std::string& reason,
-                            const boost::optional<std::string> &session_logging_path);
+                            const boost::optional<std::string>& session_logging_path);
 
     /// \brief Notifies chargepoint that a session has been stopped at the given \p
     /// connector
@@ -349,7 +398,7 @@ public:
     /// registers a \p callback function that can be used to receive a arbitrary data transfer for the given \p
     /// vendorId and \p messageId
     void register_data_transfer_callback(const CiString<255>& vendorId, const CiString<50>& messageId,
-                                         const std::function<void(const std::string data)>& callback);
+                                         const std::function<DataTransferResponse(const boost::optional<std::string>& msg)>& callback);
 
     /// \brief registers a \p callback function that can be used to enable the evse
     void register_enable_evse_callback(const std::function<bool(int32_t connector)>& callback);
@@ -420,7 +469,15 @@ public:
     /// SetChargingProfile.req
     void register_signal_set_charging_profiles_callback(const std::function<void()>& callback);
 
+    /// \brief registers a \p callback function that can be used when the connection state to CSMS changes
     void register_connection_state_changed_callback(const std::function<void(bool is_connected)>& callback);
+
+    /// \brief registers a \p callback function that can be used to publish the response to a Get15118Certificate.req
+    /// wrapped in a DataTransfer.req
+    void register_get_15118_ev_certificate_response_callback(
+        const std::function<void(const int32_t connector,
+                                 const ocpp::v201::Get15118EVCertificateResponse& certificate_response,
+                                 const ocpp::v201::CertificateActionEnum& certificate_action)>& callback);
 };
 
 } // namespace v16

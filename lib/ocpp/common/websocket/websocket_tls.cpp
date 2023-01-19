@@ -13,7 +13,6 @@ WebsocketTLS::WebsocketTLS(const WebsocketConnectionOptions& connection_options,
     this->reconnect_interval_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                                       std::chrono::seconds(connection_options.reconnect_interval_s))
                                       .count();
-    this->client_certificate_timer = std::make_unique<Everest::SteadyTimer>();
 }
 
 bool WebsocketTLS::connect(int32_t security_profile, bool try_once) {
@@ -151,32 +150,63 @@ tls_context WebsocketTLS::on_tls_init(std::string hostname, websocketpp::connect
             SSL_CTX_set_cipher_list(context->native_handle(), this->connection_options.supported_ciphers_12.c_str());
         if (rc != 1) {
             EVLOG_debug << "SSL_CTX_set_cipher_list return value: " << rc;
-            throw std::runtime_error("Could not set TLSv1.2 cipher list");
+            EVLOG_AND_THROW(std::runtime_error("Could not set TLSv1.2 cipher list"));
         }
 
         rc = SSL_CTX_set_ciphersuites(context->native_handle(), this->connection_options.supported_ciphers_13.c_str());
         if (rc != 1) {
             EVLOG_debug << "SSL_CTX_set_cipher_list return value: " << rc;
-            std::shared_ptr<X509Certificate> cert = this->pki_handler->getClientCertificate();
-            if (cert == nullptr) {
-                throw std::runtime_error(
-                    "Connecting with security profile 3 but no client side certificate is present or valid");
+        }
+
+        if (security_profile == 3) {
+            const auto csms_leaf =
+                this->pki_handler->getLeafCertificate(CertificateSigningUseEnum::ChargingStationCertificate);
+            if (csms_leaf == nullptr) {
+                EVLOG_AND_THROW(std::runtime_error(
+                    "Connecting with security profile 3 but no client side certificate is present or valid"));
             }
-            SSL_CTX_use_certificate(context->native_handle(), cert->x509);
+            if (SSL_CTX_use_certificate_file(context->native_handle(), csms_leaf->path.string().c_str(),
+                                             SSL_FILETYPE_PEM) != 1) {
+                EVLOG_AND_THROW(std::runtime_error("Could not use client certificate file within SSL context"));
+            }
+            if (SSL_CTX_use_PrivateKey_file(
+                    context->native_handle(),
+                    this->pki_handler->getLeafPrivateKeyPath(CertificateSigningUseEnum::ChargingStationCertificate)
+                        .string()
+                        .c_str(),
+                    SSL_FILETYPE_PEM) != 1) {
+                EVLOG_AND_THROW(std::runtime_error("Could not set private key file within SSL context"));
+            }
         }
 
         context->set_verify_mode(boost::asio::ssl::verify_peer);
-        rc = SSL_CTX_load_verify_locations(context->native_handle(),
-                                           this->pki_handler->getFile(CS_ROOT_CA_FILE).c_str(), NULL);
-        rc = SSL_CTX_set_default_verify_paths(context->native_handle());
+
+        if (this->connection_options.additional_root_certificate_check.has_value() and
+            this->connection_options.additional_root_certificate_check.value()) {
+            rc = SSL_CTX_load_verify_locations(context->native_handle(),
+                                               (this->pki_handler->getCaCsmsPath() / CSMS_ROOT_CA).c_str(), NULL);
+        } else {
+            rc = SSL_CTX_load_verify_locations(context->native_handle(), NULL,
+                                               this->pki_handler->getCaCsmsPath().string().c_str());
+        }
+
         if (rc != 1) {
             EVLOG_error << "Could not load CA verify locations, error: " << ERR_error_string(ERR_get_error(), NULL);
-            throw std::runtime_error("Could not load CA verify locations");
+            EVLOG_AND_THROW(std::runtime_error("Could not load CA verify locations"));
+        }
+
+        if (this->connection_options.use_ssl_default_verify_paths) {
+            rc = SSL_CTX_set_default_verify_paths(context->native_handle());
+            if (rc != 1) {
+                EVLOG_error << "Could not load default CA verify path, error: "
+                            << ERR_error_string(ERR_get_error(), NULL);
+                EVLOG_AND_THROW(std::runtime_error("Could not load CA verify locations"));
+            }
         }
 
     } catch (std::exception& e) {
         EVLOG_error << "Error on TLS init: " << e.what();
-        throw std::runtime_error("Could not properly initialize TLS connection.");
+        EVLOG_AND_THROW(std::runtime_error("Could not properly initialize TLS connection."));
     }
     return context;
 }
@@ -195,12 +225,12 @@ void WebsocketTLS::connect_tls(int32_t security_profile, bool try_once) {
         if (authorization_header != boost::none) {
             con->append_header("Authorization", authorization_header.get());
         } else {
-            throw std::runtime_error("No authorization key provided when connecting with security profile 2 or 3.");
+            EVLOG_AND_THROW(std::runtime_error("No authorization key provided when connecting with security profile 2 or 3."));
         }
     } else if (security_profile == 3) {
         EVLOG_debug << "Connecting with security profile: 3";
     } else {
-        throw std::runtime_error("Can not connect with TLS websocket with security profile not being 2 or 3.");
+        EVLOG_AND_THROW(std::runtime_error("Can not connect with TLS websocket with security profile not being 2 or 3."));
     }
 
     this->handle = con->get_handle();
@@ -222,19 +252,6 @@ void WebsocketTLS::on_open_tls(tls_client* c, websocketpp::connection_hdl hdl, i
     EVLOG_info << "Connected to TLS websocket successfully";
     this->m_is_connected = true;
     this->connection_options.security_profile = security_profile;
-    if (security_profile == 3) {
-        this->client_certificate_timer->interval(
-            [this]() {
-                EVLOG_debug << "Checking expiry date of client certificate";
-                int daysLeft = this->pki_handler->getDaysUntilClientCertificateExpires();
-                if (daysLeft < 30) {
-                    EVLOG_info << "Certificate is invalid in " << daysLeft
-                               << " days. Requesting new certificate with certificate signing request";
-                    this->sign_certificate_callback();
-                }
-            },
-            std::chrono::hours(24));
-    }
     this->set_websocket_ping_interval(this->connection_options.ping_interval_s);
     this->connected_callback(this->connection_options.security_profile);
 }
@@ -278,12 +295,10 @@ void WebsocketTLS::on_fail_tls(tls_client* c, websocketpp::connection_hdl hdl, b
 
     // TODO(piet): Trigger SecurityEvent in case InvalidCentralSystemCertificate
 
-    // move fallback ca to /certs if it exists
-    if (boost::filesystem::exists(CS_ROOT_CA_FILE_BACKUP_FILE)) {
-        EVLOG_debug << "Connection with new CA was not successful - Including fallback CA";
-        boost::filesystem::path new_path =
-            CS_ROOT_CA_FILE_BACKUP_FILE.parent_path() / CS_ROOT_CA_FILE_BACKUP_FILE.filename();
-        std::rename(CS_ROOT_CA_FILE_BACKUP_FILE.c_str(), new_path.c_str());
+    if (boost::filesystem::exists(this->pki_handler->getCaCsmsPath() / CSMS_ROOT_CA_BACKUP)) {
+        // if a fallback ca exists, we move back to it and delete the new ca certificate
+        EVLOG_warning << "Connection with new CA was not successful - Falling back to old CA";
+        this->pki_handler->useCsmsFallbackRoot();
     }
 
     if (!try_once) {

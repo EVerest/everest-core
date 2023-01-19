@@ -144,11 +144,19 @@ namespace conversions {
 std::string certificate_type_to_string(CertificateType e) {
     switch (e) {
     case CertificateType::CentralSystemRootCertificate:
-        return "CentralSystemRootCertificate";
+        return "CSMSRootCertificate";
     case CertificateType::ClientCertificate:
         return "ClientCertificate";
     case CertificateType::ManufacturerRootCertificate:
         return "ManufacturerRootCertificate";
+    case CertificateType::MORootCertificate:
+        return "MORootCertificate";
+    case CertificateType::V2GCertificateChain:
+        return "V2GCertificateChain";
+    case CertificateType::V2GRootCertificate:
+        return "V2GRootCertificate";
+    case CertificateType::CSMSRootCertificate:
+        return "CSMSRootCertificate";
     }
 
     throw std::out_of_range("No known string conversion for provided enum of type UpdateFirmwareStatusEnumType");
@@ -163,6 +171,18 @@ CertificateType string_to_certificate_type(const std::string& s) {
     }
     if (s == "ManufacturerRootCertificate") {
         return CertificateType::ManufacturerRootCertificate;
+    }
+    if (s == "MORootCertificate") {
+        return CertificateType::MORootCertificate;
+    }
+    if (s == "V2GCertificateChain") {
+        return CertificateType::V2GCertificateChain;
+    }
+    if (s == "V2GRootCertificate") {
+        return CertificateType::V2GRootCertificate;
+    }
+    if (s == "CSMSRootCertificate") {
+        return CertificateType::CSMSRootCertificate;
     }
     throw std::out_of_range("Provided string " + s + " could not be converted to enum of type CertificateType");
 }
@@ -340,6 +360,46 @@ std::ostream& operator<<(std::ostream& os, const CertificateHashDataType& k) {
     return os;
 }
 
+/// \brief Conversion from a given CertificateHashDataChain \p k to a given json object \p j
+void to_json(json& j, const CertificateHashDataChain& k) {
+    // the required parts of the message
+    j = json{
+        {"certificateHashData", k.certificateHashData},
+        {"certificateType", conversions::certificate_type_to_string(k.certificateType)},
+    };
+    // the optional parts of the message
+    if (k.childCertificateHashData) {
+        j["childCertificateHashData"] = json::array();
+        for (auto val : k.childCertificateHashData.value()) {
+            j["childCertificateHashData"].push_back(val);
+        }
+    }
+}
+
+/// \brief Conversion from a given json object \p j to a given CertificateHashDataChain \p k
+void from_json(const json& j, CertificateHashDataChain& k) {
+    // the required parts of the message
+    k.certificateHashData = j.at("certificateHashData");
+    k.certificateType = conversions::string_to_certificate_type(j.at("certificateType"));
+
+    // the optional parts of the message
+    if (j.contains("childCertificateHashData")) {
+        json arr = j.at("childCertificateHashData");
+        std::vector<CertificateHashDataType> vec;
+        for (auto val : arr) {
+            vec.push_back(val);
+        }
+        k.childCertificateHashData.emplace(vec);
+    }
+}
+
+// \brief Writes the string representation of the given CertificateHashDataChain \p k to the given output stream \p os
+/// \returns an output stream with the CertificateHashDataChain written to
+std::ostream& operator<<(std::ostream& os, const CertificateHashDataChain& k) {
+    os << json(k).dump(4);
+    return os;
+}
+
 // from: DeleteCertificateRequest
 namespace conversions {
 std::string hash_algorithm_enum_type_to_string(HashAlgorithmEnumType e) {
@@ -402,6 +462,37 @@ std::ostream& operator<<(std::ostream& os, const OcppProtocolVersion& ocpp_proto
     os << conversions::ocpp_protocol_version_to_string(ocpp_protocol_version);
     return os;
 }
+
+namespace conversions {
+std::string certificate_signing_use_enum_to_string(CertificateSigningUseEnum e) {
+    switch (e) {
+    case CertificateSigningUseEnum::ChargingStationCertificate:
+        return "ChargingStationCertificate";
+    case CertificateSigningUseEnum::V2GCertificate:
+        return "V2GCertificate";
+    }
+
+    throw std::out_of_range("No known string conversion for provided enum of type CertificateSigningUseEnum");
+}
+
+CertificateSigningUseEnum string_to_certificate_signing_use_enum(const std::string& s) {
+    if (s == "ChargingStationCertificate") {
+        return CertificateSigningUseEnum::ChargingStationCertificate;
+    }
+    if (s == "V2GCertificate") {
+        return CertificateSigningUseEnum::V2GCertificate;
+    }
+
+    throw std::out_of_range("Provided string " + s +
+                            " could not be converted to enum of type CertificateSigningUseEnum");
+}
+} // namespace conversions
+
+std::ostream& operator<<(std::ostream& os, const CertificateSigningUseEnum& certificate_signing_use_enum) {
+    os << conversions::certificate_signing_use_enum_to_string(certificate_signing_use_enum);
+    return os;
+}
+
 
 namespace conversions {
 

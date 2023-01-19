@@ -6,14 +6,18 @@
 #include <ocpp/v16/charge_point.hpp>
 #include <ocpp/v16/charge_point_configuration.hpp>
 
-#include <openssl/rsa.h>
-
 namespace ocpp {
 namespace v16 {
 
+const auto ISO15118_PNC_VENDOR_ID = "org.openchargealliance.iso15118pnc";
+const auto CLIENT_CERTIFICATE_TIMER_INTERVAL = std::chrono::hours(12);
+const auto OCSP_REQUEST_TIMER_INTERVAL = std::chrono::hours(12);
+const auto V2G_CERTIFICATE_TIMER_INTERVAL = std::chrono::hours(12);
+const auto INITIAL_CERTIFICATE_REQUESTS_DELAY = std::chrono::seconds(60);
+
 ChargePoint::ChargePoint(const json& config, const std::string& share_path, const std::string& user_config_path,
                          const std::string& database_path, const std::string& sql_init_path,
-                         const std::string& message_log_path) :
+                         const std::string& message_log_path, const std::string& certs_path) :
     ocpp::ChargingStationBase(),
     initialized(false),
     connection_state(ChargePointConnectionState::Disconnected),
@@ -23,9 +27,10 @@ ChargePoint::ChargePoint(const json& config, const std::string& share_path, cons
     log_status(UploadLogStatusEnumType::Idle),
     switch_security_profile_callback(nullptr),
     message_log_path(message_log_path) {
-    this->pki_handler = std::make_shared<ocpp::PkiHandler>(share_path);
-    this->configuration =
-        std::make_shared<ocpp::v16::ChargePointConfiguration>(config, share_path, user_config_path, this->pki_handler);
+    this->configuration = std::make_shared<ocpp::v16::ChargePointConfiguration>(config, share_path, user_config_path);
+    this->pki_handler = std::make_shared<ocpp::PkiHandler>(
+        boost::filesystem::path(certs_path),
+        this->configuration->getAdditionalRootCertificateCheck().get_value_or(false));
     this->heartbeat_timer = std::make_unique<Everest::SteadyTimer>(&this->io_service, [this]() { this->heartbeat(); });
     this->heartbeat_interval = this->configuration->getHeartbeatInterval();
     this->database_handler = std::make_shared<ocpp::DatabaseHandler>(this->configuration->getChargePointId(),
@@ -38,7 +43,6 @@ ChargePoint::ChargePoint(const json& config, const std::string& share_path, cons
         [this](json message) -> bool { return this->websocket->send(message.dump()); },
         this->configuration->getTransactionMessageAttempts(), this->configuration->getTransactionMessageRetryInterval(),
         this->external_notify);
-
     auto log_formats = this->configuration->getLogMessagesFormat();
     bool log_to_console = std::find(log_formats.begin(), log_formats.end(), "console") != log_formats.end();
     bool detailed_log_to_console =
@@ -61,6 +65,33 @@ ChargePoint::ChargePoint(const json& config, const std::string& share_path, cons
     this->clock_aligned_meter_values_timer = std::make_unique<Everest::SystemTimer>(
         &this->io_service, [this]() { this->clock_aligned_meter_values_sample(); });
 
+    this->client_certificate_timer = std::make_unique<Everest::SteadyTimer>(&this->io_service, [this]() {
+        EVLOG_info << "Checking if CSMS client certificate has expired";
+        int daysLeft =
+            this->pki_handler->getDaysUntilLeafExpires(ocpp::CertificateSigningUseEnum::ChargingStationCertificate);
+        if (daysLeft < 30) {
+            EVLOG_info << "CSMS client certificate is invalid in " << daysLeft
+                       << " days. Requesting new certificate with certificate signing request";
+            this->sign_certificate(ocpp::CertificateSigningUseEnum::ChargingStationCertificate);
+        } else {
+            EVLOG_info << "CSMS client certificate is still valid.";
+        }
+        this->client_certificate_timer->interval(CLIENT_CERTIFICATE_TIMER_INTERVAL);
+    });
+
+    this->v2g_certificate_timer = std::make_unique<Everest::SteadyTimer>(&this->io_service, [this]() {
+        EVLOG_info << "Checking if V2GCertificate has expired";
+        int daysLeft = this->pki_handler->getDaysUntilLeafExpires(ocpp::CertificateSigningUseEnum::V2GCertificate);
+        if (daysLeft < 30) {
+            EVLOG_info << "V2GCertificate is invalid in " << daysLeft
+                       << " days. Requesting new certificate with certificate signing request";
+            this->sign_certificate(ocpp::CertificateSigningUseEnum::V2GCertificate);
+        } else {
+            EVLOG_info << "V2GCertificate is still valid.";
+        }
+        this->v2g_certificate_timer->interval(V2G_CERTIFICATE_TIMER_INTERVAL);
+    });
+
     this->status = std::make_unique<ChargePointStates>(
         this->configuration->getNumberOfConnectors(),
         [this](int32_t connector, ChargePointErrorCode errorCode, ChargePointStatus status) {
@@ -75,6 +106,34 @@ ChargePoint::ChargePoint(const json& config, const std::string& share_path, cons
     }
 
     this->smart_charging_handler = std::make_unique<SmartChargingHandler>(this->connectors, this->database_handler);
+
+    // ISO15118 PnC handlers
+    if (this->configuration->getSupportedFeatureProfilesSet().count(SupportedFeatureProfiles::PnC)) {
+        this->data_transfer_pnc_callbacks[conversions::messagetype_to_string(MessageType::TriggerMessage)] =
+            [this](ocpp::Call<ocpp::v16::DataTransferRequest> call) {
+                this->handle_data_transfer_pnc_trigger_message(call);
+            };
+        this->data_transfer_pnc_callbacks[conversions::messagetype_to_string(MessageType::CertificateSigned)] =
+            [this](ocpp::Call<ocpp::v16::DataTransferRequest> call) {
+                this->handle_data_transfer_pnc_certificate_signed(call);
+            };
+        this->data_transfer_pnc_callbacks[conversions::messagetype_to_string(MessageType::GetInstalledCertificateIds)] =
+            [this](ocpp::Call<ocpp::v16::DataTransferRequest> call) {
+                this->handle_data_transfer_pnc_get_installed_certificates(call);
+            };
+        this->data_transfer_pnc_callbacks[conversions::messagetype_to_string(MessageType::DeleteCertificate)] =
+            [this](ocpp::Call<ocpp::v16::DataTransferRequest> call) {
+                this->handle_data_transfer_delete_certificate(call);
+            };
+        this->data_transfer_pnc_callbacks[conversions::messagetype_to_string(MessageType::InstallCertificate)] =
+            [this](ocpp::Call<ocpp::v16::DataTransferRequest> call) {
+                this->handle_data_transfer_install_certificate(call);
+            };
+        this->ocsp_request_timer = std::make_unique<Everest::SteadyTimer>(&this->io_service, [this]() {
+            this->update_ocsp_cache();
+            this->ocsp_request_timer->interval(OCSP_REQUEST_TIMER_INTERVAL);
+        });
+    }
 }
 
 void ChargePoint::init_websocket(int32_t security_profile) {
@@ -87,7 +146,9 @@ void ChargePoint::init_websocket(int32_t security_profile) {
                                                   this->configuration->getSupportedCiphers12(),
                                                   this->configuration->getSupportedCiphers13(),
                                                   this->configuration->getWebsocketPingInterval().value_or(0),
-                                                  this->configuration->getWebsocketPingPayload()};
+                                                  this->configuration->getWebsocketPingPayload(),
+                                                  this->configuration->getUseSslDefaultVerifyPaths(),
+                                                  this->configuration->getAdditionalRootCertificateCheck()};
 
     this->websocket = std::make_unique<Websocket>(connection_options, this->pki_handler, this->logging);
     this->websocket->register_connected_callback([this](const int security_profile) {
@@ -106,14 +167,12 @@ void ChargePoint::init_websocket(int32_t security_profile) {
         if (this->switch_security_profile_callback != nullptr) {
             this->switch_security_profile_callback();
         }
+        this->ocsp_request_timer->stop();
+        this->v2g_certificate_timer->stop();
+        this->client_certificate_timer->stop();
     });
 
     this->websocket->register_message_callback([this](const std::string& message) { this->message_callback(message); });
-
-    if (security_profile == 3) {
-        EVLOG_debug << "Registerung certificate timer";
-        this->websocket->register_sign_certificate_callback([this]() { this->sign_certificate(); });
-    }
 }
 
 void ChargePoint::connect_websocket() {
@@ -612,6 +671,7 @@ bool ChargePoint::start() {
     this->boot_notification();
     this->stop_pending_transactions();
     this->load_charging_profiles();
+
     this->stopped = false;
     return true;
 }
@@ -658,6 +718,15 @@ bool ChargePoint::stop() {
         }
         if (this->clock_aligned_meter_values_timer != nullptr) {
             this->clock_aligned_meter_values_timer->stop();
+        }
+        if (this->ocsp_request_timer != nullptr) {
+            this->ocsp_request_timer->stop();
+        }
+        if (this->client_certificate_timer != nullptr) {
+            this->client_certificate_timer->stop();
+        }
+        if (this->v2g_certificate_timer != nullptr) {
+            this->v2g_certificate_timer->stop();
         }
 
         this->stop_all_transactions();
@@ -916,6 +985,16 @@ void ChargePoint::handleBootNotificationResponse(ocpp::CallResult<BootNotificati
             this->status_notification(connector, ChargePointErrorCode::NoError, this->status->get_state(connector));
         }
 
+        if (this->is_pnc_enabled()) {
+            this->ocsp_request_timer->timeout(INITIAL_CERTIFICATE_REQUESTS_DELAY);
+            this->v2g_certificate_timer->timeout(INITIAL_CERTIFICATE_REQUESTS_DELAY);
+        }
+
+        if (this->configuration->getSecurityProfile() == 3) {
+            this->client_certificate_timer->stop();
+            this->client_certificate_timer->timeout(INITIAL_CERTIFICATE_REQUESTS_DELAY);
+        }
+
         break;
     }
     case RegistrationStatus::Pending:
@@ -1037,18 +1116,42 @@ void ChargePoint::handleChangeConfigurationRequest(ocpp::Call<ChangeConfiguratio
                     } else {
                         EVLOG_debug << "AuthorizationKey was changed while on security profile 3. Nothing to do.";
                     }
-                    // what if basic auth is not in use? what if client side certificates are in use?
-                    // log change in security log - if we have one yet?!
                 } else if (call.msg.key == "SecurityProfile") {
-                    ocpp::CallResult<ChangeConfigurationResponse> call_result(response, call.uniqueId);
-                    this->send<ChangeConfigurationResponse>(call_result);
-                    int32_t security_profile = std::stoi(call.msg.value);
-                    responded = true;
-                    this->switch_security_profile_callback = [this, security_profile]() {
-                        this->switchSecurityProfile(security_profile);
-                    };
-                    // disconnected_callback will trigger security_profile_callback when it is set
-                    this->websocket->disconnect(websocketpp::close::status::service_restart);
+                    try {
+                        const auto security_profile = std::stoi(call.msg.value.get());
+                        const auto current_security_profile = this->configuration->getSecurityProfile();
+                        if (security_profile <= current_security_profile) {
+                            EVLOG_warning << "New security profile is <= current security profile. Rejecting request.";
+                            response.status = ConfigurationStatus::Rejected;
+                        } else if ((security_profile == 1 || security_profile == 2) &&
+                                   this->configuration->getAuthorizationKey() == boost::none) {
+                            EVLOG_warning << "New security level set to 1 or 2 but no authorization key is set. "
+                                             "Rejecting request.";
+                            response.status = ConfigurationStatus::Rejected;
+                        } else if ((security_profile == 2 || security_profile == 3) &&
+                                   !this->pki_handler->isCentralSystemRootCertificateInstalled()) {
+                            EVLOG_warning
+                                << "New security level set to 2 or 3 but no CentralSystemRootCertificateInstalled";
+                            response.status = ConfigurationStatus::Rejected;
+                        } else if (security_profile == 3 && !this->pki_handler->isCsmsLeafCertificateInstalled()) {
+                            EVLOG_warning << "New security level set to 3 but no Client Certificate is installed";
+                        } else if (security_profile > 3) {
+                            response.status = ConfigurationStatus::Rejected;
+                        } else {
+                            // valid set of security profile
+                            ocpp::CallResult<ChangeConfigurationResponse> call_result(response, call.uniqueId);
+                            this->send<ChangeConfigurationResponse>(call_result);
+                            int32_t security_profile = std::stoi(call.msg.value);
+                            responded = true;
+                            this->switch_security_profile_callback = [this, security_profile]() {
+                                this->switchSecurityProfile(security_profile);
+                            };
+                            // disconnected_callback will trigger security_profile_callback when it is set
+                            this->websocket->disconnect(websocketpp::close::status::service_restart);
+                        }
+                    } catch (const std::invalid_argument& e) {
+                        response.status = ConfigurationStatus::Rejected;
+                    }
                 } else if (call.msg.key == "ConnectionTimeout") {
                     this->set_connection_timeout_callback(this->configuration->getConnectionTimeOut());
                 } else if (call.msg.key == "TransactionMessageAttempts") {
@@ -1062,6 +1165,21 @@ void ChargePoint::handleChangeConfigurationRequest(ocpp::Call<ChangeConfiguratio
                     if (websocket_ping_interval_option.has_value()) {
                         auto websocket_ping_interval = websocket_ping_interval_option.get();
                         this->websocket->set_websocket_ping_interval(websocket_ping_interval);
+                    }
+                } else if (call.msg.key == "ISO15118PnCEnabled") {
+                    if (ocpp::conversions::string_to_bool(call.msg.value.get())) {
+                        this->ocsp_request_timer->stop();
+                        this->ocsp_request_timer->timeout(INITIAL_CERTIFICATE_REQUESTS_DELAY);
+                        this->v2g_certificate_timer->stop();
+                        this->v2g_certificate_timer->timeout(INITIAL_CERTIFICATE_REQUESTS_DELAY);
+                    } else {
+                        this->ocsp_request_timer->stop();
+                        this->v2g_certificate_timer->stop();
+                    }
+                } else if (call.msg.key == "OcspRequestInterval") {
+                    if (this->is_pnc_enabled()) {
+                        this->ocsp_request_timer->stop();
+                        this->ocsp_request_timer->interval(std::chrono::seconds(this->configuration->getOcspRequestInterval()));
                     }
                 }
             }
@@ -1114,27 +1232,35 @@ void ChargePoint::handleDataTransferRequest(ocpp::Call<DataTransferRequest> call
 
     auto vendorId = call.msg.vendorId.get();
     auto messageId = call.msg.messageId.get_value_or(CiString<50>()).get();
-    std::function<void(const std::string data)> callback;
     {
         std::lock_guard<std::mutex> lock(data_transfer_callbacks_mutex);
-        if (this->data_transfer_callbacks.count(vendorId) == 0) {
+        if (vendorId == ISO15118_PNC_VENDOR_ID and !this->is_pnc_enabled()) {
             response.status = DataTransferStatus::UnknownVendorId;
-        } else {
-            if (this->data_transfer_callbacks[vendorId].count(messageId) == 0) {
-                response.status = DataTransferStatus::UnknownMessageId;
+        } else if (vendorId == ISO15118_PNC_VENDOR_ID and this->is_pnc_enabled()) {
+            if (this->data_transfer_pnc_callbacks.count(messageId)) {
+                // there is a ISO15118 PnC callback registered for this vendorId and messageId
+                const auto callback = this->data_transfer_pnc_callbacks[messageId];
+                callback(call); // DataTransfer PnC callback is responsible to send DataTransfer.conf
+                return;
             } else {
-                response.status = DataTransferStatus::Accepted;
-                callback = this->data_transfer_callbacks[vendorId][messageId];
+                EVLOG_warning
+                    << "Received DataTransfer.req for ISO15118 PnC while PnC is enabled but no handler found for : "
+                    << messageId;
+                response.status = DataTransferStatus::UnknownMessageId;
             }
+        } else if (this->data_transfer_callbacks.count(vendorId) == 0) {
+            response.status = DataTransferStatus::UnknownVendorId;
+        } else if (this->data_transfer_callbacks.count(vendorId) and
+                   this->data_transfer_callbacks[vendorId].count(messageId) == 0) {
+            response.status = DataTransferStatus::UnknownMessageId;
+        } else {
+            // there is a callback registered for this vendorId and messageId
+            response = this->data_transfer_callbacks[vendorId][messageId](call.msg.data);
         }
     }
 
     ocpp::CallResult<DataTransferResponse> call_result(response, call.uniqueId);
     this->send<DataTransferResponse>(call_result);
-
-    if (response.status == DataTransferStatus::Accepted) {
-        callback(call.msg.data.get_value_or(std::string("")));
-    }
 }
 
 void ChargePoint::handleGetConfigurationRequest(ocpp::Call<GetConfigurationRequest> call) {
@@ -1734,7 +1860,7 @@ void ChargePoint::handleExtendedTriggerMessageRequest(ocpp::Call<ExtendedTrigger
         break;
     }
     case MessageTriggerEnumType::SignChargePointCertificate:
-        this->sign_certificate();
+        this->sign_certificate(ocpp::CertificateSigningUseEnum::ChargingStationCertificate);
         break;
     case MessageTriggerEnumType::StatusNotification:
         this->status_notification(connector, ChargePointErrorCode::NoError, this->status->get_state(connector));
@@ -1742,17 +1868,47 @@ void ChargePoint::handleExtendedTriggerMessageRequest(ocpp::Call<ExtendedTrigger
     }
 }
 
-void ChargePoint::sign_certificate() {
+void ChargePoint::sign_certificate(const ocpp::CertificateSigningUseEnum& certificate_signing_use) {
 
     SignCertificateRequest req;
 
-    std::string csr =
-        this->pki_handler->generateCsr("DE", "BW", "Bad Schoenborn", this->configuration->getCpoName().get().c_str(),
-                                       this->configuration->getChargeBoxSerialNumber().c_str());
+    // TODO(piet): Fix csr data
+    std::string csr = this->pki_handler->generateCsr(certificate_signing_use, "DE", "BW", "Bad Schoenborn",
+                                                     this->configuration->getCpoName().get().c_str(),
+                                                     this->configuration->getChargeBoxSerialNumber().c_str());
 
     req.csr = csr;
     ocpp::Call<SignCertificateRequest> call(req, this->message_queue->createMessageId());
     this->send<SignCertificateRequest>(call);
+}
+
+void ChargePoint::update_ocsp_cache() {
+    EVLOG_info << "Checking if OCSP cache should be updated";
+    try {
+        const auto last_update = this->database_handler->get_last_ocsp_update();
+        const auto now = DateTime();
+        if (!last_update.has_value() or
+            (last_update.value().to_time_point() + std::chrono::seconds(this->configuration->getOcspRequestInterval()) <
+             now.to_time_point())) {
+            EVLOG_info << "Requesting OCSP response.";
+            const auto ocsp_request_data = this->pki_handler->getOCSPRequestData();
+            for (const auto& ocsp_request_entry : ocsp_request_data) {
+                ocpp::v201::OCSPRequestData ocsp_request;
+                ocsp_request.hashAlgorithm = ocpp::v201::conversions::string_to_hash_algorithm_enum(
+                    ocpp::conversions::hash_algorithm_enum_type_to_string(ocsp_request_entry.hashAlgorithm));
+                ocsp_request.issuerKeyHash = ocsp_request_entry.issuerKeyHash;
+                ocsp_request.issuerNameHash = ocsp_request_entry.issuerNameHash;
+                ocsp_request.responderURL = ocsp_request_entry.responderUrl;
+                ocsp_request.serialNumber = ocsp_request_entry.serialNumber;
+                this->data_transfer_pnc_get_certificate_status(ocsp_request);
+            }
+            this->database_handler->insert_ocsp_update();
+        } else {
+            EVLOG_info << "OCSP Cache is up-to-date enough";
+        }
+    } catch (std::exception& e) {
+        EVLOG_error << "Error while requesting OCSP Response for CSO CAs";
+    }
 }
 
 void ChargePoint::handleCertificateSignedRequest(ocpp::Call<CertificateSignedRequest> call) {
@@ -1769,7 +1925,8 @@ void ChargePoint::handleCertificateSignedRequest(ocpp::Call<CertificateSignedReq
     if (certificateVerificationResult == CertificateVerificationResult::Valid) {
         response.status = CertificateSignedStatusEnumType::Accepted;
         // FIXME(piet): dont just override, store other one for at least one month according to spec
-        this->pki_handler->writeClientCertificate(certificateChain);
+        this->pki_handler->writeClientCertificate(certificateChain,
+                                                  ocpp::CertificateSigningUseEnum::ChargingStationCertificate);
     }
 
     ocpp::CallResult<CertificateSignedResponse> call_result(response, call.uniqueId);
@@ -1797,16 +1954,24 @@ void ChargePoint::handleGetInstalledCertificateIdsRequest(ocpp::Call<GetInstalle
     GetInstalledCertificateIdsResponse response;
     response.status = GetInstalledCertificateStatusEnumType::NotFound;
 
+    // add v16::CertificateUseEnumType to std::vector<ocpp::CertificateType>
+    std::vector<CertificateType> certificate_types;
+    certificate_types.push_back(ocpp::conversions::string_to_certificate_type(
+        conversions::certificate_use_enum_type_to_string(call.msg.certificateType)));
+
+    // argument for getRootCertificateHashData
+    boost::optional<std::vector<CertificateType>> certificate_types_opt;
+    certificate_types_opt.emplace(certificate_types);
+
     // this is common CertificateHashData type
-    const auto certificate_hash_data =
-        this->pki_handler->getRootCertificateHashData(ocpp::conversions::string_to_certificate_type(
-            conversions::certificate_use_enum_type_to_string(call.msg.certificateType)));
-    if (certificate_hash_data != boost::none) {
-        // convert common CertificateHashData to 1.6 CertificateHashData
+    const auto certificate_hash_data_chain = this->pki_handler->getRootCertificateHashData(certificate_types_opt);
+    if (certificate_hash_data_chain.has_value()) {
+        // convert ocpp::CertificateHashData to v16::CertificateHashData
         boost::optional<std::vector<CertificateHashDataType>> certificate_hash_data_16_vec_opt;
         std::vector<CertificateHashDataType> certificate_hash_data_16_vec;
-        for (const auto certificate_hash_data : certificate_hash_data.value()) {
-            certificate_hash_data_16_vec.push_back(CertificateHashDataType(json(certificate_hash_data)));
+        for (const auto certificate_hash_data_chain_entry : certificate_hash_data_chain.value()) {
+            certificate_hash_data_16_vec.push_back(
+                CertificateHashDataType(json(certificate_hash_data_chain_entry.certificateHashData)));
         }
         certificate_hash_data_16_vec_opt.emplace(certificate_hash_data_16_vec);
         response.certificateHashData = certificate_hash_data_16_vec_opt;
@@ -1876,7 +2041,8 @@ void ChargePoint::handleSignedUpdateFirmware(ocpp::Call<SignedUpdateFirmwareRequ
     EVLOG_debug << "Received SignedUpdateFirmwareRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
     SignedUpdateFirmwareResponse response;
 
-    if (!this->pki_handler->verifyFirmwareCertificate(call.msg.firmware.signingCertificate.get())) {
+    if (this->pki_handler->verifyFirmwareCertificate(call.msg.firmware.signingCertificate.get()) !=
+        ocpp::CertificateVerificationResult::Valid) {
         response.status = UpdateFirmwareStatusEnumType::InvalidCertificate;
         ocpp::CallResult<SignedUpdateFirmwareResponse> call_result(response, call.uniqueId);
         this->send<SignedUpdateFirmwareResponse>(call_result);
@@ -2162,6 +2328,435 @@ std::map<int32_t, ChargingSchedule> ChargePoint::get_all_composite_charging_sche
     return charging_schedules;
 }
 
+bool ChargePoint::is_pnc_enabled() {
+    return this->configuration->getSupportedFeatureProfilesSet().count(SupportedFeatureProfiles::PnC) and
+           this->configuration->getISO15118PnCEnabled();
+}
+
+ocpp::v201::AuthorizeResponse ChargePoint::data_transfer_pnc_authorize(
+
+    const std::string& emaid, const boost::optional<std::string>& certificate,
+    const boost::optional<std::vector<ocpp::v201::OCSPRequestData>>& iso15118_certificate_hash_data) {
+
+    ocpp::v201::AuthorizeResponse authorize_response;
+    authorize_response.idTokenInfo.status = ocpp::v201::AuthorizationStatusEnum::Invalid;
+
+    if (!this->is_pnc_enabled()) {
+        EVLOG_warning << "Received request to send DataTransfer(Authorize.req) while PnC is disabled";
+        return authorize_response;
+    }
+
+    // FIXME(piet): Handle C07.FR.06 - C07.FR.12
+
+    DataTransferRequest req;
+    req.vendorId = ISO15118_PNC_VENDOR_ID;
+    req.messageId.emplace(CiString<50>(std::string("Authorize")));
+
+    ocpp::v201::AuthorizeRequest authorize_req;
+    ocpp::v201::IdToken id_token;
+
+    id_token.type = ocpp::v201::IdTokenEnum::eMAID;
+    id_token.idToken = emaid;
+    authorize_req.iso15118CertificateHashData = iso15118_certificate_hash_data;
+    authorize_req.idToken = id_token;
+
+    // do this if C07.FR.06
+    // If Charging Station is not able to validate a contract certificate, because it does not have the associated root
+    // certificate AND CentralContractValidationAllowed is true
+
+    if (this->configuration->getCentralContractValidationAllowed().has_value() and
+        this->configuration->getCentralContractValidationAllowed().value()) {
+        authorize_req.certificate = certificate;
+    }
+
+    req.data.emplace(json(authorize_req).dump());
+
+    Call<DataTransferRequest> call(req, this->message_queue->createMessageId());
+    auto authorize_future = this->send_async<DataTransferRequest>(call);
+
+    auto enhanced_message = authorize_future.get();
+
+    if (enhanced_message.messageType == MessageType::DataTransferResponse) {
+        try {
+            // parse and return authorize response
+            ocpp::CallResult<DataTransferResponse> call_result = enhanced_message.message;
+            if (call_result.msg.data.has_value()) {
+                authorize_response = json::parse(call_result.msg.data.value());
+                return authorize_response;
+            } else {
+                EVLOG_warning << "CSMS response of DataTransferRequest(Authorize) did not include data";
+            }
+        } catch (const json::exception& e) {
+            EVLOG_warning << "Could not parse data of DataTransfer message Authorize.conf: " << e.what();
+        } catch (const std::exception& e) {
+            EVLOG_error << "Unknown Error while handling DataTransfer message Authorize.conf: " << e.what();
+        }
+
+    } else if (enhanced_message.offline) {
+        if (this->configuration->getContractValidationOffline()) {
+            // C07.FR.08
+            // The Charging Station SHALL try to validate the contract certificate locally.
+
+            // if valid: C07.FR.09
+            if (this->configuration->getLocalAuthorizeOffline()) {
+                // use auth cache to look up emaid
+            }
+        } else {
+            // C07.FR.07
+            // The Charging Station SHALL NOT allow charging.
+        }
+    } else {
+        EVLOG_warning << "CSMS response of DataTransferRequest(Authorize) was not DataTransferResponse";
+    }
+    return authorize_response; // FIXME(piet)
+}
+
+void ChargePoint::data_transfer_pnc_sign_certificate() {
+
+    DataTransferRequest req;
+    req.vendorId = ISO15118_PNC_VENDOR_ID;
+    req.messageId.emplace(CiString<50>(std::string("SignCertificate")));
+
+    ocpp::v201::SignCertificateRequest csr_req;
+
+    // TODO(piet): Fix csr data
+    const auto csr = this->pki_handler->generateCsr(ocpp::CertificateSigningUseEnum::V2GCertificate, "DE", "BW",
+                                                    "Bad Schoenborn", this->configuration->getCpoName().get().c_str(),
+                                                    this->configuration->getChargeBoxSerialNumber().c_str());
+    csr_req.csr = csr;
+    csr_req.certificateType = ocpp::v201::CertificateSigningUseEnum::V2GCertificate;
+    req.data.emplace(json(csr_req).dump());
+
+    Call<DataTransferRequest> call(req, this->message_queue->createMessageId());
+    this->send<DataTransferRequest>(call);
+}
+
+void ChargePoint::data_transfer_pnc_get_15118_ev_certificate(
+    const int32_t connector_id, const std::string& exi_request, const std::string& iso15118_schema_version,
+    const ocpp::v201::CertificateActionEnum& certificate_action) {
+
+    if (!this->is_pnc_enabled()) {
+        EVLOG_warning
+            << "Received request to send DataTransfer(Get15118EVCertificateRequest.req) while PnC is disabled";
+        return;
+    }
+
+    EVLOG_info << "Sending Get15118EVCertificate DataTransfer.req";
+    DataTransferRequest req;
+    req.vendorId = ISO15118_PNC_VENDOR_ID;
+    req.messageId.emplace(CiString<50>(std::string("Get15118EVCertificate")));
+
+    ocpp::v201::Get15118EVCertificateRequest cert_req;
+    cert_req.action = certificate_action;
+    cert_req.exiRequest = exi_request;
+    cert_req.iso15118SchemaVersion = iso15118_schema_version;
+
+    req.data.emplace(json(cert_req).dump());
+
+    Call<DataTransferRequest> call(req, this->message_queue->createMessageId());
+    auto future = this->send_async<DataTransferRequest>(call);
+    auto enhanced_message = future.get();
+
+    if (enhanced_message.messageType == MessageType::DataTransferResponse) {
+        // parse and return authorize response
+        try {
+            ocpp::CallResult<DataTransferResponse> call_result = enhanced_message.message;
+            if (call_result.msg.data.has_value() and call_result.msg.status == DataTransferStatus::Accepted) {
+                ocpp::v201::Get15118EVCertificateResponse ev_certificate_response =
+                    json::parse(call_result.msg.data.value());
+                this->get_15118_ev_certificate_response_callback(connector_id, ev_certificate_response,
+                                                                 certificate_action);
+            } else {
+                EVLOG_warning << "DataTransferRequest(Get15118EVCertificate) was not Accepted by CSMS or missed data";
+                return;
+            }
+        } catch (const json::exception& e) {
+            EVLOG_warning << "Could not parse data of DataTransfer message Get15118EVCertificate.conf: " << e.what();
+            return;
+        } catch (const std::exception& e) {
+            EVLOG_error << "Unknown Error while handling DataTransfer message Get15118EVCertificate.conf: " << e.what();
+            return;
+        }
+    } else if (enhanced_message.offline) {
+        return;
+    } else {
+        EVLOG_warning << "CSMS response of DataTransferRequest(Get15118EVCertificate) was not DataTransferResponse";
+        return;
+    }
+}
+
+void ChargePoint::data_transfer_pnc_get_certificate_status(const ocpp::v201::OCSPRequestData& ocsp_request_data) {
+    EVLOG_info << "Requesting OCSP certificate Status";
+
+    DataTransferRequest req;
+    req.vendorId = ISO15118_PNC_VENDOR_ID;
+    req.messageId.emplace(CiString<50>(std::string("GetCertificateStatus")));
+
+    ocpp::v201::GetCertificateStatusRequest cert_status_req;
+    cert_status_req.ocspRequestData = ocsp_request_data;
+
+    req.data.emplace(json(cert_status_req).dump());
+
+    Call<DataTransferRequest> call(req, this->message_queue->createMessageId());
+    auto future = this->send_async<DataTransferRequest>(call);
+    auto enhanced_message = future.get();
+
+    if (enhanced_message.messageType == MessageType::DataTransferResponse) {
+        try {
+            ocpp::CallResult<DataTransferResponse> call_result = enhanced_message.message;
+            if (call_result.msg.data.has_value()) {
+                ocpp::v201::GetCertificateStatusResponse cert_status_response =
+                    json::parse(call_result.msg.data.value());
+                if (cert_status_response.status == ocpp::v201::GetCertificateStatusEnum::Accepted) {
+                    if (cert_status_response.ocspResult.has_value()) {
+                        ocpp::OCSPRequestData ocsp_request;
+                        ocsp_request.hashAlgorithm = ocpp::conversions::string_to_hash_algorithm_enum_type(
+                            ocpp::v201::conversions::hash_algorithm_enum_to_string(ocsp_request_data.hashAlgorithm));
+                        ocsp_request.issuerKeyHash = ocsp_request_data.issuerKeyHash.get();
+                        ocsp_request.issuerNameHash = ocsp_request_data.issuerNameHash.get();
+                        ocsp_request.serialNumber = ocsp_request_data.serialNumber.get();
+                        ocsp_request.responderUrl = ocsp_request_data.responderURL.get();
+                        this->pki_handler->updateOcspCache(ocsp_request, cert_status_response.ocspResult.value());
+                    } else {
+                        EVLOG_warning << "GetCertificateStatusResponse status was accepted but no ocspResult is set. "
+                                         "This is not allowed by the CSMS";
+                        return;
+                    }
+                }
+                // TODO(piet): Update cache and call this once a week (M06)
+            } else {
+                EVLOG_warning << "CSMS response of DataTransferRequest(GetCertificateStatus) did not include data";
+                return;
+            }
+        } catch (const json::exception& e) {
+            EVLOG_warning << "Could not parse data of DataTransfer message GetCertificateStatus.conf: " << e.what();
+            return;
+        } catch (const std::exception& e) {
+            EVLOG_error << "Unknown Error while handling DataTransfer message GetCertificateStatus.conf: " << e.what();
+            return;
+        }
+    } else if (enhanced_message.offline) {
+        return;
+    } else {
+        EVLOG_warning << "CSMS response of DataTransferRequest(GetCertificateStatus) was not DataTransferResponse";
+        return;
+    }
+}
+
+void ChargePoint::handle_data_transfer_pnc_trigger_message(Call<DataTransferRequest> call) {
+    EVLOG_info << "Received Data Transfer TriggerMessage: " << call.msg << "\nwith messageId: " << call.uniqueId;
+
+    DataTransferResponse response;
+
+    if (this->configuration->getCpoName().has_value()) {
+        response.status = DataTransferStatus::Accepted;
+        ocpp::v201::TriggerMessageResponse trigger_message_response;
+        trigger_message_response.status = ocpp::v201::TriggerMessageStatusEnum::Accepted;
+        response.data.emplace(json(trigger_message_response).dump());
+    } else {
+        EVLOG_warning << "Received Data Transfer TriggerMessage to trigger CSR but no "
+                         "CpoName is set.";
+        response.status = DataTransferStatus::Rejected;
+        response.data.emplace("No CpoName is set. Cannot trigger CSR");
+    }
+
+    CallResult<DataTransferResponse> call_result(response, call.uniqueId);
+    this->send<DataTransferResponse>(call_result);
+
+    if (response.status == DataTransferStatus::Accepted) {
+        // send sign certificate wrapped in data_transfer
+        this->data_transfer_pnc_sign_certificate();
+    }
+}
+
+void ChargePoint::handle_data_transfer_pnc_certificate_signed(Call<DataTransferRequest> call) {
+    EVLOG_info << "Received Data Transfer CertificateSignedRequest: " << call.msg
+               << "\nwith messageId: " << call.uniqueId;
+
+    DataTransferResponse response;
+    response.status = DataTransferStatus::Rejected;
+
+    try {
+        const ocpp::v201::CertificateSignedRequest req = json::parse(call.msg.data.value());
+
+        response.status = DataTransferStatus::Accepted;
+
+        CertificateSignedResponse certificate_response;
+        certificate_response.status = CertificateSignedStatusEnumType::Rejected;
+        std::string tech_info; // in case certificate is rejected this contains human readable information
+
+        if (req.certificateType.has_value() and
+            req.certificateType.value() != ocpp::v201::CertificateSigningUseEnum::V2GCertificate) {
+            tech_info = "Received DataTransfer.req containing CertificateSigned.req where certificateType is not "
+                        "V2GCertificate";
+            EVLOG_warning << tech_info;
+        } else if (this->configuration->getCertificateSignedMaxChainSize().has_value() and
+                   this->configuration->getCertificateSignedMaxChainSize().value() <
+                       req.certificateChain.get().size()) {
+            tech_info = "Received DataTransfer.req containing CertificateSigned.req where chain size is greater "
+                        "than configured CertificateSignedMaxChainSize";
+            EVLOG_warning << tech_info;
+        } else {
+            const auto certificate_chain = req.certificateChain.get();
+            const auto certificate_verification_result = pki_handler->verifyV2GChargingStationCertificate(
+                certificate_chain, this->configuration->getChargeBoxSerialNumber());
+
+            if (certificate_verification_result == CertificateVerificationResult::Valid) {
+                certificate_response.status = CertificateSignedStatusEnumType::Accepted;
+                // FIXME(piet): dont just override, store other one for at least one month according to spec
+                this->pki_handler->writeClientCertificate(certificate_chain,
+                                                          ocpp::CertificateSigningUseEnum::V2GCertificate);
+            } else {
+                tech_info =
+                    ocpp::conversions::certificate_verification_result_to_string(certificate_verification_result);
+            }
+        }
+
+        response.data.emplace(json(certificate_response).dump());
+
+        CallResult<DataTransferResponse> call_result(response, call.uniqueId);
+        this->send<DataTransferResponse>(call_result);
+
+        if (certificate_response.status == CertificateSignedStatusEnumType::Rejected) {
+            this->securityEventNotification(SecurityEvent::InvalidChargePointCertificate, tech_info);
+        }
+    } catch (const json::exception& e) {
+        EVLOG_warning << "Could not parse data of DataTransfer message CertificateSigned.req: " << e.what();
+        CallResult<DataTransferResponse> call_result(response, call.uniqueId);
+        this->send<DataTransferResponse>(call_result);
+    } catch (const std::exception& e) {
+        EVLOG_error << "Unknown Error while handling DataTransfer message CertificateSigned.req: " << e.what();
+        CallResult<DataTransferResponse> call_result(response, call.uniqueId);
+        this->send<DataTransferResponse>(call_result);
+    }
+}
+
+void ChargePoint::handle_data_transfer_pnc_get_installed_certificates(Call<DataTransferRequest> call) {
+    EVLOG_debug << "Received Data Transfer GetInstalledCertificatesRequest: " << call.msg
+                << "\nwith messageId: " << call.uniqueId;
+
+    DataTransferResponse response;
+
+    try {
+        if (call.msg.data.has_value()) {
+            const ocpp::v201::GetInstalledCertificateIdsRequest req = json::parse(call.msg.data.value());
+
+            response.status = DataTransferStatus::Accepted;
+
+            // prepare argument for getRootCertificate
+            boost::optional<std::vector<CertificateType>> certificate_types_opt;
+            if (req.certificateType.has_value()) {
+                std::vector<CertificateType> certificate_types;
+                for (const auto& certificate_id_use_enum : req.certificateType.value()) {
+                    certificate_types.push_back(ocpp::conversions::string_to_certificate_type(
+                        ocpp::v201::conversions::get_certificate_id_use_enum_to_string(certificate_id_use_enum)));
+                }
+                certificate_types_opt.emplace(certificate_types);
+            }
+
+            ocpp::v201::GetInstalledCertificateIdsResponse get_certificate_ids_response;
+            get_certificate_ids_response.status = ocpp::v201::GetInstalledCertificateStatusEnum::NotFound;
+
+            const auto certificate_hash_data_chain_opt =
+                this->pki_handler->getRootCertificateHashData(certificate_types_opt);
+            if (certificate_hash_data_chain_opt.has_value()) {
+                boost::optional<std::vector<ocpp::v201::CertificateHashDataChain>> certificate_hash_data_chain_v201_opt;
+                std::vector<ocpp::v201::CertificateHashDataChain> certificate_hash_data_chain_v201;
+                for (const auto certificate_hash_data_chain_entry : certificate_hash_data_chain_opt.value()) {
+                    certificate_hash_data_chain_v201.push_back(json(certificate_hash_data_chain_entry));
+                }
+                certificate_hash_data_chain_v201_opt.emplace(certificate_hash_data_chain_v201);
+                get_certificate_ids_response.certificateHashDataChain = certificate_hash_data_chain_v201_opt;
+                get_certificate_ids_response.status = ocpp::v201::GetInstalledCertificateStatusEnum::Accepted;
+            }
+
+            response.data.emplace(json(get_certificate_ids_response).dump());
+        } else {
+            response.status = DataTransferStatus::Rejected;
+        }
+    } catch (const json::exception& e) {
+        EVLOG_warning << "Could not parse data of DataTransfer message GetInstalledCertificateIds.req: " << e.what();
+        response.status = DataTransferStatus::Rejected;
+    } catch (const std::exception& e) {
+        EVLOG_error << "Unknown Error while handling DataTransfer message GetInstalledCertificateIds.req: " << e.what();
+        response.status = DataTransferStatus::Rejected;
+    }
+
+    CallResult<DataTransferResponse> call_result(response, call.uniqueId);
+    this->send<DataTransferResponse>(call_result);
+}
+
+void ChargePoint::handle_data_transfer_delete_certificate(Call<DataTransferRequest> call) {
+    DataTransferResponse response;
+
+    if (call.msg.data.has_value()) {
+        try {
+            const ocpp::v201::DeleteCertificateRequest req = json::parse(call.msg.data.value());
+            response.status = DataTransferStatus::Accepted;
+
+            ocpp::v201::DeleteCertificateResponse delete_cert_response;
+            const ocpp::CertificateHashDataType certificate_hash_data(json(req.certificateHashData));
+
+            delete_cert_response.status = ocpp::v201::conversions::string_to_delete_certificate_status_enum(
+                ocpp::conversions::delete_certificate_result_to_string(this->pki_handler->deleteRootCertificate(
+                    certificate_hash_data, this->configuration->getSecurityProfile())));
+
+            response.data.emplace(json(delete_cert_response).dump());
+        } catch (const json::exception& e) {
+            EVLOG_warning << "Could not parse data of DataTransfer message DeleteCertificate.req: " << e.what();
+            response.status = DataTransferStatus::Rejected;
+        } catch (const std::exception& e) {
+            EVLOG_error << "Unknown Error while handling DataTransfer message DeleteCertificate.req: " << e.what();
+            response.status = DataTransferStatus::Rejected;
+        }
+    } else {
+        response.status = DataTransferStatus::Rejected;
+    }
+
+    CallResult<DataTransferResponse> call_result(response, call.uniqueId);
+    this->send<DataTransferResponse>(call_result);
+}
+
+void ChargePoint::handle_data_transfer_install_certificate(Call<DataTransferRequest> call) {
+    DataTransferResponse response;
+
+    if (call.msg.data.has_value()) {
+        try {
+            const ocpp::v201::InstallCertificateRequest req = json::parse(call.msg.data.value());
+            response.status = DataTransferStatus::Accepted;
+
+            ocpp::v201::InstallCertificateResponse install_cert_response;
+
+            InstallCertificateResult install_certificate_result = this->pki_handler->installRootCertificate(
+                req.certificate.get(),
+                ocpp::conversions::string_to_certificate_type(
+                    ocpp::v201::conversions::install_certificate_use_enum_to_string(req.certificateType)),
+                this->configuration->getCertificateStoreMaxLength(),
+                this->configuration->getAdditionalRootCertificateCheck());
+            if (install_certificate_result == InstallCertificateResult::Ok ||
+                install_certificate_result == InstallCertificateResult::Valid) {
+                install_cert_response.status = ocpp::v201::InstallCertificateStatusEnum::Accepted;
+            } else if (install_certificate_result == InstallCertificateResult::WriteError) {
+                install_cert_response.status = ocpp::v201::InstallCertificateStatusEnum::Failed;
+            } else {
+                install_cert_response.status = ocpp::v201::InstallCertificateStatusEnum::Rejected;
+            }
+            response.data.emplace(json(install_cert_response).dump());
+        } catch (const json::exception& e) {
+            EVLOG_warning << "Could not parse data of DataTransfer message InstallCertificate.req: " << e.what();
+            response.status = DataTransferStatus::Rejected;
+        } catch (const std::exception& e) {
+            EVLOG_error << "Unknown Error while handling DataTransfer message InstallCertificate.req: " << e.what();
+            response.status = DataTransferStatus::Rejected;
+        }
+    } else {
+        response.status = DataTransferStatus::Rejected;
+    }
+
+    CallResult<DataTransferResponse> call_result(response, call.uniqueId);
+    this->send<DataTransferResponse>(call_result);
+}
+
 DataTransferResponse ChargePoint::data_transfer(const CiString<255>& vendorId, const CiString<50>& messageId,
                                                 const std::string& data) {
     DataTransferRequest req;
@@ -2188,8 +2783,9 @@ DataTransferResponse ChargePoint::data_transfer(const CiString<255>& vendorId, c
     return response;
 }
 
-void ChargePoint::register_data_transfer_callback(const CiString<255>& vendorId, const CiString<50>& messageId,
-                                                  const std::function<void(const std::string data)>& callback) {
+void ChargePoint::register_data_transfer_callback(
+    const CiString<255>& vendorId, const CiString<50>& messageId,
+    const std::function<DataTransferResponse(const boost::optional<std::string>& msg)>& callback) {
     std::lock_guard<std::mutex> lock(data_transfer_callbacks_mutex);
     this->data_transfer_callbacks[vendorId.get()][messageId.get()] = callback;
 }
@@ -2507,6 +3103,13 @@ void ChargePoint::register_set_connection_timeout_callback(
 
 void ChargePoint::register_connection_state_changed_callback(const std::function<void(bool is_connected)>& callback) {
     this->connection_state_changed_callback = callback;
+}
+
+void ChargePoint::register_get_15118_ev_certificate_response_callback(
+    const std::function<void(const int32_t connector,
+                             const ocpp::v201::Get15118EVCertificateResponse& certificate_response,
+                             const ocpp::v201::CertificateActionEnum& certificate_action)>& callback) {
+    this->get_15118_ev_certificate_response_callback = callback;
 }
 
 void ChargePoint::on_reservation_start(int32_t connector) {

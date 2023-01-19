@@ -30,6 +30,8 @@ struct WebsocketConnectionOptions {
     std::string supported_ciphers_13;
     int ping_interval_s;
     std::string ping_payload;
+    bool use_ssl_default_verify_paths;
+    boost::optional<bool> additional_root_certificate_check;
 };
 
 ///
@@ -42,7 +44,6 @@ protected:
     std::function<void(const int security_profile)> connected_callback;
     std::function<void()> disconnected_callback;
     std::function<void(const std::string& message)> message_callback;
-    std::function<void()> sign_certificate_callback;
     WebsocketConnectionOptions connection_options;
     websocketpp::lib::shared_ptr<websocketpp::lib::thread> websocket_thread;
     std::string uri;
@@ -92,9 +93,6 @@ public:
 
     /// \brief register a \p callback that is called when the websocket receives a message
     void register_message_callback(const std::function<void(const std::string& message)>& callback);
-
-    /// \brief register a \p callback that is called when the chargepoint should send a certificate signing request
-    void register_sign_certificate_callback(const std::function<void()>& callback);
 
     /// \brief send a \p message over the websocket
     /// \returns true if the message was sent successfully

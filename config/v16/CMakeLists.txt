@@ -12,6 +12,7 @@ list(APPEND OCPP1_6_PROFILE_SCHEMAS
      Reservation.json
      SmartCharging.json
      Security.json
+     PnC.json
 )
 
 list(TRANSFORM OCPP1_6_PROFILE_SCHEMAS
@@ -33,10 +34,6 @@ install(
      FILES ${CONFIGS}
      DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/ocpp
 )
-
-install(
-     DIRECTORY ${CERTS_DIR}
-     DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/ocpp/certs)
 
 install(FILES ${SQL_INIT_FILE} DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/ocpp)
 

@@ -157,6 +157,19 @@
             "type": "string",
             "readOnly": true,
             "default": "hello there"
+        },
+        "UseSslDefaultVerifyPaths": {
+            "$comment": "Use default verify paths for validating CSMS server certificate",
+            "type": "boolean",
+            "readOnly": true,
+            "default": true
+        },
+        "OcspRequestInterval": {
+            "$comment": "Interval in seconds used to request OCSP revocation status information on the CSO Sub-CA certificates",
+            "type": "integer",
+            "readOnly": false,
+            "default": 604800,
+            "minimum": 86400
         }
     },
     "additionalProperties": false
