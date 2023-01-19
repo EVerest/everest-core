@@ -170,6 +170,27 @@
             "readOnly": false,
             "default": 604800,
             "minimum": 86400
+        },
+        "SeccLeafSubjectCommonName": {
+            "$comment": "Common Name(s) of the SECC (EVSE) leaf certificate(s). The CN must be a SECCID. The field can contain optional multiple SECCIDs if necessary.",
+            "type": "string",
+            "readOnly": false
+        },
+        "SeccLeafSubjectCountry": {
+            "$comment": "County of the SECC (EVSE) leaf certificate. Indicates in which country the CPO operates.",
+            "type": "string",
+            "readOnly": false,
+            "default": "DE"
+        },
+        "SeccLeafSubjectOrganization": {
+            "$comment": "Organization of the SECC (EVSE) leaf certificate. Indicates which CPO operates this EVSE. Example: Hubject GmbH",
+            "type": "string",
+            "readOnly": false
+        },
+        "ConnectorEvseIds": {
+            "$comment": "Comma separated EVSEIDs for OCPP connectors starting with connector 1 in one string.",
+            "type": "string",
+            "readOnly": false
         }
     },
     "additionalProperties": false

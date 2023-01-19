@@ -206,9 +206,8 @@ public:
     void writeClientCertificate(const std::string& certificate, const CertificateSigningUseEnum& certificateUse);
 
     /// \brief generates a certifcate signing request from the given parameters
-    std::string generateCsr(const CertificateSigningUseEnum& certificateType, const char* szCountry,
-                            const char* szProvince, const char* szCity, const char* szOrganization,
-                            const char* szCommon);
+    std::string generateCsr(const CertificateSigningUseEnum& certificateType, const std::string& szCountry,
+                            const std::string& szOrganization, const std::string& szCommon);
 
     /// \brief indicates if a central system root certificate is installed
     bool isCentralSystemRootCertificateInstalled();

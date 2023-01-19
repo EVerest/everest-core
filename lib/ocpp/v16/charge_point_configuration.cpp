@@ -1544,6 +1544,119 @@ KeyValue ChargePointConfiguration::getOcspRequestIntervalKeyValue() {
     return kv;
 }
 
+boost::optional<std::string> ChargePointConfiguration::getSeccLeafSubjectCommonName() {
+    boost::optional<std::string> secc_leaf_subject_common_name = boost::none;
+    if (this->config["Internal"].contains("SeccLeafSubjectCommonName")) {
+        secc_leaf_subject_common_name.emplace(this->config["Internal"]["SeccLeafSubjectCommonName"]);
+    }
+    return secc_leaf_subject_common_name;
+}
+
+void ChargePointConfiguration::setSeccLeafSubjectCommonName(const std::string& secc_leaf_subject_common_name) {
+    if (this->getSeccLeafSubjectCommonName() != boost::none) {
+        this->config["Internal"]["SeccLeafSubjectCommonName"] = secc_leaf_subject_common_name;
+        this->setInUserConfig("Internal", "SeccLeafSubjectCommonName", secc_leaf_subject_common_name);
+    }
+}
+
+boost::optional<KeyValue> ChargePointConfiguration::getSeccLeafSubjectCommonNameKeyValue() {
+    boost::optional<KeyValue> secc_leaf_subject_common_name_kv = boost::none;
+    auto secc_leaf_subject_common_name = this->getSeccLeafSubjectCommonName();
+    if (secc_leaf_subject_common_name != boost::none) {
+        KeyValue kv;
+        kv.key = "SeccLeafSubjectCommonName";
+        kv.readonly = false;
+        kv.value.emplace(secc_leaf_subject_common_name.value());
+        secc_leaf_subject_common_name_kv.emplace(kv);
+    }
+    return secc_leaf_subject_common_name_kv;
+}
+
+
+boost::optional<std::string> ChargePointConfiguration::getSeccLeafSubjectCountry() {
+    boost::optional<std::string> secc_leaf_subject_country = boost::none;
+    if (this->config["Internal"].contains("SeccLeafSubjectCountry")) {
+        secc_leaf_subject_country.emplace(this->config["Internal"]["SeccLeafSubjectCountry"]);
+    }
+    return secc_leaf_subject_country;
+}
+
+void ChargePointConfiguration::setSeccLeafSubjectCountry(const std::string& secc_leaf_subject_country) {
+    if (this->getSeccLeafSubjectCountry() != boost::none) {
+        this->config["Internal"]["SeccLeafSubjectCountry"] = secc_leaf_subject_country;
+        this->setInUserConfig("Internal", "SeccLeafSubjectCountry", secc_leaf_subject_country);
+    }
+}
+
+boost::optional<KeyValue> ChargePointConfiguration::getSeccLeafSubjectCountryKeyValue() {
+    boost::optional<KeyValue> secc_leaf_subject_country_kv = boost::none;
+    auto secc_leaf_subject_country = this->getSeccLeafSubjectCountry();
+    if (secc_leaf_subject_country != boost::none) {
+        KeyValue kv;
+        kv.key = "SeccLeafSubjectCountry";
+        kv.readonly = false;
+        kv.value.emplace(secc_leaf_subject_country.value());
+        secc_leaf_subject_country_kv.emplace(kv);
+    }
+    return secc_leaf_subject_country_kv;
+}
+
+boost::optional<std::string> ChargePointConfiguration::getSeccLeafSubjectOrganization() {
+    boost::optional<std::string> secc_leaf_subject_organization = boost::none;
+    if (this->config["Internal"].contains("SeccLeafSubjectOrganization")) {
+        secc_leaf_subject_organization.emplace(this->config["Internal"]["SeccLeafSubjectOrganization"]);
+    }
+    return secc_leaf_subject_organization;
+}
+
+void ChargePointConfiguration::setSeccLeafSubjectOrganization(const std::string& secc_leaf_subject_organization) {
+    if (this->getSeccLeafSubjectOrganization() != boost::none) {
+        this->config["Internal"]["SeccLeafSubjectOrganization"] = secc_leaf_subject_organization;
+        this->setInUserConfig("Internal", "SeccLeafSubjectOrganization", secc_leaf_subject_organization);
+    }
+}
+
+boost::optional<KeyValue> ChargePointConfiguration::getSeccLeafSubjectOrganizationKeyValue() {
+    boost::optional<KeyValue> secc_leaf_subject_organization_kv = boost::none;
+    auto secc_leaf_subject_organization = this->getSeccLeafSubjectOrganization();
+    if (secc_leaf_subject_organization != boost::none) {
+        KeyValue kv;
+        kv.key = "SeccLeafSubjectOrganization";
+        kv.readonly = false;
+        kv.value.emplace(secc_leaf_subject_organization.value());
+        secc_leaf_subject_organization_kv.emplace(kv);
+    }
+    return secc_leaf_subject_organization_kv;
+}
+
+boost::optional<std::string> ChargePointConfiguration::getConnectorEvseIds() {
+    boost::optional<std::string> connector_evse_ids = boost::none;
+    if (this->config["Internal"].contains("ConnectorEvseIds")) {
+        connector_evse_ids.emplace(this->config["Internal"]["ConnectorEvseIds"]);
+    }
+    return connector_evse_ids;
+}
+
+void ChargePointConfiguration::setConnectorEvseIds(const std::string& connector_evse_ids) {
+    if (this->getConnectorEvseIds() != boost::none) {
+        this->config["Internal"]["ConnectorEvseIds"] = connector_evse_ids;
+        this->setInUserConfig("Internal", "ConnectorEvseIds", connector_evse_ids);
+    }
+}
+
+boost::optional<KeyValue> ChargePointConfiguration::getConnectorEvseIdsKeyValue() {
+    boost::optional<KeyValue> connector_evse_ids_kv = boost::none;
+    auto connector_evse_ids = this->getConnectorEvseIds();
+    if (connector_evse_ids != boost::none) {
+        KeyValue kv;
+        kv.key = "ConnectorEvseIds";
+        kv.readonly = false;
+        kv.value.emplace(connector_evse_ids.value());
+        connector_evse_ids_kv.emplace(kv);
+    }
+    return connector_evse_ids_kv;
+}
+
 boost::optional<KeyValue> ChargePointConfiguration::get(CiString<50> key) {
     // Core Profile
     if (key == "AllowOfflineTxForUnknownId") {

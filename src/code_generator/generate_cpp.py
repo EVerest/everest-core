@@ -64,7 +64,7 @@ def needs_enums(types):
 
 def needs_types(types):
     type_list = ['CiString<6>', 'CiString<8>', 'CiString<16>', 'CiString<20>', 'CiString<25>', 'CiString<32>', 'CiString<36>',
-                 'CiString<50>', 'CiString<64>', 'CiString<255>', 'CiString<500>', 'CiString<1000>', 'CiString<2500>', 'CiString<5600>' 'DateTime']
+                 'CiString<50>', 'CiString<64>', 'CiString<255>', 'CiString<500>', 'CiString<1000>', 'CiString<2500>', 'CiString<5600>', 'CiString<7500>', 'DateTime']
     for t in types:
         for property in t['properties']:
             if property['type'] in type_list:

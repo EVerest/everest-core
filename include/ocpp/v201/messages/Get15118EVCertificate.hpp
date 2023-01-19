@@ -16,7 +16,7 @@ namespace v201 {
 struct Get15118EVCertificateRequest : public ocpp::Message {
     CiString<50> iso15118SchemaVersion;
     CertificateActionEnum action;
-    CiString<5600> exiRequest;
+    CiString<7500> exiRequest;
     boost::optional<CustomData> customData;
 
     /// \brief Provides the type of this Get15118EVCertificate message as a human readable string
@@ -37,7 +37,7 @@ std::ostream& operator<<(std::ostream& os, const Get15118EVCertificateRequest& k
 /// \brief Contains a OCPP Get15118EVCertificateResponse message
 struct Get15118EVCertificateResponse : public ocpp::Message {
     Iso15118EVCertificateStatusEnum status;
-    CiString<5600> exiResponse;
+    CiString<7500> exiResponse;
     boost::optional<CustomData> customData;
     boost::optional<StatusInfo> statusInfo;
 

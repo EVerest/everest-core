@@ -33,7 +33,8 @@ private:
     bool isConnectorPhaseRotationValid(std::string str);
 
 public:
-    ChargePointConfiguration(const json& config, const std::string& ocpp_main_path, const std::string& user_config_path);
+    ChargePointConfiguration(const json& config, const std::string& ocpp_main_path,
+                             const std::string& user_config_path);
 
     // Internal config options
     std::string getChargePointId();
@@ -306,7 +307,7 @@ public:
     boost::optional<bool> getCentralContractValidationAllowed();
     void setCentralContractValidationAllowed(const bool central_contract_validation_allowed);
     boost::optional<KeyValue> getCentralContractValidationAllowedKeyValue();
-     
+
     boost::optional<int32_t> getCertSigningWaitMinimum();
     void setCertSigningWaitMinimum(const int32_t cert_signing_wait_minimum);
     boost::optional<KeyValue> getCertSigningWaitMinimumKeyValue();
@@ -314,7 +315,7 @@ public:
     boost::optional<int32_t> getCertSigningRepeatTimes();
     void setCertSigningRepeatTimes(const int32_t cert_signing_repeat_times);
     boost::optional<KeyValue> getCertSigningRepeatTimesKeyValue();
-    
+
     bool getContractValidationOffline();
     void setContractValidationOffline(const bool contract_validation_offline);
     KeyValue getContractValidationOfflineKeyValue();
@@ -322,6 +323,22 @@ public:
     int32_t getOcspRequestInterval();
     void setOcspRequestInterval(const int32_t ocsp_request_interval);
     KeyValue getOcspRequestIntervalKeyValue();
+
+    boost::optional<std::string> getSeccLeafSubjectCommonName();
+    void setSeccLeafSubjectCommonName(const std::string& secc_leaf_subject_common_name);
+    boost::optional<KeyValue> getSeccLeafSubjectCommonNameKeyValue();
+
+    boost::optional<std::string> getSeccLeafSubjectCountry();
+    void setSeccLeafSubjectCountry(const std::string& secc_leaf_subject_country);
+    boost::optional<KeyValue> getSeccLeafSubjectCountryKeyValue();
+
+    boost::optional<std::string> getSeccLeafSubjectOrganization();
+    void setSeccLeafSubjectOrganization(const std::string& secc_leaf_subject_organization);
+    boost::optional<KeyValue> getSeccLeafSubjectOrganizationKeyValue();
+
+    boost::optional<std::string> getConnectorEvseIds();
+    void setConnectorEvseIds(const std::string& connector_evse_ids);
+    boost::optional<KeyValue> getConnectorEvseIdsKeyValue();
 
     boost::optional<KeyValue> get(CiString<50> key);
 

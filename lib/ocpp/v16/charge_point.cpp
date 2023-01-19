@@ -1878,10 +1878,9 @@ void ChargePoint::sign_certificate(const ocpp::CertificateSigningUseEnum& certif
 
     SignCertificateRequest req;
 
-    // TODO(piet): Fix csr data
-    std::string csr = this->pki_handler->generateCsr(certificate_signing_use, "DE", "BW", "Bad Schoenborn",
-                                                     this->configuration->getCpoName().get().c_str(),
-                                                     this->configuration->getChargeBoxSerialNumber().c_str());
+    const auto csr = this->pki_handler->generateCsr(
+        certificate_signing_use, this->configuration->getSeccLeafSubjectCountry().value_or("DE"),
+        this->configuration->getCpoName().get(), this->configuration->getChargeBoxSerialNumber());
 
     req.csr = csr;
     ocpp::Call<SignCertificateRequest> call(req, this->message_queue->createMessageId());
@@ -2425,10 +2424,11 @@ void ChargePoint::data_transfer_pnc_sign_certificate() {
 
     ocpp::v201::SignCertificateRequest csr_req;
 
-    // TODO(piet): Fix csr data
-    const auto csr = this->pki_handler->generateCsr(ocpp::CertificateSigningUseEnum::V2GCertificate, "DE", "BW",
-                                                    "Bad Schoenborn", this->configuration->getCpoName().get().c_str(),
-                                                    this->configuration->getChargeBoxSerialNumber().c_str());
+    const auto csr = this->pki_handler->generateCsr(
+        ocpp::CertificateSigningUseEnum::V2GCertificate,
+        this->configuration->getSeccLeafSubjectCountry().value_or("DE"),
+        this->configuration->getSeccLeafSubjectOrganization().value_or(this->configuration->getCpoName().get()),
+        this->configuration->getSeccLeafSubjectCommonName().value_or(this->configuration->getChargeBoxSerialNumber()));
     csr_req.csr = csr;
     csr_req.certificateType = ocpp::v201::CertificateSigningUseEnum::V2GCertificate;
     req.data.emplace(json(csr_req).dump());
@@ -2554,16 +2554,17 @@ void ChargePoint::handle_data_transfer_pnc_trigger_message(Call<DataTransferRequ
 
     DataTransferResponse response;
 
-    if (this->configuration->getCpoName().has_value()) {
+    if (this->configuration->getCpoName().has_value() or
+        this->configuration->getSeccLeafSubjectOrganization().has_value()) {
         response.status = DataTransferStatus::Accepted;
         ocpp::v201::TriggerMessageResponse trigger_message_response;
         trigger_message_response.status = ocpp::v201::TriggerMessageStatusEnum::Accepted;
         response.data.emplace(json(trigger_message_response).dump());
     } else {
         EVLOG_warning << "Received Data Transfer TriggerMessage to trigger CSR but no "
-                         "CpoName is set.";
+                         "CpoName or SeccLeafSubjectOrganization is set.";
         response.status = DataTransferStatus::Rejected;
-        response.data.emplace("No CpoName is set. Cannot trigger CSR");
+        response.data.emplace("No CpoName or SeccLeafSubjectOrganization is set. Cannot trigger CSR");
     }
 
     CallResult<DataTransferResponse> call_result(response, call.uniqueId);
