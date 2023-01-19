@@ -14,7 +14,7 @@
           "type": "Actual"
         }
       ],
-      "description": "Maximum storage capacity",
+      "description": "Maximum storage capacity,",
       "type": "number"
     }
   },

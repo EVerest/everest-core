@@ -3,6 +3,19 @@
   "description": "Schema for SecurityCtrlr",
   "type": "object",
   "properties": {
+    "Enabled": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "type": "boolean"
+    },
     "AdditionalRootCertificateCheck": {
       "characteristics": {
         "supportsMonitoring": true,

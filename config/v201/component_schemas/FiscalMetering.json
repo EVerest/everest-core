@@ -14,7 +14,7 @@
           "type": "Actual"
         }
       ],
-      "description": " kWh",
+      "description": " kWh,Total energy transferred: e.g.  from EV during (ongoing or terminated) charging session (in wH by default)",
       "type": "number"
     },
     "EnergyExportRegister": {
@@ -28,7 +28,7 @@
           "type": "Actual"
         }
       ],
-      "description": " kWh",
+      "description": " kWh,Cumulative export kWh register value, such as from a (certified) fiscal energy meter.",
       "type": "number"
     },
     "EnergyImport": {
@@ -42,7 +42,7 @@
           "type": "Actual"
         }
       ],
-      "description": " kWh",
+      "description": " kWh,Total energy transferred.",
       "type": "number"
     },
     "EnergyImportRegister": {
@@ -56,7 +56,7 @@
           "type": "Actual"
         }
       ],
-      "description": " kWh",
+      "description": " kWh,Cumulative export kWh register value, such as from a (certified) fiscal energy meter.",
       "type": "number"
     }
   },

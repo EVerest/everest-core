@@ -5,7 +5,6 @@
 
 #include <everest/timer.hpp>
 
-#include <ocpp/common/database_handler.hpp>
 #include <ocpp/common/message_queue.hpp>
 #include <ocpp/common/pki_handler.hpp>
 #include <ocpp/common/websocket/websocket.hpp>
@@ -19,11 +18,23 @@ protected:
     std::unique_ptr<Websocket> websocket;
     std::shared_ptr<PkiHandler> pki_handler;
     std::shared_ptr<MessageLogging> logging;
-    std::shared_ptr<DatabaseHandler> database_handler;
 
     boost::shared_ptr<boost::asio::io_service::work> work;
     boost::asio::io_service io_service;
     std::thread io_service_thread;
+
+    boost::uuids::random_generator uuid_generator;
+
+    /// \brief Identifies the next timestamp at which a clock aligned meter value should be send
+    /// \param interval the configured AlignedDataInterval
+    /// \return boost::optional<DateTime> If \param interval > 0 it returns the next timestamp at which a clock aligned
+    /// meter value should be sent, else boost::none
+    boost::optional<DateTime> get_next_clock_aligned_meter_value_timestamp(const int32_t interval);
+
+    /// \brief Generates a uuid  
+    /// \return uuid
+    std::string uuid();
+
 
 public:
     ChargingStationBase();

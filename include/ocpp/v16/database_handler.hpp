@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
-#ifndef OCPP_COMMON_DATABASE_HANDLER_HPP
-#define OCPP_COMMON_DATABASE_HANDLER_HPP
+#ifndef OCPP_V16_DATABASE_HANDLER_HPP
+#define OCPP_V16_DATABASE_HANDLER_HPP
 
 #include "sqlite3.h"
 #include <boost/filesystem.hpp>
@@ -14,6 +14,7 @@
 #include <ocpp/v16/types.hpp>
 
 namespace ocpp {
+namespace v16 {
 
 /// \brief Struct that contains all attributes of a transaction entry in the database
 struct TransactionEntry {
@@ -75,8 +76,10 @@ public:
     /// \brief Updates the CSMS_ACK column for the transaction with the given \p session_id in the TRANSACTIONS table
     void update_transaction_csms_ack(const std::string& session_id);
 
-    /// \brief Updates the METER_LAST and METER_LAST_TIME column for the transaction with the given \p session_id in the TRANSACTIONS table
-    void update_transaction_meter_value(const std::string& session_id, const int32_t value, const std::string &timestamp);
+    /// \brief Updates the METER_LAST and METER_LAST_TIME column for the transaction with the given \p session_id in the
+    /// TRANSACTIONS table
+    void update_transaction_meter_value(const std::string& session_id, const int32_t value,
+                                        const std::string& timestamp);
 
     /// \brief Returns a list of all transactions in the database. If \p filter_complete is true, only incomplete
     /// transactions will be return. If \p filter_complete is false, all transactions will be returned
@@ -151,6 +154,7 @@ public:
     boost::optional<DateTime> get_last_ocsp_update();
 };
 
+} // namespace v16
 } // namespace ocpp
 
 #endif // OCPP_COMMON_DATABASE_HANDLER_HPP

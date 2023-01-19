@@ -32,15 +32,12 @@ template <> bool MessageQueue<v16::MessageType>::isTransactionMessage(ControlMes
 }
 
 template <> bool MessageQueue<v201::MessageType>::isTransactionMessage(ControlMessage<v201::MessageType>* message) {
-    // FIXME
-    // if (message == nullptr) {
-    //     return false;
-    // }
-    // if (message->messageType == v16::MessageType::StartTransaction ||
-    //     message->messageType == v16::MessageType::StopTransaction ||
-    //     message->messageType == v16::MessageType::MeterValues) {
-    //     return true;
-    // }
+    if (message == nullptr) {
+        return false;
+    }
+    if (message->messageType == v201::MessageType::TransactionEvent) {
+        return true;
+    }
     return false;
 }
 

@@ -13,7 +13,7 @@
           "type": "Actual"
         }
       ],
-      "description": "This variable reports current availability state for the Connector. Optional",
+      "description": "This variable reports current availability state for the Connector. Optional, because already reported in StatusNotification.",
       "type": "string"
     },
     "Available": {
@@ -40,7 +40,7 @@
           "type": "Actual"
         }
       ],
-      "description": "The Charging Control Protocol applicable to a Connector. CHAdeMO: CHAdeMO protocol",
+      "description": "The Charging Control Protocol applicable to a Connector. CHAdeMO: CHAdeMO protocol, ISO15118: ISO15118 V2G protocol (wired or wireless) as used with CCS, CPPWM: IEC61851-1 / SAE J1772  protocol (ELV DC & PWM signalling via Control Pilot wire), Uncontrolled: No charging power management applies (e.g. Schuko socket), Undetermined: Yet to be determined (e.g. before plugged in), Unknown: Not determinable, NOTE: ChargeProtocol is distinct from and orthogonal to connectorType.",
       "type": "string"
     },
     "ConnectorType": {
@@ -54,7 +54,7 @@
           "mutability": "ReadOnly"
         }
       ],
-      "description": "A value of ConnectorEnumType (See part 2) plus additionally: cGBT",
+      "description": "A value of ConnectorEnumType (See part 2) plus additionally: cGBT, cChaoJi, OppCharge. Specific type of connector, including sub-variant information. Note: Distinct and orthogonal to Charging Protocol, Power Type, Phases.",
       "type": "string"
     },
     "SupplyPhases": {

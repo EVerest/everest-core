@@ -20,8 +20,8 @@
         "EVConnectionTimeOut": 42,
         "StopTxOnEVSideDisconnect": true,
         "StopTxOnInvalidId": true,
-        "TxStartPoint": "",
-        "TxStopPoint": ""
+        "TxStartPoint": "PowerPathClosed",
+        "TxStopPoint": "EVConnected, Authorized"
     },
     "OCPPCommCtrlr": {
         "FileTransferProtocols": "",
@@ -35,15 +35,34 @@
         "UnlockOnEVSideDisconnect": true
     },
     "SampledDataCtrlr": {
-        "TxEndedInterval": 42,
-        "TxEndedMeasurands": "",
-        "TxStartedMeasurands": "",
-        "TxUpdatedInterval": 42,
-        "TxUpdatedMeasurands": ""
+        "SampledDataTxEndedInterval": 120,
+        "SampledDataTxEndedMeasurands": "Energy.Active.Import.Register,Current.Import",
+        "SampledDataTxStartedMeasurands": "Energy.Active.Import.Register,Power.Active.Import",
+        "SampledDataTxUpdatedInterval": 15,
+        "SampledDataTxUpdatedMeasurands": "Energy.Active.Import.Register,Current.Import,Voltage,Power.Active.Import,Power.Reactive.Import,Frequency"
     },
     "SecurityCtrlr": {
         "SecurityProfile": 1,
         "OrganizationName": "Pionix",
         "CertificateEntries": 100
+    },
+    "DeviceDataCtrlr": {
+        "ItemsPerMessageGetReport": 200,
+        "ItemsPerMessageGetVariables": 200,
+        "BytesPerMessageGetReport": 1000,
+        "BytesPerMessageGetVariables": 1000,
+        "ItemsPerMessageSetVariables": 200,
+        "BytesPerMessageSetVariables": 1000
+    },
+    "ClockCtrlr": {
+        "DateTime": "",
+        "TimeSource": "NTP"
+    },
+    "AlignedDataCtrlr": {
+        "AlignedDataMeasurands": "Energy.Active.Import.Register,Voltage",
+        "AlignedDataInterval": 30,
+        "AlignedDataSendDuringIdle": false,
+        "AlignedDataTxEndedMeasurands": "Energy.Active.Import.Register",
+        "AlignedDataTxEndedInterval": 60
     }
 }

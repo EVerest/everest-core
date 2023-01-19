@@ -17,7 +17,7 @@
       "description": "Local Authorization List is available.",
       "type": "boolean"
     },
-    "BytesPerMessage": {
+    "BytesPerMessageSendLocalList": {
       "characteristics": {
         "supportsMonitoring": true,
         "dataType": "integer"
@@ -42,7 +42,7 @@
           "mutability": "ReadWrite"
         }
       ],
-      "description": "If this variable exists and reports a value of true",
+      "description": "If this variable exists and reports a value of true, Local Authorization List is enabled.",
       "type": "boolean"
     },
     "Entries": {
@@ -59,7 +59,7 @@
       "description": "Amount of IdTokens currently in the Local Authorization List",
       "type": "integer"
     },
-    "ItemsPerMessage": {
+    "ItemsPerMessageSendLocalList": {
       "characteristics": {
         "supportsMonitoring": true,
         "dataType": "integer"
@@ -99,13 +99,13 @@
           "mutability": "ReadWrite"
         }
       ],
-      "description": "When set to true this variable disables the behavior to request authorization for an idToken that is stored in the local authorization list with a status other than Accepted",
+      "description": "When set to true this variable disables the behavior to request authorization for an idToken that is stored in the local authorization list with a status other than Accepted, as stated in C14.FR.03.",
       "type": "boolean"
     }
   },
   "required": [
-    "BytesPerMessage",
+    "BytesPerMessageSendLocalList",
     "Entries",
-    "ItemsPerMessage"
+    "ItemsPerMessageSendLocalList"
   ]
 }

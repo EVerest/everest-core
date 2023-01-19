@@ -3,6 +3,19 @@
   "description": "Schema for InternalCtrlr",
   "type": "object",
   "properties": {
+    "Enabled": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "type": "boolean"
+    },
     "ChargePointId": {
       "characteristics": {
         "supportsMonitoring": true,
@@ -300,6 +313,52 @@
       "maximum": 128,
       "default": "1",
       "type": "integer"
+    },
+    "UseSslDefaultVerifyPaths": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Use default verify paths for validating CSMS server certificate",
+      "default": "1",
+      "type": "boolean"
+    },
+    "OcspRequestInterval": {
+      "characteristics": {
+        "minLimit": 86400,
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Interval in seconds used to request OCSP revocation status information on the CSO Sub-CA certificates",
+      "minimum": 86400,
+      "default": "604800",
+      "type": "integer"
+    },
+    "WebsocketPingPayload": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "default": "hello there",
+      "type": "string"
     }
   },
   "required": [

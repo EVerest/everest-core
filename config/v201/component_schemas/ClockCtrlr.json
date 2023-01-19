@@ -3,6 +3,19 @@
   "description": "Schema for ClockCtrlr",
   "type": "object",
   "properties": {
+    "Enabled": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "type": "boolean"
+    },
     "DateTime": {
       "characteristics": {
         "supportsMonitoring": true,
@@ -14,9 +27,8 @@
           "mutability": "ReadOnly"
         }
       ],
-      "description": "Contains the current date and time",
-      "format": "date-time",
-      "type": "number"
+      "description": "Contains the current date and time,",
+      "type": "string"
     },
     "NextTimeOffsetTransitionDateTime": {
       "characteristics": {
@@ -30,8 +42,7 @@
         }
       ],
       "description": "Date time of the next time offset transition.",
-      "format": "date-time",
-      "type": "number"
+      "type": "string"
     },
     "NtpServerUri": {
       "characteristics": {
@@ -58,7 +69,7 @@
           "mutability": "ReadWrite"
         }
       ],
-      "description": "When an NTP client is implemented",
+      "description": "When an NTP client is implemented, this variable can be used to configure the client",
       "type": "string"
     },
     "TimeAdjustmentReportingThreshold": {
@@ -72,7 +83,7 @@
           "mutability": "ReadWrite"
         }
       ],
-      "description": "If set",
+      "description": "If set, then time adjustments with an absolute value in seconds larger than this need to be reported as a security event SettingSystemTime",
       "type": "integer"
     },
     "TimeOffset": {
@@ -86,7 +97,7 @@
           "mutability": "ReadWrite"
         }
       ],
-      "description": "A Time Offset with respect to Coordinated Universal Time (aka UTC or Greenwich Mean Time) in the form of an [RFC3339] time (zone) offset suffix",
+      "description": "A Time Offset with respect to Coordinated Universal Time (aka UTC or Greenwich Mean Time) in the form of an [RFC3339] time (zone) offset suffix, including the mandatory \u201c+\u201d or \u201c-\u201c prefix.",
       "type": "string"
     },
     "TimeOffsetNextTransition": {
@@ -114,7 +125,7 @@
           "mutability": "ReadWrite"
         }
       ],
-      "description": "Via this variable",
+      "description": "Via this variable, the Charging Station provides the CSMS with the option to configure multiple clock sources",
       "type": "string"
     },
     "TimeZone": {

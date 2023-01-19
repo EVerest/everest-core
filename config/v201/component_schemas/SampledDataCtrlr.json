@@ -14,7 +14,7 @@
           "mutability": "ReadOnly"
         }
       ],
-      "description": "If this variable reports a value of true",
+      "description": "If this variable reports a value of true, Sampled Data is supported",
       "type": "boolean"
     },
     "Enabled": {
@@ -28,10 +28,10 @@
           "mutability": "ReadWrite"
         }
       ],
-      "description": "If this variable reports a value of true",
+      "description": "If this variable reports a value of true, Sampled Data is enabled.",
       "type": "boolean"
     },
-    "SignReadings": {
+    "SampledDataSignReadings": {
       "characteristics": {
         "supportsMonitoring": true,
         "dataType": "boolean"
@@ -42,10 +42,10 @@
           "mutability": "ReadWrite"
         }
       ],
-      "description": "If set to true",
+      "description": "If set to true, the Charging Station SHALL include signed meter values in the TransactionEventRequest to the CSMS",
       "type": "boolean"
     },
-    "TxEndedInterval": {
+    "SampledDataTxEndedInterval": {
       "characteristics": {
         "unit": "s",
         "supportsMonitoring": true,
@@ -57,10 +57,10 @@
           "mutability": "ReadWrite"
         }
       ],
-      "description": "Interval between sampling of metering (or other) data",
+      "description": "Interval between sampling of metering (or other) data, intended to be transmitted in the TransactionEventRequest (eventType = Ended) message.",
       "type": "integer"
     },
-    "TxEndedMeasurands": {
+    "SampledDataTxEndedMeasurands": {
       "characteristics": {
         "supportsMonitoring": true,
         "dataType": "MemberList"
@@ -71,10 +71,10 @@
           "mutability": "ReadWrite"
         }
       ],
-      "description": "Sampled measurands to be included in the meterValues element of TransactionEventRequest (eventType = Ended)",
+      "description": "Sampled measurands to be included in the meterValues element of TransactionEventRequest (eventType = Ended), every SampledDataTxEndedInterval seconds from the start of the transaction.",
       "type": "string"
     },
-    "TxStartedMeasurands": {
+    "SampledDataTxStartedMeasurands": {
       "characteristics": {
         "supportsMonitoring": true,
         "dataType": "MemberList"
@@ -88,7 +88,7 @@
       "description": "Sampled measurand(s) to be taken at the start of any transaction to be included in the meterValues field of the first TransactionEventRequest message send at the start of a transaction (eventType = Started)",
       "type": "string"
     },
-    "TxUpdatedInterval": {
+    "SampledDataTxUpdatedInterval": {
       "characteristics": {
         "unit": "s",
         "supportsMonitoring": true,
@@ -100,10 +100,10 @@
           "mutability": "ReadWrite"
         }
       ],
-      "description": "Interval between sampling of metering (or other) data",
+      "description": "Interval between sampling of metering (or other) data, intended to be transmitted via TransactionEventRequest (eventType = Updated) messages",
       "type": "integer"
     },
-    "TxUpdatedMeasurands": {
+    "SampledDataTxUpdatedMeasurands": {
       "characteristics": {
         "supportsMonitoring": true,
         "dataType": "MemberList"
@@ -128,15 +128,15 @@
           "mutability": "ReadWrite"
         }
       ],
-      "description": "If this variable reports a value of true",
+      "description": "If this variable reports a value of true, then meter values of measurand Energy.Active.Import.Register will only report the total energy over all phases without reporting the individual phase values. If this variable is absent or false, then the value for each phase is reported, possibly also with a total value (depending on the meter).",
       "type": "boolean"
     }
   },
   "required": [
-    "TxEndedInterval",
-    "TxEndedMeasurands",
-    "TxStartedMeasurands",
-    "TxUpdatedInterval",
-    "TxUpdatedMeasurands"
+    "SampledDataTxEndedInterval",
+    "SampledDataTxEndedMeasurands",
+    "SampledDataTxStartedMeasurands",
+    "SampledDataTxUpdatedInterval",
+    "SampledDataTxUpdatedMeasurands"
   ]
 }

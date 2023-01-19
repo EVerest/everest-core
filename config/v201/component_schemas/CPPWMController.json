@@ -3,6 +3,19 @@
   "description": "Schema for CPPWMController",
   "type": "object",
   "properties": {
+    "Enabled": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "type": "boolean"
+    },
     "State": {
       "characteristics": {
         "supportsMonitoring": true,

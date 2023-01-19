@@ -3,6 +3,19 @@
   "description": "Schema for CustomizationCtrlr",
   "type": "object",
   "properties": {
+    "Enabled": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "type": "boolean"
+    },
     "CustomImplementationEnabled<vendorId>": {
       "characteristics": {
         "supportsMonitoring": true,

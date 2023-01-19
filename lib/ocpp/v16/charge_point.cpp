@@ -33,7 +33,7 @@ ChargePoint::ChargePoint(const json& config, const std::string& share_path, cons
         this->configuration->getAdditionalRootCertificateCheck().get_value_or(false));
     this->heartbeat_timer = std::make_unique<Everest::SteadyTimer>(&this->io_service, [this]() { this->heartbeat(); });
     this->heartbeat_interval = this->configuration->getHeartbeatInterval();
-    this->database_handler = std::make_shared<ocpp::DatabaseHandler>(this->configuration->getChargePointId(),
+    this->database_handler = std::make_shared<DatabaseHandler>(this->configuration->getChargePointId(),
                                                                      boost::filesystem::path(database_path),
                                                                      boost::filesystem::path(sql_init_path));
     this->database_handler->open_db_connection(this->configuration->getNumberOfConnectors());
@@ -254,26 +254,11 @@ void ChargePoint::update_meter_values_sample_interval() {
 }
 
 void ChargePoint::update_clock_aligned_meter_values_interval() {
-    int32_t clock_aligned_data_interval = this->configuration->getClockAlignedDataInterval();
-    if (clock_aligned_data_interval == 0) {
-        return;
+    const auto clock_aligned_data_interval = this->configuration->getClockAlignedDataInterval();
+    const auto next_timestamp = this->get_next_clock_aligned_meter_value_timestamp(clock_aligned_data_interval);
+    if (next_timestamp.has_value()) {
+        this->clock_aligned_meter_values_timer->at(next_timestamp.value().to_time_point());
     }
-    auto seconds_in_a_day = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::hours(24)).count();
-    auto now = date::utc_clock::now();
-    auto midnight = date::floor<date::days>(now) + std::chrono::seconds(date::get_tzdb().leap_seconds.size());
-    auto diff = now - midnight;
-    auto start = std::chrono::duration_cast<std::chrono::seconds>(diff / clock_aligned_data_interval) *
-                     clock_aligned_data_interval +
-                 std::chrono::seconds(clock_aligned_data_interval);
-    this->clock_aligned_meter_values_time_point = midnight + start;
-    using date::operator<<;
-    std::ostringstream oss;
-    EVLOG_debug << "Sending clock aligned meter values every " << clock_aligned_data_interval
-                << " seconds, starting at " << ocpp::DateTime(this->clock_aligned_meter_values_time_point)
-                << ". This amounts to " << seconds_in_a_day / clock_aligned_data_interval << " samples per day.";
-    EVLOG_debug << oss.str();
-
-    this->clock_aligned_meter_values_timer->at(this->clock_aligned_meter_values_time_point);
 }
 
 void ChargePoint::stop_pending_transactions() {

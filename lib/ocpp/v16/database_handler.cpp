@@ -3,9 +3,10 @@
 
 #include <everest/logging.hpp>
 
-#include <ocpp/common/database_handler.hpp>
+#include <ocpp/v16/database_handler.hpp>
 
 namespace ocpp {
+namespace v16 {
 
 DatabaseHandler::DatabaseHandler(const std::string& chargepoint_id, const boost::filesystem::path& database_path,
                                  const boost::filesystem::path& init_script_path) {
@@ -807,4 +808,5 @@ boost::optional<DateTime> DatabaseHandler::get_last_ocsp_update() {
     return DateTime(now);
 }
 
+} // namespace v16
 } // namespace ocpp

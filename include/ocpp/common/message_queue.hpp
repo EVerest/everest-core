@@ -248,6 +248,9 @@ public:
                     if (this->isTransactionMessage(this->in_flight)) {
                         EVLOG_info << "The message in flight is transaction related and will be sent again once the "
                                       "connection can be established again.";
+                        if (this->in_flight->message.at(CALL_ACTION) == "TransactionEvent") {
+                            this->in_flight->message.at(3)["offline"] = true;
+                        }
                     } else {
                         EVLOG_info << "The message in flight is not transaction related and will be dropped";
                         if (queue_type == QueueType::Normal) {

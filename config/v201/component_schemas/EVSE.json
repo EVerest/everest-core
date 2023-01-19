@@ -70,7 +70,7 @@
           "mutability": "ReadOnly"
         }
       ],
-      "description": " kW",
+      "description": " kW,The variableCharacteristic maxLimit, that holds the maximum power that this EVSE can provide, is required. The Actual value of the instantaneous (real) power is desired, but not required.",
       "type": "number"
     },
     "SupplyPhases": {

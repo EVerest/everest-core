@@ -3,6 +3,19 @@
   "description": "Schema for AuthCtrlr",
   "type": "object",
   "properties": {
+    "Enabled": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "type": "boolean"
+    },
     "AdditionalInfoItemsPerMessage": {
       "characteristics": {
         "supportsMonitoring": true,
@@ -31,20 +44,6 @@
       "description": "Whether a remote request to start a transaction in the form of RequestStartTransactionRequest message should be authorized beforehand like a local action to start a transaction.",
       "type": "boolean"
     },
-    "Enabled": {
-      "characteristics": {
-        "supportsMonitoring": true,
-        "dataType": "boolean"
-      },
-      "attributes": [
-        {
-          "type": "Actual",
-          "mutability": "ReadWrite"
-        }
-      ],
-      "description": "If set to false",
-      "type": "boolean"
-    },
     "LocalAuthorizeOffline": {
       "characteristics": {
         "supportsMonitoring": true,
@@ -56,7 +55,7 @@
           "mutability": "ReadWrite"
         }
       ],
-      "description": "Whether the Charging Station",
+      "description": "Whether the Charging Station, when Offline, will start a transaction for locally-authorized identifiers,",
       "type": "boolean"
     },
     "LocalPreAuthorize": {
@@ -70,7 +69,7 @@
           "mutability": "ReadWrite"
         }
       ],
-      "description": "Whether the Charging Station",
+      "description": "Whether the Charging Station, when online, will start a transaction for locally-authorized identifiers without waiting for or requesting an AuthorizeResponse from the CSMS.",
       "type": "boolean"
     },
     "MasterPassGroupId": {
@@ -84,7 +83,7 @@
           "mutability": "ReadWrite"
         }
       ],
-      "description": "IdTokens that have this id as groupId belong to the Master Pass Group. Meaning they can stop any ongoing transaction",
+      "description": "IdTokens that have this id as groupId belong to the Master Pass Group. Meaning they can stop any ongoing transaction, but cannot start transactions.",
       "type": "string"
     },
     "OfflineTxForUnknownIdEnabled": {
@@ -112,7 +111,7 @@
           "mutability": "ReadWrite"
         }
       ],
-      "description": "When set to true this instructs the Charging Station to not issue any AuthorizationRequests",
+      "description": "When set to true this instructs the Charging Station to not issue any AuthorizationRequests, but only use Authorization Cache and Local Authorization List to determine validity of idTokens.",
       "type": "boolean"
     }
   },

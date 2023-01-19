@@ -14,7 +14,7 @@
           "mutability": "ReadOnly"
         }
       ],
-      "description": "This variable can be used to indicate an on-load/in-transaction capability. If defined and true",
+      "description": "This variable can be used to indicate an on-load/in-transaction capability. If defined and true, this EVSE supports the selection of which phase to use for 1 phase AC charging.",
       "type": "boolean"
     },
     "Available": {
@@ -85,7 +85,7 @@
           "mutability": "ReadWrite"
         }
       ],
-      "description": "If at the Charging Station side a change in the limit in a ChargingProfile is lower than this percentage",
+      "description": "If at the Charging Station side a change in the limit in a ChargingProfile is lower than this percentage, the Charging Station MAY skip sending a NotifyChargingLimitRequest or a TransactionEventRequest message to the CSMS.",
       "type": "number"
     },
     "NotifyChargingLimitWithSchedules": {
@@ -127,10 +127,10 @@
           "mutability": "ReadOnly"
         }
       ],
-      "description": "If defined and true",
+      "description": "If defined and true, this Charging Station supports switching from 3 to 1 phase during a transaction",
       "type": "boolean"
     },
-    "ProfileStackLevel": {
+    "ChargingProfileMaxStackLevel": {
       "characteristics": {
         "supportsMonitoring": true,
         "dataType": "integer"
@@ -141,10 +141,10 @@
           "mutability": "ReadOnly"
         }
       ],
-      "description": "Maximum acceptable value for stackLevel in a ChargingProfile. Since the lowest stackLevel is 0",
+      "description": "Maximum acceptable value for stackLevel in a ChargingProfile. Since the lowest stackLevel is 0, this means that if SmartChargingCtrlr.ProfileStackLevel = 1, there can be at most 2 valid charging profiles per Charging Profile Purpose per EVSE.",
       "type": "integer"
     },
-    "RateUnit": {
+    "ChargingScheduleChargingRateUnit": {
       "characteristics": {
         "supportsMonitoring": true,
         "dataType": "MemberList"
@@ -155,15 +155,15 @@
           "mutability": "ReadOnly"
         }
       ],
-      "description": "A list of supported quantities for use in a ChargingSchedule. Allowed values: 'A' and 'W",
+      "description": "A list of supported quantities for use in a ChargingSchedule. Allowed values: 'A' and 'W\u2019",
       "type": "string"
     }
   },
   "required": [
+    "ChargingProfileMaxStackLevel",
+    "ChargingScheduleChargingRateUnit",
     "EntriesChargingProfiles",
     "LimitChangeSignificance",
-    "PeriodsPerSchedule",
-    "ProfileStackLevel",
-    "RateUnit"
+    "PeriodsPerSchedule"
   ]
 }

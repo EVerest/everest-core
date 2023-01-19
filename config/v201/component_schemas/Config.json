@@ -121,10 +121,14 @@
     }
   },
   "required": [
+    "AlignedDataCtrlr",
     "AuthCtrlr",
+    "ClockCtrlr",
+    "DeviceDataCtrlr",
     "InternalCtrlr",
     "OCPPCommCtrlr",
     "SampledDataCtrlr",
+    "SecurityCtrlr",
     "TxCtrlr"
   ]
 }

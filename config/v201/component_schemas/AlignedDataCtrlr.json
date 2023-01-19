@@ -3,20 +3,6 @@
   "description": "Schema for AlignedDataCtrlr",
   "type": "object",
   "properties": {
-    "Available": {
-      "characteristics": {
-        "supportsMonitoring": true,
-        "dataType": "boolean"
-      },
-      "attributes": [
-        {
-          "type": "Actual",
-          "mutability": "ReadOnly"
-        }
-      ],
-      "description": "If this variable reports a value of true",
-      "type": "boolean"
-    },
     "Enabled": {
       "characteristics": {
         "supportsMonitoring": true,
@@ -28,10 +14,23 @@
           "mutability": "ReadWrite"
         }
       ],
-      "description": "If this variable reports a value of true",
       "type": "boolean"
     },
-    "Interval": {
+    "Available": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "If this variable reports a value of true, Clock-Aligned Data is supported.",
+      "type": "boolean"
+    },
+    "AlignedDataInterval": {
       "characteristics": {
         "unit": "s",
         "supportsMonitoring": true,
@@ -43,10 +42,10 @@
           "mutability": "ReadWrite"
         }
       ],
-      "description": "Size (in seconds) of the clock-aligned data interval",
+      "description": "Size (in seconds) of the clock-aligned data interval, intended to be transmitted in the MeterValuesRequest message.",
       "type": "integer"
     },
-    "Measurands": {
+    "AlignedDataMeasurands": {
       "characteristics": {
         "supportsMonitoring": true,
         "dataType": "MemberList"
@@ -57,10 +56,10 @@
           "mutability": "ReadWrite"
         }
       ],
-      "description": "Clock-aligned measurand(s) to be included in MeterValuesRequest",
+      "description": "Clock-aligned measurand(s) to be included in MeterValuesRequest, every AlignedDataInterval seconds.",
       "type": "string"
     },
-    "SendDuringIdle": {
+    "AlignedDataSendDuringIdle": {
       "characteristics": {
         "supportsMonitoring": true,
         "dataType": "boolean"
@@ -71,10 +70,10 @@
           "mutability": "ReadWrite"
         }
       ],
-      "description": "If set to true",
+      "description": "If set to true, the Charging Station SHALL NOT send clock aligned meter values when a transaction is ongoing.",
       "type": "boolean"
     },
-    "SignReadings": {
+    "AlignedDataSignReadings": {
       "characteristics": {
         "supportsMonitoring": true,
         "dataType": "boolean"
@@ -85,10 +84,10 @@
           "mutability": "ReadWrite"
         }
       ],
-      "description": "If set to true",
+      "description": "If set to true, the Charging Station SHALL include signed meter values in the SampledValueType in the MeterValuesRequest to the CSMS.",
       "type": "boolean"
     },
-    "TxEndedInterval": {
+    "AlignedDataTxEndedInterval": {
       "characteristics": {
         "unit": "s",
         "supportsMonitoring": true,
@@ -100,10 +99,10 @@
           "mutability": "ReadWrite"
         }
       ],
-      "description": "Size (in seconds) of the clock-aligned data interval",
+      "description": "Size (in seconds) of the clock-aligned data interval, intended to be transmitted in the TransactionEventRequest (eventType = Ended) message.",
       "type": "integer"
     },
-    "TxEndedMeasurands": {
+    "AlignedDataTxEndedMeasurands": {
       "characteristics": {
         "supportsMonitoring": true,
         "dataType": "MemberList"
@@ -114,14 +113,14 @@
           "mutability": "ReadWrite"
         }
       ],
-      "description": "Clock-aligned measurands to be included in the meterValues element of TransactionEventRequest (eventType = Ended)",
+      "description": "Clock-aligned measurands to be included in the meterValues element of TransactionEventRequest (eventType = Ended), every SampledDataTxEndedInterval seconds from the start of the transaction.",
       "type": "string"
     }
   },
   "required": [
-    "Interval",
-    "Measurands",
-    "TxEndedInterval",
-    "TxEndedMeasurands"
+    "AlignedDataInterval",
+    "AlignedDataMeasurands",
+    "AlignedDataTxEndedInterval",
+    "AlignedDataTxEndedMeasurands"
   ]
 }

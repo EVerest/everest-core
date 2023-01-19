@@ -1,4 +1,5 @@
 set(OCPP2_0_1_PROFILE_SCHEMAS_DIR "component_schemas/")
+set(SQL_INIT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/init.sql")
 
 list(APPEND OCPP2_0_1_PROFILE_SCHEMAS
      AlignedDataCtrlr.json
@@ -50,3 +51,5 @@ install(
      FILES ${CONFIGS}
      DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/modules/OCPP201
 )
+
+install(FILES ${SQL_INIT_FILE} DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/modules/OCPP201)

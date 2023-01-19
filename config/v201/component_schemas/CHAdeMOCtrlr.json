@@ -3,6 +3,19 @@
   "description": "Schema for CHAdeMOCtrlr",
   "type": "object",
   "properties": {
+    "Enabled": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "type": "boolean"
+    },
     "SelftestActive": {
       "characteristics": {
         "supportsMonitoring": true,

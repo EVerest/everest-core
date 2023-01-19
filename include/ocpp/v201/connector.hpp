@@ -24,16 +24,29 @@ enum class ConnectorEvent {
     UnavailableToAvailable,
     UnavailableToOccupied,
     UnavailableToReserved,
-    UnavailableFaulted
+    UnavailableFaulted,
+    ReturnToOperativeState
 };
+
+namespace conversions {
+/// \brief Converts the given ConnectorEvent \p e to human readable string
+/// \returns a string representation of the ConnectorEvent
+std::string connector_event_to_string(ConnectorEvent e);
+
+/// \brief Converts the given std::string \p s to ConnectorEvent
+/// \returns a ConnectorEvent from a string representation
+ConnectorEvent string_to_connector_event(const std::string& s);
+} // namespace conversions
 
 /// \brief Represents a Connector, thus electrical outlet on a Charging Station. Single physical Connector.
 class Connector {
 private:
     int32_t connector_id;
     ConnectorStatusEnum state;
+    ConnectorStatusEnum last_state;
     std::mutex state_mutex;
 
+    void set_state(const ConnectorStatusEnum new_state);
     std::function<void(const ConnectorStatusEnum& status)> status_notification_callback;
 
 public:

@@ -14,7 +14,6 @@
 #include <everest/timer.hpp>
 
 #include <ocpp/common/charging_station_base.hpp>
-#include <ocpp/common/database_handler.hpp>
 #include <ocpp/common/message_queue.hpp>
 #include <ocpp/common/schemas.hpp>
 #include <ocpp/common/types.hpp>
@@ -22,6 +21,7 @@
 #include <ocpp/v16/charge_point_configuration.hpp>
 #include <ocpp/v16/charge_point_state_machine.hpp>
 #include <ocpp/v16/connector.hpp>
+#include <ocpp/v16/database_handler.hpp>
 #include <ocpp/v16/messages/Authorize.hpp>
 #include <ocpp/v16/messages/BootNotification.hpp>
 #include <ocpp/v16/messages/CancelReservation.hpp>
@@ -96,7 +96,7 @@ private:
     ChargePointConnectionState connection_state;
     std::unique_ptr<ChargePointStates> status;
     std::shared_ptr<ChargePointConfiguration> configuration;
-    std::shared_ptr<ocpp::DatabaseHandler> database_handler;
+    std::shared_ptr<DatabaseHandler> database_handler;
     std::unique_ptr<Everest::SteadyTimer> boot_notification_timer;
     std::unique_ptr<Everest::SteadyTimer> heartbeat_timer;
     std::unique_ptr<Everest::SystemTimer> clock_aligned_meter_values_timer;
@@ -104,7 +104,6 @@ private:
     std::unique_ptr<Everest::SteadyTimer> ocsp_request_timer;
     std::unique_ptr<Everest::SteadyTimer> client_certificate_timer;
     std::unique_ptr<Everest::SteadyTimer> v2g_certificate_timer;
-    std::chrono::time_point<date::utc_clock> clock_aligned_meter_values_time_point;
     std::mutex meter_values_mutex;
     std::mutex power_meters_mutex;
     std::map<int32_t, AvailabilityType> change_availability_queue; // TODO: move to Connectors
@@ -402,7 +401,7 @@ public:
     /// \brief called when a reservation ends at the given \p connector
     void on_reservation_end(int32_t connector);
 
-    /// \brief Notifies chargepoint that the \p connector is enabled 
+    /// \brief Notifies chargepoint that the \p connector is enabled
     void on_enabled(int32_t connector);
 
     /// \brief Notifies chargepoint that the \p connector is disabled

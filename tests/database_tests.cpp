@@ -4,7 +4,7 @@
 #include <boost/optional/optional_io.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
-#include <ocpp/common/database_handler.hpp>
+#include <ocpp/v16/database_handler.hpp>
 #include <thread>
 
 namespace ocpp {

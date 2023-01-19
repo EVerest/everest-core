@@ -17,7 +17,7 @@
       "description": "Whether display messages are supported.",
       "type": "boolean"
     },
-    "DisplayMessages": {
+    "NumberOfDisplayMessages": {
       "characteristics": {
         "supportsMonitoring": true,
         "dataType": "integer"
@@ -28,7 +28,7 @@
           "mutability": "ReadOnly"
         }
       ],
-      "description": "Amount of different messages that are currently configured in this Charging Station",
+      "description": "Amount of different messages that are currently configured in this Charging Station, via SetDisplayMessageRequest",
       "type": "integer"
     },
     "Enabled": {
@@ -58,7 +58,7 @@
       "description": "Max size (in characters) of the personal message element of the IdTokenInfo data (0 specifies no personal data may be stored).",
       "type": "integer"
     },
-    "SupportedFormats": {
+    "DisplayMessageSupportedFormats": {
       "characteristics": {
         "supportsMonitoring": true,
         "dataType": "MemberList"
@@ -72,7 +72,7 @@
       "description": "List of message formats supported by this Charging Station.",
       "type": "string"
     },
-    "SupportedPriorities": {
+    "DisplayMessageSupportedPriorities": {
       "characteristics": {
         "supportsMonitoring": true,
         "dataType": "MemberList"
@@ -88,8 +88,8 @@
     }
   },
   "required": [
-    "DisplayMessages",
-    "SupportedFormats",
-    "SupportedPriorities"
+    "DisplayMessageSupportedFormats",
+    "DisplayMessageSupportedPriorities",
+    "NumberOfDisplayMessages"
   ]
 }

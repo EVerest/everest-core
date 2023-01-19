@@ -3,6 +3,19 @@
   "description": "Schema for DeviceDataCtrlr",
   "type": "object",
   "properties": {
+    "Enabled": {
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "type": "boolean"
+    },
     "BytesPerMessageGetReport": {
       "characteristics": {
         "supportsMonitoring": true,
@@ -14,7 +27,7 @@
           "mutability": "ReadOnly"
         }
       ],
-      "description": "Maximum number of bytes in a message related to instance name: GetReport",
+      "description": "Maximum number of bytes in a message related to instance name: GetReport, GetVariables, SetVariables",
       "type": "integer"
     },
     "BytesPerMessageGetVariables": {
@@ -28,7 +41,7 @@
           "mutability": "ReadOnly"
         }
       ],
-      "description": "Maximum number of bytes in a message related to instance name: GetReport",
+      "description": "Maximum number of bytes in a message related to instance name: GetReport, GetVariables, SetVariables",
       "type": "integer"
     },
     "BytesPerMessageSetVariables": {
@@ -42,7 +55,7 @@
           "mutability": "ReadOnly"
         }
       ],
-      "description": "Maximum number of bytes in a message related to instance name: GetReport",
+      "description": "Maximum number of bytes in a message related to instance name: GetReport, GetVariables, SetVariables",
       "type": "integer"
     },
     "ConfigurationValueSize": {
@@ -70,7 +83,7 @@
           "mutability": "ReadOnly"
         }
       ],
-      "description": "Maximum number of ComponentVariable entries in message related to the instance name: GetReport",
+      "description": "Maximum number of ComponentVariable entries in message related to the instance name: GetReport, GetVariables, SetVariables",
       "type": "integer"
     },
     "ItemsPerMessageGetVariables": {
@@ -84,7 +97,7 @@
           "mutability": "ReadOnly"
         }
       ],
-      "description": "Maximum number of ComponentVariable entries in message related to the instance name: GetReport",
+      "description": "Maximum number of ComponentVariable entries in message related to the instance name: GetReport, GetVariables, SetVariables",
       "type": "integer"
     },
     "ItemsPerMessageSetVariables": {
@@ -98,7 +111,7 @@
           "mutability": "ReadOnly"
         }
       ],
-      "description": "Maximum number of ComponentVariable entries in message related to the instance name: GetReport",
+      "description": "Maximum number of ComponentVariable entries in message related to the instance name: GetReport, GetVariables, SetVariables",
       "type": "integer"
     },
     "ReportingValueSize": {
@@ -112,7 +125,7 @@
           "mutability": "ReadOnly"
         }
       ],
-      "description": "The limit to the following fields: GetVariableResult.attributeValue",
+      "description": "The limit to the following fields: GetVariableResult.attributeValue, VariableAttribute.value and EventData.actualValue. The max size of these values will always remain equal.",
       "type": "integer"
     },
     "ValueSize": {
@@ -125,7 +138,7 @@
           "type": "Actual"
         }
       ],
-      "description": "Can be used to limit the following fields: SetVariableData.attributeValue",
+      "description": "Can be used to limit the following fields: SetVariableData.attributeValue, GetVariableResult.attributeValue, VariableAttribute.value, VariableCharacteristics.valueList and EventData.actualValue.",
       "type": "integer"
     }
   },

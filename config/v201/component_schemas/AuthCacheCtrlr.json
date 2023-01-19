@@ -14,7 +14,7 @@
           "mutability": "ReadOnly"
         }
       ],
-      "description": "Authorization caching is available",
+      "description": "Authorization caching is available, but not necessarily enabled.",
       "type": "boolean"
     },
     "Enabled": {
@@ -28,10 +28,10 @@
           "mutability": "ReadWrite"
         }
       ],
-      "description": "If set to true",
+      "description": "If set to true, Authorizaiton caching is enabled.",
       "type": "boolean"
     },
-    "LifeTime": {
+    "AuthCacheLifeTime": {
       "characteristics": {
         "supportsMonitoring": true,
         "dataType": "integer"
@@ -45,7 +45,7 @@
       "description": "Indicates how long it takes until a token expires in the authorization cache since it is last used",
       "type": "integer"
     },
-    "Policy": {
+    "AuthCachePolicy": {
       "characteristics": {
         "supportsMonitoring": true,
         "dataType": "OptionList"
@@ -56,10 +56,10 @@
           "mutability": "ReadWrite"
         }
       ],
-      "description": "Cache Entry Replacement Policy: least recently used",
+      "description": "Cache Entry Replacement Policy: least recently used, least frequently used, first in first out, other custom mechanism.",
       "type": "string"
     },
-    "Storage": {
+    "AuthCacheStorage": {
       "characteristics": {
         "unit": "B",
         "supportsMonitoring": true,
@@ -74,7 +74,7 @@
       "description": "Indicates the number of bytes currently used by the Authorization Cache. MaxLimit indicates the maximum number of bytes that can be used by the Authorization Cache.",
       "type": "integer"
     },
-    "DisablePostAuthorize": {
+    "AuthCacheDisablePostAuthorize": {
       "characteristics": {
         "supportsMonitoring": true,
         "dataType": "boolean"
@@ -85,7 +85,7 @@
           "mutability": "ReadWrite"
         }
       ],
-      "description": "When set to true this variable disables the behavior to request authorization for an idToken that is stored in the cache with a status other than Accepted",
+      "description": "When set to true this variable disables the behavior to request authorization for an idToken that is stored in the cache with a status other than Accepted, as stated in C10.FR.03 and C12.FR.05.",
       "type": "boolean"
     }
   },
