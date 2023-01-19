@@ -327,21 +327,34 @@ static std::map<pid_t, std::string> start_modules(Config& config, MQTTAbstractio
         // FIXME (aw): implicitely adding ModuleReadyInfo and setting its ready member
         auto module_it = modules_ready.emplace(module_name, ModuleReadyInfo{false, nullptr}).first;
 
-        Handler module_ready_handler = [module_name, &mqtt_abstraction](nlohmann::json json) {
+        Handler module_ready_handler = [module_name, &mqtt_abstraction, standalone_modules](nlohmann::json json) {
             EVLOG_debug << fmt::format("received module ready signal for module: {}({})", module_name, json.dump());
             std::unique_lock<std::mutex> lock(modules_ready_mutex);
             // FIXME (aw): here are race conditions, if the ready handler gets called while modules are shut down!
             modules_ready.at(module_name).ready = json.get<bool>();
+            auto modules_spawned = 0;
             for (const auto& mod : modules_ready) {
                 std::string text_ready =
                     fmt::format((mod.second.ready) ? TERMINAL_STYLE_OK : TERMINAL_STYLE_ERROR, "ready");
                 EVLOG_debug << fmt::format("  {}: {}", mod.first, text_ready);
+                if (mod.second.ready) {
+                    modules_spawned += 1;
+                }
+            }
+            if (!standalone_modules.empty() && std::find(standalone_modules.begin(), standalone_modules.end(),
+                                                         module_name) != standalone_modules.end()) {
+                EVLOG_info << fmt::format("Standalone module {} initialized.", module_name);
             }
             if (std::all_of(modules_ready.begin(), modules_ready.end(),
                             [](const auto& element) { return element.second.ready; })) {
                 EVLOG_info << fmt::format(TERMINAL_STYLE_OK,
                                           ">>> All modules are initialized. EVerest up and running <<<");
                 mqtt_abstraction.publish("everest/ready", nlohmann::json(true));
+            } else if (!standalone_modules.empty()) {
+                if (modules_spawned == modules_ready.size() - standalone_modules.size()) {
+                    EVLOG_info << fmt::format(fg(fmt::terminal_color::green),
+                                              "Modules started by manager are ready, waiting for standalone modules.");
+                }
             }
         };
 
