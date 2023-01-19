@@ -3,7 +3,7 @@ add_library(ocpp)
 add_library(everest::ocpp ALIAS ocpp)
 target_sources(ocpp
     PRIVATE
-        ocpp/common/charge_point.cpp
+        ocpp/common/charging_station_base.cpp
         ocpp/common/database_handler.cpp
         ocpp/common/message_queue.cpp
         ocpp/common/ocpp_logging.cpp
@@ -19,10 +19,12 @@ target_sources(ocpp
         ocpp/v16/ocpp_types.cpp
         ocpp/v16/types.cpp
         ocpp/v201/charge_point.cpp
-        ocpp/v201/charge_point_configuration.cpp
+        ocpp/v201/device_model_management.cpp
         ocpp/v201/enums.cpp
         ocpp/v201/ocpp_types.cpp
         ocpp/v201/types.cpp
+        ocpp/v201/connector.cpp
+        ocpp/v201/evse.cpp
 )
 
 add_subdirectory(ocpp/common/websocket)

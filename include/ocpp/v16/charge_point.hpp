@@ -13,7 +13,7 @@
 
 #include <everest/timer.hpp>
 
-#include <ocpp/common/charge_point.hpp>
+#include <ocpp/common/charging_station_base.hpp>
 #include <ocpp/common/database_handler.hpp>
 #include <ocpp/common/message_queue.hpp>
 #include <ocpp/common/schemas.hpp>
@@ -70,7 +70,7 @@ namespace ocpp {
 namespace v16 {
 
 /// \brief Contains a ChargePoint implementation compatible with OCPP-J 1.6
-class ChargePoint : ocpp::ChargePoint {
+class ChargePoint : ocpp::ChargingStationBase {
 private:
     std::unique_ptr<MessageQueue<v16::MessageType>> message_queue;
     std::map<int32_t, std::shared_ptr<Connector>> connectors;
@@ -82,6 +82,7 @@ private:
     std::set<MessageType> allowed_message_types;
     std::mutex allowed_message_types_mutex;
     RegistrationStatus registration_status;
+    ChargePointConnectionState connection_state;
     std::unique_ptr<ChargePointStates> status;
     std::shared_ptr<ChargePointConfiguration> configuration;
     std::shared_ptr<ocpp::DatabaseHandler> database_handler;

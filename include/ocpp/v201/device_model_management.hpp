@@ -63,6 +63,12 @@ struct EnhancedVariable : Variable {
     std::map<AttributeEnum, VariableAttribute> attributes;
     boost::optional<VariableCharacteristics> characteristics;
     std::vector<VariableMonitoring> monitorings;
+
+    bool operator==(const Variable& other) const {
+        // variables are equal when they have an equal name and equal or no instance
+        return this->name == other.name and ((!this->instance.has_value() and !other.instance.has_value()) or
+                                             this->instance.value() == other.instance.value());
+    };
 };
 
 /// \brief Component extended by a collection of EnhancedVariables
@@ -70,17 +76,49 @@ struct EnhancedComponent : Component {
     EnhancedComponent(const std::string& name) {
         this->name = name;
     }
-    std::map<std::string, EnhancedVariable> variables;
+    std::map<std::string, EnhancedVariable> variables; // key is variable name
+
+    bool operator==(const Component& other) const {
+        // components are equal when they have an equal name and equal or no instance
+        return this->name == other.name and ((!this->instance.has_value() and !other.instance.has_value()) or
+                                             this->instance.value() == other.instance.value());
+    };
 };
 
 /// \brief Class for configuration and monitoring of OCPP components and variables
-class ChargePointConfiguration {
+class DeviceModelManager {
 private:
     std::map<StandardizedComponent, EnhancedComponent> components;
 
 public:
-    ChargePointConfiguration(const json& config, const std::string& ocpp_main_path,
-                             std::shared_ptr<ocpp::PkiHandler> pki_handler);
+    /// \brief Construct a new DeviceModelManager object
+    /// \param config OCPP json config
+    /// \param ocpp_main_path path where utility files for OCPP are read and written to
+    DeviceModelManager(const json& config, const std::string& ocpp_main_path);
+
+    /// \brief Set the variable specified by \p set_variable_data
+    /// \param set_variable_data specifies the variable to be set
+    /// \return SetVariableStatusEnum indicating the result of the operation
+    SetVariableStatusEnum set_variable(const SetVariableData& set_variable_data);
+
+    /// \brief Get the variable specified by \p get_variable_data
+    /// \param get_variable_data specifies the variable to get
+    /// \return std::pair<GetVariableStatusEnum, boost::optional<CiString<2500>>> first item of the pair indicates the
+    /// result of the operation and the second item optionally contains the value
+    std::pair<GetVariableStatusEnum, boost::optional<CiString<2500>>>
+    get_variable(const GetVariableData& get_variable_data);
+
+    /// \brief This function returns an std::vector<ReportData> based on the options specified by the arguments \p
+    /// report_base, \p component_variables and \p component_criteria
+    /// \param report_base optionally specifies the type of inventory data that should be included in the result
+    /// \param component_variables optionally specifies std::vector<ComponentVariables> that should be included in the
+    /// result
+    /// \param component_criteria optionally specifies std::vector<ComponentCriterionEnum> that should be
+    /// included in the result \return std::vector<ReportData>
+    std::vector<ReportData>
+    get_report_data(const boost::optional<ReportBaseEnum>& report_base = boost::none,
+                    const boost::optional<std::vector<ComponentVariable>>& component_variables = boost::none,
+                    const boost::optional<std::vector<ComponentCriterionEnum>>& component_criteria = boost::none);
 
     /// \brief Returns ChargePointId
     std::string get_charge_point_id();
@@ -135,6 +173,12 @@ public:
 
     /// \brief Sets WebsocketReconnectInterval to given \p websocket_reconnect_interval
     void set_websocket_reconnect_interval(const int32_t& websocket_reconnect_interval);
+
+    /// \brief Returns NumberOfConnectors
+    int32_t get_number_of_connectors();
+
+    /// \brief Sets NumberOfConnectors to given \p number_of_connectors
+    void set_number_of_connectors(const int32_t& number_of_connectors);
 
     /// \brief Returns Interval
     int32_t get_interval();

@@ -6,6 +6,7 @@
         "ChargePointModel": "Yeti",
         "ChargePointVendor": "Pionix",
         "FirmwareVersion": "0.4",
+        "NumberOfConnectors": 2,
         "SupportedCiphers12": "ECDHE-ECDSA-AES128-GCM-SHA256,ECDHE-ECDSA-AES256,GCM-SHA384,AES128-GCM-SHA256,AES256-GCM-SHA384,TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256",
         "SupportedCiphers13": "TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256",
         "WebsocketReconnectInterval": 30
@@ -41,7 +42,7 @@
         "TxUpdatedMeasurands": ""
     },
     "SecurityCtrlr": {
-        "SecurityProfile": 0,
+        "SecurityProfile": 1,
         "OrganizationName": "Pionix",
         "CertificateEntries": 100
     }

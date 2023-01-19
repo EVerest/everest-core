@@ -543,5 +543,36 @@ std::ostream& operator<<(std::ostream& os, const MessageType& message_type) {
     return os;
 }
 
+namespace conversions {
+
+std::string websocket_connection_status_to_string(WebsocketConnectionStatusEnum m) {
+    switch (m) {
+    case WebsocketConnectionStatusEnum::Connected:
+        return "Connected";
+    case WebsocketConnectionStatusEnum::Disconnected:
+        return "Disconnected";
+    default:
+        throw std::out_of_range("No known string conversion for provided enum of type MessageType");
+    }
+}
+
+/// \brief Converts the given std::string \p s to WebsocketConnectionStatusEnum
+/// \returns a WebsocketConnectionStatusEnum from a string representation
+WebsocketConnectionStatusEnum string_to_websocket_connection_status(const std::string& s) {
+    if (s == "Connected") {
+        return WebsocketConnectionStatusEnum::Connected;
+    } else if (s == "Disconnected") {
+        return WebsocketConnectionStatusEnum::Disconnected;
+    }
+    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type WebsocketConnectionStatusEnum");
+}
+
+} // namespace conversions
+
+std::ostream& operator<<(std::ostream& os, const WebsocketConnectionStatusEnum& websocket_connection_status) {
+    os << conversions::websocket_connection_status_to_string(websocket_connection_status);
+    return os;
+}
+
 } // namespace v201
 } // namespace ocpp

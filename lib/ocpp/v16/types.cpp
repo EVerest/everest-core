@@ -487,6 +487,52 @@ std::ostream& operator<<(std::ostream& os, const SupportedFeatureProfiles& suppo
     return os;
 }
 
+namespace conversions {
+
+std::string charge_point_connection_state_to_string(ChargePointConnectionState e) {
+    switch (e) {
+    case ChargePointConnectionState::Disconnected:
+        return "Disconnected";
+    case ChargePointConnectionState::Connected:
+        return "Connected";
+    case ChargePointConnectionState::Booted:
+        return "Booted";
+    case ChargePointConnectionState::Pending:
+        return "Pending";
+    case ChargePointConnectionState::Rejected:
+        return "Rejected";
+    }
+
+    throw std::out_of_range("No known string conversion for provided enum of type ChargePointConnectionState");
+}
+
+ChargePointConnectionState string_to_charge_point_connection_state(const std::string& s) {
+    if (s == "Disconnected") {
+        return ChargePointConnectionState::Disconnected;
+    }
+    if (s == "Connected") {
+        return ChargePointConnectionState::Connected;
+    }
+    if (s == "Booted") {
+        return ChargePointConnectionState::Booted;
+    }
+    if (s == "Pending") {
+        return ChargePointConnectionState::Pending;
+    }
+    if (s == "Rejected") {
+        return ChargePointConnectionState::Rejected;
+    }
+
+    throw std::out_of_range("Provided string " + s +
+                            " could not be converted to enum of type ChargePointConnectionState");
+}
+} // namespace conversions
+
+std::ostream& operator<<(std::ostream& os, const ChargePointConnectionState& charge_point_connection_state) {
+    os << conversions::charge_point_connection_state_to_string(charge_point_connection_state);
+    return os;
+}
+
 bool MeasurandWithPhase::operator==(MeasurandWithPhase measurand_with_phase) {
     if (this->measurand == measurand_with_phase.measurand) {
         if (this->phase || measurand_with_phase.phase) {

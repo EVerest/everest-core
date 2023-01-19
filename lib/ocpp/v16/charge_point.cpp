@@ -14,8 +14,9 @@ namespace v16 {
 ChargePoint::ChargePoint(const json& config, const std::string& share_path, const std::string& user_config_path,
                          const std::string& database_path, const std::string& sql_init_path,
                          const std::string& message_log_path) :
-    ocpp::ChargePoint(),
+    ocpp::ChargingStationBase(),
     initialized(false),
+    connection_state(ChargePointConnectionState::Disconnected),
     registration_status(RegistrationStatus::Pending),
     diagnostics_status(DiagnosticsStatus::Idle),
     firmware_status(FirmwareStatus::Idle),

@@ -402,7 +402,7 @@ public:
     /// \brief Handles a message timeout or a CALLERROR. \p enhanced_message_opt is set only in case of CALLERROR
     void handle_timeout_or_callerror(const boost::optional<EnhancedMessage<M>>& enhanced_message_opt) {
         std::lock_guard<std::mutex> lk(this->message_mutex);
-        EVLOG_warning << "Message timeout for: " << this->in_flight->messageType << " (" << this->in_flight->uniqueId()
+        EVLOG_warning << "Message timeout or CALLERROR for: " << this->in_flight->messageType << " (" << this->in_flight->uniqueId()
                       << ")";
         if (this->isTransactionMessage(this->in_flight)) {
             if (this->in_flight->message_attempts < this->transaction_message_attempts) {

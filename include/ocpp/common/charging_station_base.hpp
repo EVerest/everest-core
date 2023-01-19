@@ -12,8 +12,8 @@
 
 namespace ocpp {
 
-/// \brief Common base class for OCPP1.6 and OCPP2.0.1 chargepoints
-class ChargePoint {
+/// \brief Common base class for OCPP1.6 and OCPP2.0.1 charging stations
+class ChargingStationBase {
 
 protected:
     std::unique_ptr<Websocket> websocket;
@@ -21,15 +21,13 @@ protected:
     std::shared_ptr<MessageLogging> logging;
     std::shared_ptr<DatabaseHandler> database_handler;
 
-    ChargePointConnectionState connection_state;
-
     boost::shared_ptr<boost::asio::io_service::work> work;
     boost::asio::io_service io_service;
     std::thread io_service_thread;
 
 public:
-    ChargePoint();
-    virtual ~ChargePoint(){};
+    ChargingStationBase();
+    virtual ~ChargingStationBase(){};
 };
 
 } // namespace ocpp

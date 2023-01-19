@@ -118,6 +118,8 @@
     },
     "SecurityProfile": {
       "characteristics": {
+        "minLimit": 1,
+        "maxLimit": 3,
         "supportsMonitoring": true,
         "dataType": "integer"
       },
@@ -128,6 +130,8 @@
         }
       ],
       "description": "The security profile used by the Charging Station.",
+      "minimum": 1,
+      "maximum": 3,
       "type": "integer"
     }
   },

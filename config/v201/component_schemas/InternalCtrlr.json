@@ -282,6 +282,24 @@
       ],
       "default": "31536000",
       "type": "integer"
+    },
+    "NumberOfConnectors": {
+      "characteristics": {
+        "minLimit": 1,
+        "maxLimit": 128,
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "minimum": 1,
+      "maximum": 128,
+      "default": "1",
+      "type": "integer"
     }
   },
   "required": [
@@ -291,6 +309,7 @@
     "ChargePointModel",
     "ChargePointVendor",
     "FirmwareVersion",
+    "NumberOfConnectors",
     "SupportedCiphers12",
     "SupportedCiphers13",
     "WebsocketReconnectInterval"

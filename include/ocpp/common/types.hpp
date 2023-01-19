@@ -255,28 +255,6 @@ void from_json(const json& j, CallError& c);
 std::ostream& operator<<(std::ostream& os, const CallError& c);
 
 /// \brief Contains the different connection states of the charge point
-enum ChargePointConnectionState {
-    Disconnected,
-    Connected,
-    Booted,
-    Pending,
-    Rejected,
-};
-namespace conversions {
-/// \brief Converts the given ChargePointConnectionState \p e to std::string
-/// \returns a string representation of the ChargePointConnectionState
-std::string charge_point_connection_state_to_string(ChargePointConnectionState e);
-
-/// \brief Converts the given std::string \p s to ChargePointConnectionState
-/// \returns a ChargePointConnectionState from a string representation
-ChargePointConnectionState string_to_charge_point_connection_state(const std::string& s);
-} // namespace conversions
-
-/// \brief Writes the string representation of the given \p charge_point_connection_state
-/// to the given output stream \p os \returns an output stream with the ChargePointConnectionState written to
-std::ostream& operator<<(std::ostream& os, const ChargePointConnectionState& charge_point_connection_state);
-
-/// \brief Contains the different connection states of the charge point
 enum SessionStartedReason {
     EVConnected,
     Authorized
