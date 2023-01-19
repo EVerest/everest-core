@@ -55,7 +55,7 @@ catch2:
   git_tag: v2.13.9
 pybind11:
   git: https://github.com/pybind/pybind11.git
-  git_tag: v2.9.2
+  git_tag: v2.10.3
 pybind11_json:
   git: https://github.com/pybind/pybind11_json.git
   git_tag: 0.2.12
