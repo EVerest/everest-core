@@ -7,21 +7,19 @@ const { setInterval } = require('timers');
 let globalconf;
 
 // Command enable
-function enable(mod, raw_data) {
+function enable(mod, {value}) {
   if (mod === undefined || mod.provides === undefined) {
     evlog.warning('Already received data, but framework is not ready yet');
     return;
   }
 
-  const en = raw_data.value === 'true';
-
   // ignore if not changed
-  if (mod.enabled == en) return;
+  if (mod.enabled == value) return;
 
   simdata_reset_defaults(mod);
 
   // Start/Stop execution timer
-  if (en) {
+  if (value) {
     mod.enabled = true;
     mod.loopInterval = setInterval(simulation_loop, 250, mod);
   } else {
@@ -30,10 +28,10 @@ function enable(mod, raw_data) {
   }
 
   // Enable/Disable HIL
-  mod.uses.simulation_control.call.enable({ value: en });
+  mod.uses.simulation_control.call.enable({ value });
 
   // Publish new simualtion enabled/disabled
-  mod.provides.main.publish.enabled(en);
+  mod.provides.main.publish.enabled(value);
 }
 
 // Command execute_charging_session
@@ -87,7 +85,7 @@ boot_module(async ({
   setup, info, config, mqtt,
 }) => {
   // Subscribe external cmds for nodered
-  mqtt.subscribe(`everest_external/nodered/${config.module.connector_id}/carsim/cmd/enable`, (mod, en) => { enable(mod, { value: en }); });
+  mqtt.subscribe(`everest_external/nodered/${config.module.connector_id}/carsim/cmd/enable`, (mod, en) => { enable(mod, { value: JSON.parse(en) }); });
   mqtt.subscribe(`everest_external/nodered/${config.module.connector_id}/carsim/cmd/execute_charging_session`, (mod, str) => {
     execute_charging_session(mod, { value: str });
   });
@@ -115,7 +113,7 @@ boot_module(async ({
 }).then((mod) => {
   registerAllCmds(mod);
   mod.enabled = false;
-  if (globalconf.module.auto_enable) enable(mod, { value: 'true' });
+  if (globalconf.module.auto_enable) enable(mod, { value: true });
   if (globalconf.module.auto_exec) execute_charging_session(mod, { value: globalconf.module.auto_exec_commands });
 });
 
