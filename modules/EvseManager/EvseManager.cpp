@@ -420,7 +420,7 @@ void EvseManager::ready() {
         // Forward events from BSP to SLAC module before we process the events in the charger
         if (slac_enabled) {
             if (event == types::board_support::Event::EFtoBCD) {
-                // his means entering BCD from E|F
+                // this means entering BCD from E|F
                 r_slac[0]->call_enter_bcd();
             } else if (event == types::board_support::Event::BCDtoEF) {
                 r_slac[0]->call_leave_bcd();
