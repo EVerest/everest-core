@@ -75,6 +75,13 @@ cmds:
       value:
         description: Time in ms for the duration of the replug sequence
         type: integer
+  read_pp_ampacity:
+    description: >-
+      Read the current carrying capacity of the connected cable in ampere.
+      In case of a fixed cable the configured maximum current the hardware can handle will be reported.
+    result:
+      description: Returns the current carrying capacity of the connected cable in ampere
+      type: number
 vars:
   event:
     description: Event from ControlPilot signal/Relais/RCD

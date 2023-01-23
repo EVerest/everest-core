@@ -132,6 +132,12 @@ void board_support_ACImpl::handle_evse_replug(int& value) {
     mod->serial.replug(value);
 };
 
+double board_support_ACImpl::handle_read_pp_ampacity() {
+    // FIXME: read PP ampacity from yeti, report back maximum current the hardware can handle for now
+    std::lock_guard<std::mutex> lock(capsMutex);
+    return caps.max_current_A;
+}
+
 types::board_support::HardwareCapabilities board_support_ACImpl::handle_get_hw_capabilities() {
     std::lock_guard<std::mutex> lock(capsMutex);
     return caps;
