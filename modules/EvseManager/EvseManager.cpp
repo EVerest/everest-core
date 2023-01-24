@@ -115,6 +115,9 @@ void EvseManager::ready() {
 
             // Isolation monitoring for DC charging handler
             if (!r_imd.empty()) {
+
+                imd_stop();
+
                 r_imd[0]->subscribe_IsolationMeasurement([this](types::isolation_monitor::IsolationMeasurement m) {
                     // new DC isolation monitoring measurement received
                     EVLOG_info << fmt::format("Isolation measurement P {} N {}.", m.resistance_P_Ohm,
@@ -136,9 +139,17 @@ void EvseManager::ready() {
                             present_values.EVSEPresentCurrent.get() + config.hack_present_current_offset;
                     }
 
+                    if (config.hack_pause_imd_during_precharge && m.voltage_V * m.current_A > 1000) {
+                        // Start IMD again as it was stopped after CableCheck
+                        imd_start();
+                        EVLOG_info << "Hack: Restarting Isolation Measurement at " << m.voltage_V << " " << m.current_A;
+                    }
+
                     r_hlc[0]->call_set_DC_EVSEPresentVoltageCurrent(present_values);
-                    // publish EV_info
+
                     {
+                        // dont publish ev_info here, it will be published when other values change.
+                        // otherwise we will create too much traffic on mqtt
                         std::scoped_lock lock(ev_info_mutex);
                         ev_info.present_voltage = present_values.EVSEPresentVoltage;
                         ev_info.present_current = present_values.EVSEPresentCurrent;
@@ -185,14 +196,14 @@ void EvseManager::ready() {
             r_hlc[0]->subscribe_DC_Open_Contactor([this](bool b) {
                 if (b)
                     powersupply_DC_off();
-                r_imd[0]->call_stop();
+                imd_stop();
             });
 
             // Back up switch off - charger signalled that it needs to switch off now.
             // During normal operation this should be done earlier before switching off relais by HLC protocol.
             charger->signal_DC_supply_off.connect([this] {
                 powersupply_DC_off();
-                r_imd[0]->call_stop();
+                imd_stop();
             });
 
             // Current demand has finished - switch off DC supply
@@ -810,14 +821,14 @@ void EvseManager::cable_check() {
         if (!contactor_open && powersupply_DC_set(config.dc_isolation_voltage, 2)) {
 
             powersupply_DC_on();
-            r_imd[0]->call_start();
+            imd_start();
 
             // wait until the voltage has rised to the target value
             if (!wait_powersupply_DC_voltage_reached(config.dc_isolation_voltage)) {
                 EVLOG_info << "Voltage did not rise to 500V within timeout";
                 powersupply_DC_off();
                 ok = false;
-                r_imd[0]->call_stop();
+                imd_stop();
             } else {
                 // read out one new isolation resistance
                 isolation_measurement.clear();
@@ -853,7 +864,7 @@ void EvseManager::cable_check() {
                                                        m.resistance_N_Ohm);
                             ok = false;
                             r_hlc[0]->call_set_EVSEIsolationStatus(types::iso15118_charger::IsolationStatus::Fault);
-                            r_imd[0]->call_stop();
+                            imd_stop();
                         } else if (m.resistance_N_Ohm < min_resistance_ok || m.resistance_P_Ohm < min_resistance_ok) {
                             EVLOG_error << fmt::format("Isolation measurement WARNING P {} N {}.", m.resistance_P_Ohm,
                                                        m.resistance_N_Ohm);
@@ -869,6 +880,9 @@ void EvseManager::cable_check() {
                 }
             }
         }
+
+        if (config.hack_pause_imd_during_precharge)
+            imd_stop();
 
         // Sleep before submitting result to spend more time in cable check. This is needed for some solar inverters
         // used as DC chargers for them to warm up.
@@ -963,6 +977,18 @@ const std::vector<std::unique_ptr<powermeterIntf>>& EvseManager::r_powermeter_bi
 
 const std::vector<std::unique_ptr<powermeterIntf>>& EvseManager::r_powermeter_energy_management() {
     return r_powermeter_grid_side;
+}
+
+void EvseManager::imd_stop() {
+    if (!r_imd.empty()) {
+        r_imd[0]->call_stop();
+    }
+}
+
+void EvseManager::imd_start() {
+    if (!r_imd.empty()) {
+        r_imd[0]->call_start();
+    }
 }
 
 } // namespace module

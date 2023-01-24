@@ -69,6 +69,7 @@ struct Conf {
     bool hack_skoda_enyaq;
     int hack_present_current_offset;
     std::string connector_type;
+    bool hack_pause_imd_during_precharge;
 };
 
 class EvseManager : public Everest::ModuleBase {
@@ -197,6 +198,9 @@ private:
     // EV information
     std::mutex ev_info_mutex;
     types::evse_manager::EVInfo ev_info;
+
+    void imd_stop();
+    void imd_start();
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
