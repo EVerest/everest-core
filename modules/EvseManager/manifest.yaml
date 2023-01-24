@@ -108,19 +108,19 @@ config:
     type: integer
     default: 0
   switch_to_minimum_voltage_after_cable_check:
-    description:
+    description: >-
       When cable check is completed, switch to minimal voltage of DC output.
       Normally disabled.
     type: boolean
     default: false
   hack_skoda_enyaq:
-    description:
+    description: >-
       Skoda Enyaq requests DC charging voltages below its battery level or even below 0 initially.
       Set to true to enable dirty workaround.
     type: boolean
     default: false
   hack_present_current_offset:
-    description:
+    description: >-
       Adds an offset [A] to the present current reported to the car on HLC.
       Set to 0 unless you really know what you are doing.
     type: integer
@@ -132,6 +132,13 @@ config:
       - IEC62196Type2Cable
       - IEC62196Type2Socket
     default: IEC62196Type2Cable
+  hack_pause_imd_during_precharge:
+    description: >-
+      Disable IMD at the end of CableCheck and re-enable when current is flowing in CurrentDemand.
+      Some DCDC power supplies do not start current flow when insulation measurement is active.
+      Set to true to enable dirty workaround for some IMD hardware.
+    type: boolean
+    default: false
 provides:
   evse:
     interface: evse_manager
