@@ -19,6 +19,7 @@ namespace module {
 
 Charger::Charger(const std::unique_ptr<board_support_ACIntf>& r_bsp) : r_bsp(r_bsp) {
     maxCurrent = 6.0;
+    maxCurrentCable = r_bsp->call_read_pp_ampacity();
     authorized = false;
     r_bsp->call_enable(false);
 
@@ -561,8 +562,8 @@ void Charger::processCPEventsState(ControlPilotEvent cp_event) {
 
     case EvseState::Idle:
         if (cp_event == ControlPilotEvent::CarPluggedIn) {
-            // FIXME: Set cable current limit from PP resistor value for this
-            // session e.g. readPPAmpacity();
+            // Set cable current limit from PP resistor value for this session
+            maxCurrentCable = r_bsp->call_read_pp_ampacity();
             currentState = EvseState::WaitingForAuthentication;
         }
         break;
@@ -724,7 +725,10 @@ float Charger::ampereToDutyCycle(float ampere) {
 bool Charger::setMaxCurrent(float c, std::chrono::time_point<date::utc_clock> validUntil) {
     if (c >= 0.0 && c <= CHARGER_ABSOLUTE_MAX_CURRENT) {
         std::lock_guard<std::recursive_mutex> lock(configMutex);
-        // FIXME: limit to cable limit (PP reading) if that is smaller!
+        // limit to cable limit (PP reading) if that is smaller!
+        if (maxCurrentCable < c) {
+            c = maxCurrentCable;
+        }
         // is it still valid?
         // FIXME this requires local clock to be UTC
         if (validUntil > date::utc_clock::now()) {
@@ -738,9 +742,12 @@ bool Charger::setMaxCurrent(float c, std::chrono::time_point<date::utc_clock> va
 }
 
 bool Charger::setMaxCurrent(float c) {
-    if (c >= 0.0 && c <= 80) {
+    if (c >= 0.0 && c <= CHARGER_ABSOLUTE_MAX_CURRENT) {
         std::lock_guard<std::recursive_mutex> lock(configMutex);
-        // FIXME: limit to cable limit (PP reading) if that is smaller!
+        // limit to cable limit (PP reading) if that is smaller!
+        if (maxCurrentCable < c) {
+            c = maxCurrentCable;
+        }
         // is it still valid?
         // FIXME this requires local clock to be UTC
         if (maxCurrentValidUntil > date::utc_clock::now()) {

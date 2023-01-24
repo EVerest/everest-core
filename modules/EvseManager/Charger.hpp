@@ -191,6 +191,7 @@ private:
 
     float maxCurrent;
     std::chrono::time_point<date::utc_clock> maxCurrentValidUntil;
+    float maxCurrentCable;
 
     bool powerAvailable();
 

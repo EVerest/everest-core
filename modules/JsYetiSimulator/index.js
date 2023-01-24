@@ -78,6 +78,10 @@ boot_module(async ({
     min_phase_count: 1,
     supports_changing_phases_during_charging: true,
   }));
+  setup.provides.board_support.register.read_pp_ampacity((mod, args) => {
+    let amp = read_pp_ampacity(mod);
+    return amp;
+  });
 
   // subscribe vars of used modules
 }).then((mod) => {
@@ -707,4 +711,25 @@ function simulate_powermeter(mod) {
 
     irmsN: mod.simulation_data.currents.N,
   };
+}
+
+function read_pp_ampacity(mod) {
+  let pp_resistor = mod.simulation_data.pp_resistor;
+  if (pp_resistor < 80.0 || pp_resistor > 2460) {
+    evlog.error(`PP resistor value "${pp_resistor}" Ohm seems to be outside the allowed range.`);
+    return 0.0
+  }
+
+  // PP resistor value in spec, use a conservative interpretation of the resistance ranges
+  if(pp_resistor > 936.0 && pp_resistor <= 2460.0) {
+    return 13.0;
+  } else if(pp_resistor > 308.0 && pp_resistor <= 936.0) {
+    return 20.0;
+  } else if(pp_resistor > 140.0 && pp_resistor <= 308.0) {
+    return 32.0;
+  } else if(pp_resistor > 80.0 && pp_resistor <= 140.0) {
+    return 63.0;
+  }
+
+  return 0.0;
 }
