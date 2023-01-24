@@ -413,8 +413,8 @@ void AuthHandler::handle_session_event(const int connector_id, const SessionEven
     case SessionEventEnum::SessionFinished:
         this->connectors.at(connector_id)->connector.is_reservable = true;
         this->connectors.at(connector_id)->connector.identifier = boost::none;
-        this->connectors.at(connector_id)->connector.submit_event(Event_Session_Finished());
-        this->connectors.at(connector_id)->connector.submit_event(Event_Error_Cleared());
+        this->connectors.at(connector_id)->connector.state_machine.controller->submit_event(Event_Session_Finished(), true);
+        this->connectors.at(connector_id)->connector.state_machine.controller->submit_event(Event_Error_Cleared(), true);
         this->connectors.at(connector_id)->timeout_timer.stop();
         break;
     case SessionEventEnum::PermanentFault:
