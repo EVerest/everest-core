@@ -1,7 +1,7 @@
 ---
 everest-framework:
   git: https://github.com/EVerest/everest-framework.git
-  git_tag: 39cc02caec543c9950e2c432a973b3eb96aa81d6
+  git_tag: v0.3.0
 sigslot:
   git: https://github.com/palacaze/sigslot
   git_tag: v1.2.0
@@ -42,4 +42,4 @@ libocpp:
 # Josev
 Josev:
   git: https://github.com/EVerest/ext-switchev-iso15118.git
-  git_tag: 2022.12.0
+  git_tag: 2023.1.0
