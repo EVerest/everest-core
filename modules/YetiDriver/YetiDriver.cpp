@@ -1,8 +1,34 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
 #include "YetiDriver.hpp"
+#include <fmt/core.h>
+#include <utils/date.hpp>
 
 namespace module {
+
+std::string lowlevelstate_to_string(const DebugUpdate_LoLevelState s, bool pwm_on) {
+    const std::string pwm = (pwm_on ? "2" : "1");
+    switch (s) {
+    case DebugUpdate_LoLevelState_DISABLED:
+        return "Disabled";
+    case DebugUpdate_LoLevelState_A:
+        return "A" + pwm;
+    case DebugUpdate_LoLevelState_B:
+        return "B" + pwm;
+    case DebugUpdate_LoLevelState_C:
+        return "C" + pwm;
+    case DebugUpdate_LoLevelState_D:
+        return "D" + pwm;
+    case DebugUpdate_LoLevelState_E:
+        return "E";
+    case DebugUpdate_LoLevelState_F:
+        return "F";
+    case DebugUpdate_LoLevelState_DF:
+        return "DF";
+    default:
+        return "Unknown";
+    }
+}
 
 void YetiDriver::init() {
 
@@ -13,12 +39,52 @@ void YetiDriver::init() {
         return;
     }
 
+    telemetry_power_path_controller_version = {{"timestamp", ""},
+                                               {"type", "power_path_controller_version"},
+                                               {"hardware_version", 1},
+                                               {"software_version", "1.00"},
+                                               {"date_manufactured", "N/A"},
+                                               {"operating_time_h", 5},
+                                               {"operating_time_h_warning", 5000},
+                                               {"operating_time_h_error", 6000},
+                                               {"software_version", "1.00"},
+                                               {"error", false}};
+
+    telemetry_power_path_controller = {{"timestamp", ""},
+                                       {"type", "power_path_controller"},
+                                       {"cp_voltage_high", 0.0},
+                                       {"cp_voltage_low", 0.0},
+                                       {"cp_pwm_duty_cycle", 0.0},
+                                       {"cp_state", "A1"},
+                                       {"pp_ohm", 0.0},
+                                       {"supply_voltage_12V", 0.0},
+                                       {"supply_voltage_minus_12V", 0.0},
+                                       {"temperature_controller", 0.0},
+                                       {"temperature_car_connector", 0.0},
+                                       {"watchdog_reset_count", 0.0},
+                                       {"error", false}};
+
+    telemetry_power_switch = {{"timestamp", ""},
+                              {"type", "power_switch"},
+                              {"switching_count", 0},
+                              {"switching_count_warning", 30000},
+                              {"switching_count_error", 50000},
+                              {"is_on", false},
+                              {"time_to_switch_on_ms", 100},
+                              {"time_to_switch_off_ms", 100},
+                              {"temperature_C", 0.0},
+                              {"error", false},
+                              {"error_over_current", false}};
+
+    telemetry_rcd = {{"timestamp", ""},    //
+                     {"type", "rcd"},      //
+                     {"enabled", true},    //
+                     {"current_mA", 0.0},  //
+                     {"triggered", false}, //
+                     {"error", false}};    //
+
     invoke_init(*p_powermeter);
     invoke_init(*p_yeti_extras);
-    invoke_init(*p_debug_yeti);
-    invoke_init(*p_debug_powermeter);
-    invoke_init(*p_debug_state);
-    invoke_init(*p_debug_keepalive);
     invoke_init(*p_yeti_simulation_control);
     invoke_init(*p_board_support);
 }
@@ -39,12 +105,59 @@ void YetiDriver::ready() {
 
     invoke_ready(*p_powermeter);
     invoke_ready(*p_yeti_extras);
-    invoke_ready(*p_debug_yeti);
-    invoke_ready(*p_debug_powermeter);
-    invoke_ready(*p_debug_state);
-    invoke_ready(*p_debug_keepalive);
     invoke_ready(*p_yeti_simulation_control);
     invoke_ready(*p_board_support);
+
+    serial.signalKeepAliveLo.connect([this](const KeepAliveLo& k) {
+        auto k_json = keep_alive_lo_to_json(k);
+        mqtt.publish("/external/keepalive_json", k_json.dump());
+    });
+
+    telemetryThreadHandle = std::thread([this]() {
+        while (!telemetryThreadHandle.shouldExit()) {
+            sleep(10);
+            {
+                std::scoped_lock lock(telemetry_mutex);
+                publish_external_telemetry_livedata("power_path_controller", telemetry_power_path_controller);
+                publish_external_telemetry_livedata("rcd", telemetry_rcd);
+                publish_external_telemetry_livedata("power_path_controller_version",
+                                                    telemetry_power_path_controller_version);
+            }
+        }
+    });
+
+    serial.signalDebugUpdate.connect([this](const DebugUpdate& d) {
+        static bool relay_was_on = true;
+        auto d_json = debug_update_to_json(d);
+        mqtt.publish("/external/debug_json", d_json.dump());
+        {
+            std::scoped_lock lock(telemetry_mutex);
+            // update external telemetry data
+            telemetry_power_path_controller.at("timestamp") = Everest::Date::to_rfc3339(date::utc_clock::now());
+            telemetry_power_path_controller.at("cp_voltage_high") = d.evse_pwm_voltage_hi;
+            telemetry_power_path_controller.at("cp_voltage_low") = d.evse_pwm_voltage_lo;
+            telemetry_power_path_controller.at("cp_pwm_duty_cycle") = 0.; // FIXME this should be included
+            telemetry_power_path_controller.at("cp_state") =
+                lowlevelstate_to_string(d.lowlevel_state, d.evse_pwm_running);
+            telemetry_power_path_controller.at("pp_ohm") = 0.; // FIXME this should be included
+            telemetry_power_path_controller.at("supply_voltage_12V") = d.supply_voltage_12V;
+            telemetry_power_path_controller.at("supply_voltage_minus_12V") = d.supply_voltage_N12V;
+            telemetry_power_path_controller.at("temperature_controller") = d.cpu_temperature;
+            telemetry_power_path_controller.at("temperature_car_connector") = 0.;
+            telemetry_power_path_controller.at("watchdog_reset_count") = d.watchdog_reset_count;
+
+            telemetry_rcd.at("timestamp") = Everest::Date::to_rfc3339(date::utc_clock::now());
+            telemetry_rcd.at("current_mA") = d.rcd_current;
+            telemetry_rcd.at("enabled") = d.rcd_enabled;
+
+            telemetry_power_switch.at("timestamp") = Everest::Date::to_rfc3339(date::utc_clock::now());
+            telemetry_power_switch.at("is_on") = d.relais_on;
+            if (relay_was_on != d.relais_on) {
+                publish_external_telemetry_livedata("power_switch", telemetry_power_switch);
+            }
+            relay_was_on = d.relais_on;
+        }
+    });
 }
 
 Everest::json power_meter_data_to_json(const PowerMeter& p) {
@@ -180,6 +293,12 @@ InterfaceControlMode str_to_control_mode(std::string data) {
         return InterfaceControlMode_HIGH;
     else
         return InterfaceControlMode_NONE;
+}
+
+void YetiDriver::publish_external_telemetry_livedata(const std::string& topic, const Everest::TelemetryMap& data) {
+    if (info.telemetry_enabled) {
+        telemetry.publish("livedata", topic, data);
+    }
 }
 
 } // namespace module

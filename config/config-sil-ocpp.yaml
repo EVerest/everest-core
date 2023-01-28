@@ -23,7 +23,7 @@ active_modules:
       evse_id: "1"
       session_logging: true
       session_logging_xml: false
-      session_logging_path: /tmp
+      session_logging_path: /tmp/everest-logs
       ac_hlc_enabled: false
       ac_hlc_use_5percent: false
       ac_enforce_hlc: false

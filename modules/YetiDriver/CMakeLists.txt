@@ -31,10 +31,6 @@ target_sources(${MODULE_NAME}
         "powermeter/powermeterImpl.cpp"
         "board_support/board_support_ACImpl.cpp"
         "yeti_extras/yeti_extrasImpl.cpp"
-        "debug_yeti/debug_jsonImpl.cpp"
-        "debug_powermeter/debug_jsonImpl.cpp"
-        "debug_state/debug_jsonImpl.cpp"
-        "debug_keepalive/debug_jsonImpl.cpp"
         "yeti_simulation_control/yeti_simulation_controlImpl.cpp"
 )
 

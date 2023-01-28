@@ -34,22 +34,11 @@ provides:
   yeti_extras:
     interface: yeti_extras
     description: extra functionality special for Yeti
-  debug_yeti:
-    interface: debug_json
-    description: provides the debug information of the charging driver
-  debug_powermeter:
-    interface: debug_json
-    description: Provides the powermeter as a json object
-  debug_state:
-    interface: debug_json
-    description: Provides the state as a json object
-  debug_keepalive:
-    interface: debug_json
-    description: Provides the keepalive as a json object
   yeti_simulation_control:
     interface: yeti_simulation_control
     description: Interface for the Yeti HIL simulator
 enable_external_mqtt: true
+enable_telemetry: true
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
   authors:

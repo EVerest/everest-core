@@ -119,15 +119,27 @@ void evse_managerImpl::ready() {
 
             set_session_uuid();
 
-            session_log.startSession(session_uuid);
+            session_started.logging_path = session_log.startSession(session_uuid);
 
             session_log.evse(
                 false, fmt::format("Session Started: {}", types::evse_manager::start_session_reason_to_string(reason)));
+
+            mod->telemetry.publish("session", "events",
+                                   {
+                                       {"timestamp", Everest::Date::to_rfc3339(date::utc_clock::now())},
+                                       {"type", "session_started"},
+                                       {"session_id", session_uuid},
+                                       {"reason", types::evse_manager::start_session_reason_to_string(reason)},
+                                   });
 
             se.session_started = session_started;
         } else if (e == types::evse_manager::SessionEventEnum::SessionFinished) {
             session_log.evse(false, fmt::format("Session Finished"));
             session_log.stopSession();
+            mod->telemetry.publish("session", "events",
+                                   {{"timestamp", Everest::Date::to_rfc3339(date::utc_clock::now())},
+                                    {"type", "session_finished"},
+                                    {"session_id", session_uuid}});
         } else if (e == types::evse_manager::SessionEventEnum::TransactionStarted) {
             types::evse_manager::TransactionStarted transaction_started;
             transaction_started.timestamp =
@@ -148,6 +160,17 @@ void evse_managerImpl::ready() {
             double energy_import = transaction_started.energy_Wh_import;
 
             session_log.evse(false, fmt::format("Transaction Started ({} kWh)", energy_import / 1000.));
+
+            Everest::TelemetryMap telemetry_data = {{"timestamp", Everest::Date::to_rfc3339(date::utc_clock::now())},
+                                                    {"type", "transaction_started"},
+                                                    {"session_id", session_uuid},
+                                                    {"energy_counter_import_wh", p.energy_Wh_import.total},
+                                                    {"id_tag", transaction_started.id_tag}};
+
+            if (p.energy_Wh_export.is_initialized()) {
+                telemetry_data["energy_counter_export_wh"] = p.energy_Wh_export.get().total;
+            }
+            mod->telemetry.publish("session", "events", telemetry_data);
 
             se.transaction_started.emplace(transaction_started);
         } else if (e == types::evse_manager::SessionEventEnum::TransactionFinished) {
@@ -176,7 +199,18 @@ void evse_managerImpl::ready() {
                                                 types::evse_manager::stop_transaction_reason_to_string(reason),
                                                 energy_import / 1000.));
 
-            session_uuid = "";
+            Everest::TelemetryMap telemetry_data = {
+                {"timestamp", Everest::Date::to_rfc3339(date::utc_clock::now())},
+                {"type", "transaction_finished"},
+                {"session_id", session_uuid},
+                {"energy_counter_import_wh", p.energy_Wh_import.total},
+                {"reason", types::evse_manager::stop_transaction_reason_to_string(reason)}};
+
+            if (p.energy_Wh_export.is_initialized()) {
+                telemetry_data["energy_counter_export_wh"] = p.energy_Wh_export.get().total;
+            }
+
+            mod->telemetry.publish("session", "events", telemetry_data);
 
             se.transaction_finished.emplace(transaction_finished);
         } else if (e == types::evse_manager::SessionEventEnum::Error) {
@@ -186,6 +220,9 @@ void evse_managerImpl::ready() {
         se.uuid = session_uuid;
 
         publish_session_event(se);
+        if (e == types::evse_manager::SessionEventEnum::SessionFinished) {
+            session_uuid = "";
+        }
     });
 
     // Note: Deprecated. Only kept for Node red compatibility, will be removed in the future
@@ -257,7 +294,6 @@ bool evse_managerImpl::handle_resume_charging() {
 };
 
 bool evse_managerImpl::handle_stop_transaction(types::evse_manager::StopTransactionRequest& request) {
-
     if (mod->get_hlc_enabled()) {
         mod->r_hlc[0]->call_stop_charging(true);
     }

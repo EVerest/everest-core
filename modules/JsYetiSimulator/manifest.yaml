@@ -25,6 +25,7 @@ provides:
     interface: yeti_simulation_control
     description: Interface for the Yeti HIL simulator
 enable_external_mqtt: true
+enable_telemetry: true
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
   authors:

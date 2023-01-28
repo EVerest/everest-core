@@ -29,9 +29,13 @@ const Event_EFtoBCD = 11;
 const Event_BCDtoEF = 12;
 const Event_PermanentFault = 13;
 
+var module_id;
+let global_info;
+
 boot_module(async ({
   setup, info, config, mqtt,
 }) => {
+  global_info = info;
   // register commands
   setup.provides.yeti_simulation_control.register.enable(enable_simulation);
   setup.provides.yeti_simulation_control.register.setSimulationData((mod, args) => {
@@ -88,7 +92,47 @@ boot_module(async ({
   mod.pubCnt = 0;
   clearData(mod);
   setInterval(simulation_loop, 250, mod);
+  if (global_info.telemetry_enabled) {
+    setInterval(telemetry_slow, 15000, mod);
+    setInterval(telemetry_fast, 1000, mod);
+  }
 });
+
+function telemetry_slow(mod) {
+  const date = new Date();
+  mod.telemetry_data.power_path_controller_version.timestamp = date.toISOString();
+  mod.telemetry.publish('livedata', 'power_path_controller_version', mod.telemetry_data.power_path_controller_version);
+}
+
+function telemetry_fast(mod) {
+  const date = new Date();
+  mod.telemetry_data.power_path_controller.timestamp = date.toISOString();
+  mod.telemetry_data.power_path_controller.cp_voltage_high = mod.cpHi;
+  mod.telemetry_data.power_path_controller.cp_voltage_low = mod.cpLo;
+  mod.telemetry_data.power_path_controller.cp_pwm_duty_cycle = mod.pwm_duty_cycle * 100.;
+  mod.telemetry_data.power_path_controller.cp_state = stateToString(mod);
+
+  mod.telemetry_data.power_path_controller.temperature_controller = mod.powermeter.tempL1;
+  mod.telemetry_data.power_path_controller.temperature_car_connector = mod.powermeter.tempL1 * 2.;
+  mod.telemetry_data.power_path_controller.watchdog_reset_count = 0;
+  mod.telemetry_data.power_path_controller.error = false;
+
+  mod.telemetry_data.power_switch.timestamp = date.toISOString();
+  mod.telemetry_data.power_switch.is_on = mod.relais_on;
+  mod.telemetry_data.power_switch.time_to_switch_on_ms = 110;
+  mod.telemetry_data.power_switch.time_to_switch_off_ms = 100;
+  mod.telemetry_data.power_switch.temperature_C = 20;
+  mod.telemetry_data.power_switch.error = false;
+  mod.telemetry_data.power_switch.error_over_current = false;
+
+  mod.telemetry_data.rcd.timestamp = date.toISOString();
+  mod.telemetry_data.rcd.current_mA = mod.rcd_current;
+
+  mod.telemetry.publish('livedata', 'power_path_controller', mod.telemetry_data.power_path_controller);
+  mod.telemetry.publish('livedata', 'power_switch', mod.telemetry_data.power_switch);
+  mod.telemetry.publish('livedata', 'rcd', mod.telemetry_data.rcd);
+
+}
 
 function publish_event(mod, event) {
   // console.log("------------ EVENT PUB "+event);
@@ -353,12 +397,14 @@ function powerOn(mod) {
   if (!mod.relais_on) {
     publish_event(mod, Event_PowerOn);
     mod.relais_on = true;
+    mod.telemetry_data.power_switch.switching_count++;
   }
 }
 
 function powerOff(mod) {
   if (mod.relais_on) {
     publish_event(mod, Event_PowerOff);
+    mod.telemetry_data.power_switch.switching_count++;
     mod.relais_on = false;
   }
 }
@@ -509,6 +555,61 @@ function clearData(mod) {
     L3: 0.0,
   };
   mod.powermeter_sim_last_time_stamp = 0;
+
+  mod.telemetry_data = {
+
+    power_path_controller_version: {
+      timestamp: "",
+      type: "power_path_controller_version",
+      hardware_version: 3,
+      software_version: "1.01",
+      date_manufactured: "20220304",
+      operating_time_h: 2330,
+      operating_time_h_warning: 5000,
+      operating_time_h_error: 6000,
+      error: false
+    },
+
+    power_path_controller: {
+      timestamp: "",
+      type: "power_path_controller",
+      cp_voltage_high: 0.0,
+      cp_voltage_low: 0.0,
+      cp_pwm_duty_cycle: 0.0,
+      cp_state: "A1",
+      pp_ohm: 220.1,
+      supply_voltage_12V: 12.1,
+      supply_voltage_minus_12V: -11.9,
+      temperature_controller: 33,
+      temperature_car_connector: 65,
+      watchdog_reset_count: 1,
+      error: false
+    },
+
+    power_switch: {
+      timestamp: "",
+      type: "power_switch",
+      switching_count: 0,
+      switching_count_warning: 30000,
+      switching_count_error: 50000,
+      is_on: false,
+      time_to_switch_on_ms: 110,
+      time_to_switch_off_ms: 100,
+      temperature_C: 20,
+      error: false,
+      error_over_current: false
+    },
+
+    rcd: {
+      timestamp: "",
+      type: "rcd",
+      enabled: true,
+      current_mA: 2.5,
+      triggered: false,
+      error: false
+    }
+  }
+
 }
 
 function reset_powermeter(mod) {
@@ -519,35 +620,37 @@ function reset_powermeter(mod) {
   };
   mod.powermeter_sim_last_time_stamp = 0;
 }
-/*
-function stateToString(state) {
-  switch (state) {
+
+function stateToString(mod) {
+  let pwm = (mod.pwm_running ? "2" : "1");
+  switch (mod.state) {
     case STATE_DISABLED:
       return 'Disabled';
-    break;
+      break;
     case STATE_A:
-      return 'A';
-    break;
+      return 'A' + pwm;
+      break;
     case STATE_B:
-      return 'B';
-    break;
+      return 'B' + pwm;
+      break;
     case STATE_C:
-      return 'C';
-    break;
+      return 'C' + pwm;
+      break;
     case STATE_D:
-      return 'D';
-    break;
+      return 'D' + pwm;
+      break;
     case STATE_E:
       return 'E';
-    break;
+      break;
     case STATE_F:
       return 'F';
-    break;
+      break;
     case STATE_DF:
       return 'DF';
-    break;
+      break;
   }
-} */
+}
+
 function power_meter_external(p) {
   const date = new Date();
   return ({
@@ -721,13 +824,13 @@ function read_pp_ampacity(mod) {
   }
 
   // PP resistor value in spec, use a conservative interpretation of the resistance ranges
-  if(pp_resistor > 936.0 && pp_resistor <= 2460.0) {
+  if (pp_resistor > 936.0 && pp_resistor <= 2460.0) {
     return 13.0;
-  } else if(pp_resistor > 308.0 && pp_resistor <= 936.0) {
+  } else if (pp_resistor > 308.0 && pp_resistor <= 936.0) {
     return 20.0;
-  } else if(pp_resistor > 140.0 && pp_resistor <= 308.0) {
+  } else if (pp_resistor > 140.0 && pp_resistor <= 308.0) {
     return 32.0;
-  } else if(pp_resistor > 80.0 && pp_resistor <= 140.0) {
+  } else if (pp_resistor > 80.0 && pp_resistor <= 140.0) {
     return 63.0;
   }
 
