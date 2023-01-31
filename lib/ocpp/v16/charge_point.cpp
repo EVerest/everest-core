@@ -433,6 +433,12 @@ MeterValue ChargePoint::get_latest_meter_value(int32_t connector, std::vector<Me
                             }
                         }
                     }
+                    // report DC value if set. This is a workaround for the fact that the power meter does not report
+                    // AC (Dc charging)
+                    else if (voltage_V.value().DC) {
+                        sample.value = ocpp::conversions::double_to_string((double)voltage_V.value().DC.value());
+                    }
+
                 } else {
                     EVLOG_debug << "Power meter does not contain voltage_V configured measurand";
                 }
@@ -473,6 +479,11 @@ MeterValue ChargePoint::get_latest_meter_value(int32_t connector, std::vector<Me
                                     << "Power meter does not contain current_A configured measurand for phase L3";
                             }
                         }
+                    }
+                    // report DC value if set. This is a workaround for the fact that the power meter does not report
+                    // AC (DC charging)
+                    else if (current_A.value().DC) {
+                        sample.value = ocpp::conversions::double_to_string((double)current_A.value().DC.value());
                     }
                 } else {
                     EVLOG_debug << "Power meter does not contain current_A configured measurand";
