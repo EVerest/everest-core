@@ -72,6 +72,8 @@ types:
       - PaymentServiceSelectionRes
       - ServicePaymentSelectionReq
       - ServicePaymentSelectionRes
+      - PaymentDetailsReq
+      - PaymentDetailsRes
       - AuthorizationReq
       - AuthorizationRes
       - ContractAuthenticationReq
@@ -80,6 +82,8 @@ types:
       - ChargeParameterDiscoveryRes
       - ChargingStatusReq
       - ChargingStatusRes
+      - MeteringReceiptReq
+      - MeteringReceiptRes
       - PowerDeliveryReq
       - PowerDeliveryRes
       - CableCheckReq
@@ -92,6 +96,11 @@ types:
       - WeldingDetectionRes
       - SessionStopReq
       - SessionStopRes
+      - CertificateInstallationReq
+      - CertificateInstallationRes
+      - CertificateUpdateReq
+      - CertificateUpdateRes
+      - UnknownMessage
   DC_EVSEPresentVoltage_Current:
     description: Set the present voltage and current for the EVSE
     type: object
