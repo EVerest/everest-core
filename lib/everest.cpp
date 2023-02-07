@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 #include <future>
 #include <map>
 #include <set>
@@ -20,12 +20,16 @@ namespace Everest {
 const auto remote_cmd_res_timeout_seconds = 300;
 
 Everest::Everest(std::string module_id, Config config, bool validate_data_with_schema,
-                 const std::string& mqtt_server_address, const std::string& mqtt_server_port) :
-    mqtt_abstraction(MQTTAbstraction::get_instance(mqtt_server_address, mqtt_server_port)),
+                 const std::string& mqtt_server_address, int mqtt_server_port, const std::string& mqtt_everest_prefix,
+                 const std::string& mqtt_external_prefix) :
+    mqtt_abstraction(MQTTAbstraction::get_instance(mqtt_server_address, std::to_string(mqtt_server_port),
+                                                   mqtt_everest_prefix, mqtt_external_prefix)),
     config(std::move(config)),
     module_id(std::move(module_id)),
     remote_cmd_res_timeout(remote_cmd_res_timeout_seconds),
-    validate_data_with_schema(validate_data_with_schema) {
+    validate_data_with_schema(validate_data_with_schema),
+    mqtt_everest_prefix(mqtt_everest_prefix),
+    mqtt_external_prefix(mqtt_external_prefix) {
     BOOST_LOG_FUNCTION();
 
     EVLOG_debug << "Initializing EVerest framework...";
@@ -41,7 +45,8 @@ Everest::Everest(std::string module_id, Config config, bool validate_data_with_s
     Handler handle_ready_wrapper = [this](json data) { this->handle_ready(data); };
     std::shared_ptr<TypedHandler> everest_ready =
         std::make_shared<TypedHandler>(HandlerType::ExternalMQTT, std::make_shared<Handler>(handle_ready_wrapper));
-    this->mqtt_abstraction.register_handler("everest/ready", everest_ready, false, QOS::QOS2);
+    this->mqtt_abstraction.register_handler(fmt::format("{}ready", mqtt_everest_prefix), everest_ready, false,
+                                            QOS::QOS2);
 
     this->publish_metadata();
 }
@@ -404,7 +409,7 @@ void Everest::external_mqtt_publish(const std::string& topic, const std::string&
                                                     this->config.printable_identifier(this->module_id))));
     }
 
-    this->mqtt_abstraction.publish(topic, data);
+    this->mqtt_abstraction.publish(fmt::format("{}{}", this->mqtt_external_prefix, topic), data);
 }
 
 void Everest::provide_external_mqtt_handler(const std::string& topic, const StringHandler& handler) {
@@ -418,8 +423,10 @@ void Everest::provide_external_mqtt_handler(const std::string& topic, const Stri
                                                     this->config.printable_identifier(this->module_id))));
     }
 
-    Handler external_handler = [this, handler, topic](json const& data) {
-        EVLOG_debug << fmt::format("Incoming external mqtt data for topic '{}'...", topic);
+    std::string external_topic = fmt::format("{}{}", this->mqtt_external_prefix, topic);
+
+    Handler external_handler = [this, handler, external_topic](json const& data) {
+        EVLOG_debug << fmt::format("Incoming external mqtt data for topic '{}'...", external_topic);
         if (!data.is_string()) {
             EVLOG_AND_THROW(EverestInternalError("External mqtt result is not a string (that should never happen)"));
         }
@@ -428,7 +435,7 @@ void Everest::provide_external_mqtt_handler(const std::string& topic, const Stri
 
     std::shared_ptr<TypedHandler> token =
         std::make_shared<TypedHandler>(HandlerType::ExternalMQTT, std::make_shared<Handler>(external_handler));
-    this->mqtt_abstraction.register_handler(topic, token, true, QOS::QOS0);
+    this->mqtt_abstraction.register_handler(external_topic, token, true, QOS::QOS0);
 }
 
 void Everest::signal_ready() {

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
 #include <filesystem>
 #include <fstream>
@@ -327,7 +327,8 @@ static std::map<pid_t, std::string> start_modules(Config& config, MQTTAbstractio
         // FIXME (aw): implicitely adding ModuleReadyInfo and setting its ready member
         auto module_it = modules_ready.emplace(module_name, ModuleReadyInfo{false, nullptr}).first;
 
-        Handler module_ready_handler = [module_name, &mqtt_abstraction, standalone_modules](nlohmann::json json) {
+        Handler module_ready_handler = [module_name, &mqtt_abstraction, standalone_modules,
+                                        mqtt_everest_prefix = rs.mqtt_everest_prefix](nlohmann::json json) {
             EVLOG_debug << fmt::format("received module ready signal for module: {}({})", module_name, json.dump());
             std::unique_lock<std::mutex> lock(modules_ready_mutex);
             // FIXME (aw): here are race conditions, if the ready handler gets called while modules are shut down!
@@ -349,7 +350,7 @@ static std::map<pid_t, std::string> start_modules(Config& config, MQTTAbstractio
                             [](const auto& element) { return element.second.ready; })) {
                 EVLOG_info << fmt::format(TERMINAL_STYLE_OK,
                                           ">>> All modules are initialized. EVerest up and running <<<");
-                mqtt_abstraction.publish("everest/ready", nlohmann::json(true));
+                mqtt_abstraction.publish(fmt::format("{}ready", mqtt_everest_prefix), nlohmann::json(true));
             } else if (!standalone_modules.empty()) {
                 if (modules_spawned == modules_ready.size() - standalone_modules.size()) {
                     EVLOG_info << fmt::format(fg(fmt::terminal_color::green),
@@ -398,8 +399,7 @@ static std::map<pid_t, std::string> start_modules(Config& config, MQTTAbstractio
                                                  "  checked paths:\n"
                                                  "    cpp: {}\n"
                                                  "    js:  {}\n",
-                                                 "    py:  {}\n",
-                                                 module_name, module_type, binary_path.string(),
+                                                 "    py:  {}\n", module_name, module_type, binary_path.string(),
                                                  javascript_library_path.string(), python_module_path.string()));
         }
     }
@@ -483,6 +483,7 @@ static ControllerHandle start_controller(const RuntimeSettings& rs) {
                                                           {"www_dir", rs.www_dir.string()},
                                                           {"configs_dir", rs.configs_dir.string()},
                                                           {"logging_config_file", rs.logging_config_file.string()},
+                                                          {"controller_port", rs.controller_port},
                                                       }},
                                                  });
 
@@ -501,6 +502,7 @@ int boot(const po::variables_map& vm) {
 
     EVLOG_info << "8< 8< 8< ------------------------------------------------------------------------------ 8< 8< 8<";
     EVLOG_info << "EVerest manager starting using " << rs.config_file.string();
+    EVLOG_info << "EVerest using MQTT broker " << rs.mqtt_broker_host << ":" << rs.mqtt_broker_port;
 
     EVLOG_verbose << fmt::format("EVerest prefix was set to {}", rs.prefix.string());
 
@@ -528,7 +530,8 @@ int boot(const po::variables_map& vm) {
     try {
         // FIXME (aw): we should also use std::filesystem::path here as argument types
         config = std::make_unique<Config>(rs.schemas_dir.string(), rs.config_file.string(), rs.modules_dir.string(),
-                                          rs.interfaces_dir.string(), rs.types_dir.string());
+                                          rs.interfaces_dir.string(), rs.types_dir.string(), rs.mqtt_everest_prefix,
+                                          rs.mqtt_external_prefix);
     } catch (EverestInternalError& e) {
         EVLOG_error << fmt::format("Failed to load and validate config!\n{}", boost::diagnostic_information(e, true));
         return EXIT_FAILURE;
@@ -580,21 +583,10 @@ int boot(const po::variables_map& vm) {
         ignored_modules = vm["ignore"].as<std::vector<std::string>>();
     }
 
-    // NOLINTNEXTLINE(concurrency-mt-unsafe): not problematic that this function is not threadsafe here
-    const char* mqtt_server_address = std::getenv("MQTT_SERVER_ADDRESS");
-    if (mqtt_server_address == nullptr) {
-        mqtt_server_address = "localhost";
-    }
-
-    // NOLINTNEXTLINE(concurrency-mt-unsafe): not problematic that this function is not threadsafe here
-    const char* mqtt_server_port = std::getenv("MQTT_SERVER_PORT");
-    if (mqtt_server_port == nullptr) {
-        mqtt_server_port = "1883";
-    }
-
-    MQTTAbstraction& mqtt_abstraction = MQTTAbstraction::get_instance(mqtt_server_address, mqtt_server_port);
+    MQTTAbstraction& mqtt_abstraction = MQTTAbstraction::get_instance(
+        rs.mqtt_broker_host, std::to_string(rs.mqtt_broker_port), rs.mqtt_everest_prefix, rs.mqtt_external_prefix);
     if (!mqtt_abstraction.connect()) {
-        EVLOG_error << fmt::format("Cannot connect to MQTT broker at {}:{}", mqtt_server_address, mqtt_server_port);
+        EVLOG_error << fmt::format("Cannot connect to MQTT broker at {}:{}", rs.mqtt_broker_host, rs.mqtt_broker_port);
         return EXIT_FAILURE;
     }
 
@@ -657,9 +649,9 @@ int boot(const po::variables_map& vm) {
             const auto& payload = msg.json;
             if (payload.at("method") == "restart_modules") {
                 shutdown_modules(module_handles, *config, mqtt_abstraction);
-                config =
-                    std::make_unique<Config>(rs.schemas_dir.string(), rs.config_file.string(), rs.modules_dir.string(),
-                                             rs.interfaces_dir.string(), rs.types_dir.string());
+                config = std::make_unique<Config>(
+                    rs.schemas_dir.string(), rs.config_file.string(), rs.modules_dir.string(),
+                    rs.interfaces_dir.string(), rs.types_dir.string(), rs.mqtt_everest_prefix, rs.mqtt_external_prefix);
                 modules_started = false;
                 restart_modules = true;
             } else if (payload.at("method") == "check_config") {
@@ -668,7 +660,8 @@ int boot(const po::variables_map& vm) {
                 try {
                     // check the config
                     Config(rs.schemas_dir.string(), check_config_file_path, rs.modules_dir.string(),
-                           rs.interfaces_dir.string(), rs.types_dir.string());
+                           rs.interfaces_dir.string(), rs.types_dir.string(), rs.mqtt_everest_prefix,
+                           rs.mqtt_external_prefix);
                     controller_handle.send_message({{"id", payload.at("id")}});
                 } catch (const std::exception& e) {
                     controller_handle.send_message({{"result", e.what()}, {"id", payload.at("id")}});

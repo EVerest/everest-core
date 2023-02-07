@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 #include <algorithm>
 #include <chrono>
 #include <cstdio>
@@ -27,10 +27,14 @@ MessageWithQOS::MessageWithQOS(const std::string& topic, const std::string& payl
     Message(topic, payload), qos(qos) {
 }
 
-MQTTAbstractionImpl::MQTTAbstractionImpl(std::string mqtt_server_address, std::string mqtt_server_port) :
+MQTTAbstractionImpl::MQTTAbstractionImpl(const std::string& mqtt_server_address, const std::string& mqtt_server_port,
+                                         const std::string& mqtt_everest_prefix,
+                                         const std::string& mqtt_external_prefix) :
     message_queue(([this](std::shared_ptr<Message> message) { this->on_mqtt_message(message); })),
-    mqtt_server_address(std::move(mqtt_server_address)),
-    mqtt_server_port(std::move(mqtt_server_port)),
+    mqtt_server_address(mqtt_server_address),
+    mqtt_server_port(mqtt_server_port),
+    mqtt_everest_prefix(mqtt_everest_prefix),
+    mqtt_external_prefix(mqtt_external_prefix),
     mqtt_client{},
     sendbuf{},
     recvbuf{} {
@@ -48,7 +52,7 @@ MQTTAbstractionImpl::~MQTTAbstractionImpl() {
     if (this->mqtt_is_connected) {
         disconnect();
     }
-    //this->mqtt_mainloop_thread.join();
+    // this->mqtt_mainloop_thread.join();
 }
 
 bool MQTTAbstractionImpl::connect() {
@@ -170,11 +174,11 @@ std::future<void> MQTTAbstractionImpl::spawn_main_loop_thread() {
             }
         } catch (boost::exception& e) {
             EVLOG_critical << fmt::format("Caught MQTT mainloop boost::exception:\n{}",
-                                           boost::diagnostic_information(e, true));
+                                          boost::diagnostic_information(e, true));
             exit(1);
         } catch (std::exception& e) {
             EVLOG_critical << fmt::format("Caught MQTT mainloop std::exception:\n{}",
-                                           boost::diagnostic_information(e, true));
+                                          boost::diagnostic_information(e, true));
             exit(1);
         }
     });
@@ -192,8 +196,8 @@ void MQTTAbstractionImpl::on_mqtt_message(std::shared_ptr<Message> message) {
 
     try {
         std::shared_ptr<json> data;
-        if (topic.find("everest/") == 0) {
-            EVLOG_debug << fmt::format("topic {} starts with everest/", topic);
+        if (topic.find(mqtt_everest_prefix) == 0) {
+            EVLOG_debug << fmt::format("topic {} starts with {}", topic, mqtt_everest_prefix);
             try {
                 data = std::make_shared<json>(json::parse(payload));
             } catch (nlohmann::detail::parse_error& e) {
@@ -202,7 +206,7 @@ void MQTTAbstractionImpl::on_mqtt_message(std::shared_ptr<Message> message) {
             }
         } else {
             EVLOG_debug << fmt::format("Message parsing for topic '{}' not implemented. Wrapping in json object.",
-                                        topic);
+                                       topic);
             data = std::make_shared<json>(json(payload));
         }
 
@@ -225,11 +229,11 @@ void MQTTAbstractionImpl::on_mqtt_message(std::shared_ptr<Message> message) {
         }
     } catch (boost::exception& e) {
         EVLOG_critical << fmt::format("Caught MQTT on_message boost::exception:\n{}",
-                                       boost::diagnostic_information(e, true));
+                                      boost::diagnostic_information(e, true));
         exit(1);
     } catch (std::exception& e) {
         EVLOG_critical << fmt::format("Caught MQTT on_message std::exception:\n{}",
-                                       boost::diagnostic_information(e, true));
+                                      boost::diagnostic_information(e, true));
         exit(1);
     }
 }
@@ -272,19 +276,19 @@ void MQTTAbstractionImpl::register_handler(const std::string& topic, std::shared
     switch (handler->type) {
     case HandlerType::Call:
         EVLOG_debug << fmt::format("Registering call handler {} for command {} on topic {}",
-                                    fmt::ptr(&handler->handler), handler->name, topic);
+                                   fmt::ptr(&handler->handler), handler->name, topic);
         break;
     case HandlerType::Result:
         EVLOG_debug << fmt::format("Registering result handler {} for command {} on topic {}",
-                                    fmt::ptr(&handler->handler), handler->name, topic);
+                                   fmt::ptr(&handler->handler), handler->name, topic);
         break;
     case HandlerType::SubscribeVar:
         EVLOG_debug << fmt::format("Registering subscribe handler {} for variable {} on topic {}",
-                                    fmt::ptr(&handler->handler), handler->name, topic);
+                                   fmt::ptr(&handler->handler), handler->name, topic);
         break;
     case HandlerType::ExternalMQTT:
         EVLOG_debug << fmt::format("Registering external MQTT handler {} on topic {}", fmt::ptr(&handler->handler),
-                                    topic);
+                                   topic);
         break;
     default:
         EVLOG_warning << fmt::format("Registering unknown handler {} on topic {}", fmt::ptr(&handler->handler), topic);

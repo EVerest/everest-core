@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 #include <boost/program_options.hpp>
 #include <filesystem>
 #include <fstream>
@@ -113,9 +115,9 @@ int initialize(const std::string& prefix, const std::string& config_file, const 
     Everest::Logging::init(rs.logging_config_file.string(), module_id);
 
     try {
-        Everest::Config config =
-            Everest::Config(rs.schemas_dir.string(), rs.config_file.string(), rs.modules_dir.string(),
-                            rs.interfaces_dir.string(), rs.types_dir.string());
+        Everest::Config config = Everest::Config(
+            rs.schemas_dir.string(), rs.config_file.string(), rs.modules_dir.string(), rs.interfaces_dir.string(),
+            rs.types_dir.string(), rs.mqtt_everest_prefix, rs.mqtt_external_prefix);
 
         if (!config.contains(module_id)) {
             EVLOG_error << fmt::format("Module id '{}' not found in config!", module_id);
@@ -131,20 +133,9 @@ int initialize(const std::string& prefix, const std::string& config_file, const 
         }
         Everest::Logging::update_process_name(module_identifier);
 
-        // NOLINTNEXTLINE(concurrency-mt-unsafe): not problematic that this function is not threadsafe here
-        const char* mqtt_server_address = std::getenv("MQTT_SERVER_ADDRESS");
-        if (mqtt_server_address == nullptr) {
-            mqtt_server_address = "localhost";
-        }
-
-        // NOLINTNEXTLINE(concurrency-mt-unsafe): not problematic that this function is not threadsafe here
-        const char* mqtt_server_port = std::getenv("MQTT_SERVER_PORT");
-        if (mqtt_server_port == nullptr) {
-            mqtt_server_port = "1883";
-        }
-
-        Everest::Everest& everest = Everest::Everest::get_instance(module_id, config, rs.validate_schema,
-                                                                   mqtt_server_address, mqtt_server_port);
+        Everest::Everest& everest =
+            Everest::Everest::get_instance(module_id, config, rs.validate_schema, rs.mqtt_broker_host,
+                                           rs.mqtt_broker_port, rs.mqtt_everest_prefix, rs.mqtt_external_prefix);
 
         EVLOG_info << fmt::format("Initializing module {}...", module_identifier);
 
@@ -231,8 +222,8 @@ int initialize(const std::string& prefix, const std::string& config_file, const 
         }
 
         if (!everest.connect()) {
-            EVLOG_critical << fmt::format("Cannot connect to MQTT broker at {}:{}", mqtt_server_address,
-                                          mqtt_server_port);
+            EVLOG_critical << fmt::format("Cannot connect to MQTT broker at {}:{}", rs.mqtt_broker_host,
+                                          rs.mqtt_broker_port);
             return 1;
         }
 

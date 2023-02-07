@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 #include <everest/exceptions.hpp>
 #include <everest/logging.hpp>
 
@@ -32,7 +32,6 @@ struct EvModCtx {
         framework_ready_promise = Napi::Persistent(framework_ready_deferred.Promise());
     };
     Everest::Everest& everest;
-    // std::unique_ptr<Everest::Config> config;
     const Everest::json module_manifest;
 
     const Napi::Promise::Deferred framework_ready_deferred;
@@ -271,17 +270,14 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
         const auto& config_file = settings.Get("config_file").ToString().Utf8Value();
         const bool validate_schema = settings.Get("validate_schema").ToBoolean().Value();
 
-        const auto& mqtt_server_address = settings.Get("mqtt_server_address").ToString().Utf8Value();
-        const auto& mqtt_server_port = settings.Get("mqtt_server_port").ToString().Utf8Value();
-
         Everest::RuntimeSettings rs(prefix, config_file);
 
         // initialize logging as early as possible
         Everest::Logging::init(rs.logging_config_file, module_id);
 
-        auto config =
-            std::make_unique<Everest::Config>(rs.schemas_dir.string(), rs.config_file.string(), rs.modules_dir.string(),
-                                              rs.interfaces_dir.string(), rs.types_dir.string());
+        auto config = std::make_unique<Everest::Config>(
+            rs.schemas_dir.string(), rs.config_file.string(), rs.modules_dir.string(), rs.interfaces_dir.string(),
+            rs.types_dir.string(), rs.mqtt_everest_prefix, rs.mqtt_external_prefix);
         if (!config->contains(module_id)) {
             EVTHROW(EVEXCEPTION(Everest::EverestConfigError,
                                 "Module with identifier '" << module_id << "' not found in config!"));
@@ -303,9 +299,10 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
         Everest::Logging::update_process_name(module_identifier);
 
         // connect to mqtt server and start mqtt mainloop thread
-        ctx = new EvModCtx(
-            Everest::Everest::get_instance(module_id, *config, validate_schema, mqtt_server_address, mqtt_server_port),
-            module_manifest, env);
+        ctx =
+            new EvModCtx(Everest::Everest::get_instance(module_id, *config, validate_schema, rs.mqtt_broker_host,
+                                                        rs.mqtt_broker_port, rs.mqtt_everest_prefix, rs.mqtt_external_prefix),
+                         module_manifest, env);
         ctx->everest.connect();
 
         ctx->js_module_ref = Napi::Persistent(module_this);

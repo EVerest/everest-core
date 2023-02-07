@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 #ifndef UTILS_MQTT_ABSTRACTION_HPP
 #define UTILS_MQTT_ABSTRACTION_HPP
 
@@ -20,7 +20,8 @@ class MQTTAbstractionImpl;
 class MQTTAbstraction {
 
 private:
-    MQTTAbstraction(const std::string& mqtt_server_address, const std::string& mqtt_server_port);
+    MQTTAbstraction(const std::string& mqtt_server_address, const std::string& mqtt_server_port,
+                    const std::string& mqtt_everest_prefix, const std::string& mqtt_external_prefix);
     MQTTAbstractionImpl& mqtt_abstraction;
 
 public:
@@ -74,10 +75,13 @@ public:
     void unregister_handler(const std::string& topic, const Token& token);
 
     ///
-    /// \returns the instance of the MQTTAbstraction singleton taking a \p mqtt_server_address and \p mqtt_server_port
-    /// as parameters
-    static MQTTAbstraction& get_instance(const std::string& mqtt_server_address, const std::string& mqtt_server_port) {
-        static MQTTAbstraction instance(mqtt_server_address, mqtt_server_port);
+    /// \returns the instance of the MQTTAbstraction singleton taking a \p mqtt_server_address , \p mqtt_server_port ,
+    /// \p mqtt_everest_prefix and \p mqtt_external_prefix as parameters
+    static MQTTAbstraction& get_instance(const std::string& mqtt_server_address, const std::string& mqtt_server_port,
+                                         const std::string& mqtt_everest_prefix,
+                                         const std::string& mqtt_external_prefix) {
+        static MQTTAbstraction instance(mqtt_server_address, mqtt_server_port, mqtt_everest_prefix,
+                                        mqtt_external_prefix);
 
         return instance;
     }

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 #ifndef CONTROLLER_SERVER_HPP
 #define CONTROLLER_SERVER_HPP
 
@@ -16,7 +16,7 @@ public:
     using IncomingMessageHandler = std::function<nlohmann::json(const nlohmann::json&)>;
     Server();
     ~Server();
-    void run(const IncomingMessageHandler& handler, const std::string& html_origin);
+    void run(const IncomingMessageHandler& handler, const std::string& html_origin, int port);
     void push(const nlohmann::json& msg);
 
 private:

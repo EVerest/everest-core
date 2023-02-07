@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 #ifndef FRAMEWORK_EVEREST_HPP
 #define FRAMEWORK_EVEREST_HPP
 
@@ -46,9 +46,12 @@ private:
     std::future<void> main_loop_end{};
     json module_manifest;
     json module_classes;
+    std::string mqtt_everest_prefix;
+    std::string mqtt_external_prefix;
 
     Everest(std::string module_id, Config config, bool validate_data_with_schema,
-            const std::string& mqtt_server_address, const std::string& mqtt_server_port);
+            const std::string& mqtt_server_address, int mqtt_server_port, const std::string& mqtt_everest_prefix,
+            const std::string& mqtt_external_prefix);
 
     void handle_ready(json data);
 
@@ -137,28 +140,15 @@ public:
 
     ///
     /// \returns the instance of the Everest singleton taking a \p module_id, the \p config, a \p mqtt_server_address
-    /// and \p mqtt_server_port as parameters. If validation of data with the known json schemas is needed this can be
-    /// activated by setting \p validate_data_with_schema to true
+    /// , \p mqtt_server_port , \p mqtt_everest_prefix and \p mqtt_external_prefix as parameters. If validation of data
+    /// with the known json schemas is needed this can be activated by setting \p validate_data_with_schema to true
     static Everest& get_instance(std::string module_id, Config config, bool validate_data_with_schema,
-                                 const std::string& mqtt_server_address, const std::string& mqtt_server_port) {
-        static Everest instance(module_id, config, validate_data_with_schema, mqtt_server_address, mqtt_server_port);
+                                 const std::string& mqtt_server_address, int mqtt_server_port,
+                                 const std::string& mqtt_everest_prefix, const std::string& mqtt_external_prefix) {
+        static Everest instance(module_id, config, validate_data_with_schema, mqtt_server_address, mqtt_server_port,
+                                mqtt_everest_prefix, mqtt_external_prefix);
 
         return instance;
-    }
-
-    ///
-    /// \returns the instance of the Everest singleton taking a \p module_id and \p config, as parameters. If validation
-    /// of data with the known json schemas is needed this can be activated by setting \p validate_data_with_schema to
-    /// true. The mqtt_server_address is set to localhost and the mqtt_server_port to 1883
-    static Everest& get_instance(std::string module_id, Config config, bool validate_data_with_schema) {
-        return get_instance(module_id, config, validate_data_with_schema, "localhost", "1883");
-    }
-
-    ///
-    /// \returns the instance of the Everest singleton taking a \p module_id and \p config, as parameters enabling
-    /// validation of data with the known json schemas
-    static Everest& get_instance(std::string module_id, Config config) {
-        return get_instance(module_id, config, true);
     }
 
     Everest(Everest const&) = delete;

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 #include "server.hpp"
 
 #include <cstring>
@@ -89,7 +89,7 @@ public:
         memset(&info, 0, sizeof(info));
     }
 
-    void run(const Server::IncomingMessageHandler& handler, const std::string& html_origin);
+    void run(const Server::IncomingMessageHandler& handler, const std::string& html_origin, int port);
     void push(const nlohmann::json& msg);
 
 private:
@@ -194,7 +194,7 @@ void Server::Impl::destroy_session(WebsocketSession* session) {
     session->~WebsocketSession();
 }
 
-void Server::Impl::run(const Server::IncomingMessageHandler& handler, const std::string& html_origin) {
+void Server::Impl::run(const Server::IncomingMessageHandler& handler, const std::string& html_origin, int port) {
     if (!handler) {
         throw std::runtime_error("Could not run the server with a null incoming message handler");
     }
@@ -207,7 +207,7 @@ void Server::Impl::run(const Server::IncomingMessageHandler& handler, const std:
     };
 
     mount.origin = html_origin.c_str();
-    info.port = 8849;
+    info.port = port;
     info.mounts = &mount;
     info.protocols = protocols;
     info.pvo = &pvo;
@@ -257,8 +257,8 @@ Server::Server() : pimpl(std::make_unique<Impl>()) {
 
 Server::~Server() = default;
 
-void Server::run(const IncomingMessageHandler& handler, const std::string& html_origin) {
-    pimpl->run(handler, html_origin);
+void Server::run(const IncomingMessageHandler& handler, const std::string& html_origin, int port) {
+    pimpl->run(handler, html_origin, port);
 }
 
 void Server::push(const nlohmann::json& msg) {

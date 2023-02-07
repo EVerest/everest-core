@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 #include <everest/logging.hpp>
 
 #include <utils/mqtt_abstraction.hpp>
 #include <utils/mqtt_abstraction_impl.hpp>
 
 namespace Everest {
-MQTTAbstraction::MQTTAbstraction(const std::string& mqtt_server_address, const std::string& mqtt_server_port) :
-    mqtt_abstraction(MQTTAbstractionImpl::get_instance(mqtt_server_address, mqtt_server_port)) {
+MQTTAbstraction::MQTTAbstraction(const std::string& mqtt_server_address, const std::string& mqtt_server_port,
+                                 const std::string& mqtt_everest_prefix, const std::string& mqtt_external_prefix) :
+    mqtt_abstraction(MQTTAbstractionImpl::get_instance(mqtt_server_address, mqtt_server_port, mqtt_everest_prefix,
+                                                       mqtt_external_prefix)) {
     EVLOG_debug << "initialized mqtt_abstraction";
 }
 

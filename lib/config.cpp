@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 #include <algorithm>
 #include <fstream>
 #include <set>
@@ -104,13 +104,15 @@ static json parse_config_map(const json& config_map_schema, const json& config_m
 }
 
 Config::Config(std::string schemas_dir, std::string config_file, std::string modules_dir, std::string interfaces_dir,
-               std::string types_dir) {
+               std::string types_dir, const std::string& mqtt_everest_prefix, const std::string& mqtt_external_prefix) {
     BOOST_LOG_FUNCTION();
 
     this->schemas_dir = schemas_dir;
     this->modules_dir = modules_dir;
     this->interfaces_dir = interfaces_dir;
     this->types_dir = types_dir;
+    this->mqtt_everest_prefix = mqtt_everest_prefix;
+    this->mqtt_external_prefix = mqtt_external_prefix;
 
     this->manifests = json({});
     this->interfaces = json({});
@@ -647,13 +649,13 @@ ModuleInfo Config::get_module_info(const std::string& module_id) {
 std::string Config::mqtt_prefix(const std::string& module_id, const std::string& impl_id) {
     BOOST_LOG_FUNCTION();
 
-    return fmt::format("everest/{}/{}", module_id, impl_id);
+    return fmt::format("{}{}/{}", this->mqtt_everest_prefix, module_id, impl_id);
 }
 
 std::string Config::mqtt_module_prefix(const std::string& module_id) {
     BOOST_LOG_FUNCTION();
 
-    return fmt::format("everest/{}", module_id);
+    return fmt::format("{}{}", this->mqtt_everest_prefix, module_id);
 }
 
 json Config::extract_implementation_info(const std::string& module_id, const std::string& impl_id) {

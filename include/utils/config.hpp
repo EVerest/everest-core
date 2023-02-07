@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 #ifndef UTILS_CONFIG_HPP
 #define UTILS_CONFIG_HPP
 
@@ -42,6 +42,8 @@ private:
     std::string modules_dir;
     std::string interfaces_dir;
     std::string types_dir;
+    std::string mqtt_everest_prefix;
+    std::string mqtt_external_prefix;
 
     json main;
 
@@ -85,7 +87,8 @@ public:
     /// \brief creates a new Config object, looking for the config.json and schemes folder relative to the provided \p
     /// main_dir
     explicit Config(std::string schemas_dir, std::string config_file, std::string modules_dir,
-                    std::string interfaces_dir, std::string types_dir);
+                    std::string interfaces_dir, std::string types_dir, const std::string& mqtt_everest_prefix,
+                    const std::string& mqtt_external_prefix);
 
     ///
     /// \brief checks if the given \p module_id provides the requirement given in \p requirement_id

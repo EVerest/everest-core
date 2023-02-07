@@ -39,7 +39,19 @@ properties:
         type: string
       types_dir:
         type: string
-      config_logging_file:
+      www_dir:
+        type: string
+      logging_config_file:
+        type: string
+      controller_port:
+        type: integer
+      mqtt_broker_host:
+        type: string
+      mqtt_broker_port:
+        type: integer
+      mqtt_everest_prefix:
+        type: string
+      mqtt_external_prefix:
         type: string
     additionalProperties: false
   active_modules:

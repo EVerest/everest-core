@@ -1,9 +1,10 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 #ifndef FRAMEWORK_EVEREST_RUNTIME_HPP
 #define FRAMEWORK_EVEREST_RUNTIME_HPP
 
 #include <filesystem>
 #include <string>
-
 
 #include <everest/logging.hpp>
 #include <fmt/color.h>
@@ -70,6 +71,12 @@ inline constexpr auto LOGGING_CONFIG_NAME = "default_logging.cfg";
 
 inline constexpr auto WWW_DIR = "www";
 
+inline constexpr auto CONTROLLER_PORT = 8849;
+inline constexpr auto MQTT_BROKER_HOST = "localhost";
+inline constexpr auto MQTT_BROKER_PORT = 1883;
+inline constexpr auto MQTT_EVEREST_PREFIX = "everest";
+inline constexpr auto MQTT_EXTERNAL_PREFIX = "";
+
 } // namespace defaults
 
 std::string parse_string_option(const boost::program_options::variables_map& vm, const char* option);
@@ -91,6 +98,11 @@ struct RuntimeSettings {
     fs::path logging_config_file;
     fs::path config_file;
     fs::path www_dir;
+    int controller_port;
+    std::string mqtt_broker_host;
+    int mqtt_broker_port;
+    std::string mqtt_everest_prefix;
+    std::string mqtt_external_prefix;
 
     nlohmann::json config;
 

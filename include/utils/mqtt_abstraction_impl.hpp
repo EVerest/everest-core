@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 #ifndef UTILS_MQTT_ABSTRACTION_IMPL_HPP
 #define UTILS_MQTT_ABSTRACTION_IMPL_HPP
 
@@ -44,16 +44,18 @@ private:
     std::vector<std::shared_ptr<MessageWithQOS>> messages_before_connected;
     std::mutex messages_before_connected_mutex;
 
-    //std::thread mqtt_mainloop_thread;
     Thread mqtt_mainloop_thread;
 
     std::string mqtt_server_address;
     std::string mqtt_server_port;
+    std::string mqtt_everest_prefix;
+    std::string mqtt_external_prefix;
     struct mqtt_client mqtt_client;
     uint8_t sendbuf[MQTT_BUF_SIZE];
     uint8_t recvbuf[MQTT_BUF_SIZE];
 
-    MQTTAbstractionImpl(std::string mqtt_server_address, std::string mqtt_server_port);
+    MQTTAbstractionImpl(const std::string& mqtt_server_address, const std::string& mqtt_server_port,
+                        const std::string& mqtt_everest_prefix, const std::string& mqtt_external_prefix);
     ~MQTTAbstractionImpl();
 
     static int open_nb_socket(const char* addr, const char* port);
@@ -127,11 +129,14 @@ public:
     static void publish_callback(void** unused, struct mqtt_response_publish* published);
 
     ///
-    /// \returns the instance of the MQTTAbstractionImpl singleton taking a \p mqtt_server_address and \p
-    /// mqtt_server_port as parameters
+    /// \returns the instance of the MQTTAbstractionImpl singleton taking a \p mqtt_server_address , \p mqtt_server_port
+    /// , \p mqtt_everest_prefix and \p mqtt_external_prefix as parameters
     static MQTTAbstractionImpl& get_instance(const std::string& mqtt_server_address,
-                                             const std::string& mqtt_server_port) {
-        static MQTTAbstractionImpl instance(mqtt_server_address, mqtt_server_port);
+                                             const std::string& mqtt_server_port,
+                                             const std::string& mqtt_everest_prefix,
+                                             const std::string& mqtt_external_prefix) {
+        static MQTTAbstractionImpl instance(mqtt_server_address, mqtt_server_port, mqtt_everest_prefix,
+                                            mqtt_external_prefix);
 
         return instance;
     }

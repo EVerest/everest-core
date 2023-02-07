@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 const util = require('util');
 const addon = require('./everestjs.node');
 
@@ -44,8 +44,6 @@ const EverestModule = function EverestModule(handler_setup, user_settings) {
     prefix: settings.prefix,
     config_file: settings.config_file,
     validate_schema: helpers.get_default(settings, 'validate_schema', true),
-    mqtt_server_address: helpers.get_default(settings, 'mqtt_server_address', 'localhost'),
-    mqtt_server_port: helpers.get_default(settings, 'mqtt_server_port', '1883'),
   };
 
   function callbackWrapper(on, request, ...args) {

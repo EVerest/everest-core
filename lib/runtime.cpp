@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
 #include <framework/runtime.hpp>
 
 #include <algorithm>
+#include <cstdlib>
 
 #include <boost/program_options.hpp>
 
@@ -192,6 +193,15 @@ RuntimeSettings::RuntimeSettings(const std::string& prefix_, const std::string& 
         types_dir = assert_dir(default_types_dir, "Default type directory");
     }
 
+    const auto settings_www_dir_it = settings.find("www_dir");
+    if (settings_www_dir_it != settings.end()) {
+        const auto settings_www_dir = get_prefixed_path_from_json(*settings_www_dir_it, prefix);
+        www_dir = assert_dir(settings_www_dir, "Config provided www directory");
+    } else {
+        const auto default_www_dir = prefix / defaults::DATAROOT_DIR / defaults::NAMESPACE / defaults::WWW_DIR;
+        www_dir = assert_dir(default_www_dir, "Default www directory");
+    }
+
     const auto settings_logging_config_file_it = settings.find("logging_config_file");
     if (settings_logging_config_file_it != settings.end()) {
         const auto settings_logging_config_file = get_prefixed_path_from_json(*settings_logging_config_file_it, prefix);
@@ -208,7 +218,64 @@ RuntimeSettings::RuntimeSettings(const std::string& prefix_, const std::string& 
         logging_config_file = assert_file(default_logging_config_file, "Default logging config");
     }
 
-    www_dir = prefix / defaults::DATAROOT_DIR / defaults::NAMESPACE / defaults::WWW_DIR;
+    const auto settings_controller_port_it = settings.find("controller_port");
+    if (settings_controller_port_it != settings.end()) {
+        controller_port = settings_controller_port_it->get<int>();
+    } else {
+        controller_port = defaults::CONTROLLER_PORT;
+    }
+
+    const auto settings_mqtt_broker_host_it = settings.find("mqtt_broker_host");
+    if (settings_mqtt_broker_host_it != settings.end()) {
+        mqtt_broker_host = settings_mqtt_broker_host_it->get<std::string>();
+    } else {
+        mqtt_broker_host = defaults::MQTT_BROKER_HOST;
+    }
+
+    // overwrite mqtt broker host with environment variable
+    // NOLINTNEXTLINE(concurrency-mt-unsafe): not problematic that this function is not threadsafe here
+    const char* mqtt_server_address = std::getenv("MQTT_SERVER_ADDRESS");
+    if (mqtt_server_address != nullptr) {
+        mqtt_broker_host = mqtt_server_address;
+    }
+
+    const auto settings_mqtt_broker_port_it = settings.find("mqtt_broker_port");
+    if (settings_mqtt_broker_port_it != settings.end()) {
+        mqtt_broker_port = settings_mqtt_broker_port_it->get<int>();
+    } else {
+        mqtt_broker_port = defaults::MQTT_BROKER_PORT;
+    }
+
+    // overwrite mqtt broker port with environment variable
+    // NOLINTNEXTLINE(concurrency-mt-unsafe): not problematic that this function is not threadsafe here
+    const char* mqtt_server_port = std::getenv("MQTT_SERVER_PORT");
+    if (mqtt_server_port != nullptr) {
+        mqtt_broker_port = std::stoi(mqtt_server_port);
+    }
+
+    const auto settings_mqtt_everest_prefix_it = settings.find("mqtt_everest_prefix");
+    if (settings_mqtt_everest_prefix_it != settings.end()) {
+        mqtt_everest_prefix = settings_mqtt_everest_prefix_it->get<std::string>();
+    } else {
+        mqtt_everest_prefix = defaults::MQTT_EVEREST_PREFIX;
+    }
+
+    // always make sure the everest mqtt prefix ends with '/'
+    if (mqtt_everest_prefix.length() > 0 && mqtt_everest_prefix.back() != '/') {
+        mqtt_everest_prefix = mqtt_everest_prefix += "/";
+    }
+
+    const auto settings_mqtt_external_prefix_it = settings.find("mqtt_external_prefix");
+    if (settings_mqtt_external_prefix_it != settings.end()) {
+        mqtt_external_prefix = settings_mqtt_external_prefix_it->get<std::string>();
+    } else {
+        mqtt_external_prefix = defaults::MQTT_EXTERNAL_PREFIX;
+    }
+
+    if (mqtt_everest_prefix == mqtt_external_prefix) {
+        throw BootException(fmt::format("mqtt_everest_prefix '{}' cannot be equal to mqtt_external_prefix '{}'!",
+                                        mqtt_everest_prefix, mqtt_external_prefix));
+    }
 }
 
 ModuleCallbacks::ModuleCallbacks(const std::function<void(ModuleAdapter module_adapter)>& register_module_adapter,
@@ -236,7 +303,8 @@ int ModuleLoader::initialize() {
 
     try {
         Config config = Config(rs->schemas_dir.string(), rs->config_file.string(), rs->modules_dir.string(),
-                               rs->interfaces_dir.string(), rs->types_dir.string());
+                               rs->interfaces_dir.string(), rs->types_dir.string(), rs->mqtt_everest_prefix,
+                               rs->mqtt_external_prefix);
 
         if (!config.contains(this->module_id)) {
             EVLOG_error << fmt::format("Module id '{}' not found in config!", this->module_id);
@@ -253,26 +321,16 @@ int ModuleLoader::initialize() {
         }
         Logging::update_process_name(module_identifier);
 
-        // NOLINTNEXTLINE(concurrency-mt-unsafe): not problematic that this function is not threadsafe here
-        const char* mqtt_server_address = std::getenv("MQTT_SERVER_ADDRESS");
-        if (mqtt_server_address == nullptr) {
-            mqtt_server_address = "localhost";
-        }
-
-        // NOLINTNEXTLINE(concurrency-mt-unsafe): not problematic that this function is not threadsafe here
-        const char* mqtt_server_port = std::getenv("MQTT_SERVER_PORT");
-        if (mqtt_server_port == nullptr) {
-            mqtt_server_port = "1883";
-        }
-
-        Everest& everest = Everest::Everest::get_instance(this->module_id, config, rs->validate_schema,
-                                                          mqtt_server_address, mqtt_server_port);
+        Everest& everest =
+            Everest::Everest::get_instance(this->module_id, config, rs->validate_schema, rs->mqtt_broker_host,
+                                           rs->mqtt_broker_port, rs->mqtt_everest_prefix, rs->mqtt_external_prefix);
 
         // module import
         EVLOG_debug << fmt::format("Initializing module {}...", module_identifier);
 
         if (!everest.connect()) {
-            EVLOG_error << fmt::format("Cannot connect to MQTT broker at {}:{}", mqtt_server_address, mqtt_server_port);
+            EVLOG_error << fmt::format("Cannot connect to MQTT broker at {}:{}", rs->mqtt_broker_host,
+                                       rs->mqtt_broker_port);
             return 1;
         }
 

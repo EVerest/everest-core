@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
 #include <filesystem>
 #include <thread>
@@ -46,11 +46,12 @@ int main(int argc, char* argv[]) {
 
     RPC rpc(socket_fd, config);
     Server backend;
+    int controller_port = config_params.at("controller_port").get<int>();
 
     // FIXME (aw): don't use hard-coded path!
     std::thread(
         &Server::run, &backend, [&rpc](const nlohmann::json& request) { return rpc.handle_json_rpc(request); },
-        config_params.at("www_dir"))
+        config_params.at("www_dir"), controller_port)
         .detach();
 
     while (true) {
