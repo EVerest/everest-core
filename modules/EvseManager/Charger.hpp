@@ -58,9 +58,12 @@ enum class ControlPilotEvent {
     Invalid
 };
 
+const std::string IEC62196Type2Cable = "IEC62196Type2Cable";
+const std::string IEC62196Type2Socket = "IEC62196Type2Socket";
+
 class Charger {
 public:
-    Charger(const std::unique_ptr<board_support_ACIntf>& r_bsp);
+    Charger(const std::unique_ptr<board_support_ACIntf>& r_bsp, const std::string& connector_type);
     ~Charger();
 
     // Public interface to configure Charger
@@ -186,6 +189,7 @@ private:
     Everest::Thread mainThreadHandle;
 
     const std::unique_ptr<board_support_ACIntf>& r_bsp;
+    const std::string& connector_type;
 
     void mainThread();
 

@@ -68,6 +68,7 @@ struct Conf {
     bool switch_to_minimum_voltage_after_cable_check;
     bool hack_skoda_enyaq;
     int hack_present_current_offset;
+    std::string connector_type;
 };
 
 class EvseManager : public Everest::ModuleBase {
