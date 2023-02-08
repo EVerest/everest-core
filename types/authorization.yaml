@@ -6,8 +6,25 @@ types:
     enum:
       - Accepted
       - Blocked
+      - ConcurrentTx
       - Expired
       - Invalid
+      - NoCredit
+      - NotAllowedTypeEVSE
+      - NotAtThisLocation
+      - NotAtThisTime
+      - Unknown
+  CertificateStatus:
+    description: Certificate status information
+    type: string
+    enum:
+      - Accepted
+      - SignatureError
+      - CertificateExpired
+      - CertificateRevoked
+      - NoCertificateAvailable
+      - CertChainError
+      - ContractCancelled
   Identifier:
     description: Contains meta information about the identifier
     type: object
@@ -52,7 +69,7 @@ types:
           ascii: !!!FIXME!!! write a regex to allow only printable ascii
         type: string
         minLength: 1
-        maxLength: 20
+        maxLength: 36
       type:
         description: Type of the token
         type: string
@@ -68,6 +85,21 @@ types:
       prevalidated:
         description: Indicates that the id token is already validated by the provider
         type: boolean
+      certificate:
+        description: The X.509 certificated presented by EV and encoded in PEM format
+        type: string
+        maxLength: 5500
+      iso15118CertificateHashData:
+        description: >-
+          Contains the information needed to verify the EV Contract Certificate
+          via OCSP
+        type: array
+        items:
+          description: An array of contract certificate infos
+          type: object
+          $ref: /iso15118_charger#/CertificateHashDataInfo
+        minItems: 1
+        maxItems: 4
   ValidationResult:
     description: >-
       Result object containing authorization status enum value and an optional
@@ -80,6 +112,9 @@ types:
       authorization_status:
         type: string
         $ref: /authorization#/AuthorizationStatus
+      certificate_status:
+        type: string
+        $ref: /authorization#/CertificateStatus
       reason:
         type: string
         minLength: 5
