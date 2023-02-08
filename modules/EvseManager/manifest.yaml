@@ -125,6 +125,13 @@ config:
       Set to 0 unless you really know what you are doing.
     type: integer
     default: 0
+  connector_type:
+    description: Type of charging connector available at this EVSE
+    type: string
+    enum:
+      - IEC62196Type2Cable
+      - IEC62196Type2Socket
+    default: IEC62196Type2Cable
 provides:
   evse:
     interface: evse_manager

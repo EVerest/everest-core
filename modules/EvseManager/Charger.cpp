@@ -17,7 +17,8 @@
 
 namespace module {
 
-Charger::Charger(const std::unique_ptr<board_support_ACIntf>& r_bsp) : r_bsp(r_bsp) {
+Charger::Charger(const std::unique_ptr<board_support_ACIntf>& r_bsp, const std::string& connector_type) :
+    r_bsp(r_bsp), connector_type(connector_type) {
     maxCurrent = 6.0;
     maxCurrentCable = r_bsp->call_read_pp_ampacity();
     authorized = false;
@@ -725,9 +726,12 @@ float Charger::ampereToDutyCycle(float ampere) {
 bool Charger::setMaxCurrent(float c, std::chrono::time_point<date::utc_clock> validUntil) {
     if (c >= 0.0 && c <= CHARGER_ABSOLUTE_MAX_CURRENT) {
         std::lock_guard<std::recursive_mutex> lock(configMutex);
-        // limit to cable limit (PP reading) if that is smaller!
-        if (maxCurrentCable < c) {
-            c = maxCurrentCable;
+        // only consider PP for IEC 62196 Type 2 Socket for now
+        if (connector_type == IEC62196Type2Socket) {
+            // limit to cable limit (PP reading) if that is smaller!
+            if (maxCurrentCable < c) {
+                c = maxCurrentCable;
+            }
         }
         // is it still valid?
         // FIXME this requires local clock to be UTC
@@ -744,9 +748,12 @@ bool Charger::setMaxCurrent(float c, std::chrono::time_point<date::utc_clock> va
 bool Charger::setMaxCurrent(float c) {
     if (c >= 0.0 && c <= CHARGER_ABSOLUTE_MAX_CURRENT) {
         std::lock_guard<std::recursive_mutex> lock(configMutex);
-        // limit to cable limit (PP reading) if that is smaller!
-        if (maxCurrentCable < c) {
-            c = maxCurrentCable;
+        // only consider PP for IEC 62196 Type 2 Socket for now
+        if (connector_type == IEC62196Type2Socket) {
+            // limit to cable limit (PP reading) if that is smaller!
+            if (maxCurrentCable < c) {
+                c = maxCurrentCable;
+            }
         }
         // is it still valid?
         // FIXME this requires local clock to be UTC
