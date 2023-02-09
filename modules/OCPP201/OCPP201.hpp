@@ -5,16 +5,19 @@
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 1
+// template version 2
 //
 
 #include "ld-ev.hpp"
 
 // headers for provided interface implementations
+#include <generated/interfaces/auth_token_provider/Implementation.hpp>
+#include <generated/interfaces/auth_token_validator/Implementation.hpp>
 #include <generated/interfaces/empty/Implementation.hpp>
 
 // headers for required interface implementations
 #include <generated/interfaces/evse_manager/Interface.hpp>
+#include <generated/interfaces/system/Interface.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
@@ -26,21 +29,35 @@ namespace module {
 struct Conf {
     std::string ChargePointConfigPath;
     std::string MessageLogPath;
+    std::string CertsPath;
 };
 
 class OCPP201 : public Everest::ModuleBase {
 public:
     OCPP201() = delete;
     OCPP201(const ModuleInfo& info, std::unique_ptr<emptyImplBase> p_main,
-            std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager, Conf& config) :
-        ModuleBase(info), p_main(std::move(p_main)), r_evse_manager(std::move(r_evse_manager)), config(config){};
+            std::unique_ptr<auth_token_validatorImplBase> p_auth_validator,
+            std::unique_ptr<auth_token_providerImplBase> p_auth_provider,
+            std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager, std::unique_ptr<systemIntf> r_system,
+            Conf& config) :
+        ModuleBase(info),
+        p_main(std::move(p_main)),
+        p_auth_validator(std::move(p_auth_validator)),
+        p_auth_provider(std::move(p_auth_provider)),
+        r_evse_manager(std::move(r_evse_manager)),
+        r_system(std::move(r_system)),
+        config(config){};
 
     const Conf& config;
     const std::unique_ptr<emptyImplBase> p_main;
+    const std::unique_ptr<auth_token_validatorImplBase> p_auth_validator;
+    const std::unique_ptr<auth_token_providerImplBase> p_auth_provider;
     const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;
+    const std::unique_ptr<systemIntf> r_system;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
+    std::unique_ptr<ocpp::v201::ChargePoint> charge_point;
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
@@ -56,7 +73,6 @@ private:
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
     std::filesystem::path ocpp_share_path;
-    std::unique_ptr<ocpp::v201::ChargePoint> charge_point;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

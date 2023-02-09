@@ -8,15 +8,29 @@ config:
     description: Path to folder where logs of all OCPP messages get written to
     type: string
     default: /tmp/everest_ocpp_logs
+  CertsPath:
+    description: Path to folder where certificates are located. If empty uses everest prefix + etc/everest/certs
+    type: string
+    default: ""
 provides:
   main:
     description: This is a OCPP 2.0.1 charge point
     interface: empty
+  auth_validator:
+    description: Validates the provided token using CSMS, AuthorizationList or AuthorizationCache
+    interface: auth_token_validator
+  auth_provider:
+    description: Provides authorization requests by CSMS
+    interface: auth_token_provider
 requires:
   evse_manager:
     interface: evse_manager
     min_connections: 1
     max_connections: 128
+  system:
+    interface: system
+    min_connections: 1
+    max_connections: 1
 enable_external_mqtt: false
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
