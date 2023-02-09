@@ -32,16 +32,17 @@ void Auth::ready() {
     for (const auto& evse_manager : this->r_evse_manager) {
         int32_t connector_id = evse_manager->call_get_id();
         this->auth_handler->init_connector(connector_id, evse_index);
-        this->auth_handler->register_authorize_callback([this](const int32_t evse_index, const std::string& id_token) {
-            this->r_evse_manager.at(evse_index)
-                ->call_authorize(id_token, false); // FIXME: this defaults to EIM, needs fixing for PnC support
+        this->auth_handler->register_notify_evse_callback([this](const int evse_index,
+                                                                 const ProvidedIdToken& provided_token,
+                                                                 const ValidationResult& validation_result) {
+            this->r_evse_manager.at(evse_index)->call_authorize_response(provided_token, validation_result);
         });
         this->auth_handler->register_withdraw_authorization_callback(
             [this](const int32_t evse_index) { this->r_evse_manager.at(evse_index)->call_withdraw_authorization(); });
-        this->auth_handler->register_validate_token_callback([this](const std::string& id_token) {
+        this->auth_handler->register_validate_token_callback([this](const ProvidedIdToken& provided_token) {
             std::vector<ValidationResult> validation_results;
             for (const auto& token_validator : this->r_token_validator) {
-                validation_results.push_back(token_validator->call_validate_token(id_token));
+                validation_results.push_back(token_validator->call_validate_token(provided_token));
             }
             return validation_results;
         });

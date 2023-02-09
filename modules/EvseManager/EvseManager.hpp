@@ -133,6 +133,7 @@ public:
     int32_t get_reservation_id();
 
     bool get_hlc_enabled();
+    bool get_hlc_waiting_for_auth_pnc();
     sigslot::signal<types::evse_manager::SessionEvent> signalReservationEvent;
 
     void charger_was_authorized();
@@ -184,6 +185,8 @@ private:
 
     double latest_target_voltage;
     double latest_target_current;
+
+    types::authorization::ProvidedIdToken autocharge_token;
 
     void log_v2g_message(Object m);
 

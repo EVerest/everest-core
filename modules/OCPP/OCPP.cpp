@@ -9,6 +9,7 @@
 namespace module {
 
 const std::string EVEREST_OCPP_SHARE_PATH = "share/everest/ocpp";
+const std::string EVEREST_ETC_CERTS_PATH = "etc/everest/certs";
 const std::string INIT_SQL = "init.sql";
 
 namespace fs = std::filesystem;
@@ -65,6 +66,7 @@ void OCPP::init() {
     invoke_init(*p_auth_provider);
 
     this->ocpp_share_path = fs::path(this->info.everest_prefix) / EVEREST_OCPP_SHARE_PATH;
+    const auto etc_certs_path = fs::path(this->info.everest_prefix) / EVEREST_ETC_CERTS_PATH;
 
     auto configured_config_path = fs::path(this->config.ChargePointConfigPath);
 
@@ -118,10 +120,11 @@ void OCPP::init() {
             EVLOG_AND_THROW(e);
         }
     }
-    this->charge_point =
-        std::make_unique<ocpp::v16::ChargePoint>(json_config, this->ocpp_share_path.string(), user_config_path.string(),
-                                   this->config.DatabasePath, sql_init_path.string(), this->config.MessageLogPath);
-    // TODO(kai): select appropriate EVSE based on connector
+
+    this->charge_point = std::make_unique<ocpp::v16::ChargePoint>(
+        json_config, this->ocpp_share_path.string(), user_config_path.string(), this->config.DatabasePath,
+        sql_init_path.string(), this->config.MessageLogPath, etc_certs_path.string());
+
     this->charge_point->register_pause_charging_callback([this](int32_t connector) {
         if (connector > 0 && connector <= this->r_evse_manager.size()) {
             return this->r_evse_manager.at(connector - 1)->call_pause_charging();
@@ -339,6 +342,18 @@ void OCPP::init() {
     this->charge_point->register_connection_state_changed_callback(
         [this](bool is_connected) { this->p_main->publish_is_connected(is_connected); });
 
+    this->charge_point->register_get_15118_ev_certificate_response_callback(
+        [this](const int32_t connector_id, const ocpp::v201::Get15118EVCertificateResponse& certificate_response,
+               const ocpp::v201::CertificateActionEnum& certificate_action) {
+            types::iso15118_charger::Response_Exi_Stream_Status response;
+            response.status = types::iso15118_charger::string_to_status(
+                ocpp::v201::conversions::iso15118evcertificate_status_enum_to_string(certificate_response.status));
+            response.exiResponse.emplace(certificate_response.exiResponse.get());
+            response.certificateAction = types::iso15118_charger::string_to_certificate_action_enum(
+                ocpp::v201::conversions::certificate_action_enum_to_string(certificate_action));
+            this->r_evse_manager.at(connector_id - 1)->call_set_get_certificate_response(response);
+        });
+
     int32_t connector = 1;
     for (auto& evse : this->r_evse_manager) {
         evse->subscribe_powermeter([this, connector](types::powermeter::Powermeter powermeter) {
@@ -431,6 +446,15 @@ void OCPP::init() {
             } else if (event == "ReservationAuthtokenMismatch") {
             }
         });
+
+        evse->subscribe_iso15118_certificate_request(
+            [this, connector](types::iso15118_charger::Request_Exi_Stream_Schema request) {
+                this->charge_point->data_transfer_pnc_get_15118_ev_certificate(
+                    connector, request.exiRequest, request.iso15118SchemaVersion,
+                    ocpp::v201::conversions::string_to_certificate_action_enum(
+                        types::iso15118_charger::certificate_action_enum_to_string(request.certificateAction)));
+            });
+
         connector++;
     }
     this->charge_point->start();

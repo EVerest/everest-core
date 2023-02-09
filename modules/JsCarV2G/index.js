@@ -14,13 +14,17 @@ function JavaStartedDeferred(mqtt_base_path, module_name, mod) {
     const mqttServerPort = process.env.MQTT_SERVER_PORT || '1883';
     const cmd = 'java';
 
+    const certs_path = `${mod.info.everest_prefix}/etc/everest/certs/client/oem/`;
+    const { tls_active } = mod.config.impl.main;
+
     // FIXME: the path hierarchy should be well defined,
     //        i.e where to find 3rd party things
     const cwd = `${__dirname}/../../3rd_party/rise_v2g`;
     const args = [
       '-Djava.net.preferIPv4Stack=false', '-Djava.net.prefecom.v2gclarity.rrIPv6Addresses=true',
       '-cp', 'rise-v2g-evcc-1.2.6.jar', 'com.v2gclarity.risev2g.evcc.main.StartEVCC',
-      mqttServerAddress, mqttServerPort, mqtt_base_path, mod.payment, mod.energymode, network_interface,
+      mqttServerAddress, mqttServerPort, mqtt_base_path, mod.payment, mod.energymode, network_interface, certs_path,
+      tls_active,
     ];
 
     evlog.debug(`Starting java subprocess: '${cmd}' with args ${args} in cwd '${cwd}'`);

@@ -24,11 +24,14 @@ class Charger_Wrapper(object):
         self.debug_mode = "None"
         self.stop_charging = False
         self.auth_okay_eim = False
-        self.auth_okay_pnc = False
+        self.auth_pnc_status = "Ongoing"
+        self.auth_pnc_certificate_status = "Ongoing"
         self.EVSE_UtilityInterruptEvent = False
         self.EVSE_EmergencyShutdown = False
         self.EVSE_Malfunction = False
         self.powermeter = dict()
+        self.certificate_service_supported = False
+        self.existream_status = dict()
 
         # AC
         self.EVSENominalVoltage = 0
@@ -56,10 +59,12 @@ class Charger_Wrapper(object):
         # Common
         self.stop_charging = False
         self.auth_okay_eim = False
-        self.auth_okay_pnc = False
+        self.auth_pnc_status = "Ongoing"
+        self.auth_pnc_certificate_status = "Ongoing"
         self.EVSE_UtilityInterruptEvent = False
         self.EVSE_EmergencyShutdown = False
         self.EVSE_Malfunction = False
+        self.existream_status = dict()
 
         # AC
         self.ContactorError = False
@@ -143,11 +148,14 @@ class Charger_Wrapper(object):
     def get_Auth_Okay_EIM(self) -> bool:
         return self.auth_okay_eim
 
-    # Authorization
-    def set_Auth_Okay_PnC(self, auth_okay_pnc: bool):
-        self.auth_okay_pnc = auth_okay_pnc
-    def get_Auth_Okay_PnC(self) -> bool:
-        return self.auth_okay_pnc
+    # PaymentDetails
+    def set_Auth_PnC_Status(self, status: str, certificateStatus):
+        self.auth_pnc_status = status
+        self.auth_pnc_certificate_status = certificateStatus
+    def get_Auth_PnC_Status(self) -> str:
+        return self.auth_pnc_status
+    def get_Auth_Certificate_Status(self):
+        return self.auth_pnc_certificate_status
 
     # TODO: Not yet implemented
     def set_FAILED_ContactorError(self, ContactorError: bool):
@@ -264,6 +272,18 @@ class Charger_Wrapper(object):
         self.cableCheck_Finished = status
     def get_cableCheck_Finished(self) -> bool:
         return self.cableCheck_Finished
+
+    # ServiceDiscovery
+    def set_Certificate_Service_Supported(self, status: bool):
+        self.certificate_service_supported = status
+    def get_Certificate_Service_Supported(self) -> bool:
+        return self.certificate_service_supported
+
+    # CertificateInstallation, CertificateUpdate
+    def set_Certificate_Response(self, existream_status: dict):
+        self.existream_status = existream_status
+    def get_Certificate_Response(self) -> dict:
+        return self.existream_status
 
 
 ChargerWrapper = Charger_Wrapper()

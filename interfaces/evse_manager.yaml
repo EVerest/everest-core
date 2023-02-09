@@ -23,17 +23,20 @@ cmds:
         Returns true if evse was disabled (or was disabled before), returns
         false if it could not be disabled (i.e. due to communication error with hardware)
       type: boolean
-  authorize:
+  authorize_response:
     description: >-
-      Authorizes the evse manager to start a transaction using the given
-      id tag.
+      Reports the result of an authorization request to the EvseManagar. 
+      Contains the provided_token for which authorization was requested and
+      the validation_result
     arguments:
-      id_tag:
-        description: The authorized id tag
-        type: string
-      pnc:
-        description: true Pnc auth, false EIM auth
-        type: boolean
+      provided_token:
+        description: The token for which authorization was requested
+        type: object
+        $ref: /authorization#/ProvidedIdToken
+      validation_result:
+        description: The validation result
+        type: object
+        $ref: /authorization#/ValidationResult
   withdraw_authorization:
     description: >-
       Call to signals that EVSE is not further authorized to start a transaction
@@ -117,6 +120,16 @@ cmds:
     result:
       description: Signed meter value
       type: string
+  set_get_certificate_response:
+    description: >-
+      CertificateInstallationRes/CertificateUpdateRes - Set the new/updated Contract Certificate (including the certificate chain)
+      and the corresponding encrypted private key. Should be forwared to EVCC.
+      This is an async response to a previously published iso15118_certificate_request
+    arguments:
+      certificate_reponse:
+        description: The response raw exi stream and the status from the CSMS system
+        type: object
+        $ref: /iso15118_charger#/Response_Exi_Stream_Status
 vars:
   session_event:
     description: Emits all events related to sessions
@@ -145,3 +158,10 @@ vars:
     description: "Hardware capability/limits"
     type: object
     $ref: /board_support#/HardwareCapabilities
+  iso15118_certificate_request:
+    description: >-
+      The vehicle requests the SECC to deliver the certificate that belong 
+      to the currently valid contract of the vehicle.
+      Response will be reported async via  set_get_certificate_response
+    type: object
+    $ref: /iso15118_charger#/Request_Exi_Stream_Schema

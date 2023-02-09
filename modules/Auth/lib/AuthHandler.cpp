@@ -6,6 +6,16 @@
 
 namespace module {
 
+/// \brief helper method to intersect referenced_connectors (from ProvidedIdToken) with connectors that are listed within
+/// ValidationResult
+std::vector<int> intersect(std::vector<int>& a, std::vector<int>& b) {
+    std::vector<int> result;
+    std::sort(a.begin(), a.end());
+    std::sort(b.begin(), b.end());
+    std::set_intersection(a.begin(), a.end(), b.begin(), b.end(), std::back_inserter(result));
+    return result;
+}
+
 namespace conversions {
 std::string token_handling_result_to_string(const TokenHandlingResult& result) {
     switch (result) {
@@ -100,7 +110,7 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
         validation_result.authorization_status = AuthorizationStatus::Accepted;
         validation_results.push_back(validation_result);
     } else {
-        validation_results = this->validate_token_callback(provided_token.id_token);
+        validation_results = this->validate_token_callback(provided_token);
     }
 
     bool attempt_stop_with_parent_id_token = false;
@@ -147,17 +157,24 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
         bool authorized = false;
         int i = 0;
         // iterate over validation results
-        while (i < validation_results.size() && !authorized) {
+        while (i < validation_results.size() && !authorized && !referenced_connectors.empty()) {
             auto validation_result = validation_results.at(i);
             if (validation_result.authorization_status == AuthorizationStatus::Accepted) {
+                /* although validator accepts the authorization request, the Auth module still needs to
+                    - select the connector for the authorization request
+                    - process it against placed reservations
+                    - compare referenced_connectors against the connectors listed in the validation_result
+                */
                 int connector_id = this->select_connector(referenced_connectors); // might block
                 EVLOG_debug << "Selected connector#" << connector_id << " for token: " << provided_token.id_token;
-                if (connector_id != -1) { // indicates timeout
-                    const auto identifier =
-                        this->get_identifier(validation_result, provided_token.id_token, provided_token.type);
-                    if (!this->connectors.at(connector_id)->connector.reserved) {
+                if (connector_id != -1) { // indicates timeout of connector selection
+                    if (validation_result.evse_ids.has_value() and
+                        intersect(referenced_connectors, validation_result.evse_ids.value()).empty()) {
+                        EVLOG_debug
+                            << "Empty intersection between referenced connectors and connectors that are authorized";
+                        validation_result.authorization_status = AuthorizationStatus::NotAtThisLocation;
+                    } else if (!this->connectors.at(connector_id)->connector.reserved) {
                         EVLOG_info << "Providing authorization to connector#" << connector_id;
-                        this->authorize_evse(connector_id, identifier);
                         authorized = true;
                     } else {
                         EVLOG_debug << "Connector is reserved. Checking if token matches...";
@@ -165,13 +182,15 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
                                                                                   validation_result.parent_id_token)) {
                             EVLOG_info << "Connector is reserved and token is valid for this reservation";
                             this->reservation_handler.on_reservation_used(connector_id);
-                            this->authorize_evse(connector_id, identifier);
                             authorized = true;
                         } else {
                             EVLOG_info << "Connector is reserved but token is not valid for this reservation";
+                            validation_result.authorization_status = AuthorizationStatus::NotAtThisTime;
                         }
                     }
+                    this->notify_evse(connector_id, provided_token, validation_result);
                 } else {
+                    // in this case we dont need / cannot notify an evse, because no connector was selected
                     EVLOG_info << "Timeout while selecting connector for provided token: " << provided_token;
                     return TokenHandlingResult::TIMEOUT;
                 }
@@ -319,36 +338,30 @@ int AuthHandler::select_connector(const std::vector<int>& connectors) {
     }
 }
 
-void AuthHandler::authorize_evse(int connector_id, const Identifier& identifier) {
-
+void AuthHandler::notify_evse(int connector_id, const ProvidedIdToken& provided_token,
+                              const ValidationResult& validation_result) {
     const auto evse_index = this->connectors.at(connector_id)->evse_index;
 
-    this->connectors.at(connector_id)->connector.identifier.emplace(identifier);
-    this->authorize_callback(evse_index, identifier.id_token);
+    if (validation_result.authorization_status == AuthorizationStatus::Accepted) {
+        Identifier identifier{provided_token.id_token, provided_token.type, validation_result.authorization_status,
+                              validation_result.expiry_time, validation_result.parent_id_token};
+        this->connectors.at(connector_id)->connector.identifier.emplace(identifier);
 
-    std::lock_guard<std::mutex> timer_lk(this->timer_mutex);
-    this->connectors.at(connector_id)->timeout_timer.stop();
-    this->connectors.at(connector_id)
-        ->timeout_timer.timeout(
-            [this, evse_index, connector_id]() {
-                EVLOG_info << "Authorization timeout for evse#" << evse_index;
-                this->connectors.at(connector_id)->connector.identifier = boost::none;
-                this->withdraw_authorization_callback(evse_index);
-            },
-            std::chrono::seconds(this->connection_timeout));
-    std::lock_guard<std::mutex> plug_in_lk(this->plug_in_queue_mutex);
-    this->plug_in_queue.remove_if([connector_id](int value) { return value == connector_id; });
-}
+        std::lock_guard<std::mutex> timer_lk(this->timer_mutex);
+        this->connectors.at(connector_id)->timeout_timer.stop();
+        this->connectors.at(connector_id)
+            ->timeout_timer.timeout(
+                [this, evse_index, connector_id]() {
+                    EVLOG_info << "Authorization timeout for evse#" << evse_index;
+                    this->connectors.at(connector_id)->connector.identifier = boost::none;
+                    this->withdraw_authorization_callback(evse_index);
+                },
+                std::chrono::seconds(this->connection_timeout));
+        std::lock_guard<std::mutex> plug_in_lk(this->plug_in_queue_mutex);
+        this->plug_in_queue.remove_if([connector_id](int value) { return value == connector_id; });
+    }
 
-Identifier AuthHandler::get_identifier(const ValidationResult& validation_result, const std::string& id_token,
-                                       const TokenType& type) {
-    Identifier identifier;
-    identifier.id_token = id_token;
-    identifier.authorization_status = validation_result.authorization_status;
-    identifier.expiry_time = validation_result.expiry_time;
-    identifier.parent_id_token = validation_result.parent_id_token;
-    identifier.type = type;
-    return identifier;
+    this->notify_evse_callback(evse_index, provided_token, validation_result);
 }
 
 types::reservation::ReservationResult AuthHandler::handle_reservation(int connector_id,
@@ -447,15 +460,17 @@ void AuthHandler::set_prioritize_authorization_over_stopping_transaction(bool b)
     this->prioritize_authorization_over_stopping_transaction = b;
 }
 
-void AuthHandler::register_authorize_callback(
-    const std::function<void(const int evse_index, const std::string& id_token)>& callback) {
-    this->authorize_callback = callback;
+void AuthHandler::register_notify_evse_callback(
+    const std::function<void(const int evse_index, const ProvidedIdToken& provided_token,
+                             const ValidationResult& validation_result)>& callback) {
+    this->notify_evse_callback = callback;
 }
+
 void AuthHandler::register_withdraw_authorization_callback(const std::function<void(const int evse_index)>& callback) {
     this->withdraw_authorization_callback = callback;
 }
 void AuthHandler::register_validate_token_callback(
-    const std::function<std::vector<ValidationResult>(const std::string& id_token)>& callback) {
+    const std::function<std::vector<ValidationResult>(const ProvidedIdToken& provided_token)>& callback) {
     this->validate_token_callback = callback;
 }
 void AuthHandler::register_stop_transaction_callback(

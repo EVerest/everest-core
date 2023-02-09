@@ -14,6 +14,16 @@
 
 namespace module {
 
+/// \brief Validated Identifier struct. Used to keep track of active Identifiers
+struct Identifier {
+    std::string id_token; ///< Arbitrary id token string: this has to be printable case insensitive ascii
+    types::authorization::TokenType type; ///< Type of the provider of the identifier
+    boost::optional<types::authorization::AuthorizationStatus> authorization_status;
+    boost::optional<std::string> expiry_time; ///< Absolute UTC time point when reservation expires in RFC3339 format
+    boost::optional<std::string> parent_id_token; ///< Parent id token of the id token
+};
+
+
 struct Connector {
     explicit Connector(int id) : id(id), transaction_active(false), reserved(false), is_reservable(true) {
         this->state_machine.controller->reset(this->state_machine.sd_available);
@@ -25,7 +35,7 @@ struct Connector {
     ConnectorStateMachine state_machine;
 
     // identifier is set when transaction is running and none if not
-    boost::optional<types::authorization::Identifier> identifier = boost::none;
+    boost::optional<Identifier> identifier = boost::none;
 
     bool is_reservable;
     bool reserved;

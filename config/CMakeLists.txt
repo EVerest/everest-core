@@ -7,12 +7,20 @@ generate_config_run_script(CONFIG sil-two-evse-dc)
 generate_config_run_script(CONFIG sil-energy-management)
 generate_config_run_script(CONFIG hil)
 generate_config_run_script(CONFIG sil-gen-pm)
+generate_config_run_script(CONFIG sil-ocpp)
 
 # install configs
 install(
     DIRECTORY "."
     DESTINATION "${CMAKE_INSTALL_SYSCONFDIR}/everest"
     FILES_MATCHING PATTERN "*.yaml"
+)
+
+# install certificates
+install(
+    DIRECTORY "certs"
+    DESTINATION "${CMAKE_INSTALL_SYSCONFDIR}/everest"
+    FILES_MATCHING PATTERN "*.pem" PATTERN "*.key" PATTERN "*.der" PATTERN "*.txt"
 )
 
 install(
