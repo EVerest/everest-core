@@ -162,7 +162,7 @@ types:
         type: string
       reservation_id:
         description: Id of the reservation
-        type: number
+        type: integer
   TransactionFinished:
     description: Data for TransactionFinished event
     type: object
