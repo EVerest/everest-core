@@ -25,36 +25,6 @@ types:
       - NoCertificateAvailable
       - CertChainError
       - ContractCancelled
-  Identifier:
-    description: Contains meta information about the identifier
-    type: object
-    additionalProperties: false
-    required:
-      - id_token
-      - type
-    properties:
-      id_token:
-        description: >-
-          Arbitrary id token string: this has to be printable case insensitive
-          ascii
-        type: string
-        minLength: 1
-        maxLength: 20
-      type:
-        description: >-
-          Type of the provider of the identifier
-        type: string
-        $ref: /authorization#/TokenType
-      authorization_status:
-        type: string
-        $ref: /authorization#/AuthorizationStatus
-      expiry_time:
-        description: Absolute UTC time point when reservation expires in RFC3339 format
-        type: string
-        format: date-time
-      parent_id_token:
-        description: Parent id token of the id token
-        type: string
   ProvidedIdToken:
     description: Type for Token provided by auth token providers
     type: object
@@ -127,6 +97,15 @@ types:
         type: string
         minLength: 1
         maxLength: 20
+      evse_ids:
+        description: >-
+          Only used when the id token is valid for one or more specific evses, 
+          not for the whole charging station. Indicates for which evse ids the
+          provided token is valid
+        type: array
+        items:
+          minimum: 1
+          type: integer
   SelectionAlgorithm:
     description: >-
       The selection algorithm defines the logic to select one connector

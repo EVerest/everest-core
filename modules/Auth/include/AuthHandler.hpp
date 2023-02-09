@@ -124,13 +124,13 @@ public:
     void set_prioritize_authorization_over_stopping_transaction(bool b);
 
     /**
-     * @brief Registers the given \p callback to provide authorization.
+     * @brief Registers the given \p callback to notify the evse about the processed authorization request.
      *
      * @param callback
      */
     void
-    register_authorize_callback(const std::function<void(const int evse_index, const std::string& id_token)>& callback);
-
+    register_notify_evse_callback(const std::function<void(const int evse_index, const ProvidedIdToken& provided_token,
+                                                           const ValidationResult& validation_result)>& callback);
     /**
      * @brief Registers the given \p callback to withdraw authorization.
      *
@@ -144,7 +144,7 @@ public:
      * @param callback
      */
     void register_validate_token_callback(
-        const std::function<std::vector<ValidationResult>(const std::string& id_token)>& callback);
+        const std::function<std::vector<ValidationResult>(const ProvidedIdToken& provided_token)>& callback);
 
     /**
      * @brief Registers the given \p callback to stop a transaction at an EvseManager.
@@ -186,9 +186,11 @@ private:
     std::condition_variable cv;
 
     // callbacks
-    std::function<void(const int evse_index, const std::string& id_token)> authorize_callback;
+    std::function<void(const int evse_index, const ProvidedIdToken& provided_token,
+                       const ValidationResult& validation_result)>
+        notify_evse_callback;
     std::function<void(const int evse_index)> withdraw_authorization_callback;
-    std::function<std::vector<ValidationResult>(const std::string& id_token)> validate_token_callback;
+    std::function<std::vector<ValidationResult>(const ProvidedIdToken &provided_token)> validate_token_callback;
     std::function<void(const int evse_index, const StopTransactionRequest& request)> stop_transaction_callback;
     std::function<void(const Array& reservations)> reservation_update_callback;
     std::function<void(const int& evse_index, const int& reservation_id)> reserved_callback;
@@ -213,7 +215,8 @@ private:
     void lock_plug_in_mutex(const std::vector<int>& connectors);
     void unlock_plug_in_mutex(const std::vector<int>& connectors);
     int get_latest_plugin(const std::vector<int>& connectors);
-    void authorize_evse(int connector, const Identifier& identifier);
+    void notify_evse(int connector_id, const ProvidedIdToken& provided_token,
+                     const ValidationResult& validation_result);
     Identifier get_identifier(const ValidationResult& validation_result, const std::string& id_token,
                               const TokenType& type);
 };

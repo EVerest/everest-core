@@ -263,10 +263,26 @@ bool evse_managerImpl::handle_enable() {
     return mod->charger->enable();
 };
 
-void evse_managerImpl::handle_authorize(std::string& id_tag, bool& pnc) {
-    this->mod->charger->Authorize(true, id_tag, pnc);
-    // maybe we need to inform HLC layer as well in case it is waiting for auth
-    mod->charger_was_authorized();
+void evse_managerImpl::handle_authorize_response(types::authorization::ProvidedIdToken& provided_token,
+                                                 types::authorization::ValidationResult& validation_result) {
+    const auto pnc = provided_token.type == types::authorization::TokenType::PlugAndCharge;
+
+    if (validation_result.authorization_status == types::authorization::AuthorizationStatus::Accepted) {
+
+        if (this->mod->get_hlc_waiting_for_auth_pnc() && !pnc) {
+            EVLOG_info << "EvseManager received Authorization other than PnC while waiting for PnC. This has no effect.";
+            return;
+        }
+
+        this->mod->charger->Authorize(true, provided_token.id_token, pnc);
+        mod->charger_was_authorized();
+    }
+
+    if (pnc) {
+        this->mod->r_hlc[0]->call_set_Auth_Okay_PnC(
+            validation_result.authorization_status,
+            validation_result.certificate_status.value_or(types::authorization::CertificateStatus::Accepted));
+    }
 };
 
 void evse_managerImpl::handle_withdraw_authorization() {
@@ -332,6 +348,11 @@ std::string evse_managerImpl::handle_get_signed_meter_value() {
     } else {
         return "NOT_AVAILABLE";
     }
+}
+
+void evse_managerImpl::handle_set_get_certificate_response(
+    types::iso15118_charger::Response_Exi_Stream_Status& certificate_reponse) {
+    mod->r_hlc[0]->call_set_Get_Certificate_Response(certificate_reponse);
 }
 
 } // namespace evse

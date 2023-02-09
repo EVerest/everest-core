@@ -20,6 +20,7 @@
 #include <generated/interfaces/evse_manager/Interface.hpp>
 #include <generated/interfaces/reservation/Interface.hpp>
 #include <generated/interfaces/system/Interface.hpp>
+#include <generated/interfaces/ISO15118_charger/Interface.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
@@ -29,9 +30,10 @@
 #include <everest/timer.hpp>
 #include <filesystem>
 #include <mutex>
+#include <ocpp/v16/charge_point.hpp>
+#include <ocpp/v201/ocpp_types.hpp>
 #include <ocpp/common/schemas.hpp>
 #include <ocpp/common/types.hpp>
-#include <ocpp/v16/charge_point.hpp>
 #include <ocpp/v16/types.hpp>
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 

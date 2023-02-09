@@ -9,7 +9,7 @@ function wait(time) {
 }
 
 boot_module(async ({ setup, config }) => {
-  setup.provides.main.register.validate_token(async (mod, provided_token) => {
+  setup.provides.main.register.validate_token(async (mod, { provided_token } ) => {
     evlog.info(`Got validation request for token '${provided_token.id_token}'...`);
     await wait(config.impl.main.sleep * 1000);
     const retval = {

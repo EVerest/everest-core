@@ -33,7 +33,8 @@ public:
 
 protected:
     // command handler functions (virtual)
-    virtual types::authorization::ValidationResult handle_validate_token(std::string& id_token) override;
+    virtual types::authorization::ValidationResult
+    handle_validate_token(types::authorization::ProvidedIdToken& provided_token) override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
     // insert your protected definitions here
@@ -48,6 +49,8 @@ private:
 
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
     // insert your private definitions here
+    types::authorization::ValidationResult validate_standard_request(const types::authorization::ProvidedIdToken& provided_token);
+    types::authorization::ValidationResult validate_pnc_request(const types::authorization::ProvidedIdToken& provided_token);
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 

@@ -55,9 +55,14 @@ protected:
 
         this->auth_handler = std::make_unique<AuthHandler>(SelectionAlgorithm::PlugEvents, CONNECTION_TIMEOUT, false);
 
-        this->auth_handler->register_authorize_callback([this](int32_t evse_index, const std::string& id_token) {
-            EVLOG_debug << "Authorize called with evse_index#" << evse_index << " and id_token " << id_token;
-            this->auth_receiver->authorize(evse_index);
+        this->auth_handler->register_notify_evse_callback([this](const int evse_index,
+                                                                 const ProvidedIdToken& provided_token,
+                                                                 const ValidationResult& validation_result) {
+            EVLOG_debug << "Authorize called with evse_index#" << evse_index << " and id_token "
+                        << provided_token.id_token;
+            if (validation_result.authorization_status == AuthorizationStatus::Accepted) {
+                this->auth_receiver->authorize(evse_index);
+            }
         });
         this->auth_handler->register_withdraw_authorization_callback([this](int32_t evse_index) {
             EVLOG_debug << "DeAuthorize called with evse_index#" << evse_index;
@@ -70,8 +75,9 @@ protected:
                 this->auth_receiver->deauthorize(evse_index);
             });
 
-        this->auth_handler->register_validate_token_callback([](const std::string& id_token) {
+        this->auth_handler->register_validate_token_callback([](const ProvidedIdToken& provided_token) {
             std::vector<ValidationResult> validation_results;
+            const auto id_token = provided_token.id_token;
 
             ValidationResult result_1;
             result_1.authorization_status = AuthorizationStatus::Invalid;
@@ -117,7 +123,6 @@ TEST_F(AuthTest, test_simple_authorization) {
     ProvidedIdToken provided_token = get_provided_token(VALID_TOKEN_1, connectors);
 
     const auto result = this->auth_handler->on_token(provided_token);
-
     ASSERT_TRUE(result == TokenHandlingResult::ACCEPTED);
     ASSERT_TRUE(this->auth_receiver->get_authorization(0));
     ASSERT_FALSE(this->auth_receiver->get_authorization(1));
@@ -145,8 +150,6 @@ TEST_F(AuthTest, test_stop_transaction) {
     ProvidedIdToken provided_token = get_provided_token(VALID_TOKEN_1, connectors);
 
     SessionEvent session_event1 = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
-    session_event1.event = SessionEventEnum::SessionStarted;
-
     SessionEvent session_event2;
     session_event2.event = SessionEventEnum::TransactionStarted;
     TransactionStarted transaction_event;
@@ -260,8 +263,7 @@ TEST_F(AuthTest, test_two_id_tokens) {
     std::thread t2([this, provided_token_2, &result2]() { result2 = this->auth_handler->on_token(provided_token_2); });
 
     SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::Authorized);
-
-    std::thread t3([this, session_event]() { this->auth_handler->handle_session_event(1, session_event); });
+    td::thread t3([this, session_event]() { this->auth_handler->handle_session_event(1, session_event); });
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     std::thread t4([this, session_event]() { this->auth_handler->handle_session_event(2, session_event); });
 
@@ -875,4 +877,62 @@ TEST_F(AuthTest, test_two_transactions_start_stop) {
     ASSERT_FALSE(this->auth_receiver->get_authorization(1));
 }
 
+/// \brief Test PlugAndCharge
+TEST_F(AuthTest, test_plug_and_charge) {
+
+    const SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
+    this->auth_handler->handle_session_event(1, session_event);
+
+    ProvidedIdToken provided_token;
+    provided_token.id_token = VALID_TOKEN_1;
+    provided_token.type = types::authorization::TokenType::PlugAndCharge;
+    provided_token.certificate.emplace("TestCertificate");
+
+    const auto result = this->auth_handler->on_token(provided_token);
+    ASSERT_TRUE(result == TokenHandlingResult::ACCEPTED);
+    ASSERT_TRUE(this->auth_receiver->get_authorization(0));
+    ASSERT_FALSE(this->auth_receiver->get_authorization(1));
+}
+
+/// \brief Test empty intersection of referenced connectors in provided token and in validation result
+TEST_F(AuthTest, test_empty_intersection) {
+
+    this->auth_handler->register_validate_token_callback([](const ProvidedIdToken& provided_token) {
+        std::vector<ValidationResult> validation_results;
+        const auto id_token = provided_token.id_token;
+
+        std::vector<int> evse_ids{2};
+        std::vector<int> evse_ids2{1, 2};
+
+        ValidationResult result_1;
+        result_1.authorization_status = AuthorizationStatus::Accepted;
+        result_1.evse_ids.emplace(evse_ids);
+
+        ValidationResult result_2;
+        result_1.authorization_status = AuthorizationStatus::Accepted;
+        result_1.evse_ids.emplace(evse_ids2);
+
+        validation_results.push_back(result_1);
+        validation_results.push_back(result_2);
+
+        return validation_results;
+    });
+
+    const SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
+
+    this->auth_handler->handle_session_event(1, session_event);
+    this->auth_handler->handle_session_event(2, session_event);
+
+    std::vector<int32_t> connectors{1};
+    ProvidedIdToken provided_token;
+    provided_token.id_token = VALID_TOKEN_1;
+    provided_token.type = types::authorization::TokenType::PlugAndCharge;
+    provided_token.certificate.emplace("TestCertificate");
+    provided_token.connectors.emplace(connectors);
+
+    const auto result = this->auth_handler->on_token(provided_token);
+    ASSERT_TRUE(result == TokenHandlingResult::ACCEPTED);
+    ASSERT_TRUE(this->auth_receiver->get_authorization(0));
+    ASSERT_FALSE(this->auth_receiver->get_authorization(1));
+}
 } // namespace module

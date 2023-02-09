@@ -8,10 +8,13 @@ import sys
 JOSEV_WORK_DIR = Path(__file__).parent / '../../3rd_party/josev'
 sys.path.append(JOSEV_WORK_DIR.as_posix())
 
+EVEREST_ETC_CERTS_PATH = "etc/everest/certs"
+
 from iso15118.secc import SECCHandler
 from iso15118.secc.controller.simulator import SimEVSEController
 from iso15118.shared.exificient_exi_codec import ExificientEXICodec
 from iso15118.secc.secc_settings import Config
+from iso15118.shared.settings import set_PKI_PATH
 
 from everest_iso15118 import init_Setup
 from everest_iso15118 import ChargerWrapper
@@ -54,6 +57,9 @@ def pre_init(setup, module_config, impl_configs, _module_info):
 
 def init():
     log.debug("init")
+
+    etc_certs_path = module_info_.everest_prefix + "/" + EVEREST_ETC_CERTS_PATH + "/"
+    set_PKI_PATH(etc_certs_path)
 
     net_iface: str = str(module_config_["device"])
     if net_iface == "auto":
@@ -103,8 +109,8 @@ def charger_enable_debug_mode(debug_mode: str):
 def charger_set_Auth_Okay_EIM(auth_okay_eim: bool):
     ChargerWrapper.set_Auth_Okay_EIM(auth_okay_eim)
 
-def charger_set_Auth_Okay_PnC(auth_okay_pnc: bool):
-    ChargerWrapper.set_Auth_Okay_PnC(auth_okay_pnc)
+def charger_set_Auth_Okay_PnC(status: str, certificateStatus: str):
+    ChargerWrapper.set_Auth_PnC_Status(status, certificateStatus)
 
 def charger_set_FAILED_ContactorError(ContactorError: bool):
     ChargerWrapper.set_FAILED_ContactorError(ContactorError)
@@ -152,8 +158,14 @@ def charger_contactor_closed(status: bool):
 def charger_contactor_open(status: bool):
     ChargerWrapper.contactor_open(status)
 
-def charger_cableCheck_Finished(status):
+def charger_cableCheck_Finished(status: bool):
     ChargerWrapper.set_cableCheck_Finished(status)
+
+def charger_set_Certificate_Service_Supported(status: bool):
+    ChargerWrapper.set_Certificate_Service_Supported(status)
+
+def charger_set_Get_Certificate_Response(Existream_Status: dict):
+    ChargerWrapper.set_Certificate_Response(Existream_Status)
 
 def check_network_interfaces(net_iface: str) -> bool:
     if (net_iface in netifaces.interfaces()) is True:

@@ -37,7 +37,8 @@ protected:
     virtual int handle_get_id() override;
     virtual bool handle_enable() override;
     virtual bool handle_disable() override;
-    virtual void handle_authorize(std::string& id_tag, bool& pnc) override;
+    virtual void handle_authorize_response(types::authorization::ProvidedIdToken& provided_token,
+                                           types::authorization::ValidationResult& validation_result) override;
     virtual void handle_withdraw_authorization() override;
     virtual bool handle_reserve(int& reservation_id) override;
     virtual void handle_cancel_reservation() override;
@@ -50,6 +51,8 @@ protected:
     virtual types::evse_manager::SwitchThreePhasesWhileChargingResult
     handle_switch_three_phases_while_charging(bool& three_phases) override;
     virtual std::string handle_get_signed_meter_value() override;
+    virtual void handle_set_get_certificate_response(
+        types::iso15118_charger::Response_Exi_Stream_Status& certificate_reponse) override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
     // insert your protected definitions here

@@ -268,21 +268,15 @@ cmds:
       status:
         description: "True: The service is supported"
         type: boolean
-  set_Response_Certificate_Install:
+  set_Get_Certificate_Response:
     description: >-
-      CertificateInstallationRes - The new Contract Certificate (including the certificate chain)
-      and the corresponding encrypted private key are sent via the SECC to the vehicle
+      CertificateInstallationRes/CertificateUpdateRes - The new/updated
+       Contract Certificate (including the certificate chain)
+      and the corresponding encrypted private key are sent via the SECC to the EVCC
+      This is an async response to a previously published Certificate_Request
     arguments:
       Existream_Status:
         description: The response raw exi stream and the status from the CSMS system
-        type: object
-        $ref: /iso15118_charger#/Response_Exi_Stream_Status
-  set_Response_Certificate_Update:
-    description: CertificateUpdateRes - The updated Contract Certificate (including the certificate chain)
-      and the corresponding encrypted private key are sent via the SECC to the vehicle
-    arguments:
-      Existream_Status:
-        description: The response raw exi stream and the status n from the CSMS system
         type: object
         $ref: /iso15118_charger#/Response_Exi_Stream_Status
 vars:
@@ -425,16 +419,11 @@ vars:
     description: Estimated or calculated time until bulk and full charge is complete
     type: object
     $ref: /iso15118_charger#/DC_EVRemainingTime
-  Install_Request_Certificate:
+  Certificate_Request:
     description: >-
       The vehicle requests the SECC to deliver the certificate that belong 
       to the currently valid contract of the vehicle.
-    type: object
-    $ref: /iso15118_charger#/Request_Exi_Stream_Schema
-  Update_Request_Certificate:
-    description: >-
-      The vehicle requests the SECC to deliver new certificate that belongs to
-      the currently valid contract of the vehicle.
+      Response will be reported async via  set_Get_Certificate_Response
     type: object
     $ref: /iso15118_charger#/Request_Exi_Stream_Schema
   EV_AppProtocol:

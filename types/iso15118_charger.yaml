@@ -345,6 +345,7 @@ types:
     additionalProperties: false
     required:
       - status
+      - certificateAction
     properties:
       status:
         description: >-
@@ -361,6 +362,10 @@ types:
           as exi stream (Base64 encoded)
         type: string
         maxLength: 5600
+      certificateAction:
+        description: Type of the certificate request
+        type: string
+        $ref: /iso15118_charger#/CertificateActionEnum
   Request_Exi_Stream_Schema:
     description: The request raw exi stream and the schema version for the CSMS system
     type: object
@@ -368,6 +373,7 @@ types:
     required:
       - exiRequest
       - iso15118SchemaVersion
+      - certificateAction
     properties:
       exiRequest:
         description: >-
@@ -379,6 +385,10 @@ types:
         description: Schema Version used for CertificateReq message between EV and Charger
         type: string
         maxLength: 50 
+      certificateAction:
+        description: Type of the certificate request
+        type: string
+        $ref: /iso15118_charger#/CertificateActionEnum
   CertificateHashDataInfo:
     description: Contains the certificate information
     type: object
@@ -413,3 +423,10 @@ types:
         description: This contains the responder URL
         type: string
         maxLength: 512
+  CertificateActionEnum:
+    description: Specifies the type of a certificate request
+    type: string
+    enum:
+      - Install
+      - Update
+

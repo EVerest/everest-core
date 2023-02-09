@@ -65,6 +65,7 @@ void EvseManager::ready() {
         }
         if (config.payment_enable_contract) {
             payment_options.insert(payment_options.end(), "Contract");
+            r_hlc[0]->call_set_Certificate_Service_Supported(true);
         }
         r_hlc[0]->call_set_PaymentOptions(payment_options);
 
@@ -330,6 +331,8 @@ void EvseManager::ready() {
 
         // implement Auth handlers
         r_hlc[0]->subscribe_Require_Auth_EIM([this]() {
+            // EVLOG_info << "--------------------------------------------- Require_Auth_EIM called";
+            p_token_provider->publish_provided_token(autocharge_token);
             //  Do we have auth already (i.e. delayed HLC after charging already running)?
             if ((config.dbg_hlc_auth_after_tstep && charger->Authorized_EIM_ready_for_HLC()) ||
                 (!config.dbg_hlc_auth_after_tstep && charger->Authorized_EIM())) {
@@ -348,14 +351,12 @@ void EvseManager::ready() {
 
         // implement Auth handlers
         r_hlc[0]->subscribe_EVCCIDD([this](const std::string& _token) {
-            types::authorization::ProvidedIdToken autocharge_token;
-
             std::string token = _token;
             token.erase(remove(token.begin(), token.end(), ':'), token.end());
             autocharge_token.id_token = "VID:" + token;
             autocharge_token.type = types::authorization::TokenType::Autocharge;
-
-            p_token_provider->publish_provided_token(autocharge_token);
+            std::vector<int> referenced_connectors = {this->config.connector_id};
+            autocharge_token.connectors.emplace(referenced_connectors);
 
             {
                 std::scoped_lock lock(ev_info_mutex);
@@ -363,24 +364,26 @@ void EvseManager::ready() {
                 p_evse->publish_ev_info(ev_info);
             }
         });
-
+       
         r_hlc[0]->subscribe_Require_Auth_PnC([this](types::authorization::ProvidedIdToken _token) {
             // Do we have auth already (i.e. delayed HLC after charging already running)?
+
+            std::vector<int> referenced_connectors = {this->config.connector_id};
+            _token.connectors.emplace(referenced_connectors);
+            p_token_provider->publish_provided_token(_token);
             if (charger->Authorized_PnC()) {
                 {
                     std::scoped_lock lock(hlc_mutex);
                     hlc_waiting_for_auth_eim = false;
                     hlc_waiting_for_auth_pnc = false;
                 }
-                r_hlc[0]->call_set_Auth_Okay_PnC(types::authorization::AuthorizationStatus::Accepted,
-                                                 types::authorization::CertificateStatus::Accepted);
             } else {
                 std::scoped_lock lock(hlc_mutex);
                 hlc_waiting_for_auth_eim = false;
                 hlc_waiting_for_auth_pnc = true;
             }
         });
-
+        
         // Install debug V2G Messages handler if session logging is enabled
         if (config.session_logging) {
             r_hlc[0]->subscribe_V2G_Messages([this](types::iso15118_charger::V2G_Messages v2g_messages) {
@@ -405,6 +408,10 @@ void EvseManager::ready() {
                 switch_AC_mode();
             });
         }
+
+        r_hlc[0]->subscribe_Certificate_Request([this](types::iso15118_charger::Request_Exi_Stream_Schema request) {
+            p_evse->publish_iso15118_certificate_request(request);
+        });
     }
 
     hw_capabilities = r_bsp->call_get_hw_capabilities();
@@ -911,6 +918,11 @@ bool EvseManager::getLocalThreePhases() {
 bool EvseManager::get_hlc_enabled() {
     std::lock_guard<std::mutex> lock(hlc_mutex);
     return hlc_enabled;
+}
+
+bool EvseManager::get_hlc_waiting_for_auth_pnc() {
+    std::lock_guard<std::mutex> lock(hlc_mutex);
+    return hlc_waiting_for_auth_pnc;
 }
 
 void EvseManager::log_v2g_message(Object m) {
