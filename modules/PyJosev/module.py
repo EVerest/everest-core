@@ -42,12 +42,14 @@ def run():
 setup_ = None
 module_config_ = None
 impl_configs_ = None
+module_info_ = None
 
-def pre_init(setup, module_config, impl_configs):
-    global setup_, module_config_, impl_configs_
+def pre_init(setup, module_config, impl_configs, _module_info):
+    global setup_, module_config_, impl_configs_, module_info_
     setup_ = setup
     module_config_ = module_config
     impl_configs_ = impl_configs
+    module_info_ = _module_info
     init_Setup(setup_)
 
 def init():
