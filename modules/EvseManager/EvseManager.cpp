@@ -855,8 +855,8 @@ void EvseManager::cable_check() {
                     } else {
                         // verify it is within ranges. Warning level is <500 Ohm/V_max_output_rating, Fault
                         // is <100
-                        const double min_resistance_ok = 500. / powersupply_capabilities.max_export_voltage_V;
-                        const double min_resistance_warning = 100. / powersupply_capabilities.max_export_voltage_V;
+                        const double min_resistance_ok = 500. * powersupply_capabilities.max_export_voltage_V;
+                        const double min_resistance_warning = 100. * powersupply_capabilities.max_export_voltage_V;
 
                         if (m.resistance_N_Ohm < min_resistance_warning ||
                             m.resistance_P_Ohm < min_resistance_warning) {
