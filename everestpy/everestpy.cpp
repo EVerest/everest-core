@@ -263,7 +263,8 @@ int initialize(const std::string& prefix, const std::string& config_file, const 
         }
 
         auto module_configs = config.get_module_configs(module_id);
-        const auto module_info = config.get_module_info(module_id);
+        auto module_info = config.get_module_info(module_id);
+        module_info.everest_prefix = rs.prefix.string();
 
         everest_py.module_callbacks.init(module_configs, module_info);
 
@@ -319,7 +320,13 @@ PYBIND11_MODULE(everestpy, m) {
     py::class_<ConfigEntry>(m, "ConfigEntry").def(py::init<>());
     py::class_<ConfigMap>(m, "ConfigMap").def(py::init<>());
     py::class_<ModuleConfigs>(m, "ModuleConfigs").def(py::init<>());
-    py::class_<ModuleInfo>(m, "ModuleInfo").def(py::init<>());
+    py::class_<ModuleInfo>(m, "ModuleInfo")
+        .def(py::init<>())
+        .def_readonly("name", &ModuleInfo::name)
+        .def_readonly("authors", &ModuleInfo::authors)
+        .def_readonly("license", &ModuleInfo::license)
+        .def_readonly("id", &ModuleInfo::id)
+        .def_readonly("everest_prefix", &ModuleInfo::everest_prefix);
     py::class_<CmdWithArguments>(m, "CmdWithArguments")
         .def(py::init<>())
         .def_readwrite("cmd", &CmdWithArguments::cmd)

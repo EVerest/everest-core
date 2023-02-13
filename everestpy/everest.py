@@ -156,7 +156,7 @@ def register_init(module_configs, _module_info):
         module_config = module_configs["!module"]
         del impl_configs["!module"]
 
-    module.pre_init(setup, module_config, impl_configs)
+    module.pre_init(setup, module_config, impl_configs, _module_info)
     module.init()
 
 
