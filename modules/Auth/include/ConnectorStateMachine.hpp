@@ -7,9 +7,9 @@
 #include <string>
 #include <memory>
 
-#include <fsm/async.hpp>
+#include <fsm/sync.hpp>
 #include <fsm/fsm.hpp>
-#include <fsm/specialization/async/pthread.hpp>
+#include <fsm/specialization/sync/posix.hpp>
 #include <fsm/utils/Identifiable.hpp>
 
 namespace module {
@@ -52,10 +52,10 @@ struct StateIdType {
 struct ConnectorStateMachine {
 
     using EventInfoType = fsm::EventInfo<EventBaseType, EventBufferType>;
-    using StateHandleType = fsm::async::StateHandle<EventInfoType, StateIdType>;
+    using StateHandleType = fsm::sync::StateHandle<EventInfoType, StateIdType>;
     using TransitionType = StateHandleType::TransitionWrapperType;
     using FSMContextType = StateHandleType::FSMContextType;
-    using ConnectorStateMachineController = fsm::async::PThreadController<ConnectorStateMachine::StateHandleType>;
+    using ConnectorStateMachineController = fsm::sync::PosixController<ConnectorStateMachine::StateHandleType>;
 
     ConnectorStateMachine();
     std::shared_ptr<ConnectorStateMachineController> controller;

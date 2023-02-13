@@ -16,7 +16,7 @@ namespace module {
 
 struct Connector {
     explicit Connector(int id) : id(id), transaction_active(false), reserved(false), is_reservable(true) {
-        this->state_machine.controller->run(this->state_machine.sd_available);
+        this->state_machine.controller->reset(this->state_machine.sd_available);
     };
 
     int id;

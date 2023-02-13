@@ -22,7 +22,7 @@ ConnectorStateMachine::ConnectorStateMachine() {
         }
     };
 
-    this->sd_available.state_fun = [this](FSMContextType& ctx) {
+    this->sd_available.handler = [this](FSMContextType& ctx) {
         this->state = ConnectorState::AVAILABLE;
     };
 
@@ -37,7 +37,7 @@ ConnectorStateMachine::ConnectorStateMachine() {
         }
     };
 
-    this->sd_occupied.state_fun = [this](FSMContextType& ctx) {
+    this->sd_occupied.handler = [this](FSMContextType& ctx) {
         this->state = ConnectorState::OCCUPIED;
     };
 
@@ -51,7 +51,7 @@ ConnectorStateMachine::ConnectorStateMachine() {
         }
     };
 
-    this->sd_faulted.state_fun = [this](FSMContextType& ctx) {
+    this->sd_faulted.handler = [this](FSMContextType& ctx) {
         this->state = ConnectorState::FAULTED;
     };
 
@@ -65,7 +65,7 @@ ConnectorStateMachine::ConnectorStateMachine() {
         }
     };
 
-    this->sd_unavailable.state_fun = [this](FSMContextType& ctx) {
+    this->sd_unavailable.handler = [this](FSMContextType& ctx) {
         this->state = ConnectorState::UNAVAILABLE;
     };
 
@@ -79,7 +79,7 @@ ConnectorStateMachine::ConnectorStateMachine() {
         }
     };
 
-    this->sd_unavailable_faulted.state_fun = [this](FSMContextType& ctx) {
+    this->sd_unavailable_faulted.handler = [this](FSMContextType& ctx) {
         this->state = ConnectorState::UNAVAILABLE_FAULTED;
     };
 
@@ -93,7 +93,7 @@ ConnectorStateMachine::ConnectorStateMachine() {
         }
     };
 
-    this->sd_faulted_occupied.state_fun = [this](FSMContextType& ctx) {
+    this->sd_faulted_occupied.handler = [this](FSMContextType& ctx) {
         this->state = ConnectorState::FAULTED_OCCUPIED;
     };
 }
