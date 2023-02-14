@@ -19,6 +19,7 @@ RUN apt install -y \
 
 RUN pip install -U sphinx
 RUN pip install \
+    sphinxcontrib-youtube \
     sphinxcontrib-contentui \
     sphinxcontrib-svg2pdfconverter \
     setproctitle \
