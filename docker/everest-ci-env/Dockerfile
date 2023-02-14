@@ -8,13 +8,24 @@ RUN apt install -y \
     git \
     doxygen \
     wget \
-    nodejs
+    nodejs \
+    latexmk \
+    texlive-xetex \
+    texlive-latex-recommended \
+    texlive-latex-extra \
+    texlive-fonts-recommended \
+    fonts-freefont-otf \
+    librsvg2-bin
 
 RUN pip install -U sphinx
 RUN pip install \
     sphinxcontrib-contentui \
+    sphinxcontrib-svg2pdfconverter \
     setproctitle \
     jsonschema \
     commentjson \
     coloredlogs \
     pyyaml
+
+RUN pip install 'ev-dev-tools @ git+https://github.com/EVerest/everest-utils@main#subdirectory=ev-dev-tools'
+RUN pip install 'edm-tool @ git+https://github.com/EVerest/everest-dev-environment@main#subdirectory=dependency_manager'
