@@ -5,8 +5,7 @@
         "ChargeBoxSerialNumber": "cp001",
         "ChargePointModel": "Yeti",
         "ChargePointVendor": "Pionix",
-        "FirmwareVersion": "0.1",
-        "LogMessagesFormat": ["log", "html"]
+        "FirmwareVersion": "0.1"
     },
     "Core": {
         "AuthorizeRemoteTxRequests": false,

@@ -9,9 +9,9 @@ namespace v201 {
 ChargePoint::ChargePoint(const json& config, const std::string& ocpp_main_path, const std::string& message_log_path) :
     ocpp::ChargePoint() {
     this->pki_handler = std::make_shared<ocpp::PkiHandler>(ocpp_main_path);
-    this->configuration =
-        std::make_shared<ChargePointConfiguration>(config, ocpp_main_path, this->pki_handler);
-    this->logging = std::make_shared<ocpp::MessageLogging>(true, message_log_path, false, false, false, true);
+    this->configuration = std::make_shared<ChargePointConfiguration>(config, ocpp_main_path, this->pki_handler);
+    this->logging = std::make_shared<ocpp::MessageLogging>(true, message_log_path, DateTime().to_rfc3339(), false,
+                                                           false, false, true, true);
     this->message_queue = std::make_unique<ocpp::MessageQueue<v201::MessageType>>(
         [this](json message) -> bool { return this->websocket->send(message.dump()); }, 5, 30);
 }

@@ -6,24 +6,28 @@
 #include <ocpp/common/types.hpp>
 
 #include <boost/algorithm/string.hpp>
+#include <boost/filesystem.hpp>
 
 using json = nlohmann::json;
 
 namespace ocpp {
 
-MessageLogging::MessageLogging(bool log_messages, const std::string& message_log_path, bool log_to_console,
-                               bool detailed_log_to_console, bool log_to_file, bool log_to_html) :
+MessageLogging::MessageLogging(bool log_messages, const std::string& message_log_path,
+                               const std::string& output_file_name, bool log_to_console, bool detailed_log_to_console,
+                               bool log_to_file, bool log_to_html, bool session_logging) :
     log_messages(log_messages),
+    message_log_path(message_log_path),
+    output_file_name(output_file_name),
     log_to_console(log_to_console),
     detailed_log_to_console(detailed_log_to_console),
     log_to_file(log_to_file),
-    log_to_html(log_to_html) {
+    log_to_html(log_to_html),
+    session_logging(session_logging) {
 
     if (this->log_messages) {
         if (this->log_to_console) {
             EVLOG_info << "Logging OCPP messages to console";
         }
-        auto output_file_name = DateTime().to_rfc3339();
         if (this->log_to_file) {
             auto output_file_path = message_log_path + "/" + output_file_name + ".log";
             EVLOG_info << "Logging OCPP messages to log file: " << output_file_path;
@@ -80,15 +84,30 @@ MessageLogging::~MessageLogging() {
 void MessageLogging::charge_point(const std::string& message_type, const std::string& json_str) {
     auto formatted = format_message(message_type, json_str);
     log_output(0, formatted.message_type, formatted.message);
+    if (this->session_logging) {
+        for (auto const& [session_id, logging] : this->session_id_logging) {
+            logging->charge_point(message_type, json_str);
+        }
+    }
 }
 
 void MessageLogging::central_system(const std::string& message_type, const std::string& json_str) {
     auto formatted = format_message(message_type, json_str);
     log_output(1, formatted.message_type, formatted.message);
+    if (this->session_logging) {
+        for (auto const& [session_id, logging] : this->session_id_logging) {
+            logging->central_system(message_type, json_str);
+        }
+    }
 }
 
 void MessageLogging::sys(const std::string& msg) {
     log_output(2, msg, "");
+    if (this->session_logging) {
+        for (auto const& [session_id, logging] : this->session_id_logging) {
+            log_output(2, msg, "");
+        }
+    }
 }
 
 void MessageLogging::log_output(unsigned int typ, const std::string& message_type, const std::string& json_str) {
@@ -168,6 +187,26 @@ FormattedMessageWithType MessageLogging::format_message(const std::string& messa
     }
 
     return {extracted_message_type, formatted_message};
+}
+
+void MessageLogging::start_session_logging(const std::string& session_id, const std::string& log_path) {
+    this->session_id_logging[session_id] =
+        std::make_shared<ocpp::MessageLogging>(true, log_path, "incomplete-ocpp", false, false, false, true, false);
+}
+
+void MessageLogging::stop_session_logging(const std::string& session_id) {
+    auto old_file_path = this->session_id_logging.at(session_id)->get_message_log_path() + "/" + "incomplete-ocpp.html";
+    auto new_file_path = this->session_id_logging.at(session_id)->get_message_log_path() + "/" + "ocpp.html";
+    std::rename(old_file_path.c_str(), new_file_path.c_str());
+    this->session_id_logging.erase(session_id);
+}
+
+std::string MessageLogging::get_message_log_path() {
+    return this->message_log_path;
+}
+
+bool MessageLogging::session_logging_active() {
+    return this->session_logging;
 }
 
 } // namespace ocpp

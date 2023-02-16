@@ -121,7 +121,7 @@
             "default": true
         },
         "LogMessagesFormat": {
-            "$comment": "Supported log formats are console, log, html and console_detailed",
+            "$comment": "Supported log formats are console, log, html, console_detailed and session_logging",
             "type": "array",
             "items": {
                 "type": "string"
@@ -129,7 +129,8 @@
             "readOnly": true,
             "default": [
                 "log",
-                "html"
+                "html",
+                "session_logging"
             ]
         },
         "SupportedChargingProfilePurposeTypes": {

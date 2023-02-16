@@ -295,12 +295,14 @@ public:
     void on_max_current_offered(int32_t connector, int32_t max_current);
 
     /// \brief Notifies chargepoint that a new session with the given \p session_id has been started at the given \p
-    /// connector with the given \p reason
-    void on_session_started(int32_t connector, const std::string& session_id, const std::string& reason);
+    /// connector with the given \p reason . The logs of the session will be written into \p session_logging_path if
+    /// present
+    void on_session_started(int32_t connector, const std::string& session_id, const std::string& reason,
+                            const boost::optional<std::string> &session_logging_path);
 
     /// \brief Notifies chargepoint that a session has been stopped at the given \p
     /// connector
-    void on_session_stopped(int32_t connector);
+    void on_session_stopped(int32_t connector, const std::string& session_id);
 
     /// \brief Notifies chargepoint that a transaction at the given \p connector with the given parameters has been
     /// started
