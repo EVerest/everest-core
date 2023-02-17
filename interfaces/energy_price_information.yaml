@@ -1,6 +1,6 @@
 description: This interface defines the interface for an energy price forecast
 vars:
-  energy_price_schedule:
+  energy_pricing:
     description: >-
       Forecast JSON Object containing timestamps and the price forecast
       for both import and export.

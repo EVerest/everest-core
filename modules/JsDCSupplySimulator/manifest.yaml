@@ -28,6 +28,9 @@ provides:
         description: Max supported current
         type: number
         default: 200.0
+  powermeter:
+    interface: powermeter
+    description: Power meter interface for simulation
 enable_external_mqtt: true
 metadata:
   license: https://opensource.org/licenses/Apache-2.0

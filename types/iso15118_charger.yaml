@@ -112,12 +112,12 @@ types:
         description: "[V] Output voltage of the EVSE as defined in IEC CDV 61851-23"
         type: number
         minumum: 0
-        maximum: 1000
+        maximum: 1500
       EVSEPresentCurrent:
         description: "[A] Present output current of the EVSE"
         type: number
         minumum: 0
-        maximum: 400
+        maximum: 10000
   DC_EVSEMaximumLimits:
     description: Maximum Values (current, power and voltage) the EVSE can deliver
     type: object
@@ -130,18 +130,18 @@ types:
       EVSEMaximumCurrentLimit:
         description: "[A] Maximum current the EVSE can deliver"
         type: number
-        minimum: 0
-        maximum: 400
+        minimum: -10000
+        maximum: 10000
       EVSEMaximumPowerLimit:
         description: "[W] Maximum power the EVSE can deliver"
         type: number
-        minimum: 0
-        maximum: 200000
+        minimum: -1000000
+        maximum: 1000000
       EVSEMaximumVoltageLimit:
         description: "[V] Maximum voltage the EVSE can deliver"
         type: number
         minimum: 0
-        maximum: 1000
+        maximum: 1500
   DC_EVSEMinimumLimits:
     description: Minimum Values (current and voltage) the EVSE can deliver
     type: object
@@ -154,12 +154,12 @@ types:
         description: "[A] Minimum current the EVSE can deliver with the expected accuracy"
         type: number
         minimum: 0
-        maximum: 400
+        maximum: 10000
       EVSEMinimumVoltageLimit:
         description: "[V] Minimum voltage the EVSE can deliver with the expected accuracy"
         type: number
         minimum: 0
-        maximum: 1000
+        maximum: 1500
   DC_EVStatusType:
     description: Current status of the EV
     type: object
@@ -203,12 +203,12 @@ types:
         description: "[V] Target Voltage requested by EV"
         type: number
         minimum: -2
-        maximum: 1000
+        maximum: 1500
       DC_EVTargetCurrent:
         description: "[A] Current demanded by EV"
         type: number
         minimum: -2
-        maximum: 800
+        maximum: 10000
   DC_EVMaximumLimits:
     description:
       Maximum Values (current, power and voltage) supported and allowed
@@ -220,7 +220,7 @@ types:
         description: "[A] Maximum current supported and allowed by the EV"
         type: number
         minimum: -2
-        maximum: 1000
+        maximum: 10000
       DC_EVMaximumPowerLimit:
         description: "Optional: [W] Maximum power supported and allowed by the EV"
         type: number
@@ -230,7 +230,7 @@ types:
         description: "[V] Maximum voltage supported and allowed by the EV"
         type: number
         minimum: -2
-        maximum: 1000
+        maximum: 1500
   DC_EVRemainingTime:
     description: Estimated or calculated time until bulk and full charge is complete
     type: object

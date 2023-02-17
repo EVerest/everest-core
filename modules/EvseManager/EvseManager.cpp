@@ -85,6 +85,8 @@ void EvseManager::ready() {
 
             powersupply_capabilities = r_powersupply_DC[0]->call_getCapabilities();
 
+            updateLocalMaxWattLimit(powersupply_capabilities.max_export_power_W);
+
             r_hlc[0]->call_set_DC_EVSECurrentRegulationTolerance(
                 powersupply_capabilities.current_regulation_tolerance_A);
             r_hlc[0]->call_set_DC_EVSEPeakCurrentRipple(powersupply_capabilities.peak_current_ripple_A);
@@ -101,6 +103,7 @@ void EvseManager::ready() {
             evseMaxLimits.EVSEMaximumPowerLimit = powersupply_capabilities.max_export_power_W;
             evseMaxLimits.EVSEMaximumVoltageLimit = powersupply_capabilities.max_export_voltage_V;
             r_hlc[0]->call_set_DC_EVSEMaximumLimits(evseMaxLimits);
+            charger->inform_new_evse_max_hlc_limits(evseMaxLimits);
 
             types::iso15118_charger::DC_EVSEMinimumLimits evseMinLimits;
             evseMinLimits.EVSEMinimumCurrentLimit = powersupply_capabilities.min_export_current_A;
@@ -120,8 +123,8 @@ void EvseManager::ready() {
 
                 r_imd[0]->subscribe_IsolationMeasurement([this](types::isolation_monitor::IsolationMeasurement m) {
                     // new DC isolation monitoring measurement received
-                    EVLOG_info << fmt::format("Isolation measurement P {} N {}.", m.resistance_P_Ohm,
-                                              m.resistance_N_Ohm);
+                    session_log.evse(
+                        false, fmt::format("Isolation measurement P {} N {}.", m.resistance_P_Ohm, m.resistance_N_Ohm));
                     isolation_measurement = m;
                 });
             }
@@ -165,10 +168,6 @@ void EvseManager::ready() {
                 // Hack for Skoda Enyaq that should be fixed in a different way
                 if (config.hack_skoda_enyaq && (v.DC_EVTargetVoltage < 300 || v.DC_EVTargetCurrent < 0))
                     return;
-
-                // Some power supplies don't really like 0 current limits
-                if (v.DC_EVTargetCurrent < 2)
-                    v.DC_EVTargetCurrent = 2;
 
                 if (v.DC_EVTargetVoltage != latest_target_voltage || v.DC_EVTargetCurrent != latest_target_current) {
                     latest_target_voltage = v.DC_EVTargetVoltage;
@@ -331,7 +330,6 @@ void EvseManager::ready() {
 
         // implement Auth handlers
         r_hlc[0]->subscribe_Require_Auth_EIM([this]() {
-            // EVLOG_info << "--------------------------------------------- Require_Auth_EIM called";
             //  Do we have auth already (i.e. delayed HLC after charging already running)?
             if ((config.dbg_hlc_auth_after_tstep && charger->Authorized_EIM_ready_for_HLC()) ||
                 (!config.dbg_hlc_auth_after_tstep && charger->Authorized_EIM())) {
@@ -412,17 +410,23 @@ void EvseManager::ready() {
     hw_capabilities = r_bsp->call_get_hw_capabilities();
 
     // Maybe override with user setting for this EVSE
-    if (config.max_current < hw_capabilities.max_current_A) {
-        hw_capabilities.max_current_A = config.max_current;
+    if (config.max_current_import_A < hw_capabilities.max_current_A_import) {
+        hw_capabilities.max_current_A_import = config.max_current_import_A;
+    }
+    if (config.max_current_export_A < hw_capabilities.max_current_A_export) {
+        hw_capabilities.max_current_A_export = config.max_current_export_A;
     }
 
-    local_max_current_limit = hw_capabilities.max_current_A;
+    if (config.charge_mode == "AC") {
+        // by default we import energy
+        updateLocalMaxCurrentLimit(hw_capabilities.max_current_A_import);
+    }
 
     // Maybe limit to single phase by user setting if possible with HW
-    if (!config.three_phases && hw_capabilities.min_phase_count == 1) {
-        hw_capabilities.max_phase_count = 1;
+    if (!config.three_phases && hw_capabilities.min_phase_count_import == 1) {
+        hw_capabilities.max_phase_count_import = 1;
         local_three_phases = false;
-    } else if (hw_capabilities.max_phase_count == 3) {
+    } else if (hw_capabilities.max_phase_count_import == 3) {
         local_three_phases = true; // other configonfigurations currently not supported by HW
     }
 
@@ -795,15 +799,55 @@ void EvseManager::setup_AC_mode() {
         r_hlc[0]->call_set_SupportedEnergyTransferMode(transfer_modes);
 }
 
-bool EvseManager::updateLocalMaxCurrentLimit(float max_current) {
-    if (max_current >= 0.0F && max_current < EVSE_ABSOLUTE_MAX_CURRENT) {
-        local_max_current_limit = max_current;
+bool EvseManager::updateLocalEnergyLimit(types::energy::ExternalLimits l) {
+    local_energy_limits = l;
 
-        // wait for EnergyManager to assign optimized current on next opimizer run
+    // wait for EnergyManager to assign optimized current on next opimizer run
 
-        return true;
+    return true;
+}
+
+// Note: deprecated, use updateLocalEnergyLimit. Only kept for node red compat.
+// This overwrites all other schedules set before.
+bool EvseManager::updateLocalMaxWattLimit(float max_watt) {
+    types::energy::ScheduleReqEntry e;
+    e.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
+    if (max_watt >= 0) {
+        e.limits_to_leaves.total_power_W = max_watt;
+        local_energy_limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, e);
+        e.limits_to_leaves.total_power_W = 0;
+        local_energy_limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, e);
+    } else {
+        e.limits_to_leaves.total_power_W = -max_watt;
+        local_energy_limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, e);
+        e.limits_to_leaves.total_power_W = 0;
+        local_energy_limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, e);
     }
-    return false;
+    return true;
+}
+
+// Note: deprecated, use updateLocalEnergyLimit. Only kept for node red compat.
+// This overwrites all other schedules set before.
+bool EvseManager::updateLocalMaxCurrentLimit(float max_current) {
+    if (config.charge_mode == "DC")
+        return false;
+
+    types::energy::ScheduleReqEntry e;
+    e.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
+
+    if (max_current >= 0) {
+        e.limits_to_leaves.ac_max_current_A = max_current;
+        local_energy_limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, e);
+        e.limits_to_leaves.ac_max_current_A = 0;
+        local_energy_limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, e);
+    } else {
+        e.limits_to_leaves.ac_max_current_A = -max_current;
+        local_energy_limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, e);
+        e.limits_to_leaves.ac_max_current_A = 0;
+        local_energy_limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, e);
+    }
+
+    return true;
 }
 
 bool EvseManager::reserve(int32_t id) {
@@ -860,8 +904,8 @@ bool EvseManager::is_reserved() {
     return reserved;
 }
 
-float EvseManager::getLocalMaxCurrentLimit() {
-    return local_max_current_limit;
+bool EvseManager::getLocalThreePhases() {
+    return local_three_phases;
 }
 
 bool EvseManager::get_hlc_enabled() {
@@ -922,13 +966,13 @@ void EvseManager::cable_check() {
         bool ok = false;
 
         // verify the relais are really switched on and set 500V output
-        if (!contactor_open && powersupply_DC_set(config.dc_isolation_voltage, 2)) {
+        if (!contactor_open && powersupply_DC_set(config.dc_isolation_voltage_V, 2)) {
 
             powersupply_DC_on();
             imd_start();
 
             // wait until the voltage has rised to the target value
-            if (!wait_powersupply_DC_voltage_reached(config.dc_isolation_voltage)) {
+            if (!wait_powersupply_DC_voltage_reached(config.dc_isolation_voltage_V)) {
                 EVLOG_info << "Voltage did not rise to 500V within timeout";
                 powersupply_DC_off();
                 ok = false;
@@ -945,7 +989,7 @@ void EvseManager::cable_check() {
                     // wait until the voltage is back to safe level
                     float minvoltage = (config.switch_to_minimum_voltage_after_cable_check
                                             ? powersupply_capabilities.min_export_voltage_V
-                                            : config.dc_isolation_voltage);
+                                            : config.dc_isolation_voltage_V);
 
                     // We do not want to shut down power supply
                     if (minvoltage < 60) {
@@ -964,19 +1008,19 @@ void EvseManager::cable_check() {
 
                         if (m.resistance_N_Ohm < min_resistance_warning ||
                             m.resistance_P_Ohm < min_resistance_warning) {
-                            EVLOG_error << fmt::format("Isolation measurement FAULT P {} N {}.", m.resistance_P_Ohm,
-                                                       m.resistance_N_Ohm);
+                            session_log.evse(false, fmt::format("Isolation measurement FAULT P {} N {}.",
+                                                                m.resistance_P_Ohm, m.resistance_N_Ohm));
                             ok = false;
                             r_hlc[0]->call_set_EVSEIsolationStatus(types::iso15118_charger::IsolationStatus::Fault);
                             imd_stop();
                         } else if (m.resistance_N_Ohm < min_resistance_ok || m.resistance_P_Ohm < min_resistance_ok) {
-                            EVLOG_error << fmt::format("Isolation measurement WARNING P {} N {}.", m.resistance_P_Ohm,
-                                                       m.resistance_N_Ohm);
+                            session_log.evse(false, fmt::format("Isolation measurement WARNING P {} N {}.",
+                                                                m.resistance_P_Ohm, m.resistance_N_Ohm));
                             ok = true;
                             r_hlc[0]->call_set_EVSEIsolationStatus(types::iso15118_charger::IsolationStatus::Warning);
                         } else {
-                            EVLOG_info << fmt::format("Isolation measurement Ok P {} N {}.", m.resistance_P_Ohm,
-                                                      m.resistance_N_Ohm);
+                            session_log.evse(false, fmt::format("Isolation measurement Ok P {} N {}.",
+                                                                m.resistance_P_Ohm, m.resistance_N_Ohm));
                             ok = true;
                             r_hlc[0]->call_set_EVSEIsolationStatus(types::iso15118_charger::IsolationStatus::Valid);
                         }
@@ -1000,35 +1044,106 @@ void EvseManager::cable_check() {
 }
 
 void EvseManager::powersupply_DC_on() {
-    r_powersupply_DC[0]->call_setMode(types::power_supply_DC::Mode::Export);
+    if (!powersupply_dc_is_on) {
+        session_log.evse(false, "DC power supply: switch ON called");
+        r_powersupply_DC[0]->call_setMode(types::power_supply_DC::Mode::Export);
+        powersupply_dc_is_on = true;
+    }
 }
 
-bool EvseManager::powersupply_DC_set(double voltage, double current) {
-    // check limits of supply
-    if (voltage >= powersupply_capabilities.min_export_voltage_V &&
-        voltage <= powersupply_capabilities.max_export_voltage_V) {
+// input voltage/current is what the evse/car would like to set.
+// if it is more then what the energymanager gave us, we can limit it here.
+bool EvseManager::powersupply_DC_set(double _voltage, double _current) {
+    double voltage = _voltage;
+    double current = _current;
+    static bool last_is_actually_exporting_to_grid{false};
 
-        if (current > powersupply_capabilities.max_export_current_A)
-            current = powersupply_capabilities.max_export_current_A;
+    if (config.hack_allow_bpt_with_iso2 && is_actually_exporting_to_grid) {
+        if (!last_is_actually_exporting_to_grid) {
+            // switching from import from grid to export to grid
+            session_log.evse(false, "DC power supply: switch ON in import mode");
+            r_powersupply_DC[0]->call_setMode(types::power_supply_DC::Mode::Import);
+        }
+        last_is_actually_exporting_to_grid = is_actually_exporting_to_grid;
+        // Hack: we are exporting to grid but are in ISO-2 mode
+        // check limits of supply
+        if (powersupply_capabilities.min_import_voltage_V.has_value() &&
+            voltage >= powersupply_capabilities.min_import_voltage_V.value() &&
+            voltage <= powersupply_capabilities.max_import_voltage_V.value()) {
 
-        if (current < powersupply_capabilities.min_export_current_A)
-            current = powersupply_capabilities.min_export_current_A;
+            if (powersupply_capabilities.max_import_current_A.has_value() &&
+                current > powersupply_capabilities.max_import_current_A.value())
+                current = powersupply_capabilities.max_import_current_A.value();
 
-        if (voltage * current > powersupply_capabilities.max_export_power_W)
-            current = powersupply_capabilities.max_export_power_W / voltage;
+            if (powersupply_capabilities.min_import_current_A.has_value() &&
+                current < powersupply_capabilities.min_import_current_A.value())
+                current = powersupply_capabilities.min_import_current_A.value();
 
-        EVLOG_info << fmt::format("DC voltage/current set: Voltage {} Current {}.", voltage, current);
+            if (powersupply_capabilities.max_import_power_W.has_value() &&
+                voltage * current > powersupply_capabilities.max_import_power_W.value())
+                current = powersupply_capabilities.max_import_power_W.value() / voltage;
 
-        r_powersupply_DC[0]->call_setExportVoltageCurrent(voltage, current);
-        return true;
+            // Now it is within limits of DC power supply.
+            // now also limit with the limits given by the energymanager.
+            // FIXME: dont do this for now, see if the car reduces if we supply new limits.
+
+            session_log.evse(
+                false,
+                fmt::format("BPT HACK: DC power supply set: {}V/{}A, requested was {}V/{}A.",
+                            voltage, current, _voltage, _current));
+
+            // set the new limits for the DC output
+            r_powersupply_DC[0]->call_setImportVoltageCurrent(voltage, current);
+            return true;
+        }
+        EVLOG_critical << fmt::format("DC voltage/current out of limits requested: Voltage {} Current {}.", voltage,
+                                      current);
+        return false;
+
+    } else {
+
+        if (config.hack_allow_bpt_with_iso2 && last_is_actually_exporting_to_grid) {
+            // switching from export to grid to import from grid
+            session_log.evse(false, "DC power supply: switch ON in export mode");
+            r_powersupply_DC[0]->call_setMode(types::power_supply_DC::Mode::Export);
+        }
+        last_is_actually_exporting_to_grid = is_actually_exporting_to_grid;
+
+        // check limits of supply
+        if (voltage >= powersupply_capabilities.min_export_voltage_V &&
+            voltage <= powersupply_capabilities.max_export_voltage_V) {
+
+            if (current > powersupply_capabilities.max_export_current_A)
+                current = powersupply_capabilities.max_export_current_A;
+
+            if (current < powersupply_capabilities.min_export_current_A)
+                current = powersupply_capabilities.min_export_current_A;
+
+            if (voltage * current > powersupply_capabilities.max_export_power_W)
+                current = powersupply_capabilities.max_export_power_W / voltage;
+
+            // Now it is within limits of DC power supply.
+            // now also limit with the limits given by the energymanager.
+            // FIXME: dont do this for now, see if the car reduces if we supply new limits.
+
+            session_log.evse(
+                false, fmt::format("DC power supply set: {}V/{}A, requested was {}V/{}A.",
+                                   voltage, current, _voltage, _current));
+
+            // set the new limits for the DC output
+            r_powersupply_DC[0]->call_setExportVoltageCurrent(voltage, current);
+            return true;
+        }
+        EVLOG_critical << fmt::format("DC voltage/current out of limits requested: Voltage {} Current {}.", voltage,
+                                      current);
+        return false;
     }
-    EVLOG_critical << fmt::format("DC voltage/current out of limits requested: Voltage {} Current {}.", voltage,
-                                  current);
-    return false;
 }
 
 void EvseManager::powersupply_DC_off() {
+    session_log.evse(false, "DC power supply OFF");
     r_powersupply_DC[0]->call_setMode(types::power_supply_DC::Mode::Off);
+    powersupply_dc_is_on = false;
 }
 
 bool EvseManager::wait_powersupply_DC_voltage_reached(double target_voltage) {
@@ -1079,10 +1194,6 @@ const std::vector<std::unique_ptr<powermeterIntf>>& EvseManager::r_powermeter_bi
     }
 }
 
-const std::vector<std::unique_ptr<powermeterIntf>>& EvseManager::r_powermeter_energy_management() {
-    return r_powermeter_grid_side;
-}
-
 void EvseManager::imd_stop() {
     if (!r_imd.empty()) {
         r_imd[0]->call_stop();
@@ -1093,6 +1204,14 @@ void EvseManager::imd_start() {
     if (!r_imd.empty()) {
         r_imd[0]->call_start();
     }
+}
+
+types::energy::ExternalLimits EvseManager::getLocalEnergyLimits() {
+    return local_energy_limits;
+}
+
+float EvseManager::get_latest_target_voltage() {
+    return latest_target_voltage;
 }
 
 } // namespace module

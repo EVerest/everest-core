@@ -22,12 +22,13 @@ active_modules:
       session_logging_xml: false
       session_logging_path: /tmp/everest-logs
       charge_mode: DC
+      hack_allow_bpt_with_iso2: true
     connections:
       bsp:
         - module_id: yeti_driver
           implementation_id: board_support
-      powermeter_grid_side:
-        - module_id: yeti_driver
+      powermeter_car_side:
+        - module_id: powersupply_dc
           implementation_id: powermeter
       slac:
         - module_id: slac
@@ -81,8 +82,15 @@ active_modules:
       evse_manager:
         - module_id: evse_manager
           implementation_id: evse
-  token_provider:
-    module: JsDummyTokenProviderManual
+  token_provider: 
+    module: JsDummyTokenProvider
+    config_implementation:
+      main:
+        token: TOKEN1
+    connections:
+      evse:
+        - module_id: evse_manager
+          implementation_id: evse
   token_validator:
     module: JsDummyTokenValidator
     config_implementation:
@@ -92,6 +100,10 @@ active_modules:
         sleep: 0.25
   energy_manager:
     module: EnergyManager
+    config_module:
+      schedule_total_duration: 1
+      schedule_interval_duration: 60
+      debug: false
     connections:
       energy_trunk:
         - module_id: grid_connection_point

@@ -1,14 +1,14 @@
 active_modules:
-  iso15118_charger_1:
+  iso15118_charger:
     module: PyJosev
     config_module:
       device: auto
-  iso15118_car_1:
+  iso15118_car:
     module: JsCarV2G
     config_implementation:
       main:
         stack_implementation: RISE-V2G
-        mqtt_base_path: everest_external/iso15118/ev_1
+        mqtt_base_path: everest_external/iso15118/ev
         device: auto
   evse_manager_1:
     module: EvseManager
@@ -21,8 +21,8 @@ active_modules:
       evse_id: DE*PNX*E12345*1
       session_logging: true
       session_logging_xml: false
-      session_logging_path: /tmp/everest-logs
-      ac_hlc_enabled: false
+      session_logging_path: /tmp
+      ac_hlc_enabled: true
       ac_hlc_use_5percent: false
       ac_enforce_hlc: false
     connections:
@@ -32,6 +32,12 @@ active_modules:
       powermeter_grid_side:
         - module_id: yeti_driver_1
           implementation_id: powermeter
+      slac:
+        - module_id: slac
+          implementation_id: evse
+      hlc:
+        - module_id: iso15118_charger
+          implementation_id: charger
   evse_manager_2:
     module: EvseManager
     config_module:
@@ -54,103 +60,38 @@ active_modules:
       powermeter_grid_side:
         - module_id: yeti_driver_2
           implementation_id: powermeter
-  evse_manager_3:
-    module: EvseManager
-    config_module:
-      connector_id: 3
-      three_phases: true
-      has_ventilation: true
-      country_code: DE
-      rcd_enabled: true
-      evse_id: DE*PNX*E12345*3
-      session_logging: true
-      session_logging_xml: false
-      session_logging_path: /tmp
-      ac_hlc_enabled: false
-      ac_hlc_use_5percent: false
-      ac_enforce_hlc: false
-    connections:
-      bsp:
-        - module_id: yeti_driver_3
-          implementation_id: board_support
-      powermeter_grid_side:
-        - module_id: yeti_driver_3
-          implementation_id: powermeter
-  evse_manager_4:
-    module: EvseManager
-    config_module:
-      connector_id: 4
-      three_phases: true
-      has_ventilation: true
-      country_code: DE
-      rcd_enabled: true
-      evse_id: DE*PNX*E12345*4
-      session_logging: true
-      session_logging_xml: false
-      session_logging_path: /tmp
-      ac_hlc_enabled: false
-      ac_hlc_use_5percent: false
-      ac_enforce_hlc: false
-    connections:
-      bsp:
-        - module_id: yeti_driver_4
-          implementation_id: board_support
-      powermeter_grid_side:
-        - module_id: yeti_driver_4
-          implementation_id: powermeter
   yeti_driver_1:
     module: JsYetiSimulator
   yeti_driver_2:
     module: JsYetiSimulator
-  yeti_driver_3:
-    module: JsYetiSimulator
-  yeti_driver_4:
-    module: JsYetiSimulator
-  slac_1:
+  slac:
     module: JsSlacSimulator
   car_simulator_1:
     module: JsCarSimulator
     config_module:
       connector_id: 1
       auto_enable: true
-      auto_exec: true
-      auto_exec_commands: sleep 5;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 36000;unplug
+      auto_exec: false
+      auto_exec_commands: sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 30;unplug
     connections:
       simulation_control:
         - module_id: yeti_driver_1
           implementation_id: yeti_simulation_control
+      ev:
+        - module_id: iso15118_car
+          implementation_id: ev
+      slac:
+        - module_id: slac
+          implementation_id: ev
   car_simulator_2:
     module: JsCarSimulator
     config_module:
       connector_id: 2
       auto_enable: true
-      auto_exec: true
-      auto_exec_commands: sleep 5;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 36000;unplug
+      auto_exec: false
     connections:
       simulation_control:
         - module_id: yeti_driver_2
-          implementation_id: yeti_simulation_control
-  car_simulator_3:
-    module: JsCarSimulator
-    config_module:
-      connector_id: 3
-      auto_enable: true
-      auto_exec: true
-      auto_exec_commands: sleep 7;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 36000;unplug
-    connections:
-      simulation_control:
-        - module_id: yeti_driver_3
-          implementation_id: yeti_simulation_control
-  car_simulator_4:
-    module: JsCarSimulator
-    config_module:
-      connector_id: 4
-      auto_enable: true
-      auto_exec: true
-      auto_exec_commands: sleep 8;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 36000;unplug
-    connections:
-      simulation_control:
-        - module_id: yeti_driver_4
           implementation_id: yeti_simulation_control
   auth:
     module: Auth
@@ -163,10 +104,6 @@ active_modules:
           implementation_id: main
         - module_id: token_provider_2
           implementation_id: main
-        - module_id: token_provider_3
-          implementation_id: main
-        - module_id: token_provider_4
-          implementation_id: main
       token_validator:
         - module_id: token_validator
           implementation_id: main
@@ -175,50 +112,21 @@ active_modules:
           implementation_id: evse
         - module_id: evse_manager_2
           implementation_id: evse
-        - module_id: evse_manager_3
-          implementation_id: evse
-        - module_id: evse_manager_4
-          implementation_id: evse
   token_provider_1:
     module: JsDummyTokenProvider
+    config_implementation:
+      main:
+        token: TOKEN1
     connections:
       evse:
         - module_id: evse_manager_1
           implementation_id: evse
-    config_implementation:
-      main:
-        type: dummy
-        token: CARD1
   token_provider_2:
     module: JsDummyTokenProvider
     connections:
       evse:
         - module_id: evse_manager_2
           implementation_id: evse
-    config_implementation:
-      main:
-        type: dummy
-        token: CARD2
-  token_provider_3:
-    module: JsDummyTokenProvider
-    connections:
-      evse:
-        - module_id: evse_manager_3
-          implementation_id: evse
-    config_implementation:
-      main:
-        type: dummy
-        token: CARD3
-  token_provider_4:
-    module: JsDummyTokenProvider
-    connections:
-      evse:
-        - module_id: evse_manager_4
-          implementation_id: evse
-    config_implementation:
-      main:
-        type: dummy
-        token: CARD4
   token_validator:
     module: JsDummyTokenValidator
     config_implementation:
@@ -228,6 +136,10 @@ active_modules:
         sleep: 0.25
   energy_manager:
     module: EnergyManager
+    config_module:
+      schedule_total_duration: 2
+      schedule_interval_duration: 15
+      debug: true
     connections:
       energy_trunk:
         - module_id: grid_connection_point
@@ -235,7 +147,7 @@ active_modules:
   grid_connection_point:
     module: EnergyNode
     config_module:
-      fuse_limit_A: 40.0
+      fuse_limit_A: 20.0
       phase_count: 3
     connections:
       price_information: []
@@ -243,10 +155,6 @@ active_modules:
         - module_id: evse_manager_1
           implementation_id: energy_grid
         - module_id: evse_manager_2
-          implementation_id: energy_grid
-        - module_id: evse_manager_3
-          implementation_id: energy_grid
-        - module_id: evse_manager_4
           implementation_id: energy_grid
       powermeter:
         - module_id: yeti_driver_1

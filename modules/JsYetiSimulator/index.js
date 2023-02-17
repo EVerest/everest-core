@@ -76,10 +76,14 @@ boot_module(async ({
     publish_nr_of_phases_available(mod, (mod.use_three_phases_confirmed ? 3 : 1));
   });
   setup.provides.board_support.register.get_hw_capabilities((mod, args) => ({
-    max_current_A: 32.0,
-    min_current_A: 6.0,
-    max_phase_count: 3,
-    min_phase_count: 1,
+    max_current_A_import: 32.0,
+    min_current_A_import: 6.0,
+    max_phase_count_import: 3,
+    min_phase_count_import: 1,
+    max_current_A_export: 16.0,
+    min_current_A_export: 0.,
+    max_phase_count_export: 3,
+    min_phase_count_export: 1,
     supports_changing_phases_during_charging: true,
   }));
   setup.provides.board_support.register.read_pp_ampacity((mod, args) => {

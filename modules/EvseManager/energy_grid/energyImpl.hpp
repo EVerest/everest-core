@@ -33,10 +33,7 @@ public:
 
 protected:
     // command handler functions (virtual)
-    virtual void handle_enforce_limits(std::string& uuid, types::energy::Limits& limits_import,
-                                       types::energy::Limits& limits_export,
-                                       std::vector<types::energy::TimeSeriesEntry>& schedule_import,
-                                       std::vector<types::energy::TimeSeriesEntry>& schedule_export) override;
+    virtual void handle_enforce_limits(types::energy::EnforcedLimits& value) override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
     // insert your protected definitions here
@@ -51,21 +48,17 @@ private:
 
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
     std::mutex energy_mutex;
-    double _price_limit;
-    double _price_limit_previous_value;
-    std::string _optimizer_mode;
-    double _manual_current_limit_A;
-    json energy;
-
-    void initializeEnergyObject();
-    void updateAndPublishEnergyObject();
+    // types::energy_price_information::PricePerkWh price_limit;
+    // types::energy::OptimizerTarget optimizer_target;
+    types::energy::EnergyFlowRequest energy_flow_request;
+    types::energy::LimitsRes last_enforced_limits;
+    float last_target_voltage{-9999};
+    void clear_request_schedules(types::energy::EnergyFlowRequest& energy_flow_request);
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 
 // ev@3d7da0ad-02c2-493d-9920-0bbbd56b9876:v1
 // insert other definitions here
-#define EVSE_OPTIMIZER_MODE_MANUAL_LIMITS std::string("manual_limits")
-#define EVSE_OPTIMIZER_MODE_PRICE_DRIVEN  std::string("price_driven")
 // ev@3d7da0ad-02c2-493d-9920-0bbbd56b9876:v1
 
 } // namespace energy_grid

@@ -1,112 +1,66 @@
 description: Energy import/export capability/limit types
 types:
-  AcCurrentLimit:
-    description: AC current limit object
+  NodeType:
+    description: Enum Type for different Nodes on the energy tree
+    type: string
+    enum:
+      - Undefined
+      - Evse
+      - Generic
+  LimitsReq:
+    description: Energy flow limiting object request (Evses to EnergyManager)
     type: object
     additionalProperties: false
     properties:
-      current_A:
-        description: AC current limit per phase in Ampere
+      total_power_W:
+        description: >-
+          Total power limit in Watt. Can be used for DC or as additional
+          limit for AC.
         type: number
         minimum: 0.0
-      phase_count:
+      ac_max_current_A:
+        description: Max current limit (per phase) in Ampere. AC only.
+        type: number
+        minimum: 0.0
+      ac_min_current_A:
+        description: >-
+          Min AC current limit per phase in Ampere. Values below that value indicate the 
+          device will not work properly, i.e. it will not charge below 6 amps. AC only.
+        type: number
+        minimum: 0.0
+      ac_max_phase_count:
         description: Limit to number of phases. Omit if number of phases are not limited.
         type: integer
         minimum: 1
         maximum: 3
-  EnforcedLimits:
-    description: Enforced limits
+      ac_min_phase_count:
+        description: Minimal number of phases. Omit if number of phases are not limited.
+        type: integer
+        minimum: 1
+        maximum: 3
+      ac_supports_changing_phases_during_charging:
+        description: >-
+          Indicate whether phase switching is allowed during charging or
+          not
+        type: boolean
+  LimitsRes:
+    description: Energy flow limiting object Result (Energy manager to Evses)
     type: object
     additionalProperties: false
     properties:
-      ac_current_A:
-        description: AC current limit object
-        type: object
-        $ref: /energy#/AcCurrentLimit
       total_power_W:
         description: >-
           Total power limit in Watt. Can be used for DC or as additional
-          limit for AC.
+          limit for AC. Negative numbers mean export to grid direction.
         type: number
-        minimum: 0.0
-  Limits:
-    description: Enforced limits that must be respected.
-    type: object
-    additionalProperties: false
-    properties:
-      valid_until:
-        description: >-
-          Limits are valid until this timepoint in RFC3339 UTC. If no new
-          update is received, power consumption must be stopped afer that timepoint.
-        type: string
-        format: date-time
-      request_parameters:
-        description: Enforced limits
-        type: object
-        $ref: /energy#/EnforcedLimits
-  LimitType:
-    description: >-
-      Hard limits need to be enforced by EnergyManager, Soft limits may
-      be ignored.
-    type: string
-    enum:
-      - Hard
-      - Soft
-  LimitWithType:
-    description: Limit for this timestamp
-    type: object
-    additionalProperties: false
-    required:
-      - limit_type
-    properties:
-      limit_type:
-        description: >-
-          Hard limits need to be enforced by EnergyManager, Soft limits
-          may be ignored.
-        type: string
-        $ref: /energy#/LimitType
-      ac_current_A:
-        description: AC current limit object
-        type: object
-        $ref: /energy#/AcCurrentLimit
-      total_power_W:
-        description: >-
-          Total power limit in Watt. Can be used for DC or as additional
-          limit for AC.
+      ac_max_current_A:
+        description: Max current limit (per phase) in Ampere. AC only. Negative numbers mean export to grid direction.
         type: number
-        minimum: 0.0
-  TimeSeriesEntry:
-    description: One entry for the time series
-    type: object
-    additionalProperties: false
-    required:
-      - timestamp
-      - request_parameters
-    properties:
-      timestamp:
-        description: Absolute timestamp for this sample in RFC3339 UTC format https://datatracker.ietf.org/doc/html/rfc3339#section-5.6
-        type: string
-        format: date-time
-      request_parameters:
-        description: Limit for this timestamp
-        type: object
-        $ref: /energy#/LimitWithType
-      price_per_kwh:
-        description: Price information for this timepoint
-        type: object
-        $ref: /energy_price_information#/PricePerkWh
-  NodeType:
-    description: >-
-      Type of energy source/sink. Use Limit if this purely enforces limits
-      but is not a physical energy source/sink.
-    type: string
-    enum:
-      - Grid
-      - GridConnection
-      - Solar
-      - Battery
-      - Fuse
-      - Evse
+      ac_max_phase_count:
+        description: Limit to number of phases. Omit if number of phases are not limited.
+        type: integer
+        minimum: 1
+        maximum: 3
   OptimizerTarget:
     description: User defined optimizer targets for this evse
     type: object
@@ -121,6 +75,8 @@ types:
       car_battery_soc:
         description: Car battery State Of Charge in percent
         type: number
+        minimum: 0
+        maximum: 100
       leave_time:
         description: >-
           RFC3339 UTC format time when the car needs to drive away with
@@ -136,78 +92,176 @@ types:
           Only charge from locally generated energy. Do not draw power
           from grid for charging.
         type: boolean
-  AcCurrentLimitExtended:
-    description: AC current limit object
-    type: object
-    additionalProperties: false
-    required:
-      - max_current_A
-    properties:
-      max_current_A:
-        description: Max AC current limit per phase in Ampere
-        type: number
-        minimum: 0.0
-      min_current_A:
-        description: Minimal AC current limit per phase in Ampere to be able to charge
-        type: number
-        minimum: 0.0
-      max_phase_count:
-        description: >-
-          Max Limit of number of phases. Omit if number of phases are not
-          limited.
-        type: integer
-        minimum: 1
-        maximum: 3
-      min_phase_count:
-        description: Minimum number of phases that can be used for proper operation.
-        type: integer
-        minimum: 1
-        maximum: 3
-      supports_changing_phases_during_charging:
-        description: >-
-          Indicate whether phase switching is allowed during charging or
-          not
-        type: boolean
-  LimitWithTypeExtended:
-    description: Limit for this timestamp
-    type: object
-    additionalProperties: false
-    required:
-      - limit_type
-    properties:
-      limit_type:
-        description: >-
-          Hard limits need to be enforced by EnergyManager, Soft limits
-          may be ignored.
-        type: string
-        $ref: /energy#/LimitType
-      ac_current_A:
-        description: AC current limit object
-        type: object
-        $ref: /energy#/AcCurrentLimitExtended
-      total_power_W:
-        description: >-
-          Total power limit in Watt. Can be used for DC or as additional
-          limit for AC.
-        type: number
-        minimum: 0.0
-  TimeSeriesEntryExtended:
-    description: One entry for the time series
+  ScheduleReqEntry:
+    description: One entry for the time series (request)
     type: object
     additionalProperties: false
     required:
       - timestamp
-      - request_parameters
+      - limits_to_root
+      - limits_to_leaves
     properties:
       timestamp:
-        description: Absolute timestamp for this sample in RFC3339 UTC format https://datatracker.ietf.org/doc/html/rfc3339#section-5.6
+        description: Absolute timestamp for this sample in RFC3339 UTC format
         type: string
         format: date-time
-      request_parameters:
-        description: Limit for this timestamp
+      limits_to_root:
+        description: Limit for this timestamp, for the root facing side
         type: object
-        $ref: /energy#/LimitWithTypeExtended
+        $ref: /energy#/LimitsReq
+      limits_to_leaves:
+        description: Limit for this timestamp, for the leaves facing side
+        type: object
+        $ref: /energy#/LimitsReq
+      conversion_efficiency:
+        description: Conversion efficiency from root to leaves side (e.g. AC/DC efficiency). Defaults to one if not specified.
+        type: number
+        minimum: 0
+        maximum: 1
       price_per_kwh:
         description: Price information for this timepoint
         type: object
         $ref: /energy_price_information#/PricePerkWh
+  ScheduleResEntry:
+    description: One entry for the time series (result)
+    type: object
+    additionalProperties: false
+    required:
+      - timestamp
+      - limits_to_root
+    properties:
+      timestamp:
+        description: Absolute timestamp for this sample in RFC3339 UTC format
+        type: string
+        format: date-time
+      limits_to_root:
+        description: Limit for this timestamp, for the root facing side
+        type: object
+        $ref: /energy#/LimitsRes
+      price_per_kwh:
+        description: Price information for this timepoint
+        type: object
+        $ref: /energy_price_information#/PricePerkWh
+  EnergyFlowRequest:
+    description: >-
+      Request energy flow parameters to supply/limit energy import (direction from grid
+      to car) and/or consume/limit energy export (car to grid) at a specific point in the tree
+    type: object
+    required:
+      - uuid
+      - children
+      - node_type
+    properties:
+      children:
+        description: Array of child node energy flow requests (in the direction to consumer/car
+        type: array
+        items:
+          description: One entry per child node
+          type: object
+          $ref: /energy#/EnergyFlowRequest
+      uuid:
+        description: >-
+          UUID for this node. This UUID will be used again when enforce_limits()
+          command propagates through the tree.
+        type: string
+      node_type:
+        description: >-
+          Node Type Enum
+        type: string
+        $ref: /energy#/NodeType
+      optimizer_target:
+        description: User defined optimizer targets for this evse
+        type: object
+        $ref: /energy#/OptimizerTarget
+      energy_usage_root:
+        description: Energy usage measurement of this node at root side
+        type: object
+        $ref: /powermeter#/Powermeter
+      energy_usage_leaves:
+        description: Energy usage measurement of this node at leaves side
+        type: object
+        $ref: /powermeter#/Powermeter
+      schedule_import:
+        description: >-
+          Energy import/limits time series. The first entry is special
+          as it will be active already now even if the timestamp is in the future,
+          so it is good practice to set the first entry to current time. The time
+          series can have arbitrary time difference between entries and all timestamps
+          are absolute UTC time.
+        type: array
+        items:
+          description: One entry for the time series. Values are always positive.
+          type: object
+          $ref: /energy#/ScheduleReqEntry
+      schedule_export:
+        description: >-
+          Energy export/limits time series. The first entry is special
+          as it will be active already now even if the timestamp is in the future,
+          so it is good practice to set the first entry to current time. The time
+          series can have arbitrary time difference between entries and all timestamps
+          are absolute UTC time.
+        type: array
+        items:
+          description: One entry for the time series. Values are always positive.
+          type: object
+          $ref: /energy#/ScheduleReqEntry
+  EnforcedLimits:
+    description: Enforce Limits data type
+    type: object
+    required:
+      - uuid
+      - valid_until
+    properties:
+      uuid:
+        description: UUID of node that this limit applies to
+        type: string
+      valid_until:
+        description: >-
+          Limits are valid until this timepoint in RFC3339 UTC. If no new
+          update is received, power consumption must be stopped afer that timepoint.
+        type: string
+        format: date-time
+      limits_root_side:
+        description: Enforced limits that must be respected at the root side.
+        type: object
+        $ref: /energy#/LimitsRes
+      schedule:
+        description: >-
+          Informative only. Do not use for actual limiting. Energy import/export limits
+          time series. The first entry is special as it will be active already now
+          even if the timestamp is in the future, so it is good practice to set the
+          first entry to current time. The time series can have arbitrary time difference
+          between entries and all timestamps are absolute UTC time.
+        type: array
+        items:
+          description: One entry for the time series. Values are positive for import from grid and negative for export to grid.
+          type: object
+          $ref: /energy#/ScheduleResEntry
+  ExternalLimits:
+    description: External Limits data type
+    type: object
+    properties:
+      schedule_import:
+        description: >-
+          Energy import/limits time series. The first entry is special as it will be active already now
+          even if the timestamp is in the future, so it is good practice to set the
+          first entry to current time. The time series can have arbitrary time difference
+          between entries and all timestamps are absolute UTC time. 
+          The last entry is valid for any time after the schedule ends.
+        type: array
+        items:
+          description: One entry for the time series
+          type: object
+          $ref: /energy#/ScheduleReqEntry
+      schedule_export:
+        description: >-
+          Energy export/limits time series. The first entry is special as it will be active already now
+          even if the timestamp is in the future, so it is good practice to set the
+          first entry to current time. The time series can have arbitrary time difference
+          between entries and all timestamps are absolute UTC time.
+          The last entry is valid for any time after the schedule ends.
+        type: array
+        items:
+          description: One entry for the time series
+          type: object
+          $ref: /energy#/ScheduleReqEntry

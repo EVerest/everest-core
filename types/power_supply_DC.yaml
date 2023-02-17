@@ -83,6 +83,16 @@ types:
       max_import_power_W:
         description: Maximum import power that the power supply can sink in Watt
         type: number
+      conversion_efficiency_import:
+        description: Typical import efficiency used for energy management
+        type: number
+        minimum: 0.0
+        maximum: 1.0
+      conversion_efficiency_export:
+        description: Typical export efficiency used for energy management
+        type: number
+        minimum: 0.0
+        maximum: 1.0
   FaultCode:
     description: Fault codes
     type: string

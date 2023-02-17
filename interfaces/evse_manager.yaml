@@ -93,16 +93,13 @@ cmds:
     result:
       description: Returns true if unlocking sequence was successfully executed
       type: boolean
-  set_local_max_current:
-    description: Sets the local maximum current limit for any phase.
+  set_external_limits:
+    description: Set additional external energy flow limits at this node.
     arguments:
-      max_current:
-        description: maximum current
-        type: number
-    result:
-      description: Returns success or error code
-      type: string
-      $ref: /evse_manager#/SetLocalMaxCurrentResult
+      value:
+        description: UUID of node that this limit applies to
+        type: object
+        $ref: /energy#/ExternalLimits
   switch_three_phases_while_charging:
     description: Switch three phases while charging
     arguments:

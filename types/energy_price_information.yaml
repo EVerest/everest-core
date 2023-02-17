@@ -5,9 +5,14 @@ types:
     type: object
     additionalProperties: false
     required:
+      - timestamp
       - value
       - currency
     properties:
+      timestamp:
+        description: Absolute timestamp for this sample in RFC3339 UTC format
+        type: string
+        format: date-time
       value:
         description: Price per kWh (cost)
         type: number
@@ -16,22 +21,6 @@ types:
         type: string
         minLength: 3
         maxLength: 3
-  PricingTimeSeriesEntry:
-    description: One entry for the time series
-    type: object
-    additionalProperties: false
-    required:
-      - timestamp
-      - price_per_kwh
-    properties:
-      timestamp:
-        description: Absolute timestamp for this sample in RFC3339 UTC format https://datatracker.ietf.org/doc/html/rfc3339#section-5.6
-        type: string
-        format: date-time
-      price_per_kwh:
-        description: Price information for this timepoint
-        type: object
-        $ref: /energy_price_information#/PricePerkWh
   EnergyPriceSchedule:
     description: >-
       Forecast JSON Object containing timestamps and the price forecast

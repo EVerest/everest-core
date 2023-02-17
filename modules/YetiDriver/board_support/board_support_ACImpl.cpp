@@ -50,10 +50,16 @@ void board_support_ACImpl::init() {
     {
         std::lock_guard<std::mutex> lock(capsMutex);
 
-        caps.min_current_A = 6;
-        caps.max_current_A = 6;
-        caps.min_phase_count = 1;
-        caps.max_phase_count = 3;
+        caps.min_current_A_import = mod->config.caps_min_current_A;
+        caps.max_current_A_import = 6;
+        caps.min_phase_count_import = 1;
+        caps.max_phase_count_import = 3;
+        caps.supports_changing_phases_during_charging = false;
+
+        caps.min_current_A_export = mod->config.caps_min_current_A;
+        caps.max_current_A_export = 6;
+        caps.min_phase_count_export = 1;
+        caps.max_phase_count_export = 3;
         caps.supports_changing_phases_during_charging = false;
     }
 
@@ -78,10 +84,18 @@ void board_support_ACImpl::init() {
     mod->serial.signalKeepAliveLo.connect([this](KeepAliveLo l) {
         std::lock_guard<std::mutex> lock(capsMutex);
 
-        caps.min_current_A = l.hwcap_min_current;
-        caps.max_current_A = l.hwcap_max_current;
-        caps.min_phase_count = l.hwcap_min_phase_count;
-        caps.max_phase_count = l.hwcap_max_phase_count;
+        caps.min_current_A_import =
+            (mod->config.caps_min_current_A >= 0 ? mod->config.caps_min_current_A : l.hwcap_min_current);
+        caps.max_current_A_import = l.hwcap_max_current;
+        caps.min_phase_count_import = l.hwcap_min_phase_count;
+        caps.max_phase_count_import = l.hwcap_max_phase_count;
+
+        caps.min_current_A_export =
+            (mod->config.caps_min_current_A >= 0 ? mod->config.caps_min_current_A : l.hwcap_min_current);
+        caps.max_current_A_export = l.hwcap_max_current;
+        caps.min_phase_count_export = l.hwcap_min_phase_count;
+        caps.max_phase_count_export = l.hwcap_max_phase_count;
+
         caps.supports_changing_phases_during_charging = l.supports_changing_phases_during_charging;
     });
 } // namespace board_support
@@ -135,7 +149,7 @@ void board_support_ACImpl::handle_evse_replug(int& value) {
 double board_support_ACImpl::handle_read_pp_ampacity() {
     // FIXME: read PP ampacity from yeti, report back maximum current the hardware can handle for now
     std::lock_guard<std::mutex> lock(capsMutex);
-    return caps.max_current_A;
+    return caps.max_current_A_import;
 }
 
 types::board_support::HardwareCapabilities board_support_ACImpl::handle_get_hw_capabilities() {

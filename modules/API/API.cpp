@@ -156,7 +156,7 @@ void API::init() {
             json ev_info_json = ev_info;
             this->mqtt.publish(var_ev_info, ev_info_json.dump());
         });
-        
+
         std::string var_datetime = var_base + "datetime";
         std::string var_session_info = var_base + "session_info";
         this->datetime_threads.push_back(
@@ -210,13 +210,17 @@ void API::init() {
         std::string cmd_set_limit = cmd_base + "set_limit";
         this->mqtt.subscribe(cmd_set_limit, [&evse](const std::string& data) {
             try {
-                evse->call_set_local_max_current(std::stof(data));
-            } catch (const std::invalid_argument &e) {
+                types::energy::ExternalLimits l;
+                types::energy::ScheduleReqEntry e;
+                e.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
+                e.limits_to_leaves.ac_max_current_A = std::stof(data);
+                l.schedule_import.emplace(std::vector<types::energy::ScheduleReqEntry>(1,e));
+                evse->call_set_external_limits(l);
+            } catch (const std::invalid_argument& e) {
                 EVLOG_warning << "Invalid limit: No conversion of given input could be performed.";
-            } catch (const std::out_of_range &e) {
+            } catch (const std::out_of_range& e) {
                 EVLOG_warning << "Invalid limit: Out of range.";
             }
-            
         });
 
         count += 1;

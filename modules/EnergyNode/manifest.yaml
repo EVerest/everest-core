@@ -14,6 +14,9 @@ provides:
   energy_grid:
     description: This is the chain interface to build the energy supply tree
     interface: energy
+  external_limits:
+    description: Additional external limits can be set via this interface.
+    interface: external_energy_limits
 requires:
   energy_consumer:
     interface: energy
@@ -22,11 +25,11 @@ requires:
   powermeter:
     interface: powermeter
     min_connections: 0
-    max_connections: 128
+    max_connections: 1
   price_information:
     interface: energy_price_information
     min_connections: 0
-    max_connections: 128
+    max_connections: 1
 enable_external_mqtt: false
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
