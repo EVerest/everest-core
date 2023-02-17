@@ -15,11 +15,38 @@ let settings_connector_import_voltage;
 let settings_connector_max_export_current;
 let settings_connector_max_import_current;
 
-let connector_voltage;
+let connector_voltage = 0.0;
+let connector_current = 0.0;
 let mode;
+let energy_import_total = 0.0;
+let energy_export_total = 0.0;
 
 let voltage;
 let current;
+
+
+function power_meter_external() {
+  const date = new Date();
+  return ({
+    timestamp: date.toISOString(),
+    meter_id: 'DC_POWERMETER',
+    energy_Wh_import: {
+      total: energy_import_total,
+    },
+    energy_Wh_export: {
+      total: energy_export_total,
+    },
+    power_W: {
+      total: connector_voltage * connector_current,
+    },
+    voltage_V: {
+      DC: connector_voltage,
+    },
+    current_A: {
+      DC: connector_current,
+    }
+  });
+}
 
 boot_module(async ({
   setup, config,
@@ -32,6 +59,7 @@ boot_module(async ({
   config_max_power = config.impl.main.max_power;
 
   connector_voltage = 0.0;
+  connector_current = 0.0;
   mode = 'Off';
   voltage = 0.0;
   current = 0.0;
@@ -52,6 +80,8 @@ boot_module(async ({
       max_import_power_W: config_max_power,
       current_regulation_tolerance_A: 2,
       peak_current_ripple_A: 2,
+      conversion_efficiency_export: 0.9,
+      conversion_efficiency_import: 0.85,
     };
     return Capabilities;
   });
@@ -59,12 +89,16 @@ boot_module(async ({
   setup.provides.main.register.setMode((mod, args) => {
     if (args.value === 'Off') {
       mode = 'Off'; connector_voltage = 0.0;
+      connector_current = 0.0;
     } else if (args.value === 'Export') {
       mode = 'Export'; connector_voltage = settings_connector_export_voltage;
+      connector_current = settings_connector_max_export_current;
     } else if (args.value === 'Import') {
       mode = 'Import'; connector_voltage = settings_connector_import_voltage;
+      connector_current = -settings_connector_max_import_current;
     } else if (args.value === 'Fault') {
       mode = 'Fault'; connector_voltage = 0.0;
+      connector_current = 0.0;
     }
     mod.provides.main.publish.mode(args.value);
   });
@@ -102,7 +136,17 @@ boot_module(async ({
   setInterval(() => {
     mod.provides.main.publish.voltage_current({
       voltage_V: connector_voltage,
-      current_A: 0.1,
+      current_A: connector_current,
     });
+
+    if (connector_current > 0) energy_import_total += (connector_voltage * connector_current * 0.5) / 3600;
+    if (connector_current < 0) energy_export_total += (connector_voltage * -connector_current * 0.5) / 3600;
+    
+    mod.provides.powermeter.publish.powermeter(power_meter_external());
   }, 500, mod);
 });
+
+
+
+
+

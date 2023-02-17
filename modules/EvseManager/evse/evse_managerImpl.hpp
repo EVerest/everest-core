@@ -46,7 +46,7 @@ protected:
     virtual bool handle_resume_charging() override;
     virtual bool handle_stop_transaction(types::evse_manager::StopTransactionRequest& request) override;
     virtual bool handle_force_unlock() override;
-    virtual types::evse_manager::SetLocalMaxCurrentResult handle_set_local_max_current(double& max_current) override;
+    virtual void handle_set_external_limits(types::energy::ExternalLimits& value) override;
     virtual types::evse_manager::SwitchThreePhasesWhileChargingResult
     handle_switch_three_phases_while_charging(bool& three_phases) override;
     virtual std::string handle_get_signed_meter_value() override;

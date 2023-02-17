@@ -7,7 +7,7 @@ let config_resistance_N_Ohm;
 let config_resistance_P_Ohm;
 let config_interval;
 let intervalID;
-let interval_running;
+let interval_running = false;
 
 boot_module(async ({
   setup, config,
@@ -18,6 +18,7 @@ boot_module(async ({
 
   // register commands
   setup.provides.main.register.start((mod) => {
+    if (interval_running) return;
     evlog.debug(`Started simulated isolation monitoring with ${config_interval}ms interval`);
 
     intervalID = setInterval(() => {
@@ -38,4 +39,4 @@ boot_module(async ({
       interval_running = false;
     }
   });
-}).then(() => {});
+}).then(() => { });

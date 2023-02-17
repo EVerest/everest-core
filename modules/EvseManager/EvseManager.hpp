@@ -56,13 +56,14 @@ struct Conf {
     bool has_ventilation;
     std::string country_code;
     bool rcd_enabled;
-    double max_current;
+    double max_current_import_A;
+    double max_current_export_A;
     std::string charge_mode;
     bool ac_hlc_enabled;
     bool ac_hlc_use_5percent;
     bool ac_enforce_hlc;
     bool ac_with_soc;
-    int dc_isolation_voltage;
+    int dc_isolation_voltage_V;
     bool dbg_hlc_auth_after_tstep;
     int hack_sleep_in_cable_check;
     bool switch_to_minimum_voltage_after_cable_check;
@@ -70,6 +71,7 @@ struct Conf {
     int hack_present_current_offset;
     std::string connector_type;
     bool hack_pause_imd_during_precharge;
+    bool hack_allow_bpt_with_iso2;
 };
 
 class EvseManager : public Everest::ModuleBase {
@@ -119,8 +121,11 @@ public:
     sigslot::signal<int> signalNrOfPhasesAvailable;
     types::powermeter::Powermeter get_latest_powermeter_data_billing();
     types::board_support::HardwareCapabilities get_hw_capabilities();
-    bool updateLocalMaxCurrentLimit(float max_current);
-    float getLocalMaxCurrentLimit();
+    bool updateLocalMaxCurrentLimit(float max_current); // deprecated
+    bool updateLocalMaxWattLimit(float max_watt);       // deprecated
+    bool updateLocalEnergyLimit(types::energy::ExternalLimits l);
+    types::energy::ExternalLimits getLocalEnergyLimits();
+    bool getLocalThreePhases();
 
     void cancel_reservation();
     bool is_reserved();
@@ -133,7 +138,14 @@ public:
     void charger_was_authorized();
 
     const std::vector<std::unique_ptr<powermeterIntf>>& r_powermeter_billing();
-    const std::vector<std::unique_ptr<powermeterIntf>>& r_powermeter_energy_management();
+    types::power_supply_DC::Capabilities powersupply_capabilities;
+
+    float get_latest_target_voltage();
+
+    // FIXME: this will be removed with proper intergration of BPT on ISO-20
+    // on DIN SPEC and -2 we claim a positive charging current on ISO protocol,
+    // but the power supply switches to discharge if this flag is set.
+    std::atomic_bool is_actually_exporting_to_grid{false};
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
@@ -154,7 +166,7 @@ private:
     Everest::Thread energyThreadHandle;
     types::board_support::HardwareCapabilities hw_capabilities;
     bool local_three_phases;
-    float local_max_current_limit;
+    types::energy::ExternalLimits local_energy_limits;
     const float EVSE_ABSOLUTE_MAX_CURRENT = 80.0;
     bool slac_enabled;
 
@@ -167,7 +179,6 @@ private:
     bool hlc_waiting_for_auth_eim;
     bool hlc_waiting_for_auth_pnc;
 
-    types::power_supply_DC::Capabilities powersupply_capabilities;
     VarContainer<types::isolation_monitor::IsolationMeasurement> isolation_measurement;
     VarContainer<types::power_supply_DC::VoltageCurrent> powersupply_measurement;
 
@@ -192,6 +203,7 @@ private:
     void cable_check();
 
     void powersupply_DC_on();
+    std::atomic_bool powersupply_dc_is_on{false};
     bool powersupply_DC_set(double voltage, double current);
     void powersupply_DC_off();
     bool wait_powersupply_DC_voltage_reached(double target_voltage);

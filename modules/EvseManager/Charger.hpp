@@ -29,6 +29,7 @@
 #include <chrono>
 #include <date/date.h>
 #include <date/tz.h>
+#include <generated/interfaces/ISO15118_charger/Interface.hpp>
 #include <generated/interfaces/board_support_AC/Interface.hpp>
 #include <generated/types/evse_manager.hpp>
 #include <mutex>
@@ -120,7 +121,8 @@ public:
     bool resumeChargingPowerAvailable();
     bool getPausedByEVSE();
 
-    bool cancelTransaction(const types::evse_manager::StopTransactionRequest& request); // cancel transaction ahead of time when car is still plugged
+    bool cancelTransaction(const types::evse_manager::StopTransactionRequest&
+                               request); // cancel transaction ahead of time when car is still plugged
     std::string getStopTransactionIdTag();
     types::evse_manager::StopTransactionReason getTransactionFinishedReason(); // get reason for last finished event
     types::evse_manager::StartSessionReason getSessionStartedReason(); // get reason for last session start event
@@ -165,6 +167,7 @@ public:
         Idle,
         WaitingForAuthentication,
         PrepareCharging,
+        WaitingForEnergy,
         Charging,
         ChargingPausedEV,
         ChargingPausedEVSE,
@@ -183,6 +186,8 @@ public:
     sigslot::signal<EvseState> signalState;
     sigslot::signal<types::evse_manager::Error> signalError;
     // /Deprecated
+
+    void inform_new_evse_max_hlc_limits(const types::iso15118_charger::DC_EVSEMaximumLimits& l);
 
 private:
     // main Charger thread
@@ -281,11 +286,12 @@ private:
 
     float update_pwm_last_dc;
     void update_pwm_now(float dc);
+    void update_pwm_now_if_changed(float dc);
     void update_pwm_max_every_5seconds(float dc);
     void pwm_off();
     void pwm_F();
 
-    bool paused_by_user;
+    types::iso15118_charger::DC_EVSEMaximumLimits currentEvseMaxLimits;
 };
 
 #define CHARGER_ABSOLUTE_MAX_CURRENT double(80.0F)

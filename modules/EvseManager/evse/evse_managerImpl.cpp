@@ -35,6 +35,10 @@ void evse_managerImpl::init() {
         fmt::format("everest_external/nodered/{}/cmd/set_max_current", mod->config.connector_id),
         [&charger = mod->charger, this](std::string data) { mod->updateLocalMaxCurrentLimit(std::stof(data)); });
 
+    mod->mqtt.subscribe(
+        fmt::format("everest_external/nodered/{}/cmd/set_max_watt", mod->config.connector_id),
+        [&charger = mod->charger, this](std::string data) { mod->updateLocalMaxWattLimit(std::stof(data)); });
+
     mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/enable", mod->config.connector_id),
                         [&charger = mod->charger](const std::string& data) { charger->enable(); });
 
@@ -308,13 +312,9 @@ std::string evse_managerImpl::generate_session_uuid() {
     return boost::uuids::to_string(boost::uuids::random_generator()());
 }
 
-types::evse_manager::SetLocalMaxCurrentResult evse_managerImpl::handle_set_local_max_current(double& max_current) {
-    if (mod->updateLocalMaxCurrentLimit(static_cast<float>(max_current))) {
-        return types::evse_manager::SetLocalMaxCurrentResult::Success;
-    } else {
-        return types::evse_manager::SetLocalMaxCurrentResult::Error_OutOfRange;
-    }
-};
+void evse_managerImpl::handle_set_external_limits(types::energy::ExternalLimits& value) {
+    mod->updateLocalEnergyLimit(value);
+}
 
 types::evse_manager::SwitchThreePhasesWhileChargingResult
 evse_managerImpl::handle_switch_three_phases_while_charging(bool& three_phases) {

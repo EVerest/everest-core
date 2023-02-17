@@ -51,17 +51,6 @@ types:
     enum:
       - EVConnected
       - Authorized
-  SetLocalMaxCurrentResult:
-    description: >-
-      Result for set_local_max_current command
-        Success: LocalMaxCurrent was set successfully
-        Error_OutOfRange: The LocalMaxCurrent that was set is not in range of the EVSE capabilities
-        Error_Hardware: There was a hardware error on setting the LocalMaxCurrent
-    type: string
-    enum:
-      - Success
-      - Error_OutOfRange
-      - Error_Hardware
   SwitchThreePhasesWhileChargingResult:
     description: >-
       Returns success or error code
@@ -110,6 +99,7 @@ types:
       - ChargingStarted
       - ChargingPausedEV
       - ChargingPausedEVSE
+      - WaitingForEnergy
       - ChargingResumed
       - StoppingCharging
       - ChargingFinished

@@ -1,5 +1,34 @@
 description: >-
   This module is the global Energy Manager for all EVSE/Charging stations in this building
+config:
+  nominal_ac_voltage:
+    description: Nominal AC voltage to use to convert Ampere to Watt on AC
+    type: number
+    default: 230.0
+  update_interval:
+    description: Update interval for energy distribution [ms]
+    type: integer
+    default: 1
+  schedule_interval_duration:
+    description: Duration of the schedule interval for forecast [min]
+    type: integer
+    default: 15
+  schedule_total_duration:
+    description: Total duration of schedule forcast [h]
+    type: integer
+    default: 24
+  slice_ampere:
+    description: Ampere slice for trading. Lower values will give more even distribution but increase processing time [A].
+    type: number
+    default: 0.5
+  slice_watt:
+    description: Watt slice for trading. Lower values will give more even distribution but increase processing time [A].
+    type: number
+    default: 500
+  debug:
+    description: Show debug output on command line.
+    type: boolean
+    default: false
 provides:
   main:
     description: Main interface of the energy manager

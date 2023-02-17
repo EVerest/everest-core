@@ -5,27 +5,49 @@ types:
     type: object
     additionalProperties: false
     required:
-      - max_current_A
-      - min_current_A
-      - max_phase_count
-      - min_phase_count
+      - max_current_A_import
+      - min_current_A_import
+      - max_phase_count_import
+      - min_phase_count_import
+      - max_current_A_export
+      - min_current_A_export
+      - max_phase_count_export
+      - min_phase_count_export
       - supports_changing_phases_during_charging
     properties:
-      max_current_A:
-        description: Maximum current (ampere) the hardware can handle
+      max_current_A_import:
+        description: Maximum current (ampere) the hardware can handle (import from grid)
         type: number
-      min_current_A:
+      min_current_A_import:
         description: >-
           Minimum current (ampere) the hardware can use to charge. Values
-          below may be set but may result in pause instead.
+          below may be set but may result in pause instead.  (import from grid)
         type: number
-      max_phase_count:
-        description: Max nr of phases the hardware can use
+      max_phase_count_import:
+        description: Max nr of phases the hardware can use  (import from grid)
         type: integer
         minimum: 1
         maximum: 3
-      min_phase_count:
-        description: Minimum nr of phases the hardware can use
+      min_phase_count_import:
+        description: Minimum nr of phases the hardware can use  (import from grid)
+        type: integer
+        minimum: 1
+        maximum: 3
+      max_current_A_export:
+        description: Maximum current (ampere) the hardware can handle (export to grid)
+        type: number
+      min_current_A_export:
+        description: >-
+          Minimum current (ampere) the hardware can use to charge. Values
+          below may be set but may result in pause instead. (export to grid)
+        type: number
+      max_phase_count_export:
+        description: Max nr of phases the hardware can use (export to grid)
+        type: integer
+        minimum: 1
+        maximum: 3
+      min_phase_count_export:
+        description: Minimum nr of phases the hardware can use (export to grid)
         type: integer
         minimum: 1
         maximum: 3

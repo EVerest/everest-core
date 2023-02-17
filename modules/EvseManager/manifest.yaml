@@ -58,8 +58,12 @@ config:
     description: Enable or disable RCD
     type: boolean
     default: true
-  max_current:
-    description: User configurable current limit for this EVSE
+  max_current_import_A:
+    description: User configurable current limit for this EVSE in Ampere
+    type: number
+    default: 32
+  max_current_export_A:
+    description: User configurable current limit for this EVSE in Ampere
     type: number
     default: 32
   charge_mode:
@@ -93,7 +97,7 @@ config:
       Special mode that switches between AC and DC charging to get SoC percentage with AC charging
     type: boolean
     default: false
-  dc_isolation_voltage:
+  dc_isolation_voltage_V:
     description: DC voltage used to test isolation in CableCheck.
       Set to 500V.
     type: integer
@@ -137,6 +141,11 @@ config:
       Disable IMD at the end of CableCheck and re-enable when current is flowing in CurrentDemand.
       Some DCDC power supplies do not start current flow when insulation measurement is active.
       Set to true to enable dirty workaround for some IMD hardware.
+    type: boolean
+    default: false
+  hack_allow_bpt_with_iso2:
+    description: Hack. Allow bidirectional power transfer with DIN spec and ISO-2. Currents communicated on HLC will
+      always be positive but power supply may actually discharge the car. 
     type: boolean
     default: false
 provides:

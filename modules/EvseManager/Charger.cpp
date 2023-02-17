@@ -29,8 +29,6 @@ Charger::Charger(const std::unique_ptr<board_support_ACIntf>& r_bsp, const std::
     currentState = EvseState::Disabled;
     lastState = EvseState::Disabled;
 
-    paused_by_user = false;
-
     currentDrawnByVehicle[0] = 0.;
     currentDrawnByVehicle[1] = 0.;
     currentDrawnByVehicle[2] = 0.;
@@ -170,6 +168,13 @@ void Charger::runStateMachine() {
             if (hlc_use_5percent_current_session) {
                 update_pwm_now(PWM_5_PERCENT);
             }
+        }
+
+        // Wait for Energy Manager to supply some power, otherwise wait here.
+        // If we have zero power, some cars will not like the ChargingParameter message.
+        if (charge_mode == ChargeMode::DC &&
+            !(currentEvseMaxLimits.EVSEMaximumCurrentLimit > 0 && currentEvseMaxLimits.EVSEMaximumPowerLimit > 0)) {
+            break;
         }
 
         // SLAC is running in the background trying to setup a PLC connection.
@@ -339,11 +344,16 @@ void Charger::runStateMachine() {
         if (new_in_state) {
             signalEvent(types::evse_manager::SessionEventEnum::PrepareCharging);
             r_bsp->call_allow_power_on(true);
-            // make sure we are enabling PWM
-            if (hlc_use_5percent_current_session)
+            if (hlc_use_5percent_current_session) {
                 update_pwm_now(PWM_5_PERCENT);
-            else
-                update_pwm_now(ampereToDutyCycle(getMaxCurrent()));
+            } else {
+                update_pwm_now(ampereToDutyCycle(0));
+            }
+        }
+
+        // make sure we are enabling PWM
+        if (!hlc_use_5percent_current_session) {
+            update_pwm_now_if_changed(ampereToDutyCycle(getMaxCurrent()));
         }
 
         // if (charge_mode == ChargeMode::DC) {
@@ -422,6 +432,14 @@ void Charger::runStateMachine() {
         if (new_in_state) {
             signalEvent(types::evse_manager::SessionEventEnum::ChargingPausedEVSE);
             pwm_off();
+        }
+        break;
+
+    case EvseState::WaitingForEnergy:
+        if (new_in_state) {
+            signalEvent(types::evse_manager::SessionEventEnum::WaitingForEnergy);
+            if (!hlc_use_5percent_current_session)
+                pwm_off();
         }
         break;
 
@@ -586,7 +604,6 @@ void Charger::processCPEventsState(ControlPilotEvent cp_event) {
             signalEvent(types::evse_manager::SessionEventEnum::ChargingStarted);
             if (cp_event == ControlPilotEvent::CarRequestedPower) {
                 if (powerAvailable()) {
-
                     currentState = EvseState::Charging;
                 } else {
                     currentState = EvseState::Charging;
@@ -683,6 +700,12 @@ void Charger::update_pwm_now(float dc) {
     lastPwmUpdate = date::utc_clock::now();
 }
 
+void Charger::update_pwm_now_if_changed(float dc) {
+    if (update_pwm_last_dc != dc) {
+        update_pwm_now(dc);
+    }
+}
+
 void Charger::pwm_off() {
     session_log.evse(false, "Set PWM Off");
     r_bsp->call_pwm_off();
@@ -770,7 +793,6 @@ bool Charger::setMaxCurrent(float c) {
 bool Charger::pauseCharging() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
     if (currentState == EvseState::Charging) {
-        paused_by_user = true;
         currentState = EvseState::ChargingPausedEVSE;
         return true;
     }
@@ -779,8 +801,8 @@ bool Charger::pauseCharging() {
 
 bool Charger::resumeCharging() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
-    if (transactionActive() && currentState == EvseState::ChargingPausedEVSE && powerAvailable()) {
-        currentState = EvseState::Charging;
+    if (transactionActive() && currentState == EvseState::ChargingPausedEVSE) {
+        currentState = EvseState::WaitingForEnergy;
         return true;
     }
     return false;
@@ -790,8 +812,7 @@ bool Charger::resumeCharging() {
 bool Charger::pauseChargingWaitForPower() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
     if (currentState == EvseState::Charging) {
-        paused_by_user = false;
-        currentState = EvseState::ChargingPausedEVSE;
+        currentState = EvseState::WaitingForEnergy;
         return true;
     }
     return false;
@@ -800,7 +821,8 @@ bool Charger::pauseChargingWaitForPower() {
 // resume charging since power became available. Does not resume if user paused charging.
 bool Charger::resumeChargingPowerAvailable() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
-    if (transactionActive() && currentState == EvseState::ChargingPausedEVSE && powerAvailable() && !paused_by_user) {
+
+    if (transactionActive() && currentState == EvseState::WaitingForEnergy && powerAvailable()) {
         currentState = EvseState::Charging;
         return true;
     }
@@ -939,7 +961,7 @@ bool Charger::Authorized_PnC_ready_for_HLC() {
     {
         std::lock_guard<std::recursive_mutex> lock(stateMutex);
         ready = (currentState == EvseState::ChargingPausedEV) || (currentState == EvseState::ChargingPausedEVSE) ||
-                (currentState == EvseState::Charging);
+                (currentState == EvseState::Charging) || (currentState == EvseState::WaitingForEnergy);
     }
     return (auth && ready);
 }
@@ -953,7 +975,7 @@ bool Charger::Authorized_EIM_ready_for_HLC() {
     {
         std::lock_guard<std::recursive_mutex> lock(stateMutex);
         ready = (currentState == EvseState::ChargingPausedEV) || (currentState == EvseState::ChargingPausedEVSE) ||
-                (currentState == EvseState::Charging);
+                (currentState == EvseState::Charging) || (currentState == EvseState::WaitingForEnergy);
     }
     return (auth && ready);
 }
@@ -1064,7 +1086,7 @@ std::string Charger::evseStateToString(EvseState s) {
         return ("Idle");
         break;
     case EvseState::WaitingForAuthentication:
-        return ("WaitAuth");
+        return ("Wait for Auth");
         break;
     case EvseState::Charging:
         return ("Charging");
@@ -1074,6 +1096,9 @@ std::string Charger::evseStateToString(EvseState s) {
         break;
     case EvseState::ChargingPausedEVSE:
         return ("EVSE Paused");
+        break;
+    case EvseState::WaitingForEnergy:
+        return ("Wait for energy");
         break;
     case EvseState::Finished:
         return ("Finished");
@@ -1147,7 +1172,9 @@ bool Charger::powerAvailable() {
     if (maxCurrentValidUntil < date::utc_clock::now()) {
         maxCurrent = 0.;
         signalMaxCurrent(maxCurrent);
+        // EVLOG_warning << "Limit time is not valid anymore.";
     }
+    // EVLOG_info << getMaxCurrent();
     return (getMaxCurrent() > 5.9);
 }
 
@@ -1180,6 +1207,12 @@ void Charger::notifyCurrentDemandStarted() {
         signalEvent(types::evse_manager::SessionEventEnum::ChargingStarted);
         currentState = EvseState::Charging;
     }
+}
+
+void Charger::inform_new_evse_max_hlc_limits(
+    const types::iso15118_charger::DC_EVSEMaximumLimits& _currentEvseMaxLimits) {
+    std::lock_guard<std::recursive_mutex> lock(stateMutex);
+    currentEvseMaxLimits = _currentEvseMaxLimits;
 }
 
 } // namespace module
