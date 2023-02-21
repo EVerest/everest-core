@@ -22,6 +22,7 @@ RUN pip install \
     sphinxcontrib-youtube \
     sphinxcontrib-contentui \
     sphinxcontrib-svg2pdfconverter \
+    sphinx-notfound-page \
     setproctitle \
     jsonschema \
     commentjson \
