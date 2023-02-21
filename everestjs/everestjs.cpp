@@ -515,6 +515,10 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
         module_info_prop.DefineProperty(Napi::PropertyDescriptor::Value(
             "printable_identifier", Napi::String::New(env, module_identifier), napi_enumerable));
 
+        // set everest prefix
+        module_info_prop.DefineProperty(Napi::PropertyDescriptor::Value(
+            "everest_prefix", Napi::String::New(env, prefix), napi_enumerable));
+
         module_this.DefineProperty(Napi::PropertyDescriptor::Value("info", module_info_prop, napi_enumerable));
 
         ctx->everest.register_on_ready_handler(framework_ready_handler);
