@@ -75,4 +75,9 @@ bool Websocket::send(const std::string& message) {
     return this->websocket->send(message);
 }
 
+void Websocket::set_websocket_ping_interval(int32_t interval_s) {
+    this->logging->sys("WebsocketPingInterval changed");
+    this->websocket->set_websocket_ping_interval(interval_s);
+}
+
 } // namespace ocpp

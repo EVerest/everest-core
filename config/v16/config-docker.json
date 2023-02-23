@@ -29,7 +29,8 @@
         "SupportedFeatureProfiles": "Core,FirmwareManagement,RemoteTrigger,Reservation,LocalAuthListManagement,SmartCharging",
         "TransactionMessageAttempts": 1,
         "TransactionMessageRetryInterval": 10,
-        "UnlockConnectorOnEVSideDisconnect": true
+        "UnlockConnectorOnEVSideDisconnect": true,
+        "WebsocketPingInterval": 0
     },
     "FirmwareManagement": {
         "SupportedFileTransferProtocols": "FTP"

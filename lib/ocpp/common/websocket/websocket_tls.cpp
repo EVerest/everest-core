@@ -236,6 +236,7 @@ void WebsocketTLS::on_open_tls(tls_client* c, websocketpp::connection_hdl hdl, i
             },
             std::chrono::hours(24));
     }
+    this->set_websocket_ping_interval(this->connection_options.ping_interval_s);
     this->connected_callback(this->connection_options.security_profile);
 }
 void WebsocketTLS::on_message_tls(websocketpp::connection_hdl hdl, tls_client::message_ptr msg) {
@@ -306,6 +307,12 @@ void WebsocketTLS::close(websocketpp::close::status::value code, const std::stri
         EVLOG_error << "Error initiating close of TLS websocket: " << ec.message();
     }
     EVLOG_info << "Closed TLS websocket successfully.";
+}
+
+void WebsocketTLS::ping() {
+    auto con = this->wss_client.get_con_from_hdl(this->handle);
+    websocketpp::lib::error_code error_code;
+    con->ping(this->connection_options.ping_payload, error_code);
 }
 
 } // namespace ocpp

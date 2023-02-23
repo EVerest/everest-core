@@ -83,7 +83,9 @@ void ChargePoint::init_websocket(int32_t security_profile) {
                                                   this->configuration->getAuthorizationKey(),
                                                   this->configuration->getWebsocketReconnectInterval(),
                                                   this->configuration->getSupportedCiphers12(),
-                                                  this->configuration->getSupportedCiphers13()};
+                                                  this->configuration->getSupportedCiphers13(),
+                                                  this->configuration->getWebsocketPingInterval().value_or(0),
+                                                  this->configuration->getWebsocketPingPayload()};
 
     this->websocket = std::make_unique<Websocket>(connection_options, this->pki_handler, this->logging);
     this->websocket->register_connected_callback([this](const int security_profile) {
@@ -1038,6 +1040,12 @@ void ChargePoint::handleChangeConfigurationRequest(ocpp::Call<ChangeConfiguratio
                 } else if (call.msg.key == "TransactionMessageRetryInterval") {
                     this->message_queue->update_transaction_message_retry_interval(
                         this->configuration->getTransactionMessageRetryInterval());
+                } else if (call.msg.key == "WebsocketPingInterval") {
+                    auto websocket_ping_interval_option = this->configuration->getWebsocketPingInterval();
+                    if (websocket_ping_interval_option.has_value()) {
+                        auto websocket_ping_interval = websocket_ping_interval_option.get();
+                        this->websocket->set_websocket_ping_interval(websocket_ping_interval);
+                    }
                 }
             }
         }

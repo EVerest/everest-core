@@ -14,6 +14,7 @@ WebsocketBase::WebsocketBase(const WebsocketConnectionOptions& connection_option
     disconnected_callback(nullptr),
     message_callback(nullptr),
     reconnect_timer(nullptr) {
+    this->ping_timer = std::make_unique<Everest::SteadyTimer>();
 }
 
 WebsocketBase::~WebsocketBase() {
@@ -62,6 +63,9 @@ void WebsocketBase::disconnect(websocketpp::close::status::value code) {
     if (this->reconnect_timer) {
         this->reconnect_timer.get()->cancel();
     }
+    if (this->ping_timer) {
+        this->ping_timer->stop();
+    }
 
     EVLOG_info << "Disconnecting websocket...";
     this->close(code, "");
@@ -83,6 +87,15 @@ boost::optional<std::string> WebsocketBase::getAuthorizationHeader() {
     }
 
     return auth_header;
+}
+
+void WebsocketBase::set_websocket_ping_interval(int32_t interval_s) {
+    if (this->ping_timer) {
+        this->ping_timer->stop();
+    }
+    if (interval_s > 0) {
+        this->ping_timer->interval([this]() { this->ping(); }, std::chrono::seconds(interval_s));
+    }
 }
 
 } // namespace ocpp

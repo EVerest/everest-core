@@ -61,6 +61,9 @@ public:
     /// \brief send a \p message over the websocket
     /// \returns true if the message was sent successfully
     bool send(const std::string& message);
+
+    /// \brief set the websocket ping interval \p interval_s in seconds
+    void set_websocket_ping_interval(int32_t interval_s);
 };
 
 } // namespace ocpp

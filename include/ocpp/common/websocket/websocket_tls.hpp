@@ -74,6 +74,9 @@ public:
     /// \brief send a \p message over the websocket
     /// \returns true if the message was sent successfully
     bool send(const std::string& message) override;
+
+    /// \brief send a websocket ping
+    void ping() override;
 };
 
 } // namespace ocpp

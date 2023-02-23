@@ -150,6 +150,12 @@
             "type": "integer",
             "readOnly": true,
             "default": 31536000
+        },
+        "WebsocketPingPayload": {
+            "$comment": "The payload sent in a websocket ping.",
+            "type": "string",
+            "readOnly": true,
+            "default": "hello there"
         }
     },
     "additionalProperties": false

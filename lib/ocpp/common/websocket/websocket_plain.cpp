@@ -166,6 +166,7 @@ void WebsocketPlain::on_open_plain(client* c, websocketpp::connection_hdl hdl, i
     EVLOG_info << "Connected to plain websocket successfully. Executing connected callback";
     this->m_is_connected = true;
     this->connection_options.security_profile = security_profile;
+    this->set_websocket_ping_interval(this->connection_options.ping_interval_s);
     this->connected_callback(security_profile);
 }
 
@@ -225,6 +226,12 @@ void WebsocketPlain::close(websocketpp::close::status::value code, const std::st
     }
 
     EVLOG_info << "Closed plain websocket successfully.";
+}
+
+void WebsocketPlain::ping() {
+    auto con = this->ws_client.get_con_from_hdl(this->handle);
+    websocketpp::lib::error_code error_code;
+    con->ping(this->connection_options.ping_payload, error_code);
 }
 
 } // namespace ocpp

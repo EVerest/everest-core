@@ -63,6 +63,8 @@ public:
     std::set<MessageType> getSupportedMessageTypesSending();
     std::set<MessageType> getSupportedMessageTypesReceiving();
 
+    std::string getWebsocketPingPayload();
+
     // Core Profile - optional
     boost::optional<bool> getAllowOfflineTxForUnknownId();
     void setAllowOfflineTxForUnknownId(bool enabled);

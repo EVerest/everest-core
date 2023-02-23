@@ -8,6 +8,8 @@
 #include <mutex>
 #include <thread>
 
+#include <everest/timer.hpp>
+
 #include <boost/optional.hpp>
 
 #include <ocpp/common/types.hpp>
@@ -26,6 +28,8 @@ struct WebsocketConnectionOptions {
     int reconnect_interval_s;
     std::string supported_ciphers_12;
     std::string supported_ciphers_13;
+    int ping_interval_s;
+    std::string ping_payload;
 };
 
 ///
@@ -47,6 +51,7 @@ protected:
     long reconnect_interval_ms;
     websocketpp::transport::timer_handler reconnect_callback;
     websocketpp::lib::shared_ptr<boost::asio::steady_timer> reconnect_timer;
+    std::unique_ptr<Everest::SteadyTimer> ping_timer;
 
     /// \brief Indicates if the required callbacks are registered and the websocket is not shutting down
     /// \returns true if the websocket is properly initialized
@@ -54,6 +59,9 @@ protected:
 
     /// \brief getter for authorization header for connection with basic authentication
     boost::optional<std::string> getAuthorizationHeader();
+
+    /// \brief send a websocket ping
+    virtual void ping() = 0;
 
 public:
     /// \brief Creates a new WebsocketBase object with the providede \p connection_options
@@ -91,6 +99,9 @@ public:
     /// \brief send a \p message over the websocket
     /// \returns true if the message was sent successfully
     virtual bool send(const std::string& message) = 0;
+
+    /// \brief starts a timer that sends a websocket ping at the given \p interval_s
+    void set_websocket_ping_interval(int32_t interval_s);
 };
 
 } // namespace ocpp

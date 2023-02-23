@@ -367,6 +367,10 @@ std::set<MessageType> ChargePointConfiguration::getSupportedMessageTypesReceivin
     return this->supported_message_types_receiving;
 }
 
+std::string ChargePointConfiguration::getWebsocketPingPayload() {
+    return this->config["Internal"]["WebsocketPingPayload"];
+}
+
 // Core Profile - optional
 boost::optional<bool> ChargePointConfiguration::getAllowOfflineTxForUnknownId() {
     boost::optional<bool> unknown_offline_auth = boost::none;
