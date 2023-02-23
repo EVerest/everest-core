@@ -220,20 +220,21 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
     std::future<json> res_future = res_promise.get_future();
 
     Handler res_handler = [this, &res_promise, call_id, connection, cmd_name, return_type](json data) {
-        if (data["id"] != call_id) {
-            EVLOG_debug << fmt::format("RES: data_id != call_id ({} != {})", data["id"], call_id);
+        auto& data_id = data.at("id");
+        if (data_id != call_id) {
+            EVLOG_debug << fmt::format("RES: data_id != call_id ({} != {})", data_id, call_id);
             return;
         }
 
         EVLOG_debug << fmt::format(
-            "Incoming res {} for {}->{}()", data["id"],
+            "Incoming res {} for {}->{}()", data_id,
             this->config.printable_identifier(connection["module_id"], connection["implementation_id"]), cmd_name);
 
         // make sure to only return the intended parts of the incoming result to not open up the api to internals
         res_promise.set_value(json::object({{"retval", data["retval"]},
                                             {"return_type", return_type},
                                             {"origin", data["origin"]},
-                                            {"id", data["id"]}}));
+                                            {"id", data_id}}));
     };
 
     const auto cmd_topic =
@@ -338,7 +339,7 @@ void Everest::subscribe_var(const Requirement& req, const std::string& var_name,
     }
 
     auto requirement_module_id = connection["module_id"].get<std::string>();
-    auto module_name = this->config.get_main_config()[requirement_module_id]["module"].get<std::string>();
+    auto module_name = this->config.get_module_name(requirement_module_id);
     auto requirement_impl_id = connection["implementation_id"].get<std::string>();
     auto requirement_impl_manifest = this->config.get_interfaces()[module_name][requirement_impl_id];
 
@@ -355,17 +356,19 @@ void Everest::subscribe_var(const Requirement& req, const std::string& var_name,
         EVLOG_debug << fmt::format(
             "Incoming {}->{}", this->config.printable_identifier(requirement_module_id, requirement_impl_id), var_name);
 
-        // check data and ignore it if not matching (publishing it should have been prohibited already)
-        try {
-            json_validator validator(
-                [this](const json_uri& uri, json& schema) { this->config.ref_loader(uri, schema); },
-                Config::format_checker);
-            validator.set_root_schema(requirement_manifest_vardef);
-            validator.validate(data);
-        } catch (const std::exception& e) {
-            EVLOG_warning << fmt::format("Ignoring incoming var '{}' because not matching manifest schema: {}",
-                                         var_name, e.what());
-            return;
+        if (this->validate_data_with_schema) {
+            // check data and ignore it if not matching (publishing it should have been prohibited already)
+            try {
+                json_validator validator(
+                    [this](const json_uri& uri, json& schema) { this->config.ref_loader(uri, schema); },
+                    Config::format_checker);
+                validator.set_root_schema(requirement_manifest_vardef);
+                validator.validate(data);
+            } catch (const std::exception& e) {
+                EVLOG_warning << fmt::format("Ignoring incoming var '{}' because not matching manifest schema: {}",
+                                            var_name, e.what());
+                return;
+            }
         }
 
         callback(data);
@@ -389,7 +392,7 @@ void Everest::subscribe_var(const Requirement& req, const std::string& var_name,
     }
 
     auto requirement_module_id = connection["module_id"].get<std::string>();
-    auto module_name = this->config.get_main_config()[requirement_module_id]["module"].get<std::string>();
+    auto module_name = this->config.get_module_name(requirement_module_id);
     auto requirement_impl_id = connection["implementation_id"].get<std::string>();
     auto requirement_impl_manifest = this->config.get_interfaces()[module_name][requirement_impl_id];
 
@@ -687,12 +690,10 @@ json Everest::get_cmd_definition(const std::string& module_id, const std::string
                                  bool is_call) {
     BOOST_LOG_FUNCTION();
 
-    std::string module_name = this->config.get_main_config()[module_id]["module"].get<std::string>();
-    auto module_manifest = this->config.get_manifests()[module_name];
-    auto module = this->config.get_interfaces()[module_name];
-    auto impl_intf = module[impl_id];
+    std::string module_name = this->config.get_module_name(module_id);
+    auto cmds = this->config.get_module_cmds(module_name, impl_id);
 
-    if (!module_manifest["provides"].contains(impl_id)) {
+    if (!this->config.module_provides(module_name, impl_id)) {
         if (!is_call) {
             EVLOG_AND_THROW(EverestApiError(fmt::format(
                 "Module {} tries to provide implementation '{}' not declared in manifest!", module_name, impl_id)));
@@ -703,7 +704,7 @@ json Everest::get_cmd_definition(const std::string& module_id, const std::string
         }
     }
 
-    if (!impl_intf["cmds"].contains(cmd_name)) {
+    if (!cmds.contains(cmd_name)) {
         if (!is_call) {
             EVLOG_AND_THROW(
                 EverestApiError(fmt::format("{} tries to provide cmd '{}' not declared in manifest!",
@@ -715,7 +716,7 @@ json Everest::get_cmd_definition(const std::string& module_id, const std::string
         }
     }
 
-    return impl_intf["cmds"][cmd_name];
+    return cmds.at(cmd_name);
 }
 
 json Everest::get_cmd_definition(const std::string& module_id, const std::string& impl_id,
@@ -751,8 +752,10 @@ bool Everest::check_arg(ArgumentType arg_types, json manifest_arg) {
     // FIXME (aw): the error messages here need to be taken into the
     //             correct context!
 
-    if (manifest_arg["type"].is_string()) {
-        if (manifest_arg["type"] == "null") {
+    auto& manifest_arg_type = manifest_arg.at("type");
+
+    if (manifest_arg_type.is_string()) {
+        if (manifest_arg_type == "null") {
             // arg_types should be empty if the type is null (void)
             if (arg_types.size()) {
                 EVLOG_error << "expeceted 'null' type, but got another type";
@@ -762,16 +765,16 @@ bool Everest::check_arg(ArgumentType arg_types, json manifest_arg) {
         }
         // direct comparison
         // FIXME (aw): arg_types[0] access should be checked, otherwise core dumps
-        if (arg_types[0] != manifest_arg["type"]) {
-            EVLOG_error << fmt::format("types do not match: {} != {}", arg_types[0], manifest_arg["type"]);
+        if (arg_types[0] != manifest_arg_type) {
+            EVLOG_error << fmt::format("types do not match: {} != {}", arg_types[0], manifest_arg_type);
             return false;
         }
         return true;
     }
 
     for (size_t i = 0; i < arg_types.size(); i++) {
-        if (arg_types[i] != manifest_arg["type"][i]) {
-            EVLOG_error << fmt::format("types do not match: {} != {}", arg_types[i], manifest_arg["type"][i]);
+        if (arg_types[i] != manifest_arg_type.at(i)) {
+            EVLOG_error << fmt::format("types do not match: {} != {}", arg_types[i], manifest_arg_type.at(i));
             return false;
         }
     }

@@ -295,6 +295,7 @@ RuntimeSettings::RuntimeSettings(const std::string& prefix_, const std::string& 
     } else {
         telemetry_enabled = defaults::TELEMETRY_ENABLED;
     }
+    validate_schema = false;
 }
 
 ModuleCallbacks::ModuleCallbacks(const std::function<void(ModuleAdapter module_adapter)>& register_module_adapter,

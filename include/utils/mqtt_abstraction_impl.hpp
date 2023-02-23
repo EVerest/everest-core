@@ -122,7 +122,7 @@ public:
     /// wildcards
     ///
     /// \returns true if the topic matches, false otherwise
-    static bool check_topic_matches(std::string full_topic, std::string wildcard_topic);
+    static bool check_topic_matches(const std::string& full_topic, const std::string& wildcard_topic);
 
     ///
     /// \brief callback that is called from the mqtt implementation whenever a message is received

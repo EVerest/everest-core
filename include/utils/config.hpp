@@ -11,6 +11,7 @@
 
 #include <nlohmann/json-schema.hpp>
 
+#include <utils/config_cache.hpp>
 #include <utils/types.hpp>
 
 namespace Everest {
@@ -85,7 +86,14 @@ private:
     json extract_implementation_info(const std::string& module_id, const std::string& impl_id);
     void resolve_all_requirements();
 
+    // experimental caches
+    std::unordered_map<std::string, std::string> module_names;
+    std::unordered_map<std::string, ConfigCache> module_config_cache;
+
 public:
+    std::string get_module_name(const std::string& module_id);
+    bool module_provides(const std::string& module_name, const std::string& impl_id);
+    json get_module_cmds(const std::string& module_name, const std::string& impl_id);
     ///
     /// \brief creates a new Config object, looking for the config.json and schemes folder relative to the provided \p
     /// main_dir
