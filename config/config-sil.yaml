@@ -1,9 +1,11 @@
+settings:
+  telemetry_enabled: true
 active_modules:
   api:
     connections:
       evse_manager:
         - implementation_id: evse
-          module_id: evse_manager
+          module_id: connector_1
     module: API
   auth:
     config_module:
@@ -13,7 +15,7 @@ active_modules:
     connections:
       evse_manager:
         - implementation_id: evse
-          module_id: evse_manager
+          module_id: connector_1
       token_provider:
         - implementation_id: main
           module_id: token_provider
@@ -33,7 +35,7 @@ active_modules:
           module_id: iso15118_car
       simulation_control:
         - implementation_id: yeti_simulation_control
-          module_id: yeti_driver
+          module_id: connector_1_powerpath
       slac:
         - implementation_id: ev
           module_id: slac
@@ -44,7 +46,7 @@ active_modules:
         - implementation_id: energy_grid
           module_id: grid_connection_point
     module: EnergyManager
-  evse_manager:
+  connector_1:
     config_module:
       ac_enforce_hlc: false
       ac_hlc_enabled: true
@@ -61,23 +63,25 @@ active_modules:
       payment_enable_eim: true
       rcd_enabled: true
       session_logging: true
-      session_logging_path: /tmp
+      session_logging_path: /tmp/everest-logs
       session_logging_xml: false
       three_phases: true
     connections:
       bsp:
         - implementation_id: board_support
-          module_id: yeti_driver
+          module_id: connector_1_powerpath
       hlc:
         - implementation_id: charger
           module_id: iso15118_charger
       powermeter_grid_side:
         - implementation_id: powermeter
-          module_id: yeti_driver
+          module_id: connector_1_powerpath
       slac:
         - implementation_id: evse
           module_id: slac
     module: EvseManager
+    telemetry:
+      id: 1
   grid_connection_point:
     config_module:
       fuse_limit_A: 40
@@ -85,7 +89,7 @@ active_modules:
     connections:
       energy_consumer:
         - implementation_id: energy_grid
-          module_id: evse_manager
+          module_id: connector_1
     module: EnergyNode
   iso15118_car:
     config_implementation:
@@ -135,7 +139,7 @@ active_modules:
     connections:
       evse:
         - implementation_id: evse
-          module_id: evse_manager
+          module_id: connector_1
     module: JsDummyTokenProvider
   token_validator:
     config_implementation:
@@ -145,9 +149,11 @@ active_modules:
         validation_result: Accepted
     connections: {}
     module: JsDummyTokenValidator
-  yeti_driver:
+  connector_1_powerpath:
     connections: {}
     module: JsYetiSimulator
+    telemetry:
+      id: 1
 x-module-layout:
   api:
     position:
@@ -160,7 +166,7 @@ x-module-layout:
         - id: main
           interface: empty
           type: provide
-        - id: evse_manager
+        - id: connector_1
           interface: evse_manager
           type: requirement
       top: []
@@ -170,7 +176,7 @@ x-module-layout:
       y: -6
     terminals:
       bottom:
-        - id: evse_manager
+        - id: connector_1
           interface: evse_manager
           type: requirement
       left: []
@@ -224,7 +230,7 @@ x-module-layout:
           interface: energy
           type: requirement
       top: []
-  evse_manager:
+  connector_1:
     position:
       x: 17
       y: 13
@@ -377,7 +383,7 @@ x-module-layout:
           type: provide
       right: []
       top: []
-  yeti_driver:
+  connector_1_powerpath:
     position:
       x: 15
       y: 26

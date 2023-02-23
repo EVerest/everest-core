@@ -29,29 +29,36 @@ SessionLog::~SessionLog() {
 }
 
 void SessionLog::setPath(const std::string& path) {
-    logpath = path;
+    logpath_root = path;
 }
 
 void SessionLog::enable() {
     enabled = true;
 }
 
-void SessionLog::startSession(const std::string& session_id) {
+boost::optional<std::string> SessionLog::startSession(const std::string& session_id) {
     if (enabled) {
         if (session_active) {
             stopSession();
         }
 
-        // create log directory if it does not exist
+        // create general log directory if it does not exist
+        if (!std::filesystem::exists(logpath_root))
+            std::filesystem::create_directory(logpath_root);
+
+        std::string ts = Everest::Date::to_rfc3339(date::utc_clock::now());
+        logpath = fmt::format("{}/{}-{}", logpath_root, ts, session_id);
+
+        // create sessionlog directory if it does not exist
         if (!std::filesystem::exists(logpath))
             std::filesystem::create_directory(logpath);
 
         // open new file
-        std::string ts = Everest::Date::to_rfc3339(date::utc_clock::now());
-        const std::string fn = fmt::format("{}/everest-session-{}.log", logpath, session_id);
-        const std::string fnhtml = fmt::format("{}/everest-session-{}.html", logpath, session_id);
-        // const std::string fn = fmt::format("{}/everest-session.log", logpath);
-        // const std::string fnhtml = fmt::format("{}/everest-session.html", logpath);
+        fn = fmt::format("{}/incomplete-eventlog.csv", logpath);
+        fnhtml = fmt::format("{}/incomplete-eventlog.html", logpath);
+        fn_complete = fmt::format("{}/eventlog.csv", logpath);
+        fnhtml_complete = fmt::format("{}/eventlog.html", logpath);
+
         try {
             logfile_csv.open(fn);
             logfile_html.open(fnhtml);
@@ -86,7 +93,10 @@ void SessionLog::startSession(const std::string& session_id) {
                         "</style>";
         logfile_html << "</head><body><table class=\"log\">\n";
         sys("Session logging started.");
+        return boost::optional<std::string>(logpath);
     }
+
+    return boost::optional<std::string>();
 }
 
 void SessionLog::stopSession() {
@@ -101,6 +111,10 @@ void SessionLog::stopSession() {
         if (logfile_html.is_open()) {
             logfile_html.close();
         }
+
+        // rename files to indicate they are finished now
+        std::filesystem::rename(fn, fn_complete);
+        std::filesystem::rename(fnhtml, fnhtml_complete);
 
         session_active = false;
     }

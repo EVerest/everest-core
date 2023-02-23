@@ -23,7 +23,7 @@ active_modules:
       evse_id_din: 49A80737A45678
       session_logging: true
       session_logging_xml: false
-      session_logging_path: /tmp
+      session_logging_path: /tmp/everest-logs
       charge_mode: DC
     connections:
       bsp:

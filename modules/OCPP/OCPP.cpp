@@ -411,12 +411,13 @@ void OCPP::init() {
                 auto session_started = session_event.session_started.value();
                 this->charge_point->on_session_started(
                     connector, session_event.uuid,
-                    types::evse_manager::start_session_reason_to_string(session_started.reason));
+                    types::evse_manager::start_session_reason_to_string(session_started.reason),
+                    session_started.logging_path);
             } else if (event == "SessionFinished") {
                 EVLOG_debug << "Connector#" << connector << ": "
                             << "Received SessionFinished";
                 // ev side disconnect
-                this->charge_point->on_session_stopped(connector);
+                this->charge_point->on_session_stopped(connector, session_event.uuid);
             } else if (event == "Error") {
                 EVLOG_debug << "Connector#" << connector << ": "
                             << "Received Error";

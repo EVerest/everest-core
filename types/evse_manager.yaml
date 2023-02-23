@@ -138,6 +138,13 @@ types:
         description: Reason for session start
         type: string
         $ref: /evse_manager#/StartSessionReason
+      logging_path:
+        description: >-
+          File system path where additional log files are stored, such as
+          event logs, raw ethernet dumps, ocpp session logs etc.
+          Filenames should start with "incomplete-" when they are not finished yet,
+          this allows other process to wait for the completion after the SessionFinished event.
+        type: string
   TransactionStarted:
     description: Data for the TransactionStarted event
     type: object

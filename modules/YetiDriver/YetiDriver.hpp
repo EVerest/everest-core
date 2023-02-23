@@ -5,14 +5,13 @@
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 1
+// template version 2
 //
 
 #include "ld-ev.hpp"
 
 // headers for provided interface implementations
 #include <generated/interfaces/board_support_AC/Implementation.hpp>
-#include <generated/interfaces/debug_json/Implementation.hpp>
 #include <generated/interfaces/powermeter/Implementation.hpp>
 #include <generated/interfaces/yeti_extras/Implementation.hpp>
 #include <generated/interfaces/yeti_simulation_control/Implementation.hpp>
@@ -33,37 +32,30 @@ struct Conf {
 class YetiDriver : public Everest::ModuleBase {
 public:
     YetiDriver() = delete;
-    YetiDriver(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
+    YetiDriver(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, Everest::TelemetryProvider& telemetry,
                std::unique_ptr<powermeterImplBase> p_powermeter,
                std::unique_ptr<board_support_ACImplBase> p_board_support,
-               std::unique_ptr<yeti_extrasImplBase> p_yeti_extras, std::unique_ptr<debug_jsonImplBase> p_debug_yeti,
-               std::unique_ptr<debug_jsonImplBase> p_debug_powermeter,
-               std::unique_ptr<debug_jsonImplBase> p_debug_state, std::unique_ptr<debug_jsonImplBase> p_debug_keepalive,
+               std::unique_ptr<yeti_extrasImplBase> p_yeti_extras,
                std::unique_ptr<yeti_simulation_controlImplBase> p_yeti_simulation_control, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
+        telemetry(telemetry),
         p_powermeter(std::move(p_powermeter)),
         p_board_support(std::move(p_board_support)),
         p_yeti_extras(std::move(p_yeti_extras)),
-        p_debug_yeti(std::move(p_debug_yeti)),
-        p_debug_powermeter(std::move(p_debug_powermeter)),
-        p_debug_state(std::move(p_debug_state)),
-        p_debug_keepalive(std::move(p_debug_keepalive)),
         p_yeti_simulation_control(std::move(p_yeti_simulation_control)),
         config(config){};
 
     const Conf& config;
     Everest::MqttProvider& mqtt;
+    Everest::TelemetryProvider& telemetry;
     const std::unique_ptr<powermeterImplBase> p_powermeter;
     const std::unique_ptr<board_support_ACImplBase> p_board_support;
     const std::unique_ptr<yeti_extrasImplBase> p_yeti_extras;
-    const std::unique_ptr<debug_jsonImplBase> p_debug_yeti;
-    const std::unique_ptr<debug_jsonImplBase> p_debug_powermeter;
-    const std::unique_ptr<debug_jsonImplBase> p_debug_state;
-    const std::unique_ptr<debug_jsonImplBase> p_debug_keepalive;
     const std::unique_ptr<yeti_simulation_controlImplBase> p_yeti_simulation_control;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
+    void publish_external_telemetry_livedata(const std::string& topic, const Everest::TelemetryMap& data);
     evSerial serial;
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
@@ -79,6 +71,12 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
+    Everest::TelemetryMap telemetry_power_path_controller_version;
+    Everest::TelemetryMap telemetry_power_path_controller;
+    Everest::TelemetryMap telemetry_power_switch;
+    Everest::TelemetryMap telemetry_rcd;
+    std::mutex telemetry_mutex;
+    Everest::Thread telemetryThreadHandle;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

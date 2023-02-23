@@ -23,23 +23,21 @@
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
-#include <filesystem>
 #include <chrono>
 #include <date/date.h>
 #include <date/tz.h>
 #include <everest/timer.hpp>
+#include <filesystem>
 #include <mutex>
-#include <ocpp/v16/charge_point.hpp>
 #include <ocpp/common/schemas.hpp>
 #include <ocpp/common/types.hpp>
+#include <ocpp/v16/charge_point.hpp>
 #include <ocpp/v16/types.hpp>
-
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
 
 struct Conf {
-    std::string OcppMainPath;
     std::string ChargePointConfigPath;
     std::string UserConfigPath;
     std::string DatabasePath;

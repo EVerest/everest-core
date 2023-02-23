@@ -5,6 +5,7 @@
 
 #include <fstream>
 #include <string>
+#include <boost/optional.hpp>
 
 namespace module {
 /*
@@ -18,26 +19,32 @@ public:
 
     void setPath(const std::string& path);
     void enable();
-    void startSession(const std::string& session_id);
+    boost::optional<std::string> startSession(const std::string& session_id);
     void stopSession();
 
     void car(bool iso15118, const std::string& msg);
-    void car(bool iso15118, const std::string& msg, const std::string& xml, const std::string& xml_hex, const std::string& xml_base64, const std::string& json_str);
+    void car(bool iso15118, const std::string& msg, const std::string& xml, const std::string& xml_hex,
+             const std::string& xml_base64, const std::string& json_str);
 
     void evse(bool iso15118, const std::string& msg);
-    void evse(bool iso15118, const std::string& msg, const std::string& xml, const std::string& xml_hex, const std::string& xml_base64, const std::string& json_str);
+    void evse(bool iso15118, const std::string& msg, const std::string& xml, const std::string& xml_hex,
+              const std::string& xml_base64, const std::string& json_str);
 
     void xmlOutput(bool e);
 
     void sys(const std::string& msg);
 
 private:
-    void output(unsigned int evse, bool iso15118, const std::string& msg, const std::string& xml, const std::string& xml_hex, const std::string& xml_base64, const std::string& json_str);
+    void output(unsigned int evse, bool iso15118, const std::string& msg, const std::string& xml,
+                const std::string& xml_hex, const std::string& xml_base64, const std::string& json_str);
     std::string html_encode(const std::string& msg);
     bool xmloutput;
     bool session_active;
     bool enabled;
+    std::string logpath_root;
     std::string logpath;
+    std::string fn, fnhtml, fn_complete, fnhtml_complete;
+
     std::ofstream logfile_csv;
     std::ofstream logfile_html;
 };
