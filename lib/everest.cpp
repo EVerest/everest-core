@@ -15,13 +15,15 @@
 #include <date/tz.h>
 #include <framework/everest.hpp>
 #include <utils/conversions.hpp>
+#include <utils/date.hpp>
 
 namespace Everest {
 const auto remote_cmd_res_timeout_seconds = 300;
+const std::array<std::string, 3> TELEMETRY_RESERVED_KEYS = {{"connector_id"}};
 
 Everest::Everest(std::string module_id, Config config, bool validate_data_with_schema,
                  const std::string& mqtt_server_address, int mqtt_server_port, const std::string& mqtt_everest_prefix,
-                 const std::string& mqtt_external_prefix) :
+                 const std::string& mqtt_external_prefix, const std::string& telemetry_prefix, bool telemetry_enabled) :
     mqtt_abstraction(MQTTAbstraction::get_instance(mqtt_server_address, std::to_string(mqtt_server_port),
                                                    mqtt_everest_prefix, mqtt_external_prefix)),
     config(std::move(config)),
@@ -29,7 +31,9 @@ Everest::Everest(std::string module_id, Config config, bool validate_data_with_s
     remote_cmd_res_timeout(remote_cmd_res_timeout_seconds),
     validate_data_with_schema(validate_data_with_schema),
     mqtt_everest_prefix(mqtt_everest_prefix),
-    mqtt_external_prefix(mqtt_external_prefix) {
+    mqtt_external_prefix(mqtt_external_prefix),
+    telemetry_prefix(telemetry_prefix),
+    telemetry_enabled(telemetry_enabled) {
     BOOST_LOG_FUNCTION();
 
     EVLOG_debug << "Initializing EVerest framework...";
@@ -37,6 +41,7 @@ Everest::Everest(std::string module_id, Config config, bool validate_data_with_s
     this->module_name = this->config.get_main_config()[this->module_id]["module"].get<std::string>();
     this->module_manifest = this->config.get_manifests()[this->module_name];
     this->module_classes = this->config.get_interfaces()[this->module_name];
+    this->telemetry_config = this->config.get_telemetry_config(this->module_id);
 
     this->ready_received = false;
     this->on_ready = nullptr;
@@ -438,6 +443,39 @@ void Everest::provide_external_mqtt_handler(const std::string& topic, const Stri
     this->mqtt_abstraction.register_handler(external_topic, token, true, QOS::QOS0);
 }
 
+void Everest::telemetry_publish(const std::string& topic, const std::string& data) {
+    BOOST_LOG_FUNCTION();
+
+    this->mqtt_abstraction.publish(fmt::format("{}{}", this->telemetry_prefix, topic), data);
+}
+
+void Everest::telemetry_publish(const std::string& category, const std::string& subcategory, const std::string& type,
+                                const TelemetryMap& telemetry) {
+    BOOST_LOG_FUNCTION();
+
+    if (!this->telemetry_enabled || !this->telemetry_config.has_value()) {
+        // telemetry not enabled for this module instance in config
+        return;
+    }
+    int id = telemetry_config.get().id;
+    std::string id_string = std::to_string(id);
+    auto telemetry_data =
+        json::object({{"timestamp", Date::to_rfc3339(date::utc_clock::now())}, {"connector_id", id}, {"type", type}});
+
+    for (auto&& [key, entry] : telemetry) {
+        if (std::any_of(TELEMETRY_RESERVED_KEYS.begin(), TELEMETRY_RESERVED_KEYS.end(),
+                        [&key](const auto& element) { return element == key; })) {
+            EVLOG_warning << "Telemetry key " << key << " is reserved and will be overwritten.";
+        } else {
+            json data;
+            boost::apply_visitor([&data](auto& value) { data = value; }, entry);
+            telemetry_data[key] = data;
+        }
+    }
+    std::string topic = category + "/" + id_string + "/" + subcategory;
+    this->telemetry_publish(topic, telemetry_data.dump());
+}
+
 void Everest::signal_ready() {
     BOOST_LOG_FUNCTION();
 
@@ -685,6 +723,11 @@ json Everest::get_cmd_definition(const std::string& module_id, const std::string
     BOOST_LOG_FUNCTION();
 
     return get_cmd_definition(module_id, impl_id, cmd_name, false);
+}
+
+bool Everest::is_telemetry_enabled() {
+    BOOST_LOG_FUNCTION();
+    return (this->telemetry_enabled && this->telemetry_config.has_value());
 }
 
 std::string Everest::check_args(const Arguments& func_args, json manifest_args) {

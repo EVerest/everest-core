@@ -76,6 +76,8 @@ inline constexpr auto MQTT_BROKER_HOST = "localhost";
 inline constexpr auto MQTT_BROKER_PORT = 1883;
 inline constexpr auto MQTT_EVEREST_PREFIX = "everest";
 inline constexpr auto MQTT_EXTERNAL_PREFIX = "";
+inline constexpr auto TELEMETRY_PREFIX = "everest-telemetry";
+inline constexpr auto TELEMETRY_ENABLED = false;
 
 } // namespace defaults
 
@@ -103,6 +105,8 @@ struct RuntimeSettings {
     int mqtt_broker_port;
     std::string mqtt_everest_prefix;
     std::string mqtt_external_prefix;
+    std::string telemetry_prefix;
+    bool telemetry_enabled;
 
     nlohmann::json config;
 

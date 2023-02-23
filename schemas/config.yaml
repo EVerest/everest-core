@@ -53,6 +53,10 @@ properties:
         type: string
       mqtt_external_prefix:
         type: string
+      telemetry_prefix:
+        type: string
+      telemetry_enabled:
+        type: boolean
     additionalProperties: false
   active_modules:
     type: object
@@ -84,6 +88,15 @@ properties:
             default: {}
             # don't allow arbitrary additional properties
             additionalProperties: false
+          telemetry:
+            description: If this object is present telemetry for the module will be enabled
+            type: object
+            required:
+              - id
+            properties:
+              id:
+                description: Telemetry from modules using the same id will be grouped together
+                type: integer
           connections:
             type: object
             description: >-

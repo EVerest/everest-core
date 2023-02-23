@@ -151,4 +151,8 @@ properties:
     description: this requests access to the external mqtt publishing interface
     type: boolean
     default: false
+  enable_telemetry:
+    description: this requests access to the telemetry publishing interface
+    type: boolean
+    default: false
 additionalProperties: false

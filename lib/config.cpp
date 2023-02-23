@@ -312,6 +312,16 @@ Config::Config(std::string schemas_dir, std::string config_file, std::string mod
         }
     }
 
+    // load telemetry configs
+    for (auto& element : this->main.items()) {
+        const auto& module_id = element.key();
+        auto& module_config = element.value();
+        std::string module_name = module_config.at("module");
+        if (module_config.contains("telemetry")) {
+            this->telemetry_configs[module_id].emplace(TelemetryConfig{module_config.at("telemetry").at("id")});
+        }
+    }
+
     resolve_all_requirements();
 }
 
@@ -644,6 +654,16 @@ ModuleInfo Config::get_module_info(const std::string& module_id) {
     module_info.license = module_metadata["license"].get<std::string>();
 
     return module_info;
+}
+
+boost::optional<TelemetryConfig> Config::get_telemetry_config(const std::string& module_id) {
+    BOOST_LOG_FUNCTION();
+
+    if (this->telemetry_configs.find(module_id) == this->telemetry_configs.end()) {
+        return boost::none;
+    }
+
+    return this->telemetry_configs.at(module_id);
 }
 
 std::string Config::mqtt_prefix(const std::string& module_id, const std::string& impl_id) {

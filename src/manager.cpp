@@ -503,6 +503,9 @@ int boot(const po::variables_map& vm) {
     EVLOG_info << "8< 8< 8< ------------------------------------------------------------------------------ 8< 8< 8<";
     EVLOG_info << "EVerest manager starting using " << rs.config_file.string();
     EVLOG_info << "EVerest using MQTT broker " << rs.mqtt_broker_host << ":" << rs.mqtt_broker_port;
+    if (rs.telemetry_enabled) {
+        EVLOG_info << "EVerest telemetry enabled";
+    }
 
     EVLOG_verbose << fmt::format("EVerest prefix was set to {}", rs.prefix.string());
 

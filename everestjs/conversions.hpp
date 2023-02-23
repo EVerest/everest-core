@@ -26,6 +26,7 @@ static const char* const napi_valuetype_strings[] = {
 };
 
 Everest::json convertToJson(const Napi::Value& value);
+Everest::TelemetryMap convertToTelemetryMap(const Napi::Object& obj);
 Napi::Value convertToNapiValue(const Napi::Env& env, const Everest::json& value);
 
 } // namespace EverestJs

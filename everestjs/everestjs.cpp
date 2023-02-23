@@ -234,6 +234,33 @@ static Napi::Value mqtt_subscribe(const Napi::CallbackInfo& info) {
     return env.Undefined();
 }
 
+static Napi::Value telemetry_publish(const Napi::CallbackInfo& info) {
+    BOOST_LOG_FUNCTION();
+
+    const auto& env = info.Env();
+    try {
+        auto length = info.Length();
+        if (length == 3 || length == 4) {
+            const auto& category = info[0].ToString().Utf8Value();
+            const auto& subcategory = info[1].ToString().Utf8Value();
+            std::string type = subcategory;
+            if (length == 3) {
+                // assume it's category, subcategory, telemetry
+                auto telemetry = convertToTelemetryMap(info[2].As<Napi::Object>());
+                ctx->everest.telemetry_publish(category, subcategory, subcategory, telemetry);
+            } else if (length == 4) {
+                // assume it's category, subcategory, type, telemetry
+                auto telemetry = convertToTelemetryMap(info[3].As<Napi::Object>());
+                ctx->everest.telemetry_publish(category, subcategory, type, telemetry);
+            }
+        }
+    } catch (std::exception& e) {
+        EVLOG_AND_RETHROW(env);
+    }
+
+    return env.Undefined();
+}
+
 static Napi::Value call_cmd(const Requirement& req, const std::string& cmd_name, const Napi::CallbackInfo& info) {
     BOOST_LOG_FUNCTION();
 
@@ -299,10 +326,11 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
         Everest::Logging::update_process_name(module_identifier);
 
         // connect to mqtt server and start mqtt mainloop thread
-        ctx =
-            new EvModCtx(Everest::Everest::get_instance(module_id, *config, validate_schema, rs.mqtt_broker_host,
-                                                        rs.mqtt_broker_port, rs.mqtt_everest_prefix, rs.mqtt_external_prefix),
-                         module_manifest, env);
+        ctx = new EvModCtx(Everest::Everest::get_instance(module_id, *config, validate_schema, rs.mqtt_broker_host,
+                                                          rs.mqtt_broker_port, rs.mqtt_everest_prefix,
+                                                          rs.mqtt_external_prefix, rs.telemetry_prefix,
+                                                          rs.telemetry_enabled),
+                           module_manifest, env);
         ctx->everest.connect();
 
         ctx->js_module_ref = Napi::Persistent(module_this);
@@ -483,6 +511,15 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
             module_this.DefineProperty(Napi::PropertyDescriptor::Value("mqtt", mqtt_prop, napi_enumerable));
         }
 
+        // telemetry property
+        if (module_manifest.contains("enable_telemetry") && module_manifest["enable_telemetry"] == true) {
+            auto telemetry_prop = Napi::Object::New(env);
+            telemetry_prop.DefineProperty(Napi::PropertyDescriptor::Value(
+                "publish", Napi::Function::New(env, telemetry_publish), napi_enumerable));
+
+            module_this.DefineProperty(Napi::PropertyDescriptor::Value("telemetry", telemetry_prop, napi_enumerable));
+        }
+
         // config property
         json module_config = config->get_module_json_config(module_id);
         auto module_config_prop = Napi::Object::New(env);
@@ -518,6 +555,10 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
         // set everest prefix
         module_info_prop.DefineProperty(Napi::PropertyDescriptor::Value(
             "everest_prefix", Napi::String::New(env, prefix), napi_enumerable));
+
+        // set telemetry_enabled
+        module_info_prop.DefineProperty(Napi::PropertyDescriptor::Value(
+            "telemetry_enabled", Napi::Boolean::New(env, ctx->everest.is_telemetry_enabled()), napi_enumerable));
 
         module_this.DefineProperty(Napi::PropertyDescriptor::Value("info", module_info_prop, napi_enumerable));
 

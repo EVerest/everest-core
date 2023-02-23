@@ -135,7 +135,8 @@ int initialize(const std::string& prefix, const std::string& config_file, const 
 
         Everest::Everest& everest =
             Everest::Everest::get_instance(module_id, config, rs.validate_schema, rs.mqtt_broker_host,
-                                           rs.mqtt_broker_port, rs.mqtt_everest_prefix, rs.mqtt_external_prefix);
+                                           rs.mqtt_broker_port, rs.mqtt_everest_prefix, rs.mqtt_external_prefix,
+                                           rs.telemetry_prefix, rs.telemetry_enabled);
 
         EVLOG_info << fmt::format("Initializing module {}...", module_identifier);
 
@@ -265,6 +266,7 @@ int initialize(const std::string& prefix, const std::string& config_file, const 
         auto module_configs = config.get_module_configs(module_id);
         auto module_info = config.get_module_info(module_id);
         module_info.everest_prefix = rs.prefix.string();
+        module_info.telemetry_enabled = everest.is_telemetry_enabled();
 
         everest_py.module_callbacks.init(module_configs, module_info);
 
@@ -326,7 +328,8 @@ PYBIND11_MODULE(everestpy, m) {
         .def_readonly("authors", &ModuleInfo::authors)
         .def_readonly("license", &ModuleInfo::license)
         .def_readonly("id", &ModuleInfo::id)
-        .def_readonly("everest_prefix", &ModuleInfo::everest_prefix);
+        .def_readonly("everest_prefix", &ModuleInfo::everest_prefix)
+        .def_readonly("telemetry_enabled", &ModuleInfo::telemetry_enabled);
     py::class_<CmdWithArguments>(m, "CmdWithArguments")
         .def(py::init<>())
         .def_readwrite("cmd", &CmdWithArguments::cmd)
@@ -354,5 +357,5 @@ PYBIND11_MODULE(everestpy, m) {
     m.def("register_pre_init_callback", &register_pre_init_callback);
     m.def("register_ready_callback", &register_ready_callback);
 
-    m.attr("__version__") = "0.3";
+    m.attr("__version__") = "0.4";
 }

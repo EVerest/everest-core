@@ -27,6 +27,10 @@ struct cmd {
     ReturnType return_type; ///< The return type
 };
 
+using TelemetryEntry =
+    boost::variant<std::string, const char*, bool, int, int32_t, uint32_t, int64_t, uint64_t, double>;
+using TelemetryMap = std::map<std::string, TelemetryEntry>;
+
 ///
 /// \brief Contains the EVerest framework that provides convenience functionality for implementing EVerest modules
 ///
@@ -48,10 +52,13 @@ private:
     json module_classes;
     std::string mqtt_everest_prefix;
     std::string mqtt_external_prefix;
+    std::string telemetry_prefix;
+    boost::optional<TelemetryConfig> telemetry_config;
+    bool telemetry_enabled;
 
     Everest(std::string module_id, Config config, bool validate_data_with_schema,
             const std::string& mqtt_server_address, int mqtt_server_port, const std::string& mqtt_everest_prefix,
-            const std::string& mqtt_external_prefix);
+            const std::string& mqtt_external_prefix, const std::string& telemetry_prefix, bool telemetry_enabled);
 
     void handle_ready(json data);
 
@@ -104,6 +111,21 @@ public:
     void provide_external_mqtt_handler(const std::string& topic, const StringHandler& handler);
 
     ///
+    /// \brief publishes the given telemetry \p data on the given \p topic
+    ///
+    void telemetry_publish(const std::string& topic, const std::string& data);
+
+    ///
+    /// \brief publishes the given telemetry \p telemetry on a topic constructed from \p category \p subcategory and \p
+    /// type
+    ///
+    void telemetry_publish(const std::string& category, const std::string& subcategory, const std::string& type,
+                           const TelemetryMap& telemetry);
+
+    /// \returns true if telemetry is enabled
+    bool is_telemetry_enabled();
+
+    ///
     /// \brief Chccks if all commands of a module that are listed in its manifest are available
     ///
     void check_code();
@@ -144,9 +166,10 @@ public:
     /// with the known json schemas is needed this can be activated by setting \p validate_data_with_schema to true
     static Everest& get_instance(std::string module_id, Config config, bool validate_data_with_schema,
                                  const std::string& mqtt_server_address, int mqtt_server_port,
-                                 const std::string& mqtt_everest_prefix, const std::string& mqtt_external_prefix) {
+                                 const std::string& mqtt_everest_prefix, const std::string& mqtt_external_prefix,
+                                 const std::string& telemetry_prefix, bool telemetry_enabled) {
         static Everest instance(module_id, config, validate_data_with_schema, mqtt_server_address, mqtt_server_port,
-                                mqtt_everest_prefix, mqtt_external_prefix);
+                                mqtt_everest_prefix, mqtt_external_prefix, telemetry_prefix, telemetry_enabled);
 
         return instance;
     }

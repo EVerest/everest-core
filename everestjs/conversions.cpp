@@ -52,6 +52,33 @@ Everest::json convertToJson(const Napi::Value& value) {
                         napi_valuetype_strings[value.Type()]));
 }
 
+Everest::TelemetryMap convertToTelemetryMap(const Napi::Object& obj) {
+    BOOST_LOG_FUNCTION();
+    Everest::TelemetryMap telemetry;
+    Napi::Array keys = obj.GetPropertyNames();
+    for (uint64_t i = 0; i < keys.Length(); i++) {
+        Napi::Value key = keys[i];
+        if (key.IsString()) {
+            std::string k = key.As<Napi::String>();
+            Napi::Value value = Napi::Value(obj[k]);
+            if (value.IsString()) {
+                telemetry[k] = std::string(value.As<Napi::String>());
+            } else if (value.IsNumber()) {
+                int intNumber = value.As<Napi::Number>();
+                double floatNumber = value.As<Napi::Number>();
+                if (floatNumber == intNumber) {
+                    telemetry[k] = intNumber;
+                } else {
+                    telemetry[k] = floatNumber;
+                }
+            } else if (value.IsBoolean()) {
+                telemetry[k] = bool(value.As<Napi::Boolean>());
+            }
+        }
+    }
+    return telemetry;
+}
+
 Napi::Value convertToNapiValue(const Napi::Env& env, const json& value) {
     BOOST_LOG_FUNCTION();
 

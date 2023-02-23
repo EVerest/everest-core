@@ -4,9 +4,11 @@
 #define MODULE_ADAPTER_HPP
 
 #include "everest.hpp"
-#include <iostream>
+#include <everest/logging.hpp>
+#include <utils/date.hpp>
 
 #include <iomanip>
+#include <iostream>
 
 namespace Everest {
 
@@ -95,6 +97,8 @@ struct ModuleAdapter {
     using SubscribeFunc = std::function<void(const Requirement&, const std::string&, ValueCallback)>;
     using ExtMqttPublishFunc = std::function<void(const std::string&, const std::string&)>;
     using ExtMqttSubscribeFunc = std::function<void(const std::string&, StringHandler)>;
+    using TelemetryPublishFunc =
+        std::function<void(const std::string&, const std::string&, const std::string&, const TelemetryMap&)>;
 
     CallFunc call;
     PublishFunc publish;
@@ -102,6 +106,7 @@ struct ModuleAdapter {
     ExtMqttPublishFunc ext_mqtt_publish;
     ExtMqttSubscribeFunc ext_mqtt_subscribe;
     std::vector<cmd> registered_commands;
+    TelemetryPublishFunc telemetry_publish;
 
     void check_complete() {
         // FIXME (aw): I should throw if some of my handlers are not set
@@ -166,6 +171,23 @@ public:
 
     void subscribe(const std::string& topic, StringHandler handler) {
         ev.ext_mqtt_subscribe(topic, handler);
+    }
+
+private:
+    ModuleAdapter& ev;
+};
+
+class TelemetryProvider {
+public:
+    TelemetryProvider(ModuleAdapter& ev) : ev(ev){};
+
+    void publish(const std::string& category, const std::string& subcategory, const std::string& type,
+                 const TelemetryMap& telemetry) {
+        ev.telemetry_publish(category, subcategory, type, telemetry);
+    }
+
+    void publish(const std::string& category, const std::string& subcategory, const TelemetryMap& telemetry) {
+        publish(category, subcategory, subcategory, telemetry);
     }
 
 private:

@@ -276,6 +276,25 @@ RuntimeSettings::RuntimeSettings(const std::string& prefix_, const std::string& 
         throw BootException(fmt::format("mqtt_everest_prefix '{}' cannot be equal to mqtt_external_prefix '{}'!",
                                         mqtt_everest_prefix, mqtt_external_prefix));
     }
+
+    const auto settings_telemetry_prefix_it = settings.find("telemetry_prefix");
+    if (settings_telemetry_prefix_it != settings.end()) {
+        telemetry_prefix = settings_telemetry_prefix_it->get<std::string>();
+    } else {
+        telemetry_prefix = defaults::TELEMETRY_PREFIX;
+    }
+
+    // always make sure the telemetry mqtt prefix ends with '/'
+    if (telemetry_prefix.length() > 0 && telemetry_prefix.back() != '/') {
+        telemetry_prefix = telemetry_prefix += "/";
+    }
+
+    const auto settings_telemetry_enabled_it = settings.find("telemetry_enabled");
+    if (settings_telemetry_enabled_it != settings.end()) {
+        telemetry_enabled = settings_telemetry_enabled_it->get<bool>();
+    } else {
+        telemetry_enabled = defaults::TELEMETRY_ENABLED;
+    }
 }
 
 ModuleCallbacks::ModuleCallbacks(const std::function<void(ModuleAdapter module_adapter)>& register_module_adapter,
@@ -321,9 +340,9 @@ int ModuleLoader::initialize() {
         }
         Logging::update_process_name(module_identifier);
 
-        Everest& everest =
-            Everest::Everest::get_instance(this->module_id, config, rs->validate_schema, rs->mqtt_broker_host,
-                                           rs->mqtt_broker_port, rs->mqtt_everest_prefix, rs->mqtt_external_prefix);
+        Everest& everest = Everest::Everest::get_instance(
+            this->module_id, config, rs->validate_schema, rs->mqtt_broker_host, rs->mqtt_broker_port,
+            rs->mqtt_everest_prefix, rs->mqtt_external_prefix, rs->telemetry_prefix, rs->telemetry_enabled);
 
         // module import
         EVLOG_debug << fmt::format("Initializing module {}...", module_identifier);
@@ -357,6 +376,11 @@ int ModuleLoader::initialize() {
         module_adapter.ext_mqtt_subscribe = std::bind(&Everest::Everest::provide_external_mqtt_handler, &everest,
                                                       std::placeholders::_1, std::placeholders::_2);
 
+        module_adapter.telemetry_publish = [&everest](const std::string& category, const std::string& subcategory,
+                                                      const std::string& type, const TelemetryMap& telemetry) {
+            return everest.telemetry_publish(category, subcategory, type, telemetry);
+        };
+
         this->callbacks.register_module_adapter(module_adapter);
 
         // FIXME (aw): would be nice to move this config related thing toward the module_init function
@@ -370,6 +394,7 @@ int ModuleLoader::initialize() {
         auto module_configs = config.get_module_configs(this->module_id);
         auto module_info = config.get_module_info(this->module_id);
         module_info.everest_prefix = rs->prefix.string();
+        module_info.telemetry_enabled = everest.is_telemetry_enabled();
 
         this->callbacks.init(module_configs, module_info);
 

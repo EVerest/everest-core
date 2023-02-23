@@ -58,6 +58,7 @@ const EverestModule = function EverestModule(handler_setup, user_settings) {
     info: this.info,
     config: this.config,
     mqtt: this.mqtt,
+    telemetry: this.telemetry,
   };
 
   if (this.mqtt === undefined) {
@@ -66,6 +67,14 @@ const EverestModule = function EverestModule(handler_setup, user_settings) {
     };
     Object.defineProperty(module_setup, 'mqtt', missing_mqtt_getter);
     Object.defineProperty(this, 'mqtt', missing_mqtt_getter);
+  }
+
+  if (this.telemetry === undefined) {
+    const missing_telemetry_getter = {
+      get() { throw new Error('Telemetry not available - missing enable_telemetry in manifest?'); },
+    };
+    Object.defineProperty(module_setup, 'telemetry', missing_telemetry_getter);
+    Object.defineProperty(this, 'telemetry', missing_telemetry_getter);
   }
 
   // check, if we need to register cmds
