@@ -3,7 +3,7 @@
 #ifndef {{ info.hpp_guard }}
 #define {{ info.hpp_guard }}
 
-{{ print_template_info('1', 'marked regions will be kept') }}
+{{ print_template_info('2', 'marked regions will be kept') }}
 
 #include "{{ info.ld_ev_header }}"
 
@@ -39,6 +39,9 @@ public:
         {% if info.enable_external_mqtt %}
         Everest::MqttProvider& mqtt_provider,
         {% endif %}
+        {% if info.enable_telemetry %}
+        Everest::TelemetryProvider& telemetry,
+        {% endif %}
         {% for impl in provides %}
         std::unique_ptr<{{ impl.base_class }}> p_{{ impl.id }},
         {% endfor %}
@@ -55,6 +58,9 @@ public:
         {% if info.enable_external_mqtt %}
         mqtt(mqtt_provider),
         {% endif %}
+        {% if info.enable_telemetry %}
+        telemetry(telemetry),
+        {% endif %}
         {% for impl in provides %}
         p_{{ impl.id }}(std::move(p_{{ impl.id }})),
         {% endfor %}
@@ -68,6 +74,7 @@ public:
     {% if info.enable_external_mqtt %}
     Everest::MqttProvider& mqtt;
     {% endif %}
+    Everest::TelemetryProvider& telemetry;
     {% for impl in provides %}
     const std::unique_ptr<{{ impl.base_class }}> p_{{ impl.id }};
     {% endfor %}

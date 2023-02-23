@@ -174,7 +174,8 @@ def generate_tmpl_data_for_module(module, module_def):
             'module_header': f'{module}.hpp',
             'module_config': module_config,
             'ld_ev_header': 'ld-ev.hpp',
-            'enable_external_mqtt': module_def.get('enable_external_mqtt', False)
+            'enable_external_mqtt': module_def.get('enable_external_mqtt', False),
+            'enable_telemetry': module_def.get('enable_telemetry', False)
         },
         'provides': provides,
         'requires': requires,

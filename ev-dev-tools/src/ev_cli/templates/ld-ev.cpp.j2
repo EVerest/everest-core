@@ -94,10 +94,12 @@ std::vector<Everest::cmd> everest_register(const json& connections) {
     {% if info.enable_external_mqtt %}
     static Everest::MqttProvider mqtt_provider(adapter);
     {% endif %}
+    static Everest::TelemetryProvider telemetry_provider(adapter);
 
     static {{ info.class_name }} module(
     module_info,
     {%- if info.enable_external_mqtt %}mqtt_provider, {% endif -%}
+    {%- if info.enable_telemetry %}telemetry_provider, {% endif -%}
     {%- for impl in provides -%}
     std::move(p_{{ impl.id }}){{ ', ' }}
     {%- endfor -%}
