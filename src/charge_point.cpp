@@ -234,7 +234,7 @@ int main(int argc, char* argv[]) {
             } else if (command == "start_transaction") {
                 if (!transaction_running) {
                     uuid = boost::lexical_cast<std::string>(boost::uuids::random_generator()());
-                    charge_point->on_session_started(1, uuid, "EVConnected");
+                    charge_point->on_session_started(1, uuid, "EVConnected", boost::none);
                     const auto result = charge_point->authorize_id_token(ocpp::CiString<20>(std::string("DEADBEEF")));
                     if (result.status == ocpp::v16::AuthorizationStatus::Accepted) {
                         charge_point->on_transaction_started(1, uuid, "DEADBEEF", 0, boost::none, ocpp::DateTime(),
@@ -248,7 +248,7 @@ int main(int argc, char* argv[]) {
                 if (transaction_running) {
                     charge_point->on_transaction_stopped(1, uuid, ocpp::v16::Reason::Local, ocpp::DateTime(), 2500,
                                                          boost::none, boost::none);
-                    charge_point->on_session_stopped(1);
+                    charge_point->on_session_stopped(1, uuid);
                     transaction_running = false;
                 } else {
                     std::cout << "No transaction is currently running. Use command \"start_transaction\" first"
