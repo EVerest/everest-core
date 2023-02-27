@@ -195,10 +195,13 @@ void MessageLogging::start_session_logging(const std::string& session_id, const 
 }
 
 void MessageLogging::stop_session_logging(const std::string& session_id) {
-    auto old_file_path = this->session_id_logging.at(session_id)->get_message_log_path() + "/" + "incomplete-ocpp.html";
-    auto new_file_path = this->session_id_logging.at(session_id)->get_message_log_path() + "/" + "ocpp.html";
-    std::rename(old_file_path.c_str(), new_file_path.c_str());
-    this->session_id_logging.erase(session_id);
+    if (this->session_id_logging.count(session_id)) {
+        auto old_file_path =
+            this->session_id_logging.at(session_id)->get_message_log_path() + "/" + "incomplete-ocpp.html";
+        auto new_file_path = this->session_id_logging.at(session_id)->get_message_log_path() + "/" + "ocpp.html";
+        std::rename(old_file_path.c_str(), new_file_path.c_str());
+        this->session_id_logging.erase(session_id);
+    }
 }
 
 std::string MessageLogging::get_message_log_path() {
