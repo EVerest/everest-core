@@ -1,0 +1,188 @@
+name: "Run CI Testing"
+on: 
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      - opened
+    branches:
+      - main
+  pull_request_review:
+    types:
+      - submitted
+  workflow_dispatch:
+
+jobs:
+  testset_01:
+    name: "Execute EVerest Startup Test Set (testset_01)"
+    runs-on: ubuntu-22.04
+    permissions:
+      checks: write
+      pull-requests: write
+      contents: write
+      issues: read
+      actions: read
+      packages: write
+    env:
+      DOCKER_BUILDKIT: 1
+      RUNNER_CACHE: ${{ github.workspace }}/runner_cpm_cache
+      RUNNER_CHECKOUT: ${{ github.workspace }}/runner_checkout
+      RUNNER_RESULTS: ${{ github.workspace }}/runner_results
+    steps:
+      - name: Login to GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: 'EVerest'
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout Repository   
+        uses: actions/checkout@v3
+        with:
+          path: ${{ env.RUNNER_CHECKOUT }}
+
+      - name: Get Current Branch Name
+        run: echo "CURRENT_BRANCH=${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_ENV
+
+      - name: Create Local Folders
+        run: |
+          mkdir -p ${{ env.RUNNER_CACHE }}
+          mkdir -p ${{ env.RUNNER_RESULTS }}
+
+      - name: Restore CPM Cache
+        id: cp-cache-restore
+        uses: actions/cache/restore@v3
+        with:
+          path: ${{ env.RUNNER_CACHE }}
+          key: cpm-cache-key
+
+      - name: Load Image from GHCR
+        run: docker pull ghcr.io/everest/automated-ci-testing-base-image:latest       
+      
+      - name: Build everest-core
+        run: docker run -a STDOUT -a STDERR -t
+          -e CPM_SOURCE_CACHE=/cpm_cache
+          -e PR_BRANCH=${{ env.CURRENT_BRANCH }}
+          --mount type=volume,dst=/cpm_cache,volume-driver=local,volume-opt=type=none,volume-opt=o=bind,volume-opt=device=${{ env.RUNNER_CACHE }}
+          --mount type=volume,dst=/runner_checkout,volume-driver=local,volume-opt=type=none,volume-opt=o=bind,volume-opt=device=${{ env.RUNNER_CHECKOUT }}
+          --name everest-testing-container
+          ghcr.io/everest/automated-ci-testing-base-image:latest
+          /runner_checkout/ci/build_everest.sh
+      
+      - name: Save CPM Cache
+        id: cpm-cache-save
+        uses: actions/cache/save@v3
+        with:
+          path: runner_cpm_cache
+          key: cpm-cache-key
+        
+      - name: Make Image from Container
+        run: docker commit everest-testing-container ghcr.io/everest/automated-ci-testing-work-image
+
+      - name: Push Image to GHCR
+        run: docker push ghcr.io/everest/automated-ci-testing-work-image
+
+      - name: Remove Build Image
+        run: docker rm everest-testing-container
+
+  #     ##############################################################
+  #     ### EVEREST-CORE STARTUP TEST                              ###
+  #     ##############################################################
+
+      - name: Build and Run the EVerest Testing System
+        run: RUN_TEST_SET=testset_01.sh docker-compose
+          -f ${{ env.RUNNER_CHECKOUT }}/ci/docker-compose.yml up
+          --abort-on-container-exit
+          --exit-code-from testing-machine
+
+  #     ##############################################################
+      
+      - name: Upload Test Results Startup Tests
+        if: success() || failure()
+        uses: actions/upload-artifact@v3
+        with:
+          if-no-files-found: error
+          name: everest_testing
+          path: ${{ env.RUNNER_RESULTS }}/results*.xml
+
+  testset_02:
+    name: "Execute Basic Charge Test Set (testset_02)"
+    runs-on: ubuntu-22.04
+    if: success() || failure()
+    needs: 
+     [testset_01] ### ADD ALL PREVIOUS TEST JOBS HERE
+    permissions:
+      checks: write
+      pull-requests: write
+      contents: read
+      issues: read
+      actions: read
+    env:
+      RUNNER_CACHE: ${{ github.workspace }}/runner_cpm_cache
+      RUNNER_CHECKOUT: ${{ github.workspace }}/runner_checkout
+      RUNNER_RESULTS: ${{ github.workspace }}/runner_results
+    steps:
+      - name: Login to GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: 'EVerest'
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout Repository   
+        uses: actions/checkout@v3
+        with:
+          path: ${{ env.RUNNER_CHECKOUT }}
+
+      - name: Create Local Folders
+        run: |
+          mkdir -p ${{ env.RUNNER_CACHE }}
+          mkdir -p ${{ env.RUNNER_RESULTS }}
+ 
+      ##############################################################
+      ### BASIC CHARGING TEST-SET                                ###
+      ##############################################################
+
+      - name: Build and Run the EVerest Testing System
+        run: RUN_TEST_SET=testset_02.sh
+          docker-compose -f ${{ env.RUNNER_CHECKOUT }}/ci/docker-compose.yml up
+          --abort-on-container-exit
+          --exit-code-from testing-machine
+
+      ##############################################################
+
+      - name: Upload Test Results Basic Charging Tests
+        uses: actions/upload-artifact@v3
+        if: success() || failure()
+        with:
+          if-no-files-found: error
+          name: everest_testing
+          path: ${{ env.RUNNER_RESULTS }}/results*.xml
+
+  reports:
+    name: "Generate Test Reports"
+    runs-on: ubuntu-22.04
+    needs: 
+     [testset_01, testset_02] ### ADD ADDITIONAL TEST JOBS TO THIS LIST
+    if: success() || failure()
+    permissions:
+      checks: write
+      pull-requests: write
+      contents: read
+      issues: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Download Test Results
+        uses: actions/download-artifact@v3
+
+      - name: Generate Test Reports
+        uses: dorny/test-reporter@v1
+        if: success() || failure()
+        with:
+          fail-on-error: false
+          name: Test Results
+          path: ./everest_testing/*.xml
+          reporter: java-junit

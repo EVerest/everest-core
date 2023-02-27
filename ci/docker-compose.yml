@@ -1,0 +1,56 @@
+version: "3.6"
+
+volumes:
+  cpm_cache:
+  checkout:
+  results:
+
+networks:
+  testing_network:
+    name: testing_network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.33.1.0/24
+
+services:
+  mqtt-server:
+    image: eclipse-mosquitto:2.0.10
+    container_name: mqtt-server
+    networks:
+      testing_network:
+        ipv4_address: 172.33.1.41
+    ports:
+      - "172.33.1.1:1883:1883"
+      - "172.33.1.1:9001:9001"
+    volumes:
+      - type: bind
+        source: ${GITHUB_WORKSPACE}/runner_checkout/ci/mosquitto/mosquitto.conf
+        target: /mosquitto/config/mosquitto.conf
+    logging:
+      driver: none
+
+  testing-machine:
+    image: "ghcr.io/everest/automated-ci-testing-work-image:latest"
+    container_name: everest-testing-container
+    networks:
+      testing_network:
+        ipv4_address: 172.33.1.45
+    depends_on:
+      - mqtt-server
+    environment:
+      - MQTT_SERVER_ADDRESS=mqtt-server
+      - CPM_SOURCE_CACHE=/cpm_cache
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+    volumes:
+      - type: bind
+        source: ${GITHUB_WORKSPACE}/runner_cpm_cache
+        target: /cpm_cache
+      - type: bind
+        source: ${GITHUB_WORKSPACE}/runner_checkout
+        target: /runner_checkout
+      - type: bind
+        source: ${GITHUB_WORKSPACE}/runner_results
+        target: /results
+    command: /runner_checkout/ci/testsets/${RUN_TEST_SET}
