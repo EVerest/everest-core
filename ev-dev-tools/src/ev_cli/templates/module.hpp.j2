@@ -74,7 +74,9 @@ public:
     {% if info.enable_external_mqtt %}
     Everest::MqttProvider& mqtt;
     {% endif %}
+    {% if info.enable_telemetry %}
     Everest::TelemetryProvider& telemetry;
+    {% endif %}
     {% for impl in provides %}
     const std::unique_ptr<{{ impl.base_class }}> p_{{ impl.id }};
     {% endfor %}
