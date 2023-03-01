@@ -1,3 +1,4 @@
+ev_add_module(DCSupplySimulator)
 ev_add_module(JsCarSimulator)
 ev_add_module(JsDCSupplySimulator)
 ev_add_module(JsIMDSimulator)
