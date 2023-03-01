@@ -28,7 +28,9 @@ ChargePointConfiguration::ChargePointConfiguration(const json& config, const std
 
     // validate config entries
     Schemas schemas = Schemas(boost::filesystem::path(ocpp_main_path) / "profile_schemas");
-    auto patch = schemas.get_validator()->validate(config);
+    
+    try {
+        auto patch = schemas.get_validator()->validate(config);
     if (patch.is_null()) {
         // no defaults substituted
         EVLOG_debug << "Using a charge point configuration without default values.";
@@ -38,6 +40,10 @@ ChargePointConfiguration::ChargePointConfiguration(const json& config, const std
         EVLOG_debug << "Adding the following default values to the charge point configuration: " << patch;
         auto patched_config = config.patch(patch);
         this->config = patched_config;
+    }
+    } catch (const std::exception &e) {
+        EVLOG_error << "Error while validating OCPP config against schemas: " << e.what();
+        EVLOG_AND_THROW(e);
     }
 
     if (!this->config["Core"].contains("SupportedFeatureProfiles")) {

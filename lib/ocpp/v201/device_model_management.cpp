@@ -186,7 +186,8 @@ DeviceModelManager::DeviceModelManager(const json& config, const std::string& oc
             json_config = json_config.patch(patch);
         }
     } catch (const std::exception& e) {
-        EVLOG_error << "Validation failed, here is why: " << e.what() << "\n";
+        EVLOG_error << "Error while validating OCPP config against schemas: " << e.what();
+        EVLOG_AND_THROW(e);
     }
 
     std::set<boost::filesystem::path> available_schemas_paths;
