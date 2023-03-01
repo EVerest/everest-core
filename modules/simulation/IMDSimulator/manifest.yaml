@@ -12,8 +12,8 @@ provides:
         description: Measurement update interval in milliseconds
         type: integer
         default: 1000
-enable_external_mqtt: true
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
   authors:
+    - Fabian Hartung (chargebyte GmbH)
     - Cornelius Claussen (Pionix GmbH)

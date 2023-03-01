@@ -78,7 +78,7 @@ active_modules:
   powersupply_dc:
     module: JsDCSupplySimulator
   imd:
-    module: JsIMDSimulator
+    module: IMDSimulator
   car_simulator_1:
     module: JsCarSimulator
     config_module:

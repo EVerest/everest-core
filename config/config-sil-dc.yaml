@@ -54,7 +54,7 @@ active_modules:
   slac:
     module: JsSlacSimulator
   imd:
-    module: JsIMDSimulator
+    module: IMDSimulator
   car_simulator:
     module: JsCarSimulator
     config_module:
