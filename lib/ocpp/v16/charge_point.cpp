@@ -47,10 +47,9 @@ ChargePoint::ChargePoint(const json& config, const std::string& share_path, cons
     bool log_to_html = std::find(log_formats.begin(), log_formats.end(), "html") != log_formats.end();
     bool session_logging = std::find(log_formats.begin(), log_formats.end(), "session_logging") != log_formats.end();
 
-    this->logging = std::make_shared<ocpp::MessageLogging>(this->configuration->getLogMessages(), message_log_path,
-                                                           DateTime().to_rfc3339(), log_to_console,
-                                                           detailed_log_to_console, log_to_file, log_to_html,
-                                                           session_logging);
+    this->logging = std::make_shared<ocpp::MessageLogging>(
+        this->configuration->getLogMessages(), message_log_path, DateTime().to_rfc3339(), log_to_console,
+        detailed_log_to_console, log_to_file, log_to_html, session_logging);
 
     this->boot_notification_timer =
         std::make_unique<Everest::SteadyTimer>(&this->io_service, [this]() { this->boot_notification(); });
@@ -593,6 +592,12 @@ void ChargePoint::send_meter_value(int32_t connector, MeterValue meter_value) {
 }
 
 bool ChargePoint::start() {
+    auto connector_availability = this->database_handler->get_connector_availability();
+    connector_availability[0] = AvailabilityType::Operative; // FIXME(kai): fix internal representation in charge
+                                                             // point states, we need a different kind of state
+                                                             // machine for connector 0 anyway (with reduced states)
+    this->status->run(connector_availability);
+
     this->init_websocket(this->configuration->getSecurityProfile());
     this->websocket->connect(this->configuration->getSecurityProfile());
     this->boot_notification();
@@ -897,11 +902,6 @@ void ChargePoint::handleBootNotificationResponse(ocpp::CallResult<BootNotificati
         // activate clock aligned sampling of meter values
         this->update_clock_aligned_meter_values_interval();
 
-        auto connector_availability = this->database_handler->get_connector_availability();
-        connector_availability[0] = AvailabilityType::Operative; // FIXME(kai): fix internal representation in charge
-                                                                 // point states, we need a different kind of state
-                                                                 // machine for connector 0 anyway (with reduced states)
-        this->status->run(connector_availability);
         break;
     }
     case RegistrationStatus::Pending:

@@ -7,6 +7,7 @@
 #include <stddef.h>
 #include <stdexcept>
 #include <utility>
+#include <everest/logging.hpp>
 
 #include <fsm/async.hpp>
 
@@ -275,7 +276,11 @@ void ChargePointStates::run(std::map<int32_t, v16::AvailabilityType> connector_a
 void ChargePointStates::submit_event(int32_t connector, const EventBaseType& event) {
 
     if (connector > 0 && connector < static_cast<int32_t>(this->state_machines.size())) {
-        this->state_machines.at(connector)->controller->submit_event(event);
+        try {
+            this->state_machines.at(connector)->controller->submit_event(event);
+        } catch (const std::exception &e) {
+            EVLOG_warning << "Could not submit event to state machine at connector# " << connector;
+        }
     }
 }
 
