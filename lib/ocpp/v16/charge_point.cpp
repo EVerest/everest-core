@@ -166,10 +166,15 @@ void ChargePoint::clock_aligned_meter_values_sample() {
         for (int32_t connector = 1; connector < this->configuration->getNumberOfConnectors() + 1; connector++) {
             auto meter_value = this->get_latest_meter_value(
                 connector, this->configuration->getMeterValuesAlignedDataVector(), ReadingContext::Sample_Clock);
-            if (this->transaction_handler->transaction_active(connector)) {
-                this->transaction_handler->get_transaction(connector)->add_meter_value(meter_value);
+            if (meter_value.has_value()) {
+                if (this->transaction_handler->transaction_active(connector)) {
+                    this->transaction_handler->get_transaction(connector)->add_meter_value(meter_value.value());
+                }
+                this->send_meter_value(connector, meter_value.value());
+            } else {
+                EVLOG_warning << "Could not send clock aligned meter value for uninitialized powermeter at connector#"
+                              << connector;
             }
-            this->send_meter_value(connector, meter_value);
         }
         this->update_clock_aligned_meter_values_interval();
     }
@@ -254,13 +259,16 @@ void ChargePoint::load_charging_profiles() {
     }
 }
 
-MeterValue ChargePoint::get_latest_meter_value(int32_t connector, std::vector<MeasurandWithPhase> values_of_interest,
-                                               ReadingContext context) {
+boost::optional<MeterValue> ChargePoint::get_latest_meter_value(int32_t connector,
+                                                                std::vector<MeasurandWithPhase> values_of_interest,
+                                                                ReadingContext context) {
     std::lock_guard<std::mutex> lock(power_meters_mutex);
-    MeterValue filtered_meter_value;
+    boost::optional<MeterValue> filtered_meter_value_opt;
     // TODO(kai): also support readings from the charge point powermeter at "connector 0"
-    if (this->connectors.find(connector) != this->connectors.end()) {
-        const auto power_meter = this->connectors.at(connector)->powermeter;
+    if (this->connectors.find(connector) != this->connectors.end() &&
+        this->connectors.at(connector)->powermeter.has_value()) {
+        MeterValue filtered_meter_value;
+        const auto power_meter = this->connectors.at(connector)->powermeter.value();
         const auto timestamp = power_meter.timestamp;
         filtered_meter_value.timestamp = ocpp::DateTime(timestamp);
         EVLOG_debug << "PowerMeter value for connector: " << connector << ": " << power_meter;
@@ -546,8 +554,9 @@ MeterValue ChargePoint::get_latest_meter_value(int32_t connector, std::vector<Me
                 filtered_meter_value.sampledValue.push_back(sample);
             }
         }
+        filtered_meter_value_opt.emplace(filtered_meter_value);
     }
-    return filtered_meter_value;
+    return filtered_meter_value_opt;
 }
 
 MeterValue ChargePoint::get_signed_meter_value(const std::string& signed_value, const ReadingContext& context,
@@ -1605,11 +1614,17 @@ void ChargePoint::handleTriggerMessageRequest(ocpp::Call<TriggerMessageRequest> 
     case MessageTrigger::Heartbeat:
         this->heartbeat();
         break;
-    case MessageTrigger::MeterValues:
-        this->send_meter_value(
-            connector, this->get_latest_meter_value(connector, this->configuration->getMeterValuesSampledDataVector(),
-                                                    ReadingContext::Trigger));
+    case MessageTrigger::MeterValues: {
+        const auto meter_value = this->get_latest_meter_value(
+            connector, this->configuration->getMeterValuesSampledDataVector(), ReadingContext::Trigger);
+        if (meter_value.has_value()) {
+            this->send_meter_value(connector, meter_value.value());
+        } else {
+            EVLOG_warning << "Could not send triggered meter value for uninitialized powermeter at connector#"
+                          << connector;
+        }
         break;
+    }
     case MessageTrigger::StatusNotification:
         this->status_notification(connector, ChargePointErrorCode::NoError, this->status->get_state(connector));
         break;
@@ -1702,11 +1717,17 @@ void ChargePoint::handleExtendedTriggerMessageRequest(ocpp::Call<ExtendedTrigger
     case MessageTriggerEnumType::LogStatusNotification:
         this->log_status_notification(this->log_status, this->log_status_request_id);
         break;
-    case MessageTriggerEnumType::MeterValues:
-        this->send_meter_value(
-            connector, this->get_latest_meter_value(connector, this->configuration->getMeterValuesSampledDataVector(),
-                                                    ReadingContext::Trigger));
+    case MessageTriggerEnumType::MeterValues: {
+        const auto meter_value = this->get_latest_meter_value(
+            connector, this->configuration->getMeterValuesSampledDataVector(), ReadingContext::Trigger);
+        if (meter_value.has_value()) {
+            this->send_meter_value(connector, meter_value.value());
+        } else {
+            EVLOG_warning << "Could not send triggered meter value for uninitialized powermeter at connector#"
+                          << connector;
+        }
         break;
+    }
     case MessageTriggerEnumType::SignChargePointCertificate:
         this->sign_certificate();
         break;
@@ -2172,7 +2193,7 @@ void ChargePoint::on_meter_values(int32_t connector, const Powermeter& power_met
     // FIXME: fix power meter to also work with dc
     EVLOG_debug << "updating power meter for connector: " << connector;
     std::lock_guard<std::mutex> lock(power_meters_mutex);
-    this->connectors.at(connector)->powermeter = power_meter;
+    this->connectors.at(connector)->powermeter.emplace(power_meter);
 }
 
 void ChargePoint::on_max_current_offered(int32_t connector, int32_t max_current) {
@@ -2244,10 +2265,16 @@ void ChargePoint::on_transaction_started(const int32_t& connector, const std::st
     }
 
     auto meter_values_sample_timer = std::make_unique<Everest::SteadyTimer>(&this->io_service, [this, connector]() {
-        auto meter_value = this->get_latest_meter_value(
+        const auto meter_value = this->get_latest_meter_value(
             connector, this->configuration->getMeterValuesSampledDataVector(), ReadingContext::Sample_Periodic);
-        this->transaction_handler->add_meter_value(connector, meter_value);
-        this->send_meter_value(connector, meter_value);
+        if (meter_value.has_value()) {
+            this->transaction_handler->add_meter_value(connector, meter_value.value());
+            this->send_meter_value(connector, meter_value.value());
+        } else {
+            EVLOG_warning
+                << "Could not send and add meter value to transaction for uninitialized powermeter at connector#"
+                << connector;
+        }
     });
     meter_values_sample_timer->interval(std::chrono::seconds(this->configuration->getMeterValueSampleInterval()));
     std::shared_ptr<Transaction> transaction =

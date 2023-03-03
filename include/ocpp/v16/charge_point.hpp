@@ -165,7 +165,7 @@ private:
     void update_heartbeat_interval();
     void update_meter_values_sample_interval();
     void update_clock_aligned_meter_values_interval();
-    MeterValue get_latest_meter_value(int32_t connector, std::vector<MeasurandWithPhase> values_of_interest,
+    boost::optional<MeterValue> get_latest_meter_value(int32_t connector, std::vector<MeasurandWithPhase> values_of_interest,
                                       ReadingContext context);
     MeterValue get_signed_meter_value(const std::string& signed_value, const ReadingContext& context,
                                       const ocpp::DateTime& datetime);
