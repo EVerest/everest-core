@@ -911,6 +911,11 @@ void ChargePoint::handleBootNotificationResponse(ocpp::CallResult<BootNotificati
         // activate clock aligned sampling of meter values
         this->update_clock_aligned_meter_values_interval();
 
+        // send initial StatusNotification.req
+        for (int32_t connector = 0; connector <= this->configuration->getNumberOfConnectors(); connector++) {
+            this->status_notification(connector, ChargePointErrorCode::NoError, this->status->get_state(connector));
+        }
+
         break;
     }
     case RegistrationStatus::Pending:
