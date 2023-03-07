@@ -1,0 +1,48 @@
+description: >-
+  This module includes a DIN70121 and ISO15118-2 implementation provided by
+  chargebyte GmbH
+config:
+  device:
+    description: >-
+      Ethernet device used for HLC. Any local interface that has an ipv6
+      link-local and a MAC addr will work
+    type: string
+    default: eth0
+  supported_DIN70121:
+    description: The EVSE supports the DIN SPEC
+    type: boolean
+    default: false
+  supported_ISO15118_2:
+    description: The EVSE supports ISO15118-2
+    type: boolean
+    default: true
+  highlevel_authentication_mode:
+    description: >-
+      Specify the authentication mode for the high level charging session.
+      In case charging type is basic this parameter doesn't have any effect
+    type: string
+    enum:
+    - eim
+    - pnc
+    - eim+pnc
+    default: eim
+  tls_security:
+    description: >-
+      Controls how to handle encrypted communication
+    type: string
+    enum:
+    - prohibit
+    - allow
+    - force
+    default: prohibit
+provides:
+  charger:
+    interface: ISO15118_charger
+    description: This module implements the ISO15118-2 implementation of
+      an AC or DC charger
+enable_external_mqtt: true
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+  - Fabian Hartung
+  - Mohannad Oraby
