@@ -27,7 +27,7 @@ provides:
       ignore_echo:
         description: On some hardware every message that is sent is read back, this setting filters the sent message in the reply.
         type: boolean
-        defaul: false
+        default: false
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
   authors:
