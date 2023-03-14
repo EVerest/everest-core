@@ -128,7 +128,6 @@ void WebsocketPlain::connect_plain(int32_t security_profile, bool try_once) {
 
     if (ec) {
         EVLOG_error << "Connection initialization error for plain websocket: " << ec.message();
-        return;
     }
 
     if (security_profile == 0) {
