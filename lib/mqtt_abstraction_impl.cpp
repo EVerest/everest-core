@@ -191,13 +191,15 @@ std::future<void> MQTTAbstractionImpl::spawn_main_loop_thread() {
 void MQTTAbstractionImpl::on_mqtt_message(std::shared_ptr<Message> message) {
     BOOST_LOG_FUNCTION();
 
-    std::string topic = message->topic;
-    std::string payload = message->payload;
+    const std::string& topic = message->topic;
+    const std::string& payload = message->payload;
 
     try {
         std::shared_ptr<json> data;
+        bool is_everest_topic = false;
         if (topic.find(mqtt_everest_prefix) == 0) {
             EVLOG_debug << fmt::format("topic {} starts with {}", topic, mqtt_everest_prefix);
+            is_everest_topic = true;
             try {
                 data = std::make_shared<json>(json::parse(payload));
             } catch (nlohmann::detail::parse_error& e) {
@@ -214,11 +216,19 @@ void MQTTAbstractionImpl::on_mqtt_message(std::shared_ptr<Message> message) {
 
         std::unique_lock<std::mutex> lock(handlers_mutex);
         std::vector<Handler> local_handlers;
-        for (auto& ha : this->message_handlers) {
-            std::string handler_topic = ha.first;
-            if (MQTTAbstractionImpl::check_topic_matches(topic, handler_topic)) {
+        for (auto& [handler_topic, handler] : this->message_handlers) {
+            bool topic_matches = false;
+            if (is_everest_topic) {
+                // everest topics never contain wildcards, so a direct comparison is enough
+                if (topic == handler_topic) {
+                    topic_matches = true;
+                }
+            } else {
+                topic_matches = MQTTAbstractionImpl::check_topic_matches(topic, handler_topic);
+            }
+            if (topic_matches) {
                 found = true;
-                ha.second.add(data);
+                handler.add(data);
             }
         }
         lock.unlock();
@@ -246,8 +256,7 @@ void MQTTAbstractionImpl::on_mqtt_connect() {
     // subscribe to all topics needed by currently registered handlers
     EVLOG_debug << "Subscribing to needed MQTT topics...";
     const std::lock_guard<std::mutex> lock(handlers_mutex);
-    for (auto const& ha : this->message_handlers) {
-        std::string topic = ha.first;
+    for (auto const& [topic, handler] : this->message_handlers) {
         EVLOG_debug << fmt::format("Subscribing to {}", topic);
         subscribe(topic); // FIXME(kai): get QOS from handler
     }

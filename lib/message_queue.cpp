@@ -58,14 +58,13 @@ MessageQueue::~MessageQueue() {
 MessageHandler::MessageHandler() : running(true) {
     this->handler_thread = std::thread([this]() {
         while (true) {
-            std::shared_ptr<json> message;
             std::unique_lock<std::mutex> lock(this->handler_ctrl_mutex);
             this->cv.wait(lock, [this]() { return !this->message_queue.empty() || this->running == false; });
             if (!this->running) {
                 return;
             }
 
-            message = this->message_queue.front();
+            auto message = std::move(this->message_queue.front());
             this->message_queue.pop();
             lock.unlock();
 

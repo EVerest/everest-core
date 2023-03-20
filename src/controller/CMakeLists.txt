@@ -18,7 +18,6 @@ add_executable(controller
 
 target_include_directories(controller PRIVATE
     ${PROJECT_SOURCE_DIR}/include
-    ${websocketpp_SOURCE_DIR}
 )
 
 target_link_libraries(controller
