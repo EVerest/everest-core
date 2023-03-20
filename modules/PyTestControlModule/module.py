@@ -61,6 +61,9 @@ def init():
         evse_handles_.append([req_id_module, connector_1])
         connector_1.subscribe_session_event(process_session_event)
 
+    if len(setup_.r_connector_1.items()) < 1:
+        logging.debug("No EVSE connector available.")
+
 
 def ready():
     """Default pre-init function for PyTestControlModule.
@@ -129,7 +132,10 @@ def pause_charging(evse_number=0):
     Args:
         evse_number (int, optional): Which EVSE manager to send this command to. Defaults to 0.
     """
-    evse_handles_[evse_number].call_pause_charging()
+    if evse_handles_  != []:
+        evse_handles_[evse_number].call_pause_charging()
+    else:
+        logging.debug("Attempt to call 'pause_charging()', but no EVSE connection available!")
 
 
 def resume_charging(evse_number=0):
@@ -138,7 +144,10 @@ def resume_charging(evse_number=0):
     Args:
         evse_number (int, optional): Which EVSE manager to send this command to. Defaults to 0.
     """
-    evse_handles_[evse_number].call_resume_charging()
+    if evse_handles_  != []:
+        evse_handles_[evse_number].call_resume_charging()
+    else:
+        logging.debug("Attempt to call 'resume_charging()', but no EVSE connection available!")
 
 
 def set_local_max_current(evse_number=0, max_current_A=0.0):
@@ -148,4 +157,7 @@ def set_local_max_current(evse_number=0, max_current_A=0.0):
         evse_number (int, optional): Which EVSE manager to send this command to. Defaults to 0.
         max_current_A (float): Which maximum current to set in the EVSE manager in Ampere. Defaults to 0.0 A.
     """
-    evse_handles_[evse_number].call_set_local_max_current(max_current_A)
+    if evse_handles_  != []:
+        evse_handles_[evse_number].call_set_local_max_current(max_current_A)
+    else:
+        logging.debug("Attempt to call 'set_local_max_current()', but no EVSE connection available!")
