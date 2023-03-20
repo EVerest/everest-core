@@ -50,7 +50,7 @@ To install the [Everest Dependency Manager](https://github.com/EVerest/everest-d
 
 Install required python packages:
 ```bash
-python3 -m pip install --upgrade pip setuptools wheel jstyleson jsonschema
+python3 -m pip install --upgrade pip setuptools wheel jstyleson jsonschema environs psutil aiofile py4j
 ```
 Get EDM source files and change into the directory:
 ```bash
