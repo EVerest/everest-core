@@ -31,7 +31,7 @@ After execution a "results.xml" file should be available in the "everest-core/**
 
 ## Add own test sets
 
-To create own test sets, you need to write a new python file in the "everest-core**/tests/core_tests/**" folder. A basic file template would look like this:
+To create own test sets, you need to write a new python file in the "everest-core/**tests/core_tests/**" folder. A basic file template would look like this:
 
 ```python
 import logging
@@ -58,15 +58,15 @@ async def test_001_my_first_test(everest_core: EverestCore,
 
 \*Note: All test functions' names NEED to start with "test" (see pytest documentation: https://docs.pytest.org/)
 
-In the above example you then would also have to write a (user-)validation function by the name of "my_validation_function()" in the "everest-core**/tests/core_tests/validations/user_functions.py**" file.
+In the above example you then would also have to write a (user-)validation function by the name of "my_validation_function()" in the "everest-core/**tests/core_tests/validations/user_functions.py**" file.
 
-For this, you can utilize helper functions from the "everest-core**/tests/core_tests/validations/base_functions.py**" file (e.g. "get_key_if_exists()" to traverse and retrieve event data from an event-object).
+For this, you can utilize helper functions from the "everest-core/**tests/core_tests/validations/base_functions.py**" file (e.g. "get_key_if_exists()" to traverse and retrieve event data from an event-object).
 
 **Attention**: When you change something in the test- or validation files, please do not forget to run "*make install*" on everest-core before starting the tests, as otherwise the changes are not reflected in the test run!
 
 ### Controlling more functionality with PyTestControlModule
 
-If you would like to receive other everest-internal data, send commands to other everest-core modules or would like to change the received events for everest-testing, you can modify the **PyTestControlModule** in the "everest-core**/modules/PyTestControlModule**" folder.
+If you would like to receive other everest-internal data, send commands to other everest-core modules or would like to change the received events for everest-testing, you can modify the **PyTestControlModule** in the "everest-core/**modules/PyTestControlModule**" folder.
 
 **Attention:** Please be aware, though, that the use of this module is preliminary and changes in the *everest-framework* may render this module **obsolete** in the future!
 
