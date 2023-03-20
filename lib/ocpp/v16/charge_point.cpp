@@ -167,9 +167,15 @@ void ChargePoint::init_websocket(int32_t security_profile) {
         if (this->switch_security_profile_callback != nullptr) {
             this->switch_security_profile_callback();
         }
-        this->ocsp_request_timer->stop();
-        this->v2g_certificate_timer->stop();
-        this->client_certificate_timer->stop();
+        if (this->ocsp_request_timer != nullptr) {
+            this->ocsp_request_timer->stop();
+        }
+        if (this->client_certificate_timer != nullptr) {
+            this->client_certificate_timer->stop();
+        }
+        if (this->v2g_certificate_timer != nullptr) {
+            this->v2g_certificate_timer->stop();
+        }
     });
 
     this->websocket->register_message_callback([this](const std::string& message) { this->message_callback(message); });
