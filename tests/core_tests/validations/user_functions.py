@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
-from validations.validations import get_key_if_exists
+from validations.base_functions import get_key_if_exists
 
 validation_memory = []
 

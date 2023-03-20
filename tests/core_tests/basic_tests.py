@@ -7,10 +7,10 @@ import logging
 import pytest
 
 from everest.testing.core_utils.fixtures import *
-from validations.validations import wait_for_and_validate_event
+from validations.base_functions import wait_for_and_validate_event
 from everest.testing.core_utils.test_control_module import TestControlModule
 from everest.testing.core_utils.everest_core import EverestCore
-from validations.validation_functions import *
+from validations.user_functions import *
 
 @ pytest.mark.asyncio
 async def test_000_startup_check(everest_core: EverestCore):
