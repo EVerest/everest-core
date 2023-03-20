@@ -15,8 +15,8 @@ python3 -m pip install .
 
 To start you should try executing the available basic tests:
 
-  - **startup_tests.py** (checks if all test functionality can be started correctly, but does not yet do any value-based integration testing)
-  - **basic_charging_tests.py** (tests a basic charging situation: enable charging -> wait 20 seconds -> check if a certain minimum amount of kWhs have been charged)
+-   **startup_tests.py** (checks if all test functionality can be started correctly, but does not yet do any value-based integration testing)
+-   **basic_charging_tests.py** (tests a basic charging situation: enable charging -> wait 20 seconds -> check if a certain minimum amount of kWhs have been charged)
 
 Go to your "everest-core/**tests**" folder and execute *pytest*:
 
