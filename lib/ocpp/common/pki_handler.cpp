@@ -379,16 +379,16 @@ std::string PkiHandler::generateCsr(const CertificateSigningUseEnum& certificate
     // set subject of x509 req
     X509_NAME_ptr x509_name_ptr(X509_REQ_get_subject_name(x509_req), ::X509_NAME_free);
     assert(rc == 1);
-    X509_NAME_add_entry_by_txt(x509_name_ptr.get(), "C", MBSTRING_ASC, (const unsigned char*)szCountry.c_str(), -1, -1,
+    X509_NAME_add_entry_by_txt(x509_name_ptr.get(), "C", MBSTRING_ASC, reinterpret_cast<const unsigned char*>(szCountry.c_str()), -1, -1,
                                0);
     assert(rc == 1);
-    X509_NAME_add_entry_by_txt(x509_name_ptr.get(), "O", MBSTRING_ASC, (const unsigned char*)szOrganization.c_str(), -1,
+    X509_NAME_add_entry_by_txt(x509_name_ptr.get(), "O", MBSTRING_ASC, reinterpret_cast<const unsigned char*>(szOrganization.c_str()), -1,
                                -1, 0);
     assert(rc == 1);
-    X509_NAME_add_entry_by_txt(x509_name_ptr.get(), "CN", MBSTRING_ASC, (const unsigned char*)szCommon.c_str(), -1, -1,
+    X509_NAME_add_entry_by_txt(x509_name_ptr.get(), "CN", MBSTRING_ASC, reinterpret_cast<const unsigned char*>(szCommon.c_str()), -1, -1,
                                0);
     assert(rc == 1);
-    X509_NAME_add_entry_by_txt(x509_name_ptr.get(), "DC", MBSTRING_ASC, (const unsigned char*)"CPO", -1, -1, 0);
+    X509_NAME_add_entry_by_txt(x509_name_ptr.get(), "DC", MBSTRING_ASC, reinterpret_cast<const unsigned char*>("CPO"), -1, -1, 0);
 
     // 5. set public key of x509 req
     EVP_PKEY_assign_RSA(pKey.get(), r);
