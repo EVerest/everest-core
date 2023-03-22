@@ -113,8 +113,10 @@ void SessionLog::stopSession() {
         }
 
         // rename files to indicate they are finished now
-        std::filesystem::rename(fn, fn_complete);
-        std::filesystem::rename(fnhtml, fnhtml_complete);
+        if (std::filesystem::exists(fn))
+            std::filesystem::rename(fn, fn_complete);
+        if (std::filesystem::exists(fnhtml))
+            std::filesystem::rename(fnhtml, fnhtml_complete);
 
         session_active = false;
     }
