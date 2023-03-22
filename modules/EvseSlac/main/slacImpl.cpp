@@ -136,6 +136,8 @@ void slacImpl::run() {
                 // FIMXE (aw): this needs to be implemented in a higher level ->
                 //             stipulate link establishment if appropriate
                 fsm_ctrl.submit_event(EventLinkDetected());
+                // FIXME (aw): this control-flow is not that straight forward
+                continue;
                 break;
             default:
                 break;
