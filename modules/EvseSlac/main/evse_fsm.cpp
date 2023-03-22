@@ -341,6 +341,9 @@ void EvseFSM::sd_wait_for_matching_hsm(FSMContextType& ctx, const EventSlacMessa
 
     slac_io.send(msg_out);
 
+    signal_ev_mac_address_parm_req(
+        std::string{reinterpret_cast<const char*>(matching_ctx.ev_mac), sizeof(matching_ctx.ev_mac)});
+
     ctx.submit_event(EventStartMatching());
 }
 
@@ -471,6 +474,10 @@ void EvseFSM::sd_wait_for_slac_match_hsm(TransitionType& trans, const EventSlacM
                           slac::defs::MMTYPE_CM_SLAC_MATCH | slac::defs::MMTYPE_MODE_CNF);
 
     slac_io.send(msg_out);
+
+    signal_ev_mac_address_match_cnf(
+        std::string{reinterpret_cast<const char*>(match_cnf.pev_mac), sizeof(match_cnf.pev_mac)});
+    EVLOG_debug << "SLAC_MATCH.CNF send.";
 
     trans.set(sd_received_slac_match);
 }

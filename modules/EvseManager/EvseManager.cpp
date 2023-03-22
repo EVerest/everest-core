@@ -9,6 +9,19 @@ using namespace std::literals::chrono_literals;
 
 namespace module {
 
+inline static void trim_colons_from_string(std::string& text) {
+    text.erase(remove(text.begin(), text.end(), ':'), text.end());
+}
+
+inline static types::authorization::ProvidedIdToken create_autocharge_token(std::string token, int connector_id) {
+    types::authorization::ProvidedIdToken autocharge_token;
+    autocharge_token.type = types::authorization::TokenType::Autocharge;
+    trim_colons_from_string(token);
+    autocharge_token.id_token = "VID:" + token;
+    autocharge_token.connectors.emplace(connector_id, 1);
+    return autocharge_token;
+}
+
 void EvseManager::init() {
     local_three_phases = config.three_phases;
 
@@ -29,6 +42,14 @@ void EvseManager::init() {
     if (!(config.ac_hlc_enabled || config.ac_with_soc || config.charge_mode == "DC")) {
         slac_enabled = false;
     }
+
+    // Use SLAC MAC address for Autocharge if configured.
+    if (config.autocharge_use_slac_instead_of_hlc && slac_enabled) {
+        r_slac[0]->subscribe_ev_mac_address([this](const std::string& token) {
+            p_token_provider->publish_provided_token(create_autocharge_token(token, config.connector_id));
+        });
+    }
+
     hlc_enabled = !r_hlc.empty();
 
     if (config.charge_mode == "DC" && (!hlc_enabled || !slac_enabled || r_powersupply_DC.empty())) {
@@ -349,22 +370,18 @@ void EvseManager::ready() {
             }
         });
 
-        // implement Auth handlers
-        r_hlc[0]->subscribe_EVCCIDD([this](const std::string& _token) {
-            std::string token = _token;
-            token.erase(remove(token.begin(), token.end(), ':'), token.end());
-            autocharge_token.id_token = "VID:" + token;
-            autocharge_token.type = types::authorization::TokenType::Autocharge;
-            std::vector<int> referenced_connectors = {this->config.connector_id};
-            autocharge_token.connectors.emplace(referenced_connectors);
+        if (!config.autocharge_use_slac_instead_of_hlc) {
+            r_hlc[0]->subscribe_EVCCIDD([this](const std::string& token) {
+                autocharge_token = create_autocharge_token(token, config.connector_id);
 
-            {
-                std::scoped_lock lock(ev_info_mutex);
-                ev_info.evcc_id = _token;
-                p_evse->publish_ev_info(ev_info);
-            }
-        });
-       
+                {
+                    std::scoped_lock lock(ev_info_mutex);
+                    ev_info.evcc_id = token;
+                    p_evse->publish_ev_info(ev_info);
+                }
+            });
+        }
+
         r_hlc[0]->subscribe_Require_Auth_PnC([this](types::authorization::ProvidedIdToken _token) {
             // Do we have auth already (i.e. delayed HLC after charging already running)?
 
@@ -383,7 +400,7 @@ void EvseManager::ready() {
                 hlc_waiting_for_auth_pnc = true;
             }
         });
-        
+
         // Install debug V2G Messages handler if session logging is enabled
         if (config.session_logging) {
             r_hlc[0]->subscribe_V2G_Messages([this](types::iso15118_charger::V2G_Messages v2g_messages) {
@@ -617,7 +634,7 @@ void EvseManager::ready() {
         setup_fake_DC_mode();
     } else {
         charger->setup(local_three_phases, config.has_ventilation, config.country_code, config.rcd_enabled,
-                       (config.charge_mode == "DC" ? Charger::ChargeMode::DC : Charger::ChargeMode::AC), slac_enabled,
+                       (config.charge_mode == "DC" ? Charger::ChargeMode::DC : Charger::ChargeMode::AC), hlc_enabled,
                        config.ac_hlc_use_5percent, config.ac_enforce_hlc, false);
     }
     //  start with a limit of 0 amps. We will get a budget from EnergyManager that is locally limited by hw
@@ -729,7 +746,8 @@ void EvseManager::ready() {
         }
     });
 
-    EVLOG_info << fmt::format(fmt::emphasis::bold | fg(fmt::terminal_color::green), "🌀🌀🌀 Ready to start charging 🌀🌀🌀");
+    EVLOG_info << fmt::format(fmt::emphasis::bold | fg(fmt::terminal_color::green),
+                              "🌀🌀🌀 Ready to start charging 🌀🌀🌀");
 }
 
 types::powermeter::Powermeter EvseManager::get_latest_powermeter_data_billing() {
@@ -760,7 +778,7 @@ void EvseManager::switch_AC_mode() {
 // It is only used for AC<>DC<>AC<>DC mode to get AC charging with SoC.
 void EvseManager::setup_fake_DC_mode() {
     charger->setup(local_three_phases, config.has_ventilation, config.country_code, config.rcd_enabled,
-                   Charger::ChargeMode::DC, slac_enabled, config.ac_hlc_use_5percent, config.ac_enforce_hlc, false);
+                   Charger::ChargeMode::DC, hlc_enabled, config.ac_hlc_use_5percent, config.ac_enforce_hlc, false);
 
     // Set up energy transfer modes for HLC. For now we only support either DC or AC, not both at the same time.
     Array transfer_modes;
@@ -792,7 +810,7 @@ void EvseManager::setup_fake_DC_mode() {
 
 void EvseManager::setup_AC_mode() {
     charger->setup(local_three_phases, config.has_ventilation, config.country_code, config.rcd_enabled,
-                   Charger::ChargeMode::AC, slac_enabled, config.ac_hlc_use_5percent, config.ac_enforce_hlc, true);
+                   Charger::ChargeMode::AC, hlc_enabled, config.ac_hlc_use_5percent, config.ac_enforce_hlc, true);
 
     // Set up energy transfer modes for HLC. For now we only support either DC or AC, not both at the same time.
     Array transfer_modes;
@@ -1099,10 +1117,8 @@ bool EvseManager::powersupply_DC_set(double _voltage, double _current) {
             // now also limit with the limits given by the energymanager.
             // FIXME: dont do this for now, see if the car reduces if we supply new limits.
 
-            session_log.evse(
-                false,
-                fmt::format("BPT HACK: DC power supply set: {}V/{}A, requested was {}V/{}A.",
-                            voltage, current, _voltage, _current));
+            session_log.evse(false, fmt::format("BPT HACK: DC power supply set: {}V/{}A, requested was {}V/{}A.",
+                                                voltage, current, _voltage, _current));
 
             // set the new limits for the DC output
             r_powersupply_DC[0]->call_setImportVoltageCurrent(voltage, current);
@@ -1138,9 +1154,8 @@ bool EvseManager::powersupply_DC_set(double _voltage, double _current) {
             // now also limit with the limits given by the energymanager.
             // FIXME: dont do this for now, see if the car reduces if we supply new limits.
 
-            session_log.evse(
-                false, fmt::format("DC power supply set: {}V/{}A, requested was {}V/{}A.",
-                                   voltage, current, _voltage, _current));
+            session_log.evse(false, fmt::format("DC power supply set: {}V/{}A, requested was {}V/{}A.", voltage,
+                                                current, _voltage, _current));
 
             // set the new limits for the DC output
             r_powersupply_DC[0]->call_setExportVoltageCurrent(voltage, current);

@@ -72,6 +72,7 @@ struct Conf {
     std::string connector_type;
     bool hack_pause_imd_during_precharge;
     bool hack_allow_bpt_with_iso2;
+    bool autocharge_use_slac_instead_of_hlc;
 };
 
 class EvseManager : public Everest::ModuleBase {

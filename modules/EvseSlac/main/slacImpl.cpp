@@ -40,6 +40,13 @@ bool send_event(const EvseFSM::EventInfoType::BaseType& event) {
 namespace module {
 namespace main {
 
+static std::string mac_to_ascii(const std::string& mac_binary) {
+    if (mac_binary.size() < 6)
+        return "";
+    return fmt::format("{:02X}:{:02X}:{:02X}:{:02X}:{:02X}:{:02X}", mac_binary[0], mac_binary[1], mac_binary[2],
+                       mac_binary[3], mac_binary[4], mac_binary[5]);
+}
+
 void slacImpl::init() {
     // initialize static variables
     new_event = false;
@@ -82,6 +89,19 @@ void slacImpl::run() {
 
     EVLOG_debug << "Starting the SLAC state machine";
 
+    // connect MAC address signals for Autocharge
+    if (config.publish_mac_on_first_parm_req) {
+        fsm.signal_ev_mac_address_parm_req.connect(
+            [this](const std::string& ev_mac) { publish_ev_mac_address(mac_to_ascii(ev_mac)); });
+    }
+
+    if (config.publish_mac_on_match_cnf) {
+        fsm.signal_ev_mac_address_match_cnf.connect(
+            [this](const std::string& ev_mac) { publish_ev_mac_address(mac_to_ascii(ev_mac)); });
+    }
+
+    // signal_ev_mac_address_parm_req
+
     fsm.generate_nmk();
 
     fsm.set_five_percent_mode(config.ac_mode_five_percent);
@@ -121,6 +141,7 @@ void slacImpl::run() {
                 break;
             case State::Matched:
                 matched = true;
+                EVLOG_debug << "publish MATCHED";
                 publish_dlink_ready(true);
                 publish_state("MATCHED");
                 break;
@@ -135,6 +156,7 @@ void slacImpl::run() {
                 //             be in principle available now
                 // FIMXE (aw): this needs to be implemented in a higher level ->
                 //             stipulate link establishment if appropriate
+                EVLOG_debug << "State::ReceivedSlacMatch";
                 fsm_ctrl.submit_event(EventLinkDetected());
                 // FIXME (aw): this control-flow is not that straight forward
                 continue;

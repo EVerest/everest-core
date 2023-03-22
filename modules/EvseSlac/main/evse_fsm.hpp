@@ -10,6 +10,7 @@
 
 #include <fsm/sync.hpp>
 #include <fsm/utils/Identifiable.hpp>
+#include <sigslot/signal.hpp>
 
 #include "slac_io.hpp"
 
@@ -95,6 +96,9 @@ public:
     void generate_nmk();
 
     explicit EvseFSM(SlacIO& slac_io, int _set_key_timeout);
+
+    sigslot::signal<std::string> signal_ev_mac_address_match_cnf;
+    sigslot::signal<std::string> signal_ev_mac_address_parm_req;
 
 private:
     using SlacMsgType = slac::messages::HomeplugMessage;
