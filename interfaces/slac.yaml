@@ -53,3 +53,7 @@ vars:
       Inform the higher layer to execute the error routine for a SLAC connection
       retry
     type: 'null'
+  ev_mac_address:
+    description: >-
+      Inform higher layers about the MAC address of the vehicle.
+    type: string

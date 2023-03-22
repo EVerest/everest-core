@@ -148,6 +148,10 @@ config:
       always be positive but power supply may actually discharge the car. 
     type: boolean
     default: false
+  autocharge_use_slac_instead_of_hlc:
+    description: Use slac ev mac address for autocharge instead of EVCCID from HLC 
+    type: boolean
+    default: false
 provides:
   evse:
     interface: evse_manager

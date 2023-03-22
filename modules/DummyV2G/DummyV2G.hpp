@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifndef EVSE_SLAC_HPP
-#define EVSE_SLAC_HPP
+#ifndef DUMMY_V2G_HPP
+#define DUMMY_V2G_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
@@ -11,29 +11,27 @@
 #include "ld-ev.hpp"
 
 // headers for provided interface implementations
-#include <generated/interfaces/slac/Implementation.hpp>
+#include <generated/interfaces/ISO15118_charger/Implementation.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
-#include <sigslot/signal.hpp>
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
 
 struct Conf {};
 
-class EvseSlac : public Everest::ModuleBase {
+class DummyV2G : public Everest::ModuleBase {
 public:
-    EvseSlac() = delete;
-    EvseSlac(const ModuleInfo& info, std::unique_ptr<slacImplBase> p_main, Conf& config) :
+    DummyV2G() = delete;
+    DummyV2G(const ModuleInfo& info, std::unique_ptr<ISO15118_chargerImplBase> p_main, Conf& config) :
         ModuleBase(info), p_main(std::move(p_main)), config(config){};
 
     const Conf& config;
-    const std::unique_ptr<slacImplBase> p_main;
+    const std::unique_ptr<ISO15118_chargerImplBase> p_main;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
-    sigslot::signal<std::string> signal_ev_mac_address;
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
@@ -57,4 +55,4 @@ private:
 
 } // namespace module
 
-#endif // EVSE_SLAC_HPP
+#endif // DUMMY_V2G_HPP
