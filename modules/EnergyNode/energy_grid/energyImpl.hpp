@@ -55,6 +55,7 @@ private:
     // contains only the pricing informations last update
     types::energy_price_information::EnergyPriceSchedule energy_pricing;
 
+    types::energy::ScheduleReqEntry get_local_schedule();
     void publish_complete_energy_object();
     void set_external_limits(types::energy::ExternalLimits& l);
     void merge_price_into_schedule(std::vector<types::energy::ScheduleReqEntry>& schedule,

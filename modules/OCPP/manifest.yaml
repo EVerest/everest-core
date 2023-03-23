@@ -19,7 +19,8 @@ config:
   PublishChargingScheduleIntervalS:
     description:
       Interval in seconds in which charging schedules received from OCPP
-      are be published
+      are be published over MQTT and signalled to connected modules. If the value
+      is set to 0, charging schedules are only published when changed by CSMS
     type: integer
     default: 30
   PublishChargingScheduleDurationS:
@@ -45,6 +46,10 @@ requires:
     interface: evse_manager
     min_connections: 1
     max_connections: 128
+  connector_zero_sink:
+    interface: external_energy_limits
+    min_connections: 0
+    max_connections: 1
   reservation:
     interface: reservation
     min_connections: 1

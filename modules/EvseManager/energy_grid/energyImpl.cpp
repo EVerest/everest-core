@@ -37,11 +37,11 @@ void energyImpl::init() {
     }
 }
 
-void energyImpl::clear_request_schedules(types::energy::EnergyFlowRequest& energy_flow_request) {
-    types::energy::ScheduleReqEntry entry_import, entry_export;
-    auto hw_caps = mod->get_hw_capabilities();
-    auto tpnow = date::utc_clock::now();
-    auto tp =
+void energyImpl::clear_import_request_schedule() {
+    types::energy::ScheduleReqEntry entry_import;
+    const auto hw_caps = mod->get_hw_capabilities();
+    const auto tpnow = date::utc_clock::now();
+    const auto tp =
         Everest::Date::to_rfc3339(date::floor<std::chrono::hours>(tpnow) + date::get_leap_second_info(tpnow).elapsed);
 
     entry_import.timestamp = tp;
@@ -52,6 +52,15 @@ void energyImpl::clear_request_schedules(types::energy::EnergyFlowRequest& energ
     entry_import.limits_to_root.ac_supports_changing_phases_during_charging =
         hw_caps.supports_changing_phases_during_charging;
     entry_import.conversion_efficiency = mod->powersupply_capabilities.conversion_efficiency_export;
+    energy_flow_request.schedule_import.emplace(std::vector<types::energy::ScheduleReqEntry>({entry_import}));
+}
+
+void energyImpl::clear_export_request_schedule() {
+    types::energy::ScheduleReqEntry entry_export;
+    const auto hw_caps = mod->get_hw_capabilities();
+    const auto tpnow = date::utc_clock::now();
+    const auto tp =
+        Everest::Date::to_rfc3339(date::floor<std::chrono::hours>(tpnow) + date::get_leap_second_info(tpnow).elapsed);
 
     entry_export.timestamp = tp;
     entry_export.limits_to_root.ac_max_phase_count = hw_caps.max_phase_count_export;
@@ -61,14 +70,17 @@ void energyImpl::clear_request_schedules(types::energy::EnergyFlowRequest& energ
     entry_export.limits_to_root.ac_supports_changing_phases_during_charging =
         hw_caps.supports_changing_phases_during_charging;
     entry_export.conversion_efficiency = mod->powersupply_capabilities.conversion_efficiency_import;
-
-    energy_flow_request.schedule_import.emplace(std::vector<types::energy::ScheduleReqEntry>({entry_import}));
     energy_flow_request.schedule_export.emplace(std::vector<types::energy::ScheduleReqEntry>({entry_export}));
+}
+
+void energyImpl::clear_request_schedules() {
+    this->clear_import_request_schedule();
+    this->clear_export_request_schedule();
 }
 
 void energyImpl::ready() {
 
-    clear_request_schedules(energy_flow_request);
+    clear_request_schedules();
 
     // start thread to publish our energy object
     std::thread([this] {
@@ -93,7 +105,11 @@ void energyImpl::ready() {
 
                     // copy complete external limit schedules
                     if (mod->getLocalEnergyLimits().schedule_import.has_value()) {
-                        energy_flow_request.schedule_import = mod->getLocalEnergyLimits().schedule_import;
+                        if (!mod->getLocalEnergyLimits().schedule_import.value().empty()) {
+                            energy_flow_request.schedule_import = mod->getLocalEnergyLimits().schedule_import;
+                        } else {
+                            clear_import_request_schedule();
+                        }
                     }
 
                     // apply our local hardware limits on root side
@@ -114,7 +130,11 @@ void energyImpl::ready() {
                     }
 
                     if (mod->getLocalEnergyLimits().schedule_export.has_value()) {
-                        energy_flow_request.schedule_export = mod->getLocalEnergyLimits().schedule_export;
+                        if (!mod->getLocalEnergyLimits().schedule_export.value().empty()) {
+                            energy_flow_request.schedule_export = mod->getLocalEnergyLimits().schedule_export;
+                        } else {
+                            clear_export_request_schedule();
+                        }
                     }
 
                     // apply our local hardware limits on root side
@@ -145,7 +165,7 @@ void energyImpl::ready() {
                     }
 
                 } else {
-                    clear_request_schedules(energy_flow_request);
+                    clear_request_schedules();
 
                     if (mod->config.charge_mode == "DC") {
                         // we dont need power at the moment
@@ -169,6 +189,9 @@ void energyImpl::ready() {
 void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
     if (value.uuid == energy_flow_request.uuid) {
         // EVLOG_info << "Incoming enforce limits" << value;
+
+        // publish for e.g. OCPP module
+        mod->p_evse->publish_enforced_limits(value);
 
         //   set hardware limit
         float limit = 0.;

@@ -5,7 +5,7 @@
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 1
+// template version 2
 //
 
 #include "ld-ev.hpp"
@@ -18,9 +18,9 @@
 // headers for required interface implementations
 #include <generated/interfaces/auth/Interface.hpp>
 #include <generated/interfaces/evse_manager/Interface.hpp>
+#include <generated/interfaces/external_energy_limits/Interface.hpp>
 #include <generated/interfaces/reservation/Interface.hpp>
 #include <generated/interfaces/system/Interface.hpp>
-#include <generated/interfaces/ISO15118_charger/Interface.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
@@ -30,11 +30,11 @@
 #include <everest/timer.hpp>
 #include <filesystem>
 #include <mutex>
-#include <ocpp/v16/charge_point.hpp>
-#include <ocpp/v201/ocpp_types.hpp>
 #include <ocpp/common/schemas.hpp>
 #include <ocpp/common/types.hpp>
+#include <ocpp/v16/charge_point.hpp>
 #include <ocpp/v16/types.hpp>
+#include <ocpp/v201/ocpp_types.hpp>
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -56,14 +56,17 @@ public:
          std::unique_ptr<ocpp_1_6_charge_pointImplBase> p_main,
          std::unique_ptr<auth_token_validatorImplBase> p_auth_validator,
          std::unique_ptr<auth_token_providerImplBase> p_auth_provider,
-         std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager, std::unique_ptr<reservationIntf> r_reservation,
-         std::unique_ptr<authIntf> r_auth, std::unique_ptr<systemIntf> r_system, Conf& config) :
+         std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager,
+         std::vector<std::unique_ptr<external_energy_limitsIntf>> r_connector_zero_sink,
+         std::unique_ptr<reservationIntf> r_reservation, std::unique_ptr<authIntf> r_auth,
+         std::unique_ptr<systemIntf> r_system, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_main(std::move(p_main)),
         p_auth_validator(std::move(p_auth_validator)),
         p_auth_provider(std::move(p_auth_provider)),
         r_evse_manager(std::move(r_evse_manager)),
+        r_connector_zero_sink(std::move(r_connector_zero_sink)),
         r_reservation(std::move(r_reservation)),
         r_auth(std::move(r_auth)),
         r_system(std::move(r_system)),
@@ -75,6 +78,7 @@ public:
     const std::unique_ptr<auth_token_validatorImplBase> p_auth_validator;
     const std::unique_ptr<auth_token_providerImplBase> p_auth_provider;
     const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;
+    const std::vector<std::unique_ptr<external_energy_limitsIntf>> r_connector_zero_sink;
     const std::unique_ptr<reservationIntf> r_reservation;
     const std::unique_ptr<authIntf> r_auth;
     const std::unique_ptr<systemIntf> r_system;
@@ -98,7 +102,8 @@ private:
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
     std::filesystem::path ocpp_share_path;
-    void publish_charging_schedules();
+    void set_external_limits(const std::map<int32_t, ocpp::v16::ChargingSchedule> &charging_schedules);
+    void publish_charging_schedules(const std::map<int32_t, ocpp::v16::ChargingSchedule> &charging_schedules);
     std::thread upload_diagnostics_thread;
     std::thread upload_logs_thread;
     std::thread update_firmware_thread;

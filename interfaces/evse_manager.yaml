@@ -165,3 +165,7 @@ vars:
       Response will be reported async via  set_get_certificate_response
     type: object
     $ref: /iso15118_charger#/Request_Exi_Stream_Schema
+  enforced_limits:
+    description: Enforced limits for this node (coming from the EnergyManager)
+    type: object
+    $ref: /energy#/EnforcedLimits
