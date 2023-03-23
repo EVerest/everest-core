@@ -160,7 +160,7 @@ ScheduleReq Market::get_max_available_energy(const ScheduleReq& request) {
                 (*r).limits_to_leaves.total_power_W.value() / (*r).conversion_efficiency.value_or(1.);
         }
         // do we have a lower watt limit on root side?
-        if ((*r).limits_to_root.total_power_W.has_value() &&
+        if ((*r).limits_to_root.total_power_W.has_value() && a.limits_to_root.total_power_W.has_value() &&
             a.limits_to_root.total_power_W.value() > (*r).limits_to_root.total_power_W.value()) {
             a.limits_to_root.total_power_W = (*r).limits_to_root.total_power_W.value();
         }
