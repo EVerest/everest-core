@@ -53,7 +53,9 @@ private:
     types::energy::EnergyFlowRequest energy_flow_request;
     types::energy::LimitsRes last_enforced_limits;
     float last_target_voltage{-9999};
-    void clear_request_schedules(types::energy::EnergyFlowRequest& energy_flow_request);
+    void clear_import_request_schedule();
+    void clear_export_request_schedule();
+    void clear_request_schedules();
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 

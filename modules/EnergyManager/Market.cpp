@@ -148,38 +148,40 @@ ScheduleReq Market::get_max_available_energy(const ScheduleReq& request) {
                 break;
             }
             auto tp_r_2 = Everest::Date::from_rfc3339((*(ir + 1)).timestamp);
-            if (tp_a >= tp_r_1 && tp_a < tp_r_2) {
+            if (tp_a >= tp_r_1 && tp_a < tp_r_2 || (ir == request.begin() && tp_a < tp_r_1)) {
                 r = ir;
                 break;
             }
         }
 
-        // apply watt limit from leaf side to root side
-        if ((*r).limits_to_leaves.total_power_W.has_value()) {
-            a.limits_to_root.total_power_W =
-                (*r).limits_to_leaves.total_power_W.value() / (*r).conversion_efficiency.value_or(1.);
+        if (r != request.end()) {
+            // apply watt limit from leaf side to root side
+            if ((*r).limits_to_leaves.total_power_W.has_value()) {
+                a.limits_to_root.total_power_W =
+                    (*r).limits_to_leaves.total_power_W.value() / (*r).conversion_efficiency.value_or(1.);
+            }
+            // do we have a lower watt limit on root side?
+            if ((*r).limits_to_root.total_power_W.has_value() && a.limits_to_root.total_power_W.has_value() &&
+                a.limits_to_root.total_power_W.value() > (*r).limits_to_root.total_power_W.value()) {
+                a.limits_to_root.total_power_W = (*r).limits_to_root.total_power_W.value();
+            }
+            // apply ampere limit from leaf side to root side
+            if ((*r).limits_to_leaves.ac_max_current_A.has_value()) {
+                a.limits_to_root.ac_max_current_A =
+                    (*r).limits_to_leaves.ac_max_current_A.value() / (*r).conversion_efficiency.value_or(1.);
+            }
+            // do we have a lower ampere limit on root side?
+            if ((*r).limits_to_root.ac_max_current_A.has_value() &&
+                a.limits_to_root.ac_max_current_A > (*r).limits_to_root.ac_max_current_A.value()) {
+                a.limits_to_root.ac_max_current_A = (*r).limits_to_root.ac_max_current_A.value();
+            }
+            // all request limits have been merged on root side in available.
+            // copy pricing information data if any
+            a.price_per_kwh = (*r).price_per_kwh;
+            a.limits_to_root.ac_min_current_A = (*r).limits_to_root.ac_min_current_A;
+            a.limits_to_root.ac_min_phase_count = (*r).limits_to_root.ac_min_phase_count;
+            a.limits_to_root.ac_max_phase_count = (*r).limits_to_root.ac_max_phase_count;
         }
-        // do we have a lower watt limit on root side?
-        if ((*r).limits_to_root.total_power_W.has_value() && a.limits_to_root.total_power_W.has_value() &&
-            a.limits_to_root.total_power_W.value() > (*r).limits_to_root.total_power_W.value()) {
-            a.limits_to_root.total_power_W = (*r).limits_to_root.total_power_W.value();
-        }
-        // apply ampere limit from leaf side to root side
-        if ((*r).limits_to_leaves.ac_max_current_A.has_value()) {
-            a.limits_to_root.ac_max_current_A =
-                (*r).limits_to_leaves.ac_max_current_A.value() / (*r).conversion_efficiency.value_or(1.);
-        }
-        // do we have a lower ampere limit on root side?
-        if ((*r).limits_to_root.ac_max_current_A.has_value() &&
-            a.limits_to_root.ac_max_current_A > (*r).limits_to_root.ac_max_current_A.value()) {
-            a.limits_to_root.ac_max_current_A = (*r).limits_to_root.ac_max_current_A.value();
-        }
-        // all request limits have been merged on root side in available.
-        // copy pricing information data if any
-        a.price_per_kwh = (*r).price_per_kwh;
-        a.limits_to_root.ac_min_current_A = (*r).limits_to_root.ac_min_current_A;
-        a.limits_to_root.ac_min_phase_count = (*r).limits_to_root.ac_min_phase_count;
-        a.limits_to_root.ac_max_phase_count = (*r).limits_to_root.ac_max_phase_count;
     }
 
     return available;

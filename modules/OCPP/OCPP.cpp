@@ -50,9 +50,50 @@ void create_empty_user_config(const fs::path& user_config_path) {
     }
 }
 
-void OCPP::publish_charging_schedules() {
-    const auto charging_schedules =
-        this->charge_point->get_all_composite_charging_schedules(this->config.PublishChargingScheduleDurationS);
+void OCPP::set_external_limits(const std::map<int32_t, ocpp::v16::ChargingSchedule>& charging_schedules) {
+    const auto start_time = ocpp::DateTime();
+
+    // iterate over all schedules reported by the libocpp to create ExternalLimits for each connector
+    for (auto const& [connector_id, schedule] : charging_schedules) {
+        types::energy::ExternalLimits limits;
+        std::vector<types::energy::ScheduleReqEntry> schedule_import;
+        for (const auto period : schedule.chargingSchedulePeriod) {
+            types::energy::ScheduleReqEntry schedule_req_entry;
+            types::energy::LimitsReq limits_req;
+            const auto timestamp = start_time.to_time_point() + std::chrono::seconds(period.startPeriod);
+            schedule_req_entry.timestamp = ocpp::DateTime(timestamp).to_rfc3339();
+            if (schedule.chargingRateUnit == ocpp::v16::ChargingRateUnit::A) {
+                limits_req.ac_max_current_A = period.limit;
+                if (period.numberPhases.has_value()) {
+                    limits_req.ac_max_phase_count = period.numberPhases.value();
+                }
+                if (schedule.minChargingRate.has_value()) {
+                    limits_req.ac_min_current_A = schedule.minChargingRate.value();
+                }
+            } else {
+                limits_req.total_power_W = period.limit;
+            }
+            schedule_req_entry.limits_to_leaves = limits_req;
+            schedule_import.push_back(schedule_req_entry);
+        }
+        limits.schedule_import.emplace(schedule_import);
+
+        if (connector_id == 0) {
+            if (!this->r_connector_zero_sink.empty()) {
+                EVLOG_debug << "OCPP sets the following external limits for connector 0: \n" << limits;
+                this->r_connector_zero_sink.at(0)->call_set_external_limits(limits);
+            } else {
+                EVLOG_debug << "OCPP cannot set external limits for connector 0. No sink is configured.";
+            }
+        } else {
+            EVLOG_debug << "OCPP sets the following external limits for connector " << connector_id << ": \n" << limits;
+            this->r_evse_manager.at(connector_id - 1)->call_set_external_limits(limits);
+        }
+    }
+}
+
+void OCPP::publish_charging_schedules(const std::map<int32_t, ocpp::v16::ChargingSchedule>& charging_schedules) {
+    // publish the schedule over mqtt
     Object j;
     for (const auto charging_schedule : charging_schedules) {
         j[std::to_string(charging_schedule.first)] = charging_schedule.second;
@@ -322,12 +363,24 @@ void OCPP::init() {
                              [this](const std::string& data) { this->charge_point->disconnect_websocket(); });
     }
 
-    this->charging_schedules_timer =
-        std::make_unique<Everest::SteadyTimer>([this]() { this->publish_charging_schedules(); });
-    this->charging_schedules_timer->interval(std::chrono::seconds(this->config.PublishChargingScheduleIntervalS));
+    this->charging_schedules_timer = std::make_unique<Everest::SteadyTimer>([this]() {
+        const auto charging_schedules =
+            this->charge_point->get_all_composite_charging_schedules(this->config.PublishChargingScheduleDurationS);
+        this->set_external_limits(charging_schedules);
+        this->publish_charging_schedules(charging_schedules);
+    });
+    if (this->config.PublishChargingScheduleIntervalS > 0) {
+        this->charging_schedules_timer->interval(std::chrono::seconds(this->config.PublishChargingScheduleIntervalS));
+    }
 
-    this->charge_point->register_signal_set_charging_profiles_callback(
-        [this]() { this->publish_charging_schedules(); });
+    this->charge_point->register_signal_set_charging_profiles_callback([this]() {
+        // this is executed when CSMS sends new ChargingProfile that is accepted by the ChargePoint
+        EVLOG_info << "Received new Charging Schedules from CSMS";
+        const auto charging_schedules =
+            this->charge_point->get_all_composite_charging_schedules(this->config.PublishChargingScheduleDurationS);
+        this->set_external_limits(charging_schedules);
+        this->publish_charging_schedules(charging_schedules);
+    });
 
     this->charge_point->register_is_reset_allowed_callback([this](ocpp::v16::ResetType type) {
         const auto reset_type = types::system::string_to_reset_type(ocpp::v16::conversions::reset_type_to_string(type));
@@ -395,7 +448,7 @@ void OCPP::init() {
                 EVLOG_debug << "Connector#" << connector << ": "
                             << "Received ChargingPausedEV";
                 this->charge_point->on_suspend_charging_ev(connector);
-            } else if (event == "ChargingPausedEVSE") {
+            } else if (event == "ChargingPausedEVSE" or event == "WaitingForEnergy") {
                 EVLOG_debug << "Connector#" << connector << ": "
                             << "Received ChargingPausedEVSE";
                 this->charge_point->on_suspend_charging_evse(connector);
