@@ -1185,7 +1185,8 @@ void ChargePoint::handleChangeConfigurationRequest(ocpp::Call<ChangeConfiguratio
                 } else if (call.msg.key == "OcspRequestInterval") {
                     if (this->is_pnc_enabled()) {
                         this->ocsp_request_timer->stop();
-                        this->ocsp_request_timer->interval(std::chrono::seconds(this->configuration->getOcspRequestInterval()));
+                        this->ocsp_request_timer->interval(
+                            std::chrono::seconds(this->configuration->getOcspRequestInterval()));
                     }
                 }
             }
@@ -1629,7 +1630,12 @@ void ChargePoint::handleSetChargingProfileRequest(ocpp::Call<SetChargingProfileR
     this->send<SetChargingProfileResponse>(call_result);
 
     if (response.status == ChargingProfileStatus::Accepted) {
-        this->signal_set_charging_profiles_callback();
+        if (this->signal_set_charging_profiles_callback != nullptr) {
+            this->signal_set_charging_profiles_callback();
+        } else {
+            EVLOG_warning << "No callback registered for signaling that Charging Profiles have been set. Profiles have "
+                             "been accepted but will not be applied";
+        }
     }
 }
 
@@ -2318,7 +2324,7 @@ std::map<int32_t, ChargingSchedule> ChargePoint::get_all_composite_charging_sche
 
     std::map<int32_t, ChargingSchedule> charging_schedules;
 
-    for (int connector_id = 0; connector_id < this->configuration->getNumberOfConnectors(); connector_id++) {
+    for (int connector_id = 0; connector_id <= this->configuration->getNumberOfConnectors(); connector_id++) {
         const auto start_time = ocpp::DateTime();
         const auto duration = std::chrono::seconds(duration_s);
         const auto end_time = ocpp::DateTime(start_time.to_time_point() + duration);
