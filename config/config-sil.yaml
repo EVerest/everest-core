@@ -155,170 +155,209 @@ active_modules:
     module: JsYetiSimulator
     telemetry:
       id: 1
-x-module-layout:
+'x-module-layout':
   api:
     position:
-      x: -5
-      y: 1
+      x: 33
+      y: 13
     terminals:
       bottom: []
-      left: []
+      left:
+        - id: evse_manager
+          interface: evse_manager
+          type: requirement
       right:
         - id: main
           interface: empty
           type: provide
-        - id: connector_1
-          interface: evse_manager
-          type: requirement
       top: []
   auth:
     position:
-      x: 17
-      y: -6
+      x: 33
+      y: 2
     terminals:
       bottom:
-        - id: connector_1
-          interface: evse_manager
-          type: requirement
-      left: []
-      right:
-        - id: token_validator
-          interface: auth_token_validator
-          type: requirement
-        - id: token_provider
-          interface: auth_token_provider
-          type: requirement
-      top:
         - id: main
           interface: auth
           type: provide
         - id: reservation
           interface: reservation
           type: provide
-  car_simulator:
-    position:
-      x: 15
-      y: 37
-    terminals:
-      bottom:
-        - id: main
-          interface: car_simulator
-          type: provide
       left:
-        - id: ev
-          interface: ISO15118_ev
+        - id: evse_manager
+          interface: evse_manager
           type: requirement
       right:
-        - id: slac
-          interface: slac
+        - id: token_validator
+          interface: auth_token_validator
           type: requirement
       top:
-        - id: simulation_control
-          interface: yeti_simulation_control
+        - id: token_provider
+          interface: auth_token_provider
           type: requirement
-  energy_manager:
+  car_simulator:
     position:
-      x: -25
-      y: 13
+      x: 53
+      y: 33
     terminals:
       bottom: []
       left:
-        - id: main
-          interface: energy_manager
-          type: provide
-      right:
-        - id: energy_trunk
-          interface: energy
-          type: requirement
-      top: []
-  connector_1:
-    position:
-      x: 17
-      y: 13
-    terminals:
-      bottom:
-        - id: powermeter
-          interface: powermeter
-          type: requirement
-        - id: bsp
-          interface: board_support_AC
+        - id: simulation_control
+          interface: yeti_simulation_control
           type: requirement
         - id: slac
           interface: slac
           type: requirement
-      left:
+      right:
+        - id: main
+          interface: car_simulator
+          type: provide
+      top:
+        - id: ev
+          interface: ISO15118_ev
+          type: requirement
+  connector_1:
+    position:
+      x: 13
+      y: 23
+    terminals:
+      bottom:
+        - id: powersupply_DC
+          interface: power_supply_DC
+          type: requirement
         - id: imd
           interface: isolation_monitor
           type: requirement
-        - id: energy_grid
-          interface: energy
-          type: provide
-      right:
-        - id: hlc
-          interface: ISO15118_charger
+        - id: powermeter_car_side
+          interface: powermeter
           type: requirement
         - id: token_provider
           interface: auth_token_provider
           type: provide
+        - id: slac
+          interface: slac
+          type: requirement
+      left:
+        - id: hlc
+          interface: ISO15118_charger
+          type: requirement
+      right:
+        - id: bsp
+          interface: board_support_AC
+          type: requirement
+        - id: powermeter_grid_side
+          interface: powermeter
+          type: requirement
       top:
+        - id: energy_grid
+          interface: energy
+          type: provide
         - id: evse
           interface: evse_manager
           type: provide
+  connector_1_powerpath:
+    position:
+      x: 33
+      y: 23
+    terminals:
+      bottom:
+        - id: debug_keepalive
+          interface: debug_json
+          type: provide
+        - id: debug_powermeter
+          interface: debug_json
+          type: provide
+        - id: debug_yeti
+          interface: debug_json
+          type: provide
+        - id: yeti_extras
+          interface: yeti_extras
+          type: provide
+        - id: debug_state
+          interface: debug_json
+          type: provide
+      left:
+        - id: board_support
+          interface: board_support_AC
+          type: provide
+        - id: powermeter
+          interface: powermeter
+          type: provide
+      right:
+        - id: yeti_simulation_control
+          interface: yeti_simulation_control
+          type: provide
+      top: []
+  energy_manager:
+    position:
+      x: -5
+      y: 2
+    terminals:
+      bottom:
+        - id: energy_trunk
+          interface: energy
+          type: requirement
+      left: []
+      right:
+        - id: main
+          interface: energy_manager
+          type: provide
+      top: []
   grid_connection_point:
     position:
       x: -5
       y: 13
     terminals:
-      bottom:
+      bottom: []
+      left:
+        - id: price_information
+          interface: energy_price_information
+          type: requirement
         - id: powermeter
           interface: powermeter
           type: requirement
-      left:
-        - id: energy_grid
-          interface: energy
-          type: provide
       right:
+        - id: external_limits
+          interface: external_energy_limits
+          type: provide
         - id: energy_consumer
           interface: energy
           type: requirement
       top:
-        - id: price_information
-          interface: energy_price_information
-          type: requirement
+        - id: energy_grid
+          interface: energy
+          type: provide
   iso15118_car:
     position:
-      x: -6
-      y: 37
+      x: 53
+      y: 23
     terminals:
-      bottom: []
-      left: []
-      right:
+      bottom:
         - id: ev
           interface: ISO15118_ev
           type: provide
-      top:
-        - id: main
-          interface: empty
-          type: provide
-  iso15118_charger:
-    position:
-      x: 35
-      y: 13
-    terminals:
-      bottom: []
-      left:
-        - id: charger
-          interface: ISO15118_charger
-          type: provide
+      left: []
       right:
         - id: main
           interface: empty
           type: provide
       top: []
+  iso15118_charger:
+    position:
+      x: -5
+      y: 23
+    terminals:
+      bottom: []
+      left: []
+      right:
+        - id: charger
+          interface: ISO15118_charger
+          type: provide
+      top: []
   persistent_store:
     position:
-      x: -24
-      y: -10
+      x: -5
+      y: 40
     terminals:
       bottom: []
       left: []
@@ -329,8 +368,8 @@ x-module-layout:
       top: []
   setup:
     position:
-      x: -6
-      y: -10
+      x: 13
+      y: 40
     terminals:
       bottom: []
       left:
@@ -344,29 +383,29 @@ x-module-layout:
       top: []
   slac:
     position:
-      x: 35
-      y: 21
+      x: 33
+      y: 33
     terminals:
-      bottom:
-        - id: ev
-          interface: slac
-          type: provide
+      bottom: []
       left:
         - id: evse
           interface: slac
           type: provide
-      right: []
+      right:
+        - id: ev
+          interface: slac
+          type: provide
       top: []
   token_provider:
     position:
-      x: 35
-      y: 1
+      x: 33
+      y: -9
     terminals:
-      bottom: []
-      left:
+      bottom:
         - id: main
           interface: auth_token_provider
           type: provide
+      left:
         - id: evse
           interface: evse_manager
           type: requirement
@@ -374,8 +413,8 @@ x-module-layout:
       top: []
   token_validator:
     position:
-      x: 35
-      y: -10
+      x: 51
+      y: 2
     terminals:
       bottom: []
       left:
@@ -384,36 +423,3 @@ x-module-layout:
           type: provide
       right: []
       top: []
-  connector_1_powerpath:
-    position:
-      x: 15
-      y: 26
-    terminals:
-      bottom:
-        - id: yeti_simulation_control
-          interface: yeti_simulation_control
-          type: provide
-      left: []
-      right:
-        - id: debug_keepalive
-          interface: debug_json
-          type: provide
-        - id: debug_powermeter
-          interface: debug_json
-          type: provide
-        - id: debug_state
-          interface: debug_json
-          type: provide
-        - id: debug_yeti
-          interface: debug_json
-          type: provide
-        - id: yeti_extras
-          interface: yeti_extras
-          type: provide
-      top:
-        - id: powermeter
-          interface: powermeter
-          type: provide
-        - id: board_support
-          interface: board_support_AC
-          type: provide
