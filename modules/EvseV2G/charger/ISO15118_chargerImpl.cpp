@@ -215,11 +215,9 @@ void ISO15118_chargerImpl::handle_set_DC_EVSEMaximumLimits(
                             (long long int)EVSEMaximumLimits.EVSEMaximumCurrentLimit, iso1unitSymbolType_A);
     v2g_ctx->evse_v2g_data.evse_maximum_current_limit_is_used = 1;
 
-    struct iso1PhysicalValueType tmpPowerLimit;
-    populate_physical_value(&tmpPowerLimit, (long long int)EVSEMaximumLimits.EVSEMaximumPowerLimit,
-                            iso1unitSymbolType_W);
-    setMinPhysicalValue(&v2g_ctx->evse_v2g_data.evse_maximum_power_limit, &tmpPowerLimit,
-                        &v2g_ctx->evse_v2g_data.evse_maximum_power_limit_is_used);
+    populate_physical_value(&v2g_ctx->evse_v2g_data.evse_maximum_power_limit,
+                            (long long int)EVSEMaximumLimits.EVSEMaximumPowerLimit, iso1unitSymbolType_W);
+    v2g_ctx->evse_v2g_data.evse_maximum_power_limit_is_used = 1;
 
     populate_physical_value(&v2g_ctx->evse_v2g_data.evse_maximum_voltage_limit,
                             (long long int)EVSEMaximumLimits.EVSEMaximumVoltageLimit, iso1unitSymbolType_V);
