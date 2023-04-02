@@ -281,6 +281,9 @@ std::vector<MeasurandWithPhase> ChargePointConfiguration::csv_to_measurand_with_
 
     boost::split(components, csv, boost::is_any_of(","));
     std::vector<MeasurandWithPhase> measurand_with_phase_vector;
+    if (csv.empty()) {
+        return measurand_with_phase_vector;
+    }
     for (auto component : components) {
         MeasurandWithPhase measurand_with_phase;
         Measurand measurand = conversions::string_to_measurand(component);
@@ -336,6 +339,10 @@ bool ChargePointConfiguration::validate_measurands(const json& config) {
 }
 
 bool ChargePointConfiguration::measurands_supported(std::string csv) {
+
+    if (csv.empty()) {
+        return true;
+    }
 
     std::vector<std::string> components;
 

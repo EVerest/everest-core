@@ -2952,9 +2952,9 @@ void ChargePoint::stop_transaction(int32_t connector, Reason reason, boost::opti
         req.idTag.emplace(id_tag_end.value());
     }
 
-    std::vector<TransactionData> transaction_data_vec = transaction->get_transaction_data();
-    if (!transaction_data_vec.empty()) {
-        req.transactionData.emplace(transaction_data_vec);
+    const auto transaction_data = this->get_filtered_transaction_data(transaction);
+    if (!transaction_data.empty()) {
+        req.transactionData.emplace(transaction_data);
     }
 
     auto message_id = this->message_queue->createMessageId();
@@ -2968,6 +2968,49 @@ void ChargePoint::stop_transaction(int32_t connector, Reason reason, boost::opti
     transaction->set_finished();
     transaction->set_stop_transaction_message_id(message_id.get());
     this->transaction_handler->add_stopped_transaction(transaction->get_connector());
+}
+
+std::vector<TransactionData>
+ChargePoint::get_filtered_transaction_data(const std::shared_ptr<Transaction>& transaction) {
+    const auto stop_txn_sampled_data = this->configuration->getStopTxnSampledDataVector();
+    const auto stop_txn_aligned_data = this->configuration->getStopTxnAlignedDataVector();
+    std::vector<TransactionData> filtered_transaction_data_vec;
+
+    if (!stop_txn_sampled_data.empty() or !stop_txn_aligned_data.empty()) {
+        std::vector<TransactionData> transaction_data_vec = transaction->get_transaction_data();
+        for (const auto& entry : transaction_data_vec) {
+            std::vector<SampledValue> sampled_values;
+            for (const auto& meter_value : entry.sampledValue) {
+                if (meter_value.measurand.has_value()) {
+                    // if Sample.Clock use StopTxnAlignedData
+                    if (meter_value.context.has_value() and meter_value.context == ReadingContext::Sample_Clock) {
+                        for (const auto& stop_txn_aligned_entry : stop_txn_aligned_data) {
+                            if (stop_txn_aligned_entry.measurand == meter_value.measurand.value()) {
+                                sampled_values.push_back(meter_value);
+                                continue;
+                            }
+                        }
+                    } else {
+                        // else use StopTxnSampledData although spec is unclear about how to filter other ReadingContext
+                        // values like Transaction.Begin , Trigger , etc.
+                        for (const auto& stop_txn_sampled_entry : stop_txn_sampled_data) {
+                            if (stop_txn_sampled_entry.measurand == meter_value.measurand.value()) {
+                                sampled_values.push_back(meter_value);
+                                continue;
+                            }
+                        }
+                    }
+                }
+            }
+            if (!sampled_values.empty()) {
+                TransactionData transaction_data;
+                transaction_data.timestamp = entry.timestamp;
+                transaction_data.sampledValue = sampled_values;
+                filtered_transaction_data_vec.push_back(transaction_data);
+            }
+        }
+    }
+    return filtered_transaction_data_vec;
 }
 
 void ChargePoint::on_suspend_charging_ev(int32_t connector) {

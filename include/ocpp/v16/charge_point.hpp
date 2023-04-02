@@ -119,7 +119,8 @@ private:
     std::map<MessageId, std::thread> stop_transaction_thread;
     std::mutex remote_stop_transaction_mutex; // FIXME: this should be done differently
 
-    std::map<std::string, std::map<std::string, std::function<DataTransferResponse(const boost::optional<std::string>& msg)>>>
+    std::map<std::string,
+             std::map<std::string, std::function<DataTransferResponse(const boost::optional<std::string>& msg)>>>
         data_transfer_callbacks;
     std::map<std::string, std::function<void(Call<DataTransferRequest> call)>> data_transfer_pnc_callbacks;
     std::mutex data_transfer_callbacks_mutex;
@@ -212,6 +213,11 @@ private:
     void stop_pending_transactions();
     void stop_transaction(int32_t connector, Reason reason, boost::optional<CiString<20>> id_tag_end);
 
+    /// \brief Returns transaction data that can be used to set the transactionData field in StopTransaction.req.
+    /// Filters the meter values of the transaction according to the values set within StopTxnAlignedData and
+    /// StopTxnSampledData
+    std::vector<TransactionData> get_filtered_transaction_data(const std::shared_ptr<Transaction>& transaction);
+
     /// \brief Load charging profiles if present in database
     void load_charging_profiles();
 
@@ -220,7 +226,8 @@ private:
     /// the given \p certificate_signing_use
     void sign_certificate(const ocpp::CertificateSigningUseEnum& certificate_signing_use);
 
-    /// \brief Checks if OCSP cache needs to be updated and executes update if necessary by using DataTransfer(GetCertificateStatus.req)
+    /// \brief Checks if OCSP cache needs to be updated and executes update if necessary by using
+    /// DataTransfer(GetCertificateStatus.req)
     void update_ocsp_cache();
 
     // core profile
@@ -397,8 +404,9 @@ public:
 
     /// registers a \p callback function that can be used to receive a arbitrary data transfer for the given \p
     /// vendorId and \p messageId
-    void register_data_transfer_callback(const CiString<255>& vendorId, const CiString<50>& messageId,
-                                         const std::function<DataTransferResponse(const boost::optional<std::string>& msg)>& callback);
+    void register_data_transfer_callback(
+        const CiString<255>& vendorId, const CiString<50>& messageId,
+        const std::function<DataTransferResponse(const boost::optional<std::string>& msg)>& callback);
 
     /// \brief registers a \p callback function that can be used to enable the evse
     void register_enable_evse_callback(const std::function<bool(int32_t connector)>& callback);

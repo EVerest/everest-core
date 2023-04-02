@@ -18,7 +18,7 @@
         "LocalPreAuthorize": false,
         "MeterValuesAlignedData": "Energy.Active.Import.Register",
         "MeterValuesSampledData": "Energy.Active.Import.Register",
-        "MeterValueSampleInterval": 0,
+        "MeterValueSampleInterval": 60,
         "NumberOfConnectors": 1,
         "ResetRetries": 1,
         "StopTransactionOnEVSideDisconnect": true,
