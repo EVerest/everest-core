@@ -31,6 +31,10 @@ config:
     description: Path to folder where logs of all OCPP messages get written to
     type: string
     default: /tmp/everest_ocpp_logs
+  CertsPath:
+    description: Path to folder where certificates are located. If empty uses everest prefix + etc/everest/certs
+    type: string
+    default: ""
 provides:
   main:
     description: This is a OCPP 1.6 charge point

@@ -107,7 +107,15 @@ void OCPP::init() {
     invoke_init(*p_auth_provider);
 
     this->ocpp_share_path = fs::path(this->info.everest_prefix) / EVEREST_OCPP_SHARE_PATH;
-    const auto etc_certs_path = fs::path(this->info.everest_prefix) / EVEREST_ETC_CERTS_PATH;
+
+    const auto etc_certs_path = [&]() {
+        if (this->config.CertsPath.empty()) {
+            return fs::path(this->info.everest_prefix) / EVEREST_ETC_CERTS_PATH;
+        } else {
+            return fs::path(this->config.CertsPath);
+        }
+    }();
+    EVLOG_info << "OCPP certificates path: " << etc_certs_path.string();
 
     auto configured_config_path = fs::path(this->config.ChargePointConfigPath);
 
