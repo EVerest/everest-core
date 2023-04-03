@@ -42,6 +42,12 @@ if(NOT DISABLE_EDM)
         PROPERTY ADDITIONAL_CLEAN_FILES "${libwebsockets_BINARY_DIR}/include/libwebsockets"
     )
 
+    # FIXME (aw): libwebsockets enum-int-mismatch FIX
+    # see https://github.com/warmcat/libwebsockets/pull/2824
+    if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_C_COMPILER_VERSION VERSION_GREATER 13.0)
+        target_compile_options(websockets_shared PRIVATE -Wno-error=enum-int-mismatch)
+    endif()
+
     # FIXME (aw): pboetch json validator doesn't want to install itself :(
     install(TARGETS nlohmann_json_schema_validator
         EXPORT nlohmann_json_schema_validatorTargets
