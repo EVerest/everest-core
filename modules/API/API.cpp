@@ -44,6 +44,8 @@ void SessionInfo::update_state(const std::string& event, const std::string& stat
         this->state = "Unplugged";
     } else if (event == "AuthRequired") {
         this->state = "AuthRequired";
+    } else if (event == "WaitingForEnergy") {
+        this->state = "WaitingForEnergy";
     } else if (event == "TransactionStarted") {
         this->state = "Charging";
     } else if (event == "ChargingPausedEV") {

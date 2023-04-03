@@ -52,11 +52,12 @@ This variable is published every second and contains a json object with informat
 - **datetime** contains a string representation of the current UTC datetime in RFC3339 format
 - **latest_total_w** contains the latest total power reading over all phases in Watt
 - **state** contains the current state of the charging session, from a list of the following possible states:
-    - Disabled
     - Unplugged
+    - Disabled
     - Preparing
     - Reserved
     - AuthRequired
+    - WaitingForEnergy
     - Charging
     - ChargingPausedEV
     - ChargingPausedEVSE
