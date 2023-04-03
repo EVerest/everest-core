@@ -2305,9 +2305,7 @@ IdTagInfo ChargePoint::authorize_id_token(CiString<20> idTag) {
     IdTagInfo id_tag_info;
     if (enhanced_message.messageType == MessageType::AuthorizeResponse) {
         ocpp::CallResult<AuthorizeResponse> call_result = enhanced_message.message;
-        if (call_result.msg.idTagInfo.status == AuthorizationStatus::Accepted) {
-            this->database_handler->insert_or_update_authorization_cache_entry(idTag, call_result.msg.idTagInfo);
-        }
+        this->database_handler->insert_or_update_authorization_cache_entry(idTag, call_result.msg.idTagInfo);
         return call_result.msg.idTagInfo;
     } else if (enhanced_message.offline) {
         if (this->configuration->getAllowOfflineTxForUnknownId() != boost::none &&
