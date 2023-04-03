@@ -4,6 +4,14 @@ This module is responsible for providing a simple MQTT based API to EVerest inte
 ## Periodically published variables
 This module periodically publishes the following variables for each connected EvseManager.
 
+### everest_api/connectors
+This variable is published every second and contains an array of the connectors for which the api is available:
+```
+["evse_manager"]
+```
+
+The following documentation assumes that the only connector available is called "evse_manager".
+
 ### everest_api/evse_manager/var/datetime
 This variable is published every second and contains a string representation of the current UTC datetime in RFC3339 format:
 ```

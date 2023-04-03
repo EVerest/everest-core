@@ -112,14 +112,16 @@ SessionInfo::operator std::string() {
 void API::init() {
     invoke_init(*p_main);
     std::string api_base = "everest_api/";
+    auto connectors = json::array();
+    std::string var_connectors = api_base + "connectors";
 
-    int32_t count = 0;
     for (auto& evse : this->r_evse_manager) {
         this->info.push_back(std::make_unique<SessionInfo>());
         auto& session_info = this->info.back();
         this->hw_capabilities_json.push_back(json{});
         auto& hw_caps = this->hw_capabilities_json.back();
         std::string evse_base = api_base + evse->module_id;
+        connectors.push_back(evse->module_id);
 
         // API variables
         std::string var_base = evse_base + "/var/";
@@ -159,7 +161,7 @@ void API::init() {
 
         std::string var_datetime = var_base + "datetime";
         std::string var_session_info = var_base + "session_info";
-        this->datetime_threads.push_back(
+        this->api_threads.push_back(
             std::thread([this, var_datetime, var_session_info, var_hw_caps, &session_info, &hw_caps]() {
                 auto next_tick = std::chrono::steady_clock::now();
                 while (this->running) {
@@ -222,9 +224,18 @@ void API::init() {
                 EVLOG_warning << "Invalid limit: Out of range.";
             }
         });
-
-        count += 1;
     }
+
+    this->api_threads.push_back(
+        std::thread([this, var_connectors, connectors]() {
+            auto next_tick = std::chrono::steady_clock::now();
+            while (this->running) {
+                this->mqtt.publish(var_connectors, connectors.dump());
+
+                next_tick += std::chrono::seconds(1);
+                std::this_thread::sleep_until(next_tick);
+            }
+        }));
 }
 
 void API::ready() {
