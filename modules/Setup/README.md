@@ -51,8 +51,8 @@ with the following payload format:
     {
         "blocked": false,
         "interface": "wlan0",
-        "ipv4": "192.0.2.23",
-        "ipv6": "",
+        "ipv4": ["192.0.2.23"],
+        "ipv6": ["2001:db8:0:0:0:0:0:23"],
         "rfkill_id": "0",
         "wireless": true
     },
@@ -60,7 +60,7 @@ with the following payload format:
         "blocked": false,
         "interface": "eth0",
         "ipv4": "192.0.2.42",
-        "ipv6": "",
+        "ipv6": ["2001:db8:0:0:0:0:0:42"],
         "rfkill_id": "",
         "wireless": false
     }

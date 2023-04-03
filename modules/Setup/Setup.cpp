@@ -726,9 +726,10 @@ void Setup::populate_ip_addresses(std::vector<NetworkDeviceInfo>& device_info) {
             if (ip_object.at("ifname") == device.interface) {
                 for (auto addr_info : ip_object.at("addr_info")) {
                     if (addr_info.at("family") == "inet") {
-                        device.ipv4 = addr_info.at("local");
+                        device.ipv4.push_back(addr_info.at("local"));
+                    } else if (addr_info.at("family") == "inet6") {
+                        device.ipv6.push_back(addr_info.at("local"));
                     }
-                    // FIXME: add ipv6 info
                 }
                 break;
             }
