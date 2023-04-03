@@ -28,27 +28,9 @@ All documentation and the issue tracking can be found in our main repository her
 | [Using ISO 15118 Plug & Charge with OCPP 1.6](https://www.openchargealliance.org/uploads/files/ocpp_1_6_ISO_15118_v10.pdf)                | :heavy_check_mark: yes                    |
 | [Autocharge](https://github.com/openfastchargingalliance/openfastchargingalliance/blob/master/autocharge-final.pdf)                       | :heavy_check_mark: yes |
 
-### Functional Block support OCPP 2.0.1
+### Support for OCPP 2.0.1
 
-| Functional Block                      | Supported                            |
-| ------------------------------------- | ------------------------------------ |
-| Provisioning                          | :x:                                  |
-| Security                              | :x:                                  |
-| Authorization                         | :x:                                  |
-| LocalAuthorizationList Management     | :x:                                  |
-| Transactions                          | :x:                                  |
-| RemoteControl                         | :x:                                  |
-| Availability                          | :x:                                  |
-| Reservation                           | :x:                                  |
-| TariffAndCost                         | :x:                                  |
-| MeterValues                           | :x:                                  |
-| SmartCharging                         | :x:                                  |
-| FirmwareManagement                    | :x:                                  |
-| ISO 15118 CertificateManagement       | :x:                                  |
-| Diagnositcs                           | :x:                                  |
-| DisplayMessage                        | :x:                                  |
-| DataTransfer                          | :x:                                  |
-
+The development of OCPP2.0.1 has started this year and is in progress. The goal is to provide basic support for OCPP2.0.1 until Q2/2023 and to provide a fully featured implementation by the end of 2023.
 ## CSMS Compatibility
 
 ### CSMS Compatibility OCPP 1.6
@@ -60,10 +42,12 @@ The following table shows CSMS with which this library was tested. If you provid
 -   Chargetic
 -   Compleo
 -   Current
+-   Daimler Truck
 -   ev.energy
 -   eDRV
 -   Fastned
 -   GraphDefined
+-   Electrip Global
 -   EV-Meter
 -   Green Motion
 -   gridundco
@@ -79,7 +63,7 @@ The following table shows CSMS with which this library was tested. If you provid
 
 ### CSMS Compatibility OCPP 2.0.1
 
-The implementation of OCPP 2.0.1 has not yet been tested against any CSMS.
+The current, basic implementation of OCPP 2.0.1 has been tested against a few CSMS and is continously tested against the OCPP Compliance Test Tool 2 (OCTT2) during the implementation.  
 
 ## Integration with EVerest
 
