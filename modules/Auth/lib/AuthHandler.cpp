@@ -371,7 +371,7 @@ types::reservation::ReservationResult AuthHandler::handle_reservation(int connec
 }
 
 int AuthHandler::handle_cancel_reservation(int reservation_id) {
-    return this->reservation_handler.cancel_reservation(reservation_id);
+    return this->reservation_handler.cancel_reservation(reservation_id, true);
 }
 
 void AuthHandler::call_reserved(const int& connector_id, const int reservation_id) {
@@ -412,6 +412,7 @@ void AuthHandler::handle_session_event(const int connector_id, const SessionEven
         break;
     case SessionEventEnum::TransactionStarted:
         this->connectors.at(connector_id)->connector.transaction_active = true;
+        this->connectors.at(connector_id)->connector.reserved = false;
         this->connectors.at(connector_id)->connector.submit_event(Event_Transaction_Started());
         this->connectors.at(connector_id)->timeout_timer.stop();
         break;

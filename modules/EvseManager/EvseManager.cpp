@@ -620,7 +620,7 @@ void EvseManager::ready() {
         // Cancel reservations if charger is disabled or faulted
         if (s == types::evse_manager::SessionEventEnum::Disabled ||
             s == types::evse_manager::SessionEventEnum::PermanentFault) {
-            cancel_reservation();
+            cancel_reservation(true);
         }
         if (s == types::evse_manager::SessionEventEnum::SessionStarted ||
             s == types::evse_manager::SessionEventEnum::SessionFinished) {
@@ -912,7 +912,7 @@ bool EvseManager::reserve(int32_t id) {
     return false;
 }
 
-void EvseManager::cancel_reservation() {
+void EvseManager::cancel_reservation(bool signal_event) {
 
     std::lock_guard<std::mutex> lock(reservation_mutex);
     if (reserved) {
@@ -920,10 +920,11 @@ void EvseManager::cancel_reservation() {
         reservation_id = 0;
 
         // publish event to other modules
-        types::evse_manager::SessionEvent se;
-        se.event = types::evse_manager::SessionEventEnum::ReservationEnd;
-
-        signalReservationEvent(se);
+        if (signal_event) {
+            types::evse_manager::SessionEvent se;
+            se.event = types::evse_manager::SessionEventEnum::ReservationEnd;
+            signalReservationEvent(se);
+        }
     }
 }
 

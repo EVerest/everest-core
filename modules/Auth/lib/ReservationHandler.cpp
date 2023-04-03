@@ -49,7 +49,7 @@ types::reservation::ReservationResult ReservationHandler::reserve(int connector,
         this->connector_to_reservation_timeout_timer_map[connector]->at(
             [this, reservation, connector]() {
                 EVLOG_info << "Reservation expired for connector#" << connector;
-                this->cancel_reservation(reservation.reservation_id);
+                this->cancel_reservation(reservation.reservation_id, true);
             },
             Everest::Date::from_rfc3339(reservation.expiry_time));
         return types::reservation::ReservationResult::Accepted;
@@ -59,7 +59,7 @@ types::reservation::ReservationResult ReservationHandler::reserve(int connector,
     }
 }
 
-int ReservationHandler::cancel_reservation(int reservation_id) {
+int ReservationHandler::cancel_reservation(int reservation_id, bool execute_callback) {
 
     int connector = -1;
     for (const auto& reservation : this->reservations) {
@@ -72,13 +72,15 @@ int ReservationHandler::cancel_reservation(int reservation_id) {
         this->connector_to_reservation_timeout_timer_map[connector]->stop();
         auto it = this->reservations.find(connector);
         this->reservations.erase(it);
-        this->reservation_cancelled_callback(connector);
+        if (execute_callback) {
+            this->reservation_cancelled_callback(connector);
+        }
     }
     return connector;
 }
 
 void ReservationHandler::on_reservation_used(int connector) {
-    if (this->cancel_reservation(this->reservations[connector].reservation_id)) {
+    if (this->cancel_reservation(this->reservations[connector].reservation_id, false)) {
         EVLOG_info << "Reservation for connector#" << connector << " used and cancelled";
     } else {
         EVLOG_warning

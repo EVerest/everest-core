@@ -130,7 +130,7 @@ public:
     types::energy::ExternalLimits getLocalEnergyLimits();
     bool getLocalThreePhases();
 
-    void cancel_reservation();
+    void cancel_reservation(bool signal_event);
     bool is_reserved();
     bool reserve(int32_t id);
     int32_t get_reservation_id();
