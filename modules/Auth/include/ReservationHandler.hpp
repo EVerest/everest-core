@@ -60,9 +60,10 @@ public:
      * @brief Function tries to cancel reservation with the given \p reservation_id .
      *
      * @param reservation_id
+     * @param execute_callback if true, cancel_reservation_callback will be executed
      * @return int -1 if reservation could not been cancelled, else the id of the connnector
      */
-    int cancel_reservation(int reservation_id);
+    int cancel_reservation(int reservation_id, bool execute_callback);
 
     /**
      * @brief Handler that is called when a reservation was started / used.

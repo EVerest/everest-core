@@ -157,6 +157,7 @@ void evse_managerImpl::ready() {
 
             if (mod->is_reserved()) {
                 transaction_started.reservation_id.emplace(mod->get_reservation_id());
+                mod->cancel_reservation(false);
             }
 
             transaction_started.id_tag = mod->charger->getAuthTag();
@@ -294,7 +295,7 @@ bool evse_managerImpl::handle_reserve(int& reservation_id) {
 };
 
 void evse_managerImpl::handle_cancel_reservation() {
-    mod->cancel_reservation();
+    mod->cancel_reservation(true);
 };
 
 bool evse_managerImpl::handle_disable() {
