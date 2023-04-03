@@ -194,7 +194,7 @@ nlohmann::json RPC::ipc_request(const std::string& method, const nlohmann::json&
     Everest::controller_ipc::send_message(this->ipc_fd, {{"method", method}, {"params", params}, {"id", id}});
 
     // FIXME (aw): timeout constant!
-    auto status = call_result_future.wait_for(std::chrono::milliseconds(500));
+    auto status = call_result_future.wait_for(std::chrono::milliseconds(2000));
 
     lock.lock();
     this->ipc_calls.erase(new_call.first);
