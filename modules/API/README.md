@@ -22,11 +22,15 @@ This variable is published every second and contains a string representation of 
 This variable is published every second and contains the hardware capabilities in the following format:
 ```json
     {
-        "max_current_A": 32.0,
-        "max_phase_count": 3,
-        "min_current_A": 6.0,
-        "min_phase_count": 1,
-        "supports_changing_phases_during_charging": true
+        "max_current_A_export":16.0,
+        "max_current_A_import":32.0,
+        "max_phase_count_export":3,
+        "max_phase_count_import":3,
+        "min_current_A_export":0.0,
+        "min_current_A_import":6.0,
+        "min_phase_count_export":1,
+        "min_phase_count_import":1,
+        "supports_changing_phases_during_charging":true
     }
 ```
 
