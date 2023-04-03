@@ -97,6 +97,8 @@ cd ~/checkout/everest-workspace/Josev/iso15118/shared/pki
 
 Note that this will generate an example PKI setup that can only be used for testing and simulation purposes. It will not work and is not recommended for production!
 
+The script for setting up PKI can also be used with the EvseV2G module.
+
 Now we can build EVerest!
 
 ```bash

@@ -11,7 +11,9 @@
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
+#include <fstream>
 #include <inttypes.h>
+#include <iostream>
 #include <mbedtls/debug.h>
 #include <mbedtls/error.h>
 #include <mbedtls/sha1.h>
@@ -22,6 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
 #include <sys/socket.h>
 #include <time.h>
 #include <unistd.h>
@@ -29,9 +32,6 @@
 #ifndef SYSCONFDIR
 #define SYSCONFDIR "/etc"
 #endif
-
-#define DEFAULT_PKI_PATH SYSCONFDIR "/secc/pki/certs"
-#define DEFAULT_KEY_PATH SYSCONFDIR "/secc/pki/keys"
 
 #define DEFAULT_SOCKET_BACKLOG        3
 #define DEFAULT_TCP_PORT              61341
@@ -42,6 +42,7 @@
 #define MBEDTLS_DEBUG_LEVEL_NO_DEBUG 0
 
 mbedtls_ctr_drbg_context ctr_drbg;
+mbedtls_entropy_context entropy;
 #if defined(MBEDTLS_SSL_CACHE_C)
 mbedtls_ssl_cache_context cache;
 #endif
@@ -111,6 +112,44 @@ static int connection_create_socket(struct sockaddr_in6* sockaddr) {
     return s;
 }
 
+static int connection_ssl_initialize(void) {
+    unsigned char random_data[64];
+    int rv;
+
+    if (generate_random_data(random_data, sizeof(random_data)) != 0) {
+        dlog(DLOG_LEVEL_ERROR, "generate_random_data failed: %s", strerror(errno));
+        return -1;
+    }
+
+    mbedtls_entropy_init(&entropy);
+
+    if ((rv = mbedtls_entropy_gather(&entropy)) != 0) {
+        char error_buf[100];
+        mbedtls_strerror(rv, error_buf, sizeof(error_buf));
+        dlog(DLOG_LEVEL_ERROR, "mbedtls_entropy_gather returned -0x%04x - %s", -rv, error_buf);
+        mbedtls_entropy_free(&entropy);
+        return -1;
+    }
+
+    mbedtls_ctr_drbg_init(&ctr_drbg);
+
+    if ((rv = mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func, &entropy, random_data, sizeof(random_data))) !=
+        0) {
+        char error_buf[100];
+        mbedtls_strerror(rv, error_buf, sizeof(error_buf));
+        dlog(DLOG_LEVEL_ERROR, "mbedtls_ctr_drbg_seed returned -0x%04x - %s", -rv, error_buf);
+        mbedtls_ctr_drbg_free(&ctr_drbg);
+        mbedtls_entropy_free(&entropy);
+        return -1;
+    }
+
+#if defined(MBEDTLS_SSL_CACHE_C)
+    mbedtls_ssl_cache_init(&cache);
+#endif
+
+    return 0;
+}
+
 /*!
  * \brief check_interface This function checks the interface name. The interface name is
  * configured automatically in case it is pre-initialized to “auto.
@@ -154,6 +193,7 @@ int connection_init(struct v2g_context* v2g_ctx) {
 
     if (v2g_ctx->tls_security != TLS_SECURITY_PROHIBIT) {
         v2g_ctx->local_tls_addr = static_cast<sockaddr_in6*>(calloc(1, sizeof(*v2g_ctx->local_tls_addr)));
+        connection_ssl_initialize();
         if (!v2g_ctx->local_tls_addr) {
             dlog(DLOG_LEVEL_ERROR, "Failed to allocate memory for TLS address");
             return -1;
@@ -427,107 +467,98 @@ static void connection_teardown(struct v2g_connection* conn) {
 static bool connection_init_tls(struct v2g_context* ctx) {
 
     int rv;
-
-    char* file_path = static_cast<char*>(
-        malloc(max(std::string(DEFAULT_PKI_PATH).size(), std::string(DEFAULT_KEY_PATH).size()) + MAX_FILE_NAME_LENGTH));
     uint8_t max_idx = 0;
-    mbedtls_x509_crt* root_crt = NULL;
 
-    /* Load supported v2g root certificates */
+    std::string v2g_root_cert_path = ctx->certs_path + "/ca/v2g/V2G_ROOT_CA.pem";
+    std::string cpo_sub1_cert_path = ctx->certs_path + "/ca/cso/CPO_SUB_CA1.pem";
+    std::string cpo_sub2_cert_path = ctx->certs_path + "/ca/cso/CPO_SUB_CA2.pem";
+    std::string evse_leaf_cert_path = ctx->certs_path + "/client/cso/SECC_LEAF.pem";
+    std::string evse_leaf_key_path = ctx->certs_path + "/client/cso/SECC_LEAF.key";
+    std::string evse_leaf_key_password_path = ctx->certs_path + "/client/cso/SECC_LEAF_PASSWORD.txt";
 
-    // Determine number of v2g-folders
-    DIR* d = opendir(DEFAULT_PKI_PATH); // open the path
-    struct dirent* dir;                 // for the directory entries
+    /* Read SECC leaf private key password */
+    std::string secc_leaf_key_password;
+    std::fstream password_file;
 
-    if (d == NULL) {
-        dlog(DLOG_LEVEL_ERROR, "Unable to open pki file path: %s", DEFAULT_PKI_PATH);
+    password_file.open(evse_leaf_key_password_path, std::ios::in);
+
+    if (password_file.is_open()) {
+        getline(password_file, secc_leaf_key_password);
+        password_file.close();
+    }
+
+    uint8_t num_of_v2g_root = 1;
+    mbedtls_x509_crt* root_crt = &ctx->v2g_root_crt;
+
+    ctx->num_of_tls_crt = 1;
+    ctx->evseTlsCrt = static_cast<mbedtls_x509_crt*>(malloc(sizeof(mbedtls_x509_crt) * (num_of_v2g_root)));
+    ctx->evse_tls_crt_key = static_cast<mbedtls_pk_context*>(malloc(sizeof(mbedtls_pk_context) * (num_of_v2g_root)));
+
+    if (ctx->evseTlsCrt == NULL || ctx->evse_tls_crt_key == NULL) {
+        dlog(DLOG_LEVEL_ERROR, "Failed to allocate memory!");
         goto error_out;
     }
 
-    while ((dir = readdir(d)) != NULL)
-        if ((dir->d_type == DT_DIR) && (std::string(dir->d_name).size() && isdigit((int)dir->d_name[0])) &&
-            ((atoi(dir->d_name) <= UINT8_MAX))) {
-            max_idx = max(max_idx, (uint8_t)(atoi(dir->d_name)));
-        }
-
-    closedir(d);
-
-    dlog(DLOG_LEVEL_INFO, "PKI folders found: %i", max_idx + 1);
-
-    ctx->num_of_tls_crt = 0;
-    ctx->evseTlsCrt = static_cast<mbedtls_x509_crt*>(malloc(sizeof(mbedtls_x509_crt) * (max_idx + 1)));
-    ctx->evse_tls_crt_key = static_cast<mbedtls_pk_context*>(malloc(sizeof(mbedtls_pk_context) * (max_idx + 1)));
-    root_crt = &ctx->v2g_root_crt;
-
-    for (uint8_t pki_idx = 0; pki_idx <= max_idx; pki_idx++) {
-        mbedtls_x509_crt_init(&ctx->evseTlsCrt[pki_idx]);
-        char v2g_root_file_name[std::string(V2G_ROOT_CRT_NAME).size() + std::string(".xxx").size() + 1];
-        sprintf(file_path, "%s/%u", DEFAULT_PKI_PATH, pki_idx);
-        bool got_file_name =
-            get_dir_filename(v2g_root_file_name, sizeof(v2g_root_file_name), file_path, V2G_ROOT_CRT_NAME);
-        if (got_file_name) {
-            sprintf(file_path, "%s/%u/%s", DEFAULT_PKI_PATH, pki_idx, v2g_root_file_name);
-            dlog(DLOG_LEVEL_TRACE, "Checking PKI root file %s", file_path);
-            if ((rv = mbedtls_x509_crt_parse_file(&ctx->v2g_root_crt, file_path)) != 0) {
-                char error_buf[100];
-                mbedtls_strerror(rv, error_buf, sizeof(error_buf));
-                dlog(DLOG_LEVEL_ERROR, "Unable to parse v2g root certificate %s (err: -0x%04x - %s)", file_path, -rv,
-                     error_buf);
-                goto error_out;
-            }
-        } else {
-            dlog(DLOG_LEVEL_ERROR, "No file matching %s found in path %s", V2G_ROOT_CRT_NAME, file_path);
-            goto error_out;
-        }
+    /* Load supported v2g root certificates */
+    if ((rv = mbedtls_x509_crt_parse_file(root_crt, v2g_root_cert_path.c_str())) != 0) {
+        char error_buf[100];
+        mbedtls_strerror(rv, error_buf, sizeof(error_buf));
+        dlog(DLOG_LEVEL_ERROR, "Unable to parse v2g root certificate %s (err: -0x%04x - %s)",
+             v2g_root_cert_path.c_str(), -rv, error_buf);
+        goto error_out;
+    }
 
 #ifdef MBEDTLS_SSL_TRUSTED_CA_KEYS
-        /* Configure trusted ca certificates */
-        unsigned char trusted_id[20];
-        if (root_crt->next != NULL)
-            root_crt = root_crt->next;
-        mbedtls_sha1(root_crt->raw.p, root_crt->raw.len, trusted_id);
-        mbedtls_ssl_conf_trusted_authority(&ctx->ssl_config, trusted_id, sizeof(trusted_id),
-                                           MBEDTLS_SSL_CA_ID_TYPE_CERT_SHA1_HASH);
-        // dlog(DLOG_LEVEL_ERROR, "rootCrtrootCrtrootCrtrootCrt %s", rootCrt->issuer.val.p);
+    /* Configure trusted ca certificates */
+    unsigned char trusted_id[20];
+    mbedtls_sha1(root_crt->raw.p, root_crt->raw.len, trusted_id);
+    mbedtls_ssl_conf_trusted_authority(&ctx->ssl_config, trusted_id, sizeof(trusted_id),
+                                       MBEDTLS_SSL_CA_ID_TYPE_CERT_SHA1_HASH);
 #endif // MBEDTLS_SSL_TRUSTED_CA_KEYS
 
-        sprintf(file_path, "%s/%u/%s", DEFAULT_KEY_PATH, pki_idx, EVSE_LEAF_KEY_FILE_NAME);
-        mbedtls_pk_init(&ctx->evse_tls_crt_key[pki_idx]);
-        rv = mbedtls_pk_parse_keyfile(&ctx->evse_tls_crt_key[pki_idx], file_path, ctx->basic_config.keyFilePw[0]);
-        if (rv != 0) {
-            char error_buf[100];
-            mbedtls_strerror(rv, error_buf, sizeof(error_buf));
-            dlog(DLOG_LEVEL_ERROR, "mbedtls_pk_parse_keyfile returned -0x%04x - %s", -rv, error_buf);
-            goto error_out;
-        }
+    mbedtls_pk_init(&ctx->evse_tls_crt_key[0]);
+    rv =
+        mbedtls_pk_parse_keyfile(&ctx->evse_tls_crt_key[0], evse_leaf_key_path.c_str(), secc_leaf_key_password.c_str());
+    if (rv != 0) {
+        char error_buf[100];
+        mbedtls_strerror(rv, error_buf, sizeof(error_buf));
+        dlog(DLOG_LEVEL_ERROR, "mbedtls_pk_parse_keyfile returned -0x%04x - %s", -rv, error_buf);
+        mbedtls_pk_free(&ctx->evse_tls_crt_key[0]);
+        goto error_out;
+    }
 
-        sprintf(file_path, "%s/%u", DEFAULT_PKI_PATH, pki_idx);
-        char file_names[MAX_PKI_CA_LENGTH][MAX_FILE_NAME_LENGTH] = {0};
-        uint8_t num_of_files = get_dir_numbered_file_names(file_names, file_path, "CPO_", "", 0, MAX_PKI_CA_LENGTH);
+    mbedtls_x509_crt_init(&ctx->evseTlsCrt[0]);
 
-        for (uint8_t idx = 0; idx < num_of_files; idx++) {
-            sprintf(file_path, "%s/%u/%s", DEFAULT_PKI_PATH, pki_idx, file_names[idx]);
-            dlog(DLOG_LEVEL_TRACE, "Checking PKI file %s", file_path);
+    if ((rv = mbedtls_x509_crt_parse_file(&ctx->evseTlsCrt[0], evse_leaf_cert_path.c_str())) != 0) {
+        char error_buf[100];
+        mbedtls_strerror(rv, error_buf, sizeof(error_buf));
+        dlog(DLOG_LEVEL_ERROR, "Unable to parse evse-leaf certficate %s (err: -0x%04x - %s)",
+             evse_leaf_cert_path.c_str(), -rv, error_buf);
+        mbedtls_pk_free(&ctx->evse_tls_crt_key[0]);
+        goto error_out;
+    }
+    if ((rv = mbedtls_x509_crt_parse_file(&ctx->evseTlsCrt[0], cpo_sub2_cert_path.c_str())) != 0) {
+        char error_buf[100];
+        mbedtls_strerror(rv, error_buf, sizeof(error_buf));
+        dlog(DLOG_LEVEL_ERROR, "Unable to parse CPO-sub2 certficate %s (err: -0x%04x - %s)", cpo_sub2_cert_path.c_str(),
+             -rv, error_buf);
+        mbedtls_pk_free(&ctx->evse_tls_crt_key[0]);
+        goto error_out;
+    }
+    if ((rv = mbedtls_x509_crt_parse_file(&ctx->evseTlsCrt[0], cpo_sub1_cert_path.c_str())) != 0) {
+        char error_buf[100];
+        mbedtls_strerror(rv, error_buf, sizeof(error_buf));
+        dlog(DLOG_LEVEL_ERROR, "Unable to parse CPO-sub1 certficate %s (err: -0x%04x - %s)", cpo_sub1_cert_path.c_str(),
+             -rv, error_buf);
+        mbedtls_pk_free(&ctx->evse_tls_crt_key[0]);
+        goto error_out;
+    }
 
-            if ((rv = mbedtls_x509_crt_parse_file(&ctx->evseTlsCrt[pki_idx], file_path)) != 0) {
-                char error_buf[100];
-                mbedtls_strerror(rv, error_buf, sizeof(error_buf));
-                dlog(DLOG_LEVEL_ERROR, "Unable to parse evse-leaf certficate %s (err: -0x%04x - %s idx: %i)", file_path,
-                     -rv, error_buf, idx);
-                mbedtls_pk_free(&ctx->evse_tls_crt_key[pki_idx]);
-                goto error_out;
-            }
-        }
-
-        ctx->num_of_tls_crt++;
-
-        if ((rv = mbedtls_ssl_conf_own_cert(&ctx->ssl_config, &ctx->evseTlsCrt[pki_idx],
-                                            &ctx->evse_tls_crt_key[pki_idx])) != 0) {
-            char error_buf[100];
-            mbedtls_strerror(rv, error_buf, sizeof(error_buf));
-            dlog(DLOG_LEVEL_ERROR, "mbedtls_ssl_conf_own_cert returned -0x%04x - %s", -rv, error_buf);
-            goto error_out;
-        }
+    if ((rv = mbedtls_ssl_conf_own_cert(&ctx->ssl_config, &ctx->evseTlsCrt[0], &ctx->evse_tls_crt_key[0])) != 0) {
+        char error_buf[100];
+        mbedtls_strerror(rv, error_buf, sizeof(error_buf));
+        dlog(DLOG_LEVEL_ERROR, "mbedtls_ssl_conf_own_cert returned -0x%04x - %s", -rv, error_buf);
+        goto error_out;
     }
 
     if ((rv = mbedtls_ssl_config_defaults(&ctx->ssl_config, MBEDTLS_SSL_IS_SERVER, MBEDTLS_SSL_TRANSPORT_STREAM,
@@ -544,16 +575,12 @@ static bool connection_init_tls(struct v2g_context* ctx) {
     mbedtls_ssl_conf_session_cache(&ctx->ssl_config, &cache, mbedtls_ssl_cache_get, mbedtls_ssl_cache_set);
 #endif
     mbedtls_ssl_conf_ciphersuites(&ctx->ssl_config, v2g_cipher_suites);
-    mbedtls_ssl_conf_read_timeout(&ctx->ssl_config, ctx->network_read_timeout);
+    mbedtls_ssl_conf_read_timeout(&ctx->ssl_config, ctx->network_read_timeout_tls);
 
-    if (file_path != NULL)
-        free(file_path);
     return true;
 
 error_out:
 
-    if (file_path != NULL)
-        free(file_path);
     return false;
 }
 
@@ -664,6 +691,7 @@ static void* connection_handle_tcp(void* data) {
  */
 static void* connection_handle_tls(void* data) {
     struct v2g_connection* conn = static_cast<v2g_connection*>(data);
+    struct v2g_context* v2g_ctx = conn->ctx;
     mbedtls_ssl_config* ssl_config = conn->conn.ssl.ssl_config;
     mbedtls_net_context* client_fd = &conn->conn.ssl.tls_client_fd;
     mbedtls_ssl_context* ssl = &conn->conn.ssl.ssl_context;
@@ -674,13 +702,6 @@ static void* connection_handle_tls(void* data) {
     conn->ctx->evseTlsCrt = NULL;
     conn->ctx->evse_tls_crt_key = NULL;
 
-    if (NULL != conn->ctx->privateKeyFilePath)
-        free(conn->ctx->privateKeyFilePath);
-    if (NULL != conn->ctx->certFilePath)
-        free(conn->ctx->certFilePath);
-    conn->ctx->certFilePath = static_cast<char*>(malloc(std::string(DEFAULT_PKI_PATH).size() + 3));
-    conn->ctx->privateKeyFilePath = static_cast<char*>(malloc(std::string(DEFAULT_KEY_PATH).size() + 3));
-
     int rv = -1;
 
     dlog(DLOG_LEVEL_INFO, "Started new TLS connection thread");
@@ -689,30 +710,41 @@ static void* connection_handle_tls(void* data) {
         goto thread_exit;
     }
 
-    /* init new SSL context */
+    /* Init new SSL context */
     mbedtls_ssl_init(ssl);
 
-    /* Code to start the ssl-key-log-tracing */
-    // Activate full debugging to receive the demanded  key-log-msgs
+    /* Code to start the TLS-key logging */
+    if (v2g_ctx->tls_key_logging == true) {
+        if (v2g_ctx->tls_log_ctx.file != NULL) {
+            fclose(v2g_ctx->tls_log_ctx.file);
+        }
+        memset(&v2g_ctx->tls_log_ctx, 0, sizeof(v2g_ctx->tls_log_ctx));
 
-    if (NULL != conn->ctx->tls_log_ctx.file) {
-        mbedtls_debug_set_threshold(MBEDTLS_DEBUG_LEVEL_VERBOSE);
-        conn->ctx->tls_log_ctx.inClientRandom = false;
-        conn->ctx->tls_log_ctx.inMasterSecret = false;
-        conn->ctx->tls_log_ctx.hexdumpLinesToProcess = 0;
-        mbedtls_ssl_conf_dbg(ssl_config, ssl_key_log_debug_callback, &conn->ctx->tls_log_ctx);
+        std::string tls_log_path(v2g_ctx->tls_key_logging_path);
+        tls_log_path.append("/tls_session_keys.log");
 
-    } else {
-        mbedtls_debug_set_threshold(MBEDTLS_DEBUG_LEVEL_NO_DEBUG);
+        v2g_ctx->tls_log_ctx.file = fopen(tls_log_path.c_str(), "a");
+
+        if (v2g_ctx->tls_log_ctx.file == NULL) {
+            dlog(DLOG_LEVEL_INFO, "%s", "Failed to open file path for TLS key logging: %s", strerror(errno));
+            mbedtls_debug_set_threshold(MBEDTLS_DEBUG_LEVEL_NO_DEBUG);
+        } else {
+            // Activate full debugging to receive the demanded key-log-msgs
+            mbedtls_debug_set_threshold(MBEDTLS_DEBUG_LEVEL_VERBOSE);
+            v2g_ctx->tls_log_ctx.inClientRandom = false;
+            v2g_ctx->tls_log_ctx.inMasterSecret = false;
+            v2g_ctx->tls_log_ctx.hexdumpLinesToProcess = 0;
+            mbedtls_ssl_conf_dbg(ssl_config, ssl_key_log_debug_callback, &v2g_ctx->tls_log_ctx);
+        }
     }
 
     /* get the SSL context ready */
     if ((rv = mbedtls_ssl_setup(ssl, ssl_config)) != 0) {
-        dlog(DLOG_LEVEL_ERROR, "mbedtls_ssl_setup returned -0x%04x", -rv);
+        char error_buf[100];
+        mbedtls_strerror(rv, error_buf, sizeof(error_buf));
+        dlog(DLOG_LEVEL_ERROR, "mbedtls_ssl_setup returned: %s (-0x%04x)", error_buf, -rv);
         goto thread_exit;
     }
-    //    mbedtls_debug_set_threshold(MBEDTLS_DEBUG_LEVEL_VERBOSE);
-    //    mbedtls_ssl_conf_dbg(ssl_config, mbedDlogCallback, &conn->ctx->tls_log_ctx);
 
     mbedtls_ssl_set_bio(ssl, client_fd, mbedtls_net_send, NULL, mbedtls_net_recv_timeout);
 
@@ -731,15 +763,25 @@ static void* connection_handle_tls(void* data) {
             /* Determine used v2g-root certificate */
             if (ssl->state == MBEDTLS_SSL_SERVER_HELLO_DONE) {
                 mbedtls_x509_crt* caChain = ssl_config->key_cert->cert;
+                mbedtls_x509_crt* root_crt = &conn->ctx->v2g_root_crt;
                 uint8_t pkiIdx;
 
                 for (pkiIdx = 0; caChain != NULL && (caChain != mbedtls_ssl_own_cert(ssl)); pkiIdx++) {
                     caChain = ssl_config->key_cert->next->cert;
+                    root_crt = root_crt->next;
                 }
-                sprintf(conn->ctx->certFilePath, "%s/%u", DEFAULT_PKI_PATH, pkiIdx);
-                sprintf(conn->ctx->privateKeyFilePath, "%s/%u", DEFAULT_KEY_PATH, pkiIdx);
 
-                dlog(DLOG_LEVEL_INFO, "Using v2g-root cert of index #%u for tls-handshake", pkiIdx);
+                /* Log selected V2G-root cert */
+                if (root_crt != NULL) {
+                    unsigned char trusted_id[20];
+                    mbedtls_sha1(root_crt->raw.p, root_crt->raw.len, trusted_id);
+                    std::string root_issuer(reinterpret_cast<const char*>(root_crt->issuer.val.p),
+                                            root_crt->issuer.val.len);
+
+                    dlog(DLOG_LEVEL_INFO, "Using V2G-root of issuer %s (SHA-1: 0x%s) for TLS-handshake",
+                         root_issuer.c_str(),
+                         convert_to_hex_str(reinterpret_cast<const uint8_t*>(trusted_id), sizeof(trusted_id)).c_str());
+                }
             }
 
             if (rv != 0) {
@@ -757,8 +799,11 @@ static void* connection_handle_tls(void* data) {
     dlog(DLOG_LEVEL_INFO, "TLS handshake succeeded");
 
     /* Deactivate tls-debug-mode after the tls-handshake, because of performance reasons */
-    if (conn->ctx->tls_log_ctx.file != NULL)
+    if (conn->ctx->tls_log_ctx.file != NULL) {
         mbedtls_debug_set_threshold(MBEDTLS_DEBUG_LEVEL_NO_DEBUG);
+        fclose(conn->ctx->tls_log_ctx.file);
+        memset(&conn->ctx->tls_log_ctx, 0, sizeof(conn->ctx->tls_log_ctx));
+    }
 
     /* check if the v2g-session is already running in another thread, if not handle v2g-connection */
     if (conn->ctx->state == 0) {
@@ -784,12 +829,6 @@ static void* connection_handle_tls(void* data) {
 thread_exit:
     dlog(DLOG_LEVEL_INFO, "Closing TLS connection thread");
 
-    if ((conn->ctx->end_tls_debug_by_sessionStop == true) && (conn->ctx->tls_log_ctx.file != NULL)) {
-        fclose(conn->ctx->tls_log_ctx.file);
-        memset(&conn->ctx->tls_log_ctx, 0, sizeof(conn->ctx->tls_log_ctx));
-        dlog(DLOG_LEVEL_INFO, "TLS-debug-mode is now disabled!");
-    }
-
     if (rv != 0) {
         char error_buf[100];
         mbedtls_strerror(rv, error_buf, sizeof(error_buf));
@@ -804,26 +843,15 @@ thread_exit:
         mbedtls_x509_crt_free(&conn->ctx->evseTlsCrt[idx]);
     }
     conn->ctx->num_of_tls_crt = 0;
-    if (conn->ctx->evseTlsCrt != NULL) {
-        free(conn->ctx->evseTlsCrt);
-        conn->ctx->evseTlsCrt = NULL;
-    }
-    if (conn->ctx->evse_tls_crt_key != NULL) {
-        free(conn->ctx->evse_tls_crt_key);
-        conn->ctx->evse_tls_crt_key = NULL;
-    }
+
+    free(conn->ctx->evseTlsCrt);
+    conn->ctx->evseTlsCrt = NULL;
+
+    free(conn->ctx->evse_tls_crt_key);
+    conn->ctx->evse_tls_crt_key = NULL;
 
     mbedtls_x509_crt_free(&conn->ctx->v2g_root_crt);
     mbedtls_ssl_config_free(&conn->ctx->ssl_config);
-
-    if (conn->ctx->privateKeyFilePath != NULL) {
-        free(conn->ctx->privateKeyFilePath);
-        conn->ctx->privateKeyFilePath = NULL;
-    }
-    if (conn->ctx->certFilePath != NULL) {
-        free(conn->ctx->certFilePath);
-        conn->ctx->certFilePath = NULL;
-    }
 
     /* cleanup and notify lower layers */
     connection_teardown(conn);

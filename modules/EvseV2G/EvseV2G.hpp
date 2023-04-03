@@ -28,6 +28,8 @@ struct Conf {
     std::string highlevel_authentication_mode;
     std::string tls_security;
     bool terminate_connection_on_failed_response;
+    bool tls_key_logging;
+    std::string tls_key_logging_path;
 };
 
 class EvseV2G : public Everest::ModuleBase {
