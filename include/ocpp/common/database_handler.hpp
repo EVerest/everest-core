@@ -23,6 +23,10 @@ struct TransactionEntry {
     std::string time_start;
     int32_t meter_start;
     int32_t transaction_id;
+    bool csms_ack;
+    int32_t meter_last;
+    std::string meter_last_time;
+    std::string last_update;
     boost::optional<int32_t> reservation_id = boost::none;
     boost::optional<std::string> parent_id_tag = boost::none;
     boost::optional<int32_t> meter_stop = boost::none;
@@ -58,7 +62,7 @@ public:
     /// \brief Inserts a transaction with the given parameter to the TRANSACTIONS table.
     void insert_transaction(const std::string& session_id, const int32_t transaction_id, const int32_t connector,
                             const std::string& id_tag_start, const std::string& time_start, const int32_t meter_start,
-                            const boost::optional<int32_t> reservation_id);
+                            const bool csms_ack, const boost::optional<int32_t> reservation_id);
 
     /// \brief Updates the given parameters for the transaction with the given \p session_id in the TRANSACTIONS table.
     void update_transaction(const std::string& session_id, int32_t transaction_id,
@@ -67,6 +71,12 @@ public:
     /// \brief Updates the given parameters for the transaction with the given \p session_id in the TRANSACTIONS table.
     void update_transaction(const std::string& session_id, int32_t meter_stop, const std::string& time_end,
                             boost::optional<CiString<20>> id_tag_end, boost::optional<v16::Reason> stop_reason);
+
+    /// \brief Updates the CSMS_ACK column for the transaction with the given \p session_id in the TRANSACTIONS table
+    void update_transaction_csms_ack(const std::string& session_id);
+
+    /// \brief Updates the METER_LAST and METER_LAST_TIME column for the transaction with the given \p session_id in the TRANSACTIONS table
+    void update_transaction_meter_value(const std::string& session_id, const int32_t value, const std::string &timestamp);
 
     /// \brief Returns a list of all transactions in the database. If \p filter_complete is true, only incomplete
     /// transactions will be return. If \p filter_complete is false, all transactions will be returned

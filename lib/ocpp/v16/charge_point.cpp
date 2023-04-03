@@ -280,22 +280,31 @@ void ChargePoint::update_clock_aligned_meter_values_interval() {
 
 void ChargePoint::stop_pending_transactions() {
     const auto transactions = this->database_handler->get_transactions(true);
+    EVLOG_info << "Sending StopTransaction.req for " << transactions.size()
+               << " open transactions that haven't been acknowledged by CSMS.";
     for (const auto& transaction_entry : transactions) {
-        StopTransactionRequest req;
-        req.meterStop = transaction_entry.meter_start; // FIXME(piet): Get latest meter value here
-        req.timestamp = ocpp::DateTime();
-        req.reason = Reason::PowerLoss;
-        req.transactionId = transaction_entry.transaction_id;
-
-        auto message_id = this->message_queue->createMessageId();
-        ocpp::Call<StopTransactionRequest> call(req, message_id);
-
-        {
-            std::lock_guard<std::mutex> lock(this->stop_transaction_mutex);
-            this->send<StopTransactionRequest>(call);
+        std::shared_ptr<Transaction> transaction = std::make_shared<Transaction>(
+            transaction_entry.connector, transaction_entry.session_id, CiString<20>(transaction_entry.id_tag_start),
+            transaction_entry.meter_start, transaction_entry.reservation_id,
+            ocpp::DateTime(transaction_entry.time_start), nullptr);
+        ocpp::DateTime timestamp;
+        int meter_stop = 0;
+        if (transaction_entry.time_end.has_value() and transaction_entry.meter_stop.has_value()) {
+            timestamp = ocpp::DateTime(transaction_entry.time_end.value());
+            meter_stop = transaction_entry.meter_stop.value();
+        } else {
+            timestamp = ocpp::DateTime(transaction_entry.meter_last_time);
+            meter_stop = transaction_entry.meter_last;
         }
-        this->database_handler->update_transaction(transaction_entry.session_id, req.meterStop, req.timestamp,
-                                                   boost::none, req.reason);
+
+        const auto stop_energy_wh = std::make_shared<StampedEnergyWh>(timestamp, meter_stop);
+        transaction->add_stop_energy_wh(stop_energy_wh);
+        transaction->set_transaction_id(transaction_entry.transaction_id);
+        this->transaction_handler->add_transaction(transaction);
+
+        this->stop_transaction(transaction_entry.connector, Reason::PowerLoss, boost::none);
+        this->database_handler->update_transaction(transaction_entry.session_id, meter_stop, timestamp.to_rfc3339(),
+                                                   boost::none, Reason::PowerLoss);
     }
 }
 
@@ -675,7 +684,6 @@ bool ChargePoint::start() {
     this->init_websocket(this->configuration->getSecurityProfile());
     this->websocket->connect(this->configuration->getSecurityProfile());
     this->boot_notification();
-    this->stop_pending_transactions();
     this->load_charging_profiles();
 
     this->stopped = false;
@@ -991,6 +999,8 @@ void ChargePoint::handleBootNotificationResponse(ocpp::CallResult<BootNotificati
             this->status_notification(connector, ChargePointErrorCode::NoError, this->status->get_state(connector));
         }
 
+        this->stop_pending_transactions();
+
         if (this->is_pnc_enabled()) {
             this->ocsp_request_timer->timeout(INITIAL_CERTIFICATE_REQUESTS_DELAY);
             this->v2g_certificate_timer->timeout(INITIAL_CERTIFICATE_REQUESTS_DELAY);
@@ -1049,6 +1059,8 @@ void ChargePoint::handleChangeAvailabilityRequest(ocpp::Call<ChangeAvailabilityR
         } else {
             if (this->transaction_handler->transaction_active(call.msg.connectorId)) {
                 transaction_running = true;
+                std::lock_guard<std::mutex> change_availability_lock(change_availability_mutex);
+                this->change_availability_queue[call.msg.connectorId] = call.msg.type;
             } else {
                 connectors.push_back(call.msg.connectorId);
             }
@@ -1507,9 +1519,8 @@ void ChargePoint::handleStartTransactionResponse(ocpp::CallResult<StartTransacti
 void ChargePoint::handleStopTransactionResponse(ocpp::CallResult<StopTransactionResponse> call_result) {
 
     StopTransactionResponse stop_transaction_response = call_result.msg;
-
-    // TODO(piet): Fix this for multiple connectors;
-    int32_t connector = 1;
+    const auto transaction = this->transaction_handler->get_transaction(call_result.uniqueId);
+    int32_t connector = transaction->get_connector();
 
     if (stop_transaction_response.idTagInfo) {
         auto id_tag = this->transaction_handler->get_authorized_id_tag(call_result.uniqueId.get());
@@ -1548,6 +1559,7 @@ void ChargePoint::handleStopTransactionResponse(ocpp::CallResult<StopTransaction
             this->status->submit_event(connector, Event_ChangeAvailabilityToUnavailable());
         }
     }
+    this->database_handler->update_transaction_csms_ack(transaction->get_session_id());
     this->transaction_handler->erase_stopped_transaction(call_result.uniqueId.get());
     // when this transaction was stopped because of a Reset.req this signals that StopTransaction.conf has been received
     this->stop_transaction_cv.notify_one();
@@ -2882,6 +2894,24 @@ void ChargePoint::on_transaction_started(const int32_t& connector, const std::st
         if (meter_value.has_value()) {
             this->transaction_handler->add_meter_value(connector, meter_value.value());
             this->send_meter_value(connector, meter_value.value());
+            
+            // this updates the last meter value in the database
+            const auto transaction = this->transaction_handler->get_transaction(connector);
+            if (transaction != nullptr) {
+                for (const auto& entry : meter_value.value().sampledValue) {
+                    if (entry.measurand == Measurand::Energy_Active_Import_Register and !entry.phase.has_value()) {
+                        // this is the entry for Energy.Active.Import.Register total
+                        try {
+                            this->database_handler->update_transaction_meter_value(
+                                transaction->get_session_id(), std::stoi(entry.value),
+                                meter_value.value().timestamp.to_rfc3339());
+                        } catch (const std::invalid_argument& e) {
+                            EVLOG_warning << "Processed invalid meter value: " << entry.value
+                                          << " while updating database";
+                        }
+                    }
+                }
+            }
         } else {
             EVLOG_warning
                 << "Could not send and add meter value to transaction for uninitialized powermeter at connector#"
@@ -2899,7 +2929,7 @@ void ChargePoint::on_transaction_started(const int32_t& connector, const std::st
     }
 
     this->database_handler->insert_transaction(session_id, transaction->get_transaction_id(), connector, id_token,
-                                               timestamp.to_rfc3339(), meter_start, reservation_id);
+                                               timestamp.to_rfc3339(), meter_start, false, reservation_id);
     this->transaction_handler->add_transaction(transaction);
     this->connectors.at(connector)->transaction = transaction;
 

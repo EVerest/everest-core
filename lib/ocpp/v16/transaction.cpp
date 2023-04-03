@@ -21,7 +21,9 @@ Transaction::Transaction(const int32_t& connector, const std::string& session_id
     reservation_id(reservation_id),
     active(true),
     finished(false),
-    meter_values_sample_timer(std::move(meter_values_sample_timer)) {
+    meter_values_sample_timer(std::move(meter_values_sample_timer)),
+    start_transaction_message_id(""),
+    stop_transaction_message_id("") {
 }
 
 int32_t Transaction::get_connector() {
@@ -89,7 +91,9 @@ std::vector<TransactionData> Transaction::get_transaction_data() {
 }
 
 void Transaction::stop() {
-    this->meter_values_sample_timer->stop();
+    if (this->meter_values_sample_timer != nullptr) {
+        this->meter_values_sample_timer->stop();
+    }
     this->active = false;
 }
 
@@ -166,15 +170,17 @@ std::shared_ptr<Transaction> TransactionHandler::get_transaction(int32_t connect
     return this->active_transactions.at(connector);
 }
 
-std::shared_ptr<Transaction> TransactionHandler::get_transaction(const std::string& start_transaction_message_id) {
+std::shared_ptr<Transaction> TransactionHandler::get_transaction(const std::string& transaction_message_id) {
     std::lock_guard<std::mutex> lock(this->active_transactions_mutex);
     for (const auto& transaction : this->active_transactions) {
-        if (transaction != nullptr && transaction->get_start_transaction_message_id() == start_transaction_message_id) {
-            { return transaction; }
+        if (transaction != nullptr && (transaction->get_start_transaction_message_id() == transaction_message_id or
+                                       transaction->get_stop_transaction_message_id() == transaction_message_id)) {
+            return transaction;
         }
     }
     for (auto transaction : this->stopped_transactions) {
-        if (transaction->get_start_transaction_message_id() == start_transaction_message_id) {
+        if (transaction->get_start_transaction_message_id() == transaction_message_id or
+            transaction->get_stop_transaction_message_id() == transaction_message_id) {
             return transaction;
         }
     }

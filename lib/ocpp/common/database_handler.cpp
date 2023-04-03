@@ -96,15 +96,16 @@ bool DatabaseHandler::clear_table(const std::string& table_name) {
 // transactions
 void DatabaseHandler::insert_transaction(const std::string& session_id, const int32_t transaction_id,
                                          const int32_t connector, const std::string& id_tag_start,
-                                         const std::string& time_start, const int32_t meter_start,
+                                         const std::string& time_start, const int32_t meter_start, const bool csms_ack,
                                          const boost::optional<int32_t> reservation_id) {
-    std::string sql =
-        "INSERT INTO TRANSACTIONS (ID, TRANSACTION_ID, CONNECTOR, ID_TAG_START, TIME_START, METER_START, "
-        "RESERVATION_ID) VALUES "
-        "(@session_id, @transaction_id, @connector, @id_tag_start, @time_start, @meter_start, @reservation_id)";
+    std::string sql = "INSERT INTO TRANSACTIONS (ID, TRANSACTION_ID, CONNECTOR, ID_TAG_START, TIME_START, METER_START, "
+                      "CSMS_ACK, METER_LAST, METER_LAST_TIME, LAST_UPDATE, RESERVATION_ID) VALUES "
+                      "(@session_id, @transaction_id, @connector, @id_tag_start, @time_start, @meter_start, @csms_ack, "
+                      "@meter_last, @meter_last_time, @last_update, @reservation_id)";
+    const auto timestamp = ocpp::DateTime().to_rfc3339();
     sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_warning << "Could not prepare insert statement" << std::endl;
+        EVLOG_warning << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
         return;
     }
 
@@ -114,11 +115,15 @@ void DatabaseHandler::insert_transaction(const std::string& session_id, const in
     sqlite3_bind_text(stmt, 4, id_tag_start.c_str(), id_tag_start.length(), NULL);
     sqlite3_bind_text(stmt, 5, time_start.c_str(), time_start.length(), NULL);
     sqlite3_bind_int(stmt, 6, meter_start);
+    sqlite3_bind_int(stmt, 7, int(csms_ack));
+    sqlite3_bind_int(stmt, 8, meter_start);
+    sqlite3_bind_text(stmt, 9, time_start.c_str(), time_start.length(), NULL);
+    sqlite3_bind_text(stmt, 10, timestamp.c_str(), timestamp.length(), NULL);
 
     if (reservation_id) {
-        sqlite3_bind_int(stmt, 7, reservation_id.value());
+        sqlite3_bind_int(stmt, 11, reservation_id.value());
     } else {
-        sqlite3_bind_null(stmt, 7);
+        sqlite3_bind_null(stmt, 11);
     }
 
     if (sqlite3_step(stmt) != SQLITE_DONE) {
@@ -135,12 +140,14 @@ void DatabaseHandler::insert_transaction(const std::string& session_id, const in
 void DatabaseHandler::update_transaction(const std::string& session_id, int32_t transaction_id,
                                          boost::optional<CiString<20>> parent_id_tag) {
 
-    std::string sql =
-        "UPDATE TRANSACTIONS SET TRANSACTION_ID=@transaction_id, PARENT_ID_TAG=@parent_id_tag WHERE ID==@session_id";
+    std::string sql = "UPDATE TRANSACTIONS SET TRANSACTION_ID=@transaction_id, PARENT_ID_TAG=@parent_id_tag, "
+                      "LAST_UPDATE=@last_update WHERE ID==@session_id";
+
+    const auto timestamp = ocpp::DateTime().to_rfc3339();
 
     sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_warning << "Could not prepare insert statement" << std::endl;
+        EVLOG_warning << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
         return;
     }
 
@@ -150,7 +157,8 @@ void DatabaseHandler::update_transaction(const std::string& session_id, int32_t 
         const std::string parent_id_tag_str(parent_id_tag.value().get());
         sqlite3_bind_text(stmt, 2, parent_id_tag_str.c_str(), parent_id_tag_str.length(), NULL);
     }
-    sqlite3_bind_text(stmt, 3, session_id.c_str(), session_id.length(), NULL);
+    sqlite3_bind_text(stmt, 3, timestamp.c_str(), timestamp.length(), NULL);
+    sqlite3_bind_text(stmt, 4, session_id.c_str(), session_id.length(), NULL);
 
     if (sqlite3_step(stmt) != SQLITE_DONE) {
         EVLOG_error << "Could not insert into table: " << sqlite3_errmsg(this->db) << std::endl;
@@ -166,8 +174,11 @@ void DatabaseHandler::update_transaction(const std::string& session_id, int32_t 
 void DatabaseHandler::update_transaction(const std::string& session_id, int32_t meter_stop, const std::string& time_end,
                                          boost::optional<CiString<20>> id_tag_end,
                                          boost::optional<v16::Reason> stop_reason) {
-    std::string sql = "UPDATE TRANSACTIONS SET METER_STOP=@meter_stop, TIME_END=@time_end, "
-                      "ID_TAG_END=@id_tag_end, STOP_REASON=@stop_reason WHERE ID==@session_id";
+    std::string sql =
+        "UPDATE TRANSACTIONS SET METER_STOP=@meter_stop, TIME_END=@time_end, "
+        "ID_TAG_END=@id_tag_end, STOP_REASON=@stop_reason, LAST_UPDATE=@last_update WHERE ID==@session_id";
+
+    const auto timestamp = ocpp::DateTime().to_rfc3339();
 
     sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
@@ -185,7 +196,60 @@ void DatabaseHandler::update_transaction(const std::string& session_id, int32_t 
         const std::string stop_reason_str(v16::conversions::reason_to_string(stop_reason.value()));
         sqlite3_bind_text(stmt, 4, stop_reason_str.c_str(), stop_reason_str.length(), SQLITE_TRANSIENT);
     }
-    sqlite3_bind_text(stmt, 5, session_id.c_str(), session_id.length(), NULL);
+    sqlite3_bind_text(stmt, 5, timestamp.c_str(), timestamp.length(), NULL);
+    sqlite3_bind_text(stmt, 6, session_id.c_str(), session_id.length(), NULL);
+
+    if (sqlite3_step(stmt) != SQLITE_DONE) {
+        EVLOG_error << "Could not insert into table: " << sqlite3_errmsg(this->db) << std::endl;
+        throw std::runtime_error("db access error");
+    }
+
+    if (sqlite3_finalize(stmt) != SQLITE_OK) {
+        EVLOG_error << "Error updating table" << std::endl;
+        throw std::runtime_error("db access error");
+    }
+}
+
+void DatabaseHandler::update_transaction_csms_ack(const std::string& session_id) {
+    std::string sql = "UPDATE TRANSACTIONS SET CSMS_ACK=1, LAST_UPDATE=@last_update WHERE ID==@session_id";
+    const auto timestamp = ocpp::DateTime().to_rfc3339();
+
+    sqlite3_stmt* stmt;
+    if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
+        EVLOG_warning << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
+        return;
+    }
+
+    sqlite3_bind_text(stmt, 1, timestamp.c_str(), timestamp.length(), NULL);
+    sqlite3_bind_text(stmt, 2, session_id.c_str(), session_id.length(), NULL);
+
+    if (sqlite3_step(stmt) != SQLITE_DONE) {
+        EVLOG_error << "Could not insert into table: " << sqlite3_errmsg(this->db) << std::endl;
+        throw std::runtime_error("db access error");
+    }
+
+    if (sqlite3_finalize(stmt) != SQLITE_OK) {
+        EVLOG_error << "Error updating table" << std::endl;
+        throw std::runtime_error("db access error");
+    }
+}
+
+void DatabaseHandler::update_transaction_meter_value(const std::string& session_id, const int32_t value,
+                                                     const std::string& last_meter_time) {
+    std::string sql = "UPDATE TRANSACTIONS SET METER_LAST=@meter_last, METER_LAST_TIME=@meter_last_time, "
+                      "LAST_UPDATE=@last_update WHERE ID==@session_id";
+    const auto timestamp = ocpp::DateTime().to_rfc3339();
+
+    sqlite3_stmt* stmt;
+    if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
+        EVLOG_warning << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
+        return;
+    }
+
+    sqlite3_bind_int(stmt, 1, value);
+    sqlite3_bind_text(stmt, 2, last_meter_time.c_str(), last_meter_time.length(), NULL);
+    sqlite3_bind_text(stmt, 3, timestamp.c_str(), timestamp.length(), NULL);
+    sqlite3_bind_text(stmt, 4, session_id.c_str(), session_id.length(), NULL);
 
     if (sqlite3_step(stmt) != SQLITE_DONE) {
         EVLOG_error << "Could not insert into table: " << sqlite3_errmsg(this->db);
@@ -204,7 +268,7 @@ std::vector<TransactionEntry> DatabaseHandler::get_transactions(bool filter_inco
     std::string sql = "SELECT * FROM TRANSACTIONS";
 
     if (filter_incomplete) {
-        sql += " WHERE METER_STOP IS NULL OR TIME_END IS NULL";
+        sql += " WHERE CSMS_ACK==0";
     }
     sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
@@ -220,31 +284,35 @@ std::vector<TransactionEntry> DatabaseHandler::get_transactions(bool filter_inco
         transaction_entry.id_tag_start = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3)));
         transaction_entry.time_start = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4)));
         transaction_entry.meter_start = sqlite3_column_int(stmt, 5);
+        transaction_entry.csms_ack = bool(sqlite3_column_int(stmt, 6));
+        transaction_entry.meter_last = sqlite3_column_int(stmt, 7);
+        transaction_entry.meter_last_time = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 8)));
+        transaction_entry.last_update = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 9)));
 
-        if (sqlite3_column_type(stmt, 6) != SQLITE_NULL) {
-            transaction_entry.reservation_id.emplace(sqlite3_column_int(stmt, 6));
-        }
-        if (sqlite3_column_type(stmt, 7) != SQLITE_NULL) {
-            transaction_entry.parent_id_tag.emplace(
-                std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 7))));
-        }
-        if (sqlite3_column_type(stmt, 8) != SQLITE_NULL) {
-            transaction_entry.id_tag_end.emplace(
-                std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 8))));
-        }
-        if (sqlite3_column_type(stmt, 9) != SQLITE_NULL) {
-            transaction_entry.time_end.emplace(
-                std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 9))));
-        }
         if (sqlite3_column_type(stmt, 10) != SQLITE_NULL) {
-            transaction_entry.meter_stop.emplace(sqlite3_column_int(stmt, 10));
+            transaction_entry.reservation_id.emplace(sqlite3_column_int(stmt, 10));
         }
         if (sqlite3_column_type(stmt, 11) != SQLITE_NULL) {
-            transaction_entry.stop_reason.emplace(
+            transaction_entry.parent_id_tag.emplace(
                 std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 11))));
         }
         if (sqlite3_column_type(stmt, 12) != SQLITE_NULL) {
-            transaction_entry.reservation_id.emplace(sqlite3_column_int(stmt, 12));
+            transaction_entry.id_tag_end.emplace(
+                std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 12))));
+        }
+        if (sqlite3_column_type(stmt, 13) != SQLITE_NULL) {
+            transaction_entry.time_end.emplace(
+                std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 13))));
+        }
+        if (sqlite3_column_type(stmt, 14) != SQLITE_NULL) {
+            transaction_entry.meter_stop.emplace(sqlite3_column_int(stmt, 14));
+        }
+        if (sqlite3_column_type(stmt, 15) != SQLITE_NULL) {
+            transaction_entry.stop_reason.emplace(
+                std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 15))));
+        }
+        if (sqlite3_column_type(stmt, 16) != SQLITE_NULL) {
+            transaction_entry.reservation_id.emplace(sqlite3_column_int(stmt, 16));
         }
         transactions.push_back(transaction_entry);
     }
