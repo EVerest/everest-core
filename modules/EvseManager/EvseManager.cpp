@@ -373,6 +373,8 @@ void EvseManager::ready() {
         if (!config.autocharge_use_slac_instead_of_hlc) {
             r_hlc[0]->subscribe_EVCCIDD([this](const std::string& token) {
                 autocharge_token = create_autocharge_token(token, config.connector_id);
+                car_manufacturer = get_manufacturer_from_mac(token);
+                p_evse->publish_car_manufacturer(car_manufacturer);
 
                 {
                     std::scoped_lock lock(ev_info_mutex);
@@ -472,6 +474,7 @@ void EvseManager::ready() {
                 // may confuse the PWM state machine in some implementations.
                 // r_slac[0]->call_reset(true);
                 // This is entering BCD from state A
+                car_manufacturer = types::evse_manager::CarManufacturer::Unknown;
                 r_slac[0]->call_enter_bcd();
             } else if (event == types::board_support::Event::CarUnplugged) {
                 r_slac[0]->call_leave_bcd();
@@ -1065,6 +1068,9 @@ void EvseManager::cable_check() {
         // Sleep before submitting result to spend more time in cable check. This is needed for some solar inverters
         // used as DC chargers for them to warm up.
         sleep(config.hack_sleep_in_cable_check);
+        if (car_manufacturer == types::evse_manager::CarManufacturer::VolkswagenGroup) {
+            sleep(config.hack_sleep_in_cable_check_volkswagen);
+        }
 
         // submit result to HLC
         r_hlc[0]->call_cableCheck_Finished(ok);

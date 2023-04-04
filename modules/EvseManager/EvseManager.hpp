@@ -25,6 +25,7 @@
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
+#include "CarManufacturer.hpp"
 #include "Charger.hpp"
 #include "SessionLog.hpp"
 #include "VarContainer.hpp"
@@ -66,6 +67,7 @@ struct Conf {
     int dc_isolation_voltage_V;
     bool dbg_hlc_auth_after_tstep;
     int hack_sleep_in_cable_check;
+    int hack_sleep_in_cable_check_volkswagen;
     bool switch_to_minimum_voltage_after_cable_check;
     bool hack_skoda_enyaq;
     int hack_present_current_offset;
@@ -216,6 +218,7 @@ private:
     // EV information
     std::mutex ev_info_mutex;
     types::evse_manager::EVInfo ev_info;
+    types::evse_manager::CarManufacturer car_manufacturer{types::evse_manager::CarManufacturer::Unknown};
 
     void imd_stop();
     void imd_start();

@@ -143,6 +143,10 @@ vars:
     description: More details about the EV if available
     type: object
     $ref: /evse_manager#/EVInfo
+  car_manufacturer:
+    description: Car manufacturer (if known)
+    type: string
+    $ref: /evse_manager#/CarManufacturer
   telemetry:
     description: Other telemetry
     type: object
