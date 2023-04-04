@@ -103,8 +103,6 @@ private:
     std::vector<RegisterData> pm_configuration;
     bool config_loaded_successfully = {false};
 
-    int modbus_pause_between_messages = {0};
-
     types::powermeter::Powermeter pm_last_values;
 
     std::thread output_thread;
