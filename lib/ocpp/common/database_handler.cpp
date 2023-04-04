@@ -242,7 +242,7 @@ void DatabaseHandler::update_transaction_meter_value(const std::string& session_
 
     sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_warning << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
+        EVLOG_debug << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
         return;
     }
 

@@ -89,6 +89,11 @@ private:
     // StopTransaction.req
     std::map<std::string, int32_t> message_id_transaction_id_map;
 
+    // key is the message id of a StartTransaction.req and value is a list of MeterValue.req message ids. It is used to
+    // replace the transactionId within the MeterValue.req in case the transactionId was unknown at the time the message
+    // was queued. This can happen when the CP has not received a StartTransaction.conf from the CSMS.
+    std::map<std::string, std::vector<std::string>> start_transaction_mid_meter_values_mid_map;
+
     MessageId getMessageId(const json::array_t& json_message) {
         return MessageId(json_message.at(MESSAGE_ID).get<std::string>());
     }
@@ -402,8 +407,8 @@ public:
     /// \brief Handles a message timeout or a CALLERROR. \p enhanced_message_opt is set only in case of CALLERROR
     void handle_timeout_or_callerror(const boost::optional<EnhancedMessage<M>>& enhanced_message_opt) {
         std::lock_guard<std::mutex> lk(this->message_mutex);
-        EVLOG_warning << "Message timeout or CALLERROR for: " << this->in_flight->messageType << " (" << this->in_flight->uniqueId()
-                      << ")";
+        EVLOG_warning << "Message timeout or CALLERROR for: " << this->in_flight->messageType << " ("
+                      << this->in_flight->uniqueId() << ")";
         if (this->isTransactionMessage(this->in_flight)) {
             if (this->in_flight->message_attempts < this->transaction_message_attempts) {
                 EVLOG_warning << "Message is transaction related and will therefore be sent again";
@@ -510,8 +515,39 @@ public:
         EVLOG_debug << "adding " << stop_transaction_message_id << " for transaction " << transaction_id;
         this->message_id_transaction_id_map[stop_transaction_message_id] = transaction_id;
     }
-    void notify_start_transaction_handled() {
+
+    void add_meter_value_message_id(const std::string& start_transaction_message_id,
+                                    const std::string& meter_value_message_id) {
+        if (this->start_transaction_mid_meter_values_mid_map.count(start_transaction_message_id)) {
+            this->start_transaction_mid_meter_values_mid_map.at(start_transaction_message_id)
+                .push_back(meter_value_message_id);
+        } else {
+            std::vector<std::string> meter_value_message_ids;
+            meter_value_message_ids.push_back(meter_value_message_id);
+            this->start_transaction_mid_meter_values_mid_map[start_transaction_message_id] = meter_value_message_ids;
+        }
+    }
+
+    void notify_start_transaction_handled(const std::string& start_transaction_message_id,
+                                          const int32_t transaction_id) {
         this->cv.notify_one();
+
+        // replace transaction id in meter values if start_transaction_message_id is present in map
+        // this is necessary when the chargepoint queued MeterValue.req for a transaction with unknown transaction_id
+        std::lock_guard<std::mutex> lk(this->message_mutex);
+        if (this->start_transaction_mid_meter_values_mid_map.count(start_transaction_message_id)) {
+            for (auto it = this->transaction_message_queue.begin(); it != transaction_message_queue.end(); ++it) {
+                for (const auto& meter_value_message_id :
+                     this->start_transaction_mid_meter_values_mid_map.at(start_transaction_message_id)) {
+
+                    if (meter_value_message_id == (*it)->message.at(1)) {
+                        EVLOG_debug << "Adding transactionId " << transaction_id << " to MeterValue.req";
+                        (*it)->message.at(3)["transactionId"] = transaction_id;
+                    }
+                }
+            }
+        }
+        this->start_transaction_mid_meter_values_mid_map.erase(start_transaction_message_id);
     }
 
     M string_to_messagetype(const std::string& s);

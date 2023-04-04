@@ -280,8 +280,11 @@ void ChargePoint::update_clock_aligned_meter_values_interval() {
 
 void ChargePoint::stop_pending_transactions() {
     const auto transactions = this->database_handler->get_transactions(true);
-    EVLOG_info << "Sending StopTransaction.req for " << transactions.size()
-               << " open transactions that haven't been acknowledged by CSMS.";
+
+    if (!transactions.empty()) {
+        EVLOG_info << "Sending StopTransaction.req for " << transactions.size()
+                   << " open transactions that haven't been acknowledged by CSMS.";
+    }
     for (const auto& transaction_entry : transactions) {
         std::shared_ptr<Transaction> transaction = std::make_shared<Transaction>(
             transaction_entry.connector, transaction_entry.session_id, CiString<20>(transaction_entry.id_tag_start),
@@ -653,6 +656,7 @@ void ChargePoint::send_meter_value(int32_t connector, MeterValue meter_value) {
     }
 
     MeterValuesRequest req;
+    const auto message_id = this->message_queue->createMessageId();
     // connector = 0 designates the main powermeter
     // connector > 0 designates a connector of the charge point
     req.connectorId = connector;
@@ -663,6 +667,10 @@ void ChargePoint::send_meter_value(int32_t connector, MeterValue meter_value) {
         if (transaction != nullptr && transaction->get_transaction_id() != -1) {
             auto transaction_id = transaction->get_transaction_id();
             req.transactionId.emplace(transaction_id);
+        } else if (transaction != nullptr and transaction->get_transaction_id() == -1) {
+            // this means a transaction is active but we have not received a transaction_id from CSMS yet
+            this->message_queue->add_meter_value_message_id(transaction->get_start_transaction_message_id(),
+                                                            message_id.get());
         }
     }
 
@@ -670,7 +678,7 @@ void ChargePoint::send_meter_value(int32_t connector, MeterValue meter_value) {
 
     req.meterValue.push_back(meter_value);
 
-    ocpp::Call<MeterValuesRequest> call(req, this->message_queue->createMessageId());
+    ocpp::Call<MeterValuesRequest> call(req, message_id);
     this->send<MeterValuesRequest>(call);
 }
 
@@ -1498,7 +1506,8 @@ void ChargePoint::handleStartTransactionResponse(ocpp::CallResult<StartTransacti
         this->message_queue->add_stopped_transaction_id(transaction->get_stop_transaction_message_id(),
                                                         start_transaction_response.transactionId);
     }
-    this->message_queue->notify_start_transaction_handled();
+    this->message_queue->notify_start_transaction_handled(call_result.uniqueId.get(),
+                                                          start_transaction_response.transactionId);
     int32_t connector = transaction->get_connector();
     transaction->set_transaction_id(start_transaction_response.transactionId);
 
