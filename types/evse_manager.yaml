@@ -336,3 +336,12 @@ types:
         type: number
         minimum: 0
         maximum: 100
+  CarManufacturer:
+    description: >-
+      Enum type for car manufacturers derived from MAC address.
+      May be different from actual brand, so e.g. Skoda falls under Volkswagen_Group.
+    type: string
+    enum:
+      - VolkswagenGroup
+      - Tesla
+      - Unknown

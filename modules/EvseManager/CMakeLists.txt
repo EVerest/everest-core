@@ -14,6 +14,7 @@ target_sources(${MODULE_NAME}
         Charger.cpp
         SessionLog.cpp
         v2gMessage.cpp
+        CarManufacturer.cpp
 )
 
 target_link_libraries(${MODULE_NAME}

@@ -111,6 +111,10 @@ config:
     description: "Hack: Sleep for n seconds at the end of cable check."
     type: integer
     default: 0
+  hack_sleep_in_cable_check_volkswagen:
+    description: "Hack: Additional sleep for Volkswagen cars for n seconds at the end of cable check"
+    type: integer
+    default: 0
   switch_to_minimum_voltage_after_cable_check:
     description: >-
       When cable check is completed, switch to minimal voltage of DC output.
@@ -144,8 +148,9 @@ config:
     type: boolean
     default: false
   hack_allow_bpt_with_iso2:
-    description: Hack. Allow bidirectional power transfer with DIN spec and ISO-2. Currents communicated on HLC will
-      always be positive but power supply may actually discharge the car. 
+    description:
+      Hack. Allow bidirectional power transfer with DIN spec and ISO-2. Currents communicated on HLC will
+      always be positive but power supply may actually discharge the car.
     type: boolean
     default: false
   autocharge_use_slac_instead_of_hlc:
