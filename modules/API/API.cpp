@@ -30,6 +30,32 @@ void SessionInfo::reset() {
     this->latest_total_w = 0;
 }
 
+types::energy::ExternalLimits get_external_limits(const std::string& data, bool is_watts) {
+    const auto limit = std::stof(data);
+    const auto timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
+    types::energy::ExternalLimits external_limits;
+    types::energy::ScheduleReqEntry target_entry;
+    target_entry.timestamp = timestamp;
+
+    types::energy::ScheduleReqEntry zero_entry;
+    zero_entry.timestamp = timestamp;
+    zero_entry.limits_to_leaves.total_power_W = 0;
+
+    if (is_watts) {
+        target_entry.limits_to_leaves.total_power_W = limit;
+    } else {
+        target_entry.limits_to_leaves.ac_max_current_A = limit;
+    }
+
+    if (limit > 0) {
+        external_limits.schedule_import.emplace(std::vector<types::energy::ScheduleReqEntry>(1, target_entry));
+    } else {
+        external_limits.schedule_export.emplace(std::vector<types::energy::ScheduleReqEntry>(1, target_entry));
+        external_limits.schedule_import.emplace(std::vector<types::energy::ScheduleReqEntry>(1, zero_entry));
+    }
+    return external_limits;
+}
+
 void SessionInfo::update_state(const std::string& event, const std::string& state_info) {
     std::lock_guard<std::mutex> lock(this->session_info_mutex);
 
@@ -213,15 +239,29 @@ void API::init() {
             evse->call_resume_charging(); //
         });
 
-        std::string cmd_set_limit = cmd_base + "set_limit";
+        std::string cmd_set_limit = cmd_base + "set_limit_amps";
         this->mqtt.subscribe(cmd_set_limit, [&evse](const std::string& data) {
+            // reset previous limits set by this module
+            types::energy::ExternalLimits empty_limits;
+            evse->call_set_external_limits(empty_limits);
             try {
-                types::energy::ExternalLimits l;
-                types::energy::ScheduleReqEntry e;
-                e.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
-                e.limits_to_leaves.ac_max_current_A = std::stof(data);
-                l.schedule_import.emplace(std::vector<types::energy::ScheduleReqEntry>(1,e));
-                evse->call_set_external_limits(l);
+                const auto external_limits = get_external_limits(data, false);
+                evse->call_set_external_limits(external_limits);
+            } catch (const std::invalid_argument& e) {
+                EVLOG_warning << "Invalid limit: No conversion of given input could be performed.";
+            } catch (const std::out_of_range& e) {
+                EVLOG_warning << "Invalid limit: Out of range.";
+            }
+        });
+
+        std::string cmd_set_limit_watts = cmd_base + "set_limit_watts";
+        this->mqtt.subscribe(cmd_set_limit_watts, [&evse](const std::string& data) {
+            // reset previous limits set by this module
+            types::energy::ExternalLimits empty_limits;
+            evse->call_set_external_limits(empty_limits);
+            try {
+                const auto external_limits = get_external_limits(data, true);
+                evse->call_set_external_limits(external_limits);
             } catch (const std::invalid_argument& e) {
                 EVLOG_warning << "Invalid limit: No conversion of given input could be performed.";
             } catch (const std::out_of_range& e) {
