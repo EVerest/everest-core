@@ -166,6 +166,9 @@ void Charger::runStateMachine() {
             }
 
             if (hlc_use_5percent_current_session) {
+                // FIXME: wait for SLAC to be ready. Teslas are really fast with sending the first slac packet after
+                // enabling PWM.
+                sleep(1);
                 update_pwm_now(PWM_5_PERCENT);
             }
         }

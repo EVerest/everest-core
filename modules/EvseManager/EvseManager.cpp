@@ -1100,6 +1100,9 @@ bool EvseManager::powersupply_DC_set(double _voltage, double _current) {
             // switching from import from grid to export to grid
             session_log.evse(false, "DC power supply: switch ON in import mode");
             r_powersupply_DC[0]->call_setMode(types::power_supply_DC::Mode::Import);
+            EVLOG_critical << "----------------------------------------------------------------------------------------"
+                              "--------------------------";
+            EVLOG_info << "switched ON  import by calling setMode";
         }
         last_is_actually_exporting_to_grid = is_actually_exporting_to_grid;
         // Hack: we are exporting to grid but are in ISO-2 mode
@@ -1141,6 +1144,9 @@ bool EvseManager::powersupply_DC_set(double _voltage, double _current) {
             // switching from export to grid to import from grid
             session_log.evse(false, "DC power supply: switch ON in export mode");
             r_powersupply_DC[0]->call_setMode(types::power_supply_DC::Mode::Export);
+            EVLOG_critical << "----------------------------------------------------------------------------------------"
+                              "--------------------------";
+            EVLOG_info << "switched ON export by calling setMode";
         }
         last_is_actually_exporting_to_grid = is_actually_exporting_to_grid;
 

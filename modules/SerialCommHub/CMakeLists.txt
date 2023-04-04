@@ -9,10 +9,14 @@ ev_setup_cpp_module()
 
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 # insert your custom targets and additional config variables here
-
 target_link_libraries(${MODULE_NAME}
     PRIVATE
-    everest::modbus
+)
+
+target_sources(${MODULE_NAME}
+    PRIVATE
+    "tiny_modbus_rtu.cpp"
+    "crc16.cpp"
 )
 
 target_compile_features(${MODULE_NAME} PUBLIC cxx_std_17)
