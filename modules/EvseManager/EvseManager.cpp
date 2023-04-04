@@ -354,7 +354,6 @@ void EvseManager::ready() {
 
         // implement Auth handlers
         r_hlc[0]->subscribe_Require_Auth_EIM([this]() {
-            // EVLOG_info << "--------------------------------------------- Require_Auth_EIM called";
             p_token_provider->publish_provided_token(autocharge_token);
             //  Do we have auth already (i.e. delayed HLC after charging already running)?
             if ((config.dbg_hlc_auth_after_tstep && charger->Authorized_EIM_ready_for_HLC()) ||

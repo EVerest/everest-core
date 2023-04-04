@@ -2,52 +2,6 @@ description: >-
   This interface provides multiplexed access to one serial port (e.g. RS485)
   for multiple clients.
 cmds:
-  send_raw:
-    description: >-
-      Send a (user-defined, pre-structured) command via serial interface
-      to the target hardware
-    arguments:
-      target_device_id:
-        description: ID (1 byte) of the device to send the commands to
-        type: integer
-        minimum: 0
-        maximum: 255
-      data_raw:
-        description: >-
-          Data content (raw data bytes) to be sent to the target. User
-          must take care of correct structure.
-        type: object
-        $ref: /serial_comm_hub_requests#/VectorUint8
-      add_crc16:
-        description: Add a CRC16 at the end of the message (true) or not (false)
-        type: boolean
-    result:
-      description: Status code of the transfer
-      type: string
-      $ref: /serial_comm_hub_requests#/StatusCodeEnum
-  send_raw_wait_reply:
-    description: >-
-      Send a (user-defined, pre-structured) command via serial interface
-      to the target hardware and wait for a reply
-    arguments:
-      target_device_id:
-        description: ID (1 byte) of the device to send the commands to
-        type: integer
-        minimum: 0
-        maximum: 255
-      data_raw:
-        description: >-
-          Data content (raw data bytes) to be sent to the target. User
-          must take care of correct structure.
-        type: object
-        $ref: /serial_comm_hub_requests#/VectorUint8
-      add_crc16:
-        description: Add a CRC16 at the end of the message (true) or not (false)
-        type: boolean
-    result:
-      description: Result of the transfer
-      type: object
-      $ref: /serial_comm_hub_requests#/ResultRaw
   modbus_read_holding_registers:
     description: >-
       Send a Modbus RTU 'read holding registers' command via serial
@@ -67,20 +21,13 @@ cmds:
         description: Number of registers to read (16 bit each)
         type: integer
         minimum: 1
-      pause_between_messages:
-        description: >-
-          Ensure a pause between packets on the wire in ms. Some Modbus devices
-          require a minimal pause between the last message and this message.
-          Set to 0 if not needed.
-        type: integer
-        minimum: 0
     result:
       description: Result of the transfer
       type: object
       $ref: /serial_comm_hub_requests#/Result
   modbus_read_input_registers:
-    description: 'Send a Modbus RTU ''read input registers'' command via serial
-      interface to the target hardware. (return value: response)'
+    description: "Send a Modbus RTU 'read input registers' command via serial
+      interface to the target hardware. (return value: response)"
     arguments:
       target_device_id:
         description: ID (1 byte) of the device to send the commands to
@@ -96,12 +43,6 @@ cmds:
         description: Number of registers to read (16 bit each)
         type: integer
         minimum: 1
-      pause_between_messages:
-        description: Ensure a pause between packets on the wire in ms. Some Modbus
-          devices require a minimal pause between the last message and this message.
-          Set to 0 if not needed.
-        type: integer
-        minimum: 0
     result:
       description: Result of the transfer
       type: object
@@ -127,14 +68,50 @@ cmds:
           16 bit words)
         type: object
         $ref: /serial_comm_hub_requests#/VectorUint16
-      pause_between_messages:
-        description: >-
-          Ensure a pause between packets on the wire in ms. Some Modbus devices
-          require a minimal pause between the last message and this message.
-          Set to 0 if not needed.
-        type: integer
-        minimum: 0
     result:
       description: Status code of the transfer
       type: string
       $ref: /serial_comm_hub_requests#/StatusCodeEnum
+  nonstd_write:
+    description: >-
+      Non standard mode to write registers in read discrete input mode
+      without waiting for reply. Used e.g. by GYDCG-UBC1 isolation monitor.
+    arguments:
+      target_device_id:
+        description: ID (1 byte) of the device to send the commands to
+        type: integer
+        minimum: 0
+        maximum: 255
+      first_register_address:
+        description: Start address for read operation (16 bit address)
+        type: integer
+        minimum: 0
+        maximum: 65535
+      num_registers_to_read:
+        description: Number of registers to read (16 bit each)
+        type: integer
+        minimum: 1
+  nonstd_read:
+    description: >-
+      Non standard mode to read registers in read coils mode, but getting a malformed reply.
+      Used e.g. by GYDCG-UBC1 isolation monitor.
+    arguments:
+      target_device_id:
+        description: ID (1 byte) of the device to send the commands to
+        type: integer
+        minimum: 0
+        maximum: 255
+      first_register_address:
+        description: Start address for write operation (16 bit address)
+        type: integer
+        minimum: 0
+        maximum: 65535
+      num_registers_to_read:
+        description: Number of registers to read (16 bit each)
+        type: integer
+        minimum: 0
+        maximum: 65535
+    result:
+      description: Result of the transfer
+      type: object
+      $ref: /serial_comm_hub_requests#/Result
