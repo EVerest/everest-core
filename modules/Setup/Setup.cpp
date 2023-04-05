@@ -165,6 +165,7 @@ void Setup::ready() {
         this->mqtt.subscribe(remove_network_cmd, [this](const std::string& data) {
             InterfaceAndNetworkId wifi = json::parse(data);
             this->remove_network(wifi.interface, wifi.network_id);
+            this->save_config(wifi.interface);
             this->publish_configured_networks();
         });
 
