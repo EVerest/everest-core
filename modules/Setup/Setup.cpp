@@ -689,7 +689,7 @@ bool Setup::save_config(std::string interface) {
 
 bool Setup::reboot() {
     bool success = true;
-    auto reboot_output = this->run_application("sudo", {"reboot"});
+    auto reboot_output = this->run_application("systemctl", {"reboot"});
     if (reboot_output.exit_code != 0) {
         success = false;
     }
