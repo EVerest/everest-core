@@ -113,6 +113,7 @@ struct ApplicationInfo {
     std::string mode;
     std::string default_language;
     std::string current_language;
+    std::string release_metadata_file;
 
     operator std::string() {
         json application_info = *this;
@@ -138,6 +139,7 @@ struct Conf {
     bool setup_simulation;
     std::string online_check_host;
     bool initialized_by_default;
+    std::string release_metadata_file;
 };
 
 class Setup : public Everest::ModuleBase {

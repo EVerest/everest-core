@@ -22,6 +22,10 @@ config:
     description: Always report as if the charger was initialized
     type: boolean
     default: true
+  release_metadata_file:
+    description: Location of the release metadata file relative to the EVerest prefix
+    type: string
+    default: "/etc/everest/release.json"
 provides:
   main:
     description: EVerest Setup

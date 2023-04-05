@@ -66,7 +66,8 @@ void to_json(json& j, const ApplicationInfo& k) {
     j = json::object({{"initialized", k.initialized},
                       {"mode", k.mode},
                       {"default_language", k.default_language},
-                      {"current_language", k.current_language}});
+                      {"current_language", k.current_language},
+                      {"release_metadata_file", k.release_metadata_file}});
 }
 
 void Setup::init() {
@@ -213,6 +214,7 @@ void Setup::publish_application_info() {
     application_info.mode = this->get_mode();
     application_info.default_language = this->get_default_language();
     application_info.current_language = this->get_current_language();
+    application_info.release_metadata_file = this->info.everest_prefix + this->config.release_metadata_file;
 
     std::string application_info_var = this->var_base + "application_info";
 
