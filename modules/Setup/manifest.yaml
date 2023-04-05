@@ -26,6 +26,14 @@ config:
     description: Location of the release metadata file relative to the EVerest prefix
     type: string
     default: "/etc/everest/release.json"
+  ap_interface:
+    description: Wifi interface for AP mode
+    type: string
+    default: wlan0
+  ap_ipv4:
+    description: IPv4 address of the AP
+    type: string
+    default: "192.168.1.1/24"
 provides:
   main:
     description: EVerest Setup

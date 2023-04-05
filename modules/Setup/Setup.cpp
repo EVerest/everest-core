@@ -192,6 +192,12 @@ void Setup::ready() {
 
         std::string check_online_status_cmd = this->cmd_base + "check_online_status";
         this->mqtt.subscribe(check_online_status_cmd, [this](const std::string& data) { this->check_online_status(); });
+
+        std::string enable_ap_cmd = this->cmd_base + "enable_ap";
+        this->mqtt.subscribe(enable_ap_cmd, [this](const std::string& data) { enable_ap(); });
+
+        std::string disable_ap_cmd = this->cmd_base + "disable_ap";
+        this->mqtt.subscribe(disable_ap_cmd, [this](const std::string& data) { disable_ap(); });
     }
 }
 
@@ -711,10 +717,51 @@ void Setup::check_online_status() {
     std::string online_status_var = this->var_base + "online_status";
 
     if (this->is_online()) {
-
         this->mqtt.publish(online_status_var, "online");
     } else {
         this->mqtt.publish(online_status_var, "offline");
+    }
+}
+
+void Setup::enable_ap() {
+    auto wpa_cli_output = this->run_application("wpa_cli", {"-i", this->config.ap_interface, "disconnect"});
+    if (wpa_cli_output.exit_code != 0) {
+        EVLOG_error << "Could not disconnect from wireless LAN";
+    }
+    auto start_hostapd_output = this->run_application("systemctl", {"start", "hostapd"});
+    if (start_hostapd_output.exit_code != 0) {
+        EVLOG_error << "Could not start hostapd";
+    }
+    auto start_dnsmasq_output = this->run_application("systemctl", {"start", "dnsmasq"});
+    if (start_dnsmasq_output.exit_code != 0) {
+        EVLOG_error << "Could not start dnsmasq";
+    }
+    auto add_static_ip_output =
+        this->run_application("ip", {"addr", "add", this->config.ap_ipv4, "dev", this->config.ap_interface});
+    if (add_static_ip_output.exit_code != 0) {
+        EVLOG_error << "Could not add static ip to interface " << this->config.ap_interface;
+    }
+}
+
+void Setup::disable_ap() {
+    auto del_static_ip_output =
+        this->run_application("ip", {"addr", "del", this->config.ap_ipv4, "dev", this->config.ap_interface});
+    if (del_static_ip_output.exit_code != 0) {
+        EVLOG_error << "Could not del static ip " << this->config.ap_ipv4 << " from interface "
+                    << this->config.ap_interface;
+    }
+    auto stop_dnsmasq_output = this->run_application("systemctl", {"stop", "dnsmasq"});
+    if (stop_dnsmasq_output.exit_code != 0) {
+        EVLOG_error << "Could not stop dnsmasq";
+    }
+    auto stop_hostapd_output = this->run_application("systemctl", {"stop", "hostapd"});
+    if (stop_hostapd_output.exit_code != 0) {
+        EVLOG_error << "Could not stop hostapd";
+    }
+
+    auto wpa_cli_output = this->run_application("wpa_cli", {"-i", this->config.ap_interface, "reconnect"});
+    if (wpa_cli_output.exit_code != 0) {
+        EVLOG_error << "Could not reconnect to wireless LAN";
     }
 }
 

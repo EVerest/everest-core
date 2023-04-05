@@ -5,7 +5,7 @@
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 1
+// template version 2
 //
 
 #include "ld-ev.hpp"
@@ -84,8 +84,8 @@ struct NetworkDeviceInfo {
     bool wireless = false;
     bool blocked = false;
     std::string rfkill_id;
-    std::string ipv4;
-    std::string ipv6;
+    std::vector<std::string> ipv4;
+    std::vector<std::string> ipv6;
 
     operator std::string() {
         json device_info = *this;
@@ -140,6 +140,8 @@ struct Conf {
     std::string online_check_host;
     bool initialized_by_default;
     std::string release_metadata_file;
+    std::string ap_interface;
+    std::string ap_ipv4;
 };
 
 class Setup : public Everest::ModuleBase {
@@ -210,6 +212,8 @@ private:
     bool reboot();
     bool is_online();
     void check_online_status();
+    void enable_ap();
+    void disable_ap();
 
     void populate_ip_addresses(std::vector<NetworkDeviceInfo>& device_info);
     std::vector<WifiInfo> scan_wifi(const std::vector<NetworkDeviceInfo>& device_info);
