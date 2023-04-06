@@ -46,21 +46,18 @@ public:
 protected:
     // command handler functions (virtual)
     virtual types::serial_comm_hub_requests::Result
-    handle_modbus_read_holding_registers(int& target_device_id, int& first_register_address, int& num_registers_to_read,
-                                         int& pause_between_messages) override;
+    handle_modbus_read_holding_registers(int& target_device_id, int& first_register_address,
+                                         int& num_registers_to_read) override;
     virtual types::serial_comm_hub_requests::Result
-    handle_modbus_read_input_registers(int& target_device_id, int& first_register_address, int& num_registers_to_read,
-                                       int& pause_between_messages) override;
+    handle_modbus_read_input_registers(int& target_device_id, int& first_register_address,
+                                       int& num_registers_to_read) override;
     virtual types::serial_comm_hub_requests::StatusCodeEnum
     handle_modbus_write_multiple_registers(int& target_device_id, int& first_register_address,
-                                           types::serial_comm_hub_requests::VectorUint16& data_raw,
-                                           int& pause_between_messages) override;
-    virtual void handle_nonstd_write(int& target_device_id, int& first_register_address, int& num_registers_to_read,
-                                     int& pause_between_messages) override;
-    virtual types::serial_comm_hub_requests::Result handle_nonstd_read(int& target_device_id,
-                                                                       int& first_register_address,
-                                                                       int& num_registers_to_read,
-                                                                       int& pause_between_messages) override;
+                                           types::serial_comm_hub_requests::VectorUint16& data_raw) override;
+    virtual void handle_nonstd_write(int& target_device_id, int& first_register_address,
+                                     int& num_registers_to_read) override;
+    virtual types::serial_comm_hub_requests::Result
+    handle_nonstd_read(int& target_device_id, int& first_register_address, int& num_registers_to_read) override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
     // insert your protected definitions here
@@ -79,7 +76,6 @@ private:
     tinymod::TinyModbusRTU modbus;
 
     std::mutex serial_mutex;
-    std::chrono::time_point<std::chrono::steady_clock> last_message_end_time;
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 

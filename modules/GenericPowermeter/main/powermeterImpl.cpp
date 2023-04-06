@@ -226,12 +226,6 @@ void powermeterImpl::init_default_values() {
             this->pm_last_values.frequency_Hz = freq;
         }
     }
-
-    if (config.modbus_dead_time) {
-        modbus_pause_between_messages = config.modbus_dead_time;
-    } else {
-        modbus_pause_between_messages = 0;
-    }
 }
 
 void powermeterImpl::init_register_assignments(const json& loaded_registers) {
@@ -342,27 +336,25 @@ void powermeterImpl::readRegister(const RegisterData& register_config) {
 
     if (register_config.start_register_function == READ_HOLDING_REGISTER) {
         register_response = mod->r_serial_comm_hub->call_modbus_read_holding_registers(
-            config.powermeter_device_id, register_config.start_register, register_config.num_registers,
-            modbus_pause_between_messages);
+            config.powermeter_device_id, register_config.start_register, register_config.num_registers);
     }
 
     if (register_config.start_register_function == READ_INPUT_REGISTER) {
         register_response = mod->r_serial_comm_hub->call_modbus_read_input_registers(
-            config.powermeter_device_id, register_config.start_register - config.modbus_base_address, register_config.num_registers,
-            modbus_pause_between_messages);
+            config.powermeter_device_id, register_config.start_register - config.modbus_base_address,
+            register_config.num_registers);
     }
 
     if (register_config.exponent_register != 0) {
         if (register_config.exponent_register_function == READ_HOLDING_REGISTER) {
             exponent_response = mod->r_serial_comm_hub->call_modbus_read_holding_registers(
-                config.powermeter_device_id, register_config.exponent_register, register_config.num_registers,
-                modbus_pause_between_messages);
+                config.powermeter_device_id, register_config.exponent_register, register_config.num_registers);
         }
 
         if (register_config.exponent_register_function == READ_INPUT_REGISTER) {
             exponent_response = mod->r_serial_comm_hub->call_modbus_read_input_registers(
-                config.powermeter_device_id, register_config.exponent_register - config.modbus_base_address, register_config.num_registers,
-                modbus_pause_between_messages);
+                config.powermeter_device_id, register_config.exponent_register - config.modbus_base_address,
+                register_config.num_registers);
         }
     }
 
@@ -513,7 +505,7 @@ float powermeterImpl::merge_register_values_into_element(const RegisterData& reg
         }
 
         auto val = *reinterpret_cast<float*>(&value);
-        auto val_scaled = float(val  * reg_data.multiplier * pow(10.0, exponent));
+        auto val_scaled = float(val * reg_data.multiplier * pow(10.0, exponent));
 
         return val_scaled;
     } else {

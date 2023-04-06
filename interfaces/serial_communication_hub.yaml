@@ -21,13 +21,6 @@ cmds:
         description: Number of registers to read (16 bit each)
         type: integer
         minimum: 1
-      pause_between_messages:
-        description: >-
-          Ensure a pause between packets on the wire in ms. Some Modbus devices
-          require a minimal pause between the last message and this message.
-          Set to 0 if not needed.
-        type: integer
-        minimum: 0
     result:
       description: Result of the transfer
       type: object
@@ -50,13 +43,6 @@ cmds:
         description: Number of registers to read (16 bit each)
         type: integer
         minimum: 1
-      pause_between_messages:
-        description:
-          Ensure a pause between packets on the wire in ms. Some Modbus
-          devices require a minimal pause between the last message and this message.
-          Set to 0 if not needed.
-        type: integer
-        minimum: 0
     result:
       description: Result of the transfer
       type: object
@@ -82,13 +68,6 @@ cmds:
           16 bit words)
         type: object
         $ref: /serial_comm_hub_requests#/VectorUint16
-      pause_between_messages:
-        description: >-
-          Ensure a pause between packets on the wire in ms. Some Modbus devices
-          require a minimal pause between the last message and this message.
-          Set to 0 if not needed.
-        type: integer
-        minimum: 0
     result:
       description: Status code of the transfer
       type: string
@@ -112,13 +91,6 @@ cmds:
         description: Number of registers to read (16 bit each)
         type: integer
         minimum: 1
-      pause_between_messages:
-        description: >-
-          Ensure a pause between packets on the wire in ms. Some Modbus devices
-          require a minimal pause between the last message and this message.
-          Set to 0 if not needed.
-        type: integer
-        minimum: 0
   nonstd_read:
     description: >-
       Non standard mode to read registers in read coils mode, but getting a malformed reply.
@@ -139,13 +111,6 @@ cmds:
         type: integer
         minimum: 0
         maximum: 65535
-      pause_between_messages:
-        description: >-
-          Ensure a pause between packets on the wire in ms. Some Modbus devices
-          require a minimal pause between the last message and this message.
-          Set to 0 if not needed.
-        type: integer
-        minimum: 0
     result:
       description: Result of the transfer
       type: object
