@@ -54,7 +54,7 @@ void DatabaseHandler::run_sql_init() {
     char* err = NULL;
 
     if (sqlite3_exec(this->db, init_sql.str().c_str(), NULL, NULL, &err) != SQLITE_OK) {
-        EVLOG_error << "Could not create tables: " << err << std::endl;
+        EVLOG_error << "Could not create tables: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("Database access error");
     }
 }
@@ -65,7 +65,7 @@ void DatabaseHandler::init_connector_table(int32_t number_of_connectors) {
         std::string sql = "INSERT OR IGNORE INTO CONNECTORS (ID, AVAILABILITY) VALUES (@connector, @availability_type)";
         sqlite3_stmt* stmt;
         if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-            EVLOG_error << "Could not prepare insert statement" << std::endl;
+            EVLOG_error << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
             throw std::runtime_error("Database access error");
         }
         sqlite3_bind_int(stmt, 1, connector);
@@ -73,12 +73,12 @@ void DatabaseHandler::init_connector_table(int32_t number_of_connectors) {
         sqlite3_bind_text(stmt, 2, operative_str.c_str(), operative_str.length(), NULL);
 
         if (sqlite3_step(stmt) != SQLITE_DONE) {
-            EVLOG_error << "Could not insert into table: " << sqlite3_errmsg(this->db) << std::endl;
+            EVLOG_error << "Could not insert into table: " << sqlite3_errmsg(this->db);
             throw std::runtime_error("db access error");
         }
 
         if (sqlite3_finalize(stmt) != SQLITE_OK) {
-            EVLOG_error << "Error inserting into table" << std::endl;
+            EVLOG_error << "Error inserting into table: " << sqlite3_errmsg(this->db);
             throw std::runtime_error("db access error");
         }
     }
@@ -127,7 +127,7 @@ void DatabaseHandler::insert_transaction(const std::string& session_id, const in
     }
 
     if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error inserting into table" << std::endl;
+        EVLOG_error << "Error inserting into table: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("db access error");
     }
 }
@@ -171,7 +171,7 @@ void DatabaseHandler::update_transaction(const std::string& session_id, int32_t 
 
     sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_warning << "Could not prepare insert statement" << std::endl;
+        EVLOG_warning << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
         return;
     }
 
@@ -188,12 +188,12 @@ void DatabaseHandler::update_transaction(const std::string& session_id, int32_t 
     sqlite3_bind_text(stmt, 5, session_id.c_str(), session_id.length(), NULL);
 
     if (sqlite3_step(stmt) != SQLITE_DONE) {
-        EVLOG_error << "Could not insert into table: " << sqlite3_errmsg(this->db) << std::endl;
+        EVLOG_error << "Could not insert into table: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("db access error");
     }
 
     if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error updating table" << std::endl;
+        EVLOG_error << "Error updating table: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("db access error");
     }
 }
@@ -208,7 +208,7 @@ std::vector<TransactionEntry> DatabaseHandler::get_transactions(bool filter_inco
     }
     sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_error << "Could not prepare insert statement" << std::endl;
+        EVLOG_error << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("Database access error");
     }
 
@@ -250,7 +250,7 @@ std::vector<TransactionEntry> DatabaseHandler::get_transactions(bool filter_inco
     }
 
     if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error selecting from table" << std::endl;
+        EVLOG_error << "Error selecting from table: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("db access error");
     }
 
@@ -290,7 +290,7 @@ void DatabaseHandler::insert_or_update_authorization_cache_entry(const CiString<
     }
 
     if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error inserting into table";
+        EVLOG_error << "Error inserting into table: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("db access error");
     }
 }
@@ -302,7 +302,7 @@ boost::optional<v16::IdTagInfo> DatabaseHandler::get_authorization_cache_entry(c
     std::string sql = "SELECT ID_TAG, AUTH_STATUS, EXPIRY_DATE, PARENT_ID_TAG FROM AUTH_CACHE WHERE ID_TAG = @id_tag";
     sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_error << "Could not prepare insert statement" << std::endl;
+        EVLOG_error << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
         return boost::none;
     }
 
@@ -331,7 +331,7 @@ boost::optional<v16::IdTagInfo> DatabaseHandler::get_authorization_cache_entry(c
     }
 
     if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error selecting from table";
+        EVLOG_error << "Error selecting from table: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("db access error");
     }
 
@@ -360,7 +360,7 @@ void DatabaseHandler::insert_or_update_connector_availability(int32_t connector,
     std::string sql = "INSERT OR REPLACE INTO CONNECTORS (ID, AVAILABILITY) VALUES (@id, @availability)";
     sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_error << "Could not prepare insert statement" << std::endl;
+        EVLOG_error << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("Database access error");
     }
     sqlite3_bind_int(stmt, 1, connector);
@@ -373,7 +373,7 @@ void DatabaseHandler::insert_or_update_connector_availability(int32_t connector,
     }
 
     if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error inserting into table";
+        EVLOG_error << "Error inserting into table: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("db access error");
     }
 }
@@ -391,14 +391,14 @@ v16::AvailabilityType DatabaseHandler::get_connector_availability(int32_t connec
     sqlite3_stmt* stmt;
 
     if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_error << "Could not prepare insert statement";
+        EVLOG_error << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("Database access error");
     }
 
     sqlite3_bind_int(stmt, 1, connector);
 
     if (sqlite3_step(stmt) != SQLITE_ROW) {
-        EVLOG_error << "Error selecting availability of connector with id " << connector;
+        EVLOG_error << "Error selecting availability of connector: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("db access error");
     }
 
@@ -406,7 +406,7 @@ v16::AvailabilityType DatabaseHandler::get_connector_availability(int32_t connec
     v16::AvailabilityType availability = v16::conversions::string_to_availability_type(availability_str);
 
     if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error inserting into table";
+        EVLOG_error << "Error inserting into table: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("db access error");
     }
 
@@ -420,7 +420,7 @@ std::map<int32_t, v16::AvailabilityType> DatabaseHandler::get_connector_availabi
     sqlite3_stmt* stmt;
 
     if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_error << "Could not prepare insert statement";
+        EVLOG_error << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("Database access error");
     }
 
@@ -431,7 +431,7 @@ std::map<int32_t, v16::AvailabilityType> DatabaseHandler::get_connector_availabi
     }
 
     if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error selecting from table" << std::endl;
+        EVLOG_error << "Error selecting from table: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("db access error");
     }
 
@@ -443,7 +443,7 @@ void DatabaseHandler::insert_or_update_local_list_version(int32_t version) {
     std::string sql = "INSERT OR REPLACE INTO AUTH_LIST_VERSION (ID, VERSION) VALUES (0, @version)";
     sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_error << "Could not prepare insert statement";
+        EVLOG_error << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("Database access error");
     }
     sqlite3_bind_int(stmt, 1, version);
@@ -454,7 +454,7 @@ void DatabaseHandler::insert_or_update_local_list_version(int32_t version) {
     }
 
     if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error inserting into table";
+        EVLOG_error << "Error inserting into table: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("db access error");
     }
 }
@@ -464,19 +464,19 @@ int32_t DatabaseHandler::get_local_list_version() {
     sqlite3_stmt* stmt;
 
     if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_error << "Could not prepare insert statement";
+        EVLOG_error << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("Database access error");
     }
 
     if (sqlite3_step(stmt) != SQLITE_ROW) {
-        EVLOG_error << "Error selecting auth list version";
+        EVLOG_error << "Error selecting auth list version: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("db access error");
     }
 
     int32_t version = sqlite3_column_int(stmt, 0);
 
     if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error inserting into table";
+        EVLOG_error << "Error inserting into table: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("db access error");
     }
 
@@ -492,7 +492,7 @@ void DatabaseHandler::insert_or_update_local_authorization_list_entry(const CiSt
         "(@id_tag, @auth_status, @expiry_date, @parent_id_tag)";
     sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(this->db, insert_sql.c_str(), insert_sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_error << "Could not prepare insert statement";
+        EVLOG_error << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("Database access error");
     }
     const auto status_str = v16::conversions::authorization_status_to_string(id_tag_info.status);
@@ -513,7 +513,7 @@ void DatabaseHandler::insert_or_update_local_authorization_list_entry(const CiSt
     }
 
     if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error inserting into table";
+        EVLOG_error << "Error inserting into table: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("db access error");
     }
 }
@@ -542,7 +542,7 @@ void DatabaseHandler::delete_local_authorization_list_entry(const std::string& i
         EVLOG_error << "Could not delete from table: " << sqlite3_errmsg(db);
     }
     if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error deleting from table";
+        EVLOG_error << "Error deleting from table: " << sqlite3_errmsg(this->db);
     }
 }
 
@@ -550,7 +550,7 @@ boost::optional<v16::IdTagInfo> DatabaseHandler::get_local_authorization_list_en
     std::string sql = "SELECT ID_TAG, AUTH_STATUS, EXPIRY_DATE, PARENT_ID_TAG FROM AUTH_LIST WHERE ID_TAG = @id_tag";
     sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_error << "Could not prepare insert statement" << std::endl;
+        EVLOG_error << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
         return boost::none;
     }
 
@@ -584,7 +584,7 @@ boost::optional<v16::IdTagInfo> DatabaseHandler::get_local_authorization_list_en
     }
 
     if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error selecting from table";
+        EVLOG_error << "Error selecting from table: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("db access error");
     }
 
@@ -613,7 +613,7 @@ void DatabaseHandler::insert_or_update_charging_profile(const int connector_id, 
                              "(@id, @connector_id, @profile)";
     sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(this->db, insert_sql.c_str(), insert_sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_error << "Could not prepare insert statement";
+        EVLOG_error << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("Database access error");
     }
 
@@ -629,7 +629,7 @@ void DatabaseHandler::insert_or_update_charging_profile(const int connector_id, 
     }
 
     if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error inserting into table";
+        EVLOG_error << "Error inserting into table: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("db access error");
     }
 }
@@ -638,7 +638,7 @@ void DatabaseHandler::delete_charging_profile(const int profile_id) {
     std::string delete_sql = "DELETE FROM CHARGING_PROFILES WHERE ID = @id;";
     sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(this->db, delete_sql.c_str(), delete_sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_warning << "Could not prepare insert statement";
+        EVLOG_warning << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
         return;
     }
     sqlite3_bind_int(stmt, 1, profile_id);
@@ -646,7 +646,7 @@ void DatabaseHandler::delete_charging_profile(const int profile_id) {
         EVLOG_error << "Could not delete from table: " << sqlite3_errmsg(db);
     }
     if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error deleting from table";
+        EVLOG_error << "Error deleting from table: " << sqlite3_errmsg(this->db);
     }
 }
 
@@ -661,7 +661,7 @@ std::vector<v16::ChargingProfile> DatabaseHandler::get_charging_profiles() {
 
     sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_warning << "Could not prepare insert statement" << std::endl;
+        EVLOG_warning << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
         return profiles;
     }
 
@@ -672,7 +672,7 @@ std::vector<v16::ChargingProfile> DatabaseHandler::get_charging_profiles() {
     }
 
     if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_warning << "Error selecting from table" << std::endl;
+        EVLOG_warning << "Error selecting from table: " << sqlite3_errmsg(this->db);
         return profiles;
     }
     return profiles;
@@ -684,7 +684,7 @@ int DatabaseHandler::get_connector_id(const int profile_id) {
 
     sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_warning << "Could not prepare select statement" << std::endl;
+        EVLOG_warning << "Could not prepare select statement: " << sqlite3_errmsg(this->db);
         return -1;
     }
 
@@ -704,7 +704,7 @@ void DatabaseHandler::insert_ocsp_update() {
                              "(@last_update)";
     sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(this->db, insert_sql.c_str(), insert_sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_error << "Could not prepare insert statement";
+        EVLOG_error << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("Database access error");
     }
 
@@ -717,7 +717,7 @@ void DatabaseHandler::insert_ocsp_update() {
     }
 
     if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error inserting into table";
+        EVLOG_error << "Error inserting into table: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("db access error");
     }
 }
@@ -727,7 +727,7 @@ boost::optional<DateTime> DatabaseHandler::get_last_ocsp_update() {
 
     sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_warning << "Could not prepare select statement" << std::endl;
+        EVLOG_warning << "Could not prepare select statement: " << sqlite3_errmsg(this->db);
         return boost::none;
     }
 
