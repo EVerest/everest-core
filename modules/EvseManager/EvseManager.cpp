@@ -51,6 +51,8 @@ void EvseManager::init() {
     }
 
     hlc_enabled = !r_hlc.empty();
+    if (!slac_enabled)
+        hlc_enabled = false;
 
     if (config.charge_mode == "DC" && (!hlc_enabled || !slac_enabled || r_powersupply_DC.empty())) {
         EVLOG_error << "DC mode requires slac, HLC and powersupply DCDC to be connected";
@@ -1066,6 +1068,9 @@ void EvseManager::cable_check() {
                     }
                 }
             }
+        } else {
+            EVLOG_error << fmt::format("CableCheck Thread: Cannot start cable check, contactor_open {}",
+                                       contactor_open);
         }
 
         if (config.hack_pause_imd_during_precharge)
