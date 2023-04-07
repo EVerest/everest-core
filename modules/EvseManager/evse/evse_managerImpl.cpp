@@ -60,6 +60,16 @@ void evse_managerImpl::init() {
     mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/resume_charging", mod->config.connector_id),
                         [&charger = mod->charger](const std::string& data) { charger->resumeCharging(); });
 
+    mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/stop_transaction", mod->config.connector_id),
+                        [this](const std::string& data) {
+                            if (mod->get_hlc_enabled()) {
+                                mod->r_hlc[0]->call_stop_charging(true);
+                            }
+                            types::evse_manager::StopTransactionRequest request;
+                            request.reason = types::evse_manager::StopTransactionReason::Local;
+                            mod->charger->cancelTransaction(request);
+                        });
+
     // /Interface to Node-RED debug UI
 
     if (mod->r_powermeter_billing().size() > 0) {
@@ -272,7 +282,8 @@ void evse_managerImpl::handle_authorize_response(types::authorization::ProvidedI
     if (validation_result.authorization_status == types::authorization::AuthorizationStatus::Accepted) {
 
         if (this->mod->get_hlc_waiting_for_auth_pnc() && !pnc) {
-            EVLOG_info << "EvseManager received Authorization other than PnC while waiting for PnC. This has no effect.";
+            EVLOG_info
+                << "EvseManager received Authorization other than PnC while waiting for PnC. This has no effect.";
             return;
         }
 

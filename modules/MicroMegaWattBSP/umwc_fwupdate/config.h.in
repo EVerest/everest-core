@@ -1,0 +1,3 @@
+// the configured options and settings for umwcDriver
+#define umwc_fwupdate_VERSION_MAJOR @umwc_fwupdate_VERSION_MAJOR@
+#define umwc_fwupdate_VERSION_MINOR @umwc_fwupdate_VERSION_MINOR@

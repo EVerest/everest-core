@@ -17,7 +17,8 @@
 
  not used here since they might be in use in multiple cars:
 
- Opel Ampera (GM): 04:4E:AF (LG Innotek, maybe the OBC manufacturer)
+ Opel Ampera (GM): 04:4E:AF (LG Innotek, OBC manufacturer)
+ Mercedes EQC: CC:88:26 (LG Innotek, OBC manufacturer)
  BMW: 00:01:A9 (seems not to be used by OBCs of BMW)
  BMW iX: 00:30:AB 22kW OBC (Delta Networks, Inc.)
  BMW i4: EC:65:CC 11kW OBC (Panasonic Automotive Systems Company of America)

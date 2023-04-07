@@ -432,6 +432,9 @@ void Charger::runStateMachine() {
         if (new_in_state) {
             signalEvent(types::evse_manager::SessionEventEnum::ChargingPausedEVSE);
             pwm_off();
+            if (charge_mode == ChargeMode::DC) {
+                signal_DC_supply_off();
+            }
         }
         break;
 
@@ -446,7 +449,6 @@ void Charger::runStateMachine() {
     case EvseState::StoppingCharging:
         if (new_in_state) {
             signalEvent(types::evse_manager::SessionEventEnum::StoppingCharging);
-            pwm_off();
 
             // Transaction may already be stopped when it was cancelled earlier.
             // In that case, do not sent a second transactionFinished event.
@@ -461,6 +463,7 @@ void Charger::runStateMachine() {
                 // unplugged.
             } else {
                 // For AC, we reached StoppingCharging because an unplug happend.
+                pwm_off();
                 currentState = EvseState::Finished;
             }
         }
@@ -845,7 +848,12 @@ bool Charger::cancelTransaction(const types::evse_manager::StopTransactionReques
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
     if (transactionActive()) {
 
-        currentState = EvseState::ChargingPausedEVSE;
+        if (charge_mode == ChargeMode::DC) {
+            currentState = EvseState::StoppingCharging;
+        } else {
+            currentState = EvseState::ChargingPausedEVSE;
+        }
+
         transaction_active = false;
         last_stop_transaction_reason = request.reason;
         if (request.id_tag) {
