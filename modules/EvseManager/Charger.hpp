@@ -87,7 +87,7 @@ public:
 
     void setup(bool three_phases, bool has_ventilation, const std::string& country_code, bool rcd_enabled,
                const ChargeMode charge_mode, bool ac_hlc_enabled, bool ac_hlc_use_5percent, bool ac_enforce_hlc,
-               bool ac_with_soc_timeout);
+               bool ac_with_soc_timeout, int soft_over_current_percent, int soft_over_current_ms);
 
     bool enable();
     bool disable();
@@ -234,10 +234,11 @@ private:
     float ampereToDutyCycle(float ampere);
 
     void checkSoftOverCurrent();
+    int soft_over_current_percent;
+    int soft_over_current_ms;
     float currentDrawnByVehicle[3];
     bool overCurrent;
     std::chrono::time_point<date::utc_clock> lastOverCurrentEvent;
-    const int softOverCurrentTimeout = 7000;
 
     // 4 seconds according to table 3 of ISO15118-3
     const int t_step_EF = 4000;

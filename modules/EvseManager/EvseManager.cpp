@@ -638,7 +638,8 @@ void EvseManager::ready() {
     } else {
         charger->setup(local_three_phases, config.has_ventilation, config.country_code, config.rcd_enabled,
                        (config.charge_mode == "DC" ? Charger::ChargeMode::DC : Charger::ChargeMode::AC), hlc_enabled,
-                       config.ac_hlc_use_5percent, config.ac_enforce_hlc, false);
+                       config.ac_hlc_use_5percent, config.ac_enforce_hlc, false, config.soft_over_current_percent,
+                       config.soft_over_current_ms);
     }
     //  start with a limit of 0 amps. We will get a budget from EnergyManager that is locally limited by hw
     //  caps.
@@ -781,7 +782,8 @@ void EvseManager::switch_AC_mode() {
 // It is only used for AC<>DC<>AC<>DC mode to get AC charging with SoC.
 void EvseManager::setup_fake_DC_mode() {
     charger->setup(local_three_phases, config.has_ventilation, config.country_code, config.rcd_enabled,
-                   Charger::ChargeMode::DC, hlc_enabled, config.ac_hlc_use_5percent, config.ac_enforce_hlc, false);
+                   Charger::ChargeMode::DC, hlc_enabled, config.ac_hlc_use_5percent, config.ac_enforce_hlc, false,
+                   config.soft_over_current_percent, config.soft_over_current_ms);
 
     // Set up energy transfer modes for HLC. For now we only support either DC or AC, not both at the same time.
     Array transfer_modes;
@@ -813,7 +815,8 @@ void EvseManager::setup_fake_DC_mode() {
 
 void EvseManager::setup_AC_mode() {
     charger->setup(local_three_phases, config.has_ventilation, config.country_code, config.rcd_enabled,
-                   Charger::ChargeMode::AC, hlc_enabled, config.ac_hlc_use_5percent, config.ac_enforce_hlc, true);
+                   Charger::ChargeMode::AC, hlc_enabled, config.ac_hlc_use_5percent, config.ac_enforce_hlc, true,
+                   config.soft_over_current_percent, config.soft_over_current_ms);
 
     // Set up energy transfer modes for HLC. For now we only support either DC or AC, not both at the same time.
     Array transfer_modes;

@@ -924,7 +924,8 @@ bool Charger::switchThreePhasesWhileCharging(bool n) {
 
 void Charger::setup(bool three_phases, bool has_ventilation, const std::string& country_code, bool rcd_enabled,
                     const ChargeMode _charge_mode, bool _ac_hlc_enabled, bool _ac_hlc_use_5percent,
-                    bool _ac_enforce_hlc, bool _ac_with_soc_timeout) {
+                    bool _ac_enforce_hlc, bool _ac_with_soc_timeout, int _soft_over_current_percent,
+                    int _soft_over_current_ms) {
     std::lock_guard<std::recursive_mutex> lock(configMutex);
     // set up board support package
     r_bsp->call_setup(three_phases, has_ventilation, country_code, rcd_enabled);
@@ -935,6 +936,8 @@ void Charger::setup(bool three_phases, bool has_ventilation, const std::string& 
     ac_enforce_hlc = _ac_enforce_hlc;
     ac_with_soc_timeout = _ac_with_soc_timeout;
     ac_with_soc_timer = 3600000;
+    soft_over_current_percent = _soft_over_current_percent;
+    soft_over_current_ms = _soft_over_current_ms;
 }
 
 Charger::EvseState Charger::getCurrentState() {
@@ -1145,8 +1148,13 @@ void Charger::setCurrentDrawnByVehicle(float l1, float l2, float l3) {
 }
 
 void Charger::checkSoftOverCurrent() {
-    // Allow 10% tolerance
-    float limit = getMaxCurrent() * 1.1;
+
+    // soft over current checking was disabled in config
+    if (soft_over_current_percent == 0)
+        return;
+
+    // Allow configured tolerance
+    float limit = getMaxCurrent() * (1. + soft_over_current_percent / 100.);
 
     if (currentDrawnByVehicle[0] > limit || currentDrawnByVehicle[1] > limit || currentDrawnByVehicle[2] > limit) {
         if (!overCurrent) {
@@ -1160,7 +1168,10 @@ void Charger::checkSoftOverCurrent() {
     auto now = date::utc_clock::now();
     auto timeSinceOverCurrentStarted =
         std::chrono::duration_cast<std::chrono::milliseconds>(now - lastOverCurrentEvent).count();
-    if (overCurrent && timeSinceOverCurrentStarted >= softOverCurrentTimeout) {
+    if (overCurrent && timeSinceOverCurrentStarted >= soft_over_current_ms) {
+        EVLOG_critical << fmt::format("Soft over current event, started {}ms ago, last current values: {}A/{}A/{}A",
+                                      timeSinceOverCurrentStarted, currentDrawnByVehicle[0], currentDrawnByVehicle[1],
+                                      currentDrawnByVehicle[2]);
         currentState = EvseState::Error;
         errorState = types::evse_manager::Error::OverCurrent;
     }

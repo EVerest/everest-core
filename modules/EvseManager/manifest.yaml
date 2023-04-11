@@ -157,6 +157,20 @@ config:
     description: Use slac ev mac address for autocharge instead of EVCCID from HLC 
     type: boolean
     default: false
+  soft_over_current_percent:
+    description: >-
+      Only for AC charging: Allows N percent of over current on any phase in soft overcurrent checking.
+      Requires power meter, set to 0 to disable feature.
+    type: integer
+    minimal: 0
+    default: 25
+  soft_over_current_ms:
+    description: >-
+      Minimal time the soft over current situation must persist to trigger an error. Minimum is 6000 ms
+      as IEC61851-1 requires the EV to adjust to PWM current changes within 6 seconds.
+    type: integer
+    minimal: 6000
+    default: 7000
 provides:
   evse:
     interface: evse_manager
