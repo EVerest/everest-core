@@ -27,7 +27,7 @@
 
 uint16_t MODBUS_CRC16(const uint8_t* buf, int len) {
     uint16_t crc = 0xFFFF;
-    char i = 0;
+    char i;
 
     while (len--) {
         crc ^= (*buf++);

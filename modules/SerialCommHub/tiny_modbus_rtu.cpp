@@ -66,8 +66,7 @@ static std::vector<uint16_t> decode_reply(const uint8_t* buf, int len, uint8_t d
     }
 
     if (function != function_code_recvd) {
-        EVLOG_error << fmt::format("Function code mismatch: expected: {} received: {}", function,
-                                   function_code_recvd);
+        EVLOG_error << fmt::format("Function code mismatch: expected: {} received: {}", function, function_code_recvd);
         return result;
     }
 
@@ -147,7 +146,7 @@ bool TinyModbusRTU::openDevice(const std::string& device, int _baud) {
 
     fd = open(device.c_str(), O_RDWR | O_NOCTTY | O_SYNC);
     if (fd < 0) {
-        printf("Serial: error %d opening %s: %s\n", errno, device, strerror(errno));
+        EVLOG_error << fmt::format("Serial: error {} opening {}: {}\n", errno, device, strerror(errno));
         return false;
     }
 
@@ -172,7 +171,6 @@ bool TinyModbusRTU::openDevice(const std::string& device, int _baud) {
         baud = B230400;
         break;
     default:
-        baud = 0;
         return false;
     }
 
@@ -189,11 +187,11 @@ bool TinyModbusRTU::openDevice(const std::string& device, int _baud) {
     // disable IGNBRK for mismatched speed tests; otherwise receive break
     // as \000 chars
     tty.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON | IXOFF | IXANY);
-    tty.c_lflag = 0;     // no signaling chars, no echo,
-                         // no canonical processing
-    tty.c_oflag = 0;     // no remapping, no delays
-    tty.c_cc[VMIN] = 1;  // read blocks
-    tty.c_cc[VTIME] = 1; // 0.1 seconds inter character read timeout after first byte was received
+    tty.c_lflag = 0;                   // no signaling chars, no echo,
+                                       // no canonical processing
+    tty.c_oflag = 0;                   // no remapping, no delays
+    tty.c_cc[VMIN] = 1;                // read blocks
+    tty.c_cc[VTIME] = 1;               // 0.1 seconds inter character read timeout after first byte was received
 
     tty.c_cflag |= (CLOCAL | CREAD);   // ignore modem controls,
                                        // enable reading
@@ -272,7 +270,11 @@ std::vector<uint16_t> TinyModbusRTU::txrx(uint8_t device_address, function_code 
             } else if (rv == 0) {
                 break;
             } else {
-                int bytes_read = read(fd, rxbuf + bytes_read_total, sizeof(rxbuf));
+                // do we have space in the rx buffer left?
+                if (bytes_read_total >= sizeof(rxbuf))
+                    break;
+                    
+                int bytes_read = read(fd, rxbuf + bytes_read_total, sizeof(rxbuf) - bytes_read_total);
                 if (bytes_read > 0) {
                     bytes_read_total += bytes_read;
                     // hexdump("RECVD: ", rxbuf, bytes_read_total);
