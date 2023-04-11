@@ -12,7 +12,16 @@ ev_setup_cpp_module()
 target_sources(${MODULE_NAME}
     PRIVATE
         main/slac_io.cpp
-        main/evse_fsm.cpp
+        main/context.cpp
+        main/states/others.cpp
+        main/states/matching.cpp
+        main/states/matching_handle_slac.cpp
+        main/fsm_controller.cpp
+)
+
+target_include_directories(${MODULE_NAME}
+    PRIVATE
+        libfsm
 )
 
 target_link_libraries(${MODULE_NAME}
@@ -21,6 +30,28 @@ target_link_libraries(${MODULE_NAME}
         fsm::fsm
         Pal::Sigslot
 )
+
+add_executable(slac_test)
+target_sources(slac_test
+    PRIVATE
+        main/slac_test.cpp
+        main/context.cpp
+        main/states/others.cpp
+        main/states/matching.cpp
+        main/states/matching_handle_slac.cpp
+)
+
+target_include_directories(slac_test
+    PRIVATE
+        libfsm
+)
+
+target_link_libraries(slac_test
+    PRIVATE
+        slac::slac
+        fmt::fmt
+)
+target_compile_features(slac_test PRIVATE cxx_std_17)
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 
 target_sources(${MODULE_NAME}
