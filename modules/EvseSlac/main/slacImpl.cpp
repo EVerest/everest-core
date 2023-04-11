@@ -1,41 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2022 - 2022 Pionix GmbH and Contributors to EVerest
+// Copyright 2022 - 2023 Pionix GmbH and Contributors to EVerest
 
 #include "slacImpl.hpp"
 
 #include <future>
 
 #include <fmt/core.h>
-#include <fsm/specialization/sync/posix.hpp>
 #include <slac/channel.hpp>
 
-#include "evse_fsm.hpp"
+#include "fsm_controller.hpp"
 #include "slac_io.hpp"
 
-void fsm_logging_callback(const std::string& msg) {
-    EVLOG_verbose << fmt::format("SlacFSM: {}", msg);
-}
-
-static std::mutex comm_mtx;
 static std::promise<void> module_ready;
-static fsm::sync::PosixController<EvseFSM::StateHandleType, &fsm_logging_callback> fsm_ctrl;
-static std::condition_variable new_event_cv;
-static bool new_event;
-
-// void notify() {
-//     new_event = true;
-//     new_event_cv.notify_one();
-// }
-
-bool send_event(const EvseFSM::EventInfoType::BaseType& event) {
-    std::lock_guard<std::mutex> lck(comm_mtx);
-    new_event = true;
-
-    auto ret = fsm_ctrl.submit_event(event);
-
-    new_event_cv.notify_one();
-    return ret;
-}
+// FIXME (aw): this is ugly, but due to the design of the auto-generated module skeleton ..
+static std::unique_ptr<FSMController> fsm_ctrl{nullptr};
 
 namespace module {
 namespace main {
@@ -48,9 +26,6 @@ static std::string mac_to_ascii(const std::string& mac_binary) {
 }
 
 void slacImpl::init() {
-    // initialize static variables
-    new_event = false;
-
     // validate config settings
     if (config.evse_id.length() != slac::defs::STATION_ID_LEN) {
         EVLOG_AND_THROW(
@@ -85,104 +60,36 @@ void slacImpl::run() {
             fmt::format("Couldn't open device {} for SLAC communication. Reason: {}", config.device, e.what())));
     }
 
-    EvseFSM fsm(slac_io, config.set_key_timeout_ms);
+    // setup callbacks
+    ContextCallbacks callbacks;
+    callbacks.send_raw_slac = [&slac_io](slac::messages::HomeplugMessage& msg) { slac_io.send(msg); };
 
-    EVLOG_debug << "Starting the SLAC state machine";
+    callbacks.signal_dlink_ready = [this](bool value) { publish_dlink_ready(value); };
 
-    // connect MAC address signals for Autocharge
+    callbacks.signal_state = [this](const std::string& value) { publish_state(value); };
+
+    callbacks.signal_error_routine_request = [this]() { publish_request_error_routine(boost::blank()); };
+
+    callbacks.log = [](const std::string& text) { EVLOG_debug << text; };
+
     if (config.publish_mac_on_first_parm_req) {
-        fsm.signal_ev_mac_address_parm_req.connect(
-            [this](const std::string& ev_mac) { publish_ev_mac_address(mac_to_ascii(ev_mac)); });
+        callbacks.signal_ev_mac_address_parm_req = [this](const std::string& mac) { publish_ev_mac_address(mac); };
     }
 
     if (config.publish_mac_on_match_cnf) {
-        fsm.signal_ev_mac_address_match_cnf.connect(
-            [this](const std::string& ev_mac) { publish_ev_mac_address(mac_to_ascii(ev_mac)); });
+        callbacks.signal_ev_mac_address_match_cnf = [this](const std::string& mac) { publish_ev_mac_address(mac); };
     }
 
-    // signal_ev_mac_address_parm_req
+    auto fsm_ctx = Context(callbacks);
+    fsm_ctx.set_key_timeout_ms = config.set_key_timeout_ms;
+    fsm_ctx.ac_mode_five_percent = config.ac_mode_five_percent;
+    fsm_ctx.generate_nmk();
 
-    fsm.generate_nmk();
+    fsm_ctrl = std::make_unique<FSMController>(fsm_ctx);
 
-    fsm.set_five_percent_mode(config.ac_mode_five_percent);
+    slac_io.run([](slac::messages::HomeplugMessage& msg) { fsm_ctrl->signal_new_slac_message(msg); });
 
-    bool matched = false;
-    auto cur_state_id = fsm.get_initial_state().id.id;
-    fsm_ctrl.reset(fsm.get_initial_state());
-
-    slac_io.run([this](slac::messages::HomeplugMessage& msg) {
-        if (send_event(EventSlacMessage(msg))) {
-            return;
-        }
-
-        EVLOG_debug << fmt::format("No SLAC message handler for current state: {}", fsm_ctrl.current_state()->id.name);
-    });
-
-    std::unique_lock<std::mutex> feed_lck(comm_mtx);
-    int next_timeout_in_ms = 0;
-
-    while (true) {
-        do {
-            // run the next cycle on the state machine
-            next_timeout_in_ms = fsm_ctrl.feed();
-
-            // FIXME (aw): we probably want to react on all state changes
-        } while (next_timeout_in_ms == 0);
-
-        // FIXME (aw): this simple logic should be implemented in the fsm lib
-        bool changed_state = false;
-        changed_state = (cur_state_id != fsm_ctrl.current_state()->id.id);
-        cur_state_id = fsm_ctrl.current_state()->id.id;
-
-        if (changed_state) {
-            switch (cur_state_id) {
-            case State::Matching:
-                publish_state("MATCHING");
-                break;
-            case State::Matched:
-                matched = true;
-                EVLOG_debug << "publish MATCHED";
-                publish_dlink_ready(true);
-                publish_state("MATCHED");
-                break;
-            case State::SignalError:
-                publish_request_error_routine(boost::blank());
-                break;
-            case State::Idle:
-                publish_state("UNMATCHED");
-                break;
-            case State::ReceivedSlacMatch:
-                // FIXME (aw): we could publish a var, that SLAC should
-                //             be in principle available now
-                // FIMXE (aw): this needs to be implemented in a higher level ->
-                //             stipulate link establishment if appropriate
-                EVLOG_debug << "State::ReceivedSlacMatch";
-                fsm_ctrl.submit_event(EventLinkDetected());
-                // FIXME (aw): this control-flow is not that straight forward
-                continue;
-                break;
-            default:
-                break;
-            }
-        }
-
-        if (matched && (cur_state_id != State::Matched)) {
-            matched = false;
-            publish_dlink_ready(false);
-        }
-
-        // FIXME (aw): handle disconnection / un-matching etc.
-
-        if (next_timeout_in_ms < 0) {
-            new_event_cv.wait(feed_lck, [] { return new_event; });
-        } else {
-            new_event_cv.wait_for(feed_lck, std::chrono::milliseconds(next_timeout_in_ms), [] { return new_event; });
-        }
-
-        if (new_event) { // the if might be not necessary
-            new_event = false;
-        }
-    }
+    fsm_ctrl->run();
 }
 
 void slacImpl::handle_reset(bool& enable) {
@@ -192,16 +99,16 @@ void slacImpl::handle_reset(bool& enable) {
     // some hundreds of msecs at the beginning of the charging session as we do not need to set up keys. Then
     // EvseManager can switch on 5% PWM basically immediately as SLAC is already ready.
     if (!enable) {
-        send_event(EventReset());
+        fsm_ctrl->signal_reset();
     }
 };
 
 bool slacImpl::handle_enter_bcd() {
-    return send_event(EventEnterBCD());
+    return fsm_ctrl->signal_enter_bcd();
 };
 
 bool slacImpl::handle_leave_bcd() {
-    return send_event(EventLeaveBCD());
+    return fsm_ctrl->signal_leave_bcd();
 };
 
 bool slacImpl::handle_dlink_terminate() {
