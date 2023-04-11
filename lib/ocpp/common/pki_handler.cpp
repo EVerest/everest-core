@@ -332,16 +332,14 @@ void PkiHandler::writeClientCertificate(const std::string& certificateChain,
 std::string PkiHandler::generateCsr(const CertificateSigningUseEnum& certificateType, const std::string& szCountry,
                                     const std::string& szOrganization, const std::string& szCommon) {
     int rc;
-    RSA* r = NULL;
-    BN_ptr bn(BN_new(), ::BN_free);
-
     int nVersion = 0;
-    int bits = 2048;
-    unsigned long e = RSA_F4;
+    int bits = 256;
 
     // csr req
-    X509_REQ* x509_req = X509_REQ_new();
-    EVP_KEY_ptr pKey(EVP_PKEY_new(), ::EVP_PKEY_free);
+    X509_REQ_ptr x509ReqPtr(X509_REQ_new(), X509_REQ_free);
+    EVP_PKEY_ptr evpKey(EVP_PKEY_new(), EVP_PKEY_free);
+    EC_KEY* ecKey = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
+    X509_NAME* x509Name = X509_REQ_get_subject_name(x509ReqPtr.get());
 
     boost::filesystem::path csrFile;
     boost::filesystem::path privateKeyFile;
@@ -351,62 +349,102 @@ std::string PkiHandler::generateCsr(const CertificateSigningUseEnum& certificate
     if (certificateType == CertificateSigningUseEnum::ChargingStationCertificate) {
         csrFile = this->clientCsmsPath / CSMS_CSR;
         privateKeyFile = this->clientCsmsPath / CSMS_LEAF_KEY;
+        std::rename((this->clientCsmsPath / CSMS_LEAF_KEY).c_str(),
+                    (this->clientCsmsPath / CSMS_LEAF_KEY_BACKUP).c_str());
     } else {
         // CertificateSigningUseEnum::CertificateSigningUseEnum::V2GCertificate
         csrFile = this->clientCsoPath / V2G_CSR;
         privateKeyFile = this->clientCsoPath / V2G_LEAF_KEY;
+        std::rename((this->clientCsoPath / V2G_LEAF_KEY).c_str(),
+                    (this->clientCsoPath / V2G_LEAF_KEY_BACKUP).c_str());
     }
 
     BIO_ptr out(BIO_new_file(csrFile.c_str(), "w"), ::BIO_free);
     BIO_ptr prkey(BIO_new_file(privateKeyFile.c_str(), "w"), ::BIO_free);
     BIO_ptr bio(BIO_new(BIO_s_mem()), ::BIO_free);
 
-    // generate rsa key
-    rc = BN_set_word(bn.get(), e);
-    assert(rc == 1);
-    r = RSA_new();
-    RSA_generate_key_ex(r, bits, bn.get(), NULL);
-    assert(rc == 1);
+    // generate ec key pair
+    rc = EC_KEY_generate_key(ecKey);
+    if (rc != 1) {
+        EVLOG_error << "Failed to generate EC key pair";
+    }
+
+    rc = EVP_PKEY_assign_EC_KEY(evpKey.get(), ecKey);
+    if (rc != 1) {
+        EVLOG_error << "Failed to assign EC key to EVP key";
+    }
 
     // write private key to file
-    rc = PEM_write_bio_RSAPrivateKey(prkey.get(), r, NULL, NULL, 0, NULL, NULL);
-    assert(rc == 1);
+    rc = PEM_write_bio_PrivateKey(prkey.get(), evpKey.get(), NULL, NULL, 0, NULL, NULL);
+    if (rc != 1) {
+        EVLOG_error << "Failed to write private key to file";
+    }
 
     // set version of x509 req
-    X509_REQ_set_version(x509_req, nVersion);
-    assert(rc == 1);
+    rc = X509_REQ_set_version(x509ReqPtr.get(), nVersion);
+    if (rc != 1) {
+        EVLOG_error << "Failed to set version of X509 request";
+    }
 
     // set subject of x509 req
-    X509_NAME_ptr x509_name_ptr(X509_REQ_get_subject_name(x509_req), ::X509_NAME_free);
-    assert(rc == 1);
-    X509_NAME_add_entry_by_txt(x509_name_ptr.get(), "C", MBSTRING_ASC, reinterpret_cast<const unsigned char*>(szCountry.c_str()), -1, -1,
-                               0);
-    assert(rc == 1);
-    X509_NAME_add_entry_by_txt(x509_name_ptr.get(), "O", MBSTRING_ASC, reinterpret_cast<const unsigned char*>(szOrganization.c_str()), -1,
-                               -1, 0);
-    assert(rc == 1);
-    X509_NAME_add_entry_by_txt(x509_name_ptr.get(), "CN", MBSTRING_ASC, reinterpret_cast<const unsigned char*>(szCommon.c_str()), -1, -1,
-                               0);
-    assert(rc == 1);
-    X509_NAME_add_entry_by_txt(x509_name_ptr.get(), "DC", MBSTRING_ASC, reinterpret_cast<const unsigned char*>("CPO"), -1, -1, 0);
+    rc = X509_NAME_add_entry_by_txt(x509Name, "C", MBSTRING_ASC,
+                                    reinterpret_cast<const unsigned char*>(szCountry.c_str()), -1, -1, 0);
+    if (rc != 1) {
+        EVLOG_error << "Failed to add 'C' entry to X509 request";
+    }
+
+    rc = X509_NAME_add_entry_by_txt(x509Name, "O", MBSTRING_ASC,
+                                    reinterpret_cast<const unsigned char*>(szOrganization.c_str()), -1, -1, 0);
+    if (rc != 1) {
+        EVLOG_error << "Failed to add 'O' entry to X509 request";
+    }
+
+    rc = X509_NAME_add_entry_by_txt(x509Name, "CN", MBSTRING_ASC,
+                                    reinterpret_cast<const unsigned char*>(szCommon.c_str()), -1, -1, 0);
+    if (rc != 1) {
+        EVLOG_error << "Failed to add 'CN' entry to X509 request";
+    }
+
+    rc = X509_NAME_add_entry_by_txt(x509Name, "DC", MBSTRING_ASC,
+                                    reinterpret_cast<const unsigned char*>("CPO"), -1, -1, 0);
+
+    if (rc != 1) {
+        EVLOG_error << "Failed to add 'DC' entry to X509 request";
+    }
 
     // 5. set public key of x509 req
-    EVP_PKEY_assign_RSA(pKey.get(), r);
-    r = NULL;
-    X509_REQ_set_pubkey(x509_req, pKey.get());
-    assert(rc == 1);
+    rc = X509_REQ_set_pubkey(x509ReqPtr.get(), evpKey.get());
+    if (rc != 1) {
+        EVLOG_error << "Failed to set public key of X509 request";
+    }
+
+    STACK_OF(X509_EXTENSION)* extensions = sk_X509_EXTENSION_new_null();
+    X509_EXTENSION* ext_key_usage = X509V3_EXT_conf_nid(NULL, NULL, NID_key_usage, "digitalSignature, keyAgreement");
+    X509_EXTENSION* ext_basic_constraints =
+        X509V3_EXT_conf_nid(NULL, NULL, NID_basic_constraints, "critical,CA:false");
+    sk_X509_EXTENSION_push(extensions, ext_key_usage);
+    sk_X509_EXTENSION_push(extensions, ext_basic_constraints);
+
+    rc = X509_REQ_add_extensions(x509ReqPtr.get(), extensions);
+    if (rc != 1) {
+        EVLOG_error << "Failed to add extensions to X509 request";
+    }
 
     // 6. set sign key of x509 req
-    X509_REQ_sign(x509_req, pKey.get(), EVP_sha256());
-    assert(rc == 1);
+    X509_REQ_sign(x509ReqPtr.get(), evpKey.get(), EVP_sha256());
 
     // 7. write csr to file
-    PEM_write_bio_X509_REQ(out.get(), x509_req);
-    assert(rc == 1);
+    rc = PEM_write_bio_X509_REQ(out.get(), x509ReqPtr.get());
+    if (rc != 1) {
+        EVLOG_error << "Failed to write X509 request to file";
+    }
 
     // 8. read csr from file
-    rc = PEM_write_bio_X509_REQ(bio.get(), x509_req);
-    assert(rc == 1);
+    rc = PEM_write_bio_X509_REQ(bio.get(), x509ReqPtr.get());
+    if (rc != 1) {
+        EVLOG_error << "Failed to read X509 request from file";
+    }
+
     BUF_MEM* mem = NULL;
     BIO_get_mem_ptr(bio.get(), &mem);
     std::string csr(mem->data, mem->length);

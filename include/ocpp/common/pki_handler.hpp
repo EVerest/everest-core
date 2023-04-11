@@ -44,13 +44,11 @@ struct OCSPRequestData {
     };
 };
 
-using BN_ptr = std::unique_ptr<BIGNUM, decltype(&::BN_free)>;
-using EVP_KEY_ptr = std::unique_ptr<EVP_PKEY, decltype(&::EVP_PKEY_free)>;
+using EVP_PKEY_ptr = std::unique_ptr<EVP_PKEY, decltype(&::EVP_PKEY_free)>;
 using BIO_ptr = std::unique_ptr<BIO, decltype(&::BIO_free)>;
-using X509_NAME_ptr = std::unique_ptr<X509_NAME, decltype(&::X509_NAME_free)>;
 using X509_STORE_ptr = std::unique_ptr<X509_STORE, decltype(&::X509_STORE_free)>;
 using X509_STORE_CTX_ptr = std::unique_ptr<X509_STORE_CTX, decltype(&::X509_STORE_CTX_free)>;
-using ASN1_TIME_ptr = std::unique_ptr<ASN1_TIME, decltype(&ASN1_STRING_free)>;
+using X509_REQ_ptr = std::unique_ptr<X509_REQ, decltype(&::X509_REQ_free)>;
 
 // filenames of ca certificates
 const boost::filesystem::path CSMS_ROOT_CA("CSMS_ROOT_CA.pem");
@@ -59,9 +57,11 @@ const boost::filesystem::path CSMS_ROOT_CA_BACKUP("CSMS_ROOT_CA_BACKUP.pem");
 // filenames of leaf certificates, csrs and private keys
 const boost::filesystem::path CSMS_LEAF("CSMS_LEAF.pem");
 const boost::filesystem::path CSMS_LEAF_KEY("CSMS_LEAF.key");
+const boost::filesystem::path CSMS_LEAF_KEY_BACKUP("CSMS_LEAF_BACKUP.key");
 const boost::filesystem::path CSMS_CSR("CSMS_CSR.pem");
 const boost::filesystem::path V2G_LEAF("SECC_LEAF.pem"); // SECC_LEAF in ISO15118
 const boost::filesystem::path V2G_LEAF_KEY("SECC_LEAF.key");
+const boost::filesystem::path V2G_LEAF_KEY_BACKUP("SECC_LEAF_BACKUP.key");
 const boost::filesystem::path V2G_CSR("SECC_CSR.pem");
 
 struct X509Certificate {
