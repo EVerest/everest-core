@@ -41,7 +41,7 @@ static auto create_cm_slac_parm_cnf(const MatchingSession& session) {
     return param_confirm;
 }
 
-auto create_cm_atten_char_ind(const MatchingSession& session) {
+static auto create_cm_atten_char_ind(const MatchingSession& session) {
     slac::messages::cm_atten_char_ind atten_char_ind;
 
     atten_char_ind.application_type = slac::defs::COMMON_APPLICATION_TYPE;
@@ -64,6 +64,26 @@ auto create_cm_atten_char_ind(const MatchingSession& session) {
     }
 
     return atten_char_ind;
+}
+
+static auto create_cm_slac_match_cnf(const MatchingSession& session, const slac::messages::cm_slac_match_req& match_req,
+                                     const uint8_t* session_nmk) {
+    slac::messages::cm_slac_match_cnf match_cnf;
+
+    match_cnf.application_type = slac::defs::COMMON_APPLICATION_TYPE;
+    match_cnf.security_type = slac::defs::COMMON_SECURITY_TYPE;
+    match_cnf.mvf_length = htole16(slac::defs::CM_SLAC_MATCH_CNF_MVF_LENGTH);
+    memcpy(match_cnf.pev_id, match_req.pev_id, sizeof(match_cnf.pev_id));
+    memcpy(match_cnf.pev_mac, match_req.pev_mac, sizeof(match_cnf.pev_mac));
+    memcpy(match_cnf.evse_id, match_req.evse_id, sizeof(match_cnf.evse_id));
+    memcpy(match_cnf.evse_mac, match_req.evse_mac, sizeof(match_cnf.evse_mac));
+    memcpy(match_cnf.run_id, match_req.run_id, sizeof(match_cnf.run_id));
+    memset(match_cnf._rerserved, 0, 8);
+    match_cnf._reserved2 = 0;
+    slac::utils::generate_nid_from_nmk(match_cnf.nid, session_nmk);
+    memcpy(match_cnf.nmk, session_nmk, sizeof(match_cnf.nmk));
+
+    return match_cnf;
 }
 
 void MatchingState::handle_slac_message(slac::messages::HomeplugMessage& msg) {
@@ -232,7 +252,12 @@ void MatchingState::handle_cm_slac_match_req(const slac::messages::cm_slac_match
         return;
     }
 
-    session_log(ctx, *session, "Received CM_SLAC_MATCH_REQ -> session complete");
+    session_log(ctx, *session, "Received CM_SLAC_MATCH_REQ, sending CM_SLAC_MATCH_CNF -> session complete");
+
+    auto match_confirm = create_cm_slac_match_cnf(*session, msg, ctx.session_nmk);
+
+    ctx.send_slac_message(tmp_ev_mac, match_confirm);
+
     session->state = MatchingSubState::MATCH_COMPLETE;
 
     // call this immediately again in MatchedState::callback to handle things

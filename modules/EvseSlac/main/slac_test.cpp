@@ -233,5 +233,14 @@ int main(int argc, char* argv[]) {
 
     machine.feed();
 
+    // assert that CM_SLAC_MATCH_CNF gets set!
+    if (!msg_in.has_value() ||
+        msg_in->get_mmtype() != (slac::defs::MMTYPE_CM_SLAC_MATCH | slac::defs::MMTYPE_MODE_CNF)) {
+        printf("Expected CM_ATTEN_CHAR_IND!\n");
+        exit(EXIT_FAILURE);
+    } else {
+        msg_in.reset();
+    }
+
     return 0;
 }
