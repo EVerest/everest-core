@@ -314,13 +314,16 @@ void ChargePoint::stop_pending_transactions() {
 void ChargePoint::load_charging_profiles() {
     auto profiles = this->database_handler->get_charging_profiles();
     EVLOG_info << "Found " << profiles.size() << " charging profile(s) in the database";
+    const auto supported_purpose_types = this->configuration->getSupportedChargingProfilePurposeTypes();
     for (auto& profile : profiles) {
         const auto connector_id = this->database_handler->get_connector_id(profile.chargingProfileId);
         if (this->smart_charging_handler->validate_profile(
                 profile, connector_id, false, this->configuration->getChargeProfileMaxStackLevel(),
                 this->configuration->getMaxChargingProfilesInstalled(),
                 this->configuration->getChargingScheduleMaxPeriods(),
-                this->configuration->getChargingScheduleAllowedChargingRateUnitVector())) {
+                this->configuration->getChargingScheduleAllowedChargingRateUnitVector()) and
+            std::find(supported_purpose_types.begin(), supported_purpose_types.end(), profile.chargingProfilePurpose) !=
+                supported_purpose_types.end()) {
 
             if (profile.chargingProfilePurpose == ChargingProfilePurposeType::ChargePointMaxProfile) {
                 this->smart_charging_handler->add_charge_point_max_profile(profile);
