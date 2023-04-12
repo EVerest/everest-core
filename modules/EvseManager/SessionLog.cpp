@@ -44,14 +44,14 @@ boost::optional<std::string> SessionLog::startSession(const std::string& session
 
         // create general log directory if it does not exist
         if (!std::filesystem::exists(logpath_root))
-            std::filesystem::create_directory(logpath_root);
+            std::filesystem::create_directories(logpath_root);
 
         std::string ts = Everest::Date::to_rfc3339(date::utc_clock::now());
         logpath = fmt::format("{}/{}-{}", logpath_root, ts, session_id);
 
         // create sessionlog directory if it does not exist
         if (!std::filesystem::exists(logpath))
-            std::filesystem::create_directory(logpath);
+            std::filesystem::create_directories(logpath);
 
         // open new file
         fn = fmt::format("{}/incomplete-eventlog.csv", logpath);
