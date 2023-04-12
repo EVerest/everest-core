@@ -19,6 +19,7 @@ static inline auto remaining_milliseconds(const MatchingTimepoint& timeout, cons
 MatchingSession::MatchingSession(const uint8_t* ev_mac, const uint8_t* run_id) {
     memcpy(this->ev_mac, ev_mac, sizeof(this->ev_mac));
     memcpy(this->run_id, run_id, sizeof(this->run_id));
+    memset(captured_aags, 0, sizeof(captured_aags));
 }
 
 void MatchingSession::set_next_timeout(int delay_ms) {
