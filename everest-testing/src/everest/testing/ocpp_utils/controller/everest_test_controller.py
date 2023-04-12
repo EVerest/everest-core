@@ -6,50 +6,98 @@ import json
 import shutil
 from pathlib import Path
 from paho.mqtt import client as mqtt_client
+import logging
+import yaml
+import tempfile
 
 from everest.testing.ocpp_utils.controller.test_controller_interface import TestController
 from everest.testing.core_utils.everest_core import EverestCore
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 class EverestTestController(TestController):
 
     def __init__(self, everest_core_path, config_path: Path, chargepoint_id: str,
-                 test_function_name: str = None) -> None:
-        self.everest_core = EverestCore(everest_core_path, config_path)
+                 test_function_name: str = None, ocpp_module_id: str = "ocpp") -> None:
+        self.everest_core = EverestCore(everest_core_path, config_path, [])
         self.config_path = config_path
         self.mqtt_client = None
         self.chargepoint_id = chargepoint_id
         self.test_function_name = test_function_name
+        self.temp_ocpp_config_file = tempfile.NamedTemporaryFile(delete=False, mode="w+", suffix=".json")
+        self.temp_ocpp_user_config_file = tempfile.NamedTemporaryFile(delete=False, mode="w+", suffix=".json")
+        self.temp_ocpp_database_dir = tempfile.TemporaryDirectory()
+        self.temp_ocpp_log_dir = tempfile.TemporaryDirectory()
+        self.temp_ocpp_certs_dir = tempfile.TemporaryDirectory()
+        self.first_run = True
+        self.mqtt_external_prefix = ""
+        self.ocpp_module_id = ocpp_module_id
 
-    def start(self):
+    def start(self, central_system_port=None):
+        logging.info(f"Central system port: {central_system_port}")
+        # modify ocpp config with given central system port and modify everest-core config as well
+        everest_config = yaml.safe_load(self.everest_core.everest_config_path.read_text())
+        ocpp_dir = self.everest_core.everest_core_build_path / "dist/share/everest/ocpp"
+        ocpp_config_path = ocpp_dir / \
+            everest_config["active_modules"][self.ocpp_module_id]["config_module"]["ChargePointConfigPath"]
+        ocpp_config = json.loads(ocpp_config_path.read_text())
+        charge_point_id = ocpp_config["Internal"]["ChargePointId"]
+        ocpp_config["Internal"]["CentralSystemURI"] = f"127.0.0.1:{central_system_port}/{charge_point_id}"
+        if self.first_run:
+            logging.info("First run")
+            self.first_run = False
+            self.temp_ocpp_config_file.write(json.dumps(ocpp_config))
+            self.temp_ocpp_config_file.flush()
+            self.temp_ocpp_user_config_file.write("{}")
+            self.temp_ocpp_user_config_file.flush()
+        if "active_modules" in everest_config and self.ocpp_module_id in everest_config["active_modules"]:
+            everest_config["active_modules"][self.ocpp_module_id]["config_module"]["ChargePointConfigPath"] = self.temp_ocpp_config_file.name
+            everest_config["active_modules"][self.ocpp_module_id]["config_module"]["UserConfigPath"] = self.temp_ocpp_user_config_file.name
+            everest_config["active_modules"][self.ocpp_module_id]["config_module"]["DatabasePath"] = self.temp_ocpp_database_dir.name
+            everest_config["active_modules"][self.ocpp_module_id]["config_module"]["MessageLogPath"] = self.temp_ocpp_log_dir.name
+            everest_config["active_modules"][self.ocpp_module_id]["config_module"]["CertsPath"] = self.temp_ocpp_certs_dir.name
 
-        self.copy_occp_config()
+        self.everest_core.temp_everest_config_file.seek(0)
+        yaml.dump(everest_config, self.everest_core.temp_everest_config_file)
+
+        # install default certificates
+        certs_dir = self.everest_core.everest_core_build_path / "dist/etc/everest/certs"
+
+        shutil.copytree(f"{certs_dir}/ca", f"{self.temp_ocpp_certs_dir.name}/ca", dirs_exist_ok=True)
+        shutil.copytree(f"{certs_dir}/client", f"{self.temp_ocpp_certs_dir.name}/client", dirs_exist_ok=True)
+
+        logging.info(f"temp ocpp config: {self.temp_ocpp_config_file.name}")
+        logging.info(f"temp ocpp user config: {self.temp_ocpp_user_config_file.name}")
+        logging.info(f"temp ocpp certs path: {self.temp_ocpp_certs_dir.name}")
+
         self.everest_core.start(None)
+        self.mqtt_external_prefix = self.everest_core.mqtt_external_prefix
 
         mqtt_server_uri = os.environ.get("MQTT_SERVER_ADDRESS", "127.0.0.1")
         mqtt_server_port = int(os.environ.get("MQTT_SERVER_PORT", "1883"))
 
-        self.mqtt_client = mqtt_client.Client("unique_client_id")
+        self.mqtt_client = mqtt_client.Client(self.everest_core.everest_uuid)
         self.mqtt_client.connect(mqtt_server_uri, mqtt_server_port)
 
         self.mqtt_client.publish(
-            "everest_external/nodered/1/carsim/cmd/enable", "true")
+            f"{self.mqtt_external_prefix}everest_external/nodered/1/carsim/cmd/enable", "true")
         self.mqtt_client.publish(
-            "everest_external/nodered/2/carsim/cmd/enable", "true")
+            f"{self.mqtt_external_prefix}everest_external/nodered/2/carsim/cmd/enable", "true")
 
     def stop(self):
         self.everest_core.stop()
 
     def plug_in(self, connector_id=1):
-        self.mqtt_client.publish(f"everest_external/nodered/{connector_id}/carsim/cmd/execute_charging_session",
+        self.mqtt_client.publish(f"{self.mqtt_external_prefix}everest_external/nodered/{connector_id}/carsim/cmd/execute_charging_session",
                                  "sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 32,1;sleep 200;unplug")
 
     def plug_in_ac_iso(self, payment_type='contract', connector_id=1):
-        self.mqtt_client.publish(f"everest_external/nodered/{connector_id}/carsim/cmd/execute_charging_session",
+        self.mqtt_client.publish(f"{self.mqtt_external_prefix}everest_external/nodered/{connector_id}/carsim/cmd/execute_charging_session",
                                  f"sleep 1;iso_wait_slac_matched;iso_start_v2g_session {payment_type},AC_three_phase_core;iso_wait_pwr_ready;iso_draw_power_regulated 16,3;sleep 20;iso_stop_charging;iso_wait_v2g_session_stopped;unplug")
 
     def plug_out(self, connector_id=1):
-        self.mqtt_client.publish(f"everest_external/nodered/{connector_id}/carsim/cmd/modify_charging_session",
+        self.mqtt_client.publish(f"{self.mqtt_external_prefix}everest_external/nodered/{connector_id}/carsim/cmd/modify_charging_session",
                                  "unplug")
 
     def swipe(self, token, connectors=[1]):
@@ -59,16 +107,16 @@ class EverestTestController(TestController):
             "connectors": connectors
         }
         self.mqtt_client.publish(
-            "everest_api/dummy_token_provider/cmd/provide", json.dumps(provided_token))
+            f"{self.mqtt_external_prefix}everest_api/dummy_token_provider/cmd/provide", json.dumps(provided_token))
 
     def connect_websocket(self):
-        self.mqtt_client.publish("everest_api/ocpp/cmd/connect", "on")
+        self.mqtt_client.publish(f"{self.mqtt_external_prefix}everest_api/ocpp/cmd/connect", "on")
 
     def disconnect_websocket(self):
-        self.mqtt_client.publish("everest_api/ocpp/cmd/disconnect", "off")
+        self.mqtt_client.publish(f"{self.mqtt_external_prefix}everest_api/ocpp/cmd/disconnect", "off")
 
     def rcd_error(self, connector_id=1):
-        self.mqtt_client.publish(f"everest_external/nodered/{connector_id}/carsim/cmd/execute_charging_session",
+        self.mqtt_client.publish(f"{self.mqtt_external_prefix}everest_external/nodered/{connector_id}/carsim/cmd/execute_charging_session",
                                  "sleep 1;rcd_current 10.3;sleep 10;rcd_current 0.1;unplug")
 
     def publish(self, topic, payload):

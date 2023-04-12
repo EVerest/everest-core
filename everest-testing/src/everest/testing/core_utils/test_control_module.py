@@ -26,7 +26,6 @@ class TestControlModule:
         self.everest_core_module_path = self.everest_core_build_dist_path / 'libexec/everest/modules'
         self.test_control_module_bin_path = self.everest_core_module_path / 'PyTestControlModule/module.py'
         self.everest_py_path =  self.everest_core_build_dist_path / 'lib/everest/everestpy/everest.py'
-        self.everest_core_config_path = self.everest_core_path / 'config'
         self.event_list = []
 
 
@@ -93,15 +92,14 @@ class TestControlModule:
         return self.everest.module
 
 
-    def start(self):
+    def start(self, everest_config_path):
         """Starts the TestControlModule submodule
 
         Returns:
             _type_: The subprocess
         """
 
-        config = self.everest_core_config_path / 'config-sil.yaml'
-        self.process = self.run(config)
+        self.process = self.run(everest_config_path)
         time.sleep(2) #FIXME: wait properly for module start
         self.process.set_event_callback(self.event_occurred)
         return self.process

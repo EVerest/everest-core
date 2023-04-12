@@ -9,6 +9,7 @@ import pytest_asyncio
 import shutil
 import asyncio
 import ssl
+import socket
 from threading import Thread
 import getpass
 from enum import Enum
@@ -20,7 +21,6 @@ from everest.testing.ocpp_utils.controller.test_controller_interface import Test
 from everest.testing.ocpp_utils.controller.everest_test_controller import EverestTestController
 from everest.testing.ocpp_utils.central_system import CentralSystem
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), ".")))
-
 
 class ValidationMode(str, Enum):
     STRICT = "STRICT"
@@ -60,7 +60,7 @@ async def central_system_v16(request, test_config):
                                     test_config['Certificates']['CSMSPassphrase'])
     else:
         ssl_context = None
-    cs = CentralSystem(test_config['CSMS']['Port'],
+    cs = CentralSystem(None,
                        test_config['ChargePoint']['ChargePointId'],
                        ocpp_version='ocpp1.6')
     await cs.start(ssl_context)
@@ -95,7 +95,7 @@ async def central_system_v201(request, test_config):
 async def charge_point_v16(central_system_v16: CentralSystem, test_controller: TestController):
     """Fixture for ChargePoint16. Requires central_system_v16 and test_controller. Starts test_controller immediately
     """
-    test_controller.start()
+    test_controller.start(central_system_v16.port)
     cp = await central_system_v16.wait_for_chargepoint()
     yield cp
     cp.stop()
@@ -119,6 +119,10 @@ def test_utility():
     return TestUtility()
 
 
+class FtpThread(Thread):
+    def set_port(self, port):
+        self.port = port
+
 @pytest.fixture
 def ftp_server(test_config):
     """This fixture creates a temporary directory and starts
@@ -127,8 +131,12 @@ def ftp_server(test_config):
     """
 
     d = tempfile.mkdtemp(prefix='tmp_ftp')
+    address = ("127.0.0.1", 0)
+    ftp_socket = socket.socket()
+    ftp_socket.bind(address)
+    port = ftp_socket.getsockname()[1]
 
-    def _ftp_server(test_config):
+    def _ftp_server(test_config, ftp_socket):
         test_controller_name = test_config['TestController']
 
         if test_controller_name == 'EVerest':
@@ -142,13 +150,13 @@ def ftp_server(test_config):
         handler = FTPHandler
         handler.authorizer = authorizer
 
-        address = ("127.0.0.1", 2121)
-        server = servers.FTPServer(address, handler)
+        server = servers.FTPServer(ftp_socket, handler)
 
         server.serve_forever()
 
-    ftp_thread = Thread(target=_ftp_server, args=[test_config])
+    ftp_thread = FtpThread(target=_ftp_server, args=[test_config, ftp_socket])
     ftp_thread.daemon = True
+    ftp_thread.set_port(port)
     ftp_thread.start()
 
     yield ftp_thread
