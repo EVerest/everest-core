@@ -116,7 +116,7 @@ SessionInfo::operator std::string() {
 void API::init() {
     invoke_init(*p_main);
     std::string api_base = "everest_api/";
-    auto connectors = json::array();
+    std::vector<std::string> connectors;
     std::string var_connectors = api_base + "connectors";
 
     for (auto& evse : this->r_evse_manager) {
@@ -234,7 +234,8 @@ void API::init() {
         std::thread([this, var_connectors, connectors]() {
             auto next_tick = std::chrono::steady_clock::now();
             while (this->running) {
-                this->mqtt.publish(var_connectors, connectors.dump());
+                json connectors_array = connectors;
+                this->mqtt.publish(var_connectors, connectors_array.dump());
 
                 next_tick += NOTIFICATION_PERIOD;
                 std::this_thread::sleep_until(next_tick);
