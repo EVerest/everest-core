@@ -38,31 +38,51 @@ public:
 
     // Internal config options
     std::string getChargePointId();
+    KeyValue getChargePointIdKeyValue();
     std::string getCentralSystemURI();
+    KeyValue getCentralSystemURIKeyValue();
     std::string getChargeBoxSerialNumber();
+    KeyValue getChargeBoxSerialNumberKeyValue();
     CiString<20> getChargePointModel();
+    KeyValue getChargePointModelKeyValue();
     boost::optional<CiString<25>> getChargePointSerialNumber();
+    boost::optional<KeyValue> getChargePointSerialNumberKeyValue();
     CiString<20> getChargePointVendor();
+    KeyValue getChargePointVendorKeyValue();
     CiString<50> getFirmwareVersion();
+    KeyValue getFirmwareVersionKeyValue();
     boost::optional<CiString<20>> getICCID();
+    boost::optional<KeyValue> getICCIDKeyValue();
     boost::optional<CiString<20>> getIMSI();
+    boost::optional<KeyValue> getIMSIKeyValue();
     boost::optional<CiString<25>> getMeterSerialNumber();
+    boost::optional<KeyValue> getMeterSerialNumberKeyValue();
     boost::optional<CiString<25>> getMeterType();
+    boost::optional<KeyValue> getMeterTypeKeyValue();
     int32_t getWebsocketReconnectInterval();
+    KeyValue getWebsocketReconnectIntervalKeyValue();
     bool getAuthorizeConnectorZeroOnConnectorOne();
+    KeyValue getAuthorizeConnectorZeroOnConnectorOneKeyValue();
     bool getLogMessages();
+    KeyValue getLogMessagesKeyValue();
     std::vector<std::string> getLogMessagesFormat();
+    KeyValue getLogMessagesFormatKeyValue();
     std::vector<ChargingProfilePurposeType> getSupportedChargingProfilePurposeTypes();
+    KeyValue getSupportedChargingProfilePurposeTypesKeyValue();
     int32_t getMaxCompositeScheduleDuration();
-
+    KeyValue getMaxCompositeScheduleDurationKeyValue();
     std::string getSupportedCiphers12();
+    KeyValue getSupportedCiphers12KeyValue();
     std::string getSupportedCiphers13();
+    KeyValue getSupportedCiphers13KeyValue();
     bool getUseSslDefaultVerifyPaths();
+    KeyValue getUseSslDefaultVerifyPathsKeyValue();
 
     std::set<MessageType> getSupportedMessageTypesSending();
     std::set<MessageType> getSupportedMessageTypesReceiving();
 
     std::string getWebsocketPingPayload();
+    KeyValue getWebsocketPingPayloadKeyValue();
 
     // Core Profile - optional
     boost::optional<bool> getAllowOfflineTxForUnknownId();

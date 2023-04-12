@@ -26,20 +26,20 @@ ChargePointConfiguration::ChargePointConfiguration(const json& config, const std
 
     // validate config entries
     Schemas schemas = Schemas(boost::filesystem::path(ocpp_main_path) / "profile_schemas");
-    
+
     try {
         auto patch = schemas.get_validator()->validate(config);
-    if (patch.is_null()) {
-        // no defaults substituted
-        EVLOG_debug << "Using a charge point configuration without default values.";
-        this->config = config;
-    } else {
-        // extend config with default values
-        EVLOG_debug << "Adding the following default values to the charge point configuration: " << patch;
-        auto patched_config = config.patch(patch);
-        this->config = patched_config;
-    }
-    } catch (const std::exception &e) {
+        if (patch.is_null()) {
+            // no defaults substituted
+            EVLOG_debug << "Using a charge point configuration without default values.";
+            this->config = config;
+        } else {
+            // extend config with default values
+            EVLOG_debug << "Adding the following default values to the charge point configuration: " << patch;
+            auto patched_config = config.patch(patch);
+            this->config = patched_config;
+        }
+    } catch (const std::exception& e) {
         EVLOG_error << "Error while validating OCPP config against schemas: " << e.what();
         EVLOG_AND_THROW(e);
     }
@@ -64,6 +64,9 @@ ChargePointConfiguration::ChargePointConfiguration(const json& config, const std
             }
             // add Security behind the scenes as supported feature profile
             this->supported_feature_profiles.insert(conversions::string_to_supported_feature_profiles("Security"));
+
+            // add Internal behind the scenes as supported feature profile
+            this->supported_feature_profiles.insert(conversions::string_to_supported_feature_profiles("Internal"));
 
             if (this->config.contains("PnC")) {
                 // add PnC behind the scenes as supported feature profile
@@ -175,6 +178,17 @@ void ChargePointConfiguration::setInUserConfig(std::string profile, std::string 
     ofs.close();
 }
 
+std::string to_csl(const std::vector<std::string> &vec) {
+    std::string csl;
+    for (auto it = vec.begin(); it != vec.end(); ++it) {
+        if (it != vec.begin()) {
+            csl += ",";
+        }
+        csl += *it;
+    }
+    return csl;
+}
+
 // Internal config options
 std::string ChargePointConfiguration::getChargePointId() {
     return this->config["Internal"]["ChargePointId"];
@@ -274,6 +288,203 @@ std::string ChargePointConfiguration::getSupportedCiphers13() {
 
 bool ChargePointConfiguration::getUseSslDefaultVerifyPaths() {
     return this->config["Internal"]["UseSslDefaultVerifyPaths"];
+}
+
+KeyValue ChargePointConfiguration::getChargePointIdKeyValue() {
+    KeyValue kv;
+    kv.key = "ChargePointId";
+    kv.readonly = true;
+    kv.value.emplace(this->getChargePointId());
+    return kv;
+}
+
+KeyValue ChargePointConfiguration::getCentralSystemURIKeyValue() {
+    KeyValue kv;
+    kv.key = "CentralSystemURI";
+    kv.readonly = true;
+    kv.value.emplace(this->getCentralSystemURI());
+    return kv;
+}
+
+KeyValue ChargePointConfiguration::getChargeBoxSerialNumberKeyValue() {
+    KeyValue kv;
+    kv.key = "ChargeBoxSerialNumber";
+    kv.readonly = true;
+    kv.value.emplace(this->getChargeBoxSerialNumber());
+    return kv;
+}
+
+KeyValue ChargePointConfiguration::getChargePointModelKeyValue() {
+    KeyValue kv;
+    kv.key = "ChargePointModel";
+    kv.readonly = true;
+    kv.value.emplace(this->getChargePointModel());
+    return kv;
+}
+
+boost::optional<KeyValue> ChargePointConfiguration::getChargePointSerialNumberKeyValue() {
+    boost::optional<KeyValue> charge_point_serial_number_kv = boost::none;
+    auto charge_point_serial_number = this->getChargePointSerialNumber();
+    if (charge_point_serial_number.has_value()) {
+        KeyValue kv;
+        kv.key = "ChargePointSerialNumber";
+        kv.readonly = true;
+        kv.value.emplace(this->getChargePointSerialNumber().value());
+        charge_point_serial_number_kv.emplace(kv);
+    }
+    return charge_point_serial_number_kv;
+}
+
+KeyValue ChargePointConfiguration::getChargePointVendorKeyValue() {
+    KeyValue kv;
+    kv.key = "ChargePointVendor";
+    kv.readonly = true;
+    kv.value.emplace(this->getChargePointVendor());
+    return kv;
+}
+
+KeyValue ChargePointConfiguration::getFirmwareVersionKeyValue() {
+    KeyValue kv;
+    kv.key = "FirmwareVersion";
+    kv.readonly = true;
+    kv.value.emplace(this->getFirmwareVersion());
+    return kv;
+}
+
+boost::optional<KeyValue> ChargePointConfiguration::getICCIDKeyValue() {
+    boost::optional<KeyValue> kv_opt;
+    auto value = this->getICCID();
+    if (value.has_value()) {
+        KeyValue kv;
+        kv.key = "ICCID";
+        kv.readonly = true;
+        kv.value.emplace(value.value());
+        kv_opt.emplace(kv);
+    }
+    return kv_opt;
+}
+
+boost::optional<KeyValue> ChargePointConfiguration::getIMSIKeyValue() {
+    boost::optional<KeyValue> kv_opt;
+    auto value = this->getIMSI();
+    if (value.has_value()) {
+        KeyValue kv;
+        kv.key = "IMSI";
+        kv.readonly = true;
+        kv.value.emplace(value.value());
+        kv_opt.emplace(kv);
+    }
+    return kv_opt;
+}
+
+boost::optional<KeyValue> ChargePointConfiguration::getMeterSerialNumberKeyValue() {
+    boost::optional<KeyValue> kv_opt;
+    auto value = this->getMeterSerialNumber();
+    if (value.has_value()) {
+        KeyValue kv;
+        kv.key = "MeterSerialNumber";
+        kv.readonly = true;
+        kv.value.emplace(value.value());
+        kv_opt.emplace(kv);
+    }
+    return kv_opt;
+}
+
+boost::optional<KeyValue> ChargePointConfiguration::getMeterTypeKeyValue() {
+    boost::optional<KeyValue> kv_opt;
+    auto value = this->getMeterType();
+    if (value.has_value()) {
+        KeyValue kv;
+        kv.key = "MeterType";
+        kv.readonly = true;
+        kv.value.emplace(value.value());
+        kv_opt.emplace(kv);
+    }
+    return kv_opt;
+}
+
+KeyValue ChargePointConfiguration::getWebsocketReconnectIntervalKeyValue() {
+    KeyValue kv;
+    kv.key = "WebsocketReconnectInterval";
+    kv.readonly = true;
+    kv.value.emplace(std::to_string(this->getWebsocketReconnectInterval()));
+    return kv;
+}
+
+KeyValue ChargePointConfiguration::getAuthorizeConnectorZeroOnConnectorOneKeyValue() {
+    KeyValue kv;
+    kv.key = "AuthorizeConnectorZeroOnConnectorOne";
+    kv.readonly = true;
+    kv.value.emplace(ocpp::conversions::bool_to_string(this->getAuthorizeConnectorZeroOnConnectorOne()));
+    return kv;
+}
+
+KeyValue ChargePointConfiguration::getLogMessagesKeyValue() {
+    KeyValue kv;
+    kv.key = "LogMessages";
+    kv.readonly = true;
+    kv.value.emplace(ocpp::conversions::bool_to_string(this->getLogMessages()));
+    return kv;
+}
+
+KeyValue ChargePointConfiguration::getLogMessagesFormatKeyValue() {
+    KeyValue kv;
+    kv.key = "LogMessagesFormat";
+    kv.readonly = true;
+    kv.value.emplace(to_csl(this->getLogMessagesFormat()));
+    return kv;
+}
+
+KeyValue ChargePointConfiguration::getSupportedChargingProfilePurposeTypesKeyValue() {
+    KeyValue kv;
+    kv.key = "SupportedChargingProfilePurposeTypes";
+    kv.readonly = true;
+    std::vector<std::string> purpose_types;
+    for (const auto& entry : this->getSupportedChargingProfilePurposeTypes()) {
+        purpose_types.push_back(conversions::charging_profile_purpose_type_to_string(entry));
+    }
+    kv.value.emplace(to_csl(purpose_types));
+    return kv;
+}
+
+KeyValue ChargePointConfiguration::getMaxCompositeScheduleDurationKeyValue() {
+    KeyValue kv;
+    kv.key = "MaxCompositeScheduleDuration";
+    kv.readonly = true;
+    kv.value.emplace(std::to_string(this->getMaxCompositeScheduleDuration()));
+    return kv;
+}
+
+KeyValue ChargePointConfiguration::getSupportedCiphers12KeyValue() {
+    KeyValue kv;
+    kv.key = "SupportedCiphers12";
+    kv.readonly = true;
+    kv.value.emplace(this->getSupportedCiphers12());
+    return kv;
+}
+
+KeyValue ChargePointConfiguration::getSupportedCiphers13KeyValue() {
+    KeyValue kv;
+    kv.key = "SupportedCiphers13";
+    kv.readonly = true;
+    kv.value.emplace(this->getSupportedCiphers13());
+    return kv;
+}
+
+KeyValue ChargePointConfiguration::getUseSslDefaultVerifyPathsKeyValue() {
+    KeyValue kv;
+    kv.key = "UseSslDefaultVerifyPaths";
+    kv.readonly = true;
+    kv.value.emplace(ocpp::conversions::bool_to_string(this->getUseSslDefaultVerifyPaths()));
+    return kv;
+}
+
+KeyValue ChargePointConfiguration::getWebsocketPingPayloadKeyValue() {
+    KeyValue kv;
+    kv.key = "WebsocketPingPayload";
+    kv.readonly = true;
+    kv.value.emplace(this->getWebsocketPingPayload());
+    return kv;
 }
 
 std::vector<MeasurandWithPhase> ChargePointConfiguration::csv_to_measurand_with_phase_vector(std::string csv) {
@@ -1579,7 +1790,6 @@ boost::optional<KeyValue> ChargePointConfiguration::getSeccLeafSubjectCommonName
     return secc_leaf_subject_common_name_kv;
 }
 
-
 boost::optional<std::string> ChargePointConfiguration::getSeccLeafSubjectCountry() {
     boost::optional<std::string> secc_leaf_subject_country = boost::none;
     if (this->config["Internal"].contains("SeccLeafSubjectCountry")) {
@@ -1665,6 +1875,87 @@ boost::optional<KeyValue> ChargePointConfiguration::getConnectorEvseIdsKeyValue(
 }
 
 boost::optional<KeyValue> ChargePointConfiguration::get(CiString<50> key) {
+
+    // Internal Profile
+    if (key == "ChargePointId") {
+        return this->getChargePointIdKeyValue();
+    }
+    if (key == "CentralSystemURI") {
+        return this->getCentralSystemURIKeyValue();
+    }
+    if (key == "ChargeBoxSerialNumber") {
+        return this->getChargeBoxSerialNumberKeyValue();
+    }
+    if (key == "ChargePointModel") {
+        return this->getChargePointModelKeyValue();
+    }
+    if (key == "ChargePointSerialNumber") {
+        return this->getChargePointSerialNumberKeyValue();
+    }
+    if (key == "ChargePointVendor") {
+        return this->getChargePointVendorKeyValue();
+    }
+    if (key == "FirmwareVersion") {
+        return this->getFirmwareVersionKeyValue();
+    }
+    if (key == "ICCID") {
+        return this->getICCIDKeyValue();
+    }
+    if (key == "IMSI") {
+        return this->getIMSIKeyValue();
+    }
+    if (key == "MeterSerialNumber") {
+        return this->getMeterSerialNumberKeyValue();
+    }
+    if (key == "MeterType") {
+        return this->getMeterTypeKeyValue();
+    }
+    if (key == "SupportedCiphers12") {
+        return this->getSupportedCiphers12KeyValue();
+    }
+    if (key == "SupportedCiphers13") {
+        return this->getSupportedCiphers13KeyValue();
+    }
+    if (key == "WebsocketReconnectInterval") {
+        return this->getWebsocketReconnectIntervalKeyValue();
+    }
+    if (key == "AuthorizeConnectorZeroOnConnectorOne") {
+        return this->getAuthorizeConnectorZeroOnConnectorOneKeyValue();
+    }
+    if (key == "LogMessages") {
+        return this->getLogMessagesKeyValue();
+    }
+    if (key == "LogMessagesFormat") {
+        return this->getLogMessagesFormatKeyValue();
+    }
+    if (key == "SupportedChargingProfilePurposeTypes") {
+        return this->getSupportedChargingProfilePurposeTypesKeyValue();
+    }
+    if (key == "MaxCompositeScheduleDuration") {
+        return this->getMaxCompositeScheduleDurationKeyValue();
+    }
+    if (key == "WebsocketPingPayload") {
+        return this->getWebsocketPingPayloadKeyValue();
+    }
+    if (key == "UseSslDefaultVerifyPaths") {
+        return this->getUseSslDefaultVerifyPathsKeyValue();
+    }
+    if (key == "OcspRequestInterval") {
+        return this->getOcspRequestIntervalKeyValue();
+    }
+    if (key == "SeccLeafSubjectCommonName") {
+        return this->getSeccLeafSubjectCommonNameKeyValue();
+    }
+    if (key == "SeccLeafSubjectCountry") {
+        return this->getSeccLeafSubjectCountryKeyValue();
+    }
+    if (key == "SeccLeafSubjectOrganization") {
+        return this->getSeccLeafSubjectOrganizationKeyValue();
+    }
+    if (key == "ConnectorEvseIds") {
+        return this->getConnectorEvseIdsKeyValue();
+    }
+
     // Core Profile
     if (key == "AllowOfflineTxForUnknownId") {
         return this->getAllowOfflineTxForUnknownIdKeyValue();
@@ -1735,9 +2026,6 @@ boost::optional<KeyValue> ChargePointConfiguration::get(CiString<50> key) {
     }
     if (key == "NumberOfConnectors") {
         return this->getNumberOfConnectorsKeyValue();
-    }
-    if (key == "OcspRequestInterval") {
-        return this->getOcspRequestIntervalKeyValue();
     }
     if (key == "ReserveConnectorZeroSupported") {
         return this->getReserveConnectorZeroSupportedKeyValue();
@@ -2166,6 +2454,36 @@ ConfigurationStatus ChargePointConfiguration::set(CiString<50> key, CiString<500
             } else {
                 return ConfigurationStatus::Rejected;
             }
+        } else {
+            return ConfigurationStatus::NotSupported;
+        }
+    }
+
+    // Hubject PnC Extension keys
+    if (key == "SeccLeafSubjectCommonName") {
+        if (this->getSeccLeafSubjectCommonName().has_value()) {
+            this->setSeccLeafSubjectCommonName(value.get());
+        } else {
+            return ConfigurationStatus::NotSupported;
+        }
+    }
+    if (key == "SeccLeafSubjectCountry") {
+        if (this->getSeccLeafSubjectCountry().has_value()) {
+            this->setSeccLeafSubjectCountry(value.get());
+        } else {
+            return ConfigurationStatus::NotSupported;
+        }
+    }
+    if (key == "SeccLeafSubjectOrganization") {
+        if (this->getSeccLeafSubjectOrganization().has_value()) {
+            this->setSeccLeafSubjectOrganization(value.get());
+        } else {
+            return ConfigurationStatus::NotSupported;
+        }
+    }
+    if (key == "ConnectorEvseIds") {
+        if (this->getConnectorEvseIds().has_value()) {
+            this->setConnectorEvseIds(value.get());
         } else {
             return ConfigurationStatus::NotSupported;
         }

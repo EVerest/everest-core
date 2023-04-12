@@ -117,6 +117,7 @@ std::ostream& operator<<(std::ostream& os, const MessageType& message_type);
 
 /// \brief Contains the supported OCPP 1.6 feature profiles
 enum SupportedFeatureProfiles {
+    Internal,
     Core,
     FirmwareManagement,
     LocalAuthListManagement,

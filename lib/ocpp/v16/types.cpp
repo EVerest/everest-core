@@ -431,6 +431,8 @@ namespace conversions {
 /// \returns a string representation of the SupportedFeatureProfiles
 std::string supported_feature_profiles_to_string(SupportedFeatureProfiles e) {
     switch (e) {
+    case SupportedFeatureProfiles::Internal:
+        return "Internal";
     case SupportedFeatureProfiles::Core:
         return "Core";
     case SupportedFeatureProfiles::FirmwareManagement:
@@ -455,6 +457,9 @@ std::string supported_feature_profiles_to_string(SupportedFeatureProfiles e) {
 /// \brief Converts the given std::string \p s to SupportedFeatureProfiles
 /// \returns a SupportedFeatureProfiles from a string representation
 SupportedFeatureProfiles string_to_supported_feature_profiles(const std::string& s) {
+    if (s == "Internal") {
+        return SupportedFeatureProfiles::Internal;
+    }
     if (s == "Core") {
         return SupportedFeatureProfiles::Core;
     }

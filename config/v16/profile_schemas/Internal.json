@@ -179,8 +179,7 @@
         "SeccLeafSubjectCountry": {
             "$comment": "County of the SECC (EVSE) leaf certificate. Indicates in which country the CPO operates.",
             "type": "string",
-            "readOnly": false,
-            "default": "DE"
+            "readOnly": false
         },
         "SeccLeafSubjectOrganization": {
             "$comment": "Organization of the SECC (EVSE) leaf certificate. Indicates which CPO operates this EVSE. Example: Hubject GmbH",
