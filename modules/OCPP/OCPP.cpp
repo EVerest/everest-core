@@ -433,9 +433,11 @@ void OCPP::init() {
             if (event == "Enabled") {
                 EVLOG_debug << "Connector#" << connector << ": "
                             << "Received Enabled";
+                this->charge_point->on_enabled(connector);
             } else if (event == "Disabled") {
                 EVLOG_debug << "Connector#" << connector << ": "
                             << "Received Disabled";
+                this->charge_point->on_disabled(connector);
             } else if (event == "TransactionStarted") {
                 EVLOG_debug << "Connector#" << connector << ": "
                             << "Received TransactionStarted";
