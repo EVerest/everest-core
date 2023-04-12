@@ -64,6 +64,10 @@ struct EVSession {
         std::copy(mac.begin(), mac.end(), profile_ind.pev_mac);
         profile_ind.num_groups = slac::defs::AAG_LIST_LEN;
 
+        for (int i = 0; i < slac::defs::AAG_LIST_LEN; ++i) {
+            profile_ind.aag[i] = i;
+        }
+
         slac::messages::HomeplugMessage hp_message;
         hp_message.setup_ethernet_header(mac.data(), mac.data());
         hp_message.setup_payload(&profile_ind, sizeof(profile_ind),
@@ -211,6 +215,13 @@ int main(int argc, char* argv[]) {
         printf("Expected CM_ATTEN_CHAR_IND!\n");
         exit(EXIT_FAILURE);
     } else {
+        auto atten_char_ind = msg_in->get_payload<slac::messages::cm_atten_char_ind>();
+        for (int i = 0; i < slac::defs::AAG_LIST_LEN; ++i) {
+            if (atten_char_ind.attenuation_profile.aag[i] != i) {
+                printf("Averaging not correct in ATTEN_CHAR_IND\n");
+                exit(EXIT_FAILURE);
+            }
+        }
         msg_in.reset();
     }
 
