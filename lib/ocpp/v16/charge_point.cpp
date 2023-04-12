@@ -3213,5 +3213,13 @@ void ChargePoint::on_reservation_end(int32_t connector) {
     this->status->submit_event(connector, Event_BecomeAvailable());
 }
 
+void ChargePoint::on_enabled(int32_t connector) {
+    this->status->submit_event(connector, Event_BecomeAvailable());
+}
+
+void ChargePoint::on_disabled(int32_t connector) {
+    this->status->submit_event(connector, Event_ChangeAvailabilityToUnavailable());
+}
+
 } // namespace v16
 } // namespace ocpp

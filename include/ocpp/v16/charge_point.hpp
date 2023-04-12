@@ -402,6 +402,12 @@ public:
     /// \brief called when a reservation ends at the given \p connector
     void on_reservation_end(int32_t connector);
 
+    /// \brief Notifies chargepoint that the \p connector is enabled 
+    void on_enabled(int32_t connector);
+
+    /// \brief Notifies chargepoint that the \p connector is disabled
+    void on_disabled(int32_t connector);
+
     /// registers a \p callback function that can be used to receive a arbitrary data transfer for the given \p
     /// vendorId and \p messageId
     void register_data_transfer_callback(
