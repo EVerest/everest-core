@@ -5,6 +5,8 @@
 
 namespace module {
 
+static const auto NOTIFICATION_PERIOD = std::chrono::seconds(1);
+
 SessionInfo::SessionInfo() : state("Unknown"), start_energy_wh(0), end_energy_wh(0), latest_total_w(0) {
     this->start_time_point = date::utc_clock::now();
     this->end_time_point = this->start_time_point;
@@ -172,7 +174,7 @@ void API::init() {
                     this->mqtt.publish(var_session_info, *session_info);
                     this->mqtt.publish(var_hw_caps, hw_caps.dump());
 
-                    next_tick += std::chrono::seconds(1);
+                    next_tick += NOTIFICATION_PERIOD;
                     std::this_thread::sleep_until(next_tick);
                 }
             }));
@@ -234,7 +236,7 @@ void API::init() {
             while (this->running) {
                 this->mqtt.publish(var_connectors, connectors.dump());
 
-                next_tick += std::chrono::seconds(1);
+                next_tick += NOTIFICATION_PERIOD;
                 std::this_thread::sleep_until(next_tick);
             }
         }));
