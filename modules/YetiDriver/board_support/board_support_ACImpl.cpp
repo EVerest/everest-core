@@ -2,6 +2,8 @@
 // Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
 #include "board_support_ACImpl.hpp"
 
+using namespace std::chrono_literals;
+
 namespace module {
 namespace board_support {
 
@@ -97,10 +99,26 @@ void board_support_ACImpl::init() {
         caps.max_phase_count_export = l.hwcap_max_phase_count;
 
         caps.supports_changing_phases_during_charging = l.supports_changing_phases_during_charging;
+        caps_received = true;
     });
 } // namespace board_support
 
 void board_support_ACImpl::ready() {
+    // Wait for caps to be received at least once
+    int i;
+    for (i = 0; i < 50; i++) {
+        {
+            std::lock_guard<std::mutex> lock(capsMutex);
+            if (caps_received)
+                break;
+        }
+
+        std::this_thread::sleep_for(100ms);
+    }
+    if (i == 49) {
+        EVLOG_AND_THROW(
+            Everest::EverestTimeoutError("Did not receive hardware capabilities from Yeti hardware, exiting."));
+    }
 }
 
 void board_support_ACImpl::handle_setup(bool& three_phases, bool& has_ventilation, std::string& country_code,

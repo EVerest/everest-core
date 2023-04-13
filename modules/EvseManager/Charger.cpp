@@ -935,6 +935,8 @@ void Charger::setup(bool three_phases, bool has_ventilation, const std::string& 
     ac_enforce_hlc = _ac_enforce_hlc;
     ac_with_soc_timeout = _ac_with_soc_timeout;
     ac_with_soc_timer = 3600000;
+    if (charge_mode == ChargeMode::AC && ac_hlc_enabled)
+        EVLOG_info << "AC HLC mode enabled.";
 }
 
 Charger::EvseState Charger::getCurrentState() {
