@@ -27,6 +27,7 @@ struct Conf {
     bool supported_ISO15118_2;
     std::string highlevel_authentication_mode;
     std::string tls_security;
+    bool terminate_connection_on_failed_response;
 };
 
 class EvseV2G : public Everest::ModuleBase {

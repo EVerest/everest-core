@@ -35,6 +35,13 @@ config:
     - allow
     - force
     default: prohibit
+  terminate_connection_on_failed_response:
+    description: >-
+      Controls how to handle a failed response code of the EVSE. If true the
+      V2G connection is terminated immediately on a failed response code, otherwise
+      the EV is responsible for closing of the V2G communication session with SessionStop.
+    type: boolean
+    default: false
 provides:
   charger:
     interface: ISO15118_charger

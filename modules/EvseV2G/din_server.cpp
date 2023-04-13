@@ -104,17 +104,16 @@ static v2g_event din_validate_response_code(dinresponseCodeType* const din_respo
                              ? dinresponseCodeType_FAILED_UnknownSession
                              : *din_response_code;
 
-    if (*din_response_code >= dinresponseCodeType_FAILED) {
+    if ((conn->ctx->terminate_connection_on_failed_response == true) &&
+        (*din_response_code >= dinresponseCodeType_FAILED)) {
         nextEvent = V2G_EVENT_SEND_AND_TERMINATE; // [V2G-DC-665]
-        /* set return value to 1 if the EVSE cannot process this request message */
-        if (*din_response_code >= dinresponseCodeType_FAILED &&
-            *din_response_code <= dinresponseCodeType_FAILED_WrongEnergyTransferType) {
-            dlog(DLOG_LEVEL_ERROR, "Failed response code detected for message \"%s\", error: %s",
-                 v2g_msg_type[conn->ctx->current_v2g_msg], dinResponse[*din_response_code]);
-        } else {
-            dlog(DLOG_LEVEL_ERROR, "Failed response code detected for message \"%s\", Invalid response code: %d",
-                 v2g_msg_type[conn->ctx->current_v2g_msg], *din_response_code);
-        }
+    }
+
+    /* log failed response code message */
+    if (*din_response_code >= dinresponseCodeType_FAILED &&
+        *din_response_code <= dinresponseCodeType_FAILED_WrongEnergyTransferType) {
+        dlog(DLOG_LEVEL_ERROR, "Failed response code detected for message \"%s\", error: %s",
+             v2g_msg_type[conn->ctx->current_v2g_msg], dinResponse[*din_response_code]);
     }
 
     return nextEvent;

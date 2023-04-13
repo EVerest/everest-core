@@ -47,6 +47,8 @@ void ISO15118_chargerImpl::init() {
         v2g_ctx->tls_security = TLS_SECURITY_PROHIBIT;
         dlog(DLOG_LEVEL_DEBUG, "tls_security prohibit");
     }
+
+    v2g_ctx->terminate_connection_on_failed_response = mod->config.terminate_connection_on_failed_response;
 }
 
 void ISO15118_chargerImpl::ready() {
