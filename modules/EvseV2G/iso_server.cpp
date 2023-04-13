@@ -91,20 +91,16 @@ static v2g_event iso_validate_response_code(iso1responseCodeType* const v2g_resp
                              ? iso1responseCodeType_FAILED_UnknownSession
                              : *v2g_response_code;
 
-    /* set return value to 1 if the EVSE cannot process this request message */
-    if (*v2g_response_code >= iso1responseCodeType_FAILED) {
+    if ((conn->ctx->terminate_connection_on_failed_response == true) &&
+        (*v2g_response_code >= iso1responseCodeType_FAILED)) {
         next_event = V2G_EVENT_SEND_AND_TERMINATE; // [V2G2-539], [V2G2-034] Send response and terminate tcp-connection
+    }
 
-        /* check if the ISO response is within the range of the enum. If not, then the out of range response code will
-         * be printed */
-        if ((*v2g_response_code >= iso1responseCodeType_OK) &&
-            (*v2g_response_code <= iso1responseCodeType_FAILED_CertificateRevoked)) {
-            dlog(DLOG_LEVEL_ERROR, "Failed response code detected for message \"%s\", error: %s",
-                 v2g_msg_type[conn->ctx->current_v2g_msg], isoResponse[*v2g_response_code]);
-        } else {
-            dlog(DLOG_LEVEL_ERROR, "Failed response code detected for message \"%s\", Invalid response code: %d",
-                 v2g_msg_type[conn->ctx->current_v2g_msg], *v2g_response_code);
-        }
+    /* log failed response code message */
+    if ((*v2g_response_code >= iso1responseCodeType_FAILED) &&
+        (*v2g_response_code <= iso1responseCodeType_FAILED_CertificateRevoked)) {
+        dlog(DLOG_LEVEL_ERROR, "Failed response code detected for message \"%s\", error: %s",
+             v2g_msg_type[conn->ctx->current_v2g_msg], isoResponse[*v2g_response_code]);
     }
 
     return next_event;
@@ -251,7 +247,8 @@ static bool check_iso1_signature(const struct iso1SignatureType* iso1_signature,
     err = mbedtls_ecp_group_load(&ecp_group, MBEDTLS_ECP_DP_SECP256R1);
 
     if (err == 0) {
-        err = mbedtls_ecdsa_verify(&ecp_group, static_cast<const unsigned char*>(digest), 32, &public_key->Q, &mpi_r, &mpi_s);
+        err = mbedtls_ecdsa_verify(&ecp_group, static_cast<const unsigned char*>(digest), 32, &public_key->Q, &mpi_r,
+                                   &mpi_s);
     }
 
     mbedtls_ecp_group_free(&ecp_group);
@@ -280,10 +277,9 @@ static void populate_ac_evse_status(struct v2g_context* ctx, struct iso1AC_EVSES
 }
 
 /*!
- * \brief check_iso1_charging_profile_values This function checks if EV charging profile values are within permissible ranges
- * \param req is the PowerDeliveryReq \param res is the PowerDeliveryRes
- * \param conn holds the structure with the V2G msg pair
- * \param sa_schedule_tuple_idx is the index of SA schedule tuple
+ * \brief check_iso1_charging_profile_values This function checks if EV charging profile values are within permissible
+ * ranges \param req is the PowerDeliveryReq \param res is the PowerDeliveryRes \param conn holds the structure with the
+ * V2G msg pair \param sa_schedule_tuple_idx is the index of SA schedule tuple
  */
 static void check_iso1_charging_profile_values(iso1PowerDeliveryReqType* req, iso1PowerDeliveryResType* res,
                                                v2g_connection* conn, uint8_t sa_schedule_tuple_idx) {
@@ -292,9 +288,9 @@ static void check_iso1_charging_profile_values(iso1PowerDeliveryReqType* req, is
         const struct iso1PMaxScheduleType* evse_p_max_schedule =
             &conn->ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[sa_schedule_tuple_idx].PMaxSchedule;
 
-        uint32_t ev_time_sum = 0;   // Summed EV relative time interval
-        uint32_t evse_time_sum = 0; // Summed EVSE relative time interval
-        uint8_t evse_idx = 0;       // Actual PMaxScheduleEntry index
+        uint32_t ev_time_sum = 0;                     // Summed EV relative time interval
+        uint32_t evse_time_sum = 0;                   // Summed EVSE relative time interval
+        uint8_t evse_idx = 0;                         // Actual PMaxScheduleEntry index
         bool ev_time_is_within_profile_entry = false; /* Is true if the summed EV relative time interval
                                                          is within the actual EVSE time interval */
 
@@ -444,16 +440,17 @@ static size_t getEmaidFromContractCert(const mbedtls_x509_name* ASubject, char* 
 //=============================================
 
 /*!
- * \brief publish_iso_service_discovery_req This function publishes the iso_service_discovery_req message to the MQTT interface.
- * \param iso1ServiceDiscoveryReqType is the request message.
+ * \brief publish_iso_service_discovery_req This function publishes the iso_service_discovery_req message to the MQTT
+ * interface. \param iso1ServiceDiscoveryReqType is the request message.
  */
-static void publish_iso_service_discovery_req(struct iso1ServiceDiscoveryReqType const* const v2g_service_discovery_req) {
+static void
+publish_iso_service_discovery_req(struct iso1ServiceDiscoveryReqType const* const v2g_service_discovery_req) {
     // V2G values that can be published: ServiceCategory, ServiceScope
 }
 
 /*!
- * \brief publish_iso_service_detail_req This function publishes the iso_service_detail_req message to the MQTT interface.
- * \param v2g_service_detail_req is the request message.
+ * \brief publish_iso_service_detail_req This function publishes the iso_service_detail_req message to the MQTT
+ * interface. \param v2g_service_detail_req is the request message.
  */
 static void publish_iso_service_detail_req(struct iso1ServiceDetailReqType const* const v2g_service_detail_req) {
     // V2G values that can be published: ServiceID
@@ -470,17 +467,17 @@ static void publish_iso_payment_service_selection_req(
 }
 
 /*!
- * \brief publish_iso_authorization_req This function publishes the publish_iso_authorization_req message to the MQTT interface.
- * \param v2g_authorization_req is the request message.
+ * \brief publish_iso_authorization_req This function publishes the publish_iso_authorization_req message to the MQTT
+ * interface. \param v2g_authorization_req is the request message.
  */
 static void publish_iso_authorization_req(struct iso1AuthorizationReqType const* const v2g_authorization_req) {
     // V2G values that can be published: Id, Id_isUsed, GenChallenge, GenChallenge_isUsed
 }
 
 /*!
- * \brief publish_iso_charge_parameter_discovery_req This function publishes the charge_parameter_discovery_req message to the MQTT interface.
- * \param ctx is the V2G context.
- * \param v2g_charge_parameter_discovery_req is the request message.
+ * \brief publish_iso_charge_parameter_discovery_req This function publishes the charge_parameter_discovery_req message
+ * to the MQTT interface. \param ctx is the V2G context. \param v2g_charge_parameter_discovery_req is the request
+ * message.
  */
 static void publish_iso_charge_parameter_discovery_req(
     struct v2g_context* ctx,
@@ -555,8 +552,8 @@ static void publish_iso_charge_parameter_discovery_req(
 }
 
 /*!
- * \brief publish_iso_payment_details_req This function publishes the iso_payment_details_req message to the MQTT interface.
- * \param v2g_payment_details_req is the request message.
+ * \brief publish_iso_payment_details_req This function publishes the iso_payment_details_req message to the MQTT
+ * interface. \param v2g_payment_details_req is the request message.
  */
 static bool publish_iso_payment_details_req(struct iso1PaymentDetailsReqType const* const v2g_payment_details_req) {
 
@@ -566,9 +563,9 @@ static bool publish_iso_payment_details_req(struct iso1PaymentDetailsReqType con
 
     /* Parse contract leaf certificate */
     if (MAX_CERT_SIZE >= v2g_payment_details_req->ContractSignatureCertChain.Certificate.bytesLen) {
-        mbedtls_base64_encode(NULL, 0, &olen,
-                              v2g_payment_details_req->ContractSignatureCertChain.Certificate.bytes,
-                              static_cast<size_t>(v2g_payment_details_req->ContractSignatureCertChain.Certificate.bytesLen));
+        mbedtls_base64_encode(
+            NULL, 0, &olen, v2g_payment_details_req->ContractSignatureCertChain.Certificate.bytes,
+            static_cast<size_t>(v2g_payment_details_req->ContractSignatureCertChain.Certificate.bytesLen));
 
         base64Buffer = static_cast<unsigned char*>(malloc(olen));
 
@@ -608,8 +605,7 @@ static bool publish_iso_payment_details_req(struct iso1PaymentDetailsReqType con
             }
 
             if ((NULL == base64Buffer) ||
-                (0 != mbedtls_base64_encode(base64Buffer, olen, &olen,
-                                            subCertTmp->Certificate.array[idx].bytes,
+                (0 != mbedtls_base64_encode(base64Buffer, olen, &olen, subCertTmp->Certificate.array[idx].bytes,
                                             static_cast<size_t>(subCertTmp->Certificate.array[idx].bytesLen)))) {
                 rv = false;
                 dlog(DLOG_LEVEL_ERROR, "Unable to encode contract sub certificate #%d", idx);
@@ -666,9 +662,8 @@ static void publish_iso_power_delivery_req(struct v2g_context* ctx,
 }
 
 /*!
- * \brief publish_iso_current_demand_req This function publishes the iso_current_demand_req message to the MQTT interface.
- * \param ctx is the V2G context
- * \param v2g_current_demand_req is the request message.
+ * \brief publish_iso_current_demand_req This function publishes the iso_current_demand_req message to the MQTT
+ * interface. \param ctx is the V2G context \param v2g_current_demand_req is the request message.
  */
 static void publish_iso_current_demand_req(struct v2g_context* ctx,
                                            struct iso1CurrentDemandReqType const* const v2g_current_demand_req) {
@@ -712,17 +707,16 @@ static void publish_iso_current_demand_req(struct v2g_context* ctx,
         v2g_dc_ev_remaining_time_to_bulk_soc, v2g_current_demand_req->RemainingTimeToBulkSoC_isUsed);
 }
 /*!
- * \brief publish_iso_metering_receipt_req This function publishes the iso_metering_receipt_req message to the MQTT interface.
- * \param v2g_metering_receipt_req is the request message.
+ * \brief publish_iso_metering_receipt_req This function publishes the iso_metering_receipt_req message to the MQTT
+ * interface. \param v2g_metering_receipt_req is the request message.
  */
 static void publish_iso_metering_receipt_req(struct iso1MeteringReceiptReqType const* const v2g_metering_receipt_req) {
     // TODO: publish PnC only
 }
 
 /*!
- * \brief publish_iso_welding_detection_req This function publishes the iso_welding_detection_req message to the MQTT interface.
- * \param p_charger to publish MQTT topics.
- * \param v2g_welding_detection_req is the request message.
+ * \brief publish_iso_welding_detection_req This function publishes the iso_welding_detection_req message to the MQTT
+ * interface. \param p_charger to publish MQTT topics. \param v2g_welding_detection_req is the request message.
  */
 static void
 publish_iso_welding_detection_req(struct v2g_context* ctx,
@@ -732,10 +726,9 @@ publish_iso_welding_detection_req(struct v2g_context* ctx,
 }
 
 /*!
- * \brief publish_iso_certificate_installation_exi_req This function publishes the iso_certificate_update_req message to the MQTT interface.
- * \param AExiBuffer is the exi msg where the V2G EXI msg is stored.
- * \param AExiBufferSize is the size of the V2G msg.
- * \return Returns \c true if it was successful, otherwise \c false.
+ * \brief publish_iso_certificate_installation_exi_req This function publishes the iso_certificate_update_req message to
+ * the MQTT interface. \param AExiBuffer is the exi msg where the V2G EXI msg is stored. \param AExiBufferSize is the
+ * size of the V2G msg. \return Returns \c true if it was successful, otherwise \c false.
  */
 static bool publish_iso_certificate_installation_exi_req(uint8_t* AExiBuffer, size_t AExiBufferSize) {
     // PnC only
@@ -755,7 +748,8 @@ static bool publish_iso_certificate_installation_exi_req(uint8_t* AExiBuffer, si
     base64Buffer = static_cast<unsigned char*>(malloc(olen));
 
     if ((NULL == base64Buffer) ||
-        (mbedtls_base64_encode(base64Buffer, olen, &olen, static_cast<unsigned char*>(AExiBuffer), AExiBufferSize) != 0)) {
+        (mbedtls_base64_encode(base64Buffer, olen, &olen, static_cast<unsigned char*>(AExiBuffer), AExiBufferSize) !=
+         0)) {
         rv = false;
         dlog(DLOG_LEVEL_ERROR, "Unable to encode contract leaf certificate");
         goto exit;
@@ -775,9 +769,8 @@ exit:
 //=============================================
 
 /*!
- * \brief handle_iso_session_setup This function handles the iso_session_setup msg pair. It analyzes the request msg and fills the response msg.
- * \param conn holds the structure with the V2G msg pair.
- * \return Returns the next V2G-event.
+ * \brief handle_iso_session_setup This function handles the iso_session_setup msg pair. It analyzes the request msg and
+ * fills the response msg. \param conn holds the structure with the V2G msg pair. \return Returns the next V2G-event.
  */
 static enum v2g_event handle_iso_session_setup(struct v2g_connection* conn) {
     struct iso1SessionSetupReqType* req = &conn->exi_in.iso1EXIDocument->V2G_Message.Body.SessionSetupReq;
@@ -1070,7 +1063,8 @@ static enum v2g_event handle_iso_payment_service_selection(struct v2g_connection
                                                                             // only the ac case... )
     } else {
         dlog(DLOG_LEVEL_INFO, "SelectedPaymentOption: ExternalPayment");
-        conn->ctx->evse_v2g_data.evse_processing[PHASE_AUTH] = (uint8_t)iso1EVSEProcessingType_Ongoing_WaitingForCustomerInteraction; // [V2G2-854]
+        conn->ctx->evse_v2g_data.evse_processing[PHASE_AUTH] =
+            (uint8_t)iso1EVSEProcessingType_Ongoing_WaitingForCustomerInteraction; // [V2G2-854]
         /* Set next expected req msg */
         conn->ctx->state = (int)
             iso_dc_state_id::WAIT_FOR_AUTHORIZATION; // [V2G-551] (iso specification describes only the ac case... )
@@ -1203,7 +1197,7 @@ static enum v2g_event handle_iso_authorization(struct v2g_connection* conn) {
     res->ResponseCode = iso1responseCodeType_OK;
 
     if (conn->ctx->last_v2g_msg != V2G_AUTHORIZATION_MSG &&
-       (conn->ctx->session.iso_selected_payment_option == iso1paymentOptionType_Contract)) { /* [V2G2-684] */
+        (conn->ctx->session.iso_selected_payment_option == iso1paymentOptionType_Contract)) { /* [V2G2-684] */
         if (req->GenChallenge_isUsed == 0 ||
             req->GenChallenge.bytesLen != 16 // [V2G2-697]  The GenChallenge field shall be exactly 128 bits long.
             || memcmp(req->GenChallenge.bytes, conn->ctx->session.gen_challenge, 16) != 0) {
@@ -1617,9 +1611,8 @@ static enum v2g_event handle_iso_charging_status(struct v2g_connection* conn) {
     res->ResponseCode = iso1responseCodeType_OK;
 
     res->ReceiptRequired = conn->ctx->evse_v2g_data.receipt_required;
-    res->ReceiptRequired_isUsed = (conn->ctx->session.iso_selected_payment_option == iso1paymentOptionType_Contract)
-                                      ? 1U
-                                      : 0U;
+    res->ReceiptRequired_isUsed =
+        (conn->ctx->session.iso_selected_payment_option == iso1paymentOptionType_Contract) ? 1U : 0U;
 
     if (conn->ctx->meter_info.meter_info_is_used == true) {
         res->MeterInfo.MeterID.charactersLen = conn->ctx->meter_info.meter_id.bytesLen;
@@ -1742,7 +1735,7 @@ static enum v2g_event handle_iso_certificate_installation(struct v2g_connection*
     int rv = 0;
     /* At first, publish the received ev request message to the customer mqtt interface */
     if (publish_iso_certificate_installation_exi_req(conn->buffer + V2GTP_HEADER_LENGTH,
-                                                              conn->stream.size - V2GTP_HEADER_LENGTH) == false) {
+                                                     conn->stream.size - V2GTP_HEADER_LENGTH) == false) {
         dlog(DLOG_LEVEL_ERROR, "Failed to send CertificateInstallationExiReq");
         goto exit;
     }
@@ -1765,9 +1758,10 @@ static enum v2g_event handle_iso_certificate_installation(struct v2g_connection*
         pthread_mutex_unlock(&conn->ctx->mqtt_lock);
     }
     if (conn->ctx->evse_v2g_data.cert_install_res_b64_buffer != NULL) {
-        if ((rv = mbedtls_base64_decode(conn->buffer + V2GTP_HEADER_LENGTH, DEFAULT_BUFFER_SIZE, &conn->buffer_pos,
-                                       reinterpret_cast<unsigned char*>(conn->ctx->evse_v2g_data.cert_install_res_b64_buffer),
-                                       std::string(conn->ctx->evse_v2g_data.cert_install_res_b64_buffer).size())) != 0) {
+        if ((rv = mbedtls_base64_decode(
+                 conn->buffer + V2GTP_HEADER_LENGTH, DEFAULT_BUFFER_SIZE, &conn->buffer_pos,
+                 reinterpret_cast<unsigned char*>(conn->ctx->evse_v2g_data.cert_install_res_b64_buffer),
+                 std::string(conn->ctx->evse_v2g_data.cert_install_res_b64_buffer).size())) != 0) {
             dlog(DLOG_LEVEL_ERROR, "Failed to decode base64 stream (-0x%04x)", rv);
             goto exit;
         }

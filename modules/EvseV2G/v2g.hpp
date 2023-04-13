@@ -232,6 +232,7 @@ struct v2g_context {
                       close tcp connection) */
     bool is_connection_terminated; /* Is set to true if the connection is terminated (CP State A/F, shutdown immediately
                                       without response message) */
+    std::atomic<bool> terminate_connection_on_failed_response;
     std::atomic<bool> contactor_is_closed; /* Actual contactor state */
 
     struct {

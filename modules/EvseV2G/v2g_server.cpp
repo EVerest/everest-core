@@ -318,7 +318,10 @@ static enum v2g_event v2g_handle_apphandshake(struct v2g_connection* conn) {
         (V2G_EVENT_SEND_AND_TERMINATE == next_event)) {
         conn->handshake_resp.supportedAppProtocolRes.ResponseCode = appHandresponseCodeType_Failed_NoNegotiation;
         dlog(DLOG_LEVEL_ERROR, "Abort charging session");
-        next_event = V2G_EVENT_SEND_AND_TERMINATE; // send response and terminate the tcp-connection
+
+        if (conn->ctx->terminate_connection_on_failed_response == true) {
+            next_event = V2G_EVENT_SEND_AND_TERMINATE; // send response and terminate the TCP-connection
+        }
     }
 
     /* encode response at the right buffer location */
