@@ -765,26 +765,31 @@ void Setup::disable_ap() {
     }
 }
 
+static void add_addr_infos_to_device(const json& addr_infos, NetworkDeviceInfo& device) {
+    for (const auto& addr_info : addr_infos) {
+        if (addr_info.at("family") == "inet") {
+            device.ipv4.push_back(addr_info.at("local"));
+        } else if (addr_info.at("family") == "inet6") {
+            device.ipv6.push_back(addr_info.at("local"));
+        }
+    }
+}
+
 void Setup::populate_ip_addresses(std::vector<NetworkDeviceInfo>& device_info) {
     auto ip_output = this->run_application("ip", {"--json", "address", "show"});
     if (ip_output.exit_code != 0) {
         return;
     }
-    auto ip_json = json::parse(ip_output.output);
-    for (auto ip_object : ip_json) {
-        for (auto& device : device_info) {
-            if (ip_object.at("ifname") != device.interface) {
-                continue;
-            }
-            for (auto addr_info : ip_object.at("addr_info")) {
-                if (addr_info.at("family") == "inet") {
-                    device.ipv4.push_back(addr_info.at("local"));
-                } else if (addr_info.at("family") == "inet6") {
-                    device.ipv6.push_back(addr_info.at("local"));
-                }
-            }
-            break;
+    const auto ip_json = json::parse(ip_output.output);
+    for (const auto& ip_object : ip_json) {
+        const std::string ifname = ip_object.at("ifname");
+        auto device = std::find_if(device_info.begin(), device_info.end(),
+                                   [&ifname](NetworkDeviceInfo& device) { return device.interface == ifname; });
+        if (device == device_info.end()) {
+            continue;
         }
+
+        add_addr_infos_to_device(ip_object.at("addr_info"), *device);
     }
 }
 
