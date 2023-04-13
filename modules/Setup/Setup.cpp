@@ -66,7 +66,8 @@ void to_json(json& j, const ApplicationInfo& k) {
     j = json::object({{"initialized", k.initialized},
                       {"mode", k.mode},
                       {"default_language", k.default_language},
-                      {"current_language", k.current_language}});
+                      {"current_language", k.current_language},
+                      {"release_metadata_file", k.release_metadata_file}});
 }
 
 void Setup::init() {
@@ -165,6 +166,7 @@ void Setup::ready() {
         this->mqtt.subscribe(remove_network_cmd, [this](const std::string& data) {
             InterfaceAndNetworkId wifi = json::parse(data);
             this->remove_network(wifi.interface, wifi.network_id);
+            this->save_config(wifi.interface);
             this->publish_configured_networks();
         });
 
@@ -190,6 +192,12 @@ void Setup::ready() {
 
         std::string check_online_status_cmd = this->cmd_base + "check_online_status";
         this->mqtt.subscribe(check_online_status_cmd, [this](const std::string& data) { this->check_online_status(); });
+
+        std::string enable_ap_cmd = this->cmd_base + "enable_ap";
+        this->mqtt.subscribe(enable_ap_cmd, [this](const std::string& data) { enable_ap(); });
+
+        std::string disable_ap_cmd = this->cmd_base + "disable_ap";
+        this->mqtt.subscribe(disable_ap_cmd, [this](const std::string& data) { disable_ap(); });
     }
 }
 
@@ -212,6 +220,7 @@ void Setup::publish_application_info() {
     application_info.mode = this->get_mode();
     application_info.default_language = this->get_default_language();
     application_info.current_language = this->get_current_language();
+    application_info.release_metadata_file = this->info.everest_prefix + this->config.release_metadata_file;
 
     std::string application_info_var = this->var_base + "application_info";
 
@@ -688,7 +697,7 @@ bool Setup::save_config(std::string interface) {
 
 bool Setup::reboot() {
     bool success = true;
-    auto reboot_output = this->run_application("sudo", {"reboot"});
+    auto reboot_output = this->run_application("systemctl", {"reboot"});
     if (reboot_output.exit_code != 0) {
         success = false;
     }
@@ -708,10 +717,61 @@ void Setup::check_online_status() {
     std::string online_status_var = this->var_base + "online_status";
 
     if (this->is_online()) {
-
         this->mqtt.publish(online_status_var, "online");
     } else {
         this->mqtt.publish(online_status_var, "offline");
+    }
+}
+
+void Setup::enable_ap() {
+    auto wpa_cli_output = this->run_application("wpa_cli", {"-i", this->config.ap_interface, "disconnect"});
+    if (wpa_cli_output.exit_code != 0) {
+        EVLOG_error << "Could not disconnect from wireless LAN";
+    }
+    auto start_hostapd_output = this->run_application("systemctl", {"start", "hostapd"});
+    if (start_hostapd_output.exit_code != 0) {
+        EVLOG_error << "Could not start hostapd";
+    }
+    auto start_dnsmasq_output = this->run_application("systemctl", {"start", "dnsmasq"});
+    if (start_dnsmasq_output.exit_code != 0) {
+        EVLOG_error << "Could not start dnsmasq";
+    }
+    auto add_static_ip_output =
+        this->run_application("ip", {"addr", "add", this->config.ap_ipv4, "dev", this->config.ap_interface});
+    if (add_static_ip_output.exit_code != 0) {
+        EVLOG_error << "Could not add static ip to interface " << this->config.ap_interface;
+    }
+}
+
+void Setup::disable_ap() {
+    auto del_static_ip_output =
+        this->run_application("ip", {"addr", "del", this->config.ap_ipv4, "dev", this->config.ap_interface});
+    if (del_static_ip_output.exit_code != 0) {
+        EVLOG_error << "Could not del static ip " << this->config.ap_ipv4 << " from interface "
+                    << this->config.ap_interface;
+    }
+    auto stop_dnsmasq_output = this->run_application("systemctl", {"stop", "dnsmasq"});
+    if (stop_dnsmasq_output.exit_code != 0) {
+        EVLOG_error << "Could not stop dnsmasq";
+    }
+    auto stop_hostapd_output = this->run_application("systemctl", {"stop", "hostapd"});
+    if (stop_hostapd_output.exit_code != 0) {
+        EVLOG_error << "Could not stop hostapd";
+    }
+
+    auto wpa_cli_output = this->run_application("wpa_cli", {"-i", this->config.ap_interface, "reconnect"});
+    if (wpa_cli_output.exit_code != 0) {
+        EVLOG_error << "Could not reconnect to wireless LAN";
+    }
+}
+
+static void add_addr_infos_to_device(const json& addr_infos, NetworkDeviceInfo& device) {
+    for (const auto& addr_info : addr_infos) {
+        if (addr_info.at("family") == "inet") {
+            device.ipv4.push_back(addr_info.at("local"));
+        } else if (addr_info.at("family") == "inet6") {
+            device.ipv6.push_back(addr_info.at("local"));
+        }
     }
 }
 
@@ -720,19 +780,16 @@ void Setup::populate_ip_addresses(std::vector<NetworkDeviceInfo>& device_info) {
     if (ip_output.exit_code != 0) {
         return;
     }
-    auto ip_json = json::parse(ip_output.output);
-    for (auto ip_object : ip_json) {
-        for (auto& device : device_info) {
-            if (ip_object.at("ifname") == device.interface) {
-                for (auto addr_info : ip_object.at("addr_info")) {
-                    if (addr_info.at("family") == "inet") {
-                        device.ipv4 = addr_info.at("local");
-                    }
-                    // FIXME: add ipv6 info
-                }
-                break;
-            }
+    const auto ip_json = json::parse(ip_output.output);
+    for (const auto& ip_object : ip_json) {
+        const std::string ifname = ip_object.at("ifname");
+        auto device = std::find_if(device_info.begin(), device_info.end(),
+                                   [&ifname](NetworkDeviceInfo& device) { return device.interface == ifname; });
+        if (device == device_info.end()) {
+            continue;
         }
+
+        add_addr_infos_to_device(ip_object.at("addr_info"), *device);
     }
 }
 

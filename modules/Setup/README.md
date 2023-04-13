@@ -51,8 +51,8 @@ with the following payload format:
     {
         "blocked": false,
         "interface": "wlan0",
-        "ipv4": "192.0.2.23",
-        "ipv6": "",
+        "ipv4": ["192.0.2.23"],
+        "ipv6": ["2001:db8:0:0:0:0:0:23"],
         "rfkill_id": "0",
         "wireless": true
     },
@@ -60,7 +60,7 @@ with the following payload format:
         "blocked": false,
         "interface": "eth0",
         "ipv4": "192.0.2.42",
-        "ipv6": "",
+        "ipv6": ["2001:db8:0:0:0:0:0:42"],
         "rfkill_id": "",
         "wireless": false
     }
@@ -170,6 +170,12 @@ To remove a wifi network a payload with the following format must be published t
 
 ### everest_api/setup/cmd/remove_all_networks
 If any arbitrary payload is published to this topic all wifi networks will be removed.
+
+### everest_api/setup/cmd/enable_ap
+If any arbitrary payload is published to this topic a wireless access point will be enabled on the interface configured in the module config.
+
+### everest_api/setup/cmd/disable_ap
+If any arbitrary payload is published to this topic the wireless access point will be disabled.
 
 ### everest_api/setup/cmd/check_online_status
 If any arbitrary payload is published to this topic a ping will be sent to the host configured in the configuration key "online_check_host". Depending on the success of this ping a status of "online" or "offline" will be reported on the following topic:
