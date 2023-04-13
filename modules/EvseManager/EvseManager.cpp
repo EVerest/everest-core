@@ -458,6 +458,11 @@ void EvseManager::ready() {
 
     p_evse->publish_hw_capabilities(hw_capabilities);
 
+    if (config.charge_mode == "AC") {
+        EVLOG_info << fmt::format("Max AC hardware capabilities: {}A/{}ph", hw_capabilities.max_current_A_import,
+                                  hw_capabilities.max_phase_count_import);
+    }
+
     r_bsp->subscribe_event([this](const types::board_support::Event event) {
         // Forward events from BSP to SLAC module before we process the events in the charger
         if (slac_enabled) {
