@@ -36,7 +36,7 @@ void SessionLog::enable() {
     enabled = true;
 }
 
-boost::optional<std::string> SessionLog::startSession(const std::string& session_id) {
+boost::optional<std::string> SessionLog::startSession(const std::string& suffix_string) {
     if (enabled) {
         if (session_active) {
             stopSession();
@@ -47,7 +47,7 @@ boost::optional<std::string> SessionLog::startSession(const std::string& session
             std::filesystem::create_directories(logpath_root);
 
         std::string ts = Everest::Date::to_rfc3339(date::utc_clock::now());
-        logpath = fmt::format("{}/{}-{}", logpath_root, ts, session_id);
+        logpath = fmt::format("{}/{}-{}", logpath_root, ts, suffix_string);
 
         // create sessionlog directory if it does not exist
         if (!std::filesystem::exists(logpath))
@@ -67,7 +67,7 @@ boost::optional<std::string> SessionLog::startSession(const std::string& session
             EVLOG_error << fmt::format("Cannot open {} of {} for writing", fn, fnhtml);
             session_active = false;
         }
-        logfile_html << fmt::format("<html><head><title>EVerest log session {}</title>\n", session_id);
+        logfile_html << fmt::format("<html><head><title>EVerest log session {}</title>\n", suffix_string);
         logfile_html << "<style>"
                         ".log {"
                         "  font-family: Arial, Helvetica, sans-serif;"

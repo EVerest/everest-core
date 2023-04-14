@@ -123,7 +123,8 @@ void evse_managerImpl::ready() {
 
             set_session_uuid();
 
-            session_started.logging_path = session_log.startSession(session_uuid);
+            session_started.logging_path = session_log.startSession(
+                mod->config.logfile_suffix == "session_uuid" ? session_uuid : mod->config.logfile_suffix);
 
             session_log.evse(
                 false, fmt::format("Session Started: {}", types::evse_manager::start_session_reason_to_string(reason)));
