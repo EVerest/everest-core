@@ -5,6 +5,8 @@
 #include "log.hpp"
 #include "v2g_ctx.hpp"
 
+using namespace chrono_literals;
+
 namespace module {
 namespace charger {
 
@@ -195,7 +197,35 @@ void ISO15118_chargerImpl::handle_set_RCD_Error(bool& RCD) {
 };
 
 void ISO15118_chargerImpl::handle_stop_charging(bool& stop_charging) {
-    v2g_ctx->stop_hlc = stop_charging;
+    // FIXME we need to use locks on v2g-ctx in all commands as they are running in different threads
+
+    if (stop_charging) {
+        // spawn new thread to not block command handler
+        std::thread([this, stop_charging] {
+            // try to gracefully shutdown charging session
+            v2g_ctx->evse_v2g_data.evse_notification = iso1EVSENotificationType_StopCharging;
+            memset(v2g_ctx->evse_v2g_data.evse_status_code, iso1DC_EVSEStatusCodeType_EVSE_Shutdown,
+                   sizeof(v2g_ctx->evse_v2g_data.evse_status_code));
+
+            int i;
+            bool timeout_reached = true;
+            // allow 10 seconds for graceful shutdown
+            for (i = 0; i < 10; i++) {
+                if (v2g_ctx->is_connection_terminated) {
+                    timeout_reached = false;
+                    break;
+                }
+                std::this_thread::sleep_for(1s);
+            }
+
+            // If it did not stop within timeout, stop session using FAILED reply
+            if (timeout_reached) {
+                v2g_ctx->stop_hlc = stop_charging;
+            }
+        }).detach();
+    } else {
+        v2g_ctx->stop_hlc = false;
+    }
 };
 
 void ISO15118_chargerImpl::handle_set_DC_EVSEPresentVoltageCurrent(
