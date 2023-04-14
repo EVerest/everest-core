@@ -113,10 +113,17 @@ void SessionLog::stopSession() {
         }
 
         // rename files to indicate they are finished now
-        if (std::filesystem::exists(fn))
+        try {
             std::filesystem::rename(fn, fn_complete);
-        if (std::filesystem::exists(fnhtml))
+        } catch (const std::filesystem::filesystem_error& fs_err) {
+            EVLOG_error << "Could not rename " << fn << ": " << fs_err.what();
+        }
+
+        try {
             std::filesystem::rename(fnhtml, fnhtml_complete);
+        } catch (const std::filesystem::filesystem_error& fs_err) {
+            EVLOG_error << "Could not rename " << fnhtml << ": " << fs_err.what();
+        }
 
         session_active = false;
     }
