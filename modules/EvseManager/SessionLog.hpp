@@ -19,7 +19,7 @@ public:
 
     void setPath(const std::string& path);
     void enable();
-    boost::optional<std::string> startSession(const std::string& session_id);
+    boost::optional<std::string> startSession(const std::string& suffix_string);
     void stopSession();
 
     void car(bool iso15118, const std::string& msg);
