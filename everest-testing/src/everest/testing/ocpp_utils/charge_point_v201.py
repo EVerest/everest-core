@@ -112,3 +112,7 @@ class ChargePoint201(cp):
     async def get_report_req(self, **kwargs):
         payload = call.GetReportPayload(**kwargs)
         return await self.call(payload)
+    
+    async def reset_req(self, **kwargs):
+        payload = call.ResetPayload(**kwargs)
+        return await self.call(payload)

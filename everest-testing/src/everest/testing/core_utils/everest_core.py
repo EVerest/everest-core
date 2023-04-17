@@ -69,7 +69,7 @@ class EverestCore:
     """This class can be used to configure, start and stop a full build of everest-core
     """
 
-    def __init__(self, prefix_path: Path) -> None:
+    def __init__(self, prefix_path: Path, config_path: Path = None) -> None:
         """Initialize EVerest using everest_core_path and everest_config_path
 
         Args:
@@ -84,10 +84,11 @@ class EverestCore:
         self.everest_core_user_config_path = Path(
             self.temp_everest_config_file.name).parent / 'user-config'
         self.everest_core_user_config_path.mkdir(parents=True, exist_ok=True)
+        self.prefix_path = prefix_path
+        self.etc_path = Path('/etc/everest') if prefix_path == '/usr' else prefix_path / 'etc/everest'
 
-        # namespace everest with uids
-        etc_path = Path('/etc') if prefix_path == '/usr' else prefix_path / 'etc'
-        config_path = etc_path / 'everest/config-sil.yaml'
+        if config_path is None:
+            config_path = self.etc_path / 'config-sil.yaml'
 
         everest_config = yaml.safe_load(config_path.read_text())
 
@@ -112,9 +113,8 @@ class EverestCore:
         logging.info(f"everest uuid: {self.everest_uuid}")
         logging.info(f"temp everest config: {self.everest_config_path} based on {config_path}")
 
-        self.prefix_path = prefix_path
-
         self.test_control_modules = None
+
         self.log_reader_thread: Thread = None
         self.everest_running = False
 

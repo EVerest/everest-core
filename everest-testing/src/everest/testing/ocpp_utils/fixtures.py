@@ -39,10 +39,16 @@ def test_controller(request, test_config) -> TestController:
     """Fixture that references the the test_controller that can be used for
     control events for the test cases.
     """
-    everest_core_path = Path(request.config.getoption("--path"))
+    ocpp_version = request.node.get_closest_marker("ocpp_version")
+    if ocpp_version:
+        ocpp_version = request.node.get_closest_marker("ocpp_version").args[0]
+    else:
+        ocpp_version = "ocpp1.6"
+
+    everest_core_path = Path(request.config.getoption("--everest-prefix"))
     config_path = test_config['ConfigPath']
     test_controller = EverestTestController(
-        everest_core_path, config_path, test_config['ChargePoint']['ChargePointId'], request.function.__name__)
+        everest_core_path, config_path, test_config['ChargePoint']['ChargePointId'], ocpp_version, request.function.__name__)
     yield test_controller
     test_controller.stop()
 
@@ -78,11 +84,10 @@ async def central_system_v201(request, test_config):
         ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         ssl_context.load_cert_chain(Path(test_config['Certificates']['CSMS']),
                                     Path(test_config['Certificates']['CSMSKey']),
-                                    Path(test_config['Certificates']['CSMSKey']),
                                     test_config['Certificates']['CSMSPassphrase'])
     else:
         ssl_context = None
-    cs = CentralSystem(test_config['CSMS']['Port'],
+    cs = CentralSystem(None,
                        test_config['ChargePoint']['ChargePointId'],
                        ocpp_version='ocpp2.0.1')
     await cs.start(ssl_context)
@@ -105,7 +110,7 @@ async def charge_point_v16(central_system_v16: CentralSystem, test_controller: T
 async def charge_point_v201(central_system_v201: CentralSystem, test_controller: TestController):
     """Fixture for ChargePoint16. Requires central_system_v201 and test_controller. Starts test_controller immediately
     """
-    test_controller.start()
+    test_controller.start(central_system_v201.port)
     await asyncio.sleep(1)
     cp = await central_system_v201.wait_for_chargepoint()
     yield cp
