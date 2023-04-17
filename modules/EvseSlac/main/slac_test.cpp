@@ -19,6 +19,19 @@ static auto create_cm_set_key_cnf() {
     return hp_message;
 }
 
+static auto create_cm_validate_req() {
+    slac::messages::cm_validate_req validate_req;
+    validate_req.signal_type = slac::defs::CM_VALIDATE_REQ_SIGNAL_TYPE;
+    validate_req.timer = 0;
+    validate_req.result = slac::defs::CM_VALIDATE_REQ_RESULT_READY;
+
+    slac::messages::HomeplugMessage hp_message;
+    hp_message.setup_payload(&validate_req, sizeof(validate_req),
+                             (slac::defs::MMTYPE_CM_VALIDATE | slac::defs::MMTYPE_MODE_REQ));
+
+    return hp_message;
+}
+
 struct EVSession {
     EVSession(const std::array<uint8_t, 8>& run_id_, const std::array<uint8_t, 6>& mac_) : run_id(run_id_), mac(mac_){};
 
@@ -223,6 +236,24 @@ int main(int argc, char* argv[]) {
             }
         }
         msg_in.reset();
+    }
+
+    // "async" insert an CM_VALIDATE.REQ
+    ctx.slac_message_payload = create_cm_validate_req();
+    machine.feed_event(Event::SLAC_MESSAGE);
+    machine.feed();
+
+    // assert that CM_VALIDATE.CNF gets set!
+    if (!msg_in.has_value() || msg_in->get_mmtype() != (slac::defs::MMTYPE_CM_VALIDATE | slac::defs::MMTYPE_MODE_CNF)) {
+        printf("Expected CM_VALIDATE.CNF!\n");
+        exit(EXIT_FAILURE);
+    } else {
+        // check for correct "failure" result
+        auto validate_cnf = msg_in->get_payload<slac::messages::cm_validate_cnf>();
+        if (validate_cnf.result != slac::defs::CM_VALIDATE_REQ_RESULT_FAILURE) {
+            printf("Expected result field of CM_VALIDATE.CNF to be set to failure\n");
+            exit(EXIT_FAILURE);
+        }
     }
 
     // inject CM_ATTEN_CHAR_RSP

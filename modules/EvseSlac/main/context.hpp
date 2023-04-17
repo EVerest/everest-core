@@ -19,7 +19,9 @@ template <> struct MMTYPE<slac::messages::cm_atten_char_ind> {
 template <> struct MMTYPE<slac::messages::cm_set_key_req> {
     static const uint16_t value = slac::defs::MMTYPE_CM_SET_KEY | slac::defs::MMTYPE_MODE_REQ;
 };
-
+template <> struct MMTYPE<slac::messages::cm_validate_cnf> {
+    static const uint16_t value = slac::defs::MMTYPE_CM_VALIDATE | slac::defs::MMTYPE_MODE_CNF;
+};
 template <> struct MMTYPE<slac::messages::cm_slac_match_cnf> {
     static const uint16_t value = slac::defs::MMTYPE_CM_SLAC_MATCH | slac::defs::MMTYPE_MODE_CNF;
 };

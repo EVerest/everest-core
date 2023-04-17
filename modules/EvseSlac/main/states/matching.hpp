@@ -63,6 +63,7 @@ struct MatchingState : public FSMBaseState {
     void handle_cm_mnbc_sound_ind(const slac::messages::cm_mnbc_sound_ind&);
     void handle_cm_atten_profile_ind(const slac::messages::cm_atten_profile_ind&);
     void handle_cm_atten_char_rsp(const slac::messages::cm_atten_char_rsp&);
+    void handle_cm_validate_req(const slac::messages::cm_validate_req&);
     void handle_cm_slac_match_req(const slac::messages::cm_slac_match_req&);
 
     void finalize_sounding(MatchingSession& session);

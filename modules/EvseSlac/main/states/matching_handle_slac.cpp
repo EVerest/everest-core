@@ -109,6 +109,9 @@ void MatchingState::handle_slac_message(slac::messages::HomeplugMessage& msg) {
     case (slac::defs::MMTYPE_CM_SLAC_MATCH | slac::defs::MMTYPE_MODE_REQ):
         handle_cm_slac_match_req(msg.get_payload<slac::messages::cm_slac_match_req>());
         break;
+    case (slac::defs::MMTYPE_CM_VALIDATE | slac::defs::MMTYPE_MODE_REQ):
+        handle_cm_validate_req(msg.get_payload<slac::messages::cm_validate_req>());
+        break;
     default:
         ctx.log_info(fmt::format("Received non-expected SLAC message of type {:#06x}", mmtype));
     }
@@ -237,6 +240,18 @@ void MatchingState::handle_cm_atten_char_rsp(const slac::messages::cm_atten_char
 
     // FIXME (aw): referring to the standard, it is not clear here, if we should offset from TT_EVSE_MATCH_MNBC
     session->set_next_timeout(slac::defs::TT_EVSE_MATCH_SESSION_MS);
+}
+
+void MatchingState::handle_cm_validate_req(const slac::messages::cm_validate_req& msg) {
+    // NOTE: CM_VALIDATE.REQ does not specify its session
+    ctx.log_info("Received CM_VALIDATE.REQ / not implemented - will return failure code");
+
+    slac::messages::cm_validate_cnf validate_cnf;
+    validate_cnf.signal_type = slac::defs::CM_VALIDATE_REQ_SIGNAL_TYPE;
+    validate_cnf.toggle_num = 0;
+    validate_cnf.result = slac::defs::CM_VALIDATE_REQ_RESULT_FAILURE;
+
+    ctx.send_slac_message(tmp_ev_mac, validate_cnf);
 }
 
 void MatchingState::handle_cm_slac_match_req(const slac::messages::cm_slac_match_req& msg) {
