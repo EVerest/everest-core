@@ -43,14 +43,15 @@ const int TT_MATCH_SEQUENCE_MS = 400;
 const int TT_MATCH_RESPONSE_MS = 200;
 const int TT_EVSE_MATCH_SESSION_MS = 10000;
 const int TT_EVSE_SLAC_INIT_MS = 40000; // (20s - 50s)
-const int TT_MATCH_JOIN_MS = 12000; // max. 12s
-const int T_STEP_EF_MS = 4000; // min. 4s
+const int TT_MATCH_JOIN_MS = 12000;     // max. 12s
+const int T_STEP_EF_MS = 4000;          // min. 4s
 
 const uint16_t MMTYPE_CM_SET_KEY = 0x6008;
 const uint16_t MMTYPE_CM_SLAC_PARAM = 0x6064;
 const uint16_t MMTYPE_CM_START_ATTEN_CHAR = 0x6068;
 const uint16_t MMTYPE_CM_ATTEN_CHAR = 0x606C;
 const uint16_t MMTYPE_CM_MNBC_SOUND = 0x6074;
+const uint16_t MMTYPE_CM_VALIDATE = 0x6078;
 const uint16_t MMTYPE_CM_SLAC_MATCH = 0x607C;
 const uint16_t MMTYPE_CM_ATTEN_PROFILE = 0x6084;
 
@@ -70,6 +71,10 @@ const uint16_t MMTYPE_CATEGORY_MASK = 0xE000;
 
 const uint8_t COMMON_APPLICATION_TYPE = 0x00;
 const uint8_t COMMON_SECURITY_TYPE = 0x00;
+
+const uint8_t CM_VALIDATE_REQ_SIGNAL_TYPE = 0x00;
+const uint8_t CM_VALIDATE_REQ_RESULT_READY = 0x01;
+const uint8_t CM_VALIDATE_REQ_RESULT_FAILURE = 0x03;
 
 const uint16_t CM_SLAC_MATCH_REQ_MVF_LENGTH = 0x3e;
 
@@ -147,7 +152,7 @@ public:
 private:
     homeplug_message raw_msg;
     int raw_msg_len{-1};
-    bool keep_src_mac {false};
+    bool keep_src_mac{false};
 };
 
 const int M_SOUND_TARGET_LEN = 6;
