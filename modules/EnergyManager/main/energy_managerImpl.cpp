@@ -13,5 +13,8 @@ void energy_managerImpl::init() {
 void energy_managerImpl::ready() {
 }
 
+void energy_managerImpl::shutdown() {
+}
+
 } // namespace main
 } // namespace module

@@ -12,4 +12,8 @@ void EvseSlac::ready() {
     invoke_ready(*p_main);
 }
 
+void EvseSlac::shutdown() {
+    invoke_shutdown(*p_main);
+}
+
 } // namespace module

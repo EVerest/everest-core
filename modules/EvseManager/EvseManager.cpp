@@ -753,6 +753,12 @@ void EvseManager::ready() {
                               "🌀🌀🌀 Ready to start charging 🌀🌀🌀");
 }
 
+void EvseManager::shutdown() {
+    invoke_shutdown(*p_evse);
+    invoke_shutdown(*p_energy_grid);
+    invoke_shutdown(*p_token_provider);
+}
+
 types::powermeter::Powermeter EvseManager::get_latest_powermeter_data_billing() {
     std::scoped_lock lock(power_mutex);
     return latest_powermeter_data_billing;

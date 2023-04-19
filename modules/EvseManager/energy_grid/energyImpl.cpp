@@ -186,6 +186,9 @@ void energyImpl::ready() {
     }).detach();
 }
 
+void energyImpl::shutdown() {
+}
+
 void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
     if (value.uuid == energy_flow_request.uuid) {
         // EVLOG_info << "Incoming enforce limits" << value;

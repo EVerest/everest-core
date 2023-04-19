@@ -17,6 +17,9 @@ void exampleImpl::ready() {
     publish_max_current(config.current);
 }
 
+void exampleImpl::shutdown() {
+}
+
 bool exampleImpl::handle_uses_something(std::string& key) {
     if (mod->r_kvs->call_exists(key)) {
         EVLOG_debug << "IT SHOULD NOT AND DOES NOT EXIST";

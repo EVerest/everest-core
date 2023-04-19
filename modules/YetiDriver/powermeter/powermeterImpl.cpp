@@ -54,6 +54,9 @@ void powermeterImpl::init() {
 void powermeterImpl::ready() {
 }
 
+void powermeterImpl::shutdown() {
+}
+
 std::string powermeterImpl::handle_get_signed_meter_value(std::string& auth_token) {
     return "NOT_AVAILABLE";
 }

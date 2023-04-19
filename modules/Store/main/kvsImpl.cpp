@@ -11,6 +11,9 @@ void kvsImpl::init() {
 void kvsImpl::ready() {
 }
 
+void kvsImpl::shutdown() {
+}
+
 void kvsImpl::handle_store(std::string& key,
                            boost::variant<boost::blank, Array, Object, bool, double, int, std::string>& value) {
     kvs[key] = value;

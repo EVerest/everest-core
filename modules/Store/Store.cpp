@@ -12,4 +12,8 @@ void Store::ready() {
     invoke_ready(*p_main);
 }
 
+void Store::shutdown() {
+    invoke_shutdown(*p_main);
+}
+
 } // namespace module

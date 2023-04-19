@@ -94,6 +94,9 @@ void sunspec_scannerImpl::ready() {
 
 }
 
+void sunspec_scannerImpl::shutdown() {
+}
+
 Object sunspec_scannerImpl::handle_scan_unit(std::string& ip_address, int& port, int& unit){
     return scan_unit(ip_address, port, unit);
 };

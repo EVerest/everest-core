@@ -12,6 +12,9 @@ void ISO15118_chargerImpl::init() {
 void ISO15118_chargerImpl::ready() {
 }
 
+void ISO15118_chargerImpl::shutdown() {
+}
+
 void ISO15118_chargerImpl::handle_set_EVSEID(std::string& EVSEID, std::string& EVSEID_DIN){
     // your code for cmd set_EVSEID goes here
 };

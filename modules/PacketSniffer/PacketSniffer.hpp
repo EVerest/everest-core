@@ -5,7 +5,7 @@
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 1
+// template version 2
 //
 
 #include "ld-ev.hpp"
@@ -40,6 +40,7 @@ public:
     const std::unique_ptr<evse_managerIntf> r_evse_manager;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
+    // insert your public definitions here
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
@@ -51,14 +52,15 @@ private:
     friend class LdEverest;
     void init();
     void ready();
+    void shutdown();
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
     void capture(const std::string& logpath, const std::string& session_id);
-    pcap_t *p_handle {nullptr};
-    pcap_dumper_t *pdumpfile {nullptr};
+    pcap_t* p_handle{nullptr};
+    pcap_dumper_t* pdumpfile{nullptr};
     char errbuf[PCAP_ERRBUF_SIZE];
-    bool capturing_stopped; 
+    bool capturing_stopped;
     std::mutex capture_mutex;
     bool already_started;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1

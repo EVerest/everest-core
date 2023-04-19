@@ -56,6 +56,10 @@ void PacketSniffer::ready() {
     invoke_ready(*p_main);
 }
 
+void PacketSniffer::shutdown() {
+    invoke_shutdown(*p_main);
+}
+
 void PacketSniffer::capture(const std::string& logpath, const std::string& session_id) {
 
     const std::string fn = fmt::format("{}/ethernet-traffic.dump", logpath);

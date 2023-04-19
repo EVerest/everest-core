@@ -160,6 +160,13 @@ void YetiDriver::ready() {
     });
 }
 
+void YetiDriver::shutdown() {
+    invoke_shutdown(*p_powermeter);
+    invoke_shutdown(*p_yeti_extras);
+    invoke_shutdown(*p_yeti_simulation_control);
+    invoke_shutdown(*p_board_support);
+}
+
 Everest::json power_meter_data_to_json(const PowerMeter& p) {
     Everest::json j;
     j["time_stamp"] = p.time_stamp;

@@ -63,6 +63,10 @@ err_out:
     v2g_ctx_free(v2g_ctx);
 }
 
+void EvseV2G::shutdown() {
+    invoke_shutdown(*p_charger);
+}
+
 EvseV2G::~EvseV2G() {
     v2g_ctx_free(v2g_ctx);
 }

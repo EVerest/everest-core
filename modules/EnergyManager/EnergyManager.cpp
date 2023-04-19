@@ -32,7 +32,11 @@ void EnergyManager::ready() {
             enforce_limits(optimized_values);
             sleep(config.update_interval);
         }
-    }).detach();
+    });
+}
+
+void EnergyManager::shutdown() {
+    invoke_shutdown(*p_main);
 }
 
 void EnergyManager::enforce_limits(const std::vector<types::energy::EnforcedLimits>& limits) {
@@ -107,8 +111,8 @@ std::vector<types::energy::EnforcedLimits> EnergyManager::run_optimizer(types::e
     if (globals.debug) {
         EVLOG_info << fmt::format("\033[1;44m---------------- End energy optimizer ({} rounds, offer {}ms market {}ms "
                                   "broker {}ms total {}ms) ---------------- \033[1;0m",
-                                  100 - max_number_of_trading_rounds, offer_tp.stop(), market_tp.stop(), broker_tp.stop(),
-                                  optimizer_start.stop());
+                                  100 - max_number_of_trading_rounds, offer_tp.stop(), market_tp.stop(),
+                                  broker_tp.stop(), optimizer_start.stop());
     }
 
     std::vector<types::energy::EnforcedLimits> optimized_values;

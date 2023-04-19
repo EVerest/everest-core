@@ -12,6 +12,9 @@ void sunspec_ac_meterImpl::init() {
 void sunspec_ac_meterImpl::ready() {
 }
 
+void sunspec_ac_meterImpl::shutdown() {
+}
+
 types::sunspec_ac_meter::Result sunspec_ac_meterImpl::handle_get_sunspec_ac_meter_value(std::string& auth_token) {
     // your code for cmd get_sunspec_ac_meter_value goes here
     EVLOG_verbose << __PRETTY_FUNCTION__ << " start " << std::endl;

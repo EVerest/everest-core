@@ -201,6 +201,10 @@ void Setup::ready() {
     }
 }
 
+void Setup::shutdown() {
+    invoke_shutdown(*p_main);
+}
+
 void Setup::publish_supported_features() {
     SupportedSetupFeatures supported_setup_features;
     supported_setup_features.setup_wifi = this->config.setup_wifi;

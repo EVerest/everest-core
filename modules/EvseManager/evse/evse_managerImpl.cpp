@@ -256,6 +256,9 @@ void evse_managerImpl::ready() {
     // /Deprecated
 }
 
+void evse_managerImpl::shutdown() {
+}
+
 int evse_managerImpl::handle_get_id() {
     return this->mod->config.connector_id;
 };

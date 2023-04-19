@@ -12,4 +12,8 @@ void System::ready() {
     invoke_ready(*p_main);
 }
 
+void System::shutdown() {
+    invoke_shutdown(*p_main);
+}
+
 } // namespace module

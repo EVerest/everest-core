@@ -10,4 +10,8 @@ void SunspecReader::ready() {
     invoke_ready(*p_main);
 }
 
+void SunspecReader::shutdown() {
+    invoke_shutdown(*p_main);
+}
+
 } // namespace module

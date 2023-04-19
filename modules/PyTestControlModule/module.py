@@ -1,3 +1,4 @@
+from everestpy import log
 import asyncio
 import logging
 import json
@@ -8,6 +9,9 @@ async def main():
     Entrypoint function
     """
     logging.info("test_control_module up and running")
+
+    # you can use this to request a shutdown of all everest modules
+    # setup_.request_shutdown()
 
 
 def run():
@@ -72,6 +76,9 @@ def ready():
     """
     logging.info("PyTestControlModule ready")
     run()
+
+def shutdown():
+    log.info("Shutting down PyTestControlModule module...")
 
 
 def set_event_callback(callback_func):

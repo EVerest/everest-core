@@ -12,4 +12,8 @@ void GenericPowermeter::ready() {
     invoke_ready(*p_main);
 }
 
+void GenericPowermeter::shutdown() {
+    invoke_shutdown(*p_main);
+}
+
 } // namespace module

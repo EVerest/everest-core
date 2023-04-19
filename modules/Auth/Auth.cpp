@@ -63,6 +63,11 @@ void Auth::ready() {
     }
 }
 
+void Auth::shutdown() {
+    invoke_shutdown(*p_main);
+    invoke_shutdown(*p_reservation);
+}
+
 void Auth::set_connection_timeout(int& connection_timeout) {
     this->auth_handler->set_connection_timeout(connection_timeout);
 }

@@ -18,6 +18,11 @@ void PowermeterBSM::ready() {
     invoke_ready(*p_ac_meter);
 }
 
+void PowermeterBSM::shutdown() {
+    invoke_shutdown(*p_main);
+    invoke_shutdown(*p_ac_meter);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // module module implementation helper

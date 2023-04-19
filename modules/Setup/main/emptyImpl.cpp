@@ -12,5 +12,8 @@ void emptyImpl::init() {
 void emptyImpl::ready() {
 }
 
+void emptyImpl::shutdown() {
+}
+
 } // namespace main
 } // namespace module

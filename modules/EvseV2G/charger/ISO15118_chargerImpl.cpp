@@ -54,6 +54,9 @@ void ISO15118_chargerImpl::init() {
 void ISO15118_chargerImpl::ready() {
 }
 
+void ISO15118_chargerImpl::shutdown() {
+}
+
 void ISO15118_chargerImpl::handle_set_EVSEID(std::string& EVSEID, std::string& EVSEID_DIN) {
     uint8_t len = EVSEID.length();
     if (len < iso1SessionSetupResType_EVSEID_CHARACTERS_SIZE) {

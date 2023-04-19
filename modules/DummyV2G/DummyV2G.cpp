@@ -12,4 +12,8 @@ void DummyV2G::ready() {
     invoke_ready(*p_main);
 }
 
+void DummyV2G::shutdown() {
+    invoke_shutdown(*p_main);
+}
+
 } // namespace module

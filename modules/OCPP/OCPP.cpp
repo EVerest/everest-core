@@ -539,4 +539,10 @@ void OCPP::ready() {
     }
 }
 
+void OCPP::shutdown() {
+    invoke_shutdown(*p_main);
+    invoke_shutdown(*p_auth_validator);
+    invoke_shutdown(*p_auth_provider);
+}
+
 } // namespace module

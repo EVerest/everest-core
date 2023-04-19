@@ -5,7 +5,7 @@
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 3
+// template version 4
 //
 
 #include <generated/interfaces/serial_communication_hub/Implementation.hpp>
@@ -21,7 +21,6 @@
 #include <termios.h>
 #include <utils/thread.hpp>
 #include <vector>
-#include <chrono>
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 
 namespace module {
@@ -75,6 +74,7 @@ private:
 
     virtual void init() override;
     virtual void ready() override;
+    virtual void shutdown() override;
 
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
     // insert your private definitions here

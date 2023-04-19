@@ -67,4 +67,8 @@ void OCPP201::ready() {
     invoke_ready(*p_main);
 }
 
+void OCPP201::shutdown() {
+    invoke_shutdown(*p_main);
+}
+
 } // namespace module

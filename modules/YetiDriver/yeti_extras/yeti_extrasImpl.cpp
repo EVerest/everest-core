@@ -19,6 +19,9 @@ void yeti_extrasImpl::init() {
 void yeti_extrasImpl::ready() {
 }
 
+void yeti_extrasImpl::shutdown() {
+}
+
 void yeti_extrasImpl::handle_firmware_update(std::string& firmware_binary){
     // your code for cmd firmware_update goes here
 };

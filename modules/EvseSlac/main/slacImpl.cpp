@@ -47,6 +47,9 @@ void slacImpl::ready() {
     module_ready.set_value();
 }
 
+void slacImpl::shutdown() {
+}
+
 void slacImpl::run() {
     // wait until ready
     module_ready.get_future().get();

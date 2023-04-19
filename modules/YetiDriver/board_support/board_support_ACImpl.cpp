@@ -103,6 +103,9 @@ void board_support_ACImpl::init() {
 void board_support_ACImpl::ready() {
 }
 
+void board_support_ACImpl::shutdown() {
+}
+
 void board_support_ACImpl::handle_setup(bool& three_phases, bool& has_ventilation, std::string& country_code,
                                         bool& rcd_enabled) {
     mod->serial.setCountryCode(country_code.c_str());

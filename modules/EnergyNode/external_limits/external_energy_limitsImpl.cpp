@@ -12,6 +12,9 @@ void external_energy_limitsImpl::init() {
 void external_energy_limitsImpl::ready() {
 }
 
+void external_energy_limitsImpl::shutdown() {
+}
+
 void external_energy_limitsImpl::handle_set_external_limits(types::energy::ExternalLimits& value) {
     // your code for cmd set_external_limits goes here
     mod->signalExternalLimit(value);

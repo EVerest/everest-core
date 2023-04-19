@@ -12,6 +12,9 @@ void reservationImpl::init() {
 void reservationImpl::ready() {
 }
 
+void reservationImpl::shutdown() {
+}
+
 types::reservation::ReservationResult
 reservationImpl::handle_reserve_now(int& connector_id, types::reservation::Reservation& reservation) {
     // your code for cmd reserve_now goes here

@@ -55,6 +55,9 @@ void systemImpl::init() {
 void systemImpl::ready() {
 }
 
+void systemImpl::shutdown() {
+}
+
 void systemImpl::standard_firmware_update(const types::system::FirmwareUpdateRequest& firmware_update_request) {
 
     this->standard_firmware_update_running = true;

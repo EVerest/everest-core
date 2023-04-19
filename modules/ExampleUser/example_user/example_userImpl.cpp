@@ -12,5 +12,8 @@ void example_userImpl::ready() {
     mod->r_example->call_uses_something("hello_there");
 }
 
+void example_userImpl::shutdown() {
+}
+
 } // namespace example_user
 } // namespace module

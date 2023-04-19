@@ -16,4 +16,9 @@ void Example::ready() {
     mqtt.publish("external/topic", "data");
 }
 
+void Example::shutdown() {
+    invoke_shutdown(*p_example);
+    invoke_shutdown(*p_store);
+}
+
 } // namespace module

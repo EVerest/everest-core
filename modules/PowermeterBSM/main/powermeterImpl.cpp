@@ -31,6 +31,9 @@ void powermeterImpl::ready() {
     m_watchdog_thread = std::thread(&powermeterImpl::watchdog, this);
 }
 
+void powermeterImpl::shutdown() {
+}
+
 std::string powermeterImpl::handle_get_signed_meter_value(std::string& auth_token) {
 
     // your code for cmd get_signed_meter_value goes here

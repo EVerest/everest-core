@@ -50,6 +50,9 @@ void kvsImpl::init() {
 void kvsImpl::ready() {
 }
 
+void kvsImpl::shutdown() {
+}
+
 class TypeNameVisitor : public boost::static_visitor<std::string> {
 public:
     std::string operator()(const boost::blank& t) const {

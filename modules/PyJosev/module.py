@@ -73,6 +73,9 @@ def ready():
     log.debug("Josev is starting ...")
     run()
 
+def shutdown():
+    log.info("Shutting down PyJosev module...")
+
 ### Charger Command Callbacks ###
 
 def charger_set_EVSEID(EVSEID: str, EVSEID_DIN: str):

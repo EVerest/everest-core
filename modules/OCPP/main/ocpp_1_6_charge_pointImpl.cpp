@@ -11,6 +11,9 @@ void ocpp_1_6_charge_pointImpl::init() {
 void ocpp_1_6_charge_pointImpl::ready() {
 }
 
+void ocpp_1_6_charge_pointImpl::shutdown() {
+}
+
 bool ocpp_1_6_charge_pointImpl::handle_stop() {
     mod->charging_schedules_timer->stop();
     return mod->charge_point->stop();

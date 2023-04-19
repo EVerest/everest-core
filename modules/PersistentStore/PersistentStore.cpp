@@ -12,4 +12,8 @@ void PersistentStore::ready() {
     invoke_ready(*p_main);
 }
 
+void PersistentStore::shutdown() {
+    invoke_shutdown(*p_main);
+}
+
 } // namespace module

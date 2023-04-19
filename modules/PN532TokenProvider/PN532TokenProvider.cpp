@@ -12,4 +12,8 @@ void PN532TokenProvider::ready() {
     invoke_ready(*p_main);
 }
 
+void PN532TokenProvider::shutdown() {
+    invoke_shutdown(*p_main);
+}
+
 } // namespace module

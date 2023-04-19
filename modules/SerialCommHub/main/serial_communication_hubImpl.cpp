@@ -155,6 +155,9 @@ void serial_communication_hubImpl::init() {
 void serial_communication_hubImpl::ready() {
 }
 
+void serial_communication_hubImpl::shutdown() {
+}
+
 // Commands
 
 types::serial_comm_hub_requests::StatusCodeEnum

@@ -39,6 +39,9 @@ void sunspec_readerImpl::ready() {
     }
 }
 
+void sunspec_readerImpl::shutdown() {
+}
+
 void sunspec_readerImpl::run_read_loop() {
     std::chrono::time_point<date::utc_clock> tp_loop;
     tp_loop = date::utc_clock::now();

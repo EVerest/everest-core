@@ -189,6 +189,9 @@ void energyImpl::ready() {
     mod->signalExternalLimit.connect([this](types::energy::ExternalLimits& l) { set_external_limits(l); });
 }
 
+void energyImpl::shutdown() {
+}
+
 void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
 
     // is it for me?
