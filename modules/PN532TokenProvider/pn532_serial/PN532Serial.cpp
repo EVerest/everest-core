@@ -166,17 +166,19 @@ void PN532Serial::readThread() {
                                     target_data.sel_res = sel_res;
                                     target_data.nfcid_length = nfcid_length;
 
-                                    if (data.size() >= 6 + nfcid_length + 1) {
+                                    if (data.size() >= 6 + nfcid_length) {
                                         response.valid = true;
                                         for (size_t i = 6; i < 6 + nfcid_length; i++) {
                                             target_data.nfcid.push_back(data.at(i));
                                         }
 
-                                        auto ats_length = data.at(6 + nfcid_length);
+                                        if (data.size() >= 6 + nfcid_length + 1) {
+                                            auto ats_length = data.at(6 + nfcid_length);
 
-                                        if (data.size() >= 6 + nfcid_length + ats_length) {
-                                            for (size_t i = 6 + nfcid_length; i < 6 + nfcid_length + ats_length; i++) {
-                                                target_data.ats.push_back(data.at(i));
+                                            if (data.size() >= 6 + nfcid_length + ats_length) {
+                                                for (size_t i = 6 + nfcid_length; i < 6 + nfcid_length + ats_length; i++) {
+                                                    target_data.ats.push_back(data.at(i));
+                                                }
                                             }
                                         }
                                     }
