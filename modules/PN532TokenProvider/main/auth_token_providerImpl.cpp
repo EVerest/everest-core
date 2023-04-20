@@ -42,7 +42,9 @@ void auth_token_providerImpl::ready() {
     auto firmware_version = firmware_version_future.get();
     if (firmware_version.valid) {
         std::shared_ptr<FirmwareVersion> fv = std::dynamic_pointer_cast<FirmwareVersion>(firmware_version.message);
-        EVLOG_debug << "PN532 firmware version: " << std::to_string(fv->ver) << "." << std::to_string(fv->rev);
+        if (config.debug) {
+            EVLOG_info << "PN532 firmware version: " << std::to_string(fv->ver) << "." << std::to_string(fv->rev);
+        }
     }
 
     while (true) {
@@ -57,7 +59,6 @@ void auth_token_providerImpl::ready() {
                 std::dynamic_pointer_cast<InListPassiveTargetResponse>(in_list_passive_target_response.message);
             auto target_data = in_list_passive_target_response_message->target_data;
             for (auto entry : target_data) {
-                EVLOG_debug << "Got raw rfid/nfc tag: " << entry.getNFCID();
                 types::authorization::ProvidedIdToken provided_token;
                 provided_token.id_token = entry.getNFCID();
                 provided_token.type = types::authorization::TokenType::RFID;

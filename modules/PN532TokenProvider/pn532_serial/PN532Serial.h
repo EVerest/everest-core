@@ -98,6 +98,8 @@ private:
     bool debug = false;
 
     void resetDataRead();
+    void parseData();
+    void parseInListPassiveTargetResponse();
 
     // Read thread for serial port
     Everest::Thread readThreadHandle;
