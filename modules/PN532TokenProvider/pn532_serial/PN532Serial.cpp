@@ -69,6 +69,15 @@ void PN532Serial::readThread() {
             continue;
         }
 
+        if (this->debug) {
+            std::stringstream data_stream;
+            for (size_t i = 0; i < n; i++) {
+                data_stream << "0x" << std::setfill('0') << std::setw(2) << std::right << std::hex << (int)buf[i]
+                            << " ";
+            }
+
+            EVLOG_info << "Received bytes: " << data_stream.str();
+        }
         for (size_t i = 0; i < n; i++) {
             if (!preamble_seen) {
                 if (preamble_start_seen && buf[i] == 0xff) {
