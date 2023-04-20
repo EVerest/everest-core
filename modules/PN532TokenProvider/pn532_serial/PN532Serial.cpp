@@ -199,6 +199,14 @@ void PN532Serial::parseData() {
     } else {
         if (this->debug) {
             EVLOG_warning << "Last byte is NOT 0x00, something went wrong...";
+            std::stringstream data_stream;
+            for (auto& element : data) {
+                data_stream << "0x" << std::setfill('0') << std::setw(2) << std::right << std::hex << (int)element
+                            << " ";
+            }
+            data_stream << "(length: " << std::dec << data.size() << ")";
+
+            EVLOG_info << "Raw data: " << data_stream.str();
         }
     }
 }
