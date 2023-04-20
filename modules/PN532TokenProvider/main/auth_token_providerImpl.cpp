@@ -8,7 +8,10 @@ namespace main {
 
 void auth_token_providerImpl::init() {
     // initialize serial driver
-    EVLOG_debug << "Serial port: " << config.serial_port << " baud rate: " << config.baud_rate;
+    if (config.debug) {
+        serial.enableDebug();
+        EVLOG_info << "Serial port: " << config.serial_port << " baud rate: " << config.baud_rate;
+    }
     if (!serial.openDevice(config.serial_port.c_str(), config.baud_rate)) {
         EVLOG_AND_THROW(EVEXCEPTION(Everest::EverestConfigError, "Could not open serial port ", config.serial_port,
                                     " with baud rate ", config.baud_rate));
@@ -58,7 +61,9 @@ void auth_token_providerImpl::ready() {
                 types::authorization::ProvidedIdToken provided_token;
                 provided_token.id_token = entry.getNFCID();
                 provided_token.type = types::authorization::TokenType::RFID;
-                EVLOG_debug << "Publishing new rfid/nfc token: " << provided_token;
+                if (config.debug) {
+                    EVLOG_info << "Publishing new rfid/nfc token: " << provided_token;
+                }
                 this->publish_provided_token(provided_token);
             }
         }
