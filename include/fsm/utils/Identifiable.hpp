@@ -18,9 +18,6 @@ template <typename IDType, IDType ID, typename T = void> struct Identifiable : I
     Identifiable(T&& data) : IdentifiableBase<IDType>(ID), data(std::forward<T>(data)) {
     }
 
-    Identifiable(const T& data) : IdentifiableBase<IDType>(ID), data(data) {
-    }
-
     Identifiable(const IdentifiableBase<IDType>& ev) :
         IdentifiableBase<IDType>(ID), data(static_cast<const Identifiable<IDType, ID, T>&>(ev).data) {
     }
