@@ -87,7 +87,6 @@ private:
     std::unique_ptr<std::promise<PN532Response>> in_list_passive_target_promise;
     size_t start_of_packet = 0;
     size_t packet_length = 0;
-    size_t data_received = 0;
     bool preamble_start_seen = false;
     bool preamble_seen = false;
     bool first_data = true;

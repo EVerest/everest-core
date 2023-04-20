@@ -44,7 +44,6 @@ void PN532Serial::run() {
 void PN532Serial::resetDataRead() {
     start_of_packet = 0;
     packet_length = 0;
-    data_received = 0;
     preamble_start_seen = false;
     preamble_seen = false;
     first_data = true;
@@ -94,7 +93,6 @@ void PN532Serial::readThread() {
                         auto checksum = (packet_length + packet_length_checksum) & 0x00ff;
                         if (checksum == 0) {
                             // data length checkum is valid
-                            data_received = n - start_of_packet;
                             data_length_checksum_valid = true;
                         } else {
                             // can be a valid ACK frame
@@ -110,7 +108,6 @@ void PN532Serial::readThread() {
                 }
             } else {
                 data.push_back(buf[i]);
-                data_received += 1;
             }
         }
 
@@ -145,7 +142,7 @@ void PN532Serial::readThread() {
                 }
             }
 
-            if (data_received < packet_length) {
+            if (data.size() < packet_length) {
                 // not enough bytes received for a complete message yet
                 continue;
             } else {
