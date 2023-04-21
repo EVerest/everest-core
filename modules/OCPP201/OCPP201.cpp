@@ -252,8 +252,10 @@ void OCPP201::init() {
         }
     };
 
+    const auto sql_init_path = this->ocpp_share_path / INIT_SQL;
     this->charge_point = std::make_unique<ocpp::v201::ChargePoint>(
-        json_config, this->ocpp_share_path.string(), this->config.MessageLogPath, etc_certs_path, callbacks);
+        json_config, this->ocpp_share_path.string(), this->config.DatabasePath, sql_init_path.string(),
+        this->config.MessageLogPath, etc_certs_path, callbacks);
 
     int evse_id = 1;
     for (const auto& evse : this->r_evse_manager) {
@@ -301,7 +303,7 @@ void OCPP201::init() {
                 try {
                     reason = ocpp::v201::conversions::string_to_reason_enum(
                         types::evse_manager::stop_transaction_reason_to_string(transaction_finished.reason.value()));
-                } catch (std::out_of_range &e) {
+                } catch (std::out_of_range& e) {
                     reason = ocpp::v201::ReasonEnum::Other;
                 }
                 const auto signed_meter_value = transaction_finished.signed_meter_value;

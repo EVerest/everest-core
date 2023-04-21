@@ -30,6 +30,7 @@ struct Conf {
     std::string ChargePointConfigPath;
     std::string MessageLogPath;
     std::string CertsPath;
+    std::string DatabasePath;
 };
 
 class OCPP201 : public Everest::ModuleBase {

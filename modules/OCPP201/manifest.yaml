@@ -12,6 +12,10 @@ config:
     description: Path to folder where certificates are located. If empty uses everest prefix + etc/everest/certs
     type: string
     default: ""
+  DatabasePath:
+    description: Path to the persistent SQLite database folder
+    type: string
+    default: /tmp/ocpp201
 provides:
   main:
     description: This is a OCPP 2.0.1 charge point
