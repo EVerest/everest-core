@@ -301,7 +301,7 @@ void OCPP201::init() {
                 try {
                     reason = ocpp::v201::conversions::string_to_reason_enum(
                         types::evse_manager::stop_transaction_reason_to_string(transaction_finished.reason.value()));
-                } catch (std::out_of_range e) {
+                } catch (std::out_of_range &e) {
                     reason = ocpp::v201::ReasonEnum::Other;
                 }
                 const auto signed_meter_value = transaction_finished.signed_meter_value;
