@@ -24,8 +24,8 @@ void EnergyManager::ready() {
     invoke_ready(*p_main);
 
     // start thread to update energy optimization
-    std::thread([this] {
-        while (true) {
+    this->optimizer_thread = std::thread([this] {
+        while (!this->optimizer_thread.shouldExit()) {
             globals.init(date::utc_clock::now(), config.schedule_interval_duration, config.schedule_total_duration,
                          config.slice_ampere, config.slice_watt, config.debug, energy_flow_request);
             auto optimized_values = run_optimizer(energy_flow_request);
@@ -37,6 +37,7 @@ void EnergyManager::ready() {
 
 void EnergyManager::shutdown() {
     invoke_shutdown(*p_main);
+    this->optimizer_thread.stop();
 }
 
 void EnergyManager::enforce_limits(const std::vector<types::energy::EnforcedLimits>& limits) {

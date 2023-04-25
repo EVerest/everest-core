@@ -22,6 +22,7 @@
 #include <date/date.h>
 #include <date/tz.h>
 #include <utils/date.hpp>
+#include <utils/thread.hpp>
 
 #include <mutex>
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
@@ -66,6 +67,7 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
+    Everest::Thread optimizer_thread;
 
     std::mutex energy_mutex;
 
