@@ -33,7 +33,7 @@ libfsm:
 # JsCarV2G and JsRiseV2G module
 RISE-V2G:
   git: https://github.com/EVerest/ext-RISE-V2G.git
-  git_tag: 2023.3.0
+  git_tag: a0e0be8
 
 # OCPP
 libocpp:
@@ -42,7 +42,7 @@ libocpp:
 # Josev
 Josev:
   git: https://github.com/EVerest/ext-switchev-iso15118.git
-  git_tag: 2023.3.0
+  git_tag: c3006e7
 
 # OpenV2G
 ext-openv2g:
