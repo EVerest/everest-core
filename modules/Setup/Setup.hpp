@@ -18,6 +18,7 @@
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
+#include <utils/thread.hpp>
 #include <regex>
 
 namespace module {
@@ -176,8 +177,8 @@ private:
     std::string api_base = "everest_api/setup/";
     std::string var_base = api_base + "var/";
     std::string cmd_base = api_base + "cmd/";
-    std::thread discover_network_thread;
-    std::thread publish_application_info_thread;
+    Everest::Thread discover_network_thread;
+    Everest::Thread publish_application_info_thread;
     bool wifi_scan_enabled = false;
     void publish_supported_features();
     void publish_application_info();

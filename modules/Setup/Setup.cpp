@@ -85,18 +85,26 @@ void Setup::ready() {
     invoke_ready(*p_main);
 
     this->discover_network_thread = std::thread([this]() {
-        while (true) {
+        while (!this->discover_network_thread.shouldExit()) {
             if (wifi_scan_enabled) {
-                this->discover_network();
+                try {
+                    this->discover_network();
+                } catch (const EverestShuttingDown& e) {
+                    break;
+                }
             }
             std::this_thread::sleep_for(std::chrono::seconds(5));
         }
     });
 
     this->publish_application_info_thread = std::thread([this]() {
-        while (true) {
-            this->publish_supported_features();
-            this->publish_application_info();
+        while (!this->publish_application_info_thread.shouldExit()) {
+            try {
+                this->publish_supported_features();
+                this->publish_application_info();
+            } catch (const EverestShuttingDown& e) {
+                break;
+            }
             std::this_thread::sleep_for(std::chrono::seconds(1));
         }
     });
