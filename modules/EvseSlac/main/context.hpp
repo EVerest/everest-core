@@ -38,7 +38,7 @@ struct ContextCallbacks {
 };
 
 struct Context {
-    Context(const ContextCallbacks& callbacks_) : callbacks(callbacks_){};
+    explicit Context(const ContextCallbacks& callbacks_) : callbacks(callbacks_){};
 
     // event specific payloads
     // FIXME (aw): due to the synchroneous nature of the fsm, this could be even a ptr/ref
@@ -47,7 +47,7 @@ struct Context {
     // peer mac
     uint8_t plc_peer_mac[ETH_ALEN] = {0x00, 0xB0, 0x52, 0x00, 0x00, 0x01};
     // FIXME (aw): we probably want to use std::array here
-    uint8_t session_nmk[slac::defs::NMK_LEN];
+    uint8_t session_nmk[slac::defs::NMK_LEN] {};
     void generate_nmk();
     bool ac_mode_five_percent{true};
 

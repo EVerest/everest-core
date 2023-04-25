@@ -10,7 +10,7 @@
 
 class FSMController {
 public:
-    FSMController(Context& ctx);
+    explicit FSMController(Context& ctx);
 
     void signal_new_slac_message(slac::messages::HomeplugMessage&);
     void signal_reset();
