@@ -25,6 +25,7 @@ struct Conf {
     int baud_rate;
     double timeout;
     int read_timeout;
+    bool debug;
 };
 
 class auth_token_providerImpl : public auth_token_providerImplBase {

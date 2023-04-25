@@ -9,8 +9,8 @@
 #include <sstream>
 #include <stdint.h>
 #include <termios.h>
-#include <utils/thread.hpp>
 #include <utils/serial.hpp>
+#include <utils/thread.hpp>
 #include <vector>
 
 enum class PN532Command {
@@ -28,21 +28,24 @@ struct PN532Response {
 };
 
 struct FirmwareVersion : public PN532Message {
-    u_int8_t ic;
-    u_int8_t ver; // TODO: also pre-parsed version string of this
-    u_int8_t rev;
-    u_int8_t support; // TODO: bool flags
+    uint8_t ic;
+    uint8_t ver;     // TODO: also pre-parsed version string of this
+    uint8_t rev;
+    uint8_t support; // TODO: bool flags
+    FirmwareVersion(uint8_t ic, uint8_t ver, uint8_t rev, uint8_t support) :
+        ic(ic), ver(ver), rev(rev), support(support) {
+    }
 };
 
 struct TargetData {
-    u_int8_t tg;
-    u_int8_t sens_res_msb;
-    u_int8_t sens_res_lsb;
-    u_int16_t sens_res;
-    u_int8_t sel_res;
-    u_int8_t nfcid_length;
-    std::vector<u_int8_t> nfcid;
-    std::vector<u_int8_t> ats;
+    uint8_t tg;
+    uint8_t sens_res_msb;
+    uint8_t sens_res_lsb;
+    uint16_t sens_res;
+    uint8_t sel_res;
+    uint8_t nfcid_length;
+    std::vector<uint8_t> nfcid;
+    std::vector<uint8_t> ats;
 
     std::string getNFCID() {
         std::stringstream ss;
@@ -55,7 +58,7 @@ struct TargetData {
 };
 
 struct InListPassiveTargetResponse : public PN532Message {
-    u_int8_t nbtg = 0;
+    uint8_t nbtg = 0;
     std::vector<TargetData> target_data;
 };
 
@@ -73,26 +76,29 @@ public:
     std::future<bool> configureSAM();
     std::future<PN532Response> getFirmwareVersion();
     std::future<PN532Response> inListPassiveTarget();
+    void enableDebug();
 
 private:
-    std::vector<u_int8_t> preamble = {0x00, 0x00, 0xff};
-    u_int8_t postamble = 0x00;
+    std::vector<uint8_t> preamble = {0x00, 0x00, 0xff};
+    uint8_t postamble = 0x00;
     uint8_t host_to_pn532 = 0xd4;
     std::unique_ptr<std::promise<bool>> configure_sam_promise;
     std::unique_ptr<std::promise<PN532Response>> get_firmware_version_promise;
     std::unique_ptr<std::promise<PN532Response>> in_list_passive_target_promise;
     size_t start_of_packet = 0;
     size_t packet_length = 0;
-    size_t data_received = 0;
     bool preamble_start_seen = false;
     bool preamble_seen = false;
     bool first_data = true;
     bool data_length_checksum_valid = false;
-    u_int8_t tfi = 0;
-    u_int8_t command_code = 0;
-    std::vector<u_int8_t> data;
+    uint8_t tfi = 0;
+    uint8_t command_code = 0;
+    std::vector<uint8_t> data;
+    bool debug = false;
 
     void resetDataRead();
+    void parseData();
+    void parseInListPassiveTargetResponse();
 
     // Read thread for serial port
     Everest::Thread readThreadHandle;
