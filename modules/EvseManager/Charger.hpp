@@ -149,6 +149,7 @@ public:
     void processEvent(types::board_support::Event event);
 
     void run();
+    void shutdown();
 
     void requestErrorSequence();
 

@@ -757,6 +757,7 @@ void EvseManager::shutdown() {
     invoke_shutdown(*p_evse);
     invoke_shutdown(*p_energy_grid);
     invoke_shutdown(*p_token_provider);
+    this->charger->shutdown();
 }
 
 types::powermeter::Powermeter EvseManager::get_latest_powermeter_data_billing() {

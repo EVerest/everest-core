@@ -45,7 +45,10 @@ Charger::Charger(const std::unique_ptr<board_support_ACIntf>& r_bsp, const std::
 }
 
 Charger::~Charger() {
-    r_bsp->call_pwm_F();
+    // FIXME: this cannot work since there is no guarantee that r_bsp is still around in shutdown
+    // TODO: do we need a pre-shutdown phase that does cleanup?
+    // r_bsp->call_pwm_F();
+    mainThreadHandle.stop();
 }
 
 void Charger::mainThread() {
@@ -719,6 +722,11 @@ void Charger::pwm_F() {
 void Charger::run() {
     // spawn new thread and return
     mainThreadHandle = std::thread(&Charger::mainThread, this);
+}
+
+void Charger::shutdown() {
+    mainThreadHandle.stop();
+    signalMaxCurrent.disconnect_all();
 }
 
 float Charger::ampereToDutyCycle(float ampere) {
