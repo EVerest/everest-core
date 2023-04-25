@@ -26,6 +26,16 @@ provides:
           If true, EVCC connects to SECC as TLS client
         type: boolean
         default: false
+      ciphersuites:
+        description: >-
+          Ciphersuites used for EVCC TLS client
+        type: string
+        default: TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256:TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256
+      keystorePassword:
+        description: >-
+          Password for the EVCC keystore. This is and should only be used for simulation purposes
+        type: string
+        default: "123456"
   ev:
     interface: ISO15118_ev
     description: This module implements the ISO15118-2 implementation of an EV
