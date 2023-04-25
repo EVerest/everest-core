@@ -605,7 +605,12 @@ void EvseManager::ready() {
     charger->signalMaxCurrent.connect([this](float ampere) {
         // The charger changed the max current setting. Forward to HLC
         if (get_hlc_enabled()) {
-            r_hlc[0]->call_set_AC_EVSEMaxCurrent(ampere);
+            try {
+                r_hlc[0]->call_set_AC_EVSEMaxCurrent(ampere);
+            } catch (const EverestShuttingDown& e) {
+                // shutting down
+                this->charger->signalMaxCurrent.disconnect_all();
+            }
         }
     });
 

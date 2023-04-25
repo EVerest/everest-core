@@ -71,12 +71,17 @@ void Charger::mainThread() {
 
         stateMutex.lock();
 
-        // update power limits
-        powerAvailable();
+        try {
+            // update power limits
+            powerAvailable();
 
-        // Run our own state machine update (i.e. run everything that needs
-        // to be done on regular intervals independent from events)
-        runStateMachine();
+            // Run our own state machine update (i.e. run everything that needs
+            // to be done on regular intervals independent from events)
+            runStateMachine();
+        } catch (const EverestShuttingDown& e) {
+            // shutting down
+            break;
+        }
 
         stateMutex.unlock();
     }
