@@ -757,6 +757,8 @@ void EvseManager::shutdown() {
     invoke_shutdown(*p_evse);
     invoke_shutdown(*p_energy_grid);
     invoke_shutdown(*p_token_provider);
+    this->energyThreadHandle.stop();
+    this->telemetryThreadHandle.stop();
     this->charger->shutdown();
 }
 

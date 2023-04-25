@@ -49,6 +49,7 @@ private:
 
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
     std::mutex energy_mutex;
+    Everest::Thread energyObjectThread;
     // types::energy_price_information::PricePerkWh price_limit;
     // types::energy::OptimizerTarget optimizer_target;
     types::energy::EnergyFlowRequest energy_flow_request;

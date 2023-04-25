@@ -83,10 +83,10 @@ void energyImpl::ready() {
     clear_request_schedules();
 
     // start thread to publish our energy object
-    std::thread([this] {
+    this->energyObjectThread = std::thread([this] {
         auto hw_caps = mod->get_hw_capabilities();
 
-        while (true) {
+        while (!this->energyObjectThread.shouldExit()) {
 
             auto s = mod->charger->getCurrentState();
 
@@ -183,7 +183,7 @@ void energyImpl::ready() {
 
             sleep(1);
         }
-    }).detach();
+    });
 }
 
 void energyImpl::shutdown() {
