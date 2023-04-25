@@ -46,7 +46,12 @@ void EnergyManager::enforce_limits(const std::vector<types::energy::EnforcedLimi
             EVLOG_info << fmt::format("\033[1;92m{} Enforce limits {}A {}W \033[1;0m", it.uuid,
                                       it.limits_root_side.value().ac_max_current_A.value_or(-9999),
                                       it.limits_root_side.value().total_power_W.value_or(-9999));
-        r_energy_trunk->call_enforce_limits(it);
+        try {
+            r_energy_trunk->call_enforce_limits(it);
+        } catch (const EverestShuttingDown& e) {
+            // shutting down
+            break;
+        }
     }
 }
 
