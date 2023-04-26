@@ -5,7 +5,7 @@
 #include "log.hpp"
 #include "v2g_ctx.hpp"
 
-using namespace chrono_literals;
+using namespace std::chrono_literals;
 
 namespace module {
 namespace charger {
