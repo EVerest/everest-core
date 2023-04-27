@@ -5,6 +5,8 @@
 #include "log.hpp"
 #include "v2g_ctx.hpp"
 
+const std::string EVEREST_ETC_CERTS_PATH = "etc/everest/certs"; // relativ path of the certs
+
 using namespace std::chrono_literals;
 
 namespace module {
@@ -16,6 +18,7 @@ void ISO15118_chargerImpl::init() {
         return;
     }
 
+    /* Configure if_name and auth_mode */
     v2g_ctx->if_name = mod->config.device.data();
     dlog(DLOG_LEVEL_DEBUG, "if_name %s", v2g_ctx->if_name);
     dlog(DLOG_LEVEL_DEBUG, "auth_mode %s", mod->config.highlevel_authentication_mode.data());
@@ -51,6 +54,20 @@ void ISO15118_chargerImpl::init() {
     }
 
     v2g_ctx->terminate_connection_on_failed_response = mod->config.terminate_connection_on_failed_response;
+
+    v2g_ctx->tls_key_logging = mod->config.tls_key_logging;
+    v2g_ctx->tls_key_logging_path = mod->config.tls_key_logging_path;
+
+    if (mod->config.tls_key_logging == true) {
+        dlog(DLOG_LEVEL_DEBUG, "tls-key-logging enabled (path: %s)", mod->config.tls_key_logging_path.c_str());
+    }
+
+    /*  Determine certs path */
+    if (mod->info.everest_prefix != "/usr") {
+        v2g_ctx->certs_path = mod->info.everest_prefix + "/" + EVEREST_ETC_CERTS_PATH;
+    } else {
+        v2g_ctx->certs_path = "/" + EVEREST_ETC_CERTS_PATH;
+    }
 }
 
 void ISO15118_chargerImpl::ready() {

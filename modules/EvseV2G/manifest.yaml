@@ -42,10 +42,24 @@ config:
       the EV is responsible for closing of the V2G communication session with SessionStop.
     type: boolean
     default: false
+  tls_key_logging:
+    description: >-
+      Enable/Disable the export of TLS session keys (pre-master-secret)
+      during a TLS handshake. This log file can be used to decrypt TLS
+      sessions. Note that this option is for testing and simulation
+      purpose only
+    type: boolean
+    default: false
+  tls_key_logging_path:
+    description:  >-
+      Output directory for the TLS key log file
+    type: string
+    default: /tmp
 provides:
   charger:
     interface: ISO15118_charger
-    description: This module implements the ISO15118-2 implementation of
+    description: >-
+      This module implements the ISO15118-2 implementation of
       an AC or DC charger
 enable_external_mqtt: true
 metadata:

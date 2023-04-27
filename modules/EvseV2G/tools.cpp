@@ -1,12 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2022-2023 chargebyte GmbH
 // Copyright (C) 2022-2023 Contributors to EVerest
+#include "tools.hpp"
+#include "log.hpp"
 #include <arpa/inet.h>
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <ifaddrs.h>
+#include <iomanip>
 #include <math.h>
+#include <sstream>
 #include <stdio.h>
 #include <string>
 #include <string.h>
@@ -14,8 +18,6 @@
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
-#include "log.hpp"
-#include "tools.hpp"
 
 ssize_t safe_read(int fd, void* buf, size_t count) {
     for (;;) {
@@ -301,7 +303,7 @@ uint8_t get_dir_numbered_file_names(char file_names[MAX_PKI_CA_LENGTH][MAX_FILE_
                             strcpy(file_names[idx], dir->d_name);
                             // dlog(DLOG_LEVEL_ERROR,"Cert-file found: %s", &AFileNames[idx]);
                             num_of_files++;
-                            min_idx = min(min_idx, idx);
+                            min_idx = std::min(min_idx, idx);
                         } else {
                             dlog(DLOG_LEVEL_ERROR, "Max. file-name size exceeded. Only %i characters supported",
                                  MAX_FILE_NAME_LENGTH);
@@ -328,4 +330,14 @@ exit:
     closedir(d);
 
     return num_of_files + offset;
+}
+
+std::string convert_to_hex_str(const uint8_t* data, int len) {
+    std::stringstream string_stream;
+    string_stream << std::hex;
+
+    for (int idx = 0; idx < len; ++idx)
+        string_stream << std::setw(2) << std::setfill('0') << (int)data[idx];
+
+    return string_stream.str();
 }

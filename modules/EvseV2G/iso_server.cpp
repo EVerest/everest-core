@@ -604,9 +604,9 @@ static bool publish_iso_payment_details_req(struct iso1PaymentDetailsReqType con
                 goto exit;
             }
 
-            if ((NULL == base64Buffer) ||
-                (0 != mbedtls_base64_encode(base64Buffer, olen, &olen, subCertTmp->Certificate.array[idx].bytes,
-                                            static_cast<size_t>(subCertTmp->Certificate.array[idx].bytesLen)))) {
+            if ((base64Buffer == NULL) ||
+                (mbedtls_base64_encode(base64Buffer, olen, &olen, subCertTmp->Certificate.array[idx].bytes,
+                                       static_cast<size_t>(subCertTmp->Certificate.array[idx].bytesLen)) != 0)) {
                 rv = false;
                 dlog(DLOG_LEVEL_ERROR, "Unable to encode contract sub certificate #%d", idx);
                 goto exit;

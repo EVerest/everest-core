@@ -184,10 +184,11 @@ struct v2g_context {
     struct sockaddr_in6* local_tcp_addr;
     struct sockaddr_in6* local_tls_addr;
 
-    char* privateKeyFilePath;
-    char* certFilePath;
+    std::string certs_path;
+    std::string tls_key_logging_path;
 
-    uint32_t network_read_timeout; /* in milli seconds */
+    uint32_t network_read_timeout;     /* in milli seconds */
+    uint32_t network_read_timeout_tls; /* in milli seconds */
 
     enum tls_security_level tls_security;
 
@@ -202,7 +203,7 @@ struct v2g_context {
     mbedtls_x509_crt v2g_root_crt;
     mbedtls_net_context tls_socket;
     keylogDebugCtx tls_log_ctx;
-    bool end_tls_debug_by_sessionStop;
+    bool tls_key_logging;
     pthread_t tls_thread;
 
     mbedtls_x509_crt mop_root_ca_list;
@@ -213,8 +214,7 @@ struct v2g_context {
 
     struct {
         float evse_ac_current_limit; // default is 0
-        char keyFilePw[MAX_V2G_ROOT_CERTS][MAX_KEY_PW_LEN];
-    } basic_config; // This config will not reseted after beginning of a new charging session
+    } basic_config;                  // This config will not reseted after beginning of a new charging session
 
     /* actual charging state */
     enum V2gMsgTypeId last_v2g_msg;    /* holds the current v2g msg type */

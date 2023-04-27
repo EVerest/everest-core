@@ -618,13 +618,13 @@ uint64_t v2g_session_id_from_exi(bool is_iso, void* exi_in) {
          * send our full session id back to us; this is why we init the id with 0 above
          * and only copy the provided byte len
          */
-        memcpy(&session_id, &hdr->SessionID.bytes, min(sizeof(session_id), hdr->SessionID.bytesLen));
+        memcpy(&session_id, &hdr->SessionID.bytes, std::min((int)sizeof(session_id), (int)hdr->SessionID.bytesLen));
     } else {
         struct dinEXIDocument* req = static_cast<struct dinEXIDocument*>(exi_in);
         struct dinMessageHeaderType* hdr = &req->V2G_Message.Header;
 
         /* see comment above */
-        memcpy(&session_id, &hdr->SessionID.bytes, min(sizeof(session_id), hdr->SessionID.bytesLen));
+        memcpy(&session_id, &hdr->SessionID.bytes, std::min((int)sizeof(session_id), (int)hdr->SessionID.bytesLen));
     }
 
     return session_id;

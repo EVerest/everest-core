@@ -9,25 +9,12 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string>
 #include <sys/time.h>
 #include <time.h>
 
 #define MAX_FILE_NAME_LENGTH 100
 #define MAX_PKI_CA_LENGTH    4 /* leaf up to root certificate */
-
-#define max(a, b)                                                                                                      \
-    ({                                                                                                                 \
-        __typeof__(a) _a = (a);                                                                                        \
-        __typeof__(b) _b = (b);                                                                                        \
-        _a > _b ? _a : _b;                                                                                             \
-    })
-
-#define min(a, b)                                                                                                      \
-    ({                                                                                                                 \
-        __typeof__(a) _a = (a);                                                                                        \
-        __typeof__(b) _b = (b);                                                                                        \
-        _a < _b ? _a : _b;                                                                                             \
-    })
 
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
@@ -121,5 +108,13 @@ bool get_dir_filename(char* file_name, uint8_t file_name_len, const char* path, 
 uint8_t get_dir_numbered_file_names(char file_names[MAX_PKI_CA_LENGTH][MAX_FILE_NAME_LENGTH], const char* path,
                                     const char* prefix, const char* suffix, const uint8_t offset,
                                     const uint8_t max_idx);
+
+/*!
+ * \brief convert_to_hex_str This function converts a array of binary data to hex string.
+ * \param data is the array of binary data.
+ * \param len is length of the array.
+ * \return Returns the converted string.
+ */
+std::string convert_to_hex_str(const uint8_t* data, int len);
 
 #endif /* TOOLS_H */
