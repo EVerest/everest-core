@@ -50,7 +50,7 @@ int FSMController::signal_simple_event(Event ev) {
 void FSMController::run() {
     ctx.log_info("Starting the SLAC state machine");
 
-    auto feed_result = fsm.reset<ResetState>(ctx);
+    feed_result = fsm.reset<ResetState>(ctx);
 
     std::unique_lock<std::mutex> feed_lck(feed_mtx);
 
