@@ -64,7 +64,7 @@ void Charger::mainThread() {
             break;
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        std::this_thread::sleep_for(MAINLOOP_UPDATE_RATE);
 
         stateMutex.lock();
 
@@ -166,6 +166,9 @@ void Charger::runStateMachine() {
             }
 
             if (hlc_use_5percent_current_session) {
+                // FIXME: wait for SLAC to be ready. Teslas are really fast with sending the first slac packet after
+                // enabling PWM.
+                std::this_thread::sleep_for(SLEEP_BEFORE_ENABLING_PWM_HLC_MODE);
                 update_pwm_now(PWM_5_PERCENT);
             }
         }
