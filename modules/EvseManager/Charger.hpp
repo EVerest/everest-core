@@ -292,6 +292,9 @@ private:
     void pwm_F();
 
     types::iso15118_charger::DC_EVSEMaximumLimits currentEvseMaxLimits;
+
+    static constexpr auto SLEEP_BEFORE_ENABLING_PWM_HLC_MODE = std::chrono::seconds(1);
+    static constexpr auto MAINLOOP_UPDATE_RATE = std::chrono::milliseconds(50);
 };
 
 #define CHARGER_ABSOLUTE_MAX_CURRENT double(80.0F)
