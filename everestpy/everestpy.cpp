@@ -265,7 +265,8 @@ int initialize(const std::string& prefix, const std::string& config_file, const 
 
         auto module_configs = config.get_module_configs(module_id);
         auto module_info = config.get_module_info(module_id);
-        module_info.everest_prefix = rs.prefix.string();
+
+        populate_module_info_path_from_runtime_settings(module_info, rs);
         module_info.telemetry_enabled = everest.is_telemetry_enabled();
 
         everest_py.module_callbacks.init(module_configs, module_info);
@@ -322,13 +323,18 @@ PYBIND11_MODULE(everestpy, m) {
     py::class_<ConfigEntry>(m, "ConfigEntry").def(py::init<>());
     py::class_<ConfigMap>(m, "ConfigMap").def(py::init<>());
     py::class_<ModuleConfigs>(m, "ModuleConfigs").def(py::init<>());
+    py::class_<ModuleInfo::Paths>(m, "ModuleInfoPaths")
+        .def(py::init<>())
+        .def_property_readonly("etc", [](const ModuleInfo::Paths& p) { return p.etc.string(); })
+        .def_property_readonly("libexec", [](const ModuleInfo::Paths& p) { return p.libexec.string(); })
+        .def_property_readonly("share", [](const ModuleInfo::Paths& p) { return p.share.string(); });
     py::class_<ModuleInfo>(m, "ModuleInfo")
         .def(py::init<>())
         .def_readonly("name", &ModuleInfo::name)
         .def_readonly("authors", &ModuleInfo::authors)
         .def_readonly("license", &ModuleInfo::license)
         .def_readonly("id", &ModuleInfo::id)
-        .def_readonly("everest_prefix", &ModuleInfo::everest_prefix)
+        .def_readonly("paths", &ModuleInfo::paths)
         .def_readonly("telemetry_enabled", &ModuleInfo::telemetry_enabled);
     py::class_<CmdWithArguments>(m, "CmdWithArguments")
         .def(py::init<>())

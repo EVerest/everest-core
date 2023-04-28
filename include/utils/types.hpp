@@ -6,6 +6,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <filesystem>
 
 #include <boost/any.hpp>
 #include <boost/optional.hpp>
@@ -68,11 +69,17 @@ enum class QOS {
 };
 
 struct ModuleInfo {
+    struct Paths {
+        std::filesystem::path etc;
+        std::filesystem::path libexec;
+        std::filesystem::path share;
+    };
+
     std::string name;
     std::vector<std::string> authors;
     std::string license;
     std::string id;
-    std::string everest_prefix;
+    Paths paths;
     bool telemetry_enabled;
 };
 

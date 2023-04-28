@@ -69,6 +69,12 @@ static std::string get_prefixed_path_from_json(const nlohmann::json& value, cons
     return settings_configs_dir;
 }
 
+void populate_module_info_path_from_runtime_settings(ModuleInfo& mi, const RuntimeSettings& rs) {
+    mi.paths.etc = rs.etc_dir;
+    mi.paths.libexec = rs.modules_dir / mi.name;
+    mi.paths.share = rs.data_dir / defaults::MODULES_DIR / mi.name;
+}
+
 RuntimeSettings::RuntimeSettings(const std::string& prefix_, const std::string& config_) {
     // if prefix or config is empty, we assume they have not been set!
     // if they have been set, check their validity, otherwise bail out!
@@ -141,19 +147,29 @@ RuntimeSettings::RuntimeSettings(const std::string& prefix_, const std::string& 
         }
     }
 
+    {
+        // etc directory
+        const auto default_etc_dir = fs::path(defaults::SYSCONF_DIR) / defaults::NAMESPACE;
+        if (prefix.string() != "/usr") {
+            etc_dir = prefix / default_etc_dir;
+        } else {
+            etc_dir = fs::path("/") / default_etc_dir;
+        }
+        etc_dir = assert_dir(etc_dir.string(), "Default etc directory");
+    }
+
+    {
+        // share directory
+        data_dir =
+            assert_dir((prefix / defaults::DATAROOT_DIR / defaults::NAMESPACE).string(), "Default share directory");
+    }
+
     const auto settings_configs_dir_it = settings.find("configs_dir");
     if (settings_configs_dir_it != settings.end()) {
         auto settings_configs_dir = get_prefixed_path_from_json(*settings_configs_dir_it, prefix);
         configs_dir = assert_dir(settings_configs_dir, "Config provided configs directory");
     } else {
-        auto default_configs_dir = fs::path(defaults::SYSCONF_DIR) / defaults::NAMESPACE;
-        if (prefix.string() != "/usr") {
-            default_configs_dir = prefix / default_configs_dir;
-        } else {
-            default_configs_dir = fs::path("/") / default_configs_dir;
-        }
-
-        configs_dir = assert_dir(default_configs_dir.string(), "Default configs directory");
+        configs_dir = assert_dir(etc_dir.string(), "Default configs directory");
     }
 
     const auto settings_schemas_dir_it = settings.find("schemas_dir");
@@ -161,7 +177,7 @@ RuntimeSettings::RuntimeSettings(const std::string& prefix_, const std::string& 
         const auto settings_schemas_dir = get_prefixed_path_from_json(*settings_schemas_dir_it, prefix);
         schemas_dir = assert_dir(settings_schemas_dir, "Config provided schema directory");
     } else {
-        const auto default_schemas_dir = prefix / defaults::DATAROOT_DIR / defaults::NAMESPACE / defaults::SCHEMAS_DIR;
+        const auto default_schemas_dir = data_dir / defaults::SCHEMAS_DIR;
         schemas_dir = assert_dir(default_schemas_dir.string(), "Default schema directory");
     }
 
@@ -170,8 +186,7 @@ RuntimeSettings::RuntimeSettings(const std::string& prefix_, const std::string& 
         const auto settings_interfaces_dir = get_prefixed_path_from_json(*settings_interfaces_dir_it, prefix);
         interfaces_dir = assert_dir(settings_interfaces_dir, "Config provided interface directory");
     } else {
-        const auto default_interfaces_dir =
-            prefix / defaults::DATAROOT_DIR / defaults::NAMESPACE / defaults::INTERFACES_DIR;
+        const auto default_interfaces_dir = data_dir / defaults::INTERFACES_DIR;
         interfaces_dir = assert_dir(default_interfaces_dir, "Default interface directory");
     }
 
@@ -189,7 +204,7 @@ RuntimeSettings::RuntimeSettings(const std::string& prefix_, const std::string& 
         const auto settings_types_dir = get_prefixed_path_from_json(*settings_types_dir_it, prefix);
         types_dir = assert_dir(settings_types_dir, "Config provided type directory");
     } else {
-        const auto default_types_dir = prefix / defaults::DATAROOT_DIR / defaults::NAMESPACE / defaults::TYPES_DIR;
+        const auto default_types_dir = data_dir / defaults::TYPES_DIR;
         types_dir = assert_dir(default_types_dir, "Default type directory");
     }
 
@@ -198,7 +213,7 @@ RuntimeSettings::RuntimeSettings(const std::string& prefix_, const std::string& 
         const auto settings_www_dir = get_prefixed_path_from_json(*settings_www_dir_it, prefix);
         www_dir = assert_dir(settings_www_dir, "Config provided www directory");
     } else {
-        const auto default_www_dir = prefix / defaults::DATAROOT_DIR / defaults::NAMESPACE / defaults::WWW_DIR;
+        const auto default_www_dir = data_dir / defaults::WWW_DIR;
         www_dir = assert_dir(default_www_dir, "Default www directory");
     }
 
@@ -394,7 +409,7 @@ int ModuleLoader::initialize() {
 
         auto module_configs = config.get_module_configs(this->module_id);
         auto module_info = config.get_module_info(this->module_id);
-        module_info.everest_prefix = rs->prefix.string();
+        populate_module_info_path_from_runtime_settings(module_info, *rs);
         module_info.telemetry_enabled = everest.is_telemetry_enabled();
 
         this->callbacks.init(module_configs, module_info);

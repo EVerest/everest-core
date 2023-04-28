@@ -90,8 +90,12 @@ struct BootException : public std::runtime_error {
     using std::runtime_error::runtime_error;
 };
 
+
+
 struct RuntimeSettings {
     fs::path prefix;
+    fs::path etc_dir;
+    fs::path data_dir;
     fs::path configs_dir;
     fs::path schemas_dir;
     fs::path modules_dir;
@@ -114,6 +118,9 @@ struct RuntimeSettings {
 
     explicit RuntimeSettings(const std::string& prefix, const std::string& config);
 };
+
+// NOTE: this function needs the be called with a pre-initialized ModuleInfo struct
+void populate_module_info_path_from_runtime_settings(ModuleInfo&, const RuntimeSettings& rs);
 
 struct ModuleCallbacks {
     std::function<void(ModuleAdapter module_adapter)> register_module_adapter;

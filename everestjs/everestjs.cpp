@@ -522,6 +522,10 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
 
         // config property
         json module_config = config->get_module_json_config(module_id);
+
+        auto module_info = config->get_module_info(module_id);
+        populate_module_info_path_from_runtime_settings(module_info, rs);
+
         auto module_config_prop = Napi::Object::New(env);
         auto module_config_impl_prop = Napi::Object::New(env);
 
@@ -542,19 +546,29 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
         auto module_info_prop = Napi::Object::New(env);
         // set moduleName property
         module_info_prop.DefineProperty(
-            Napi::PropertyDescriptor::Value("name", Napi::String::New(env, module_name), napi_enumerable));
+            Napi::PropertyDescriptor::Value("name", Napi::String::New(env, module_info.name), napi_enumerable));
 
         // set moduleId property
         module_info_prop.DefineProperty(
-            Napi::PropertyDescriptor::Value("id", Napi::String::New(env, module_id), napi_enumerable));
+            Napi::PropertyDescriptor::Value("id", Napi::String::New(env, module_info.id), napi_enumerable));
 
         // set printable identifier
         module_info_prop.DefineProperty(Napi::PropertyDescriptor::Value(
             "printable_identifier", Napi::String::New(env, module_identifier), napi_enumerable));
 
-        // set everest prefix
-        module_info_prop.DefineProperty(Napi::PropertyDescriptor::Value(
-            "everest_prefix", Napi::String::New(env, prefix), napi_enumerable));
+        auto module_info_paths_prop = Napi::Object::New(env);
+        module_info_paths_prop.DefineProperty(Napi::PropertyDescriptor::Value(
+            "etc", Napi::String::New(env, module_info.paths.etc.string()), napi_enumerable));
+
+        module_info_paths_prop.DefineProperty(Napi::PropertyDescriptor::Value(
+            "libexec", Napi::String::New(env, module_info.paths.libexec.string()), napi_enumerable));
+
+        module_info_paths_prop.DefineProperty(Napi::PropertyDescriptor::Value(
+            "share", Napi::String::New(env, module_info.paths.share.string()), napi_enumerable));
+
+        // add path info property
+        module_info_prop.DefineProperty(
+            Napi::PropertyDescriptor::Value("paths", module_info_paths_prop, napi_enumerable));
 
         // set telemetry_enabled
         module_info_prop.DefineProperty(Napi::PropertyDescriptor::Value(
