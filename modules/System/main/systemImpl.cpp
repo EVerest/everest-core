@@ -21,7 +21,6 @@ const std::string DIAGNOSTICS_UPLOADER = "diagnostics_uploader.sh";
 const std::string FIRMWARE_UPDATER = "firmware_updater.sh";
 const std::string SIGNED_FIRMWARE_DOWNLOADER = "signed_firmware_downloader.sh";
 const std::string SIGNED_FIRMWARE_INSTALLER = "signed_firmware_installer.sh";
-const std::string EVEREST_LIBEXEC_MODULES_PATH = "libexec/everest/modules";
 
 namespace fs = std::filesystem;
 
@@ -45,7 +44,7 @@ fs::path create_temp_file(const fs::path& dir, const std::string& prefix) {
 }
 
 void systemImpl::init() {
-    this->scripts_path = fs::path(mod->info.everest_prefix) / EVEREST_LIBEXEC_MODULES_PATH / mod->info.name;
+    this->scripts_path = mod->info.paths.libexec;
     this->log_upload_running = false;
     this->firmware_download_running = false;
     this->firmware_installation_running = false;

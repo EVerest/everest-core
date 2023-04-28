@@ -14,7 +14,7 @@ function JavaStartedDeferred(mqtt_base_path, module_name, mod) {
     const mqttServerPort = process.env.MQTT_SERVER_PORT || '1883';
     const cmd = 'java';
 
-    const certs_path = `${mod.info.everest_prefix}/etc/everest/certs/client/oem/`;
+    const certs_path = `${mod.info.paths.etc}/certs/client/oem/`;
     const { tls_active } = mod.config.impl.main;
     const { ciphersuites } = mod.config.impl.main;
     const { keystorePassword } = mod.config.impl.main;

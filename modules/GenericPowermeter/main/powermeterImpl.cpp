@@ -7,7 +7,7 @@
 #include <utils/date.hpp>
 #include <utils/yaml_loader.hpp>
 
-const std::string EVEREST_GENERIC_POWERMETER_SHARE_PATH = "/share/everest/modules/GenericPowermeter/models/";
+const std::string MODELS_SUB_DIR = "models";
 
 namespace fs = std::filesystem;
 
@@ -20,7 +20,8 @@ void powermeterImpl::init() {
     if (found != std::string::npos) {
         EVLOG_error << "Error! Substring \"..\" not allowed in model name!\n";
     } else {
-        auto model = this->mod->info.everest_prefix + EVEREST_GENERIC_POWERMETER_SHARE_PATH + config.model + ".yaml";
+        // FIXME (aw): path validation?
+        auto model = this->mod->info.paths.share / MODELS_SUB_DIR / fmt::format("{}.yaml", config.model);
 
         try {
             json powermeter_registers = Everest::load_yaml(model);

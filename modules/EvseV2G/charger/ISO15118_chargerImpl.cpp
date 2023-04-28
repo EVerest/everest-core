@@ -5,7 +5,7 @@
 #include "log.hpp"
 #include "v2g_ctx.hpp"
 
-const std::string EVEREST_ETC_CERTS_PATH = "etc/everest/certs"; // relativ path of the certs
+const std::string CERTS_SUB_DIR = "certs"; // relativ path of the certs
 
 using namespace std::chrono_literals;
 
@@ -62,12 +62,7 @@ void ISO15118_chargerImpl::init() {
         dlog(DLOG_LEVEL_DEBUG, "tls-key-logging enabled (path: %s)", mod->config.tls_key_logging_path.c_str());
     }
 
-    /*  Determine certs path */
-    if (mod->info.everest_prefix != "/usr") {
-        v2g_ctx->certs_path = mod->info.everest_prefix + "/" + EVEREST_ETC_CERTS_PATH;
-    } else {
-        v2g_ctx->certs_path = "/" + EVEREST_ETC_CERTS_PATH;
-    }
+    v2g_ctx->certs_path = mod->info.paths.etc / CERTS_SUB_DIR;
 }
 
 void ISO15118_chargerImpl::ready() {

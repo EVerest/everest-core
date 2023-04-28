@@ -220,7 +220,7 @@ void Setup::publish_application_info() {
     application_info.mode = this->get_mode();
     application_info.default_language = this->get_default_language();
     application_info.current_language = this->get_current_language();
-    application_info.release_metadata_file = this->info.everest_prefix + this->config.release_metadata_file;
+    application_info.release_metadata_file = this->info.paths.etc / this->config.release_metadata_file;
 
     std::string application_info_var = this->var_base + "application_info";
 
