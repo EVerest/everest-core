@@ -8,8 +8,7 @@
 
 namespace module {
 
-const std::string EVEREST_OCPP_SHARE_PATH = "share/everest/ocpp";
-const std::string EVEREST_ETC_CERTS_PATH = "etc/everest/certs";
+const std::string CERTS_SUB_DIR = "certs";
 const std::string INIT_SQL = "init.sql";
 
 namespace fs = std::filesystem;
@@ -106,11 +105,11 @@ void OCPP::init() {
     invoke_init(*p_auth_validator);
     invoke_init(*p_auth_provider);
 
-    this->ocpp_share_path = fs::path(this->info.everest_prefix) / EVEREST_OCPP_SHARE_PATH;
+    this->ocpp_share_path = this->info.paths.share;
 
     const auto etc_certs_path = [&]() {
         if (this->config.CertsPath.empty()) {
-            return fs::path(this->info.everest_prefix) / EVEREST_ETC_CERTS_PATH;
+            return this->info.paths.etc / CERTS_SUB_DIR;
         } else {
             return fs::path(this->config.CertsPath);
         }

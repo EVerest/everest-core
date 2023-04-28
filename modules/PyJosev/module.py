@@ -8,7 +8,7 @@ import sys
 JOSEV_WORK_DIR = Path(__file__).parent / '../../3rd_party/josev'
 sys.path.append(JOSEV_WORK_DIR.as_posix())
 
-EVEREST_ETC_CERTS_PATH = "etc/everest/certs"
+EVEREST_CERTS_SUB_DIR = "certs"
 
 from iso15118.secc import SECCHandler
 from iso15118.secc.controller.simulator import SimEVSEController
@@ -58,7 +58,7 @@ def pre_init(setup, module_config, impl_configs, _module_info):
 def init():
     log.debug("init")
 
-    etc_certs_path = module_info_.everest_prefix + "/" + EVEREST_ETC_CERTS_PATH + "/"
+    etc_certs_path = module_info_.paths.etc + "/" + EVEREST_CERTS_SUB_DIR + "/"
     set_PKI_PATH(etc_certs_path)
 
     net_iface: str = str(module_config_["device"])

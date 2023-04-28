@@ -7,7 +7,6 @@
 
 namespace module {
 
-const std::string EVEREST_OCPP_SHARE_PATH = "share/everest/ocpp201";
 const std::string INIT_SQL = "init.sql";
 
 namespace fs = std::filesystem;
@@ -15,7 +14,7 @@ namespace fs = std::filesystem;
 void OCPP201::init() {
     invoke_init(*p_main);
 
-    this->ocpp_share_path = fs::path(this->info.everest_prefix) / EVEREST_OCPP_SHARE_PATH;
+    this->ocpp_share_path = this->info.paths.share;
 
     auto configured_config_path = fs::path(this->config.ChargePointConfigPath);
 

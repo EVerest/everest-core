@@ -25,7 +25,7 @@ config:
   release_metadata_file:
     description: Location of the release metadata file relative to the EVerest prefix
     type: string
-    default: "/etc/everest/release.json"
+    default: "release.json"
   ap_interface:
     description: Wifi interface for AP mode
     type: string
