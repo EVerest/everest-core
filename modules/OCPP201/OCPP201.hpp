@@ -59,6 +59,11 @@ public:
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
     std::unique_ptr<ocpp::v201::ChargePoint> charge_point;
+
+    // holds operational states of EVSE
+    std::map<int32_t, ocpp::v201::OperationalStatusEnum> operational_evse_states;
+    // holds operational states of Connectors
+    std::map<int32_t, ocpp::v201::OperationalStatusEnum> operational_connector_states;
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:

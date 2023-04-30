@@ -193,6 +193,7 @@ void OCPP201::init() {
     invoke_init(*p_auth_validator);
 
     this->ocpp_share_path = this->info.paths.share;
+    this->operational_evse_states[0] = ocpp::v201::OperationalStatusEnum::Operative;
 
     const auto etc_certs_path = [&]() {
         if (this->config.CertsPath.empty()) {
@@ -252,6 +253,43 @@ void OCPP201::init() {
         }
     };
 
+    callbacks.change_availability_callback = [this](const ocpp::v201::ChangeAvailabilityRequest& request) {
+        if (request.evse.has_value()) {
+            if (request.evse.value().connectorId.has_value()) {
+                // Connector is adressed
+                // Today EVSE in EVerest has always one connector
+                this->operational_connector_states[request.evse.value().id] = request.operationalStatus;
+            } else {
+                // EVSE is adressed
+                this->operational_evse_states[request.evse.value().id] = request.operationalStatus;
+            }
+
+            if (this->operational_evse_states[0] == ocpp::v201::OperationalStatusEnum::Operative and
+                this->operational_evse_states[request.evse.value().id] ==
+                    ocpp::v201::OperationalStatusEnum::Operative and
+                this->operational_connector_states[request.evse.value().id] ==
+                    ocpp::v201::OperationalStatusEnum::Operative) {
+                this->r_evse_manager.at(request.evse.value().id - 1)->call_enable();
+            } else if (request.operationalStatus == ocpp::v201::OperationalStatusEnum::Inoperative) {
+                this->r_evse_manager.at(request.evse.value().id - 1)->call_disable();
+            }
+        } else {
+            // whole charging station is adressed
+            this->operational_evse_states[0] = request.operationalStatus;
+            for (const auto& evse : this->r_evse_manager) {
+                if (this->operational_evse_states[0] == ocpp::v201::OperationalStatusEnum::Operative and
+                    this->operational_evse_states[evse->call_get_id()] ==
+                        ocpp::v201::OperationalStatusEnum::Operative and
+                    this->operational_connector_states[evse->call_get_id()] ==
+                        ocpp::v201::OperationalStatusEnum::Operative) {
+                    evse->call_enable();
+                } else if (request.operationalStatus == ocpp::v201::OperationalStatusEnum::Inoperative) {
+                    evse->call_disable();
+                }
+            }
+        }
+    };
+
     const auto sql_init_path = this->ocpp_share_path / INIT_SQL;
     this->charge_point = std::make_unique<ocpp::v201::ChargePoint>(
         json_config, this->ocpp_share_path.string(), this->config.DatabasePath, sql_init_path.string(),
@@ -260,6 +298,7 @@ void OCPP201::init() {
     int evse_id = 1;
     for (const auto& evse : this->r_evse_manager) {
         evse->subscribe_session_event([this, evse_id](types::evse_manager::SessionEvent session_event) {
+            ocpp::v201::EVSE evse_ref{evse_id}; // in EVerest
             switch (session_event.event) {
             case types::evse_manager::SessionEventEnum::SessionStarted: {
                 this->charge_point->on_session_started(evse_id, 1);
@@ -338,9 +377,13 @@ void OCPP201::init() {
                 break;
             }
             case types::evse_manager::SessionEventEnum::Disabled: {
+                this->charge_point->on_unavailable(evse_id, 1);
                 break;
             }
             case types::evse_manager::SessionEventEnum::Enabled: {
+                this->operational_evse_states[evse_id] = ocpp::v201::OperationalStatusEnum::Operative;
+                this->operational_connector_states[evse_id] = ocpp::v201::OperationalStatusEnum::Operative;
+                this->charge_point->on_operative(evse_id, 1);
                 break;
             }
             }
