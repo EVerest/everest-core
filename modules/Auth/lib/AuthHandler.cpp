@@ -413,7 +413,7 @@ void AuthHandler::handle_session_event(const int connector_id, const SessionEven
     case SessionEventEnum::TransactionStarted:
         this->connectors.at(connector_id)->connector.transaction_active = true;
         this->connectors.at(connector_id)->connector.reserved = false;
-        this->connectors.at(connector_id)->connector.submit_event(Event_Transaction_Started());
+        this->connectors.at(connector_id)->connector.submit_event(ConnectorEvent::TRANSACTION_STARTED);
         this->connectors.at(connector_id)->timeout_timer.stop();
         break;
     case SessionEventEnum::TransactionFinished:
@@ -423,23 +423,23 @@ void AuthHandler::handle_session_event(const int connector_id, const SessionEven
     case SessionEventEnum::SessionFinished:
         this->connectors.at(connector_id)->connector.is_reservable = true;
         this->connectors.at(connector_id)->connector.identifier = boost::none;
-        this->connectors.at(connector_id)->connector.submit_event(Event_Session_Finished());
-        this->connectors.at(connector_id)->connector.submit_event(Event_Error_Cleared());
+        this->connectors.at(connector_id)->connector.submit_event(ConnectorEvent::SESSION_FINISHED);
+        this->connectors.at(connector_id)->connector.submit_event(ConnectorEvent::ERROR_CLEARED);
         this->connectors.at(connector_id)->timeout_timer.stop();
         break;
     case SessionEventEnum::PermanentFault:
-        this->connectors.at(connector_id)->connector.submit_event(Event_Faulted());
+        this->connectors.at(connector_id)->connector.submit_event(ConnectorEvent::FAULTED);
         break;
     case SessionEventEnum::Error:
-        this->connectors.at(connector_id)->connector.submit_event(Event_Faulted());
+        this->connectors.at(connector_id)->connector.submit_event(ConnectorEvent::FAULTED);
         break;
 
     case SessionEventEnum::Disabled:
-        this->connectors.at(connector_id)->connector.submit_event(Event_Disable());
+        this->connectors.at(connector_id)->connector.submit_event(ConnectorEvent::DISABLE);
         break;
 
     case SessionEventEnum::Enabled:
-        this->connectors.at(connector_id)->connector.submit_event(Event_Enable());
+        this->connectors.at(connector_id)->connector.submit_event(ConnectorEvent::ENABLE);
         break;
 
     case SessionEventEnum::ReservationStart:

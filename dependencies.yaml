@@ -1,7 +1,7 @@
 ---
 everest-framework:
   git: https://github.com/EVerest/everest-framework.git
-  git_tag: f621465
+  git_tag: 2f4e8a2
 sigslot:
   git: https://github.com/palacaze/sigslot
   git_tag: v1.2.0
@@ -28,7 +28,7 @@ libslac:
   git_tag: fee9f12
 libfsm:
   git: https://github.com/EVerest/libfsm.git
-  git_tag: v0.1.0
+  git_tag: v0.2.0
 
 # JsCarV2G and JsRiseV2G module
 RISE-V2G:
@@ -38,7 +38,7 @@ RISE-V2G:
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: 940eaf8
+  git_tag: be1d2c5
 # Josev
 Josev:
   git: https://github.com/EVerest/ext-switchev-iso15118.git

@@ -26,6 +26,7 @@ struct Conf {
     int number_of_sounds;
     bool ac_mode_five_percent;
     int set_key_timeout_ms;
+    int sounding_attenuation_adjustment;
     bool publish_mac_on_match_cnf;
     bool publish_mac_on_first_parm_req;
 };

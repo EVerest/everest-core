@@ -8,7 +8,7 @@
 
 #include "matching.hpp"
 
-static auto create_cm_set_key_req(uint8_t* session_nmk) {
+static auto create_cm_set_key_req(uint8_t const * session_nmk) {
     slac::messages::cm_set_key_req set_key_req;
 
     set_key_req.key_type = slac::defs::CM_SET_KEY_REQ_KEY_TYPE_NMK;
@@ -25,33 +25,38 @@ static auto create_cm_set_key_req(uint8_t* session_nmk) {
     return set_key_req;
 }
 
-int ResetState::enter() {
+void ResetState::enter() {
     ctx.log_info("Entered Reset state");
-
-    auto set_key_req = create_cm_set_key_req(ctx.session_nmk);
-
-    ctx.send_slac_message(ctx.plc_peer_mac, set_key_req);
-
-    return ctx.set_key_timeout_ms;
 }
 
-FSM::NextStateType ResetState::handle_event(Event ev) {
+FSMSimpleState::HandleEventReturnType ResetState::handle_event(AllocatorType& sa, Event ev) {
     if (ev == Event::SLAC_MESSAGE) {
         if (handle_slac_message(ctx.slac_message_payload)) {
-            return create_with_context<IdleState>();
+            return sa.create_simple<IdleState>(ctx);
         } else {
-            return fsm::NextStateOption::PASS_ON;
+            return sa.PASS_ON;
         }
     } else if (ev == Event::RESET) {
-        return create_with_context<ResetState>();
+        return sa.create_simple<ResetState>(ctx);
     } else {
-        return fsm::NextStateOption::PASS_ON;
+        return sa.PASS_ON;
     }
 }
 
-FSM::CallbackResultType ResetState::callback() {
-    ctx.log_info("CM_SET_KEY_REQ timeout - failed to setup NMK key");
-    return fsm::DO_NOT_CALL_ME_AGAIN;
+FSMSimpleState::CallbackReturnType ResetState::callback() {
+    const auto& cfg = ctx.slac_config;
+    if (setup_has_been_send == false) {
+        auto set_key_req = create_cm_set_key_req(cfg.session_nmk);
+
+        ctx.send_slac_message(cfg.plc_peer_mac, set_key_req);
+
+        setup_has_been_send = true;
+
+        return cfg.set_key_timeout_ms;
+    } else {
+        ctx.log_info("CM_SET_KEY_REQ timeout - failed to setup NMK key");
+        return {};
+    }
 }
 
 bool ResetState::handle_slac_message(slac::messages::HomeplugMessage& message) {
@@ -67,53 +72,50 @@ bool ResetState::handle_slac_message(slac::messages::HomeplugMessage& message) {
     }
 }
 
-int IdleState::enter() {
+void IdleState::enter() {
     ctx.signal_state("UNMATCHED");
     ctx.log_info("Entered Idle state");
-    return fsm::DO_NOT_CALL_ME_AGAIN;
 }
 
-FSM::NextStateType IdleState::handle_event(Event ev) {
+FSMSimpleState::HandleEventReturnType IdleState::handle_event(AllocatorType& sa, Event ev) {
     if (ev == Event::ENTER_BCD) {
-        return create_with_context<MatchingState>();
+        return sa.create_simple<MatchingState>(ctx);
     } else if (ev == Event::RESET) {
-        return create_with_context<ResetState>();
+        return sa.create_simple<ResetState>(ctx);
     } else {
-        return fsm::NextStateOption::PASS_ON;
+        return sa.PASS_ON;
     }
 }
 
-int MatchedState::enter() {
+void MatchedState::enter() {
     ctx.signal_state("MATCHED");
     ctx.signal_dlink_ready(true);
     ctx.log_info("Entered Matched state");
-    return fsm::DO_NOT_CALL_ME_AGAIN;
 }
 
-FSM::NextStateType MatchedState::handle_event(Event ev) {
+FSMSimpleState::HandleEventReturnType MatchedState::handle_event(AllocatorType& sa, Event ev) {
     if (ev == Event::RESET) {
-        return create_with_context<ResetState>();
+        return sa.create_simple<ResetState>(ctx);
     } else {
-        return fsm::NextStateOption::PASS_ON;
+        return sa.PASS_ON;
     }
 }
 
 void MatchedState::leave() {
     // FIXME (aw): do we want to generate the NMK here?
-    ctx.generate_nmk();
+    ctx.slac_config.generate_nmk();
     ctx.signal_dlink_ready(false);
 }
 
-int FailedState::enter() {
+void FailedState::enter() {
     ctx.signal_error_routine_request();
     ctx.log_info("Entered Failed state");
-    return fsm::DO_NOT_CALL_ME_AGAIN;
 }
 
-FSM::NextStateType FailedState::handle_event(Event ev) {
+FSMSimpleState::HandleEventReturnType FailedState::handle_event(AllocatorType& sa, Event ev) {
     if (ev == Event::RESET) {
-        return create_with_context<ResetState>();
+        return sa.create_simple<ResetState>(ctx);
     } else {
-        return fsm::NextStateOption::PASS_ON;
+        return sa.PASS_ON;
     }
 }

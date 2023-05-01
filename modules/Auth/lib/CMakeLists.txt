@@ -19,14 +19,10 @@ target_include_directories(auth_handler PRIVATE
 add_dependencies(auth_handler generate_cpp_files)
 
 target_link_libraries(auth_handler
-PUBLIC
-    fsm::fsm
 PRIVATE
-    everest::log
     everest::timer
     date::date
     date::date-tz
-    nlohmann_json::nlohmann_json
     everest::framework
 )
 

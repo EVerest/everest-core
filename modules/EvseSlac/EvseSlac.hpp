@@ -15,7 +15,6 @@
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
-#include <sigslot/signal.hpp>
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -28,12 +27,11 @@ public:
     EvseSlac(const ModuleInfo& info, std::unique_ptr<slacImplBase> p_main, Conf& config) :
         ModuleBase(info), p_main(std::move(p_main)), config(config){};
 
-    const Conf& config;
     const std::unique_ptr<slacImplBase> p_main;
+    const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
-    sigslot::signal<std::string> signal_ev_mac_address;
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:

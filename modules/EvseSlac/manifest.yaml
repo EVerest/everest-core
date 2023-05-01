@@ -28,6 +28,10 @@ provides:
         description: Timeout for CM_SET_KEY.REQ. Default works for QCA7000/QCA7005/CG5317.
         type: integer
         default: 500
+      sounding_attenuation_adjustment:
+        description: Offset in dB that should be added to the calculated sounding attenuation
+        type: integer
+        default: 0
       publish_mac_on_match_cnf:
         description: >-
           Publish the EV MAC address on the token_provider interface when matching is confirmed (CM_SLAC_MATCH.CNF).

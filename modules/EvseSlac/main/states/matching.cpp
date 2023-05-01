@@ -3,6 +3,7 @@
 #include "matching.hpp"
 
 #include <cstring>
+#include <optional>
 
 #include <fmt/format.h>
 
@@ -56,20 +57,18 @@ bool all_sessions_failed(const std::vector<MatchingSession>& sessions) {
 //
 // Matching state related
 //
-int MatchingState::enter() {
+void MatchingState::enter() {
     ctx.signal_state("MATCHING");
     ctx.log_info("Entered Matching state, waiting for CM_SLAC_PARM_REQ");
     // timeout for getting CM_SLAC_PARM_REQ
     timeout_slac_parm_req =
         std::chrono::steady_clock::now() + std::chrono::milliseconds(slac::defs::TT_EVSE_SLAC_INIT_MS);
-
-    return slac::defs::TT_EVSE_SLAC_INIT_MS;
 }
 
-FSM::CallbackResultType MatchingState::callback() {
+FSMSimpleState::CallbackReturnType MatchingState::callback() {
     // check timeouts
     auto now_tp = std::chrono::steady_clock::now();
-    int call_back_ms = fsm::DO_NOT_CALL_ME_AGAIN;
+    std::optional<FSMReturnType> call_back_ms;
 
     if (!seen_slac_parm_req) {
         if (now_tp >= timeout_slac_parm_req) {
@@ -92,7 +91,7 @@ FSM::CallbackResultType MatchingState::callback() {
 
             auto remaining_ms = remaining_milliseconds(session.next_timeout, now_tp);
             if (remaining_ms > 0) {
-                if (call_back_ms == fsm::DO_NOT_CALL_ME_AGAIN || call_back_ms > remaining_ms) {
+                if (call_back_ms.has_value() == false || *call_back_ms > remaining_ms) {
                     call_back_ms = remaining_ms;
                 }
                 break;
@@ -111,7 +110,7 @@ FSM::CallbackResultType MatchingState::callback() {
                 session_log(ctx, session, "Waiting for CM_ATTEN_CHAR_RSP timeouted -> failed");
                 session.state = MatchingSubState::FAILED;
             } else if (session.state == MatchingSubState::WAIT_FOR_SLAC_MATCH) {
-                session_log(ctx, session, "Wating for CM_SLAC_MATCH_REQ timouted -> failed");
+                session_log(ctx, session, "Wating for CM_SLAC_MATCH_REQ timeouted -> failed");
                 session.state = MatchingSubState::FAILED;
             }
         }
@@ -121,31 +120,34 @@ FSM::CallbackResultType MatchingState::callback() {
         }
     }
 
-    return call_back_ms;
+    if (call_back_ms.has_value() == false) {
+        // FIXME (aw): this should not happen, should we assert here or something similar?
+    }
+    return *call_back_ms;
 }
 
-FSM::NextStateType MatchingState::handle_event(Event ev) {
+FSMSimpleState::HandleEventReturnType MatchingState::handle_event(AllocatorType& sa, Event ev) {
     if (ev == Event::SLAC_MESSAGE) {
         handle_slac_message(ctx.slac_message_payload);
-        return fsm::NextStateOption::HANDLED_INTERNALLY;
+        return sa.HANDLED_INTERNALLY;
     } else if (ev == Event::RESET) {
-        return create_with_context<ResetState>();
+        return sa.create_simple<ResetState>(ctx);
     } else if (ev == Event::MATCH_COMPLETE) {
-        return create_with_context<MatchedState>();
+        return sa.create_simple<MatchedState>(ctx);
     } else if (ev == Event::RETRY_MATCHING) {
         num_retries++;
         if (num_retries == slac::defs::C_EV_MATCH_RETRY) {
             ctx.log_info("Reached retry limit for matching");
-            return create_with_context<FailedState>();
+            return sa.create_simple<FailedState>(ctx);
         }
 
         // otherwise, reset timeout
         timeout_slac_parm_req =
             std::chrono::steady_clock::now() + std::chrono::milliseconds(slac::defs::TT_EVSE_SLAC_INIT_MS);
-        return fsm::NextStateOption::HANDLED_INTERNALLY;
+        return sa.HANDLED_INTERNALLY;
     } else if (ev == Event::FAILED) {
-        return create_with_context<FailedState>();
+        return sa.create_simple<FailedState>(ctx);
     }
 
-    return fsm::NextStateOption::PASS_ON;
+    return sa.PASS_ON;
 }

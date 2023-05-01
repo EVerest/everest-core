@@ -19,16 +19,10 @@ target_sources(${MODULE_NAME}
         main/fsm_controller.cpp
 )
 
-target_include_directories(${MODULE_NAME}
-    PRIVATE
-        libfsm
-)
-
 target_link_libraries(${MODULE_NAME}
     PRIVATE
         slac::slac
         fsm::fsm
-        Pal::Sigslot
 )
 
 add_executable(slac_test)
@@ -41,14 +35,10 @@ target_sources(slac_test
         main/states/matching_handle_slac.cpp
 )
 
-target_include_directories(slac_test
-    PRIVATE
-        libfsm
-)
-
 target_link_libraries(slac_test
     PRIVATE
         slac::slac
+        fsm::fsm
         fmt::fmt
 )
 target_compile_features(slac_test PRIVATE cxx_std_17)

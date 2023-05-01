@@ -5,12 +5,13 @@
 
 #include "../fsm.hpp"
 
-struct ResetState : public FSMBaseState {
-    using FSMBaseState::FSMBaseState;
+struct ResetState : public FSMSimpleState {
+    using FSMSimpleState::FSMSimpleState;
 
-    int enter() final;
-    FSM::CallbackResultType callback() final;
-    FSM::NextStateType handle_event(Event ev) final;
+    HandleEventReturnType handle_event(AllocatorType&, Event) final;
+
+    void enter() final;
+    CallbackReturnType callback() final;
 
     // for now returns true if CM_SET_KEY_CNF is received
     bool handle_slac_message(slac::messages::HomeplugMessage&);
@@ -18,26 +19,29 @@ struct ResetState : public FSMBaseState {
     bool setup_has_been_send{false};
 };
 
-struct IdleState : public FSMBaseState {
-    using FSMBaseState::FSMBaseState;
+struct IdleState : public FSMSimpleState {
+    using FSMSimpleState::FSMSimpleState;
 
-    int enter() final;
-    FSM::NextStateType handle_event(Event ev) final;
+    HandleEventReturnType handle_event(AllocatorType&, Event) final;
+
+    void enter() final;
 };
 
-struct MatchedState : public FSMBaseState {
-    using FSMBaseState::FSMBaseState;
+struct MatchedState : public FSMSimpleState {
+    using FSMSimpleState::FSMSimpleState;
 
-    int enter() final;
+    HandleEventReturnType handle_event(AllocatorType&, Event) final;
+
+    void enter() final;
     void leave() final;
-    FSM::NextStateType handle_event(Event ev) final;
 };
 
-struct FailedState : public FSMBaseState {
-    using FSMBaseState::FSMBaseState;
+struct FailedState : public FSMSimpleState {
+    using FSMSimpleState::FSMSimpleState;
 
-    int enter() final;
-    FSM::NextStateType handle_event(Event ev) final;
+    HandleEventReturnType handle_event(AllocatorType&, Event) final;
+
+    void enter() final;
 };
 
 #endif // EVSE_SLAC_STATES_OTHERS_HPP

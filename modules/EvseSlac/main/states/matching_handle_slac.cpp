@@ -41,7 +41,7 @@ static auto create_cm_slac_parm_cnf(const MatchingSession& session) {
     return param_confirm;
 }
 
-static auto create_cm_atten_char_ind(const MatchingSession& session) {
+static auto create_cm_atten_char_ind(const MatchingSession& session, int atten_offset = 0) {
     slac::messages::cm_atten_char_ind atten_char_ind;
 
     atten_char_ind.application_type = slac::defs::COMMON_APPLICATION_TYPE;
@@ -56,7 +56,7 @@ static auto create_cm_atten_char_ind(const MatchingSession& session) {
     atten_char_ind.attenuation_profile.num_groups = slac::defs::AAG_LIST_LEN;
     if (session.captured_sounds != 0) {
         for (int i = 0; i < slac::defs::AAG_LIST_LEN; ++i) {
-            atten_char_ind.attenuation_profile.aag[i] = session.captured_aags[i] / session.captured_sounds;
+            atten_char_ind.attenuation_profile.aag[i] = session.captured_aags[i] / session.captured_sounds + atten_offset;
         }
     } else {
         // FIXME (aw): what to do here, if we didn't receive any sounds?
@@ -269,7 +269,7 @@ void MatchingState::handle_cm_slac_match_req(const slac::messages::cm_slac_match
 
     session_log(ctx, *session, "Received CM_SLAC_MATCH_REQ, sending CM_SLAC_MATCH_CNF -> session complete");
 
-    auto match_confirm = create_cm_slac_match_cnf(*session, msg, ctx.session_nmk);
+    auto match_confirm = create_cm_slac_match_cnf(*session, msg, ctx.slac_config.session_nmk);
 
     ctx.send_slac_message(tmp_ev_mac, match_confirm);
 
@@ -283,7 +283,7 @@ void MatchingState::handle_cm_slac_match_req(const slac::messages::cm_slac_match
 void MatchingState::finalize_sounding(MatchingSession& session) {
     session.state = MatchingSubState::WAIT_FOR_ATTEN_CHAR_RSP;
 
-    auto atten_char = create_cm_atten_char_ind(session);
+    auto atten_char = create_cm_atten_char_ind(session, ctx.slac_config.sounding_atten_adjustment);
 
     ctx.send_slac_message(session.ev_mac, atten_char);
 
