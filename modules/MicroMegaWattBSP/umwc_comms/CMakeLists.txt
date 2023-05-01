@@ -18,18 +18,19 @@ target_sources(umwc_comms
         evSerial.cpp
         protobuf/hi2lo.pb.c
         protobuf/lo2hi.pb.c
-        nanopb/pb_decode.c
-        nanopb/pb_encode.c
-        nanopb/pb_common.c
 )
 
-target_include_directories(umwc_comms PUBLIC "${PROJECT_BINARY_DIR}" PUBLIC "nanopb" PUBLIC "protobuf" PUBLIC "../common")
+target_include_directories(umwc_comms
+    PUBLIC
+        "${PROJECT_BINARY_DIR}"
+        protobuf
+)
 
 target_link_libraries(umwc_comms
     PUBLIC
         date::date-tz
+        everest::nanopb
     PRIVATE
-        Threads::Threads
         Pal::Sigslot
         everest::framework
 )

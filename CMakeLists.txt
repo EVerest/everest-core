@@ -70,6 +70,8 @@ else()
     find_package(pugixml REQUIRED)
 endif()
 
+add_subdirectory(lib/3rd_party)
+
 include(ev-project-bootstrap)
 
 ev_add_project()
