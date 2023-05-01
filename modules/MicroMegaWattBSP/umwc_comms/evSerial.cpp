@@ -1,24 +1,25 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 #include "evSerial.h"
-#include "hi2lo.pb.h"
-#include "lo2hi.pb.h"
-#include "pb_decode.h"
-#include "pb_encode.h"
+
+#include <cerrno>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <string>
-
-#include <errno.h>
-#include <fcntl.h>
-#include <string.h>
-
-#include <unistd.h>
-
 #include <thread>
+
+#include <fcntl.h>
+#include <unistd.h>
 
 #include <date/date.h>
 #include <date/tz.h>
+
+#include <nanopb/pb_decode.h>
+#include <nanopb/pb_encode.h>
+
+#include "hi2lo.pb.h"
+#include "lo2hi.pb.h"
 
 evSerial::evSerial() {
     fd = 0;
