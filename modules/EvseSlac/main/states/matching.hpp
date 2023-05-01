@@ -45,13 +45,13 @@ struct MatchingSession {
     slac::messages::cm_atten_char_ind calculate_avg() const;
 };
 
-struct MatchingState : public FSMBaseState {
-    using FSMBaseState::FSMBaseState;
+struct MatchingState : public FSMSimpleState {
+    using FSMSimpleState::FSMSimpleState;
 
-    FSM::NextStateType handle_event(Event ev) final;
+    HandleEventReturnType handle_event(AllocatorType&, Event) final;
 
-    int enter() final;
-    FSM::CallbackResultType callback() final;
+    void enter() final;
+    CallbackReturnType callback() final;
 
     std::vector<MatchingSession> sessions;
 

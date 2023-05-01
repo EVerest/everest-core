@@ -19,8 +19,11 @@ enum class Event {
     FAILED,
 };
 
-using FSM = fsm::FSM<Event>;
-using FSMBaseState = fsm::StateWithContext<FSM::BaseType, Context>;
-using FSMCompoundState = fsm::StateWithContext<FSM::CompoundType, Context>;
+using FSMReturnType = int;
+
+using FSM = fsm::FSM<Event, FSMReturnType>;
+using FSMSimpleState = fsm::states::StateWithContext<FSM::SimpleStateType, Context>;
+using FSMCompoundState = fsm::states::StateWithContext<FSM::CompoundStateType, Context>;
+
 
 #endif // EVSE_SLAC_FSM_HPP

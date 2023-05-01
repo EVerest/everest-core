@@ -37,21 +37,33 @@ struct ContextCallbacks {
     std::function<void(const std::string&)> log{nullptr};
 };
 
+struct EvseSlacConfig {
+    // MAC address of our (EVSE) PLC modem
+    // FIXME (aw): is that used somehow?
+    uint8_t plc_peer_mac[ETH_ALEN] = {0x00, 0xB0, 0x52, 0x00, 0x00, 0x01};
+
+    // FIXME (aw): we probably want to use std::array here
+    void generate_nmk();
+    uint8_t session_nmk[slac::defs::NMK_LEN]{};
+
+    // flag for using 5% PWM in AC mode
+    bool ac_mode_five_percent{true};
+
+    // timeout for CM_SET_KEY.REQ
+    int set_key_timeout_ms = 500;
+
+    // offset for adjusting the calculated sounding attenuation
+    int sounding_atten_adjustment = 0;
+};
+
 struct Context {
     explicit Context(const ContextCallbacks& callbacks_) : callbacks(callbacks_){};
+
+    EvseSlacConfig slac_config{};
 
     // event specific payloads
     // FIXME (aw): due to the synchroneous nature of the fsm, this could be even a ptr/ref
     slac::messages::HomeplugMessage slac_message_payload;
-
-    // peer mac
-    uint8_t plc_peer_mac[ETH_ALEN] = {0x00, 0xB0, 0x52, 0x00, 0x00, 0x01};
-    // FIXME (aw): we probably want to use std::array here
-    uint8_t session_nmk[slac::defs::NMK_LEN] {};
-    void generate_nmk();
-    bool ac_mode_five_percent{true};
-
-    int set_key_timeout_ms = 500;
 
     // FIXME (aw): message should be const, but libslac doesn't allow for const ptr - needs changes in libslac
     template <typename SlacMessageType> void send_slac_message(const uint8_t* mac, SlacMessageType& message) {

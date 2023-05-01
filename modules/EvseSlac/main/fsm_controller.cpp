@@ -13,7 +13,7 @@ void FSMController::signal_new_slac_message(slac::messages::HomeplugMessage& msg
     {
         const std::lock_guard<std::mutex> feed_lck(feed_mtx);
         ctx.slac_message_payload = msg;
-        feed_result = fsm.feed_event(Event::SLAC_MESSAGE);
+        fsm.handle_event(Event::SLAC_MESSAGE);
     }
 
     new_event = true;
@@ -25,56 +25,55 @@ void FSMController::signal_reset() {
 }
 
 bool FSMController::signal_enter_bcd() {
-    return (signal_simple_event(Event::ENTER_BCD) != fsm::EVENT_UNHANDLED);
+    return signal_simple_event(Event::ENTER_BCD);
 }
 
 bool FSMController::signal_leave_bcd() {
-    return (signal_simple_event(Event::LEAVE_BCD) != fsm::EVENT_UNHANDLED);
+    return signal_simple_event(Event::LEAVE_BCD);
 }
 
-int FSMController::signal_simple_event(Event ev) {
-    int feed_result_copy;
-
-    {
-        const std::lock_guard<std::mutex> feed_lck(feed_mtx);
-        feed_result = fsm.feed_event(ev);
-        feed_result_copy = feed_result;
-    }
+bool FSMController::signal_simple_event(Event ev) {
+    const std::lock_guard<std::mutex> feed_lck(feed_mtx);
+    auto event_result = fsm.handle_event(ev);
 
     new_event = true;
     new_event_cv.notify_all();
 
-    return feed_result_copy;
+    return event_result == fsm::HandleEventResult::SUCCESS;
 }
 
 void FSMController::run() {
     ctx.log_info("Starting the SLAC state machine");
 
-    feed_result = fsm.reset<ResetState>(ctx);
+    fsm.reset<ResetState>(ctx);
 
     std::unique_lock<std::mutex> feed_lck(feed_mtx);
 
     running = true;
 
     while (true) {
-        if (feed_result == 0 || feed_result == fsm::EVENT_HANDLED_INTERNALLY) {
+        auto feed_result = fsm.feed();
+
+        if (feed_result.transition()) {
             // call immediately again
-        } else if (feed_result == fsm::EVENT_UNHANDLED) {
-            // FIXME (aw): what to do here?
-            // ENABLE_ME DEBUG
-        } else if (feed_result == fsm::DO_NOT_CALL_ME_AGAIN) {
-            new_event_cv.wait(feed_lck, [this] { return new_event; });
+            continue;
+        } else if (feed_result.internal_error() || feed_result.unhandled_event()) {
+            // FIXME (aw): would need to log here!
+        } else if (feed_result.has_value() == true) {
+            const auto timeout = *feed_result;
+            if (timeout == 0) {
+                // call feed directly again
+                continue;
+            }
+            new_event_cv.wait_for(feed_lck, std::chrono::milliseconds(timeout), [this] { return new_event; });
         } else {
-            new_event_cv.wait_for(feed_lck, std::chrono::milliseconds(feed_result), [this] { return new_event; });
+            // nothing happened, no return value -> wait for new event
+            new_event_cv.wait(feed_lck, [this] { return new_event; });
         }
 
         if (new_event) {
-            // we got an event and the feed result was just set
+            // we got a new event, reset it and let run feed again
             new_event = false;
-            continue;
         }
-
-        // no new event, so either timeout or all other conditions to call feed again
-        feed_result = fsm.feed();
     }
 }

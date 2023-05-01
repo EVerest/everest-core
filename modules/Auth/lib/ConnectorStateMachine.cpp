@@ -5,97 +5,90 @@
 
 namespace module {
 
-ConnectorStateMachine::ConnectorStateMachine() {
+ConnectorStateMachine::ConnectorStateMachine(ConnectorState initial_state) : state(initial_state) {
+}
 
-    this->controller = std::make_shared<ConnectorStateMachineController>();
-
-    this->sd_available.transitions = [this](const EventBaseType& ev, TransitionType& trans) {
-        switch (ev.id) {
-        case ConnectorStatusTransition::TRANSACTION_STARTED:
-            return trans.set(this->sd_occupied);
-        case ConnectorStatusTransition::FAULTED:
-            return trans.set(this->sd_faulted);
-        case ConnectorStatusTransition::DISABLE:
-            return trans.set(this->sd_unavailable);
+bool ConnectorStateMachine::handle_event(ConnectorEvent event) {
+    switch (state) {
+    case ConnectorState::AVAILABLE:
+        switch (event) {
+        case ConnectorEvent::TRANSACTION_STARTED:
+            state = ConnectorState::OCCUPIED;
+            return true;
+        case ConnectorEvent::DISABLE:
+            state = ConnectorState::UNAVAILABLE;
+            return true;
+        case ConnectorEvent::FAULTED:
+            state = ConnectorState::FAULTED;
+            return true;
         default:
-            return;
+            return false;
         }
-    };
 
-    this->sd_available.handler = [this](FSMContextType& ctx) {
-        this->state = ConnectorState::AVAILABLE;
-    };
-
-    this->sd_occupied.transitions = [this](const EventBaseType& ev, TransitionType& trans) {
-        switch (ev.id) {
-        case ConnectorStatusTransition::SESSION_FINISHED:
-            return trans.set(this->sd_available);
-        case ConnectorStatusTransition::FAULTED:
-            return trans.set(this->sd_faulted_occupied);
+    case ConnectorState::UNAVAILABLE:
+        switch (event) {
+        case ConnectorEvent::ENABLE:
+            state = ConnectorState::AVAILABLE;
+            return true;
+        case ConnectorEvent::FAULTED:
+            state = ConnectorState::UNAVAILABLE_FAULTED;
+            return true;
         default:
-            return;
+            return false;
         }
-    };
 
-    this->sd_occupied.handler = [this](FSMContextType& ctx) {
-        this->state = ConnectorState::OCCUPIED;
-    };
-
-    this->sd_faulted.transitions = [this](const EventBaseType& ev, TransitionType& trans) {
-        switch(ev.id) {
-            case ConnectorStatusTransition::ERROR_CLEARED:
-                return trans.set(this->sd_available);
-            case ConnectorStatusTransition::DISABLE:
-                return trans.set(this->sd_unavailable_faulted);
-            
+    case ConnectorState::FAULTED:
+        switch (event) {
+        case ConnectorEvent::ERROR_CLEARED:
+            state = ConnectorState::AVAILABLE;
+            return true;
+        case ConnectorEvent::DISABLE:
+            state = ConnectorState::UNAVAILABLE_FAULTED;
+            return true;
+        default:
+            return false;
         }
-    };
 
-    this->sd_faulted.handler = [this](FSMContextType& ctx) {
-        this->state = ConnectorState::FAULTED;
-    };
-
-    this->sd_unavailable.transitions = [this](const EventBaseType& ev, TransitionType& trans) {
-        switch(ev.id) {
-            case ConnectorStatusTransition::ENABLE:
-                return trans.set(this->sd_available);
-            case ConnectorStatusTransition::FAULTED:
-                return trans.set(this->sd_unavailable_faulted);
-            
+    case ConnectorState::OCCUPIED:
+        switch (event) {
+        case ConnectorEvent::SESSION_FINISHED:
+            state = ConnectorState::AVAILABLE;
+            return true;
+        case ConnectorEvent::FAULTED:
+            state = ConnectorState::FAULTED_OCCUPIED;
+            return true;
+        default:
+            return false;
         }
-    };
 
-    this->sd_unavailable.handler = [this](FSMContextType& ctx) {
-        this->state = ConnectorState::UNAVAILABLE;
-    };
-
-    this->sd_unavailable_faulted.transitions = [this](const EventBaseType& ev, TransitionType& trans) {
-        switch(ev.id) {
-            case ConnectorStatusTransition::ENABLE:
-                return trans.set(this->sd_faulted);
-            case ConnectorStatusTransition::ERROR_CLEARED:
-                return trans.set(this->sd_unavailable);
-            
+    case ConnectorState::FAULTED_OCCUPIED:
+        switch (event) {
+        case ConnectorEvent::ERROR_CLEARED:
+            state = ConnectorState::OCCUPIED;
+            return true;
+        case ConnectorEvent::SESSION_FINISHED:
+            state = ConnectorState::FAULTED;
+            return true;
+        default:
+            return false;
         }
-    };
 
-    this->sd_unavailable_faulted.handler = [this](FSMContextType& ctx) {
-        this->state = ConnectorState::UNAVAILABLE_FAULTED;
-    };
-
-    this->sd_faulted_occupied.transitions = [this](const EventBaseType& ev, TransitionType& trans) {
-        switch(ev.id) {
-            case ConnectorStatusTransition::SESSION_FINISHED:
-                return trans.set(this->sd_faulted);
-            case ConnectorStatusTransition::ERROR_CLEARED:
-                return trans.set(this->sd_occupied);
-            
+    case ConnectorState::UNAVAILABLE_FAULTED:
+        switch (event) {
+        case ConnectorEvent::ENABLE:
+            state = ConnectorState::FAULTED;
+            return true;
+        case ConnectorEvent::ERROR_CLEARED:
+            state = ConnectorState::UNAVAILABLE;
+            return true;
+        default:
+            return false;
         }
-    };
 
-    this->sd_faulted_occupied.handler = [this](FSMContextType& ctx) {
-        this->state = ConnectorState::FAULTED_OCCUPIED;
-    };
+    default:
+        // could/should not happen!
+        return false;
+    }
 }
 
 ConnectorState ConnectorStateMachine::get_state() const {

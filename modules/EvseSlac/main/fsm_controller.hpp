@@ -19,13 +19,11 @@ public:
     void run();
 
 private:
-    int signal_simple_event(Event ev);
+    bool signal_simple_event(Event ev);
     Context& ctx;
     FSM fsm;
 
     bool running{false};
-
-    int feed_result{0};
 
     std::mutex feed_mtx;
     std::condition_variable new_event_cv;

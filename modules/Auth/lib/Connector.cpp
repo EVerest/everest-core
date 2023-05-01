@@ -5,9 +5,8 @@
 
 namespace module {
 
-void Connector::submit_event(const EventBaseType& event) {
-    this->state_machine.controller->submit_event(event);
-    this->state_machine.controller->feed();
+void Connector::submit_event(ConnectorEvent event) {
+    state_machine.handle_event(event);
 }
 
 ConnectorState Connector::get_state() const {

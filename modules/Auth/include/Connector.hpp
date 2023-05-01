@@ -11,7 +11,6 @@
 #include <ConnectorStateMachine.hpp>
 #include <generated/types/authorization.hpp>
 
-
 namespace module {
 
 /// \brief Validated Identifier struct. Used to keep track of active Identifiers
@@ -23,11 +22,13 @@ struct Identifier {
     boost::optional<std::string> parent_id_token; ///< Parent id token of the id token
 };
 
-
 struct Connector {
-    explicit Connector(int id) : id(id), transaction_active(false), reserved(false), is_reservable(true) {
-        this->state_machine.controller->reset(this->state_machine.sd_available);
-    };
+    explicit Connector(int id) :
+        id(id),
+        transaction_active(false),
+        reserved(false),
+        is_reservable(true),
+        state_machine(ConnectorState::AVAILABLE){};
 
     int id;
 
@@ -45,13 +46,13 @@ struct Connector {
      *
      * @param event
      */
-    void submit_event(const EventBaseType& event);
+    void submit_event(ConnectorEvent event);
 
     /**
      * @brief Returns true if connector is in state UNAVAILABLE or UNAVAILABLE_FAULTED
-     * 
-     * @return true 
-     * @return false 
+     *
+     * @return true
+     * @return false
      */
     bool is_unavailable();
 

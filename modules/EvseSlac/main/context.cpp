@@ -6,6 +6,18 @@
 
 #include <fmt/format.h>
 
+void EvseSlacConfig::generate_nmk() {
+    const std::string CHARACTERS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+    std::random_device random_device;
+    std::mt19937 generator(random_device());
+    std::uniform_int_distribution<> distribution(0, CHARACTERS.size() - 1);
+
+    for (std::size_t i = 0; i < slac::defs::NMK_LEN; ++i) {
+        session_nmk[i] = (uint8_t)CHARACTERS[distribution(generator)];
+    }
+}
+
 void Context::signal_cm_slac_parm_req(const uint8_t* mac) {
     if (callbacks.signal_ev_mac_address_parm_req) {
         auto mac_string = fmt::format("{:02X}", fmt::join(mac, mac + ETH_ALEN, ":"));
@@ -35,18 +47,6 @@ void Context::signal_error_routine_request() {
 void Context::signal_state(const std::string& state) {
     if (callbacks.signal_state) {
         callbacks.signal_state(state);
-    }
-}
-
-void Context::generate_nmk() {
-    const std::string CHARACTERS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-
-    std::random_device random_device;
-    std::mt19937 generator(random_device());
-    std::uniform_int_distribution<> distribution(0, CHARACTERS.size() - 1);
-
-    for (std::size_t i = 0; i < slac::defs::NMK_LEN; ++i) {
-        session_nmk[i] = (uint8_t)CHARACTERS[distribution(generator)];
     }
 }
 
