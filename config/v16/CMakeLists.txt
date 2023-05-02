@@ -20,7 +20,7 @@ list(TRANSFORM OCPP1_6_PROFILE_SCHEMAS
 
 install(
      FILES ${OCPP1_6_PROFILE_SCHEMAS}
-     DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/ocpp/profile_schemas
+     DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/modules/OCPP/profile_schemas
 )
 
 list(APPEND CONFIGS
@@ -32,13 +32,13 @@ list(APPEND CONFIGS
 
 install(
      FILES ${CONFIGS}
-     DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/ocpp
+     DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/modules/OCPP
 )
 
-install(FILES ${SQL_INIT_FILE} DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/ocpp)
+install(FILES ${SQL_INIT_FILE} DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/modules/OCPP)
 
 if(EXISTS ${USER_CONFIG_FILE})
      install(
           FILES ${USER_CONFIG_FILE}
-          DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/ocpp)
+          DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/modules/OCPP)
 endif()

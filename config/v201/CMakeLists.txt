@@ -38,7 +38,7 @@ list(TRANSFORM OCPP2_0_1_PROFILE_SCHEMAS
 
 install(
      FILES ${OCPP2_0_1_PROFILE_SCHEMAS}
-     DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/ocpp201/component_schemas
+     DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/modules/OCPP201/component_schemas
 )
 
 list(APPEND CONFIGS
@@ -48,5 +48,5 @@ list(APPEND CONFIGS
 
 install(
      FILES ${CONFIGS}
-     DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/ocpp201
+     DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/modules/OCPP201
 )
