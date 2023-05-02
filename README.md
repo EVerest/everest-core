@@ -141,3 +141,11 @@ Use the following command to start the charge point. Replace the config with [co
 ```
 
 Type `help` to see a list of possible commands.
+
+## Building the doxygen documentation
+```bash
+  cmake -S . -B build
+  cmake --build build --target doxygen-ocpp
+```
+You will find the generated doxygen documentation at:
+`build/dist/docs/html/index.html`
