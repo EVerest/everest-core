@@ -38,7 +38,7 @@ class EverestTestController(TestController):
         logging.info(f"Central system port: {central_system_port}")
         # modify ocpp config with given central system port and modify everest-core config as well
         everest_config = yaml.safe_load(self.everest_core.everest_config_path.read_text())
-        ocpp_dir = self.everest_core.everest_core_build_path / "dist/share/everest/ocpp"
+        ocpp_dir = self.everest_core.everest_core_build_path / "dist/share/everest/modules/OCPP"
         ocpp_config_path = ocpp_dir / \
             everest_config["active_modules"][self.ocpp_module_id]["config_module"]["ChargePointConfigPath"]
         ocpp_config = json.loads(ocpp_config_path.read_text())
@@ -123,6 +123,6 @@ class EverestTestController(TestController):
         self.mqtt_client.publish(topic, payload)
 
     def copy_occp_config(self):
-        ocpp_dir = self.everest_core.everest_core_build_path / "dist/share/everest/ocpp"
+        ocpp_dir = self.everest_core.everest_core_build_path / "dist/share/everest/modules/OCPP"
         dest_file = os.path.join(ocpp_dir, self.config_path.name)
         shutil.copy(self.config_path, dest_file)
