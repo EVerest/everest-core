@@ -263,7 +263,7 @@ TEST_F(AuthTest, test_two_id_tokens) {
     std::thread t2([this, provided_token_2, &result2]() { result2 = this->auth_handler->on_token(provided_token_2); });
 
     SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::Authorized);
-    td::thread t3([this, session_event]() { this->auth_handler->handle_session_event(1, session_event); });
+    std::thread t3([this, session_event]() { this->auth_handler->handle_session_event(1, session_event); });
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     std::thread t4([this, session_event]() { this->auth_handler->handle_session_event(2, session_event); });
 
