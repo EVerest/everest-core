@@ -42,7 +42,6 @@ target_link_libraries(ocpp
     PUBLIC
         everest::log
         everest::timer
-        fsm::fsm
         websocketpp::websocketpp
     PRIVATE
         Boost::filesystem

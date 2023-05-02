@@ -93,7 +93,6 @@ ChargePoint::ChargePoint(const json& config, const std::string& share_path, cons
     });
 
     this->status = std::make_unique<ChargePointStates>(
-        this->configuration->getNumberOfConnectors(),
         [this](int32_t connector, ChargePointErrorCode errorCode, ChargePointStatus status) {
             this->status_notification_timers.at(connector)->stop();
             this->status_notification_timers.at(connector)->timeout(
@@ -690,7 +689,10 @@ bool ChargePoint::start() {
     connector_availability[0] = AvailabilityType::Operative; // FIXME(kai): fix internal representation in charge
                                                              // point states, we need a different kind of state
                                                              // machine for connector 0 anyway (with reduced states)
-    this->status->run(connector_availability);
+    if (this->configuration->getNumberOfConnectors() + 1 != connector_availability.size()) {
+        throw std::runtime_error("Number of configured connectors doesn't match number of connectors in the database.");
+    }
+    this->status->reset(connector_availability);
 
     this->init_websocket(this->configuration->getSecurityProfile());
     this->websocket->connect(this->configuration->getSecurityProfile());
@@ -1087,13 +1089,13 @@ void ChargePoint::handleChangeAvailabilityRequest(ocpp::Call<ChangeAvailabilityR
                         // TODO(kai): check return value
                         this->enable_evse_callback(connector);
                     }
-                    this->status->submit_event(connector, Event_BecomeAvailable());
+                    this->status->submit_event(connector, FSMEvent::BecomeAvailable);
                 } else {
                     if (this->disable_evse_callback != nullptr) {
                         // TODO(kai): check return value
                         this->disable_evse_callback(connector);
                     }
-                    this->status->submit_event(connector, Event_ChangeAvailabilityToUnavailable());
+                    this->status->submit_event(connector, FSMEvent::ChangeAvailabilityToUnavailable);
                 }
             }
 
@@ -1562,13 +1564,13 @@ void ChargePoint::handleStopTransactionResponse(ocpp::CallResult<StopTransaction
                 // TODO(kai): check return value
                 this->enable_evse_callback(connector);
             }
-            this->status->submit_event(connector, Event_BecomeAvailable());
+            this->status->submit_event(connector, FSMEvent::BecomeAvailable);
         } else {
             if (this->disable_evse_callback != nullptr) {
                 // TODO(kai): check return value
                 this->disable_evse_callback(connector);
             }
-            this->status->submit_event(connector, Event_ChangeAvailabilityToUnavailable());
+            this->status->submit_event(connector, FSMEvent::ChangeAvailabilityToUnavailable);
         }
     }
     this->database_handler->update_transaction_csms_ack(transaction->get_session_id());
@@ -2874,17 +2876,17 @@ void ChargePoint::on_session_started(int32_t connector, const std::string& sessi
     if ((this->status->get_state(connector) == ChargePointStatus::Reserved &&
          session_started_reason == SessionStartedReason::Authorized) ||
         this->status->get_state(connector) != ChargePointStatus::Reserved) {
-        this->status->submit_event(connector, Event_UsageInitiated());
+        this->status->submit_event(connector, FSMEvent::UsageInitiated);
     }
 }
 
 void ChargePoint::on_session_stopped(const int32_t connector, const std::string& session_id) {
     // TODO(piet) fix this when evse manager signals clearance of an error
     if (this->status->get_state(connector) == ChargePointStatus::Faulted) {
-        this->status->submit_event(connector, Event_I1_ReturnToAvailable());
+        this->status->submit_event(connector, FSMEvent::I1_ReturnToAvailable);
     } else if (this->status->get_state(connector) != ChargePointStatus::Reserved &&
                this->status->get_state(connector) != ChargePointStatus::Unavailable) {
-        this->status->submit_event(connector, Event_BecomeAvailable());
+        this->status->submit_event(connector, FSMEvent::BecomeAvailable);
     }
 
     if (this->logging->session_logging_active()) {
@@ -2897,7 +2899,7 @@ void ChargePoint::on_transaction_started(const int32_t& connector, const std::st
                                          boost::optional<int32_t> reservation_id, const ocpp::DateTime& timestamp,
                                          boost::optional<std::string> signed_meter_value) {
     if (this->status->get_state(connector) == ChargePointStatus::Reserved) {
-        this->status->submit_event(connector, Event_UsageInitiated());
+        this->status->submit_event(connector, FSMEvent::UsageInitiated);
     }
 
     auto meter_values_sample_timer = std::make_unique<Everest::SteadyTimer>(&this->io_service, [this, connector]() {
@@ -2906,7 +2908,7 @@ void ChargePoint::on_transaction_started(const int32_t& connector, const std::st
         if (meter_value.has_value()) {
             this->transaction_handler->add_meter_value(connector, meter_value.value());
             this->send_meter_value(connector, meter_value.value());
-            
+
             // this updates the last meter value in the database
             const auto transaction = this->transaction_handler->get_transaction(connector);
             if (transaction != nullptr) {
@@ -2960,7 +2962,7 @@ void ChargePoint::on_transaction_stopped(const int32_t connector, const std::str
     const auto stop_energy_wh = std::make_shared<StampedEnergyWh>(timestamp, energy_wh_import);
     this->transaction_handler->get_transaction(connector)->add_stop_energy_wh(stop_energy_wh);
 
-    this->status->submit_event(connector, Event_TransactionStoppedAndUserActionRequired());
+    this->status->submit_event(connector, FSMEvent::TransactionStoppedAndUserActionRequired);
     this->stop_transaction(connector, reason, id_tag_end);
     this->database_handler->update_transaction(session_id, energy_wh_import, timestamp.to_rfc3339(), id_tag_end,
                                                reason);
@@ -3054,19 +3056,19 @@ ChargePoint::get_filtered_transaction_data(const std::shared_ptr<Transaction>& t
 }
 
 void ChargePoint::on_suspend_charging_ev(int32_t connector) {
-    this->status->submit_event(connector, Event_PauseChargingEV());
+    this->status->submit_event(connector, FSMEvent::PauseChargingEV);
 }
 
 void ChargePoint::on_suspend_charging_evse(int32_t connector) {
-    this->status->submit_event(connector, Event_PauseChargingEVSE());
+    this->status->submit_event(connector, FSMEvent::PauseChargingEVSE);
 }
 
 void ChargePoint::on_resume_charging(int32_t connector) {
-    this->status->submit_event(connector, Event_StartCharging());
+    this->status->submit_event(connector, FSMEvent::StartCharging);
 }
 
 void ChargePoint::on_error(int32_t connector, const ChargePointErrorCode& error) {
-    this->status->submit_event(connector, Event_FaultDetected(ChargePointErrorCode(error)));
+    this->status->submit_error(connector, error);
 }
 
 void ChargePoint::on_log_status_notification(int32_t request_id, std::string log_status) {
@@ -3209,19 +3211,19 @@ void ChargePoint::register_get_15118_ev_certificate_response_callback(
 }
 
 void ChargePoint::on_reservation_start(int32_t connector) {
-    this->status->submit_event(connector, Event_ReserveConnector());
+    this->status->submit_event(connector, FSMEvent::ReserveConnector);
 }
 
 void ChargePoint::on_reservation_end(int32_t connector) {
-    this->status->submit_event(connector, Event_BecomeAvailable());
+    this->status->submit_event(connector, FSMEvent::BecomeAvailable);
 }
 
 void ChargePoint::on_enabled(int32_t connector) {
-    this->status->submit_event(connector, Event_BecomeAvailable());
+    this->status->submit_event(connector, FSMEvent::BecomeAvailable);
 }
 
 void ChargePoint::on_disabled(int32_t connector) {
-    this->status->submit_event(connector, Event_ChangeAvailabilityToUnavailable());
+    this->status->submit_event(connector, FSMEvent::ChangeAvailabilityToUnavailable);
 }
 
 } // namespace v16
