@@ -154,7 +154,6 @@ void ChargePoint::init_websocket(int32_t security_profile) {
         if (this->connection_state_changed_callback != nullptr) {
             this->connection_state_changed_callback(true);
         }
-        this->configuration->setSecurityProfile(security_profile);
         this->message_queue->resume(); //
         this->connected_callback();    //
     });
@@ -163,9 +162,6 @@ void ChargePoint::init_websocket(int32_t security_profile) {
             this->connection_state_changed_callback(false);
         }
         this->message_queue->pause(); //
-        if (this->switch_security_profile_callback != nullptr) {
-            this->switch_security_profile_callback();
-        }
         if (this->ocsp_request_timer != nullptr) {
             this->ocsp_request_timer->stop();
         }
@@ -174,6 +170,9 @@ void ChargePoint::init_websocket(int32_t security_profile) {
         }
         if (this->v2g_certificate_timer != nullptr) {
             this->v2g_certificate_timer->stop();
+        }
+        if (this->switch_security_profile_callback != nullptr) {
+            this->switch_security_profile_callback();
         }
     });
 
@@ -1229,11 +1228,13 @@ void ChargePoint::handleChangeConfigurationRequest(ocpp::Call<ChangeConfiguratio
 void ChargePoint::switchSecurityProfile(int32_t new_security_profile) {
     EVLOG_info << "Switching security profile from " << this->configuration->getSecurityProfile() << " to "
                << new_security_profile;
+    const auto old_security_profile = this->configuration->getSecurityProfile();
+    this->configuration->setSecurityProfile(new_security_profile);
 
     this->init_websocket(new_security_profile);
-    this->switch_security_profile_callback = [this]() {
+    this->switch_security_profile_callback = [this, old_security_profile]() {
         EVLOG_warning << "Switching security profile back to fallback because new profile couldnt connect";
-        this->switchSecurityProfile(this->configuration->getSecurityProfile());
+        this->switchSecurityProfile(old_security_profile);
     };
 
     // connection will only try to be established once. If a connection for this security profile cant be established,
