@@ -333,7 +333,7 @@ static std::map<pid_t, std::string> start_modules(Config& config, MQTTAbstractio
             std::unique_lock<std::mutex> lock(modules_ready_mutex);
             // FIXME (aw): here are race conditions, if the ready handler gets called while modules are shut down!
             modules_ready.at(module_name).ready = json.get<bool>();
-            auto modules_spawned = 0;
+            size_t modules_spawned = 0;
             for (const auto& mod : modules_ready) {
                 std::string text_ready =
                     fmt::format((mod.second.ready) ? TERMINAL_STYLE_OK : TERMINAL_STYLE_ERROR, "ready");
@@ -364,7 +364,7 @@ static std::map<pid_t, std::string> start_modules(Config& config, MQTTAbstractio
         module_it->second.token =
             std::make_shared<TypedHandler>(HandlerType::ExternalMQTT, std::make_shared<Handler>(module_ready_handler));
 
-        mqtt_abstraction.register_handler(topic, module_it->second.token, false, QOS::QOS2);
+        mqtt_abstraction.register_handler(topic, module_it->second.token, QOS::QOS2);
 
         if (std::any_of(standalone_modules.begin(), standalone_modules.end(),
                         [module_name](const auto& element) { return element == module_name; })) {

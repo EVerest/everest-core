@@ -4,6 +4,8 @@
 #include "utils.hpp"
 
 void JsExecCtx::tramp(Napi::Env env, Napi::Function callback, std::nullptr_t* context, JsExecCtx* this_) {
+    (void) context; // this is unused in this callback
+
     try {
         std::vector<napi_value> args{this_->result_handler_ref.Value()};
         if (this_->arg_func != nullptr) {
@@ -14,7 +16,7 @@ void JsExecCtx::tramp(Napi::Env env, Napi::Function callback, std::nullptr_t* co
             append_args.clear();
         }
 
-        const Napi::Value& retval = callback.Call(args);
+        callback.Call(args);
     } catch (std::exception& e) {
         EVLOG_AND_RETHROW(env);
     }

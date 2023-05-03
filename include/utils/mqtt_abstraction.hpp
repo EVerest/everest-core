@@ -67,8 +67,7 @@ public:
 
     ///
     /// \copydoc MQTTAbstractionImpl::register_handler(const std::string&, std::shared_ptr<TypedHandler>, QOS)
-    void register_handler(const std::string& topic, std::shared_ptr<TypedHandler> handler, bool allow_multiple_handlers,
-                          QOS qos);
+    void register_handler(const std::string& topic, std::shared_ptr<TypedHandler> handler, QOS qos);
 
     ///
     /// \copydoc MQTTAbstractionImpl::unregister_handler(const std::string&, const Token&)

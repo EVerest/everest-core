@@ -5,6 +5,8 @@ target_link_libraries(controller-ipc
         nlohmann_json::nlohmann_json
 )
 
+target_compile_options(controller-ipc PRIVATE ${COMPILER_WARNING_OPTIONS})
+
 find_package(Threads REQUIRED)
 
 # FIXME (aw): refactor the yaml_loader into on lib, so it can be shared somehow, similar to the controller-ipc
@@ -19,6 +21,8 @@ add_executable(controller
 target_include_directories(controller PRIVATE
     ${PROJECT_SOURCE_DIR}/include
 )
+
+target_compile_options(controller PRIVATE ${COMPILER_WARNING_OPTIONS})
 
 target_link_libraries(controller
     PRIVATE

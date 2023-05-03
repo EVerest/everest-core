@@ -11,6 +11,8 @@ endif()
 
 pybind11_add_module(everestpy everestpy.cpp)
 
+target_compile_options(everestpy PRIVATE ${COMPILER_WARNING_OPTIONS})
+
 target_link_libraries(everestpy
     PRIVATE
     everest::framework

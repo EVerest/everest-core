@@ -117,6 +117,7 @@ uint32_t Serial::crc32(uint8_t* buf, int len) {
 }
 
 void Serial::handlePacket(uint8_t* buf, int len) {
+    // FIXME (aw): why is there no implementation here?
 }
 
 void Serial::cobsDecode(uint8_t* buf, int len) {

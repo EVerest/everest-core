@@ -50,8 +50,7 @@ Everest::Everest(std::string module_id, Config config, bool validate_data_with_s
     Handler handle_ready_wrapper = [this](json data) { this->handle_ready(data); };
     std::shared_ptr<TypedHandler> everest_ready =
         std::make_shared<TypedHandler>(HandlerType::ExternalMQTT, std::make_shared<Handler>(handle_ready_wrapper));
-    this->mqtt_abstraction.register_handler(fmt::format("{}ready", mqtt_everest_prefix), everest_ready, false,
-                                            QOS::QOS2);
+    this->mqtt_abstraction.register_handler(fmt::format("{}ready", mqtt_everest_prefix), everest_ready, QOS::QOS2);
 
     this->publish_metadata();
 }
@@ -231,10 +230,8 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
             this->config.printable_identifier(connection["module_id"], connection["implementation_id"]), cmd_name);
 
         // make sure to only return the intended parts of the incoming result to not open up the api to internals
-        res_promise.set_value(json::object({{"retval", data["retval"]},
-                                            {"return_type", return_type},
-                                            {"origin", data["origin"]},
-                                            {"id", data_id}}));
+        res_promise.set_value(json::object(
+            {{"retval", data["retval"]}, {"return_type", return_type}, {"origin", data["origin"]}, {"id", data_id}}));
     };
 
     const auto cmd_topic =
@@ -242,7 +239,7 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
 
     std::shared_ptr<TypedHandler> res_token =
         std::make_shared<TypedHandler>(cmd_name, call_id, HandlerType::Result, std::make_shared<Handler>(res_handler));
-    this->mqtt_abstraction.register_handler(cmd_topic, res_token, true, QOS::QOS2);
+    this->mqtt_abstraction.register_handler(cmd_topic, res_token, QOS::QOS2);
 
     json cmd_publish_data =
         json::object({{"name", cmd_name},
@@ -366,7 +363,7 @@ void Everest::subscribe_var(const Requirement& req, const std::string& var_name,
                 validator.validate(data);
             } catch (const std::exception& e) {
                 EVLOG_warning << fmt::format("Ignoring incoming var '{}' because not matching manifest schema: {}",
-                                            var_name, e.what());
+                                             var_name, e.what());
                 return;
             }
         }
@@ -379,7 +376,7 @@ void Everest::subscribe_var(const Requirement& req, const std::string& var_name,
     // TODO(kai): multiple subscription should be perfectly fine here!
     std::shared_ptr<TypedHandler> token =
         std::make_shared<TypedHandler>(var_name, HandlerType::SubscribeVar, std::make_shared<Handler>(handler));
-    this->mqtt_abstraction.register_handler(var_topic, token, true, QOS::QOS2);
+    this->mqtt_abstraction.register_handler(var_topic, token, QOS::QOS2);
 }
 
 void Everest::subscribe_var(const Requirement& req, const std::string& var_name, const ValueCallback& callback) {
@@ -443,7 +440,7 @@ void Everest::provide_external_mqtt_handler(const std::string& topic, const Stri
 
     std::shared_ptr<TypedHandler> token =
         std::make_shared<TypedHandler>(HandlerType::ExternalMQTT, std::make_shared<Handler>(external_handler));
-    this->mqtt_abstraction.register_handler(external_topic, token, true, QOS::QOS0);
+    this->mqtt_abstraction.register_handler(external_topic, token, QOS::QOS0);
 }
 
 void Everest::telemetry_publish(const std::string& topic, const std::string& data) {
@@ -614,7 +611,7 @@ void Everest::provide_cmd(const std::string impl_id, const std::string cmd_name,
 
     auto typed_handler =
         std::make_shared<TypedHandler>(cmd_name, HandlerType::Call, std::make_shared<Handler>(wrapper));
-    this->mqtt_abstraction.register_handler(cmd_topic, typed_handler, false, QOS::QOS2);
+    this->mqtt_abstraction.register_handler(cmd_topic, typed_handler, QOS::QOS2);
 
     // this list of registered cmds will be used later on to check if all cmds
     // defined in manifest are provided by code

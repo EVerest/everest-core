@@ -350,8 +350,6 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
             const auto& impl_id = impl_definition.key();
             const auto& impl_intf = module_impls[impl_id];
 
-            auto set_prop = Napi::Object::New(env);
-
             // iterator over every variable, that the interface of this implementation provides
             auto impl_vars_prop = Napi::Object::New(env);
             if (impl_intf.contains("vars")) {

@@ -9,6 +9,8 @@ target_link_libraries(manager
         Boost::program_options
 )
 
+target_compile_options(manager PRIVATE ${COMPILER_WARNING_OPTIONS})
+
 target_compile_features(manager PRIVATE cxx_std_17)
 
 install(

@@ -119,13 +119,32 @@ const lws_protocol_vhost_options Server::Impl::pvo = {nullptr, &pvo_opt, "everes
 
 const lws_protocol_vhost_options Server::Impl::pvo_mime = {nullptr, nullptr, ".mp4", "application/x-mp4"};
 
+// lws_http_mount Server::Impl::mount = {
+//     .mountpoint = "/",
+//     .origin = "/",
+//     .def = "index.html",
+//     .extra_mimetypes = &pvo_mime,
+//     .origin_protocol = LWSMPRO_FILE,
+//     .mountpoint_len = 1,
+// };
 lws_http_mount Server::Impl::mount = {
-    .mountpoint = "/",
-    .origin = "/",
-    .def = "index.html",
-    .extra_mimetypes = &pvo_mime,
-    .origin_protocol = LWSMPRO_FILE,
-    .mountpoint_len = 1,
+    nullptr,      // lws_http_mount *mount_next;
+    "/",          // const char *mountpoint;
+    "/",          // const char *origin;
+    "index.html", // const char *def;
+    nullptr,      // const char *protocol;
+    nullptr,      // const struct lws_protocol_vhost_options *cgienv;
+    &pvo_mime,    // const struct lws_protocol_vhost_options *extra_mimetypes;
+    nullptr,      // const struct lws_protocol_vhost_options *interpret;
+    0,            // int cgi_timeout;
+    0,            // int cache_max_age;
+    0,            // unsigned int auth_mask;
+    0,            // unsigned int cache_reusable:1; /**< set if client cache may reuse this */
+    0,            // unsigned int cache_revalidate:1; /**< set if client cache should revalidate on use */
+    0,            // unsigned int cache_intermediaries:1; /**< set if intermediaries are allowed to cache */
+    LWSMPRO_FILE, // unsigned char origin_protocol; /**< one of enum lws_mount_protocols */
+    1,            // unsigned char mountpoint_len; /**< length of mountpoint string */
+    nullptr,      // const char *basic_auth_login_file;
 };
 
 int Server::Impl::callback(struct lws* wsi, lws_callback_reasons reason, void* user, void* in, size_t len) {
@@ -219,7 +238,7 @@ void Server::Impl::run(const Server::IncomingMessageHandler& handler, const std:
             // should be LLL_ERR or LLL_WARN
             EVLOG_info << line;
         }
-        });
+    });
 
     EVLOG_info << fmt::format("Launching controller service on port {}\n", info.port);
 

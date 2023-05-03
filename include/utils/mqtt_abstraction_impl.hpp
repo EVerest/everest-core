@@ -108,10 +108,8 @@ public:
 
     ///
     /// \brief subscribes to the given \p topic and registers a callback \p handler that is called when a message
-    /// arrives on the topic. If \p allow_multiple_handlers is set to true, multiple handlers can be registered for the
-    /// same topic. With \p qos a MQTT Quality of Service level can be set.
-    void register_handler(const std::string& topic, std::shared_ptr<TypedHandler> handler, bool allow_multiple_handlers,
-                          QOS qos);
+    /// arrives on the topic. With \p qos a MQTT Quality of Service level can be set.
+    void register_handler(const std::string& topic, std::shared_ptr<TypedHandler> handler, QOS qos);
 
     ///
     /// \brief unsubscribes a handler identified by its \p token from the given \p topic

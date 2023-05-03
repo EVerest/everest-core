@@ -27,6 +27,12 @@ target_sources(framework
         yaml_loader.cpp
 )
 
+# FIXME (aw): c++17 doesn't need necessarily to be public, but our
+#             headers are messed up
+target_compile_features(framework PUBLIC cxx_std_17)
+
+target_compile_options(framework PRIVATE ${COMPILER_WARNING_OPTIONS})
+
 target_include_directories(framework
     PUBLIC
         $<BUILD_INTERFACE:${EVEREST_FRAMEWORK_GENERATED_INC_DIR}>
@@ -50,7 +56,3 @@ target_link_libraries(framework
         mqttc
         ryml::ryml
 )
-
-# FIXME (aw): c++17 doesn't need necessarily to be public, but our
-#             headers are messed up
-target_compile_features(framework PUBLIC cxx_std_17)
