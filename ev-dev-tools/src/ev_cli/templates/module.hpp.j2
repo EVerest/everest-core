@@ -70,7 +70,6 @@ public:
         config(config)
     {};
 
-    const Conf& config;
     {% if info.enable_external_mqtt %}
     Everest::MqttProvider& mqtt;
     {% endif %}
@@ -87,6 +86,7 @@ public:
     const std::unique_ptr<{{ requirement.class_name }}> r_{{ requirement.id }};
     {% endif %}
     {% endfor %}
+    const Conf& config;
 
     {{ insert_block(info.blocks.public_defs, indent=4) }}
 

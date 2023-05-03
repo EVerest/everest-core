@@ -95,6 +95,8 @@ private:
                 {% else %}
                     auto {{ arg.name }} = {{ var_to_cpp(arg) }}(args["{{ arg.name }}"]);
                 {% endif %}
+            {% else %}
+                (void) args; // no arguments used for this callback
             {% endfor %}
 
             {{ 'auto result = ' if cmd.result }}this->handle_{{ cmd.name }}(

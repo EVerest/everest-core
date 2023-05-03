@@ -89,6 +89,8 @@ std::vector<Everest::cmd> everest_register(const json& connections) {
     }
     auto r_{{ requirement.id }} = std::make_unique<{{ requirement.class_name }}>(&adapter, Requirement{"{{ requirement.id }}", 0}, r_{{ requirement.id }}_requirement_module_id);
     {% endif %}
+    {% else %}
+        (void) connections; // no requirements -> unused connections
     {% endfor %}
 
     {% if info.enable_external_mqtt %}

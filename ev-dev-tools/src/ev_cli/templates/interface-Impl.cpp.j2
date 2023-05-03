@@ -20,7 +20,7 @@ void {{ info.class_name }}::ready() {
     {% if cmd.result %}
     return {{ cmd.result.json_type|create_dummy_result }};
     {% endif %}
-};
+}
 {% endfor %}
 
 } // namespace {{ info.interface_implementation_id }}
