@@ -297,6 +297,18 @@ void OCPP201::init() {
 
     int evse_id = 1;
     for (const auto& evse : this->r_evse_manager) {
+    std::map<int32_t, int32_t> evse_connector_structure;
+    int evse_id = 1;
+    for (const auto& evse : this->r_evse_manager) {
+        evse_connector_structure.emplace(evse_id, 1);
+        evse_id++;
+    }
+
+    this->charge_point = std::make_unique<ocpp::v201::ChargePoint>(
+        evse_connector_structure, json_config, this->ocpp_share_path.string(), this->config.MessageLogPath);
+
+    evse_id = 1;
+    for (const auto& evse : this->r_evse_manager) {
         evse->subscribe_session_event([this, evse_id](types::evse_manager::SessionEvent session_event) {
             ocpp::v201::EVSE evse_ref{evse_id}; // in EVerest
             switch (session_event.event) {
