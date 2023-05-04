@@ -9,12 +9,14 @@ from paho.mqtt import client as mqtt_client
 import logging
 import yaml
 import tempfile
+from datetime import datetime
 
 from everest.testing.ocpp_utils.controller.test_controller_interface import TestController
 from everest.testing.core_utils.everest_core import EverestCore
 
 logging.basicConfig(level=logging.DEBUG)
 
+TEST_LOGS_DIR = "/tmp/everest_ocpp_test_logs"
 
 class EverestTestController(TestController):
 
@@ -52,10 +54,12 @@ class EverestTestController(TestController):
             self.temp_ocpp_user_config_file.write("{}")
             self.temp_ocpp_user_config_file.flush()
         if "active_modules" in everest_config and self.ocpp_module_id in everest_config["active_modules"]:
+            os.makedirs(TEST_LOGS_DIR, exist_ok=True)
             everest_config["active_modules"][self.ocpp_module_id]["config_module"]["ChargePointConfigPath"] = self.temp_ocpp_config_file.name
             everest_config["active_modules"][self.ocpp_module_id]["config_module"]["UserConfigPath"] = self.temp_ocpp_user_config_file.name
             everest_config["active_modules"][self.ocpp_module_id]["config_module"]["DatabasePath"] = self.temp_ocpp_database_dir.name
-            everest_config["active_modules"][self.ocpp_module_id]["config_module"]["MessageLogPath"] = self.temp_ocpp_log_dir.name
+            everest_config["active_modules"][self.ocpp_module_id]["config_module"][
+                    "MessageLogPath"] = f"{TEST_LOGS_DIR}/{self.test_function_name}-{datetime.utcnow().isoformat()}"
             everest_config["active_modules"][self.ocpp_module_id]["config_module"]["CertsPath"] = self.temp_ocpp_certs_dir.name
 
         self.everest_core.temp_everest_config_file.seek(0)
