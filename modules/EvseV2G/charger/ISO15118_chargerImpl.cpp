@@ -352,12 +352,32 @@ void ISO15118_chargerImpl::handle_cableCheck_Finished(bool& status) {
 };
 
 void ISO15118_chargerImpl::handle_set_Certificate_Service_Supported(bool& status) {
-    // your code for cmd handle_set_Certificate_Service_Supported goes here
+    if (status == true) {
+        // For setting "Certificate" in ServiceList in ServiceDiscoveryRes
+        const std::string service_name = "Certificate";
+        uint8_t len = service_name.length();
+        v2g_ctx->evse_v2g_data.evse_service_list[v2g_ctx->evse_v2g_data.evse_service_list_len].FreeService = 1;
+        v2g_ctx->evse_v2g_data.evse_service_list[v2g_ctx->evse_v2g_data.evse_service_list_len].ServiceID = 2;
+        v2g_ctx->evse_v2g_data.evse_service_list[v2g_ctx->evse_v2g_data.evse_service_list_len].ServiceCategory = iso1serviceCategoryType_ContractCertificate;
+        memcpy(v2g_ctx->evse_v2g_data.evse_service_list[v2g_ctx->evse_v2g_data.evse_service_list_len].ServiceName.characters, reinterpret_cast<const char*>(service_name.data()), len);
+        v2g_ctx->evse_v2g_data.evse_service_list[v2g_ctx->evse_v2g_data.evse_service_list_len].ServiceName.charactersLen = len;
+        v2g_ctx->evse_v2g_data.evse_service_list_len += 1;
+
+        // For setting "Installation" in the ServiceParameterList in ServiceDetailRes
+        configure_parameter_set(&v2g_ctx->evse_v2g_data.service_parameter_list[0], 1);
+        // TODO: support "Update" in the ServiceParameterList in ServiceDetailRes
+        // configure_parameter_set(&v2g_ctx->evse_v2g_data.service_parameter_list[0], 2);
+    }
 }
 
 void ISO15118_chargerImpl::handle_set_Get_Certificate_Response(
     types::iso15118_charger::Response_Exi_Stream_Status& Existream_Status) {
-    // your code for cmd handle_set_Response_Certificate_Install goes here
+    pthread_mutex_lock(&v2g_ctx->mqtt_lock);
+    v2g_ctx->evse_v2g_data.cert_install_res_b64_buffer = std::string(*Existream_Status.exiResponse);
+    v2g_ctx->evse_v2g_data.cert_install_status = (Existream_Status.status == types::iso15118_charger::Status::Accepted) ? true : false;
+    pthread_cond_signal(&v2g_ctx->mqtt_cond);
+    /* unlock */
+    pthread_mutex_unlock(&v2g_ctx->mqtt_lock);
 }
 
 } // namespace charger

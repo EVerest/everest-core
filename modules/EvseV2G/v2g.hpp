@@ -257,7 +257,6 @@ struct v2g_context {
         struct iso1ServiceType evse_service_list[iso1ServiceListType_Service_ARRAY_SIZE];
         struct iso1ServiceParameterListType service_parameter_list[iso1ServiceListType_Service_ARRAY_SIZE];
         uint16_t evse_service_list_len;
-        uint8_t evse_service_list_write_idx;
 
         struct iso1SAScheduleListType evse_sa_schedule_list;
         bool evse_sa_schedule_list_is_used;
@@ -265,7 +264,8 @@ struct v2g_context {
         iso1paymentOptionType payment_option_list[iso1PaymentOptionListType_PaymentOption_ARRAY_SIZE];
         uint8_t payment_option_list_len;
 
-        char* cert_install_res_b64_buffer;
+        bool cert_install_status;
+        std::string cert_install_res_b64_buffer;
 
         // AC parameter
         int rcd;
