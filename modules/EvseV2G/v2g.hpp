@@ -299,6 +299,7 @@ struct v2g_context {
         /* V2G session values */
         iso1paymentOptionType iso_selected_payment_option;
         uint8_t gen_challenge[16]; // for PnC
+        bool verify_contract_cert_chain; // for PnC
 
         struct {
             bool valid_crt;

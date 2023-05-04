@@ -55,6 +55,12 @@ config:
       Output directory for the TLS key log file
     type: string
     default: /tmp
+  verify_contract_cert_chain:
+    description: >-
+      Specifies if the EVSE should verify the contract certificate
+      chain locally.
+    type: boolean
+    default: false
 provides:
   charger:
     interface: ISO15118_charger

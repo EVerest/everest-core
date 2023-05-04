@@ -173,6 +173,100 @@ static void convertIso1ToXmldsigSignedInfoType(struct xmldsigSignedInfoType* xml
     xmld_sig_signed_info->SignatureMethod.ANY_isUsed = 0;
 }
 
+static bool load_contract_root_cert(mbedtls_x509_crt *contract_root_crt, const char* V2G_file_path, const char* MO_file_path) {
+    int rv = 0;
+
+    if (((rv = mbedtls_x509_crt_parse_file(contract_root_crt, MO_file_path)) != 0) &&
+        ((rv = mbedtls_x509_crt_parse_file(contract_root_crt, V2G_file_path)) != 0)) {
+        char strerr[256];
+        mbedtls_strerror(rv, strerr, 256);
+        dlog(DLOG_LEVEL_ERROR, "Unable to parse V2G (%s) or MO (%s) root certificate  (err: -0x%04x - %s)",
+                V2G_file_path, MO_file_path, -rv, strerr);
+    }
+
+    return (rv != 0)? false : true;
+}
+
+/*!
+ * \brief debug_verify_cert Function is from https://github.com/aws/aws-iot-device-sdk-embedded-C/blob
+ * /master/platform/linux/mbedtls/network_mbedtls_wrapper.c to debug certificate verification
+ * \param data
+ * \param crt
+ * \param depth
+ * \param flags
+ * \return
+ */
+static int debug_verify_cert( void *data, mbedtls_x509_crt *crt, int depth, uint32_t *flags )
+{
+    char buf[1024];
+    ((void) data);
+
+    dlog(DLOG_LEVEL_INFO, "\nVerify requested for (Depth %d):\n", depth );
+    mbedtls_x509_crt_info( buf, sizeof( buf ) - 1, "", crt );
+    dlog(DLOG_LEVEL_INFO, "%s", buf );
+
+    if ( ( *flags ) == 0 )
+        dlog(DLOG_LEVEL_INFO, "  This certificate has no flags\n" );
+    else
+    {
+        mbedtls_x509_crt_verify_info( buf, sizeof( buf ), "  ! ", *flags );
+        dlog(DLOG_LEVEL_INFO, "%s\n", buf );
+    }
+
+    return( 0 );
+}
+
+/*!
+ * \brief printMbedVerifyErrorCode This functions prints the mbedTls specific error code.
+ * \param AErr is the return value of the mbed verify function
+ * \param AFlags includes the flags of the verification.
+ */
+static void printMbedVerifyErrorCode(int AErr, uint32_t AFlags) {
+    dlog(DLOG_LEVEL_ERROR, "Failed to verify certificate (err: 0x%08x flags: 0x%08x)", AErr, AFlags);
+    if (AErr == MBEDTLS_ERR_X509_CERT_VERIFY_FAILED) {
+        if (AFlags & MBEDTLS_X509_BADCERT_EXPIRED)
+            dlog(DLOG_LEVEL_ERROR, "CERT_EXPIRED");
+        else if (AFlags & MBEDTLS_X509_BADCERT_REVOKED)
+            dlog(DLOG_LEVEL_ERROR, "CERT_REVOKED");
+        else if (AFlags & MBEDTLS_X509_BADCERT_CN_MISMATCH)
+            dlog(DLOG_LEVEL_ERROR, "CN_MISMATCH");
+        else if (AFlags & MBEDTLS_X509_BADCERT_NOT_TRUSTED)
+            dlog(DLOG_LEVEL_ERROR, "CERT_NOT_TRUSTED");
+        else if (AFlags & MBEDTLS_X509_BADCRL_NOT_TRUSTED)
+            dlog(DLOG_LEVEL_ERROR, "CRL_NOT_TRUSTED");
+        else if (AFlags & MBEDTLS_X509_BADCRL_EXPIRED)
+            dlog(DLOG_LEVEL_ERROR, "CRL_EXPIRED");
+        else if (AFlags & MBEDTLS_X509_BADCERT_MISSING)
+            dlog(DLOG_LEVEL_ERROR, "CERT_MISSING");
+        else if (AFlags & MBEDTLS_X509_BADCERT_SKIP_VERIFY)
+            dlog(DLOG_LEVEL_ERROR, "SKIP_VERIFY");
+        else if (AFlags & MBEDTLS_X509_BADCERT_OTHER)
+            dlog(DLOG_LEVEL_ERROR, "CERT_OTHER");
+        else if (AFlags & MBEDTLS_X509_BADCERT_FUTURE)
+            dlog(DLOG_LEVEL_ERROR, "CERT_FUTURE");
+        else if (AFlags & MBEDTLS_X509_BADCRL_FUTURE)
+            dlog(DLOG_LEVEL_ERROR, "CRL_FUTURE");
+        else if (AFlags & MBEDTLS_X509_BADCERT_KEY_USAGE)
+            dlog(DLOG_LEVEL_ERROR, "KEY_USAGE");
+        else if (AFlags & MBEDTLS_X509_BADCERT_EXT_KEY_USAGE)
+            dlog(DLOG_LEVEL_ERROR, "EXT_KEY_USAGE");
+        else if (AFlags & MBEDTLS_X509_BADCERT_NS_CERT_TYPE)
+            dlog(DLOG_LEVEL_ERROR, "NS_CERT_TYPE");
+        else if (AFlags & MBEDTLS_X509_BADCERT_BAD_MD)
+            dlog(DLOG_LEVEL_ERROR, "BAD_MD");
+        else if (AFlags & MBEDTLS_X509_BADCERT_BAD_PK)
+            dlog(DLOG_LEVEL_ERROR, "BAD_PK");
+        else if (AFlags & MBEDTLS_X509_BADCERT_BAD_KEY)
+            dlog(DLOG_LEVEL_ERROR, "BAD_KEY");
+        else if (AFlags & MBEDTLS_X509_BADCRL_BAD_MD)
+            dlog(DLOG_LEVEL_ERROR, "CRL_BAD_MD");
+        else if (AFlags & MBEDTLS_X509_BADCRL_BAD_PK)
+            dlog(DLOG_LEVEL_ERROR, "CRL_BAD_PK");
+        else if (AFlags & MBEDTLS_X509_BADCRL_BAD_KEY)
+            dlog(DLOG_LEVEL_ERROR, "CRL_BAD_KEY");
+    }
+}
+
 /*!
  * \brief check_iso1_signature This function validates the ISO signature
  * \param iso1_signature is the signature of the ISO EXI fragment
@@ -549,84 +643,6 @@ static void publish_iso_charge_parameter_discovery_req(
             publish_DC_EVStatusType(ctx, v2g_charge_parameter_discovery_req->DC_EVChargeParameter.DC_EVStatus);
         }
     }
-}
-
-/*!
- * \brief publish_iso_payment_details_req This function publishes the iso_payment_details_req message to the MQTT
- * interface. \param v2g_payment_details_req is the request message.
- */
-static bool publish_iso_payment_details_req(struct iso1PaymentDetailsReqType const* const v2g_payment_details_req) {
-
-    bool rv = true;
-    unsigned char* base64Buffer = NULL;
-    size_t olen;
-
-    /* Parse contract leaf certificate */
-    if (MAX_CERT_SIZE >= v2g_payment_details_req->ContractSignatureCertChain.Certificate.bytesLen) {
-        mbedtls_base64_encode(
-            NULL, 0, &olen, v2g_payment_details_req->ContractSignatureCertChain.Certificate.bytes,
-            static_cast<size_t>(v2g_payment_details_req->ContractSignatureCertChain.Certificate.bytesLen));
-
-        base64Buffer = static_cast<unsigned char*>(malloc(olen));
-
-        if ((NULL == base64Buffer) ||
-            (0 != mbedtls_base64_encode(
-                      base64Buffer, olen, &olen,
-                      (unsigned char*)v2g_payment_details_req->ContractSignatureCertChain.Certificate.bytes,
-                      static_cast<size_t>(v2g_payment_details_req->ContractSignatureCertChain.Certificate.bytesLen)))) {
-            rv = false;
-            dlog(DLOG_LEVEL_ERROR, "Unable to encode contract leaf certificate");
-            goto exit;
-        }
-    } else {
-        dlog(DLOG_LEVEL_ERROR, "Invalid size of the received contract leaf certificate");
-        rv = false;
-        goto exit;
-    }
-
-    // TODO: add leaf certificate to contract chain: (char*) base64Buffer, olen
-
-    /* Parse contract sub certificate */
-    if (v2g_payment_details_req->ContractSignatureCertChain.SubCertificates_isUsed == (unsigned int)1) {
-        const struct iso1SubCertificatesType* subCertTmp =
-            &v2g_payment_details_req->ContractSignatureCertChain.SubCertificates;
-
-        for (uint8_t idx = 0; idx < subCertTmp->Certificate.arrayLen; idx++) {
-            if (subCertTmp->Certificate.array[idx].bytesLen <= MAX_CERT_SIZE) {
-                mbedtls_base64_encode(NULL, 0, &olen, subCertTmp->Certificate.array[idx].bytes,
-                                      (size_t)subCertTmp->Certificate.array[idx].bytesLen);
-                if (base64Buffer != NULL)
-                    free(base64Buffer);
-                base64Buffer = static_cast<unsigned char*>(malloc(olen));
-            } else {
-                dlog(DLOG_LEVEL_ERROR, "Invalid size of the received contract sub certificate #%d", idx);
-                rv = false;
-                goto exit;
-            }
-
-            if ((base64Buffer == NULL) ||
-                (mbedtls_base64_encode(base64Buffer, olen, &olen, subCertTmp->Certificate.array[idx].bytes,
-                                       static_cast<size_t>(subCertTmp->Certificate.array[idx].bytesLen)) != 0)) {
-                rv = false;
-                dlog(DLOG_LEVEL_ERROR, "Unable to encode contract sub certificate #%d", idx);
-                goto exit;
-            }
-
-            // TODO: add sub certificates to contract chain: (char*) base64Buffer, olen(char*) base64Buffer, olen)
-        }
-    }
-
-    // TODO: publish contract chain and emaid
-exit:
-
-    if (base64Buffer != NULL)
-        free(base64Buffer);
-
-    //    v2g_payment_details_req->ContractSignatureCertChain.Id.characters
-    //    v2g_payment_details_req->ContractSignatureCertChain.Id.charactersLen
-    //    v2g_payment_details_req->ContractSignatureCertChain.Id_isUsed
-
-    return rv;
 }
 
 /*!
@@ -1057,6 +1073,7 @@ static enum v2g_event handle_iso_payment_service_selection(struct v2g_connection
 
     if (req->SelectedPaymentOption == iso1paymentOptionType_Contract) {
         dlog(DLOG_LEVEL_INFO, "SelectedPaymentOption: Contract");
+        conn->ctx->session.iso_selected_payment_option = iso1paymentOptionType_Contract;
         /* Set next expected req msg */
         conn->ctx->state =
             (int)iso_dc_state_id::WAIT_FOR_PAYMENTDETAILS_CERTINST_CERTUPD; // [V2G-551] (iso specification describes
@@ -1086,12 +1103,6 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
     enum v2g_event nextEvent = V2G_EVENT_NO_EVENT;
     int err;
 
-    /* At first, publish the received EV request message to the customer MQTT interface */
-    if (publish_iso_payment_details_req(req) == false) {
-        res->ResponseCode = iso1responseCodeType_FAILED_CertChainError;
-        goto error_out;
-    }
-
     // === For the contract certificate, the certificate chain should be checked ===
     conn->ctx->session.contract.valid_crt = false;
 
@@ -1103,6 +1114,7 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
         mbedtls_x509_crt_init(&conn->ctx->session.contract.crt);
         mbedtls_ecdsa_init(&conn->ctx->session.contract.pubkey);
 
+        // Parse contract leaf certificate
         if (req->ContractSignatureCertChain.Certificate.bytesLen != 0) {
             err = mbedtls_x509_crt_parse(&conn->ctx->session.contract.crt,
                                          req->ContractSignatureCertChain.Certificate.bytes,
@@ -1140,7 +1152,9 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
         if (err != 0) {
             memset(res, 0, sizeof(*res));
             res->ResponseCode = iso1responseCodeType_FAILED_CertChainError;
-            dlog(DLOG_LEVEL_ERROR, "handle_payment_detail: invalid certificate received in req");
+            char strerr[256];
+            mbedtls_strerror(err, strerr, std::string(strerr).size());
+            dlog(DLOG_LEVEL_ERROR, "handle_payment_detail: invalid certificate received in req: %s", strerr);
             goto error_out;
         }
 
@@ -1157,12 +1171,98 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
             goto error_out;
         }
 
+        // Parse contract sub certificates
+        if (req->ContractSignatureCertChain.SubCertificates_isUsed == 1) {
+            for (int i = 0; i < req->ContractSignatureCertChain.SubCertificates.Certificate.arrayLen; i++) {
+                err = mbedtls_x509_crt_parse(&conn->ctx->session.contract.crt,
+                        req->ContractSignatureCertChain.SubCertificates.Certificate.array[i].bytes,
+                        req->ContractSignatureCertChain.SubCertificates.Certificate.array[i].bytesLen);
+
+                if (err != 0) {
+                    char strerr[256];
+                    mbedtls_strerror(err, strerr, std::string(strerr).size());
+                    dlog(DLOG_LEVEL_ERROR, "handle_payment_detail: invalid sub-certificate received in req: %s", strerr);
+                    goto error_out;
+                }
+            }
+        }
+
+        std::string contract_cert_chain_pem = "";
+        /* Only if certificate chain verification should be done locally by the EVSE */
+        if (conn->ctx->session.verify_contract_cert_chain == true) {
+            std::string v2g_root_cert_path = conn->ctx->certs_path + "/ca/v2g/V2G_ROOT_CA.pem";
+            std::string mo_root_cert_path = conn->ctx->certs_path + "/ca/mo/MO_ROOT_CA.pem";
+            mbedtls_x509_crt contract_root_crt;
+            mbedtls_x509_crt_init(&contract_root_crt);
+            uint32_t flags;
+
+            /* Load supported V2G/MO root certificates */
+            if (load_contract_root_cert(&contract_root_crt, v2g_root_cert_path.c_str(), mo_root_cert_path.c_str()) == false) {
+                memset(res, 0, sizeof(*res));
+                res->ResponseCode = iso1responseCodeType_FAILED_NoCertificateAvailable;
+                goto error_out;
+            }
+            // === Verify the retrieved contract ECDSA key against the root cert ===
+            err = mbedtls_x509_crt_verify(&conn->ctx->session.contract.crt, &contract_root_crt,
+                                          NULL, NULL, &flags, (conn->ctx->debugMode == true)? debug_verify_cert : NULL, NULL);
+
+            if (err != 0) {
+                printMbedVerifyErrorCode(err, flags);
+                memset(res, 0, sizeof(*res));
+                dlog(DLOG_LEVEL_ERROR, "Validation of the contract certificate failed!");
+                if ((err == MBEDTLS_ERR_X509_CERT_VERIFY_FAILED) && (flags & MBEDTLS_X509_BADCERT_EXPIRED)) {
+                    res->ResponseCode = iso1responseCodeType_FAILED_CertificateExpired;
+                } else if ((err == MBEDTLS_ERR_X509_CERT_VERIFY_FAILED) && (flags & MBEDTLS_X509_BADCERT_REVOKED)) {
+                    res->ResponseCode = iso1responseCodeType_FAILED_CertificateRevoked;
+                } else {
+                    res->ResponseCode = iso1responseCodeType_FAILED_CertChainError;
+                }
+                goto error_out;
+            }
+
+            dlog(DLOG_LEVEL_INFO, "Validation of the contract certificate was successful!");
+        } else {
+            // Save the certificate chain in a variable in PEM format to publish it
+            mbedtls_x509_crt *crt = &conn->ctx->session.contract.crt;
+            mbedtls_x509_crt *prev = nullptr;
+            unsigned char* base64Buffer = NULL;
+            size_t olen;
+
+            while( crt->version != 0 && crt->next != nullptr )
+            {
+                mbedtls_base64_encode(NULL, 0, &olen, crt->raw.p, crt->raw.len);
+                base64Buffer = static_cast<unsigned char*>(malloc(olen));
+                if ((base64Buffer == NULL) || ((mbedtls_base64_encode(base64Buffer, olen, &olen,crt->raw.p, crt->raw.len)) != 0 )) {
+                    dlog(DLOG_LEVEL_ERROR, "Unable to encode certificate chain");
+                    break;
+                }
+                contract_cert_chain_pem.append("-----BEGIN CERTIFICATE-----\n");
+                contract_cert_chain_pem.append(std::string(reinterpret_cast<char const*>(base64Buffer), olen));
+                contract_cert_chain_pem.append("-----END CERTIFICATE-----\n");
+
+                free(base64Buffer);
+                prev = crt;
+                crt = crt->next;
+            }
+        }
+
         generate_random_data(&conn->ctx->session.gen_challenge, GEN_CHALLENGE_SIZE);
         memcpy(res->GenChallenge.bytes, conn->ctx->session.gen_challenge, GEN_CHALLENGE_SIZE);
         res->GenChallenge.bytesLen = GEN_CHALLENGE_SIZE;
         conn->ctx->session.contract.valid_crt = true;
+
+        // Publish the provided signature certificate chain and eMAID from EVCC
+        // to receive PnC authorization
+        types::authorization::ProvidedIdToken ProvidedIdToken;
+        ProvidedIdToken.id_token = std::string(cert_emaid);
+        ProvidedIdToken.type = types::authorization::TokenType::PlugAndCharge;
+        if (contract_cert_chain_pem.empty() == false) {
+           ProvidedIdToken.certificate = contract_cert_chain_pem;
+        }
+        conn->ctx->p_charger->publish_Require_Auth_PnC(ProvidedIdToken);
+
     } else {
-        res->ResponseCode = iso1responseCodeType_FAILED_CertChainError;
+        res->ResponseCode = iso1responseCodeType_FAILED;
         goto error_out;
     }
     res->EVSETimeStamp = time(NULL);
@@ -2104,11 +2204,6 @@ enum v2g_event iso_handle_request(v2g_connection* conn) {
     } else if (exi_in->V2G_Message.Body.PaymentDetailsReq_isUsed) {
         dlog(DLOG_LEVEL_TRACE, "Handling PaymentDetailsReq");
         conn->ctx->current_v2g_msg = V2G_PAYMENT_DETAILS_MSG;
-        if (conn->ctx->last_v2g_msg != V2G_PAYMENT_DETAILS_MSG) {
-            if (conn->ctx->session.iso_selected_payment_option == iso1paymentOptionType_Contract) {
-                // conn->ctx->p_charger->publish_Require_Auth_PnC(boost::blank{}); // TODO: PnC
-            }
-        }
         exi_out->V2G_Message.Body.PaymentDetailsRes_isUsed = 1u;
         init_iso1PaymentDetailsResType(&exi_out->V2G_Message.Body.PaymentDetailsRes);
         next_v2g_event = handle_iso_payment_details(conn); // [V2G2-559]
