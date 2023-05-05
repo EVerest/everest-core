@@ -119,14 +119,6 @@ const lws_protocol_vhost_options Server::Impl::pvo = {nullptr, &pvo_opt, "everes
 
 const lws_protocol_vhost_options Server::Impl::pvo_mime = {nullptr, nullptr, ".mp4", "application/x-mp4"};
 
-// lws_http_mount Server::Impl::mount = {
-//     .mountpoint = "/",
-//     .origin = "/",
-//     .def = "index.html",
-//     .extra_mimetypes = &pvo_mime,
-//     .origin_protocol = LWSMPRO_FILE,
-//     .mountpoint_len = 1,
-// };
 lws_http_mount Server::Impl::mount = {
     nullptr,      // lws_http_mount *mount_next;
     "/",          // const char *mountpoint;
