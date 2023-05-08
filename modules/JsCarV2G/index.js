@@ -161,6 +161,7 @@ function start_v2g(mod, args) {
   let started = false;
   mod.payment = args.PaymentOption;
   mod.energymode = args.EnergyTransferMode;
+  const mqtt_prefix_base_path = `${mod.config.impl.main.mqtt_prefix}${mod.config.impl.main.mqtt_base_path}`;
 
   switch (mod.config.impl.main.stack_implementation) {
     case 'Josev':
@@ -173,7 +174,7 @@ function start_v2g(mod, args) {
     default:
       // start java process
       mod.java_started = new JavaStartedDeferred(
-        mod.config.impl.main.mqtt_base_path,
+        mqtt_prefix_base_path,
         mod.info.printable_identifier,
         mod
       );

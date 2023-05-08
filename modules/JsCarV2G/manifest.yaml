@@ -36,6 +36,11 @@ provides:
           Password for the EVCC keystore. This is and should only be used for simulation purposes
         type: string
         default: "123456"
+      mqtt_prefix:
+        description: >-
+          Prefix for the mqtt communication used by the java process. Only needed for everest-testing!
+        type: string
+        default: ""
   ev:
     interface: ISO15118_ev
     description: This module implements the ISO15118-2 implementation of an EV
