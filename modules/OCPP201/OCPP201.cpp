@@ -8,6 +8,7 @@
 namespace module {
 
 const std::string INIT_SQL = "init.sql";
+const std::string CERTS_DIR = "certs";
 
 namespace fs = std::filesystem;
 
@@ -197,7 +198,7 @@ void OCPP201::init() {
 
     const auto etc_certs_path = [&]() {
         if (this->config.CertsPath.empty()) {
-            return fs::path(this->info.everest_prefix) / EVEREST_ETC_CERTS_PATH;
+            return fs::path(this->info.paths.etc) / CERTS_DIR ;
         } else {
             return fs::path(this->config.CertsPath);
         }
@@ -291,12 +292,6 @@ void OCPP201::init() {
     };
 
     const auto sql_init_path = this->ocpp_share_path / INIT_SQL;
-    this->charge_point = std::make_unique<ocpp::v201::ChargePoint>(
-        json_config, this->ocpp_share_path.string(), this->config.DatabasePath, sql_init_path.string(),
-        this->config.MessageLogPath, etc_certs_path, callbacks);
-
-    int evse_id = 1;
-    for (const auto& evse : this->r_evse_manager) {
     std::map<int32_t, int32_t> evse_connector_structure;
     int evse_id = 1;
     for (const auto& evse : this->r_evse_manager) {
@@ -305,7 +300,8 @@ void OCPP201::init() {
     }
 
     this->charge_point = std::make_unique<ocpp::v201::ChargePoint>(
-        evse_connector_structure, json_config, this->ocpp_share_path.string(), this->config.MessageLogPath);
+        evse_connector_structure, json_config, this->ocpp_share_path.string(), this->config.DatabasePath,
+        sql_init_path.string(), this->config.MessageLogPath, etc_certs_path, callbacks);
 
     evse_id = 1;
     for (const auto& evse : this->r_evse_manager) {
