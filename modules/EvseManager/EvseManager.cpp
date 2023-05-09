@@ -1006,71 +1006,86 @@ void EvseManager::cable_check() {
         session_log.evse(true, "Start cable check...");
         bool ok = false;
 
+        // normally contactors should be closed before entering cable check routine.
+        // On some hardware implementation it may take some time until the confirmation arrives though,
+        // so we wait with a timeout here until the contactors are confirmed to be closed.
+        Timeout timeout(CABLECHECK_CONTACTORS_CLOSE_TIMEOUT);
+
+        while (!timeout.reached()) {
+            if (!contactor_open)
+                break;
+            std::this_thread::sleep_for(100ms);
+        }
+
         // verify the relais are really switched on and set 500V output
-        if (!contactor_open && powersupply_DC_set(config.dc_isolation_voltage_V, 2)) {
+        if (!contactor_open) {
+            if (powersupply_DC_set(config.dc_isolation_voltage_V, 2)) {
+                powersupply_DC_on();
+                imd_start();
 
-            powersupply_DC_on();
-            imd_start();
-
-            // wait until the voltage has rised to the target value
-            if (!wait_powersupply_DC_voltage_reached(config.dc_isolation_voltage_V)) {
-                EVLOG_info << "Voltage did not rise to 500V within timeout";
-                powersupply_DC_off();
-                ok = false;
-                imd_stop();
-            } else {
-                // read out one new isolation resistance
-                isolation_measurement.clear();
-                types::isolation_monitor::IsolationMeasurement m;
-                if (!isolation_measurement.wait_for(m, 10s)) {
-                    EVLOG_info << "Did not receive isolation measurement from IMD within 10 seconds.";
+                // wait until the voltage has rised to the target value
+                if (!wait_powersupply_DC_voltage_reached(config.dc_isolation_voltage_V)) {
+                    EVLOG_info << "Voltage did not rise to 500V within timeout";
                     powersupply_DC_off();
                     ok = false;
+                    imd_stop();
                 } else {
-                    // wait until the voltage is back to safe level
-                    float minvoltage = (config.switch_to_minimum_voltage_after_cable_check
-                                            ? powersupply_capabilities.min_export_voltage_V
-                                            : config.dc_isolation_voltage_V);
-
-                    // We do not want to shut down power supply
-                    if (minvoltage < 60) {
-                        minvoltage = 60;
-                    }
-                    powersupply_DC_set(minvoltage, 2);
-
-                    if (!wait_powersupply_DC_below_voltage(minvoltage + 20)) {
-                        EVLOG_info << "Voltage did not go back to minimal voltage within timeout.";
+                    // read out one new isolation resistance
+                    isolation_measurement.clear();
+                    types::isolation_monitor::IsolationMeasurement m;
+                    if (!isolation_measurement.wait_for(m, 10s)) {
+                        EVLOG_info << "Did not receive isolation measurement from IMD within 10 seconds.";
+                        powersupply_DC_off();
                         ok = false;
                     } else {
-                        // verify it is within ranges. Warning level is <500 Ohm/V_max_output_rating, Fault
-                        // is <100
-                        const double min_resistance_ok = 500. * powersupply_capabilities.max_export_voltage_V;
-                        const double min_resistance_warning = 100. * powersupply_capabilities.max_export_voltage_V;
+                        // wait until the voltage is back to safe level
+                        float minvoltage = (config.switch_to_minimum_voltage_after_cable_check
+                                                ? powersupply_capabilities.min_export_voltage_V
+                                                : config.dc_isolation_voltage_V);
 
-                        if (m.resistance_N_Ohm < min_resistance_warning ||
-                            m.resistance_P_Ohm < min_resistance_warning) {
-                            session_log.evse(false, fmt::format("Isolation measurement FAULT P {} N {}.",
-                                                                m.resistance_P_Ohm, m.resistance_N_Ohm));
+                        // We do not want to shut down power supply
+                        if (minvoltage < 60) {
+                            minvoltage = 60;
+                        }
+                        powersupply_DC_set(minvoltage, 2);
+
+                        if (!wait_powersupply_DC_below_voltage(minvoltage + 20)) {
+                            EVLOG_info << "Voltage did not go back to minimal voltage within timeout.";
                             ok = false;
-                            r_hlc[0]->call_set_EVSEIsolationStatus(types::iso15118_charger::IsolationStatus::Fault);
-                            imd_stop();
-                        } else if (m.resistance_N_Ohm < min_resistance_ok || m.resistance_P_Ohm < min_resistance_ok) {
-                            session_log.evse(false, fmt::format("Isolation measurement WARNING P {} N {}.",
-                                                                m.resistance_P_Ohm, m.resistance_N_Ohm));
-                            ok = true;
-                            r_hlc[0]->call_set_EVSEIsolationStatus(types::iso15118_charger::IsolationStatus::Warning);
                         } else {
-                            session_log.evse(false, fmt::format("Isolation measurement Ok P {} N {}.",
-                                                                m.resistance_P_Ohm, m.resistance_N_Ohm));
-                            ok = true;
-                            r_hlc[0]->call_set_EVSEIsolationStatus(types::iso15118_charger::IsolationStatus::Valid);
+                            // verify it is within ranges. Warning level is <500 Ohm/V_max_output_rating, Fault
+                            // is <100
+                            const double min_resistance_ok = 500. * powersupply_capabilities.max_export_voltage_V;
+                            const double min_resistance_warning = 100. * powersupply_capabilities.max_export_voltage_V;
+
+                            if (m.resistance_N_Ohm < min_resistance_warning ||
+                                m.resistance_P_Ohm < min_resistance_warning) {
+                                session_log.evse(false, fmt::format("Isolation measurement FAULT P {} N {}.",
+                                                                    m.resistance_P_Ohm, m.resistance_N_Ohm));
+                                ok = false;
+                                r_hlc[0]->call_set_EVSEIsolationStatus(types::iso15118_charger::IsolationStatus::Fault);
+                                imd_stop();
+                            } else if (m.resistance_N_Ohm < min_resistance_ok ||
+                                       m.resistance_P_Ohm < min_resistance_ok) {
+                                session_log.evse(false, fmt::format("Isolation measurement WARNING P {} N {}.",
+                                                                    m.resistance_P_Ohm, m.resistance_N_Ohm));
+                                ok = true;
+                                r_hlc[0]->call_set_EVSEIsolationStatus(
+                                    types::iso15118_charger::IsolationStatus::Warning);
+                            } else {
+                                session_log.evse(false, fmt::format("Isolation measurement Ok P {} N {}.",
+                                                                    m.resistance_P_Ohm, m.resistance_N_Ohm));
+                                ok = true;
+                                r_hlc[0]->call_set_EVSEIsolationStatus(types::iso15118_charger::IsolationStatus::Valid);
+                            }
                         }
                     }
                 }
+            } else {
+                EVLOG_error << fmt::format("CableCheck Thread: Could not set DC power supply voltage and current.");
             }
         } else {
-            EVLOG_error << fmt::format("CableCheck Thread: Cannot start cable check, contactor_open {}",
-                                       contactor_open);
+            EVLOG_error << fmt::format("CableCheck Thread: Contactors are still open after timeout, giving up.");
         }
 
         if (config.hack_pause_imd_during_precharge)
