@@ -21,7 +21,9 @@ import stringcase
 from typing import List
 
 
-# Global variables
+# FIXME (aw): remove these global variables
+
+# global variables
 everest_dirs: List[Path] = []
 work_dir: Path = None
 
@@ -29,21 +31,8 @@ work_dir: Path = None
 env = j2.Environment(loader=j2.FileSystemLoader(Path(__file__).parent / 'templates'),
                      lstrip_blocks=True, trim_blocks=True, undefined=j2.StrictUndefined,
                      keep_trailing_newline=True)
-env.filters['snake_case'] = helpers.snake_case
 
-templates = {
-    'interface_base': env.get_template('interface-Base.hpp.j2'),
-    'interface_exports': env.get_template('interface-Exports.hpp.j2'),
-    'interface_impl.hpp': env.get_template('interface-Impl.hpp.j2'),
-    'interface_impl.cpp': env.get_template('interface-Impl.cpp.j2'),
-    'types.hpp': env.get_template('types.hpp.j2'),
-    'module.hpp': env.get_template('module.hpp.j2'),
-    'module.cpp': env.get_template('module.cpp.j2'),
-    'ld-ev.hpp': env.get_template('ld-ev.hpp.j2'),
-    'ld-ev.cpp': env.get_template('ld-ev.cpp.j2'),
-    'cmakelists': env.get_template('CMakeLists.txt.j2')
-}
-
+templates = {}
 validators = {}
 
 # Function declarations
@@ -53,7 +42,21 @@ def setup_jinja_env():
     env.globals['timestamp'] = datetime.utcnow()
     # FIXME (aw): which repo to use? everest or everest-framework?
     env.globals['git'] = helpers.gather_git_info(work_dir)
+    env.filters['snake_case'] = helpers.snake_case
     env.filters['create_dummy_result'] = helpers.create_dummy_result
+
+    templates.update({
+        'interface_base': env.get_template('interface-Base.hpp.j2'),
+        'interface_exports': env.get_template('interface-Exports.hpp.j2'),
+        'interface_impl.hpp': env.get_template('interface-Impl.hpp.j2'),
+        'interface_impl.cpp': env.get_template('interface-Impl.cpp.j2'),
+        'types.hpp': env.get_template('types.hpp.j2'),
+        'module.hpp': env.get_template('module.hpp.j2'),
+        'module.cpp': env.get_template('module.cpp.j2'),
+        'ld-ev.hpp': env.get_template('ld-ev.hpp.j2'),
+        'ld-ev.cpp': env.get_template('ld-ev.cpp.j2'),
+        'cmakelists': env.get_template('CMakeLists.txt.j2')
+    })
 
 
 def generate_tmpl_data_for_if(interface, if_def, type_file):
@@ -754,12 +757,11 @@ def main():
 
         setup_jinja_env()
 
-
         schemas_dir = Path(args.schemas_dir).resolve()
         if not schemas_dir.exists():
             print('The default ("../everest-framework/schemas") xor supplied (via --schemas-dir) schemas directory\n'
-                'doesn\'t exist.\n'
-                f'dir: {schemas_dir}')
+                  'doesn\'t exist.\n'
+                  f'dir: {schemas_dir}')
             exit(1)
 
         validators = helpers.load_validators(schemas_dir)
