@@ -224,6 +224,8 @@ private:
     void imd_stop();
     void imd_start();
     Everest::Thread telemetryThreadHandle;
+
+    static constexpr auto CABLECHECK_CONTACTORS_CLOSE_TIMEOUT{std::chrono::seconds(5)};
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
