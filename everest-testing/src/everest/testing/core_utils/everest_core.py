@@ -55,6 +55,11 @@ class EverestCore:
         # make sure controller starts with a dynamic port
         everest_config["settings"]["controller_port"] = 0
 
+        try:
+            everest_config["active_modules"]["iso15118_car"]["config_implementation"]["main"]["mqtt_prefix"] = self.mqtt_external_prefix
+        except KeyError:
+            logging.warning("Missing key in iso15118_car config")
+
         yaml.dump(everest_config, self.temp_everest_config_file)
 
         self.everest_config_path = Path(self.temp_everest_config_file.name)
