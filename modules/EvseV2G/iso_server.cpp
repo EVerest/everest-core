@@ -1228,7 +1228,7 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
             unsigned char* base64Buffer = NULL;
             size_t olen;
 
-            while( crt->version != 0 && crt->next != nullptr )
+            while( crt != nullptr && crt->version != 0 )
             {
                 mbedtls_base64_encode(NULL, 0, &olen, crt->raw.p, crt->raw.len);
                 base64Buffer = static_cast<unsigned char*>(malloc(olen));
