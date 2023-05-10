@@ -1697,7 +1697,7 @@
         "color": "",
         "bgcolor": "",
         "icon": "",
-        "payload": "sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 36000;unplug",
+        "payload": "start",
         "payloadType": "str",
         "topic": "everest_external/nodered/#/carsim/cmd/execute_charging_session",
         "topicType": "str",
@@ -1719,12 +1719,12 @@
         "width": "3",
         "height": "1",
         "passthru": false,
-        "label": "Car unplug",
+        "label": "Stop & Unplug",
         "tooltip": "",
         "color": "",
         "bgcolor": "",
         "icon": "",
-        "payload": "unplug",
+        "payload": "stop",
         "payloadType": "str",
         "topic": "everest_external/nodered/#/carsim/cmd/modify_charging_session",
         "topicType": "str",
@@ -1732,7 +1732,7 @@
         "y": 940,
         "wires": [
             [
-                "361b3d846c4e6673"
+                "620b0d248a89ece0"
             ]
         ]
     },
@@ -1767,7 +1767,7 @@
         "type": "ui_dropdown",
         "z": "ed603c51db9dcbb9",
         "name": "",
-        "label": "Simulation",
+        "label": "Car Simulation",
         "tooltip": "",
         "place": "Select option",
         "group": "b364f7eb4621082b",
@@ -1808,7 +1808,7 @@
                 "type": "str"
             },
             {
-                "label": "DC (experimental)",
+                "label": "DC ISO15118-2",
                 "value": "sleep 1;iso_wait_slac_matched;iso_start_v2g_session ExternalPayment,DC_extended;sleep 36000#iso_stop_charging;iso_wait_v2g_session_stopped;unplug",
                 "type": "str"
             }
@@ -1829,7 +1829,7 @@
         "type": "function",
         "z": "ed603c51db9dcbb9",
         "name": "Buffer sim commands",
-        "func": "if (msg.topic.indexOf('sim_commands') > -1) {\n    flow.set('sim_commands', msg.payload);\n} else {\n    msg.payload = flow.get('sim_commands');\n    return msg;\n}\n",
+        "func": "if (msg.topic.indexOf('sim_commands') > -1) {\n    const s = msg.payload.split('#');\n    flow.set('sim_commands_start', s[0]);\n    flow.set('sim_commands_stop', s[1]);\n} else if (msg.payload == 'start') {\n    msg.payload = flow.get('sim_commands_start');\n    return msg;\n} else if (msg.payload == 'stop') {\n    msg.payload = flow.get('sim_commands_stop');\n    return msg;\n} else {\n    msg.payload = 'NONE';\n    return msg;\n}\n",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
