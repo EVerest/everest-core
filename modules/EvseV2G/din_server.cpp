@@ -55,11 +55,10 @@ void load_din_physical_value(struct dinPhysicalValueType* const phy_value_dest,
 
 /*!
  * \brief din_validate_state This function checks whether the received message is expected and valid at this
- * point in the communication sequence state machine. The current V2G msg type must be set with the current V2G msg state.
- * \param state is the current state of the charging session
- * \param current_v2g_msg is the current handled V2G message
- * \param state of the actual session.
- * \return Returns a dinResponseCode with sequence error if current_v2g_msg is not expected, otherwise OK.
+ * point in the communication sequence state machine. The current V2G msg type must be set with the current V2G msg
+ * state. \param state is the current state of the charging session \param current_v2g_msg is the current handled V2G
+ * message \param state of the actual session. \return Returns a dinResponseCode with sequence error if current_v2g_msg
+ * is not expected, otherwise OK.
  */
 static dinresponseCodeType din_validate_state(int state, enum V2gMsgTypeId current_v2g_msg) {
     /* if the request type has enabled (= set) bit in expected_requests, then this
@@ -70,10 +69,10 @@ static dinresponseCodeType din_validate_state(int state, enum V2gMsgTypeId curre
 }
 
 /*!
- * \brief din_validate_response_code This function checks if an external error has occurred (sequence error, user abort)... ).
- * \param din_response_code is a pointer to the current response code. The value will be modified if an external error has occurred.
- * \param conn the structure with the external error information.
- * \return Returns the next v2g-event.
+ * \brief din_validate_response_code This function checks if an external error has occurred (sequence error, user
+ * abort)... ). \param din_response_code is a pointer to the current response code. The value will be modified if an
+ * external error has occurred. \param conn the structure with the external error information. \return Returns the next
+ * v2g-event.
  */
 static v2g_event din_validate_response_code(dinresponseCodeType* const din_response_code,
                                             struct v2g_connection const* conn) {
@@ -145,9 +144,8 @@ static void publish_DIN_DC_EVStatusType(struct v2g_context* ctx, const struct di
 //=============================================
 
 /*!
- * \brief publish_din_service_discovery_req This function publishes the dinServiceDiscoveryReqType message to the MQTT interface.
- * \param ctx is the V2G context.
- * \param dinServiceDiscoveryReqType is the request message.
+ * \brief publish_din_service_discovery_req This function publishes the dinServiceDiscoveryReqType message to the MQTT
+ * interface. \param ctx is the V2G context. \param dinServiceDiscoveryReqType is the request message.
  */
 static void
 publish_din_service_discovery_req(struct v2g_context* ctx,
@@ -214,9 +212,8 @@ static void publish_din_charge_parameter_discovery_req(
 }
 
 /*!
- * \brief publish_din_power_delivery_req This function publishes the dinPowerDeliveryReqType message to the MQTT interface.
- * \param ctx is the V2G context.
- * \param din_power_delivery_req is the request message.
+ * \brief publish_din_power_delivery_req This function publishes the dinPowerDeliveryReqType message to the MQTT
+ * interface. \param ctx is the V2G context. \param din_power_delivery_req is the request message.
  */
 static void publish_din_power_delivery_req(struct v2g_context* ctx,
                                            struct dinPowerDeliveryReqType const* const v2g_power_delivery_req) {
@@ -247,9 +244,8 @@ static void publish_din_precharge_req(struct v2g_context* ctx,
 }
 
 /*!
- * \brief publish_din_current_demand_req This function publishes the dinCurrentDemandReqType message to the MQTT interface.
- * \param ctx is the V2G context.
- * \param v2g_current_demand_req is the request message.
+ * \brief publish_din_current_demand_req This function publishes the dinCurrentDemandReqType message to the MQTT
+ * interface. \param ctx is the V2G context. \param v2g_current_demand_req is the request message.
  */
 static void publish_din_current_demand_req(struct v2g_context* ctx,
                                            struct dinCurrentDemandReqType const* const v2g_current_demand_req) {
@@ -318,7 +314,7 @@ static enum v2g_event handle_din_session_setup(struct v2g_connection* conn) {
 
     /* format EVCC ID */
     for (idx = 0; idx < req->EVCCID.bytesLen; idx++) {
-        sprintf(&buffer[idx * 3], "%02" PRIx8 ":", req->EVCCID.bytes[idx]);
+        sprintf(&buffer[idx * 3], "%02" PRIX8 ":", req->EVCCID.bytes[idx]);
     }
     if (idx)
         buffer[idx * 3 - 1] = '\0';
@@ -611,7 +607,7 @@ static enum v2g_event handle_din_charge_parameter(struct v2g_connection* conn) {
             dlog(DLOG_LEVEL_WARNING,
                  "EVSE wants to finish charge parameter phase, but status code is not set to 'ready' (1)");
         }
-        conn->ctx->state = WAIT_FOR_CABLECHECK; // [V2G-DC-453]
+        conn->ctx->state = WAIT_FOR_CABLECHECK;               // [V2G-DC-453]
     } else {
         conn->ctx->state = WAIT_FOR_CHARGEPARAMETERDISCOVERY; // [V2G-DC-498]
     }

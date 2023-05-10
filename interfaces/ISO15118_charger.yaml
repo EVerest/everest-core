@@ -315,9 +315,9 @@ vars:
   EVCCIDD:
     description:
       Specifies the EVs identification in a readable format. It contains
-      the MAC address of the EVCC
+      the MAC address of the EVCC in uppercase
     type: string
-    pattern: ^[A-Fa-f0-9]{2}(:[A-Fa-f0-9]{2}){5}$
+    pattern: ^[A-F0-9]{2}(:[A-F0-9]{2}){5}$
   SelectedPaymentOption:
     description: This element is used for indicating the payment type
     type: string
