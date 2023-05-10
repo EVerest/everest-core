@@ -15,8 +15,6 @@ active_modules:
     module: EvseManager
     config_module:
       connector_id: 1
-      three_phases: true
-      has_ventilation: true
       country_code: DE
       rcd_enabled: true
       evse_id: DE*PNX*E12345*1
@@ -29,8 +27,8 @@ active_modules:
       bsp:
         - module_id: yeti_driver_1
           implementation_id: board_support
-      powermeter_grid_side:
-        - module_id: yeti_driver_1
+      powermeter_car_side:
+        - module_id: powersupply_dc
           implementation_id: powermeter
       slac:
         - module_id: slac_1
@@ -131,6 +129,10 @@ active_modules:
         sleep: 0.25
   energy_manager:
     module: EnergyManager
+    config_module:
+      schedule_total_duration: 1
+      schedule_interval_duration: 60
+      debug: false
     connections:
       energy_trunk:
         - module_id: grid_connection_point

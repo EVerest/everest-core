@@ -2140,7 +2140,7 @@
                 "type": "str"
             },
             {
-                "label": "DC (experimental)",
+                "label": "DC ISO15118-2",
                 "value": "sleep 1;iso_wait_slac_matched;iso_start_v2g_session ExternalPayment,DC_extended;sleep 36000#iso_stop_charging;iso_wait_v2g_session_stopped;unplug",
                 "type": "str"
             }
