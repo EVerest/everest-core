@@ -1,14 +1,14 @@
 ---
 everest-framework:
   git: https://github.com/EVerest/everest-framework.git
-  git_tag: 16b7863
+  git_tag: f621465
 sigslot:
   git: https://github.com/palacaze/sigslot
   git_tag: v1.2.0
   options: ["SIGSLOT_COMPILE_EXAMPLES OFF"]
 libmodbus:
   git: https://github.com/EVerest/libmodbus.git
-  git_tag: v0.2.0
+  git_tag: 2e89951
 libsunspec:
   git: https://github.com/EVerest/libsunspec.git
   git_tag: v0.1.0
