@@ -8,14 +8,14 @@
 
 void Context::signal_cm_slac_parm_req(const uint8_t* mac) {
     if (callbacks.signal_ev_mac_address_parm_req) {
-        auto mac_string = fmt::format("{:02x}", fmt::join(mac, mac + ETH_ALEN, ":"));
+        auto mac_string = fmt::format("{:02X}", fmt::join(mac, mac + ETH_ALEN, ":"));
         callbacks.signal_ev_mac_address_parm_req(mac_string);
     }
 }
 
 void Context::signal_cm_slac_match_cnf(const uint8_t* mac) {
     if (callbacks.signal_ev_mac_address_match_cnf) {
-        auto mac_string = fmt::format("{:02x}", fmt::join(mac, mac + ETH_ALEN, ":"));
+        auto mac_string = fmt::format("{:02X}", fmt::join(mac, mac + ETH_ALEN, ":"));
         callbacks.signal_ev_mac_address_match_cnf(mac_string);
     }
 }

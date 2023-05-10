@@ -53,12 +53,13 @@ static iso1responseCodeType iso_validate_state(int state, enum V2gMsgTypeId curr
 }
 
 /*!
- * \brief iso_validate_response_code This function checks if an external error has occurred (sequence error, user abort) ... ).
- * \param iso_response_code is a pointer to the current response code. The value will be modified if an external
+ * \brief iso_validate_response_code This function checks if an external error has occurred (sequence error, user abort)
+ * ... ). \param iso_response_code is a pointer to the current response code. The value will be modified if an external
  *  error has occurred.
  * \param conn the structure with the external error information.
- * \return Returns \c V2G_EVENT_SEND_AND_TERMINATE if the charging must be terminated after sending the response message,
- *  returns \c V2G_EVENT_TERMINATE_CONNECTION if charging must be aborted immediately and \c V2G_EVENT_NO_EVENT if no error
+ * \return Returns \c V2G_EVENT_SEND_AND_TERMINATE if the charging must be terminated after sending the response
+ * message, returns \c V2G_EVENT_TERMINATE_CONNECTION if charging must be aborted immediately and \c V2G_EVENT_NO_EVENT
+ * if no error
  */
 static v2g_event iso_validate_response_code(iso1responseCodeType* const v2g_response_code,
                                             struct v2g_connection const* const conn) {
@@ -801,7 +802,7 @@ static enum v2g_event handle_iso_session_setup(struct v2g_connection* conn) {
 
     /* format EVCC ID */
     for (i = 0; i < req->EVCCID.bytesLen; i++) {
-        sprintf(&buffer[i * 3], "%02" PRIx8 ":", req->EVCCID.bytes[i]);
+        sprintf(&buffer[i * 3], "%02" PRIX8 ":", req->EVCCID.bytes[i]);
     }
     if (i)
         buffer[i * 3 - 1] = '\0';
@@ -1070,7 +1071,7 @@ static enum v2g_event handle_iso_payment_service_selection(struct v2g_connection
     res->ResponseCode = (selected_services_found == false) ? iso1responseCodeType_FAILED_ServiceSelectionInvalid
                                                            : res->ResponseCode; // [V2G2-467]
     res->ResponseCode = (charge_service_found == false) ? iso1responseCodeType_FAILED_NoChargeServiceSelected
-                                                        : res->ResponseCode; // [V2G2-804]
+                                                        : res->ResponseCode;    // [V2G2-804]
 
     /* Check the current response code and check if no external error has occurred */
     next_event = (v2g_event)iso_validate_response_code(&res->ResponseCode, conn);
