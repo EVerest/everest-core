@@ -1224,7 +1224,6 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
         } else {
             // Save the certificate chain in a variable in PEM format to publish it
             mbedtls_x509_crt *crt = &conn->ctx->session.contract.crt;
-            mbedtls_x509_crt *prev = nullptr;
             unsigned char* base64Buffer = NULL;
             size_t olen;
 
@@ -1241,7 +1240,6 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
                 contract_cert_chain_pem.append("-----END CERTIFICATE-----\n");
 
                 free(base64Buffer);
-                prev = crt;
                 crt = crt->next;
             }
         }
