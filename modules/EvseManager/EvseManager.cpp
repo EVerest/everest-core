@@ -634,6 +634,25 @@ void EvseManager::ready() {
             ev_info = types::evse_manager::EVInfo();
             p_evse->publish_ev_info(ev_info);
         }
+
+        if (get_hlc_enabled() && s == types::evse_manager::SessionEventEnum::SessionStarted &&
+            charger->getSessionStartedReason() == types::evse_manager::StartSessionReason::Authorized) {
+            Array payment_options;
+            payment_options.insert(payment_options.end(), "ExternalPayment");
+            r_hlc[0]->call_set_PaymentOptions(payment_options);
+            r_hlc[0]->call_set_Certificate_Service_Supported(false);
+        } else if (get_hlc_enabled() && s == types::evse_manager::SessionEventEnum::SessionFinished) {  
+            Array payment_options;
+            if (config.payment_enable_eim) {
+                payment_options.insert(payment_options.end(), "ExternalPayment");
+            }
+            if (config.payment_enable_contract) {
+                payment_options.insert(payment_options.end(), "Contract");
+                r_hlc[0]->call_set_Certificate_Service_Supported(true);
+            }
+            r_hlc[0]->call_set_PaymentOptions(payment_options);
+        }
+
     });
 
     invoke_ready(*p_evse);
