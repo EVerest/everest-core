@@ -82,7 +82,6 @@ class TypeParser:
         helpers.type_headers.clear()
         types = []
         enums = []
-        type_headers = []
 
         for type_name, type_properties in type_def.get('types', {}).items():
             type_url = f'/{type_with_namespace["relative_path"]}#/{type_name}'
@@ -107,8 +106,7 @@ class TypeParser:
             parsed_type['name'] = stringcase.capitalcase(parsed_type['name'])
             types.append(parsed_type)
 
-        for type_header in helpers.type_headers:
-            type_headers.append(type_header)
+        type_headers = sorted(helpers.type_headers)
 
         # sort types, so no forward declaration is necessary
         sorted_types: List = []

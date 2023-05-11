@@ -9,8 +9,7 @@
 {% for type_header in info.type_headers %}
 #include <{{type_header}}>
 {% endfor %}
-{% else %}
-{%endif%}
+{% endif %}
 {% if not enums %}
 // no enums defined for this interface
 {% else %}

@@ -103,7 +103,6 @@ def generate_tmpl_data_for_if(interface, if_def, type_file):
             }
             enums.append(enum_info)
 
-    type_headers = helpers.type_headers
     if type_file:
         for parsed_type in helpers.parsed_types:
             parsed_type['name'] = stringcase.capitalcase(parsed_type['name'])
@@ -112,7 +111,7 @@ def generate_tmpl_data_for_if(interface, if_def, type_file):
                     if 'type_dict' in prop['info']:
                         path = Path('generated/types') / \
                             prop['info']['type_dict']['type_relative_path'].with_suffix('.hpp')
-                        type_headers.add(path.as_posix())
+                        helpers.type_headers.add(path.as_posix())
 
             types.append(parsed_type)
 
@@ -121,7 +120,7 @@ def generate_tmpl_data_for_if(interface, if_def, type_file):
             'base_class_header': f'generated/interfaces/{interface}/Implementation.hpp',
             'interface': interface,
             'desc': if_def['description'],
-            'type_headers': type_headers
+            'type_headers': sorted(helpers.type_headers)
         },
         'enums': enums,
         'types': types,
