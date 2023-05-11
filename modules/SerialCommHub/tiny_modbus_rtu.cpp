@@ -9,11 +9,15 @@
 #include "tiny_modbus_rtu.hpp"
 
 #include <cstring>
+#include <endian.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <iostream>
 #include <string>
 #include <unistd.h>
+
+#include <sys/select.h>
+#include <sys/time.h>
 
 #include <fmt/core.h>
 
