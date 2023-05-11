@@ -103,8 +103,9 @@ active_modules:
   iso15118_charger:
     config_module:
       device: auto
+      tls_security: allow
     connections: {}
-    module: PyJosev
+    module: EvseV2G
   persistent_store:
     config_module:
       sqlite_db_file_path: everest_persistent_store.db

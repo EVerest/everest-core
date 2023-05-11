@@ -1,10 +1,9 @@
 active_modules:
   iso15118_charger:
-    module: JsRiseV2G
-    config_implementation:
-      main:
-        mqtt_base_path: everest_external/iso15118/java
-        device: auto
+    module: EvseV2G
+    config_module:
+      device: auto
+      tls_security: allow
   iso15118_car:
     module: JsCarV2G
     config_implementation:

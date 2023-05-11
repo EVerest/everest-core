@@ -1,8 +1,9 @@
 active_modules:
   iso15118_charger:
-    module: PyJosev
+    module: EvseV2G
     config_module:
       device: auto
+      tls_security: allow
   iso15118_car:
     module: JsCarV2G
     config_implementation:
