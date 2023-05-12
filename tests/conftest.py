@@ -4,9 +4,5 @@
 import os
 
 def pytest_addoption(parser):
-    parser.addoption("--path", action="store", default="~/checkout/everest-workspace/everest-core",
-                     help="everest-core path; default = '~/checkout/everest-workspace/everest-core'")
-
-
-def pytest_sessionfinish(session, exitstatus):
-    os._exit(exitstatus)
+    parser.addoption("--everest-prefix", action="store", default="../build/dist",
+                     help="everest prefix path; default = '../build/dist'")
