@@ -206,7 +206,6 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
         // ctx->evse_v2g_data.evse_service_list[0].ServiceCategory Not needed at the moment, because it is a fixed value
         // in din and iso
         ctx->evse_v2g_data.evse_service_list_len = (uint16_t)0;
-        ctx->evse_v2g_data.evse_service_list_write_idx = (uint8_t)0;
         memset(&ctx->evse_v2g_data.service_parameter_list, 0,
                sizeof(struct iso1ServiceParameterListType) * iso1ServiceListType_Service_ARRAY_SIZE);
     }
@@ -244,8 +243,9 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
     ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0].SalesTariff_isUsed =
         (unsigned int)0; // Not supported in DIN
 
-    free(ctx->evse_v2g_data.cert_install_res_b64_buffer);
-    ctx->evse_v2g_data.cert_install_res_b64_buffer = NULL;
+    if (ctx->evse_v2g_data.cert_install_res_b64_buffer.empty() == false) {
+        ctx->evse_v2g_data.cert_install_res_b64_buffer.clear();
+    }
 
     // AC paramter
     ctx->evse_v2g_data.rcd = (int)0; // 0 if RCD has not detected an error

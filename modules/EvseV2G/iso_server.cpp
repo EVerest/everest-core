@@ -746,12 +746,13 @@ publish_iso_welding_detection_req(struct v2g_context* ctx,
  * the MQTT interface. \param AExiBuffer is the exi msg where the V2G EXI msg is stored. \param AExiBufferSize is the
  * size of the V2G msg. \return Returns \c true if it was successful, otherwise \c false.
  */
-static bool publish_iso_certificate_installation_exi_req(uint8_t* AExiBuffer, size_t AExiBufferSize) {
+static bool publish_iso_certificate_installation_exi_req(struct v2g_context* ctx, uint8_t* AExiBuffer, size_t AExiBufferSize) {
     // PnC only
 
     bool rv = true;
     unsigned char* base64Buffer = NULL;
     size_t olen;
+    types::iso15118_charger::Request_Exi_Stream_Schema certificate_request;
 
     /* Parse contract leaf certificate */
     mbedtls_base64_encode(NULL, 0, &olen, static_cast<unsigned char*>(AExiBuffer), AExiBufferSize);
@@ -771,7 +772,10 @@ static bool publish_iso_certificate_installation_exi_req(uint8_t* AExiBuffer, si
         goto exit;
     }
 
-    // TODO: Publish EXI message
+    certificate_request.exiRequest = std::string(reinterpret_cast<const char*>(base64Buffer), olen);
+    certificate_request.iso15118SchemaVersion = ISO_15118_2013_MSG_DEF;
+    certificate_request.certificateAction = types::iso15118_charger::CertificateActionEnum::Install;
+    ctx->p_charger->publish_Certificate_Request(certificate_request);
 
 exit:
     if (base64Buffer != NULL)
@@ -1831,8 +1835,8 @@ static enum v2g_event handle_iso_certificate_installation(struct v2g_connection*
     enum v2g_event nextEvent = V2G_EVENT_SEND_AND_TERMINATE;
     struct timespec ts_abs_timeout;
     int rv = 0;
-    /* At first, publish the received ev request message to the customer mqtt interface */
-    if (publish_iso_certificate_installation_exi_req(conn->buffer + V2GTP_HEADER_LENGTH,
+    /* At first, publish the received EV request message to the customer MQTT interface */
+    if (publish_iso_certificate_installation_exi_req(conn->ctx, conn->buffer + V2GTP_HEADER_LENGTH,
                                                      conn->stream.size - V2GTP_HEADER_LENGTH) == false) {
         dlog(DLOG_LEVEL_ERROR, "Failed to send CertificateInstallationExiReq");
         goto exit;
@@ -1841,8 +1845,8 @@ static enum v2g_event handle_iso_certificate_installation(struct v2g_connection*
     clock_gettime(CLOCK_MONOTONIC, &ts_abs_timeout);
     timespec_add_ms(&ts_abs_timeout, V2G_SECC_MSG_CERTINSTALL_TIME);
     dlog(DLOG_LEVEL_INFO, "Waiting for the CertInstallationExiRes msg");
-    while ((rv == 0) && (conn->ctx->evse_v2g_data.cert_install_res_b64_buffer == NULL) &&
-           (conn->ctx->intl_emergency_shutdown) && (conn->ctx->stop_hlc == false) &&
+    while ((rv == 0) && (conn->ctx->evse_v2g_data.cert_install_res_b64_buffer.empty() == true) &&
+           (conn->ctx->intl_emergency_shutdown == false) && (conn->ctx->stop_hlc == false) &&
            (conn->ctx->is_connection_terminated == false)) { // [V2G2-917]
         pthread_mutex_lock(&conn->ctx->mqtt_lock);
         rv = pthread_cond_timedwait(&conn->ctx->mqtt_cond, &conn->ctx->mqtt_lock, &ts_abs_timeout);
@@ -1855,16 +1859,20 @@ static enum v2g_event handle_iso_certificate_installation(struct v2g_connection*
         }
         pthread_mutex_unlock(&conn->ctx->mqtt_lock);
     }
-    if (conn->ctx->evse_v2g_data.cert_install_res_b64_buffer != NULL) {
+
+    if ((conn->ctx->evse_v2g_data.cert_install_res_b64_buffer.empty() == false) && (conn->ctx->evse_v2g_data.cert_install_status == true)) {
         if ((rv = mbedtls_base64_decode(
                  conn->buffer + V2GTP_HEADER_LENGTH, DEFAULT_BUFFER_SIZE, &conn->buffer_pos,
-                 reinterpret_cast<unsigned char*>(conn->ctx->evse_v2g_data.cert_install_res_b64_buffer),
-                 std::string(conn->ctx->evse_v2g_data.cert_install_res_b64_buffer).size())) != 0) {
-            dlog(DLOG_LEVEL_ERROR, "Failed to decode base64 stream (-0x%04x)", rv);
+                 reinterpret_cast<unsigned char*>(conn->ctx->evse_v2g_data.cert_install_res_b64_buffer.data()),
+                 conn->ctx->evse_v2g_data.cert_install_res_b64_buffer.size())) != 0) {
+            char strerr[256];
+            mbedtls_strerror(rv, strerr, 256);
+            dlog(DLOG_LEVEL_ERROR, "Failed to decode base64 stream (-0x%04x) %s", rv, strerr);
             goto exit;
         }
         nextEvent = V2G_EVENT_SEND_RECV_EXI_MSG;
         res->ResponseCode = iso1responseCodeType_OK; // Is irrelevant but must be valid to serve the internal validation
+        conn->buffer_pos += V2GTP_HEADER_LENGTH; // buffer_pos had only the payload, so increase it to be header + payload
     } else {
         res->ResponseCode = iso1responseCodeType_FAILED;
     }
