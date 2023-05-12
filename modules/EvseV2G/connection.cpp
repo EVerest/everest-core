@@ -47,9 +47,6 @@ mbedtls_entropy_context entropy;
 mbedtls_ssl_cache_context cache;
 #endif
 
-static const int v2g_cipher_suites[] = {MBEDTLS_TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256,
-                                        MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256, 0};
-
 /* list of allowed hashes which our TLS server supports; this list is
  * copied from mbedtls' ssl_preset_default_hashes (ssl_tls.c) with one
  * nitpick: the MBEDTLS_MD_SHA1 is enabled unconditionally since TLSv1.2
@@ -597,7 +594,7 @@ static bool connection_init_tls(struct v2g_context* ctx) {
 #if defined(MBEDTLS_SSL_CACHE_C)
     mbedtls_ssl_conf_session_cache(&ctx->ssl_config, &cache, mbedtls_ssl_cache_get, mbedtls_ssl_cache_set);
 #endif
-    mbedtls_ssl_conf_ciphersuites(&ctx->ssl_config, v2g_cipher_suites);
+    mbedtls_ssl_conf_ciphersuites(&ctx->ssl_config, ctx->tls_ciphersuites.data());
     mbedtls_ssl_conf_sig_hashes(&ctx->ssl_config, v2g_ssl_allowed_hashes);
     mbedtls_ssl_conf_read_timeout(&ctx->ssl_config, ctx->network_read_timeout_tls);
 

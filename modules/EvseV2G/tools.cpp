@@ -341,3 +341,28 @@ std::string convert_to_hex_str(const uint8_t* data, int len) {
 
     return string_stream.str();
 }
+
+std::vector<std::string> parse_separated_string(const std::string& separated_string, char delim) {
+    std::vector<std::string> rv;
+    std::stringstream string_stream(separated_string);
+
+    dlog (DLOG_LEVEL_ERROR, "%s", separated_string.c_str());
+
+    while(string_stream.good() == true) {
+        std::string substr;
+        getline(string_stream, substr, delim);
+        rv.push_back(substr);
+        dlog(DLOG_LEVEL_ERROR, "substr %s", substr.c_str());
+    }
+
+    return rv;
+}
+
+std::vector<int> string_to_int_vector(const std::vector<std::string>& str_vector, const int& base) {
+    std::vector<int> rv;
+
+    for (uint8_t idx = 0; idx < str_vector.size(); idx++) {
+        rv.push_back((int) strtol(str_vector[idx].c_str(), NULL, base));
+    }
+    return rv;
+}

@@ -26,6 +26,13 @@ config:
     - pnc
     - eim+pnc
     default: eim
+  terminate_connection_on_failed_response:
+    description: >-
+      Controls how to handle a failed response code of the EVSE. If true the
+      V2G connection is terminated immediately on a failed response code, otherwise
+      the EV is responsible for closing of the V2G communication session with SessionStop.
+    type: boolean
+    default: false
   tls_security:
     description: >-
       Controls how to handle encrypted communication
@@ -35,13 +42,13 @@ config:
     - allow
     - force
     default: prohibit
-  terminate_connection_on_failed_response:
+  tls_ciphersuites:
     description: >-
-      Controls how to handle a failed response code of the EVSE. If true the
-      V2G connection is terminated immediately on a failed response code, otherwise
-      the EV is responsible for closing of the V2G communication session with SessionStop.
-    type: boolean
-    default: false
+      To configure the list of allowed ciphersuites and the preference order.
+      First in the list has the highest priority. The list is a colon-seperated
+      list of two byte hex-coded values (See the offical table of IANA).
+    type: string
+    default: 0xC025:0xC023
   tls_key_logging:
     description: >-
       Enable/Disable the export of TLS session keys (pre-master-secret)

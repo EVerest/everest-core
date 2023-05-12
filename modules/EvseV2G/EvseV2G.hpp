@@ -26,8 +26,9 @@ struct Conf {
     bool supported_DIN70121;
     bool supported_ISO15118_2;
     std::string highlevel_authentication_mode;
-    std::string tls_security;
     bool terminate_connection_on_failed_response;
+    std::string tls_security;
+    std::string tls_ciphersuites;
     bool tls_key_logging;
     std::string tls_key_logging_path;
 };

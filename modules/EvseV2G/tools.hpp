@@ -12,6 +12,7 @@
 #include <string>
 #include <sys/time.h>
 #include <time.h>
+#include <vector>
 
 #define MAX_FILE_NAME_LENGTH 100
 #define MAX_PKI_CA_LENGTH    4 /* leaf up to root certificate */
@@ -116,5 +117,8 @@ uint8_t get_dir_numbered_file_names(char file_names[MAX_PKI_CA_LENGTH][MAX_FILE_
  * \return Returns the converted string.
  */
 std::string convert_to_hex_str(const uint8_t* data, int len);
+
+std::vector<std::string> parse_separated_string(const std::string& separated_string, char delim);
+std::vector<int> string_to_int_vector(const std::vector<std::string>& str_vector, const int& base);
 
 #endif /* TOOLS_H */

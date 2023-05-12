@@ -191,6 +191,7 @@ struct v2g_context {
     uint32_t network_read_timeout_tls; /* in milli seconds */
 
     enum tls_security_level tls_security;
+    std::vector<int> tls_ciphersuites;
 
     int sdp_socket;
     int tcp_socket;

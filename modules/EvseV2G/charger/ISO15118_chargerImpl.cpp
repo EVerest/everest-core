@@ -4,6 +4,7 @@
 #include "ISO15118_chargerImpl.hpp"
 #include "log.hpp"
 #include "v2g_ctx.hpp"
+#include "tools.hpp"
 
 const std::string CERTS_SUB_DIR = "certs"; // relativ path of the certs
 
@@ -41,6 +42,8 @@ void ISO15118_chargerImpl::init() {
         v2g_ctx->supported_protocols |= (1 << V2G_PROTO_ISO15118_2013);
     }
 
+    v2g_ctx->terminate_connection_on_failed_response = mod->config.terminate_connection_on_failed_response;
+
     /* Configure tls_security */
     if (mod->config.tls_security == "force") {
         v2g_ctx->tls_security = TLS_SECURITY_FORCE;
@@ -53,7 +56,8 @@ void ISO15118_chargerImpl::init() {
         dlog(DLOG_LEVEL_DEBUG, "tls_security prohibit");
     }
 
-    v2g_ctx->terminate_connection_on_failed_response = mod->config.terminate_connection_on_failed_response;
+    v2g_ctx->tls_ciphersuites = string_to_int_vector(parse_separated_string(mod->config.tls_ciphersuites, ':'), 0);
+    v2g_ctx->tls_ciphersuites.push_back(0); // mbedtls needs a 0 terminated array
 
     v2g_ctx->tls_key_logging = mod->config.tls_key_logging;
     v2g_ctx->tls_key_logging_path = mod->config.tls_key_logging_path;
