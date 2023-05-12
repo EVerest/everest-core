@@ -7,20 +7,27 @@ from pathlib import Path
 from everest.testing.core_utils.everest_core import EverestCore
 from everest.testing.core_utils.test_control_module import TestControlModule
 
-@ pytest.fixture
+
+@pytest.fixture
 def everest_core(request) -> EverestCore:
-    """Fixture that can be used to start and stop everest-core
-    """
-    everest_core_path = Path(request.config.getoption("--path"))
-    everest_core = EverestCore(everest_core_path, everest_core_path / "config/config-sil.yaml")
+    """Fixture that can be used to start and stop everest-core"""
+
+    everest_prefix = Path(request.config.getoption("--everest-prefix"))
+    everest_core = EverestCore(everest_prefix)
     yield everest_core
+
+    # FIXME (aw): proper life time management, shouldn't the fixure start and stop?
     everest_core.stop()
 
-@ pytest.fixture
+
+@pytest.fixture
 def test_control_module(request):
     """Fixture that references the module which interfaces with everest-core and that can be used for
     control events for the test cases for everest-core.
     """
-    everest_core_path = Path(request.config.getoption("--path"))
-    test_control_module = TestControlModule(everest_core_path)
-    return test_control_module
+    everest_prefix = Path(request.config.getoption("--everest-prefix"))
+    test_control_module = TestControlModule(everest_prefix)
+    yield test_control_module
+
+    # FIXME (aw): proper life time management, shouldn't the fixure start and stop?
+    test_control_module.stop()

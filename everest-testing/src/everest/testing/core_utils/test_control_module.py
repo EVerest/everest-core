@@ -13,6 +13,7 @@ from os import environ
 class TestControlModule:
     """This class can be used to configure, start and stop the EVerest PyTestControlModule
     """
+    __test__ = False
 
     def __init__(self, everest_core_path: Path) -> None:
         """Initialization method for TestControlModule
