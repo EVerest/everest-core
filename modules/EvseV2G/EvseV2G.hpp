@@ -30,6 +30,7 @@ struct Conf {
     bool terminate_connection_on_failed_response;
     bool tls_key_logging;
     std::string tls_key_logging_path;
+    bool verify_contract_cert_chain;
 };
 
 class EvseV2G : public Everest::ModuleBase {
