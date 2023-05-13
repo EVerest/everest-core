@@ -1,0 +1,51 @@
+name: Build and test
+on: workflow_dispatch
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup cache
+        uses: actions/cache@v3
+        with:
+          path: cache
+          key: compile-${{ github.ref }}-${{ github.sha }}
+          restore-keys: |
+            compile-${{ github.ref }}-
+            compile-
+      - name: Checkout everest-core
+        uses: actions/checkout@v3
+        with:
+          path: source
+      - name: Setup run scripts
+        run: |
+          mkdir scripts
+          rsync -a source/.ci/build-kit/ scripts
+      - name: Pull docker container
+        run: |
+          docker pull --quiet ghcr.io/everest/build-kit-alpine:latest
+          docker image tag ghcr.io/everest/build-kit-alpine:latest build-kit
+      - name: Compile
+        run: |
+          docker run \
+          --volume "$(pwd):/ext" \
+          --name compile-container \
+          build-kit run-script compile
+      - name: Unit tests and install
+        run: |
+          docker commit compile-container build-image
+          docker run \
+          --volume "$(pwd):/ext" \
+          --name test-container \
+          build-image run-script test_and_install
+      - name: Run integration tests
+        run: |
+          docker commit test-container integration-image
+          pushd source/.ci/e2e
+          docker-compose run e2e-test-server run-script tests
+          
+
+
+
+          
