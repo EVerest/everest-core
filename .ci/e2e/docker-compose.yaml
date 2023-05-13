@@ -1,0 +1,24 @@
+version: "3.6"
+
+services:
+  mqtt-server:
+    image: eclipse-mosquitto:2.0.10
+    volumes:
+      - type: bind
+        source: ./mosquitto/mosquitto.conf
+        target: /mosquitto/config/mosquitto.conf
+    logging:
+      driver: none
+
+  e2e-test-server:
+    image: integration-image
+    depends_on:
+      - mqtt-server
+    environment:
+      - MQTT_SERVER_ADDRESS=mqtt-server
+    volumes:
+      - type: bind
+        source: ./scripts
+        target: /ext/scripts
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
