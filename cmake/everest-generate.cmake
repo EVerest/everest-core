@@ -249,6 +249,8 @@ function (ev_add_cpp_module MODULE_NAME)
                 DEPENDS ${MODULE_LOADER_DIR}/ld-ev.cpp
             )
 
+            add_dependencies(generate_cpp_files ld-ev_${MODULE_NAME})
+
             add_executable(${MODULE_NAME})
 
             set_target_properties(${MODULE_NAME}
@@ -274,7 +276,7 @@ function (ev_add_cpp_module MODULE_NAME)
                     everest::framework
             )
 
-            add_dependencies(${MODULE_NAME} ld-ev_${MODULE_NAME} generate_cpp_files)
+            add_dependencies(${MODULE_NAME} generate_cpp_files)
 
             install(TARGETS ${MODULE_NAME}
                 DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
