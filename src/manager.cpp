@@ -28,6 +28,7 @@
 #include <framework/runtime.hpp>
 #include <utils/config.hpp>
 #include <utils/mqtt_abstraction.hpp>
+#include <utils/status_fifo.hpp>
 
 #include "controller/ipc.hpp"
 
@@ -309,7 +310,7 @@ std::mutex modules_ready_mutex;
 static std::map<pid_t, std::string> start_modules(Config& config, MQTTAbstraction& mqtt_abstraction,
                                                   const std::vector<std::string>& ignored_modules,
                                                   const std::vector<std::string>& standalone_modules,
-                                                  const RuntimeSettings& rs) {
+                                                  const RuntimeSettings& rs, StatusFifo& status_fifo) {
 
     std::vector<ModuleStartInfo> modules_to_spawn;
 
@@ -328,7 +329,8 @@ static std::map<pid_t, std::string> start_modules(Config& config, MQTTAbstractio
         auto module_it = modules_ready.emplace(module_name, ModuleReadyInfo{false, nullptr}).first;
 
         Handler module_ready_handler = [module_name, &mqtt_abstraction, standalone_modules,
-                                        mqtt_everest_prefix = rs.mqtt_everest_prefix](nlohmann::json json) {
+                                        mqtt_everest_prefix = rs.mqtt_everest_prefix,
+                                        &status_fifo](nlohmann::json json) {
             EVLOG_debug << fmt::format("received module ready signal for module: {}({})", module_name, json.dump());
             std::unique_lock<std::mutex> lock(modules_ready_mutex);
             // FIXME (aw): here are race conditions, if the ready handler gets called while modules are shut down!
@@ -350,6 +352,7 @@ static std::map<pid_t, std::string> start_modules(Config& config, MQTTAbstractio
                             [](const auto& element) { return element.second.ready; })) {
                 EVLOG_info << fmt::format(TERMINAL_STYLE_OK,
                                           ">>> All modules are initialized. EVerest up and running <<<");
+                status_fifo.update(StatusFifo::ALL_MODULES_STARTED);
                 mqtt_abstraction.publish(fmt::format("{}ready", mqtt_everest_prefix), nlohmann::json(true));
             } else if (!standalone_modules.empty()) {
                 if (modules_spawned == modules_ready.size() - standalone_modules.size()) {
@@ -586,6 +589,9 @@ int boot(const po::variables_map& vm) {
         ignored_modules = vm["ignore"].as<std::vector<std::string>>();
     }
 
+    // create StatusFifo object
+    auto status_fifo = StatusFifo::create_from_path(vm["status-fifo"].as<std::string>());
+
     MQTTAbstraction& mqtt_abstraction = MQTTAbstraction::get_instance(
         rs.mqtt_broker_host, std::to_string(rs.mqtt_broker_port), rs.mqtt_everest_prefix, rs.mqtt_external_prefix);
     if (!mqtt_abstraction.connect()) {
@@ -596,7 +602,8 @@ int boot(const po::variables_map& vm) {
     mqtt_abstraction.spawn_main_loop_thread();
 
     auto controller_handle = start_controller(rs);
-    auto module_handles = start_modules(*config, mqtt_abstraction, ignored_modules, standalone_modules, rs);
+    auto module_handles =
+        start_modules(*config, mqtt_abstraction, ignored_modules, standalone_modules, rs, status_fifo);
     bool modules_started = true;
     bool restart_modules = false;
 
@@ -640,7 +647,8 @@ int boot(const po::variables_map& vm) {
         }
 
         if (module_handles.size() == 0 && restart_modules) {
-            module_handles = start_modules(*config, mqtt_abstraction, ignored_modules, standalone_modules, rs);
+            module_handles =
+                start_modules(*config, mqtt_abstraction, ignored_modules, standalone_modules, rs, status_fifo);
             restart_modules = false;
             modules_started = true;
         }
@@ -704,6 +712,8 @@ int main(int argc, char* argv[]) {
     desc.add_options()("config", po::value<std::string>(),
                        "Full path to a config file.  If the file does not exist and has no extension, it will be "
                        "looked up in the default config directory");
+    desc.add_options()("status-fifo", po::value<std::string>()->default_value(""),
+                       "Path to a named pipe, that shall be used for status updates from the manager");
 
     po::variables_map vm;
 

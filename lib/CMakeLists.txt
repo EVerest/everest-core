@@ -22,6 +22,7 @@ target_sources(framework
         conversions.cpp
         thread.cpp
         serial.cpp
+        status_fifo.cpp
         date.cpp
         runtime.cpp
         yaml_loader.cpp
