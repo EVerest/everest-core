@@ -170,8 +170,8 @@ void OCPP::init() {
     }
 
     this->charge_point = std::make_unique<ocpp::v16::ChargePoint>(
-        json_config, this->ocpp_share_path.string(), user_config_path.string(), this->config.DatabasePath,
-        sql_init_path.string(), this->config.MessageLogPath, etc_certs_path.string());
+        json_config.dump(), this->ocpp_share_path, user_config_path, std::filesystem::path(this->config.DatabasePath),
+        sql_init_path, std::filesystem::path(this->config.MessageLogPath), etc_certs_path);
 
     this->charge_point->register_pause_charging_callback([this](int32_t connector) {
         if (connector > 0 && connector <= this->r_evse_manager.size()) {
