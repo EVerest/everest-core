@@ -30,7 +30,6 @@
 #include <everest/timer.hpp>
 #include <filesystem>
 #include <mutex>
-#include <ocpp/common/schemas.hpp>
 #include <ocpp/common/types.hpp>
 #include <ocpp/v16/charge_point.hpp>
 #include <ocpp/v16/types.hpp>
