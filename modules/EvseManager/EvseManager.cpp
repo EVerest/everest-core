@@ -74,7 +74,7 @@ void EvseManager::init() {
 }
 
 void EvseManager::ready() {
-    charger = std::unique_ptr<Charger>(new Charger(r_bsp, config.connector_type));
+    charger = std::unique_ptr<Charger>(new Charger(r_bsp, config.connector_type, config.hack_tstep_use_f_instead_of_x1));
 
     if (get_hlc_enabled()) {
 

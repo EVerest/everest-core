@@ -64,7 +64,7 @@ const std::string IEC62196Type2Socket = "IEC62196Type2Socket";
 
 class Charger {
 public:
-    Charger(const std::unique_ptr<board_support_ACIntf>& r_bsp, const std::string& connector_type);
+    Charger(const std::unique_ptr<board_support_ACIntf>& r_bsp, const std::string& connector_type, bool tstep_f_instead_of_x1);
     ~Charger();
 
     // Public interface to configure Charger
@@ -295,6 +295,8 @@ private:
 
     static constexpr auto SLEEP_BEFORE_ENABLING_PWM_HLC_MODE = std::chrono::seconds(1);
     static constexpr auto MAINLOOP_UPDATE_RATE = std::chrono::milliseconds(50);
+
+    bool tstep_f_instead_of_x1{false};
 };
 
 #define CHARGER_ABSOLUTE_MAX_CURRENT double(80.0F)

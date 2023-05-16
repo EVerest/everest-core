@@ -17,8 +17,9 @@
 
 namespace module {
 
-Charger::Charger(const std::unique_ptr<board_support_ACIntf>& r_bsp, const std::string& connector_type) :
-    r_bsp(r_bsp), connector_type(connector_type) {
+Charger::Charger(const std::unique_ptr<board_support_ACIntf>& r_bsp, const std::string& connector_type,
+                 bool _tstep_f_instead_of_x1) :
+    r_bsp(r_bsp), connector_type(connector_type), tstep_f_instead_of_x1(_tstep_f_instead_of_x1) {
     maxCurrent = 6.0;
     maxCurrentCable = r_bsp->call_read_pp_ampacity();
     authorized = false;
@@ -330,7 +331,11 @@ void Charger::runStateMachine() {
     case EvseState::T_step_X1:
         if (new_in_state) {
             session_log.evse(false, "Enter T_step_X1");
-            pwm_off();
+            if (tstep_f_instead_of_x1) {
+                pwm_F();
+            } else {
+                pwm_off();
+            }
         }
         if (timeInCurrentState >= t_step_X1) {
             session_log.evse(false, "Exit T_step_X1");

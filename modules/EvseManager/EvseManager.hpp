@@ -76,6 +76,7 @@ struct Conf {
     bool hack_allow_bpt_with_iso2;
     bool autocharge_use_slac_instead_of_hlc;
     std::string logfile_suffix;
+    bool hack_tstep_use_f_instead_of_x1;
 };
 
 class EvseManager : public Everest::ModuleBase {

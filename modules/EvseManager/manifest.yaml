@@ -161,6 +161,10 @@ config:
     description: Use the string given for the log folder name. Special string session_uuid will be replaced with session uuid.
     type: string
     default: session_uuid
+  hack_tstep_use_f_instead_of_x1:
+    description: Experimental hack, use F in T_step_X1
+    type: boolean
+    default: false
 provides:
   evse:
     interface: evse_manager
