@@ -24,14 +24,14 @@
 namespace EverestJs {
 
 struct EvModCtx {
-    EvModCtx(Everest::Everest& everest, const Everest::json& module_manifest, const Napi::Env& env) :
-        everest(everest),
+    EvModCtx(std::unique_ptr<Everest::Everest> everest_, const Everest::json& module_manifest, const Napi::Env& env) :
+        everest(std::move(everest_)),
         module_manifest(module_manifest),
         framework_ready_deferred(Napi::Promise::Deferred::New(env)),
         framework_ready_flag{false} {
         framework_ready_promise = Napi::Persistent(framework_ready_deferred.Promise());
     };
-    Everest::Everest& everest;
+    std::unique_ptr<Everest::Everest> everest;
     const Everest::json module_manifest;
 
     const Napi::Promise::Deferred framework_ready_deferred;
@@ -56,7 +56,7 @@ static Napi::Value publish_var(const std::string& impl_id, const std::string& va
     const auto& env = info.Env();
 
     try {
-        ctx->everest.publish_var(impl_id, var_name, convertToJson(info[0]));
+        ctx->everest->publish_var(impl_id, var_name, convertToJson(info[0]));
     } catch (std::exception& e) {
         EVLOG_AND_RETHROW(env);
     }
@@ -84,7 +84,7 @@ static Napi::Value setup_cmd_handler(const std::string& impl_id, const std::stri
         cmd_handlers.insert({cmd_key, Napi::Persistent(handler)});
         // FIXME (aw): in principle we could also pass this reference down to js_cb
 
-        ctx->everest.provide_cmd(impl_id, cmd_name, [cmd_key](Everest::json input) -> Everest::json {
+        ctx->everest->provide_cmd(impl_id, cmd_name, [cmd_key](Everest::json input) -> Everest::json {
             Everest::json result;
 
             ctx->js_cb->exec(
@@ -131,7 +131,7 @@ static Napi::Value set_var_subscription_handler(const Requirement& req, const st
         var_subs.insert({sub_key, Napi::Persistent(handler)});
 
         // FIXME (aw): in principle we could also pass this reference down to js_cb
-        ctx->everest.subscribe_var(req, var_name, [sub_key](Everest::json input) {
+        ctx->everest->subscribe_var(req, var_name, [sub_key](Everest::json input) {
             ctx->js_cb->exec(
                 [&input, &sub_key](Napi::Env& env) {
                     const auto& arg = convertToNapiValue(env, input);
@@ -155,7 +155,7 @@ static Napi::Value signal_ready(const Napi::CallbackInfo& info) {
     Napi::Value retval;
 
     try {
-        ctx->everest.signal_ready();
+        ctx->everest->signal_ready();
         retval = ctx->framework_ready_promise.Value();
     } catch (std::exception& e) {
         EVLOG_AND_RETHROW(env);
@@ -189,7 +189,7 @@ static Napi::Value mqtt_publish(const Napi::CallbackInfo& info) {
         const auto& topic_alias = info[0].ToString().Utf8Value();
         const auto& data = info[1].ToString().Utf8Value();
 
-        ctx->everest.external_mqtt_publish(topic_alias, data);
+        ctx->everest->external_mqtt_publish(topic_alias, data);
     } catch (std::exception& e) {
         EVLOG_AND_RETHROW(env);
     }
@@ -215,7 +215,7 @@ static Napi::Value mqtt_subscribe(const Napi::CallbackInfo& info) {
 
         ctx->mqtt_subscriptions.insert({topic_alias, Napi::Persistent(handler)});
 
-        ctx->everest.provide_external_mqtt_handler(topic_alias, [topic_alias](std::string data) {
+        ctx->everest->provide_external_mqtt_handler(topic_alias, [topic_alias](std::string data) {
             ctx->js_cb->exec(
                 [&topic_alias, &data](Napi::Env& env) {
                     // in case we're not ready, the mod argument of the subscribe handler will be undefined, so no
@@ -247,11 +247,11 @@ static Napi::Value telemetry_publish(const Napi::CallbackInfo& info) {
             if (length == 3) {
                 // assume it's category, subcategory, telemetry
                 auto telemetry = convertToTelemetryMap(info[2].As<Napi::Object>());
-                ctx->everest.telemetry_publish(category, subcategory, subcategory, telemetry);
+                ctx->everest->telemetry_publish(category, subcategory, subcategory, telemetry);
             } else if (length == 4) {
                 // assume it's category, subcategory, type, telemetry
                 auto telemetry = convertToTelemetryMap(info[3].As<Napi::Object>());
-                ctx->everest.telemetry_publish(category, subcategory, type, telemetry);
+                ctx->everest->telemetry_publish(category, subcategory, type, telemetry);
             }
         }
     } catch (std::exception& e) {
@@ -269,7 +269,7 @@ static Napi::Value call_cmd(const Requirement& req, const std::string& cmd_name,
 
     try {
         const auto& argument = convertToJson(info[0]);
-        const auto& retval = ctx->everest.call_cmd(req, cmd_name, argument);
+        const auto& retval = ctx->everest->call_cmd(req, cmd_name, argument);
 
         cmd_result = convertToNapiValue(info.Env(), retval["retval"]);
     } catch (std::exception& e) {
@@ -324,20 +324,6 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
         }
 
         Everest::Logging::update_process_name(module_identifier);
-
-        // connect to mqtt server and start mqtt mainloop thread
-        ctx = new EvModCtx(Everest::Everest::get_instance(module_id, *config, validate_schema, rs.mqtt_broker_host,
-                                                          rs.mqtt_broker_port, rs.mqtt_everest_prefix,
-                                                          rs.mqtt_external_prefix, rs.telemetry_prefix,
-                                                          rs.telemetry_enabled),
-                           module_manifest, env);
-        ctx->everest.connect();
-
-        ctx->js_module_ref = Napi::Persistent(module_this);
-
-        ctx->everest.spawn_main_loop_thread();
-
-        ctx->js_cb = std::make_unique<JsExecCtx>(env, callback_wrapper);
 
         //
         // fill in everything we know about the module
@@ -570,11 +556,27 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
 
         // set telemetry_enabled
         module_info_prop.DefineProperty(Napi::PropertyDescriptor::Value(
-            "telemetry_enabled", Napi::Boolean::New(env, ctx->everest.is_telemetry_enabled()), napi_enumerable));
+            "telemetry_enabled", Napi::Boolean::New(env, rs.telemetry_enabled), napi_enumerable));
 
         module_this.DefineProperty(Napi::PropertyDescriptor::Value("info", module_info_prop, napi_enumerable));
 
-        ctx->everest.register_on_ready_handler(framework_ready_handler);
+        // connect to mqtt server and start mqtt mainloop thread
+        auto everest_handle = std::make_unique<Everest::Everest>(
+            module_id, *config, validate_schema, rs.mqtt_broker_host, rs.mqtt_broker_port, rs.mqtt_everest_prefix,
+            rs.mqtt_external_prefix, rs.telemetry_prefix, rs.telemetry_enabled);
+
+        ctx = new EvModCtx(std::move(everest_handle), module_manifest, env);
+
+        // FIXME (aw): passing the handle away and then still accessing it is bad design
+        //             all of this should be solved, if we would have a module instance on the js side
+        ctx->everest->connect();
+
+        ctx->js_module_ref = Napi::Persistent(module_this);
+        ctx->js_cb = std::make_unique<JsExecCtx>(env, callback_wrapper);
+        ctx->everest->register_on_ready_handler(framework_ready_handler);
+
+        ctx->everest->spawn_main_loop_thread();
+
     } catch (std::exception& e) {
         EVLOG_AND_RETHROW(env);
     }

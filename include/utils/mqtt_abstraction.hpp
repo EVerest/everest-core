@@ -12,19 +12,23 @@
 namespace Everest {
 using json = nlohmann::json;
 
+// forward declaration
 class MQTTAbstractionImpl;
 
 ///
 /// \brief Contains a C++ abstraction for using MQTT in EVerest modules
 ///
 class MQTTAbstraction {
-
-private:
+public:
     MQTTAbstraction(const std::string& mqtt_server_address, const std::string& mqtt_server_port,
                     const std::string& mqtt_everest_prefix, const std::string& mqtt_external_prefix);
-    MQTTAbstractionImpl& mqtt_abstraction;
 
-public:
+    // forbid copy assignment and copy construction
+    MQTTAbstraction(MQTTAbstraction const&) = delete;
+    void operator=(MQTTAbstraction const&) = delete;
+
+    ~MQTTAbstraction();
+
     ///
     /// \copydoc MQTTAbstractionImpl::connect()
     bool connect();
@@ -73,20 +77,8 @@ public:
     /// \copydoc MQTTAbstractionImpl::unregister_handler(const std::string&, const Token&)
     void unregister_handler(const std::string& topic, const Token& token);
 
-    ///
-    /// \returns the instance of the MQTTAbstraction singleton taking a \p mqtt_server_address , \p mqtt_server_port ,
-    /// \p mqtt_everest_prefix and \p mqtt_external_prefix as parameters
-    static MQTTAbstraction& get_instance(const std::string& mqtt_server_address, const std::string& mqtt_server_port,
-                                         const std::string& mqtt_everest_prefix,
-                                         const std::string& mqtt_external_prefix) {
-        static MQTTAbstraction instance(mqtt_server_address, mqtt_server_port, mqtt_everest_prefix,
-                                        mqtt_external_prefix);
-
-        return instance;
-    }
-
-    MQTTAbstraction(MQTTAbstraction const&) = delete;
-    void operator=(MQTTAbstraction const&) = delete;
+private:
+    std::unique_ptr<MQTTAbstractionImpl> mqtt_abstraction;
 };
 } // namespace Everest
 

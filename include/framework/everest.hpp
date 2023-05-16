@@ -35,41 +35,17 @@ using TelemetryMap = std::map<std::string, TelemetryEntry>;
 /// \brief Contains the EVerest framework that provides convenience functionality for implementing EVerest modules
 ///
 class Everest {
-
-private:
-    MQTTAbstraction& mqtt_abstraction;
-    Config config;
-    std::string module_id;
-    std::map<std::string, std::set<std::string>> registered_cmds;
-    bool ready_received;
-    std::chrono::seconds remote_cmd_res_timeout;
-    bool validate_data_with_schema;
-    std::unique_ptr<std::function<void()>> on_ready;
-    std::thread heartbeat_thread;
-    std::string module_name;
-    std::future<void> main_loop_end{};
-    json module_manifest;
-    json module_classes;
-    std::string mqtt_everest_prefix;
-    std::string mqtt_external_prefix;
-    std::string telemetry_prefix;
-    boost::optional<TelemetryConfig> telemetry_config;
-    bool telemetry_enabled;
-
+public:
     Everest(std::string module_id, Config config, bool validate_data_with_schema,
             const std::string& mqtt_server_address, int mqtt_server_port, const std::string& mqtt_everest_prefix,
             const std::string& mqtt_external_prefix, const std::string& telemetry_prefix, bool telemetry_enabled);
 
-    void handle_ready(json data);
+    // forbid copy assignment and copy construction
+    // NOTE (aw): move assignment and construction are also not supported because we're creating explicit references to
+    // our instance due to callback registration
+    Everest(Everest const&) = delete;
+    void operator=(Everest const&) = delete;
 
-    void heartbeat();
-
-    void publish_metadata();
-
-    static std::string check_args(const Arguments& func_args, json manifest_args);
-    static bool check_arg(ArgumentType arg_types, json manifest_arg);
-
-public:
     json get_cmd_definition(const std::string& module_id, const std::string& impl_id, const std::string& cmd_name,
                             bool is_call);
     json get_cmd_definition(const std::string& module_id, const std::string& impl_id, const std::string& cmd_name);
@@ -160,22 +136,34 @@ public:
     ///
     void register_on_ready_handler(const std::function<void()>& handler);
 
-    ///
-    /// \returns the instance of the Everest singleton taking a \p module_id, the \p config, a \p mqtt_server_address
-    /// , \p mqtt_server_port , \p mqtt_everest_prefix and \p mqtt_external_prefix as parameters. If validation of data
-    /// with the known json schemas is needed this can be activated by setting \p validate_data_with_schema to true
-    static Everest& get_instance(std::string module_id, Config config, bool validate_data_with_schema,
-                                 const std::string& mqtt_server_address, int mqtt_server_port,
-                                 const std::string& mqtt_everest_prefix, const std::string& mqtt_external_prefix,
-                                 const std::string& telemetry_prefix, bool telemetry_enabled) {
-        static Everest instance(module_id, config, validate_data_with_schema, mqtt_server_address, mqtt_server_port,
-                                mqtt_everest_prefix, mqtt_external_prefix, telemetry_prefix, telemetry_enabled);
+private:
+    MQTTAbstraction mqtt_abstraction;
+    Config config;
+    std::string module_id;
+    std::map<std::string, std::set<std::string>> registered_cmds;
+    bool ready_received;
+    std::chrono::seconds remote_cmd_res_timeout;
+    bool validate_data_with_schema;
+    std::unique_ptr<std::function<void()>> on_ready;
+    std::thread heartbeat_thread;
+    std::string module_name;
+    std::future<void> main_loop_end{};
+    json module_manifest;
+    json module_classes;
+    std::string mqtt_everest_prefix;
+    std::string mqtt_external_prefix;
+    std::string telemetry_prefix;
+    boost::optional<TelemetryConfig> telemetry_config;
+    bool telemetry_enabled;
 
-        return instance;
-    }
+    void handle_ready(json data);
 
-    Everest(Everest const&) = delete;
-    void operator=(Everest const&) = delete;
+    void heartbeat();
+
+    void publish_metadata();
+
+    static std::string check_args(const Arguments& func_args, json manifest_args);
+    static bool check_arg(ArgumentType arg_types, json manifest_arg);
 };
 } // namespace Everest
 

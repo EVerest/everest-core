@@ -35,36 +35,13 @@ struct MessageWithQOS : Message {
 /// \brief Contains a C++ abstraction of MQTT-C and some convenience functionality for using MQTT in EVerest modules
 ///
 class MQTTAbstractionImpl {
-
-private:
-    bool mqtt_is_connected;
-    std::map<std::string, MessageHandler> message_handlers;
-    std::mutex handlers_mutex;
-    MessageQueue message_queue;
-    std::vector<std::shared_ptr<MessageWithQOS>> messages_before_connected;
-    std::mutex messages_before_connected_mutex;
-
-    Thread mqtt_mainloop_thread;
-
-    std::string mqtt_server_address;
-    std::string mqtt_server_port;
-    std::string mqtt_everest_prefix;
-    std::string mqtt_external_prefix;
-    struct mqtt_client mqtt_client;
-    uint8_t sendbuf[MQTT_BUF_SIZE];
-    uint8_t recvbuf[MQTT_BUF_SIZE];
-
+public:
     MQTTAbstractionImpl(const std::string& mqtt_server_address, const std::string& mqtt_server_port,
                         const std::string& mqtt_everest_prefix, const std::string& mqtt_external_prefix);
     ~MQTTAbstractionImpl();
 
-    static int open_nb_socket(const char* addr, const char* port);
-    bool connectBroker(const char* host, const char* port);
-    void on_mqtt_message(std::shared_ptr<Message> message);
-    void on_mqtt_connect();
-    static void on_mqtt_disconnect();
-
-public:
+    MQTTAbstractionImpl(MQTTAbstractionImpl const&) = delete;
+    void operator=(MQTTAbstractionImpl const&) = delete;
     ///
     /// \brief connects to the mqtt broker using the MQTT_SERVER_ADDRESS AND MQTT_SERVER_PORT environment variables
     bool connect();
@@ -126,21 +103,29 @@ public:
     /// \brief callback that is called from the mqtt implementation whenever a message is received
     static void publish_callback(void** unused, struct mqtt_response_publish* published);
 
-    ///
-    /// \returns the instance of the MQTTAbstractionImpl singleton taking a \p mqtt_server_address , \p mqtt_server_port
-    /// , \p mqtt_everest_prefix and \p mqtt_external_prefix as parameters
-    static MQTTAbstractionImpl& get_instance(const std::string& mqtt_server_address,
-                                             const std::string& mqtt_server_port,
-                                             const std::string& mqtt_everest_prefix,
-                                             const std::string& mqtt_external_prefix) {
-        static MQTTAbstractionImpl instance(mqtt_server_address, mqtt_server_port, mqtt_everest_prefix,
-                                            mqtt_external_prefix);
+private:
+    bool mqtt_is_connected;
+    std::map<std::string, MessageHandler> message_handlers;
+    std::mutex handlers_mutex;
+    MessageQueue message_queue;
+    std::vector<std::shared_ptr<MessageWithQOS>> messages_before_connected;
+    std::mutex messages_before_connected_mutex;
 
-        return instance;
-    }
+    Thread mqtt_mainloop_thread;
 
-    MQTTAbstractionImpl(MQTTAbstractionImpl const&) = delete;
-    void operator=(MQTTAbstractionImpl const&) = delete;
+    std::string mqtt_server_address;
+    std::string mqtt_server_port;
+    std::string mqtt_everest_prefix;
+    std::string mqtt_external_prefix;
+    struct mqtt_client mqtt_client;
+    uint8_t sendbuf[MQTT_BUF_SIZE];
+    uint8_t recvbuf[MQTT_BUF_SIZE];
+
+    static int open_nb_socket(const char* addr, const char* port);
+    bool connectBroker(const char* host, const char* port);
+    void on_mqtt_message(std::shared_ptr<Message> message);
+    void on_mqtt_connect();
+    static void on_mqtt_disconnect();
 };
 } // namespace Everest
 

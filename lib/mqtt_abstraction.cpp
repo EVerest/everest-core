@@ -8,69 +8,71 @@
 namespace Everest {
 MQTTAbstraction::MQTTAbstraction(const std::string& mqtt_server_address, const std::string& mqtt_server_port,
                                  const std::string& mqtt_everest_prefix, const std::string& mqtt_external_prefix) :
-    mqtt_abstraction(MQTTAbstractionImpl::get_instance(mqtt_server_address, mqtt_server_port, mqtt_everest_prefix,
-                                                       mqtt_external_prefix)) {
+    mqtt_abstraction(std::make_unique<MQTTAbstractionImpl>(mqtt_server_address, mqtt_server_port, mqtt_everest_prefix,
+                                                           mqtt_external_prefix)) {
     EVLOG_debug << "initialized mqtt_abstraction";
 }
 
+MQTTAbstraction::~MQTTAbstraction() = default;
+
 bool MQTTAbstraction::connect() {
     BOOST_LOG_FUNCTION();
-    return mqtt_abstraction.connect();
+    return mqtt_abstraction->connect();
 }
 
 void MQTTAbstraction::disconnect() {
     BOOST_LOG_FUNCTION();
-    mqtt_abstraction.disconnect();
+    mqtt_abstraction->disconnect();
 }
 
 void MQTTAbstraction::publish(const std::string& topic, const json& json) {
     BOOST_LOG_FUNCTION();
-    mqtt_abstraction.publish(topic, json);
+    mqtt_abstraction->publish(topic, json);
 }
 
 void MQTTAbstraction::publish(const std::string& topic, const json& json, QOS qos) {
     BOOST_LOG_FUNCTION();
-    mqtt_abstraction.publish(topic, json, qos);
+    mqtt_abstraction->publish(topic, json, qos);
 }
 
 void MQTTAbstraction::publish(const std::string& topic, const std::string& data) {
     BOOST_LOG_FUNCTION();
-    mqtt_abstraction.publish(topic, data);
+    mqtt_abstraction->publish(topic, data);
 }
 
 void MQTTAbstraction::publish(const std::string& topic, const std::string& data, QOS qos) {
     BOOST_LOG_FUNCTION();
-    mqtt_abstraction.publish(topic, data, qos);
+    mqtt_abstraction->publish(topic, data, qos);
 }
 
 void MQTTAbstraction::subscribe(const std::string& topic) {
     BOOST_LOG_FUNCTION();
-    mqtt_abstraction.subscribe(topic);
+    mqtt_abstraction->subscribe(topic);
 }
 
 void MQTTAbstraction::subscribe(const std::string& topic, QOS qos) {
     BOOST_LOG_FUNCTION();
-    mqtt_abstraction.subscribe(topic, qos);
+    mqtt_abstraction->subscribe(topic, qos);
 }
 
 void MQTTAbstraction::unsubscribe(const std::string& topic) {
     BOOST_LOG_FUNCTION();
-    mqtt_abstraction.unsubscribe(topic);
+    mqtt_abstraction->unsubscribe(topic);
 }
 
 std::future<void> MQTTAbstraction::spawn_main_loop_thread() {
     BOOST_LOG_FUNCTION();
-    return mqtt_abstraction.spawn_main_loop_thread();
+    return mqtt_abstraction->spawn_main_loop_thread();
 }
 
 void MQTTAbstraction::register_handler(const std::string& topic, std::shared_ptr<TypedHandler> handler, QOS qos) {
     BOOST_LOG_FUNCTION();
-    mqtt_abstraction.register_handler(topic, handler, qos);
+    mqtt_abstraction->register_handler(topic, handler, qos);
 }
 
 void MQTTAbstraction::unregister_handler(const std::string& topic, const Token& token) {
     BOOST_LOG_FUNCTION();
-    mqtt_abstraction.unregister_handler(topic, token);
+    mqtt_abstraction->unregister_handler(topic, token);
 }
 
 } // namespace Everest

@@ -592,8 +592,9 @@ int boot(const po::variables_map& vm) {
     // create StatusFifo object
     auto status_fifo = StatusFifo::create_from_path(vm["status-fifo"].as<std::string>());
 
-    MQTTAbstraction& mqtt_abstraction = MQTTAbstraction::get_instance(
-        rs.mqtt_broker_host, std::to_string(rs.mqtt_broker_port), rs.mqtt_everest_prefix, rs.mqtt_external_prefix);
+    auto mqtt_abstraction = MQTTAbstraction(rs.mqtt_broker_host, std::to_string(rs.mqtt_broker_port),
+                                            rs.mqtt_everest_prefix, rs.mqtt_external_prefix);
+
     if (!mqtt_abstraction.connect()) {
         EVLOG_error << fmt::format("Cannot connect to MQTT broker at {}:{}", rs.mqtt_broker_host, rs.mqtt_broker_port);
         return EXIT_FAILURE;

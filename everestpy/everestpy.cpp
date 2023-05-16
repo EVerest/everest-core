@@ -133,10 +133,10 @@ int initialize(const std::string& prefix, const std::string& config_file, const 
         }
         Everest::Logging::update_process_name(module_identifier);
 
-        Everest::Everest& everest =
-            Everest::Everest::get_instance(module_id, config, rs.validate_schema, rs.mqtt_broker_host,
-                                           rs.mqtt_broker_port, rs.mqtt_everest_prefix, rs.mqtt_external_prefix,
-                                           rs.telemetry_prefix, rs.telemetry_enabled);
+        // FIXME (aw): we do not want to have static here, but the module itself doesn't support any storage up to now
+        static auto everest =
+            Everest::Everest(module_id, config, rs.validate_schema, rs.mqtt_broker_host, rs.mqtt_broker_port,
+                    rs.mqtt_everest_prefix, rs.mqtt_external_prefix, rs.telemetry_prefix, rs.telemetry_enabled);
 
         EVLOG_info << fmt::format("Initializing module {}...", module_identifier);
 
@@ -156,7 +156,7 @@ int initialize(const std::string& prefix, const std::string& config_file, const 
             if (impl_intf.contains("vars")) {
                 for (const auto& var_entry : impl_intf["vars"].items()) {
                     const auto& var_name = var_entry.key();
-                    reqs.pub_vars[impl_id][var_name] = [&everest, impl_id, var_name](json json_value) {
+                    reqs.pub_vars[impl_id][var_name] = [impl_id, var_name](json json_value) {
                         everest.publish_var(impl_id, var_name, json_value);
                     };
                 }
@@ -207,14 +207,14 @@ int initialize(const std::string& prefix, const std::string& config_file, const 
 
                 for (auto var_name : requirement_vars) {
                     reqs.vars[requirement_id][requirement_module_id][var_name] =
-                        [&everest, requirement_id, i, var_name](std::function<void(json json_value)> callback) {
+                        [requirement_id, i, var_name](std::function<void(json json_value)> callback) {
                             everest.subscribe_var({requirement_id, i}, var_name, callback);
                         };
                 }
 
                 for (auto const& cmd_name : requirement_cmds) {
                     reqs.call_cmds[requirement_id][requirement_module_id][cmd_name] = {
-                        [&everest, requirement_id, i, cmd_name](json parameters) {
+                        [requirement_id, i, cmd_name](json parameters) {
                             return everest.call_cmd({requirement_id, i}, cmd_name, parameters);
                         },
                         requirement_impl_intf.at("cmds").at(cmd_name).at("arguments")};
@@ -230,15 +230,15 @@ int initialize(const std::string& prefix, const std::string& config_file, const 
 
         Everest::ModuleAdapter module_adapter;
 
-        module_adapter.call = [&everest](const Requirement& req, const std::string& cmd_name, Parameters args) {
+        module_adapter.call = [](const Requirement& req, const std::string& cmd_name, Parameters args) {
             return everest.call_cmd(req, cmd_name, args);
         };
 
-        module_adapter.publish = [&everest](const std::string& param1, const std::string& param2, Value param3) {
+        module_adapter.publish = [](const std::string& param1, const std::string& param2, Value param3) {
             return everest.publish_var(param1, param2, param3);
         };
 
-        module_adapter.subscribe = [&everest](const Requirement& req, const std::string& var_name,
+        module_adapter.subscribe = [](const Requirement& req, const std::string& var_name,
                                               const ValueCallback& callback) {
             return everest.subscribe_var(req, var_name, callback);
         };
