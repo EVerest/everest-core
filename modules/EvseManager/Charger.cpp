@@ -332,6 +332,7 @@ void Charger::runStateMachine() {
         if (new_in_state) {
             session_log.evse(false, "Enter T_step_X1");
             if (tstep_f_instead_of_x1) {
+                session_log.evse(false, "Hack: use state F instead of X1");
                 pwm_F();
             } else {
                 pwm_off();
