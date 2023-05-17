@@ -1,0 +1,8 @@
+__pycache__/
+
+*.so
+
+*.egg-info/
+
+htmlcov/
+.coverage

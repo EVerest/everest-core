@@ -238,10 +238,8 @@ static SubprocessHandle exec_python_module(const ModuleStartInfo& module_info, c
     // instead of using setenv, using execvpe might be a better way for a controlled environment!
 
     const auto pythonpath = rs.prefix / defaults::LIB_DIR / defaults::NAMESPACE / "everestpy";
-    auto python_loader_path = pythonpath / "everest.py";
 
     setenv("EV_MODULE", module_info.name.c_str(), 1);
-    setenv("EV_PYTHON_MODULE", module_info.path.c_str(), 1);
     setenv("EV_PREFIX", rs.prefix.c_str(), 0);
     setenv("EV_CONF_FILE", rs.config_file.c_str(), 0);
     setenv("PYTHONPATH", pythonpath.c_str(), 0);
@@ -252,7 +250,7 @@ static SubprocessHandle exec_python_module(const ModuleStartInfo& module_info, c
 
     const auto python_binary = "python3";
 
-    std::vector<std::string> arguments = {python_binary, python_loader_path.string()};
+    std::vector<std::string> arguments = {python_binary, module_info.path.c_str()};
 
     auto handle = create_subprocess();
     if (handle.is_child()) {
@@ -358,6 +356,7 @@ static std::map<pid_t, std::string> start_modules(Config& config, MQTTAbstractio
                 if (modules_spawned == modules_ready.size() - standalone_modules.size()) {
                     EVLOG_info << fmt::format(fg(fmt::terminal_color::green),
                                               "Modules started by manager are ready, waiting for standalone modules.");
+                    status_fifo.update(StatusFifo::WAITING_FOR_STANDALONE_MODULES);
                 }
             }
         };

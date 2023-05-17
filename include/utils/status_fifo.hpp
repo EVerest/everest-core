@@ -11,6 +11,7 @@ class StatusFifo {
 public:
     // defined messages
     static constexpr auto ALL_MODULES_STARTED = "ALL_MODULES_STARTED\n";
+    static constexpr auto WAITING_FOR_STANDALONE_MODULES = "WAITING_FOR_STANDALONE_MODULES\n";
 
     static StatusFifo create_from_path(const std::string&);
     void update(const std::string&);
