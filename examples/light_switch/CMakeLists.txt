@@ -1,22 +1,16 @@
-find_package(Threads REQUIRED)
+add_executable(light_switch)
 
-add_executable(ls_async_pthread
-    ls_async_pthread.cpp
-    async_fsm.cpp
+target_sources(light_switch
+    PRIVATE
+        light_switch.cpp
+        states.cpp
+        context.cpp
 )
 
-target_link_libraries(ls_async_pthread
+target_link_libraries(light_switch
     PRIVATE
         fsm::fsm
-        Threads::Threads
 )
 
-add_executable(ls_sync_posix
-    ls_sync_posix.cpp
-    sync_fsm.cpp
-)
-
-target_link_libraries(ls_sync_posix PRIVATE
-    fsm::fsm
-    Threads::Threads
-)
+# target_compile_definitions(light_switch PUBLIC HEAP_FREE_MODE)
+target_compile_features(light_switch PRIVATE cxx_std_14)
