@@ -30,6 +30,9 @@ struct Conf {
     int parity;
     int rs485_direction_gpio;
     bool ignore_echo;
+    std::string rxtx_gpio_chip;
+    int rxtx_gpio_line;
+    bool rxtx_gpio_tx_high;
 };
 
 class serial_communication_hubImpl : public serial_communication_hubImplBase {

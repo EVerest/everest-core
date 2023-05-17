@@ -31,7 +31,13 @@ static std::vector<int> vector_to_int(const std::vector<uint16_t>& response) {
 // Implementation
 
 void serial_communication_hubImpl::init() {
-    if (!modbus.open_device(config.serial_port, config.baudrate, config.ignore_echo)) {
+    Everest::GpioSettings rxtx_gpio_settings;
+
+    rxtx_gpio_settings.chip_name = config.rxtx_gpio_chip;
+    rxtx_gpio_settings.line_number = config.rxtx_gpio_line;
+    rxtx_gpio_settings.inverted = config.rxtx_gpio_tx_high;
+
+    if (!modbus.open_device(config.serial_port, config.baudrate, config.ignore_echo, rxtx_gpio_settings)) {
         EVLOG_AND_THROW(Everest::EverestConfigError(fmt::format("Cannot open serial port {}.", config.serial_port)));
     }
 }
