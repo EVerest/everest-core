@@ -11,6 +11,7 @@ ev_setup_cpp_module()
 # insert your custom targets and additional config variables here
 target_link_libraries(${MODULE_NAME}
     PRIVATE
+    everest::gpio
 )
 
 target_sources(${MODULE_NAME}

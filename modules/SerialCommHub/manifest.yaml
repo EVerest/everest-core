@@ -20,15 +20,24 @@ provides:
         minimum: 0
         maximum: 2
         default: 0
-      rs485_direction_gpio:
-        description: GPIO to use for direction switching. Set to -1 to disable.
-        type: integer
-        default: -1
       ignore_echo:
         description: On some hardware every message that is sent is read back, this setting filters the sent message in the reply.
+        type: boolean
+        default: false
+      rxtx_gpio_chip:
+        description: GPIO chip to use to switch between RX/TX. An empty string disables GPIO usage.
+        type: string
+        default: ''
+      rxtx_gpio_line:
+        description: GPIO line to use to switch between RX/TX
+        type: integer
+        default: 0
+      rxtx_gpio_tx_high:
+        description: GPIO direction, false means low for TX, true means high for TX
         type: boolean
         default: false
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
   authors:
     - Lars Dieckmann
+    - Cornelius Claussen

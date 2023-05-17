@@ -16,6 +16,7 @@
 #include <string>
 #include <unistd.h>
 
+#include <sys/ioctl.h>
 #include <sys/select.h>
 #include <sys/time.h>
 
@@ -25,6 +26,18 @@
 
 namespace tiny_modbus {
 
+// This is a replacement for system library tcdrain().
+// tcdrain() returns when all bytes are written to the UART, but it actually returns about 10msecs or more after the
+// last byte has been written. This function tries to return as fast as possible instead.
+static void fast_tcdrain(int fd) {
+    // in user space, the only way to find out if there are still bits to be shiftet out is to poll line status register
+    // as fast as we can
+    uint32_t lsr;
+    do {
+        ioctl(fd, TIOCSERGETLSR, &lsr);
+    } while (!(lsr & TIOCSER_TEMT));
+}
+
 static auto check_for_exception(uint8_t received_function_code) {
     return received_function_code & (1 << 7);
 }
@@ -33,7 +46,7 @@ static void clear_exception_bit(uint8_t& received_function_code) {
     received_function_code &= ~(1 << 7);
 }
 
-static std::string hexdump(uint8_t* msg, int msg_len) {
+static std::string hexdump(const uint8_t* msg, int msg_len) {
     std::stringstream ss;
     for (int i = 0; i < msg_len; i++) {
         ss << std::hex << (int)msg[i] << " ";
@@ -67,7 +80,9 @@ static std::vector<uint16_t> decode_reply(const uint8_t* buf, int len, uint8_t e
     }
     if (expected_device_address != buf[DEVICE_ADDRESS_POS]) {
         EVLOG_error << fmt::format("Device address mismatch: expected: {} received: {}", expected_device_address,
-                                   buf[DEVICE_ADDRESS_POS]);
+                                   buf[DEVICE_ADDRESS_POS])
+                    << ": " << hexdump(buf, len);
+
         return result;
     }
 
@@ -167,9 +182,13 @@ TinyModbusRTU::~TinyModbusRTU() {
         close(fd);
 }
 
-bool TinyModbusRTU::open_device(const std::string& device, int _baud, bool _ignore_echo) {
+bool TinyModbusRTU::open_device(const std::string& device, int _baud, bool _ignore_echo,
+                                const Everest::GpioSettings& rxtx_gpio_settings) {
 
     ignore_echo = _ignore_echo;
+
+    rxtx_gpio.open(rxtx_gpio_settings);
+    rxtx_gpio.set_output(true);
 
     fd = open(device.c_str(), O_RDWR | O_NOCTTY | O_SYNC);
     if (fd < 0) {
@@ -214,11 +233,11 @@ bool TinyModbusRTU::open_device(const std::string& device, int _baud, bool _igno
     // disable IGNBRK for mismatched speed tests; otherwise receive break
     // as \000 chars
     tty.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON | IXOFF | IXANY);
-    tty.c_lflag = 0;                   // no signaling chars, no echo,
-                                       // no canonical processing
-    tty.c_oflag = 0;                   // no remapping, no delays
-    tty.c_cc[VMIN] = 1;                // read blocks
-    tty.c_cc[VTIME] = 1;               // 0.1 seconds inter character read timeout after first byte was received
+    tty.c_lflag = 0;     // no signaling chars, no echo,
+                         // no canonical processing
+    tty.c_oflag = 0;     // no remapping, no delays
+    tty.c_cc[VMIN] = 1;  // read blocks
+    tty.c_cc[VTIME] = 1; // 0.1 seconds inter character read timeout after first byte was received
 
     tty.c_cflag |= (CLOCAL | CREAD);   // ignore modem controls,
                                        // enable reading
@@ -251,7 +270,7 @@ int TinyModbusRTU::read_reply(uint8_t* rxbuf, int rxbuf_len) {
             break;
         } else if (rv == 0) { // no more bytes to read within timeout, so transfer is complete
             break;
-        } else {              // received more bytes, add them to buffer
+        } else { // received more bytes, add them to buffer
             // do we have space in the rx buffer left?
             if (bytes_read_total >= rxbuf_len) {
                 // no buffer space left, but more to read.
@@ -309,8 +328,16 @@ std::vector<uint16_t> TinyModbusRTU::txrx(uint8_t device_address, FunctionCode f
         tcflush(fd, TCIOFLUSH);
 
         // write to serial port
+        rxtx_gpio.set(false);
         write(fd, req.get(), req_len);
-        tcdrain(fd);
+        if (rxtx_gpio.is_ready()) {
+            // if we are using GPIO to switch between RX/TX, use the fast version of tcdrain with exact timing
+            fast_tcdrain(fd);
+        } else {
+            // without GPIO switching, use regular tcdrain as not all UART drivers implement the ioctl
+            tcdrain(fd);
+        }
+        rxtx_gpio.set(true);
 
         if (ignore_echo) {
             // read back echo of what we sent and ignore it
