@@ -48,6 +48,12 @@ config:
       Ciphersuites that are supported by SECC when starting TLS server
     type: string
     default: TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:ECDH-ECDSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256
+  verify_contract_cert_chain:
+    description: >-
+      Specifies if the EVSE should verify the contract certificate
+      chain locally.
+    type: boolean
+    default: false
 provides:
   charger:
     interface: ISO15118_charger
