@@ -30,7 +30,7 @@ ev_add_cpp_module(PersistentStore)
 ev_add_cpp_module(PN532TokenProvider)
 
 ev_add_py_module(PyJosev)
-ev_add_py_module(PyTestControlModule)
+ev_add_py_module(PyProbeModule)
 
 ev_add_cpp_module(Setup)
 ev_add_cpp_module(SerialCommHub)

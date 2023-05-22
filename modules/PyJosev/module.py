@@ -1,33 +1,41 @@
-from everestpy import log
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 import asyncio
-import logging
-import netifaces
-from pathlib import Path
-
 import sys
+from pathlib import Path
+import threading
+
+from everest.framework import Module, RuntimeSession, log
+
+# fmt: off
 JOSEV_WORK_DIR = Path(__file__).parent / '../../3rd_party/josev'
 sys.path.append(JOSEV_WORK_DIR.as_posix())
 
-EVEREST_CERTS_SUB_DIR = "certs"
-
-from iso15118.secc import SECCHandler
-from iso15118.secc.controller.simulator import SimEVSEController
-from iso15118.shared.exificient_exi_codec import ExificientEXICodec
-from iso15118.secc.secc_settings import Config
 from iso15118.shared.settings import set_PKI_PATH
+from iso15118.secc.secc_settings import Config
+from iso15118.shared.exificient_exi_codec import ExificientEXICodec
+from iso15118.secc.controller.simulator import SimEVSEController
+from iso15118.secc.everest import context as JOSEV_CONTEXT
+from iso15118.secc import SECCHandler
 
-from everest_iso15118 import init_Setup
-from everest_iso15118 import ChargerWrapper
+from utilities import setup_everest_logging, patch_josev_config
+# fmt: on
 
-logger = logging.getLogger(__name__)
+setup_everest_logging()
 
-async def main():
+
+EVEREST_CERTS_SUB_DIR = 'certs'
+
+
+async def secc_handler_main_loop(module_config: dict):
     """
     Entrypoint function that starts the ISO 15118 code running on
     the SECC (Supply Equipment Communication Controller)
     """
+
     config = Config()
-    config.load_everest_config(module_config_)
+
+    patch_josev_config(config, module_config)
 
     sim_evse_controller = await SimEVSEController.create()
     await SECCHandler(
@@ -35,149 +43,155 @@ async def main():
     ).start(config.iface)
 
 
-def run():
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        logger.debug("SECC program terminated manually")
+class PyJosevModule():
+    def __init__(self):
+        self._cs = JOSEV_CONTEXT.charger_state
+        self._session = RuntimeSession()
+        m = Module(self._session)
+
+        log.update_process_name(m.info.id)
+
+        self._setup = m.say_hello()
+
+        etc_certs_path = m.info.paths.etc / EVEREST_CERTS_SUB_DIR
+        set_PKI_PATH(str(etc_certs_path.resolve()))
+
+        # setup publishing callback
+        def publish_callback(variable_name: str, value: any):
+            m.publish_variable('charger', variable_name, value)
+
+        JOSEV_CONTEXT.set_publish_callback(publish_callback)
+
+        # setup handlers
+        for cmd in m.implementations['charger'].commands:
+            m.implement_command(
+                'charger', cmd, getattr(self, f'_handler_{cmd}'))
+
+        # init ready event
+        self._ready_event = threading.Event()
+
+        self._mod = m
+        self._mod.init_done(self._ready)
+
+    def start_secc_handler(self):
+        # NOTE (aw): we could also have run the main logic inside the _ready
+        # method, but then it would run inside the pybind thread, which doesn't
+        # always produce nice tracebacks
+        self._ready_event.wait()
+
+        # finally spawn SECC
+        try:
+            asyncio.run(secc_handler_main_loop(self._setup.configs.module))
+        except KeyboardInterrupt:
+            log.debug("SECC program terminated manually")
+
+    def _ready(self):
+        self._ready_event.set()
+
+    # implementation handlers
+
+    def _handler_set_EVSEID(self, args):
+        self._cs.EVSEID = args['EVSEID']
+        self._cs.EVSEID_DIN = args['EVSEID_DIN']
+
+    def _handler_set_PaymentOptions(self, args):
+        self._cs.PaymentOptions = args['PaymentOptions']
+
+    def _handler_set_SupportedEnergyTransferMode(self, args):
+        self._cs.SupportedEnergyTransferMode = args['SupportedEnergyTransferMode']
+
+    def _handler_set_AC_EVSENominalVoltage(self, args):
+        self._cs.EVSENominalVoltage = args['EVSENominalVoltage']
+
+    def _handler_set_DC_EVSECurrentRegulationTolerance(self, args):
+        self._cs.EVSECurrentRegulationTolerance = args['EVSECurrentRegulationTolerance']
+
+    def _handler_set_DC_EVSEPeakCurrentRipple(self, args):
+        self._cs.EVSEPeakCurrentRipple = args['EVSEPeakCurrentRipple']
+
+    def _handler_set_ReceiptRequired(self, args):
+        self._cs.ReceiptRequired = args['ReceiptRequired']
+
+    def _handler_set_FreeService(self, args):
+        self._cs.FreeService = args['FreeService']
+
+    def _handler_set_EVSEEnergyToBeDelivered(self, args):
+        self._cs.EVSEEnergyToBeDelivered = args['EVSEEnergyToBeDelivered']
+
+    def _handler_enable_debug_mode(self, args):
+        self._cs.debug_mode = args['debug_mode']
+
+    def _handler_set_Auth_Okay_EIM(self, args):
+        self._cs.auth_okay_eim = args['auth_okay_eim']
+
+    def _handler_set_Auth_Okay_PnC(self, args):
+        self._cs.auth_pnc_status = args['status']
+        self._cs.auth_pnc_certificate_status = args['certificateStatus']
+
+    def _handler_set_FAILED_ContactorError(self, args):
+        self._cs.ContactorError = args['ContactorError']
+
+    def _handler_set_RCD_Error(self, args):
+        self._cs.RCD_Error = args['RCD']
+
+    def _handler_stop_charging(self, args):
+        self._cs.stop_charging = args['stop_charging']
+
+    def _handler_set_DC_EVSEPresentVoltageCurrent(self, args):
+        present_values = args['EVSEPresentVoltage_Current']
+        self._cs.EVSEPresentVoltage = present_values['EVSEPresentVoltage']
+        self._cs.EVSEPresentCurrent = present_values['EVSEPresentCurrent']
+
+    def _handler_set_AC_EVSEMaxCurrent(self, args):
+        self._cs.EVSEMaxCurrent = args['EVSEMaxCurrent']
+
+    def _handler_set_DC_EVSEMaximumLimits(self, args):
+        limits = args['EVSEMaximumLimits']
+        self._cs.EVSEMaximumCurrentLimit = limits['EVSEMaximumCurrentLimit']
+        self._cs.EVSEMaximumPowerLimit = limits['EVSEMaximumPowerLimit']
+        self._cs.EVSEMaximumVoltageLimit = limits['EVSEMaximumVoltageLimit']
+
+    def _handler_set_DC_EVSEMinimumLimits(self, args):
+        limits = args['EVSEMinimumLimits']
+        self._cs.EVSEMinimumCurrentLimit = limits['EVSEMinimumCurrentLimit']
+        self._cs.EVSEMinimumVoltageLimit = limits['EVSEMinimumVoltageLimit']
+
+    def _handler_set_EVSEIsolationStatus(self, args):
+        self._cs.EVSEIsolationStatus = args['EVSEIsolationStatus']
+
+    def _handler_set_EVSE_UtilityInterruptEvent(self, args):
+        self._cs.EVSE_UtilityInterruptEvent = args['EVSE_UtilityInterruptEvent']
+
+    def _handler_set_EVSE_Malfunction(self, args):
+        self._cs.EVSE_Malfunction = args['EVSE_Malfunction']
+
+    def _handler_set_EVSE_EmergencyShutdown(self, args):
+        self._cs.EVSE_EmergencyShutdown = args['EVSE_EmergencyShutdown']
+
+    def _handler_set_MeterInfo(self, args):
+        self._cs.powermeter = args['powermeter']
+
+    def _handler_contactor_closed(self, args):
+        closed = args['status']
+        if closed:
+            self._cs.contactorClosed = True
+            self._cs.contactorOpen = False
+
+    def _handler_contactor_open(self, args):
+        opened = args['status']
+        if opened:
+            self._cs.contactorOpen = True
+            self._cs.contactorClosed = False
+
+    def _handler_cableCheck_Finished(self, args):
+        self._cs.cableCheck_Finished = args['status']
+
+    def _handler_set_Certificate_Service_Supported(self, args):
+        self._cs.certificate_service_supported = args['status']
+
+    def _handler_set_Get_Certificate_Response(self, args):
+        self._cs.existream_status = args['Existream_Status']
 
 
-setup_ = None
-module_config_ = None
-impl_configs_ = None
-module_info_ = None
-
-def pre_init(setup, module_config, impl_configs, _module_info):
-    global setup_, module_config_, impl_configs_, module_info_
-    setup_ = setup
-    module_config_ = module_config
-    impl_configs_ = impl_configs
-    module_info_ = _module_info
-    init_Setup(setup_)
-
-def init():
-    log.debug("init")
-
-    etc_certs_path = module_info_.paths.etc + "/" + EVEREST_CERTS_SUB_DIR + "/"
-    set_PKI_PATH(etc_certs_path)
-
-    net_iface: str = str(module_config_["device"])
-    if net_iface == "auto":
-        module_config_["device"] = choose_first_ipv6_local()
-    elif not check_network_interfaces(net_iface=net_iface):
-        log.warning(f"The network interface {net_iface} was not found!")
-
-def ready():
-    log.debug("ready")
-
-    log.debug("Josev is starting ...")
-    run()
-
-### Charger Command Callbacks ###
-
-def charger_set_EVSEID(EVSEID: str, EVSEID_DIN: str):
-    ChargerWrapper.set_EVSEID(EVSEID)
-    ChargerWrapper.set_EVSEID_DIN(EVSEID_DIN)
-
-def charger_set_PaymentOptions(PaymentOptions: list):
-    ChargerWrapper.set_PaymentOptions(PaymentOptions)
-
-def charger_set_SupportedEnergyTransferMode(SupportedEnergyTransferMode: list):
-    ChargerWrapper.set_SupportedEnergyTransferMode(SupportedEnergyTransferMode)
-
-def charger_set_AC_EVSENominalVoltage(EVSENominalVoltage: float):
-    ChargerWrapper.set_AC_EVSENominalVoltage(EVSENominalVoltage)
-
-def charger_set_DC_EVSECurrentRegulationTolerance(EVSECurrentRegulationTolerance: float):
-    ChargerWrapper.set_DC_EVSECurrentRegulationTolerance(EVSECurrentRegulationTolerance)
-
-def charger_set_DC_EVSEPeakCurrentRipple(EVSEPeakCurrentRipple: float):
-    ChargerWrapper.set_DC_EVSEPeakCurrentRipple(EVSEPeakCurrentRipple)
-
-def charger_set_ReceiptRequired(ReceiptRequired: bool):
-    ChargerWrapper.set_ReceiptRequired(ReceiptRequired)
-
-def charger_set_FreeService(FreeService: bool):
-    ChargerWrapper.set_FreeService(FreeService)
-
-def charger_set_EVSEEnergyToBeDelivered(EVSEEnergyToBeDelivered: float):
-    ChargerWrapper.set_EVSEEnergyToBeDelivered(EVSEEnergyToBeDelivered)
-
-def charger_enable_debug_mode(debug_mode: str):
-    ChargerWrapper.enable_debug_mode(debug_mode)
-
-def charger_set_Auth_Okay_EIM(auth_okay_eim: bool):
-    ChargerWrapper.set_Auth_Okay_EIM(auth_okay_eim)
-
-def charger_set_Auth_Okay_PnC(status: str, certificateStatus: str):
-    ChargerWrapper.set_Auth_PnC_Status(status, certificateStatus)
-
-def charger_set_FAILED_ContactorError(ContactorError: bool):
-    ChargerWrapper.set_FAILED_ContactorError(ContactorError)
-
-def charger_set_RCD_Error(RCD: bool):
-    ChargerWrapper.set_RCD_Error(RCD)
-
-def charger_stop_charging(stop_charging: bool):
-    ChargerWrapper.set_stop_charging(stop_charging)
-
-def charger_set_DC_EVSEPresentVoltageCurrent(EVSEPresentVoltage_Current: dict):
-    ChargerWrapper.set_DC_EVSEPresentVoltage(EVSEPresentVoltage_Current["EVSEPresentVoltage"])
-    ChargerWrapper.set_DC_EVSEPresentCurrent(EVSEPresentVoltage_Current["EVSEPresentCurrent"])
-
-def charger_set_AC_EVSEMaxCurrent(EVSEMaxCurrent: float):
-    ChargerWrapper.set_AC_EVSEMaxCurrent(EVSEMaxCurrent)
-
-def charger_set_DC_EVSEMaximumLimits(EVSEMaximumLimits: dict):
-    ChargerWrapper.set_DC_EVSEMaximumCurrentLimit(EVSEMaximumLimits["EVSEMaximumCurrentLimit"])
-    ChargerWrapper.set_DC_EVSEMaximumPowerLimit(EVSEMaximumLimits["EVSEMaximumPowerLimit"])
-    ChargerWrapper.set_DC_EVSEMaximumVoltageLimit(EVSEMaximumLimits["EVSEMaximumVoltageLimit"])
-
-def charger_set_DC_EVSEMinimumLimits(EVSEMinimumLimits: dict):
-    ChargerWrapper.set_DC_EVSEMinimumCurrentLimit(EVSEMinimumLimits["EVSEMinimumCurrentLimit"])
-    ChargerWrapper.set_DC_EVSEMinimumVoltageLimit(EVSEMinimumLimits["EVSEMinimumVoltageLimit"])
-
-def charger_set_EVSEIsolationStatus(EVSEIsolationStatus: str):
-    ChargerWrapper.set_EVSEIsolationStatus(EVSEIsolationStatus)
-
-def charger_set_EVSE_UtilityInterruptEvent(EVSE_UtilityInterruptEvent: bool):
-    ChargerWrapper.set_EVSE_UtilityInterruptEvent(EVSE_UtilityInterruptEvent)
-
-def charger_set_EVSE_Malfunction(EVSE_Malfunction: bool):
-    ChargerWrapper.set_EVSE_Malfunction(EVSE_Malfunction)
-
-def charger_set_EVSE_EmergencyShutdown(EVSE_EmergencyShutdown: bool):
-    ChargerWrapper.set_EVSE_EmergencyShutdown(EVSE_EmergencyShutdown)
-
-def charger_set_MeterInfo(powermeter: dict):
-    ChargerWrapper.set_MeterInfo(powermeter)
-
-def charger_contactor_closed(status: bool):
-    ChargerWrapper.contactor_closed(status)
-
-def charger_contactor_open(status: bool):
-    ChargerWrapper.contactor_open(status)
-
-def charger_cableCheck_Finished(status: bool):
-    ChargerWrapper.set_cableCheck_Finished(status)
-
-def charger_set_Certificate_Service_Supported(status: bool):
-    ChargerWrapper.set_Certificate_Service_Supported(status)
-
-def charger_set_Get_Certificate_Response(Existream_Status: dict):
-    ChargerWrapper.set_Certificate_Response(Existream_Status)
-
-def check_network_interfaces(net_iface: str) -> bool:
-    if (net_iface in netifaces.interfaces()) is True:
-        return True
-    return False
-
-def choose_first_ipv6_local() -> str:
-    for iface in netifaces.interfaces():
-        if netifaces.AF_INET6 in netifaces.ifaddresses(iface):
-            for netif_inet6 in netifaces.ifaddresses(iface)[netifaces.AF_INET6]:
-                if 'fe80' in netif_inet6['addr']:
-                    return iface
-
-    log.warning("No necessary IPv6 link-local address was found!")
-    return "eth0"
+py_josev = PyJosevModule()
+py_josev.start_secc_handler()
