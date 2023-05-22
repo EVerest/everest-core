@@ -12,7 +12,8 @@
 
  used for mapping:
 
- Tesla: 98:ED:5C
+ Tesla: 0C:29:8F, 4C:FC:AA, 54:F8:F0, 98:ED:5C,
+        DC:44:27:1x:xx:xx/28
  VW: 00:7D:FA (used for all brands such as Skoda as well)
 
  not used here since they might be in use in multiple cars:
