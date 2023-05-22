@@ -69,16 +69,12 @@ class EverestCore:
     """This class can be used to configure, start and stop a full build of everest-core
     """
 
-    def __init__(self, prefix_path: Path,
-                 test_control_modules: List[TestControlModuleConnection]) -> None:
+    def __init__(self, prefix_path: Path) -> None:
         """Initialize EVerest using everest_core_path and everest_config_path
 
         Args:
             everest_prefix (Path): location of installed everest distribution".
         """
-        if test_control_modules is None:
-            test_control_modules = [TestControlModuleConnection(
-                evse_manager_id="connector_1", car_simulator_id="car_simulator")]
 
         self.process = None
         self.everest_uuid = uuid.uuid4().hex
@@ -118,11 +114,11 @@ class EverestCore:
 
         self.prefix_path = prefix_path
 
-        self.test_control_modules = test_control_modules
+        self.test_control_modules = None
         self.log_reader_thread: Thread = None
         self.everest_running = False
 
-    def start(self, standalone_module: Optional[str] = None):
+    def start(self, standalone_module: Optional[str] = None, modules_to_test: List[TestControlModuleConnection] = None):
         """Starts everest-core in a subprocess
 
         Args:
@@ -133,6 +129,9 @@ class EverestCore:
         manager_path = self.prefix_path / 'bin/manager'
 
         logging.info(f'config: {self.everest_config_path}')
+
+        # FIXME (aw): clean up passing of modules_to_test
+        self.test_control_modules = modules_to_test
         self.create_testing_user_config()
 
         status_fifo_path = self.temp_dir / "status.fifo"
@@ -197,8 +196,7 @@ class EverestCore:
         If a user-config already exists, it will be re-named
         """
         file = self.everest_core_user_config_path / self.everest_config_path.name
-        filename = str(file)
-        logging.info(f"temp everest user-config: {filename}")
+        logging.info(f"temp everest user-config: {file.resolve()}")
         if self.test_control_modules:
             logging.info(f"Adding test control module(s) to user-config: {self.test_control_modules}")
             user_config = {"active_modules": {}}
@@ -208,10 +206,10 @@ class EverestCore:
                     {"implementation_id": "evse", "module_id": test_control_module["evse_manager_id"]})
                 connections["test_control"].append(
                     {"implementation_id": "main", "module_id": test_control_module["car_simulator_id"]})
-            user_config["active_modules"]["test_control_module"] = {
+
+            user_config["active_modules"]["probe_module"] = {
                 "config_module": {"device": "auto"},
                 "connections": connections,
-                "module": "PyTestControlModule"}
+                "module": "PyProbeModule"}
 
-            with open(file, "a") as f:
-                yaml.dump(user_config, f)
+            file.write_text(yaml.dump(user_config))
