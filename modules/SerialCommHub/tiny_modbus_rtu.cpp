@@ -98,7 +98,7 @@ static std::vector<uint16_t> decode_reply(const uint8_t* buf, int len, uint8_t e
         // Was it a read reply?
         if (function == FunctionCode::READ_COILS || function == FunctionCode::READ_DISCRETE_INPUTS ||
             function == FunctionCode::READ_MULTIPLE_HOLDING_REGISTERS ||
-            tiny_modbus::FunctionCode::READ_INPUT_REGISTERS) {
+            function == FunctionCode::READ_INPUT_REGISTERS) {
             // adapt byte count and starting pos
             byte_cnt = buf[RES_RX_LEN_POS];
             start_of_result = RES_RX_START_OF_PAYLOAD;
