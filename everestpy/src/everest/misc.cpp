@@ -38,7 +38,6 @@ std::unique_ptr<Everest::Config> RuntimeSession::create_config_instance(const Ev
                                              rs.mqtt_external_prefix);
 }
 
-
 ModuleSetup create_setup_from_config(const std::string& module_id, Everest::Config& config) {
     ModuleSetup setup;
 

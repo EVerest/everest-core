@@ -8,6 +8,7 @@
 #include <set>
 #include <string>
 #include <unordered_map>
+#include <optional>
 
 #include <nlohmann/json-schema.hpp>
 
@@ -55,7 +56,7 @@ private:
     json types;
     schemas _schemas;
 
-    std::unordered_map<std::string, boost::optional<TelemetryConfig>> telemetry_configs;
+    std::unordered_map<std::string, std::optional<TelemetryConfig>> telemetry_configs;
 
     ///
     /// \brief loads the contents of the interface file referenced by the give \p intf_name from disk and validates its
@@ -133,7 +134,7 @@ public:
 
     ///
     /// \returns a TelemetryConfig if this has been configured
-    boost::optional<TelemetryConfig> get_telemetry_config(const std::string& module_id);
+    std::optional<TelemetryConfig> get_telemetry_config(const std::string& module_id);
 
     ///
     /// \returns a json object that contains the manifests

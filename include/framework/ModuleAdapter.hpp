@@ -5,37 +5,13 @@
 
 #include "everest.hpp"
 #include <everest/logging.hpp>
+#include <utils/conversions.hpp>
 #include <utils/date.hpp>
 
 #include <iomanip>
 #include <iostream>
 
 namespace Everest {
-
-// FIXME (aw): proper namespacing for these utility classes and functions
-
-namespace detail_module_adapter {
-template <class Ret> bool any_to_variant_impl(Ret& var, const boost::any& val) noexcept {
-    // we didn't find any proper type to convert to :(
-    return false;
-}
-
-template <class Ret, class F, class... R> bool any_to_variant_impl(Ret& var, const boost::any& val) noexcept {
-    if (val.type() == typeid(F)) {
-        var = boost::any_cast<F>(val);
-        return true;
-    }
-
-    return any_to_variant_impl<Ret, R...>(var, val);
-}
-
-class ToAnyVisitor : public boost::static_visitor<boost::any> {
-public:
-    template <typename T> boost::any operator()(const T& value) const {
-        return value;
-    }
-};
-} // namespace detail_module_adapter
 
 // FIXME (aw): does the standard library already has something like this?
 template <typename T> class PtrContainer {
@@ -115,23 +91,6 @@ struct ModuleAdapter {
 
     void gather_cmds(ImplementationBase& impl) {
         impl._gather_cmds(registered_commands);
-    }
-
-    // FIXME (aw): Depending on the unrolling performance and usage with different types
-    //             this template function should automatically generated for the Exports hpps
-    template <class... Ts> static boost::variant<Ts...> any_to_variant(const boost::any& val) {
-        boost::variant<Ts...> var;
-        if (detail_module_adapter::any_to_variant_impl<boost::variant<Ts...>, Ts...>(var, val))
-            return var;
-
-        throw std::runtime_error(
-            // FIXME (aw): propably we could be more explicit on the types here
-            "The given boost::any object doesn't contain any type, the boost::variant is aware of");
-    }
-
-    template <typename Variant> static boost::any variant_to_any(const Variant& var) {
-        static auto visitor = detail_module_adapter::ToAnyVisitor();
-        return boost::apply_visitor(visitor, var);
     }
 };
 

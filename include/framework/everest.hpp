@@ -8,6 +8,7 @@
 #include <map>
 #include <set>
 #include <thread>
+#include <variant>
 
 #include <everest/exceptions.hpp>
 
@@ -27,8 +28,7 @@ struct cmd {
     ReturnType return_type; ///< The return type
 };
 
-using TelemetryEntry =
-    boost::variant<std::string, const char*, bool, int, int32_t, uint32_t, int64_t, uint64_t, double>;
+using TelemetryEntry = std::variant<std::string, const char*, bool, int32_t, uint32_t, int64_t, uint64_t, double>;
 using TelemetryMap = std::map<std::string, TelemetryEntry>;
 
 ///
@@ -60,20 +60,17 @@ public:
     /// \brief Provides functionality for calling commands of other modules. The module is identified by the given \p
     /// req, the command by the given command name \p cmd_name and the needed arguments by \p args
     ///
-    json call_cmd(const Requirement& req, const std::string& cmd_name, json json_args);
-    Result call_cmd(const Requirement& req, const std::string& cmd_name, Parameters args);
+    json call_cmd(const Requirement& req, const std::string& cmd_name, json args);
 
     ///
     /// \brief Publishes a variable of the given \p impl_id, names \p var_name with the given \p value
     ///
-    void publish_var(const std::string& impl_id, const std::string& var_name, json json_value);
-    void publish_var(const std::string& impl_id, const std::string& var_name, Value value);
+    void publish_var(const std::string& impl_id, const std::string& var_name, json value);
 
     ///
     /// \brief Subscribes to a variable of another module identified by the given \p req and variable name \p
     /// var_name. The given \p callback is called when a new value becomes available
     ///
-    void subscribe_var(const Requirement& req, const std::string& var_name, const ValueCallback& callback);
     void subscribe_var(const Requirement& req, const std::string& var_name, const JsonCallback& callback);
 
     ///
@@ -153,7 +150,7 @@ private:
     std::string mqtt_everest_prefix;
     std::string mqtt_external_prefix;
     std::string telemetry_prefix;
-    boost::optional<TelemetryConfig> telemetry_config;
+    std::optional<TelemetryConfig> telemetry_config;
     bool telemetry_enabled;
 
     void handle_ready(json data);

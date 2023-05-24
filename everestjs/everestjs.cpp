@@ -271,7 +271,7 @@ static Napi::Value call_cmd(const Requirement& req, const std::string& cmd_name,
         const auto& argument = convertToJson(info[0]);
         const auto& retval = ctx->everest->call_cmd(req, cmd_name, argument);
 
-        cmd_result = convertToNapiValue(info.Env(), retval["retval"]);
+        cmd_result = convertToNapiValue(info.Env(), retval);
     } catch (std::exception& e) {
         EVLOG_AND_RETHROW(env);
     }

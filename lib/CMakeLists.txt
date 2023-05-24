@@ -19,7 +19,6 @@ target_sources(framework
         message_queue.cpp
         mqtt_abstraction.cpp
         mqtt_abstraction_impl.cpp
-        conversions.cpp
         thread.cpp
         serial.cpp
         status_fifo.cpp

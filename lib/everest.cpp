@@ -228,9 +228,7 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
             "Incoming res {} for {}->{}()", data_id,
             this->config.printable_identifier(connection["module_id"], connection["implementation_id"]), cmd_name);
 
-        // make sure to only return the intended parts of the incoming result to not open up the api to internals
-        res_promise.set_value(json::object(
-            {{"retval", data["retval"]}, {"return_type", return_type}, {"origin", data["origin"]}, {"id", data_id}}));
+        res_promise.set_value(std::move(data["retval"]));
     };
 
     const auto cmd_topic =
@@ -268,15 +266,7 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
     return result;
 }
 
-Result Everest::call_cmd(const Requirement& req, const std::string& cmd_name, Parameters args) {
-    BOOST_LOG_FUNCTION();
-    json result = this->call_cmd(req, cmd_name, convertTo<json>(args));
-    return convertTo<Result>(
-        result["retval"],
-        result["return_type"]); // FIXME: other datatype so we can return the data["origin"] as well
-}
-
-void Everest::publish_var(const std::string& impl_id, const std::string& var_name, json json_value) {
+void Everest::publish_var(const std::string& impl_id, const std::string& var_name, json value) {
     BOOST_LOG_FUNCTION();
 
     // check arguments
@@ -301,25 +291,20 @@ void Everest::publish_var(const std::string& impl_id, const std::string& var_nam
                 [this](const json_uri& uri, json& schema) { this->config.ref_loader(uri, schema); },
                 Config::format_checker);
             validator.set_root_schema(var_definition);
-            validator.validate(json_value);
+            validator.validate(value);
         } catch (const std::exception& e) {
             EVLOG_AND_THROW(EverestApiError(fmt::format(
                 "Publish var of {} with variable name '{}' with value: {}\ncould not be validated with schema: {}",
-                this->config.printable_identifier(this->module_id, impl_id), var_name, json_value.dump(2), e.what())));
+                this->config.printable_identifier(this->module_id, impl_id), var_name, value.dump(2), e.what())));
         }
     }
 
     const auto var_topic = fmt::format("{}/var", this->config.mqtt_prefix(this->module_id, impl_id));
 
-    json var_publish_data = {{"name", var_name}, {"data", json_value}};
+    json var_publish_data = {{"name", var_name}, {"data", value}};
 
     // FIXME(kai): implement an efficient way of choosing qos for each variable
     this->mqtt_abstraction.publish(var_topic, var_publish_data, QOS::QOS2);
-}
-
-void Everest::publish_var(const std::string& impl_id, const std::string& var_name, Value value) {
-    BOOST_LOG_FUNCTION();
-    return this->publish_var(impl_id, var_name, convertTo<json>(value));
 }
 
 void Everest::subscribe_var(const Requirement& req, const std::string& var_name, const JsonCallback& callback) {
@@ -378,30 +363,6 @@ void Everest::subscribe_var(const Requirement& req, const std::string& var_name,
     this->mqtt_abstraction.register_handler(var_topic, token, QOS::QOS2);
 }
 
-void Everest::subscribe_var(const Requirement& req, const std::string& var_name, const ValueCallback& callback) {
-    BOOST_LOG_FUNCTION();
-    // resolve requirement
-    json connections = this->config.resolve_requirement(this->module_id, req.id);
-    auto& connection = connections; // this is for a min/max == 1 requirement
-    if (connections.is_array()) {   // this is for every other requirement
-        connection = connections[req.index];
-    }
-
-    auto requirement_module_id = connection["module_id"].get<std::string>();
-    auto module_name = this->config.get_module_name(requirement_module_id);
-    auto requirement_impl_id = connection["implementation_id"].get<std::string>();
-    auto requirement_impl_manifest = this->config.get_interfaces()[module_name][requirement_impl_id];
-
-    if (!requirement_impl_manifest["vars"].contains(var_name)) {
-        EVLOG_AND_THROW(EverestApiError(
-            fmt::format("{}->{}: Variable not defined in manifest!",
-                        this->config.printable_identifier(requirement_module_id, requirement_impl_id), var_name)));
-    }
-    std::string var_type = requirement_impl_manifest["vars"].at(var_name).at("type").get<std::string>();
-    return this->subscribe_var(req, var_name,
-                               [callback, var_type](json data) { callback(convertTo<Value>(data, var_type)); });
-}
-
 void Everest::external_mqtt_publish(const std::string& topic, const std::string& data) {
     BOOST_LOG_FUNCTION();
 
@@ -456,7 +417,7 @@ void Everest::telemetry_publish(const std::string& category, const std::string& 
         // telemetry not enabled for this module instance in config
         return;
     }
-    int id = telemetry_config.get().id;
+    int id = telemetry_config->id;
     std::string id_string = std::to_string(id);
     auto telemetry_data =
         json::object({{"timestamp", Date::to_rfc3339(date::utc_clock::now())}, {"connector_id", id}, {"type", type}});
@@ -467,7 +428,7 @@ void Everest::telemetry_publish(const std::string& category, const std::string& 
             EVLOG_warning << "Telemetry key " << key << " is reserved and will be overwritten.";
         } else {
             json data;
-            boost::apply_visitor([&data](auto& value) { data = value; }, entry);
+            std::visit([&data](auto& value) { data = value; }, entry);
             telemetry_data[key] = data;
         }
     }
@@ -675,10 +636,11 @@ void Everest::provide_cmd(const cmd& cmd) {
                         fmt::join(arg_names, ","), fmt::join(return_type, ","), cmd_definition["result"])));
     }
 
-    return this->provide_cmd(impl_id, cmd_name, [handler, cmd_definition](json data) {
+    return this->provide_cmd(impl_id, cmd_name, [handler](json data) {
         // call cmd handlers (handle async or normal handlers being both:
         // methods or functions)
-        return convertTo<json>(handler(convertTo<Parameters>(data, cmd_definition["arguments"])));
+        // FIXME (aw): this behaviour needs to be checked, i.e. how to distinguish in json between no value and null?
+        return handler(data).value_or(nullptr);
     });
 }
 

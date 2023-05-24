@@ -7,24 +7,23 @@
 #include <string>
 #include <vector>
 #include <filesystem>
+#include <optional>
+#include <variant>
 
-#include <boost/any.hpp>
-#include <boost/optional.hpp>
-#include <boost/variant.hpp>
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
-using Value = boost::any;
-using Parameters = std::map<std::string, boost::any>;
-using Result = boost::optional<boost::any>;
+using Value = json;
+using Parameters = json;
+using Result = std::optional<json>;
 using JsonCommand = std::function<json(json)>;
-using Command = std::function<boost::optional<boost::any>(Parameters)>;
+using Command = std::function<Result(Parameters)>;
 using ArgumentType = std::vector<std::string>;
 using Arguments = std::map<std::string, ArgumentType>;
 using ReturnType = std::vector<std::string>;
 using JsonCallback = std::function<void(json)>;
 using ValueCallback = std::function<void(Value)>;
-using ConfigEntry = boost::variant<std::string, bool, int, double>;
+using ConfigEntry = std::variant<std::string, bool, int, double>;
 using ConfigMap = std::map<std::string, ConfigEntry>;
 using ModuleConfigs = std::map<std::string, ConfigMap>;
 using Array = json::array_t;

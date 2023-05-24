@@ -675,11 +675,11 @@ ModuleInfo Config::get_module_info(const std::string& module_id) {
     return module_info;
 }
 
-boost::optional<TelemetryConfig> Config::get_telemetry_config(const std::string& module_id) {
+std::optional<TelemetryConfig> Config::get_telemetry_config(const std::string& module_id) {
     BOOST_LOG_FUNCTION();
 
     if (this->telemetry_configs.find(module_id) == this->telemetry_configs.end()) {
-        return boost::none;
+        return {};
     }
 
     return this->telemetry_configs.at(module_id);
