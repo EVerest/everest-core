@@ -23,18 +23,14 @@ public:
     void subscribe_{{ var.name }}(const std::function<void({% if var.json_type != 'null' %}{{ cpp_type(var) }}{% endif %})>& listener) {
         ValueCallback cb = [listener](const Value& value) {
         {% if 'object_type' in var %}
-            json json_object = boost::any_cast<Object>(value);
-            {{ var.object_type }} native_value = json_object;
-            listener(native_value);
+            listener(value);
         {% elif 'enum_type' in var %}
-            auto string_value = {{ var_to_cpp(var) }}(value);
-            auto native_value = {{ string_to_enum(var.enum_type) }}(string_value);
+            auto native_value = {{ string_to_enum(var.enum_type) }}({{ var_to_cpp(var) }}(value));
             listener(native_value);
         {% elif var.json_type != 'null' %}
-            auto native_value = {{ var_to_cpp(var) }}(value);
-            listener(native_value);
+            listener({{ var_to_cpp(var) }}(value));
         {% else %}
-            if (value.type() != typeid({{ cpp_type(var) }})) {
+            if (value.type() != Everest::detail::FundamentalTypeTrait<{{ cpp_type(var) }}>::type) {
                 EVLOG_error << "Callback for variable '{{ var.name }}' in interface '{{ info.interface }}' has wrong type!";
             }
             listener();
@@ -81,13 +77,12 @@ public:
         {% if cmd.result %}Result result = {% endif %}_adapter->call(_req, "{{ cmd.name }}", args);
         {% if cmd.result %}
         {% if 'enum_type' in cmd.result %}
-        auto retval = {{ string_to_enum(cmd.result.enum_type) }}({{ var_to_cpp(cmd.result) }}(result.get()));
+        auto retval = {{ string_to_enum(cmd.result.enum_type) }}({{ var_to_cpp(cmd.result) }}(result.value()));
         {% elif 'object_type' in cmd.result %}
-        auto retval_object = boost::any_cast<Object>(result.get());
-        json retval_json = retval_object;
+        json retval_json = result.value();
         {{ result_type(cmd.result) }} retval = retval_json;
         {% else %}
-        auto retval = {{ var_to_cpp(cmd.result) }}(result.get());
+        auto retval = {{ var_to_cpp(cmd.result) }}(result.value());
         {% endif %}
         return retval;
         {% endif %}

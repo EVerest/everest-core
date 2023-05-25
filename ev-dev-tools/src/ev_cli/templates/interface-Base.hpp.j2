@@ -77,20 +77,18 @@ private:
         {{ cmd.name }}_cmd.cmd = [this](Parameters args) -> Result {
             {% for arg in cmd.args %}
                 {% if 'object_type' in arg %}
-                    json {{ arg.name }}_json_object = boost::any_cast<Object>(args["{{ arg.name }}"]);
-                    {{ arg.object_type }} {{ arg.name }} = {{ arg.name }}_json_object;
+                    {{ arg.object_type }} {{ arg.name }} = args["{{ arg.name }}"];
                 {% elif 'enum_type' in arg %}
-                    auto {{ arg.name }}_string = {{ var_to_cpp(arg) }}(args["{{ arg.name }}"]);
-                    auto {{ arg.name }} = {{ string_to_enum(arg.enum_type) }}({{ arg.name }}_string);
+                    auto {{ arg.name }} = {{ string_to_enum(arg.enum_type) }}(args["{{ arg.name }}"]);
                 {% elif 'array_type' in arg %}
-                    json {{ arg.name }}_json_array = boost::any_cast<Array>(args["{{ arg.name }}"]);
+                    json {{ arg.name }}_json_array = args["{{ arg.name }}"];
                     {% if 'array_type_contains_enum' in arg %}
                         std::vector<{{ arg.array_type }}> {{ arg.name }};
-                        for (auto {{ arg.name }}_entry : {{ arg.name }}_json_array) {
-                            {{ arg.name }}.push_back({{ string_to_enum(arg.array_type) }}({{ arg.name }}_entry));
+                        for (auto entry : {{ arg.name }}_json_array) {
+                            {{ arg.name }}.push_back({{ string_to_enum(arg.array_type) }}(entry));
                         }
                     {% else %}
-                        std::vector<{{ arg.array_type }}> {{ arg.name }} = {{ arg.name }}_json_array;
+                        std::vector<{{ arg.array_type }}> {{ arg.name }} = args["{{ arg.name }}"];
                     {% endif %}
                 {% else %}
                     auto {{ arg.name }} = {{ var_to_cpp(arg) }}(args["{{ arg.name }}"]);
@@ -105,14 +103,11 @@ private:
                 {%- endfor -%}
             );
             {% if cmd.result and 'object_type' in cmd.result %}
-                json json_result = result;
-                Object object_result = json_result;
-                return boost::any(object_result);
+                return result;
             {% elif cmd.result and 'enum_type' in cmd.result %}
-                auto result_string = {{ enum_to_string(cmd.result.enum_type) }}(result);
-                return boost::any(result_string);
+                return {{ enum_to_string(cmd.result.enum_type) }}(result);
             {% else %}
-                return {{ var_to_any(cmd.result, 'result') if cmd.result else 'boost::none'}};
+                return {{ var_to_any(cmd.result, 'result') if cmd.result else 'nullptr'}};
             {% endif %}
 
         };

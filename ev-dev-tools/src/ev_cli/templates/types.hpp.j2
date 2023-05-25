@@ -79,7 +79,7 @@ namespace {{ namespace }} {
 struct {{ parsed_type.name }} {
     {% for property in parsed_type.properties %}
         {# Constraints will be checked by the framework #}
-        {{ 'boost::optional<' if not property.required -}}
+        {{ 'std::optional<' if not property.required -}}
         {{ property.type -}}
         {{ '>' if not property.required -}}
         {{ ' ' + property.name + ';' }} ///< {{ property.info.description }}

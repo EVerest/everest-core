@@ -115,7 +115,7 @@ def gather_git_info(repo):
 
 
 cpp_type_map = {
-    "null": "boost::blank",  # FIXME (aw): check whether boost::blank or boost::none is more appropriate here
+    "null": "nullptr_t",  # FIXME (aw): who gets the null, json? or the variant
     "integer": "int",
     "number": "double",
     "string": "std::string",

@@ -33,14 +33,14 @@ void LdEverest::init(ModuleConfigs module_configs, const ModuleInfo& mod_info) {
     {% for impl in provides %}
     auto {{ impl.id }}_config_input = std::move(module_configs["{{ impl.id }}"]);
     {% for item in impl.config %}
-    {{ impl.id }}_config.{{ item.name }} = boost::get<{{ item.cpp_type }}>({{ impl.id }}_config_input["{{ item.name }}"]);
+    {{ impl.id }}_config.{{ item.name }} = std::get<{{ item.cpp_type }}>({{ impl.id }}_config_input["{{ item.name }}"]);
     {% endfor %}
 
     {% endfor %}
     {% if info.module_config|length %}
 
     {% for item in info.module_config %}
-    module_conf.{{ item.name }} = boost::get<{{ item.cpp_type }}>(module_configs["!module"]["{{ item.name }}"]);
+    module_conf.{{ item.name }} = std::get<{{ item.cpp_type }}>(module_configs["!module"]["{{ item.name }}"]);
     {% endfor %}
     {% endif %}
 

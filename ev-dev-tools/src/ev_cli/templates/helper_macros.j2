@@ -1,6 +1,6 @@
 {% macro cpp_type(type, interface=none) -%}
 {% if type.is_variant -%}
-boost::variant<{{ type.cpp_type|join(', ') }}>
+std::variant<{{ type.cpp_type|join(', ') }}>
 {%- else -%}
     {% if interface is not none and 'object_type' in type %}
         {{ interface + '::' + type.object_type }}
@@ -28,17 +28,17 @@ void
 
 {% macro var_to_any(var, name) -%}
 {% if var.is_variant -%}
-Everest::ModuleAdapter::variant_to_any({{ name }})
+Everest::variant_to_json({{ name }})
 {%- else -%}
-boost::any({{ name }})
+{{ name }}
 {%- endif %}
 {%- endmacro %}
 
 {% macro var_to_cpp(arg) -%}
 {% if arg.is_variant -%}
-Everest::ModuleAdapter::any_to_variant<{{ arg.cpp_type|join(', ')}}>
+Everest::json_to_variant<{{ arg.cpp_type|join(', ')}}>
 {%- else -%}
-boost::any_cast<{{ arg.cpp_type }}>
+static_cast<{{ arg.cpp_type }}>
 {%- endif %}
 {%- endmacro %}
 
@@ -62,7 +62,7 @@ handle_{{ cmd.name }}(
 
 {% macro publish_var_signature(var) %}
 void publish_{{ var.name }}({% if var.json_type != 'null' %}{{ cpp_type(var) }} value{% endif %}) {
-        _ev->publish(_name, "{{ var.name }}", {% if var.json_type != 'null' %}{{ var_to_any(var, 'value')}}{% else %}boost::blank(){% endif %});
+        _ev->publish(_name, "{{ var.name }}", {% if var.json_type != 'null' %}{{ var_to_any(var, 'value')}}{% else %}nullptr{% endif %});
 }
 {% endmacro %}
 
