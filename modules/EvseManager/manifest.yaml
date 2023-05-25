@@ -154,13 +154,21 @@ config:
     type: boolean
     default: false
   autocharge_use_slac_instead_of_hlc:
-    description: Use slac ev mac address for autocharge instead of EVCCID from HLC 
+    description: Use slac ev mac address for autocharge instead of EVCCID from HLC
     type: boolean
     default: false
   logfile_suffix:
     description: Use the string given for the log folder name. Special string session_uuid will be replaced with session uuid.
     type: string
     default: session_uuid
+  soft_over_current_tolerance_percent:
+    description: Allow for N percent over current in soft over current checking during AC charging.
+    type: number
+    default: 10.0
+  soft_over_current_measurement_noise_A:
+    description: Set current measurement noise. Added to limit as an offset to avoid false triggers.
+    type: number
+    default: 0.5
 provides:
   evse:
     interface: evse_manager

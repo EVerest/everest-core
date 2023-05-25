@@ -76,6 +76,8 @@ struct Conf {
     bool hack_allow_bpt_with_iso2;
     bool autocharge_use_slac_instead_of_hlc;
     std::string logfile_suffix;
+    double soft_over_current_tolerance_percent;
+    double soft_over_current_measurement_noise_A;
 };
 
 class EvseManager : public Everest::ModuleBase {

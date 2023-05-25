@@ -87,7 +87,7 @@ public:
 
     void setup(bool three_phases, bool has_ventilation, const std::string& country_code, bool rcd_enabled,
                const ChargeMode charge_mode, bool ac_hlc_enabled, bool ac_hlc_use_5percent, bool ac_enforce_hlc,
-               bool ac_with_soc_timeout);
+               bool ac_with_soc_timeout, float soft_over_current_tolerance_percent, float soft_over_current_measurement_noise_A);
 
     bool enable();
     bool disable();
@@ -295,6 +295,9 @@ private:
 
     static constexpr auto SLEEP_BEFORE_ENABLING_PWM_HLC_MODE = std::chrono::seconds(1);
     static constexpr auto MAINLOOP_UPDATE_RATE = std::chrono::milliseconds(50);
+
+    float soft_over_current_tolerance_percent{10.};
+    float soft_over_current_measurement_noise_A{0.5};
 };
 
 #define CHARGER_ABSOLUTE_MAX_CURRENT double(80.0F)
