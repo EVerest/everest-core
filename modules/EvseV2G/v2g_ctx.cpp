@@ -287,7 +287,7 @@ struct v2g_context* v2g_ctx_create(ISO15118_chargerImplBase* p_chargerImplBase) 
     ctx->if_name = "eth1";
 
     ctx->network_read_timeout = 1000;
-    ctx->network_read_timeout_tls = 2000;
+    ctx->network_read_timeout_tls = 5000;
 
     ctx->sdp_socket = -1;
     ctx->tcp_socket = -1;
