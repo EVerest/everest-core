@@ -1,17 +1,17 @@
 ---
 everest-framework:
   git: https://github.com/EVerest/everest-framework.git
-  git_tag: 2f4e8a2
+  git_tag: v0.5.0
 sigslot:
   git: https://github.com/palacaze/sigslot
   git_tag: v1.2.0
   options: ["SIGSLOT_COMPILE_EXAMPLES OFF"]
 libmodbus:
   git: https://github.com/EVerest/libmodbus.git
-  git_tag: 2e89951
+  git_tag: v0.3.0
 libsunspec:
   git: https://github.com/EVerest/libsunspec.git
-  git_tag: v0.1.0
+  git_tag: v0.2.0
 pugixml:
   git: https://github.com/zeux/pugixml
   git_tag: v1.12.1
@@ -25,7 +25,7 @@ libtimer:
 # Slac module
 libslac:
   git: https://github.com/EVerest/libslac.git
-  git_tag: fee9f12
+  git_tag: v0.2.0
 libfsm:
   git: https://github.com/EVerest/libfsm.git
   git_tag: v0.2.0
@@ -33,7 +33,7 @@ libfsm:
 # JsCarV2G and JsRiseV2G module
 RISE-V2G:
   git: https://github.com/EVerest/ext-RISE-V2G.git
-  git_tag: a0e0be8
+  git_tag: 2023.5.0
 
 # OCPP
 libocpp:
@@ -42,7 +42,7 @@ libocpp:
 # Josev
 Josev:
   git: https://github.com/EVerest/ext-switchev-iso15118.git
-  git_tag: c3006e7
+  git_tag: 2023.5.0
 
 # OpenV2G
 ext-openv2g:
