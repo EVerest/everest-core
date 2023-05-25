@@ -51,5 +51,5 @@ ext-openv2g:
 # mbedtls
 ext-mbedtls:
   git: https://github.com/EVerest/ext-mbedtls.git
-  git_tag: mbedtls-2.28.0-trustedCAKey
+  git_tag: 8b3f26a
   options: ["ENABLE_PROGRAMS OFF", "ENABLE_TESTING OFF"]
