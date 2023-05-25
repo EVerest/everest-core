@@ -313,10 +313,10 @@ void ISO15118_chargerImpl::handle_set_MeterInfo(types::powermeter::Powermeter& p
     v2g_ctx->meter_info.meter_info_is_used = 1;
     v2g_ctx->meter_info.meter_reading = powermeter.energy_Wh_import.total;
 
-    if (powermeter.meter_id.is_initialized() == true) {
-        uint8_t len = powermeter.meter_id.get().length();
+    if (powermeter.meter_id) {
+        uint8_t len = powermeter.meter_id->length();
         if (len < iso1MeterInfoType_MeterID_CHARACTERS_SIZE) {
-            memcpy(v2g_ctx->meter_info.meter_id.bytes, powermeter.meter_id.get().c_str(), len);
+            memcpy(v2g_ctx->meter_info.meter_id.bytes, powermeter.meter_id->c_str(), len);
             v2g_ctx->meter_info.meter_id.bytesLen = len;
         } else {
             dlog(DLOG_LEVEL_WARNING, "MeterID_CHARACTERS_SIZEexceeded (received: %u, max: %u)", len,

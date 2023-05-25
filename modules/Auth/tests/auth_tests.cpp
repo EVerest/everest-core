@@ -29,8 +29,8 @@ static SessionEvent get_session_started_event(const types::evse_manager::StartSe
 }
 
 static ProvidedIdToken get_provided_token(const std::string& id_token,
-                                          boost::optional<std::vector<int32_t>> connectors = boost::none,
-                                          boost::optional<bool> prevalidated = boost::none) {
+                                          std::optional<std::vector<int32_t>> connectors = std::nullopt,
+                                          std::optional<bool> prevalidated = std::nullopt) {
     ProvidedIdToken provided_token;
     provided_token.id_token = id_token;
     provided_token.type = types::authorization::TokenType::RFID;

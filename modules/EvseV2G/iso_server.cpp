@@ -1561,7 +1561,7 @@ static enum v2g_event handle_iso_power_delivery(struct v2g_connection* conn) {
 
     switch (req->ChargeProgress) {
     case iso1chargeProgressType_Start:
-        conn->ctx->p_charger->publish_V2G_Setup_Finished(boost::blank{});
+        conn->ctx->p_charger->publish_V2G_Setup_Finished(nullptr);
 
         if (conn->ctx->is_dc_charger == false) {
             // TODO: For AC charging wait for CP state C or D , before transmitting of the response. CP state is checked
@@ -1604,7 +1604,7 @@ static enum v2g_event handle_iso_power_delivery(struct v2g_connection* conn) {
             // state is checked by other module
             conn->ctx->p_charger->publish_AC_Open_Contactor(true);
         } else {
-            conn->ctx->p_charger->publish_currentDemand_Finished(boost::blank{});
+            conn->ctx->p_charger->publish_currentDemand_Finished(nullptr);
             conn->ctx->p_charger->publish_DC_Open_Contactor(true);
         }
         break;
@@ -2177,7 +2177,7 @@ enum v2g_event iso_handle_request(v2g_connection* conn) {
     if (exi_in->V2G_Message.Body.CurrentDemandReq_isUsed) {
         dlog(DLOG_LEVEL_TRACE, "Handling CurrentDemandReq");
         if (conn->ctx->last_v2g_msg == V2G_POWER_DELIVERY_MSG) {
-            conn->ctx->p_charger->publish_currentDemand_Started(boost::blank{});
+            conn->ctx->p_charger->publish_currentDemand_Started(nullptr);
             conn->ctx->session.is_charging = true;
         }
         conn->ctx->current_v2g_msg = V2G_CURRENT_DEMAND_MSG;
@@ -2219,7 +2219,7 @@ enum v2g_event iso_handle_request(v2g_connection* conn) {
         conn->ctx->current_v2g_msg = V2G_AUTHORIZATION_MSG;
         if (conn->ctx->last_v2g_msg != V2G_AUTHORIZATION_MSG) {
             if (conn->ctx->session.iso_selected_payment_option == iso1paymentOptionType_ExternalPayment) {
-                conn->ctx->p_charger->publish_Require_Auth_EIM(boost::blank{});
+                conn->ctx->p_charger->publish_Require_Auth_EIM(nullptr);
             }
         }
         exi_out->V2G_Message.Body.AuthorizationRes_isUsed = 1u;
@@ -2273,7 +2273,7 @@ enum v2g_event iso_handle_request(v2g_connection* conn) {
         conn->ctx->current_v2g_msg = V2G_CABLE_CHECK_MSG;
         /* At first send mqtt charging phase signal to the customer interface */
         if (V2G_CHARGE_PARAMETER_DISCOVERY_MSG == conn->ctx->last_v2g_msg) {
-            conn->ctx->p_charger->publish_Start_CableCheck(boost::blank{});
+            conn->ctx->p_charger->publish_Start_CableCheck(nullptr);
         }
 
         exi_out->V2G_Message.Body.CableCheckRes_isUsed = 1u;

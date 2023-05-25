@@ -163,7 +163,7 @@ void EvseManager::ready() {
 
                     if (config.hack_present_current_offset > 0) {
                         present_values.EVSEPresentCurrent =
-                            present_values.EVSEPresentCurrent.get() + config.hack_present_current_offset;
+                            present_values.EVSEPresentCurrent.value() + config.hack_present_current_offset;
                     }
 
                     if (config.hack_pause_imd_during_precharge && m.voltage_V * m.current_A > 1000) {
@@ -552,10 +552,10 @@ void EvseManager::ready() {
     if (r_powermeter_billing().size() > 0) {
         r_powermeter_billing()[0]->subscribe_powermeter([this](types::powermeter::Powermeter p) {
             // Inform charger about current charging current. This is used for slow OC detection.
-            if (p.current_A.is_initialized() && p.current_A.get().L1.is_initialized() &&
-                p.current_A.get().L2.is_initialized() && p.current_A.get().L3.is_initialized()) {
-                charger->setCurrentDrawnByVehicle(p.current_A.get().L1.get(), p.current_A.get().L2.get(),
-                                                  p.current_A.get().L3.get());
+            if (p.current_A && p.current_A.value().L1 &&
+                p.current_A.value().L2 && p.current_A.value().L3) {
+                charger->setCurrentDrawnByVehicle(p.current_A.value().L1.value(), p.current_A.value().L2.value(),
+                                                  p.current_A.value().L3.value());
             }
 
             // Inform HLC about the power meter data
@@ -570,17 +570,17 @@ void EvseManager::ready() {
             }
 
             // External Nodered interface
-            if (p.phase_seq_error.is_initialized()) {
+            if (p.phase_seq_error) {
                 mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter/phaseSeqError", config.connector_id),
-                             p.phase_seq_error.get());
+                             p.phase_seq_error.value());
             }
 
             mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter/time_stamp", config.connector_id),
                          p.timestamp);
 
-            if (p.power_W.is_initialized()) {
+            if (p.power_W) {
                 mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter/totalKw", config.connector_id),
-                             p.power_W.get().total / 1000., 1);
+                             p.power_W.value().total / 1000., 1);
             }
 
             mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter/totalKWattHr", config.connector_id),
@@ -677,96 +677,96 @@ void EvseManager::ready() {
             auto p = get_latest_powermeter_data_billing();
             Everest::TelemetryMap telemetry_data{{"timestamp", p.timestamp},
                                                  {"type", "power_meter"},
-                                                 {"meter_id", p.meter_id.get_value_or("N/A")},
+                                                 {"meter_id", p.meter_id.value_or("N/A")},
                                                  {"energy_import_total_Wh", p.energy_Wh_import.total}};
 
-            if (p.energy_Wh_import.L1.is_initialized()) {
-                telemetry_data["energy_import_L1_Wh"] = p.energy_Wh_import.L1.get();
+            if (p.energy_Wh_import.L1) {
+                telemetry_data["energy_import_L1_Wh"] = p.energy_Wh_import.L1.value();
             }
-            if (p.energy_Wh_import.L2.is_initialized()) {
-                telemetry_data["energy_import_L2_Wh"] = p.energy_Wh_import.L2.get();
+            if (p.energy_Wh_import.L2) {
+                telemetry_data["energy_import_L2_Wh"] = p.energy_Wh_import.L2.value();
             }
-            if (p.energy_Wh_import.L3.is_initialized()) {
-                telemetry_data["energy_import_L3_Wh"] = p.energy_Wh_import.L3.get();
-            }
-
-            if (p.energy_Wh_export.is_initialized()) {
-                telemetry_data["energy_export_total_Wh"] = p.energy_Wh_export.get().total;
-            }
-            if (p.energy_Wh_export.is_initialized() && p.energy_Wh_export.get().L1.is_initialized()) {
-                telemetry_data["energy_export_L1_Wh"] = p.energy_Wh_export.get().L1.get();
-            }
-            if (p.energy_Wh_export.is_initialized() && p.energy_Wh_export.get().L2.is_initialized()) {
-                telemetry_data["energy_export_L2_Wh"] = p.energy_Wh_export.get().L2.get();
-            }
-            if (p.energy_Wh_export.is_initialized() && p.energy_Wh_export.get().L3.is_initialized()) {
-                telemetry_data["energy_export_L3_Wh"] = p.energy_Wh_export.get().L3.get();
+            if (p.energy_Wh_import.L3) {
+                telemetry_data["energy_import_L3_Wh"] = p.energy_Wh_import.L3.value();
             }
 
-            if (p.power_W.is_initialized()) {
-                telemetry_data["power_total_W"] = p.power_W.get().total;
+            if (p.energy_Wh_export) {
+                telemetry_data["energy_export_total_Wh"] = p.energy_Wh_export.value().total;
             }
-            if (p.power_W.is_initialized() && p.power_W.get().L1.is_initialized()) {
-                telemetry_data["power_L1_W"] = p.power_W.get().L1.get();
+            if (p.energy_Wh_export && p.energy_Wh_export.value().L1) {
+                telemetry_data["energy_export_L1_Wh"] = p.energy_Wh_export.value().L1.value();
             }
-            if (p.power_W.is_initialized() && p.power_W.get().L2.is_initialized()) {
-                telemetry_data["power_L3_W"] = p.power_W.get().L2.get();
+            if (p.energy_Wh_export && p.energy_Wh_export.value().L2) {
+                telemetry_data["energy_export_L2_Wh"] = p.energy_Wh_export.value().L2.value();
             }
-            if (p.power_W.is_initialized() && p.power_W.get().L3.is_initialized()) {
-                telemetry_data["power_L3_W"] = p.power_W.get().L3.get();
-            }
-
-            if (p.VAR.is_initialized()) {
-                telemetry_data["var_total"] = p.VAR.get().total;
-            }
-            if (p.VAR.is_initialized() && p.VAR.get().L1.is_initialized()) {
-                telemetry_data["var_L1"] = p.VAR.get().L1.get();
-            }
-            if (p.VAR.is_initialized() && p.VAR.get().L2.is_initialized()) {
-                telemetry_data["var_L1"] = p.VAR.get().L2.get();
-            }
-            if (p.VAR.is_initialized() && p.VAR.get().L3.is_initialized()) {
-                telemetry_data["var_L1"] = p.VAR.get().L3.get();
+            if (p.energy_Wh_export && p.energy_Wh_export.value().L3) {
+                telemetry_data["energy_export_L3_Wh"] = p.energy_Wh_export.value().L3.value();
             }
 
-            if (p.voltage_V.is_initialized() && p.voltage_V.get().L1.is_initialized()) {
-                telemetry_data["voltage_L1_V"] = p.voltage_V.get().L1.get();
+            if (p.power_W) {
+                telemetry_data["power_total_W"] = p.power_W.value().total;
             }
-            if (p.voltage_V.is_initialized() && p.voltage_V.get().L2.is_initialized()) {
-                telemetry_data["voltage_L2_V"] = p.voltage_V.get().L2.get();
+            if (p.power_W && p.power_W.value().L1) {
+                telemetry_data["power_L1_W"] = p.power_W.value().L1.value();
             }
-            if (p.voltage_V.is_initialized() && p.voltage_V.get().L3.is_initialized()) {
-                telemetry_data["voltage_L3_V"] = p.voltage_V.get().L3.get();
+            if (p.power_W && p.power_W.value().L2) {
+                telemetry_data["power_L3_W"] = p.power_W.value().L2.value();
             }
-            if (p.voltage_V.is_initialized() && p.voltage_V.get().DC.is_initialized()) {
-                telemetry_data["voltage_DC_V"] = p.voltage_V.get().DC.get();
-            }
-
-            if (p.current_A.is_initialized() && p.current_A.get().L1.is_initialized()) {
-                telemetry_data["current_L1_A"] = p.current_A.get().L1.get();
-            }
-            if (p.current_A.is_initialized() && p.current_A.get().L2.is_initialized()) {
-                telemetry_data["current_L2_A"] = p.current_A.get().L2.get();
-            }
-            if (p.current_A.is_initialized() && p.current_A.get().L3.is_initialized()) {
-                telemetry_data["current_L3_A"] = p.current_A.get().L3.get();
-            }
-            if (p.current_A.is_initialized() && p.current_A.get().DC.is_initialized()) {
-                telemetry_data["current_DC_A"] = p.current_A.get().DC.get();
+            if (p.power_W && p.power_W.value().L3) {
+                telemetry_data["power_L3_W"] = p.power_W.value().L3.value();
             }
 
-            if (p.frequency_Hz.is_initialized()) {
-                telemetry_data["frequency_L1_Hz"] = p.frequency_Hz.get().L1;
+            if (p.VAR) {
+                telemetry_data["var_total"] = p.VAR.value().total;
             }
-            if (p.frequency_Hz.is_initialized() && p.frequency_Hz.get().L2.is_initialized()) {
-                telemetry_data["frequency_L2_Hz"] = p.frequency_Hz.get().L2.get();
+            if (p.VAR && p.VAR.value().L1) {
+                telemetry_data["var_L1"] = p.VAR.value().L1.value();
             }
-            if (p.frequency_Hz.is_initialized() && p.frequency_Hz.get().L3.is_initialized()) {
-                telemetry_data["frequency_L3_Hz"] = p.frequency_Hz.get().L3.get();
+            if (p.VAR && p.VAR.value().L2) {
+                telemetry_data["var_L1"] = p.VAR.value().L2.value();
+            }
+            if (p.VAR && p.VAR.value().L3) {
+                telemetry_data["var_L1"] = p.VAR.value().L3.value();
             }
 
-            if (p.phase_seq_error.is_initialized()) {
-                telemetry_data["phase_seq_error"] = p.phase_seq_error.get();
+            if (p.voltage_V && p.voltage_V.value().L1) {
+                telemetry_data["voltage_L1_V"] = p.voltage_V.value().L1.value();
+            }
+            if (p.voltage_V && p.voltage_V.value().L2) {
+                telemetry_data["voltage_L2_V"] = p.voltage_V.value().L2.value();
+            }
+            if (p.voltage_V && p.voltage_V.value().L3) {
+                telemetry_data["voltage_L3_V"] = p.voltage_V.value().L3.value();
+            }
+            if (p.voltage_V && p.voltage_V.value().DC) {
+                telemetry_data["voltage_DC_V"] = p.voltage_V.value().DC.value();
+            }
+
+            if (p.current_A && p.current_A.value().L1) {
+                telemetry_data["current_L1_A"] = p.current_A.value().L1.value();
+            }
+            if (p.current_A && p.current_A.value().L2) {
+                telemetry_data["current_L2_A"] = p.current_A.value().L2.value();
+            }
+            if (p.current_A && p.current_A.value().L3) {
+                telemetry_data["current_L3_A"] = p.current_A.value().L3.value();
+            }
+            if (p.current_A && p.current_A.value().DC) {
+                telemetry_data["current_DC_A"] = p.current_A.value().DC.value();
+            }
+
+            if (p.frequency_Hz) {
+                telemetry_data["frequency_L1_Hz"] = p.frequency_Hz.value().L1;
+            }
+            if (p.frequency_Hz && p.frequency_Hz.value().L2) {
+                telemetry_data["frequency_L2_Hz"] = p.frequency_Hz.value().L2.value();
+            }
+            if (p.frequency_Hz && p.frequency_Hz.value().L3) {
+                telemetry_data["frequency_L3_Hz"] = p.frequency_Hz.value().L3.value();
+            }
+
+            if (p.phase_seq_error) {
+                telemetry_data["phase_seq_error"] = p.phase_seq_error.value();
             }
 
             // Publish as external telemetry data

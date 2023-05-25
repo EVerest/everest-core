@@ -28,7 +28,7 @@ types::authorization::ValidationResult
 auth_token_validatorImpl::validate_pnc_request(const types::authorization::ProvidedIdToken& provided_token) {
 
     // preparing payload for data_transfer_pnc_authorize
-    boost::optional<std::vector<ocpp::v201::OCSPRequestData>> iso15118_certificate_hash_data_opt;
+    std::optional<std::vector<ocpp::v201::OCSPRequestData>> iso15118_certificate_hash_data_opt;
     if (provided_token.iso15118CertificateHashData.has_value()) {
         std::vector<ocpp::v201::OCSPRequestData> iso15118_certificate_hash_data;
         for (const auto& certificate_hash_data : provided_token.iso15118CertificateHashData.value()) {
@@ -76,10 +76,10 @@ auth_token_validatorImpl::validate_standard_request(const types::authorization::
     result.authorization_status = types::authorization::string_to_authorization_status(
         ocpp::v16::conversions::authorization_status_to_string(id_tag_info.status));
     if (id_tag_info.expiryDate) {
-        result.expiry_time = id_tag_info.expiryDate.get().to_rfc3339();
+        result.expiry_time = id_tag_info.expiryDate->to_rfc3339();
     }
     if (id_tag_info.parentIdTag) {
-        result.parent_id_token = id_tag_info.parentIdTag.get().get();
+        result.parent_id_token = id_tag_info.parentIdTag->get();
     }
     result.reason = "Validation by OCPP 1.6 Central System";
     return result;

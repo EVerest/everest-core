@@ -12,7 +12,7 @@ void ReservationHandler::init_connector(int connector_id) {
 }
 
 bool ReservationHandler::matches_reserved_identifier(int connector, const std::string& id_token,
-                                                     boost::optional<std::string> parent_id_token) {
+                                                     std::optional<std::string> parent_id_token) {
     // return true if id tokens match or parent id tokens exists and match
     return this->reservations[connector].id_token == id_token ||
            (parent_id_token && this->reservations[connector].parent_id_token &&

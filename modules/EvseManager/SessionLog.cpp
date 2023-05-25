@@ -36,7 +36,7 @@ void SessionLog::enable() {
     enabled = true;
 }
 
-boost::optional<std::string> SessionLog::startSession(const std::string& suffix_string) {
+std::optional<std::string> SessionLog::startSession(const std::string& suffix_string) {
     if (enabled) {
         if (session_active) {
             stopSession();
@@ -93,10 +93,10 @@ boost::optional<std::string> SessionLog::startSession(const std::string& suffix_
                         "</style>";
         logfile_html << "</head><body><table class=\"log\">\n";
         sys("Session logging started.");
-        return boost::optional<std::string>(logpath);
+        return logpath;
     }
 
-    return boost::optional<std::string>();
+    return std::string();
 }
 
 void SessionLog::stopSession() {

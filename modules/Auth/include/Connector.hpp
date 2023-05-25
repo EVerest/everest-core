@@ -4,9 +4,12 @@
 #ifndef _CONNECTOR_HPP_
 #define _CONNECTOR_HPP_
 
+#include <optional>
+
 #include <everest/timer.hpp>
 
 #include <utils/types.hpp>
+
 
 #include <ConnectorStateMachine.hpp>
 #include <generated/types/authorization.hpp>
@@ -17,9 +20,9 @@ namespace module {
 struct Identifier {
     std::string id_token; ///< Arbitrary id token string: this has to be printable case insensitive ascii
     types::authorization::TokenType type; ///< Type of the provider of the identifier
-    boost::optional<types::authorization::AuthorizationStatus> authorization_status;
-    boost::optional<std::string> expiry_time; ///< Absolute UTC time point when reservation expires in RFC3339 format
-    boost::optional<std::string> parent_id_token; ///< Parent id token of the id token
+    std::optional<types::authorization::AuthorizationStatus> authorization_status;
+    std::optional<std::string> expiry_time; ///< Absolute UTC time point when reservation expires in RFC3339 format
+    std::optional<std::string> parent_id_token; ///< Parent id token of the id token
 };
 
 struct Connector {
@@ -36,7 +39,7 @@ struct Connector {
     ConnectorStateMachine state_machine;
 
     // identifier is set when transaction is running and none if not
-    boost::optional<Identifier> identifier = boost::none;
+    std::optional<Identifier> identifier = std::nullopt;
 
     bool is_reservable;
     bool reserved;

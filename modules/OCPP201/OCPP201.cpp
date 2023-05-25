@@ -13,7 +13,7 @@ const std::string CERTS_DIR = "certs";
 namespace fs = std::filesystem;
 
 ocpp::v201::SampledValue get_sampled_value(const ocpp::v201::MeasurandEnum& measurand, const std::string& unit,
-                                           const boost::optional<ocpp::v201::PhaseEnum> phase) {
+                                           const std::optional<ocpp::v201::PhaseEnum> phase) {
     ocpp::v201::SampledValue sampled_value;
     ocpp::v201::UnitOfMeasure unit_of_measure;
     sampled_value.context = ocpp::v201::ReadingContextEnum::Sample_Periodic;
@@ -31,7 +31,7 @@ ocpp::v201::MeterValue get_meter_value(const types::powermeter::Powermeter& powe
 
     // Energy.Active.Import.Register
     ocpp::v201::SampledValue sampled_value =
-        get_sampled_value(ocpp::v201::MeasurandEnum::Energy_Active_Import_Register, "Wh", boost::none);
+        get_sampled_value(ocpp::v201::MeasurandEnum::Energy_Active_Import_Register, "Wh", std::nullopt);
     sampled_value.value = power_meter.energy_Wh_import.total;
     meter_value.sampledValue.push_back(sampled_value);
     if (power_meter.energy_Wh_import.L1.has_value()) {
@@ -56,7 +56,7 @@ ocpp::v201::MeterValue get_meter_value(const types::powermeter::Powermeter& powe
     // Energy.Active.Export.Register
     if (power_meter.energy_Wh_export.has_value()) {
         auto sampled_value =
-            get_sampled_value(ocpp::v201::MeasurandEnum::Energy_Active_Export_Register, "Wh", boost::none);
+            get_sampled_value(ocpp::v201::MeasurandEnum::Energy_Active_Export_Register, "Wh", std::nullopt);
         sampled_value.value = power_meter.energy_Wh_export.value().total;
         meter_value.sampledValue.push_back(sampled_value);
         if (power_meter.energy_Wh_export.value().L1.has_value()) {
@@ -81,7 +81,7 @@ ocpp::v201::MeterValue get_meter_value(const types::powermeter::Powermeter& powe
 
     // Power.Active.Import
     if (power_meter.power_W.has_value()) {
-        auto sampled_value = get_sampled_value(ocpp::v201::MeasurandEnum::Power_Active_Import, "W", boost::none);
+        auto sampled_value = get_sampled_value(ocpp::v201::MeasurandEnum::Power_Active_Import, "W", std::nullopt);
         sampled_value.value = power_meter.power_W.value().total;
         meter_value.sampledValue.push_back(sampled_value);
         if (power_meter.power_W.value().L1.has_value()) {
@@ -106,7 +106,7 @@ ocpp::v201::MeterValue get_meter_value(const types::powermeter::Powermeter& powe
 
     // Power.Reactive.Import
     if (power_meter.VAR.has_value()) {
-        auto sampled_value = get_sampled_value(ocpp::v201::MeasurandEnum::Power_Reactive_Import, "var", boost::none);
+        auto sampled_value = get_sampled_value(ocpp::v201::MeasurandEnum::Power_Reactive_Import, "var", std::nullopt);
         sampled_value.value = power_meter.VAR.value().total;
         meter_value.sampledValue.push_back(sampled_value);
         if (power_meter.VAR.value().L1.has_value()) {
@@ -131,7 +131,7 @@ ocpp::v201::MeterValue get_meter_value(const types::powermeter::Powermeter& powe
 
     // Current.Import
     if (power_meter.current_A.has_value()) {
-        auto sampled_value = get_sampled_value(ocpp::v201::MeasurandEnum::Current_Import, "A", boost::none);
+        auto sampled_value = get_sampled_value(ocpp::v201::MeasurandEnum::Current_Import, "A", std::nullopt);
         if (power_meter.current_A.value().L1.has_value()) {
             sampled_value =
                 get_sampled_value(ocpp::v201::MeasurandEnum::Current_Import, "A", ocpp::v201::PhaseEnum::L1);
@@ -151,7 +151,7 @@ ocpp::v201::MeterValue get_meter_value(const types::powermeter::Powermeter& powe
             meter_value.sampledValue.push_back(sampled_value);
         }
         if (power_meter.current_A.value().DC.has_value()) {
-            sampled_value = get_sampled_value(ocpp::v201::MeasurandEnum::Current_Import, "A", boost::none);
+            sampled_value = get_sampled_value(ocpp::v201::MeasurandEnum::Current_Import, "A", std::nullopt);
             sampled_value.value = power_meter.current_A.value().DC.value();
             meter_value.sampledValue.push_back(sampled_value);
         }
@@ -180,7 +180,7 @@ ocpp::v201::MeterValue get_meter_value(const types::powermeter::Powermeter& powe
             meter_value.sampledValue.push_back(sampled_value);
         }
         if (power_meter.voltage_V.value().DC.has_value()) {
-            sampled_value = get_sampled_value(ocpp::v201::MeasurandEnum::Voltage, "V", boost::none);
+            sampled_value = get_sampled_value(ocpp::v201::MeasurandEnum::Voltage, "V", std::nullopt);
             sampled_value.value = power_meter.voltage_V.value().L1.value();
             meter_value.sampledValue.push_back(sampled_value);
         }

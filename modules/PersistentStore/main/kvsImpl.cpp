@@ -4,7 +4,6 @@
 #include "kvsImpl.hpp"
 
 #include <boost/filesystem.hpp>
-#include <boost/variant.hpp>
 
 namespace module {
 namespace main {
@@ -50,10 +49,10 @@ void kvsImpl::init() {
 void kvsImpl::ready() {
 }
 
-class TypeNameVisitor : public boost::static_visitor<std::string> {
+class TypeNameVisitor {
 public:
-    std::string operator()(const boost::blank& t) const {
-        return "boost::blank";
+    std::string operator()(std::nullptr_t t) const {
+        return "nullptr_t";
     }
 
     std::string operator()(const Array& t) const {
@@ -81,9 +80,9 @@ public:
     }
 };
 
-class StringValueVisitor : public boost::static_visitor<std::string> {
+class StringValueVisitor {
 public:
-    std::string operator()(const boost::blank& t) const {
+    std::string operator()(std::nullptr_t t) const {
         return "";
     }
 
@@ -118,9 +117,9 @@ public:
 };
 
 void kvsImpl::handle_store(std::string& key,
-                           boost::variant<boost::blank, Array, Object, bool, double, int, std::string>& value) {
-    std::string type = boost::apply_visitor(TypeNameVisitor(), value);
-    std::string string_value = boost::apply_visitor(StringValueVisitor(), value);
+                           std::variant<std::nullptr_t, Array, Object, bool, double, int, std::string>& value) {
+    std::string type = std::visit(TypeNameVisitor(), value);
+    std::string string_value = std::visit(StringValueVisitor(), value);
     ;
 
     std::string insert_sql_str = "INSERT OR REPLACE INTO KVS (KEY, VALUE, TYPE) VALUES "
@@ -144,7 +143,7 @@ void kvsImpl::handle_store(std::string& key,
     }
 };
 
-boost::variant<boost::blank, Array, Object, bool, double, int, std::string> kvsImpl::handle_load(std::string& key) {
+std::variant<std::nullptr_t, Array, Object, bool, double, int, std::string> kvsImpl::handle_load(std::string& key) {
     std::string select_sql_str = "SELECT KEY, VALUE, TYPE FROM KVS WHERE KEY = @key";
     sqlite3_stmt* select_statement;
     sqlite3_prepare_v2(db, select_sql_str.c_str(), select_sql_str.size(), &select_statement, NULL);
@@ -157,7 +156,7 @@ boost::variant<boost::blank, Array, Object, bool, double, int, std::string> kvsI
         return {};
     }
 
-    boost::variant<boost::blank, Array, Object, bool, double, int, std::string> value;
+    std::variant<std::nullptr_t, Array, Object, bool, double, int, std::string> value;
 
     auto value_ptr = sqlite3_column_text(select_statement, 1);
     if (value_ptr != nullptr) {

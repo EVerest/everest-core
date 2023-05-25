@@ -3,9 +3,12 @@
 #ifndef OFFER_HPP
 #define OFFER_HPP
 
+#include <vector>
+#include <optional>
+
 #include "Market.hpp"
 #include <generated/interfaces/energy/Interface.hpp>
-#include <vector>
+
 
 namespace module {
 
@@ -13,7 +16,7 @@ class Offer {
 public:
     Offer(Market& market);
 
-    boost::optional<types::energy::OptimizerTarget> optimizer_target;
+    std::optional<types::energy::OptimizerTarget> optimizer_target;
     ScheduleReq import_offer, export_offer;
 
 private:

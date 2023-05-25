@@ -68,7 +68,7 @@ void slacImpl::run() {
 
     callbacks.signal_state = [this](const std::string& value) { publish_state(value); };
 
-    callbacks.signal_error_routine_request = [this]() { publish_request_error_routine(boost::blank()); };
+    callbacks.signal_error_routine_request = [this]() { publish_request_error_routine(nullptr); };
 
     callbacks.log = [](const std::string& text) { EVLOG_debug << text; };
 

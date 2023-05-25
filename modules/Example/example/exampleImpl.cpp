@@ -33,7 +33,7 @@ bool exampleImpl::handle_uses_something(std::string& key) {
 
     auto ret = mod->r_kvs->call_load(key);
 
-    Array arr = boost::get<Array>(ret);
+    Array arr = std::get<Array>(ret);
 
     EVLOG_debug << "loaded array: " << arr << ", original array: " << test_array;
 
