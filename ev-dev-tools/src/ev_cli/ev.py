@@ -55,7 +55,9 @@ def setup_jinja_env():
         'module.cpp': env.get_template('module.cpp.j2'),
         'ld-ev.hpp': env.get_template('ld-ev.hpp.j2'),
         'ld-ev.cpp': env.get_template('ld-ev.cpp.j2'),
-        'cmakelists': env.get_template('CMakeLists.txt.j2')
+        'cmakelists': env.get_template('CMakeLists.txt.j2'),
+        'doc.rst': env.get_template('doc.rst.j2'),
+        'index.rst': env.get_template('index.rst.j2'),
     })
 
 
@@ -237,7 +239,7 @@ def generate_module_loader_files(rel_mod_dir, output_dir):
 def generate_module_files(rel_mod_dir, update_flag):
     (_, _, mod) = rel_mod_dir.rpartition('/')
 
-    mod_files = {'core': [], 'interfaces': []}
+    mod_files = {'core': [], 'interfaces': [], 'docs': []}
     mod_path = work_dir / f'modules/{rel_mod_dir}/manifest.yaml'
     mod_def = helpers.load_validated_module_def(mod_path, validators['module'])
 
@@ -387,7 +389,23 @@ def generate_module_files(rel_mod_dir, update_flag):
         'last_mtime': mod_path.stat().st_mtime
     })
 
-    for file_info in [*mod_files['core'], *mod_files['interfaces']]:
+    # doc.rst
+    mod_files['docs'].append({
+        'abbr': 'doc.rst',
+        'path': output_path / 'doc.rst',
+        'content': templates['doc.rst'].render(tmpl_data),
+        'last_mtime': mod_path.stat().st_mtime
+    })
+
+    # docs/index.rst
+    mod_files['docs'].append({
+        'abbr': 'index.rst',
+        'path': output_path / 'docs' / 'index.rst',
+        'content': templates['index.rst'].render(tmpl_data),
+        'last_mtime': mod_path.stat().st_mtime
+    })
+
+    for file_info in [*mod_files['core'], *mod_files['interfaces'], *mod_files['docs']]:
         file_info['printable_name'] = file_info['path'].relative_to(output_path)
 
     return mod_files
@@ -485,7 +503,7 @@ def module_create(args):
             print(err)
             return
 
-    for file_info in mod_files['core'] + mod_files['interfaces']:
+    for file_info in mod_files['core'] + mod_files['interfaces'] + mod_files['docs']:
         if not args.disable_clang_format:
             helpers.clang_format(args.clang_format_file, file_info)
 
