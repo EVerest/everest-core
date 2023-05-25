@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.11)
 
-project(slac VERSION 0.1
+project(slac VERSION 0.2.0
         DESCRIPTION "Simple ISO15118-3 SLAC implementation"
 		LANGUAGES CXX C
 )
