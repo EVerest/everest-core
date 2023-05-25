@@ -110,9 +110,7 @@ transport::DataVector SerialCommHubTransport::fetch(protocol_related_types::Suns
 
         // make sure that returned vector is a int32 vector
         static_assert(
-            std::is_same<
-                int32_t,
-                decltype(types::serial_comm_hub_requests::Result::value)::this_type::value_type::value_type>::value);
+            std::is_same_v<int32_t, decltype(types::serial_comm_hub_requests::Result::value)::value_type::value_type>);
 
         union {
             int32_t val_32;
@@ -128,7 +126,7 @@ transport::DataVector SerialCommHubTransport::fetch(protocol_related_types::Suns
 
         transport::DataVector tmp{};
 
-        for (auto item : serial_com_hub_result.value.get()) {
+        for (auto item : serial_com_hub_result.value.value()) {
             swapit.val_32 = item;
             tmp.push_back(swapit.val_8.v2);
             tmp.push_back(swapit.val_8.v3);
@@ -156,12 +154,12 @@ bool SerialCommHubTransport::trigger_snapshot_generation(
 
     types::serial_comm_hub_requests::VectorUint16 trigger_create_snapshot_command{{0x0002}};
 
-    types::serial_comm_hub_requests::StatusCodeEnum write_result =
-        m_serial_hub.call_modbus_write_multiple_registers(m_unit_id, snapshot_trigger_register.val, trigger_create_snapshot_command);
+    types::serial_comm_hub_requests::StatusCodeEnum write_result = m_serial_hub.call_modbus_write_multiple_registers(
+        m_unit_id, snapshot_trigger_register.val, trigger_create_snapshot_command);
 
     if (not(types::serial_comm_hub_requests::StatusCodeEnum::Success == write_result))
         throw(""s + __PRETTY_FUNCTION__ + " SerialCommHub error : "s +
-              types::serial_comm_hub_requests::status_code_enum_to_string( write_result ) );
+              types::serial_comm_hub_requests::status_code_enum_to_string(write_result));
 
     std::size_t counter = 10;
 
@@ -173,7 +171,7 @@ bool SerialCommHubTransport::trigger_snapshot_generation(
         if (not serial_com_hub_result.value.has_value())
             throw std::runtime_error("no result from serial com hub!");
 
-        auto snapshot_generatrion_code = serial_com_hub_result.value.get();
+        auto snapshot_generatrion_code = serial_com_hub_result.value.value();
 
         if ((not snapshot_generatrion_code.empty()) and (snapshot_generatrion_code[0] == 0))
             return true;

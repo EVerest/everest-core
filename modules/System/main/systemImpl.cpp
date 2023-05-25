@@ -70,9 +70,9 @@ void systemImpl::standard_firmware_update(const types::system::FirmwareUpdateReq
         const std::vector<std::string> args = {constants.string(), firmware_update_request.location,
                                                firmware_file_path.string()};
         int32_t retries = 0;
-        const auto total_retries = firmware_update_request.retries.get_value_or(this->mod->config.DefaultRetries);
+        const auto total_retries = firmware_update_request.retries.value_or(this->mod->config.DefaultRetries);
         const auto retry_interval =
-            firmware_update_request.retry_interval_s.get_value_or(this->mod->config.DefaultRetryInterval);
+            firmware_update_request.retry_interval_s.value_or(this->mod->config.DefaultRetryInterval);
 
         auto firmware_status_enum = types::system::FirmwareUpdateStatusEnum::DownloadFailed;
         types::system::FirmwareUpdateStatus firmware_status;
@@ -186,11 +186,11 @@ void systemImpl::download_signed_firmware(const types::system::FirmwareUpdateReq
 
     const std::vector<std::string> download_args = {
         constants.string(), firmware_update_request.location, firmware_file_path.string(),
-        firmware_update_request.signature.get(), firmware_update_request.signing_certificate.get()};
+        firmware_update_request.signature.value(), firmware_update_request.signing_certificate.value()};
     int32_t retries = 0;
-    const auto total_retries = firmware_update_request.retries.get_value_or(this->mod->config.DefaultRetries);
+    const auto total_retries = firmware_update_request.retries.value_or(this->mod->config.DefaultRetries);
     const auto retry_interval =
-        firmware_update_request.retry_interval_s.get_value_or(this->mod->config.DefaultRetryInterval);
+        firmware_update_request.retry_interval_s.value_or(this->mod->config.DefaultRetryInterval);
 
     auto firmware_status_enum = types::system::FirmwareUpdateStatusEnum::DownloadFailed;
     types::system::FirmwareUpdateStatus firmware_status;
@@ -329,9 +329,9 @@ systemImpl::handle_upload_logs(types::system::UploadLogsRequest& upload_logs_req
                                          diagnostics_file_path.string()};
         bool uploaded = false;
         int32_t retries = 0;
-        const auto total_retries = upload_logs_request.retries.get_value_or(this->mod->config.DefaultRetries);
+        const auto total_retries = upload_logs_request.retries.value_or(this->mod->config.DefaultRetries);
         const auto retry_interval =
-            upload_logs_request.retry_interval_s.get_value_or(this->mod->config.DefaultRetryInterval);
+            upload_logs_request.retry_interval_s.value_or(this->mod->config.DefaultRetryInterval);
 
         types::system::LogStatus log_status;
         while (!uploaded && retries <= total_retries && !this->interrupt_log_upload) {

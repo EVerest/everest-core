@@ -74,11 +74,11 @@ void auth_token_validatorImpl::ready() {
 types::authorization::ValidationResult
 auth_token_validatorImpl::handle_validate_token(types::authorization::ProvidedIdToken& provided_token) {
         const auto id_token = get_id_token(provided_token);
-    boost::optional<ocpp::CiString<5500>> certificate_opt;
+    std::optional<ocpp::CiString<5500>> certificate_opt;
     if (provided_token.certificate.has_value()) {
         certificate_opt.emplace(provided_token.certificate.value());
     }
-    boost::optional<std::vector<ocpp::v201::OCSPRequestData>> ocsp_request_data_opt;
+    std::optional<std::vector<ocpp::v201::OCSPRequestData>> ocsp_request_data_opt;
     if (provided_token.iso15118CertificateHashData.has_value()) {
         ocsp_request_data_opt.emplace(get_ocsp_request_data(provided_token));
     }

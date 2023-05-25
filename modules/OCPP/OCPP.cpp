@@ -210,7 +210,7 @@ void OCPP::init() {
     // int32_t reservation_id, CiString<20> auth_token, DateTime expiry_time, std::string parent_id
     this->charge_point->register_reserve_now_callback([this](int32_t reservation_id, int32_t connector,
                                                              ocpp::DateTime expiryDate, ocpp::CiString<20> idTag,
-                                                             boost::optional<ocpp::CiString<20>> parent_id) {
+                                                             std::optional<ocpp::CiString<20>> parent_id) {
         types::reservation::Reservation reservation;
         reservation.id_token = idTag.get();
         reservation.reservation_id = reservation_id;
@@ -447,7 +447,7 @@ void OCPP::init() {
                 const auto session_id = session_event.uuid;
                 const auto id_token = transaction_started.id_tag;
                 const auto signed_meter_value = transaction_started.signed_meter_value;
-                boost::optional<int32_t> reservation_id_opt = boost::none;
+                std::optional<int32_t> reservation_id_opt = std::nullopt;
                 if (transaction_started.reservation_id) {
                     reservation_id_opt.emplace(transaction_started.reservation_id.value());
                 }
@@ -474,7 +474,7 @@ void OCPP::init() {
                 const auto reason = ocpp::v16::conversions::string_to_reason(
                     types::evse_manager::stop_transaction_reason_to_string(transaction_finished.reason.value()));
                 const auto signed_meter_value = transaction_finished.signed_meter_value;
-                boost::optional<ocpp::CiString<20>> id_tag_opt = boost::none;
+                std::optional<ocpp::CiString<20>> id_tag_opt = std::nullopt;
                 if (transaction_finished.id_tag) {
                     id_tag_opt.emplace(ocpp::CiString<20>(transaction_finished.id_tag.value()));
                 }

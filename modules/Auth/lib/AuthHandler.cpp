@@ -244,7 +244,7 @@ int AuthHandler::used_for_transaction(const std::vector<int>& connector_ids, con
                 return connector_id;
             }
             // check against parent_id_token
-            else if (identifier.parent_id_token.has_value() && identifier.parent_id_token.get() == token) {
+            else if (identifier.parent_id_token.has_value() && identifier.parent_id_token.value() == token) {
                 return connector_id;
             }
         }
@@ -353,7 +353,7 @@ void AuthHandler::notify_evse(int connector_id, const ProvidedIdToken& provided_
             ->timeout_timer.timeout(
                 [this, evse_index, connector_id]() {
                     EVLOG_info << "Authorization timeout for evse#" << evse_index;
-                    this->connectors.at(connector_id)->connector.identifier = boost::none;
+                    this->connectors.at(connector_id)->connector.identifier.reset();
                     this->withdraw_authorization_callback(evse_index);
                 },
                 std::chrono::seconds(this->connection_timeout));
@@ -418,11 +418,11 @@ void AuthHandler::handle_session_event(const int connector_id, const SessionEven
         break;
     case SessionEventEnum::TransactionFinished:
         this->connectors.at(connector_id)->connector.transaction_active = false;
-        this->connectors.at(connector_id)->connector.identifier = boost::none;
+        this->connectors.at(connector_id)->connector.identifier.reset();
         break;
     case SessionEventEnum::SessionFinished:
         this->connectors.at(connector_id)->connector.is_reservable = true;
-        this->connectors.at(connector_id)->connector.identifier = boost::none;
+        this->connectors.at(connector_id)->connector.identifier.reset();
         this->connectors.at(connector_id)->connector.submit_event(ConnectorEvent::SESSION_FINISHED);
         this->connectors.at(connector_id)->connector.submit_event(ConnectorEvent::ERROR_CLEARED);
         this->connectors.at(connector_id)->timeout_timer.stop();

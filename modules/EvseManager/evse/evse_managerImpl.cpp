@@ -162,8 +162,8 @@ void evse_managerImpl::ready() {
 
             auto p = mod->get_latest_powermeter_data_billing();
             transaction_started.energy_Wh_import = p.energy_Wh_import.total;
-            if (p.energy_Wh_export.is_initialized()) {
-                transaction_started.energy_Wh_export.emplace(p.energy_Wh_export.get().total);
+            if (p.energy_Wh_export) {
+                transaction_started.energy_Wh_export.emplace(p.energy_Wh_export.value().total);
             }
 
             if (mod->is_reserved()) {
@@ -183,8 +183,8 @@ void evse_managerImpl::ready() {
                                                     {"energy_counter_import_wh", p.energy_Wh_import.total},
                                                     {"id_tag", transaction_started.id_tag}};
 
-            if (p.energy_Wh_export.is_initialized()) {
-                telemetry_data["energy_counter_export_wh"] = p.energy_Wh_export.get().total;
+            if (p.energy_Wh_export) {
+                telemetry_data["energy_counter_export_wh"] = p.energy_Wh_export.value().total;
             }
             mod->telemetry.publish("session", "events", telemetry_data);
 
@@ -197,8 +197,8 @@ void evse_managerImpl::ready() {
 
             auto p = mod->get_latest_powermeter_data_billing();
             transaction_finished.energy_Wh_import = p.energy_Wh_import.total;
-            if (p.energy_Wh_export.is_initialized()) {
-                transaction_finished.energy_Wh_export.emplace(p.energy_Wh_export.get().total);
+            if (p.energy_Wh_export) {
+                transaction_finished.energy_Wh_export.emplace(p.energy_Wh_export.value().total);
             }
 
             auto reason = mod->charger->getTransactionFinishedReason();
@@ -222,8 +222,8 @@ void evse_managerImpl::ready() {
                 {"energy_counter_import_wh", p.energy_Wh_import.total},
                 {"reason", types::evse_manager::stop_transaction_reason_to_string(reason)}};
 
-            if (p.energy_Wh_export.is_initialized()) {
-                telemetry_data["energy_counter_export_wh"] = p.energy_Wh_export.get().total;
+            if (p.energy_Wh_export) {
+                telemetry_data["energy_counter_export_wh"] = p.energy_Wh_export.value().total;
             }
 
             mod->telemetry.publish("session", "events", telemetry_data);

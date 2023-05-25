@@ -444,7 +444,7 @@ void publish_DC_EVRemainingTime(struct v2g_context* ctx, const float& v2g_dc_ev_
         if (ctx->ev_v2g_data.remaining_time_to_full_soc != v2g_dc_ev_remaining_time_to_full_soc) {
             std::time_t time_to_full_soc = time_now_in_sec + v2g_dc_ev_remaining_time_to_full_soc;
             std::strftime(buffer, sizeof(buffer), format, std::gmtime(&time_to_full_soc));
-            DC_EVRemainingTime.EV_RemainingTimeToFullSoC = static_cast<boost::optional<std::string>>(buffer);
+            DC_EVRemainingTime.EV_RemainingTimeToFullSoC = std::string(buffer);
             ctx->ev_v2g_data.remaining_time_to_full_soc = v2g_dc_ev_remaining_time_to_full_soc;
             publish_message = true;
         }
@@ -453,7 +453,7 @@ void publish_DC_EVRemainingTime(struct v2g_context* ctx, const float& v2g_dc_ev_
         if (ctx->ev_v2g_data.remaining_time_to_bulk_soc != v2g_dc_ev_remaining_time_to_bulk_soc) {
             std::time_t time_to_bulk_soc = time_now_in_sec + v2g_dc_ev_remaining_time_to_bulk_soc;
             std::strftime(buffer, sizeof(buffer), format, std::gmtime(&time_to_bulk_soc));
-            DC_EVRemainingTime.EV_RemainingTimeToBulkSoC = static_cast<boost::optional<std::string>>(buffer);
+            DC_EVRemainingTime.EV_RemainingTimeToBulkSoC = std::string(buffer);
             ctx->ev_v2g_data.remaining_time_to_bulk_soc = v2g_dc_ev_remaining_time_to_bulk_soc;
             publish_message = true;
         }

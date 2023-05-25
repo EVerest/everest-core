@@ -5,7 +5,7 @@
 
 #include <fstream>
 #include <string>
-#include <boost/optional.hpp>
+#include <optional>
 
 namespace module {
 /*
@@ -19,7 +19,7 @@ public:
 
     void setPath(const std::string& path);
     void enable();
-    boost::optional<std::string> startSession(const std::string& suffix_string);
+    std::optional<std::string> startSession(const std::string& suffix_string);
     void stopSession();
 
     void car(bool iso15118, const std::string& msg);

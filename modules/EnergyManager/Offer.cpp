@@ -25,25 +25,25 @@ std::ostream& operator<<(std::ostream& out, const Offer& self) {
 }
 
 template <class T> static void apply_one_limit_if_smaller(T& a, const T& b) {
-    if (b.is_initialized()) {
-        if (a.is_initialized()) {
-            if (a.get() > b.get()) {
-                a = b.get();
+    if (b) {
+        if (a) {
+            if (a.value() > b.value()) {
+                a = b.value();
             }
         } else {
-            a = b.get();
+            a = b.value();
         }
     }
 }
 
 template <class T> static void apply_one_limit_if_greater(T& a, const T& b) {
-    if (b.is_initialized()) {
-        if (a.is_initialized()) {
-            if (a.get() < b.get()) {
-                a = b.get();
+    if (b) {
+        if (a) {
+            if (a.value() < b.value()) {
+                a = b.value();
             }
         } else {
-            a = b.get();
+            a = b.value();
         }
     }
 }

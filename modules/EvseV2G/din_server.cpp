@@ -631,7 +631,7 @@ static enum v2g_event handle_din_power_delivery(struct v2g_connection* conn) {
     publish_din_power_delivery_req(conn->ctx, req);
 
     if (req->ReadyToChargeState == (int)0) {
-        conn->ctx->p_charger->publish_currentDemand_Finished(boost::blank{});
+        conn->ctx->p_charger->publish_currentDemand_Finished(nullptr);
         conn->ctx->p_charger->publish_DC_Open_Contactor(true);
         conn->ctx->session.is_charging = false;
     }
@@ -944,7 +944,7 @@ enum v2g_event din_handle_request(v2g_connection* conn) {
     if (exi_in->V2G_Message.Body.CurrentDemandReq_isUsed) {
         dlog(DLOG_LEVEL_TRACE, "Handling CurrentDemandReq");
         if (conn->ctx->last_v2g_msg == V2G_POWER_DELIVERY_MSG) {
-            conn->ctx->p_charger->publish_currentDemand_Started(boost::blank{});
+            conn->ctx->p_charger->publish_currentDemand_Started(nullptr);
             conn->ctx->session.is_charging = true;
         }
         conn->ctx->current_v2g_msg = V2G_CURRENT_DEMAND_MSG;
@@ -975,7 +975,7 @@ enum v2g_event din_handle_request(v2g_connection* conn) {
         conn->ctx->current_v2g_msg = V2G_AUTHORIZATION_MSG;
         if (conn->ctx->last_v2g_msg != V2G_AUTHORIZATION_MSG) {
             dlog(DLOG_LEVEL_INFO, "Auth-phase started");
-            conn->ctx->p_charger->publish_Require_Auth_EIM(boost::blank{});
+            conn->ctx->p_charger->publish_Require_Auth_EIM(nullptr);
         }
         exi_out->V2G_Message.Body.ContractAuthenticationRes_isUsed = 1u;
         init_dinContractAuthenticationResType(&exi_out->V2G_Message.Body.ContractAuthenticationRes);
@@ -1001,7 +1001,7 @@ enum v2g_event din_handle_request(v2g_connection* conn) {
         dlog(DLOG_LEVEL_TRACE, "Handling CableCheckReq");
         conn->ctx->current_v2g_msg = V2G_CABLE_CHECK_MSG;
         if (conn->ctx->last_v2g_msg == V2G_CHARGE_PARAMETER_DISCOVERY_MSG) {
-            conn->ctx->p_charger->publish_Start_CableCheck(boost::blank{});
+            conn->ctx->p_charger->publish_Start_CableCheck(nullptr);
             dlog(DLOG_LEVEL_INFO, "Isolation-phase started");
         }
         exi_out->V2G_Message.Body.CableCheckRes_isUsed = 1u;

@@ -458,7 +458,7 @@ ssize_t connection_write(struct v2g_connection* conn, unsigned char* buf, size_t
  */
 static void connection_teardown(struct v2g_connection* conn) {
     if (conn->ctx->session.is_charging == true) {
-        conn->ctx->p_charger->publish_currentDemand_Finished(boost::blank{});
+        conn->ctx->p_charger->publish_currentDemand_Finished(nullptr);
 
         if (conn->ctx->is_dc_charger == true) {
             conn->ctx->p_charger->publish_DC_Open_Contactor(true);
