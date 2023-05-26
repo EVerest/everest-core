@@ -153,7 +153,7 @@ private:
     /// \param chargeBoxSerialNumber \return
     CertificateVerificationResult
     verifyCertificate(const PkiEnum& pki, const std::vector<std::shared_ptr<X509Certificate>>& certificates,
-                      const boost::optional<std::string>& chargeBoxSerialNumber = boost::none);
+                      const std::optional<std::string>& chargeBoxSerialNumber = std::nullopt);
 
     /// \brief Splits the given \p certChain into single certificates and returns them
     std::vector<std::shared_ptr<X509Certificate>> getCertificatesFromChain(const std::string& certChain);
@@ -165,7 +165,7 @@ private:
     void execOpenSSLRehash(const boost::filesystem::path caPath);
 
     /// \brief Returns the file path of the CSMS root CA file
-    boost::optional<boost::filesystem::path> getCsmsCaFilePath();
+    std::optional<boost::filesystem::path> getCsmsCaFilePath();
 
     /// \brief Returns the number of installed CSMS CA certificates
     int getNumberOfCsmsCaCertificates();
@@ -222,8 +222,8 @@ public:
     bool isCsmsLeafCertificateInstalled();
 
     /// \brief Gets a list of the CertificateHashDataType for the given \p type
-    boost::optional<std::vector<CertificateHashDataChain>>
-    getRootCertificateHashData(boost::optional<std::vector<CertificateType>> certificateTypes);
+    std::optional<std::vector<CertificateHashDataChain>>
+    getRootCertificateHashData(std::optional<std::vector<CertificateType>> certificateTypes);
 
     /// \brief Deletes a root certificate that matches the given \p certificateHashData
     DeleteCertificateResult deleteRootCertificate(CertificateHashDataType certificateHashData,
@@ -232,8 +232,8 @@ public:
     /// \brief Installs the the given \p rootCertificate
     InstallCertificateResult installRootCertificate(const std::string& rootCertificate,
                                                     const CertificateType& certificateType,
-                                                    boost::optional<int32_t> certificateStoreMaxLength,
-                                                    boost::optional<bool> additionalRootCertificateCheck);
+                                                    std::optional<int32_t> certificateStoreMaxLength,
+                                                    std::optional<bool> additionalRootCertificateCheck);
 
     /// \brief Get the leaf certificate of the given \p certificate_signing_use
     std::shared_ptr<X509Certificate> getLeafCertificate(const CertificateSigningUseEnum& certificate_signing_use);

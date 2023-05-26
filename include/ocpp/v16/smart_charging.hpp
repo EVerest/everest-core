@@ -29,7 +29,7 @@ struct LimitStackLevelPair {
 
 /// \brief Helper struct to calculate Composite Schedule
 struct PeriodDateTimePair {
-    boost::optional<ChargingSchedulePeriod> period;
+    std::optional<ChargingSchedulePeriod> period;
     ocpp::DateTime end_time;
 };
 
@@ -47,9 +47,9 @@ private:
     std::unique_ptr<Everest::SteadyTimer> clear_profiles_timer;
 
     bool clear_profiles(std::map<int32_t, ChargingProfile>& stack_level_profiles_map,
-                        boost::optional<int> profile_id_opt, boost::optional<int> connector_id_opt,
-                        const int connector_id, boost::optional<int> stack_level_opt,
-                        boost::optional<ChargingProfilePurposeType> charging_profile_purpose_opt, bool check_id_only);
+                        std::optional<int> profile_id_opt, std::optional<int> connector_id_opt,
+                        const int connector_id, std::optional<int> stack_level_opt,
+                        std::optional<ChargingProfilePurposeType> charging_profile_purpose_opt, bool check_id_only);
 
     ///
     /// \brief Iterates over the periods of the given \p profile and returns a struct that contains the period and the
@@ -65,7 +65,7 @@ private:
     /// \brief Gets the absolute start time of the given \p profile for the given \p connector_id for different profile
     /// purposes
     ///
-    boost::optional<ocpp::DateTime> get_profile_start_time(const ChargingProfile& profile, const ocpp::DateTime& time,
+    std::optional<ocpp::DateTime> get_profile_start_time(const ChargingProfile& profile, const ocpp::DateTime& time,
                                                            const int connector_id);
 
     ///
@@ -107,9 +107,9 @@ public:
     ///
     /// \brief Clears all charging profiles using optional filters
     ///
-    bool clear_all_profiles_with_filter(boost::optional<int> profile_id, boost::optional<int> connector_id,
-                                        boost::optional<int> stack_level,
-                                        boost::optional<ChargingProfilePurposeType> charging_profile_purpose,
+    bool clear_all_profiles_with_filter(std::optional<int> profile_id, std::optional<int> connector_id,
+                                        std::optional<int> stack_level,
+                                        std::optional<ChargingProfilePurposeType> charging_profile_purpose,
                                         bool check_id_only);
 
     ///
@@ -129,7 +129,7 @@ public:
     ChargingSchedule calculate_composite_schedule(std::vector<ChargingProfile> valid_profiles,
                                                   const ocpp::DateTime& start_time, const ocpp::DateTime& end_time,
                                                   const int connector_id,
-                                                  boost::optional<ChargingRateUnit> charging_rate_unit);
+                                                  std::optional<ChargingRateUnit> charging_rate_unit);
 };
 
 bool validate_schedule(const ChargingSchedule& schedule, const int charging_schedule_max_periods,

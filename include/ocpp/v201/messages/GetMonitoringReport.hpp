@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_GETMONITORINGREPORT_HPP
 #define OCPP_V201_GETMONITORINGREPORT_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -15,9 +15,9 @@ namespace v201 {
 /// \brief Contains a OCPP GetMonitoringReport message
 struct GetMonitoringReportRequest : public ocpp::Message {
     int32_t requestId;
-    boost::optional<CustomData> customData;
-    boost::optional<std::vector<ComponentVariable>> componentVariable;
-    boost::optional<std::vector<MonitoringCriterionEnum>> monitoringCriteria;
+    std::optional<CustomData> customData;
+    std::optional<std::vector<ComponentVariable>> componentVariable;
+    std::optional<std::vector<MonitoringCriterionEnum>> monitoringCriteria;
 
     /// \brief Provides the type of this GetMonitoringReport message as a human readable string
     /// \returns the message type as a human readable string
@@ -37,8 +37,8 @@ std::ostream& operator<<(std::ostream& os, const GetMonitoringReportRequest& k);
 /// \brief Contains a OCPP GetMonitoringReportResponse message
 struct GetMonitoringReportResponse : public ocpp::Message {
     GenericDeviceModelStatusEnum status;
-    boost::optional<CustomData> customData;
-    boost::optional<StatusInfo> statusInfo;
+    std::optional<CustomData> customData;
+    std::optional<StatusInfo> statusInfo;
 
     /// \brief Provides the type of this GetMonitoringReportResponse message as a human readable string
     /// \returns the message type as a human readable string

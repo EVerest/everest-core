@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_SETMONITORINGLEVEL_HPP
 #define OCPP_V201_SETMONITORINGLEVEL_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -15,7 +15,7 @@ namespace v201 {
 /// \brief Contains a OCPP SetMonitoringLevel message
 struct SetMonitoringLevelRequest : public ocpp::Message {
     int32_t severity;
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this SetMonitoringLevel message as a human readable string
     /// \returns the message type as a human readable string
@@ -35,8 +35,8 @@ std::ostream& operator<<(std::ostream& os, const SetMonitoringLevelRequest& k);
 /// \brief Contains a OCPP SetMonitoringLevelResponse message
 struct SetMonitoringLevelResponse : public ocpp::Message {
     GenericStatusEnum status;
-    boost::optional<CustomData> customData;
-    boost::optional<StatusInfo> statusInfo;
+    std::optional<CustomData> customData;
+    std::optional<StatusInfo> statusInfo;
 
     /// \brief Provides the type of this SetMonitoringLevelResponse message as a human readable string
     /// \returns the message type as a human readable string

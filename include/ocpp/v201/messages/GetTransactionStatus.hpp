@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_GETTRANSACTIONSTATUS_HPP
 #define OCPP_V201_GETTRANSACTIONSTATUS_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/ocpp_types.hpp>
@@ -13,8 +13,8 @@ namespace v201 {
 
 /// \brief Contains a OCPP GetTransactionStatus message
 struct GetTransactionStatusRequest : public ocpp::Message {
-    boost::optional<CustomData> customData;
-    boost::optional<CiString<36>> transactionId;
+    std::optional<CustomData> customData;
+    std::optional<CiString<36>> transactionId;
 
     /// \brief Provides the type of this GetTransactionStatus message as a human readable string
     /// \returns the message type as a human readable string
@@ -34,8 +34,8 @@ std::ostream& operator<<(std::ostream& os, const GetTransactionStatusRequest& k)
 /// \brief Contains a OCPP GetTransactionStatusResponse message
 struct GetTransactionStatusResponse : public ocpp::Message {
     bool messagesInQueue;
-    boost::optional<CustomData> customData;
-    boost::optional<bool> ongoingIndicator;
+    std::optional<CustomData> customData;
+    std::optional<bool> ongoingIndicator;
 
     /// \brief Provides the type of this GetTransactionStatusResponse message as a human readable string
     /// \returns the message type as a human readable string

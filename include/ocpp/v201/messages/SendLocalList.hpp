@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_SENDLOCALLIST_HPP
 #define OCPP_V201_SENDLOCALLIST_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -16,8 +16,8 @@ namespace v201 {
 struct SendLocalListRequest : public ocpp::Message {
     int32_t versionNumber;
     UpdateEnum updateType;
-    boost::optional<CustomData> customData;
-    boost::optional<std::vector<AuthorizationData>> localAuthorizationList;
+    std::optional<CustomData> customData;
+    std::optional<std::vector<AuthorizationData>> localAuthorizationList;
 
     /// \brief Provides the type of this SendLocalList message as a human readable string
     /// \returns the message type as a human readable string
@@ -37,8 +37,8 @@ std::ostream& operator<<(std::ostream& os, const SendLocalListRequest& k);
 /// \brief Contains a OCPP SendLocalListResponse message
 struct SendLocalListResponse : public ocpp::Message {
     SendLocalListStatusEnum status;
-    boost::optional<CustomData> customData;
-    boost::optional<StatusInfo> statusInfo;
+    std::optional<CustomData> customData;
+    std::optional<StatusInfo> statusInfo;
 
     /// \brief Provides the type of this SendLocalListResponse message as a human readable string
     /// \returns the message type as a human readable string

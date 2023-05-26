@@ -233,11 +233,11 @@ int main(int argc, char* argv[]) {
             } else if (command == "start_transaction") {
                 if (!transaction_running) {
                     uuid = boost::lexical_cast<std::string>(boost::uuids::random_generator()());
-                    charge_point->on_session_started(1, uuid, "EVConnected", boost::none);
+                    charge_point->on_session_started(1, uuid, "EVConnected", std::nullopt);
                     const auto result = charge_point->authorize_id_token(ocpp::CiString<20>(std::string("DEADBEEF")));
                     if (result.status == ocpp::v16::AuthorizationStatus::Accepted) {
-                        charge_point->on_transaction_started(1, uuid, "DEADBEEF", 0, boost::none, ocpp::DateTime(),
-                                                             boost::none);
+                        charge_point->on_transaction_started(1, uuid, "DEADBEEF", 0, std::nullopt, ocpp::DateTime(),
+                                                             std::nullopt);
                         charge_point->on_resume_charging(1);
                         transaction_running = true;
                     }
@@ -246,7 +246,7 @@ int main(int argc, char* argv[]) {
             } else if (command == "stop_transaction") {
                 if (transaction_running) {
                     charge_point->on_transaction_stopped(1, uuid, ocpp::v16::Reason::Local, ocpp::DateTime(), 2500,
-                                                         boost::none, boost::none);
+                                                         std::nullopt, std::nullopt);
                     charge_point->on_session_stopped(1, uuid);
                     transaction_running = false;
                 } else {

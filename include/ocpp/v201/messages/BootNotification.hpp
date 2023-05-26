@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_BOOTNOTIFICATION_HPP
 #define OCPP_V201_BOOTNOTIFICATION_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -16,7 +16,7 @@ namespace v201 {
 struct BootNotificationRequest : public ocpp::Message {
     ChargingStation chargingStation;
     BootReasonEnum reason;
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this BootNotification message as a human readable string
     /// \returns the message type as a human readable string
@@ -38,8 +38,8 @@ struct BootNotificationResponse : public ocpp::Message {
     ocpp::DateTime currentTime;
     int32_t interval;
     RegistrationStatusEnum status;
-    boost::optional<CustomData> customData;
-    boost::optional<StatusInfo> statusInfo;
+    std::optional<CustomData> customData;
+    std::optional<StatusInfo> statusInfo;
 
     /// \brief Provides the type of this BootNotificationResponse message as a human readable string
     /// \returns the message type as a human readable string

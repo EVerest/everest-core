@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_REQUESTSTOPTRANSACTION_HPP
 #define OCPP_V201_REQUESTSTOPTRANSACTION_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -15,7 +15,7 @@ namespace v201 {
 /// \brief Contains a OCPP StopTransaction message
 struct RequestStopTransactionRequest : public ocpp::Message {
     CiString<36> transactionId;
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this StopTransaction message as a human readable string
     /// \returns the message type as a human readable string
@@ -35,8 +35,8 @@ std::ostream& operator<<(std::ostream& os, const RequestStopTransactionRequest& 
 /// \brief Contains a OCPP StopTransactionResponse message
 struct RequestStopTransactionResponse : public ocpp::Message {
     RequestStartStopStatusEnum status;
-    boost::optional<CustomData> customData;
-    boost::optional<StatusInfo> statusInfo;
+    std::optional<CustomData> customData;
+    std::optional<StatusInfo> statusInfo;
 
     /// \brief Provides the type of this StopTransactionResponse message as a human readable string
     /// \returns the message type as a human readable string

@@ -103,7 +103,7 @@ SetVariableStatusEnum DeviceModelManager::set_variable(const SetVariableData& se
                 return SetVariableStatusEnum::UnknownVariable;
             } else {
                 auto variable = component.variables.at(set_variable_data.variable.name.get());
-                if (variable.attributes.find(set_variable_data.attributeType.get_value_or(AttributeEnum::Actual)) ==
+                if (variable.attributes.find(set_variable_data.attributeType.value_or(AttributeEnum::Actual)) ==
                     variable.attributes.end()) {
                     return SetVariableStatusEnum::NotSupportedAttributeType;
                 } else {
@@ -116,7 +116,7 @@ SetVariableStatusEnum DeviceModelManager::set_variable(const SetVariableData& se
                     // FIXME(piet): add handling for B05.FR.11
                     this->components.at(standardized_component)
                         .variables.at(set_variable_data.variable.name.get())
-                        .attributes.at(set_variable_data.attributeType.get_value_or(AttributeEnum::Actual))
+                        .attributes.at(set_variable_data.attributeType.value_or(AttributeEnum::Actual))
                         .value.emplace(set_variable_data.attributeValue.get());
                     return SetVariableStatusEnum::Accepted;
                 }
@@ -127,10 +127,10 @@ SetVariableStatusEnum DeviceModelManager::set_variable(const SetVariableData& se
     }
 }
 
-std::pair<GetVariableStatusEnum, boost::optional<CiString<2500>>>
+std::pair<GetVariableStatusEnum, std::optional<CiString<2500>>>
 DeviceModelManager::get_variable(const GetVariableData& get_variable_data) {
 
-    std::pair<GetVariableStatusEnum, boost::optional<CiString<2500>>> status_value_pair;
+    std::pair<GetVariableStatusEnum, std::optional<CiString<2500>>> status_value_pair;
 
     try {
         const auto standardized_component =
@@ -147,7 +147,7 @@ DeviceModelManager::get_variable(const GetVariableData& get_variable_data) {
                 return status_value_pair;
             } else {
                 auto variable = component.variables.at(get_variable_data.variable.name.get());
-                if (variable.attributes.find(get_variable_data.attributeType.get_value_or(AttributeEnum::Actual)) ==
+                if (variable.attributes.find(get_variable_data.attributeType.value_or(AttributeEnum::Actual)) ==
                     variable.attributes.end()) {
                     status_value_pair.first = GetVariableStatusEnum::NotSupportedAttributeType;
                     return status_value_pair;
@@ -159,8 +159,8 @@ DeviceModelManager::get_variable(const GetVariableData& get_variable_data) {
                     status_value_pair.second.emplace(
                         this->components.at(standardized_component)
                             .variables.at(get_variable_data.variable.name.get())
-                            .attributes.at(get_variable_data.attributeType.get_value_or(AttributeEnum::Actual))
-                            .value.get_value_or("")); // B06.FR.13
+                            .attributes.at(get_variable_data.attributeType.value_or(AttributeEnum::Actual))
+                            .value.value_or("")); // B06.FR.13
                     status_value_pair.first = GetVariableStatusEnum::Accepted;
                     return status_value_pair;
                 }
@@ -191,9 +191,9 @@ static bool component_criteria_match(const EnhancedComponent& enhanced_component
 }
 
 std::vector<ReportData>
-DeviceModelManager::get_report_data(const boost::optional<ReportBaseEnum>& report_base,
-                                    const boost::optional<std::vector<ComponentVariable>>& component_variables,
-                                    const boost::optional<std::vector<ComponentCriterionEnum>>& component_criteria) {
+DeviceModelManager::get_report_data(const std::optional<ReportBaseEnum>& report_base,
+                                    const std::optional<std::vector<ComponentVariable>>& component_variables,
+                                    const std::optional<std::vector<ComponentCriterionEnum>>& component_criteria) {
     std::vector<ReportData> report_data_vec;
 
     for (const auto& component_entry : this->components) {

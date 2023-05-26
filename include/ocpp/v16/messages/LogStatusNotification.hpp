@@ -3,7 +3,7 @@
 #ifndef OCPP_V16_LOGSTATUSNOTIFICATION_HPP
 #define OCPP_V16_LOGSTATUSNOTIFICATION_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/v16/enums.hpp>
 #include <ocpp/v16/ocpp_types.hpp>
@@ -14,7 +14,7 @@ namespace v16 {
 /// \brief Contains a OCPP LogStatusNotification message
 struct LogStatusNotificationRequest : public ocpp::Message {
     UploadLogStatusEnumType status;
-    boost::optional<int32_t> requestId;
+    std::optional<int32_t> requestId;
 
     /// \brief Provides the type of this LogStatusNotification message as a human readable string
     /// \returns the message type as a human readable string

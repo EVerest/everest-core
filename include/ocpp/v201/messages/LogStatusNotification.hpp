@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_LOGSTATUSNOTIFICATION_HPP
 #define OCPP_V201_LOGSTATUSNOTIFICATION_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -15,8 +15,8 @@ namespace v201 {
 /// \brief Contains a OCPP LogStatusNotification message
 struct LogStatusNotificationRequest : public ocpp::Message {
     UploadLogStatusEnum status;
-    boost::optional<CustomData> customData;
-    boost::optional<int32_t> requestId;
+    std::optional<CustomData> customData;
+    std::optional<int32_t> requestId;
 
     /// \brief Provides the type of this LogStatusNotification message as a human readable string
     /// \returns the message type as a human readable string
@@ -35,7 +35,7 @@ std::ostream& operator<<(std::ostream& os, const LogStatusNotificationRequest& k
 
 /// \brief Contains a OCPP LogStatusNotificationResponse message
 struct LogStatusNotificationResponse : public ocpp::Message {
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this LogStatusNotificationResponse message as a human readable string
     /// \returns the message type as a human readable string

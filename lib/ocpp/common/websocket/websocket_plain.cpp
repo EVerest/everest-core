@@ -134,9 +134,9 @@ void WebsocketPlain::connect_plain(int32_t security_profile, bool try_once) {
         EVLOG_debug << "Connecting with security profile: 0";
     } else if (security_profile == 1) {
         EVLOG_debug << "Connecting with security profile: 1";
-        boost::optional<std::string> authorization_header = this->getAuthorizationHeader();
-        if (authorization_header != boost::none) {
-            con->append_header("Authorization", authorization_header.get());
+        std::optional<std::string> authorization_header = this->getAuthorizationHeader();
+        if (authorization_header) {
+            con->append_header("Authorization", authorization_header.value());
         } else {
             throw std::runtime_error("No authorization key provided when connecting with security profile: 1");
         }

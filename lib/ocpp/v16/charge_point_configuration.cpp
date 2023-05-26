@@ -203,8 +203,8 @@ std::string ChargePointConfiguration::getChargeBoxSerialNumber() {
 CiString<20> ChargePointConfiguration::getChargePointModel() {
     return CiString<20>(this->config["Internal"]["ChargePointModel"]);
 }
-boost::optional<CiString<25>> ChargePointConfiguration::getChargePointSerialNumber() {
-    boost::optional<CiString<25>> charge_point_serial_number = boost::none;
+std::optional<CiString<25>> ChargePointConfiguration::getChargePointSerialNumber() {
+    std::optional<CiString<25>> charge_point_serial_number = std::nullopt;
     if (this->config["Internal"].contains("ChargePointSerialNumber")) {
         charge_point_serial_number.emplace(this->config["Internal"]["ChargePointSerialNumber"]);
     }
@@ -217,29 +217,29 @@ CiString<20> ChargePointConfiguration::getChargePointVendor() {
 CiString<50> ChargePointConfiguration::getFirmwareVersion() {
     return CiString<50>(this->config["Internal"]["FirmwareVersion"]);
 }
-boost::optional<CiString<20>> ChargePointConfiguration::getICCID() {
-    boost::optional<CiString<20>> iccid = boost::none;
+std::optional<CiString<20>> ChargePointConfiguration::getICCID() {
+    std::optional<CiString<20>> iccid = std::nullopt;
     if (this->config["Internal"].contains("ICCID")) {
         iccid.emplace(this->config["Internal"]["ICCID"]);
     }
     return iccid;
 }
-boost::optional<CiString<20>> ChargePointConfiguration::getIMSI() {
-    boost::optional<CiString<20>> imsi = boost::none;
+std::optional<CiString<20>> ChargePointConfiguration::getIMSI() {
+    std::optional<CiString<20>> imsi = std::nullopt;
     if (this->config["Internal"].contains("IMSI")) {
         imsi.emplace(this->config["Internal"]["IMSI"]);
     }
     return imsi;
 }
-boost::optional<CiString<25>> ChargePointConfiguration::getMeterSerialNumber() {
-    boost::optional<CiString<25>> meter_serial_number = boost::none;
+std::optional<CiString<25>> ChargePointConfiguration::getMeterSerialNumber() {
+    std::optional<CiString<25>> meter_serial_number = std::nullopt;
     if (this->config["Internal"].contains("MeterSerialNumber")) {
         meter_serial_number.emplace(this->config["Internal"]["MeterSerialNumber"]);
     }
     return meter_serial_number;
 }
-boost::optional<CiString<25>> ChargePointConfiguration::getMeterType() {
-    boost::optional<CiString<25>> meter_type = boost::none;
+std::optional<CiString<25>> ChargePointConfiguration::getMeterType() {
+    std::optional<CiString<25>> meter_type = std::nullopt;
     if (this->config["Internal"].contains("MeterType")) {
         meter_type.emplace(this->config["Internal"]["MeterType"]);
     }
@@ -322,8 +322,8 @@ KeyValue ChargePointConfiguration::getChargePointModelKeyValue() {
     return kv;
 }
 
-boost::optional<KeyValue> ChargePointConfiguration::getChargePointSerialNumberKeyValue() {
-    boost::optional<KeyValue> charge_point_serial_number_kv = boost::none;
+std::optional<KeyValue> ChargePointConfiguration::getChargePointSerialNumberKeyValue() {
+    std::optional<KeyValue> charge_point_serial_number_kv = std::nullopt;
     auto charge_point_serial_number = this->getChargePointSerialNumber();
     if (charge_point_serial_number.has_value()) {
         KeyValue kv;
@@ -351,8 +351,8 @@ KeyValue ChargePointConfiguration::getFirmwareVersionKeyValue() {
     return kv;
 }
 
-boost::optional<KeyValue> ChargePointConfiguration::getICCIDKeyValue() {
-    boost::optional<KeyValue> kv_opt;
+std::optional<KeyValue> ChargePointConfiguration::getICCIDKeyValue() {
+    std::optional<KeyValue> kv_opt;
     auto value = this->getICCID();
     if (value.has_value()) {
         KeyValue kv;
@@ -364,8 +364,8 @@ boost::optional<KeyValue> ChargePointConfiguration::getICCIDKeyValue() {
     return kv_opt;
 }
 
-boost::optional<KeyValue> ChargePointConfiguration::getIMSIKeyValue() {
-    boost::optional<KeyValue> kv_opt;
+std::optional<KeyValue> ChargePointConfiguration::getIMSIKeyValue() {
+    std::optional<KeyValue> kv_opt;
     auto value = this->getIMSI();
     if (value.has_value()) {
         KeyValue kv;
@@ -377,8 +377,8 @@ boost::optional<KeyValue> ChargePointConfiguration::getIMSIKeyValue() {
     return kv_opt;
 }
 
-boost::optional<KeyValue> ChargePointConfiguration::getMeterSerialNumberKeyValue() {
-    boost::optional<KeyValue> kv_opt;
+std::optional<KeyValue> ChargePointConfiguration::getMeterSerialNumberKeyValue() {
+    std::optional<KeyValue> kv_opt;
     auto value = this->getMeterSerialNumber();
     if (value.has_value()) {
         KeyValue kv;
@@ -390,8 +390,8 @@ boost::optional<KeyValue> ChargePointConfiguration::getMeterSerialNumberKeyValue
     return kv_opt;
 }
 
-boost::optional<KeyValue> ChargePointConfiguration::getMeterTypeKeyValue() {
-    boost::optional<KeyValue> kv_opt;
+std::optional<KeyValue> ChargePointConfiguration::getMeterTypeKeyValue() {
+    std::optional<KeyValue> kv_opt;
     auto value = this->getMeterType();
     if (value.has_value()) {
         KeyValue kv;
@@ -600,23 +600,23 @@ std::string ChargePointConfiguration::getWebsocketPingPayload() {
 }
 
 // Core Profile - optional
-boost::optional<bool> ChargePointConfiguration::getAllowOfflineTxForUnknownId() {
-    boost::optional<bool> unknown_offline_auth = boost::none;
+std::optional<bool> ChargePointConfiguration::getAllowOfflineTxForUnknownId() {
+    std::optional<bool> unknown_offline_auth = std::nullopt;
     if (this->config["Core"].contains("AllowOfflineTxForUnknownId")) {
         unknown_offline_auth.emplace(this->config["Core"]["AllowOfflineTxForUnknownId"]);
     }
     return unknown_offline_auth;
 }
 void ChargePointConfiguration::setAllowOfflineTxForUnknownId(bool enabled) {
-    if (this->getAllowOfflineTxForUnknownId() != boost::none) {
+    if (this->getAllowOfflineTxForUnknownId() != std::nullopt) {
         this->config["Core"]["AllowOfflineTxForUnknownId"] = enabled;
         this->setInUserConfig("Core", "AllowOfflineTxForUnknownId", enabled);
     }
 }
-boost::optional<KeyValue> ChargePointConfiguration::getAllowOfflineTxForUnknownIdKeyValue() {
-    boost::optional<KeyValue> unknown_offline_auth_kv = boost::none;
+std::optional<KeyValue> ChargePointConfiguration::getAllowOfflineTxForUnknownIdKeyValue() {
+    std::optional<KeyValue> unknown_offline_auth_kv = std::nullopt;
     auto unknown_offline_auth = this->getAllowOfflineTxForUnknownId();
-    if (unknown_offline_auth != boost::none) {
+    if (unknown_offline_auth != std::nullopt) {
         KeyValue kv;
         kv.key = "AllowOfflineTxForUnknownId";
         kv.readonly = false;
@@ -627,23 +627,23 @@ boost::optional<KeyValue> ChargePointConfiguration::getAllowOfflineTxForUnknownI
 }
 
 // Core Profile - optional
-boost::optional<bool> ChargePointConfiguration::getAuthorizationCacheEnabled() {
-    boost::optional<bool> enabled = boost::none;
+std::optional<bool> ChargePointConfiguration::getAuthorizationCacheEnabled() {
+    std::optional<bool> enabled = std::nullopt;
     if (this->config["Core"].contains("AuthorizationCacheEnabled")) {
         enabled.emplace(this->config["Core"]["AuthorizationCacheEnabled"]);
     }
     return enabled;
 }
 void ChargePointConfiguration::setAuthorizationCacheEnabled(bool enabled) {
-    if (this->getAuthorizationCacheEnabled() != boost::none) {
+    if (this->getAuthorizationCacheEnabled() != std::nullopt) {
         this->config["Core"]["AuthorizationCacheEnabled"] = enabled;
         this->setInUserConfig("Core", "AuthorizationCacheEnabled", enabled);
     }
 }
-boost::optional<KeyValue> ChargePointConfiguration::getAuthorizationCacheEnabledKeyValue() {
-    boost::optional<KeyValue> enabled_kv = boost::none;
+std::optional<KeyValue> ChargePointConfiguration::getAuthorizationCacheEnabledKeyValue() {
+    std::optional<KeyValue> enabled_kv = std::nullopt;
     auto enabled = this->getAuthorizationCacheEnabled();
-    if (enabled != boost::none) {
+    if (enabled != std::nullopt) {
         KeyValue kv;
         kv.key = "AuthorizationCacheEnabled";
         kv.readonly = false;
@@ -670,23 +670,23 @@ KeyValue ChargePointConfiguration::getAuthorizeRemoteTxRequestsKeyValue() {
 }
 
 // Core Profile - optional
-boost::optional<int32_t> ChargePointConfiguration::getBlinkRepeat() {
-    boost::optional<int32_t> blink_repeat = boost::none;
+std::optional<int32_t> ChargePointConfiguration::getBlinkRepeat() {
+    std::optional<int32_t> blink_repeat = std::nullopt;
     if (this->config["Core"].contains("BlinkRepeat")) {
         blink_repeat.emplace(this->config["Core"]["BlinkRepeat"]);
     }
     return blink_repeat;
 }
 void ChargePointConfiguration::setBlinkRepeat(int32_t blink_repeat) {
-    if (this->getBlinkRepeat() != boost::none) {
+    if (this->getBlinkRepeat() != std::nullopt) {
         this->config["Core"]["BlinkRepeat"] = blink_repeat;
         this->setInUserConfig("Core", "BlinkRepeat", blink_repeat);
     }
 }
-boost::optional<KeyValue> ChargePointConfiguration::getBlinkRepeatKeyValue() {
-    boost::optional<KeyValue> blink_repeat_kv = boost::none;
+std::optional<KeyValue> ChargePointConfiguration::getBlinkRepeatKeyValue() {
+    std::optional<KeyValue> blink_repeat_kv = std::nullopt;
     auto blink_repeat = this->getBlinkRepeat();
-    if (blink_repeat != boost::none) {
+    if (blink_repeat != std::nullopt) {
         KeyValue kv;
         kv.key = "BlinkRepeat";
         kv.readonly = false;
@@ -745,17 +745,17 @@ KeyValue ChargePointConfiguration::getConnectorPhaseRotationKeyValue() {
 }
 
 // Core Profile - optional
-boost::optional<int32_t> ChargePointConfiguration::getConnectorPhaseRotationMaxLength() {
-    boost::optional<int32_t> max_length = boost::none;
+std::optional<int32_t> ChargePointConfiguration::getConnectorPhaseRotationMaxLength() {
+    std::optional<int32_t> max_length = std::nullopt;
     if (this->config["Core"].contains("ConnectorPhaseRotationMaxLength")) {
         max_length.emplace(this->config["Core"]["ConnectorPhaseRotationMaxLength"]);
     }
     return max_length;
 }
-boost::optional<KeyValue> ChargePointConfiguration::getConnectorPhaseRotationMaxLengthKeyValue() {
-    boost::optional<KeyValue> max_length_kv = boost::none;
+std::optional<KeyValue> ChargePointConfiguration::getConnectorPhaseRotationMaxLengthKeyValue() {
+    std::optional<KeyValue> max_length_kv = std::nullopt;
     auto max_length = this->getConnectorPhaseRotationMaxLength();
-    if (max_length != boost::none) {
+    if (max_length != std::nullopt) {
         KeyValue kv;
         kv.key = "ConnectorPhaseRotationMaxLength";
         kv.readonly = true;
@@ -794,23 +794,23 @@ KeyValue ChargePointConfiguration::getHeartbeatIntervalKeyValue() {
 }
 
 // Core Profile - optional
-boost::optional<int32_t> ChargePointConfiguration::getLightIntensity() {
-    boost::optional<int32_t> light_intensity = boost::none;
+std::optional<int32_t> ChargePointConfiguration::getLightIntensity() {
+    std::optional<int32_t> light_intensity = std::nullopt;
     if (this->config["Core"].contains("LightIntensity")) {
         light_intensity.emplace(this->config["Core"]["LightIntensity"]);
     }
     return light_intensity;
 }
 void ChargePointConfiguration::setLightIntensity(int32_t light_intensity) {
-    if (this->getLightIntensity() != boost::none) {
+    if (this->getLightIntensity() != std::nullopt) {
         this->config["Core"]["LightIntensity"] = light_intensity;
         this->setInUserConfig("Core", "LightIntensity", light_intensity);
     }
 }
-boost::optional<KeyValue> ChargePointConfiguration::getLightIntensityKeyValue() {
-    boost::optional<KeyValue> light_intensity_kv = boost::none;
+std::optional<KeyValue> ChargePointConfiguration::getLightIntensityKeyValue() {
+    std::optional<KeyValue> light_intensity_kv = std::nullopt;
     auto light_intensity = this->getLightIntensity();
-    if (light_intensity != boost::none) {
+    if (light_intensity != std::nullopt) {
         KeyValue kv;
         kv.key = "LightIntensity";
         kv.readonly = false;
@@ -853,23 +853,23 @@ KeyValue ChargePointConfiguration::getLocalPreAuthorizeKeyValue() {
 }
 
 // Core Profile - optional
-boost::optional<int32_t> ChargePointConfiguration::getMaxEnergyOnInvalidId() {
-    boost::optional<int32_t> max_energy = boost::none;
+std::optional<int32_t> ChargePointConfiguration::getMaxEnergyOnInvalidId() {
+    std::optional<int32_t> max_energy = std::nullopt;
     if (this->config["Core"].contains("MaxEnergyOnInvalidId")) {
         max_energy.emplace(this->config["Core"]["MaxEnergyOnInvalidId"]);
     }
     return max_energy;
 }
 void ChargePointConfiguration::setMaxEnergyOnInvalidId(int32_t max_energy) {
-    if (this->getMaxEnergyOnInvalidId() != boost::none) {
+    if (this->getMaxEnergyOnInvalidId() != std::nullopt) {
         this->config["Core"]["MaxEnergyOnInvalidId"] = max_energy;
         this->setInUserConfig("Core", "MaxEnergyOnInvalidId", max_energy);
     }
 }
-boost::optional<KeyValue> ChargePointConfiguration::getMaxEnergyOnInvalidIdKeyValue() {
-    boost::optional<KeyValue> max_energy_kv = boost::none;
+std::optional<KeyValue> ChargePointConfiguration::getMaxEnergyOnInvalidIdKeyValue() {
+    std::optional<KeyValue> max_energy_kv = std::nullopt;
     auto max_energy = this->getMaxEnergyOnInvalidId();
-    if (max_energy != boost::none) {
+    if (max_energy != std::nullopt) {
         KeyValue kv;
         kv.key = "MaxEnergyOnInvalidId";
         kv.readonly = false;
@@ -903,17 +903,17 @@ std::vector<MeasurandWithPhase> ChargePointConfiguration::getMeterValuesAlignedD
 }
 
 // Core Profile - optional
-boost::optional<int32_t> ChargePointConfiguration::getMeterValuesAlignedDataMaxLength() {
-    boost::optional<int32_t> max_length = boost::none;
+std::optional<int32_t> ChargePointConfiguration::getMeterValuesAlignedDataMaxLength() {
+    std::optional<int32_t> max_length = std::nullopt;
     if (this->config["Core"].contains("MeterValuesAlignedDataMaxLength")) {
         max_length.emplace(this->config["Core"]["MeterValuesAlignedDataMaxLength"]);
     }
     return max_length;
 }
-boost::optional<KeyValue> ChargePointConfiguration::getMeterValuesAlignedDataMaxLengthKeyValue() {
-    boost::optional<KeyValue> max_length_kv = boost::none;
+std::optional<KeyValue> ChargePointConfiguration::getMeterValuesAlignedDataMaxLengthKeyValue() {
+    std::optional<KeyValue> max_length_kv = std::nullopt;
     auto max_length = this->getMeterValuesAlignedDataMaxLength();
-    if (max_length != boost::none) {
+    if (max_length != std::nullopt) {
         KeyValue kv;
         kv.key = "MeterValuesAlignedDataMaxLength";
         kv.readonly = true;
@@ -947,17 +947,17 @@ std::vector<MeasurandWithPhase> ChargePointConfiguration::getMeterValuesSampledD
 }
 
 // Core Profile - optional
-boost::optional<int32_t> ChargePointConfiguration::getMeterValuesSampledDataMaxLength() {
-    boost::optional<int32_t> max_length = boost::none;
+std::optional<int32_t> ChargePointConfiguration::getMeterValuesSampledDataMaxLength() {
+    std::optional<int32_t> max_length = std::nullopt;
     if (this->config["Core"].contains("MeterValuesSampledDataMaxLength")) {
         max_length.emplace(this->config["Core"]["MeterValuesSampledDataMaxLength"]);
     }
     return max_length;
 }
-boost::optional<KeyValue> ChargePointConfiguration::getMeterValuesSampledDataMaxLengthKeyValue() {
-    boost::optional<KeyValue> max_length_kv = boost::none;
+std::optional<KeyValue> ChargePointConfiguration::getMeterValuesSampledDataMaxLengthKeyValue() {
+    std::optional<KeyValue> max_length_kv = std::nullopt;
     auto max_length = this->getMeterValuesSampledDataMaxLength();
-    if (max_length != boost::none) {
+    if (max_length != std::nullopt) {
         KeyValue kv;
         kv.key = "MeterValuesSampledDataMaxLength";
         kv.readonly = true;
@@ -984,23 +984,23 @@ KeyValue ChargePointConfiguration::getMeterValueSampleIntervalKeyValue() {
 }
 
 // Core Profile - optional
-boost::optional<int32_t> ChargePointConfiguration::getMinimumStatusDuration() {
-    boost::optional<int32_t> minimum_status_duration = boost::none;
+std::optional<int32_t> ChargePointConfiguration::getMinimumStatusDuration() {
+    std::optional<int32_t> minimum_status_duration = std::nullopt;
     if (this->config["Core"].contains("MinimumStatusDuration")) {
         minimum_status_duration.emplace(this->config["Core"]["MinimumStatusDuration"]);
     }
     return minimum_status_duration;
 }
 void ChargePointConfiguration::setMinimumStatusDuration(int32_t minimum_status_duration) {
-    if (this->getMinimumStatusDuration() != boost::none) {
+    if (this->getMinimumStatusDuration() != std::nullopt) {
         this->config["Core"]["MinimumStatusDuration"] = minimum_status_duration;
         this->setInUserConfig("Core", "MinimumStatusDuration", minimum_status_duration);
     }
 }
-boost::optional<KeyValue> ChargePointConfiguration::getMinimumStatusDurationKeyValue() {
-    boost::optional<KeyValue> minimum_status_duration_kv = boost::none;
+std::optional<KeyValue> ChargePointConfiguration::getMinimumStatusDurationKeyValue() {
+    std::optional<KeyValue> minimum_status_duration_kv = std::nullopt;
     auto minimum_status_duration = this->getMinimumStatusDuration();
-    if (minimum_status_duration != boost::none) {
+    if (minimum_status_duration != std::nullopt) {
         KeyValue kv;
         kv.key = "MinimumStatusDuration";
         kv.readonly = false;
@@ -1023,18 +1023,18 @@ KeyValue ChargePointConfiguration::getNumberOfConnectorsKeyValue() {
 }
 
 // Reservation Profile
-boost::optional<bool> ChargePointConfiguration::getReserveConnectorZeroSupported() {
-    boost::optional<bool> reserve_connector_zero_supported = boost::none;
+std::optional<bool> ChargePointConfiguration::getReserveConnectorZeroSupported() {
+    std::optional<bool> reserve_connector_zero_supported = std::nullopt;
     if (this->config.contains("Reservation") && this->config["Reservation"].contains("ReserveConnectorZeroSupported")) {
         reserve_connector_zero_supported.emplace(this->config["Reservation"]["ReserveConnectorZeroSupported"]);
     }
     return reserve_connector_zero_supported;
 }
 
-boost::optional<KeyValue> ChargePointConfiguration::getReserveConnectorZeroSupportedKeyValue() {
-    boost::optional<KeyValue> reserve_connector_zero_supported_kv = boost::none;
+std::optional<KeyValue> ChargePointConfiguration::getReserveConnectorZeroSupportedKeyValue() {
+    std::optional<KeyValue> reserve_connector_zero_supported_kv = std::nullopt;
     auto reserve_connector_zero_supported = this->getReserveConnectorZeroSupported();
-    if (reserve_connector_zero_supported != boost::none) {
+    if (reserve_connector_zero_supported != std::nullopt) {
         KeyValue kv;
         kv.key = "ReserveConnectorZeroSupported";
         kv.readonly = true;
@@ -1116,17 +1116,17 @@ std::vector<MeasurandWithPhase> ChargePointConfiguration::getStopTxnAlignedDataV
 }
 
 // Core Profile - optional
-boost::optional<int32_t> ChargePointConfiguration::getStopTxnAlignedDataMaxLength() {
-    boost::optional<int32_t> max_length = boost::none;
+std::optional<int32_t> ChargePointConfiguration::getStopTxnAlignedDataMaxLength() {
+    std::optional<int32_t> max_length = std::nullopt;
     if (this->config["Core"].contains("StopTxnAlignedDataMaxLength")) {
         max_length.emplace(this->config["Core"]["StopTxnAlignedDataMaxLength"]);
     }
     return max_length;
 }
-boost::optional<KeyValue> ChargePointConfiguration::getStopTxnAlignedDataMaxLengthKeyValue() {
-    boost::optional<KeyValue> max_length_kv = boost::none;
+std::optional<KeyValue> ChargePointConfiguration::getStopTxnAlignedDataMaxLengthKeyValue() {
+    std::optional<KeyValue> max_length_kv = std::nullopt;
     auto max_length = this->getStopTxnAlignedDataMaxLength();
-    if (max_length != boost::none) {
+    if (max_length != std::nullopt) {
         KeyValue kv;
         kv.key = "StopTxnAlignedDataMaxLength";
         kv.readonly = true;
@@ -1161,17 +1161,17 @@ std::vector<MeasurandWithPhase> ChargePointConfiguration::getStopTxnSampledDataV
 }
 
 // Core Profile - optional
-boost::optional<int32_t> ChargePointConfiguration::getStopTxnSampledDataMaxLength() {
-    boost::optional<int32_t> max_length = boost::none;
+std::optional<int32_t> ChargePointConfiguration::getStopTxnSampledDataMaxLength() {
+    std::optional<int32_t> max_length = std::nullopt;
     if (this->config["Core"].contains("StopTxnSampledDataMaxLength")) {
         max_length.emplace(this->config["Core"]["StopTxnSampledDataMaxLength"]);
     }
     return max_length;
 }
-boost::optional<KeyValue> ChargePointConfiguration::getStopTxnSampledDataMaxLengthKeyValue() {
-    boost::optional<KeyValue> max_length_kv = boost::none;
+std::optional<KeyValue> ChargePointConfiguration::getStopTxnSampledDataMaxLengthKeyValue() {
+    std::optional<KeyValue> max_length_kv = std::nullopt;
     auto max_length = this->getStopTxnSampledDataMaxLength();
-    if (max_length != boost::none) {
+    if (max_length != std::nullopt) {
         KeyValue kv;
         kv.key = "StopTxnSampledDataMaxLength";
         kv.readonly = true;
@@ -1197,17 +1197,17 @@ std::set<SupportedFeatureProfiles> ChargePointConfiguration::getSupportedFeature
 }
 
 // Core Profile - optional
-boost::optional<int32_t> ChargePointConfiguration::getSupportedFeatureProfilesMaxLength() {
-    boost::optional<int32_t> max_length = boost::none;
+std::optional<int32_t> ChargePointConfiguration::getSupportedFeatureProfilesMaxLength() {
+    std::optional<int32_t> max_length = std::nullopt;
     if (this->config["Core"].contains("SupportedFeatureProfilesMaxLength")) {
         max_length.emplace(this->config["Core"]["SupportedFeatureProfilesMaxLength"]);
     }
     return max_length;
 }
-boost::optional<KeyValue> ChargePointConfiguration::getSupportedFeatureProfilesMaxLengthKeyValue() {
-    boost::optional<KeyValue> max_length_kv = boost::none;
+std::optional<KeyValue> ChargePointConfiguration::getSupportedFeatureProfilesMaxLengthKeyValue() {
+    std::optional<KeyValue> max_length_kv = std::nullopt;
     auto max_length = this->getSupportedFeatureProfilesMaxLength();
-    if (max_length != boost::none) {
+    if (max_length != std::nullopt) {
         KeyValue kv;
         kv.key = "SupportedFeatureProfilesMaxLength";
         kv.readonly = true;
@@ -1266,23 +1266,23 @@ KeyValue ChargePointConfiguration::getUnlockConnectorOnEVSideDisconnectKeyValue(
 }
 
 // Core Profile - optional
-boost::optional<int32_t> ChargePointConfiguration::getWebsocketPingInterval() {
-    boost::optional<int32_t> websocket_ping_interval = boost::none;
+std::optional<int32_t> ChargePointConfiguration::getWebsocketPingInterval() {
+    std::optional<int32_t> websocket_ping_interval = std::nullopt;
     if (this->config["Core"].contains("WebsocketPingInterval")) {
         websocket_ping_interval.emplace(this->config["Core"]["WebsocketPingInterval"]);
     }
     return websocket_ping_interval;
 }
 void ChargePointConfiguration::setWebsocketPingInterval(int32_t websocket_ping_interval) {
-    if (this->getWebsocketPingInterval() != boost::none) {
+    if (this->getWebsocketPingInterval() != std::nullopt) {
         this->config["Core"]["WebsocketPingInterval"] = websocket_ping_interval;
         this->setInUserConfig("Core", "WebsocketPingInterval", websocket_ping_interval);
     }
 }
-boost::optional<KeyValue> ChargePointConfiguration::getWebsocketPingIntervalKeyValue() {
-    boost::optional<KeyValue> websocket_ping_interval_kv = boost::none;
+std::optional<KeyValue> ChargePointConfiguration::getWebsocketPingIntervalKeyValue() {
+    std::optional<KeyValue> websocket_ping_interval_kv = std::nullopt;
     auto websocket_ping_interval = this->getWebsocketPingInterval();
-    if (websocket_ping_interval != boost::none) {
+    if (websocket_ping_interval != std::nullopt) {
         KeyValue kv;
         kv.key = "WebsocketPingInterval";
         kv.readonly = false;
@@ -1341,19 +1341,19 @@ KeyValue ChargePointConfiguration::getChargingScheduleMaxPeriodsKeyValue() {
     return kv;
 }
 
-boost::optional<bool> ChargePointConfiguration::getConnectorSwitch3to1PhaseSupported() {
-    boost::optional<bool> connector_switch_3_to_1_phase_supported = boost::none;
+std::optional<bool> ChargePointConfiguration::getConnectorSwitch3to1PhaseSupported() {
+    std::optional<bool> connector_switch_3_to_1_phase_supported = std::nullopt;
     if (this->config["SmartCharging"].contains("ConnectorSwitch3to1PhaseSupported")) {
         connector_switch_3_to_1_phase_supported.emplace(
             this->config["SmartCharging"]["ConnectorSwitch3to1PhaseSupported"]);
     }
     return connector_switch_3_to_1_phase_supported;
 }
-boost::optional<KeyValue> ChargePointConfiguration::getConnectorSwitch3to1PhaseSupportedKeyValue() {
-    boost::optional<KeyValue> connector_switch_3_to_1_phase_supported_kv = boost::none;
+std::optional<KeyValue> ChargePointConfiguration::getConnectorSwitch3to1PhaseSupportedKeyValue() {
+    std::optional<KeyValue> connector_switch_3_to_1_phase_supported_kv = std::nullopt;
 
     auto connector_switch_3_to_1_phase_supported = this->getConnectorSwitch3to1PhaseSupported();
-    if (connector_switch_3_to_1_phase_supported != boost::none) {
+    if (connector_switch_3_to_1_phase_supported != std::nullopt) {
         KeyValue kv;
         kv.key = "ConnectorSwitch3to1PhaseSupported";
         kv.readonly = true;
@@ -1375,15 +1375,15 @@ KeyValue ChargePointConfiguration::getMaxChargingProfilesInstalledKeyValue() {
 }
 
 // Security profile - optional
-boost::optional<bool> ChargePointConfiguration::getAdditionalRootCertificateCheck() {
-    boost::optional<bool> additional_root_certificate_check = boost::none;
+std::optional<bool> ChargePointConfiguration::getAdditionalRootCertificateCheck() {
+    std::optional<bool> additional_root_certificate_check = std::nullopt;
     if (this->config["Security"].contains("AdditionalRootCertificateCheck")) {
         additional_root_certificate_check.emplace(this->config["Security"]["AdditionalRootCertificateCheck"]);
     }
     return additional_root_certificate_check;
 }
 
-boost::optional<KeyValue> ChargePointConfiguration::getAdditionalRootCertificateCheckKeyValue() {
+std::optional<KeyValue> ChargePointConfiguration::getAdditionalRootCertificateCheckKeyValue() {
     KeyValue kv;
     kv.key = "AdditionalRootCertificateCheck";
     kv.readonly = true;
@@ -1392,8 +1392,8 @@ boost::optional<KeyValue> ChargePointConfiguration::getAdditionalRootCertificate
 }
 
 // Security Profile - optional
-boost::optional<std::string> ChargePointConfiguration::getAuthorizationKey() {
-    boost::optional<std::string> authorization_key = boost::none;
+std::optional<std::string> ChargePointConfiguration::getAuthorizationKey() {
+    std::optional<std::string> authorization_key = std::nullopt;
     if (this->config["Security"].contains("AuthorizationKey")) {
         authorization_key.emplace(this->config["Security"]["AuthorizationKey"]);
     }
@@ -1475,9 +1475,9 @@ bool isBool(const std::string& str) {
     return str == "true" || str == "false";
 }
 
-boost::optional<KeyValue> ChargePointConfiguration::getAuthorizationKeyKeyValue() {
-    boost::optional<KeyValue> enabled_kv = boost::none;
-    boost::optional<std::string> enabled = boost::none;
+std::optional<KeyValue> ChargePointConfiguration::getAuthorizationKeyKeyValue() {
+    std::optional<KeyValue> enabled_kv = std::nullopt;
+    std::optional<std::string> enabled = std::nullopt;
 
     KeyValue kv;
     kv.key = "AuthorizationKey";
@@ -1493,18 +1493,18 @@ boost::optional<KeyValue> ChargePointConfiguration::getAuthorizationKeyKeyValue(
 }
 
 // Security profile - optional
-boost::optional<int32_t> ChargePointConfiguration::getCertificateSignedMaxChainSize() {
-    boost::optional<int32_t> certificate_max_chain_size = boost::none;
+std::optional<int32_t> ChargePointConfiguration::getCertificateSignedMaxChainSize() {
+    std::optional<int32_t> certificate_max_chain_size = std::nullopt;
     if (this->config["Core"].contains("CertificateMaxChainSize")) {
         certificate_max_chain_size.emplace(this->config["Security"]["CertificateMaxChainSize"]);
     }
     return certificate_max_chain_size;
 }
 
-boost::optional<KeyValue> ChargePointConfiguration::getCertificateSignedMaxChainSizeKeyValue() {
-    boost::optional<KeyValue> certificate_max_chain_size_kv = boost::none;
+std::optional<KeyValue> ChargePointConfiguration::getCertificateSignedMaxChainSizeKeyValue() {
+    std::optional<KeyValue> certificate_max_chain_size_kv = std::nullopt;
     auto certificate_max_chain_size = this->getCertificateSignedMaxChainSize();
-    if (certificate_max_chain_size != boost::none) {
+    if (certificate_max_chain_size != std::nullopt) {
         KeyValue kv;
         kv.key = "CertificateMaxChainSize";
         kv.readonly = true;
@@ -1515,18 +1515,18 @@ boost::optional<KeyValue> ChargePointConfiguration::getCertificateSignedMaxChain
 }
 
 // Security profile - optional
-boost::optional<int32_t> ChargePointConfiguration::getCertificateStoreMaxLength() {
-    boost::optional<int32_t> certificate_store_max_length = boost::none;
+std::optional<int32_t> ChargePointConfiguration::getCertificateStoreMaxLength() {
+    std::optional<int32_t> certificate_store_max_length = std::nullopt;
     if (this->config["Core"].contains("CertificateStoreMaxLength")) {
         certificate_store_max_length.emplace(this->config["Security"]["CertificateStoreMaxLength"]);
     }
     return certificate_store_max_length;
 }
 
-boost::optional<KeyValue> ChargePointConfiguration::getCertificateStoreMaxLengthKeyValue() {
-    boost::optional<KeyValue> certificate_store_max_length_kv = boost::none;
+std::optional<KeyValue> ChargePointConfiguration::getCertificateStoreMaxLengthKeyValue() {
+    std::optional<KeyValue> certificate_store_max_length_kv = std::nullopt;
     auto certificate_store_max_length = this->getCertificateStoreMaxLength();
-    if (certificate_store_max_length != boost::none) {
+    if (certificate_store_max_length != std::nullopt) {
         KeyValue kv;
         kv.key = "CertificateStoreMaxLength";
         kv.readonly = true;
@@ -1537,8 +1537,8 @@ boost::optional<KeyValue> ChargePointConfiguration::getCertificateStoreMaxLength
 }
 
 // Security Profile - optional
-boost::optional<std::string> ChargePointConfiguration::getCpoName() {
-    boost::optional<std::string> cpo_name = boost::none;
+std::optional<std::string> ChargePointConfiguration::getCpoName() {
+    std::optional<std::string> cpo_name = std::nullopt;
     if (this->config["Security"].contains("CpoName")) {
         cpo_name.emplace(this->config["Security"]["CpoName"]);
     }
@@ -1550,13 +1550,13 @@ void ChargePointConfiguration::setCpoName(std::string cpoName) {
     this->setInUserConfig("Security", "CpoName", cpoName);
 }
 
-boost::optional<KeyValue> ChargePointConfiguration::getCpoNameKeyValue() {
-    boost::optional<KeyValue> cpo_name_kv = boost::none;
+std::optional<KeyValue> ChargePointConfiguration::getCpoNameKeyValue() {
+    std::optional<KeyValue> cpo_name_kv = std::nullopt;
     auto cpo_name = this->getCpoName();
     KeyValue kv;
     kv.key = "CpoName";
     kv.readonly = false;
-    if (cpo_name != boost::none) {
+    if (cpo_name != std::nullopt) {
         kv.value.emplace(cpo_name.value());
     }
     cpo_name_kv.emplace(kv);
@@ -1646,8 +1646,8 @@ KeyValue ChargePointConfiguration::getISO15118PnCEnabledKeyValue() {
     return kv;
 }
 
-boost::optional<bool> ChargePointConfiguration::getCentralContractValidationAllowed() {
-    boost::optional<bool> central_contract_validation_allowed = boost::none;
+std::optional<bool> ChargePointConfiguration::getCentralContractValidationAllowed() {
+    std::optional<bool> central_contract_validation_allowed = std::nullopt;
     if (this->config["PnC"].contains("CentralContractValidationAllowed")) {
         central_contract_validation_allowed.emplace(this->config["PnC"]["CentralContractValidationAllowed"]);
     }
@@ -1655,15 +1655,15 @@ boost::optional<bool> ChargePointConfiguration::getCentralContractValidationAllo
 }
 
 void ChargePointConfiguration::setCentralContractValidationAllowed(const bool central_contract_validation_allowed) {
-    if (this->getCentralContractValidationAllowed() != boost::none) {
+    if (this->getCentralContractValidationAllowed() != std::nullopt) {
         this->config["PnC"]["CentralContractValidationAllowed"] = central_contract_validation_allowed;
         this->setInUserConfig("PnC", "CentralContractValidationAllowed", central_contract_validation_allowed);
     }
 }
-boost::optional<KeyValue> ChargePointConfiguration::getCentralContractValidationAllowedKeyValue() {
-    boost::optional<KeyValue> central_contract_validation_allowed_kv = boost::none;
+std::optional<KeyValue> ChargePointConfiguration::getCentralContractValidationAllowedKeyValue() {
+    std::optional<KeyValue> central_contract_validation_allowed_kv = std::nullopt;
     auto central_contract_validation_allowed = this->getCentralContractValidationAllowed();
-    if (central_contract_validation_allowed != boost::none) {
+    if (central_contract_validation_allowed != std::nullopt) {
         KeyValue kv;
         kv.key = "CentralContractValidationAllowed";
         kv.readonly = false;
@@ -1673,8 +1673,8 @@ boost::optional<KeyValue> ChargePointConfiguration::getCentralContractValidation
     return central_contract_validation_allowed_kv;
 }
 
-boost::optional<int32_t> ChargePointConfiguration::getCertSigningWaitMinimum() {
-    boost::optional<int32_t> cert_signing_wait_minimum = boost::none;
+std::optional<int32_t> ChargePointConfiguration::getCertSigningWaitMinimum() {
+    std::optional<int32_t> cert_signing_wait_minimum = std::nullopt;
     if (this->config["PnC"].contains("CertSigningWaitMinimum")) {
         cert_signing_wait_minimum.emplace(this->config["PnC"]["CertSigningWaitMinimum"]);
     }
@@ -1682,16 +1682,16 @@ boost::optional<int32_t> ChargePointConfiguration::getCertSigningWaitMinimum() {
 }
 
 void ChargePointConfiguration::setCertSigningWaitMinimum(const int32_t cert_signing_wait_minimum) {
-    if (this->getCertSigningWaitMinimum() != boost::none) {
+    if (this->getCertSigningWaitMinimum() != std::nullopt) {
         this->config["PnC"]["CertSigningWaitMinimum"] = cert_signing_wait_minimum;
         this->setInUserConfig("PnC", "CertSigningWaitMinimum", cert_signing_wait_minimum);
     }
 }
 
-boost::optional<KeyValue> ChargePointConfiguration::getCertSigningWaitMinimumKeyValue() {
-    boost::optional<KeyValue> cert_signing_wait_minimum_kv = boost::none;
+std::optional<KeyValue> ChargePointConfiguration::getCertSigningWaitMinimumKeyValue() {
+    std::optional<KeyValue> cert_signing_wait_minimum_kv = std::nullopt;
     auto cert_signing_wait_minimum = this->getCertSigningWaitMinimum();
-    if (cert_signing_wait_minimum != boost::none) {
+    if (cert_signing_wait_minimum != std::nullopt) {
         KeyValue kv;
         kv.key = "CertSigningWaitMinimum";
         kv.readonly = false;
@@ -1701,24 +1701,24 @@ boost::optional<KeyValue> ChargePointConfiguration::getCertSigningWaitMinimumKey
     return cert_signing_wait_minimum_kv;
 }
 
-boost::optional<int32_t> ChargePointConfiguration::getCertSigningRepeatTimes() {
-    boost::optional<int32_t> get_cert_signing_repeat_times = boost::none;
+std::optional<int32_t> ChargePointConfiguration::getCertSigningRepeatTimes() {
+    std::optional<int32_t> get_cert_signing_repeat_times = std::nullopt;
     if (this->config["PnC"].contains("CertSigningRepeatTimes")) {
         get_cert_signing_repeat_times.emplace(this->config["PnC"]["CertSigningRepeatTimes"]);
     }
     return get_cert_signing_repeat_times;
 }
 void ChargePointConfiguration::setCertSigningRepeatTimes(const int32_t cert_signing_repeat_times) {
-    if (this->getCertSigningRepeatTimes() != boost::none) {
+    if (this->getCertSigningRepeatTimes() != std::nullopt) {
         this->config["PnC"]["CertSigningRepeatTimes"] = cert_signing_repeat_times;
         this->setInUserConfig("PnC", "CertSigningRepeatTimes", cert_signing_repeat_times);
     }
 }
 
-boost::optional<KeyValue> ChargePointConfiguration::getCertSigningRepeatTimesKeyValue() {
-    boost::optional<KeyValue> cert_signing_repeat_times_kv = boost::none;
+std::optional<KeyValue> ChargePointConfiguration::getCertSigningRepeatTimesKeyValue() {
+    std::optional<KeyValue> cert_signing_repeat_times_kv = std::nullopt;
     auto cert_signing_repeat_times = this->getCertSigningRepeatTimes();
-    if (cert_signing_repeat_times != boost::none) {
+    if (cert_signing_repeat_times != std::nullopt) {
         KeyValue kv;
         kv.key = "CertSigningRepeatTimes";
         kv.readonly = false;
@@ -1762,8 +1762,8 @@ KeyValue ChargePointConfiguration::getOcspRequestIntervalKeyValue() {
     return kv;
 }
 
-boost::optional<std::string> ChargePointConfiguration::getSeccLeafSubjectCommonName() {
-    boost::optional<std::string> secc_leaf_subject_common_name = boost::none;
+std::optional<std::string> ChargePointConfiguration::getSeccLeafSubjectCommonName() {
+    std::optional<std::string> secc_leaf_subject_common_name = std::nullopt;
     if (this->config["Internal"].contains("SeccLeafSubjectCommonName")) {
         secc_leaf_subject_common_name.emplace(this->config["Internal"]["SeccLeafSubjectCommonName"]);
     }
@@ -1771,16 +1771,16 @@ boost::optional<std::string> ChargePointConfiguration::getSeccLeafSubjectCommonN
 }
 
 void ChargePointConfiguration::setSeccLeafSubjectCommonName(const std::string& secc_leaf_subject_common_name) {
-    if (this->getSeccLeafSubjectCommonName() != boost::none) {
+    if (this->getSeccLeafSubjectCommonName() != std::nullopt) {
         this->config["Internal"]["SeccLeafSubjectCommonName"] = secc_leaf_subject_common_name;
         this->setInUserConfig("Internal", "SeccLeafSubjectCommonName", secc_leaf_subject_common_name);
     }
 }
 
-boost::optional<KeyValue> ChargePointConfiguration::getSeccLeafSubjectCommonNameKeyValue() {
-    boost::optional<KeyValue> secc_leaf_subject_common_name_kv = boost::none;
+std::optional<KeyValue> ChargePointConfiguration::getSeccLeafSubjectCommonNameKeyValue() {
+    std::optional<KeyValue> secc_leaf_subject_common_name_kv = std::nullopt;
     auto secc_leaf_subject_common_name = this->getSeccLeafSubjectCommonName();
-    if (secc_leaf_subject_common_name != boost::none) {
+    if (secc_leaf_subject_common_name != std::nullopt) {
         KeyValue kv;
         kv.key = "SeccLeafSubjectCommonName";
         kv.readonly = false;
@@ -1790,8 +1790,8 @@ boost::optional<KeyValue> ChargePointConfiguration::getSeccLeafSubjectCommonName
     return secc_leaf_subject_common_name_kv;
 }
 
-boost::optional<std::string> ChargePointConfiguration::getSeccLeafSubjectCountry() {
-    boost::optional<std::string> secc_leaf_subject_country = boost::none;
+std::optional<std::string> ChargePointConfiguration::getSeccLeafSubjectCountry() {
+    std::optional<std::string> secc_leaf_subject_country = std::nullopt;
     if (this->config["Internal"].contains("SeccLeafSubjectCountry")) {
         secc_leaf_subject_country.emplace(this->config["Internal"]["SeccLeafSubjectCountry"]);
     }
@@ -1799,16 +1799,16 @@ boost::optional<std::string> ChargePointConfiguration::getSeccLeafSubjectCountry
 }
 
 void ChargePointConfiguration::setSeccLeafSubjectCountry(const std::string& secc_leaf_subject_country) {
-    if (this->getSeccLeafSubjectCountry() != boost::none) {
+    if (this->getSeccLeafSubjectCountry() != std::nullopt) {
         this->config["Internal"]["SeccLeafSubjectCountry"] = secc_leaf_subject_country;
         this->setInUserConfig("Internal", "SeccLeafSubjectCountry", secc_leaf_subject_country);
     }
 }
 
-boost::optional<KeyValue> ChargePointConfiguration::getSeccLeafSubjectCountryKeyValue() {
-    boost::optional<KeyValue> secc_leaf_subject_country_kv = boost::none;
+std::optional<KeyValue> ChargePointConfiguration::getSeccLeafSubjectCountryKeyValue() {
+    std::optional<KeyValue> secc_leaf_subject_country_kv = std::nullopt;
     auto secc_leaf_subject_country = this->getSeccLeafSubjectCountry();
-    if (secc_leaf_subject_country != boost::none) {
+    if (secc_leaf_subject_country != std::nullopt) {
         KeyValue kv;
         kv.key = "SeccLeafSubjectCountry";
         kv.readonly = false;
@@ -1818,8 +1818,8 @@ boost::optional<KeyValue> ChargePointConfiguration::getSeccLeafSubjectCountryKey
     return secc_leaf_subject_country_kv;
 }
 
-boost::optional<std::string> ChargePointConfiguration::getSeccLeafSubjectOrganization() {
-    boost::optional<std::string> secc_leaf_subject_organization = boost::none;
+std::optional<std::string> ChargePointConfiguration::getSeccLeafSubjectOrganization() {
+    std::optional<std::string> secc_leaf_subject_organization = std::nullopt;
     if (this->config["Internal"].contains("SeccLeafSubjectOrganization")) {
         secc_leaf_subject_organization.emplace(this->config["Internal"]["SeccLeafSubjectOrganization"]);
     }
@@ -1827,16 +1827,16 @@ boost::optional<std::string> ChargePointConfiguration::getSeccLeafSubjectOrganiz
 }
 
 void ChargePointConfiguration::setSeccLeafSubjectOrganization(const std::string& secc_leaf_subject_organization) {
-    if (this->getSeccLeafSubjectOrganization() != boost::none) {
+    if (this->getSeccLeafSubjectOrganization() != std::nullopt) {
         this->config["Internal"]["SeccLeafSubjectOrganization"] = secc_leaf_subject_organization;
         this->setInUserConfig("Internal", "SeccLeafSubjectOrganization", secc_leaf_subject_organization);
     }
 }
 
-boost::optional<KeyValue> ChargePointConfiguration::getSeccLeafSubjectOrganizationKeyValue() {
-    boost::optional<KeyValue> secc_leaf_subject_organization_kv = boost::none;
+std::optional<KeyValue> ChargePointConfiguration::getSeccLeafSubjectOrganizationKeyValue() {
+    std::optional<KeyValue> secc_leaf_subject_organization_kv = std::nullopt;
     auto secc_leaf_subject_organization = this->getSeccLeafSubjectOrganization();
-    if (secc_leaf_subject_organization != boost::none) {
+    if (secc_leaf_subject_organization != std::nullopt) {
         KeyValue kv;
         kv.key = "SeccLeafSubjectOrganization";
         kv.readonly = false;
@@ -1846,8 +1846,8 @@ boost::optional<KeyValue> ChargePointConfiguration::getSeccLeafSubjectOrganizati
     return secc_leaf_subject_organization_kv;
 }
 
-boost::optional<std::string> ChargePointConfiguration::getConnectorEvseIds() {
-    boost::optional<std::string> connector_evse_ids = boost::none;
+std::optional<std::string> ChargePointConfiguration::getConnectorEvseIds() {
+    std::optional<std::string> connector_evse_ids = std::nullopt;
     if (this->config["Internal"].contains("ConnectorEvseIds")) {
         connector_evse_ids.emplace(this->config["Internal"]["ConnectorEvseIds"]);
     }
@@ -1855,16 +1855,16 @@ boost::optional<std::string> ChargePointConfiguration::getConnectorEvseIds() {
 }
 
 void ChargePointConfiguration::setConnectorEvseIds(const std::string& connector_evse_ids) {
-    if (this->getConnectorEvseIds() != boost::none) {
+    if (this->getConnectorEvseIds() != std::nullopt) {
         this->config["Internal"]["ConnectorEvseIds"] = connector_evse_ids;
         this->setInUserConfig("Internal", "ConnectorEvseIds", connector_evse_ids);
     }
 }
 
-boost::optional<KeyValue> ChargePointConfiguration::getConnectorEvseIdsKeyValue() {
-    boost::optional<KeyValue> connector_evse_ids_kv = boost::none;
+std::optional<KeyValue> ChargePointConfiguration::getConnectorEvseIdsKeyValue() {
+    std::optional<KeyValue> connector_evse_ids_kv = std::nullopt;
     auto connector_evse_ids = this->getConnectorEvseIds();
-    if (connector_evse_ids != boost::none) {
+    if (connector_evse_ids != std::nullopt) {
         KeyValue kv;
         kv.key = "ConnectorEvseIds";
         kv.readonly = false;
@@ -1874,7 +1874,7 @@ boost::optional<KeyValue> ChargePointConfiguration::getConnectorEvseIdsKeyValue(
     return connector_evse_ids_kv;
 }
 
-boost::optional<KeyValue> ChargePointConfiguration::get(CiString<50> key) {
+std::optional<KeyValue> ChargePointConfiguration::get(CiString<50> key) {
 
     // Internal Profile
     if (key == "ChargePointId") {
@@ -2124,7 +2124,7 @@ boost::optional<KeyValue> ChargePointConfiguration::get(CiString<50> key) {
         }
     }
 
-    return boost::none;
+    return std::nullopt;
 }
 
 std::vector<KeyValue> ChargePointConfiguration::get_all_key_value() {
@@ -2136,7 +2136,7 @@ std::vector<KeyValue> ChargePointConfiguration::get_all_key_value() {
             for (auto& feature_config_entry : feature_config.items()) {
                 auto config_key = CiString<50>(feature_config_entry.key());
                 auto config_value = this->get(config_key);
-                if (config_value != boost::none) {
+                if (config_value != std::nullopt) {
                     all.push_back(config_value.value());
                 }
             }
@@ -2147,7 +2147,7 @@ std::vector<KeyValue> ChargePointConfiguration::get_all_key_value() {
 
 ConfigurationStatus ChargePointConfiguration::set(CiString<50> key, CiString<500> value) {
     if (key == "AllowOfflineTxForUnknownId") {
-        if (this->getAllowOfflineTxForUnknownId() == boost::none) {
+        if (this->getAllowOfflineTxForUnknownId() == std::nullopt) {
             return ConfigurationStatus::NotSupported;
         }
         if (isBool(value.get())) {
@@ -2157,7 +2157,7 @@ ConfigurationStatus ChargePointConfiguration::set(CiString<50> key, CiString<500
         }
     }
     if (key == "AuthorizationCacheEnabled") {
-        if (this->getAuthorizationCacheEnabled() == boost::none) {
+        if (this->getAuthorizationCacheEnabled() == std::nullopt) {
             return ConfigurationStatus::NotSupported;
         }
         if (isBool(value.get())) {
@@ -2180,7 +2180,7 @@ ConfigurationStatus ChargePointConfiguration::set(CiString<50> key, CiString<500
         this->setAuthorizeRemoteTxRequests(ocpp::conversions::string_to_bool(value.get()));
     }
     if (key == "BlinkRepeat") {
-        if (this->getBlinkRepeat() == boost::none) {
+        if (this->getBlinkRepeat() == std::nullopt) {
             return ConfigurationStatus::NotSupported;
         }
         try {
@@ -2223,14 +2223,14 @@ ConfigurationStatus ChargePointConfiguration::set(CiString<50> key, CiString<500
         }
     }
     if (key == "CentralContractValidationAllowed") {
-        if (this->getCentralContractValidationAllowed() == boost::none) {
+        if (this->getCentralContractValidationAllowed() == std::nullopt) {
             return ConfigurationStatus::NotSupported;
         } else {
             this->setContractValidationOffline(ocpp::conversions::string_to_bool(value.get()));
         }
     }
     if (key == "CertSigningWaitMinimum") {
-        if (this->getCertSigningWaitMinimum() == boost::none) {
+        if (this->getCertSigningWaitMinimum() == std::nullopt) {
             return ConfigurationStatus::NotSupported;
         } else {
             try {
@@ -2245,7 +2245,7 @@ ConfigurationStatus ChargePointConfiguration::set(CiString<50> key, CiString<500
         }
     }
     if (key == "CertSigningRepeatTimes") {
-        if (this->getCertSigningRepeatTimes() == boost::none) {
+        if (this->getCertSigningRepeatTimes() == std::nullopt) {
             return ConfigurationStatus::NotSupported;
         } else {
             try {
@@ -2280,7 +2280,7 @@ ConfigurationStatus ChargePointConfiguration::set(CiString<50> key, CiString<500
         this->setISO15118PnCEnabled(ocpp::conversions::string_to_bool(value.get()));
     }
     if (key == "LightIntensity") {
-        if (this->getLightIntensity() == boost::none) {
+        if (this->getLightIntensity() == std::nullopt) {
             return ConfigurationStatus::NotSupported;
         }
         try {
@@ -2308,7 +2308,7 @@ ConfigurationStatus ChargePointConfiguration::set(CiString<50> key, CiString<500
         }
     }
     if (key == "MaxEnergyOnInvalidId") {
-        if (this->getMaxEnergyOnInvalidId() == boost::none) {
+        if (this->getMaxEnergyOnInvalidId() == std::nullopt) {
             return ConfigurationStatus::NotSupported;
         }
         try {
@@ -2343,7 +2343,7 @@ ConfigurationStatus ChargePointConfiguration::set(CiString<50> key, CiString<500
         }
     }
     if (key == "MinimumStatusDuration") {
-        if (this->getMinimumStatusDuration() == boost::none) {
+        if (this->getMinimumStatusDuration() == std::nullopt) {
             return ConfigurationStatus::NotSupported;
         }
         try {
@@ -2432,7 +2432,7 @@ ConfigurationStatus ChargePointConfiguration::set(CiString<50> key, CiString<500
         }
     }
     if (key == "WebsocketPingInterval") {
-        if (this->getWebsocketPingInterval() == boost::none) {
+        if (this->getWebsocketPingInterval() == std::nullopt) {
             return ConfigurationStatus::NotSupported;
         }
         try {

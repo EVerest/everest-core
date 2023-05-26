@@ -2,8 +2,8 @@
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 #include <string>
 
-#include <boost/optional.hpp>
 #include <nlohmann/json.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v16/enums.hpp>

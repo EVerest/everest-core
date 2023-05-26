@@ -3,7 +3,7 @@
 #ifndef OCPP_V16_GETINSTALLEDCERTIFICATEIDS_HPP
 #define OCPP_V16_GETINSTALLEDCERTIFICATEIDS_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/v16/enums.hpp>
 #include <ocpp/v16/ocpp_types.hpp>
@@ -33,7 +33,7 @@ std::ostream& operator<<(std::ostream& os, const GetInstalledCertificateIdsReque
 /// \brief Contains a OCPP GetInstalledCertificateIdsResponse message
 struct GetInstalledCertificateIdsResponse : public ocpp::Message {
     GetInstalledCertificateStatusEnumType status;
-    boost::optional<std::vector<CertificateHashDataType>> certificateHashData;
+    std::optional<std::vector<CertificateHashDataType>> certificateHashData;
 
     /// \brief Provides the type of this GetInstalledCertificateIdsResponse message as a human readable string
     /// \returns the message type as a human readable string

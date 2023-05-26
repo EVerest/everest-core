@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_GETCERTIFICATESTATUS_HPP
 #define OCPP_V201_GETCERTIFICATESTATUS_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -15,7 +15,7 @@ namespace v201 {
 /// \brief Contains a OCPP GetCertificateStatus message
 struct GetCertificateStatusRequest : public ocpp::Message {
     OCSPRequestData ocspRequestData;
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this GetCertificateStatus message as a human readable string
     /// \returns the message type as a human readable string
@@ -35,9 +35,9 @@ std::ostream& operator<<(std::ostream& os, const GetCertificateStatusRequest& k)
 /// \brief Contains a OCPP GetCertificateStatusResponse message
 struct GetCertificateStatusResponse : public ocpp::Message {
     GetCertificateStatusEnum status;
-    boost::optional<CustomData> customData;
-    boost::optional<StatusInfo> statusInfo;
-    boost::optional<CiString<5500>> ocspResult;
+    std::optional<CustomData> customData;
+    std::optional<StatusInfo> statusInfo;
+    std::optional<CiString<5500>> ocspResult;
 
     /// \brief Provides the type of this GetCertificateStatusResponse message as a human readable string
     /// \returns the message type as a human readable string

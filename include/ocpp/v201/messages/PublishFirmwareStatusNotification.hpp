@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_PUBLISHFIRMWARESTATUSNOTIFICATION_HPP
 #define OCPP_V201_PUBLISHFIRMWARESTATUSNOTIFICATION_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -15,9 +15,9 @@ namespace v201 {
 /// \brief Contains a OCPP PublishFirmwareStatusNotification message
 struct PublishFirmwareStatusNotificationRequest : public ocpp::Message {
     PublishFirmwareStatusEnum status;
-    boost::optional<CustomData> customData;
-    boost::optional<std::vector<CiString<512>>> location;
-    boost::optional<int32_t> requestId;
+    std::optional<CustomData> customData;
+    std::optional<std::vector<CiString<512>>> location;
+    std::optional<int32_t> requestId;
 
     /// \brief Provides the type of this PublishFirmwareStatusNotification message as a human readable string
     /// \returns the message type as a human readable string
@@ -36,7 +36,7 @@ std::ostream& operator<<(std::ostream& os, const PublishFirmwareStatusNotificati
 
 /// \brief Contains a OCPP PublishFirmwareStatusNotificationResponse message
 struct PublishFirmwareStatusNotificationResponse : public ocpp::Message {
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this PublishFirmwareStatusNotificationResponse message as a human readable string
     /// \returns the message type as a human readable string

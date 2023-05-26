@@ -5,7 +5,7 @@
 #define OCPP_{{namespace | upper}}_{{ action.name|upper }}_HPP
 
 {% if uses_optional %}
-#include <boost/optional.hpp>
+#include <optional>
 {% endif %}
 
 {% if needs_enums %}
@@ -25,7 +25,7 @@ namespace {{namespace}} {
 /// \brief Contains a OCPP {{ type.name | replace('Request', '') }} message
 struct {{ type.name }} : public ocpp::Message {
 {% for property in type.properties %}
-    {{ 'boost::optional<' if not property.required -}}
+    {{ 'std::optional<' if not property.required -}}
     {{ property.type -}}
     {{ '>' if not property.required -}}
     {{ ' ' + property.name + ';' }}

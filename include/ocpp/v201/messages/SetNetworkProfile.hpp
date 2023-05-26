@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_SETNETWORKPROFILE_HPP
 #define OCPP_V201_SETNETWORKPROFILE_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -16,7 +16,7 @@ namespace v201 {
 struct SetNetworkProfileRequest : public ocpp::Message {
     int32_t configurationSlot;
     NetworkConnectionProfile connectionData;
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this SetNetworkProfile message as a human readable string
     /// \returns the message type as a human readable string
@@ -36,8 +36,8 @@ std::ostream& operator<<(std::ostream& os, const SetNetworkProfileRequest& k);
 /// \brief Contains a OCPP SetNetworkProfileResponse message
 struct SetNetworkProfileResponse : public ocpp::Message {
     SetNetworkProfileStatusEnum status;
-    boost::optional<CustomData> customData;
-    boost::optional<StatusInfo> statusInfo;
+    std::optional<CustomData> customData;
+    std::optional<StatusInfo> statusInfo;
 
     /// \brief Provides the type of this SetNetworkProfileResponse message as a human readable string
     /// \returns the message type as a human readable string

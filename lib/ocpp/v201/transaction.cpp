@@ -8,7 +8,7 @@ namespace ocpp {
 namespace v201 {
 
 Transaction EnhancedTransaction::get_transaction() {
-    Transaction transaction = {this->transactionId,     boost::none,         this->chargingState,
+    Transaction transaction = {this->transactionId,     std::nullopt,         this->chargingState,
                                this->timeSpentCharging, this->stoppedReason, this->remoteStartId};
     return transaction;
 }

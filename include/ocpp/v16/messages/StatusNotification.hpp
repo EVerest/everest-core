@@ -3,7 +3,7 @@
 #ifndef OCPP_V16_STATUSNOTIFICATION_HPP
 #define OCPP_V16_STATUSNOTIFICATION_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v16/enums.hpp>
@@ -17,10 +17,10 @@ struct StatusNotificationRequest : public ocpp::Message {
     int32_t connectorId;
     ChargePointErrorCode errorCode;
     ChargePointStatus status;
-    boost::optional<CiString<50>> info;
-    boost::optional<ocpp::DateTime> timestamp;
-    boost::optional<CiString<255>> vendorId;
-    boost::optional<CiString<50>> vendorErrorCode;
+    std::optional<CiString<50>> info;
+    std::optional<ocpp::DateTime> timestamp;
+    std::optional<CiString<255>> vendorId;
+    std::optional<CiString<50>> vendorErrorCode;
 
     /// \brief Provides the type of this StatusNotification message as a human readable string
     /// \returns the message type as a human readable string

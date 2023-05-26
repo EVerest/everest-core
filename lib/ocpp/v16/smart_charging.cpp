@@ -71,7 +71,7 @@ ocpp::DateTime get_period_end_time(const int period_index, const ocpp::DateTime&
                                    const ChargingSchedule& schedule,
                                    const std::vector<ChargingSchedulePeriod>& periods) {
 
-    boost::optional<ocpp::DateTime> period_end_time;
+    std::optional<ocpp::DateTime> period_end_time;
 
     int period_diff_in_seconds;
     if (period_index + 1 < periods.size()) {
@@ -130,7 +130,7 @@ PeriodDateTimePair SmartChargingHandler::find_period_at(const ocpp::DateTime& ti
         }
     }
 
-    return {boost::none, ocpp::DateTime(date::utc_clock::now() + hours(std::numeric_limits<int>::max()))};
+    return {std::nullopt, ocpp::DateTime(date::utc_clock::now() + hours(std::numeric_limits<int>::max()))};
 }
 
 void SmartChargingHandler::clear_expired_profiles() {
@@ -167,7 +167,7 @@ int SmartChargingHandler::get_number_installed_profiles() {
 
 ChargingSchedule SmartChargingHandler::calculate_composite_schedule(
     std::vector<ChargingProfile> valid_profiles, const ocpp::DateTime& start_time, const ocpp::DateTime& end_time,
-    const int connector_id, boost::optional<ChargingRateUnit> charging_rate_unit) {
+    const int connector_id, std::optional<ChargingRateUnit> charging_rate_unit) {
     // return in amps if not given
     if (!charging_rate_unit) {
         charging_rate_unit.emplace(ChargingRateUnit::A);
@@ -369,9 +369,9 @@ void SmartChargingHandler::add_tx_profile(const ChargingProfile& profile, const 
 }
 
 bool SmartChargingHandler::clear_profiles(std::map<int32_t, ChargingProfile>& stack_level_profiles_map,
-                                          boost::optional<int> profile_id_opt, boost::optional<int> connector_id_opt,
-                                          const int connector_id, boost::optional<int> stack_level_opt,
-                                          boost::optional<ChargingProfilePurposeType> charging_profile_purpose_opt,
+                                          std::optional<int> profile_id_opt, std::optional<int> connector_id_opt,
+                                          const int connector_id, std::optional<int> stack_level_opt,
+                                          std::optional<ChargingProfilePurposeType> charging_profile_purpose_opt,
                                           bool check_id_only) {
     bool erased_at_least_one = false;
 
@@ -397,8 +397,8 @@ bool SmartChargingHandler::clear_profiles(std::map<int32_t, ChargingProfile>& st
 }
 
 bool SmartChargingHandler::clear_all_profiles_with_filter(
-    boost::optional<int> profile_id_opt, boost::optional<int> connector_id_opt, boost::optional<int> stack_level_opt,
-    boost::optional<ChargingProfilePurposeType> charging_profile_purpose_opt, bool check_id_only) {
+    std::optional<int> profile_id_opt, std::optional<int> connector_id_opt, std::optional<int> stack_level_opt,
+    std::optional<ChargingProfilePurposeType> charging_profile_purpose_opt, bool check_id_only) {
 
     // for ChargePointMaxProfile
     auto erased_charge_point_max_profile =
@@ -473,12 +473,12 @@ std::vector<ChargingProfile> SmartChargingHandler::get_valid_profiles(const ocpp
     return valid_profiles;
 }
 
-boost::optional<ocpp::DateTime> SmartChargingHandler::get_profile_start_time(const ChargingProfile& profile,
+std::optional<ocpp::DateTime> SmartChargingHandler::get_profile_start_time(const ChargingProfile& profile,
                                                                              const ocpp::DateTime& time,
                                                                              const int connector_id) {
 
     const auto schedule = profile.chargingSchedule;
-    boost::optional<ocpp::DateTime> period_start_time;
+    std::optional<ocpp::DateTime> period_start_time;
     if (profile.chargingProfileKind == ChargingProfileKindType::Absolute) {
         if (schedule.startSchedule) {
             period_start_time.emplace(ocpp::DateTime(floor<seconds>(schedule.startSchedule.value().to_time_point())));

@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_DATATRANSFER_HPP
 #define OCPP_V201_DATATRANSFER_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -15,9 +15,9 @@ namespace v201 {
 /// \brief Contains a OCPP DataTransfer message
 struct DataTransferRequest : public ocpp::Message {
     CiString<255> vendorId;
-    boost::optional<CustomData> customData;
-    boost::optional<CiString<50>> messageId;
-    boost::optional<std::string> data;
+    std::optional<CustomData> customData;
+    std::optional<CiString<50>> messageId;
+    std::optional<std::string> data;
 
     /// \brief Provides the type of this DataTransfer message as a human readable string
     /// \returns the message type as a human readable string
@@ -37,9 +37,9 @@ std::ostream& operator<<(std::ostream& os, const DataTransferRequest& k);
 /// \brief Contains a OCPP DataTransferResponse message
 struct DataTransferResponse : public ocpp::Message {
     DataTransferStatusEnum status;
-    boost::optional<CustomData> customData;
-    boost::optional<StatusInfo> statusInfo;
-    boost::optional<std::string> data;
+    std::optional<CustomData> customData;
+    std::optional<StatusInfo> statusInfo;
+    std::optional<std::string> data;
 
     /// \brief Provides the type of this DataTransferResponse message as a human readable string
     /// \returns the message type as a human readable string

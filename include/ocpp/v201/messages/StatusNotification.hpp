@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_STATUSNOTIFICATION_HPP
 #define OCPP_V201_STATUSNOTIFICATION_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -18,7 +18,7 @@ struct StatusNotificationRequest : public ocpp::Message {
     ConnectorStatusEnum connectorStatus;
     int32_t evseId;
     int32_t connectorId;
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this StatusNotification message as a human readable string
     /// \returns the message type as a human readable string
@@ -37,7 +37,7 @@ std::ostream& operator<<(std::ostream& os, const StatusNotificationRequest& k);
 
 /// \brief Contains a OCPP StatusNotificationResponse message
 struct StatusNotificationResponse : public ocpp::Message {
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this StatusNotificationResponse message as a human readable string
     /// \returns the message type as a human readable string

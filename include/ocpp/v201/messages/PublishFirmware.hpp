@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_PUBLISHFIRMWARE_HPP
 #define OCPP_V201_PUBLISHFIRMWARE_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -17,9 +17,9 @@ struct PublishFirmwareRequest : public ocpp::Message {
     CiString<512> location;
     CiString<32> checksum;
     int32_t requestId;
-    boost::optional<CustomData> customData;
-    boost::optional<int32_t> retries;
-    boost::optional<int32_t> retryInterval;
+    std::optional<CustomData> customData;
+    std::optional<int32_t> retries;
+    std::optional<int32_t> retryInterval;
 
     /// \brief Provides the type of this PublishFirmware message as a human readable string
     /// \returns the message type as a human readable string
@@ -39,8 +39,8 @@ std::ostream& operator<<(std::ostream& os, const PublishFirmwareRequest& k);
 /// \brief Contains a OCPP PublishFirmwareResponse message
 struct PublishFirmwareResponse : public ocpp::Message {
     GenericStatusEnum status;
-    boost::optional<CustomData> customData;
-    boost::optional<StatusInfo> statusInfo;
+    std::optional<CustomData> customData;
+    std::optional<StatusInfo> statusInfo;
 
     /// \brief Provides the type of this PublishFirmwareResponse message as a human readable string
     /// \returns the message type as a human readable string

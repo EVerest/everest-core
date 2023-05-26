@@ -5,8 +5,8 @@
 
 #include <string>
 
-#include <boost/optional.hpp>
 #include <nlohmann/json.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v16/enums.hpp>
@@ -17,8 +17,8 @@ namespace v16 {
 
 struct IdTagInfo {
     AuthorizationStatus status;
-    boost::optional<ocpp::DateTime> expiryDate;
-    boost::optional<CiString<20>> parentIdTag;
+    std::optional<ocpp::DateTime> expiryDate;
+    std::optional<CiString<20>> parentIdTag;
 };
 /// \brief Conversion from a given IdTagInfo \p k to a given json object \p j
 void to_json(json& j, const IdTagInfo& k);
@@ -49,7 +49,7 @@ std::ostream& operator<<(std::ostream& os, const CertificateHashDataType& k);
 struct ChargingSchedulePeriod {
     int32_t startPeriod;
     float limit;
-    boost::optional<int32_t> numberPhases;
+    std::optional<int32_t> numberPhases;
 };
 /// \brief Conversion from a given ChargingSchedulePeriod \p k to a given json object \p j
 void to_json(json& j, const ChargingSchedulePeriod& k);
@@ -64,9 +64,9 @@ std::ostream& operator<<(std::ostream& os, const ChargingSchedulePeriod& k);
 struct ChargingSchedule {
     ChargingRateUnit chargingRateUnit;
     std::vector<ChargingSchedulePeriod> chargingSchedulePeriod;
-    boost::optional<int32_t> duration;
-    boost::optional<ocpp::DateTime> startSchedule;
-    boost::optional<float> minChargingRate;
+    std::optional<int32_t> duration;
+    std::optional<ocpp::DateTime> startSchedule;
+    std::optional<float> minChargingRate;
 };
 /// \brief Conversion from a given ChargingSchedule \p k to a given json object \p j
 void to_json(json& j, const ChargingSchedule& k);
@@ -81,7 +81,7 @@ std::ostream& operator<<(std::ostream& os, const ChargingSchedule& k);
 struct KeyValue {
     CiString<50> key;
     bool readonly;
-    boost::optional<CiString<500>> value;
+    std::optional<CiString<500>> value;
 };
 /// \brief Conversion from a given KeyValue \p k to a given json object \p j
 void to_json(json& j, const KeyValue& k);
@@ -95,8 +95,8 @@ std::ostream& operator<<(std::ostream& os, const KeyValue& k);
 
 struct LogParametersType {
     CiString<512> remoteLocation;
-    boost::optional<ocpp::DateTime> oldestTimestamp;
-    boost::optional<ocpp::DateTime> latestTimestamp;
+    std::optional<ocpp::DateTime> oldestTimestamp;
+    std::optional<ocpp::DateTime> latestTimestamp;
 };
 /// \brief Conversion from a given LogParametersType \p k to a given json object \p j
 void to_json(json& j, const LogParametersType& k);
@@ -110,12 +110,12 @@ std::ostream& operator<<(std::ostream& os, const LogParametersType& k);
 
 struct SampledValue {
     std::string value;
-    boost::optional<ReadingContext> context;
-    boost::optional<ValueFormat> format;
-    boost::optional<Measurand> measurand;
-    boost::optional<Phase> phase;
-    boost::optional<Location> location;
-    boost::optional<UnitOfMeasure> unit;
+    std::optional<ReadingContext> context;
+    std::optional<ValueFormat> format;
+    std::optional<Measurand> measurand;
+    std::optional<Phase> phase;
+    std::optional<Location> location;
+    std::optional<UnitOfMeasure> unit;
 };
 /// \brief Conversion from a given SampledValue \p k to a given json object \p j
 void to_json(json& j, const SampledValue& k);
@@ -147,10 +147,10 @@ struct ChargingProfile {
     ChargingProfilePurposeType chargingProfilePurpose;
     ChargingProfileKindType chargingProfileKind;
     ChargingSchedule chargingSchedule;
-    boost::optional<int32_t> transactionId;
-    boost::optional<RecurrencyKindType> recurrencyKind;
-    boost::optional<ocpp::DateTime> validFrom;
-    boost::optional<ocpp::DateTime> validTo;
+    std::optional<int32_t> transactionId;
+    std::optional<RecurrencyKindType> recurrencyKind;
+    std::optional<ocpp::DateTime> validFrom;
+    std::optional<ocpp::DateTime> validTo;
 };
 /// \brief Conversion from a given ChargingProfile \p k to a given json object \p j
 void to_json(json& j, const ChargingProfile& k);
@@ -164,7 +164,7 @@ std::ostream& operator<<(std::ostream& os, const ChargingProfile& k);
 
 struct LocalAuthorizationList {
     CiString<20> idTag;
-    boost::optional<IdTagInfo> idTagInfo;
+    std::optional<IdTagInfo> idTagInfo;
 };
 /// \brief Conversion from a given LocalAuthorizationList \p k to a given json object \p j
 void to_json(json& j, const LocalAuthorizationList& k);
@@ -181,7 +181,7 @@ struct FirmwareType {
     ocpp::DateTime retrieveDateTime;
     CiString<5500> signingCertificate;
     CiString<800> signature;
-    boost::optional<ocpp::DateTime> installDateTime;
+    std::optional<ocpp::DateTime> installDateTime;
 };
 /// \brief Conversion from a given FirmwareType \p k to a given json object \p j
 void to_json(json& j, const FirmwareType& k);

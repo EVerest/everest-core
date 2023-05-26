@@ -3,7 +3,7 @@
 #ifndef OCPP_V16_BOOTNOTIFICATION_HPP
 #define OCPP_V16_BOOTNOTIFICATION_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v16/enums.hpp>
@@ -16,13 +16,13 @@ namespace v16 {
 struct BootNotificationRequest : public ocpp::Message {
     CiString<20> chargePointVendor;
     CiString<20> chargePointModel;
-    boost::optional<CiString<25>> chargePointSerialNumber;
-    boost::optional<CiString<25>> chargeBoxSerialNumber;
-    boost::optional<CiString<50>> firmwareVersion;
-    boost::optional<CiString<20>> iccid;
-    boost::optional<CiString<20>> imsi;
-    boost::optional<CiString<25>> meterType;
-    boost::optional<CiString<25>> meterSerialNumber;
+    std::optional<CiString<25>> chargePointSerialNumber;
+    std::optional<CiString<25>> chargeBoxSerialNumber;
+    std::optional<CiString<50>> firmwareVersion;
+    std::optional<CiString<20>> iccid;
+    std::optional<CiString<20>> imsi;
+    std::optional<CiString<25>> meterType;
+    std::optional<CiString<25>> meterSerialNumber;
 
     /// \brief Provides the type of this BootNotification message as a human readable string
     /// \returns the message type as a human readable string

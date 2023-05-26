@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_NOTIFYEVCHARGINGSCHEDULE_HPP
 #define OCPP_V201_NOTIFYEVCHARGINGSCHEDULE_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -17,7 +17,7 @@ struct NotifyEVChargingScheduleRequest : public ocpp::Message {
     ocpp::DateTime timeBase;
     ChargingSchedule chargingSchedule;
     int32_t evseId;
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this NotifyEVChargingSchedule message as a human readable string
     /// \returns the message type as a human readable string
@@ -37,8 +37,8 @@ std::ostream& operator<<(std::ostream& os, const NotifyEVChargingScheduleRequest
 /// \brief Contains a OCPP NotifyEVChargingScheduleResponse message
 struct NotifyEVChargingScheduleResponse : public ocpp::Message {
     GenericStatusEnum status;
-    boost::optional<CustomData> customData;
-    boost::optional<StatusInfo> statusInfo;
+    std::optional<CustomData> customData;
+    std::optional<StatusInfo> statusInfo;
 
     /// \brief Provides the type of this NotifyEVChargingScheduleResponse message as a human readable string
     /// \returns the message type as a human readable string

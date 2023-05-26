@@ -10,7 +10,7 @@ namespace ocpp {
 namespace v16 {
 
 Transaction::Transaction(const int32_t& connector, const std::string& session_id, const CiString<20>& id_token,
-                         const int32_t& meter_start, boost::optional<int32_t> reservation_id,
+                         const int32_t& meter_start, std::optional<int32_t> reservation_id,
                          const ocpp::DateTime& timestamp,
                          std::unique_ptr<Everest::SteadyTimer> meter_values_sample_timer) :
     transaction_id(-1),
@@ -122,7 +122,7 @@ std::shared_ptr<StampedEnergyWh> Transaction::get_stop_energy_wh() {
     return this->stop_energy_wh;
 }
 
-boost::optional<int32_t> Transaction::get_reservation_id() {
+std::optional<int32_t> Transaction::get_reservation_id() {
     return this->reservation_id;
 }
 
@@ -218,14 +218,14 @@ void TransactionHandler::change_meter_values_sample_intervals(int32_t interval) 
     }
 }
 
-boost::optional<CiString<20>>
+std::optional<CiString<20>>
 TransactionHandler::get_authorized_id_tag(const std::string& stop_transaction_message_id) {
     for (const auto& transaction : this->stopped_transactions) {
         if (transaction->get_stop_transaction_message_id() == stop_transaction_message_id) {
             transaction->get_id_tag();
         }
     }
-    return boost::none;
+    return std::nullopt;
 }
 
 bool TransactionHandler::transaction_active(int32_t connector) {

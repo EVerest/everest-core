@@ -44,12 +44,12 @@ public:
     /// \brief Gets cache entry for given \p id_token_hash if present
     /// \param id_token_hash
     /// \return
-    boost::optional<IdTokenInfo> get_auth_cache_entry(const std::string& id_token_hash);
+    std::optional<IdTokenInfo> get_auth_cache_entry(const std::string& id_token_hash);
 
-    void insert_availability(const int32_t evse_id, boost::optional<int32_t> connector_id,
+    void insert_availability(const int32_t evse_id, std::optional<int32_t> connector_id,
                              const OperationalStatusEnum& operational_status, const bool replace);
 
-    OperationalStatusEnum get_availability(const int32_t evse_id, boost::optional<int32_t> connector_id);
+    OperationalStatusEnum get_availability(const int32_t evse_id, std::optional<int32_t> connector_id);
 };
 
 } // namespace v201

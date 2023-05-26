@@ -23,7 +23,7 @@ private:
     std::map<int32_t, std::unique_ptr<Connector>> id_connector_map;
     std::function<void(const int32_t connector_id, const ConnectorStatusEnum& status)> status_notification_callback;
     std::function<void(const MeterValue& meter_value, const Transaction& transaction, const int32_t seq_no,
-                       const boost::optional<int32_t> reservation_id)>
+                       const std::optional<int32_t> reservation_id)>
         transaction_meter_value_req;
     std::unique_ptr<EnhancedTransaction> transaction; // pointer to active transaction (can be nullptr)
     MeterValue meter_value;                           // represents current meter value
@@ -39,7 +39,7 @@ public:
          const std::function<void(const int32_t connector_id, const ConnectorStatusEnum& status)>&
              status_notification_callback,
          const std::function<void(const MeterValue& meter_value, const Transaction& transaction, const int32_t seq_no,
-                                  const boost::optional<int32_t> reservation_id)>& transaction_meter_value_req);
+                                  const std::optional<int32_t> reservation_id)>& transaction_meter_value_req);
 
     /// \brief Returns an OCPP2.0.1 EVSE type
     /// \return
@@ -64,7 +64,7 @@ public:
     /// transmitted via TransactionEventRequest (eventType = Updated) messages
     void open_transaction(const std::string& transaction_id, const int32_t connector_id, const DateTime& timestamp,
                           const MeterValue& meter_start, const IdToken& id_token,
-                          const boost::optional<int32_t> reservation_id,
+                          const std::optional<int32_t> reservation_id,
                           const int32_t sampled_data_tx_updated_interval);
 
     /// \brief Closes the transaction on this evse by adding the given \p timestamp \p meter_stop and \p reason .

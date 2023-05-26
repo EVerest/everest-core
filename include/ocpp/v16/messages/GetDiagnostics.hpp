@@ -3,7 +3,7 @@
 #ifndef OCPP_V16_GETDIAGNOSTICS_HPP
 #define OCPP_V16_GETDIAGNOSTICS_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v16/ocpp_types.hpp>
@@ -14,10 +14,10 @@ namespace v16 {
 /// \brief Contains a OCPP GetDiagnostics message
 struct GetDiagnosticsRequest : public ocpp::Message {
     std::string location;
-    boost::optional<int32_t> retries;
-    boost::optional<int32_t> retryInterval;
-    boost::optional<ocpp::DateTime> startTime;
-    boost::optional<ocpp::DateTime> stopTime;
+    std::optional<int32_t> retries;
+    std::optional<int32_t> retryInterval;
+    std::optional<ocpp::DateTime> startTime;
+    std::optional<ocpp::DateTime> stopTime;
 
     /// \brief Provides the type of this GetDiagnostics message as a human readable string
     /// \returns the message type as a human readable string
@@ -36,7 +36,7 @@ std::ostream& operator<<(std::ostream& os, const GetDiagnosticsRequest& k);
 
 /// \brief Contains a OCPP GetDiagnosticsResponse message
 struct GetDiagnosticsResponse : public ocpp::Message {
-    boost::optional<CiString<255>> fileName;
+    std::optional<CiString<255>> fileName;
 
     /// \brief Provides the type of this GetDiagnosticsResponse message as a human readable string
     /// \returns the message type as a human readable string

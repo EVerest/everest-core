@@ -3,7 +3,7 @@
 #ifndef OCPP_V16_AUTHORIZE_HPP
 #define OCPP_V16_AUTHORIZE_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v16/enums.hpp>

@@ -32,7 +32,7 @@ class Transaction {
 private:
     std::shared_ptr<StampedEnergyWh> start_energy_wh;
     std::shared_ptr<StampedEnergyWh> stop_energy_wh;
-    boost::optional<int32_t> reservation_id;
+    std::optional<int32_t> reservation_id;
     int32_t transaction_id;
     std::string session_id;
     int32_t connector;
@@ -49,7 +49,7 @@ public:
     /// \brief Creates a new Transaction object, taking ownership of the provided \p meter_values_sample_timer
     /// on the provided \p connector
     Transaction(const int32_t& connector, const std::string& session_id, const CiString<20>& id_token,
-                const int32_t& meter_start, boost::optional<int32_t> reservation_id, const ocpp::DateTime& timestamp,
+                const int32_t& meter_start, std::optional<int32_t> reservation_id, const ocpp::DateTime& timestamp,
                 std::unique_ptr<Everest::SteadyTimer> meter_values_sample_timer);
 
     /// \brief Provides the energy in Wh at the start of the transaction
@@ -66,7 +66,7 @@ public:
 
     /// \brief Provides the reservation id of the transaction if present
     /// \returns the reservation id
-    boost::optional<int32_t> get_reservation_id();
+    std::optional<int32_t> get_reservation_id();
 
     /// \brief Provides the connector of this transaction
     /// \returns the connector
@@ -182,8 +182,8 @@ public:
 
     // \brief Provides the IdTag that was associated with the transaction with the provided
     /// \p stop_transaction_message_id
-    /// \returns the IdTag if it is available, boost::none otherwise
-    boost::optional<CiString<20>> get_authorized_id_tag(const std::string& stop_transaction_message_id);
+    /// \returns the IdTag if it is available, std::nullopt otherwise
+    std::optional<CiString<20>> get_authorized_id_tag(const std::string& stop_transaction_message_id);
 
     /// \brief Indicates if there is an active transaction at the proveded \p connector
     /// \returns true if a transaction exists

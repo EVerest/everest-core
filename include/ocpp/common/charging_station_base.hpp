@@ -27,9 +27,9 @@ protected:
 
     /// \brief Identifies the next timestamp at which a clock aligned meter value should be send
     /// \param interval the configured AlignedDataInterval
-    /// \return boost::optional<DateTime> If \param interval > 0 it returns the next timestamp at which a clock aligned
-    /// meter value should be sent, else boost::none
-    boost::optional<DateTime> get_next_clock_aligned_meter_value_timestamp(const int32_t interval);
+    /// \return std::optional<DateTime> If \param interval > 0 it returns the next timestamp at which a clock aligned
+    /// meter value should be sent, else std::nullopt
+    std::optional<DateTime> get_next_clock_aligned_meter_value_timestamp(const int32_t interval);
 
     /// \brief Generates a uuid  
     /// \return uuid

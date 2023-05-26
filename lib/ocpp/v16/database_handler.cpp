@@ -98,7 +98,7 @@ bool DatabaseHandler::clear_table(const std::string& table_name) {
 void DatabaseHandler::insert_transaction(const std::string& session_id, const int32_t transaction_id,
                                          const int32_t connector, const std::string& id_tag_start,
                                          const std::string& time_start, const int32_t meter_start, const bool csms_ack,
-                                         const boost::optional<int32_t> reservation_id) {
+                                         const std::optional<int32_t> reservation_id) {
     std::string sql = "INSERT INTO TRANSACTIONS (ID, TRANSACTION_ID, CONNECTOR, ID_TAG_START, TIME_START, METER_START, "
                       "CSMS_ACK, METER_LAST, METER_LAST_TIME, LAST_UPDATE, RESERVATION_ID) VALUES "
                       "(@session_id, @transaction_id, @connector, @id_tag_start, @time_start, @meter_start, @csms_ack, "
@@ -139,7 +139,7 @@ void DatabaseHandler::insert_transaction(const std::string& session_id, const in
 }
 
 void DatabaseHandler::update_transaction(const std::string& session_id, int32_t transaction_id,
-                                         boost::optional<CiString<20>> parent_id_tag) {
+                                         std::optional<CiString<20>> parent_id_tag) {
 
     std::string sql = "UPDATE TRANSACTIONS SET TRANSACTION_ID=@transaction_id, PARENT_ID_TAG=@parent_id_tag, "
                       "LAST_UPDATE=@last_update WHERE ID==@session_id";
@@ -154,7 +154,7 @@ void DatabaseHandler::update_transaction(const std::string& session_id, int32_t 
 
     // bindings
     sqlite3_bind_int(stmt, 1, transaction_id);
-    if (parent_id_tag != boost::none) {
+    if (parent_id_tag != std::nullopt) {
         const std::string parent_id_tag_str(parent_id_tag.value().get());
         sqlite3_bind_text(stmt, 2, parent_id_tag_str.c_str(), parent_id_tag_str.length(), NULL);
     }
@@ -173,8 +173,8 @@ void DatabaseHandler::update_transaction(const std::string& session_id, int32_t 
 }
 
 void DatabaseHandler::update_transaction(const std::string& session_id, int32_t meter_stop, const std::string& time_end,
-                                         boost::optional<CiString<20>> id_tag_end,
-                                         boost::optional<v16::Reason> stop_reason) {
+                                         std::optional<CiString<20>> id_tag_end,
+                                         std::optional<v16::Reason> stop_reason) {
     std::string sql =
         "UPDATE TRANSACTIONS SET METER_STOP=@meter_stop, TIME_END=@time_end, "
         "ID_TAG_END=@id_tag_end, STOP_REASON=@stop_reason, LAST_UPDATE=@last_update WHERE ID==@session_id";
@@ -189,11 +189,11 @@ void DatabaseHandler::update_transaction(const std::string& session_id, int32_t 
 
     sqlite3_bind_int(stmt, 1, meter_stop);
     sqlite3_bind_text(stmt, 2, time_end.c_str(), time_end.length(), NULL);
-    if (id_tag_end != boost::none) {
+    if (id_tag_end != std::nullopt) {
         const std::string id_tag_end_str(id_tag_end.value().get());
         sqlite3_bind_text(stmt, 3, id_tag_end_str.c_str(), id_tag_end_str.length(), SQLITE_TRANSIENT);
     }
-    if (stop_reason != boost::none) {
+    if (stop_reason != std::nullopt) {
         const std::string stop_reason_str(v16::conversions::reason_to_string(stop_reason.value()));
         sqlite3_bind_text(stmt, 4, stop_reason_str.c_str(), stop_reason_str.length(), SQLITE_TRANSIENT);
     }
@@ -364,7 +364,7 @@ void DatabaseHandler::insert_or_update_authorization_cache_entry(const CiString<
     }
 }
 
-boost::optional<v16::IdTagInfo> DatabaseHandler::get_authorization_cache_entry(const CiString<20>& id_tag) {
+std::optional<v16::IdTagInfo> DatabaseHandler::get_authorization_cache_entry(const CiString<20>& id_tag) {
 
     // TODO(piet): Only call this when authorization cache is enabled!
 
@@ -372,14 +372,14 @@ boost::optional<v16::IdTagInfo> DatabaseHandler::get_authorization_cache_entry(c
     sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
         EVLOG_error << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
-        return boost::none;
+        return std::nullopt;
     }
 
     const auto id_tag_str = id_tag.get();
     sqlite3_bind_text(stmt, 1, id_tag_str.c_str(), id_tag_str.length(), NULL);
 
     if (sqlite3_step(stmt) != SQLITE_ROW) {
-        return boost::none;
+        return std::nullopt;
     }
 
     v16::IdTagInfo id_tag_info;
@@ -408,7 +408,7 @@ boost::optional<v16::IdTagInfo> DatabaseHandler::get_authorization_cache_entry(c
     if (id_tag_info.status != v16::AuthorizationStatus::Expired) {
         if (id_tag_info.expiryDate) {
             auto now = DateTime();
-            if (id_tag_info.expiryDate.get() <= now) {
+            if (id_tag_info.expiryDate.value() <= now) {
                 EVLOG_debug << "IdTag " << id_tag
                             << " in auth cache has expiry date in the past, setting entry to expired.";
                 id_tag_info.status = v16::AuthorizationStatus::Expired;
@@ -615,19 +615,19 @@ void DatabaseHandler::delete_local_authorization_list_entry(const std::string& i
     }
 }
 
-boost::optional<v16::IdTagInfo> DatabaseHandler::get_local_authorization_list_entry(const CiString<20>& id_tag) {
+std::optional<v16::IdTagInfo> DatabaseHandler::get_local_authorization_list_entry(const CiString<20>& id_tag) {
     std::string sql = "SELECT ID_TAG, AUTH_STATUS, EXPIRY_DATE, PARENT_ID_TAG FROM AUTH_LIST WHERE ID_TAG = @id_tag";
     sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
         EVLOG_error << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
-        return boost::none;
+        return std::nullopt;
     }
 
     const auto id_tag_str = id_tag.get();
     sqlite3_bind_text(stmt, 1, id_tag_str.c_str(), id_tag_str.length(), NULL);
 
     if (sqlite3_step(stmt) != SQLITE_ROW) {
-        return boost::none;
+        return std::nullopt;
     }
 
     v16::IdTagInfo id_tag_info;
@@ -661,7 +661,7 @@ boost::optional<v16::IdTagInfo> DatabaseHandler::get_local_authorization_list_en
     if (id_tag_info.status != v16::AuthorizationStatus::Expired) {
         if (id_tag_info.expiryDate) {
             auto now = DateTime();
-            if (id_tag_info.expiryDate.get() <= now) {
+            if (id_tag_info.expiryDate.value() <= now) {
                 EVLOG_debug << "IdTag " << id_tag
                             << " in auth list has expiry date in the past, setting entry to expired.";
                 id_tag_info.status = v16::AuthorizationStatus::Expired;
@@ -791,17 +791,17 @@ void DatabaseHandler::insert_ocsp_update() {
     }
 }
 
-boost::optional<DateTime> DatabaseHandler::get_last_ocsp_update() {
+std::optional<DateTime> DatabaseHandler::get_last_ocsp_update() {
     std::string sql = "SELECT LAST_UPDATE FROM OCSP_REQUEST";
 
     sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
         EVLOG_warning << "Could not prepare select statement: " << sqlite3_errmsg(this->db);
-        return boost::none;
+        return std::nullopt;
     }
 
     if (sqlite3_step(stmt) != SQLITE_ROW) {
-        return boost::none;
+        return std::nullopt;
     }
 
     const auto now = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)));

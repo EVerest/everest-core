@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_SETCHARGINGPROFILE_HPP
 #define OCPP_V201_SETCHARGINGPROFILE_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -16,7 +16,7 @@ namespace v201 {
 struct SetChargingProfileRequest : public ocpp::Message {
     int32_t evseId;
     ChargingProfile chargingProfile;
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this SetChargingProfile message as a human readable string
     /// \returns the message type as a human readable string
@@ -36,8 +36,8 @@ std::ostream& operator<<(std::ostream& os, const SetChargingProfileRequest& k);
 /// \brief Contains a OCPP SetChargingProfileResponse message
 struct SetChargingProfileResponse : public ocpp::Message {
     ChargingProfileStatusEnum status;
-    boost::optional<CustomData> customData;
-    boost::optional<StatusInfo> statusInfo;
+    std::optional<CustomData> customData;
+    std::optional<StatusInfo> statusInfo;
 
     /// \brief Provides the type of this SetChargingProfileResponse message as a human readable string
     /// \returns the message type as a human readable string

@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_HEARTBEAT_HPP
 #define OCPP_V201_HEARTBEAT_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/ocpp_types.hpp>
@@ -13,7 +13,7 @@ namespace v201 {
 
 /// \brief Contains a OCPP Heartbeat message
 struct HeartbeatRequest : public ocpp::Message {
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this Heartbeat message as a human readable string
     /// \returns the message type as a human readable string
@@ -33,7 +33,7 @@ std::ostream& operator<<(std::ostream& os, const HeartbeatRequest& k);
 /// \brief Contains a OCPP HeartbeatResponse message
 struct HeartbeatResponse : public ocpp::Message {
     ocpp::DateTime currentTime;
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this HeartbeatResponse message as a human readable string
     /// \returns the message type as a human readable string

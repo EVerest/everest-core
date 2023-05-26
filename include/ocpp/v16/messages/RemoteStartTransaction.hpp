@@ -3,7 +3,7 @@
 #ifndef OCPP_V16_REMOTESTARTTRANSACTION_HPP
 #define OCPP_V16_REMOTESTARTTRANSACTION_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v16/enums.hpp>
@@ -15,8 +15,8 @@ namespace v16 {
 /// \brief Contains a OCPP RemoteStartTransaction message
 struct RemoteStartTransactionRequest : public ocpp::Message {
     CiString<20> idTag;
-    boost::optional<int32_t> connectorId;
-    boost::optional<ChargingProfile> chargingProfile;
+    std::optional<int32_t> connectorId;
+    std::optional<ChargingProfile> chargingProfile;
 
     /// \brief Provides the type of this RemoteStartTransaction message as a human readable string
     /// \returns the message type as a human readable string

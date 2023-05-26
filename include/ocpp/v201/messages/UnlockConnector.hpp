@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_UNLOCKCONNECTOR_HPP
 #define OCPP_V201_UNLOCKCONNECTOR_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -16,7 +16,7 @@ namespace v201 {
 struct UnlockConnectorRequest : public ocpp::Message {
     int32_t evseId;
     int32_t connectorId;
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this UnlockConnector message as a human readable string
     /// \returns the message type as a human readable string
@@ -36,8 +36,8 @@ std::ostream& operator<<(std::ostream& os, const UnlockConnectorRequest& k);
 /// \brief Contains a OCPP UnlockConnectorResponse message
 struct UnlockConnectorResponse : public ocpp::Message {
     UnlockStatusEnum status;
-    boost::optional<CustomData> customData;
-    boost::optional<StatusInfo> statusInfo;
+    std::optional<CustomData> customData;
+    std::optional<StatusInfo> statusInfo;
 
     /// \brief Provides the type of this UnlockConnectorResponse message as a human readable string
     /// \returns the message type as a human readable string

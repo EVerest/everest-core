@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_CANCELRESERVATION_HPP
 #define OCPP_V201_CANCELRESERVATION_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -15,7 +15,7 @@ namespace v201 {
 /// \brief Contains a OCPP CancelReservation message
 struct CancelReservationRequest : public ocpp::Message {
     int32_t reservationId;
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this CancelReservation message as a human readable string
     /// \returns the message type as a human readable string
@@ -35,8 +35,8 @@ std::ostream& operator<<(std::ostream& os, const CancelReservationRequest& k);
 /// \brief Contains a OCPP CancelReservationResponse message
 struct CancelReservationResponse : public ocpp::Message {
     CancelReservationStatusEnum status;
-    boost::optional<CustomData> customData;
-    boost::optional<StatusInfo> statusInfo;
+    std::optional<CustomData> customData;
+    std::optional<StatusInfo> statusInfo;
 
     /// \brief Provides the type of this CancelReservationResponse message as a human readable string
     /// \returns the message type as a human readable string

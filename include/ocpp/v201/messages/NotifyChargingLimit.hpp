@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_NOTIFYCHARGINGLIMIT_HPP
 #define OCPP_V201_NOTIFYCHARGINGLIMIT_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -15,9 +15,9 @@ namespace v201 {
 /// \brief Contains a OCPP NotifyChargingLimit message
 struct NotifyChargingLimitRequest : public ocpp::Message {
     ChargingLimit chargingLimit;
-    boost::optional<CustomData> customData;
-    boost::optional<std::vector<ChargingSchedule>> chargingSchedule;
-    boost::optional<int32_t> evseId;
+    std::optional<CustomData> customData;
+    std::optional<std::vector<ChargingSchedule>> chargingSchedule;
+    std::optional<int32_t> evseId;
 
     /// \brief Provides the type of this NotifyChargingLimit message as a human readable string
     /// \returns the message type as a human readable string
@@ -36,7 +36,7 @@ std::ostream& operator<<(std::ostream& os, const NotifyChargingLimitRequest& k);
 
 /// \brief Contains a OCPP NotifyChargingLimitResponse message
 struct NotifyChargingLimitResponse : public ocpp::Message {
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this NotifyChargingLimitResponse message as a human readable string
     /// \returns the message type as a human readable string

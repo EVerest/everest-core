@@ -166,7 +166,7 @@ std::ostream& operator<<(std::ostream& os, const ChargePointConnectionState& cha
 /// \brief Combines a Measurand with an optional Phase
 struct MeasurandWithPhase {
     Measurand measurand;          ///< A OCPP Measurand
-    boost::optional<Phase> phase; ///< If applicable and available a Phase
+    std::optional<Phase> phase; ///< If applicable and available a Phase
 
     /// \brief Comparison operator== between this MeasurandWithPhase and the given \p measurand_with_phase
     /// \returns true when measurand and phase are equal

@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_REQUESTSTARTTRANSACTION_HPP
 #define OCPP_V201_REQUESTSTARTTRANSACTION_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -16,10 +16,10 @@ namespace v201 {
 struct RequestStartTransactionRequest : public ocpp::Message {
     IdToken idToken;
     int32_t remoteStartId;
-    boost::optional<CustomData> customData;
-    boost::optional<int32_t> evseId;
-    boost::optional<IdToken> groupIdToken;
-    boost::optional<ChargingProfile> chargingProfile;
+    std::optional<CustomData> customData;
+    std::optional<int32_t> evseId;
+    std::optional<IdToken> groupIdToken;
+    std::optional<ChargingProfile> chargingProfile;
 
     /// \brief Provides the type of this StartTransaction message as a human readable string
     /// \returns the message type as a human readable string
@@ -39,9 +39,9 @@ std::ostream& operator<<(std::ostream& os, const RequestStartTransactionRequest&
 /// \brief Contains a OCPP StartTransactionResponse message
 struct RequestStartTransactionResponse : public ocpp::Message {
     RequestStartStopStatusEnum status;
-    boost::optional<CustomData> customData;
-    boost::optional<StatusInfo> statusInfo;
-    boost::optional<CiString<36>> transactionId;
+    std::optional<CustomData> customData;
+    std::optional<StatusInfo> statusInfo;
+    std::optional<CiString<36>> transactionId;
 
     /// \brief Provides the type of this StartTransactionResponse message as a human readable string
     /// \returns the message type as a human readable string

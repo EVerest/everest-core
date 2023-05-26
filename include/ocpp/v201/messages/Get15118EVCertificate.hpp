@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_GET15118EVCERTIFICATE_HPP
 #define OCPP_V201_GET15118EVCERTIFICATE_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -17,7 +17,7 @@ struct Get15118EVCertificateRequest : public ocpp::Message {
     CiString<50> iso15118SchemaVersion;
     CertificateActionEnum action;
     CiString<7500> exiRequest;
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this Get15118EVCertificate message as a human readable string
     /// \returns the message type as a human readable string
@@ -38,8 +38,8 @@ std::ostream& operator<<(std::ostream& os, const Get15118EVCertificateRequest& k
 struct Get15118EVCertificateResponse : public ocpp::Message {
     Iso15118EVCertificateStatusEnum status;
     CiString<7500> exiResponse;
-    boost::optional<CustomData> customData;
-    boost::optional<StatusInfo> statusInfo;
+    std::optional<CustomData> customData;
+    std::optional<StatusInfo> statusInfo;
 
     /// \brief Provides the type of this Get15118EVCertificateResponse message as a human readable string
     /// \returns the message type as a human readable string

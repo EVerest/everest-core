@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_REPORTCHARGINGPROFILES_HPP
 #define OCPP_V201_REPORTCHARGINGPROFILES_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -18,8 +18,8 @@ struct ReportChargingProfilesRequest : public ocpp::Message {
     ChargingLimitSourceEnum chargingLimitSource;
     std::vector<ChargingProfile> chargingProfile;
     int32_t evseId;
-    boost::optional<CustomData> customData;
-    boost::optional<bool> tbc;
+    std::optional<CustomData> customData;
+    std::optional<bool> tbc;
 
     /// \brief Provides the type of this ReportChargingProfiles message as a human readable string
     /// \returns the message type as a human readable string
@@ -38,7 +38,7 @@ std::ostream& operator<<(std::ostream& os, const ReportChargingProfilesRequest& 
 
 /// \brief Contains a OCPP ReportChargingProfilesResponse message
 struct ReportChargingProfilesResponse : public ocpp::Message {
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this ReportChargingProfilesResponse message as a human readable string
     /// \returns the message type as a human readable string

@@ -119,7 +119,7 @@ private:
     std::mutex remote_stop_transaction_mutex; // FIXME: this should be done differently
 
     std::map<std::string,
-             std::map<std::string, std::function<DataTransferResponse(const boost::optional<std::string>& msg)>>>
+             std::map<std::string, std::function<DataTransferResponse(const std::optional<std::string>& msg)>>>
         data_transfer_callbacks;
     std::map<std::string, std::function<void(Call<DataTransferRequest> call)>> data_transfer_pnc_callbacks;
     std::mutex data_transfer_callbacks_mutex;
@@ -158,7 +158,7 @@ private:
     std::function<UpdateFirmwareStatusEnumType(const SignedUpdateFirmwareRequest msg)> signed_update_firmware_callback;
 
     std::function<ReservationStatus(int32_t reservation_id, int32_t connector, ocpp::DateTime expiryDate,
-                                    CiString<20> idTag, boost::optional<CiString<20>> parent_id)>
+                                    CiString<20> idTag, std::optional<CiString<20>> parent_id)>
         reserve_now_callback;
     std::function<bool(int32_t reservation_id)> cancel_reservation_callback;
     std::function<void()> switch_security_profile_callback;
@@ -186,7 +186,7 @@ private:
     void update_heartbeat_interval();
     void update_meter_values_sample_interval();
     void update_clock_aligned_meter_values_interval();
-    boost::optional<MeterValue> get_latest_meter_value(int32_t connector,
+    std::optional<MeterValue> get_latest_meter_value(int32_t connector,
                                                        std::vector<MeasurandWithPhase> values_of_interest,
                                                        ReadingContext context);
     MeterValue get_signed_meter_value(const std::string& signed_value, const ReadingContext& context,
@@ -210,7 +210,7 @@ private:
     /// \brief Sends StopTransaction.req for all transactions for which meter_stop or time_end is not set in the
     /// database's Transaction table
     void stop_pending_transactions();
-    void stop_transaction(int32_t connector, Reason reason, boost::optional<CiString<20>> id_tag_end);
+    void stop_transaction(int32_t connector, Reason reason, std::optional<CiString<20>> id_tag_end);
 
     /// \brief Returns transaction data that can be used to set the transactionData field in StopTransaction.req.
     /// Filters the meter values of the transaction according to the values set within StopTxnAlignedData and
@@ -327,8 +327,8 @@ public:
     /// \brief Uses data_transfer mechanism to authorize given \p emaid and \p certificate locally or by requesting
     /// authorzation at CSMS
     ocpp::v201::AuthorizeResponse data_transfer_pnc_authorize(
-        const std::string& emaid, const boost::optional<std::string>& certificate,
-        const boost::optional<std::vector<ocpp::v201::OCSPRequestData>>& iso15118_certificate_hash_data);
+        const std::string& emaid, const std::optional<std::string>& certificate,
+        const std::optional<std::vector<ocpp::v201::OCSPRequestData>>& iso15118_certificate_hash_data);
 
     /// \brief  Uses data transfer mechanism to get 15118 ev certificate from CSMS
     void data_transfer_pnc_get_15118_ev_certificate(const int32_t connector_id, const std::string& exi_request,
@@ -354,7 +354,7 @@ public:
     /// connector with the given \p reason . The logs of the session will be written into \p session_logging_path if
     /// present
     void on_session_started(int32_t connector, const std::string& session_id, const std::string& reason,
-                            const boost::optional<std::string>& session_logging_path);
+                            const std::optional<std::string>& session_logging_path);
 
     /// \brief Notifies chargepoint that a session has been stopped at the given \p
     /// connector
@@ -363,15 +363,15 @@ public:
     /// \brief Notifies chargepoint that a transaction at the given \p connector with the given parameters has been
     /// started
     void on_transaction_started(const int32_t& connector, const std::string& session_id, const std::string& id_token,
-                                const int32_t& meter_start, boost::optional<int32_t> reservation_id,
-                                const ocpp::DateTime& timestamp, boost::optional<std::string> signed_meter_value);
+                                const int32_t& meter_start, std::optional<int32_t> reservation_id,
+                                const ocpp::DateTime& timestamp, std::optional<std::string> signed_meter_value);
 
     /// \brief Notifies chargepoint that the transaction on the given \p connector with the given \p reason has been
     /// stopped.
     void on_transaction_stopped(const int32_t connector, const std::string& session_id, const Reason& reason,
                                 ocpp::DateTime timestamp, float energy_wh_import,
-                                boost::optional<CiString<20>> id_tag_end,
-                                boost::optional<std::string> signed_meter_value);
+                                std::optional<CiString<20>> id_tag_end,
+                                std::optional<std::string> signed_meter_value);
 
     /// \brief EV indicates that it suspends charging on the given \p connector
     /// \returns true if this state change was possible
@@ -411,7 +411,7 @@ public:
     /// vendorId and \p messageId
     void register_data_transfer_callback(
         const CiString<255>& vendorId, const CiString<50>& messageId,
-        const std::function<DataTransferResponse(const boost::optional<std::string>& msg)>& callback);
+        const std::function<DataTransferResponse(const std::optional<std::string>& msg)>& callback);
 
     /// \brief registers a \p callback function that can be used to enable the evse
     void register_enable_evse_callback(const std::function<bool(int32_t connector)>& callback);
@@ -439,7 +439,7 @@ public:
     /// is reached
     void register_reserve_now_callback(
         const std::function<ReservationStatus(int32_t reservation_id, int32_t connector, ocpp::DateTime expiryDate,
-                                              CiString<20> idTag, boost::optional<CiString<20>> parent_id)>& callback);
+                                              CiString<20> idTag, std::optional<CiString<20>> parent_id)>& callback);
 
     /// \brief registers a \p callback function that can be used to cancel a reservation on a connector. Callback
     /// function returns -1 if the reservation could not be cancelled, else it returns the connector id of the cancelled

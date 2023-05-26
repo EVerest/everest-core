@@ -3,7 +3,7 @@
 #ifndef OCPP_V16_UPDATEFIRMWARE_HPP
 #define OCPP_V16_UPDATEFIRMWARE_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/v16/ocpp_types.hpp>
 
@@ -14,8 +14,8 @@ namespace v16 {
 struct UpdateFirmwareRequest : public ocpp::Message {
     std::string location;
     ocpp::DateTime retrieveDate;
-    boost::optional<int32_t> retries;
-    boost::optional<int32_t> retryInterval;
+    std::optional<int32_t> retries;
+    std::optional<int32_t> retryInterval;
 
     /// \brief Provides the type of this UpdateFirmware message as a human readable string
     /// \returns the message type as a human readable string

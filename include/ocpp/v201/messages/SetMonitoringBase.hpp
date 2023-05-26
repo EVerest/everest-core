@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_SETMONITORINGBASE_HPP
 #define OCPP_V201_SETMONITORINGBASE_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -15,7 +15,7 @@ namespace v201 {
 /// \brief Contains a OCPP SetMonitoringBase message
 struct SetMonitoringBaseRequest : public ocpp::Message {
     MonitoringBaseEnum monitoringBase;
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this SetMonitoringBase message as a human readable string
     /// \returns the message type as a human readable string
@@ -35,8 +35,8 @@ std::ostream& operator<<(std::ostream& os, const SetMonitoringBaseRequest& k);
 /// \brief Contains a OCPP SetMonitoringBaseResponse message
 struct SetMonitoringBaseResponse : public ocpp::Message {
     GenericDeviceModelStatusEnum status;
-    boost::optional<CustomData> customData;
-    boost::optional<StatusInfo> statusInfo;
+    std::optional<CustomData> customData;
+    std::optional<StatusInfo> statusInfo;
 
     /// \brief Provides the type of this SetMonitoringBaseResponse message as a human readable string
     /// \returns the message type as a human readable string

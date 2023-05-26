@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_SETVARIABLEMONITORING_HPP
 #define OCPP_V201_SETVARIABLEMONITORING_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -15,7 +15,7 @@ namespace v201 {
 /// \brief Contains a OCPP SetVariableMonitoring message
 struct SetVariableMonitoringRequest : public ocpp::Message {
     std::vector<SetMonitoringData> setMonitoringData;
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this SetVariableMonitoring message as a human readable string
     /// \returns the message type as a human readable string
@@ -35,7 +35,7 @@ std::ostream& operator<<(std::ostream& os, const SetVariableMonitoringRequest& k
 /// \brief Contains a OCPP SetVariableMonitoringResponse message
 struct SetVariableMonitoringResponse : public ocpp::Message {
     std::vector<SetMonitoringResult> setMonitoringResult;
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this SetVariableMonitoringResponse message as a human readable string
     /// \returns the message type as a human readable string

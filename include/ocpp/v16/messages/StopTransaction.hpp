@@ -3,7 +3,7 @@
 #ifndef OCPP_V16_STOPTRANSACTION_HPP
 #define OCPP_V16_STOPTRANSACTION_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v16/enums.hpp>
@@ -17,9 +17,9 @@ struct StopTransactionRequest : public ocpp::Message {
     int32_t meterStop;
     ocpp::DateTime timestamp;
     int32_t transactionId;
-    boost::optional<CiString<20>> idTag;
-    boost::optional<Reason> reason;
-    boost::optional<std::vector<TransactionData>> transactionData;
+    std::optional<CiString<20>> idTag;
+    std::optional<Reason> reason;
+    std::optional<std::vector<TransactionData>> transactionData;
 
     /// \brief Provides the type of this StopTransaction message as a human readable string
     /// \returns the message type as a human readable string
@@ -38,7 +38,7 @@ std::ostream& operator<<(std::ostream& os, const StopTransactionRequest& k);
 
 /// \brief Contains a OCPP StopTransactionResponse message
 struct StopTransactionResponse : public ocpp::Message {
-    boost::optional<IdTagInfo> idTagInfo;
+    std::optional<IdTagInfo> idTagInfo;
 
     /// \brief Provides the type of this StopTransactionResponse message as a human readable string
     /// \returns the message type as a human readable string

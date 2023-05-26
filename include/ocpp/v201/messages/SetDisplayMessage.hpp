@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_SETDISPLAYMESSAGE_HPP
 #define OCPP_V201_SETDISPLAYMESSAGE_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -15,7 +15,7 @@ namespace v201 {
 /// \brief Contains a OCPP SetDisplayMessage message
 struct SetDisplayMessageRequest : public ocpp::Message {
     MessageInfo message;
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this SetDisplayMessage message as a human readable string
     /// \returns the message type as a human readable string
@@ -35,8 +35,8 @@ std::ostream& operator<<(std::ostream& os, const SetDisplayMessageRequest& k);
 /// \brief Contains a OCPP SetDisplayMessageResponse message
 struct SetDisplayMessageResponse : public ocpp::Message {
     DisplayMessageStatusEnum status;
-    boost::optional<CustomData> customData;
-    boost::optional<StatusInfo> statusInfo;
+    std::optional<CustomData> customData;
+    std::optional<StatusInfo> statusInfo;
 
     /// \brief Provides the type of this SetDisplayMessageResponse message as a human readable string
     /// \returns the message type as a human readable string

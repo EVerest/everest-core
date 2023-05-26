@@ -3,7 +3,7 @@
 #ifndef OCPP_V16_EXTENDEDTRIGGERMESSAGE_HPP
 #define OCPP_V16_EXTENDEDTRIGGERMESSAGE_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/v16/enums.hpp>
 #include <ocpp/v16/ocpp_types.hpp>
@@ -14,7 +14,7 @@ namespace v16 {
 /// \brief Contains a OCPP ExtendedTriggerMessage message
 struct ExtendedTriggerMessageRequest : public ocpp::Message {
     MessageTriggerEnumType requestedMessage;
-    boost::optional<int32_t> connectorId;
+    std::optional<int32_t> connectorId;
 
     /// \brief Provides the type of this ExtendedTriggerMessage message as a human readable string
     /// \returns the message type as a human readable string

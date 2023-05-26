@@ -5,8 +5,8 @@
 
 #include <string>
 
-#include <boost/optional.hpp>
 #include <nlohmann/json.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -30,7 +30,7 @@ std::ostream& operator<<(std::ostream& os, const CustomData& k);
 struct AdditionalInfo {
     CiString<36> additionalIdToken;
     CiString<50> type;
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 };
 /// \brief Conversion from a given AdditionalInfo \p k to a given json object \p j
 void to_json(json& j, const AdditionalInfo& k);
@@ -45,8 +45,8 @@ std::ostream& operator<<(std::ostream& os, const AdditionalInfo& k);
 struct IdToken {
     CiString<36> idToken;
     IdTokenEnum type;
-    boost::optional<CustomData> customData;
-    boost::optional<std::vector<AdditionalInfo>> additionalInfo;
+    std::optional<CustomData> customData;
+    std::optional<std::vector<AdditionalInfo>> additionalInfo;
 };
 /// \brief Conversion from a given IdToken \p k to a given json object \p j
 void to_json(json& j, const IdToken& k);
@@ -64,7 +64,7 @@ struct OCSPRequestData {
     CiString<128> issuerKeyHash;
     CiString<40> serialNumber;
     CiString<512> responderURL;
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 };
 /// \brief Conversion from a given OCSPRequestData \p k to a given json object \p j
 void to_json(json& j, const OCSPRequestData& k);
@@ -79,8 +79,8 @@ std::ostream& operator<<(std::ostream& os, const OCSPRequestData& k);
 struct MessageContent {
     MessageFormatEnum format;
     CiString<512> content;
-    boost::optional<CustomData> customData;
-    boost::optional<CiString<8>> language;
+    std::optional<CustomData> customData;
+    std::optional<CiString<8>> language;
 };
 /// \brief Conversion from a given MessageContent \p k to a given json object \p j
 void to_json(json& j, const MessageContent& k);
@@ -94,14 +94,14 @@ std::ostream& operator<<(std::ostream& os, const MessageContent& k);
 
 struct IdTokenInfo {
     AuthorizationStatusEnum status;
-    boost::optional<CustomData> customData;
-    boost::optional<ocpp::DateTime> cacheExpiryDateTime;
-    boost::optional<int32_t> chargingPriority;
-    boost::optional<CiString<8>> language1;
-    boost::optional<std::vector<int32_t>> evseId;
-    boost::optional<IdToken> groupIdToken;
-    boost::optional<CiString<8>> language2;
-    boost::optional<MessageContent> personalMessage;
+    std::optional<CustomData> customData;
+    std::optional<ocpp::DateTime> cacheExpiryDateTime;
+    std::optional<int32_t> chargingPriority;
+    std::optional<CiString<8>> language1;
+    std::optional<std::vector<int32_t>> evseId;
+    std::optional<IdToken> groupIdToken;
+    std::optional<CiString<8>> language2;
+    std::optional<MessageContent> personalMessage;
 };
 /// \brief Conversion from a given IdTokenInfo \p k to a given json object \p j
 void to_json(json& j, const IdTokenInfo& k);
@@ -114,9 +114,9 @@ void from_json(const json& j, IdTokenInfo& k);
 std::ostream& operator<<(std::ostream& os, const IdTokenInfo& k);
 
 struct Modem {
-    boost::optional<CustomData> customData;
-    boost::optional<CiString<20>> iccid;
-    boost::optional<CiString<20>> imsi;
+    std::optional<CustomData> customData;
+    std::optional<CiString<20>> iccid;
+    std::optional<CiString<20>> imsi;
 };
 /// \brief Conversion from a given Modem \p k to a given json object \p j
 void to_json(json& j, const Modem& k);
@@ -131,10 +131,10 @@ std::ostream& operator<<(std::ostream& os, const Modem& k);
 struct ChargingStation {
     CiString<20> model;
     CiString<50> vendorName;
-    boost::optional<CustomData> customData;
-    boost::optional<CiString<25>> serialNumber;
-    boost::optional<Modem> modem;
-    boost::optional<CiString<50>> firmwareVersion;
+    std::optional<CustomData> customData;
+    std::optional<CiString<25>> serialNumber;
+    std::optional<Modem> modem;
+    std::optional<CiString<50>> firmwareVersion;
 };
 /// \brief Conversion from a given ChargingStation \p k to a given json object \p j
 void to_json(json& j, const ChargingStation& k);
@@ -148,8 +148,8 @@ std::ostream& operator<<(std::ostream& os, const ChargingStation& k);
 
 struct StatusInfo {
     CiString<20> reasonCode;
-    boost::optional<CustomData> customData;
-    boost::optional<CiString<512>> additionalInfo;
+    std::optional<CustomData> customData;
+    std::optional<CiString<512>> additionalInfo;
 };
 /// \brief Conversion from a given StatusInfo \p k to a given json object \p j
 void to_json(json& j, const StatusInfo& k);
@@ -163,8 +163,8 @@ std::ostream& operator<<(std::ostream& os, const StatusInfo& k);
 
 struct EVSE {
     int32_t id;
-    boost::optional<CustomData> customData;
-    boost::optional<int32_t> connectorId;
+    std::optional<CustomData> customData;
+    std::optional<int32_t> connectorId;
 };
 /// \brief Conversion from a given EVSE \p k to a given json object \p j
 void to_json(json& j, const EVSE& k);
@@ -177,10 +177,10 @@ void from_json(const json& j, EVSE& k);
 std::ostream& operator<<(std::ostream& os, const EVSE& k);
 
 struct ClearChargingProfile {
-    boost::optional<CustomData> customData;
-    boost::optional<int32_t> evseId;
-    boost::optional<ChargingProfilePurposeEnum> chargingProfilePurpose;
-    boost::optional<int32_t> stackLevel;
+    std::optional<CustomData> customData;
+    std::optional<int32_t> evseId;
+    std::optional<ChargingProfilePurposeEnum> chargingProfilePurpose;
+    std::optional<int32_t> stackLevel;
 };
 /// \brief Conversion from a given ClearChargingProfile \p k to a given json object \p j
 void to_json(json& j, const ClearChargingProfile& k);
@@ -195,8 +195,8 @@ std::ostream& operator<<(std::ostream& os, const ClearChargingProfile& k);
 struct ClearMonitoringResult {
     ClearMonitoringStatusEnum status;
     int32_t id;
-    boost::optional<CustomData> customData;
-    boost::optional<StatusInfo> statusInfo;
+    std::optional<CustomData> customData;
+    std::optional<StatusInfo> statusInfo;
 };
 /// \brief Conversion from a given ClearMonitoringResult \p k to a given json object \p j
 void to_json(json& j, const ClearMonitoringResult& k);
@@ -213,7 +213,7 @@ struct CertificateHashDataType {
     CiString<128> issuerNameHash;
     CiString<128> issuerKeyHash;
     CiString<40> serialNumber;
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 };
 /// \brief Conversion from a given CertificateHashDataType \p k to a given json object \p j
 void to_json(json& j, const CertificateHashDataType& k);
@@ -226,11 +226,11 @@ void from_json(const json& j, CertificateHashDataType& k);
 std::ostream& operator<<(std::ostream& os, const CertificateHashDataType& k);
 
 struct ChargingProfileCriterion {
-    boost::optional<CustomData> customData;
-    boost::optional<ChargingProfilePurposeEnum> chargingProfilePurpose;
-    boost::optional<int32_t> stackLevel;
-    boost::optional<std::vector<int32_t>> chargingProfileId;
-    boost::optional<std::vector<ChargingLimitSourceEnum>> chargingLimitSource;
+    std::optional<CustomData> customData;
+    std::optional<ChargingProfilePurposeEnum> chargingProfilePurpose;
+    std::optional<int32_t> stackLevel;
+    std::optional<std::vector<int32_t>> chargingProfileId;
+    std::optional<std::vector<ChargingLimitSourceEnum>> chargingLimitSource;
 };
 /// \brief Conversion from a given ChargingProfileCriterion \p k to a given json object \p j
 void to_json(json& j, const ChargingProfileCriterion& k);
@@ -245,9 +245,9 @@ std::ostream& operator<<(std::ostream& os, const ChargingProfileCriterion& k);
 struct ChargingSchedulePeriod {
     int32_t startPeriod;
     float limit;
-    boost::optional<CustomData> customData;
-    boost::optional<int32_t> numberPhases;
-    boost::optional<int32_t> phaseToUse;
+    std::optional<CustomData> customData;
+    std::optional<int32_t> numberPhases;
+    std::optional<int32_t> phaseToUse;
 };
 /// \brief Conversion from a given ChargingSchedulePeriod \p k to a given json object \p j
 void to_json(json& j, const ChargingSchedulePeriod& k);
@@ -265,7 +265,7 @@ struct CompositeSchedule {
     int32_t duration;
     ocpp::DateTime scheduleStart;
     ChargingRateUnitEnum chargingRateUnit;
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 };
 /// \brief Conversion from a given CompositeSchedule \p k to a given json object \p j
 void to_json(json& j, const CompositeSchedule& k);
@@ -280,8 +280,8 @@ std::ostream& operator<<(std::ostream& os, const CompositeSchedule& k);
 struct CertificateHashDataChain {
     CertificateHashDataType certificateHashData;
     GetCertificateIdUseEnum certificateType;
-    boost::optional<CustomData> customData;
-    boost::optional<std::vector<CertificateHashDataType>> childCertificateHashData;
+    std::optional<CustomData> customData;
+    std::optional<std::vector<CertificateHashDataType>> childCertificateHashData;
 };
 /// \brief Conversion from a given CertificateHashDataChain \p k to a given json object \p j
 void to_json(json& j, const CertificateHashDataChain& k);
@@ -295,9 +295,9 @@ std::ostream& operator<<(std::ostream& os, const CertificateHashDataChain& k);
 
 struct LogParameters {
     CiString<512> remoteLocation;
-    boost::optional<CustomData> customData;
-    boost::optional<ocpp::DateTime> oldestTimestamp;
-    boost::optional<ocpp::DateTime> latestTimestamp;
+    std::optional<CustomData> customData;
+    std::optional<ocpp::DateTime> oldestTimestamp;
+    std::optional<ocpp::DateTime> latestTimestamp;
 };
 /// \brief Conversion from a given LogParameters \p k to a given json object \p j
 void to_json(json& j, const LogParameters& k);
@@ -311,9 +311,9 @@ std::ostream& operator<<(std::ostream& os, const LogParameters& k);
 
 struct Component {
     CiString<50> name;
-    boost::optional<CustomData> customData;
-    boost::optional<EVSE> evse;
-    boost::optional<CiString<50>> instance;
+    std::optional<CustomData> customData;
+    std::optional<EVSE> evse;
+    std::optional<CiString<50>> instance;
 };
 /// \brief Conversion from a given Component \p k to a given json object \p j
 void to_json(json& j, const Component& k);
@@ -327,8 +327,8 @@ std::ostream& operator<<(std::ostream& os, const Component& k);
 
 struct Variable {
     CiString<50> name;
-    boost::optional<CustomData> customData;
-    boost::optional<CiString<50>> instance;
+    std::optional<CustomData> customData;
+    std::optional<CiString<50>> instance;
 };
 /// \brief Conversion from a given Variable \p k to a given json object \p j
 void to_json(json& j, const Variable& k);
@@ -342,8 +342,8 @@ std::ostream& operator<<(std::ostream& os, const Variable& k);
 
 struct ComponentVariable {
     Component component;
-    boost::optional<CustomData> customData;
-    boost::optional<Variable> variable;
+    std::optional<CustomData> customData;
+    std::optional<Variable> variable;
 };
 /// \brief Conversion from a given ComponentVariable \p k to a given json object \p j
 void to_json(json& j, const ComponentVariable& k);
@@ -358,8 +358,8 @@ std::ostream& operator<<(std::ostream& os, const ComponentVariable& k);
 struct GetVariableData {
     Component component;
     Variable variable;
-    boost::optional<CustomData> customData;
-    boost::optional<AttributeEnum> attributeType;
+    std::optional<CustomData> customData;
+    std::optional<AttributeEnum> attributeType;
 };
 /// \brief Conversion from a given GetVariableData \p k to a given json object \p j
 void to_json(json& j, const GetVariableData& k);
@@ -375,10 +375,10 @@ struct GetVariableResult {
     GetVariableStatusEnum attributeStatus;
     Component component;
     Variable variable;
-    boost::optional<CustomData> customData;
-    boost::optional<StatusInfo> attributeStatusInfo;
-    boost::optional<AttributeEnum> attributeType;
-    boost::optional<CiString<2500>> attributeValue;
+    std::optional<CustomData> customData;
+    std::optional<StatusInfo> attributeStatusInfo;
+    std::optional<AttributeEnum> attributeType;
+    std::optional<CiString<2500>> attributeValue;
 };
 /// \brief Conversion from a given GetVariableResult \p k to a given json object \p j
 void to_json(json& j, const GetVariableResult& k);
@@ -395,7 +395,7 @@ struct SignedMeterValue {
     CiString<50> signingMethod;
     CiString<50> encodingMethod;
     CiString<2500> publicKey;
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 };
 /// \brief Conversion from a given SignedMeterValue \p k to a given json object \p j
 void to_json(json& j, const SignedMeterValue& k);
@@ -408,9 +408,9 @@ void from_json(const json& j, SignedMeterValue& k);
 std::ostream& operator<<(std::ostream& os, const SignedMeterValue& k);
 
 struct UnitOfMeasure {
-    boost::optional<CustomData> customData;
-    boost::optional<CiString<20>> unit;
-    boost::optional<int32_t> multiplier;
+    std::optional<CustomData> customData;
+    std::optional<CiString<20>> unit;
+    std::optional<int32_t> multiplier;
 };
 /// \brief Conversion from a given UnitOfMeasure \p k to a given json object \p j
 void to_json(json& j, const UnitOfMeasure& k);
@@ -424,13 +424,13 @@ std::ostream& operator<<(std::ostream& os, const UnitOfMeasure& k);
 
 struct SampledValue {
     float value;
-    boost::optional<CustomData> customData;
-    boost::optional<ReadingContextEnum> context;
-    boost::optional<MeasurandEnum> measurand;
-    boost::optional<PhaseEnum> phase;
-    boost::optional<LocationEnum> location;
-    boost::optional<SignedMeterValue> signedMeterValue;
-    boost::optional<UnitOfMeasure> unitOfMeasure;
+    std::optional<CustomData> customData;
+    std::optional<ReadingContextEnum> context;
+    std::optional<MeasurandEnum> measurand;
+    std::optional<PhaseEnum> phase;
+    std::optional<LocationEnum> location;
+    std::optional<SignedMeterValue> signedMeterValue;
+    std::optional<UnitOfMeasure> unitOfMeasure;
 };
 /// \brief Conversion from a given SampledValue \p k to a given json object \p j
 void to_json(json& j, const SampledValue& k);
@@ -445,7 +445,7 @@ std::ostream& operator<<(std::ostream& os, const SampledValue& k);
 struct MeterValue {
     std::vector<SampledValue> sampledValue;
     ocpp::DateTime timestamp;
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 };
 /// \brief Conversion from a given MeterValue \p k to a given json object \p j
 void to_json(json& j, const MeterValue& k);
@@ -459,8 +459,8 @@ std::ostream& operator<<(std::ostream& os, const MeterValue& k);
 
 struct RelativeTimeInterval {
     int32_t start;
-    boost::optional<CustomData> customData;
-    boost::optional<int32_t> duration;
+    std::optional<CustomData> customData;
+    std::optional<int32_t> duration;
 };
 /// \brief Conversion from a given RelativeTimeInterval \p k to a given json object \p j
 void to_json(json& j, const RelativeTimeInterval& k);
@@ -475,8 +475,8 @@ std::ostream& operator<<(std::ostream& os, const RelativeTimeInterval& k);
 struct Cost {
     CostKindEnum costKind;
     int32_t amount;
-    boost::optional<CustomData> customData;
-    boost::optional<int32_t> amountMultiplier;
+    std::optional<CustomData> customData;
+    std::optional<int32_t> amountMultiplier;
 };
 /// \brief Conversion from a given Cost \p k to a given json object \p j
 void to_json(json& j, const Cost& k);
@@ -491,7 +491,7 @@ std::ostream& operator<<(std::ostream& os, const Cost& k);
 struct ConsumptionCost {
     float startValue;
     std::vector<Cost> cost;
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 };
 /// \brief Conversion from a given ConsumptionCost \p k to a given json object \p j
 void to_json(json& j, const ConsumptionCost& k);
@@ -505,9 +505,9 @@ std::ostream& operator<<(std::ostream& os, const ConsumptionCost& k);
 
 struct SalesTariffEntry {
     RelativeTimeInterval relativeTimeInterval;
-    boost::optional<CustomData> customData;
-    boost::optional<int32_t> ePriceLevel;
-    boost::optional<std::vector<ConsumptionCost>> consumptionCost;
+    std::optional<CustomData> customData;
+    std::optional<int32_t> ePriceLevel;
+    std::optional<std::vector<ConsumptionCost>> consumptionCost;
 };
 /// \brief Conversion from a given SalesTariffEntry \p k to a given json object \p j
 void to_json(json& j, const SalesTariffEntry& k);
@@ -522,9 +522,9 @@ std::ostream& operator<<(std::ostream& os, const SalesTariffEntry& k);
 struct SalesTariff {
     int32_t id;
     std::vector<SalesTariffEntry> salesTariffEntry;
-    boost::optional<CustomData> customData;
-    boost::optional<CiString<32>> salesTariffDescription;
-    boost::optional<int32_t> numEPriceLevels;
+    std::optional<CustomData> customData;
+    std::optional<CiString<32>> salesTariffDescription;
+    std::optional<int32_t> numEPriceLevels;
 };
 /// \brief Conversion from a given SalesTariff \p k to a given json object \p j
 void to_json(json& j, const SalesTariff& k);
@@ -540,11 +540,11 @@ struct ChargingSchedule {
     int32_t id;
     ChargingRateUnitEnum chargingRateUnit;
     std::vector<ChargingSchedulePeriod> chargingSchedulePeriod;
-    boost::optional<CustomData> customData;
-    boost::optional<ocpp::DateTime> startSchedule;
-    boost::optional<int32_t> duration;
-    boost::optional<float> minChargingRate;
-    boost::optional<SalesTariff> salesTariff;
+    std::optional<CustomData> customData;
+    std::optional<ocpp::DateTime> startSchedule;
+    std::optional<int32_t> duration;
+    std::optional<float> minChargingRate;
+    std::optional<SalesTariff> salesTariff;
 };
 /// \brief Conversion from a given ChargingSchedule \p k to a given json object \p j
 void to_json(json& j, const ChargingSchedule& k);
@@ -558,8 +558,8 @@ std::ostream& operator<<(std::ostream& os, const ChargingSchedule& k);
 
 struct ChargingLimit {
     ChargingLimitSourceEnum chargingLimitSource;
-    boost::optional<CustomData> customData;
-    boost::optional<bool> isGridCritical;
+    std::optional<CustomData> customData;
+    std::optional<bool> isGridCritical;
 };
 /// \brief Conversion from a given ChargingLimit \p k to a given json object \p j
 void to_json(json& j, const ChargingLimit& k);
@@ -575,12 +575,12 @@ struct MessageInfo {
     int32_t id;
     MessagePriorityEnum priority;
     MessageContent message;
-    boost::optional<CustomData> customData;
-    boost::optional<Component> display;
-    boost::optional<MessageStateEnum> state;
-    boost::optional<ocpp::DateTime> startDateTime;
-    boost::optional<ocpp::DateTime> endDateTime;
-    boost::optional<CiString<36>> transactionId;
+    std::optional<CustomData> customData;
+    std::optional<Component> display;
+    std::optional<MessageStateEnum> state;
+    std::optional<ocpp::DateTime> startDateTime;
+    std::optional<ocpp::DateTime> endDateTime;
+    std::optional<CiString<36>> transactionId;
 };
 /// \brief Conversion from a given MessageInfo \p k to a given json object \p j
 void to_json(json& j, const MessageInfo& k);
@@ -597,7 +597,7 @@ struct ACChargingParameters {
     int32_t evMinCurrent;
     int32_t evMaxCurrent;
     int32_t evMaxVoltage;
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 };
 /// \brief Conversion from a given ACChargingParameters \p k to a given json object \p j
 void to_json(json& j, const ACChargingParameters& k);
@@ -612,13 +612,13 @@ std::ostream& operator<<(std::ostream& os, const ACChargingParameters& k);
 struct DCChargingParameters {
     int32_t evMaxCurrent;
     int32_t evMaxVoltage;
-    boost::optional<CustomData> customData;
-    boost::optional<int32_t> energyAmount;
-    boost::optional<int32_t> evMaxPower;
-    boost::optional<int32_t> stateOfCharge;
-    boost::optional<int32_t> evEnergyCapacity;
-    boost::optional<int32_t> fullSoC;
-    boost::optional<int32_t> bulkSoC;
+    std::optional<CustomData> customData;
+    std::optional<int32_t> energyAmount;
+    std::optional<int32_t> evMaxPower;
+    std::optional<int32_t> stateOfCharge;
+    std::optional<int32_t> evEnergyCapacity;
+    std::optional<int32_t> fullSoC;
+    std::optional<int32_t> bulkSoC;
 };
 /// \brief Conversion from a given DCChargingParameters \p k to a given json object \p j
 void to_json(json& j, const DCChargingParameters& k);
@@ -632,10 +632,10 @@ std::ostream& operator<<(std::ostream& os, const DCChargingParameters& k);
 
 struct ChargingNeeds {
     EnergyTransferModeEnum requestedEnergyTransfer;
-    boost::optional<CustomData> customData;
-    boost::optional<ACChargingParameters> acChargingParameters;
-    boost::optional<DCChargingParameters> dcChargingParameters;
-    boost::optional<ocpp::DateTime> departureTime;
+    std::optional<CustomData> customData;
+    std::optional<ACChargingParameters> acChargingParameters;
+    std::optional<DCChargingParameters> dcChargingParameters;
+    std::optional<ocpp::DateTime> departureTime;
 };
 /// \brief Conversion from a given ChargingNeeds \p k to a given json object \p j
 void to_json(json& j, const ChargingNeeds& k);
@@ -655,13 +655,13 @@ struct EventData {
     Component component;
     EventNotificationEnum eventNotificationType;
     Variable variable;
-    boost::optional<CustomData> customData;
-    boost::optional<int32_t> cause;
-    boost::optional<CiString<50>> techCode;
-    boost::optional<CiString<500>> techInfo;
-    boost::optional<bool> cleared;
-    boost::optional<CiString<36>> transactionId;
-    boost::optional<int32_t> variableMonitoringId;
+    std::optional<CustomData> customData;
+    std::optional<int32_t> cause;
+    std::optional<CiString<50>> techCode;
+    std::optional<CiString<500>> techInfo;
+    std::optional<bool> cleared;
+    std::optional<CiString<36>> transactionId;
+    std::optional<int32_t> variableMonitoringId;
 };
 /// \brief Conversion from a given EventData \p k to a given json object \p j
 void to_json(json& j, const EventData& k);
@@ -679,7 +679,7 @@ struct VariableMonitoring {
     float value;
     MonitorEnum type;
     int32_t severity;
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 };
 /// \brief Conversion from a given VariableMonitoring \p k to a given json object \p j
 void to_json(json& j, const VariableMonitoring& k);
@@ -695,7 +695,7 @@ struct MonitoringData {
     Component component;
     Variable variable;
     std::vector<VariableMonitoring> variableMonitoring;
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 };
 /// \brief Conversion from a given MonitoringData \p k to a given json object \p j
 void to_json(json& j, const MonitoringData& k);
@@ -708,12 +708,12 @@ void from_json(const json& j, MonitoringData& k);
 std::ostream& operator<<(std::ostream& os, const MonitoringData& k);
 
 struct VariableAttribute {
-    boost::optional<CustomData> customData;
-    boost::optional<AttributeEnum> type;
-    boost::optional<CiString<2500>> value;
-    boost::optional<MutabilityEnum> mutability;
-    boost::optional<bool> persistent;
-    boost::optional<bool> constant;
+    std::optional<CustomData> customData;
+    std::optional<AttributeEnum> type;
+    std::optional<CiString<2500>> value;
+    std::optional<MutabilityEnum> mutability;
+    std::optional<bool> persistent;
+    std::optional<bool> constant;
 };
 /// \brief Conversion from a given VariableAttribute \p k to a given json object \p j
 void to_json(json& j, const VariableAttribute& k);
@@ -728,11 +728,11 @@ std::ostream& operator<<(std::ostream& os, const VariableAttribute& k);
 struct VariableCharacteristics {
     DataEnum dataType;
     bool supportsMonitoring;
-    boost::optional<CustomData> customData;
-    boost::optional<CiString<16>> unit;
-    boost::optional<float> minLimit;
-    boost::optional<float> maxLimit;
-    boost::optional<CiString<1000>> valuesList;
+    std::optional<CustomData> customData;
+    std::optional<CiString<16>> unit;
+    std::optional<float> minLimit;
+    std::optional<float> maxLimit;
+    std::optional<CiString<1000>> valuesList;
 };
 /// \brief Conversion from a given VariableCharacteristics \p k to a given json object \p j
 void to_json(json& j, const VariableCharacteristics& k);
@@ -748,8 +748,8 @@ struct ReportData {
     Component component;
     Variable variable;
     std::vector<VariableAttribute> variableAttribute;
-    boost::optional<CustomData> customData;
-    boost::optional<VariableCharacteristics> variableCharacteristics;
+    std::optional<CustomData> customData;
+    std::optional<VariableCharacteristics> variableCharacteristics;
 };
 /// \brief Conversion from a given ReportData \p k to a given json object \p j
 void to_json(json& j, const ReportData& k);
@@ -767,11 +767,11 @@ struct ChargingProfile {
     ChargingProfilePurposeEnum chargingProfilePurpose;
     ChargingProfileKindEnum chargingProfileKind;
     std::vector<ChargingSchedule> chargingSchedule;
-    boost::optional<CustomData> customData;
-    boost::optional<RecurrencyKindEnum> recurrencyKind;
-    boost::optional<ocpp::DateTime> validFrom;
-    boost::optional<ocpp::DateTime> validTo;
-    boost::optional<CiString<36>> transactionId;
+    std::optional<CustomData> customData;
+    std::optional<RecurrencyKindEnum> recurrencyKind;
+    std::optional<ocpp::DateTime> validFrom;
+    std::optional<ocpp::DateTime> validTo;
+    std::optional<CiString<36>> transactionId;
 };
 /// \brief Conversion from a given ChargingProfile \p k to a given json object \p j
 void to_json(json& j, const ChargingProfile& k);
@@ -785,8 +785,8 @@ std::ostream& operator<<(std::ostream& os, const ChargingProfile& k);
 
 struct AuthorizationData {
     IdToken idToken;
-    boost::optional<CustomData> customData;
-    boost::optional<IdTokenInfo> idTokenInfo;
+    std::optional<CustomData> customData;
+    std::optional<IdTokenInfo> idTokenInfo;
 };
 /// \brief Conversion from a given AuthorizationData \p k to a given json object \p j
 void to_json(json& j, const AuthorizationData& k);
@@ -801,12 +801,12 @@ std::ostream& operator<<(std::ostream& os, const AuthorizationData& k);
 struct APN {
     CiString<512> apn;
     APNAuthenticationEnum apnAuthentication;
-    boost::optional<CustomData> customData;
-    boost::optional<CiString<20>> apnUserName;
-    boost::optional<CiString<20>> apnPassword;
-    boost::optional<int32_t> simPin;
-    boost::optional<CiString<6>> preferredNetwork;
-    boost::optional<bool> useOnlyPreferredNetwork;
+    std::optional<CustomData> customData;
+    std::optional<CiString<20>> apnUserName;
+    std::optional<CiString<20>> apnPassword;
+    std::optional<int32_t> simPin;
+    std::optional<CiString<6>> preferredNetwork;
+    std::optional<bool> useOnlyPreferredNetwork;
 };
 /// \brief Conversion from a given APN \p k to a given json object \p j
 void to_json(json& j, const APN& k);
@@ -824,8 +824,8 @@ struct VPN {
     CiString<20> password;
     CiString<255> key;
     VPNEnum type;
-    boost::optional<CustomData> customData;
-    boost::optional<CiString<20>> group;
+    std::optional<CustomData> customData;
+    std::optional<CiString<20>> group;
 };
 /// \brief Conversion from a given VPN \p k to a given json object \p j
 void to_json(json& j, const VPN& k);
@@ -844,9 +844,9 @@ struct NetworkConnectionProfile {
     int32_t messageTimeout;
     int32_t securityProfile;
     OCPPInterfaceEnum ocppInterface;
-    boost::optional<CustomData> customData;
-    boost::optional<APN> apn;
-    boost::optional<VPN> vpn;
+    std::optional<CustomData> customData;
+    std::optional<APN> apn;
+    std::optional<VPN> vpn;
 };
 /// \brief Conversion from a given NetworkConnectionProfile \p k to a given json object \p j
 void to_json(json& j, const NetworkConnectionProfile& k);
@@ -864,9 +864,9 @@ struct SetMonitoringData {
     int32_t severity;
     Component component;
     Variable variable;
-    boost::optional<CustomData> customData;
-    boost::optional<int32_t> id;
-    boost::optional<bool> transaction;
+    std::optional<CustomData> customData;
+    std::optional<int32_t> id;
+    std::optional<bool> transaction;
 };
 /// \brief Conversion from a given SetMonitoringData \p k to a given json object \p j
 void to_json(json& j, const SetMonitoringData& k);
@@ -884,9 +884,9 @@ struct SetMonitoringResult {
     Component component;
     Variable variable;
     int32_t severity;
-    boost::optional<CustomData> customData;
-    boost::optional<int32_t> id;
-    boost::optional<StatusInfo> statusInfo;
+    std::optional<CustomData> customData;
+    std::optional<int32_t> id;
+    std::optional<StatusInfo> statusInfo;
 };
 /// \brief Conversion from a given SetMonitoringResult \p k to a given json object \p j
 void to_json(json& j, const SetMonitoringResult& k);
@@ -902,8 +902,8 @@ struct SetVariableData {
     CiString<1000> attributeValue;
     Component component;
     Variable variable;
-    boost::optional<CustomData> customData;
-    boost::optional<AttributeEnum> attributeType;
+    std::optional<CustomData> customData;
+    std::optional<AttributeEnum> attributeType;
 };
 /// \brief Conversion from a given SetVariableData \p k to a given json object \p j
 void to_json(json& j, const SetVariableData& k);
@@ -919,9 +919,9 @@ struct SetVariableResult {
     SetVariableStatusEnum attributeStatus;
     Component component;
     Variable variable;
-    boost::optional<CustomData> customData;
-    boost::optional<AttributeEnum> attributeType;
-    boost::optional<StatusInfo> attributeStatusInfo;
+    std::optional<CustomData> customData;
+    std::optional<AttributeEnum> attributeType;
+    std::optional<StatusInfo> attributeStatusInfo;
 };
 /// \brief Conversion from a given SetVariableResult \p k to a given json object \p j
 void to_json(json& j, const SetVariableResult& k);
@@ -935,11 +935,11 @@ std::ostream& operator<<(std::ostream& os, const SetVariableResult& k);
 
 struct Transaction {
     CiString<36> transactionId;
-    boost::optional<CustomData> customData;
-    boost::optional<ChargingStateEnum> chargingState;
-    boost::optional<int32_t> timeSpentCharging;
-    boost::optional<ReasonEnum> stoppedReason;
-    boost::optional<int32_t> remoteStartId;
+    std::optional<CustomData> customData;
+    std::optional<ChargingStateEnum> chargingState;
+    std::optional<int32_t> timeSpentCharging;
+    std::optional<ReasonEnum> stoppedReason;
+    std::optional<int32_t> remoteStartId;
 };
 /// \brief Conversion from a given Transaction \p k to a given json object \p j
 void to_json(json& j, const Transaction& k);
@@ -954,10 +954,10 @@ std::ostream& operator<<(std::ostream& os, const Transaction& k);
 struct Firmware {
     CiString<512> location;
     ocpp::DateTime retrieveDateTime;
-    boost::optional<CustomData> customData;
-    boost::optional<ocpp::DateTime> installDateTime;
-    boost::optional<CiString<5500>> signingCertificate;
-    boost::optional<CiString<800>> signature;
+    std::optional<CustomData> customData;
+    std::optional<ocpp::DateTime> installDateTime;
+    std::optional<CiString<5500>> signingCertificate;
+    std::optional<CiString<800>> signature;
 };
 /// \brief Conversion from a given Firmware \p k to a given json object \p j
 void to_json(json& j, const Firmware& k);

@@ -30,7 +30,7 @@ ChargePoint::ChargePoint(const json& config, const std::string& share_path, cons
     this->configuration = std::make_shared<ocpp::v16::ChargePointConfiguration>(config, share_path, user_config_path);
     this->pki_handler = std::make_shared<ocpp::PkiHandler>(
         boost::filesystem::path(certs_path),
-        this->configuration->getAdditionalRootCertificateCheck().get_value_or(false));
+        this->configuration->getAdditionalRootCertificateCheck().value_or(false));
     this->heartbeat_timer = std::make_unique<Everest::SteadyTimer>(&this->io_service, [this]() { this->heartbeat(); });
     this->heartbeat_interval = this->configuration->getHeartbeatInterval();
     this->database_handler = std::make_shared<DatabaseHandler>(this->configuration->getChargePointId(),
@@ -97,7 +97,7 @@ ChargePoint::ChargePoint(const json& config, const std::string& share_path, cons
             this->status_notification_timers.at(connector)->stop();
             this->status_notification_timers.at(connector)->timeout(
                 [this, connector, errorCode, status]() { this->status_notification(connector, errorCode, status); },
-                std::chrono::seconds(this->configuration->getMinimumStatusDuration().get_value_or(0)));
+                std::chrono::seconds(this->configuration->getMinimumStatusDuration().value_or(0)));
         });
 
     for (int id = 0; id <= this->configuration->getNumberOfConnectors(); id++) {
@@ -288,9 +288,9 @@ void ChargePoint::stop_pending_transactions() {
         transaction->set_transaction_id(transaction_entry.transaction_id);
         this->transaction_handler->add_transaction(transaction);
 
-        this->stop_transaction(transaction_entry.connector, Reason::PowerLoss, boost::none);
+        this->stop_transaction(transaction_entry.connector, Reason::PowerLoss, std::nullopt);
         this->database_handler->update_transaction(transaction_entry.session_id, meter_stop, timestamp.to_rfc3339(),
-                                                   boost::none, Reason::PowerLoss);
+                                                   std::nullopt, Reason::PowerLoss);
     }
 }
 
@@ -322,11 +322,11 @@ void ChargePoint::load_charging_profiles() {
     }
 }
 
-boost::optional<MeterValue> ChargePoint::get_latest_meter_value(int32_t connector,
+std::optional<MeterValue> ChargePoint::get_latest_meter_value(int32_t connector,
                                                                 std::vector<MeasurandWithPhase> values_of_interest,
                                                                 ReadingContext context) {
     std::lock_guard<std::mutex> lock(power_meters_mutex);
-    boost::optional<MeterValue> filtered_meter_value_opt;
+    std::optional<MeterValue> filtered_meter_value_opt;
     // TODO(kai): also support readings from the charge point powermeter at "connector 0"
     if (this->connectors.find(connector) != this->connectors.end() &&
         this->connectors.at(connector)->powermeter.has_value()) {
@@ -1139,7 +1139,7 @@ void ChargePoint::handleChangeConfigurationRequest(ocpp::Call<ChangeConfiguratio
                             EVLOG_warning << "New security profile is <= current security profile. Rejecting request.";
                             response.status = ConfigurationStatus::Rejected;
                         } else if ((security_profile == 1 || security_profile == 2) &&
-                                   this->configuration->getAuthorizationKey() == boost::none) {
+                                   this->configuration->getAuthorizationKey() == std::nullopt) {
                             EVLOG_warning << "New security level set to 1 or 2 but no authorization key is set. "
                                              "Rejecting request.";
                             response.status = ConfigurationStatus::Rejected;
@@ -1178,7 +1178,7 @@ void ChargePoint::handleChangeConfigurationRequest(ocpp::Call<ChangeConfiguratio
                 } else if (call.msg.key == "WebsocketPingInterval") {
                     auto websocket_ping_interval_option = this->configuration->getWebsocketPingInterval();
                     if (websocket_ping_interval_option.has_value()) {
-                        auto websocket_ping_interval = websocket_ping_interval_option.get();
+                        auto websocket_ping_interval = websocket_ping_interval_option.value();
                         this->websocket->set_websocket_ping_interval(websocket_ping_interval);
                     }
                 } else if (call.msg.key == "ISO15118PnCEnabled") {
@@ -1249,7 +1249,7 @@ void ChargePoint::handleDataTransferRequest(ocpp::Call<DataTransferRequest> call
     DataTransferResponse response;
 
     auto vendorId = call.msg.vendorId.get();
-    auto messageId = call.msg.messageId.get_value_or(CiString<50>()).get();
+    auto messageId = call.msg.messageId.value_or(CiString<50>()).get();
     {
         std::lock_guard<std::mutex> lock(data_transfer_callbacks_mutex);
         if (vendorId == ISO15118_PNC_VENDOR_ID and !this->is_pnc_enabled()) {
@@ -1328,7 +1328,7 @@ void ChargePoint::handleRemoteStartTransactionRequest(ocpp::Call<RemoteStartTran
     // TODO(kai): what is our policy here? reject for now
     RemoteStartTransactionResponse response;
     if (call.msg.connectorId) {
-        if (call.msg.connectorId.get() == 0) {
+        if (call.msg.connectorId.value() == 0) {
             EVLOG_warning << "Received RemoteStartTransactionRequest with connector id 0";
             response.status = RemoteStartStopStatus::Rejected;
             ocpp::CallResult<RemoteStartTransactionResponse> call_result(response, call.uniqueId);
@@ -1624,8 +1624,8 @@ void ChargePoint::handleSetChargingProfileRequest(ocpp::Call<SetChargingProfileR
         // If a charging profile with the same chargingProfileId, or the same combination of stackLevel /
         // ChargingProfilePurpose, exists on the Charge Point, the new charging profile SHALL replace the
         // existing charging profile, otherwise it SHALL be added.
-        this->smart_charging_handler->clear_all_profiles_with_filter(profile.chargingProfileId, boost::none,
-                                                                     boost::none, boost::none, true);
+        this->smart_charging_handler->clear_all_profiles_with_filter(profile.chargingProfileId, std::nullopt,
+                                                                     std::nullopt, std::nullopt, true);
         if (profile.chargingProfilePurpose == ChargingProfilePurposeType::ChargePointMaxProfile) {
             this->smart_charging_handler->add_charge_point_max_profile(profile);
         } else if (profile.chargingProfilePurpose == ChargingProfilePurposeType::TxDefaultProfile) {
@@ -1831,7 +1831,7 @@ void ChargePoint::handleExtendedTriggerMessageRequest(ocpp::Call<ExtendedTrigger
         response.status = TriggerMessageStatusEnumType::Accepted;
         break;
     case MessageTriggerEnumType::SignChargePointCertificate:
-        if (this->configuration->getCpoName() != boost::none) {
+        if (this->configuration->getCpoName() != std::nullopt) {
             response.status = TriggerMessageStatusEnumType::Accepted;
         } else {
             EVLOG_warning << "Received ExtendedTriggerMessage with SignChargePointCertificate but no "
@@ -1898,7 +1898,7 @@ void ChargePoint::sign_certificate(const ocpp::CertificateSigningUseEnum& certif
 
     const auto csr = this->pki_handler->generateCsr(
         certificate_signing_use, this->configuration->getSeccLeafSubjectCountry().value_or("DE"),
-        this->configuration->getCpoName().get(), this->configuration->getChargeBoxSerialNumber());
+        this->configuration->getCpoName().value(), this->configuration->getChargeBoxSerialNumber());
 
     req.csr = csr;
     ocpp::Call<SignCertificateRequest> call(req, this->message_queue->createMessageId());
@@ -1983,14 +1983,14 @@ void ChargePoint::handleGetInstalledCertificateIdsRequest(ocpp::Call<GetInstalle
         conversions::certificate_use_enum_type_to_string(call.msg.certificateType)));
 
     // argument for getRootCertificateHashData
-    boost::optional<std::vector<CertificateType>> certificate_types_opt;
+    std::optional<std::vector<CertificateType>> certificate_types_opt;
     certificate_types_opt.emplace(certificate_types);
 
     // this is common CertificateHashData type
     const auto certificate_hash_data_chain = this->pki_handler->getRootCertificateHashData(certificate_types_opt);
     if (certificate_hash_data_chain.has_value()) {
         // convert ocpp::CertificateHashData to v16::CertificateHashData
-        boost::optional<std::vector<CertificateHashDataType>> certificate_hash_data_16_vec_opt;
+        std::optional<std::vector<CertificateHashDataType>> certificate_hash_data_16_vec_opt;
         std::vector<CertificateHashDataType> certificate_hash_data_16_vec;
         for (const auto certificate_hash_data_chain_entry : certificate_hash_data_chain.value()) {
             certificate_hash_data_16_vec.push_back(
@@ -2164,7 +2164,7 @@ void ChargePoint::handleSendLocalListRequest(ocpp::Call<SendLocalListRequest> ca
 
     else if (call.msg.updateType == UpdateType::Full) {
         if (call.msg.localAuthorizationList) {
-            auto local_auth_list = call.msg.localAuthorizationList.get();
+            auto local_auth_list = call.msg.localAuthorizationList.value();
             this->database_handler->clear_local_authorization_list();
             this->database_handler->insert_or_update_local_list_version(call.msg.listVersion);
             this->database_handler->insert_or_update_local_authorization_list(local_auth_list);
@@ -2175,7 +2175,7 @@ void ChargePoint::handleSendLocalListRequest(ocpp::Call<SendLocalListRequest> ca
         response.status = UpdateStatus::Accepted;
     } else if (call.msg.updateType == UpdateType::Differential) {
         if (call.msg.localAuthorizationList) {
-            auto local_auth_list = call.msg.localAuthorizationList.get();
+            auto local_auth_list = call.msg.localAuthorizationList.value();
             if (this->database_handler->get_local_list_version() < call.msg.listVersion) {
                 this->database_handler->insert_or_update_local_list_version(call.msg.listVersion);
                 this->database_handler->insert_or_update_local_authorization_list(local_auth_list);
@@ -2320,13 +2320,13 @@ IdTagInfo ChargePoint::authorize_id_token(CiString<20> idTag) {
         this->database_handler->insert_or_update_authorization_cache_entry(idTag, call_result.msg.idTagInfo);
         return call_result.msg.idTagInfo;
     } else if (enhanced_message.offline) {
-        if (this->configuration->getAllowOfflineTxForUnknownId() != boost::none &&
+        if (this->configuration->getAllowOfflineTxForUnknownId() != std::nullopt &&
             this->configuration->getAllowOfflineTxForUnknownId().value()) {
-            id_tag_info = {AuthorizationStatus::Accepted, boost::none, boost::none};
+            id_tag_info = {AuthorizationStatus::Accepted, std::nullopt, std::nullopt};
             return id_tag_info;
         }
     }
-    id_tag_info = {AuthorizationStatus::Invalid, boost::none, boost::none};
+    id_tag_info = {AuthorizationStatus::Invalid, std::nullopt, std::nullopt};
     return id_tag_info;
 }
 
@@ -2356,8 +2356,8 @@ bool ChargePoint::is_pnc_enabled() {
 
 ocpp::v201::AuthorizeResponse ChargePoint::data_transfer_pnc_authorize(
 
-    const std::string& emaid, const boost::optional<std::string>& certificate,
-    const boost::optional<std::vector<ocpp::v201::OCSPRequestData>>& iso15118_certificate_hash_data) {
+    const std::string& emaid, const std::optional<std::string>& certificate,
+    const std::optional<std::vector<ocpp::v201::OCSPRequestData>>& iso15118_certificate_hash_data) {
 
     ocpp::v201::AuthorizeResponse authorize_response;
     authorize_response.idTokenInfo.status = ocpp::v201::AuthorizationStatusEnum::Invalid;
@@ -2444,7 +2444,7 @@ void ChargePoint::data_transfer_pnc_sign_certificate() {
     const auto csr = this->pki_handler->generateCsr(
         ocpp::CertificateSigningUseEnum::V2GCertificate,
         this->configuration->getSeccLeafSubjectCountry().value_or("DE"),
-        this->configuration->getSeccLeafSubjectOrganization().value_or(this->configuration->getCpoName().get()),
+        this->configuration->getSeccLeafSubjectOrganization().value_or(this->configuration->getCpoName().value()),
         this->configuration->getSeccLeafSubjectCommonName().value_or(this->configuration->getChargeBoxSerialNumber()));
     csr_req.csr = csr;
     csr_req.certificateType = ocpp::v201::CertificateSigningUseEnum::V2GCertificate;
@@ -2668,7 +2668,7 @@ void ChargePoint::handle_data_transfer_pnc_get_installed_certificates(Call<DataT
             response.status = DataTransferStatus::Accepted;
 
             // prepare argument for getRootCertificate
-            boost::optional<std::vector<CertificateType>> certificate_types_opt;
+            std::optional<std::vector<CertificateType>> certificate_types_opt;
             if (req.certificateType.has_value()) {
                 std::vector<CertificateType> certificate_types;
                 for (const auto& certificate_id_use_enum : req.certificateType.value()) {
@@ -2684,7 +2684,7 @@ void ChargePoint::handle_data_transfer_pnc_get_installed_certificates(Call<DataT
             const auto certificate_hash_data_chain_opt =
                 this->pki_handler->getRootCertificateHashData(certificate_types_opt);
             if (certificate_hash_data_chain_opt.has_value()) {
-                boost::optional<std::vector<ocpp::v201::CertificateHashDataChain>> certificate_hash_data_chain_v201_opt;
+                std::optional<std::vector<ocpp::v201::CertificateHashDataChain>> certificate_hash_data_chain_v201_opt;
                 std::vector<ocpp::v201::CertificateHashDataChain> certificate_hash_data_chain_v201;
                 for (const auto certificate_hash_data_chain_entry : certificate_hash_data_chain_opt.value()) {
                     certificate_hash_data_chain_v201.push_back(json(certificate_hash_data_chain_entry));
@@ -2809,7 +2809,7 @@ DataTransferResponse ChargePoint::data_transfer(const CiString<255>& vendorId, c
 
 void ChargePoint::register_data_transfer_callback(
     const CiString<255>& vendorId, const CiString<50>& messageId,
-    const std::function<DataTransferResponse(const boost::optional<std::string>& msg)>& callback) {
+    const std::function<DataTransferResponse(const std::optional<std::string>& msg)>& callback) {
     std::lock_guard<std::mutex> lock(data_transfer_callbacks_mutex);
     this->data_transfer_callbacks[vendorId.get()][messageId.get()] = callback;
 }
@@ -2849,7 +2849,7 @@ void ChargePoint::start_transaction(std::shared_ptr<Transaction> transaction) {
 }
 
 void ChargePoint::on_session_started(int32_t connector, const std::string& session_id, const std::string& reason,
-                                     const boost::optional<std::string>& session_logging_path) {
+                                     const std::optional<std::string>& session_logging_path) {
 
     EVLOG_debug << "Session on connector#" << connector << " started with reason " << reason;
 
@@ -2883,8 +2883,8 @@ void ChargePoint::on_session_stopped(const int32_t connector, const std::string&
 
 void ChargePoint::on_transaction_started(const int32_t& connector, const std::string& session_id,
                                          const std::string& id_token, const int32_t& meter_start,
-                                         boost::optional<int32_t> reservation_id, const ocpp::DateTime& timestamp,
-                                         boost::optional<std::string> signed_meter_value) {
+                                         std::optional<int32_t> reservation_id, const ocpp::DateTime& timestamp,
+                                         std::optional<std::string> signed_meter_value) {
     if (this->status->get_state(connector) == ChargePointStatus::Reserved) {
         this->status->submit_event(connector, FSMEvent::UsageInitiated);
     }
@@ -2939,8 +2939,8 @@ void ChargePoint::on_transaction_started(const int32_t& connector, const std::st
 
 void ChargePoint::on_transaction_stopped(const int32_t connector, const std::string& session_id, const Reason& reason,
                                          ocpp::DateTime timestamp, float energy_wh_import,
-                                         boost::optional<CiString<20>> id_tag_end,
-                                         boost::optional<std::string> signed_meter_value) {
+                                         std::optional<CiString<20>> id_tag_end,
+                                         std::optional<std::string> signed_meter_value) {
     if (signed_meter_value) {
         const auto meter_value =
             this->get_signed_meter_value(signed_meter_value.value(), ReadingContext::Transaction_End, timestamp);
@@ -2954,11 +2954,11 @@ void ChargePoint::on_transaction_stopped(const int32_t connector, const std::str
     this->database_handler->update_transaction(session_id, energy_wh_import, timestamp.to_rfc3339(), id_tag_end,
                                                reason);
     this->transaction_handler->remove_active_transaction(connector);
-    this->smart_charging_handler->clear_all_profiles_with_filter(boost::none, connector, boost::none,
+    this->smart_charging_handler->clear_all_profiles_with_filter(std::nullopt, connector, std::nullopt,
                                                                  ChargingProfilePurposeType::TxProfile, false);
 }
 
-void ChargePoint::stop_transaction(int32_t connector, Reason reason, boost::optional<CiString<20>> id_tag_end) {
+void ChargePoint::stop_transaction(int32_t connector, Reason reason, std::optional<CiString<20>> id_tag_end) {
     EVLOG_debug << "Called stop transaction with reason: " << conversions::reason_to_string(reason);
     StopTransactionRequest req;
 
@@ -3128,7 +3128,7 @@ void ChargePoint::register_stop_transaction_callback(
 
 void ChargePoint::register_reserve_now_callback(
     const std::function<ReservationStatus(int32_t reservation_id, int32_t connector, ocpp::DateTime expiryDate,
-                                          CiString<20> idTag, boost::optional<CiString<20>> parent_id)>& callback) {
+                                          CiString<20> idTag, std::optional<CiString<20>> parent_id)>& callback) {
     this->reserve_now_callback = callback;
 }
 

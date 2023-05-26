@@ -3,7 +3,7 @@
 #ifndef OCPP_V16_GETLOG_HPP
 #define OCPP_V16_GETLOG_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v16/enums.hpp>
@@ -17,8 +17,8 @@ struct GetLogRequest : public ocpp::Message {
     LogParametersType log;
     LogEnumType logType;
     int32_t requestId;
-    boost::optional<int32_t> retries;
-    boost::optional<int32_t> retryInterval;
+    std::optional<int32_t> retries;
+    std::optional<int32_t> retryInterval;
 
     /// \brief Provides the type of this GetLog message as a human readable string
     /// \returns the message type as a human readable string
@@ -38,7 +38,7 @@ std::ostream& operator<<(std::ostream& os, const GetLogRequest& k);
 /// \brief Contains a OCPP GetLogResponse message
 struct GetLogResponse : public ocpp::Message {
     LogStatusEnumType status;
-    boost::optional<CiString<255>> filename;
+    std::optional<CiString<255>> filename;
 
     /// \brief Provides the type of this GetLogResponse message as a human readable string
     /// \returns the message type as a human readable string

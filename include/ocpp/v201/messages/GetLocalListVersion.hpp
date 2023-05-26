@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_GETLOCALLISTVERSION_HPP
 #define OCPP_V201_GETLOCALLISTVERSION_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/ocpp_types.hpp>
@@ -13,7 +13,7 @@ namespace v201 {
 
 /// \brief Contains a OCPP GetLocalListVersion message
 struct GetLocalListVersionRequest : public ocpp::Message {
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this GetLocalListVersion message as a human readable string
     /// \returns the message type as a human readable string
@@ -33,7 +33,7 @@ std::ostream& operator<<(std::ostream& os, const GetLocalListVersionRequest& k);
 /// \brief Contains a OCPP GetLocalListVersionResponse message
 struct GetLocalListVersionResponse : public ocpp::Message {
     int32_t versionNumber;
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this GetLocalListVersionResponse message as a human readable string
     /// \returns the message type as a human readable string

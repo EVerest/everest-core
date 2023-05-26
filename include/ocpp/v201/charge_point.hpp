@@ -88,8 +88,8 @@ private:
     void notify_report_req(const int request_id, const int seq_no, const std::vector<ReportData>& report_data);
 
     // Functional Block C: Authorization
-    AuthorizeResponse authorize_req(const IdToken id_token, const boost::optional<CiString<5500>>& certificate,
-                                    const boost::optional<std::vector<OCSPRequestData>>& ocsp_request_data);
+    AuthorizeResponse authorize_req(const IdToken id_token, const std::optional<CiString<5500>>& certificate,
+                                    const std::optional<std::vector<OCSPRequestData>>& ocsp_request_data);
 
     // Functional Block G: Availability
     void status_notification_req(const int32_t evse_id, const int32_t connector_id, const ConnectorStatusEnum status);
@@ -99,12 +99,12 @@ private:
     void transaction_event_req(const TransactionEventEnum& event_type, const DateTime& timestamp,
                                const ocpp::v201::Transaction& transaction,
                                const ocpp::v201::TriggerReasonEnum& trigger_reason, const int32_t seq_no,
-                               const boost::optional<int32_t>& cable_max_current,
-                               const boost::optional<ocpp::v201::EVSE>& evse,
-                               const boost::optional<ocpp::v201::IdToken>& id_token,
-                               const boost::optional<std::vector<ocpp::v201::MeterValue>>& meter_value,
-                               const boost::optional<int32_t>& number_of_phases_used,
-                               const boost::optional<bool>& offline, const boost::optional<int32_t>& reservation_id);
+                               const std::optional<int32_t>& cable_max_current,
+                               const std::optional<ocpp::v201::EVSE>& evse,
+                               const std::optional<ocpp::v201::IdToken>& id_token,
+                               const std::optional<std::vector<ocpp::v201::MeterValue>>& meter_value,
+                               const std::optional<int32_t>& number_of_phases_used,
+                               const std::optional<bool>& offline, const std::optional<int32_t>& reservation_id);
 
     // Functional Block J: MeterValues
     void meter_values_req(const int32_t evse_id, const std::vector<MeterValue>& meter_values);
@@ -166,7 +166,7 @@ public:
     /// \param reservation_id
     void on_transaction_started(const int32_t evse_id, const int32_t connector_id, const std::string& session_id,
                                 const DateTime& timestamp, const MeterValue& meter_start, const IdToken& id_token,
-                                const boost::optional<int32_t>& reservation_id);
+                                const std::optional<int32_t>& reservation_id);
 
     /// \brief Event handler that should be called when a transaction has finished
     /// \param evse_id
@@ -176,8 +176,8 @@ public:
     /// \param id_token
     /// \param signed_meter_value
     void on_transaction_finished(const int32_t evse_id, const DateTime& timestamp, const MeterValue& meter_stop,
-                                 const ReasonEnum reason, const boost::optional<std::string>& id_token,
-                                 const boost::optional<std::string>& signed_meter_value);
+                                 const ReasonEnum reason, const std::optional<std::string>& id_token,
+                                 const std::optional<std::string>& signed_meter_value);
 
     /// \brief Event handler that should be called when a session has finished
     /// \param evse_id
@@ -202,8 +202,8 @@ public:
     /// \param certificate
     /// \param ocsp_request_data
     /// \return AuthorizeResponse containing the result of the validation
-    AuthorizeResponse validate_token(const IdToken id_token, const boost::optional<CiString<5500>>& certificate,
-                                     const boost::optional<std::vector<OCSPRequestData>>& ocsp_request_data);
+    AuthorizeResponse validate_token(const IdToken id_token, const std::optional<CiString<5500>>& certificate,
+                                     const std::optional<std::vector<OCSPRequestData>>& ocsp_request_data);
 
     /// \brief Event handler that can be called to trigger a NotifyEvent.req with the given \p events
     /// \param events

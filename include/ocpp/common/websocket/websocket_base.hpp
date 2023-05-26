@@ -24,14 +24,14 @@ struct WebsocketConnectionOptions {
     std::string cs_uri;
     int security_profile;
     std::string chargepoint_id;
-    boost::optional<std::string> authorization_key;
+    std::optional<std::string> authorization_key;
     int reconnect_interval_s;
     std::string supported_ciphers_12;
     std::string supported_ciphers_13;
     int ping_interval_s;
     std::string ping_payload;
     bool use_ssl_default_verify_paths;
-    boost::optional<bool> additional_root_certificate_check;
+    std::optional<bool> additional_root_certificate_check;
 };
 
 ///
@@ -59,7 +59,7 @@ protected:
     bool initialized();
 
     /// \brief getter for authorization header for connection with basic authentication
-    boost::optional<std::string> getAuthorizationHeader();
+    std::optional<std::string> getAuthorizationHeader();
 
     /// \brief send a websocket ping
     virtual void ping() = 0;

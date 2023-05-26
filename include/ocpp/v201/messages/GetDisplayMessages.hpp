@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_GETDISPLAYMESSAGES_HPP
 #define OCPP_V201_GETDISPLAYMESSAGES_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -15,10 +15,10 @@ namespace v201 {
 /// \brief Contains a OCPP GetDisplayMessages message
 struct GetDisplayMessagesRequest : public ocpp::Message {
     int32_t requestId;
-    boost::optional<CustomData> customData;
-    boost::optional<std::vector<int32_t>> id;
-    boost::optional<MessagePriorityEnum> priority;
-    boost::optional<MessageStateEnum> state;
+    std::optional<CustomData> customData;
+    std::optional<std::vector<int32_t>> id;
+    std::optional<MessagePriorityEnum> priority;
+    std::optional<MessageStateEnum> state;
 
     /// \brief Provides the type of this GetDisplayMessages message as a human readable string
     /// \returns the message type as a human readable string
@@ -38,8 +38,8 @@ std::ostream& operator<<(std::ostream& os, const GetDisplayMessagesRequest& k);
 /// \brief Contains a OCPP GetDisplayMessagesResponse message
 struct GetDisplayMessagesResponse : public ocpp::Message {
     GetDisplayMessagesStatusEnum status;
-    boost::optional<CustomData> customData;
-    boost::optional<StatusInfo> statusInfo;
+    std::optional<CustomData> customData;
+    std::optional<StatusInfo> statusInfo;
 
     /// \brief Provides the type of this GetDisplayMessagesResponse message as a human readable string
     /// \returns the message type as a human readable string

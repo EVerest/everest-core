@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_SECURITYEVENTNOTIFICATION_HPP
 #define OCPP_V201_SECURITYEVENTNOTIFICATION_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/ocpp_types.hpp>
@@ -15,8 +15,8 @@ namespace v201 {
 struct SecurityEventNotificationRequest : public ocpp::Message {
     CiString<50> type;
     ocpp::DateTime timestamp;
-    boost::optional<CustomData> customData;
-    boost::optional<CiString<255>> techInfo;
+    std::optional<CustomData> customData;
+    std::optional<CiString<255>> techInfo;
 
     /// \brief Provides the type of this SecurityEventNotification message as a human readable string
     /// \returns the message type as a human readable string
@@ -35,7 +35,7 @@ std::ostream& operator<<(std::ostream& os, const SecurityEventNotificationReques
 
 /// \brief Contains a OCPP SecurityEventNotificationResponse message
 struct SecurityEventNotificationResponse : public ocpp::Message {
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this SecurityEventNotificationResponse message as a human readable string
     /// \returns the message type as a human readable string

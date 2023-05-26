@@ -4,8 +4,8 @@
 #include <ostream>
 #include <string>
 
-#include <boost/optional/optional.hpp>
 #include <nlohmann/json.hpp>
+#include <optional>
 
 #include <ocpp/v16/messages/SendLocalList.hpp>
 

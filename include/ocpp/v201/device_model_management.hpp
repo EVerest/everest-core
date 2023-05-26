@@ -28,9 +28,9 @@ public:
 
     /// \brief Get the variable specified by \p get_variable_data
     /// \param get_variable_data specifies the variable to get
-    /// \return std::pair<GetVariableStatusEnum, boost::optional<CiString<2500>>> first item of the pair indicates the
+    /// \return std::pair<GetVariableStatusEnum, std::optional<CiString<2500>>> first item of the pair indicates the
     /// result of the operation and the second item optionally contains the value
-    std::pair<GetVariableStatusEnum, boost::optional<CiString<2500>>>
+    std::pair<GetVariableStatusEnum, std::optional<CiString<2500>>>
     get_variable(const GetVariableData& get_variable_data);
 
     /// \brief This function returns an std::vector<ReportData> based on the options specified by the arguments \p
@@ -42,9 +42,9 @@ public:
     /// included in the result
     /// \return std::vector<ReportData>
     std::vector<ReportData>
-    get_report_data(const boost::optional<ReportBaseEnum>& report_base = boost::none,
-                    const boost::optional<std::vector<ComponentVariable>>& component_variables = boost::none,
-                    const boost::optional<std::vector<ComponentCriterionEnum>>& component_criteria = boost::none);
+    get_report_data(const std::optional<ReportBaseEnum>& report_base = std::nullopt,
+                    const std::optional<std::vector<ComponentVariable>>& component_variables = std::nullopt,
+                    const std::optional<std::vector<ComponentCriterionEnum>>& component_criteria = std::nullopt);
 };
 
 } // namespace v201

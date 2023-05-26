@@ -61,7 +61,7 @@ std::ostream& operator<<(std::ostream& os, const StandardizedComponent& standard
 
 struct EnhancedVariable : Variable {
     std::map<AttributeEnum, VariableAttribute> attributes;
-    boost::optional<VariableCharacteristics> characteristics;
+    std::optional<VariableCharacteristics> characteristics;
     std::vector<VariableMonitoring> monitorings;
 
     bool operator==(const Variable& other) const {
@@ -94,7 +94,7 @@ public:
     DeviceModelManagerBase() {};
 
     /// \brief Returns Enabled
-    boost::optional<bool> get_internal_ctrlr_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_internal_ctrlr_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Enabled to given \p internal_ctrlr_enabled
     void set_internal_ctrlr_enabled(const bool &internal_ctrlr_enabled, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -119,7 +119,7 @@ public:
     /// \brief Sets ChargePointModel to given \p charge_point_model
     void set_charge_point_model(const std::string &charge_point_model, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns ChargePointSerialNumber
-    boost::optional<std::string> get_charge_point_serial_number(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_charge_point_serial_number(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets ChargePointSerialNumber to given \p charge_point_serial_number
     void set_charge_point_serial_number(const std::string &charge_point_serial_number, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -134,22 +134,22 @@ public:
     /// \brief Sets FirmwareVersion to given \p firmware_version
     void set_firmware_version(const std::string &firmware_version, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns ICCID
-    boost::optional<std::string> get_iccid(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_iccid(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets ICCID to given \p iccid
     void set_iccid(const std::string &iccid, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns IMSI
-    boost::optional<std::string> get_imsi(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_imsi(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets IMSI to given \p imsi
     void set_imsi(const std::string &imsi, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns MeterSerialNumber
-    boost::optional<std::string> get_meter_serial_number(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_meter_serial_number(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets MeterSerialNumber to given \p meter_serial_number
     void set_meter_serial_number(const std::string &meter_serial_number, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns MeterType
-    boost::optional<std::string> get_meter_type(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_meter_type(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets MeterType to given \p meter_type
     void set_meter_type(const std::string &meter_type, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -169,27 +169,27 @@ public:
     /// \brief Sets WebsocketReconnectInterval to given \p websocket_reconnect_interval
     void set_websocket_reconnect_interval(const int &websocket_reconnect_interval, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns AuthorizeConnectorZeroOnConnectorOne
-    boost::optional<bool> get_authorize_connector_zero_on_connector_one(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_authorize_connector_zero_on_connector_one(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets AuthorizeConnectorZeroOnConnectorOne to given \p authorize_connector_zero_on_connector_one
     void set_authorize_connector_zero_on_connector_one(const bool &authorize_connector_zero_on_connector_one, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns LogMessages
-    boost::optional<bool> get_log_messages(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_log_messages(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets LogMessages to given \p log_messages
     void set_log_messages(const bool &log_messages, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns LogMessagesFormat
-    boost::optional<std::string> get_log_messages_format(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_log_messages_format(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets LogMessagesFormat to given \p log_messages_format
     void set_log_messages_format(const std::string &log_messages_format, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns SupportedChargingProfilePurposeTypes
-    boost::optional<std::string> get_supported_charging_profile_purpose_types(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_supported_charging_profile_purpose_types(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets SupportedChargingProfilePurposeTypes to given \p supported_charging_profile_purpose_types
     void set_supported_charging_profile_purpose_types(const std::string &supported_charging_profile_purpose_types, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns MaxCompositeScheduleDuration
-    boost::optional<int> get_max_composite_schedule_duration(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<int> get_max_composite_schedule_duration(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets MaxCompositeScheduleDuration to given \p max_composite_schedule_duration
     void set_max_composite_schedule_duration(const int &max_composite_schedule_duration, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -199,27 +199,27 @@ public:
     /// \brief Sets NumberOfConnectors to given \p number_of_connectors
     void set_number_of_connectors(const int &number_of_connectors, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns UseSslDefaultVerifyPaths
-    boost::optional<bool> get_use_ssl_default_verify_paths(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_use_ssl_default_verify_paths(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets UseSslDefaultVerifyPaths to given \p use_ssl_default_verify_paths
     void set_use_ssl_default_verify_paths(const bool &use_ssl_default_verify_paths, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns OcspRequestInterval
-    boost::optional<int> get_ocsp_request_interval(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<int> get_ocsp_request_interval(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets OcspRequestInterval to given \p ocsp_request_interval
     void set_ocsp_request_interval(const int &ocsp_request_interval, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns WebsocketPingPayload
-    boost::optional<std::string> get_websocket_ping_payload(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_websocket_ping_payload(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets WebsocketPingPayload to given \p websocket_ping_payload
     void set_websocket_ping_payload(const std::string &websocket_ping_payload, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns Enabled
-    boost::optional<bool> get_aligned_data_ctrlr_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_aligned_data_ctrlr_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Enabled to given \p aligned_data_ctrlr_enabled
     void set_aligned_data_ctrlr_enabled(const bool &aligned_data_ctrlr_enabled, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns Available
-    boost::optional<bool> get_aligned_data_ctrlr_available(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_aligned_data_ctrlr_available(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Available to given \p aligned_data_ctrlr_available
     void set_aligned_data_ctrlr_available(const bool &aligned_data_ctrlr_available, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -234,12 +234,12 @@ public:
     /// \brief Sets AlignedDataMeasurands to given \p aligned_data_measurands
     void set_aligned_data_measurands(const std::string &aligned_data_measurands, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns AlignedDataSendDuringIdle
-    boost::optional<bool> get_aligned_data_send_during_idle(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_aligned_data_send_during_idle(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets AlignedDataSendDuringIdle to given \p aligned_data_send_during_idle
     void set_aligned_data_send_during_idle(const bool &aligned_data_send_during_idle, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns AlignedDataSignReadings
-    boost::optional<bool> get_aligned_data_sign_readings(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_aligned_data_sign_readings(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets AlignedDataSignReadings to given \p aligned_data_sign_readings
     void set_aligned_data_sign_readings(const bool &aligned_data_sign_readings, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -254,42 +254,42 @@ public:
     /// \brief Sets AlignedDataTxEndedMeasurands to given \p aligned_data_tx_ended_measurands
     void set_aligned_data_tx_ended_measurands(const std::string &aligned_data_tx_ended_measurands, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns Available
-    boost::optional<bool> get_auth_cache_ctrlr_available(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_auth_cache_ctrlr_available(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Available to given \p auth_cache_ctrlr_available
     void set_auth_cache_ctrlr_available(const bool &auth_cache_ctrlr_available, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns Enabled
-    boost::optional<bool> get_auth_cache_ctrlr_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_auth_cache_ctrlr_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Enabled to given \p auth_cache_ctrlr_enabled
     void set_auth_cache_ctrlr_enabled(const bool &auth_cache_ctrlr_enabled, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns AuthCacheLifeTime
-    boost::optional<int> get_auth_cache_life_time(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<int> get_auth_cache_life_time(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets AuthCacheLifeTime to given \p auth_cache_life_time
     void set_auth_cache_life_time(const int &auth_cache_life_time, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns AuthCachePolicy
-    boost::optional<std::string> get_auth_cache_policy(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_auth_cache_policy(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets AuthCachePolicy to given \p auth_cache_policy
     void set_auth_cache_policy(const std::string &auth_cache_policy, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns AuthCacheStorage
-    boost::optional<int> get_auth_cache_storage(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<int> get_auth_cache_storage(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets AuthCacheStorage to given \p auth_cache_storage
     void set_auth_cache_storage(const int &auth_cache_storage, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns AuthCacheDisablePostAuthorize
-    boost::optional<bool> get_auth_cache_disable_post_authorize(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_auth_cache_disable_post_authorize(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets AuthCacheDisablePostAuthorize to given \p auth_cache_disable_post_authorize
     void set_auth_cache_disable_post_authorize(const bool &auth_cache_disable_post_authorize, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns Enabled
-    boost::optional<bool> get_auth_ctrlr_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_auth_ctrlr_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Enabled to given \p auth_ctrlr_enabled
     void set_auth_ctrlr_enabled(const bool &auth_ctrlr_enabled, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns AdditionalInfoItemsPerMessage
-    boost::optional<int> get_additional_info_items_per_message(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<int> get_additional_info_items_per_message(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets AdditionalInfoItemsPerMessage to given \p additional_info_items_per_message
     void set_additional_info_items_per_message(const int &additional_info_items_per_message, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -309,62 +309,62 @@ public:
     /// \brief Sets LocalPreAuthorize to given \p local_pre_authorize
     void set_local_pre_authorize(const bool &local_pre_authorize, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns MasterPassGroupId
-    boost::optional<std::string> get_master_pass_group_id(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_master_pass_group_id(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets MasterPassGroupId to given \p master_pass_group_id
     void set_master_pass_group_id(const std::string &master_pass_group_id, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns OfflineTxForUnknownIdEnabled
-    boost::optional<bool> get_offline_tx_for_unknown_id_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_offline_tx_for_unknown_id_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets OfflineTxForUnknownIdEnabled to given \p offline_tx_for_unknown_id_enabled
     void set_offline_tx_for_unknown_id_enabled(const bool &offline_tx_for_unknown_id_enabled, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns DisableRemoteAuthorization
-    boost::optional<bool> get_disable_remote_authorization(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_disable_remote_authorization(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets DisableRemoteAuthorization to given \p disable_remote_authorization
     void set_disable_remote_authorization(const bool &disable_remote_authorization, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns Enabled
-    boost::optional<bool> get_chade_moctrlr_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_chade_moctrlr_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Enabled to given \p chade_moctrlr_enabled
     void set_chade_moctrlr_enabled(const bool &chade_moctrlr_enabled, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns SelftestActive
-    boost::optional<bool> get_selftest_active(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_selftest_active(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets SelftestActive to given \p selftest_active
     void set_selftest_active(const bool &selftest_active, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns CHAdeMOProtocolNumber
-    boost::optional<int> get_chade_moprotocol_number(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<int> get_chade_moprotocol_number(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets CHAdeMOProtocolNumber to given \p chade_moprotocol_number
     void set_chade_moprotocol_number(const int &chade_moprotocol_number, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns VehicleStatus
-    boost::optional<bool> get_vehicle_status(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_vehicle_status(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets VehicleStatus to given \p vehicle_status
     void set_vehicle_status(const bool &vehicle_status, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns DynamicControl
-    boost::optional<bool> get_dynamic_control(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_dynamic_control(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets DynamicControl to given \p dynamic_control
     void set_dynamic_control(const bool &dynamic_control, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns HighCurrentControl
-    boost::optional<bool> get_high_current_control(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_high_current_control(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets HighCurrentControl to given \p high_current_control
     void set_high_current_control(const bool &high_current_control, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns HighVoltageControl
-    boost::optional<bool> get_high_voltage_control(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_high_voltage_control(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets HighVoltageControl to given \p high_voltage_control
     void set_high_voltage_control(const bool &high_voltage_control, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns AutoManufacturerCode
-    boost::optional<int> get_auto_manufacturer_code(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<int> get_auto_manufacturer_code(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets AutoManufacturerCode to given \p auto_manufacturer_code
     void set_auto_manufacturer_code(const int &auto_manufacturer_code, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns AllowNewSessionsPendingFirmwareUpdate
-    boost::optional<bool> get_allow_new_sessions_pending_firmware_update(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_allow_new_sessions_pending_firmware_update(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets AllowNewSessionsPendingFirmwareUpdate to given \p allow_new_sessions_pending_firmware_update
     void set_allow_new_sessions_pending_firmware_update(const bool &allow_new_sessions_pending_firmware_update, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -379,7 +379,7 @@ public:
     /// \brief Sets Available to given \p charging_station_available
     void set_charging_station_available(const bool &charging_station_available, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns Model
-    boost::optional<std::string> get_model(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_model(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Model to given \p model
     void set_model(const std::string &model, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -389,12 +389,12 @@ public:
     /// \brief Sets SupplyPhases to given \p charging_station_supply_phases
     void set_charging_station_supply_phases(const int &charging_station_supply_phases, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns VendorName
-    boost::optional<std::string> get_vendor_name(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_vendor_name(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets VendorName to given \p vendor_name
     void set_vendor_name(const std::string &vendor_name, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns Enabled
-    boost::optional<bool> get_clock_ctrlr_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_clock_ctrlr_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Enabled to given \p clock_ctrlr_enabled
     void set_clock_ctrlr_enabled(const bool &clock_ctrlr_enabled, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -404,32 +404,32 @@ public:
     /// \brief Sets DateTime to given \p date_time
     void set_date_time(const ocpp::DateTime &date_time, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns NextTimeOffsetTransitionDateTime
-    boost::optional<ocpp::DateTime> get_next_time_offset_transition_date_time(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<ocpp::DateTime> get_next_time_offset_transition_date_time(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets NextTimeOffsetTransitionDateTime to given \p next_time_offset_transition_date_time
     void set_next_time_offset_transition_date_time(const ocpp::DateTime &next_time_offset_transition_date_time, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns NtpServerUri
-    boost::optional<std::string> get_ntp_server_uri(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_ntp_server_uri(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets NtpServerUri to given \p ntp_server_uri
     void set_ntp_server_uri(const std::string &ntp_server_uri, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns NtpSource
-    boost::optional<std::string> get_ntp_source(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_ntp_source(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets NtpSource to given \p ntp_source
     void set_ntp_source(const std::string &ntp_source, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns TimeAdjustmentReportingThreshold
-    boost::optional<int> get_time_adjustment_reporting_threshold(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<int> get_time_adjustment_reporting_threshold(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets TimeAdjustmentReportingThreshold to given \p time_adjustment_reporting_threshold
     void set_time_adjustment_reporting_threshold(const int &time_adjustment_reporting_threshold, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns TimeOffset
-    boost::optional<std::string> get_time_offset(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_time_offset(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets TimeOffset to given \p time_offset
     void set_time_offset(const std::string &time_offset, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns TimeOffset
-    boost::optional<std::string> get_time_offset_next_transition(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_time_offset_next_transition(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets TimeOffset to given \p time_offset_next_transition
     void set_time_offset_next_transition(const std::string &time_offset_next_transition, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -439,27 +439,27 @@ public:
     /// \brief Sets TimeSource to given \p time_source
     void set_time_source(const std::string &time_source, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns TimeZone
-    boost::optional<std::string> get_time_zone(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_time_zone(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets TimeZone to given \p time_zone
     void set_time_zone(const std::string &time_zone, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns ProtocolAgreed
-    boost::optional<std::string> get_protocol_agreed(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_protocol_agreed(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets ProtocolAgreed to given \p protocol_agreed
     void set_protocol_agreed(const std::string &protocol_agreed, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns ProtocolSupportedByEV
-    boost::optional<std::string> get_protocol_supported_by_ev_priority_(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_protocol_supported_by_ev_priority_(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets ProtocolSupportedByEV to given \p protocol_supported_by_ev_priority_
     void set_protocol_supported_by_ev_priority_(const std::string &protocol_supported_by_ev_priority_, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns VehicleID
-    boost::optional<std::string> get_vehicle_id(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_vehicle_id(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets VehicleID to given \p vehicle_id
     void set_vehicle_id(const std::string &vehicle_id, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns AvailabilityState
-    boost::optional<std::string> get_connector_availability_state(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_connector_availability_state(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets AvailabilityState to given \p connector_availability_state
     void set_connector_availability_state(const std::string &connector_availability_state, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -469,7 +469,7 @@ public:
     /// \brief Sets Available to given \p connector_available
     void set_connector_available(const bool &connector_available, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns ChargeProtocol
-    boost::optional<std::string> get_charge_protocol(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_charge_protocol(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets ChargeProtocol to given \p charge_protocol
     void set_charge_protocol(const std::string &charge_protocol, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -484,32 +484,32 @@ public:
     /// \brief Sets SupplyPhases to given \p connector_supply_phases
     void set_connector_supply_phases(const int &connector_supply_phases, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns MaxMsgElements
-    boost::optional<int> get_max_msg_elements(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<int> get_max_msg_elements(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets MaxMsgElements to given \p max_msg_elements
     void set_max_msg_elements(const int &max_msg_elements, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns Enabled
-    boost::optional<bool> get_cppwmcontroller_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_cppwmcontroller_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Enabled to given \p cppwmcontroller_enabled
     void set_cppwmcontroller_enabled(const bool &cppwmcontroller_enabled, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns State
-    boost::optional<std::string> get_state(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_state(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets State to given \p state
     void set_state(const std::string &state, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns Enabled
-    boost::optional<bool> get_customization_ctrlr_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_customization_ctrlr_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Enabled to given \p customization_ctrlr_enabled
     void set_customization_ctrlr_enabled(const bool &customization_ctrlr_enabled, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns CustomImplementationEnabled
-    boost::optional<bool> get_custom_implementation_enabled_vendor_id_(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_custom_implementation_enabled_vendor_id_(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets CustomImplementationEnabled to given \p custom_implementation_enabled_vendor_id_
     void set_custom_implementation_enabled_vendor_id_(const bool &custom_implementation_enabled_vendor_id_, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns Enabled
-    boost::optional<bool> get_device_data_ctrlr_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_device_data_ctrlr_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Enabled to given \p device_data_ctrlr_enabled
     void set_device_data_ctrlr_enabled(const bool &device_data_ctrlr_enabled, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -529,7 +529,7 @@ public:
     /// \brief Sets BytesPerMessage to given \p bytes_per_message_set_variables
     void set_bytes_per_message_set_variables(const int &bytes_per_message_set_variables, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns ConfigurationValueSize
-    boost::optional<int> get_configuration_value_size(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<int> get_configuration_value_size(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets ConfigurationValueSize to given \p configuration_value_size
     void set_configuration_value_size(const int &configuration_value_size, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -549,17 +549,17 @@ public:
     /// \brief Sets ItemsPerMessage to given \p items_per_message_set_variables
     void set_items_per_message_set_variables(const int &items_per_message_set_variables, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns ReportingValueSize
-    boost::optional<int> get_reporting_value_size(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<int> get_reporting_value_size(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets ReportingValueSize to given \p reporting_value_size
     void set_reporting_value_size(const int &reporting_value_size, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns ValueSize
-    boost::optional<int> get_value_size(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<int> get_value_size(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets ValueSize to given \p value_size
     void set_value_size(const int &value_size, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns Available
-    boost::optional<bool> get_display_message_ctrlr_available(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_display_message_ctrlr_available(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Available to given \p display_message_ctrlr_available
     void set_display_message_ctrlr_available(const bool &display_message_ctrlr_available, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -569,12 +569,12 @@ public:
     /// \brief Sets NumberOfDisplayMessages to given \p number_of_display_messages
     void set_number_of_display_messages(const int &number_of_display_messages, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns Enabled
-    boost::optional<bool> get_display_message_ctrlr_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_display_message_ctrlr_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Enabled to given \p display_message_ctrlr_enabled
     void set_display_message_ctrlr_enabled(const bool &display_message_ctrlr_enabled, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns PersonalMessageSize
-    boost::optional<int> get_personal_message_size(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<int> get_personal_message_size(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets PersonalMessageSize to given \p personal_message_size
     void set_personal_message_size(const int &personal_message_size, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -589,22 +589,22 @@ public:
     /// \brief Sets DisplayMessageSupportedPriorities to given \p display_message_supported_priorities
     void set_display_message_supported_priorities(const std::string &display_message_supported_priorities, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns ChargingStation
-    boost::optional<std::string> get_charging_station(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_charging_station(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets ChargingStation to given \p charging_station
     void set_charging_station(const std::string &charging_station, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns DistributionPanel
-    boost::optional<std::string> get_distribution_panel(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_distribution_panel(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets DistributionPanel to given \p distribution_panel
     void set_distribution_panel(const std::string &distribution_panel, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns Fuse
-    boost::optional<int> get_fuse_n_(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<int> get_fuse_n_(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Fuse to given \p fuse_n_
     void set_fuse_n_(const int &fuse_n_, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns AllowReset
-    boost::optional<bool> get_allow_reset(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_allow_reset(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets AllowReset to given \p allow_reset
     void set_allow_reset(const bool &allow_reset, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -619,7 +619,7 @@ public:
     /// \brief Sets Available to given \p evse_available
     void set_evse_available(const bool &evse_available, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns EvseId
-    boost::optional<std::string> get_evse__id(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_evse__id(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets EvseId to given \p evse__id
     void set_evse__id(const std::string &evse__id, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -634,37 +634,37 @@ public:
     /// \brief Sets SupplyPhases to given \p evse_supply_phases
     void set_evse_supply_phases(const int &evse_supply_phases, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns ISO15118EvseId
-    boost::optional<std::string> get_iso15118_evse__id(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_iso15118_evse__id(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets ISO15118EvseId to given \p iso15118_evse__id
     void set_iso15118_evse__id(const std::string &iso15118_evse__id, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns EnergyExport
-    boost::optional<double> get_energy_export(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<double> get_energy_export(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets EnergyExport to given \p energy_export
     void set_energy_export(const double &energy_export, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns EnergyExportRegister
-    boost::optional<double> get_energy_export_register(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<double> get_energy_export_register(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets EnergyExportRegister to given \p energy_export_register
     void set_energy_export_register(const double &energy_export_register, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns EnergyImport
-    boost::optional<double> get_energy_import(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<double> get_energy_import(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets EnergyImport to given \p energy_import
     void set_energy_import(const double &energy_import, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns EnergyImportRegister
-    boost::optional<double> get_energy_import_register(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<double> get_energy_import_register(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets EnergyImportRegister to given \p energy_import_register
     void set_energy_import_register(const double &energy_import_register, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns Enabled
-    boost::optional<bool> get_iso15118ctrlr_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_iso15118ctrlr_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Enabled to given \p iso15118ctrlr_enabled
     void set_iso15118ctrlr_enabled(const bool &iso15118ctrlr_enabled, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns CentralContractValidationAllowed
-    boost::optional<bool> get_central_contract_validation_allowed(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_central_contract_validation_allowed(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets CentralContractValidationAllowed to given \p central_contract_validation_allowed
     void set_central_contract_validation_allowed(const bool &central_contract_validation_allowed, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -674,52 +674,52 @@ public:
     /// \brief Sets ContractValidationOffline to given \p contract_validation_offline
     void set_contract_validation_offline(const bool &contract_validation_offline, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns SeccId
-    boost::optional<std::string> get_secc_id(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_secc_id(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets SeccId to given \p secc_id
     void set_secc_id(const std::string &secc_id, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns MaxScheduleEntries
-    boost::optional<int> get_max_schedule_entries(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<int> get_max_schedule_entries(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets MaxScheduleEntries to given \p max_schedule_entries
     void set_max_schedule_entries(const int &max_schedule_entries, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns RequestedEnergyTransferMode
-    boost::optional<std::string> get_requested_energy_transfer_mode(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_requested_energy_transfer_mode(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets RequestedEnergyTransferMode to given \p requested_energy_transfer_mode
     void set_requested_energy_transfer_mode(const std::string &requested_energy_transfer_mode, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns RequestMeteringReceipt
-    boost::optional<bool> get_request_metering_receipt(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_request_metering_receipt(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets RequestMeteringReceipt to given \p request_metering_receipt
     void set_request_metering_receipt(const bool &request_metering_receipt, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns CountryName
-    boost::optional<std::string> get_country_name(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_country_name(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets CountryName to given \p country_name
     void set_country_name(const std::string &country_name, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns OrganizationName
-    boost::optional<std::string> get_iso15118ctrlr_organization_name(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_iso15118ctrlr_organization_name(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets OrganizationName to given \p iso15118ctrlr_organization_name
     void set_iso15118ctrlr_organization_name(const std::string &iso15118ctrlr_organization_name, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns PnCEnabled
-    boost::optional<bool> get_pn_cenabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_pn_cenabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets PnCEnabled to given \p pn_cenabled
     void set_pn_cenabled(const bool &pn_cenabled, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns V2GCertificateInstallationEnabled
-    boost::optional<bool> get_v2gcertificate_installation_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_v2gcertificate_installation_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets V2GCertificateInstallationEnabled to given \p v2gcertificate_installation_enabled
     void set_v2gcertificate_installation_enabled(const bool &v2gcertificate_installation_enabled, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns ContractCertificateInstallationEnabled
-    boost::optional<bool> get_contract_certificate_installation_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_contract_certificate_installation_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets ContractCertificateInstallationEnabled to given \p contract_certificate_installation_enabled
     void set_contract_certificate_installation_enabled(const bool &contract_certificate_installation_enabled, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns Available
-    boost::optional<bool> get_local_auth_list_ctrlr_available(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_local_auth_list_ctrlr_available(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Available to given \p local_auth_list_ctrlr_available
     void set_local_auth_list_ctrlr_available(const bool &local_auth_list_ctrlr_available, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -729,7 +729,7 @@ public:
     /// \brief Sets BytesPerMessageSendLocalList to given \p bytes_per_message_send_local_list
     void set_bytes_per_message_send_local_list(const int &bytes_per_message_send_local_list, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns Enabled
-    boost::optional<bool> get_local_auth_list_ctrlr_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_local_auth_list_ctrlr_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Enabled to given \p local_auth_list_ctrlr_enabled
     void set_local_auth_list_ctrlr_enabled(const bool &local_auth_list_ctrlr_enabled, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -744,27 +744,27 @@ public:
     /// \brief Sets ItemsPerMessageSendLocalList to given \p items_per_message_send_local_list
     void set_items_per_message_send_local_list(const int &items_per_message_send_local_list, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns Storage
-    boost::optional<int> get_storage(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<int> get_storage(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Storage to given \p storage
     void set_storage(const int &storage, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns DisablePostAuthorize
-    boost::optional<bool> get_disable_post_authorize(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_disable_post_authorize(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets DisablePostAuthorize to given \p disable_post_authorize
     void set_disable_post_authorize(const bool &disable_post_authorize, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns Capacity
-    boost::optional<double> get_capacity(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<double> get_capacity(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Capacity to given \p capacity
     void set_capacity(const double &capacity, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns Available
-    boost::optional<bool> get_monitoring_ctrlr_available(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_monitoring_ctrlr_available(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Available to given \p monitoring_ctrlr_available
     void set_monitoring_ctrlr_available(const bool &monitoring_ctrlr_available, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns BytesPerMessage
-    boost::optional<int> get_bytes_per_message_clear_variable_monitoring(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<int> get_bytes_per_message_clear_variable_monitoring(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets BytesPerMessage to given \p bytes_per_message_clear_variable_monitoring
     void set_bytes_per_message_clear_variable_monitoring(const int &bytes_per_message_clear_variable_monitoring, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -774,12 +774,12 @@ public:
     /// \brief Sets BytesPerMessage to given \p bytes_per_message_set_variable_monitoring
     void set_bytes_per_message_set_variable_monitoring(const int &bytes_per_message_set_variable_monitoring, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns Enabled
-    boost::optional<bool> get_monitoring_ctrlr_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_monitoring_ctrlr_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Enabled to given \p monitoring_ctrlr_enabled
     void set_monitoring_ctrlr_enabled(const bool &monitoring_ctrlr_enabled, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns ItemsPerMessage
-    boost::optional<int> get_items_per_message_clear_variable_monitoring(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<int> get_items_per_message_clear_variable_monitoring(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets ItemsPerMessage to given \p items_per_message_clear_variable_monitoring
     void set_items_per_message_clear_variable_monitoring(const int &items_per_message_clear_variable_monitoring, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -789,37 +789,37 @@ public:
     /// \brief Sets ItemsPerMessage to given \p items_per_message_set_variable_monitoring
     void set_items_per_message_set_variable_monitoring(const int &items_per_message_set_variable_monitoring, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns OfflineQueuingSeverity
-    boost::optional<int> get_offline_queuing_severity(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<int> get_offline_queuing_severity(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets OfflineQueuingSeverity to given \p offline_queuing_severity
     void set_offline_queuing_severity(const int &offline_queuing_severity, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns MonitoringBase
-    boost::optional<std::string> get_monitoring_base(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_monitoring_base(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets MonitoringBase to given \p monitoring_base
     void set_monitoring_base(const std::string &monitoring_base, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns MonitoringLevel
-    boost::optional<int> get_monitoring_level(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<int> get_monitoring_level(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets MonitoringLevel to given \p monitoring_level
     void set_monitoring_level(const int &monitoring_level, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns ActiveMonitoringBase
-    boost::optional<std::string> get_active_monitoring_base(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_active_monitoring_base(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets ActiveMonitoringBase to given \p active_monitoring_base
     void set_active_monitoring_base(const std::string &active_monitoring_base, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns ActiveMonitoringLevel
-    boost::optional<int> get_active_monitoring_level(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<int> get_active_monitoring_level(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets ActiveMonitoringLevel to given \p active_monitoring_level
     void set_active_monitoring_level(const int &active_monitoring_level, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns Enabled
-    boost::optional<bool> get_ocppcomm_ctrlr_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_ocppcomm_ctrlr_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Enabled to given \p ocppcomm_ctrlr_enabled
     void set_ocppcomm_ctrlr_enabled(const bool &ocppcomm_ctrlr_enabled, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns ActiveNetworkProfile
-    boost::optional<std::string> get_active_network_profile(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_active_network_profile(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets ActiveNetworkProfile to given \p active_network_profile
     void set_active_network_profile(const std::string &active_network_profile, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -829,7 +829,7 @@ public:
     /// \brief Sets FileTransferProtocols to given \p file_transfer_protocols
     void set_file_transfer_protocols(const std::string &file_transfer_protocols, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns HeartbeatInterval
-    boost::optional<int> get_heartbeat_interval(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<int> get_heartbeat_interval(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets HeartbeatInterval to given \p heartbeat_interval
     void set_heartbeat_interval(const int &heartbeat_interval, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -864,12 +864,12 @@ public:
     /// \brief Sets OfflineThreshold to given \p offline_threshold
     void set_offline_threshold(const int &offline_threshold, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns PublicKeyWithSignedMeterValue
-    boost::optional<std::string> get_public_key_with_signed_meter_value(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_public_key_with_signed_meter_value(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets PublicKeyWithSignedMeterValue to given \p public_key_with_signed_meter_value
     void set_public_key_with_signed_meter_value(const std::string &public_key_with_signed_meter_value, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns QueueAllMessages
-    boost::optional<bool> get_queue_all_messages(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_queue_all_messages(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets QueueAllMessages to given \p queue_all_messages
     void set_queue_all_messages(const bool &queue_all_messages, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -879,17 +879,17 @@ public:
     /// \brief Sets ResetRetries to given \p reset_retries
     void set_reset_retries(const int &reset_retries, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns RetryBackOffRandomRange
-    boost::optional<int> get_retry_back_off_random_range(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<int> get_retry_back_off_random_range(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets RetryBackOffRandomRange to given \p retry_back_off_random_range
     void set_retry_back_off_random_range(const int &retry_back_off_random_range, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns RetryBackOffRepeatTimes
-    boost::optional<int> get_retry_back_off_repeat_times(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<int> get_retry_back_off_repeat_times(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets RetryBackOffRepeatTimes to given \p retry_back_off_repeat_times
     void set_retry_back_off_repeat_times(const int &retry_back_off_repeat_times, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns RetryBackOffWaitMinimum
-    boost::optional<int> get_retry_back_off_wait_minimum(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<int> get_retry_back_off_wait_minimum(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets RetryBackOffWaitMinimum to given \p retry_back_off_wait_minimum
     void set_retry_back_off_wait_minimum(const int &retry_back_off_wait_minimum, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -899,42 +899,42 @@ public:
     /// \brief Sets UnlockOnEVSideDisconnect to given \p unlock_on_evside_disconnect
     void set_unlock_on_evside_disconnect(const bool &unlock_on_evside_disconnect, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns WebSocketPingInterval
-    boost::optional<int> get_web_socket_ping_interval(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<int> get_web_socket_ping_interval(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets WebSocketPingInterval to given \p web_socket_ping_interval
     void set_web_socket_ping_interval(const int &web_socket_ping_interval, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns FieldLength
-    boost::optional<int> get_field_length(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<int> get_field_length(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets FieldLength to given \p field_length
     void set_field_length(const int &field_length, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns Available
-    boost::optional<bool> get_reservation_ctrlr_available(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_reservation_ctrlr_available(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Available to given \p reservation_ctrlr_available
     void set_reservation_ctrlr_available(const bool &reservation_ctrlr_available, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns Enabled
-    boost::optional<bool> get_reservation_ctrlr_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_reservation_ctrlr_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Enabled to given \p reservation_ctrlr_enabled
     void set_reservation_ctrlr_enabled(const bool &reservation_ctrlr_enabled, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns NonEvseSpecific
-    boost::optional<bool> get_non__evse__specific(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_non__evse__specific(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets NonEvseSpecific to given \p non__evse__specific
     void set_non__evse__specific(const bool &non__evse__specific, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns Available
-    boost::optional<bool> get_sampled_data_ctrlr_available(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_sampled_data_ctrlr_available(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Available to given \p sampled_data_ctrlr_available
     void set_sampled_data_ctrlr_available(const bool &sampled_data_ctrlr_available, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns Enabled
-    boost::optional<bool> get_sampled_data_ctrlr_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_sampled_data_ctrlr_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Enabled to given \p sampled_data_ctrlr_enabled
     void set_sampled_data_ctrlr_enabled(const bool &sampled_data_ctrlr_enabled, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns SampledDataSignReadings
-    boost::optional<bool> get_sampled_data_sign_readings(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_sampled_data_sign_readings(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets SampledDataSignReadings to given \p sampled_data_sign_readings
     void set_sampled_data_sign_readings(const bool &sampled_data_sign_readings, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -964,22 +964,22 @@ public:
     /// \brief Sets SampledDataTxUpdatedMeasurands to given \p sampled_data_tx_updated_measurands
     void set_sampled_data_tx_updated_measurands(const std::string &sampled_data_tx_updated_measurands, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns RegisterValuesWithoutPhases
-    boost::optional<bool> get_register_values_without_phases(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_register_values_without_phases(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets RegisterValuesWithoutPhases to given \p register_values_without_phases
     void set_register_values_without_phases(const bool &register_values_without_phases, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns Enabled
-    boost::optional<bool> get_security_ctrlr_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_security_ctrlr_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Enabled to given \p security_ctrlr_enabled
     void set_security_ctrlr_enabled(const bool &security_ctrlr_enabled, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns AdditionalRootCertificateCheck
-    boost::optional<bool> get_additional_root_certificate_check(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_additional_root_certificate_check(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets AdditionalRootCertificateCheck to given \p additional_root_certificate_check
     void set_additional_root_certificate_check(const bool &additional_root_certificate_check, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns BasicAuthPassword
-    boost::optional<std::string> get_basic_auth_password(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_basic_auth_password(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets BasicAuthPassword to given \p basic_auth_password
     void set_basic_auth_password(const std::string &basic_auth_password, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -989,22 +989,22 @@ public:
     /// \brief Sets CertificateEntries to given \p certificate_entries
     void set_certificate_entries(const int &certificate_entries, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns CertSigningRepeatTimes
-    boost::optional<int> get_cert_signing_repeat_times(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<int> get_cert_signing_repeat_times(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets CertSigningRepeatTimes to given \p cert_signing_repeat_times
     void set_cert_signing_repeat_times(const int &cert_signing_repeat_times, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns CertSigningWaitMinimum
-    boost::optional<int> get_cert_signing_wait_minimum(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<int> get_cert_signing_wait_minimum(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets CertSigningWaitMinimum to given \p cert_signing_wait_minimum
     void set_cert_signing_wait_minimum(const int &cert_signing_wait_minimum, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns Identity
-    boost::optional<std::string> get_identity(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_identity(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Identity to given \p identity
     void set_identity(const std::string &identity, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns MaxCertificateChainSize
-    boost::optional<int> get_max_certificate_chain_size(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<int> get_max_certificate_chain_size(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets MaxCertificateChainSize to given \p max_certificate_chain_size
     void set_max_certificate_chain_size(const int &max_certificate_chain_size, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -1019,17 +1019,17 @@ public:
     /// \brief Sets SecurityProfile to given \p security_profile
     void set_security_profile(const int &security_profile, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns ACPhaseSwitchingSupported
-    boost::optional<bool> get_acphase_switching_supported(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_acphase_switching_supported(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets ACPhaseSwitchingSupported to given \p acphase_switching_supported
     void set_acphase_switching_supported(const bool &acphase_switching_supported, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns Available
-    boost::optional<bool> get_smart_charging_ctrlr_available(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_smart_charging_ctrlr_available(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Available to given \p smart_charging_ctrlr_available
     void set_smart_charging_ctrlr_available(const bool &smart_charging_ctrlr_available, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns Enabled
-    boost::optional<bool> get_smart_charging_ctrlr_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_smart_charging_ctrlr_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Enabled to given \p smart_charging_ctrlr_enabled
     void set_smart_charging_ctrlr_enabled(const bool &smart_charging_ctrlr_enabled, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -1039,7 +1039,7 @@ public:
     /// \brief Sets Entries to given \p entries_charging_profiles
     void set_entries_charging_profiles(const int &entries_charging_profiles, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns ExternalControlSignalsEnabled
-    boost::optional<bool> get_external_control_signals_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_external_control_signals_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets ExternalControlSignalsEnabled to given \p external_control_signals_enabled
     void set_external_control_signals_enabled(const bool &external_control_signals_enabled, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -1049,7 +1049,7 @@ public:
     /// \brief Sets LimitChangeSignificance to given \p limit_change_significance
     void set_limit_change_significance(const double &limit_change_significance, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns NotifyChargingLimitWithSchedules
-    boost::optional<bool> get_notify_charging_limit_with_schedules(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_notify_charging_limit_with_schedules(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets NotifyChargingLimitWithSchedules to given \p notify_charging_limit_with_schedules
     void set_notify_charging_limit_with_schedules(const bool &notify_charging_limit_with_schedules, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -1059,7 +1059,7 @@ public:
     /// \brief Sets PeriodsPerSchedule to given \p periods_per_schedule
     void set_periods_per_schedule(const int &periods_per_schedule, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns Phases3to1
-    boost::optional<bool> get_phases3to1(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_phases3to1(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Phases3to1 to given \p phases3to1
     void set_phases3to1(const bool &phases3to1, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -1074,12 +1074,12 @@ public:
     /// \brief Sets ChargingScheduleChargingRateUnit to given \p charging_schedule_charging_rate_unit
     void set_charging_schedule_charging_rate_unit(const std::string &charging_schedule_charging_rate_unit, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns Available
-    boost::optional<bool> get_available_tariff(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_available_tariff(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Available to given \p available_tariff
     void set_available_tariff(const bool &available_tariff, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns Available
-    boost::optional<bool> get_available_cost(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_available_cost(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Available to given \p available_cost
     void set_available_cost(const bool &available_cost, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -1089,12 +1089,12 @@ public:
     /// \brief Sets Currency to given \p currency
     void set_currency(const std::string &currency, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns Enabled
-    boost::optional<bool> get_enabled_tariff(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_enabled_tariff(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Enabled to given \p enabled_tariff
     void set_enabled_tariff(const bool &enabled_tariff, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns Enabled
-    boost::optional<bool> get_enabled_cost(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_enabled_cost(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Enabled to given \p enabled_cost
     void set_enabled_cost(const bool &enabled_cost, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -1109,22 +1109,22 @@ public:
     /// \brief Sets TotalCostFallbackMessage to given \p total_cost_fallback_message
     void set_total_cost_fallback_message(const std::string &total_cost_fallback_message, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns Token
-    boost::optional<std::string> get_token(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_token(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Token to given \p token
     void set_token(const std::string &token, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns TokenType
-    boost::optional<std::string> get_token_type(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<std::string> get_token_type(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets TokenType to given \p token_type
     void set_token_type(const std::string &token_type, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns Enabled
-    boost::optional<bool> get_tx_ctrlr_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_tx_ctrlr_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets Enabled to given \p tx_ctrlr_enabled
     void set_tx_ctrlr_enabled(const bool &tx_ctrlr_enabled, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns ChargingTime
-    boost::optional<double> get_charging_time(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<double> get_charging_time(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets ChargingTime to given \p charging_time
     void set_charging_time(const double &charging_time, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -1134,7 +1134,7 @@ public:
     /// \brief Sets EVConnectionTimeOut to given \p evconnection_time_out
     void set_evconnection_time_out(const int &evconnection_time_out, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns MaxEnergyOnInvalidId
-    boost::optional<int> get_max_energy_on_invalid_id(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<int> get_max_energy_on_invalid_id(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets MaxEnergyOnInvalidId to given \p max_energy_on_invalid_id
     void set_max_energy_on_invalid_id(const int &max_energy_on_invalid_id, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
@@ -1149,7 +1149,7 @@ public:
     /// \brief Sets StopTxOnInvalidId to given \p stop_tx_on_invalid_id
     void set_stop_tx_on_invalid_id(const bool &stop_tx_on_invalid_id, const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     /// \brief Returns TxBeforeAcceptedEnabled
-    boost::optional<bool> get_tx_before_accepted_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
+    std::optional<bool> get_tx_before_accepted_enabled(const AttributeEnum &attribute_enum = AttributeEnum::Actual);
     
     /// \brief Sets TxBeforeAcceptedEnabled to given \p tx_before_accepted_enabled
     void set_tx_before_accepted_enabled(const bool &tx_before_accepted_enabled, const AttributeEnum &attribute_enum = AttributeEnum::Actual);

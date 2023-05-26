@@ -470,9 +470,9 @@ bool PkiHandler::isCsmsLeafCertificateInstalled() {
     return boost::filesystem::exists(this->clientCsmsPath / CSMS_LEAF);
 }
 
-boost::optional<std::vector<CertificateHashDataChain>>
-PkiHandler::getRootCertificateHashData(boost::optional<std::vector<CertificateType>> certificateTypes) {
-    boost::optional<std::vector<CertificateHashDataChain>> certificateHashDataChainOpt = boost::none;
+std::optional<std::vector<CertificateHashDataChain>>
+PkiHandler::getRootCertificateHashData(std::optional<std::vector<CertificateType>> certificateTypes) {
+    std::optional<std::vector<CertificateHashDataChain>> certificateHashDataChainOpt = std::nullopt;
 
     std::vector<CertificateHashDataChain> certificateHashDataChain;
     std::vector<std::shared_ptr<X509Certificate>> caCertificates;
@@ -581,14 +581,14 @@ DeleteCertificateResult PkiHandler::deleteRootCertificate(CertificateHashDataTyp
 
 InstallCertificateResult PkiHandler::installRootCertificate(const std::string& rootCertificate,
                                                             const CertificateType& certificateType,
-                                                            boost::optional<int32_t> certificateStoreMaxLength,
-                                                            boost::optional<bool> additionalRootCertificateCheck) {
+                                                            std::optional<int32_t> certificateStoreMaxLength,
+                                                            std::optional<bool> additionalRootCertificateCheck) {
     EVLOG_info << "Installing new root certificate of type: "
                << ocpp::conversions::certificate_type_to_string(certificateType);
     InstallCertificateResult installCertificateResult = InstallCertificateResult::Valid;
 
-    if (certificateStoreMaxLength != boost::none &&
-        this->getCaCertificates().size() >= size_t(certificateStoreMaxLength.get())) {
+    if (certificateStoreMaxLength &&
+        this->getCaCertificates().size() >= size_t(certificateStoreMaxLength.value())) {
         return InstallCertificateResult::CertificateStoreMaxLengthExceeded;
     }
 
@@ -765,7 +765,7 @@ CertificateVerificationResult getCertificateValidationResult(const int ec) {
 
 CertificateVerificationResult
 PkiHandler::verifyCertificate(const PkiEnum& pki, const std::vector<std::shared_ptr<X509Certificate>>& certificates,
-                              const boost::optional<std::string>& chargeBoxSerialNumber) {
+                              const std::optional<std::string>& chargeBoxSerialNumber) {
     EVLOG_info << "Verifying certificate...";
     const auto leaf_certificate = certificates.at(0);
     if (leaf_certificate->x509 == NULL) {
@@ -923,8 +923,8 @@ void PkiHandler::execOpenSSLRehash(const boost::filesystem::path caPath) {
     }
 }
 
-boost::optional<boost::filesystem::path> PkiHandler::getCsmsCaFilePath() {
-    boost::optional<boost::filesystem::path> csmsCaFilePath;
+std::optional<boost::filesystem::path> PkiHandler::getCsmsCaFilePath() {
+    std::optional<boost::filesystem::path> csmsCaFilePath;
     for (const auto& entry : boost::filesystem::directory_iterator(this->caCsmsPath)) {
         if (entry.path().extension().string() == ".pem") {
             csmsCaFilePath.emplace(entry.path());

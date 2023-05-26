@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_NOTIFYDISPLAYMESSAGES_HPP
 #define OCPP_V201_NOTIFYDISPLAYMESSAGES_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -15,9 +15,9 @@ namespace v201 {
 /// \brief Contains a OCPP NotifyDisplayMessages message
 struct NotifyDisplayMessagesRequest : public ocpp::Message {
     int32_t requestId;
-    boost::optional<CustomData> customData;
-    boost::optional<std::vector<MessageInfo>> messageInfo;
-    boost::optional<bool> tbc;
+    std::optional<CustomData> customData;
+    std::optional<std::vector<MessageInfo>> messageInfo;
+    std::optional<bool> tbc;
 
     /// \brief Provides the type of this NotifyDisplayMessages message as a human readable string
     /// \returns the message type as a human readable string
@@ -36,7 +36,7 @@ std::ostream& operator<<(std::ostream& os, const NotifyDisplayMessagesRequest& k
 
 /// \brief Contains a OCPP NotifyDisplayMessagesResponse message
 struct NotifyDisplayMessagesResponse : public ocpp::Message {
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this NotifyDisplayMessagesResponse message as a human readable string
     /// \returns the message type as a human readable string

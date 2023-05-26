@@ -4,8 +4,8 @@
 #include <ostream>
 #include <string>
 
-#include <boost/optional/optional.hpp>
 #include <nlohmann/json.hpp>
+#include <optional>
 
 #include <ocpp/v201/messages/GetReport.hpp>
 
@@ -36,7 +36,7 @@ void to_json(json& j, const GetReportRequest& k) {
     if (k.componentCriteria) {
         j["componentCriteria"] = json::array();
         for (auto val : k.componentCriteria.value()) {
-            //FIXME(piet): Fix this in code generator
+            // FIXME(piet): Fix this in code generator
             j["componentCriteria"].push_back(conversions::component_criterion_enum_to_string(val));
         }
     }
@@ -62,7 +62,7 @@ void from_json(const json& j, GetReportRequest& k) {
         json arr = j.at("componentCriteria");
         std::vector<ComponentCriterionEnum> vec;
         for (auto val : arr) {
-            //FIXME(piet): Fix this in code generator
+            // FIXME(piet): Fix this in code generator
             vec.push_back(conversions::string_to_component_criterion_enum(val));
         }
         k.componentCriteria.emplace(vec);

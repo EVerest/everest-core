@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_METERVALUES_HPP
 #define OCPP_V201_METERVALUES_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -16,7 +16,7 @@ namespace v201 {
 struct MeterValuesRequest : public ocpp::Message {
     int32_t evseId;
     std::vector<MeterValue> meterValue;
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this MeterValues message as a human readable string
     /// \returns the message type as a human readable string
@@ -35,7 +35,7 @@ std::ostream& operator<<(std::ostream& os, const MeterValuesRequest& k);
 
 /// \brief Contains a OCPP MeterValuesResponse message
 struct MeterValuesResponse : public ocpp::Message {
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this MeterValuesResponse message as a human readable string
     /// \returns the message type as a human readable string

@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_UPDATEFIRMWARE_HPP
 #define OCPP_V201_UPDATEFIRMWARE_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -16,9 +16,9 @@ namespace v201 {
 struct UpdateFirmwareRequest : public ocpp::Message {
     int32_t requestId;
     Firmware firmware;
-    boost::optional<CustomData> customData;
-    boost::optional<int32_t> retries;
-    boost::optional<int32_t> retryInterval;
+    std::optional<CustomData> customData;
+    std::optional<int32_t> retries;
+    std::optional<int32_t> retryInterval;
 
     /// \brief Provides the type of this UpdateFirmware message as a human readable string
     /// \returns the message type as a human readable string
@@ -38,8 +38,8 @@ std::ostream& operator<<(std::ostream& os, const UpdateFirmwareRequest& k);
 /// \brief Contains a OCPP UpdateFirmwareResponse message
 struct UpdateFirmwareResponse : public ocpp::Message {
     UpdateFirmwareStatusEnum status;
-    boost::optional<CustomData> customData;
-    boost::optional<StatusInfo> statusInfo;
+    std::optional<CustomData> customData;
+    std::optional<StatusInfo> statusInfo;
 
     /// \brief Provides the type of this UpdateFirmwareResponse message as a human readable string
     /// \returns the message type as a human readable string

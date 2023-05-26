@@ -3,7 +3,7 @@
 #ifndef OCPP_V16_SIGNEDFIRMWARESTATUSNOTIFICATION_HPP
 #define OCPP_V16_SIGNEDFIRMWARESTATUSNOTIFICATION_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/v16/enums.hpp>
 #include <ocpp/v16/ocpp_types.hpp>
@@ -14,7 +14,7 @@ namespace v16 {
 /// \brief Contains a OCPP SignedFirmwareStatusNotification message
 struct SignedFirmwareStatusNotificationRequest : public ocpp::Message {
     FirmwareStatusEnumType status;
-    boost::optional<int32_t> requestId;
+    std::optional<int32_t> requestId;
 
     /// \brief Provides the type of this SignedFirmwareStatusNotification message as a human readable string
     /// \returns the message type as a human readable string

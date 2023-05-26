@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_RESERVATIONSTATUSUPDATE_HPP
 #define OCPP_V201_RESERVATIONSTATUSUPDATE_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -16,7 +16,7 @@ namespace v201 {
 struct ReservationStatusUpdateRequest : public ocpp::Message {
     int32_t reservationId;
     ReservationUpdateStatusEnum reservationUpdateStatus;
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this ReservationStatusUpdate message as a human readable string
     /// \returns the message type as a human readable string
@@ -35,7 +35,7 @@ std::ostream& operator<<(std::ostream& os, const ReservationStatusUpdateRequest&
 
 /// \brief Contains a OCPP ReservationStatusUpdateResponse message
 struct ReservationStatusUpdateResponse : public ocpp::Message {
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this ReservationStatusUpdateResponse message as a human readable string
     /// \returns the message type as a human readable string

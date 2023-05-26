@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_CLEARCACHE_HPP
 #define OCPP_V201_CLEARCACHE_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -14,7 +14,7 @@ namespace v201 {
 
 /// \brief Contains a OCPP ClearCache message
 struct ClearCacheRequest : public ocpp::Message {
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this ClearCache message as a human readable string
     /// \returns the message type as a human readable string
@@ -34,8 +34,8 @@ std::ostream& operator<<(std::ostream& os, const ClearCacheRequest& k);
 /// \brief Contains a OCPP ClearCacheResponse message
 struct ClearCacheResponse : public ocpp::Message {
     ClearCacheStatusEnum status;
-    boost::optional<CustomData> customData;
-    boost::optional<StatusInfo> statusInfo;
+    std::optional<CustomData> customData;
+    std::optional<StatusInfo> statusInfo;
 
     /// \brief Provides the type of this ClearCacheResponse message as a human readable string
     /// \returns the message type as a human readable string

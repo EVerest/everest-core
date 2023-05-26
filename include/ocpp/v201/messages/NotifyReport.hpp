@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_NOTIFYREPORT_HPP
 #define OCPP_V201_NOTIFYREPORT_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -17,9 +17,9 @@ struct NotifyReportRequest : public ocpp::Message {
     int32_t requestId;
     ocpp::DateTime generatedAt;
     int32_t seqNo;
-    boost::optional<CustomData> customData;
-    boost::optional<std::vector<ReportData>> reportData;
-    boost::optional<bool> tbc;
+    std::optional<CustomData> customData;
+    std::optional<std::vector<ReportData>> reportData;
+    std::optional<bool> tbc;
 
     /// \brief Provides the type of this NotifyReport message as a human readable string
     /// \returns the message type as a human readable string
@@ -38,7 +38,7 @@ std::ostream& operator<<(std::ostream& os, const NotifyReportRequest& k);
 
 /// \brief Contains a OCPP NotifyReportResponse message
 struct NotifyReportResponse : public ocpp::Message {
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this NotifyReportResponse message as a human readable string
     /// \returns the message type as a human readable string

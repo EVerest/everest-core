@@ -263,7 +263,7 @@ public:
                     this->reset_in_flight();
                 } else {
                     EVLOG_debug << "Successfully sent message. UID: " << this->in_flight->uniqueId();
-                    this->in_flight_timeout_timer.timeout([this]() { this->handle_timeout_or_callerror(boost::none); },
+                    this->in_flight_timeout_timer.timeout([this]() { this->handle_timeout_or_callerror(std::nullopt); },
                                                           STANDARD_MESSAGE_TIMEOUT);
                     switch (queue_type) {
                     case QueueType::Normal:
@@ -408,7 +408,7 @@ public:
     }
 
     /// \brief Handles a message timeout or a CALLERROR. \p enhanced_message_opt is set only in case of CALLERROR
-    void handle_timeout_or_callerror(const boost::optional<EnhancedMessage<M>>& enhanced_message_opt) {
+    void handle_timeout_or_callerror(const std::optional<EnhancedMessage<M>>& enhanced_message_opt) {
         std::lock_guard<std::mutex> lk(this->message_mutex);
         EVLOG_warning << "Message timeout or CALLERROR for: " << this->in_flight->messageType << " ("
                       << this->in_flight->uniqueId() << ")";

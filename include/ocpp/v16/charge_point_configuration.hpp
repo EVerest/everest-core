@@ -45,20 +45,20 @@ public:
     KeyValue getChargeBoxSerialNumberKeyValue();
     CiString<20> getChargePointModel();
     KeyValue getChargePointModelKeyValue();
-    boost::optional<CiString<25>> getChargePointSerialNumber();
-    boost::optional<KeyValue> getChargePointSerialNumberKeyValue();
+    std::optional<CiString<25>> getChargePointSerialNumber();
+    std::optional<KeyValue> getChargePointSerialNumberKeyValue();
     CiString<20> getChargePointVendor();
     KeyValue getChargePointVendorKeyValue();
     CiString<50> getFirmwareVersion();
     KeyValue getFirmwareVersionKeyValue();
-    boost::optional<CiString<20>> getICCID();
-    boost::optional<KeyValue> getICCIDKeyValue();
-    boost::optional<CiString<20>> getIMSI();
-    boost::optional<KeyValue> getIMSIKeyValue();
-    boost::optional<CiString<25>> getMeterSerialNumber();
-    boost::optional<KeyValue> getMeterSerialNumberKeyValue();
-    boost::optional<CiString<25>> getMeterType();
-    boost::optional<KeyValue> getMeterTypeKeyValue();
+    std::optional<CiString<20>> getICCID();
+    std::optional<KeyValue> getICCIDKeyValue();
+    std::optional<CiString<20>> getIMSI();
+    std::optional<KeyValue> getIMSIKeyValue();
+    std::optional<CiString<25>> getMeterSerialNumber();
+    std::optional<KeyValue> getMeterSerialNumberKeyValue();
+    std::optional<CiString<25>> getMeterType();
+    std::optional<KeyValue> getMeterTypeKeyValue();
     int32_t getWebsocketReconnectInterval();
     KeyValue getWebsocketReconnectIntervalKeyValue();
     bool getAuthorizeConnectorZeroOnConnectorOne();
@@ -85,14 +85,14 @@ public:
     KeyValue getWebsocketPingPayloadKeyValue();
 
     // Core Profile - optional
-    boost::optional<bool> getAllowOfflineTxForUnknownId();
+    std::optional<bool> getAllowOfflineTxForUnknownId();
     void setAllowOfflineTxForUnknownId(bool enabled);
-    boost::optional<KeyValue> getAllowOfflineTxForUnknownIdKeyValue();
+    std::optional<KeyValue> getAllowOfflineTxForUnknownIdKeyValue();
 
     // Core Profile - optional
-    boost::optional<bool> getAuthorizationCacheEnabled();
+    std::optional<bool> getAuthorizationCacheEnabled();
     void setAuthorizationCacheEnabled(bool enabled);
-    boost::optional<KeyValue> getAuthorizationCacheEnabledKeyValue();
+    std::optional<KeyValue> getAuthorizationCacheEnabledKeyValue();
 
     // Core Profile
     bool getAuthorizeRemoteTxRequests();
@@ -100,9 +100,9 @@ public:
     KeyValue getAuthorizeRemoteTxRequestsKeyValue();
 
     // Core Profile - optional
-    boost::optional<int32_t> getBlinkRepeat();
+    std::optional<int32_t> getBlinkRepeat();
     void setBlinkRepeat(int32_t blink_repeat);
-    boost::optional<KeyValue> getBlinkRepeatKeyValue();
+    std::optional<KeyValue> getBlinkRepeatKeyValue();
 
     // Core Profile
     int32_t getClockAlignedDataInterval();
@@ -120,8 +120,8 @@ public:
     KeyValue getConnectorPhaseRotationKeyValue();
 
     // Core Profile - optional
-    boost::optional<int32_t> getConnectorPhaseRotationMaxLength();
-    boost::optional<KeyValue> getConnectorPhaseRotationMaxLengthKeyValue();
+    std::optional<int32_t> getConnectorPhaseRotationMaxLength();
+    std::optional<KeyValue> getConnectorPhaseRotationMaxLengthKeyValue();
 
     // Core Profile
     int32_t getGetConfigurationMaxKeys();
@@ -133,9 +133,9 @@ public:
     KeyValue getHeartbeatIntervalKeyValue();
 
     // Core Profile - optional
-    boost::optional<int32_t> getLightIntensity();
+    std::optional<int32_t> getLightIntensity();
     void setLightIntensity(int32_t light_intensity);
-    boost::optional<KeyValue> getLightIntensityKeyValue();
+    std::optional<KeyValue> getLightIntensityKeyValue();
 
     // Core Profile
     bool getLocalAuthorizeOffline();
@@ -148,9 +148,9 @@ public:
     KeyValue getLocalPreAuthorizeKeyValue();
 
     // Core Profile - optional
-    boost::optional<int32_t> getMaxEnergyOnInvalidId();
+    std::optional<int32_t> getMaxEnergyOnInvalidId();
     void setMaxEnergyOnInvalidId(int32_t max_energy);
-    boost::optional<KeyValue> getMaxEnergyOnInvalidIdKeyValue();
+    std::optional<KeyValue> getMaxEnergyOnInvalidIdKeyValue();
 
     // Core Profile
     std::string getMeterValuesAlignedData();
@@ -159,8 +159,8 @@ public:
     std::vector<MeasurandWithPhase> getMeterValuesAlignedDataVector();
 
     // Core Profile - optional
-    boost::optional<int32_t> getMeterValuesAlignedDataMaxLength();
-    boost::optional<KeyValue> getMeterValuesAlignedDataMaxLengthKeyValue();
+    std::optional<int32_t> getMeterValuesAlignedDataMaxLength();
+    std::optional<KeyValue> getMeterValuesAlignedDataMaxLengthKeyValue();
 
     // Core Profile
     std::string getMeterValuesSampledData();
@@ -169,8 +169,8 @@ public:
     std::vector<MeasurandWithPhase> getMeterValuesSampledDataVector();
 
     // Core Profile - optional
-    boost::optional<int32_t> getMeterValuesSampledDataMaxLength();
-    boost::optional<KeyValue> getMeterValuesSampledDataMaxLengthKeyValue();
+    std::optional<int32_t> getMeterValuesSampledDataMaxLength();
+    std::optional<KeyValue> getMeterValuesSampledDataMaxLengthKeyValue();
 
     // Core Profile
     int32_t getMeterValueSampleInterval();
@@ -178,17 +178,17 @@ public:
     KeyValue getMeterValueSampleIntervalKeyValue();
 
     // Core Profile - optional
-    boost::optional<int32_t> getMinimumStatusDuration();
+    std::optional<int32_t> getMinimumStatusDuration();
     void setMinimumStatusDuration(int32_t minimum_status_duration);
-    boost::optional<KeyValue> getMinimumStatusDurationKeyValue();
+    std::optional<KeyValue> getMinimumStatusDurationKeyValue();
 
     // Core Profile
     int32_t getNumberOfConnectors();
     KeyValue getNumberOfConnectorsKeyValue();
 
     // Reservation Profile
-    boost::optional<bool> getReserveConnectorZeroSupported();
-    boost::optional<KeyValue> getReserveConnectorZeroSupportedKeyValue();
+    std::optional<bool> getReserveConnectorZeroSupported();
+    std::optional<KeyValue> getReserveConnectorZeroSupportedKeyValue();
 
     // Core Profile
     int32_t getResetRetries();
@@ -212,8 +212,8 @@ public:
     std::vector<MeasurandWithPhase> getStopTxnAlignedDataVector();
 
     // Core Profile - optional
-    boost::optional<int32_t> getStopTxnAlignedDataMaxLength();
-    boost::optional<KeyValue> getStopTxnAlignedDataMaxLengthKeyValue();
+    std::optional<int32_t> getStopTxnAlignedDataMaxLength();
+    std::optional<KeyValue> getStopTxnAlignedDataMaxLengthKeyValue();
 
     // Core Profile
     std::string getStopTxnSampledData();
@@ -222,8 +222,8 @@ public:
     std::vector<MeasurandWithPhase> getStopTxnSampledDataVector();
 
     // Core Profile - optional
-    boost::optional<int32_t> getStopTxnSampledDataMaxLength();
-    boost::optional<KeyValue> getStopTxnSampledDataMaxLengthKeyValue();
+    std::optional<int32_t> getStopTxnSampledDataMaxLength();
+    std::optional<KeyValue> getStopTxnSampledDataMaxLengthKeyValue();
 
     // Core Profile
     std::string getSupportedFeatureProfiles();
@@ -231,8 +231,8 @@ public:
     std::set<SupportedFeatureProfiles> getSupportedFeatureProfilesSet();
 
     // Core Profile - optional
-    boost::optional<int32_t> getSupportedFeatureProfilesMaxLength();
-    boost::optional<KeyValue> getSupportedFeatureProfilesMaxLengthKeyValue();
+    std::optional<int32_t> getSupportedFeatureProfilesMaxLength();
+    std::optional<KeyValue> getSupportedFeatureProfilesMaxLengthKeyValue();
 
     // Core Profile
     int32_t getTransactionMessageAttempts();
@@ -250,9 +250,9 @@ public:
     KeyValue getUnlockConnectorOnEVSideDisconnectKeyValue();
 
     // Core Profile - optional
-    boost::optional<int32_t> getWebsocketPingInterval();
+    std::optional<int32_t> getWebsocketPingInterval();
     void setWebsocketPingInterval(int32_t websocket_ping_interval);
-    boost::optional<KeyValue> getWebsocketPingIntervalKeyValue();
+    std::optional<KeyValue> getWebsocketPingIntervalKeyValue();
 
     // Core Profile end
 
@@ -270,8 +270,8 @@ public:
     KeyValue getChargingScheduleMaxPeriodsKeyValue();
 
     // SmartCharging Profile - optional
-    boost::optional<bool> getConnectorSwitch3to1PhaseSupported();
-    boost::optional<KeyValue> getConnectorSwitch3to1PhaseSupportedKeyValue();
+    std::optional<bool> getConnectorSwitch3to1PhaseSupported();
+    std::optional<KeyValue> getConnectorSwitch3to1PhaseSupportedKeyValue();
 
     // SmartCharging Profile
     int32_t getMaxChargingProfilesInstalled();
@@ -280,26 +280,26 @@ public:
     // SmartCharging Profile end
 
     // Security profile - optional
-    boost::optional<bool> getAdditionalRootCertificateCheck();
-    boost::optional<KeyValue> getAdditionalRootCertificateCheckKeyValue();
+    std::optional<bool> getAdditionalRootCertificateCheck();
+    std::optional<KeyValue> getAdditionalRootCertificateCheckKeyValue();
 
     // Security profile - optional
-    boost::optional<std::string> getAuthorizationKey();
+    std::optional<std::string> getAuthorizationKey();
     void setAuthorizationKey(std::string authorization_key);
-    boost::optional<KeyValue> getAuthorizationKeyKeyValue();
+    std::optional<KeyValue> getAuthorizationKeyKeyValue();
 
     // Security profile - optional
-    boost::optional<int32_t> getCertificateSignedMaxChainSize();
-    boost::optional<KeyValue> getCertificateSignedMaxChainSizeKeyValue();
+    std::optional<int32_t> getCertificateSignedMaxChainSize();
+    std::optional<KeyValue> getCertificateSignedMaxChainSizeKeyValue();
 
     // Security profile - optional
-    boost::optional<int32_t> getCertificateStoreMaxLength();
-    boost::optional<KeyValue> getCertificateStoreMaxLengthKeyValue();
+    std::optional<int32_t> getCertificateStoreMaxLength();
+    std::optional<KeyValue> getCertificateStoreMaxLengthKeyValue();
 
     // Security profile - optional
-    boost::optional<std::string> getCpoName();
+    std::optional<std::string> getCpoName();
     void setCpoName(std::string cpo_name);
-    boost::optional<KeyValue> getCpoNameKeyValue();
+    std::optional<KeyValue> getCpoNameKeyValue();
 
     // // Security profile - optional in ocpp but mandatory websocket connection
     int32_t getSecurityProfile();
@@ -324,17 +324,17 @@ public:
     void setISO15118PnCEnabled(const bool iso15118_pnc_enabled);
     KeyValue getISO15118PnCEnabledKeyValue();
 
-    boost::optional<bool> getCentralContractValidationAllowed();
+    std::optional<bool> getCentralContractValidationAllowed();
     void setCentralContractValidationAllowed(const bool central_contract_validation_allowed);
-    boost::optional<KeyValue> getCentralContractValidationAllowedKeyValue();
+    std::optional<KeyValue> getCentralContractValidationAllowedKeyValue();
 
-    boost::optional<int32_t> getCertSigningWaitMinimum();
+    std::optional<int32_t> getCertSigningWaitMinimum();
     void setCertSigningWaitMinimum(const int32_t cert_signing_wait_minimum);
-    boost::optional<KeyValue> getCertSigningWaitMinimumKeyValue();
+    std::optional<KeyValue> getCertSigningWaitMinimumKeyValue();
 
-    boost::optional<int32_t> getCertSigningRepeatTimes();
+    std::optional<int32_t> getCertSigningRepeatTimes();
     void setCertSigningRepeatTimes(const int32_t cert_signing_repeat_times);
-    boost::optional<KeyValue> getCertSigningRepeatTimesKeyValue();
+    std::optional<KeyValue> getCertSigningRepeatTimesKeyValue();
 
     bool getContractValidationOffline();
     void setContractValidationOffline(const bool contract_validation_offline);
@@ -344,23 +344,23 @@ public:
     void setOcspRequestInterval(const int32_t ocsp_request_interval);
     KeyValue getOcspRequestIntervalKeyValue();
 
-    boost::optional<std::string> getSeccLeafSubjectCommonName();
+    std::optional<std::string> getSeccLeafSubjectCommonName();
     void setSeccLeafSubjectCommonName(const std::string& secc_leaf_subject_common_name);
-    boost::optional<KeyValue> getSeccLeafSubjectCommonNameKeyValue();
+    std::optional<KeyValue> getSeccLeafSubjectCommonNameKeyValue();
 
-    boost::optional<std::string> getSeccLeafSubjectCountry();
+    std::optional<std::string> getSeccLeafSubjectCountry();
     void setSeccLeafSubjectCountry(const std::string& secc_leaf_subject_country);
-    boost::optional<KeyValue> getSeccLeafSubjectCountryKeyValue();
+    std::optional<KeyValue> getSeccLeafSubjectCountryKeyValue();
 
-    boost::optional<std::string> getSeccLeafSubjectOrganization();
+    std::optional<std::string> getSeccLeafSubjectOrganization();
     void setSeccLeafSubjectOrganization(const std::string& secc_leaf_subject_organization);
-    boost::optional<KeyValue> getSeccLeafSubjectOrganizationKeyValue();
+    std::optional<KeyValue> getSeccLeafSubjectOrganizationKeyValue();
 
-    boost::optional<std::string> getConnectorEvseIds();
+    std::optional<std::string> getConnectorEvseIds();
     void setConnectorEvseIds(const std::string& connector_evse_ids);
-    boost::optional<KeyValue> getConnectorEvseIdsKeyValue();
+    std::optional<KeyValue> getConnectorEvseIdsKeyValue();
 
-    boost::optional<KeyValue> get(CiString<50> key);
+    std::optional<KeyValue> get(CiString<50> key);
 
     std::vector<KeyValue> get_all_key_value();
 

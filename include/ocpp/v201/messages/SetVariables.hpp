@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_SETVARIABLES_HPP
 #define OCPP_V201_SETVARIABLES_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -15,7 +15,7 @@ namespace v201 {
 /// \brief Contains a OCPP SetVariables message
 struct SetVariablesRequest : public ocpp::Message {
     std::vector<SetVariableData> setVariableData;
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this SetVariables message as a human readable string
     /// \returns the message type as a human readable string
@@ -35,7 +35,7 @@ std::ostream& operator<<(std::ostream& os, const SetVariablesRequest& k);
 /// \brief Contains a OCPP SetVariablesResponse message
 struct SetVariablesResponse : public ocpp::Message {
     std::vector<SetVariableResult> setVariableResult;
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this SetVariablesResponse message as a human readable string
     /// \returns the message type as a human readable string

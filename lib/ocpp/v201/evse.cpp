@@ -14,7 +14,7 @@ Evse::Evse(const int32_t evse_id, const int32_t number_of_connectors,
            const std::function<void(const int32_t connector_id, const ConnectorStatusEnum& status)>&
                status_notification_callback,
            const std::function<void(const MeterValue& meter_value, const Transaction& transaction, const int32_t seq_no,
-                                    const boost::optional<int32_t> reservation_id)>& transaction_meter_value_req) :
+                                    const std::optional<int32_t> reservation_id)>& transaction_meter_value_req) :
     evse_id(evse_id),
     status_notification_callback(status_notification_callback),
     transaction_meter_value_req(transaction_meter_value_req),
@@ -43,7 +43,7 @@ Everest::SteadyTimer& Evse::get_sampled_meter_values_timer() {
 
 void Evse::open_transaction(const std::string& transaction_id, const int32_t connector_id, const DateTime& timestamp,
                             const MeterValue& meter_start, const IdToken& id_token,
-                            const boost::optional<int32_t> reservation_id,
+                            const std::optional<int32_t> reservation_id,
                             const int32_t sampled_data_tx_updated_interval) {
     if (!this->id_connector_map.count(connector_id)) {
         EVLOG_AND_THROW(std::runtime_error("Attempt to start transaction at invalid connector_id"));

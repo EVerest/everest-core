@@ -274,11 +274,11 @@ SessionStartedReason string_to_session_started_reason(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const SessionStartedReason& session_started_reason);
 
 struct Current {
-    boost::optional<float> DC; ///< DC current
-    boost::optional<float> L1; ///< AC L1 value only
-    boost::optional<float> L2; ///< AC L2 value only
-    boost::optional<float> L3; ///< AC L3 value only
-    boost::optional<float> N;  ///< AC Neutral value only
+    std::optional<float> DC; ///< DC current
+    std::optional<float> L1; ///< AC L1 value only
+    std::optional<float> L2; ///< AC L2 value only
+    std::optional<float> L3; ///< AC L3 value only
+    std::optional<float> N;  ///< AC Neutral value only
 
     /// \brief Conversion from a given Current \p k to a given json object \p j
     friend void to_json(json& j, const Current& k) {
@@ -332,10 +332,10 @@ struct Current {
     }
 };
 struct Voltage {
-    boost::optional<float> DC; ///< DC voltage
-    boost::optional<float> L1; ///< AC L1 value only
-    boost::optional<float> L2; ///< AC L2 value only
-    boost::optional<float> L3; ///< AC L3 value only
+    std::optional<float> DC; ///< DC voltage
+    std::optional<float> L1; ///< AC L1 value only
+    std::optional<float> L2; ///< AC L2 value only
+    std::optional<float> L3; ///< AC L3 value only
 
     /// \brief Conversion from a given Voltage \p k to a given json object \p j
     friend void to_json(json& j, const Voltage& k) {
@@ -384,8 +384,8 @@ struct Voltage {
 };
 struct Frequency {
     float L1;                  ///< AC L1 value
-    boost::optional<float> L2; ///< AC L2 value
-    boost::optional<float> L3; ///< AC L3 value
+    std::optional<float> L2; ///< AC L2 value
+    std::optional<float> L3; ///< AC L3 value
 
     /// \brief Conversion from a given Frequency \p k to a given json object \p j
     friend void to_json(json& j, const Frequency& k) {
@@ -425,9 +425,9 @@ struct Frequency {
 };
 struct Power {
     float total;               ///< DC / AC Sum value
-    boost::optional<float> L1; ///< AC L1 value only
-    boost::optional<float> L2; ///< AC L2 value only
-    boost::optional<float> L3; ///< AC L3 value only
+    std::optional<float> L1; ///< AC L1 value only
+    std::optional<float> L2; ///< AC L2 value only
+    std::optional<float> L3; ///< AC L3 value only
 
     /// \brief Conversion from a given Power \p k to a given json object \p j
     friend void to_json(json& j, const Power& k) {
@@ -473,9 +473,9 @@ struct Power {
 };
 struct Energy {
     float total;               ///< DC / AC Sum value (which is relevant for billing)
-    boost::optional<float> L1; ///< AC L1 value only
-    boost::optional<float> L2; ///< AC L2 value only
-    boost::optional<float> L3; ///< AC L3 value only
+    std::optional<float> L1; ///< AC L1 value only
+    std::optional<float> L2; ///< AC L2 value only
+    std::optional<float> L3; ///< AC L3 value only
 
     /// \brief Conversion from a given Energy \p k to a given json object \p j
     friend void to_json(json& j, const Energy& k) {
@@ -521,9 +521,9 @@ struct Energy {
 };
 struct ReactivePower {
     float total;                   ///< VAR total
-    boost::optional<float> VARphA; ///< VAR phase A
-    boost::optional<float> VARphB; ///< VAR phase B
-    boost::optional<float> VARphC; ///< VAR phase C
+    std::optional<float> VARphA; ///< VAR phase A
+    std::optional<float> VARphB; ///< VAR phase B
+    std::optional<float> VARphC; ///< VAR phase C
 
     /// \brief Conversion from a given ReactivePower \p k to a given json object \p j
     friend void to_json(json& j, const ReactivePower& k) {
@@ -571,15 +571,15 @@ struct ReactivePower {
 struct Powermeter {
     std::string timestamp;                    ///< Timestamp of measurement
     Energy energy_Wh_import;                  ///< Imported energy in Wh (from grid)
-    boost::optional<std::string> meter_id;    ///< A (user defined) meter if (e.g. id printed on the case)
-    boost::optional<bool> phase_seq_error;    ///< AC only: true for 3 phase rotation error (ccw)
-    boost::optional<Energy> energy_Wh_export; ///< Exported energy in Wh (to grid)
-    boost::optional<Power>
+    std::optional<std::string> meter_id;    ///< A (user defined) meter if (e.g. id printed on the case)
+    std::optional<bool> phase_seq_error;    ///< AC only: true for 3 phase rotation error (ccw)
+    std::optional<Energy> energy_Wh_export; ///< Exported energy in Wh (to grid)
+    std::optional<Power>
         power_W; ///< Instantaneous power in Watt. Negative values are exported, positive values imported Energy.
-    boost::optional<Voltage> voltage_V;      ///< Voltage in Volts
-    boost::optional<ReactivePower> VAR;      ///< Reactive power VAR
-    boost::optional<Current> current_A;      ///< Current in ampere
-    boost::optional<Frequency> frequency_Hz; ///< Grid frequency in Hertz
+    std::optional<Voltage> voltage_V;      ///< Voltage in Volts
+    std::optional<ReactivePower> VAR;      ///< Reactive power VAR
+    std::optional<Current> current_A;      ///< Current in ampere
+    std::optional<Frequency> frequency_Hz; ///< Grid frequency in Hertz
 
     /// \brief Conversion from a given Powermeter \p k to a given json object \p j
     friend void to_json(json& j, const Powermeter& k) {
@@ -794,7 +794,7 @@ std::ostream& operator<<(std::ostream& os, const CertificateHashDataType& k);
 struct CertificateHashDataChain {
     CertificateHashDataType certificateHashData;
     CertificateType certificateType;
-    boost::optional<std::vector<CertificateHashDataType>> childCertificateHashData;
+    std::optional<std::vector<CertificateHashDataType>> childCertificateHashData;
 };
 /// \brief Conversion from a given CertificateHashDataChain \p k to a given json object \p j
 void to_json(json& j, const CertificateHashDataChain& k);

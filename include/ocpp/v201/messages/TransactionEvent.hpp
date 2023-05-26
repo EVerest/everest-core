@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_TRANSACTIONEVENT_HPP
 #define OCPP_V201_TRANSACTIONEVENT_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -19,14 +19,14 @@ struct TransactionEventRequest : public ocpp::Message {
     TriggerReasonEnum triggerReason;
     int32_t seqNo;
     Transaction transactionInfo;
-    boost::optional<CustomData> customData;
-    boost::optional<std::vector<MeterValue>> meterValue;
-    boost::optional<bool> offline;
-    boost::optional<int32_t> numberOfPhasesUsed;
-    boost::optional<int32_t> cableMaxCurrent;
-    boost::optional<int32_t> reservationId;
-    boost::optional<EVSE> evse;
-    boost::optional<IdToken> idToken;
+    std::optional<CustomData> customData;
+    std::optional<std::vector<MeterValue>> meterValue;
+    std::optional<bool> offline;
+    std::optional<int32_t> numberOfPhasesUsed;
+    std::optional<int32_t> cableMaxCurrent;
+    std::optional<int32_t> reservationId;
+    std::optional<EVSE> evse;
+    std::optional<IdToken> idToken;
 
     /// \brief Provides the type of this TransactionEvent message as a human readable string
     /// \returns the message type as a human readable string
@@ -45,11 +45,11 @@ std::ostream& operator<<(std::ostream& os, const TransactionEventRequest& k);
 
 /// \brief Contains a OCPP TransactionEventResponse message
 struct TransactionEventResponse : public ocpp::Message {
-    boost::optional<CustomData> customData;
-    boost::optional<float> totalCost;
-    boost::optional<int32_t> chargingPriority;
-    boost::optional<IdTokenInfo> idTokenInfo;
-    boost::optional<MessageContent> updatedPersonalMessage;
+    std::optional<CustomData> customData;
+    std::optional<float> totalCost;
+    std::optional<int32_t> chargingPriority;
+    std::optional<IdTokenInfo> idTokenInfo;
+    std::optional<MessageContent> updatedPersonalMessage;
 
     /// \brief Provides the type of this TransactionEventResponse message as a human readable string
     /// \returns the message type as a human readable string

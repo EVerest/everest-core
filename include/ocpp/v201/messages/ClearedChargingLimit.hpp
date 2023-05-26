@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_CLEAREDCHARGINGLIMIT_HPP
 #define OCPP_V201_CLEAREDCHARGINGLIMIT_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -15,8 +15,8 @@ namespace v201 {
 /// \brief Contains a OCPP ClearedChargingLimit message
 struct ClearedChargingLimitRequest : public ocpp::Message {
     ChargingLimitSourceEnum chargingLimitSource;
-    boost::optional<CustomData> customData;
-    boost::optional<int32_t> evseId;
+    std::optional<CustomData> customData;
+    std::optional<int32_t> evseId;
 
     /// \brief Provides the type of this ClearedChargingLimit message as a human readable string
     /// \returns the message type as a human readable string
@@ -35,7 +35,7 @@ std::ostream& operator<<(std::ostream& os, const ClearedChargingLimitRequest& k)
 
 /// \brief Contains a OCPP ClearedChargingLimitResponse message
 struct ClearedChargingLimitResponse : public ocpp::Message {
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this ClearedChargingLimitResponse message as a human readable string
     /// \returns the message type as a human readable string

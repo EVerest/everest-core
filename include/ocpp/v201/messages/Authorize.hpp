@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_AUTHORIZE_HPP
 #define OCPP_V201_AUTHORIZE_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -15,9 +15,9 @@ namespace v201 {
 /// \brief Contains a OCPP Authorize message
 struct AuthorizeRequest : public ocpp::Message {
     IdToken idToken;
-    boost::optional<CustomData> customData;
-    boost::optional<CiString<5500>> certificate;
-    boost::optional<std::vector<OCSPRequestData>> iso15118CertificateHashData;
+    std::optional<CustomData> customData;
+    std::optional<CiString<5500>> certificate;
+    std::optional<std::vector<OCSPRequestData>> iso15118CertificateHashData;
 
     /// \brief Provides the type of this Authorize message as a human readable string
     /// \returns the message type as a human readable string
@@ -37,8 +37,8 @@ std::ostream& operator<<(std::ostream& os, const AuthorizeRequest& k);
 /// \brief Contains a OCPP AuthorizeResponse message
 struct AuthorizeResponse : public ocpp::Message {
     IdTokenInfo idTokenInfo;
-    boost::optional<CustomData> customData;
-    boost::optional<AuthorizeCertificateStatusEnum> certificateStatus;
+    std::optional<CustomData> customData;
+    std::optional<AuthorizeCertificateStatusEnum> certificateStatus;
 
     /// \brief Provides the type of this AuthorizeResponse message as a human readable string
     /// \returns the message type as a human readable string

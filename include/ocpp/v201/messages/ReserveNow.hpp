@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_RESERVENOW_HPP
 #define OCPP_V201_RESERVENOW_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -17,10 +17,10 @@ struct ReserveNowRequest : public ocpp::Message {
     int32_t id;
     ocpp::DateTime expiryDateTime;
     IdToken idToken;
-    boost::optional<CustomData> customData;
-    boost::optional<ConnectorEnum> connectorType;
-    boost::optional<int32_t> evseId;
-    boost::optional<IdToken> groupIdToken;
+    std::optional<CustomData> customData;
+    std::optional<ConnectorEnum> connectorType;
+    std::optional<int32_t> evseId;
+    std::optional<IdToken> groupIdToken;
 
     /// \brief Provides the type of this ReserveNow message as a human readable string
     /// \returns the message type as a human readable string
@@ -40,8 +40,8 @@ std::ostream& operator<<(std::ostream& os, const ReserveNowRequest& k);
 /// \brief Contains a OCPP ReserveNowResponse message
 struct ReserveNowResponse : public ocpp::Message {
     ReserveNowStatusEnum status;
-    boost::optional<CustomData> customData;
-    boost::optional<StatusInfo> statusInfo;
+    std::optional<CustomData> customData;
+    std::optional<StatusInfo> statusInfo;
 
     /// \brief Provides the type of this ReserveNowResponse message as a human readable string
     /// \returns the message type as a human readable string

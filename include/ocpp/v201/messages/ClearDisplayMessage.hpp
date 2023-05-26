@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_CLEARDISPLAYMESSAGE_HPP
 #define OCPP_V201_CLEARDISPLAYMESSAGE_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -15,7 +15,7 @@ namespace v201 {
 /// \brief Contains a OCPP ClearDisplayMessage message
 struct ClearDisplayMessageRequest : public ocpp::Message {
     int32_t id;
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this ClearDisplayMessage message as a human readable string
     /// \returns the message type as a human readable string
@@ -35,8 +35,8 @@ std::ostream& operator<<(std::ostream& os, const ClearDisplayMessageRequest& k);
 /// \brief Contains a OCPP ClearDisplayMessageResponse message
 struct ClearDisplayMessageResponse : public ocpp::Message {
     ClearMessageStatusEnum status;
-    boost::optional<CustomData> customData;
-    boost::optional<StatusInfo> statusInfo;
+    std::optional<CustomData> customData;
+    std::optional<StatusInfo> statusInfo;
 
     /// \brief Provides the type of this ClearDisplayMessageResponse message as a human readable string
     /// \returns the message type as a human readable string

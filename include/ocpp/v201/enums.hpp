@@ -10,7 +10,8 @@ namespace ocpp {
 namespace v201 {
 
 // from: AuthorizeRequest
-enum class IdTokenEnum {
+enum class IdTokenEnum
+{
     Central,
     eMAID,
     ISO14443,
@@ -36,7 +37,8 @@ IdTokenEnum string_to_id_token_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const IdTokenEnum& id_token_enum);
 
 // from: AuthorizeRequest
-enum class HashAlgorithmEnum {
+enum class HashAlgorithmEnum
+{
     SHA256,
     SHA384,
     SHA512,
@@ -57,7 +59,8 @@ HashAlgorithmEnum string_to_hash_algorithm_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const HashAlgorithmEnum& hash_algorithm_enum);
 
 // from: AuthorizeResponse
-enum class AuthorizationStatusEnum {
+enum class AuthorizationStatusEnum
+{
     Accepted,
     Blocked,
     ConcurrentTx,
@@ -85,7 +88,8 @@ AuthorizationStatusEnum string_to_authorization_status_enum(const std::string& s
 std::ostream& operator<<(std::ostream& os, const AuthorizationStatusEnum& authorization_status_enum);
 
 // from: AuthorizeResponse
-enum class MessageFormatEnum {
+enum class MessageFormatEnum
+{
     ASCII,
     HTML,
     URI,
@@ -107,7 +111,8 @@ MessageFormatEnum string_to_message_format_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const MessageFormatEnum& message_format_enum);
 
 // from: AuthorizeResponse
-enum class AuthorizeCertificateStatusEnum {
+enum class AuthorizeCertificateStatusEnum
+{
     Accepted,
     SignatureError,
     CertificateExpired,
@@ -133,7 +138,8 @@ AuthorizeCertificateStatusEnum string_to_authorize_certificate_status_enum(const
 std::ostream& operator<<(std::ostream& os, const AuthorizeCertificateStatusEnum& authorize_certificate_status_enum);
 
 // from: BootNotificationRequest
-enum class BootReasonEnum {
+enum class BootReasonEnum
+{
     ApplicationReset,
     FirmwareUpdate,
     LocalReset,
@@ -160,7 +166,8 @@ BootReasonEnum string_to_boot_reason_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const BootReasonEnum& boot_reason_enum);
 
 // from: BootNotificationResponse
-enum class RegistrationStatusEnum {
+enum class RegistrationStatusEnum
+{
     Accepted,
     Pending,
     Rejected,
@@ -181,7 +188,8 @@ RegistrationStatusEnum string_to_registration_status_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const RegistrationStatusEnum& registration_status_enum);
 
 // from: CancelReservationResponse
-enum class CancelReservationStatusEnum {
+enum class CancelReservationStatusEnum
+{
     Accepted,
     Rejected,
 };
@@ -201,7 +209,8 @@ CancelReservationStatusEnum string_to_cancel_reservation_status_enum(const std::
 std::ostream& operator<<(std::ostream& os, const CancelReservationStatusEnum& cancel_reservation_status_enum);
 
 // from: CertificateSignedRequest
-enum class CertificateSigningUseEnum {
+enum class CertificateSigningUseEnum
+{
     ChargingStationCertificate,
     V2GCertificate,
 };
@@ -221,7 +230,8 @@ CertificateSigningUseEnum string_to_certificate_signing_use_enum(const std::stri
 std::ostream& operator<<(std::ostream& os, const CertificateSigningUseEnum& certificate_signing_use_enum);
 
 // from: CertificateSignedResponse
-enum class CertificateSignedStatusEnum {
+enum class CertificateSignedStatusEnum
+{
     Accepted,
     Rejected,
 };
@@ -241,7 +251,8 @@ CertificateSignedStatusEnum string_to_certificate_signed_status_enum(const std::
 std::ostream& operator<<(std::ostream& os, const CertificateSignedStatusEnum& certificate_signed_status_enum);
 
 // from: ChangeAvailabilityRequest
-enum class OperationalStatusEnum {
+enum class OperationalStatusEnum
+{
     Inoperative,
     Operative,
 };
@@ -261,7 +272,8 @@ OperationalStatusEnum string_to_operational_status_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const OperationalStatusEnum& operational_status_enum);
 
 // from: ChangeAvailabilityResponse
-enum class ChangeAvailabilityStatusEnum {
+enum class ChangeAvailabilityStatusEnum
+{
     Accepted,
     Rejected,
     Scheduled,
@@ -282,7 +294,8 @@ ChangeAvailabilityStatusEnum string_to_change_availability_status_enum(const std
 std::ostream& operator<<(std::ostream& os, const ChangeAvailabilityStatusEnum& change_availability_status_enum);
 
 // from: ClearCacheResponse
-enum class ClearCacheStatusEnum {
+enum class ClearCacheStatusEnum
+{
     Accepted,
     Rejected,
 };
@@ -302,7 +315,8 @@ ClearCacheStatusEnum string_to_clear_cache_status_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const ClearCacheStatusEnum& clear_cache_status_enum);
 
 // from: ClearChargingProfileRequest
-enum class ChargingProfilePurposeEnum {
+enum class ChargingProfilePurposeEnum
+{
     ChargingStationExternalConstraints,
     ChargingStationMaxProfile,
     TxDefaultProfile,
@@ -324,7 +338,8 @@ ChargingProfilePurposeEnum string_to_charging_profile_purpose_enum(const std::st
 std::ostream& operator<<(std::ostream& os, const ChargingProfilePurposeEnum& charging_profile_purpose_enum);
 
 // from: ClearChargingProfileResponse
-enum class ClearChargingProfileStatusEnum {
+enum class ClearChargingProfileStatusEnum
+{
     Accepted,
     Unknown,
 };
@@ -345,7 +360,8 @@ ClearChargingProfileStatusEnum string_to_clear_charging_profile_status_enum(cons
 std::ostream& operator<<(std::ostream& os, const ClearChargingProfileStatusEnum& clear_charging_profile_status_enum);
 
 // from: ClearDisplayMessageResponse
-enum class ClearMessageStatusEnum {
+enum class ClearMessageStatusEnum
+{
     Accepted,
     Unknown,
 };
@@ -365,7 +381,8 @@ ClearMessageStatusEnum string_to_clear_message_status_enum(const std::string& s)
 std::ostream& operator<<(std::ostream& os, const ClearMessageStatusEnum& clear_message_status_enum);
 
 // from: ClearVariableMonitoringResponse
-enum class ClearMonitoringStatusEnum {
+enum class ClearMonitoringStatusEnum
+{
     Accepted,
     Rejected,
     NotFound,
@@ -386,7 +403,8 @@ ClearMonitoringStatusEnum string_to_clear_monitoring_status_enum(const std::stri
 std::ostream& operator<<(std::ostream& os, const ClearMonitoringStatusEnum& clear_monitoring_status_enum);
 
 // from: ClearedChargingLimitRequest
-enum class ChargingLimitSourceEnum {
+enum class ChargingLimitSourceEnum
+{
     EMS,
     Other,
     SO,
@@ -408,7 +426,8 @@ ChargingLimitSourceEnum string_to_charging_limit_source_enum(const std::string& 
 std::ostream& operator<<(std::ostream& os, const ChargingLimitSourceEnum& charging_limit_source_enum);
 
 // from: CustomerInformationResponse
-enum class CustomerInformationStatusEnum {
+enum class CustomerInformationStatusEnum
+{
     Accepted,
     Rejected,
     Invalid,
@@ -430,7 +449,8 @@ CustomerInformationStatusEnum string_to_customer_information_status_enum(const s
 std::ostream& operator<<(std::ostream& os, const CustomerInformationStatusEnum& customer_information_status_enum);
 
 // from: DataTransferResponse
-enum class DataTransferStatusEnum {
+enum class DataTransferStatusEnum
+{
     Accepted,
     Rejected,
     UnknownMessageId,
@@ -452,7 +472,8 @@ DataTransferStatusEnum string_to_data_transfer_status_enum(const std::string& s)
 std::ostream& operator<<(std::ostream& os, const DataTransferStatusEnum& data_transfer_status_enum);
 
 // from: DeleteCertificateResponse
-enum class DeleteCertificateStatusEnum {
+enum class DeleteCertificateStatusEnum
+{
     Accepted,
     Failed,
     NotFound,
@@ -473,7 +494,8 @@ DeleteCertificateStatusEnum string_to_delete_certificate_status_enum(const std::
 std::ostream& operator<<(std::ostream& os, const DeleteCertificateStatusEnum& delete_certificate_status_enum);
 
 // from: FirmwareStatusNotificationRequest
-enum class FirmwareStatusEnum {
+enum class FirmwareStatusEnum
+{
     Downloaded,
     DownloadFailed,
     Downloading,
@@ -505,7 +527,8 @@ FirmwareStatusEnum string_to_firmware_status_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const FirmwareStatusEnum& firmware_status_enum);
 
 // from: Get15118EVCertificateRequest
-enum class CertificateActionEnum {
+enum class CertificateActionEnum
+{
     Install,
     Update,
 };
@@ -525,7 +548,8 @@ CertificateActionEnum string_to_certificate_action_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const CertificateActionEnum& certificate_action_enum);
 
 // from: Get15118EVCertificateResponse
-enum class Iso15118EVCertificateStatusEnum {
+enum class Iso15118EVCertificateStatusEnum
+{
     Accepted,
     Failed,
 };
@@ -546,7 +570,8 @@ Iso15118EVCertificateStatusEnum string_to_iso15118evcertificate_status_enum(cons
 std::ostream& operator<<(std::ostream& os, const Iso15118EVCertificateStatusEnum& iso15118evcertificate_status_enum);
 
 // from: GetBaseReportRequest
-enum class ReportBaseEnum {
+enum class ReportBaseEnum
+{
     ConfigurationInventory,
     FullInventory,
     SummaryInventory,
@@ -567,7 +592,8 @@ ReportBaseEnum string_to_report_base_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const ReportBaseEnum& report_base_enum);
 
 // from: GetBaseReportResponse
-enum class GenericDeviceModelStatusEnum {
+enum class GenericDeviceModelStatusEnum
+{
     Accepted,
     Rejected,
     NotSupported,
@@ -590,7 +616,8 @@ GenericDeviceModelStatusEnum string_to_generic_device_model_status_enum(const st
 std::ostream& operator<<(std::ostream& os, const GenericDeviceModelStatusEnum& generic_device_model_status_enum);
 
 // from: GetCertificateStatusResponse
-enum class GetCertificateStatusEnum {
+enum class GetCertificateStatusEnum
+{
     Accepted,
     Failed,
 };
@@ -610,7 +637,8 @@ GetCertificateStatusEnum string_to_get_certificate_status_enum(const std::string
 std::ostream& operator<<(std::ostream& os, const GetCertificateStatusEnum& get_certificate_status_enum);
 
 // from: GetChargingProfilesResponse
-enum class GetChargingProfileStatusEnum {
+enum class GetChargingProfileStatusEnum
+{
     Accepted,
     NoProfiles,
 };
@@ -631,7 +659,8 @@ GetChargingProfileStatusEnum string_to_get_charging_profile_status_enum(const st
 std::ostream& operator<<(std::ostream& os, const GetChargingProfileStatusEnum& get_charging_profile_status_enum);
 
 // from: GetCompositeScheduleRequest
-enum class ChargingRateUnitEnum {
+enum class ChargingRateUnitEnum
+{
     W,
     A,
 };
@@ -651,7 +680,8 @@ ChargingRateUnitEnum string_to_charging_rate_unit_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const ChargingRateUnitEnum& charging_rate_unit_enum);
 
 // from: GetCompositeScheduleResponse
-enum class GenericStatusEnum {
+enum class GenericStatusEnum
+{
     Accepted,
     Rejected,
 };
@@ -671,7 +701,8 @@ GenericStatusEnum string_to_generic_status_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const GenericStatusEnum& generic_status_enum);
 
 // from: GetDisplayMessagesRequest
-enum class MessagePriorityEnum {
+enum class MessagePriorityEnum
+{
     AlwaysFront,
     InFront,
     NormalCycle,
@@ -692,7 +723,8 @@ MessagePriorityEnum string_to_message_priority_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const MessagePriorityEnum& message_priority_enum);
 
 // from: GetDisplayMessagesRequest
-enum class MessageStateEnum {
+enum class MessageStateEnum
+{
     Charging,
     Faulted,
     Idle,
@@ -714,7 +746,8 @@ MessageStateEnum string_to_message_state_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const MessageStateEnum& message_state_enum);
 
 // from: GetDisplayMessagesResponse
-enum class GetDisplayMessagesStatusEnum {
+enum class GetDisplayMessagesStatusEnum
+{
     Accepted,
     Unknown,
 };
@@ -735,7 +768,8 @@ GetDisplayMessagesStatusEnum string_to_get_display_messages_status_enum(const st
 std::ostream& operator<<(std::ostream& os, const GetDisplayMessagesStatusEnum& get_display_messages_status_enum);
 
 // from: GetInstalledCertificateIdsRequest
-enum class GetCertificateIdUseEnum {
+enum class GetCertificateIdUseEnum
+{
     V2GRootCertificate,
     MORootCertificate,
     CSMSRootCertificate,
@@ -758,7 +792,8 @@ GetCertificateIdUseEnum string_to_get_certificate_id_use_enum(const std::string&
 std::ostream& operator<<(std::ostream& os, const GetCertificateIdUseEnum& get_certificate_id_use_enum);
 
 // from: GetInstalledCertificateIdsResponse
-enum class GetInstalledCertificateStatusEnum {
+enum class GetInstalledCertificateStatusEnum
+{
     Accepted,
     NotFound,
 };
@@ -780,7 +815,8 @@ std::ostream& operator<<(std::ostream& os,
                          const GetInstalledCertificateStatusEnum& get_installed_certificate_status_enum);
 
 // from: GetLogRequest
-enum class LogEnum {
+enum class LogEnum
+{
     DiagnosticsLog,
     SecurityLog,
 };
@@ -800,7 +836,8 @@ LogEnum string_to_log_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const LogEnum& log_enum);
 
 // from: GetLogResponse
-enum class LogStatusEnum {
+enum class LogStatusEnum
+{
     Accepted,
     Rejected,
     AcceptedCanceled,
@@ -821,7 +858,8 @@ LogStatusEnum string_to_log_status_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const LogStatusEnum& log_status_enum);
 
 // from: GetMonitoringReportRequest
-enum class MonitoringCriterionEnum {
+enum class MonitoringCriterionEnum
+{
     ThresholdMonitoring,
     DeltaMonitoring,
     PeriodicMonitoring,
@@ -842,7 +880,8 @@ MonitoringCriterionEnum string_to_monitoring_criterion_enum(const std::string& s
 std::ostream& operator<<(std::ostream& os, const MonitoringCriterionEnum& monitoring_criterion_enum);
 
 // from: GetReportRequest
-enum class ComponentCriterionEnum {
+enum class ComponentCriterionEnum
+{
     Active,
     Available,
     Enabled,
@@ -864,7 +903,8 @@ ComponentCriterionEnum string_to_component_criterion_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const ComponentCriterionEnum& component_criterion_enum);
 
 // from: GetVariablesRequest
-enum class AttributeEnum {
+enum class AttributeEnum
+{
     Actual,
     Target,
     MinSet,
@@ -886,7 +926,8 @@ AttributeEnum string_to_attribute_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const AttributeEnum& attribute_enum);
 
 // from: GetVariablesResponse
-enum class GetVariableStatusEnum {
+enum class GetVariableStatusEnum
+{
     Accepted,
     Rejected,
     UnknownComponent,
@@ -909,7 +950,8 @@ GetVariableStatusEnum string_to_get_variable_status_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const GetVariableStatusEnum& get_variable_status_enum);
 
 // from: InstallCertificateRequest
-enum class InstallCertificateUseEnum {
+enum class InstallCertificateUseEnum
+{
     V2GRootCertificate,
     MORootCertificate,
     CSMSRootCertificate,
@@ -931,7 +973,8 @@ InstallCertificateUseEnum string_to_install_certificate_use_enum(const std::stri
 std::ostream& operator<<(std::ostream& os, const InstallCertificateUseEnum& install_certificate_use_enum);
 
 // from: InstallCertificateResponse
-enum class InstallCertificateStatusEnum {
+enum class InstallCertificateStatusEnum
+{
     Accepted,
     Rejected,
     Failed,
@@ -952,7 +995,8 @@ InstallCertificateStatusEnum string_to_install_certificate_status_enum(const std
 std::ostream& operator<<(std::ostream& os, const InstallCertificateStatusEnum& install_certificate_status_enum);
 
 // from: LogStatusNotificationRequest
-enum class UploadLogStatusEnum {
+enum class UploadLogStatusEnum
+{
     BadMessage,
     Idle,
     NotSupportedOperation,
@@ -978,7 +1022,8 @@ UploadLogStatusEnum string_to_upload_log_status_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const UploadLogStatusEnum& upload_log_status_enum);
 
 // from: MeterValuesRequest
-enum class ReadingContextEnum {
+enum class ReadingContextEnum
+{
     Interruption_Begin,
     Interruption_End,
     Other,
@@ -1004,7 +1049,8 @@ ReadingContextEnum string_to_reading_context_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const ReadingContextEnum& reading_context_enum);
 
 // from: MeterValuesRequest
-enum class MeasurandEnum {
+enum class MeasurandEnum
+{
     Current_Export,
     Current_Import,
     Current_Offered,
@@ -1047,7 +1093,8 @@ MeasurandEnum string_to_measurand_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const MeasurandEnum& measurand_enum);
 
 // from: MeterValuesRequest
-enum class PhaseEnum {
+enum class PhaseEnum
+{
     L1,
     L2,
     L3,
@@ -1075,7 +1122,8 @@ PhaseEnum string_to_phase_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const PhaseEnum& phase_enum);
 
 // from: MeterValuesRequest
-enum class LocationEnum {
+enum class LocationEnum
+{
     Body,
     Cable,
     EV,
@@ -1098,7 +1146,8 @@ LocationEnum string_to_location_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const LocationEnum& location_enum);
 
 // from: NotifyChargingLimitRequest
-enum class CostKindEnum {
+enum class CostKindEnum
+{
     CarbonDioxideEmission,
     RelativePricePercentage,
     RenewableGenerationPercentage,
@@ -1119,7 +1168,8 @@ CostKindEnum string_to_cost_kind_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const CostKindEnum& cost_kind_enum);
 
 // from: NotifyEVChargingNeedsRequest
-enum class EnergyTransferModeEnum {
+enum class EnergyTransferModeEnum
+{
     DC,
     AC_single_phase,
     AC_two_phase,
@@ -1141,7 +1191,8 @@ EnergyTransferModeEnum string_to_energy_transfer_mode_enum(const std::string& s)
 std::ostream& operator<<(std::ostream& os, const EnergyTransferModeEnum& energy_transfer_mode_enum);
 
 // from: NotifyEVChargingNeedsResponse
-enum class NotifyEVChargingNeedsStatusEnum {
+enum class NotifyEVChargingNeedsStatusEnum
+{
     Accepted,
     Rejected,
     Processing,
@@ -1163,7 +1214,8 @@ NotifyEVChargingNeedsStatusEnum string_to_notify_evcharging_needs_status_enum(co
 std::ostream& operator<<(std::ostream& os, const NotifyEVChargingNeedsStatusEnum& notify_evcharging_needs_status_enum);
 
 // from: NotifyEventRequest
-enum class EventTriggerEnum {
+enum class EventTriggerEnum
+{
     Alerting,
     Delta,
     Periodic,
@@ -1184,7 +1236,8 @@ EventTriggerEnum string_to_event_trigger_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const EventTriggerEnum& event_trigger_enum);
 
 // from: NotifyEventRequest
-enum class EventNotificationEnum {
+enum class EventNotificationEnum
+{
     HardWiredNotification,
     HardWiredMonitor,
     PreconfiguredMonitor,
@@ -1206,7 +1259,8 @@ EventNotificationEnum string_to_event_notification_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const EventNotificationEnum& event_notification_enum);
 
 // from: NotifyMonitoringReportRequest
-enum class MonitorEnum {
+enum class MonitorEnum
+{
     UpperThreshold,
     LowerThreshold,
     Delta,
@@ -1229,7 +1283,8 @@ MonitorEnum string_to_monitor_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const MonitorEnum& monitor_enum);
 
 // from: NotifyReportRequest
-enum class MutabilityEnum {
+enum class MutabilityEnum
+{
     ReadOnly,
     WriteOnly,
     ReadWrite,
@@ -1250,7 +1305,8 @@ MutabilityEnum string_to_mutability_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const MutabilityEnum& mutability_enum);
 
 // from: NotifyReportRequest
-enum class DataEnum {
+enum class DataEnum
+{
     string,
     decimal,
     integer,
@@ -1276,7 +1332,8 @@ DataEnum string_to_data_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const DataEnum& data_enum);
 
 // from: PublishFirmwareStatusNotificationRequest
-enum class PublishFirmwareStatusEnum {
+enum class PublishFirmwareStatusEnum
+{
     Idle,
     DownloadScheduled,
     Downloading,
@@ -1304,7 +1361,8 @@ PublishFirmwareStatusEnum string_to_publish_firmware_status_enum(const std::stri
 std::ostream& operator<<(std::ostream& os, const PublishFirmwareStatusEnum& publish_firmware_status_enum);
 
 // from: ReportChargingProfilesRequest
-enum class ChargingProfileKindEnum {
+enum class ChargingProfileKindEnum
+{
     Absolute,
     Recurring,
     Relative,
@@ -1325,7 +1383,8 @@ ChargingProfileKindEnum string_to_charging_profile_kind_enum(const std::string& 
 std::ostream& operator<<(std::ostream& os, const ChargingProfileKindEnum& charging_profile_kind_enum);
 
 // from: ReportChargingProfilesRequest
-enum class RecurrencyKindEnum {
+enum class RecurrencyKindEnum
+{
     Daily,
     Weekly,
 };
@@ -1345,7 +1404,8 @@ RecurrencyKindEnum string_to_recurrency_kind_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const RecurrencyKindEnum& recurrency_kind_enum);
 
 // from: RequestStartTransactionResponse
-enum class RequestStartStopStatusEnum {
+enum class RequestStartStopStatusEnum
+{
     Accepted,
     Rejected,
 };
@@ -1365,7 +1425,8 @@ RequestStartStopStatusEnum string_to_request_start_stop_status_enum(const std::s
 std::ostream& operator<<(std::ostream& os, const RequestStartStopStatusEnum& request_start_stop_status_enum);
 
 // from: ReservationStatusUpdateRequest
-enum class ReservationUpdateStatusEnum {
+enum class ReservationUpdateStatusEnum
+{
     Expired,
     Removed,
 };
@@ -1385,7 +1446,8 @@ ReservationUpdateStatusEnum string_to_reservation_update_status_enum(const std::
 std::ostream& operator<<(std::ostream& os, const ReservationUpdateStatusEnum& reservation_update_status_enum);
 
 // from: ReserveNowRequest
-enum class ConnectorEnum {
+enum class ConnectorEnum
+{
     cCCS1,
     cCCS2,
     cG105,
@@ -1425,7 +1487,8 @@ ConnectorEnum string_to_connector_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const ConnectorEnum& connector_enum);
 
 // from: ReserveNowResponse
-enum class ReserveNowStatusEnum {
+enum class ReserveNowStatusEnum
+{
     Accepted,
     Faulted,
     Occupied,
@@ -1448,7 +1511,8 @@ ReserveNowStatusEnum string_to_reserve_now_status_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const ReserveNowStatusEnum& reserve_now_status_enum);
 
 // from: ResetRequest
-enum class ResetEnum {
+enum class ResetEnum
+{
     Immediate,
     OnIdle,
 };
@@ -1468,7 +1532,8 @@ ResetEnum string_to_reset_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const ResetEnum& reset_enum);
 
 // from: ResetResponse
-enum class ResetStatusEnum {
+enum class ResetStatusEnum
+{
     Accepted,
     Rejected,
     Scheduled,
@@ -1489,7 +1554,8 @@ ResetStatusEnum string_to_reset_status_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const ResetStatusEnum& reset_status_enum);
 
 // from: SendLocalListRequest
-enum class UpdateEnum {
+enum class UpdateEnum
+{
     Differential,
     Full,
 };
@@ -1509,7 +1575,8 @@ UpdateEnum string_to_update_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const UpdateEnum& update_enum);
 
 // from: SendLocalListResponse
-enum class SendLocalListStatusEnum {
+enum class SendLocalListStatusEnum
+{
     Accepted,
     Failed,
     VersionMismatch,
@@ -1530,7 +1597,8 @@ SendLocalListStatusEnum string_to_send_local_list_status_enum(const std::string&
 std::ostream& operator<<(std::ostream& os, const SendLocalListStatusEnum& send_local_list_status_enum);
 
 // from: SetChargingProfileResponse
-enum class ChargingProfileStatusEnum {
+enum class ChargingProfileStatusEnum
+{
     Accepted,
     Rejected,
 };
@@ -1550,7 +1618,8 @@ ChargingProfileStatusEnum string_to_charging_profile_status_enum(const std::stri
 std::ostream& operator<<(std::ostream& os, const ChargingProfileStatusEnum& charging_profile_status_enum);
 
 // from: SetDisplayMessageResponse
-enum class DisplayMessageStatusEnum {
+enum class DisplayMessageStatusEnum
+{
     Accepted,
     NotSupportedMessageFormat,
     Rejected,
@@ -1574,7 +1643,8 @@ DisplayMessageStatusEnum string_to_display_message_status_enum(const std::string
 std::ostream& operator<<(std::ostream& os, const DisplayMessageStatusEnum& display_message_status_enum);
 
 // from: SetMonitoringBaseRequest
-enum class MonitoringBaseEnum {
+enum class MonitoringBaseEnum
+{
     All,
     FactoryDefault,
     HardWiredOnly,
@@ -1595,7 +1665,8 @@ MonitoringBaseEnum string_to_monitoring_base_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const MonitoringBaseEnum& monitoring_base_enum);
 
 // from: SetNetworkProfileRequest
-enum class APNAuthenticationEnum {
+enum class APNAuthenticationEnum
+{
     CHAP,
     NONE,
     PAP,
@@ -1617,7 +1688,8 @@ APNAuthenticationEnum string_to_apnauthentication_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const APNAuthenticationEnum& apnauthentication_enum);
 
 // from: SetNetworkProfileRequest
-enum class OCPPVersionEnum {
+enum class OCPPVersionEnum
+{
     OCPP12,
     OCPP15,
     OCPP16,
@@ -1639,7 +1711,8 @@ OCPPVersionEnum string_to_ocppversion_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const OCPPVersionEnum& ocppversion_enum);
 
 // from: SetNetworkProfileRequest
-enum class OCPPTransportEnum {
+enum class OCPPTransportEnum
+{
     JSON,
     SOAP,
 };
@@ -1659,7 +1732,8 @@ OCPPTransportEnum string_to_ocpptransport_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const OCPPTransportEnum& ocpptransport_enum);
 
 // from: SetNetworkProfileRequest
-enum class OCPPInterfaceEnum {
+enum class OCPPInterfaceEnum
+{
     Wired0,
     Wired1,
     Wired2,
@@ -1685,7 +1759,8 @@ OCPPInterfaceEnum string_to_ocppinterface_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const OCPPInterfaceEnum& ocppinterface_enum);
 
 // from: SetNetworkProfileRequest
-enum class VPNEnum {
+enum class VPNEnum
+{
     IKEv2,
     IPSec,
     L2TP,
@@ -1707,7 +1782,8 @@ VPNEnum string_to_vpnenum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const VPNEnum& vpnenum);
 
 // from: SetNetworkProfileResponse
-enum class SetNetworkProfileStatusEnum {
+enum class SetNetworkProfileStatusEnum
+{
     Accepted,
     Rejected,
     Failed,
@@ -1728,7 +1804,8 @@ SetNetworkProfileStatusEnum string_to_set_network_profile_status_enum(const std:
 std::ostream& operator<<(std::ostream& os, const SetNetworkProfileStatusEnum& set_network_profile_status_enum);
 
 // from: SetVariableMonitoringResponse
-enum class SetMonitoringStatusEnum {
+enum class SetMonitoringStatusEnum
+{
     Accepted,
     UnknownComponent,
     UnknownVariable,
@@ -1752,7 +1829,8 @@ SetMonitoringStatusEnum string_to_set_monitoring_status_enum(const std::string& 
 std::ostream& operator<<(std::ostream& os, const SetMonitoringStatusEnum& set_monitoring_status_enum);
 
 // from: SetVariablesResponse
-enum class SetVariableStatusEnum {
+enum class SetVariableStatusEnum
+{
     Accepted,
     Rejected,
     UnknownComponent,
@@ -1776,7 +1854,8 @@ SetVariableStatusEnum string_to_set_variable_status_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const SetVariableStatusEnum& set_variable_status_enum);
 
 // from: StatusNotificationRequest
-enum class ConnectorStatusEnum {
+enum class ConnectorStatusEnum
+{
     Available,
     Occupied,
     Reserved,
@@ -1799,7 +1878,8 @@ ConnectorStatusEnum string_to_connector_status_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const ConnectorStatusEnum& connector_status_enum);
 
 // from: TransactionEventRequest
-enum class TransactionEventEnum {
+enum class TransactionEventEnum
+{
     Ended,
     Started,
     Updated,
@@ -1820,7 +1900,8 @@ TransactionEventEnum string_to_transaction_event_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const TransactionEventEnum& transaction_event_enum);
 
 // from: TransactionEventRequest
-enum class TriggerReasonEnum {
+enum class TriggerReasonEnum
+{
     Authorized,
     CablePluggedIn,
     ChargingRateChanged,
@@ -1859,7 +1940,8 @@ TriggerReasonEnum string_to_trigger_reason_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const TriggerReasonEnum& trigger_reason_enum);
 
 // from: TransactionEventRequest
-enum class ChargingStateEnum {
+enum class ChargingStateEnum
+{
     Charging,
     EVConnected,
     SuspendedEV,
@@ -1882,7 +1964,8 @@ ChargingStateEnum string_to_charging_state_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const ChargingStateEnum& charging_state_enum);
 
 // from: TransactionEventRequest
-enum class ReasonEnum {
+enum class ReasonEnum
+{
     DeAuthorized,
     EmergencyStop,
     EnergyLimitReached,
@@ -1919,7 +2002,8 @@ ReasonEnum string_to_reason_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const ReasonEnum& reason_enum);
 
 // from: TriggerMessageRequest
-enum class MessageTriggerEnum {
+enum class MessageTriggerEnum
+{
     BootNotification,
     LogStatusNotification,
     FirmwareStatusNotification,
@@ -1948,7 +2032,8 @@ MessageTriggerEnum string_to_message_trigger_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const MessageTriggerEnum& message_trigger_enum);
 
 // from: TriggerMessageResponse
-enum class TriggerMessageStatusEnum {
+enum class TriggerMessageStatusEnum
+{
     Accepted,
     Rejected,
     NotImplemented,
@@ -1969,7 +2054,8 @@ TriggerMessageStatusEnum string_to_trigger_message_status_enum(const std::string
 std::ostream& operator<<(std::ostream& os, const TriggerMessageStatusEnum& trigger_message_status_enum);
 
 // from: UnlockConnectorResponse
-enum class UnlockStatusEnum {
+enum class UnlockStatusEnum
+{
     Unlocked,
     UnlockFailed,
     OngoingAuthorizedTransaction,
@@ -1991,7 +2077,8 @@ UnlockStatusEnum string_to_unlock_status_enum(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const UnlockStatusEnum& unlock_status_enum);
 
 // from: UnpublishFirmwareResponse
-enum class UnpublishFirmwareStatusEnum {
+enum class UnpublishFirmwareStatusEnum
+{
     DownloadOngoing,
     NoFirmware,
     Unpublished,
@@ -2012,7 +2099,8 @@ UnpublishFirmwareStatusEnum string_to_unpublish_firmware_status_enum(const std::
 std::ostream& operator<<(std::ostream& os, const UnpublishFirmwareStatusEnum& unpublish_firmware_status_enum);
 
 // from: UpdateFirmwareResponse
-enum class UpdateFirmwareStatusEnum {
+enum class UpdateFirmwareStatusEnum
+{
     Accepted,
     Rejected,
     AcceptedCanceled,

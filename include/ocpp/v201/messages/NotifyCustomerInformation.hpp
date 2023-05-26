@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_NOTIFYCUSTOMERINFORMATION_HPP
 #define OCPP_V201_NOTIFYCUSTOMERINFORMATION_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/ocpp_types.hpp>
@@ -17,8 +17,8 @@ struct NotifyCustomerInformationRequest : public ocpp::Message {
     int32_t seqNo;
     ocpp::DateTime generatedAt;
     int32_t requestId;
-    boost::optional<CustomData> customData;
-    boost::optional<bool> tbc;
+    std::optional<CustomData> customData;
+    std::optional<bool> tbc;
 
     /// \brief Provides the type of this NotifyCustomerInformation message as a human readable string
     /// \returns the message type as a human readable string
@@ -37,7 +37,7 @@ std::ostream& operator<<(std::ostream& os, const NotifyCustomerInformationReques
 
 /// \brief Contains a OCPP NotifyCustomerInformationResponse message
 struct NotifyCustomerInformationResponse : public ocpp::Message {
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this NotifyCustomerInformationResponse message as a human readable string
     /// \returns the message type as a human readable string

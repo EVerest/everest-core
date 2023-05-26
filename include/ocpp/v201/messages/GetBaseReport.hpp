@@ -3,7 +3,7 @@
 #ifndef OCPP_V201_GETBASEREPORT_HPP
 #define OCPP_V201_GETBASEREPORT_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
@@ -16,7 +16,7 @@ namespace v201 {
 struct GetBaseReportRequest : public ocpp::Message {
     int32_t requestId;
     ReportBaseEnum reportBase;
-    boost::optional<CustomData> customData;
+    std::optional<CustomData> customData;
 
     /// \brief Provides the type of this GetBaseReport message as a human readable string
     /// \returns the message type as a human readable string
@@ -36,8 +36,8 @@ std::ostream& operator<<(std::ostream& os, const GetBaseReportRequest& k);
 /// \brief Contains a OCPP GetBaseReportResponse message
 struct GetBaseReportResponse : public ocpp::Message {
     GenericDeviceModelStatusEnum status;
-    boost::optional<CustomData> customData;
-    boost::optional<StatusInfo> statusInfo;
+    std::optional<CustomData> customData;
+    std::optional<StatusInfo> statusInfo;
 
     /// \brief Provides the type of this GetBaseReportResponse message as a human readable string
     /// \returns the message type as a human readable string

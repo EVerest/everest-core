@@ -221,9 +221,9 @@ void WebsocketTLS::connect_tls(int32_t security_profile, bool try_once) {
 
     if (security_profile == 2) {
         EVLOG_debug << "Connecting with security profile: 2";
-        boost::optional<std::string> authorization_header = this->getAuthorizationHeader();
-        if (authorization_header != boost::none) {
-            con->append_header("Authorization", authorization_header.get());
+        std::optional<std::string> authorization_header = this->getAuthorizationHeader();
+        if (authorization_header != std::nullopt) {
+            con->append_header("Authorization", authorization_header.value());
         } else {
             EVLOG_AND_THROW(std::runtime_error("No authorization key provided when connecting with security profile 2 or 3."));
         }

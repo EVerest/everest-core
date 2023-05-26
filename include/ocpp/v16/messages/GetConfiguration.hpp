@@ -3,7 +3,7 @@
 #ifndef OCPP_V16_GETCONFIGURATION_HPP
 #define OCPP_V16_GETCONFIGURATION_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v16/ocpp_types.hpp>
@@ -13,7 +13,7 @@ namespace v16 {
 
 /// \brief Contains a OCPP GetConfiguration message
 struct GetConfigurationRequest : public ocpp::Message {
-    boost::optional<std::vector<CiString<50>>> key;
+    std::optional<std::vector<CiString<50>>> key;
 
     /// \brief Provides the type of this GetConfiguration message as a human readable string
     /// \returns the message type as a human readable string
@@ -32,8 +32,8 @@ std::ostream& operator<<(std::ostream& os, const GetConfigurationRequest& k);
 
 /// \brief Contains a OCPP GetConfigurationResponse message
 struct GetConfigurationResponse : public ocpp::Message {
-    boost::optional<std::vector<KeyValue>> configurationKey;
-    boost::optional<std::vector<CiString<50>>> unknownKey;
+    std::optional<std::vector<KeyValue>> configurationKey;
+    std::optional<std::vector<CiString<50>>> unknownKey;
 
     /// \brief Provides the type of this GetConfigurationResponse message as a human readable string
     /// \returns the message type as a human readable string
