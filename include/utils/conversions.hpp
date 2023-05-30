@@ -18,7 +18,7 @@ template <typename FundamentalType> struct FundamentalTypeTrait {
     static const auto type = nlohmann::json::value_t::discarded;
 };
 
-template <> struct FundamentalTypeTrait<nullptr_t> {
+template <> struct FundamentalTypeTrait<std::nullptr_t> {
     static const auto type = nlohmann::json::value_t::null;
 };
 
