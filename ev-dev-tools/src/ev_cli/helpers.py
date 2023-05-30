@@ -115,7 +115,7 @@ def gather_git_info(repo):
 
 
 cpp_type_map = {
-    "null": "nullptr_t",  # FIXME (aw): who gets the null, json? or the variant
+    "null": "std::nullptr_t",  # FIXME (aw): who gets the null, json? or the variant
     "integer": "int",
     "number": "double",
     "string": "std::string",
