@@ -3,20 +3,20 @@
 #ifndef OCPP_COMMON_TYPES_HPP
 #define OCPP_COMMON_TYPES_HPP
 
-#include <boost/algorithm/string/predicate.hpp>
-#include <boost/optional.hpp>
-#include <boost/optional/optional.hpp>
-#include <iostream>
-#include <nlohmann/json.hpp>
-#include <sstream>
-#include <stdexcept>
-
 #include <chrono>
 #include <cstddef>
+#include <iostream>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <optional>
+
+#include <boost/algorithm/string/predicate.hpp>
+
+#include <nlohmann/json.hpp>
+
 #include <date/date.h>
 #include <date/tz.h>
-#include <iostream>
-#include <string>
 
 #include <ocpp/common/cistring.hpp>
 
@@ -383,7 +383,7 @@ struct Voltage {
     }
 };
 struct Frequency {
-    float L1;                  ///< AC L1 value
+    float L1;                ///< AC L1 value
     std::optional<float> L2; ///< AC L2 value
     std::optional<float> L3; ///< AC L3 value
 
@@ -424,7 +424,7 @@ struct Frequency {
     }
 };
 struct Power {
-    float total;               ///< DC / AC Sum value
+    float total;             ///< DC / AC Sum value
     std::optional<float> L1; ///< AC L1 value only
     std::optional<float> L2; ///< AC L2 value only
     std::optional<float> L3; ///< AC L3 value only
@@ -472,7 +472,7 @@ struct Power {
     }
 };
 struct Energy {
-    float total;               ///< DC / AC Sum value (which is relevant for billing)
+    float total;             ///< DC / AC Sum value (which is relevant for billing)
     std::optional<float> L1; ///< AC L1 value only
     std::optional<float> L2; ///< AC L2 value only
     std::optional<float> L3; ///< AC L3 value only
@@ -520,7 +520,7 @@ struct Energy {
     }
 };
 struct ReactivePower {
-    float total;                   ///< VAR total
+    float total;                 ///< VAR total
     std::optional<float> VARphA; ///< VAR phase A
     std::optional<float> VARphB; ///< VAR phase B
     std::optional<float> VARphC; ///< VAR phase C
@@ -569,8 +569,8 @@ struct ReactivePower {
 };
 
 struct Powermeter {
-    std::string timestamp;                    ///< Timestamp of measurement
-    Energy energy_Wh_import;                  ///< Imported energy in Wh (from grid)
+    std::string timestamp;                  ///< Timestamp of measurement
+    Energy energy_Wh_import;                ///< Imported energy in Wh (from grid)
     std::optional<std::string> meter_id;    ///< A (user defined) meter if (e.g. id printed on the case)
     std::optional<bool> phase_seq_error;    ///< AC only: true for 3 phase rotation error (ccw)
     std::optional<Energy> energy_Wh_export; ///< Exported energy in Wh (to grid)
@@ -731,7 +731,6 @@ InstallCertificateResult string_to_install_certificate_result(const std::string&
 /// install_certificate_result to the given output stream \p os \returns an output stream with the
 /// InstallCertificateResult written to
 std::ostream& operator<<(std::ostream& os, const InstallCertificateResult& install_certificate_result);
-
 
 enum class DeleteCertificateResult {
     Accepted,
