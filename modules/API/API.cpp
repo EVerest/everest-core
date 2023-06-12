@@ -50,9 +50,9 @@ types::energy::ExternalLimits get_external_limits(const std::string& data, bool 
     zero_entry.limits_to_leaves.total_power_W = 0;
 
     if (is_watts) {
-        target_entry.limits_to_leaves.total_power_W = limit;
+        target_entry.limits_to_leaves.total_power_W = std::fabs(limit);
     } else {
-        target_entry.limits_to_leaves.ac_max_current_A = limit;
+        target_entry.limits_to_leaves.ac_max_current_A = std::fabs(limit);
     }
 
     if (limit > 0) {
