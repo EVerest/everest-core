@@ -513,9 +513,15 @@ static bool connection_init_tls(struct v2g_context* ctx) {
     uint8_t num_of_v2g_root = 1;
     mbedtls_x509_crt* root_crt = &ctx->v2g_root_crt;
 
+    /* Allocate and initialize TLS certificate and key array*/
     ctx->num_of_tls_crt = 1;
     ctx->evseTlsCrt = static_cast<mbedtls_x509_crt*>(malloc(sizeof(mbedtls_x509_crt) * (num_of_v2g_root)));
     ctx->evse_tls_crt_key = static_cast<mbedtls_pk_context*>(malloc(sizeof(mbedtls_pk_context) * (num_of_v2g_root)));
+
+    for (uint8_t idx = 0; idx < ctx->num_of_tls_crt; idx++) {
+        mbedtls_x509_crt_init(&ctx->evseTlsCrt[idx]);
+        mbedtls_pk_init(&ctx->evse_tls_crt_key[idx]);
+    }
 
     if (ctx->evseTlsCrt == NULL || ctx->evse_tls_crt_key == NULL) {
         dlog(DLOG_LEVEL_ERROR, "Failed to allocate memory!");
@@ -539,25 +545,20 @@ static bool connection_init_tls(struct v2g_context* ctx) {
                                        MBEDTLS_SSL_CA_ID_TYPE_CERT_SHA1_HASH);
 #endif // MBEDTLS_SSL_TRUSTED_CA_KEYS
 
-    mbedtls_pk_init(&ctx->evse_tls_crt_key[0]);
     rv =
         mbedtls_pk_parse_keyfile(&ctx->evse_tls_crt_key[0], evse_leaf_key_path.c_str(), secc_leaf_key_password.c_str());
     if (rv != 0) {
         char error_buf[100];
         mbedtls_strerror(rv, error_buf, sizeof(error_buf));
         dlog(DLOG_LEVEL_ERROR, "mbedtls_pk_parse_keyfile returned -0x%04x - %s", -rv, error_buf);
-        mbedtls_pk_free(&ctx->evse_tls_crt_key[0]);
         goto error_out;
     }
-
-    mbedtls_x509_crt_init(&ctx->evseTlsCrt[0]);
 
     if ((rv = mbedtls_x509_crt_parse_file(&ctx->evseTlsCrt[0], evse_leaf_cert_path.c_str())) != 0) {
         char error_buf[100];
         mbedtls_strerror(rv, error_buf, sizeof(error_buf));
         dlog(DLOG_LEVEL_ERROR, "Unable to parse evse-leaf certficate %s (err: -0x%04x - %s)",
              evse_leaf_cert_path.c_str(), -rv, error_buf);
-        mbedtls_pk_free(&ctx->evse_tls_crt_key[0]);
         goto error_out;
     }
     if ((rv = mbedtls_x509_crt_parse_file(&ctx->evseTlsCrt[0], cpo_sub2_cert_path.c_str())) != 0) {
@@ -565,7 +566,6 @@ static bool connection_init_tls(struct v2g_context* ctx) {
         mbedtls_strerror(rv, error_buf, sizeof(error_buf));
         dlog(DLOG_LEVEL_ERROR, "Unable to parse CPO-sub2 certficate %s (err: -0x%04x - %s)", cpo_sub2_cert_path.c_str(),
              -rv, error_buf);
-        mbedtls_pk_free(&ctx->evse_tls_crt_key[0]);
         goto error_out;
     }
     if ((rv = mbedtls_x509_crt_parse_file(&ctx->evseTlsCrt[0], cpo_sub1_cert_path.c_str())) != 0) {
@@ -573,7 +573,6 @@ static bool connection_init_tls(struct v2g_context* ctx) {
         mbedtls_strerror(rv, error_buf, sizeof(error_buf));
         dlog(DLOG_LEVEL_ERROR, "Unable to parse CPO-sub1 certficate %s (err: -0x%04x - %s)", cpo_sub1_cert_path.c_str(),
              -rv, error_buf);
-        mbedtls_pk_free(&ctx->evse_tls_crt_key[0]);
         goto error_out;
     }
 
