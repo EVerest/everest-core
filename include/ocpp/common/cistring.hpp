@@ -3,10 +3,10 @@
 #ifndef OCPP_COMMON_CISTRING_HPP
 #define OCPP_COMMON_CISTRING_HPP
 
-#include <boost/algorithm/string/predicate.hpp>
 #include <nlohmann/json.hpp>
 
 #include <ocpp/common/string.hpp>
+#include <ocpp/common/utils.hpp>
 
 using json = nlohmann::json;
 
@@ -46,12 +46,12 @@ public:
 
 /// \brief Case insensitive compare for a case insensitive (Ci)String
 template <size_t L> bool operator==(const CiString<L>& lhs, const char* rhs) {
-    return boost::iequals(lhs.get(), rhs);
+    return iequals(lhs.get(), rhs);
 }
 
 /// \brief Case insensitive compare for a case insensitive (Ci)String
 template <size_t L> bool operator==(const CiString<L>& lhs, const CiString<L>& rhs) {
-    return boost::iequals(lhs.get(), rhs.get());
+    return iequals(lhs.get(), rhs.get());
 }
 
 /// \brief Case insensitive compare for a case insensitive (Ci)String

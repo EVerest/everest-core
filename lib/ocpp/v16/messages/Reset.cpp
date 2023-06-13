@@ -4,8 +4,6 @@
 #include <ostream>
 #include <string>
 
-#include <nlohmann/json.hpp>
-
 #include <ocpp/v16/messages/Reset.hpp>
 
 using json = nlohmann::json;

@@ -13,10 +13,10 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
                          const std::string& sql_init_path, const std::string& message_log_path,
                          const std::string& certs_path, const Callbacks& callbacks) :
     ocpp::ChargingStationBase(),
-    callbacks(callbacks),
     registration_status(RegistrationStatusEnum::Rejected),
     websocket_connection_status(WebsocketConnectionStatusEnum::Disconnected),
-    operational_state(OperationalStatusEnum::Operative) {
+    operational_state(OperationalStatusEnum::Operative),
+    callbacks(callbacks) {
     this->device_model_manager = std::make_shared<DeviceModelManager>(config, ocpp_main_path);
     this->pki_handler = std::make_shared<ocpp::PkiHandler>(ocpp_main_path, false); // FIXME(piet): Fix second parameter
     this->database_handler = std::make_unique<DatabaseHandler>(database_path, sql_init_path);
@@ -160,8 +160,7 @@ void ChargePoint::on_operative(const int32_t evse_id, const int32_t connector_id
     this->evses.at(evse_id)->submit_event(connector_id, ConnectorEvent::ReturnToOperativeState);
 }
 
-AuthorizeResponse ChargePoint::validate_token(const IdToken id_token,
-                                              const std::optional<CiString<5500>>& certificate,
+AuthorizeResponse ChargePoint::validate_token(const IdToken id_token, const std::optional<CiString<5500>>& certificate,
                                               const std::optional<std::vector<OCSPRequestData>>& ocsp_request_data) {
     // TODO(piet): C01.FR.14
     // TODO(piet): C01.FR.15
@@ -374,8 +373,8 @@ void ChargePoint::update_aligned_data_interval() {
                         this->transaction_event_req(
                             TransactionEventEnum::Updated, DateTime(), enhanced_transaction->get_transaction(),
                             TriggerReasonEnum::MeterValueClock, enhanced_transaction->get_seq_no(), std::nullopt,
-                            std::nullopt, std::nullopt, std::vector<MeterValue>(1, meter_value), std::nullopt, std::nullopt,
-                            std::nullopt);
+                            std::nullopt, std::nullopt, std::vector<MeterValue>(1, meter_value), std::nullopt,
+                            std::nullopt, std::nullopt);
                     } else if (!evse->has_active_transaction() and
                                this->device_model_manager->get_aligned_data_send_during_idle().value_or(false)) {
                         if (!meter_value.sampledValue.empty()) {

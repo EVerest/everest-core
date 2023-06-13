@@ -21,17 +21,17 @@ struct FormattedMessageWithType {
 ///
 class MessageLogging {
 private:
-    std::ofstream output_file;
-    std::ofstream html_log_file;
-    std::mutex output_file_mutex;
+    bool log_messages;
     std::string message_log_path;
     std::string output_file_name;
-    bool log_messages;
     bool log_to_console;
     bool detailed_log_to_console;
     bool log_to_file;
     bool log_to_html;
     bool session_logging;
+    std::ofstream output_file;
+    std::ofstream html_log_file;
+    std::mutex output_file_mutex;
     std::map<std::string, std::string> lookup_map;
     std::map<std::string, std::shared_ptr<MessageLogging>> session_id_logging;
 

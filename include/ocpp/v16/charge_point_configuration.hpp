@@ -15,7 +15,7 @@ namespace v16 {
 class ChargePointConfiguration {
 private:
     json config;
-    boost::filesystem::path user_config_path;
+    std::filesystem::path user_config_path;
 
     std::set<SupportedFeatureProfiles> supported_feature_profiles;
     std::map<Measurand, std::vector<Phase>> supported_measurands;
@@ -33,8 +33,8 @@ private:
     bool isConnectorPhaseRotationValid(std::string str);
 
 public:
-    ChargePointConfiguration(const json& config, const std::string& ocpp_main_path,
-                             const std::string& user_config_path);
+    ChargePointConfiguration(const std::string& config, const std::filesystem::path& ocpp_main_path,
+                             const std::filesystem::path& user_config_path);
 
     // Internal config options
     std::string getChargePointId();

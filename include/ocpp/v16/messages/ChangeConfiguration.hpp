@@ -3,6 +3,8 @@
 #ifndef OCPP_V16_CHANGECONFIGURATION_HPP
 #define OCPP_V16_CHANGECONFIGURATION_HPP
 
+#include <nlohmann/json_fwd.hpp>
+
 #include <ocpp/common/types.hpp>
 #include <ocpp/v16/enums.hpp>
 #include <ocpp/v16/ocpp_types.hpp>

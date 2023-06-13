@@ -37,8 +37,8 @@ struct PeriodDateTimePair {
 /// to calculate the composite schedules
 class SmartChargingHandler {
 private:
-    std::shared_ptr<DatabaseHandler> database_handler;
     std::map<int32_t, std::shared_ptr<Connector>> connectors;
+    std::shared_ptr<ocpp::v16::DatabaseHandler> database_handler;
     std::map<int, ChargingProfile> stack_level_charge_point_max_profiles_map;
     std::mutex charge_point_max_profiles_map_mutex;
     std::mutex tx_default_profiles_map_mutex;

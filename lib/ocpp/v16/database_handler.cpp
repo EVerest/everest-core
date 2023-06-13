@@ -8,11 +8,11 @@
 namespace ocpp {
 namespace v16 {
 
-DatabaseHandler::DatabaseHandler(const std::string& chargepoint_id, const boost::filesystem::path& database_path,
-                                 const boost::filesystem::path& init_script_path) {
+DatabaseHandler::DatabaseHandler(const std::string& chargepoint_id, const std::filesystem::path& database_path,
+                                 const std::filesystem::path& init_script_path) {
     const auto sqlite_db_filename = chargepoint_id + ".db";
-    if (!boost::filesystem::exists(database_path)) {
-        boost::filesystem::create_directories(database_path);
+    if (!std::filesystem::exists(database_path)) {
+        std::filesystem::create_directories(database_path);
     }
     this->db_path = database_path / sqlite_db_filename;
     this->init_script_path = init_script_path;

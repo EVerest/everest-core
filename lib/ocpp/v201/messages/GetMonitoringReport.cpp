@@ -4,7 +4,6 @@
 #include <ostream>
 #include <string>
 
-#include <nlohmann/json.hpp>
 #include <optional>
 
 #include <ocpp/v201/messages/GetMonitoringReport.hpp>
@@ -36,7 +35,7 @@ void to_json(json& j, const GetMonitoringReportRequest& k) {
     if (k.monitoringCriteria) {
         j["monitoringCriteria"] = json::array();
         for (auto val : k.monitoringCriteria.value()) {
-            j["monitoringCriteria"].push_back(val);
+            j["monitoringCriteria"].push_back(conversions::monitoring_criterion_enum_to_string(val));
         }
     }
 }
@@ -61,7 +60,7 @@ void from_json(const json& j, GetMonitoringReportRequest& k) {
         json arr = j.at("monitoringCriteria");
         std::vector<MonitoringCriterionEnum> vec;
         for (auto val : arr) {
-            vec.push_back(val);
+            vec.push_back(conversions::string_to_monitoring_criterion_enum(val));
         }
         k.monitoringCriteria.emplace(vec);
     }

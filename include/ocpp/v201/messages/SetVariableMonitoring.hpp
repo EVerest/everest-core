@@ -3,6 +3,7 @@
 #ifndef OCPP_V201_SETVARIABLEMONITORING_HPP
 #define OCPP_V201_SETVARIABLEMONITORING_HPP
 
+#include <nlohmann/json_fwd.hpp>
 #include <optional>
 
 #include <ocpp/common/types.hpp>

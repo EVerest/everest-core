@@ -4,7 +4,6 @@
 // AUTO GENERATED - DO NOT EDIT!
 
 #include <map>
-#include <boost/optional.hpp>
 
 #include <ocpp/v201/ocpp_types.hpp>
 #include <ocpp/v201/types.hpp>

@@ -3,10 +3,6 @@
 #ifndef OCPP_WEBSOCKET_HPP
 #define OCPP_WEBSOCKET_HPP
 
-#include <fstream>
-#include <iostream>
-#include <thread>
-
 #include <ocpp/common/ocpp_logging.hpp>
 #include <ocpp/common/pki_handler.hpp>
 #include <ocpp/common/websocket/websocket_plain.hpp>

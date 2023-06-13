@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include <gtest/gtest.h>
 
 #include <everest/logging.hpp>
 
 #include <ocpp/common/pki_handler.hpp>
 
-std::string read_file_to_string(const boost::filesystem::path filepath) {
+std::string read_file_to_string(const std::filesystem::path filepath) {
     std::ifstream t(filepath.string());
     std::stringstream buffer;
     buffer << t.rdbuf();
@@ -25,17 +25,17 @@ protected:
 
     void SetUp() override {
         install_certs();
-        this->pki_handler = std::make_unique<ocpp::PkiHandler>(boost::filesystem::path("certs"), false);
+        this->pki_handler = std::make_unique<ocpp::PkiHandler>(std::filesystem::path("certs"), false);
     }
 
     void TearDown() override {
-        boost::filesystem::remove_all("certs");
+        std::filesystem::remove_all("certs");
     }
 };
 
 /// \brief test verifyChargepointCertificate with valid cert
 TEST_F(PkiHandlerTests, verify_chargepoint_cert_01) {
-    const auto client_certificate = read_file_to_string(boost::filesystem::path("certs/client/csms/CSMS_LEAF.pem"));
+    const auto client_certificate = read_file_to_string(std::filesystem::path("certs/client/csms/CSMS_LEAF.pem"));
     const auto result = this->pki_handler->verifyChargepointCertificate(client_certificate, "SECCCert");
     ASSERT_TRUE(result == ocpp::CertificateVerificationResult::Valid);
 }
@@ -48,7 +48,7 @@ TEST_F(PkiHandlerTests, verify_chargepoint_cert_02) {
 
 /// \brief test verifyV2GChargingStationCertificate with valid cert
 TEST_F(PkiHandlerTests, verify_v2g_cert_01) {
-    const auto client_certificate = read_file_to_string(boost::filesystem::path("certs/client/cso/SECC_LEAF.pem"));
+    const auto client_certificate = read_file_to_string(std::filesystem::path("certs/client/cso/SECC_LEAF.pem"));
     const auto result = this->pki_handler->verifyV2GChargingStationCertificate(client_certificate, "SECCCert");
     ASSERT_TRUE(result == ocpp::CertificateVerificationResult::Valid);
 }
@@ -60,8 +60,8 @@ TEST_F(PkiHandlerTests, verify_v2g_cert_02) {
 }
 
 TEST_F(PkiHandlerTests, install_root_ca_01) {
-    const auto v2g_root_ca = read_file_to_string(boost::filesystem::path("certs/ca/v2g/V2G_ROOT_CA.pem"));
-    boost::filesystem::remove("certs/ca/v2g/V2G_ROOT_CA.pem");
+    const auto v2g_root_ca = read_file_to_string(std::filesystem::path("certs/ca/v2g/V2G_ROOT_CA.pem"));
+    std::filesystem::remove("certs/ca/v2g/V2G_ROOT_CA.pem");
     const auto result = this->pki_handler->installRootCertificate(
         v2g_root_ca, ocpp::CertificateType::V2GRootCertificate, boost::none, boost::none);
     ASSERT_TRUE(result == ocpp::InstallCertificateResult::Ok);
@@ -75,14 +75,14 @@ TEST_F(PkiHandlerTests, install_root_ca_02) {
 }
 
 TEST_F(PkiHandlerTests, install_root_ca_03) {
-    const auto invalid_ca = read_file_to_string(boost::filesystem::path("certs/ca/invalid/INVALID_CA.pem"));
+    const auto invalid_ca = read_file_to_string(std::filesystem::path("certs/ca/invalid/INVALID_CA.pem"));
     const auto result = this->pki_handler->installRootCertificate(
         invalid_ca, ocpp::CertificateType::CentralSystemRootCertificate, boost::none, true);
     ASSERT_EQ(result, ocpp::InstallCertificateResult::InvalidCertificateChain);
 }
 
 TEST_F(PkiHandlerTests, install_root_ca_04) {
-    const auto invalid_csms_ca = read_file_to_string(boost::filesystem::path("certs/INVALID_CERT.pem"));
+    const auto invalid_csms_ca = read_file_to_string(std::filesystem::path("certs/INVALID_CERT.pem"));
     const auto result = this->pki_handler->installRootCertificate(
         invalid_csms_ca, ocpp::CertificateType::CentralSystemRootCertificate, 2, true);
     ASSERT_EQ(result, ocpp::InstallCertificateResult::CertificateStoreMaxLengthExceeded);
@@ -119,4 +119,4 @@ TEST_F(PkiHandlerTests, get_root_certificate_hash_data) {
     this->pki_handler->getRootCertificateHashData(certificateTypes);
 }
 
-//FIXME(piet): Add more tests for getRootCertificateHashData (incl. V2GCertificateChain etc.)
+// FIXME(piet): Add more tests for getRootCertificateHashData (incl. V2GCertificateChain etc.)

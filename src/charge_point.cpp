@@ -5,6 +5,7 @@
 #include <csignal>
 #include <date/date.h>
 #include <date/tz.h>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <mutex>
@@ -16,7 +17,6 @@
 #include <boost/uuid/uuid_io.hpp>
 
 #include <boost/exception/diagnostic_information.hpp>
-#include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include <everest/logging.hpp>
 
@@ -54,31 +54,34 @@ int main(int argc, char* argv[]) {
         maindir = vm["maindir"].as<std::string>();
     }
 
+    const auto database_path = "/tmp/ocpp";
+    const auto share_path = std::filesystem::path(maindir) / "share" / "everest" / "modules" / "OCPP";
+
     // initialize logging as early as possible
-    std::string logging_config = maindir + "/logging.ini";
+    auto logging_config = share_path / "logging.ini";
     if (vm.count("logconf") != 0) {
-        logging_config = vm["logconf"].as<std::string>();
+        logging_config = std::filesystem::path(vm["logconf"].as<std::string>());
     }
-    Everest::Logging::init(logging_config, "charge_point");
+    Everest::Logging::init(logging_config.string(), "charge_point");
 
     std::string conf = "config.json";
     if (vm.count("conf") != 0) {
         conf = vm["conf"].as<std::string>();
     }
 
-    const auto configs_path = maindir;
-    const auto database_path = "/tmp/ocpp";
-    const auto share_path = "dist/share/everest/ocpp";
-
-    boost::filesystem::path config_path = boost::filesystem::path(maindir) / conf;
+    std::filesystem::path config_path = share_path / conf;
+    if (!std::filesystem::exists(config_path)) {
+        EVLOG_error << "Could not find config at: " << config_path;
+        return 1;
+    }
     std::ifstream ifs(config_path.c_str());
     std::string config_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     auto json_config = json::parse(config_file);
     json_config["Internal"]["LogMessagesFormat"][0] = "console_detailed";
-    auto user_config_path = boost::filesystem::path("/tmp") / "user_config.json";
+    auto user_config_path = std::filesystem::path("/tmp") / "user_config.json";
 
-    if (boost::filesystem::exists(user_config_path)) {
+    if (std::filesystem::exists(user_config_path)) {
         std::ifstream ifs(user_config_path.c_str());
         std::string user_config_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
         auto user_config = json::parse(user_config_file);
@@ -90,9 +93,10 @@ int main(int argc, char* argv[]) {
         fs.close();
     }
 
-    const boost::filesystem::path sql_init_path = boost::filesystem::path(configs_path) / "init.sql";
-    charge_point = new ocpp::v16::ChargePoint(json_config, share_path, user_config_path.string(), database_path,
-                                              sql_init_path.string(), "/tmp", "/tmp");
+    const std::filesystem::path sql_init_path = share_path / "init.sql";
+    charge_point =
+        new ocpp::v16::ChargePoint(json_config.dump(), share_path, user_config_path, database_path, sql_init_path,
+                                   std::filesystem::path("/tmp"), std::filesystem::path("/tmp"));
 
     /************************************** START REGISTERING CALLBACKS /**************************************/
 
@@ -135,7 +139,7 @@ int main(int argc, char* argv[]) {
 
     charge_point->register_reserve_now_callback([](int32_t reservation_id, int32_t connector, ocpp::DateTime expiryDate,
                                                    ocpp::CiString<20> idTag,
-                                                   boost::optional<ocpp::CiString<20>> parent_id) {
+                                                   std::optional<ocpp::CiString<20>> parent_id) {
         std::cout << "Callback: "
                   << "Reserving connector# " << connector << " for id token: " << idTag.get() << " until "
                   << expiryDate;
@@ -151,12 +155,6 @@ int main(int argc, char* argv[]) {
     charge_point->register_unlock_connector_callback([](int32_t connector) {
         std::cout << "Callback: "
                   << "Unlock connector#" << connector;
-        return true;
-    });
-
-    charge_point->register_set_max_current_callback([](int32_t connector, double max_current) {
-        std::cout << "Callback: "
-                  << "Setting maximum current for connector#" << connector << "to: " << max_current;
         return true;
     });
 

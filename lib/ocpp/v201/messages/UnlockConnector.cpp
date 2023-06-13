@@ -4,7 +4,6 @@
 #include <ostream>
 #include <string>
 
-#include <nlohmann/json.hpp>
 #include <optional>
 
 #include <ocpp/v201/messages/UnlockConnector.hpp>

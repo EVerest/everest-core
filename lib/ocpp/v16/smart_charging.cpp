@@ -11,7 +11,7 @@ namespace v16 {
 bool validate_schedule(const ChargingSchedule& schedule, const int charging_schedule_max_periods,
                        const std::vector<ChargingRateUnit>& charging_schedule_allowed_charging_rate_units) {
 
-    if (schedule.chargingSchedulePeriod.size() > charging_schedule_max_periods) {
+    if (schedule.chargingSchedulePeriod.size() > (size_t)charging_schedule_max_periods) {
         EVLOG_warning << "INVALID SCHEDULE - Number of chargingSchedulePeriod(s) is greater than configured "
                          "ChargingScheduleMaxPeriods of "
                       << charging_schedule_max_periods;
@@ -74,7 +74,7 @@ ocpp::DateTime get_period_end_time(const int period_index, const ocpp::DateTime&
     std::optional<ocpp::DateTime> period_end_time;
 
     int period_diff_in_seconds;
-    if (period_index + 1 < periods.size()) {
+    if ((size_t)period_index + 1 < periods.size()) {
         int duration;
         if (schedule.duration) {
             duration = schedule.duration.value();
@@ -121,10 +121,10 @@ PeriodDateTimePair SmartChargingHandler::find_period_at(const ocpp::DateTime& ti
     if (period_start_time) {
         const auto periods = schedule.chargingSchedulePeriod;
         time_point<date::utc_clock> period_end_time;
-        for (int i = 0; i < periods.size(); i++) {
+        for (size_t i = 0; i < periods.size(); i++) {
             const auto period_end_time = get_period_end_time(i, period_start_time.value(), schedule, periods);
             if (time >= period_start_time.value() && time < period_end_time) {
-                return {periods[i], ocpp::DateTime(period_end_time)};
+                return {periods.at(i), ocpp::DateTime(period_end_time)};
             }
             period_start_time.emplace(ocpp::DateTime(period_end_time));
         }
@@ -268,7 +268,7 @@ bool SmartChargingHandler::validate_profile(
     ChargingProfile& profile, const int connector_id, bool ignore_no_transaction, const int profile_max_stack_level,
     const int max_charging_profiles_installed, const int charging_schedule_max_periods,
     const std::vector<ChargingRateUnit>& charging_schedule_allowed_charging_rate_units) {
-    if (connector_id > this->connectors.size() or connector_id < 0 or profile.stackLevel < 0 or
+    if ((size_t)connector_id > this->connectors.size() or connector_id < 0 or profile.stackLevel < 0 or
         profile.stackLevel > profile_max_stack_level) {
         EVLOG_warning << "INVALID PROFILE - connector_id invalid or invalid stack level";
         return false;
@@ -352,7 +352,7 @@ void SmartChargingHandler::add_charge_point_max_profile(const ChargingProfile& p
 void SmartChargingHandler::add_tx_default_profile(const ChargingProfile& profile, const int connector_id) {
     std::lock_guard<std::mutex> lk(this->tx_default_profiles_map_mutex);
     if (connector_id == 0) {
-        for (auto id = 1; id <= this->connectors.size() - 1; id++) {
+        for (size_t id = 1; id <= this->connectors.size() - 1; id++) {
             this->connectors.at(id)->stack_level_tx_default_profiles_map[profile.stackLevel] = profile;
             this->database_handler->insert_or_update_charging_profile(connector_id, profile);
         }
@@ -516,7 +516,7 @@ ocpp::DateTime SmartChargingHandler::get_next_temp_time(const ocpp::DateTime tem
         const auto period_start_time_opt = this->get_profile_start_time(profile, temp_time, connector_id);
         if (period_start_time_opt) {
             auto period_start_time = period_start_time_opt.value();
-            for (int i = 0; i < periods.size(); i++) {
+            for (size_t i = 0; i < periods.size(); i++) {
                 auto period_end_time = get_period_end_time(i, period_start_time, schedule, periods);
                 if (temp_time >= period_start_time && temp_time < period_end_time &&
                     period_end_time < lowest_next_time) {

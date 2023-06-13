@@ -4,6 +4,8 @@
 
 #include <ocpp/common/websocket/websocket_base.hpp>
 
+#include <boost/optional/optional.hpp>
+
 namespace ocpp {
 
 WebsocketBase::WebsocketBase(const WebsocketConnectionOptions& connection_options) :

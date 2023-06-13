@@ -3,10 +3,6 @@
 #ifndef OCPP_WEBSOCKET_TLS_HPP
 #define OCPP_WEBSOCKET_TLS_HPP
 
-#include <thread>
-
-#include <everest/timer.hpp>
-
 #include <websocketpp/client.hpp>
 #include <websocketpp/config/asio_client.hpp>
 

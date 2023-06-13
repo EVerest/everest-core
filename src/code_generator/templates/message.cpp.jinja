@@ -8,7 +8,6 @@
 {% if uses_optional %}
 #include <optional>
 {% endif %}
-#include <nlohmann/json.hpp>
 
 #include <ocpp/{{namespace}}/messages/{{action.name}}.hpp>
 
@@ -67,7 +66,11 @@ if (j.size() == 0) {
             }
 {% endif %}
             for (auto val : k.{{property.name}}.value()) {
+                {%- if property.type.endswith('Enum>') %}
+                j["{{property.name}}"].push_back(conversions::{{- property.type.replace('std::vector<','').replace('>','') | snake_case}}_to_string(val));
+                {%- else%}
                 j["{{property.name}}"].push_back(val);
+                {%- endif%}
             }
 {% else %}
 {% if property.enum %}
@@ -83,6 +86,9 @@ j["{{property.name}}"] = k.{{property.name}}.value();
         }
 {% endif %}
 {% endfor %}
+{% if not type.properties|length %}
+    (void)k; // no elements to unpack, silence unused parameter warning
+{% endif %}
     }
 
     void from_json(const json& j, {{ type.name }}& k) {
@@ -116,7 +122,11 @@ j["{{property.name}}"] = k.{{property.name}}.value();
             json arr = j.at("{{property.name}}");
             {{property.type}} vec;
             for (auto val : arr) {
+                {%- if property.type.endswith('Enum>') %}
+                vec.push_back(conversions::string_to_{{- property.type.replace('std::vector<','').replace('>','') | snake_case}}(val));
+                {%- else %}
                 vec.push_back(val);
+                {%- endif %}
             }
             k.{{property.name}}.emplace(vec);
 {% else %}
@@ -133,6 +143,11 @@ j["{{property.name}}"] = k.{{property.name}}.value();
         }
 {% endif %}
 {% endfor %}
+{% if not type.properties|length %}
+    // no elements to unpack, silence unused parameter warning
+    (void)j;
+    (void)k;
+{% endif %}
     }
 
 /// \brief Writes the string representation of the given {{ type.name }} \p k to the given output stream \p os

@@ -141,21 +141,21 @@ void ChargePointStates::reset(std::map<int, v16::AvailabilityType> connector_ava
 
 void ChargePointStates::submit_event(int connector_id, FSMEvent event) {
     const std::lock_guard<std::mutex> lck(state_machines_mutex);
-    if (connector_id > 0 && connector_id < this->state_machines.size()) {
+    if (connector_id > 0 && (size_t)connector_id < this->state_machines.size()) {
         this->state_machines.at(connector_id).handle_event(event);
     }
 }
 
 void ChargePointStates::submit_error(int connector_id, const ChargePointErrorCode& error_code) {
     const std::lock_guard<std::mutex> lck(state_machines_mutex);
-    if (connector_id > 0 && connector_id < state_machines.size()) {
+    if (connector_id > 0 && (size_t)connector_id < state_machines.size()) {
         state_machines.at(connector_id).handle_fault(error_code);
     }
 }
 
 ChargePointStatus ChargePointStates::get_state(int connector_id) {
     const std::lock_guard<std::mutex> lck(state_machines_mutex);
-    if (connector_id > 0 && connector_id < this->state_machines.size()) {
+    if (connector_id > 0 && (size_t)connector_id < this->state_machines.size()) {
         return state_machines.at(connector_id).get_state();
     } else if (connector_id == 0) {
         return ChargePointStatus::Available;

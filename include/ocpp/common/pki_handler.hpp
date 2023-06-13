@@ -3,7 +3,7 @@
 #ifndef OCPP_COMMON_PKI_HANDLER
 #define OCPP_COMMON_PKI_HANDLER
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include <memory>
 #include <openssl/bio.h>
 #include <openssl/err.h>
@@ -51,21 +51,21 @@ using X509_STORE_CTX_ptr = std::unique_ptr<X509_STORE_CTX, decltype(&::X509_STOR
 using X509_REQ_ptr = std::unique_ptr<X509_REQ, decltype(&::X509_REQ_free)>;
 
 // filenames of ca certificates
-const boost::filesystem::path CSMS_ROOT_CA("CSMS_ROOT_CA.pem");
-const boost::filesystem::path CSMS_ROOT_CA_BACKUP("CSMS_ROOT_CA_BACKUP.pem");
+const std::filesystem::path CSMS_ROOT_CA("CSMS_ROOT_CA.pem");
+const std::filesystem::path CSMS_ROOT_CA_BACKUP("CSMS_ROOT_CA_BACKUP.pem");
 
 // filenames of leaf certificates, csrs and private keys
-const boost::filesystem::path CSMS_LEAF("CSMS_LEAF.pem");
-const boost::filesystem::path CSMS_LEAF_KEY("CSMS_LEAF.key");
-const boost::filesystem::path CSMS_LEAF_KEY_BACKUP("CSMS_LEAF_BACKUP.key");
-const boost::filesystem::path CSMS_CSR("CSMS_CSR.pem");
-const boost::filesystem::path V2G_LEAF("SECC_LEAF.pem"); // SECC_LEAF in ISO15118
-const boost::filesystem::path V2G_LEAF_KEY("SECC_LEAF.key");
-const boost::filesystem::path V2G_LEAF_KEY_BACKUP("SECC_LEAF_BACKUP.key");
-const boost::filesystem::path V2G_CSR("SECC_CSR.pem");
+const std::filesystem::path CSMS_LEAF("CSMS_LEAF.pem");
+const std::filesystem::path CSMS_LEAF_KEY("CSMS_LEAF.key");
+const std::filesystem::path CSMS_LEAF_KEY_BACKUP("CSMS_LEAF_BACKUP.key");
+const std::filesystem::path CSMS_CSR("CSMS_CSR.pem");
+const std::filesystem::path V2G_LEAF("SECC_LEAF.pem"); // SECC_LEAF in ISO15118
+const std::filesystem::path V2G_LEAF_KEY("SECC_LEAF.key");
+const std::filesystem::path V2G_LEAF_KEY_BACKUP("SECC_LEAF_BACKUP.key");
+const std::filesystem::path V2G_CSR("SECC_CSR.pem");
 
 struct X509Certificate {
-    boost::filesystem::path path;
+    std::filesystem::path path;
     X509* x509;
     std::string str;
     CertificateType type;
@@ -73,13 +73,13 @@ struct X509Certificate {
     int validTo; // seconds. If < 0 cert has expired
 
     X509Certificate(){};
-    X509Certificate(boost::filesystem::path path, X509* x509, std::string str);
+    X509Certificate(std::filesystem::path path, X509* x509, std::string str);
     ~X509Certificate();
 
     /// \brief writes the X509 certificate to the path set
     bool write();
     /// \brief writes the X509 certificate to the given \p path
-    bool write(const boost::filesystem::path& path);
+    bool write(const std::filesystem::path& path);
 
     /// \brief Gets CN of certificate
     std::string getCommonName();
@@ -100,11 +100,11 @@ struct X509Certificate {
     OCSPRequestData getOCSPRequestData();
 };
 /// \brief loads a X509Certificate from the given \p pat
-std::shared_ptr<X509Certificate> loadFromFile(const boost::filesystem::path& path);
+std::shared_ptr<X509Certificate> loadFromFile(const std::filesystem::path& path);
 /// \brief loads a X509Certificate from the given \p st
 std::shared_ptr<X509Certificate> loadFromString(std::string& str);
 /// \brief reads a file from the given \p path to a strin
-std::string readFileToString(const boost::filesystem::path& path);
+std::string readFileToString(const std::filesystem::path& path);
 
 /// \brief Handler for verifying, installing, deleting and managing certificates and security related operations.
 /// Requires CA files to be located inside the following directory structure according to their use:
@@ -123,18 +123,18 @@ std::string readFileToString(const boost::filesystem::path& path);
 class PkiHandler {
 
 private:
-    boost::filesystem::path certsPath;
-    boost::filesystem::path caPath;
-    boost::filesystem::path caCsmsPath;
-    boost::filesystem::path caCsoPath;
-    boost::filesystem::path caCpsPath;
-    boost::filesystem::path caMfPath;
-    boost::filesystem::path caMoPath;
-    boost::filesystem::path caOemPath;
-    boost::filesystem::path caV2gPath;
+    std::filesystem::path certsPath;
+    std::filesystem::path caPath;
+    std::filesystem::path caCsmsPath;
+    std::filesystem::path caCsoPath;
+    std::filesystem::path caCpsPath;
+    std::filesystem::path caMfPath;
+    std::filesystem::path caMoPath;
+    std::filesystem::path caOemPath;
+    std::filesystem::path caV2gPath;
 
-    boost::filesystem::path clientCsmsPath;
-    boost::filesystem::path clientCsoPath;
+    std::filesystem::path clientCsmsPath;
+    std::filesystem::path clientCsoPath;
 
     bool useRootCaFallback;
 
@@ -159,13 +159,13 @@ private:
     std::vector<std::shared_ptr<X509Certificate>> getCertificatesFromChain(const std::string& certChain);
 
     /// \brief Returns the path where the ca certificates of the given \p pki are located
-    boost::filesystem::path getCaPath(const PkiEnum& pki);
+    std::filesystem::path getCaPath(const PkiEnum& pki);
 
     /// \brief Executes "openssl rehash" for the given \p caPath
-    void execOpenSSLRehash(const boost::filesystem::path caPath);
+    void execOpenSSLRehash(const std::filesystem::path caPath);
 
     /// \brief Returns the file path of the CSMS root CA file
-    std::optional<boost::filesystem::path> getCsmsCaFilePath();
+    std::optional<std::filesystem::path> getCsmsCaFilePath();
 
     /// \brief Returns the number of installed CSMS CA certificates
     int getNumberOfCsmsCaCertificates();
@@ -181,10 +181,10 @@ private:
     bool isCaCertificateAlreadyInstalled(const std::shared_ptr<X509Certificate>& certificate);
 
 public:
-    explicit PkiHandler(const boost::filesystem::path& certsPath, const bool multipleCsmsCaNotAllowed);
+    explicit PkiHandler(const std::filesystem::path& certsPath, const bool multipleCsmsCaNotAllowed);
 
     /// \brief Returns the path where the certificates are located
-    boost::filesystem::path getCaCsmsPath();
+    std::filesystem::path getCaCsmsPath();
 
     /// \brief Verifies the given \p certificate and the \p charge_box_serial_number using the
     /// CentralSystemRootCertificate This method verifies the certificate chain, the signature, and the period when the
@@ -239,7 +239,7 @@ public:
     std::shared_ptr<X509Certificate> getLeafCertificate(const CertificateSigningUseEnum& certificate_signing_use);
 
     /// \brief Get the leaf private key of the given \p certificate_signing_use
-    boost::filesystem::path getLeafPrivateKeyPath(const CertificateSigningUseEnum& certificate_signing_use);
+    std::filesystem::path getLeafPrivateKeyPath(const CertificateSigningUseEnum& certificate_signing_use);
 
     /// \brief Removes a fallback central system root certificate if present
     void removeCentralSystemFallbackCa();

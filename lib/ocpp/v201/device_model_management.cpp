@@ -7,12 +7,11 @@
 
 namespace ocpp {
 namespace v201 {
-
-DeviceModelManager::DeviceModelManager(const json& config, const std::string& ocpp_main_path) {
+DeviceModelManager::DeviceModelManager(const json& config, const std::filesystem::path& ocpp_main_path) {
     auto json_config = config;
 
     // validate config entries
-    Schemas schemas = Schemas(boost::filesystem::path(ocpp_main_path) / "component_schemas");
+    Schemas schemas = Schemas(ocpp_main_path / "component_schemas");
     try {
         const auto patch = schemas.get_validator()->validate(json_config);
         if (!patch.is_null()) {
@@ -25,11 +24,11 @@ DeviceModelManager::DeviceModelManager(const json& config, const std::string& oc
         EVLOG_AND_THROW(e);
     }
 
-    std::set<boost::filesystem::path> available_schemas_paths;
-    const auto component_schemas_path = boost::filesystem::path(ocpp_main_path) / "component_schemas";
+    std::set<std::filesystem::path> available_schemas_paths;
+    const auto component_schemas_path = ocpp_main_path / "component_schemas";
 
     // iterating over schemas to initialize standardized components and variables
-    for (auto file : boost::filesystem::directory_iterator(component_schemas_path)) {
+    for (auto file : std::filesystem::directory_iterator(component_schemas_path)) {
         if (file.path().filename() != "Config.json") {
 
             auto component_name = file.path().filename().replace_extension("").string();

@@ -4,7 +4,6 @@
 #include <ostream>
 #include <string>
 
-#include <nlohmann/json.hpp>
 #include <optional>
 
 #include <ocpp/v201/messages/GetInstalledCertificateIds.hpp>
@@ -32,7 +31,6 @@ void to_json(json& j, const GetInstalledCertificateIdsRequest& k) {
             j["certificateType"] = json::array();
         }
         for (auto val : k.certificateType.value()) {
-            // FIXME(piet): Fix this in code generator
             j["certificateType"].push_back(conversions::get_certificate_id_use_enum_to_string(val));
         }
     }
@@ -49,7 +47,6 @@ void from_json(const json& j, GetInstalledCertificateIdsRequest& k) {
         json arr = j.at("certificateType");
         std::vector<GetCertificateIdUseEnum> vec;
         for (auto val : arr) {
-            // FIXME(piet): Fix this in code generator
             vec.push_back(conversions::string_to_get_certificate_id_use_enum(val));
         }
         k.certificateType.emplace(vec);

@@ -3,6 +3,7 @@
 #ifndef OCPP_V201_GET15118EVCERTIFICATE_HPP
 #define OCPP_V201_GET15118EVCERTIFICATE_HPP
 
+#include <nlohmann/json_fwd.hpp>
 #include <optional>
 
 #include <ocpp/common/types.hpp>

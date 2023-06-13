@@ -2,6 +2,7 @@
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
 #include <boost/optional/optional_io.hpp>
+#include <filesystem>
 #include <gtest/gtest.h>
 #include <iostream>
 #include <ocpp/v16/database_handler.hpp>
@@ -51,13 +52,13 @@ ChargingProfile get_sample_charging_profile() {
 class DatabaseTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        this->db_handler = std::make_unique<DatabaseHandler>(CP_ID, boost::filesystem::path("/tmp"),
-                                                             boost::filesystem::path("../config/v16/init.sql"));
+        this->db_handler = std::make_unique<DatabaseHandler>(CP_ID, std::filesystem::path("/tmp"),
+                                                             std::filesystem::path("../config/v16/init.sql"));
         this->db_handler->open_db_connection(2);
     }
 
     void TearDown() override {
-        boost::filesystem::remove("/tmp/" + CP_ID + ".db");
+        std::filesystem::remove("/tmp/" + CP_ID + ".db");
     }
 
     std::unique_ptr<DatabaseHandler> db_handler;

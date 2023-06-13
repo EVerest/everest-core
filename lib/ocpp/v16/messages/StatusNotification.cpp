@@ -4,7 +4,6 @@
 #include <ostream>
 #include <string>
 
-#include <nlohmann/json.hpp>
 #include <optional>
 
 #include <ocpp/v16/messages/StatusNotification.hpp>
@@ -76,12 +75,16 @@ void to_json(json& j, const StatusNotificationResponse& k) {
     // the required parts of the message
     j = json({});
     // the optional parts of the message
+    (void)k; // no elements to unpack, silence unused parameter warning
 }
 
 void from_json(const json& j, StatusNotificationResponse& k) {
     // the required parts of the message
 
     // the optional parts of the message
+    // no elements to unpack, silence unused parameter warning
+    (void)j;
+    (void)k;
 }
 
 /// \brief Writes the string representation of the given StatusNotificationResponse \p k to the given output stream \p

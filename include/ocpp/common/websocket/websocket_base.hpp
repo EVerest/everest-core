@@ -10,8 +10,6 @@
 
 #include <everest/timer.hpp>
 
-#include <boost/optional.hpp>
-
 #include <ocpp/common/types.hpp>
 
 #include <websocketpp/client.hpp>
@@ -41,18 +39,18 @@ class WebsocketBase {
 protected:
     bool shutting_down;
     bool m_is_connected;
+    WebsocketConnectionOptions connection_options;
     std::function<void(const int security_profile)> connected_callback;
     std::function<void()> disconnected_callback;
     std::function<void(const std::string& message)> message_callback;
-    WebsocketConnectionOptions connection_options;
+    websocketpp::lib::shared_ptr<boost::asio::steady_timer> reconnect_timer;
+    std::unique_ptr<Everest::SteadyTimer> ping_timer;
     websocketpp::lib::shared_ptr<websocketpp::lib::thread> websocket_thread;
     std::string uri;
     websocketpp::connection_hdl handle;
     std::mutex reconnect_mutex;
     long reconnect_interval_ms;
     websocketpp::transport::timer_handler reconnect_callback;
-    websocketpp::lib::shared_ptr<boost::asio::steady_timer> reconnect_timer;
-    std::unique_ptr<Everest::SteadyTimer> ping_timer;
 
     /// \brief Indicates if the required callbacks are registered and the websocket is not shutting down
     /// \returns true if the websocket is properly initialized

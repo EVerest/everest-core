@@ -3,6 +3,7 @@
 #ifndef OCPP_V16_SIGNEDFIRMWARESTATUSNOTIFICATION_HPP
 #define OCPP_V16_SIGNEDFIRMWARESTATUSNOTIFICATION_HPP
 
+#include <nlohmann/json_fwd.hpp>
 #include <optional>
 
 #include <ocpp/v16/enums.hpp>

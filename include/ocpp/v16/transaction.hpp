@@ -30,18 +30,18 @@ struct StampedEnergyWh {
 /// \brief Contains all transaction related data, such as the ID and power meter values
 class Transaction {
 private:
-    std::shared_ptr<StampedEnergyWh> start_energy_wh;
-    std::shared_ptr<StampedEnergyWh> stop_energy_wh;
-    std::optional<int32_t> reservation_id;
     int32_t transaction_id;
-    std::string session_id;
     int32_t connector;
-    std::string start_transaction_message_id;
-    std::string stop_transaction_message_id;
+    std::string session_id;
+    CiString<20> id_token;
+    std::shared_ptr<StampedEnergyWh> start_energy_wh;
+    std::optional<int32_t> reservation_id;
     bool active;
     bool finished;
-    CiString<20> id_token;
     std::unique_ptr<Everest::SteadyTimer> meter_values_sample_timer;
+    std::string start_transaction_message_id;
+    std::string stop_transaction_message_id;
+    std::shared_ptr<StampedEnergyWh> stop_energy_wh;
     std::mutex meter_values_mutex;
     std::vector<MeterValue> meter_values;
 

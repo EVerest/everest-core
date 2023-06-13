@@ -3,13 +3,10 @@
 #ifndef OCPP_COMMON_STRING_HPP
 #define OCPP_COMMON_STRING_HPP
 
-#include <boost/algorithm/string/predicate.hpp>
+#include <cstddef>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
-
-#include <cstddef>
-#include <iostream>
 #include <string>
 
 namespace ocpp {
@@ -56,6 +53,7 @@ public:
 
     /// \brief Override this to check for a specific format
     bool is_valid(const std::string& data) {
+        (void)data; // not needed here
         return true;
     }
 

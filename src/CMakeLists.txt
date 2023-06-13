@@ -7,7 +7,10 @@ target_link_libraries(charge_point
         nlohmann_json::nlohmann_json
         nlohmann_json_schema_validator
         ocpp
+        OpenSSL::SSL
+        OpenSSL::Crypto
 )
 
 install(TARGETS charge_point
         RUNTIME)
+set_property(TARGET ocpp PROPERTY POSITION_INDEPENDENT_CODE ON)

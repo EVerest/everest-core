@@ -8,10 +8,10 @@
 #include <set>
 #include <vector>
 
-#include <boost/filesystem.hpp>
 #include <everest/logging.hpp>
+#include <filesystem>
 #include <nlohmann/json-schema.hpp>
-#include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 
 using json = nlohmann::json;
 using json_uri = nlohmann::json_uri;
@@ -24,8 +24,8 @@ class Schemas {
 private:
     json schema;
     std::shared_ptr<json_validator> validator;
-    boost::filesystem::path schemas_path;
-    std::set<boost::filesystem::path> available_schemas_paths;
+    std::filesystem::path schemas_path;
+    std::set<std::filesystem::path> available_schemas_paths;
     const static std::vector<std::string> profiles;
     const static std::regex date_time_regex;
 
@@ -37,7 +37,7 @@ private:
 
 public:
     /// \brief Creates a new Schemas object looking for the root schema file in relation to the provided \p main_dir
-    explicit Schemas(boost::filesystem::path schemas_path);
+    explicit Schemas(std::filesystem::path schemas_path);
 
     /// \brief Provides the config schema
     /// \returns the config schema as as json object

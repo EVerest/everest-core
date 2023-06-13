@@ -9,12 +9,12 @@
 
 namespace ocpp {
 
-Schemas::Schemas(boost::filesystem::path schemas_path) : schemas_path(schemas_path) {
-    if (!boost::filesystem::exists(this->schemas_path) || !boost::filesystem::is_directory(this->schemas_path)) {
+Schemas::Schemas(std::filesystem::path schemas_path) : schemas_path(schemas_path) {
+    if (!std::filesystem::exists(this->schemas_path) || !std::filesystem::is_directory(this->schemas_path)) {
         EVLOG_error << this->schemas_path << " does not exist";
         // FIXME(kai): exception?
     } else {
-        for (auto file : boost::filesystem::directory_iterator(this->schemas_path)) {
+        for (auto file : std::filesystem::directory_iterator(this->schemas_path)) {
             available_schemas_paths.insert(file.path());
         }
         this->load_root_schema();
@@ -22,9 +22,9 @@ Schemas::Schemas(boost::filesystem::path schemas_path) : schemas_path(schemas_pa
 }
 
 void Schemas::load_root_schema() {
-    boost::filesystem::path config_schema_path = this->schemas_path / "Config.json";
+    std::filesystem::path config_schema_path = this->schemas_path / "Config.json";
 
-    EVLOG_debug << "parsing root schema file: " << boost::filesystem::canonical(config_schema_path);
+    EVLOG_debug << "parsing root schema file: " << std::filesystem::canonical(config_schema_path);
 
     std::ifstream ifs(config_schema_path.c_str());
     std::string schema_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
@@ -48,11 +48,14 @@ void Schemas::loader(const json_uri& uri, json& schema) {
     if (location == "http://json-schema.org/draft-07/schema") {
         schema = nlohmann::json_schema::draft7_schema_builtin;
         return;
+    } else if (location.rfind("/", 0) == 0) {
+        // remove leading /
+        location.erase(0, 1);
     }
 
-    boost::filesystem::path schema_path = this->schemas_path / uri.location();
+    std::filesystem::path schema_path = this->schemas_path / std::filesystem::path(location);
     if (available_schemas_paths.count(schema_path) != 0) {
-        std::ifstream ifs(schema_path.c_str());
+        std::ifstream ifs(schema_path.string().c_str());
         std::string schema_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
         schema = json::parse(schema_file);
         return;

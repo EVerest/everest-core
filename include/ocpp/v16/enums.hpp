@@ -10,8 +10,7 @@ namespace ocpp {
 namespace v16 {
 
 // from: AuthorizeResponse
-enum class AuthorizationStatus
-{
+enum class AuthorizationStatus {
     Accepted,
     Blocked,
     Expired,
@@ -34,8 +33,7 @@ AuthorizationStatus string_to_authorization_status(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const AuthorizationStatus& authorization_status);
 
 // from: BootNotificationResponse
-enum class RegistrationStatus
-{
+enum class RegistrationStatus {
     Accepted,
     Pending,
     Rejected,
@@ -56,8 +54,7 @@ RegistrationStatus string_to_registration_status(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const RegistrationStatus& registration_status);
 
 // from: CancelReservationResponse
-enum class CancelReservationStatus
-{
+enum class CancelReservationStatus {
     Accepted,
     Rejected,
 };
@@ -77,8 +74,7 @@ CancelReservationStatus string_to_cancel_reservation_status(const std::string& s
 std::ostream& operator<<(std::ostream& os, const CancelReservationStatus& cancel_reservation_status);
 
 // from: CertificateSignedResponse
-enum class CertificateSignedStatusEnumType
-{
+enum class CertificateSignedStatusEnumType {
     Accepted,
     Rejected,
 };
@@ -99,8 +95,7 @@ CertificateSignedStatusEnumType string_to_certificate_signed_status_enum_type(co
 std::ostream& operator<<(std::ostream& os, const CertificateSignedStatusEnumType& certificate_signed_status_enum_type);
 
 // from: ChangeAvailabilityRequest
-enum class AvailabilityType
-{
+enum class AvailabilityType {
     Inoperative,
     Operative,
 };
@@ -120,8 +115,7 @@ AvailabilityType string_to_availability_type(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const AvailabilityType& availability_type);
 
 // from: ChangeAvailabilityResponse
-enum class AvailabilityStatus
-{
+enum class AvailabilityStatus {
     Accepted,
     Rejected,
     Scheduled,
@@ -142,8 +136,7 @@ AvailabilityStatus string_to_availability_status(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const AvailabilityStatus& availability_status);
 
 // from: ChangeConfigurationResponse
-enum class ConfigurationStatus
-{
+enum class ConfigurationStatus {
     Accepted,
     Rejected,
     RebootRequired,
@@ -165,8 +158,7 @@ ConfigurationStatus string_to_configuration_status(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const ConfigurationStatus& configuration_status);
 
 // from: ClearCacheResponse
-enum class ClearCacheStatus
-{
+enum class ClearCacheStatus {
     Accepted,
     Rejected,
 };
@@ -186,8 +178,7 @@ ClearCacheStatus string_to_clear_cache_status(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const ClearCacheStatus& clear_cache_status);
 
 // from: ClearChargingProfileRequest
-enum class ChargingProfilePurposeType
-{
+enum class ChargingProfilePurposeType {
     ChargePointMaxProfile,
     TxDefaultProfile,
     TxProfile,
@@ -208,8 +199,7 @@ ChargingProfilePurposeType string_to_charging_profile_purpose_type(const std::st
 std::ostream& operator<<(std::ostream& os, const ChargingProfilePurposeType& charging_profile_purpose_type);
 
 // from: ClearChargingProfileResponse
-enum class ClearChargingProfileStatus
-{
+enum class ClearChargingProfileStatus {
     Accepted,
     Unknown,
 };
@@ -229,8 +219,7 @@ ClearChargingProfileStatus string_to_clear_charging_profile_status(const std::st
 std::ostream& operator<<(std::ostream& os, const ClearChargingProfileStatus& clear_charging_profile_status);
 
 // from: DataTransferResponse
-enum class DataTransferStatus
-{
+enum class DataTransferStatus {
     Accepted,
     Rejected,
     UnknownMessageId,
@@ -252,8 +241,7 @@ DataTransferStatus string_to_data_transfer_status(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const DataTransferStatus& data_transfer_status);
 
 // from: DeleteCertificateRequest
-enum class HashAlgorithmEnumType
-{
+enum class HashAlgorithmEnumType {
     SHA256,
     SHA384,
     SHA512,
@@ -274,8 +262,7 @@ HashAlgorithmEnumType string_to_hash_algorithm_enum_type(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const HashAlgorithmEnumType& hash_algorithm_enum_type);
 
 // from: DeleteCertificateResponse
-enum class DeleteCertificateStatusEnumType
-{
+enum class DeleteCertificateStatusEnumType {
     Accepted,
     Failed,
     NotFound,
@@ -297,8 +284,7 @@ DeleteCertificateStatusEnumType string_to_delete_certificate_status_enum_type(co
 std::ostream& operator<<(std::ostream& os, const DeleteCertificateStatusEnumType& delete_certificate_status_enum_type);
 
 // from: DiagnosticsStatusNotificationRequest
-enum class DiagnosticsStatus
-{
+enum class DiagnosticsStatus {
     Idle,
     Uploaded,
     UploadFailed,
@@ -320,8 +306,7 @@ DiagnosticsStatus string_to_diagnostics_status(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const DiagnosticsStatus& diagnostics_status);
 
 // from: ExtendedTriggerMessageRequest
-enum class MessageTriggerEnumType
-{
+enum class MessageTriggerEnumType {
     BootNotification,
     LogStatusNotification,
     FirmwareStatusNotification,
@@ -346,8 +331,7 @@ MessageTriggerEnumType string_to_message_trigger_enum_type(const std::string& s)
 std::ostream& operator<<(std::ostream& os, const MessageTriggerEnumType& message_trigger_enum_type);
 
 // from: ExtendedTriggerMessageResponse
-enum class TriggerMessageStatusEnumType
-{
+enum class TriggerMessageStatusEnumType {
     Accepted,
     Rejected,
     NotImplemented,
@@ -369,8 +353,7 @@ TriggerMessageStatusEnumType string_to_trigger_message_status_enum_type(const st
 std::ostream& operator<<(std::ostream& os, const TriggerMessageStatusEnumType& trigger_message_status_enum_type);
 
 // from: FirmwareStatusNotificationRequest
-enum class FirmwareStatus
-{
+enum class FirmwareStatus {
     Downloaded,
     DownloadFailed,
     Downloading,
@@ -395,8 +378,7 @@ FirmwareStatus string_to_firmware_status(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const FirmwareStatus& firmware_status);
 
 // from: GetCompositeScheduleRequest
-enum class ChargingRateUnit
-{
+enum class ChargingRateUnit {
     A,
     W,
 };
@@ -416,8 +398,7 @@ ChargingRateUnit string_to_charging_rate_unit(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const ChargingRateUnit& charging_rate_unit);
 
 // from: GetCompositeScheduleResponse
-enum class GetCompositeScheduleStatus
-{
+enum class GetCompositeScheduleStatus {
     Accepted,
     Rejected,
 };
@@ -437,8 +418,7 @@ GetCompositeScheduleStatus string_to_get_composite_schedule_status(const std::st
 std::ostream& operator<<(std::ostream& os, const GetCompositeScheduleStatus& get_composite_schedule_status);
 
 // from: GetInstalledCertificateIdsRequest
-enum class CertificateUseEnumType
-{
+enum class CertificateUseEnumType {
     CentralSystemRootCertificate,
     ManufacturerRootCertificate,
 };
@@ -458,8 +438,7 @@ CertificateUseEnumType string_to_certificate_use_enum_type(const std::string& s)
 std::ostream& operator<<(std::ostream& os, const CertificateUseEnumType& certificate_use_enum_type);
 
 // from: GetInstalledCertificateIdsResponse
-enum class GetInstalledCertificateStatusEnumType
-{
+enum class GetInstalledCertificateStatusEnumType {
     Accepted,
     NotFound,
 };
@@ -481,8 +460,7 @@ std::ostream& operator<<(std::ostream& os,
                          const GetInstalledCertificateStatusEnumType& get_installed_certificate_status_enum_type);
 
 // from: GetLogRequest
-enum class LogEnumType
-{
+enum class LogEnumType {
     DiagnosticsLog,
     SecurityLog,
 };
@@ -502,8 +480,7 @@ LogEnumType string_to_log_enum_type(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const LogEnumType& log_enum_type);
 
 // from: GetLogResponse
-enum class LogStatusEnumType
-{
+enum class LogStatusEnumType {
     Accepted,
     Rejected,
     AcceptedCanceled,
@@ -524,8 +501,7 @@ LogStatusEnumType string_to_log_status_enum_type(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const LogStatusEnumType& log_status_enum_type);
 
 // from: InstallCertificateResponse
-enum class InstallCertificateStatusEnumType
-{
+enum class InstallCertificateStatusEnumType {
     Accepted,
     Failed,
     Rejected,
@@ -548,8 +524,7 @@ std::ostream& operator<<(std::ostream& os,
                          const InstallCertificateStatusEnumType& install_certificate_status_enum_type);
 
 // from: LogStatusNotificationRequest
-enum class UploadLogStatusEnumType
-{
+enum class UploadLogStatusEnumType {
     BadMessage,
     Idle,
     NotSupportedOperation,
@@ -574,8 +549,7 @@ UploadLogStatusEnumType string_to_upload_log_status_enum_type(const std::string&
 std::ostream& operator<<(std::ostream& os, const UploadLogStatusEnumType& upload_log_status_enum_type);
 
 // from: MeterValuesRequest
-enum class ReadingContext
-{
+enum class ReadingContext {
     Interruption_Begin,
     Interruption_End,
     Sample_Clock,
@@ -601,8 +575,7 @@ ReadingContext string_to_reading_context(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const ReadingContext& reading_context);
 
 // from: MeterValuesRequest
-enum class ValueFormat
-{
+enum class ValueFormat {
     Raw,
     SignedData,
 };
@@ -622,8 +595,7 @@ ValueFormat string_to_value_format(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const ValueFormat& value_format);
 
 // from: MeterValuesRequest
-enum class Measurand
-{
+enum class Measurand {
     Energy_Active_Export_Register,
     Energy_Active_Import_Register,
     Energy_Reactive_Export_Register,
@@ -663,8 +635,7 @@ Measurand string_to_measurand(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const Measurand& measurand);
 
 // from: MeterValuesRequest
-enum class Phase
-{
+enum class Phase {
     L1,
     L2,
     L3,
@@ -692,8 +663,7 @@ Phase string_to_phase(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const Phase& phase);
 
 // from: MeterValuesRequest
-enum class Location
-{
+enum class Location {
     Cable,
     EV,
     Inlet,
@@ -716,8 +686,7 @@ Location string_to_location(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const Location& location);
 
 // from: MeterValuesRequest
-enum class UnitOfMeasure
-{
+enum class UnitOfMeasure {
     Wh,
     kWh,
     varh,
@@ -752,8 +721,7 @@ UnitOfMeasure string_to_unit_of_measure(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const UnitOfMeasure& unit_of_measure);
 
 // from: RemoteStartTransactionRequest
-enum class ChargingProfileKindType
-{
+enum class ChargingProfileKindType {
     Absolute,
     Recurring,
     Relative,
@@ -774,8 +742,7 @@ ChargingProfileKindType string_to_charging_profile_kind_type(const std::string& 
 std::ostream& operator<<(std::ostream& os, const ChargingProfileKindType& charging_profile_kind_type);
 
 // from: RemoteStartTransactionRequest
-enum class RecurrencyKindType
-{
+enum class RecurrencyKindType {
     Daily,
     Weekly,
 };
@@ -795,8 +762,7 @@ RecurrencyKindType string_to_recurrency_kind_type(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const RecurrencyKindType& recurrency_kind_type);
 
 // from: RemoteStartTransactionResponse
-enum class RemoteStartStopStatus
-{
+enum class RemoteStartStopStatus {
     Accepted,
     Rejected,
 };
@@ -816,8 +782,7 @@ RemoteStartStopStatus string_to_remote_start_stop_status(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const RemoteStartStopStatus& remote_start_stop_status);
 
 // from: ReserveNowResponse
-enum class ReservationStatus
-{
+enum class ReservationStatus {
     Accepted,
     Faulted,
     Occupied,
@@ -840,8 +805,7 @@ ReservationStatus string_to_reservation_status(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const ReservationStatus& reservation_status);
 
 // from: ResetRequest
-enum class ResetType
-{
+enum class ResetType {
     Hard,
     Soft,
 };
@@ -861,8 +825,7 @@ ResetType string_to_reset_type(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const ResetType& reset_type);
 
 // from: ResetResponse
-enum class ResetStatus
-{
+enum class ResetStatus {
     Accepted,
     Rejected,
 };
@@ -882,8 +845,7 @@ ResetStatus string_to_reset_status(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const ResetStatus& reset_status);
 
 // from: SecurityEventNotificationRequest
-enum class SecurityEvent
-{
+enum class SecurityEvent {
     FirmwareUpdated,
     FailedToAuthenticateAtCentralSystem,
     CentralSystemFailedToAuthenticate,
@@ -919,8 +881,7 @@ SecurityEvent string_to_security_event(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const SecurityEvent& security_event);
 
 // from: SendLocalListRequest
-enum class UpdateType
-{
+enum class UpdateType {
     Differential,
     Full,
 };
@@ -940,8 +901,7 @@ UpdateType string_to_update_type(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const UpdateType& update_type);
 
 // from: SendLocalListResponse
-enum class UpdateStatus
-{
+enum class UpdateStatus {
     Accepted,
     Failed,
     NotSupported,
@@ -963,8 +923,7 @@ UpdateStatus string_to_update_status(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const UpdateStatus& update_status);
 
 // from: SetChargingProfileResponse
-enum class ChargingProfileStatus
-{
+enum class ChargingProfileStatus {
     Accepted,
     Rejected,
     NotSupported,
@@ -985,8 +944,7 @@ ChargingProfileStatus string_to_charging_profile_status(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const ChargingProfileStatus& charging_profile_status);
 
 // from: SignCertificateResponse
-enum class GenericStatusEnumType
-{
+enum class GenericStatusEnumType {
     Accepted,
     Rejected,
 };
@@ -1006,8 +964,7 @@ GenericStatusEnumType string_to_generic_status_enum_type(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const GenericStatusEnumType& generic_status_enum_type);
 
 // from: SignedFirmwareStatusNotificationRequest
-enum class FirmwareStatusEnumType
-{
+enum class FirmwareStatusEnumType {
     Downloaded,
     DownloadFailed,
     Downloading,
@@ -1039,8 +996,7 @@ FirmwareStatusEnumType string_to_firmware_status_enum_type(const std::string& s)
 std::ostream& operator<<(std::ostream& os, const FirmwareStatusEnumType& firmware_status_enum_type);
 
 // from: SignedUpdateFirmwareResponse
-enum class UpdateFirmwareStatusEnumType
-{
+enum class UpdateFirmwareStatusEnumType {
     Accepted,
     Rejected,
     AcceptedCanceled,
@@ -1064,8 +1020,7 @@ UpdateFirmwareStatusEnumType string_to_update_firmware_status_enum_type(const st
 std::ostream& operator<<(std::ostream& os, const UpdateFirmwareStatusEnumType& update_firmware_status_enum_type);
 
 // from: StatusNotificationRequest
-enum class ChargePointErrorCode
-{
+enum class ChargePointErrorCode {
     ConnectorLockFailure,
     EVCommunicationError,
     GroundFailure,
@@ -1099,8 +1054,7 @@ ChargePointErrorCode string_to_charge_point_error_code(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const ChargePointErrorCode& charge_point_error_code);
 
 // from: StatusNotificationRequest
-enum class ChargePointStatus
-{
+enum class ChargePointStatus {
     Available,
     Preparing,
     Charging,
@@ -1127,8 +1081,7 @@ ChargePointStatus string_to_charge_point_status(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const ChargePointStatus& charge_point_status);
 
 // from: StopTransactionRequest
-enum class Reason
-{
+enum class Reason {
     EmergencyStop,
     EVDisconnected,
     HardReset,
@@ -1157,8 +1110,7 @@ Reason string_to_reason(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const Reason& reason);
 
 // from: TriggerMessageRequest
-enum class MessageTrigger
-{
+enum class MessageTrigger {
     BootNotification,
     DiagnosticsStatusNotification,
     FirmwareStatusNotification,
@@ -1182,8 +1134,7 @@ MessageTrigger string_to_message_trigger(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const MessageTrigger& message_trigger);
 
 // from: TriggerMessageResponse
-enum class TriggerMessageStatus
-{
+enum class TriggerMessageStatus {
     Accepted,
     Rejected,
     NotImplemented,
@@ -1204,8 +1155,7 @@ TriggerMessageStatus string_to_trigger_message_status(const std::string& s);
 std::ostream& operator<<(std::ostream& os, const TriggerMessageStatus& trigger_message_status);
 
 // from: UnlockConnectorResponse
-enum class UnlockStatus
-{
+enum class UnlockStatus {
     Unlocked,
     UnlockFailed,
     NotSupported,

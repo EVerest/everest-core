@@ -2,21 +2,10 @@
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
 #include <everest/logging.hpp>
+#include <ocpp/common/call_types.hpp>
 #include <ocpp/common/types.hpp>
 
 namespace ocpp {
-
-bool operator<(const MessageId& lhs, const MessageId& rhs) {
-    return lhs.get() < rhs.get();
-}
-
-void to_json(json& j, const MessageId& k) {
-    j = json(k.get());
-}
-
-void from_json(const json& j, MessageId& k) {
-    k.set(j);
-}
 
 DateTime::DateTime() : DateTimeImpl() {
 }
@@ -74,9 +63,34 @@ std::chrono::time_point<date::utc_clock> DateTimeImpl::to_time_point() const {
     return this->timepoint;
 }
 
+DateTimeImpl& DateTimeImpl::operator=(const DateTimeImpl& dt) {
+    this->timepoint = dt.timepoint;
+    return *this;
+}
+
 std::ostream& operator<<(std::ostream& os, const DateTimeImpl& dt) {
     os << dt.to_rfc3339();
     return os;
+}
+
+bool operator>(const DateTimeImpl& lhs, const DateTimeImpl& rhs) {
+    return lhs.to_rfc3339() > rhs.to_rfc3339();
+}
+
+bool operator>=(const DateTimeImpl& lhs, const DateTimeImpl& rhs) {
+    return lhs.to_rfc3339() >= rhs.to_rfc3339();
+}
+
+bool operator<(const DateTimeImpl& lhs, const DateTimeImpl& rhs) {
+    return lhs.to_rfc3339() < rhs.to_rfc3339();
+}
+
+bool operator<=(const DateTimeImpl& lhs, const DateTimeImpl& rhs) {
+    return lhs.to_rfc3339() <= rhs.to_rfc3339();
+}
+
+bool operator==(const DateTimeImpl& lhs, const DateTimeImpl& rhs) {
+    return lhs.to_rfc3339() == rhs.to_rfc3339();
 }
 
 CallError::CallError() {
@@ -137,6 +151,310 @@ SessionStartedReason string_to_session_started_reason(const std::string& s) {
 
 std::ostream& operator<<(std::ostream& os, const SessionStartedReason& session_started_reason) {
     os << conversions::session_started_reason_to_string(session_started_reason);
+    return os;
+}
+
+void to_json(json& j, const Current& k) {
+    // the required parts of the type
+    j = json({});
+    // the optional parts of the type
+    if (k.DC) {
+        j["DC"] = k.DC.value();
+    }
+    if (k.L1) {
+        j["L1"] = k.L1.value();
+    }
+    if (k.L2) {
+        j["L2"] = k.L2.value();
+    }
+    if (k.L3) {
+        j["L3"] = k.L3.value();
+    }
+    if (k.N) {
+        j["N"] = k.N.value();
+    }
+}
+
+void from_json(const json& j, Current& k) {
+    // the required parts of the type
+
+    // the optional parts of the type
+    if (j.contains("DC")) {
+        k.DC.emplace(j.at("DC"));
+    }
+    if (j.contains("L1")) {
+        k.L1.emplace(j.at("L1"));
+    }
+    if (j.contains("L2")) {
+        k.L2.emplace(j.at("L2"));
+    }
+    if (j.contains("L3")) {
+        k.L3.emplace(j.at("L3"));
+    }
+    if (j.contains("N")) {
+        k.N.emplace(j.at("N"));
+    }
+}
+
+std::ostream& operator<<(std::ostream& os, const Current& k) {
+    os << json(k).dump(4);
+    return os;
+}
+
+void to_json(json& j, const Voltage& k) {
+    // the required parts of the type
+    j = json({});
+    // the optional parts of the type
+    if (k.DC) {
+        j["DC"] = k.DC.value();
+    }
+    if (k.L1) {
+        j["L1"] = k.L1.value();
+    }
+    if (k.L2) {
+        j["L2"] = k.L2.value();
+    }
+    if (k.L3) {
+        j["L3"] = k.L3.value();
+    }
+}
+
+void from_json(const json& j, Voltage& k) {
+    // the required parts of the type
+
+    // the optional parts of the type
+    if (j.contains("DC")) {
+        k.DC.emplace(j.at("DC"));
+    }
+    if (j.contains("L1")) {
+        k.L1.emplace(j.at("L1"));
+    }
+    if (j.contains("L2")) {
+        k.L2.emplace(j.at("L2"));
+    }
+    if (j.contains("L3")) {
+        k.L3.emplace(j.at("L3"));
+    }
+}
+
+std::ostream& operator<<(std::ostream& os, const Voltage& k) {
+    os << json(k).dump(4);
+    return os;
+}
+
+void to_json(json& j, const Frequency& k) {
+    // the required parts of the type
+    j = json{
+        {"L1", k.L1},
+    };
+    // the optional parts of the type
+    if (k.L2) {
+        j["L2"] = k.L2.value();
+    }
+    if (k.L3) {
+        j["L3"] = k.L3.value();
+    }
+}
+
+void from_json(const json& j, Frequency& k) {
+    // the required parts of the type
+    k.L1 = j.at("L1");
+
+    // the optional parts of the type
+    if (j.contains("L2")) {
+        k.L2.emplace(j.at("L2"));
+    }
+    if (j.contains("L3")) {
+        k.L3.emplace(j.at("L3"));
+    }
+}
+
+std::ostream& operator<<(std::ostream& os, const Frequency& k) {
+    os << json(k).dump(4);
+    return os;
+}
+
+void to_json(json& j, const Power& k) {
+    // the required parts of the type
+    j = json{
+        {"total", k.total},
+    };
+    // the optional parts of the type
+    if (k.L1) {
+        j["L1"] = k.L1.value();
+    }
+    if (k.L2) {
+        j["L2"] = k.L2.value();
+    }
+    if (k.L3) {
+        j["L3"] = k.L3.value();
+    }
+}
+
+void from_json(const json& j, Power& k) {
+    // the required parts of the type
+    k.total = j.at("total");
+
+    // the optional parts of the type
+    if (j.contains("L1")) {
+        k.L1.emplace(j.at("L1"));
+    }
+    if (j.contains("L2")) {
+        k.L2.emplace(j.at("L2"));
+    }
+    if (j.contains("L3")) {
+        k.L3.emplace(j.at("L3"));
+    }
+}
+
+std::ostream& operator<<(std::ostream& os, const Power& k) {
+    os << json(k).dump(4);
+    return os;
+}
+
+void to_json(json& j, const Energy& k) {
+    // the required parts of the type
+    j = json{
+        {"total", k.total},
+    };
+    // the optional parts of the type
+    if (k.L1) {
+        j["L1"] = k.L1.value();
+    }
+    if (k.L2) {
+        j["L2"] = k.L2.value();
+    }
+    if (k.L3) {
+        j["L3"] = k.L3.value();
+    }
+}
+
+void from_json(const json& j, Energy& k) {
+    // the required parts of the type
+    k.total = j.at("total");
+
+    // the optional parts of the type
+    if (j.contains("L1")) {
+        k.L1.emplace(j.at("L1"));
+    }
+    if (j.contains("L2")) {
+        k.L2.emplace(j.at("L2"));
+    }
+    if (j.contains("L3")) {
+        k.L3.emplace(j.at("L3"));
+    }
+}
+
+std::ostream& operator<<(std::ostream& os, const Energy& k) {
+    os << json(k).dump(4);
+    return os;
+}
+
+void to_json(json& j, const ReactivePower& k) {
+    // the required parts of the type
+    j = json{
+        {"total", k.total},
+    };
+    // the optional parts of the type
+    if (k.VARphA) {
+        j["VARphA"] = k.VARphA.value();
+    }
+    if (k.VARphB) {
+        j["VARphB"] = k.VARphB.value();
+    }
+    if (k.VARphC) {
+        j["VARphC"] = k.VARphC.value();
+    }
+}
+
+void from_json(const json& j, ReactivePower& k) {
+    // the required parts of the type
+    k.total = j.at("total");
+
+    // the optional parts of the type
+    if (j.contains("VARphA")) {
+        k.VARphA.emplace(j.at("VARphA"));
+    }
+    if (j.contains("VARphB")) {
+        k.VARphB.emplace(j.at("VARphB"));
+    }
+    if (j.contains("VARphC")) {
+        k.VARphC.emplace(j.at("VARphC"));
+    }
+}
+
+std::ostream& operator<<(std::ostream& os, const ReactivePower& k) {
+    os << json(k).dump(4);
+    return os;
+}
+
+void to_json(json& j, const Powermeter& k) {
+    // the required parts of the type
+    j = json{
+        {"timestamp", k.timestamp},
+        {"energy_Wh_import", k.energy_Wh_import},
+    };
+    // the optional parts of the type
+    if (k.meter_id) {
+        j["meter_id"] = k.meter_id.value();
+    }
+    if (k.phase_seq_error) {
+        j["phase_seq_error"] = k.phase_seq_error.value();
+    }
+    if (k.energy_Wh_export) {
+        j["energy_Wh_export"] = k.energy_Wh_export.value();
+    }
+    if (k.power_W) {
+        j["power_W"] = k.power_W.value();
+    }
+    if (k.voltage_V) {
+        j["voltage_V"] = k.voltage_V.value();
+    }
+    if (k.VAR) {
+        j["VAR"] = k.VAR.value();
+    }
+    if (k.current_A) {
+        j["current_A"] = k.current_A.value();
+    }
+    if (k.frequency_Hz) {
+        j["frequency_Hz"] = k.frequency_Hz.value();
+    }
+}
+
+void from_json(const json& j, Powermeter& k) {
+    // the required parts of the type
+    k.timestamp = j.at("timestamp");
+    k.energy_Wh_import = j.at("energy_Wh_import");
+
+    // the optional parts of the type
+    if (j.contains("meter_id")) {
+        k.meter_id.emplace(j.at("meter_id"));
+    }
+    if (j.contains("phase_seq_error")) {
+        k.phase_seq_error.emplace(j.at("phase_seq_error"));
+    }
+    if (j.contains("energy_Wh_export")) {
+        k.energy_Wh_export.emplace(j.at("energy_Wh_export"));
+    }
+    if (j.contains("power_W")) {
+        k.power_W.emplace(j.at("power_W"));
+    }
+    if (j.contains("voltage_V")) {
+        k.voltage_V.emplace(j.at("voltage_V"));
+    }
+    if (j.contains("VAR")) {
+        k.VAR.emplace(j.at("VAR"));
+    }
+    if (j.contains("current_A")) {
+        k.current_A.emplace(j.at("current_A"));
+    }
+    if (j.contains("frequency_Hz")) {
+        k.frequency_Hz.emplace(j.at("frequency_Hz"));
+    }
+}
+
+std::ostream& operator<<(std::ostream& os, const Powermeter& k) {
+    os << json(k).dump(4);
     return os;
 }
 
@@ -492,7 +810,6 @@ std::ostream& operator<<(std::ostream& os, const CertificateSigningUseEnum& cert
     os << conversions::certificate_signing_use_enum_to_string(certificate_signing_use_enum);
     return os;
 }
-
 
 namespace conversions {
 

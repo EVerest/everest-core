@@ -3,6 +3,7 @@
 #ifndef OCPP_V201_GETCHARGINGPROFILES_HPP
 #define OCPP_V201_GETCHARGINGPROFILES_HPP
 
+#include <nlohmann/json_fwd.hpp>
 #include <optional>
 
 #include <ocpp/common/types.hpp>

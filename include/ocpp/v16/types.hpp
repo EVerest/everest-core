@@ -6,7 +6,7 @@
 #include <iostream>
 #include <sstream>
 
-#include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 
 #include <everest/logging.hpp>
 

@@ -17,7 +17,7 @@ option(LIBOCPP_BUILD_EXAMPLES "Build charge_point and central_system binaries." 
 option(OCPP_INSTALL "Install the library (shared data might be installed anyway)" ${EVC_MAIN_PROJECT})
 
 # dependencies
-find_package(Boost COMPONENTS filesystem program_options regex system thread REQUIRED)
+find_package(Boost COMPONENTS program_options regex system thread REQUIRED)
 find_package(SQLite3 REQUIRED)
 find_package(OpenSSL REQUIRED)
 

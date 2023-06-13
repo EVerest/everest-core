@@ -3,6 +3,7 @@
 #ifndef OCPP_V201_SECURITYEVENTNOTIFICATION_HPP
 #define OCPP_V201_SECURITYEVENTNOTIFICATION_HPP
 
+#include <nlohmann/json_fwd.hpp>
 #include <optional>
 
 #include <ocpp/common/types.hpp>
