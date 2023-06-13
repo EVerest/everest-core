@@ -163,6 +163,10 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
 
     ctx->meter_info.meter_info_is_used = false;
 
+    ctx->evse_v2g_data.evse_service_list_len = (uint16_t)0;
+    memset(&ctx->evse_v2g_data.service_parameter_list, 0,
+        sizeof(struct iso1ServiceParameterListType) * iso1ServiceListType_Service_ARRAY_SIZE);
+
     if (initialize_once == false) {
         ctx->evse_v2g_data.charge_service.FreeService = 0;
         std::string evse_id = std::string("DE*CBY*ETE1*234");
@@ -205,9 +209,6 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
                // EVCC and the SECC shall use the ServiceIDs in the range from 1 to 4 as defined in this
         // ctx->evse_v2g_data.evse_service_list[0].ServiceCategory Not needed at the moment, because it is a fixed value
         // in din and iso
-        ctx->evse_v2g_data.evse_service_list_len = (uint16_t)0;
-        memset(&ctx->evse_v2g_data.service_parameter_list, 0,
-               sizeof(struct iso1ServiceParameterListType) * iso1ServiceListType_Service_ARRAY_SIZE);
     }
 
     init_physical_value(&ctx->evse_v2g_data.evse_present_voltage, iso1unitSymbolType_V);
