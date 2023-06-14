@@ -16,7 +16,8 @@ struct ResetState : public FSMSimpleState {
     // for now returns true if CM_SET_KEY_CNF is received
     bool handle_slac_message(slac::messages::HomeplugMessage&);
 
-    bool setup_has_been_send{false};
+    bool nmk_has_been_set{false};
+    bool chip_reset_has_been_send{false};
 };
 
 struct IdleState : public FSMSimpleState {

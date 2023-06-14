@@ -52,8 +52,12 @@ struct EvseSlacConfig {
     // timeout for CM_SET_KEY.REQ
     int set_key_timeout_ms = 500;
 
-    // offset for adjusting the calculated sounding attenuation
-    int sounding_atten_adjustment = 0;
+    // soft reset chip in RESET state
+    bool soft_reset_chip{true};
+    int soft_reset_wait_time_ms = 1000;
+    ,
+        // offset for adjusting the calculated sounding attenuation
+        int sounding_atten_adjustment = 0;
 };
 
 struct Context {

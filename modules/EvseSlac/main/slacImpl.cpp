@@ -70,7 +70,7 @@ void slacImpl::run() {
 
     callbacks.signal_error_routine_request = [this]() { publish_request_error_routine(nullptr); };
 
-    callbacks.log = [](const std::string& text) { EVLOG_debug << text; };
+    callbacks.log = [](const std::string& text) { EVLOG_info << text; };
 
     if (config.publish_mac_on_first_parm_req) {
         callbacks.signal_ev_mac_address_parm_req = [this](const std::string& mac) { publish_ev_mac_address(mac); };
@@ -84,6 +84,9 @@ void slacImpl::run() {
     fsm_ctx.slac_config.set_key_timeout_ms = config.set_key_timeout_ms;
     fsm_ctx.slac_config.ac_mode_five_percent = config.ac_mode_five_percent;
     fsm_ctx.slac_config.sounding_atten_adjustment = config.sounding_attenuation_adjustment;
+    fsm_ctx.slac_config.soft_reset_chip = config.soft_reset_chip;
+    fsm_ctx.slac_config.soft_reset_wait_time_ms = config.soft_reset_wait_time_ms;
+
     fsm_ctx.slac_config.generate_nmk();
 
     fsm_ctrl = std::make_unique<FSMController>(fsm_ctx);

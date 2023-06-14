@@ -8,7 +8,7 @@
 
 #include "matching.hpp"
 
-static auto create_cm_set_key_req(uint8_t const * session_nmk) {
+static auto create_cm_set_key_req(uint8_t const* session_nmk) {
     slac::messages::cm_set_key_req set_key_req;
 
     set_key_req.key_type = slac::defs::CM_SET_KEY_REQ_KEY_TYPE_NMK;
@@ -23,6 +23,11 @@ static auto create_cm_set_key_req(uint8_t const * session_nmk) {
     memcpy(set_key_req.new_key, session_nmk, sizeof(set_key_req.new_key));
 
     return set_key_req;
+}
+
+static auto create_cm_reset_req() {
+    slac::messages::cm_reset_req reset_req;
+    return reset_req;
 }
 
 void ResetState::enter() {
@@ -45,12 +50,22 @@ FSMSimpleState::HandleEventReturnType ResetState::handle_event(AllocatorType& sa
 
 FSMSimpleState::CallbackReturnType ResetState::callback() {
     const auto& cfg = ctx.slac_config;
-    if (setup_has_been_send == false) {
+
+    if (cfg.soft_reset_chip && chip_reset_has_been_send == false) {
+        ctx.log_info("Resetting chip and wait for it to come online again");
+        auto reset_req = create_cm_reset_req();
+        ctx.send_slac_message(cfg.plc_peer_mac, reset_req);
+        chip_reset_has_been_send = true;
+
+        return cfg.soft_reset_wait_time_ms;
+    }
+
+    if (nmk_has_been_set == false) {
         auto set_key_req = create_cm_set_key_req(cfg.session_nmk);
 
         ctx.send_slac_message(cfg.plc_peer_mac, set_key_req);
 
-        setup_has_been_send = true;
+        nmk_has_been_set = true;
 
         return cfg.set_key_timeout_ms;
     } else {
@@ -61,14 +76,18 @@ FSMSimpleState::CallbackReturnType ResetState::callback() {
 
 bool ResetState::handle_slac_message(slac::messages::HomeplugMessage& message) {
     const auto mmtype = message.get_mmtype();
-    if (mmtype != (slac::defs::MMTYPE_CM_SET_KEY | slac::defs::MMTYPE_MODE_CNF)) {
+    if (mmtype == slac::defs::MMTYPE_RESET_DEVICE_CNF) {
+        ctx.log_info("Received CM_RESET_DEVICE_CNF");
+        return false;
+
+    } else if (mmtype == (slac::defs::MMTYPE_CM_SET_KEY | slac::defs::MMTYPE_MODE_CNF)) {
+        ctx.log_info("Received CM_SET_KEY_CNF");
+        return true;
+    } else {
         // unexpected message
         // FIXME (aw): need to also deal with CM_VALIDATE.REQ
         ctx.log_info(fmt::format("Received non-expected SLAC message of type {:#06x}", mmtype));
         return false;
-    } else {
-        ctx.log_info("Received CM_SET_KEY_CNF");
-        return true;
     }
 }
 

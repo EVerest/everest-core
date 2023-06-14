@@ -29,6 +29,8 @@ struct Conf {
     int sounding_attenuation_adjustment;
     bool publish_mac_on_match_cnf;
     bool publish_mac_on_first_parm_req;
+    bool soft_reset_chip;
+    int soft_reset_wait_time_ms;
 };
 
 class slacImpl : public slacImplBase {
