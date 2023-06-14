@@ -26,7 +26,7 @@ static auto create_cm_set_key_req(uint8_t const* session_nmk) {
 }
 
 static auto create_cm_reset_req() {
-    slac::messages::cm_reset_req reset_req;
+    slac::messages::cm_reset_req reset_req{0x00, 0xB0, 0x52};
     return reset_req;
 }
 
@@ -76,7 +76,7 @@ FSMSimpleState::CallbackReturnType ResetState::callback() {
 
 bool ResetState::handle_slac_message(slac::messages::HomeplugMessage& message) {
     const auto mmtype = message.get_mmtype();
-    if (mmtype == slac::defs::MMTYPE_RESET_DEVICE_CNF) {
+    if (mmtype == (slac::defs::MMTYPE_CM_RESET_DEVICE | slac::defs::MMTYPE_MODE_CNF)) {
         ctx.log_info("Received CM_RESET_DEVICE_CNF");
         return false;
 

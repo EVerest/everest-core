@@ -25,6 +25,12 @@ template <> struct MMTYPE<slac::messages::cm_validate_cnf> {
 template <> struct MMTYPE<slac::messages::cm_slac_match_cnf> {
     static const uint16_t value = slac::defs::MMTYPE_CM_SLAC_MATCH | slac::defs::MMTYPE_MODE_CNF;
 };
+template <> struct MMTYPE<slac::messages::cm_reset_cnf> {
+    static const uint16_t value = slac::defs::MMTYPE_CM_RESET_DEVICE | slac::defs::MMTYPE_MODE_CNF;
+};
+template <> struct MMTYPE<slac::messages::cm_reset_req> {
+    static const uint16_t value = slac::defs::MMTYPE_CM_RESET_DEVICE | slac::defs::MMTYPE_MODE_REQ;
+};
 } // namespace _context_detail
 
 struct ContextCallbacks {
@@ -55,9 +61,9 @@ struct EvseSlacConfig {
     // soft reset chip in RESET state
     bool soft_reset_chip{true};
     int soft_reset_wait_time_ms = 1000;
-    ,
-        // offset for adjusting the calculated sounding attenuation
-        int sounding_atten_adjustment = 0;
+
+    // offset for adjusting the calculated sounding attenuation
+    int sounding_atten_adjustment = 0;
 };
 
 struct Context {
