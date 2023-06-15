@@ -18,6 +18,8 @@ struct ResetState : public FSMSimpleState {
 
     bool nmk_has_been_set{false};
     bool chip_reset_has_been_send{false};
+    bool chip_reset_has_been_confirmed{false};
+    bool chip_reset_completed{false};
 };
 
 struct IdleState : public FSMSimpleState {

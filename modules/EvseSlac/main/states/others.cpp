@@ -52,24 +52,35 @@ FSMSimpleState::CallbackReturnType ResetState::callback() {
     const auto& cfg = ctx.slac_config;
 
     if (cfg.soft_reset_chip && chip_reset_has_been_send == false) {
-        ctx.log_info("Resetting chip and wait for it to come online again");
+        ctx.log_info(fmt::format("Resetting chip and wait for {}ms", cfg.soft_reset_wait_time_ms));
         auto reset_req = create_cm_reset_req();
-        ctx.send_slac_message(cfg.plc_peer_mac, reset_req);
+        ctx.send_slac_message(cfg.plc_peer_mac, reset_req, 0);
         chip_reset_has_been_send = true;
 
         return cfg.soft_reset_wait_time_ms;
     }
 
+    if (cfg.soft_reset_chip && chip_reset_has_been_send && !chip_reset_completed) {
+        // did we receive confirmation from chip or did we timeout?
+        chip_reset_completed = true;
+        if (chip_reset_has_been_confirmed) {
+            ctx.log_info(fmt::format("Reset confirmed, wait for {}ms", cfg.soft_reset_wait_time_ms));
+            return cfg.soft_reset_wait_time_ms;
+        } else {
+            ctx.log_error("CM_RESET_REQ timeout - chip did not confirm reset command");
+        }
+    }
+
     if (nmk_has_been_set == false) {
         auto set_key_req = create_cm_set_key_req(cfg.session_nmk);
-
+        ctx.log_info("Sending key set req");
         ctx.send_slac_message(cfg.plc_peer_mac, set_key_req);
 
         nmk_has_been_set = true;
 
         return cfg.set_key_timeout_ms;
     } else {
-        ctx.log_info("CM_SET_KEY_REQ timeout - failed to setup NMK key");
+        ctx.log_error("CM_SET_KEY_REQ timeout - failed to setup NMK key");
         return {};
     }
 }
@@ -78,6 +89,7 @@ bool ResetState::handle_slac_message(slac::messages::HomeplugMessage& message) {
     const auto mmtype = message.get_mmtype();
     if (mmtype == (slac::defs::MMTYPE_CM_RESET_DEVICE | slac::defs::MMTYPE_MODE_CNF)) {
         ctx.log_info("Received CM_RESET_DEVICE_CNF");
+        chip_reset_has_been_confirmed = true;
         return false;
 
     } else if (mmtype == (slac::defs::MMTYPE_CM_SET_KEY | slac::defs::MMTYPE_MODE_CNF)) {

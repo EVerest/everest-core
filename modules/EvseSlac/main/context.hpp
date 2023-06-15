@@ -41,6 +41,7 @@ struct ContextCallbacks {
     std::function<void(const std::string&)> signal_ev_mac_address_parm_req{nullptr};
     std::function<void(const std::string&)> signal_ev_mac_address_match_cnf{nullptr};
     std::function<void(const std::string&)> log{nullptr};
+    std::function<void(const std::string&)> log_error{nullptr};
 };
 
 struct EvseSlacConfig {
@@ -76,8 +77,11 @@ struct Context {
     slac::messages::HomeplugMessage slac_message_payload;
 
     // FIXME (aw): message should be const, but libslac doesn't allow for const ptr - needs changes in libslac
-    template <typename SlacMessageType> void send_slac_message(const uint8_t* mac, SlacMessageType& message) {
+    template <typename SlacMessageType>
+    void send_slac_message(const uint8_t* mac, SlacMessageType& message, int protocol_version = 1) {
         slac::messages::HomeplugMessage hp_message;
+
+        hp_message.set_protocol_version(protocol_version);
         hp_message.setup_ethernet_header(mac);
         hp_message.setup_payload(&message, sizeof(message), _context_detail::MMTYPE<SlacMessageType>::value);
         callbacks.send_raw_slac(hp_message);
@@ -92,6 +96,7 @@ struct Context {
 
     // logging util
     void log_info(const std::string& text);
+    void log_error(const std::string& text);
 
 private:
     const ContextCallbacks& callbacks;

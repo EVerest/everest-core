@@ -55,3 +55,9 @@ void Context::log_info(const std::string& text) {
         callbacks.log(text);
     }
 }
+
+void Context::log_error(const std::string& text) {
+    if (callbacks.log_error) {
+        callbacks.log_error(text);
+    }
+}

@@ -50,7 +50,7 @@ provides:
         description: >-
           Soft-Reset PLC chip using RESET_DEVICE_REQUEST after charging session is finished and before new keys are CM_SET_KEY.REQ.
           This is needed on some QCA hardwares with e.g. firmware 3.0.0, otherwise the chip will not be able to receive packets 
-          after setting NMK for quite a while. This will make the next charging session fail plugged in relativly quickly after unplug
+          after setting NMK for quite a while. This will make the next charging session fail when plugged in relativly quickly after unplug
           on these hardware types.
           Note that this is a non-standard request that works on QCA's but may not work on other chips.
         type: boolean
@@ -58,7 +58,7 @@ provides:
       soft_reset_wait_time_ms:
         description: Waiting time after soft reset
         type: integer
-        default: 1000
+        default: 2000
 metadata:
   base_license: https://directory.fsf.org/wiki/License:BSD-3-Clause-Clear
   license: https://opensource.org/licenses/Apache-2.0
