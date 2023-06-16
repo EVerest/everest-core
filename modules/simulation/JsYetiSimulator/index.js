@@ -37,11 +37,6 @@ boot_module(async ({
 }) => {
   global_info = info;
   // register commands
-  setup.provides.yeti_simulation_control.register.enable(enable_simulation);
-  setup.provides.yeti_simulation_control.register.setSimulationData((mod, args) => {
-    /* evlog.error(args.value); */
-    mod.simulation_data = args.value;
-  });
 
   setup.provides.yeti_extras.register.firmware_update((mod, args) => { });
   setup.provides.powermeter.register.stop_transaction((mod, args) => ({
@@ -95,6 +90,41 @@ boot_module(async ({
     return amp;
   });
 
+  // bsp ev
+  setup.provides.ev_board_support.register.enable(enable_simulation);
+
+  setup.provides.ev_board_support.register.set_cp_state((mod, args) => {
+    switch (args.cp_state) {
+      case 'A':
+        mod.simulation_data.cp_voltage = 12.0;
+        break;
+      case 'B':
+        mod.simulation_data.cp_voltage = 9.0;
+        break;
+      case 'C':
+        mod.simulation_data.cp_voltage = 6.0;
+        break;
+      case 'D':
+        mod.simulation_data.cp_voltage = 3.0;
+        break;
+      case 'E':
+        mod.simulation_data.error_e = true;
+        break;
+    }
+
+    // Todo(sl)
+    // mod.provides.ev_board_support.publish.bsp_event(mod.relais_on ? "PowerOn" : "PowerOff");
+
+  });
+
+  setup.provides.ev_board_support.register.diode_fail((mod, args) => {
+    mod.simulation_data.diode_fail = args.value;
+  });
+
+  setup.provides.ev_board_support.register.allow_power_on((mod, args) => {
+    // FIXME(piet): not implemented?
+  });
+
   // subscribe vars of used modules
 }).then((mod) => {
   mod.pubCnt = 0;
@@ -143,7 +173,6 @@ function telemetry_fast(mod) {
 }
 
 function publish_event(mod, event) {
-  // console.log("------------ EVENT PUB "+event);
   mod.provides.board_support.publish.event(event_to_enum(event));
 }
 
@@ -161,7 +190,7 @@ function simulation_loop(mod) {
     read_from_car(mod);
     simulate_powermeter(mod);
     simulation_statemachine(mod);
-    publish_yeti_simulation_control(mod);
+    publish_ev_board_support(mod);
   }
 
   // console.error(mod);
@@ -340,7 +369,6 @@ function check_error_rcd(mod) {
 }
 
 function publish_nr_of_phases_available(mod, n) {
-  // console.log("------------ NR PHASE PUB "+n);
   mod.provides.board_support.publish.nr_of_phases_available(n);
 }
 
@@ -761,22 +789,14 @@ function publish_yeti_extras(mod) {
   mod.provides.yeti_extras.publish.sw_version_string('simulation');
 }
 
-function publish_yeti_simulation_control(mod) {
-  mod.provides.yeti_simulation_control.publish.enabled(mod.simulation_enabled);
-  mod.provides.yeti_simulation_control.publish.simulation_feedback({
-    pwm_duty_cycle: mod.pwm_duty_cycle,
-    relais_on: (mod.relais_on ? (mod.use_three_phases_confirmed ? 3 : 1) : 0),
-    evse_pwm_running: mod.pwm_running,
-    evse_pwm_voltage_hi: mod.pwm_voltage_hi,
-    evse_pwm_voltage_lo: mod.pwm_voltage_lo,
+function publish_ev_board_support(mod) {
+  // mod.provides.yeti_simulation_control.publish.enabled(mod.simulation_enabled);
+  
+  mod.provides.ev_board_support.publish.bsp_measurement({
+    'cp_pwm_duty_cycle': mod.pwm_duty_cycle * 100.0,
+    'rcd_current_mA': mod.rcd_current,
+    'proximity_pilot': "A_32" //FIXME(piet)
   });
-  /* evlog.error({
-    pwm_duty_cycle: mod.pwm_duty_cycle,
-    relais_on: (mod.relais_on?(mod.use_three_phases_confirmed?3:1):0),
-    evse_pwm_running: mod.pwm_running,
-    evse_pwm_voltage_hi: mod.pwm_voltage_hi,
-    evse_pwm_voltage_lo: mod.pwm_voltage_lo
-  }); */
 }
 
 function simulate_powermeter(mod) {
@@ -825,7 +845,7 @@ function simulate_powermeter(mod) {
 }
 
 function read_pp_ampacity(mod) {
-  let pp_resistor = mod.simulation_data.pp_resistor;
+  let pp_resistor = 500;
   if (pp_resistor < 80.0 || pp_resistor > 2460) {
     evlog.error(`PP resistor value "${pp_resistor}" Ohm seems to be outside the allowed range.`);
     return 0.0

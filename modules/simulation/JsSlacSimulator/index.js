@@ -53,27 +53,10 @@ boot_module(async ({
     set_unmatched_ev(mod);
   });
 
-  setup.provides.ev.register.enter_bcd((mod, args) => {
+  setup.provides.ev.register.trigger_matching((mod, args) => {
     set_matching_ev(mod);
     return true;
   });
-
-  setup.provides.ev.register.leave_bcd((mod, args) => {
-    set_unmatched_ev(mod);
-    return true;
-  });
-
-  setup.provides.ev.register.dlink_terminate((mod, args) => {
-    set_unmatched_ev(mod);
-    return true;
-  });
-
-  setup.provides.ev.register.dlink_error((mod, args) => {
-    set_unmatched_ev(mod);
-    return true;
-  });
-
-  setup.provides.ev.register.dlink_pause((mod, args) => true);
 }).then((mod) => {
   mod.provides.ev.publish.state(state_to_string(state_ev));
   mod.provides.evse.publish.state(state_to_string(state_evse));

@@ -8,29 +8,27 @@
 ev_setup_cpp_module()
 
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
-add_subdirectory(yeti_comms)
-add_subdirectory(yeti_fwupdate)
+# insert your custom targets and additional config variables here
+add_subdirectory(evyeti_comms)
 
 target_include_directories(${MODULE_NAME}
     PRIVATE
         "common"
-        "yeti_comms"
-        "yeti_comms/nanopb"
-        "yeti_comms/protobuf"
+        "evyeti_comms"
+        "evyeti_comms/nanopb"
+        "evyeti_comms/protobuf"
 )
 
 target_link_libraries(${MODULE_NAME}
     PRIVATE
         Pal::Sigslot
-        yeti_comms
+        evyeti_comms
 )
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 
 target_sources(${MODULE_NAME}
     PRIVATE
-        "powermeter/powermeterImpl.cpp"
-        "board_support/board_support_ACImpl.cpp"
-        "yeti_extras/yeti_extrasImpl.cpp"
+        "ev_board_support/ev_board_supportImpl.cpp"
 )
 
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1

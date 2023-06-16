@@ -1,0 +1,35 @@
+active_modules:
+  ev_manager:
+    module: JsEvManager
+    config_module:
+      connector_id: 1
+      auto_enable: true
+      auto_exec: true
+      auto_exec_commands: wait_for_real_plugin;iso_wait_slac_matched;sleep 10;iso_start_v2g_session ExternalPayment,DC_extended;iso_wait_pwr_ready;iso_dc_power_on;sleep 36000#iso_stop_charging;iso_wait_v2g_session_stopped;unplug
+    connections:
+      ev_board_support:
+        - module_id: ev_yeti_driver
+          implementation_id: ev_board_support
+      ev:
+        - module_id: iso15118_ev
+          implementation_id: ev
+      slac:
+        - module_id: ev_slac
+          implementation_id: main 
+  ev_yeti_driver:
+    module: YetiEvDriver
+    config_module:
+      default: /dev/serial0
+      reset_gpio: 27
+  ev_slac:
+    module: EvSlac
+    config_implementation:
+      main:
+        device: eth1
+  iso15118_ev:
+    module: PyEvJosev
+    config_module:
+      supported_DIN70121: true
+      supported_ISO15118_2: true
+      tls_active: true
+      device: eth1

@@ -7,7 +7,7 @@ const { setInterval } = require('timers');
 let globalconf;
 
 // Command enable
-function enable(mod, {value}) {
+function enable(mod, { value }) {
   if (mod === undefined || mod.provides === undefined) {
     evlog.warning('Already received data, but framework is not ready yet');
     return;
@@ -28,7 +28,7 @@ function enable(mod, {value}) {
   }
 
   // Enable/Disable HIL
-  mod.uses.simulation_control.call.enable({ value });
+  mod.uses.ev_board_support.call.enable({ value });
 
   // Publish new simualtion enabled/disabled
   mod.provides.main.publish.enabled(value);
@@ -55,7 +55,6 @@ function execute_charging_session(mod, args) {
 
   // start values
   simdata_reset_defaults(mod);
-  addNoise(mod);
 
   mod.simCommands = parseSimCommands(mod, str);
   mod.loopCurrentCommand = -1;
@@ -98,15 +97,28 @@ boot_module(async ({
   setup.provides.main.register.executeChargingSession(execute_charging_session);
 
   // subscribe vars of used modules
-  setup.uses.simulation_control.subscribe.simulation_feedback((mod, args) => { mod.simulation_feedback = args; });
-  if (setup.uses_list.slac.length > 0) setup.uses_list.slac[0].subscribe.state((mod, args) => { mod.slac_state = args; });
+  setup.uses.ev_board_support.subscribe.bsp_event((mod, str) => {
+    mod.actual_bsp_event = str;
+    if (mod.actual_bsp_event == 'Disconnected' && mod.state != 'unplugged') {
+      // we were unplugged
+      mod.executionActive = false;
+      mod.state = 'unplugged';
+    }
+  });
+  setup.uses.ev_board_support.subscribe.bsp_measurement((mod, args) => {
+    mod.pp = args.proximity_pilot;
+    mod.rcd_current_mA = args.rcd_current_mA;
+    mod.pwm_duty_cycle = args.cp_pwm_duty_cycle;
+  });
 
+  if (setup.uses_list.slac.length > 0) setup.uses_list.slac[0].subscribe.state((mod, args) => { mod.slac_state = args; });
   // ISO15118 ev setup
   if (setup.uses_list.ev.length > 0) {
     setup.uses_list.ev[0].subscribe.AC_EVPowerReady((mod, value) => { mod.iso_pwr_ready = value; });
     setup.uses_list.ev[0].subscribe.AC_EVSEMaxCurrent((mod, value) => { mod.evse_maxcurrent = value; });
     setup.uses_list.ev[0].subscribe.AC_StopFromCharger((mod) => { mod.iso_stopped = true; });
     setup.uses_list.ev[0].subscribe.V2G_Session_Finished((mod) => { mod.v2g_finished = true; });
+    setup.uses_list.ev[0].subscribe.DC_PowerOn((mod) => { mod.dc_power_on = true; });
   }
 
   globalconf = config;
@@ -119,30 +131,6 @@ boot_module(async ({
 });
 
 function simdata_reset_defaults(mod) {
-  mod.simdata = {
-    pp_resistor: 220.1,
-    diode_fail: false,
-    error_e: false,
-    cp_voltage: 12.0,
-    rcd_current: 0.1,
-    voltages: { L1: 230.0, L2: 230.0, L3: 230.0 },
-    currents: {
-      L1: 0.0, L2: 0.0, L3: 0.0, N: 0.0,
-    },
-    frequencies: { L1: 50.0, L2: 50.0, L3: 50.0 },
-  };
-
-  mod.simdata_setting = {
-    cp_voltage: 12.0,
-    pp_resistor: 220.1,
-    impedance: 500.0,
-    rcd_current: 0.1,
-    voltages: { L1: 230.0, L2: 230.0, L3: 230.0 },
-    currents: {
-      L1: 0.0, L2: 0.0, L3: 0.0, N: 0.0,
-    },
-    frequencies: { L1: 50.0, L2: 50.0, L3: 50.0 },
-  };
 
   mod.simCommands = [];
   mod.loopCurrentCommand = 0;
@@ -162,6 +150,11 @@ function simdata_reset_defaults(mod) {
   mod.bcb_toggle_C = true;
 
   mod.uses.simulation_control.call.setSimulationData({ value: mod.simdata });
+  mod.pp = "";
+  mod.rcd_current_mA = 0;
+  mod.pwm_duty_cycle = 100;
+
+  mod.dc_power_on = false;
 }
 
 // Prepare next command
@@ -180,85 +173,50 @@ function current_command(mod) {
 
 // state machine for the car simulator
 function car_statemachine(mod) {
-  let amps1 = 0.0;
-  let amps2 = 0.0;
-  let amps3 = 0.0;
   let amps = 0;
   switch (mod.state) {
     case 'unplugged':
-      drawPower(mod, 0, 0, 0, 0);
-      mod.simdata_setting.cp_voltage = 12.0;
-      mod.simdata.error_e = false;
-      mod.simdata.diode_fail = false;
+      mod.uses.ev_board_support.call.set_cp_state({ cp_state: 'A' });
+      // Wait for physical plugin (ev BSP sees state A on CP and not Disconnected)
+      if (!mod.executionActive) {
+        // If we have auto_exec configured, restart simulation when it was unplugged
+        evlog.info('Unplug detected, restarting simulation.');
+        mod.slac_state = "UNMATCHED";
+        mod.uses_list.ev[0].call.stop_charging();
+        if (globalconf.module.auto_exec) execute_charging_session(mod, { value: globalconf.module.auto_exec_commands });
+      }
       break;
     case 'pluggedin':
-      drawPower(mod, 0, 0, 0, 0);
-      mod.simdata_setting.cp_voltage = 9.0;
+      mod.uses.ev_board_support.call.set_cp_state({ cp_state: 'B' });
       break;
     case 'charging_regulated':
-      amps = dutyCycleToAmps(mod.simulation_feedback.pwm_duty_cycle);
-      if (amps > mod.maxCurrent) amps = mod.maxCurrent;
 
+      amps = dutyCycleToAmps(mod.pwm_duty_cycle / 100.0);
+      if (amps > mod.maxCurrent) amps = mod.maxCurrent;
       // do not draw power if EVSE paused by stopping PWM
       if (amps > 5.9) {
-        mod.simdata_setting.cp_voltage = 6.0;
-        if (mod.simulation_feedback.relais_on > 0 && mod.numPhases > 0) amps1 = amps;
-        else amps1 = 0;
-        if (mod.simulation_feedback.relais_on > 1 && mod.numPhases > 1) amps2 = amps;
-        else amps2 = 0;
-        if (mod.simulation_feedback.relais_on > 2 && mod.numPhases > 2) amps3 = amps;
-        else amps3 = 0;
-
-        drawPower(mod, amps1, amps2, amps3, 0.2);
+        mod.uses.ev_board_support.call.set_cp_state({ cp_state: 'C' });
       } else {
-        mod.simdata_setting.cp_voltage = 9.0;
-        drawPower(mod, amps1, amps2, amps3, 0.2);
+        mod.uses.ev_board_support.call.set_cp_state({ cp_state: 'B' });
       }
       break;
 
     case 'charging_fixed':
       // Also draw power if EVSE stopped PWM - this is a break the rules mode to test the charging implementation!
-      mod.simdata_setting.cp_voltage = 6.0;
-
-      amps = mod.maxCurrent;
-
-      if (amps > mod.maxCurrent) amps = mod.maxCurrent;
-
-      if (mod.simulation_feedback.relais_on > 0 && mod.numPhases > 0) amps1 = amps;
-      else amps1 = 0;
-      if (mod.simulation_feedback.relais_on > 1 && mod.numPhases > 1) amps2 = amps;
-      else amps2 = 0;
-      if (mod.simulation_feedback.relais_on > 2 && mod.numPhases > 2) amps3 = amps;
-      else amps3 = 0;
-
-      drawPower(mod, amps1, amps2, amps3, 0.2);
+      mod.uses.ev_board_support.call.set_cp_state({ cp_state: 'C' });
       break;
 
     case 'error_e':
-      drawPower(mod, 0, 0, 0, 0);
-      mod.simdata.error_e = true;
+      mod.uses.ev_board_support.call.set_cp_state({ cp_state: 'E' });
       break;
     case 'diode_fail':
-      drawPower(mod, 0, 0, 0, 0);
-      mod.simdata.diode_fail = true;
+      mod.uses.ev_board_support.call.diode_fail({ value: true });
       break;
     case 'iso_power_ready':
-      drawPower(mod, 0, 0, 0, 0);
-      mod.simdata_setting.cp_voltage = 6.0;
+      mod.uses.ev_board_support.call.set_cp_state({ cp_state: 'C' });
       break;
     case 'iso_charging_regulated':
-      amps = mod.evse_maxcurrent;
-      if (amps > mod.maxCurrent) amps = mod.maxCurrent;
-
-      mod.simdata_setting.cp_voltage = 6.0;
-      if (mod.simulation_feedback.relais_on > 0 && mod.numPhases > 0) amps1 = amps;
-      else amps1 = 0;
-      if (mod.simulation_feedback.relais_on > 1 && mod.numPhases > 1) amps2 = amps;
-      else amps2 = 0;
-      if (mod.simulation_feedback.relais_on > 2 && mod.numPhases > 2) amps3 = amps;
-      else amps3 = 0;
-
-      drawPower(mod, amps1, amps2, amps3, 0.2);
+      mod.uses.ev_board_support.call.set_cp_state({ cp_state: 'C' });
       break;
     case 'bcb_toggle':
       drawPower(mod, 0, 0, 0, 0);
@@ -286,13 +244,6 @@ function dutyCycleToAmps(dc) {
   return 0;
 }
 
-function drawPower(mod, l1, l2, l3, n) {
-  mod.simdata_setting.currents.L1 = l1;
-  mod.simdata_setting.currents.L2 = l2;
-  mod.simdata_setting.currents.L3 = l3;
-  mod.simdata_setting.currents.N = n;
-}
-
 function simulation_loop(mod) {
   // Execute sim commands until a command blocks or we are finished
   while (mod.executionActive) {
@@ -304,39 +255,14 @@ function simulation_loop(mod) {
         evlog.debug('Finished simulation.');
         simdata_reset_defaults(mod);
         mod.executionActive = false;
+        // If we have auto_exec configured, restart simulation when it is done
+        if (globalconf.module.auto_exec) execute_charging_session(mod, { value: globalconf.module.auto_exec_commands });
         break;
       }
     } else break; // command blocked, wait for timer to run this function again
   }
 
   car_statemachine(mod);
-  addNoise(mod);
-
-  // send new sim data to HIL
-  mod.uses.simulation_control.call.setSimulationData({ value: mod.simdata });
-}
-
-function addNoise(mod) {
-  const noise = (1 + (Math.random() - 0.5) * 0.02);
-  const lonoise = (1 + (Math.random() - 0.5) * 0.005);
-  const impedance = mod.simdata_setting.impedance / 1000.0;
-
-  mod.simdata.currents.L1 = mod.simdata_setting.currents.L1 * noise;
-  mod.simdata.currents.L2 = mod.simdata_setting.currents.L2 * noise;
-  mod.simdata.currents.L3 = mod.simdata_setting.currents.L3 * noise;
-  mod.simdata.currents.N = mod.simdata_setting.currents.N * noise;
-
-  mod.simdata.voltages.L1 = mod.simdata_setting.voltages.L1 * noise - impedance * mod.simdata.currents.L1;
-  mod.simdata.voltages.L2 = mod.simdata_setting.voltages.L2 * noise - impedance * mod.simdata.currents.L2;
-  mod.simdata.voltages.L3 = mod.simdata_setting.voltages.L3 * noise - impedance * mod.simdata.currents.L3;
-
-  mod.simdata.frequencies.L1 = mod.simdata_setting.frequencies.L1 * lonoise;
-  mod.simdata.frequencies.L2 = mod.simdata_setting.frequencies.L2 * lonoise;
-  mod.simdata.frequencies.L3 = mod.simdata_setting.frequencies.L3 * lonoise;
-
-  mod.simdata.cp_voltage = mod.simdata_setting.cp_voltage * noise;
-  mod.simdata.rcd_current = mod.simdata_setting.rcd_current * noise;
-  mod.simdata.pp_resistor = mod.simdata_setting.pp_resistor * noise;
 }
 
 /*
@@ -376,10 +302,10 @@ function parseSimCommands(mod, str) {
 function registerAllCmds(mod) {
   mod.registeredCmds = [];
 
-  registerCmd(mod, 'cp', 1, (mod, c) => {
-    mod.simdata_setting.cp_voltage = c.args[0];
-    return true;
-  });
+  // registerCmd(mod, 'cp', 1, (mod, c) => {
+  //   mod.simdata_setting.cp_voltage = c.args[0];
+  //   return true;
+  // });
 
   registerCmd(mod, 'sleep', 1, (mod, c) => {
     if (c.timeLeft === undefined) c.timeLeft = c.args[0] * 4 + 1;
@@ -388,8 +314,7 @@ function registerAllCmds(mod) {
 
   registerCmd(mod, 'iec_wait_pwr_ready', 0, (mod, c) => {
     mod.state = 'pluggedin';
-    if (mod.simulation_feedback === undefined) return false;
-    if (mod.simulation_feedback.evse_pwm_running && dutyCycleToAmps(mod.simulation_feedback.pwm_duty_cycle) > 0) {
+    if (mod.pwm_duty_cycle > 7.0 && mod.pwm_duty_cycle < 97.0 && dutyCycleToAmps(mod.pwm_duty_cycle / 100.0) > 0) {
       return true;
     }
     return false;
@@ -397,9 +322,8 @@ function registerAllCmds(mod) {
 
   registerCmd(mod, 'iso_wait_pwm_is_running', 0, (mod, c) => {
     mod.state = 'pluggedin';
-    if (mod.simulation_feedback === undefined) return false;
-    if (mod.simulation_feedback.evse_pwm_running && mod.simulation_feedback.pwm_duty_cycle > 0.04
-      && mod.simulation_feedback.pwm_duty_cycle < 0.97) {
+    if (mod.pwm_duty_cycle > 4.0
+      && mod.pwm_duty_cycle < 6.0) {
       return true;
     }
     return false;
@@ -439,21 +363,25 @@ function registerAllCmds(mod) {
     return true;
   });
 
-  registerCmd(mod, 'rcd_current', 1, (mod, c) => {
-    mod.simdata_setting.rcd_current = c.args[0];
-    return true;
-  });
-
-  registerCmd(mod, 'pp_resistor', 1, (mod, c) => {
-    mod.simdata_setting.pp_resistor = c.args[0];
-    return true;
-  });
-
   registerCmd(mod, 'iso_wait_slac_matched', 0, (mod, c) => {
     mod.state = 'pluggedin';
-    if (mod.slac_state === undefined) return false;
-    if (mod.slac_state === 'UNMATCHED') if (mod.uses_list.slac.length > 0) mod.uses_list.slac[0].call.enter_bcd();
-    if (mod.slac_state === 'MATCHED') return true;
+    if (mod.slac_state === undefined) {
+      evlog.info("Slac undefined")
+    }
+    if (mod.slac_state === 'UNMATCHED') {
+      evlog.info("Slac UNMATCHED")
+      if (mod.uses_list.slac.length > 0) {
+        evlog.info("Slac trigger matching")
+        mod.uses_list.slac[0].call.reset();
+        mod.uses_list.slac[0].call.trigger_matching();
+        mod.slac_state = "TRIGGERED"; // make sure we do not trigger SLAC again before we get a state update
+      }
+    }
+    if (mod.slac_state === 'MATCHED') {
+      evlog.info("Slac Matched")
+      return true;
+    }
+    return false;
   });
   // --- wip
 
@@ -489,6 +417,17 @@ function registerAllCmds(mod) {
       return true;
     }
     return false;
+  });
+
+  registerCmd(mod, 'iso_dc_power_on', 0, (mod, c) => {
+    mod.state = 'iso_power_ready';
+    if (mod.dc_power_on == true) {
+      mod.state = 'iso_charging_regulated';
+      mod.uses.ev_board_support.call.allow_power_on({ value: true });
+      return true;
+    } else {
+      return false;
+    }
   });
 
   registerCmd(mod, 'iso_draw_power_regulated', 2, (mod, c) => {
@@ -548,6 +487,14 @@ function registerAllCmds(mod) {
       return true;
     }
     return false;
+  registerCmd(mod, 'wait_for_real_plugin', 0, (mod, c) => {
+    if (mod.actual_bsp_event == 'A') {
+      evlog.info("Real plugin detected.");
+      mod.state = 'pluggedin';
+      return true;
+    } else {
+      return false;
+    }
   });
 }
 

@@ -1,0 +1,44 @@
+description: EV and EVSE board support types
+types:
+  BspEvent:
+    description: Event stream from ControlPilot signal/Relais/RCD
+    type: string
+    enum:
+      - A
+      - B
+      - C
+      - D
+      - 'E'
+      - F
+      - PowerOn
+      - PowerOff
+      - ErrorDF
+      - ErrorRelais
+      - ErrorRCD
+      - ErrorVentilationNotAvailable
+      - ErrorOverCurrent
+      - EFtoBCD
+      - BCDtoEF
+      - PermanentFault
+      - EvseReplugStarted
+      - EvseReplugFinished
+      - Disconnected
+  BspMeasurement:
+    description: Bsp Measurement
+    type: object
+    properties:
+      proximity_pilot:
+        description: Current capability of the cable
+        type: string
+        enum:
+          - None
+          - A_13
+          - A_20
+          - A_32
+          - A_63
+      rcd_current_mA:
+        description: RCD current in mA
+        type: number
+      cp_pwm_duty_cycle:
+        description: CP PWM Duty Cycle in percent (0-100)
+        type: number

@@ -1,0 +1,40 @@
+description: This defines the board support package for the EV side
+cmds:
+  enable:
+    description: Enable/disable the simulation
+    arguments:
+      value:
+        description: true to enable, false to disable
+        type: boolean
+  set_cp_state:
+    description: Sets the CP State that should be set by the EV Yeti driver (controlled by S2)
+    arguments:
+      cp_state:
+        description: The CP State
+        type: string
+        $ref: /ev_board_support#/EvCpState
+  allow_power_on:
+    description: >-
+      Sets allow_power_on flag. If false, contactor must never be switched
+      on. Onyly for dc charging
+    arguments:
+      value:
+        description: 'True: allow power on, false: do not allow power on.'
+        type: boolean
+  diode_fail:
+    description: Todo
+    arguments:
+      value:
+        description: True diode fail
+        type: boolean
+vars:
+  bsp_event:
+    description: >-
+      Events from CP/Relais
+    type: string
+    $ref: /board_support_common#/BspEvent
+  bsp_measurement:
+    description: >-
+      BSP Measurements
+    type: object
+    $ref: /board_support_common#/BspMeasurement

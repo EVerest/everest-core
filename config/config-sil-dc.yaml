@@ -4,6 +4,7 @@ active_modules:
     config_module:
       device: auto
       tls_security: allow
+      supported_DIN70121: true
   iso15118_car:
     module: PyEvJosev
     config_module:
@@ -50,8 +51,8 @@ active_modules:
     module: JsSlacSimulator
   imd:
     module: JsIMDSimulator
-  car_simulator:
-    module: JsCarSimulator
+  ev_manager:
+    module: JsEvManager
     config_module:
       connector_id: 1
       auto_enable: true
@@ -60,9 +61,9 @@ active_modules:
       dc_target_current: 20
       dc_target_voltage: 400
     connections:
-      simulation_control:
-        - module_id: yeti_driver
-          implementation_id: yeti_simulation_control
+      ev_board_support:
+        - implementation_id: ev_board_support
+          module_id: yeti_driver
       ev:
         - module_id: iso15118_car
           implementation_id: ev

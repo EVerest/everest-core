@@ -38,9 +38,6 @@ provides:
   yeti_extras:
     interface: yeti_extras
     description: extra functionality special for Yeti
-  yeti_simulation_control:
-    interface: yeti_simulation_control
-    description: Interface for the Yeti HIL simulator
 enable_external_mqtt: true
 enable_telemetry: true
 metadata:

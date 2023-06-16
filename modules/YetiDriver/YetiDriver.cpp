@@ -85,7 +85,6 @@ void YetiDriver::init() {
 
     invoke_init(*p_powermeter);
     invoke_init(*p_yeti_extras);
-    invoke_init(*p_yeti_simulation_control);
     invoke_init(*p_board_support);
 }
 
@@ -105,7 +104,6 @@ void YetiDriver::ready() {
 
     invoke_ready(*p_powermeter);
     invoke_ready(*p_yeti_extras);
-    invoke_ready(*p_yeti_simulation_control);
     invoke_ready(*p_board_support);
 
     serial.signalKeepAliveLo.connect([this](const KeepAliveLo& k) {

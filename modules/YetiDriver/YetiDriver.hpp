@@ -14,7 +14,6 @@
 #include <generated/interfaces/board_support_AC/Implementation.hpp>
 #include <generated/interfaces/powermeter/Implementation.hpp>
 #include <generated/interfaces/yeti_extras/Implementation.hpp>
-#include <generated/interfaces/yeti_simulation_control/Implementation.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 #include "yeti_comms/evSerial.h"
@@ -36,15 +35,13 @@ public:
     YetiDriver(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, Everest::TelemetryProvider& telemetry,
                std::unique_ptr<powermeterImplBase> p_powermeter,
                std::unique_ptr<board_support_ACImplBase> p_board_support,
-               std::unique_ptr<yeti_extrasImplBase> p_yeti_extras,
-               std::unique_ptr<yeti_simulation_controlImplBase> p_yeti_simulation_control, Conf& config) :
+               std::unique_ptr<yeti_extrasImplBase> p_yeti_extras, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         telemetry(telemetry),
         p_powermeter(std::move(p_powermeter)),
         p_board_support(std::move(p_board_support)),
         p_yeti_extras(std::move(p_yeti_extras)),
-        p_yeti_simulation_control(std::move(p_yeti_simulation_control)),
         config(config){};
 
     Everest::MqttProvider& mqtt;
@@ -52,7 +49,6 @@ public:
     const std::unique_ptr<powermeterImplBase> p_powermeter;
     const std::unique_ptr<board_support_ACImplBase> p_board_support;
     const std::unique_ptr<yeti_extrasImplBase> p_yeti_extras;
-    const std::unique_ptr<yeti_simulation_controlImplBase> p_yeti_simulation_control;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
