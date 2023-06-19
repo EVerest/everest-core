@@ -163,6 +163,9 @@ private:
     std::function<GetLogResponse(GetLogRequest msg)> upload_logs_callback;
     std::function<void(int32_t connection_timeout)> set_connection_timeout_callback;
 
+    std::function<void(const int32_t connector, const int32_t transaction_id)>
+        transaction_started_callback;
+
     // iso15118 callback
     std::function<void(const int32_t connector, const ocpp::v201::Get15118EVCertificateResponse& certificate_response,
                        const ocpp::v201::CertificateActionEnum& certificate_action)>
@@ -637,6 +640,11 @@ public:
         const std::function<void(const int32_t connector,
                                  const ocpp::v201::Get15118EVCertificateResponse& certificate_response,
                                  const ocpp::v201::CertificateActionEnum& certificate_action)>& callback);
+
+    // \brief registers a \p callback function that can be used to publish the response when transaction starts respone is received
+    // \param callback
+    void register_transaction_started_callback(
+        const std::function<void(int32_t connector, int32_t transaction_id)>& callback);
 };
 
 } // namespace v16

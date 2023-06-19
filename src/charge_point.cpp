@@ -94,6 +94,13 @@ int main(int argc, char* argv[]) {
     }
 
     const std::filesystem::path sql_init_path = share_path / "init.sql";
+
+    // create the cso_path
+    const std::filesystem::path cso_path = "/tmp/client/cso";
+    if (!std::filesystem::exists(cso_path)) {
+        std::filesystem::create_directories(cso_path);
+    }
+
     charge_point =
         new ocpp::v16::ChargePoint(json_config.dump(), share_path, user_config_path, database_path, sql_init_path,
                                    std::filesystem::path("/tmp"), std::filesystem::path("/tmp"));
@@ -205,6 +212,12 @@ int main(int argc, char* argv[]) {
     charge_point->register_signal_set_charging_profiles_callback([]() {
         std::cout << "Callback: "
                   << "Setting charging profiles" << std::endl;
+    });
+
+    charge_point->register_transaction_started_callback([](int32_t connector, int32_t transaction_id) {
+        std::cout << "Callback: "
+                  << "Transaction started at connector#" << connector << " and transaction id: " << transaction_id
+                  << std::endl;
     });
 
     /************************************** STOP REGISTERING CALLBACKS /**************************************/

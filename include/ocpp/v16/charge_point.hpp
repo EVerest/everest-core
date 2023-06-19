@@ -383,6 +383,11 @@ public:
         const std::function<void(const int32_t connector,
                                  const ocpp::v201::Get15118EVCertificateResponse& certificate_response,
                                  const ocpp::v201::CertificateActionEnum& certificate_action)>& callback);
+
+    /// \brief registers a \p callback function that can be used to publish the response when transaction starts
+    /// \param callback
+    void register_transaction_started_callback(
+        const std::function<void(const int32_t connector, const int32_t  transaction_id)>& callback);
 };
 
 } // namespace v16

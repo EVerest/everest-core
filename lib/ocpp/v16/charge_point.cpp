@@ -246,5 +246,10 @@ void ChargePoint::register_get_15118_ev_certificate_response_callback(
     this->charge_point->register_get_15118_ev_certificate_response_callback(callback);
 }
 
+void ChargePoint::register_transaction_started_callback(
+    const std::function<void(const int32_t connector, const int32_t  transaction_id)>& callback) {
+    this->charge_point->register_transaction_started_callback(callback);
+}
+
 } // namespace v16
 } // namespace ocpp
