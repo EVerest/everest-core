@@ -50,6 +50,7 @@ target_link_libraries(ocpp
         everest::log
         everest::timer
         websocketpp::websocketpp
+        nlohmann_json_schema_validator
     PRIVATE
         OpenSSL::SSL
         OpenSSL::Crypto
@@ -57,7 +58,6 @@ target_link_libraries(ocpp
         Threads::Threads
 
         nlohmann_json::nlohmann_json
-        nlohmann_json_schema_validator
         date::date-tz
 )
 
