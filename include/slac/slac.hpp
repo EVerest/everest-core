@@ -37,7 +37,9 @@ const int RUN_ID_LEN = 8;
 // FIXME (aw): where to put these iso15118/3 consts?
 const int C_EV_START_ATTEN_CHAR_INDS = 3;
 const int C_EV_MATCH_RETRY = 2;
+const int C_EV_MATCH_MNBC = 10;
 const int TP_EV_BATCH_MSG_INTERVAL_MS = 40; // 20ms - 50ms, interval between start_atten_char and mnbc_sound msgs
+const int TT_EV_ATTEN_RESULTS_MS = 1200; // max. 1200ms
 const int TT_EVSE_MATCH_MNBC_MS = 600;
 const int TT_MATCH_SEQUENCE_MS = 400;
 const int TT_MATCH_RESPONSE_MS = 200;
@@ -242,7 +244,7 @@ typedef struct {
     uint8_t evse_id[EVSE_ID_LEN];     // EVSE id
     uint8_t evse_mac[ETH_ALEN];       // mac address of the EVSE
     uint8_t run_id[defs::RUN_ID_LEN]; // indentifier for a matching run
-    uint8_t _rerserved[8]; // note: this is to pad the run_id, which is defined to be 16 bytes for this message
+    uint8_t _reserved[8]; // note: this is to pad the run_id, which is defined to be 16 bytes for this message
 } __attribute__((packed)) cm_slac_match_req;
 
 typedef struct {
