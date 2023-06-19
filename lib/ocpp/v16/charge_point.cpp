@@ -85,7 +85,7 @@ ChargePoint::ChargePoint(const json& config, const std::string& share_path, cons
         if (daysLeft < 30) {
             EVLOG_info << "V2GCertificate is invalid in " << daysLeft
                        << " days. Requesting new certificate with certificate signing request";
-            this->sign_certificate(ocpp::CertificateSigningUseEnum::V2GCertificate);
+            this->data_transfer_pnc_sign_certificate();
         } else {
             EVLOG_info << "V2GCertificate is still valid.";
         }
@@ -2396,11 +2396,12 @@ ocpp::v201::AuthorizeResponse ChargePoint::data_transfer_pnc_authorize(
     authorize_req.iso15118CertificateHashData = iso15118_certificate_hash_data;
     authorize_req.idToken = id_token;
 
-    // do this if C07.FR.06
-    // If Charging Station is not able to validate a contract certificate, because it does not have the associated root
-    // certificate AND CentralContractValidationAllowed is true
-
-    if (this->configuration->getCentralContractValidationAllowed().has_value() and
+    // C07.FR.06: If Charging Station is not able to validate a contract certificate, because it does not have the
+    // associated root certificate AND CentralContractValidationAllowed is true
+    // certificate.has_value() implies that ISO module could not validate certificate, otherwise certificate would not
+    // be set
+    if (certificate.has_value() and
+        this->configuration->getCentralContractValidationAllowed().has_value() and
         this->configuration->getCentralContractValidationAllowed().value()) {
         authorize_req.certificate = certificate;
     }
