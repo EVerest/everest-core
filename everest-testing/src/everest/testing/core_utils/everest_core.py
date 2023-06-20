@@ -25,7 +25,8 @@ class TestControlModuleConnection(TypedDict):
 
 class StatusFifoListener:
     def __init__(self, status_fifo_path: Path):
-        os.mkfifo(status_fifo_path)
+        if (not status_fifo_path.exists()):
+            os.mkfifo(status_fifo_path)
 
         # note: open doesn't support non-blocking, so we use os.open to get the fd
         fd = os.open(status_fifo_path, flags=(os.O_RDONLY | os.O_NONBLOCK))
