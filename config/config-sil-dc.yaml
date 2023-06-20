@@ -5,12 +5,11 @@ active_modules:
       device: auto
       tls_security: allow
   iso15118_car:
-    module: JsCarV2G
-    config_implementation:
-      main:
-        stack_implementation: RISE-V2G
-        mqtt_base_path: everest_external/iso15118/ev
-        device: auto
+    module: PyEvJosev
+    config_module:
+      device: auto
+      supported_DIN70121: true
+      supported_ISO15118_2: true
   evse_manager:
     module: EvseManager
     config_module:

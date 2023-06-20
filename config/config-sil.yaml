@@ -93,13 +93,11 @@ active_modules:
           module_id: connector_1
     module: EnergyNode
   iso15118_car:
-    config_implementation:
-      main:
-        device: auto
-        mqtt_base_path: everest_external/iso15118/ev
-        stack_implementation: RISE-V2G
+    config_module:
+      device: auto
+      supported_ISO15118_2: true
     connections: {}
-    module: JsCarV2G
+    module: PyEvJosev
   iso15118_charger:
     config_module:
       device: auto

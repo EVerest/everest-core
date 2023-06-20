@@ -1788,33 +1788,8 @@
         "multiple": false,
         "options": [
             {
-                "label": "AC 3ph 16A",
-                "value": "sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 36000#unplug",
-                "type": "str"
-            },
-            {
-                "label": "AC 1ph 32A",
-                "value": "sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 32,1;sleep 36000#unplug",
-                "type": "str"
-            },
-            {
-                "label": "AC Diode Fail",
-                "value": "sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 32,3;sleep 5;diode_fail;sleep 36000#unplug",
-                "type": "str"
-            },
-            {
-                "label": "AC Error E",
-                "value": "sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 3;error_e;sleep 36000#unplug",
-                "type": "str"
-            },
-            {
-                "label": "AC RCD Error",
-                "value": "sleep 1;rcd_current 10.3;sleep 10;rcd_current 0.1sleep 36000#unplug",
-                "type": "str"
-            },
-            {
-                "label": "AC ISO15118-2",
-                "value": "sleep 1;iso_wait_slac_matched;iso_start_v2g_session ExternalPayment,AC_three_phase_core;iso_wait_pwr_ready;iso_draw_power_regulated 16,3;sleep 36000#iso_stop_charging;iso_wait_v2g_session_stopped;unplug",
+                "label": "DC ISO15118-2",
+                "value": "sleep 1;iso_wait_slac_matched;iso_start_v2g_session ExternalPayment,DC_extended;sleep 36000#iso_stop_charging;iso_wait_v2g_session_stopped;unplug",
                 "type": "str"
             }
         ],
@@ -1884,7 +1859,7 @@
         "once": true,
         "onceDelay": "1",
         "topic": "sim_commands",
-        "payload": "sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 36000#unplug",
+        "payload": "sleep 1;iso_wait_slac_matched;iso_start_v2g_session ExternalPayment,DC_extended;sleep 36000#iso_stop_charging;iso_wait_v2g_session_stopped;unplug",
         "payloadType": "str",
         "x": 150,
         "y": 1100,
