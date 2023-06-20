@@ -45,3 +45,6 @@ vars:
   AC_StopFromCharger:
     description: The charger wants to stop the charging process
     type: 'null'
+  DC_PowerOn:
+    description: The ev wants to close the dc contactors
+    type: 'null'
