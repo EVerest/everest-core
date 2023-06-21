@@ -176,7 +176,8 @@ Config::Config(std::string schemas_dir, std::string config_file, std::string mod
 
                 this->types[type_path] = type_json["types"];
             } catch (const std::exception& e) {
-                EVLOG_AND_THROW(EverestConfigError(fmt::format("Failed to load and parse type file: {}", e.what())));
+                EVLOG_AND_THROW(EverestConfigError(fmt::format("Failed to load and parse type file '{}', reason: {}",
+                                                               type_file_path.string(), e.what())));
             }
         }
     }
