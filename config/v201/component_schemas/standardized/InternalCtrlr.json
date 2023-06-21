@@ -1,0 +1,400 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Schema for InternalCtrlr",
+  "type": "object",
+  "properties": {
+    "InternalCtrlrEnabled": {
+      "variable_name": "Enabled",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "type": "boolean"
+    },
+    "ChargePointId": {
+      "variable_name": "ChargePointId",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "minLength": 1,
+      "type": "string"
+    },
+    "CentralSystemURI": {
+      "variable_name": "CentralSystemURI",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "minLength": 1,
+      "type": "string"
+    },
+    "ChargeBoxSerialNumber": {
+      "variable_name": "ChargeBoxSerialNumber",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "minLength": 1,
+      "maxLength": 25,
+      "type": "string"
+    },
+    "ChargePointModel": {
+      "variable_name": "ChargePointModel",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "minLength": 1,
+      "maxLength": 20,
+      "type": "string"
+    },
+    "ChargePointSerialNumber": {
+      "variable_name": "ChargePointSerialNumber",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "minLength": 1,
+      "maxLength": 25,
+      "type": "string"
+    },
+    "ChargePointVendor": {
+      "variable_name": "ChargePointVendor",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "minLength": 1,
+      "maxLength": 20,
+      "type": "string"
+    },
+    "FirmwareVersion": {
+      "variable_name": "FirmwareVersion",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "minLength": 1,
+      "maxLength": 50,
+      "type": "string"
+    },
+    "ICCID": {
+      "variable_name": "ICCID",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "minLength": 1,
+      "maxLength": 20,
+      "type": "string"
+    },
+    "IMSI": {
+      "variable_name": "IMSI",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "minLength": 1,
+      "maxLength": 20,
+      "type": "string"
+    },
+    "MeterSerialNumber": {
+      "variable_name": "MeterSerialNumber",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "minLength": 1,
+      "maxLength": 25,
+      "type": "string"
+    },
+    "MeterType": {
+      "variable_name": "MeterType",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "minLength": 1,
+      "maxLength": 25,
+      "type": "string"
+    },
+    "SupportedCiphers12": {
+      "variable_name": "SupportedCiphers12",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "MemberList"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "default": "ECDHE-ECDSA-AES128-GCM-SHA256,ECDHE-ECDSA-AES256,GCM-SHA384,AES128-GCM-SHA256,AES256-GCM-SHA384,TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256",
+      "minLength": 0,
+      "type": "string"
+    },
+    "SupportedCiphers13": {
+      "variable_name": "SupportedCiphers13",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "MemberList"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "default": "TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256",
+      "minLength": 0,
+      "type": "string"
+    },
+    "WebsocketReconnectInterval": {
+      "variable_name": "WebsocketReconnectInterval",
+      "characteristics": {
+        "minLimit": 0,
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "minimum": 0,
+      "default": "10",
+      "type": "integer"
+    },
+    "AuthorizeConnectorZeroOnConnectorOne": {
+      "variable_name": "AuthorizeConnectorZeroOnConnectorOne",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "default": "1",
+      "type": "boolean"
+    },
+    "LogMessages": {
+      "variable_name": "LogMessages",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "default": "1",
+      "type": "boolean"
+    },
+    "LogMessagesFormat": {
+      "variable_name": "LogMessagesFormat",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "MemberList"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Supported log formats are console, log, html and console_detailed",
+      "default": "log,html",
+      "type": "string"
+    },
+    "SupportedChargingProfilePurposeTypes": {
+      "variable_name": "SupportedChargingProfilePurposeTypes",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "MemberList"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "default": "ChargePointMaxProfile,TxDefaultProfile,TxProfile",
+      "type": "string"
+    },
+    "MaxCompositeScheduleDuration": {
+      "variable_name": "MaxCompositeScheduleDuration",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "default": "31536000",
+      "type": "integer"
+    },
+    "NumberOfConnectors": {
+      "variable_name": "NumberOfConnectors",
+      "characteristics": {
+        "minLimit": 1,
+        "maxLimit": 128,
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "minimum": 1,
+      "maximum": 128,
+      "default": "1",
+      "type": "integer"
+    },
+    "UseSslDefaultVerifyPaths": {
+      "variable_name": "UseSslDefaultVerifyPaths",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Use default verify paths for validating CSMS server certificate",
+      "default": "1",
+      "type": "boolean"
+    },
+    "OcspRequestInterval": {
+      "variable_name": "OcspRequestInterval",
+      "characteristics": {
+        "minLimit": 86400,
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Interval in seconds used to request OCSP revocation status information on the CSO Sub-CA certificates",
+      "minimum": 86400,
+      "default": "604800",
+      "type": "integer"
+    },
+    "WebsocketPingPayload": {
+      "variable_name": "WebsocketPingPayload",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "default": "hello there",
+      "type": "string"
+    }
+  },
+  "required": [
+    "CentralSystemURI",
+    "ChargeBoxSerialNumber",
+    "ChargePointId",
+    "ChargePointModel",
+    "ChargePointVendor",
+    "FirmwareVersion",
+    "NumberOfConnectors",
+    "SupportedCiphers12",
+    "SupportedCiphers13",
+    "WebsocketReconnectInterval"
+  ]
+}

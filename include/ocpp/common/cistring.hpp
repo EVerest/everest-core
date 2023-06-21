@@ -64,6 +64,11 @@ template <size_t L> bool operator!=(const CiString<L>& lhs, const CiString<L>& r
     return !(lhs.get() == rhs.get());
 }
 
+/// \brief Case insensitive compare for a case insensitive (Ci)String
+template <size_t L> bool operator<(const CiString<L>& lhs, const CiString<L>& rhs) {
+    return lhs.get() < rhs.get();
+}
+
 /// \brief Writes the given string \p str to the given output stream \p os
 /// \returns an output stream with the case insensitive string written to
 template <size_t L> std::ostream& operator<<(std::ostream& os, const CiString<L>& str) {

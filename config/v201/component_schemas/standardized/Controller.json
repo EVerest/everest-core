@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Schema for Controller",
+  "type": "object",
+  "properties": {
+    "MaxMsgElements": {
+      "variable_name": "MaxMsgElements",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual"
+        }
+      ],
+      "description": "Array of implementation-defined limits to the number of elements of specific type that the Charging Station can accept in one message.",
+      "type": "integer"
+    }
+  },
+  "required": []
+}

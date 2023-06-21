@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Schema for CPPWMController",
+  "type": "object",
+  "properties": {
+    "": {
+      "variable_name": "State",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual"
+        }
+      ],
+      "description": "IEC 61851-1 states (\"A\" to \"E\")",
+      "type": "string"
+    }
+  },
+  "required": []
+}

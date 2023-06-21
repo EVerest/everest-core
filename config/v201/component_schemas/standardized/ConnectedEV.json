@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Schema for ConnectedEV",
+  "type": "object",
+  "properties": {
+    "ProtocolAgreed": {
+      "variable_name": "ProtocolAgreed",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Information about uri and version that was agreed upon between EV and EVSE in the supportedAppProtocolReq message from ISO 15118. Example: urn:iso:15118:2:2013:MsgDef,2,0",
+      "type": "string"
+    },
+    "ProtocolSupportedByEV": {
+      "variable_name": "ProtocolSupportedByEV",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "instance": "<Priority>",
+      "description": "Information from the supportedAppProtocolReq message from ISO 15118. Each priority is given its own variable instance. Example: urn:iso:15118:2:2013:MsgDef,2,0",
+      "type": "string"
+    },
+    "VehicleID": {
+      "variable_name": "VehicleID",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual"
+        }
+      ],
+      "description": "EVCCID (from ISO 15118 SessionSetupReq)",
+      "type": "string"
+    }
+  },
+  "required": []
+}

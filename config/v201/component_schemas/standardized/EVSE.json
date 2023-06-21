@@ -1,0 +1,118 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Schema for EVSE",
+  "type": "object",
+  "properties": {
+    "EVSEAllowReset": {
+      "variable_name": "AllowReset",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Can be used to announce that an EVSE can be reset individually",
+      "type": "boolean"
+    },
+    "EVSEAvailabilityState": {
+      "variable_name": "AvailabilityState",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "OptionList"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "This variable reports current availability state for the EVSE",
+      "type": "string"
+    },
+    "EVSEAvailable": {
+      "variable_name": "Available",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Component exists",
+      "type": "boolean"
+    },
+    "EvseId": {
+      "variable_name": "EvseId",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual"
+        }
+      ],
+      "description": "The name of the EVSE in the string format as required by ISO 15118 and IEC 63119-2.",
+      "type": "string"
+    },
+    "EVSEPower": {
+      "variable_name": "Power",
+      "characteristics": {
+        "unit": "W",
+        "supportsMonitoring": true,
+        "dataType": "decimal"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": " kW,The variableCharacteristic maxLimit, that holds the maximum power that this EVSE can provide, is required. The Actual value of the instantaneous (real) power is desired, but not required.",
+      "type": "number"
+    },
+    "EVSESupplyPhases": {
+      "variable_name": "SupplyPhases",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Number of alternating current phases connected/available.",
+      "type": "integer"
+    },
+    "ISO15118EvseId": {
+      "variable_name": "ISO15118EvseId",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "The name of the EVSE in the string format as required by ISO 15118 and IEC 63119-2. Example: \"DE*ICE*E*1234567890*1\"",
+      "type": "string"
+    }
+  },
+  "required": [
+    "EVSEAvailabilityState",
+    "EVSEAvailable",
+    "EVSEPower",
+    "EVSESupplyPhases"
+  ]
+}

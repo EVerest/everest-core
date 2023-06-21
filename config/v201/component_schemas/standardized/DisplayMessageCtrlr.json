@@ -1,0 +1,101 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Schema for DisplayMessageCtrlr",
+  "type": "object",
+  "properties": {
+    "DisplayMessageCtrlrAvailable": {
+      "variable_name": "Available",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Whether display messages are supported.",
+      "type": "boolean"
+    },
+    "NumberOfDisplayMessages": {
+      "variable_name": "NumberOfDisplayMessages",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Amount of different messages that are currently configured in this Charging Station, via SetDisplayMessageRequest",
+      "type": "integer"
+    },
+    "DisplayMessageCtrlrEnabled": {
+      "variable_name": "Enabled",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Whether display messages are enabled.",
+      "type": "boolean"
+    },
+    "PersonalMessageSize": {
+      "variable_name": "PersonalMessageSize",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual"
+        }
+      ],
+      "description": "Max size (in characters) of the personal message element of the IdTokenInfo data (0 specifies no personal data may be stored).",
+      "type": "integer"
+    },
+    "DisplayMessageSupportedFormats": {
+      "variable_name": "SupportedFormats",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "MemberList"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "List of message formats supported by this Charging Station.",
+      "type": "string"
+    },
+    "DisplayMessageSupportedPriorities": {
+      "variable_name": "SupportedPriorities",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "MemberList"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "List of the priorities supported by this Charging Station.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "DisplayMessageSupportedFormats",
+    "DisplayMessageSupportedPriorities",
+    "NumberOfDisplayMessages"
+  ]
+}

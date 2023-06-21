@@ -5,6 +5,31 @@ This is a C++ library implementation of OCPP for version 1.6 (https://www.opench
 Libocpp can be used for the communication of one charging station and multiple EVSE using a single websocket connection.
 
 Libocpp provides a complete implementation of OCPP 1.6. The implementation of OCPP 2.0.1 is currently under development.
+
+## Table of contents
+- [Feature Support](#feature-support)
+  - [Feature Profile Support OCPP 1.6](#feature-profile-support-ocpp-16)
+  - [Support for OCPP 2.0.1](#support-for-ocpp-201)
+- [CSMS Compatibility](#csms-compatibility)
+  - [CSMS Compatibility OCPP 1.6](#csms-compatibility-ocpp-16)
+  - [CSMS Compatibility OCPP 2.0.1](#csms-compatibility-ocpp-201)
+- [Integration with EVerest](#integration-with-everest)
+  - [Run OCPP1.6 with EVerest](#run-ocpp16-with-everest)
+  - [Run OCPP2.0.1 with EVerest](#run-ocpp201-with-everest)
+- [Integrate this library with your Charging Station Implementation for OCPP1.6](#integrate-this-library-with-your-charging-station-implementation-for-ocpp16)
+  - [Overview of the required callbacks and events and what libocpp expects to happen](#overview-of-the-required-callbacks-and-events-and-what-libocpp-expects-to-happen)
+    - [ChargePoint() constructor](#chargepoint-constructor)
+    - [registering callbacks](#registering-callbacks)
+    - [Functions that need to be triggered from the outside after new information is availble (on\_... functions in the charge point API)](#functions-that-need-to-be-triggered-from-the-outside-after-new-information-is-availble-on_-functions-in-the-charge-point-api)
+    - [The following functions are triggered depending on different so called "Session Events" from the EvseManager](#the-following-functions-are-triggered-depending-on-different-so-called-session-events-from-the-evsemanager)
+    - [Authorization](#authorization)
+- [Integrate this library with your Charging Station Implementation for OCPP2.0.1](#integrate-this-library-with-your-charging-station-implementation-for-ocpp201)
+  - [Register event callbacks and on\_handlers](#register-event-callbacks-and-on_handlers)
+  - [Initialize the database](#initialize-the-database)
+- [Install libocpp](#install-libocpp)
+- [Quickstart for OCPP 1.6](#quickstart-for-ocpp-16)
+- [Building the doxygen documentation](#building-the-doxygen-documentation)
+
 ## Feature Support
 
 The following tables show the current support for the listed feature profiles / functional blocks and application notes.
@@ -26,7 +51,6 @@ All documentation and the issue tracking can be found in our main repository her
 | ----------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
 | [OCPP 1.6 Security Whitepaper (3rd edition)](https://www.openchargealliance.org/uploads/files/OCPP-1.6-security-whitepaper-edition-3.zip) | :heavy_check_mark: yes |
 | [Using ISO 15118 Plug & Charge with OCPP 1.6](https://www.openchargealliance.org/uploads/files/ocpp_1_6_ISO_15118_v10.pdf)                | :heavy_check_mark: yes                    |
-| [Autocharge](https://github.com/openfastchargingalliance/openfastchargingalliance/blob/master/autocharge-final.pdf)                       | :heavy_check_mark: yes |
 
 ### Support for OCPP 2.0.1
 
@@ -69,9 +93,24 @@ The current, basic implementation of OCPP 2.0.1 has been tested against a few CS
 
 This library is automatically integrated as the OCPP and OCPP201 module within [everest-core](https://github.com/EVerest/everest-core) - the complete software stack for your charging station. It is recommended to use EVerest together with this OCPP implementation.
 
-If you run libocpp with EVerest, the build process of [everest-core](https://github.com/EVerest/everest-core) will take care of installing all necessary dependencies for you.
+### Run OCPP1.6 with EVerest
+If you run libocpp with OCPP1.6 with EVerest, the build process of [everest-core](https://github.com/EVerest/everest-core) will take care of installing all necessary dependencies for you.
 
-## Integration with your Charging Station Implementation
+### Run OCPP2.0.1 with EVerest
+the build process of [everest-core](https://github.com/EVerest/everest-core) will take care of installing all necessary dependencies for you. Additionally for OCPP2.0.1 you need to set up the SQLite device model storage database.
+
+```bash
+cd config/v201
+python3 init_device_model_db.py
+python3 insert_device_model_config.py --config config.json --db /tmp/ocpp201/device_model_storage.db
+```
+
+These two scripts do the following:
+
+- create the database and tables and it will 
+- insert the variables with a role standardized within the OCPP2.0.1 specification
+- insert the VariableAttributes specified within the config.json  
+## Integrate this library with your Charging Station Implementation for OCPP1.6
 
 OCPP is a protocol that affects, controls and monitors many areas of a charging station's operation.
 
@@ -363,7 +402,17 @@ each of these functions will have a small note what the Session Event was and wh
 In EVerest authorization is handled by the Auth module and various auth token providers and validators. The OCPP module acts as both a token provider (for pre validated tokens in RemoteStartTransactions) and a token validator (using the authorize requests, or plug & charge)
 To use libocpp as a auth token validator (e.g. before starting a transaction) you can call the "authorize_id_token" function of the ChargePoint object
 
-### Install libocpp
+## Integrate this library with your Charging Station Implementation for OCPP2.0.1
+TODO
+
+### Register event callbacks and on_handlers
+
+### Initialize the database
+- Use provided sql database or implement your own storage drive
+
+
+
+## Install libocpp
 
 For Debian GNU/Linux 11 you will need the following dependencies:
 

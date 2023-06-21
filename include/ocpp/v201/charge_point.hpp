@@ -5,8 +5,9 @@
 
 #include <ocpp/common/charging_station_base.hpp>
 
+#include <ocpp/v201/ctrlr_component_variables.hpp>
 #include <ocpp/v201/database_handler.hpp>
-#include <ocpp/v201/device_model_management.hpp>
+#include <ocpp/v201/device_model.hpp>
 #include <ocpp/v201/enums.hpp>
 #include <ocpp/v201/evse.hpp>
 #include <ocpp/v201/ocpp_types.hpp>
@@ -52,7 +53,7 @@ private:
 
     // utility
     std::unique_ptr<MessageQueue<v201::MessageType>> message_queue;
-    std::shared_ptr<DeviceModelManager> device_model_manager;
+    std::unique_ptr<DeviceModel> device_model;
     std::unique_ptr<DatabaseHandler> database_handler;
 
     std::map<int32_t, ChangeAvailabilityRequest> scheduled_change_availability_requests;
@@ -61,7 +62,7 @@ private:
              std::map<std::string, std::function<DataTransferResponse(const std::optional<std::string>& msg)>>>
         data_transfer_callbacks;
     std::mutex data_transfer_callbacks_mutex;
-    
+
     // timers
     Everest::SteadyTimer heartbeat_timer;
     Everest::SteadyTimer boot_notification_timer;
@@ -111,8 +112,8 @@ private:
                                const std::optional<ocpp::v201::EVSE>& evse,
                                const std::optional<ocpp::v201::IdToken>& id_token,
                                const std::optional<std::vector<ocpp::v201::MeterValue>>& meter_value,
-                               const std::optional<int32_t>& number_of_phases_used,
-                               const std::optional<bool>& offline, const std::optional<int32_t>& reservation_id);
+                               const std::optional<int32_t>& number_of_phases_used, const std::optional<bool>& offline,
+                               const std::optional<int32_t>& reservation_id);
 
     // Functional Block J: MeterValues
     void meter_values_req(const int32_t evse_id, const std::vector<MeterValue>& meter_values);
@@ -146,12 +147,14 @@ public:
     /// \param evse_connector_structure Map that defines the structure of EVSE and connectors of the chargepoint. The
     /// key represents the id of the EVSE and the value represents the number of connectors for this EVSE. The ids of
     /// the EVSEs have to increment starting with 1.
-    /// \param config OCPP json config
+    /// \param device_model_storage_address address to device model storage (e.g. location of SQLite database)
     /// \param ocpp_main_path Path where utility files for OCPP are read and written to
+    /// \param core_database_path Path to directory where core database is located
     /// \param message_log_path Path to where logfiles are written to
     /// \param callbacks Callbacks that will be registered for ChargePoint
-    ChargePoint(const std::map<int32_t, int32_t>& evse_connector_structure, const json& config,
-                const std::string& ocpp_main_path, const std::string& database_path, const std::string& sql_init_path,
+    ChargePoint(const std::map<int32_t, int32_t>& evse_connector_structure,
+                const std::string& device_model_storage_address, const std::string& ocpp_main_path,
+                const std::string& core_database_path, const std::string& sql_init_path,
                 const std::string& message_log_path, const std::string& certs_path, const Callbacks& callbacks);
 
     /// \brief Starts the ChargePoint, initializes and connects to the Websocket endpoint
@@ -229,11 +232,12 @@ public:
     void on_log_status_notification(UploadLogStatusEnum status, int32_t requestId);
 
     /// @brief Data transfer mechanism initiated by charger
-    /// @param vendorId 
-    /// @param messageId 
-    /// @param data 
+    /// @param vendorId
+    /// @param messageId
+    /// @param data
     /// @return DataTransferResponse contaning the result from CSMS
-    DataTransferResponse data_transfer_req(const CiString<255>& vendorId,const CiString<50>& messageId, const std::string& data);
+    DataTransferResponse data_transfer_req(const CiString<255>& vendorId, const CiString<50>& messageId,
+                                           const std::string& data);
 };
 
 } // namespace v201

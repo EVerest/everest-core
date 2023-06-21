@@ -1,0 +1,28 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - {{year}} Pionix GmbH and Contributors to EVerest
+
+#ifndef OCPP_V201_CTRLR_COMPONENT_VARIABLES
+#define OCPP_V201_CTRLR_COMPONENT_VARIABLES
+
+#include <ocpp/v201/ocpp_types.hpp>
+
+namespace ocpp {
+namespace v201 {
+
+namespace ControllerComponents {
+{% for component in components %}
+extern const Component& {{ component }};
+{% endfor %}
+} // ControllerComponents
+
+// Provides access to standardized variables of OCPP2.0.1 spec
+namespace ControllerComponentVariables {
+{% for variable in variables %}
+extern const ComponentVariable& {{ variable.unique_variable_name }};
+{% endfor %}
+
+} // namespace ComponentVariables
+} // namespace ocpp
+} // namespace v201
+
+#endif // OCPP_V201_CTRLR_COMPONENT_VARIABLES

@@ -23,8 +23,8 @@ target_sources(ocpp
         ocpp/v16/types.cpp
         ocpp/v201/charge_point.cpp
         ocpp/v201/database_handler.cpp
-        ocpp/v201/device_model_management.cpp
-        ocpp/v201/device_model_management_base.cpp
+        ocpp/v201/device_model_storage_sqlite.cpp
+        ocpp/v201/device_model.cpp
         ocpp/v201/transaction.cpp
         ocpp/v201/enums.cpp
         ocpp/v201/ocpp_types.cpp
@@ -32,6 +32,7 @@ target_sources(ocpp
         ocpp/v201/connector.cpp
         ocpp/v201/evse.cpp
         ocpp/v201/utils.cpp
+        ocpp/v201/ctrlr_component_variables.cpp
 )
 
 add_subdirectory(ocpp/common/websocket)

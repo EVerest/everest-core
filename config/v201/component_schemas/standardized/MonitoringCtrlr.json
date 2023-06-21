@@ -1,0 +1,180 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Schema for MonitoringCtrlr",
+  "type": "object",
+  "properties": {
+    "MonitoringCtrlrAvailable": {
+      "variable_name": "Available",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Whether monitoring is available,",
+      "type": "boolean"
+    },
+    "BytesPerMessageClearVariableMonitoring": {
+      "variable_name": "BytesPerMessage",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "instance": "ClearVariableMonitoring",
+      "description": "Maximum number of bytes in a ClearVariableMonitoring message.",
+      "type": "integer"
+    },
+    "BytesPerMessageSetVariableMonitoring": {
+      "variable_name": "BytesPerMessage",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "instance": "SetVariableMonitoring",
+      "description": "Maximum number of bytes in a SetVariableMonitoring message,",
+      "type": "integer"
+    },
+    "MonitoringCtrlrEnabled": {
+      "variable_name": "Enabled",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Whether monitoring is enabled.",
+      "type": "boolean"
+    },
+    "ItemsPerMessageClearVariableMonitoring": {
+      "variable_name": "ItemsPerMessage",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "instance": "ClearVariableMonitoring",
+      "description": "Maximum number of IDs in a ClearVariableMonitoringRequest.",
+      "type": "integer"
+    },
+    "ItemsPerMessageSetVariableMonitoring": {
+      "variable_name": "ItemsPerMessage",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "instance": "SetVariableMonitoring",
+      "description": "Maximum number of setMonitoringData elements that can be sent in one setVariableMonitoringRequest message.",
+      "type": "integer"
+    },
+    "OfflineQueuingSeverity": {
+      "variable_name": "OfflineQueuingSeverity",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "When set and the Charging Station is offline, the Charging Station shall queue any notifyEventRequest messages triggered by a monitor with a severity number equal to or lower than the severity configured here.",
+      "type": "integer"
+    },
+    "MonitoringBase": {
+      "variable_name": "MonitoringBase",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "OptionList"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Currently used monitoring base (readonly)",
+      "type": "string"
+    },
+    "MonitoringLevel": {
+      "variable_name": "MonitoringLevel",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Currently used monitoring level (readonly)",
+      "type": "integer"
+    },
+    "ActiveMonitoringBase": {
+      "variable_name": "ActiveMonitoringBase",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "OptionList"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Shows the currently used MonitoringBase. Valid values according MonitoringBaseEnumType: All, FactoryDefault, HardwiredOnly.",
+      "type": "string"
+    },
+    "ActiveMonitoringLevel": {
+      "variable_name": "ActiveMonitoringLevel",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Shows the currently used MonitoringLevel. Valid values are severity levels of SetMonitoringLevelRequest: 0-9.",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "BytesPerMessageSetVariableMonitoring",
+    "ItemsPerMessageSetVariableMonitoring"
+  ]
+}
