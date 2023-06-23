@@ -42,6 +42,7 @@ find_path(NODEJS_INCLUDE_DIR "node_api.h"
         "node17"
         "node18"
         "node19"
+        "node20"
         "nodejs/src"
     REQUIRED
 )
