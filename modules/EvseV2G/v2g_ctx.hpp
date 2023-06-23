@@ -137,24 +137,6 @@ void publish_DC_EVRemainingTime(struct v2g_context* ctx, const float& iso1_dc_ev
  */
 void log_selected_energy_transfer_type(int selected_energy_transfer_mode);
 
-/*!
- * \brief add_service_to_service_list This function adds a service list item to the service list.
- * \param v2g_ctx is a pointer of type \c v2g_context
- * \param evse_service is service which shall be provided by the EVSE in the service list.
- * \param parameter_set_id is an array of optional service parameter-set-IDs
- * \param parameter_set_id_len is the array length of parameter_set_id
- * \return Returns \c true if it was successful, otherwise \c false.
- */
-bool add_service_to_service_list(struct v2g_context* v2g_ctx, const struct iso1ServiceType& evse_service,
-                                 const int16_t* parameter_set_id = NULL, uint8_t parameter_set_id_len = 0);
-
-/*!
- * \brief configure_parameter_set This function configures the parameter-set structure of a specific service ID.
- * \param v2g_ctx is a pointer of type \c v2g_context
- * \param parameterSetId is the parameter-set-ID which belongs to the service ID.
- * \param serviceId is the service ID. Currently only service ID 2 ("Certificate") supported.
- */
-void configure_parameter_set(struct iso1ServiceParameterListType* parameterSetList, int16_t parameterSetId,
-                             uint16_t serviceId);
+void configure_parameter_set(struct iso1ServiceParameterListType* parameterSetList, int16_t parameterSetId);
 
 #endif /* V2G_CTX_H */
