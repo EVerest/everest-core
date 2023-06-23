@@ -354,16 +354,19 @@ void ISO15118_chargerImpl::handle_cableCheck_Finished(bool& status) {
 void ISO15118_chargerImpl::handle_set_Certificate_Service_Supported(bool& status) {
     if (status == true) {
         // For setting "Certificate" in ServiceList in ServiceDiscoveryRes
-        struct iso1ServiceType cert_service;
         const std::string service_name = "Certificate";
-        const int16_t cert_parameter_set_id[] = {1}; // parameter-set-ID 1: "Installation" service. TODO: Support of the "Update" service (parameter-set-ID 2)
+        uint8_t len = service_name.length();
+        v2g_ctx->evse_v2g_data.evse_service_list[v2g_ctx->evse_v2g_data.evse_service_list_len].FreeService = 1;
+        v2g_ctx->evse_v2g_data.evse_service_list[v2g_ctx->evse_v2g_data.evse_service_list_len].ServiceID = 2;
+        v2g_ctx->evse_v2g_data.evse_service_list[v2g_ctx->evse_v2g_data.evse_service_list_len].ServiceCategory = iso1serviceCategoryType_ContractCertificate;
+        memcpy(v2g_ctx->evse_v2g_data.evse_service_list[v2g_ctx->evse_v2g_data.evse_service_list_len].ServiceName.characters, reinterpret_cast<const char*>(service_name.data()), len);
+        v2g_ctx->evse_v2g_data.evse_service_list[v2g_ctx->evse_v2g_data.evse_service_list_len].ServiceName.charactersLen = len;
+        v2g_ctx->evse_v2g_data.evse_service_list_len += 1;
 
-        cert_service.FreeService = 1; // true
-        cert_service.ServiceID = 2; // as defined in ISO 15118-2
-        cert_service.ServiceCategory = iso1serviceCategoryType_ContractCertificate;
-        memcpy(cert_service.ServiceName.characters, reinterpret_cast<const char*>(service_name.data()), service_name.length());
-
-        add_service_to_service_list(v2g_ctx, cert_service, cert_parameter_set_id, sizeof(cert_parameter_set_id) / sizeof(cert_parameter_set_id[0]));
+        // For setting "Installation" in the ServiceParameterList in ServiceDetailRes
+        configure_parameter_set(&v2g_ctx->evse_v2g_data.service_parameter_list[0], 1);
+        // TODO: support "Update" in the ServiceParameterList in ServiceDetailRes
+        // configure_parameter_set(&v2g_ctx->evse_v2g_data.service_parameter_list[0], 2);
     }
 }
 
