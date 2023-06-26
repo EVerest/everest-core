@@ -298,8 +298,12 @@ struct v2g_context {
     struct {
         /* V2G session values */
         iso1paymentOptionType iso_selected_payment_option;
-        uint8_t gen_challenge[16]; // for PnC
-        bool verify_contract_cert_chain; // for PnC
+        long long int auth_start_timeout;
+        int auth_timeout_eim;
+        int auth_timeout_pnc;                                       // for PnC
+        uint8_t gen_challenge[16];                                  // for PnC
+        bool verify_contract_cert_chain;                            // for PnC
+        types::authorization::CertificateStatus certificate_status; // for PnC
 
         struct {
             bool valid_crt;

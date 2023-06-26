@@ -31,6 +31,8 @@ struct Conf {
     bool tls_key_logging;
     std::string tls_key_logging_path;
     bool verify_contract_cert_chain;
+    int auth_timeout_pnc;
+    int auth_timeout_eim;
 };
 
 class EvseV2G : public Everest::ModuleBase {

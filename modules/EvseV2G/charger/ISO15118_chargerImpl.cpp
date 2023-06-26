@@ -66,6 +66,9 @@ void ISO15118_chargerImpl::init() {
 
     /* Configure if the contract certificate chain should be verified locally */
     v2g_ctx->session.verify_contract_cert_chain = mod->config.verify_contract_cert_chain;
+
+    v2g_ctx->session.auth_timeout_eim = mod->config.auth_timeout_eim;
+    v2g_ctx->session.auth_timeout_pnc = mod->config.auth_timeout_pnc;
 }
 
 void ISO15118_chargerImpl::ready() {
@@ -195,6 +198,8 @@ void ISO15118_chargerImpl::handle_set_Auth_Okay_EIM(bool& auth_okay_eim) {
 
 void ISO15118_chargerImpl::handle_set_Auth_Okay_PnC(types::authorization::AuthorizationStatus& status,
                                                     types::authorization::CertificateStatus& certificateStatus) {
+    v2g_ctx->session.certificate_status = certificateStatus;
+
     if (status == types::authorization::AuthorizationStatus::Accepted &&
         certificateStatus == types::authorization::CertificateStatus::Accepted) {
         v2g_ctx->evse_v2g_data.evse_processing[PHASE_AUTH] = (uint8_t)iso1EVSEProcessingType_Finished;
