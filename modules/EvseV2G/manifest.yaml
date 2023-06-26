@@ -61,6 +61,20 @@ config:
       chain locally.
     type: boolean
     default: false
+  auth_timeout_pnc:
+    description: >-
+      Defines how many seconds the EVSE should wait for authorization in PnC case,
+      before the charging session is aborted.
+      Write 0 if the EVSE should wait indefinitely for PnC authorization.
+    type: integer
+    default: 55
+  auth_timeout_eim:
+    description: >-
+      Defines how many seconds the EVSE should wait for authorization in EIM case,
+      before the charging session is aborted.
+      Write 0 if the EVSE should wait indefinitely for EIM authorization.
+    type: integer
+    default: 300
 provides:
   charger:
     interface: ISO15118_charger

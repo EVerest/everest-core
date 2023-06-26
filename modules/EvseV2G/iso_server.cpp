@@ -1090,6 +1090,7 @@ static enum v2g_event handle_iso_payment_service_selection(struct v2g_connection
         /* Set next expected req msg */
         conn->ctx->state = (int)
             iso_dc_state_id::WAIT_FOR_AUTHORIZATION; // [V2G-551] (iso specification describes only the ac case... )
+        conn->ctx->session.auth_start_timeout = getmonotonictime();
     }
 
     return next_event;
@@ -1260,7 +1261,7 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
         ProvidedIdToken.id_token = std::string(cert_emaid);
         ProvidedIdToken.type = types::authorization::TokenType::PlugAndCharge;
         if (contract_cert_chain_pem.empty() == false) {
-           ProvidedIdToken.certificate = contract_cert_chain_pem;
+            ProvidedIdToken.certificate = contract_cert_chain_pem;
         }
         conn->ctx->p_charger->publish_Require_Auth_PnC(ProvidedIdToken);
 
@@ -1278,6 +1279,7 @@ error_out:
 
     /* Set next expected req msg */
     conn->ctx->state = (int)iso_dc_state_id::WAIT_FOR_AUTHORIZATION; // [V2G-560]
+    conn->ctx->session.auth_start_timeout = getmonotonictime();
 
     return nextEvent;
 }
@@ -1293,6 +1295,8 @@ static enum v2g_event handle_iso_authorization(struct v2g_connection* conn) {
     struct iso1AuthorizationReqType* req = &conn->exi_in.iso1EXIDocument->V2G_Message.Body.AuthorizationReq;
     struct iso1AuthorizationResType* res = &conn->exi_out.iso1EXIDocument->V2G_Message.Body.AuthorizationRes;
     enum v2g_event next_event = V2G_EVENT_NO_EVENT;
+    struct timespec ts_abs_timeout;
+    bool is_payment_option_contract = conn->ctx->session.iso_selected_payment_option == iso1paymentOptionType_Contract;
 
     /* At first, publish the received ev request message to the customer mqtt interface */
     publish_iso_authorization_req(req);
@@ -1329,12 +1333,24 @@ static enum v2g_event handle_iso_authorization(struct v2g_connection* conn) {
     }
     res->EVSEProcessing = (iso1EVSEProcessingType)conn->ctx->evse_v2g_data.evse_processing[PHASE_AUTH];
 
+    if (conn->ctx->evse_v2g_data.evse_processing[PHASE_AUTH] != iso1EVSEProcessingType_Finished) {
+        if (((is_payment_option_contract == false) && (conn->ctx->session.auth_timeout_eim == 0)) ||
+            ((is_payment_option_contract == true) && (conn->ctx->session.auth_timeout_pnc == 0))) {
+            dlog(DLOG_LEVEL_DEBUG, "Waiting for authorization forever!");
+        } else if ((getmonotonictime() - conn->ctx->session.auth_start_timeout) >= 1000 *
+                   (is_payment_option_contract ? conn->ctx->session.auth_timeout_pnc
+                                               : conn->ctx->session.auth_timeout_eim)) {
+            conn->ctx->session.auth_start_timeout = getmonotonictime();
+            res->ResponseCode = iso1responseCodeType_FAILED;
+        }
+    }
+
 error_out:
     /* Check the current response code and check if no external error has occurred */
     next_event = (v2g_event)iso_validate_response_code(&res->ResponseCode, conn);
 
     /* Set next expected req msg */
-    conn->ctx->state = (iso1EVSEProcessingType_Finished == res->EVSEProcessing)
+    conn->ctx->state = (res->EVSEProcessing == iso1EVSEProcessingType_Finished)
                            ? (int)iso_dc_state_id::WAIT_FOR_CHARGEPARAMETERDISCOVERY
                            : (int)iso_dc_state_id::WAIT_FOR_AUTHORIZATION; // [V2G-573] (AC) , [V2G-687] (DC)
 
