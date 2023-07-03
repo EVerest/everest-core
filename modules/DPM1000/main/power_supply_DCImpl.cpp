@@ -4,17 +4,19 @@
 
 #include <memory>
 
-#include "dc_can_broker.hpp"
+#include "can_broker.hpp"
 
 #include <fmt/core.h>
 
-std::unique_ptr<DcCanBroker> can_broker;
+std::unique_ptr<CanBroker> can_broker;
+
+namespace dpm1000 = can::protocol::dpm1000;
 
 namespace module {
 namespace main {
 
-static void log_status_on_fail(const std::string& msg, DcCanBroker::AccessReturnType status) {
-    using ReturnStatus = DcCanBroker::AccessReturnType;
+static void log_status_on_fail(const std::string& msg, CanBroker::AccessReturnType status) {
+    using ReturnStatus = CanBroker::AccessReturnType;
 
     std::string reason;
     switch (status) {
@@ -36,57 +38,57 @@ static void log_status_on_fail(const std::string& msg, DcCanBroker::AccessReturn
 static std::string alarm_to_string(uint32_t alarm) {
     std::string alarmflags;
 
-    if (alarm & (1 << (int)dc_can::defs::Alarm::FUSE_BURN_OUT))
+    if (alarm & (1 << (int)dpm1000::def::Alarm::FUSE_BURN_OUT))
         alarmflags += "[FUSE_BURN_OUT]";
-    if (alarm & (1 << (int)dc_can::defs::Alarm::PFC_DCDC_COMMUNICATION_ERROR))
+    if (alarm & (1 << (int)dpm1000::def::Alarm::PFC_DCDC_COMMUNICATION_ERROR))
         alarmflags += "[PFC_DCDC_COMMUNICATION_ERROR]";
-    if (alarm & (1 << (int)dc_can::defs::Alarm::UNBALANCED_BUS_VOLTAGE))
+    if (alarm & (1 << (int)dpm1000::def::Alarm::UNBALANCED_BUS_VOLTAGE))
         alarmflags += "[UNBALANCED_BUS_VOLTAGE]";
-    if (alarm & (1 << (int)dc_can::defs::Alarm::BUS_OVER_VOLTAGE))
+    if (alarm & (1 << (int)dpm1000::def::Alarm::BUS_OVER_VOLTAGE))
         alarmflags += "[BUS_OVER_VOLTAGE]";
-    if (alarm & (1 << (int)dc_can::defs::Alarm::BUS_ABNORMAL_VOLTAGE))
+    if (alarm & (1 << (int)dpm1000::def::Alarm::BUS_ABNORMAL_VOLTAGE))
         alarmflags += "[BUS_ABNORMAL_VOLTAGE]";
-    if (alarm & (1 << (int)dc_can::defs::Alarm::PHASE_OVER_VOLTAGE))
+    if (alarm & (1 << (int)dpm1000::def::Alarm::PHASE_OVER_VOLTAGE))
         alarmflags += "[PHASE_OVER_VOLTAGE]";
-    if (alarm & (1 << (int)dc_can::defs::Alarm::ID_NUMBER_REPETITION))
+    if (alarm & (1 << (int)dpm1000::def::Alarm::ID_NUMBER_REPETITION))
         alarmflags += "[ID_NUMBER_REPETITION]";
-    if (alarm & (1 << (int)dc_can::defs::Alarm::BUS_UNDER_VOLTAGE))
+    if (alarm & (1 << (int)dpm1000::def::Alarm::BUS_UNDER_VOLTAGE))
         alarmflags += "[BUS_UNDER_VOLTAGE]";
-    if (alarm & (1 << (int)dc_can::defs::Alarm::PHASE_LOSS))
+    if (alarm & (1 << (int)dpm1000::def::Alarm::PHASE_LOSS))
         alarmflags += "[PHASE_LOSS]";
 
-    if (alarm & (1 << (int)dc_can::defs::Alarm::PHASE_UNDER_VOLTAGE))
+    if (alarm & (1 << (int)dpm1000::def::Alarm::PHASE_UNDER_VOLTAGE))
         alarmflags += "[PHASE_UNDER_VOLTAGE]";
-    if (alarm & (1 << (int)dc_can::defs::Alarm::CAN_COMMUNICATION_FAULT))
+    if (alarm & (1 << (int)dpm1000::def::Alarm::CAN_COMMUNICATION_FAULT))
         alarmflags += "[CAN_COMMUNICATION_FAULT]";
-    if (alarm & (1 << (int)dc_can::defs::Alarm::DCDC_UNEVEN_CURRENT_SHARING))
+    if (alarm & (1 << (int)dpm1000::def::Alarm::DCDC_UNEVEN_CURRENT_SHARING))
         alarmflags += "[DCDC_UNEVEN_CURRENT_SHARING]";
-    if (alarm & (1 << (int)dc_can::defs::Alarm::PFC_POWER_OFF))
+    if (alarm & (1 << (int)dpm1000::def::Alarm::PFC_POWER_OFF))
         alarmflags += "[PFC_POWER_OFF]";
 
-    if (alarm & (1 << (int)dc_can::defs::Alarm::FAN_FULL_SPEED))
+    if (alarm & (1 << (int)dpm1000::def::Alarm::FAN_FULL_SPEED))
         alarmflags += "[FAN_FULL_SPEED]";
-    if (alarm & (1 << (int)dc_can::defs::Alarm::POWER_LIMITING))
+    if (alarm & (1 << (int)dpm1000::def::Alarm::POWER_LIMITING))
         alarmflags += "[POWER_LIMITING]";
-    if (alarm & (1 << (int)dc_can::defs::Alarm::DCDC_POWER_OFF))
+    if (alarm & (1 << (int)dpm1000::def::Alarm::DCDC_POWER_OFF))
         alarmflags += "[DCDC_POWER_OFF]";
-    if (alarm & (1 << (int)dc_can::defs::Alarm::TEMPERATURE_POWER_LIMITING))
+    if (alarm & (1 << (int)dpm1000::def::Alarm::TEMPERATURE_POWER_LIMITING))
         alarmflags += "[TEMPERATURE_POWER_LIMITING]";
 
-    if (alarm & (1 << (int)dc_can::defs::Alarm::AC_POWER_LIMITING))
+    if (alarm & (1 << (int)dpm1000::def::Alarm::AC_POWER_LIMITING))
         alarmflags += "[AC_POWER_LIMITING]";
-    if (alarm & (1 << (int)dc_can::defs::Alarm::DCDC_EEPROM_FAULTS))
+    if (alarm & (1 << (int)dpm1000::def::Alarm::DCDC_EEPROM_FAULTS))
         alarmflags += "[DCDC_EEPROM_FAULTS]";
-    if (alarm & (1 << (int)dc_can::defs::Alarm::FAN_FAULTS))
+    if (alarm & (1 << (int)dpm1000::def::Alarm::FAN_FAULTS))
         alarmflags += "[FAN_FAULTS]";
-    if (alarm & (1 << (int)dc_can::defs::Alarm::DCDC_SHORT_CIRCUIT))
+    if (alarm & (1 << (int)dpm1000::def::Alarm::DCDC_SHORT_CIRCUIT))
         alarmflags += "[DCDC_SHORT_CIRCUIT]";
 
-    if (alarm & (1 << (int)dc_can::defs::Alarm::PFC_EEPROM_FAULTS))
+    if (alarm & (1 << (int)dpm1000::def::Alarm::PFC_EEPROM_FAULTS))
         alarmflags += "[PFC_EEPROM_FAULTS]";
-    if (alarm & (1 << (int)dc_can::defs::Alarm::DCDC_OVER_TEMPERATURE))
+    if (alarm & (1 << (int)dpm1000::def::Alarm::DCDC_OVER_TEMPERATURE))
         alarmflags += "[DCDC_OVER_TEMPERATURE]";
-    if (alarm & (1 << (int)dc_can::defs::Alarm::DCDC_OUTPUT_OVER_VOLTAGE))
+    if (alarm & (1 << (int)dpm1000::def::Alarm::DCDC_OUTPUT_OVER_VOLTAGE))
         alarmflags += "[DCDC_OUTPUT_OVER_VOLTAGE]";
 
     return alarmflags;
@@ -100,7 +102,7 @@ void power_supply_DCImpl::init() {
     config_voltage_limit = mod->config.voltage_limit_V;
     config_power_limit = mod->config.power_limit_W;
 
-    can_broker = std::make_unique<DcCanBroker>(mod->config.device, mod->config.device_address);
+    can_broker = std::make_unique<CanBroker>(mod->config.device, mod->config.device_address);
 
     // ensure the module is switched off
     can_broker->set_state(false);
@@ -119,7 +121,7 @@ void power_supply_DCImpl::init() {
     }
 
     // WTF: This really uses a float to set one of the three modes automatic, series or parallel.
-    auto status = can_broker->set_data(dc_can::defs::SetValueType::SERIES_PARALLEL_MODE, series_parallel_mode);
+    auto status = can_broker->set_data(dpm1000::def::SetValueType::SERIES_PARALLEL_MODE, series_parallel_mode);
     log_status_on_fail("Set current limit failed", status);
 }
 
@@ -130,32 +132,32 @@ void power_supply_DCImpl::ready() {
 
         // Send voltage, current and power limits
 
-        auto status = can_broker->set_data(dc_can::defs::SetValueType::CURRENT_LIMIT, current);
+        auto status = can_broker->set_data(dpm1000::def::SetValueType::CURRENT_LIMIT, current);
         log_status_on_fail("Set current limit failed", status);
 
-        status = can_broker->set_data(dc_can::defs::SetValueType::DEFAULT_CURRENT_LIMIT, 1.0);
+        status = can_broker->set_data(dpm1000::def::SetValueType::DEFAULT_CURRENT_LIMIT, 1.0);
         log_status_on_fail("Set default current limit failed", status);
 
-        status = can_broker->set_data(dc_can::defs::SetValueType::VOLTAGE, voltage);
+        status = can_broker->set_data(dpm1000::def::SetValueType::VOLTAGE, voltage);
         log_status_on_fail("Set voltage failed", status);
 
-        status = can_broker->set_data(dc_can::defs::SetValueType::POWER_LIMIT, 1.0);
+        status = can_broker->set_data(dpm1000::def::SetValueType::POWER_LIMIT, 1.0);
         log_status_on_fail("Set current limit failed", status);
 
         // Read voltage and current
         float tmp;
         types::power_supply_DC::VoltageCurrent vc;
 
-        status = can_broker->read_data(dc_can::defs::ReadValueType::VOLTAGE, tmp);
+        status = can_broker->read_data(dpm1000::def::ReadValueType::VOLTAGE, tmp);
         log_status_on_fail("Read voltage failed", status);
-        if (status != DcCanBroker::AccessReturnType::SUCCESS) {
+        if (status != CanBroker::AccessReturnType::SUCCESS) {
             continue;
         }
         vc.voltage_V = tmp;
 
-        status = can_broker->read_data(dc_can::defs::ReadValueType::CURRENT, tmp);
+        status = can_broker->read_data(dpm1000::def::ReadValueType::CURRENT, tmp);
         log_status_on_fail("Read current failed", status);
-        if (status != DcCanBroker::AccessReturnType::SUCCESS) {
+        if (status != CanBroker::AccessReturnType::SUCCESS) {
             continue;
         }
 
@@ -165,9 +167,9 @@ void power_supply_DCImpl::ready() {
 
         // read alarm flags
         uint32_t alarm = 0;
-        status = can_broker->read_data_int(dc_can::defs::ReadValueType::ALARM, alarm);
+        status = can_broker->read_data_int(dpm1000::def::ReadValueType::ALARM, alarm);
         log_status_on_fail("Read alarm failed", status);
-        if (status == DcCanBroker::AccessReturnType::SUCCESS) {
+        if (status == CanBroker::AccessReturnType::SUCCESS) {
             if (last_alarm_flags != alarm) {
                 auto alarmflags = alarm_to_string(alarm);
                 if (alarmflags != "") {
@@ -184,39 +186,39 @@ void power_supply_DCImpl::ready() {
         float current_real_part = 0, current_limit = 0, dcdc_temperature = 0, ac_voltage = 0, voltage_limit = 0,
               pfc0_voltage = 0, pfc1_voltage = 0, env_temperature = 0, ac_voltage_phase_a = 0, ac_voltage_phase_b = 0,
               ac_voltage_phase_c = 0, pfc_temperature = 0, power_limit = 0;
-        status = can_broker->read_data(dc_can::defs::ReadValueType::CURRENT_REAL_PART, current_real_part);
+        status = can_broker->read_data(dpm1000::def::ReadValueType::CURRENT_REAL_PART, current_real_part);
         log_status_on_fail("Read CURRENT_REAL_PART failed", status);
-        status = can_broker->read_data(dc_can::defs::ReadValueType::CURRENT_LIMIT, current_limit);
+        status = can_broker->read_data(dpm1000::def::ReadValueType::CURRENT_LIMIT, current_limit);
         log_status_on_fail("Read CURRENT_LIMIT failed", status);
 
-        status = can_broker->read_data(dc_can::defs::ReadValueType::DCDC_TEMPERATURE, dcdc_temperature);
+        status = can_broker->read_data(dpm1000::def::ReadValueType::DCDC_TEMPERATURE, dcdc_temperature);
         log_status_on_fail("Read DCDC_TEMPERATURE failed", status);
-        status = can_broker->read_data(dc_can::defs::ReadValueType::AC_VOLTAGE, ac_voltage);
+        status = can_broker->read_data(dpm1000::def::ReadValueType::AC_VOLTAGE, ac_voltage);
         log_status_on_fail("Read AC_VOLTAGE failed", status);
-        status = can_broker->read_data(dc_can::defs::ReadValueType::VOLTAGE_LIMIT, voltage_limit);
+        status = can_broker->read_data(dpm1000::def::ReadValueType::VOLTAGE_LIMIT, voltage_limit);
         log_status_on_fail("Read VOLTAGE_LIMIT failed", status);
-        status = can_broker->read_data(dc_can::defs::ReadValueType::PFC0_VOLTAGE, pfc0_voltage);
+        status = can_broker->read_data(dpm1000::def::ReadValueType::PFC0_VOLTAGE, pfc0_voltage);
         log_status_on_fail("Read PFC0_VOLTAGE failed", status);
-        status = can_broker->read_data(dc_can::defs::ReadValueType::PFC1_VOLTAGE, pfc1_voltage);
+        status = can_broker->read_data(dpm1000::def::ReadValueType::PFC1_VOLTAGE, pfc1_voltage);
         log_status_on_fail("Read PFC1_VOLTAGE failed", status);
-        status = can_broker->read_data(dc_can::defs::ReadValueType::ENV_TEMPERATURE, env_temperature);
+        status = can_broker->read_data(dpm1000::def::ReadValueType::ENV_TEMPERATURE, env_temperature);
         log_status_on_fail("Read ENV_TEMPERATURE failed", status);
 
-        status = can_broker->read_data(dc_can::defs::ReadValueType::AC_VOLTAGE_PHASE_A, ac_voltage_phase_a);
+        status = can_broker->read_data(dpm1000::def::ReadValueType::AC_VOLTAGE_PHASE_A, ac_voltage_phase_a);
         log_status_on_fail("Read AC_VOLTAGE_PHASE_A failed", status);
-        status = can_broker->read_data(dc_can::defs::ReadValueType::AC_VOLTAGE_PHASE_B, ac_voltage_phase_b);
+        status = can_broker->read_data(dpm1000::def::ReadValueType::AC_VOLTAGE_PHASE_B, ac_voltage_phase_b);
         log_status_on_fail("Read AC_VOLTAGE_PHASE_B failed", status);
 
-        status = can_broker->read_data(dc_can::defs::ReadValueType::AC_VOLTAGE_PHASE_C, ac_voltage_phase_c);
+        status = can_broker->read_data(dpm1000::def::ReadValueType::AC_VOLTAGE_PHASE_C, ac_voltage_phase_c);
         log_status_on_fail("Read AC_VOLTAGE_PHASE_C failed", status);
 
-        status = can_broker->read_data(dc_can::defs::ReadValueType::PFC_TEMPERATURE, pfc_temperature);
+        status = can_broker->read_data(dpm1000::def::ReadValueType::PFC_TEMPERATURE, pfc_temperature);
         log_status_on_fail("Read PFC_TEMPERATURE failed", status);
 
-        status = can_broker->read_data(dc_can::defs::ReadValueType::POWER_LIMIT, power_limit);
+        status = can_broker->read_data(dpm1000::def::ReadValueType::POWER_LIMIT, power_limit);
         log_status_on_fail("Read POWER_LIMIT failed", status);
 
-        status = can_broker->read_data(dc_can::defs::ReadValueType::ENV_TEMPERATURE, env_temperature);
+        status = can_broker->read_data(dpm1000::def::ReadValueType::ENV_TEMPERATURE, env_temperature);
         log_status_on_fail("Read ENV_TEMPERATURE failed", status);
 
         EVLOG_info << fmt::format(

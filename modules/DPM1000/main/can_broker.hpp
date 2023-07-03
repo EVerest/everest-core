@@ -10,9 +10,9 @@
 #include <string>
 #include <thread>
 
-#include <dc_can/dc_can.hpp>
+#include <can/protocol/dpm1000.hpp>
 
-struct DcCanRequest {
+struct CanRequest {
     enum class State {
         IDLE,
         ISSUED,
@@ -26,7 +26,7 @@ struct DcCanRequest {
     std::mutex mutex;
 };
 
-class DcCanBroker {
+class CanBroker {
 public:
     enum class AccessReturnType {
         SUCCESS,
@@ -34,16 +34,16 @@ public:
         TIMEOUT,
         NOT_READY,
     };
-    DcCanBroker(const std::string& interface_name, uint8_t _device_src);
+    CanBroker(const std::string& interface_name, uint8_t _device_src);
 
-    AccessReturnType read_data(dc_can::defs::ReadValueType, float& result);
-    AccessReturnType read_data_int(dc_can::defs::ReadValueType, uint32_t& result);
+    AccessReturnType read_data(can::protocol::dpm1000::def::ReadValueType, float& result);
+    AccessReturnType read_data_int(can::protocol::dpm1000::def::ReadValueType, uint32_t& result);
 
-    AccessReturnType set_data(dc_can::defs::SetValueType, float value);
-    AccessReturnType set_data_int(dc_can::defs::SetValueType, uint32_t value);
+    AccessReturnType set_data(can::protocol::dpm1000::def::SetValueType, float value);
+    AccessReturnType set_data_int(can::protocol::dpm1000::def::SetValueType, uint32_t value);
     void set_state(bool enabled);
 
-    ~DcCanBroker();
+    ~CanBroker();
 
 private:
     constexpr static auto ACCESS_TIMEOUT = std::chrono::milliseconds(250);
@@ -57,7 +57,7 @@ private:
     uint8_t device_src;
 
     std::mutex access_mtx;
-    DcCanRequest request;
+    CanRequest request;
 
     const uint8_t monitor_id{0xf0};
 

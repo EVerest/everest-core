@@ -11,12 +11,13 @@ ev_setup_cpp_module()
 # insert your custom targets and additional config variables here
 target_sources(${MODULE_NAME}
     PRIVATE
-        main/dc_can_broker.cpp
+        main/can_broker.cpp
 )
 
 target_link_libraries(${MODULE_NAME}
     PRIVATE
-        dc_can)
+        can_protocols::dpm1000
+)
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 
 target_sources(${MODULE_NAME}

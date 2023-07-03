@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifndef DC_CAN_DC_CAN_HPP
-#define DC_CAN_DC_CAN_HPP
+#ifndef CAN_PROTOCOL_DPM1000_HPP
+#define CAN_PROTOCOL_DPM1000_HPP
 
 #include <cstdint>
 #include <vector>
 
 #include <linux/can.h>
 
-namespace dc_can {
-namespace defs {
+namespace can::protocol::dpm1000 {
+namespace def {
 
 enum class ErrorType : uint8_t {
     NO_ERROR = 0xf0,
@@ -102,7 +102,7 @@ constexpr auto ERROR_FLAG_BIT_SHIFT = 7;
 // CURRENT_ALARM_STATUS = 0x0040 (is this get or set?)
 // MODULE_GROUPING_SETTINGS = 0x0048 (is this get or set?)
 
-} // namespace defs
+} // namespace def
 
 int dumb_function();
 
@@ -110,17 +110,17 @@ void set_header(struct can_frame&, uint8_t source, uint8_t destination = 0xFF);
 
 void power_on(struct can_frame&, bool switch_on, bool close_input_relay);
 
-void request_data(struct can_frame&, defs::ReadValueType);
+void request_data(struct can_frame&, def::ReadValueType);
 
-void set_data(struct can_frame&, defs::SetValueType, const std::vector<uint8_t>& payload);
+void set_data(struct can_frame&, def::SetValueType, const std::vector<uint8_t>& payload);
 
 uint8_t parse_source(const struct can_frame&);
 uint16_t parse_msg_type(const struct can_frame&);
 
 inline bool is_error_flag_set(const struct can_frame& frame) {
-    return (frame.data[0] >> defs::ERROR_FLAG_BIT_SHIFT);
+    return (frame.data[0] >> def::ERROR_FLAG_BIT_SHIFT);
 }
 
-} // namespace dc_can
+} // namespace can::protocol::dpm1000
 
-#endif // DC_CAN_DC_CAN_HPP
+#endif // CAN_PROTOCOL_DPM1000_HPP

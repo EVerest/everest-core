@@ -1,1 +1,1 @@
-add_subdirectory(dc_can)
+add_subdirectory(can_dpm1000)
