@@ -12,9 +12,9 @@
 #include <thread>
 
 #include <net/if.h>
+#include <poll.h>
 #include <sys/eventfd.h>
 #include <sys/ioctl.h>
-#include <sys/poll.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
@@ -22,10 +22,13 @@
 
 namespace dpm1000 = can::protocol::dpm1000;
 
-// FIXME (aw): this helper doesn't really belong here
 static void exit_with_error(const char* msg) {
     fprintf(stderr, "%s (%s)\n", msg, strerror(errno));
     exit(-EXIT_FAILURE);
+}
+
+template <typename EnumType> static inline auto to_underlying(EnumType value) {
+    return static_cast<std::underlying_type_t<EnumType>>(value);
 }
 
 struct CanRequest {
@@ -275,10 +278,10 @@ int main(int argc, char* argv[]) {
 
     // while (1) {
     auto success = broker.set_data(dpm1000::def::SetValueType::VOLTAGE, 1000);
-    printf("Voltage setting success: %d\n", success);
+    printf("Voltage setting success: %d\n", to_underlying(success));
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     success = broker.set_data(dpm1000::def::SetValueType::CURRENT_LIMIT, 0);
-    printf("Current setting success: %d\n", success);
+    printf("Current setting success: %d\n", to_underlying(success));
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     // }
 
@@ -314,7 +317,7 @@ int main(int argc, char* argv[]) {
     // dpm1000::set_data(frame, dpm1000::def::SetValueType::CURRENT_LIMIT, {0x23, 0x24});
     dpm1000::set_header(frame, 0xf0, 0b00000100);
 
-    printf("frame is %08lX#", frame.can_id);
+    printf("frame is %08X#", frame.can_id);
     for (auto i = 0; i < sizeof(frame.data); ++i) {
         printf("%02X", frame.data[i]);
     }

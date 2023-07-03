@@ -4,9 +4,9 @@
 #include <stdexcept>
 
 #include <net/if.h>
+#include <poll.h>
 #include <sys/eventfd.h>
 #include <sys/ioctl.h>
-#include <sys/poll.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
@@ -103,7 +103,7 @@ void CanBroker::set_state(bool enabled) {
 }
 
 CanBroker::AccessReturnType CanBroker::dispatch_frame(const struct can_frame& frame, uint16_t id,
-                                                          uint32_t* return_payload) {
+                                                      uint32_t* return_payload) {
     // wait until we get access
     std::lock_guard<std::mutex> access_lock(access_mtx);
 

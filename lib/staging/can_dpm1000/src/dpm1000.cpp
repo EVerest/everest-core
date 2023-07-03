@@ -6,6 +6,8 @@
 #include <cstring>
 #include <type_traits>
 
+#include <endian.h>
+
 namespace can::protocol::dpm1000 {
 
 static inline void clear_frame_data(struct can_frame& frame) {
