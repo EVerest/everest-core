@@ -26,6 +26,7 @@ struct Conf {
     double current_limit_A;
     double voltage_limit_V;
     std::string series_parallel_mode;
+    bool debug_print_all_telemetry;
 };
 
 class DPM1000 : public Everest::ModuleBase {

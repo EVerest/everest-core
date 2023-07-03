@@ -181,56 +181,56 @@ void power_supply_DCImpl::ready() {
             }
         }
 
-#if 0
-        // read additional meta data
-        float current_real_part = 0, current_limit = 0, dcdc_temperature = 0, ac_voltage = 0, voltage_limit = 0,
-              pfc0_voltage = 0, pfc1_voltage = 0, env_temperature = 0, ac_voltage_phase_a = 0, ac_voltage_phase_b = 0,
-              ac_voltage_phase_c = 0, pfc_temperature = 0, power_limit = 0;
-        status = can_broker->read_data(dpm1000::def::ReadValueType::CURRENT_REAL_PART, current_real_part);
-        log_status_on_fail("Read CURRENT_REAL_PART failed", status);
-        status = can_broker->read_data(dpm1000::def::ReadValueType::CURRENT_LIMIT, current_limit);
-        log_status_on_fail("Read CURRENT_LIMIT failed", status);
+        if (mod->config.debug_print_all_telemetry) {
+            // read additional meta data
+            float current_real_part = 0, current_limit = 0, dcdc_temperature = 0, ac_voltage = 0, voltage_limit = 0,
+                  pfc0_voltage = 0, pfc1_voltage = 0, env_temperature = 0, ac_voltage_phase_a = 0,
+                  ac_voltage_phase_b = 0, ac_voltage_phase_c = 0, pfc_temperature = 0, power_limit = 0;
+            status = can_broker->read_data(dpm1000::def::ReadValueType::CURRENT_REAL_PART, current_real_part);
+            log_status_on_fail("Read CURRENT_REAL_PART failed", status);
+            status = can_broker->read_data(dpm1000::def::ReadValueType::CURRENT_LIMIT, current_limit);
+            log_status_on_fail("Read CURRENT_LIMIT failed", status);
 
-        status = can_broker->read_data(dpm1000::def::ReadValueType::DCDC_TEMPERATURE, dcdc_temperature);
-        log_status_on_fail("Read DCDC_TEMPERATURE failed", status);
-        status = can_broker->read_data(dpm1000::def::ReadValueType::AC_VOLTAGE, ac_voltage);
-        log_status_on_fail("Read AC_VOLTAGE failed", status);
-        status = can_broker->read_data(dpm1000::def::ReadValueType::VOLTAGE_LIMIT, voltage_limit);
-        log_status_on_fail("Read VOLTAGE_LIMIT failed", status);
-        status = can_broker->read_data(dpm1000::def::ReadValueType::PFC0_VOLTAGE, pfc0_voltage);
-        log_status_on_fail("Read PFC0_VOLTAGE failed", status);
-        status = can_broker->read_data(dpm1000::def::ReadValueType::PFC1_VOLTAGE, pfc1_voltage);
-        log_status_on_fail("Read PFC1_VOLTAGE failed", status);
-        status = can_broker->read_data(dpm1000::def::ReadValueType::ENV_TEMPERATURE, env_temperature);
-        log_status_on_fail("Read ENV_TEMPERATURE failed", status);
+            status = can_broker->read_data(dpm1000::def::ReadValueType::DCDC_TEMPERATURE, dcdc_temperature);
+            log_status_on_fail("Read DCDC_TEMPERATURE failed", status);
+            status = can_broker->read_data(dpm1000::def::ReadValueType::AC_VOLTAGE, ac_voltage);
+            log_status_on_fail("Read AC_VOLTAGE failed", status);
+            status = can_broker->read_data(dpm1000::def::ReadValueType::VOLTAGE_LIMIT, voltage_limit);
+            log_status_on_fail("Read VOLTAGE_LIMIT failed", status);
+            status = can_broker->read_data(dpm1000::def::ReadValueType::PFC0_VOLTAGE, pfc0_voltage);
+            log_status_on_fail("Read PFC0_VOLTAGE failed", status);
+            status = can_broker->read_data(dpm1000::def::ReadValueType::PFC1_VOLTAGE, pfc1_voltage);
+            log_status_on_fail("Read PFC1_VOLTAGE failed", status);
+            status = can_broker->read_data(dpm1000::def::ReadValueType::ENV_TEMPERATURE, env_temperature);
+            log_status_on_fail("Read ENV_TEMPERATURE failed", status);
 
-        status = can_broker->read_data(dpm1000::def::ReadValueType::AC_VOLTAGE_PHASE_A, ac_voltage_phase_a);
-        log_status_on_fail("Read AC_VOLTAGE_PHASE_A failed", status);
-        status = can_broker->read_data(dpm1000::def::ReadValueType::AC_VOLTAGE_PHASE_B, ac_voltage_phase_b);
-        log_status_on_fail("Read AC_VOLTAGE_PHASE_B failed", status);
+            status = can_broker->read_data(dpm1000::def::ReadValueType::AC_VOLTAGE_PHASE_A, ac_voltage_phase_a);
+            log_status_on_fail("Read AC_VOLTAGE_PHASE_A failed", status);
+            status = can_broker->read_data(dpm1000::def::ReadValueType::AC_VOLTAGE_PHASE_B, ac_voltage_phase_b);
+            log_status_on_fail("Read AC_VOLTAGE_PHASE_B failed", status);
 
-        status = can_broker->read_data(dpm1000::def::ReadValueType::AC_VOLTAGE_PHASE_C, ac_voltage_phase_c);
-        log_status_on_fail("Read AC_VOLTAGE_PHASE_C failed", status);
+            status = can_broker->read_data(dpm1000::def::ReadValueType::AC_VOLTAGE_PHASE_C, ac_voltage_phase_c);
+            log_status_on_fail("Read AC_VOLTAGE_PHASE_C failed", status);
 
-        status = can_broker->read_data(dpm1000::def::ReadValueType::PFC_TEMPERATURE, pfc_temperature);
-        log_status_on_fail("Read PFC_TEMPERATURE failed", status);
+            status = can_broker->read_data(dpm1000::def::ReadValueType::PFC_TEMPERATURE, pfc_temperature);
+            log_status_on_fail("Read PFC_TEMPERATURE failed", status);
 
-        status = can_broker->read_data(dpm1000::def::ReadValueType::POWER_LIMIT, power_limit);
-        log_status_on_fail("Read POWER_LIMIT failed", status);
+            status = can_broker->read_data(dpm1000::def::ReadValueType::POWER_LIMIT, power_limit);
+            log_status_on_fail("Read POWER_LIMIT failed", status);
 
-        status = can_broker->read_data(dpm1000::def::ReadValueType::ENV_TEMPERATURE, env_temperature);
-        log_status_on_fail("Read ENV_TEMPERATURE failed", status);
+            status = can_broker->read_data(dpm1000::def::ReadValueType::ENV_TEMPERATURE, env_temperature);
+            log_status_on_fail("Read ENV_TEMPERATURE failed", status);
 
-        EVLOG_info << fmt::format(
-            "set_voltage {} set_current {} vc.current_A {} vc.voltage_V {} current_real_part {} current_limit {} "
-            "dcdc_temperature {} ac_voltage {} "
-            "voltage_limit "
-            "{} pfc0_voltage {} pfc1_voltage {} env_temperature {} ac_voltage_phase_a {} ac_voltage_phase_b {} "
-            "ac_voltage_phase_c {} pfc_temperature {} power_limit {}",
-            voltage, current, vc.current_A, vc.voltage_V, current_real_part, current_limit, dcdc_temperature,
-            ac_voltage, voltage_limit, pfc0_voltage, pfc1_voltage, env_temperature, ac_voltage_phase_a,
-            ac_voltage_phase_b, ac_voltage_phase_c, pfc_temperature, power_limit);
-#endif
+            EVLOG_info << fmt::format(
+                "set_voltage {} set_current {} vc.current_A {} vc.voltage_V {} current_real_part {} current_limit {} "
+                "dcdc_temperature {} ac_voltage {} "
+                "voltage_limit "
+                "{} pfc0_voltage {} pfc1_voltage {} env_temperature {} ac_voltage_phase_a {} ac_voltage_phase_b {} "
+                "ac_voltage_phase_c {} pfc_temperature {} power_limit {}",
+                voltage, current, vc.current_A, vc.voltage_V, current_real_part, current_limit, dcdc_temperature,
+                ac_voltage, voltage_limit, pfc0_voltage, pfc1_voltage, env_temperature, ac_voltage_phase_a,
+                ac_voltage_phase_b, ac_voltage_phase_c, pfc_temperature, power_limit);
+        }
     }
 }
 

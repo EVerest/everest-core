@@ -37,6 +37,10 @@ config:
       - Parallel
       - Automatic
     default: Series
+  debug_print_all_telemetry:
+    description: Read and print all telemetry from the power module. Helpful while debugging.
+    type: boolean
+    default: false
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
   authors:
