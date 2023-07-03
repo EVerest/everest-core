@@ -101,7 +101,8 @@ void energyImpl::ready() {
 
                 // If we need energy, copy local limit schedules to energy_flow_request.
                 if (s == Charger::EvseState::Charging || s == Charger::EvseState::PrepareCharging ||
-                    s == Charger::EvseState::WaitingForEnergy || s == Charger::EvseState::WaitingForAuthentication) {
+                    s == Charger::EvseState::WaitingForEnergy || s == Charger::EvseState::WaitingForAuthentication ||
+                    s == Charger::EvseState::ChargingPausedEV) {
 
                     // copy complete external limit schedules
                     if (mod->getLocalEnergyLimits().schedule_import.has_value()) {
@@ -115,8 +116,16 @@ void energyImpl::ready() {
                     // apply our local hardware limits on root side
                     for (auto& e : energy_flow_request.schedule_import.value()) {
                         if (!e.limits_to_root.ac_max_current_A.has_value() ||
-                            e.limits_to_root.ac_max_current_A.value() > hw_caps.max_current_A_import)
+                            e.limits_to_root.ac_max_current_A.value() > hw_caps.max_current_A_import) {
                             e.limits_to_root.ac_max_current_A = hw_caps.max_current_A_import;
+
+                            // are we in EV pause mode? -> Reduce requested current to minimum just to see when car
+                            // wants to start charging again. The energy manager may pause us externally to reduce to
+                            // zero
+                            if (s == Charger::EvseState::ChargingPausedEV) {
+                                e.limits_to_root.ac_max_current_A = hw_caps.min_current_A_import;
+                            }
+                        }
 
                         if (!e.limits_to_root.ac_max_phase_count.has_value() ||
                             e.limits_to_root.ac_max_phase_count.value() > hw_caps.max_phase_count_import)
@@ -140,8 +149,16 @@ void energyImpl::ready() {
                     // apply our local hardware limits on root side
                     for (auto& e : energy_flow_request.schedule_export.value()) {
                         if (!e.limits_to_root.ac_max_current_A.has_value() ||
-                            e.limits_to_root.ac_max_current_A.value() > hw_caps.max_current_A_export)
+                            e.limits_to_root.ac_max_current_A.value() > hw_caps.max_current_A_export) {
                             e.limits_to_root.ac_max_current_A = hw_caps.max_current_A_export;
+
+                            // are we in EV pause mode? -> Reduce requested current to minimum just to see when car
+                            // wants to start discharging again. The energy manager may pause us externally to reduce to
+                            // zero
+                            if (s == Charger::EvseState::ChargingPausedEV) {
+                                e.limits_to_root.ac_max_current_A = hw_caps.min_current_A_export;
+                            }
+                        }
 
                         if (!e.limits_to_root.ac_max_phase_count.has_value() ||
                             e.limits_to_root.ac_max_phase_count.value() > hw_caps.max_phase_count_export)
