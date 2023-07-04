@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2022 - 2022 Pionix GmbH and Contributors to EVerest
-#include "slac_io.hpp"
+#include <slac/io.hpp>
 
 #include <stdexcept>
 #include <thread>

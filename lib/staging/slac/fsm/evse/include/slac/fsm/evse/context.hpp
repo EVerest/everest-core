@@ -8,6 +8,8 @@
 
 #include <slac/slac.hpp>
 
+namespace slac::fsm::evse {
+
 namespace _context_detail {
 template <typename SlacMessageType> struct MMTYPE;
 template <> struct MMTYPE<slac::messages::cm_slac_parm_cnf> {
@@ -86,5 +88,7 @@ struct Context {
 private:
     const ContextCallbacks& callbacks;
 };
+
+} // namespace slac::fsm::evse
 
 #endif // EVSE_SLAC_CONTEXT_HPP

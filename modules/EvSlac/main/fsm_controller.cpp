@@ -2,9 +2,9 @@
 // Copyright 2023 - 2023 Pionix GmbH and Contributors to EVerest
 #include "fsm_controller.hpp"
 
-#include <slac/fsm/evse/states/others.hpp>
+#include <slac/fsm/ev/states/others.hpp>
 
-FSMController::FSMController(slac::fsm::evse::Context& context) : ctx(context){};
+FSMController::FSMController(slac::fsm::ev::Context& context) : ctx(context){};
 
 void FSMController::signal_new_slac_message(slac::messages::HomeplugMessage& msg) {
     if (running == false) {
@@ -12,8 +12,8 @@ void FSMController::signal_new_slac_message(slac::messages::HomeplugMessage& msg
     }
     {
         const std::lock_guard<std::mutex> feed_lck(feed_mtx);
-        ctx.slac_message_payload = msg;
-        fsm.handle_event(slac::fsm::evse::Event::SLAC_MESSAGE);
+        ctx.slac_message = msg;
+        fsm.handle_event(slac::fsm::ev::Event::SLAC_MESSAGE);
     }
 
     new_event = true;
@@ -21,18 +21,14 @@ void FSMController::signal_new_slac_message(slac::messages::HomeplugMessage& msg
 }
 
 void FSMController::signal_reset() {
-    signal_simple_event(slac::fsm::evse::Event::RESET);
+    signal_simple_event(slac::fsm::ev::Event::RESET);
 }
 
-bool FSMController::signal_enter_bcd() {
-    return signal_simple_event(slac::fsm::evse::Event::ENTER_BCD);
+void FSMController::signal_trigger_matching() {
+    signal_simple_event(slac::fsm::ev::Event::TRIGGER_MATCHING);
 }
 
-bool FSMController::signal_leave_bcd() {
-    return signal_simple_event(slac::fsm::evse::Event::LEAVE_BCD);
-}
-
-bool FSMController::signal_simple_event(slac::fsm::evse::Event ev) {
+bool FSMController::signal_simple_event(slac::fsm::ev::Event ev) {
     const std::lock_guard<std::mutex> feed_lck(feed_mtx);
     auto event_result = fsm.handle_event(ev);
 
@@ -45,7 +41,7 @@ bool FSMController::signal_simple_event(slac::fsm::evse::Event ev) {
 void FSMController::run() {
     ctx.log_info("Starting the SLAC state machine");
 
-    fsm.reset<slac::fsm::evse::ResetState>(ctx);
+    fsm.reset<slac::fsm::ev::ResetState>(ctx);
 
     std::unique_lock<std::mutex> feed_lck(feed_mtx);
 

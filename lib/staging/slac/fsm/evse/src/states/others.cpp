@@ -1,14 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2023 - 2023 Pionix GmbH and Contributors to EVerest
-#include "others.hpp"
+#include <slac/fsm/evse/states/others.hpp>
 
 #include <cstring>
 
-#include <fmt/core.h>
+#include <slac/fsm/evse/states/matching.hpp>
 
-#include "matching.hpp"
+#include "../misc.hpp"
 
-static auto create_cm_set_key_req(uint8_t const * session_nmk) {
+namespace slac::fsm::evse {
+
+static auto create_cm_set_key_req(uint8_t const* session_nmk) {
     slac::messages::cm_set_key_req set_key_req;
 
     set_key_req.key_type = slac::defs::CM_SET_KEY_REQ_KEY_TYPE_NMK;
@@ -64,7 +66,7 @@ bool ResetState::handle_slac_message(slac::messages::HomeplugMessage& message) {
     if (mmtype != (slac::defs::MMTYPE_CM_SET_KEY | slac::defs::MMTYPE_MODE_CNF)) {
         // unexpected message
         // FIXME (aw): need to also deal with CM_VALIDATE.REQ
-        ctx.log_info(fmt::format("Received non-expected SLAC message of type {:#06x}", mmtype));
+        ctx.log_info("Received non-expected SLAC message of type " + format_mmtype(mmtype));
         return false;
     } else {
         ctx.log_info("Received CM_SET_KEY_CNF");
@@ -119,3 +121,5 @@ FSMSimpleState::HandleEventReturnType FailedState::handle_event(AllocatorType& s
         return sa.PASS_ON;
     }
 }
+
+} // namespace slac::fsm::evse

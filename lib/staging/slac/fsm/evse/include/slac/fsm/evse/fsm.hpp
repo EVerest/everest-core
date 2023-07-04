@@ -7,6 +7,8 @@
 
 #include "context.hpp"
 
+namespace slac::fsm::evse {
+
 enum class Event {
     RESET,
     ENTER_BCD,
@@ -21,9 +23,10 @@ enum class Event {
 
 using FSMReturnType = int;
 
-using FSM = fsm::FSM<Event, FSMReturnType>;
-using FSMSimpleState = fsm::states::StateWithContext<FSM::SimpleStateType, Context>;
-using FSMCompoundState = fsm::states::StateWithContext<FSM::CompoundStateType, Context>;
+using FSM = ::fsm::FSM<Event, FSMReturnType>;
+using FSMSimpleState = ::fsm::states::StateWithContext<FSM::SimpleStateType, Context>;
+using FSMCompoundState = ::fsm::states::StateWithContext<FSM::CompoundStateType, Context>;
 
+} // namespace slac::fsm::evse
 
 #endif // EVSE_SLAC_FSM_HPP

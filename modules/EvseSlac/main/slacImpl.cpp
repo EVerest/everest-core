@@ -7,9 +7,9 @@
 
 #include <fmt/core.h>
 #include <slac/channel.hpp>
+#include <slac/io.hpp>
 
 #include "fsm_controller.hpp"
-#include "slac_io.hpp"
 
 static std::promise<void> module_ready;
 // FIXME (aw): this is ugly, but due to the design of the auto-generated module skeleton ..
@@ -61,7 +61,7 @@ void slacImpl::run() {
     }
 
     // setup callbacks
-    ContextCallbacks callbacks;
+    slac::fsm::evse::ContextCallbacks callbacks;
     callbacks.send_raw_slac = [&slac_io](slac::messages::HomeplugMessage& msg) { slac_io.send(msg); };
 
     callbacks.signal_dlink_ready = [this](bool value) { publish_dlink_ready(value); };
@@ -70,7 +70,7 @@ void slacImpl::run() {
 
     callbacks.signal_error_routine_request = [this]() { publish_request_error_routine(nullptr); };
 
-    callbacks.log = [](const std::string& text) { EVLOG_debug << text; };
+    callbacks.log = [](const std::string& text) { EVLOG_info << "EvseSlac: " << text; };
 
     if (config.publish_mac_on_first_parm_req) {
         callbacks.signal_ev_mac_address_parm_req = [this](const std::string& mac) { publish_ev_mac_address(mac); };
@@ -80,7 +80,7 @@ void slacImpl::run() {
         callbacks.signal_ev_mac_address_match_cnf = [this](const std::string& mac) { publish_ev_mac_address(mac); };
     }
 
-    auto fsm_ctx = Context(callbacks);
+    auto fsm_ctx = slac::fsm::evse::Context(callbacks);
     fsm_ctx.slac_config.set_key_timeout_ms = config.set_key_timeout_ms;
     fsm_ctx.slac_config.ac_mode_five_percent = config.ac_mode_five_percent;
     fsm_ctx.slac_config.sounding_atten_adjustment = config.sounding_attenuation_adjustment;

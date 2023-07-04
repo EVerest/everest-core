@@ -4,12 +4,14 @@
 
 #include <cstring>
 
-#include <fmt/format.h>
+#include "../misc.hpp"
+
+namespace slac::fsm::evse {
 
 void session_log(Context& ctx, MatchingSession& session, const std::string& text) {
-    auto run_id = fmt::format("{:02x}", fmt::join(session.run_id, session.run_id + 8, ""));
-    auto mac = fmt::format("{:02x}", fmt::join(session.ev_mac, session.ev_mac + 6, ":"));
-    ctx.log_info(fmt::format("Session (run_id={}, ev_mac={}): {}", run_id, mac, text));
+    const auto run_id = format_run_id(session.run_id);
+    const auto mac = format_mac_addr(session.ev_mac);
+    ctx.log_info("Session (run_id=" + run_id + ", ev_mac=" + mac + "): " + text);
 }
 
 //
@@ -56,7 +58,8 @@ static auto create_cm_atten_char_ind(const MatchingSession& session, int atten_o
     atten_char_ind.attenuation_profile.num_groups = slac::defs::AAG_LIST_LEN;
     if (session.captured_sounds != 0) {
         for (int i = 0; i < slac::defs::AAG_LIST_LEN; ++i) {
-            atten_char_ind.attenuation_profile.aag[i] = session.captured_aags[i] / session.captured_sounds + atten_offset;
+            atten_char_ind.attenuation_profile.aag[i] =
+                session.captured_aags[i] / session.captured_sounds + atten_offset;
         }
     } else {
         // FIXME (aw): what to do here, if we didn't receive any sounds?
@@ -113,7 +116,7 @@ void MatchingState::handle_slac_message(slac::messages::HomeplugMessage& msg) {
         handle_cm_validate_req(msg.get_payload<slac::messages::cm_validate_req>());
         break;
     default:
-        ctx.log_info(fmt::format("Received non-expected SLAC message of type {:#06x}", mmtype));
+        ctx.log_info("Received non-expected SLAC message of type " + format_mmtype(mmtype));
     }
 }
 
@@ -289,3 +292,5 @@ void MatchingState::finalize_sounding(MatchingSession& session) {
 
     session.set_next_timeout(slac::defs::TT_MATCH_RESPONSE_MS);
 }
+
+} // namespace slac::fsm::evse

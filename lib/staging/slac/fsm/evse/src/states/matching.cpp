@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2023 - 2023 Pionix GmbH and Contributors to EVerest
-#include "matching.hpp"
+#include <slac/fsm/evse/states/matching.hpp>
 
 #include <cstring>
 #include <optional>
 
-#include <fmt/format.h>
-
 #include "matching_handle_slac.hpp"
-#include "others.hpp"
+#include <slac/fsm/evse/states/others.hpp>
+
+namespace slac::fsm::evse {
 
 //
 // Helper functions
@@ -151,3 +151,5 @@ FSMSimpleState::HandleEventReturnType MatchingState::handle_event(AllocatorType&
 
     return sa.PASS_ON;
 }
+
+} // namespace slac::fsm::evse

@@ -9,6 +9,8 @@
 
 #include "../fsm.hpp"
 
+namespace slac::fsm::evse {
+
 enum class MatchingSubState {
     WAIT_FOR_START_ATTEN_CHAR,
     SOUNDING,
@@ -75,5 +77,7 @@ struct MatchingState : public FSMSimpleState {
     bool seen_slac_parm_req{false};
     int num_retries{0};
 };
+
+} // namespace slac::fsm::evse
 
 #endif // EVSE_SLAC_STATES_MATCHING_HPP
