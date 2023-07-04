@@ -343,6 +343,7 @@
         "nl": false,
         "rap": true,
         "rh": 0,
+        "inputs": 0,
         "x": 180,
         "y": 100,
         "wires": [
@@ -753,6 +754,7 @@
         "nl": false,
         "rap": true,
         "rh": 0,
+        "inputs": 0,
         "x": 160,
         "y": 960,
         "wires": [
@@ -824,6 +826,7 @@
         "nl": false,
         "rap": true,
         "rh": 0,
+        "inputs": 0,
         "x": 170,
         "y": 1140,
         "wires": [
@@ -895,6 +898,7 @@
         "nl": false,
         "rap": true,
         "rh": 0,
+        "inputs": 0,
         "x": 170,
         "y": 1200,
         "wires": [
@@ -966,6 +970,7 @@
         "nl": false,
         "rap": true,
         "rh": 0,
+        "inputs": 0,
         "x": 140,
         "y": 1020,
         "wires": [
@@ -1318,6 +1323,7 @@
         "nl": false,
         "rap": true,
         "rh": 0,
+        "inputs": 0,
         "x": 270,
         "y": 280,
         "wires": [
@@ -1408,6 +1414,7 @@
         "nl": false,
         "rap": true,
         "rh": 0,
+        "inputs": 0,
         "x": 300,
         "y": 340,
         "wires": [
@@ -1428,6 +1435,7 @@
         "nl": false,
         "rap": true,
         "rh": 0,
+        "inputs": 0,
         "x": 270,
         "y": 440,
         "wires": [
@@ -1448,6 +1456,7 @@
         "nl": false,
         "rap": true,
         "rh": 0,
+        "inputs": 0,
         "x": 280,
         "y": 500,
         "wires": [
@@ -1510,6 +1519,7 @@
         "nl": false,
         "rap": true,
         "rh": 0,
+        "inputs": 0,
         "x": 280,
         "y": 560,
         "wires": [
@@ -1779,27 +1789,27 @@
         "options": [
             {
                 "label": "AC 3ph 16A",
-                "value": "sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 36000;unplug",
+                "value": "sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 36000#unplug",
                 "type": "str"
             },
             {
                 "label": "AC 1ph 32A",
-                "value": "sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 32,1;sleep 36000;unplug",
+                "value": "sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 32,1;sleep 36000#unplug",
                 "type": "str"
             },
             {
                 "label": "AC Diode Fail",
-                "value": "sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 32,3;sleep 5;diode_fail;sleep 36000;unplug",
+                "value": "sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 32,3;sleep 5;diode_fail;sleep 36000#unplug",
                 "type": "str"
             },
             {
                 "label": "AC Error E",
-                "value": "sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 3;error_e;sleep 36000;unplug",
+                "value": "sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 3;error_e;sleep 36000#unplug",
                 "type": "str"
             },
             {
                 "label": "AC RCD Error",
-                "value": "sleep 1;rcd_current 10.3;sleep 10;rcd_current 0.1;unplug",
+                "value": "sleep 1;rcd_current 10.3;sleep 10;rcd_current 0.1sleep 36000#unplug",
                 "type": "str"
             },
             {
@@ -1816,6 +1826,7 @@
         "payload": "",
         "topic": "sim_commands",
         "topicType": "str",
+        "className": "",
         "x": 170,
         "y": 1040,
         "wires": [
@@ -1878,7 +1889,7 @@
         "once": true,
         "onceDelay": "1",
         "topic": "sim_commands",
-        "payload": "sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 36000;unplug",
+        "payload": "sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 36000#unplug",
         "payloadType": "str",
         "x": 150,
         "y": 1100,
