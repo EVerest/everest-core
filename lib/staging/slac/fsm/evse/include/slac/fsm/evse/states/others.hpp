@@ -5,6 +5,8 @@
 
 #include "../fsm.hpp"
 
+namespace slac::fsm::evse {
+
 struct ResetState : public FSMSimpleState {
     using FSMSimpleState::FSMSimpleState;
 
@@ -43,5 +45,7 @@ struct FailedState : public FSMSimpleState {
 
     void enter() final;
 };
+
+} // namespace slac::fsm::evse
 
 #endif // EVSE_SLAC_STATES_OTHERS_HPP

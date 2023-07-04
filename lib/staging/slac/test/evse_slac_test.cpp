@@ -5,8 +5,8 @@
 #include <optional>
 #include <thread>
 
-#include "fsm.hpp"
-#include "states/others.hpp"
+#include <slac/fsm/evse/fsm.hpp>
+#include <slac/fsm/evse/states/others.hpp>
 
 #include <fmt/format.h>
 
@@ -118,7 +118,8 @@ private:
     const std::array<uint8_t, ETH_ALEN>& mac;
 };
 
-void feed_machine_for(FSM& machine, int period_ms, fsm::FeedResult<FSMReturnType> feed_result) {
+void feed_machine_for(slac::fsm::evse::FSM& machine, int period_ms,
+                      fsm::FeedResult<slac::fsm::evse::FSMReturnType> feed_result) {
     using namespace std::chrono;
 
     auto end_tp = steady_clock::now() + milliseconds(period_ms);
@@ -164,20 +165,20 @@ int main(int argc, char* argv[]) {
 
     std::optional<slac::messages::HomeplugMessage> msg_in;
 
-    ContextCallbacks callbacks;
+    slac::fsm::evse::ContextCallbacks callbacks;
     callbacks.log = [](const std::string& text) { fmt::print("SLAC LOG: {}\n", text); };
 
     callbacks.send_raw_slac = [&msg_in](slac::messages::HomeplugMessage& hp_message) { msg_in = hp_message; };
 
-    auto ctx = Context(callbacks);
+    auto ctx = slac::fsm::evse::Context(callbacks);
     ctx.slac_config.sounding_atten_adjustment = ATTENUATION_ADJUSTMENT;
 
-    auto machine = FSM();
+    auto machine = slac::fsm::evse::FSM();
 
     //
     // reset machine
     //
-    machine.reset<ResetState>(ctx);
+    machine.reset<slac::fsm::evse::ResetState>(ctx);
     auto fr = machine.feed();
 
     // assert that CM_SET_KEY_REQ gets set!
@@ -192,11 +193,11 @@ int main(int argc, char* argv[]) {
 
     // feed in CM_SET_KEY_CNF
     ctx.slac_message_payload = create_cm_set_key_cnf();
-    machine.handle_event(Event::SLAC_MESSAGE);
+    machine.handle_event(slac::fsm::evse::Event::SLAC_MESSAGE);
     fr = machine.feed();
 
     // should be idle state now, send ENTER_BCD, to enter MATCHING
-    machine.handle_event(Event::ENTER_BCD);
+    machine.handle_event(slac::fsm::evse::Event::ENTER_BCD);
     fr = machine.feed();
 
     feed_machine_for(machine, 300, fr);
@@ -204,7 +205,7 @@ int main(int argc, char* argv[]) {
     // create session 1 and inject CM_SLAC_PARM_REQ
     auto session_1 = EVSession({0, 1, 2, 3, 4, 5, 6, 7}, {0xca, 0xfe, 0xca, 0xfe, 0xca, 0xfe});
     ctx.slac_message_payload = session_1.create_cm_slac_parm_req();
-    machine.handle_event(Event::SLAC_MESSAGE);
+    machine.handle_event(slac::fsm::evse::Event::SLAC_MESSAGE);
     fr = machine.feed();
 
     // assert that CM_SLAC_PARM_CNF gets set!
@@ -220,17 +221,17 @@ int main(int argc, char* argv[]) {
 
     // inject CM_START_ATTEN_CHAR_IND
     ctx.slac_message_payload = session_1.create_cm_start_atten_char_ind();
-    machine.handle_event(Event::SLAC_MESSAGE);
+    machine.handle_event(slac::fsm::evse::Event::SLAC_MESSAGE);
     fr = machine.feed();
 
     // inject all the soundings ...
     for (int i = 0; i < slac::defs::CM_SLAC_PARM_CNF_NUM_SOUNDS - 1; i++) {
         ctx.slac_message_payload = session_1.create_cm_mnbc_sound_ind();
-        machine.handle_event(Event::SLAC_MESSAGE);
+        machine.handle_event(slac::fsm::evse::Event::SLAC_MESSAGE);
         fr = machine.feed();
 
         ctx.slac_message_payload = session_1.create_cm_atten_profile_ind();
-        machine.handle_event(Event::SLAC_MESSAGE);
+        machine.handle_event(slac::fsm::evse::Event::SLAC_MESSAGE);
         fr = machine.feed();
     }
 
@@ -254,7 +255,7 @@ int main(int argc, char* argv[]) {
 
     // "async" insert an CM_VALIDATE.REQ
     ctx.slac_message_payload = create_cm_validate_req();
-    machine.handle_event(Event::SLAC_MESSAGE);
+    machine.handle_event(slac::fsm::evse::Event::SLAC_MESSAGE);
     fr = machine.feed();
 
     // assert that CM_VALIDATE.CNF gets set!
@@ -272,7 +273,7 @@ int main(int argc, char* argv[]) {
 
     // inject CM_ATTEN_CHAR_RSP
     ctx.slac_message_payload = session_1.create_cm_atten_char_rsp();
-    machine.handle_event(Event::SLAC_MESSAGE);
+    machine.handle_event(slac::fsm::evse::Event::SLAC_MESSAGE);
     fr = machine.feed();
 
     feed_machine_for(machine, 1000, fr);
@@ -280,14 +281,14 @@ int main(int argc, char* argv[]) {
     // inject messages from a second session
     auto session_2 = EVSession({9, 1, 2, 3, 4, 5, 6, 7}, {0xbe, 0xaf, 0xbe, 0xaf, 0xbe, 0xaf});
     ctx.slac_message_payload = session_2.create_cm_slac_parm_req();
-    machine.handle_event(Event::SLAC_MESSAGE);
+    machine.handle_event(slac::fsm::evse::Event::SLAC_MESSAGE);
     fr = machine.feed();
 
     feed_machine_for(machine, 1000, fr);
 
     // inject CM_SLAC_MATCH_REQ
     ctx.slac_message_payload = session_1.create_cm_slac_match_req();
-    machine.handle_event(Event::SLAC_MESSAGE);
+    machine.handle_event(slac::fsm::evse::Event::SLAC_MESSAGE);
     fr = machine.feed();
 
     // assert that CM_SLAC_MATCH_CNF gets set!

@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2023 - 2023 Pionix GmbH and Contributors to EVerest
-#include "context.hpp"
+#include <slac/fsm/evse/context.hpp>
 
 #include <random>
 
-#include <fmt/format.h>
+#include "misc.hpp"
+
+namespace slac::fsm::evse {
 
 void EvseSlacConfig::generate_nmk() {
     const std::string CHARACTERS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -20,14 +22,14 @@ void EvseSlacConfig::generate_nmk() {
 
 void Context::signal_cm_slac_parm_req(const uint8_t* mac) {
     if (callbacks.signal_ev_mac_address_parm_req) {
-        auto mac_string = fmt::format("{:02X}", fmt::join(mac, mac + ETH_ALEN, ":"));
+        const auto mac_string = format_mac_addr(mac);
         callbacks.signal_ev_mac_address_parm_req(mac_string);
     }
 }
 
 void Context::signal_cm_slac_match_cnf(const uint8_t* mac) {
     if (callbacks.signal_ev_mac_address_match_cnf) {
-        auto mac_string = fmt::format("{:02X}", fmt::join(mac, mac + ETH_ALEN, ":"));
+        const auto mac_string = format_mac_addr(mac);
         callbacks.signal_ev_mac_address_match_cnf(mac_string);
     }
 }
@@ -55,3 +57,5 @@ void Context::log_info(const std::string& text) {
         callbacks.log(text);
     }
 }
+
+} // namespace slac::fsm::evse
