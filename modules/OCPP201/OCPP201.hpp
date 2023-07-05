@@ -30,7 +30,8 @@ struct Conf {
     std::string ChargePointConfigPath;
     std::string MessageLogPath;
     std::string CertsPath;
-    std::string DatabasePath;
+    std::string CoreDatabasePath;
+    std::string DeviceModelDatabasePath;
 };
 
 class OCPP201 : public Everest::ModuleBase {
@@ -49,12 +50,12 @@ public:
         r_system(std::move(r_system)),
         config(config){};
 
-    const Conf& config;
     const std::unique_ptr<emptyImplBase> p_main;
     const std::unique_ptr<auth_token_validatorImplBase> p_auth_validator;
     const std::unique_ptr<auth_token_providerImplBase> p_auth_provider;
     const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;
     const std::unique_ptr<systemIntf> r_system;
+    const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
