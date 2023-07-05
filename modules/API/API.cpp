@@ -7,7 +7,13 @@ namespace module {
 
 static const auto NOTIFICATION_PERIOD = std::chrono::seconds(1);
 
-SessionInfo::SessionInfo() : state("Unknown"), start_energy_wh(0), end_energy_wh(0), latest_total_w(0) {
+SessionInfo::SessionInfo() :
+    state("Unknown"),
+    start_energy_import_wh(0),
+    end_energy_import_wh(0),
+    latest_total_w(0),
+    start_energy_export_wh(0),
+    end_energy_export_wh(0) {
     this->start_time_point = date::utc_clock::now();
     this->end_time_point = this->start_time_point;
 }
@@ -24,8 +30,10 @@ void SessionInfo::reset() {
     std::lock_guard<std::mutex> lock(this->session_info_mutex);
     this->state = "Unknown";
     this->state_info = "";
-    this->start_energy_wh = 0;
-    this->end_energy_wh = 0;
+    this->start_energy_import_wh = 0;
+    this->end_energy_import_wh = 0;
+    this->start_energy_export_wh = 0;
+    this->end_energy_export_wh = 0;
     this->start_time_point = date::utc_clock::now();
     this->latest_total_w = 0;
 }
@@ -93,25 +101,46 @@ void SessionInfo::update_state(const std::string& event, const std::string& stat
     }
 }
 
-void SessionInfo::set_start_energy_wh(int32_t start_energy_wh) {
+void SessionInfo::set_start_energy_import_wh(int32_t start_energy_import_wh) {
     std::lock_guard<std::mutex> lock(this->session_info_mutex);
-    this->start_energy_wh = start_energy_wh;
-    this->end_energy_wh = start_energy_wh;
+    this->start_energy_import_wh = start_energy_import_wh;
+    this->end_energy_import_wh = start_energy_import_wh;
     this->start_time_point = date::utc_clock::now();
     this->end_time_point = this->start_time_point;
 }
 
-void SessionInfo::set_end_energy_wh(int32_t end_energy_wh) {
+void SessionInfo::set_end_energy_import_wh(int32_t end_energy_import_wh) {
     std::lock_guard<std::mutex> lock(this->session_info_mutex);
-    this->end_energy_wh = end_energy_wh;
+    this->end_energy_import_wh = end_energy_import_wh;
     this->end_time_point = date::utc_clock::now();
 }
 
-void SessionInfo::set_latest_energy_wh(int32_t latest_energy_wh) {
+void SessionInfo::set_latest_energy_import_wh(int32_t latest_energy_wh) {
     std::lock_guard<std::mutex> lock(this->session_info_mutex);
     if (this->is_state_charging(this->state)) {
         this->end_time_point = date::utc_clock::now();
-        this->end_energy_wh = latest_energy_wh;
+        this->end_energy_import_wh = latest_energy_wh;
+    }
+}
+
+void SessionInfo::set_start_energy_export_wh(int32_t start_energy_export_wh) {
+    std::lock_guard<std::mutex> lock(this->session_info_mutex);
+    this->start_energy_export_wh = start_energy_export_wh;
+    this->end_energy_export_wh = start_energy_export_wh;
+    this->start_energy_export_wh_was_set = true;
+}
+
+void SessionInfo::set_end_energy_export_wh(int32_t end_energy_export_wh) {
+    std::lock_guard<std::mutex> lock(this->session_info_mutex);
+    this->end_energy_export_wh = end_energy_export_wh;
+    this->end_energy_export_wh_was_set = true;
+}
+
+void SessionInfo::set_latest_energy_export_wh(int32_t latest_export_energy_wh) {
+    std::lock_guard<std::mutex> lock(this->session_info_mutex);
+    if (this->is_state_charging(this->state)) {
+        this->end_energy_export_wh = latest_export_energy_wh;
+        this->end_energy_export_wh_was_set = true;
     }
 }
 
@@ -123,7 +152,11 @@ void SessionInfo::set_latest_total_w(double latest_total_w) {
 SessionInfo::operator std::string() {
     std::lock_guard<std::mutex> lock(this->session_info_mutex);
 
-    auto charged_energy_wh = this->end_energy_wh - this->start_energy_wh;
+    auto charged_energy_wh = this->end_energy_import_wh - this->start_energy_import_wh;
+    int32_t discharged_energy_wh{0};
+    if ((this->start_energy_export_wh_was_set == true) && (this->end_energy_export_wh_was_set == true)) {
+        discharged_energy_wh = this->end_energy_export_wh - this->start_energy_export_wh;
+    }
     auto now = date::utc_clock::now();
 
     auto charging_duration_s =
@@ -132,6 +165,7 @@ SessionInfo::operator std::string() {
     json session_info = json::object({{"state", this->state},
                                       {"state_info", this->state_info},
                                       {"charged_energy_wh", charged_energy_wh},
+                                      {"discharged_energy_wh", discharged_energy_wh},
                                       {"latest_total_w", this->latest_total_w},
                                       {"charging_duration_s", charging_duration_s.count()},
                                       {"datetime", Everest::Date::to_rfc3339(now)}});
@@ -167,8 +201,12 @@ void API::init() {
         evse->subscribe_powermeter([this, var_powermeter, &session_info](types::powermeter::Powermeter powermeter) {
             json powermeter_json = powermeter;
             this->mqtt.publish(var_powermeter, powermeter_json.dump());
-            session_info->set_latest_energy_wh(powermeter_json.at("energy_Wh_import").at("total"));
-            session_info->set_latest_total_w(powermeter_json.at("power_W").at("total"));
+            session_info->set_latest_energy_import_wh(powermeter.energy_Wh_import.total);
+            if (powermeter.energy_Wh_export.has_value()) {
+                session_info->set_latest_energy_export_wh(powermeter.energy_Wh_export.value().total);
+            }
+            if (powermeter.power_W.has_value())
+                session_info->set_latest_total_w(powermeter.power_W.value().total);
         });
 
         std::string var_limits = var_base + "limits";
@@ -216,11 +254,25 @@ void API::init() {
             if (event == "TransactionStarted") {
                 auto session_started = session_event.transaction_started.value();
                 auto energy_Wh_import = session_started.energy_Wh_import;
-                session_info->set_start_energy_wh(energy_Wh_import);
+                session_info->set_start_energy_import_wh(energy_Wh_import);
+
+                if (session_started.energy_Wh_export.has_value()) {
+                    auto energy_Wh_export = session_started.energy_Wh_export;
+                    session_info->set_start_energy_export_wh(energy_Wh_export.value());
+                } else {
+                    session_info->start_energy_export_wh_was_set = false;
+                }
             } else if (event == "TransactionFinished") {
                 auto session_finished = session_event.transaction_finished.value();
                 auto energy_Wh_import = session_finished.energy_Wh_import;
-                session_info->set_end_energy_wh(energy_Wh_import);
+                session_info->set_end_energy_import_wh(energy_Wh_import);
+
+                if (session_finished.energy_Wh_export.has_value()) {
+                    auto energy_Wh_export = session_finished.energy_Wh_export;
+                    session_info->set_end_energy_export_wh(energy_Wh_export.value());
+                } else {
+                    session_info->end_energy_export_wh_was_set = false;
+                }
 
                 this->mqtt.publish(var_session_info, *session_info);
             }
@@ -270,17 +322,16 @@ void API::init() {
         });
     }
 
-    this->api_threads.push_back(
-        std::thread([this, var_connectors, connectors]() {
-            auto next_tick = std::chrono::steady_clock::now();
-            while (this->running) {
-                json connectors_array = connectors;
-                this->mqtt.publish(var_connectors, connectors_array.dump());
+    this->api_threads.push_back(std::thread([this, var_connectors, connectors]() {
+        auto next_tick = std::chrono::steady_clock::now();
+        while (this->running) {
+            json connectors_array = connectors;
+            this->mqtt.publish(var_connectors, connectors_array.dump());
 
-                next_tick += NOTIFICATION_PERIOD;
-                std::this_thread::sleep_until(next_tick);
-            }
-        }));
+            next_tick += NOTIFICATION_PERIOD;
+            std::this_thread::sleep_until(next_tick);
+        }
+    }));
 }
 
 void API::ready() {
