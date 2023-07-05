@@ -167,8 +167,9 @@ void API::init() {
         evse->subscribe_powermeter([this, var_powermeter, &session_info](types::powermeter::Powermeter powermeter) {
             json powermeter_json = powermeter;
             this->mqtt.publish(var_powermeter, powermeter_json.dump());
-            session_info->set_latest_energy_wh(powermeter_json.at("energy_Wh_import").at("total"));
-            session_info->set_latest_total_w(powermeter_json.at("power_W").at("total"));
+            session_info->set_latest_energy_wh(powermeter.energy_Wh_import.total);
+            if (powermeter.power_W.has_value())
+                session_info->set_latest_total_w(powermeter.power_W.value().total);
         });
 
         std::string var_limits = var_base + "limits";
@@ -270,17 +271,16 @@ void API::init() {
         });
     }
 
-    this->api_threads.push_back(
-        std::thread([this, var_connectors, connectors]() {
-            auto next_tick = std::chrono::steady_clock::now();
-            while (this->running) {
-                json connectors_array = connectors;
-                this->mqtt.publish(var_connectors, connectors_array.dump());
+    this->api_threads.push_back(std::thread([this, var_connectors, connectors]() {
+        auto next_tick = std::chrono::steady_clock::now();
+        while (this->running) {
+            json connectors_array = connectors;
+            this->mqtt.publish(var_connectors, connectors_array.dump());
 
-                next_tick += NOTIFICATION_PERIOD;
-                std::this_thread::sleep_until(next_tick);
-            }
-        }));
+            next_tick += NOTIFICATION_PERIOD;
+            std::this_thread::sleep_until(next_tick);
+        }
+    }));
 }
 
 void API::ready() {
