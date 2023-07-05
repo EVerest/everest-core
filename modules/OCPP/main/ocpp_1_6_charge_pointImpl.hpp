@@ -35,6 +35,8 @@ protected:
     // command handler functions (virtual)
     virtual bool handle_stop() override;
     virtual bool handle_restart() override;
+    virtual types::ocpp::DataTransferResponse handle_data_transfer(std::string& vendor_id, std::string& message_id,
+                                                                   std::string& data) override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
     // insert your protected definitions here

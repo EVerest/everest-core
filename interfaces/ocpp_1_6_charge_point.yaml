@@ -18,6 +18,24 @@ cmds:
       description: >-
         Returns true if the service could be restarted successfully, else
         false
+  data_transfer:
+    description: >-
+      Performs a OCPP data transfer request and returns the response
+    arguments:
+      vendor_id:
+        description: VendorId
+        type: string
+      message_id:
+        description: MessageId
+        type: string
+      data:
+        description: Data
+        type: string
+    result:
+      description: >-
+        Result object containing data transfer response
+      type: object
+      $ref: /ocpp#/DataTransferResponse
 vars:
   charging_schedules:
     description: >-

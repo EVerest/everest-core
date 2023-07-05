@@ -1,0 +1,24 @@
+description: OCPP types
+types:
+  DataTransferStatus:
+    description: Data Transfer Status enum
+    type: string
+    enum:
+      - Accepted
+      - Rejected
+      - UnknownMessageId
+      - UnknownVendorId
+  DataTransferResponse:
+    description: Type for data transfer response provided by OCPP
+    type: object
+    additionalProperties: false
+    required:
+      - status
+    properties:
+      status:
+        description: Status of the data transfer
+        type: string
+        $ref: /ocpp#/DataTransferStatus
+      data:
+        description: Data provided by this data transfer
+        type: string
