@@ -7,7 +7,7 @@ boot_module(async ({ setup }) => {
     if (!(sessionEvent.event === undefined) && sessionEvent.event === 'AuthRequired') {
       const data = {
         id_token: mod.config.impl.main.token,
-        type: mod.config.impl.main.type,
+        authorization_type: mod.config.impl.main.type,
       };
       evlog.info('Publishing new dummy token: ', data);
       mod.provides.main.publish.provided_token(data);

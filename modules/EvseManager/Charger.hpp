@@ -31,6 +31,7 @@
 #include <date/tz.h>
 #include <generated/interfaces/ISO15118_charger/Interface.hpp>
 #include <generated/interfaces/board_support_AC/Interface.hpp>
+#include <generated/types/authorization.hpp>
 #include <generated/types/evse_manager.hpp>
 #include <mutex>
 #include <queue>
@@ -38,7 +39,8 @@
 
 namespace module {
 
-enum class ControlPilotEvent {
+enum class ControlPilotEvent
+{
     CarPluggedIn,
     CarRequestedPower,
     PowerOn,
@@ -80,14 +82,16 @@ public:
     float getMaxCurrent();
     sigslot::signal<float> signalMaxCurrent;
 
-    enum class ChargeMode {
+    enum class ChargeMode
+    {
         AC,
         DC
     };
 
     void setup(bool three_phases, bool has_ventilation, const std::string& country_code, bool rcd_enabled,
                const ChargeMode charge_mode, bool ac_hlc_enabled, bool ac_hlc_use_5percent, bool ac_enforce_hlc,
-               bool ac_with_soc_timeout, float soft_over_current_tolerance_percent, float soft_over_current_measurement_noise_A);
+               bool ac_with_soc_timeout, float soft_over_current_tolerance_percent,
+               float soft_over_current_measurement_noise_A);
 
     bool enable();
     bool disable();
@@ -101,9 +105,9 @@ public:
     //
 
     // call when in state WaitingForAuthentication
-    void Authorize(bool a, const std::string& userid, bool pnc);
+    void Authorize(bool a, const types::authorization::ProvidedIdToken& token);
     bool DeAuthorize();
-    std::string getAuthTag();
+    types::authorization::ProvidedIdToken getIdToken();
 
     bool Authorized_PnC();
     bool Authorized_EIM();
@@ -162,7 +166,8 @@ public:
     // in the future.
     // Use new EvseEvent interface instead.
 
-    enum class EvseState {
+    enum class EvseState
+    {
         Disabled,
         Idle,
         WaitingForAuthentication,
@@ -264,7 +269,8 @@ private:
     bool authorized;
     // set to true if auth is from PnC, otherwise to false (EIM)
     bool authorized_pnc;
-    std::string auth_tag;
+
+    types::authorization::ProvidedIdToken id_token;
 
     // AC or DC
     ChargeMode charge_mode{0};

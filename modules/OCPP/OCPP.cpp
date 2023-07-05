@@ -341,7 +341,7 @@ void OCPP::init() {
         [this](const std::string& id_token, std::vector<int32_t> referenced_connectors, bool prevalidated) {
             types::authorization::ProvidedIdToken provided_token;
             provided_token.id_token = id_token;
-            provided_token.type = types::authorization::TokenType::OCPP;
+            provided_token.authorization_type = types::authorization::AuthorizationType::OCPP;
             provided_token.connectors.emplace(referenced_connectors);
             provided_token.prevalidated.emplace(prevalidated);
             this->p_auth_provider->publish_provided_token(provided_token);
@@ -463,9 +463,9 @@ void OCPP::init() {
                 const auto transaction_started = session_event.transaction_started.value();
 
                 const auto timestamp = ocpp::DateTime(transaction_started.timestamp);
-                const auto energy_Wh_import = transaction_started.energy_Wh_import;
+                const auto energy_Wh_import = transaction_started.meter_value.energy_Wh_import.total;
                 const auto session_id = session_event.uuid;
-                const auto id_token = transaction_started.id_tag;
+                const auto id_token = transaction_started.id_tag.id_token;
                 const auto signed_meter_value = transaction_started.signed_meter_value;
                 std::optional<int32_t> reservation_id_opt = std::nullopt;
                 if (transaction_started.reservation_id) {
@@ -490,7 +490,7 @@ void OCPP::init() {
                             << "Received TransactionFinished";
                 const auto transaction_finished = session_event.transaction_finished.value();
                 const auto timestamp = ocpp::DateTime(transaction_finished.timestamp);
-                const auto energy_Wh_import = transaction_finished.energy_Wh_import;
+                const auto energy_Wh_import = transaction_finished.meter_value.energy_Wh_import.total;
                 const auto reason = ocpp::v16::conversions::string_to_reason(
                     types::evse_manager::stop_transaction_reason_to_string(transaction_finished.reason.value()));
                 const auto signed_meter_value = transaction_finished.signed_meter_value;

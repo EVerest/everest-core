@@ -26,7 +26,8 @@ using namespace types::reservation;
 
 namespace module {
 
-enum class TokenHandlingResult {
+enum class TokenHandlingResult
+{
     ACCEPTED,
     ALREADY_IN_PROCESS,
     REJECTED,
@@ -190,7 +191,7 @@ private:
                        const ValidationResult& validation_result)>
         notify_evse_callback;
     std::function<void(const int evse_index)> withdraw_authorization_callback;
-    std::function<std::vector<ValidationResult>(const ProvidedIdToken &provided_token)> validate_token_callback;
+    std::function<std::vector<ValidationResult>(const ProvidedIdToken& provided_token)> validate_token_callback;
     std::function<void(const int evse_index, const StopTransactionRequest& request)> stop_transaction_callback;
     std::function<void(const Array& reservations)> reservation_update_callback;
     std::function<void(const int& evse_index, const int& reservation_id)> reserved_callback;
@@ -218,7 +219,7 @@ private:
     void notify_evse(int connector_id, const ProvidedIdToken& provided_token,
                      const ValidationResult& validation_result);
     Identifier get_identifier(const ValidationResult& validation_result, const std::string& id_token,
-                              const TokenType& type);
+                              const AuthorizationType& type);
 };
 
 } // namespace module

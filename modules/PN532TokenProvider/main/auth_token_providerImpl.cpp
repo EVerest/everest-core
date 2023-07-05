@@ -61,7 +61,7 @@ void auth_token_providerImpl::ready() {
             for (auto entry : target_data) {
                 types::authorization::ProvidedIdToken provided_token;
                 provided_token.id_token = entry.getNFCID();
-                provided_token.type = types::authorization::TokenType::RFID;
+                provided_token.authorization_type = types::authorization::AuthorizationType::RFID;
                 if (config.debug) {
                     EVLOG_info << "Publishing new rfid/nfc token: " << provided_token;
                 }

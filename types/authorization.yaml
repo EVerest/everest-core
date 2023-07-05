@@ -31,8 +31,12 @@ types:
     additionalProperties: false
     required:
       - id_token
-      - type
+      - authorization_type
     properties:
+      request_id:
+        description: >-
+          Id of the authorization request of this token. Could be used to put remoteStartId of OCPP2.0.1
+        type: integer
       id_token:
         description: >-
           Arbitrary token string: this has to be printable case insensitive
@@ -40,12 +44,16 @@ types:
         type: string
         minLength: 1
         maxLength: 36
-      type:
-        description: Type of the token
+      authorization_type:
+        description: Authorization type of the token
         type: string
-        $ref: /authorization#/TokenType
+        $ref: /authorization#/AuthorizationType
         minLength: 2
         maxLength: 32
+      id_token_type:
+        description: IdTokenType of the token
+        type: string
+        $ref: /authorization#/IdTokenType
       connectors:
         description: A list of connector ids to which the authorization can be assigned
         type: array
@@ -118,12 +126,25 @@ types:
     enum:
       - UserInput
       - PlugEvents
-  TokenType:
+  AuthorizationType:
     description: >-
-      Type of the provided token
+      Type of authorization of the provided token
     type: string
     enum:
       - OCPP
       - RFID
       - Autocharge
       - PlugAndCharge
+  IdTokenType:
+    description: >-
+      IdTokenType of the provided token
+    type: string
+    enum:
+      - Central
+      - eMAID
+      - MacAddress
+      - ISO14443
+      - ISO15693
+      - KeyCode
+      - Local
+      - NoAuthorization

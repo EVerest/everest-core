@@ -88,7 +88,7 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
     std::vector<int> referenced_connectors = this->get_referenced_connectors(provided_token);
 
     // Only provided token with type RFID can be used to stop a transaction
-    if (provided_token.type == TokenType::RFID) {
+    if (provided_token.authorization_type == AuthorizationType::RFID) {
         // check if id_token is used for an active transaction
         const auto connector_used_for_transaction =
             this->used_for_transaction(referenced_connectors, provided_token.id_token);
@@ -343,8 +343,9 @@ void AuthHandler::notify_evse(int connector_id, const ProvidedIdToken& provided_
     const auto evse_index = this->connectors.at(connector_id)->evse_index;
 
     if (validation_result.authorization_status == AuthorizationStatus::Accepted) {
-        Identifier identifier{provided_token.id_token, provided_token.type, validation_result.authorization_status,
-                              validation_result.expiry_time, validation_result.parent_id_token};
+        Identifier identifier{provided_token.id_token, provided_token.authorization_type,
+                              validation_result.authorization_status, validation_result.expiry_time,
+                              validation_result.parent_id_token};
         this->connectors.at(connector_id)->connector.identifier.emplace(identifier);
 
         std::lock_guard<std::mutex> timer_lk(this->timer_mutex);
