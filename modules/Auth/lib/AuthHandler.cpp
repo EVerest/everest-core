@@ -6,8 +6,8 @@
 
 namespace module {
 
-/// \brief helper method to intersect referenced_connectors (from ProvidedIdToken) with connectors that are listed within
-/// ValidationResult
+/// \brief helper method to intersect referenced_connectors (from ProvidedIdToken) with connectors that are listed
+/// within ValidationResult
 std::vector<int> intersect(std::vector<int>& a, std::vector<int>& b) {
     std::vector<int> result;
     std::sort(a.begin(), a.end());
@@ -424,8 +424,10 @@ void AuthHandler::handle_session_event(const int connector_id, const SessionEven
         this->connectors.at(connector_id)->connector.is_reservable = true;
         this->connectors.at(connector_id)->connector.identifier.reset();
         this->connectors.at(connector_id)->connector.submit_event(ConnectorEvent::SESSION_FINISHED);
-        this->connectors.at(connector_id)->connector.submit_event(ConnectorEvent::ERROR_CLEARED);
         this->connectors.at(connector_id)->timeout_timer.stop();
+        break;
+    case SessionEventEnum::AllErrorsCleared:
+        this->connectors.at(connector_id)->connector.submit_event(ConnectorEvent::ERROR_CLEARED);
         break;
     case SessionEventEnum::PermanentFault:
         this->connectors.at(connector_id)->connector.submit_event(ConnectorEvent::FAULTED);

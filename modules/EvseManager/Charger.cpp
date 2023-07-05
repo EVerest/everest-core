@@ -451,7 +451,9 @@ void Charger::runStateMachine() {
 
     case EvseState::StoppingCharging:
         if (new_in_state) {
-            signalEvent(types::evse_manager::SessionEventEnum::StoppingCharging);
+            if (transactionActive() || sessionActive()) {
+                signalEvent(types::evse_manager::SessionEventEnum::StoppingCharging);
+            }
 
             // Transaction may already be stopped when it was cancelled earlier.
             // In that case, do not sent a second transactionFinished event.
@@ -473,16 +475,16 @@ void Charger::runStateMachine() {
         break;
 
     case EvseState::Finished:
-        // We are temporarily unavailable to avoid that new cars plug in
-        // during the cleanup phase. Re-Enable once we are in idle.
+
         if (new_in_state) {
             // Transaction may already be stopped when it was cancelled earlier.
             // In that case, do not sent a second transactionFinished event.
             if (transactionActive())
                 stopTransaction();
-
-            stopSession();
-            pwm_F();
+            // We may come here from an error state, so a session was maybe not active.
+            if (sessionActive()) {
+                stopSession();
+            }
         }
 
         restart();
