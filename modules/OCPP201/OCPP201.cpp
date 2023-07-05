@@ -7,7 +7,7 @@
 
 namespace module {
 
-const std::string INIT_SQL = "init.sql";
+const std::string INIT_SQL = "init_core.sql";
 const std::string CERTS_DIR = "certs";
 
 namespace fs = std::filesystem;
@@ -300,8 +300,8 @@ void OCPP201::init() {
     }
 
     this->charge_point = std::make_unique<ocpp::v201::ChargePoint>(
-        evse_connector_structure, json_config, this->ocpp_share_path.string(), this->config.DatabasePath,
-        sql_init_path.string(), this->config.MessageLogPath, etc_certs_path, callbacks);
+        evse_connector_structure, this->config.DeviceModelDatabasePath, this->ocpp_share_path.string(),
+        this->config.CoreDatabasePath, sql_init_path.string(), this->config.MessageLogPath, etc_certs_path, callbacks);
 
     evse_id = 1;
     for (const auto& evse : this->r_evse_manager) {
