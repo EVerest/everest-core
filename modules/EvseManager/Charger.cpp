@@ -127,7 +127,7 @@ void Charger::runStateMachine() {
         // make sure we signal availability to potential new cars
         if (new_in_state) {
             pwm_off();
-            Authorize(false, "", false);
+            DeAuthorize();
             transaction_active = false;
         }
         break;
@@ -852,7 +852,6 @@ bool Charger::evseReplug() {
 bool Charger::cancelTransaction(const types::evse_manager::StopTransactionRequest& request) {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
     if (transactionActive()) {
-
         if (charge_mode == ChargeMode::DC) {
             currentState = EvseState::StoppingCharging;
         } else {
@@ -866,7 +865,6 @@ bool Charger::cancelTransaction(const types::evse_manager::StopTransactionReques
         }
         signalEvent(types::evse_manager::SessionEventEnum::ChargingFinished);
         signalEvent(types::evse_manager::SessionEventEnum::TransactionFinished);
-
         return true;
     }
     return false;
@@ -998,16 +996,15 @@ bool Charger::Authorized_EIM_ready_for_HLC() {
     return (auth && ready);
 }
 
-void Charger::Authorize(bool a, const std::string& userid, bool pnc) {
+void Charger::Authorize(bool a, const types::authorization::ProvidedIdToken& token) {
     if (a) {
         // First user interaction was auth? Then start session already here and not at plug in
         if (!sessionActive())
             startSession(true);
         std::lock_guard<std::recursive_mutex> lock(configMutex);
         authorized = true;
-        authorized_pnc = pnc;
-
-        auth_tag = userid;
+        authorized_pnc = token.authorization_type == types::authorization::AuthorizationType::PlugAndCharge;
+        id_token = token;
     } else {
         if (sessionActive()) {
             stopSession();
@@ -1017,12 +1014,9 @@ void Charger::Authorize(bool a, const std::string& userid, bool pnc) {
     }
 }
 
-std::string Charger::getAuthTag() {
+types::authorization::ProvidedIdToken Charger::getIdToken() {
     std::lock_guard<std::recursive_mutex> lock(configMutex);
-    if (authorized) {
-        return auth_tag;
-    } else
-        return "";
+    return id_token;
 }
 
 bool Charger::AuthorizedEIM() {

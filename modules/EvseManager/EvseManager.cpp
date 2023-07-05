@@ -15,7 +15,8 @@ inline static void trim_colons_from_string(std::string& text) {
 
 inline static types::authorization::ProvidedIdToken create_autocharge_token(std::string token, int connector_id) {
     types::authorization::ProvidedIdToken autocharge_token;
-    autocharge_token.type = types::authorization::TokenType::Autocharge;
+    autocharge_token.authorization_type = types::authorization::AuthorizationType::Autocharge;
+    autocharge_token.id_token_type = types::authorization::IdTokenType::MacAddress;
     trim_colons_from_string(token);
     autocharge_token.id_token = "VID:" + token;
     autocharge_token.connectors.emplace(connector_id, 1);

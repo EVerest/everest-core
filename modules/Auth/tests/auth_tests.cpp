@@ -33,7 +33,7 @@ static ProvidedIdToken get_provided_token(const std::string& id_token,
                                           std::optional<bool> prevalidated = std::nullopt) {
     ProvidedIdToken provided_token;
     provided_token.id_token = id_token;
-    provided_token.type = types::authorization::TokenType::RFID;
+    provided_token.authorization_type = types::authorization::AuthorizationType::RFID;
     if (connectors) {
         provided_token.connectors.emplace(connectors.value());
     }
@@ -153,8 +153,8 @@ TEST_F(AuthTest, test_stop_transaction) {
     SessionEvent session_event2;
     session_event2.event = SessionEventEnum::TransactionStarted;
     TransactionStarted transaction_event;
-    transaction_event.energy_Wh_import = 0;
-    transaction_event.id_tag = provided_token.id_token;
+    transaction_event.meter_value.energy_Wh_import.total = 0;
+    transaction_event.id_tag = provided_token;
     transaction_event.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
     session_event2.transaction_started = transaction_event;
 
@@ -385,16 +385,16 @@ TEST_F(AuthTest, test_transaction_finish) {
     SessionEvent session_event2;
     session_event2.event = SessionEventEnum::TransactionStarted;
     TransactionStarted transaction_event1;
-    transaction_event1.energy_Wh_import = 0;
-    transaction_event1.id_tag = provided_token_1.id_token;
+    transaction_event1.meter_value.energy_Wh_import.total = 0;
+    transaction_event1.id_tag = provided_token_1;
     transaction_event1.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
     session_event2.transaction_started = transaction_event1;
 
     SessionEvent session_event3;
     session_event3.event = SessionEventEnum::TransactionStarted;
     TransactionStarted transaction_event2;
-    transaction_event2.energy_Wh_import = 0;
-    transaction_event2.id_tag = provided_token_2.id_token;
+    transaction_event2.meter_value.energy_Wh_import.total = 0;
+    transaction_event2.id_tag = provided_token_2;
     transaction_event2.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
     session_event3.transaction_started = transaction_event2;
 
@@ -450,8 +450,8 @@ TEST_F(AuthTest, test_parent_id_finish) {
     SessionEvent session_event2;
     session_event2.event = SessionEventEnum::TransactionStarted;
     TransactionStarted transaction_event1;
-    transaction_event1.energy_Wh_import = 0;
-    transaction_event1.id_tag = provided_token_1.id_token;
+    transaction_event1.meter_value.energy_Wh_import.total = 0;
+    transaction_event1.id_tag = provided_token_1;
     transaction_event1.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
     session_event2.transaction_started = transaction_event1;
 
@@ -549,8 +549,8 @@ TEST_F(AuthTest, test_parent_id_finish_because_no_available_connector) {
     SessionEvent session_event_3;
     session_event_3.event = SessionEventEnum::TransactionStarted;
     TransactionStarted transaction_event;
-    transaction_event.energy_Wh_import = 0;
-    transaction_event.id_tag = provided_token_1.id_token;
+    transaction_event.meter_value.energy_Wh_import.total = 0;
+    transaction_event.id_tag = provided_token_1;
     transaction_event.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
     session_event_3.transaction_started = transaction_event;
     std::thread t4([this, session_event_3]() { this->auth_handler->handle_session_event(1, session_event_3); });
@@ -657,8 +657,8 @@ TEST_F(AuthTest, test_complete_event_flow) {
     SessionEvent session_event_2;
     session_event_2.event = SessionEventEnum::TransactionStarted;
     TransactionStarted transaction_event;
-    transaction_event.energy_Wh_import = 0;
-    transaction_event.id_tag = provided_token.id_token;
+    transaction_event.energy_Wh_import.total = 0;
+    transaction_event.id_tag = provided_token;
     transaction_event.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
 
     SessionEvent session_event_3;
@@ -670,8 +670,8 @@ TEST_F(AuthTest, test_complete_event_flow) {
     SessionEvent session_event_5;
     session_event_5.event = SessionEventEnum::TransactionFinished;
     TransactionStarted transaction_finished_event;
-    transaction_finished_event.energy_Wh_import = 1000;
-    transaction_finished_event.id_tag = provided_token.id_token;
+    transaction_finished_event.meter_value.energy_Wh_import.total = 1000;
+    transaction_finished_event.id_tag = provided_token;
     transaction_finished_event.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
 
     SessionEvent session_event_6;
@@ -831,16 +831,16 @@ TEST_F(AuthTest, test_two_transactions_start_stop) {
     SessionEvent session_event2;
     session_event2.event = SessionEventEnum::TransactionStarted;
     TransactionStarted transaction_event_1;
-    transaction_event_1.energy_Wh_import = 0;
-    transaction_event_1.id_tag = provided_token_1.id_token;
+    transaction_event_1.meter_value.energy_Wh_import.total = 0;
+    transaction_event_1.id_tag = provided_token_1;
     transaction_event_1.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
-    session_event2.transaction_started = transaction_event_1;
+    session_event2.meter_value.transaction_started = transaction_event_1;
 
     SessionEvent session_event3;
     session_event3.event = SessionEventEnum::TransactionStarted;
     TransactionStarted transaction_event_2;
-    transaction_event_2.energy_Wh_import = 0;
-    transaction_event_2.id_tag = provided_token_2.id_token;
+    transaction_event_2.meter_value.energy_Wh_import.total = 0;
+    transaction_event_2.id_tag = provided_token_2;
     transaction_event_2.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
     session_event3.transaction_started = transaction_event_2;
 
@@ -885,7 +885,7 @@ TEST_F(AuthTest, test_plug_and_charge) {
 
     ProvidedIdToken provided_token;
     provided_token.id_token = VALID_TOKEN_1;
-    provided_token.type = types::authorization::TokenType::PlugAndCharge;
+    provided_token.authorization_type = types::authorization::AuthorizationType::PlugAndCharge;
     provided_token.certificate.emplace("TestCertificate");
 
     const auto result = this->auth_handler->on_token(provided_token);
@@ -926,7 +926,7 @@ TEST_F(AuthTest, test_empty_intersection) {
     std::vector<int32_t> connectors{1};
     ProvidedIdToken provided_token;
     provided_token.id_token = VALID_TOKEN_1;
-    provided_token.type = types::authorization::TokenType::PlugAndCharge;
+    provided_token.authorization_type = types::authorization::AuthorizationType::PlugAndCharge;
     provided_token.certificate.emplace("TestCertificate");
     provided_token.connectors.emplace(connectors);
 

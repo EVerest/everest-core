@@ -252,24 +252,24 @@ void API::init() {
                 session_info->update_state(event, "");
             }
             if (event == "TransactionStarted") {
-                auto session_started = session_event.transaction_started.value();
-                auto energy_Wh_import = session_started.energy_Wh_import;
+                auto transaction_started = session_event.transaction_started.value();
+                auto energy_Wh_import = transaction_started.meter_value.energy_Wh_import.total;
                 session_info->set_start_energy_import_wh(energy_Wh_import);
 
-                if (session_started.energy_Wh_export.has_value()) {
-                    auto energy_Wh_export = session_started.energy_Wh_export;
-                    session_info->set_start_energy_export_wh(energy_Wh_export.value());
+                if (transaction_started.meter_value.energy_Wh_export.has_value()) {
+                    auto energy_Wh_export = transaction_started.meter_value.energy_Wh_export.value().total;
+                    session_info->set_start_energy_export_wh(energy_Wh_export);
                 } else {
                     session_info->start_energy_export_wh_was_set = false;
                 }
             } else if (event == "TransactionFinished") {
-                auto session_finished = session_event.transaction_finished.value();
-                auto energy_Wh_import = session_finished.energy_Wh_import;
+                auto transaction_finished = session_event.transaction_finished.value();
+                auto energy_Wh_import = transaction_finished.meter_value.energy_Wh_import.total;
                 session_info->set_end_energy_import_wh(energy_Wh_import);
 
-                if (session_finished.energy_Wh_export.has_value()) {
-                    auto energy_Wh_export = session_finished.energy_Wh_export;
-                    session_info->set_end_energy_export_wh(energy_Wh_export.value());
+                if (transaction_finished.meter_value.energy_Wh_export.has_value()) {
+                    auto energy_Wh_export = transaction_finished.meter_value.energy_Wh_export.value().total;
+                    session_info->set_end_energy_export_wh(energy_Wh_export);
                 } else {
                     session_info->end_energy_export_wh_was_set = false;
                 }

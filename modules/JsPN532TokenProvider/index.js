@@ -27,8 +27,8 @@ boot_module(async ({ setup, config }) => {
             
             // emit new token into the everest system
             const data = {
-                token: tag.uid,
-                type: "RFID",
+                id_token: tag.uid,
+                authorization_type: "RFID",
                 timeout: mod.config.impl.main.timeout,
             };
             evlog.info('Publishing new rfid/nfc token: ', data);

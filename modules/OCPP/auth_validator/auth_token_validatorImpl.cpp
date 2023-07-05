@@ -17,7 +17,7 @@ void auth_token_validatorImpl::ready() {
 types::authorization::ValidationResult
 auth_token_validatorImpl::handle_validate_token(types::authorization::ProvidedIdToken& provided_token) {
 
-    if (provided_token.type == types::authorization::TokenType::PlugAndCharge) {
+    if (provided_token.authorization_type == types::authorization::AuthorizationType::PlugAndCharge) {
         return validate_pnc_request(provided_token);
     } else {
         return validate_standard_request(provided_token);

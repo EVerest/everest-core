@@ -29,6 +29,16 @@ types:
         SoftReset: A soft reset command was received
         UnlockCommand: Central System sent an Unlock Connector command
         DeAuthorized: The transaction was stopped because of the authorization status in a StartTransaction.conf
+        EnergyLimitReached: Maximum energy of charging reached. For example: in a pre-paid charging solution
+        GroundFault: A GroundFault has occurred
+        LocalOutOfCredit: A local credit limit enforced through the Charging Station has been exceeded.
+        MasterPass: The transaction was stopped using a token with a MasterPassGroupId.
+        OvercurrentFault: A larger than intended electric current has occurred
+        PowerQuality: Quality of power too low, e.g. voltage too low/high, phase imbalance, etc.
+        SOCLimitReached: Electric vehicle has reported reaching a locally enforced maximum battery State of Charge (SOC)
+        StoppedByEV: The transaction was stopped by the EV
+        TimeLimitReached: EV charging session reached a locally enforced time limit
+        Timeout: EV not connected within timeout
     type: string
     enum:
       - EmergencyStop
@@ -42,6 +52,16 @@ types:
       - SoftReset
       - UnlockCommand
       - DeAuthorized
+      - EnergyLimitReached
+      - GroundFault
+      - LocalOutOfCredit
+      - MasterPass
+      - OvercurrentFault
+      - PowerQuality
+      - SOCLimitReached
+      - StoppedByEV
+      - TimeLimitReached
+      - Timeout
   StartSessionReason:
     description: >-
       Reason for session start
@@ -141,22 +161,21 @@ types:
     additionalProperties: false
     required:
       - timestamp
-      - energy_Wh_import
+      - meter_value
       - id_tag
     properties:
       timestamp:
         description: Transaction start time in RFC3339 format
         type: string
         format: date-time
-      energy_Wh_import:
-        description: Transaction start imported meter value in Wh
-        type: number
       id_tag:
         description: The id tag assigned to this transaction
-        type: string
-      energy_Wh_export:
-        description: Transaction start exported meter value Wh
-        type: number
+        type: object
+        $ref: /authorization#/ProvidedIdToken
+      meter_value:
+        description: Transaction start exported meter value
+        type: object
+        $ref: /powermeter#/Powermeter
       signed_meter_value:
         description: Signed meter value
         type: string
@@ -169,18 +188,16 @@ types:
     additionalProperties: false
     required:
       - timestamp
-      - energy_Wh_import
+      - meter_value
     properties:
       timestamp:
         description: Transaction end time in RFC3339 format
         type: string
         format: date-time
-      energy_Wh_import:
-        description: Transaction finished imported meter value in Wh
-        type: number
-      energy_Wh_export:
-        description: Transaction finished exported meter value in Wh
-        type: number
+      meter_value:
+        description: Transaction finished meter value
+        type: object
+        $ref: /powermeter#/Powermeter
       signed_meter_value:
         description: Signed meter value
         type: string

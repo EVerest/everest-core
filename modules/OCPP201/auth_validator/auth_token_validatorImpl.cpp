@@ -12,13 +12,20 @@ namespace auth_validator {
 ocpp::v201::IdToken get_id_token(const types::authorization::ProvidedIdToken& provided_token) {
     ocpp::v201::IdToken id_token;
     id_token.idToken = provided_token.id_token;
-    if (provided_token.type == types::authorization::TokenType::Autocharge) {
+
+    if (provided_token.id_token_type.has_value()) {
+        id_token.type = ocpp::v201::conversions::string_to_id_token_enum(
+            types::authorization::id_token_type_to_string(provided_token.id_token_type.value()));
+        return id_token;
+    }
+
+    if (provided_token.authorization_type == types::authorization::AuthorizationType::Autocharge) {
         id_token.type = ocpp::v201::IdTokenEnum::MacAddress;
-    } else if (provided_token.type == types::authorization::TokenType::OCPP) {
+    } else if (provided_token.authorization_type == types::authorization::AuthorizationType::OCPP) {
         id_token.type = ocpp::v201::IdTokenEnum::Central;
-    } else if (provided_token.type == types::authorization::TokenType::PlugAndCharge) {
+    } else if (provided_token.authorization_type == types::authorization::AuthorizationType::PlugAndCharge) {
         id_token.type = ocpp::v201::IdTokenEnum::eMAID;
-    } else if (provided_token.type == types::authorization::TokenType::RFID) {
+    } else if (provided_token.authorization_type == types::authorization::AuthorizationType::RFID) {
         id_token.type = ocpp::v201::IdTokenEnum::ISO14443;
     }
     return id_token;
@@ -73,7 +80,7 @@ void auth_token_validatorImpl::ready() {
 
 types::authorization::ValidationResult
 auth_token_validatorImpl::handle_validate_token(types::authorization::ProvidedIdToken& provided_token) {
-        const auto id_token = get_id_token(provided_token);
+    const auto id_token = get_id_token(provided_token);
     std::optional<ocpp::CiString<5500>> certificate_opt;
     if (provided_token.certificate.has_value()) {
         certificate_opt.emplace(provided_token.certificate.value());
