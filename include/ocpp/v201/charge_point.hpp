@@ -54,6 +54,11 @@ private:
 
     std::map<int32_t, ChangeAvailabilityRequest> scheduled_change_availability_requests;
 
+    std::map<std::string,
+             std::map<std::string, std::function<DataTransferResponse(const std::optional<std::string>& msg)>>>
+        data_transfer_callbacks;
+    std::mutex data_transfer_callbacks_mutex;
+    
     // timers
     Everest::SteadyTimer heartbeat_timer;
     Everest::SteadyTimer boot_notification_timer;
@@ -208,6 +213,13 @@ public:
     /// \brief Event handler that can be called to trigger a NotifyEvent.req with the given \p events
     /// \param events
     void on_event(const std::vector<EventData>& events);
+
+    /// @brief Data transfer mechanism initiated by charger
+    /// @param vendorId 
+    /// @param messageId 
+    /// @param data 
+    /// @return DataTransferResponse contaning the result from CSMS
+    DataTransferResponse data_transfer_req(const CiString<255>& vendorId,const CiString<50>& messageId, const std::string& data);
 };
 
 } // namespace v201
