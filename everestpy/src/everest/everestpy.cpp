@@ -82,5 +82,5 @@ PYBIND11_MODULE(everestpy, m) {
     log_submodule.def("error", [](const std::string& message) { EVLOG_error << message; });
     log_submodule.def("critical", [](const std::string& message) { EVLOG_critical << message; });
 
-    m.attr("__version__") = "0.4";
+    m.attr("__version__") = "0.6";
 }
