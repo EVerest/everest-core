@@ -786,61 +786,69 @@ void ChargePointImpl::connected_callback() {
 
 void ChargePointImpl::message_callback(const std::string& message) {
     EVLOG_debug << "Received Message: " << message;
-
     // EVLOG_debug << "json message: " << json_message;
     auto enhanced_message = this->message_queue->receive(message);
     auto json_message = enhanced_message.message;
     this->logging->central_system(conversions::messagetype_to_string(enhanced_message.messageType), message);
-    // reject unsupported messages
-    if (this->configuration->getSupportedMessageTypesReceiving().count(enhanced_message.messageType) == 0) {
-        EVLOG_warning << "Received an unsupported message: " << enhanced_message.messageType;
-        // FIXME(kai): however, only send a CALLERROR when it is a CALL message we just received
-        if (enhanced_message.messageTypeId == MessageTypeId::CALL) {
-            auto call_error = CallError(enhanced_message.uniqueId, "NotSupported", "", json({}));
+    try {
+        // reject unsupported messages
+        if (this->configuration->getSupportedMessageTypesReceiving().count(enhanced_message.messageType) == 0) {
+            EVLOG_warning << "Received an unsupported message: " << enhanced_message.messageType;
+            // FIXME(kai): however, only send a CALLERROR when it is a CALL message we just received
+            if (enhanced_message.messageTypeId == MessageTypeId::CALL) {
+                auto call_error = CallError(enhanced_message.uniqueId, "NotSupported", "", json({}));
+                this->send(call_error);
+            }
+
+            // in any case stop message handling here:
+            return;
+        }
+
+        switch (this->connection_state) {
+        case ChargePointConnectionState::Disconnected: {
+            EVLOG_error << "Received a message in disconnected state, this cannot be correct";
+            break;
+        }
+        case ChargePointConnectionState::Connected: {
+            if (enhanced_message.messageType == MessageType::BootNotificationResponse) {
+                this->handleBootNotificationResponse(json_message);
+            }
+            break;
+        }
+        case ChargePointConnectionState::Rejected: {
+            if (this->registration_status == RegistrationStatus::Rejected) {
+                if (enhanced_message.messageType == MessageType::BootNotificationResponse) {
+                    this->handleBootNotificationResponse(json_message);
+                }
+            }
+            break;
+        }
+        case ChargePointConnectionState::Pending: {
+            if (this->registration_status == RegistrationStatus::Pending) {
+                if (enhanced_message.messageType == MessageType::BootNotificationResponse) {
+                    this->handleBootNotificationResponse(json_message);
+                } else {
+                    this->handle_message(json_message, enhanced_message.messageType);
+                }
+            }
+            break;
+        }
+        case ChargePointConnectionState::Booted: {
+            this->handle_message(json_message, enhanced_message.messageType);
+            break;
+        }
+
+        default:
+            EVLOG_error << "Reached default statement in on_message, this should not be possible";
+            break;
+        }
+    } catch (json::exception& e) {
+        EVLOG_error << "JSON exception during handling of message: " << e.what();
+        if (json_message.is_array() && json_message.size() > MESSAGE_ID) {
+            auto call_error = CallError(MessageId(json_message.at(MESSAGE_ID).get<std::string>()), "FormationViolation",
+                                        e.what(), json({}));
             this->send(call_error);
         }
-
-        // in any case stop message handling here:
-        return;
-    }
-
-    switch (this->connection_state) {
-    case ChargePointConnectionState::Disconnected: {
-        EVLOG_error << "Received a message in disconnected state, this cannot be correct";
-        break;
-    }
-    case ChargePointConnectionState::Connected: {
-        if (enhanced_message.messageType == MessageType::BootNotificationResponse) {
-            this->handleBootNotificationResponse(json_message);
-        }
-        break;
-    }
-    case ChargePointConnectionState::Rejected: {
-        if (this->registration_status == RegistrationStatus::Rejected) {
-            if (enhanced_message.messageType == MessageType::BootNotificationResponse) {
-                this->handleBootNotificationResponse(json_message);
-            }
-        }
-        break;
-    }
-    case ChargePointConnectionState::Pending: {
-        if (this->registration_status == RegistrationStatus::Pending) {
-            if (enhanced_message.messageType == MessageType::BootNotificationResponse) {
-                this->handleBootNotificationResponse(json_message);
-            } else {
-                this->handle_message(json_message, enhanced_message.messageType);
-            }
-        }
-        break;
-    }
-    case ChargePointConnectionState::Booted: {
-        this->handle_message(json_message, enhanced_message.messageType);
-        break;
-    }
-
-    default:
-        EVLOG_error << "Reached default statement in on_message, this should not be possible";
-        break;
     }
 }
 
@@ -1515,8 +1523,7 @@ void ChargePointImpl::handleStartTransactionResponse(ocpp::CallResult<StartTrans
         if (this->configuration->getStopTransactionOnInvalidId()) {
             this->stop_transaction_callback(connector, Reason::DeAuthorized);
         }
-    }
-    else if (this->transaction_started_callback!= nullptr) {
+    } else if (this->transaction_started_callback != nullptr) {
         this->transaction_started_callback(connector, start_transaction_response.transactionId);
     }
 }
@@ -2303,7 +2310,7 @@ IdTagInfo ChargePointImpl::authorize_id_token(CiString<20> idTag) {
         }
         if (this->configuration->getAuthorizationCacheEnabled()) {
             if (this->validate_against_cache_entries(idTag)) {
-                EVLOG_info << "Found vlaid id_tag " << idTag.get() << " in AuthorizationCache";
+                EVLOG_info << "Found valid id_tag " << idTag.get() << " in AuthorizationCache";
                 return this->database_handler->get_authorization_cache_entry(idTag).value();
             }
         }
@@ -2319,9 +2326,15 @@ IdTagInfo ChargePointImpl::authorize_id_token(CiString<20> idTag) {
 
     IdTagInfo id_tag_info;
     if (enhanced_message.messageType == MessageType::AuthorizeResponse) {
-        ocpp::CallResult<AuthorizeResponse> call_result = enhanced_message.message;
-        this->database_handler->insert_or_update_authorization_cache_entry(idTag, call_result.msg.idTagInfo);
-        return call_result.msg.idTagInfo;
+        try {
+            ocpp::CallResult<AuthorizeResponse> call_result = enhanced_message.message;
+            this->database_handler->insert_or_update_authorization_cache_entry(idTag, call_result.msg.idTagInfo);
+            return call_result.msg.idTagInfo;
+        } catch (const json::exception& e) {
+            EVLOG_error << "CSMS returned a malformed response to the AuthorizeRequest, assuming id tag is invalid.";
+            id_tag_info = {AuthorizationStatus::Invalid, std::nullopt, std::nullopt};
+            return id_tag_info;
+        }
     } else if (enhanced_message.offline) {
         if (this->configuration->getAllowOfflineTxForUnknownId() != std::nullopt &&
             this->configuration->getAllowOfflineTxForUnknownId().value()) {
@@ -2617,7 +2630,7 @@ void ChargePointImpl::handle_data_transfer_pnc_certificate_signed(Call<DataTrans
                         "V2GCertificate";
             EVLOG_warning << tech_info;
         } else if (this->configuration->getCertificateSignedMaxChainSize().has_value() and
-                   (size_t)this->configuration->getCertificateSignedMaxChainSize().value() <
+                   (size_t) this->configuration->getCertificateSignedMaxChainSize().value() <
                        req.certificateChain.get().size()) {
             tech_info = "Received DataTransfer.req containing CertificateSigned.req where chain size is greater "
                         "than configured CertificateSignedMaxChainSize";
@@ -3197,7 +3210,7 @@ void ChargePointImpl::register_get_15118_ev_certificate_response_callback(
 }
 
 void ChargePointImpl::register_transaction_started_callback(
-    const std::function<void(const int32_t connector, const int32_t transaction_id )>& callback) {
+    const std::function<void(const int32_t connector, const int32_t transaction_id)>& callback) {
     this->transaction_started_callback = callback;
 }
 
