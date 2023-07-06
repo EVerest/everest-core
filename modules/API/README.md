@@ -41,6 +41,7 @@ This variable is published every second and contains a json object with informat
         "charged_energy_wh": 0,
         "charging_duration_s": 84,
         "datetime": "2022-10-11T16:48:35.747Z",
+        "discharged_energy_wh": 0,
         "latest_total_w": 0.0,
         "state": "Unplugged",
         "state_info": ""
@@ -50,6 +51,7 @@ This variable is published every second and contains a json object with informat
 - **charged_energy_wh** contains the charged energy in Wh
 - **charging_duration_s** contains the duration of the current charging session in seconds
 - **datetime** contains a string representation of the current UTC datetime in RFC3339 format
+- **discharged_energy_wh** contains the energy fed into the power grid by the EV in Wh
 - **latest_total_w** contains the latest total power reading over all phases in Watt
 - **state** contains the current state of the charging session, from a list of the following possible states:
     - Unplugged

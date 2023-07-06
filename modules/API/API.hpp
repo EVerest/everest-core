@@ -32,8 +32,10 @@ private:
 
     std::string state;       ///< Latest state of the EVSE
     std::string state_info;  ///< Additional information of this state
-    int32_t start_energy_wh; ///< Energy reading at the beginning of this charging session in Wh
-    int32_t end_energy_wh;   ///< Energy reading at the end of this charging session in Wh
+    int32_t start_energy_import_wh; ///< Energy reading (import) at the beginning of this charging session in Wh
+    int32_t end_energy_import_wh;   ///< Energy reading (import) at the end of this charging session in Wh
+    int32_t start_energy_export_wh; ///< Energy reading (export) at the beginning of this charging session in Wh
+    int32_t end_energy_export_wh;   ///< Energy reading (export) at the end of this charging session in Wh
     std::chrono::time_point<date::utc_clock> start_time_point; ///< Start of the charging session
     std::chrono::time_point<date::utc_clock> end_time_point;   ///< End of the charging session
     double latest_total_w;                                     ///< Latest total power reading in W
@@ -43,11 +45,17 @@ private:
 public:
     SessionInfo();
 
+    bool start_energy_export_wh_was_set{false}; ///< Indicate if start export energy value (optional) has been received or not
+    bool end_energy_export_wh_was_set{false};   ///< Indicate if end export energy value (optional) has been received or not
+    
     void reset();
     void update_state(const std::string& event, const std::string& state_info);
-    void set_start_energy_wh(int32_t start_energy_wh);
-    void set_end_energy_wh(int32_t end_energy_wh);
-    void set_latest_energy_wh(int32_t latest_energy_wh);
+    void set_start_energy_import_wh(int32_t start_energy_import_wh);
+    void set_end_energy_import_wh(int32_t end_energy_import_wh);
+    void set_latest_energy_import_wh(int32_t latest_energy_wh);
+    void set_start_energy_export_wh(int32_t start_energy_export_wh);
+    void set_end_energy_export_wh(int32_t end_energy_export_wh);
+    void set_latest_energy_export_wh(int32_t latest_export_energy_wh);
     void set_latest_total_w(double latest_total_w);
 
     /// \brief Converts this struct into a serialized json object
