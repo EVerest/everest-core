@@ -1243,7 +1243,7 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
                 }
                 contract_cert_chain_pem.append("-----BEGIN CERTIFICATE-----\n");
                 contract_cert_chain_pem.append(std::string(reinterpret_cast<char const*>(base64Buffer), olen));
-                contract_cert_chain_pem.append("-----END CERTIFICATE-----\n");
+                contract_cert_chain_pem.append("\n-----END CERTIFICATE-----\n");
 
                 free(base64Buffer);
                 crt = crt->next;
