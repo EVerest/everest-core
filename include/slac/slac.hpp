@@ -37,6 +37,7 @@ const int RUN_ID_LEN = 8;
 // FIXME (aw): where to put these iso15118/3 consts?
 const int C_EV_START_ATTEN_CHAR_INDS = 3;
 const int C_EV_MATCH_RETRY = 2;
+const int C_EV_PARM_REQ_RETRY = 100;
 const int C_EV_MATCH_MNBC = 10;
 const int TP_EV_BATCH_MSG_INTERVAL_MS = 40; // 20ms - 50ms, interval between start_atten_char and mnbc_sound msgs
 const int TT_EV_ATTEN_RESULTS_MS = 1200; // max. 1200ms
