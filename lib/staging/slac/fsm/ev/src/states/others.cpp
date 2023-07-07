@@ -77,8 +77,11 @@ FSMSimpleState::CallbackReturnType InitSlacState::callback() {
         return time_left;
     }
 
+
     // timeout, check if we still have retries
-    if (num_of_tries < slac::defs::C_EV_PARM_REQ_RETRY) {
+    if (num_of_tries < 100) {
+        // FIXME (aw): the norm says num_of_tries < slac::defs::C_EV_MATCH_RETRY
+        // but doesn't seem to work in 'real life'
         return send_parm_req();
     }
 
