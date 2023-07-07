@@ -198,10 +198,11 @@ def set_impl_specific_path_vars(tmpl_data, output_path):
         (impl['class_header'], impl['cpp_file_rel_path']) = construct_impl_file_paths(impl)
 
 
-def generate_module_loader_files(mod, output_dir):
+def generate_module_loader_files(rel_mod_dir, output_dir):
     loader_files = []
+    (_, _, mod) = rel_mod_dir.rpartition('/')
 
-    mod_path = work_dir / f'modules/{mod}/manifest.yaml'
+    mod_path = work_dir / f'modules/{rel_mod_dir}/manifest.yaml'
     if not mod_path.exists():
         raise Exception(f'Could not find module manifest ({mod_path}')
 
@@ -233,9 +234,11 @@ def generate_module_loader_files(mod, output_dir):
     return loader_files
 
 
-def generate_module_files(mod, update_flag):
+def generate_module_files(rel_mod_dir, update_flag):
+    (_, _, mod) = rel_mod_dir.rpartition('/')
+
     mod_files = {'core': [], 'interfaces': []}
-    mod_path = work_dir / f'modules/{mod}/manifest.yaml'
+    mod_path = work_dir / f'modules/{rel_mod_dir}/manifest.yaml'
     mod_def = helpers.load_validated_module_def(mod_path, validators['module'])
 
     tmpl_data = generate_tmpl_data_for_module(mod, mod_def)
