@@ -128,7 +128,7 @@ void power_supply_DCImpl::init() {
 void power_supply_DCImpl::ready() {
 
     while (true) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(250));
 
         // Send voltage, current and power limits
 
