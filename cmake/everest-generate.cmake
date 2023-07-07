@@ -208,9 +208,17 @@ function(ev_setup_cpp_module)
 endfunction()
 
 function (ev_add_cpp_module MODULE_NAME)
+
+    if (ARGC GREATER 1)
+        set(MODULE_SUBDIR ${ARGV1})
+        message (STATUS "Module is located in a sub directory: ${MODULE_SUBDIR}")
+    else()
+        set(MODULE_SUBDIR ".")
+    endif ()
+
     set(EVEREST_MODULE_INSTALL_PREFIX "${CMAKE_INSTALL_LIBEXECDIR}/everest/modules")
 
-    set(MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}")
+    set(MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_SUBDIR}/${MODULE_NAME}")
 
     if(IS_DIRECTORY ${MODULE_PATH})
         if(${EVEREST_EXCLUDE_CPP_MODULES})
@@ -302,9 +310,17 @@ function (ev_add_cpp_module MODULE_NAME)
 endfunction()
 
 function (ev_add_js_module MODULE_NAME)
+
+    if (ARGC GREATER 1)
+        set(MODULE_SUBDIR ${ARGV1})
+        message (STATUS "Module is located in a sub directory: ${MODULE_SUBDIR}")
+    else()
+        set(MODULE_SUBDIR ".")
+    endif ()
+
     set(EVEREST_MODULE_INSTALL_PREFIX "${CMAKE_INSTALL_LIBEXECDIR}/everest/modules")
 
-    set(MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}")
+    set(MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_SUBDIR}/${MODULE_NAME}")
 
     if(IS_DIRECTORY ${MODULE_PATH})
         if(NOT ${EVEREST_ENABLE_JS_SUPPORT})
@@ -389,9 +405,17 @@ function (ev_add_js_module MODULE_NAME)
 endfunction()
 
 function (ev_add_py_module MODULE_NAME)
+
+    if (ARGC GREATER 1)
+        set(MODULE_SUBDIR ${ARGV1})
+        message (STATUS "Module is located in a sub directory: ${MODULE_SUBDIR}")
+    else()
+        set(MODULE_SUBDIR ".")
+    endif ()
+
     set(EVEREST_MODULE_INSTALL_PREFIX "${CMAKE_INSTALL_LIBEXECDIR}/everest/modules")
 
-    set(MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}")
+    set(MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_SUBDIR}/${MODULE_NAME}")
 
     if(IS_DIRECTORY ${MODULE_PATH})
         if(NOT ${EVEREST_ENABLE_PY_SUPPORT})
