@@ -143,11 +143,11 @@ std::ostream& operator<<(std::ostream& os, const SupportedFeatureProfiles& suppo
 
 /// \brief Contains the different connection states of the charge point
 enum ChargePointConnectionState {
-    Disconnected,
-    Connected,
-    Booted,
-    Pending,
-    Rejected,
+    Disconnected, // state when disconnected
+    Connected, // state when ws is connected
+    Booted, // state when ws is connected and BootNotifcation had been Accepted
+    Pending, // state when ws is connected and state when BootNotifcation is Pending
+    Rejected, // state when ws is connected and state when BootNotifcation had been Rejected
 };
 namespace conversions {
 /// \brief Converts the given ChargePointConnectionState \p e to std::string

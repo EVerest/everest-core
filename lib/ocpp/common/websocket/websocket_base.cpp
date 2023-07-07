@@ -17,6 +17,11 @@ WebsocketBase::WebsocketBase(const WebsocketConnectionOptions& connection_option
     message_callback(nullptr),
     reconnect_timer(nullptr) {
     this->ping_timer = std::make_unique<Everest::SteadyTimer>();
+    const auto auth_key = connection_options.authorization_key;
+    if (auth_key.has_value() and auth_key.value().length() < 16) {
+        EVLOG_warning << "AuthorizationKey with only " << auth_key.value().length()
+                      << " characters has been configured";
+    }
 }
 
 WebsocketBase::~WebsocketBase() {
@@ -76,15 +81,23 @@ bool WebsocketBase::is_connected() {
 std::optional<std::string> WebsocketBase::getAuthorizationHeader() {
     std::optional<std::string> auth_header = std::nullopt;
     const auto authorization_key = this->connection_options.authorization_key;
-    if (authorization_key) {
+    if (authorization_key.has_value()) {
         EVLOG_debug << "AuthorizationKey present, encoding authentication header";
         std::string plain_auth_header = this->connection_options.chargepoint_id + ":" + authorization_key.value();
         auth_header.emplace(std::string("Basic ") + websocketpp::base64_encode(plain_auth_header));
-
-        EVLOG_info << "Basic Auth header: " << auth_header.value();
+        EVLOG_debug << "Basic Auth header: " << auth_header.value();
     }
 
     return auth_header;
+}
+
+void WebsocketBase::log_on_fail(const std::error_code& ec, const boost::system::error_code& transport_ec,
+                                const int http_status) {
+    EVLOG_error << "Failed to connect to websocket server"
+                << ", error_code: " << ec.value() << ", reason: " << ec.message()
+                << ", HTTP response code: " << http_status << ", category: " << ec.category().name()
+                << ", transport error code: " << transport_ec.value()
+                << ", Transport error category: " << transport_ec.category().name();
 }
 
 void WebsocketBase::set_websocket_ping_interval(int32_t interval_s) {

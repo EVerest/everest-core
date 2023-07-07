@@ -165,7 +165,7 @@ void WebsocketPlain::connect_plain(int32_t security_profile, bool try_once) {
 
 void WebsocketPlain::on_open_plain(client* c, websocketpp::connection_hdl hdl, int32_t security_profile) {
     (void)c; // client is not used in this function
-    EVLOG_info << "Connected to plain websocket successfully. Executing connected callback";
+    EVLOG_info << "OCPP client successfully connected to plain websocket server";
     this->m_is_connected = true;
     this->connection_options.security_profile = security_profile;
     this->set_websocket_ping_interval(this->connection_options.ping_interval_s);
@@ -201,17 +201,12 @@ void WebsocketPlain::on_close_plain(client* c, websocketpp::connection_hdl hdl) 
 
 void WebsocketPlain::on_fail_plain(client* c, websocketpp::connection_hdl hdl, bool try_once) {
     client::connection_ptr con = c->get_con_from_hdl(hdl);
-    auto error_code = con->get_ec();
-    EVLOG_error << "Failed to connect to plain websocket server " << con->get_response_header("Server")
-                << ", code: " << error_code.value() << ", reason: " << error_code.message()
-                << ", response code: " << con->get_response_code();
-    EVLOG_error << "Failed to connect to plain websocket server "
-                << ", code: " << con->get_transport_ec().value() << ", reason: " << con->get_transport_ec().message()
-                << ", category: " << con->get_transport_ec().category().name();
-    EVLOG_error << "Close code: " << con->get_local_close_code() << ", close reason: " << con->get_local_close_reason();
+    const auto ec = con->get_ec();
+    this->log_on_fail(ec, con->get_transport_ec(), con->get_response_code());
+
     // when connecting with new security profile websocket should only try to connect once
     if (!try_once) {
-        this->reconnect(error_code, this->reconnect_interval_ms);
+        this->reconnect(ec, this->reconnect_interval_ms);
     } else {
         this->disconnected_callback();
     }

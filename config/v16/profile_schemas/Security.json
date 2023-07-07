@@ -14,7 +14,7 @@
         "AuthorizationKey": {
             "type": "string",
             "description": "The basic authentication password is used for HTTP Basic Authentication",
-            "minLength": 16,
+            "minLength": 8,
             "readOnly": false
         },
         "CertificateSignedMaxChainSize": {

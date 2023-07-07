@@ -59,6 +59,9 @@ protected:
     /// \brief getter for authorization header for connection with basic authentication
     std::optional<std::string> getAuthorizationHeader();
 
+    /// \brief Logs websocket connection error
+    void log_on_fail(const std::error_code& ec, const boost::system::error_code& transport_ec, const int http_status);
+
     /// \brief send a websocket ping
     virtual void ping() = 0;
 

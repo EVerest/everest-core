@@ -777,6 +777,10 @@ void ChargePointImpl::connected_callback() {
         }
         break;
     }
+    case ChargePointConnectionState::Pending: {
+        // in Pending state this can happen when we reconnected while the BootNotification had not been yet accepted
+        break;
+    }
     default:
         EVLOG_error << "Connected but not in state 'Disconnected' or 'Booted', something is wrong: "
                     << this->connection_state;
@@ -1023,8 +1027,7 @@ void ChargePointImpl::handleBootNotificationResponse(ocpp::CallResult<BootNotifi
     }
     case RegistrationStatus::Pending:
         this->connection_state = ChargePointConnectionState::Pending;
-
-        EVLOG_debug << "BootNotification response is pending.";
+        EVLOG_info << "BootNotification response is pending.";
         this->boot_notification_timer->timeout(std::chrono::seconds(call_result.msg.interval));
         break;
     default:
@@ -1032,7 +1035,7 @@ void ChargePointImpl::handleBootNotificationResponse(ocpp::CallResult<BootNotifi
         // In this state we are not allowed to send any messages to the central system, even when
         // requested. The first time we are allowed to send a message (a BootNotification) is
         // after boot_time + heartbeat_interval if the msg.interval is 0, or after boot_timer + msg.interval
-        EVLOG_debug << "BootNotification was rejected, trying again in " << this->configuration->getHeartbeatInterval()
+        EVLOG_info << "BootNotification was rejected, trying again in " << this->configuration->getHeartbeatInterval()
                     << "s";
 
         this->boot_notification_timer->timeout(std::chrono::seconds(call_result.msg.interval));
@@ -1128,19 +1131,19 @@ void ChargePointImpl::handleChangeConfigurationRequest(ocpp::Call<ChangeConfigur
                 } else if (call.msg.key == "ClockAlignedDataInterval") {
                     this->update_clock_aligned_meter_values_interval();
                 } else if (call.msg.key == "AuthorizationKey") {
-                    /*SECURITYLOG*/ EVLOG_debug << "AuthorizationKey was changed by central system";
+                    EVLOG_info << "AuthorizationKey was changed by central system";
                     if (this->configuration->getSecurityProfile() == 0) {
-                        EVLOG_debug << "AuthorizationKey was changed while on security profile 0.";
+                        EVLOG_info << "AuthorizationKey was changed while on security profile 0.";
                     } else if (this->configuration->getSecurityProfile() == 1 ||
                                this->configuration->getSecurityProfile() == 2) {
-                        EVLOG_debug
+                        EVLOG_info
                             << "AuthorizationKey was changed while on security profile 1 or 2. Reconnect Websocket.";
                         ocpp::CallResult<ChangeConfigurationResponse> call_result(response, call.uniqueId);
                         this->send<ChangeConfigurationResponse>(call_result);
                         responded = true;
                         this->websocket->reconnect(std::error_code(), 1000);
                     } else {
-                        EVLOG_debug << "AuthorizationKey was changed while on security profile 3. Nothing to do.";
+                        EVLOG_info << "AuthorizationKey was changed while on security profile 3. Nothing to do.";
                     }
                 } else if (call.msg.key == "SecurityProfile") {
                     try {

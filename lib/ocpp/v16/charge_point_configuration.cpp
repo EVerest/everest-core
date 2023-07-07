@@ -2175,11 +2175,11 @@ ConfigurationStatus ChargePointConfiguration::set(CiString<50> key, CiString<500
     }
     if (key == "AuthorizationKey") {
         std::string authorization_key = value.get();
-        if (authorization_key.length() >= 16) {
+        if (authorization_key.length() >= 8) {
             this->setAuthorizationKey(value.get());
             return ConfigurationStatus::Accepted;
         } else {
-            EVLOG_debug << "AuthorizationKey is < 16 bytes";
+            EVLOG_warning << "Attempt to change AuthorizationKey to value with < 8 characters";
             return ConfigurationStatus::Rejected;
         }
     }
