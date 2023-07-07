@@ -1,0 +1,2 @@
+ev_add_module(SunspecReader)
+ev_add_module(SunspecScanner)

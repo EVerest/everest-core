@@ -8,6 +8,13 @@ endif()
 
 set (EV_CORE_CMAKE_SCRIPT_DIR ${CMAKE_CURRENT_LIST_DIR} CACHE FILEPATH "")
 
+# FIXME (aw): where should this go, should it be global?
+string(ASCII 27 ESCAPE)
+set(FMT_RESET "${ESCAPE}[m")
+set(FMT_BOLD "${ESCAPE}[1m")
+
+message(STATUS "${COLOR_BOLD}Should be bold?${COLOR_RESET}")
+
 # NOTE (aw): maybe this could be also implemented as an IMPORTED target?
 add_custom_target(generate_cpp_files)
 set_target_properties(generate_cpp_files
@@ -207,8 +214,66 @@ function(ev_setup_cpp_module)
     # no-op to not break API
 endfunction()
 
+function (ev_add_module)
+    #
+    # handle passed arguments
+    #
+    set(options "")
+    set(one_value_args "")
+    set(multi_value_args
+        DEPENDENCIES
+    )
+
+    if (${ARGC} LESS 1)
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}() missing module name")
+    endif ()
+
+    set (MODULE_NAME ${ARGV0})
+
+    cmake_parse_arguments(PARSE_ARGV 1 OPTNS "${options}" "${one_value_args}" "${multi_value_args}")
+
+    if (OPTNS_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}() got unknown argument(s): ${OPTNS_UNPARSED_ARGUMENTS}")
+    endif()
+
+    if (OPTNS_DEPENDENCIES)
+        foreach(DEPENDENCY_NAME ${OPTNS_DEPENDENCIES})
+            set(DEPENDENCY_VALUE ${${DEPENDENCY_NAME}})
+            if (NOT DEPENDENCY_VALUE)
+                message(STATUS "${FMT_BOLD}Skipping${FMT_RESET} module ${MODULE_NAME} (${DEPENDENCY_NAME} is false)")
+                return()
+            endif()
+        endforeach()
+    endif()
+
+    # check if python module
+    string(FIND ${MODULE_NAME} "Py" MODULE_PREFIX_POS)
+    if (MODULE_PREFIX_POS EQUAL 0)
+        ev_add_py_module(${MODULE_NAME})
+        return()
+    endif()
+
+    # check if javascript module
+    string(FIND ${MODULE_NAME} "Js" MODULE_PREFIX_POS)
+    if (MODULE_PREFIX_POS EQUAL 0)
+        ev_add_js_module(${MODULE_NAME})
+        return()
+    endif()
+
+    # otherwise, should be cpp module
+    ev_add_cpp_module(${MODULE_NAME})
+endfunction()
+
 function (ev_add_cpp_module MODULE_NAME)
     set(EVEREST_MODULE_INSTALL_PREFIX "${CMAKE_INSTALL_LIBEXECDIR}/everest/modules")
+    set(EVEREST_MODULE_DIR ${PROJECT_SOURCE_DIR}/modules)
+
+    file(RELATIVE_PATH MODULE_PARENT_DIR ${EVEREST_MODULE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+
+    set(RELATIVE_MODULE_DIR ${MODULE_NAME})
+    if (MODULE_PARENT_DIR)
+        set(RELATIVE_MODULE_DIR ${MODULE_PARENT_DIR}/${MODULE_NAME})
+    endif()
 
     set(MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}")
 
@@ -236,7 +301,7 @@ function (ev_add_cpp_module MODULE_NAME)
                         --disable-clang-format
                         --schemas-dir "$<TARGET_PROPERTY:generate_cpp_files,EVEREST_SCHEMA_DIR>"
                         --output-dir ${GENERATED_MODULE_DIR}
-                        ${MODULE_NAME}
+                        ${RELATIVE_MODULE_DIR}
                 DEPENDS
                     ${MODULE_PATH}/manifest.yaml
                 WORKING_DIRECTORY
