@@ -1,0 +1,5 @@
+ev_add_module(JsCarSimulator)
+ev_add_module(JsDCSupplySimulator)
+ev_add_module(JsIMDSimulator)
+ev_add_module(JsSlacSimulator)
+ev_add_module(JsYetiSimulator)
