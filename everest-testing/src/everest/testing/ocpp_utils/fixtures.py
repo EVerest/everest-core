@@ -12,7 +12,6 @@ import ssl
 import socket
 from threading import Thread
 import getpass
-from enum import Enum
 from pathlib import Path
 from pyftpdlib import servers
 from pyftpdlib.authorizers import DummyAuthorizer
@@ -20,18 +19,8 @@ from pyftpdlib.handlers import FTPHandler
 from everest.testing.ocpp_utils.controller.test_controller_interface import TestController
 from everest.testing.ocpp_utils.controller.everest_test_controller import EverestTestController
 from everest.testing.ocpp_utils.central_system import CentralSystem
+from everest.testing.ocpp_utils.charge_point_utils import TestUtility
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), ".")))
-
-class ValidationMode(str, Enum):
-    STRICT = "STRICT"
-    EASY = "EASY"
-
-
-class TestUtility:
-    def __init__(self) -> None:
-        self.messages = []
-        self.validation_mode = ValidationMode.EASY
-        self.forbidden_actions = []
 
 
 @pytest.fixture
