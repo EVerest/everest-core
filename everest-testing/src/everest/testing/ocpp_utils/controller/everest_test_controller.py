@@ -21,7 +21,7 @@ TEST_LOGS_DIR = "/tmp/everest_ocpp_test_logs"
 
 class EverestTestController(TestController):
 
-    def __init__(self, everest_core_path, config_path: Path, chargepoint_id: str, ocpp_version: str,
+    def __init__(self, everest_core_path: Path, config_path: Path, chargepoint_id: str, ocpp_version: str,
                  test_function_name: str = None, ocpp_module_id: str = "ocpp") -> None:
         self.everest_core = EverestCore(everest_core_path, config_path)
         self.config_path = config_path
@@ -29,8 +29,10 @@ class EverestTestController(TestController):
         self.chargepoint_id = chargepoint_id
         self.ocpp_version = ocpp_version
         self.test_function_name = test_function_name
-        self.temp_ocpp_config_file = tempfile.NamedTemporaryFile(delete=False, mode="w+", suffix=".json")
-        self.temp_ocpp_user_config_file = tempfile.NamedTemporaryFile(delete=False, mode="w+", suffix=".json")
+        self.temp_ocpp_config_file = tempfile.NamedTemporaryFile(
+            delete=False, mode="w+", suffix=".json")
+        self.temp_ocpp_user_config_file = tempfile.NamedTemporaryFile(
+            delete=False, mode="w+", suffix=".json")
         self.temp_ocpp_database_dir = tempfile.TemporaryDirectory()
         self.temp_ocpp_log_dir = tempfile.TemporaryDirectory()
         self.temp_ocpp_certs_dir = tempfile.TemporaryDirectory()
@@ -41,7 +43,8 @@ class EverestTestController(TestController):
     def start(self, central_system_port=None, standalone_module=None):
         logging.info(f"Central system port: {central_system_port}")
         # modify ocpp config with given central system port and modify everest-core config as well
-        everest_config = yaml.safe_load(self.everest_core.everest_config_path.read_text())
+        everest_config = yaml.safe_load(
+            self.everest_core.everest_config_path.read_text())
 
         if self.ocpp_version == "ocpp1.6":
             ocpp_dir = self.everest_core.prefix_path / "share/everest/modules/OCPP"
@@ -49,14 +52,17 @@ class EverestTestController(TestController):
                 everest_config["active_modules"][self.ocpp_module_id]["config_module"]["ChargePointConfigPath"]
             ocpp_config = json.loads(ocpp_config_path.read_text())
             charge_point_id = ocpp_config["Internal"]["ChargePointId"]
-            ocpp_config["Internal"]["CentralSystemURI"] = f"127.0.0.1:{central_system_port}/{charge_point_id}"
+            ocpp_config["Internal"][
+                "CentralSystemURI"] = f"127.0.0.1:{central_system_port}/{charge_point_id}"
         else:
             ocpp_dir = self.everest_core.prefix_path / "share/everest/modules/OCPP201"
             ocpp_config_path = ocpp_dir / \
                 everest_config["active_modules"][self.ocpp_module_id]["config_module"]["ChargePointConfigPath"]
             ocpp_config = json.loads(ocpp_config_path.read_text())
-            charge_point_id = ocpp_config["InternalCtrlr"]["ChargePointId"]
-            ocpp_config["InternalCtrlr"]["CentralSystemURI"] = f"127.0.0.1:{central_system_port}/{charge_point_id}"
+            charge_point_id = ocpp_config["InternalCtrlr"]["ChargePointId"]["attributes"][
+                "Actual"]
+            ocpp_config["InternalCtrlr"]["CentralSystemURI"]["attributes"][
+                "Actual"] = f"127.0.0.1:{central_system_port}/{charge_point_id}"
 
         if self.first_run:
             logging.info("First run")
@@ -73,8 +79,13 @@ class EverestTestController(TestController):
                 "MessageLogPath"] = f"{TEST_LOGS_DIR}/{self.test_function_name}-{datetime.utcnow().isoformat()}"
             everest_config["active_modules"][self.ocpp_module_id]["config_module"]["CertsPath"] = self.temp_ocpp_certs_dir.name
             if everest_config["active_modules"][self.ocpp_module_id]["module"] == "OCPP":
-                everest_config["active_modules"][self.ocpp_module_id]["config_module"]["UserConfigPath"] = self.temp_ocpp_user_config_file.name
+                everest_config["active_modules"][self.ocpp_module_id]["config_module"][
+                    "UserConfigPath"] = self.temp_ocpp_user_config_file.name
                 everest_config["active_modules"][self.ocpp_module_id]["config_module"]["DatabasePath"] = self.temp_ocpp_database_dir.name
+            elif everest_config["active_modules"][self.ocpp_module_id]["module"] == "OCPP201":
+                # HACK!
+                os.system(
+                    f"python3 {str(self.everest_core.prefix_path)}/../../../libocpp/config/v201/insert_device_model_config.py --config {self.temp_ocpp_config_file.name} --db /tmp/ocpp201/device_model_storage.db")
 
         self.everest_core.temp_everest_config_file.seek(0)
         yaml.dump(everest_config, self.everest_core.temp_everest_config_file)
@@ -82,11 +93,14 @@ class EverestTestController(TestController):
         # install default certificates
         certs_dir = self.everest_core.etc_path / 'certs'
 
-        shutil.copytree(f"{certs_dir}/ca", f"{self.temp_ocpp_certs_dir.name}/ca", dirs_exist_ok=True)
-        shutil.copytree(f"{certs_dir}/client", f"{self.temp_ocpp_certs_dir.name}/client", dirs_exist_ok=True)
+        shutil.copytree(
+            f"{certs_dir}/ca", f"{self.temp_ocpp_certs_dir.name}/ca", dirs_exist_ok=True)
+        shutil.copytree(
+            f"{certs_dir}/client", f"{self.temp_ocpp_certs_dir.name}/client", dirs_exist_ok=True)
 
         logging.info(f"temp ocpp config: {self.temp_ocpp_config_file.name}")
-        logging.info(f"temp ocpp user config: {self.temp_ocpp_user_config_file.name}")
+        logging.info(
+            f"temp ocpp user config: {self.temp_ocpp_user_config_file.name}")
         logging.info(f"temp ocpp certs path: {self.temp_ocpp_certs_dir.name}")
 
         modules_to_test = None
@@ -131,10 +145,12 @@ class EverestTestController(TestController):
             f"{self.mqtt_external_prefix}everest_api/dummy_token_provider/cmd/provide", json.dumps(provided_token))
 
     def connect_websocket(self):
-        self.mqtt_client.publish(f"{self.mqtt_external_prefix}everest_api/ocpp/cmd/connect", "on")
+        self.mqtt_client.publish(
+            f"{self.mqtt_external_prefix}everest_api/ocpp/cmd/connect", "on")
 
     def disconnect_websocket(self):
-        self.mqtt_client.publish(f"{self.mqtt_external_prefix}everest_api/ocpp/cmd/disconnect", "off")
+        self.mqtt_client.publish(
+            f"{self.mqtt_external_prefix}everest_api/ocpp/cmd/disconnect", "off")
 
     def rcd_error(self, connector_id=1):
         self.mqtt_client.publish(f"{self.mqtt_external_prefix}everest_external/nodered/{connector_id}/carsim/cmd/execute_charging_session",
