@@ -244,7 +244,7 @@ function (ev_add_cpp_module MODULE_NAME)
                         --disable-clang-format
                         --schemas-dir "$<TARGET_PROPERTY:generate_cpp_files,EVEREST_SCHEMA_DIR>"
                         --output-dir ${GENERATED_MODULE_DIR}
-                        ${MODULE_NAME}
+                        ${MODULE_SUBDIR}/${MODULE_NAME}
                 DEPENDS
                     ${MODULE_PATH}/manifest.yaml
                 WORKING_DIRECTORY
