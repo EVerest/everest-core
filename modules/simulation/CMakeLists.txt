@@ -1,3 +1,7 @@
+ev_add_module(JsDummyTokenProvider)
+ev_add_module(JsDummyTokenProviderManual)
+ev_add_module(JsDummyTokenValidator)
+ev_add_module(DummyV2G)
 ev_add_module(JsCarSimulator)
 ev_add_module(JsDCSupplySimulator)
 ev_add_module(JsIMDSimulator)

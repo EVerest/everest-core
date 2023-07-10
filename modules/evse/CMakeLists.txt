@@ -1,0 +1,11 @@
+ev_add_module(API)
+ev_add_module(Auth)
+ev_add_module(EvseSlac)
+ev_add_module(OCPP)
+ev_add_module(PyJosev)
+ev_add_module(Setup)
+ev_add_module(System)
+ev_add_module(EvseV2G)
+ev_add_module(OCPP201)
+ev_add_module(EvseManager)
+
