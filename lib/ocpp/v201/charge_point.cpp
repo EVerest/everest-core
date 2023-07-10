@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
+#include <ocpp/v201/messages/LogStatusNotification.hpp>
 #include <ocpp/v201/charge_point.hpp>
 
 namespace ocpp {
@@ -212,6 +213,16 @@ void ChargePoint::on_event(const std::vector<EventData>& events) {
     this->notify_event_req(events);
 }
 
+void ChargePoint::on_log_status_notification(UploadLogStatusEnum status, int32_t requestId)
+{
+    LogStatusNotificationRequest request;
+    request.status = status;
+    request.requestId = requestId;
+
+    ocpp::Call<LogStatusNotificationRequest> call(request, this->message_queue->createMessageId());
+    this->send<LogStatusNotificationRequest>(call);
+}
+
 template <class T> bool ChargePoint::send(ocpp::Call<T> call) {
     this->message_queue->push(call);
     return true;
@@ -293,6 +304,9 @@ void ChargePoint::handle_message(const json& json_message, const MessageType& me
         break;
     case MessageType::DataTransfer:
         this->handle_data_transfer_req(json_message);
+        break;
+    case MessageType::GetLog:
+        this->handle_get_log_req(json_message);
         break;
     }
 }
@@ -532,6 +546,14 @@ void ChargePoint::meter_values_req(const int32_t evse_id, const std::vector<Mete
 
     ocpp::Call<MeterValuesRequest> call(req, this->message_queue->createMessageId());
     this->send<MeterValuesRequest>(call);
+}
+
+void ChargePoint::handle_get_log_req(Call<GetLogRequest> call)
+{
+    const GetLogResponse response = this->callbacks.get_log_request_callback(call.msg);
+
+    ocpp::CallResult<GetLogResponse> call_result(response, call.uniqueId);
+    this->send<GetLogResponse>(call_result);
 }
 
 void ChargePoint::notify_event_req(const std::vector<EventData>& events) {

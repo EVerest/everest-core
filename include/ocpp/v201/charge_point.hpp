@@ -29,6 +29,8 @@
 #include <ocpp/v201/messages/StatusNotification.hpp>
 #include <ocpp/v201/messages/TransactionEvent.hpp>
 #include <ocpp/v201/messages/TriggerMessage.hpp>
+#include <ocpp/v201/messages/GetLog.hpp>
+
 namespace ocpp {
 namespace v201 {
 
@@ -38,6 +40,7 @@ struct Callbacks {
     std::function<void(const int32_t evse_id, const ReasonEnum& stop_reason)> stop_transaction_callback;
     std::function<void(const int32_t evse_id)> pause_charging_callback;
     std::function<void(const ChangeAvailabilityRequest& request)> change_availability_callback;
+    std::function<GetLogResponse(const GetLogRequest& request)> get_log_request_callback;
 };
 
 /// \brief Class implements OCPP2.0.1 Charging Station
@@ -115,6 +118,7 @@ private:
     void meter_values_req(const int32_t evse_id, const std::vector<MeterValue>& meter_values);
 
     // Functional Block N: Diagnostics
+    void handle_get_log_req(Call<GetLogRequest> call);
     void notify_event_req(const std::vector<EventData>& events);
 
     /* OCPP message handlers */
@@ -213,6 +217,16 @@ public:
     /// \brief Event handler that can be called to trigger a NotifyEvent.req with the given \p events
     /// \param events
     void on_event(const std::vector<EventData>& events);
+
+    ///
+    /// \brief Event handler that can be called to notify about the log status.
+    ///
+    /// This function should be called curing a Diagnostics / Log upload to indicate the current log status.
+    ///
+    /// \param status       Log status.
+    /// \param requestId    Request id that was provided in GetLogRequest.
+    ///
+    void on_log_status_notification(UploadLogStatusEnum status, int32_t requestId);
 
     /// @brief Data transfer mechanism initiated by charger
     /// @param vendorId 
