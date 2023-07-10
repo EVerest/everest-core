@@ -5,6 +5,7 @@ import logging
 import os
 import signal
 from threading import Thread
+import threading
 import time
 import subprocess
 from pathlib import Path
@@ -21,6 +22,7 @@ STARTUP_TIMEOUT = 30
 class TestControlModuleConnection(TypedDict):
     evse_manager_id: str
     car_simulator_id: str
+    ocpp_id: str
 
 
 class StatusFifoListener:
@@ -118,6 +120,7 @@ class EverestCore:
 
         self.log_reader_thread: Thread = None
         self.everest_running = False
+        self.all_modules_started_event = threading.Event()
 
     def start(self, standalone_module: Optional[str] = None, modules_to_test: List[TestControlModuleConnection] = None):
         """Starts everest-core in a subprocess
@@ -136,7 +139,7 @@ class EverestCore:
         self.create_testing_user_config()
 
         status_fifo_path = self.temp_dir / "status.fifo"
-        status_listener = StatusFifoListener(status_fifo_path)
+        self.status_listener = StatusFifoListener(status_fifo_path)
         logging.info(status_fifo_path)
 
         args = [str(manager_path.resolve()), '--config', str(self.everest_config_path),
@@ -159,11 +162,13 @@ class EverestCore:
 
         expected_status = 'ALL_MODULES_STARTED' if standalone_module == None else 'WAITING_FOR_STANDALONE_MODULES'
 
-        status = status_listener.wait_for_status(STARTUP_TIMEOUT, [expected_status])
+        status = self.status_listener.wait_for_status(STARTUP_TIMEOUT, [expected_status])
         if status == None or len(status) == 0:
             raise TimeoutError("Timeout while waiting for EVerest to start")
 
         logging.info("EVerest has started")
+        if expected_status == 'ALL_MODULES_STARTED':
+            self.all_modules_started_event.set()
 
     def read_everest_log(self):
         while self.process.poll() == None:
@@ -201,12 +206,14 @@ class EverestCore:
         if self.test_control_modules:
             logging.info(f"Adding test control module(s) to user-config: {self.test_control_modules}")
             user_config = {"active_modules": {}}
-            connections = {"connector_1": [], "test_control": []}
+            connections = {"connector_1": [], "test_control": [], "ocpp": []}
             for test_control_module in self.test_control_modules:
                 connections["connector_1"].append(
                     {"implementation_id": "evse", "module_id": test_control_module["evse_manager_id"]})
                 connections["test_control"].append(
                     {"implementation_id": "main", "module_id": test_control_module["car_simulator_id"]})
+                connections["ocpp"].append(
+                    {"implementation_id": "main", "module_id": test_control_module["ocpp_id"]})
 
             user_config["active_modules"]["probe_module"] = {
                 "config_module": {"device": "auto"},

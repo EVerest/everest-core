@@ -12,7 +12,7 @@ import tempfile
 from datetime import datetime
 
 from everest.testing.ocpp_utils.controller.test_controller_interface import TestController
-from everest.testing.core_utils.everest_core import EverestCore
+from everest.testing.core_utils.everest_core import EverestCore, TestControlModuleConnection
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -38,7 +38,7 @@ class EverestTestController(TestController):
         self.mqtt_external_prefix = ""
         self.ocpp_module_id = ocpp_module_id
 
-    def start(self, central_system_port=None):
+    def start(self, central_system_port=None, standalone_module=None):
         logging.info(f"Central system port: {central_system_port}")
         # modify ocpp config with given central system port and modify everest-core config as well
         everest_config = yaml.safe_load(self.everest_core.everest_config_path.read_text())
@@ -89,7 +89,10 @@ class EverestTestController(TestController):
         logging.info(f"temp ocpp user config: {self.temp_ocpp_user_config_file.name}")
         logging.info(f"temp ocpp certs path: {self.temp_ocpp_certs_dir.name}")
 
-        self.everest_core.start(None)
+        modules_to_test = None
+        if standalone_module == 'probe_module':
+            modules_to_test=[TestControlModuleConnection(evse_manager_id="connector_1", car_simulator_id="car_simulator", ocpp_id="ocpp")]
+        self.everest_core.start(standalone_module=standalone_module, modules_to_test=modules_to_test)
         self.mqtt_external_prefix = self.everest_core.mqtt_external_prefix
 
         mqtt_server_uri = os.environ.get("MQTT_SERVER_ADDRESS", "127.0.0.1")
