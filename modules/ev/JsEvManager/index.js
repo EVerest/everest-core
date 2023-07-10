@@ -18,6 +18,8 @@ function enable(mod, { value }) {
 
   simdata_reset_defaults(mod);
 
+  mod.uses.ev_board_support.call.allow_power_on({ value: false });
+
   // Start/Stop execution timer
   if (value) {
     mod.enabled = true;
@@ -440,6 +442,7 @@ function registerAllCmds(mod) {
   if (mod.uses_list.ev.length > 0)
     registerCmd(mod, 'iso_stop_charging', 0, (mod, c) => {
       mod.uses_list.ev[0].call.stop_charging();
+      mod.uses.ev_board_support.call.allow_power_on({ value: false });
       mod.state = 'pluggedin';
       return true;
     });
