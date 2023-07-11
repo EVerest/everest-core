@@ -33,8 +33,8 @@ std::string X509Certificate::getCommonName() {
     int index = X509_NAME_get_index_by_NID(subject, nid, -1);
     X509_NAME_ENTRY* entry = X509_NAME_get_entry(subject, index);
     ASN1_STRING* cnAsn1 = X509_NAME_ENTRY_get_data(entry);
-    unsigned char* cnStr = ASN1_STRING_data(cnAsn1);
-    std::string commonName(reinterpret_cast<char*>(cnStr), ASN1_STRING_length(cnAsn1));
+    const unsigned char* cnStr = ASN1_STRING_get0_data(cnAsn1);
+    std::string commonName(reinterpret_cast<const char*>(cnStr), ASN1_STRING_length(cnAsn1));
     return commonName;
 }
 
