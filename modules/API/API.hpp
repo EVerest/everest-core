@@ -88,12 +88,13 @@ struct Conf {
     int hw_caps_max_current_import_decimal_places;
     int hw_caps_min_current_export_decimal_places;
     int hw_caps_min_current_import_decimal_places;
+    int hw_caps_max_plug_temperature_C_decimal_places;
     int limits_max_current_decimal_places;
-    int telemetry_temperature_decimal_places;
+    int telemetry_evse_temperature_C_decimal_places;
     int telemetry_fan_rpm_decimal_places;
     int telemetry_supply_voltage_12V_decimal_places;
     int telemetry_supply_voltage_minus_12V_decimal_places;
-    int telemetry_rcd_current_decimal_places;
+    int telemetry_plug_temperature_C_decimal_places;
     double powermeter_energy_import_round_to;
     double powermeter_energy_export_round_to;
     double powermeter_power_round_to;
@@ -105,12 +106,13 @@ struct Conf {
     double hw_caps_max_current_import_round_to;
     double hw_caps_min_current_export_round_to;
     double hw_caps_min_current_import_round_to;
+    double hw_caps_max_plug_temperature_C_round_to;
     double limits_max_current_round_to;
-    double telemetry_temperature_round_to;
+    double telemetry_evse_temperature_C_round_to;
     double telemetry_fan_rpm_round_to;
     double telemetry_supply_voltage_12V_round_to;
     double telemetry_supply_voltage_minus_12V_round_to;
-    double telemetry_rcd_current_round_to;
+    double telemetry_plug_temperature_C_round_to;
 };
 
 class API : public Everest::ModuleBase {

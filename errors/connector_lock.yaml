@@ -1,0 +1,33 @@
+description: >-
+  Errors for Connector Lock
+
+  The following error types give more details about connector lock errors.
+  You should consider setting a MREC_1_ConnectorLockFailure to indicate a generic lock failure with an MREC error code as well
+  as one of the more detailed but custom error codes to specify the reason:
+
+  All error codes that begin with MREC needs to be implemented to fulfill the Minimum Required Error Codes defined by the ChargeX consortium:
+
+  https://inl.gov/content/uploads/2023/07/ChargeX_MREC_Rev5_09.12.23.pdf
+errors:
+  - name: ConnectorLockCapNotCharged
+    description: The capacitor for connector lock motor failed to charge within expected time
+  - name: ConnectorLockUnexpectedOpen
+    description: The connector lock feedback returns open while it should be closed
+  - name: ConnectorLockUnexpectedClose
+    description: The connector lock feedback returns closed while it should be open
+  - name: ConnectorLockFailedLock
+    description: The connector lock failed to lock (feedback still returns open)
+  - name: ConnectorLockFailedUnlock
+    description: The connector lock failed to unlock (feedback still returns closed)
+  - name: MREC1ConnectorLockFailure
+    description: >-
+      Failure to lock or unlock connector on the vehicle side as per MREC definition.
+      How should that be implemented? We can only find out about locking on the EVSE side,
+      so we will use this error to report EVSE side lock failures. It is probably a mistake in the MREC definition.
+  - name: VendorError
+    description: >-
+      Vendor specific error code. Will stop charging session.
+  - name: VendorWarning
+    description: >-
+      Vendor specific error code. Charging may continue.
+ 

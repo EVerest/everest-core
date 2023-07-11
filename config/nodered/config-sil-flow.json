@@ -14,6 +14,14 @@
         "info": ""
     },
     {
+        "id": "cb7609df6138407d",
+        "type": "tab",
+        "label": "Errors",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
         "id": "af1e1eeac9c4b704",
         "type": "group",
         "z": "ed603c51db9dcbb9",
@@ -330,6 +338,17 @@
         "order": 1,
         "disabled": false,
         "hidden": false
+    },
+    {
+        "id": "18b792e585c4a82f",
+        "type": "ui_group",
+        "name": "Errors",
+        "tab": "d3ada9fa4cf6ac53",
+        "order": 1,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
     },
     {
         "id": "c8955752ad17f297",
@@ -1809,7 +1828,7 @@
             },
             {
                 "label": "AC RCD Error",
-                "value": "sleep 1;rcd_current 10.3;sleep 10;rcd_current 0.1sleep 36000#unplug",
+                "value": "sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 3;rcd_current 10.5;sleep 5;rcd_current 0.2;sleep 36000#unplug",
                 "type": "str"
             },
             {
@@ -1947,6 +1966,786 @@
         "wires": [
             [
                 "620b0d248a89ece0"
+            ]
+        ]
+    },
+    {
+        "id": "14a551bb80c5552d",
+        "type": "change",
+        "z": "cb7609df6138407d",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "connector_number",
+                "pt": "flow",
+                "to": "1",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 440,
+        "y": 180,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "2ffed6827d01d00d",
+        "type": "inject",
+        "z": "cb7609df6138407d",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payloadType": "date",
+        "x": 190,
+        "y": 180,
+        "wires": [
+            [
+                "14a551bb80c5552d"
+            ]
+        ]
+    },
+    {
+        "id": "ca7308d14419cbd2",
+        "type": "change",
+        "z": "cb7609df6138407d",
+        "name": "Insert Connector number",
+        "rules": [
+            {
+                "t": "change",
+                "p": "topic",
+                "pt": "msg",
+                "from": "#",
+                "fromt": "str",
+                "to": "connector_number",
+                "tot": "flow"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 770,
+        "y": 560,
+        "wires": [
+            [
+                "513a3b91748dc03c"
+            ]
+        ]
+    },
+    {
+        "id": "513a3b91748dc03c",
+        "type": "mqtt out",
+        "z": "cb7609df6138407d",
+        "name": "",
+        "topic": "",
+        "qos": "1",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "fc8686af.48d178",
+        "x": 970,
+        "y": 560,
+        "wires": []
+    },
+    {
+        "id": "cf15f41427168f59",
+        "type": "ui_switch",
+        "z": "cb7609df6138407d",
+        "name": "",
+        "label": "BrownOut",
+        "tooltip": "",
+        "group": "18b792e585c4a82f",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "everest_external/nodered/#/carsim/error",
+        "topicType": "str",
+        "style": "",
+        "onvalue": "{\"error_type\":\"BrownOut\",\"raise\":\"true\"}",
+        "onvalueType": "json",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "{\"error_type\":\"BrownOut\",\"raise\":\"false\"}",
+        "offvalueType": "json",
+        "officon": "",
+        "offcolor": "",
+        "animate": false,
+        "className": "",
+        "x": 160,
+        "y": 280,
+        "wires": [
+            [
+                "ca7308d14419cbd2"
+            ]
+        ]
+    },
+    {
+        "id": "b0c90949862e4acf",
+        "type": "ui_switch",
+        "z": "cb7609df6138407d",
+        "name": "",
+        "label": "DiodeFault",
+        "tooltip": "",
+        "group": "18b792e585c4a82f",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "everest_external/nodered/#/carsim/error",
+        "topicType": "str",
+        "style": "",
+        "onvalue": "{\"error_type\":\"DiodeFault\",\"raise\":\"true\"}",
+        "onvalueType": "json",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "{\"error_type\":\"DiodeFault\",\"raise\":\"false\"}",
+        "offvalueType": "json",
+        "officon": "",
+        "offcolor": "",
+        "animate": false,
+        "className": "",
+        "x": 170,
+        "y": 240,
+        "wires": [
+            [
+                "ca7308d14419cbd2"
+            ]
+        ]
+    },
+    {
+        "id": "40c2bf363920110e",
+        "type": "ui_switch",
+        "z": "cb7609df6138407d",
+        "name": "",
+        "label": "EnergyManagement",
+        "tooltip": "",
+        "group": "18b792e585c4a82f",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "everest_external/nodered/#/carsim/error",
+        "topicType": "str",
+        "style": "",
+        "onvalue": "{\"error_type\":\"EnergyManagement\",\"raise\":\"true\"}",
+        "onvalueType": "json",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "{\"error_type\":\"EnergyManagement\",\"raise\":\"false\"}",
+        "offvalueType": "json",
+        "officon": "",
+        "offcolor": "",
+        "animate": false,
+        "className": "",
+        "x": 200,
+        "y": 320,
+        "wires": [
+            [
+                "ca7308d14419cbd2"
+            ]
+        ]
+    },
+    {
+        "id": "94a8973cf4eb4963",
+        "type": "ui_switch",
+        "z": "cb7609df6138407d",
+        "name": "",
+        "label": "PermanentFault",
+        "tooltip": "",
+        "group": "18b792e585c4a82f",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "everest_external/nodered/#/carsim/error",
+        "topicType": "str",
+        "style": "",
+        "onvalue": "{\"error_type\":\"PermanentFault\",\"raise\":\"true\"}",
+        "onvalueType": "json",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "{\"error_type\":\"PermanentFault\",\"raise\":\"false\"}",
+        "offvalueType": "json",
+        "officon": "",
+        "offcolor": "",
+        "animate": false,
+        "className": "",
+        "x": 180,
+        "y": 360,
+        "wires": [
+            [
+                "ca7308d14419cbd2"
+            ]
+        ]
+    },
+    {
+        "id": "db13aa747d6ffd3a",
+        "type": "ui_switch",
+        "z": "cb7609df6138407d",
+        "name": "",
+        "label": "MREC2GroundFailure",
+        "tooltip": "",
+        "group": "18b792e585c4a82f",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "everest_external/nodered/#/carsim/error",
+        "topicType": "str",
+        "style": "",
+        "onvalue": "{\"error_type\":\"MREC2GroundFailure\",\"raise\":\"true\"}",
+        "onvalueType": "json",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "{\"error_type\":\"MREC2GroundFailure\",\"raise\":\"false\"}",
+        "offvalueType": "json",
+        "officon": "",
+        "offcolor": "",
+        "animate": false,
+        "className": "",
+        "x": 200,
+        "y": 400,
+        "wires": [
+            [
+                "ca7308d14419cbd2"
+            ]
+        ]
+    },
+    {
+        "id": "a18a831e962fe2fb",
+        "type": "ui_switch",
+        "z": "cb7609df6138407d",
+        "name": "",
+        "label": "MREC4OverCurrentFailure",
+        "tooltip": "",
+        "group": "18b792e585c4a82f",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "everest_external/nodered/#/carsim/error",
+        "topicType": "str",
+        "style": "",
+        "onvalue": "{\"error_type\":\"MREC4OverCurrentFailure\",\"raise\":\"true\"}",
+        "onvalueType": "json",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "{\"error_type\":\"MREC4OverCurrentFailure\",\"raise\":\"false\"}",
+        "offvalueType": "json",
+        "officon": "",
+        "offcolor": "",
+        "animate": false,
+        "className": "",
+        "x": 220,
+        "y": 440,
+        "wires": [
+            [
+                "ca7308d14419cbd2"
+            ]
+        ]
+    },
+    {
+        "id": "2fc7fdfe4ae8b520",
+        "type": "ui_switch",
+        "z": "cb7609df6138407d",
+        "name": "",
+        "label": "MREC5OverVoltage",
+        "tooltip": "",
+        "group": "18b792e585c4a82f",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "everest_external/nodered/#/carsim/error",
+        "topicType": "str",
+        "style": "",
+        "onvalue": "{\"error_type\":\"MREC5OverVoltage\",\"raise\":\"true\"}",
+        "onvalueType": "json",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "{\"error_type\":\"MREC5OverVoltage\",\"raise\":\"false\"}",
+        "offvalueType": "json",
+        "officon": "",
+        "offcolor": "",
+        "animate": false,
+        "className": "",
+        "x": 200,
+        "y": 480,
+        "wires": [
+            [
+                "ca7308d14419cbd2"
+            ]
+        ]
+    },
+    {
+        "id": "9efbf3ce40d6881c",
+        "type": "ui_switch",
+        "z": "cb7609df6138407d",
+        "name": "",
+        "label": "MREC6UnderVoltage",
+        "tooltip": "",
+        "group": "18b792e585c4a82f",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "everest_external/nodered/#/carsim/error",
+        "topicType": "str",
+        "style": "",
+        "onvalue": "{\"error_type\":\"MREC6UnderVoltage\",\"raise\":\"true\"}",
+        "onvalueType": "json",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "{\"error_type\":\"MREC6UnderVoltage\",\"raise\":\"false\"}",
+        "offvalueType": "json",
+        "officon": "",
+        "offcolor": "",
+        "animate": false,
+        "className": "",
+        "x": 200,
+        "y": 520,
+        "wires": [
+            [
+                "ca7308d14419cbd2"
+            ]
+        ]
+    },
+    {
+        "id": "d6bbb4c57751877b",
+        "type": "ui_switch",
+        "z": "cb7609df6138407d",
+        "name": "",
+        "label": "MREC8EmergencyStop",
+        "tooltip": "",
+        "group": "18b792e585c4a82f",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "everest_external/nodered/#/carsim/error",
+        "topicType": "str",
+        "style": "",
+        "onvalue": "{\"error_type\":\"MREC8EmergencyStop\",\"raise\":\"true\"}",
+        "onvalueType": "json",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "{\"error_type\":\"MREC8EmergencyStop\",\"raise\":\"false\"}",
+        "offvalueType": "json",
+        "officon": "",
+        "offcolor": "",
+        "animate": false,
+        "className": "",
+        "x": 210,
+        "y": 560,
+        "wires": [
+            [
+                "ca7308d14419cbd2"
+            ]
+        ]
+    },
+    {
+        "id": "639a0db868e0ed18",
+        "type": "ui_switch",
+        "z": "cb7609df6138407d",
+        "name": "",
+        "label": "MREC10InvalidVehicleMode",
+        "tooltip": "",
+        "group": "18b792e585c4a82f",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "everest_external/nodered/#/carsim/error",
+        "topicType": "str",
+        "style": "",
+        "onvalue": "{\"error_type\":\"MREC10InvalidVehicleMode\",\"raise\":\"true\"}",
+        "onvalueType": "json",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "{\"error_type\":\"MREC10InvalidVehicleMode\",\"raise\":\"false\"}",
+        "offvalueType": "json",
+        "officon": "",
+        "offcolor": "",
+        "animate": false,
+        "className": "",
+        "x": 220,
+        "y": 600,
+        "wires": [
+            [
+                "ca7308d14419cbd2"
+            ]
+        ]
+    },
+    {
+        "id": "7b28a940fe45f635",
+        "type": "ui_switch",
+        "z": "cb7609df6138407d",
+        "name": "",
+        "label": "MREC14PilotFault",
+        "tooltip": "",
+        "group": "18b792e585c4a82f",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "everest_external/nodered/#/carsim/error",
+        "topicType": "str",
+        "style": "",
+        "onvalue": "{\"error_type\":\"MREC14PilotFault\",\"raise\":\"true\"}",
+        "onvalueType": "json",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "{\"error_type\":\"MREC14PilotFault\",\"raise\":\"false\"}",
+        "offvalueType": "json",
+        "officon": "",
+        "offcolor": "",
+        "animate": false,
+        "className": "",
+        "x": 190,
+        "y": 640,
+        "wires": [
+            [
+                "ca7308d14419cbd2"
+            ]
+        ]
+    },
+    {
+        "id": "0232fd01e1e02fe1",
+        "type": "ui_switch",
+        "z": "cb7609df6138407d",
+        "name": "",
+        "label": "MREC15PowerLoss",
+        "tooltip": "",
+        "group": "18b792e585c4a82f",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "everest_external/nodered/#/carsim/error",
+        "topicType": "str",
+        "style": "",
+        "onvalue": "{\"error_type\":\"MREC15PowerLoss\",\"raise\":\"true\"}",
+        "onvalueType": "json",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "{\"error_type\":\"MREC15PowerLoss\",\"raise\":\"false\"}",
+        "offvalueType": "json",
+        "officon": "",
+        "offcolor": "",
+        "animate": false,
+        "className": "",
+        "x": 200,
+        "y": 680,
+        "wires": [
+            [
+                "ca7308d14419cbd2"
+            ]
+        ]
+    },
+    {
+        "id": "202ebd4c388a5817",
+        "type": "ui_switch",
+        "z": "cb7609df6138407d",
+        "name": "",
+        "label": "MREC17EVSEContactorFault",
+        "tooltip": "",
+        "group": "18b792e585c4a82f",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "everest_external/nodered/#/carsim/error",
+        "topicType": "str",
+        "style": "",
+        "onvalue": "{\"error_type\":\"MREC17EVSEContactorFault\",\"raise\":\"true\"}",
+        "onvalueType": "json",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "{\"error_type\":\"MREC17EVSEContactorFault\",\"raise\":\"false\"}",
+        "offvalueType": "json",
+        "officon": "",
+        "offcolor": "",
+        "animate": false,
+        "className": "",
+        "x": 230,
+        "y": 720,
+        "wires": [
+            [
+                "ca7308d14419cbd2"
+            ]
+        ]
+    },
+    {
+        "id": "0a81c071b35d54d3",
+        "type": "ui_switch",
+        "z": "cb7609df6138407d",
+        "name": "",
+        "label": "MREC18CableOverTempDerate",
+        "tooltip": "",
+        "group": "18b792e585c4a82f",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "everest_external/nodered/#/carsim/error",
+        "topicType": "str",
+        "style": "",
+        "onvalue": "{\"error_type\":\"MREC18CableOverTempDerate\",\"raise\":\"true\"}",
+        "onvalueType": "json",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "{\"error_type\":\"MREC18CableOverTempDerate\",\"raise\":\"false\"}",
+        "offvalueType": "json",
+        "officon": "",
+        "offcolor": "",
+        "animate": false,
+        "className": "",
+        "x": 230,
+        "y": 760,
+        "wires": [
+            [
+                "ca7308d14419cbd2"
+            ]
+        ]
+    },
+    {
+        "id": "3eb9a5937aed34a7",
+        "type": "ui_switch",
+        "z": "cb7609df6138407d",
+        "name": "",
+        "label": "MREC19CableOverTempStop",
+        "tooltip": "",
+        "group": "18b792e585c4a82f",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "everest_external/nodered/#/carsim/error",
+        "topicType": "str",
+        "style": "",
+        "onvalue": "{\"error_type\":\"MREC19CableOverTempStop\",\"raise\":\"true\"}",
+        "onvalueType": "json",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "{\"error_type\":\"MREC19CableOverTempStop\",\"raise\":\"false\"}",
+        "offvalueType": "json",
+        "officon": "",
+        "offcolor": "",
+        "animate": false,
+        "className": "",
+        "x": 230,
+        "y": 800,
+        "wires": [
+            [
+                "ca7308d14419cbd2"
+            ]
+        ]
+    },
+    {
+        "id": "b6208cc76ab8ba93",
+        "type": "ui_switch",
+        "z": "cb7609df6138407d",
+        "name": "",
+        "label": "MREC20PartialInsertion",
+        "tooltip": "",
+        "group": "18b792e585c4a82f",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "everest_external/nodered/#/carsim/error",
+        "topicType": "str",
+        "style": "",
+        "onvalue": "{\"error_type\":\"MREC20PartialInsertion\",\"raise\":\"true\"}",
+        "onvalueType": "json",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "{\"error_type\":\"MREC20PartialInsertion\",\"raise\":\"false\"}",
+        "offvalueType": "json",
+        "officon": "",
+        "offcolor": "",
+        "animate": false,
+        "className": "",
+        "x": 210,
+        "y": 840,
+        "wires": [
+            [
+                "ca7308d14419cbd2"
+            ]
+        ]
+    },
+    {
+        "id": "1205c62ee631e717",
+        "type": "ui_switch",
+        "z": "cb7609df6138407d",
+        "name": "",
+        "label": "MREC23ProximityFault",
+        "tooltip": "",
+        "group": "18b792e585c4a82f",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "everest_external/nodered/#/carsim/error",
+        "topicType": "str",
+        "style": "",
+        "onvalue": "{\"error_type\":\"MREC23ProximityFault\",\"raise\":\"true\"}",
+        "onvalueType": "json",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "{\"error_type\":\"MREC23ProximityFault\",\"raise\":\"false\"}",
+        "offvalueType": "json",
+        "officon": "",
+        "offcolor": "",
+        "animate": false,
+        "className": "",
+        "x": 210,
+        "y": 880,
+        "wires": [
+            [
+                "ca7308d14419cbd2"
+            ]
+        ]
+    },
+    {
+        "id": "df7bf0f1e692028c",
+        "type": "ui_switch",
+        "z": "cb7609df6138407d",
+        "name": "",
+        "label": "MREC24ConnectorVoltageHigh",
+        "tooltip": "",
+        "group": "18b792e585c4a82f",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "everest_external/nodered/#/carsim/error",
+        "topicType": "str",
+        "style": "",
+        "onvalue": "{\"error_type\":\"MREC24ConnectorVoltageHigh\",\"raise\":\"true\"}",
+        "onvalueType": "json",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "{\"error_type\":\"MREC24ConnectorVoltageHigh\",\"raise\":\"false\"}",
+        "offvalueType": "json",
+        "officon": "",
+        "offcolor": "",
+        "animate": false,
+        "className": "",
+        "x": 230,
+        "y": 920,
+        "wires": [
+            [
+                "ca7308d14419cbd2"
+            ]
+        ]
+    },
+    {
+        "id": "5a669dee09d69d6c",
+        "type": "ui_switch",
+        "z": "cb7609df6138407d",
+        "name": "",
+        "label": "MREC25BrokenLatch",
+        "tooltip": "",
+        "group": "18b792e585c4a82f",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "everest_external/nodered/#/carsim/error",
+        "topicType": "str",
+        "style": "",
+        "onvalue": "{\"error_type\":\"MREC25BrokenLatch\",\"raise\":\"true\"}",
+        "onvalueType": "json",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "{\"error_type\":\"MREC25BrokenLatch\",\"raise\":\"false\"}",
+        "offvalueType": "json",
+        "officon": "",
+        "offcolor": "",
+        "animate": false,
+        "className": "",
+        "x": 200,
+        "y": 960,
+        "wires": [
+            [
+                "ca7308d14419cbd2"
+            ]
+        ]
+    },
+    {
+        "id": "25cadcb508c05cfc",
+        "type": "ui_switch",
+        "z": "cb7609df6138407d",
+        "name": "",
+        "label": "MREC26CutCable",
+        "tooltip": "",
+        "group": "18b792e585c4a82f",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "everest_external/nodered/#/carsim/error",
+        "topicType": "str",
+        "style": "",
+        "onvalue": "{\"error_type\":\"MREC26CutCable\",\"raise\":\"true\"}",
+        "onvalueType": "json",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "{\"error_type\":\"MREC26CutCable\",\"raise\":\"false\"}",
+        "offvalueType": "json",
+        "officon": "",
+        "offcolor": "",
+        "animate": false,
+        "className": "",
+        "x": 190,
+        "y": 1000,
+        "wires": [
+            [
+                "ca7308d14419cbd2"
             ]
         ]
     }
