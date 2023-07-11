@@ -156,7 +156,7 @@ vars:
   telemetry:
     description: Other telemetry
     type: object
-    $ref: /board_support#/Telemetry
+    $ref: /evse_board_support#/Telemetry
   powermeter:
     description: Measured dataset
     type: object
@@ -167,7 +167,7 @@ vars:
   hw_capabilities:
     description: "Hardware capability/limits"
     type: object
-    $ref: /board_support#/HardwareCapabilities
+    $ref: /evse_board_support#/HardwareCapabilities
   iso15118_certificate_request:
     description: >-
       The vehicle requests the SECC to deliver the certificate that belong 

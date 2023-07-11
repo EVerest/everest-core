@@ -1,0 +1,54 @@
+description: EV and EVSE board support types
+types:
+  BspEvent:
+    description: Event stream from ControlPilot signal/Relais
+    type: object
+    additionalProperties: false
+    required:
+      - event
+    properties:
+      event:
+        type: string
+        enum:
+          - 'A'
+          - 'B'
+          - 'C'
+          - 'D'
+          - 'E'
+          - 'F'
+          - 'PowerOn'
+          - 'PowerOff'
+          - 'ErrorDF'
+          - 'ErrorRelais'
+          - 'ErrorVentilationNotAvailable'
+          - 'ErrorOverCurrent'
+          - 'ErrorOverVoltage'
+          - 'ErrorUnderVoltage'
+          - 'ErrorMotorLock'
+          - 'ErrorOverTemperature'
+          - 'ErrorBrownOut'
+          - 'ErrorCablePP'
+          - 'ErrorEnergyManagement'
+          - 'ErrorNeutralPEN'
+          - 'ErrorCpDriver'
+          - 'PermanentFault'
+          - 'EvseReplugStarted'
+          - 'EvseReplugFinished'
+          - 'Disconnected'
+          - 'EmergencyStopButtonPressed'
+  ProximityPilot:
+    description: Current capability (ampacity) of the cable
+    type: object
+    additionalProperties: false
+    required:
+      - ampacity
+    properties:
+      ampacity:
+        description: Ampacity value of the cable assembly
+        type: string
+        enum:
+          - None
+          - A_13
+          - A_20
+          - A_32
+          - A_63
