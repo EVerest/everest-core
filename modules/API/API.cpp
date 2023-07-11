@@ -192,7 +192,7 @@ void API::init() {
 
         std::string var_hw_caps = var_base + "hardware_capabilities";
         evse->subscribe_hw_capabilities(
-            [this, var_hw_caps, &hw_caps](types::board_support::HardwareCapabilities hw_capabilities) {
+            [this, var_hw_caps, &hw_caps](types::evse_board_support::HardwareCapabilities hw_capabilities) {
                 hw_caps = hw_capabilities;
                 this->mqtt.publish(var_hw_caps, hw_caps.dump());
             });
@@ -216,7 +216,7 @@ void API::init() {
         });
 
         std::string var_telemetry = var_base + "telemetry";
-        evse->subscribe_telemetry([this, var_telemetry](types::board_support::Telemetry telemetry) {
+        evse->subscribe_telemetry([this, var_telemetry](types::evse_board_support::Telemetry telemetry) {
             json telemetry_json = telemetry;
             this->mqtt.publish(var_telemetry, telemetry_json.dump());
         });

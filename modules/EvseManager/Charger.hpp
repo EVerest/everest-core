@@ -30,23 +30,22 @@
 #include <date/date.h>
 #include <date/tz.h>
 #include <generated/interfaces/ISO15118_charger/Interface.hpp>
-#include <generated/interfaces/board_support_AC/Interface.hpp>
 #include <generated/types/authorization.hpp>
 #include <generated/types/evse_manager.hpp>
 #include <mutex>
 #include <queue>
 #include <sigslot/signal.hpp>
 
+#include "IECStateMachine.hpp"
+
 namespace module {
 
 const std::string IEC62196Type2Cable = "IEC62196Type2Cable";
 const std::string IEC62196Type2Socket = "IEC62196Type2Socket";
 
-using ControlPilotEvent = types::board_support::Event;
-
 class Charger {
 public:
-    Charger(const std::unique_ptr<board_support_ACIntf>& r_bsp, const std::string& connector_type);
+    Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::string& connector_type);
     ~Charger();
 
     // Public interface to configure Charger
@@ -57,8 +56,7 @@ public:
 
     // external input to charger: update max_current and new validUntil
     bool setMaxCurrent(float ampere, std::chrono::time_point<date::utc_clock> validUntil);
-    // update only max_current but keep the current validUntil
-    bool setMaxCurrent(float ampere);
+
     float getMaxCurrent();
     sigslot::signal<float> signalMaxCurrent;
 
@@ -67,15 +65,15 @@ public:
         DC
     };
 
-    void setup(bool three_phases, bool has_ventilation, const std::string& country_code, bool rcd_enabled,
-               const ChargeMode charge_mode, bool ac_hlc_enabled, bool ac_hlc_use_5percent, bool ac_enforce_hlc,
-               bool ac_with_soc_timeout, float soft_over_current_tolerance_percent,
-               float soft_over_current_measurement_noise_A);
+    void setup(bool three_phases, bool has_ventilation, const std::string& country_code, const ChargeMode charge_mode,
+               bool ac_hlc_enabled, bool ac_hlc_use_5percent, bool ac_enforce_hlc, bool ac_with_soc_timeout,
+               float soft_over_current_tolerance_percent, float soft_over_current_measurement_noise_A);
 
     bool enable(int connector_id);
     bool disable(int connector_id);
     void set_faulted();
     void set_hlc_error(types::evse_manager::ErrorEnum e);
+    void set_rcd_error();
     // switch to next charging session after Finished
     bool restart();
 
@@ -134,7 +132,7 @@ public:
     // Request more details about the error that happend
     types::evse_manager::ErrorEnum getErrorState();
 
-    void processEvent(types::board_support::Event event);
+    void processEvent(CPEvent event);
 
     void run();
 
@@ -200,14 +198,14 @@ private:
     // main Charger thread
     Everest::Thread mainThreadHandle;
 
-    const std::unique_ptr<board_support_ACIntf>& r_bsp;
+    const std::unique_ptr<IECStateMachine>& bsp;
     const std::string& connector_type;
 
     void mainThread();
 
     float maxCurrent;
     std::chrono::time_point<date::utc_clock> maxCurrentValidUntil;
-    float maxCurrentCable;
+    float maxCurrentCable{0.};
 
     bool powerAvailable();
 
@@ -264,10 +262,8 @@ private:
 
     bool matching_started;
 
-    ControlPilotEvent string_to_control_pilot_event(const types::board_support::Event& event);
-
-    void processCPEventsIndependent(ControlPilotEvent cp_event);
-    void processCPEventsState(ControlPilotEvent cp_event);
+    void processCPEventsIndependent(CPEvent cp_event);
+    void processCPEventsState(CPEvent cp_event);
     void runStateMachine();
 
     bool authorized;

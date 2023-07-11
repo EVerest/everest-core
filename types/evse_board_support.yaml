@@ -56,51 +56,24 @@ types:
           Indicates whether changing number of phases is supported during
           charging (true) or not (false)
         type: boolean
-  Event:
-    description: Event from ControlPilot signal/Relais/RCD
-    type: string
-    enum:
-      - CarPluggedIn
-      - CarRequestedPower
-      - PowerOn
-      - PowerOff
-      - CarRequestedStopPower
-      - CarUnplugged
-      - ErrorE
-      - ErrorDF
-      - ErrorRelais
-      - ErrorRCD
-      - ErrorRCD_DC
-      - ErrorVentilationNotAvailable
-      - ErrorOverCurrent
-      - ErrorOverVoltage
-      - ErrorUnderVoltage
-      - ErrorMotorLock
-      - ErrorOverTemperature
-      - ErrorBrownOut
-      - ErrorCablePP
-      - ErrorEnergyManagement
-      - ErrorNeutralPEN
-      - ErrorCpDriver
-      - EFtoBCD
-      - BCDtoEF
-      - PermanentFault
-      - EvseReplugStarted
-      - EvseReplugFinished
+      max_gun_temperature_C:
+        type: number
   Telemetry:
     description: Other telemetry
     type: object
     additionalProperties: false
     required:
-      - temperature
+      - evse_temperature_C
       - fan_rpm
       - supply_voltage_12V
       - supply_voltage_minus_12V
-      - rcd_current
       - relais_on
     properties:
-      temperature:
+      evse_temperature_C:
         description: Current temperature of the EVSE in degree celsius
+        type: number
+      gun_temperature_C:
+        description: Current temperature of the gun in degree celsius
         type: number
       fan_rpm:
         description: RPM of the fan. 0 if off or no fan available.
@@ -111,9 +84,26 @@ types:
       supply_voltage_minus_12V:
         description: Internal -12V supply voltage
         type: number
-      rcd_current:
-        description: Residual current in mA
-        type: number
       relais_on:
         description: true if power to the car is currently on, false if off
         type: boolean
+  PowerOnOff:
+    description: Flag and context for switching power on/off. In some architectures e.g. DC power 
+      train needs to know whether it should switch on with limited current or full current on the output contactors.
+    type: object
+    additionalProperties: false
+    required:
+      - allow_power_on
+      - reason
+    properties:
+      allow_power_on:
+        description: Allow switching on (true) or force switching off (false)
+        type: boolean
+      reason:
+        description: Reason for switching on/off
+        type: string
+        enum:
+          - DCCableCheck
+          - DCPreCharge
+          - FullPowerCharging
+          - PowerOff

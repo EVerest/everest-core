@@ -1,0 +1,27 @@
+description: >-
+  This interface defines an AC Residual Current Monitor (RCD). Actual emergency switch off is done in HW directly,
+  but this interface allows some control and telemetry.
+cmds:
+  self_test:
+    description: >-
+      Executes a self test of the RCD. Once finished, the var self_test_result should be published. Since 
+      the test can take quite long we do not use a synchronous return value here.
+  reset:
+    description: >-
+      Resets the RCD after a trigger. May not be supported by actual hardware.
+    result:
+      description: 'True: Reset successfull, False: Reset failed.'
+      type: boolean
+vars:
+  rcd_current_mA:
+    description: Residual current in mA. Note that this does not trigger anything, it is merely for reporting.
+    type: number
+  fault_ac:
+    description: Indicates an AC residual current fault (informational only, hardware needs to shut down power on its own)
+    type: 'null'
+  fault_dc:
+    description: Indicates an DC residual current fault (on the AC wires, informational only, hardware needs to shut down power on its own).
+    type: 'null'
+  self_test_result:
+    description: Result of a triggered self test
+    type: boolean

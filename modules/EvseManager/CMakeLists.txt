@@ -15,6 +15,7 @@ target_sources(${MODULE_NAME}
         SessionLog.cpp
         v2gMessage.cpp
         CarManufacturer.cpp
+        IECStateMachine.cpp
 )
 
 target_link_libraries(${MODULE_NAME}
