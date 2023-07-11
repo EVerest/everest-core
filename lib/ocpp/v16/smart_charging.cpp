@@ -106,8 +106,11 @@ std::map<ChargingProfilePurposeType, LimitStackLevelPair> get_initial_purpose_an
 }
 
 SmartChargingHandler::SmartChargingHandler(std::map<int32_t, std::shared_ptr<Connector>>& connectors,
-                                           std::shared_ptr<DatabaseHandler> database_handler) :
-    connectors(connectors), database_handler(database_handler) {
+                                           std::shared_ptr<DatabaseHandler> database_handler,
+                                           const bool allow_charging_profile_without_start_schedule) :
+    connectors(connectors),
+    database_handler(database_handler),
+    allow_charging_profile_without_start_schedule(allow_charging_profile_without_start_schedule) {
     this->clear_profiles_timer = std::make_unique<Everest::SteadyTimer>();
     this->clear_profiles_timer->interval([this]() { this->clear_expired_profiles(); }, hours(HOURS_PER_DAY));
 }
@@ -276,7 +279,12 @@ bool SmartChargingHandler::validate_profile(
 
     if (profile.chargingProfileKind == ChargingProfileKindType::Absolute && !profile.chargingSchedule.startSchedule) {
         EVLOG_warning << "INVALID PROFILE - Absolute Profile Kind with no given startSchedule";
-        return false;
+        if (this->allow_charging_profile_without_start_schedule) {
+            EVLOG_warning << "Allowing profile because AllowChargingProfileWithoutStartSchedule is configured";
+            profile.chargingSchedule.startSchedule = ocpp::DateTime();
+        } else {
+            return false;
+        }
     }
 
     if (this->get_number_installed_profiles() >= max_charging_profiles_installed) {
@@ -295,8 +303,13 @@ bool SmartChargingHandler::validate_profile(
             return false;
         }
         if (!profile.chargingSchedule.startSchedule) {
-            EVLOG_warning << "INVALID PROFILE - Recurring Profile Kind with no start_schedule";
-            return false;
+            EVLOG_warning << "INVALID PROFILE - Recurring Profile Kind with no startSchedule";
+            if (this->allow_charging_profile_without_start_schedule) {
+                EVLOG_warning << "Allowing profile because AllowChargingProfileWithoutStartSchedule is configured";
+                profile.chargingSchedule.startSchedule = ocpp::DateTime();
+            } else {
+                return false;
+            }
         }
         if (profile.chargingSchedule.duration) {
             int max_recurrency_duration;
@@ -474,8 +487,8 @@ std::vector<ChargingProfile> SmartChargingHandler::get_valid_profiles(const ocpp
 }
 
 std::optional<ocpp::DateTime> SmartChargingHandler::get_profile_start_time(const ChargingProfile& profile,
-                                                                             const ocpp::DateTime& time,
-                                                                             const int connector_id) {
+                                                                           const ocpp::DateTime& time,
+                                                                           const int connector_id) {
 
     const auto schedule = profile.chargingSchedule;
     std::optional<ocpp::DateTime> period_start_time;

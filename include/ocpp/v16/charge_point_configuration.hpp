@@ -360,6 +360,10 @@ public:
     void setConnectorEvseIds(const std::string& connector_evse_ids);
     std::optional<KeyValue> getConnectorEvseIdsKeyValue();
 
+    std::optional<bool> getAllowChargingProfileWithoutStartSchedule();
+    void setAllowChargingProfileWithoutStartSchedule(const bool allow);
+    std::optional<KeyValue> getAllowChargingProfileWithoutStartScheduleKeyValue();
+
     std::optional<KeyValue> get(CiString<50> key);
 
     std::vector<KeyValue> get_all_key_value();

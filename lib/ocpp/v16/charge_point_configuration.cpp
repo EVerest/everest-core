@@ -1881,6 +1881,34 @@ std::optional<KeyValue> ChargePointConfiguration::getConnectorEvseIdsKeyValue() 
     return connector_evse_ids_kv;
 }
 
+std::optional<bool> ChargePointConfiguration::getAllowChargingProfileWithoutStartSchedule() {
+    std::optional<bool> allow = std::nullopt;
+    if (this->config["Internal"].contains("AllowChargingProfileWithoutStartSchedule")) {
+        allow.emplace(this->config["Internal"]["AllowChargingProfileWithoutStartSchedule"]);
+    }
+    return allow;
+}
+
+void ChargePointConfiguration::setAllowChargingProfileWithoutStartSchedule(const bool allow) {
+    if (this->getAllowChargingProfileWithoutStartSchedule() != std::nullopt) {
+        this->config["Internal"]["AllowChargingProfileWithoutStartSchedule"] = allow;
+        this->setInUserConfig("Internal", "AllowChargingProfileWithoutStartSchedule", allow);
+    }
+}
+
+std::optional<KeyValue> ChargePointConfiguration::getAllowChargingProfileWithoutStartScheduleKeyValue() {
+    std::optional<KeyValue> allow_opt = std::nullopt;
+    auto allow = this->getAllowChargingProfileWithoutStartSchedule();
+    if (allow != std::nullopt) {
+        KeyValue kv;
+        kv.key = "AllowChargingProfileWithoutStartSchedule";
+        kv.readonly = false;
+        kv.value.emplace(std::to_string(allow.value()));
+        allow_opt.emplace(kv);
+    }
+    return allow_opt;
+}
+
 std::optional<KeyValue> ChargePointConfiguration::get(CiString<50> key) {
 
     // Internal Profile
@@ -1961,6 +1989,9 @@ std::optional<KeyValue> ChargePointConfiguration::get(CiString<50> key) {
     }
     if (key == "ConnectorEvseIds") {
         return this->getConnectorEvseIdsKeyValue();
+    }
+    if (key == "AllowChargingProfileWithoutStartSchedule") {
+        return this->getAllowChargingProfileWithoutStartScheduleKeyValue();
     }
 
     // Core Profile
@@ -2491,6 +2522,13 @@ ConfigurationStatus ChargePointConfiguration::set(CiString<50> key, CiString<500
     if (key == "ConnectorEvseIds") {
         if (this->getConnectorEvseIds().has_value()) {
             this->setConnectorEvseIds(value.get());
+        } else {
+            return ConfigurationStatus::NotSupported;
+        }
+    }
+    if (key == "AllowChargingProfileWithoutStartSchedule") {
+        if (this->getAllowChargingProfileWithoutStartSchedule().has_value()) {
+            this->setAllowChargingProfileWithoutStartSchedule(ocpp::conversions::string_to_bool(value.get()));
         } else {
             return ConfigurationStatus::NotSupported;
         }

@@ -6,8 +6,8 @@
 
 #include <limits>
 
-#include <ocpp/v16/database_handler.hpp>
 #include <ocpp/v16/connector.hpp>
+#include <ocpp/v16/database_handler.hpp>
 #include <ocpp/v16/ocpp_types.hpp>
 #include <ocpp/v16/transaction.hpp>
 
@@ -43,12 +43,12 @@ private:
     std::mutex charge_point_max_profiles_map_mutex;
     std::mutex tx_default_profiles_map_mutex;
     std::mutex tx_profiles_map_mutex;
+    bool allow_charging_profile_without_start_schedule;
 
     std::unique_ptr<Everest::SteadyTimer> clear_profiles_timer;
 
-    bool clear_profiles(std::map<int32_t, ChargingProfile>& stack_level_profiles_map,
-                        std::optional<int> profile_id_opt, std::optional<int> connector_id_opt,
-                        const int connector_id, std::optional<int> stack_level_opt,
+    bool clear_profiles(std::map<int32_t, ChargingProfile>& stack_level_profiles_map, std::optional<int> profile_id_opt,
+                        std::optional<int> connector_id_opt, const int connector_id, std::optional<int> stack_level_opt,
                         std::optional<ChargingProfilePurposeType> charging_profile_purpose_opt, bool check_id_only);
 
     ///
@@ -66,7 +66,7 @@ private:
     /// purposes
     ///
     std::optional<ocpp::DateTime> get_profile_start_time(const ChargingProfile& profile, const ocpp::DateTime& time,
-                                                           const int connector_id);
+                                                         const int connector_id);
 
     ///
     /// \brief Iterates over the periods of the given \p valid_profiles and determines the earliest next absolute period
@@ -77,7 +77,8 @@ private:
 
 public:
     SmartChargingHandler(std::map<int32_t, std::shared_ptr<Connector>>& connectors,
-                         std::shared_ptr<DatabaseHandler> database_handler);
+                         std::shared_ptr<DatabaseHandler> database_handler,
+                         const bool allow_charging_profile_without_start_schedule);
 
     ///
     /// \brief validates the given \p profile according to the specification

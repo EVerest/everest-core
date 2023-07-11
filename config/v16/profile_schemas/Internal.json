@@ -190,6 +190,11 @@
             "$comment": "Comma separated EVSEIDs for OCPP connectors starting with connector 1 in one string.",
             "type": "string",
             "readOnly": false
+        },
+        "AllowChargingProfileWithoutStartSchedule": {
+            "$comment": "OCPP1.6 specifies that for certain ChargingProfiles the startSchedule field needs to be set. This flag ignores this requirement and will accept those profiles without startSchedule, assuming startSchedule is now.",
+            "type": "boolean",
+            "readOnly": false
         }
     },
     "additionalProperties": false
