@@ -20,7 +20,6 @@ active_modules:
       three_phases: true
       has_ventilation: true
       country_code: DE
-      rcd_enabled: true
       evse_id: "1"
       session_logging: true
       session_logging_xml: false
@@ -48,7 +47,6 @@ active_modules:
       three_phases: true
       has_ventilation: true
       country_code: DE
-      rcd_enabled: true
       evse_id: "2"
       session_logging: true
       session_logging_xml: false

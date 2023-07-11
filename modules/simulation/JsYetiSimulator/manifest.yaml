@@ -4,26 +4,14 @@ provides:
     interface: powermeter
     description: provides the Yeti Internal Power Meter
   board_support:
-    interface: board_support_AC
+    interface: evse_board_support
     description: provides the board support Interface to low level control control pilot, relais, rcd, motor lock
-  yeti_extras:
-    interface: yeti_extras
-    description: extra functionality special for Yeti
-  debug_yeti:
-    interface: debug_json
-    description: provides the debug information of the charging driver
-  debug_powermeter:
-    interface: debug_json
-    description: Provides the powermeter as a json object
-  debug_state:
-    interface: debug_json
-    description: Provides the state as a json object
-  debug_keepalive:
-    interface: debug_json
-    description: Provides the keepalive as a json object
   yeti_simulation_control:
     interface: yeti_simulation_control
     description: Interface for the Yeti HIL simulator
+  rcd:
+    interface: ac_rcd
+    description: Interface for the simulated AC RCD
 enable_external_mqtt: true
 enable_telemetry: true
 metadata:

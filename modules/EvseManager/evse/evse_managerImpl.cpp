@@ -105,10 +105,10 @@ void evse_managerImpl::ready() {
         }
     });
 
-    mod->r_bsp->subscribe_telemetry([this](types::board_support::Telemetry telemetry) {
+    mod->r_bsp->subscribe_telemetry([this](types::evse_board_support::Telemetry telemetry) {
         // external Nodered interface
         mod->mqtt.publish(fmt::format("everest_external/nodered/{}/state/temperature", mod->config.connector_id),
-                          telemetry.temperature);
+                          telemetry.evse_temperature_C);
         // /external Nodered interface
         publish_telemetry(telemetry);
     });

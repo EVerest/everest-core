@@ -33,14 +33,11 @@ provides:
     interface: powermeter
     description: provides the Yeti Internal Power Meter
   board_support:
-    interface: board_support_AC
-    description: provides the board support Interface to low level control control pilot, relais, rcd, motor lock
-  yeti_extras:
-    interface: yeti_extras
-    description: extra functionality special for Yeti
-  yeti_simulation_control:
-    interface: yeti_simulation_control
-    description: Interface for the Yeti HIL simulator
+    interface: evse_board_support
+    description: provides the board support Interface to low level control control pilot, relais, motor lock
+  rcd:
+    interface: ac_rcd
+    description: RCD interface of the onboard RCD
 enable_external_mqtt: true
 enable_telemetry: true
 metadata:

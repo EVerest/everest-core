@@ -1809,7 +1809,7 @@
             },
             {
                 "label": "AC RCD Error",
-                "value": "sleep 1;rcd_current 10.3;sleep 10;rcd_current 0.1sleep 36000#unplug",
+                "value": "sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 3;rcd_current 10.5;sleep 5;rcd_current 0.2;sleep 36000#unplug",
                 "type": "str"
             },
             {

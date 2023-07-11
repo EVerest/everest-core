@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 #include "EvseManager.hpp"
-#include "SessionLog.hpp"
-#include "Timeout.hpp"
+
 #include <fmt/color.h>
 #include <fmt/core.h>
+
+#include "IECStateMachine.hpp"
+#include "SessionLog.hpp"
+#include "Timeout.hpp"
 using namespace std::literals::chrono_literals;
 
 namespace module {
@@ -67,6 +70,26 @@ void EvseManager::init() {
     if (config.charge_mode == "DC" && r_imd.empty()) {
         EVLOG_warning << "DC mode without isolation monitoring configured, please check your national regulations.";
     }
+    if (r_ac_rcd.size() > 0) {
+        r_ac_rcd[0]->subscribe_fault_ac([this] {
+            session_log.evse(true, "RCD: AC Fault");
+            // Inform charger
+            charger->set_rcd_error();
+            // Inform HLC
+            if (hlc_enabled) {
+                r_hlc[0]->call_set_RCD_Error(true);
+            }
+        });
+        r_ac_rcd[0]->subscribe_fault_dc([this] {
+            session_log.evse(true, "RCD: DC Fault");
+            // Inform charger
+            charger->set_rcd_error();
+            // Inform HLC
+            if (hlc_enabled) {
+                r_hlc[0]->call_set_RCD_Error(true);
+            }
+        });
+    }
 
     reserved = false;
     reservation_id = 0;
@@ -79,7 +102,8 @@ void EvseManager::init() {
 }
 
 void EvseManager::ready() {
-    charger = std::unique_ptr<Charger>(new Charger(r_bsp, config.connector_type));
+    bsp = std::unique_ptr<IECStateMachine>(new IECStateMachine(r_bsp));
+    charger = std::unique_ptr<Charger>(new Charger(bsp, config.connector_type));
 
     if (get_hlc_enabled()) {
 
@@ -533,8 +557,8 @@ void EvseManager::ready() {
         // switch to DC mode for first session for AC with SoC
         if (config.ac_with_soc) {
 
-            r_bsp->subscribe_event([this](const types::board_support::Event& event) {
-                if (event == types::board_support::Event::CarUnplugged) {
+            bsp->signal_event.connect([this](const CPEvent event) {
+                if (event == CPEvent::CarUnplugged) {
                     // configure for DC again for next session. Will reset to AC when SoC is received
                     switch_DC_mode();
                 }
@@ -583,15 +607,16 @@ void EvseManager::ready() {
                                   hw_capabilities.max_phase_count_import);
     }
 
-    r_bsp->subscribe_event([this](const types::board_support::Event event) {
+    bsp->signal_event.connect([this](const CPEvent event) {
+
         // Forward events from BSP to SLAC module before we process the events in the charger
         if (slac_enabled) {
-            if (event == types::board_support::Event::EFtoBCD) {
+            if (event == CPEvent::EFtoBCD) {
                 // this means entering BCD from E|F
                 r_slac[0]->call_enter_bcd();
-            } else if (event == types::board_support::Event::BCDtoEF) {
+            } else if (event == CPEvent::BCDtoEF) {
                 r_slac[0]->call_leave_bcd();
-            } else if (event == types::board_support::Event::CarPluggedIn) {
+            } else if (event == CPEvent::CarPluggedIn) {
                 // CC: right now we dont support energy saving mode, so no need to reset slac here.
                 // It is more important to start slac as early as possible to avoid unneccesary retries
                 // e.g. by Tesla cars which send the first SLAC_PARM_REQ directly after plugin.
@@ -601,7 +626,7 @@ void EvseManager::ready() {
                 // This is entering BCD from state A
                 car_manufacturer = types::evse_manager::CarManufacturer::Unknown;
                 r_slac[0]->call_enter_bcd();
-            } else if (event == types::board_support::Event::CarUnplugged) {
+            } else if (event == CPEvent::CarUnplugged) {
                 r_slac[0]->call_leave_bcd();
                 r_slac[0]->call_reset(false);
             }
@@ -612,7 +637,7 @@ void EvseManager::ready() {
         // Forward some events to HLC
         if (get_hlc_enabled()) {
             // Reset HLC auth waiting flags on new session
-            if (event == types::board_support::Event::CarPluggedIn) {
+            if (event == CPEvent::CarPluggedIn) {
                 r_hlc[0]->call_set_FAILED_ContactorError(false);
                 r_hlc[0]->call_set_RCD_Error(false);
                 r_hlc[0]->call_set_EVSE_Malfunction(false);
@@ -628,32 +653,27 @@ void EvseManager::ready() {
                 }
             }
 
-            if (event == types::board_support::Event::ErrorRelais) {
+            if (event == CPEvent::ErrorRelais) {
                 session_log.evse(false, "Error Relais");
                 r_hlc[0]->call_set_FAILED_ContactorError(true);
             }
 
-            if (event == types::board_support::Event::ErrorRCD) {
-                session_log.evse(false, "Error RCD");
-                r_hlc[0]->call_set_RCD_Error(true);
-            }
-
-            if (event == types::board_support::Event::PermanentFault) {
+            if (event == CPEvent::PermanentFault) {
                 session_log.evse(false, "Error Permanent Fault");
                 r_hlc[0]->call_set_EVSE_Malfunction(true);
             }
 
-            if (event == types::board_support::Event::ErrorOverCurrent) {
+            if (event == CPEvent::ErrorOverCurrent) {
                 session_log.evse(false, "Error Over Current");
                 r_hlc[0]->call_set_EVSE_EmergencyShutdown(true);
             }
 
-            if (event == types::board_support::Event::PowerOn) {
+            if (event == CPEvent::PowerOn) {
                 contactor_open = false;
                 r_hlc[0]->call_contactor_closed(true);
             }
 
-            if (event == types::board_support::Event::PowerOff) {
+            if (event == CPEvent::PowerOff) {
                 contactor_open = true;
                 latest_target_voltage = 0;
                 latest_target_current = 0;
@@ -668,7 +688,7 @@ void EvseManager::ready() {
             });
     });
 
-    r_bsp->subscribe_nr_of_phases_available([this](int n) { signalNrOfPhasesAvailable(n); });
+    r_bsp->subscribe_ac_nr_of_phases_available([this](int n) { signalNrOfPhasesAvailable(n); });
 
     if (r_powermeter_billing().size() > 0) {
         r_powermeter_billing()[0]->subscribe_powermeter([this](types::powermeter::Powermeter p) {
@@ -713,7 +733,6 @@ void EvseManager::ready() {
     }
 
     if (slac_enabled) {
-
         // Reset once on startup and disable modem
         r_slac[0]->call_reset(false);
 
@@ -785,7 +804,7 @@ void EvseManager::ready() {
     if (config.ac_with_soc) {
         setup_fake_DC_mode();
     } else {
-        charger->setup(local_three_phases, config.has_ventilation, config.country_code, config.rcd_enabled,
+        charger->setup(local_three_phases, config.has_ventilation, config.country_code,
                        (config.charge_mode == "DC" ? Charger::ChargeMode::DC : Charger::ChargeMode::AC), hlc_enabled,
                        config.ac_hlc_use_5percent, config.ac_enforce_hlc, false,
                        config.soft_over_current_tolerance_percent, config.soft_over_current_measurement_noise_A);
@@ -910,7 +929,7 @@ types::powermeter::Powermeter EvseManager::get_latest_powermeter_data_billing() 
     return latest_powermeter_data_billing;
 }
 
-types::board_support::HardwareCapabilities EvseManager::get_hw_capabilities() {
+types::evse_board_support::HardwareCapabilities EvseManager::get_hw_capabilities() {
     return hw_capabilities;
 }
 
@@ -932,8 +951,8 @@ void EvseManager::switch_AC_mode() {
 // This sets up a fake DC mode that is just supposed to work until we get the SoC.
 // It is only used for AC<>DC<>AC<>DC mode to get AC charging with SoC.
 void EvseManager::setup_fake_DC_mode() {
-    charger->setup(local_three_phases, config.has_ventilation, config.country_code, config.rcd_enabled,
-                   Charger::ChargeMode::DC, hlc_enabled, config.ac_hlc_use_5percent, config.ac_enforce_hlc, false,
+    charger->setup(local_three_phases, config.has_ventilation, config.country_code, Charger::ChargeMode::DC,
+                   hlc_enabled, config.ac_hlc_use_5percent, config.ac_enforce_hlc, false,
                    config.soft_over_current_tolerance_percent, config.soft_over_current_measurement_noise_A);
 
     // Set up energy transfer modes for HLC. For now we only support either DC or AC, not both at the same time.
@@ -965,8 +984,8 @@ void EvseManager::setup_fake_DC_mode() {
 }
 
 void EvseManager::setup_AC_mode() {
-    charger->setup(local_three_phases, config.has_ventilation, config.country_code, config.rcd_enabled,
-                   Charger::ChargeMode::AC, hlc_enabled, config.ac_hlc_use_5percent, config.ac_enforce_hlc, true,
+    charger->setup(local_three_phases, config.has_ventilation, config.country_code, Charger::ChargeMode::AC,
+                   hlc_enabled, config.ac_hlc_use_5percent, config.ac_enforce_hlc, true,
                    config.soft_over_current_tolerance_percent, config.soft_over_current_measurement_noise_A);
 
     // Set up energy transfer modes for HLC. For now we only support either DC or AC, not both at the same time.
@@ -1173,7 +1192,8 @@ void EvseManager::cable_check() {
         session_log.car(true, "DC HLC Close contactor (in CableCheck)");
         charger->set_hlc_allow_close_contactor(true);
 
-        Timeout timeout(CABLECHECK_CONTACTORS_CLOSE_TIMEOUT);
+        Timeout timeout;
+        timeout.start(CABLECHECK_CONTACTORS_CLOSE_TIMEOUT);
 
         while (!timeout.reached()) {
             if (!contactor_open)
@@ -1228,8 +1248,8 @@ void EvseManager::cable_check() {
                             if (m.resistance_F_Ohm < min_resistance_warning) {
                                 session_log.evse(
                                     false, fmt::format("Isolation measurement FAULT R_F {}.", m.resistance_F_Ohm));
-                                ok = true; // this just means that we are finished measuring, not that we are ok with
-                                           // the result
+                                ok = true; // this just means that we are finished measuring, not that we are ok
+                                           // with the result
                                 r_hlc[0]->call_set_EVSEIsolationStatus(types::iso15118_charger::IsolationStatus::Fault);
                                 imd_stop();
                                 fail_session();
@@ -1385,7 +1405,8 @@ void EvseManager::powersupply_DC_off() {
 
 bool EvseManager::wait_powersupply_DC_voltage_reached(double target_voltage) {
     // wait until the voltage has rised to the target value
-    Timeout timeout(30s);
+    Timeout timeout;
+    timeout.start(30s);
     bool voltage_ok = false;
     while (!timeout.reached()) {
         types::power_supply_DC::VoltageCurrent m;
@@ -1405,7 +1426,8 @@ bool EvseManager::wait_powersupply_DC_voltage_reached(double target_voltage) {
 
 bool EvseManager::wait_powersupply_DC_below_voltage(double target_voltage) {
     // wait until the voltage is below the target voltage
-    Timeout timeout(30s);
+    Timeout timeout;
+    timeout.start(30s);
     bool voltage_ok = false;
     while (!timeout.reached()) {
         types::power_supply_DC::VoltageCurrent m;

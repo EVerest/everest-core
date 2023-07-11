@@ -17,15 +17,16 @@
 
 namespace module {
 
-Charger::Charger(const std::unique_ptr<board_support_ACIntf>& r_bsp, const std::string& connector_type) :
-    r_bsp(r_bsp), connector_type(connector_type) {
+Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::string& connector_type) :
+    bsp(bsp), connector_type(connector_type) {
 
     connectorEnabled = true;
-
     maxCurrent = 6.0;
-    maxCurrentCable = r_bsp->call_read_pp_ampacity();
+    if (connector_type == IEC62196Type2Socket) {
+        maxCurrentCable = bsp->read_pp_ampacity();
+    }
     authorized = false;
-    r_bsp->call_enable(false);
+    bsp->enable(false);
 
     update_pwm_last_dc = 0.;
 
@@ -48,13 +49,13 @@ Charger::Charger(const std::unique_ptr<board_support_ACIntf>& r_bsp, const std::
 }
 
 Charger::~Charger() {
-    r_bsp->call_pwm_F();
+    pwm_F();
 }
 
 void Charger::mainThread() {
 
     // Enable CP output
-    r_bsp->call_enable(true);
+    bsp->enable(true);
 
     // publish initial values
     signalMaxCurrent(getMaxCurrent());
@@ -62,23 +63,20 @@ void Charger::mainThread() {
     signalError(errorState);
 
     while (true) {
-
         if (mainThreadHandle.shouldExit()) {
             break;
         }
 
         std::this_thread::sleep_for(MAINLOOP_UPDATE_RATE);
 
-        stateMutex.lock();
-
-        // update power limits
-        powerAvailable();
-
-        // Run our own state machine update (i.e. run everything that needs
-        // to be done on regular intervals independent from events)
-        runStateMachine();
-
-        stateMutex.unlock();
+        {
+            std::scoped_lock lock(stateMutex);
+            // update power limits
+            powerAvailable();
+            // Run our own state machine update (i.e. run everything that needs
+            // to be done on regular intervals independent from events)
+            runStateMachine();
+        }
     }
 }
 
@@ -149,7 +147,7 @@ void Charger::runStateMachine() {
         // to make sure control_pilot does not switch on relais even if
         // we start PWM here
         if (new_in_state) {
-            r_bsp->call_allow_power_on(false);
+            bsp->allow_power_on(false, types::evse_board_support::Reason::PowerOff);
 
             if (last_state == EvseState::Replug) {
                 signalEvent(types::evse_manager::SessionEventEnum::ReplugFinished);
@@ -371,7 +369,7 @@ void Charger::runStateMachine() {
 
         if (charge_mode == ChargeMode::DC) {
             if (hlc_allow_close_contactor && iec_allow_close_contactor) {
-                r_bsp->call_allow_power_on(true);
+                bsp->allow_power_on(true, types::evse_board_support::Reason::DCCableCheck);
             }
         }
 
@@ -429,7 +427,7 @@ void Charger::runStateMachine() {
                     signalEvent(types::evse_manager::SessionEventEnum::ChargingResumed);
                 }
 
-                r_bsp->call_allow_power_on(true);
+                bsp->allow_power_on(true, types::evse_board_support::Reason::FullPowerCharging);
                 // make sure we are enabling PWM
                 if (hlc_use_5percent_current_session)
                     update_pwm_now(PWM_5_PERCENT);
@@ -474,7 +472,7 @@ void Charger::runStateMachine() {
             // This is for HLC charging (both AC and DC)
             if (new_in_state) {
                 bcb_toggle_reset();
-                r_bsp->call_allow_power_on(false);
+                bsp->allow_power_on(false, types::evse_board_support::Reason::PowerOff);
                 if (charge_mode == ChargeMode::DC) {
                     signal_DC_supply_off();
                 }
@@ -512,7 +510,7 @@ void Charger::runStateMachine() {
 
             if (new_in_state) {
                 signalEvent(types::evse_manager::SessionEventEnum::ChargingPausedEV);
-                r_bsp->call_allow_power_on(true);
+                bsp->allow_power_on(true, types::evse_board_support::Reason::FullPowerCharging);
                 // make sure we are enabling PWM
                 if (hlc_use_5percent_current_session) {
                     update_pwm_now(PWM_5_PERCENT);
@@ -627,31 +625,29 @@ void Charger::runStateMachine() {
     }
 }
 
-void Charger::processEvent(types::board_support::Event cp_event) {
-
+void Charger::processEvent(CPEvent cp_event) {
     switch (cp_event) {
-    case ControlPilotEvent::CarPluggedIn:
-    case ControlPilotEvent::CarRequestedPower:
-    case ControlPilotEvent::CarRequestedStopPower:
-    case ControlPilotEvent::CarUnplugged:
-    case ControlPilotEvent::ErrorDF:
-    case ControlPilotEvent::ErrorE:
-    case ControlPilotEvent::BCDtoEF:
-    case ControlPilotEvent::EFtoBCD:
-        session_log.car(false, fmt::format("Event {}", types::board_support::event_to_string(cp_event)));
+    case CPEvent::CarPluggedIn:
+    case CPEvent::CarRequestedPower:
+    case CPEvent::CarRequestedStopPower:
+    case CPEvent::CarUnplugged:
+    case CPEvent::ErrorDF:
+    case CPEvent::ErrorE:
+    case CPEvent::BCDtoEF:
+    case CPEvent::EFtoBCD:
+        session_log.car(false, fmt::format("Event {}", cpevent_to_string(cp_event)));
         break;
-    case ControlPilotEvent::ErrorOverCurrent:
-    case ControlPilotEvent::ErrorRCD:
-    case ControlPilotEvent::ErrorRelais:
-    case ControlPilotEvent::ErrorVentilationNotAvailable:
-    case ControlPilotEvent::PermanentFault:
-    case ControlPilotEvent::PowerOff:
-    case ControlPilotEvent::PowerOn:
-    case ControlPilotEvent::EvseReplugStarted:
-    case ControlPilotEvent::EvseReplugFinished:
+    case CPEvent::ErrorOverCurrent:
+    case CPEvent::ErrorRelais:
+    case CPEvent::ErrorVentilationNotAvailable:
+    case CPEvent::PermanentFault:
+    case CPEvent::PowerOff:
+    case CPEvent::PowerOn:
+    case CPEvent::EvseReplugStarted:
+    case CPEvent::EvseReplugFinished:
 
     default:
-        session_log.evse(false, fmt::format("Event {}", types::board_support::event_to_string(cp_event)));
+        session_log.evse(false, fmt::format("Event {}", cpevent_to_string(cp_event)));
         break;
     }
 
@@ -676,45 +672,47 @@ void Charger::processEvent(types::board_support::Event cp_event) {
     runStateMachine();
 }
 
-void Charger::processCPEventsState(ControlPilotEvent cp_event) {
+void Charger::processCPEventsState(CPEvent cp_event) {
     switch (currentState) {
 
     case EvseState::Idle:
-        if (cp_event == ControlPilotEvent::CarPluggedIn) {
+        if (cp_event == CPEvent::CarPluggedIn) {
             // Set cable current limit from PP resistor value for this session
-            maxCurrentCable = r_bsp->call_read_pp_ampacity();
+            if (connector_type == IEC62196Type2Socket) {
+                maxCurrentCable = bsp->read_pp_ampacity();
+            }
             currentState = EvseState::WaitingForAuthentication;
         }
         break;
 
     case EvseState::WaitingForAuthentication:
-        if (cp_event == ControlPilotEvent::CarRequestedPower) {
+        if (cp_event == CPEvent::CarRequestedPower) {
             session_log.car(false, "Ignoring CarRequestedPower in WaitingForAuth state. Probably a BCB toggle that "
                                    "does not make sense here.");
-        } else if (cp_event == ControlPilotEvent::CarRequestedStopPower) {
+        } else if (cp_event == CPEvent::CarRequestedStopPower) {
             session_log.car(false, "Ignoring CarRequestedStopPower in WaitingForAuth state. Probably a BCB toggle that "
                                    "does not make sense here.");
         }
         break;
 
     case EvseState::PrepareCharging:
-        if (cp_event == ControlPilotEvent::CarRequestedPower) {
+        if (cp_event == CPEvent::CarRequestedPower) {
             iec_allow_close_contactor = true;
-        } else if (cp_event == ControlPilotEvent::CarRequestedStopPower) {
+        } else if (cp_event == CPEvent::CarRequestedStopPower) {
             iec_allow_close_contactor = false;
             // currentState = EvseState::StoppingCharging;
         }
         break;
 
     case EvseState::Charging:
-        if (cp_event == ControlPilotEvent::CarRequestedStopPower) {
+        if (cp_event == CPEvent::CarRequestedStopPower) {
             iec_allow_close_contactor = false;
             currentState = EvseState::ChargingPausedEV;
         }
         break;
 
     case EvseState::ChargingPausedEV:
-        if (cp_event == ControlPilotEvent::CarRequestedPower) {
+        if (cp_event == CPEvent::CarRequestedPower) {
             iec_allow_close_contactor = true;
             // For BASIC charging we can simply switch back to Charging
             if (charge_mode == ChargeMode::AC && !hlc_charging_active) {
@@ -724,7 +722,7 @@ void Charger::processCPEventsState(ControlPilotEvent cp_event) {
             }
         }
 
-        if (cp_event == ControlPilotEvent::CarRequestedStopPower && !pwm_running && hlc_charging_active) {
+        if (cp_event == CPEvent::CarRequestedStopPower && !pwm_running && hlc_charging_active) {
             bcb_toggle_detect_stop_pulse();
         }
         break;
@@ -732,9 +730,9 @@ void Charger::processCPEventsState(ControlPilotEvent cp_event) {
     case EvseState::StoppingCharging:
         // Allow session restart from EV after SessionStop.terminate with BCB toggle
         if (hlc_charging_active && !pwm_running) {
-            if (cp_event == ControlPilotEvent::CarRequestedPower) {
+            if (cp_event == CPEvent::CarRequestedPower) {
                 bcb_toggle_detect_start_pulse();
-            } else if (cp_event == ControlPilotEvent::CarRequestedStopPower) {
+            } else if (cp_event == CPEvent::CarRequestedStopPower) {
                 bcb_toggle_detect_stop_pulse();
             }
         }
@@ -745,16 +743,16 @@ void Charger::processCPEventsState(ControlPilotEvent cp_event) {
     }
 }
 
-void Charger::processCPEventsIndependent(ControlPilotEvent cp_event) {
+void Charger::processCPEventsIndependent(CPEvent cp_event) {
 
     switch (cp_event) {
-    case ControlPilotEvent::EvseReplugStarted:
+    case CPEvent::EvseReplugStarted:
         currentState = EvseState::Replug;
         break;
-    case ControlPilotEvent::EvseReplugFinished:
+    case CPEvent::EvseReplugFinished:
         currentState = EvseState::WaitingForAuthentication;
         break;
-    case ControlPilotEvent::CarUnplugged:
+    case CPEvent::CarUnplugged:
         if (currentState == EvseState::Error)
             signalEvent(types::evse_manager::SessionEventEnum::AllErrorsCleared);
         if (!hlc_charging_active) {
@@ -763,67 +761,59 @@ void Charger::processCPEventsIndependent(ControlPilotEvent cp_event) {
             currentState = EvseState::Finished;
         }
         break;
-    case ControlPilotEvent::ErrorE:
+    case CPEvent::ErrorE:
         currentState = EvseState::Error;
         errorState = types::evse_manager::ErrorEnum::Car;
         break;
-    case ControlPilotEvent::ErrorDF:
+    case CPEvent::ErrorDF:
         currentState = EvseState::Error;
         errorState = types::evse_manager::ErrorEnum::CarDiodeFault;
         break;
-    case ControlPilotEvent::ErrorRelais:
+    case CPEvent::ErrorRelais:
         currentState = EvseState::Error;
         errorState = types::evse_manager::ErrorEnum::Relais;
         break;
-    case ControlPilotEvent::ErrorRCD:
-        currentState = EvseState::Error;
-        errorState = types::evse_manager::ErrorEnum::RCD;
-        break;
-    case ControlPilotEvent::ErrorVentilationNotAvailable:
+    case CPEvent::ErrorVentilationNotAvailable:
         currentState = EvseState::Error;
         errorState = types::evse_manager::ErrorEnum::VentilationNotAvailable;
         break;
-    case ControlPilotEvent::ErrorOverCurrent:
+    case CPEvent::ErrorOverCurrent:
         currentState = EvseState::Error;
         errorState = types::evse_manager::ErrorEnum::OverCurrent;
         break;
-    case ControlPilotEvent::ErrorRCD_DC:
-        currentState = EvseState::Error;
-        errorState = types::evse_manager::ErrorEnum::OverCurrent;
-        break;
-    case ControlPilotEvent::ErrorOverVoltage:
+    case CPEvent::ErrorOverVoltage:
         currentState = EvseState::Error;
         errorState = types::evse_manager::ErrorEnum::OverVoltage;
         break;
-    case ControlPilotEvent::ErrorUnderVoltage:
+    case CPEvent::ErrorUnderVoltage:
         currentState = EvseState::Error;
         errorState = types::evse_manager::ErrorEnum::UnderVoltage;
         break;
-    case ControlPilotEvent::ErrorMotorLock:
+    case CPEvent::ErrorMotorLock:
         currentState = EvseState::Error;
         errorState = types::evse_manager::ErrorEnum::MotorLock;
         break;
-    case ControlPilotEvent::ErrorOverTemperature:
+    case CPEvent::ErrorOverTemperature:
         currentState = EvseState::Error;
         errorState = types::evse_manager::ErrorEnum::OverTemperature;
         break;
-    case ControlPilotEvent::ErrorBrownOut:
+    case CPEvent::ErrorBrownOut:
         currentState = EvseState::Error;
         errorState = types::evse_manager::ErrorEnum::BrownOut;
         break;
-    case ControlPilotEvent::ErrorCablePP:
+    case CPEvent::ErrorCablePP:
         currentState = EvseState::Error;
         errorState = types::evse_manager::ErrorEnum::CablePP;
         break;
-    case ControlPilotEvent::ErrorEnergyManagement:
+    case CPEvent::ErrorEnergyManagement:
         currentState = EvseState::Error;
         errorState = types::evse_manager::ErrorEnum::EnergyManagement;
         break;
-    case ControlPilotEvent::ErrorNeutralPEN:
+    case CPEvent::ErrorNeutralPEN:
         currentState = EvseState::Error;
         errorState = types::evse_manager::ErrorEnum::NeutralPEN;
         break;
-    case ControlPilotEvent::ErrorCpDriver:
+    case CPEvent::ErrorCpDriver:
         currentState = EvseState::Error;
         errorState = types::evse_manager::ErrorEnum::CpDriver;
         break;
@@ -848,7 +838,7 @@ void Charger::update_pwm_now(float dc) {
 
     update_pwm_last_dc = dc;
     pwm_running = true;
-    r_bsp->call_pwm_on(dc);
+    bsp->set_pwm(dc);
     lastPwmUpdate = date::utc_clock::now();
 }
 
@@ -861,13 +851,13 @@ void Charger::update_pwm_now_if_changed(float dc) {
 void Charger::pwm_off() {
     session_log.evse(false, "Set PWM Off");
     pwm_running = false;
-    r_bsp->call_pwm_off();
+    bsp->set_pwm_off();
 }
 
 void Charger::pwm_F() {
     session_log.evse(false, "Set PWM F");
     pwm_running = false;
-    r_bsp->call_pwm_F();
+    bsp->set_pwm_F();
 }
 
 void Charger::run() {
@@ -911,31 +901,10 @@ bool Charger::setMaxCurrent(float c, std::chrono::time_point<date::utc_clock> va
             }
         }
         // is it still valid?
-        // FIXME this requires local clock to be UTC
         if (validUntil > date::utc_clock::now()) {
             maxCurrent = c;
             maxCurrentValidUntil = validUntil;
-            signalMaxCurrent(c);
-            return true;
-        }
-    }
-    return false;
-}
-
-bool Charger::setMaxCurrent(float c) {
-    if (c >= 0.0 && c <= CHARGER_ABSOLUTE_MAX_CURRENT) {
-        std::lock_guard<std::recursive_mutex> lock(configMutex);
-        // only consider PP for IEC 62196 Type 2 Socket for now
-        if (connector_type == IEC62196Type2Socket) {
-            // limit to cable limit (PP reading) if that is smaller!
-            if (maxCurrentCable < c) {
-                c = maxCurrentCable;
-            }
-        }
-        // is it still valid?
-        // FIXME this requires local clock to be UTC
-        if (maxCurrentValidUntil > date::utc_clock::now()) {
-            maxCurrent = c;
+            bsp->set_overcurrent_limit(c);
             signalMaxCurrent(c);
             return true;
         }
@@ -999,7 +968,7 @@ bool Charger::evseReplug() {
     // If BSP never executes the replug, we also never change state and nothing happens.
     // After replugging finishes, BSP will emit EvseReplugFinished event and we will go back to WaitingForAuth
     EVLOG_info << fmt::format("Calling evse_replug({})...", t_replug_ms);
-    r_bsp->call_evse_replug(t_replug_ms);
+    bsp->evse_replug(t_replug_ms);
     return true;
 }
 
@@ -1085,17 +1054,18 @@ types::evse_manager::StartSessionReason Charger::getSessionStartedReason() {
 }
 
 bool Charger::switchThreePhasesWhileCharging(bool n) {
-    r_bsp->call_switch_three_phases_while_charging(n);
+    bsp->switch_three_phases_while_charging(n);
     return false; // FIXME: implement real return value when protobuf has sync calls
 }
 
-void Charger::setup(bool three_phases, bool has_ventilation, const std::string& country_code, bool rcd_enabled,
+void Charger::setup(bool three_phases, bool has_ventilation, const std::string& country_code,
                     const ChargeMode _charge_mode, bool _ac_hlc_enabled, bool _ac_hlc_use_5percent,
                     bool _ac_enforce_hlc, bool _ac_with_soc_timeout, float _soft_over_current_tolerance_percent,
                     float _soft_over_current_measurement_noise_A) {
     std::lock_guard<std::recursive_mutex> lock(configMutex);
     // set up board support package
-    r_bsp->call_setup(three_phases, has_ventilation, country_code, rcd_enabled);
+    bsp->setup(three_phases, has_ventilation, country_code);
+
     // cache our config variables
     charge_mode = _charge_mode;
     ac_hlc_enabled_current_session = ac_hlc_enabled = _ac_hlc_enabled;
@@ -1311,7 +1281,7 @@ float Charger::getMaxCurrent() {
 }
 
 bool Charger::forceUnlock() {
-    return r_bsp->call_force_unlock();
+    return bsp->force_unlock();
 }
 
 void Charger::setCurrentDrawnByVehicle(float l1, float l2, float l3) {
@@ -1504,6 +1474,10 @@ void Charger::bcb_toggle_detect_start_pulse() {
 
 // call this on C->B transitions
 void Charger::bcb_toggle_detect_stop_pulse() {
+
+    if (!hlc_bcb_sequence_started)
+        return;
+
     // This is probably and end of BCB toggle, verify it was not too long or too short
     auto pulse_length = std::chrono::steady_clock::now() - hlc_ev_pause_start_of_bcb;
 
@@ -1534,6 +1508,12 @@ bool Charger::bcb_toggle_detected() {
         return true;
     }
     return false;
+}
+
+void Charger::set_rcd_error() {
+    std::lock_guard<std::recursive_mutex> lock(stateMutex);
+    currentState = EvseState::Error;
+    errorState = types::evse_manager::ErrorEnum::RCD;
 }
 
 } // namespace module
