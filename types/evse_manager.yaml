@@ -212,48 +212,20 @@ types:
         type: string
   ErrorEnum:
     description: >-
-      Details on error type
-        Car: Signals a car error
-        CarDiodeFault: Signals a car diode fault
-        Relais: Signals a relais error
-        RCD: Signals an RCD error (AC)
-        RCDDC: Signal an RCD error (DC)
-        VentilationNotAvailable: Signals that ventilation is not available
-        OverCurrent: Signals an overcurrent error
-        OverVoltage: Signals on overvoltage error
-        UnderVoltage: Signals on overvoltage error
-        Internal: Signals an internal error
-        SLAC: Signals a SLAC communication error
-        HLC: Signals a HLC error
-        MotorLock: Signals an error with the motor lock of the connector
-        OverTemperature: Signals an over temperature error
-        BrownOut: Brown out detected in electronics
-        CablePP: PP resistor value in cable is out of range
-        EnergyManagement: An error from the energy management was reported
-        NeutralPEN: Nutral/PEN fault
-        CpDriver: The CP output driver has a fault
+      Note this is only kept for compatibility with the legacy error handling and will be removed soon.
     type: string
     enum:
       - Car
       - CarDiodeFault
-      - Relais
       - RCD
       - RCDDC
       - VentilationNotAvailable
-      - OverCurrent
-      - OverVoltage
-      - UnderVoltage
       - Internal
       - SLAC
       - HLC
       - Other
-      - MotorLock
-      - OverTemperature
       - BrownOut
-      - CablePP
       - EnergyManagement
-      - NeutralPEN
-      - CpDriver
   Error:
     description: >-
       Error object that contains information about the error and optional vendor error information

@@ -17,7 +17,9 @@
 
 // headers for required interface implementations
 #include <generated/interfaces/ISO15118_charger/Interface.hpp>
-#include <generated/interfaces/board_support_AC/Interface.hpp>
+#include <generated/interfaces/ac_rcd/Interface.hpp>
+#include <generated/interfaces/connector_lock/Interface.hpp>
+#include <generated/interfaces/evse_board_support/Interface.hpp>
 #include <generated/interfaces/isolation_monitor/Interface.hpp>
 #include <generated/interfaces/power_supply_DC/Interface.hpp>
 #include <generated/interfaces/powermeter/Interface.hpp>
@@ -25,10 +27,6 @@
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
-#include "CarManufacturer.hpp"
-#include "Charger.hpp"
-#include "SessionLog.hpp"
-#include "VarContainer.hpp"
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
@@ -38,6 +36,12 @@
 #include <future>
 #include <iostream>
 #include <optional>
+
+#include "CarManufacturer.hpp"
+#include "Charger.hpp"
+#include "ErrorHandling.hpp"
+#include "SessionLog.hpp"
+#include "VarContainer.hpp"
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -56,7 +60,6 @@ struct Conf {
     bool three_phases;
     bool has_ventilation;
     std::string country_code;
-    bool rcd_enabled;
     double max_current_import_A;
     double max_current_export_A;
     std::string charge_mode;
@@ -71,7 +74,6 @@ struct Conf {
     bool switch_to_minimum_voltage_after_cable_check;
     bool hack_skoda_enyaq;
     int hack_present_current_offset;
-    std::string connector_type;
     bool hack_pause_imd_during_precharge;
     bool hack_allow_bpt_with_iso2;
     bool autocharge_use_slac_instead_of_hlc;
@@ -92,7 +94,8 @@ public:
     EvseManager(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, Everest::TelemetryProvider& telemetry,
                 std::unique_ptr<evse_managerImplBase> p_evse, std::unique_ptr<energyImplBase> p_energy_grid,
                 std::unique_ptr<auth_token_providerImplBase> p_token_provider,
-                std::unique_ptr<board_support_ACIntf> r_bsp,
+                std::unique_ptr<evse_board_supportIntf> r_bsp, std::vector<std::unique_ptr<ac_rcdIntf>> r_ac_rcd,
+                std::vector<std::unique_ptr<connector_lockIntf>> r_connector_lock,
                 std::vector<std::unique_ptr<powermeterIntf>> r_powermeter_grid_side,
                 std::vector<std::unique_ptr<powermeterIntf>> r_powermeter_car_side,
                 std::vector<std::unique_ptr<slacIntf>> r_slac, std::vector<std::unique_ptr<ISO15118_chargerIntf>> r_hlc,
@@ -105,6 +108,8 @@ public:
         p_energy_grid(std::move(p_energy_grid)),
         p_token_provider(std::move(p_token_provider)),
         r_bsp(std::move(r_bsp)),
+        r_ac_rcd(std::move(r_ac_rcd)),
+        r_connector_lock(std::move(r_connector_lock)),
         r_powermeter_grid_side(std::move(r_powermeter_grid_side)),
         r_powermeter_car_side(std::move(r_powermeter_car_side)),
         r_slac(std::move(r_slac)),
@@ -118,7 +123,9 @@ public:
     const std::unique_ptr<evse_managerImplBase> p_evse;
     const std::unique_ptr<energyImplBase> p_energy_grid;
     const std::unique_ptr<auth_token_providerImplBase> p_token_provider;
-    const std::unique_ptr<board_support_ACIntf> r_bsp;
+    const std::unique_ptr<evse_board_supportIntf> r_bsp;
+    const std::vector<std::unique_ptr<ac_rcdIntf>> r_ac_rcd;
+    const std::vector<std::unique_ptr<connector_lockIntf>> r_connector_lock;
     const std::vector<std::unique_ptr<powermeterIntf>> r_powermeter_grid_side;
     const std::vector<std::unique_ptr<powermeterIntf>> r_powermeter_car_side;
     const std::vector<std::unique_ptr<slacIntf>> r_slac;
@@ -132,7 +139,7 @@ public:
     std::unique_ptr<Charger> charger;
     sigslot::signal<int> signalNrOfPhasesAvailable;
     types::powermeter::Powermeter get_latest_powermeter_data_billing();
-    types::board_support::HardwareCapabilities get_hw_capabilities();
+    types::evse_board_support::HardwareCapabilities get_hw_capabilities();
     bool updateLocalMaxCurrentLimit(float max_current); // deprecated
     bool updateLocalMaxWattLimit(float max_watt);       // deprecated
     bool updateLocalEnergyLimit(types::energy::ExternalLimits l);
@@ -166,6 +173,8 @@ public:
     std::atomic_bool sae_bidi_active{false};
 
     void ready_to_start_charging();
+
+    std::unique_ptr<IECStateMachine> bsp;
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
@@ -184,7 +193,7 @@ private:
     types::powermeter::Powermeter latest_powermeter_data_billing;
 
     Everest::Thread energyThreadHandle;
-    types::board_support::HardwareCapabilities hw_capabilities;
+    types::evse_board_support::HardwareCapabilities hw_capabilities;
     bool local_three_phases;
     types::energy::ExternalLimits local_energy_limits;
     const float EVSE_ABSOLUTE_MAX_CURRENT = 80.0;
@@ -248,6 +257,8 @@ private:
     static constexpr auto CABLECHECK_CONTACTORS_CLOSE_TIMEOUT{std::chrono::seconds(5)};
 
     std::atomic_bool current_demand_active{false};
+
+    std::unique_ptr<ErrorHandling> error_handling;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

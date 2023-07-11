@@ -54,10 +54,6 @@ config:
     description: Country Code
     type: string
     default: DE
-  rcd_enabled:
-    description: Enable or disable RCD
-    type: boolean
-    default: true
   max_current_import_A:
     description: User configurable current limit for this EVSE in Ampere
     type: number
@@ -133,13 +129,6 @@ config:
       Set to 0 unless you really know what you are doing.
     type: integer
     default: 0
-  connector_type:
-    description: Type of charging connector available at this EVSE
-    type: string
-    enum:
-      - IEC62196Type2Cable
-      - IEC62196Type2Socket
-    default: IEC62196Type2Cable
   hack_pause_imd_during_precharge:
     description: >-
       Disable IMD at the end of CableCheck and re-enable when current is flowing in CurrentDemand.
@@ -218,7 +207,15 @@ provides:
     interface: auth_token_provider
 requires:
   bsp:
-    interface: board_support_AC
+    interface: evse_board_support
+  ac_rcd:
+    interface: ac_rcd
+    min_connections: 0
+    max_connections: 1
+  connector_lock:
+    interface: connector_lock
+    min_connections: 0
+    max_connections: 1
   powermeter_grid_side:
     interface: powermeter
     min_connections: 0

@@ -38,10 +38,11 @@ std::string token_handling_result_to_string(const TokenHandlingResult& result) {
 } // namespace conversions
 
 AuthHandler::AuthHandler(const SelectionAlgorithm& selection_algorithm, const int connection_timeout,
-                         bool prioritize_authorization_over_stopping_transaction) :
+                         bool prioritize_authorization_over_stopping_transaction, bool ignore_faults) :
     selection_algorithm(selection_algorithm),
     connection_timeout(connection_timeout),
-    prioritize_authorization_over_stopping_transaction(prioritize_authorization_over_stopping_transaction){};
+    prioritize_authorization_over_stopping_transaction(prioritize_authorization_over_stopping_transaction),
+    ignore_faults(ignore_faults){};
 
 AuthHandler::~AuthHandler() {
 }
@@ -463,13 +464,19 @@ void AuthHandler::handle_session_event(const int connector_id, const SessionEven
         this->connectors.at(connector_id)->timeout_timer.stop();
         break;
     case SessionEventEnum::AllErrorsCleared:
-        this->connectors.at(connector_id)->connector.submit_event(ConnectorEvent::ERROR_CLEARED);
+        if (not ignore_faults) {
+            this->connectors.at(connector_id)->connector.submit_event(ConnectorEvent::ERROR_CLEARED);
+        }
         break;
     case SessionEventEnum::PermanentFault:
-        this->connectors.at(connector_id)->connector.submit_event(ConnectorEvent::FAULTED);
+        if (not ignore_faults) {
+            this->connectors.at(connector_id)->connector.submit_event(ConnectorEvent::FAULTED);
+        }
         break;
     case SessionEventEnum::Error:
-        this->connectors.at(connector_id)->connector.submit_event(ConnectorEvent::FAULTED);
+        if (not ignore_faults) {
+            this->connectors.at(connector_id)->connector.submit_event(ConnectorEvent::FAULTED);
+        }
         break;
 
     case SessionEventEnum::Disabled:

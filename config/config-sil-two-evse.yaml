@@ -20,7 +20,6 @@ active_modules:
       three_phases: true
       has_ventilation: true
       country_code: DE
-      rcd_enabled: true
       evse_id: DE*PNX*E12345*1
       session_logging: true
       session_logging_xml: false
@@ -48,7 +47,6 @@ active_modules:
       three_phases: true
       has_ventilation: true
       country_code: DE
-      rcd_enabled: true
       evse_id: DE*PNX*E12345*2
       session_logging: true
       session_logging_xml: false
@@ -65,8 +63,12 @@ active_modules:
           implementation_id: powermeter
   yeti_driver_1:
     module: JsYetiSimulator
+    config_module:
+      connector_id: 1
   yeti_driver_2:
     module: JsYetiSimulator
+    config_module:
+      connector_id: 2
   slac:
     module: JsSlacSimulator
   car_simulator_1:

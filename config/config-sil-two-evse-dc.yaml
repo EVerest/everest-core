@@ -19,7 +19,6 @@ active_modules:
     config_module:
       connector_id: 1
       country_code: DE
-      rcd_enabled: true
       evse_id: DE*PNX*E12345*1
       evse_id_din: 49A80737A45678
       session_logging: true
@@ -52,7 +51,6 @@ active_modules:
       three_phases: true
       has_ventilation: true
       country_code: DE
-      rcd_enabled: true
       evse_id: DE*PNX*E12345*2
       session_logging: true
       session_logging_xml: false
@@ -69,8 +67,12 @@ active_modules:
           implementation_id: powermeter
   yeti_driver_1:
     module: JsYetiSimulator
+    config_module:
+      connector_id: 1
   yeti_driver_2:
     module: JsYetiSimulator
+    config_module:
+      connector_id: 2
   slac_1:
     module: JsSlacSimulator
   powersupply_dc:

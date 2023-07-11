@@ -30,7 +30,7 @@ provides:
     interface: powermeter
     description: provides the Yeti Internal Power Meter
   board_support:
-    interface: board_support_AC
+    interface: evse_board_support
     description: provides the board support Interface to low level control control pilot, relais, rcd, motor lock
 enable_external_mqtt: true
 metadata:

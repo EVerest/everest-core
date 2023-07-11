@@ -1,3 +1,0 @@
-// the configured options and settings for YetiDriver
-#define YetiComms_VERSION_MAJOR @YetiComms_VERSION_MAJOR@
-#define YetiComms_VERSION_MINOR @YetiComms_VERSION_MINOR@
