@@ -59,11 +59,12 @@ public:
     /// \param timestamp timestamp of the start of the transaction
     /// \param meter_start start meter value of the transaction
     /// \param id_token id_token with which the transaction was authorized / started
+    /// \param group_id_token optional group id_token
     /// \param reservation optional reservation_id if evse was reserved
     /// \param sampled_data_tx_updated_interval Interval between sampling of metering (or other) data, intended to be
     /// transmitted via TransactionEventRequest (eventType = Updated) messages
     void open_transaction(const std::string& transaction_id, const int32_t connector_id, const DateTime& timestamp,
-                          const MeterValue& meter_start, const IdToken& id_token,
+                          const MeterValue& meter_start, const IdToken& id_token, const std::optional<IdToken> &group_id_token,
                           const std::optional<int32_t> reservation_id,
                           const int32_t sampled_data_tx_updated_interval);
 

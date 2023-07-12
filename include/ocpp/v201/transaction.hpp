@@ -13,6 +13,7 @@ namespace v201 {
 struct EnhancedTransaction : public Transaction {
     std::vector<MeterValue> meter_values;
     IdToken id_token;
+    std::optional<IdToken> group_id_token;
     std::optional<int32_t> reservation_id;
     int32_t seq_no = 0;
     int32_t get_seq_no();

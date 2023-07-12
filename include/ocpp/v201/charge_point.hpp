@@ -19,18 +19,20 @@
 #include <ocpp/v201/messages/ChangeAvailability.hpp>
 #include <ocpp/v201/messages/DataTransfer.hpp>
 #include <ocpp/v201/messages/GetBaseReport.hpp>
+#include <ocpp/v201/messages/GetLog.hpp>
 #include <ocpp/v201/messages/GetReport.hpp>
 #include <ocpp/v201/messages/GetVariables.hpp>
 #include <ocpp/v201/messages/Heartbeat.hpp>
 #include <ocpp/v201/messages/MeterValues.hpp>
 #include <ocpp/v201/messages/NotifyEvent.hpp>
 #include <ocpp/v201/messages/NotifyReport.hpp>
+#include <ocpp/v201/messages/RequestStartTransaction.hpp>
+#include <ocpp/v201/messages/RequestStopTransaction.hpp>
 #include <ocpp/v201/messages/Reset.hpp>
 #include <ocpp/v201/messages/SetVariables.hpp>
 #include <ocpp/v201/messages/StatusNotification.hpp>
 #include <ocpp/v201/messages/TransactionEvent.hpp>
 #include <ocpp/v201/messages/TriggerMessage.hpp>
-#include <ocpp/v201/messages/GetLog.hpp>
 #include <ocpp/v201/messages/UnlockConnector.hpp>
 
 namespace ocpp {
@@ -44,6 +46,18 @@ struct Callbacks {
     std::function<void(const ChangeAvailabilityRequest& request)> change_availability_callback;
     std::function<GetLogResponse(const GetLogRequest& request)> get_log_request_callback;
     std::function<UnlockConnectorResponse(const int32_t evse_id, const int32_t connecor_id)> unlock_connector_callback;
+    // callback to be called when the request can be accepted. authorize_remote_start indicates if Authorize.req needs
+    // to follow or not
+    std::function<void(const RequestStartTransactionRequest& request, const bool authorize_remote_start)>
+        remote_start_transaction_callback;
+    ///
+    /// \brief Check if the current reservation for the given evse id is made for the id token / group id token.
+    /// \return True if evse is reserved for the given id token / group id token, false if it is reserved for another
+    ///         one.
+    ///
+    std::function<bool(const int32_t evse_id, const CiString<36> idToken,
+                       const std::optional<CiString<36>> groupIdToken)>
+        is_reservation_for_token_callback;
 };
 
 /// \brief Class implements OCPP2.0.1 Charging Station
@@ -91,6 +105,38 @@ private:
     void update_aligned_data_interval();
     bool is_change_availability_possible(const ChangeAvailabilityRequest& req);
     void handle_scheduled_change_availability_requests(const int32_t evse_id);
+
+    ///
+    /// \brief Get evseid for the given transaction id.
+    /// \param transaction_id   The transactionid
+    /// \return The evse id belonging the the transaction id. std::nullopt if there is no transaction with the given
+    ///         transaction id.
+    ///
+    std::optional<int32_t> get_transaction_evseid(const CiString<36>& transaction_id);
+
+    ///
+    /// \brief Check if EVSE connector is reserved for another than the given id token and / or group id token.
+    /// \param evse             The evse id that must be checked. Reservation will be checked for all connectors.
+    /// \param id_token         The id token to check if it is reserved for that token.
+    /// \param group_id_token   The group id token to check if it is reserved for that group id.
+    /// \return True when one of the EVSE connectors is reserved for another id token or group id token than the given
+    ///         tokens.
+    ///         If id_token is different than reserved id_token, but group_id_token is equal to reserved group_id_token,
+    ///         returns true.
+    ///         If both are different, returns true.
+    ///         If id_token is equal to reserved id_token or group_id_token is equal, return false.
+    ///         If there is no reservation, return false.
+    ///
+    bool is_evse_reserved_for_other(const std::unique_ptr<Evse>& evse, const IdToken& id_token,
+                                    const std::optional<IdToken>& group_id_token) const;
+
+    ///
+    /// \brief Check if one of the connectors of the evse is available (both connectors faulted or unavailable or on of
+    ///        the connectors occupied).
+    /// \param evse Evse to check.
+    /// \return True if at least one connector is not faulted or unavailable.
+    ///
+    bool is_evse_connector_available(const std::unique_ptr<Evse>& evse) const;
 
     /* OCPP message requests */
 
@@ -140,6 +186,9 @@ private:
 
     // Function Block F: Remote transaction control
     void handle_unlock_connector(Call<UnlockConnectorRequest> call);
+    // Function Block f: Remote transaction control
+    void handle_remote_start_transaction_request(Call<RequestStartTransactionRequest> call);
+    void handle_remote_stop_transaction_request(Call<RequestStopTransactionRequest> call);
 
     // Functional Block G: Availability
     void handle_change_availability_req(Call<ChangeAvailabilityRequest> call);
@@ -178,11 +227,15 @@ public:
     /// \param connector_id
     /// \param session_id
     /// \param timestamp
+    /// \param trigger_reason
     /// \param meter_start
     /// \param id_token
+    /// \param group_id_token   Optional group id token
     /// \param reservation_id
     void on_transaction_started(const int32_t evse_id, const int32_t connector_id, const std::string& session_id,
-                                const DateTime& timestamp, const MeterValue& meter_start, const IdToken& id_token,
+                                const DateTime& timestamp, const ocpp::v201::TriggerReasonEnum trigger_reason,
+                                const MeterValue& meter_start, const IdToken& id_token,
+                                const std::optional<IdToken>& group_id_token,
                                 const std::optional<int32_t>& reservation_id);
 
     /// \brief Event handler that should be called when a transaction has finished

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
-#include <ocpp/v201/messages/LogStatusNotification.hpp>
 #include <ocpp/v201/charge_point.hpp>
+#include <ocpp/v201/messages/LogStatusNotification.hpp>
 
 namespace ocpp {
 namespace v201 {
@@ -89,25 +89,26 @@ void ChargePoint::on_session_started(const int32_t evse_id, const int32_t connec
 
 void ChargePoint::on_transaction_started(const int32_t evse_id, const int32_t connector_id,
                                          const std::string& session_id, const DateTime& timestamp,
+                                         const ocpp::v201::TriggerReasonEnum trigger_reason,
                                          const MeterValue& meter_start, const IdToken& id_token,
+                                         const std::optional<IdToken>& group_id_token,
                                          const std::optional<int32_t>& reservation_id) {
 
     this->evses.at(evse_id)->open_transaction(
-        session_id, connector_id, timestamp, meter_start, id_token, reservation_id,
+        session_id, connector_id, timestamp, meter_start, id_token, group_id_token, reservation_id,
         this->device_model->get_value<int>(ControllerComponentVariables::SampledDataTxUpdatedInterval));
     const auto& enhanced_transaction = this->evses.at(evse_id)->get_transaction();
     const auto meter_value = utils::get_meter_value_with_measurands_applied(
         meter_start, utils::get_measurands_vec(this->device_model->get_value<std::string>(
-                         ControllerComponentVariables::SampledDataTxUpdatedMeasurands)));
+                         ControllerComponentVariables::SampledDataTxStartedMeasurands)));
 
     Transaction transaction{enhanced_transaction->transactionId};
 
     auto evse = this->evses.at(evse_id)->get_evse_info();
     evse.connectorId.emplace(connector_id);
 
-    this->transaction_event_req(TransactionEventEnum::Started, timestamp, transaction,
-                                TriggerReasonEnum::ChargingStateChanged, enhanced_transaction->get_seq_no(),
-                                std::nullopt, evse, enhanced_transaction->id_token,
+    this->transaction_event_req(TransactionEventEnum::Started, timestamp, transaction, trigger_reason,
+                                enhanced_transaction->get_seq_no(), std::nullopt, evse, enhanced_transaction->id_token,
                                 std::vector<MeterValue>(1, meter_value), std::nullopt, std::nullopt, reservation_id);
 }
 
@@ -222,8 +223,7 @@ void ChargePoint::on_event(const std::vector<EventData>& events) {
     this->notify_event_req(events);
 }
 
-void ChargePoint::on_log_status_notification(UploadLogStatusEnum status, int32_t requestId)
-{
+void ChargePoint::on_log_status_notification(UploadLogStatusEnum status, int32_t requestId) {
     LogStatusNotificationRequest request;
     request.status = status;
     request.requestId = requestId;
@@ -308,6 +308,12 @@ void ChargePoint::handle_message(const json& json_message, const MessageType& me
         break;
     case MessageType::TransactionEventResponse:
         // handled by transaction_event_req future
+        break;
+    case MessageType::RequestStartTransaction:
+        this->handle_remote_start_transaction_request(json_message);
+        break;
+    case MessageType::RequestStopTransaction:
+        this->handle_remote_stop_transaction_request(json_message);
         break;
     case MessageType::DataTransfer:
         this->handle_data_transfer_req(json_message);
@@ -439,6 +445,58 @@ void ChargePoint::handle_scheduled_change_availability_requests(const int32_t ev
     }
 }
 
+std::optional<int32_t> ChargePoint::get_transaction_evseid(const CiString<36>& transaction_id) {
+    for (auto const& [evse_id, evse] : evses) {
+        if (evse->has_active_transaction()) {
+            if (transaction_id == evse->get_transaction()->get_transaction().transactionId) {
+                return evse_id;
+            }
+        }
+    }
+
+    return std::nullopt;
+}
+
+bool ChargePoint::is_evse_reserved_for_other(const std::unique_ptr<Evse>& evse, const IdToken& id_token,
+                                             const std::optional<IdToken>& group_id_token) const {
+    const int32_t connectors = evse->get_number_of_connectors();
+    for (int32_t i = 1; i <= connectors; ++i) {
+        const ConnectorStatusEnum& status = evse->get_state(i);
+        if (status == ConnectorStatusEnum::Reserved) {
+            const std::optional<CiString<36>> groupIdToken =
+                group_id_token.has_value() ? group_id_token.value().idToken : std::optional<CiString<36>>{};
+
+            if (!callbacks.is_reservation_for_token_callback(evse->get_evse_info().id, id_token.idToken,
+                                                             groupIdToken)) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool ChargePoint::is_evse_connector_available(const std::unique_ptr<Evse>& evse) const {
+    if (evse->has_active_transaction()) {
+        // If an EV is connected and has no authorization yet then the status is 'Occupied' and the RemoteStartRequest
+        // should still be accepted. So this is the 'occupied' check instead.
+        return false;
+    }
+
+    const int32_t connectors = evse->get_number_of_connectors();
+    for (int32_t i = 1; i <= connectors; ++i) {
+        const ConnectorStatusEnum& status = evse->get_state(i);
+
+        // At least one of the connectors is available / not faulted.
+        if (status != ConnectorStatusEnum::Faulted && status != ConnectorStatusEnum::Unavailable) {
+            return true;
+        }
+    }
+
+    // Connectors are faulted or unavailable.
+    return false;
+}
+
 void ChargePoint::boot_notification_req(const BootReasonEnum& reason) {
     EVLOG_debug << "Sending BootNotification";
     BootNotificationRequest req;
@@ -560,8 +618,7 @@ void ChargePoint::meter_values_req(const int32_t evse_id, const std::vector<Mete
     this->send<MeterValuesRequest>(call);
 }
 
-void ChargePoint::handle_get_log_req(Call<GetLogRequest> call)
-{
+void ChargePoint::handle_get_log_req(Call<GetLogRequest> call) {
     const GetLogResponse response = this->callbacks.get_log_request_callback(call.msg);
 
     ocpp::CallResult<GetLogResponse> call_result(response, call.uniqueId);
@@ -781,6 +838,81 @@ void ChargePoint::handle_unlock_connector(Call<UnlockConnectorRequest> call) {
     const UnlockConnectorResponse unlock_response = callbacks.unlock_connector_callback(msg.evseId, msg.connectorId);
     ocpp::CallResult<UnlockConnectorResponse> call_result(unlock_response, call.uniqueId);
     this->send<UnlockConnectorResponse>(call_result);
+}
+
+void ChargePoint::handle_remote_start_transaction_request(Call<RequestStartTransactionRequest> call) {
+    const auto msg = call.msg;
+
+    RequestStartTransactionResponse response;
+    response.status = RequestStartStopStatusEnum::Rejected;
+
+    // Check if evse id is given.
+    if (msg.evseId.has_value()) {
+        const int32_t evse_id = msg.evseId.value();
+        const auto& evse = this->evses.at(evse_id);
+
+        if (evse != nullptr) {
+            // TODO F01.FR.26 If a Charging Station with support for Smart Charging receives a
+            // RequestStartTransactionRequest with an invalid ChargingProfile: The Charging Station SHALL respond with
+            // RequestStartTransactionResponse with status = Rejected and optionally with reasonCode = "InvalidProfile"
+            // or "InvalidSchedule".
+
+            // F01.FR.23: Faulted or unavailable. F01.FR.24 / F02.FR.25: Occupied. Send rejected.
+            const bool available = is_evse_connector_available(evse);
+
+            // When available but there was a reservation for another token id or group token id:
+            //    send rejected (F01.FR.21 & F01.FR.22)
+            const bool reserved = is_evse_reserved_for_other(evse, call.msg.idToken, call.msg.groupIdToken);
+
+            if (!available || reserved) {
+                // Note: we only support TxStartPoint PowerPathClosed, so we did not implement starting a transaction
+                // first (and send TransactionEventRequest (eventType = Started). Only if a transaction is authorized, a
+                // TransactionEventRequest will be sent. Because of this, F01.FR.13 is not implemented as well, because
+                // in the current situation, this is an impossible state. (TODO: when more TxStartPoints are supported,
+                // add implementation for F01.FR.13 as well).
+                EVLOG_info << "Remote start transaction requested, but connector is not available or reserved.";
+            } else {
+                // F02: No active transaction yet and there is an available connector, so just send 'accepted'.
+                response.status = RequestStartStopStatusEnum::Accepted;
+            }
+        }
+    } else {
+        // F01.FR.07 RequestStartTransactionRequest does not contain an evseId.The Charging Station MAY reject the
+        // RequestStartTransactionRequest. We do this for now (send rejected) (TODO: eventually support the charging
+        // station to )
+        EVLOG_warning << "No evse id given. Can not remote start transaction.";
+    }
+
+    const ocpp::CallResult<RequestStartTransactionResponse> call_result(response, call.uniqueId);
+    this->send<RequestStartTransactionResponse>(call_result);
+
+    if (response.status == RequestStartStopStatusEnum::Accepted) {
+        // F01.FR.01 and F01.FR.02
+        this->callbacks.remote_start_transaction_callback(
+            msg, this->device_model->get_value<bool>(ControllerComponentVariables::AuthorizeRemoteStart));
+    }
+}
+
+void ChargePoint::handle_remote_stop_transaction_request(Call<RequestStopTransactionRequest> call) {
+    const auto msg = call.msg;
+
+    RequestStopTransactionResponse response;
+    std::optional<int32_t> evseid = get_transaction_evseid(msg.transactionId);
+
+    if (evseid.has_value()) {
+        // F03.FR.07: send 'accepted' if there was an ongoing transaction with the given transaction id
+        response.status = RequestStartStopStatusEnum::Accepted;
+    } else {
+        // F03.FR.08: send 'rejected' if there was no ongoing transaction with the given transaction id
+        response.status = RequestStartStopStatusEnum::Rejected;
+    }
+
+    const ocpp::CallResult<RequestStopTransactionResponse> call_result(response, call.uniqueId);
+    this->send<RequestStopTransactionResponse>(call_result);
+
+    if (response.status == RequestStartStopStatusEnum::Accepted) {
+        this->callbacks.stop_transaction_callback(evseid.value(), ReasonEnum::Remote);
+    }
 }
 
 void ChargePoint::handle_change_availability_req(Call<ChangeAvailabilityRequest> call) {

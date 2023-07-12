@@ -43,6 +43,7 @@ Everest::SteadyTimer& Evse::get_sampled_meter_values_timer() {
 
 void Evse::open_transaction(const std::string& transaction_id, const int32_t connector_id, const DateTime& timestamp,
                             const MeterValue& meter_start, const IdToken& id_token,
+                            const std::optional<IdToken>& group_id_token,
                             const std::optional<int32_t> reservation_id,
                             const int32_t sampled_data_tx_updated_interval) {
     if (!this->id_connector_map.count(connector_id)) {
@@ -52,6 +53,7 @@ void Evse::open_transaction(const std::string& transaction_id, const int32_t con
     this->transaction->transactionId = transaction_id;
     this->transaction->reservation_id = reservation_id;
     this->transaction->id_token = id_token;
+    this->transaction->group_id_token = group_id_token;
 
     transaction->meter_values.push_back(meter_start);
 
