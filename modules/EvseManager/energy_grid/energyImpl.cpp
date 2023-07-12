@@ -92,12 +92,8 @@ void energyImpl::ready() {
 
             {
                 std::lock_guard<std::mutex> lock(this->energy_mutex);
-                auto tpnow = date::utc_clock::now();
-                auto tp = Everest::Date::to_rfc3339(date::floor<std::chrono::hours>(tpnow) +
-                                                    date::get_leap_second_info(tpnow).elapsed);
-
-                energy_flow_request.schedule_import.value()[0].timestamp = tp;
-                energy_flow_request.schedule_export.value()[0].timestamp = tp;
+                clear_import_request_schedule();
+                clear_export_request_schedule();
 
                 // If we need energy, copy local limit schedules to energy_flow_request.
                 if (s == Charger::EvseState::Charging || s == Charger::EvseState::PrepareCharging ||
@@ -105,12 +101,9 @@ void energyImpl::ready() {
                     s == Charger::EvseState::ChargingPausedEV) {
 
                     // copy complete external limit schedules
-                    if (mod->getLocalEnergyLimits().schedule_import.has_value()) {
-                        if (!mod->getLocalEnergyLimits().schedule_import.value().empty()) {
-                            energy_flow_request.schedule_import = mod->getLocalEnergyLimits().schedule_import;
-                        } else {
-                            clear_import_request_schedule();
-                        }
+                    if (mod->getLocalEnergyLimits().schedule_import.has_value() &&
+                        !mod->getLocalEnergyLimits().schedule_import.value().empty()) {
+                        energy_flow_request.schedule_import = mod->getLocalEnergyLimits().schedule_import;
                     }
 
                     // apply our local hardware limits on root side
@@ -138,12 +131,9 @@ void energyImpl::ready() {
                             hw_caps.supports_changing_phases_during_charging;
                     }
 
-                    if (mod->getLocalEnergyLimits().schedule_export.has_value()) {
-                        if (!mod->getLocalEnergyLimits().schedule_export.value().empty()) {
-                            energy_flow_request.schedule_export = mod->getLocalEnergyLimits().schedule_export;
-                        } else {
-                            clear_export_request_schedule();
-                        }
+                    if (mod->getLocalEnergyLimits().schedule_export.has_value() &&
+                        !mod->getLocalEnergyLimits().schedule_export.value().empty()) {
+                        energy_flow_request.schedule_export = mod->getLocalEnergyLimits().schedule_export;
                     }
 
                     // apply our local hardware limits on root side
@@ -182,8 +172,6 @@ void energyImpl::ready() {
                     }
 
                 } else {
-                    clear_request_schedules();
-
                     if (mod->config.charge_mode == "DC") {
                         // we dont need power at the moment
                         energy_flow_request.schedule_import.value()[0].limits_to_leaves.total_power_W = 0.;
