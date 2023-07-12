@@ -64,26 +64,33 @@ get_meter_values_with_measurands_and_interval_applied(const std::vector<MeterVal
     // valid assumption but the schema definitions allow different ReadingContext(s) for SampledValues inside a
     // MeterValue
     for (const auto& meter_value : _meter_values) {
-        // ReadingContext is Sample_Clock so aligned_interval applies
-        if (aligned_interval > 0 and !meter_value.sampledValue.empty() and
-            meter_value.sampledValue.at(0).context.has_value() and
-            meter_value.sampledValue.at(0).context.value() == ReadingContextEnum::Sample_Clock) {
-            if (meter_value.timestamp.to_time_point() > next_aligned_timepoint) {
-                meter_values.push_back(get_meter_value_with_measurands_applied(meter_value, aligned_measurands));
-                next_aligned_timepoint = meter_value.timestamp.to_time_point() + std::chrono::seconds(aligned_interval);
-            }
-        }
-        // ReadingContext is Sample_Periodic so sampled_interval applies
-        else if (sampled_interval > 0 and !meter_value.sampledValue.empty() and
-                 meter_value.sampledValue.at(0).context.has_value() and
-                 meter_value.sampledValue.at(0).context.value() == ReadingContextEnum::Sample_Periodic) {
-            if (meter_value.timestamp.to_time_point() > next_sampled_timepoint) {
+        if (!meter_value.sampledValue.empty() and meter_value.sampledValue.at(0).context.has_value()) {
+            if ((meter_value.sampledValue.at(0).context.value() == ReadingContextEnum::Transaction_Begin or
+                 meter_value.sampledValue.at(0).context.value() == ReadingContextEnum::Transaction_End) or
+                meter_value.sampledValue.at(0).context.value() == ReadingContextEnum::Interruption_Begin or
+                meter_value.sampledValue.at(0).context.value() == ReadingContextEnum::Interruption_End) {
                 meter_values.push_back(get_meter_value_with_measurands_applied(meter_value, sample_measurands));
-                next_sampled_timepoint = meter_value.timestamp.to_time_point() + std::chrono::seconds(sampled_interval);
             }
-            // we add any other meter value than Sample_Clock or Sample_Periodic with sampled measurands applied
-        } else if (!meter_value.sampledValue.empty()) {
-            meter_values.push_back(get_meter_value_with_measurands_applied(meter_value, sample_measurands));
+            // ReadingContext is Sample_Clock so aligned_interval applies
+            else if (aligned_interval > 0 and
+                     meter_value.sampledValue.at(0).context.value() == ReadingContextEnum::Sample_Clock) {
+                if (meter_value.timestamp.to_time_point() > next_aligned_timepoint) {
+                    meter_values.push_back(get_meter_value_with_measurands_applied(meter_value, aligned_measurands));
+                    next_aligned_timepoint =
+                        meter_value.timestamp.to_time_point() + std::chrono::seconds(aligned_interval);
+                }
+            }
+            // ReadingContext is Sample_Periodic so sampled_interval applies
+            else if (sampled_interval > 0 and
+                     meter_value.sampledValue.at(0).context.value() == ReadingContextEnum::Sample_Periodic) {
+                if (meter_value.timestamp.to_time_point() > next_sampled_timepoint) {
+                    meter_values.push_back(get_meter_value_with_measurands_applied(meter_value, sample_measurands));
+                    next_sampled_timepoint =
+                        meter_value.timestamp.to_time_point() + std::chrono::seconds(sampled_interval);
+                }
+            } else {
+                meter_values.push_back(meter_value);
+            }
         }
     }
     return meter_values;
