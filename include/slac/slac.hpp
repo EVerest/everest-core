@@ -256,7 +256,7 @@ typedef struct {
     uint8_t evse_id[EVSE_ID_LEN];     // EVSE id
     uint8_t evse_mac[ETH_ALEN];       // mac address of the EVSE
     uint8_t run_id[defs::RUN_ID_LEN]; // indentifier for a matching run
-    uint8_t _reserved[8];       // note: this is to pad the run_id, which is defined to be 16 bytes for this message
+    uint8_t _rerserved[8];      // note: this is to pad the run_id, which is defined to be 16 bytes for this message
     uint8_t nid[defs::NID_LEN]; // network id derived from the nmk
     uint8_t _reserved2;         // note: this is to pad the nid, which is defined to be 8 bytes for this message
     uint8_t nmk[defs::NMK_LEN]; // private nmk of the EVSE
