@@ -31,6 +31,7 @@
 #include <ocpp/v201/messages/TransactionEvent.hpp>
 #include <ocpp/v201/messages/TriggerMessage.hpp>
 #include <ocpp/v201/messages/GetLog.hpp>
+#include <ocpp/v201/messages/UnlockConnector.hpp>
 
 namespace ocpp {
 namespace v201 {
@@ -42,6 +43,7 @@ struct Callbacks {
     std::function<void(const int32_t evse_id)> pause_charging_callback;
     std::function<void(const ChangeAvailabilityRequest& request)> change_availability_callback;
     std::function<GetLogResponse(const GetLogRequest& request)> get_log_request_callback;
+    std::function<UnlockConnectorResponse(const int32_t evse_id, const int32_t connecor_id)> unlock_connector_callback;
 };
 
 /// \brief Class implements OCPP2.0.1 Charging Station
@@ -135,6 +137,9 @@ private:
     // Functional Block E: Transaction
     void handle_start_transaction_event_response(CallResult<TransactionEventResponse> call_result,
                                                  const int32_t evse_id);
+
+    // Function Block F: Remote transaction control
+    void handle_unlock_connector(Call<UnlockConnectorRequest> call);
 
     // Functional Block G: Availability
     void handle_change_availability_req(Call<ChangeAvailabilityRequest> call);

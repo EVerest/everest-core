@@ -776,6 +776,13 @@ void ChargePoint::handle_start_transaction_event_response(CallResult<Transaction
     }
 }
 
+void ChargePoint::handle_unlock_connector(Call<UnlockConnectorRequest> call) {
+    const UnlockConnectorRequest& msg = call.msg;
+    const UnlockConnectorResponse unlock_response = callbacks.unlock_connector_callback(msg.evseId, msg.connectorId);
+    ocpp::CallResult<UnlockConnectorResponse> call_result(unlock_response, call.uniqueId);
+    this->send<UnlockConnectorResponse>(call_result);
+}
+
 void ChargePoint::handle_change_availability_req(Call<ChangeAvailabilityRequest> call) {
     const auto msg = call.msg;
     ChangeAvailabilityResponse response;
