@@ -107,7 +107,9 @@ ChargePointImpl::ChargePointImpl(const std::string& config, const std::filesyste
         this->connectors.insert(std::make_pair(id, std::make_shared<Connector>(id)));
     }
 
-    this->smart_charging_handler = std::make_unique<SmartChargingHandler>(this->connectors, this->database_handler, this->configuration->getAllowChargingProfileWithoutStartSchedule().value_or(false));
+    this->smart_charging_handler = std::make_unique<SmartChargingHandler>(
+        this->connectors, this->database_handler,
+        this->configuration->getAllowChargingProfileWithoutStartSchedule().value_or(false));
 
     // ISO15118 PnC handlers
     if (this->configuration->getSupportedFeatureProfilesSet().count(SupportedFeatureProfiles::PnC)) {
@@ -1036,7 +1038,7 @@ void ChargePointImpl::handleBootNotificationResponse(ocpp::CallResult<BootNotifi
         // requested. The first time we are allowed to send a message (a BootNotification) is
         // after boot_time + heartbeat_interval if the msg.interval is 0, or after boot_timer + msg.interval
         EVLOG_info << "BootNotification was rejected, trying again in " << this->configuration->getHeartbeatInterval()
-                    << "s";
+                   << "s";
 
         this->boot_notification_timer->timeout(std::chrono::seconds(call_result.msg.interval));
 
@@ -1051,9 +1053,10 @@ void ChargePointImpl::handleChangeAvailabilityRequest(ocpp::Call<ChangeAvailabil
     // connector. is that case this change must be scheduled and we should report an availability status
     // of "Scheduled"
 
+    std::vector<int32_t> connectors;
+
     // check if connector exists
     if (call.msg.connectorId <= this->configuration->getNumberOfConnectors() && call.msg.connectorId >= 0) {
-        std::vector<int32_t> connectors;
         bool transaction_running = false;
 
         if (call.msg.connectorId == 0) {
@@ -1080,23 +1083,6 @@ void ChargePointImpl::handleChangeAvailabilityRequest(ocpp::Call<ChangeAvailabil
         if (transaction_running) {
             response.status = AvailabilityStatus::Scheduled;
         } else {
-            this->database_handler->insert_or_update_connector_availability(connectors, call.msg.type);
-            for (auto connector : connectors) {
-                if (call.msg.type == AvailabilityType::Operative) {
-                    if (this->enable_evse_callback != nullptr) {
-                        // TODO(kai): check return value
-                        this->enable_evse_callback(connector);
-                    }
-                    this->status->submit_event(connector, FSMEvent::BecomeAvailable);
-                } else {
-                    if (this->disable_evse_callback != nullptr) {
-                        // TODO(kai): check return value
-                        this->disable_evse_callback(connector);
-                    }
-                    this->status->submit_event(connector, FSMEvent::ChangeAvailabilityToUnavailable);
-                }
-            }
-
             response.status = AvailabilityStatus::Accepted;
         }
     } else {
@@ -1104,8 +1090,27 @@ void ChargePointImpl::handleChangeAvailabilityRequest(ocpp::Call<ChangeAvailabil
         response.status = AvailabilityStatus::Rejected;
     }
 
+    // respond first
     ocpp::CallResult<ChangeAvailabilityResponse> call_result(response, call.uniqueId);
     this->send<ChangeAvailabilityResponse>(call_result);
+
+    // then execute enabled / disabled callback
+    if (response.status == AvailabilityStatus::Accepted) {
+        this->database_handler->insert_or_update_connector_availability(connectors, call.msg.type);
+        for (auto connector : connectors) {
+            if (call.msg.type == AvailabilityType::Operative) {
+                if (this->enable_evse_callback != nullptr) {
+                    this->enable_evse_callback(connector);
+                }
+                this->status->submit_event(connector, FSMEvent::BecomeAvailable);
+            } else {
+                if (this->disable_evse_callback != nullptr) {
+                    this->disable_evse_callback(connector);
+                }
+                this->status->submit_event(connector, FSMEvent::ChangeAvailabilityToUnavailable);
+            }
+        }
+    }
 }
 
 void ChargePointImpl::handleChangeConfigurationRequest(ocpp::Call<ChangeConfigurationRequest> call) {
