@@ -774,6 +774,7 @@ void EvseManager::ready() {
         }
     });
 
+    this->charger->signalEvent(types::evse_manager::SessionEventEnum::Enabled);
     EVLOG_info << fmt::format(fmt::emphasis::bold | fg(fmt::terminal_color::green),
                               "🌀🌀🌀 Ready to start charging 🌀🌀🌀");
 }

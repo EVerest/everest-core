@@ -87,6 +87,8 @@ public:
     // insert your public definitions here
     std::unique_ptr<ocpp::v16::ChargePoint> charge_point;
     std::unique_ptr<Everest::SteadyTimer> charging_schedules_timer;
+    bool started = false;
+    std::map<int32_t, bool> connector_ready_map;
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
@@ -104,6 +106,8 @@ private:
     std::filesystem::path ocpp_share_path;
     void set_external_limits(const std::map<int32_t, ocpp::v16::ChargingSchedule> &charging_schedules);
     void publish_charging_schedules(const std::map<int32_t, ocpp::v16::ChargingSchedule> &charging_schedules);
+    bool all_evse_ready();
+    std::mutex evse_ready_mutex;
     std::thread upload_diagnostics_thread;
     std::thread upload_logs_thread;
     std::thread update_firmware_thread;
