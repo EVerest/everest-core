@@ -3047,6 +3047,8 @@ ChargePointImpl::get_filtered_transaction_data(const std::shared_ptr<Transaction
                             }
                         }
                     }
+                } else {
+                    sampled_values.push_back(meter_value);
                 }
             }
             if (!sampled_values.empty()) {
