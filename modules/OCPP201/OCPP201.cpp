@@ -198,7 +198,7 @@ void OCPP201::init() {
 
     const auto etc_certs_path = [&]() {
         if (this->config.CertsPath.empty()) {
-            return fs::path(this->info.paths.etc) / CERTS_DIR ;
+            return fs::path(this->info.paths.etc) / CERTS_DIR;
         } else {
             return fs::path(this->config.CertsPath);
         }
@@ -338,8 +338,9 @@ void OCPP201::init() {
                 id_token.idToken = transaction_started.id_tag;
                 id_token.type = ocpp::v201::IdTokenEnum::ISO14443;
 
-                this->charge_point->on_transaction_started(evse_id, 1, session_id, timestamp, meter_value, id_token,
-                                                           reservation_id);
+                this->charge_point->on_transaction_started(evse_id, 1, session_id, timestamp,
+                                                           ocpp::v201::TriggerReasonEnum::Authorized, meter_value,
+                                                           id_token, std::nullopt, reservation_id);
                 break;
             }
             case types::evse_manager::SessionEventEnum::TransactionFinished: {
