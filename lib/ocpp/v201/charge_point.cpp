@@ -92,7 +92,8 @@ void ChargePoint::on_transaction_started(const int32_t evse_id, const int32_t co
                                          const ocpp::v201::TriggerReasonEnum trigger_reason,
                                          const MeterValue& meter_start, const IdToken& id_token,
                                          const std::optional<IdToken>& group_id_token,
-                                         const std::optional<int32_t>& reservation_id) {
+                                         const std::optional<int32_t>& reservation_id,
+                                         const std::optional<int32_t>& remote_start_id) {
 
     this->evses.at(evse_id)->open_transaction(
         session_id, connector_id, timestamp, meter_start, id_token, group_id_token, reservation_id,
@@ -103,6 +104,10 @@ void ChargePoint::on_transaction_started(const int32_t evse_id, const int32_t co
                          ControllerComponentVariables::SampledDataTxStartedMeasurands)));
 
     Transaction transaction{enhanced_transaction->transactionId};
+    if (remote_start_id.has_value()) {
+        transaction.remoteStartId = remote_start_id.value();
+        enhanced_transaction->remoteStartId = remote_start_id.value();
+    }
 
     auto evse = this->evses.at(evse_id)->get_evse_info();
     evse.connectorId.emplace(connector_id);

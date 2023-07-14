@@ -81,11 +81,9 @@ get_meter_values_with_measurands_and_interval_applied(const std::vector<MeterVal
                 meter_values.push_back(get_meter_value_with_measurands_applied(meter_value, sample_measurands));
                 next_sampled_timepoint = meter_value.timestamp.to_time_point() + std::chrono::seconds(sampled_interval);
             }
-            // we add any other meter value than Sample_Clock or Sample_Periodic
-        } else if (!meter_value.sampledValue.empty() and meter_value.sampledValue.at(0).context.has_value() and
-                   meter_value.sampledValue.at(0).context.value() != ReadingContextEnum::Sample_Periodic and
-                   meter_value.sampledValue.at(0).context.value() != ReadingContextEnum::Sample_Clock) {
-            meter_values.push_back(meter_value);
+            // we add any other meter value than Sample_Clock or Sample_Periodic with sampled measurands applied
+        } else if (!meter_value.sampledValue.empty()) {
+            meter_values.push_back(get_meter_value_with_measurands_applied(meter_value, sample_measurands));
         }
     }
     return meter_values;
