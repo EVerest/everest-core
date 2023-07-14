@@ -108,6 +108,14 @@ class PyEVJosevModule():
     def _handler_set_fault(self, args):
         pass
 
+    def _handler_set_dc_params(self, args):
+        parameters = args['EV_Parameters']
+        self._es.dc_max_current_limit = parameters['MaxCurrentLimit']
+        self._es.dc_max_power_limit = parameters['MaxPowerLimit']
+        self._es.dc_max_voltage_limit = parameters['MaxVoltageLimit']
+        self._es.dc_energy_capacity = parameters['EnergyCapacity']
+        self._es.dc_target_current = parameters['TargetCurrent']
+        self._es.dc_target_voltage = parameters['TargetVoltage']
 
 py_ev_josev = PyEVJosevModule()
 py_ev_josev.start_evcc_handler()
