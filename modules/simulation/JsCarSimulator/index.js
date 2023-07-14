@@ -113,6 +113,7 @@ boot_module(async ({
 }).then((mod) => {
   registerAllCmds(mod);
   mod.enabled = false;
+  if (mod.uses_list.ev.length > 0) mod.uses_list.ev[0].call.set_dc_params(get_hlc_dc_parameters(mod));
   if (globalconf.module.auto_enable) enable(mod, { value: true });
   if (globalconf.module.auto_exec) execute_charging_session(mod, { value: globalconf.module.auto_exec_commands });
 });
@@ -517,6 +518,19 @@ function registerAllCmds(mod) {
 
 function registerCmd(mod, name, numargs, execfunction) {
   mod.registeredCmds[name] = { cmd: name, numargs, exec: execfunction };
+}
+
+function get_hlc_dc_parameters(mod) {
+  return {
+    EV_Parameters: {
+      MaxCurrentLimit: mod.config.module.dc_max_current_limit,
+      MaxPowerLimit: mod.config.module.dc_max_power_limit,
+      MaxVoltageLimit: mod.config.module.dc_max_voltage_limit,
+      EnergyCapacity: mod.config.module.dc_energy_capacity,
+      TargetCurrent: mod.config.module.dc_target_current,
+      TargetVoltage: mod.config.module.dc_target_voltage,
+    }
+  };
 }
 
 /*

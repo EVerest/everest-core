@@ -115,7 +115,10 @@ boot_module(async ({
     settings_connector_max_export_current = current;
     settings_connector_export_voltage = voltage;
 
-    if (mode === 'Export') connector_voltage = settings_connector_export_voltage;
+    if (mode === 'Export') {
+      connector_voltage = settings_connector_export_voltage;
+      connector_current = settings_connector_max_export_current;
+    }
   });
 
   setup.provides.main.register.setImportVoltageCurrent((mod, args) => {

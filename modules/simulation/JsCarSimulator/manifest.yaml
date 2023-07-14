@@ -19,6 +19,30 @@ config:
       Simulation commands, e.g. sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 30;unplug
     type: string
     default: ""
+  dc_max_current_limit:
+    description: Maximum current allowed by the EV
+    type: integer
+    default: 300
+  dc_max_power_limit:
+    description: Maximum power allowed by the EV
+    type: integer
+    default: 150000
+  dc_max_voltage_limit:
+    description: Maximum voltage allowed by the EV
+    type: integer
+    default: 900
+  dc_energy_capacity:
+    description: Energy capacity of the EV
+    type: integer
+    default: 60000
+  dc_target_current:
+    description: Target current requested by the EV
+    type: integer
+    default: 5
+  dc_target_voltage:
+    description: Target voltage requested by the EV
+    type: integer
+    default: 200
 provides:
   main:
     interface: car_simulator

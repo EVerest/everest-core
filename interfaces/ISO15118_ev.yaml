@@ -30,6 +30,13 @@ cmds:
     description: >-
       TODO_SL: Set the different ev faults to communicate these errors
       to the charging station
+  set_dc_params:
+    description: Set the target parameters for a dc charging process 
+    arguments:
+      EV_Parameters:
+        description: Target parameters for dc charging
+        type: object
+        $ref: /iso15118_ev#/DC_EVParameters
 vars:
   V2G_Session_Finished:
     description: The v2g session between the charger and the car is finished

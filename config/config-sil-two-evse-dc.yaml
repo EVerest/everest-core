@@ -80,6 +80,8 @@ active_modules:
       auto_enable: true
       auto_exec: false
       auto_exec_commands: sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 30;unplug
+      dc_target_current: 20
+      dc_target_voltage: 400
     connections:
       simulation_control:
         - module_id: yeti_driver_1
