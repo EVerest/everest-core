@@ -21,17 +21,6 @@ void ISO15118_chargerImpl::init() {
     /* Configure if_name and auth_mode */
     v2g_ctx->if_name = mod->config.device.data();
     dlog(DLOG_LEVEL_DEBUG, "if_name %s", v2g_ctx->if_name);
-    dlog(DLOG_LEVEL_DEBUG, "auth_mode %s", mod->config.highlevel_authentication_mode.data());
-    if (mod->config.highlevel_authentication_mode == "eim") {
-        v2g_ctx->evse_v2g_data.payment_option_list[v2g_ctx->evse_v2g_data.payment_option_list_len] =
-            iso1paymentOptionType_ExternalPayment;
-        v2g_ctx->evse_v2g_data.payment_option_list_len++;
-    }
-    if (mod->config.highlevel_authentication_mode == "pnc") {
-        v2g_ctx->evse_v2g_data.payment_option_list[v2g_ctx->evse_v2g_data.payment_option_list_len] =
-            iso1paymentOptionType_Contract;
-        v2g_ctx->evse_v2g_data.payment_option_list_len++;
-    }
 
     /* Configure hlc_protocols */
     if (mod->config.supported_DIN70121 == true) {
