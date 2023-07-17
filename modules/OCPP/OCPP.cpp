@@ -100,6 +100,15 @@ void OCPP::publish_charging_schedules(const std::map<int32_t, ocpp::v16::Chargin
     this->p_main->publish_charging_schedules(j);
 }
 
+bool OCPP::all_evse_ready() {
+    for (auto const& [connector, ready] : this->connector_ready_map) {
+        if (!ready) {
+            return false;
+        }
+    }
+    return true;
+}
+
 void OCPP::init() {
     invoke_init(*p_main);
     invoke_init(*p_auth_validator);
@@ -416,6 +425,8 @@ void OCPP::init() {
 
     int32_t connector = 1;
     for (auto& evse : this->r_evse_manager) {
+        connector_ready_map.insert({connector, false});
+
         evse->subscribe_powermeter([this, connector](types::powermeter::Powermeter powermeter) {
             json powermeter_json = powermeter;
             this->charge_point->on_meter_values(connector, powermeter_json); //
@@ -430,9 +441,18 @@ void OCPP::init() {
             auto event = types::evse_manager::session_event_enum_to_string(session_event.event);
 
             if (event == "Enabled") {
-                EVLOG_debug << "Connector#" << connector << ": "
-                            << "Received Enabled";
-                this->charge_point->on_enabled(connector);
+                std::lock_guard<std::mutex>(this->evse_ready_mutex);
+                this->connector_ready_map.at(connector) = true;
+                if (started) {
+                    this->charge_point->on_enabled(connector);
+                } else {
+                    // EvseManager sends initial enable on startup
+                    if (this->all_evse_ready()) {
+                        EVLOG_info << "All EVSE ready: Starting OCPP";
+                        started = true;
+                        this->charge_point->start();
+                    }
+                }
             } else if (event == "Disabled") {
                 EVLOG_debug << "Connector#" << connector << ": "
                             << "Received Disabled";
@@ -519,7 +539,6 @@ void OCPP::init() {
 
         connector++;
     }
-    this->charge_point->start();
 }
 
 void OCPP::ready() {
