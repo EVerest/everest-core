@@ -17,6 +17,7 @@
 #include <ocpp/v201/messages/Authorize.hpp>
 #include <ocpp/v201/messages/BootNotification.hpp>
 #include <ocpp/v201/messages/ChangeAvailability.hpp>
+#include <ocpp/v201/messages/ClearCache.hpp>
 #include <ocpp/v201/messages/DataTransfer.hpp>
 #include <ocpp/v201/messages/GetBaseReport.hpp>
 #include <ocpp/v201/messages/GetLog.hpp>
@@ -180,9 +181,12 @@ private:
     void handle_get_report_req(Call<GetReportRequest> call);
     void handle_reset_req(Call<ResetRequest> call);
 
+    // Functional Block C: Authorization
+    void handle_clear_cache_req(Call<ClearCacheRequest> call);
+
     // Functional Block E: Transaction
     void handle_start_transaction_event_response(CallResult<TransactionEventResponse> call_result,
-                                                 const int32_t evse_id);
+                                                 const int32_t evse_id, const std::string &id_token);
 
     // Function Block F: Remote transaction control
     void handle_unlock_connector(Call<UnlockConnectorRequest> call);

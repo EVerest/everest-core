@@ -181,47 +181,53 @@ AuthorizeResponse ChargePoint::validate_token(const IdToken id_token, const std:
     // TODO(piet): C01.FR.16
     // TODO(piet): C01.FR.17
 
-    // TODO(piet): C10.FR.05
     // TODO(piet): C10.FR.06
     // TODO(piet): C10.FR.07
-    // TODO(piet): C10.FR.09
 
     AuthorizeResponse response;
     IdTokenInfo id_token_info;
 
-    // C01.FR.01
-    if (this->device_model->get_optional_value<bool>(ControllerComponentVariables::AuthCtrlrEnabled).value_or(true)) {
-        if (this->device_model->get_optional_value<bool>(ControllerComponentVariables::AuthCacheCtrlrEnabled)
-                .value_or(true)) {
-            const auto cache_entry =
-                this->database_handler->get_auth_cache_entry(utils::sha256(id_token.idToken.get()));
-            if (cache_entry.has_value() and
-                this->device_model->get_value<bool>(ControllerComponentVariables::LocalPreAuthorize) and
-                cache_entry.value().status == AuthorizationStatusEnum::Accepted and
-                (!cache_entry.value().cacheExpiryDateTime.has_value() or
-                 cache_entry.value().cacheExpiryDateTime.value().to_time_point() > DateTime().to_time_point())) {
-                response.idTokenInfo = cache_entry.value();
-                return response;
-            }
-        }
-        // C01.FR.02
-        response = this->authorize_req(id_token, certificate, ocsp_request_data);
-        // C10.FR.08
-        if (!response.idTokenInfo.cacheExpiryDateTime.has_value() and
-            this->device_model->get_optional_value<int>(ControllerComponentVariables::AuthCacheLifeTime).has_value()) {
-            // when CSMS does not set cacheExpiryDateTime and config variable for AuthCacheLifeTime is present
-            response.idTokenInfo.cacheExpiryDateTime =
-                DateTime(date::utc_clock::now() + std::chrono::seconds(this->device_model->get_value<int>(
-                                                      ControllerComponentVariables::AuthCacheLifeTime)));
-        }
-        this->database_handler->insert_auth_cache_entry(utils::sha256(id_token.idToken.get()), response.idTokenInfo);
-        return response;
-
-    } else {
+    if (!this->device_model->get_optional_value<bool>(ControllerComponentVariables::AuthCtrlrEnabled).value_or(true)) {
         id_token_info.status = AuthorizationStatusEnum::Accepted;
         response.idTokenInfo = id_token_info;
         return response;
     }
+
+    if (!this->device_model->get_optional_value<bool>(ControllerComponentVariables::AuthCacheCtrlrEnabled)
+             .value_or(true)) {
+        EVLOG_info << "AuthCache not enabled: Sending Authorize.req";
+        return this->authorize_req(id_token, certificate, ocsp_request_data);
+    }
+
+    const auto hashed_id_token = utils::sha256(id_token.idToken.get());
+    const auto cache_entry = this->database_handler->get_auth_cache_entry(hashed_id_token);
+
+    if (!cache_entry.has_value()) {
+        EVLOG_info << "AuthCache enabled but not entry found: Sending Authorize.req";
+        response = this->authorize_req(id_token, certificate, ocsp_request_data);
+        this->database_handler->insert_auth_cache_entry(utils::sha256(id_token.idToken.get()), response.idTokenInfo);
+        return response;
+    }
+
+    if ((cache_entry.value().cacheExpiryDateTime.has_value() and
+         cache_entry.value().cacheExpiryDateTime.value().to_time_point() < DateTime().to_time_point())) {
+        EVLOG_info << "Entry found in AuthCache but cacheExpiryDate exceeded: Sending Authorize.req";
+        this->database_handler->delete_auth_cache_entry(hashed_id_token);
+        response = this->authorize_req(id_token, certificate, ocsp_request_data);
+        this->database_handler->insert_auth_cache_entry(utils::sha256(id_token.idToken.get()), response.idTokenInfo);
+        return response;
+    }
+
+    if (this->device_model->get_value<bool>(ControllerComponentVariables::LocalPreAuthorize) and
+        cache_entry.value().status == AuthorizationStatusEnum::Accepted) {
+        EVLOG_info << "Found valid entry in AuthCache";
+        response.idTokenInfo = cache_entry.value();
+        return response;
+    }
+
+    response = this->authorize_req(id_token, certificate, ocsp_request_data);
+    this->database_handler->insert_auth_cache_entry(utils::sha256(id_token.idToken.get()), response.idTokenInfo);
+    return response;
 }
 
 void ChargePoint::on_event(const std::vector<EventData>& events) {
@@ -325,6 +331,9 @@ void ChargePoint::handle_message(const json& json_message, const MessageType& me
         break;
     case MessageType::GetLog:
         this->handle_get_log_req(json_message);
+        break;
+    case MessageType::ClearCache:
+        this->handle_clear_cache_req(json_message);
         break;
     }
 }
@@ -546,14 +555,27 @@ AuthorizeResponse ChargePoint::authorize_req(const IdToken id_token, const std::
     auto future = this->send_async<AuthorizeRequest>(call);
     const auto enhanced_message = future.get();
 
-    if (enhanced_message.messageType == MessageType::AuthorizeResponse) {
-        ocpp::CallResult<AuthorizeResponse> call_result = enhanced_message.message;
-        return call_result.msg;
-    } else {
-        AuthorizeResponse response;
+    AuthorizeResponse response;
+
+    if (enhanced_message.messageType != MessageType::AuthorizeResponse) {
         response.idTokenInfo.status = AuthorizationStatusEnum::Unknown;
         return response;
     }
+
+    ocpp::CallResult<AuthorizeResponse> call_result = enhanced_message.message;
+    if (response.idTokenInfo.cacheExpiryDateTime.has_value() or
+        !this->device_model->get_optional_value<int>(ControllerComponentVariables::AuthCacheLifeTime).has_value()) {
+        return call_result.msg;
+    }
+
+    // C10.FR.08
+    // when CSMS does not set cacheExpiryDateTime and config variable for AuthCacheLifeTime is present use the
+    // configured AuthCacheLifeTime
+    response = call_result.msg;
+    response.idTokenInfo.cacheExpiryDateTime = DateTime(
+        date::utc_clock::now() +
+        std::chrono::seconds(this->device_model->get_value<int>(ControllerComponentVariables::AuthCacheLifeTime)));
+    return response;
 }
 
 void ChargePoint::status_notification_req(const int32_t evse_id, const int32_t connector_id,
@@ -602,10 +624,16 @@ void ChargePoint::transaction_event_req(const TransactionEventEnum& event_type, 
     ocpp::Call<TransactionEventRequest> call(req, this->message_queue->createMessageId());
 
     if (event_type == TransactionEventEnum::Started) {
+        if (!evse.has_value() or !id_token.has_value()) {
+            EVLOG_error << "Request to send TransactionEvent(Started) without given evse or id_token. These properties "
+                           "are required for this eventType \"Started\"!";
+            return;
+        }
         auto future = this->send_async<TransactionEventRequest>(call);
         const auto enhanced_message = future.get();
         if (enhanced_message.messageType == MessageType::TransactionEventResponse) {
-            this->handle_start_transaction_event_response(enhanced_message.message, evse.value().id);
+            this->handle_start_transaction_event_response(enhanced_message.message, evse.value().id,
+                                                          id_token.value().idToken.get());
         } else if (enhanced_message.offline) {
             // TODO(piet): offline handling
         }
@@ -819,20 +847,41 @@ void ChargePoint::handle_reset_req(Call<ResetRequest> call) {
     }
 }
 
+void ChargePoint::handle_clear_cache_req(Call<ClearCacheRequest> call) {
+    ClearCacheResponse response;
+    response.status = ClearCacheStatusEnum::Rejected;
+
+    if (this->device_model->get_optional_value<bool>(ControllerComponentVariables::AuthCacheCtrlrEnabled)
+            .value_or(true) and
+        this->database_handler->clear_authorization_cache()) {
+        response.status = ClearCacheStatusEnum::Accepted;
+    }
+
+    ocpp::CallResult<ClearCacheResponse> call_result(response, call.uniqueId);
+    this->send<ClearCacheResponse>(call_result);
+}
+
 void ChargePoint::handle_start_transaction_event_response(CallResult<TransactionEventResponse> call_result,
-                                                          const int32_t evse_id) {
+                                                          const int32_t evse_id, const std::string& id_token) {
     const auto msg = call_result.msg;
-    if (msg.idTokenInfo.has_value() and msg.idTokenInfo.value().status != AuthorizationStatusEnum::Accepted) {
-        if (this->device_model->get_value<bool>(ControllerComponentVariables::StopTxOnInvalidId)) {
-            this->callbacks.stop_transaction_callback(evse_id, ReasonEnum::DeAuthorized);
-        } else {
-            if (this->device_model->get_optional_value<bool>(ControllerComponentVariables::MaxEnergyOnInvalidId)
-                    .has_value()) {
-                // TODO(piet): E05.FR.03
-                // Energy delivery to the EV SHALL be allowed until the amount of energy specified in
-                // MaxEnergyOnInvalidId has been reached.
+    if (msg.idTokenInfo.has_value()) {
+        // C10.FR.05
+        if (this->device_model->get_optional_value<bool>(ControllerComponentVariables::AuthCacheCtrlrEnabled)
+                .value_or(true)) {
+            this->database_handler->insert_auth_cache_entry(utils::sha256(id_token), msg.idTokenInfo.value());
+        }
+        if (msg.idTokenInfo.value().status != AuthorizationStatusEnum::Accepted) {
+            if (this->device_model->get_value<bool>(ControllerComponentVariables::StopTxOnInvalidId)) {
+                this->callbacks.stop_transaction_callback(evse_id, ReasonEnum::DeAuthorized);
             } else {
-                this->callbacks.pause_charging_callback(evse_id);
+                if (this->device_model->get_optional_value<bool>(ControllerComponentVariables::MaxEnergyOnInvalidId)
+                        .has_value()) {
+                    // TODO(piet): E05.FR.03
+                    // Energy delivery to the EV SHALL be allowed until the amount of energy specified in
+                    // MaxEnergyOnInvalidId has been reached.
+                } else {
+                    this->callbacks.pause_charging_callback(evse_id);
+                }
             }
         }
     }

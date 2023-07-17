@@ -39,6 +39,15 @@ void DatabaseHandler::sql_init() {
     }
 }
 
+bool DatabaseHandler::clear_table(const std::string& table_name) {
+    char* err_msg = 0;
+    std::string sql = "DELETE FROM " + table_name + ";";
+    if (sqlite3_exec(this->db, sql.c_str(), NULL, NULL, &err_msg) != SQLITE_OK) {
+        return false;
+    }
+    return true;
+}
+
 void DatabaseHandler::open_connection() {
     if (sqlite3_open(this->database_file_path.c_str(), &this->db) != SQLITE_OK) {
         EVLOG_error << "Error opening database at " << this->database_file_path.c_str() << ": " << sqlite3_errmsg(db);
@@ -103,6 +112,31 @@ std::optional<IdTokenInfo> DatabaseHandler::get_auth_cache_entry(const std::stri
         EVLOG_error << "Unknown Error while parsing IdTokenInfo: " << e.what();
         return std::nullopt;
     }
+}
+
+void DatabaseHandler::delete_auth_cache_entry(const std::string& id_token_hash) {
+    try {
+        std::string sql = "DELETE FROM AUTH_CACHE WHERE ID_TOKEN_HASH = @id_token_hash";
+        sqlite3_stmt* stmt;
+        if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
+            EVLOG_error << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
+            return;
+        }
+
+        sqlite3_bind_text(stmt, 1, id_token_hash.c_str(), id_token_hash.length(), NULL);
+        if (sqlite3_step(stmt) != SQLITE_DONE) {
+            EVLOG_error << "Could not delete from table: " << sqlite3_errmsg(this->db);
+        }
+        if (sqlite3_finalize(stmt) != SQLITE_OK) {
+            EVLOG_error << "Error deleting from table: " << sqlite3_errmsg(this->db);
+        }
+    } catch (const std::exception& e) {
+        EVLOG_error << "Exception while deleting from auth cache table: " << e.what();
+    }
+}
+
+bool DatabaseHandler::clear_authorization_cache() {
+    return this->clear_table("AUTH_CACHE");
 }
 
 void DatabaseHandler::insert_availability(const int32_t evse_id, std::optional<int32_t> connector_id,

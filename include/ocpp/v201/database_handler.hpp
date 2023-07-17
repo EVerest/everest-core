@@ -25,6 +25,7 @@ private:
     fs::path sql_init_path;
 
     void sql_init();
+    bool clear_table(const std::string& table_name);
 
 public:
     DatabaseHandler(const fs::path& database_path, const fs::path& sql_init_path);
@@ -45,6 +46,14 @@ public:
     /// \param id_token_hash
     /// \return
     std::optional<IdTokenInfo> get_auth_cache_entry(const std::string& id_token_hash);
+
+    /// \brief Deletes the cache entry for the given \p id_token_hash
+    /// \param id_token_hash
+    void delete_auth_cache_entry(const std::string& id_token_hash);
+
+    /// \brief Deletes all entries of the AUTH_CACHE table. Returns true if the operation was successful, else false
+    /// \return
+    bool clear_authorization_cache();
 
     void insert_availability(const int32_t evse_id, std::optional<int32_t> connector_id,
                              const OperationalStatusEnum& operational_status, const bool replace);
