@@ -552,8 +552,7 @@ void EvseManager::ready() {
     if (r_powermeter_billing().size() > 0) {
         r_powermeter_billing()[0]->subscribe_powermeter([this](types::powermeter::Powermeter p) {
             // Inform charger about current charging current. This is used for slow OC detection.
-            if (p.current_A && p.current_A.value().L1 &&
-                p.current_A.value().L2 && p.current_A.value().L3) {
+            if (p.current_A && p.current_A.value().L1 && p.current_A.value().L2 && p.current_A.value().L3) {
                 charger->setCurrentDrawnByVehicle(p.current_A.value().L1.value(), p.current_A.value().L2.value(),
                                                   p.current_A.value().L3.value());
             }
@@ -665,11 +664,6 @@ void EvseManager::ready() {
                        config.ac_hlc_use_5percent, config.ac_enforce_hlc, false,
                        config.soft_over_current_tolerance_percent, config.soft_over_current_measurement_noise_A);
     }
-    //  start with a limit of 0 amps. We will get a budget from EnergyManager that is locally limited by hw
-    //  caps.
-    charger->setMaxCurrent(0.0F, date::utc_clock::now());
-    charger->run();
-    charger->enable();
 
     telemetryThreadHandle = std::thread([this]() {
         while (!telemetryThreadHandle.shouldExit()) {
@@ -774,7 +768,12 @@ void EvseManager::ready() {
         }
     });
 
-    this->charger->signalEvent(types::evse_manager::SessionEventEnum::Enabled);
+    //  start with a limit of 0 amps. We will get a budget from EnergyManager that is locally limited by hw
+    //  caps.
+    charger->setMaxCurrent(0.0F, date::utc_clock::now());
+    charger->run();
+    charger->enable();
+
     EVLOG_info << fmt::format(fmt::emphasis::bold | fg(fmt::terminal_color::green),
                               "🌀🌀🌀 Ready to start charging 🌀🌀🌀");
 }
