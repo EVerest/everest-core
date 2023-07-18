@@ -350,14 +350,17 @@ void ISO15118_chargerImpl::handle_set_Certificate_Service_Supported(bool& status
         // For setting "Certificate" in ServiceList in ServiceDiscoveryRes
         struct iso1ServiceType cert_service;
         const std::string service_name = "Certificate";
-        const int16_t cert_parameter_set_id[] = {1}; // parameter-set-ID 1: "Installation" service. TODO: Support of the "Update" service (parameter-set-ID 2)
+        const int16_t cert_parameter_set_id[] = {1}; // parameter-set-ID 1: "Installation" service. TODO: Support of the
+                                                     // "Update" service (parameter-set-ID 2)
 
-        cert_service.FreeService = 1; // true
-        cert_service.ServiceID = 2; // as defined in ISO 15118-2
+        cert_service.FreeService = 1;                // true
+        cert_service.ServiceID = 2;                  // as defined in ISO 15118-2
         cert_service.ServiceCategory = iso1serviceCategoryType_ContractCertificate;
-        memcpy(cert_service.ServiceName.characters, reinterpret_cast<const char*>(service_name.data()), service_name.length());
+        memcpy(cert_service.ServiceName.characters, reinterpret_cast<const char*>(service_name.data()),
+               service_name.length());
 
-        add_service_to_service_list(v2g_ctx, cert_service, cert_parameter_set_id, sizeof(cert_parameter_set_id) / sizeof(cert_parameter_set_id[0]));
+        add_service_to_service_list(v2g_ctx, cert_service, cert_parameter_set_id,
+                                    sizeof(cert_parameter_set_id) / sizeof(cert_parameter_set_id[0]));
     }
 }
 
@@ -365,10 +368,15 @@ void ISO15118_chargerImpl::handle_set_Get_Certificate_Response(
     types::iso15118_charger::Response_Exi_Stream_Status& Existream_Status) {
     pthread_mutex_lock(&v2g_ctx->mqtt_lock);
     v2g_ctx->evse_v2g_data.cert_install_res_b64_buffer = std::string(*Existream_Status.exiResponse);
-    v2g_ctx->evse_v2g_data.cert_install_status = (Existream_Status.status == types::iso15118_charger::Status::Accepted) ? true : false;
+    v2g_ctx->evse_v2g_data.cert_install_status =
+        (Existream_Status.status == types::iso15118_charger::Status::Accepted) ? true : false;
     pthread_cond_signal(&v2g_ctx->mqtt_cond);
     /* unlock */
     pthread_mutex_unlock(&v2g_ctx->mqtt_lock);
+}
+
+void ISO15118_chargerImpl::handle_dlink_ready(bool& value) {
+    // FIXME: do something with this information
 }
 
 } // namespace charger

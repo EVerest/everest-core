@@ -279,6 +279,13 @@ cmds:
         description: The response raw exi stream and the status from the CSMS system
         type: object
         $ref: /iso15118_charger#/Response_Exi_Stream_Status
+  dlink_ready:
+    description: >-
+      Signals dlink_ready from SLAC layer according to ISO15118-3
+    arguments:
+      value:
+        description: Set to true when link becomes ready, false when the link is terminated
+        type: boolean
 vars:
   Require_Auth_EIM:
     description: An EIM authorization is requiered

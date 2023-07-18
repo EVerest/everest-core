@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2022-2023 chargebyte GmbH
 // Copyright (C) 2022-2023 Contributors to EVerest
+
 #ifndef EVSE_V2G_HPP
 #define EVSE_V2G_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 1
+// template version 2
 //
 
 #include "ld-ev.hpp"
@@ -41,9 +42,9 @@ public:
             std::unique_ptr<ISO15118_chargerImplBase> p_charger, Conf& config) :
         ModuleBase(info), mqtt(mqtt_provider), p_charger(std::move(p_charger)), config(config){};
 
-    const Conf& config;
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<ISO15118_chargerImplBase> p_charger;
+    const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     ~EvseV2G();

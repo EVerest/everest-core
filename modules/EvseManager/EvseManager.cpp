@@ -606,6 +606,18 @@ void EvseManager::ready() {
                 charger->setMatchingStarted(true);
             }
         });
+
+        r_slac[0]->subscribe_request_error_routine([this]() {
+            EVLOG_info << "Received request error routine from SLAC in evsemanager\n";
+            charger->requestErrorSequence();
+        });
+
+        r_slac[0]->subscribe_dlink_ready([this](const bool value) {
+            session_log.evse(true, fmt::format("dlink_ready {}", value));
+            if (hlc_enabled) {
+                r_hlc[0]->call_dlink_ready(value);
+            }
+        });
     }
 
     charger->signalMaxCurrent.connect([this](float ampere) {
@@ -614,13 +626,6 @@ void EvseManager::ready() {
             r_hlc[0]->call_set_AC_EVSEMaxCurrent(ampere);
         }
     });
-
-    if (slac_enabled) {
-        r_slac[0]->subscribe_request_error_routine([this]() {
-            EVLOG_info << "Received request error routine from SLAC in evsemanager\n";
-            charger->requestErrorSequence();
-        });
-    }
 
     charger->signalEvent.connect([this](types::evse_manager::SessionEventEnum s) {
         // Cancel reservations if charger is disabled or faulted
