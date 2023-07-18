@@ -19,12 +19,12 @@ from pyftpdlib.handlers import FTPHandler
 from everest.testing.ocpp_utils.controller.test_controller_interface import TestController
 from everest.testing.ocpp_utils.controller.everest_test_controller import EverestTestController
 from everest.testing.ocpp_utils.central_system import CentralSystem
-from everest.testing.ocpp_utils.charge_point_utils import TestUtility
+from everest.testing.ocpp_utils.charge_point_utils import TestUtility, OcppTestConfiguration
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), ".")))
 
 
 @pytest.fixture
-def test_controller(request, test_config) -> TestController:
+def test_controller(request, test_config: OcppTestConfiguration) -> TestController:
     """Fixture that references the the test_controller that can be used for
     control events for the test cases.
     """
@@ -37,11 +37,13 @@ def test_controller(request, test_config) -> TestController:
     everest_core_path = Path(request.config.getoption("--everest-prefix"))
     marker = request.node.get_closest_marker("everest_core_config")
     if marker is None:
-        config_path = test_config['ConfigPath']
+        config_path = test_config.config_path
     else:
         config_path = Path(marker.args[0])
+
+    libocpp_path = Path(request.config.getoption("--libocpp"))
     test_controller = EverestTestController(
-        everest_core_path, config_path, test_config['ChargePoint']['ChargePointId'], ocpp_version, request.function.__name__)
+        everest_core_path, libocpp_path, config_path, test_config['ChargePoint']['ChargePointId'], ocpp_version, request.function.__name__)
     yield test_controller
     test_controller.stop()
 
@@ -55,7 +57,8 @@ async def central_system_v16(request, test_config):
     if (hasattr(request, 'param')):
         ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         ssl_context.load_cert_chain(Path(test_config['Certificates']['CSMS']),
-                                    Path(test_config['Certificates']['CSMSKey']),
+                                    Path(
+                                        test_config['Certificates']['CSMSKey']),
                                     test_config['Certificates']['CSMSPassphrase'])
     else:
         ssl_context = None
@@ -76,7 +79,8 @@ async def central_system_v201(request, test_config):
     if (hasattr(request, 'param')):
         ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         ssl_context.load_cert_chain(Path(test_config['Certificates']['CSMS']),
-                                    Path(test_config['Certificates']['CSMSKey']),
+                                    Path(
+                                        test_config['Certificates']['CSMSKey']),
                                     test_config['Certificates']['CSMSPassphrase'])
     else:
         ssl_context = None
@@ -109,7 +113,6 @@ async def charge_point_v201(central_system_v201: CentralSystem, test_controller:
     """Fixture for ChargePoint16. Requires central_system_v201 and test_controller. Starts test_controller immediately
     """
     test_controller.start(central_system_v201.port)
-    await asyncio.sleep(1)
     cp = await central_system_v201.wait_for_chargepoint()
     yield cp
     cp.stop()
@@ -125,6 +128,7 @@ def test_utility():
 class FtpThread(Thread):
     def set_port(self, port):
         self.port = port
+
 
 @pytest.fixture
 def ftp_server(test_config):
@@ -143,7 +147,8 @@ def ftp_server(test_config):
         test_controller_name = test_config['TestController']
 
         if test_controller_name == 'EVerest':
-            shutil.copyfile(test_config['Firmware']['UpdateFile'], os.path.join(d, "firmware_update.pnx"))
+            shutil.copyfile(test_config['Firmware']['UpdateFile'], os.path.join(
+                d, "firmware_update.pnx"))
             shutil.copyfile(test_config['Firmware']['UpdateFileSignature'],
                             os.path.join(d, "firmware_update.pnx.base64"))
 

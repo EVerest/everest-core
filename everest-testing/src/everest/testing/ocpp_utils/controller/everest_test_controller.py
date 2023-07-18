@@ -21,9 +21,10 @@ TEST_LOGS_DIR = "/tmp/everest_ocpp_test_logs"
 
 class EverestTestController(TestController):
 
-    def __init__(self, everest_core_path: Path, config_path: Path, chargepoint_id: str, ocpp_version: str,
+    def __init__(self, everest_core_path: Path, libocpp_path: Path, config_path: Path, chargepoint_id: str, ocpp_version: str,
                  test_function_name: str = None, ocpp_module_id: str = "ocpp") -> None:
         self.everest_core = EverestCore(everest_core_path, config_path)
+        self.libocpp_path = libocpp_path
         self.config_path = config_path
         self.mqtt_client = None
         self.chargepoint_id = chargepoint_id
@@ -83,9 +84,13 @@ class EverestTestController(TestController):
                     "UserConfigPath"] = self.temp_ocpp_user_config_file.name
                 everest_config["active_modules"][self.ocpp_module_id]["config_module"]["DatabasePath"] = self.temp_ocpp_database_dir.name
             elif everest_config["active_modules"][self.ocpp_module_id]["module"] == "OCPP201":
-                # HACK!
+                everest_config["active_modules"][self.ocpp_module_id]["config_module"]["CoreDatabasePath"] = self.temp_ocpp_database_dir.name
+                everest_config["active_modules"][self.ocpp_module_id]["config_module"][
+                    "DeviceModelDatabasePath"] = f"{self.temp_ocpp_database_dir.name}/device_model_storage.db"
                 os.system(
-                    f"python3 {str(self.everest_core.prefix_path)}/../../../libocpp/config/v201/insert_device_model_config.py --config {self.temp_ocpp_config_file.name} --db /tmp/ocpp201/device_model_storage.db")
+                    f"python3 {str(self.libocpp_path)}/config/v201/init_device_model_db.py --out {self.temp_ocpp_database_dir.name}/device_model_storage.db --config_path {str(self.libocpp_path)}/config/v201")
+                os.system(
+                    f"python3 {str(self.libocpp_path)}/config/v201/insert_device_model_config.py --config {self.temp_ocpp_config_file.name} --db {str(self.temp_ocpp_database_dir.name)}/device_model_storage.db")
 
         self.everest_core.temp_everest_config_file.seek(0)
         yaml.dump(everest_config, self.everest_core.temp_everest_config_file)
@@ -105,8 +110,10 @@ class EverestTestController(TestController):
 
         modules_to_test = None
         if standalone_module == 'probe_module':
-            modules_to_test=[TestControlModuleConnection(evse_manager_id="connector_1", car_simulator_id="car_simulator", ocpp_id="ocpp")]
-        self.everest_core.start(standalone_module=standalone_module, modules_to_test=modules_to_test)
+            modules_to_test = [TestControlModuleConnection(
+                evse_manager_id="connector_1", car_simulator_id="car_simulator", ocpp_id="ocpp")]
+        self.everest_core.start(
+            standalone_module=standalone_module, modules_to_test=modules_to_test)
         self.mqtt_external_prefix = self.everest_core.mqtt_external_prefix
 
         mqtt_server_uri = os.environ.get("MQTT_SERVER_ADDRESS", "127.0.0.1")

@@ -3,17 +3,21 @@
 
 import asyncio
 import logging
+import time
 from datetime import datetime
 from websockets.exceptions import ConnectionClosedOK, ConnectionClosedError
 
+from ocpp.messages import unpack
+from ocpp.charge_point import camel_to_snake_case
 from ocpp.v201 import ChargePoint as cp
 from ocpp.v201 import call, call_result
 from ocpp.v201.enums import (
     Action,
     RegistrationStatusType,
-    AuthorizationStatusType
+    AuthorizationStatusType,
+    AttributeType
 )
-from ocpp.v201.datatypes import IdTokenInfoType
+from ocpp.v201.datatypes import IdTokenInfoType, SetVariableDataType, GetVariableDataType, ComponentType, VariableType
 from ocpp.routing import on
 
 from everest.testing.ocpp_utils.charge_point_utils import MessageHistory
@@ -71,6 +75,25 @@ class ChargePoint201(cp):
             await self.message_event.wait()
         return self.pipeline.pop(0)
 
+    async def wait_for_specific_message(self, exp_action, exp_payload={}, timeout=60):
+        msg_found = False
+        t_timeout = time.time() + timeout
+        while (not msg_found and time.time() < t_timeout):
+            try:
+                raw_message = await asyncio.wait_for(self.wait_for_message(), timeout=timeout)
+                msg = unpack(raw_message)
+                if (msg.action == exp_action):
+                    payload_matches = True
+                    # check if exp_payload matches
+                    for k, v in exp_payload.items():
+                        if k not in msg.payload or msg.payload[k] != v:
+                            payload_matches = False
+                    if payload_matches:
+                        return camel_to_snake_case(msg.payload)
+            except asyncio.TimeoutError:
+                logging.debug("Timeout while waiting for new message")
+        return None
+
     @on(Action.BootNotification)
     def on_boot_notification(self, **kwargs):
         logging.debug("Received a BootNotification")
@@ -97,12 +120,43 @@ class ChargePoint201(cp):
     def on_notify_report(self, **kwargs):
         return call_result.NotifyReportPayload()
 
+    @on(Action.TransactionEvent)
+    def on_transaction_event(self, **kwargs):
+        return call_result.TransactionEventPayload()
+
     async def set_variables_req(self, **kwargs):
         payload = call.SetVariablesPayload(**kwargs)
         return await self.call(payload)
 
+    async def set_config_variables_req(self, component_name, variable_name, value):
+        el = SetVariableDataType(
+            attribute_value=value,
+            attribute_type=AttributeType.actual,
+            component=ComponentType(
+                name=component_name
+            ),
+            variable=VariableType(
+                name=variable_name
+            )
+        )
+        payload = call.SetVariablesPayload([el])
+        return await self.call(payload)
+
     async def get_variables_req(self, **kwargs):
         payload = call.GetVariablesPayload(**kwargs)
+        return await self.call(payload)
+
+    async def get_config_variables_req(self, component_name, variable_name):
+        el = GetVariableDataType(
+            component=ComponentType(
+                name=component_name
+            ),
+            variable=VariableType(
+                name=variable_name
+            ),
+            attribute_type=AttributeType.actual
+        )
+        payload = call.GetVariablesPayload([el])
         return await self.call(payload)
 
     async def get_base_report_req(self, **kwargs):
@@ -112,7 +166,23 @@ class ChargePoint201(cp):
     async def get_report_req(self, **kwargs):
         payload = call.GetReportPayload(**kwargs)
         return await self.call(payload)
-    
+
     async def reset_req(self, **kwargs):
         payload = call.ResetPayload(**kwargs)
+        return await self.call(payload)
+
+    async def request_start_transaction_req(self, **kwargs):
+        payload = call.RequestStartTransactionPayload(**kwargs)
+        return await self.call(payload)
+
+    async def request_stop_transaction_req(self, **kwargs):
+        payload = call.RequestStopTransactionPayload(**kwargs)
+        return await self.call(payload)
+
+    async def change_availablility_req(self, **kwargs):
+        payload = call.ChangeAvailabilityPayload(**kwargs)
+        return await self.call(payload)
+
+    async def clear_cache_req(self, **kwargs):
+        payload = call.ClearCachePayload(**kwargs)
         return await self.call(payload)
