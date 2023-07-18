@@ -177,7 +177,7 @@ private:
     const float EVSE_ABSOLUTE_MAX_CURRENT = 80.0;
     bool slac_enabled;
 
-    std::atomic_bool contactor_open{false};
+    std::atomic_bool contactor_open{true};
 
     std::mutex hlc_mutex;
 
@@ -226,6 +226,8 @@ private:
     void imd_stop();
     void imd_start();
     Everest::Thread telemetryThreadHandle;
+
+    void fail_session();
 
     static constexpr auto CABLECHECK_CONTACTORS_CLOSE_TIMEOUT{std::chrono::seconds(5)};
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1

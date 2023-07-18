@@ -93,6 +93,45 @@ void EvseManager::ready() {
         }
         r_hlc[0]->call_set_PaymentOptions(payment_options);
 
+        r_hlc[0]->subscribe_dlink_error([this] {
+            session_log.evse(true, "D-LINK_ERROR.req");
+            // Inform charger
+            charger->dlink_error();
+            // Inform SLAC layer, it will leave the logical network
+            r_slac[0]->call_dlink_error();
+        });
+
+        r_hlc[0]->subscribe_dlink_pause([this] {
+            // tell charger (it will disable PWM)
+            session_log.evse(true, "D-LINK_PAUSE.req");
+            charger->dlink_pause();
+            r_slac[0]->call_dlink_pause();
+        });
+
+        r_hlc[0]->subscribe_dlink_terminate([this] {
+            session_log.evse(true, "D-LINK_TERMINATE.req");
+            charger->dlink_terminate();
+            r_slac[0]->call_dlink_terminate();
+        });
+
+        r_hlc[0]->subscribe_V2G_Setup_Finished([this] { charger->set_hlc_charging_active(); });
+
+        r_hlc[0]->subscribe_AC_Close_Contactor([this] {
+            session_log.car(true, "AC HLC Close contactor");
+            charger->set_hlc_allow_close_contactor(true);
+        });
+
+        r_hlc[0]->subscribe_AC_Open_Contactor([this] {
+            session_log.car(true, "AC HLC Open contactor");
+            charger->set_hlc_allow_close_contactor(false);
+        });
+
+        // Trigger SLAC restart
+        charger->signal_SLAC_start.connect([this] { r_slac[0]->call_enter_bcd(); });
+
+        // Ask HLC to stop charging session
+        charger->signal_hlc_stop_charging.connect([this] { r_hlc[0]->call_stop_charging(true); });
+
         // Set up energy transfer modes for HLC. For now we only support either DC or AC, not both at the same time.
         Array transfer_modes;
         if (config.charge_mode == "AC") {
@@ -217,9 +256,8 @@ void EvseManager::ready() {
 
             // Car requests DC contactor open. We don't actually open but switch off DC supply.
             // opening will be done by Charger on C->B CP event.
-            r_hlc[0]->subscribe_DC_Open_Contactor([this](bool b) {
-                if (b)
-                    powersupply_DC_off();
+            r_hlc[0]->subscribe_DC_Open_Contactor([this] {
+                powersupply_DC_off();
                 imd_stop();
             });
 
@@ -323,7 +361,6 @@ void EvseManager::ready() {
             // AC_Close_Contactor
             // AC_Open_Contactor
 
-            // V2G_Setup_Finished
             // SelectedPaymentOption
             // RequestedEnergyTransferMode
 
@@ -355,7 +392,6 @@ void EvseManager::ready() {
 
         // implement Auth handlers
         r_hlc[0]->subscribe_Require_Auth_EIM([this]() {
-            p_token_provider->publish_provided_token(autocharge_token);
             //  Do we have auth already (i.e. delayed HLC after charging already running)?
             if ((config.dbg_hlc_auth_after_tstep && charger->Authorized_EIM_ready_for_HLC()) ||
                 (!config.dbg_hlc_auth_after_tstep && charger->Authorized_EIM())) {
@@ -366,6 +402,7 @@ void EvseManager::ready() {
                 }
                 r_hlc[0]->call_set_Auth_Okay_EIM(true);
             } else {
+                p_token_provider->publish_provided_token(autocharge_token);
                 std::scoped_lock lock(hlc_mutex);
                 hlc_waiting_for_auth_eim = true;
                 hlc_waiting_for_auth_pnc = false;
@@ -537,6 +574,8 @@ void EvseManager::ready() {
 
             if (event == types::board_support::Event::PowerOff) {
                 contactor_open = true;
+                latest_target_voltage = 0;
+                latest_target_current = 0;
                 r_hlc[0]->call_contactor_open(true);
             }
         }
@@ -606,6 +645,18 @@ void EvseManager::ready() {
                 charger->setMatchingStarted(true);
             }
         });
+
+        r_slac[0]->subscribe_request_error_routine([this]() {
+            EVLOG_info << "Received request error routine from SLAC in evsemanager\n";
+            charger->requestErrorSequence();
+        });
+
+        r_slac[0]->subscribe_dlink_ready([this](const bool value) {
+            session_log.evse(true, fmt::format("D-LINK_READY ({})", value));
+            if (hlc_enabled) {
+                r_hlc[0]->call_dlink_ready(value);
+            }
+        });
     }
 
     charger->signalMaxCurrent.connect([this](float ampere) {
@@ -614,13 +665,6 @@ void EvseManager::ready() {
             r_hlc[0]->call_set_AC_EVSEMaxCurrent(ampere);
         }
     });
-
-    if (slac_enabled) {
-        r_slac[0]->subscribe_request_error_routine([this]() {
-            EVLOG_info << "Received request error routine from SLAC in evsemanager\n";
-            charger->requestErrorSequence();
-        });
-    }
 
     charger->signalEvent.connect([this](types::evse_manager::SessionEventEnum s) {
         // Cancel reservations if charger is disabled or faulted
@@ -1018,8 +1062,8 @@ void EvseManager::cable_check() {
     if (r_imd.empty()) {
         // If no IMD is connected, we skip isolation checking.
         EVLOG_info << "No IMD: skippint cable check.";
-        r_hlc[0]->call_cableCheck_Finished(false);
         r_hlc[0]->call_set_EVSEIsolationStatus(types::iso15118_charger::IsolationStatus::No_IMD);
+        r_hlc[0]->call_cableCheck_Finished(true);
         return;
     }
     // start cable check in a seperate thread.
@@ -1030,6 +1074,10 @@ void EvseManager::cable_check() {
         // normally contactors should be closed before entering cable check routine.
         // On some hardware implementation it may take some time until the confirmation arrives though,
         // so we wait with a timeout here until the contactors are confirmed to be closed.
+        // Allow closing from HLC perspective, it will wait for CP state C in Charger IEC state machine as well.
+        session_log.car(true, "DC HLC Close contactor (in CableCheck)");
+        charger->set_hlc_allow_close_contactor(true);
+
         Timeout timeout(CABLECHECK_CONTACTORS_CLOSE_TIMEOUT);
 
         while (!timeout.reached()) {
@@ -1048,6 +1096,7 @@ void EvseManager::cable_check() {
                 if (!wait_powersupply_DC_voltage_reached(config.dc_isolation_voltage_V)) {
                     EVLOG_info << "Voltage did not rise to 500V within timeout";
                     powersupply_DC_off();
+                    fail_session();
                     ok = false;
                     imd_stop();
                 } else {
@@ -1058,6 +1107,7 @@ void EvseManager::cable_check() {
                         EVLOG_info << "Did not receive isolation measurement from IMD within 10 seconds.";
                         powersupply_DC_off();
                         ok = false;
+                        fail_session();
                     } else {
                         // wait until the voltage is back to safe level
                         float minvoltage = (config.switch_to_minimum_voltage_after_cable_check
@@ -1073,6 +1123,7 @@ void EvseManager::cable_check() {
                         if (!wait_powersupply_DC_below_voltage(minvoltage + 20)) {
                             EVLOG_info << "Voltage did not go back to minimal voltage within timeout.";
                             ok = false;
+                            fail_session();
                         } else {
                             // verify it is within ranges. Warning level is <500 Ohm/V_max_output_rating, Fault
                             // is <100
@@ -1083,9 +1134,11 @@ void EvseManager::cable_check() {
                                 m.resistance_P_Ohm < min_resistance_warning) {
                                 session_log.evse(false, fmt::format("Isolation measurement FAULT P {} N {}.",
                                                                     m.resistance_P_Ohm, m.resistance_N_Ohm));
-                                ok = false;
+                                ok = true; // this just means that we are finished measuring, not that we are ok with
+                                           // the result
                                 r_hlc[0]->call_set_EVSEIsolationStatus(types::iso15118_charger::IsolationStatus::Fault);
                                 imd_stop();
+                                fail_session();
                             } else if (m.resistance_N_Ohm < min_resistance_ok ||
                                        m.resistance_P_Ohm < min_resistance_ok) {
                                 session_log.evse(false, fmt::format("Isolation measurement WARNING P {} N {}.",
@@ -1104,9 +1157,11 @@ void EvseManager::cable_check() {
                 }
             } else {
                 EVLOG_error << fmt::format("CableCheck Thread: Could not set DC power supply voltage and current.");
+                fail_session();
             }
         } else {
             EVLOG_error << fmt::format("CableCheck Thread: Contactors are still open after timeout, giving up.");
+            fail_session();
         }
 
         if (config.hack_pause_imd_during_precharge)
@@ -1292,6 +1347,14 @@ types::energy::ExternalLimits EvseManager::getLocalEnergyLimits() {
 
 float EvseManager::get_latest_target_voltage() {
     return latest_target_voltage;
+}
+
+void EvseManager::fail_session() {
+    r_hlc[0]->call_set_EVSE_EmergencyShutdown(true);
+    if (config.charge_mode == "DC") {
+        powersupply_DC_off();
+    }
+    charger->set_hlc_error(types::evse_manager::ErrorEnum::HLC);
 }
 
 } // namespace module

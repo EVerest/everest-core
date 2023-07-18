@@ -105,6 +105,9 @@ class PyEVJosevModule():
     def _handler_stop_charging(self, args):
         self._es.StopCharging = True
 
+    def _handler_pause_charging(self, args):
+        self._es.Pause = True
+
     def _handler_set_fault(self, args):
         pass
 

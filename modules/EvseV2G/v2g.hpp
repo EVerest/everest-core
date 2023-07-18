@@ -334,6 +334,8 @@ struct v2g_context {
         float remaining_time_to_bulk_soc;
         float remaining_time_to_full_soc;
     } ev_v2g_data;
+
+    bool hlc_pause_active;
 };
 
 enum mqtt_dlink_action {

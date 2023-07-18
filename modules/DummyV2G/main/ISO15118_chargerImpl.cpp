@@ -134,5 +134,8 @@ void ISO15118_chargerImpl::handle_set_Get_Certificate_Response(
     // your code for cmd set_Get_Certificate_Response goes here
 };
 
+void ISO15118_chargerImpl::handle_dlink_ready(bool& value) {
+}
+
 } // namespace main
 } // namespace module

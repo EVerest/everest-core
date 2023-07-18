@@ -81,14 +81,18 @@ boot_module(async ({
 });
 
 function set_unmatched_evse(mod) {
-  state_evse = STATE_UNMATCHED;
-  mod.provides.evse.publish.state(state_to_string(state_evse));
-  mod.provides.evse.publish.dlink_ready(false);
+  if (state_evse !== STATE_UNMATCHED) {
+    state_evse = STATE_UNMATCHED;
+    mod.provides.evse.publish.state(state_to_string(state_evse));
+    mod.provides.evse.publish.dlink_ready(false);
+  }
 }
 function set_unmatched_ev(mod) {
-  state_ev = STATE_UNMATCHED;
-  mod.provides.ev.publish.state(state_to_string(state_ev));
-  mod.provides.ev.publish.dlink_ready(false);
+  if (state_ev !== STATE_UNMATCHED) {
+    state_ev = STATE_UNMATCHED;
+    mod.provides.ev.publish.state(state_to_string(state_ev));
+    mod.provides.ev.publish.dlink_ready(false);
+  }
 }
 
 function set_matching_evse(mod) {

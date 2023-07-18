@@ -1667,7 +1667,7 @@
         "label": "Simulation enable (HIL)",
         "tooltip": "",
         "group": "b364f7eb4621082b",
-        "order": 10,
+        "order": 12,
         "width": 0,
         "height": 0,
         "passthru": true,
@@ -1781,7 +1781,7 @@
         "tooltip": "",
         "place": "Select option",
         "group": "b364f7eb4621082b",
-        "order": 10,
+        "order": 13,
         "width": 0,
         "height": 0,
         "passthru": true,
@@ -1789,7 +1789,7 @@
         "options": [
             {
                 "label": "DC ISO15118-2",
-                "value": "sleep 1;iso_wait_slac_matched;iso_start_v2g_session ExternalPayment,DC_extended;sleep 36000#iso_stop_charging;iso_wait_v2g_session_stopped;unplug",
+                "value": "sleep 1;iso_wait_slac_matched;iso_start_v2g_session ExternalPayment,DC_extended;iso_wait_pwr_ready;sleep 36000#iso_stop_charging;iso_wait_v2g_session_stopped;unplug#iso_pause_charging;iso_wait_for_resume#iso_start_bcb_toogle 3;iso_wait_pwm_is_running;iso_start_v2g_session ExternalPayment,DC_extended;iso_wait_pwr_ready;sleep 36000;",
                 "type": "str"
             }
         ],
@@ -1798,7 +1798,7 @@
         "topicType": "str",
         "className": "",
         "x": 170,
-        "y": 1040,
+        "y": 1120,
         "wires": [
             [
                 "620b0d248a89ece0"
@@ -1810,7 +1810,7 @@
         "type": "function",
         "z": "ed603c51db9dcbb9",
         "name": "Buffer sim commands",
-        "func": "if (msg.topic.indexOf('sim_commands') > -1) {\n    const s = msg.payload.split('#');\n    flow.set('sim_commands_start', s[0]);\n    flow.set('sim_commands_stop', s[1]);\n} else if (msg.payload == 'start') {\n    msg.payload = flow.get('sim_commands_start');\n    return msg;\n} else if (msg.payload == 'stop') {\n    msg.payload = flow.get('sim_commands_stop');\n    return msg;\n} else {\n    msg.payload = 'NONE';\n    return msg;\n}\n",
+        "func": "if (msg.topic.indexOf('sim_commands') > -1) {\n    const s = msg.payload.split('#');\n    flow.set('sim_commands_start', s[0]);\n    flow.set('sim_commands_stop', s[1]);\n    flow.set('sim_commands_pause', s[2]);\n    flow.set('sim_commands_resume', s[3]);\n} else if (msg.payload == 'start') {\n    msg.payload = flow.get('sim_commands_start');\n    return msg;\n} else if (msg.payload == 'stop') {\n    msg.payload = flow.get('sim_commands_stop');\n    return msg;\n} else if (msg.payload == 'pause') {\n    msg.payload = flow.get('sim_commands_pause');\n    return msg;\n} else if (msg.payload == 'resume') {\n    msg.payload = flow.get('sim_commands_resume');\n    return msg;\n} else {\n    msg.payload = 'NONE';\n    return msg;\n}\n",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
@@ -1859,13 +1859,69 @@
         "once": true,
         "onceDelay": "1",
         "topic": "sim_commands",
-        "payload": "sleep 1;iso_wait_slac_matched;iso_start_v2g_session ExternalPayment,DC_extended;sleep 36000#iso_stop_charging;iso_wait_v2g_session_stopped;unplug",
+        "payload": "sleep 1;iso_wait_slac_matched;iso_start_v2g_session ExternalPayment,DC_extended;iso_wait_pwr_ready;sleep 36000#iso_stop_charging;iso_wait_v2g_session_stopped;unplug#iso_pause_charging;iso_wait_for_resume#iso_start_bcb_toogle 3;iso_wait_pwm_is_running;iso_start_v2g_session ExternalPayment,DC_extended;iso_wait_pwr_ready;sleep 36000;",
         "payloadType": "str",
         "x": 150,
-        "y": 1100,
+        "y": 1180,
         "wires": [
             [
                 "f2ae0c306f3052f9"
+            ]
+        ]
+    },
+    {
+        "id": "7cedfe81979df439",
+        "type": "ui_button",
+        "z": "ed603c51db9dcbb9",
+        "name": "",
+        "group": "b364f7eb4621082b",
+        "order": 11,
+        "width": "3",
+        "height": "1",
+        "passthru": false,
+        "label": "EV Resume",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "resume",
+        "payloadType": "str",
+        "topic": "everest_external/nodered/#/carsim/cmd/modify_charging_session",
+        "topicType": "str",
+        "x": 170,
+        "y": 1060,
+        "wires": [
+            [
+                "620b0d248a89ece0"
+            ]
+        ]
+    },
+    {
+        "id": "9ca06173e71733b7",
+        "type": "ui_button",
+        "z": "ed603c51db9dcbb9",
+        "name": "",
+        "group": "b364f7eb4621082b",
+        "order": 10,
+        "width": "3",
+        "height": "1",
+        "passthru": false,
+        "label": "EV Pause",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "pause",
+        "payloadType": "str",
+        "topic": "everest_external/nodered/#/carsim/cmd/modify_charging_session",
+        "topicType": "str",
+        "x": 170,
+        "y": 1020,
+        "wires": [
+            [
+                "620b0d248a89ece0"
             ]
         ]
     }

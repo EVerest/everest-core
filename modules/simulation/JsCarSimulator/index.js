@@ -158,6 +158,9 @@ function simdata_reset_defaults(mod) {
   mod.energymode = 'AC_single_phase_core';
   mod.iso_pwr_ready = false;
 
+  mod.bcb_toggles = 0;
+  mod.bcb_toggle_C = true;
+
   mod.uses.simulation_control.call.setSimulationData({ value: mod.simdata });
 }
 
@@ -256,6 +259,17 @@ function car_statemachine(mod) {
       else amps3 = 0;
 
       drawPower(mod, amps1, amps2, amps3, 0.2);
+      break;
+    case 'bcb_toggle':
+      drawPower(mod, 0, 0, 0, 0);
+      if (mod.bcb_toggle_C === true) {
+        mod.simdata_setting.cp_voltage = 6.0;
+        mod.bcb_toggle_C = false;
+      } else {
+        mod.simdata_setting.cp_voltage = 9.0;
+        mod.bcb_toggle_C = true;
+        mod.bcb_toggles++;
+      }
       break;
     default:
       mod.state = 'unplugged';
@@ -381,11 +395,11 @@ function registerAllCmds(mod) {
     return false;
   });
 
-  registerCmd(mod, 'iso_wait_5percent', 0, (mod, c) => {
+  registerCmd(mod, 'iso_wait_pwm_is_running', 0, (mod, c) => {
     mod.state = 'pluggedin';
     if (mod.simulation_feedback === undefined) return false;
     if (mod.simulation_feedback.evse_pwm_running && mod.simulation_feedback.pwm_duty_cycle > 0.04
-      && mod.simulation_feedback.pwm_duty_cycle < 0.06) {
+      && mod.simulation_feedback.pwm_duty_cycle < 0.97) {
       return true;
     }
     return false;
@@ -510,6 +524,27 @@ function registerAllCmds(mod) {
 
   registerCmd(mod, 'iso_wait_v2g_session_stopped', 0, (mod, c) => {
     if (mod.v2g_finished === true) {
+      return true;
+    }
+    return false;
+  });
+
+  registerCmd(mod, 'iso_pause_charging', 0, (mod, c) => {
+    mod.uses_list.ev[0].call.pause_charging();
+    mod.state = 'pluggedin';
+    mod.iso_pwr_ready = false;
+    return true;
+  });
+
+  registerCmd(mod, 'iso_wait_for_resume', 0, (mod, c) => {
+    return false;
+  });
+
+  registerCmd(mod, 'iso_start_bcb_toogle', 1, (mod, c) => {
+    mod.state = 'bcb_toggle';
+    if (mod.bcb_toggles >= c.args[0] || mod.bcb_toggles === 3) {
+      mod.bcb_toggles = 0;
+      mod.state = 'pluggedin';
       return true;
     }
     return false;
