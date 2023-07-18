@@ -177,7 +177,7 @@ static void convertIso1ToXmldsigSignedInfoType(struct xmldsigSignedInfoType* xml
 static bool load_contract_root_cert(mbedtls_x509_crt *contract_root_crt, const char* V2G_file_path, const char* MO_file_path) {
     int rv = 0;
 
-    if (((rv = mbedtls_x509_crt_parse_file(contract_root_crt, MO_file_path)) != 0) &&
+    if (((rv = mbedtls_x509_crt_parse_file(contract_root_crt, MO_file_path)) != 0) ||
         ((rv = mbedtls_x509_crt_parse_file(contract_root_crt, V2G_file_path)) != 0)) {
         char strerr[256];
         mbedtls_strerror(rv, strerr, 256);
