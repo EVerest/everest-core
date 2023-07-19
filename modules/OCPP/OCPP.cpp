@@ -441,7 +441,7 @@ void OCPP::init() {
             auto event = types::evse_manager::session_event_enum_to_string(session_event.event);
 
             if (event == "Enabled") {
-                std::lock_guard<std::mutex>(this->evse_ready_mutex);
+                std::lock_guard<std::mutex> lk(this->evse_ready_mutex);
                 this->connector_ready_map.at(connector) = true;
                 if (started) {
                     this->charge_point->on_enabled(connector);
