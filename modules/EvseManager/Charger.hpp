@@ -39,8 +39,7 @@
 
 namespace module {
 
-enum class ControlPilotEvent
-{
+enum class ControlPilotEvent {
     CarPluggedIn,
     CarRequestedPower,
     PowerOn,
@@ -82,8 +81,7 @@ public:
     float getMaxCurrent();
     sigslot::signal<float> signalMaxCurrent;
 
-    enum class ChargeMode
-    {
+    enum class ChargeMode {
         AC,
         DC
     };
@@ -166,8 +164,7 @@ public:
     // in the future.
     // Use new EvseEvent interface instead.
 
-    enum class EvseState
-    {
+    enum class EvseState {
         Disabled,
         Idle,
         WaitingForAuthentication,
