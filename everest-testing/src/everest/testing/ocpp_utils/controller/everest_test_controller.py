@@ -124,7 +124,7 @@ class EverestTestController(TestController):
     def swipe(self, token, connectors=[1]):
         provided_token = {
             "id_token": token,
-            "type": "RFID",
+            "authorization_type": "RFID",
             "connectors": connectors
         }
         self.mqtt_client.publish(
