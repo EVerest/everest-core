@@ -93,21 +93,38 @@ void EvseManager::ready() {
         }
         r_hlc[0]->call_set_PaymentOptions(payment_options);
 
-        r_hlc[0]->subscribe_dlink_error([this] { 
-            // Inform charger 
+        r_hlc[0]->subscribe_dlink_error([this] {
+            // Inform charger
             charger->dlink_error();
             // Inform SLAC layer, it will leave the logical network
-            r_slac[0]->call_dlink_error(); 
+            r_slac[0]->call_dlink_error();
         });
+
         r_hlc[0]->subscribe_dlink_pause([this] {
             // tell charger (it will disable PWM)
             charger->dlink_pause();
             r_slac[0]->call_dlink_pause();
         });
+
         r_hlc[0]->subscribe_dlink_terminate([this] {
             charger->dlink_terminate();
             r_slac[0]->call_dlink_terminate();
         });
+
+        r_hlc[0]->subscribe_EV_ChargingSession([this](types::iso15118_charger::ChargingSession s) {
+            Charger::HlcTerminatePause p;
+            if (s == types::iso15118_charger::ChargingSession::Pause) {
+                p = Charger::HlcTerminatePause::Pause;
+            } else if (s == types::iso15118_charger::ChargingSession::Terminate) {
+                p = Charger::HlcTerminatePause::Terminate;
+            } else {
+                p = Charger::HlcTerminatePause::Unknown;
+            }
+
+            charger->hlc_chargingsession(p);
+        });
+
+        r_hlc[0]->subscribe_V2G_Setup_Finished([this]() { charger->set_hlc_charging_active(); });
 
         // Set up energy transfer modes for HLC. For now we only support either DC or AC, not both at the same time.
         Array transfer_modes;

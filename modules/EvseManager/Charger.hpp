@@ -182,6 +182,12 @@ public:
         Replug
     };
 
+    enum class HlcTerminatePause {
+        Unknown,
+        Terminate,
+        Pause
+    };
+
     std::string evseStateToString(EvseState s);
 
     EvseState getCurrentState();
@@ -194,6 +200,11 @@ public:
     void dlink_pause();
     void dlink_error();
     void dlink_terminate();
+
+    // Inform charger about charging session info (pause/terminate)
+    void hlc_chargingsession(const HlcTerminatePause& s);
+
+    void set_hlc_charging_active();
 
 private:
     // main Charger thread
@@ -306,6 +317,9 @@ private:
 
     float soft_over_current_tolerance_percent{10.};
     float soft_over_current_measurement_noise_A{0.5};
+
+    HlcTerminatePause hlc_charging_terminate_pause;
+    bool hlc_charging_active{false};
 };
 
 #define CHARGER_ABSOLUTE_MAX_CURRENT double(80.0F)

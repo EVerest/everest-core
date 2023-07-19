@@ -126,6 +126,8 @@ void Charger::runStateMachine() {
     case EvseState::Idle:
         // make sure we signal availability to potential new cars
         if (new_in_state) {
+            hlc_charging_active = false;
+            hlc_charging_terminate_pause = HlcTerminatePause::Unknown;
             pwm_off();
             DeAuthorize();
             transaction_active = false;
@@ -399,13 +401,10 @@ void Charger::runStateMachine() {
 
     case EvseState::ChargingPausedEV:
 
-        // Normally power should be available, since we request a minimum power also during EV pause.
-        // In case the energy manager gives us no energy, we effectivly switch to a pause by EVSE here.
-        if (!powerAvailable()) {
-            pauseChargingWaitForPower();
-            break;
+        if (charge_mode == ChargeMode::AC) {
+            checkSoftOverCurrent();
         }
-        
+
         // A pause issued by the EV needs to be handled differently for the different charging modes
 
         // 1) BASIC AC charging: Nominal PWM needs be running, so the EV can actually resume charging when it wants to
@@ -414,17 +413,31 @@ void Charger::runStateMachine() {
         //    [V2G3-M07-20] forces us to switch off PWM.
         //    This is also true for nominal PWM AC HLC charging, so an EV that does HLC AC and pauses can only resume in
         //    HLC mode and not in BASIC charging.
-        // FIXME: this if needs to be HLC_CHARGING (independent of PWM)
-        if (hlc_use_5percent_current_session) {
+
+        if (hlc_charging_active) {
+            // This is for HLC charging (both AC and DC)
             if (new_in_state) {
                 r_bsp->call_allow_power_on(false);
-                // FIXME: C->B is not always the end of a charging session.
-                // Pauses needs to be fixed later
+                pwm_off();
+            }
+
+            // We come here by a state C->B transition but the ISO message may not have arrived yet,
+            // so we wait here until it is Terminate, everything else is a Pause and we stay here
+
+            if (hlc_charging_terminate_pause == HlcTerminatePause::Terminate) {
+                // EV wants to terminate session
                 currentState = EvseState::StoppingCharging;
             }
+
         } else {
             // This is for BASIC charging only
-            checkSoftOverCurrent();
+
+            // Normally power should be available, since we request a minimum power also during EV pause.
+            // In case the energy manager gives us no energy, we effectivly switch to a pause by EVSE here.
+            if (!powerAvailable()) {
+                pauseChargingWaitForPower();
+                break;
+            }
 
             if (new_in_state) {
                 signalEvent(types::evse_manager::SessionEventEnum::ChargingPausedEV);
@@ -609,19 +622,12 @@ void Charger::processCPEventsState(ControlPilotEvent cp_event) {
         break;
 
     case EvseState::WaitingForAuthentication:
-        // FIXME: in simplified mode, we get a car requested power here directly
-        // even if PWM is not enabled yet... this should be fixed in control
-        // pilot logic? i.e. car requests power only if pwm was enabled? Could
-        // be a fix, but with 5% mode it will not work.
-        // this is work arounded in cp logic -> needs testing.
-        if (cp_event == ControlPilotEvent::CarRequestedPower) {
-            // FIXME
-        }
         break;
 
     case EvseState::PrepareCharging:
         if (charge_mode == ChargeMode::AC) {
-            // AC: once the car requests power (B->C/D), we can switch to charging.
+            // FIXME: This needs to be fixed for AC HLC, in this case the car can trigger Charging state before
+            // PowerDeliveryReq is sent on ISO. AC: once the car requests power (B->C/D), we can switch to charging.
             signalEvent(types::evse_manager::SessionEventEnum::ChargingStarted);
             if (cp_event == ControlPilotEvent::CarRequestedPower) {
                 if (powerAvailable()) {
@@ -1307,4 +1313,12 @@ void Charger::dlink_error() {
     }
 }
 
+void Charger::hlc_chargingsession(const HlcTerminatePause& s) {
+    std::lock_guard<std::recursive_mutex> lock(stateMutex);
+    hlc_charging_terminate_pause = s;
+}
+
+void Charger::set_hlc_charging_active() {
+    hlc_charging_active = true;
+}
 } // namespace module
