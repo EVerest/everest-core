@@ -94,6 +94,7 @@ void EvseManager::ready() {
         r_hlc[0]->call_set_PaymentOptions(payment_options);
 
         r_hlc[0]->subscribe_dlink_error([this] {
+            session_log.evse(true, "D-LINK_ERROR.req");
             // Inform charger
             charger->dlink_error();
             // Inform SLAC layer, it will leave the logical network
@@ -102,11 +103,13 @@ void EvseManager::ready() {
 
         r_hlc[0]->subscribe_dlink_pause([this] {
             // tell charger (it will disable PWM)
+            session_log.evse(true, "D-LINK_PAUSE.req");
             charger->dlink_pause();
             r_slac[0]->call_dlink_pause();
         });
 
         r_hlc[0]->subscribe_dlink_terminate([this] {
+            session_log.evse(true, "D-LINK_TERMINATE.req");
             charger->dlink_terminate();
             r_slac[0]->call_dlink_terminate();
         });
@@ -632,7 +635,7 @@ void EvseManager::ready() {
         });
 
         r_slac[0]->subscribe_dlink_ready([this](const bool value) {
-            session_log.evse(true, fmt::format("dlink_ready {}", value));
+            session_log.evse(true, fmt::format("D-LINK_READY ({})", value));
             if (hlc_enabled) {
                 r_hlc[0]->call_dlink_ready(value);
             }
