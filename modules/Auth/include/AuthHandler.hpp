@@ -26,8 +26,7 @@ using namespace types::reservation;
 
 namespace module {
 
-enum class TokenHandlingResult
-{
+enum class TokenHandlingResult {
     ACCEPTED,
     ALREADY_IN_PROCESS,
     REJECTED,
