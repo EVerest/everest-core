@@ -111,19 +111,6 @@ void EvseManager::ready() {
             r_slac[0]->call_dlink_terminate();
         });
 
-        r_hlc[0]->subscribe_EV_ChargingSession([this](types::iso15118_charger::ChargingSession s) {
-            Charger::HlcTerminatePause p;
-            if (s == types::iso15118_charger::ChargingSession::Pause) {
-                p = Charger::HlcTerminatePause::Pause;
-            } else if (s == types::iso15118_charger::ChargingSession::Terminate) {
-                p = Charger::HlcTerminatePause::Terminate;
-            } else {
-                p = Charger::HlcTerminatePause::Unknown;
-            }
-
-            charger->hlc_chargingsession(p);
-        });
-
         r_hlc[0]->subscribe_V2G_Setup_Finished([this]() { charger->set_hlc_charging_active(); });
 
         // Set up energy transfer modes for HLC. For now we only support either DC or AC, not both at the same time.
@@ -356,7 +343,6 @@ void EvseManager::ready() {
             // AC_Close_Contactor
             // AC_Open_Contactor
 
-            // V2G_Setup_Finished
             // SelectedPaymentOption
             // RequestedEnergyTransferMode
 

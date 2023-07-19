@@ -2133,8 +2133,7 @@ static enum v2g_event handle_iso_session_stop(struct v2g_connection* conn) {
     switch (req->ChargingSession) {
     case iso1chargingSessionType_Terminate:
         conn->dlink_action = MQTT_DLINK_ACTION_TERMINATE;
-        conn->ctx->p_charger->publish_EV_ChargingSession(
-            static_cast<types::iso15118_charger::ChargingSession>(iso1chargingSessionType_Terminate));
+        conn->ctx->p_charger->publish_dlink_terminate(NULL);
         /* Set next expected req msg */
         conn->ctx->state = (int)iso_dc_state_id::WAIT_FOR_TERMINATED_SESSION;
         break;
@@ -2142,18 +2141,16 @@ static enum v2g_event handle_iso_session_stop(struct v2g_connection* conn) {
     case iso1chargingSessionType_Pause:
         /* Set next expected req msg */
         /* Check if the EV is allowed to request the sleep mode. TODO: Remove "true" if sleep mode is supported */
-        if (true || ((conn->ctx->last_v2g_msg != V2G_POWER_DELIVERY_MSG) &&
-                     (conn->ctx->last_v2g_msg != V2G_WELDING_DETECTION_MSG))) {
+        if (((conn->ctx->last_v2g_msg != V2G_POWER_DELIVERY_MSG) &&
+             (conn->ctx->last_v2g_msg != V2G_WELDING_DETECTION_MSG))) {
             conn->dlink_action = MQTT_DLINK_ACTION_TERMINATE;
-            conn->ctx->p_charger->publish_EV_ChargingSession(
-                static_cast<types::iso15118_charger::ChargingSession>(iso1chargingSessionType_Terminate));
+            conn->ctx->p_charger->publish_dlink_terminate(NULL);
             res->ResponseCode = iso1responseCodeType_FAILED;
             conn->ctx->state = (int)iso_dc_state_id::WAIT_FOR_TERMINATED_SESSION;
         } else {
             /* Init sleep mode for the EV */
             conn->dlink_action = MQTT_DLINK_ACTION_PAUSE;
-            conn->ctx->p_charger->publish_EV_ChargingSession(
-                static_cast<types::iso15118_charger::ChargingSession>(iso1chargingSessionType_Pause));
+            conn->ctx->p_charger->publish_dlink_pause(NULL);
             conn->ctx->state = (int)iso_dc_state_id::WAIT_FOR_SESSIONSETUP;
         }
         break;
@@ -2161,8 +2158,7 @@ static enum v2g_event handle_iso_session_stop(struct v2g_connection* conn) {
     default:
         /* Set next expected req msg */
         conn->dlink_action = MQTT_DLINK_ACTION_TERMINATE;
-        conn->ctx->p_charger->publish_EV_ChargingSession(
-            static_cast<types::iso15118_charger::ChargingSession>(iso1chargingSessionType_Terminate));
+        conn->ctx->p_charger->publish_dlink_terminate(NULL);
         conn->ctx->state = (int)iso_dc_state_id::WAIT_FOR_TERMINATED_SESSION;
     }
 

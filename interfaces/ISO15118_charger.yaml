@@ -396,12 +396,6 @@ vars:
     description: Current status of the EV
     type: object
     $ref: /iso15118_charger#/DC_EVStatusType
-  EV_ChargingSession:
-    description: >-
-      ChargingSession indicates the intention of the EVCC to either pause
-      or terminate a V2G Communication Session
-    type: string
-    $ref: /iso15118_charger#/ChargingSession
   DC_BulkChargingComplete:
     description: >-
       Optional: If set to TRUE, the EV indicates that bulk charge (approx.

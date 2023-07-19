@@ -201,9 +201,6 @@ public:
     void dlink_error();
     void dlink_terminate();
 
-    // Inform charger about charging session info (pause/terminate)
-    void hlc_chargingsession(const HlcTerminatePause& s);
-
     void set_hlc_charging_active();
 
 private:

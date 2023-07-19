@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (C) 2022-2023 chargebyte GmbH
-// Copyright (C) 2022-2023 Contributors to EVerest
-
+// Copyright Pionix GmbH and Contributors to EVerest
 #ifndef CHARGER_ISO15118_CHARGER_IMPL_HPP
 #define CHARGER_ISO15118_CHARGER_IMPL_HPP
 

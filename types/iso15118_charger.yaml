@@ -48,14 +48,6 @@ types:
       - Reserved_C
       - FAILED_ChargingSystemIncompatibility
       - NoData
-  ChargingSession:
-    description:
-      ChargingSession indicates the intention of the EVCC to either pause
-      or terminate a V2G Communication Session
-    type: string
-    enum:
-      - Terminate
-      - Pause
   V2G_Message_ID:
     description: This element contains the id of the v2g message body
     type: string

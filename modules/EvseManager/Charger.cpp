@@ -1261,12 +1261,14 @@ void Charger::inform_new_evse_max_hlc_limits(
 void Charger::dlink_pause() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
     pwm_off();
+    hlc_charging_terminate_pause = HlcTerminatePause::Pause;
 }
 
 // HLC requested end of charging session, so we can stop the 5% PWM
 void Charger::dlink_terminate() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
     pwm_off();
+    hlc_charging_terminate_pause = HlcTerminatePause::Terminate;
 }
 
 void Charger::dlink_error() {
@@ -1311,11 +1313,6 @@ void Charger::dlink_error() {
         // So we don't do anything here, SLAC will be notified anyway to reset
         //}
     }
-}
-
-void Charger::hlc_chargingsession(const HlcTerminatePause& s) {
-    std::lock_guard<std::recursive_mutex> lock(stateMutex);
-    hlc_charging_terminate_pause = s;
 }
 
 void Charger::set_hlc_charging_active() {
