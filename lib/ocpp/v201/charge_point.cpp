@@ -3,6 +3,7 @@
 
 #include <ocpp/v201/charge_point.hpp>
 #include <ocpp/v201/messages/LogStatusNotification.hpp>
+#include <ocpp/v201/messages/FirmwareStatusNotification.hpp>
 
 namespace ocpp {
 namespace v201 {
@@ -81,6 +82,20 @@ void ChargePoint::stop() {
     this->boot_notification_timer.stop();
     this->websocket->disconnect(websocketpp::close::status::going_away);
     this->message_queue->stop();
+}
+
+void ChargePoint::on_firmware_update_status_notification(int32_t request_id, std::string& firmware_update_status) {
+    FirmwareStatusNotificationRequest req;
+    req.status = conversions::string_to_firmware_status_enum(firmware_update_status);
+    // Firmware status is stored for future trigger message request.
+    this->firmware_status = req.status;
+
+    if (request_id != -1) {
+        req.requestId = request_id;
+    }
+
+    ocpp::Call<FirmwareStatusNotificationRequest> call(req, this->message_queue->createMessageId());
+    this->send_async<FirmwareStatusNotificationRequest>(call);
 }
 
 void ChargePoint::on_session_started(const int32_t evse_id, const int32_t connector_id) {
@@ -334,6 +349,9 @@ void ChargePoint::handle_message(const json& json_message, const MessageType& me
         break;
     case MessageType::ClearCache:
         this->handle_clear_cache_req(json_message);
+        break;
+    case MessageType::UpdateFirmware:
+        this->handle_firmware_update_req(json_message);
         break;
     }
 }
@@ -997,6 +1015,14 @@ void ChargePoint::handle_change_availability_req(Call<ChangeAvailabilityRequest>
     if (is_change_availability_possible) {
         this->callbacks.change_availability_callback(msg);
     }
+}
+
+void ChargePoint::handle_firmware_update_req(Call<UpdateFirmwareRequest> call) {
+    EVLOG_debug << "Received UpdateFirmwareRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
+    UpdateFirmwareResponse response = callbacks.update_firmware_request_callback(call.msg);
+
+    ocpp::CallResult<UpdateFirmwareResponse> call_result(response, call.uniqueId);
+    this->send<UpdateFirmwareResponse>(call_result);
 }
 
 void ChargePoint::handle_data_transfer_req(Call<DataTransferRequest> call) {

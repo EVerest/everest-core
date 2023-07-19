@@ -35,6 +35,7 @@
 #include <ocpp/v201/messages/TransactionEvent.hpp>
 #include <ocpp/v201/messages/TriggerMessage.hpp>
 #include <ocpp/v201/messages/UnlockConnector.hpp>
+#include <ocpp/v201/messages/UpdateFirmware.hpp>
 
 namespace ocpp {
 namespace v201 {
@@ -59,6 +60,7 @@ struct Callbacks {
     std::function<bool(const int32_t evse_id, const CiString<36> idToken,
                        const std::optional<CiString<36>> groupIdToken)>
         is_reservation_for_token_callback;
+    std::function<UpdateFirmwareResponse(const UpdateFirmwareRequest& request)> update_firmware_request_callback;
 };
 
 /// \brief Class implements OCPP2.0.1 Charging Station
@@ -89,6 +91,7 @@ private:
     RegistrationStatusEnum registration_status;
     WebsocketConnectionStatusEnum websocket_connection_status;
     OperationalStatusEnum operational_state;
+    FirmwareStatusEnum firmware_status;
 
     // callback struct
     Callbacks callbacks;
@@ -190,12 +193,14 @@ private:
 
     // Function Block F: Remote transaction control
     void handle_unlock_connector(Call<UnlockConnectorRequest> call);
-    // Function Block f: Remote transaction control
     void handle_remote_start_transaction_request(Call<RequestStartTransactionRequest> call);
     void handle_remote_stop_transaction_request(Call<RequestStopTransactionRequest> call);
 
     // Functional Block G: Availability
     void handle_change_availability_req(Call<ChangeAvailabilityRequest> call);
+
+    // Functional Block L: Firmware management
+    void handle_firmware_update_req(Call<UpdateFirmwareRequest> call);
 
     // Functional Block P: DataTransfer
     void handle_data_transfer_req(Call<DataTransferRequest> call);
@@ -220,6 +225,13 @@ public:
 
     /// \brief Stops the ChargePoint. Disconnects the websocket connection and stops MessageQueue and all timers
     void stop();
+
+    /// \brief Chargepoint notifies about new firmware update status firmware_update_status. This function should be
+    ///        called during a Firmware Update to indicate the current firmware_update_status.
+    /// \param request_id   The request_id. When it is -1, it will not be included in the request.
+    /// \param firmware_update_status The firmware_update_status should be convertable to the
+    ///        ocpp::v201::FirmwareStatusEnum.
+    void on_firmware_update_status_notification(int32_t request_id, std::string& firmware_update_status);
 
     /// \brief Event handler that should be called when a session has started
     /// \param evse_id
