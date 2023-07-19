@@ -398,20 +398,33 @@ void Charger::runStateMachine() {
         break;
 
     case EvseState::ChargingPausedEV:
-        if (charge_mode == ChargeMode::DC) {
+
+        // Normally power should be available, since we request a minimum power also during EV pause.
+        // In case the energy manager gives us no energy, we effectivly switch to a pause by EVSE here.
+        if (!powerAvailable()) {
+            pauseChargingWaitForPower();
+            break;
+        }
+        
+        // A pause issued by the EV needs to be handled differently for the different charging modes
+
+        // 1) BASIC AC charging: Nominal PWM needs be running, so the EV can actually resume charging when it wants to
+
+        // 2) HLC charging: [V2G3-M07-19] requires the EV to switch to state B, so we will end up here in this state
+        //    [V2G3-M07-20] forces us to switch off PWM.
+        //    This is also true for nominal PWM AC HLC charging, so an EV that does HLC AC and pauses can only resume in
+        //    HLC mode and not in BASIC charging.
+        // FIXME: this if needs to be HLC_CHARGING (independent of PWM)
+        if (hlc_use_5percent_current_session) {
             if (new_in_state) {
                 r_bsp->call_allow_power_on(false);
-                // Assume C->B is always the end of charging for DC.
+                // FIXME: C->B is not always the end of a charging session.
                 // Pauses needs to be fixed later
                 currentState = EvseState::StoppingCharging;
             }
         } else {
+            // This is for BASIC charging only
             checkSoftOverCurrent();
-
-            if (!powerAvailable()) {
-                pauseChargingWaitForPower();
-                break;
-            }
 
             if (new_in_state) {
                 signalEvent(types::evse_manager::SessionEventEnum::ChargingPausedEV);
@@ -704,6 +717,7 @@ void Charger::update_pwm_now(float dc) {
     session_log.evse(false, fmt::format("Set PWM On ({}%)", dc * 100.));
 
     update_pwm_last_dc = dc;
+    pwm_running = true;
     r_bsp->call_pwm_on(dc);
     lastPwmUpdate = date::utc_clock::now();
 }
@@ -716,11 +730,13 @@ void Charger::update_pwm_now_if_changed(float dc) {
 
 void Charger::pwm_off() {
     session_log.evse(false, "Set PWM Off");
+    pwm_running = false;
     r_bsp->call_pwm_off();
 }
 
 void Charger::pwm_F() {
     session_log.evse(false, "Set PWM F");
+    pwm_running = false;
     r_bsp->call_pwm_F();
 }
 
@@ -1233,6 +1249,62 @@ void Charger::inform_new_evse_max_hlc_limits(
     const types::iso15118_charger::DC_EVSEMaximumLimits& _currentEvseMaxLimits) {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
     currentEvseMaxLimits = _currentEvseMaxLimits;
+}
+
+// HLC stack signalled a pause request for the lower layers.
+void Charger::dlink_pause() {
+    std::lock_guard<std::recursive_mutex> lock(stateMutex);
+    pwm_off();
+}
+
+// HLC requested end of charging session, so we can stop the 5% PWM
+void Charger::dlink_terminate() {
+    std::lock_guard<std::recursive_mutex> lock(stateMutex);
+    pwm_off();
+}
+
+void Charger::dlink_error() {
+    std::lock_guard<std::recursive_mutex> lock(stateMutex);
+
+    // Is PWM on at the moment?
+    if (!pwm_running) {
+        // [V2G3-M07-04]: With receiving a D-LINK_ERROR.request from HLE in X1 state, the EVSE’s communication node
+        // shall perform a state X1 to state E/F to state X1 or X2 transition.
+    } else {
+        // [V2G3-M07-05]: With receiving a D-LINK_ERROR.request in X2 state from HLE, the EVSE’s communication node
+        // shall perform a state X2 to X1 to state E/F to state X1 or X2 transition.
+
+        // Are we in 5% mode or not?
+        if (hlc_use_5percent_current_session) {
+            // [V2G3-M07-06] Within the control pilot state X1, the communication node shall leave the logical network
+            // and change the matching state to "Unmatched".
+            // [V2G3-M07-07] With reaching the state “Unmatched”, the EVSE shall switch to state E/F.
+
+            // FIXME: We don't wait for SLAC to go to UNMATCHED in X1 for now but just do a normal 3 seconds t_step_X1
+            // instead. This should be more then sufficient for the SLAC module to reset.
+
+            // Do t_step_X1 with a t_step_EF afterwards
+            // [V2G3-M07-08] The state E/F shall be applied at least T_step_EF: This is already handled in the t_step_EF
+            // state.
+            t_step_X1_returnState = EvseState::T_step_EF;
+            t_step_X1_returnPWM = 0.;
+            currentState = EvseState::T_step_X1;
+
+            // After returning from T_step_EF, go to Waiting for Auth (We are restarting the session)
+            t_step_EF_returnState == EvseState::WaitingForAuthentication;
+            // [V2G3-M07-09] After applying state E/F, the EVSE shall switch to contol pilot state X1 or X2 as soon as
+            // the EVSE is ready control for pilot incoming duty matching cycle requests: This is already handled in the
+            // Auth step.
+
+            // [V2G3-M07-05] says we need to go through X1 at the end of the sequence
+            t_step_EF_returnPWM = 0.;
+        }
+        // else {
+        // [V2G3-M07-10] Gives us two options for nominal PWM mode and HLC in case of error: We choose [V2G3-M07-12]
+        // (Don't interrupt basic AC charging just because an error in HLC happend)
+        // So we don't do anything here, SLAC will be notified anyway to reset
+        //}
+    }
 }
 
 } // namespace module

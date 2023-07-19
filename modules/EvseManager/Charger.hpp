@@ -191,6 +191,10 @@ public:
 
     void inform_new_evse_max_hlc_limits(const types::iso15118_charger::DC_EVSEMaximumLimits& l);
 
+    void dlink_pause();
+    void dlink_error();
+    void dlink_terminate();
+
 private:
     // main Charger thread
     Everest::Thread mainThreadHandle;
@@ -293,6 +297,7 @@ private:
     void update_pwm_max_every_5seconds(float dc);
     void pwm_off();
     void pwm_F();
+    bool pwm_running{false};
 
     types::iso15118_charger::DC_EVSEMaximumLimits currentEvseMaxLimits;
 

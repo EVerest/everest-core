@@ -433,6 +433,15 @@ vars:
       Response will be reported async via  set_Get_Certificate_Response
     type: object
     $ref: /iso15118_charger#/Request_Exi_Stream_Schema
+  dlink_terminate:
+    description: Terminate the data link and become UNMATCHED.
+    type: "null"
+  dlink_error:
+    description: Terminate the data link and restart the matching process.
+    type: "null"
+  dlink_pause:
+    description: Request power saving mode, while staying MATCHED.
+    type: "null"
   EV_AppProtocol:
     description: >-
       Debug_Lite - This request message provides a list of charging protocols
