@@ -202,6 +202,7 @@ public:
     void dlink_terminate();
 
     void set_hlc_charging_active();
+    void set_hlc_allow_close_contactor(bool on);
 
 private:
     // main Charger thread
@@ -317,6 +318,8 @@ private:
 
     HlcTerminatePause hlc_charging_terminate_pause;
     bool hlc_charging_active{false};
+    bool hlc_allow_close_contactor{false};
+    bool iec_allow_close_contactor{false};
 };
 
 #define CHARGER_ABSOLUTE_MAX_CURRENT double(80.0F)

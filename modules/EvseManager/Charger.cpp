@@ -126,7 +126,9 @@ void Charger::runStateMachine() {
     case EvseState::Idle:
         // make sure we signal availability to potential new cars
         if (new_in_state) {
+            iec_allow_close_contactor = false;
             hlc_charging_active = false;
+            hlc_allow_close_contactor = false;
             hlc_charging_terminate_pause = HlcTerminatePause::Unknown;
             pwm_off();
             DeAuthorize();
@@ -348,7 +350,10 @@ void Charger::runStateMachine() {
 
         if (new_in_state) {
             signalEvent(types::evse_manager::SessionEventEnum::PrepareCharging);
-            r_bsp->call_allow_power_on(true);
+            if (charge_mode == ChargeMode::DC) {
+                r_bsp->call_allow_power_on(true);
+            }
+
             if (hlc_use_5percent_current_session) {
                 update_pwm_now(PWM_5_PERCENT);
             } else {
@@ -359,6 +364,24 @@ void Charger::runStateMachine() {
         // make sure we are enabling PWM
         if (!hlc_use_5percent_current_session) {
             update_pwm_now_if_changed(ampereToDutyCycle(getMaxCurrent()));
+        }
+
+        if (charge_mode == ChargeMode::AC) {
+            // In AC mode BASIC, iec_allow is sufficient.  The same is true for HLC mode when nominal PWM is used as the
+            // car can do BASIC and HLC charging any time. In AC HLC with 5 percent mode, we need to wait for both
+            // iec_allow and hlc_allow.
+            if ((iec_allow_close_contactor && !hlc_use_5percent_current_session) ||
+                (iec_allow_close_contactor && hlc_allow_close_contactor && hlc_use_5percent_current_session)) {
+
+                signalEvent(types::evse_manager::SessionEventEnum::ChargingStarted);
+
+                if (powerAvailable()) {
+                    currentState = EvseState::Charging;
+                } else {
+                    currentState = EvseState::Charging;
+                    pauseChargingWaitForPower();
+                }
+            }
         }
 
         // if (charge_mode == ChargeMode::DC) {
@@ -625,33 +648,24 @@ void Charger::processCPEventsState(ControlPilotEvent cp_event) {
         break;
 
     case EvseState::PrepareCharging:
-        if (charge_mode == ChargeMode::AC) {
-            // FIXME: This needs to be fixed for AC HLC, in this case the car can trigger Charging state before
-            // PowerDeliveryReq is sent on ISO. AC: once the car requests power (B->C/D), we can switch to charging.
-            signalEvent(types::evse_manager::SessionEventEnum::ChargingStarted);
-            if (cp_event == ControlPilotEvent::CarRequestedPower) {
-                if (powerAvailable()) {
-                    currentState = EvseState::Charging;
-                } else {
-                    currentState = EvseState::Charging;
-                    pauseChargingWaitForPower();
-                }
-            }
-        } else {
-            if (cp_event == ControlPilotEvent::CarRequestedStopPower) {
-                currentState = EvseState::StoppingCharging;
-            }
+        if (cp_event == ControlPilotEvent::CarRequestedPower) {
+            iec_allow_close_contactor = true;
+        } else if (cp_event == ControlPilotEvent::CarRequestedStopPower) {
+            iec_allow_close_contactor = false;
+            currentState = EvseState::StoppingCharging;
         }
         break;
 
     case EvseState::Charging:
         if (cp_event == ControlPilotEvent::CarRequestedStopPower) {
+            iec_allow_close_contactor = false;
             currentState = EvseState::ChargingPausedEV;
         }
         break;
 
     case EvseState::ChargingPausedEV:
         if (cp_event == ControlPilotEvent::CarRequestedPower) {
+            iec_allow_close_contactor = true;
             currentState = EvseState::Charging;
         }
         break;
@@ -1316,6 +1330,13 @@ void Charger::dlink_error() {
 }
 
 void Charger::set_hlc_charging_active() {
+    std::lock_guard<std::recursive_mutex> lock(stateMutex);
     hlc_charging_active = true;
 }
+
+void Charger::set_hlc_allow_close_contactor(bool on) {
+    std::lock_guard<std::recursive_mutex> lock(stateMutex);
+    hlc_allow_close_contactor = on;
+}
+
 } // namespace module

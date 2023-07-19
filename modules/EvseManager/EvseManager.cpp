@@ -114,7 +114,17 @@ void EvseManager::ready() {
             r_slac[0]->call_dlink_terminate();
         });
 
-        r_hlc[0]->subscribe_V2G_Setup_Finished([this]() { charger->set_hlc_charging_active(); });
+        r_hlc[0]->subscribe_V2G_Setup_Finished([this] { charger->set_hlc_charging_active(); });
+
+        r_hlc[0]->subscribe_AC_Close_Contactor([this] {
+            session_log.car(true, "AC HLC Close contactor");
+            charger->set_hlc_allow_close_contactor(true);
+        });
+
+        r_hlc[0]->subscribe_AC_Open_Contactor([this] {
+            session_log.car(true, "AC HLC Close contactor");
+            charger->set_hlc_allow_close_contactor(false);
+        });
 
         // Set up energy transfer modes for HLC. For now we only support either DC or AC, not both at the same time.
         Array transfer_modes;
@@ -240,9 +250,8 @@ void EvseManager::ready() {
 
             // Car requests DC contactor open. We don't actually open but switch off DC supply.
             // opening will be done by Charger on C->B CP event.
-            r_hlc[0]->subscribe_DC_Open_Contactor([this](bool b) {
-                if (b)
-                    powersupply_DC_off();
+            r_hlc[0]->subscribe_DC_Open_Contactor([this] {
+                powersupply_DC_off();
                 imd_stop();
             });
 

@@ -632,7 +632,7 @@ static enum v2g_event handle_din_power_delivery(struct v2g_connection* conn) {
 
     if (req->ReadyToChargeState == (int)0) {
         conn->ctx->p_charger->publish_currentDemand_Finished(nullptr);
-        conn->ctx->p_charger->publish_DC_Open_Contactor(true);
+        conn->ctx->p_charger->publish_DC_Open_Contactor(nullptr);
         conn->ctx->session.is_charging = false;
     }
 

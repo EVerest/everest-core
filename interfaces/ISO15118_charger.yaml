@@ -297,17 +297,17 @@ vars:
     type: object
     $ref: /authorization#/ProvidedIdToken
   AC_Close_Contactor:
-    description: If true, the contactor should be closed
-    type: boolean
+    description: The contactor should be closed
+    type: "null"
   AC_Open_Contactor:
-    description: If true, the contactor should be opened
-    type: boolean
+    description: The contactor should be opened
+    type: "null"
   Start_CableCheck:
     description: The charger should now start a cable check
     type: "null"
   DC_Open_Contactor:
-    description: If true, the contactor should be opened
-    type: boolean
+    description: The contactor should be opened
+    type: "null"
   V2G_Setup_Finished:
     description: >-
       V2G_Setup_Finished from ISO15118-3. Trigger when EV sends a PowerDeliveryReq
