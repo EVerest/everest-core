@@ -177,7 +177,7 @@ private:
     const float EVSE_ABSOLUTE_MAX_CURRENT = 80.0;
     bool slac_enabled;
 
-    std::atomic_bool contactor_open{false};
+    std::atomic_bool contactor_open{true};
 
     std::mutex hlc_mutex;
 

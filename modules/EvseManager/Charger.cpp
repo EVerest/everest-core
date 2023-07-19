@@ -351,7 +351,9 @@ void Charger::runStateMachine() {
         if (new_in_state) {
             signalEvent(types::evse_manager::SessionEventEnum::PrepareCharging);
             if (charge_mode == ChargeMode::DC) {
-                r_bsp->call_allow_power_on(true);
+                if (hlc_allow_close_contactor && iec_allow_close_contactor) {
+                    r_bsp->call_allow_power_on(true);
+                }
             }
 
             if (hlc_use_5percent_current_session) {
@@ -666,7 +668,10 @@ void Charger::processCPEventsState(ControlPilotEvent cp_event) {
     case EvseState::ChargingPausedEV:
         if (cp_event == ControlPilotEvent::CarRequestedPower) {
             iec_allow_close_contactor = true;
-            currentState = EvseState::Charging;
+            // FIXME to resume from HLC pause we need to do more
+            if (charge_mode == ChargeMode::AC && !hlc_charging_active) {
+                currentState = EvseState::Charging;
+            }
         }
         break;
 

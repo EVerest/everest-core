@@ -1066,6 +1066,10 @@ void EvseManager::cable_check() {
         // normally contactors should be closed before entering cable check routine.
         // On some hardware implementation it may take some time until the confirmation arrives though,
         // so we wait with a timeout here until the contactors are confirmed to be closed.
+        // Allow closing from HLC perspective, it will wait for CP state C in Charger IEC state machine as well.
+        session_log.car(true, "DC HLC Close contactor (in CableCheck)");
+        charger->set_hlc_allow_close_contactor(true);
+
         Timeout timeout(CABLECHECK_CONTACTORS_CLOSE_TIMEOUT);
 
         while (!timeout.reached()) {
