@@ -285,6 +285,16 @@ public:
     /// becomes operative again
     void on_operative(const int32_t evse_id, const int32_t connector_id);
 
+    /// \brief Event handler that should be called when the connector on the given evse_id and connector_id is faulted.
+    /// \param evse_id          Faulted EVSE id
+    /// \param connector_id     Faulted connector id
+    void on_faulted(const int32_t evse_id, const int32_t connector_id);
+
+    /// \brief Event handler that should be called when the connector on the given evse_id and connector_id is reserved.
+    /// \param evse_id          Reserved EVSE id
+    /// \param connector_id     Reserved connector id
+    void on_reserved(const int32_t evse_id, const int32_t connector_id);
+
     /// \brief Validates provided \p id_token \p certificate and \p ocsp_request_data using CSMS, AuthCache or AuthList
     /// \param id_token
     /// \param certificate

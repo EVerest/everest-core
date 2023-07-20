@@ -189,6 +189,14 @@ void ChargePoint::on_operative(const int32_t evse_id, const int32_t connector_id
     this->evses.at(evse_id)->submit_event(connector_id, ConnectorEvent::ReturnToOperativeState);
 }
 
+void ChargePoint::on_faulted(const int32_t evse_id, const int32_t connector_id) {
+    this->evses.at(evse_id)->submit_event(connector_id, ConnectorEvent::Error);
+}
+
+void ChargePoint::on_reserved(const int32_t evse_id, const int32_t connector_id) {
+    this->evses.at(evse_id)->submit_event(connector_id, ConnectorEvent::Reserve);
+}
+
 AuthorizeResponse ChargePoint::validate_token(const IdToken id_token, const std::optional<CiString<5500>>& certificate,
                                               const std::optional<std::vector<OCSPRequestData>>& ocsp_request_data) {
     // TODO(piet): C01.FR.14
