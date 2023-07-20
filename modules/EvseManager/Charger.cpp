@@ -350,16 +350,17 @@ void Charger::runStateMachine() {
 
         if (new_in_state) {
             signalEvent(types::evse_manager::SessionEventEnum::PrepareCharging);
-            if (charge_mode == ChargeMode::DC) {
-                if (hlc_allow_close_contactor && iec_allow_close_contactor) {
-                    r_bsp->call_allow_power_on(true);
-                }
-            }
 
             if (hlc_use_5percent_current_session) {
                 update_pwm_now(PWM_5_PERCENT);
             } else {
                 update_pwm_now(ampereToDutyCycle(0));
+            }
+        }
+
+        if (charge_mode == ChargeMode::DC) {
+            if (hlc_allow_close_contactor && iec_allow_close_contactor) {
+                r_bsp->call_allow_power_on(true);
             }
         }
 
@@ -443,15 +444,19 @@ void Charger::runStateMachine() {
             // This is for HLC charging (both AC and DC)
             if (new_in_state) {
                 r_bsp->call_allow_power_on(false);
-                pwm_off();
             }
 
             // We come here by a state C->B transition but the ISO message may not have arrived yet,
-            // so we wait here until it is Terminate, everything else is a Pause and we stay here
+            // so we wait here until we know wether it is Terminate or Pause. Until we leave PWM on (should not be shut
+            // down before SessionStop.req)
 
             if (hlc_charging_terminate_pause == HlcTerminatePause::Terminate) {
                 // EV wants to terminate session
                 currentState = EvseState::StoppingCharging;
+                pwm_off();
+            } else if (hlc_charging_terminate_pause == HlcTerminatePause::Pause) {
+                // EV wants an actual pause
+                pwm_off();
             }
 
         } else {
@@ -1279,6 +1284,7 @@ void Charger::inform_new_evse_max_hlc_limits(
 // HLC stack signalled a pause request for the lower layers.
 void Charger::dlink_pause() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
+    hlc_allow_close_contactor = false;
     pwm_off();
     hlc_charging_terminate_pause = HlcTerminatePause::Pause;
 }
@@ -1286,12 +1292,15 @@ void Charger::dlink_pause() {
 // HLC requested end of charging session, so we can stop the 5% PWM
 void Charger::dlink_terminate() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
+    hlc_allow_close_contactor = false;
     pwm_off();
     hlc_charging_terminate_pause = HlcTerminatePause::Terminate;
 }
 
 void Charger::dlink_error() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
+
+    hlc_allow_close_contactor = false;
 
     // Is PWM on at the moment?
     if (!pwm_running) {
@@ -1342,6 +1351,12 @@ void Charger::set_hlc_charging_active() {
 void Charger::set_hlc_allow_close_contactor(bool on) {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
     hlc_allow_close_contactor = on;
+}
+
+void Charger::set_hlc_error(types::evse_manager::Error e) {
+    std::lock_guard<std::recursive_mutex> lock(stateMutex);
+    currentState = EvseState::Error;
+    errorState = e;
 }
 
 } // namespace module

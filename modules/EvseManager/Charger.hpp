@@ -94,6 +94,7 @@ public:
     bool enable();
     bool disable();
     void set_faulted();
+    void set_hlc_error(types::evse_manager::Error e);
     // switch to next charging session after Finished
     bool restart();
 
