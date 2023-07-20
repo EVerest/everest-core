@@ -321,6 +321,13 @@ private:
     bool hlc_charging_active{false};
     bool hlc_allow_close_contactor{false};
     bool iec_allow_close_contactor{false};
+
+    static constexpr auto TP_EV_VALD_STATE_DURATION_MIN =
+        std::chrono::milliseconds(200 - 10); // We give 10msecs tolerance to the norm values (table 3 ISO15118-3)
+    static constexpr auto TP_EV_VALD_STATE_DURATION_MAX =
+        std::chrono::milliseconds(400 + 10); // We give 10msecs tolerance to the norm values (table 3 ISO15118-3)
+
+    std::chrono::time_point<std::chrono::steady_clock> hlc_ev_pause_start_of_bcb;
 };
 
 #define CHARGER_ABSOLUTE_MAX_CURRENT double(80.0F)

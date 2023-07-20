@@ -673,9 +673,29 @@ void Charger::processCPEventsState(ControlPilotEvent cp_event) {
     case EvseState::ChargingPausedEV:
         if (cp_event == ControlPilotEvent::CarRequestedPower) {
             iec_allow_close_contactor = true;
-            // FIXME to resume from HLC pause we need to do more
+            // For BASIC charging we can simply switch back to Charging
             if (charge_mode == ChargeMode::AC && !hlc_charging_active) {
                 currentState = EvseState::Charging;
+            } else if (!pwm_running) {
+                // For HLC charging, PWM already off: This is probably a BCB Toggle to wake us up from sleep mode.
+                // Remember start of BCB toggle.
+                hlc_ev_pause_start_of_bcb = std::chrono::steady_clock::now();
+            }
+        }
+
+        if (cp_event == ControlPilotEvent::CarRequestedStopPower && !pwm_running && hlc_charging_active) {
+            // This is probably and end of BCB toggle, verify it was not too long or too short
+            auto pulse_length = std::chrono::steady_clock::now() - hlc_ev_pause_start_of_bcb;
+            if (pulse_length > TP_EV_VALD_STATE_DURATION_MIN && pulse_length < TP_EV_VALD_STATE_DURATION_MAX) {
+                session_log.car(
+                    false, fmt::format("BCB toggle ({} ms)",
+                                       std::chrono::duration_cast<std::chrono::milliseconds>(pulse_length).count()));
+                // enable PWM again. ISO stack should have been ready for the whole time.
+                // FIXME where do we go from here? Auth?
+                // XXX
+            } else {
+                EVLOG_warning << "BCB toggle with invalid duration detected: "
+                              << std::chrono::duration_cast<std::chrono::milliseconds>(pulse_length).count();
             }
         }
         break;
