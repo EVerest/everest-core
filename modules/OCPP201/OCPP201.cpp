@@ -370,6 +370,10 @@ void OCPP201::init() {
         }
     };
 
+    callbacks.validate_network_profile_callback = [this](const int32_t configuration_slot, const ocpp::v201::NetworkConnectionProfile& network_connection_profile) {
+        return ocpp::v201::SetNetworkProfileStatusEnum::Accepted;
+    };
+
     const auto sql_init_path = this->ocpp_share_path / INIT_SQL;
     std::map<int32_t, int32_t> evse_connector_structure;
     int evse_id = 1;
