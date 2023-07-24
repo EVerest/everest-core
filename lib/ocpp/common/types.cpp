@@ -53,7 +53,8 @@ void DateTimeImpl::from_rfc3339(const std::string& timepoint_str) {
             in.seekg(0);
             in >> date::parse("%FT%T", this->timepoint);
             if (in.fail()) {
-                EVLOG_error << "timepoint string parsing failed";
+                EVLOG_error << "Timepoint string parsing failed. Could not convert: \"" << timepoint_str
+                            << "\" into DateTime.";
             }
         }
     }

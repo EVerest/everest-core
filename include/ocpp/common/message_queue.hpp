@@ -370,6 +370,8 @@ public:
                 }
                 if (enhanced_message.messageTypeId == MessageTypeId::CALLERROR) {
                     EVLOG_error << "Received a CALLERROR for message with UID: " << enhanced_message.uniqueId;
+                    // make sure the original call message is attached to the callerror
+                    enhanced_message.call_message = this->in_flight->message;
                     lk.unlock();
                     this->handle_timeout_or_callerror(enhanced_message);
                 } else {

@@ -24,6 +24,7 @@ ChargePointImpl::ChargePointImpl(const std::string& config, const std::filesyste
                                  const std::filesystem::path& message_log_path,
                                  const std::filesystem::path& certs_path) :
     ocpp::ChargingStationBase(),
+    boot_notification_callerror(false),
     initialized(false),
     connection_state(ChargePointConnectionState::Disconnected),
     registration_status(RegistrationStatus::Pending),
@@ -784,6 +785,13 @@ void ChargePointImpl::connected_callback() {
         break;
     }
     default:
+        if (this->connection_state == ChargePointConnectionState::Connected && this->boot_notification_callerror) {
+            EVLOG_error << "Connected but not in state 'Disconnected' or 'Booted' and previous BootNotification "
+                           "failed. Trying again...";
+            this->boot_notification_callerror = false;
+            this->boot_notification();
+            break;
+        }
         EVLOG_error << "Connected but not in state 'Disconnected' or 'Booted', something is wrong: "
                     << this->connection_state;
         break;
@@ -804,6 +812,13 @@ void ChargePointImpl::message_callback(const std::string& message) {
             if (enhanced_message.messageTypeId == MessageTypeId::CALL) {
                 auto call_error = CallError(enhanced_message.uniqueId, "NotSupported", "", json({}));
                 this->send(call_error);
+            } else if (enhanced_message.messageTypeId == MessageTypeId::CALLERROR) {
+                auto call_messagetype =
+                    this->message_queue->string_to_messagetype(enhanced_message.call_message.at(CALL_ACTION));
+                if (call_messagetype == MessageType::BootNotification) {
+                    EVLOG_error << "Received a CALLERROR in response to a BootNotification";
+                    this->boot_notification_callerror = true;
+                }
             }
 
             // in any case stop message handling here:
@@ -2813,13 +2828,18 @@ DataTransferResponse ChargePointImpl::data_transfer(const CiString<255>& vendorI
 
     DataTransferResponse response;
     ocpp::Call<DataTransferRequest> call(req, this->message_queue->createMessageId());
-
     auto data_transfer_future = this->send_async<DataTransferRequest>(call);
 
     auto enhanced_message = data_transfer_future.get();
     if (enhanced_message.messageType == MessageType::DataTransferResponse) {
-        ocpp::CallResult<DataTransferResponse> call_result = enhanced_message.message;
-        response = call_result.msg;
+        try {
+            ocpp::CallResult<DataTransferResponse> call_result = enhanced_message.message;
+            response = call_result.msg;
+        } catch (json::exception& e) {
+            // We can not parse the returned message, so we somehow have to indicate an error to the caller
+            response.status = DataTransferStatus::Rejected; // Rejected is not completely correct, but the
+                                                            // best we have to indicate an error
+        }
     }
     if (enhanced_message.offline) {
         // The charge point is offline or has a bad connection.

@@ -86,6 +86,7 @@ class ChargePointImpl : ocpp::ChargingStationBase {
 private:
     bool initialized;
     ChargePointConnectionState connection_state;
+    bool boot_notification_callerror;
     RegistrationStatus registration_status;
     DiagnosticsStatus diagnostics_status;
     FirmwareStatus firmware_status;
