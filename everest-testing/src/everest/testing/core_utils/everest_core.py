@@ -212,8 +212,9 @@ class EverestCore:
                     {"implementation_id": "evse", "module_id": test_control_module["evse_manager_id"]})
                 connections["test_control"].append(
                     {"implementation_id": "main", "module_id": test_control_module["car_simulator_id"]})
-                connections["ocpp"].append(
-                    {"implementation_id": "main", "module_id": test_control_module["ocpp_id"]})
+                if test_control_module["ocpp_id"]:
+                    connections["ocpp"].append(
+                        {"implementation_id": "main", "module_id": test_control_module["ocpp_id"]})
 
             user_config["active_modules"]["probe_module"] = {
                 "config_module": {"device": "auto"},

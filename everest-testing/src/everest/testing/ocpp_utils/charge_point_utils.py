@@ -18,6 +18,7 @@ class ValidationMode(str, Enum):
 
 
 class TestUtility:
+    __test__ = False
     def __init__(self) -> None:
         self.messages = []
         self.validation_mode = ValidationMode.EASY
