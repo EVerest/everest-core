@@ -76,17 +76,21 @@ class ProbeModule:
 
         return True
 
-
+@pytest.mark.everest_core_config('config-sil.yaml')
 @pytest.mark.asyncio
 async def test_001_start_test_module(everest_core: EverestCore):
     logging.info(">>>>>>>>> test_001_start_test_module <<<<<<<<<")
 
     everest_core.start(standalone_module='probe_module', modules_to_test=[
-                       TestControlModuleConnection(evse_manager_id="connector_1", car_simulator_id="car_simulator")])
+                       TestControlModuleConnection(evse_manager_id="connector_1", car_simulator_id="car_simulator", ocpp_id=None)])
     logging.info("everest-core ready, waiting for probe module")
 
     session = RuntimeSession(str(everest_core.prefix_path), str(everest_core.everest_config_path))
 
     probe = ProbeModule(session)
+
+    if everest_core.status_listener.wait_for_status(10, ["ALL_MODULES_STARTED"]):
+        everest_core.all_modules_started_event.set()
+        logging.info("set all modules started event...")
 
     assert probe.test(20)
