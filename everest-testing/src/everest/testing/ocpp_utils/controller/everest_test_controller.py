@@ -62,8 +62,11 @@ class EverestTestController(TestController):
             ocpp_config = json.loads(ocpp_config_path.read_text())
             charge_point_id = ocpp_config["InternalCtrlr"]["ChargePointId"]["attributes"][
                 "Actual"]
-            ocpp_config["InternalCtrlr"]["CentralSystemURI"]["attributes"][
-                "Actual"] = f"127.0.0.1:{central_system_port}/{charge_point_id}"
+            network_connection_profiles = json.loads(ocpp_config["InternalCtrlr"]["NetworkConnectionProfiles"]["attributes"][
+                "Actual"])
+            network_connection_profiles[0]["connectionData"]["ocppCsmsUrl"] =  f"ws://127.0.0.1:{central_system_port}/{charge_point_id}"
+            ocpp_config["InternalCtrlr"]["NetworkConnectionProfiles"]["attributes"][
+                "Actual"] = json.dumps(network_connection_profiles)
 
         if self.first_run:
             logging.info("First run")

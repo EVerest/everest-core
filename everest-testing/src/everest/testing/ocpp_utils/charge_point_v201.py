@@ -372,3 +372,4 @@ class ChargePoint201(cp):
     async def update_firmware(self, **kwargs):
         payload = call.UpdateFirmwarePayload(**kwargs)
         return await self.call(payload)
+
