@@ -15,7 +15,9 @@ from ocpp.v201.enums import (
     Action,
     RegistrationStatusType,
     AuthorizationStatusType,
-    AttributeType
+    AttributeType,
+    NotifyEVChargingNeedsStatusType,
+    GenericStatusType
 )
 from ocpp.v201.datatypes import IdTokenInfoType, SetVariableDataType, GetVariableDataType, ComponentType, VariableType
 from ocpp.routing import on
@@ -120,9 +122,61 @@ class ChargePoint201(cp):
     def on_notify_report(self, **kwargs):
         return call_result.NotifyReportPayload()
 
+    @on(Action.LogStatusNotification)
+    def on_log_status_notification(self, **kwargs):
+        return call_result.LogStatusNotificationPayload()
+
+    @on(Action.FirmwareStatusNotification)
+    def on_firmware_status_notification(self, **kwargs):
+        return call_result.FirmwareStatusNotificationPayload()
+
     @on(Action.TransactionEvent)
     def on_transaction_event(self, **kwargs):
         return call_result.TransactionEventPayload()
+
+    @on(Action.NotifyChargingLimit)
+    def on_notify_charging_limit(self, **kwargs):
+        return call_result.NotifyChargingLimitPayload()
+
+    @on(Action.NotifyCustomerInformation)
+    def on_notify_customer_information(self, **kwargs):
+        return call_result.NotifyCustomerInformationPayload()
+
+    @on(Action.NotifyEVChargingNeeds)
+    def on_notify_ev_charging_needs(self, **kwargs):
+        return call_result.NotifyEVChargingNeedsPayload(status=NotifyEVChargingNeedsStatusType.accepted)
+
+    @on(Action.NotifyEVChargingSchedule)
+    def on_notify_ev_charging_schedule(self, **kwargs):
+        return call_result.NotifyEVChargingSchedulePayload(status=GenericStatusType.accepted)
+
+    @on(Action.NotifyEvent)
+    def on_notify_event(self, **kwargs):
+        return call_result.NotifyEventPayload()
+
+    @on(Action.NotifyMonitoringReport)
+    def on_notify_monitoring_report(self, **kwargs):
+        return call_result.NotifyMonitoringReportPayload()
+
+    @on(Action.PublishFirmwareStatusNotification)
+    def on_publish_firmware_status_notification(self, **kwargs):
+        return call_result.PublishFirmwareStatusNotificationPayload()
+
+    @on(Action.ReportChargingProfiles)
+    def on_report_charging_profiles(self, **kwargs):
+        return call_result.ReportChargingProfilesPayload()
+
+    @on(Action.ReservationStatusUpdate)
+    def on_reservation_status_update(self, **kwargs):
+        return call_result.ReservationStatusUpdatePayload()
+
+    @on(Action.SecurityEventNotification)
+    def on_security_event_notification(self, **kwargs):
+        return call_result.SecurityEventNotificationPayload()
+
+    @on(Action.SignCertificate)
+    def on_sign_certificate(self, **kwargs):
+        return call_result.SignCertificatePayload(status=GenericStatusType.accepted)
 
     async def set_variables_req(self, **kwargs):
         payload = call.SetVariablesPayload(**kwargs)
@@ -185,4 +239,136 @@ class ChargePoint201(cp):
 
     async def clear_cache_req(self, **kwargs):
         payload = call.ClearCachePayload(**kwargs)
+        return await self.call(payload)
+
+    async def cancel_reservation_req(self, **kwargs):
+        payload = call.CancelReservationPayload(**kwargs)
+        return await self.call(payload)
+
+    async def certificate_signed_req(self, **kwargs):
+        payload = call.CertificateSignedPayload(**kwargs)
+        return await self.call(payload)
+
+    async def clear_charging_profile_req(self, **kwargs):
+        payload = call.ClearChargingProfilePayload(**kwargs)
+        return await self.call(payload)
+
+    async def clear_display_message(self, **kwargs):
+        payload = call.ClearDisplayMessagePayload(**kwargs)
+        return await self.call(payload)
+
+    async def clear_variable_monitoring(self, **kwargs):
+        payload = call.ClearVariableMonitoringPayload(**kwargs)
+        return await self.call(payload)
+
+    async def clear_charging_limit(self, **kwargs):
+        payload = call.ClearedChargingLimitPayload(**kwargs)
+        return await self.call(payload)
+
+    async def clear_variable_monitoring(self, **kwargs):
+        payload = call.ClearVariableMonitoringPayloaddPayload(**kwargs)
+        return await self.call(payload)
+
+    async def cost_update_req(self, **kwargs):
+        payload = call.CostUpdatedPayload(**kwargs)
+        return await self.call(payload)
+
+    async def customer_information_req(self, **kwargs):
+        payload = call.CustomerInformationPayload(**kwargs)
+        return await self.call(payload)
+
+    async def data_transfer_req(self, **kwargs):
+        payload = call.DataTransferPayload(**kwargs)
+        return await self.call(payload)
+
+    async def delete_certificate_req(self, **kwargs):
+        payload = call.DeleteCertificatePayload(**kwargs)
+        return await self.call(payload)
+
+    async def get_charging_profiles_req(self, **kwargs):
+        payload = call.GetChargingProfilesPayload(**kwargs)
+        return await self.call(payload)
+
+    async def get_composite_schedule_req(self, **kwargs):
+        payload = call.GetCompositeSchedulePayload(**kwargs)
+        return await self.call(payload)
+
+    async def get_display_nessages_req(self, **kwargs):
+        payload = call.GetDisplayMessagesPayload(**kwargs)
+        return await self.call(payload)
+
+    async def get_installed_certificate_ids_req(self, **kwargs):
+        payload = call.GetInstalledCertificateIdsPayload(**kwargs)
+        return await self.call(payload)
+
+    async def get_local_list_version(self, **kwargs):
+        payload = call.GetLocalListVersionPayload(**kwargs)
+        return await self.call(payload)
+
+    async def get_log_req(self, **kwargs):
+        payload = call.GetLogPayload(**kwargs)
+        return await self.call(payload)
+
+    async def get_transaction_status_req(self, **kwargs):
+        payload = call.GetTransactionStatusPayload(**kwargs)
+        return await self.call(payload)
+
+    async def install_certificate_req(self, **kwargs):
+        payload = call.InstallCertificatePayload(**kwargs)
+        return await self.call(payload)
+
+    async def install_certificate_req(self, **kwargs):
+        payload = call.InstallCertificatePayload(**kwargs)
+        return await self.call(payload)
+
+    async def publish_firmware_req(self, **kwargs):
+        payload = call.PublishFirmwarePayload(**kwargs)
+        return await self.call(payload)
+
+    async def reserve_now_req(self, **kwargs):
+        payload = call.ReserveNowPayload(**kwargs)
+        return await self.call(payload)
+
+    async def send_local_list_req(self, **kwargs):
+        payload = call.SendLocalListPayload(**kwargs)
+        return await self.call(payload)
+
+    async def set_charging_profile_req(self, **kwargs):
+        payload = call.SetChargingProfilePayload(**kwargs)
+        return await self.call(payload)
+
+    async def set_display_message_req(self, **kwargs):
+        payload = call.SetDisplayMessagePayload(**kwargs)
+        return await self.call(payload)
+
+    async def set_monitoring_base_req(self, **kwargs):
+        payload = call.SetMonitoringBasePayload(**kwargs)
+        return await self.call(payload)
+
+    async def set_monitoring_level_req(self, **kwargs):
+        payload = call.SetMonitoringLevelPayload(**kwargs)
+        return await self.call(payload)
+
+    async def set_network_profile_req(self, **kwargs):
+        payload = call.SetNetworkProfilePayload(self, **kwargs)
+        return await self.call(payload)
+
+    async def set_variable_monitoring_req(self, **kwargs):
+        payload = call.SetVariableMonitoringPayload(**kwargs)
+        return await self.call(payload)
+
+    async def trigger_message_req(self, **kwargs):
+        payload = call.TriggerMessagePayload(**kwargs)
+        return await self.call(payload)
+
+    async def unlock_connector_req(self, **kwargs):
+        payload = call.UnlockConnectorPayload(**kwargs)
+        return await self.call(payload)
+
+    async def unpublish_firmware_req(self, **kwargs):
+        payload = call.UnpublishFirmwarePayload(**kwargs)
+        return await self.call(payload)
+
+    async def update_firmware(self, **kwargs):
+        payload = call.UpdateFirmwarePayload(**kwargs)
         return await self.call(payload)
