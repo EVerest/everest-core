@@ -40,6 +40,8 @@ public:
         return did_timeout;
     }
 
+    const uint8_t* get_mac_addr();
+
 private:
     // for debugging only, should be removed
     std::unique_ptr<::utils::PacketSocket> socket;

@@ -83,4 +83,8 @@ bool Channel::write(slac::messages::HomeplugMessage& msg, int timeout) {
     return false;
 }
 
+const uint8_t* Channel::get_mac_addr() {
+    return orig_if_mac;
+}
+
 } // namespace slac
