@@ -178,12 +178,18 @@ static bool load_contract_root_cert(mbedtls_x509_crt* contract_root_crt, const c
                                     const char* MO_file_path) {
     int rv = 0;
 
-    if (((rv = mbedtls_x509_crt_parse_file(contract_root_crt, MO_file_path)) != 0) &&
-        ((rv = mbedtls_x509_crt_parse_file(contract_root_crt, V2G_file_path)) != 0)) {
+    if ((rv = mbedtls_x509_crt_parse_file(contract_root_crt, MO_file_path)) != 0) {
         char strerr[256];
-        mbedtls_strerror(rv, strerr, 256);
-        dlog(DLOG_LEVEL_ERROR, "Unable to parse V2G (%s) or MO (%s) root certificate  (err: -0x%04x - %s)",
-             V2G_file_path, MO_file_path, -rv, strerr);
+        mbedtls_strerror(rv, strerr, sizeof(strerr));
+        dlog(DLOG_LEVEL_WARNING, "Unable to parse MO (%s) root certificate. (err: -0x%04x - %s)",
+             MO_file_path, -rv, strerr);
+        dlog(DLOG_LEVEL_INFO, "Attempting to parse V2G root certificate..");
+
+        if ((rv = mbedtls_x509_crt_parse_file(contract_root_crt, V2G_file_path)) != 0) {
+            mbedtls_strerror(rv, strerr, sizeof(strerr));
+            dlog(DLOG_LEVEL_ERROR, "Unable to parse V2G (%s) root certificate. (err: -0x%04x - %s)",
+                 V2G_file_path, -rv, strerr);
+        }
     }
 
     return (rv != 0) ? false : true;
