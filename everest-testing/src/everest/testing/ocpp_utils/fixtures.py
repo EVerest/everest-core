@@ -35,7 +35,11 @@ def test_controller(request, test_config) -> TestController:
         ocpp_version = "ocpp1.6"
 
     everest_core_path = Path(request.config.getoption("--everest-prefix"))
-    config_path = test_config['ConfigPath']
+    marker = request.node.get_closest_marker("everest_core_config")
+    if marker is None:
+        config_path = test_config['ConfigPath']
+    else:
+        config_path = Path(marker.args[0])
     test_controller = EverestTestController(
         everest_core_path, config_path, test_config['ChargePoint']['ChargePointId'], ocpp_version, request.function.__name__)
     yield test_controller
