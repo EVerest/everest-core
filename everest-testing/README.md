@@ -10,15 +10,33 @@ The utilities are seperated into
 
 The core_utils basically provide two fixtures that you can require in your test cases: 
 * everest_core
-* test_control_module
 
 The fixture `everest_core` can be used to start and stop the everest-core application.
 
-The fixture `test_control_module` is a wrapper around the everest module `PyTestControlModule`. It contains a direct reference to this python module and is used to interface with everest-core. It also contains a data structure in which events that occur within EVerest are stored. Those events can be used to validate against the expectations of your test case. You can access controlling the simulation and events for the test cases.
-
 ## OCPP utils
+
 The ocpp utils provide fixture which you can require in your test cases in order to start a central system and initiate operations.
-These utilities are still under early development.
+These utilities are still under development.
+
+* **test_controller**: Fixture that references the the test_controller that can be used for control events for the test cases. This includes control over simulations that trigger events like an EV plug in, EV plug out, swipe RFID and more.
+* **central_system_v16**: Fixture that starts up an OCPP1.6 central system. Can be started as TLS or plain websocket depending on the request parameter.
+* **central_system_v201**: Fixture that starts up an OCPP2.0.1 central system. Can be started as TLS or plain websocket depending on the request parameter.
+* **charge_point_v16**: Fixture starts up an OCPP1.6 central system and provides access to the connection of the charge point that connects to it. This reference can be used to send OCPP messages initiated by the central system and to receive and validate messages from the charge point. It requires the fixtures central_system_v16 and test_controller and starts the test_controller immediately.
+* **charge_point_v201**: Fixture starts up an OCPP2.0.1 central system and provides access to the connection of the charge point that connects to it. This reference can be used to send OCPP messages initiated by the central system and to receive and validate messages from the charge point. It requires the fixtures central_system_v16 and test_controller and starts the test_controller immediately.
+* **test_utility**: Utility fixture that contains the OCPP message history, the validation mode (STRICT, EASY) and it can keep track of forbidden OCPP messages (Actions) (ones that cause a test case to fail if they are received)
+* **ftp_server**: This fixture creates a temporary directory and starts a local ftp server connected to that directory. The temporary directory is deleted after the test. It is used for Diagnostics and Logfiles
+* **test_config**: This fixture is of type OcppTestConfiguration and it specifies some data that are required or can be configured for testing OCPP. If you dont override this fixture, it initiializes to some default information that is required to set up other fixtures (e.g. ChargePointId, CSMS Port). You can implement this fixture yourself in order to be able to include this information in your test cases.
+
+## pytest markers
+
+Some fixtures will parse pytest markers of test cases. The following markers can be used:
+
+* **ocpp_version**: Can be "ocpp1.6" or "ocpp2.0.1" and is used to setup EVerest and the central system for the specific OCPP version
+* **everest_core_config**: Can be used to specify the everest configuration file to be used in this test case
+
+## Add a conftest.py
+
+The test_controller fixture and inherently also the charge_point_v16 and charge_point_v201 require information about the directory of the everest-core application and libocpp. Those can be specified within a conftest.py 
 
 ## Install
 
@@ -30,7 +48,7 @@ Install this package using
 python3 -m pip install .
 ```
 
-## Usage
+## Example test case
 
 Simply require the provided fixtures in your test case.
 

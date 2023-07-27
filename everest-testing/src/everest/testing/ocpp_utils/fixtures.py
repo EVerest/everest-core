@@ -7,7 +7,6 @@ import pytest
 import tempfile
 import pytest_asyncio
 import shutil
-import asyncio
 import ssl
 import socket
 from threading import Thread
@@ -43,27 +42,26 @@ def test_controller(request, test_config: OcppTestConfiguration) -> TestControll
 
     libocpp_path = Path(request.config.getoption("--libocpp"))
     test_controller = EverestTestController(
-        everest_core_path, libocpp_path, config_path, test_config['ChargePoint']['ChargePointId'], ocpp_version, request.function.__name__)
+        everest_core_path, libocpp_path, config_path, test_config.charge_point_info.charge_point_id, ocpp_version, request.function.__name__)
     yield test_controller
     test_controller.stop()
 
 
 @pytest_asyncio.fixture
-async def central_system_v16(request, test_config):
+async def central_system_v16(request, test_config: OcppTestConfiguration):
     """Fixture for CentralSystem. Can be started as TLS or
     plain websocket depending on the request parameter.
     """
 
     if (hasattr(request, 'param')):
         ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-        ssl_context.load_cert_chain(Path(test_config['Certificates']['CSMS']),
-                                    Path(
-                                        test_config['Certificates']['CSMSKey']),
-                                    test_config['Certificates']['CSMSPassphrase'])
+        ssl_context.load_cert_chain(test_config.certificate_info.csms_cert,
+                                    test_config.certificate_info.csms_key,
+                                    test_config.certificate_info.csms_passphrase)
     else:
         ssl_context = None
     cs = CentralSystem(None,
-                       test_config['ChargePoint']['ChargePointId'],
+                       test_config.charge_point_info.charge_point_id,
                        ocpp_version='ocpp1.6')
     await cs.start(ssl_context)
     yield cs
@@ -72,20 +70,19 @@ async def central_system_v16(request, test_config):
 
 
 @pytest_asyncio.fixture
-async def central_system_v201(request, test_config):
+async def central_system_v201(request, test_config: OcppTestConfiguration):
     """Fixture for CentralSystem. Can be started as TLS or
     plain websocket depending on the request parameter.
     """
     if (hasattr(request, 'param')):
         ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-        ssl_context.load_cert_chain(Path(test_config['Certificates']['CSMS']),
-                                    Path(
-                                        test_config['Certificates']['CSMSKey']),
-                                    test_config['Certificates']['CSMSPassphrase'])
+        ssl_context.load_cert_chain(test_config.certificate_info.csms_cert,
+                                    test_config.certificate_info.csms_key,
+                                    test_config.certificate_info.csms_passphrase)
     else:
         ssl_context = None
     cs = CentralSystem(None,
-                       test_config['ChargePoint']['ChargePointId'],
+                       test_config.charge_point_info.charge_point_id,
                        ocpp_version='ocpp2.0.1')
     await cs.start(ssl_context)
     yield cs
@@ -124,6 +121,9 @@ def test_utility():
     """
     return TestUtility()
 
+@pytest.fixture
+def test_config():
+    return OcppTestConfiguration()
 
 class FtpThread(Thread):
     def set_port(self, port):
@@ -131,7 +131,7 @@ class FtpThread(Thread):
 
 
 @pytest.fixture
-def ftp_server(test_config):
+def ftp_server(test_config: OcppTestConfiguration):
     """This fixture creates a temporary directory and starts
     a local ftp server connected to that directory. The temporary
     directory is deleted afterwards
@@ -143,14 +143,12 @@ def ftp_server(test_config):
     ftp_socket.bind(address)
     port = ftp_socket.getsockname()[1]
 
-    def _ftp_server(test_config, ftp_socket):
-        test_controller_name = test_config['TestController']
+    def _ftp_server(test_config: OcppTestConfiguration, ftp_socket):
 
-        if test_controller_name == 'EVerest':
-            shutil.copyfile(test_config['Firmware']['UpdateFile'], os.path.join(
-                d, "firmware_update.pnx"))
-            shutil.copyfile(test_config['Firmware']['UpdateFileSignature'],
-                            os.path.join(d, "firmware_update.pnx.base64"))
+        shutil.copyfile(test_config.firmware_info.update_file, os.path.join(
+            d, "firmware_update.pnx"))
+        shutil.copyfile(test_config.firmware_info.update_file_signature,
+                        os.path.join(d, "firmware_update.pnx.base64"))
 
         authorizer = DummyAuthorizer()
         authorizer.add_user(getpass.getuser(), "12345", d, perm="elradfmwMT")

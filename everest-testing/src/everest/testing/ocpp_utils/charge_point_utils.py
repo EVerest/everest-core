@@ -2,15 +2,56 @@
 # Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
 from datetime import datetime
+from pathlib import Path
 import OpenSSL.crypto as crypto
 import logging
 import time
 import asyncio
 from enum import Enum
+from dataclasses import dataclass
+from typing import Optional
 
 from ocpp.messages import unpack
 from ocpp.charge_point import snake_to_camel_case, asdict, remove_nones
 
+@dataclass
+class ChargePointInfo:
+    charge_point_id: str = "cp001"
+    charge_point_vendor: Optional[str] = None
+    charge_point_model: Optional[str] = None
+    firmware_version: Optional[str] = None
+
+@dataclass
+class AuthorizationInfo:
+    emaid: str
+    valid_id_tag_1: str
+    valid_id_tag_2: str
+    invalid_id_tag: str
+    parent_id_tag: str
+    invalid_parent_id_tag: str
+
+@dataclass
+class CertificateInfo:
+    csms_root_ca: Path
+    csms_root_ca_key: Path
+    csms_root_ca_invalid: Path
+    csms_cert: Path
+    csms_key: Path
+    csms_passphrase: str
+    mf_root_ca: Path
+
+@dataclass
+class FirmwareInfo:
+    update_file: Path
+    update_file_signature: Path
+@dataclass
+class OcppTestConfiguration:
+    csms_port: str = 9000
+    charge_point_info: ChargePointInfo = ChargePointInfo()
+    config_path: Optional[Path] = None
+    authorization_info: Optional[AuthorizationInfo] = None
+    certificate_info: Optional[CertificateInfo] = None
+    firmware_info: Optional[FirmwareInfo] = None
 
 class ValidationMode(str, Enum):
     STRICT = "STRICT"

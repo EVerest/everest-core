@@ -253,19 +253,15 @@ class ChargePoint201(cp):
         payload = call.ClearChargingProfilePayload(**kwargs)
         return await self.call(payload)
 
-    async def clear_display_message(self, **kwargs):
+    async def clear_display_message_req(self, **kwargs):
         payload = call.ClearDisplayMessagePayload(**kwargs)
         return await self.call(payload)
 
-    async def clear_variable_monitoring(self, **kwargs):
-        payload = call.ClearVariableMonitoringPayload(**kwargs)
-        return await self.call(payload)
-
-    async def clear_charging_limit(self, **kwargs):
+    async def clear_charging_limit_req(self, **kwargs):
         payload = call.ClearedChargingLimitPayload(**kwargs)
         return await self.call(payload)
 
-    async def clear_variable_monitoring(self, **kwargs):
+    async def clear_variable_monitoring_req(self, **kwargs):
         payload = call.ClearVariableMonitoringPayloaddPayload(**kwargs)
         return await self.call(payload)
 
@@ -311,10 +307,6 @@ class ChargePoint201(cp):
 
     async def get_transaction_status_req(self, **kwargs):
         payload = call.GetTransactionStatusPayload(**kwargs)
-        return await self.call(payload)
-
-    async def install_certificate_req(self, **kwargs):
-        payload = call.InstallCertificatePayload(**kwargs)
         return await self.call(payload)
 
     async def install_certificate_req(self, **kwargs):
