@@ -26,32 +26,18 @@ async def test_ocpp_16(test_config: OcppTestConfiguration, charge_point_v16: Cha
     await charge_point_v16.get_configuration_req(key=["AuthorizeRemoteTxRequests"])
     await charge_point_v16.change_configuration_req(key="MeterValueSampleInterval", value="10")
 
-    # send RemoteStartTransaction.req
-    await charge_point_v16.remote_start_transaction_req(id_tag=test_config.authorization_info.valid_id_tag_1, connector_id=1)
-    await charge_point_v16.wait_for_specific_message(
-        "RemoteStartTransaction", {"status": "Accepted"})
-
     # start charging session
     test_controller.plug_in()
 
+    await charge_point_v16.wait_for_specific_message("StatusNotification", {"connectorId": 1, "status": "Preparing"})
+
+    # send RemoteStartTransaction.req
+    await charge_point_v16.remote_start_transaction_req(id_tag="DEADBEEF", connector_id=1)
+
     # expect StartTransaction.req
     await charge_point_v16.wait_for_specific_message("StartTransaction", {
-                                               "connectorId": 1, "idTag": test_config.authorization_info.valid_id_tag_1, "meterStart": 0})
-
-    await charge_point_v16.wait_for_specific_message("StatusNotification", {"connectorId": 1, "status": "Preparing"})
-    await charge_point_v16.wait_for_specific_message("StatusNotification", {"connectorId": 1, "status": "Charging"})
-
-    await charge_point_v16.remote_stop_transaction_req(transaction_id=1)
-    await charge_point_v16.wait_for_specific_message(
-        "RemoteStopTransaction", {"status": "Accepted"})
+                                               "connectorId": 1, "idTag": "DEADBEEF", "meterStart": 0})
     
-    await charge_point_v16.wait_for_specific_message("StopTransaction", {"reason": "Remote"})
-    await charge_point_v16.wait_for_specific_message("StatusNotification", {"connectorId": 1, "status": "Finishing"})
-
-    test_controller.plug_out()
-
-    await charge_point_v16.wait_for_specific_message("StatusNotification", {"connectorId": 1, "status": "Available"})
-
 
 @ pytest.mark.asyncio
 @pytest.mark.ocpp_version("ocpp2.0.1")

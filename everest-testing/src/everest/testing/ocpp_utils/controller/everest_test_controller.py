@@ -56,7 +56,6 @@ class EverestTestController(TestController):
             ocpp_config["Internal"][
                 "CentralSystemURI"] = f"127.0.0.1:{central_system_port}/{charge_point_id}"
         else:
-            logging.critical(everest_config)
             ocpp_dir = self.everest_core.prefix_path / "share/everest/modules/OCPP201"
             ocpp_config_path = ocpp_dir / \
                 everest_config["active_modules"][self.ocpp_module_id]["config_module"]["ChargePointConfigPath"]
