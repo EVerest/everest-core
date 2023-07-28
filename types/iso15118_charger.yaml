@@ -111,12 +111,12 @@ types:
       EVSEPresentVoltage:
         description: "[V] Output voltage of the EVSE as defined in IEC CDV 61851-23"
         type: number
-        minumum: 0
+        minimum: 0
         maximum: 1500
       EVSEPresentCurrent:
         description: "[A] Present output current of the EVSE"
         type: number
-        minumum: 0
+        minimum: 0
         maximum: 10000
   DC_EVSEMaximumLimits:
     description: Maximum Values (current, power and voltage) the EVSE can deliver

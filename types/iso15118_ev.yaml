@@ -8,30 +8,30 @@ types:
       MaxCurrentLimit:
         description: "[A] Maximum current allowed by the EV"
         type: number
-        minumum: 0
+        minimum: 0
         maximum: 1000
       MaxPowerLimit:
         description: "[W] Maximum power allowed by the EV"
         type: number
-        minumum: 0
+        minimum: 0
         maximum: 500000
       MaxVoltageLimit:
         description: "[V] Maximum voltage allowed by the EV"
         type: number
-        minumum: 0
+        minimum: 0
         maximum: 1500
       EnergyCapacity:
         description: "[Wh] Energy capacity of the EV"
         type: number
-        minumum: 0
+        minimum: 0
         maximum: 100000
       TargetCurrent:
         description: "[A] Target current requested by the EV"
         type: number
-        minumum: 0
+        minimum: 0
         maximum: 1000
       TargetVoltage:
         description: "[V] Target voltage requested by the EV"
         type: number
-        minumum: 0
+        minimum: 0
         maximum: 1500
