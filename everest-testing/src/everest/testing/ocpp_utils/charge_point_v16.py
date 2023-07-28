@@ -92,25 +92,6 @@ class ChargePoint16(cp):
             await self.message_event.wait()
         return self.pipeline.pop(0)
 
-    async def wait_for_specific_message(self, exp_action, exp_payload={}, timeout=60):
-        msg_found = False
-        t_timeout = time.time() + timeout
-        while (not msg_found and time.time() < t_timeout):
-            try:
-                raw_message = await asyncio.wait_for(self.wait_for_message(), timeout=timeout)
-                msg = unpack(raw_message)
-                if (msg.action == exp_action):
-                    payload_matches = True
-                    # check if exp_payload matches
-                    for k, v in exp_payload.items():
-                        if k not in msg.payload or msg.payload[k] != v:
-                            payload_matches = False
-                    if payload_matches:
-                        return camel_to_snake_case(msg.payload)
-            except asyncio.TimeoutError:
-                logging.debug("Timeout while waiting for new message")
-        return None
-
     @on(Action.BootNotification)
     def on_boot_notification(
         self, charge_point_vendor: str, charge_point_model: str, **kwargs

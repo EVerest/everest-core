@@ -1,0 +1,108 @@
+active_modules:
+  iso15118_car:
+    module: JsCarV2G
+    config_implementation:
+      main:
+        stack_implementation: RISE-V2G
+        mqtt_base_path: everest_external/iso15118/ev
+        device: auto
+  connector_1:
+    module: EvseManager
+    config_module:
+      connector_id: 1
+      three_phases: true
+      has_ventilation: true
+      country_code: DE
+      rcd_enabled: true
+      evse_id: '1'
+    connections:
+      bsp:
+      - module_id: yeti_driver
+        implementation_id: board_support
+      powermeter_grid_side:
+      - module_id: yeti_driver
+        implementation_id: powermeter
+  yeti_driver:
+    module: JsYetiSimulator
+  slac:
+    module: JsSlacSimulator
+  car_simulator:
+    module: JsCarSimulator
+    config_module:
+      auto_enable: true
+      connector_id: 1
+      auto_enable: true
+    connections:
+      simulation_control:
+      - module_id: yeti_driver
+        implementation_id: yeti_simulation_control
+      ev:
+      - module_id: iso15118_car
+        implementation_id: ev
+      slac:
+      - module_id: slac
+        implementation_id: ev
+  ocpp:
+    module: OCPP
+    config_module:
+      ChargePointConfigPath: ocpp16-config.json
+      UserConfigPath: user_config.json
+      EnableExternalWebsocketControl: true
+    connections:
+      evse_manager:
+      - module_id: connector_1
+        implementation_id: evse
+      reservation:
+      - module_id: auth
+        implementation_id: reservation
+      auth:
+      - module_id: auth
+        implementation_id: main
+      system:
+      - module_id: system
+        implementation_id: main
+  auth:
+    module: Auth
+    config_module:
+      connection_timeout: 20
+    connections:
+      token_provider:
+      - module_id: token_provider_manual
+        implementation_id: main
+      - module_id: ocpp
+        implementation_id: auth_provider
+      token_validator:
+      - module_id: ocpp
+        implementation_id: auth_validator
+      evse_manager:
+      - module_id: connector_1
+        implementation_id: evse
+  token_provider_manual:
+    module: JsDummyTokenProviderManual
+    connections: {}
+    config_implementation:
+      main:
+        token: '123'
+        type: dummy
+  energy_manager:
+    module: EnergyManager
+    connections:
+      energy_trunk:
+      - module_id: grid_connection_point
+        implementation_id: energy_grid
+  grid_connection_point:
+    module: EnergyNode
+    config_module:
+      fuse_limit_A: 63.0
+      phase_count: 3
+    connections:
+      price_information: []
+      energy_consumer:
+      - module_id: connector_1
+        implementation_id: energy_grid
+      powermeter:
+      - module_id: yeti_driver
+        implementation_id: powermeter
+  system:
+    module: System
+x-module-layout: {}

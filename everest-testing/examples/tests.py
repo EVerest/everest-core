@@ -5,10 +5,10 @@ from datetime import datetime
 
 from ocpp.v201 import call_result, call
 from ocpp.v201.datatypes import SetVariableResultType, IdTokenType
-from ocpp.v201.enums import SetVariableStatusType, IdTokenType as IdTokenTypeEnum, ClearCacheStatusType, ConnectorStatusType
+from ocpp.v201.enums import SetVariableStatusType, IdTokenType as IdTokenTypeEnum, ClearCacheStatusType, ConnectorStatusType, RequestStartStopStatusType
 
 from everest.testing.ocpp_utils.fixtures import *
-from everest.testing.ocpp_utils.charge_point_utils import wait_for_and_validate, OcppTestConfiguration, ChargePointInfo
+from everest.testing.ocpp_utils.charge_point_utils import wait_for_and_validate, OcppTestConfiguration
 from everest.testing.ocpp_utils.charge_point_v201 import ChargePoint201
 from everest.testing.ocpp_utils.charge_point_v16 import ChargePoint16
 
@@ -21,27 +21,40 @@ def validate_status_notification_201(meta_data, msg, exp_payload):
 
 @ pytest.mark.asyncio
 @pytest.mark.ocpp_version("ocpp1.6")
-@pytest.mark.everest_core_config("/home/piet/code/everest-workspace/ocpp-testing/test_sets/ocpp_tests/everest-aux/config/everest-config-sil-ocpp.yaml")
-async def test_ocpp_16(test_config: OcppTestConfiguration, charge_point_v16: ChargePoint16, test_controller: TestController):
+@pytest.mark.everest_core_config("conf/everest-config-ocpp16.yaml")
+async def test_ocpp_16(test_config: OcppTestConfiguration, charge_point_v16: ChargePoint16, test_controller: TestController, test_utility: TestUtility):
     await charge_point_v16.get_configuration_req(key=["AuthorizeRemoteTxRequests"])
     await charge_point_v16.change_configuration_req(key="MeterValueSampleInterval", value="10")
-
-    # start charging session
-    test_controller.plug_in()
-
-    await charge_point_v16.wait_for_specific_message("StatusNotification", {"connectorId": 1, "status": "Preparing"})
 
     # send RemoteStartTransaction.req
     await charge_point_v16.remote_start_transaction_req(id_tag="DEADBEEF", connector_id=1)
 
+    assert await wait_for_and_validate(test_utility, charge_point_v16, "RequestStartTransactio", call_result.RequestStartTransactionPayload(status=RequestStartStopStatusType.accepted))
+
+    assert await wait_for_and_validate(test_utility, charge_point_v16, "StatusNotification", {"connectorId": 1, "status": "Preparing"})
+
+    test_controller.plug_in()
+
     # expect StartTransaction.req
-    await charge_point_v16.wait_for_specific_message("StartTransaction", {
-                                               "connectorId": 1, "idTag": "DEADBEEF", "meterStart": 0})
-    
+    assert await wait_for_and_validate(test_utility, charge_point_v16, "StartTransaction", {
+        "connectorId": 1, "idTag": "DEADBEEF", "meterStart": 0})
+
+    assert await wait_for_and_validate(test_utility, charge_point_v16, "StatusNotification", {"connectorId": 1, "status": "Charging"})
+
+    assert await charge_point_v16.remote_stop_transaction_req(transaction_id=1)
+    assert await wait_for_and_validate(test_utility, charge_point_v16, "RemoteStopTransaction", {"status": "Accepted"})
+
+    assert await wait_for_and_validate(test_utility, charge_point_v16, "StopTransaction", {"reason": "Remote"})
+    assert await wait_for_and_validate(test_utility, charge_point_v16, "StatusNotification", {"connectorId": 1, "status": "Finishing"})
+
+    test_controller.plug_out()
+
+    assert await wait_for_and_validate(test_utility, charge_point_v16, "StatusNotification", {"connectorId": 1, "status": "Available"})
+
 
 @ pytest.mark.asyncio
 @pytest.mark.ocpp_version("ocpp2.0.1")
-@pytest.mark.everest_core_config("/home/piet/code/everest-workspace/ocpp-testing/test_sets/ocpp_tests/everest-aux/config/everest-config-ocpp201.yaml")
+@pytest.mark.everest_core_config("conf/everest-config-ocpp201.yaml")
 async def test_ocpp_201(charge_point_v201: ChargePoint201, test_controller: TestController, test_utility: TestUtility):
     """This test case tests some requirements around AuthorizationCache of OCPP2.0.1
 
@@ -87,11 +100,11 @@ async def test_ocpp_201(charge_point_v201: ChargePoint201, test_controller: Test
 
     test_controller.plug_in()
     # eventType=Started
-    await charge_point_v201.wait_for_specific_message("TransactionEvent", {"eventType": "Started"})
+    await wait_for_and_validate(test_utility, charge_point_v201, "TransactionEvent", {"eventType": "Started"})
     test_utility.messages.clear()
     test_controller.plug_out()
     # eventType=Ended
-    await charge_point_v201.wait_for_specific_message("TransactionEvent", {"eventType": "Ended"})
+    await wait_for_and_validate(test_utility, charge_point_v201, "TransactionEvent", {"eventType": "Ended"})
 
     test_utility.messages.clear()
 
@@ -109,7 +122,8 @@ async def test_ocpp_201(charge_point_v201: ChargePoint201, test_controller: Test
                                        validate_status_notification_201)
 
     # because LocalPreAuthorize is true we dont expect an authorize here
-    r: call.TransactionEventPayload = call.TransactionEventPayload(**await charge_point_v201.wait_for_specific_message("TransactionEvent", {"eventType": "Started"}))
+    r: call.TransactionEventPayload = call.TransactionEventPayload(**await wait_for_and_validate(test_utility, charge_point_v201,
+                                                                                                 "TransactionEvent", {"eventType": "Started"}))
 
     # Disable LocalPreAuthorize
     r: call_result.SetVariablesPayload = await charge_point_v201.set_config_variables_req("AuthCtrlr", "LocalPreAuthorize", "false")
@@ -132,7 +146,7 @@ async def test_ocpp_201(charge_point_v201: ChargePoint201, test_controller: Test
                                        validate_status_notification_201)
 
     # eventType=Ended
-    await charge_point_v201.wait_for_specific_message("TransactionEvent", {"eventType": "Ended"})
+    await wait_for_and_validate(test_utility, charge_point_v201,"TransactionEvent", {"eventType": "Ended"})
 
     test_utility.forbidden_actions.clear()
 
@@ -153,11 +167,11 @@ async def test_ocpp_201(charge_point_v201: ChargePoint201, test_controller: Test
 
     test_controller.plug_in()
     # eventType=Started
-    await charge_point_v201.wait_for_specific_message("TransactionEvent", {"eventType": "Started"})
+    assert await wait_for_and_validate(test_utility, charge_point_v201, "TransactionEvent", {"eventType": "Started"})
     test_utility.messages.clear()
     test_controller.plug_out()
     # eventType=Ended
-    await charge_point_v201.wait_for_specific_message("TransactionEvent", {"eventType": "Ended"})
+    assert await wait_for_and_validate(test_utility, charge_point_v201,"TransactionEvent", {"eventType": "Ended"})
 
     assert await wait_for_and_validate(test_utility, charge_point_v201, "StatusNotification",
                                        call.StatusNotificationPayload(datetime.now().isoformat(),
