@@ -4,7 +4,6 @@ types:
     description: simulation data
     type: object
     additionalProperties: false
-    minProperties: 8
     properties:
       cp_voltage:
         description: CP Voltage level [V]
