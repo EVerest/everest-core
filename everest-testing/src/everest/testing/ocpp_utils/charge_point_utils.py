@@ -164,7 +164,7 @@ def validate_message(msg, exp_action, exp_payload, validate_payload_func, meta_d
     try:
         if ((msg.message_type_id == 2 and msg.action == exp_action) or msg.message_type_id == 3):
             if (validate_payload_func == None):
-                if isinstance(exp_payload) != dict:
+                if not isinstance(exp_payload, dict):
                     exp_payload = asdict(exp_payload)
                 exp_payload = remove_nones(snake_to_camel_case(exp_payload))
                 success = True

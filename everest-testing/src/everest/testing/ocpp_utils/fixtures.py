@@ -91,8 +91,8 @@ async def central_system_v201(request, test_config: OcppTestConfiguration):
 
 
 @pytest_asyncio.fixture
-async def charge_point_v16(request, central_system_v16: CentralSystem, test_controller: TestController):
-    """Fixture for ChargePoint16. Requires central_system_v16 and test_controller. Starts test_controller immediately
+async def central_system_v16_standalone(request, central_system_v16: CentralSystem, test_controller: TestController):
+    """Fixture for standalone central system. Requires central_system_v16 and test_controller. Starts test_controller immediately
     """
     marker = request.node.get_closest_marker('standalone_module')
     if marker is None:
@@ -100,6 +100,18 @@ async def charge_point_v16(request, central_system_v16: CentralSystem, test_cont
     else:
         standalone_module = marker.args[0]
         test_controller.start(central_system_v16.port, standalone_module)
+    yield central_system_v16
+
+
+@pytest_asyncio.fixture
+async def charge_point_v16(request, central_system_v16: CentralSystem, test_controller: TestController):
+    """Fixture for ChargePoint16. Requires central_system_v16 and test_controller. Starts test_controller immediately
+    """
+    marker = request.node.get_closest_marker('standalone_module')
+    if marker is None:
+        test_controller.start(central_system_v16.port)
+    else:
+        raise Exception("Using a standalone module with the charge_point_v16 fixture is not supported, please use central_system_v16_standalone")
     cp = await central_system_v16.wait_for_chargepoint()
     yield cp
     cp.stop()
