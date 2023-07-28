@@ -2,13 +2,14 @@
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
 #include <ocpp/v201/charge_point.hpp>
-#include <ocpp/v201/messages/LogStatusNotification.hpp>
 #include <ocpp/v201/messages/FirmwareStatusNotification.hpp>
+#include <ocpp/v201/messages/LogStatusNotification.hpp>
 
 namespace ocpp {
 namespace v201 {
 
 const auto DEFAULT_BOOT_NOTIFICATION_RETRY_INTERVAL = std::chrono::seconds(30);
+const auto WEBSOCKET_INIT_DELAY = std::chrono::seconds(2);
 
 ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_structure,
                          const std::string& device_model_storage_address, const std::string& ocpp_main_path,
@@ -19,10 +20,11 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
     registration_status(RegistrationStatusEnum::Rejected),
     websocket_connection_status(WebsocketConnectionStatusEnum::Disconnected),
     operational_state(OperationalStatusEnum::Operative),
+    network_configuration_priority(0),
     callbacks(callbacks) {
     this->device_model = std::make_unique<DeviceModel>(device_model_storage_address);
     this->pki_handler = std::make_shared<ocpp::PkiHandler>(
-        ocpp_main_path,
+        certs_path,
         this->device_model->get_optional_value<bool>(ControllerComponentVariables::AdditionalRootCertificateCheck)
             .value_or(false));
     this->database_handler = std::make_unique<DatabaseHandler>(core_database_path, sql_init_path);
@@ -71,15 +73,22 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
 }
 
 void ChargePoint::start() {
-    this->init_websocket();
-    this->websocket->connect(this->device_model->get_value<int>(ControllerComponentVariables::SecurityProfile));
+    this->start_websocket();
     this->boot_notification_req(BootReasonEnum::PowerUp);
     // FIXME(piet): Run state machine with correct initial state
+}
+
+void ChargePoint::start_websocket() {
+    this->init_websocket();
+    if (this->websocket != nullptr) {
+        this->websocket->connect();
+    }
 }
 
 void ChargePoint::stop() {
     this->heartbeat_timer.stop();
     this->boot_notification_timer.stop();
+    this->websocket_timer.stop();
     this->websocket->disconnect(websocketpp::close::status::going_away);
     this->message_queue->stop();
 }
@@ -290,31 +299,107 @@ void ChargePoint::init_websocket() {
         EVLOG_AND_THROW(std::runtime_error("ChargePointId must not contain \':\'"));
     }
 
-    WebsocketConnectionOptions connection_options{
-        OcppProtocolVersion::v201,
-        this->device_model->get_value<std::string>(ControllerComponentVariables::CentralSystemURI),
-        this->device_model->get_value<int>(ControllerComponentVariables::SecurityProfile),
-        this->device_model->get_value<std::string>(ControllerComponentVariables::ChargePointId),
-        this->device_model->get_optional_value<std::string>(ControllerComponentVariables::BasicAuthPassword),
-        this->device_model->get_value<int>(ControllerComponentVariables::WebsocketReconnectInterval),
-        this->device_model->get_value<std::string>(ControllerComponentVariables::SupportedCiphers12),
-        this->device_model->get_value<std::string>(ControllerComponentVariables::SupportedCiphers13),
-        0,
-        "payload",
-        true,
-        false}; // TOD(Piet): fix this hard coded params
+    const auto configuration_slot =
+        ocpp::get_vector_from_csv(
+            this->device_model->get_value<std::string>(ControllerComponentVariables::NetworkConfigurationPriority))
+            .at(this->network_configuration_priority);
+    const auto connection_options = this->get_ws_connection_options(std::stoi(configuration_slot));
+    const auto network_connection_profile = this->get_network_connection_profile(std::stoi(configuration_slot));
+
+    if (!network_connection_profile.has_value() or
+        (this->callbacks.configure_network_connection_profile_callback.has_value() and
+         !this->callbacks.configure_network_connection_profile_callback.value()(network_connection_profile.value()))) {
+        EVLOG_warning << "NetworkConnectionProfile could not be retrieved or configuration of network with the given profile failed";
+        this->websocket_timer.timeout(
+            [this]() {
+                this->next_network_configuration_priority();
+                this->start_websocket();
+            },
+            WEBSOCKET_INIT_DELAY);
+        return;
+    }
 
     this->websocket = std::make_unique<Websocket>(connection_options, this->pki_handler, this->logging);
     this->websocket->register_connected_callback([this](const int security_profile) {
         this->message_queue->resume();
-        this->websocket_connection_status = WebsocketConnectionStatusEnum::Disconnected;
+        this->websocket_connection_status = WebsocketConnectionStatusEnum::Connected;
     });
-    this->websocket->register_disconnected_callback([this]() {
+
+    this->websocket->register_closed_callback([this, connection_options, configuration_slot]() {
+        EVLOG_warning << "Failed to connect to NetworkConfigurationPriority: "
+                      << this->network_configuration_priority + 1
+                      << " which is configurationSlot: " << configuration_slot;
         this->websocket_connection_status = WebsocketConnectionStatusEnum::Disconnected;
         this->message_queue->pause();
+
+        this->websocket_timer.timeout(
+            [this]() {
+                this->next_network_configuration_priority();
+                this->start_websocket();
+            },
+            WEBSOCKET_INIT_DELAY);
     });
 
     this->websocket->register_message_callback([this](const std::string& message) { this->message_callback(message); });
+}
+
+WebsocketConnectionOptions ChargePoint::get_ws_connection_options(const int32_t configuration_slot) {
+    const auto network_connection_profile_opt = this->get_network_connection_profile(configuration_slot);
+
+    if (!network_connection_profile_opt.has_value()) {
+        EVLOG_critical << "Could not retrieve NetworkProfile of configurationSlot: " << configuration_slot;
+        throw std::runtime_error("Could not retrieve NetworkProfile");
+    }
+
+    const auto network_connection_profile = network_connection_profile_opt.value();
+    auto ocpp_csms_url = network_connection_profile.ocppCsmsUrl.get();
+
+    if (ocpp_csms_url.compare(0, 5, "ws://") == 0) {
+        ocpp_csms_url.erase(0, 5);
+    } else if (ocpp_csms_url.compare(0, 6, "wss://") == 0) {
+        ocpp_csms_url.erase(0, 6);
+    }
+
+    WebsocketConnectionOptions connection_options{
+        OcppProtocolVersion::v201,
+        ocpp_csms_url,
+        network_connection_profile.securityProfile,
+        this->device_model->get_value<std::string>(ControllerComponentVariables::ChargePointId),
+        this->device_model->get_optional_value<std::string>(ControllerComponentVariables::BasicAuthPassword),
+        this->device_model->get_value<int>(ControllerComponentVariables::RetryBackOffRandomRange),
+        this->device_model->get_value<int>(ControllerComponentVariables::RetryBackOffRepeatTimes),
+        this->device_model->get_value<int>(ControllerComponentVariables::RetryBackOffWaitMinimum),
+        this->device_model->get_value<int>(ControllerComponentVariables::NetworkProfileConnectionAttempts),
+        this->device_model->get_value<std::string>(ControllerComponentVariables::SupportedCiphers12),
+        this->device_model->get_value<std::string>(ControllerComponentVariables::SupportedCiphers13),
+        this->device_model->get_value<int>(ControllerComponentVariables::WebSocketPingInterval),
+        this->device_model->get_optional_value<std::string>(ControllerComponentVariables::WebsocketPingPayload)
+            .value_or("payload"),
+        this->device_model->get_optional_value<bool>(ControllerComponentVariables::UseSslDefaultVerifyPaths)
+            .value_or(true),
+        this->device_model->get_optional_value<bool>(ControllerComponentVariables::AdditionalRootCertificateCheck)
+            .value_or(false)};
+
+    return connection_options;
+}
+
+std::optional<NetworkConnectionProfile> ChargePoint::get_network_connection_profile(const int32_t configuration_slot) {
+    std::vector<SetNetworkProfileRequest> network_connection_profiles = json::parse(
+        this->device_model->get_value<std::string>(ControllerComponentVariables::NetworkConnectionProfiles));
+
+    for (const auto& network_profile : network_connection_profiles) {
+        if (network_profile.configurationSlot == configuration_slot) {
+            return network_profile.connectionData;
+        }
+    }
+    return std::nullopt;
+}
+
+void ChargePoint::next_network_configuration_priority() {
+    EVLOG_info << "Switching to next network configuration priority";
+    std::vector<SetNetworkProfileRequest> network_connection_profiles = json::parse(
+    this->device_model->get_value<std::string>(ControllerComponentVariables::NetworkConnectionProfiles));
+    this->network_configuration_priority = (this->network_configuration_priority + 1) % (network_connection_profiles.size() - 1);
 }
 
 void ChargePoint::handle_message(const json& json_message, const MessageType& message_type) {
@@ -336,6 +421,9 @@ void ChargePoint::handle_message(const json& json_message, const MessageType& me
         break;
     case MessageType::Reset:
         this->handle_reset_req(json_message);
+        break;
+    case MessageType::SetNetworkProfile:
+        this->handle_set_network_profile_req(json_message);
         break;
     case MessageType::ChangeAvailability:
         this->handle_change_availability_req(json_message);
@@ -483,6 +571,66 @@ void ChargePoint::handle_scheduled_change_availability_requests(const int32_t ev
             EVLOG_info << "Cannot change availability because transaction is still active";
         }
     }
+}
+
+void ChargePoint::handle_variable_changed(const SetVariableData& set_variable_data) {
+
+    ComponentVariable component_variable = {set_variable_data.component, std::nullopt, set_variable_data.variable};
+
+    if (set_variable_data.attributeType.has_value() and
+        set_variable_data.attributeType.value() != AttributeEnum::Actual) {
+        return;
+    }
+
+    if (component_variable == ControllerComponentVariables::BasicAuthPassword) {
+        if (this->device_model->get_value<int>(ControllerComponentVariables::SecurityProfile) < 3) {
+            // TODO: A01.FR.11 log the change of BasicAuth in Security Log
+            this->websocket->reconnect(std::error_code(), 1000);
+        }
+    }
+
+    // TODO(piet): other special handling of changed variables can be added here...
+}
+
+bool ChargePoint::validate_set_variable(const SetVariableData& set_variable_data) {
+    ComponentVariable cv = {set_variable_data.component, std::nullopt, set_variable_data.variable};
+    if (cv == ControllerComponentVariables::NetworkConfigurationPriority) {
+        const auto network_configuration_priorities = ocpp::get_vector_from_csv(set_variable_data.attributeValue.get());
+        const auto active_security_profile =
+            this->device_model->get_value<int>(ControllerComponentVariables::SecurityProfile);
+        for (const auto configuration_slot : network_configuration_priorities) {
+            try {
+                auto network_profile_opt = this->get_network_connection_profile(std::stoi(configuration_slot));
+                if (!network_profile_opt.has_value()) {
+                    EVLOG_warning << "Could not find network profile for configurationSlot: " << configuration_slot;
+                    return false;
+                }
+
+                auto network_profile = network_profile_opt.value();
+
+                if (network_profile.securityProfile <= active_security_profile) {
+                    continue;
+                }
+
+                if (network_profile.securityProfile == 3 and !this->pki_handler->isCsmsLeafCertificateInstalled()) {
+                    EVLOG_warning << "SecurityProfile of configurationSlot: " << configuration_slot
+                                  << " is 3 but no CSMS Leaf Certificate is installed";
+                    return false;
+                }
+                if (network_profile.securityProfile >= 2 and
+                    !this->pki_handler->isCentralSystemRootCertificateInstalled()) {
+                    EVLOG_warning << "SecurityProfile of configurationSlot: " << configuration_slot
+                                  << " is >= 2 but no CSMS Root Certifciate is installed";
+                    return false;
+                }
+            } catch (const std::invalid_argument& e) {
+                EVLOG_warning << "NetworkConfigurationPriority is not an integer: " << configuration_slot;
+                return false;
+            }
+        }
+    }
+    return true;
+    // TODO(piet): other special validating of variables requested to change can be added here...
 }
 
 std::optional<int32_t> ChargePoint::get_transaction_evseid(const CiString<36>& transaction_id) {
@@ -735,20 +883,46 @@ void ChargePoint::handle_set_variables_req(Call<SetVariablesRequest> call) {
 
     SetVariablesResponse response;
 
+    // collection used to collect SetVariableData that has been accepted
+    std::vector<SetVariableData> accepted_set_variable_data;
+
+    // iterate over the request
     for (const auto& set_variable_data : msg.setVariableData) {
         SetVariableResult set_variable_result;
         set_variable_result.component = set_variable_data.component;
         set_variable_result.variable = set_variable_data.variable;
         set_variable_result.attributeType = set_variable_data.attributeType.value_or(AttributeEnum::Actual);
-        set_variable_result.attributeStatus = this->device_model->set_value(
-            set_variable_data.component, set_variable_data.variable,
-            set_variable_data.attributeType.value_or(AttributeEnum::Actual), set_variable_data.attributeValue.get());
 
+        if (this->validate_set_variable(set_variable_data)) {
+            set_variable_result.attributeStatus =
+                this->device_model->set_value(set_variable_data.component, set_variable_data.variable,
+                                              set_variable_data.attributeType.value_or(AttributeEnum::Actual),
+                                              set_variable_data.attributeValue.get());
+        } else {
+            set_variable_result.attributeStatus = SetVariableStatusEnum::Rejected;
+        }
         response.setVariableResult.push_back(set_variable_result);
+
+        // collect SetVariableData that has been accepted
+        if (set_variable_result.attributeStatus == SetVariableStatusEnum::Accepted) {
+            accepted_set_variable_data.push_back(set_variable_data);
+        }
     }
 
     ocpp::CallResult<SetVariablesResponse> call_result(response, call.uniqueId);
     this->send<SetVariablesResponse>(call_result);
+
+    // iterate over changed_component_variables_values_map
+    for (const auto& set_variable_data : accepted_set_variable_data) {
+        EVLOG_info << set_variable_data.component.name << ":" << set_variable_data.variable.name << " changed to "
+                   << set_variable_data.attributeValue.get();
+        // handles required behavior specified within OCPP2.0.1 (e.g. reconnect when BasicAuthPassword has changed)
+        this->handle_variable_changed(set_variable_data);
+        // notifies application that a variable has changed
+        if (this->callbacks.variable_changed_callback.has_value()) {
+            this->callbacks.variable_changed_callback.value()(set_variable_data);
+        }
+    }
 }
 
 void ChargePoint::handle_get_variables_req(Call<GetVariablesRequest> call) {
@@ -815,6 +989,76 @@ void ChargePoint::handle_get_report_req(Call<GetReportRequest> call) {
     if (response.status == GenericDeviceModelStatusEnum::Accepted) {
         this->notify_report_req(msg.requestId, 0, report_data);
     }
+}
+
+void ChargePoint::handle_set_network_profile_req(Call<SetNetworkProfileRequest> call) {
+    const auto msg = call.msg;
+
+    SetNetworkProfileResponse response;
+
+    if (!this->callbacks.validate_network_profile_callback.has_value()) {
+        EVLOG_warning << "No callback registered to validate network profile";
+        response.status = SetNetworkProfileStatusEnum::Rejected;
+        ocpp::CallResult<SetNetworkProfileResponse> call_result(response, call.uniqueId);
+        this->send<SetNetworkProfileResponse>(call_result);
+        return;
+    }
+
+    if (msg.connectionData.securityProfile <
+        this->device_model->get_value<int>(ControllerComponentVariables::SecurityProfile)) {
+        EVLOG_warning << "CSMS attempted to set a network profile with a lower securityProfile";
+        response.status = SetNetworkProfileStatusEnum::Rejected;
+        ocpp::CallResult<SetNetworkProfileResponse> call_result(response, call.uniqueId);
+        this->send<SetNetworkProfileResponse>(call_result);
+        return;
+    }
+
+    if (this->callbacks.validate_network_profile_callback.value()(msg.configurationSlot, msg.connectionData) !=
+        SetNetworkProfileStatusEnum::Accepted) {
+        EVLOG_warning << "CSMS attempted to set a network profile that could not be validated.";
+        response.status = SetNetworkProfileStatusEnum::Rejected;
+        ocpp::CallResult<SetNetworkProfileResponse> call_result(response, call.uniqueId);
+        this->send<SetNetworkProfileResponse>(call_result);
+        return;
+    }
+
+    auto network_connection_profiles = json::parse(
+        this->device_model->get_value<std::string>(ControllerComponentVariables::NetworkConnectionProfiles));
+
+    int index_to_override = -1;
+    int index = 0;
+    for (const SetNetworkProfileRequest network_profile : network_connection_profiles) {
+        if (network_profile.configurationSlot == msg.configurationSlot) {
+            index_to_override = index;
+        }
+        index++;
+    }
+
+    if (index_to_override != -1) {
+        // configurationSlot present, so we override
+        network_connection_profiles[index_to_override] = msg;
+    } else {
+        // configurationSlot not present, so we can append
+        network_connection_profiles.push_back(msg);
+    }
+
+    if (this->device_model->set_value(ControllerComponentVariables::NetworkConnectionProfiles.component,
+                                      ControllerComponentVariables::NetworkConnectionProfiles.variable.value(),
+                                      AttributeEnum::Actual,
+                                      network_connection_profiles.dump()) != SetVariableStatusEnum::Accepted) {
+        EVLOG_warning
+            << "CSMS attempted to set a network profile that could not be written to the device model storage";
+        response.status = SetNetworkProfileStatusEnum::Rejected;
+        ocpp::CallResult<SetNetworkProfileResponse> call_result(response, call.uniqueId);
+        this->send<SetNetworkProfileResponse>(call_result);
+        return;
+    }
+
+    EVLOG_info << "Received and stored a new network connection profile at configurationSlot: "
+               << msg.configurationSlot;
+    response.status = SetNetworkProfileStatusEnum::Accepted;
+    ocpp::CallResult<SetNetworkProfileResponse> call_result(response, call.uniqueId);
+    this->send<SetNetworkProfileResponse>(call_result);
 }
 
 void ChargePoint::handle_reset_req(Call<ResetRequest> call) {

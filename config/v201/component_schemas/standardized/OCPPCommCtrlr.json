@@ -304,6 +304,10 @@
     "NetworkProfileConnectionAttempts",
     "OfflineThreshold",
     "ResetRetries",
-    "UnlockOnEVSideDisconnect"
+    "RetryBackOffRandomRange",
+    "RetryBackOffRepeatTimes",
+    "RetryBackOffWaitMinimum",
+    "UnlockOnEVSideDisconnect",
+    "WebSocketPingInterval"
   ]
 }

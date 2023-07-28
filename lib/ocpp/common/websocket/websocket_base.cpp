@@ -1,21 +1,20 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+#include <random>
+
 #include <everest/logging.hpp>
-
 #include <ocpp/common/websocket/websocket_base.hpp>
-
-#include <boost/optional/optional.hpp>
-
 namespace ocpp {
 
 WebsocketBase::WebsocketBase(const WebsocketConnectionOptions& connection_options) :
-    shutting_down(false),
     m_is_connected(false),
     connection_options(connection_options),
     connected_callback(nullptr),
-    disconnected_callback(nullptr),
+    closed_callback(nullptr),
     message_callback(nullptr),
-    reconnect_timer(nullptr) {
+    reconnect_timer(nullptr),
+    connection_attempts(0),
+    reconnect_backoff_ms(0) {
     this->ping_timer = std::make_unique<Everest::SteadyTimer>();
     const auto auth_key = connection_options.authorization_key;
     if (auth_key.has_value() and auth_key.value().length() < 16) {
@@ -25,15 +24,19 @@ WebsocketBase::WebsocketBase(const WebsocketConnectionOptions& connection_option
 }
 
 WebsocketBase::~WebsocketBase() {
-    this->websocket_thread->detach();
+}
+
+void WebsocketBase::set_connection_options(const WebsocketConnectionOptions &connection_options) {
+    this->connection_attempts = 0;
+    this->connection_options = connection_options;
 }
 
 void WebsocketBase::register_connected_callback(const std::function<void(const int security_profile)>& callback) {
     this->connected_callback = callback;
 }
 
-void WebsocketBase::register_disconnected_callback(const std::function<void()>& callback) {
-    this->disconnected_callback = callback;
+void WebsocketBase::register_closed_callback(const std::function<void()>& callback) {
+    this->closed_callback = callback;
 }
 
 void WebsocketBase::register_message_callback(const std::function<void(const std::string& message)>& callback) {
@@ -45,8 +48,8 @@ bool WebsocketBase::initialized() {
         EVLOG_error << "Not properly initialized: please register connected callback.";
         return false;
     }
-    if (this->disconnected_callback == nullptr) {
-        EVLOG_error << "Not properly initialized: please register disconnected callback.";
+    if (this->closed_callback == nullptr) {
+        EVLOG_error << "Not properly initialized: please closed_callback.";
         return false;
     }
     if (this->message_callback == nullptr) {
@@ -62,7 +65,6 @@ void WebsocketBase::disconnect(websocketpp::close::status::value code) {
         EVLOG_error << "Cannot disconnect a websocket that was not initialized";
         return;
     }
-    this->shutting_down = true;
     if (this->reconnect_timer) {
         this->reconnect_timer.get()->cancel();
     }
@@ -100,6 +102,35 @@ void WebsocketBase::log_on_fail(const std::error_code& ec, const boost::system::
                 << ", Transport error category: " << transport_ec.category().name();
 }
 
+long WebsocketBase::get_reconnect_interval() {
+
+    if (this->connection_attempts > this->connection_options.retry_backoff_repeat_times) {
+        return this->reconnect_backoff_ms;
+    }
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> distr(0, this->connection_options.retry_backoff_random_range_s);
+
+    int random_number = distr(gen);
+
+    if (this->connection_attempts == 1) {
+        this->reconnect_backoff_ms = (this->connection_options.retry_backoff_wait_minimum_s + random_number) * 1000;
+        return this->reconnect_backoff_ms;
+    }
+
+    this->reconnect_backoff_ms = this->reconnect_backoff_ms * 2 + (random_number * 1000);
+    return this->reconnect_backoff_ms;
+}
+
+void WebsocketBase::cancel_reconnect_timer() {
+    std::lock_guard<std::mutex> lk(this->reconnect_mutex);
+    if (this->reconnect_timer) {
+        this->reconnect_timer.get()->cancel();
+    }
+    this->reconnect_timer = nullptr;
+}
+
 void WebsocketBase::set_websocket_ping_interval(int32_t interval_s) {
     if (this->ping_timer) {
         this->ping_timer->stop();
@@ -107,6 +138,10 @@ void WebsocketBase::set_websocket_ping_interval(int32_t interval_s) {
     if (interval_s > 0) {
         this->ping_timer->interval([this]() { this->ping(); }, std::chrono::seconds(interval_s));
     }
+}
+
+void WebsocketBase::set_authorization_key(const std::string& authorization_key) {
+    this->connection_options.authorization_key = authorization_key;
 }
 
 } // namespace ocpp

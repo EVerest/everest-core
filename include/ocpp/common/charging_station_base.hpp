@@ -16,6 +16,7 @@ protected:
     std::unique_ptr<Websocket> websocket;
     std::shared_ptr<PkiHandler> pki_handler;
     std::shared_ptr<MessageLogging> logging;
+    Everest::SteadyTimer websocket_timer;
 
     boost::shared_ptr<boost::asio::io_service::work> work;
     boost::asio::io_service io_service;
@@ -32,7 +33,6 @@ protected:
     /// \brief Generates a uuid  
     /// \return uuid
     std::string uuid();
-
 
 public:
     ChargingStationBase();

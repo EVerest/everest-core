@@ -77,6 +77,18 @@ public:
     KeyValue getSupportedCiphers13KeyValue();
     bool getUseSslDefaultVerifyPaths();
     KeyValue getUseSslDefaultVerifyPathsKeyValue();
+    
+    int32_t getRetryBackoffRandomRange();
+    void setRetryBackoffRandomRange(int32_t retry_backoff_random_range);
+    KeyValue getRetryBackoffRandomRangeKeyValue();
+
+    int32_t getRetryBackoffRepeatTimes();
+    void setRetryBackoffRepeatTimes(int32_t retry_backoff_repeat_times);
+    KeyValue getRetryBackoffRepeatTimesKeyValue();
+
+    int32_t getRetryBackoffWaitMinimum();
+    void setRetryBackoffWaitMinimum(int32_t retry_backoff_wait_minimum);
+    KeyValue getRetryBackoffWaitMinimumKeyValue();
 
     std::set<MessageType> getSupportedMessageTypesSending();
     std::set<MessageType> getSupportedMessageTypesReceiving();

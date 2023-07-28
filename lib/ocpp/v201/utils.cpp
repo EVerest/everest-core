@@ -4,6 +4,7 @@
 #include <everest/logging.hpp>
 
 #include <ocpp/v201/utils.hpp>
+#include <ocpp/common/utils.hpp>
 
 namespace ocpp {
 namespace v201 {
@@ -11,13 +12,7 @@ namespace utils {
 
 std::vector<MeasurandEnum> get_measurands_vec(const std::string& measurands_csv) {
     std::vector<MeasurandEnum> measurands;
-    std::vector<std::string> measurands_strings;
-    std::stringstream ss(measurands_csv);
-
-    std::string measurand;
-    while (std::getline(ss, measurand, ',')) {
-        measurands_strings.push_back(measurand);
-    }
+    std::vector<std::string> measurands_strings = ocpp::get_vector_from_csv(measurands_csv);
 
     for (const auto& measurand_string : measurands_strings) {
         try {

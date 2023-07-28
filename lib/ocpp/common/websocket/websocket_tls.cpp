@@ -12,52 +12,44 @@ namespace ocpp {
 WebsocketTLS::WebsocketTLS(const WebsocketConnectionOptions& connection_options,
                            std::shared_ptr<PkiHandler> pki_handler) :
     WebsocketBase(connection_options), pki_handler(pki_handler) {
-    this->reconnect_interval_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-                                      std::chrono::seconds(connection_options.reconnect_interval_s))
-                                      .count();
 }
 
-bool WebsocketTLS::connect(int32_t security_profile, bool try_once) {
+bool WebsocketTLS::connect() {
     if (!this->initialized()) {
         return false;
     }
     this->uri = this->connection_options.cs_uri.insert(0, "wss://");
-    EVLOG_info << "Connecting TLS websocket to uri: " << this->uri << " with profile " << security_profile;
+    EVLOG_info << "Connecting TLS websocket to uri: " << this->uri << " with profile "
+               << this->connection_options.security_profile;
     this->wss_client.clear_access_channels(websocketpp::log::alevel::all);
     this->wss_client.clear_error_channels(websocketpp::log::elevel::all);
     this->wss_client.init_asio();
     this->wss_client.start_perpetual();
-
-    this->wss_client.set_tls_init_handler(websocketpp::lib::bind(&WebsocketTLS::on_tls_init, this,
-                                                                 this->get_hostname(this->uri),
-                                                                 websocketpp::lib::placeholders::_1, security_profile));
-
     websocket_thread.reset(new websocketpp::lib::thread(&tls_client::run, &this->wss_client));
 
-    this->reconnect_callback = [this, security_profile, try_once](const websocketpp::lib::error_code& ec) {
-        EVLOG_info << "Reconnecting TLS websocket...";
+    this->wss_client.set_tls_init_handler(
+        websocketpp::lib::bind(&WebsocketTLS::on_tls_init, this, this->get_hostname(this->uri),
+                               websocketpp::lib::placeholders::_1, this->connection_options.security_profile));
+
+    this->reconnect_callback = [this](const websocketpp::lib::error_code& ec) {
+        EVLOG_info << "Reconnecting to TLS websocket at uri: " << this->connection_options.cs_uri
+                   << " with profile: " << this->connection_options.security_profile;
 
         // close connection before reconnecting
         if (this->m_is_connected) {
             try {
-                EVLOG_debug << "Closing websocket connection";
+                EVLOG_info << "Closing websocket connection before reconnecting";
                 this->wss_client.close(this->handle, websocketpp::close::status::normal, "");
             } catch (std::exception& e) {
                 EVLOG_error << "Error on TLS close: " << e.what();
             }
         }
 
-        {
-            std::lock_guard<std::mutex> lk(this->reconnect_mutex);
-            if (this->reconnect_timer) {
-                this->reconnect_timer.get()->cancel();
-            }
-            this->reconnect_timer = nullptr;
-        }
-        this->connect_tls(security_profile, try_once);
+        this->cancel_reconnect_timer();
+        this->connect_tls();
     };
 
-    this->connect_tls(security_profile, try_once);
+    this->connect_tls();
     return true;
 }
 
@@ -73,7 +65,7 @@ bool WebsocketTLS::send(const std::string& message) {
     if (ec) {
         EVLOG_error << "Error sending message over TLS websocket: " << ec.message();
 
-        this->reconnect(ec, this->reconnect_interval_ms);
+        this->reconnect(ec, this->get_reconnect_interval());
         EVLOG_info << "(TLS) Called reconnect()";
         return false;
     }
@@ -84,19 +76,24 @@ bool WebsocketTLS::send(const std::string& message) {
 }
 
 void WebsocketTLS::reconnect(std::error_code reason, long delay) {
-    if (this->shutting_down) {
-        EVLOG_info << "Not reconnecting because the websocket is being shutdown.";
-        return;
-    }
-
     // TODO(kai): notify message queue that connection is down and a reconnect is imminent?
     {
         std::lock_guard<std::mutex> lk(this->reconnect_mutex);
+        if (this->m_is_connected) {
+            try {
+                EVLOG_info << "Closing websocket connection before reconnecting";
+                this->wss_client.close(this->handle, websocketpp::close::status::service_restart, "");
+            } catch (std::exception& e) {
+                EVLOG_error << "Error on plain close: " << e.what();
+            }
+        }
+
         if (!this->reconnect_timer) {
-            EVLOG_info << "Reconnecting in: " << delay << "ms";
+            EVLOG_info << "Reconnecting in: " << delay << "ms"
+                       << ", attempt: " << this->connection_attempts;
             this->reconnect_timer = this->wss_client.set_timer(delay, this->reconnect_callback);
         } else {
-            EVLOG_debug << "Reconnect timer already running";
+            EVLOG_info << "Reconnect timer already running";
         }
     }
 
@@ -212,7 +209,7 @@ tls_context WebsocketTLS::on_tls_init(std::string hostname, websocketpp::connect
     }
     return context;
 }
-void WebsocketTLS::connect_tls(int32_t security_profile, bool try_once) {
+void WebsocketTLS::connect_tls() {
     websocketpp::lib::error_code ec;
 
     tls_client::connection_ptr con = this->wss_client.get_connection(this->uri, ec);
@@ -221,7 +218,7 @@ void WebsocketTLS::connect_tls(int32_t security_profile, bool try_once) {
         EVLOG_error << "Connection initialization error for TLS websocket: " << ec.message();
     }
 
-    if (security_profile == 2) {
+    if (this->connection_options.security_profile == 2) {
         EVLOG_debug << "Connecting with security profile: 2";
         std::optional<std::string> authorization_header = this->getAuthorizationHeader();
         if (authorization_header != std::nullopt) {
@@ -230,7 +227,7 @@ void WebsocketTLS::connect_tls(int32_t security_profile, bool try_once) {
             EVLOG_AND_THROW(
                 std::runtime_error("No authorization key provided when connecting with security profile 2 or 3."));
         }
-    } else if (security_profile == 3) {
+    } else if (this->connection_options.security_profile == 3) {
         EVLOG_debug << "Connecting with security profile: 3";
     } else {
         EVLOG_AND_THROW(
@@ -240,9 +237,9 @@ void WebsocketTLS::connect_tls(int32_t security_profile, bool try_once) {
     this->handle = con->get_handle();
 
     con->set_open_handler(websocketpp::lib::bind(&WebsocketTLS::on_open_tls, this, &this->wss_client,
-                                                 websocketpp::lib::placeholders::_1, security_profile));
+                                                 websocketpp::lib::placeholders::_1));
     con->set_fail_handler(websocketpp::lib::bind(&WebsocketTLS::on_fail_tls, this, &this->wss_client,
-                                                 websocketpp::lib::placeholders::_1, try_once));
+                                                 websocketpp::lib::placeholders::_1));
     con->set_close_handler(websocketpp::lib::bind(&WebsocketTLS::on_close_tls, this, &this->wss_client,
                                                   websocketpp::lib::placeholders::_1));
     con->set_message_handler(websocketpp::lib::bind(
@@ -252,11 +249,10 @@ void WebsocketTLS::connect_tls(int32_t security_profile, bool try_once) {
 
     this->wss_client.connect(con);
 }
-void WebsocketTLS::on_open_tls(tls_client* c, websocketpp::connection_hdl hdl, int32_t security_profile) {
+void WebsocketTLS::on_open_tls(tls_client* c, websocketpp::connection_hdl hdl) {
     (void)c; // tlc_client is not used in this function
     EVLOG_info << "OCPP client successfully connected to TLS websocket server";
     this->m_is_connected = true;
-    this->connection_options.security_profile = security_profile;
     this->set_websocket_ping_interval(this->connection_options.ping_interval_s);
     this->connected_callback(this->connection_options.security_profile);
 }
@@ -274,7 +270,9 @@ void WebsocketTLS::on_message_tls(websocketpp::connection_hdl hdl, tls_client::m
     }
 }
 void WebsocketTLS::on_close_tls(tls_client* c, websocketpp::connection_hdl hdl) {
+    std::lock_guard<std::mutex> lk(this->connection_mutex);
     this->m_is_connected = false;
+    this->cancel_reconnect_timer();
     tls_client::connection_ptr con = c->get_con_from_hdl(hdl);
     auto error_code = con->get_ec();
 
@@ -283,11 +281,14 @@ void WebsocketTLS::on_close_tls(tls_client* c, websocketpp::connection_hdl hdl) 
                << "), reason: " << con->get_remote_close_reason();
     // dont reconnect on normal close
     if (con->get_remote_close_code() != websocketpp::close::status::service_restart) {
-        this->reconnect(error_code, this->reconnect_interval_ms);
+        this->reconnect(error_code, this->get_reconnect_interval());
+    } else {
+        this->closed_callback();
     }
-    this->disconnected_callback();
 }
-void WebsocketTLS::on_fail_tls(tls_client* c, websocketpp::connection_hdl hdl, bool try_once) {
+void WebsocketTLS::on_fail_tls(tls_client* c, websocketpp::connection_hdl hdl) {
+    std::lock_guard<std::mutex> lk(this->connection_mutex);
+    this->connection_attempts += 1;
     tls_client::connection_ptr con = c->get_con_from_hdl(hdl);
     const auto ec = con->get_ec();
     this->log_on_fail(ec, con->get_transport_ec(), con->get_response_code());
@@ -300,10 +301,12 @@ void WebsocketTLS::on_fail_tls(tls_client* c, websocketpp::connection_hdl hdl, b
         this->pki_handler->useCsmsFallbackRoot();
     }
 
-    if (!try_once) {
-        this->reconnect(ec, this->reconnect_interval_ms);
+    // -1 indicates to always attempt to reconnect
+    if (this->connection_options.max_connection_attempts == -1 or
+        this->connection_attempts < this->connection_options.max_connection_attempts) {
+        this->reconnect(ec, this->get_reconnect_interval());
     } else {
-        this->disconnected_callback();
+        this->close(websocketpp::close::status::service_restart, "Connection failed");
     }
 }
 
@@ -312,20 +315,26 @@ void WebsocketTLS::close(websocketpp::close::status::value code, const std::stri
     EVLOG_info << "Closing TLS websocket.";
 
     websocketpp::lib::error_code ec;
+    this->cancel_reconnect_timer();
 
     this->wss_client.stop_perpetual();
     this->wss_client.close(this->handle, code, reason, ec);
 
     if (ec) {
         EVLOG_error << "Error initiating close of TLS websocket: " << ec.message();
+        // on_close_tls wont be called here so we have to call the closed_callback manually
+        this->closed_callback();
+    } else {
+        EVLOG_info << "Closed TLS websocket successfully.";
     }
-    EVLOG_info << "Closed TLS websocket successfully.";
 }
 
 void WebsocketTLS::ping() {
-    auto con = this->wss_client.get_con_from_hdl(this->handle);
-    websocketpp::lib::error_code error_code;
-    con->ping(this->connection_options.ping_payload, error_code);
+    if (this->m_is_connected) {
+        auto con = this->wss_client.get_con_from_hdl(this->handle);
+        websocketpp::lib::error_code error_code;
+        con->ping(this->connection_options.ping_payload, error_code);
+    }
 }
 
 } // namespace ocpp

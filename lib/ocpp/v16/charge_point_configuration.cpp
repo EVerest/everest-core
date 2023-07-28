@@ -252,9 +252,6 @@ std::optional<CiString<25>> ChargePointConfiguration::getMeterType() {
     }
     return meter_type;
 }
-int32_t ChargePointConfiguration::getWebsocketReconnectInterval() {
-    return this->config["Internal"]["WebsocketReconnectInterval"];
-}
 bool ChargePointConfiguration::getAuthorizeConnectorZeroOnConnectorOne() {
     if (this->getNumberOfConnectors() == 1) {
         return this->config["Internal"]["AuthorizeConnectorZeroOnConnectorOne"];
@@ -410,14 +407,6 @@ std::optional<KeyValue> ChargePointConfiguration::getMeterTypeKeyValue() {
     return kv_opt;
 }
 
-KeyValue ChargePointConfiguration::getWebsocketReconnectIntervalKeyValue() {
-    KeyValue kv;
-    kv.key = "WebsocketReconnectInterval";
-    kv.readonly = true;
-    kv.value.emplace(std::to_string(this->getWebsocketReconnectInterval()));
-    return kv;
-}
-
 KeyValue ChargePointConfiguration::getAuthorizeConnectorZeroOnConnectorOneKeyValue() {
     KeyValue kv;
     kv.key = "AuthorizeConnectorZeroOnConnectorOne";
@@ -491,6 +480,57 @@ KeyValue ChargePointConfiguration::getWebsocketPingPayloadKeyValue() {
     kv.key = "WebsocketPingPayload";
     kv.readonly = true;
     kv.value.emplace(this->getWebsocketPingPayload());
+    return kv;
+}
+
+int32_t ChargePointConfiguration::getRetryBackoffRandomRange() {
+    return this->config["Internal"]["RetryBackoffRandomRange"];
+}
+
+void ChargePointConfiguration::setRetryBackoffRandomRange(int32_t retry_backoff_random_range) {
+    this->config["Internal"]["RetryBackoffRandomRange"] = retry_backoff_random_range;
+    this->setInUserConfig("Internal", "RetryBackoffRandomRange", retry_backoff_random_range);
+}
+
+KeyValue ChargePointConfiguration::getRetryBackoffRandomRangeKeyValue() {
+    KeyValue kv;
+    kv.key = "RetryBackoffRandomRange";
+    kv.readonly = false;
+    kv.value.emplace(std::to_string(this->getRetryBackoffRandomRange()));
+    return kv;
+}
+
+int32_t ChargePointConfiguration::getRetryBackoffRepeatTimes() {
+    return this->config["Internal"]["RetryBackoffRepeatTimes"];
+}
+
+void ChargePointConfiguration::setRetryBackoffRepeatTimes(int32_t retry_backoff_repeat_times) {
+    this->config["Internal"]["RetryBackoffRepeatTimes"] = retry_backoff_repeat_times;
+    this->setInUserConfig("Internal", "RetryBackoffRepeatTimes", retry_backoff_repeat_times);
+}
+
+KeyValue ChargePointConfiguration::getRetryBackoffRepeatTimesKeyValue() {
+    KeyValue kv;
+    kv.key = "RetryBackoffRepeatTimes";
+    kv.readonly = false;
+    kv.value.emplace(std::to_string(this->getRetryBackoffRepeatTimes()));
+    return kv;
+}
+
+int32_t ChargePointConfiguration::getRetryBackoffWaitMinimum() {
+    return this->config["Internal"]["RetryBackoffWaitMinimum"];
+}
+
+void ChargePointConfiguration::setRetryBackoffWaitMinimum(int32_t retry_backoff_wait_minimum) {
+    this->config["Internal"]["RetryBackoffWaitMinimum"] = retry_backoff_wait_minimum;
+    this->setInUserConfig("Internal", "RetryBackoffWaitMinimum", retry_backoff_wait_minimum);
+}
+
+KeyValue ChargePointConfiguration::getRetryBackoffWaitMinimumKeyValue() {
+    KeyValue kv;
+    kv.key = "RetryBackoffWaitMinimum";
+    kv.readonly = false;
+    kv.value.emplace(std::to_string(this->getRetryBackoffWaitMinimum()));
     return kv;
 }
 
@@ -1951,8 +1991,14 @@ std::optional<KeyValue> ChargePointConfiguration::get(CiString<50> key) {
     if (key == "SupportedCiphers13") {
         return this->getSupportedCiphers13KeyValue();
     }
-    if (key == "WebsocketReconnectInterval") {
-        return this->getWebsocketReconnectIntervalKeyValue();
+    if (key == "RetryBackoffRandomRange") {
+        return this->getRetryBackoffRandomRangeKeyValue();
+    }
+    if (key == "RetryBackoffRepeatTimes") {
+        return this->getRetryBackoffRepeatTimesKeyValue();
+    }
+    if (key == "RetryBackoffWaitMinimum") {
+        return this->getRetryBackoffWaitMinimumKeyValue();
     }
     if (key == "AuthorizeConnectorZeroOnConnectorOne") {
         return this->getAuthorizeConnectorZeroOnConnectorOneKeyValue();

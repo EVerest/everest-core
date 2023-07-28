@@ -16,7 +16,7 @@ class Websocket {
 private:
     std::unique_ptr<WebsocketBase> websocket;
     std::function<void(const int security_profile)> connected_callback;
-    std::function<void()> disconnected_callback;
+    std::function<void()> closed_callback;
     std::function<void(const std::string& message)> message_callback;
     std::shared_ptr<MessageLogging> logging;
 
@@ -26,11 +26,10 @@ public:
                        std::shared_ptr<MessageLogging> logging);
     ~Websocket();
 
-    /// \brief connect to a websocket (TLS or non-TLS depending on the central system uri in the configuration). If \p
-    /// try_once is set to true, to establish a connection will only be tried once and will be no reconnect attempts.
-    /// This mechanism is used to switch back to a working security profile if a connection for a new security profile
-    /// cant be established. \returns true if the websocket is initialized and a connection attempt is made
-    bool connect(int32_t security_profile, bool try_once = false);
+    /// \brief connect to a websocket (TLS or non-TLS depending on the central system uri in the configuration).
+    bool connect();
+
+    void set_connection_options(const WebsocketConnectionOptions &connection_options);
 
     /// \brief disconnect the websocket
     void disconnect(websocketpp::close::status::value code);
@@ -44,8 +43,9 @@ public:
     /// \brief register a \p callback that is called when the websocket is connected successfully
     void register_connected_callback(const std::function<void(const int security_profile)>& callback);
 
-    /// \brief register a \p callback that is called when the websocket is disconnected
-    void register_disconnected_callback(const std::function<void()>& callback);
+    /// \brief register a \p callback that is called when the websocket connection has been closed and will not attempt
+    /// to reconnect
+    void register_closed_callback(const std::function<void()>& callback);
 
     /// \brief register a \p callback that is called when the websocket receives a message
     void register_message_callback(const std::function<void(const std::string& message)>& callback);
@@ -56,6 +56,9 @@ public:
 
     /// \brief set the websocket ping interval \p interval_s in seconds
     void set_websocket_ping_interval(int32_t interval_s);
+
+    /// \brief set the \p authorization_key of the connection_options
+    void set_authorization_key(const std::string &authorization_key);
 };
 
 } // namespace ocpp

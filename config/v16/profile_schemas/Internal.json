@@ -101,12 +101,23 @@
                 "TLS_AES_128_GCM_SHA256"
             ]
         },
-        "WebsocketReconnectInterval": {
-            "$comment": "The reconnect interval of the websocket in seconds",
+        "RetryBackoffRandomRange": {
+            "$comment": "maximum value for the random part of the websocket reconnect back-off time",
             "type": "integer",
-            "readOnly": true,
-            "minimum": 0,
+            "readOnly": false,
             "default": 10
+        },
+        "RetryBackoffRepeatTimes": {
+            "$comment": "amount of times previous reconnect back-off time will be doubled",
+            "type": "integer",
+            "readOnly": false,
+            "default": 3
+        },
+        "RetryBackoffWaitMinimum": {
+            "$comment": "minimum back-off time of the first reconnect",
+            "type": "integer",
+            "readOnly": false,
+            "default": 3
         },
         "AuthorizeConnectorZeroOnConnectorOne": {
             "$comment": "Automatically authorize id tags on connector 1 when there is only one connector",

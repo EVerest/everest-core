@@ -32,19 +32,20 @@
       "minLength": 1,
       "type": "string"
     },
-    "CentralSystemURI": {
-      "variable_name": "CentralSystemURI",
+    "NetworkConnectionProfiles": {
+      "variable_name": "NetworkConnectionProfiles",
       "characteristics": {
         "supportsMonitoring": true,
-        "dataType": "string"
+        "dataType": "MemberList"
       },
       "attributes": [
         {
           "type": "Actual",
-          "mutability": "ReadOnly"
+          "mutability": "ReadWrite"
         }
       ],
-      "minLength": 1,
+      "description": "List of NetworkConnectionProfiles that define the functional and technical parameters of a communication link. Must be a (JSON) string with the format of SetNetworkProfileRequest",
+      "default": "[{\\\"configurationSlot\\\": 1, \\\"connectionData\\\": {\\\"messageTimeout\\\": 30, \\\"ocppCsmsUrl\\\": \\\"ws://localhost:9000/cp001\\\", \\\"ocppInterface\\\": \\\"Wired0\\\", \\\"ocppTransport\\\": \\\"JSON\\\", \\\"ocppVersion\\\": \\\"OCPP20\\\", \\\"securityProfile\\\": 1}}]\n",
       "type": "string"
     },
     "ChargeBoxSerialNumber": {
@@ -223,23 +224,6 @@
       "minLength": 0,
       "type": "string"
     },
-    "WebsocketReconnectInterval": {
-      "variable_name": "WebsocketReconnectInterval",
-      "characteristics": {
-        "minLimit": 0,
-        "supportsMonitoring": true,
-        "dataType": "integer"
-      },
-      "attributes": [
-        {
-          "type": "Actual",
-          "mutability": "ReadOnly"
-        }
-      ],
-      "minimum": 0,
-      "default": "10",
-      "type": "integer"
-    },
     "AuthorizeConnectorZeroOnConnectorOne": {
       "variable_name": "AuthorizeConnectorZeroOnConnectorOne",
       "characteristics": {
@@ -386,15 +370,14 @@
     }
   },
   "required": [
-    "CentralSystemURI",
     "ChargeBoxSerialNumber",
     "ChargePointId",
     "ChargePointModel",
     "ChargePointVendor",
     "FirmwareVersion",
+    "NetworkConnectionProfiles",
     "NumberOfConnectors",
     "SupportedCiphers12",
-    "SupportedCiphers13",
-    "WebsocketReconnectInterval"
+    "SupportedCiphers13"
   ]
 }

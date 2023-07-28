@@ -26,8 +26,12 @@ Websocket::Websocket(const WebsocketConnectionOptions& connection_options, std::
 Websocket::~Websocket() {
 }
 
-bool Websocket::connect(int32_t security_profile, bool try_once) {
-    return this->websocket->connect(security_profile, try_once);
+bool Websocket::connect() {
+    return this->websocket->connect();
+}
+
+void Websocket::set_connection_options(const WebsocketConnectionOptions &connection_options) {
+    this->websocket->set_connection_options(connection_options);
 }
 
 void Websocket::disconnect(websocketpp::close::status::value code) {
@@ -52,13 +56,15 @@ void Websocket::register_connected_callback(const std::function<void(const int s
         this->connected_callback(security_profile);
     });
 }
-void Websocket::register_disconnected_callback(const std::function<void()>& callback) {
-    this->disconnected_callback = callback;
-    this->websocket->register_disconnected_callback([this]() {
+
+void Websocket::register_closed_callback(const std::function<void()>& callback) {
+    this->closed_callback = callback;
+    this->websocket->register_closed_callback([this]() {
         this->logging->sys("Disconnected");
-        this->disconnected_callback();
+        this->closed_callback();
     });
 }
+
 void Websocket::register_message_callback(const std::function<void(const std::string& message)>& callback) {
     this->message_callback = callback;
 
@@ -73,6 +79,10 @@ bool Websocket::send(const std::string& message) {
 void Websocket::set_websocket_ping_interval(int32_t interval_s) {
     this->logging->sys("WebsocketPingInterval changed");
     this->websocket->set_websocket_ping_interval(interval_s);
+}
+
+void Websocket::set_authorization_key(const std::string &authorization_key) {
+    this->websocket->set_authorization_key(authorization_key);
 }
 
 } // namespace ocpp

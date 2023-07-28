@@ -132,10 +132,10 @@
                 "Actual": "cp001"
             }
         },
-        "CentralSystemURI": {
-            "variable_name": "CentralSystemURI",
+        "NetworkConnectionProfiles": {
+            "variable_name": "NetworkConnectionProfiles",
             "attributes": {
-                "Actual": "localhost:9000/cp001"
+                "Actual": "[{\"configurationSlot\": 1, \"connectionData\": {\"messageTimeout\": 30, \"ocppCsmsUrl\": \"ws://localhost:9000/cp001\", \"ocppInterface\": \"Wired0\", \"ocppTransport\": \"JSON\", \"ocppVersion\": \"OCPP20\", \"securityProfile\": 1}}]"
             }
         },
         "ChargeBoxSerialNumber": {
@@ -172,12 +172,6 @@
             "variable_name": "SupportedCiphers13",
             "attributes": {
                 "Actual": "TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256"
-            }
-        },
-        "WebsocketReconnectInterval": {
-            "variable_name": "WebsocketReconnectInterval",
-            "attributes": {
-                "Actual": "60"
             }
         },
         "NumberOfConnectors": {
@@ -262,13 +256,31 @@
         "NetworkConfigurationPriority": {
             "variable_name": "NetworkConfigurationPriority",
             "attributes": {
-                "Actual": "dummy"
+                "Actual": "1,2,3"
             }
         },
         "NetworkProfileConnectionAttempts": {
             "variable_name": "NetworkProfileConnectionAttempts",
             "attributes": {
-                "Actual": 42
+                "Actual": 3 
+            }
+        },
+        "RetryBackOffRandomRange": {
+            "variable_name": "RetryBackOffRandomRange",
+            "attributes": {
+                "Actual": 2
+            }
+        },
+        "RetryBackOffWaitMinimum": {
+            "variable_name": "RetryBackOffWaitMinimum",
+            "attributes": {
+                "Actual": 1
+            }
+        },
+        "RetryBackOffRepeatTimes": {
+            "variable_name": "RetryBackOffRepeatTimes",
+            "attributes": {
+                "Actual": 2
             }
         },
         "OfflineThreshold": {
@@ -287,6 +299,12 @@
             "variable_name": "UnlockOnEVSideDisconnect",
             "attributes": {
                 "Actual": true
+            }
+        },
+        "WebSocketPingInterval": {
+            "variable_name": "WebSocketPingInterval",
+            "attributes": {
+                "Actual": "60"
             }
         }
     },

@@ -23,7 +23,10 @@ struct WebsocketConnectionOptions {
     int security_profile;
     std::string chargepoint_id;
     std::optional<std::string> authorization_key;
-    int reconnect_interval_s;
+    int retry_backoff_random_range_s;
+    int retry_backoff_repeat_times;
+    int retry_backoff_wait_minimum_s;
+    int max_connection_attempts;
     std::string supported_ciphers_12;
     std::string supported_ciphers_13;
     int ping_interval_s;
@@ -37,22 +40,22 @@ struct WebsocketConnectionOptions {
 ///
 class WebsocketBase {
 protected:
-    bool shutting_down;
     bool m_is_connected;
     WebsocketConnectionOptions connection_options;
     std::function<void(const int security_profile)> connected_callback;
-    std::function<void()> disconnected_callback;
+    std::function<void()> closed_callback;
     std::function<void(const std::string& message)> message_callback;
     websocketpp::lib::shared_ptr<boost::asio::steady_timer> reconnect_timer;
     std::unique_ptr<Everest::SteadyTimer> ping_timer;
-    websocketpp::lib::shared_ptr<websocketpp::lib::thread> websocket_thread;
     std::string uri;
     websocketpp::connection_hdl handle;
     std::mutex reconnect_mutex;
-    long reconnect_interval_ms;
+    std::mutex connection_mutex;
+    long reconnect_backoff_ms;
     websocketpp::transport::timer_handler reconnect_callback;
+    int connection_attempts;
 
-    /// \brief Indicates if the required callbacks are registered and the websocket is not shutting down
+    /// \brief Indicates if the required callbacks are registered
     /// \returns true if the websocket is properly initialized
     bool initialized();
 
@@ -61,6 +64,13 @@ protected:
 
     /// \brief Logs websocket connection error
     void log_on_fail(const std::error_code& ec, const boost::system::error_code& transport_ec, const int http_status);
+
+    /// \brief Calculates and returns the reconnect interval based on int retry_backoff_random_range_s,
+    /// retry_backoff_repeat_times, int retry_backoff_wait_minimum_s of the WebsocketConnectionOptions
+    long get_reconnect_interval();
+
+    // \brief cancels the reconnect timer
+    void cancel_reconnect_timer();
 
     /// \brief send a websocket ping
     virtual void ping() = 0;
@@ -72,7 +82,10 @@ public:
 
     /// \brief connect to a websocket
     /// \returns true if the websocket is initialized and a connection attempt is made
-    virtual bool connect(int32_t security_profile, bool try_once) = 0;
+    virtual bool connect() = 0;
+
+    /// \brief sets this connection_options to the given \p connection_options and resets the connection_attempts
+    void set_connection_options(const WebsocketConnectionOptions &connection_options);
 
     /// \brief reconnect the websocket after the delay
     virtual void reconnect(std::error_code reason, long delay) = 0;
@@ -89,8 +102,9 @@ public:
     /// \brief register a \p callback that is called when the websocket is connected successfully
     void register_connected_callback(const std::function<void(const int security_profile)>& callback);
 
-    /// \brief register a \p callback that is called when the websocket is disconnected
-    void register_disconnected_callback(const std::function<void()>& callback);
+    /// \brief register a \p callback that is called when the websocket connection has been closed and will not attempt
+    /// to reconnect
+    void register_closed_callback(const std::function<void()>& callback);
 
     /// \brief register a \p callback that is called when the websocket receives a message
     void register_message_callback(const std::function<void(const std::string& message)>& callback);
@@ -101,6 +115,9 @@ public:
 
     /// \brief starts a timer that sends a websocket ping at the given \p interval_s
     void set_websocket_ping_interval(int32_t interval_s);
+
+    /// \brief set the \p authorization_key of the connection_options
+    void set_authorization_key(const std::string &authorization_key);
 };
 
 } // namespace ocpp

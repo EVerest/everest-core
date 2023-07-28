@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
+#include <ocpp/common/utils.hpp>
 #include <ocpp/v201/device_model.hpp>
 #include <ocpp/v201/device_model_storage_sqlite.hpp>
 
@@ -29,6 +30,65 @@ bool DeviceModel::component_criteria_match(const Component& component,
         }
     }
     return false;
+}
+
+bool validate_value(const VariableCharacteristics& characteristics, const std::string& value) {
+    switch (characteristics.dataType) {
+    case DataEnum::string:
+        if (characteristics.minLimit.has_value() and value.size() < characteristics.minLimit.value()) {
+            return false;
+        }
+        if (characteristics.maxLimit.has_value() and value.size() > characteristics.maxLimit.value()) {
+            return false;
+        }
+        return true;
+    case DataEnum::decimal:
+        if (characteristics.minLimit.has_value() and std::stof(value) < characteristics.minLimit.value()) {
+            return false;
+        }
+        if (characteristics.maxLimit.has_value() and std::stof(value) > characteristics.maxLimit.value()) {
+            return false;
+        }
+        return true;
+    case DataEnum::integer:
+        if (characteristics.minLimit.has_value() and std::stoi(value) < characteristics.minLimit.value()) {
+            return false;
+        }
+        if (characteristics.maxLimit.has_value() and std::stoi(value) > characteristics.maxLimit.value()) {
+            return false;
+        }
+        return true;
+    case DataEnum::dateTime:
+        return true;
+    case DataEnum::boolean:
+        return (value == "true" or value == "false");
+    case DataEnum::OptionList: {
+        // OptionList: The (Actual) Variable value must be a single value from the reported (CSV) enumeration list.
+        if (!characteristics.valuesList.has_value()) {
+            return true;
+        }
+        const auto values_list = ocpp::get_vector_from_csv(characteristics.valuesList.value().get());
+        return std::find(values_list.begin(), values_list.end(), value) != values_list.end();
+    }
+    default: // same validation for MemberList or SequenceList
+        // MemberList: The (Actual) Variable value may be an (unordered) (sub-)set of the reported (CSV) valid values
+        // list.
+        // SequenceList: The (Actual) Variable value may be an ordered (priority, etc) (sub-)set of the reported (CSV)
+        // valid values.
+        {
+            if (!characteristics.valuesList.has_value()) {
+                return true;
+            }
+            const auto values_list = ocpp::get_vector_from_csv(characteristics.valuesList.value().get());
+            const auto value_csv = get_vector_from_csv(value);
+            for (const auto& v : value_csv) {
+                if (std::find(values_list.begin(), values_list.end(), v) == values_list.end()) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
 }
 
 GetVariableStatusEnum DeviceModel::request_value(const Component& component_id, const Variable& variable_id,
@@ -62,28 +122,34 @@ DeviceModel::DeviceModel(const std::string& storage_address) {
 
 SetVariableStatusEnum DeviceModel::set_value(const Component& component, const Variable& variable,
                                              const AttributeEnum& attribute_enum, const std::string& value) {
-    if (this->device_model.find(component) != this->device_model.end()) {
-        const auto _component = this->device_model[component];
-        if (_component.find(variable) != _component.end()) {
-            const auto attribute = this->storage->get_variable_attribute(component, variable, attribute_enum);
-            if (attribute.has_value()) {
-                if (attribute.value().mutability.has_value() and
-                    attribute.value().mutability.value() != MutabilityEnum::ReadOnly) {
-                    const auto success =
-                        this->storage->set_variable_attribute_value(component, variable, attribute_enum, value);
-                    return success ? SetVariableStatusEnum::Accepted : SetVariableStatusEnum::Rejected;
-                } else {
-                    return SetVariableStatusEnum::Rejected;
-                }
-            } else {
-                return SetVariableStatusEnum::NotSupportedAttributeType;
-            }
-        } else {
-            return SetVariableStatusEnum::UnknownVariable;
-        }
-    } else {
+
+    if (this->device_model.find(component) == this->device_model.end()) {
         return SetVariableStatusEnum::UnknownComponent;
     }
+
+    auto variable_map = this->device_model[component];
+
+    if (variable_map.find(variable) == variable_map.end()) {
+        return SetVariableStatusEnum::UnknownVariable;
+    }
+
+    const auto characteristics = variable_map[variable].characteristics;
+    if (!validate_value(characteristics, value)) {
+        return SetVariableStatusEnum::Rejected;
+    }
+
+    const auto attribute = this->storage->get_variable_attribute(component, variable, attribute_enum);
+
+    if (!attribute.has_value()) {
+        return SetVariableStatusEnum::NotSupportedAttributeType;
+    }
+
+    if (!attribute.value().mutability.has_value() or attribute.value().mutability.value() == MutabilityEnum::ReadOnly) {
+        return SetVariableStatusEnum::Rejected;
+    }
+
+    const auto success = this->storage->set_variable_attribute_value(component, variable, attribute_enum, value);
+    return success ? SetVariableStatusEnum::Accepted : SetVariableStatusEnum::Rejected;
 };
 
 std::optional<VariableMetaData> DeviceModel::get_variable_meta_data(const Component& component,
@@ -118,10 +184,11 @@ DeviceModel::get_report_data(const std::optional<ReportBaseEnum>& report_base,
 
                     // request the variable attribute from the device model storage
                     const auto variable_attributes = this->storage->get_variable_attributes(component, variable);
-                    
+
                     // iterate over possibly (Actual, Target, MinSet, MaxSet)
                     for (const auto& variable_attribute : variable_attributes) {
-                        // FIXME(piet): Right now this reports only FullInventory and ConfigurationInventory (ReadWrite or WriteOnly) correctly
+                        // FIXME(piet): Right now this reports only FullInventory and ConfigurationInventory (ReadWrite
+                        // or WriteOnly) correctly
                         // TODO(piet): SummaryInventory
                         if (report_base == ReportBaseEnum::FullInventory or
                             variable_attribute.mutability == MutabilityEnum::ReadWrite or

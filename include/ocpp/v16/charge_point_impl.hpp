@@ -174,7 +174,8 @@ private:
 
     /// \brief This function is called after a successful connection to the Websocket
     void connected_callback();
-    void init_websocket(int32_t security_profile);
+    void init_websocket();
+    WebsocketConnectionOptions get_ws_connection_options();
     void message_callback(const std::string& message);
     void handle_message(const json& json_message, MessageType message_type);
     bool allowed_to_send_message(json::array_t message_type);
@@ -287,7 +288,7 @@ private:
     void handleGetLogRequest(Call<GetLogRequest> call);
     void handleSignedUpdateFirmware(Call<SignedUpdateFirmwareRequest> call);
     void securityEventNotification(const SecurityEvent& type, const std::string& tech_info);
-    void switchSecurityProfile(int32_t new_security_profile);
+    void switchSecurityProfile(int32_t new_security_profile, int32_t max_connection_attempts);
     // Local Authorization List profile
     void handleSendLocalListRequest(Call<SendLocalListRequest> call);
     void handleGetLocalListVersionRequest(Call<GetLocalListVersionRequest> call);

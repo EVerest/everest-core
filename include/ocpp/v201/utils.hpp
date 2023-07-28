@@ -4,7 +4,6 @@
 #define V201_UTILS_HPP
 
 #include <openssl/sha.h>
-#include <sstream>
 
 #include <ocpp/v201/ocpp_types.hpp>
 namespace ocpp {

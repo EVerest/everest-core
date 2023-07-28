@@ -30,6 +30,7 @@
 #include <ocpp/v201/messages/RequestStartTransaction.hpp>
 #include <ocpp/v201/messages/RequestStopTransaction.hpp>
 #include <ocpp/v201/messages/Reset.hpp>
+#include <ocpp/v201/messages/SetNetworkProfile.hpp>
 #include <ocpp/v201/messages/SetVariables.hpp>
 #include <ocpp/v201/messages/StatusNotification.hpp>
 #include <ocpp/v201/messages/TransactionEvent.hpp>
@@ -61,6 +62,13 @@ struct Callbacks {
                        const std::optional<CiString<36>> groupIdToken)>
         is_reservation_for_token_callback;
     std::function<UpdateFirmwareResponse(const UpdateFirmwareRequest& request)> update_firmware_request_callback;
+    // callback to be called when a variable has been changed by the CSMS
+    std::optional<std::function<void(const SetVariableData& set_variable_data)>> variable_changed_callback;
+    // callback is called when receiving a SetNetworkProfile.req from the CSMS
+    std::optional<std::function<SetNetworkProfileStatusEnum(
+        const int32_t configuration_slot, const NetworkConnectionProfile& network_connection_profile)>>
+        validate_network_profile_callback;
+    std::optional<std::function<bool(const NetworkConnectionProfile &network_connection_profile)>> configure_network_connection_profile_callback;
 };
 
 /// \brief Class implements OCPP2.0.1 Charging Station
@@ -92,6 +100,7 @@ private:
     WebsocketConnectionStatusEnum websocket_connection_status;
     OperationalStatusEnum operational_state;
     FirmwareStatusEnum firmware_status;
+    int network_configuration_priority;
 
     // callback struct
     Callbacks callbacks;
@@ -104,11 +113,21 @@ private:
 
     // internal helper functions
     void init_websocket();
+    WebsocketConnectionOptions get_ws_connection_options(const int32_t configuration_slot);
+
+    /// \brief Gets the configured NetworkConnectionProfile based on the given \p configuration_slot . The
+    /// central system uri ofthe connection options will not contain ws:// or wss:// because this method removes it if
+    /// present \param network_configuration_priority \return
+    std::optional<NetworkConnectionProfile> get_network_connection_profile(const int32_t configuration_slot);
+    /// \brief Moves websocket network_configuration_priority to next profile 
+    void next_network_configuration_priority();
     void handle_message(const json& json_message, const MessageType& message_type);
     void message_callback(const std::string& message);
     void update_aligned_data_interval();
     bool is_change_availability_possible(const ChangeAvailabilityRequest& req);
     void handle_scheduled_change_availability_requests(const int32_t evse_id);
+    void handle_variable_changed(const SetVariableData& set_variable_data);
+    bool validate_set_variable(const SetVariableData &set_variable_data);
 
     ///
     /// \brief Get evseid for the given transaction id.
@@ -182,6 +201,7 @@ private:
     void handle_get_variables_req(Call<GetVariablesRequest> call);
     void handle_get_base_report_req(Call<GetBaseReportRequest> call);
     void handle_get_report_req(Call<GetReportRequest> call);
+    void handle_set_network_profile_req(Call<SetNetworkProfileRequest> call);
     void handle_reset_req(Call<ResetRequest> call);
 
     // Functional Block C: Authorization
@@ -189,7 +209,7 @@ private:
 
     // Functional Block E: Transaction
     void handle_start_transaction_event_response(CallResult<TransactionEventResponse> call_result,
-                                                 const int32_t evse_id, const std::string &id_token);
+                                                 const int32_t evse_id, const std::string& id_token);
 
     // Function Block F: Remote transaction control
     void handle_unlock_connector(Call<UnlockConnectorRequest> call);
@@ -222,6 +242,9 @@ public:
 
     /// \brief Starts the ChargePoint, initializes and connects to the Websocket endpoint
     void start();
+
+    /// \brief Starts the websocket
+    void start_websocket();
 
     /// \brief Stops the ChargePoint. Disconnects the websocket connection and stops MessageQueue and all timers
     void stop();
@@ -317,11 +340,11 @@ public:
     ///
     void on_log_status_notification(UploadLogStatusEnum status, int32_t requestId);
 
-    /// @brief Data transfer mechanism initiated by charger
-    /// @param vendorId
-    /// @param messageId
-    /// @param data
-    /// @return DataTransferResponse contaning the result from CSMS
+    /// \brief Data transfer mechanism initiated by charger
+    /// \param vendorId
+    /// \param messageId
+    /// \param data
+    /// \return DataTransferResponse contaning the result from CSMS
     DataTransferResponse data_transfer_req(const CiString<255>& vendorId, const CiString<50>& messageId,
                                            const std::string& data);
 };

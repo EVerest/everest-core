@@ -33,11 +33,11 @@ extern const Component& TariffCostCtrlr;
 extern const Component& TxCtrlr;
 } // ControllerComponents
 
+// Provides access to standardized variables of OCPP2.0.1 spec
 namespace ControllerComponentVariables {
-
 extern const ComponentVariable& InternalCtrlrEnabled;
 extern const ComponentVariable& ChargePointId;
-extern const ComponentVariable& CentralSystemURI;
+extern const ComponentVariable& NetworkConnectionProfiles;
 extern const ComponentVariable& ChargeBoxSerialNumber;
 extern const ComponentVariable& ChargePointModel;
 extern const ComponentVariable& ChargePointSerialNumber;
@@ -49,7 +49,6 @@ extern const ComponentVariable& MeterSerialNumber;
 extern const ComponentVariable& MeterType;
 extern const ComponentVariable& SupportedCiphers12;
 extern const ComponentVariable& SupportedCiphers13;
-extern const ComponentVariable& WebsocketReconnectInterval;
 extern const ComponentVariable& AuthorizeConnectorZeroOnConnectorOne;
 extern const ComponentVariable& LogMessages;
 extern const ComponentVariable& LogMessagesFormat;
@@ -144,6 +143,9 @@ extern const ComponentVariable& NetworkProfileConnectionAttempts;
 extern const ComponentVariable& OfflineThreshold;
 extern const ComponentVariable& QueueAllMessages;
 extern const ComponentVariable& ResetRetries;
+extern const ComponentVariable& RetryBackOffRandomRange;
+extern const ComponentVariable& RetryBackOffRepeatTimes;
+extern const ComponentVariable& RetryBackOffWaitMinimum;
 extern const ComponentVariable& UnlockOnEVSideDisconnect;
 extern const ComponentVariable& WebSocketPingInterval;
 extern const ComponentVariable& ReservationCtrlrAvailable;

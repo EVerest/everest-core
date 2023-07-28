@@ -46,11 +46,11 @@ const ComponentVariable& ChargePointId = {
         "ChargePointId",
     }),
 };
-const ComponentVariable& CentralSystemURI = {
+const ComponentVariable& NetworkConnectionProfiles = {
     ControllerComponents::InternalCtrlr,
     std::nullopt,
     std::optional<Variable>({
-        "CentralSystemURI",
+        "NetworkConnectionProfiles",
     }),
 };
 const ComponentVariable& ChargeBoxSerialNumber = {
@@ -128,13 +128,6 @@ const ComponentVariable& SupportedCiphers13 = {
     std::nullopt,
     std::optional<Variable>({
         "SupportedCiphers13",
-    }),
-};
-const ComponentVariable& WebsocketReconnectInterval = {
-    ControllerComponents::InternalCtrlr,
-    std::nullopt,
-    std::optional<Variable>({
-        "WebsocketReconnectInterval",
     }),
 };
 const ComponentVariable& AuthorizeConnectorZeroOnConnectorOne = {
@@ -763,6 +756,27 @@ const ComponentVariable& ResetRetries = {
     std::nullopt,
     std::optional<Variable>({
         "ResetRetries",
+    }),
+};
+const ComponentVariable& RetryBackOffRandomRange = {
+    ControllerComponents::OCPPCommCtrlr,
+    std::nullopt,
+    std::optional<Variable>({
+        "RetryBackOffRandomRange",
+    }),
+};
+const ComponentVariable& RetryBackOffRepeatTimes = {
+    ControllerComponents::OCPPCommCtrlr,
+    std::nullopt,
+    std::optional<Variable>({
+        "RetryBackOffRepeatTimes",
+    }),
+};
+const ComponentVariable& RetryBackOffWaitMinimum = {
+    ControllerComponents::OCPPCommCtrlr,
+    std::nullopt,
+    std::optional<Variable>({
+        "RetryBackOffWaitMinimum",
     }),
 };
 const ComponentVariable& UnlockOnEVSideDisconnect = {
