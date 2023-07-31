@@ -101,9 +101,9 @@ types:
         ChargingFinished: Charging is finished. Essentially the same as TransactionFinished, but emitted for clarity
         TransactionFinished: Signaled when the transaction finished. Transaction finishes at the point where one of the preconditions for charging irrevocably becomes false: When a user swipes to stop the transaction and the stop is authorized.
         SessionFinished: Session finishes at the point that the EVSE is available again (no cable plugged)
-        Error: Signaled when an error occured
+        Error: Signaled when an error occured. An error doesnt prevent further charging operations.
         AllErrorsCleared: Signalled when all errors are cleared
-        PermanentFault: Signaled when there is a permanent fault at the EVSE
+        PermanentFault: Signaled when there is a permanent fault at the EVSE. A permanent fault prevents further charging operations
         ReservationStart: Signaled when a reservation starts
         ReservationEnd: Signaled when a reservation ends
         ReplugStarted: Signaled when the EVSE Manager virtually replugs without interrupting the session or transaction
@@ -208,7 +208,7 @@ types:
       id_tag:
         description: Id tag that was used to stop the transaction
         type: string
-  Error:
+  ErrorEnum:
     description: >-
       Details on error type
         Car: Signals a car error
@@ -231,6 +231,22 @@ types:
       - Internal
       - SLAC
       - HLC
+      - Other
+  Error:
+    description: >-
+      Error object that contains information about the error and optional vendor error information
+    type: object
+    additionalProperties: false
+    required:
+      - error_code
+    properties:
+      error_code:
+        description: The error enum
+        type: string
+        $ref: /evse_manager#/ErrorEnum
+      vendor_error:
+        description: The error code of the vendor
+        type: string
   SessionEvent:
     description: Emits all events related to sessions
     type: object
@@ -266,7 +282,7 @@ types:
         $ref: /evse_manager#/TransactionFinished
       error:
         description: Details on error type
-        type: string
+        type: object
         $ref: /evse_manager#/Error
   Limits:
     description: Limits of this EVSE

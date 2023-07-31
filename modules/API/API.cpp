@@ -247,7 +247,7 @@ void API::init() {
                                        &session_info](types::evse_manager::SessionEvent session_event) {
             auto event = types::evse_manager::session_event_enum_to_string(session_event.event);
             if (session_event.error) {
-                session_info->update_state(event, types::evse_manager::error_to_string(session_event.error.value()));
+                session_info->update_state(event, types::evse_manager::error_enum_to_string(session_event.error.value().error_code));
             } else {
                 session_info->update_state(event, "");
             }

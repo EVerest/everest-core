@@ -162,7 +162,7 @@ void Charger::runStateMachine() {
             } else {
                 // unsupported charging mode, give up here.
                 currentState = EvseState::Error;
-                errorState = types::evse_manager::Error::Internal;
+                errorState = types::evse_manager::ErrorEnum::Internal;
             }
 
             if (hlc_use_5percent_current_session) {
@@ -277,7 +277,7 @@ void Charger::runStateMachine() {
                 // unsupported charging mode, give up here.
                 EVLOG_error << "Unsupported charging mode.";
                 currentState = EvseState::Error;
-                errorState = types::evse_manager::Error::Internal;
+                errorState = types::evse_manager::ErrorEnum::Internal;
             }
         } else if (AuthorizedPnC()) {
 
@@ -306,7 +306,7 @@ void Charger::runStateMachine() {
                 // unsupported charging mode, give up here.
                 EVLOG_error << "Unsupported charging mode.";
                 currentState = EvseState::Error;
-                errorState = types::evse_manager::Error::Internal;
+                errorState = types::evse_manager::ErrorEnum::Internal;
             }
         }
 
@@ -662,27 +662,27 @@ void Charger::processCPEventsIndependent(ControlPilotEvent cp_event) {
         break;
     case ControlPilotEvent::Error_E:
         currentState = EvseState::Error;
-        errorState = types::evse_manager::Error::Car;
+        errorState = types::evse_manager::ErrorEnum::Car;
         break;
     case ControlPilotEvent::Error_DF:
         currentState = EvseState::Error;
-        errorState = types::evse_manager::Error::CarDiodeFault;
+        errorState = types::evse_manager::ErrorEnum::CarDiodeFault;
         break;
     case ControlPilotEvent::Error_Relais:
         currentState = EvseState::Error;
-        errorState = types::evse_manager::Error::Relais;
+        errorState = types::evse_manager::ErrorEnum::Relais;
         break;
     case ControlPilotEvent::Error_RCD:
         currentState = EvseState::Error;
-        errorState = types::evse_manager::Error::RCD;
+        errorState = types::evse_manager::ErrorEnum::RCD;
         break;
     case ControlPilotEvent::Error_VentilationNotAvailable:
         currentState = EvseState::Error;
-        errorState = types::evse_manager::Error::VentilationNotAvailable;
+        errorState = types::evse_manager::ErrorEnum::VentilationNotAvailable;
         break;
     case ControlPilotEvent::Error_OverCurrent:
         currentState = EvseState::Error;
-        errorState = types::evse_manager::Error::OverCurrent;
+        errorState = types::evse_manager::ErrorEnum::OverCurrent;
         break;
     default:
         break;
@@ -1049,7 +1049,7 @@ bool Charger::DeAuthorize() {
     return false;
 }
 
-types::evse_manager::Error Charger::getErrorState() {
+types::evse_manager::ErrorEnum Charger::getErrorState() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
     return errorState;
 }
@@ -1182,7 +1182,7 @@ void Charger::checkSoftOverCurrent() {
                                             currentDrawnByVehicle[0], currentDrawnByVehicle[1],
                                             currentDrawnByVehicle[2], limit));
         currentState = EvseState::Error;
-        errorState = types::evse_manager::Error::OverCurrent;
+        errorState = types::evse_manager::ErrorEnum::OverCurrent;
     }
 }
 

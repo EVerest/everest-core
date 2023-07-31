@@ -224,7 +224,9 @@ void evse_managerImpl::ready() {
 
             se.transaction_finished.emplace(transaction_finished);
         } else if (e == types::evse_manager::SessionEventEnum::Error) {
-            se.error = mod->charger->getErrorState();
+            types::evse_manager::Error error;
+            error.error_code = mod->charger->getErrorState();
+            se.error = error;
         }
 
         se.uuid = session_uuid;
@@ -252,11 +254,11 @@ void evse_managerImpl::ready() {
                           static_cast<int>(s));
     });
 
-    mod->charger->signalError.connect([this](types::evse_manager::Error s) {
+    mod->charger->signalError.connect([this](types::evse_manager::ErrorEnum s) {
         mod->mqtt.publish(fmt::format("everest_external/nodered/{}/state/error_type", mod->config.connector_id),
                           static_cast<int>(s));
         mod->mqtt.publish(fmt::format("everest_external/nodered/{}/state/error_string", mod->config.connector_id),
-                          types::evse_manager::error_to_string(s));
+                          types::evse_manager::error_enum_to_string(s));
     });
     // /Deprecated
 }
