@@ -88,7 +88,10 @@ static const FSMDefinition FSM_DEF = {
 
 ChargePointFSM::ChargePointFSM(const StatusNotificationCallback& status_notification_callback_,
                                FSMState initial_state) :
-    status_notification_callback(status_notification_callback_), state(initial_state) {
+    status_notification_callback(status_notification_callback_),
+    state(initial_state),
+    error_code(ChargePointErrorCode::NoError),
+    faulted(false) {
     // FIXME (aw): do we need to call the callback here already?
 }
 
@@ -108,14 +111,34 @@ bool ChargePointFSM::handle_event(FSMEvent event) {
     // fall through: transition found
     state = dest_state_it->second;
 
-    status_notification_callback(state, ChargePointErrorCode::NoError);
+    if (!faulted) {
+        status_notification_callback(state, this->error_code);
+    }
 
     return true;
 }
 
 bool ChargePointFSM::handle_fault(const ChargePointErrorCode& error_code) {
-    state = FSMState::Faulted;
-    status_notification_callback(state, error_code);
+    this->error_code = error_code;
+
+    if (this->error_code == ChargePointErrorCode::NoError) {
+        faulted = false;
+        status_notification_callback(state, this->error_code);
+    } else {
+        faulted = true;
+        status_notification_callback(FSMState::Faulted, error_code);
+    }
+
+    return true;
+}
+
+bool ChargePointFSM::handle_error(const ChargePointErrorCode& error_code) {
+    this->error_code = error_code;
+    if (!faulted) {
+        status_notification_callback(this->state, error_code);
+    } else {
+        status_notification_callback(FSMState::Faulted, error_code);
+    }
     return true;
 }
 
@@ -146,10 +169,17 @@ void ChargePointStates::submit_event(int connector_id, FSMEvent event) {
     }
 }
 
-void ChargePointStates::submit_error(int connector_id, const ChargePointErrorCode& error_code) {
+void ChargePointStates::submit_fault(int connector_id, const ChargePointErrorCode& error_code) {
     const std::lock_guard<std::mutex> lck(state_machines_mutex);
     if (connector_id > 0 && (size_t)connector_id < state_machines.size()) {
         state_machines.at(connector_id).handle_fault(error_code);
+    }
+}
+
+void ChargePointStates::submit_error(int connector_id, const ChargePointErrorCode& error_code) {
+    const std::lock_guard<std::mutex> lck(state_machines_mutex);
+    if (connector_id > 0 && (size_t)connector_id < state_machines.size()) {
+        state_machines.at(connector_id).handle_error(error_code);
     }
 }
 

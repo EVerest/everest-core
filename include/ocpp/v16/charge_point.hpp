@@ -189,8 +189,7 @@ public:
     /// \param signed_meter_value e.g. in OCMF format
     void on_transaction_stopped(const int32_t connector, const std::string& session_id, const Reason& reason,
                                 ocpp::DateTime timestamp, float energy_wh_import,
-                                std::optional<CiString<20>> id_tag_end,
-                                std::optional<std::string> signed_meter_value);
+                                std::optional<CiString<20>> id_tag_end, std::optional<std::string> signed_meter_value);
 
     /// \brief This function should be called when EV indicates that it suspends charging on the given \p connector
     /// \param connector
@@ -204,11 +203,17 @@ public:
     /// \param connector
     void on_resume_charging(int32_t connector);
 
-    /// \brief This function should be called if an \p error with the given \p error_code is present. This function will
-    /// trigger a StatusNotification.req with status Faulted containing the given \p error .
+    /// \brief This function should be called if an error with the given \p error_code is present. This function will
+    /// trigger a StatusNotification.req containing the given \p error_code . It will not change the present state of
+    /// the state machine.
     /// \param connector
-    /// \param error
-    void on_error(int32_t connector, const ChargePointErrorCode& error);
+    /// \param error_code
+    void on_error(int32_t connector, const ChargePointErrorCode& error_code);
+
+    /// \brief This function should be called if a fault is detected that prevents further charging operations. The \p
+    /// error_code indicates the reason for the fault.
+    /// \param error_code
+    void on_fault(int32_t connector, const ChargePointErrorCode& error_code);
 
     /// \brief Chargepoint notifies about new log status \p log_status . This function should be called during a
     /// Diagnostics / Log upload to indicate the current \p log_status .
@@ -387,7 +392,7 @@ public:
     /// \brief registers a \p callback function that can be used to publish the response when transaction starts
     /// \param callback
     void register_transaction_started_callback(
-        const std::function<void(const int32_t connector, const int32_t  transaction_id)>& callback);
+        const std::function<void(const int32_t connector, const int32_t transaction_id)>& callback);
 };
 
 } // namespace v16

@@ -119,8 +119,12 @@ void ChargePoint::on_resume_charging(int32_t connector) {
     this->charge_point->on_resume_charging(connector);
 }
 
-void ChargePoint::on_error(int32_t connector, const ChargePointErrorCode& error) {
-    this->charge_point->on_error(connector, error);
+void ChargePoint::on_error(int32_t connector, const ChargePointErrorCode& error_code) {
+    this->charge_point->on_error(connector, error_code);
+}
+
+void ChargePoint::on_fault(int32_t connector, const ChargePointErrorCode& error_code) {
+    this->charge_point->on_fault(connector, error_code);
 }
 
 void ChargePoint::on_log_status_notification(int32_t request_id, std::string log_status) {
@@ -247,7 +251,7 @@ void ChargePoint::register_get_15118_ev_certificate_response_callback(
 }
 
 void ChargePoint::register_transaction_started_callback(
-    const std::function<void(const int32_t connector, const int32_t  transaction_id)>& callback) {
+    const std::function<void(const int32_t connector, const int32_t transaction_id)>& callback) {
     this->charge_point->register_transaction_started_callback(callback);
 }
 

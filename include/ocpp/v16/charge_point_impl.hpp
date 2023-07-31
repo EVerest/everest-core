@@ -463,11 +463,17 @@ public:
     /// \param connector
     void on_resume_charging(int32_t connector);
 
-    /// \brief This function should be called if an \p error with the given \p error_code is present. This function will
-    /// trigger a StatusNotification.req with status Faulted containing the given \p error .
+    /// \brief This function should be called if an error with the given \p error_code is present. This function will
+    /// trigger a StatusNotification.req containing the given \p error_code . It will not change the present state of
+    /// the state machine.
     /// \param connector
-    /// \param error
+    /// \param error_code
     void on_error(int32_t connector, const ChargePointErrorCode& error);
+
+    /// \brief This function should be called if a fault is detected that prevents further charging operations. The \p
+    /// error_code indicates the reason for the fault.
+    /// \param error_code
+    void on_fault(int32_t connector, const ChargePointErrorCode& error_code);
 
     /// \brief Chargepoint notifies about new log status \p log_status . This function should be called during a
     /// Diagnostics / Log upload to indicate the current \p log_status .

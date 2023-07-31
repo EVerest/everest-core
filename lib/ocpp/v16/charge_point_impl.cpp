@@ -3119,8 +3119,12 @@ void ChargePointImpl::on_resume_charging(int32_t connector) {
     this->status->submit_event(connector, FSMEvent::StartCharging);
 }
 
-void ChargePointImpl::on_error(int32_t connector, const ChargePointErrorCode& error) {
-    this->status->submit_error(connector, error);
+void ChargePointImpl::on_error(int32_t connector, const ChargePointErrorCode& error_code) {
+    this->status->submit_error(connector, error_code);
+}
+
+void ChargePointImpl::on_fault(int32_t connector, const ChargePointErrorCode& error_code) {
+    this->status->submit_fault(connector, error_code);
 }
 
 void ChargePointImpl::on_log_status_notification(int32_t request_id, std::string log_status) {

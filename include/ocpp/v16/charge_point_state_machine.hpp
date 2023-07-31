@@ -47,6 +47,7 @@ public:
     explicit ChargePointFSM(const StatusNotificationCallback& status_notification_callback, FSMState initial_state);
 
     bool handle_event(FSMEvent event);
+    bool handle_error(const ChargePointErrorCode& error_code);
     bool handle_fault(const ChargePointErrorCode& error_code);
 
     FSMState get_state() const;
@@ -54,6 +55,9 @@ public:
 private:
     StatusNotificationCallback status_notification_callback;
     // track current state
+
+    bool faulted;
+    ChargePointErrorCode error_code;
     FSMState state;
 };
 
@@ -65,6 +69,7 @@ public:
     void reset(std::map<int, AvailabilityType> connector_availability);
 
     void submit_event(int connector_id, FSMEvent event);
+    void submit_fault(int connector_id, const ChargePointErrorCode& error_code);
     void submit_error(int connector_id, const ChargePointErrorCode& error_code);
 
     ChargePointStatus get_state(int connector_id);
