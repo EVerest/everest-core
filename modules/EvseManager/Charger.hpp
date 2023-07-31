@@ -146,7 +146,7 @@ public:
     sigslot::signal<> signal_DC_supply_off;
 
     // Request more details about the error that happend
-    types::evse_manager::Error getErrorState();
+    types::evse_manager::ErrorEnum getErrorState();
 
     void processEvent(types::board_support::Event event);
 
@@ -186,7 +186,7 @@ public:
 
     EvseState getCurrentState();
     sigslot::signal<EvseState> signalState;
-    sigslot::signal<types::evse_manager::Error> signalError;
+    sigslot::signal<types::evse_manager::ErrorEnum> signalError;
     // /Deprecated
 
     void inform_new_evse_max_hlc_limits(const types::iso15118_charger::DC_EVSEMaximumLimits& l);
@@ -230,7 +230,7 @@ private:
 
     EvseState currentState;
     EvseState lastState;
-    types::evse_manager::Error errorState{types::evse_manager::Error::Internal};
+    types::evse_manager::ErrorEnum errorState{types::evse_manager::ErrorEnum::Internal};
     std::chrono::system_clock::time_point currentStateStarted;
 
     float ampereToDutyCycle(float ampere);

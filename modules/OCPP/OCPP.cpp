@@ -32,6 +32,8 @@ static ocpp::v16::ChargePointErrorCode get_ocpp_error_code(const std::string& ev
         return ocpp::v16::ChargePointErrorCode::EVCommunicationError;
     } else if (evse_error == "HLC") {
         return ocpp::v16::ChargePointErrorCode::EVCommunicationError;
+    } else if (evse_error == "NoError") {
+        return ocpp::v16::ChargePointErrorCode::NoError;
     } else {
         return ocpp::v16::ChargePointErrorCode::OtherError;
     }
@@ -518,9 +520,15 @@ void OCPP::init() {
             } else if (event == "Error") {
                 EVLOG_debug << "Connector#" << connector << ": "
                             << "Received Error";
-                const auto evse_error = types::evse_manager::error_to_string(session_event.error.value());
+                const auto evse_error = types::evse_manager::error_enum_to_string(session_event.error.value().error_code);
                 ocpp::v16::ChargePointErrorCode ocpp_error_code = get_ocpp_error_code(evse_error);
                 this->charge_point->on_error(connector, ocpp_error_code);
+            } else if (event == "AllErrorsCleared") {
+                this->charge_point->on_fault(connector, ocpp::v16::ChargePointErrorCode::NoError);
+            } else if (event == "PermanentFault") {
+                const auto evse_error = types::evse_manager::error_enum_to_string(session_event.error.value().error_code);
+                ocpp::v16::ChargePointErrorCode ocpp_error_code = get_ocpp_error_code(evse_error);
+                this->charge_point->on_fault(connector, ocpp_error_code);
             } else if (event == "ReservationStart") {
                 this->charge_point->on_reservation_start(connector);
             } else if (event == "ReservationEnd") {
