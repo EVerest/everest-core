@@ -37,7 +37,7 @@ bool WebsocketPlain::connect() {
         if (this->m_is_connected) {
             try {
                 EVLOG_info << "Closing websocket connection before reconnecting";
-                this->ws_client.close(this->handle, websocketpp::close::status::service_restart, "");
+                this->ws_client.close(this->handle, websocketpp::close::status::normal, "");
             } catch (std::exception& e) {
                 EVLOG_error << "Error on plain close: " << e.what();
             }
@@ -74,6 +74,10 @@ bool WebsocketPlain::send(const std::string& message) {
 }
 
 void WebsocketPlain::reconnect(std::error_code reason, long delay) {
+    if (this->shutting_down) {
+        EVLOG_info << "Not reconnecting because the websocket is being shutdown.";
+        return;
+    }
 
     // TODO(kai): notify message queue that connection is down and a reconnect is imminent?
     {
@@ -82,7 +86,7 @@ void WebsocketPlain::reconnect(std::error_code reason, long delay) {
         if (this->m_is_connected) {
             try {
                 EVLOG_info << "Closing websocket connection before reconnecting";
-                this->ws_client.close(this->handle, websocketpp::close::status::service_restart, "");
+                this->ws_client.close(this->handle, websocketpp::close::status::normal, "");
             } catch (std::exception& e) {
                 EVLOG_error << "Error on plain close: " << e.what();
             }
@@ -186,7 +190,7 @@ void WebsocketPlain::on_close_plain(client* c, websocketpp::connection_hdl hdl) 
                << websocketpp::close::status::get_string(con->get_remote_close_code())
                << "), reason: " << con->get_remote_close_reason();
     // dont reconnect on service restart code
-    if (con->get_remote_close_code() != websocketpp::close::status::service_restart) {
+    if (con->get_remote_close_code() != websocketpp::close::status::normal) {
         this->reconnect(error_code, this->get_reconnect_interval());
     } else {
         this->closed_callback();
@@ -205,7 +209,7 @@ void WebsocketPlain::on_fail_plain(client* c, websocketpp::connection_hdl hdl) {
         this->connection_attempts < this->connection_options.max_connection_attempts) {
         this->reconnect(ec, this->get_reconnect_interval());
     } else {
-        this->close(websocketpp::close::status::service_restart, "Connection failed");
+        this->close(websocketpp::close::status::normal, "Connection failed");
     }
 }
 

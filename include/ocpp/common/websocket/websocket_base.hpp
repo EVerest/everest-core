@@ -54,6 +54,7 @@ protected:
     long reconnect_backoff_ms;
     websocketpp::transport::timer_handler reconnect_callback;
     int connection_attempts;
+    bool shutting_down;
 
     /// \brief Indicates if the required callbacks are registered
     /// \returns true if the websocket is properly initialized

@@ -14,7 +14,8 @@ WebsocketBase::WebsocketBase(const WebsocketConnectionOptions& connection_option
     message_callback(nullptr),
     reconnect_timer(nullptr),
     connection_attempts(0),
-    reconnect_backoff_ms(0) {
+    reconnect_backoff_ms(0),
+    shutting_down(false) {
     this->ping_timer = std::make_unique<Everest::SteadyTimer>();
     const auto auth_key = connection_options.authorization_key;
     if (auth_key.has_value() and auth_key.value().length() < 16) {
@@ -64,6 +65,9 @@ void WebsocketBase::disconnect(websocketpp::close::status::value code) {
     if (!this->initialized()) {
         EVLOG_error << "Cannot disconnect a websocket that was not initialized";
         return;
+    }
+    if (code == websocketpp::close::status::normal) {
+        this->shutting_down = true;
     }
     if (this->reconnect_timer) {
         this->reconnect_timer.get()->cancel();

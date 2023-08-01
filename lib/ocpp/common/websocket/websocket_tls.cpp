@@ -76,13 +76,18 @@ bool WebsocketTLS::send(const std::string& message) {
 }
 
 void WebsocketTLS::reconnect(std::error_code reason, long delay) {
+    if (this->shutting_down) {
+        EVLOG_info << "Not reconnecting because the websocket is being shutdown.";
+        return;
+    }
+    
     // TODO(kai): notify message queue that connection is down and a reconnect is imminent?
     {
         std::lock_guard<std::mutex> lk(this->reconnect_mutex);
         if (this->m_is_connected) {
             try {
                 EVLOG_info << "Closing websocket connection before reconnecting";
-                this->wss_client.close(this->handle, websocketpp::close::status::service_restart, "");
+                this->wss_client.close(this->handle, websocketpp::close::status::normal, "");
             } catch (std::exception& e) {
                 EVLOG_error << "Error on plain close: " << e.what();
             }
@@ -280,7 +285,7 @@ void WebsocketTLS::on_close_tls(tls_client* c, websocketpp::connection_hdl hdl) 
                << websocketpp::close::status::get_string(con->get_remote_close_code())
                << "), reason: " << con->get_remote_close_reason();
     // dont reconnect on normal close
-    if (con->get_remote_close_code() != websocketpp::close::status::service_restart) {
+    if (con->get_remote_close_code() != websocketpp::close::status::normal) {
         this->reconnect(error_code, this->get_reconnect_interval());
     } else {
         this->closed_callback();
@@ -306,7 +311,7 @@ void WebsocketTLS::on_fail_tls(tls_client* c, websocketpp::connection_hdl hdl) {
         this->connection_attempts < this->connection_options.max_connection_attempts) {
         this->reconnect(ec, this->get_reconnect_interval());
     } else {
-        this->close(websocketpp::close::status::service_restart, "Connection failed");
+        this->close(websocketpp::close::status::normal, "Connection failed");
     }
 }
 

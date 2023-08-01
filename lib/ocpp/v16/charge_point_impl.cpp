@@ -204,7 +204,7 @@ void ChargePointImpl::connect_websocket() {
 
 void ChargePointImpl::disconnect_websocket() {
     if (this->websocket->is_connected()) {
-        this->websocket->disconnect(websocketpp::close::status::service_restart);
+        this->websocket->disconnect(websocketpp::close::status::normal);
     }
 }
 
@@ -760,7 +760,7 @@ bool ChargePointImpl::stop() {
         this->stop_all_transactions();
 
         this->database_handler->close_db_connection();
-        this->websocket->disconnect(websocketpp::close::status::service_restart);
+        this->websocket->disconnect(websocketpp::close::status::normal);
         this->message_queue->stop();
 
         this->stopped = true;
@@ -1209,7 +1209,7 @@ void ChargePointImpl::handleChangeConfigurationRequest(ocpp::Call<ChangeConfigur
                                 this->switchSecurityProfile(security_profile, 1);
                             };
                             // disconnected_callback will trigger security_profile_callback when it is set
-                            this->websocket->disconnect(websocketpp::close::status::service_restart);
+                            this->websocket->disconnect(websocketpp::close::status::normal);
                         }
                     } catch (const std::invalid_argument& e) {
                         response.status = ConfigurationStatus::Rejected;
