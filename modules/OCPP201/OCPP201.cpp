@@ -427,7 +427,7 @@ void OCPP201::init() {
                     evse_id, 1, session_id, timestamp,
                     ocpp::v201::TriggerReasonEnum::RemoteStart, // FIXME(piet): Use proper reason here
                     meter_value, id_token, std::nullopt, reservation_id,
-                    remote_start_id); // FIXME(piet): add proper groupIdToken
+                    remote_start_id, ocpp::v201::ChargingStateEnum::Charging); // FIXME(piet): add proper groupIdToken + ChargingStateEnum
                 break;
             }
             case types::evse_manager::SessionEventEnum::TransactionFinished: {
@@ -450,18 +450,19 @@ void OCPP201::init() {
                 break;
             }
             case types::evse_manager::SessionEventEnum::ChargingStarted: {
+                this->charge_point->on_charging_state_changed(evse_id, ocpp::v201::ChargingStateEnum::Charging);
                 break;
             }
             case types::evse_manager::SessionEventEnum::ChargingResumed: {
-                break;
-            }
-            case types::evse_manager::SessionEventEnum::ChargingFinished: {
+                this->charge_point->on_charging_state_changed(evse_id, ocpp::v201::ChargingStateEnum::Charging);
                 break;
             }
             case types::evse_manager::SessionEventEnum::ChargingPausedEV: {
+                this->charge_point->on_charging_state_changed(evse_id, ocpp::v201::ChargingStateEnum::SuspendedEV);
                 break;
             }
             case types::evse_manager::SessionEventEnum::ChargingPausedEVSE: {
+                this->charge_point->on_charging_state_changed(evse_id, ocpp::v201::ChargingStateEnum::SuspendedEVSE);
                 break;
             }
             case types::evse_manager::SessionEventEnum::Disabled: {
