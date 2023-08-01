@@ -399,7 +399,7 @@ void ChargePoint::next_network_configuration_priority() {
     EVLOG_info << "Switching to next network configuration priority";
     std::vector<SetNetworkProfileRequest> network_connection_profiles = json::parse(
     this->device_model->get_value<std::string>(ControllerComponentVariables::NetworkConnectionProfiles));
-    this->network_configuration_priority = (this->network_configuration_priority + 1) % (network_connection_profiles.size() - 1);
+    this->network_configuration_priority = (this->network_configuration_priority + 1) % (network_connection_profiles.size());
 }
 
 void ChargePoint::handle_message(const json& json_message, const MessageType& message_type) {
