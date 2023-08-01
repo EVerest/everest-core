@@ -16,7 +16,7 @@ class Websocket {
 private:
     std::unique_ptr<WebsocketBase> websocket;
     std::function<void(const int security_profile)> connected_callback;
-    std::function<void()> closed_callback;
+    std::function<void(const websocketpp::close::status::value reason)> closed_callback;
     std::function<void(const std::string& message)> message_callback;
     std::shared_ptr<MessageLogging> logging;
 
@@ -45,7 +45,7 @@ public:
 
     /// \brief register a \p callback that is called when the websocket connection has been closed and will not attempt
     /// to reconnect
-    void register_closed_callback(const std::function<void()>& callback);
+    void register_closed_callback(const std::function<void(const websocketpp::close::status::value reason)>& callback);
 
     /// \brief register a \p callback that is called when the websocket receives a message
     void register_message_callback(const std::function<void(const std::string& message)>& callback);

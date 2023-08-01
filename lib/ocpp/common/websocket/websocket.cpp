@@ -27,6 +27,7 @@ Websocket::~Websocket() {
 }
 
 bool Websocket::connect() {
+    this->logging->sys("Connecting");
     return this->websocket->connect();
 }
 
@@ -57,11 +58,11 @@ void Websocket::register_connected_callback(const std::function<void(const int s
     });
 }
 
-void Websocket::register_closed_callback(const std::function<void()>& callback) {
+void Websocket::register_closed_callback(const std::function<void(const websocketpp::close::status::value reason)>& callback) {
     this->closed_callback = callback;
-    this->websocket->register_closed_callback([this]() {
+    this->websocket->register_closed_callback([this](const websocketpp::close::status::value reason) {
         this->logging->sys("Disconnected");
-        this->closed_callback();
+        this->closed_callback(reason);
     });
 }
 

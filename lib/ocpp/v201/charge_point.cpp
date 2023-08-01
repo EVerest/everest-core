@@ -348,7 +348,7 @@ void ChargePoint::init_websocket() {
         this->websocket_connection_status = WebsocketConnectionStatusEnum::Connected;
     });
 
-    this->websocket->register_closed_callback([this, connection_options, configuration_slot]() {
+    this->websocket->register_closed_callback([this, connection_options, configuration_slot](const websocketpp::close::status::value reason) {
         EVLOG_warning << "Failed to connect to NetworkConfigurationPriority: "
                       << this->network_configuration_priority + 1
                       << " which is configurationSlot: " << configuration_slot;
@@ -356,8 +356,10 @@ void ChargePoint::init_websocket() {
         this->message_queue->pause();
 
         this->websocket_timer.timeout(
-            [this]() {
-                this->next_network_configuration_priority();
+            [this, reason]() {
+                if (reason != websocketpp::close::status::service_restart) {
+                    this->next_network_configuration_priority();
+                }
                 this->start_websocket();
             },
             WEBSOCKET_INIT_DELAY);
@@ -419,9 +421,11 @@ std::optional<NetworkConnectionProfile> ChargePoint::get_network_connection_prof
 }
 
 void ChargePoint::next_network_configuration_priority() {
-    EVLOG_info << "Switching to next network configuration priority";
     std::vector<SetNetworkProfileRequest> network_connection_profiles = json::parse(
     this->device_model->get_value<std::string>(ControllerComponentVariables::NetworkConnectionProfiles));
+    if (network_connection_profiles.size() > 1) {
+        EVLOG_info << "Switching to next network configuration priority";
+    }
     this->network_configuration_priority = (this->network_configuration_priority + 1) % (network_connection_profiles.size());
 }
 
@@ -608,7 +612,7 @@ void ChargePoint::handle_variable_changed(const SetVariableData& set_variable_da
     if (component_variable == ControllerComponentVariables::BasicAuthPassword) {
         if (this->device_model->get_value<int>(ControllerComponentVariables::SecurityProfile) < 3) {
             // TODO: A01.FR.11 log the change of BasicAuth in Security Log
-            this->websocket->reconnect(std::error_code(), 1000);
+            this->websocket->disconnect(websocketpp::close::status::service_restart);
         }
     }
 

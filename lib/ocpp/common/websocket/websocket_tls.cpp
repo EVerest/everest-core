@@ -288,7 +288,7 @@ void WebsocketTLS::on_close_tls(tls_client* c, websocketpp::connection_hdl hdl) 
     if (con->get_remote_close_code() != websocketpp::close::status::normal) {
         this->reconnect(error_code, this->get_reconnect_interval());
     } else {
-        this->closed_callback();
+        this->closed_callback(con->get_remote_close_code());
     }
 }
 void WebsocketTLS::on_fail_tls(tls_client* c, websocketpp::connection_hdl hdl) {
@@ -328,7 +328,7 @@ void WebsocketTLS::close(websocketpp::close::status::value code, const std::stri
     if (ec) {
         EVLOG_error << "Error initiating close of TLS websocket: " << ec.message();
         // on_close_tls wont be called here so we have to call the closed_callback manually
-        this->closed_callback();
+        this->closed_callback(websocketpp::close::status::abnormal_close);
     } else {
         EVLOG_info << "Closed TLS websocket successfully.";
     }

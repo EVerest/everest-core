@@ -154,7 +154,7 @@ void ChargePointImpl::init_websocket() {
         this->message_queue->resume(); //
         this->connected_callback();    //
     });
-    this->websocket->register_closed_callback([this]() {
+    this->websocket->register_closed_callback([this](const websocketpp::close::status::value reason) {
         if (this->connection_state_changed_callback != nullptr) {
             this->connection_state_changed_callback(false);
         }
