@@ -70,7 +70,13 @@ export CPM_SOURCE_CACHE=$HOME/.cache/CPM
 Now setup EVerest workspace: 
 ```bash
 cd everest-dev-environment/dependency_manager
-edm --config ../everest-complete.yaml --workspace ~/checkout/everest-workspace
+edm init --workspace ~/checkout/everest-workspace
+```
+
+This sets up a workspace based on the most recent EVerest release. If you want to check out the most recent main you can use the following command:
+```bash
+cd everest-dev-environment/dependency_manager
+edm init main --workspace ~/checkout/everest-workspace
 ```
 
 Install [ev-cli](https://github.com/EVerest/everest-utils/tree/main/ev-dev-tools):
