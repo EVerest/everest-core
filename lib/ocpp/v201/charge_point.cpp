@@ -117,12 +117,14 @@ void ChargePoint::on_transaction_started(const int32_t evse_id, const int32_t co
                                          const MeterValue& meter_start, const IdToken& id_token,
                                          const std::optional<IdToken>& group_id_token,
                                          const std::optional<int32_t>& reservation_id,
-                                         const std::optional<int32_t>& remote_start_id) {
+                                         const std::optional<int32_t>& remote_start_id,
+                                         const ChargingStateEnum charging_state) {
 
     this->evses.at(evse_id)->open_transaction(
         session_id, connector_id, timestamp, meter_start, id_token, group_id_token, reservation_id,
         this->device_model->get_value<int>(ControllerComponentVariables::SampledDataTxUpdatedInterval));
     const auto& enhanced_transaction = this->evses.at(evse_id)->get_transaction();
+    enhanced_transaction->chargingState = charging_state;
     const auto meter_value = utils::get_meter_value_with_measurands_applied(
         meter_start, utils::get_measurands_vec(this->device_model->get_value<std::string>(
                          ControllerComponentVariables::SampledDataTxStartedMeasurands)));
@@ -204,6 +206,27 @@ void ChargePoint::on_faulted(const int32_t evse_id, const int32_t connector_id) 
 
 void ChargePoint::on_reserved(const int32_t evse_id, const int32_t connector_id) {
     this->evses.at(evse_id)->submit_event(connector_id, ConnectorEvent::Reserve);
+}
+
+bool ChargePoint::on_charging_state_changed(const uint32_t evse_id,
+                                            ChargingStateEnum charging_state) {
+    if (this->evses.find(static_cast<int32_t>(evse_id)) != this->evses.end()) {
+        std::unique_ptr<EnhancedTransaction> &transaction =
+            this->evses.at(static_cast<int32_t>(evse_id))->get_transaction();
+        if (transaction != nullptr) {
+            transaction->chargingState = charging_state;
+            return true;
+        } else {
+            EVLOG_warning
+                << "Can not change charging state: no transaction for evse id "
+                << evse_id;
+        }
+    } else {
+        EVLOG_warning << "Can not change charging state: evse id invalid: "
+                      << evse_id;
+    }
+
+    return false;
 }
 
 AuthorizeResponse ChargePoint::validate_token(const IdToken id_token, const std::optional<CiString<5500>>& certificate,

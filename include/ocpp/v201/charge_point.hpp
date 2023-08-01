@@ -272,12 +272,14 @@ public:
     /// \param group_id_token   Optional group id token
     /// \param reservation_id
     /// \param remote_start_id
+    /// \param charging_state   The new charging state
     void on_transaction_started(const int32_t evse_id, const int32_t connector_id, const std::string& session_id,
                                 const DateTime& timestamp, const ocpp::v201::TriggerReasonEnum trigger_reason,
                                 const MeterValue& meter_start, const IdToken& id_token,
                                 const std::optional<IdToken>& group_id_token,
                                 const std::optional<int32_t>& reservation_id,
-                                const std::optional<int32_t>& remote_start_id);
+                                const std::optional<int32_t>& remote_start_id,
+                                const ChargingStateEnum charging_state);
 
     /// \brief Event handler that should be called when a transaction has finished
     /// \param evse_id
@@ -317,6 +319,12 @@ public:
     /// \param evse_id          Reserved EVSE id
     /// \param connector_id     Reserved connector id
     void on_reserved(const int32_t evse_id, const int32_t connector_id);
+
+    /// \brief Event handler that will update the charging state internally when it has been changed.
+    /// \param evse_id          The evse id of which the charging state has changed.
+    /// \param charging_state   The new charging state.
+    /// \return True on success. False if evse id does not exist.
+    bool on_charging_state_changed(const uint32_t evse_id, ChargingStateEnum charging_state);
 
     /// \brief Validates provided \p id_token \p certificate and \p ocsp_request_data using CSMS, AuthCache or AuthList
     /// \param id_token
