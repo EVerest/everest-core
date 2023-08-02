@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
-#include <boost/optional/optional_io.hpp>
+#include <optional>
 #include <filesystem>
 #include <gtest/gtest.h>
 #include <iostream>
@@ -96,10 +96,10 @@ TEST_F(DatabaseTest, test_local_authorization_list_entry_1) {
 
     this->db_handler->insert_or_update_local_authorization_list_entry(id_tag, exp_id_tag_info);
     auto id_tag_info = this->db_handler->get_local_authorization_list_entry(id_tag);
-    ASSERT_EQ(exp_id_tag_info.status, id_tag_info.get().status);
+    ASSERT_EQ(exp_id_tag_info.status, id_tag_info.value().status);
 
     id_tag_info = this->db_handler->get_local_authorization_list_entry(unknown_id_tag);
-    ASSERT_EQ(boost::none, id_tag_info);
+    ASSERT_EQ(std::nullopt, id_tag_info);
 }
 
 TEST_F(DatabaseTest, test_local_authorization_list_entry_2) {
@@ -154,7 +154,7 @@ TEST_F(DatabaseTest, test_local_authorization_list) {
 
     // entry_2 had no idTagInfo so it is not set so it is deleted from the list
     received_id_tag_info = this->db_handler->get_local_authorization_list_entry(id_tag_2);
-    ASSERT_EQ(boost::none, received_id_tag_info);
+    ASSERT_EQ(std::nullopt, received_id_tag_info);
 }
 
 TEST_F(DatabaseTest, test_clear_authorization_list) {
@@ -176,7 +176,7 @@ TEST_F(DatabaseTest, test_clear_authorization_list) {
     this->db_handler->clear_local_authorization_list();
 
     id_tag_info = this->db_handler->get_local_authorization_list_entry(id_tag);
-    ASSERT_EQ(boost::none, id_tag_info);
+    ASSERT_EQ(std::nullopt, id_tag_info);
 }
 
 TEST_F(DatabaseTest, test_authorization_cache_entry) {
@@ -189,10 +189,10 @@ TEST_F(DatabaseTest, test_authorization_cache_entry) {
 
     this->db_handler->insert_or_update_authorization_cache_entry(id_tag, exp_id_tag_info);
     auto id_tag_info = this->db_handler->get_authorization_cache_entry(id_tag);
-    ASSERT_EQ(exp_id_tag_info.status, id_tag_info.get().status);
+    ASSERT_EQ(exp_id_tag_info.status, id_tag_info.value().status);
 
     id_tag_info = this->db_handler->get_authorization_cache_entry(unknown_id_tag);
-    ASSERT_EQ(boost::none, id_tag_info);
+    ASSERT_EQ(std::nullopt, id_tag_info);
 }
 
 TEST_F(DatabaseTest, test_authorization_cache_entry_2) {
@@ -232,7 +232,7 @@ TEST_F(DatabaseTest, test_clear_authorization_cache) {
     this->db_handler->clear_authorization_cache();
 
     id_tag_info = this->db_handler->get_authorization_cache_entry(id_tag);
-    ASSERT_EQ(boost::none, id_tag_info);
+    ASSERT_EQ(std::nullopt, id_tag_info);
 }
 
 TEST_F(DatabaseTest, test_connector_availability) {
@@ -252,7 +252,7 @@ TEST_F(DatabaseTest, test_connector_availability) {
 
 TEST_F(DatabaseTest, test_insert_and_get_transaction) {
 
-    boost::optional<CiString<20>> id_tag;
+    std::optional<CiString<20>> id_tag;
     id_tag.emplace(CiString<20>("DEADBEEF"));
 
     this->db_handler->insert_transaction("id-42", -1, 1, "DEADBEEF", "2022-08-18T09:42:41", 42, false, 42);
@@ -283,7 +283,7 @@ TEST_F(DatabaseTest, test_insert_and_get_transaction) {
 
 TEST_F(DatabaseTest, test_insert_and_get_transaction_without_id_tag) {
 
-    boost::optional<CiString<20>> id_tag;
+    std::optional<CiString<20>> id_tag;
     this->db_handler->insert_transaction("id-42", -1, 1, "DEADBEEF", "2022-08-18T09:42:41", 42, false, 42);
     this->db_handler->update_transaction("id-42", 42);
     this->db_handler->update_transaction("id-42", 5000, "2022-08-18T10:42:41", id_tag, Reason::EVDisconnected);

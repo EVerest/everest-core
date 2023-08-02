@@ -3,6 +3,8 @@
 
 #include <filesystem>
 #include <gtest/gtest.h>
+#include <fstream>
+#include <sstream>
 
 #include <everest/logging.hpp>
 
@@ -63,21 +65,21 @@ TEST_F(PkiHandlerTests, install_root_ca_01) {
     const auto v2g_root_ca = read_file_to_string(std::filesystem::path("certs/ca/v2g/V2G_ROOT_CA.pem"));
     std::filesystem::remove("certs/ca/v2g/V2G_ROOT_CA.pem");
     const auto result = this->pki_handler->installRootCertificate(
-        v2g_root_ca, ocpp::CertificateType::V2GRootCertificate, boost::none, boost::none);
+        v2g_root_ca, ocpp::CertificateType::V2GRootCertificate, std::nullopt, std::nullopt);
     ASSERT_TRUE(result == ocpp::InstallCertificateResult::Ok);
 }
 
 TEST_F(PkiHandlerTests, install_root_ca_02) {
     const auto invalid_csms_ca = "InvalidCertificate";
     const auto result = this->pki_handler->installRootCertificate(
-        invalid_csms_ca, ocpp::CertificateType::CentralSystemRootCertificate, boost::none, true);
+        invalid_csms_ca, ocpp::CertificateType::CentralSystemRootCertificate, std::nullopt, true);
     ASSERT_EQ(result, ocpp::InstallCertificateResult::InvalidFormat);
 }
 
 TEST_F(PkiHandlerTests, install_root_ca_03) {
     const auto invalid_ca = read_file_to_string(std::filesystem::path("certs/ca/invalid/INVALID_CA.pem"));
     const auto result = this->pki_handler->installRootCertificate(
-        invalid_ca, ocpp::CertificateType::CentralSystemRootCertificate, boost::none, true);
+        invalid_ca, ocpp::CertificateType::CentralSystemRootCertificate, std::nullopt, true);
     ASSERT_EQ(result, ocpp::InstallCertificateResult::InvalidCertificateChain);
 }
 
@@ -90,7 +92,7 @@ TEST_F(PkiHandlerTests, install_root_ca_04) {
 
 TEST_F(PkiHandlerTests, delete_root_ca_01) {
 
-    const auto root_certs = this->pki_handler->getRootCertificateHashData(boost::none);
+    const auto root_certs = this->pki_handler->getRootCertificateHashData(std::nullopt);
 
     ocpp::CertificateHashDataType certificate_hash_data;
     certificate_hash_data.hashAlgorithm = ocpp::HashAlgorithmEnumType::SHA256;
