@@ -52,3 +52,8 @@ ext-mbedtls:
   git: https://github.com/EVerest/ext-mbedtls.git
   git_tag: 8b3f26a
   options: ["ENABLE_PROGRAMS OFF", "ENABLE_TESTING OFF"]
+
+# everest-testing
+everest-utils:
+  git: https://github.com/EVerest/everest-utils.git
+  git_tag: 3af45e2
