@@ -10,19 +10,213 @@ provides:
   main:
     interface: empty
     description: This module provides no outward-facing interface
-requires:
-  test_control:
+  auth_token_provider:
+    interface: auth_token_provider
+    description: Allows to simulate an auth token provider interface
+  auth_token_validator:
+    interface: auth_token_validator
+    description: Allows to simulate an auth token validator interface
+  auth:
+    interface: auth
+    description: Allows to simulate an auth interface
+  board_support_AC:
+    interface: board_support_AC
+    description: Allows to simulate a board support AC interface
+  car_simulator:
     interface: car_simulator
-  connector_1:
+    description: Allows to simulate a car simulator interface
+  energy_manager:
+    interface: energy_manager
+    description: Allows to simulate an energy manager interface
+  energy_price_information:
+    interface: energy_price_information
+    description: Allows to simulate a energy price information interface
+  energy:
+    interface: energy
+    description: Allows to simulate an energy interface
+  evse_manager:
+    interface: evse_manager
+    description: Allows to simulate an evse manager interface
+  ev_slac:
+    interface: ev_slac
+    description: Allows to simulate an EV SLAC interface
+  external_energy_limits:
+    interface: external_energy_limits
+    description: Allows to simulate an external energy limits interface
+  ISO15118_charger:
+    interface: ISO15118_charger
+    description: Allows to simulate an ISO15118 charger interface
+  ISO15118_ev:
+    interface: ISO15118_ev
+    description: Allows to simulate an ISO15118 EV interface
+  isolation_monitor:
+    interface: isolation_monitor
+    description: Allows to simulate an isolation monitor interface
+  ocpp_1_6_charge_point:
+    interface: ocpp_1_6_charge_point
+    description: Allows to simulate a OCPP 1.6 charge point interface
+  powermeter:
+    interface: powermeter
+    description: Allows to simulate a powermeter interface
+  power_supply_DC:
+    interface: power_supply_DC
+    description: Allows to simulate a power supply DC interface
+  power:
+    interface: power
+    description: Allows to simulate a power interface
+  reservation:
+    interface: reservation
+    description: Allows to simulate a reservation interface
+  serial_communication_hub:
+    interface: serial_communication_hub
+    description: Allows to simulate a serial communication hub interface
+  slac:
+    interface: slac
+    description: Allows to simulate a SLAC interface
+  solar_forecast:
+    interface: solar_forecast
+    description: Allows to simulate a solar forecast interface
+  sunspec_ac_meter:
+    interface: sunspec_ac_meter
+    description: Allows to simulate a sunspec AC meter interface
+  sunspec_reader:
+    interface: sunspec_reader
+    description: Allows to simulate a sunspec reader interface
+  sunspec_scanner:
+    interface: sunspec_scanner
+    description: Allows to simulate a sunspec scanner interface
+  system:
+    interface: system
+    description: Allows to simulate a system interface
+  tibber_price_forecast:
+    interface: tibber_price_forecast
+    description: Allows to simulate a tibber price forecast interface
+  yeti_extras:
+    interface: yeti_extras
+    description: Allows to simulate a yeti extras interface
+  yeti_simulation_control:
+    interface: yeti_simulation_control
+    description: Allows to simulate a yeti simulation control interface
+requires:
+  auth_token_provider:
+    interface: auth_token_provider
+    min_connections: 0
+    max_connections: 128
+  auth_token_validator:
+    interface: auth_token_validator
+    min_connections: 0
+    max_connections: 128
+  auth:
+    interface: auth
+    min_connections: 0
+    max_connections: 128
+  board_support_AC:
+    interface: board_support_AC
+    min_connections: 0
+    max_connections: 128
+  car_simulator:
+    interface: car_simulator
+    min_connections: 0
+    max_connections: 128
+  energy_manager:
+    interface: energy_manager
+    min_connections: 0
+    max_connections: 128
+  energy_price_information:
+    interface: energy_price_information
+    min_connections: 0
+    max_connections: 128
+  energy:
+    interface: energy
+    min_connections: 0
+    max_connections: 128
+  evse_manager:
     interface: evse_manager
     min_connections: 0
     max_connections: 128
-  ocpp:
+  ev_slac:
+    interface: ev_slac
+    min_connections: 0
+    max_connections: 128
+  external_energy_limits:
+    interface: external_energy_limits
+    min_connections: 0
+    max_connections: 128
+  ISO15118_charger:
+    interface: ISO15118_charger
+    min_connections: 0
+    max_connections: 128
+  ISO15118_ev:
+    interface: ISO15118_ev
+    min_connections: 0
+    max_connections: 128
+  isolation_monitor:
+    interface: isolation_monitor
+    min_connections: 0
+    max_connections: 128
+  ocpp_1_6_charge_point:
     interface: ocpp_1_6_charge_point
     min_connections: 0
-    max_connections: 1
+    max_connections: 128
+  powermeter:
+    interface: powermeter
+    min_connections: 0
+    max_connections: 128
+  power_supply_DC:
+    interface: power_supply_DC
+    min_connections: 0
+    max_connections: 128
+  power:
+    interface: power
+    min_connections: 0
+    max_connections: 128
+  reservation:
+    interface: reservation
+    min_connections: 0
+    max_connections: 128
+  serial_communication_hub:
+    interface: serial_communication_hub
+    min_connections: 0
+    max_connections: 128
+  slac:
+    interface: slac
+    min_connections: 0
+    max_connections: 128
+  solar_forecast:
+    interface: solar_forecast
+    min_connections: 0
+    max_connections: 128
+  sunspec_ac_meter:
+    interface: sunspec_ac_meter
+    min_connections: 0
+    max_connections: 128
+  sunspec_reader:
+    interface: sunspec_reader
+    min_connections: 0
+    max_connections: 128
+  sunspec_scanner:
+    interface: sunspec_scanner
+    min_connections: 0
+    max_connections: 128
+  system:
+    interface: system
+    min_connections: 0
+    max_connections: 128
+  tibber_price_forecast:
+    interface: tibber_price_forecast
+    min_connections: 0
+    max_connections: 128
+  yeti_extras:
+    interface: yeti_extras
+    min_connections: 0
+    max_connections: 128
+  yeti_simulation_control:
+    interface: yeti_simulation_control
+    min_connections: 0
+    max_connections: 128
 enable_external_mqtt: false
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
   authors:
+    - Kai-Uwe Hermann
     - Lars Dieckmann

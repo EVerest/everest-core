@@ -10,7 +10,7 @@ import threading
 import queue
 
 from everest.testing.core_utils.fixtures import *
-from everest.testing.core_utils.everest_core import EverestCore, TestControlModuleConnection
+from everest.testing.core_utils.everest_core import EverestCore, TestControlModuleConnection, ModuleConnection
 
 from everest.framework import Module, RuntimeSession
 
@@ -27,7 +27,7 @@ class ProbeModule:
         self._setup = m.say_hello()
 
         # subscribe to session events
-        evse_manager_ff = self._setup.connections['connector_1'][0]
+        evse_manager_ff = self._setup.connections['evse_manager'][0]
         m.subscribe_variable(evse_manager_ff, 'session_event',
                              self._handle_evse_manager_event)
 
@@ -50,7 +50,7 @@ class ProbeModule:
             return False
 
         # fetch fulfillment
-        car_sim_ff = self._setup.connections['test_control'][0]
+        car_sim_ff = self._setup.connections['car_simulator'][0]
 
         # enable simulator
         self._mod.call_command(car_sim_ff, 'enable', {'value': True})
@@ -76,16 +76,22 @@ class ProbeModule:
 
         return True
 
+
 @pytest.mark.everest_core_config('config-sil.yaml')
 @pytest.mark.asyncio
 async def test_001_start_test_module(everest_core: EverestCore):
     logging.info(">>>>>>>>> test_001_start_test_module <<<<<<<<<")
 
     everest_core.start(standalone_module='probe_module', modules_to_test=[
-                       TestControlModuleConnection(evse_manager_id="connector_1", car_simulator_id="car_simulator", ocpp_id=None)])
+                       TestControlModuleConnection(
+                           evse_manager=ModuleConnection(
+                               implementation_id="evse", module_id="connector_1"),
+                           car_simulator=ModuleConnection(
+                               implementation_id="main", module_id="car_simulator"))])
     logging.info("everest-core ready, waiting for probe module")
 
-    session = RuntimeSession(str(everest_core.prefix_path), str(everest_core.everest_config_path))
+    session = RuntimeSession(str(everest_core.prefix_path), str(
+        everest_core.everest_config_path))
 
     probe = ProbeModule(session)
 
