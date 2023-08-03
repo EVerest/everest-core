@@ -151,7 +151,6 @@ function simdata_reset_defaults(mod) {
   mod.bcb_toggles = 0;
   mod.bcb_toggle_C = true;
 
-  mod.uses.simulation_control.call.setSimulationData({ value: mod.simdata });
   mod.pp = "";
   mod.rcd_current_mA = 0;
   mod.pwm_duty_cycle = 100;
@@ -490,6 +489,8 @@ function registerAllCmds(mod) {
       return true;
     }
     return false;
+  });
+
   registerCmd(mod, 'wait_for_real_plugin', 0, (mod, c) => {
     if (mod.actual_bsp_event == 'A') {
       evlog.info("Real plugin detected.");
