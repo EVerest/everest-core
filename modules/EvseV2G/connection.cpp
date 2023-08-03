@@ -461,9 +461,9 @@ static void connection_teardown(struct v2g_connection* conn) {
         conn->ctx->p_charger->publish_currentDemand_Finished(nullptr);
 
         if (conn->ctx->is_dc_charger == true) {
-            conn->ctx->p_charger->publish_DC_Open_Contactor(true);
+            conn->ctx->p_charger->publish_DC_Open_Contactor(nullptr);
         } else {
-            conn->ctx->p_charger->publish_AC_Open_Contactor(true);
+            conn->ctx->p_charger->publish_AC_Open_Contactor(nullptr);
         }
     }
 

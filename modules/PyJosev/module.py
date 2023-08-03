@@ -192,6 +192,8 @@ class PyJosevModule():
     def _handler_set_Get_Certificate_Response(self, args):
         self._cs.existream_status = args['Existream_Status']
 
+    def _handler_dlink_ready(self, args):
+        self._cs.dlink_ready = args['value']
 
 py_josev = PyJosevModule()
 py_josev.start_secc_handler()

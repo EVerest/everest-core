@@ -67,6 +67,7 @@ protected:
     virtual void handle_set_Certificate_Service_Supported(bool& status) override;
     virtual void
     handle_set_Get_Certificate_Response(types::iso15118_charger::Response_Exi_Stream_Status& Existream_Status) override;
+    virtual void handle_dlink_ready(bool& value) override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
     // insert your protected definitions here

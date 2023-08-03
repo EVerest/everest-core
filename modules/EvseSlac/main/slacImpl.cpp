@@ -113,18 +113,32 @@ bool slacImpl::handle_leave_bcd() {
 };
 
 bool slacImpl::handle_dlink_terminate() {
-    EVLOG_AND_THROW(Everest::EverestInternalError("dlink_terminate() not implemented yet"));
-    return false;
+    // With receiving a D-LINK_TERMINATE.request from HLE, the communication node
+    // shall leave the logical network within TP_match_leave. All parameters related
+    // to the current link shall be set to the default value and shall change to the status "Unmatched".
+    EVLOG_info << "D-LINK_TERMINATE.request received, leaving network.";
+    fsm_ctrl->signal_reset();
+    return true;
 };
 
 bool slacImpl::handle_dlink_error() {
-    EVLOG_AND_THROW(Everest::EverestInternalError("dlink_error() not implemented yet"));
-    return false;
+    // The D-LINK_ERROR.request requests lower layers to terminate the data link and restart the matching
+    // process by a control pilot transition through state E (on EVSE side this should be state F though)
+    // CP signal is handled by EvseManager, so we just need to reset the SLAC state machine here.
+    // DLINK_ERROR will be send from HLC layers when they detect that the connection is dead.
+    EVLOG_warning << "D-LINK_ERROR.request received";
+    fsm_ctrl->signal_reset();
+    return true;
 };
 
 bool slacImpl::handle_dlink_pause() {
-    EVLOG_AND_THROW(Everest::EverestInternalError("dlink_pause() not implemented yet"));
-    return false;
+    // The D-LINK_PAUSE.request requests lower layers to enter a power saving mode. While being in this
+    // mode, the state will be kept to "Matched".
+    // So we don't need to do anything here as we do not support low power mode to power down the PLC modem.
+    // This is optional in ISO15118-3.
+    EVLOG_info << "D-LINK_PAUSE.request received. Staying in MATCHED, PLC chip stays powered on (low power mode "
+                  "optional in -3)";
+    return true;
 };
 
 } // namespace main

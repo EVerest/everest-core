@@ -838,13 +838,16 @@ static enum v2g_event handle_iso_session_setup(struct v2g_connection* conn) {
     /* Check and init session id */
     /* If no session id is configured, generate one */
     srand((unsigned int)time(NULL));
-    if (conn->ctx->evse_v2g_data.session_id == (uint64_t)0) {
+    if (conn->ctx->evse_v2g_data.session_id == (uint64_t)0 || conn->ctx->evse_v2g_data.session_id != conn->ctx->ev_v2g_data.received_session_id) {
         conn->ctx->evse_v2g_data.session_id =
             ((uint64_t)rand() << 48) | ((uint64_t)rand() << 32) | ((uint64_t)rand() << 16) | (uint64_t)rand();
-        dlog(DLOG_LEVEL_INFO, "No session_id found. Generating random session id.");
+        dlog(DLOG_LEVEL_INFO, "No session_id found or not equal to the id from the preceding v2g session. Generating random session id.");
+        dlog(DLOG_LEVEL_INFO, "Created new session with id 0x%08" PRIu64, conn->ctx->evse_v2g_data.session_id);
     }
-
-    dlog(DLOG_LEVEL_INFO, "Created new session with id 0x%08" PRIu64, conn->ctx->evse_v2g_data.session_id);
+    else {
+        dlog(DLOG_LEVEL_INFO, "Found Session_id from the old session: 0x%08" PRIu64, conn->ctx->evse_v2g_data.session_id);
+        res->ResponseCode = iso1responseCodeType_OK_OldSessionJoined;
+    }
 
     /* TODO: publish EVCCID to MQTT */
 
@@ -1594,7 +1597,7 @@ static enum v2g_event handle_iso_power_delivery(struct v2g_connection* conn) {
             // by other module
             if (conn->ctx->contactor_is_closed == false) {
                 // TODO: Signal closing contactor with MQTT if no timeout while waiting for state C or D
-                conn->ctx->p_charger->publish_AC_Close_Contactor(true);
+                conn->ctx->p_charger->publish_AC_Close_Contactor(nullptr);
                 conn->ctx->session.is_charging = true;
 
                 /* determine timeout for contactor */
@@ -1628,10 +1631,10 @@ static enum v2g_event handle_iso_power_delivery(struct v2g_connection* conn) {
         if (conn->ctx->is_dc_charger == false) {
             // TODO: For AC charging wait for CP state change from C/D to B , before transmitting of the response. CP
             // state is checked by other module
-            conn->ctx->p_charger->publish_AC_Open_Contactor(true);
+            conn->ctx->p_charger->publish_AC_Open_Contactor(nullptr);
         } else {
             conn->ctx->p_charger->publish_currentDemand_Finished(nullptr);
-            conn->ctx->p_charger->publish_DC_Open_Contactor(true);
+            conn->ctx->p_charger->publish_DC_Open_Contactor(nullptr);
         }
         break;
 
@@ -2139,8 +2142,8 @@ static enum v2g_event handle_iso_session_stop(struct v2g_connection* conn) {
     switch (req->ChargingSession) {
     case iso1chargingSessionType_Terminate:
         conn->dlink_action = MQTT_DLINK_ACTION_TERMINATE;
-        conn->ctx->p_charger->publish_EV_ChargingSession(
-            static_cast<types::iso15118_charger::ChargingSession>(iso1chargingSessionType_Terminate));
+        conn->ctx->p_charger->publish_dlink_terminate(nullptr);
+        conn->ctx->hlc_pause_active = false;
         /* Set next expected req msg */
         conn->ctx->state = (int)iso_dc_state_id::WAIT_FOR_TERMINATED_SESSION;
         break;
@@ -2148,18 +2151,18 @@ static enum v2g_event handle_iso_session_stop(struct v2g_connection* conn) {
     case iso1chargingSessionType_Pause:
         /* Set next expected req msg */
         /* Check if the EV is allowed to request the sleep mode. TODO: Remove "true" if sleep mode is supported */
-        if (true || ((conn->ctx->last_v2g_msg != V2G_POWER_DELIVERY_MSG) &&
-                     (conn->ctx->last_v2g_msg != V2G_WELDING_DETECTION_MSG))) {
+        if (((conn->ctx->last_v2g_msg != V2G_POWER_DELIVERY_MSG) &&
+             (conn->ctx->last_v2g_msg != V2G_WELDING_DETECTION_MSG))) {
             conn->dlink_action = MQTT_DLINK_ACTION_TERMINATE;
-            conn->ctx->p_charger->publish_EV_ChargingSession(
-                static_cast<types::iso15118_charger::ChargingSession>(iso1chargingSessionType_Terminate));
+            conn->ctx->p_charger->publish_dlink_terminate(nullptr);
             res->ResponseCode = iso1responseCodeType_FAILED;
+            conn->ctx->hlc_pause_active = false;
             conn->ctx->state = (int)iso_dc_state_id::WAIT_FOR_TERMINATED_SESSION;
         } else {
             /* Init sleep mode for the EV */
             conn->dlink_action = MQTT_DLINK_ACTION_PAUSE;
-            conn->ctx->p_charger->publish_EV_ChargingSession(
-                static_cast<types::iso15118_charger::ChargingSession>(iso1chargingSessionType_Pause));
+            conn->ctx->p_charger->publish_dlink_pause(nullptr);
+            conn->ctx->hlc_pause_active = true;
             conn->ctx->state = (int)iso_dc_state_id::WAIT_FOR_SESSIONSETUP;
         }
         break;
@@ -2167,8 +2170,7 @@ static enum v2g_event handle_iso_session_stop(struct v2g_connection* conn) {
     default:
         /* Set next expected req msg */
         conn->dlink_action = MQTT_DLINK_ACTION_TERMINATE;
-        conn->ctx->p_charger->publish_EV_ChargingSession(
-            static_cast<types::iso15118_charger::ChargingSession>(iso1chargingSessionType_Terminate));
+        conn->ctx->p_charger->publish_dlink_terminate(nullptr);
         conn->ctx->state = (int)iso_dc_state_id::WAIT_FOR_TERMINATED_SESSION;
     }
 

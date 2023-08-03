@@ -26,6 +26,8 @@ cmds:
       type: boolean
   stop_charging:
     description: Stop the ev charging communication process
+  pause_charging:
+    description: Pause the ev charging communication process  
   set_fault:
     description: >-
       TODO_SL: Set the different ev faults to communicate these errors

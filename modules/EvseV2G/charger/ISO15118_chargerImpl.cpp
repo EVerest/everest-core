@@ -75,67 +75,74 @@ void ISO15118_chargerImpl::handle_set_EVSEID(std::string& EVSEID, std::string& E
 };
 
 void ISO15118_chargerImpl::handle_set_PaymentOptions(Array& PaymentOptions) {
-    v2g_ctx->evse_v2g_data.payment_option_list_len = 0;
+    
+    if (v2g_ctx->hlc_pause_active != true) {
 
-    for (auto& element : PaymentOptions) {
-        if (element.is_string()) {
-            types::iso15118_charger::PaymentOption payment_option =
-                types::iso15118_charger::string_to_payment_option(element.get<std::string>());
-            if (payment_option == types::iso15118_charger::PaymentOption::Contract) {
-                v2g_ctx->evse_v2g_data.payment_option_list[v2g_ctx->evse_v2g_data.payment_option_list_len] =
-                    iso1paymentOptionType_Contract;
-                v2g_ctx->evse_v2g_data.payment_option_list_len++;
-            } else if (payment_option == types::iso15118_charger::PaymentOption::ExternalPayment) {
-                v2g_ctx->evse_v2g_data.payment_option_list[v2g_ctx->evse_v2g_data.payment_option_list_len] =
-                    iso1paymentOptionType_ExternalPayment;
-                v2g_ctx->evse_v2g_data.payment_option_list_len++;
-            } else if (v2g_ctx->evse_v2g_data.payment_option_list_len == 0) {
-                dlog(DLOG_LEVEL_WARNING, "Unable to configure PaymentOptions %s", element.get<std::string>());
+        v2g_ctx->evse_v2g_data.payment_option_list_len = 0;
+
+        for (auto& element : PaymentOptions) {
+            if (element.is_string()) {
+                types::iso15118_charger::PaymentOption payment_option =
+                    types::iso15118_charger::string_to_payment_option(element.get<std::string>());
+                if (payment_option == types::iso15118_charger::PaymentOption::Contract) {
+                    v2g_ctx->evse_v2g_data.payment_option_list[v2g_ctx->evse_v2g_data.payment_option_list_len] =
+                        iso1paymentOptionType_Contract;
+                    v2g_ctx->evse_v2g_data.payment_option_list_len++;
+                } else if (payment_option == types::iso15118_charger::PaymentOption::ExternalPayment) {
+                    v2g_ctx->evse_v2g_data.payment_option_list[v2g_ctx->evse_v2g_data.payment_option_list_len] =
+                        iso1paymentOptionType_ExternalPayment;
+                    v2g_ctx->evse_v2g_data.payment_option_list_len++;
+                } else if (v2g_ctx->evse_v2g_data.payment_option_list_len == 0) {
+                    dlog(DLOG_LEVEL_WARNING, "Unable to configure PaymentOptions %s", element.get<std::string>());
+                }
             }
         }
     }
 }
 
 void ISO15118_chargerImpl::handle_set_SupportedEnergyTransferMode(Array& SupportedEnergyTransferMode) {
-    uint16_t& energyArrayLen =
-        (v2g_ctx->evse_v2g_data.charge_service.SupportedEnergyTransferMode.EnergyTransferMode.arrayLen);
-    iso1EnergyTransferModeType* energyArray =
-        v2g_ctx->evse_v2g_data.charge_service.SupportedEnergyTransferMode.EnergyTransferMode.array;
-    energyArrayLen = 0;
 
-    v2g_ctx->is_dc_charger = true;
+    if (v2g_ctx->hlc_pause_active != true) {
+        uint16_t& energyArrayLen =
+            (v2g_ctx->evse_v2g_data.charge_service.SupportedEnergyTransferMode.EnergyTransferMode.arrayLen);
+        iso1EnergyTransferModeType* energyArray =
+            v2g_ctx->evse_v2g_data.charge_service.SupportedEnergyTransferMode.EnergyTransferMode.array;
+        energyArrayLen = 0;
 
-    for (auto& element : SupportedEnergyTransferMode) {
-        if (element.is_string()) {
-            types::iso15118_charger::EnergyTransferMode energy_transfer_mode =
-                types::iso15118_charger::string_to_energy_transfer_mode(element.get<std::string>());
-            switch (energy_transfer_mode) {
-            case types::iso15118_charger::EnergyTransferMode::AC_single_phase_core:
-                energyArray[(energyArrayLen)++] = iso1EnergyTransferModeType_AC_single_phase_core;
-                v2g_ctx->is_dc_charger = false;
-                break;
-            case types::iso15118_charger::EnergyTransferMode::AC_three_phase_core:
-                energyArray[(energyArrayLen)++] = iso1EnergyTransferModeType_AC_three_phase_core;
-                v2g_ctx->is_dc_charger = false;
-                break;
-            case types::iso15118_charger::EnergyTransferMode::DC_core:
-                energyArray[(energyArrayLen)++] = iso1EnergyTransferModeType_DC_core;
-                break;
-            case types::iso15118_charger::EnergyTransferMode::DC_extended:
-                energyArray[(energyArrayLen)++] = iso1EnergyTransferModeType_DC_extended;
-                break;
-            case types::iso15118_charger::EnergyTransferMode::DC_combo_core:
-                energyArray[(energyArrayLen)++] = iso1EnergyTransferModeType_DC_combo_core;
-                break;
-            case types::iso15118_charger::EnergyTransferMode::DC_unique:
-                energyArray[(energyArrayLen)++] = iso1EnergyTransferModeType_DC_unique;
-                break;
-            default:
-                if (energyArrayLen == 0) {
-                    dlog(DLOG_LEVEL_WARNING, "Unable to configure SupportedEnergyTransferMode %s",
-                         element.get<std::string>());
+        v2g_ctx->is_dc_charger = true;
+
+        for (auto& element : SupportedEnergyTransferMode) {
+            if (element.is_string()) {
+                types::iso15118_charger::EnergyTransferMode energy_transfer_mode =
+                    types::iso15118_charger::string_to_energy_transfer_mode(element.get<std::string>());
+                switch (energy_transfer_mode) {
+                case types::iso15118_charger::EnergyTransferMode::AC_single_phase_core:
+                    energyArray[(energyArrayLen)++] = iso1EnergyTransferModeType_AC_single_phase_core;
+                    v2g_ctx->is_dc_charger = false;
+                    break;
+                case types::iso15118_charger::EnergyTransferMode::AC_three_phase_core:
+                    energyArray[(energyArrayLen)++] = iso1EnergyTransferModeType_AC_three_phase_core;
+                    v2g_ctx->is_dc_charger = false;
+                    break;
+                case types::iso15118_charger::EnergyTransferMode::DC_core:
+                    energyArray[(energyArrayLen)++] = iso1EnergyTransferModeType_DC_core;
+                    break;
+                case types::iso15118_charger::EnergyTransferMode::DC_extended:
+                    energyArray[(energyArrayLen)++] = iso1EnergyTransferModeType_DC_extended;
+                    break;
+                case types::iso15118_charger::EnergyTransferMode::DC_combo_core:
+                    energyArray[(energyArrayLen)++] = iso1EnergyTransferModeType_DC_combo_core;
+                    break;
+                case types::iso15118_charger::EnergyTransferMode::DC_unique:
+                    energyArray[(energyArrayLen)++] = iso1EnergyTransferModeType_DC_unique;
+                    break;
+                default:
+                    if (energyArrayLen == 0) {
+                        dlog(DLOG_LEVEL_WARNING, "Unable to configure SupportedEnergyTransferMode %s",
+                            element.get<std::string>());
+                    }
+                    break;
                 }
-                break;
             }
         }
     }
@@ -162,7 +169,9 @@ void ISO15118_chargerImpl::handle_set_ReceiptRequired(bool& ReceiptRequired) {
 };
 
 void ISO15118_chargerImpl::handle_set_FreeService(bool& FreeService) {
-    v2g_ctx->evse_v2g_data.charge_service.FreeService = (int)FreeService;
+    if (v2g_ctx->hlc_pause_active != true) {
+        v2g_ctx->evse_v2g_data.charge_service.FreeService = (int)FreeService;
+    }
 };
 
 void ISO15118_chargerImpl::handle_set_EVSEEnergyToBeDelivered(double& EVSEEnergyToBeDelivered) {
@@ -350,14 +359,17 @@ void ISO15118_chargerImpl::handle_set_Certificate_Service_Supported(bool& status
         // For setting "Certificate" in ServiceList in ServiceDiscoveryRes
         struct iso1ServiceType cert_service;
         const std::string service_name = "Certificate";
-        const int16_t cert_parameter_set_id[] = {1}; // parameter-set-ID 1: "Installation" service. TODO: Support of the "Update" service (parameter-set-ID 2)
+        const int16_t cert_parameter_set_id[] = {1}; // parameter-set-ID 1: "Installation" service. TODO: Support of the
+                                                     // "Update" service (parameter-set-ID 2)
 
-        cert_service.FreeService = 1; // true
-        cert_service.ServiceID = 2; // as defined in ISO 15118-2
+        cert_service.FreeService = 1;                // true
+        cert_service.ServiceID = 2;                  // as defined in ISO 15118-2
         cert_service.ServiceCategory = iso1serviceCategoryType_ContractCertificate;
-        memcpy(cert_service.ServiceName.characters, reinterpret_cast<const char*>(service_name.data()), service_name.length());
+        memcpy(cert_service.ServiceName.characters, reinterpret_cast<const char*>(service_name.data()),
+               service_name.length());
 
-        add_service_to_service_list(v2g_ctx, cert_service, cert_parameter_set_id, sizeof(cert_parameter_set_id) / sizeof(cert_parameter_set_id[0]));
+        add_service_to_service_list(v2g_ctx, cert_service, cert_parameter_set_id,
+                                    sizeof(cert_parameter_set_id) / sizeof(cert_parameter_set_id[0]));
     }
 }
 
@@ -365,10 +377,15 @@ void ISO15118_chargerImpl::handle_set_Get_Certificate_Response(
     types::iso15118_charger::Response_Exi_Stream_Status& Existream_Status) {
     pthread_mutex_lock(&v2g_ctx->mqtt_lock);
     v2g_ctx->evse_v2g_data.cert_install_res_b64_buffer = std::string(*Existream_Status.exiResponse);
-    v2g_ctx->evse_v2g_data.cert_install_status = (Existream_Status.status == types::iso15118_charger::Status::Accepted) ? true : false;
+    v2g_ctx->evse_v2g_data.cert_install_status =
+        (Existream_Status.status == types::iso15118_charger::Status::Accepted) ? true : false;
     pthread_cond_signal(&v2g_ctx->mqtt_cond);
     /* unlock */
     pthread_mutex_unlock(&v2g_ctx->mqtt_lock);
+}
+
+void ISO15118_chargerImpl::handle_dlink_ready(bool& value) {
+    // FIXME: do something with this information
 }
 
 } // namespace charger

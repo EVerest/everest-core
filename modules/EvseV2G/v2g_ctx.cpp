@@ -139,8 +139,10 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
     static bool initialize_once = false;
     const char init_service_name[] = {"EVCharging_Service"};
 
-    ctx->evse_v2g_data.session_id =
+    if (ctx->hlc_pause_active != true) {
+        ctx->evse_v2g_data.session_id =
         (uint64_t)0; /* store associated session id, this is zero until SessionSetupRes is sent */
+    }
     ctx->evse_v2g_data.notification_max_delay = (uint32_t)0;
     ctx->evse_v2g_data.evse_isolation_status = (uint8_t)iso1isolationLevelType_Invalid;
     ctx->evse_v2g_data.evse_isolation_status_is_used = (unsigned int)1; // Shall be used in DIN
@@ -152,15 +154,16 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
     memset(ctx->evse_v2g_data.evse_processing, iso1EVSEProcessingType_Ongoing, PHASE_LENGTH);
     ctx->evse_v2g_data.evse_processing[PHASE_PARAMETER] = iso1EVSEProcessingType_Finished; // Skip parameter phase
 
-    ctx->evse_v2g_data.charge_service.ServiceCategory = iso1serviceCategoryType_EVCharging;
-    ctx->evse_v2g_data.charge_service.ServiceID = (uint16_t)1;
-    memcpy(ctx->evse_v2g_data.charge_service.ServiceName.characters, init_service_name, sizeof(init_service_name));
-    ctx->evse_v2g_data.charge_service.ServiceName.charactersLen = sizeof(init_service_name);
-    ctx->evse_v2g_data.charge_service.ServiceName_isUsed = 0;
-    // ctx->evse_v2g_data.chargeService.ServiceScope.characters
-    // ctx->evse_v2g_data.chargeService.ServiceScope.charactersLen
-    ctx->evse_v2g_data.charge_service.ServiceScope_isUsed = (unsigned int)0;
-
+    if (ctx->hlc_pause_active != true) {
+        ctx->evse_v2g_data.charge_service.ServiceCategory = iso1serviceCategoryType_EVCharging;
+        ctx->evse_v2g_data.charge_service.ServiceID = (uint16_t)1;
+        memcpy(ctx->evse_v2g_data.charge_service.ServiceName.characters, init_service_name, sizeof(init_service_name));
+        ctx->evse_v2g_data.charge_service.ServiceName.charactersLen = sizeof(init_service_name);
+        ctx->evse_v2g_data.charge_service.ServiceName_isUsed = 0;
+        // ctx->evse_v2g_data.chargeService.ServiceScope.characters
+        // ctx->evse_v2g_data.chargeService.ServiceScope.charactersLen
+        ctx->evse_v2g_data.charge_service.ServiceScope_isUsed = (unsigned int)0;
+    }
     ctx->meter_info.meter_info_is_used = false;
 
     ctx->evse_v2g_data.evse_service_list_len = (uint16_t)0;
@@ -214,36 +217,39 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
     init_physical_value(&ctx->evse_v2g_data.evse_present_voltage, iso1unitSymbolType_V);
     init_physical_value(&ctx->evse_v2g_data.evse_present_current, iso1unitSymbolType_A);
 
-    // SAScheduleTupleID#PMaxScheduleTupleID#Start#Duration#PMax#
-    init_physical_value(
-        &ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0].PMaxSchedule.PMaxScheduleEntry.array[0].PMax,
-        iso1unitSymbolType_W);
-    ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0]
-        .PMaxSchedule.PMaxScheduleEntry.array[0]
-        .RelativeTimeInterval.duration = (uint32_t)0;
-    ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0]
-        .PMaxSchedule.PMaxScheduleEntry.array[0]
-        .RelativeTimeInterval.duration_isUsed = (unsigned int)1;
-    ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0]
-        .PMaxSchedule.PMaxScheduleEntry.array[0]
-        .RelativeTimeInterval.start = (uint32_t)0;
-    ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0]
-        .PMaxSchedule.PMaxScheduleEntry.array[0]
-        .RelativeTimeInterval_isUsed = (unsigned int)1; // Optional: In DIN/ISO it must be set to 1
-    ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0]
-        .PMaxSchedule.PMaxScheduleEntry.array[0]
-        .TimeInterval_isUsed = (unsigned int)0;
-    ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0].PMaxSchedule.PMaxScheduleEntry.arrayLen = 1;
-    ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0].SalesTariff_isUsed = (unsigned int)0;
-    ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0].SAScheduleTupleID =
-        (uint8_t)1; // [V2G2-773]  1 to 255
-    ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.arrayLen = (uint16_t)1;
-    ctx->evse_v2g_data.evse_sa_schedule_list_is_used = false;
+    if (ctx->hlc_pause_active != true) {
+        // SAScheduleTupleID#PMaxScheduleTupleID#Start#Duration#PMax#
+        init_physical_value(
+            &ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0].PMaxSchedule.PMaxScheduleEntry.array[0].PMax,
+            iso1unitSymbolType_W);
+        ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0]
+            .PMaxSchedule.PMaxScheduleEntry.array[0]
+            .RelativeTimeInterval.duration = (uint32_t)0;
+        ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0]
+            .PMaxSchedule.PMaxScheduleEntry.array[0]
+            .RelativeTimeInterval.duration_isUsed = (unsigned int)1;
+        ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0]
+            .PMaxSchedule.PMaxScheduleEntry.array[0]
+            .RelativeTimeInterval.start = (uint32_t)0;
+        ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0]
+            .PMaxSchedule.PMaxScheduleEntry.array[0]
+            .RelativeTimeInterval_isUsed = (unsigned int)1; // Optional: In DIN/ISO it must be set to 1
+        ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0]
+            .PMaxSchedule.PMaxScheduleEntry.array[0]
+            .TimeInterval_isUsed = (unsigned int)0;
+        ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0].PMaxSchedule.PMaxScheduleEntry.arrayLen = 1;
+        ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0].SalesTariff_isUsed = (unsigned int)0;
+        ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0].SAScheduleTupleID =
+            (uint8_t)1; // [V2G2-773]  1 to 255
+        ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.arrayLen = (uint16_t)1;
+        ctx->evse_v2g_data.evse_sa_schedule_list_is_used = false;
 
-    // ctx->evse_v2g_data.evseSAScheduleTuple.SalesTariff
-    ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0].SalesTariff_isUsed =
-        (unsigned int)0; // Not supported in DIN
-
+        // ctx->evse_v2g_data.evseSAScheduleTuple.SalesTariff
+        ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0].SalesTariff_isUsed =
+            (unsigned int)0; // Not supported in DIN
+    } else {
+        ctx->evse_v2g_data.evse_sa_schedule_list_is_used = true;
+    }
     if (ctx->evse_v2g_data.cert_install_res_b64_buffer.empty() == false) {
         ctx->evse_v2g_data.cert_install_res_b64_buffer.clear();
     }
@@ -257,7 +263,12 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
     memset(&ctx->ev_v2g_data, 0xff, sizeof(ctx->ev_v2g_data));
 
     /* Init session values */
-    ctx->session.iso_selected_payment_option = iso1paymentOptionType_ExternalPayment;
+    if (ctx->hlc_pause_active != true) {
+        ctx->session.iso_selected_payment_option = iso1paymentOptionType_ExternalPayment;
+    } else {
+        ctx->evse_v2g_data.payment_option_list[0] = ctx->session.iso_selected_payment_option;
+        ctx->evse_v2g_data.payment_option_list_len = (uint8_t)1; // One option must be set
+    }
     memset(ctx->session.gen_challenge, 0, sizeof(ctx->session.gen_challenge));
 
     initialize_once = true;
@@ -314,6 +325,8 @@ struct v2g_context* v2g_ctx_create(ISO15118_chargerImplBase* p_chargerImplBase) 
         goto free_out;
 
     ctx->com_setup_timeout = NULL;
+
+    ctx->hlc_pause_active = false;
 
     return ctx;
 

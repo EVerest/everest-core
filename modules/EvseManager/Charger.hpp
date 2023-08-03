@@ -17,7 +17,7 @@
  * Authenticate()
  * from hi level to start charging. After car is unplugged, it waits in
  * ChargingFinished forever (or in an error state if an error happens during
- * charging). Send restart() from hi level to allow a new charging session.
+ * charging).
  */
 
 #ifndef SRC_EVDRIVERS_CHARGER_H_
@@ -94,6 +94,7 @@ public:
     bool enable();
     bool disable();
     void set_faulted();
+    void set_hlc_error(types::evse_manager::ErrorEnum e);
     // switch to next charging session after Finished
     bool restart();
 
@@ -144,6 +145,9 @@ public:
     sigslot::signal<> signalACWithSoCTimeout;
 
     sigslot::signal<> signal_DC_supply_off;
+    sigslot::signal<> signal_SLAC_start;
+
+    sigslot::signal<> signal_hlc_stop_charging;
 
     // Request more details about the error that happend
     types::evse_manager::ErrorEnum getErrorState();
@@ -182,6 +186,12 @@ public:
         Replug
     };
 
+    enum class HlcTerminatePause {
+        Unknown,
+        Terminate,
+        Pause
+    };
+
     std::string evseStateToString(EvseState s);
 
     EvseState getCurrentState();
@@ -191,7 +201,19 @@ public:
 
     void inform_new_evse_max_hlc_limits(const types::iso15118_charger::DC_EVSEMaximumLimits& l);
 
+    void dlink_pause();
+    void dlink_error();
+    void dlink_terminate();
+
+    void set_hlc_charging_active();
+    void set_hlc_allow_close_contactor(bool on);
+
 private:
+    void bcb_toggle_reset();
+    void bcb_toggle_detect_start_pulse();
+    void bcb_toggle_detect_stop_pulse();
+    bool bcb_toggle_detected();
+
     // main Charger thread
     Everest::Thread mainThreadHandle;
 
@@ -293,6 +315,7 @@ private:
     void update_pwm_max_every_5seconds(float dc);
     void pwm_off();
     void pwm_F();
+    bool pwm_running{false};
 
     types::iso15118_charger::DC_EVSEMaximumLimits currentEvseMaxLimits;
 
@@ -301,6 +324,26 @@ private:
 
     float soft_over_current_tolerance_percent{10.};
     float soft_over_current_measurement_noise_A{0.5};
+
+    HlcTerminatePause hlc_charging_terminate_pause;
+    bool hlc_charging_active{false};
+    bool hlc_allow_close_contactor{false};
+    bool iec_allow_close_contactor{false};
+
+    // valid Length of BCB toggles
+    static constexpr auto TP_EV_VALD_STATE_DURATION_MIN =
+        std::chrono::milliseconds(200 - 50); // We give 50 msecs tolerance to the norm values (table 3 ISO15118-3)
+    static constexpr auto TP_EV_VALD_STATE_DURATION_MAX =
+        std::chrono::milliseconds(400 + 50); // We give 50 msecs tolerance to the norm values (table 3 ISO15118-3)
+
+    // Maximum duration of a BCB toggle sequence of 1-3 BCB toggles
+    static constexpr auto TT_EVSE_VALD_TOGGLE =
+        std::chrono::milliseconds(3500 + 200); // We give 200 msecs tolerance to the norm values (table 3 ISO15118-3)
+
+    std::chrono::time_point<std::chrono::steady_clock> hlc_ev_pause_start_of_bcb;
+    std::chrono::time_point<std::chrono::steady_clock> hlc_ev_pause_start_of_bcb_sequence;
+    int hlc_ev_pause_bcb_count{0};
+    bool hlc_bcb_sequence_started{false};
 };
 
 #define CHARGER_ABSOLUTE_MAX_CURRENT double(80.0F)

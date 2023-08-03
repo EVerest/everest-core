@@ -62,11 +62,18 @@ void evse_managerImpl::init() {
 
     mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/stop_transaction", mod->config.connector_id),
                         [this](const std::string& data) {
-                            if (mod->get_hlc_enabled()) {
-                                mod->r_hlc[0]->call_stop_charging(true);
-                            }
                             types::evse_manager::StopTransactionRequest request;
                             request.reason = types::evse_manager::StopTransactionReason::Local;
+                            mod->charger->cancelTransaction(request);
+                        });
+
+    mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/emergency_stop", mod->config.connector_id),
+                        [this](const std::string& data) {
+                            if (mod->get_hlc_enabled()) {
+                                mod->r_hlc[0]->call_set_EVSE_EmergencyShutdown(true);
+                            }
+                            types::evse_manager::StopTransactionRequest request;
+                            request.reason = types::evse_manager::StopTransactionReason::EmergencyStop;
                             mod->charger->cancelTransaction(request);
                         });
 
@@ -323,9 +330,6 @@ bool evse_managerImpl::handle_resume_charging() {
 };
 
 bool evse_managerImpl::handle_stop_transaction(types::evse_manager::StopTransactionRequest& request) {
-    if (mod->get_hlc_enabled()) {
-        mod->r_hlc[0]->call_stop_charging(true);
-    }
     return mod->charger->cancelTransaction(request);
 };
 

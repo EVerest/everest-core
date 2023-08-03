@@ -279,6 +279,13 @@ cmds:
         description: The response raw exi stream and the status from the CSMS system
         type: object
         $ref: /iso15118_charger#/Response_Exi_Stream_Status
+  dlink_ready:
+    description: >-
+      Signals dlink_ready from SLAC layer according to ISO15118-3
+    arguments:
+      value:
+        description: Set to true when link becomes ready, false when the link is terminated
+        type: boolean
 vars:
   Require_Auth_EIM:
     description: An EIM authorization is requiered
@@ -290,17 +297,17 @@ vars:
     type: object
     $ref: /authorization#/ProvidedIdToken
   AC_Close_Contactor:
-    description: If true, the contactor should be closed
-    type: boolean
+    description: The contactor should be closed
+    type: "null"
   AC_Open_Contactor:
-    description: If true, the contactor should be opened
-    type: boolean
+    description: The contactor should be opened
+    type: "null"
   Start_CableCheck:
     description: The charger should now start a cable check
     type: "null"
   DC_Open_Contactor:
-    description: If true, the contactor should be opened
-    type: boolean
+    description: The contactor should be opened
+    type: "null"
   V2G_Setup_Finished:
     description: >-
       V2G_Setup_Finished from ISO15118-3. Trigger when EV sends a PowerDeliveryReq
@@ -389,12 +396,6 @@ vars:
     description: Current status of the EV
     type: object
     $ref: /iso15118_charger#/DC_EVStatusType
-  EV_ChargingSession:
-    description: >-
-      ChargingSession indicates the intention of the EVCC to either pause
-      or terminate a V2G Communication Session
-    type: string
-    $ref: /iso15118_charger#/ChargingSession
   DC_BulkChargingComplete:
     description: >-
       Optional: If set to TRUE, the EV indicates that bulk charge (approx.
@@ -426,6 +427,15 @@ vars:
       Response will be reported async via  set_Get_Certificate_Response
     type: object
     $ref: /iso15118_charger#/Request_Exi_Stream_Schema
+  dlink_terminate:
+    description: Terminate the data link and become UNMATCHED.
+    type: "null"
+  dlink_error:
+    description: Terminate the data link and restart the matching process.
+    type: "null"
+  dlink_pause:
+    description: Request power saving mode, while staying MATCHED.
+    type: "null"
   EV_AppProtocol:
     description: >-
       Debug_Lite - This request message provides a list of charging protocols
