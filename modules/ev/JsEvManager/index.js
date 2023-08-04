@@ -323,8 +323,8 @@ function registerAllCmds(mod) {
 
   registerCmd(mod, 'iso_wait_pwm_is_running', 0, (mod, c) => {
     mod.state = 'pluggedin';
-    if (mod.pwm_duty_cycle > 4.0
-      && mod.pwm_duty_cycle < 6.0) {
+    // AC ISO can also start with nominal dutycycle
+    if (mod.pwm_duty_cycle > 4.0 && mod.pwm_duty_cycle < 97.0) {
       return true;
     }
     return false;
@@ -453,10 +453,12 @@ function registerAllCmds(mod) {
       }
       if (!(c.timeLeft-- > 0)) {
         mod.uses_list.ev[0].call.stop_charging();
+        mod.uses.ev_board_support.call.allow_power_on({ value: false });
         mod.state = 'pluggedin';
         return true;
       }
       if (mod.iso_stopped === true) {
+        mod.uses.ev_board_support.call.allow_power_on({ value: false });
         mod.state = 'pluggedin';
         return true;
       }

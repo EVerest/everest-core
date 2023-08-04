@@ -49,7 +49,6 @@ boot_module(async ({
 
   // register commands for EV side
   setup.provides.ev.register.reset((mod, args) => {
-    enabled = args.enable;
     set_unmatched_ev(mod);
   });
 

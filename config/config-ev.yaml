@@ -5,8 +5,10 @@ active_modules:
       connector_id: 1
       auto_enable: true
       auto_exec: true
-      auto_exec_commands: wait_for_real_plugin;iso_wait_slac_matched;sleep 10;iso_start_v2g_session ExternalPayment,DC_extended;iso_wait_pwr_ready;iso_dc_power_on;sleep 36000#iso_stop_charging;iso_wait_v2g_session_stopped;unplug
-    connections:
+      auto_exec_commands: wait_for_real_plugin;iso_wait_pwm_is_running;iso_wait_slac_matched;iso_start_v2g_session ExternalPayment,DC_extended;iso_wait_pwr_ready;iso_dc_power_on;iso_wait_for_stop 3600;iso_wait_v2g_session_stopped;unplug
+      dc_target_current: 5
+      dc_target_voltage: 200
+      connections:
       ev_board_support:
         - module_id: ev_yeti_driver
           implementation_id: ev_board_support
@@ -15,11 +17,11 @@ active_modules:
           implementation_id: ev
       slac:
         - module_id: ev_slac
-          implementation_id: main 
+          implementation_id: main
   ev_yeti_driver:
     module: YetiEvDriver
     config_module:
-      default: /dev/serial0
+      serial_port: /dev/serial0
       reset_gpio: 27
   ev_slac:
     module: EvSlac
@@ -31,5 +33,5 @@ active_modules:
     config_module:
       supported_DIN70121: true
       supported_ISO15118_2: true
-      tls_active: true
+      tls_active: false
       device: eth1
