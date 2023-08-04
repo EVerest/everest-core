@@ -6,6 +6,7 @@ import netifaces
 from everest.framework import log
 
 from iso15118.evcc.evcc_config import EVCCConfig
+from iso15118.shared.settings import set_ignoring_value_range
 from iso15118.shared.utils import load_requested_protocols
 
 class EverestPyLoggingHandler(logging.Handler):
@@ -67,6 +68,8 @@ def patch_josev_config(josev_config: EVCCConfig, everest_config: dict) -> None:
     josev_config.is_cert_install_needed = everest_config['is_cert_install_needed']
 
     josev_config.sdp_retry_cycles = 1
+
+    set_ignoring_value_range(everest_config['ignore_physical_values_limits'])
 
     protocols = [
         "DIN_SPEC_70121",

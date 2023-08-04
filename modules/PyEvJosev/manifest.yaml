@@ -36,6 +36,11 @@ config:
       And any existing contract certificate will also be overwritten.
     type: boolean
     default: false
+  ignore_physical_values_limits:
+    description: >-
+      Set to True if Josev should ignore the physical value limits
+    type: boolean
+    default: false
 provides:  
   ev:
     interface: ISO15118_ev
