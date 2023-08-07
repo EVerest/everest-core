@@ -228,9 +228,9 @@ struct v2g_context {
     std::atomic<bool>
         intl_emergency_shutdown; /* Is set to true if an internal emergency_shutdown has occurred (send failed response,
                                     configure emergency shutdown in EVSEStatus and close tcp connection) */
-    bool stop_hlc; /* is set to true if a shutdown of the charging session should be initiated (send failed response and
+    std::atomic_bool stop_hlc; /* is set to true if a shutdown of the charging session should be initiated (send failed response and
                       close tcp connection) */
-    bool is_connection_terminated; /* Is set to true if the connection is terminated (CP State A/F, shutdown immediately
+    std::atomic_bool is_connection_terminated; /* Is set to true if the connection is terminated (CP State A/F, shutdown immediately
                                       without response message) */
     std::atomic<bool> terminate_connection_on_failed_response;
     std::atomic<bool> contactor_is_closed; /* Actual contactor state */
