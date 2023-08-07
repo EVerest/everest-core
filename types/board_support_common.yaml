@@ -26,6 +26,9 @@ types:
   BspMeasurement:
     description: Bsp Measurement
     type: object
+    required:
+      - cp_pwm_duty_cycle
+      - proximity_pilot
     properties:
       proximity_pilot:
         description: Current capability of the cable

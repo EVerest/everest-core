@@ -55,15 +55,14 @@ void YetiEvDriver::ready() {
         }
 
         p_ev_board_support->publish_bsp_event(bspe);
+    });
 
+    serial.signalMeasurements.connect([this](Measurements m) {
         types::board_support_common::BspMeasurement bspm;
-        bspm.cp_pwm_duty_cycle = 5;
-
+        bspm.cp_pwm_duty_cycle = m.pwmDutyCycle * 100.;
+        // FIXME(cc): This is not implemented on MCU side yet
+        bspm.proximity_pilot = types::board_support_common::Proximity_pilot::None;
         p_ev_board_support->publish_bsp_measurement(bspm);
-
-        // FIXME
-        // publish event
-        // FIXME in uC: only send events when they actually change
     });
 
     invoke_ready(*p_ev_board_support);

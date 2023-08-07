@@ -157,6 +157,10 @@ void evSerial::handlePacket(uint8_t* buf, int len) {
             // printf("Received event %i\n",msg_in.payload.event);
             signalEvent(msg_in.payload.event);
             break;
+        case LoToHi_measurements_tag:
+            // printf("Received event %i\n",msg_in.payload.event);
+            signalMeasurements(msg_in.payload.measurements);
+            break;
         case LoToHi_reset_done_tag:
             // printf("Received reset_done\n");
             reset_done_flag = true;

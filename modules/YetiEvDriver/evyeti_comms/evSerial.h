@@ -35,6 +35,7 @@ class evSerial {
 
     sigslot::signal<KeepAliveLo> signalKeepAliveLo;
     sigslot::signal<Event> signalEvent;
+    sigslot::signal<Measurements> signalMeasurements;
     sigslot::signal<> signalSpuriousReset;
     sigslot::signal<> signalConnectionTimeout;
 

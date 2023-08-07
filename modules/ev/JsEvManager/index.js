@@ -156,6 +156,8 @@ function simdata_reset_defaults(mod) {
   mod.pwm_duty_cycle = 100;
 
   mod.dc_power_on = false;
+  mod.last_state = "";
+  mod.last_pwm_duty_cycle = 0;
 }
 
 // Prepare next command
@@ -175,49 +177,79 @@ function current_command(mod) {
 // state machine for the car simulator
 function car_statemachine(mod) {
   let amps = 0;
+
+  let new_in_state = false;
+  if (mod.state != mod.last_state) new_in_state = true;
+  mod.last_state = mod.state;
+
+  if (new_in_state) {
+    evlog.info("New state: " + mod.state);
+  }
+
   switch (mod.state) {
     case 'unplugged':
-      mod.uses.ev_board_support.call.set_cp_state({ cp_state: 'A' });
-      // Wait for physical plugin (ev BSP sees state A on CP and not Disconnected)
-      if (!mod.executionActive) {
+      if (new_in_state) {
+        mod.uses.ev_board_support.call.set_cp_state({ cp_state: 'A' });
+        mod.uses.ev_board_support.call.allow_power_on({ value: false });
+
+        // Wait for physical plugin (ev BSP sees state A on CP and not Disconnected)
+
         // If we have auto_exec configured, restart simulation when it was unplugged
         evlog.info('Unplug detected, restarting simulation.');
         mod.slac_state = "UNMATCHED";
         mod.uses_list.ev[0].call.stop_charging();
         if (globalconf.module.auto_exec) execute_charging_session(mod, { value: globalconf.module.auto_exec_commands });
+
       }
       break;
     case 'pluggedin':
-      mod.uses.ev_board_support.call.set_cp_state({ cp_state: 'B' });
+      if (new_in_state) {
+        mod.uses.ev_board_support.call.set_cp_state({ cp_state: 'B' });
+        mod.uses.ev_board_support.call.allow_power_on({ value: false });
+      }
       break;
     case 'charging_regulated':
-
-      amps = dutyCycleToAmps(mod.pwm_duty_cycle / 100.0);
-      if (amps > mod.maxCurrent) amps = mod.maxCurrent;
-      // do not draw power if EVSE paused by stopping PWM
-      if (amps > 5.9) {
-        mod.uses.ev_board_support.call.set_cp_state({ cp_state: 'C' });
-      } else {
-        mod.uses.ev_board_support.call.set_cp_state({ cp_state: 'B' });
+      if (new_in_state || mod.pwm_duty_cycle != mod.last_pwm_duty_cycle) {
+        amps = dutyCycleToAmps(mod.pwm_duty_cycle / 100.0);
+        if (amps > mod.maxCurrent) amps = mod.maxCurrent;
+        mod.last_pwm_duty_cycle = mod.pwm_duty_cycle;
+        // do not draw power if EVSE paused by stopping PWM
+        if (amps > 5.9) {
+          mod.uses.ev_board_support.call.set_cp_state({ cp_state: 'C' });
+        } else {
+          mod.uses.ev_board_support.call.set_cp_state({ cp_state: 'B' });
+        }
       }
       break;
 
     case 'charging_fixed':
-      // Also draw power if EVSE stopped PWM - this is a break the rules mode to test the charging implementation!
-      mod.uses.ev_board_support.call.set_cp_state({ cp_state: 'C' });
+      if (new_in_state) {
+        // Also draw power if EVSE stopped PWM - this is a break the rules mode to test the charging implementation!
+        mod.uses.ev_board_support.call.set_cp_state({ cp_state: 'C' });
+      }
       break;
 
     case 'error_e':
-      mod.uses.ev_board_support.call.set_cp_state({ cp_state: 'E' });
+      if (new_in_state) {
+        mod.uses.ev_board_support.call.set_cp_state({ cp_state: 'E' });
+        mod.uses.ev_board_support.call.allow_power_on({ value: false });
+      }
       break;
     case 'diode_fail':
-      mod.uses.ev_board_support.call.diode_fail({ value: true });
+      if (new_in_state) {
+        mod.uses.ev_board_support.call.diode_fail({ value: true });
+        mod.uses.ev_board_support.call.allow_power_on({ value: false });
+      }
       break;
     case 'iso_power_ready':
-      mod.uses.ev_board_support.call.set_cp_state({ cp_state: 'C' });
+      if (new_in_state) {
+        mod.uses.ev_board_support.call.set_cp_state({ cp_state: 'C' });
+      }
       break;
     case 'iso_charging_regulated':
-      mod.uses.ev_board_support.call.set_cp_state({ cp_state: 'C' });
+      if (new_in_state) {
+        mod.uses.ev_board_support.call.set_cp_state({ cp_state: 'C' });
+      }
       break;
     case 'bcb_toggle':
       drawPower(mod, 0, 0, 0, 0);
@@ -458,6 +490,7 @@ function registerAllCmds(mod) {
         return true;
       }
       if (mod.iso_stopped === true) {
+        evlog.info("POWER OFF iso stopped");
         mod.uses.ev_board_support.call.allow_power_on({ value: false });
         mod.state = 'pluggedin';
         return true;
