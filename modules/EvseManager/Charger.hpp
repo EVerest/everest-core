@@ -145,6 +145,7 @@ public:
     sigslot::signal<> signalACWithSoCTimeout;
 
     sigslot::signal<> signal_DC_supply_off;
+    sigslot::signal<> signal_SLAC_reset;
     sigslot::signal<> signal_SLAC_start;
 
     sigslot::signal<> signal_hlc_stop_charging;
