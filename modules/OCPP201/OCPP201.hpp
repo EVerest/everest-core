@@ -29,9 +29,24 @@ namespace module {
 struct Conf {
     std::string ChargePointConfigPath;
     std::string MessageLogPath;
-    std::string CertsPath;
     std::string CoreDatabasePath;
     std::string DeviceModelDatabasePath;
+    std::string csmsCaBundle;
+    std::string csmsCaBackupBundle;
+    std::string csoCaBundle;
+    std::string cpsCaBundle;
+    std::string mfCaBundle;
+    std::string moCaBundle;
+    std::string oemCaBundle;
+    std::string v2gCaBundle;
+    std::string csmsLeafCert;
+    std::string csmsLeafKey;
+    std::string csmsLeafKeyBackup;
+    std::string csmsLeafCsr;
+    std::string seccLeafCert;
+    std::string seccLeafKey;
+    std::string seccLeafKeyBackup;
+    std::string seccLeafCsr;
 };
 
 class OCPP201 : public Everest::ModuleBase {
@@ -78,6 +93,8 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
+    ocpp::CertificateFilePaths get_certificate_files();
+
     std::filesystem::path ocpp_share_path;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };

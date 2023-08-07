@@ -24,17 +24,77 @@ config:
     type: integer
     default: 30
   PublishChargingScheduleDurationS:
-    description:  Duration in seconds that defines the duration of the requested charging schedules starting from now
+    description: Duration in seconds that defines the duration of the requested charging schedules starting from now
     type: integer
     default: 600
   MessageLogPath:
     description: Path to folder where logs of all OCPP messages get written to
     type: string
     default: /tmp/everest_ocpp_logs
-  CertsPath:
-    description: Path to folder where certificates are located. If empty uses everest prefix + etc/everest/certs
+  csmsCaBundle:
+    description: Path to csmsCaBundle file. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
     type: string
-    default: ""
+    default: ca/csms/CSMS_ROOT_CA.pem
+  csmsCaBackupBundle:
+    description: Path to csmsCaBackupBundle file. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
+    type: string
+    default: ca/csms/CSMS_ROOT_CA_BACKUP.pem
+  csoCaBundle:
+    description: Path to csoCaBundle file. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
+    type: string
+    default: ca/v2g/V2G_ROOT_CA.pem
+  cpsCaBundle:
+    description: Path to cpsCaBundle file. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
+    type: string
+    default: ca/v2g/V2G_ROOT_CA.pem
+  mfCaBundle:
+    description: Path to mfCaBundle file. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
+    type: string
+    default: ca/mf/MF_ROOT_CA.pem
+  moCaBundle:
+    description: Path to moCaBundle file. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
+    type: string
+    default: ca/mo/MO_ROOT_CA.pem
+  oemCaBundle:
+    description: Path to oemCaBundle file. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
+    type: string
+    default: ca/oem/OEM_ROOT_CA.pem
+  v2gCaBundle:
+    description: Path to v2gCaBundle file. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
+    type: string
+    default: ca/v2g/V2G_ROOT_CA.pem
+  csmsLeafCert:
+    description: Path to csmsLeafCert file. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
+    type: string
+    default: client/csms/SECC_LEAF.pem
+  csmsLeafKey:
+    description: Path to csmsLeafKey file. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
+    type: string
+    default: client/csms/SECC_LEAF.key
+  csmsLeafKeyBackup:
+    description: Path to csmsLeafKeyBackup file. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
+    type: string
+    default: client/csms/SECC_LEAF_BACKUP.key
+  csmsLeafCsr:
+    description: Path to csmsLeafCsr file. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
+    type: string
+    default: SECC_LEAF_CSR.pem
+  seccLeafCert:
+    description: Path to seccLeafCert file. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
+    type: string
+    default: client/cso/SECC_LEAF.pem
+  seccLeafKey:
+    description: Path to seccLeafKey file. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
+    type: string
+    default: client/cso/SECC_LEAF.key
+  seccLeafKeyBackup:
+    description: Path to seccLeafKeyBackup file. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
+    type: string
+    default: client/cso/SECC_LEAF_BACKUP.key
+  seccLeafCsr:
+    description: Path to seccLeafCsr file. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
+    type: string
+    default: client/cso/SECC_LEAF_CSR.pem
 provides:
   main:
     description: This is a OCPP 1.6 charge point

@@ -30,6 +30,7 @@
 #include <everest/timer.hpp>
 #include <filesystem>
 #include <mutex>
+#include <ocpp/common/pki_handler.hpp>
 #include <ocpp/common/types.hpp>
 #include <ocpp/v16/charge_point.hpp>
 #include <ocpp/v16/types.hpp>
@@ -46,7 +47,22 @@ struct Conf {
     int PublishChargingScheduleIntervalS;
     int PublishChargingScheduleDurationS;
     std::string MessageLogPath;
-    std::string CertsPath;
+    std::string csmsCaBundle;
+    std::string csmsCaBackupBundle;
+    std::string csoCaBundle;
+    std::string cpsCaBundle;
+    std::string mfCaBundle;
+    std::string moCaBundle;
+    std::string oemCaBundle;
+    std::string v2gCaBundle;
+    std::string csmsLeafCert;
+    std::string csmsLeafKey;
+    std::string csmsLeafKeyBackup;
+    std::string csmsLeafCsr;
+    std::string seccLeafCert;
+    std::string seccLeafKey;
+    std::string seccLeafKeyBackup;
+    std::string seccLeafCsr;
 };
 
 class OCPP : public Everest::ModuleBase {
@@ -72,7 +88,6 @@ public:
         r_system(std::move(r_system)),
         config(config){};
 
-    const Conf& config;
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<ocpp_1_6_charge_pointImplBase> p_main;
     const std::unique_ptr<auth_token_validatorImplBase> p_auth_validator;
@@ -82,6 +97,7 @@ public:
     const std::unique_ptr<reservationIntf> r_reservation;
     const std::unique_ptr<authIntf> r_auth;
     const std::unique_ptr<systemIntf> r_system;
+    const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
@@ -104,9 +120,10 @@ private:
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
     std::filesystem::path ocpp_share_path;
-    void set_external_limits(const std::map<int32_t, ocpp::v16::ChargingSchedule> &charging_schedules);
-    void publish_charging_schedules(const std::map<int32_t, ocpp::v16::ChargingSchedule> &charging_schedules);
+    void set_external_limits(const std::map<int32_t, ocpp::v16::ChargingSchedule>& charging_schedules);
+    void publish_charging_schedules(const std::map<int32_t, ocpp::v16::ChargingSchedule>& charging_schedules);
     bool all_evse_ready();
+    ocpp::CertificateFilePaths get_certificate_files();
     std::mutex evse_ready_mutex;
     std::thread upload_diagnostics_thread;
     std::thread upload_logs_thread;

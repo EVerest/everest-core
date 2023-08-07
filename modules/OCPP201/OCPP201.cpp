@@ -243,6 +243,91 @@ ocpp::v201::MeterValue get_meter_value(const types::powermeter::Powermeter& powe
     return meter_value;
 }
 
+ocpp::CertificateFilePaths OCPP201::get_certificate_files() {
+    ocpp::CertificateFilePaths cert_file_paths;
+    if (std::filesystem::path(this->config.csmsCaBundle).is_absolute()) {
+        cert_file_paths.csms_ca_bundle = this->config.csmsCaBundle;
+    } else {
+        cert_file_paths.csms_ca_bundle = this->info.paths.etc / "certs" / this->config.csmsCaBundle;
+    }
+    if (std::filesystem::path(this->config.csmsCaBackupBundle).is_absolute()) {
+        cert_file_paths.csms_ca_backup_bundle = this->config.csmsCaBackupBundle;
+    } else {
+        cert_file_paths.csms_ca_backup_bundle = this->info.paths.etc / "certs" / this->config.csmsCaBackupBundle;
+    }
+    if (std::filesystem::path(this->config.csoCaBundle).is_absolute()) {
+        cert_file_paths.cso_ca_bundle = this->config.csoCaBundle;
+    } else {
+        cert_file_paths.cso_ca_bundle = this->info.paths.etc / "certs" / this->config.csoCaBundle;
+    }
+    if (std::filesystem::path(this->config.cpsCaBundle).is_absolute()) {
+        cert_file_paths.cps_ca_bundle = this->config.cpsCaBundle;
+    } else {
+        cert_file_paths.cps_ca_bundle = this->info.paths.etc / "certs" / this->config.cpsCaBundle;
+    }
+    if (std::filesystem::path(this->config.mfCaBundle).is_absolute()) {
+        cert_file_paths.mf_ca_bundle = this->config.mfCaBundle;
+    } else {
+        cert_file_paths.mf_ca_bundle = this->info.paths.etc / "certs" / this->config.mfCaBundle;
+    }
+    if (std::filesystem::path(this->config.moCaBundle).is_absolute()) {
+        cert_file_paths.mo_ca_bundle = this->config.moCaBundle;
+    } else {
+        cert_file_paths.mo_ca_bundle = this->info.paths.etc / "certs" / this->config.moCaBundle;
+    }
+    if (std::filesystem::path(this->config.oemCaBundle).is_absolute()) {
+        cert_file_paths.oem_ca_bundle = this->config.oemCaBundle;
+    } else {
+        cert_file_paths.oem_ca_bundle = this->info.paths.etc / "certs" / this->config.oemCaBundle;
+    }
+    if (std::filesystem::path(this->config.v2gCaBundle).is_absolute()) {
+        cert_file_paths.v2g_ca_bundle = this->config.v2gCaBundle;
+    } else {
+        cert_file_paths.v2g_ca_bundle = this->info.paths.etc / "certs" / this->config.v2gCaBundle;
+    }
+    if (std::filesystem::path(this->config.csmsLeafCert).is_absolute()) {
+        cert_file_paths.csms_leaf_cert = this->config.csmsLeafCert;
+    } else {
+        cert_file_paths.csms_leaf_cert = this->info.paths.etc / "certs" / this->config.csmsLeafCert;
+    }
+    if (std::filesystem::path(this->config.csmsLeafKey).is_absolute()) {
+        cert_file_paths.csms_leaf_key = this->config.csmsLeafKey;
+    } else {
+        cert_file_paths.csms_leaf_key = this->info.paths.etc / "certs" / this->config.csmsLeafKey;
+    }
+    if (std::filesystem::path(this->config.csmsLeafKeyBackup).is_absolute()) {
+        cert_file_paths.csms_leaf_key_backup = this->config.csmsLeafKeyBackup;
+    } else {
+        cert_file_paths.csms_leaf_key_backup = this->info.paths.etc / "certs" / this->config.csmsLeafKeyBackup;
+    }
+    if (std::filesystem::path(this->config.csmsLeafCsr).is_absolute()) {
+        cert_file_paths.csms_leaf_csr = this->config.csmsLeafCsr;
+    } else {
+        cert_file_paths.csms_leaf_csr = this->info.paths.etc / "certs" / this->config.csmsLeafCsr;
+    }
+    if (std::filesystem::path(this->config.seccLeafCert).is_absolute()) {
+        cert_file_paths.secc_leaf_cert = this->config.seccLeafCert;
+    } else {
+        cert_file_paths.secc_leaf_cert = this->info.paths.etc / "certs" / this->config.seccLeafCert;
+    }
+    if (std::filesystem::path(this->config.seccLeafKey).is_absolute()) {
+        cert_file_paths.secc_leaf_key = this->config.seccLeafKey;
+    } else {
+        cert_file_paths.secc_leaf_key = this->info.paths.etc / "certs" / this->config.seccLeafKey;
+    }
+    if (std::filesystem::path(this->config.seccLeafKeyBackup).is_absolute()) {
+        cert_file_paths.secc_leaf_key_backup = this->config.seccLeafKeyBackup;
+    } else {
+        cert_file_paths.secc_leaf_key_backup = this->info.paths.etc / "certs" / this->config.seccLeafKeyBackup;
+    }
+    if (std::filesystem::path(this->config.seccLeafCsr).is_absolute()) {
+        cert_file_paths.secc_leaf_csr = this->config.seccLeafCsr;
+    } else {
+        cert_file_paths.secc_leaf_csr = this->info.paths.etc / "certs" / this->config.seccLeafCsr;
+    }
+    return cert_file_paths;
+}
+
 void OCPP201::init() {
     invoke_init(*p_main);
     invoke_init(*p_auth_provider);
@@ -251,14 +336,7 @@ void OCPP201::init() {
     this->ocpp_share_path = this->info.paths.share;
     this->operational_evse_states[0] = ocpp::v201::OperationalStatusEnum::Operative;
 
-    const auto etc_certs_path = [&]() {
-        if (this->config.CertsPath.empty()) {
-            return fs::path(this->info.paths.etc) / CERTS_DIR;
-        } else {
-            return fs::path(this->config.CertsPath);
-        }
-    }();
-    EVLOG_info << "OCPP certificates path: " << etc_certs_path.string();
+    const auto cert_file_paths = this->get_certificate_files();
 
     auto configured_config_path = fs::path(this->config.ChargePointConfigPath);
 
@@ -388,7 +466,7 @@ void OCPP201::init() {
 
     this->charge_point = std::make_unique<ocpp::v201::ChargePoint>(
         evse_connector_structure, this->config.DeviceModelDatabasePath, this->ocpp_share_path.string(),
-        this->config.CoreDatabasePath, sql_init_path.string(), this->config.MessageLogPath, etc_certs_path, callbacks);
+        this->config.CoreDatabasePath, sql_init_path.string(), this->config.MessageLogPath, cert_file_paths, callbacks);
 
     evse_id = 1;
     for (const auto& evse : this->r_evse_manager) {
