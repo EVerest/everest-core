@@ -128,6 +128,8 @@ void EvseManager::ready() {
 
         // Trigger SLAC restart
         charger->signal_SLAC_start.connect([this] { r_slac[0]->call_enter_bcd(); });
+        // Trigger SLAC reset
+        charger->signal_SLAC_reset.connect([this] { r_slac[0]->call_reset(false); });
 
         // Ask HLC to stop charging session
         charger->signal_hlc_stop_charging.connect([this] { r_hlc[0]->call_stop_charging(true); });

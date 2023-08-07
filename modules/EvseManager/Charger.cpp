@@ -1315,10 +1315,11 @@ bool Charger::powerAvailable() {
 
 void Charger::requestErrorSequence() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
-    if (currentState == EvseState::WaitingForAuthentication) {
-        t_step_EF_returnState = EvseState::WaitingForAuthentication;
+    if (currentState == EvseState::WaitingForAuthentication || currentState == EvseState::PrepareCharging) {
+        t_step_EF_returnState = currentState;
         currentState = EvseState::T_step_EF;
-        if (ac_hlc_enabled_current_session && hlc_use_5percent_current_session) {
+        signal_SLAC_reset();
+        if (hlc_use_5percent_current_session) {
             t_step_EF_returnPWM = PWM_5_PERCENT;
         } else {
             t_step_EF_returnPWM = 0.;
