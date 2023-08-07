@@ -4,7 +4,15 @@ types:
     description: simulation data
     type: object
     additionalProperties: false
-    minProperties: 8
+    required:
+      - cp_voltage
+      - pp_resistor
+      - rcd_current
+      - diode_fail
+      - error_e
+      - currents
+      - voltages
+      - frequencies
     properties:
       cp_voltage:
         description: CP Voltage level [V]
