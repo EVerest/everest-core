@@ -75,7 +75,7 @@ void ISO15118_chargerImpl::handle_set_EVSEID(std::string& EVSEID, std::string& E
 };
 
 void ISO15118_chargerImpl::handle_set_PaymentOptions(Array& PaymentOptions) {
-    
+
     if (v2g_ctx->hlc_pause_active != true) {
 
         v2g_ctx->evse_v2g_data.payment_option_list_len = 0;
@@ -139,7 +139,7 @@ void ISO15118_chargerImpl::handle_set_SupportedEnergyTransferMode(Array& Support
                 default:
                     if (energyArrayLen == 0) {
                         dlog(DLOG_LEVEL_WARNING, "Unable to configure SupportedEnergyTransferMode %s",
-                            element.get<std::string>());
+                             element.get<std::string>());
                     }
                     break;
                 }
@@ -385,7 +385,11 @@ void ISO15118_chargerImpl::handle_set_Get_Certificate_Response(
 }
 
 void ISO15118_chargerImpl::handle_dlink_ready(bool& value) {
-    // FIXME: do something with this information
+    // FIXME: dlink_ready(true) is ignored for now
+    // If dlink becomes not ready (false), stop TCP connection in the read thread
+    if (!value) {
+        v2g_ctx->is_connection_terminated = true;
+    }
 }
 
 } // namespace charger
