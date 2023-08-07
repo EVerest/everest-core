@@ -28,10 +28,6 @@ config:
     description: Path to csoCaBundle file. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
     type: string
     default: ca/v2g/V2G_ROOT_CA.pem
-  cpsCaBundle:
-    description: Path to cpsCaBundle file. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
-    type: string
-    default: ca/v2g/V2G_ROOT_CA.pem
   mfCaBundle:
     description: Path to mfCaBundle file. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
     type: string
@@ -40,10 +36,6 @@ config:
     description: Path to moCaBundle file. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
     type: string
     default: ca/mo/MO_ROOT_CA.pem
-  oemCaBundle:
-    description: Path to oemCaBundle file. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
-    type: string
-    default: ca/oem/OEM_ROOT_CA.pem
   v2gCaBundle:
     description: Path to v2gCaBundle file. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
     type: string

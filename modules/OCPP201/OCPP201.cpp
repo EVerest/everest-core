@@ -260,11 +260,6 @@ ocpp::CertificateFilePaths OCPP201::get_certificate_files() {
     } else {
         cert_file_paths.cso_ca_bundle = this->info.paths.etc / "certs" / this->config.csoCaBundle;
     }
-    if (std::filesystem::path(this->config.cpsCaBundle).is_absolute()) {
-        cert_file_paths.cps_ca_bundle = this->config.cpsCaBundle;
-    } else {
-        cert_file_paths.cps_ca_bundle = this->info.paths.etc / "certs" / this->config.cpsCaBundle;
-    }
     if (std::filesystem::path(this->config.mfCaBundle).is_absolute()) {
         cert_file_paths.mf_ca_bundle = this->config.mfCaBundle;
     } else {
@@ -274,11 +269,6 @@ ocpp::CertificateFilePaths OCPP201::get_certificate_files() {
         cert_file_paths.mo_ca_bundle = this->config.moCaBundle;
     } else {
         cert_file_paths.mo_ca_bundle = this->info.paths.etc / "certs" / this->config.moCaBundle;
-    }
-    if (std::filesystem::path(this->config.oemCaBundle).is_absolute()) {
-        cert_file_paths.oem_ca_bundle = this->config.oemCaBundle;
-    } else {
-        cert_file_paths.oem_ca_bundle = this->info.paths.etc / "certs" / this->config.oemCaBundle;
     }
     if (std::filesystem::path(this->config.v2gCaBundle).is_absolute()) {
         cert_file_paths.v2g_ca_bundle = this->config.v2gCaBundle;
