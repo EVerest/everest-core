@@ -54,7 +54,9 @@ All documentation and the issue tracking can be found in our main repository her
 
 ### Support for OCPP 2.0.1
 
-The development of OCPP2.0.1 has started this year and is in progress. The goal is to provide basic support for OCPP2.0.1 until Q2/2023 and to provide a fully featured implementation by the end of 2023.
+The development of OCPP2.0.1 has already started and is in progress. See also the general roadmap of EVerest:
+https://github.com/EVerest/EVerest/blob/main/tsc/ROADMAP.md
+
 ## CSMS Compatibility
 
 ### CSMS Compatibility OCPP 1.6
