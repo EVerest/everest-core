@@ -36,6 +36,8 @@ RUN apt-get update \
     python3-pip \
     libssl-dev \
     libcurl4-openssl-dev \
+    pkg-config \
+    libpcap-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

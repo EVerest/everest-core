@@ -6,7 +6,7 @@ ARG USERNAME=docker
 ARG USER_UID=1000
 
 # create user and add to sudoers
-RUN zypper --non-interactive update \
+RUN zypper --non-interactive --gpg-auto-import-keys update \
     && zypper --non-interactive install sudo shadow \
     && useradd -ms /bin/bash -u ${USER_UID} -U ${USERNAME} \
     && echo ${USERNAME} ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/${USERNAME} \
@@ -39,7 +39,11 @@ RUN zypper --non-interactive install \
     gcc-c++ \
     sqlite3-devel \
     libopenssl-devel \
-    libcurl-devel
+    libcurl-devel \
+    pkgconf-pkg-config \
+    libpcap-devel \
+    libevent-devel \
+    python3-devel
 
 # create workdir and set access rights
 WORKDIR /workspace/everest-cpp

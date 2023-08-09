@@ -24,13 +24,7 @@ else
     fi
 fi
 (cd everest-dev-environment/dependency_manager && python3 -m pip install .)
-edm --register-cmake-module
-if [ "${GIT_PROTOCOL}" = "https" ] ; then
-    edm --config everest-dev-environment/everest-complete-readonly.yaml --workspace .
-else
-    edm --config everest-dev-environment/everest-complete.yaml --workspace .
-fi
-edm --update
+edm init main
 (cd everest-utils/ev-dev-tools && python3 -m pip install .)
 mkdir -p everest-core/build
 cd everest-core/build
