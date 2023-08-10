@@ -5,6 +5,7 @@
 #include <fmt/core.h>
 #include <fstream>
 
+#include <evse_security_ocpp.hpp>
 namespace module {
 
 const std::string INIT_SQL = "init_core.sql";
@@ -606,7 +607,8 @@ void OCPP201::ready() {
 
     this->charge_point = std::make_unique<ocpp::v201::ChargePoint>(
         evse_connector_structure, device_model_database_path, this->ocpp_share_path.string(),
-        this->config.CoreDatabasePath, sql_init_path.string(), this->config.MessageLogPath, etc_certs_path, callbacks);
+        this->config.CoreDatabasePath, sql_init_path.string(), this->config.MessageLogPath,
+        std::make_shared<EvseSecurity>(), callbacks);
 
     if (this->config.EnableExternalWebsocketControl) {
         const std::string connect_topic = "everest_api/ocpp/cmd/connect";
@@ -655,8 +657,8 @@ void OCPP201::ready() {
                     evse_id, connector_id, session_id, timestamp,
                     ocpp::v201::TriggerReasonEnum::RemoteStart, // FIXME(piet): Use proper reason here
                     meter_value, id_token, std::nullopt, reservation_id, remote_start_id,
-                    ocpp::v201::ChargingStateEnum::Charging);   // FIXME(piet): add proper groupIdToken +
-                                                                // ChargingStateEnum
+                    ocpp::v201::ChargingStateEnum::Charging); // FIXME(piet): add proper groupIdToken +
+                                                              // ChargingStateEnum
                 break;
             }
             case types::evse_manager::SessionEventEnum::TransactionFinished: {

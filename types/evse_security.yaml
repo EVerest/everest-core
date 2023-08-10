@@ -1,0 +1,194 @@
+description: Types for evse security
+types:
+  EncodingFormat:
+    description: Enum specifies the encoding of certificates or keys
+    type: string
+    enum:
+      - DER
+      - PEM
+  CaCertificateType:
+    description: Enum specifies the type of a CA certificate
+    type: string
+    enum:
+      - V2G
+      - MO
+      - CSMS
+      - MF
+  LeafCertificateType:
+    description: Enum specifies the type of a leaf certificate
+    type: string
+    enum:
+      - CSMS
+      - V2G
+      - MF
+  CertificateType:
+    description: Enum specifies certificate type of leaf and CA certificates
+    type: string
+    enum:
+      - V2GRootCertificate
+      - MORootCertificate
+      - CSMSRootCertificate
+      - V2GCertificateChain
+      - MFRootCertificate
+  HashAlgorithm:
+    description: Enum specifies a hash algorithm
+    type: string
+    enum:
+      - SHA256
+      - SHA384
+      - SHA512
+  InstallCertificateResult:
+    description: Result of the attempt to install a certificate
+    type: string
+    enum:
+      - InvalidSignature
+      - InvalidCertificateChain
+      - InvalidFormat
+      - InvalidCommonName
+      - NoRootCertificateInstalled
+      - Expired
+      - CertificateStoreMaxLengthExceeded
+      - WriteError
+      - Accepted
+  DeleteCertificateResult:
+    description: Result of the attempt to delete a certificate
+    type: string
+    enum:
+      - Accepted
+      - Failed
+      - NotFound
+  GetInstalledCertificatesStatus:
+    description: Status indicates the result of the attempt to retrieve certificates
+    type: string
+    enum:
+      - Accepted
+      - NotFound
+  CertificateHashData:
+    description: >-
+      Type specifies the hash data of a certificate
+    type: object
+    required:
+      - hash_algorithm
+      - issuer_name_hash
+      - issuer_key_hash
+      - serial_number
+    properties:
+      hash_algorithm:
+        description: Algorithm used for the hashes provided
+        type: string
+        $ref: /evse_security#/HashAlgorithm
+      issuer_name_hash:
+        description: >-
+          The hash of the issuer's distinguished name (DN), calculated over the DER encoding of
+          the issuer's name field.
+        type: string
+        maxLength: 128
+      issuer_key_hash:
+        description: >-
+          The hash of the DER encoded public key: the value (excluding tag and length) of the 
+          subject public key field
+        type: string
+        maxLength: 128
+      serial_number:
+        description: >-
+          The string representation of the hexadecimal value of the serial number without the
+          prefix "0x" and without leading zeroes.
+        type: string
+        maxLength: 40
+  CertificateHashDataChain:
+    description: Type specifies the hash data chain of a certificate
+    type: object
+    required:
+      - certificate_type
+      - certificate_hash_data
+    properties:
+      certificate_type:
+        description: Indicates the type of the certificate for which the hash data is provided
+        type: string
+        $ref: /evse_security#/CertificateType
+      certificate_hash_data:
+        description: Contains the hash data of the certificate
+        type: object
+        $ref: /evse_security#/CertificateHashData
+      child_certificate_hash_data:
+        description: Contains the hash data of the child's certificates
+        type: array
+        items:
+          minimum: 0
+          maximum: 4
+          type: object
+          $ref: /evse_security#/CertificateHashData
+  GetInstalledCertificatesResult:
+    description: Result to a request to retrieve certificates
+    type: object
+    required:
+      - status
+      - certificate_hash_data_chain
+    properties:
+      status:
+        description: Indicates the status of the request
+        type: string
+        $ref: /evse_security#/GetInstalledCertificatesStatus
+      certificate_hash_data_chain:
+        description: the hashed certificate data for each requested certificates
+        type: array
+        items:
+          minimum: 0
+          type: object
+          $ref: /evse_security#/CertificateHashDataChain
+  OCSPRequestData:
+    description: Type that specifies OCSP data
+    type: object
+    properties:
+      certificate_hash_data:
+        description: Contains the hash data of the certificate
+        type: object
+        $ref: /evse_security#/CertificateHashData
+      responder_url:
+        description: Contains the responder URL
+        type: string
+        maxLength: 512
+  OCSPRequestDataList:
+    description: List of OCSP Request data
+    type: object
+    required:
+      - ocsp_request_data_list
+    properties:
+      ocsp_request_data_list:
+        description: A list of OCSP request data
+        type: array
+        items:
+          minimum: 0
+          type: object
+          $ref: /evse_security#/OCSPRequestData
+  KeyPair:
+    description: Type that specifies the paths of a certificate and the respective private key
+    type: object
+    required:
+      - key
+      - certificate
+    properties:
+      key:
+        description: The path of the PEM or DER encoded private key
+        type: string
+      certificate:
+        description: The path of the PEM or DER encoded certificate
+        type: string
+      password:
+        description: Specifies the password for the private key if encrypted
+        type: string
+  KeyPairResponse:
+    description: Response to the command get_key_pair
+    type: object
+    required:
+      - status
+    properties:
+      status:
+        description: The status of the requested command
+        type: string
+        $ref: /evse_security#/GetInstalledCertificatesStatus
+      key_pair:
+        description: The requested key pair
+        type: object
+        $ref: /evse_security#/KeyPair
+
