@@ -5,6 +5,7 @@
 #include <fstream>
 
 #include <boost/process.hpp>
+#include <evse_security_ocpp.hpp>
 
 namespace module {
 
@@ -185,7 +186,7 @@ void OCPP::init() {
 
     this->charge_point = std::make_unique<ocpp::v16::ChargePoint>(
         json_config.dump(), this->ocpp_share_path, user_config_path, std::filesystem::path(this->config.DatabasePath),
-        sql_init_path, std::filesystem::path(this->config.MessageLogPath), etc_certs_path);
+        sql_init_path, std::filesystem::path(this->config.MessageLogPath), std::make_shared<EvseSecurity>());
 
     this->charge_point->register_pause_charging_callback([this](int32_t connector) {
         if (connector > 0 && connector <= this->r_evse_manager.size()) {
