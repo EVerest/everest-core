@@ -250,11 +250,6 @@ ocpp::CertificateFilePaths OCPP201::get_certificate_files() {
     } else {
         cert_file_paths.csms_ca_bundle = this->info.paths.etc / "certs" / this->config.csmsCaBundle;
     }
-    if (std::filesystem::path(this->config.csmsCaBackupBundle).is_absolute()) {
-        cert_file_paths.csms_ca_backup_bundle = this->config.csmsCaBackupBundle;
-    } else {
-        cert_file_paths.csms_ca_backup_bundle = this->info.paths.etc / "certs" / this->config.csmsCaBackupBundle;
-    }
     if (std::filesystem::path(this->config.csoCaBundle).is_absolute()) {
         cert_file_paths.cso_ca_bundle = this->config.csoCaBundle;
     } else {
@@ -285,16 +280,6 @@ ocpp::CertificateFilePaths OCPP201::get_certificate_files() {
     } else {
         cert_file_paths.csms_leaf_key = this->info.paths.etc / "certs" / this->config.csmsLeafKey;
     }
-    if (std::filesystem::path(this->config.csmsLeafKeyBackup).is_absolute()) {
-        cert_file_paths.csms_leaf_key_backup = this->config.csmsLeafKeyBackup;
-    } else {
-        cert_file_paths.csms_leaf_key_backup = this->info.paths.etc / "certs" / this->config.csmsLeafKeyBackup;
-    }
-    if (std::filesystem::path(this->config.csmsLeafCsr).is_absolute()) {
-        cert_file_paths.csms_leaf_csr = this->config.csmsLeafCsr;
-    } else {
-        cert_file_paths.csms_leaf_csr = this->info.paths.etc / "certs" / this->config.csmsLeafCsr;
-    }
     if (std::filesystem::path(this->config.seccLeafCert).is_absolute()) {
         cert_file_paths.secc_leaf_cert = this->config.seccLeafCert;
     } else {
@@ -304,16 +289,6 @@ ocpp::CertificateFilePaths OCPP201::get_certificate_files() {
         cert_file_paths.secc_leaf_key = this->config.seccLeafKey;
     } else {
         cert_file_paths.secc_leaf_key = this->info.paths.etc / "certs" / this->config.seccLeafKey;
-    }
-    if (std::filesystem::path(this->config.seccLeafKeyBackup).is_absolute()) {
-        cert_file_paths.secc_leaf_key_backup = this->config.seccLeafKeyBackup;
-    } else {
-        cert_file_paths.secc_leaf_key_backup = this->info.paths.etc / "certs" / this->config.seccLeafKeyBackup;
-    }
-    if (std::filesystem::path(this->config.seccLeafCsr).is_absolute()) {
-        cert_file_paths.secc_leaf_csr = this->config.seccLeafCsr;
-    } else {
-        cert_file_paths.secc_leaf_csr = this->info.paths.etc / "certs" / this->config.seccLeafCsr;
     }
     return cert_file_paths;
 }

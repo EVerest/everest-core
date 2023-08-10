@@ -32,21 +32,14 @@ struct Conf {
     std::string CoreDatabasePath;
     std::string DeviceModelDatabasePath;
     std::string csmsCaBundle;
-    std::string csmsCaBackupBundle;
     std::string csoCaBundle;
-    std::string cpsCaBundle;
     std::string mfCaBundle;
     std::string moCaBundle;
-    std::string oemCaBundle;
     std::string v2gCaBundle;
     std::string csmsLeafCert;
     std::string csmsLeafKey;
-    std::string csmsLeafKeyBackup;
-    std::string csmsLeafCsr;
     std::string seccLeafCert;
     std::string seccLeafKey;
-    std::string seccLeafKeyBackup;
-    std::string seccLeafCsr;
 };
 
 class OCPP201 : public Everest::ModuleBase {
