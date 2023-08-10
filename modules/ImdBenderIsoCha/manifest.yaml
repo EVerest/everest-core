@@ -1,0 +1,28 @@
+description: IMD driver for Bender isoCHA IMD devices
+provides:
+  main:
+    description: Implementation of the driver functionality
+    interface: isolation_monitor
+    config:
+      imd_device_id:
+        description: The IMD's address on the serial bus
+        type: integer
+        minimum: 0
+        maximum: 255
+        default: 3
+      threshold_resistance_kohm:
+        description: >-
+          The IMD's internal measurement resistance for signaling an alarm in kiloohms 
+          (the internal resistance is only used for switching the IMDs relays, 
+          EVerest handles any isolation issue internaly inside the EVSE manager)
+        type: integer
+        minimum: 15
+        maximum: 600
+        default: 600
+requires:
+  serial_comm_hub:
+    interface: serial_communication_hub
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Lars Dieckmann
