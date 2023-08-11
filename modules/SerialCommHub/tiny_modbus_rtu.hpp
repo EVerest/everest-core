@@ -34,6 +34,12 @@ constexpr int MODBUS_BASE_PAYLOAD_SIZE = 8;
 constexpr int MODBUS_RX_INITIAL_TIMEOUT_MS = 500;
 constexpr int MODBUS_RX_WITHIN_MESSAGE_TIMEOUT_MS = 100;
 
+enum class Parity : uint8_t {
+    NONE = 0,
+    ODD = 1,
+    EVEN = 2
+};
+
 enum FunctionCode : uint8_t {
     READ_COILS = 0x01,
     READ_DISCRETE_INPUTS = 0x02,
@@ -51,7 +57,7 @@ public:
     ~TinyModbusRTU();
 
     bool open_device(const std::string& device, int baud, bool ignore_echo,
-                     const Everest::GpioSettings& rxtx_gpio_settings);
+                     const Everest::GpioSettings& rxtx_gpio_settings, const Parity parity);
     std::vector<uint16_t> txrx(uint8_t device_address, FunctionCode function, uint16_t first_register_address,
                                uint16_t register_quantity, bool wait_for_reply = true,
                                std::vector<uint16_t> request = std::vector<uint16_t>());
