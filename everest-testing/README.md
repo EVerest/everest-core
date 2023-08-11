@@ -46,6 +46,8 @@ The test_controller fixture and inherently also the charge_point_v16 and charge_
 
 In order to use the provided fixtures within your test cases, a successful build of everest-core is required. Refer to https://github.com/EVerest/everest-core for this.
 
+An MQTT broker needs to run on your system in order to start the test cases including everest-core. Docker can be used for this. Refer to https://everest.github.io/nightly/tutorials/docker_setup.html in order to set this up.
+
 Install this package using
 
 ```bash
