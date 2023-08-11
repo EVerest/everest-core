@@ -183,7 +183,7 @@ TinyModbusRTU::~TinyModbusRTU() {
 }
 
 bool TinyModbusRTU::open_device(const std::string& device, int _baud, bool _ignore_echo,
-                                const Everest::GpioSettings& rxtx_gpio_settings) {
+                                const Everest::GpioSettings& rxtx_gpio_settings, const Parity parity) {
 
     ignore_echo = _ignore_echo;
 
@@ -241,7 +241,14 @@ bool TinyModbusRTU::open_device(const std::string& device, int _baud, bool _igno
 
     tty.c_cflag |= (CLOCAL | CREAD);   // ignore modem controls,
                                        // enable reading
-    tty.c_cflag &= ~(PARENB | PARODD); // shut off parity
+    if (parity == Parity::ODD) {
+        tty.c_cflag |= (PARENB | PARODD);   // odd parity
+    } else if (parity == Parity::EVEN) {    // even parity
+        tty.c_cflag &= ~PARODD;
+        tty.c_cflag |= PARENB;
+    } else {
+        tty.c_cflag &= ~(PARENB | PARODD);  // shut off parity
+    }
     tty.c_cflag &= ~CSTOPB;            // 1 Stop bit
     tty.c_cflag &= ~CRTSCTS;
 
@@ -319,10 +326,10 @@ std::vector<uint16_t> TinyModbusRTU::txrx(uint8_t device_address, FunctionCode f
                 i += 2;
             }
         }
-        // set cksum in the last 2 bytes
+        // set checksum in the last 2 bytes
         append_checksum(req.get(), req_len);
 
-        // EVLOG_info << "SEND: " << hexdump(req, req_len);
+        // EVLOG_info << "SEND: " << hexdump(req.get(), req_len);
 
         // clear input and output buffer
         tcflush(fd, TCIOFLUSH);
