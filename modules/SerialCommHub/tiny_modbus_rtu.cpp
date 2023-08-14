@@ -64,15 +64,10 @@ static void append_checksum(uint8_t* msg, int msg_len) {
 static bool validate_checksum(const uint8_t* msg, int msg_len) {
     if (msg_len < 5)
         return false;
-
-    EVLOG_info << hexdump(msg, msg_len);
     // check crc
     uint16_t crc_sum = calculate_modbus_crc16(msg, msg_len - 2);
     uint16_t crc_msg;
     memcpy(&crc_msg, msg + msg_len - 2, 2);
-
-    EVLOG_info << "crc_sum: " << std::setfill('0') << std::setw(4) << std::hex << crc_sum;
-    EVLOG_info << "crc_msg: " << std::setfill('0') << std::setw(4) << std::hex << crc_msg;
     return (crc_msg == crc_sum);
 }
 
@@ -314,7 +309,6 @@ std::vector<uint16_t> TinyModbusRTU::decode_reply(const std::array<uint8_t, MODB
 
     if (!validate_checksum(&buf.at(start_offset), len)) {
         if (this->skip_zero_padding) {  // in case of zero-padding, remove trailing zero(es) and check again
-            EVLOG_info << "first checksum validation failed and skip_zero_padding set";
             bool valid_checksum_found{false};
             while (!valid_checksum_found) {
                 if (len > MODBUS_MIN_REPLY_SIZE) {
@@ -324,11 +318,9 @@ std::vector<uint16_t> TinyModbusRTU::decode_reply(const std::array<uint8_t, MODB
                             valid_checksum_found = true;
                         }
                     } else {
-                        EVLOG_info << "hit non-zero last character";
                         break;  // hit non-zero last character
                     }
                 } else {
-                    EVLOG_info << "length too short";
                     break;  // length too short
                 }
             }
