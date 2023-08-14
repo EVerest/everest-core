@@ -57,18 +57,29 @@ public:
     ~TinyModbusRTU();
 
     bool open_device(const std::string& device, int baud, bool ignore_echo,
+                     const Everest::GpioSettings& rxtx_gpio_settings, const Parity parity, const bool skip_zero_padding);
+    bool open_device(const std::string& device, int baud, bool ignore_echo,
                      const Everest::GpioSettings& rxtx_gpio_settings, const Parity parity);
-    std::vector<uint16_t> txrx(uint8_t device_address, FunctionCode function, uint16_t first_register_address,
-                               uint16_t register_quantity, bool wait_for_reply = true,
+    std::vector<uint16_t> txrx(uint8_t device_address, 
+                               FunctionCode function, 
+                               uint16_t first_register_address,
+                               uint16_t register_quantity, 
+                               bool wait_for_reply = true,
                                std::vector<uint16_t> request = std::vector<uint16_t>());
 
 private:
     // Serial interface
     int fd{0};
     bool ignore_echo{false};
-    int read_reply(uint8_t* rxbuf, int rxbuf_len);
+    bool skip_zero_padding{false};
 
     Everest::Gpio rxtx_gpio;
+    
+    int read_reply(uint8_t* rxbuf, int rxbuf_len);
+    std::vector<uint16_t> decode_reply(const std::array<uint8_t, MODBUS_MAX_REPLY_SIZE>& buf, 
+                                       int len, 
+                                       uint8_t expected_device_address,
+                                       FunctionCode function);
 };
 
 } // namespace tiny_modbus

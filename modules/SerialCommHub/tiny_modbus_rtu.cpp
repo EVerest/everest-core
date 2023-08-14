@@ -64,117 +64,16 @@ static void append_checksum(uint8_t* msg, int msg_len) {
 static bool validate_checksum(const uint8_t* msg, int msg_len) {
     if (msg_len < 5)
         return false;
+
+    EVLOG_info << hexdump(msg, msg_len);
     // check crc
     uint16_t crc_sum = calculate_modbus_crc16(msg, msg_len - 2);
     uint16_t crc_msg;
     memcpy(&crc_msg, msg + msg_len - 2, 2);
+
+    EVLOG_info << "crc_sum: " << std::setfill('0') << std::setw(4) << std::hex << crc_sum;
+    EVLOG_info << "crc_msg: " << std::setfill('0') << std::setw(4) << std::hex << crc_msg;
     return (crc_msg == crc_sum);
-}
-
-static std::vector<uint16_t> decode_reply(const uint8_t* buf, int len, uint8_t expected_device_address,
-                                          FunctionCode function) {
-    std::vector<uint16_t> result;
-    if (len < MODBUS_MIN_REPLY_SIZE) {
-        EVLOG_error << fmt::format("Packet too small: {} bytes.", len);
-        return result;
-    }
-    if (expected_device_address != buf[DEVICE_ADDRESS_POS]) {
-        EVLOG_error << fmt::format("Device address mismatch: expected: {} received: {}", expected_device_address,
-                                   buf[DEVICE_ADDRESS_POS])
-                    << ": " << hexdump(buf, len);
-
-        return result;
-    }
-
-    bool exception = false;
-    uint8_t function_code_recvd = buf[FUNCTION_CODE_POS];
-    if (check_for_exception(function_code_recvd)) {
-        // highest bit is set for exception reply
-        exception = true;
-        // clear error bit
-        clear_exception_bit(function_code_recvd);
-    }
-
-    if (function != function_code_recvd) {
-        EVLOG_error << fmt::format("Function code mismatch: expected: {} received: {}", function, function_code_recvd);
-        return result;
-    }
-
-    if (!validate_checksum(buf, len)) {
-        EVLOG_error << "Checksum error";
-        return result;
-    }
-
-    if (!exception) {
-        // For a write reply we always get 4 bytes
-        uint8_t byte_cnt = 4;
-        int start_of_result = RES_TX_START_OF_PAYLOAD;
-
-        // Was it a read reply?
-        if (function == FunctionCode::READ_COILS || function == FunctionCode::READ_DISCRETE_INPUTS ||
-            function == FunctionCode::READ_MULTIPLE_HOLDING_REGISTERS ||
-            function == FunctionCode::READ_INPUT_REGISTERS) {
-            // adapt byte count and starting pos
-            byte_cnt = buf[RES_RX_LEN_POS];
-            start_of_result = RES_RX_START_OF_PAYLOAD;
-        }
-
-        // check if result is completely in received data
-        if (start_of_result + byte_cnt > len) {
-            EVLOG_error << "Result data not completely in received message.";
-            return result;
-        }
-
-        // ready to copy actual result data to output
-        result.reserve(byte_cnt / 2);
-
-        for (int i = start_of_result; i < start_of_result + byte_cnt; i += 2) {
-            uint16_t t;
-            memcpy(&t, buf + i, 2);
-            t = be16toh(t);
-            result.push_back(t);
-        }
-        return result;
-    } else {
-        // handle exception message
-        uint8_t err_code = buf[RES_RX_START_OF_PAYLOAD];
-        switch (err_code) {
-        case 0x01:
-            EVLOG_error << "Modbus exception: Illegal function";
-            break;
-        case 0x02:
-            EVLOG_error << "Modbus exception: Illegal data address";
-            break;
-        case 0x03:
-            EVLOG_error << "Modbus exception: Illegal data value";
-            break;
-        case 0x04:
-            EVLOG_error << "Modbus exception: Client device failure";
-            break;
-        case 0x05:
-            EVLOG_debug << "Modbus ACK";
-            break;
-        case 0x06:
-            EVLOG_error << "Modbus exception: Client device busy";
-            break;
-        case 0x07:
-            EVLOG_error << "Modbus exception: NACK";
-            break;
-        case 0x08:
-            EVLOG_error << "Modbus exception: Memory parity error";
-            break;
-        case 0x09:
-            EVLOG_error << "Modbus exception: Out of resources";
-            break;
-        case 0x0A:
-            EVLOG_error << "Modbus exception: Gateway path unavailable";
-            break;
-        case 0x0B:
-            EVLOG_error << "Modbus exception: Gateway target device failed to respond";
-            break;
-        }
-        return result;
-    }
 }
 
 TinyModbusRTU::~TinyModbusRTU() {
@@ -184,8 +83,15 @@ TinyModbusRTU::~TinyModbusRTU() {
 
 bool TinyModbusRTU::open_device(const std::string& device, int _baud, bool _ignore_echo,
                                 const Everest::GpioSettings& rxtx_gpio_settings, const Parity parity) {
+    return open_device(device, _baud, _ignore_echo, rxtx_gpio_settings, parity, false);
+}
+
+
+bool TinyModbusRTU::open_device(const std::string& device, int _baud, bool _ignore_echo,
+                                const Everest::GpioSettings& rxtx_gpio_settings, const Parity parity, const bool _skip_zero_padding) {
 
     ignore_echo = _ignore_echo;
+    skip_zero_padding = _skip_zero_padding;
 
     rxtx_gpio.open(rxtx_gpio_settings);
     rxtx_gpio.set_output(true);
@@ -354,11 +260,159 @@ std::vector<uint16_t> TinyModbusRTU::txrx(uint8_t device_address, FunctionCode f
 
     if (wait_for_reply) {
         // wait for reply
-        uint8_t rxbuf[MODBUS_MAX_REPLY_SIZE];
-        int bytes_read_total = read_reply(rxbuf, sizeof(rxbuf));
+        std::array<uint8_t, MODBUS_MAX_REPLY_SIZE> rxbuf({0});
+        int bytes_read_total = read_reply(rxbuf.data(), rxbuf.size());
         return decode_reply(rxbuf, bytes_read_total, device_address, function);
     }
     return std::vector<uint16_t>();
+}
+
+std::vector<uint16_t> TinyModbusRTU::decode_reply(const std::array<uint8_t, MODBUS_MAX_REPLY_SIZE>& buf, 
+                                                  int len,
+                                                  uint8_t expected_device_address,
+                                                  FunctionCode function) {
+    std::vector<uint16_t> result;
+    int start_offset = 0;
+
+    if (len < MODBUS_MIN_REPLY_SIZE) {
+        EVLOG_error << fmt::format("Packet too small: {} bytes.", len);
+        return result;
+    }
+
+    if (this->skip_zero_padding) {
+        while(start_offset < (MODBUS_MAX_REPLY_SIZE - MODBUS_MIN_REPLY_SIZE)) {  // find first non-zero byte (= skip leading zeros)
+            if (buf.at(start_offset) == 0) {
+                start_offset++;
+                len--;
+            } else {
+                break;
+            }
+        }
+    }
+
+    if (expected_device_address != buf.at(start_offset + DEVICE_ADDRESS_POS)) {
+        EVLOG_error << fmt::format("Device address mismatch: expected: {} received: {}", expected_device_address,
+                                   buf.at(start_offset + DEVICE_ADDRESS_POS))
+                    << ": " << hexdump(buf.data(), len);
+
+        return result;
+    }
+
+    bool exception = false;
+    uint8_t function_code_recvd = buf.at(start_offset + FUNCTION_CODE_POS);
+    if (check_for_exception(function_code_recvd)) {
+        // highest bit is set for exception reply
+        exception = true;
+        // clear error bit
+        clear_exception_bit(function_code_recvd);
+    }
+
+    if (function != function_code_recvd) {
+        EVLOG_error << fmt::format("Function code mismatch: expected: {} received: {}", function, function_code_recvd);
+        return result;
+    }
+
+    if (!validate_checksum(&buf.at(start_offset), len)) {
+        if (this->skip_zero_padding) {  // in case of zero-padding, remove trailing zero(es) and check again
+            EVLOG_info << "first checksum validation failed and skip_zero_padding set";
+            bool valid_checksum_found{false};
+            while (!valid_checksum_found) {
+                if (len > MODBUS_MIN_REPLY_SIZE) {
+                    if (buf.at(start_offset + (len - 1)) == 0x00) {
+                        len--;  // in case of zero-padding, decrease length by one
+                        if (validate_checksum(&buf.at(start_offset), len)) {
+                            valid_checksum_found = true;
+                        }
+                    } else {
+                        EVLOG_info << "hit non-zero last character";
+                        break;  // hit non-zero last character
+                    }
+                } else {
+                    EVLOG_info << "length too short";
+                    break;  // length too short
+                }
+            }
+            if (!valid_checksum_found) {
+                EVLOG_error << "Checksum error";
+                return result;
+            }
+        } else {  // when no zero-padding is allowed, this is already an error
+            EVLOG_error << "Checksum error";
+            return result;
+        }
+    }
+
+    if (!exception) {
+        // For a write reply we always get 4 bytes
+        uint8_t byte_cnt = 4;
+        int start_of_result = start_offset + RES_TX_START_OF_PAYLOAD;
+
+        // Was it a read reply?
+        if (function == FunctionCode::READ_COILS || function == FunctionCode::READ_DISCRETE_INPUTS ||
+            function == FunctionCode::READ_MULTIPLE_HOLDING_REGISTERS ||
+            function == FunctionCode::READ_INPUT_REGISTERS) {
+            // adapt byte count and starting pos
+            byte_cnt = buf.at(start_offset + RES_RX_LEN_POS);
+            start_of_result = start_offset + RES_RX_START_OF_PAYLOAD;
+        }
+
+        // check if result is completely in received data
+        if (start_of_result + byte_cnt > len) {
+            EVLOG_error << "Result data not completely in received message.";
+            return result;
+        }
+
+        // ready to copy actual result data to output
+        result.reserve(byte_cnt / 2);
+
+        for (int i = start_of_result; i < start_of_result + byte_cnt; i += 2) {
+            uint16_t t;
+            // memcpy(&t, buf + i, 2);
+            // t = be16toh(t);
+            t = (buf.at(i) << 8) | (buf.at(i + 1));
+            result.push_back(t);
+        }
+        return result;
+    } else {
+        // handle exception message
+        uint8_t err_code = buf.at(start_offset + RES_RX_START_OF_PAYLOAD);
+        switch (err_code) {
+        case 0x01:
+            EVLOG_error << "Modbus exception: Illegal function";
+            break;
+        case 0x02:
+            EVLOG_error << "Modbus exception: Illegal data address";
+            break;
+        case 0x03:
+            EVLOG_error << "Modbus exception: Illegal data value";
+            break;
+        case 0x04:
+            EVLOG_error << "Modbus exception: Client device failure";
+            break;
+        case 0x05:
+            EVLOG_debug << "Modbus ACK";
+            break;
+        case 0x06:
+            EVLOG_error << "Modbus exception: Client device busy";
+            break;
+        case 0x07:
+            EVLOG_error << "Modbus exception: NACK";
+            break;
+        case 0x08:
+            EVLOG_error << "Modbus exception: Memory parity error";
+            break;
+        case 0x09:
+            EVLOG_error << "Modbus exception: Out of resources";
+            break;
+        case 0x0A:
+            EVLOG_error << "Modbus exception: Gateway path unavailable";
+            break;
+        case 0x0B:
+            EVLOG_error << "Modbus exception: Gateway target device failed to respond";
+            break;
+        }
+        return result;
+    }
 }
 
 } // namespace tiny_modbus

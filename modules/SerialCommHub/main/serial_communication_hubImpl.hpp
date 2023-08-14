@@ -28,8 +28,8 @@ struct Conf {
     std::string serial_port;
     int baudrate;
     int parity;
-    int rs485_direction_gpio;
     bool ignore_echo;
+    bool skip_zero_padding;
     std::string rxtx_gpio_chip;
     int rxtx_gpio_line;
     bool rxtx_gpio_tx_high;

@@ -24,6 +24,10 @@ provides:
         description: On some hardware every message that is sent is read back, this setting filters the sent message in the reply.
         type: boolean
         default: false
+      skip_zero_padding:
+        description: This setting filters received zeroes at the start of the message.
+        type: boolean
+        default: false
       rxtx_gpio_chip:
         description: GPIO chip to use to switch between RX/TX. An empty string disables GPIO usage.
         type: string
