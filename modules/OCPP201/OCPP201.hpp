@@ -32,17 +32,19 @@ struct Conf {
     std::string CertsPath;
     std::string CoreDatabasePath;
     std::string DeviceModelDatabasePath;
+    bool EnableExternalWebsocketControl;
 };
 
 class OCPP201 : public Everest::ModuleBase {
 public:
     OCPP201() = delete;
-    OCPP201(const ModuleInfo& info, std::unique_ptr<emptyImplBase> p_main,
+    OCPP201(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, std::unique_ptr<emptyImplBase> p_main,
             std::unique_ptr<auth_token_validatorImplBase> p_auth_validator,
             std::unique_ptr<auth_token_providerImplBase> p_auth_provider,
             std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager, std::unique_ptr<systemIntf> r_system,
             Conf& config) :
         ModuleBase(info),
+        mqtt(mqtt_provider),
         p_main(std::move(p_main)),
         p_auth_validator(std::move(p_auth_validator)),
         p_auth_provider(std::move(p_auth_provider)),
@@ -50,6 +52,7 @@ public:
         r_system(std::move(r_system)),
         config(config){};
 
+    Everest::MqttProvider& mqtt;
     const std::unique_ptr<emptyImplBase> p_main;
     const std::unique_ptr<auth_token_validatorImplBase> p_auth_validator;
     const std::unique_ptr<auth_token_providerImplBase> p_auth_provider;
