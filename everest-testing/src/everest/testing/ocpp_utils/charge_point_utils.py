@@ -154,6 +154,21 @@ def validate_against_old_messages(meta_data, exp_action, exp_payload, validate_p
     return False
 
 
+def contains_expected_response(expected: dict, input: dict):
+    for k, v in expected.items():
+        if k not in input:
+            return False
+
+        if isinstance(v, dict):
+            if not isinstance(input[k], dict):
+                return False
+            if not contains_expected_response(v, input[k]):
+                return False
+        elif input[k] != v:
+            return False
+    return True
+
+
 def validate_message(msg, exp_action, exp_payload, validate_payload_func, meta_data):
 
     if msg.action in meta_data.forbidden_actions:
@@ -167,13 +182,9 @@ def validate_message(msg, exp_action, exp_payload, validate_payload_func, meta_d
                 if not isinstance(exp_payload, dict):
                     exp_payload = asdict(exp_payload)
                 exp_payload = remove_nones(snake_to_camel_case(exp_payload))
-                success = True
-                for k, v in exp_payload.items():
-                    if k not in msg.payload or msg.payload[k] != v:
-                        success = False
-                if success:
+                if contains_expected_response(exp_payload, msg.payload):
                     return camel_to_snake_case(msg.payload)
-                elif not success and meta_data.validation_mode == ValidationMode.STRICT and \
+                elif meta_data.validation_mode == ValidationMode.STRICT and \
                         msg.message_type_id != 3:
                     assert False
                 else:
