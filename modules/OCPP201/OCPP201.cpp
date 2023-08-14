@@ -390,6 +390,16 @@ void OCPP201::init() {
         evse_connector_structure, this->config.DeviceModelDatabasePath, this->ocpp_share_path.string(),
         this->config.CoreDatabasePath, sql_init_path.string(), this->config.MessageLogPath, etc_certs_path, callbacks);
 
+    if (this->config.EnableExternalWebsocketControl) {
+        const std::string connect_topic = "everest_api/ocpp/cmd/connect";
+        this->mqtt.subscribe(connect_topic,
+                             [this](const std::string& data) { this->charge_point->connect_websocket(); });
+
+        const std::string disconnect_topic = "everest_api/ocpp/cmd/disconnect";
+        this->mqtt.subscribe(disconnect_topic,
+                             [this](const std::string& data) { this->charge_point->disconnect_websocket(); });
+    }
+
     evse_id = 1;
     for (const auto& evse : this->r_evse_manager) {
         evse->subscribe_session_event([this, evse_id](types::evse_manager::SessionEvent session_event) {
