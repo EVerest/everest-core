@@ -21,6 +21,7 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
     websocket_connection_status(WebsocketConnectionStatusEnum::Disconnected),
     operational_state(OperationalStatusEnum::Operative),
     network_configuration_priority(0),
+    disable_automatic_websocket_reconnects(false),
     callbacks(callbacks) {
     this->device_model = std::make_unique<DeviceModel>(device_model_storage_address);
     this->pki_handler = std::make_shared<ocpp::PkiHandler>(
@@ -91,6 +92,21 @@ void ChargePoint::stop() {
     this->websocket_timer.stop();
     this->websocket->disconnect(websocketpp::close::status::going_away);
     this->message_queue->stop();
+}
+
+void ChargePoint::connect_websocket() {
+    if (!this->websocket->is_connected()) {
+        this->disable_automatic_websocket_reconnects = false;
+        this->init_websocket();
+        this->websocket->connect();
+    }
+}
+
+void ChargePoint::disconnect_websocket() {
+    if (this->websocket->is_connected()) {
+        this->disable_automatic_websocket_reconnects = true;
+        this->websocket->disconnect(websocketpp::close::status::normal);
+    }
 }
 
 void ChargePoint::on_firmware_update_status_notification(int32_t request_id, std::string& firmware_update_status) {
@@ -355,7 +371,8 @@ void ChargePoint::init_websocket() {
         this->websocket_connection_status = WebsocketConnectionStatusEnum::Disconnected;
         this->message_queue->pause();
 
-        this->websocket_timer.timeout(
+        if (!this->disable_automatic_websocket_reconnects) {
+            this->websocket_timer.timeout(
             [this, reason]() {
                 if (reason != websocketpp::close::status::service_restart) {
                     this->next_network_configuration_priority();
@@ -363,6 +380,7 @@ void ChargePoint::init_websocket() {
                 this->start_websocket();
             },
             WEBSOCKET_INIT_DELAY);
+        }
     });
 
     this->websocket->register_message_callback([this](const std::string& message) { this->message_callback(message); });

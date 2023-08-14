@@ -101,6 +101,7 @@ private:
     OperationalStatusEnum operational_state;
     FirmwareStatusEnum firmware_status;
     int network_configuration_priority;
+    bool disable_automatic_websocket_reconnects;
 
     // callback struct
     Callbacks callbacks;
@@ -248,6 +249,12 @@ public:
 
     /// \brief Stops the ChargePoint. Disconnects the websocket connection and stops MessageQueue and all timers
     void stop();
+
+    /// \brief Initializes the websocket and connects to CSMS if it is not yet connected
+    void connect_websocket();
+
+    /// \brief Disconnects the the websocket connection to the CSMS if it is connected
+    void disconnect_websocket();
 
     /// \brief Chargepoint notifies about new firmware update status firmware_update_status. This function should be
     ///        called during a Firmware Update to indicate the current firmware_update_status.
