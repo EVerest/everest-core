@@ -154,17 +154,17 @@ def validate_against_old_messages(meta_data, exp_action, exp_payload, validate_p
     return False
 
 
-def contains_expected_response(expected: dict, input: dict):
+def contains_expected_response(expected: dict, msg_payload: dict):
     for k, v in expected.items():
-        if k not in input:
+        if k not in msg_payload:
             return False
 
         if isinstance(v, dict):
-            if not isinstance(input[k], dict):
+            if not isinstance(msg_payload[k], dict):
                 return False
-            if not contains_expected_response(v, input[k]):
+            if not contains_expected_response(v, msg_payload[k]):
                 return False
-        elif input[k] != v:
+        elif msg_payload[k] != v:
             return False
     return True
 
