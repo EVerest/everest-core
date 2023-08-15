@@ -370,13 +370,14 @@ void OCPP201::init() {
         }
     };
 
-    callbacks.validate_network_profile_callback = [this](const int32_t configuration_slot, const ocpp::v201::NetworkConnectionProfile& network_connection_profile) {
-        return ocpp::v201::SetNetworkProfileStatusEnum::Accepted;
-    };
+    callbacks.validate_network_profile_callback =
+        [this](const int32_t configuration_slot,
+               const ocpp::v201::NetworkConnectionProfile& network_connection_profile) {
+            return ocpp::v201::SetNetworkProfileStatusEnum::Accepted;
+        };
 
-    callbacks.configure_network_connection_profile_callback = [this](const ocpp::v201::NetworkConnectionProfile &network_connection_profile) {
-        return true;
-    };
+    callbacks.configure_network_connection_profile_callback =
+        [this](const ocpp::v201::NetworkConnectionProfile& network_connection_profile) { return true; };
 
     const auto sql_init_path = this->ocpp_share_path / INIT_SQL;
     std::map<int32_t, int32_t> evse_connector_structure;
@@ -436,8 +437,9 @@ void OCPP201::init() {
                 this->charge_point->on_transaction_started(
                     evse_id, 1, session_id, timestamp,
                     ocpp::v201::TriggerReasonEnum::RemoteStart, // FIXME(piet): Use proper reason here
-                    meter_value, id_token, std::nullopt, reservation_id,
-                    remote_start_id, ocpp::v201::ChargingStateEnum::Charging); // FIXME(piet): add proper groupIdToken + ChargingStateEnum
+                    meter_value, id_token, std::nullopt, reservation_id, remote_start_id,
+                    ocpp::v201::ChargingStateEnum::Charging);   // FIXME(piet): add proper groupIdToken +
+                                                                // ChargingStateEnum
                 break;
             }
             case types::evse_manager::SessionEventEnum::TransactionFinished: {

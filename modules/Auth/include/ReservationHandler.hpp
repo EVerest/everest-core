@@ -42,7 +42,8 @@ public:
      * @return true
      * @return false
      */
-    bool matches_reserved_identifier(int connector, const std::string& id_token, std::optional<std::string> parent_id_token);
+    bool matches_reserved_identifier(int connector, const std::string& id_token,
+                                     std::optional<std::string> parent_id_token);
 
     /**
      * @brief Function tries to reserve the given \p connector using the given \p reservation

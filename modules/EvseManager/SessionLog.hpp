@@ -4,8 +4,8 @@
 #define SESSION_LOG_HPP
 
 #include <fstream>
-#include <string>
 #include <optional>
+#include <string>
 
 namespace module {
 /*

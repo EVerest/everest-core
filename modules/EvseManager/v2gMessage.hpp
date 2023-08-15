@@ -3,9 +3,9 @@
 #ifndef V2G_MESSAGE_HPP
 #define V2G_MESSAGE_HPP
 
-#include <string>
-#include <pugixml.hpp>
 #include <nlohmann/json.hpp>
+#include <pugixml.hpp>
+#include <string>
 
 namespace module {
 /*

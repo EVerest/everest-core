@@ -61,17 +61,14 @@ static const int v2g_cipher_suites[] = {MBEDTLS_TLS_ECDH_ECDSA_WITH_AES_128_CBC_
 static const int v2g_ssl_allowed_hashes[] = {
 #if defined(MBEDTLS_SHA512_C)
     MBEDTLS_MD_SHA512,
-#  if !defined(MBEDTLS_SHA512_NO_SHA384)
+#if !defined(MBEDTLS_SHA512_NO_SHA384)
     MBEDTLS_MD_SHA384,
-#  endif
+#endif
 #endif
 #if defined(MBEDTLS_SHA256_C)
-    MBEDTLS_MD_SHA256,
-    MBEDTLS_MD_SHA224,
+    MBEDTLS_MD_SHA256, MBEDTLS_MD_SHA224,
 #endif
-    MBEDTLS_MD_SHA1,
-    MBEDTLS_MD_NONE
-};
+    MBEDTLS_MD_SHA1,   MBEDTLS_MD_NONE};
 
 /*!
  * \brief connection_create_socket This function creates a tcp/tls socket
@@ -644,7 +641,7 @@ static void ssl_key_log_debug_callback(void* ACtx, int ALevel, const char* AFile
     if (!AStr || std::string(AStr).size() < 3 + 3 * 16) {
         goto reset; /* not the expected hex buffer */
     }
-    AStr += 3; /* skip over ":  " */
+    AStr += 3;      /* skip over ":  " */
     /* Process sequences of "hh " */
     for (int i = 0; i < (3 * 16); i += 3) {
         char c1 = AStr[i], c2 = AStr[i + 1], c3 = AStr[i + 2];

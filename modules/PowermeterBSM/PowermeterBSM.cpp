@@ -83,13 +83,13 @@ transport::AbstractDataTransport::Spt PowermeterBSM::get_data_transport() {
 
     if (not m_transport_spt) {
         if (config.use_serial_comm_hub) {
-            if ( r_serial_com_0_connection.empty() ) {
-                throw std::runtime_error( ""s + __PRETTY_FUNCTION__ + " SerialCommHub enabled, but no connection available.");
+            if (r_serial_com_0_connection.empty()) {
+                throw std::runtime_error(""s + __PRETTY_FUNCTION__ +
+                                         " SerialCommHub enabled, but no connection available.");
             }
             m_transport_spt = std::make_shared<transport::SerialCommHubTransport>((*(r_serial_com_0_connection.at(0))),
                                                                                   m_unit_id, m_modbus_base_address);
-        }
-        else {
+        } else {
             auto modbus_transport_spt =
                 std::make_shared<transport::ModbusTransport>(m_serial_device_name, m_unit_id, m_modbus_base_address);
             modbus_transport_spt->serial_device().get_serial_device_config().set_baud_rate(

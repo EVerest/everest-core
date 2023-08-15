@@ -141,11 +141,11 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
 
     if (ctx->hlc_pause_active != true) {
         ctx->evse_v2g_data.session_id =
-        (uint64_t)0; /* store associated session id, this is zero until SessionSetupRes is sent */
+            (uint64_t)0; /* store associated session id, this is zero until SessionSetupRes is sent */
     }
     ctx->evse_v2g_data.notification_max_delay = (uint32_t)0;
     ctx->evse_v2g_data.evse_isolation_status = (uint8_t)iso1isolationLevelType_Invalid;
-    ctx->evse_v2g_data.evse_isolation_status_is_used = (unsigned int)1; // Shall be used in DIN
+    ctx->evse_v2g_data.evse_isolation_status_is_used = (unsigned int)1;                          // Shall be used in DIN
     ctx->evse_v2g_data.evse_notification = (uint8_t)0;
     ctx->evse_v2g_data.evse_status_code[PHASE_PARAMETER] = iso1DC_EVSEStatusCodeType_EVSE_Ready; // [V2G-DC-453]
     ctx->evse_v2g_data.evse_status_code[PHASE_ISOLATION] = iso1DC_EVSEStatusCodeType_EVSE_Ready;
@@ -184,7 +184,7 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
         init_physical_value(&ctx->evse_v2g_data.evse_current_regulation_tolerance, iso1unitSymbolType_A);
         ctx->evse_v2g_data.evse_current_regulation_tolerance_is_used = (unsigned int)0; // optional in din
         init_physical_value(&ctx->evse_v2g_data.evse_energy_to_be_delivered, iso1unitSymbolType_Wh);
-        ctx->evse_v2g_data.evse_energy_to_be_delivered_is_used = (unsigned int)0; // optional in din
+        ctx->evse_v2g_data.evse_energy_to_be_delivered_is_used = (unsigned int)0;       // optional in din
         init_physical_value(&ctx->evse_v2g_data.evse_maximum_current_limit, iso1unitSymbolType_A);
         ctx->evse_v2g_data.evse_maximum_current_limit_is_used = (unsigned int)0;
         ctx->evse_v2g_data.evse_current_limit_achieved = (int)0;
@@ -219,9 +219,10 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
 
     if (ctx->hlc_pause_active != true) {
         // SAScheduleTupleID#PMaxScheduleTupleID#Start#Duration#PMax#
-        init_physical_value(
-            &ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0].PMaxSchedule.PMaxScheduleEntry.array[0].PMax,
-            iso1unitSymbolType_W);
+        init_physical_value(&ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0]
+                                 .PMaxSchedule.PMaxScheduleEntry.array[0]
+                                 .PMax,
+                            iso1unitSymbolType_W);
         ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0]
             .PMaxSchedule.PMaxScheduleEntry.array[0]
             .RelativeTimeInterval.duration = (uint32_t)0;

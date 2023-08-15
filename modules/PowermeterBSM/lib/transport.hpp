@@ -6,8 +6,8 @@
 
 #include <modbus/modbus_client.hpp>
 
-#include "protocol_related_types.hpp"
 #include "known_model.hpp"
+#include "protocol_related_types.hpp"
 
 #include <memory>
 

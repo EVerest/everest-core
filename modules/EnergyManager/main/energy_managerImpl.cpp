@@ -3,7 +3,6 @@
 
 #include "energy_managerImpl.hpp"
 
-
 namespace module {
 namespace main {
 

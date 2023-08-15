@@ -520,13 +520,15 @@ void OCPP::init() {
             } else if (event == "Error") {
                 EVLOG_debug << "Connector#" << connector << ": "
                             << "Received Error";
-                const auto evse_error = types::evse_manager::error_enum_to_string(session_event.error.value().error_code);
+                const auto evse_error =
+                    types::evse_manager::error_enum_to_string(session_event.error.value().error_code);
                 ocpp::v16::ChargePointErrorCode ocpp_error_code = get_ocpp_error_code(evse_error);
                 this->charge_point->on_error(connector, ocpp_error_code);
             } else if (event == "AllErrorsCleared") {
                 this->charge_point->on_fault(connector, ocpp::v16::ChargePointErrorCode::NoError);
             } else if (event == "PermanentFault") {
-                const auto evse_error = types::evse_manager::error_enum_to_string(session_event.error.value().error_code);
+                const auto evse_error =
+                    types::evse_manager::error_enum_to_string(session_event.error.value().error_code);
                 ocpp::v16::ChargePointErrorCode ocpp_error_code = get_ocpp_error_code(evse_error);
                 this->charge_point->on_fault(connector, ocpp_error_code);
             } else if (event == "ReservationStart") {

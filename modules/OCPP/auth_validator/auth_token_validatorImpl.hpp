@@ -49,8 +49,10 @@ private:
 
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
     // insert your private definitions here
-    types::authorization::ValidationResult validate_standard_request(const types::authorization::ProvidedIdToken& provided_token);
-    types::authorization::ValidationResult validate_pnc_request(const types::authorization::ProvidedIdToken& provided_token);
+    types::authorization::ValidationResult
+    validate_standard_request(const types::authorization::ProvidedIdToken& provided_token);
+    types::authorization::ValidationResult
+    validate_pnc_request(const types::authorization::ProvidedIdToken& provided_token);
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 

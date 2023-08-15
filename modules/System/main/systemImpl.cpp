@@ -82,7 +82,8 @@ void systemImpl::standard_firmware_update(const types::system::FirmwareUpdateReq
         while (firmware_status.firmware_update_status == types::system::FirmwareUpdateStatusEnum::DownloadFailed &&
                retries <= total_retries) {
             boost::process::ipstream stream;
-            boost::process::child cmd(firmware_updater.string(), boost::process::args(args), boost::process::std_out > stream);
+            boost::process::child cmd(firmware_updater.string(), boost::process::args(args),
+                                      boost::process::std_out > stream);
             std::string temp;
             retries += 1;
             while (std::getline(stream, temp)) {

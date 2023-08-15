@@ -19,7 +19,8 @@ private:
 
     bool buy_ampere_import(int index, float ampere, bool allow_less);
     bool buy_ampere_export(int index, float ampere, bool allow_less);
-    bool buy_ampere(const types::energy::ScheduleReqEntry& _offer, int index, float ampere, bool allow_less, bool import);
+    bool buy_ampere(const types::energy::ScheduleReqEntry& _offer, int index, float ampere, bool allow_less,
+                    bool import);
 
     bool buy_watt_import(int index, float watt, bool allow_less);
     bool buy_watt_export(int index, float watt, bool allow_less);

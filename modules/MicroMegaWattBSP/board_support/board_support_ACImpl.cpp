@@ -45,7 +45,7 @@ static types::board_support::Event cast_event_type(const Event& e) {
     }
 
     EVLOG_error << "Received an unknown interface event from uMWC: " << (int)e.type;
-      return types::board_support::Event::ErrorVentilationNotAvailable;
+    return types::board_support::Event::ErrorVentilationNotAvailable;
 }
 
 void board_support_ACImpl::init() {
