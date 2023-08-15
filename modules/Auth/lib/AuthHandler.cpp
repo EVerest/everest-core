@@ -126,7 +126,8 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
 
     if (attempt_stop_with_parent_id_token) {
         for (const auto& validation_result : validation_results) {
-            if (validation_result.parent_id_token.has_value()) {
+            if (validation_result.authorization_status == AuthorizationStatus::Accepted &&
+                validation_result.parent_id_token.has_value()) {
                 const auto connector_used_for_transaction =
                     this->used_for_transaction(referenced_connectors, validation_result.parent_id_token.value());
                 if (connector_used_for_transaction != -1) {
