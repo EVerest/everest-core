@@ -55,10 +55,10 @@ private:
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
     void capture(const std::string& logpath, const std::string& session_id);
-    pcap_t *p_handle {nullptr};
-    pcap_dumper_t *pdumpfile {nullptr};
+    pcap_t* p_handle{nullptr};
+    pcap_dumper_t* pdumpfile{nullptr};
     char errbuf[PCAP_ERRBUF_SIZE];
-    bool capturing_stopped; 
+    bool capturing_stopped;
     std::mutex capture_mutex;
     bool already_started;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1

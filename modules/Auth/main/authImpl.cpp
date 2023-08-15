@@ -15,7 +15,7 @@ void authImpl::init() {
 void authImpl::ready() {
 }
 
-void authImpl::handle_set_connection_timeout(int& connection_timeout){
+void authImpl::handle_set_connection_timeout(int& connection_timeout) {
     this->mod->set_connection_timeout(connection_timeout);
 }
 

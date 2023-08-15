@@ -48,7 +48,7 @@ const std::uint16_t uint16{0xffff};
 const std::uint32_t uint32{0xffffffff};
 
 inline bool valid_string(std::string s) {
-    return not ( s.empty() || s.at(0) == 0 ); // string starts with a endmarker
+    return not(s.empty() || s.at(0) == 0); // string starts with a endmarker
 }
 
 }; // namespace invalid_point_value

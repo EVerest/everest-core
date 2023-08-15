@@ -36,8 +36,7 @@ void PacketSniffer::init() {
             if (!already_started) {
                 already_started = true;
                 capturing_stopped = false;
-                if (session_event.session_started &&
-                    session_event.session_started->logging_path) {
+                if (session_event.session_started && session_event.session_started->logging_path) {
                     std::thread(&PacketSniffer::capture, this, session_event.session_started->logging_path.value(),
                                 session_event.uuid)
                         .detach();

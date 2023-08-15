@@ -3,12 +3,11 @@
 #ifndef OFFER_HPP
 #define OFFER_HPP
 
-#include <vector>
 #include <optional>
+#include <vector>
 
 #include "Market.hpp"
 #include <generated/interfaces/energy/Interface.hpp>
-
 
 namespace module {
 

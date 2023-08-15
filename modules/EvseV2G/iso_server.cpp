@@ -181,14 +181,14 @@ static bool load_contract_root_cert(mbedtls_x509_crt* contract_root_crt, const c
     if ((rv = mbedtls_x509_crt_parse_file(contract_root_crt, MO_file_path)) != 0) {
         char strerr[256];
         mbedtls_strerror(rv, strerr, sizeof(strerr));
-        dlog(DLOG_LEVEL_WARNING, "Unable to parse MO (%s) root certificate. (err: -0x%04x - %s)",
-             MO_file_path, -rv, strerr);
+        dlog(DLOG_LEVEL_WARNING, "Unable to parse MO (%s) root certificate. (err: -0x%04x - %s)", MO_file_path, -rv,
+             strerr);
         dlog(DLOG_LEVEL_INFO, "Attempting to parse V2G root certificate..");
 
         if ((rv = mbedtls_x509_crt_parse_file(contract_root_crt, V2G_file_path)) != 0) {
             mbedtls_strerror(rv, strerr, sizeof(strerr));
-            dlog(DLOG_LEVEL_ERROR, "Unable to parse V2G (%s) root certificate. (err: -0x%04x - %s)",
-                 V2G_file_path, -rv, strerr);
+            dlog(DLOG_LEVEL_ERROR, "Unable to parse V2G (%s) root certificate. (err: -0x%04x - %s)", V2G_file_path, -rv,
+                 strerr);
         }
     }
 
@@ -838,14 +838,17 @@ static enum v2g_event handle_iso_session_setup(struct v2g_connection* conn) {
     /* Check and init session id */
     /* If no session id is configured, generate one */
     srand((unsigned int)time(NULL));
-    if (conn->ctx->evse_v2g_data.session_id == (uint64_t)0 || conn->ctx->evse_v2g_data.session_id != conn->ctx->ev_v2g_data.received_session_id) {
+    if (conn->ctx->evse_v2g_data.session_id == (uint64_t)0 ||
+        conn->ctx->evse_v2g_data.session_id != conn->ctx->ev_v2g_data.received_session_id) {
         conn->ctx->evse_v2g_data.session_id =
             ((uint64_t)rand() << 48) | ((uint64_t)rand() << 32) | ((uint64_t)rand() << 16) | (uint64_t)rand();
-        dlog(DLOG_LEVEL_INFO, "No session_id found or not equal to the id from the preceding v2g session. Generating random session id.");
+        dlog(
+            DLOG_LEVEL_INFO,
+            "No session_id found or not equal to the id from the preceding v2g session. Generating random session id.");
         dlog(DLOG_LEVEL_INFO, "Created new session with id 0x%08" PRIu64, conn->ctx->evse_v2g_data.session_id);
-    }
-    else {
-        dlog(DLOG_LEVEL_INFO, "Found Session_id from the old session: 0x%08" PRIu64, conn->ctx->evse_v2g_data.session_id);
+    } else {
+        dlog(DLOG_LEVEL_INFO, "Found Session_id from the old session: 0x%08" PRIu64,
+             conn->ctx->evse_v2g_data.session_id);
         res->ResponseCode = iso1responseCodeType_OK_OldSessionJoined;
     }
 

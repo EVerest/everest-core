@@ -37,7 +37,8 @@ void serial_communication_hubImpl::init() {
     rxtx_gpio_settings.line_number = config.rxtx_gpio_line;
     rxtx_gpio_settings.inverted = config.rxtx_gpio_tx_high;
 
-    if (!modbus.open_device(config.serial_port, config.baudrate, config.ignore_echo, rxtx_gpio_settings, static_cast<tiny_modbus::Parity>(config.parity))) {
+    if (!modbus.open_device(config.serial_port, config.baudrate, config.ignore_echo, rxtx_gpio_settings,
+                            static_cast<tiny_modbus::Parity>(config.parity))) {
         EVLOG_AND_THROW(Everest::EverestConfigError(fmt::format("Cannot open serial port {}.", config.serial_port)));
     }
 }
@@ -135,8 +136,8 @@ types::serial_comm_hub_requests::StatusCodeEnum serial_communication_hubImpl::ha
         while (retry_counter-- > 0) {
 
             EVLOG_info << fmt::format("Try {} Call modbus_client->write_multiple_registers(id {} addr {} len {})",
-                                      (int)retry_counter, (uint8_t)target_device_id,
-                                      (uint16_t)first_register_address, (uint16_t)data.size());
+                                      (int)retry_counter, (uint8_t)target_device_id, (uint16_t)first_register_address,
+                                      (uint16_t)data.size());
 
             response = modbus.txrx(target_device_id, tiny_modbus::FunctionCode::WRITE_MULTIPLE_HOLDING_REGISTERS,
                                    first_register_address, data.size(), true, data);

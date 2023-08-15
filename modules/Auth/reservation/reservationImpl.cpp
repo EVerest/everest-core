@@ -15,7 +15,7 @@ void reservationImpl::ready() {
 types::reservation::ReservationResult
 reservationImpl::handle_reserve_now(int& connector_id, types::reservation::Reservation& reservation) {
     // your code for cmd reserve_now goes here
-    
+
     const auto reservation_result = this->mod->auth_handler->handle_reservation(connector_id, reservation);
     if (reservation_result == ReservationResult::Accepted) {
         this->mod->auth_handler->call_reserved(connector_id, reservation.reservation_id);
@@ -30,7 +30,6 @@ bool reservationImpl::handle_cancel_reservation(int& reservation_id) {
         return true;
     }
     return false;
-    
 };
 
 } // namespace reservation

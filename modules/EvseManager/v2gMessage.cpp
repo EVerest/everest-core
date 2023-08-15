@@ -8,7 +8,6 @@
 
 #include <fmt/core.h>
 
-
 namespace module {
 
 v2g_message::v2g_message() {
