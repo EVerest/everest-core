@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        image_name: [everest-ci-env, everest-docu]
+        image_name: [everest-ci-env, everest-docu, everest-clang-format]
     steps:
     - name: Checkout Dockerfile
       uses: actions/checkout@v2
