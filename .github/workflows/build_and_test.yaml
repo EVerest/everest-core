@@ -21,6 +21,12 @@ jobs:
         uses: actions/checkout@v3
         with:
           path: source
+      - name: Run clang-format
+        run: |
+          docker run \
+          --volume "$(pwd):/source" \
+          ghcr.io/everest/everest-clang-format:latest \
+          -r /source --extensions "hpp,cpp" -e "/source/cache"
       - name: Setup run scripts
         run: |
           mkdir scripts
@@ -47,8 +53,3 @@ jobs:
           docker commit test-container integration-image
           pushd source/.ci/e2e
           docker-compose run e2e-test-server run-script tests
-          
-
-
-
-          
