@@ -1,3 +1,8 @@
+##  recommended settings on the powermeter to be configured by the Finder configuration software before connecting to the SerialCommHub:
+##    baudrate: >= 19200 baud
+##    modbus id: set to a different address than the default address
+##    communication parameters:   8 data bits, no parity, one stop bit
+#
 # (<start_register> of length <num_registers>) * <multiplier> * 10^(<exponent_register>)
 #
 # if <start_register> is "0", then this value does not exist in the powermeter
