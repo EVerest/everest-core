@@ -22,11 +22,11 @@ jobs:
         with:
           path: source
       - name: Run clang-format
-        run: |
-          docker run \
-          --volume "$(pwd):/source" \
-          ghcr.io/everest/everest-clang-format:latest \
-          -r /source --extensions "hpp,cpp" -e "/source/cache"
+        uses: everest/everest-ci/github-actions/run-clang-format@v1.0.0
+        with:
+          source-dir: source
+          extensions: hpp,cpp
+          exclude: cache
       - name: Setup run scripts
         run: |
           mkdir scripts
