@@ -494,6 +494,9 @@ void ChargePoint::handle_message(const json& json_message, const MessageType& me
     case MessageType::UpdateFirmware:
         this->handle_firmware_update_req(json_message);
         break;
+    case MessageType::UnlockConnector:
+        this->handle_unlock_connector(json_message);
+        break;
     }
 }
 
