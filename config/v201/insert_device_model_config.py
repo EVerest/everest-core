@@ -22,12 +22,14 @@ VARIABLE_ATTRIBUTE_TYPE_ENCODING = {
     "MaxSet": 3
 }
 
-def insert_variable_attribute_value(component_name: str, variable_name: str, value: str, attribute_type: str, cur: sqlite3.Cursor):
+
+def insert_variable_attribute_value(component_name: str, variable_name: str, variable_instance: str, value: str, attribute_type: str, cur: sqlite3.Cursor):
     """Inserts a variable attribute value into the VARIABLE_ATTRIBUTE table
 
     Args:
         component_name (str): name of the component
         variable_name (str): name of the variable
+        variable_instance(str): name of the instance
         value (str): value that should be set
         cur (sqlite3.Cursor): sqlite3 cursor
     """
@@ -38,11 +40,13 @@ def insert_variable_attribute_value(component_name: str, variable_name: str, val
                  "FROM VARIABLE "
                  "JOIN COMPONENT ON COMPONENT.ID = VARIABLE.COMPONENT_ID "
                  "WHERE COMPONENT.NAME = ? "
-                 "AND VARIABLE.NAME = ?) "
+                 "AND VARIABLE.NAME = ? "
+                 "AND VARIABLE.INSTANCE IS ?) "
                  "AND TYPE_ID = ?")
 
     # Execute the query with parameter values
-    cur.execute(statement, (str(value).lower() if isinstance(value, bool) else value, component_name, variable_name, VARIABLE_ATTRIBUTE_TYPE_ENCODING[attribute_type]))
+    cur.execute(statement, (str(value).lower() if isinstance(value, bool) else value, component_name,
+                variable_name, variable_instance, VARIABLE_ATTRIBUTE_TYPE_ENCODING[attribute_type]))
 
 
 def insert_config(config_file: Path, cur: sqlite3.Cursor):
@@ -58,7 +62,7 @@ def insert_config(config_file: Path, cur: sqlite3.Cursor):
             for variable_data in config[component].values():
                 for attribute_type, value in variable_data["attributes"].items():
                     insert_variable_attribute_value(
-                        component, variable_data["variable_name"], value, attribute_type, cur)
+                        component, variable_data["variable_name"], variable_data.get("instance"), value, attribute_type, cur)
 
 
 if __name__ == '__main__':
@@ -76,4 +80,3 @@ if __name__ == '__main__':
     insert_config(config, con.cursor())
     con.commit()
     con.close()
-
