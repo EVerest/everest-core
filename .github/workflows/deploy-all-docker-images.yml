@@ -1,0 +1,28 @@
+name: Build and push all docker images
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - '**'
+    tags:
+      - 'v*'
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build-and-push-all-images:
+    name: Build and push all docker images
+    strategy:
+      matrix:
+        image_name: [everest-ci-env, everest-clang-format]
+    uses: ./.github/workflows/deploy-single-docker-image.yml
+    with:
+      image_name: ${{ matrix.image_name }}
+      docker_registry: ghcr.io
+      github_ref_before: ${{ github.event.before }}
+      github_ref_after: ${{ github.event.after }}
+    secrets:
+      SA_GITHUB_PAT: ${{ secrets.SA_GITHUB_PAT }}
+      SA_GITHUB_USERNAME: ${{ secrets.SA_GITHUB_USERNAME }}

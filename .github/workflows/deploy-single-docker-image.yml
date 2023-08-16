@@ -1,0 +1,104 @@
+name: Build and push single docker image
+
+on:
+  workflow_call:
+    inputs:
+      image_name:
+        description: 'Name of the image to build and push'
+        required: true
+        type: string
+      docker_registry:
+        description: 'Docker registry to push to'
+        required: true
+        default: 'ghcr.io'
+        type: string
+      github_ref_before:
+        description: 'Github ref before the change'
+        required: true
+        type: string
+      github_ref_after:
+        description: 'Github ref after the change'
+        required: true
+        type: string
+    secrets:
+      SA_GITHUB_PAT:
+        description: 'Github PAT with access to the repository'
+        required: true
+      SA_GITHUB_USERNAME:
+        description: 'Github username'
+        required: true
+
+jobs:
+  check:
+    name: Check for changes
+    outputs:
+      changed_files: ${{ steps.changed-files.outputs.changed_files }}
+    runs-on: large-ubuntu-22.04-xxl
+    steps:
+    - name: Checkout Dockerfile
+      uses: actions/checkout@v3
+      with:
+        repository: everest/everest-utils 
+        path: everest-utils
+        ref: ${{ inputs.github_ref_after }}
+        token: ${{secrets.SA_GITHUB_PAT}}
+        fetch-depth: 0
+    - name: Get changed files
+      id: changed-files
+      run: |
+        echo "changed_files=$(git diff --name-only ${{ inputs.github_ref_before }} ${{ inputs.github_ref_after }} | grep "^docker/${{inputs.image_name}}" | wc  -l)" >> $GITHUB_OUTPUT
+      working-directory: everest-utils
+
+  build-and-push:
+    name: Build and push
+    needs: check
+    if: ${{ needs.check.outputs.changed_files > 0 }}
+    runs-on: large-ubuntu-22.04-xxl
+    steps:
+    - name: Checkout Dockerfile
+      uses: actions/checkout@v3
+      with:
+        repository: everest/everest-utils
+        path: everest-utils
+        ref: ${{github.ref}}
+        token: ${{secrets.SA_GITHUB_PAT}}
+        fetch-depth: 0
+    - name: Get context / Path of Dockerfile
+      id: get-context
+      run: |
+        if [ -f everest-utils/docker/${{inputs.image_name}}/Dockerfile ]; then
+          echo "::set-output name=path::everest-utils/docker/${{inputs.image_name}}/"
+        elif [ -f everest-utils/docker/${{inputs.image_name}}/.devcontainer/Dockerfile ]; then
+          echo "::set-output name=path::everest-utils/docker/${{inputs.image_name}}/.devcontainer/"
+        else
+          echo "No Dockerfile found for image ${{inputs.image_name}}!"
+          exit 1
+        fi
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v3
+      with:
+        images: ${{ inputs.docker_registry }}/everest/${{ inputs.image_name }}
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v1
+      with:
+        image: tonistiigi/binfmt:latest
+        platforms: all
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+    - name: Login to DockerHub
+      uses: docker/login-action@v2
+      with:
+        registry: ${{ inputs.docker_registry }}
+        username: ${{ secrets.SA_GITHUB_USERNAME }}
+        password: ${{ secrets.SA_GITHUB_PAT }}
+    - name: Build and push
+      uses: docker/build-push-action@v3
+      with:
+        context: ${{ steps.get-context.outputs.path }}
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}    
+        platforms: linux/amd64,linux/arm64,linux/arm/v7
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
