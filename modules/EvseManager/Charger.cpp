@@ -454,6 +454,9 @@ void Charger::runStateMachine() {
             if (new_in_state) {
                 bcb_toggle_reset();
                 r_bsp->call_allow_power_on(false);
+                if (charge_mode == ChargeMode::DC) {
+                    signal_DC_supply_off();
+                }
                 signalEvent(types::evse_manager::SessionEventEnum::ChargingPausedEV);
             }
 
@@ -576,6 +579,10 @@ void Charger::runStateMachine() {
             // We may come here from an error state, so a session was maybe not active.
             if (sessionActive()) {
                 stopSession();
+            }
+
+            if (charge_mode == ChargeMode::DC) {
+                signal_DC_supply_off();
             }
         }
 
