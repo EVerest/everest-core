@@ -152,6 +152,8 @@ private:
     void handle_scheduled_change_availability_requests(const int32_t evse_id);
     void handle_variable_changed(const SetVariableData& set_variable_data);
     bool validate_set_variable(const SetVariableData& set_variable_data);
+    MeterValue get_latest_meter_value_filtered(const MeterValue& meter_value, ReadingContextEnum context,
+                                               const std::string& measurands);
 
     ///
     /// \brief Get evseid for the given transaction id.
@@ -247,6 +249,7 @@ private:
     void handle_unlock_connector(Call<UnlockConnectorRequest> call);
     void handle_remote_start_transaction_request(Call<RequestStartTransactionRequest> call);
     void handle_remote_stop_transaction_request(Call<RequestStopTransactionRequest> call);
+    void handle_trigger_message(Call<TriggerMessageRequest> call);
 
     // Functional Block G: Availability
     void handle_change_availability_req(Call<ChangeAvailabilityRequest> call);

@@ -557,6 +557,9 @@ void ChargePoint::handle_message(const json& json_message, const MessageType& me
     case MessageType::UnlockConnector:
         this->handle_unlock_connector(json_message);
         break;
+    case MessageType::TriggerMessage:
+        this->handle_trigger_message(json_message);
+        break;
     }
 }
 
@@ -621,6 +624,16 @@ void ChargePoint::message_callback(const std::string& message) {
     }
 }
 
+MeterValue ChargePoint::get_latest_meter_value_filtered(const MeterValue& meter_value, ReadingContextEnum context,
+                                                        const std::string& measurands) {
+    auto filtered_meter_value =
+        utils::get_meter_value_with_measurands_applied(meter_value, utils::get_measurands_vec(measurands));
+    for (auto& sampled_value : filtered_meter_value.sampledValue) {
+        sampled_value.context = context;
+    }
+    return filtered_meter_value;
+}
+
 void ChargePoint::update_aligned_data_interval() {
     const auto next_timestamp = this->get_next_clock_aligned_meter_value_timestamp(
         this->device_model->get_value<int>(ControllerComponentVariables::AlignedDataInterval));
@@ -630,19 +643,20 @@ void ChargePoint::update_aligned_data_interval() {
             [this]() {
                 for (auto const& [evse_id, evse] : this->evses) {
                     auto _meter_value = evse->get_meter_value();
-                    // because we do not actively read meter values at clock aligned timepoint, we switch the
-                    // ReadingContext here
-                    for (auto& sampled_value : _meter_value.sampledValue) {
-                        sampled_value.context = ReadingContextEnum::Sample_Clock;
-                    }
-
                     // this will apply configured measurands and possibly reduce the entries of sampledValue
                     // according to the configuration
-                    const auto meter_value = utils::get_meter_value_with_measurands_applied(
-                        _meter_value, utils::get_measurands_vec(this->device_model->get_value<std::string>(
-                                          ControllerComponentVariables::AlignedDataMeasurands)));
+                    const auto meter_value =
+                        get_latest_meter_value_filtered(_meter_value, ReadingContextEnum::Sample_Clock,
+                                                        this->device_model->get_value<std::string>(
+                                                            ControllerComponentVariables::AlignedDataMeasurands));
 
                     if (evse->has_active_transaction()) {
+                        // because we do not actively read meter values at clock aligned timepoint, we switch the
+                        // ReadingContext here
+                        for (auto& sampled_value : _meter_value.sampledValue) {
+                            sampled_value.context = ReadingContextEnum::Sample_Clock;
+                        }
+
                         // add meter value to transaction meter values
                         const auto& enhanced_transaction = evse->get_transaction();
                         enhanced_transaction->meter_values.push_back(_meter_value);
@@ -1370,6 +1384,131 @@ void ChargePoint::handle_unlock_connector(Call<UnlockConnectorRequest> call) {
     const UnlockConnectorResponse unlock_response = callbacks.unlock_connector_callback(msg.evseId, msg.connectorId);
     ocpp::CallResult<UnlockConnectorResponse> call_result(unlock_response, call.uniqueId);
     this->send<UnlockConnectorResponse>(call_result);
+}
+
+void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
+    const TriggerMessageRequest& msg = call.msg;
+    TriggerMessageResponse response;
+
+    response.status = TriggerMessageStatusEnum::Rejected;
+
+    // F06.FR.04: First send the TriggerMessageResponse before sending the requested message
+    //            so we split the functionality to be able to determine if we need to respond first.
+    switch (msg.requestedMessage) {
+    case MessageTriggerEnum::BootNotification:
+    case MessageTriggerEnum::Heartbeat:
+        response.status = TriggerMessageStatusEnum::Accepted;
+        break;
+
+    case MessageTriggerEnum::MeterValues:
+        if (msg.evse.has_value()) {
+            int32_t evse_id = msg.evse.value().id;
+            if (this->evses.find(evse_id) != this->evses.end()) {
+                response.status = TriggerMessageStatusEnum::Accepted;
+            }
+        } else {
+            response.status = TriggerMessageStatusEnum::Accepted;
+        }
+        break;
+
+    case MessageTriggerEnum::TransactionEvent:
+        if (msg.evse.has_value()) {
+            int32_t evse_id = msg.evse.value().id;
+            if (this->evses.find(evse_id) != this->evses.end() &&
+                this->evses.at(evse_id).get()->has_active_transaction()) {
+                response.status = TriggerMessageStatusEnum::Accepted;
+            }
+        } else {
+            for (auto const& [evse_id, evse] : this->evses) {
+                if (evse->has_active_transaction()) {
+                    response.status = TriggerMessageStatusEnum::Accepted;
+                    break;
+                }
+            }
+        }
+        break;
+
+    case MessageTriggerEnum::StatusNotification:
+        if (msg.evse.has_value() && msg.evse.value().connectorId.has_value()) {
+            response.status = TriggerMessageStatusEnum::NotImplemented;
+        } else {
+            // F06.FR.12: Reject if evse or connectorId is ommited
+        }
+        break;
+
+    default:
+        response.status = TriggerMessageStatusEnum::NotImplemented;
+        break;
+    }
+
+    ocpp::CallResult<TriggerMessageResponse> call_result(response, call.uniqueId);
+    this->send<TriggerMessageResponse>(call_result);
+
+    if (response.status != TriggerMessageStatusEnum::Accepted) {
+        return;
+    }
+
+    auto send_evse_message = [&](std::function<void(int32_t evse_id, Evse & evse)> send) {
+        if (msg.evse.has_value()) {
+            int32_t evse_id = msg.evse.value().id;
+            if (this->evses.find(evse_id) == this->evses.end()) {
+                // Should never get here
+                return;
+            }
+            auto& evse = this->evses.at(evse_id);
+            send(evse_id, *evse);
+        } else {
+            for (auto const& [evse_id, evse] : this->evses) {
+                send(evse_id, *evse);
+            }
+        }
+    };
+
+    switch (msg.requestedMessage) {
+    case MessageTriggerEnum::BootNotification: {
+        // TODO: F06.FR.17
+        auto reason = BootReasonEnum::Triggered;
+        boot_notification_req(reason);
+    } break;
+    case MessageTriggerEnum::MeterValues: {
+        auto send_meter_value = [&](int32_t evse_id, Evse& evse) {
+            const auto meter_value = get_latest_meter_value_filtered(
+                evse.get_meter_value(), ReadingContextEnum::Trigger,
+                this->device_model->get_value<std::string>(ControllerComponentVariables::AlignedDataMeasurands));
+
+            this->meter_values_req(evse_id, std::vector<ocpp::v201::MeterValue>(1, meter_value));
+        };
+        send_evse_message(send_meter_value);
+    } break;
+
+    case MessageTriggerEnum::TransactionEvent: {
+        auto send_transaction = [&](int32_t evse_id, Evse& evse) {
+            if (!evse.has_active_transaction()) {
+                return;
+            }
+
+            const auto meter_value =
+                get_latest_meter_value_filtered(evse.get_meter_value(), ReadingContextEnum::Trigger,
+                                                this->device_model->get_value<std::string>(
+                                                    ControllerComponentVariables::SampledDataTxUpdatedMeasurands));
+
+            this->meter_values_req(evse_id, std::vector<ocpp::v201::MeterValue>(1, meter_value));
+            const auto& enhanced_transaction = evse.get_transaction();
+            this->transaction_event_req(
+                TransactionEventEnum::Updated, DateTime(), enhanced_transaction->get_transaction(),
+                TriggerReasonEnum::Trigger, enhanced_transaction->get_seq_no(), std::nullopt, std::nullopt,
+                std::nullopt, std::vector<MeterValue>(1, meter_value), std::nullopt, std::nullopt, std::nullopt);
+        };
+        send_evse_message(send_transaction);
+    } break;
+
+    case MessageTriggerEnum::Heartbeat:
+        this->heartbeat_req();
+        break;
+    default:
+        EVLOG_error << "Sent a TriggerMessageResponse::Accepted while not following up with a message";
+        break;
+    }
 }
 
 void ChargePoint::handle_remote_start_transaction_request(Call<RequestStartTransactionRequest> call) {
