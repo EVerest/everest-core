@@ -80,7 +80,7 @@ void WebsocketTLS::reconnect(std::error_code reason, long delay) {
         EVLOG_info << "Not reconnecting because the websocket is being shutdown.";
         return;
     }
-    
+
     // TODO(kai): notify message queue that connection is down and a reconnect is imminent?
     {
         std::lock_guard<std::mutex> lk(this->reconnect_mutex);

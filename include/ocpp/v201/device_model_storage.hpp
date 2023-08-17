@@ -56,15 +56,15 @@ inline bool operator<(const Variable& lhs, const Variable& rhs) {
     return lhs.instance < rhs.instance;
 };
 
-inline bool operator==(const ComponentVariable& lhs, const ComponentVariable &rhs) {
+inline bool operator==(const ComponentVariable& lhs, const ComponentVariable& rhs) {
     return lhs.component == rhs.component and lhs.variable == rhs.variable;
 }
 
-inline bool operator<(const ComponentVariable& lhs, const ComponentVariable &rhs) {
+inline bool operator<(const ComponentVariable& lhs, const ComponentVariable& rhs) {
     if (lhs.component == rhs.component) {
         return lhs.variable < rhs.variable;
     }
-    return lhs.component < rhs.component;    
+    return lhs.component < rhs.component;
 }
 
 using VariableMap = std::map<Variable, VariableMetaData>;

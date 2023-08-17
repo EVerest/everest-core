@@ -585,8 +585,7 @@ InstallCertificateResult PkiHandler::installRootCertificate(const std::string& r
                << ocpp::conversions::certificate_type_to_string(certificateType);
     InstallCertificateResult installCertificateResult = InstallCertificateResult::Valid;
 
-    if (certificateStoreMaxLength &&
-        this->getCaCertificates().size() >= size_t(certificateStoreMaxLength.value())) {
+    if (certificateStoreMaxLength && this->getCaCertificates().size() >= size_t(certificateStoreMaxLength.value())) {
         return InstallCertificateResult::CertificateStoreMaxLengthExceeded;
     }
 

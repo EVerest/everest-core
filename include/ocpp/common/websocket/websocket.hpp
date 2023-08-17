@@ -29,7 +29,7 @@ public:
     /// \brief connect to a websocket (TLS or non-TLS depending on the central system uri in the configuration).
     bool connect();
 
-    void set_connection_options(const WebsocketConnectionOptions &connection_options);
+    void set_connection_options(const WebsocketConnectionOptions& connection_options);
 
     /// \brief disconnect the websocket
     void disconnect(websocketpp::close::status::value code);
@@ -58,7 +58,7 @@ public:
     void set_websocket_ping_interval(int32_t interval_s);
 
     /// \brief set the \p authorization_key of the connection_options
-    void set_authorization_key(const std::string &authorization_key);
+    void set_authorization_key(const std::string& authorization_key);
 };
 
 } // namespace ocpp

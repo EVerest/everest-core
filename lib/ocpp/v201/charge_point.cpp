@@ -127,14 +127,11 @@ void ChargePoint::on_session_started(const int32_t evse_id, const int32_t connec
     this->evses.at(evse_id)->submit_event(connector_id, ConnectorEvent::PlugIn);
 }
 
-void ChargePoint::on_transaction_started(const int32_t evse_id, const int32_t connector_id,
-                                         const std::string& session_id, const DateTime& timestamp,
-                                         const ocpp::v201::TriggerReasonEnum trigger_reason,
-                                         const MeterValue& meter_start, const IdToken& id_token,
-                                         const std::optional<IdToken>& group_id_token,
-                                         const std::optional<int32_t>& reservation_id,
-                                         const std::optional<int32_t>& remote_start_id,
-                                         const ChargingStateEnum charging_state) {
+void ChargePoint::on_transaction_started(
+    const int32_t evse_id, const int32_t connector_id, const std::string& session_id, const DateTime& timestamp,
+    const ocpp::v201::TriggerReasonEnum trigger_reason, const MeterValue& meter_start, const IdToken& id_token,
+    const std::optional<IdToken>& group_id_token, const std::optional<int32_t>& reservation_id,
+    const std::optional<int32_t>& remote_start_id, const ChargingStateEnum charging_state) {
 
     this->evses.at(evse_id)->open_transaction(
         session_id, connector_id, timestamp, meter_start, id_token, group_id_token, reservation_id,
@@ -227,10 +224,9 @@ void ChargePoint::on_reserved(const int32_t evse_id, const int32_t connector_id)
     this->evses.at(evse_id)->submit_event(connector_id, ConnectorEvent::Reserve);
 }
 
-bool ChargePoint::on_charging_state_changed(const uint32_t evse_id,
-                                            ChargingStateEnum charging_state) {
+bool ChargePoint::on_charging_state_changed(const uint32_t evse_id, ChargingStateEnum charging_state) {
     if (this->evses.find(static_cast<int32_t>(evse_id)) != this->evses.end()) {
-        std::unique_ptr<EnhancedTransaction> &transaction =
+        std::unique_ptr<EnhancedTransaction>& transaction =
             this->evses.at(static_cast<int32_t>(evse_id))->get_transaction();
         if (transaction != nullptr) {
             transaction->chargingState = charging_state;
@@ -244,13 +240,10 @@ bool ChargePoint::on_charging_state_changed(const uint32_t evse_id,
                 std::nullopt);
             return true;
         } else {
-            EVLOG_warning
-                << "Can not change charging state: no transaction for evse id "
-                << evse_id;
+            EVLOG_warning << "Can not change charging state: no transaction for evse id " << evse_id;
         }
     } else {
-        EVLOG_warning << "Can not change charging state: evse id invalid: "
-                      << evse_id;
+        EVLOG_warning << "Can not change charging state: evse id invalid: " << evse_id;
     }
 
     return false;
@@ -359,7 +352,8 @@ void ChargePoint::init_websocket() {
     if (!network_connection_profile.has_value() or
         (this->callbacks.configure_network_connection_profile_callback.has_value() and
          !this->callbacks.configure_network_connection_profile_callback.value()(network_connection_profile.value()))) {
-        EVLOG_warning << "NetworkConnectionProfile could not be retrieved or configuration of network with the given profile failed";
+        EVLOG_warning << "NetworkConnectionProfile could not be retrieved or configuration of network with the given "
+                         "profile failed";
         this->websocket_timer.timeout(
             [this]() {
                 this->next_network_configuration_priority();
@@ -375,24 +369,25 @@ void ChargePoint::init_websocket() {
         this->websocket_connection_status = WebsocketConnectionStatusEnum::Connected;
     });
 
-    this->websocket->register_closed_callback([this, connection_options, configuration_slot](const websocketpp::close::status::value reason) {
-        EVLOG_warning << "Failed to connect to NetworkConfigurationPriority: "
-                      << this->network_configuration_priority + 1
-                      << " which is configurationSlot: " << configuration_slot;
-        this->websocket_connection_status = WebsocketConnectionStatusEnum::Disconnected;
-        this->message_queue->pause();
+    this->websocket->register_closed_callback(
+        [this, connection_options, configuration_slot](const websocketpp::close::status::value reason) {
+            EVLOG_warning << "Failed to connect to NetworkConfigurationPriority: "
+                          << this->network_configuration_priority + 1
+                          << " which is configurationSlot: " << configuration_slot;
+            this->websocket_connection_status = WebsocketConnectionStatusEnum::Disconnected;
+            this->message_queue->pause();
 
-        if (!this->disable_automatic_websocket_reconnects) {
-            this->websocket_timer.timeout(
-            [this, reason]() {
-                if (reason != websocketpp::close::status::service_restart) {
-                    this->next_network_configuration_priority();
-                }
-                this->start_websocket();
-            },
-            WEBSOCKET_INIT_DELAY);
-        }
-    });
+            if (!this->disable_automatic_websocket_reconnects) {
+                this->websocket_timer.timeout(
+                    [this, reason]() {
+                        if (reason != websocketpp::close::status::service_restart) {
+                            this->next_network_configuration_priority();
+                        }
+                        this->start_websocket();
+                    },
+                    WEBSOCKET_INIT_DELAY);
+            }
+        });
 
     this->websocket->register_message_callback([this](const std::string& message) { this->message_callback(message); });
 }
@@ -451,11 +446,12 @@ std::optional<NetworkConnectionProfile> ChargePoint::get_network_connection_prof
 
 void ChargePoint::next_network_configuration_priority() {
     std::vector<SetNetworkProfileRequest> network_connection_profiles = json::parse(
-    this->device_model->get_value<std::string>(ControllerComponentVariables::NetworkConnectionProfiles));
+        this->device_model->get_value<std::string>(ControllerComponentVariables::NetworkConnectionProfiles));
     if (network_connection_profiles.size() > 1) {
         EVLOG_info << "Switching to next network configuration priority";
     }
-    this->network_configuration_priority = (this->network_configuration_priority + 1) % (network_connection_profiles.size());
+    this->network_configuration_priority =
+        (this->network_configuration_priority + 1) % (network_connection_profiles.size());
 }
 
 void ChargePoint::handle_message(const json& json_message, const MessageType& message_type) {

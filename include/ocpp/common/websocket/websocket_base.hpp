@@ -86,7 +86,7 @@ public:
     virtual bool connect() = 0;
 
     /// \brief sets this connection_options to the given \p connection_options and resets the connection_attempts
-    void set_connection_options(const WebsocketConnectionOptions &connection_options);
+    void set_connection_options(const WebsocketConnectionOptions& connection_options);
 
     /// \brief reconnect the websocket after the delay
     virtual void reconnect(std::error_code reason, long delay) = 0;
@@ -118,7 +118,7 @@ public:
     void set_websocket_ping_interval(int32_t interval_s);
 
     /// \brief set the \p authorization_key of the connection_options
-    void set_authorization_key(const std::string &authorization_key);
+    void set_authorization_key(const std::string& authorization_key);
 };
 
 } // namespace ocpp

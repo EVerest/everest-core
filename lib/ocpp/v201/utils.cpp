@@ -3,8 +3,8 @@
 
 #include <everest/logging.hpp>
 
-#include <ocpp/v201/utils.hpp>
 #include <ocpp/common/utils.hpp>
+#include <ocpp/v201/utils.hpp>
 
 namespace ocpp {
 namespace v201 {

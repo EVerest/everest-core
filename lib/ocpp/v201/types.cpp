@@ -564,7 +564,8 @@ WebsocketConnectionStatusEnum string_to_websocket_connection_status(const std::s
     } else if (s == "Disconnected") {
         return WebsocketConnectionStatusEnum::Disconnected;
     }
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type WebsocketConnectionStatusEnum");
+    throw std::out_of_range("Provided string " + s +
+                            " could not be converted to enum of type WebsocketConnectionStatusEnum");
 }
 
 } // namespace conversions

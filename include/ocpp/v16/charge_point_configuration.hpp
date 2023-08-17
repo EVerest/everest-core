@@ -77,7 +77,7 @@ public:
     KeyValue getSupportedCiphers13KeyValue();
     bool getUseSslDefaultVerifyPaths();
     KeyValue getUseSslDefaultVerifyPathsKeyValue();
-    
+
     int32_t getRetryBackoffRandomRange();
     void setRetryBackoffRandomRange(int32_t retry_backoff_random_range);
     KeyValue getRetryBackoffRandomRangeKeyValue();

@@ -25,7 +25,7 @@ private:
     tls_client wss_client;
     std::shared_ptr<PkiHandler> pki_handler;
     websocketpp::lib::shared_ptr<websocketpp::lib::thread> websocket_thread;
-    
+
     /// \brief Extracts the hostname from the provided \p uri
     /// FIXME(kai): this only works with a very limited subset of hostnames and should be extended to work spec conform
     /// \returns the extracted hostname

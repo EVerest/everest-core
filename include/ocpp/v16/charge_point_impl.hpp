@@ -164,8 +164,7 @@ private:
     std::function<GetLogResponse(GetLogRequest msg)> upload_logs_callback;
     std::function<void(int32_t connection_timeout)> set_connection_timeout_callback;
 
-    std::function<void(const int32_t connector, const int32_t transaction_id)>
-        transaction_started_callback;
+    std::function<void(const int32_t connector, const int32_t transaction_id)> transaction_started_callback;
 
     // iso15118 callback
     std::function<void(const int32_t connector, const ocpp::v201::Get15118EVCertificateResponse& certificate_response,
@@ -190,8 +189,8 @@ private:
     void update_meter_values_sample_interval();
     void update_clock_aligned_meter_values_interval();
     std::optional<MeterValue> get_latest_meter_value(int32_t connector,
-                                                       std::vector<MeasurandWithPhase> values_of_interest,
-                                                       ReadingContext context);
+                                                     std::vector<MeasurandWithPhase> values_of_interest,
+                                                     ReadingContext context);
     MeterValue get_signed_meter_value(const std::string& signed_value, const ReadingContext& context,
                                       const ocpp::DateTime& datetime);
     void send_meter_value(int32_t connector, MeterValue meter_value);
@@ -448,8 +447,7 @@ public:
     /// \param signed_meter_value e.g. in OCMF format
     void on_transaction_stopped(const int32_t connector, const std::string& session_id, const Reason& reason,
                                 ocpp::DateTime timestamp, float energy_wh_import,
-                                std::optional<CiString<20>> id_tag_end,
-                                std::optional<std::string> signed_meter_value);
+                                std::optional<CiString<20>> id_tag_end, std::optional<std::string> signed_meter_value);
 
     /// \brief This function should be called when EV indicates that it suspends charging on the given \p connector
     /// \param connector
@@ -649,8 +647,8 @@ public:
                                  const ocpp::v201::Get15118EVCertificateResponse& certificate_response,
                                  const ocpp::v201::CertificateActionEnum& certificate_action)>& callback);
 
-    // \brief registers a \p callback function that can be used to publish the response when transaction starts respone is received
-    // \param callback
+    // \brief registers a \p callback function that can be used to publish the response when transaction starts respone
+    // is received \param callback
     void register_transaction_started_callback(
         const std::function<void(int32_t connector, int32_t transaction_id)>& callback);
 };

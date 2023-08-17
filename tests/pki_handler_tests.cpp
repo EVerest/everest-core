@@ -2,8 +2,8 @@
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
 #include <filesystem>
-#include <gtest/gtest.h>
 #include <fstream>
+#include <gtest/gtest.h>
 #include <sstream>
 
 #include <everest/logging.hpp>

@@ -218,8 +218,7 @@ void TransactionHandler::change_meter_values_sample_intervals(int32_t interval) 
     }
 }
 
-std::optional<CiString<20>>
-TransactionHandler::get_authorized_id_tag(const std::string& stop_transaction_message_id) {
+std::optional<CiString<20>> TransactionHandler::get_authorized_id_tag(const std::string& stop_transaction_message_id) {
     for (const auto& transaction : this->stopped_transactions) {
         if (transaction->get_stop_transaction_message_id() == stop_transaction_message_id) {
             transaction->get_id_tag();

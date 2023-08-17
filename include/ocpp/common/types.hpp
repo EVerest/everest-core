@@ -6,10 +6,10 @@
 #include <chrono>
 #include <cstddef>
 #include <iostream>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <string>
-#include <optional>
 
 #include <nlohmann/json_fwd.hpp>
 

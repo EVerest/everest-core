@@ -68,7 +68,8 @@ struct Callbacks {
     std::optional<std::function<SetNetworkProfileStatusEnum(
         const int32_t configuration_slot, const NetworkConnectionProfile& network_connection_profile)>>
         validate_network_profile_callback;
-    std::optional<std::function<bool(const NetworkConnectionProfile &network_connection_profile)>> configure_network_connection_profile_callback;
+    std::optional<std::function<bool(const NetworkConnectionProfile& network_connection_profile)>>
+        configure_network_connection_profile_callback;
 };
 
 /// \brief Class implements OCPP2.0.1 Charging Station
@@ -122,7 +123,7 @@ private:
     /// central system uri ofthe connection options will not contain ws:// or wss:// because this method removes it if
     /// present \param network_configuration_priority \return
     std::optional<NetworkConnectionProfile> get_network_connection_profile(const int32_t configuration_slot);
-    /// \brief Moves websocket network_configuration_priority to next profile 
+    /// \brief Moves websocket network_configuration_priority to next profile
     void next_network_configuration_priority();
     void handle_message(const json& json_message, const MessageType& message_type);
     void message_callback(const std::string& message);
@@ -130,7 +131,7 @@ private:
     bool is_change_availability_possible(const ChangeAvailabilityRequest& req);
     void handle_scheduled_change_availability_requests(const int32_t evse_id);
     void handle_variable_changed(const SetVariableData& set_variable_data);
-    bool validate_set_variable(const SetVariableData &set_variable_data);
+    bool validate_set_variable(const SetVariableData& set_variable_data);
 
     ///
     /// \brief Get evseid for the given transaction id.
@@ -287,8 +288,7 @@ public:
                                 const MeterValue& meter_start, const IdToken& id_token,
                                 const std::optional<IdToken>& group_id_token,
                                 const std::optional<int32_t>& reservation_id,
-                                const std::optional<int32_t>& remote_start_id,
-                                const ChargingStateEnum charging_state);
+                                const std::optional<int32_t>& remote_start_id, const ChargingStateEnum charging_state);
 
     /// \brief Event handler that should be called when a transaction has finished
     /// \param evse_id

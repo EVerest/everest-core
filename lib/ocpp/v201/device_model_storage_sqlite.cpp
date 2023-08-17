@@ -182,7 +182,7 @@ bool DeviceModelStorageSqlite::set_variable_attribute_value(const Component& com
     if (_variable_id == -1) {
         return false;
     }
-    
+
     insert_stmt.bind_text(value, 1);
     insert_stmt.bind_int(_variable_id, 2);
     insert_stmt.bind_int(static_cast<int>(attribute_enum), 3);

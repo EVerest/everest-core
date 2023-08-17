@@ -31,7 +31,7 @@ extern const Component& SecurityCtrlr;
 extern const Component& SmartChargingCtrlr;
 extern const Component& TariffCostCtrlr;
 extern const Component& TxCtrlr;
-} // ControllerComponents
+} // namespace ControllerComponents
 
 // Provides access to standardized variables of OCPP2.0.1 spec
 namespace ControllerComponentVariables {
@@ -192,8 +192,8 @@ extern const ComponentVariable& TxBeforeAcceptedEnabled;
 extern const ComponentVariable& TxStartPoint;
 extern const ComponentVariable& TxStopPoint;
 
-} // namespace ComponentVariables
-} // namespace ocpp
+} // namespace ControllerComponentVariables
 } // namespace v201
+} // namespace ocpp
 
 #endif // OCPP_V201_CTRLR_COMPONENT_VARIABLES

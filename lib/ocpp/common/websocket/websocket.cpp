@@ -31,7 +31,7 @@ bool Websocket::connect() {
     return this->websocket->connect();
 }
 
-void Websocket::set_connection_options(const WebsocketConnectionOptions &connection_options) {
+void Websocket::set_connection_options(const WebsocketConnectionOptions& connection_options) {
     this->websocket->set_connection_options(connection_options);
 }
 
@@ -58,7 +58,8 @@ void Websocket::register_connected_callback(const std::function<void(const int s
     });
 }
 
-void Websocket::register_closed_callback(const std::function<void(const websocketpp::close::status::value reason)>& callback) {
+void Websocket::register_closed_callback(
+    const std::function<void(const websocketpp::close::status::value reason)>& callback) {
     this->closed_callback = callback;
     this->websocket->register_closed_callback([this](const websocketpp::close::status::value reason) {
         this->logging->sys("Disconnected");
@@ -82,7 +83,7 @@ void Websocket::set_websocket_ping_interval(int32_t interval_s) {
     this->websocket->set_websocket_ping_interval(interval_s);
 }
 
-void Websocket::set_authorization_key(const std::string &authorization_key) {
+void Websocket::set_authorization_key(const std::string& authorization_key) {
     this->websocket->set_authorization_key(authorization_key);
 }
 

@@ -46,7 +46,7 @@ public:
     EVSE get_evse_info();
 
     /// \brief Returns the number of connectors of this EVSE
-    /// \return 
+    /// \return
     int32_t get_number_of_connectors();
 
     /// \brief Returns a reference to the sampled meter values timer
@@ -64,8 +64,8 @@ public:
     /// \param sampled_data_tx_updated_interval Interval between sampling of metering (or other) data, intended to be
     /// transmitted via TransactionEventRequest (eventType = Updated) messages
     void open_transaction(const std::string& transaction_id, const int32_t connector_id, const DateTime& timestamp,
-                          const MeterValue& meter_start, const IdToken& id_token, const std::optional<IdToken> &group_id_token,
-                          const std::optional<int32_t> reservation_id,
+                          const MeterValue& meter_start, const IdToken& id_token,
+                          const std::optional<IdToken>& group_id_token, const std::optional<int32_t> reservation_id,
                           const int32_t sampled_data_tx_updated_interval);
 
     /// \brief Closes the transaction on this evse by adding the given \p timestamp \p meter_stop and \p reason .
