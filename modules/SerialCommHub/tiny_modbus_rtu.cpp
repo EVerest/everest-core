@@ -96,7 +96,8 @@ static std::vector<uint16_t> decode_reply(const uint8_t* buf, int len, uint8_t e
     }
 
     if (function != function_code_recvd) {
-        EVLOG_error << fmt::format("Function code mismatch: expected: {} received: {}", function, function_code_recvd);
+        EVLOG_error << fmt::format("Function code mismatch: expected: {} received: {}", static_cast<uint8_t>(function),
+                                   function_code_recvd);
         return result;
     }
 
