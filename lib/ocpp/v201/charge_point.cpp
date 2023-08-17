@@ -625,9 +625,9 @@ void ChargePoint::message_callback(const std::string& message) {
 }
 
 MeterValue ChargePoint::get_latest_meter_value_filtered(const MeterValue& meter_value, ReadingContextEnum context,
-                                                        const std::string& measurands) {
+                                                        const ComponentVariable& component_variable) {
     auto filtered_meter_value =
-        utils::get_meter_value_with_measurands_applied(meter_value, utils::get_measurands_vec(measurands));
+        utils::get_meter_value_with_measurands_applied(meter_value, utils::get_measurands_vec(this->device_model->get_value<std::string>(component_variable)));
     for (auto& sampled_value : filtered_meter_value.sampledValue) {
         sampled_value.context = context;
     }
@@ -647,8 +647,7 @@ void ChargePoint::update_aligned_data_interval() {
                     // according to the configuration
                     const auto meter_value =
                         get_latest_meter_value_filtered(_meter_value, ReadingContextEnum::Sample_Clock,
-                                                        this->device_model->get_value<std::string>(
-                                                            ControllerComponentVariables::AlignedDataMeasurands));
+                                                        ControllerComponentVariables::AlignedDataMeasurands);
 
                     if (evse->has_active_transaction()) {
                         // because we do not actively read meter values at clock aligned timepoint, we switch the
@@ -1474,7 +1473,7 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
         auto send_meter_value = [&](int32_t evse_id, Evse& evse) {
             const auto meter_value = get_latest_meter_value_filtered(
                 evse.get_meter_value(), ReadingContextEnum::Trigger,
-                this->device_model->get_value<std::string>(ControllerComponentVariables::AlignedDataMeasurands));
+                ControllerComponentVariables::AlignedDataMeasurands);
 
             this->meter_values_req(evse_id, std::vector<ocpp::v201::MeterValue>(1, meter_value));
         };
@@ -1489,8 +1488,7 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
 
             const auto meter_value =
                 get_latest_meter_value_filtered(evse.get_meter_value(), ReadingContextEnum::Trigger,
-                                                this->device_model->get_value<std::string>(
-                                                    ControllerComponentVariables::SampledDataTxUpdatedMeasurands));
+                                                ControllerComponentVariables::SampledDataTxUpdatedMeasurands);
 
             this->meter_values_req(evse_id, std::vector<ocpp::v201::MeterValue>(1, meter_value));
             const auto& enhanced_transaction = evse.get_transaction();

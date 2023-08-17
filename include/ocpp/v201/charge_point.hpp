@@ -153,7 +153,7 @@ private:
     void handle_variable_changed(const SetVariableData& set_variable_data);
     bool validate_set_variable(const SetVariableData& set_variable_data);
     MeterValue get_latest_meter_value_filtered(const MeterValue& meter_value, ReadingContextEnum context,
-                                               const std::string& measurands);
+                                               const ComponentVariable& component_variable);
 
     ///
     /// \brief Get evseid for the given transaction id.
