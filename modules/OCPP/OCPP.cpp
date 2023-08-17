@@ -493,12 +493,12 @@ void OCPP::ready() {
 
     this->charge_point->register_is_reset_allowed_callback([this](ocpp::v16::ResetType type) {
         const auto reset_type = types::system::string_to_reset_type(ocpp::v16::conversions::reset_type_to_string(type));
-        return this->r_system->call_is_reset_allowed(reset_type);
+        return this->r_system->call_is_reset_allowed(reset_type, 0);
     });
 
     this->charge_point->register_reset_callback([this](ocpp::v16::ResetType type) {
         const auto reset_type = types::system::string_to_reset_type(ocpp::v16::conversions::reset_type_to_string(type));
-        this->r_system->call_reset(reset_type);
+        this->r_system->call_reset(reset_type, 0);
     });
 
     this->charge_point->register_connection_state_changed_callback(

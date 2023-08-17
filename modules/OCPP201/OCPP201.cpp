@@ -452,11 +452,9 @@ void OCPP201::ready() {
     ocpp::v201::Callbacks callbacks;
     callbacks.is_reset_allowed_callback = [this](const std::optional<const int32_t> evse_id,
                                                  const ocpp::v201::ResetEnum& type) {
-        // FIXME: use evse_id!
         try {
-            const auto reset_type =
-                types::system::string_to_reset_type(ocpp::v201::conversions::reset_enum_to_string(type));
-            return this->r_system->call_is_reset_allowed(reset_type);
+            const auto _evse_id = evse_id.value_or(0);
+            return this->r_system->call_is_reset_allowed(types::system::ResetType::NotSpecified, _evse_id);
         } catch (std::out_of_range& e) {
             EVLOG_warning
                 << "Could not convert OCPP ResetEnum to EVerest ResetType while executing is_reset_allowed_callback.";
@@ -464,12 +462,10 @@ void OCPP201::ready() {
         }
     };
     callbacks.reset_callback = [this](const std::optional<const int32_t> evse_id, const ocpp::v201::ResetEnum& type) {
-        // FIXME: use evse_id!
         try {
-            const auto reset_type =
-                types::system::string_to_reset_type(ocpp::v201::conversions::reset_enum_to_string(type));
-            this->r_system->call_reset(types::system::ResetType::Soft); // FIXME(piet): fix reset type in system module
-                                                                        // according to v201 reset type
+            const auto _evse_id = evse_id.value_or(0);
+            this->r_system->call_reset(types::system::ResetType::NotSpecified,
+                                       _evse_id);
         } catch (std::out_of_range& e) {
             EVLOG_warning << "Could not convert OCPP ResetEnum to EVerest ResetType while executing reset_callack. No "
                              "reset will be executed.";

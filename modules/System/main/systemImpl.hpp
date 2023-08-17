@@ -40,8 +40,8 @@ protected:
     handle_update_firmware(types::system::FirmwareUpdateRequest& firmware_update_request) override;
     virtual types::system::UploadLogsResponse
     handle_upload_logs(types::system::UploadLogsRequest& upload_logs_request) override;
-    virtual bool handle_is_reset_allowed(types::system::ResetType& type) override;
-    virtual void handle_reset(types::system::ResetType& type) override;
+    virtual bool handle_is_reset_allowed(types::system::ResetType& type, int& evse_id) override;
+    virtual void handle_reset(types::system::ResetType& type, int& evse_id) override;
     virtual bool handle_set_system_time(std::string& timestamp) override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
@@ -98,16 +98,17 @@ private:
      */
     types::system::UpdateFirmwareResponse
     handle_standard_firmware_update(const types::system::FirmwareUpdateRequest& firmware_update_request);
-    types::system::UpdateFirmwareResponse
+    types::system::
+        UpdateFirmwareResponse
 
-    /**
-     * @brief Handles the given \p firmware_update_request. If the download should not be started in the future it
-     * starts the download and installation of the firmware immediately, otherwise this method sets a timer for the
-     * download accordingly.
-     *
-     * @param firmware_update_request
-     */
-    handle_signed_fimware_update(const types::system::FirmwareUpdateRequest& firmware_update_request);
+        /**
+         * @brief Handles the given \p firmware_update_request. If the download should not be started in the future it
+         * starts the download and installation of the firmware immediately, otherwise this method sets a timer for the
+         * download accordingly.
+         *
+         * @param firmware_update_request
+         */
+        handle_signed_fimware_update(const types::system::FirmwareUpdateRequest& firmware_update_request);
 
     /**
      * @brief Handles the download of the firmware specified in the given \p firmware_update_request . If a download is
