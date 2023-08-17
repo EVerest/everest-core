@@ -1388,21 +1388,34 @@ void ChargePoint::handle_unlock_connector(Call<UnlockConnectorRequest> call) {
 void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
     const TriggerMessageRequest& msg = call.msg;
     TriggerMessageResponse response;
+    Evse* pEvse = nullptr;
 
     response.status = TriggerMessageStatusEnum::Rejected;
+
+    if (msg.evse.has_value()) {
+        int32_t evse_id = msg.evse.value().id;
+        if (this->evses.find(evse_id) != this->evses.end()) {
+            pEvse = this->evses.at(evse_id).get();
+        }
+    }
 
     // F06.FR.04: First send the TriggerMessageResponse before sending the requested message
     //            so we split the functionality to be able to determine if we need to respond first.
     switch (msg.requestedMessage) {
     case MessageTriggerEnum::BootNotification:
+        // F06.FR.17: Respond with rejected in case registration status is already accepted
+        if (this->registration_status != RegistrationStatusEnum::Accepted) {
+            response.status = TriggerMessageStatusEnum::Accepted;
+        }
+        break;
+
     case MessageTriggerEnum::Heartbeat:
         response.status = TriggerMessageStatusEnum::Accepted;
         break;
 
     case MessageTriggerEnum::MeterValues:
         if (msg.evse.has_value()) {
-            int32_t evse_id = msg.evse.value().id;
-            if (this->evses.find(evse_id) != this->evses.end()) {
+            if (pEvse != nullptr) {
                 response.status = TriggerMessageStatusEnum::Accepted;
             }
         } else {
@@ -1412,9 +1425,7 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
 
     case MessageTriggerEnum::TransactionEvent:
         if (msg.evse.has_value()) {
-            int32_t evse_id = msg.evse.value().id;
-            if (this->evses.find(evse_id) != this->evses.end() &&
-                this->evses.at(evse_id).get()->has_active_transaction()) {
+            if (pEvse != nullptr && pEvse->has_active_transaction()) {
                 response.status = TriggerMessageStatusEnum::Accepted;
             }
         } else {
@@ -1429,7 +1440,10 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
 
     case MessageTriggerEnum::StatusNotification:
         if (msg.evse.has_value() && msg.evse.value().connectorId.has_value()) {
-            response.status = TriggerMessageStatusEnum::NotImplemented;
+            int32_t connector_id = msg.evse.value().connectorId.value();
+            if (pEvse != nullptr && connector_id > 0 && connector_id <= pEvse->get_number_of_connectors()) {
+                response.status = TriggerMessageStatusEnum::Accepted;
+            }
         } else {
             // F06.FR.12: Reject if evse or connectorId is ommited
         }
@@ -1448,14 +1462,8 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
     }
 
     auto send_evse_message = [&](std::function<void(int32_t evse_id, Evse & evse)> send) {
-        if (msg.evse.has_value()) {
-            int32_t evse_id = msg.evse.value().id;
-            if (this->evses.find(evse_id) == this->evses.end()) {
-                // Should never get here
-                return;
-            }
-            auto& evse = this->evses.at(evse_id);
-            send(evse_id, *evse);
+        if (pEvse != nullptr) {
+            send(msg.evse.value().id, *pEvse);
         } else {
             for (auto const& [evse_id, evse] : this->evses) {
                 send(evse_id, *evse);
@@ -1465,15 +1473,14 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
 
     switch (msg.requestedMessage) {
     case MessageTriggerEnum::BootNotification: {
-        // TODO: F06.FR.17
         auto reason = BootReasonEnum::Triggered;
         boot_notification_req(reason);
     } break;
     case MessageTriggerEnum::MeterValues: {
         auto send_meter_value = [&](int32_t evse_id, Evse& evse) {
-            const auto meter_value = get_latest_meter_value_filtered(
-                evse.get_meter_value(), ReadingContextEnum::Trigger,
-                ControllerComponentVariables::AlignedDataMeasurands);
+            const auto meter_value =
+                get_latest_meter_value_filtered(evse.get_meter_value(), ReadingContextEnum::Trigger,
+                                                ControllerComponentVariables::AlignedDataMeasurands);
 
             this->meter_values_req(evse_id, std::vector<ocpp::v201::MeterValue>(1, meter_value));
         };
@@ -1499,6 +1506,12 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
         };
         send_evse_message(send_transaction);
     } break;
+
+    case MessageTriggerEnum::StatusNotification:
+        if (pEvse != nullptr) {
+            pEvse->trigger_status_notification_callback(msg.evse.value().connectorId.value());
+        }
+        break;
 
     case MessageTriggerEnum::Heartbeat:
         this->heartbeat_req();

@@ -105,6 +105,10 @@ void Evse::trigger_status_notification_callbacks() {
     }
 }
 
+void Evse::trigger_status_notification_callback(const int32_t connector_id) {
+    this->status_notification_callback(connector_id, this->id_connector_map.at(connector_id)->get_state());
+}
+
 void Evse::on_meter_value(const MeterValue& meter_value) {
     std::lock_guard<std::mutex> lk(this->meter_value_mutex);
     this->meter_value = meter_value;

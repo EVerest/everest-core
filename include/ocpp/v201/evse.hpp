@@ -99,6 +99,10 @@ public:
     /// \brief Triggers status notification callback for all connectors of the evse
     void trigger_status_notification_callbacks();
 
+    /// @brief Triggers a status notification callback for connector_id of the evse
+    /// @param connector_id id of the connector of the evse
+    void trigger_status_notification_callback(const int32_t connector_id);
+
     /// \brief Event handler that should be called when a new meter_value for this evse is present
     /// \param meter_value
     void on_meter_value(const MeterValue& meter_value);
