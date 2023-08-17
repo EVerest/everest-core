@@ -33,7 +33,7 @@ jobs:
     name: Check for changes
     outputs:
       changed_files: ${{ steps.changed-files.outputs.changed_files }}
-    runs-on: large-ubuntu-22.04-xxl
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout Dockerfile
       uses: actions/checkout@v3
@@ -53,7 +53,7 @@ jobs:
     name: Build and push
     needs: check
     if: ${{ needs.check.outputs.changed_files > 0 }}
-    runs-on: large-ubuntu-22.04-xxl
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout Dockerfile
       uses: actions/checkout@v3
