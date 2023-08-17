@@ -626,8 +626,8 @@ void ChargePoint::message_callback(const std::string& message) {
 
 MeterValue ChargePoint::get_latest_meter_value_filtered(const MeterValue& meter_value, ReadingContextEnum context,
                                                         const ComponentVariable& component_variable) {
-    auto filtered_meter_value =
-        utils::get_meter_value_with_measurands_applied(meter_value, utils::get_measurands_vec(this->device_model->get_value<std::string>(component_variable)));
+    auto filtered_meter_value = utils::get_meter_value_with_measurands_applied(
+        meter_value, utils::get_measurands_vec(this->device_model->get_value<std::string>(component_variable)));
     for (auto& sampled_value : filtered_meter_value.sampledValue) {
         sampled_value.context = context;
     }
@@ -1448,6 +1448,14 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
             // F06.FR.12: Reject if evse or connectorId is ommited
         }
         break;
+
+    // TODO:
+    // LogStatusNotification
+    // FirmwareStatusNotification
+    // PublishFirmwareStatusNotification
+    // SignChargingStationCertificate
+    // SignV2GCertificate
+    // SignCombinedCertificate
 
     default:
         response.status = TriggerMessageStatusEnum::NotImplemented;
