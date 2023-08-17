@@ -525,6 +525,18 @@ void ChargePoint::message_callback(const std::string& message) {
                 enhanced_message.messageType == MessageType::GetReport or
                 enhanced_message.messageType == MessageType::TriggerMessage) {
                 this->handle_message(json_message, enhanced_message.messageType);
+            } else if (enhanced_message.messageType == MessageType::RequestStartTransaction) {
+                // Send rejected: B02.FR.05
+                RequestStartTransactionResponse response;
+                response.status = RequestStartStopStatusEnum::Rejected;
+                const ocpp::CallResult<RequestStartTransactionResponse> call_result(response, enhanced_message.uniqueId);
+                this->send<RequestStartTransactionResponse>(call_result);
+            } else if (enhanced_message.messageType == MessageType::RequestStopTransaction) {
+                // Send rejected: B02.FR.05
+                RequestStopTransactionResponse response;
+                response.status = RequestStartStopStatusEnum::Rejected;
+                const ocpp::CallResult<RequestStopTransactionResponse> call_result(response, enhanced_message.uniqueId);
+                this->send<RequestStopTransactionResponse>(call_result);
             } else {
                 EVLOG_warning << "Received invalid MessageType: "
                               << conversions::messagetype_to_string(enhanced_message.messageType)
