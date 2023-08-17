@@ -90,6 +90,8 @@ private:
         data_transfer_callbacks;
     std::mutex data_transfer_callbacks_mutex;
 
+    std::map<int32_t, std::pair<IdToken, int32_t>> remote_start_id_per_evse;
+
     // timers
     Everest::SteadyTimer heartbeat_timer;
     Everest::SteadyTimer boot_notification_timer;
@@ -297,7 +299,7 @@ public:
     /// \param signed_meter_value
     void on_transaction_finished(const int32_t evse_id, const DateTime& timestamp, const MeterValue& meter_stop,
                                  const ReasonEnum reason, const std::optional<std::string>& id_token,
-                                 const std::optional<std::string>& signed_meter_value);
+                                 const std::optional<std::string>& signed_meter_value, const ChargingStateEnum charging_state);
 
     /// \brief Event handler that should be called when a session has finished
     /// \param evse_id
