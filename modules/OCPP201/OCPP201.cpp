@@ -438,8 +438,8 @@ void OCPP201::init() {
                     evse_id, 1, session_id, timestamp,
                     ocpp::v201::TriggerReasonEnum::RemoteStart, // FIXME(piet): Use proper reason here
                     meter_value, id_token, std::nullopt, reservation_id, remote_start_id,
-                    ocpp::v201::ChargingStateEnum::Charging);   // FIXME(piet): add proper groupIdToken +
-                                                                // ChargingStateEnum
+                    ocpp::v201::ChargingStateEnum::Charging); // FIXME(piet): add proper groupIdToken +
+                                                              // ChargingStateEnum
                 break;
             }
             case types::evse_manager::SessionEventEnum::TransactionFinished: {
@@ -458,7 +458,8 @@ void OCPP201::init() {
                 const auto id_token = transaction_finished.id_tag;
 
                 this->charge_point->on_transaction_finished(evse_id, timestamp, meter_value, reason, id_token,
-                                                            signed_meter_value);
+                                                            signed_meter_value,
+                                                            ocpp::v201::ChargingStateEnum::EVConnected);
                 break;
             }
             case types::evse_manager::SessionEventEnum::ChargingStarted: {
