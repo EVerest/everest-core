@@ -323,7 +323,7 @@ class ChargePoint201(cp):
         return await self.call(payload)
 
     async def set_network_profile_req(self, **kwargs):
-        payload = call.SetNetworkProfilePayload(self, **kwargs)
+        payload = call.SetNetworkProfilePayload(**kwargs)
         return await self.call(payload)
 
     async def set_variable_monitoring_req(self, **kwargs):
