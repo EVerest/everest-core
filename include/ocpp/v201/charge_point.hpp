@@ -118,6 +118,8 @@ private:
     WebsocketConnectionStatusEnum websocket_connection_status;
     OperationalStatusEnum operational_state;
     FirmwareStatusEnum firmware_status;
+    UploadLogStatusEnum upload_log_status;
+    int32_t upload_log_status_id;
     int network_configuration_priority;
     bool disable_automatic_websocket_reconnects;
 

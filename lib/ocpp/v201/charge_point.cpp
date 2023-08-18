@@ -24,7 +24,8 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
     disable_automatic_websocket_reconnects(false),
     reset_scheduled(false),
     reset_scheduled_evseids{},
-    callbacks(callbacks) {
+    callbacks(callbacks),
+    upload_log_status(UploadLogStatusEnum::Idle) {
     this->device_model = std::make_unique<DeviceModel>(device_model_storage_address);
     this->pki_handler = std::make_shared<ocpp::PkiHandler>(
         certs_path,
@@ -366,6 +367,10 @@ void ChargePoint::on_log_status_notification(UploadLogStatusEnum status, int32_t
     LogStatusNotificationRequest request;
     request.status = status;
     request.requestId = requestId;
+
+    // Store for use by the triggerMessage
+    this->upload_log_status = status;
+    this->upload_log_status_id = requestId;
 
     ocpp::Call<LogStatusNotificationRequest> call(request, this->message_queue->createMessageId());
     this->send<LogStatusNotificationRequest>(call);
@@ -1409,6 +1414,7 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
         }
         break;
 
+    case MessageTriggerEnum::LogStatusNotification:
     case MessageTriggerEnum::Heartbeat:
         response.status = TriggerMessageStatusEnum::Accepted;
         break;
@@ -1450,7 +1456,6 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
         break;
 
     // TODO:
-    // LogStatusNotification
     // FirmwareStatusNotification
     // PublishFirmwareStatusNotification
     // SignChargingStationCertificate
@@ -1523,6 +1528,19 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
     case MessageTriggerEnum::Heartbeat:
         this->heartbeat_req();
         break;
+
+    case MessageTriggerEnum::LogStatusNotification: {
+        LogStatusNotificationRequest request;
+        if (this->upload_log_status == UploadLogStatusEnum::Uploading) {
+            request.status = UploadLogStatusEnum::Uploading;
+            request.requestId = this->upload_log_status_id;
+        } else {
+            request.status = UploadLogStatusEnum::Idle;
+        }
+
+        ocpp::Call<LogStatusNotificationRequest> call(request, this->message_queue->createMessageId());
+        this->send<LogStatusNotificationRequest>(call);
+    } break;
 
     default:
         EVLOG_error << "Sent a TriggerMessageResponse::Accepted while not following up with a message";
