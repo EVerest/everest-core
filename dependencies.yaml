@@ -52,3 +52,7 @@ ext-mbedtls:
   git: https://github.com/EVerest/ext-mbedtls.git
   git_tag: 8b3f26a
   options: ["ENABLE_PROGRAMS OFF", "ENABLE_TESTING OFF"]
+libdevicemodel:
+  git: git@github.com:EVerest/libdevicemodel.git
+  git_tag: main
+
