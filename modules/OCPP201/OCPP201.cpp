@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 #include "OCPP201.hpp"
+#include <device_model_ocpp.hpp>
 
 #include <fmt/core.h>
 #include <fstream>
@@ -527,9 +528,9 @@ void OCPP201::init() {
     }
 
     this->charge_point = std::make_unique<ocpp::v201::ChargePoint>(
-        evse_connector_structure, this->config.DeviceModelDatabasePath, this->ocpp_share_path.string(),
-        this->config.CoreDatabasePath, sql_init_path.string(), this->config.MessageLogPath,
-        std::make_shared<EvseSecurity>(*this->r_security), callbacks);
+        evse_connector_structure, std::make_shared<DeviceModelStorageOcpp>(this->config.DeviceModelDatabasePath),
+        this->ocpp_share_path.string(), this->config.CoreDatabasePath, sql_init_path.string(),
+        this->config.MessageLogPath, std::make_shared<EvseSecurity>(*this->r_security), callbacks);
 
     if (this->config.EnableExternalWebsocketControl) {
         const std::string connect_topic = "everest_api/ocpp/cmd/connect";

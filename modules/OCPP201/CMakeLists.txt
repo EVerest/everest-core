@@ -13,6 +13,7 @@ target_link_libraries(${MODULE_NAME}
     PRIVATE
         everest::ocpp
         everest::ocpp_evse_security
+        everest::device_model
 )
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 
@@ -21,6 +22,7 @@ target_sources(${MODULE_NAME}
         "main/emptyImpl.cpp"
         "auth_validator/auth_token_validatorImpl.cpp"
         "auth_provider/auth_token_providerImpl.cpp"
+        "device_model_ocpp.cpp"
 )
 
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1
