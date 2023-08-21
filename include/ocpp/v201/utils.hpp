@@ -52,6 +52,11 @@ TriggerReasonEnum stop_reason_to_trigger_reason_enum(const ReasonEnum& stop_reas
 /// \return
 std::string sha256(const std::string& str);
 
+/// @brief Return a SHA256 hash generated from a combination of the \p token type and id
+/// @param token the token to generate the hash for
+/// @return A SHA256 hash string
+std::string generate_token_hash(const IdToken& token);
+
 } // namespace utils
 } // namespace v201
 } // namespace ocpp

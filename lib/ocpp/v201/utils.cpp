@@ -149,6 +149,10 @@ std::string sha256(const std::string& str) {
     return ss.str();
 }
 
+std::string generate_token_hash(const IdToken& token) {
+    return sha256(conversions::id_token_enum_to_string(token.type) + token.idToken.get());
+}
+
 } // namespace utils
 } // namespace v201
 } // namespace ocpp

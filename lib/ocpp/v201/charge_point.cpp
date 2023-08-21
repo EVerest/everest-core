@@ -272,13 +272,13 @@ AuthorizeResponse ChargePoint::validate_token(const IdToken id_token, const std:
         return this->authorize_req(id_token, certificate, ocsp_request_data);
     }
 
-    const auto hashed_id_token = utils::sha256(id_token.idToken.get());
+    const auto hashed_id_token = utils::generate_token_hash(id_token);
     const auto cache_entry = this->database_handler->get_auth_cache_entry(hashed_id_token);
 
     if (!cache_entry.has_value()) {
         EVLOG_info << "AuthCache enabled but not entry found: Sending Authorize.req";
         response = this->authorize_req(id_token, certificate, ocsp_request_data);
-        this->database_handler->insert_auth_cache_entry(utils::sha256(id_token.idToken.get()), response.idTokenInfo);
+        this->database_handler->insert_auth_cache_entry(hashed_id_token, response.idTokenInfo);
         return response;
     }
 
@@ -287,7 +287,7 @@ AuthorizeResponse ChargePoint::validate_token(const IdToken id_token, const std:
         EVLOG_info << "Entry found in AuthCache but cacheExpiryDate exceeded: Sending Authorize.req";
         this->database_handler->delete_auth_cache_entry(hashed_id_token);
         response = this->authorize_req(id_token, certificate, ocsp_request_data);
-        this->database_handler->insert_auth_cache_entry(utils::sha256(id_token.idToken.get()), response.idTokenInfo);
+        this->database_handler->insert_auth_cache_entry(hashed_id_token, response.idTokenInfo);
         return response;
     }
 
@@ -299,7 +299,7 @@ AuthorizeResponse ChargePoint::validate_token(const IdToken id_token, const std:
     }
 
     response = this->authorize_req(id_token, certificate, ocsp_request_data);
-    this->database_handler->insert_auth_cache_entry(utils::sha256(id_token.idToken.get()), response.idTokenInfo);
+    this->database_handler->insert_auth_cache_entry(hashed_id_token, response.idTokenInfo);
     return response;
 }
 
@@ -1233,7 +1233,7 @@ void ChargePoint::handle_start_transaction_event_response(CallResult<Transaction
         if (id_token.type != IdTokenEnum::Central and
             this->device_model->get_optional_value<bool>(ControllerComponentVariables::AuthCacheCtrlrEnabled)
                 .value_or(true)) {
-            this->database_handler->insert_auth_cache_entry(utils::sha256(id_token.idToken.get()),
+            this->database_handler->insert_auth_cache_entry(utils::generate_token_hash(id_token),
                                                             msg.idTokenInfo.value());
         }
         if (msg.idTokenInfo.value().status != AuthorizationStatusEnum::Accepted) {
