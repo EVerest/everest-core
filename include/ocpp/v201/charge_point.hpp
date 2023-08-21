@@ -213,7 +213,7 @@ private:
 
     // Functional Block E: Transaction
     void handle_start_transaction_event_response(CallResult<TransactionEventResponse> call_result,
-                                                 const int32_t evse_id, const std::string& id_token);
+                                                 const int32_t evse_id, const IdToken& id_token);
 
     // Function Block F: Remote transaction control
     void handle_unlock_connector(Call<UnlockConnectorRequest> call);

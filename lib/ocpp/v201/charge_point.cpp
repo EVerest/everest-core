@@ -258,7 +258,9 @@ AuthorizeResponse ChargePoint::validate_token(const IdToken id_token, const std:
     AuthorizeResponse response;
     IdTokenInfo id_token_info;
 
-    if (!this->device_model->get_optional_value<bool>(ControllerComponentVariables::AuthCtrlrEnabled).value_or(true)) {
+    // C03.FR.01 && C05.FR.01: We SHALL NOT send an authorize reqeust for IdTokenType Central
+    if (id_token.type == IdTokenEnum::Central or
+        !this->device_model->get_optional_value<bool>(ControllerComponentVariables::AuthCtrlrEnabled).value_or(true)) {
         id_token_info.status = AuthorizationStatusEnum::Accepted;
         response.idTokenInfo = id_token_info;
         return response;
@@ -898,8 +900,7 @@ void ChargePoint::transaction_event_req(const TransactionEventEnum& event_type, 
         auto future = this->send_async<TransactionEventRequest>(call);
         const auto enhanced_message = future.get();
         if (enhanced_message.messageType == MessageType::TransactionEventResponse) {
-            this->handle_start_transaction_event_response(enhanced_message.message, evse.value().id,
-                                                          id_token.value().idToken.get());
+            this->handle_start_transaction_event_response(enhanced_message.message, evse.value().id, id_token.value());
         } else if (enhanced_message.offline) {
             // TODO(piet): offline handling
         }
@@ -1224,13 +1225,16 @@ void ChargePoint::handle_clear_cache_req(Call<ClearCacheRequest> call) {
 }
 
 void ChargePoint::handle_start_transaction_event_response(CallResult<TransactionEventResponse> call_result,
-                                                          const int32_t evse_id, const std::string& id_token) {
+                                                          const int32_t evse_id, const IdToken& id_token) {
     const auto msg = call_result.msg;
     if (msg.idTokenInfo.has_value()) {
+        // C03.FR.0x and C05.FR.01: We SHALL NOT store central information in the Authorization Cache
         // C10.FR.05
-        if (this->device_model->get_optional_value<bool>(ControllerComponentVariables::AuthCacheCtrlrEnabled)
+        if (id_token.type != IdTokenEnum::Central and
+            this->device_model->get_optional_value<bool>(ControllerComponentVariables::AuthCacheCtrlrEnabled)
                 .value_or(true)) {
-            this->database_handler->insert_auth_cache_entry(utils::sha256(id_token), msg.idTokenInfo.value());
+            this->database_handler->insert_auth_cache_entry(utils::sha256(id_token.idToken.get()),
+                                                            msg.idTokenInfo.value());
         }
         if (msg.idTokenInfo.value().status != AuthorizationStatusEnum::Accepted) {
             if (this->device_model->get_value<bool>(ControllerComponentVariables::StopTxOnInvalidId)) {
