@@ -8,7 +8,7 @@ types:
       - resistance_F_Ohm
     properties:
       resistance_F_Ohm:
-        description: Isolation resistance between DC+/DC- and vehicle or enclosure in Ohm
+        description: Isolation resistance between DC+/DC- and protective earth in Ohm
         type: number
       voltage_V:
         description: DC voltage between positive and negative terminal in Volt
