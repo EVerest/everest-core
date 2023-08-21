@@ -135,9 +135,9 @@ types::serial_comm_hub_requests::StatusCodeEnum serial_communication_hubImpl::ha
         uint8_t retry_counter{this->num_resends_on_error};
         while (retry_counter-- > 0) {
 
-            EVLOG_info << fmt::format("Try {} Call modbus_client->write_multiple_registers(id {} addr {} len {})",
-                                      (int)retry_counter, (uint8_t)target_device_id, (uint16_t)first_register_address,
-                                      (uint16_t)data.size());
+            EVLOG_debug << fmt::format("Try {} Call modbus_client->write_multiple_registers(id {} addr {} len {})",
+                                       (int)retry_counter, (uint8_t)target_device_id, (uint16_t)first_register_address,
+                                       (uint16_t)data.size());
 
             response = modbus.txrx(target_device_id, tiny_modbus::FunctionCode::WRITE_MULTIPLE_HOLDING_REGISTERS,
                                    first_register_address, data.size(), true, data);
