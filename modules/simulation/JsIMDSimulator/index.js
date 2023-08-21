@@ -22,7 +22,7 @@ boot_module(async ({
     intervalID = setInterval(() => {
       evlog.debug('Simulated isolation test finished');
       mod.provides.main.publish.IsolationMeasurement({
-        resistance_F_Ohm: config_resistance_F_Ohm
+        resistance_F_Ohm: config_resistance_F_Ohm,
       });
     }, config_interval, mod);
     interval_running = true;
