@@ -481,3 +481,21 @@ You will find the generated doxygen documentation at:
 `build/dist/docs/html/index.html`
 
 The main reference for the integration of libocpp for OCPP1.6 is the ocpp::v16::ChargePoint class defined in libocpp/include/ocpp/v16/charge_point.hpp . 
+
+
+## Unit testing
+
+If you want to run the unit tests in the tests subdirectory: install the needed dependencies.
+For Debian GNU/Linux 11 you can install it like this:
+
+```bash
+sudo apt install libgtest-dev lcov
+python3 -m pip install gcovr
+```
+
+Run the unit tests
+  
+```bash
+  cmake .. -DBUILD_TESTING=ON
+```
+
