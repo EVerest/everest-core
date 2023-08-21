@@ -525,7 +525,8 @@ void ChargePoint::message_callback(const std::string& message) {
                 // Send rejected: B02.FR.05
                 RequestStartTransactionResponse response;
                 response.status = RequestStartStopStatusEnum::Rejected;
-                const ocpp::CallResult<RequestStartTransactionResponse> call_result(response, enhanced_message.uniqueId);
+                const ocpp::CallResult<RequestStartTransactionResponse> call_result(response,
+                                                                                    enhanced_message.uniqueId);
                 this->send<RequestStartTransactionResponse>(call_result);
             } else if (enhanced_message.messageType == MessageType::RequestStopTransaction) {
                 // Send rejected: B02.FR.05
