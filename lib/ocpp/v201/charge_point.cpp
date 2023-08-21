@@ -230,14 +230,10 @@ bool ChargePoint::on_charging_state_changed(const uint32_t evse_id, ChargingStat
             this->evses.at(static_cast<int32_t>(evse_id))->get_transaction();
         if (transaction != nullptr) {
             transaction->chargingState = charging_state;
-            this->transaction_event_req(
-                TransactionEventEnum::Updated, DateTime(),
-                transaction->get_transaction(),
-                TriggerReasonEnum::ChargingStateChanged,
-                transaction->get_seq_no(), std::nullopt,
-                this->evses.at(static_cast<int32_t>(evse_id))->get_evse_info(),
-                std::nullopt, std::nullopt, std::nullopt, std::nullopt,
-                std::nullopt);
+            this->transaction_event_req(TransactionEventEnum::Updated, DateTime(), transaction->get_transaction(),
+                                        TriggerReasonEnum::ChargingStateChanged, transaction->get_seq_no(),
+                                        std::nullopt, this->evses.at(static_cast<int32_t>(evse_id))->get_evse_info(),
+                                        std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt);
             return true;
         } else {
             EVLOG_warning << "Can not change charging state: no transaction for evse id " << evse_id;
@@ -864,27 +860,24 @@ void ChargePoint::transaction_event_req(const TransactionEventEnum& event_type, 
 
     ocpp::Call<TransactionEventRequest> call(req, this->message_queue->createMessageId());
 
-           // Check if id token is in the remote start map, because when a remote
-           // start request is done, the first transaction event request should
-           // always contain trigger reason 'RemoteStart'.
+    // Check if id token is in the remote start map, because when a remote
+    // start request is done, the first transaction event request should
+    // always contain trigger reason 'RemoteStart'.
     auto it = std::find_if(
         remote_start_id_per_evse.begin(), remote_start_id_per_evse.end(),
         [&id_token, &evse](const std::pair<int32_t, std::pair<IdToken, int32_t>>& remote_start_per_evse) {
-            if (id_token.has_value() &&
-                remote_start_per_evse.second.first.idToken == id_token.value().idToken) {
+            if (id_token.has_value() && remote_start_per_evse.second.first.idToken == id_token.value().idToken) {
 
                 if (remote_start_per_evse.first == 0) {
                     return true;
                 }
 
-                if (evse.has_value() &&
-                    evse.value().id == remote_start_per_evse.first) {
+                if (evse.has_value() && evse.value().id == remote_start_per_evse.first) {
                     return true;
                 }
             }
             return false;
-        }
-        );
+        });
 
     if (it != remote_start_id_per_evse.end()) {
         // Found remote start. Set remote start id and the trigger reason.

@@ -1,12 +1,18 @@
 ---
 nlohmann_json:
   git: https://github.com/nlohmann/json
-  git_tag: v3.10.5
+  git_tag: v3.11.2
   options: ["JSON_BuildTests OFF", "JSON_MultipleHeaders ON"]
 nlohmann_json_schema_validator:
   git: https://github.com/pboettch/json-schema-validator
-  git_tag: 2.1.0
-  options: ["BUILD_TESTS OFF", "BUILD_EXAMPLES OFF"]
+  git_tag: 2.2.0
+  options:
+    [
+      "JSON_VALIDATOR_INSTALL OFF",
+      "JSON_VALIDATOR_BUILD_TESTS OFF",
+      "JSON_VALIDATOR_BUILD_EXAMPLES OFF",
+      "JSON_VALIDATOR_BUILD_SHARED_LIBS ON",
+    ]
 liblog:
   git: https://github.com/EVerest/liblog.git
   git_tag: v0.1.0

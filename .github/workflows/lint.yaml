@@ -6,7 +6,7 @@ jobs:
     name: Lint
     strategy:
       matrix:
-        os: [large-ubuntu-22.04-s]
+        os: [ubuntu-22.04]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout libocpp
