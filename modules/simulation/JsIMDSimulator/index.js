@@ -3,8 +3,7 @@
 const { evlog, boot_module } = require('everestjs');
 const { setInterval } = require('timers');
 
-let config_resistance_N_Ohm;
-let config_resistance_P_Ohm;
+let config_resistance_F_Ohm;
 let config_interval;
 let intervalID;
 let interval_running = false;
@@ -12,8 +11,7 @@ let interval_running = false;
 boot_module(async ({
   setup, config,
 }) => {
-  config_resistance_N_Ohm = config.impl.main.resistance_N_Ohm;
-  config_resistance_P_Ohm = config.impl.main.resistance_P_Ohm;
+  config_resistance_F_Ohm = config.impl.main.resistance_F_Ohm;
   config_interval = config.impl.main.interval;
 
   // register commands
@@ -24,8 +22,7 @@ boot_module(async ({
     intervalID = setInterval(() => {
       evlog.debug('Simulated isolation test finished');
       mod.provides.main.publish.IsolationMeasurement({
-        resistance_P_Ohm: config_resistance_P_Ohm,
-        resistance_N_Ohm: config_resistance_N_Ohm,
+        resistance_F_Ohm: config_resistance_F_Ohm,
       });
     }, config_interval, mod);
     interval_running = true;

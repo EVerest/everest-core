@@ -4,14 +4,10 @@ provides:
     interface: isolation_monitor
     description: Main interface for the IMD
     config:
-      resistance_N_Ohm:
+      resistance_F_Ohm:
         description: Resistance to return for the simulated measurements in Ohm
         type: number
         default: 900000
-      resistance_P_Ohm:
-        description: Resistance to return for the simulated measurements in Ohm
-        type: number
-        default: 910000
       interval:
         description: Measurement update interval in milliseconds
         type: integer

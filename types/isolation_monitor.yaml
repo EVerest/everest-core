@@ -5,14 +5,10 @@ types:
     type: object
     additionalProperties: false
     required:
-      - resistance_P_Ohm
-      - resistance_N_Ohm
+      - resistance_F_Ohm
     properties:
-      resistance_P_Ohm:
-        description: Isolation resistance of positive terminal to PE in Ohm
-        type: number
-      resistance_N_Ohm:
-        description: Isolation resistance of negative terminal to PE in Ohm
+      resistance_F_Ohm:
+        description: Isolation resistance between DC+/DC- and protective earth in Ohm
         type: number
       voltage_V:
         description: DC voltage between positive and negative terminal in Volt
