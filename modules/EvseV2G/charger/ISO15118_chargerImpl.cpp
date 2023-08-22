@@ -368,6 +368,8 @@ void ISO15118_chargerImpl::handle_set_Certificate_Service_Supported(bool& status
         memcpy(cert_service.ServiceName.characters, reinterpret_cast<const char*>(service_name.data()),
                service_name.length());
 
+        cert_service.ServiceName.charactersLen = service_name.length();
+
         add_service_to_service_list(v2g_ctx, cert_service, cert_parameter_set_id,
                                     sizeof(cert_parameter_set_id) / sizeof(cert_parameter_set_id[0]));
     }
