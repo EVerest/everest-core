@@ -18,6 +18,7 @@
 #include <everest/timer.hpp>
 
 #include <ocpp/common/call_types.hpp>
+#include <ocpp/common/database_handler_base.hpp>
 #include <ocpp/common/types.hpp>
 #include <ocpp/v16/types.hpp>
 #include <ocpp/v201/types.hpp>
@@ -56,7 +57,7 @@ template <typename M> struct ControlMessage {
 
     /// \brief Provides the unique message ID stored in the message
     /// \returns the unique ID of the contained message
-    MessageId uniqueId() {
+    MessageId uniqueId() const {
         return this->message[MESSAGE_ID];
     }
 };
@@ -64,14 +65,15 @@ template <typename M> struct ControlMessage {
 /// \brief contains a message queue that makes sure that OCPPs synchronicity requirements are met
 template <typename M> class MessageQueue {
 private:
+    std::shared_ptr<ocpp::common::DatabaseHandlerBase> database_handler;
     int transaction_message_attempts;
     int transaction_message_retry_interval; // seconds
     std::thread worker_thread;
     /// message deque for transaction related messages
-    std::deque<ControlMessage<M>*> transaction_message_queue;
+    std::deque<std::shared_ptr<ControlMessage<M>>> transaction_message_queue;
     /// message queue for non-transaction related messages
-    std::queue<ControlMessage<M>*> normal_message_queue;
-    ControlMessage<M>* in_flight;
+    std::queue<std::shared_ptr<ControlMessage<M>>> normal_message_queue;
+    std::shared_ptr<ControlMessage<M>> in_flight;
     std::mutex message_mutex;
     std::condition_variable cv;
     std::function<bool(json message)> send_callback;
@@ -121,9 +123,9 @@ private:
         return false;
     }
 
-    bool isTransactionMessage(ControlMessage<M>* message);
+    bool isTransactionMessage(const std::shared_ptr<ControlMessage<M>> message) const;
 
-    void add_to_normal_message_queue(ControlMessage<M>* message) {
+    void add_to_normal_message_queue(std::shared_ptr<ControlMessage<M>> message) {
         EVLOG_debug << "Adding message to normal message queue";
         {
             std::lock_guard<std::mutex> lk(this->message_mutex);
@@ -133,11 +135,15 @@ private:
         this->cv.notify_all();
         EVLOG_debug << "Notified message queue worker";
     }
-    void add_to_transaction_message_queue(ControlMessage<M>* message) {
+    void add_to_transaction_message_queue(std::shared_ptr<ControlMessage<M>> message) {
         EVLOG_debug << "Adding message to transaction message queue";
         {
             std::lock_guard<std::mutex> lk(this->message_mutex);
             this->transaction_message_queue.push_back(message);
+            ocpp::common::DBTransactionMessage db_message{message->message, messagetype_to_string(message->messageType),
+                                                          message->message_attempts, message->timestamp,
+                                                          message->uniqueId()};
+            this->database_handler->insert_transaction_message(db_message);
             this->new_message = true;
         }
         this->cv.notify_all();
@@ -147,7 +153,9 @@ private:
 public:
     /// \brief Creates a new MessageQueue object with the provided \p configuration and \p send_callback
     MessageQueue(const std::function<bool(json message)>& send_callback, const int transaction_message_attempts,
-                 const int transaction_message_retry_interval, const std::vector<M>& external_notify) :
+                 const int transaction_message_retry_interval, const std::vector<M>& external_notify,
+                 std::shared_ptr<common::DatabaseHandlerBase> database_handler) :
+        database_handler(database_handler),
         transaction_message_attempts(transaction_message_attempts),
         transaction_message_retry_interval(transaction_message_retry_interval),
         external_notify(external_notify),
@@ -155,6 +163,7 @@ public:
         running(true),
         new_message(false),
         uuid_generator(boost::uuids::random_generator()) {
+
         this->send_callback = send_callback;
         this->in_flight = nullptr;
         this->worker_thread = std::thread([this]() {
@@ -190,7 +199,7 @@ public:
 
                 // prioritize the message with the oldest timestamp
                 auto now = DateTime();
-                ControlMessage<M>* message = nullptr;
+                std::shared_ptr<ControlMessage<M>> message = nullptr;
                 QueueType queue_type = QueueType::None;
 
                 if (!this->normal_message_queue.empty()) {
@@ -289,12 +298,33 @@ public:
     }
 
     MessageQueue(const std::function<bool(json message)>& send_callback, const int transaction_message_attempts,
-                 const int transaction_message_retry_interval) :
-        MessageQueue(send_callback, transaction_message_attempts, transaction_message_retry_interval, {}){};
+                 const int transaction_message_retry_interval,
+                 std::shared_ptr<common::DatabaseHandlerBase> databaseHandler) :
+        MessageQueue(send_callback, transaction_message_attempts, transaction_message_retry_interval, {},
+                     databaseHandler) {
+    }
+
+    void get_transaction_messages_from_db() {
+        std::vector<ocpp::common::DBTransactionMessage> transaction_messages =
+            database_handler->get_transaction_messages();
+
+        if (!transaction_messages.empty()) {
+            for (auto& transaction_message : transaction_messages) {
+                std::shared_ptr<ControlMessage<M>> message =
+                    std::make_shared<ControlMessage<M>>(transaction_message.json_message);
+                message->messageType = string_to_messagetype(transaction_message.message_type);
+                message->timestamp = transaction_message.timestamp;
+                message->message_attempts = transaction_message.message_attempts;
+                transaction_message_queue.push_back(message);
+            }
+
+            this->new_message = true;
+        }
+    }
 
     /// \brief pushes a new \p call message onto the message queue
     template <class T> void push(Call<T> call) {
-        auto* message = new ControlMessage<M>(call);
+        auto message = std::make_shared<ControlMessage<M>>(call);
         if (this->isTransactionMessage(message)) {
             // according to the spec the "transaction related messages" StartTransaction, StopTransaction and
             // MeterValues have to be delivered in chronological order
@@ -315,7 +345,7 @@ public:
     /// \brief pushes a new \p call message onto the message queue
     /// \returns a future from which the CallResult can be extracted
     template <class T> std::future<EnhancedMessage<M>> push_async(Call<T> call) {
-        auto* message = new ControlMessage<M>(call);
+        auto message = std::make_shared<ControlMessage<M>>(call);
         if (this->isTransactionMessage(message)) {
             // according to the spec the "transaction related messages" StartTransaction, StopTransaction and
             // MeterValues have to be delivered in chronological order
@@ -398,6 +428,13 @@ public:
             enhanced_message.messageType = this->string_to_messagetype(
                 this->in_flight->message.at(CALL_ACTION).template get<std::string>() + std::string("Response"));
             this->in_flight->promise.set_value(enhanced_message);
+
+            if (isTransactionMessage(this->in_flight)) {
+                // We only remove the message as soon as a response is received. Otherwise we might miss a message if
+                // the charging station just boots after sending, but before receiving the result.
+                this->database_handler->remove_transaction_message(this->in_flight->uniqueId());
+            }
+
             this->reset_in_flight();
 
             // we want the start transaction response handler to be executed before the next message will be
@@ -557,6 +594,7 @@ public:
     }
 
     M string_to_messagetype(const std::string& s);
+    std::string messagetype_to_string(M m);
 };
 
 } // namespace ocpp

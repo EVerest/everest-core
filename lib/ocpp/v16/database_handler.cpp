@@ -9,7 +9,8 @@ namespace ocpp {
 namespace v16 {
 
 DatabaseHandler::DatabaseHandler(const std::string& chargepoint_id, const std::filesystem::path& database_path,
-                                 const std::filesystem::path& init_script_path) {
+                                 const std::filesystem::path& init_script_path) :
+    ocpp::common::DatabaseHandlerBase() {
     const auto sqlite_db_filename = chargepoint_id + ".db";
     if (!std::filesystem::exists(database_path)) {
         std::filesystem::create_directories(database_path);

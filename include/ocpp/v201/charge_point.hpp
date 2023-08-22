@@ -2,6 +2,7 @@
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
 #include <future>
+#include <set>
 
 #include <ocpp/common/charging_station_base.hpp>
 
@@ -42,11 +43,25 @@ namespace ocpp {
 namespace v201 {
 
 struct Callbacks {
-    std::function<bool(const ResetEnum& reset_type)> is_reset_allowed_callback;
-    std::function<void(const ResetEnum& reset_type)> reset_callback;
+    ///
+    /// \brief Callback if reset is allowed. If evse_id has a value, reset only applies to the given evse id. If it has
+    ///        no value, applies to complete charging station.
+    ///
+    std::function<bool(const std::optional<const int32_t> evse_id, const ResetEnum& reset_type)>
+        is_reset_allowed_callback;
+    std::function<void(const std::optional<const int32_t> evse_id, const ResetEnum& reset_type)> reset_callback;
     std::function<void(const int32_t evse_id, const ReasonEnum& stop_reason)> stop_transaction_callback;
     std::function<void(const int32_t evse_id)> pause_charging_callback;
-    std::function<void(const ChangeAvailabilityRequest& request)> change_availability_callback;
+    ///
+    /// \brief Change availability of charging station / evse / connector.
+    /// \param request The request.
+    /// \param persist True to persist the status after reboot.
+    ///
+    /// Persist is set to 'false' if the status does not need to be stored after restarting. Otherwise it is true.
+    /// False is for example during a reset OnIdle where first an 'unavailable' is sent until the charging session
+    /// stopped. True is for example when the CSMS sent an 'inoperative' request.
+    ///
+    std::function<void(const ChangeAvailabilityRequest& request, const bool persist)> change_availability_callback;
     std::function<GetLogResponse(const GetLogRequest& request)> get_log_request_callback;
     std::function<UnlockConnectorResponse(const int32_t evse_id, const int32_t connecor_id)> unlock_connector_callback;
     // callback to be called when the request can be accepted. authorize_remote_start indicates if Authorize.req needs
@@ -82,7 +97,7 @@ private:
     // utility
     std::unique_ptr<MessageQueue<v201::MessageType>> message_queue;
     std::unique_ptr<DeviceModel> device_model;
-    std::unique_ptr<DatabaseHandler> database_handler;
+    std::shared_ptr<DatabaseHandler> database_handler;
 
     std::map<int32_t, ChangeAvailabilityRequest> scheduled_change_availability_requests;
 
@@ -105,6 +120,11 @@ private:
     FirmwareStatusEnum firmware_status;
     int network_configuration_priority;
     bool disable_automatic_websocket_reconnects;
+
+    /// \brief Used when an 'OnIdle' reset is requested, to perform the reset after the charging has stopped.
+    bool reset_scheduled;
+    /// \brief If `reset_scheduled` is true and the reset is for a specific evse id, it will be stored in this member.
+    std::set<int32_t> reset_scheduled_evseids;
 
     // callback struct
     Callbacks callbacks;
@@ -164,6 +184,14 @@ private:
     /// \return True if at least one connector is not faulted or unavailable.
     ///
     bool is_evse_connector_available(const std::unique_ptr<Evse>& evse) const;
+
+    ///
+    /// \brief Set all connectors of a given evse to unavailable.
+    /// \param evse The evse.
+    /// \param persist  True if unavailability should persist. If it is set to false, there will be a check per
+    ///                 connector if it was already set to true and if that is the case, it will be persisted anyway.
+    ///
+    void set_evse_connectors_unavailable(const std::unique_ptr<Evse>& evse, bool persist);
 
     /* OCPP message requests */
 
@@ -245,7 +273,8 @@ public:
                 const std::string& message_log_path, const std::string& certs_path, const Callbacks& callbacks);
 
     /// \brief Starts the ChargePoint, initializes and connects to the Websocket endpoint
-    void start();
+    /// \param bootreason   Optional bootreason (default: PowerUp).
+    void start(BootReasonEnum bootreason = BootReasonEnum::PowerUp);
 
     /// \brief Starts the websocket
     void start_websocket();
@@ -264,7 +293,7 @@ public:
     /// \param request_id   The request_id. When it is -1, it will not be included in the request.
     /// \param firmware_update_status The firmware_update_status should be convertable to the
     ///        ocpp::v201::FirmwareStatusEnum.
-    void on_firmware_update_status_notification(int32_t request_id, std::string& firmware_update_status);
+    void on_firmware_update_status_notification(int32_t request_id, const std::string& firmware_update_status);
 
     /// \brief Event handler that should be called when a session has started
     /// \param evse_id

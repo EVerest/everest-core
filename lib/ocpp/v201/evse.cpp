@@ -33,8 +33,8 @@ EVSE Evse::get_evse_info() {
     return evse;
 }
 
-int32_t Evse::get_number_of_connectors() {
-    return this->id_connector_map.size();
+uint32_t Evse::get_number_of_connectors() {
+    return static_cast<uint32_t>(this->id_connector_map.size());
 }
 
 Everest::SteadyTimer& Evse::get_sampled_meter_values_timer() {

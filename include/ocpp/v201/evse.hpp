@@ -47,7 +47,7 @@ public:
 
     /// \brief Returns the number of connectors of this EVSE
     /// \return
-    int32_t get_number_of_connectors();
+    uint32_t get_number_of_connectors();
 
     /// \brief Returns a reference to the sampled meter values timer
     /// \return

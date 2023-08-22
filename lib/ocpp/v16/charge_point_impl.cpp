@@ -47,7 +47,7 @@ ChargePointImpl::ChargePointImpl(const std::string& config, const std::filesyste
     this->message_queue = std::make_unique<ocpp::MessageQueue<v16::MessageType>>(
         [this](json message) -> bool { return this->websocket->send(message.dump()); },
         this->configuration->getTransactionMessageAttempts(), this->configuration->getTransactionMessageRetryInterval(),
-        this->external_notify);
+        this->external_notify, this->database_handler);
     auto log_formats = this->configuration->getLogMessagesFormat();
     bool log_to_console = std::find(log_formats.begin(), log_formats.end(), "console") != log_formats.end();
     bool detailed_log_to_console =
@@ -711,7 +711,7 @@ bool ChargePointImpl::restart() {
         this->message_queue = std::make_unique<ocpp::MessageQueue<v16::MessageType>>(
             [this](json message) -> bool { return this->websocket->send(message.dump()); },
             this->configuration->getTransactionMessageAttempts(),
-            this->configuration->getTransactionMessageRetryInterval(), this->external_notify);
+            this->configuration->getTransactionMessageRetryInterval(), this->external_notify, this->database_handler);
         this->initialized = true;
         return this->start();
     } else {
@@ -1982,7 +1982,7 @@ void ChargePointImpl::update_ocsp_cache() {
         } else {
             EVLOG_info << "OCSP Cache is up-to-date enough";
         }
-    } catch (std::exception& e) {
+    } catch (const std::exception& e) {
         EVLOG_error << "Error while requesting OCSP Response for CSO CAs";
     }
 }
@@ -2045,7 +2045,7 @@ void ChargePointImpl::handleGetInstalledCertificateIdsRequest(ocpp::Call<GetInst
         // convert ocpp::CertificateHashData to v16::CertificateHashData
         std::optional<std::vector<CertificateHashDataType>> certificate_hash_data_16_vec_opt;
         std::vector<CertificateHashDataType> certificate_hash_data_16_vec;
-        for (const auto certificate_hash_data_chain_entry : certificate_hash_data_chain.value()) {
+        for (const auto& certificate_hash_data_chain_entry : certificate_hash_data_chain.value()) {
             certificate_hash_data_16_vec.push_back(
                 CertificateHashDataType(json(certificate_hash_data_chain_entry.certificateHashData)));
         }
@@ -2744,7 +2744,7 @@ void ChargePointImpl::handle_data_transfer_pnc_get_installed_certificates(Call<D
             if (certificate_hash_data_chain_opt.has_value()) {
                 std::optional<std::vector<ocpp::v201::CertificateHashDataChain>> certificate_hash_data_chain_v201_opt;
                 std::vector<ocpp::v201::CertificateHashDataChain> certificate_hash_data_chain_v201;
-                for (const auto certificate_hash_data_chain_entry : certificate_hash_data_chain_opt.value()) {
+                for (const auto& certificate_hash_data_chain_entry : certificate_hash_data_chain_opt.value()) {
                     certificate_hash_data_chain_v201.push_back(json(certificate_hash_data_chain_entry));
                 }
                 certificate_hash_data_chain_v201_opt.emplace(certificate_hash_data_chain_v201);

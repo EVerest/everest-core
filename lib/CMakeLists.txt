@@ -5,6 +5,7 @@ target_sources(ocpp
     PRIVATE
         ocpp/common/call_types.cpp
         ocpp/common/charging_station_base.cpp
+        ocpp/common/database_handler_base.cpp
         ocpp/common/message_queue.cpp
         ocpp/common/ocpp_logging.cpp
         ocpp/common/pki_handler.cpp

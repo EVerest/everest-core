@@ -4,10 +4,12 @@
 #define OCPP_V201_DATABASE_HANDLER_HPP
 
 #include "sqlite3.h"
+#include <deque>
 #include <filesystem>
 #include <fstream>
 #include <memory>
 
+#include <ocpp/common/database_handler_base.hpp>
 #include <ocpp/v201/ocpp_types.hpp>
 
 #include <everest/logging.hpp>
@@ -17,10 +19,9 @@ namespace fs = std::filesystem;
 namespace ocpp {
 namespace v201 {
 
-class DatabaseHandler {
+class DatabaseHandler : public ocpp::common::DatabaseHandlerBase {
 
 private:
-    sqlite3* db;
     fs::path database_file_path;
     fs::path sql_init_path;
 

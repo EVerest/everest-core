@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
+#include <ocpp/common/message_queue.hpp>
 #include <ocpp/v201/database_handler.hpp>
+#include <ocpp/v201/types.hpp>
 
 namespace fs = std::filesystem;
 
@@ -9,7 +11,7 @@ namespace ocpp {
 namespace v201 {
 
 DatabaseHandler::DatabaseHandler(const fs::path& database_path, const fs::path& sql_init_path) :
-    sql_init_path(sql_init_path) {
+    ocpp::common::DatabaseHandlerBase(), sql_init_path(sql_init_path) {
     if (!fs::exists(database_path)) {
         fs::create_directories(database_path);
     }

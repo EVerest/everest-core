@@ -19,7 +19,9 @@ template <> ControlMessage<v201::MessageType>::ControlMessage(json message) {
     this->message_attempts = 0;
 }
 
-template <> bool MessageQueue<v16::MessageType>::isTransactionMessage(ControlMessage<v16::MessageType>* message) {
+template <>
+bool MessageQueue<v16::MessageType>::isTransactionMessage(
+    const std::shared_ptr<ControlMessage<v16::MessageType>> message) const {
     if (message == nullptr) {
         return false;
     }
@@ -31,7 +33,9 @@ template <> bool MessageQueue<v16::MessageType>::isTransactionMessage(ControlMes
     return false;
 }
 
-template <> bool MessageQueue<v201::MessageType>::isTransactionMessage(ControlMessage<v201::MessageType>* message) {
+template <>
+bool MessageQueue<v201::MessageType>::isTransactionMessage(
+    const std::shared_ptr<ControlMessage<v201::MessageType>> message) const {
     if (message == nullptr) {
         return false;
     }
@@ -47,6 +51,14 @@ template <> v16::MessageType MessageQueue<v16::MessageType>::string_to_messagety
 
 template <> v201::MessageType MessageQueue<v201::MessageType>::string_to_messagetype(const std::string& s) {
     return v201::conversions::string_to_messagetype(s);
+}
+
+template <> std::string MessageQueue<v16::MessageType>::messagetype_to_string(v16::MessageType m) {
+    return v16::conversions::messagetype_to_string(m);
+}
+
+template <> std::string MessageQueue<v201::MessageType>::messagetype_to_string(const v201::MessageType m) {
+    return v201::conversions::messagetype_to_string(m);
 }
 
 } // namespace ocpp
