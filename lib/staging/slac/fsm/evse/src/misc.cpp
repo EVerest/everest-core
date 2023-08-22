@@ -13,6 +13,14 @@ std::string format_mac_addr(const uint8_t* mac) {
     return string_buffer;
 }
 
+std::string format_nmk(const uint8_t* nmk) {
+    char string_buffer[slac::defs::NMK_LEN * 3];
+    for (int i = 0; i < slac::defs::NMK_LEN; i++) {
+        snprintf(string_buffer + (i * 3), sizeof(string_buffer) - (i * 3), "%02X:", nmk[i]);
+    }
+    return string_buffer;
+}
+
 std::string format_run_id(const uint8_t* run_id) {
     char string_buffer[2 * slac::defs::RUN_ID_LEN + 1];
     snprintf(string_buffer, sizeof(string_buffer), "%02X%02X%02X%02X%02X%02X%02X%02X", run_id[0], run_id[1], run_id[2],
