@@ -6,8 +6,7 @@
 #include "command_api.hpp"
 #include "ipc.hpp"
 
-enum class RPCRequestErrorCode
-{
+enum class RPCRequestErrorCode {
     ParseError = -32700,
     InvalidRequest = -32600,
     MethodNotFound = -32601,

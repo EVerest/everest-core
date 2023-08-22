@@ -2,8 +2,8 @@
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include "command_api.hpp"
 
-#include <fstream>
 #include <filesystem>
+#include <fstream>
 
 #include <fmt/core.h>
 
@@ -12,11 +12,11 @@
 
 #include "rpc.hpp"
 
+#include <utils/formatter.hpp>
 #include <utils/yaml_loader.hpp>
 
 using json = nlohmann::json;
 namespace fs = std::filesystem;
-
 
 static void clear_quote_flags(ryml::NodeRef& root) {
     if (root.has_val() && root.val().is_number()) {

@@ -3,12 +3,13 @@
 #ifndef UTILS_TYPES_HPP
 #define UTILS_TYPES_HPP
 
-#include <map>
-#include <string>
-#include <vector>
 #include <filesystem>
+#include <fmt/core.h>
+#include <map>
 #include <optional>
+#include <string>
 #include <variant>
+#include <vector>
 
 #include <nlohmann/json.hpp>
 

@@ -10,8 +10,7 @@
 namespace Everest {
 namespace controller_ipc {
 
-enum class MESSAGE_RETURN_STATUS
-{
+enum class MESSAGE_RETURN_STATUS {
     OK,
     ERROR,
     TIMEOUT,
@@ -30,7 +29,7 @@ void set_read_timeout(int fd, int timeout_in_ms);
 void send_message(int fd, const nlohmann::json& msg);
 Message receive_message(int fd);
 
-} // namespace controller
-} // namespace everest
+} // namespace controller_ipc
+} // namespace Everest
 
 #endif // CONTROLLER_IPC_HPP

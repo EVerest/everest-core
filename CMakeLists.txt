@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 
 project(everest-framework
-    VERSION 0.6.0
+    VERSION 0.6.1
     DESCRIPTION "The open operating system for e-mobility charging stations"
 	LANGUAGES CXX C
 )
@@ -48,6 +48,7 @@ if(NOT DISABLE_EDM)
         target_compile_options(websockets_shared PRIVATE -Wno-error=enum-int-mismatch)
     endif()
 
+    set_property(TARGET nlohmann_json_schema_validator PROPERTY POSITION_INDEPENDENT_CODE ON)
     # FIXME (aw): pboetch json validator doesn't want to install itself :(
     install(TARGETS nlohmann_json_schema_validator
         EXPORT nlohmann_json_schema_validatorTargets
@@ -135,6 +136,9 @@ endif ()
 # testing
 # FIXME (aw): move testing logic into tests/CMakeLists.txt
 if(BUILD_TESTING)
+    if(NOT DISABLE_EDM)
+        list(APPEND CMAKE_MODULE_PATH ${CPM_PACKAGE_catch2_SOURCE_DIR}/extras)
+    endif()
     include(CTest)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
 

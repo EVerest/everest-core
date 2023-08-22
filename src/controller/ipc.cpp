@@ -8,7 +8,7 @@
 #include <unistd.h>
 
 // FIXME (aw): this needs be done better!
-static char raw_message_buffer[16*1024];
+static char raw_message_buffer[16 * 1024];
 
 namespace Everest {
 namespace controller_ipc {
@@ -47,5 +47,5 @@ Message receive_message(int fd) {
     return {MESSAGE_RETURN_STATUS::OK, nlohmann::json::from_bson(raw_message_buffer, raw_message_buffer + msg_size)};
 }
 
-} // namespace controller
-} // namespace everest
+} // namespace controller_ipc
+} // namespace Everest

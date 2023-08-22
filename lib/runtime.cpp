@@ -356,9 +356,9 @@ int ModuleLoader::initialize() {
         }
         Logging::update_process_name(module_identifier);
 
-        auto everest = Everest(this->module_id, config, rs->validate_schema, rs->mqtt_broker_host,
-                                        rs->mqtt_broker_port, rs->mqtt_everest_prefix, rs->mqtt_external_prefix,
-                                        rs->telemetry_prefix, rs->telemetry_enabled);
+        auto everest =
+            Everest(this->module_id, config, rs->validate_schema, rs->mqtt_broker_host, rs->mqtt_broker_port,
+                    rs->mqtt_everest_prefix, rs->mqtt_external_prefix, rs->telemetry_prefix, rs->telemetry_enabled);
 
         // module import
         EVLOG_debug << fmt::format("Initializing module {}...", module_identifier);

@@ -90,8 +90,6 @@ struct BootException : public std::runtime_error {
     using std::runtime_error::runtime_error;
 };
 
-
-
 struct RuntimeSettings {
     fs::path prefix;
     fs::path etc_dir;

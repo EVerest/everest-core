@@ -11,6 +11,7 @@
 #include <everest/logging.hpp>
 
 #include <utils/config.hpp>
+#include <utils/formatter.hpp>
 #include <utils/yaml_loader.hpp>
 
 namespace Everest {
@@ -145,7 +146,7 @@ Config::Config(std::string schemas_dir, std::string config_file, std::string mod
             EVLOG_verbose << "No user-config provided.";
         }
 
-        json_validator validator(Config::loader);
+        json_validator validator(Config::loader, Config::format_checker);
         validator.set_root_schema(this->_schemas.config);
         auto patch = validator.validate(complete_config);
         if (!patch.is_null()) {
@@ -510,7 +511,7 @@ json Config::load_schema(const fs::path& path) {
 
     json schema = load_yaml(path);
 
-    json_validator validator(Config::loader);
+    json_validator validator(Config::loader, Config::format_checker);
 
     try {
         validator.set_root_schema(schema);

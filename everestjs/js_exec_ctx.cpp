@@ -4,7 +4,7 @@
 #include "utils.hpp"
 
 void JsExecCtx::tramp(Napi::Env env, Napi::Function callback, std::nullptr_t* context, JsExecCtx* this_) {
-    (void) context; // this is unused in this callback
+    (void)context; // this is unused in this callback
 
     try {
         std::vector<napi_value> args{this_->result_handler_ref.Value()};

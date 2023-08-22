@@ -10,8 +10,38 @@
 
 #include <everest/logging.hpp>
 
-static nlohmann::ordered_json ryml_to_nlohmann_json(const c4::yml::NodeRef& ryml_node) {
-    if (ryml_node.is_map()) {
+static void yaml_error_handler(const char* msg, size_t len, ryml::Location loc, void*) {
+    std::stringstream error_msg;
+    error_msg << "YAML parsing error: ";
+
+    if (loc) {
+        if (not loc.name.empty()) {
+            error_msg.write(loc.name.str, loc.name.len);
+            error_msg << ":";
+        }
+        error_msg << loc.line << ":";
+        if (loc.col) {
+            error_msg << loc.col << ":";
+        }
+        if (loc.offset) {
+            error_msg << " (" << loc.offset << "B):";
+        }
+    }
+    error_msg.write(msg, len);
+
+    throw std::runtime_error(error_msg.str());
+}
+
+struct RymlCallbackInitializer {
+    RymlCallbackInitializer() {
+        ryml::set_callbacks({nullptr, nullptr, nullptr, yaml_error_handler});
+    }
+};
+
+static nlohmann::ordered_json ryml_to_nlohmann_json(const c4::yml::ConstNodeRef& ryml_node) {
+    if (ryml_node.empty()) {
+        return nullptr;
+    } else if (ryml_node.is_map()) {
         // handle object
         auto object = nlohmann::ordered_json::object();
         for (const auto& child : ryml_node) {
@@ -82,6 +112,9 @@ static std::string load_yaml_content(std::filesystem::path path) {
 namespace Everest {
 
 nlohmann::ordered_json load_yaml(const std::filesystem::path& path) {
+    // FIXME (aw): using the static here this isn't a perfect solution
+    static RymlCallbackInitializer ryml_callback_initializer;
+
     const auto content = load_yaml_content(path);
     // FIXME (aw): using parse_in_place would be faster but that will need the file as a whole char buffer
     const auto tree = ryml::parse_in_arena(ryml::to_csubstr(content));

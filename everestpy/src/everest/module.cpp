@@ -21,7 +21,8 @@ static std::string get_ev_module_from_env() {
     return module_id;
 }
 
-Module::Module(const RuntimeSession& session) : Module(get_ev_module_from_env(), session){};
+Module::Module(const RuntimeSession& session) : Module(get_ev_module_from_env(), session) {
+}
 
 Module::Module(const std::string& module_id_, const RuntimeSession& session_) :
     module_id(module_id_), session(session_), handle(create_everest_instance(module_id, session)) {

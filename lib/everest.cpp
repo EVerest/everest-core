@@ -16,6 +16,7 @@
 #include <framework/everest.hpp>
 #include <utils/conversions.hpp>
 #include <utils/date.hpp>
+#include <utils/formatter.hpp>
 
 namespace Everest {
 const auto remote_cmd_res_timeout_seconds = 300;

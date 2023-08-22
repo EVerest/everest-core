@@ -33,7 +33,7 @@ properties:
     type: string
     minLength: 2
   capabilities:
-    description: linux capabilities this module should have (whitelist)
+    description: linux capabilities this module should have (allowlist)
     type: array
     minItems: 0
     items:

@@ -3,13 +3,12 @@
 #ifndef CONTROLLER_SERVER_HPP
 #define CONTROLLER_SERVER_HPP
 
-#include <memory>
 #include <functional>
+#include <memory>
 
 #include <nlohmann/json.hpp>
 
 #include "command_api.hpp"
-
 
 class Server {
 public:
