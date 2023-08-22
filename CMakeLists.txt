@@ -49,10 +49,6 @@ if(NOT DISABLE_EDM)
     endif()
 
     set_property(TARGET nlohmann_json_schema_validator PROPERTY POSITION_INDEPENDENT_CODE ON)
-    # FIXME (aw): pboetch json validator doesn't want to install itself :(
-    install(TARGETS nlohmann_json_schema_validator
-        EXPORT nlohmann_json_schema_validatorTargets
-    )
 
     # FIXME (aw): add catch2's cmake folder
     list(APPEND CMAKE_MODULE_PATH "${Catch2_SOURCE_DIR}/contrib")
