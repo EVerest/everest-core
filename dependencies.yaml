@@ -1,7 +1,7 @@
 ---
 ryml:
   git: https://github.com/biojppm/rapidyaml
-  git_tag: v0.5.0
+  git_tag: v0.4.1
   options: ["CMAKE_POSITION_INDEPENDENT_CODE ON"]
 libwebsockets:
   git: https://github.com/warmcat/libwebsockets.git
