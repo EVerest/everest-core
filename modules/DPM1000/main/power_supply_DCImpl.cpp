@@ -7,6 +7,7 @@
 #include "can_broker.hpp"
 
 #include <fmt/core.h>
+#include <utils/formatter.hpp>
 
 std::unique_ptr<CanBroker> can_broker;
 

@@ -10,6 +10,7 @@
 #include <fmt/core.h>
 #include <string>
 #include <utils/date.hpp>
+#include <utils/formatter.hpp>
 
 namespace module {
 namespace energy_grid {
