@@ -14,6 +14,7 @@
 #include <fcntl.h>
 #include <iostream>
 #include <string>
+#include <type_traits>
 #include <unistd.h>
 
 #include <sys/ioctl.h>
@@ -96,8 +97,8 @@ static std::vector<uint16_t> decode_reply(const uint8_t* buf, int len, uint8_t e
     }
 
     if (function != function_code_recvd) {
-        EVLOG_error << fmt::format("Function code mismatch: expected: {} received: {}", static_cast<uint8_t>(function),
-                                   function_code_recvd);
+        EVLOG_error << fmt::format("Function code mismatch: expected: {} received: {}",
+                                   static_cast<std::underlying_type_t<FunctionCode>>(function), function_code_recvd);
         return result;
     }
 
