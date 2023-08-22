@@ -50,6 +50,8 @@ FSMSimpleState::CallbackReturnType ResetState::callback() {
     if (setup_has_been_send == false) {
         auto set_key_req = create_cm_set_key_req(cfg.session_nmk);
 
+        ctx.log_info("New NMK key: " + format_nmk(cfg.session_nmk));
+
         ctx.send_slac_message(cfg.plc_peer_mac, set_key_req);
 
         setup_has_been_send = true;
