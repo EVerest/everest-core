@@ -13,10 +13,10 @@ find_package(OpenSSL REQUIRED)
 
 target_link_libraries(${MODULE_NAME}
     PRIVATE
+        everest::device_model
         everest::ocpp
         OpenSSL::SSL
         OpenSSL::Crypto
-        device_model
 )
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 
