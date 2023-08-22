@@ -286,7 +286,8 @@ void OCPP201::init() {
     }
 
     ocpp::v201::Callbacks callbacks;
-    callbacks.is_reset_allowed_callback = [this](const ocpp::v201::ResetEnum& type) {
+    callbacks.is_reset_allowed_callback = [this](const std::optional<const int32_t> evse_id, const ocpp::v201::ResetEnum& type) {
+        // FIXME: use evse_id!
         try {
             const auto reset_type =
                 types::system::string_to_reset_type(ocpp::v201::conversions::reset_enum_to_string(type));
@@ -297,7 +298,8 @@ void OCPP201::init() {
             return false;
         }
     };
-    callbacks.reset_callback = [this](const ocpp::v201::ResetEnum& type) {
+    callbacks.reset_callback = [this](const std::optional<const int32_t> evse_id, const ocpp::v201::ResetEnum& type) {
+        // FIXME: use evse_id!
         try {
             const auto reset_type =
                 types::system::string_to_reset_type(ocpp::v201::conversions::reset_enum_to_string(type));
@@ -309,7 +311,8 @@ void OCPP201::init() {
         }
     };
 
-    callbacks.change_availability_callback = [this](const ocpp::v201::ChangeAvailabilityRequest& request) {
+    callbacks.change_availability_callback = [this](const ocpp::v201::ChangeAvailabilityRequest& request, const bool persist) {
+         // FIXME: use persist flag!
         if (request.evse.has_value()) {
             if (request.evse.value().connectorId.has_value()) {
                 // Connector is adressed
