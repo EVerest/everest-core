@@ -189,8 +189,7 @@ void EvseManager::ready() {
 
                 r_imd[0]->subscribe_IsolationMeasurement([this](types::isolation_monitor::IsolationMeasurement m) {
                     // new DC isolation monitoring measurement received
-                    session_log.evse(
-                        false, fmt::format("Isolation measurement R_F {}.", m.resistance_F_Ohm));
+                    session_log.evse(false, fmt::format("Isolation measurement R_F {}.", m.resistance_F_Ohm));
                     isolation_measurement = m;
                 });
             }
@@ -902,7 +901,20 @@ void EvseManager::setup_AC_mode() {
 }
 
 bool EvseManager::updateLocalEnergyLimit(types::energy::ExternalLimits l) {
-    local_energy_limits = l;
+
+    // received empty limits, fall back to hardware limits
+    if (!l.schedule_import.has_value() && !l.schedule_export.has_value()) {
+        EVLOG_info << "External limits are empty, defaulting to hardware limits";
+        if (config.charge_mode == "AC") {
+            // by default we import energy
+            updateLocalMaxCurrentLimit(hw_capabilities.max_current_A_import);
+        } else {
+            updateLocalMaxWattLimit(powersupply_capabilities.max_export_power_W);
+        }
+    } else {
+        // apply external limits if they are lower
+        local_energy_limits = l;
+    }
 
     // wait for EnergyManager to assign optimized current on next opimizer run
 
@@ -1133,22 +1145,22 @@ void EvseManager::cable_check() {
                             const double min_resistance_warning = 100. * powersupply_capabilities.max_export_voltage_V;
 
                             if (m.resistance_F_Ohm < min_resistance_warning) {
-                                session_log.evse(false, fmt::format("Isolation measurement FAULT R_F {}.",
-                                                                    m.resistance_F_Ohm));
+                                session_log.evse(
+                                    false, fmt::format("Isolation measurement FAULT R_F {}.", m.resistance_F_Ohm));
                                 ok = true; // this just means that we are finished measuring, not that we are ok with
                                            // the result
                                 r_hlc[0]->call_set_EVSEIsolationStatus(types::iso15118_charger::IsolationStatus::Fault);
                                 imd_stop();
                                 fail_session();
                             } else if (m.resistance_F_Ohm < min_resistance_ok) {
-                                session_log.evse(false, fmt::format("Isolation measurement WARNING R_F {}.",
-                                                                    m.resistance_F_Ohm));
+                                session_log.evse(
+                                    false, fmt::format("Isolation measurement WARNING R_F {}.", m.resistance_F_Ohm));
                                 ok = true;
                                 r_hlc[0]->call_set_EVSEIsolationStatus(
                                     types::iso15118_charger::IsolationStatus::Warning);
                             } else {
-                                session_log.evse(false, fmt::format("Isolation measurement Ok R_F {}.",
-                                                                    m.resistance_F_Ohm));
+                                session_log.evse(false,
+                                                 fmt::format("Isolation measurement Ok R_F {}.", m.resistance_F_Ohm));
                                 ok = true;
                                 r_hlc[0]->call_set_EVSEIsolationStatus(types::iso15118_charger::IsolationStatus::Valid);
                             }
