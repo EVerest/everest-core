@@ -183,6 +183,7 @@ void energyImpl::ready() {
                 }
 
                 publish_energy_flow_request(energy_flow_request);
+                // EVLOG_info << "Local limits " << mod->getLocalEnergyLimits();
                 // EVLOG_info << "Outgoing request " << energy_flow_request;
             }
 

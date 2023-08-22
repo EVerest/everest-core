@@ -294,9 +294,6 @@ void API::init() {
 
         std::string cmd_set_limit = cmd_base + "set_limit_amps";
         this->mqtt.subscribe(cmd_set_limit, [&evse](const std::string& data) {
-            // reset previous limits set by this module
-            types::energy::ExternalLimits empty_limits;
-            evse->call_set_external_limits(empty_limits);
             try {
                 const auto external_limits = get_external_limits(data, false);
                 evse->call_set_external_limits(external_limits);
@@ -309,9 +306,6 @@ void API::init() {
 
         std::string cmd_set_limit_watts = cmd_base + "set_limit_watts";
         this->mqtt.subscribe(cmd_set_limit_watts, [&evse](const std::string& data) {
-            // reset previous limits set by this module
-            types::energy::ExternalLimits empty_limits;
-            evse->call_set_external_limits(empty_limits);
             try {
                 const auto external_limits = get_external_limits(data, true);
                 evse->call_set_external_limits(external_limits);
