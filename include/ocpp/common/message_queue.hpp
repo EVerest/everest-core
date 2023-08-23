@@ -324,6 +324,11 @@ public:
 
     /// \brief pushes a new \p call message onto the message queue
     template <class T> void push(Call<T> call) {
+
+        if (!running) {
+            return;
+        }
+
         auto message = std::make_shared<ControlMessage<M>>(call);
         if (this->isTransactionMessage(message)) {
             // according to the spec the "transaction related messages" StartTransaction, StopTransaction and
@@ -346,7 +351,12 @@ public:
     /// \returns a future from which the CallResult can be extracted
     template <class T> std::future<EnhancedMessage<M>> push_async(Call<T> call) {
         auto message = std::make_shared<ControlMessage<M>>(call);
-        if (this->isTransactionMessage(message)) {
+
+        if (!running) {
+            auto enhanced_message = EnhancedMessage<M>();
+            enhanced_message.offline = true;
+            message->promise.set_value(enhanced_message);
+        } else if (this->isTransactionMessage(message)) {
             // according to the spec the "transaction related messages" StartTransaction, StopTransaction and
             // MeterValues have to be delivered in chronological order
             this->add_to_transaction_message_queue(message);
