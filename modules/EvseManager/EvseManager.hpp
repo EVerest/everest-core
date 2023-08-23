@@ -154,6 +154,7 @@ public:
     std::atomic_bool is_actually_exporting_to_grid{false};
 
     types::evse_manager::EVInfo get_ev_info();
+    void apply_new_target_voltage_current();
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
