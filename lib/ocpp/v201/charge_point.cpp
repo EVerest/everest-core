@@ -1455,12 +1455,12 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
         }
         break;
 
-    // TODO:
-    // FirmwareStatusNotification
-    // PublishFirmwareStatusNotification
-    // SignChargingStationCertificate
-    // SignV2GCertificate
-    // SignCombinedCertificate
+        // TODO:
+        // FirmwareStatusNotification
+        // PublishFirmwareStatusNotification
+        // SignChargingStationCertificate
+        // SignV2GCertificate
+        // SignCombinedCertificate
 
     default:
         response.status = TriggerMessageStatusEnum::NotImplemented;
