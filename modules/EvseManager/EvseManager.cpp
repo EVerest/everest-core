@@ -246,15 +246,15 @@ void EvseManager::ready() {
                 }
 
                 if (target_changed) {
-                    powersupply_DC_set(v.DC_EVTargetVoltage, v.DC_EVTargetCurrent);
+                    apply_new_target_voltage_current();
                     if (!contactor_open) {
                         powersupply_DC_on();
                     }
 
                     {
                         std::scoped_lock lock(ev_info_mutex);
-                        ev_info.target_voltage = v.DC_EVTargetVoltage;
-                        ev_info.target_current = v.DC_EVTargetCurrent;
+                        ev_info.target_voltage = latest_target_voltage;
+                        ev_info.target_current = latest_target_current;
                         p_evse->publish_ev_info(ev_info);
                     }
                 }
@@ -1383,6 +1383,10 @@ void EvseManager::fail_session() {
 types::evse_manager::EVInfo EvseManager::get_ev_info() {
     std::scoped_lock l(ev_info_mutex);
     return ev_info;
+}
+
+void EvseManager::apply_new_target_voltage_current() {
+    powersupply_DC_set(latest_target_voltage, latest_target_current);
 }
 
 } // namespace module
