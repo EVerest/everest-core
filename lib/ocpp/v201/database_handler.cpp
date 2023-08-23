@@ -2,6 +2,7 @@
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
 #include <ocpp/common/message_queue.hpp>
+#include <ocpp/common/sqlite_statement.hpp>
 #include <ocpp/v201/database_handler.hpp>
 #include <ocpp/v201/types.hpp>
 
@@ -70,22 +71,13 @@ void DatabaseHandler::close_connection() {
 void DatabaseHandler::insert_auth_cache_entry(const std::string& id_token_hash, const IdTokenInfo& id_token_info) {
     std::string sql = "INSERT OR REPLACE INTO AUTH_CACHE (ID_TOKEN_HASH, ID_TOKEN_INFO) VALUES "
                       "(@id_token_hash, @id_token_info)";
-    sqlite3_stmt* stmt;
-    if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_error << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
-        return;
-    }
+    SQLiteStatement insert_stmt(this->db, sql);
 
-    const auto id_token_info_str = json(id_token_info).dump();
-    sqlite3_bind_text(stmt, 1, id_token_hash.c_str(), id_token_hash.length(), NULL);
-    sqlite3_bind_text(stmt, 2, id_token_info_str.c_str(), id_token_info_str.length(), NULL);
-    if (sqlite3_step(stmt) != SQLITE_DONE) {
+    insert_stmt.bind_text("@id_token_hash", id_token_hash);
+    insert_stmt.bind_text("@id_token_info", json(id_token_info).dump(), SQLiteString::Transient);
+
+    if (insert_stmt.step() != SQLITE_DONE) {
         EVLOG_error << "Could not insert into AUTH_CACHE table: " << sqlite3_errmsg(db);
-        return;
-    }
-
-    if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error inserting into AUTH_CACHE table: " << sqlite3_errmsg(this->db);
         return;
     }
 }
@@ -93,20 +85,14 @@ void DatabaseHandler::insert_auth_cache_entry(const std::string& id_token_hash, 
 std::optional<IdTokenInfo> DatabaseHandler::get_auth_cache_entry(const std::string& id_token_hash) {
     try {
         std::string sql = "SELECT ID_TOKEN_INFO FROM AUTH_CACHE WHERE ID_TOKEN_HASH = @id_token_hash";
-        sqlite3_stmt* stmt;
-        if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-            EVLOG_error << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
+        SQLiteStatement select_stmt(this->db, sql);
+
+        select_stmt.bind_text("@id_token_hash", id_token_hash);
+
+        if (select_stmt.step() != SQLITE_ROW) {
             return std::nullopt;
         }
-
-        sqlite3_bind_text(stmt, 1, id_token_hash.c_str(), id_token_hash.length(), NULL);
-
-        if (sqlite3_step(stmt) != SQLITE_ROW) {
-            return std::nullopt;
-        }
-        IdTokenInfo id_token_info =
-            json::parse(std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0))));
-        return id_token_info;
+        return IdTokenInfo(json::parse(select_stmt.column_text(0)));
     } catch (const json::exception& e) {
         EVLOG_warning << "Could not parse data of IdTokenInfo: " << e.what();
         return std::nullopt;
@@ -119,18 +105,12 @@ std::optional<IdTokenInfo> DatabaseHandler::get_auth_cache_entry(const std::stri
 void DatabaseHandler::delete_auth_cache_entry(const std::string& id_token_hash) {
     try {
         std::string sql = "DELETE FROM AUTH_CACHE WHERE ID_TOKEN_HASH = @id_token_hash";
-        sqlite3_stmt* stmt;
-        if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-            EVLOG_error << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
-            return;
-        }
+        SQLiteStatement delete_stmt(this->db, sql);
 
-        sqlite3_bind_text(stmt, 1, id_token_hash.c_str(), id_token_hash.length(), NULL);
-        if (sqlite3_step(stmt) != SQLITE_DONE) {
+        delete_stmt.bind_text("@id_token_hash", id_token_hash);
+
+        if (delete_stmt.step() != SQLITE_DONE) {
             EVLOG_error << "Could not delete from table: " << sqlite3_errmsg(this->db);
-        }
-        if (sqlite3_finalize(stmt) != SQLITE_OK) {
-            EVLOG_error << "Error deleting from table: " << sqlite3_errmsg(this->db);
         }
     } catch (const std::exception& e) {
         EVLOG_error << "Exception while deleting from auth cache table: " << e.what();
@@ -153,29 +133,20 @@ void DatabaseHandler::insert_availability(const int32_t evse_id, std::optional<i
         sql.replace(pos, or_replace.length(), or_ignore);
     }
 
-    sqlite3_stmt* stmt;
-    if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_error << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
-        throw std::runtime_error("Error while inserting availability into database");
-    }
+    SQLiteStatement insert_stmt(this->db, sql);
 
-    const auto operational_status_str = conversions::operational_status_enum_to_string(operational_status);
-    sqlite3_bind_int(stmt, 1, evse_id);
+    insert_stmt.bind_int("@evse_id", evse_id);
 
     if (connector_id.has_value()) {
-        sqlite3_bind_int(stmt, 2, connector_id.value());
+        insert_stmt.bind_int("@connector_id", connector_id.value());
     } else {
-        sqlite3_bind_null(stmt, 2);
+        insert_stmt.bind_null("@connector_id");
     }
-    sqlite3_bind_text(stmt, 3, operational_status_str.c_str(), operational_status_str.length(), NULL);
+    insert_stmt.bind_text("@operational_status", conversions::operational_status_enum_to_string(operational_status),
+                          SQLiteString::Transient);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE) {
+    if (insert_stmt.step() != SQLITE_DONE) {
         EVLOG_error << "Could not insert into AVAILABILITY table: " << sqlite3_errmsg(db);
-        return;
-    }
-
-    if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error inserting into AVAILABILITY table: " << sqlite3_errmsg(this->db);
         return;
     }
 }
@@ -184,25 +155,20 @@ OperationalStatusEnum DatabaseHandler::get_availability(const int32_t evse_id, s
     try {
         std::string sql =
             "SELECT OPERATIONAL_STATUS FROM AVAILABILITY WHERE EVSE_ID = @evse_id AND CONNECTOR_ID = @connector_id;";
-        sqlite3_stmt* stmt;
-        if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-            EVLOG_error << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
-            throw std::runtime_error("Could not get availability");
-        }
+        SQLiteStatement select_stmt(this->db, sql);
 
-        sqlite3_bind_int(stmt, 1, evse_id);
+        select_stmt.bind_int("@evse_id", evse_id);
+
         if (connector_id.has_value()) {
-            sqlite3_bind_int(stmt, 2, connector_id.value());
+            select_stmt.bind_int("@connector_id", connector_id.value());
         } else {
-            sqlite3_bind_null(stmt, 2);
+            select_stmt.bind_null("@connector_id");
         }
 
-        if (sqlite3_step(stmt) != SQLITE_ROW) {
+        if (select_stmt.step() != SQLITE_ROW) {
             throw std::runtime_error("Could not get availability from database");
         }
-        const auto operational_status = conversions::string_to_operational_status_enum(
-            std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0))));
-        return operational_status;
+        return conversions::string_to_operational_status_enum(select_stmt.column_text(0));
     } catch (const std::exception& e) {
         throw std::runtime_error("Could not get availability from database");
     }

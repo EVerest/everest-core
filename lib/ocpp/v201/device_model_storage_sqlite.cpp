@@ -2,6 +2,7 @@
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
 #include <everest/logging.hpp>
+#include <ocpp/common/sqlite_statement.hpp>
 #include <ocpp/v201/device_model_storage_sqlite.hpp>
 
 namespace ocpp {
@@ -21,9 +22,9 @@ int DeviceModelStorageSqlite::get_component_id(const Component& component_id) {
     std::string select_query = "SELECT ID FROM COMPONENT WHERE NAME = ? AND INSTANCE IS ?";
     SQLiteStatement select_stmt(this->db, select_query);
 
-    select_stmt.bind_text(component_id.name.get(), 1);
+    select_stmt.bind_text(1, component_id.name.get(), SQLiteString::Transient);
     if (component_id.instance.has_value()) {
-        select_stmt.bind_text(component_id.instance.value().get(), 2);
+        select_stmt.bind_text(2, component_id.instance.value().get(), SQLiteString::Transient);
     } else {
         select_stmt.bind_null(2);
     }
@@ -44,10 +45,10 @@ int DeviceModelStorageSqlite::get_variable_id(const Component& component_id, con
     std::string select_query = "SELECT ID FROM VARIABLE WHERE COMPONENT_ID = ? AND NAME = ? AND INSTANCE IS ?";
     SQLiteStatement select_stmt(this->db, select_query);
 
-    select_stmt.bind_int(_component_id, 1);
-    select_stmt.bind_text(variable_id.name.get(), 2);
+    select_stmt.bind_int(1, _component_id);
+    select_stmt.bind_text(2, variable_id.name.get(), SQLiteString::Transient);
     if (variable_id.instance.has_value()) {
-        select_stmt.bind_text(variable_id.instance.value().get(), 3);
+        select_stmt.bind_text(3, variable_id.instance.value().get(), SQLiteString::Transient);
     } else {
         select_stmt.bind_null(3);
     }
@@ -153,7 +154,7 @@ DeviceModelStorageSqlite::get_variable_attributes(const Component& component_id,
 
     SQLiteStatement select_stmt(this->db, select_query);
 
-    select_stmt.bind_int(_variable_id, 1);
+    select_stmt.bind_int(1, _variable_id);
 
     while (select_stmt.step() == SQLITE_ROW) {
         VariableAttribute attribute;
@@ -183,9 +184,9 @@ bool DeviceModelStorageSqlite::set_variable_attribute_value(const Component& com
         return false;
     }
 
-    insert_stmt.bind_text(value, 1);
-    insert_stmt.bind_int(_variable_id, 2);
-    insert_stmt.bind_int(static_cast<int>(attribute_enum), 3);
+    insert_stmt.bind_text(1, value);
+    insert_stmt.bind_int(2, _variable_id);
+    insert_stmt.bind_int(3, static_cast<int>(attribute_enum));
     if (insert_stmt.step() != SQLITE_DONE) {
         EVLOG_error << sqlite3_errmsg(this->db);
         return false;
