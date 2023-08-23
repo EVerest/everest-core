@@ -180,7 +180,12 @@ void EvseManager::ready() {
             r_hlc[0]->subscribe_Start_CableCheck([this] { cable_check(); });
 
             // Notification that current demand has started
-            r_hlc[0]->subscribe_currentDemand_Started([this] { charger->notifyCurrentDemandStarted(); });
+            r_hlc[0]->subscribe_currentDemand_Started([this] {
+                charger->notifyCurrentDemandStarted();
+                current_demand_active = true;
+            });
+
+            r_hlc[0]->subscribe_currentDemand_Finished([this] { current_demand_active = false; });
 
             // Isolation monitoring for DC charging handler
             if (!r_imd.empty()) {
@@ -1208,7 +1213,7 @@ bool EvseManager::powersupply_DC_set(double _voltage, double _current) {
     double current = _current;
     static bool last_is_actually_exporting_to_grid{false};
 
-    if (config.hack_allow_bpt_with_iso2 && is_actually_exporting_to_grid) {
+    if (config.hack_allow_bpt_with_iso2 && current_demand_active && is_actually_exporting_to_grid) {
         if (!last_is_actually_exporting_to_grid) {
             // switching from import from grid to export to grid
             session_log.evse(false, "DC power supply: switch ON in import mode");
@@ -1250,12 +1255,12 @@ bool EvseManager::powersupply_DC_set(double _voltage, double _current) {
 
     } else {
 
-        if (config.hack_allow_bpt_with_iso2 && last_is_actually_exporting_to_grid) {
+        if (config.hack_allow_bpt_with_iso2 && current_demand_active && last_is_actually_exporting_to_grid) {
             // switching from export to grid to import from grid
             session_log.evse(false, "DC power supply: switch ON in export mode");
             r_powersupply_DC[0]->call_setMode(types::power_supply_DC::Mode::Export);
+            last_is_actually_exporting_to_grid = is_actually_exporting_to_grid;
         }
-        last_is_actually_exporting_to_grid = is_actually_exporting_to_grid;
 
         // check limits of supply
         if (voltage >= powersupply_capabilities.min_export_voltage_V &&
