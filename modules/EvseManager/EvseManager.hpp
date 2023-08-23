@@ -230,6 +230,8 @@ private:
     void fail_session();
 
     static constexpr auto CABLECHECK_CONTACTORS_CLOSE_TIMEOUT{std::chrono::seconds(5)};
+
+    std::atomic_bool current_demand_active{false};
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
