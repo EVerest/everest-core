@@ -147,12 +147,12 @@ public:
     const std::vector<std::unique_ptr<powermeterIntf>>& r_powermeter_billing();
     types::power_supply_DC::Capabilities powersupply_capabilities;
 
-    float get_latest_target_voltage();
-
     // FIXME: this will be removed with proper intergration of BPT on ISO-20
     // on DIN SPEC and -2 we claim a positive charging current on ISO protocol,
     // but the power supply switches to discharge if this flag is set.
     std::atomic_bool is_actually_exporting_to_grid{false};
+
+    types::evse_manager::EVInfo get_ev_info();
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:

@@ -15,6 +15,12 @@
 namespace module {
 namespace energy_grid {
 
+// helper to find out if voltage changed (more then noise)
+static bool voltage_changed(float a, float b) {
+    constexpr float noise_voltage = 1;
+    return (fabs(a - b) > noise_voltage);
+}
+
 void energyImpl::init() {
 
     // UUID must be unique also beyond this charging station -> will be handled on framework level and above later
@@ -258,15 +264,18 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
                 float watt_leave_side = value.limits_root_side.value().total_power_W.value();
                 float ampere_root_side = value.limits_root_side.value().ac_max_current_A.value();
 
-                float target_voltage = mod->get_latest_target_voltage();
+                auto ev_info = mod->get_ev_info();
+                float target_voltage = ev_info.target_voltage.value_or(0.);
+                float actual_voltage = ev_info.present_voltage.value_or(0.);
 
                 // did the values change since the last call?
                 if (last_enforced_limits.total_power_W != watt_leave_side ||
                     last_enforced_limits.ac_max_current_A != ampere_root_side ||
-                    target_voltage != last_target_voltage) {
+                    target_voltage != last_target_voltage || voltage_changed(actual_voltage, last_actual_voltage)) {
 
                     last_enforced_limits = value.limits_root_side.value();
                     last_target_voltage = target_voltage;
+                    last_actual_voltage = actual_voltage;
 
                     // tell car our new limits
                     types::iso15118_charger::DC_EVSEMaximumLimits evseMaxLimits;
@@ -276,8 +285,13 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
                         // If target_voltage is a lot higher then the actual voltage the
                         // current limit is too low, i.e. charging will not reach the actual watt value.
                         // FIXME: we could use some magic here that involves actual measured voltage as well.
-                        evseMaxLimits.EVSEMaximumCurrentLimit =
-                            value.limits_root_side.value().total_power_W.value() / target_voltage;
+                        if (actual_voltage > 10) {
+                            evseMaxLimits.EVSEMaximumCurrentLimit =
+                                value.limits_root_side.value().total_power_W.value() / actual_voltage;
+                        } else {
+                            evseMaxLimits.EVSEMaximumCurrentLimit =
+                                value.limits_root_side.value().total_power_W.value() / target_voltage;
+                        }
                     } else {
                         evseMaxLimits.EVSEMaximumCurrentLimit = mod->powersupply_capabilities.max_export_current_A;
                     }
@@ -335,10 +349,11 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
                         mod->is_actually_exporting_to_grid = false;
                     }
 
-                    session_log.evse(true, fmt::format("Change HLC Limits: {}W/{}A, target_voltage {}, hack_bpt {}",
-                                                       evseMaxLimits.EVSEMaximumPowerLimit,
-                                                       evseMaxLimits.EVSEMaximumCurrentLimit, target_voltage,
-                                                       mod->is_actually_exporting_to_grid));
+                    session_log.evse(
+                        true,
+                        fmt::format("Change HLC Limits: {}W/{}A, target_voltage {}, actual_voltage {}, hack_bpt {}",
+                                    evseMaxLimits.EVSEMaximumPowerLimit, evseMaxLimits.EVSEMaximumCurrentLimit,
+                                    target_voltage, actual_voltage, mod->is_actually_exporting_to_grid));
                     mod->r_hlc[0]->call_set_DC_EVSEMaximumLimits(evseMaxLimits);
                     mod->charger->inform_new_evse_max_hlc_limits(evseMaxLimits);
 
