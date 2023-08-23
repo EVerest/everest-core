@@ -118,6 +118,7 @@ private:
     WebsocketConnectionStatusEnum websocket_connection_status;
     OperationalStatusEnum operational_state;
     FirmwareStatusEnum firmware_status;
+    int32_t firmware_status_id;
     UploadLogStatusEnum upload_log_status;
     int32_t upload_log_status_id;
     int network_configuration_priority;

@@ -25,6 +25,7 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
     reset_scheduled(false),
     reset_scheduled_evseids{},
     callbacks(callbacks),
+    firmware_status(FirmwareStatusEnum::Idle),
     upload_log_status(UploadLogStatusEnum::Idle) {
     this->device_model = std::make_unique<DeviceModel>(device_model_storage_address);
     this->pki_handler = std::make_shared<ocpp::PkiHandler>(
@@ -117,11 +118,12 @@ void ChargePoint::on_firmware_update_status_notification(int32_t request_id,
                                                          const std::string& firmware_update_status) {
     FirmwareStatusNotificationRequest req;
     req.status = conversions::string_to_firmware_status_enum(firmware_update_status);
-    // Firmware status is stored for future trigger message request.
+    // Firmware status and id are stored for future trigger message request.
     this->firmware_status = req.status;
 
     if (request_id != -1) {
         req.requestId = request_id;
+        this->firmware_status_id = request_id;
     }
 
     ocpp::Call<FirmwareStatusNotificationRequest> call(req, this->message_queue->createMessageId());
@@ -1416,6 +1418,7 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
 
     case MessageTriggerEnum::LogStatusNotification:
     case MessageTriggerEnum::Heartbeat:
+    case MessageTriggerEnum::FirmwareStatusNotification:
         response.status = TriggerMessageStatusEnum::Accepted;
         break;
 
@@ -1456,7 +1459,6 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
         break;
 
         // TODO:
-        // FirmwareStatusNotification
         // PublishFirmwareStatusNotification
         // SignChargingStationCertificate
         // SignV2GCertificate
@@ -1540,6 +1542,28 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
 
         ocpp::Call<LogStatusNotificationRequest> call(request, this->message_queue->createMessageId());
         this->send<LogStatusNotificationRequest>(call);
+    } break;
+
+    case MessageTriggerEnum::FirmwareStatusNotification: {
+        FirmwareStatusNotificationRequest request;
+        switch (this->firmware_status) {
+        case FirmwareStatusEnum::DownloadFailed:
+        case FirmwareStatusEnum::Idle:
+        case FirmwareStatusEnum::InstallationFailed:
+        case FirmwareStatusEnum::Installed:
+        case FirmwareStatusEnum::InstallVerificationFailed:
+        case FirmwareStatusEnum::InvalidSignature:
+            request.status = FirmwareStatusEnum::Idle;
+            break;
+
+        default: // So not idle
+            request.status = this->firmware_status;
+            request.requestId = this->firmware_status_id;
+            break;
+        }
+
+        ocpp::Call<FirmwareStatusNotificationRequest> call(request, this->message_queue->createMessageId());
+        this->send<FirmwareStatusNotificationRequest>(call);
     } break;
 
     default:
