@@ -1213,6 +1213,16 @@ bool EvseManager::powersupply_DC_set(double _voltage, double _current) {
     double current = _current;
     static bool last_is_actually_exporting_to_grid{false};
 
+    // Some cars always request integer ampere values, so if we offer 14.34A they will request 14.0A.
+    // On low power DC charging this makes quite a difference
+    // this option will deliver the offered ampere value in those cases
+
+    if (config.hack_fix_hlc_integer_current_requests) {
+        auto hlc_limits = charger->get_evse_max_hlc_limits();
+        if (hlc_limits.EVSEMaximumCurrentLimit - (int)current < 1.)
+            current = hlc_limits.EVSEMaximumCurrentLimit;
+    }
+
     if (config.hack_allow_bpt_with_iso2 && current_demand_active && is_actually_exporting_to_grid) {
         if (!last_is_actually_exporting_to_grid) {
             // switching from import from grid to export to grid

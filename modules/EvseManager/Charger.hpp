@@ -201,6 +201,7 @@ public:
     // /Deprecated
 
     void inform_new_evse_max_hlc_limits(const types::iso15118_charger::DC_EVSEMaximumLimits& l);
+    types::iso15118_charger::DC_EVSEMaximumLimits get_evse_max_hlc_limits();
 
     void dlink_pause();
     void dlink_error();

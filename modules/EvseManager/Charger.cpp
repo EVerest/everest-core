@@ -1358,6 +1358,11 @@ void Charger::inform_new_evse_max_hlc_limits(
     currentEvseMaxLimits = _currentEvseMaxLimits;
 }
 
+types::iso15118_charger::DC_EVSEMaximumLimits Charger::get_evse_max_hlc_limits() {
+    std::lock_guard<std::recursive_mutex> lock(stateMutex);
+    return currentEvseMaxLimits;
+}
+
 // HLC stack signalled a pause request for the lower layers.
 void Charger::dlink_pause() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
