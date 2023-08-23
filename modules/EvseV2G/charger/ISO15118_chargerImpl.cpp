@@ -149,19 +149,19 @@ void ISO15118_chargerImpl::handle_set_SupportedEnergyTransferMode(Array& Support
 };
 
 void ISO15118_chargerImpl::handle_set_AC_EVSENominalVoltage(double& EVSENominalVoltage) {
-    populate_physical_value(&v2g_ctx->evse_v2g_data.evse_nominal_voltage, (long long int)EVSENominalVoltage,
-                            iso1unitSymbolType_V);
+    populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_nominal_voltage, EVSENominalVoltage, 1,
+                                  iso1unitSymbolType_V);
 };
 
 void ISO15118_chargerImpl::handle_set_DC_EVSECurrentRegulationTolerance(double& EVSECurrentRegulationTolerance) {
-    populate_physical_value(&v2g_ctx->evse_v2g_data.evse_current_regulation_tolerance,
-                            (long long int)EVSECurrentRegulationTolerance, iso1unitSymbolType_A);
+    populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_current_regulation_tolerance,
+                                  EVSECurrentRegulationTolerance, 1, iso1unitSymbolType_A);
     v2g_ctx->evse_v2g_data.evse_current_regulation_tolerance_is_used = 1;
 };
 
 void ISO15118_chargerImpl::handle_set_DC_EVSEPeakCurrentRipple(double& EVSEPeakCurrentRipple) {
-    populate_physical_value(&v2g_ctx->evse_v2g_data.evse_peak_current_ripple, (long long int)EVSEPeakCurrentRipple,
-                            iso1unitSymbolType_A);
+    populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_peak_current_ripple, EVSEPeakCurrentRipple, 1,
+                                  iso1unitSymbolType_A);
 };
 
 void ISO15118_chargerImpl::handle_set_ReceiptRequired(bool& ReceiptRequired) {
@@ -175,7 +175,7 @@ void ISO15118_chargerImpl::handle_set_FreeService(bool& FreeService) {
 };
 
 void ISO15118_chargerImpl::handle_set_EVSEEnergyToBeDelivered(double& EVSEEnergyToBeDelivered) {
-    populate_physical_value(&v2g_ctx->evse_v2g_data.evse_energy_to_be_delivered, (long long int)EVSEEnergyToBeDelivered,
+    populate_physical_value(&v2g_ctx->evse_v2g_data.evse_energy_to_be_delivered, EVSEEnergyToBeDelivered,
                             iso1unitSymbolType_Wh);
     v2g_ctx->evse_v2g_data.evse_energy_to_be_delivered_is_used = 1;
 };
@@ -261,25 +261,31 @@ void ISO15118_chargerImpl::handle_set_AC_EVSEMaxCurrent(double& EVSEMaxCurrent) 
 
 void ISO15118_chargerImpl::handle_set_DC_EVSEMaximumLimits(
     types::iso15118_charger::DC_EVSEMaximumLimits& EVSEMaximumLimits) {
-    populate_physical_value(&v2g_ctx->evse_v2g_data.evse_maximum_current_limit,
-                            (long long int)EVSEMaximumLimits.EVSEMaximumCurrentLimit, iso1unitSymbolType_A);
+    // This if is just to ignore the warning about loss of precision
+    if (EVSEMaximumLimits.EVSEMaximumCurrentLimit > 300.) {
+        populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_maximum_current_limit,
+                                      EVSEMaximumLimits.EVSEMaximumCurrentLimit, 1, iso1unitSymbolType_A);
+    } else {
+        populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_maximum_current_limit,
+                                      EVSEMaximumLimits.EVSEMaximumCurrentLimit, 2, iso1unitSymbolType_A);
+    }
     v2g_ctx->evse_v2g_data.evse_maximum_current_limit_is_used = 1;
 
-    populate_physical_value(&v2g_ctx->evse_v2g_data.evse_maximum_power_limit,
-                            (long long int)EVSEMaximumLimits.EVSEMaximumPowerLimit, iso1unitSymbolType_W);
+    populate_physical_value(&v2g_ctx->evse_v2g_data.evse_maximum_power_limit, EVSEMaximumLimits.EVSEMaximumPowerLimit,
+                            iso1unitSymbolType_W);
     v2g_ctx->evse_v2g_data.evse_maximum_power_limit_is_used = 1;
 
-    populate_physical_value(&v2g_ctx->evse_v2g_data.evse_maximum_voltage_limit,
-                            (long long int)EVSEMaximumLimits.EVSEMaximumVoltageLimit, iso1unitSymbolType_V);
+    populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_maximum_voltage_limit,
+                                  EVSEMaximumLimits.EVSEMaximumVoltageLimit, 1, iso1unitSymbolType_V);
     v2g_ctx->evse_v2g_data.evse_maximum_voltage_limit_is_used = 1;
 };
 
 void ISO15118_chargerImpl::handle_set_DC_EVSEMinimumLimits(
     types::iso15118_charger::DC_EVSEMinimumLimits& EVSEMinimumLimits) {
-    populate_physical_value(&v2g_ctx->evse_v2g_data.evse_minimum_current_limit,
-                            (long long int)EVSEMinimumLimits.EVSEMinimumCurrentLimit, iso1unitSymbolType_A);
-    populate_physical_value(&v2g_ctx->evse_v2g_data.evse_minimum_voltage_limit,
-                            (long long int)EVSEMinimumLimits.EVSEMinimumVoltageLimit, iso1unitSymbolType_V);
+    populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_minimum_current_limit,
+                                  (long long int)EVSEMinimumLimits.EVSEMinimumCurrentLimit, 1, iso1unitSymbolType_A);
+    populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_minimum_voltage_limit,
+                                  (long long int)EVSEMinimumLimits.EVSEMinimumVoltageLimit, 1, iso1unitSymbolType_V);
 };
 
 void ISO15118_chargerImpl::handle_set_EVSEIsolationStatus(
@@ -362,8 +368,8 @@ void ISO15118_chargerImpl::handle_set_Certificate_Service_Supported(bool& status
         const int16_t cert_parameter_set_id[] = {1}; // parameter-set-ID 1: "Installation" service. TODO: Support of the
                                                      // "Update" service (parameter-set-ID 2)
 
-        cert_service.FreeService = 1;                // true
-        cert_service.ServiceID = 2;                  // as defined in ISO 15118-2
+        cert_service.FreeService = 1; // true
+        cert_service.ServiceID = 2;   // as defined in ISO 15118-2
         cert_service.ServiceCategory = iso1serviceCategoryType_ContractCertificate;
         memcpy(cert_service.ServiceName.characters, reinterpret_cast<const char*>(service_name.data()),
                service_name.length());
