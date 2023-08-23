@@ -169,6 +169,13 @@ config:
     description: Set current measurement noise. Added to limit as an offset to avoid false triggers.
     type: number
     default: 0.5
+  hack_fix_hlc_integer_current_requests:
+    description: >-
+      Some cars request only integer ampere values during DC charging. For low power DC charging that 
+      means that they charge a few hundred watts slower then needed. If enabled, this will charge at full power if the difference
+      between EV requested current (integer) and HLC current limit is less then 1.0
+    type: boolean
+    default: false
 provides:
   evse:
     interface: evse_manager

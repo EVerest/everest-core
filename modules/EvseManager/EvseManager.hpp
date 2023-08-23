@@ -78,6 +78,7 @@ struct Conf {
     std::string logfile_suffix;
     double soft_over_current_tolerance_percent;
     double soft_over_current_measurement_noise_A;
+    bool hack_fix_hlc_integer_current_requests;
 };
 
 class EvseManager : public Everest::ModuleBase {
@@ -107,7 +108,6 @@ public:
         r_powersupply_DC(std::move(r_powersupply_DC)),
         config(config){};
 
-    const Conf& config;
     Everest::MqttProvider& mqtt;
     Everest::TelemetryProvider& telemetry;
     const std::unique_ptr<evse_managerImplBase> p_evse;
@@ -120,6 +120,7 @@ public:
     const std::vector<std::unique_ptr<ISO15118_chargerIntf>> r_hlc;
     const std::vector<std::unique_ptr<isolation_monitorIntf>> r_imd;
     const std::vector<std::unique_ptr<power_supply_DCIntf>> r_powersupply_DC;
+    const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
