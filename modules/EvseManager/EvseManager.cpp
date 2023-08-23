@@ -1345,16 +1345,17 @@ types::energy::ExternalLimits EvseManager::getLocalEnergyLimits() {
     return local_energy_limits;
 }
 
-float EvseManager::get_latest_target_voltage() {
-    return latest_target_voltage;
-}
-
 void EvseManager::fail_session() {
     r_hlc[0]->call_set_EVSE_EmergencyShutdown(true);
     if (config.charge_mode == "DC") {
         powersupply_DC_off();
     }
     charger->set_hlc_error(types::evse_manager::ErrorEnum::HLC);
+}
+
+types::evse_manager::EVInfo EvseManager::get_ev_info() {
+    std::scoped_lock l(ev_info_mutex);
+    return ev_info;
 }
 
 } // namespace module
