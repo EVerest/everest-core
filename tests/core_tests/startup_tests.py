@@ -10,7 +10,7 @@ import threading
 import queue
 
 from everest.testing.core_utils.fixtures import *
-from everest.testing.core_utils.everest_core import EverestCore, TestControlModuleConnection
+from everest.testing.core_utils.everest_core import EverestCore, Requirement
 
 from everest.framework import Module, RuntimeSession
 
@@ -23,7 +23,7 @@ async def test_000_startup_check(everest_core: EverestCore):
 
 class ProbeModule:
     def __init__(self, session: RuntimeSession):
-        m = Module('probe_module', session)
+        m = Module('probe', session)
         self._setup = m.say_hello()
 
         # subscribe to session events
@@ -76,13 +76,18 @@ class ProbeModule:
 
         return True
 
+
 @pytest.mark.everest_core_config('config-sil.yaml')
 @pytest.mark.asyncio
 async def test_001_start_test_module(everest_core: EverestCore):
     logging.info(">>>>>>>>> test_001_start_test_module <<<<<<<<<")
 
-    everest_core.start(standalone_module='probe_module', modules_to_test=[
-                       TestControlModuleConnection(evse_manager_id="connector_1", car_simulator_id="car_simulator", ocpp_id=None)])
+    test_connections = {
+        'test_control': [Requirement('car_simulator', 'main')],
+        'connector_1': [Requirement('connector_1', 'evse')]
+    }
+
+    everest_core.start(standalone_module='probe', test_connections=test_connections)
     logging.info("everest-core ready, waiting for probe module")
 
     session = RuntimeSession(str(everest_core.prefix_path), str(everest_core.everest_config_path))
