@@ -1395,14 +1395,14 @@ void ChargePoint::handle_unlock_connector(Call<UnlockConnectorRequest> call) {
 void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
     const TriggerMessageRequest& msg = call.msg;
     TriggerMessageResponse response;
-    Evse* pEvse = nullptr;
+    Evse* evse_ptr = nullptr;
 
     response.status = TriggerMessageStatusEnum::Rejected;
 
     if (msg.evse.has_value()) {
         int32_t evse_id = msg.evse.value().id;
         if (this->evses.find(evse_id) != this->evses.end()) {
-            pEvse = this->evses.at(evse_id).get();
+            evse_ptr = this->evses.at(evse_id).get();
         }
     }
 
@@ -1424,7 +1424,7 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
 
     case MessageTriggerEnum::MeterValues:
         if (msg.evse.has_value()) {
-            if (pEvse != nullptr) {
+            if (evse_ptr != nullptr) {
                 response.status = TriggerMessageStatusEnum::Accepted;
             }
         } else {
@@ -1434,7 +1434,7 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
 
     case MessageTriggerEnum::TransactionEvent:
         if (msg.evse.has_value()) {
-            if (pEvse != nullptr and pEvse->has_active_transaction()) {
+            if (evse_ptr != nullptr and evse_ptr->has_active_transaction()) {
                 response.status = TriggerMessageStatusEnum::Accepted;
             }
         } else {
@@ -1450,7 +1450,7 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
     case MessageTriggerEnum::StatusNotification:
         if (msg.evse.has_value() and msg.evse.value().connectorId.has_value()) {
             int32_t connector_id = msg.evse.value().connectorId.value();
-            if (pEvse != nullptr and connector_id > 0 and connector_id <= pEvse->get_number_of_connectors()) {
+            if (evse_ptr != nullptr and connector_id > 0 and connector_id <= evse_ptr->get_number_of_connectors()) {
                 response.status = TriggerMessageStatusEnum::Accepted;
             }
         } else {
@@ -1477,8 +1477,8 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
     }
 
     auto send_evse_message = [&](std::function<void(int32_t evse_id, Evse & evse)> send) {
-        if (pEvse != nullptr) {
-            send(msg.evse.value().id, *pEvse);
+        if (evse_ptr != nullptr) {
+            send(msg.evse.value().id, *evse_ptr);
         } else {
             for (auto const& [evse_id, evse] : this->evses) {
                 send(evse_id, *evse);
@@ -1522,8 +1522,8 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
     } break;
 
     case MessageTriggerEnum::StatusNotification:
-        if (pEvse != nullptr and msg.evse.value().connectorId.has_value()) {
-            pEvse->trigger_status_notification_callback(msg.evse.value().connectorId.value());
+        if (evse_ptr != nullptr and msg.evse.value().connectorId.has_value()) {
+            evse_ptr->trigger_status_notification_callback(msg.evse.value().connectorId.value());
         }
         break;
 
