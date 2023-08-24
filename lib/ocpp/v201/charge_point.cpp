@@ -24,7 +24,9 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
     disable_automatic_websocket_reconnects(false),
     reset_scheduled(false),
     reset_scheduled_evseids{},
-    callbacks(callbacks) {
+    callbacks(callbacks),
+    firmware_status(FirmwareStatusEnum::Idle),
+    upload_log_status(UploadLogStatusEnum::Idle) {
     this->device_model = std::make_unique<DeviceModel>(device_model_storage_address);
     this->pki_handler = std::make_shared<ocpp::PkiHandler>(
         certs_path,
@@ -116,11 +118,12 @@ void ChargePoint::on_firmware_update_status_notification(int32_t request_id,
                                                          const std::string& firmware_update_status) {
     FirmwareStatusNotificationRequest req;
     req.status = conversions::string_to_firmware_status_enum(firmware_update_status);
-    // Firmware status is stored for future trigger message request.
+    // Firmware status and id are stored for future trigger message request.
     this->firmware_status = req.status;
 
     if (request_id != -1) {
         req.requestId = request_id;
+        this->firmware_status_id = request_id;
     }
 
     ocpp::Call<FirmwareStatusNotificationRequest> call(req, this->message_queue->createMessageId());
@@ -367,6 +370,10 @@ void ChargePoint::on_log_status_notification(UploadLogStatusEnum status, int32_t
     request.status = status;
     request.requestId = requestId;
 
+    // Store for use by the triggerMessage
+    this->upload_log_status = status;
+    this->upload_log_status_id = requestId;
+
     ocpp::Call<LogStatusNotificationRequest> call(request, this->message_queue->createMessageId());
     this->send<LogStatusNotificationRequest>(call);
 }
@@ -557,6 +564,9 @@ void ChargePoint::handle_message(const json& json_message, const MessageType& me
     case MessageType::UnlockConnector:
         this->handle_unlock_connector(json_message);
         break;
+    case MessageType::TriggerMessage:
+        this->handle_trigger_message(json_message);
+        break;
     }
 }
 
@@ -621,6 +631,16 @@ void ChargePoint::message_callback(const std::string& message) {
     }
 }
 
+MeterValue ChargePoint::get_latest_meter_value_filtered(const MeterValue& meter_value, ReadingContextEnum context,
+                                                        const ComponentVariable& component_variable) {
+    auto filtered_meter_value = utils::get_meter_value_with_measurands_applied(
+        meter_value, utils::get_measurands_vec(this->device_model->get_value<std::string>(component_variable)));
+    for (auto& sampled_value : filtered_meter_value.sampledValue) {
+        sampled_value.context = context;
+    }
+    return filtered_meter_value;
+}
+
 void ChargePoint::update_aligned_data_interval() {
     const auto next_timestamp = this->get_next_clock_aligned_meter_value_timestamp(
         this->device_model->get_value<int>(ControllerComponentVariables::AlignedDataInterval));
@@ -630,19 +650,19 @@ void ChargePoint::update_aligned_data_interval() {
             [this]() {
                 for (auto const& [evse_id, evse] : this->evses) {
                     auto _meter_value = evse->get_meter_value();
-                    // because we do not actively read meter values at clock aligned timepoint, we switch the
-                    // ReadingContext here
-                    for (auto& sampled_value : _meter_value.sampledValue) {
-                        sampled_value.context = ReadingContextEnum::Sample_Clock;
-                    }
-
                     // this will apply configured measurands and possibly reduce the entries of sampledValue
                     // according to the configuration
-                    const auto meter_value = utils::get_meter_value_with_measurands_applied(
-                        _meter_value, utils::get_measurands_vec(this->device_model->get_value<std::string>(
-                                          ControllerComponentVariables::AlignedDataMeasurands)));
+                    const auto meter_value =
+                        get_latest_meter_value_filtered(_meter_value, ReadingContextEnum::Sample_Clock,
+                                                        ControllerComponentVariables::AlignedDataMeasurands);
 
                     if (evse->has_active_transaction()) {
+                        // because we do not actively read meter values at clock aligned timepoint, we switch the
+                        // ReadingContext here
+                        for (auto& sampled_value : _meter_value.sampledValue) {
+                            sampled_value.context = ReadingContextEnum::Sample_Clock;
+                        }
+
                         // add meter value to transaction meter values
                         const auto& enhanced_transaction = evse->get_transaction();
                         enhanced_transaction->meter_values.push_back(_meter_value);
@@ -1370,6 +1390,186 @@ void ChargePoint::handle_unlock_connector(Call<UnlockConnectorRequest> call) {
     const UnlockConnectorResponse unlock_response = callbacks.unlock_connector_callback(msg.evseId, msg.connectorId);
     ocpp::CallResult<UnlockConnectorResponse> call_result(unlock_response, call.uniqueId);
     this->send<UnlockConnectorResponse>(call_result);
+}
+
+void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
+    const TriggerMessageRequest& msg = call.msg;
+    TriggerMessageResponse response;
+    Evse* evse_ptr = nullptr;
+
+    response.status = TriggerMessageStatusEnum::Rejected;
+
+    if (msg.evse.has_value()) {
+        int32_t evse_id = msg.evse.value().id;
+        if (this->evses.find(evse_id) != this->evses.end()) {
+            evse_ptr = this->evses.at(evse_id).get();
+        }
+    }
+
+    // F06.FR.04: First send the TriggerMessageResponse before sending the requested message
+    //            so we split the functionality to be able to determine if we need to respond first.
+    switch (msg.requestedMessage) {
+    case MessageTriggerEnum::BootNotification:
+        // F06.FR.17: Respond with rejected in case registration status is already accepted
+        if (this->registration_status != RegistrationStatusEnum::Accepted) {
+            response.status = TriggerMessageStatusEnum::Accepted;
+        }
+        break;
+
+    case MessageTriggerEnum::LogStatusNotification:
+    case MessageTriggerEnum::Heartbeat:
+    case MessageTriggerEnum::FirmwareStatusNotification:
+        response.status = TriggerMessageStatusEnum::Accepted;
+        break;
+
+    case MessageTriggerEnum::MeterValues:
+        if (msg.evse.has_value()) {
+            if (evse_ptr != nullptr) {
+                response.status = TriggerMessageStatusEnum::Accepted;
+            }
+        } else {
+            response.status = TriggerMessageStatusEnum::Accepted;
+        }
+        break;
+
+    case MessageTriggerEnum::TransactionEvent:
+        if (msg.evse.has_value()) {
+            if (evse_ptr != nullptr and evse_ptr->has_active_transaction()) {
+                response.status = TriggerMessageStatusEnum::Accepted;
+            }
+        } else {
+            for (auto const& [evse_id, evse] : this->evses) {
+                if (evse->has_active_transaction()) {
+                    response.status = TriggerMessageStatusEnum::Accepted;
+                    break;
+                }
+            }
+        }
+        break;
+
+    case MessageTriggerEnum::StatusNotification:
+        if (msg.evse.has_value() and msg.evse.value().connectorId.has_value()) {
+            int32_t connector_id = msg.evse.value().connectorId.value();
+            if (evse_ptr != nullptr and connector_id > 0 and connector_id <= evse_ptr->get_number_of_connectors()) {
+                response.status = TriggerMessageStatusEnum::Accepted;
+            }
+        } else {
+            // F06.FR.12: Reject if evse or connectorId is ommited
+        }
+        break;
+
+        // TODO:
+        // PublishFirmwareStatusNotification
+        // SignChargingStationCertificate
+        // SignV2GCertificate
+        // SignCombinedCertificate
+
+    default:
+        response.status = TriggerMessageStatusEnum::NotImplemented;
+        break;
+    }
+
+    ocpp::CallResult<TriggerMessageResponse> call_result(response, call.uniqueId);
+    this->send<TriggerMessageResponse>(call_result);
+
+    if (response.status != TriggerMessageStatusEnum::Accepted) {
+        return;
+    }
+
+    auto send_evse_message = [&](std::function<void(int32_t evse_id, Evse & evse)> send) {
+        if (evse_ptr != nullptr) {
+            send(msg.evse.value().id, *evse_ptr);
+        } else {
+            for (auto const& [evse_id, evse] : this->evses) {
+                send(evse_id, *evse);
+            }
+        }
+    };
+
+    switch (msg.requestedMessage) {
+    case MessageTriggerEnum::BootNotification:
+        boot_notification_req(BootReasonEnum::Triggered);
+        break;
+
+    case MessageTriggerEnum::MeterValues: {
+        auto send_meter_value = [&](int32_t evse_id, Evse& evse) {
+            const auto meter_value =
+                get_latest_meter_value_filtered(evse.get_meter_value(), ReadingContextEnum::Trigger,
+                                                ControllerComponentVariables::AlignedDataMeasurands);
+
+            this->meter_values_req(evse_id, std::vector<ocpp::v201::MeterValue>(1, meter_value));
+        };
+        send_evse_message(send_meter_value);
+    } break;
+
+    case MessageTriggerEnum::TransactionEvent: {
+        auto send_transaction = [&](int32_t evse_id, Evse& evse) {
+            if (!evse.has_active_transaction()) {
+                return;
+            }
+
+            const auto meter_value =
+                get_latest_meter_value_filtered(evse.get_meter_value(), ReadingContextEnum::Trigger,
+                                                ControllerComponentVariables::SampledDataTxUpdatedMeasurands);
+
+            const auto& enhanced_transaction = evse.get_transaction();
+            this->transaction_event_req(
+                TransactionEventEnum::Updated, DateTime(), enhanced_transaction->get_transaction(),
+                TriggerReasonEnum::Trigger, enhanced_transaction->get_seq_no(), std::nullopt, std::nullopt,
+                std::nullopt, std::vector<MeterValue>(1, meter_value), std::nullopt, std::nullopt, std::nullopt);
+        };
+        send_evse_message(send_transaction);
+    } break;
+
+    case MessageTriggerEnum::StatusNotification:
+        if (evse_ptr != nullptr and msg.evse.value().connectorId.has_value()) {
+            evse_ptr->trigger_status_notification_callback(msg.evse.value().connectorId.value());
+        }
+        break;
+
+    case MessageTriggerEnum::Heartbeat:
+        this->heartbeat_req();
+        break;
+
+    case MessageTriggerEnum::LogStatusNotification: {
+        LogStatusNotificationRequest request;
+        if (this->upload_log_status == UploadLogStatusEnum::Uploading) {
+            request.status = UploadLogStatusEnum::Uploading;
+            request.requestId = this->upload_log_status_id;
+        } else {
+            request.status = UploadLogStatusEnum::Idle;
+        }
+
+        ocpp::Call<LogStatusNotificationRequest> call(request, this->message_queue->createMessageId());
+        this->send<LogStatusNotificationRequest>(call);
+    } break;
+
+    case MessageTriggerEnum::FirmwareStatusNotification: {
+        FirmwareStatusNotificationRequest request;
+        switch (this->firmware_status) {
+        case FirmwareStatusEnum::DownloadFailed:
+        case FirmwareStatusEnum::Idle:
+        case FirmwareStatusEnum::InstallationFailed:
+        case FirmwareStatusEnum::Installed:
+        case FirmwareStatusEnum::InstallVerificationFailed:
+        case FirmwareStatusEnum::InvalidSignature:
+            request.status = FirmwareStatusEnum::Idle;
+            break;
+
+        default: // So not idle
+            request.status = this->firmware_status;
+            request.requestId = this->firmware_status_id;
+            break;
+        }
+
+        ocpp::Call<FirmwareStatusNotificationRequest> call(request, this->message_queue->createMessageId());
+        this->send<FirmwareStatusNotificationRequest>(call);
+    } break;
+
+    default:
+        EVLOG_error << "Sent a TriggerMessageResponse::Accepted while not following up with a message";
+        break;
+    }
 }
 
 void ChargePoint::handle_remote_start_transaction_request(Call<RequestStartTransactionRequest> call) {
