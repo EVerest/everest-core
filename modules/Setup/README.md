@@ -12,6 +12,9 @@ This variable is published periodically and contains a JSON object with the supp
 }
 ```
 
+### everest_api/setup/var/hostname
+This variable is published periodically and contains the hostname.
+
 ## Commands and variables published in response
 ### everest_api/setup/cmd/scan_wifi
 If any arbitrary payload is published to this topic a list of available wifi networks is published on the following topic:
