@@ -180,6 +180,7 @@ private:
     bool wifi_scan_enabled = false;
     void publish_supported_features();
     void publish_application_info();
+    void publish_hostname();
     void set_default_language(std::string language);
     std::string get_default_language();
     std::string current_language;
@@ -214,9 +215,10 @@ private:
     void check_online_status();
     void enable_ap();
     void disable_ap();
-
     void populate_ip_addresses(std::vector<NetworkDeviceInfo>& device_info);
     std::vector<WifiInfo> scan_wifi(const std::vector<NetworkDeviceInfo>& device_info);
+    std::string get_hostname();
+
     CmdOutput run_application(const std::string& name, std::vector<std::string> args);
     std::vector<std::string> parse_wpa_cli_flags(std::string flags);
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1

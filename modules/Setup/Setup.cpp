@@ -89,6 +89,7 @@ void Setup::ready() {
             if (wifi_scan_enabled) {
                 this->discover_network();
             }
+            this->publish_hostname();
             std::this_thread::sleep_for(std::chrono::seconds(5));
         }
     });
@@ -227,6 +228,12 @@ void Setup::publish_application_info() {
     json application_info_json = application_info;
 
     this->mqtt.publish(application_info_var, application_info_json.dump());
+}
+
+void Setup::publish_hostname() {
+    std::string hostname_var = this->var_base + "hostname";
+
+    this->mqtt.publish(hostname_var, this->get_hostname());
 }
 
 void Setup::set_default_language(std::string language) {
@@ -838,6 +845,14 @@ std::vector<WifiInfo> Setup::scan_wifi(const std::vector<NetworkDeviceInfo>& dev
     }
 
     return wifi_info;
+}
+
+std::string Setup::get_hostname() {
+    auto hostname_output = this->run_application("hostname", {});
+    if (hostname_output.exit_code == 0 && hostname_output.split_output.size() > 0) {
+        return hostname_output.split_output.at(0);
+    }
+    return "";
 }
 
 CmdOutput Setup::run_application(const std::string& name, std::vector<std::string> args) {
