@@ -69,6 +69,15 @@ private:
     bool component_criteria_match(const Component& component_id,
                                   const std::vector<ComponentCriterionEnum>& component_criteria);
 
+    /// \brief Sets the variable_id attribute \p value specified by \p component_id , \p variable_id and \p
+    /// attribute_enum \param component_id \param variable_id \param attribute_enum \param value
+    /// \param force_read_only If this is true, only read-only variables can be changed,
+    ///                        otherwise only non read-only variables can be changed
+    /// \return Result of the requested operation
+    SetVariableStatusEnum set_value_internal(const Component& component_id, const Variable& variable_id,
+                                             const AttributeEnum& attribute_enum, const std::string& value,
+                                             bool force_read_only);
+
 public:
     /// \brief Constructor for the device model
     /// \param storage_address address fo device model storage
@@ -136,10 +145,24 @@ public:
     }
 
     /// \brief Sets the variable_id attribute \p value specified by \p component_id , \p variable_id and \p
-    /// attribute_enum \param component_id \param variable_id \param attribute_enum \param value \return Result of the
-    /// requested operation
+    /// attribute_enum
+    /// \param component_id
+    /// \param variable_id
+    /// \param attribute_enum
+    /// \param value
+    /// \return Result of the requested operation
     SetVariableStatusEnum set_value(const Component& component_id, const Variable& variable_id,
                                     const AttributeEnum& attribute_enum, const std::string& value);
+
+    /// \brief Sets the variable_id attribute \p value specified by \p component_id , \p variable_id and \p
+    /// attribute_enum for read only variables only. Only works on certain allowed components.
+    /// \param component_id
+    /// \param variable_id
+    /// \param attribute_enum
+    /// \param value
+    /// \return Result of the requested operation
+    SetVariableStatusEnum set_read_only_value(const Component& component_id, const Variable& variable_id,
+                                              const AttributeEnum& attribute_enum, const std::string& value);
 
     /// \brief Gets the VariableMetaData for the given \p component_id and \p variable_id
     /// \param component_id

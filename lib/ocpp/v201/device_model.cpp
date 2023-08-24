@@ -2,6 +2,7 @@
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
 #include <ocpp/common/utils.hpp>
+#include <ocpp/v201/ctrlr_component_variables.hpp>
 #include <ocpp/v201/device_model.hpp>
 #include <ocpp/v201/device_model_storage_sqlite.hpp>
 
@@ -115,13 +116,9 @@ GetVariableStatusEnum DeviceModel::request_value(const Component& component_id, 
     return GetVariableStatusEnum::Accepted;
 }
 
-DeviceModel::DeviceModel(const std::string& storage_address) {
-    this->storage = std::make_unique<DeviceModelStorageSqlite>(storage_address);
-    this->device_model = this->storage->get_device_model();
-};
-
-SetVariableStatusEnum DeviceModel::set_value(const Component& component, const Variable& variable,
-                                             const AttributeEnum& attribute_enum, const std::string& value) {
+SetVariableStatusEnum DeviceModel::set_value_internal(const Component& component, const Variable& variable,
+                                                      const AttributeEnum& attribute_enum, const std::string& value,
+                                                      bool force_read_only) {
 
     if (this->device_model.find(component) == this->device_model.end()) {
         return SetVariableStatusEnum::UnknownComponent;
@@ -144,13 +141,36 @@ SetVariableStatusEnum DeviceModel::set_value(const Component& component, const V
         return SetVariableStatusEnum::NotSupportedAttributeType;
     }
 
-    if (!attribute.value().mutability.has_value() or attribute.value().mutability.value() == MutabilityEnum::ReadOnly) {
+    // If force_read_only is false, don't allow read only
+    // If force_read_only is true, only allow read only
+    if (!attribute.value().mutability.has_value() or
+        ((attribute.value().mutability.value() == MutabilityEnum::ReadOnly) and !force_read_only) or
+        ((attribute.value().mutability.value() != MutabilityEnum::ReadOnly) and force_read_only)) {
         return SetVariableStatusEnum::Rejected;
     }
 
     const auto success = this->storage->set_variable_attribute_value(component, variable, attribute_enum, value);
     return success ? SetVariableStatusEnum::Accepted : SetVariableStatusEnum::Rejected;
 };
+
+DeviceModel::DeviceModel(const std::string& storage_address) {
+    this->storage = std::make_unique<DeviceModelStorageSqlite>(storage_address);
+    this->device_model = this->storage->get_device_model();
+};
+
+SetVariableStatusEnum DeviceModel::set_value(const Component& component, const Variable& variable,
+                                             const AttributeEnum& attribute_enum, const std::string& value) {
+    return this->set_value_internal(component, variable, attribute_enum, value, false);
+};
+
+SetVariableStatusEnum DeviceModel::set_read_only_value(const Component& component, const Variable& variable,
+                                                       const AttributeEnum& attribute_enum, const std::string& value) {
+
+    if (component == ControllerComponents::LocalAuthListCtrlr) {
+        return this->set_value_internal(component, variable, attribute_enum, value, true);
+    }
+    throw std::invalid_argument("Not allowed to set read only value for component " + component.name.get());
+}
 
 std::optional<VariableMetaData> DeviceModel::get_variable_meta_data(const Component& component,
                                                                     const Variable& variable) {
