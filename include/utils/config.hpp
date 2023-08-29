@@ -91,6 +91,8 @@ private:
     std::unordered_map<std::string, std::string> module_names;
     std::unordered_map<std::string, ConfigCache> module_config_cache;
 
+    void load_and_validate_manifest(const std::string& module_id, const json& module_config);
+
 public:
     std::string get_module_name(const std::string& module_id);
     bool module_provides(const std::string& module_name, const std::string& impl_id);
@@ -115,6 +117,7 @@ public:
 
     ///
     /// \returns a json object that contains the main config
+    // FIXME (aw): this should be const and return the config by const ref!
     json get_main_config();
 
     ///

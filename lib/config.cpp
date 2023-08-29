@@ -104,6 +104,266 @@ static json parse_config_map(const json& config_map_schema, const json& config_m
     return parsed_config_map;
 }
 
+static auto get_provides_for_probe_module(const std::string& probe_module_id, const json& config,
+                                          const json& manifests) {
+    auto probe_module_config = config.at(probe_module_id);
+
+    auto provides = json::object();
+
+    for (const auto& item : config.items()) {
+        if (item.key() == probe_module_id) {
+            // do not parse ourself
+            continue;
+        }
+
+        const auto& module_config = item.value();
+
+        const auto& connections = module_config.value("connections", json::object());
+
+        for (const auto& connection : connections.items()) {
+            const std::string req_id = connection.key();
+            const std::string module_name = module_config.at("module");
+            const auto& module_manifest = manifests.at(module_name);
+
+            // FIXME (aw): in principle we would need to check here again, the listed connections are indeed specified
+            // in the modules manifest
+            const std::string requirement_interface = module_manifest.at("requires").at(req_id).at("interface");
+
+            for (const auto& req_item : connection.value().items()) {
+                const std::string impl_mod_id = req_item.value().at("module_id");
+                const std::string impl_id = req_item.value().at("implementation_id");
+
+                if (impl_mod_id != probe_module_id) {
+                    continue;
+                }
+
+                if (provides.contains(impl_id) && (provides[impl_id].at("interface") != requirement_interface)) {
+                    EVLOG_AND_THROW(EverestConfigError(
+                        "ProbeModule can not fulfill multiple requirements for the same implementation id '" + impl_id +
+                        "', but with different interfaces"));
+                } else {
+                    provides[impl_id] = {{"interface", requirement_interface}, {"description", "none"}};
+                }
+            }
+        }
+    }
+
+    if (provides.empty()) {
+        provides["none"] = {{"interface", "empty"}, {"description", "none"}};
+    }
+
+    return provides;
+}
+
+static auto get_requirements_for_probe_module(const std::string& probe_module_id, const json& config,
+                                              const json& manifests) {
+    auto probe_module_config = config.at(probe_module_id);
+
+    auto requirements = json::object();
+
+    const auto connections_it = probe_module_config.find("connections");
+    if (connections_it == probe_module_config.end()) {
+        return requirements;
+    }
+
+    for (const auto& item : connections_it->items()) {
+        const auto& req_id = item.key();
+
+        for (const auto& ffs : item.value()) {
+            const std::string module_id = ffs.at("module_id");
+            const std::string impl_id = ffs.at("implementation_id");
+
+            const auto& module_config_it = config.find(module_id);
+
+            if (module_config_it == config.end()) {
+                EVLOG_AND_THROW(
+                    EverestConfigError("ProbeModule refers to a non-existent module id '" + module_id + "'"));
+            }
+
+            const auto& module_manifest = manifests.at(module_config_it->at("module"));
+
+            const auto& module_provides_it = module_manifest.find("provides");
+
+            if (module_provides_it == module_manifest.end()) {
+                EVLOG_AND_THROW(EverestConfigError("ProbeModule requires something from module id' " + module_id +
+                                                   "', but it does not provide anything"));
+            }
+
+            const auto& provide_it = module_provides_it->find(impl_id);
+            if (provide_it == module_provides_it->end()) {
+                EVLOG_AND_THROW(EverestConfigError("ProbeModule requires something from module id '" + module_id +
+                                                   "', but it does not provide '" + impl_id + "'"));
+            }
+
+            const std::string interface = provide_it->at("interface");
+
+            if (requirements.contains(req_id) && (requirements[req_id].at("interface") != interface)) {
+                // FIXME (aw): we might need to adujst the min/max values here for possible implementations
+                EVLOG_AND_THROW(EverestConfigError("ProbeModule interface mismatch -- FIXME (aw)"));
+            } else {
+                requirements[req_id] = {{"interface", interface}};
+            }
+        }
+    }
+
+    return requirements;
+}
+
+static void setup_probe_module_manifest(const std::string& probe_module_id, const json& config, json& manifests) {
+    // setup basic information
+    auto& manifest = manifests["ProbeModule"];
+    manifest = {
+        {"description", "ProbeModule (generated)"},
+        {
+            "metadata",
+            {
+                {"license", "https://opensource.org/licenses/Apache-2.0"},
+                {"authors", {"everest"}},
+            },
+        },
+    };
+
+    manifest["provides"] = get_provides_for_probe_module(probe_module_id, config, manifests);
+
+    auto requirements = get_requirements_for_probe_module(probe_module_id, config, manifests);
+    if (not requirements.empty()) {
+        manifest["requires"] = requirements;
+    }
+}
+
+void Config::load_and_validate_manifest(const std::string& module_id, const json& module_config) {
+    std::string module_name = module_config["module"];
+
+    this->module_config_cache[module_id] = ConfigCache();
+    this->module_names[module_id] = module_name;
+    EVLOG_debug << fmt::format("Found module {}, loading and verifying manifest...", printable_identifier(module_id));
+
+    // load and validate module manifest.json
+    fs::path manifest_path = fs::path(modules_dir) / module_name / "manifest.yaml";
+    try {
+        EVLOG_debug << fmt::format("Loading module manifest file at: {}", fs::canonical(manifest_path).string());
+
+        if (module_name != "ProbeModule") {
+            // FIXME (aw): this is implicit logic, because we know, that the ProbeModule manifest had been set up
+            // manually already
+            this->manifests[module_name] = load_yaml(manifest_path);
+        }
+
+        json_validator validator(Config::loader, Config::format_checker);
+        validator.set_root_schema(this->_schemas.manifest);
+        auto patch = validator.validate(this->manifests[module_name]);
+        if (!patch.is_null()) {
+            // extend manifest with default values
+            this->manifests[module_name] = this->manifests[module_name].patch(patch);
+        }
+    } catch (const std::exception& e) {
+        EVLOG_AND_THROW(EverestConfigError(fmt::format("Failed to load and parse manifest file {}: {}",
+                                                       fs::weakly_canonical(manifest_path).string(), e.what())));
+    }
+
+    // validate user-defined default values for the config meta-schemas
+    try {
+        validate_config_schema(this->manifests[module_name]["config"]);
+    } catch (const std::exception& e) {
+        EVLOG_AND_THROW(EverestConfigError(
+            fmt::format("Failed to validate the module configuration meta-schema for module '{}'. Reason:\n{}",
+                        module_name, e.what())));
+    }
+
+    for (auto& impl : this->manifests[module_name]["provides"].items()) {
+        try {
+            validate_config_schema(impl.value()["config"]);
+        } catch (const std::exception& e) {
+            EVLOG_AND_THROW(
+                EverestConfigError(fmt::format("Failed to validate the implementation configuration meta-schema "
+                                               "for implementation '{}' in module '{}'. Reason:\n{}",
+                                               impl.key(), module_name, e.what())));
+        }
+    }
+
+    std::set<std::string> provided_impls = Config::keys(this->manifests[module_name]["provides"]);
+
+    this->interfaces[module_name] = json({});
+    this->module_config_cache[module_name].provides_impl = provided_impls;
+
+    for (const auto& impl_id : provided_impls) {
+        EVLOG_debug << fmt::format("Loading interface for implementation: {}", impl_id);
+        auto intf_name = this->manifests[module_name]["provides"][impl_id]["interface"].get<std::string>();
+        auto seen_interfaces = std::set<std::string>();
+        this->interfaces[module_name][impl_id] = resolve_interface(intf_name);
+        this->module_config_cache[module_name].cmds[impl_id] = this->interfaces.at(module_name).at(impl_id).at("cmds");
+    }
+
+    // check if config only contains impl_ids listed in manifest file
+    std::set<std::string> unknown_impls_in_config;
+    std::set<std::string> configured_impls = Config::keys(this->main[module_id]["config_implementation"]);
+
+    std::set_difference(configured_impls.begin(), configured_impls.end(), provided_impls.begin(), provided_impls.end(),
+                        std::inserter(unknown_impls_in_config, unknown_impls_in_config.end()));
+
+    if (!unknown_impls_in_config.empty()) {
+        EVLOG_AND_THROW(EverestApiError(
+            fmt::format("Implementation id(s)[{}] mentioned in config, but not defined in manifest of module '{}'!",
+                        fmt::join(unknown_impls_in_config, " "), module_config["module"])));
+    }
+
+    // validate config entries against manifest file
+    for (const auto& impl_id : provided_impls) {
+        EVLOG_verbose << fmt::format(
+            "Validating implementation config of {} against json schemas defined in module mainfest...",
+            printable_identifier(module_id, impl_id));
+
+        json config_map = module_config.value("config_implementation", json::object()).value(impl_id, json::object());
+        json config_map_schema =
+            this->manifests[module_config["module"].get<std::string>()]["provides"][impl_id]["config"];
+
+        try {
+            this->main[module_id]["config_maps"][impl_id] = parse_config_map(config_map_schema, config_map);
+        } catch (const ConfigParseException& err) {
+            if (err.err_t == ConfigParseException::NOT_DEFINED) {
+                EVLOG_AND_THROW(EverestConfigError(
+                    fmt::format("Config entry '{}' of {} not defined in manifest of module '{}'!", err.entry,
+                                printable_identifier(module_id, impl_id), module_config["module"])));
+            } else if (err.err_t == ConfigParseException::MISSING_ENTRY) {
+                EVLOG_AND_THROW(EverestConfigError(fmt::format("Missing mandatory config entry '{}' in {}!", err.entry,
+                                                               printable_identifier(module_id, impl_id))));
+            } else if (err.err_t == ConfigParseException::SCHEMA) {
+                EVLOG_AND_THROW(
+                    EverestConfigError(fmt::format("Schema validation for config entry '{}' failed in {}! Reason:\n{}",
+                                                   err.entry, printable_identifier(module_id, impl_id), err.what)));
+            } else {
+                throw err;
+            }
+        }
+    }
+
+    // validate config for !module
+    {
+        json config_map = module_config["config_module"];
+        json config_map_schema = this->manifests[module_config["module"].get<std::string>()]["config"];
+
+        try {
+            this->main[module_id]["config_maps"]["!module"] = parse_config_map(config_map_schema, config_map);
+        } catch (const ConfigParseException& err) {
+            if (err.err_t == ConfigParseException::NOT_DEFINED) {
+                EVLOG_AND_THROW(EverestConfigError(
+                    fmt::format("Config entry '{}' for module config not defined in manifest of module '{}'!",
+                                err.entry, module_config["module"])));
+            } else if (err.err_t == ConfigParseException::MISSING_ENTRY) {
+                EVLOG_AND_THROW(
+                    EverestConfigError(fmt::format("Missing mandatory config entry '{}' for module config in module {}",
+                                                   err.entry, module_config["module"])));
+            } else if (err.err_t == ConfigParseException::SCHEMA) {
+                EVLOG_AND_THROW(EverestConfigError(fmt::format(
+                    "Schema validation for config entry '{}' failed for module config in module {}! Reason:\n{}",
+                    err.entry, module_config["module"], err.what)));
+            } else {
+                throw err;
+            }
+        }
+    }
+}
+
 Config::Config(std::string schemas_dir, std::string config_file, std::string modules_dir, std::string interfaces_dir,
                std::string types_dir, const std::string& mqtt_everest_prefix, const std::string& mqtt_external_prefix) {
     BOOST_LOG_FUNCTION();
@@ -183,140 +443,30 @@ Config::Config(std::string schemas_dir, std::string config_file, std::string mod
         }
     }
 
+    std::optional<std::string> probe_module_id;
+
     // load manifest files of configured modules
     for (auto& element : this->main.items()) {
         const auto& module_id = element.key();
-        auto& module_config = element.value();
-        std::string module_name = module_config["module"];
+        const auto& module_config = element.value();
 
-        this->module_config_cache[module_id] = ConfigCache();
-        this->module_names[module_id] = module_name;
-        EVLOG_debug << fmt::format("Found module {}, loading and verifying manifest...",
-                                   printable_identifier(module_id));
-
-        // load and validate module manifest.json
-        fs::path manifest_path = fs::path(modules_dir) / module_name / "manifest.yaml";
-        try {
-            EVLOG_debug << fmt::format("Loading module manifest file at: {}", fs::canonical(manifest_path).string());
-
-            this->manifests[module_name] = load_yaml(manifest_path);
-
-            json_validator validator(Config::loader, Config::format_checker);
-            validator.set_root_schema(this->_schemas.manifest);
-            auto patch = validator.validate(this->manifests[module_name]);
-            if (!patch.is_null()) {
-                // extend manifest with default values
-                this->manifests[module_name] = this->manifests[module_name].patch(patch);
+        if (module_config.at("module") == "ProbeModule") {
+            if (probe_module_id) {
+                EVLOG_AND_THROW(EverestConfigError("Multiple instance of module type ProbeModule not supported yet"));
             }
-        } catch (const std::exception& e) {
-            EVLOG_AND_THROW(EverestConfigError(fmt::format("Failed to load and parse manifest file {}: {}",
-                                                           fs::weakly_canonical(manifest_path).string(), e.what())));
+            probe_module_id = module_id;
+            continue;
         }
 
-        // validate user-defined default values for the config meta-schemas
-        try {
-            validate_config_schema(this->manifests[module_name]["config"]);
-        } catch (const std::exception& e) {
-            EVLOG_AND_THROW(EverestConfigError(
-                fmt::format("Failed to validate the module configuration meta-schema for module '{}'. Reason:\n{}",
-                            module_name, e.what())));
-        }
+        load_and_validate_manifest(module_id, module_config);
+    }
 
-        for (auto& impl : this->manifests[module_name]["provides"].items()) {
-            try {
-                validate_config_schema(impl.value()["config"]);
-            } catch (const std::exception& e) {
-                EVLOG_AND_THROW(
-                    EverestConfigError(fmt::format("Failed to validate the implementation configuration meta-schema "
-                                                   "for implementation '{}' in module '{}'. Reason:\n{}",
-                                                   impl.key(), module_name, e.what())));
-            }
-        }
+    if (probe_module_id) {
+        auto& manifest = this->manifests["ProbeModule"];
 
-        std::set<std::string> provided_impls = Config::keys(this->manifests[module_name]["provides"]);
+        setup_probe_module_manifest(*probe_module_id, this->main, this->manifests);
 
-        this->interfaces[module_name] = json({});
-        this->module_config_cache[module_name].provides_impl = provided_impls;
-
-        for (const auto& impl_id : provided_impls) {
-            EVLOG_debug << fmt::format("Loading interface for implementation: {}", impl_id);
-            auto intf_name = this->manifests[module_name]["provides"][impl_id]["interface"].get<std::string>();
-            auto seen_interfaces = std::set<std::string>();
-            this->interfaces[module_name][impl_id] = resolve_interface(intf_name);
-            this->module_config_cache[module_name].cmds[impl_id] =
-                this->interfaces.at(module_name).at(impl_id).at("cmds");
-        }
-
-        // check if config only contains impl_ids listed in manifest file
-        std::set<std::string> unknown_impls_in_config;
-        std::set<std::string> configured_impls = Config::keys(this->main[module_id]["config_implementation"]);
-
-        std::set_difference(configured_impls.begin(), configured_impls.end(), provided_impls.begin(),
-                            provided_impls.end(),
-                            std::inserter(unknown_impls_in_config, unknown_impls_in_config.end()));
-
-        if (!unknown_impls_in_config.empty()) {
-            EVLOG_AND_THROW(EverestApiError(
-                fmt::format("Implementation id(s)[{}] mentioned in config, but not defined in manifest of module '{}'!",
-                            fmt::join(unknown_impls_in_config, " "), module_config["module"])));
-        }
-
-        // validate config entries against manifest file
-        for (const auto& impl_id : provided_impls) {
-            EVLOG_verbose << fmt::format(
-                "Validating implementation config of {} against json schemas defined in module mainfest...",
-                printable_identifier(module_id, impl_id));
-
-            json config_map = module_config["config_implementation"][impl_id];
-            json config_map_schema =
-                this->manifests[module_config["module"].get<std::string>()]["provides"][impl_id]["config"];
-
-            try {
-                this->main[module_id]["config_maps"][impl_id] = parse_config_map(config_map_schema, config_map);
-            } catch (const ConfigParseException& err) {
-                if (err.err_t == ConfigParseException::NOT_DEFINED) {
-                    EVLOG_AND_THROW(EverestConfigError(
-                        fmt::format("Config entry '{}' of {} not defined in manifest of module '{}'!", err.entry,
-                                    printable_identifier(module_id, impl_id), module_config["module"])));
-                } else if (err.err_t == ConfigParseException::MISSING_ENTRY) {
-                    EVLOG_AND_THROW(
-                        EverestConfigError(fmt::format("Missing mandatory config entry '{}' in {}!", err.entry,
-                                                       printable_identifier(module_id, impl_id))));
-                } else if (err.err_t == ConfigParseException::SCHEMA) {
-                    EVLOG_AND_THROW(EverestConfigError(
-                        fmt::format("Schema validation for config entry '{}' failed in {}! Reason:\n{}", err.entry,
-                                    printable_identifier(module_id, impl_id), err.what)));
-                } else {
-                    throw err;
-                }
-            }
-        }
-
-        // validate config for !module
-        {
-            json config_map = module_config["config_module"];
-            json config_map_schema = this->manifests[module_config["module"].get<std::string>()]["config"];
-
-            try {
-                this->main[module_id]["config_maps"]["!module"] = parse_config_map(config_map_schema, config_map);
-            } catch (const ConfigParseException& err) {
-                if (err.err_t == ConfigParseException::NOT_DEFINED) {
-                    EVLOG_AND_THROW(EverestConfigError(
-                        fmt::format("Config entry '{}' for module config not defined in manifest of module '{}'!",
-                                    err.entry, module_config["module"])));
-                } else if (err.err_t == ConfigParseException::MISSING_ENTRY) {
-                    EVLOG_AND_THROW(EverestConfigError(
-                        fmt::format("Missing mandatory config entry '{}' for module config in module {}", err.entry,
-                                    module_config["module"])));
-                } else if (err.err_t == ConfigParseException::SCHEMA) {
-                    EVLOG_AND_THROW(EverestConfigError(fmt::format(
-                        "Schema validation for config entry '{}' failed for module config in module {}! Reason:\n{}",
-                        err.entry, module_config["module"], err.what)));
-                } else {
-                    throw err;
-                }
-            }
-        }
+        load_and_validate_manifest(*probe_module_id, this->main.at(*probe_module_id));
     }
 
     // load telemetry configs
@@ -790,8 +940,8 @@ void Config::resolve_all_requirements() {
 
             for (uint64_t connection_num = 0; connection_num < connections.size(); connection_num++) {
                 auto& connection = connections[connection_num];
-                std::string connection_module_id = connection["module_id"];
-                if (!this->main.contains(connection["module_id"])) {
+                const std::string connection_module_id = connection["module_id"];
+                if (!this->main.contains(connection_module_id)) {
                     EVLOG_AND_THROW(EverestConfigError(fmt::format(
                         "Requirement '{}' of module {} not fulfilled: module id '{}' (configured in "
                         "connection {}) not loaded in config!",
@@ -815,7 +965,8 @@ void Config::resolve_all_requirements() {
                 // check interface requirement
                 if (requirement_interface != connection_provides["interface"]) {
                     EVLOG_AND_THROW(EverestConfigError(fmt::format(
-                        "Requirement '{}' of module {} not fulfilled by connection to module {}: required interface "
+                        "Requirement '{}' of module {} not fulfilled by connection to module {}: required "
+                        "interface "
                         "'{}' is not provided by this implementation! Connected implementation provides interface "
                         "'{}'.",
                         requirement_id, printable_identifier(module_id),

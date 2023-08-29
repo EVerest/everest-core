@@ -22,12 +22,12 @@ namespace Everest {
 const auto remote_cmd_res_timeout_seconds = 300;
 const std::array<std::string, 3> TELEMETRY_RESERVED_KEYS = {{"connector_id"}};
 
-Everest::Everest(std::string module_id, Config config, bool validate_data_with_schema,
+Everest::Everest(std::string module_id_, Config config_, bool validate_data_with_schema,
                  const std::string& mqtt_server_address, int mqtt_server_port, const std::string& mqtt_everest_prefix,
                  const std::string& mqtt_external_prefix, const std::string& telemetry_prefix, bool telemetry_enabled) :
     mqtt_abstraction(mqtt_server_address, std::to_string(mqtt_server_port), mqtt_everest_prefix, mqtt_external_prefix),
-    config(std::move(config)),
-    module_id(std::move(module_id)),
+    config(std::move(config_)),
+    module_id(std::move(module_id_)),
     remote_cmd_res_timeout(remote_cmd_res_timeout_seconds),
     validate_data_with_schema(validate_data_with_schema),
     mqtt_everest_prefix(mqtt_everest_prefix),
@@ -38,7 +38,13 @@ Everest::Everest(std::string module_id, Config config, bool validate_data_with_s
 
     EVLOG_debug << "Initializing EVerest framework...";
 
-    this->module_name = this->config.get_main_config()[this->module_id]["module"].get<std::string>();
+    const auto& main_config = this->config.get_main_config();
+    const auto module_config_it = main_config.find(this->module_id);
+    if (module_config_it == main_config.end()) {
+        EVLOG_AND_THROW(EverestBaseRuntimeError("Module id '" + module_id + "' not found in config"));
+    }
+
+    this->module_name = module_config_it->at("module");
     this->module_manifest = this->config.get_manifests()[this->module_name];
     this->module_classes = this->config.get_interfaces()[this->module_name];
     this->telemetry_config = this->config.get_telemetry_config(this->module_id);
