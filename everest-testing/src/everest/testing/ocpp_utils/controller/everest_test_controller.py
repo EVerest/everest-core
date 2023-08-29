@@ -12,7 +12,7 @@ import tempfile
 from datetime import datetime
 
 from everest.testing.ocpp_utils.controller.test_controller_interface import TestController
-from everest.testing.core_utils.everest_core import EverestCore, TestControlModuleConnection
+from everest.testing.core_utils.everest_core import EverestCore
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -111,12 +111,8 @@ class EverestTestController(TestController):
             f"temp ocpp user config: {self.temp_ocpp_user_config_file.name}")
         logging.info(f"temp ocpp certs path: {self.temp_ocpp_certs_dir.name}")
 
-        modules_to_test = None
-        if standalone_module == 'probe_module':
-            modules_to_test = [TestControlModuleConnection(
-                evse_manager_id="connector_1", car_simulator_id="car_simulator", ocpp_id="ocpp")]
         self.everest_core.start(
-            standalone_module=standalone_module, modules_to_test=modules_to_test)
+            standalone_module=standalone_module)
         self.mqtt_external_prefix = self.everest_core.mqtt_external_prefix
 
         mqtt_server_uri = os.environ.get("MQTT_SERVER_ADDRESS", "127.0.0.1")

@@ -10,7 +10,7 @@ import time
 import subprocess
 from pathlib import Path
 import tempfile
-from typing import List, TypedDict, Optional
+from typing import List, Optional
 import uuid
 import yaml
 import selectors
@@ -19,10 +19,13 @@ from signal import SIGINT
 STARTUP_TIMEOUT = 30
 
 
-class TestControlModuleConnection(TypedDict):
-    evse_manager_id: str
-    car_simulator_id: str
-    ocpp_id: str
+class Requirement:
+    def __init__(self, module_id: str, implementation_id: str):
+        self.module_id = module_id
+        self.implementation_id = implementation_id
+
+
+Connections = dict[str, List[Requirement]]
 
 
 class StatusFifoListener:
@@ -122,7 +125,7 @@ class EverestCore:
         self.everest_running = False
         self.all_modules_started_event = threading.Event()
 
-    def start(self, standalone_module: Optional[str] = None, modules_to_test: List[TestControlModuleConnection] = None):
+    def start(self, standalone_module: Optional[str] = None, test_connections: Connections = None):
         """Starts everest-core in a subprocess
 
         Args:
@@ -135,7 +138,7 @@ class EverestCore:
         logging.info(f'config: {self.everest_config_path}')
 
         # FIXME (aw): clean up passing of modules_to_test
-        self.test_control_modules = modules_to_test
+        self.test_connections = test_connections if test_connections != None else {}
         self.create_testing_user_config()
 
         status_fifo_path = self.temp_dir / "status.fifo"
@@ -201,24 +204,21 @@ class EverestCore:
         """Creates a user-config file to include the PyTestControlModule in the current SIL simulation.
         If a user-config already exists, it will be re-named
         """
+
+        if len(self.test_connections) == 0:
+            # nothing to do here
+            return
+
         file = self.everest_core_user_config_path / self.everest_config_path.name
         logging.info(f"temp everest user-config: {file.resolve()}")
-        if self.test_control_modules:
-            logging.info(f"Adding test control module(s) to user-config: {self.test_control_modules}")
-            user_config = {"active_modules": {}}
-            connections = {"connector_1": [], "test_control": [], "ocpp": []}
-            for test_control_module in self.test_control_modules:
-                connections["connector_1"].append(
-                    {"implementation_id": "evse", "module_id": test_control_module["evse_manager_id"]})
-                connections["test_control"].append(
-                    {"implementation_id": "main", "module_id": test_control_module["car_simulator_id"]})
-                if test_control_module["ocpp_id"]:
-                    connections["ocpp"].append(
-                        {"implementation_id": "main", "module_id": test_control_module["ocpp_id"]})
 
-            user_config["active_modules"]["probe_module"] = {
-                "config_module": {"device": "auto"},
-                "connections": connections,
-                "module": "PyProbeModule"}
+        # FIXME (aw): we need some agreement, if the module id of the probe module should be fixed or not
+        logging.info(f'Adding test control module(s) to user-config: {self.test_control_modules}')
+        user_config = {'active_modules': {
+            'probe': {
+                'connections': self.test_connections,
+                'module': 'ProbeModule'
+            }
+        }}
 
-            file.write_text(yaml.dump(user_config))
+        file.write_text(yaml.dump(user_config))
