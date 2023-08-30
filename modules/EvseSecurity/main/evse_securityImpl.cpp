@@ -53,7 +53,6 @@ evse_securityImpl::handle_verify_certificate(std::string& certificate_chain,
 
 types::evse_security::GetInstalledCertificatesResult evse_securityImpl::handle_get_installed_certificates(
     std::vector<types::evse_security::CertificateType>& certificate_types) {
-
     std::vector<evse_security::CertificateType> _certificate_types;
 
     for (const auto& certificate_type : certificate_types) {
