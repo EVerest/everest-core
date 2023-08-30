@@ -43,6 +43,8 @@ evse_security::LeafCertificateType from_everest(types::evse_security::LeafCertif
         return evse_security::LeafCertificateType::CSMS;
     case types::evse_security::LeafCertificateType::V2G:
         return evse_security::LeafCertificateType::V2G;
+    case types::evse_security::LeafCertificateType::MF:
+        return evse_security::LeafCertificateType::MF;
     default:
         throw std::runtime_error(
             "Could not convert types::evse_security::LeafCertificateType to evse_security::LeafCertificateType");
@@ -128,8 +130,8 @@ evse_security::GetInstalledCertificatesStatus from_everest(types::evse_security:
     case types::evse_security::GetInstalledCertificatesStatus::NotFound:
         return evse_security::GetInstalledCertificatesStatus::NotFound;
     default:
-        throw std::runtime_error("Could not convert types::evse_security::DeleteCertificateResult to "
-                                 "evse_security::DeleteCertificateResult");
+        throw std::runtime_error("Could not convert types::evse_security::GetInstalledCertificatesStatus to "
+                                 "evse_security::GetInstalledCertificatesStatus");
     }
 }
 
@@ -226,6 +228,8 @@ types::evse_security::LeafCertificateType to_everest(evse_security::LeafCertific
         return types::evse_security::LeafCertificateType::CSMS;
     case evse_security::LeafCertificateType::V2G:
         return types::evse_security::LeafCertificateType::V2G;
+    case evse_security::LeafCertificateType::MF:
+        return types::evse_security::LeafCertificateType::MF;
     default:
         throw std::runtime_error(
             "Could not convert evse_security::LeafCertificateType to types::evse_security::LeafCertificateType");
@@ -304,16 +308,15 @@ types::evse_security::DeleteCertificateResult to_everest(evse_security::DeleteCe
     }
 }
 
-types::evse_security::GetInstalledCertificatesStatus
-to_everest(evse_security::GetInstalledCertificatesStatus other) {
+types::evse_security::GetInstalledCertificatesStatus to_everest(evse_security::GetInstalledCertificatesStatus other) {
     switch (other) {
     case evse_security::GetInstalledCertificatesStatus::Accepted:
         return types::evse_security::GetInstalledCertificatesStatus::Accepted;
     case evse_security::GetInstalledCertificatesStatus::NotFound:
         return types::evse_security::GetInstalledCertificatesStatus::NotFound;
     default:
-        throw std::runtime_error("Could not convert evse_security::DeleteCertificateResult to "
-                                 "types::evse_security::DeleteCertificateResult");
+        throw std::runtime_error("Could not convert evse_security::GetInstalledCertificatesStatus to "
+                                 "types::evse_security::GetInstalledCertificatesStatus");
     }
 }
 
