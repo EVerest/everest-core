@@ -185,15 +185,6 @@ void OCPP::ready() {
 
     this->ocpp_share_path = this->info.paths.share;
 
-    const auto etc_certs_path = [&]() {
-        if (this->config.CertsPath.empty()) {
-            return this->info.paths.etc / CERTS_SUB_DIR;
-        } else {
-            return fs::path(this->config.CertsPath);
-        }
-    }();
-    EVLOG_info << "OCPP certificates path: " << etc_certs_path.string();
-
     auto configured_config_path = fs::path(this->config.ChargePointConfigPath);
 
     // try to find the config file if it has been provided as a relative path
@@ -250,7 +241,8 @@ void OCPP::ready() {
 
     this->charge_point = std::make_unique<ocpp::v16::ChargePoint>(
         json_config.dump(), this->ocpp_share_path, user_config_path, std::filesystem::path(this->config.DatabasePath),
-        sql_init_path, std::filesystem::path(this->config.MessageLogPath), std::make_shared<EvseSecurity>());
+        sql_init_path, std::filesystem::path(this->config.MessageLogPath),
+        std::make_shared<EvseSecurity>(*this->r_security));
 
     this->charge_point->register_pause_charging_callback([this](int32_t connector) {
         if (this->connector_evse_index_map.count(connector)) {

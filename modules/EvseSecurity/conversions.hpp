@@ -25,7 +25,7 @@ evse_security::GetInstalledCertificatesResult from_everest(types::evse_security:
 evse_security::OCSPRequestData from_everest(types::evse_security::OCSPRequestData other);
 evse_security::OCSPRequestDataList from_everest(types::evse_security::OCSPRequestDataList other);
 evse_security::KeyPair from_everest(types::evse_security::KeyPair other);
- 
+
 types::evse_security::EncodingFormat to_everest(evse_security::EncodingFormat other);
 types::evse_security::CaCertificateType to_everest(evse_security::CaCertificateType other);
 types::evse_security::LeafCertificateType to_everest(evse_security::LeafCertificateType other);

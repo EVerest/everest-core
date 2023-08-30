@@ -18,7 +18,8 @@ void evse_securityImpl::init() {
                                            certs_path / this->mod->config.csms_leaf_key_directory,
                                            certs_path / this->mod->config.secc_leaf_cert_directory,
                                            certs_path / this->mod->config.secc_leaf_key_directory};
-    this->evse_security = std::make_unique<evse_security::EvseSecurity>(file_paths, this->mod->config.private_key_password);
+    this->evse_security =
+        std::make_unique<evse_security::EvseSecurity>(file_paths, this->mod->config.private_key_password);
 }
 
 void evse_securityImpl::ready() {
@@ -59,8 +60,7 @@ types::evse_security::GetInstalledCertificatesResult evse_securityImpl::handle_g
         _certificate_types.push_back(conversions::from_everest(certificate_type));
     }
 
-    return conversions::to_everest(
-        this->evse_security->get_installed_certificates(_certificate_types));
+    return conversions::to_everest(this->evse_security->get_installed_certificates(_certificate_types));
 }
 
 types::evse_security::OCSPRequestDataList evse_securityImpl::handle_get_ocsp_request_data() {

@@ -3,8 +3,6 @@
 
 #include <evse_security_ocpp.hpp>
 
-namespace module {
-
 EvseSecurity::EvseSecurity(evse_securityIntf& r_security) : r_security(r_security) {
 }
 
@@ -394,5 +392,3 @@ types::evse_security::KeyPair from_ocpp(ocpp::KeyPair other) {
 }
 
 } // namespace conversions
-
-} // namespace module
