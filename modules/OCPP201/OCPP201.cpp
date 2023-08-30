@@ -353,15 +353,6 @@ void OCPP201::init() {
     this->ocpp_share_path = this->info.paths.share;
     this->operational_evse_states[0] = ocpp::v201::OperationalStatusEnum::Operative;
 
-    const auto etc_certs_path = [&]() {
-        if (this->config.CertsPath.empty()) {
-            return fs::path(this->info.paths.etc) / CERTS_DIR;
-        } else {
-            return fs::path(this->config.CertsPath);
-        }
-    }();
-    EVLOG_info << "OCPP certificates path: " << etc_certs_path.string();
-
     auto configured_config_path = fs::path(this->config.ChargePointConfigPath);
 
     // try to find the config file if it has been provided as a relative path
@@ -537,7 +528,8 @@ void OCPP201::init() {
 
     this->charge_point = std::make_unique<ocpp::v201::ChargePoint>(
         evse_connector_structure, this->config.DeviceModelDatabasePath, this->ocpp_share_path.string(),
-        this->config.CoreDatabasePath, sql_init_path.string(), this->config.MessageLogPath, std::make_shared<EvseSecurity>(), callbacks);
+        this->config.CoreDatabasePath, sql_init_path.string(), this->config.MessageLogPath,
+        std::make_shared<EvseSecurity>(*this->r_security), callbacks);
 
     if (this->config.EnableExternalWebsocketControl) {
         const std::string connect_topic = "everest_api/ocpp/cmd/connect";
@@ -586,8 +578,8 @@ void OCPP201::init() {
                     evse_id, 1, session_id, timestamp,
                     ocpp::v201::TriggerReasonEnum::RemoteStart, // FIXME(piet): Use proper reason here
                     meter_value, id_token, std::nullopt, reservation_id, remote_start_id,
-                    ocpp::v201::ChargingStateEnum::Charging);   // FIXME(piet): add proper groupIdToken +
-                                                                // ChargingStateEnum
+                    ocpp::v201::ChargingStateEnum::Charging); // FIXME(piet): add proper groupIdToken +
+                                                              // ChargingStateEnum
                 break;
             }
             case types::evse_manager::SessionEventEnum::TransactionFinished: {

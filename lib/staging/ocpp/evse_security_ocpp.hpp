@@ -8,11 +8,10 @@
 #include <generated/interfaces/evse_security/Interface.hpp>
 #include <ocpp/common/evse_security.hpp>
 
-namespace module {
-
 class EvseSecurity : public ocpp::EvseSecurity {
 private:
     evse_securityIntf& r_security;
+
 public:
     EvseSecurity() = delete;
     EvseSecurity(evse_securityIntf& r_security);
@@ -21,9 +20,8 @@ public:
                                                           const ocpp::CaCertificateType& certificate_type) override;
     ocpp::DeleteCertificateResult
     delete_certificate(const ocpp::CertificateHashDataType& certificate_hash_data) override;
-    ocpp::InstallCertificateResult
-    verify_certificate(const std::string& certificate_chain,
-                            const ocpp::CertificateSigningUseEnum& certificate_type) override;
+    ocpp::InstallCertificateResult verify_certificate(const std::string& certificate_chain,
+                                                      const ocpp::CertificateSigningUseEnum& certificate_type) override;
     ocpp::InstallCertificateResult
     update_leaf_certificate(const std::string& certificate_chain,
                             const ocpp::CertificateSigningUseEnum& certificate_type) override;
@@ -54,7 +52,7 @@ ocpp::CertificateHashDataType to_ocpp(types::evse_security::CertificateHashData 
 ocpp::CertificateHashDataChain to_ocpp(types::evse_security::CertificateHashDataChain other);
 ocpp::OCSPRequestData to_ocpp(types::evse_security::OCSPRequestData other);
 ocpp::KeyPair to_ocpp(types::evse_security::KeyPair other);
- 
+
 types::evse_security::CaCertificateType from_ocpp(ocpp::CaCertificateType other);
 types::evse_security::LeafCertificateType from_ocpp(ocpp::CertificateSigningUseEnum other);
 types::evse_security::CertificateType from_ocpp(ocpp::CertificateType other);
@@ -67,9 +65,6 @@ types::evse_security::CertificateHashDataChain from_ocpp(ocpp::CertificateHashDa
 types::evse_security::OCSPRequestData from_ocpp(ocpp::OCSPRequestData other);
 types::evse_security::KeyPair from_ocpp(ocpp::KeyPair other);
 
-
-};
-
-} // namespace module
+}; // namespace conversions
 
 #endif // EVEREST_SECURITY_OCPP_HPP
