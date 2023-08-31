@@ -133,6 +133,24 @@ private:
     int network_configuration_priority;
     bool disable_automatic_websocket_reconnects;
 
+    // store the connector status
+    struct EvseConnectorPair {
+        int32_t evse_id;
+        int32_t connector_id;
+
+        // Define a comparison operator for the struct
+        bool operator<(const EvseConnectorPair& other) const {
+            // Compare based on name, then age
+            if (evse_id != other.evse_id) {
+                return evse_id < other.evse_id;
+            }
+            return connector_id < other.connector_id;
+        }
+    };
+
+    std::map<EvseConnectorPair, ConnectorStatusEnum> conn_state_per_evse;
+    std::chrono::time_point<std::chrono::steady_clock> time_disconnected;
+
     /// \brief Used when an 'OnIdle' reset is requested, to perform the reset after the charging has stopped.
     bool reset_scheduled;
     /// \brief If `reset_scheduled` is true and the reset is for a specific evse id, it will be stored in this member.

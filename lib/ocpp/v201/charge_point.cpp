@@ -470,6 +470,35 @@ void ChargePoint::init_websocket() {
     this->websocket->register_connected_callback([this](const int security_profile) {
         this->message_queue->resume();
         this->websocket_connection_status = WebsocketConnectionStatusEnum::Connected;
+
+        if (this->registration_status == RegistrationStatusEnum::Accepted) {
+            // handle offline threshold
+            //  Get the current time point using steady_clock
+            std::chrono::steady_clock::duration offline_duration = std::chrono::steady_clock::now() - time_disconnected;
+
+            // B04.FR.01
+            // If offline period exceeds offline threshold then send the status notification for all connectors
+            if (offline_duration > std::chrono::seconds(this->device_model->get_value<int>(
+                                       ControllerComponentVariables::OfflineThreshold))) {
+                EVLOG_debug << "offline for more than offline threshold ";
+                for (auto const& [evse_id, evse] : this->evses) {
+                    evse->trigger_status_notification_callbacks();
+                }
+            } else {
+                // B04.FR.02
+                // If offline period doesn't exceed offline threshold then send the status notification for all
+                // connectors that changed state
+                EVLOG_debug << "offline for less than offline threshold ";
+                for (auto const& [evse_id, evse] : this->evses) {
+                    int number_of_connectors = evse->get_number_of_connectors();
+                    for (int connector_id = 1; connector_id <= number_of_connectors; connector_id++) {
+                        if (conn_state_per_evse[{evse_id, connector_id}] != evse->get_state(connector_id)) {
+                            evse->trigger_status_notification_callback(connector_id);
+                        }
+                    }
+                }
+            }
+        }
     });
 
     this->websocket->register_closed_callback(
@@ -479,6 +508,25 @@ void ChargePoint::init_websocket() {
                           << " which is configurationSlot: " << configuration_slot;
             this->websocket_connection_status = WebsocketConnectionStatusEnum::Disconnected;
             this->message_queue->pause();
+
+            // check if offline threshold has been defined
+            if (this->device_model->get_value<int>(ControllerComponentVariables::OfflineThreshold) != 0) {
+                // get the status of all the connectors
+                for (auto const& [evse_id, evse] : this->evses) {
+                    int number_of_connectors = evse->get_number_of_connectors();
+                    EvseConnectorPair conn_states_struct_key;
+                    EVLOG_debug << "evseId: " << evse_id << " numConn: " << number_of_connectors;
+                    for (int connector_id = 1; connector_id <= number_of_connectors; connector_id++) {
+                        conn_states_struct_key.evse_id = evse_id;
+                        conn_states_struct_key.connector_id = connector_id;
+                        conn_state_per_evse[conn_states_struct_key] = evse->get_state(connector_id);
+                        EVLOG_debug << "conn_id: " << conn_states_struct_key.connector_id
+                                    << " State: " << conn_state_per_evse[conn_states_struct_key];
+                    }
+                }
+                // Get the current time point using steady_clock
+                time_disconnected = std::chrono::steady_clock::now();
+            }
 
             if (!this->disable_automatic_websocket_reconnects) {
                 this->websocket_timer.timeout(
