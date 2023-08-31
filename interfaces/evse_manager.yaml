@@ -25,7 +25,7 @@ cmds:
       type: boolean
   authorize_response:
     description: >-
-      Reports the result of an authorization request to the EvseManagar. 
+      Reports the result of an authorization request to the EvseManager. 
       Contains the provided_token for which authorization was requested and
       the validation_result
     arguments:
