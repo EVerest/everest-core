@@ -103,6 +103,12 @@ void power_supply_DCImpl::init() {
     config_voltage_limit = mod->config.voltage_limit_V;
     config_power_limit = mod->config.power_limit_W;
 
+    if (!mod->config.discharge_gpio_chip.empty()) {
+        discharge_gpio.open(mod->config.discharge_gpio_chip, mod->config.discharge_gpio_line,
+                            !mod->config.discharge_gpio_polarity);
+        discharge_gpio.set_output(false);
+    }
+
     can_broker = std::make_unique<CanBroker>(mod->config.device, mod->config.device_address);
 
     // ensure the module is switched off
@@ -180,6 +186,14 @@ void power_supply_DCImpl::ready() {
                 }
                 last_alarm_flags = alarm;
             }
+        }
+
+        // Discharge output if it is higher then setpoint voltage.
+        // Note that this has no timeout, so HW must be designed to sustain the worst case load (e.g. 1000V) continously
+        if (vc.voltage_V > (voltage + 10)) {
+            discharge_gpio.set(true);
+        } else {
+            discharge_gpio.set(false);
         }
 
         if (mod->config.debug_print_all_telemetry) {
