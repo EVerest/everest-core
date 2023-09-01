@@ -42,7 +42,7 @@ libocpp:
 # Josev
 Josev:
   git: https://github.com/EVerest/ext-switchev-iso15118.git
-  git_tag: 43828f6
+  git_tag: 646ceca
 # OpenV2G
 ext-openv2g:
   git: https://github.com/EVerest/ext-openv2g.git
