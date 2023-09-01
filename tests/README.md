@@ -11,6 +11,12 @@ cd ~/checkout/everest-workspace/everest-utils/everest-testing
 python3 -m pip install .
 ```
 
+You can also use the following cmake target to install everest-testing and its dependencies:
+```bash
+cd everest-core
+cmake --build build --target install_everest_testing
+```
+
 ## Execute locally
 
 To start you should try executing the available basic tests:
