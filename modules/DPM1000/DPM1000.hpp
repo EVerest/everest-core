@@ -26,6 +26,9 @@ struct Conf {
     double current_limit_A;
     double voltage_limit_V;
     std::string series_parallel_mode;
+    std::string discharge_gpio_chip;
+    int discharge_gpio_line;
+    bool discharge_gpio_polarity;
     bool debug_print_all_telemetry;
 };
 

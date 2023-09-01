@@ -14,6 +14,8 @@
 
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 #include <atomic>
+
+#include <gpio.hpp>
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 
 namespace module {
@@ -58,6 +60,8 @@ private:
     float config_voltage_limit{0};
     float config_power_limit{0};
     float config_min_voltage_limit{50.};
+
+    Everest::Gpio discharge_gpio;
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 
