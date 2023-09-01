@@ -83,7 +83,7 @@ The following table shows CSMS with which this library was tested. If you provid
 -   gridundco
 -   ihomer
 -   iLumen
--   P3
+-   EnergyStacks
 -   Siemens
 -   SteVe
 -   Syntech
