@@ -42,11 +42,11 @@ public:
         p_board_support(std::move(p_board_support)),
         config(config){};
 
-    const Conf& config;
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<power_supply_DCImplBase> p_dc_supply;
     const std::unique_ptr<powermeterImplBase> p_powermeter;
     const std::unique_ptr<board_support_ACImplBase> p_board_support;
+    const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here

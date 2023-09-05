@@ -47,12 +47,12 @@ public:
         r_price_information(std::move(r_price_information)),
         config(config){};
 
-    const Conf& config;
     const std::unique_ptr<energyImplBase> p_energy_grid;
     const std::unique_ptr<external_energy_limitsImplBase> p_external_limits;
     const std::vector<std::unique_ptr<energyIntf>> r_energy_consumer;
     const std::vector<std::unique_ptr<powermeterIntf>> r_powermeter;
     const std::vector<std::unique_ptr<energy_price_informationIntf>> r_price_information;
+    const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here

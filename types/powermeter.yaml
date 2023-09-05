@@ -1,5 +1,35 @@
 description: Powermeter types
 types:
+  TransactionReq:
+    description: Required input parameter for starting an OCMF transaction. These values will be included in the signed OCMF packet.
+    type: object
+    additionalProperties: false
+    required:
+      - evse_id
+      - transaction_id
+      - client_id
+      - tariff_id
+      - cable_id
+      - user_data
+    properties:
+      evse_id:
+        description: Id of this EVSE
+        type: string
+      transaction_id:
+        description: OCPP transaction UUID
+        type: string
+      client_id:
+        description: User identification means, e.g. RFID card ID
+        type: string
+      tariff_id:
+        description: Tariff ID
+        type: string
+      cable_id:
+        description: Cable ID
+        type: string
+      user_data:
+        description: User data
+        type: string
   Powermeter:
     description: Measured dataset (AC or DC)
     type: object

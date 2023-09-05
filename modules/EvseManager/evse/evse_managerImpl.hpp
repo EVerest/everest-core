@@ -50,7 +50,6 @@ protected:
     virtual void handle_set_external_limits(types::energy::ExternalLimits& value) override;
     virtual types::evse_manager::SwitchThreePhasesWhileChargingResult
     handle_switch_three_phases_while_charging(bool& three_phases) override;
-    virtual std::string handle_get_signed_meter_value() override;
     virtual void handle_set_get_certificate_response(
         types::iso15118_charger::Response_Exi_Stream_Status& certificate_reponse) override;
 

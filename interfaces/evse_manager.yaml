@@ -113,13 +113,6 @@ cmds:
       description: Returns success or error code
       type: string
       $ref: /evse_manager#/SwitchThreePhasesWhileChargingResult
-  get_signed_meter_value:
-    description: >-
-      Returns a signed meter value. Includes current id_token if session
-      is running.
-    result:
-      description: Signed meter value
-      type: string
   set_get_certificate_response:
     description: >-
       CertificateInstallationRes/CertificateUpdateRes - Set the new/updated Contract Certificate (including the certificate chain)

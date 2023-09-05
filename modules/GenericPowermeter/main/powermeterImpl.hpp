@@ -22,7 +22,6 @@ namespace main {
 struct Conf {
     std::string model;
     int powermeter_device_id;
-    int modbus_dead_time;
     int modbus_base_address;
 };
 
@@ -38,7 +37,8 @@ public:
 
 protected:
     // command handler functions (virtual)
-    virtual std::string handle_get_signed_meter_value(std::string& auth_token) override;
+    virtual bool handle_start_transaction(types::powermeter::TransactionReq& value) override;
+    virtual std::string handle_stop_transaction(std::string& transaction_id) override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
     // insert your protected definitions here

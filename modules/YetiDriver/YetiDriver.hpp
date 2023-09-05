@@ -47,13 +47,13 @@ public:
         p_yeti_simulation_control(std::move(p_yeti_simulation_control)),
         config(config){};
 
-    const Conf& config;
     Everest::MqttProvider& mqtt;
     Everest::TelemetryProvider& telemetry;
     const std::unique_ptr<powermeterImplBase> p_powermeter;
     const std::unique_ptr<board_support_ACImplBase> p_board_support;
     const std::unique_ptr<yeti_extrasImplBase> p_yeti_extras;
     const std::unique_ptr<yeti_simulation_controlImplBase> p_yeti_simulation_control;
+    const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     void publish_external_telemetry_livedata(const std::string& topic, const Everest::TelemetryMap& data);

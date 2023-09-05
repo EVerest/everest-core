@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (C) 2022-2023 chargebyte GmbH
-// Copyright (C) 2022-2023 Contributors to EVerest
-
+// Copyright Pionix GmbH and Contributors to EVerest
 #ifndef EVSE_V2G_HPP
 #define EVSE_V2G_HPP
 

@@ -5,7 +5,7 @@
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 1
+// template version 2
 //
 
 #include "ld-ev.hpp"
@@ -48,11 +48,11 @@ public:
         r_serial_com_0_connection(std::move(r_serial_com_0_connection)),
         config(config){};
 
-    const Conf& config;
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<powermeterImplBase> p_main;
     const std::unique_ptr<sunspec_ac_meterImplBase> p_ac_meter;
     const std::vector<std::unique_ptr<serial_communication_hubIntf>> r_serial_com_0_connection;
+    const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here

@@ -45,9 +45,9 @@ public:
                   std::unique_ptr<energyIntf> r_energy_trunk, Conf& config) :
         ModuleBase(info), p_main(std::move(p_main)), r_energy_trunk(std::move(r_energy_trunk)), config(config){};
 
-    const Conf& config;
     const std::unique_ptr<energy_managerImplBase> p_main;
     const std::unique_ptr<energyIntf> r_energy_trunk;
+    const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here

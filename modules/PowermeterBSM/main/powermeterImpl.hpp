@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-
 #ifndef MAIN_POWERMETER_IMPL_HPP
 #define MAIN_POWERMETER_IMPL_HPP
 
@@ -19,7 +18,6 @@
 #include <modbus/modbus_client.hpp>
 #include <mutex>
 #include <thread>
-
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 
 namespace module {
@@ -39,7 +37,8 @@ public:
 
 protected:
     // command handler functions (virtual)
-    virtual std::string handle_get_signed_meter_value(std::string& auth_token) override;
+    virtual bool handle_start_transaction(types::powermeter::TransactionReq& value) override;
+    virtual std::string handle_stop_transaction(std::string& transaction_id) override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
     // insert your protected definitions here

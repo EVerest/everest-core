@@ -151,10 +151,10 @@ public:
           std::unique_ptr<kvsIntf> r_store, Conf& config) :
         ModuleBase(info), mqtt(mqtt_provider), p_main(std::move(p_main)), r_store(std::move(r_store)), config(config){};
 
-    const Conf& config;
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<emptyImplBase> p_main;
     const std::unique_ptr<kvsIntf> r_store;
+    const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
