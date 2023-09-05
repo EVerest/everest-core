@@ -1059,6 +1059,10 @@ void ChargePointImpl::handle_message(const json& json_message, MessageType messa
         this->handleGetLocalListVersionRequest(json_message);
         break;
 
+    case MessageType::HeartbeatResponse:
+        this->handleHeartbeatResponse(json_message);
+        break;
+
     default:
         // TODO(kai): not implemented error?
         break;
@@ -1078,6 +1082,11 @@ void ChargePointImpl::handleBootNotificationResponse(ocpp::CallResult<BootNotifi
     switch (call_result.msg.status) {
     case RegistrationStatus::Accepted: {
         this->connection_state = ChargePointConnectionState::Booted;
+
+        if (this->set_system_time_callback != nullptr) {
+            this->set_system_time_callback(call_result.msg.currentTime.to_rfc3339());
+        }
+
         // we are allowed to send messages to the central system
         // activate heartbeat
         this->update_heartbeat_interval();
@@ -1700,6 +1709,12 @@ void ChargePointImpl::handleUnlockConnectorRequest(ocpp::Call<UnlockConnectorReq
 
     ocpp::CallResult<UnlockConnectorResponse> call_result(response, call.uniqueId);
     this->send<UnlockConnectorResponse>(call_result);
+}
+
+void ChargePointImpl::handleHeartbeatResponse(CallResult<HeartbeatResponse> call_result) {
+    if (this->set_system_time_callback != nullptr) {
+        this->set_system_time_callback(call_result.msg.currentTime.to_rfc3339());
+    }
 }
 
 void ChargePointImpl::handleSetChargingProfileRequest(ocpp::Call<SetChargingProfileRequest> call) {

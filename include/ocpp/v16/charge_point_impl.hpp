@@ -245,6 +245,7 @@ private:
     void handleStartTransactionResponse(CallResult<StartTransactionResponse> call_result);
     void handleStopTransactionResponse(CallResult<StopTransactionResponse> call_result);
     void handleUnlockConnectorRequest(Call<UnlockConnectorRequest> call);
+    void handleHeartbeatResponse(CallResult<HeartbeatResponse> call_result);
 
     // smart charging profile
     void handleSetChargingProfileRequest(Call<SetChargingProfileRequest> call);
