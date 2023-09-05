@@ -14,6 +14,7 @@ namespace ocpp {
 ///
 class Websocket {
 private:
+    // unique_ptr holds address of base - requires WebSocketBase to have a virtual destructor
     std::unique_ptr<WebsocketBase> websocket;
     std::function<void(const int security_profile)> connected_callback;
     std::function<void(const websocketpp::close::status::value reason)> closed_callback;

@@ -79,7 +79,7 @@ protected:
 public:
     /// \brief Creates a new WebsocketBase object with the providede \p connection_options
     explicit WebsocketBase(const WebsocketConnectionOptions& connection_options);
-    ~WebsocketBase();
+    virtual ~WebsocketBase();
 
     /// \brief connect to a websocket
     /// \returns true if the websocket is initialized and a connection attempt is made

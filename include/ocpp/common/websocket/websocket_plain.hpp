@@ -21,7 +21,7 @@ using websocketpp::lib::placeholders::_2;
 ///
 /// \brief contains a websocket abstraction that can connect to plaintext websocket endpoints (ws://)
 ///
-class WebsocketPlain : public WebsocketBase {
+class WebsocketPlain final : public WebsocketBase {
 private:
     client ws_client;
     websocketpp::lib::shared_ptr<websocketpp::lib::thread> websocket_thread;

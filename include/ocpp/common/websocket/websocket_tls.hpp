@@ -20,7 +20,7 @@ using websocketpp::lib::placeholders::_2;
 ///
 /// \brief contains a websocket abstraction that can connect to TLS and non-TLS websocket endpoints
 ///
-class WebsocketTLS : public WebsocketBase {
+class WebsocketTLS final : public WebsocketBase {
 private:
     tls_client wss_client;
     std::shared_ptr<PkiHandler> pki_handler;
