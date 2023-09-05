@@ -108,6 +108,7 @@ types:
         ReservationEnd: Signaled when a reservation ends
         ReplugStarted: Signaled when the EVSE Manager virtually replugs without interrupting the session or transaction
         ReplugFinished: Signaled when the virtual replug process has finished
+        PluginTimeout: Signaled when an EV has been Plugged in but no authorization is present within specified ConnectionTimeout
     type: string
     enum:
       - Enabled
@@ -132,6 +133,7 @@ types:
       - ReservationEnd
       - ReplugStarted
       - ReplugFinished
+      - PluginTimeout
   SessionStarted:
     description: Data for the SessionStarted event
     type: object

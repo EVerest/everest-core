@@ -1161,8 +1161,10 @@ bool Charger::DeAuthorize() {
 
             // We can safely remove auth as it is not in use right now
             std::lock_guard<std::recursive_mutex> lock(configMutex);
-            if (!authorized)
+            if (!authorized) {
+                signalEvent(types::evse_manager::SessionEventEnum::PluginTimeout);
                 return false;
+            }
             authorized = false;
             stopSession();
             return true;
