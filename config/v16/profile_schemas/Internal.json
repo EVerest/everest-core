@@ -206,6 +206,13 @@
             "$comment": "OCPP1.6 specifies that for certain ChargingProfiles the startSchedule field needs to be set. This flag ignores this requirement and will accept those profiles without startSchedule, assuming startSchedule is now.",
             "type": "boolean",
             "readOnly": false
+        },
+        "WaitForStopTransactionsOnResetTimeout": {
+            "$comment": "Specifies the timeout that is used when transactions are stopped because of a Reset.req . If timeout exceeds, the reset callback is executed even if StopTransaction.conf messages not yet received for transactions that have been active.",
+            "type": "integer",
+            "readOnly": false,
+            "minimum": 0,
+            "default": 60
         }
     },
     "additionalProperties": false

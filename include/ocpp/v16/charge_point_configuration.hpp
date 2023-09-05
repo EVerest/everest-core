@@ -376,6 +376,10 @@ public:
     void setAllowChargingProfileWithoutStartSchedule(const bool allow);
     std::optional<KeyValue> getAllowChargingProfileWithoutStartScheduleKeyValue();
 
+    int32_t getWaitForStopTransactionsOnResetTimeout();
+    void setWaitForStopTransactionsOnResetTimeout(const int32_t wait_for_stop_transactions_on_reset_timeout);
+    KeyValue getWaitForStopTransactionsOnResetTimeoutKeyValue();
+
     std::optional<KeyValue> get(CiString<50> key);
 
     std::vector<KeyValue> get_all_key_value();

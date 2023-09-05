@@ -1579,14 +1579,16 @@ void ChargePointImpl::handleResetRequest(ocpp::Call<ResetRequest> call) {
         this->reset_thread = std::thread([this, reset_type]() {
             EVLOG_debug << "Waiting until all transactions are stopped...";
             std::unique_lock lk(this->stop_transaction_mutex);
-            this->stop_transaction_cv.wait_for(lk, std::chrono::seconds(5), [this] {
-                for (int32_t connector = 1; connector <= this->configuration->getNumberOfConnectors(); connector++) {
-                    if (this->transaction_handler->transaction_active(connector)) {
-                        return false;
+            this->stop_transaction_cv.wait_for(
+                lk, std::chrono::seconds(this->configuration->getWaitForStopTransactionsOnResetTimeout()), [this] {
+                    for (int32_t connector = 1; connector <= this->configuration->getNumberOfConnectors();
+                         connector++) {
+                        if (this->transaction_handler->transaction_active(connector)) {
+                            return false;
+                        }
                     }
-                }
-                return true;
-            });
+                    return true;
+                });
             // this is executed after all transactions have been stopped
             this->stop();
             this->reset_callback(reset_type);
