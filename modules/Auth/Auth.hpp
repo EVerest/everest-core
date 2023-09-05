@@ -5,7 +5,7 @@
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 1
+// template version 2
 //
 
 #include "ld-ev.hpp"
@@ -52,12 +52,12 @@ public:
         r_evse_manager(std::move(r_evse_manager)),
         config(config){};
 
-    const Conf& config;
     const std::unique_ptr<authImplBase> p_main;
     const std::unique_ptr<reservationImplBase> p_reservation;
     const std::vector<std::unique_ptr<auth_token_providerIntf>> r_token_provider;
     const std::vector<std::unique_ptr<auth_token_validatorIntf>> r_token_validator;
     const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;
+    const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here

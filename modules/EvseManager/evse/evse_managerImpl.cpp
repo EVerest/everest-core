@@ -355,14 +355,6 @@ evse_managerImpl::handle_switch_three_phases_while_charging(bool& three_phases) 
     }
 };
 
-std::string evse_managerImpl::handle_get_signed_meter_value() {
-    if (mod->r_powermeter_billing().size() > 0) {
-        return mod->r_powermeter_billing()[0]->call_get_signed_meter_value("FIXME");
-    } else {
-        return "NOT_AVAILABLE";
-    }
-}
-
 void evse_managerImpl::handle_set_get_certificate_response(
     types::iso15118_charger::Response_Exi_Stream_Status& certificate_reponse) {
     mod->r_hlc[0]->call_set_Get_Certificate_Response(certificate_reponse);

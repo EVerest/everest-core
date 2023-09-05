@@ -16,7 +16,6 @@ target_link_libraries(${MODULE_NAME}
     PRIVATE
         ${PCAP_LIBRARY}
 )
-
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 
 target_sources(${MODULE_NAME}

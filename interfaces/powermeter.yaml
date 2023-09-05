@@ -1,15 +1,23 @@
 description: This interface defines a generic powermeter for 5 wire TN networks.
 cmds:
-  get_signed_meter_value:
-    description: Returns a signed meter value with the given auth token
+  start_transaction:
+    description: Starts a transaction on the power meter (for signed metering according to German Eichrecht)
     arguments:
-      auth_token:
-        description: Auth token
-        type: string
-        minLength: 1
-        maxLength: 20
+      value:
+        description: All information that should be included in the signed OCMF packet
+        type: object
+        $ref: /powermeter#/TransactionReq
     result:
-      description: Signed meter value
+      description: True on success, False if transaction could not be started in the power meter
+      type: boolean
+  stop_transaction:
+    description: Stop the transaction on the power meter and return the signed metering information
+    arguments:
+      transaction_id:
+        description: Transaction id
+        type: string
+    result:
+      description: Returns OCMF signed meter values
       type: string
 vars:
   powermeter:

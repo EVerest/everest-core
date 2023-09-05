@@ -47,9 +47,13 @@ void powermeterImpl::ready() {
     }
 }
 
-std::string powermeterImpl::handle_get_signed_meter_value(std::string& auth_token) {
+std::string powermeterImpl::handle_stop_transaction(std::string& transaction_id) {
     return "NOT_SUPPORTED";
 };
+
+bool powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& value) {
+    return false;
+}
 
 void powermeterImpl::init_default_values() {
     this->pm_last_values.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());

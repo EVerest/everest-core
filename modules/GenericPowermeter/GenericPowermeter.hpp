@@ -31,9 +31,9 @@ public:
                       std::unique_ptr<serial_communication_hubIntf> r_serial_comm_hub, Conf& config) :
         ModuleBase(info), p_main(std::move(p_main)), r_serial_comm_hub(std::move(r_serial_comm_hub)), config(config){};
 
-    const Conf& config;
     const std::unique_ptr<powermeterImplBase> p_main;
     const std::unique_ptr<serial_communication_hubIntf> r_serial_comm_hub;
+    const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here

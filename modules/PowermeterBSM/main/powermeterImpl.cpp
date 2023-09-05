@@ -31,10 +31,7 @@ void powermeterImpl::ready() {
     m_watchdog_thread = std::thread(&powermeterImpl::watchdog, this);
 }
 
-std::string powermeterImpl::handle_get_signed_meter_value(std::string& auth_token) {
-
-    // your code for cmd get_signed_meter_value goes here
-
+std::string powermeterImpl::handle_stop_transaction(std::string& transaction_id) {
     try {
 
         std::scoped_lock lock(mod->get_device_mutex());
@@ -55,6 +52,12 @@ std::string powermeterImpl::handle_get_signed_meter_value(std::string& auth_toke
         return "get_signed_meter_value_error";
     }
 };
+
+// FIXME: probably this would need to be handled differently in Bauer power meter - need to actually start a transaction
+// on the power meter. With current implementation we do not get a start signed meter value
+bool powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& value) {
+    return true;
+}
 
 //////////////////////////////////////////////////////////////////////
 //

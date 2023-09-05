@@ -36,9 +36,13 @@ void powermeterImpl::init() {
 void powermeterImpl::ready() {
 }
 
-std::string powermeterImpl::handle_get_signed_meter_value(std::string& auth_token) {
-    return "NOT_AVAILABLE";
+std::string powermeterImpl::handle_stop_transaction(std::string& transaction_id) {
+    return "NOT_SUPPORTED";
 };
+
+bool powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& value) {
+    return false;
+}
 
 } // namespace powermeter
 } // namespace module
