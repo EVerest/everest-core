@@ -251,6 +251,10 @@ public:
     /// \param connector
     void on_disabled(int32_t connector);
 
+    /// \brief Notifies chargepoint that a ConnectionTimeout occured for the given \p connector . This function should
+    /// be called when an EV is plugged in but the authorization is present within the specified ConnectionTimeout
+    void on_plugin_timeout(int32_t connector);
+
     /// registers a \p callback function that can be used to receive a arbitrary data transfer for the given \p
     /// vendorId and \p messageId
     /// \param vendorId

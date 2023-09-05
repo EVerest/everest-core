@@ -510,6 +510,10 @@ public:
     /// \param connector
     void on_disabled(int32_t connector);
 
+    /// \brief Notifies chargepoint that a ConnectionTimeout occured for the given \p connector . This function should
+    /// be called when an EV is plugged in but the authorization is present within the specified ConnectionTimeout
+    void on_plugin_timeout(int32_t connector);
+
     /// registers a \p callback function that can be used to receive a arbitrary data transfer for the given \p
     /// vendorId and \p messageId
     /// \param vendorId
@@ -648,8 +652,8 @@ public:
                                  const ocpp::v201::Get15118EVCertificateResponse& certificate_response,
                                  const ocpp::v201::CertificateActionEnum& certificate_action)>& callback);
 
-    // \brief registers a \p callback function that can be used to publish the response when transaction starts respone
-    // is received \param callback
+    /// \brief registers a \p callback function that can be used to publish the response when transaction starts respone
+    /// is received \param callback
     void register_transaction_started_callback(
         const std::function<void(int32_t connector, int32_t transaction_id)>& callback);
 };

@@ -151,6 +151,10 @@ void ChargePoint::on_disabled(int32_t connector) {
     this->charge_point->on_disabled(connector);
 }
 
+void ChargePoint::on_plugin_timeout(int32_t connector) {
+    this->charge_point->on_plugin_timeout(connector);
+}
+
 void ChargePoint::register_data_transfer_callback(
     const CiString<255>& vendorId, const CiString<50>& messageId,
     const std::function<DataTransferResponse(const std::optional<std::string>& msg)>& callback) {

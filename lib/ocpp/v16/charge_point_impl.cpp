@@ -3352,5 +3352,9 @@ void ChargePointImpl::on_disabled(int32_t connector) {
     this->status->submit_event(connector, FSMEvent::ChangeAvailabilityToUnavailable);
 }
 
+void ChargePointImpl::on_plugin_timeout(int32_t connector) {
+    this->status->submit_event(connector, FSMEvent::TransactionStoppedAndUserActionRequired);
+}
+
 } // namespace v16
 } // namespace ocpp
