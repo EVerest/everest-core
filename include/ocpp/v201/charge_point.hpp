@@ -21,6 +21,7 @@
 #include <ocpp/v201/messages/ClearCache.hpp>
 #include <ocpp/v201/messages/DataTransfer.hpp>
 #include <ocpp/v201/messages/GetBaseReport.hpp>
+#include <ocpp/v201/messages/GetLocalListVersion.hpp>
 #include <ocpp/v201/messages/GetLog.hpp>
 #include <ocpp/v201/messages/GetReport.hpp>
 #include <ocpp/v201/messages/GetVariables.hpp>
@@ -31,6 +32,7 @@
 #include <ocpp/v201/messages/RequestStartTransaction.hpp>
 #include <ocpp/v201/messages/RequestStopTransaction.hpp>
 #include <ocpp/v201/messages/Reset.hpp>
+#include <ocpp/v201/messages/SendLocalList.hpp>
 #include <ocpp/v201/messages/SetNetworkProfile.hpp>
 #include <ocpp/v201/messages/SetVariables.hpp>
 #include <ocpp/v201/messages/StatusNotification.hpp>
@@ -158,6 +160,12 @@ private:
     MeterValue get_latest_meter_value_filtered(const MeterValue& meter_value, ReadingContextEnum context,
                                                const ComponentVariable& component_variable);
 
+    ///\brief Apply a local list request to the database if allowed
+    ///
+    ///\param request The local list request to apply
+    ///\retval Accepted if applied, otherwise will return either Failed or VersionMismatch
+    SendLocalListStatusEnum apply_local_authorization_list(const SendLocalListRequest& request);
+
     ///
     /// \brief Get evseid for the given transaction id.
     /// \param transaction_id   The transactionid
@@ -243,6 +251,10 @@ private:
 
     // Functional Block C: Authorization
     void handle_clear_cache_req(Call<ClearCacheRequest> call);
+
+    // Functional Block D: Local authorization list management
+    void handle_send_local_authorization_list_req(Call<SendLocalListRequest> call);
+    void handle_get_local_authorization_list_version_req(Call<GetLocalListVersionRequest> call);
 
     // Functional Block E: Transaction
     void handle_start_transaction_event_response(CallResult<TransactionEventResponse> call_result,

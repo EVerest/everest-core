@@ -190,16 +190,28 @@
         }
     },
     "LocalAuthListCtrlr": {
-        "BytesPerMessageSendLocalList": {
-            "variable_name": "BytesPerMessageSendLocalList",
+        "LocalAuthListCtrlrAvailable": {
+            "variable_name": "Available",
             "attributes": {
-                "Actual": 42
+                "Actual": true
+            }
+        },
+        "LocalAuthListCtrlrEnabled": {
+            "variable_name": "Enabled",
+            "attributes": {
+                "Actual": false
             }
         },
         "LocalAuthListCtrlrEntries": {
             "variable_name": "Entries",
             "attributes": {
-                "Actual": 42
+                "Actual": 0
+            }
+        },
+        "BytesPerMessageSendLocalList": {
+            "variable_name": "BytesPerMessageSendLocalList",
+            "attributes": {
+                "Actual": 5000
             }
         },
         "ItemsPerMessageSendLocalList": {

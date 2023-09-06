@@ -5,6 +5,7 @@
 #include <ocpp/common/sqlite_statement.hpp>
 #include <ocpp/v201/database_handler.hpp>
 #include <ocpp/v201/types.hpp>
+#include <ocpp/v201/utils.hpp>
 
 namespace fs = std::filesystem;
 
@@ -169,6 +170,108 @@ OperationalStatusEnum DatabaseHandler::get_availability(const int32_t evse_id, s
             throw std::runtime_error("Could not get availability from database");
         }
         return conversions::string_to_operational_status_enum(select_stmt.column_text(0));
+    } catch (const std::exception& e) {
+        throw std::runtime_error("Could not get availability from database");
+    }
+}
+
+void DatabaseHandler::insert_or_update_local_authorization_list_version(int32_t version) {
+    std::string sql = "INSERT OR REPLACE INTO AUTH_LIST_VERSION (ID, VERSION) VALUES (0, @version)";
+    SQLiteStatement stmt(this->db, sql);
+
+    stmt.bind_int("@version", version);
+
+    if (stmt.step() != SQLITE_DONE) {
+        EVLOG_error << "Could not insert into table: " << sqlite3_errmsg(db);
+        throw std::runtime_error("db access error");
+    }
+}
+
+int32_t DatabaseHandler::get_local_authorization_list_version() {
+    std::string sql = "SELECT VERSION FROM AUTH_LIST_VERSION WHERE ID = 0";
+    SQLiteStatement stmt(this->db, sql);
+
+    if (stmt.step() != SQLITE_ROW) {
+        EVLOG_error << "Error selecting auth list version: " << sqlite3_errmsg(this->db);
+        throw std::runtime_error("db access error");
+    }
+
+    return stmt.column_int(0);
+}
+
+void DatabaseHandler::insert_or_update_local_authorization_list_entry(const IdToken& id_token,
+                                                                      const IdTokenInfo& id_token_info) {
+    // add or replace
+    std::string sql = "INSERT OR REPLACE INTO AUTH_LIST (ID_TOKEN_HASH, ID_TOKEN_INFO) "
+                      "VALUES (@id_token_hash, @id_token_info)";
+    SQLiteStatement stmt(this->db, sql);
+
+    stmt.bind_text("@id_token_hash", utils::generate_token_hash(id_token), SQLiteString::Transient);
+    stmt.bind_text("@id_token_info", json(id_token_info).dump(), SQLiteString::Transient);
+
+    if (stmt.step() != SQLITE_DONE) {
+        EVLOG_error << "Could not insert into table: " << sqlite3_errmsg(db);
+        throw std::runtime_error("db access error");
+    }
+}
+
+void DatabaseHandler::insert_or_update_local_authorization_list(
+    const std::vector<AuthorizationData>& local_authorization_list) {
+    for (const auto& authorization_data : local_authorization_list) {
+        if (authorization_data.idTokenInfo.has_value()) {
+            this->insert_or_update_local_authorization_list_entry(authorization_data.idToken,
+                                                                  authorization_data.idTokenInfo.value());
+        } else {
+            this->delete_local_authorization_list_entry(authorization_data.idToken);
+        }
+    }
+}
+
+void DatabaseHandler::delete_local_authorization_list_entry(const IdToken& id_token) {
+    std::string sql = "DELETE FROM AUTH_LIST WHERE ID_TOKEN_HASH = @id_token_hash;";
+    SQLiteStatement stmt(this->db, sql);
+
+    stmt.bind_text("@id_token_hash", utils::generate_token_hash(id_token), SQLiteString::Transient);
+
+    if (stmt.step() != SQLITE_DONE) {
+        EVLOG_error << "Could not delete from table: " << sqlite3_errmsg(db);
+    }
+}
+
+std::optional<IdTokenInfo> DatabaseHandler::get_local_authorization_list_entry(const IdToken& id_token) {
+    try {
+        std::string sql = "SELECT ID_TOKEN_INFO FROM AUTH_LIST WHERE ID_TOKEN_HASH = @id_token_hash;";
+        SQLiteStatement stmt(this->db, sql);
+
+        stmt.bind_text("@id_token_hash", utils::generate_token_hash(id_token), SQLiteString::Transient);
+
+        if (stmt.step() != SQLITE_ROW) {
+            return std::nullopt;
+        }
+        return IdTokenInfo(json::parse(stmt.column_text(0)));
+    } catch (const json::exception& e) {
+        EVLOG_warning << "Could not parse data of IdTokenInfo: " << e.what();
+        return std::nullopt;
+    } catch (const std::exception& e) {
+        EVLOG_error << "Unknown Error while parsing IdTokenInfo: " << e.what();
+        return std::nullopt;
+    }
+}
+
+bool DatabaseHandler::clear_local_authorization_list() {
+    return this->clear_table("AUTH_LIST");
+}
+
+int32_t DatabaseHandler::get_local_authorization_list_number_of_entries() {
+    try {
+        std::string sql = "SELECT COUNT(*) FROM AUTH_LIST;";
+        SQLiteStatement stmt(this->db, sql);
+
+        if (stmt.step() != SQLITE_ROW) {
+            throw std::runtime_error("Could not get local list count from database");
+        }
+
+        return stmt.column_int(0);
     } catch (const std::exception& e) {
         throw std::runtime_error("Could not get availability from database");
     }
