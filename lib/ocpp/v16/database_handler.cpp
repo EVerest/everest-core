@@ -3,6 +3,7 @@
 
 #include <everest/logging.hpp>
 
+#include <ocpp/common/sqlite_statement.hpp>
 #include <ocpp/v16/database_handler.hpp>
 
 namespace ocpp {
@@ -63,24 +64,14 @@ void DatabaseHandler::run_sql_init() {
 
 void DatabaseHandler::init_connector_table(int32_t number_of_connectors) {
     for (int32_t connector = 1; connector <= number_of_connectors; connector++) {
-        std::ostringstream insert_sql;
         std::string sql = "INSERT OR IGNORE INTO CONNECTORS (ID, AVAILABILITY) VALUES (@connector, @availability_type)";
-        sqlite3_stmt* stmt;
-        if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-            EVLOG_error << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
-            throw std::runtime_error("Database access error");
-        }
-        sqlite3_bind_int(stmt, 1, connector);
-        const std::string operative_str("Operative");
-        sqlite3_bind_text(stmt, 2, operative_str.c_str(), operative_str.length(), NULL);
+        SQLiteStatement stmt(this->db, sql);
 
-        if (sqlite3_step(stmt) != SQLITE_DONE) {
+        stmt.bind_int("@connector", connector);
+        stmt.bind_text("@availability_type", "Operative", SQLiteString::Transient);
+
+        if (stmt.step() != SQLITE_DONE) {
             EVLOG_error << "Could not insert into table: " << sqlite3_errmsg(this->db);
-            throw std::runtime_error("db access error");
-        }
-
-        if (sqlite3_finalize(stmt) != SQLITE_OK) {
-            EVLOG_error << "Error inserting into table: " << sqlite3_errmsg(this->db);
             throw std::runtime_error("db access error");
         }
     }
@@ -104,37 +95,27 @@ void DatabaseHandler::insert_transaction(const std::string& session_id, const in
                       "CSMS_ACK, METER_LAST, METER_LAST_TIME, LAST_UPDATE, RESERVATION_ID) VALUES "
                       "(@session_id, @transaction_id, @connector, @id_tag_start, @time_start, @meter_start, @csms_ack, "
                       "@meter_last, @meter_last_time, @last_update, @reservation_id)";
-    const auto timestamp = ocpp::DateTime().to_rfc3339();
-    sqlite3_stmt* stmt;
-    if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_warning << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
-        return;
-    }
+    SQLiteStatement stmt(this->db, sql);
 
-    sqlite3_bind_text(stmt, 1, session_id.c_str(), session_id.length(), NULL);
-    sqlite3_bind_int(stmt, 2, transaction_id);
-    sqlite3_bind_int(stmt, 3, connector);
-    sqlite3_bind_text(stmt, 4, id_tag_start.c_str(), id_tag_start.length(), NULL);
-    sqlite3_bind_text(stmt, 5, time_start.c_str(), time_start.length(), NULL);
-    sqlite3_bind_int(stmt, 6, meter_start);
-    sqlite3_bind_int(stmt, 7, int(csms_ack));
-    sqlite3_bind_int(stmt, 8, meter_start);
-    sqlite3_bind_text(stmt, 9, time_start.c_str(), time_start.length(), NULL);
-    sqlite3_bind_text(stmt, 10, timestamp.c_str(), timestamp.length(), NULL);
+    stmt.bind_text("@session_id", session_id);
+    stmt.bind_int("@transaction_id", transaction_id);
+    stmt.bind_int("@connector", connector);
+    stmt.bind_text("@id_tag_start", id_tag_start);
+    stmt.bind_text("@time_start", time_start);
+    stmt.bind_int("@meter_start", meter_start);
+    stmt.bind_int("@csms_ack", int(csms_ack));
+    stmt.bind_int("@meter_last", meter_start);
+    stmt.bind_text("@meter_last_time", time_start);
+    stmt.bind_text("@last_update", ocpp::DateTime().to_rfc3339(), SQLiteString::Transient);
 
-    if (reservation_id) {
-        sqlite3_bind_int(stmt, 11, reservation_id.value());
+    if (reservation_id.has_value()) {
+        stmt.bind_int("@reservation_id", reservation_id.value());
     } else {
-        sqlite3_bind_null(stmt, 11);
+        stmt.bind_null("@reservation_id");
     }
 
-    if (sqlite3_step(stmt) != SQLITE_DONE) {
+    if (stmt.step() != SQLITE_DONE) {
         EVLOG_error << "Could not insert into table: " << sqlite3_errmsg(this->db) << std::endl;
-        throw std::runtime_error("db access error");
-    }
-
-    if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error inserting into table: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("db access error");
     }
 }
@@ -144,31 +125,18 @@ void DatabaseHandler::update_transaction(const std::string& session_id, int32_t 
 
     std::string sql = "UPDATE TRANSACTIONS SET TRANSACTION_ID=@transaction_id, PARENT_ID_TAG=@parent_id_tag, "
                       "LAST_UPDATE=@last_update WHERE ID==@session_id";
-
-    const auto timestamp = ocpp::DateTime().to_rfc3339();
-
-    sqlite3_stmt* stmt;
-    if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_warning << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
-        return;
-    }
+    SQLiteStatement stmt(this->db, sql);
 
     // bindings
-    sqlite3_bind_int(stmt, 1, transaction_id);
-    if (parent_id_tag != std::nullopt) {
-        const std::string parent_id_tag_str(parent_id_tag.value().get());
-        sqlite3_bind_text(stmt, 2, parent_id_tag_str.c_str(), parent_id_tag_str.length(), NULL);
+    stmt.bind_int("@transaction_id", transaction_id);
+    if (parent_id_tag.has_value()) {
+        stmt.bind_text("@parent_id_tag", parent_id_tag.value().get(), SQLiteString::Transient);
     }
-    sqlite3_bind_text(stmt, 3, timestamp.c_str(), timestamp.length(), NULL);
-    sqlite3_bind_text(stmt, 4, session_id.c_str(), session_id.length(), NULL);
+    stmt.bind_text("@last_update", ocpp::DateTime().to_rfc3339(), SQLiteString::Transient);
+    stmt.bind_text("@session_id", session_id);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE) {
+    if (stmt.step() != SQLITE_DONE) {
         EVLOG_error << "Could not insert into table: " << sqlite3_errmsg(this->db) << std::endl;
-        throw std::runtime_error("db access error");
-    }
-
-    if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error updating table" << std::endl;
         throw std::runtime_error("db access error");
     }
 }
@@ -179,59 +147,35 @@ void DatabaseHandler::update_transaction(const std::string& session_id, int32_t 
     std::string sql =
         "UPDATE TRANSACTIONS SET METER_STOP=@meter_stop, TIME_END=@time_end, "
         "ID_TAG_END=@id_tag_end, STOP_REASON=@stop_reason, LAST_UPDATE=@last_update WHERE ID==@session_id";
+    SQLiteStatement stmt(this->db, sql);
 
-    const auto timestamp = ocpp::DateTime().to_rfc3339();
-
-    sqlite3_stmt* stmt;
-    if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_warning << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
-        return;
+    stmt.bind_int("@meter_stop", meter_stop);
+    stmt.bind_text("@time_end", time_end);
+    if (id_tag_end.has_value()) {
+        stmt.bind_text("@id_tag_end", id_tag_end.value().get(), SQLiteString::Transient);
     }
-
-    sqlite3_bind_int(stmt, 1, meter_stop);
-    sqlite3_bind_text(stmt, 2, time_end.c_str(), time_end.length(), NULL);
-    if (id_tag_end != std::nullopt) {
-        const std::string id_tag_end_str(id_tag_end.value().get());
-        sqlite3_bind_text(stmt, 3, id_tag_end_str.c_str(), id_tag_end_str.length(), SQLITE_TRANSIENT);
+    if (stop_reason.has_value()) {
+        stmt.bind_text("@stop_reason", v16::conversions::reason_to_string(stop_reason.value()),
+                       SQLiteString::Transient);
     }
-    if (stop_reason != std::nullopt) {
-        const std::string stop_reason_str(v16::conversions::reason_to_string(stop_reason.value()));
-        sqlite3_bind_text(stmt, 4, stop_reason_str.c_str(), stop_reason_str.length(), SQLITE_TRANSIENT);
-    }
-    sqlite3_bind_text(stmt, 5, timestamp.c_str(), timestamp.length(), NULL);
-    sqlite3_bind_text(stmt, 6, session_id.c_str(), session_id.length(), NULL);
+    stmt.bind_text("@last_update", ocpp::DateTime().to_rfc3339(), SQLiteString::Transient);
+    stmt.bind_text("@session_id", session_id);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE) {
+    if (stmt.step() != SQLITE_DONE) {
         EVLOG_error << "Could not insert into table: " << sqlite3_errmsg(this->db) << std::endl;
-        throw std::runtime_error("db access error");
-    }
-
-    if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error updating table" << std::endl;
         throw std::runtime_error("db access error");
     }
 }
 
 void DatabaseHandler::update_transaction_csms_ack(const std::string& session_id) {
     std::string sql = "UPDATE TRANSACTIONS SET CSMS_ACK=1, LAST_UPDATE=@last_update WHERE ID==@session_id";
-    const auto timestamp = ocpp::DateTime().to_rfc3339();
+    SQLiteStatement stmt(this->db, sql);
 
-    sqlite3_stmt* stmt;
-    if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_warning << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
-        return;
-    }
+    stmt.bind_text("@last_update", ocpp::DateTime().to_rfc3339(), SQLiteString::Transient);
+    stmt.bind_text("@session_id", session_id);
 
-    sqlite3_bind_text(stmt, 1, timestamp.c_str(), timestamp.length(), NULL);
-    sqlite3_bind_text(stmt, 2, session_id.c_str(), session_id.length(), NULL);
-
-    if (sqlite3_step(stmt) != SQLITE_DONE) {
+    if (stmt.step() != SQLITE_DONE) {
         EVLOG_error << "Could not insert into table: " << sqlite3_errmsg(this->db) << std::endl;
-        throw std::runtime_error("db access error");
-    }
-
-    if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error updating table" << std::endl;
         throw std::runtime_error("db access error");
     }
 }
@@ -240,26 +184,15 @@ void DatabaseHandler::update_transaction_meter_value(const std::string& session_
                                                      const std::string& last_meter_time) {
     std::string sql = "UPDATE TRANSACTIONS SET METER_LAST=@meter_last, METER_LAST_TIME=@meter_last_time, "
                       "LAST_UPDATE=@last_update WHERE ID==@session_id";
-    const auto timestamp = ocpp::DateTime().to_rfc3339();
+    SQLiteStatement stmt(this->db, sql);
 
-    sqlite3_stmt* stmt;
-    if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_debug << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
-        return;
-    }
+    stmt.bind_int("@meter_last", value);
+    stmt.bind_text("@meter_last_time", last_meter_time);
+    stmt.bind_text("@last_update", ocpp::DateTime().to_rfc3339(), SQLiteString::Transient);
+    stmt.bind_text("@session_id", session_id);
 
-    sqlite3_bind_int(stmt, 1, value);
-    sqlite3_bind_text(stmt, 2, last_meter_time.c_str(), last_meter_time.length(), NULL);
-    sqlite3_bind_text(stmt, 3, timestamp.c_str(), timestamp.length(), NULL);
-    sqlite3_bind_text(stmt, 4, session_id.c_str(), session_id.length(), NULL);
-
-    if (sqlite3_step(stmt) != SQLITE_DONE) {
+    if (stmt.step() != SQLITE_DONE) {
         EVLOG_error << "Could not insert into table: " << sqlite3_errmsg(this->db);
-        throw std::runtime_error("db access error");
-    }
-
-    if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error updating table: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("db access error");
     }
 }
@@ -272,56 +205,44 @@ std::vector<TransactionEntry> DatabaseHandler::get_transactions(bool filter_inco
     if (filter_incomplete) {
         sql += " WHERE CSMS_ACK==0";
     }
-    sqlite3_stmt* stmt;
-    if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_error << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
-        throw std::runtime_error("Database access error");
-    }
 
-    while (sqlite3_step(stmt) != SQLITE_DONE) {
+    SQLiteStatement stmt(this->db, sql);
+
+    while (stmt.step() != SQLITE_DONE) {
         TransactionEntry transaction_entry;
-        transaction_entry.session_id = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)));
-        transaction_entry.transaction_id = sqlite3_column_int(stmt, 1);
-        transaction_entry.connector = sqlite3_column_int(stmt, 2);
-        transaction_entry.id_tag_start = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3)));
-        transaction_entry.time_start = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4)));
-        transaction_entry.meter_start = sqlite3_column_int(stmt, 5);
-        transaction_entry.csms_ack = bool(sqlite3_column_int(stmt, 6));
-        transaction_entry.meter_last = sqlite3_column_int(stmt, 7);
-        transaction_entry.meter_last_time = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 8)));
-        transaction_entry.last_update = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 9)));
+        transaction_entry.session_id = stmt.column_text(0);
+        transaction_entry.transaction_id = stmt.column_int(1);
+        transaction_entry.connector = stmt.column_int(2);
+        transaction_entry.id_tag_start = stmt.column_text(3);
+        transaction_entry.time_start = stmt.column_text(4);
+        transaction_entry.meter_start = stmt.column_int(5);
+        transaction_entry.csms_ack = bool(stmt.column_int(6));
+        transaction_entry.meter_last = stmt.column_int(7);
+        transaction_entry.meter_last_time = stmt.column_text(8);
+        transaction_entry.last_update = stmt.column_text(9);
 
-        if (sqlite3_column_type(stmt, 10) != SQLITE_NULL) {
-            transaction_entry.reservation_id.emplace(sqlite3_column_int(stmt, 10));
+        if (stmt.column_type(10) != SQLITE_NULL) {
+            transaction_entry.reservation_id.emplace(stmt.column_int(10));
         }
-        if (sqlite3_column_type(stmt, 11) != SQLITE_NULL) {
-            transaction_entry.parent_id_tag.emplace(
-                std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 11))));
+        if (stmt.column_type(11) != SQLITE_NULL) {
+            transaction_entry.parent_id_tag.emplace(stmt.column_text(11));
         }
-        if (sqlite3_column_type(stmt, 12) != SQLITE_NULL) {
-            transaction_entry.id_tag_end.emplace(
-                std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 12))));
+        if (stmt.column_type(12) != SQLITE_NULL) {
+            transaction_entry.id_tag_end.emplace(stmt.column_text(12));
         }
-        if (sqlite3_column_type(stmt, 13) != SQLITE_NULL) {
-            transaction_entry.time_end.emplace(
-                std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 13))));
+        if (stmt.column_type(13) != SQLITE_NULL) {
+            transaction_entry.time_end.emplace(stmt.column_text(13));
         }
-        if (sqlite3_column_type(stmt, 14) != SQLITE_NULL) {
-            transaction_entry.meter_stop.emplace(sqlite3_column_int(stmt, 14));
+        if (stmt.column_type(14) != SQLITE_NULL) {
+            transaction_entry.meter_stop.emplace(stmt.column_int(14));
         }
-        if (sqlite3_column_type(stmt, 15) != SQLITE_NULL) {
-            transaction_entry.stop_reason.emplace(
-                std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 15))));
+        if (stmt.column_type(15) != SQLITE_NULL) {
+            transaction_entry.stop_reason.emplace(stmt.column_text(15));
         }
-        if (sqlite3_column_type(stmt, 16) != SQLITE_NULL) {
-            transaction_entry.reservation_id.emplace(sqlite3_column_int(stmt, 16));
+        if (stmt.column_type(16) != SQLITE_NULL) {
+            transaction_entry.reservation_id.emplace(stmt.column_int(16));
         }
         transactions.push_back(transaction_entry);
-    }
-
-    if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error selecting from table: " << sqlite3_errmsg(this->db);
-        throw std::runtime_error("db access error");
     }
 
     return transactions;
@@ -335,32 +256,20 @@ void DatabaseHandler::insert_or_update_authorization_cache_entry(const CiString<
 
     std::string sql = "INSERT OR REPLACE INTO AUTH_CACHE (ID_TAG, AUTH_STATUS, EXPIRY_DATE, PARENT_ID_TAG) VALUES "
                       "(@id_tag, @auth_status, @expiry_date, @parent_id_tag)";
-    sqlite3_stmt* stmt;
-    if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_error << "Could not prepare insert statement" << std::endl;
-        return;
+    SQLiteStatement stmt(this->db, sql);
+
+    stmt.bind_text("@id_tag", id_tag.get(), SQLiteString::Transient);
+    stmt.bind_text("@auth_status", v16::conversions::authorization_status_to_string(id_tag_info.status),
+                   SQLiteString::Transient);
+    if (id_tag_info.expiryDate.has_value()) {
+        stmt.bind_text("@expiry_date", id_tag_info.expiryDate.value().to_rfc3339(), SQLiteString::Transient);
+    }
+    if (id_tag_info.parentIdTag.has_value()) {
+        stmt.bind_text("@parent_id_tag", id_tag_info.parentIdTag.value().get(), SQLiteString::Transient);
     }
 
-    const auto id_tag_str = id_tag.get();
-    const auto status = v16::conversions::authorization_status_to_string(id_tag_info.status);
-    sqlite3_bind_text(stmt, 1, id_tag_str.c_str(), id_tag_str.length(), NULL);
-    sqlite3_bind_text(stmt, 2, status.c_str(), status.length(), NULL);
-    if (id_tag_info.expiryDate) {
-        auto expiry_date = id_tag_info.expiryDate.value().to_rfc3339();
-        sqlite3_bind_text(stmt, 3, expiry_date.c_str(), expiry_date.length(), SQLITE_TRANSIENT);
-    }
-    if (id_tag_info.parentIdTag) {
-        const auto parent_id_tag = id_tag_info.parentIdTag.value().get();
-        sqlite3_bind_text(stmt, 4, parent_id_tag.c_str(), parent_id_tag.length(), SQLITE_TRANSIENT);
-    }
-
-    if (sqlite3_step(stmt) != SQLITE_DONE) {
+    if (stmt.step() != SQLITE_DONE) {
         EVLOG_error << "Could not insert into table: " << sqlite3_errmsg(db);
-        throw std::runtime_error("db access error");
-    }
-
-    if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error inserting into table: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("db access error");
     }
 }
@@ -370,39 +279,23 @@ std::optional<v16::IdTagInfo> DatabaseHandler::get_authorization_cache_entry(con
     // TODO(piet): Only call this when authorization cache is enabled!
 
     std::string sql = "SELECT ID_TAG, AUTH_STATUS, EXPIRY_DATE, PARENT_ID_TAG FROM AUTH_CACHE WHERE ID_TAG = @id_tag";
-    sqlite3_stmt* stmt;
-    if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_error << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
-        return std::nullopt;
-    }
+    SQLiteStatement stmt(this->db, sql);
 
-    const auto id_tag_str = id_tag.get();
-    sqlite3_bind_text(stmt, 1, id_tag_str.c_str(), id_tag_str.length(), NULL);
+    stmt.bind_text("@id_tag", id_tag.get(), SQLiteString::Transient);
 
-    if (sqlite3_step(stmt) != SQLITE_ROW) {
+    if (stmt.step() != SQLITE_ROW) {
         return std::nullopt;
     }
 
     v16::IdTagInfo id_tag_info;
-    const auto auth_status_ptr = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1)));
-    id_tag_info.status = v16::conversions::string_to_authorization_status(auth_status_ptr);
+    id_tag_info.status = v16::conversions::string_to_authorization_status(stmt.column_text(1));
 
-    auto expiry_date_ptr = sqlite3_column_text(stmt, 2);
-    if (expiry_date_ptr != nullptr) {
-        const auto expiry_date_str = std::string(reinterpret_cast<const char*>(expiry_date_ptr));
-        const auto expiry_date = DateTime(expiry_date_str);
-        id_tag_info.expiryDate.emplace(expiry_date);
+    if (stmt.column_type(2) != SQLITE_NULL) {
+        id_tag_info.expiryDate.emplace(stmt.column_text(2));
     }
 
-    const auto parent_id_tag_ptr = sqlite3_column_text(stmt, 3);
-    if (parent_id_tag_ptr != nullptr) {
-        const auto parent_id_tag_str = std::string(reinterpret_cast<const char*>(parent_id_tag_ptr));
-        id_tag_info.parentIdTag.emplace(parent_id_tag_str);
-    }
-
-    if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error selecting from table: " << sqlite3_errmsg(this->db);
-        throw std::runtime_error("db access error");
+    if (stmt.column_type(3) != SQLITE_NULL) {
+        id_tag_info.parentIdTag.emplace(stmt.column_text(3));
     }
 
     // check if expiry date is set and the entry should be set to Expired
@@ -428,22 +321,14 @@ bool DatabaseHandler::clear_authorization_cache() {
 void DatabaseHandler::insert_or_update_connector_availability(int32_t connector,
                                                               const v16::AvailabilityType& availability_type) {
     std::string sql = "INSERT OR REPLACE INTO CONNECTORS (ID, AVAILABILITY) VALUES (@id, @availability)";
-    sqlite3_stmt* stmt;
-    if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_error << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
-        throw std::runtime_error("Database access error");
-    }
-    sqlite3_bind_int(stmt, 1, connector);
-    const std::string availability_type_str(v16::conversions::availability_type_to_string(availability_type));
-    sqlite3_bind_text(stmt, 2, availability_type_str.c_str(), availability_type_str.length(), NULL);
+    SQLiteStatement stmt(this->db, sql);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE) {
+    stmt.bind_int("@id", connector);
+    stmt.bind_text("@availability", v16::conversions::availability_type_to_string(availability_type),
+                   SQLiteString::Transient);
+
+    if (stmt.step() != SQLITE_DONE) {
         EVLOG_error << "Could not insert into table: " << sqlite3_errmsg(db);
-        throw std::runtime_error("db access error");
-    }
-
-    if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error inserting into table: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("db access error");
     }
 }
@@ -458,51 +343,25 @@ void DatabaseHandler::insert_or_update_connector_availability(const std::vector<
 
 v16::AvailabilityType DatabaseHandler::get_connector_availability(int32_t connector) {
     std::string sql = "SELECT AVAILABILITY FROM CONNECTORS WHERE ID = @connector";
-    sqlite3_stmt* stmt;
+    SQLiteStatement stmt(this->db, sql);
 
-    if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_error << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
-        throw std::runtime_error("Database access error");
-    }
-
-    sqlite3_bind_int(stmt, 1, connector);
-
-    if (sqlite3_step(stmt) != SQLITE_ROW) {
+    stmt.bind_int("@connector", connector);
+    if (stmt.step() != SQLITE_ROW) {
         EVLOG_error << "Error selecting availability of connector: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("db access error");
     }
 
-    const auto availability_str = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)));
-    v16::AvailabilityType availability = v16::conversions::string_to_availability_type(availability_str);
-
-    if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error inserting into table: " << sqlite3_errmsg(this->db);
-        throw std::runtime_error("db access error");
-    }
-
-    return availability;
+    return v16::conversions::string_to_availability_type(stmt.column_text(0));
 }
 
 std::map<int32_t, v16::AvailabilityType> DatabaseHandler::get_connector_availability() {
     std::map<int32_t, v16::AvailabilityType> availability_map;
     const std::string sql = "SELECT ID, AVAILABILITY FROM CONNECTORS";
+    SQLiteStatement stmt(this->db, sql);
 
-    sqlite3_stmt* stmt;
-
-    if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_error << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
-        throw std::runtime_error("Database access error");
-    }
-
-    while (sqlite3_step(stmt) != SQLITE_DONE) {
-        auto connector = sqlite3_column_int(stmt, 0);
-        auto availability_str = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1)));
-        availability_map[connector] = v16::conversions::string_to_availability_type(availability_str);
-    }
-
-    if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error selecting from table: " << sqlite3_errmsg(this->db);
-        throw std::runtime_error("db access error");
+    while (stmt.step() != SQLITE_DONE) {
+        auto connector = stmt.column_int(0);
+        availability_map[connector] = v16::conversions::string_to_availability_type(stmt.column_text(1));
     }
 
     return availability_map;
@@ -511,79 +370,46 @@ std::map<int32_t, v16::AvailabilityType> DatabaseHandler::get_connector_availabi
 // local auth list management
 void DatabaseHandler::insert_or_update_local_list_version(int32_t version) {
     std::string sql = "INSERT OR REPLACE INTO AUTH_LIST_VERSION (ID, VERSION) VALUES (0, @version)";
-    sqlite3_stmt* stmt;
-    if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_error << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
-        throw std::runtime_error("Database access error");
-    }
-    sqlite3_bind_int(stmt, 1, version);
+    SQLiteStatement stmt(this->db, sql);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE) {
+    stmt.bind_int("@version", version);
+    if (stmt.step() != SQLITE_DONE) {
         EVLOG_error << "Could not insert into table: " << sqlite3_errmsg(db);
-        throw std::runtime_error("db access error");
-    }
-
-    if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error inserting into table: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("db access error");
     }
 }
 
 int32_t DatabaseHandler::get_local_list_version() {
     std::string sql = "SELECT VERSION FROM AUTH_LIST_VERSION WHERE ID = 0";
-    sqlite3_stmt* stmt;
+    SQLiteStatement stmt(this->db, sql);
 
-    if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_error << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
-        throw std::runtime_error("Database access error");
-    }
-
-    if (sqlite3_step(stmt) != SQLITE_ROW) {
+    if (stmt.step() != SQLITE_ROW) {
         EVLOG_error << "Error selecting auth list version: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("db access error");
     }
 
-    int32_t version = sqlite3_column_int(stmt, 0);
-
-    if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error inserting into table: " << sqlite3_errmsg(this->db);
-        throw std::runtime_error("db access error");
-    }
-
-    return version;
+    return stmt.column_int(0);
 }
 
 void DatabaseHandler::insert_or_update_local_authorization_list_entry(const CiString<20>& id_tag,
                                                                       const v16::IdTagInfo& id_tag_info) {
-    const auto id_tag_str = id_tag.get();
     // add or replace
-    std::string insert_sql =
-        "INSERT OR REPLACE INTO AUTH_LIST (ID_TAG, AUTH_STATUS, EXPIRY_DATE, PARENT_ID_TAG) VALUES "
-        "(@id_tag, @auth_status, @expiry_date, @parent_id_tag)";
-    sqlite3_stmt* stmt;
-    if (sqlite3_prepare_v2(this->db, insert_sql.c_str(), insert_sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_error << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
-        throw std::runtime_error("Database access error");
+    std::string sql = "INSERT OR REPLACE INTO AUTH_LIST (ID_TAG, AUTH_STATUS, EXPIRY_DATE, PARENT_ID_TAG) VALUES "
+                      "(@id_tag, @auth_status, @expiry_date, @parent_id_tag)";
+    SQLiteStatement stmt(this->db, sql);
+
+    stmt.bind_text("@id_tag", id_tag.get(), SQLiteString::Transient);
+    stmt.bind_text("@auth_status", v16::conversions::authorization_status_to_string(id_tag_info.status),
+                   SQLiteString::Transient);
+    if (id_tag_info.expiryDate.has_value()) {
+        stmt.bind_text("@expiry_date", id_tag_info.expiryDate.value().to_rfc3339(), SQLiteString::Transient);
     }
-    const auto status_str = v16::conversions::authorization_status_to_string(id_tag_info.status);
-    sqlite3_bind_text(stmt, 1, id_tag_str.c_str(), id_tag_str.length(), NULL);
-    sqlite3_bind_text(stmt, 2, status_str.c_str(), status_str.length(), NULL);
-    if (id_tag_info.expiryDate) {
-        const auto expiry_date_str = id_tag_info.expiryDate.value().to_rfc3339();
-        sqlite3_bind_text(stmt, 3, expiry_date_str.c_str(), expiry_date_str.length(), SQLITE_TRANSIENT);
-    }
-    if (id_tag_info.parentIdTag) {
-        const auto parent_id_tag_str = id_tag_info.parentIdTag.value().get();
-        sqlite3_bind_text(stmt, 4, parent_id_tag_str.c_str(), parent_id_tag_str.length(), SQLITE_TRANSIENT);
+    if (id_tag_info.parentIdTag.has_value()) {
+        stmt.bind_text("@parent_id_tag", id_tag_info.parentIdTag.value().get(), SQLiteString::Transient);
     }
 
-    if (sqlite3_step(stmt) != SQLITE_DONE) {
+    if (stmt.step() != SQLITE_DONE) {
         EVLOG_error << "Could not insert into table: " << sqlite3_errmsg(db);
-        throw std::runtime_error("db access error");
-    }
-
-    if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error inserting into table: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("db access error");
     }
 }
@@ -601,60 +427,38 @@ void DatabaseHandler::insert_or_update_local_authorization_list(
 }
 
 void DatabaseHandler::delete_local_authorization_list_entry(const std::string& id_tag) {
-    std::string delete_sql = "DELETE FROM AUTH_LIST WHERE ID_TAG = @id_tag;";
-    sqlite3_stmt* stmt;
-    if (sqlite3_prepare_v2(this->db, delete_sql.c_str(), delete_sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_error << "Could not prepare insert statement";
-        throw std::runtime_error("Database access error");
-    }
-    sqlite3_bind_text(stmt, 1, id_tag.c_str(), id_tag.length(), NULL);
-    if (sqlite3_step(stmt) != SQLITE_DONE) {
+    std::string sql = "DELETE FROM AUTH_LIST WHERE ID_TAG = @id_tag;";
+    SQLiteStatement stmt(this->db, sql);
+
+    stmt.bind_text("@id_tag", id_tag);
+    if (stmt.step() != SQLITE_DONE) {
         EVLOG_error << "Could not delete from table: " << sqlite3_errmsg(db);
-    }
-    if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error deleting from table: " << sqlite3_errmsg(this->db);
     }
 }
 
 std::optional<v16::IdTagInfo> DatabaseHandler::get_local_authorization_list_entry(const CiString<20>& id_tag) {
     std::string sql = "SELECT ID_TAG, AUTH_STATUS, EXPIRY_DATE, PARENT_ID_TAG FROM AUTH_LIST WHERE ID_TAG = @id_tag";
-    sqlite3_stmt* stmt;
-    if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_error << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
-        return std::nullopt;
-    }
+    SQLiteStatement stmt(this->db, sql);
 
-    const auto id_tag_str = id_tag.get();
-    sqlite3_bind_text(stmt, 1, id_tag_str.c_str(), id_tag_str.length(), NULL);
+    stmt.bind_text("@id_tag", id_tag.get(), SQLiteString::Transient);
 
-    if (sqlite3_step(stmt) != SQLITE_ROW) {
+    if (stmt.step() != SQLITE_ROW) {
         return std::nullopt;
     }
 
     v16::IdTagInfo id_tag_info;
-    const auto auth_status_ptr = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1)));
-    id_tag_info.status = v16::conversions::string_to_authorization_status(auth_status_ptr);
+    id_tag_info.status = v16::conversions::string_to_authorization_status(stmt.column_text(1));
 
-    auto expiry_date_ptr = sqlite3_column_text(stmt, 2);
-    if (expiry_date_ptr != nullptr) {
-        const auto expiry_date_str = std::string(reinterpret_cast<const char*>(expiry_date_ptr));
-        const auto expiry_date = DateTime(expiry_date_str);
-        id_tag_info.expiryDate.emplace(expiry_date);
+    if (stmt.column_type(2) != SQLITE_NULL) {
+        id_tag_info.expiryDate.emplace(stmt.column_text(2));
     }
 
-    const auto parent_id_tag_ptr = sqlite3_column_text(stmt, 3);
-    if (parent_id_tag_ptr != nullptr) {
-        const auto parent_id_tag_str = std::string(reinterpret_cast<const char*>(parent_id_tag_ptr));
-        id_tag_info.parentIdTag.emplace(parent_id_tag_str);
+    if (stmt.column_type(3) != SQLITE_NULL) {
+        id_tag_info.parentIdTag.emplace(stmt.column_text(3));
     }
 
-    if (sqlite3_step(stmt) != SQLITE_DONE) {
+    if (stmt.step() != SQLITE_DONE) {
         EVLOG_error << "Could not insert into table: " << sqlite3_errmsg(db);
-        throw std::runtime_error("db access error");
-    }
-
-    if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error selecting from table: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("db access error");
     }
 
@@ -679,44 +483,29 @@ bool DatabaseHandler::clear_local_authorization_list() {
 
 void DatabaseHandler::insert_or_update_charging_profile(const int connector_id, const v16::ChargingProfile& profile) {
     // add or replace
-    std::string insert_sql = "INSERT OR REPLACE INTO CHARGING_PROFILES (ID, CONNECTOR_ID, PROFILE) VALUES "
-                             "(@id, @connector_id, @profile)";
-    sqlite3_stmt* stmt;
-    if (sqlite3_prepare_v2(this->db, insert_sql.c_str(), insert_sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_error << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
-        throw std::runtime_error("Database access error");
-    }
+    std::string sql = "INSERT OR REPLACE INTO CHARGING_PROFILES (ID, CONNECTOR_ID, PROFILE) VALUES "
+                      "(@id, @connector_id, @profile)";
+    SQLiteStatement stmt(this->db, sql);
 
     json json_profile(profile);
 
-    sqlite3_bind_int(stmt, 1, profile.chargingProfileId);
-    sqlite3_bind_int(stmt, 2, connector_id);
-    sqlite3_bind_text(stmt, 3, json_profile.dump().c_str(), json_profile.dump().length(), SQLITE_TRANSIENT);
+    stmt.bind_int("@id", profile.chargingProfileId);
+    stmt.bind_int("@connector_id", connector_id);
+    stmt.bind_text("@profile", json_profile.dump(), SQLiteString::Transient);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE) {
+    if (stmt.step() != SQLITE_DONE) {
         EVLOG_error << "Could not insert into table: " << sqlite3_errmsg(db);
-        throw std::runtime_error("db access error");
-    }
-
-    if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error inserting into table: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("db access error");
     }
 }
 
 void DatabaseHandler::delete_charging_profile(const int profile_id) {
-    std::string delete_sql = "DELETE FROM CHARGING_PROFILES WHERE ID = @id;";
-    sqlite3_stmt* stmt;
-    if (sqlite3_prepare_v2(this->db, delete_sql.c_str(), delete_sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_warning << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
-        return;
-    }
-    sqlite3_bind_int(stmt, 1, profile_id);
-    if (sqlite3_step(stmt) != SQLITE_DONE) {
+    std::string sql = "DELETE FROM CHARGING_PROFILES WHERE ID = @id;";
+    SQLiteStatement stmt(this->db, sql);
+
+    stmt.bind_int("@id", profile_id);
+    if (stmt.step() != SQLITE_DONE) {
         EVLOG_error << "Could not delete from table: " << sqlite3_errmsg(db);
-    }
-    if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error deleting from table: " << sqlite3_errmsg(this->db);
     }
 }
 
@@ -728,85 +517,51 @@ std::vector<v16::ChargingProfile> DatabaseHandler::get_charging_profiles() {
 
     std::vector<v16::ChargingProfile> profiles;
     std::string sql = "SELECT * FROM CHARGING_PROFILES";
+    SQLiteStatement stmt(this->db, sql);
 
-    sqlite3_stmt* stmt;
-    if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_warning << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
-        return profiles;
+    while (stmt.step() != SQLITE_DONE) {
+        profiles.emplace_back(json::parse(stmt.column_text(2)));
     }
 
-    while (sqlite3_step(stmt) != SQLITE_DONE) {
-        v16::ChargingProfile profile(
-            json::parse(std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2)))));
-        profiles.push_back(profile);
-    }
-
-    if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_warning << "Error selecting from table: " << sqlite3_errmsg(this->db);
-        return profiles;
-    }
     return profiles;
 }
 
 int DatabaseHandler::get_connector_id(const int profile_id) {
-
     std::string sql = "SELECT CONNECTOR_ID FROM CHARGING_PROFILES WHERE ID = @profile_id";
+    SQLiteStatement stmt(this->db, sql);
 
-    sqlite3_stmt* stmt;
-    if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_warning << "Could not prepare select statement: " << sqlite3_errmsg(this->db);
-        return -1;
-    }
+    stmt.bind_int("@profile_id", profile_id);
 
-    sqlite3_bind_int(stmt, 1, profile_id);
-
-    if (sqlite3_step(stmt) != SQLITE_ROW) {
+    if (stmt.step() != SQLITE_ROW) {
         EVLOG_warning << "Requesting an unknown profile_id from database";
         return -1;
     }
 
-    const auto connector_id = sqlite3_column_int(stmt, 0);
-    return connector_id;
+    return stmt.column_int(0);
 }
 
 void DatabaseHandler::insert_ocsp_update() {
-    std::string insert_sql = "INSERT OR REPLACE INTO OCSP_REQUEST (LAST_UPDATE) VALUES "
-                             "(@last_update)";
-    sqlite3_stmt* stmt;
-    if (sqlite3_prepare_v2(this->db, insert_sql.c_str(), insert_sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_error << "Could not prepare insert statement: " << sqlite3_errmsg(this->db);
-        throw std::runtime_error("Database access error");
-    }
+    std::string sql = "INSERT OR REPLACE INTO OCSP_REQUEST (LAST_UPDATE) VALUES "
+                      "(@last_update)";
+    SQLiteStatement stmt(this->db, sql);
 
-    const auto now = DateTime().to_rfc3339();
-    sqlite3_bind_text(stmt, 1, now.c_str(), now.length(), SQLITE_TRANSIENT);
+    stmt.bind_text("@last_update", DateTime().to_rfc3339(), SQLiteString::Transient);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE) {
+    if (stmt.step() != SQLITE_DONE) {
         EVLOG_error << "Could not insert into table: " << sqlite3_errmsg(db);
-        throw std::runtime_error("db access error");
-    }
-
-    if (sqlite3_finalize(stmt) != SQLITE_OK) {
-        EVLOG_error << "Error inserting into table: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("db access error");
     }
 }
 
 std::optional<DateTime> DatabaseHandler::get_last_ocsp_update() {
     std::string sql = "SELECT LAST_UPDATE FROM OCSP_REQUEST";
+    SQLiteStatement stmt(this->db, sql);
 
-    sqlite3_stmt* stmt;
-    if (sqlite3_prepare_v2(this->db, sql.c_str(), sql.size(), &stmt, NULL) != SQLITE_OK) {
-        EVLOG_warning << "Could not prepare select statement: " << sqlite3_errmsg(this->db);
+    if (stmt.step() != SQLITE_ROW) {
         return std::nullopt;
     }
 
-    if (sqlite3_step(stmt) != SQLITE_ROW) {
-        return std::nullopt;
-    }
-
-    const auto now = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)));
-    return DateTime(now);
+    return DateTime(stmt.column_text(0));
 }
 
 } // namespace v16
