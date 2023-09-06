@@ -647,6 +647,64 @@ MeterValue ChargePoint::get_latest_meter_value_filtered(const MeterValue& meter_
     return filtered_meter_value;
 }
 
+SendLocalListStatusEnum ChargePoint::apply_local_authorization_list(const SendLocalListRequest& request) {
+    auto status = SendLocalListStatusEnum::Failed;
+
+    auto has_duplicate_in_list = [](const std::vector<AuthorizationData>& list) {
+        for (auto it1 = list.begin(); it1 != list.end(); ++it1) {
+            for (auto it2 = it1 + 1; it2 != list.end(); ++it2) {
+                if (it1->idToken.idToken == it2->idToken.idToken and it1->idToken.type == it2->idToken.type) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
+
+    if (request.versionNumber == 0) {
+        // D01.FR.18: Do nothing, not allowed, respond with failed
+    } else if (request.updateType == UpdateEnum::Full) {
+        if (!request.localAuthorizationList.has_value() or request.localAuthorizationList.value().empty()) {
+            this->database_handler->clear_local_authorization_list();
+            status = SendLocalListStatusEnum::Accepted;
+        } else {
+            const auto& list = request.localAuthorizationList.value();
+
+            auto has_no_token_info = [](const AuthorizationData& item) { return !item.idTokenInfo.has_value(); };
+
+            if (!has_duplicate_in_list(list) and
+                std::find_if(list.begin(), list.end(), has_no_token_info) == list.end()) {
+                this->database_handler->clear_local_authorization_list();
+                this->database_handler->insert_or_update_local_authorization_list(list);
+                status = SendLocalListStatusEnum::Accepted;
+            }
+        }
+    } else if (request.updateType == UpdateEnum::Differential) {
+        if (request.versionNumber <= this->database_handler->get_local_authorization_list_version()) {
+            // D01.FR.19: Do not allow version numbers smaller than current to update differentially
+            status = SendLocalListStatusEnum::VersionMismatch;
+        } else if (!request.localAuthorizationList.has_value() or request.localAuthorizationList.value().empty()) {
+            // D01.FR.05: Do not update database with empty list, only update version number
+            status = SendLocalListStatusEnum::Accepted;
+        } else if (has_duplicate_in_list(request.localAuthorizationList.value())) {
+            // Do nothing with duplicate in list
+        } else {
+            const auto& list = request.localAuthorizationList.value();
+
+            for (auto& item : list) {
+                if (item.idTokenInfo.has_value()) {
+                    this->database_handler->insert_or_update_local_authorization_list_entry(item.idToken,
+                                                                                            item.idTokenInfo.value());
+                } else {
+                    this->database_handler->delete_local_authorization_list_entry(item.idToken);
+                }
+            }
+            status = SendLocalListStatusEnum::Accepted;
+        }
+    }
+    return status;
+}
+
 void ChargePoint::update_aligned_data_interval() {
     const auto next_timestamp = this->get_next_clock_aligned_meter_value_timestamp(
         this->device_model->get_value<int>(ControllerComponentVariables::AlignedDataInterval));
@@ -778,64 +836,6 @@ bool ChargePoint::validate_set_variable(const SetVariableData& set_variable_data
     }
     return true;
     // TODO(piet): other special validating of variables requested to change can be added here...
-}
-
-SendLocalListStatusEnum ChargePoint::apply_local_authorization_list(const SendLocalListRequest& request) {
-    auto status = SendLocalListStatusEnum::Failed;
-
-    auto has_duplicate_in_list = [](const std::vector<AuthorizationData>& list) {
-        for (auto it1 = list.begin(); it1 != list.end(); ++it1) {
-            for (auto it2 = it1 + 1; it2 != list.end(); ++it2) {
-                if (it1->idToken.idToken == it2->idToken.idToken and it1->idToken.type == it2->idToken.type) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    };
-
-    if (request.versionNumber == 0) {
-        // D01.FR.18: Do nothing, not allowed, respond with failed
-    } else if (request.updateType == UpdateEnum::Full) {
-        if (!request.localAuthorizationList.has_value() or request.localAuthorizationList.value().empty()) {
-            this->database_handler->clear_local_authorization_list();
-            status = SendLocalListStatusEnum::Accepted;
-        } else {
-            const auto& list = request.localAuthorizationList.value();
-
-            auto has_no_token_info = [](const AuthorizationData& item) { return !item.idTokenInfo.has_value(); };
-
-            if (!has_duplicate_in_list(list) and
-                std::find_if(list.begin(), list.end(), has_no_token_info) == list.end()) {
-                this->database_handler->clear_local_authorization_list();
-                this->database_handler->insert_or_update_local_authorization_list(list);
-                status = SendLocalListStatusEnum::Accepted;
-            }
-        }
-    } else if (request.updateType == UpdateEnum::Differential) {
-        if (request.versionNumber <= this->database_handler->get_local_authorization_list_version()) {
-            // D01.FR.19: Do not allow version numbers smaller than current to update differentially
-            status = SendLocalListStatusEnum::VersionMismatch;
-        } else if (!request.localAuthorizationList.has_value() or request.localAuthorizationList.value().empty()) {
-            // D01.FR.05: Do not update database with empty list, only update version number
-            status = SendLocalListStatusEnum::Accepted;
-        } else if (has_duplicate_in_list(request.localAuthorizationList.value())) {
-            // Do nothing with duplicate in list
-        } else {
-            const auto& list = request.localAuthorizationList.value();
-
-            for (auto& item : list) {
-                if (item.idTokenInfo.has_value()) {
-                    this->database_handler->insert_or_update_local_authorization_list_entry(item.idToken,
-                                                                                            item.idTokenInfo.value());
-                } else {
-                    this->database_handler->delete_local_authorization_list_entry(item.idToken);
-                }
-            }
-            status = SendLocalListStatusEnum::Accepted;
-        }
-    }
-    return status;
 }
 
 std::optional<int32_t> ChargePoint::get_transaction_evseid(const CiString<36>& transaction_id) {
@@ -1795,64 +1795,6 @@ DataTransferResponse ChargePoint::data_transfer_req(const CiString<255>& vendorI
     }
 
     return response;
-}
-
-SendLocalListStatusEnum ChargePoint::apply_local_authorization_list(const SendLocalListRequest& request) {
-    auto status = SendLocalListStatusEnum::Failed;
-
-    auto has_duplicate_in_list = [](const std::vector<AuthorizationData>& list) {
-        for (auto it1 = list.begin(); it1 != list.end(); ++it1) {
-            for (auto it2 = it1 + 1; it2 != list.end(); ++it2) {
-                if (it1->idToken.idToken == it2->idToken.idToken and it1->idToken.type == it2->idToken.type) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    };
-
-    if (request.versionNumber == 0) {
-        // D01.FR.18: Do nothing, not allowed, respond with failed
-    } else if (request.updateType == UpdateEnum::Full) {
-        if (!request.localAuthorizationList.has_value() or request.localAuthorizationList.value().empty()) {
-            this->database_handler->clear_local_authorization_list();
-            status = SendLocalListStatusEnum::Accepted;
-        } else {
-            const auto& list = request.localAuthorizationList.value();
-
-            auto has_no_token_info = [](const AuthorizationData& item) { return !item.idTokenInfo.has_value(); };
-
-            if (!has_duplicate_in_list(list) and
-                std::find_if(list.begin(), list.end(), has_no_token_info) == list.end()) {
-                this->database_handler->clear_local_authorization_list();
-                this->database_handler->insert_or_update_local_authorization_list(list);
-                status = SendLocalListStatusEnum::Accepted;
-            }
-        }
-    } else if (request.updateType == UpdateEnum::Differential) {
-        if (request.versionNumber <= this->database_handler->get_local_authorization_list_version()) {
-            // D01.FR.19: Do not allow version numbers smaller than current to update differentially
-            status = SendLocalListStatusEnum::VersionMismatch;
-        } else if (!request.localAuthorizationList.has_value() or request.localAuthorizationList.value().empty()) {
-            // D01.FR.05: Do not update database with empty list, only update version number
-            status = SendLocalListStatusEnum::Accepted;
-        } else if (has_duplicate_in_list(request.localAuthorizationList.value())) {
-            // Do nothing with duplicate in list
-        } else {
-            const auto& list = request.localAuthorizationList.value();
-
-            for (auto& item : list) {
-                if (item.idTokenInfo.has_value()) {
-                    this->database_handler->insert_or_update_local_authorization_list_entry(item.idToken,
-                                                                                            item.idTokenInfo.value());
-                } else {
-                    this->database_handler->delete_local_authorization_list_entry(item.idToken);
-                }
-            }
-            status = SendLocalListStatusEnum::Accepted;
-        }
-    }
-    return status;
 }
 
 void ChargePoint::handle_send_local_authorization_list_req(Call<SendLocalListRequest> call) {
