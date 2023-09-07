@@ -66,7 +66,7 @@ public:
     using ConnectorStatusCallback =
         std::function<void(int connector_id, ChargePointErrorCode errorCode, ChargePointStatus status)>;
     ChargePointStates(const ConnectorStatusCallback& connector_status_callback);
-    void reset(std::map<int, AvailabilityType> connector_availability);
+    void reset(std::map<int, ChargePointStatus> connector_status_map);
 
     void submit_event(int connector_id, FSMEvent event);
     void submit_fault(int connector_id, const ChargePointErrorCode& error_code);
@@ -77,6 +77,7 @@ public:
 private:
     ConnectorStatusCallback connector_status_callback;
 
+    std::unique_ptr<ChargePointFSM> state_machine_connector_zero;
     std::vector<ChargePointFSM> state_machines;
     std::mutex state_machines_mutex;
 };

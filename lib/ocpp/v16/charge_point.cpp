@@ -20,8 +20,8 @@ ChargePoint::ChargePoint(const std::string& config, const std::filesystem::path&
 
 ChargePoint::~ChargePoint() = default;
 
-bool ChargePoint::start() {
-    return this->charge_point->start();
+bool ChargePoint::start(const std::map<int, ChargePointStatus>& connector_status_map) {
+    return this->charge_point->start(connector_status_map);
 }
 
 bool ChargePoint::restart() {

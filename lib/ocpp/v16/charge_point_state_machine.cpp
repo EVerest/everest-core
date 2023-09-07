@@ -86,6 +86,23 @@ static const FSMDefinition FSM_DEF = {
      }},
 };
 
+// special fsm definition for connector 0 wih reduced states
+static const FSMDefinition FSM_DEF_CONNECTOR_ZERO = {
+    {FSMState::Available,
+     {
+         {FSMEvent::ChangeAvailabilityToUnavailable, FSMState::Unavailable},
+     }},
+    {FSMState::Unavailable,
+     {
+         {FSMEvent::BecomeAvailable, FSMState::Available},
+     }},
+    {FSMState::Faulted,
+     {
+         {FSMEvent::I1_ReturnToAvailable, FSMState::Available},
+         {FSMEvent::I8_ReturnToUnavailable, FSMState::Unavailable},
+     }},
+};
+
 ChargePointFSM::ChargePointFSM(const StatusNotificationCallback& status_notification_callback_,
                                FSMState initial_state) :
     status_notification_callback(status_notification_callback_),
@@ -112,7 +129,7 @@ bool ChargePointFSM::handle_event(FSMEvent event) {
     state = dest_state_it->second;
 
     if (!faulted) {
-        status_notification_callback(state, this->error_code);
+        status_notification_callback(state, ChargePointErrorCode::NoError);
     }
 
     return true;
@@ -143,52 +160,69 @@ bool ChargePointFSM::handle_error(const ChargePointErrorCode& error_code) {
 }
 
 ChargePointStates::ChargePointStates(const ConnectorStatusCallback& callback) : connector_status_callback(callback) {
-    // TODO special state machine for connector 0
 }
 
-void ChargePointStates::reset(std::map<int, v16::AvailabilityType> connector_availability) {
+void ChargePointStates::reset(std::map<int, ChargePointStatus> connector_status_map) {
     const std::lock_guard<std::mutex> lck(state_machines_mutex);
     state_machines.clear();
 
-    for (size_t connector_id = 0; connector_id < connector_availability.size(); ++connector_id) {
-        const auto availability = connector_availability.at(connector_id);
-        const auto initial_state =
-            (availability == AvailabilityType::Operative) ? FSMState::Available : FSMState::Unavailable;
-        state_machines.emplace_back(
-            [this, connector_id](ChargePointStatus status, ChargePointErrorCode error_code) {
-                this->connector_status_callback(connector_id, error_code, status);
-            },
-            initial_state);
+    for (size_t connector_id = 0; connector_id < connector_status_map.size(); ++connector_id) {
+        const auto initial_state = connector_status_map.at(connector_id);
+
+        if (connector_id == 0 and initial_state != ChargePointStatus::Available and
+            initial_state != ChargePointStatus::Unavailable and initial_state != ChargePointStatus::Faulted) {
+            throw std::runtime_error("Invalid initial status for connector 0: " +
+                                     conversions::charge_point_status_to_string(initial_state));
+        } else if (connector_id == 0) {
+            state_machine_connector_zero = std::make_unique<ChargePointFSM>(
+                [this](ChargePointStatus status, ChargePointErrorCode error_code) {
+                    this->connector_status_callback(0, error_code, status);
+                },
+                initial_state);
+        } else {
+            state_machines.emplace_back(
+                [this, connector_id](ChargePointStatus status, ChargePointErrorCode error_code) {
+                    this->connector_status_callback(connector_id, error_code, status);
+                },
+                initial_state);
+        }
     }
 }
 
 void ChargePointStates::submit_event(int connector_id, FSMEvent event) {
     const std::lock_guard<std::mutex> lck(state_machines_mutex);
-    if (connector_id > 0 && (size_t)connector_id < this->state_machines.size()) {
-        this->state_machines.at(connector_id).handle_event(event);
+
+    if (connector_id == 0) {
+        this->state_machine_connector_zero->handle_event(event);
+    } else if (connector_id > 0 && (size_t)connector_id <= this->state_machines.size()) {
+        this->state_machines.at(connector_id - 1).handle_event(event);
     }
 }
 
 void ChargePointStates::submit_fault(int connector_id, const ChargePointErrorCode& error_code) {
     const std::lock_guard<std::mutex> lck(state_machines_mutex);
-    if (connector_id > 0 && (size_t)connector_id < state_machines.size()) {
-        state_machines.at(connector_id).handle_fault(error_code);
+    if (connector_id == 0) {
+        this->state_machine_connector_zero->handle_fault(error_code);
+    } else if (connector_id > 0 && (size_t)connector_id <= state_machines.size()) {
+        state_machines.at(connector_id - 1).handle_fault(error_code);
     }
 }
 
 void ChargePointStates::submit_error(int connector_id, const ChargePointErrorCode& error_code) {
     const std::lock_guard<std::mutex> lck(state_machines_mutex);
-    if (connector_id > 0 && (size_t)connector_id < state_machines.size()) {
-        state_machines.at(connector_id).handle_error(error_code);
+    if (connector_id == 0) {
+        this->state_machine_connector_zero->handle_error(error_code);
+    } else if (connector_id > 0 && (size_t)connector_id <= state_machines.size()) {
+        state_machines.at(connector_id - 1).handle_error(error_code);
     }
 }
 
 ChargePointStatus ChargePointStates::get_state(int connector_id) {
     const std::lock_guard<std::mutex> lck(state_machines_mutex);
-    if (connector_id > 0 && (size_t)connector_id < this->state_machines.size()) {
-        return state_machines.at(connector_id).get_state();
+    if (connector_id > 0 && (size_t)connector_id <= this->state_machines.size()) {
+        return state_machines.at(connector_id - 1).get_state();
     } else if (connector_id == 0) {
-        return ChargePointStatus::Available;
+        return state_machine_connector_zero->get_state();
     }
 
     // fall through on invalid id

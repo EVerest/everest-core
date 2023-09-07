@@ -65,11 +65,20 @@ public:
 
     /// \brief Starts the ChargePoint, initializes and connects to the Websocket endpoint and initializes a
     /// BootNotification.req
-    bool start();
+    /// \param connector_status_map initial state of connectors including connector 0 with reduced set of states
+    /// (Available, Unavailable, Faulted). connector_status_map is empty, last availability states from the persistant
+    /// storage will be used
+    /// \return
+    bool start(const std::map<int, ChargePointStatus>& connector_status_map = {});
 
     /// \brief Restarts the ChargePoint if it has been stopped before. The ChargePoint is reinitialized, connects to the
     /// websocket and starts to communicate OCPP messages again
     bool restart();
+
+    // \brief Resets the internal state machine for the connectors using the given \p connector_status_map
+    /// \param connector_status_map state of connectors including connector 0 with reduced set of states (Available,
+    /// Unavailable, Faulted)
+    void reset_state_machine(const std::map<int, ChargePointStatus>& connector_status_map);
 
     /// \brief Stops the ChargePoint, stops timers, transactions and the message queue and disconnects from the
     /// websocket

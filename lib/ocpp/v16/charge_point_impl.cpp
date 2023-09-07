@@ -175,6 +175,33 @@ void ChargePointImpl::init_websocket() {
 
     this->websocket->register_message_callback([this](const std::string& message) { this->message_callback(message); });
 }
+void ChargePointImpl::init_state_machine(const std::map<int, ChargePointStatus>& connector_status_map) {
+    // if connector_status_map empty it retrieves the last availablity states from the database
+    if (connector_status_map.empty()) {
+        auto connector_availability = this->database_handler->get_connector_availability();
+        std::map<int, ChargePointStatus> _connector_status_map;
+        for (const auto& [connector, availability] : connector_availability) {
+            if (availability == AvailabilityType::Operative) {
+                _connector_status_map[connector] = ChargePointStatus::Available;
+                if (this->enable_evse_callback != nullptr) {
+                    this->enable_evse_callback(connector);
+                }
+            } else {
+                _connector_status_map[connector] = ChargePointStatus::Unavailable;
+                if (this->disable_evse_callback != nullptr) {
+                    this->disable_evse_callback(connector);
+                }
+            }
+        }
+        this->status->reset(_connector_status_map);
+    } else {
+        if ((size_t)this->configuration->getNumberOfConnectors() + 1 != connector_status_map.size()) {
+            throw std::runtime_error(
+                "Number of configured connectors doesn't match number of connectors in the database.");
+        }
+        this->status->reset(connector_status_map);
+    }
+}
 
 WebsocketConnectionOptions ChargePointImpl::get_ws_connection_options() {
     WebsocketConnectionOptions connection_options{OcppProtocolVersion::v16,
@@ -735,16 +762,8 @@ void ChargePointImpl::send_meter_value(int32_t connector, MeterValue meter_value
     this->send<MeterValuesRequest>(call);
 }
 
-bool ChargePointImpl::start() {
-    auto connector_availability = this->database_handler->get_connector_availability();
-    connector_availability[0] = AvailabilityType::Operative; // FIXME(kai): fix internal representation in charge
-                                                             // point states, we need a different kind of state
-                                                             // machine for connector 0 anyway (with reduced states)
-    if ((size_t)this->configuration->getNumberOfConnectors() + 1 != connector_availability.size()) {
-        throw std::runtime_error("Number of configured connectors doesn't match number of connectors in the database.");
-    }
-    this->status->reset(connector_availability);
-
+bool ChargePointImpl::start(const std::map<int, ChargePointStatus>& connector_status_map) {
+    this->init_state_machine(connector_status_map);
     this->init_websocket();
     this->websocket->connect();
     this->boot_notification();
@@ -764,11 +783,22 @@ bool ChargePointImpl::restart() {
             this->configuration->getTransactionMessageAttempts(),
             this->configuration->getTransactionMessageRetryInterval(), this->external_notify, this->database_handler);
         this->initialized = true;
-        return this->start();
+
+        // restart with the states that are currently active
+        std::map<int, ChargePointStatus> connector_status_map;
+        for (int i = 0; i <= (size_t)this->configuration->getNumberOfConnectors(); i++) {
+            connector_status_map.at(i) = this->status->get_state(i);
+        }
+
+        return this->start(connector_status_map);
     } else {
         EVLOG_warning << "Attempting to restart Chargepoint while it has not been stopped before";
         return false;
     }
+}
+
+void ChargePointImpl::reset_state_machine(const std::map<int, ChargePointStatus>& connector_status_map) {
+    this->status->reset(connector_status_map);
 }
 
 void ChargePointImpl::stop_all_transactions() {
@@ -1139,13 +1169,14 @@ void ChargePointImpl::handleChangeAvailabilityRequest(ocpp::Call<ChangeAvailabil
     // connector. is that case this change must be scheduled and we should report an availability status
     // of "Scheduled"
 
-    std::vector<int32_t> connectors;
+    std::map<int32_t, AvailabilityStatus> connector_availability_status;
 
     // check if connector exists
     if (call.msg.connectorId <= this->configuration->getNumberOfConnectors() && call.msg.connectorId >= 0) {
         bool transaction_running = false;
 
         if (call.msg.connectorId == 0) {
+            connector_availability_status[0] = AvailabilityStatus::Accepted;
             int32_t number_of_connectors = this->configuration->getNumberOfConnectors();
             for (int32_t connector = 1; connector <= number_of_connectors; connector++) {
                 if (this->transaction_handler->transaction_active(connector)) {
@@ -1153,7 +1184,7 @@ void ChargePointImpl::handleChangeAvailabilityRequest(ocpp::Call<ChangeAvailabil
                     std::lock_guard<std::mutex> change_availability_lock(change_availability_mutex);
                     this->change_availability_queue[connector] = call.msg.type;
                 } else {
-                    connectors.push_back(connector);
+                    connector_availability_status[connector] = AvailabilityStatus::Accepted;
                 }
             }
         } else {
@@ -1162,7 +1193,7 @@ void ChargePointImpl::handleChangeAvailabilityRequest(ocpp::Call<ChangeAvailabil
                 std::lock_guard<std::mutex> change_availability_lock(change_availability_mutex);
                 this->change_availability_queue[call.msg.connectorId] = call.msg.type;
             } else {
-                connectors.push_back(call.msg.connectorId);
+                connector_availability_status[call.msg.connectorId] = AvailabilityStatus::Accepted;
             }
         }
 
@@ -1180,20 +1211,25 @@ void ChargePointImpl::handleChangeAvailabilityRequest(ocpp::Call<ChangeAvailabil
     ocpp::CallResult<ChangeAvailabilityResponse> call_result(response, call.uniqueId);
     this->send<ChangeAvailabilityResponse>(call_result);
 
-    // then execute enabled / disabled callback
-    if (response.status == AvailabilityStatus::Accepted) {
-        this->database_handler->insert_or_update_connector_availability(connectors, call.msg.type);
-        for (auto connector : connectors) {
+    // if scheduled: execute status transition for connector 0
+    // if accepted: execute status transition for connectr 0 and other connectors
+    if (response.status != AvailabilityStatus::Rejected) {
+        for (const auto& [connector, availability_status] : connector_availability_status) {
+            this->database_handler->insert_or_update_connector_availability(connector, call.msg.type);
             if (call.msg.type == AvailabilityType::Operative) {
-                if (this->enable_evse_callback != nullptr) {
+                if (connector == 0) {
+                    this->status->submit_event(0, FSMEvent::BecomeAvailable);
+                } else if (this->enable_evse_callback != nullptr and
+                           availability_status == AvailabilityStatus::Accepted) {
                     this->enable_evse_callback(connector);
                 }
-                this->status->submit_event(connector, FSMEvent::BecomeAvailable);
             } else {
-                if (this->disable_evse_callback != nullptr) {
+                if (connector == 0) {
+                    this->status->submit_event(0, FSMEvent::ChangeAvailabilityToUnavailable);
+                } else if (this->disable_evse_callback != nullptr and
+                           availability_status == AvailabilityStatus::Accepted) {
                     this->disable_evse_callback(connector);
                 }
-                this->status->submit_event(connector, FSMEvent::ChangeAvailabilityToUnavailable);
             }
         }
     }
@@ -1450,7 +1486,8 @@ void ChargePointImpl::handleRemoteStartTransactionRequest(ocpp::Call<RemoteStart
             return;
         }
         int32_t connector = call.msg.connectorId.value();
-        if (this->database_handler->get_connector_availability(connector) == AvailabilityType::Inoperative) {
+        if (this->status->get_state(connector) == ChargePointStatus::Unavailable or
+            this->status->get_state(connector) == ChargePointStatus::Faulted) {
             EVLOG_warning << "Received RemoteStartTransactionRequest for inoperative connector";
             response.status = RemoteStartStopStatus::Rejected;
             ocpp::CallResult<RemoteStartTransactionResponse> call_result(response, call.uniqueId);

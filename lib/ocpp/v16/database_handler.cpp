@@ -63,7 +63,7 @@ void DatabaseHandler::run_sql_init() {
 }
 
 void DatabaseHandler::init_connector_table(int32_t number_of_connectors) {
-    for (int32_t connector = 1; connector <= number_of_connectors; connector++) {
+    for (int32_t connector = 0; connector <= number_of_connectors; connector++) {
         std::string sql = "INSERT OR IGNORE INTO CONNECTORS (ID, AVAILABILITY) VALUES (@connector, @availability_type)";
         SQLiteStatement stmt(this->db, sql);
 
