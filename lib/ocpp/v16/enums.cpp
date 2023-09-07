@@ -1301,6 +1301,8 @@ std::string unit_of_measure_to_string(UnitOfMeasure e) {
         return "Fahrenheit";
     case UnitOfMeasure::Percent:
         return "Percent";
+    case UnitOfMeasure::RevolutionsPerMinute:
+        return "RevolutionsPerMinute";
     }
 
     throw std::out_of_range("No known string conversion for provided enum of type UnitOfMeasure");
@@ -1357,6 +1359,9 @@ UnitOfMeasure string_to_unit_of_measure(const std::string& s) {
     }
     if (s == "Percent") {
         return UnitOfMeasure::Percent;
+    }
+    if (s == "RevolutionsPerMinute") {
+        return UnitOfMeasure::RevolutionsPerMinute;
     }
 
     throw std::out_of_range("Provided string " + s + " could not be converted to enum of type UnitOfMeasure");

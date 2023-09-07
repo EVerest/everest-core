@@ -247,6 +247,68 @@ struct Powermeter {
     friend std::ostream& operator<<(std::ostream& os, const Powermeter& k);
 };
 
+struct StateOfCharge {
+    float value;                         ///< State of Charge in percent
+    std::optional<std::string> location; ///< Location of the State of Charge measurement
+
+    /// \brief Conversion from a given StateOfCharge \p k to a given json object \p j
+    friend void to_json(json& j, const StateOfCharge& k);
+
+    /// \brief Conversion from a given json object \p j to a given StateOfCharge \p k
+    friend void from_json(const json& j, StateOfCharge& k);
+
+    // \brief Writes the string representation of the given StateOfCharge \p k to the given output stream \p os
+    /// \returns an output stream with the StateOfCharge written to
+    friend std::ostream& operator<<(std::ostream& os, const StateOfCharge& k);
+};
+
+struct Temperature {
+    float value;                         ///< Temperature in degree Celsius
+    std::optional<std::string> location; ///< Location of the Temperature measurement
+
+    /// \brief Conversion from a given Temperature \p k to a given json object \p j
+    friend void to_json(json& j, const Temperature& k);
+
+    /// \brief Conversion from a given json object \p j to a given Temperature \p k
+    friend void from_json(const json& j, Temperature& k);
+
+    // \brief Writes the string representation of the given Temperature \p k to the given output stream \p os
+    /// \returns an output stream with the Temperature written to
+    friend std::ostream& operator<<(std::ostream& os, const Temperature& k);
+};
+
+struct RPM {
+    float value;                         ///< RPM
+    std::optional<std::string> location; ///< Location of the RPM measurement
+
+    /// \brief Conversion from a given RPM \p k to a given json object \p j
+    friend void to_json(json& j, const RPM& k);
+
+    /// \brief Conversion from a given json object \p j to a given RPM \p k
+    friend void from_json(const json& j, RPM& k);
+
+    // \brief Writes the string representation of the given RPM \p k to the given output stream \p os
+    /// \returns an output stream with the RPM written to
+    friend std::ostream& operator<<(std::ostream& os, const RPM& k);
+};
+
+struct Measurement {
+    Powermeter power_meter;                   ///< Powermeter data
+    std::optional<StateOfCharge> soc_Percent; ///< State of Charge in percent
+    std::optional<Temperature> temperature_C; ///< Temperature in degree Celsius
+    std::optional<RPM> rpm;                   ///< RPM
+
+    /// \brief Conversion from a given Measurement \p k to a given json object \p j
+    friend void to_json(json& j, const Measurement& k);
+
+    /// \brief Conversion from a given json object \p j to a given Measurement \p k
+    friend void from_json(const json& j, Measurement& k);
+
+    // \brief Writes the string representation of the given Measurement \p k to the given output stream \p os
+    /// \returns an output stream with the Measurement written to
+    friend std::ostream& operator<<(std::ostream& os, const Measurement& k);
+};
+
 enum class CertificateType {
     CentralSystemRootCertificate,
     ManufacturerRootCertificate,

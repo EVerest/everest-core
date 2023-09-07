@@ -135,8 +135,8 @@ public:
     /// \brief Stores the given \p powermeter values for the given \p connector . This function can be called when a new
     /// meter value is present.
     /// \param connector
-    /// \param powermeter structure that can contain all kinds of measurands
-    void on_meter_values(int32_t connector, const Powermeter& powermeter);
+    /// \param measurement structure that can contain all kinds of measurands
+    void on_meter_values(int32_t connector, const Measurement& measurement);
 
     /// \brief Stores the given \p max_current for the given \p connector offered to the EV. This function can be called
     /// when the value for the maximum current for the connector changes. It will be used to report the Measurand

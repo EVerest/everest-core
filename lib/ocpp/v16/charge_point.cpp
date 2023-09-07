@@ -73,8 +73,8 @@ std::map<int32_t, ChargingSchedule> ChargePoint::get_all_composite_charging_sche
     return this->charge_point->get_all_composite_charging_schedules(duration_s);
 }
 
-void ChargePoint::on_meter_values(int32_t connector, const Powermeter& power_meter) {
-    this->charge_point->on_meter_values(connector, power_meter);
+void ChargePoint::on_meter_values(int32_t connector, const Measurement& measurement) {
+    this->charge_point->on_meter_values(connector, measurement);
 }
 
 void ChargePoint::on_max_current_offered(int32_t connector, int32_t max_current) {

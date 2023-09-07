@@ -13,7 +13,7 @@ namespace v16 {
 
 struct Connector {
     int32_t id;
-    std::optional<Powermeter> powermeter;
+    std::optional<Measurement> measurement;
     double max_current_offered = 0;
     std::shared_ptr<Transaction> transaction = nullptr;
     std::map<int, ChargingProfile> stack_level_tx_default_profiles_map;

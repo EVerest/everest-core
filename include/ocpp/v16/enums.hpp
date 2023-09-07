@@ -704,6 +704,7 @@ enum class UnitOfMeasure {
     Celsius,
     Fahrenheit,
     Percent,
+    RevolutionsPerMinute,
 };
 
 namespace conversions {
