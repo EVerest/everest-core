@@ -274,7 +274,7 @@ int evse_managerImpl::handle_get_id() {
     return this->mod->config.connector_id;
 };
 
-bool evse_managerImpl::handle_enable() {
+bool evse_managerImpl::handle_enable(int& connector_id) {
     return mod->charger->enable();
 };
 
@@ -313,7 +313,7 @@ void evse_managerImpl::handle_cancel_reservation() {
     mod->cancel_reservation(true);
 };
 
-bool evse_managerImpl::handle_disable() {
+bool evse_managerImpl::handle_disable(int& connector_id) {
     return mod->charger->disable();
 };
 
@@ -333,7 +333,7 @@ bool evse_managerImpl::handle_stop_transaction(types::evse_manager::StopTransact
     return mod->charger->cancelTransaction(request);
 };
 
-bool evse_managerImpl::handle_force_unlock() {
+bool evse_managerImpl::handle_force_unlock(int& connector_id) {
     return mod->charger->forceUnlock();
 };
 

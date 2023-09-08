@@ -212,7 +212,7 @@ void OCPP::init() {
     this->charge_point->register_unlock_connector_callback([this](int32_t connector) {
         if (connector > 0 && connector <= this->r_evse_manager.size()) {
             EVLOG_info << "Executing unlock connector callback";
-            return this->r_evse_manager.at(connector - 1)->call_force_unlock();
+            return this->r_evse_manager.at(connector - 1)->call_force_unlock(1);
         } else {
             return false;
         }
@@ -354,7 +354,7 @@ void OCPP::init() {
 
     this->charge_point->register_disable_evse_callback([this](int32_t connector) {
         if (connector > 0 && connector <= this->r_evse_manager.size()) {
-            return this->r_evse_manager.at(connector - 1)->call_disable();
+            return this->r_evse_manager.at(connector - 1)->call_disable(0);
         } else {
             return false;
         }
@@ -362,7 +362,7 @@ void OCPP::init() {
 
     this->charge_point->register_enable_evse_callback([this](int32_t connector) {
         if (connector > 0 && connector <= this->r_evse_manager.size()) {
-            return this->r_evse_manager.at(connector - 1)->call_enable();
+            return this->r_evse_manager.at(connector - 1)->call_enable(0);
         } else {
             return false;
         }
