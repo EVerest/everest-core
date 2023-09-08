@@ -35,8 +35,8 @@ public:
 protected:
     // command handler functions (virtual)
     virtual int handle_get_id() override;
-    virtual bool handle_enable() override;
-    virtual bool handle_disable() override;
+    virtual bool handle_enable(int& connector_id) override;
+    virtual bool handle_disable(int& connector_id) override;
     virtual void handle_authorize_response(types::authorization::ProvidedIdToken& provided_token,
                                            types::authorization::ValidationResult& validation_result) override;
     virtual void handle_withdraw_authorization() override;
@@ -46,7 +46,7 @@ protected:
     virtual bool handle_pause_charging() override;
     virtual bool handle_resume_charging() override;
     virtual bool handle_stop_transaction(types::evse_manager::StopTransactionRequest& request) override;
-    virtual bool handle_force_unlock() override;
+    virtual bool handle_force_unlock(int& connector_id) override;
     virtual void handle_set_external_limits(types::energy::ExternalLimits& value) override;
     virtual types::evse_manager::SwitchThreePhasesWhileChargingResult
     handle_switch_three_phases_while_charging(bool& three_phases) override;

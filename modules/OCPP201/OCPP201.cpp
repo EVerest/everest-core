@@ -330,9 +330,11 @@ void OCPP201::init() {
                     ocpp::v201::OperationalStatusEnum::Operative and
                 this->operational_connector_states[request.evse.value().id] ==
                     ocpp::v201::OperationalStatusEnum::Operative) {
-                this->r_evse_manager.at(request.evse.value().id - 1)->call_enable();
+                this->r_evse_manager.at(request.evse.value().id - 1)
+                    ->call_enable(request.evse.value().connectorId.value_or(0));
             } else if (request.operationalStatus == ocpp::v201::OperationalStatusEnum::Inoperative) {
-                this->r_evse_manager.at(request.evse.value().id - 1)->call_disable();
+                this->r_evse_manager.at(request.evse.value().id - 1)
+                    ->call_disable(request.evse.value().connectorId.value_or(0));
             }
         } else {
             // whole charging station is adressed
@@ -343,9 +345,9 @@ void OCPP201::init() {
                         ocpp::v201::OperationalStatusEnum::Operative and
                     this->operational_connector_states[evse->call_get_id()] ==
                         ocpp::v201::OperationalStatusEnum::Operative) {
-                    evse->call_enable();
+                    evse->call_enable(0);
                 } else if (request.operationalStatus == ocpp::v201::OperationalStatusEnum::Inoperative) {
-                    evse->call_disable();
+                    evse->call_disable(0);
                 }
             }
         }

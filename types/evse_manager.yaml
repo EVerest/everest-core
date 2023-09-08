@@ -260,6 +260,11 @@ types:
           An EVSE generated UUID for this session, can be used e.g. for
           database storage.
         type: string
+      connector_id:
+        description: >-
+          Id of the connector of this EVSE. 
+          If the connector_id is not specified, its assumed to be 1
+        type: integer
       event:
         description: >-
           Event enum. For some events an additional object is set, see

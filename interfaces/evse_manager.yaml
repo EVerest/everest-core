@@ -9,6 +9,10 @@ cmds:
       type: integer
   enable:
     description: Enables the evse. EVSE is available for charging after this operation
+    arguments:
+      connector_id:
+        description: Specifies the ID of the connector to disable. If 0, the whole EVSE should be enabled
+        type: integer
     result:
       description: >-
         Returns true if evse was enabled (or was enabled before), returns
@@ -18,6 +22,10 @@ cmds:
     description: >-
       Disables the evse. EVSE is not available for charging after this
       operation
+    arguments:
+      connector_id:
+        description: Specifies the ID of the connector. If 0, the whole EVSE should be disabled
+        type: integer
     result:
       description: >-
         Returns true if evse was disabled (or was disabled before), returns
@@ -90,9 +98,13 @@ cmds:
       type: boolean
   force_unlock:
     description: >-
-      Forces EVSE to unlock connector now. During normal operation, connector
+      Forces connector to unlock connector now. During normal operation, connector
       will be locked/unlocked in the correct sequence. Do not use this function except
       if explicitly requested by e.g. management cloud.
+    arguments:
+      connector_id:
+        description: Specifies the ID of the connector that should be unlocked
+        type: integer
     result:
       description: Returns true if unlocking sequence was successfully executed
       type: boolean
