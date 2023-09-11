@@ -383,3 +383,76 @@ types:
       - VolkswagenGroup
       - Tesla
       - Unknown
+  Connector:
+    description: >-
+      Type for a connector which is an independently operated and managed electrical outlet of an EVSE. It corresponds
+      to a single physical connector
+    type: object
+    additionalProperties: false
+    required:
+      - id
+    properties:
+      id:
+        description: Id of the connector. Connectors should be numbered starting with 1 counting upwards
+        type: integer
+        minimum: 1
+      type:
+        description: Type of the connector
+        type: string
+        $ref: /evse_manager#/ConnectorTypeEnum
+  ConnectorTypeEnum:
+    description: >-
+      Type of a physical connector
+      cCCS1: Combined Charging System 1 a.k.a. Combo 1
+      cCCS2: Combined Charging System 2 a.k.a. Combo 2
+      cG105: JARI G105-1993 a.k.a. CHAdeMO
+      cTesla: Tesla Connector
+      cType1: IEC62196-2 Type 1 connector a.k.a. J1772
+      cType2: IEC62196-2 Type 2 connector a.k.a. Mennekes connector
+      s309_1P_16A: 16A 1 phase IEC60309 socket
+      s309_1P_32A: 32A 1 phase IEC60309 socket
+      s309_3P_16A: 16A 3 phase IEC60309 socket
+      s309_3P_32A: 32A 3 phase IEC60309 socket
+      sBS1361: UK domestic socket a.k.a. 13Amp
+      sCEE-7_7: CEE 7/7 16A socket a.k.a Schuko
+      sType2: IEC62196-2 Type 2 socket a.k.a. Mennekes connector
+      sType3: IEC62196-2 Type 2 socket a.k.a. Scame
+      Unknown: Unknown
+    type: string
+    enum:
+      - cCCS1
+      - cCCS2
+      - cG105
+      - cTesla
+      - cType1
+      - cType2
+      - s309_1P_16A
+      - s309_1P_32A
+      - s309_3P_16A
+      - s309_3P_32A
+      - sBS1361
+      - sCEE_7_7
+      - sType2
+      - sType3
+      - Unknown
+  Evse:
+    description: Type that defines properties of an EVSE including its connectors
+    type: object
+    required:
+      - id
+      - connectors
+    properties:
+      id:
+        description: ID of the EVSE
+        type: integer
+        minimum: 1
+        maximum: 128
+      connectors:
+        description: List of connectors of this EVSE
+        type: array
+        items:
+          description: A single connector
+          type: object
+          $ref: /evse_manager#/Connector
+        minItems: 1
+        maxItems: 128

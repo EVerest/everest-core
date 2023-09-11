@@ -34,7 +34,7 @@ public:
 
 protected:
     // command handler functions (virtual)
-    virtual int handle_get_id() override;
+    virtual types::evse_manager::Evse handle_get_evse() override;
     virtual bool handle_enable(int& connector_id) override;
     virtual bool handle_disable(int& connector_id) override;
     virtual void handle_authorize_response(types::authorization::ProvidedIdToken& provided_token,

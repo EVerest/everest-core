@@ -559,7 +559,7 @@ void OCPP::ready() {
     this->charge_point->call_set_connection_timeout();
     int connector = 1;
     for (const auto& evse : this->r_evse_manager) {
-        if (connector != evse->call_get_id()) {
+        if (connector != evse->call_get_evse().id) {
             EVLOG_AND_THROW(std::runtime_error("Connector Ids of EVSE manager are not configured in ascending order "
                                                "starting with 1. This is mandatory when using the OCPP module"));
         }

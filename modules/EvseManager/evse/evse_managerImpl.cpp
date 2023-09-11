@@ -270,9 +270,17 @@ void evse_managerImpl::ready() {
     // /Deprecated
 }
 
-int evse_managerImpl::handle_get_id() {
-    return this->mod->config.connector_id;
-};
+types::evse_manager::Evse evse_managerImpl::handle_get_evse() {
+    types::evse_manager::Evse evse;
+    evse.id = this->mod->config.connector_id;
+
+    // EvseManager currently only supports a single connector with id: 1;
+    std::vector<types::evse_manager::Connector> connectors;
+    types::evse_manager::Connector connector;
+    connector.id = 1;
+    connectors.push_back(connector);
+    return evse;
+}
 
 bool evse_managerImpl::handle_enable(int& connector_id) {
     return mod->charger->enable();

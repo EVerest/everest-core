@@ -341,9 +341,9 @@ void OCPP201::init() {
             this->operational_evse_states[0] = request.operationalStatus;
             for (const auto& evse : this->r_evse_manager) {
                 if (this->operational_evse_states[0] == ocpp::v201::OperationalStatusEnum::Operative and
-                    this->operational_evse_states[evse->call_get_id()] ==
+                    this->operational_evse_states[evse->call_get_evse().id] ==
                         ocpp::v201::OperationalStatusEnum::Operative and
-                    this->operational_connector_states[evse->call_get_id()] ==
+                    this->operational_connector_states[evse->call_get_evse().id] ==
                         ocpp::v201::OperationalStatusEnum::Operative) {
                     evse->call_enable(0);
                 } else if (request.operationalStatus == ocpp::v201::OperationalStatusEnum::Inoperative) {

@@ -30,7 +30,7 @@ void Auth::ready() {
 
     int32_t evse_index = 0;
     for (const auto& evse_manager : this->r_evse_manager) {
-        int32_t connector_id = evse_manager->call_get_id();
+        int32_t connector_id = evse_manager->call_get_evse().id;
         this->auth_handler->init_connector(connector_id, evse_index);
         this->auth_handler->register_notify_evse_callback([this](const int evse_index,
                                                                  const ProvidedIdToken& provided_token,
