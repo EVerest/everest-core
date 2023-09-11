@@ -2,11 +2,12 @@ description: >-
   This interface defines the evse manager. An evse manager represents the
   charging kernel of one physical connector.
 cmds:
-  get_id:
-    description: Call to get the connector id of the evse manager
+  get_evse:
+    description: Call to get information about the EVSE including its connectors
     result:
-      description: Returns the connector id of the evse manager
-      type: integer
+      description: Object that contains information of the EVSE including its connectors
+      type: object
+      $ref: /evse_manager#/Evse
   enable:
     description: Enables the evse. EVSE is available for charging after this operation
     arguments:
