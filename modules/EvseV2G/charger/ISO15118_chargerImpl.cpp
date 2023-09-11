@@ -365,6 +365,9 @@ void ISO15118_chargerImpl::handle_set_Certificate_Service_Supported(bool& status
     if (status == true) {
         // For setting "Certificate" in ServiceList in ServiceDiscoveryRes
         struct iso1ServiceType cert_service;
+
+        init_iso1ServiceType(&cert_service);
+
         const std::string service_name = "Certificate";
         const int16_t cert_parameter_set_id[] = {1}; // parameter-set-ID 1: "Installation" service. TODO: Support of the
                                                      // "Update" service (parameter-set-ID 2)
@@ -376,6 +379,7 @@ void ISO15118_chargerImpl::handle_set_Certificate_Service_Supported(bool& status
                service_name.length());
 
         cert_service.ServiceName.charactersLen = service_name.length();
+        cert_service.ServiceName_isUsed = true;
 
         add_service_to_service_list(v2g_ctx, cert_service, cert_parameter_set_id,
                                     sizeof(cert_parameter_set_id) / sizeof(cert_parameter_set_id[0]));
@@ -399,6 +403,34 @@ void ISO15118_chargerImpl::handle_dlink_ready(bool& value) {
     if (!value) {
         v2g_ctx->is_connection_terminated = true;
     }
+}
+
+void ISO15118_chargerImpl::handle_supporting_sae_j2847_bidi(types::iso15118_charger::SAE_J2847_Bidi_Mode& mode) {
+
+    struct iso1ServiceType sae_service;
+
+    init_iso1ServiceType(&sae_service);
+
+    sae_service.FreeService = 1;
+    sae_service.ServiceCategory = iso1serviceCategoryType_OtherCustom;
+
+    if (mode == types::iso15118_charger::SAE_J2847_Bidi_Mode::V2H) {
+        sae_service.ServiceID = 28472;
+        const std::string service_name = "SAE J2847/2 V2H";
+        memcpy(sae_service.ServiceName.characters, reinterpret_cast<const char*>(service_name.data()),
+               service_name.length());
+        sae_service.ServiceName.charactersLen = service_name.length();
+        sae_service.ServiceName_isUsed = true;
+    } else {
+        sae_service.ServiceID = 28473;
+        const std::string service_name = "SAE J2847/2 V2G";
+        memcpy(sae_service.ServiceName.characters, reinterpret_cast<const char*>(service_name.data()),
+               service_name.length());
+        sae_service.ServiceName.charactersLen = service_name.length();
+        sae_service.ServiceName_isUsed = true;
+    }
+
+    add_service_to_service_list(v2g_ctx, sae_service);
 }
 
 } // namespace charger

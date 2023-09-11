@@ -43,6 +43,26 @@ config:
     description: Target voltage requested by the EV
     type: integer
     default: 200
+  support_sae_j2847:
+    description: Supporting SAE J2847 ISO 2 bidi version
+    type: boolean
+    default: false
+  dc_discharge_max_current_limit:
+    description: Maximum discharge current allowed by the EV
+    type: integer
+    default: 300
+  dc_discharge_max_power_limit:
+    description: Maximum discharge power allowed by the EV
+    type: integer
+    default: 150000
+  dc_discharge_target_current:
+    description: Discharge target current requested by the EV
+    type: integer
+    default: 5
+  dc_discharge_v2g_minimal_soc:
+    description: Discharge minimal soc at which the evse should shutdown
+    type: integer
+    default: 20
 provides:
   main:
     interface: car_simulator

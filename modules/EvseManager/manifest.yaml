@@ -183,6 +183,17 @@ config:
       Use DummyTokenProvider/Validator when testing with Auth module and/or OCPP.
     type: boolean
     default: false
+  sae_j2847_2_bpt_enabled:
+    description: Enable SAE J2847 2 V2G or V2H mode
+    type: boolean
+    default: false
+  sae_j2847_2_bpt_mode:
+    description: SAE J2847 2 BPT mode
+    type: string
+    enum:
+      - V2H
+      - V2G
+    default: V2G 
 provides:
   evse:
     interface: evse_manager
