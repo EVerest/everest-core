@@ -22,21 +22,14 @@ public:
 
 /// @brief Convenience wrapper around openssl X509
 class X509Wrapper {
-
-private:
-    X509* x509;
-    int valid_in; // seconds; if > 0 cert is not yet valid
-    int valid_to; // seconds; if < 0 cert has expired
-    std::string str;
-    std::optional<std::filesystem::path> path;
-
-    void load_certificate(const std::string& data, const EncodingFormat encoding);
-
+    using X509_ptr = std::unique_ptr<X509,  decltype(&::X509_free)>;
 public:
     // Constructors
     X509Wrapper(const std::string& certificate, const EncodingFormat encoding);
     X509Wrapper(const std::filesystem::path& path, const EncodingFormat encoding);
     X509Wrapper(X509* x509);
+
+    // using custom copy constructors and deleters can usually and should be avoided
     X509Wrapper(const X509Wrapper& other);
     ~X509Wrapper();
 
@@ -91,6 +84,15 @@ public:
     /// @brief Gets OCSP responder URL of certificate if present, else returns an empty string
     /// @return
     std::string get_responder_url() const;
+
+private:
+    X509_ptr x509;
+    int valid_in; // seconds; if > 0 cert is not yet valid
+    int valid_to; // seconds; if < 0 cert has expired
+    std::string str;
+    std::optional<std::filesystem::path> path;
+
+    void load_certificate(const std::string& data, const EncodingFormat encoding);
 };
 
 } // namespace evse_security

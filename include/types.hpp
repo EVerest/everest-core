@@ -33,7 +33,7 @@ enum class CertificateType {
     V2GRootCertificate,
     MORootCertificate,
     CSMSRootCertificate,
-    V2GCertificateChain,
+    V2GCertificateChain, // is the certificate chain a certificate type?
     MFRootCertificate,
 };
 
@@ -43,6 +43,7 @@ enum class HashAlgorithm {
     SHA512,
 };
 
+// the following 3 enum classes should go into evse_security
 enum class InstallCertificateResult {
     InvalidSignature,
     InvalidCertificateChain,
@@ -52,7 +53,7 @@ enum class InstallCertificateResult {
     Expired,
     CertificateStoreMaxLengthExceeded,
     WriteError,
-    Accepted,
+    Accepted, // would call it Success, not Accepted
 };
 
 enum class DeleteCertificateResult {
@@ -61,6 +62,7 @@ enum class DeleteCertificateResult {
     NotFound,
 };
 
+// why Status here and not Result as before?
 enum class GetInstalledCertificatesStatus {
     Accepted,
     NotFound,
@@ -80,6 +82,7 @@ struct CertificateHashData {
 struct CertificateHashDataChain {
     CertificateType certificate_type; ///< Indicates the type of the certificate for which the hash data is provided
     CertificateHashData certificate_hash_data; ///< Contains the hash data of the certificate
+    // making a vector optional shouldn't be necessary here, if there is no data, then the vector is just empty
     std::optional<std::vector<CertificateHashData>>
         child_certificate_hash_data; ///< Contains the hash data of the child's certificates
 };
