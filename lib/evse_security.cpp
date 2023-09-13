@@ -489,9 +489,25 @@ EvseSecurity::get_installed_certificates(const std::vector<CertificateType>& cer
 }
 
 OCSPRequestDataList EvseSecurity::get_ocsp_request_data() {
-    // TODO(piet): Implement this properly
-    OCSPRequestDataList ocsp_request_data_list;
-    return ocsp_request_data_list;
+    OCSPRequestDataList response;
+     std::vector<OCSPRequestData> ocsp_request_data_list;
+
+    X509Wrapper ca_bundle(this->ca_bundle_path_map.at(CaCertificateType::V2G), EncodingFormat::PEM);
+    const auto certificates_of_bundle = ca_bundle.split();
+    for (const auto &certificate : certificates_of_bundle) {
+        std::string responder_url = certificate.get_responder_url();
+        if (!responder_url.empty()) {
+            auto certificate_hash_data = certificate.get_certificate_hash_data();
+            OCSPRequestData ocsp_request_data = {
+                certificate_hash_data,
+                responder_url   
+            };
+            ocsp_request_data_list.push_back(ocsp_request_data);
+        }
+    }
+
+    response.ocsp_request_data_list = ocsp_request_data_list;
+    return response;
 }
 
 void EvseSecurity::update_ocsp_cache(const CertificateHashData& certificate_hash_data,
