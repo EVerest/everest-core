@@ -25,7 +25,20 @@
             }
         }
     },
-    "AuthCacheCtrlr": {},
+    "AuthCacheCtrlr": {
+        "AuthCacheCtrlrAvailable": {
+            "variable_name": "Available",
+            "attributes": {
+                "Actual": true
+            }
+        },
+        "AuthCacheCtrlrEnabled": {
+            "variable_name": "Enabled",
+            "attributes": {
+                "Actual": false
+            }
+        }
+    },
     "AuthCtrlr": {
         "AuthorizeRemoteStart": {
             "variable_name": "AuthorizeRemoteStart",
@@ -43,6 +56,12 @@
             "variable_name": "LocalPreAuthorize",
             "attributes": {
                 "Actual": true
+            }
+        },
+        "OfflineTxForUnknownIdEnabled": {
+            "variable_name": "OfflineTxForUnknownIdEnabled",
+            "attributes": {
+                "Actual": false
             }
         }
     },

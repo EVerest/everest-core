@@ -314,50 +314,74 @@ AuthorizeResponse ChargePoint::validate_token(const IdToken id_token, const std:
     // TODO(piet): C10.FR.07
 
     AuthorizeResponse response;
-    IdTokenInfo id_token_info;
 
     // C03.FR.01 && C05.FR.01: We SHALL NOT send an authorize reqeust for IdTokenType Central
     if (id_token.type == IdTokenEnum::Central or
         !this->device_model->get_optional_value<bool>(ControllerComponentVariables::AuthCtrlrEnabled).value_or(true)) {
-        id_token_info.status = AuthorizationStatusEnum::Accepted;
-        response.idTokenInfo = id_token_info;
+        response.idTokenInfo.status = AuthorizationStatusEnum::Accepted;
         return response;
     }
 
-    if (!this->device_model->get_optional_value<bool>(ControllerComponentVariables::AuthCacheCtrlrEnabled)
-             .value_or(true)) {
-        EVLOG_info << "AuthCache not enabled: Sending Authorize.req";
-        return this->authorize_req(id_token, certificate, ocsp_request_data);
+    if (this->device_model->get_optional_value<bool>(ControllerComponentVariables::LocalAuthListCtrlrEnabled)
+            .value_or(false)) {
+        const auto id_token_info = this->database_handler->get_local_authorization_list_entry(id_token);
+
+        if (id_token_info.has_value()) {
+            if (id_token_info.value().status == AuthorizationStatusEnum::Accepted) {
+                // C14.FR.02: If found in local list we shall start charging without an AuthorizeRequest
+                EVLOG_info << "Found valid entry in local authorization list";
+                response.idTokenInfo = id_token_info.value();
+            } else if (this->websocket_connection_status == WebsocketConnectionStatusEnum::Connected) {
+                // C14.FR.03: If a value found but not valid we shall send an authorize request
+                EVLOG_info << "Found invalid entry in local authorization list: Sending Authorize.req";
+                response = this->authorize_req(id_token, certificate, ocsp_request_data);
+            } else {
+                // errata C13.FR.04: even in the offline state we should not authorize if present (and not accepted)
+                EVLOG_info << "Found invalid entry in local authorization list whilst offline: Not authorized";
+                response.idTokenInfo.status = AuthorizationStatusEnum::Unknown;
+            }
+            return response;
+        }
     }
 
     const auto hashed_id_token = utils::generate_token_hash(id_token);
-    const auto cache_entry = this->database_handler->get_auth_cache_entry(hashed_id_token);
+    const auto auth_cache_enabled =
+        this->device_model->get_optional_value<bool>(ControllerComponentVariables::AuthCacheCtrlrEnabled)
+            .value_or(false);
 
-    if (!cache_entry.has_value()) {
-        EVLOG_info << "AuthCache enabled but not entry found: Sending Authorize.req";
-        response = this->authorize_req(id_token, certificate, ocsp_request_data);
-        this->database_handler->insert_auth_cache_entry(hashed_id_token, response.idTokenInfo);
-        return response;
+    if (auth_cache_enabled) {
+        const auto cache_entry = this->database_handler->get_auth_cache_entry(hashed_id_token);
+        if (cache_entry.has_value()) {
+            if ((cache_entry.value().cacheExpiryDateTime.has_value() and
+                 cache_entry.value().cacheExpiryDateTime.value().to_time_point() < DateTime().to_time_point())) {
+                EVLOG_info << "Found valid entry in AuthCache but expiry date passed: Removing from cache and sending "
+                              "new request";
+                this->database_handler->delete_auth_cache_entry(hashed_id_token);
+            } else if (this->device_model->get_value<bool>(ControllerComponentVariables::LocalPreAuthorize) and
+                       cache_entry.value().status == AuthorizationStatusEnum::Accepted) {
+                EVLOG_info << "Found valid entry in AuthCache";
+                response.idTokenInfo = cache_entry.value();
+                return response;
+            } else {
+                EVLOG_info << "Found invalid entry in AuthCache: Sending new request";
+            }
+        }
     }
 
-    if ((cache_entry.value().cacheExpiryDateTime.has_value() and
-         cache_entry.value().cacheExpiryDateTime.value().to_time_point() < DateTime().to_time_point())) {
-        EVLOG_info << "Entry found in AuthCache but cacheExpiryDate exceeded: Sending Authorize.req";
-        this->database_handler->delete_auth_cache_entry(hashed_id_token);
-        response = this->authorize_req(id_token, certificate, ocsp_request_data);
-        this->database_handler->insert_auth_cache_entry(hashed_id_token, response.idTokenInfo);
-        return response;
-    }
-
-    if (this->device_model->get_value<bool>(ControllerComponentVariables::LocalPreAuthorize) and
-        cache_entry.value().status == AuthorizationStatusEnum::Accepted) {
-        EVLOG_info << "Found valid entry in AuthCache";
-        response.idTokenInfo = cache_entry.value();
+    if (this->websocket_connection_status == WebsocketConnectionStatusEnum::Disconnected and
+        this->device_model->get_optional_value<bool>(ControllerComponentVariables::OfflineTxForUnknownIdEnabled)
+            .value_or(false)) {
+        EVLOG_info << "Offline authorization due to OfflineTxForUnknownIdEnabled being enabled";
+        response.idTokenInfo.status = AuthorizationStatusEnum::Accepted;
         return response;
     }
 
     response = this->authorize_req(id_token, certificate, ocsp_request_data);
-    this->database_handler->insert_auth_cache_entry(hashed_id_token, response.idTokenInfo);
+
+    if (auth_cache_enabled) {
+        this->database_handler->insert_auth_cache_entry(hashed_id_token, response.idTokenInfo);
+    }
+
     return response;
 }
 
