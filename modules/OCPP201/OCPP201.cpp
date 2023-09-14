@@ -377,6 +377,51 @@ void OCPP201::init() {
         }
     };
 
+    callbacks.pause_charging_callback = [this](const int32_t evse_id) {
+        if (evse_id > 0 && evse_id <= this->r_evse_manager.size()) {
+            this->r_evse_manager.at(evse_id - 1)->call_pause_charging();
+        }
+    };
+
+    callbacks.unlock_connector_callback = [this](const int32_t evse_id, const int32_t connector_id) {
+        // FIXME: This needs to properly handle different connectors
+        ocpp::v201::UnlockConnectorResponse response;
+        if (evse_id > 0 && evse_id <= this->r_evse_manager.size()) {
+            if (this->r_evse_manager.at(evse_id - 1)->call_force_unlock(connector_id)) {
+                response.status = ocpp::v201::UnlockStatusEnum::Unlocked;
+            } else {
+                response.status = ocpp::v201::UnlockStatusEnum::UnlockFailed;
+            }
+        } else {
+            response.status = ocpp::v201::UnlockStatusEnum::UnknownConnector;
+        }
+
+        return response;
+    };
+
+    callbacks.get_log_request_callback = [](const ocpp::v201::GetLogRequest& request) {
+        // FIXME: This is just a stub, replace with functionality
+        EVLOG_warning << "get_log_request_callback is still a stub";
+        ocpp::v201::GetLogResponse response;
+        response.status = ocpp::v201::LogStatusEnum::Rejected;
+        return response;
+    };
+
+    callbacks.is_reservation_for_token_callback = [](const int32_t evse_id, const ocpp::CiString<36> idToken,
+                                                     const std::optional<ocpp::CiString<36>> groupIdToken) {
+        // FIXME: This is just a stub, replace with functionality
+        EVLOG_warning << "is_reservation_for_token_callback is still a stub";
+        return false;
+    };
+
+    callbacks.update_firmware_request_callback = [](const ocpp::v201::UpdateFirmwareRequest& request) {
+        // FIXME: This is just a stub, replace with functionality
+        EVLOG_warning << "update_firmware_request_callback is still a stub";
+        ocpp::v201::UpdateFirmwareResponse response;
+        response.status = ocpp::v201::UpdateFirmwareStatusEnum::Rejected;
+        return response;
+    };
+
     callbacks.validate_network_profile_callback =
         [this](const int32_t configuration_slot,
                const ocpp::v201::NetworkConnectionProfile& network_connection_profile) {
