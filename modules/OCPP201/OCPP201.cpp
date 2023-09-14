@@ -243,6 +243,107 @@ ocpp::v201::MeterValue get_meter_value(const types::powermeter::Powermeter& powe
     return meter_value;
 }
 
+ocpp::v201::LogStatusEnum get_log_status_enum(types::system::UploadLogsStatus log_status) {
+    switch (log_status) {
+    case types::system::UploadLogsStatus::Accepted:
+        return ocpp::v201::LogStatusEnum::Accepted;
+    case types::system::UploadLogsStatus::Rejected:
+        return ocpp::v201::LogStatusEnum::Rejected;
+    case types::system::UploadLogsStatus::AcceptedCancelled:
+        return ocpp::v201::LogStatusEnum::AcceptedCanceled;
+    default:
+        throw std::runtime_error("Could not convert UploadLogsStatus");
+    }
+}
+
+types::system::UploadLogsRequest get_log_request(const ocpp::v201::GetLogRequest& request) {
+    types::system::UploadLogsRequest _request;
+    _request.location = request.log.remoteLocation.get();
+    _request.retries = request.retries;
+    _request.retry_interval_s = request.retryInterval;
+
+    if (request.log.oldestTimestamp.has_value()) {
+        _request.oldest_timestamp = request.log.oldestTimestamp.value().to_rfc3339();
+    }
+    if (request.log.latestTimestamp.has_value()) {
+        _request.latest_timestamp = request.log.latestTimestamp.value().to_rfc3339();
+    }
+    _request.type = ocpp::v201::conversions::log_enum_to_string(request.logType);
+    _request.request_id = request.requestId;
+    return _request;
+}
+
+ocpp::v201::GetLogResponse get_log_response(const types::system::UploadLogsResponse& response) {
+    ocpp::v201::GetLogResponse _response;
+    _response.status = get_log_status_enum(response.upload_logs_status);
+    _response.filename = response.file_name;
+    return _response;
+}
+
+ocpp::v201::UpdateFirmwareStatusEnum
+get_update_firmware_status_enum(const types::system::UpdateFirmwareResponse& response) {
+    switch (response) {
+    case types::system::UpdateFirmwareResponse::Accepted:
+        return ocpp::v201::UpdateFirmwareStatusEnum::Accepted;
+    case types::system::UpdateFirmwareResponse::Rejected:
+        return ocpp::v201::UpdateFirmwareStatusEnum::Rejected;
+    case types::system::UpdateFirmwareResponse::AcceptedCancelled:
+        return ocpp::v201::UpdateFirmwareStatusEnum::AcceptedCanceled;
+    case types::system::UpdateFirmwareResponse::InvalidCertificate:
+        return ocpp::v201::UpdateFirmwareStatusEnum::InvalidCertificate;
+    case types::system::UpdateFirmwareResponse::RevokedCertificate:
+        return ocpp::v201::UpdateFirmwareStatusEnum::RevokedCertificate;
+    default:
+        throw std::runtime_error("Could not convert UpdateFirmwareResponse");
+    }
+}
+
+types::system::FirmwareUpdateRequest get_firmware_update_request(const ocpp::v201::UpdateFirmwareRequest& request) {
+    types::system::FirmwareUpdateRequest _request;
+    _request.request_id = request.requestId;
+    _request.location = request.firmware.location.get();
+    _request.retries = request.retries;
+    _request.retry_interval_s = request.retryInterval;
+    _request.retrieve_timestamp = request.firmware.retrieveDateTime.to_rfc3339();
+    if (request.firmware.installDateTime.has_value()) {
+        _request.install_timestamp = request.firmware.installDateTime.value().to_rfc3339();
+    }
+    if (request.firmware.signingCertificate.has_value()) {
+        _request.signing_certificate = request.firmware.signingCertificate.value().get();
+    }
+    if (request.firmware.signature.has_value()) {
+        _request.signature = request.firmware.signature.value().get();
+    }
+    return _request;
+}
+
+ocpp::v201::UpdateFirmwareResponse get_update_firmware_response(const types::system::UpdateFirmwareResponse& response) {
+    ocpp::v201::UpdateFirmwareResponse _response;
+    _response.status = get_update_firmware_status_enum(response);
+    return _response;
+}
+
+ocpp::v201::UploadLogStatusEnum get_upload_log_status_enum(types::system::LogStatusEnum status) {
+    switch (status) {
+    case types::system::LogStatusEnum::BadMessage:
+        return ocpp::v201::UploadLogStatusEnum::BadMessage;
+    case types::system::LogStatusEnum::Idle:
+        return ocpp::v201::UploadLogStatusEnum::Idle;
+    case types::system::LogStatusEnum::NotSupportedOperation:
+        return ocpp::v201::UploadLogStatusEnum::NotSupportedOperation;
+    case types::system::LogStatusEnum::PermissionDenied:
+        return ocpp::v201::UploadLogStatusEnum::PermissionDenied;
+    case types::system::LogStatusEnum::Uploaded:
+        return ocpp::v201::UploadLogStatusEnum::Uploaded;
+    case types::system::LogStatusEnum::UploadFailure:
+        return ocpp::v201::UploadLogStatusEnum::UploadFailure;
+    case types::system::LogStatusEnum::Uploading:
+        return ocpp::v201::UploadLogStatusEnum::Uploading;
+    default:
+        throw std::runtime_error("Could not convert UploadLogStatusEnum");
+    }
+}
+
 void OCPP201::init() {
     invoke_init(*p_main);
     invoke_init(*p_auth_provider);
@@ -399,12 +500,9 @@ void OCPP201::init() {
         return response;
     };
 
-    callbacks.get_log_request_callback = [](const ocpp::v201::GetLogRequest& request) {
-        // FIXME: This is just a stub, replace with functionality
-        EVLOG_warning << "get_log_request_callback is still a stub";
-        ocpp::v201::GetLogResponse response;
-        response.status = ocpp::v201::LogStatusEnum::Rejected;
-        return response;
+    callbacks.get_log_request_callback = [this](const ocpp::v201::GetLogRequest& request) {
+        const auto response = this->r_system->call_upload_logs(get_log_request(request));
+        return get_log_response(response);
     };
 
     callbacks.is_reservation_for_token_callback = [](const int32_t evse_id, const ocpp::CiString<36> idToken,
@@ -414,12 +512,9 @@ void OCPP201::init() {
         return false;
     };
 
-    callbacks.update_firmware_request_callback = [](const ocpp::v201::UpdateFirmwareRequest& request) {
-        // FIXME: This is just a stub, replace with functionality
-        EVLOG_warning << "update_firmware_request_callback is still a stub";
-        ocpp::v201::UpdateFirmwareResponse response;
-        response.status = ocpp::v201::UpdateFirmwareStatusEnum::Rejected;
-        return response;
+    callbacks.update_firmware_request_callback = [this](const ocpp::v201::UpdateFirmwareRequest& request) {
+        const auto response = this->r_system->call_update_firmware(get_firmware_update_request(request));
+        return get_update_firmware_response(response);
     };
 
     callbacks.validate_network_profile_callback =
@@ -548,6 +643,16 @@ void OCPP201::init() {
             this->charge_point->on_meter_value(evse_id, meter_value);
         });
         evse_id++;
+
+        r_system->subscribe_firmware_update_status([this](const types::system::FirmwareUpdateStatus status) {
+            this->charge_point->on_firmware_update_status_notification(
+                status.request_id, types::system::firmware_update_status_enum_to_string(status.firmware_update_status));
+        });
+
+        r_system->subscribe_log_status([this](types::system::LogStatus status) {
+            this->charge_point->on_log_status_notification(get_upload_log_status_enum(status.log_status),
+                                                           status.request_id);
+        });
     }
 
     this->charge_point->start();
