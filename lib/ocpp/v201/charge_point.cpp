@@ -605,8 +605,9 @@ void ChargePoint::next_network_configuration_priority() {
         (this->network_configuration_priority + 1) % (network_connection_profiles.size());
 }
 
-void ChargePoint::handle_message(const json& json_message, const MessageType& message_type) {
-    switch (message_type) {
+void ChargePoint::handle_message(const EnhancedMessage<v201::MessageType>& message) {
+    const auto& json_message = message.message;
+    switch (message.messageType) {
     case MessageType::BootNotificationResponse:
         this->handle_boot_notification_response(json_message);
         break;
@@ -632,7 +633,7 @@ void ChargePoint::handle_message(const json& json_message, const MessageType& me
         this->handle_change_availability_req(json_message);
         break;
     case MessageType::TransactionEventResponse:
-        // handled by transaction_event_req future
+        this->handle_start_transaction_event_response(message);
         break;
     case MessageType::RequestStartTransaction:
         this->handle_remote_start_transaction_request(json_message);
@@ -673,7 +674,7 @@ void ChargePoint::message_callback(const std::string& message) {
     this->logging->central_system(conversions::messagetype_to_string(enhanced_message.messageType), message);
 
     if (this->registration_status == RegistrationStatusEnum::Accepted) {
-        this->handle_message(json_message, enhanced_message.messageType);
+        this->handle_message(enhanced_message);
     } else if (this->registration_status == RegistrationStatusEnum::Pending) {
         if (enhanced_message.messageType == MessageType::BootNotificationResponse) {
             this->handle_boot_notification_response(json_message);
@@ -684,7 +685,7 @@ void ChargePoint::message_callback(const std::string& message) {
                 enhanced_message.messageType == MessageType::GetBaseReport or
                 enhanced_message.messageType == MessageType::GetReport or
                 enhanced_message.messageType == MessageType::TriggerMessage) {
-                this->handle_message(json_message, enhanced_message.messageType);
+                this->handle_message(enhanced_message);
             } else if (enhanced_message.messageType == MessageType::RequestStartTransaction) {
                 // Send rejected: B02.FR.05
                 RequestStartTransactionResponse response;
@@ -710,7 +711,7 @@ void ChargePoint::message_callback(const std::string& message) {
         } else if (enhanced_message.messageType == MessageType::TriggerMessage) {
             Call<TriggerMessageRequest> call(json_message);
             if (call.msg.requestedMessage == MessageTriggerEnum::BootNotification) {
-                this->handle_message(json_message, enhanced_message.messageType);
+                this->handle_message(enhanced_message);
             } else {
                 const auto error_message = "Received TriggerMessage with requestedMessage != BootNotification before "
                                            "having received an accepted BootNotificationResponse";
@@ -1142,23 +1143,13 @@ void ChargePoint::transaction_event_req(const TransactionEventEnum& event_type, 
         remote_start_id_per_evse.erase(it);
     }
 
-    if (event_type == TransactionEventEnum::Started) {
-        if (!evse.has_value() or !id_token.has_value()) {
-            EVLOG_error << "Request to send TransactionEvent(Started) without given evse or id_token. These properties "
-                           "are required for this eventType \"Started\"!";
-            return;
-        }
-
-        auto future = this->send_async<TransactionEventRequest>(call);
-        const auto enhanced_message = future.get();
-        if (enhanced_message.messageType == MessageType::TransactionEventResponse) {
-            this->handle_start_transaction_event_response(enhanced_message.message, evse.value().id, id_token.value());
-        } else if (enhanced_message.offline) {
-            // TODO(piet): offline handling
-        }
-    } else {
-        this->send<TransactionEventRequest>(call);
+    if (event_type == TransactionEventEnum::Started and (!evse.has_value() or !id_token.has_value())) {
+        EVLOG_error << "Request to send TransactionEvent(Started) without given evse or id_token. These properties "
+                       "are required for this eventType \"Started\"!";
+        return;
     }
+
+    this->send<TransactionEventRequest>(call);
 }
 
 void ChargePoint::meter_values_req(const int32_t evse_id, const std::vector<MeterValue>& meter_values) {
@@ -1511,8 +1502,28 @@ void ChargePoint::handle_clear_cache_req(Call<ClearCacheRequest> call) {
     this->send<ClearCacheResponse>(call_result);
 }
 
-void ChargePoint::handle_start_transaction_event_response(CallResult<TransactionEventResponse> call_result,
-                                                          const int32_t evse_id, const IdToken& id_token) {
+void ChargePoint::handle_start_transaction_event_response(const EnhancedMessage<v201::MessageType>& message) {
+    CallResult<TransactionEventResponse> call_result = message.message;
+    const Call<TransactionEventRequest>& original_call = message.call_message;
+    const auto& original_msg = original_call.msg;
+
+    if (original_msg.eventType != TransactionEventEnum::Started) {
+        return;
+    }
+
+    if (!original_msg.evse.has_value()) {
+        EVLOG_error << "Start transaction event sent without without evse id";
+        return;
+    }
+
+    if (!original_msg.idToken.has_value()) {
+        EVLOG_error << "Start transaction event sent without without idToken info";
+        return;
+    }
+
+    const int32_t evse_id = original_msg.evse.value().id;
+    const IdToken& id_token = original_msg.idToken.value();
+
     const auto msg = call_result.msg;
     if (msg.idTokenInfo.has_value()) {
         // C03.FR.0x and C05.FR.01: We SHALL NOT store central information in the Authorization Cache
