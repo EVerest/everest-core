@@ -308,12 +308,16 @@ bool ChargePoint::on_charging_state_changed(const uint32_t evse_id, ChargingStat
         std::unique_ptr<EnhancedTransaction>& transaction =
             this->evses.at(static_cast<int32_t>(evse_id))->get_transaction();
         if (transaction != nullptr) {
-            transaction->chargingState = charging_state;
-
-            this->transaction_event_req(TransactionEventEnum::Updated, DateTime(), transaction->get_transaction(),
-                                        TriggerReasonEnum::ChargingStateChanged, transaction->get_seq_no(),
-                                        std::nullopt, this->evses.at(static_cast<int32_t>(evse_id))->get_evse_info(),
-                                        std::nullopt, std::nullopt, std::nullopt, this->is_offline(), std::nullopt);
+            if (transaction->chargingState == charging_state) {
+                EVLOG_debug << "Trying to send charging state changed without actual change, dropping message";
+            } else {
+                transaction->chargingState = charging_state;
+                this->transaction_event_req(TransactionEventEnum::Updated, DateTime(), transaction->get_transaction(),
+                                            TriggerReasonEnum::ChargingStateChanged, transaction->get_seq_no(),
+                                            std::nullopt,
+                                            this->evses.at(static_cast<int32_t>(evse_id))->get_evse_info(),
+                                            std::nullopt, std::nullopt, std::nullopt, this->is_offline(), std::nullopt);
+            }
             return true;
         } else {
             EVLOG_warning << "Can not change charging state: no transaction for evse id " << evse_id;
