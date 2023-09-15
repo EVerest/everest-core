@@ -102,13 +102,14 @@ public:
     }
 
 private:
+    void load_certificate(const std::string& data, const EncodingFormat encoding);
+    void update_validity();
+
+private:
     std::vector<X509_ptr> x509;
     int valid_in; // seconds; if > 0 cert is not yet valid
     int valid_to; // seconds; if < 0 cert has expired
-    std::optional<std::filesystem::path> path;
-
-    void load_certificate(const std::string& data, const EncodingFormat encoding);
-    void update_validity();
+    std::optional<std::filesystem::path> path;    
 };
 
 } // namespace evse_security

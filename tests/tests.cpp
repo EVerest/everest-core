@@ -52,10 +52,10 @@ protected:
         file_paths.mf_ca_bundle = std::filesystem::path("certs/ca/v2g/V2G_CA_BUNDLE.pem");
         file_paths.mo_ca_bundle = std::filesystem::path("certs/ca/mo/MO_CA_BUNDLE.pem");
         file_paths.v2g_ca_bundle = std::filesystem::path("certs/ca/v2g/V2G_CA_BUNDLE.pem");
-        file_paths.csms_leaf_cert_directory = std::filesystem::path("certs/client/csms/");
-        file_paths.csms_leaf_key_directory = std::filesystem::path("certs/client/csms/");
-        file_paths.secc_leaf_cert_directory = std::filesystem::path("certs/client/cso/");
-        file_paths.secc_leaf_key_directory = std::filesystem::path("certs/client/cso/");
+        file_paths.directories.csms_leaf_cert_directory = std::filesystem::path("certs/client/csms/");
+        file_paths.directories.csms_leaf_key_directory = std::filesystem::path("certs/client/csms/");
+        file_paths.directories.secc_leaf_cert_directory = std::filesystem::path("certs/client/cso/");
+        file_paths.directories.secc_leaf_key_directory = std::filesystem::path("certs/client/cso/");
 
         this->evse_security = std::make_unique<EvseSecurity>(file_paths, "123456");
     }
@@ -112,7 +112,7 @@ TEST_F(EvseSecurityTests, verify_chargepoint_cert_01) {
     const auto client_certificate = read_file_to_string(std::filesystem::path("certs/client/csms/CSMS_LEAF.pem"));
     std::cout << client_certificate << std::endl;
     const auto result = this->evse_security->update_leaf_certificate(client_certificate, LeafCertificateType::CSMS);
-    ASSERT_TRUE(result == InstallCertificateResult::Accepted);
+    ASSERT_TRUE(result == InstallCertificateResult::Success);
 }
 
 /// \brief test verifyChargepointCertificate with invalid cert
@@ -125,7 +125,7 @@ TEST_F(EvseSecurityTests, verify_chargepoint_cert_02) {
 TEST_F(EvseSecurityTests, verify_v2g_cert_01) {
     const auto client_certificate = read_file_to_string(std::filesystem::path("certs/client/cso/SECC_LEAF.pem"));
     const auto result = this->evse_security->update_leaf_certificate(client_certificate, LeafCertificateType::V2G);
-    ASSERT_TRUE(result == InstallCertificateResult::Accepted);
+    ASSERT_TRUE(result == InstallCertificateResult::Success);
 }
 
 /// \brief test verifyV2GChargingStationCertificate with invalid cert
@@ -139,7 +139,7 @@ TEST_F(EvseSecurityTests, verify_v2g_cert_02) {
 TEST_F(EvseSecurityTests, install_root_ca_01) {
     const auto v2g_root_ca = read_file_to_string(std::filesystem::path("certs/ca/v2g/V2G_ROOT_CA_NEW.pem"));
     const auto result = this->evse_security->install_ca_certificate(v2g_root_ca, CaCertificateType::V2G);
-    ASSERT_TRUE(result == InstallCertificateResult::Accepted);
+    ASSERT_TRUE(result == InstallCertificateResult::Success);
 }
 
 TEST_F(EvseSecurityTests, install_root_ca_02) {

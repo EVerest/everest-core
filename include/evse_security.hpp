@@ -9,20 +9,20 @@
 
 namespace evse_security {
 
+struct DirectoryPaths {
+    std::filesystem::path csms_leaf_cert_directory;
+    std::filesystem::path csms_leaf_key_directory;
+    std::filesystem::path secc_leaf_cert_directory;
+    std::filesystem::path secc_leaf_key_directory;
+};
 struct FilePaths {
-    // could be substructed
-
     // bundle paths
     std::filesystem::path csms_ca_bundle;
     std::filesystem::path mf_ca_bundle;
     std::filesystem::path mo_ca_bundle;
     std::filesystem::path v2g_ca_bundle;
 
-    // pairs
-    std::filesystem::path csms_leaf_cert_directory;
-    std::filesystem::path csms_leaf_key_directory;
-    std::filesystem::path secc_leaf_cert_directory;
-    std::filesystem::path secc_leaf_key_directory;
+    DirectoryPaths directories;
 };
 
 /// @brief This class holds filesystem paths to CA bundle file locations and directories for leaf certificates
@@ -50,7 +50,6 @@ public:
     /// filesystem
     /// @param certificate_hash_data specifies the certificate to be deleted
     /// @return result of the operation
-    // where do I get the hash data from?
     DeleteCertificateResult delete_certificate(const CertificateHashData& certificate_hash_data);
 
     /// @brief Verifies the given \p certificate_chain for the given \p certificate_type against the respective CA
@@ -58,7 +57,6 @@ public:
     /// @param certificate_chain PEM formatted certificate or certificate chain
     /// @param certificate_type type of the leaf certificate
     /// @return result of the operation
-    // Why does verify return a Install.. result?
     InstallCertificateResult verify_certificate(const std::string& certificate_chain,
                                                 const LeafCertificateType certificate_type);
 
@@ -68,15 +66,17 @@ public:
     /// @param certificate_chain PEM formatted certificate or certificate chain
     /// @param certificate_type type of the leaf certificate
     /// @return result of the operation
-    // if deleting is "protected" with hash data, then so should updating
     InstallCertificateResult update_leaf_certificate(const std::string& certificate_chain,
                                                      LeafCertificateType certificate_type);
 
+    /// @brief Retrieves all certificates installed on the filesystem applying the \p certificate_type filter.
+    /// @param certificate_types
+    /// @return contains the certificate hash data chains of the requested \p certificate_type
+    GetInstalledCertificatesResult get_installed_certificate(CertificateType certificate_type);
+
     /// @brief Retrieves all certificates installed on the filesystem applying the \p certificate_types filter.
     /// @param certificate_types
-    /// @return contains the certificate hash data chains of the requested \p certificate_types
-    // for simpler api, I would only allow to request one type because otherwise, in case of not found it is not clear, which one wasn't found
-    // fetching multiple can be then implemented by a free function
+    /// @return contains the certificate hash data chains of the requested \p certificate_types    
     GetInstalledCertificatesResult get_installed_certificates(const std::vector<CertificateType>& certificate_types);
 
     /// @brief Retrieves the OCSP request data of the V2G certificates
@@ -109,29 +109,23 @@ public:
     /// matching the certificate, this function returns std::nullopt
     /// @param certificate_type type of the leaf certificate
     /// @param encoding specifies PEM or DER format
-    /// @return key pair of certificate and key if present, else std::nullopt
-    // would probably return a custom result type, which also encodes the reason, while it wasn't found
-    std::optional<KeyPair> get_key_pair(LeafCertificateType certificate_type, EncodingFormat encoding);
+    /// @return contains response result
+    GetKeyPairResult get_key_pair(LeafCertificateType certificate_type, EncodingFormat encoding);
 
     /// @brief Retrieves the PEM formatted CA bundle file for the given \p certificate_type
     /// @param certificate_type
-    /// @return CA certificate file
-    // couldn't this fail as well?
+    /// @return CA certificate file    
     std::string get_verify_file(CaCertificateType certificate_type);
-
+    
     /// @brief Gets the expiry day count for the leaf certificate of the given \p certificate_type
     /// @param certificate_type
-    /// @return day count until the leaf certificate expires
-    // couldn't this fail as well?
-    int get_leaf_expiry_days_count(LeafCertificateType certificate_type); 
+    /// @return day count until the leaf certificate expires    
+    int get_leaf_expiry_days_count(LeafCertificateType certificate_type);
 
 private:
     // why not reusing the FilePaths here directly (storage duplication)
     std::map<CaCertificateType, std::filesystem::path> ca_bundle_path_map;
-    std::filesystem::path csms_leaf_cert_directory;
-    std::filesystem::path csms_leaf_key_directory;
-    std::filesystem::path secc_leaf_cert_directory;
-    std::filesystem::path secc_leaf_key_directory;
+    DirectoryPaths directories;
 
     // FIXME(piet): map passwords to encrypted private key files
     // is there only one password for all private keys?

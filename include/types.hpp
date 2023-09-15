@@ -53,7 +53,7 @@ enum class InstallCertificateResult {
     Expired,
     CertificateStoreMaxLengthExceeded,
     WriteError,
-    Accepted, // would call it Success, not Accepted
+    Success,
 };
 
 enum class DeleteCertificateResult {
@@ -66,6 +66,14 @@ enum class DeleteCertificateResult {
 enum class GetInstalledCertificatesStatus {
     Accepted,
     NotFound,
+};
+
+enum class GetKeyPairStatus {
+    Accepted,
+    Rejected,
+    NotFound,
+    NotFoundValid,
+    PrivateKeyNotFound,
 };
 
 // types of evse_security
@@ -107,6 +115,10 @@ struct KeyPair {
     std::filesystem::path key;           ///< The path of the PEM or DER encoded private key
     std::filesystem::path certificate;   ///< The path of the PEM or DER encoded certificate
     std::optional<std::string> password; ///< Specifies the password for the private key if encrypted
+};
+struct GetKeyPairResult {
+    GetKeyPairStatus status;
+    std::optional<KeyPair> pair;
 };
 
 } // namespace evse_security
