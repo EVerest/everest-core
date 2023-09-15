@@ -385,11 +385,12 @@ InstallCertificateResult EvseSecurity::update_leaf_certificate(const std::string
             return result;
         }
 
-        const auto leaf_certificate = _certificate_chain.at(0);
+        // const auto &leaf_certificate = _certificate_chain.at(0);
+        const auto &leaf_certificate = _certificate_chain[0];
 
         // check if a private key belongs to the provided certificate
         try {
-            const auto private_key_path = get_private_key_path(leaf_certificate.get(), key_path, this->private_key_password);
+            const auto private_key_path = get_private_key_path(leaf_certificate, key_path, this->private_key_password);
         } catch (const NoPrivateKeyException& e) {
             EVLOG_warning << "Provided certificate does not belong to any private key";
             return InstallCertificateResult::WriteError;
@@ -398,7 +399,9 @@ InstallCertificateResult EvseSecurity::update_leaf_certificate(const std::string
         // write certificate to file
         const auto file_name = get_random_file_name(PEM_EXTENSION.string());
         const auto file_path = cert_path / file_name;
-        if (write_to_file(file_path, leaf_certificate.get_str(), std::ios::out)) {
+        std::string str_cert = leaf_certificate.get_str();
+
+        if (write_to_file(file_path, str_cert, std::ios::out)) {
             return InstallCertificateResult::Accepted;
         } else {
             return InstallCertificateResult::WriteError;
@@ -440,7 +443,7 @@ EvseSecurity::get_installed_certificates(const std::vector<CertificateType>& cer
             certificate_hash_data_chain.child_certificate_hash_data = child_certificate_hash_data;
             certificate_chains.push_back(certificate_hash_data_chain);
         } catch (const CertificateLoadException& e) {
-            EVLOG_warning << "Could not load CA bundle file at: " << ca_bundle_path;
+            EVLOG_warning << "Could not load CA bundle file at: " << ca_bundle_path << " error: " << e.what();
         }
     }
 
@@ -667,8 +670,7 @@ int EvseSecurity::get_leaf_expiry_days_count(LeafCertificateType certificate_typ
 }
 
 InstallCertificateResult EvseSecurity::verify_certificate(const std::string& certificate_chain,
-                                                          LeafCertificateType certificate_type) {
-    // personally, I would use try catch here, if else return should be enough
+                                                          LeafCertificateType certificate_type) {    
     try {
         // most of this logic belongs to x509_wrapper
         X509Wrapper certificate(certificate_chain, EncodingFormat::PEM);

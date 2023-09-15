@@ -78,13 +78,18 @@ struct CertificateHashData {
                                   ///< the  subject public key field
     std::string serial_number; ///< The string representation of the hexadecimal value of the serial number without the
                                ///< prefix "0x" and without leading zeroes.
+
+    bool operator==(const CertificateHashData &Other) {
+        return hash_algorithm == Other.hash_algorithm 
+            && issuer_name_hash == Other.issuer_name_hash 
+            && issuer_key_hash == Other.issuer_key_hash 
+            && serial_number == Other.serial_number;
+    }
 };
 struct CertificateHashDataChain {
     CertificateType certificate_type; ///< Indicates the type of the certificate for which the hash data is provided
-    CertificateHashData certificate_hash_data; ///< Contains the hash data of the certificate
-    // making a vector optional shouldn't be necessary here, if there is no data, then the vector is just empty
-    std::optional<std::vector<CertificateHashData>>
-        child_certificate_hash_data; ///< Contains the hash data of the child's certificates
+    CertificateHashData certificate_hash_data; ///< Contains the hash data of the certificate    
+    std::vector<CertificateHashData> child_certificate_hash_data; ///< Contains the hash data of the child's certificates
 };
 struct GetInstalledCertificatesResult {
     GetInstalledCertificatesStatus status; ///< Indicates the status of the request

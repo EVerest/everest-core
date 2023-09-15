@@ -5,14 +5,33 @@
 #include <fstream>
 #include <gtest/gtest.h>
 #include <sstream>
+#include <regex>
 
 #include "evse_security.hpp"
+
+#include <openssl/err.h>
+#include <x509_wrapper.hpp>
+#include <openssl/x509v3.h>
 
 std::string read_file_to_string(const std::filesystem::path filepath) {
     std::ifstream t(filepath.string());
     std::stringstream buffer;
     buffer << t.rdbuf();
     return buffer.str();
+}
+
+bool equal_certificate_strings(const std::string &cert1, const std::string &cert2)
+{
+    for(int i = 0; i < cert1.length(); ++i)
+    {
+        if(i < cert1.length() && i < cert2.length())
+        {
+            if(isalnum(cert1[i]) && isalnum(cert2[i]) && cert1[i] != cert2[i])
+                return false;
+        }
+    }
+
+    return true;
 }
 
 void install_certs() {
@@ -45,6 +64,48 @@ protected:
         std::filesystem::remove_all("certs");
     }
 };
+
+TEST_F(EvseSecurityTests, verify_basics) {
+    const char *bundle_path = "certs/ca/v2g/V2G_CA_BUNDLE.pem";
+
+    std::ifstream file(bundle_path, std::ios::binary);
+    std::string certificate_file((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+
+    std::vector<std::string> certificate_strings;
+
+    static const std::regex cert_regex("-----BEGIN CERTIFICATE-----[\\s\\S]*?-----END CERTIFICATE-----");
+    std::string::const_iterator search_start(certificate_file.begin());
+
+    std::smatch match;
+    while (std::regex_search(search_start, certificate_file.cend(), match, cert_regex)) {
+        std::string cert_data = match.str();
+        try {            
+            certificate_strings.emplace_back(cert_data);
+        } catch (const CertificateLoadException& e) {
+            std::cout << "Could not load single certificate while splitting CA bundle: " << e.what() << std::endl;
+        }
+        search_start = match.suffix().first;
+    }
+
+    ASSERT_TRUE(certificate_strings.size() == 3);
+
+    X509Wrapper bundle(std::filesystem::path(bundle_path), EncodingFormat::PEM);
+    ASSERT_TRUE(bundle.is_bundle());
+
+    auto certificates = bundle.split();
+    ASSERT_TRUE(certificates.size() == 3);
+    ASSERT_TRUE(certificates[0].get_certificate_hash_data() == bundle.get_certificate_hash_data());    
+
+    ASSERT_TRUE(equal_certificate_strings(bundle.get_str(), certificates[0].get_str()));
+    ASSERT_TRUE(equal_certificate_strings(bundle.get_str(), certificate_strings[0]));
+
+    for(int i = 0; i < certificate_strings.size(); ++i) {
+        X509Wrapper cert(certificate_strings[i], EncodingFormat::PEM);
+
+        ASSERT_TRUE(certificates[i].get_certificate_hash_data() == cert.get_certificate_hash_data());        
+        ASSERT_TRUE(equal_certificate_strings(cert.get_str(), certificate_strings[i]));
+    }
+}
 
 /// \brief test verifyChargepointCertificate with valid cert
 TEST_F(EvseSecurityTests, verify_chargepoint_cert_01) {
@@ -143,7 +204,7 @@ TEST_F(EvseSecurityTests, get_installed_certificates_and_delete_secc_leaf) {
         if (certificate_hash_data_chain.certificate_type == CertificateType::V2GCertificateChain) {
             found_v2g_chain = true;
             secc_leaf_data = certificate_hash_data_chain.certificate_hash_data;
-            ASSERT_EQ(2, certificate_hash_data_chain.child_certificate_hash_data.value().size());
+            ASSERT_EQ(2, certificate_hash_data_chain.child_certificate_hash_data.size());
         }
     }
     ASSERT_TRUE(found_v2g_chain);

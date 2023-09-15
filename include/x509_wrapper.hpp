@@ -20,17 +20,22 @@ public:
     using std::runtime_error::runtime_error;
 };
 
-/// @brief Convenience wrapper around openssl X509
+/// @brief Convenience wrapper around openssl X509 certificate. Can contain multiple certificates
 class X509Wrapper {
-    using X509_ptr = std::unique_ptr<X509,  decltype(&::X509_free)>;
+    using X509_ptr = std::unique_ptr<X509,  decltype(&::X509_free)>;    
 public:
     // Constructors
     X509Wrapper(const std::string& certificate, const EncodingFormat encoding);
     X509Wrapper(const std::filesystem::path& path, const EncodingFormat encoding);
-    X509Wrapper(X509* x509);
 
-    // using custom copy constructors and deleters can usually and should be avoided
+    /// @brief Since it implies ownership full transfer, must be very carefull with this that's why it's explicit
+    /// If another object owns the x509 will destroy it and if another one tries to use the dead reference
+    /// it will crash the program
+    explicit X509Wrapper(X509* x509);
+
     X509Wrapper(const X509Wrapper& other);
+    X509Wrapper(X509Wrapper&& other) = default;
+    
     ~X509Wrapper();
 
     /// @brief Gets raw X509 pointer
@@ -85,14 +90,25 @@ public:
     /// @return
     std::string get_responder_url() const;
 
+    /// @brief Gets the bin64 string representation of this certificate
+    /// @return
+    std::string to_base64_string() const;
+
+    /// @brief Gets if this certificate file is containing multiple certificates
+    /// @return
+    bool is_bundle()
+    {
+        return x509.size() > 1;
+    }
+
 private:
-    X509_ptr x509;
+    std::vector<X509_ptr> x509;
     int valid_in; // seconds; if > 0 cert is not yet valid
     int valid_to; // seconds; if < 0 cert has expired
-    std::string str;
     std::optional<std::filesystem::path> path;
 
     void load_certificate(const std::string& data, const EncodingFormat encoding);
+    void update_validity();
 };
 
 } // namespace evse_security
