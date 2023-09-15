@@ -45,6 +45,13 @@ namespace ocpp {
 namespace v201 {
 
 struct Callbacks {
+    ///\brief Function to check if the callback struct is completely filled. All std::functions should hold a function,
+    ///       all std::optional<std::functions> should either be emtpy or hold a function.
+    ///
+    ///\retval false if any of the normal callbacks are nullptr or any of the optional ones are filled with a nullptr
+    ///        true otherwise
+    bool all_callbacks_valid() const;
+
     ///
     /// \brief Callback if reset is allowed. If evse_id has a value, reset only applies to the given evse id. If it has
     ///        no value, applies to complete charging station.

@@ -11,6 +11,19 @@ namespace v201 {
 const auto DEFAULT_BOOT_NOTIFICATION_RETRY_INTERVAL = std::chrono::seconds(30);
 const auto WEBSOCKET_INIT_DELAY = std::chrono::seconds(2);
 
+bool Callbacks::all_callbacks_valid() const {
+    return this->is_reset_allowed_callback != nullptr and this->reset_callback != nullptr and
+           this->stop_transaction_callback != nullptr and this->pause_charging_callback != nullptr and
+           this->change_availability_callback != nullptr and this->get_log_request_callback != nullptr and
+           this->unlock_connector_callback != nullptr and this->remote_start_transaction_callback != nullptr and
+           this->is_reservation_for_token_callback != nullptr and this->update_firmware_request_callback != nullptr and
+           (!this->variable_changed_callback.has_value() or this->variable_changed_callback.value() != nullptr) and
+           (!this->validate_network_profile_callback.has_value() or
+            this->validate_network_profile_callback.value() != nullptr) and
+           (!this->configure_network_connection_profile_callback.has_value() or
+            this->configure_network_connection_profile_callback.value() != nullptr);
+}
+
 ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_structure,
                          const std::string& device_model_storage_address, const std::string& ocpp_main_path,
                          const std::string& core_database_path, const std::string& sql_init_path,
@@ -27,6 +40,12 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
     callbacks(callbacks),
     firmware_status(FirmwareStatusEnum::Idle),
     upload_log_status(UploadLogStatusEnum::Idle) {
+
+    // Make sure the received callback struct is completely filled early before we actually start running
+    if (!this->callbacks.all_callbacks_valid()) {
+        EVLOG_AND_THROW(std::invalid_argument("All non-optional callbacks must be supplied"));
+    }
+
     this->device_model = std::make_unique<DeviceModel>(device_model_storage_address);
     this->pki_handler = std::make_shared<ocpp::PkiHandler>(
         certs_path,
