@@ -381,6 +381,12 @@ void OCPP201::init() {
     invoke_init(*p_main);
     invoke_init(*p_auth_provider);
     invoke_init(*p_auth_validator);
+}
+
+void OCPP201::ready() {
+    invoke_ready(*p_main);
+    invoke_ready(*p_auth_provider);
+    invoke_ready(*p_auth_validator);
 
     this->ocpp_share_path = this->info.paths.share;
     this->operational_evse_states[0] = ocpp::v201::OperationalStatusEnum::Operative;
@@ -569,10 +575,30 @@ void OCPP201::init() {
         [this](const ocpp::v201::NetworkConnectionProfile& network_connection_profile) { return true; };
 
     const auto sql_init_path = this->ocpp_share_path / INIT_SQL;
+
+    // key represents the evse_id, value represents the number of connectors
     std::map<int32_t, int32_t> evse_connector_structure;
     int evse_id = 1;
     for (const auto& evse : this->r_evse_manager) {
-        evse_connector_structure.emplace(evse_id, 1);
+        int connector_id = 1;
+        const auto _evse = evse->call_get_evse();
+        if (_evse.id != evse_id) {
+            throw std::runtime_error("Configured evse_id(s) must start with 1 counting upwards");
+        }
+
+        int32_t number_of_connectors = _evse.connectors.size();
+        if (number_of_connectors == 0) {
+            number_of_connectors = 1;
+        }
+
+        for (const auto& connector : _evse.connectors) {
+            if (connector.id != connector_id) {
+                throw std::runtime_error("Configured connector_id(s) must start with 1 counting upwards");
+            }
+            connector_id++;
+        }
+
+        evse_connector_structure.emplace(_evse.id, number_of_connectors);
         evse_id++;
     }
 
@@ -593,14 +619,14 @@ void OCPP201::init() {
     evse_id = 1;
     for (const auto& evse : this->r_evse_manager) {
         evse->subscribe_session_event([this, evse_id](types::evse_manager::SessionEvent session_event) {
-            ocpp::v201::EVSE evse_ref{evse_id}; // in EVerest
+            const auto connector_id = session_event.connector_id.value_or(1);
             switch (session_event.event) {
             case types::evse_manager::SessionEventEnum::SessionStarted: {
-                this->charge_point->on_session_started(evse_id, 1);
+                this->charge_point->on_session_started(evse_id, connector_id);
                 break;
             }
             case types::evse_manager::SessionEventEnum::SessionFinished: {
-                this->charge_point->on_session_finished(evse_id, 1);
+                this->charge_point->on_session_finished(evse_id, connector_id);
                 break;
             }
             case types::evse_manager::SessionEventEnum::TransactionStarted: {
@@ -624,7 +650,7 @@ void OCPP201::init() {
                 }
 
                 this->charge_point->on_transaction_started(
-                    evse_id, 1, session_id, timestamp,
+                    evse_id, connector_id, session_id, timestamp,
                     ocpp::v201::TriggerReasonEnum::RemoteStart, // FIXME(piet): Use proper reason here
                     meter_value, id_token, std::nullopt, reservation_id, remote_start_id,
                     ocpp::v201::ChargingStateEnum::Charging);   // FIXME(piet): add proper groupIdToken +
@@ -668,13 +694,13 @@ void OCPP201::init() {
                 break;
             }
             case types::evse_manager::SessionEventEnum::Disabled: {
-                this->charge_point->on_unavailable(evse_id, 1);
+                this->charge_point->on_unavailable(evse_id, connector_id);
                 break;
             }
             case types::evse_manager::SessionEventEnum::Enabled: {
                 this->operational_evse_states[evse_id] = ocpp::v201::OperationalStatusEnum::Operative;
                 this->operational_connector_states[evse_id] = ocpp::v201::OperationalStatusEnum::Operative;
-                this->charge_point->on_operative(evse_id, 1);
+                this->charge_point->on_operative(evse_id, connector_id);
                 break;
             }
             }
@@ -698,12 +724,6 @@ void OCPP201::init() {
     }
 
     this->charge_point->start();
-}
-
-void OCPP201::ready() {
-    invoke_ready(*p_main);
-    invoke_ready(*p_auth_provider);
-    invoke_ready(*p_auth_validator);
 }
 
 } // namespace module
