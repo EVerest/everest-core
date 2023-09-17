@@ -39,6 +39,10 @@
         "PnC": {
             "type": "object",
             "$ref": "PnC.json"
+        },
+        "Custom": {
+            "type": "object",
+            "$ref": "Custom.json"
         }
     },
     "additionalProperties": false

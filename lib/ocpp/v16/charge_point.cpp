@@ -259,5 +259,18 @@ void ChargePoint::register_transaction_started_callback(
     this->charge_point->register_transaction_started_callback(callback);
 }
 
+void ChargePoint::register_configuration_key_changed_callback(
+    const CiString<50>& key, const std::function<void(const KeyValue& key_value)>& callback) {
+    this->charge_point->register_configuration_key_changed_callback(key, callback);
+}
+
+GetConfigurationResponse ChargePoint::get_configuration_key(const GetConfigurationRequest& request) {
+    return this->charge_point->get_configuration_key(request);
+}
+
+ConfigurationStatus ChargePoint::set_custom_configuration_key(CiString<50> key, CiString<500> value) {
+    return this->charge_point->set_custom_configuration_key(key, value);
+}
+
 } // namespace v16
 } // namespace ocpp

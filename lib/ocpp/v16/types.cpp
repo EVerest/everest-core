@@ -449,6 +449,8 @@ std::string supported_feature_profiles_to_string(SupportedFeatureProfiles e) {
         return "Security";
     case SupportedFeatureProfiles::PnC:
         return "PnC";
+    case SupportedFeatureProfiles::Custom:
+        return "Custom";
     }
 
     throw std::out_of_range("No known string conversion for provided enum of type SupportedFeatureProfiles");
@@ -483,6 +485,9 @@ SupportedFeatureProfiles string_to_supported_feature_profiles(const std::string&
     }
     if (s == "PnC") {
         return SupportedFeatureProfiles::PnC;
+    }
+    if (s == "Custom") {
+        return SupportedFeatureProfiles::Custom;
     }
 
     throw std::out_of_range("Provided string " + s +

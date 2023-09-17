@@ -26,10 +26,17 @@ ChargePointConfiguration::ChargePointConfiguration(const std::string& config,
     }
 
     // validate config entries
-    Schemas schemas = Schemas(ocpp_main_path / "profile_schemas");
+    const auto schemas_path = ocpp_main_path / "profile_schemas";
+    Schemas schemas = Schemas(schemas_path);
 
     try {
         this->config = json::parse(config);
+        const auto custom_schema_path = schemas_path / "Custom.json";
+        if (std::filesystem::exists(custom_schema_path)) {
+            std::ifstream ifs(custom_schema_path.c_str());
+            std::string custom_schema_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+            this->custom_schema = json::parse(custom_schema_file);
+        }
     } catch (const json::parse_error& e) {
         EVLOG_error << "Error while parsing config file.";
         EVLOG_AND_THROW(e);
@@ -78,6 +85,11 @@ ChargePointConfiguration::ChargePointConfiguration(const std::string& config,
             if (this->config.contains("PnC")) {
                 // add PnC behind the scenes as supported feature profile
                 this->supported_feature_profiles.insert(conversions::string_to_supported_feature_profiles("PnC"));
+            }
+
+            if (this->config.contains("Custom")) {
+                // add Custom behind the scenes as supported feature profile
+                this->supported_feature_profiles.insert(conversions::string_to_supported_feature_profiles("Custom"));
             }
         }
     }
@@ -1968,6 +1980,53 @@ KeyValue ChargePointConfiguration::getWaitForStopTransactionsOnResetTimeoutKeyVa
     return kv;
 }
 
+std::optional<KeyValue> ChargePointConfiguration::getCustomKeyValue(CiString<50> key) {
+    if (!this->config["Custom"].contains(key)) {
+        return std::nullopt;
+    }
+
+    KeyValue kv;
+    kv.readonly = this->custom_schema["properties"][key]["readOnly"];
+    if (kv.readonly) {
+        return std::nullopt;
+    }
+    kv.key = key;
+    if (this->config["Custom"][key].is_string()) {
+        kv.value = std::string(this->config["Custom"][key]);
+    } else {
+        kv.value = this->config["Custom"][key].dump();
+    }
+    return kv;
+}
+
+ConfigurationStatus ChargePointConfiguration::setCustomKey(CiString<50> key, CiString<500> value, bool force) {
+    const auto kv = this->getCustomKeyValue(key);
+    if (!kv.has_value() or (kv.value().readonly and !force)) {
+        return ConfigurationStatus::Rejected;
+    }
+
+    try {
+        const auto type = this->custom_schema["properties"][key]["type"];
+        if (type == "integer") {
+            this->config["Custom"][key] = std::stoi(value.get());
+        } else if (type == "number") {
+            this->config["Custom"][key] = std::stof(value.get());
+        } else if (type == "string" or type == "array") {
+            this->config["Custom"][key] = value.get();
+        } else if (type == "boolean") {
+            this->config["Custom"][key] = ocpp::conversions::string_to_bool(value.get());
+        } else {
+            return ConfigurationStatus::Rejected;
+        }
+    } catch (const std::exception& e) {
+        EVLOG_warning << "Could not set custom configuration key";
+        return ConfigurationStatus::Rejected;
+    }
+
+    this->setInUserConfig("Custom", key, this->config["Custom"][key]);
+    return ConfigurationStatus::Accepted;
+}
+
 std::optional<KeyValue> ChargePointConfiguration::get(CiString<50> key) {
 
     // Internal Profile
@@ -2228,6 +2287,10 @@ std::optional<KeyValue> ChargePointConfiguration::get(CiString<50> key) {
         if (key == "SendLocalListMaxLength") {
             return this->getSendLocalListMaxLengthKeyValue();
         }
+    }
+
+    if (this->supported_feature_profiles.count(SupportedFeatureProfiles::Custom)) {
+        return this->getCustomKeyValue(key);
     }
 
     return std::nullopt;
@@ -2611,6 +2674,10 @@ ConfigurationStatus ChargePointConfiguration::set(CiString<50> key, CiString<500
         } else {
             return ConfigurationStatus::NotSupported;
         }
+    }
+
+    if (this->config.contains("Custom") and this->config["Custom"].contains(key)) {
+        return this->setCustomKey(key, value, false);
     }
 
     return ConfigurationStatus::Accepted;

@@ -1351,6 +1351,13 @@ void ChargePointImpl::handleChangeConfigurationRequest(ocpp::Call<ChangeConfigur
         ocpp::CallResult<ChangeConfigurationResponse> call_result(response, call.uniqueId);
         this->send<ChangeConfigurationResponse>(call_result);
     }
+
+    if (this->configuration_key_changed_callbacks.count(call.msg.key) and
+        this->configuration_key_changed_callbacks[call.msg.key] != nullptr and
+        response.status == ConfigurationStatus::Accepted) {
+        kv.value().value = call.msg.value;
+        this->configuration_key_changed_callbacks[call.msg.key](kv.value());
+    }
 }
 
 void ChargePointImpl::switchSecurityProfile(int32_t new_security_profile, int32_t max_connection_attempts) {
@@ -1434,39 +1441,7 @@ void ChargePointImpl::handleDataTransferRequest(ocpp::Call<DataTransferRequest> 
 void ChargePointImpl::handleGetConfigurationRequest(ocpp::Call<GetConfigurationRequest> call) {
     EVLOG_debug << "Received GetConfigurationRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
 
-    GetConfigurationResponse response;
-    std::vector<KeyValue> configurationKey;
-    std::vector<CiString<50>> unknownKey;
-
-    if (!call.msg.key) {
-        EVLOG_debug << "empty request, sending all configuration keys...";
-        configurationKey = this->configuration->get_all_key_value();
-    } else {
-        auto keys = call.msg.key.value();
-        if (keys.empty()) {
-            EVLOG_debug << "key field is empty, sending all configuration keys...";
-            configurationKey = this->configuration->get_all_key_value();
-        } else {
-            EVLOG_debug << "specific requests for some keys";
-            for (const auto& key : call.msg.key.value()) {
-                EVLOG_debug << "retrieving key: " << key;
-                auto kv = this->configuration->get(key);
-                if (kv) {
-                    configurationKey.push_back(kv.value());
-                } else {
-                    unknownKey.push_back(key);
-                }
-            }
-        }
-    }
-
-    if (!configurationKey.empty()) {
-        response.configurationKey.emplace(configurationKey);
-    }
-    if (!unknownKey.empty()) {
-        response.unknownKey.emplace(unknownKey);
-    }
-
+    const auto response = this->get_configuration_key(call.msg);
     ocpp::CallResult<GetConfigurationResponse> call_result(response, call.uniqueId);
     this->send<GetConfigurationResponse>(call_result);
 }
@@ -3373,6 +3348,11 @@ void ChargePointImpl::register_transaction_started_callback(
     this->transaction_started_callback = callback;
 }
 
+void ChargePointImpl::register_configuration_key_changed_callback(
+    const CiString<50>& key, const std::function<void(const KeyValue& key_value)>& callback) {
+    this->configuration_key_changed_callbacks[key] = callback;
+}
+
 void ChargePointImpl::on_reservation_start(int32_t connector) {
     this->status->submit_event(connector, FSMEvent::ReserveConnector);
 }
@@ -3391,6 +3371,46 @@ void ChargePointImpl::on_disabled(int32_t connector) {
 
 void ChargePointImpl::on_plugin_timeout(int32_t connector) {
     this->status->submit_event(connector, FSMEvent::TransactionStoppedAndUserActionRequired);
+}
+
+GetConfigurationResponse ChargePointImpl::get_configuration_key(const GetConfigurationRequest& request) {
+    GetConfigurationResponse response;
+    std::vector<KeyValue> configurationKey;
+    std::vector<CiString<50>> unknownKey;
+
+    if (!request.key) {
+        EVLOG_debug << "empty request, sending all configuration keys...";
+        configurationKey = this->configuration->get_all_key_value();
+    } else {
+        auto keys = request.key.value();
+        if (keys.empty()) {
+            EVLOG_debug << "key field is empty, sending all configuration keys...";
+            configurationKey = this->configuration->get_all_key_value();
+        } else {
+            EVLOG_debug << "specific requests for some keys";
+            for (const auto& key : request.key.value()) {
+                EVLOG_debug << "retrieving key: " << key;
+                auto kv = this->configuration->get(key);
+                if (kv) {
+                    configurationKey.push_back(kv.value());
+                } else {
+                    unknownKey.push_back(key);
+                }
+            }
+        }
+    }
+
+    if (!configurationKey.empty()) {
+        response.configurationKey.emplace(configurationKey);
+    }
+    if (!unknownKey.empty()) {
+        response.unknownKey.emplace(unknownKey);
+    }
+    return response;
+}
+
+ConfigurationStatus ChargePointImpl::set_custom_configuration_key(CiString<50> key, CiString<500> value) {
+    return this->configuration->setCustomKey(key, value, true);
 }
 
 } // namespace v16

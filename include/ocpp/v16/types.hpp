@@ -125,7 +125,8 @@ enum SupportedFeatureProfiles {
     SmartCharging,
     RemoteTrigger,
     Security,
-    PnC
+    PnC,
+    Custom
 };
 namespace conversions {
 /// \brief Converts the given SupportedFeatureProfiles \p e to std::string

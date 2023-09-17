@@ -161,7 +161,8 @@ This is defined in libocpp/include/ocpp/v16/charge_point.hpp and takes the follo
       ├── PnC.json
       ├── Reservation.json
       ├── Security.json
-      └── SmartCharging.json
+      ├── SmartCharging.json
+      └── Custom.json
   ```
   Here you can find:
   -  the aforementioned config files
@@ -170,7 +171,7 @@ This is defined in libocpp/include/ocpp/v16/charge_point.hpp and takes the follo
 
   - a *init.sql* file which contains the database schema used by libocpp for its sqlite database
 
-  - and a *profile_schemas* directory. This contains json schema files that are used to validate the libocpp config. The schemas are split up according to the OCPP1.6 feature profiles like Core, FirmwareManagement and so on. Additionally there is a schema for "Internal" configuration options (for example the ChargePointId, or CentralSystemURI). A "PnC" schema for the ISO 15118 Plug & Charge with OCPP 1.6 Application note, as well as a "Security" schema for the OCPP 1.6 Security Whitepaper (3rd edition) are provided as well. Finally there's a Config.json schema that ties everything together
+  - and a *profile_schemas* directory. This contains json schema files that are used to validate the libocpp config. The schemas are split up according to the OCPP1.6 feature profiles like Core, FirmwareManagement and so on. Additionally there is a schema for "Internal" configuration options (for example the ChargePointId, or CentralSystemURI). A "PnC" schema for the ISO 15118 Plug & Charge with OCPP 1.6 Application note, a "Security" schema for the OCPP 1.6 Security Whitepaper (3rd edition) and an exemplary "Custom" schema are provided as well. The Custom.json could be modified to be able to add custom configuration keys. Finally there's a Config.json schema that ties everything together
 
 - user_config_path: this points to a "user config", which we call a configuration file that's merged with the config that's provided in the "config" parameter. Here you can add, remove and overwrite settings without modifying the config passed in the first parameter directly. This is also used by libocpp to persistently modify config entries that are changed by the CSMS that should persist across restarts.
 
@@ -318,6 +319,9 @@ Some general notes: the "connector" parameter of some of the callbacks refers to
 - register_connection_state_changed_callback
 
   used to inform about the connection state to the CSMS (connected = true, disconnected = false)
+
+- register_configuration_key_changed_callback
+  used to react on a changed configuration key. This callback is called when the specified configuration key has been changed by the CSMS
 
 
 #### Functions that need to be triggered from the outside after new information is availble (on_... functions in the charge point API)

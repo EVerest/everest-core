@@ -15,6 +15,7 @@ namespace v16 {
 class ChargePointConfiguration {
 private:
     json config;
+    json custom_schema;
     std::filesystem::path user_config_path;
 
     std::set<SupportedFeatureProfiles> supported_feature_profiles;
@@ -379,6 +380,10 @@ public:
     int32_t getWaitForStopTransactionsOnResetTimeout();
     void setWaitForStopTransactionsOnResetTimeout(const int32_t wait_for_stop_transactions_on_reset_timeout);
     KeyValue getWaitForStopTransactionsOnResetTimeoutKeyValue();
+
+    // custom
+    std::optional<KeyValue> getCustomKeyValue(CiString<50> key);
+    ConfigurationStatus setCustomKey(CiString<50> key, CiString<500> value, bool force);
 
     std::optional<KeyValue> get(CiString<50> key);
 
