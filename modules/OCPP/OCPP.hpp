@@ -34,6 +34,8 @@
 #include <ocpp/v16/charge_point.hpp>
 #include <ocpp/v16/types.hpp>
 #include <ocpp/v201/ocpp_types.hpp>
+
+using EvseConnectorMap = std::map<int32_t, std::map<int32_t, int32_t>>;
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -89,7 +91,6 @@ public:
     std::unique_ptr<Everest::SteadyTimer> charging_schedules_timer;
     bool started = false;
     bool ocpp_stopped = false;
-    std::map<int32_t, bool> connector_ready_map;
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
@@ -107,12 +108,15 @@ private:
     std::filesystem::path ocpp_share_path;
     void set_external_limits(const std::map<int32_t, ocpp::v16::ChargingSchedule>& charging_schedules);
     void publish_charging_schedules(const std::map<int32_t, ocpp::v16::ChargingSchedule>& charging_schedules);
-    bool all_evse_ready();
-    std::mutex evse_ready_mutex;
     std::thread upload_diagnostics_thread;
     std::thread upload_logs_thread;
     std::thread update_firmware_thread;
     std::thread signed_update_firmware_thread;
+
+    void init_evse_connector_map();
+    EvseConnectorMap evse_connector_map; // provides access to OCPP connector id by using EVerests evse and connector id
+    std::map<int32_t, int32_t>
+        connector_evse_index_map;        // provides access to r_evse_manager index by using OCPP connector id
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
