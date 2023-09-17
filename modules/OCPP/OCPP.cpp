@@ -54,7 +54,8 @@ void create_empty_user_config(const fs::path& user_config_path) {
 void OCPP::set_external_limits(const std::map<int32_t, ocpp::v16::ChargingSchedule>& charging_schedules) {
     const auto start_time = ocpp::DateTime();
 
-    // iterate over all schedules reported by the libocpp to create ExternalLimits for each connector
+    // iterate over all schedules reported by the libocpp to create ExternalLimits
+    // for each connector
     for (auto const& [connector_id, schedule] : charging_schedules) {
         types::energy::ExternalLimits limits;
         std::vector<types::energy::ScheduleReqEntry> schedule_import;
@@ -84,7 +85,8 @@ void OCPP::set_external_limits(const std::map<int32_t, ocpp::v16::ChargingSchedu
                 EVLOG_debug << "OCPP sets the following external limits for connector 0: \n" << limits;
                 this->r_connector_zero_sink.at(0)->call_set_external_limits(limits);
             } else {
-                EVLOG_debug << "OCPP cannot set external limits for connector 0. No sink is configured.";
+                EVLOG_debug << "OCPP cannot set external limits for connector 0. No "
+                               "sink is configured.";
             }
         } else {
             EVLOG_debug << "OCPP sets the following external limits for connector " << connector_id << ": \n" << limits;
@@ -135,7 +137,8 @@ void OCPP::init() {
     }
     if (!fs::exists(configured_config_path)) {
         EVLOG_AND_THROW(Everest::EverestConfigError(
-            fmt::format("OCPP config file is not available at given path: {} which was resolved to: {}",
+            fmt::format("OCPP config file is not available at given path: {} which was "
+                        "resolved to: {}",
                         this->config.ChargePointConfigPath, configured_config_path.string())));
     }
     const auto config_path = configured_config_path;
@@ -218,7 +221,8 @@ void OCPP::init() {
         }
     });
 
-    // int32_t reservation_id, CiString<20> auth_token, DateTime expiry_time, std::string parent_id
+    // int32_t reservation_id, CiString<20> auth_token, DateTime expiry_time,
+    // std::string parent_id
     this->charge_point->register_reserve_now_callback([this](int32_t reservation_id, int32_t connector,
                                                              ocpp::DateTime expiryDate, ocpp::CiString<20> idTag,
                                                              std::optional<ocpp::CiString<20>> parent_id) {
@@ -392,7 +396,8 @@ void OCPP::init() {
     }
 
     this->charge_point->register_signal_set_charging_profiles_callback([this]() {
-        // this is executed when CSMS sends new ChargingProfile that is accepted by the ChargePoint
+        // this is executed when CSMS sends new ChargingProfile that is accepted by
+        // the ChargePoint
         EVLOG_info << "Received new Charging Schedules from CSMS";
         const auto charging_schedules =
             this->charge_point->get_all_composite_charging_schedules(this->config.PublishChargingScheduleDurationS);

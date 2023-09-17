@@ -38,7 +38,7 @@ RISE-V2G:
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: 0278eeb
+  git_tag: d2ef696
 # Josev
 Josev:
   git: https://github.com/EVerest/ext-switchev-iso15118.git
