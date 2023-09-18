@@ -45,11 +45,12 @@ types::powermeter::TransactionStopResponse powermeterImpl::handle_stop_transacti
 
         bsm::SignedOCMFSnapshot signed_snapshot(data);
 
-        return { .status = types::powermeter::TransactionRequestStatus::OK, .ocmf  = signed_snapshot.O()};
+        return {.status = types::powermeter::TransactionRequestStatus::OK, .ocmf = signed_snapshot.O()};
 
     } catch (const std::runtime_error& e) {
         EVLOG_error << __PRETTY_FUNCTION__ << " Error: " << e.what() << std::endl;
-        return { .status =  types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR, .error = "get_signed_meter_value_error"};
+        return {.status = types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR,
+                .error = "get_signed_meter_value_error"};
     }
 };
 
@@ -57,7 +58,7 @@ types::powermeter::TransactionStopResponse powermeterImpl::handle_stop_transacti
 // on the power meter. With current implementation we do not get a start signed meter value
 types::powermeter::TransactionStartResponse
 powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& value) {
-    return { .status = types::powermeter::TransactionRequestStatus::OK };
+    return {.status = types::powermeter::TransactionRequestStatus::OK};
 }
 
 //////////////////////////////////////////////////////////////////////

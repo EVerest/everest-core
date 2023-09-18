@@ -49,13 +49,13 @@ void powermeterImpl::ready() {
 
 types::powermeter::TransactionStopResponse powermeterImpl::handle_stop_transaction(std::string& transaction_id) {
     return {.status = types::powermeter::TransactionRequestStatus::NOT_SUPPORTED,
-            .error = "Generic powermeter does not support the stop_transaction command" };
+            .error = "Generic powermeter does not support the stop_transaction command"};
 };
 
 types::powermeter::TransactionStartResponse
 powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& value) {
     return {.status = types::powermeter::TransactionRequestStatus::NOT_SUPPORTED,
-            .error = "Generic powermeter does not support the start_transaction command" };
+            .error = "Generic powermeter does not support the start_transaction command"};
 }
 
 void powermeterImpl::init_default_values() {
