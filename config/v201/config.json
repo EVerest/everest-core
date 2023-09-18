@@ -23,6 +23,12 @@
             "attributes": {
                 "Actual": "Energy.Active.Import.Register"
             }
+        },
+        "AlignedDataSignReadings": {
+            "variable_name": "SignReadings",
+            "attributes": {
+                "Actual": false
+            }
         }
     },
     "AuthCacheCtrlr": {

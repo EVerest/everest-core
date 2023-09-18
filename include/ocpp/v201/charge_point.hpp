@@ -231,6 +231,9 @@ private:
     ///
     void set_evse_connectors_unavailable(const std::unique_ptr<Evse>& evse, bool persist);
 
+    /// @brief Get the value optional offline flag
+    /// @return true if the charge point is offline. std::nullopt if it is online;
+    bool is_offline();
     /* OCPP message requests */
 
     // Functional Block B: Provisioning
@@ -253,7 +256,7 @@ private:
                                const std::optional<ocpp::v201::EVSE>& evse,
                                const std::optional<ocpp::v201::IdToken>& id_token,
                                const std::optional<std::vector<ocpp::v201::MeterValue>>& meter_value,
-                               const std::optional<int32_t>& number_of_phases_used, const std::optional<bool>& offline,
+                               const std::optional<int32_t>& number_of_phases_used, const bool offline,
                                const std::optional<int32_t>& reservation_id);
 
     // Functional Block J: MeterValues

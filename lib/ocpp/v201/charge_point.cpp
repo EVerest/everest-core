@@ -74,10 +74,11 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
             const auto filtered_meter_value = utils::get_meter_value_with_measurands_applied(
                 _meter_value, utils::get_measurands_vec(this->device_model->get_value<std::string>(
                                   ControllerComponentVariables::SampledDataTxUpdatedMeasurands)));
+
             this->transaction_event_req(TransactionEventEnum::Updated, DateTime(), transaction,
                                         TriggerReasonEnum::MeterValuePeriodic, seq_no, std::nullopt, std::nullopt,
                                         std::nullopt, std::vector<MeterValue>(1, filtered_meter_value), std::nullopt,
-                                        std::nullopt, reservation_id);
+                                        this->is_offline(), reservation_id);
         };
 
         this->evses.insert(
@@ -180,7 +181,8 @@ void ChargePoint::on_transaction_started(
 
     this->transaction_event_req(TransactionEventEnum::Started, timestamp, transaction, trigger_reason,
                                 enhanced_transaction->get_seq_no(), std::nullopt, evse, enhanced_transaction->id_token,
-                                std::vector<MeterValue>(1, meter_value), std::nullopt, std::nullopt, reservation_id);
+                                std::vector<MeterValue>(1, meter_value), std::nullopt, this->is_offline(),
+                                reservation_id);
 }
 
 void ChargePoint::on_transaction_finished(const int32_t evse_id, const DateTime& timestamp,
@@ -219,8 +221,8 @@ void ChargePoint::on_transaction_finished(const int32_t evse_id, const DateTime&
     }
 
     this->transaction_event_req(TransactionEventEnum::Ended, timestamp, transaction, trigger_reason, seq_no,
-                                std::nullopt, std::nullopt, id_token_opt, meter_values, std::nullopt, std::nullopt,
-                                std::nullopt);
+                                std::nullopt, std::nullopt, id_token_opt, meter_values, std::nullopt,
+                                this->is_offline(), std::nullopt);
 
     bool send_reset = false;
     if (this->reset_scheduled) {
@@ -307,10 +309,11 @@ bool ChargePoint::on_charging_state_changed(const uint32_t evse_id, ChargingStat
             this->evses.at(static_cast<int32_t>(evse_id))->get_transaction();
         if (transaction != nullptr) {
             transaction->chargingState = charging_state;
+
             this->transaction_event_req(TransactionEventEnum::Updated, DateTime(), transaction->get_transaction(),
                                         TriggerReasonEnum::ChargingStateChanged, transaction->get_seq_no(),
                                         std::nullopt, this->evses.at(static_cast<int32_t>(evse_id))->get_evse_info(),
-                                        std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt);
+                                        std::nullopt, std::nullopt, std::nullopt, this->is_offline(), std::nullopt);
             return true;
         } else {
             EVLOG_warning << "Can not change charging state: no transaction for evse id " << evse_id;
@@ -822,11 +825,12 @@ void ChargePoint::update_aligned_data_interval() {
                         // add meter value to transaction meter values
                         const auto& enhanced_transaction = evse->get_transaction();
                         enhanced_transaction->meter_values.push_back(_meter_value);
+
                         this->transaction_event_req(
                             TransactionEventEnum::Updated, DateTime(), enhanced_transaction->get_transaction(),
                             TriggerReasonEnum::MeterValueClock, enhanced_transaction->get_seq_no(), std::nullopt,
                             std::nullopt, std::nullopt, std::vector<MeterValue>(1, meter_value), std::nullopt,
-                            std::nullopt, std::nullopt);
+                            this->is_offline(), std::nullopt);
                     } else if (!evse->has_active_transaction() and
                                this->device_model
                                    ->get_optional_value<bool>(ControllerComponentVariables::AlignedDataSendDuringIdle)
@@ -1004,6 +1008,14 @@ void ChargePoint::set_evse_connectors_unavailable(const std::unique_ptr<Evse>& e
     }
 }
 
+bool ChargePoint::is_offline() {
+    bool offline = false; // false by default
+    if (this->websocket_connection_status == WebsocketConnectionStatusEnum::Disconnected) {
+        offline = true;
+    }
+    return offline;
+}
+
 void ChargePoint::boot_notification_req(const BootReasonEnum& reason) {
     EVLOG_debug << "Sending BootNotification";
     BootNotificationRequest req;
@@ -1097,8 +1109,7 @@ void ChargePoint::transaction_event_req(const TransactionEventEnum& event_type, 
                                         const std::optional<ocpp::v201::EVSE>& evse,
                                         const std::optional<ocpp::v201::IdToken>& id_token,
                                         const std::optional<std::vector<ocpp::v201::MeterValue>>& meter_value,
-                                        const std::optional<int32_t>& number_of_phases_used,
-                                        const std::optional<bool>& offline,
+                                        const std::optional<int32_t>& number_of_phases_used, const bool offline,
                                         const std::optional<int32_t>& reservation_id) {
     TransactionEventRequest req;
     req.eventType = event_type;
@@ -1679,10 +1690,11 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
                                                 ControllerComponentVariables::SampledDataTxUpdatedMeasurands);
 
             const auto& enhanced_transaction = evse.get_transaction();
+
             this->transaction_event_req(
                 TransactionEventEnum::Updated, DateTime(), enhanced_transaction->get_transaction(),
                 TriggerReasonEnum::Trigger, enhanced_transaction->get_seq_no(), std::nullopt, std::nullopt,
-                std::nullopt, std::vector<MeterValue>(1, meter_value), std::nullopt, std::nullopt, std::nullopt);
+                std::nullopt, std::vector<MeterValue>(1, meter_value), std::nullopt, this->is_offline(), std::nullopt);
         };
         send_evse_message(send_transaction);
     } break;
