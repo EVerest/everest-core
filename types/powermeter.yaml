@@ -35,7 +35,6 @@ types:
     type: string
     enum:
         - OK
-        - NOT_FOUND  # Referred transaction does not exist.
         - NOT_SUPPORTED
         - UNEXPECTED_ERROR
   TransactionStartResponse:
