@@ -404,6 +404,7 @@ void AuthHandler::handle_session_event(const int connector_id, const SessionEven
                 ->timeout_timer.timeout(
                     [this, connector_id]() {
                         EVLOG_info << "Plug In timeout for connector#" << connector_id;
+                        this->withdraw_authorization_callback(this->connectors.at(connector_id)->evse_index);
                         {
                             std::lock_guard<std::mutex> lk(this->plug_in_queue_mutex);
                             this->plug_in_queue.remove_if([connector_id](int value) { return value == connector_id; });

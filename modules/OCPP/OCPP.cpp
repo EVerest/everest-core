@@ -536,6 +536,8 @@ void OCPP::init() {
             } else if (event == "ReservationEnd") {
                 this->charge_point->on_reservation_end(connector);
             } else if (event == "ReservationAuthtokenMismatch") {
+            } else if (event == "PluginTimeout") {
+                this->charge_point->on_plugin_timeout(connector);
             }
         });
 
