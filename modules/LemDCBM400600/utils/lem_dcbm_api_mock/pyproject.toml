@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "lem-dcbm-api-mock"
+version = "0.1.0"
+description = ""
+authors = ["Fabian Klemm <fabian.klemm@pionix.de>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.103.1"
+uvicorn = "^0.23.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
