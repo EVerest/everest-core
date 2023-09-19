@@ -36,6 +36,50 @@ cmds:
         Result object containing data transfer response
       type: object
       $ref: /ocpp#/DataTransferResponse
+  get_configuration_key:
+    description: >-
+      Gets the response to the requested configuration key containing a list of the values of the requested keys 
+      and a list of the keys that are unknown
+    arguments:
+      keys:
+        description: List of keys for which the values are requested. If empty, all keys and values are returned
+        type: array
+        items:
+          description: A key
+          type: string
+    result:
+      description: Response to the requested operation
+      type: object
+      $ref: /ocpp#/GetConfigurationResponse
+  set_custom_configuration_key:
+    description: >-
+      Command to set a custom configuration key. Its not possible to set standardized configuration keys externally
+    arguments:
+      key:
+        description: Key that should be set
+        type: string
+        maximum: 50
+      value:
+        description: Value that should be set for the given key
+        type: string
+        maximum: 500
+    result:
+      description: Indicates the result of the requested operation
+      type: string
+      $ref: /ocpp#/ConfigurationStatus
+  monitor_configuration_keys:
+    description: >-
+      Monitors the given configuration key. In case this configuration keys is changed by the CSMS the configuration key
+      the changed configuration key will be published. Consecutive calls of this operation will not override but extend the
+      existing monitors
+    arguments:
+      keys:
+        description: Keys that should be monitored
+        type: array
+        items:
+          description: Key that should be montired
+          type: string
+          maximum: 50
 vars:
   charging_schedules:
     description: >-
@@ -46,3 +90,10 @@ vars:
   is_connected:
     description: Indicates if chargepoint is connected to CSMS
     type: boolean
+  configuration_key:
+    description: >-
+      Published when a configuration key has been changed by the CSMS and a monitor has been registered
+      using the command monitor_configuration_keys
+    type: object
+    $ref: /ocpp#/KeyValue
+

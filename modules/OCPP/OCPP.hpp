@@ -72,7 +72,6 @@ public:
         r_system(std::move(r_system)),
         config(config){};
 
-    const Conf& config;
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<ocpp_1_6_charge_pointImplBase> p_main;
     const std::unique_ptr<auth_token_validatorImplBase> p_auth_validator;
@@ -82,6 +81,7 @@ public:
     const std::unique_ptr<reservationIntf> r_reservation;
     const std::unique_ptr<authIntf> r_auth;
     const std::unique_ptr<systemIntf> r_system;
+    const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here

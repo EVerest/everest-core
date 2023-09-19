@@ -22,3 +22,51 @@ types:
       data:
         description: Data provided by this data transfer
         type: string
+  KeyValue:
+    description: Type for a key value pair
+    type: object
+    additionalProperties: false
+    required:
+      - key
+      - read_only
+    properties:
+      key:
+        description: Key / Identifier
+        type: string
+        maximum: 50
+      read_only:
+        description: Indicates if the configuration key is configured to be read-only
+        type: boolean
+      value:
+        description: Value of the configuration key
+        type: string
+        maximum: 5000
+  GetConfigurationResponse:
+    description: Response to a GetConfiguration request
+    type: object
+    required:
+      - configuration_keys
+      - unknown_keys
+    properties:
+      configuration_keys:
+        description: List of known configuration keys of key value pairs
+        type: array
+        items:
+          description: Key value pair
+          type: object
+          $ref: /ocpp#/KeyValue
+      unknown_keys:
+        description: List of unknown configuration keys
+        type: array
+        items:
+          description: Unknown key
+          type: string
+          maximum: 50
+  ConfigurationStatus:
+    description: Response to a set_custom_configuration_key command
+    type: string
+    enum:
+      - Accepted
+      - Rejected
+      - RebootRequired
+      - NotSupported

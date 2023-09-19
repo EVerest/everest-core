@@ -1,0 +1,15 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "description": "Json schema for Custom configuration keys",
+    "$comment": "This is just an example schema and can be modified according to custom requirements",
+    "type": "object",
+    "required": [],
+    "properties": {
+      "ExampleConfigurationKey": {
+        "type": "string",
+        "description": "Custom key",
+        "readOnly": false
+      }
+    }
+  }
+  

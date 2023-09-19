@@ -1,0 +1,21 @@
+description: >-
+  This is an example module that shows how the OCPP module of EVerest could be extended using the DataTransfer functionality
+  and custom configuration keys
+config:
+  keys_to_monitor:
+    description: Commad seperated list of keys that should be monitored
+    type: string
+    default: "HeartbeatInterval,SecurityProfile,ExampleConfigurationKey"
+provides:
+  empty:
+    description: This module doesnt implement any interface
+    interface: empty
+requires:
+  ocpp:
+    interface: ocpp_1_6_charge_point
+    min_connections: 1
+    max_connections: 1
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Piet Gömpel

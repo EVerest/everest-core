@@ -44,7 +44,8 @@ auth_token_validatorImpl::validate_pnc_request(const types::authorization::Provi
         iso15118_certificate_hash_data_opt.emplace(iso15118_certificate_hash_data);
     }
 
-    // this is the actual OCPP request via DataTransfer.req to CSMS according to PnC1.6 whitepaper
+    // this is the actual OCPP request via DataTransfer.req to CSMS according to
+    // PnC1.6 whitepaper
     const auto authorize_response = mod->charge_point->data_transfer_pnc_authorize(
         provided_token.id_token, provided_token.certificate, iso15118_certificate_hash_data_opt);
 
