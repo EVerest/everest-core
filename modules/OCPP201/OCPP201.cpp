@@ -350,6 +350,12 @@ void OCPP201::init() {
     invoke_init(*p_main);
     invoke_init(*p_auth_provider);
     invoke_init(*p_auth_validator);
+}
+
+void OCPP201::ready() {
+    invoke_ready(*p_main);
+    invoke_ready(*p_auth_provider);
+    invoke_ready(*p_auth_validator);
 
     this->ocpp_share_path = this->info.paths.share;
     this->operational_evse_states[0] = ocpp::v201::OperationalStatusEnum::Operative;
@@ -650,12 +656,6 @@ void OCPP201::init() {
     }
 
     this->charge_point->start();
-}
-
-void OCPP201::ready() {
-    invoke_ready(*p_main);
-    invoke_ready(*p_auth_provider);
-    invoke_ready(*p_auth_validator);
 }
 
 } // namespace module
