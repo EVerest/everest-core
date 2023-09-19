@@ -37,14 +37,14 @@ void powermeterImpl::ready() {
 }
 
 types::powermeter::TransactionStopResponse powermeterImpl::handle_stop_transaction(std::string& transaction_id) {
-    return {.status = types::powermeter::TransactionRequestStatus::NOT_SUPPORTED,
-            .error = "MicroMegaWattBSP powermeter does not support the stop_transaction command"};
+    return {types::powermeter::TransactionRequestStatus::NOT_SUPPORTED, {},
+            "MicroMegaWattBSP powermeter does not support the stop_transaction command"};
 };
 
 types::powermeter::TransactionStartResponse
 powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& value) {
-    return {.status = types::powermeter::TransactionRequestStatus::NOT_SUPPORTED,
-            .error = "MicroMegaWattBSP powermeter does not support the start_transaction command"};
+    return {types::powermeter::TransactionRequestStatus::NOT_SUPPORTED,
+            "MicroMegaWattBSP powermeter does not support the start_transaction command"};
 }
 
 } // namespace powermeter

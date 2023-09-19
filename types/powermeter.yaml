@@ -43,7 +43,6 @@ types:
     additionalProperties: false
     required:
       - status
-      - transaction_id
     properties:
       status:
         description: Response status that indicates whether the transaction start request could successfully be performed.
@@ -54,9 +53,11 @@ types:
       transaction_min_stop_time:
         description: Earliest point in time the started transaction can be stopped again (if a minimum duration is required by the meter); yields a RFC3339 timestamp.
         type: string
+        format: date-time
       transaction_max_stop_time:
         description:  Deadline for the transaction to be stopped again (if a minimum duration is required by the meter); yields a RFC3339 timestamp.
         type: string
+        format: date-time
   TransactionStopResponse:
     description: Report returned when a OCMF transaction is requested to stop. If successful, includes the signed OCMF string. In case of an error, an additional error message can be provided.
     type: object
