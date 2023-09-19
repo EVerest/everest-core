@@ -5,7 +5,7 @@
 #ifndef DEVICE_MODEL_OCPP_HPP
 #define DEVICE_MODEL_OCPP_HPP
 
-#include <device_model_storage_sqlite.hpp>
+#include <device_model/storage_sqlite.hpp>
 #include <ocpp/v201/device_model_storage.hpp>
 
 namespace module {

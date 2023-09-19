@@ -61,6 +61,6 @@ libevse-security:
   git: https://github.com:EVerest/libevse-security.git
   git_tag: main
 libdevicemodel:
-  git: git@github.com:EVerest/libdevicemodel.git
+  git: https://github.com/EVerest/libdevicemodel.git
   git_tag: main
 
