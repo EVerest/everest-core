@@ -390,8 +390,8 @@ void OCPP201::ready() {
                                                  const ocpp::v201::ResetEnum& type) {
         // FIXME: use evse_id!
         try {
-            const auto reset_type =
-                types::system::string_to_reset_type(ocpp::v201::conversions::reset_enum_to_string(type));
+            // FIXME(piet): use correct type
+            const auto reset_type = types::system::ResetType::Soft;
             return this->r_system->call_is_reset_allowed(reset_type);
         } catch (std::out_of_range& e) {
             EVLOG_warning
@@ -402,8 +402,8 @@ void OCPP201::ready() {
     callbacks.reset_callback = [this](const std::optional<const int32_t> evse_id, const ocpp::v201::ResetEnum& type) {
         // FIXME: use evse_id!
         try {
-            const auto reset_type =
-                types::system::string_to_reset_type(ocpp::v201::conversions::reset_enum_to_string(type));
+            // const auto reset_type =
+            //     types::system::string_to_reset_type(ocpp::v201::conversions::reset_enum_to_string(type));
             this->r_system->call_reset(types::system::ResetType::Soft); // FIXME(piet): fix reset type in system module
                                                                         // according to v201 reset type
         } catch (std::out_of_range& e) {
