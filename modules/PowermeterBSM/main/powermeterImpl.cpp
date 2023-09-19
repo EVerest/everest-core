@@ -31,7 +31,7 @@ void powermeterImpl::ready() {
     m_watchdog_thread = std::thread(&powermeterImpl::watchdog, this);
 }
 
-std::string powermeterImpl::handle_stop_transaction(std::string& transaction_id) {
+types::powermeter::TransactionStopResponse powermeterImpl::handle_stop_transaction(std::string& transaction_id) {
     try {
 
         std::scoped_lock lock(mod->get_device_mutex());
@@ -45,18 +45,19 @@ std::string powermeterImpl::handle_stop_transaction(std::string& transaction_id)
 
         bsm::SignedOCMFSnapshot signed_snapshot(data);
 
-        return signed_snapshot.O();
+        return {types::powermeter::TransactionRequestStatus::OK, signed_snapshot.O()};
 
     } catch (const std::runtime_error& e) {
         EVLOG_error << __PRETTY_FUNCTION__ << " Error: " << e.what() << std::endl;
-        return "get_signed_meter_value_error";
+        return {types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR, {}, "get_signed_meter_value_error"};
     }
 };
 
 // FIXME: probably this would need to be handled differently in Bauer power meter - need to actually start a transaction
 // on the power meter. With current implementation we do not get a start signed meter value
-bool powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& value) {
-    return true;
+types::powermeter::TransactionStartResponse
+powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& value) {
+    return {types::powermeter::TransactionRequestStatus::OK};
 }
 
 //////////////////////////////////////////////////////////////////////

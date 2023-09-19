@@ -33,8 +33,9 @@ public:
 
 protected:
     // command handler functions (virtual)
-    virtual bool handle_start_transaction(types::powermeter::TransactionReq& value) override;
-    virtual std::string handle_stop_transaction(std::string& transaction_id) override;
+    virtual types::powermeter::TransactionStartResponse
+    handle_start_transaction(types::powermeter::TransactionReq& value) override;
+    virtual types::powermeter::TransactionStopResponse handle_stop_transaction(std::string& transaction_id) override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
     // insert your protected definitions here

@@ -23,12 +23,56 @@ types:
         type: string
       tariff_id:
         description: Tariff ID
-        type: string
+        type: integer
       cable_id:
         description: Cable ID
-        type: string
+        type: integer
       user_data:
         description: User data
+        type: string
+  TransactionRequestStatus:
+    description: Status of a transaction start or stop request.
+    type: string
+    enum:
+        - OK
+        - NOT_SUPPORTED
+        - UNEXPECTED_ERROR
+  TransactionStartResponse:
+    description: Return value when a transaction is started.
+    type: object
+    additionalProperties: false
+    required:
+      - status
+    properties:
+      status:
+        description: Response status that indicates whether the transaction start request could successfully be performed.
+        $ref: /powermeter#/TransactionRequestStatus
+      error:
+        description: If status is not OK, a verbose error message.
+        type: string
+      transaction_min_stop_time:
+        description: Earliest point in time the started transaction can be stopped again (if a minimum duration is required by the meter); yields a RFC3339 timestamp.
+        type: string
+        format: date-time
+      transaction_max_stop_time:
+        description:  Deadline for the transaction to be stopped again (if a minimum duration is required by the meter); yields a RFC3339 timestamp.
+        type: string
+        format: date-time
+  TransactionStopResponse:
+    description: Report returned when a OCMF transaction is requested to stop. If successful, includes the signed OCMF string. In case of an error, an additional error message can be provided.
+    type: object
+    additionalProperties: false
+    required:
+      - status
+    properties:
+      status:
+        description: Response status that indicates whether the transaction stop request could successfully be performed.
+        $ref: /powermeter#/TransactionRequestStatus
+      ocmf:
+        description: The signed OCMF report of the stopped transaction. Must be provided if status is OK.
+        type: string
+      error:
+        description: If status is not OK, a verbose error message.
         type: string
   Powermeter:
     description: Measured dataset (AC or DC)

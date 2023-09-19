@@ -9,7 +9,8 @@ cmds:
         $ref: /powermeter#/TransactionReq
     result:
       description: True on success, False if transaction could not be started in the power meter
-      type: boolean
+      type: object
+      $ref: /powermeter#/TransactionStartResponse
   stop_transaction:
     description: Stop the transaction on the power meter and return the signed metering information
     arguments:
@@ -17,8 +18,9 @@ cmds:
         description: Transaction id
         type: string
     result:
-      description: Returns OCMF signed meter values
-      type: string
+      description: Response to transaction stop request including OCMF string.
+      type: object
+      $ref: /powermeter#/TransactionStopResponse
 vars:
   powermeter:
     description: Measured dataset
