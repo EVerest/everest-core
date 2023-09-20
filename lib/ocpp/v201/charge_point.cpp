@@ -893,7 +893,17 @@ void ChargePoint::handle_variable_changed(const SetVariableData& set_variable_da
             this->websocket->disconnect(websocketpp::close::status::service_restart);
         }
     }
-
+    if (component_variable == ControllerComponentVariables::HeartbeatInterval and
+        this->registration_status == RegistrationStatusEnum::Accepted) {
+        try {
+            this->heartbeat_timer.interval([this]() { this->heartbeat_req(); },
+                                           std::chrono::seconds(std::stoi(set_variable_data.attributeValue.get())));
+        } catch (const std::invalid_argument& e) {
+            EVLOG_error << "Invalid argument exception while updating the heartbeat interval: " << e.what();
+        } catch (const std::out_of_range& e) {
+            EVLOG_error << "Out of range exception while updating the heartbeat interval: " << e.what();
+        }
+    }
     // TODO(piet): other special handling of changed variables can be added here...
 }
 
