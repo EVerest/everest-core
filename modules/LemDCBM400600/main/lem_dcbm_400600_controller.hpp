@@ -18,12 +18,14 @@ class LemDCBM400600Controller {
 
 public:
     struct Conf {
-        const int init_number_of_http_retries;        // number of retries to connect to powermeter at initialization
-        const int init_retry_wait_in_milliseconds;    // wait time before each retry during powermeter at initialization
-        const int transaction_number_of_http_retries; // number of retries for failed requests (due to HTTP or device
-                                                      // errors) to start or stop a transaction
-        const int
-            transaction_retry_wait_in_milliseconds; // wait time before each retry for transaction start/stop requests
+        // number of retries to connect to powermeter at initialization
+        const int init_number_of_http_retries;
+        // wait time before each retry during powermeter at initialization
+        const int init_retry_wait_in_milliseconds;
+        // number of retries for failed requests (due to HTTP or device errors) to start or stop a transaction
+        const int transaction_number_of_http_retries;
+        // wait time before each retry for transaction start/stop requests
+        const int transaction_retry_wait_in_milliseconds;
     };
 
     class DCBMUnexpectedResponseException : public std::exception {
