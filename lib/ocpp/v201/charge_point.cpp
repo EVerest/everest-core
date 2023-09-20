@@ -901,6 +901,7 @@ void ChargePoint::handle_variable_changed(const SetVariableData& set_variable_da
     if (component_variable == ControllerComponentVariables::BasicAuthPassword) {
         if (this->device_model->get_value<int>(ControllerComponentVariables::SecurityProfile) < 3) {
             // TODO: A01.FR.11 log the change of BasicAuth in Security Log
+            this->websocket->set_authorization_key(set_variable_data.attributeValue.get());
             this->websocket->disconnect(websocketpp::close::status::service_restart);
         }
     }
