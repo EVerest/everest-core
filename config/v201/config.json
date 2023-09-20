@@ -412,7 +412,7 @@
             },
             "instance": "ChargingProfiles"
         },
-        "LimitChangeSignificance": {
+            "LimitChangeSignificance": {
             "variable_name": "LimitChangeSignificance",
             "attributes": {
                 "Actual": 42

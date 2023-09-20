@@ -179,6 +179,7 @@ private:
     void message_callback(const std::string& message);
     void update_aligned_data_interval();
     bool is_change_availability_possible(const ChangeAvailabilityRequest& req);
+    bool is_valid_evse(const EVSE& evse);
     void handle_scheduled_change_availability_requests(const int32_t evse_id);
     void handle_variable_changed(const SetVariableData& set_variable_data);
     bool validate_set_variable(const SetVariableData& set_variable_data);

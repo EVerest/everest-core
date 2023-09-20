@@ -869,6 +869,12 @@ bool ChargePoint::is_change_availability_possible(const ChangeAvailabilityReques
     return true;
 }
 
+bool ChargePoint::is_valid_evse(const EVSE& evse) {
+    return this->evses.count(evse.id) and
+           (!evse.connectorId.has_value() or
+            this->evses.at(evse.id)->get_number_of_connectors() >= evse.connectorId.value());
+}
+
 void ChargePoint::handle_scheduled_change_availability_requests(const int32_t evse_id) {
     if (this->scheduled_change_availability_requests.count(evse_id)) {
         EVLOG_info << "Found scheduled ChangeAvailability.req for evse_id:" << evse_id;
@@ -1851,6 +1857,14 @@ void ChargePoint::handle_change_availability_req(Call<ChangeAvailabilityRequest>
     const auto msg = call.msg;
     ChangeAvailabilityResponse response;
     response.status = ChangeAvailabilityStatusEnum::Scheduled;
+
+    if (msg.evse.has_value() and !this->is_valid_evse(msg.evse.value())) {
+        EVLOG_warning << "CSMS requested ChangeAvailability for invalid evse id or connector id";
+        response.status = ChangeAvailabilityStatusEnum::Rejected;
+        ocpp::CallResult<ChangeAvailabilityResponse> call_result(response, call.uniqueId);
+        this->send<ChangeAvailabilityResponse>(call_result);
+        return;
+    }
 
     const auto is_change_availability_possible = this->is_change_availability_possible(msg);
 
