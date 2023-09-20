@@ -39,29 +39,10 @@
 
 namespace module {
 
-enum class ControlPilotEvent {
-    CarPluggedIn,
-    CarRequestedPower,
-    PowerOn,
-    PowerOff,
-    CarRequestedStopPower,
-    CarUnplugged,
-    Error_E,
-    Error_DF,
-    Error_Relais,
-    Error_RCD,
-    Error_VentilationNotAvailable,
-    Error_OverCurrent,
-    EFtoBCD,
-    BCDtoEF,
-    PermanentFault,
-    EvseReplugStarted,
-    EvseReplugFinished,
-    Invalid
-};
-
 const std::string IEC62196Type2Cable = "IEC62196Type2Cable";
 const std::string IEC62196Type2Socket = "IEC62196Type2Socket";
+
+using ControlPilotEvent = types::board_support::Event;
 
 class Charger {
 public:

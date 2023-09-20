@@ -606,64 +606,23 @@ void Charger::runStateMachine() {
     }
 }
 
-ControlPilotEvent Charger::string_to_control_pilot_event(const types::board_support::Event& event) {
-    if (event == types::board_support::Event::CarPluggedIn) {
-        return ControlPilotEvent::CarPluggedIn;
-    } else if (event == types::board_support::Event::CarRequestedPower) {
-        return ControlPilotEvent::CarRequestedPower;
-    } else if (event == types::board_support::Event::PowerOn) {
-        return ControlPilotEvent::PowerOn;
-    } else if (event == types::board_support::Event::PowerOff) {
-        return ControlPilotEvent::PowerOff;
-    } else if (event == types::board_support::Event::CarRequestedStopPower) {
-        return ControlPilotEvent::CarRequestedStopPower;
-    } else if (event == types::board_support::Event::CarUnplugged) {
-        return ControlPilotEvent::CarUnplugged;
-    } else if (event == types::board_support::Event::ErrorE) {
-        return ControlPilotEvent::Error_E;
-    } else if (event == types::board_support::Event::ErrorDF) {
-        return ControlPilotEvent::Error_DF;
-    } else if (event == types::board_support::Event::ErrorRelais) {
-        return ControlPilotEvent::Error_Relais;
-    } else if (event == types::board_support::Event::ErrorRCD) {
-        return ControlPilotEvent::Error_RCD;
-    } else if (event == types::board_support::Event::ErrorVentilationNotAvailable) {
-        return ControlPilotEvent::Error_VentilationNotAvailable;
-    } else if (event == types::board_support::Event::ErrorOverCurrent) {
-        return ControlPilotEvent::Error_OverCurrent;
-    } else if (event == types::board_support::Event::BCDtoEF) {
-        return ControlPilotEvent::BCDtoEF;
-    } else if (event == types::board_support::Event::EFtoBCD) {
-        return ControlPilotEvent::EFtoBCD;
-    } else if (event == types::board_support::Event::PermanentFault) {
-        return ControlPilotEvent::PermanentFault;
-    } else if (event == types::board_support::Event::EvseReplugStarted) {
-        return ControlPilotEvent::EvseReplugStarted;
-    } else if (event == types::board_support::Event::EvseReplugFinished) {
-        return ControlPilotEvent::EvseReplugFinished;
-    }
-
-    return ControlPilotEvent::Invalid;
-}
-
-void Charger::processEvent(types::board_support::Event event) {
-    auto cp_event = string_to_control_pilot_event(event);
+void Charger::processEvent(types::board_support::Event cp_event) {
 
     switch (cp_event) {
     case ControlPilotEvent::CarPluggedIn:
     case ControlPilotEvent::CarRequestedPower:
     case ControlPilotEvent::CarRequestedStopPower:
     case ControlPilotEvent::CarUnplugged:
-    case ControlPilotEvent::Error_DF:
-    case ControlPilotEvent::Error_E:
+    case ControlPilotEvent::ErrorDF:
+    case ControlPilotEvent::ErrorE:
     case ControlPilotEvent::BCDtoEF:
     case ControlPilotEvent::EFtoBCD:
-        session_log.car(false, fmt::format("Event {}", types::board_support::event_to_string(event)));
+        session_log.car(false, fmt::format("Event {}", types::board_support::event_to_string(cp_event)));
         break;
-    case ControlPilotEvent::Error_OverCurrent:
-    case ControlPilotEvent::Error_RCD:
-    case ControlPilotEvent::Error_Relais:
-    case ControlPilotEvent::Error_VentilationNotAvailable:
+    case ControlPilotEvent::ErrorOverCurrent:
+    case ControlPilotEvent::ErrorRCD:
+    case ControlPilotEvent::ErrorRelais:
+    case ControlPilotEvent::ErrorVentilationNotAvailable:
     case ControlPilotEvent::PermanentFault:
     case ControlPilotEvent::PowerOff:
     case ControlPilotEvent::PowerOn:
@@ -671,7 +630,7 @@ void Charger::processEvent(types::board_support::Event event) {
     case ControlPilotEvent::EvseReplugFinished:
 
     default:
-        session_log.evse(false, fmt::format("Event {}", types::board_support::event_to_string(event)));
+        session_log.evse(false, fmt::format("Event {}", types::board_support::event_to_string(cp_event)));
         break;
     }
 
@@ -770,29 +729,69 @@ void Charger::processCPEventsIndependent(ControlPilotEvent cp_event) {
             currentState = EvseState::Finished;
         }
         break;
-    case ControlPilotEvent::Error_E:
+    case ControlPilotEvent::ErrorE:
         currentState = EvseState::Error;
         errorState = types::evse_manager::ErrorEnum::Car;
         break;
-    case ControlPilotEvent::Error_DF:
+    case ControlPilotEvent::ErrorDF:
         currentState = EvseState::Error;
         errorState = types::evse_manager::ErrorEnum::CarDiodeFault;
         break;
-    case ControlPilotEvent::Error_Relais:
+    case ControlPilotEvent::ErrorRelais:
         currentState = EvseState::Error;
         errorState = types::evse_manager::ErrorEnum::Relais;
         break;
-    case ControlPilotEvent::Error_RCD:
+    case ControlPilotEvent::ErrorRCD:
         currentState = EvseState::Error;
         errorState = types::evse_manager::ErrorEnum::RCD;
         break;
-    case ControlPilotEvent::Error_VentilationNotAvailable:
+    case ControlPilotEvent::ErrorVentilationNotAvailable:
         currentState = EvseState::Error;
         errorState = types::evse_manager::ErrorEnum::VentilationNotAvailable;
         break;
-    case ControlPilotEvent::Error_OverCurrent:
+    case ControlPilotEvent::ErrorOverCurrent:
         currentState = EvseState::Error;
         errorState = types::evse_manager::ErrorEnum::OverCurrent;
+        break;
+    case ControlPilotEvent::ErrorRCD_DC:
+        currentState = EvseState::Error;
+        errorState = types::evse_manager::ErrorEnum::OverCurrent;
+        break;
+    case ControlPilotEvent::ErrorOverVoltage:
+        currentState = EvseState::Error;
+        errorState = types::evse_manager::ErrorEnum::OverVoltage;
+        break;
+    case ControlPilotEvent::ErrorUnderVoltage:
+        currentState = EvseState::Error;
+        errorState = types::evse_manager::ErrorEnum::UnderVoltage;
+        break;
+    case ControlPilotEvent::ErrorMotorLock:
+        currentState = EvseState::Error;
+        errorState = types::evse_manager::ErrorEnum::MotorLock;
+        break;
+    case ControlPilotEvent::ErrorOverTemperature:
+        currentState = EvseState::Error;
+        errorState = types::evse_manager::ErrorEnum::OverTemperature;
+        break;
+    case ControlPilotEvent::ErrorBrownOut:
+        currentState = EvseState::Error;
+        errorState = types::evse_manager::ErrorEnum::BrownOut;
+        break;
+    case ControlPilotEvent::ErrorCablePP:
+        currentState = EvseState::Error;
+        errorState = types::evse_manager::ErrorEnum::CablePP;
+        break;
+    case ControlPilotEvent::ErrorEnergyManagement:
+        currentState = EvseState::Error;
+        errorState = types::evse_manager::ErrorEnum::EnergyManagement;
+        break;
+    case ControlPilotEvent::ErrorNeutralPEN:
+        currentState = EvseState::Error;
+        errorState = types::evse_manager::ErrorEnum::NeutralPEN;
+        break;
+    case ControlPilotEvent::ErrorCpDriver:
+        currentState = EvseState::Error;
+        errorState = types::evse_manager::ErrorEnum::CpDriver;
         break;
     default:
         break;

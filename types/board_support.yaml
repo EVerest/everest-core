@@ -70,8 +70,18 @@ types:
       - ErrorDF
       - ErrorRelais
       - ErrorRCD
+      - ErrorRCD_DC
       - ErrorVentilationNotAvailable
       - ErrorOverCurrent
+      - ErrorOverVoltage
+      - ErrorUnderVoltage
+      - ErrorMotorLock
+      - ErrorOverTemperature
+      - ErrorBrownOut
+      - ErrorCablePP
+      - ErrorEnergyManagement
+      - ErrorNeutralPEN
+      - ErrorCpDriver
       - EFtoBCD
       - BCDtoEF
       - PermanentFault
