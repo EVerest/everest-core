@@ -672,6 +672,11 @@ void ChargePoint::handle_message(const EnhancedMessage<v201::MessageType>& messa
     case MessageType::GetLocalListVersion:
         this->handle_get_local_authorization_list_version_req(json_message);
         break;
+    default:
+        if (message.messageTypeId == MessageTypeId::CALL) {
+            const auto call_error = CallError(message.uniqueId, "NotImplemented", "", json({}));
+            this->send(call_error);
+        }
     }
 }
 
