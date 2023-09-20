@@ -39,8 +39,8 @@ To start the mocked API, run
 python3 <Projekt root directory>/modules/LemDCBM400600/utils/lem_dcbm_api_mock/main.py 
 ```
 
-To then run the http client integraion tests, run in the build directory
-```
+To then run the http client integration tests, run in the build directory
+```bash
 ./modules/LemDCBM400600/tests/integration_test_http_client
 ```
 ## Integration / E2E Tests for LemDCBM400600 (Python wrapped)
@@ -50,12 +50,14 @@ the module from inside EVerest both against the mock (integration test) and the 
 
 ### Requirements for E2E tests
 
-- Module built & installed into <Build dir>/dist 
-- Everest testing utils installed; cf. everst-core/tests/Readme.md
-- Further, this requires the following installed packages in the used Python interpreter
-  ```bash
-  pip install fastapi uvicorn pyyaml
-  ```
+-  Module built & installed into <Build dir>/dist
+
+-  Everest testing utils installed; cf. everst-core/tests/Readme.md
+
+-  Further, this requires the following installed packages in the used Python interpreter
+    ```bash
+    pip install fastapi uvicorn pyyaml
+    ```
 
 If not done before  set the Cmake install prefix, for example via
 ```bash
