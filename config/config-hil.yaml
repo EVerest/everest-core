@@ -40,10 +40,10 @@ active_modules:
         - module_id: yeti_driver
           implementation_id: powermeter
   iso15118_charger:
-    module: JsRiseV2G
-    config_implementation:
-      main:
-        mqtt_base_path: everest_external/iso15118/java
+    module: EvseV2G
+    config_module:
+      device: auto
+      tls_security: allow
   evse_manager:
     module: EvseManager
     config_module:
