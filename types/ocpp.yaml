@@ -70,3 +70,39 @@ types:
       - Rejected
       - RebootRequired
       - NotSupported
+  SecurityEventEnum:
+    description: Enum for known security events
+    type: string
+    enum:
+      - FirmwareUpdated
+      - FailedToAuthenticateAtCsms
+      - CsmsFailedToAuthenticate
+      - SettingSystemTime
+      - StartupOfTheDevice
+      - ResetOrReboot
+      - SecurityLogWasCleared
+      - ReconfigurationOfSecurityParameters
+      - MemoryExhaustion
+      - InvalidMessages
+      - AttemptedReplayAttacks
+      - TamperDetectionActivated
+      - InvalidFirmwareSignature
+      - InvalidFirmwareSigningCertificate
+      - InvalidCsmsCertificate
+      - InvalidChargingStationCertificate
+      - InvalidTLSVersion
+      - InvalidTLSCipherSuite
+      - MaintenanceLoginAccepted
+      - MaintenanceLoginFailed
+  SecurityEvent:
+    description: Type for a security event
+    type: object
+    required:
+      - type
+    properties:
+      type:
+        description: Type of the security event
+        type: string
+      info:
+        description: Additional information about the occurred security event
+        type: string
