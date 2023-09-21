@@ -1110,7 +1110,6 @@ void ChargePointImpl::handleBootNotificationResponse(ocpp::CallResult<BootNotifi
         if (this->set_system_time_callback != nullptr) {
             this->set_system_time_callback(call_result.msg.currentTime.to_rfc3339());
         }
-
         // we are allowed to send messages to the central system
         // activate heartbeat
         this->update_heartbeat_interval();
@@ -1124,6 +1123,7 @@ void ChargePointImpl::handleBootNotificationResponse(ocpp::CallResult<BootNotifi
         }
 
         this->stop_pending_transactions();
+        this->message_queue->get_transaction_messages_from_db();
 
         if (this->is_pnc_enabled()) {
             this->ocsp_request_timer->timeout(INITIAL_CERTIFICATE_REQUESTS_DELAY);
@@ -2096,8 +2096,8 @@ void ChargePointImpl::handleCertificateSignedRequest(ocpp::Call<CertificateSigne
     this->send<CertificateSignedResponse>(call_result);
 
     if (response.status == CertificateSignedStatusEnumType::Rejected) {
-        this->securityEventNotification(SecurityEvent::InvalidChargePointCertificate,
-                                        ocpp::conversions::install_certificate_result_to_string(result));
+        this->securityEventNotification("InvalidChargePointCertificate",
+                                        ocpp::conversions::install_certificate_result_to_string(result), true);
     }
 
     // reconnect with new certificate if valid and security profile is 3
@@ -2179,8 +2179,8 @@ void ChargePointImpl::handleInstallCertificateRequest(ocpp::Call<InstallCertific
     this->send<InstallCertificateResponse>(call_result);
 
     if (response.status == InstallCertificateStatusEnumType::Rejected) {
-        this->securityEventNotification(SecurityEvent::InvalidCentralSystemCertificate,
-                                        ocpp::conversions::install_certificate_result_to_string(result));
+        this->securityEventNotification("InvalidCentralSystemCertificate",
+                                        ocpp::conversions::install_certificate_result_to_string(result), true);
     }
 }
 
@@ -2215,11 +2215,12 @@ void ChargePointImpl::handleSignedUpdateFirmware(ocpp::Call<SignedUpdateFirmware
     }
 
     if (response.status == UpdateFirmwareStatusEnumType::InvalidCertificate) {
-        this->securityEventNotification(SecurityEvent::InvalidFirmwareSigningCertificate, "Certificate is invalid.");
+        this->securityEventNotification("InvalidFirmwareSigningCertificate", "Certificate is invalid.", true);
     }
 }
 
-void ChargePointImpl::securityEventNotification(const SecurityEvent& type, const std::string& tech_info) {
+void ChargePointImpl::securityEventNotification(const std::string& type, const std::string& tech_info,
+                                                const bool triggered_internally) {
 
     SecurityEventNotificationRequest req;
     req.type = type;
@@ -2228,6 +2229,10 @@ void ChargePointImpl::securityEventNotification(const SecurityEvent& type, const
 
     ocpp::Call<SecurityEventNotificationRequest> call(req, this->message_queue->createMessageId());
     this->send<SecurityEventNotificationRequest>(call);
+
+    if (triggered_internally and this->security_event_callback != nullptr) {
+        this->security_event_callback(type, tech_info);
+    }
 }
 
 void ChargePointImpl::log_status_notification(UploadLogStatusEnumType status, int requestId) {
@@ -2258,7 +2263,7 @@ void ChargePointImpl::signed_firmware_update_status_notification(FirmwareStatusE
     this->send<SignedFirmwareStatusNotificationRequest>(call);
 
     if (status == FirmwareStatusEnumType::InvalidSignature) {
-        this->securityEventNotification(SecurityEvent::InvalidFirmwareSignature, "techinfo");
+        this->securityEventNotification("InvalidFirmwareSignature", "", true);
     }
 }
 
@@ -2785,7 +2790,7 @@ void ChargePointImpl::handle_data_transfer_pnc_certificate_signed(Call<DataTrans
         this->send<DataTransferResponse>(call_result);
 
         if (certificate_response.status == CertificateSignedStatusEnumType::Rejected) {
-            this->securityEventNotification(SecurityEvent::InvalidChargePointCertificate, tech_info);
+            this->securityEventNotification("InvalidChargePointCertificate", tech_info, true);
         }
     } catch (const json::exception& e) {
         EVLOG_warning << "Could not parse data of DataTransfer message CertificateSigned.req: " << e.what();
@@ -3362,6 +3367,11 @@ void ChargePointImpl::register_configuration_key_changed_callback(
     this->configuration_key_changed_callbacks[key] = callback;
 }
 
+void ChargePointImpl::register_security_event_callback(
+    const std::function<void(const std::string& type, const std::string& tech_info)>& callback) {
+    this->security_event_callback = callback;
+}
+
 void ChargePointImpl::on_reservation_start(int32_t connector) {
     this->status->submit_event(connector, FSMEvent::ReserveConnector);
 }
@@ -3380,6 +3390,10 @@ void ChargePointImpl::on_disabled(int32_t connector) {
 
 void ChargePointImpl::on_plugin_timeout(int32_t connector) {
     this->status->submit_event(connector, FSMEvent::TransactionStoppedAndUserActionRequired);
+}
+
+void ChargePointImpl::on_security_event(const std::string& type, const std::string& tech_info) {
+    this->securityEventNotification(type, tech_info, false);
 }
 
 GetConfigurationResponse ChargePointImpl::get_configuration_key(const GetConfigurationRequest& request) {

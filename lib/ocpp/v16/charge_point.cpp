@@ -157,6 +157,10 @@ void ChargePoint::on_plugin_timeout(int32_t connector) {
     this->charge_point->on_plugin_timeout(connector);
 }
 
+void ChargePoint::on_security_event(const std::string& type, const std::string& tech_info) {
+    this->charge_point->on_security_event(type, tech_info);
+}
+
 void ChargePoint::register_data_transfer_callback(
     const CiString<255>& vendorId, const CiString<50>& messageId,
     const std::function<DataTransferResponse(const std::optional<std::string>& msg)>& callback) {
@@ -264,6 +268,11 @@ void ChargePoint::register_transaction_started_callback(
 void ChargePoint::register_configuration_key_changed_callback(
     const CiString<50>& key, const std::function<void(const KeyValue& key_value)>& callback) {
     this->charge_point->register_configuration_key_changed_callback(key, callback);
+}
+
+void ChargePoint::register_security_event_callback(
+    const std::function<void(const std::string& type, const std::string& tech_info)>& callback) {
+    this->charge_point->register_security_event_callback(callback);
 }
 
 GetConfigurationResponse ChargePoint::get_configuration_key(const GetConfigurationRequest& request) {

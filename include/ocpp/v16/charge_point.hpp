@@ -270,6 +270,12 @@ public:
     /// be called when an EV is plugged in but the authorization is present within the specified ConnectionTimeout
     void on_plugin_timeout(int32_t connector);
 
+    // \brief Notifies chargepoint that a SecurityEvent occurs. This will send a SecurityEventNotification.req to the
+    /// CSMS
+    /// \param type type of the security event
+    /// \param tech_info additional info of the security event
+    void on_security_event(const std::string& type, const std::string& tech_info);
+
     /// registers a \p callback function that can be used to receive a arbitrary data transfer for the given \p
     /// vendorId and \p messageId
     /// \param vendorId
@@ -419,6 +425,11 @@ public:
     /// \param callback executed when this configuration key changed
     void register_configuration_key_changed_callback(const CiString<50>& key,
                                                      const std::function<void(const KeyValue& key_value)>& callback);
+
+    /// \brief registers a \p callback function that can be used to react to a security event callback. This callback is
+    /// called only if the SecurityEvent occured internally within libocpp
+    void register_security_event_callback(
+        const std::function<void(const std::string& type, const std::string& tech_info)>& callback);
 
     /// \brief Gets the configured configuration key requested in the given \p request
     /// \param request specifies the keys that should be returned. If empty or not set, all keys will be reported

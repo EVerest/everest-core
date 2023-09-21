@@ -27,7 +27,8 @@ bool MessageQueue<v16::MessageType>::isTransactionMessage(
     }
     if (message->messageType == v16::MessageType::StartTransaction ||
         message->messageType == v16::MessageType::StopTransaction ||
-        message->messageType == v16::MessageType::MeterValues) {
+        message->messageType == v16::MessageType::MeterValues ||
+        message->messageType == v16::MessageType::SecurityEventNotification) {
         return true;
     }
     return false;

@@ -7,7 +7,6 @@
 #include <optional>
 
 #include <ocpp/common/types.hpp>
-#include <ocpp/v16/enums.hpp>
 #include <ocpp/v16/ocpp_types.hpp>
 
 namespace ocpp {
@@ -15,7 +14,7 @@ namespace v16 {
 
 /// \brief Contains a OCPP SecurityEventNotification message
 struct SecurityEventNotificationRequest : public ocpp::Message {
-    SecurityEvent type;
+    CiString<50> type;
     ocpp::DateTime timestamp;
     std::optional<CiString<255>> techInfo;
 

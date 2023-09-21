@@ -20,7 +20,7 @@ std::string SecurityEventNotificationRequest::get_type() const {
 void to_json(json& j, const SecurityEventNotificationRequest& k) {
     // the required parts of the message
     j = json{
-        {"type", conversions::security_event_to_string(k.type)},
+        {"type", k.type},
         {"timestamp", k.timestamp.to_rfc3339()},
     };
     // the optional parts of the message
@@ -31,7 +31,7 @@ void to_json(json& j, const SecurityEventNotificationRequest& k) {
 
 void from_json(const json& j, SecurityEventNotificationRequest& k) {
     // the required parts of the message
-    k.type = conversions::string_to_security_event(j.at("type"));
+    k.type = j.at("type");
     k.timestamp = ocpp::DateTime(std::string(j.at("timestamp")));
 
     // the optional parts of the message
