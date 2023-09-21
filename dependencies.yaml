@@ -30,11 +30,6 @@ libfsm:
   git: https://github.com/EVerest/libfsm.git
   git_tag: v0.2.0
 
-# JsCarV2G and JsRiseV2G module
-RISE-V2G:
-  git: https://github.com/EVerest/ext-RISE-V2G.git
-  git_tag: 2023.5.0
-
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
