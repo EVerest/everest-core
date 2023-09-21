@@ -74,7 +74,10 @@ public:
 
     /// \brief Restarts the ChargePoint if it has been stopped before. The ChargePoint is reinitialized, connects to the
     /// websocket and starts to communicate OCPP messages again
-    bool restart();
+    /// \param connector_status_map initial state of connectors including connector 0 with reduced set of states
+    /// (Available, Unavailable, Faulted). connector_status_map is empty, last availability states from the persistant
+    /// storage will be used
+    bool restart(const std::map<int, ChargePointStatus>& connector_status_map = {});
 
     // \brief Resets the internal state machine for the connectors using the given \p connector_status_map
     /// \param connector_status_map state of connectors including connector 0 with reduced set of states (Available,

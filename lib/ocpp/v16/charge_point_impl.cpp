@@ -773,7 +773,7 @@ bool ChargePointImpl::start(const std::map<int, ChargePointStatus>& connector_st
     return true;
 }
 
-bool ChargePointImpl::restart() {
+bool ChargePointImpl::restart(const std::map<int, ChargePointStatus>& connector_status_map) {
     if (this->stopped) {
         EVLOG_info << "Restarting OCPP Chargepoint";
         this->database_handler->open_db_connection(this->configuration->getNumberOfConnectors());
@@ -783,12 +783,6 @@ bool ChargePointImpl::restart() {
             this->configuration->getTransactionMessageAttempts(),
             this->configuration->getTransactionMessageRetryInterval(), this->external_notify, this->database_handler);
         this->initialized = true;
-
-        // restart with the states that are currently active
-        std::map<int, ChargePointStatus> connector_status_map;
-        for (int i = 0; i <= (size_t)this->configuration->getNumberOfConnectors(); i++) {
-            connector_status_map.at(i) = this->status->get_state(i);
-        }
 
         return this->start(connector_status_map);
     } else {

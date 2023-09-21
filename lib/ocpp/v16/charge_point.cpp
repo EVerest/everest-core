@@ -24,8 +24,8 @@ bool ChargePoint::start(const std::map<int, ChargePointStatus>& connector_status
     return this->charge_point->start(connector_status_map);
 }
 
-bool ChargePoint::restart() {
-    return this->charge_point->restart();
+bool ChargePoint::restart(const std::map<int, ChargePointStatus>& connector_status_map) {
+    return this->charge_point->restart(connector_status_map);
 }
 
 bool ChargePoint::stop() {
