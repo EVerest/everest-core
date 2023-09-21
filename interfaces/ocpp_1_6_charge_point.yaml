@@ -80,6 +80,17 @@ cmds:
           description: Key that should be montired
           type: string
           maximum: 50
+  security_event:
+    description: >-
+      Triggers a SecurityEventNotification.req at the CSMS. This event is queued with a guaranteed delivery
+      to the CSMS.
+    arguments:
+      type:
+        description: type of the security event
+        type: string
+      info:
+        description: Additional information about the occurred security event
+        type: string
 vars:
   charging_schedules:
     description: >-
@@ -96,4 +107,8 @@ vars:
       using the command monitor_configuration_keys
     type: object
     $ref: /ocpp#/KeyValue
+  security_event:
+    description: Published when an internal security event occured
+    type: object
+    $ref: /ocpp#/SecurityEvent
 

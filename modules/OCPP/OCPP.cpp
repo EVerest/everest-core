@@ -517,6 +517,14 @@ void OCPP::ready() {
                 ->call_set_get_certificate_response(response);
         });
 
+    this->charge_point->register_security_event_callback([this](const std::string& type, const std::string& tech_info) {
+        EVLOG_info << "Security Event in OCPP occured: " << type;
+        types::ocpp::SecurityEvent event;
+        event.type = type;
+        event.info = tech_info;
+        this->p_main->publish_security_event(event);
+    });
+
     int32_t evse_id = 1;
     for (auto& evse : this->r_evse_manager) {
         evse->subscribe_powermeter([this, evse_id](types::powermeter::Powermeter powermeter) {
