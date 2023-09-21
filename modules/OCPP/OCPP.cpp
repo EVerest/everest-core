@@ -445,6 +445,11 @@ void OCPP::init() {
         });
 
         evse->subscribe_session_event([this, connector](types::evse_manager::SessionEvent session_event) {
+            if (this->ocpp_stopped) {
+                // dont call any on handler in case ocpp is stopped
+                return;
+            }
+
             auto event = types::evse_manager::session_event_enum_to_string(session_event.event);
 
             if (event == "Enabled") {
