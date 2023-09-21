@@ -88,6 +88,7 @@ public:
     std::unique_ptr<ocpp::v16::ChargePoint> charge_point;
     std::unique_ptr<Everest::SteadyTimer> charging_schedules_timer;
     bool started = false;
+    bool ocpp_stopped = false;
     std::map<int32_t, bool> connector_ready_map;
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
