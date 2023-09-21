@@ -11,11 +11,12 @@ All documentation and the issue tracking can be found in our main repository her
 It is recommended to have at least 4GB of RAM available to build EVerest.
 More CPU cores will optionally boost the build process, while requiring more RAM accordingly.
 
-#### Ubuntu 20.04
+#### Ubuntu 20.04 & 22.04
 ```bash
 sudo apt update
-sudo apt install -y python3-pip git rsync wget cmake doxygen graphviz build-essential clang-tidy cppcheck maven openjdk-11-jdk npm docker docker-compose libboost-all-dev nodejs libssl-dev libsqlite3-dev clang-format curl rfkill libpcap-dev libevent-dev
+sudo apt install -y python3-pip git rsync wget cmake doxygen graphviz build-essential clang-tidy cppcheck openjdk-17-jdk npm docker docker-compose libboost-all-dev nodejs libssl-dev libsqlite3-dev clang-format curl rfkill libpcap-dev libevent-dev pkg-config
 ```
+##### Ubuntu 20.04
 In order to build EVerest, we need clang-format version greater than 11. To date *apt* does only install an older version, so we install version 12 manually:
 ```bash
 sudo apt install clang-format-12
@@ -33,13 +34,13 @@ to install a newer version, minimum v12.
 ```bash
 zypper update && zypper install -y sudo shadow
 zypper install -y --type pattern devel_basis
-zypper install -y git rsync wget cmake doxygen graphviz clang-tools cppcheck boost-devel libboost_filesystem-devel libboost_log-devel libboost_program_options-devel libboost_system-devel libboost_thread-devel maven java-11-openjdk java-11-openjdk-devel nodejs nodejs-devel npm python3-pip gcc-c++ libopenssl-devel sqlite3-devel libpcap-devel libevent-devel
+zypper install -y git rsync wget cmake doxygen graphviz clang-tools cppcheck boost-devel libboost_filesystem-devel libboost_log-devel libboost_program_options-devel libboost_system-devel libboost_thread-devel java-17-openjdk java-17-openjdk-devel nodejs nodejs-devel npm python3-pip gcc-c++ libopenssl-devel sqlite3-devel libpcap-devel libevent-devel
 ```
 
 #### Fedora 36, 37 & 38
 ```bash
 sudo dnf update
-sudo dnf install make automake gcc gcc-c++ kernel-devel python3-pip python3-devel git rsync wget cmake doxygen graphviz clang-tools-extra cppcheck maven java-17-openjdk java-17-openjdk-devel boost-devel nodejs nodejs-devel npm openssl openssl-devel libsqlite3x-devel curl rfkill libpcap-devel libevent-devel
+sudo dnf install make automake gcc gcc-c++ kernel-devel python3-pip python3-devel git rsync wget cmake doxygen graphviz clang-tools-extra cppcheck java-17-openjdk java-17-openjdk-devel boost-devel nodejs nodejs-devel npm openssl openssl-devel libsqlite3x-devel curl rfkill libpcap-devel libevent-devel
 ```
 
 ### Build & Install:
