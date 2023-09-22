@@ -117,7 +117,6 @@ make install
 
 (Optional) In case you have more than one CPU core and more RAM availble you can use the following command to significantly speed up the build process:
 ```bash
-cmake -j$(nproc) ..
 make -j$(nproc) install
 ```
 *$(nproc)* puts out the core count of your machine, so it is using all available CPU cores!
