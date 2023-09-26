@@ -13,7 +13,6 @@ list(APPEND OCPP1_6_PROFILE_SCHEMAS
      SmartCharging.json
      Security.json
      PnC.json
-     Custom.json
 )
 
 list(TRANSFORM OCPP1_6_PROFILE_SCHEMAS
