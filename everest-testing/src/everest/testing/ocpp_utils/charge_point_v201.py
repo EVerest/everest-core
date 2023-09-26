@@ -115,6 +115,10 @@ class ChargePoint201(cp):
     def on_transaction_event(self, **kwargs):
         return call_result.TransactionEventPayload()
 
+    @on(Action.MeterValues)
+    def on_meter_values(self, **kwargs):
+        return call_result.MeterValuesPayload()
+
     @on(Action.NotifyChargingLimit)
     def on_notify_charging_limit(self, **kwargs):
         return call_result.NotifyChargingLimitPayload()
