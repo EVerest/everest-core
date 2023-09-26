@@ -352,6 +352,15 @@ void OCPP201::init() {
     this->ocpp_share_path = this->info.paths.share;
     this->operational_evse_states[0] = ocpp::v201::OperationalStatusEnum::Operative;
 
+    const auto device_model_database_path = [&]() {
+        const auto config_device_model_path = fs::path(this->config.DeviceModelDatabasePath);
+        if (config_device_model_path.is_relative()) {
+            return this->ocpp_share_path / config_device_model_path;
+        } else {
+            return config_device_model_path;
+        }
+    }();
+
     const auto etc_certs_path = [&]() {
         if (this->config.CertsPath.empty()) {
             return fs::path(this->info.paths.etc) / CERTS_DIR;
@@ -535,7 +544,7 @@ void OCPP201::init() {
     }
 
     this->charge_point = std::make_unique<ocpp::v201::ChargePoint>(
-        evse_connector_structure, this->config.DeviceModelDatabasePath, this->ocpp_share_path.string(),
+        evse_connector_structure, device_model_database_path, this->ocpp_share_path.string(),
         this->config.CoreDatabasePath, sql_init_path.string(), this->config.MessageLogPath, etc_certs_path, callbacks);
 
     if (this->config.EnableExternalWebsocketControl) {
