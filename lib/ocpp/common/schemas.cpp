@@ -30,6 +30,12 @@ void Schemas::load_root_schema() {
     std::string schema_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
     this->schema = json::parse(schema_file);
 
+    const auto custom_schema_path = schemas_path / "Custom.json";
+    if (std::filesystem::exists(custom_schema_path)) {
+        json custom_object = {{"type", "object"}, {"$ref", "Custom.json"}};
+        this->schema["properties"]["Custom"] = custom_object;
+    }
+
     this->validator = std::make_shared<json_validator>(
         [this](const json_uri& uri, json& schema) { this->loader(uri, schema); }, Schemas::format_checker);
     this->validator->set_root_schema(this->schema);

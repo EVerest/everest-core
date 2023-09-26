@@ -1985,18 +1985,22 @@ std::optional<KeyValue> ChargePointConfiguration::getCustomKeyValue(CiString<50>
         return std::nullopt;
     }
 
-    KeyValue kv;
-    kv.readonly = this->custom_schema["properties"][key]["readOnly"];
-    if (kv.readonly) {
+    try {
+        KeyValue kv;
+        kv.readonly = this->custom_schema["properties"][key]["readOnly"];
+        if (kv.readonly) {
+            return std::nullopt;
+        }
+        kv.key = key;
+        if (this->config["Custom"][key].is_string()) {
+            kv.value = std::string(this->config["Custom"][key]);
+        } else {
+            kv.value = this->config["Custom"][key].dump();
+        }
+        return kv;
+    } catch (const std::exception& e) {
         return std::nullopt;
     }
-    kv.key = key;
-    if (this->config["Custom"][key].is_string()) {
-        kv.value = std::string(this->config["Custom"][key]);
-    } else {
-        kv.value = this->config["Custom"][key].dump();
-    }
-    return kv;
 }
 
 ConfigurationStatus ChargePointConfiguration::setCustomKey(CiString<50> key, CiString<500> value, bool force) {
