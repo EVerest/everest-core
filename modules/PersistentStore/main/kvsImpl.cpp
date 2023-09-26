@@ -3,18 +3,19 @@
 
 #include "kvsImpl.hpp"
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 namespace module {
 namespace main {
 
 void kvsImpl::init() {
     // open and initialize database
-    boost::filesystem::path sqlite_db_path =
-        boost::filesystem::absolute(boost::filesystem::path(mod->config.sqlite_db_file_path));
-    boost::filesystem::path database_directory = sqlite_db_path.parent_path();
-    if (!boost::filesystem::exists(database_directory)) {
-        boost::filesystem::create_directories(database_directory);
+    fs::path sqlite_db_path = fs::absolute(fs::path(mod->config.sqlite_db_file_path));
+    fs::path database_directory = sqlite_db_path.parent_path();
+    if (!fs::exists(database_directory)) {
+        fs::create_directories(database_directory);
     }
 
     int ret = sqlite3_open(sqlite_db_path.c_str(), &this->db);
