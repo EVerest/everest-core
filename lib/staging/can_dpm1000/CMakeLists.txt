@@ -10,4 +10,6 @@ target_sources(can_dpm1000
         src/dpm1000.cpp
 )
 
-add_subdirectory(tests)
+if(BUILD_DEV_TESTS)
+    add_subdirectory(tests)
+endif()
