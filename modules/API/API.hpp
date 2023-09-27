@@ -18,11 +18,13 @@
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
-#include <date/date.h>
-#include <date/tz.h>
+#include <list>
 #include <memory>
 #include <mutex>
 #include <sstream>
+
+#include <date/date.h>
+#include <date/tz.h>
 
 namespace module {
 
@@ -106,8 +108,9 @@ private:
     // insert your private definitions here
     std::vector<std::thread> api_threads;
     bool running = true;
-    std::vector<std::unique_ptr<SessionInfo>> info;
-    std::vector<json> hw_capabilities_json;
+
+    std::list<std::unique_ptr<SessionInfo>> info;
+    std::list<json> hw_capabilities_json;
     std::string selected_protocol;
     json charger_information;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1

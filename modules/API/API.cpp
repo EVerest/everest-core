@@ -181,10 +181,8 @@ void API::init() {
     std::string var_connectors = api_base + "connectors";
 
     for (auto& evse : this->r_evse_manager) {
-        this->info.push_back(std::make_unique<SessionInfo>());
-        auto& session_info = this->info.back();
-        this->hw_capabilities_json.push_back(json{});
-        auto& hw_caps = this->hw_capabilities_json.back();
+        auto& session_info = this->info.emplace_back(std::make_unique<SessionInfo>());
+        auto& hw_caps = this->hw_capabilities_json.emplace_back(json{});
         std::string evse_base = api_base + evse->module_id;
         connectors.push_back(evse->module_id);
 
