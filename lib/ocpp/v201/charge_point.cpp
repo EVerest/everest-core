@@ -1985,9 +1985,7 @@ void ChargePoint::handle_send_local_authorization_list_req(Call<SendLocalListReq
 void ChargePoint::handle_get_local_authorization_list_version_req(Call<GetLocalListVersionRequest> call) {
     GetLocalListVersionResponse response;
 
-    if (this->device_model->get_optional_value<bool>(ControllerComponentVariables::LocalAuthListCtrlrAvailable)
-            .value_or(false) and
-        this->device_model->get_optional_value<bool>(ControllerComponentVariables::LocalAuthListCtrlrEnabled)
+    if (this->device_model->get_optional_value<bool>(ControllerComponentVariables::LocalAuthListCtrlrEnabled)
             .value_or(false)) {
         response.versionNumber = this->database_handler->get_local_authorization_list_version();
     } else {
