@@ -103,19 +103,7 @@ This library is automatically integrated as the OCPP and OCPP201 module within [
 If you run libocpp with OCPP1.6 with EVerest, the build process of [everest-core](https://github.com/EVerest/everest-core) will take care of installing all necessary dependencies for you.
 
 ### Run OCPP2.0.1 with EVerest
-the build process of [everest-core](https://github.com/EVerest/everest-core) will take care of installing all necessary dependencies for you. Additionally for OCPP2.0.1 you need to set up the SQLite device model storage database.
-
-```bash
-cd config/v201
-python3 init_device_model_db.py
-python3 insert_device_model_config.py --config config.json --db /tmp/ocpp201/device_model_storage.db
-```
-
-These two scripts do the following:
-
-- create the database and tables and it will 
-- insert the variables with a role standardized within the OCPP2.0.1 specification
-- insert the VariableAttributes specified within the config.json  
+If you run libocpp with OCPP1.6 with EVerest, the build process of [everest-core](https://github.com/EVerest/everest-core) will take care of installing all necessary dependencies for you. This includes the initialization of the device model database using the [config.json](config/v201/config.json) file.
 ## Integrate this library with your Charging Station Implementation for OCPP1.6
 
 OCPP is a protocol that affects, controls and monitors many areas of a charging station's operation.
