@@ -320,6 +320,24 @@ types::evse_security::GetInstalledCertificatesStatus to_everest(evse_security::G
     }
 }
 
+types::evse_security::GetKeyPairStatus to_everest(evse_security::GetKeyPairStatus other) {
+    switch (other) {
+    case evse_security::GetKeyPairStatus::Accepted:
+        return types::evse_security::GetKeyPairStatus::Accepted;
+    case evse_security::GetKeyPairStatus::Rejected:
+        return types::evse_security::GetKeyPairStatus::Rejected;
+    case evse_security::GetKeyPairStatus::NotFound:
+        return types::evse_security::GetKeyPairStatus::NotFound;
+    case evse_security::GetKeyPairStatus::NotFoundValid:
+        return types::evse_security::GetKeyPairStatus::NotFoundValid;
+    case evse_security::GetKeyPairStatus::PrivateKeyNotFound:
+        return types::evse_security::GetKeyPairStatus::PrivateKeyNotFound;
+    default:
+        throw std::runtime_error("Could not convert evse_security::GetKeyPairStatus to "
+                                 "types::evse_security::GetKeyPairStatus");
+    }
+}
+
 types::evse_security::CertificateHashData to_everest(evse_security::CertificateHashData other) {
     types::evse_security::CertificateHashData lhs;
     lhs.hash_algorithm = to_everest(other.hash_algorithm);
@@ -333,13 +351,13 @@ types::evse_security::CertificateHashDataChain to_everest(evse_security::Certifi
     types::evse_security::CertificateHashDataChain lhs;
     lhs.certificate_type = to_everest(other.certificate_type);
     lhs.certificate_hash_data = to_everest(other.certificate_hash_data);
-    if (other.child_certificate_hash_data.has_value()) {
-        std::vector<types::evse_security::CertificateHashData> v;
-        for (const auto& certificate_hash_data : other.child_certificate_hash_data.value()) {
-            v.push_back(to_everest(certificate_hash_data));
-        }
-        lhs.child_certificate_hash_data = v;
+
+    std::vector<types::evse_security::CertificateHashData> v;
+    for (const auto& certificate_hash_data : other.child_certificate_hash_data) {
+        v.push_back(to_everest(certificate_hash_data));
     }
+    lhs.child_certificate_hash_data = v;
+
     return lhs;
 }
 

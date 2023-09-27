@@ -657,8 +657,8 @@ void OCPP201::ready() {
                     evse_id, connector_id, session_id, timestamp,
                     ocpp::v201::TriggerReasonEnum::RemoteStart, // FIXME(piet): Use proper reason here
                     meter_value, id_token, std::nullopt, reservation_id, remote_start_id,
-                    ocpp::v201::ChargingStateEnum::Charging); // FIXME(piet): add proper groupIdToken +
-                                                              // ChargingStateEnum
+                    ocpp::v201::ChargingStateEnum::Charging);   // FIXME(piet): add proper groupIdToken +
+                                                                // ChargingStateEnum
                 break;
             }
             case types::evse_manager::SessionEventEnum::TransactionFinished: {

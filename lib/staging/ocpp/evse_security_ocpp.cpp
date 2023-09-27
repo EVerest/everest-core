@@ -83,7 +83,7 @@ std::string EvseSecurity::generate_certificate_signing_request(const ocpp::Certi
 std::optional<ocpp::KeyPair> EvseSecurity::get_key_pair(const ocpp::CertificateSigningUseEnum& certificate_type) {
     const auto key_pair_response = this->r_security.call_get_key_pair(conversions::from_ocpp(certificate_type),
                                                                       types::evse_security::EncodingFormat::PEM);
-    if (key_pair_response.status == types::evse_security::GetInstalledCertificatesStatus::Accepted and
+    if (key_pair_response.status == types::evse_security::GetKeyPairStatus::Accepted and
         key_pair_response.key_pair.has_value()) {
         const auto _key_pair = conversions::to_ocpp(key_pair_response.key_pair.value());
         return _key_pair;

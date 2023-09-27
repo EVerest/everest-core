@@ -63,6 +63,15 @@ types:
     enum:
       - Accepted
       - NotFound
+  GetKeyPairStatus:
+    description: Status indicates the result of the attempt to retrieve a a keypair
+    type: string
+    enum:
+      - Accepted
+      - Rejected
+      - NotFound
+      - NotFoundValid
+      - PrivateKeyNotFound
   CertificateHashData:
     description: >-
       Type specifies the hash data of a certificate
@@ -177,7 +186,7 @@ types:
       password:
         description: Specifies the password for the private key if encrypted
         type: string
-  KeyPairResponse:
+  GetKeyPairResult:
     description: Response to the command get_key_pair
     type: object
     required:
@@ -186,7 +195,7 @@ types:
       status:
         description: The status of the requested command
         type: string
-        $ref: /evse_security#/GetInstalledCertificatesStatus
+        $ref: /evse_security#/GetKeyPairStatus
       key_pair:
         description: The requested key pair
         type: object

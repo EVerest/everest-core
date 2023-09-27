@@ -130,7 +130,7 @@ cmds:
     result:
       description: The response to the requested command
       type: object
-      $ref: /evse_security#/KeyPairResponse
+      $ref: /evse_security#/GetKeyPairResult
   get_verify_file:
     description: Command to get the file path of a CA bundle that can be used for verification
     arguments:

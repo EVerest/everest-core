@@ -83,18 +83,19 @@ std::string evse_securityImpl::handle_generate_certificate_signing_request(
                                                                      country, organization, common);
 }
 
-types::evse_security::KeyPairResponse
+types::evse_security::GetKeyPairResult
 evse_securityImpl::handle_get_key_pair(types::evse_security::LeafCertificateType& certificate_type,
                                        types::evse_security::EncodingFormat& encoding) {
-    types::evse_security::KeyPairResponse response;
+    types::evse_security::GetKeyPairResult response;
     const auto key_pair = this->evse_security->get_key_pair(conversions::from_everest(certificate_type),
                                                             conversions::from_everest(encoding));
-    if (key_pair.has_value()) {
-        response.status = types::evse_security::GetInstalledCertificatesStatus::Accepted;
-        response.key_pair = conversions::to_everest(key_pair.value());
-    } else {
-        response.status = types::evse_security::GetInstalledCertificatesStatus::NotFound;
+
+    response.status = conversions::to_everest(key_pair.status);
+
+    if (key_pair.status == evse_security::GetKeyPairStatus::Accepted && key_pair.pair.has_value()) {
+        response.key_pair = conversions::to_everest(key_pair.pair.value());
     }
+
     return response;
 }
 

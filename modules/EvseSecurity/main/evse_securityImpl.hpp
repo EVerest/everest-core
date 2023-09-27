@@ -55,7 +55,7 @@ protected:
     handle_generate_certificate_signing_request(types::evse_security::LeafCertificateType& certificate_type,
                                                 std::string& country, std::string& organization,
                                                 std::string& common) override;
-    virtual types::evse_security::KeyPairResponse
+    virtual types::evse_security::GetKeyPairResult
     handle_get_key_pair(types::evse_security::LeafCertificateType& certificate_type,
                         types::evse_security::EncodingFormat& encoding) override;
     virtual std::string handle_get_verify_file(types::evse_security::CaCertificateType& certificate_type) override;
