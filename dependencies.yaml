@@ -25,7 +25,7 @@ libtimer:
 # Slac module
 libslac:
   git: https://github.com/EVerest/libslac.git
-  git_tag: 486cd8b
+  git_tag: 12b0a5e
 libfsm:
   git: https://github.com/EVerest/libfsm.git
   git_tag: v0.2.0
