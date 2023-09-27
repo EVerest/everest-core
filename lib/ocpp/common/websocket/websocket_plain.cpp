@@ -151,6 +151,10 @@ void WebsocketPlain::connect_plain() {
     con->set_message_handler(websocketpp::lib::bind(&WebsocketPlain::on_message_plain, this,
                                                     websocketpp::lib::placeholders::_1,
                                                     websocketpp::lib::placeholders::_2));
+    con->set_pong_timeout(this->connection_options.pong_timeout_s * 1000); // pong timeout in ms
+    con->set_pong_timeout_handler(websocketpp::lib::bind(&WebsocketPlain::on_pong_timeout, this,
+                                                         websocketpp::lib::placeholders::_1,
+                                                         websocketpp::lib::placeholders::_2));
 
     con->add_subprotocol(conversions::ocpp_protocol_version_to_string(this->connection_options.ocpp_version));
     std::lock_guard<std::mutex> lk(this->connection_mutex);
@@ -163,6 +167,7 @@ void WebsocketPlain::on_open_plain(client* c, websocketpp::connection_hdl hdl) {
     EVLOG_info << "OCPP client successfully connected to plain websocket server";
     this->connection_attempts = 1; // reset connection attempts
     this->m_is_connected = true;
+    this->reconnecting = false;
     this->set_websocket_ping_interval(this->connection_options.ping_interval_s);
     this->connected_callback(this->connection_options.security_profile);
 }
@@ -222,7 +227,7 @@ void WebsocketPlain::close(websocketpp::close::status::value code, const std::st
     this->ws_client.close(this->handle, code, reason, ec);
     if (ec) {
         EVLOG_error << "Error initiating close of plain websocket: " << ec.message();
-        // on_close_tls wont be called here so we have to call the closed_callback manually
+        // on_close_plain won't be called here so we have to call the closed_callback manually
         this->closed_callback(websocketpp::close::status::abnormal_close);
     } else {
         EVLOG_info << "Closed plain websocket successfully.";

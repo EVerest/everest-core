@@ -97,6 +97,9 @@ public:
     std::string getWebsocketPingPayload();
     KeyValue getWebsocketPingPayloadKeyValue();
 
+    int32_t getWebsocketPongTimeout();
+    KeyValue getWebsocketPongTimeoutKeyValue();
+
     // Core Profile - optional
     std::optional<bool> getAllowOfflineTxForUnknownId();
     void setAllowOfflineTxForUnknownId(bool enabled);

@@ -169,6 +169,12 @@
             "readOnly": true,
             "default": "hello there"
         },
+        "WebsocketPongTimeout": {
+            "$comment": "Maximum timeout for receiving a pong message in seconds",
+            "type": "integer",
+            "readOnly": true,
+            "default": 5
+        },
         "UseSslDefaultVerifyPaths": {
             "$comment": "Use default verify paths for validating CSMS server certificate",
             "type": "boolean",

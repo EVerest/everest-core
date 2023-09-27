@@ -249,15 +249,20 @@ void WebsocketTLS::connect_tls() {
                                                   websocketpp::lib::placeholders::_1));
     con->set_message_handler(websocketpp::lib::bind(
         &WebsocketTLS::on_message_tls, this, websocketpp::lib::placeholders::_1, websocketpp::lib::placeholders::_2));
+    con->set_pong_timeout(this->connection_options.pong_timeout_s * 1000); // pong timeout in ms
+    con->set_pong_timeout_handler(websocketpp::lib::bind(
+        &WebsocketTLS::on_pong_timeout, this, websocketpp::lib::placeholders::_1, websocketpp::lib::placeholders::_2));
 
     con->add_subprotocol(conversions::ocpp_protocol_version_to_string(this->connection_options.ocpp_version));
 
     this->wss_client.connect(con);
 }
 void WebsocketTLS::on_open_tls(tls_client* c, websocketpp::connection_hdl hdl) {
-    (void)c; // tlc_client is not used in this function
+    (void)c;                       // tls_client is not used in this function
     EVLOG_info << "OCPP client successfully connected to TLS websocket server";
+    this->connection_attempts = 1; // reset connection attempts
     this->m_is_connected = true;
+    this->reconnecting = false;
     this->set_websocket_ping_interval(this->connection_options.ping_interval_s);
     this->connected_callback(this->connection_options.security_profile);
 }
@@ -293,6 +298,7 @@ void WebsocketTLS::on_close_tls(tls_client* c, websocketpp::connection_hdl hdl) 
 }
 void WebsocketTLS::on_fail_tls(tls_client* c, websocketpp::connection_hdl hdl) {
     std::lock_guard<std::mutex> lk(this->connection_mutex);
+    this->m_is_connected = false;
     this->connection_attempts += 1;
     tls_client::connection_ptr con = c->get_con_from_hdl(hdl);
     const auto ec = con->get_ec();

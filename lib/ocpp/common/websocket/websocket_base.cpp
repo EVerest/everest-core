@@ -15,7 +15,8 @@ WebsocketBase::WebsocketBase(const WebsocketConnectionOptions& connection_option
     reconnect_timer(nullptr),
     connection_attempts(0),
     reconnect_backoff_ms(0),
-    shutting_down(false) {
+    shutting_down(false),
+    reconnecting(false) {
     this->ping_timer = std::make_unique<Everest::SteadyTimer>();
     const auto auth_key = connection_options.authorization_key;
     if (auth_key.has_value() and auth_key.value().length() < 16) {
@@ -143,10 +144,19 @@ void WebsocketBase::set_websocket_ping_interval(int32_t interval_s) {
     if (interval_s > 0) {
         this->ping_timer->interval([this]() { this->ping(); }, std::chrono::seconds(interval_s));
     }
+    this->connection_options.ping_interval_s = interval_s;
 }
 
 void WebsocketBase::set_authorization_key(const std::string& authorization_key) {
     this->connection_options.authorization_key = authorization_key;
+}
+
+void WebsocketBase::on_pong_timeout(websocketpp::connection_hdl hdl, std::string msg) {
+    if (!this->reconnecting) {
+        EVLOG_info << "Reconnecting because of a pong timeout after " << this->connection_options.pong_timeout_s << "s";
+        this->reconnecting = true;
+        this->close(websocketpp::close::status::going_away, "Pong timeout");
+    }
 }
 
 } // namespace ocpp

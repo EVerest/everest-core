@@ -193,6 +193,13 @@ const ComponentVariable& WebsocketPingPayload = {
         "WebsocketPingPayload",
     }),
 };
+const ComponentVariable& WebsocketPongTimeout = {
+    ControllerComponents::InternalCtrlr,
+    std::nullopt,
+    std::optional<Variable>({
+        "WebsocketPongTimeout",
+    }),
+};
 const ComponentVariable& AlignedDataCtrlrEnabled = {
     ControllerComponents::AlignedDataCtrlr,
     std::nullopt,

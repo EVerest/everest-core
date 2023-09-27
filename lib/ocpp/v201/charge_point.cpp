@@ -582,6 +582,7 @@ WebsocketConnectionOptions ChargePoint::get_ws_connection_options(const int32_t 
         this->device_model->get_value<int>(ControllerComponentVariables::WebSocketPingInterval),
         this->device_model->get_optional_value<std::string>(ControllerComponentVariables::WebsocketPingPayload)
             .value_or("payload"),
+        this->device_model->get_optional_value<int>(ControllerComponentVariables::WebsocketPongTimeout).value_or(5),
         this->device_model->get_optional_value<bool>(ControllerComponentVariables::UseSslDefaultVerifyPaths)
             .value_or(true),
         this->device_model->get_optional_value<bool>(ControllerComponentVariables::AdditionalRootCertificateCheck)
