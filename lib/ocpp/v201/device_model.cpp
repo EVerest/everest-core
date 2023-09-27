@@ -194,9 +194,9 @@ DeviceModel::get_report_data(const std::optional<ReportBaseEnum>& report_base,
                 // check if this variable should be reported based on the given component_variables
                 if (!component_variables.has_value() or
                     std::find_if(component_variables.value().begin(), component_variables.value().end(),
-                                 [variable, component](ComponentVariable v) {
-                                     return component == v.component and v.variable.has_value() and
-                                            variable == v.variable.value();
+                                 [&variable_ = variable, &component_ = component](ComponentVariable v) {
+                                     return component_ == v.component and v.variable.has_value() and
+                                            variable_ == v.variable.value();
                                  }) != component_variables.value().end()) {
                     ReportData report_data;
                     report_data.component = component;

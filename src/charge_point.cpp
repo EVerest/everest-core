@@ -105,7 +105,7 @@ int main(int argc, char* argv[]) {
         new ocpp::v16::ChargePoint(json_config.dump(), share_path, user_config_path, database_path, sql_init_path,
                                    std::filesystem::path("/tmp"), std::filesystem::path("/tmp"));
 
-    /************************************** START REGISTERING CALLBACKS /**************************************/
+    /************************************** START REGISTERING CALLBACKS **************************************/
 
     charge_point->register_enable_evse_callback([](int32_t connector) {
         std::cout << "Callback: "
@@ -220,7 +220,7 @@ int main(int argc, char* argv[]) {
                   << std::endl;
     });
 
-    /************************************** STOP REGISTERING CALLBACKS /**************************************/
+    /************************************** STOP REGISTERING CALLBACKS **************************************/
 
     charge_point->start();
 
