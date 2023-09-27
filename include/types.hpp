@@ -53,7 +53,7 @@ enum class InstallCertificateResult {
     Expired,
     CertificateStoreMaxLengthExceeded,
     WriteError,
-    Success,
+    Accepted,
 };
 
 enum class DeleteCertificateResult {

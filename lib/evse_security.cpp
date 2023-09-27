@@ -290,7 +290,7 @@ InstallCertificateResult EvseSecurity::install_ca_certificate(const std::string&
         X509Wrapper cert(certificate, EncodingFormat::PEM);
         const auto ca_bundle_path = this->ca_bundle_path_map.at(certificate_type);
         if (write_to_file(ca_bundle_path, certificate, std::ios::app)) {
-            return InstallCertificateResult::Success;
+            return InstallCertificateResult::Accepted;
         } else {
             return InstallCertificateResult::WriteError;
         }
@@ -368,7 +368,7 @@ InstallCertificateResult EvseSecurity::update_leaf_certificate(const std::string
             return InstallCertificateResult::InvalidFormat;
         }
         const auto result = this->verify_certificate(certificate_chain, certificate_type);
-        if (result != InstallCertificateResult::Success) {
+        if (result != InstallCertificateResult::Accepted) {
             return result;
         }
 
@@ -388,7 +388,7 @@ InstallCertificateResult EvseSecurity::update_leaf_certificate(const std::string
         std::string str_cert = leaf_certificate.get_str();
 
         if (write_to_file(file_path, str_cert, std::ios::out)) {
-            return InstallCertificateResult::Success;
+            return InstallCertificateResult::Accepted;
         } else {
             return InstallCertificateResult::WriteError;
         }
@@ -398,7 +398,7 @@ InstallCertificateResult EvseSecurity::update_leaf_certificate(const std::string
         return InstallCertificateResult::InvalidFormat;
     }
 
-    return InstallCertificateResult::Success;
+    return InstallCertificateResult::Accepted;
 }
 
 GetInstalledCertificatesResult
@@ -704,7 +704,7 @@ InstallCertificateResult EvseSecurity::verify_certificate(const std::string& cer
             return to_install_certificate_result(ec);
         }
 
-        return InstallCertificateResult::Success;
+        return InstallCertificateResult::Accepted;
     } catch (const CertificateLoadException& e) {
         EVLOG_warning << "Could not load update leaf certificate because of invalid format";
         return InstallCertificateResult::InvalidFormat;
