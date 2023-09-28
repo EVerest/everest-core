@@ -4,7 +4,6 @@
 #ifndef SQLITE_STATEMENT_HPP
 #define SQLITE_STATEMENT_HPP
 
-#include <filesystem>
 #include <sqlite3.h>
 
 #include <everest/logging.hpp>

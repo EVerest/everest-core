@@ -40,6 +40,7 @@ add_subdirectory(ocpp/common/websocket)
 add_subdirectory(ocpp/v16/messages)
 add_subdirectory(ocpp/v201/messages)
 
+option(LIBOCPP_USE_BOOST_FILESYSTEM "Usage of boost/filesystem.hpp instead of std::filesystem" OFF)
 
 target_include_directories(ocpp
     PUBLIC
@@ -74,7 +75,7 @@ endif()
 #############
 # End logging configuration
 #############
-           
+ 
 target_link_libraries(ocpp
     PUBLIC
         everest::timer
@@ -89,6 +90,18 @@ target_link_libraries(ocpp
         nlohmann_json::nlohmann_json
         date::date-tz
 )
+
+if(LIBOCPP_USE_BOOST_FILESYSTEM)
+    find_package(Boost REQUIRED COMPONENTS filesystem)
+    target_link_libraries(ocpp
+        PRIVATE
+            Boost::filesystem
+    )
+    target_compile_definitions(log
+        PRIVATE
+            LIBOCPP_USE_BOOST_FILESYSTEM
+    )
+endif()
 
 # FIXME (aw): right now nlohmann_json and boost::optional don't compile
 #             with gcc 10.x and C++11/14, so we need to publish the

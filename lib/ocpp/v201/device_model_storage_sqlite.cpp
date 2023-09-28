@@ -9,7 +9,7 @@ namespace ocpp {
 
 namespace v201 {
 
-DeviceModelStorageSqlite::DeviceModelStorageSqlite(const std::filesystem::path& db_path) {
+DeviceModelStorageSqlite::DeviceModelStorageSqlite(const fs::path& db_path) {
     if (sqlite3_open(db_path.c_str(), &this->db) != SQLITE_OK) {
         EVLOG_error << "Could not open database at provided path: " << db_path;
         EVLOG_AND_THROW(std::runtime_error("Could not open device model database at provided path."));

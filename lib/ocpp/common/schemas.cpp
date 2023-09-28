@@ -9,12 +9,12 @@
 
 namespace ocpp {
 
-Schemas::Schemas(std::filesystem::path schemas_path) : schemas_path(schemas_path) {
-    if (!std::filesystem::exists(this->schemas_path) || !std::filesystem::is_directory(this->schemas_path)) {
+Schemas::Schemas(fs::path schemas_path) : schemas_path(schemas_path) {
+    if (!fs::exists(this->schemas_path) || !fs::is_directory(this->schemas_path)) {
         EVLOG_error << this->schemas_path << " does not exist";
         // FIXME(kai): exception?
     } else {
-        for (auto file : std::filesystem::directory_iterator(this->schemas_path)) {
+        for (auto file : fs::directory_iterator(this->schemas_path)) {
             available_schemas_paths.insert(file.path());
         }
         this->load_root_schema();
@@ -22,9 +22,9 @@ Schemas::Schemas(std::filesystem::path schemas_path) : schemas_path(schemas_path
 }
 
 void Schemas::load_root_schema() {
-    std::filesystem::path config_schema_path = this->schemas_path / "Config.json";
+    fs::path config_schema_path = this->schemas_path / "Config.json";
 
-    EVLOG_debug << "parsing root schema file: " << std::filesystem::canonical(config_schema_path);
+    EVLOG_debug << "parsing root schema file: " << fs::canonical(config_schema_path);
 
     std::ifstream ifs(config_schema_path.c_str());
     std::string schema_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
@@ -59,7 +59,7 @@ void Schemas::loader(const json_uri& uri, json& schema) {
         location.erase(0, 1);
     }
 
-    std::filesystem::path schema_path = this->schemas_path / std::filesystem::path(location);
+    fs::path schema_path = this->schemas_path / fs::path(location);
     if (available_schemas_paths.count(schema_path) != 0) {
         std::ifstream ifs(schema_path.string().c_str());
         std::string schema_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));

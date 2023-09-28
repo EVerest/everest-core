@@ -19,11 +19,10 @@ const auto V2G_CERTIFICATE_TIMER_INTERVAL = std::chrono::hours(12);
 const auto INITIAL_CERTIFICATE_REQUESTS_DELAY = std::chrono::seconds(60);
 const auto WEBSOCKET_INIT_DELAY = std::chrono::seconds(2);
 
-ChargePointImpl::ChargePointImpl(const std::string& config, const std::filesystem::path& share_path,
-                                 const std::filesystem::path& user_config_path,
-                                 const std::filesystem::path& database_path, const std::filesystem::path& sql_init_path,
-                                 const std::filesystem::path& message_log_path,
-                                 const std::filesystem::path& certs_path) :
+ChargePointImpl::ChargePointImpl(const std::string& config, const fs::path& share_path,
+                                 const fs::path& user_config_path, const fs::path& database_path,
+                                 const fs::path& sql_init_path, const fs::path& message_log_path,
+                                 const fs::path& certs_path) :
     ocpp::ChargingStationBase(),
     boot_notification_callerror(false),
     initialized(false),
@@ -32,7 +31,7 @@ ChargePointImpl::ChargePointImpl(const std::string& config, const std::filesyste
     diagnostics_status(DiagnosticsStatus::Idle),
     firmware_status(FirmwareStatus::Idle),
     log_status(UploadLogStatusEnumType::Idle),
-    message_log_path(message_log_path),
+    message_log_path(message_log_path.string()), // .string() for compatibility with boost::filesystem
     switch_security_profile_callback(nullptr) {
     this->configuration = std::make_shared<ocpp::v16::ChargePointConfiguration>(config, share_path, user_config_path);
     this->pki_handler = std::make_shared<ocpp::PkiHandler>(
@@ -57,7 +56,7 @@ ChargePointImpl::ChargePointImpl(const std::string& config, const std::filesyste
     bool session_logging = std::find(log_formats.begin(), log_formats.end(), "session_logging") != log_formats.end();
 
     this->logging = std::make_shared<ocpp::MessageLogging>(
-        this->configuration->getLogMessages(), message_log_path, DateTime().to_rfc3339(), log_to_console,
+        this->configuration->getLogMessages(), this->message_log_path, DateTime().to_rfc3339(), log_to_console,
         detailed_log_to_console, log_to_file, log_to_html, session_logging);
 
     this->boot_notification_timer =

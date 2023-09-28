@@ -4,10 +4,8 @@
 #ifndef DEVICE_MODEL_STORAGE_SQLITE_HPP
 #define DEVICE_MODEL_STORAGE_SQLITE_HPP
 
-#include <filesystem>
-#include <sqlite3.h>
-
 #include <ocpp/v201/device_model_storage.hpp>
+#include <sqlite3.h>
 
 namespace ocpp {
 namespace v201 {
@@ -24,7 +22,7 @@ private:
 public:
     /// \brief Opens SQLite connection at given \p db_path
     /// \param db_path  path to database
-    explicit DeviceModelStorageSqlite(const std::filesystem::path& db_path);
+    explicit DeviceModelStorageSqlite(const fs::path& db_path);
 
     std::map<Component, std::map<Variable, VariableMetaData>> get_device_model() final;
 

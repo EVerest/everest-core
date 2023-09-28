@@ -306,7 +306,7 @@ void WebsocketTLS::on_fail_tls(tls_client* c, websocketpp::connection_hdl hdl) {
 
     // TODO(piet): Trigger SecurityEvent in case InvalidCentralSystemCertificate
 
-    if (std::filesystem::exists(this->pki_handler->getCaCsmsPath() / CSMS_ROOT_CA_BACKUP)) {
+    if (fs::exists(this->pki_handler->getCaCsmsPath() / CSMS_ROOT_CA_BACKUP)) {
         // if a fallback ca exists, we move back to it and delete the new ca certificate
         EVLOG_warning << "Connection with new CA was not successful - Falling back to old CA";
         this->pki_handler->useCsmsFallbackRoot();

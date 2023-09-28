@@ -6,10 +6,10 @@
 #include <chrono>
 #include <date/date.h>
 #include <date/tz.h>
-#include <filesystem>
 #include <future>
 #include <iostream>
 #include <mutex>
+#include <ocpp/common/support_older_cpp_versions.hpp>
 #include <set>
 
 #include <everest/timer.hpp>
@@ -317,10 +317,9 @@ public:
     /// \param certs_path this points to the directory where certificates used by libocpp are located, these are used
     /// for the "Improved security for OCPP 1.6-J" whitepaper (eg. Security Profile 3 TLS with Client Side Certificates)
     /// as well as for Plug & Charge.
-    explicit ChargePointImpl(const std::string& config, const std::filesystem::path& share_path,
-                             const std::filesystem::path& user_config_path, const std::filesystem::path& database_path,
-                             const std::filesystem::path& sql_init_path, const std::filesystem::path& message_log_path,
-                             const std::filesystem::path& certs_path);
+    explicit ChargePointImpl(const std::string& config, const fs::path& share_path, const fs::path& user_config_path,
+                             const fs::path& database_path, const fs::path& sql_init_path,
+                             const fs::path& message_log_path, const fs::path& certs_path);
 
     ~ChargePointImpl() {
     }

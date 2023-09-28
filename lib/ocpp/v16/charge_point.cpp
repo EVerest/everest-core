@@ -10,10 +10,9 @@
 namespace ocpp {
 namespace v16 {
 
-ChargePoint::ChargePoint(const std::string& config, const std::filesystem::path& share_path,
-                         const std::filesystem::path& user_config_path, const std::filesystem::path& database_path,
-                         const std::filesystem::path& sql_init_path, const std::filesystem::path& message_log_path,
-                         const std::filesystem::path& certs_path) {
+ChargePoint::ChargePoint(const std::string& config, const fs::path& share_path, const fs::path& user_config_path,
+                         const fs::path& database_path, const fs::path& sql_init_path, const fs::path& message_log_path,
+                         const fs::path& certs_path) {
     this->charge_point = std::make_unique<ChargePointImpl>(config, share_path, user_config_path, database_path,
                                                            sql_init_path, message_log_path, certs_path);
 }

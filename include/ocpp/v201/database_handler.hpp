@@ -5,16 +5,14 @@
 
 #include "sqlite3.h"
 #include <deque>
-#include <filesystem>
 #include <fstream>
 #include <memory>
+#include <ocpp/common/support_older_cpp_versions.hpp>
 
 #include <ocpp/common/database_handler_base.hpp>
 #include <ocpp/v201/ocpp_types.hpp>
 
 #include <everest/logging.hpp>
-
-namespace fs = std::filesystem;
 
 namespace ocpp {
 namespace v201 {

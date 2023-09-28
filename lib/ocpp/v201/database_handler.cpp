@@ -7,8 +7,6 @@
 #include <ocpp/v201/types.hpp>
 #include <ocpp/v201/utils.hpp>
 
-namespace fs = std::filesystem;
-
 namespace ocpp {
 namespace v201 {
 
