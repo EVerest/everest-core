@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.11)
 
 project(everest-log
-    VERSION 0.1
+    VERSION 0.2
     DESCRIPTION "EVerest logging library"
     LANGUAGES CXX C
 )
@@ -16,10 +16,16 @@ option(BUILD_TESTING "Run unit tests" OFF)
 option(BUILD_EXAMPLES "Build liblog example binaries." OFF)
 option(LOG_INSTALL "Install the library (shared data might be installed anyway)" ${EVC_MAIN_PROJECT})
 option(CMAKE_RUN_CLANG_TIDY "Run clang-tidy" OFF)
-
+option(LIBLOG_USE_BOOST_FILESYSTEM "Usage of boost/filesystem.hpp instead of std::filesystem" OFF)
 
 # library dependencies
-find_package(Boost COMPONENTS log_setup log filesystem REQUIRED)
+
+if (LIBLOG_USE_BOOST_FILESYSTEM) 
+    message(STATUS "Using boost/filesystem instead of std::filesystem")
+    find_package(Boost COMPONENTS log_setup log filesystem REQUIRED)
+else()
+    find_package(Boost COMPONENTS log_setup log REQUIRED)
+endif()
 
 
 # third party dependencies

@@ -17,9 +17,19 @@ target_link_libraries(log
     PUBLIC
         Boost::log
     PRIVATE
-        Boost::filesystem
         Boost::log_setup
 )
+
+if (LIBLOG_USE_BOOST_FILESYSTEM)
+    target_link_libraries(log
+        PRIVATE
+            Boost::filesystem
+    )
+    target_compile_definitions(log
+        PRIVATE
+            LIBLOG_USE_BOOST_FILESYSTEM
+    )
+endif()
 
 # FIXME (aw): in case FindBoost.cmake was used we need to add things
 #             this should be removed no support for Boost < 1.74 is needed
