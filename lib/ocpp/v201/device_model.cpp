@@ -192,9 +192,11 @@ DeviceModel::get_report_data(const std::optional<ReportBaseEnum>& report_base,
         if (!component_criteria.has_value() or component_criteria_match(component, component_criteria.value())) {
             for (auto const& [variable, variable_meta_data] : variable_map) {
                 // check if this variable should be reported based on the given component_variables
+                auto variable_ = variable;
+                auto component_ = component;
                 if (!component_variables.has_value() or
                     std::find_if(component_variables.value().begin(), component_variables.value().end(),
-                                 [&variable_ = variable, &component_ = component](ComponentVariable v) {
+                                 [variable_, component_](ComponentVariable v) {
                                      return component_ == v.component and v.variable.has_value() and
                                             variable_ == v.variable.value();
                                  }) != component_variables.value().end()) {

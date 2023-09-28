@@ -58,11 +58,12 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
     this->database_handler->insert_availability(0, std::nullopt, OperationalStatusEnum::Operative, false);
     // intantiate and initialize evses
     for (auto const& [evse_id, number_of_connectors] : evse_connector_structure) {
+        auto evse_id_ = evse_id;
         // operational status for this evse
         this->database_handler->insert_availability(evse_id, std::nullopt, OperationalStatusEnum::Operative, false);
         // used by evse to trigger StatusNotification.req
-        auto status_notification_callback = [this, &evse_id_ = evse_id](const int32_t connector_id,
-                                                                        const ConnectorStatusEnum& status) {
+        auto status_notification_callback = [this, evse_id_](const int32_t connector_id,
+                                                             const ConnectorStatusEnum& status) {
             if (this->registration_status == RegistrationStatusEnum::Accepted) {
                 this->status_notification_req(evse_id_, connector_id, status);
             }
