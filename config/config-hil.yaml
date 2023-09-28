@@ -82,13 +82,13 @@ active_modules:
         - module_id: token_validator
           implementation_id: main
   token_provider_1:
-    module: JsDummyTokenProvider
+    module: DummyTokenProvider
     connections:
       evse:
         - module_id: evse_manager
           implementation_id: evse
   token_validator:
-    module: JsDummyTokenValidator
+    module: DummyTokenValidator
     config_implementation:
       main:
         validation_result: Accepted

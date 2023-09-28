@@ -140,7 +140,7 @@ active_modules:
       evse:
         - implementation_id: evse
           module_id: connector_1
-    module: JsDummyTokenProvider
+    module: DummyTokenProvider
   token_validator:
     config_implementation:
       main:
@@ -148,7 +148,7 @@ active_modules:
         validation_reason: Token seems valid
         validation_result: Accepted
     connections: {}
-    module: JsDummyTokenValidator
+    module: DummyTokenValidator
   connector_1_powerpath:
     connections: {}
     module: JsYetiSimulator

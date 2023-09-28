@@ -118,7 +118,7 @@ active_modules:
         - module_id: system
           implementation_id: main
   token_provider_1:
-    module: JsDummyTokenProviderManual
+    module: DummyTokenProviderManual
   auth:
     module: Auth
     config_module:
