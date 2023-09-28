@@ -1,3 +1,5 @@
 *build
 *build-cross
+target
+watcher.lua
 workspace.yaml
