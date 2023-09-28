@@ -37,7 +37,8 @@ libocpp:
 # Josev
 Josev:
   git: https://github.com/EVerest/ext-switchev-iso15118.git
-  git_tag: 646ceca
+  git_tag: a65bed9
+  options: ["ISO15118_2_GENERATE_AND_INSTALL_CERTIFICATES ON"]
 # OpenV2G
 ext-openv2g:
   git: https://github.com/EVerest/ext-openv2g.git
