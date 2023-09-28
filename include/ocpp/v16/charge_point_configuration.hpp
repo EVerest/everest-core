@@ -101,6 +101,9 @@ public:
     int32_t getWebsocketPongTimeout();
     KeyValue getWebsocketPongTimeoutKeyValue();
 
+    std::optional<std::string> getHostName();
+    std::optional<KeyValue> getHostNameKeyValue();
+
     // Core Profile - optional
     std::optional<bool> getAllowOfflineTxForUnknownId();
     void setAllowOfflineTxForUnknownId(bool enabled);

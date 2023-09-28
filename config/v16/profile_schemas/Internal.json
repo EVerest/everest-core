@@ -57,6 +57,11 @@
             "minLength": 1,
             "maxLength": 20
         },
+        "HostName": {
+	     "type": "string",
+             "readOnly": true,
+             "minLength": 1
+        },
         "IMSI": {
             "type": "string",
             "readOnly": true,

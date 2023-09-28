@@ -218,7 +218,8 @@ WebsocketConnectionOptions ChargePointImpl::get_ws_connection_options() {
                                                   this->configuration->getWebsocketPingPayload(),
                                                   this->configuration->getWebsocketPongTimeout(),
                                                   this->configuration->getUseSslDefaultVerifyPaths(),
-                                                  this->configuration->getAdditionalRootCertificateCheck()};
+                                                  this->configuration->getAdditionalRootCertificateCheck(),
+												  this->configuration->getHostName()};
     return connection_options;
 }
 

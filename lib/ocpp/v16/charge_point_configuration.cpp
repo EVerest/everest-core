@@ -669,6 +669,14 @@ int32_t ChargePointConfiguration::getWebsocketPongTimeout() {
     return this->config["Internal"]["WebsocketPongTimeout"];
 }
 
+std::optional<std::string> ChargePointConfiguration::getHostName() {
+    std::optional<std::string> hostName_key = std::nullopt;
+    if (this->config["Internal"].contains("HostName")) {
+        hostName_key.emplace(this->config["Internal"]["HostName"]);
+    }
+    return hostName_key;
+}
+
 // Core Profile - optional
 std::optional<bool> ChargePointConfiguration::getAllowOfflineTxForUnknownId() {
     std::optional<bool> unknown_offline_auth = std::nullopt;
@@ -1361,6 +1369,20 @@ std::optional<KeyValue> ChargePointConfiguration::getWebsocketPingIntervalKeyVal
     }
     return websocket_ping_interval_kv;
 }
+
+std::optional<KeyValue> ChargePointConfiguration::getHostNameKeyValue() {
+	std::optional<KeyValue> host_name_kv = std::nullopt;
+	auto host_name = this->getHostName();
+	if (host_name != std::nullopt) {
+		KeyValue kv;
+		kv.key = "HostName";
+		kv.readonly = true;
+		kv.value.emplace(host_name.value());
+		host_name_kv.emplace(kv);
+	}
+	return host_name_kv;
+}
+
 
 // Core Profile end
 
@@ -2137,6 +2159,9 @@ std::optional<KeyValue> ChargePointConfiguration::get(CiString<50> key) {
     }
     if (key == "WaitForStopTransactionsOnResetTimeout") {
         return this->getWaitForStopTransactionsOnResetTimeoutKeyValue();
+    }
+    if (key == "HostName") {
+    	return this->getHostNameKeyValue();
     }
 
     // Core Profile

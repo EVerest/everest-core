@@ -126,6 +126,11 @@ void WebsocketPlain::connect_plain() {
         EVLOG_error << "Connection initialization error for plain websocket: " << ec.message();
     }
 
+    if (this->connection_options.hostName.has_value()){
+       EVLOG_info << "User-Host is set to " << this->connection_options.hostName.value();
+       con->append_header("User-Host", this->connection_options.hostName.value());
+    }
+
     if (this->connection_options.security_profile == 0) {
         EVLOG_debug << "Connecting with security profile: 0";
     } else if (this->connection_options.security_profile == 1) {
