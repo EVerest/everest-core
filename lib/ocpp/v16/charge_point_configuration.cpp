@@ -1371,18 +1371,17 @@ std::optional<KeyValue> ChargePointConfiguration::getWebsocketPingIntervalKeyVal
 }
 
 std::optional<KeyValue> ChargePointConfiguration::getHostNameKeyValue() {
-	std::optional<KeyValue> host_name_kv = std::nullopt;
-	auto host_name = this->getHostName();
-	if (host_name != std::nullopt) {
-		KeyValue kv;
-		kv.key = "HostName";
-		kv.readonly = true;
-		kv.value.emplace(host_name.value());
-		host_name_kv.emplace(kv);
-	}
-	return host_name_kv;
+    std::optional<KeyValue> host_name_kv = std::nullopt;
+    auto host_name = this->getHostName();
+    if (host_name != std::nullopt) {
+        KeyValue kv;
+        kv.key = "HostName";
+        kv.readonly = true;
+        kv.value.emplace(host_name.value());
+        host_name_kv.emplace(kv);
+    }
+    return host_name_kv;
 }
-
 
 // Core Profile end
 
@@ -2161,7 +2160,7 @@ std::optional<KeyValue> ChargePointConfiguration::get(CiString<50> key) {
         return this->getWaitForStopTransactionsOnResetTimeoutKeyValue();
     }
     if (key == "HostName") {
-    	return this->getHostNameKeyValue();
+        return this->getHostNameKeyValue();
     }
 
     // Core Profile

@@ -223,6 +223,11 @@ void WebsocketTLS::connect_tls() {
         EVLOG_error << "Connection initialization error for TLS websocket: " << ec.message();
     }
 
+    if (this->connection_options.hostName.has_value()) {
+        EVLOG_info << "User-Host is set to " << this->connection_options.hostName.value();
+        con->append_header("User-Host", this->connection_options.hostName.value());
+    }
+
     if (this->connection_options.security_profile == 2) {
         EVLOG_debug << "Connecting with security profile: 2";
         std::optional<std::string> authorization_header = this->getAuthorizationHeader();
