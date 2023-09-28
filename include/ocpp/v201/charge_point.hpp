@@ -9,6 +9,7 @@
 #include <ocpp/v201/ctrlr_component_variables.hpp>
 #include <ocpp/v201/database_handler.hpp>
 #include <ocpp/v201/device_model.hpp>
+#include <ocpp/v201/device_model_storage.hpp>
 #include <ocpp/v201/enums.hpp>
 #include <ocpp/v201/evse.hpp>
 #include <ocpp/v201/ocpp_types.hpp>
@@ -315,6 +316,20 @@ public:
     /// \param callbacks Callbacks that will be registered for ChargePoint
     ChargePoint(const std::map<int32_t, int32_t>& evse_connector_structure,
                 const std::string& device_model_storage_address, const std::string& ocpp_main_path,
+                const std::string& core_database_path, const std::string& sql_init_path,
+                const std::string& message_log_path, const std::string& certs_path, const Callbacks& callbacks);
+
+    /// \brief Construct a new ChargePoint object
+    /// \param evse_connector_structure Map that defines the structure of EVSE and connectors of the chargepoint. The
+    /// key represents the id of the EVSE and the value represents the number of connectors for this EVSE. The ids of
+    /// the EVSEs have to increment starting with 1.
+    /// \param device_model_storage device model storage instance
+    /// \param ocpp_main_path Path where utility files for OCPP are read and written to
+    /// \param core_database_path Path to directory where core database is located
+    /// \param message_log_path Path to where logfiles are written to
+    /// \param callbacks Callbacks that will be registered for ChargePoint
+    ChargePoint(const std::map<int32_t, int32_t>& evse_connector_structure,
+                std::unique_ptr<DeviceModelStorage> device_model_storage, const std::string& ocpp_main_path,
                 const std::string& core_database_path, const std::string& sql_init_path,
                 const std::string& message_log_path, const std::string& certs_path, const Callbacks& callbacks);
 

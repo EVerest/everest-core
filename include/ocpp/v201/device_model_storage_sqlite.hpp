@@ -4,8 +4,11 @@
 #ifndef DEVICE_MODEL_STORAGE_SQLITE_HPP
 #define DEVICE_MODEL_STORAGE_SQLITE_HPP
 
-#include <ocpp/v201/device_model_storage.hpp>
+#include <filesystem>
 #include <sqlite3.h>
+
+#include <everest/logging.hpp>
+#include <ocpp/v201/device_model_storage.hpp>
 
 namespace ocpp {
 namespace v201 {

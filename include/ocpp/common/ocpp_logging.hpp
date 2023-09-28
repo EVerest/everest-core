@@ -6,6 +6,7 @@
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <mutex>
 #include <thread>
 

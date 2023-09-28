@@ -80,8 +80,8 @@ private:
 
 public:
     /// \brief Constructor for the device model
-    /// \param storage_address address fo device model storage
-    explicit DeviceModel(const std::string& storage_address);
+    /// \param device_model_storage pointer to a device model storage class
+    explicit DeviceModel(std::unique_ptr<DeviceModelStorage> device_model_storage);
 
     /// \brief Direct access to value of a VariableAttribute for the given component, variable and attribute_enum. This
     /// should only be called for variables that have a role standardized in the OCPP2.0.1 specification.

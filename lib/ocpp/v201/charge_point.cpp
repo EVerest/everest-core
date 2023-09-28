@@ -2,6 +2,7 @@
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
 #include <ocpp/v201/charge_point.hpp>
+#include <ocpp/v201/device_model_storage_sqlite.hpp>
 #include <ocpp/v201/messages/FirmwareStatusNotification.hpp>
 #include <ocpp/v201/messages/LogStatusNotification.hpp>
 
@@ -29,6 +30,15 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
                          const std::string& core_database_path, const std::string& sql_init_path,
                          const std::string& message_log_path, const std::string& certs_path,
                          const Callbacks& callbacks) :
+    ChargePoint(evse_connector_structure, std::make_unique<DeviceModelStorageSqlite>(device_model_storage_address),
+                ocpp_main_path, core_database_path, sql_init_path, message_log_path, certs_path, callbacks) {
+}
+
+ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_structure,
+                         std::unique_ptr<DeviceModelStorage> device_model_storage, const std::string& ocpp_main_path,
+                         const std::string& core_database_path, const std::string& sql_init_path,
+                         const std::string& message_log_path, const std::string& certs_path,
+                         const Callbacks& callbacks) :
     ocpp::ChargingStationBase(),
     registration_status(RegistrationStatusEnum::Rejected),
     websocket_connection_status(WebsocketConnectionStatusEnum::Disconnected),
@@ -46,7 +56,7 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
         EVLOG_AND_THROW(std::invalid_argument("All non-optional callbacks must be supplied"));
     }
 
-    this->device_model = std::make_unique<DeviceModel>(device_model_storage_address);
+    this->device_model = std::make_unique<DeviceModel>(std::move(device_model_storage));
     this->pki_handler = std::make_shared<ocpp::PkiHandler>(
         certs_path,
         this->device_model->get_optional_value<bool>(ControllerComponentVariables::AdditionalRootCertificateCheck)
