@@ -50,6 +50,7 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
     reset_scheduled_evseids{},
     firmware_status(FirmwareStatusEnum::Idle),
     upload_log_status(UploadLogStatusEnum::Idle),
+    bootreason(BootReasonEnum::PowerUp),
     callbacks(callbacks) {
     // Make sure the received callback struct is completely filled early before we actually start running
     if (!this->callbacks.all_callbacks_valid()) {
@@ -108,6 +109,7 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
 }
 
 void ChargePoint::start(BootReasonEnum bootreason) {
+    this->bootreason = bootreason;
     this->start_websocket();
     this->boot_notification_req(bootreason);
     // FIXME(piet): Run state machine with correct initial state
@@ -151,12 +153,26 @@ void ChargePoint::on_firmware_update_status_notification(int32_t request_id,
     this->firmware_status = req.status;
 
     if (request_id != -1) {
-        req.requestId = request_id;
+        req.requestId = request_id; // L01.FR.20
         this->firmware_status_id = request_id;
     }
 
     ocpp::Call<FirmwareStatusNotificationRequest> call(req, this->message_queue->createMessageId());
     this->send_async<FirmwareStatusNotificationRequest>(call);
+
+    if (req.status == FirmwareStatusEnum::Installed) {
+        std::string firmwareVersionMessage = "New firmware succesfully installed! Version: ";
+        firmwareVersionMessage.append(
+            this->device_model->get_value<std::string>(ControllerComponentVariables::FirmwareVersion));
+        this->security_event_notification_req(CiString<50>(ocpp::security_events::FIRMWARE_UPDATED),
+                                              std::optional<CiString<255>>(firmwareVersionMessage), true,
+                                              true); // L01.FR.31
+    } else if (req.status == FirmwareStatusEnum::InvalidSignature) {
+        this->security_event_notification_req(
+            CiString<50>(ocpp::security_events::INVALIDFIRMWARESIGNATURE),
+            std::optional<CiString<255>>("Signature of the provided firmware is not valid!"), true,
+            false); // L01.FR.03
+    }
 }
 
 void ChargePoint::on_session_started(const int32_t evse_id, const int32_t connector_id) {
@@ -446,6 +462,10 @@ void ChargePoint::on_log_status_notification(UploadLogStatusEnum status, int32_t
 
     ocpp::Call<LogStatusNotificationRequest> call(request, this->message_queue->createMessageId());
     this->send<LogStatusNotificationRequest>(call);
+}
+
+void ChargePoint::on_security_event(const CiString<50>& event_type, const std::optional<CiString<255>>& tech_info) {
+    this->security_event_notification_req(event_type, tech_info, false, false);
 }
 
 template <class T> bool ChargePoint::send(ocpp::Call<T> call) {
@@ -1140,6 +1160,25 @@ bool ChargePoint::is_offline() {
     return offline;
 }
 
+void ChargePoint::security_event_notification_req(const CiString<50>& event_type,
+                                                  const std::optional<CiString<255>>& tech_info,
+                                                  const bool triggered_internally, const bool critical) {
+    if (critical) {
+        EVLOG_debug << "Sending SecurityEventNotification";
+        SecurityEventNotificationRequest req;
+
+        req.type = event_type;
+        req.timestamp = DateTime().to_rfc3339();
+        req.techInfo = tech_info;
+
+        ocpp::Call<SecurityEventNotificationRequest> call(req, this->message_queue->createMessageId());
+        this->send<SecurityEventNotificationRequest>(call);
+    }
+    if (triggered_internally and this->callbacks.security_event_callback != nullptr) {
+        this->callbacks.security_event_callback(event_type, tech_info);
+    }
+}
+
 void ChargePoint::boot_notification_req(const BootReasonEnum& reason) {
     EVLOG_debug << "Sending BootNotification";
     BootNotificationRequest req;
@@ -1344,6 +1383,22 @@ void ChargePoint::handle_boot_notification_response(CallResult<BootNotificationR
         }
         for (auto const& [evse_id, evse] : this->evses) {
             evse->trigger_status_notification_callbacks();
+        }
+
+        if (this->bootreason == BootReasonEnum::RemoteReset) {
+            this->security_event_notification_req(
+                CiString<50>(ocpp::security_events::RESET_OR_REBOOT),
+                std::optional<CiString<255>>("Charging Station rebooted due to requested remote reset!"), true, true);
+        } else if (this->bootreason == BootReasonEnum::ScheduledReset) {
+            this->security_event_notification_req(
+                CiString<50>(ocpp::security_events::RESET_OR_REBOOT),
+                std::optional<CiString<255>>("Charging Station rebooted due to a scheduled reset!"), true, true);
+        } else {
+            std::string startup_message = "Charging Station powered up! Firmware version: ";
+            startup_message.append(
+                this->device_model->get_value<std::string>(ControllerComponentVariables::FirmwareVersion));
+            this->security_event_notification_req(CiString<50>(ocpp::security_events::STARTUP_OF_THE_DEVICE),
+                                                  std::optional<CiString<255>>(startup_message), true, true);
         }
     } else {
         auto retry_interval = DEFAULT_BOOT_NOTIFICATION_RETRY_INTERVAL;
@@ -1875,16 +1930,13 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
     case MessageTriggerEnum::FirmwareStatusNotification: {
         FirmwareStatusNotificationRequest request;
         switch (this->firmware_status) {
-        case FirmwareStatusEnum::DownloadFailed:
         case FirmwareStatusEnum::Idle:
-        case FirmwareStatusEnum::InstallationFailed:
-        case FirmwareStatusEnum::Installed:
-        case FirmwareStatusEnum::InstallVerificationFailed:
-        case FirmwareStatusEnum::InvalidSignature:
+        case FirmwareStatusEnum::Installed: // L01.FR.25
             request.status = FirmwareStatusEnum::Idle;
+            // do not set requestId when idle: L01.FR.20
             break;
 
-        default: // So not idle
+        default: // So not Idle or Installed                   // L01.FR.26
             request.status = this->firmware_status;
             request.requestId = this->firmware_status_id;
             break;
@@ -2039,6 +2091,14 @@ void ChargePoint::handle_firmware_update_req(Call<UpdateFirmwareRequest> call) {
 
     ocpp::CallResult<UpdateFirmwareResponse> call_result(response, call.uniqueId);
     this->send<UpdateFirmwareResponse>(call_result);
+
+    if ((response.status == UpdateFirmwareStatusEnum::InvalidCertificate) ||
+        (response.status == UpdateFirmwareStatusEnum::RevokedCertificate)) {
+        // L01.FR.02
+        this->security_event_notification_req(
+            CiString<50>(ocpp::security_events::INVALIDFIRMWARESIGNINGCERTIFICATE),
+            std::optional<CiString<255>>("Provided signing certificate is not valid!"), true, false);
+    }
 }
 
 void ChargePoint::handle_data_transfer_req(Call<DataTransferRequest> call) {

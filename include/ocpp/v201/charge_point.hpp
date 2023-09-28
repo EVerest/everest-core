@@ -33,6 +33,7 @@
 #include <ocpp/v201/messages/RequestStartTransaction.hpp>
 #include <ocpp/v201/messages/RequestStopTransaction.hpp>
 #include <ocpp/v201/messages/Reset.hpp>
+#include <ocpp/v201/messages/SecurityEventNotification.hpp>
 #include <ocpp/v201/messages/SendLocalList.hpp>
 #include <ocpp/v201/messages/SetNetworkProfile.hpp>
 #include <ocpp/v201/messages/SetVariables.hpp>
@@ -96,6 +97,13 @@ struct Callbacks {
     std::optional<std::function<bool(const NetworkConnectionProfile& network_connection_profile)>>
         configure_network_connection_profile_callback;
     std::optional<std::function<void(const ocpp::DateTime& currentTime)>> time_sync_callback;
+    ///
+    /// \brief callback function that can be used to react to a security event callback. This callback is
+    /// called only if the SecurityEvent occured internally within libocpp
+    /// Typically this callback is used to log security events in the security log
+    ///
+    std::function<void(const CiString<50>& event_type, const std::optional<CiString<255>>& tech_info)>
+        security_event_callback;
 };
 
 /// \brief Class implements OCPP2.0.1 Charging Station
@@ -135,6 +143,7 @@ private:
     int32_t firmware_status_id;
     UploadLogStatusEnum upload_log_status;
     int32_t upload_log_status_id;
+    BootReasonEnum bootreason;
     int network_configuration_priority;
     bool disable_automatic_websocket_reconnects;
 
@@ -254,6 +263,10 @@ private:
     /// @return true if the charge point is offline. std::nullopt if it is online;
     bool is_offline();
     /* OCPP message requests */
+
+    // Functional Block A: Security
+    void security_event_notification_req(const CiString<50>& event_type, const std::optional<CiString<255>>& tech_info,
+                                         const bool triggered_internally, const bool critical);
 
     // Functional Block B: Provisioning
     void boot_notification_req(const BootReasonEnum& reason);
@@ -471,6 +484,13 @@ public:
     /// \param requestId    Request id that was provided in GetLogRequest.
     ///
     void on_log_status_notification(UploadLogStatusEnum status, int32_t requestId);
+
+    // \brief Notifies chargepoint that a SecurityEvent has occured. This will send a SecurityEventNotification.req to
+    // the
+    /// CSMS
+    /// \param type type of the security event
+    /// \param tech_info additional info of the security event
+    void on_security_event(const CiString<50>& event_type, const std::optional<CiString<255>>& tech_info);
 
     /// \brief Data transfer mechanism initiated by charger
     /// \param vendorId

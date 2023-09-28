@@ -558,6 +558,34 @@ firmware_status_notification_to_firmware_status_enum_type(const FirmwareStatusNo
 
 } // namespace conversions
 
+namespace security_events {
+
+// This is the list of security events defined in OCPP 2.0.1 (and the 1.6 security whitepper).
+// Security events that are marked critical should be pushed to the CSMS.
+// This is a non-exhaustive list of security events, when a security event matches the description in the OCPP
+// specification of one of the Security Events in this list, for interoperability reasons, the Security Event from this
+// list shall be used, instead of adding a new (proprietary) Security Event.
+
+inline const std::string FIRMWARE_UPDATED = "FirmwareUpdated"; // CRITICAL
+inline const std::string FAILEDTOAUTHENTICATEATCSMS = "FailedToAuthenticateAtCsms";
+inline const std::string CSMSFAILEDTOAUTHENTICATE = "CsmsFailedToAuthenticate";
+inline const std::string SETTINGSYSTEMTIME = "SettingSystemTime";         // CRITICAL
+inline const std::string RESET_OR_REBOOT = "ResetOrReboot";               // CRITICAL
+inline const std::string STARTUP_OF_THE_DEVICE = "StartupOfTheDevice";    // CRITICAL
+inline const std::string SECURITYLOGWASCLEARED = "SecurityLogWasCleared"; // CRITICAL
+inline const std::string RECONFIGURATIONOFSECURITYPARAMETERS = "ReconfigurationOfSecurityParameters";
+inline const std::string MEMORYEXHAUSTION = "MemoryExhaustion";           // CRITICAL
+inline const std::string INVALIDMESSAGES = "InvalidMessages";
+inline const std::string ATTEMPTEDREPLAYATTACKS = "AttemptedReplayAttacks";
+inline const std::string TAMPERDETECTIONACTIVATED = "TamperDetectionActivated"; // CRITICAL
+inline const std::string INVALIDFIRMWARESIGNATURE = "InvalidFirmwareSignature";
+inline const std::string INVALIDFIRMWARESIGNINGCERTIFICATE = "InvalidFirmwareSigningCertificate";
+inline const std::string INVALIDCSMSCERTIFICATE = "InvalidCsmsCertificate";
+inline const std::string INVALIDCHARGINGSTATIONCERTIFICATE = "InvalidChargingStationCertificate";
+inline const std::string INVALIDTLSVERSION = "InvalidTLSVersion";
+inline const std::string INVALIDTLSCIPHERSUITE = "InvalidTLSCipherSuite";
+} // namespace security_events
+
 } // namespace ocpp
 
 #endif

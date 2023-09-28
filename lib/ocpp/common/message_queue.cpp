@@ -39,7 +39,8 @@ bool MessageQueue<v201::MessageType>::isTransactionMessage(
     if (message == nullptr) {
         return false;
     }
-    if (message->messageType == v201::MessageType::TransactionEvent) {
+    if (message->messageType == v201::MessageType::TransactionEvent ||
+        message->messageType == v201::MessageType::SecurityEventNotification) { // A04.FR.02
         return true;
     }
     return false;
