@@ -8,10 +8,10 @@ target_sources(ocpp
         ocpp/common/database_handler_base.cpp
         ocpp/common/message_queue.cpp
         ocpp/common/ocpp_logging.cpp
-        ocpp/common/pki_handler.cpp
         ocpp/common/schemas.cpp
         ocpp/common/types.cpp
         ocpp/common/utils.cpp
+        ocpp/common/evse_security_impl.cpp
         ocpp/v16/charge_point.cpp
         ocpp/v16/database_handler.cpp
         ocpp/v16/charge_point_impl.cpp
@@ -81,6 +81,7 @@ target_link_libraries(ocpp
         everest::timer
         websocketpp::websocketpp
         nlohmann_json_schema_validator
+        everest::evse_security
     PRIVATE
         OpenSSL::SSL
         OpenSSL::Crypto

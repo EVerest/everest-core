@@ -3,8 +3,8 @@
 #ifndef OCPP_WEBSOCKET_HPP
 #define OCPP_WEBSOCKET_HPP
 
+#include <ocpp/common/evse_security.hpp>
 #include <ocpp/common/ocpp_logging.hpp>
-#include <ocpp/common/pki_handler.hpp>
 #include <ocpp/common/websocket/websocket_plain.hpp>
 #include <ocpp/common/websocket/websocket_tls.hpp>
 
@@ -23,8 +23,8 @@ private:
 
 public:
     /// \brief Creates a new Websocket object with the provided \p connection_options
-    explicit Websocket(const WebsocketConnectionOptions& connection_options, std::shared_ptr<PkiHandler> pki_handler,
-                       std::shared_ptr<MessageLogging> logging);
+    explicit Websocket(const WebsocketConnectionOptions& connection_options,
+                       std::shared_ptr<EvseSecurity> evse_security, std::shared_ptr<MessageLogging> logging);
     ~Websocket();
 
     /// \brief connect to a websocket (TLS or non-TLS depending on the central system uri in the configuration).

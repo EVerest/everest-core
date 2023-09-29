@@ -23,7 +23,7 @@ using websocketpp::lib::placeholders::_2;
 class WebsocketTLS final : public WebsocketBase {
 private:
     tls_client wss_client;
-    std::shared_ptr<PkiHandler> pki_handler;
+    std::shared_ptr<EvseSecurity> evse_security;
     websocketpp::lib::shared_ptr<websocketpp::lib::thread> websocket_thread;
 
     /// \brief Extracts the hostname from the provided \p uri
@@ -53,7 +53,7 @@ private:
 public:
     /// \brief Creates a new Websocket object with the providede \p connection_options
     explicit WebsocketTLS(const WebsocketConnectionOptions& connection_options,
-                          std::shared_ptr<PkiHandler> pki_handler);
+                          std::shared_ptr<EvseSecurity> evse_security);
 
     ~WebsocketTLS() {
         this->websocket_thread->join();

@@ -101,7 +101,7 @@ int main(int argc, char* argv[]) {
     }
 
     charge_point = new ocpp::v16::ChargePoint(json_config.dump(), share_path, user_config_path, database_path,
-                                              sql_init_path, fs::path("/tmp"), fs::path("/tmp"));
+                                              sql_init_path, fs::path("/tmp"), nullptr);
 
     /************************************** START REGISTERING CALLBACKS **************************************/
 

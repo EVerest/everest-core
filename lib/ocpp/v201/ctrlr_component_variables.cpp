@@ -898,6 +898,20 @@ const ComponentVariable& CertificateEntries = {
         "CertificateEntries",
     }),
 };
+const ComponentVariable& CertSigningRepeatTimes = {
+    ControllerComponents::SecurityCtrlr,
+    std::nullopt,
+    std::optional<Variable>({
+        "CertSigningRepeatTimes",
+    }),
+};
+const ComponentVariable& CertSigningWaitMinimum = {
+    ControllerComponents::SecurityCtrlr,
+    std::nullopt,
+    std::optional<Variable>({
+        "CertSigningWaitMinimum",
+    }),
+};
 const ComponentVariable& SecurityCtrlrIdentity = {
     ControllerComponents::SecurityCtrlr,
     std::nullopt,

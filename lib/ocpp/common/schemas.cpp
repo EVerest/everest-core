@@ -31,7 +31,7 @@ void Schemas::load_root_schema() {
     this->schema = json::parse(schema_file);
 
     const auto custom_schema_path = schemas_path / "Custom.json";
-    if (std::filesystem::exists(custom_schema_path)) {
+    if (fs::exists(custom_schema_path)) {
         json custom_object = {{"type", "object"}, {"$ref", "Custom.json"}};
         this->schema["properties"]["Custom"] = custom_object;
     }

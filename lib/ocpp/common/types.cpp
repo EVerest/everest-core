@@ -569,132 +569,68 @@ std::ostream& operator<<(std::ostream& os, const Measurement& k) {
 }
 
 namespace conversions {
-std::string certificate_type_to_string(CertificateType e) {
+std::string ca_certificate_type_to_string(CaCertificateType e) {
     switch (e) {
-    case CertificateType::CentralSystemRootCertificate:
-        return "CSMSRootCertificate";
-    case CertificateType::ClientCertificate:
-        return "ClientCertificate";
-    case CertificateType::ManufacturerRootCertificate:
-        return "ManufacturerRootCertificate";
-    case CertificateType::MORootCertificate:
-        return "MORootCertificate";
-    case CertificateType::V2GCertificateChain:
-        return "V2GCertificateChain";
-    case CertificateType::V2GRootCertificate:
-        return "V2GRootCertificate";
-    case CertificateType::CSMSRootCertificate:
-        return "CSMSRootCertificate";
+    case CaCertificateType::V2G:
+        return "V2G";
+    case CaCertificateType::MO:
+        return "MO";
+    case CaCertificateType::CSMS:
+        return "CSMS";
+    case CaCertificateType::MF:
+        return "MF";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type UpdateFirmwareStatusEnumType");
+    throw std::out_of_range("No known string conversion for provided enum of type CaCertificateType");
 }
 
-CertificateType string_to_certificate_type(const std::string& s) {
-    if (s == "CentralSystemRootCertificate") {
-        return CertificateType::CentralSystemRootCertificate;
-    }
-    if (s == "ClientCertificate") {
-        return CertificateType::ClientCertificate;
-    }
-    if (s == "ManufacturerRootCertificate") {
-        return CertificateType::ManufacturerRootCertificate;
-    }
-    if (s == "MORootCertificate") {
-        return CertificateType::MORootCertificate;
-    }
-    if (s == "V2GCertificateChain") {
-        return CertificateType::V2GCertificateChain;
-    }
-    if (s == "V2GRootCertificate") {
-        return CertificateType::V2GRootCertificate;
-    }
-    if (s == "CSMSRootCertificate") {
-        return CertificateType::CSMSRootCertificate;
+CaCertificateType string_to_ca_certificate_type(const std::string& s) {
+    if (s == "V2G") {
+        return CaCertificateType::V2G;
+    } else if (s == "MO") {
+        return CaCertificateType::MO;
+    } else if (s == "CSMS") {
+        return CaCertificateType::CSMS;
+    } else if (s == "MF") {
+        return CaCertificateType::MF;
     }
     throw std::out_of_range("Provided string " + s + " could not be converted to enum of type CertificateType");
 }
 } // namespace conversions
 
-std::ostream& operator<<(std::ostream& os, const CertificateType& certificate_type) {
-    os << conversions::certificate_type_to_string(certificate_type);
+std::ostream& operator<<(std::ostream& os, const CaCertificateType& ca_certificate_type) {
+    os << conversions::ca_certificate_type_to_string(ca_certificate_type);
     return os;
 }
-
-namespace conversions {
-std::string certificate_verification_result_to_string(CertificateVerificationResult e) {
-    switch (e) {
-    case CertificateVerificationResult::Expired:
-        return "Expired";
-    case CertificateVerificationResult::InvalidCertificateChain:
-        return "InvalidCertificateChain";
-    case CertificateVerificationResult::InvalidCommonName:
-        return "InvalidCommonName";
-    case CertificateVerificationResult::InvalidSignature:
-        return "InvalidSignature";
-    case CertificateVerificationResult::NoRootCertificateInstalled:
-        return "NoRootCertificateInstalled";
-    case CertificateVerificationResult::Valid:
-        return "Valid";
-    }
-
-    throw std::out_of_range("No known string conversion for provided enum of type UpdateFirmwareStatusEnumType");
-}
-
-CertificateVerificationResult string_to_certificate_verification_result(const std::string& s) {
-    if (s == "Expired") {
-        return CertificateVerificationResult::Expired;
-    }
-    if (s == "InvalidCertificateChain") {
-        return CertificateVerificationResult::InvalidCertificateChain;
-    }
-    if (s == "InvalidCommonName") {
-        return CertificateVerificationResult::InvalidCommonName;
-    }
-    if (s == "InvalidSignature") {
-        return CertificateVerificationResult::InvalidSignature;
-    }
-    if (s == "NoRootCertificateInstalled") {
-        return CertificateVerificationResult::NoRootCertificateInstalled;
-    }
-    if (s == "Valid") {
-        return CertificateVerificationResult::Valid;
-    }
-    throw std::out_of_range("Provided string " + s +
-                            " could not be converted to enum of type CertificateVerificationResult");
-}
-} // namespace conversions
-
-std::ostream& operator<<(std::ostream& os, const CertificateVerificationResult& certificate_verification_result) {
-    os << conversions::certificate_verification_result_to_string(certificate_verification_result);
-    return os;
-}
-
 namespace conversions {
 std::string install_certificate_result_to_string(InstallCertificateResult e) {
     switch (e) {
-    case InstallCertificateResult::CertificateStoreMaxLengthExceeded:
-        return "CertificateStoreMaxLengthExceeded";
-    case InstallCertificateResult::InvalidCertificateChain:
-        return "InvalidCertificateChain";
     case InstallCertificateResult::InvalidSignature:
         return "InvalidSignature";
+    case InstallCertificateResult::InvalidCertificateChain:
+        return "InvalidCertificateChain";
     case InstallCertificateResult::InvalidFormat:
         return "InvalidFormat";
-    case InstallCertificateResult::Ok:
-        return "Ok";
-    case InstallCertificateResult::Valid:
-        return "Valid";
+    case InstallCertificateResult::InvalidCommonName:
+        return "InvalidCommonName";
+    case InstallCertificateResult::NoRootCertificateInstalled:
+        return "NoRootCertificateInstalled";
+    case InstallCertificateResult::Expired:
+        return "Expired";
+    case InstallCertificateResult::CertificateStoreMaxLengthExceeded:
+        return "CertificateStoreMaxLengthExceeded";
     case InstallCertificateResult::WriteError:
         return "WriteError";
+    case InstallCertificateResult::Accepted:
+        return "Accepted";
     }
 
     throw std::out_of_range("No known string conversion for provided enum of type UpdateFirmwareStatusEnumType");
 }
 
 InstallCertificateResult string_to_install_certificate_result(const std::string& s) {
-    if (s == "CertificateStoreMaxLengthExceeded") {
-        return InstallCertificateResult::CertificateStoreMaxLengthExceeded;
+    if (s == "InvalidSignature") {
+        return InstallCertificateResult::InvalidSignature;
     }
     if (s == "InvalidCertificateChain") {
         return InstallCertificateResult::InvalidCertificateChain;
@@ -702,17 +638,23 @@ InstallCertificateResult string_to_install_certificate_result(const std::string&
     if (s == "InvalidFormat") {
         return InstallCertificateResult::InvalidFormat;
     }
-    if (s == "InvalidSignature") {
-        return InstallCertificateResult::InvalidSignature;
+    if (s == "InvalidCommonName") {
+        return InstallCertificateResult::InvalidCommonName;
     }
-    if (s == "Ok") {
-        return InstallCertificateResult::Ok;
+    if (s == "NoRootCertificateInstalled") {
+        return InstallCertificateResult::NoRootCertificateInstalled;
     }
-    if (s == "Valid") {
-        return InstallCertificateResult::Valid;
+    if (s == "Expired") {
+        return InstallCertificateResult::Expired;
+    }
+    if (s == "CertificateStoreMaxLengthExceeded") {
+        return InstallCertificateResult::CertificateStoreMaxLengthExceeded;
     }
     if (s == "WriteError") {
         return InstallCertificateResult::WriteError;
+    }
+    if (s == "Accepted") {
+        return InstallCertificateResult::Accepted;
     }
     throw std::out_of_range("Provided string " + s +
                             " could not be converted to enum of type InstallCertificateResult");
@@ -898,6 +840,8 @@ std::string certificate_signing_use_enum_to_string(CertificateSigningUseEnum e) 
         return "ChargingStationCertificate";
     case CertificateSigningUseEnum::V2GCertificate:
         return "V2GCertificate";
+    case CertificateSigningUseEnum::ManufacturerCertificate:
+        return "ManufacturerCertificate";
     }
 
     throw std::out_of_range("No known string conversion for provided enum of type CertificateSigningUseEnum");
@@ -910,6 +854,9 @@ CertificateSigningUseEnum string_to_certificate_signing_use_enum(const std::stri
     if (s == "V2GCertificate") {
         return CertificateSigningUseEnum::V2GCertificate;
     }
+    if (s == "ManufacturerCertificate") {
+        return CertificateSigningUseEnum::ManufacturerCertificate;
+    }
 
     throw std::out_of_range("Provided string " + s +
                             " could not be converted to enum of type CertificateSigningUseEnum");
@@ -918,6 +865,50 @@ CertificateSigningUseEnum string_to_certificate_signing_use_enum(const std::stri
 
 std::ostream& operator<<(std::ostream& os, const CertificateSigningUseEnum& certificate_signing_use_enum) {
     os << conversions::certificate_signing_use_enum_to_string(certificate_signing_use_enum);
+    return os;
+}
+
+namespace conversions {
+std::string certificate_type_to_string(CertificateType e) {
+    switch (e) {
+    case CertificateType::V2GRootCertificate:
+        return "V2GRootCertificate";
+    case CertificateType::MORootCertificate:
+        return "MORootCertificate";
+    case CertificateType::CSMSRootCertificate:
+        return "CSMSRootCertificate";
+    case CertificateType::V2GCertificateChain:
+        return "V2GCertificateChain";
+    case CertificateType::MFRootCertificate:
+        return "MFRootCertificate";
+    }
+
+    throw std::out_of_range("No known string conversion for provided enum of type CertificateType");
+}
+
+CertificateType string_to_certificate_type(const std::string& s) {
+    if (s == "V2GRootCertificate") {
+        return CertificateType::V2GRootCertificate;
+    }
+    if (s == "MORootCertificate") {
+        return CertificateType::MORootCertificate;
+    }
+    if (s == "CSMSRootCertificate") {
+        return CertificateType::CSMSRootCertificate;
+    }
+    if (s == "V2GCertificateChain") {
+        return CertificateType::V2GCertificateChain;
+    }
+    if (s == "MFRootCertificate") {
+        return CertificateType::MFRootCertificate;
+    }
+
+    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type CertificateType");
+}
+} // namespace conversions
+
+std::ostream& operator<<(std::ostream& os, const CertificateType& certificate_type) {
+    os << conversions::certificate_type_to_string(certificate_type);
     return os;
 }
 

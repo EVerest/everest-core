@@ -40,6 +40,7 @@ else()
     find_package(fsm REQUIRED)
     find_package(everest-timer REQUIRED)
     find_package(everest-log REQUIRED)
+    find_package(everest-evse_security REQUIRED)
 endif()
 
 # library code
