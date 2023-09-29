@@ -95,6 +95,8 @@ cd ~/checkout/everest-workspace/Josev
 python3 -m pip install -r requirements.txt
 ```
 
+For ISO15118 communication including Plug&Charge you need to install the required CA certificates inside [config/certs/ca](config/certs/ca) and client certificates, private keys and password files inside [config/certs/client](config/certs/client/). For an more seamless development experience, these are automatically generated for you, but you can set the ISO15118_2_GENERATE_AND_INSTALL_CERTIFICATES cmake option to OFF to disable this auto-generation for production use.
+
 Now we can build EVerest!
 
 ```bash
