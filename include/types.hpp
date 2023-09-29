@@ -33,7 +33,7 @@ enum class CertificateType {
     V2GRootCertificate,
     MORootCertificate,
     CSMSRootCertificate,
-    V2GCertificateChain,
+    V2GCertificateChain, // is the certificate chain a certificate type?
     MFRootCertificate,
 };
 
@@ -43,6 +43,7 @@ enum class HashAlgorithm {
     SHA512,
 };
 
+// the following 3 enum classes should go into evse_security
 enum class InstallCertificateResult {
     InvalidSignature,
     InvalidCertificateChain,
@@ -61,9 +62,18 @@ enum class DeleteCertificateResult {
     NotFound,
 };
 
+// why Status here and not Result as before?
 enum class GetInstalledCertificatesStatus {
     Accepted,
     NotFound,
+};
+
+enum class GetKeyPairStatus {
+    Accepted,
+    Rejected,
+    NotFound,
+    NotFoundValid,
+    PrivateKeyNotFound,
 };
 
 // types of evse_security
@@ -76,12 +86,18 @@ struct CertificateHashData {
                                   ///< the  subject public key field
     std::string serial_number; ///< The string representation of the hexadecimal value of the serial number without the
                                ///< prefix "0x" and without leading zeroes.
+
+    bool operator==(const CertificateHashData &Other) {
+        return hash_algorithm == Other.hash_algorithm 
+            && issuer_name_hash == Other.issuer_name_hash 
+            && issuer_key_hash == Other.issuer_key_hash 
+            && serial_number == Other.serial_number;
+    }
 };
 struct CertificateHashDataChain {
     CertificateType certificate_type; ///< Indicates the type of the certificate for which the hash data is provided
-    CertificateHashData certificate_hash_data; ///< Contains the hash data of the certificate
-    std::optional<std::vector<CertificateHashData>>
-        child_certificate_hash_data; ///< Contains the hash data of the child's certificates
+    CertificateHashData certificate_hash_data; ///< Contains the hash data of the certificate    
+    std::vector<CertificateHashData> child_certificate_hash_data; ///< Contains the hash data of the child's certificates
 };
 struct GetInstalledCertificatesResult {
     GetInstalledCertificatesStatus status; ///< Indicates the status of the request
@@ -99,6 +115,10 @@ struct KeyPair {
     std::filesystem::path key;           ///< The path of the PEM or DER encoded private key
     std::filesystem::path certificate;   ///< The path of the PEM or DER encoded certificate
     std::optional<std::string> password; ///< Specifies the password for the private key if encrypted
+};
+struct GetKeyPairResult {
+    GetKeyPairStatus status;
+    std::optional<KeyPair> pair;
 };
 
 } // namespace evse_security

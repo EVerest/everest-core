@@ -45,5 +45,6 @@ endif()
 
 if(BUILD_TESTING_EVSE_SECURITY)
     add_subdirectory(tests)
+    set(CMAKE_BUILD_TYPE Debug)
 endif()
 
