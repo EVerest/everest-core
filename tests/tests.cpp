@@ -11,6 +11,7 @@
 
 #include <openssl/err.h>
 #include <openssl/x509v3.h>
+#include <x509_bundle.hpp>
 #include <x509_wrapper.hpp>
 
 std::string read_file_to_string(const std::filesystem::path filepath) {
@@ -86,22 +87,41 @@ TEST_F(EvseSecurityTests, verify_basics) {
 
     ASSERT_TRUE(certificate_strings.size() == 3);
 
-    X509Wrapper bundle(std::filesystem::path(bundle_path), EncodingFormat::PEM);
-    ASSERT_TRUE(bundle.is_bundle());
+    X509CertificateBundle bundle(std::filesystem::path(bundle_path), EncodingFormat::PEM);
+    ASSERT_TRUE(bundle.is_using_bundle_file());
 
     auto certificates = bundle.split();
     ASSERT_TRUE(certificates.size() == 3);
-    ASSERT_TRUE(certificates[0].get_certificate_hash_data() == bundle.get_certificate_hash_data());
-
-    ASSERT_TRUE(equal_certificate_strings(bundle.get_str(), certificates[0].get_str()));
-    ASSERT_TRUE(equal_certificate_strings(bundle.get_str(), certificate_strings[0]));
 
     for (int i = 0; i < certificate_strings.size(); ++i) {
         X509Wrapper cert(certificate_strings[i], EncodingFormat::PEM);
 
         ASSERT_TRUE(certificates[i].get_certificate_hash_data() == cert.get_certificate_hash_data());
-        ASSERT_TRUE(equal_certificate_strings(cert.get_str(), certificate_strings[i]));
+        ASSERT_TRUE(equal_certificate_strings(cert.get_export_string(), certificate_strings[i]));
     }
+}
+
+TEST_F(EvseSecurityTests, verify_bundle_management) {
+    const char* directory_path = "certs/ca/csms/";
+    X509CertificateBundle bundle(std::filesystem::path(directory_path), EncodingFormat::PEM);
+    ASSERT_TRUE(bundle.split().size() == 2);
+    bundle.delete_certificate(bundle.split()[0].get_certificate_hash_data());
+    bundle.sync_to_certificate_store();
+
+    int items = 0;
+    for (const auto& entry : std::filesystem::recursive_directory_iterator(directory_path)) {
+        if (X509CertificateBundle::is_certificate_file(entry)) {
+            items++;
+        }
+    }
+    ASSERT_TRUE(items == 1);
+
+    EXPECT_THROW(
+        {
+            // We don't support directory/bundle combination
+            X509CertificateBundle bundle_throw(std::filesystem::path("certs/ca/v2g/"), EncodingFormat::PEM);
+        },
+        CertificateLoadException);
 }
 
 /// \brief test verifyChargepointCertificate with valid cert
@@ -109,7 +129,7 @@ TEST_F(EvseSecurityTests, verify_chargepoint_cert_01) {
     const auto client_certificate = read_file_to_string(std::filesystem::path("certs/client/csms/CSMS_LEAF.pem"));
     std::cout << client_certificate << std::endl;
     const auto result = this->evse_security->update_leaf_certificate(client_certificate, LeafCertificateType::CSMS);
-    ASSERT_TRUE(result == InstallCertificateResult::Success);
+    ASSERT_TRUE(result == InstallCertificateResult::Accepted);
 }
 
 /// \brief test verifyChargepointCertificate with invalid cert
@@ -122,7 +142,7 @@ TEST_F(EvseSecurityTests, verify_chargepoint_cert_02) {
 TEST_F(EvseSecurityTests, verify_v2g_cert_01) {
     const auto client_certificate = read_file_to_string(std::filesystem::path("certs/client/cso/SECC_LEAF.pem"));
     const auto result = this->evse_security->update_leaf_certificate(client_certificate, LeafCertificateType::V2G);
-    ASSERT_TRUE(result == InstallCertificateResult::Success);
+    ASSERT_TRUE(result == InstallCertificateResult::Accepted);
 }
 
 /// \brief test verifyV2GChargingStationCertificate with invalid cert
@@ -136,7 +156,7 @@ TEST_F(EvseSecurityTests, verify_v2g_cert_02) {
 TEST_F(EvseSecurityTests, install_root_ca_01) {
     const auto v2g_root_ca = read_file_to_string(std::filesystem::path("certs/ca/v2g/V2G_ROOT_CA_NEW.pem"));
     const auto result = this->evse_security->install_ca_certificate(v2g_root_ca, CaCertificateType::V2G);
-    ASSERT_TRUE(result == InstallCertificateResult::Success);
+    ASSERT_TRUE(result == InstallCertificateResult::Accepted);
 }
 
 TEST_F(EvseSecurityTests, install_root_ca_02) {

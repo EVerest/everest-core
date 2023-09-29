@@ -7,6 +7,7 @@ target_sources(evse_security
         evse_security.cpp
         x509_wrapper.cpp
         types.cpp
+        x509_bundle.cpp
 )
 
 target_include_directories(evse_security
