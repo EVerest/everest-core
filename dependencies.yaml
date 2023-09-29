@@ -53,5 +53,5 @@ everest-utils:
   git_tag: v0.1.4
 # evse-security
 libevse-security:
-  git: https://github.com:EVerest/libevse-security.git
-  git_tag: main
+  git: https://github.com/EVerest/libevse-security.git
+  git_tag: f621aab
