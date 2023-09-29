@@ -130,7 +130,8 @@ void ChargePoint::on_log_status_notification(int32_t request_id, std::string log
     this->charge_point->on_log_status_notification(request_id, log_status);
 }
 
-void ChargePoint::on_firmware_update_status_notification(int32_t request_id, std::string firmware_update_status) {
+void ChargePoint::on_firmware_update_status_notification(int32_t request_id,
+                                                         const FirmwareStatusNotification firmware_update_status) {
     this->charge_point->on_firmware_update_status_notification(request_id, firmware_update_status);
 }
 

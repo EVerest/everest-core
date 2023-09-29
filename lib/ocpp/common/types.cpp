@@ -950,4 +950,64 @@ std::string double_to_string(double d) {
 
 } // namespace conversions
 
+namespace conversions {
+v16::FirmwareStatus firmware_status_notification_to_firmware_status(const FirmwareStatusNotification status) {
+    switch (status) {
+    case FirmwareStatusNotification::Downloaded:
+        return v16::FirmwareStatus::Downloaded;
+    case FirmwareStatusNotification::DownloadFailed:
+        return v16::FirmwareStatus::DownloadFailed;
+    case FirmwareStatusNotification::Downloading:
+        return v16::FirmwareStatus::Downloading;
+    case FirmwareStatusNotification::Idle:
+        return v16::FirmwareStatus::Idle;
+    case FirmwareStatusNotification::InstallationFailed:
+        return v16::FirmwareStatus::InstallationFailed;
+    case FirmwareStatusNotification::Installing:
+        return v16::FirmwareStatus::Installing;
+    case FirmwareStatusNotification::Installed:
+        return v16::FirmwareStatus::Installed;
+    default:
+        throw std::out_of_range("Could not convert to v16::FirmwareStatus");
+    }
+}
+
+v16::FirmwareStatusEnumType
+firmware_status_notification_to_firmware_status_enum_type(const FirmwareStatusNotification status) {
+    switch (status) {
+    case FirmwareStatusNotification::Downloaded:
+        return v16::FirmwareStatusEnumType::Downloaded;
+    case FirmwareStatusNotification::DownloadFailed:
+        return v16::FirmwareStatusEnumType::DownloadFailed;
+    case FirmwareStatusNotification::Downloading:
+        return v16::FirmwareStatusEnumType::Downloading;
+    case FirmwareStatusNotification::DownloadScheduled:
+        return v16::FirmwareStatusEnumType::DownloadScheduled;
+    case FirmwareStatusNotification::DownloadPaused:
+        return v16::FirmwareStatusEnumType::DownloadPaused;
+    case FirmwareStatusNotification::Idle:
+        return v16::FirmwareStatusEnumType::Idle;
+    case FirmwareStatusNotification::InstallationFailed:
+        return v16::FirmwareStatusEnumType::InstallationFailed;
+    case FirmwareStatusNotification::Installing:
+        return v16::FirmwareStatusEnumType::Installing;
+    case FirmwareStatusNotification::Installed:
+        return v16::FirmwareStatusEnumType::Installed;
+    case FirmwareStatusNotification::InstallRebooting:
+        return v16::FirmwareStatusEnumType::InstallRebooting;
+    case FirmwareStatusNotification::InstallScheduled:
+        return v16::FirmwareStatusEnumType::InstallScheduled;
+    case FirmwareStatusNotification::InstallVerificationFailed:
+        return v16::FirmwareStatusEnumType::InstallVerificationFailed;
+    case FirmwareStatusNotification::InvalidSignature:
+        return v16::FirmwareStatusEnumType::InvalidSignature;
+    case FirmwareStatusNotification::SignatureVerified:
+        return v16::FirmwareStatusEnumType::SignatureVerified;
+    default:
+        throw std::out_of_range("Could not convert to v16::FirmwareStatusEnumType");
+    }
+}
+
+} // namespace conversions
+
 } // namespace ocpp

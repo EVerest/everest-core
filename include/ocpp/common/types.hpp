@@ -17,6 +17,8 @@
 #include <date/tz.h>
 
 #include <ocpp/common/cistring.hpp>
+#include <ocpp/v16/enums.hpp>
+#include <ocpp/v201/enums.hpp>
 
 using json = nlohmann::json;
 
@@ -513,6 +515,34 @@ std::string double_to_string(double d, int precision);
 /// \brief Converts the given double \p d to a string representation with a fixed precision of 2
 /// \returns a string representation of the given double using a fixed precision of 2
 std::string double_to_string(double d);
+} // namespace conversions
+
+enum class FirmwareStatusNotification {
+    Downloaded,
+    DownloadFailed,
+    Downloading,
+    DownloadScheduled,
+    DownloadPaused,
+    Idle,
+    InstallationFailed,
+    Installing,
+    Installed,
+    InstallRebooting,
+    InstallScheduled,
+    InstallVerificationFailed,
+    InvalidSignature,
+    SignatureVerified
+};
+
+namespace conversions {
+
+/// \brief Converts ocpp::FirmwareStatusNotification to v16::FirmwareStatus
+v16::FirmwareStatus firmware_status_notification_to_firmware_status(const FirmwareStatusNotification status);
+
+/// \brief Converts ocpp::FirmwareStatusNotification to v16::FirmwareStatusEnumType
+v16::FirmwareStatusEnumType
+firmware_status_notification_to_firmware_status_enum_type(const FirmwareStatusNotification status);
+
 } // namespace conversions
 
 } // namespace ocpp

@@ -146,9 +146,9 @@ void ChargePoint::disconnect_websocket() {
 }
 
 void ChargePoint::on_firmware_update_status_notification(int32_t request_id,
-                                                         const std::string& firmware_update_status) {
+                                                         const FirmwareStatusEnum& firmware_update_status) {
     FirmwareStatusNotificationRequest req;
-    req.status = conversions::string_to_firmware_status_enum(firmware_update_status);
+    req.status = firmware_update_status;
     // Firmware status and id are stored for future trigger message request.
     this->firmware_status = req.status;
 

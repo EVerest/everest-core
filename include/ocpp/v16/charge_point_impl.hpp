@@ -499,10 +499,9 @@ public:
     /// called during a Firmware Update to indicate the current \p firmware_update_status .
     /// \param request_id A \p request_id of -1 indicates a FirmwareStatusNotification.req, else a
     /// SignedFirmwareUpdateStatusNotification.req .
-    /// \param firmware_update_status The \p firmware_update_status should be either be convertable to the
-    /// ocpp::v16::FirmwareStatusEnumType enum or ocpp::v16::FirmwareStatus enum depending on the previous request,
-    /// which could have been a UpdateFirmware.req or a SignedUpdateFirmware.req (Security Whitepaper)
-    void on_firmware_update_status_notification(int32_t request_id, std::string firmware_update_status);
+    /// \param firmware_update_status The \p firmware_update_status
+    void on_firmware_update_status_notification(int32_t request_id,
+                                                const ocpp::FirmwareStatusNotification firmware_update_status);
 
     /// \brief This function must be called when a reservation is started at the given \p connector .
     /// \param connector

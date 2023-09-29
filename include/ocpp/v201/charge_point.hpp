@@ -352,9 +352,8 @@ public:
     /// \brief Chargepoint notifies about new firmware update status firmware_update_status. This function should be
     ///        called during a Firmware Update to indicate the current firmware_update_status.
     /// \param request_id   The request_id. When it is -1, it will not be included in the request.
-    /// \param firmware_update_status The firmware_update_status should be convertable to the
-    ///        ocpp::v201::FirmwareStatusEnum.
-    void on_firmware_update_status_notification(int32_t request_id, const std::string& firmware_update_status);
+    /// \param firmware_update_status The firmware_update_status
+    void on_firmware_update_status_notification(int32_t request_id, const FirmwareStatusEnum& firmware_update_status);
 
     /// \brief Event handler that should be called when a session has started
     /// \param evse_id
