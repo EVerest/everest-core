@@ -12,6 +12,39 @@ const std::string CERTS_DIR = "certs";
 
 namespace fs = std::filesystem;
 
+ocpp::v201::FirmwareStatusEnum get_firmware_status_notification(const types::system::FirmwareUpdateStatusEnum status) {
+    switch (status) {
+    case types::system::FirmwareUpdateStatusEnum::Downloaded:
+        return ocpp::v201::FirmwareStatusEnum::Downloaded;
+    case types::system::FirmwareUpdateStatusEnum::DownloadFailed:
+        return ocpp::v201::FirmwareStatusEnum::DownloadFailed;
+    case types::system::FirmwareUpdateStatusEnum::Downloading:
+        return ocpp::v201::FirmwareStatusEnum::Downloading;
+    case types::system::FirmwareUpdateStatusEnum::DownloadScheduled:
+        return ocpp::v201::FirmwareStatusEnum::DownloadScheduled;
+    case types::system::FirmwareUpdateStatusEnum::DownloadPaused:
+        return ocpp::v201::FirmwareStatusEnum::DownloadPaused;
+    case types::system::FirmwareUpdateStatusEnum::Idle:
+        return ocpp::v201::FirmwareStatusEnum::Idle;
+    case types::system::FirmwareUpdateStatusEnum::InstallationFailed:
+        return ocpp::v201::FirmwareStatusEnum::InstallationFailed;
+    case types::system::FirmwareUpdateStatusEnum::Installing:
+        return ocpp::v201::FirmwareStatusEnum::Installing;
+    case types::system::FirmwareUpdateStatusEnum::Installed:
+        return ocpp::v201::FirmwareStatusEnum::Installed;
+    case types::system::FirmwareUpdateStatusEnum::InstallRebooting:
+        return ocpp::v201::FirmwareStatusEnum::InstallRebooting;
+    case types::system::FirmwareUpdateStatusEnum::InstallScheduled:
+        return ocpp::v201::FirmwareStatusEnum::InstallScheduled;
+    case types::system::FirmwareUpdateStatusEnum::InstallVerificationFailed:
+        return ocpp::v201::FirmwareStatusEnum::InstallVerificationFailed;
+    case types::system::FirmwareUpdateStatusEnum::InvalidSignature:
+        return ocpp::v201::FirmwareStatusEnum::InvalidSignature;
+    case types::system::FirmwareUpdateStatusEnum::SignatureVerified:
+        return ocpp::v201::FirmwareStatusEnum::SignatureVerified;
+    }
+}
+
 types::evse_manager::StopTransactionReason get_stop_reason(const ocpp::v201::ReasonEnum& stop_reason) {
     switch (stop_reason) {
     case ocpp::v201::ReasonEnum::DeAuthorized:
@@ -655,7 +688,7 @@ void OCPP201::init() {
 
         r_system->subscribe_firmware_update_status([this](const types::system::FirmwareUpdateStatus status) {
             this->charge_point->on_firmware_update_status_notification(
-                status.request_id, types::system::firmware_update_status_enum_to_string(status.firmware_update_status));
+                status.request_id, get_firmware_status_notification(status.firmware_update_status));
         });
 
         r_system->subscribe_log_status([this](types::system::LogStatus status) {
