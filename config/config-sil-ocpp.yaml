@@ -142,6 +142,11 @@ active_modules:
       system:
         - module_id: system
           implementation_id: main
+      security:
+        - module_id: evse_security
+          implementation_id: main
+  evse_security:
+    module: EvseSecurity
   token_provider_1:
     module: DummyTokenProviderManual
   energy_manager:

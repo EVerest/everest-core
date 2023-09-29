@@ -38,7 +38,6 @@ option(ISO15118_2_GENERATE_AND_INSTALL_CERTIFICATES "Automatically generate and 
 # tests requires hardware.
 option(BUILD_DEV_TESTS "Build dev tests" OFF)
 
-
 find_package(Boost
     COMPONENTS
         filesystem
@@ -76,6 +75,11 @@ add_subdirectory(lib)
 include(ev-project-bootstrap)
 
 ev_add_project()
+
+# create MF_ROOT_CA if not available
+if (ISO15118_2_GENERATE_AND_INSTALL_CERTIFICATES)
+    file(TOUCH config/certs/ca/mf/MF_ROOT_CA.pem)
+endif()
 
 # config
 # FIXME (aw): this should be optional

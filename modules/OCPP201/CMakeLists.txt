@@ -9,13 +9,10 @@ ev_setup_cpp_module()
 
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 # insert your custom targets and additional config variables here
-find_package(OpenSSL REQUIRED)
-
 target_link_libraries(${MODULE_NAME}
     PRIVATE
         everest::ocpp
-        OpenSSL::SSL
-        OpenSSL::Crypto
+        everest::ocpp_evse_security
 )
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 

@@ -18,6 +18,7 @@
 // headers for required interface implementations
 #include <generated/interfaces/auth/Interface.hpp>
 #include <generated/interfaces/evse_manager/Interface.hpp>
+#include <generated/interfaces/evse_security/Interface.hpp>
 #include <generated/interfaces/external_energy_limits/Interface.hpp>
 #include <generated/interfaces/reservation/Interface.hpp>
 #include <generated/interfaces/system/Interface.hpp>
@@ -61,7 +62,7 @@ public:
          std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager,
          std::vector<std::unique_ptr<external_energy_limitsIntf>> r_connector_zero_sink,
          std::unique_ptr<reservationIntf> r_reservation, std::unique_ptr<authIntf> r_auth,
-         std::unique_ptr<systemIntf> r_system, Conf& config) :
+         std::unique_ptr<systemIntf> r_system, std::unique_ptr<evse_securityIntf> r_security, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_main(std::move(p_main)),
@@ -72,6 +73,7 @@ public:
         r_reservation(std::move(r_reservation)),
         r_auth(std::move(r_auth)),
         r_system(std::move(r_system)),
+        r_security(std::move(r_security)),
         config(config){};
 
     Everest::MqttProvider& mqtt;
@@ -83,6 +85,7 @@ public:
     const std::unique_ptr<reservationIntf> r_reservation;
     const std::unique_ptr<authIntf> r_auth;
     const std::unique_ptr<systemIntf> r_system;
+    const std::unique_ptr<evse_securityIntf> r_security;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1

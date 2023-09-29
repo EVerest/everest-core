@@ -17,6 +17,7 @@
 
 // headers for required interface implementations
 #include <generated/interfaces/evse_manager/Interface.hpp>
+#include <generated/interfaces/evse_security/Interface.hpp>
 #include <generated/interfaces/system/Interface.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
@@ -42,7 +43,7 @@ public:
             std::unique_ptr<auth_token_validatorImplBase> p_auth_validator,
             std::unique_ptr<auth_token_providerImplBase> p_auth_provider,
             std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager, std::unique_ptr<systemIntf> r_system,
-            Conf& config) :
+            std::unique_ptr<evse_securityIntf> r_security, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_main(std::move(p_main)),
@@ -50,6 +51,7 @@ public:
         p_auth_provider(std::move(p_auth_provider)),
         r_evse_manager(std::move(r_evse_manager)),
         r_system(std::move(r_system)),
+        r_security(std::move(r_security)),
         config(config){};
 
     Everest::MqttProvider& mqtt;
@@ -58,6 +60,7 @@ public:
     const std::unique_ptr<auth_token_providerImplBase> p_auth_provider;
     const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;
     const std::unique_ptr<systemIntf> r_system;
+    const std::unique_ptr<evse_securityIntf> r_security;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
