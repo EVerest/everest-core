@@ -22,7 +22,8 @@ public:
 
 /// @brief Convenience wrapper around openssl X509 certificate. Can contain multiple certificates
 class X509Wrapper {
-    using X509_ptr = std::unique_ptr<X509,  decltype(&::X509_free)>;    
+    using X509_ptr = std::unique_ptr<X509, decltype(&::X509_free)>;
+
 public:
     // Constructors
     X509Wrapper(const std::string& certificate, const EncodingFormat encoding);
@@ -35,7 +36,7 @@ public:
 
     X509Wrapper(const X509Wrapper& other);
     X509Wrapper(X509Wrapper&& other) = default;
-    
+
     ~X509Wrapper();
 
     /// @brief Gets raw X509 pointer
@@ -96,8 +97,7 @@ public:
 
     /// @brief Gets if this certificate file is containing multiple certificates
     /// @return
-    bool is_bundle()
-    {
+    bool is_bundle() {
         return x509.size() > 1;
     }
 
@@ -109,7 +109,7 @@ private:
     std::vector<X509_ptr> x509;
     int valid_in; // seconds; if > 0 cert is not yet valid
     int valid_to; // seconds; if < 0 cert has expired
-    std::optional<std::filesystem::path> path;    
+    std::optional<std::filesystem::path> path;
 };
 
 } // namespace evse_security

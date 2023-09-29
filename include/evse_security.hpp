@@ -76,7 +76,7 @@ public:
 
     /// @brief Retrieves all certificates installed on the filesystem applying the \p certificate_types filter.
     /// @param certificate_types
-    /// @return contains the certificate hash data chains of the requested \p certificate_types    
+    /// @return contains the certificate hash data chains of the requested \p certificate_types
     GetInstalledCertificatesResult get_installed_certificates(const std::vector<CertificateType>& certificate_types);
 
     /// @brief Retrieves the OCSP request data of the V2G certificates
@@ -114,12 +114,12 @@ public:
 
     /// @brief Retrieves the PEM formatted CA bundle file for the given \p certificate_type
     /// @param certificate_type
-    /// @return CA certificate file    
+    /// @return CA certificate file
     std::string get_verify_file(CaCertificateType certificate_type);
-    
+
     /// @brief Gets the expiry day count for the leaf certificate of the given \p certificate_type
     /// @param certificate_type
-    /// @return day count until the leaf certificate expires    
+    /// @return day count until the leaf certificate expires
     int get_leaf_expiry_days_count(LeafCertificateType certificate_type);
 
 private:
