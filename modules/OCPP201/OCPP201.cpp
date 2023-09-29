@@ -42,6 +42,8 @@ ocpp::v201::FirmwareStatusEnum get_firmware_status_notification(const types::sys
         return ocpp::v201::FirmwareStatusEnum::InvalidSignature;
     case types::system::FirmwareUpdateStatusEnum::SignatureVerified:
         return ocpp::v201::FirmwareStatusEnum::SignatureVerified;
+    default:
+        throw std::out_of_range("Could not convert FirmwareUpdateStatusEnum to FirmwareStatusEnum");
     }
 }
 
