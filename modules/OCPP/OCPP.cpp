@@ -13,6 +13,40 @@ const std::string INIT_SQL = "init.sql";
 
 namespace fs = std::filesystem;
 
+static ocpp::FirmwareStatusNotification
+get_firmware_status_notification(const types::system::FirmwareUpdateStatusEnum status) {
+    switch (status) {
+    case types::system::FirmwareUpdateStatusEnum::Downloaded:
+        return ocpp::FirmwareStatusNotification::Downloaded;
+    case types::system::FirmwareUpdateStatusEnum::DownloadFailed:
+        return ocpp::FirmwareStatusNotification::DownloadFailed;
+    case types::system::FirmwareUpdateStatusEnum::Downloading:
+        return ocpp::FirmwareStatusNotification::Downloading;
+    case types::system::FirmwareUpdateStatusEnum::DownloadScheduled:
+        return ocpp::FirmwareStatusNotification::DownloadScheduled;
+    case types::system::FirmwareUpdateStatusEnum::DownloadPaused:
+        return ocpp::FirmwareStatusNotification::DownloadPaused;
+    case types::system::FirmwareUpdateStatusEnum::Idle:
+        return ocpp::FirmwareStatusNotification::Idle;
+    case types::system::FirmwareUpdateStatusEnum::InstallationFailed:
+        return ocpp::FirmwareStatusNotification::InstallationFailed;
+    case types::system::FirmwareUpdateStatusEnum::Installing:
+        return ocpp::FirmwareStatusNotification::Installing;
+    case types::system::FirmwareUpdateStatusEnum::Installed:
+        return ocpp::FirmwareStatusNotification::Installed;
+    case types::system::FirmwareUpdateStatusEnum::InstallRebooting:
+        return ocpp::FirmwareStatusNotification::InstallRebooting;
+    case types::system::FirmwareUpdateStatusEnum::InstallScheduled:
+        return ocpp::FirmwareStatusNotification::InstallScheduled;
+    case types::system::FirmwareUpdateStatusEnum::InstallVerificationFailed:
+        return ocpp::FirmwareStatusNotification::InstallVerificationFailed;
+    case types::system::FirmwareUpdateStatusEnum::InvalidSignature:
+        return ocpp::FirmwareStatusNotification::InvalidSignature;
+    case types::system::FirmwareUpdateStatusEnum::SignatureVerified:
+        return ocpp::FirmwareStatusNotification::SignatureVerified;
+    }
+}
+
 static ocpp::v16::ChargePointErrorCode get_ocpp_error_code(const std::string& evse_error) {
     if (evse_error == "Car") {
         return ocpp::v16::ChargePointErrorCode::OtherError;
@@ -340,7 +374,7 @@ void OCPP::init() {
         [this](types::system::FirmwareUpdateStatus firmware_update_status) {
             this->charge_point->on_firmware_update_status_notification(
                 firmware_update_status.request_id,
-                types::system::firmware_update_status_enum_to_string(firmware_update_status.firmware_update_status));
+                get_firmware_status_notification(firmware_update_status.firmware_update_status));
         });
 
     this->charge_point->register_provide_token_callback(
