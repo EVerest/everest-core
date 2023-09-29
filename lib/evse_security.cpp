@@ -181,7 +181,7 @@ static CertificateType get_certificate_type(const CaCertificateType ca_certifica
 
 static std::string get_random_file_name(const std::string& extension) {
     char path[] = "XXXXXX";
-    mktemp(path);
+    mkstemp(path);
 
     return std::string(path) + extension;
 }
@@ -269,11 +269,12 @@ EvseSecurity::EvseSecurity(const FilePaths& file_paths, const std::optional<std:
 
     for (const auto& pair : this->ca_bundle_path_map) {
         if (!std::filesystem::exists(pair.second)) {
-            throw std::runtime_error("Could not find configured " + std::to_string((int)pair.first) +
-                                     " bundle file at: " + file_paths.csms_ca_bundle.string());
+            throw std::runtime_error("Could not find configured " +
+                                     conversions::ca_certificate_type_to_string(pair.first) +
+                                     " bundle file at: " + pair.second.string());
         } else if (std::filesystem::is_directory(pair.second)) {
-            throw std::runtime_error("Provided bundle " + std::to_string((int)pair.first) +
-                                     " is directory: " + file_paths.csms_ca_bundle.string());
+            throw std::runtime_error("Provided bundle " + conversions::ca_certificate_type_to_string(pair.first) +
+                                     " is directory: " + pair.second.string());
         }
     }
 

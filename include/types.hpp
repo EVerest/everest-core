@@ -120,6 +120,19 @@ struct GetKeyPairResult {
     std::optional<KeyPair> pair;
 };
 
+namespace conversions {
+std::string encoding_format_to_string(EncodingFormat e);
+std::string ca_certificate_type_to_string(CaCertificateType e);
+std::string leaf_certificate_type_to_string(LeafCertificateType e);
+std::string certificate_type_to_string(CertificateType e);
+std::string hash_algorithm_to_string(HashAlgorithm e);
+std::string install_certificate_result_to_string(InstallCertificateResult e);
+std::string delete_certificate_result_to_string(DeleteCertificateResult e);
+std::string get_installed_certificates_status_to_string(GetInstalledCertificatesStatus e);
+std::string get_key_pair_status_to_string(GetKeyPairStatus e);
+
+} // namespace conversions
+
 } // namespace evse_security
 
 #endif // TYPES_HPP

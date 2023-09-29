@@ -6,6 +6,7 @@ target_sources(evse_security
     PRIVATE
         evse_security.cpp
         x509_wrapper.cpp
+        types.cpp
 )
 
 target_include_directories(evse_security
