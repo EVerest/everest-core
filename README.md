@@ -95,17 +95,6 @@ cd ~/checkout/everest-workspace/Josev
 python3 -m pip install -r requirements.txt
 ```
 
-For ISO15118 communication including Plug&Charge you need to install the required CA certificates inside [config/certs/ca](config/certs/ca) and client certificates, private keys and password files inside [config/certs/client](config/certs/client/). Run the following commands to generate and install all necessary certificates and keys:
-
-```bash
-cd ~/checkout/everest-workspace/Josev/iso15118/shared/pki
-./create_certs.sh -v iso-2 -i ~/checkout/everest-workspace/everest-core
-```
-
-Note that this will generate an example PKI setup that can only be used for testing and simulation purposes. It will not work and is not recommended for production!
-
-The script for setting up PKI can also be used with the EvseV2G module.
-
 Now we can build EVerest!
 
 ```bash
