@@ -33,7 +33,7 @@ libfsm:
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: 32dd05f
+  git_tag: e4f1ccd
 # Josev
 Josev:
   git: https://github.com/EVerest/ext-switchev-iso15118.git
