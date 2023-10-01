@@ -179,3 +179,6 @@ vars:
     description: Enforced limits for this node (coming from the EnergyManager)
     type: object
     $ref: /energy#/EnforcedLimits
+  ready:
+    description: Signals that the EVSE Manager is ready to start charging
+    type: boolean

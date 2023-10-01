@@ -380,10 +380,30 @@ ocpp::v201::UploadLogStatusEnum get_upload_log_status_enum(types::system::LogSta
     }
 }
 
+bool OCPP201::all_evse_ready() {
+    for (auto const& [evse, ready] : this->evse_ready_map) {
+        if (!ready) {
+            return false;
+        }
+    }
+    EVLOG_info << "All EVSE ready. Starting OCPP2.0.1 service";
+    return true;
+}
+
 void OCPP201::init() {
     invoke_init(*p_main);
     invoke_init(*p_auth_provider);
     invoke_init(*p_auth_validator);
+
+    for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
+        this->r_evse_manager.at(evse_id - 1)->subscribe_ready([this, evse_id](bool ready) {
+            std::lock_guard<std::mutex> lk(this->evse_ready_mutex);
+            if (ready) {
+                this->evse_ready_map[evse_id] = true;
+                this->evse_ready_cv.notify_one();
+            }
+        });
+    }
 }
 
 void OCPP201::ready() {
@@ -411,23 +431,6 @@ void OCPP201::ready() {
         }
     }();
     EVLOG_info << "OCPP certificates path: " << etc_certs_path.string();
-
-    auto configured_config_path = fs::path(this->config.ChargePointConfigPath);
-
-    // try to find the config file if it has been provided as a relative path
-    if (!fs::exists(configured_config_path) && configured_config_path.is_relative()) {
-        configured_config_path = this->ocpp_share_path / configured_config_path;
-    }
-    if (!fs::exists(configured_config_path)) {
-        EVLOG_AND_THROW(Everest::EverestConfigError(
-            fmt::format("OCPP config file is not available at given path: {} which was resolved to: {}",
-                        this->config.ChargePointConfigPath, configured_config_path.string())));
-    }
-    EVLOG_info << "OCPP config: " << configured_config_path.string();
-
-    std::ifstream ifs(configured_config_path.c_str());
-    std::string config_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-    auto json_config = json::parse(config_file);
 
     if (!fs::exists(this->config.MessageLogPath)) {
         try {
@@ -727,6 +730,10 @@ void OCPP201::ready() {
         });
     }
 
+    std::unique_lock lk(this->evse_ready_mutex);
+    while (!this->all_evse_ready()) {
+        this->evse_ready_cv.wait(lk);
+    }
     this->charge_point->start();
 }
 

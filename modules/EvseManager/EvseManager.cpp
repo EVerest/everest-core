@@ -825,6 +825,7 @@ void EvseManager::ready() {
     charger->run();
     charger->enable();
 
+    this->p_evse->publish_ready(true);
     EVLOG_info << fmt::format(fmt::emphasis::bold | fg(fmt::terminal_color::green),
                               "🌀🌀🌀 Ready to start charging 🌀🌀🌀");
 }
