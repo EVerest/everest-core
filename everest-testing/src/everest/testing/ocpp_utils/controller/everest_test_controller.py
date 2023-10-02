@@ -19,6 +19,19 @@ logging.basicConfig(level=logging.DEBUG)
 TEST_LOGS_DIR = "/tmp/everest_ocpp_test_logs"
 
 
+def get_value_from_v201_config(ocpp_config: json, component_name: str, variable_name: str, variable_attribute_type: str):
+    for component in ocpp_config:
+        if (component["name"] == component_name):
+            return component["variables"][variable_name]["attributes"][variable_attribute_type]
+
+
+def set_value_in_v201_config(ocpp_config: json, component_name: str, variable_name: str, variable_attribute_type: str, value: str):
+    for component in ocpp_config:
+        if (component["name"] == component_name):
+            component["variables"][variable_name]["attributes"][variable_attribute_type] = value
+            return
+
+
 class EverestTestController(TestController):
 
     def __init__(self, everest_core_path: Path, libocpp_path: Path, config_path: Path, chargepoint_id: str, ocpp_version: str,
@@ -60,13 +73,14 @@ class EverestTestController(TestController):
             ocpp_config_path = ocpp_dir / \
                 everest_config["active_modules"][self.ocpp_module_id]["config_module"]["ChargePointConfigPath"]
             ocpp_config = json.loads(ocpp_config_path.read_text())
-            charge_point_id = ocpp_config["InternalCtrlr"]["ChargePointId"]["attributes"][
-                "Actual"]
-            network_connection_profiles = json.loads(ocpp_config["InternalCtrlr"]["NetworkConnectionProfiles"]["attributes"][
-                "Actual"])
-            network_connection_profiles[0]["connectionData"]["ocppCsmsUrl"] =  f"ws://127.0.0.1:{central_system_port}/{charge_point_id}"
-            ocpp_config["InternalCtrlr"]["NetworkConnectionProfiles"]["attributes"][
-                "Actual"] = json.dumps(network_connection_profiles)
+            charge_point_id = get_value_from_v201_config(
+                ocpp_config, "InternalCtrlr", "ChargePointId", "Actual")
+            network_connection_profiles = json.loads(get_value_from_v201_config(
+                ocpp_config, "InternalCtrlr", "NetworkConnectionProfiles", "Actual"))
+            network_connection_profiles[0]["connectionData"][
+                "ocppCsmsUrl"] = f"ws://127.0.0.1:{central_system_port}/{charge_point_id}"
+            set_value_in_v201_config(ocpp_config, "InternalCtrlr", "NetworkConnectionProfiles",
+                                     "Actual", json.dumps(network_connection_profiles))
 
         if self.first_run:
             logging.info("First run")
@@ -90,8 +104,10 @@ class EverestTestController(TestController):
                 everest_config["active_modules"][self.ocpp_module_id]["config_module"]["CoreDatabasePath"] = self.temp_ocpp_database_dir.name
                 everest_config["active_modules"][self.ocpp_module_id]["config_module"][
                     "DeviceModelDatabasePath"] = f"{self.temp_ocpp_database_dir.name}/device_model_storage.db"
+                cwd = f"{(self.libocpp_path)}/config/v201/"
+                os.chdir(cwd)
                 os.system(
-                    f"python3 {str(self.libocpp_path)}/config/v201/init_device_model_db.py --out {self.temp_ocpp_database_dir.name}/device_model_storage.db --config_path {str(self.libocpp_path)}/config/v201")
+                    f"python3 {str(self.libocpp_path)}/config/v201/init_device_model_db.py --out {self.temp_ocpp_database_dir.name}/device_model_storage.db --schemas {str(self.libocpp_path)}/config/v201/component_schemas")
                 os.system(
                     f"python3 {str(self.libocpp_path)}/config/v201/insert_device_model_config.py --config {self.temp_ocpp_config_file.name} --db {str(self.temp_ocpp_database_dir.name)}/device_model_storage.db")
 
