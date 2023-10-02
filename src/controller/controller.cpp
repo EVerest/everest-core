@@ -42,6 +42,7 @@ int main(int argc, char* argv[]) {
         config_params.at("module_dir"),
         config_params.at("interface_dir"),
         config_params.at("configs_dir"),
+        config_params.at("controller_rpc_timeout_ms"),
     };
 
     RPC rpc(socket_fd, config);

@@ -123,6 +123,8 @@ nlohmann::json CommandApi::handle(const std::string& cmd, const json& params) {
         this->rpc.ipc_request("restart_modules", nullptr, true);
 
         return nullptr;
+    } else if (cmd == "get_rpc_timeout") {
+        return this->config.controller_rpc_timeout_ms;
     }
 
     throw CommandApiMethodNotFound(fmt::format("Command '{}' unknown", cmd));

@@ -89,7 +89,8 @@ private:
     nlohmann::json params;
 };
 
-RPC::RPC(int ipc_fd, const CommandApi::Config& config) : ipc_fd(ipc_fd) {
+RPC::RPC(int ipc_fd, const CommandApi::Config& config) :
+    ipc_fd(ipc_fd), rpc_timeout(std::chrono::milliseconds(config.controller_rpc_timeout_ms)) {
     this->api = std::make_unique<CommandApi>(config, *this);
 }
 
@@ -192,8 +193,7 @@ nlohmann::json RPC::ipc_request(const std::string& method, const nlohmann::json&
 
     Everest::controller_ipc::send_message(this->ipc_fd, {{"method", method}, {"params", params}, {"id", id}});
 
-    // FIXME (aw): timeout constant!
-    auto status = call_result_future.wait_for(std::chrono::milliseconds(2000));
+    auto status = call_result_future.wait_for(this->rpc_timeout);
 
     lock.lock();
     this->ipc_calls.erase(new_call.first);

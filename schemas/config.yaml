@@ -45,6 +45,8 @@ properties:
         type: string
       controller_port:
         type: integer
+      controller_rpc_timeout_ms:
+        type: integer
       mqtt_broker_host:
         type: string
       mqtt_broker_port:

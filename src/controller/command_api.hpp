@@ -24,6 +24,7 @@ public:
         std::string module_dir;
         std::string interface_dir;
         std::string configs_dir;
+        int controller_rpc_timeout_ms;
     };
 
     CommandApi(const Config& config, RPC& rpc);

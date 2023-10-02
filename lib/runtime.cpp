@@ -240,6 +240,13 @@ RuntimeSettings::RuntimeSettings(const std::string& prefix_, const std::string& 
         controller_port = defaults::CONTROLLER_PORT;
     }
 
+    const auto settings_controller_rpc_timeout_ms_it = settings.find("controller_rpc_timeout_ms");
+    if (settings_controller_rpc_timeout_ms_it != settings.end()) {
+        controller_rpc_timeout_ms = settings_controller_rpc_timeout_ms_it->get<int>();
+    } else {
+        controller_rpc_timeout_ms = defaults::CONTROLLER_RPC_TIMEOUT_MS;
+    }
+
     const auto settings_mqtt_broker_host_it = settings.find("mqtt_broker_host");
     if (settings_mqtt_broker_host_it != settings.end()) {
         mqtt_broker_host = settings_mqtt_broker_host_it->get<std::string>();

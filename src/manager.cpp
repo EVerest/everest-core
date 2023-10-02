@@ -486,6 +486,7 @@ static ControllerHandle start_controller(const RuntimeSettings& rs) {
                                                           {"configs_dir", rs.configs_dir.string()},
                                                           {"logging_config_file", rs.logging_config_file.string()},
                                                           {"controller_port", rs.controller_port},
+                                                          {"controller_rpc_timeout_ms", rs.controller_rpc_timeout_ms},
                                                       }},
                                                  });
 

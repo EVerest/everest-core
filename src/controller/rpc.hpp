@@ -29,6 +29,7 @@ private:
     int ipc_fd;
     std::unique_ptr<CommandApi> api;
     NotificationHandler notification_handler;
+    std::chrono::milliseconds rpc_timeout;
 
     // FIXME (aw): what type of cafe?
     std::mt19937 rng{0xcafe};
