@@ -187,6 +187,10 @@ private:
     MeterValue get_latest_meter_value_filtered(const MeterValue& meter_value, ReadingContextEnum context,
                                                const ComponentVariable& component_variable);
 
+    ///\brief Calculate and update the authorization cache size in the device model
+    ///
+    void update_authorization_cache_size();
+
     ///\brief Apply a local list request to the database if allowed
     ///
     ///\param request The local list request to apply

@@ -382,13 +382,14 @@ AuthorizeResponse ChargePoint::validate_token(const IdToken id_token, const std:
             .value_or(false);
 
     if (auth_cache_enabled) {
-        const auto cache_entry = this->database_handler->get_auth_cache_entry(hashed_id_token);
+        const auto cache_entry = this->database_handler->authorization_cache_get_entry(hashed_id_token);
         if (cache_entry.has_value()) {
             if ((cache_entry.value().cacheExpiryDateTime.has_value() and
                  cache_entry.value().cacheExpiryDateTime.value().to_time_point() < DateTime().to_time_point())) {
                 EVLOG_info << "Found valid entry in AuthCache but expiry date passed: Removing from cache and sending "
                               "new request";
-                this->database_handler->delete_auth_cache_entry(hashed_id_token);
+                this->database_handler->authorization_cache_delete_entry(hashed_id_token);
+                this->update_authorization_cache_size();
             } else if (this->device_model->get_value<bool>(ControllerComponentVariables::LocalPreAuthorize) and
                        cache_entry.value().status == AuthorizationStatusEnum::Accepted) {
                 EVLOG_info << "Found valid entry in AuthCache";
@@ -411,7 +412,8 @@ AuthorizeResponse ChargePoint::validate_token(const IdToken id_token, const std:
     response = this->authorize_req(id_token, certificate, ocsp_request_data);
 
     if (auth_cache_enabled) {
-        this->database_handler->insert_auth_cache_entry(hashed_id_token, response.idTokenInfo);
+        this->database_handler->authorization_cache_insert_entry(hashed_id_token, response.idTokenInfo);
+        this->update_authorization_cache_size();
     }
 
     return response;
@@ -769,6 +771,15 @@ MeterValue ChargePoint::get_latest_meter_value_filtered(const MeterValue& meter_
     return filtered_meter_value;
 }
 
+void ChargePoint::update_authorization_cache_size() {
+    auto& auth_cache_size = ControllerComponentVariables::AuthCacheStorage;
+    if (auth_cache_size.variable.has_value()) {
+        auto size = this->database_handler->authorization_cache_get_binary_size();
+        this->device_model->set_read_only_value(auth_cache_size.component, auth_cache_size.variable.value(),
+                                                AttributeEnum::Actual, std::to_string(size));
+    }
+}
+
 SendLocalListStatusEnum ChargePoint::apply_local_authorization_list(const SendLocalListRequest& request) {
     auto status = SendLocalListStatusEnum::Failed;
 
@@ -1113,7 +1124,7 @@ AuthorizeResponse ChargePoint::authorize_req(const IdToken id_token, const std::
     }
 
     ocpp::CallResult<AuthorizeResponse> call_result = enhanced_message.message;
-    if (response.idTokenInfo.cacheExpiryDateTime.has_value() or
+    if (call_result.msg.idTokenInfo.cacheExpiryDateTime.has_value() or
         !this->device_model->get_optional_value<int>(ControllerComponentVariables::AuthCacheLifeTime).has_value()) {
         return call_result.msg;
     }
@@ -1552,7 +1563,8 @@ void ChargePoint::handle_clear_cache_req(Call<ClearCacheRequest> call) {
 
     if (this->device_model->get_optional_value<bool>(ControllerComponentVariables::AuthCacheCtrlrEnabled)
             .value_or(true) and
-        this->database_handler->clear_authorization_cache()) {
+        this->database_handler->authorization_cache_clear()) {
+        this->update_authorization_cache_size();
         response.status = ClearCacheStatusEnum::Accepted;
     }
 
@@ -1589,8 +1601,9 @@ void ChargePoint::handle_start_transaction_event_response(const EnhancedMessage<
         if (id_token.type != IdTokenEnum::Central and
             this->device_model->get_optional_value<bool>(ControllerComponentVariables::AuthCacheCtrlrEnabled)
                 .value_or(true)) {
-            this->database_handler->insert_auth_cache_entry(utils::generate_token_hash(id_token),
-                                                            msg.idTokenInfo.value());
+            this->database_handler->authorization_cache_insert_entry(utils::generate_token_hash(id_token),
+                                                                     msg.idTokenInfo.value());
+            this->update_authorization_cache_size();
         }
         if (msg.idTokenInfo.value().status != AuthorizationStatusEnum::Accepted) {
             if (this->device_model->get_value<bool>(ControllerComponentVariables::StopTxOnInvalidId)) {

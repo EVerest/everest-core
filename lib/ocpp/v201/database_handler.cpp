@@ -67,7 +67,8 @@ void DatabaseHandler::close_connection() {
     }
 }
 
-void DatabaseHandler::insert_auth_cache_entry(const std::string& id_token_hash, const IdTokenInfo& id_token_info) {
+void DatabaseHandler::authorization_cache_insert_entry(const std::string& id_token_hash,
+                                                       const IdTokenInfo& id_token_info) {
     std::string sql = "INSERT OR REPLACE INTO AUTH_CACHE (ID_TOKEN_HASH, ID_TOKEN_INFO) VALUES "
                       "(@id_token_hash, @id_token_info)";
     SQLiteStatement insert_stmt(this->db, sql);
@@ -81,7 +82,7 @@ void DatabaseHandler::insert_auth_cache_entry(const std::string& id_token_hash, 
     }
 }
 
-std::optional<IdTokenInfo> DatabaseHandler::get_auth_cache_entry(const std::string& id_token_hash) {
+std::optional<IdTokenInfo> DatabaseHandler::authorization_cache_get_entry(const std::string& id_token_hash) {
     try {
         std::string sql = "SELECT ID_TOKEN_INFO FROM AUTH_CACHE WHERE ID_TOKEN_HASH = @id_token_hash";
         SQLiteStatement select_stmt(this->db, sql);
@@ -101,7 +102,7 @@ std::optional<IdTokenInfo> DatabaseHandler::get_auth_cache_entry(const std::stri
     }
 }
 
-void DatabaseHandler::delete_auth_cache_entry(const std::string& id_token_hash) {
+void DatabaseHandler::authorization_cache_delete_entry(const std::string& id_token_hash) {
     try {
         std::string sql = "DELETE FROM AUTH_CACHE WHERE ID_TOKEN_HASH = @id_token_hash";
         SQLiteStatement delete_stmt(this->db, sql);
@@ -116,8 +117,23 @@ void DatabaseHandler::delete_auth_cache_entry(const std::string& id_token_hash) 
     }
 }
 
-bool DatabaseHandler::clear_authorization_cache() {
+bool DatabaseHandler::authorization_cache_clear() {
     return this->clear_table("AUTH_CACHE");
+}
+
+size_t DatabaseHandler::authorization_cache_get_binary_size() {
+    try {
+        std::string sql = "SELECT SUM(\"payload\") FROM \"dbstat\" WHERE name='AUTH_CACHE';";
+        SQLiteStatement stmt(this->db, sql);
+
+        if (stmt.step() != SQLITE_ROW) {
+            throw std::runtime_error("Could not get authorization cache binary size from database");
+        }
+
+        return stmt.column_int(0);
+    } catch (const std::exception& e) {
+        throw std::runtime_error("Could not get authorization cache binary size from database");
+    }
 }
 
 void DatabaseHandler::insert_availability(const int32_t evse_id, std::optional<int32_t> connector_id,
@@ -271,7 +287,7 @@ int32_t DatabaseHandler::get_local_authorization_list_number_of_entries() {
 
         return stmt.column_int(0);
     } catch (const std::exception& e) {
-        throw std::runtime_error("Could not get availability from database");
+        throw std::runtime_error("Could not get local list count from database");
     }
 }
 

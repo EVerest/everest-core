@@ -456,7 +456,26 @@
     },
     {
         "name": "AuthCacheCtrlr",
-        "variables": {}
+        "variables": {
+            "AuthCacheCtrlrAvailable": {
+                "variable_name": "Available",
+                "attributes": {
+                    "Actual": true
+                }
+            },
+            "AuthCacheCtrlrEnabled": {
+                "variable_name": "Enabled",
+                "attributes": {
+                    "Actual": false
+                }
+            },
+            "AuthCacheStorage": {
+                "variable_name": "Storage",
+                "attributes": {
+                    "Actual": 0
+                }
+            }
+        }
     },
     {
         "name": "ChargingStation",
