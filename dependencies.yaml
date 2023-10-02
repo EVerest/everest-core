@@ -33,15 +33,15 @@ libfsm:
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: e4f1ccd
+  git_tag: v0.9.3
 # Josev
 Josev:
   git: https://github.com/EVerest/ext-switchev-iso15118.git
-  git_tag: a65bed9
+  git_tag: 2023.9.0
 # OpenV2G
 ext-openv2g:
   git: https://github.com/EVerest/ext-openv2g.git
-  git_tag: everest
+  git_tag: 2023.3.0
 # mbedtls
 ext-mbedtls:
   git: https://github.com/EVerest/ext-mbedtls.git
@@ -50,8 +50,8 @@ ext-mbedtls:
 # everest-testing
 everest-utils:
   git: https://github.com/EVerest/everest-utils.git
-  git_tag: v0.1.4
+  git_tag: v0.1.5
 # evse-security
 libevse-security:
   git: https://github.com/EVerest/libevse-security.git
-  git_tag: f621aab
+  git_tag: v0.1.0
