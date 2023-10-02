@@ -12,16 +12,14 @@ config/insert_device_model_config.py .
 import argparse
 from pathlib import Path
 import json
-
-STANDARDIZED_COMPONENTS = ["AlignedDataCtrlr", "AuthCacheCtrlr", "AuthCtrlr", "ClockCtrlr", "CustomizationCtrlr", "DeviceDataCtrlr", "DisplayMessageCtrlr",
-                           "InternalCtrlr", "ISO15118Ctrlr", "LocalAuthListCtrlr", "MonitoringCtrlr", "OCPPCommCtrlr", "ReservationCtrlr", "SampledDataCtrlr", "SecurityCtrlr", "SmartChargingCtrlr", "TariffCostCtrlr", "TxCtrlr"]
+from glob import glob
 
 
 def get_attribute_value(property_entry):
     if "default" in property_entry:
         return property_entry["default"]
     elif property_entry["type"] == "string":
-        return "dummy"
+        return ""
     elif property_entry["type"] == "integer":
         return 42
     elif property_entry["type"] == "object":
@@ -37,12 +35,31 @@ def get_attribute_value(property_entry):
 
 
 def generate_config(schemas: Path, out_file: Path, required_only):
-    config = {}
+    config = []
 
-    for component in STANDARDIZED_COMPONENTS:
-        with open(schemas / f"{component}.json") as component_schema_file:
+    print(schemas)
+
+    component_schema_dirs = glob((schemas / "custom").joinpath(
+        "*").as_posix()) + glob((schemas / "standardized").joinpath("*").as_posix())
+    component_schema_dirs = [Path(component_schema)
+                             for component_schema in component_schema_dirs]
+
+    for file in component_schema_dirs:
+        with open(file) as component_schema_file:
+
             component_schema = json.load(component_schema_file)
-            config[component] = {}
+            component_config = {
+                "name": component_schema["name"],
+            }
+
+            if "instance" in component_schema:
+                component_config["instance"] = component_schema["instance"]
+            if "evse_id" in component_schema:
+                component_config["evse_id"] = component_schema["evse_id"]
+            if "connector_id" in component_schema:
+                component_config["connector_id"] = component_schema["connector_id"]
+
+            component_variables = {}
 
             for unique_variable_name in component_schema["properties"]:
                 property_entry = component_schema["properties"][unique_variable_name]
@@ -58,7 +75,10 @@ def generate_config(schemas: Path, out_file: Path, required_only):
                     for variable_attribute in property_entry["attributes"]:
                         config_entry["attributes"][variable_attribute["type"]] = get_attribute_value(
                             property_entry)
-                    config[component][unique_variable_name] = config_entry
+                    component_variables[unique_variable_name] = config_entry
+
+            component_config["variables"] = component_variables
+            config.append(component_config)
 
     with open(out_file, "w") as out:
         out.write(json.dumps(config, indent=4))

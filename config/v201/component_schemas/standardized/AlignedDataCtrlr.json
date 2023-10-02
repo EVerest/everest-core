@@ -1,6 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "description": "Schema for AlignedDataCtrlr",
+  "name": "AlignedDataCtrlr",
   "type": "object",
   "properties": {
     "AlignedDataCtrlrEnabled": {
@@ -15,6 +16,7 @@
           "mutability": "ReadWrite"
         }
       ],
+      "default": "1",
       "type": "boolean"
     },
     "AlignedDataCtrlrAvailable": {
@@ -30,6 +32,7 @@
         }
       ],
       "description": "If this variable reports a value of true, Clock-Aligned Data is supported.",
+      "default": "1",
       "type": "boolean"
     },
     "AlignedDataInterval": {
@@ -46,6 +49,7 @@
         }
       ],
       "description": "Size (in seconds) of the clock-aligned data interval, intended to be transmitted in the MeterValuesRequest message.",
+      "default": "900",
       "type": "integer"
     },
     "AlignedDataMeasurands": {
@@ -61,6 +65,7 @@
         }
       ],
       "description": "Clock-aligned measurand(s) to be included in MeterValuesRequest, every AlignedDataInterval seconds.",
+      "default": "Energy.Active.Import.Register,Voltage",
       "type": "string"
     },
     "AlignedDataSendDuringIdle": {
@@ -91,6 +96,7 @@
         }
       ],
       "description": "If set to true, the Charging Station SHALL include signed meter values in the SampledValueType in the MeterValuesRequest to the CSMS.",
+      "default": "0",
       "type": "boolean"
     },
     "AlignedDataTxEndedInterval": {
@@ -107,6 +113,7 @@
         }
       ],
       "description": "Size (in seconds) of the clock-aligned data interval, intended to be transmitted in the TransactionEventRequest (eventType = Ended) message.",
+      "default": "60",
       "type": "integer"
     },
     "AlignedDataTxEndedMeasurands": {
@@ -122,6 +129,7 @@
         }
       ],
       "description": "Clock-aligned measurands to be included in the meterValues element of TransactionEventRequest (eventType = Ended), every SampledDataTxEndedInterval seconds from the start of the transaction.",
+      "default": "Energy.Active.Import.Register",
       "type": "string"
     }
   },

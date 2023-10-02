@@ -23,7 +23,8 @@ VARIABLE_ATTRIBUTE_TYPE_ENCODING = {
 }
 
 
-def insert_variable_attribute_value(component_name: str, variable_name: str, variable_instance: str, value: str, attribute_type: str, cur: sqlite3.Cursor):
+def insert_variable_attribute_value(component_name: str, component_instance: str, component_evse_id: str, component_connector_id: str,
+                                    variable_name: str, variable_instance: str, value: str, attribute_type: str, cur: sqlite3.Cursor):
     """Inserts a variable attribute value into the VARIABLE_ATTRIBUTE table
 
     Args:
@@ -40,13 +41,17 @@ def insert_variable_attribute_value(component_name: str, variable_name: str, var
                  "FROM VARIABLE "
                  "JOIN COMPONENT ON COMPONENT.ID = VARIABLE.COMPONENT_ID "
                  "WHERE COMPONENT.NAME = ? "
+                 "AND COMPONENT.INSTANCE IS ? "
+                 "AND COMPONENT.EVSE_ID IS ? "
+                 "AND COMPONENT.CONNECTOR_ID IS ? "
                  "AND VARIABLE.NAME = ? "
                  "AND VARIABLE.INSTANCE IS ?) "
                  "AND TYPE_ID = ?")
 
     # Execute the query with parameter values
     cur.execute(statement, (str(value).lower() if isinstance(value, bool) else value, component_name,
-                variable_name, variable_instance, VARIABLE_ATTRIBUTE_TYPE_ENCODING[attribute_type]))
+                component_instance, component_evse_id, component_connector_id, variable_name,
+                variable_instance, VARIABLE_ATTRIBUTE_TYPE_ENCODING[attribute_type]))
 
 
 def insert_config(config_file: Path, cur: sqlite3.Cursor):
@@ -59,10 +64,16 @@ def insert_config(config_file: Path, cur: sqlite3.Cursor):
     with open(config_file, 'r') as f:
         config: dict = json.loads(f.read())
         for component in config:
-            for variable_data in config[component].values():
+            component_name = component["name"]
+            component_instance = component.get("instance")
+            component_evse_id = component.get("evse_id")
+            component_connector_id = component.get("connector_id")
+
+            for variable_data in component["variables"].values():
                 for attribute_type, value in variable_data["attributes"].items():
                     insert_variable_attribute_value(
-                        component, variable_data["variable_name"], variable_data.get("instance"), value, attribute_type, cur)
+                        component_name, component_instance, component_evse_id, component_connector_id,
+                        variable_data["variable_name"], variable_data.get("instance"), value, attribute_type, cur)
 
 
 if __name__ == '__main__':
@@ -80,3 +91,5 @@ if __name__ == '__main__':
     insert_config(config, con.cursor())
     con.commit()
     con.close()
+
+    print(f"Successfully inserted variables from {config} into sqlite storage at {db_path}")

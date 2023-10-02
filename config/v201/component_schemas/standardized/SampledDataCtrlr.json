@@ -1,6 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "description": "Schema for SampledDataCtrlr",
+  "name": "SampledDataCtrlr",
   "type": "object",
   "properties": {
     "SampledDataCtrlrAvailable": {
@@ -16,6 +17,7 @@
         }
       ],
       "description": "If this variable reports a value of true, Sampled Data is supported",
+      "default": "1",
       "type": "boolean"
     },
     "SampledDataCtrlrEnabled": {
@@ -31,6 +33,7 @@
         }
       ],
       "description": "If this variable reports a value of true, Sampled Data is enabled.",
+      "default": "1",
       "type": "boolean"
     },
     "SampledDataSignReadings": {
@@ -62,6 +65,7 @@
         }
       ],
       "description": "Interval between sampling of metering (or other) data, intended to be transmitted in the TransactionEventRequest (eventType = Ended) message.",
+      "default": "60",
       "type": "integer"
     },
     "SampledDataTxEndedMeasurands": {
@@ -77,6 +81,7 @@
         }
       ],
       "description": "Sampled measurands to be included in the meterValues element of TransactionEventRequest (eventType = Ended), every SampledDataTxEndedInterval seconds from the start of the transaction.",
+      "default": "Energy.Active.Import.Register,Current.Import",
       "type": "string"
     },
     "SampledDataTxStartedMeasurands": {
@@ -92,6 +97,7 @@
         }
       ],
       "description": "Sampled measurand(s) to be taken at the start of any transaction to be included in the meterValues field of the first TransactionEventRequest message send at the start of a transaction (eventType = Started)",
+      "default": "Energy.Active.Import.Register,Current.Import",
       "type": "string"
     },
     "SampledDataTxUpdatedInterval": {
@@ -108,6 +114,7 @@
         }
       ],
       "description": "Interval between sampling of metering (or other) data, intended to be transmitted via TransactionEventRequest (eventType = Updated) messages",
+      "default": "120",
       "type": "integer"
     },
     "SampledDataTxUpdatedMeasurands": {
@@ -123,6 +130,7 @@
         }
       ],
       "description": "Sampled measurands to be included in the meterValues element of TransactionEventRequest (eventType = Ended)",
+      "default": "Energy.Active.Import.Register,Current.Import,Voltage,Power.Active.Import,Power.Reactive.Import,Frequency",
       "type": "string"
     },
     "RegisterValuesWithoutPhases": {

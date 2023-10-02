@@ -1,6 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "description": "Schema for DisplayMessageCtrlr",
+  "name": "DisplayMessageCtrlr",
   "type": "object",
   "properties": {
     "DisplayMessageCtrlrAvailable": {

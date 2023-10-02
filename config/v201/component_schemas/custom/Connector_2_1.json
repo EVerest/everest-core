@@ -2,6 +2,9 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "description": "Schema for Connector",
   "type": "object",
+  "name": "Connector",
+  "evse_id": 2,
+  "connector_id": 1,
   "properties": {
     "ConnectorAvailabilityState": {
       "variable_name": "AvailabilityState",

@@ -1,6 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "description": "Schema for SecurityCtrlr",
+  "name": "SecurityCtrlr",
   "type": "object",
   "properties": {
     "SecurityCtrlrEnabled": {
@@ -15,6 +16,7 @@
           "mutability": "ReadWrite"
         }
       ],
+      "default": "1",
       "type": "boolean"
     },
     "AdditionalRootCertificateCheck": {
@@ -30,6 +32,7 @@
         }
       ],
       "description": "Required for all security profiles except profile 1.",
+      "default": "0",
       "type": "boolean"
     },
     "BasicAuthPassword": {
@@ -45,6 +48,7 @@
         }
       ],
       "description": "The basic authentication password is used for HTTP Basic Authentication.",
+      "default": "DEADBEEFDEADBEEF",
       "type": "string"
     },
     "CertificateEntries": {
@@ -75,6 +79,7 @@
         }
       ],
       "description": "Number of times to resend a SignCertificateRequest when CSMS does nor return a signed certificate.",
+      "default": "3",
       "type": "integer"
     },
     "CertSigningWaitMinimum": {
@@ -91,6 +96,7 @@
         }
       ],
       "description": "Seconds to wait before generating another CSR in case CSMS does not return a signed certificate.",
+      "default": "30",
       "type": "integer"
     },
     "SecurityCtrlrIdentity": {
@@ -106,6 +112,7 @@
         }
       ],
       "description": "The Charging Station identity.",
+      "default": "cp001",
       "type": "string"
     },
     "MaxCertificateChainSize": {
@@ -136,6 +143,7 @@
         }
       ],
       "description": "The organization name of the CSO or an organization trusted by the CSO. This organization name is used to specify the subject field in the client certificate.",
+      "default": "Pionix",
       "type": "string"
     },
     "SecurityProfile": {
@@ -155,6 +163,7 @@
       "description": "The security profile used by the Charging Station.",
       "minimum": 1,
       "maximum": 3,
+      "default": "1",
       "type": "integer"
     }
   },

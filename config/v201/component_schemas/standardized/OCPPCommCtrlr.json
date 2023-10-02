@@ -1,6 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "description": "Schema for OCPPCommCtrlr",
+  "name": "OCPPCommCtrlr",
   "type": "object",
   "properties": {
     "OCPPCommCtrlrEnabled": {
@@ -30,6 +31,7 @@
         }
       ],
       "description": "Indicates the configuration profile the station uses at that moment to connect to the network.",
+      "default": "1",
       "type": "string"
     },
     "FileTransferProtocols": {
@@ -61,6 +63,7 @@
         }
       ],
       "description": "Interval of inactivity (no OCPP exchanges) with CSMS after which the Charging Station should send HeartbeatRequest.",
+      "default": "1800",
       "type": "integer"
     },
     "MessageTimeout": {
@@ -78,6 +81,7 @@
       ],
       "instance": "Default",
       "description": "MessageTimeout(Default) specifies after which time a message times out. It is configured in the network connection profile.",
+      "default": "60",
       "type": "integer"
     },
     "MessageAttemptInterval": {
@@ -94,6 +98,7 @@
       ],
       "instance": "TransactionEvent",
       "description": "MessageAttemptInterval(TransactionEvent) specifies long the Charging Station should wait before resubmitting a TransactionEventRequest message that the CSMS failed to process.",
+      "default": "10",
       "type": "integer"
     },
     "MessageAttempts": {
@@ -110,6 +115,7 @@
       ],
       "instance": "TransactionEvent",
       "description": "MessageAttempts(TransactionEvent) specifies how often the Charging Station should try to submit a TransactionEventRequest message when the CSMS fails to process it.",
+      "default": "5",
       "type": "integer"
     },
     "NetworkConfigurationPriority": {
@@ -125,6 +131,7 @@
         }
       ],
       "description": "A comma separated ordered list of the priority of the possible Network Connection Profiles.",
+      "default": "1",
       "type": "string"
     },
     "NetworkProfileConnectionAttempts": {
@@ -140,6 +147,7 @@
         }
       ],
       "description": "Specifies the number of connection attempts the Charging Station executes before switching to a different profile.",
+      "default": "3",
       "type": "integer"
     },
     "OfflineThreshold": {
@@ -156,6 +164,7 @@
         }
       ],
       "description": "When the offline period of a Charging Station exceeds the OfflineThreshold it is recommended to send a StatusNotificationRequest for all its Connectors.",
+      "default": "60",
       "type": "integer"
     },
     "PublicKeyWithSignedMeterValue": {
@@ -201,6 +210,7 @@
         }
       ],
       "description": "Number of times to retry a reset of the Charging Station when a reset was unsuccessful",
+      "default": "3",
       "type": "integer"
     },
     "RetryBackOffRandomRange": {
@@ -216,6 +226,7 @@
         }
       ],
       "description": "When the Charging Station is reconnecting, after a connection loss, it will use this variable as the maximum value for the random part of the back-off time",
+      "default": "2",
       "type": "integer"
     },
     "RetryBackOffRepeatTimes": {
@@ -231,6 +242,7 @@
         }
       ],
       "description": "When the Charging Station is reconnecting, after a connection loss, it will use this variable for the amount of times it will double the previous back-off time.",
+      "default": "2",
       "type": "integer"
     },
     "RetryBackOffWaitMinimum": {
@@ -246,6 +258,7 @@
         }
       ],
       "description": "When the Charging Station is reconnecting, after a connection loss, it will use this variable as the minimum back-off time, the first time it tries to reconnect.",
+      "default": "1",
       "type": "integer"
     },
     "UnlockOnEVSideDisconnect": {
@@ -261,6 +274,7 @@
         }
       ],
       "description": "When set to true, the Charging Station SHALL unlock the cable on the Charging Station side when the cable is unplugged at the EV. For an EVSE with only fixed cables, the mutability SHALL be ReadOnly and the actual value SHALL be false. For a charging station with fixed cables and sockets, the variable is only applicable to the sockets.",
+      "default": "1",
       "type": "boolean"
     },
     "WebSocketPingInterval": {
@@ -277,6 +291,7 @@
         }
       ],
       "description": "0 disables client side websocket Ping/Pong. In this case there is either no ping/pong or the server initiates the ping and client responds with Pong. Positive values are interpreted as number of seconds between pings. Negative values are not allowed.",
+      "default": "30",
       "type": "integer"
     },
     "FieldLength": {

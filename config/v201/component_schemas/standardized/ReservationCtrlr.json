@@ -1,6 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "description": "Schema for ReservationCtrlr",
+  "name": "ReservationCtrlr",
   "type": "object",
   "properties": {
     "ReservationCtrlrAvailable": {
@@ -16,6 +17,7 @@
         }
       ],
       "description": "Whether reservation is supported.",
+      "default": "1",
       "type": "boolean"
     },
     "ReservationCtrlrEnabled": {
@@ -31,6 +33,7 @@
         }
       ],
       "description": "Whether reservation is enabled.",
+      "default": "1",
       "type": "boolean"
     },
     "ReservationCtrlrNonEvseSpecific": {

@@ -62,11 +62,12 @@ int DeviceModelStorageSqlite::get_variable_id(const Component& component_id, con
 DeviceModelMap DeviceModelStorageSqlite::get_device_model() {
     std::map<Component, std::map<Variable, VariableMetaData>> device_model;
 
-    std::string select_query = "SELECT c.NAME, c.EVSE_ID, c.INSTANCE, v.NAME, v.INSTANCE, vc.DATATYPE_ID, "
-                               "vc.SUPPORTS_MONITORING, vc.UNIT, vc.MIN_LIMIT, vc.MAX_LIMIT, vc.VALUES_LIST "
-                               "FROM COMPONENT c "
-                               "JOIN VARIABLE v ON c.ID = v.COMPONENT_ID "
-                               "JOIN VARIABLE_CHARACTERISTICS vc ON v.VARIABLE_CHARACTERISTICS_ID = vc.ID";
+    std::string select_query =
+        "SELECT c.NAME, c.EVSE_ID, c.CONNECTOR_ID, c.INSTANCE, v.NAME, v.INSTANCE, vc.DATATYPE_ID, "
+        "vc.SUPPORTS_MONITORING, vc.UNIT, vc.MIN_LIMIT, vc.MAX_LIMIT, vc.VALUES_LIST "
+        "FROM COMPONENT c "
+        "JOIN VARIABLE v ON c.ID = v.COMPONENT_ID "
+        "JOIN VARIABLE_CHARACTERISTICS vc ON v.VARIABLE_CHARACTERISTICS_ID = vc.ID";
 
     SQLiteStatement select_stmt(this->db, select_query);
 
@@ -78,38 +79,41 @@ DeviceModelMap DeviceModelStorageSqlite::get_device_model() {
             auto evse_id = select_stmt.column_int(1);
             EVSE evse;
             evse.id = evse_id;
+            if (select_stmt.column_type(2) != SQLITE_NULL) {
+                evse.connectorId = select_stmt.column_int(2);
+            }
             component.evse = evse;
         }
 
-        if (select_stmt.column_type(2) != SQLITE_NULL) {
-            component.instance = select_stmt.column_text(2);
+        if (select_stmt.column_type(3) != SQLITE_NULL) {
+            component.instance = select_stmt.column_text(3);
         }
 
         Variable variable;
-        variable.name = select_stmt.column_text(3);
+        variable.name = select_stmt.column_text(4);
 
-        if (select_stmt.column_type(4) != SQLITE_NULL) {
-            variable.instance = select_stmt.column_text(4);
+        if (select_stmt.column_type(5) != SQLITE_NULL) {
+            variable.instance = select_stmt.column_text(5);
         }
 
         VariableCharacteristics characteristics;
-        characteristics.dataType = static_cast<DataEnum>(select_stmt.column_int(5));
-        characteristics.supportsMonitoring = select_stmt.column_int(6) != 0;
-
-        if (select_stmt.column_type(7) != SQLITE_NULL) {
-            characteristics.unit = select_stmt.column_text(7);
-        }
+        characteristics.dataType = static_cast<DataEnum>(select_stmt.column_int(6));
+        characteristics.supportsMonitoring = select_stmt.column_int(7) != 0;
 
         if (select_stmt.column_type(8) != SQLITE_NULL) {
-            characteristics.minLimit = select_stmt.column_double(8);
+            characteristics.unit = select_stmt.column_text(8);
         }
 
         if (select_stmt.column_type(9) != SQLITE_NULL) {
-            characteristics.maxLimit = select_stmt.column_double(9);
+            characteristics.minLimit = select_stmt.column_double(9);
         }
 
         if (select_stmt.column_type(10) != SQLITE_NULL) {
-            characteristics.valuesList = select_stmt.column_text(10);
+            characteristics.maxLimit = select_stmt.column_double(10);
+        }
+
+        if (select_stmt.column_type(11) != SQLITE_NULL) {
+            characteristics.valuesList = select_stmt.column_text(11);
         }
 
         VariableMetaData meta_data;

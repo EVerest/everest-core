@@ -1,6 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "description": "Schema for LocalAuthListCtrlr",
+  "name": "LocalAuthListCtrlr",
   "type": "object",
   "properties": {
     "LocalAuthListCtrlrAvailable": {
@@ -16,6 +17,7 @@
         }
       ],
       "description": "Local Authorization List is available.",
+      "default": "1",
       "type": "boolean"
     },
     "BytesPerMessageSendLocalList": {
@@ -46,6 +48,7 @@
         }
       ],
       "description": "If this variable exists and reports a value of true, Local Authorization List is enabled.",
+      "default": "1",
       "type": "boolean"
     },
     "LocalAuthListCtrlrEntries": {

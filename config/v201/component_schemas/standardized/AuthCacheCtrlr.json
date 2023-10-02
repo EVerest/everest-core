@@ -1,6 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "description": "Schema for AuthCacheCtrlr",
+  "name": "AuthCacheCtrlr",
   "type": "object",
   "properties": {
     "AuthCacheCtrlrAvailable": {
@@ -16,6 +17,7 @@
         }
       ],
       "description": "Authorization caching is available, but not necessarily enabled.",
+      "default": "1",
       "type": "boolean"
     },
     "AuthCacheCtrlrEnabled": {
@@ -30,7 +32,8 @@
           "mutability": "ReadWrite"
         }
       ],
-      "description": "If set to true, Authorizaiton caching is enabled.",
+      "description": "If set to true, Authorization caching is enabled.",
+      "default": "1",
       "type": "boolean"
     },
     "AuthCacheLifeTime": {

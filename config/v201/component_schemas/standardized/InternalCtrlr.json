@@ -1,6 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "description": "Schema for InternalCtrlr",
+  "name": "InternalCtrlr",
   "type": "object",
   "properties": {
     "InternalCtrlrEnabled": {
@@ -15,6 +16,7 @@
           "mutability": "ReadWrite"
         }
       ],
+      "default": "1",
       "type": "boolean"
     },
     "ChargePointId": {

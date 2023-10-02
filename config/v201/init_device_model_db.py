@@ -23,11 +23,12 @@ import sqlite3
 import argparse
 from pathlib import Path
 import json
+import os
 from glob import glob
 
 INIT_DEVICE_MODEL_SQL = "init_device_model.sql"
-STANDARDIZED_COMPONENT_SCHEMAS_DIR = Path("component_schemas/standardized")
-ADDITIONAL_COMPONENT_SCHEMAS_DIR = Path("component_schemas/additional")
+STANDARDIZED_COMPONENT_SCHEMAS_DIR = Path("standardized")
+CUSTOM_COMPONENT_SCHEMAS_DIR = Path("custom")
 
 DATATYPE_ENCODING = {
     "string": 0,
@@ -54,7 +55,7 @@ VARIABLE_ATTRIBUTE_TYPE_ENCODING = {
 }
 
 
-def execute_init_sql(con: sqlite3.Connection, init_device_model_sql_path: Path) :
+def execute_init_sql(con: sqlite3.Connection, init_device_model_sql_path: Path):
     """Executes the sql script to create tables and insert constant entries_summary_
 
     Args:INIT_DEVICE_MODEL_SQL
@@ -75,8 +76,7 @@ def insert_components(con: sqlite3.Connection, component_schema_dirs: list[Path]
     for component_schema_file in component_schema_dirs:
         with open(component_schema_file) as f:
             component_schema = json.load(f)
-            insert_component(con, component_schema,
-                             component_schema_file.name.replace(".json", ""))
+            insert_component(con, component_schema)
 
 
 def insert_variable_characteristics(characteristics: dict, cur: sqlite3.Cursor):
@@ -121,7 +121,7 @@ def insert_attributes(attributes: list[dict], variable_id: str, cur: sqlite3.Cur
                     "TYPE_ID) VALUES(?, ?, ?, ?, ?)", data)
 
 
-def insert_component(con: sqlite3.Connection, component_schema: dict, component_name: str):
+def insert_component(con: sqlite3.Connection, component_schema: dict):
     """Inserts the given component into the COMPONENT table
 
     Args:
@@ -130,8 +130,15 @@ def insert_component(con: sqlite3.Connection, component_schema: dict, component_
         component_name (str): name of the component
     """
     cur = con.cursor()
-    cur.execute(
-        f"INSERT OR REPLACE INTO COMPONENT (NAME) VALUES('{component_name}');")
+
+    component_name = component_schema.get("name")
+    instance = component_schema.get("instance")
+    evse_id = component_schema.get("evse_id")
+    connector_id = component_schema.get("connector_id")
+
+    statement = "INSERT OR REPLACE INTO COMPONENT (NAME, INSTANCE, EVSE_ID, CONNECTOR_ID) VALUES(?,?,?,?)"
+
+    cur.execute(statement, (component_name, instance, evse_id, connector_id))
     component_id = cur.lastrowid
     for variable_meta_data in component_schema.get("properties").values():
         variable_name = variable_meta_data["variable_name"]
@@ -157,24 +164,29 @@ if __name__ == '__main__':
         formatter_class=argparse.RawTextHelpFormatter, description="OCPP2.0.1 Database Initialization")
     parser.add_argument("--out", metavar='OUT', nargs='?', const='/tmp/ocpp201/device_model_storage.db', default='/tmp/ocpp201/device_model_storage.db', type=str,
                         help="Path to where the directory where the database file should be located", required=False)
-    parser.add_argument("--config_path", metavar='CONFIG-PATH', nargs='?', const='.', default='.', type=str,
+    parser.add_argument("--schemas", metavar='CONFIG-PATH', nargs='?', const='.', default='component_schemas', type=str,
                         help="Path to libocpp/config/v201", required=False)
 
     Path("/tmp/ocpp201").mkdir(parents=True, exist_ok=True)
 
     args = parser.parse_args()
     out_file = Path(args.out)
-    config_v201_path = Path(args.config_path)
-    init_device_model_sql_path = config_v201_path / INIT_DEVICE_MODEL_SQL
 
-    component_schema_dirs = glob((config_v201_path / STANDARDIZED_COMPONENT_SCHEMAS_DIR).joinpath(
-        "*").as_posix()) + glob((config_v201_path / ADDITIONAL_COMPONENT_SCHEMAS_DIR).joinpath("*").as_posix())
-    component_schmea_dirs = [Path(component_schema)
+    if os.path.exists(out_file):
+        os.remove(out_file)
+
+    schemas_path = Path(args.schemas)
+
+    component_schema_dirs = glob((schemas_path / STANDARDIZED_COMPONENT_SCHEMAS_DIR).joinpath(
+        "*").as_posix()) + glob((schemas_path / CUSTOM_COMPONENT_SCHEMAS_DIR).joinpath("*").as_posix())
+    component_schema_dirs = [Path(component_schema)
                              for component_schema in component_schema_dirs]
 
     con = sqlite3.connect(out_file)
-    execute_init_sql(con, init_device_model_sql_path)
-    insert_components(con, component_schmea_dirs)
+    execute_init_sql(con, INIT_DEVICE_MODEL_SQL)
+    insert_components(con, component_schema_dirs)
+
+    print(f"Successfully initialized device model sqlite storage using schemas directory {schemas_path} at {out_file}")
 
     con.commit()
     con.close()

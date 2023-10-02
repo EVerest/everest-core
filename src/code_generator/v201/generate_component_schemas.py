@@ -40,6 +40,7 @@ def generate_schemas(csv_path: Path, schema_dir: Path):
             # add new component to schemas if not yet present
             if component not in schemas:
                 schemas[component] = {
+                    "name": component,
                     "properties": {},
                     "description": f"Schema for {component}",
                     "required": []
@@ -114,7 +115,7 @@ def generate_schemas(csv_path: Path, schema_dir: Path):
     for key in schemas:
         builder = SchemaBuilder()
         builder.add_schema({"$schema": "http://json-schema.org/draft-07/schema#", "type": "object", "description": schemas[key]["description"],
-                           "required": schemas[key]["required"], "properties": schemas[key]["properties"]})
+                           "name":schemas[key]["name"], "required": schemas[key]["required"], "properties": schemas[key]["properties"]})
 
         file_path = schema_dir / f"{key}.json"
         with open(file_path, "w") as out:
