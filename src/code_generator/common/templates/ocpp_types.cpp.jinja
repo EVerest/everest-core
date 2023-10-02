@@ -38,7 +38,7 @@ k.{{property.name}}
 {%- endif %}
 {%- endfor %}
 {% if not type.properties|selectattr('required')|list|length %}
-        j = json ({});
+        j = json ({}, true);
 {%- else %}
 };
 {%- endif %}

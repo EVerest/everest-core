@@ -17,7 +17,7 @@ std::string HeartbeatRequest::get_type() const {
 
 void to_json(json& j, const HeartbeatRequest& k) {
     // the required parts of the message
-    j = json({});
+    j = json({}, true);
     // the optional parts of the message
     (void)k; // no elements to unpack, silence unused parameter warning
 }

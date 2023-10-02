@@ -274,7 +274,7 @@ std::ostream& operator<<(std::ostream& os, const IdTokenInfo& k) {
 /// \brief Conversion from a given Modem \p k to a given json object \p j
 void to_json(json& j, const Modem& k) {
     // the required parts of the message
-    j = json({});
+    j = json({}, true);
     // the optional parts of the message
     if (k.customData) {
         j["customData"] = k.customData.value();
@@ -435,7 +435,7 @@ std::ostream& operator<<(std::ostream& os, const EVSE& k) {
 /// \brief Conversion from a given ClearChargingProfile \p k to a given json object \p j
 void to_json(json& j, const ClearChargingProfile& k) {
     // the required parts of the message
-    j = json({});
+    j = json({}, true);
     // the optional parts of the message
     if (k.customData) {
         j["customData"] = k.customData.value();
@@ -556,7 +556,7 @@ std::ostream& operator<<(std::ostream& os, const CertificateHashDataType& k) {
 /// \brief Conversion from a given ChargingProfileCriterion \p k to a given json object \p j
 void to_json(json& j, const ChargingProfileCriterion& k) {
     // the required parts of the message
-    j = json({});
+    j = json({}, true);
     // the optional parts of the message
     if (k.customData) {
         j["customData"] = k.customData.value();
@@ -1046,7 +1046,7 @@ std::ostream& operator<<(std::ostream& os, const SignedMeterValue& k) {
 /// \brief Conversion from a given UnitOfMeasure \p k to a given json object \p j
 void to_json(json& j, const UnitOfMeasure& k) {
     // the required parts of the message
-    j = json({});
+    j = json({}, true);
     // the optional parts of the message
     if (k.customData) {
         j["customData"] = k.customData.value();
@@ -1855,7 +1855,7 @@ std::ostream& operator<<(std::ostream& os, const MonitoringData& k) {
 /// \brief Conversion from a given VariableAttribute \p k to a given json object \p j
 void to_json(json& j, const VariableAttribute& k) {
     // the required parts of the message
-    j = json({});
+    j = json({}, true);
     // the optional parts of the message
     if (k.customData) {
         j["customData"] = k.customData.value();

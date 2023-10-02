@@ -65,7 +65,7 @@ std::string ReportChargingProfilesResponse::get_type() const {
 
 void to_json(json& j, const ReportChargingProfilesResponse& k) {
     // the required parts of the message
-    j = json({});
+    j = json({}, true);
     // the optional parts of the message
     if (k.customData) {
         j["customData"] = k.customData.value();

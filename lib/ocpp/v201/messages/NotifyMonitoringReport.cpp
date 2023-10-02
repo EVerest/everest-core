@@ -75,7 +75,7 @@ std::string NotifyMonitoringReportResponse::get_type() const {
 
 void to_json(json& j, const NotifyMonitoringReportResponse& k) {
     // the required parts of the message
-    j = json({});
+    j = json({}, true);
     // the optional parts of the message
     if (k.customData) {
         j["customData"] = k.customData.value();

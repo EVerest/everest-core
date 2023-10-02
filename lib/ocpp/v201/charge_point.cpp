@@ -745,7 +745,7 @@ void ChargePoint::message_callback(const std::string& message) {
                 const auto error_message = "Received other message than BootNotificationResponse before "
                                            "having received an accepted BootNotificationResponse";
                 EVLOG_warning << error_message;
-                const auto call_error = CallError(enhanced_message.uniqueId, "SecurityError", "", json({}));
+                const auto call_error = CallError(enhanced_message.uniqueId, "SecurityError", "", json({}, true));
                 this->send(call_error);
             }
         }

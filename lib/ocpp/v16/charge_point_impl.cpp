@@ -896,7 +896,7 @@ void ChargePointImpl::message_callback(const std::string& message) {
             EVLOG_warning << "Received an unsupported message: " << enhanced_message.messageType;
             // FIXME(kai): however, only send a CALLERROR when it is a CALL message we just received
             if (enhanced_message.messageTypeId == MessageTypeId::CALL) {
-                auto call_error = CallError(enhanced_message.uniqueId, "NotSupported", "", json({}));
+                auto call_error = CallError(enhanced_message.uniqueId, "NotSupported", "", json({}, true));
                 this->send(call_error);
             } else if (enhanced_message.messageTypeId == MessageTypeId::CALLERROR) {
                 auto call_messagetype =
@@ -953,7 +953,7 @@ void ChargePointImpl::message_callback(const std::string& message) {
         EVLOG_error << "JSON exception during handling of message: " << e.what();
         if (json_message.is_array() && json_message.size() > MESSAGE_ID) {
             auto call_error = CallError(MessageId(json_message.at(MESSAGE_ID).get<std::string>()), "FormationViolation",
-                                        e.what(), json({}));
+                                        e.what(), json({}, true));
             this->send(call_error);
         }
     }

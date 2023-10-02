@@ -19,7 +19,7 @@ std::string GetConfigurationRequest::get_type() const {
 
 void to_json(json& j, const GetConfigurationRequest& k) {
     // the required parts of the message
-    j = json({});
+    j = json({}, true);
     // the optional parts of the message
     if (k.key) {
         if (j.size() == 0) {
@@ -60,7 +60,7 @@ std::string GetConfigurationResponse::get_type() const {
 
 void to_json(json& j, const GetConfigurationResponse& k) {
     // the required parts of the message
-    j = json({});
+    j = json({}, true);
     // the optional parts of the message
     if (k.configurationKey) {
         if (j.size() == 0) {

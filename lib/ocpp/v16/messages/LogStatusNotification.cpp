@@ -51,7 +51,7 @@ std::string LogStatusNotificationResponse::get_type() const {
 
 void to_json(json& j, const LogStatusNotificationResponse& k) {
     // the required parts of the message
-    j = json({});
+    j = json({}, true);
     // the optional parts of the message
     (void)k; // no elements to unpack, silence unused parameter warning
 }

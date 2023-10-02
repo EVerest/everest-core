@@ -157,7 +157,7 @@ std::ostream& operator<<(std::ostream& os, const SessionStartedReason& session_s
 
 void to_json(json& j, const Current& k) {
     // the required parts of the type
-    j = json({});
+    j = json({}, true);
     // the optional parts of the type
     if (k.DC) {
         j["DC"] = k.DC.value();
@@ -204,7 +204,7 @@ std::ostream& operator<<(std::ostream& os, const Current& k) {
 
 void to_json(json& j, const Voltage& k) {
     // the required parts of the type
-    j = json({});
+    j = json({}, true);
     // the optional parts of the type
     if (k.DC) {
         j["DC"] = k.DC.value();
