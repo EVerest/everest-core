@@ -170,10 +170,30 @@ void OCPP::init_evse_connector_map() {
     }
 }
 
+bool OCPP::all_evse_ready() {
+    for (auto const& [evse, ready] : this->evse_ready_map) {
+        if (!ready) {
+            return false;
+        }
+    }
+    EVLOG_info << "All EVSE ready. Starting OCPP1.6 service";
+    return true;
+}
+
 void OCPP::init() {
     invoke_init(*p_main);
     invoke_init(*p_auth_validator);
     invoke_init(*p_auth_provider);
+
+    for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
+        this->r_evse_manager.at(evse_id - 1)->subscribe_ready([this, evse_id](bool ready) {
+            std::lock_guard<std::mutex> lk(this->evse_ready_mutex);
+            if (ready) {
+                this->evse_ready_map[evse_id] = true;
+                this->evse_ready_cv.notify_one();
+            }
+        });
+    }
 }
 
 void OCPP::ready() {
@@ -611,6 +631,10 @@ void OCPP::ready() {
         evse_id++;
     }
 
+    std::unique_lock lk(this->evse_ready_mutex);
+    while (!this->all_evse_ready()) {
+        this->evse_ready_cv.wait(lk);
+    }
     this->charge_point->start();
 }
 

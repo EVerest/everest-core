@@ -85,6 +85,11 @@ private:
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
     std::filesystem::path ocpp_share_path;
+
+    std::map<int32_t, bool> evse_ready_map;
+    std::mutex evse_ready_mutex;
+    std::condition_variable evse_ready_cv;
+    bool all_evse_ready();
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

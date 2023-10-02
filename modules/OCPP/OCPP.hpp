@@ -120,6 +120,10 @@ private:
     EvseConnectorMap evse_connector_map; // provides access to OCPP connector id by using EVerests evse and connector id
     std::map<int32_t, int32_t>
         connector_evse_index_map;        // provides access to r_evse_manager index by using OCPP connector id
+    std::map<int32_t, bool> evse_ready_map;
+    std::mutex evse_ready_mutex;
+    std::condition_variable evse_ready_cv;
+    bool all_evse_ready();
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
