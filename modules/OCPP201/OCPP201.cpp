@@ -380,6 +380,13 @@ ocpp::v201::UploadLogStatusEnum get_upload_log_status_enum(types::system::LogSta
     }
 }
 
+void OCPP201::init_evse_ready_map() {
+    std::lock_guard<std::mutex> lk(this->evse_ready_mutex);
+    for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
+        this->evse_ready_map[evse_id] = false;
+    }
+}
+
 bool OCPP201::all_evse_ready() {
     for (auto const& [evse, ready] : this->evse_ready_map) {
         if (!ready) {
@@ -394,6 +401,8 @@ void OCPP201::init() {
     invoke_init(*p_main);
     invoke_init(*p_auth_provider);
     invoke_init(*p_auth_validator);
+
+    this->init_evse_ready_map();
 
     for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
         this->r_evse_manager.at(evse_id - 1)->subscribe_ready([this, evse_id](bool ready) {

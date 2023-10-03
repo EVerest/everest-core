@@ -117,6 +117,7 @@ private:
     std::thread signed_update_firmware_thread;
 
     void init_evse_connector_map();
+    void init_evse_ready_map();
     EvseConnectorMap evse_connector_map; // provides access to OCPP connector id by using EVerests evse and connector id
     std::map<int32_t, int32_t>
         connector_evse_index_map;        // provides access to r_evse_manager index by using OCPP connector id
