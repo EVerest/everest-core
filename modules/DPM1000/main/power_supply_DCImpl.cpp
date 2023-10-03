@@ -274,8 +274,7 @@ void power_supply_DCImpl::handle_setMode(types::power_supply_DC::Mode& value) {
 }
 
 void power_supply_DCImpl::handle_setExportVoltageCurrent(double& voltage, double& current) {
-    if (voltage <= config_voltage_limit && voltage >= config_min_voltage_limit && current <= config_current_limit &&
-        voltage * current <= config_power_limit) {
+    if (voltage <= config_voltage_limit && voltage >= config_min_voltage_limit && current <= config_current_limit) {
         this->voltage = voltage;
         this->current = current / 100.;
     } else {

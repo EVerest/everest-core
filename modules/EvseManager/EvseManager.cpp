@@ -1245,10 +1245,6 @@ bool EvseManager::powersupply_DC_set(double _voltage, double _current) {
                 current < powersupply_capabilities.min_import_current_A.value())
                 current = powersupply_capabilities.min_import_current_A.value();
 
-            if (powersupply_capabilities.max_import_power_W.has_value() &&
-                voltage * current > powersupply_capabilities.max_import_power_W.value())
-                current = powersupply_capabilities.max_import_power_W.value() / voltage;
-
             // Now it is within limits of DC power supply.
             // now also limit with the limits given by the energymanager.
             // FIXME: dont do this for now, see if the car reduces if we supply new limits.
@@ -1282,9 +1278,6 @@ bool EvseManager::powersupply_DC_set(double _voltage, double _current) {
 
             if (current < powersupply_capabilities.min_export_current_A)
                 current = powersupply_capabilities.min_export_current_A;
-
-            if (voltage * current > powersupply_capabilities.max_export_power_W)
-                current = powersupply_capabilities.max_export_power_W / voltage;
 
             // Now it is within limits of DC power supply.
             // now also limit with the limits given by the energymanager.
@@ -1387,7 +1380,9 @@ types::evse_manager::EVInfo EvseManager::get_ev_info() {
 }
 
 void EvseManager::apply_new_target_voltage_current() {
-    powersupply_DC_set(latest_target_voltage, latest_target_current);
+    if (latest_target_voltage > 0) {
+        powersupply_DC_set(latest_target_voltage, latest_target_current);
+    }
 }
 
 } // namespace module
