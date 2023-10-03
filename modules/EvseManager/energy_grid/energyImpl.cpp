@@ -358,7 +358,9 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
                     mod->charger->inform_new_evse_max_hlc_limits(evseMaxLimits);
 
                     // This is just neccessary to switch between charging and discharging
-                    mod->apply_new_target_voltage_current();
+                    if (target_voltage > 0) {
+                        mod->apply_new_target_voltage_current();
+                    }
 
                     // Note: If the limits are lower then before, we could tell the DC power supply to
                     // ramp down already here instead of waiting for the car to request less power.
