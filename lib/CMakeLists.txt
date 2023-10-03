@@ -12,6 +12,7 @@ target_sources(ocpp
         ocpp/common/types.cpp
         ocpp/common/utils.cpp
         ocpp/common/evse_security_impl.cpp
+        ocpp/common/evse_security.cpp
         ocpp/v16/charge_point.cpp
         ocpp/v16/database_handler.cpp
         ocpp/v16/charge_point_impl.cpp

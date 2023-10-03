@@ -2064,13 +2064,8 @@ void ChargePointImpl::update_ocsp_cache() {
             EVLOG_info << "Requesting OCSP response.";
             const auto ocsp_request_data = this->evse_security->get_ocsp_request_data();
             for (const auto& ocsp_request_entry : ocsp_request_data) {
-                ocpp::v201::OCSPRequestData ocsp_request;
-                ocsp_request.hashAlgorithm = ocpp::v201::conversions::string_to_hash_algorithm_enum(
-                    ocpp::conversions::hash_algorithm_enum_type_to_string(ocsp_request_entry.hashAlgorithm));
-                ocsp_request.issuerKeyHash = ocsp_request_entry.issuerKeyHash;
-                ocsp_request.issuerNameHash = ocsp_request_entry.issuerNameHash;
-                ocsp_request.responderURL = ocsp_request_entry.responderUrl;
-                ocsp_request.serialNumber = ocsp_request_entry.serialNumber;
+                ocpp::v201::OCSPRequestData ocsp_request =
+                    ocpp::evse_security_conversions::to_ocpp_v201(ocsp_request_entry);
                 this->data_transfer_pnc_get_certificate_status(ocsp_request);
             }
             this->database_handler->insert_ocsp_update();
@@ -2685,8 +2680,8 @@ void ChargePointImpl::data_transfer_pnc_get_certificate_status(const ocpp::v201:
                 if (cert_status_response.status == ocpp::v201::GetCertificateStatusEnum::Accepted) {
                     if (cert_status_response.ocspResult.has_value()) {
                         ocpp::CertificateHashDataType certificate_hash_data;
-                        certificate_hash_data.hashAlgorithm = ocpp::conversions::string_to_hash_algorithm_enum_type(
-                            ocpp::v201::conversions::hash_algorithm_enum_to_string(ocsp_request_data.hashAlgorithm));
+                        certificate_hash_data.hashAlgorithm =
+                            ocpp::evse_security_conversions::from_ocpp_v201(ocsp_request_data.hashAlgorithm);
                         certificate_hash_data.issuerKeyHash = ocsp_request_data.issuerKeyHash.get();
                         certificate_hash_data.issuerNameHash = ocsp_request_data.issuerNameHash.get();
                         certificate_hash_data.serialNumber = ocsp_request_data.serialNumber.get();
@@ -2845,7 +2840,8 @@ void ChargePointImpl::handle_data_transfer_pnc_get_installed_certificates(Call<D
             std::optional<std::vector<ocpp::v201::CertificateHashDataChain>> certificate_hash_data_chain_v201_opt;
             std::vector<ocpp::v201::CertificateHashDataChain> certificate_hash_data_chain_v201;
             for (const auto certificate_hash_data_chain_entry : certificate_hash_data_chains) {
-                certificate_hash_data_chain_v201.push_back(json(certificate_hash_data_chain_entry));
+                certificate_hash_data_chain_v201.push_back(
+                    ocpp::evse_security_conversions::to_ocpp_v201(certificate_hash_data_chain_entry));
             }
             certificate_hash_data_chain_v201_opt.emplace(certificate_hash_data_chain_v201);
             get_certificate_ids_response.certificateHashDataChain = certificate_hash_data_chain_v201_opt;
@@ -2878,9 +2874,8 @@ void ChargePointImpl::handle_data_transfer_delete_certificate(Call<DataTransferR
             ocpp::v201::DeleteCertificateResponse delete_cert_response;
             const ocpp::CertificateHashDataType certificate_hash_data(json(req.certificateHashData));
 
-            delete_cert_response.status = ocpp::v201::conversions::string_to_delete_certificate_status_enum(
-                ocpp::conversions::delete_certificate_result_to_string(
-                    this->evse_security->delete_certificate(certificate_hash_data)));
+            delete_cert_response.status = ocpp::evse_security_conversions::to_ocpp_v201(
+                this->evse_security->delete_certificate(certificate_hash_data));
 
             response.data.emplace(json(delete_cert_response).dump());
         } catch (const json::exception& e) {
@@ -2905,30 +2900,11 @@ void ChargePointImpl::handle_data_transfer_install_certificate(Call<DataTransfer
         try {
             const ocpp::v201::InstallCertificateRequest req = json::parse(call.msg.data.value());
             response.status = DataTransferStatus::Accepted;
-
-            ocpp::CaCertificateType ca_certificate_type;
-            if (req.certificateType == ocpp::v201::InstallCertificateUseEnum::V2GRootCertificate) {
-                ca_certificate_type = ocpp::CaCertificateType::V2G;
-            }
-            if (req.certificateType == ocpp::v201::InstallCertificateUseEnum::MORootCertificate) {
-                ca_certificate_type = ocpp::CaCertificateType::MO;
-            }
-            if (req.certificateType == ocpp::v201::InstallCertificateUseEnum::CSMSRootCertificate) {
-                ca_certificate_type = ocpp::CaCertificateType::CSMS;
-            }
-            if (req.certificateType == ocpp::v201::InstallCertificateUseEnum::ManufacturerRootCertificate) {
-                ca_certificate_type = ocpp::CaCertificateType::MF;
-            }
-            ocpp::v201::InstallCertificateResponse install_cert_response;
-
+            ocpp::CaCertificateType ca_certificate_type =
+                evse_security_conversions::from_ocpp_v201(req.certificateType);
             const auto result = this->evse_security->install_ca_certificate(req.certificate.get(), ca_certificate_type);
-            if (result == ocpp::InstallCertificateResult::Accepted) {
-                install_cert_response.status = ocpp::v201::InstallCertificateStatusEnum::Accepted;
-            } else if (result == ocpp::InstallCertificateResult::WriteError) {
-                install_cert_response.status = ocpp::v201::InstallCertificateStatusEnum::Failed;
-            } else {
-                install_cert_response.status = ocpp::v201::InstallCertificateStatusEnum::Rejected;
-            }
+            ocpp::v201::InstallCertificateResponse install_cert_response;
+            install_cert_response.status = ocpp::evse_security_conversions::to_ocpp_v201(result);
             response.data.emplace(json(install_cert_response).dump());
         } catch (const json::exception& e) {
             EVLOG_warning << "Could not parse data of DataTransfer message InstallCertificate.req: " << e.what();
