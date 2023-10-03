@@ -170,6 +170,13 @@ void OCPP::init_evse_connector_map() {
     }
 }
 
+void OCPP::init_evse_ready_map() {
+    std::lock_guard<std::mutex> lk(this->evse_ready_mutex);
+    for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
+        this->evse_ready_map[evse_id] = false;
+    }
+}
+
 bool OCPP::all_evse_ready() {
     for (auto const& [evse, ready] : this->evse_ready_map) {
         if (!ready) {
@@ -184,6 +191,8 @@ void OCPP::init() {
     invoke_init(*p_main);
     invoke_init(*p_auth_validator);
     invoke_init(*p_auth_provider);
+
+    this->init_evse_ready_map();
 
     for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
         this->r_evse_manager.at(evse_id - 1)->subscribe_ready([this, evse_id](bool ready) {
