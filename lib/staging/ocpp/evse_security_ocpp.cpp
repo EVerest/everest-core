@@ -76,8 +76,8 @@ std::string EvseSecurity::generate_certificate_signing_request(const ocpp::Certi
                                                                const std::string& country,
                                                                const std::string& organization,
                                                                const std::string& common) {
-    return this->r_security.call_generate_certificate_signing_request(types::evse_security::LeafCertificateType::CSMS,
-                                                                      country, organization, common);
+    return this->r_security.call_generate_certificate_signing_request(conversions::from_ocpp(certificate_type), country,
+                                                                      organization, common);
 }
 
 std::optional<ocpp::KeyPair> EvseSecurity::get_key_pair(const ocpp::CertificateSigningUseEnum& certificate_type) {
