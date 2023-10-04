@@ -1416,7 +1416,7 @@ void Charger::dlink_error() {
             currentState = EvseState::T_step_X1;
 
             // After returning from T_step_EF, go to Waiting for Auth (We are restarting the session)
-            t_step_EF_returnState == EvseState::WaitingForAuthentication;
+            t_step_EF_returnState = EvseState::WaitingForAuthentication;
             // [V2G3-M07-09] After applying state E/F, the EVSE shall switch to contol pilot state X1 or X2 as soon
             // as the EVSE is ready control for pilot incoming duty matching cycle requests: This is already handled
             // in the Auth step.
