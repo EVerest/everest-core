@@ -129,6 +129,7 @@ void evse_managerImpl::ready() {
         se.event = e;
 
         if (e == types::evse_manager::SessionEventEnum::SessionStarted) {
+            this->mod->selected_protocol = "IEC61851-1";
             types::evse_manager::SessionStarted session_started;
 
             session_started.timestamp =
@@ -194,6 +195,7 @@ void evse_managerImpl::ready() {
 
             se.transaction_started.emplace(transaction_started);
         } else if (e == types::evse_manager::SessionEventEnum::TransactionFinished) {
+            this->mod->selected_protocol = "Unknown";
             types::evse_manager::TransactionFinished transaction_finished;
 
             transaction_finished.timestamp =
@@ -246,7 +248,10 @@ void evse_managerImpl::ready() {
         publish_session_event(se);
         if (e == types::evse_manager::SessionEventEnum::SessionFinished) {
             session_uuid = "";
+            this->mod->selected_protocol = "Unknown";
         }
+
+        publish_selected_protocol(this->mod->selected_protocol);
     });
 
     // Note: Deprecated. Only kept for Node red compatibility, will be removed in the future

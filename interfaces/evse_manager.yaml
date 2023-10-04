@@ -182,3 +182,7 @@ vars:
   ready:
     description: Signals that the EVSE Manager is ready to start charging
     type: boolean
+  selected_protocol:
+    description: >-
+      Contains the selected protocol used for charging for informative purposes
+    type: string

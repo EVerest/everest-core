@@ -155,6 +155,8 @@ public:
 
     types::evse_manager::EVInfo get_ev_info();
     void apply_new_target_voltage_current();
+
+    std::string selected_protocol = "Unknown";
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:

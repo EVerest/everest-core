@@ -1,7 +1,11 @@
 description: >-
   The EVerest API module, exposing some internal functionality on an external
   MQTT connection.
-config: {}
+config:
+  charger_information_file:
+    description: Path to a file containing information about the charger like its serial number
+    type: string
+    default: ""
 provides:
   main:
     description: EVerest API

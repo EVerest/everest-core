@@ -68,7 +68,9 @@ public:
 
 namespace module {
 
-struct Conf {};
+struct Conf {
+    std::string charger_information_file;
+};
 
 class API : public Everest::ModuleBase {
 public:
@@ -106,6 +108,8 @@ private:
     bool running = true;
     std::vector<std::unique_ptr<SessionInfo>> info;
     std::vector<json> hw_capabilities_json;
+    std::string selected_protocol;
+    json charger_information;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
