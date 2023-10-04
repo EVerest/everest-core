@@ -32,6 +32,10 @@ void SessionLog::setPath(const std::string& path) {
     logpath_root = path;
 }
 
+void SessionLog::setMqtt(const std::function<void(nlohmann::json data)>& mqtt_provider) {
+    mqtt = mqtt_provider;
+}
+
 void SessionLog::enable() {
     enabled = true;
 }
@@ -194,6 +198,14 @@ void SessionLog::output(unsigned int typ, bool iso15118, const std::string& msg,
                                     origin, ts, origin + "&gt;" + target, (typ == 0 || typ == 2 ? msg : ""),
                                     (typ == 1 ? msg : ""), html_encode(xml_pretty), xml_hex, xml_base64);
         logfile_html.flush();
+
+        // output to api
+        nlohmann::json data;
+        data["origin"] = origin;
+        data["target"] = target;
+        data["iso15118"] = iso15118;
+        data["msg"] = msg;
+        this->mqtt(data);
     }
 }
 

@@ -21,7 +21,8 @@ void to_json(json& j, const NetworkDeviceInfo& k) {
                       {"blocked", k.blocked},
                       {"rfkill_id", k.rfkill_id},
                       {"ipv4", k.ipv4},
-                      {"ipv6", k.ipv6}});
+                      {"ipv6", k.ipv6},
+                      {"mac", k.mac}});
 }
 
 void to_json(json& j, const WifiInfo& k) {
@@ -98,6 +99,7 @@ void Setup::ready() {
         while (true) {
             this->publish_supported_features();
             this->publish_application_info();
+            this->publish_ap_state();
             std::this_thread::sleep_for(std::chrono::seconds(1));
         }
     });
@@ -234,6 +236,12 @@ void Setup::publish_hostname() {
     std::string hostname_var = this->var_base + "hostname";
 
     this->mqtt.publish(hostname_var, this->get_hostname());
+}
+
+void Setup::publish_ap_state() {
+    std::string ap_state_var = this->var_base + "ap_state";
+
+    this->mqtt.publish(ap_state_var, this->ap_state);
 }
 
 void Setup::set_default_language(std::string language) {
@@ -734,6 +742,7 @@ void Setup::check_online_status() {
 }
 
 void Setup::enable_ap() {
+    bool success = true;
     auto wpa_cli_output = this->run_application("wpa_cli", {"-i", this->config.ap_interface, "disconnect"});
     if (wpa_cli_output.exit_code != 0) {
         EVLOG_error << "Could not disconnect from wireless LAN";
@@ -751,6 +760,9 @@ void Setup::enable_ap() {
     if (add_static_ip_output.exit_code != 0) {
         EVLOG_error << "Could not add static ip to interface " << this->config.ap_interface;
     }
+
+    // FIXME
+    this->ap_state = "enabled";
 }
 
 void Setup::disable_ap() {
@@ -773,6 +785,8 @@ void Setup::disable_ap() {
     if (wpa_cli_output.exit_code != 0) {
         EVLOG_error << "Could not reconnect to wireless LAN";
     }
+
+    this->ap_state = "disabled";
 }
 
 static void add_addr_infos_to_device(const json& addr_infos, NetworkDeviceInfo& device) {
@@ -799,6 +813,7 @@ void Setup::populate_ip_addresses(std::vector<NetworkDeviceInfo>& device_info) {
             continue;
         }
 
+        device->mac = ip_object.at("address");
         add_addr_infos_to_device(ip_object.at("addr_info"), *device);
     }
 }
