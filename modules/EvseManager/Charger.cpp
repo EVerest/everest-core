@@ -635,11 +635,17 @@ void Charger::processEvent(types::board_support::Event cp_event) {
     }
 
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
+    runStateMachine();
+
     // Process all event actions that are independent of the current state
     processCPEventsIndependent(cp_event);
 
+    runStateMachine();
+
     // Process all events that depend on the current state
     processCPEventsState(cp_event);
+
+    runStateMachine();
 }
 
 void Charger::processCPEventsState(ControlPilotEvent cp_event) {
