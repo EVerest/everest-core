@@ -14,12 +14,15 @@ namespace slac::fsm::evse {
 enum class MatchingSubState {
     WAIT_FOR_START_ATTEN_CHAR,
     SOUNDING,
+    FINALIZE_SOUNDING,
     WAIT_FOR_ATTEN_CHAR_RSP,
     WAIT_FOR_SLAC_MATCH,
     RECEIVED_SLAC_MATCH,
     MATCH_COMPLETE,
     FAILED,
 };
+
+constexpr auto FINALIZE_SOUNDING_DELAY_MS = 45;
 
 using MatchingTimepoint = std::chrono::time_point<std::chrono::steady_clock>;
 
