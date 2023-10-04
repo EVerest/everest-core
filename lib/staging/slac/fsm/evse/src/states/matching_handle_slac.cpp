@@ -221,8 +221,9 @@ void MatchingState::handle_cm_atten_profile_ind(const slac::messages::cm_atten_p
     }
 
     // fall-through: all sounds captured
-    session_log(ctx, *session, "received all sounds, going to substate WAIT_FOR_ATTEN_CHAR_RSP");
-    finalize_sounding(*session);
+    session_log(ctx, *session, "received all sounds, going to substate FINALIZE_SOUNDING");
+    session->state = MatchingSubState::FINALIZE_SOUNDING;
+    session->set_next_timeout(FINALIZE_SOUNDING_DELAY_MS);
 }
 
 void MatchingState::handle_cm_atten_char_rsp(const slac::messages::cm_atten_char_rsp& msg) {
@@ -284,6 +285,7 @@ void MatchingState::handle_cm_slac_match_req(const slac::messages::cm_slac_match
 }
 
 void MatchingState::finalize_sounding(MatchingSession& session) {
+    session_log(ctx, session, "Finalize sounding, sending CM_ATTEN_CHAR_IND");
     session.state = MatchingSubState::WAIT_FOR_ATTEN_CHAR_RSP;
 
     auto atten_char = create_cm_atten_char_ind(session, ctx.slac_config.sounding_atten_adjustment);
