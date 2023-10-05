@@ -37,6 +37,8 @@ protected:
     virtual void handle_set_cp_state(types::ev_board_support::EvCpState& cp_state) override;
     virtual void handle_allow_power_on(bool& value) override;
     virtual void handle_diode_fail(bool& value) override;
+    virtual void handle_set_ac_max_current(double& current) override;
+    virtual void handle_set_three_phases(bool& three_phases) override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
     // insert your protected definitions here

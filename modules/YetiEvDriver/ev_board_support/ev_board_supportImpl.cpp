@@ -46,5 +46,13 @@ void ev_board_supportImpl::handle_diode_fail(bool& value) {
     // your code for cmd diode_fail goes here
 }
 
+void ev_board_supportImpl::handle_set_ac_max_current(double& current) {
+    // your code for cmd set_ac_max_current goes here
+}
+
+void ev_board_supportImpl::handle_set_three_phases(bool& three_phases) {
+    // your code for cmd set_three_phases goes here
+}
+
 } // namespace ev_board_support
 } // namespace module

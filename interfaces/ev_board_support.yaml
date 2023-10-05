@@ -22,10 +22,22 @@ cmds:
         description: 'True: allow power on, false: do not allow power on.'
         type: boolean
   diode_fail:
-    description: Todo
+    description: Setting a diode failure
     arguments:
       value:
-        description: True diode fail
+        description: "True: diode failure"
+        type: boolean
+  set_ac_max_current:
+    description: Setting the max current requested from the ev
+    arguments:
+      current:
+        description: Max current requested from the ev
+        type: number
+  set_three_phases:
+    description: Setting three or one phase support
+    arguments:
+      three_phases:
+        description: "True: Three phase support, False: One phase support"
         type: boolean
 vars:
   bsp_event:
