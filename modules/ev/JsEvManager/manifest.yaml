@@ -43,6 +43,14 @@ config:
     description: Target voltage requested by the EV
     type: integer
     default: 200
+  max_curent:
+    description: Ac max current in Ampere
+    type: number
+    default: 16
+  three_phases:
+    description: Support three phase
+    type: boolean
+    default: true
 provides:
   main:
     interface: car_simulator

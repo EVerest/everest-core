@@ -96,19 +96,19 @@ boot_module(async ({
   setup.provides.ev_board_support.register.set_cp_state((mod, args) => {
     switch (args.cp_state) {
       case 'A':
-        mod.simulation_data.cp_voltage = 12.0;
+        mod.simdata_setting.cp_voltage = 12.0;
         break;
       case 'B':
-        mod.simulation_data.cp_voltage = 9.0;
+        mod.simdata_setting.cp_voltage = 9.0;
         break;
       case 'C':
-        mod.simulation_data.cp_voltage = 6.0;
+        mod.simdata_setting.cp_voltage = 6.0;
         break;
       case 'D':
-        mod.simulation_data.cp_voltage = 3.0;
+        mod.simdata_setting.cp_voltage = 3.0;
         break;
       case 'E':
-        mod.simulation_data.error_e = true;
+        mod.simdata_setting.error_e = true;
         break;
     }
 
@@ -118,11 +118,19 @@ boot_module(async ({
   });
 
   setup.provides.ev_board_support.register.diode_fail((mod, args) => {
-    mod.simulation_data.diode_fail = args.value;
+    mod.simdata_setting.diode_fail = args.value;
   });
 
   setup.provides.ev_board_support.register.allow_power_on((mod, args) => {
-    // FIXME(piet): not implemented?
+    // Todo(sl): not implemented?
+  });
+
+  setup.provides.ev_board_support.register.set_ac_max_current((mod, args) => {
+    mod.ev_max_current = args.current;
+  });
+  setup.provides.ev_board_support.register.set_three_phases((mod, args) => {
+    if (args.three_phases) mod.ev_three_phases = 3.0
+    else mod.ev_three_phases = 1.0
   });
 
   // subscribe vars of used modules
@@ -188,8 +196,9 @@ function simulation_loop(mod) {
   if (mod.simulation_enabled) {
     check_error_rcd(mod);
     read_from_car(mod);
-    simulate_powermeter(mod);
     simulation_statemachine(mod);
+    addNoise(mod);
+    simulate_powermeter(mod);
     publish_ev_board_support(mod);
   }
 
@@ -445,8 +454,62 @@ function powerOff(mod) {
   }
 }
 
+function drawPower(mod, l1, l2, l3, n) {
+  mod.simdata_setting.currents.L1 = l1;
+  mod.simdata_setting.currents.L2 = l2;
+  mod.simdata_setting.currents.L3 = l3;
+  mod.simdata_setting.currents.N = n;
+}
+
+function addNoise(mod) {
+  const noise = (1 + (Math.random() - 0.5) * 0.02);
+  const lonoise = (1 + (Math.random() - 0.5) * 0.005);
+  const impedance = mod.simdata_setting.impedance / 1000.0;
+
+  mod.simulation_data.currents.L1 = mod.simdata_setting.currents.L1 * noise;
+  mod.simulation_data.currents.L2 = mod.simdata_setting.currents.L2 * noise;
+  mod.simulation_data.currents.L3 = mod.simdata_setting.currents.L3 * noise;
+  mod.simulation_data.currents.N = mod.simdata_setting.currents.N * noise;
+
+  mod.simulation_data.voltages.L1 = mod.simdata_setting.voltages.L1 * noise - impedance * mod.simulation_data.currents.L1;
+  mod.simulation_data.voltages.L2 = mod.simdata_setting.voltages.L2 * noise - impedance * mod.simulation_data.currents.L2;
+  mod.simulation_data.voltages.L3 = mod.simdata_setting.voltages.L3 * noise - impedance * mod.simulation_data.currents.L3;
+
+  mod.simulation_data.frequencies.L1 = mod.simdata_setting.frequencies.L1 * lonoise;
+  mod.simulation_data.frequencies.L2 = mod.simdata_setting.frequencies.L2 * lonoise;
+  mod.simulation_data.frequencies.L3 = mod.simdata_setting.frequencies.L3 * lonoise;
+
+  mod.simulation_data.cp_voltage = mod.simdata_setting.cp_voltage * noise;
+  mod.simulation_data.rcd_current = mod.simdata_setting.rcd_current * noise;
+  mod.simulation_data.pp_resistor = mod.simdata_setting.pp_resistor * noise;
+}
+
+// IEC61851 Table A.8
+function dutyCycleToAmps(dc) {
+  if (dc < 8.0 / 100.0) return 0;
+  if (dc < 85.0 / 100.0) return dc * 100.0 * 0.6;
+  if (dc < 96.0 / 100.0) return (dc * 100.0 - 64) * 2.5;
+  if (dc < 97.0 / 100.0) return 80;
+  return 0;
+}
+
 // Translate ADC readings for lo and hi part of PWM to IEC61851 states.
 function read_from_car(mod) {
+
+  let amps1 = 0.0;
+  let amps2 = 0.0;
+  let amps3 = 0.0;
+
+  let amps = dutyCycleToAmps(mod.pwm_duty_cycle);
+  if (amps > mod.ev_max_current) amps = mod.ev_max_current;
+
+  if (mod.relais_on === true && mod.ev_three_phases > 0) amps1 = amps;
+  else amps1 = 0;
+  if (mod.relais_on === true && mod.ev_three_phases > 1) amps2 = amps;
+  else amps2 = 0;
+  if (mod.relais_on === true && mod.ev_three_phases > 2) amps3 = amps;
+  else amps3 = 0;
+
   if (mod.pwm_running) {
     mod.pwm_voltage_hi = mod.simulation_data.cp_voltage;
     mod.pwm_voltage_lo = -12.0;
@@ -473,22 +536,29 @@ function read_from_car(mod) {
   // sth is wrong with negative signal
   if (mod.pwm_running && !is_voltage_in_range(cpLo, -12.0)) {
     // CP-PE short or signal somehow gone
-    if (is_voltage_in_range(cpLo, 0.0) && is_voltage_in_range(cpHi, 0.0)) mod.current_state = STATE_E;
-    // Diode fault
-    else if (is_voltage_in_range(cpHi + cpLo, 0.0)) {
+    if (is_voltage_in_range(cpLo, 0.0) && is_voltage_in_range(cpHi, 0.0)) {
+      mod.current_state = STATE_E;
+      drawPower(mod, 0, 0, 0, 0);
+    } else if (is_voltage_in_range(cpHi + cpLo, 0.0)) { // Diode fault
       mod.current_state = STATE_DF;
+      drawPower(mod, 0, 0, 0, 0);
     } else return;
   } else if (is_voltage_in_range(cpHi, 12.0)) {
     // +12V State A IDLE (open circuit)
     mod.current_state = STATE_A;
+    drawPower(mod, 0, 0, 0, 0);
   } else if (is_voltage_in_range(cpHi, 9.0)) {
     mod.current_state = STATE_B;
+    drawPower(mod, 0, 0, 0, 0);
   } else if (is_voltage_in_range(cpHi, 6.0)) {
     mod.current_state = STATE_C;
+    drawPower(mod, amps1, amps2, amps3, 0.2);
   } else if (is_voltage_in_range(cpHi, 3.0)) {
     mod.current_state = STATE_D;
+    drawPower(mod, amps1, amps2, amps3, 0.2);
   } else if (is_voltage_in_range(cpHi, -12.0)) {
     mod.current_state = STATE_F;
+    drawPower(mod, 0, 0, 0, 0);
   } else {
 
   }
@@ -582,6 +652,18 @@ function clearData(mod) {
 
   };
 
+  mod.simdata_setting = {
+    cp_voltage: 12.0,
+    pp_resistor: 220.1,
+    impedance: 500.0,
+    rcd_current: 0.1,
+    voltages: { L1: 230.0, L2: 230.0, L3: 230.0 },
+    currents: {
+      L1: 0.0, L2: 0.0, L3: 0.0, N: 0.0,
+    },
+    frequencies: { L1: 50.0, L2: 50.0, L3: 50.0 },
+  };
+
   mod.country_code = 'DE';
   mod.lastPwmUpdate = 0;
 
@@ -646,6 +728,8 @@ function clearData(mod) {
     }
   }
 
+  mod.ev_max_current = 0.0;
+  mod.ev_three_phases = 3;
 }
 
 function reset_powermeter(mod) {
@@ -845,7 +929,7 @@ function simulate_powermeter(mod) {
 }
 
 function read_pp_ampacity(mod) {
-  let pp_resistor = 500;
+  let pp_resistor = mod.simulation_data.pp_resistor;
   if (pp_resistor < 80.0 || pp_resistor > 2460) {
     evlog.error(`PP resistor value "${pp_resistor}" Ohm seems to be outside the allowed range.`);
     return 0.0

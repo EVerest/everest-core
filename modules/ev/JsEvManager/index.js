@@ -20,6 +20,9 @@ function enable(mod, { value }) {
 
   mod.uses.ev_board_support.call.allow_power_on({ value: false });
 
+  mod.uses.ev_board_support.call.set_ac_max_current({ current: globalconf.module.max_curent });
+  mod.uses.ev_board_support.call.set_three_phases({ three_phases: globalconf.module.three_phases });
+
   // Start/Stop execution timer
   if (value) {
     mod.enabled = true;
@@ -182,10 +185,6 @@ function car_statemachine(mod) {
   if (mod.state != mod.last_state) new_in_state = true;
   mod.last_state = mod.state;
 
-  if (new_in_state) {
-    evlog.info("New state: " + mod.state);
-  }
-
   switch (mod.state) {
     case 'unplugged':
       if (new_in_state) {
@@ -210,11 +209,10 @@ function car_statemachine(mod) {
       break;
     case 'charging_regulated':
       if (new_in_state || mod.pwm_duty_cycle != mod.last_pwm_duty_cycle) {
-        amps = dutyCycleToAmps(mod.pwm_duty_cycle / 100.0);
-        if (amps > mod.maxCurrent) amps = mod.maxCurrent;
         mod.last_pwm_duty_cycle = mod.pwm_duty_cycle;
         // do not draw power if EVSE paused by stopping PWM
-        if (amps > 5.9) {
+
+        if (mod.pwm_duty_cycle > 7.0 && mod.pwm_duty_cycle < 97.0) {
           mod.uses.ev_board_support.call.set_cp_state({ cp_state: 'C' });
         } else {
           mod.uses.ev_board_support.call.set_cp_state({ cp_state: 'B' });
@@ -223,6 +221,7 @@ function car_statemachine(mod) {
       break;
 
     case 'charging_fixed':
+      // Todo(sl): What to do here
       if (new_in_state) {
         // Also draw power if EVSE stopped PWM - this is a break the rules mode to test the charging implementation!
         mod.uses.ev_board_support.call.set_cp_state({ cp_state: 'C' });
@@ -252,7 +251,6 @@ function car_statemachine(mod) {
       }
       break;
     case 'bcb_toggle':
-      drawPower(mod, 0, 0, 0, 0);
       if (mod.bcb_toggle_C === true) {
         mod.simdata_setting.cp_voltage = 6.0;
         mod.bcb_toggle_C = false;
@@ -266,15 +264,6 @@ function car_statemachine(mod) {
       mod.state = 'unplugged';
       break;
   }
-}
-
-// IEC61851 Table A.8
-function dutyCycleToAmps(dc) {
-  if (dc < 8.0 / 100.0) return 0;
-  if (dc < 85.0 / 100.0) return dc * 100.0 * 0.6;
-  if (dc < 96.0 / 100.0) return (dc * 100.0 - 64) * 2.5;
-  if (dc < 97.0 / 100.0) return 80;
-  return 0;
 }
 
 function simulation_loop(mod) {
@@ -335,11 +324,6 @@ function parseSimCommands(mod, str) {
 function registerAllCmds(mod) {
   mod.registeredCmds = [];
 
-  // registerCmd(mod, 'cp', 1, (mod, c) => {
-  //   mod.simdata_setting.cp_voltage = c.args[0];
-  //   return true;
-  // });
-
   registerCmd(mod, 'sleep', 1, (mod, c) => {
     if (c.timeLeft === undefined) c.timeLeft = c.args[0] * 4 + 1;
     return (!(c.timeLeft-- > 0));
@@ -347,7 +331,7 @@ function registerAllCmds(mod) {
 
   registerCmd(mod, 'iec_wait_pwr_ready', 0, (mod, c) => {
     mod.state = 'pluggedin';
-    if (mod.pwm_duty_cycle > 7.0 && mod.pwm_duty_cycle < 97.0 && dutyCycleToAmps(mod.pwm_duty_cycle / 100.0) > 0) {
+    if (mod.pwm_duty_cycle > 7.0 && mod.pwm_duty_cycle < 97.0) {
       return true;
     }
     return false;
@@ -363,15 +347,19 @@ function registerAllCmds(mod) {
   });
 
   registerCmd(mod, 'draw_power_regulated', 2, (mod, c) => {
-    mod.maxCurrent = c.args[0];
-    mod.numPhases = c.args[1];
+    mod.uses.ev_board_support.call.set_ac_max_current({ current: c.args[0] });
+    if (c.args[1] === 3) mod.uses.ev_board_support.call.set_three_phases({ three_phases: true});
+    else mod.uses.ev_board_support.call.set_three_phases({ three_phases: false});
+    
     mod.state = 'charging_regulated';
     return true;
   });
 
+  // Todo(sl). Check power_fixed again 
   registerCmd(mod, 'draw_power_fixed', 2, (mod, c) => {
-    mod.maxCurrent = c.args[0];
-    mod.numPhases = c.args[1];
+    mod.uses.ev_board_support.call.set_ac_max_current({ current: c.args[0] });
+    if (c.args[1] === 3) mod.uses.ev_board_support.call.set_three_phases({ three_phases: true});
+    else mod.uses.ev_board_support.call.set_three_phases({ three_phases: false});
     mod.state = 'charging_fixed';
     return true;
   });
@@ -416,7 +404,6 @@ function registerAllCmds(mod) {
     }
     return false;
   });
-  // --- wip
 
   if (mod.uses_list.ev.length > 0) registerCmd(mod, 'iso_start_v2g_session', 2, (mod, c) => {
     if (c.args[0] === 'externalpayment') mod.payment = 'ExternalPayment';
@@ -432,7 +419,7 @@ function registerAllCmds(mod) {
       case 'dc_unique': mod.energymode = 'DC_unique'; break;
       default: return false;
     }
-    // TODO_SL: Check NumPhases with EnergyMode
+    // Todo(Sl): Check NumPhases with EnergyMode
 
     args = { PaymentOption: mod.payment, EnergyTransferMode: mod.energymode };
 
@@ -464,8 +451,9 @@ function registerAllCmds(mod) {
   });
 
   registerCmd(mod, 'iso_draw_power_regulated', 2, (mod, c) => {
-    mod.maxCurrent = c.args[0];
-    mod.numPhases = c.args[1];
+    mod.uses.ev_board_support.call.set_ac_max_current({ current: c.args[0] });
+    if (c.args[1] === 3) mod.uses.ev_board_support.call.set_three_phases({ three_phases: true});
+    else mod.uses.ev_board_support.call.set_three_phases({ three_phases: false});
     mod.state = 'iso_charging_regulated';
     return true;
   });
