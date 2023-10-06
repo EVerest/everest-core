@@ -2020,9 +2020,6 @@ std::optional<KeyValue> ChargePointConfiguration::getCustomKeyValue(CiString<50>
     try {
         KeyValue kv;
         kv.readonly = this->custom_schema["properties"][key]["readOnly"];
-        if (kv.readonly) {
-            return std::nullopt;
-        }
         kv.key = key;
         if (this->config["Custom"][key].is_string()) {
             kv.value = std::string(this->config["Custom"][key]);
