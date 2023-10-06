@@ -203,14 +203,6 @@ void OCPP::init() {
             }
         });
     }
-}
-
-void OCPP::ready() {
-    invoke_ready(*p_main);
-    invoke_ready(*p_auth_validator);
-    invoke_ready(*p_auth_provider);
-
-    this->init_evse_connector_map();
 
     this->ocpp_share_path = this->info.paths.share;
 
@@ -272,6 +264,14 @@ void OCPP::ready() {
         json_config.dump(), this->ocpp_share_path, user_config_path, std::filesystem::path(this->config.DatabasePath),
         sql_init_path, std::filesystem::path(this->config.MessageLogPath),
         std::make_shared<EvseSecurity>(*this->r_security));
+}
+
+void OCPP::ready() {
+    invoke_ready(*p_main);
+    invoke_ready(*p_auth_validator);
+    invoke_ready(*p_auth_provider);
+
+    this->init_evse_connector_map();
 
     this->charge_point->register_pause_charging_callback([this](int32_t connector) {
         if (this->connector_evse_index_map.count(connector)) {
