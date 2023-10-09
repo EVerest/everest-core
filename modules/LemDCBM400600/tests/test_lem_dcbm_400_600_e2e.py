@@ -84,14 +84,14 @@ def dcbm(dcbm_host, dcbm_port):
 
 
 @pytest.mark.asyncio
-async def test_lem_dcbm_e2e_get_powermeter(everest_test_instance, dcbm):
+async def test_lem_dcbm_e2e_powermeter_does_regular_publish(everest_test_instance, dcbm):
     for i in range(2):
         logging.info(f"waiting for {i + 1}th powermeter publications")
         await everest_test_instance.probe_module.poll_next_powermeter(1.25)
 
 
 @pytest.mark.asyncio
-async def test_lem_dcbm_e2e_get_powermeter(everest_test_instance):
+async def test_lem_dcbm_e2e_powermeter_meterid_correct(everest_test_instance):
     power_meter: Powermeter = await everest_test_instance.probe_module.poll_next_powermeter(1.25)
     assert re.match(r"^\d+$", power_meter.meter_id), f"got unexpected meter_id {power_meter.meter_id}"
 

@@ -245,12 +245,12 @@ OCMF_EXAMPLE_JSON2 = {
 
 
 @v1_api.get("/ocmf", response_class=PlainTextResponse)
-def get_last_transaction_ocmf(transactionId: str | None) -> str:
+def get_last_transaction_ocmf_by_transaction_id(transactionId: str | None) -> str:
     return f"OCMF|{OCMFPart1(**OCMF_EXAMPLE_JSON1)}|{OCMFPart2(**OCMF_EXAMPLE_JSON2)}"
 
 
 @v1_api.get("/ocmf/{transactionIndex}", response_class=PlainTextResponse)
-def get_last_transaction_ocmf(transactionIndex: int) -> str:
+def get_last_transaction_ocmf_by_transaction_index(transactionIndex: int) -> str:
     return f"OCMF|{OCMFPart1(**OCMF_EXAMPLE_JSON1)}|{OCMFPart2(**OCMF_EXAMPLE_JSON2)}"
 
 
