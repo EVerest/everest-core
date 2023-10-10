@@ -347,7 +347,7 @@
             "TimeSource": {
                 "variable_name": "TimeSource",
                 "attributes": {
-                    "Actual": ""
+                    "Actual": "Heartbeat"
                 }
             }
         }

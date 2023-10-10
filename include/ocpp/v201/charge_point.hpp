@@ -95,6 +95,7 @@ struct Callbacks {
         validate_network_profile_callback;
     std::optional<std::function<bool(const NetworkConnectionProfile& network_connection_profile)>>
         configure_network_connection_profile_callback;
+    std::optional<std::function<void(const ocpp::DateTime& currentTime)>> time_sync_callback;
 };
 
 /// \brief Class implements OCPP2.0.1 Charging Station
@@ -122,6 +123,9 @@ private:
     Everest::SteadyTimer heartbeat_timer;
     Everest::SteadyTimer boot_notification_timer;
     Everest::SteadyTimer aligned_meter_values_timer;
+
+    // time keeping
+    std::chrono::time_point<std::chrono::steady_clock> heartbeat_request_time;
 
     // states
     RegistrationStatusEnum registration_status;
@@ -301,6 +305,7 @@ private:
 
     // Functional Block G: Availability
     void handle_change_availability_req(Call<ChangeAvailabilityRequest> call);
+    void handle_heartbeat_response(CallResult<HeartbeatResponse> call);
 
     // Functional Block L: Firmware management
     void handle_firmware_update_req(Call<UpdateFirmwareRequest> call);

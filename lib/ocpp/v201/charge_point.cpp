@@ -22,7 +22,8 @@ bool Callbacks::all_callbacks_valid() const {
            (!this->validate_network_profile_callback.has_value() or
             this->validate_network_profile_callback.value() != nullptr) and
            (!this->configure_network_connection_profile_callback.has_value() or
-            this->configure_network_connection_profile_callback.value() != nullptr);
+            this->configure_network_connection_profile_callback.value() != nullptr) and
+           (!this->time_sync_callback.has_value() or this->time_sync_callback.value() != nullptr);
 }
 
 ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_structure,
@@ -675,6 +676,9 @@ void ChargePoint::handle_message(const EnhancedMessage<v201::MessageType>& messa
     case MessageType::TriggerMessage:
         this->handle_trigger_message(json_message);
         break;
+    case MessageType::HeartbeatResponse:
+        this->handle_heartbeat_response(json_message);
+        break;
     case MessageType::SendLocalList:
         this->handle_send_local_authorization_list_req(json_message);
         break;
@@ -1154,6 +1158,7 @@ void ChargePoint::status_notification_req(const int32_t evse_id, const int32_t c
 void ChargePoint::heartbeat_req() {
     HeartbeatRequest req;
 
+    heartbeat_request_time = std::chrono::steady_clock::now();
     ocpp::Call<HeartbeatRequest> call(req, this->message_queue->createMessageId());
     this->send<HeartbeatRequest>(call);
 }
@@ -1267,7 +1272,12 @@ void ChargePoint::handle_boot_notification_response(CallResult<BootNotificationR
             this->heartbeat_timer.interval([this]() { this->heartbeat_req(); }, std::chrono::seconds(msg.interval));
         }
         this->update_aligned_data_interval();
-
+        // B01.FR.06 Only use boot timestamp if TimeSource contains Heartbeat
+        if (this->callbacks.time_sync_callback.has_value() &&
+            this->device_model->get_value<std::string>(ControllerComponentVariables::TimeSource).find("Heartbeat") !=
+                std::string::npos) {
+            this->callbacks.time_sync_callback.value()(msg.currentTime);
+        }
         for (auto const& [evse_id, evse] : this->evses) {
             evse->trigger_status_notification_callbacks();
         }
@@ -1923,6 +1933,18 @@ void ChargePoint::handle_change_availability_req(Call<ChangeAvailabilityRequest>
     // execute change availability if possible
     if (is_change_availability_possible) {
         this->callbacks.change_availability_callback(msg, true);
+    }
+}
+
+void ChargePoint::handle_heartbeat_response(CallResult<HeartbeatResponse> call) {
+    if (this->callbacks.time_sync_callback.has_value() &&
+        this->device_model->get_value<std::string>(ControllerComponentVariables::TimeSource).find("Heartbeat") !=
+            std::string::npos) {
+        // the received currentTime was the time the CSMS received the heartbeat request
+        // to get a system time as accurate as possible keep the time-of-flight into account
+        auto timeOfFlight = (std::chrono::steady_clock::now() - this->heartbeat_request_time) / 2;
+        ocpp::DateTime currentTimeCompensated(call.msg.currentTime.to_time_point() + timeOfFlight);
+        this->callbacks.time_sync_callback.value()(currentTimeCompensated);
     }
 }
 
