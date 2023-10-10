@@ -1,0 +1,15 @@
+description: Simple example module written in Rust
+provides:
+  foobar:
+    interface: example
+    description: This implements an example interface that uses multiple framework features
+  my_store:
+    interface: kvs
+    description: This implements the kvs interface, mostly for testing multiple interfaces in one manifest
+requires:
+  their_store:
+    interface: kvs
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Holger Rapp
