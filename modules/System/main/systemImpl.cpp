@@ -374,14 +374,11 @@ systemImpl::handle_upload_logs(types::system::UploadLogsRequest& upload_logs_req
     return response;
 };
 
-bool systemImpl::handle_is_reset_allowed(types::system::ResetType& type, int& evse_id) {
-    if (evse_id != 0) {
-        return false;
-    }
+bool systemImpl::handle_is_reset_allowed(types::system::ResetType& type) {
     return true;
 }
 
-void systemImpl::handle_reset(types::system::ResetType& type, int& evse_id) {
+void systemImpl::handle_reset(types::system::ResetType& type) {
     if (type == types::system::ResetType::Soft) {
         EVLOG_info << "Performing soft reset";
         kill(getpid(), SIGINT);

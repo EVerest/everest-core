@@ -29,10 +29,6 @@ cmds:
         description: Type of the reset (Soft or Hard)
         type: string
         $ref: /system#/ResetType
-      evse_id:
-        description: Id of the EVSE which should be reset. The value 0 indicates that the whole charging station should be reset
-        type: integer
-        minimum: 0
     result:
       description: >-
         Indicates if the system can be reset
@@ -44,10 +40,6 @@ cmds:
         description: Type of the reset (Soft or Hard)
         type: string
         $ref: /system#/ResetType
-      evse_id:
-        description: Id of the EVSE which should be reset. The value 0 indicates that the whole charging station should be reset
-        type: integer
-        minimum: 0
   set_system_time:
     description: Call to set the system time of EVerest
     arguments:
