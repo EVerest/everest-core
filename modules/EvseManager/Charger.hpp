@@ -72,8 +72,8 @@ public:
                bool ac_with_soc_timeout, float soft_over_current_tolerance_percent,
                float soft_over_current_measurement_noise_A);
 
-    bool enable();
-    bool disable();
+    bool enable(int connector_id);
+    bool disable(int connector_id);
     void set_faulted();
     void set_hlc_error(types::evse_manager::ErrorEnum e);
     // switch to next charging session after Finished
@@ -237,6 +237,8 @@ private:
     EvseState lastState;
     types::evse_manager::ErrorEnum errorState{types::evse_manager::ErrorEnum::Internal};
     std::chrono::system_clock::time_point currentStateStarted;
+
+    bool connectorEnabled;
 
     float ampereToDutyCycle(float ampere);
 

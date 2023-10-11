@@ -66,6 +66,7 @@ private:
 
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
     // insert your private definitions here
+    bool connector_status_changed;
     types::evse_manager::Limits limits;
 
     std::string generate_session_uuid();
