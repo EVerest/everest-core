@@ -431,7 +431,7 @@ void Everest::telemetry_publish(const std::string& category, const std::string& 
 
     for (auto&& [key, entry] : telemetry) {
         if (std::any_of(TELEMETRY_RESERVED_KEYS.begin(), TELEMETRY_RESERVED_KEYS.end(),
-                        [&key](const auto& element) { return element == key; })) {
+                        [&key_ = key](const auto& element) { return element == key_; })) {
             EVLOG_warning << "Telemetry key " << key << " is reserved and will be overwritten.";
         } else {
             json data;
