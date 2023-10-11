@@ -18,11 +18,21 @@
 // headers for required interface implementations
 #include <generated/interfaces/evse_manager/Interface.hpp>
 #include <generated/interfaces/evse_security/Interface.hpp>
+#include <generated/interfaces/kvs/Interface.hpp>
 #include <generated/interfaces/system/Interface.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
 #include <ocpp/v201/charge_point.hpp>
+
+struct Evse {
+    uint16_t evse_id;
+    ocpp::v201::OperationalStatusEnum operational_state;
+    std::map<uint16_t, ocpp::v201::OperationalStatusEnum> connectors;
+    ocpp::v201::OperationalStatusEnum get_connector_state(uint16_t connector_id) {
+        return connectors.at(connector_id);
+    }
+};
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -43,7 +53,7 @@ public:
             std::unique_ptr<auth_token_validatorImplBase> p_auth_validator,
             std::unique_ptr<auth_token_providerImplBase> p_auth_provider,
             std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager, std::unique_ptr<systemIntf> r_system,
-            std::unique_ptr<evse_securityIntf> r_security, Conf& config) :
+            std::unique_ptr<evse_securityIntf> r_security, std::unique_ptr<kvsIntf> r_kvs, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_main(std::move(p_main)),
@@ -52,6 +62,7 @@ public:
         r_evse_manager(std::move(r_evse_manager)),
         r_system(std::move(r_system)),
         r_security(std::move(r_security)),
+        r_kvs(std::move(r_kvs)),
         config(config){};
 
     Everest::MqttProvider& mqtt;
@@ -61,15 +72,12 @@ public:
     const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;
     const std::unique_ptr<systemIntf> r_system;
     const std::unique_ptr<evse_securityIntf> r_security;
+    const std::unique_ptr<kvsIntf> r_kvs;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
     std::unique_ptr<ocpp::v201::ChargePoint> charge_point;
-    // holds operational states of EVSE
-    std::map<int32_t, ocpp::v201::OperationalStatusEnum> operational_evse_states;
-    // holds operational states of Connectors
-    std::map<int32_t, ocpp::v201::OperationalStatusEnum> operational_connector_states;
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
@@ -86,10 +94,16 @@ private:
     // insert your private definitions here
     std::filesystem::path ocpp_share_path;
 
+    // holds operational states of EVSE
+    ocpp::v201::OperationalStatusEnum cs_operational_status;
+    std::map<uint16_t, Evse> evses;
+
+    // key represents evse_id, value indicates if ready
     std::map<int32_t, bool> evse_ready_map;
     std::mutex evse_ready_mutex;
     std::condition_variable evse_ready_cv;
     void init_evse_ready_map();
+    void init_evses();
     bool all_evse_ready();
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };

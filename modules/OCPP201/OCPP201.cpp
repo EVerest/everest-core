@@ -387,6 +387,54 @@ void OCPP201::init_evse_ready_map() {
     }
 }
 
+void OCPP201::init_evses() {
+
+    if (this->r_kvs->call_exists("0")) {
+        this->cs_operational_status = ocpp::v201::OperationalStatusEnum::Inoperative;
+    } else {
+        this->cs_operational_status = ocpp::v201::OperationalStatusEnum::Operative;
+    }
+
+    int evse_id = 1;
+    for (const auto& evse : this->r_evse_manager) {
+        int connector_id = 1;
+        auto _evse = evse->call_get_evse();
+        if (_evse.id != evse_id) {
+            throw std::runtime_error("Configured evse_id(s) must start with 1 counting upwards");
+        }
+
+        if (_evse.connectors.size() == 0) {
+            _evse.connectors.push_back({1});
+        }
+
+        Evse module_evse;
+        module_evse.evse_id = evse_id;
+
+        if (this->r_kvs->call_exists(std::to_string(evse_id))) {
+            module_evse.operational_state = ocpp::v201::OperationalStatusEnum::Inoperative;
+        } else {
+            module_evse.operational_state = ocpp::v201::OperationalStatusEnum::Operative;
+        }
+
+        for (const auto& connector : _evse.connectors) {
+            if (connector.id != connector_id) {
+                throw std::runtime_error("Configured connector_id(s) must start with 1 counting upwards");
+            }
+
+            auto connector_id_str = std::to_string(evse_id) + "." + std::to_string(connector_id);
+            if (this->r_kvs->call_exists(connector_id_str)) {
+                module_evse.connectors[connector_id] = ocpp::v201::OperationalStatusEnum::Inoperative;
+            } else {
+                module_evse.connectors[connector_id] = ocpp::v201::OperationalStatusEnum::Operative;
+            }
+            connector_id++;
+        }
+
+        this->evses[_evse.id] = module_evse;
+        evse_id++;
+    }
+}
+
 bool OCPP201::all_evse_ready() {
     for (auto const& [evse, ready] : this->evse_ready_map) {
         if (!ready) {
@@ -421,7 +469,7 @@ void OCPP201::ready() {
     invoke_ready(*p_auth_validator);
 
     this->ocpp_share_path = this->info.paths.share;
-    this->operational_evse_states[0] = ocpp::v201::OperationalStatusEnum::Operative;
+    this->cs_operational_status = ocpp::v201::OperationalStatusEnum::Operative;
 
     const auto device_model_database_path = [&]() {
         const auto config_device_model_path = fs::path(this->config.DeviceModelDatabasePath);
@@ -452,9 +500,11 @@ void OCPP201::ready() {
     ocpp::v201::Callbacks callbacks;
     callbacks.is_reset_allowed_callback = [this](const std::optional<const int32_t> evse_id,
                                                  const ocpp::v201::ResetEnum& type) {
+        if (evse_id.has_value()) {
+            return false; // Reset of EVSE is currently not supported
+        }
         try {
-            const auto _evse_id = evse_id.value_or(0);
-            return this->r_system->call_is_reset_allowed(types::system::ResetType::NotSpecified, _evse_id);
+            return this->r_system->call_is_reset_allowed(types::system::ResetType::NotSpecified);
         } catch (std::out_of_range& e) {
             EVLOG_warning
                 << "Could not convert OCPP ResetEnum to EVerest ResetType while executing is_reset_allowed_callback.";
@@ -462,10 +512,12 @@ void OCPP201::ready() {
         }
     };
     callbacks.reset_callback = [this](const std::optional<const int32_t> evse_id, const ocpp::v201::ResetEnum& type) {
+        if (evse_id.has_value()) {
+            EVLOG_warning << "Reset of EVSE is currently not supported";
+            return;
+        }
         try {
-            const auto _evse_id = evse_id.value_or(0);
-            this->r_system->call_reset(types::system::ResetType::NotSpecified,
-                                       _evse_id);
+            this->r_system->call_reset(types::system::ResetType::NotSpecified);
         } catch (std::out_of_range& e) {
             EVLOG_warning << "Could not convert OCPP ResetEnum to EVerest ResetType while executing reset_callack. No "
                              "reset will be executed.";
@@ -476,38 +528,48 @@ void OCPP201::ready() {
                                                     const bool persist) {
         // FIXME: use persist flag!
         if (request.evse.has_value()) {
-            if (request.evse.value().connectorId.has_value()) {
-                // Connector is adressed
-                // Today EVSE in EVerest has always one connector
-                this->operational_connector_states[request.evse.value().id] = request.operationalStatus;
+            auto evse_id = request.evse.value().id;
+            auto connector_id = request.evse.value().connectorId;
+            if (request.operationalStatus == ocpp::v201::OperationalStatusEnum::Operative) {
+                // change to operative
+                if (connector_id.has_value()) {
+                    // connector is addressed
+                    this->evses.at(evse_id).connectors.at(connector_id.value()) =
+                        ocpp::v201::OperationalStatusEnum::Operative;
+                    auto connector_id_str = std::to_string(evse_id) + "." + std::to_string(connector_id.value());
+                    this->r_kvs->call_delete(connector_id_str);
+                } else {
+                    // EVSE is addressed
+                    this->evses.at(evse_id).operational_state = ocpp::v201::OperationalStatusEnum::Operative;
+                    this->r_kvs->call_delete(std::to_string(evse_id));
+                }
+                this->r_evse_manager.at(evse_id - 1)->call_enable(request.evse.value().connectorId.value_or(0));
             } else {
-                // EVSE is adressed
-                this->operational_evse_states[request.evse.value().id] = request.operationalStatus;
-            }
-
-            if (this->operational_evse_states[0] == ocpp::v201::OperationalStatusEnum::Operative and
-                this->operational_evse_states[request.evse.value().id] ==
-                    ocpp::v201::OperationalStatusEnum::Operative and
-                this->operational_connector_states[request.evse.value().id] ==
-                    ocpp::v201::OperationalStatusEnum::Operative) {
-                this->r_evse_manager.at(request.evse.value().id - 1)
-                    ->call_enable(request.evse.value().connectorId.value_or(0));
-            } else if (request.operationalStatus == ocpp::v201::OperationalStatusEnum::Inoperative) {
-                this->r_evse_manager.at(request.evse.value().id - 1)
-                    ->call_disable(request.evse.value().connectorId.value_or(0));
+                // change to inoperative
+                if (connector_id.has_value()) {
+                    // connector is addressed
+                    this->evses.at(evse_id).connectors.at(connector_id.value()) =
+                        ocpp::v201::OperationalStatusEnum::Inoperative;
+                    auto connector_id_str = std::to_string(evse_id) + "." + std::to_string(connector_id.value());
+                    this->r_kvs->call_store(connector_id_str, true);
+                } else {
+                    // EVSE is addressed
+                    this->evses.at(evse_id).operational_state = ocpp::v201::OperationalStatusEnum::Inoperative;
+                    this->r_kvs->call_store(std::to_string(evse_id), true);
+                }
+                this->r_evse_manager.at(evse_id - 1)->call_disable(request.evse.value().connectorId.value_or(0));
             }
         } else {
             // whole charging station is adressed
-            this->operational_evse_states[0] = request.operationalStatus;
-            for (const auto& evse : this->r_evse_manager) {
-                if (this->operational_evse_states[0] == ocpp::v201::OperationalStatusEnum::Operative and
-                    this->operational_evse_states[evse->call_get_evse().id] ==
-                        ocpp::v201::OperationalStatusEnum::Operative and
-                    this->operational_connector_states[evse->call_get_evse().id] ==
-                        ocpp::v201::OperationalStatusEnum::Operative) {
-                    evse->call_enable(0);
+            this->cs_operational_status = request.operationalStatus;
+            for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
+                if (this->cs_operational_status == ocpp::v201::OperationalStatusEnum::Operative and
+                    this->evses.at(evse_id).operational_state == ocpp::v201::OperationalStatusEnum::Operative) {
+                    this->r_evse_manager.at(evse_id - 1)->call_enable(0);
+                    this->r_kvs->call_delete("0");
                 } else if (request.operationalStatus == ocpp::v201::OperationalStatusEnum::Inoperative) {
-                    evse->call_disable(0);
+                    this->r_evse_manager.at(evse_id - 1)->call_disable(0);
+                    this->r_kvs->call_store("0", true);
                 }
             }
         }
@@ -587,30 +649,11 @@ void OCPP201::ready() {
 
     const auto sql_init_path = this->ocpp_share_path / INIT_SQL;
 
-    // key represents the evse_id, value represents the number of connectors
+    this->init_evses();
+
     std::map<int32_t, int32_t> evse_connector_structure;
-    int evse_id = 1;
-    for (const auto& evse : this->r_evse_manager) {
-        int connector_id = 1;
-        const auto _evse = evse->call_get_evse();
-        if (_evse.id != evse_id) {
-            throw std::runtime_error("Configured evse_id(s) must start with 1 counting upwards");
-        }
-
-        int32_t number_of_connectors = _evse.connectors.size();
-        if (number_of_connectors == 0) {
-            number_of_connectors = 1;
-        }
-
-        for (const auto& connector : _evse.connectors) {
-            if (connector.id != connector_id) {
-                throw std::runtime_error("Configured connector_id(s) must start with 1 counting upwards");
-            }
-            connector_id++;
-        }
-
-        evse_connector_structure.emplace(_evse.id, number_of_connectors);
-        evse_id++;
+    for (const auto [evse_id, evse] : this->evses) {
+        evse_connector_structure[evse_id] = evse.connectors.size();
     }
 
     this->charge_point = std::make_unique<ocpp::v201::ChargePoint>(
@@ -628,7 +671,7 @@ void OCPP201::ready() {
                              [this](const std::string& data) { this->charge_point->disconnect_websocket(); });
     }
 
-    evse_id = 1;
+    int evse_id = 1;
     for (const auto& evse : this->r_evse_manager) {
         evse->subscribe_session_event([this, evse_id](types::evse_manager::SessionEvent session_event) {
             const auto connector_id = session_event.connector_id.value_or(1);
@@ -706,13 +749,28 @@ void OCPP201::ready() {
                 break;
             }
             case types::evse_manager::SessionEventEnum::Disabled: {
-                this->charge_point->on_unavailable(evse_id, connector_id);
+                if (session_event.connector_id.has_value()) {
+                    this->charge_point->on_unavailable(evse_id, connector_id);
+                } else {
+                    for (size_t index = 1; index <= this->evses.at(evse_id).connectors.size(); index++) {
+                        this->charge_point->on_unavailable(evse_id, index);
+                    }
+                }
                 break;
             }
             case types::evse_manager::SessionEventEnum::Enabled: {
-                this->operational_evse_states[evse_id] = ocpp::v201::OperationalStatusEnum::Operative;
-                this->operational_connector_states[evse_id] = ocpp::v201::OperationalStatusEnum::Operative;
-                this->charge_point->on_operative(evse_id, connector_id);
+                if (session_event.connector_id.has_value()) {
+                    if (this->evses.at(evse_id).operational_state == ocpp::v201::OperationalStatusEnum::Operative) {
+                        this->charge_point->on_operative(evse_id, connector_id);
+                    }
+                } else {
+                    for (size_t index = 1; index <= this->evses.at(evse_id).connectors.size(); index++) {
+                        if (this->evses.at(evse_id).connectors.at(index) ==
+                            ocpp::v201::OperationalStatusEnum::Operative) {
+                            this->charge_point->on_operative(evse_id, index);
+                        }
+                    }
+                }
                 break;
             }
             }
@@ -738,6 +796,19 @@ void OCPP201::ready() {
     std::unique_lock lk(this->evse_ready_mutex);
     while (!this->all_evse_ready()) {
         this->evse_ready_cv.wait(lk);
+    }
+
+    // align state machine based on operational status
+    for (const auto& [evse_id, evse] : this->evses) {
+        if (evse.operational_state == ocpp::v201::OperationalStatusEnum::Inoperative or
+            this->cs_operational_status == ocpp::v201::OperationalStatusEnum::Inoperative) {
+            this->r_evse_manager.at(evse_id - 1)->call_disable(0);
+        }
+        for (const auto [connector_id, operational_state] : evse.connectors) {
+            if (operational_state == ocpp::v201::OperationalStatusEnum::Inoperative) {
+                this->r_evse_manager.at(evse_id - 1)->call_disable(connector_id);
+            }
+        }
     }
     this->charge_point->start();
 }
