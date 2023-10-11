@@ -22,7 +22,7 @@ private:
     std::thread handle;
     std::promise<void> exitSignal;
     std::future<void> exitFuture;
-    bool started;
+    std::atomic_bool started;
 };
 } // namespace Everest
 

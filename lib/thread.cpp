@@ -17,12 +17,15 @@ void Thread::stop() {
         exitSignal.set_value();
         if (handle.joinable())
             handle.join();
+        started = false;
     }
 }
 
 bool Thread::shouldExit() {
-    if (exitFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+    if (exitFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+        started = false;
         return true;
+    }
     return false;
 }
 
