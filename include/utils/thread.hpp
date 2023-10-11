@@ -10,7 +10,6 @@
 namespace Everest {
 class Thread {
 public:
-    Thread();
     ~Thread();
 
     void stop();
@@ -20,9 +19,7 @@ public:
 
 private:
     std::thread handle;
-    std::promise<void> exitSignal;
-    std::future<void> exitFuture;
-    std::atomic_bool started;
+    std::atomic_bool exit_signal{false};
 };
 } // namespace Everest
 

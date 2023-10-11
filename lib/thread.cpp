@@ -3,35 +3,26 @@
 #include <utils/thread.hpp>
 
 namespace Everest {
-Thread::Thread() {
-    exitFuture = exitSignal.get_future();
-    started = false;
-}
 
 Thread::~Thread() {
     stop();
 }
 
 void Thread::stop() {
-    if (started) {
-        exitSignal.set_value();
-        if (handle.joinable())
-            handle.join();
-        started = false;
+    if (handle.joinable()) {
+        exit_signal = true;
+        handle.join();
     }
+    exit_signal = false;
 }
 
 bool Thread::shouldExit() {
-    if (exitFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-        started = false;
-        return true;
-    }
-    return false;
+    return exit_signal;
 }
 
 void Thread::operator=(std::thread&& t) {
+    stop();
     handle = std::move(t);
-    started = true;
 }
 
 } // namespace Everest
