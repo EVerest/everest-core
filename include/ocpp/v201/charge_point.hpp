@@ -183,7 +183,16 @@ private:
     void handle_message(const EnhancedMessage<v201::MessageType>& message);
     void message_callback(const std::string& message);
     void update_aligned_data_interval();
-    bool is_change_availability_possible(const ChangeAvailabilityRequest& req);
+
+    /// \brief Helper function to determine if there is any active transaction for the given \p evse
+    /// \param evse if optional is not set, this function will check if there is any transaction active f or the whole
+    /// charging station
+    /// \return
+    bool any_transaction_active(const std::optional<EVSE>& evse);
+
+    /// \brief Helper function to determine if the requested change results in a state that the Connector(s) is/are
+    /// already in \param request \return
+    bool is_already_in_state(const ChangeAvailabilityRequest& request);
     bool is_valid_evse(const EVSE& evse);
     void handle_scheduled_change_availability_requests(const int32_t evse_id);
     void handle_variable_changed(const SetVariableData& set_variable_data);

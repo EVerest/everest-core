@@ -914,17 +914,59 @@ void ChargePoint::update_aligned_data_interval() {
     }
 }
 
-bool ChargePoint::is_change_availability_possible(const ChangeAvailabilityRequest& req) {
-    if (req.evse.has_value() and this->evses.at(req.evse.value().id)->has_active_transaction()) {
-        return false;
-    } else {
+bool ChargePoint::any_transaction_active(const std::optional<EVSE>& evse) {
+    if (!evse.has_value()) {
         for (auto const& [evse_id, evse] : this->evses) {
             if (evse->has_active_transaction()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    if (this->evses.at(evse.value().id)->has_active_transaction()) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool operational_status_matches_connector_status(ConnectorStatusEnum connector_status,
+                                                 OperationalStatusEnum operational_status) {
+    return (operational_status == OperationalStatusEnum::Inoperative and
+            connector_status == ConnectorStatusEnum::Unavailable) or
+           (operational_status == OperationalStatusEnum::Operative and
+            (connector_status != ConnectorStatusEnum::Unavailable or connector_status != ConnectorStatusEnum::Faulted));
+}
+
+bool ChargePoint::is_already_in_state(const ChangeAvailabilityRequest& request) {
+    if (!request.evse.has_value()) {
+        for (const auto& [evse_id, evse] : this->evses) {
+            for (int connector_id = 1; connector_id <= evse->get_number_of_connectors(); connector_id++) {
+                auto status = evse->get_state(connector_id);
+                if (!operational_status_matches_connector_status(status, request.operationalStatus)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    const auto evse_id = request.evse.value().id;
+    if (request.evse.value().connectorId.has_value()) {
+        const auto connector_id = request.evse.value().connectorId.value();
+        const auto status = this->evses.at(evse_id)->get_state(connector_id);
+        return operational_status_matches_connector_status(status, request.operationalStatus);
+    } else {
+        for (int connector_id = 1; connector_id <= this->evses.at(evse_id)->get_number_of_connectors();
+             connector_id++) {
+            auto status = this->evses.at(evse_id)->get_state(connector_id);
+            if (!operational_status_matches_connector_status(status, request.operationalStatus)) {
                 return false;
             }
         }
+        return true;
     }
-    return true;
 }
 
 bool ChargePoint::is_valid_evse(const EVSE& evse) {
@@ -937,7 +979,7 @@ void ChargePoint::handle_scheduled_change_availability_requests(const int32_t ev
     if (this->scheduled_change_availability_requests.count(evse_id)) {
         EVLOG_info << "Found scheduled ChangeAvailability.req for evse_id:" << evse_id;
         const auto req = this->scheduled_change_availability_requests[evse_id];
-        if (this->is_change_availability_possible(req)) {
+        if (!this->any_transaction_active(req.evse)) {
             EVLOG_info << "Changing availability of evse:" << evse_id;
             this->callbacks.change_availability_callback(req, true);
             this->scheduled_change_availability_requests.erase(evse_id);
@@ -1952,15 +1994,20 @@ void ChargePoint::handle_change_availability_req(Call<ChangeAvailabilityRequest>
         return;
     }
 
-    const auto is_change_availability_possible = this->is_change_availability_possible(msg);
+    const auto transaction_active = this->any_transaction_active(msg.evse);
+    const auto is_already_in_state = this->is_already_in_state(msg);
 
-    if (is_change_availability_possible) {
+    auto evse_id = 0; // represents the whole charging station
+    if (msg.evse.has_value()) {
+        evse_id = msg.evse.value().id;
+    }
+
+    if (!transaction_active or is_already_in_state) {
         response.status = ChangeAvailabilityStatusEnum::Accepted;
+        // remove any scheduled availability request in case no transaction is scheduled or the component is already in
+        // correct state to override possible requests that have been scheduled before
+        this->scheduled_change_availability_requests.erase(evse_id);
     } else {
-        auto evse_id = 0; // represents the whole charging station
-        if (msg.evse.has_value()) {
-            evse_id = msg.evse.value().id;
-        }
         // add to map of scheduled operational_states. This also overrides successive ChangeAvailability.req with
         // the same EVSE, which is propably desirable
         this->scheduled_change_availability_requests[evse_id] = msg;
@@ -1971,8 +2018,8 @@ void ChargePoint::handle_change_availability_req(Call<ChangeAvailabilityRequest>
     ocpp::CallResult<ChangeAvailabilityResponse> call_result(response, call.uniqueId);
     this->send<ChangeAvailabilityResponse>(call_result);
 
-    // execute change availability if possible
-    if (is_change_availability_possible) {
+    if (!transaction_active) {
+        // execute change availability if possible
         this->callbacks.change_availability_callback(msg, true);
     }
 }
