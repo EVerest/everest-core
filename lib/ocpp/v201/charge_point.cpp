@@ -493,10 +493,23 @@ void ChargePoint::init_websocket() {
         return;
     }
 
+    const auto& security_profile_cv = ControllerComponentVariables::SecurityProfile;
+    if (security_profile_cv.variable.has_value()) {
+        this->device_model->set_read_only_value(security_profile_cv.component, security_profile_cv.variable.value(),
+                                                AttributeEnum::Actual,
+                                                std::to_string(network_connection_profile.value().securityProfile));
+    }
+
     this->websocket = std::make_unique<Websocket>(connection_options, this->evse_security, this->logging);
     this->websocket->register_connected_callback([this](const int security_profile) {
         this->message_queue->resume();
         this->websocket_connection_status = WebsocketConnectionStatusEnum::Connected;
+
+        const auto& security_profile_cv = ControllerComponentVariables::SecurityProfile;
+        if (security_profile_cv.variable.has_value()) {
+            this->device_model->set_read_only_value(security_profile_cv.component, security_profile_cv.variable.value(),
+                                                    AttributeEnum::Actual, std::to_string(security_profile));
+        }
 
         if (this->registration_status == RegistrationStatusEnum::Accepted) {
             // handle offline threshold
