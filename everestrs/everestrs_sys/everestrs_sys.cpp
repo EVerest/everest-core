@@ -8,19 +8,17 @@
 namespace {
 
 std::unique_ptr<Everest::Everest> create_everest_instance(const std::string& module_id,
-                                                          const Everest::RuntimeSettings& rs,
+                                                          std::shared_ptr<RuntimeSettings> rs,
                                                           const Everest::Config& config) {
-    return std::make_unique<Everest::Everest>(module_id, config, true /* FIXME */, rs.mqtt_broker_host,
-                                              rs.mqtt_broker_port, rs.mqtt_everest_prefix, rs.mqtt_external_prefix,
-                                              rs.telemetry_prefix, rs.telemetry_enabled);
+    return std::make_unique<Everest::Everest>(module_id, config, , rs->validate_schema, rs->mqtt_broker_host,
+                                              rs->mqtt_broker_port, rs->mqtt_everest_prefix, rs->mqtt_external_prefix,
+                                              rs->telemetry_prefix, rs->telemetry_enabled);
 }
 
-std::unique_ptr<Everest::Config> create_config_instance(const Everest::RuntimeSettings& rs) {
+std::unique_ptr<Everest::Config> create_config_instance(std::shared_ptr<RuntimeSettings> rs) {
     // FIXME (aw): where to initialize the logger?
-    Everest::Logging::init(rs.logging_config_file);
-    return std::make_unique<Everest::Config>(rs.schemas_dir.string(), rs.config_file.string(), rs.modules_dir.string(),
-                                             rs.interfaces_dir.string(), rs.types_dir.string(), rs.mqtt_everest_prefix,
-                                             rs.mqtt_external_prefix);
+    Everest::Logging::init(rs->logging_config_file);
+    return std::make_unique<Everest::Config>(rs);
 }
 
 JsonBlob json2blob(const json& j) {

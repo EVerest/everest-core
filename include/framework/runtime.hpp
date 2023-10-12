@@ -79,6 +79,7 @@ inline constexpr auto MQTT_EVEREST_PREFIX = "everest";
 inline constexpr auto MQTT_EXTERNAL_PREFIX = "";
 inline constexpr auto TELEMETRY_PREFIX = "everest-telemetry";
 inline constexpr auto TELEMETRY_ENABLED = false;
+inline constexpr auto VALIDATE_SCHEMA = false;
 
 } // namespace defaults
 
@@ -86,6 +87,7 @@ std::string parse_string_option(const boost::program_options::variables_map& vm,
 
 const auto TERMINAL_STYLE_ERROR = fmt::emphasis::bold | fg(fmt::terminal_color::red);
 const auto TERMINAL_STYLE_OK = fmt::emphasis::bold | fg(fmt::terminal_color::green);
+const auto TERMINAL_STYLE_BLUE = fmt::emphasis::bold | fg(fmt::terminal_color::blue);
 
 struct BootException : public std::runtime_error {
     using std::runtime_error::runtime_error;
@@ -120,7 +122,7 @@ struct RuntimeSettings {
 };
 
 // NOTE: this function needs the be called with a pre-initialized ModuleInfo struct
-void populate_module_info_path_from_runtime_settings(ModuleInfo&, const RuntimeSettings& rs);
+void populate_module_info_path_from_runtime_settings(ModuleInfo&, std::shared_ptr<RuntimeSettings> rs);
 
 struct ModuleCallbacks {
     std::function<void(ModuleAdapter module_adapter)> register_module_adapter;
@@ -138,7 +140,7 @@ struct ModuleCallbacks {
 
 class ModuleLoader {
 private:
-    std::unique_ptr<RuntimeSettings> runtime_settings;
+    std::shared_ptr<RuntimeSettings> runtime_settings;
     std::string module_id;
     std::string original_process_name;
     ModuleCallbacks callbacks;

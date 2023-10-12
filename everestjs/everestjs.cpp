@@ -297,14 +297,12 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
         const auto& config_file = settings.Get("config_file").ToString().Utf8Value();
         const bool validate_schema = settings.Get("validate_schema").ToBoolean().Value();
 
-        Everest::RuntimeSettings rs(prefix, config_file);
+        auto rs = std::make_shared<Everest::RuntimeSettings>(prefix, config_file);
 
         // initialize logging as early as possible
-        Everest::Logging::init(rs.logging_config_file, module_id);
+        Everest::Logging::init(rs->logging_config_file, module_id);
 
-        auto config = std::make_unique<Everest::Config>(
-            rs.schemas_dir.string(), rs.config_file.string(), rs.modules_dir.string(), rs.interfaces_dir.string(),
-            rs.types_dir.string(), rs.mqtt_everest_prefix, rs.mqtt_external_prefix);
+        auto config = std::make_unique<Everest::Config>(rs);
         if (!config->contains(module_id)) {
             EVTHROW(EVEXCEPTION(Everest::EverestConfigError,
                                 "Module with identifier '" << module_id << "' not found in config!"));
@@ -556,14 +554,14 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
 
         // set telemetry_enabled
         module_info_prop.DefineProperty(Napi::PropertyDescriptor::Value(
-            "telemetry_enabled", Napi::Boolean::New(env, rs.telemetry_enabled), napi_enumerable));
+            "telemetry_enabled", Napi::Boolean::New(env, rs->telemetry_enabled), napi_enumerable));
 
         module_this.DefineProperty(Napi::PropertyDescriptor::Value("info", module_info_prop, napi_enumerable));
 
         // connect to mqtt server and start mqtt mainloop thread
         auto everest_handle = std::make_unique<Everest::Everest>(
-            module_id, *config, validate_schema, rs.mqtt_broker_host, rs.mqtt_broker_port, rs.mqtt_everest_prefix,
-            rs.mqtt_external_prefix, rs.telemetry_prefix, rs.telemetry_enabled);
+            module_id, *config, validate_schema, rs->mqtt_broker_host, rs->mqtt_broker_port, rs->mqtt_everest_prefix,
+            rs->mqtt_external_prefix, rs->telemetry_prefix, rs->telemetry_enabled);
 
         ctx = new EvModCtx(std::move(everest_handle), module_manifest, env);
 

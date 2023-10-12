@@ -36,7 +36,7 @@ int main(int argc, char* argv[]) {
 
     Everest::Logging::init(config_params.at("logging_config_file"), "everest_ctrl");
 
-    EVLOG_info << "everest controller process started ...";
+    EVLOG_debug << "everest controller process started ...";
 
     CommandApi::Config config{
         config_params.at("module_dir"),

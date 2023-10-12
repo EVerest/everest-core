@@ -31,6 +31,7 @@ const EverestModule = function EverestModule(handler_setup, user_settings) {
     config_file: process.env.EV_CONF_FILE,
     mqtt_server_address: process.env.MQTT_SERVER_ADDRESS,
     mqtt_server_port: process.env.MQTT_SERVER_PORT,
+    validate_schema: process.env.EV_VALIDATE_SCHEMA,
   };
 
   const settings = { ...env_settings, ...user_settings };
@@ -43,7 +44,7 @@ const EverestModule = function EverestModule(handler_setup, user_settings) {
     module: settings.module,
     prefix: settings.prefix,
     config_file: settings.config_file,
-    validate_schema: helpers.get_default(settings, 'validate_schema', true),
+    validate_schema: helpers.get_default(settings, 'validate_schema', false),
   };
 
   function callbackWrapper(on, request, ...args) {

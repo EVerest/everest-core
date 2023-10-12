@@ -13,7 +13,7 @@ public:
 
     RuntimeSession();
 
-    const Everest::RuntimeSettings& get_runtime_settings() const {
+    std::shared_ptr<Everest::RuntimeSettings> get_runtime_settings() const {
         return rs;
     }
 
@@ -22,10 +22,10 @@ public:
     }
 
 private:
-    Everest::RuntimeSettings rs;
+    std::shared_ptr<Everest::RuntimeSettings> rs;
     std::unique_ptr<Everest::Config> config;
 
-    static std::unique_ptr<Everest::Config> create_config_instance(const Everest::RuntimeSettings& rs);
+    static std::unique_ptr<Everest::Config> create_config_instance(std::shared_ptr<Everest::RuntimeSettings> rs);
 };
 
 struct Fulfillment {

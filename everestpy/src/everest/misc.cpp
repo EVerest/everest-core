@@ -24,18 +24,16 @@ static std::string get_ev_conf_file_from_env() {
 }
 
 RuntimeSession::RuntimeSession(const std::string& prefix, const std::string& config_file) :
-    rs(prefix, config_file), config(create_config_instance(rs)) {
+    rs(std::make_shared<Everest::RuntimeSettings>(prefix, config_file)), config(create_config_instance(rs)) {
 }
 
 RuntimeSession::RuntimeSession() : RuntimeSession(get_ev_prefix_from_env(), get_ev_conf_file_from_env()) {
 }
 
-std::unique_ptr<Everest::Config> RuntimeSession::create_config_instance(const Everest::RuntimeSettings& rs) {
+std::unique_ptr<Everest::Config> RuntimeSession::create_config_instance(std::shared_ptr<Everest::RuntimeSettings> rs) {
     // FIXME (aw): where to initialize the logger?
-    Everest::Logging::init(rs.logging_config_file);
-    return std::make_unique<Everest::Config>(rs.schemas_dir.string(), rs.config_file.string(), rs.modules_dir.string(),
-                                             rs.interfaces_dir.string(), rs.types_dir.string(), rs.mqtt_everest_prefix,
-                                             rs.mqtt_external_prefix);
+    Everest::Logging::init(rs->logging_config_file);
+    return std::make_unique<Everest::Config>(rs);
 }
 
 ModuleSetup create_setup_from_config(const std::string& module_id, Everest::Config& config) {

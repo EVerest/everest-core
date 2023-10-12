@@ -25,7 +25,7 @@ public:
 
 private:
     const std::string module_id_;
-    Everest::RuntimeSettings rs_;
+    std::shared_ptr<Everest::RuntimeSettings> rs_;
     std::unique_ptr<Everest::Config> config_;
     std::unique_ptr<Everest::Everest> handle_;
 };

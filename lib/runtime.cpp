@@ -69,10 +69,10 @@ static std::string get_prefixed_path_from_json(const nlohmann::json& value, cons
     return settings_configs_dir;
 }
 
-void populate_module_info_path_from_runtime_settings(ModuleInfo& mi, const RuntimeSettings& rs) {
-    mi.paths.etc = rs.etc_dir;
-    mi.paths.libexec = rs.modules_dir / mi.name;
-    mi.paths.share = rs.data_dir / defaults::MODULES_DIR / mi.name;
+void populate_module_info_path_from_runtime_settings(ModuleInfo& mi, std::shared_ptr<RuntimeSettings> rs) {
+    mi.paths.etc = rs->etc_dir;
+    mi.paths.libexec = rs->modules_dir / mi.name;
+    mi.paths.share = rs->data_dir / defaults::MODULES_DIR / mi.name;
 }
 
 RuntimeSettings::RuntimeSettings(const std::string& prefix_, const std::string& config_) {
@@ -317,7 +317,13 @@ RuntimeSettings::RuntimeSettings(const std::string& prefix_, const std::string& 
     } else {
         telemetry_enabled = defaults::TELEMETRY_ENABLED;
     }
-    validate_schema = false;
+
+    const auto settings_validate_schema_it = settings.find("validate_schema");
+    if (settings_validate_schema_it != settings.end()) {
+        validate_schema = settings_validate_schema_it->get<bool>();
+    } else {
+        validate_schema = defaults::VALIDATE_SCHEMA;
+    }
 }
 
 ModuleCallbacks::ModuleCallbacks(const std::function<void(ModuleAdapter module_adapter)>& register_module_adapter,
@@ -335,18 +341,15 @@ ModuleLoader::ModuleLoader(int argc, char* argv[], ModuleCallbacks callbacks) :
 }
 
 int ModuleLoader::initialize() {
+    auto start_time = std::chrono::system_clock::now();
     if (!this->runtime_settings) {
         return 0;
     }
 
     auto& rs = this->runtime_settings;
-
     Logging::init(rs->logging_config_file.string(), this->module_id);
-
     try {
-        Config config = Config(rs->schemas_dir.string(), rs->config_file.string(), rs->modules_dir.string(),
-                               rs->interfaces_dir.string(), rs->types_dir.string(), rs->mqtt_everest_prefix,
-                               rs->mqtt_external_prefix);
+        Config config = Config(rs);
 
         if (!config.contains(this->module_id)) {
             EVLOG_error << fmt::format("Module id '{}' not found in config!", this->module_id);
@@ -416,7 +419,7 @@ int ModuleLoader::initialize() {
 
         auto module_configs = config.get_module_configs(this->module_id);
         auto module_info = config.get_module_info(this->module_id);
-        populate_module_info_path_from_runtime_settings(module_info, *rs);
+        populate_module_info_path_from_runtime_settings(module_info, rs);
         module_info.telemetry_enabled = everest.is_telemetry_enabled();
 
         this->callbacks.init(module_configs, module_info);
@@ -429,6 +432,10 @@ int ModuleLoader::initialize() {
 
         // the module should now be ready
         everest.signal_ready();
+
+        auto end_time = std::chrono::system_clock::now();
+        EVLOG_info << "Module " << fmt::format(TERMINAL_STYLE_BLUE, "{}", module_id) << " initialized ["
+                   << std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count() << "ms]";
 
         everest.wait_for_main_loop_end();
 

@@ -36,7 +36,7 @@ using TelemetryMap = std::map<std::string, TelemetryEntry>;
 ///
 class Everest {
 public:
-    Everest(std::string module_id, Config config, bool validate_data_with_schema,
+    Everest(std::string module_id, const Config& config, bool validate_data_with_schema,
             const std::string& mqtt_server_address, int mqtt_server_port, const std::string& mqtt_everest_prefix,
             const std::string& mqtt_external_prefix, const std::string& telemetry_prefix, bool telemetry_enabled);
 

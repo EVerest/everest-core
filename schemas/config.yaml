@@ -59,6 +59,8 @@ properties:
         type: string
       telemetry_enabled:
         type: boolean
+      validate_schema:
+        type: boolean
     additionalProperties: false
   active_modules:
     type: object

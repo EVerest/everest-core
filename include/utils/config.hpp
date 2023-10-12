@@ -21,6 +21,7 @@ using json_uri = nlohmann::json_uri;
 using json_validator = nlohmann::json_schema::json_validator;
 namespace fs = std::filesystem;
 
+struct RuntimeSettings;
 ///
 /// \brief A structure that contains all available schemas
 ///
@@ -41,12 +42,8 @@ const static std::regex type_uri_regex{R"(^((?:\/[a-zA-Z0-9\-\_]+)+#\/[a-zA-Z0-9
 ///
 class Config {
 private:
-    std::string schemas_dir;
-    std::string modules_dir;
-    std::string interfaces_dir;
-    std::string types_dir;
-    std::string mqtt_everest_prefix;
-    std::string mqtt_external_prefix;
+    std::shared_ptr<RuntimeSettings> rs;
+    bool manager;
 
     json main;
 
@@ -98,11 +95,9 @@ public:
     bool module_provides(const std::string& module_name, const std::string& impl_id);
     json get_module_cmds(const std::string& module_name, const std::string& impl_id);
     ///
-    /// \brief creates a new Config object, looking for the config.json and schemes folder relative to the provided \p
-    /// main_dir
-    explicit Config(std::string schemas_dir, std::string config_file, std::string modules_dir,
-                    std::string interfaces_dir, std::string types_dir, const std::string& mqtt_everest_prefix,
-                    const std::string& mqtt_external_prefix);
+    /// \brief creates a new Config object
+    explicit Config(std::shared_ptr<RuntimeSettings> rs);
+    explicit Config(std::shared_ptr<RuntimeSettings> rs, bool manager);
 
     ///
     /// \brief checks if the given \p module_id provides the requirement given in \p requirement_id
@@ -185,7 +180,7 @@ public:
     /// the provided \p schemas_dir
     ///
     /// \returns the config and manifest schemas
-    static schemas load_schemas(std::string schemas_dir);
+    static schemas load_schemas(const fs::path& schemas_dir);
 
     ///
     /// \brief loads and validates a json schema at the provided \p path
@@ -197,7 +192,7 @@ public:
     /// \brief loads all module manifests relative to the \p main_dir
     ///
     /// \returns all module manifests as a json object
-    static json load_all_manifests(std::string modules_dir, std::string schemas_dir);
+    static json load_all_manifests(const std::string& modules_dir, const std::string& schemas_dir);
 
     ///
     /// \brief Extracts the keys of the provided json \p object
