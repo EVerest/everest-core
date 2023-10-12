@@ -71,6 +71,7 @@ if (OCPP_INSTALL)
             "find_dependency(SQLite3)"
             "find_dependency(websocketpp)"
             "find_dependency(everest-timer)"
+            "find_dependency(everest-evse_security)"
     )
 endif()
 
