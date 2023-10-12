@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
 
-project(evse_security VERSION 0.1.0
+project(everest-evse_security VERSION 0.1.0
         DESCRIPTION "Implementation of EVSE related security operations"
 		LANGUAGES CXX C
 )
@@ -34,8 +34,13 @@ if (EVSE_SECURITY_INSTALL)
         LIBRARY
     )
 
+    install(
+        DIRECTORY include/
+        TYPE INCLUDE
+    )
+
     evc_setup_package(
-        NAME evse_security
+        NAME everest-evse_security
         NAMESPACE everest
         EXPORT evse_security-targets
         ADDITIONAL_CONTENT
