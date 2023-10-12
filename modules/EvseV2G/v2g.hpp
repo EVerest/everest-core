@@ -5,6 +5,7 @@
 #define V2G_H
 
 #include <generated/interfaces/ISO15118_charger/Implementation.hpp>
+#include <generated/interfaces/evse_security/Interface.hpp>
 #include <mbedtls/certs.h>
 #include <mbedtls/config.h>
 #include <mbedtls/ctr_drbg.h>
@@ -173,6 +174,7 @@ typedef struct keylogDebugCtx {
 struct v2g_context {
     volatile int shutdown;
 
+    evse_securityIntf* r_security;
     ISO15118_chargerImplBase* p_charger;
 
     struct event_base* event_base;

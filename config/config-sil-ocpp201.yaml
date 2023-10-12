@@ -127,6 +127,8 @@ active_modules:
     module: PersistentStore
   evse_security:
     module: EvseSecurity
+    config_module:
+      private_key_password: "123456"
   token_provider_1:
     module: DummyTokenProviderManual
   auth:

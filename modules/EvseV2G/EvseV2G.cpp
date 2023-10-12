@@ -13,7 +13,7 @@ namespace module {
 void EvseV2G::init() {
     int rv = 0;
     /* create v2g context */
-    v2g_ctx = v2g_ctx_create(&(*p_charger));
+    v2g_ctx = v2g_ctx_create(&(*p_charger), &(*r_security));
 
     if (v2g_ctx == NULL)
         return;

@@ -147,6 +147,8 @@ active_modules:
           implementation_id: main
   evse_security:
     module: EvseSecurity
+    config_module:
+      private_key_password: "123456"
   ocpp_extension:
     module: OCPPExtensionExample
     config_module:
