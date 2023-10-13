@@ -38,6 +38,8 @@
     "BasicAuthPassword": {
       "variable_name": "BasicAuthPassword",
       "characteristics": {
+        "minLimit": 16,
+        "maxLimit": 40,
         "supportsMonitoring": true,
         "dataType": "string"
       },
@@ -48,6 +50,8 @@
         }
       ],
       "description": "The basic authentication password is used for HTTP Basic Authentication.",
+      "minimum": 16,
+      "maximum": 40,
       "default": "DEADBEEFDEADBEEF",
       "type": "string"
     },
