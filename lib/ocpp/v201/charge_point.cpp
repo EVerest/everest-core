@@ -923,20 +923,17 @@ bool ChargePoint::any_transaction_active(const std::optional<EVSE>& evse) {
         }
         return false;
     }
-
-    if (this->evses.at(evse.value().id)->has_active_transaction()) {
-        return true;
-    } else {
-        return false;
-    }
+    return this->evses.at(evse.value().id)->has_active_transaction();
 }
 
 bool operational_status_matches_connector_status(ConnectorStatusEnum connector_status,
                                                  OperationalStatusEnum operational_status) {
-    return (operational_status == OperationalStatusEnum::Inoperative and
-            connector_status == ConnectorStatusEnum::Unavailable) or
-           (operational_status == OperationalStatusEnum::Operative and
-            (connector_status != ConnectorStatusEnum::Unavailable or connector_status != ConnectorStatusEnum::Faulted));
+    if (operational_status == OperationalStatusEnum::Operative) {
+        return connector_status != ConnectorStatusEnum::Unavailable and
+               connector_status != ConnectorStatusEnum::Faulted;
+    } else {
+        return connector_status == ConnectorStatusEnum::Unavailable or connector_status == ConnectorStatusEnum::Faulted;
+    }
 }
 
 bool ChargePoint::is_already_in_state(const ChangeAvailabilityRequest& request) {
