@@ -112,3 +112,7 @@ vars:
     description: Other telemetry
     type: object
     $ref: /evse_board_support#/Telemetry
+  capabilities:
+    description: Hardware capabilities/limits. This can be published during runtime whenever it changes to e.g. lower the limits when the hardware overheats.
+    type: object
+    $ref: /evse_board_support#/HardwareCapabilities
