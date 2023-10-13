@@ -533,7 +533,6 @@ void EvseManager::ready() {
     }
 
     bsp->signal_event.connect([this](const CPEvent event) {
-
         // Forward events from BSP to SLAC module before we process the events in the charger
         if (slac_enabled) {
             if (event == CPEvent::EFtoBCD) {
@@ -578,18 +577,25 @@ void EvseManager::ready() {
                 }
             }
 
-            if (event == CPEvent::ErrorRelais) {
+            if (event == CPEvent::MREC_17_EVSEContactorFault) {
                 session_log.evse(false, "Error Relais");
                 r_hlc[0]->call_set_FAILED_ContactorError(true);
             }
 
-            if (event == CPEvent::PermanentFault) {
-                session_log.evse(false, "Error Permanent Fault");
+            if (event == CPEvent::PermanentFault || event == CPEvent::MREC_26_CutCable ||
+                event == CPEvent::MREC_25_BrokenLatch) {
+                session_log.evse(false, "Error Permanent Fault: " + cpevent_to_string(event));
                 r_hlc[0]->call_set_EVSE_Malfunction(true);
             }
 
-            if (event == CPEvent::ErrorOverCurrent) {
-                session_log.evse(false, "Error Over Current");
+            if (event == CPEvent::MREC_2_GroundFailure || event == CPEvent::MREC_4_OverCurrentFailure ||
+                event == CPEvent::MREC_5_OverVoltage || event == CPEvent::MREC_6_UnderVoltage ||
+                event == CPEvent::MREC_8_EmergencyStop || event == CPEvent::MREC_19_CableOverTempStop ||
+                event == CPEvent::MREC_10_InvalidVehicleMode || event == CPEvent::MREC_14_PilotFault ||
+                event == CPEvent::MREC_15_PowerLoss || event == CPEvent::MREC_17_EVSEContactorFault ||
+                event == CPEvent::MREC_19_CableOverTempStop || event == CPEvent::MREC_20_PartialInsertion ||
+                event == CPEvent::MREC_23_ProximityFault || event == CPEvent::MREC_24_ConnectorVoltageHigh) {
+                session_log.evse(false, "Fatal error, emergency stop: " + cpevent_to_string(event));
                 r_hlc[0]->call_set_EVSE_EmergencyShutdown(true);
             }
 

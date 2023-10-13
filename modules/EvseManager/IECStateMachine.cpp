@@ -35,39 +35,54 @@ static std::variant<RawCPState, CPEvent> from_bsp_event(types::board_support_com
         return CPEvent::PowerOff;
     case types::board_support_common::Event::ErrorDF:
         return CPEvent::ErrorDF;
-    case types::board_support_common::Event::ErrorRelais:
-        return CPEvent::ErrorRelais;
     case types::board_support_common::Event::ErrorVentilationNotAvailable:
         return CPEvent::ErrorVentilationNotAvailable;
-    case types::board_support_common::Event::ErrorOverCurrent:
-        return CPEvent::ErrorOverCurrent;
-    case types::board_support_common::Event::ErrorOverVoltage:
-        return CPEvent::ErrorOverVoltage;
-    case types::board_support_common::Event::ErrorUnderVoltage:
-        return CPEvent::ErrorUnderVoltage;
-    case types::board_support_common::Event::ErrorMotorLock:
-        return CPEvent::ErrorMotorLock;
-    case types::board_support_common::Event::ErrorOverTemperature:
-        return CPEvent::ErrorOverTemperature;
     case types::board_support_common::Event::ErrorBrownOut:
         return CPEvent::ErrorBrownOut;
-    case types::board_support_common::Event::ErrorCablePP:
-        return CPEvent::ErrorCablePP;
     case types::board_support_common::Event::ErrorEnergyManagement:
         return CPEvent::ErrorEnergyManagement;
-    case types::board_support_common::Event::ErrorNeutralPEN:
-        return CPEvent::ErrorNeutralPEN;
-    case types::board_support_common::Event::ErrorCpDriver:
-        return CPEvent::ErrorCpDriver;
     case types::board_support_common::Event::PermanentFault:
         return CPEvent::PermanentFault;
     case types::board_support_common::Event::EvseReplugStarted:
         return CPEvent::EvseReplugStarted;
     case types::board_support_common::Event::EvseReplugFinished:
         return CPEvent::EvseReplugFinished;
-    case types::board_support_common::Event::EmergencyStopButtonPressed:
-        return CPEvent::EmergencyStopButtonPressed;
-
+    case types::board_support_common::Event::MREC_1_ConnectorLockFailure:
+        return CPEvent::MREC_1_ConnectorLockFailure;
+    case types::board_support_common::Event::MREC_2_GroundFailure:
+        return CPEvent::MREC_2_GroundFailure;
+    case types::board_support_common::Event::MREC_3_HighTemperature:
+        return CPEvent::MREC_3_HighTemperature;
+    case types::board_support_common::Event::MREC_4_OverCurrentFailure:
+        return CPEvent::MREC_4_OverCurrentFailure;
+    case types::board_support_common::Event::MREC_5_OverVoltage:
+        return CPEvent::MREC_5_OverVoltage;
+    case types::board_support_common::Event::MREC_6_UnderVoltage:
+        return CPEvent::MREC_6_UnderVoltage;
+    case types::board_support_common::Event::MREC_8_EmergencyStop:
+        return CPEvent::MREC_8_EmergencyStop;
+    case types::board_support_common::Event::MREC_10_InvalidVehicleMode:
+        return CPEvent::MREC_10_InvalidVehicleMode;
+    case types::board_support_common::Event::MREC_14_PilotFault:
+        return CPEvent::MREC_14_PilotFault;
+    case types::board_support_common::Event::MREC_15_PowerLoss:
+        return CPEvent::MREC_15_PowerLoss;
+    case types::board_support_common::Event::MREC_17_EVSEContactorFault:
+        return CPEvent::MREC_17_EVSEContactorFault;
+    case types::board_support_common::Event::MREC_18_CableOverTempDerate:
+        return CPEvent::MREC_18_CableOverTempDerate;
+    case types::board_support_common::Event::MREC_19_CableOverTempStop:
+        return CPEvent::MREC_19_CableOverTempStop;
+    case types::board_support_common::Event::MREC_20_PartialInsertion:
+        return CPEvent::MREC_20_PartialInsertion;
+    case types::board_support_common::Event::MREC_23_ProximityFault:
+        return CPEvent::MREC_23_ProximityFault;
+    case types::board_support_common::Event::MREC_24_ConnectorVoltageHigh:
+        return CPEvent::MREC_24_ConnectorVoltageHigh;
+    case types::board_support_common::Event::MREC_25_BrokenLatch:
+        return CPEvent::MREC_25_BrokenLatch;
+    case types::board_support_common::Event::MREC_26_CutCable:
+        return CPEvent::MREC_26_CutCable;
     default:
         return RawCPState::Disabled;
     }
@@ -93,30 +108,12 @@ const std::string cpevent_to_string(CPEvent e) {
         return "ErrorE";
     case CPEvent::ErrorDF:
         return "ErrorDF";
-    case CPEvent::ErrorRelais:
-        return "ErrorRelais";
     case CPEvent::ErrorVentilationNotAvailable:
         return "ErrorVentilationNotAvailable";
-    case CPEvent::ErrorOverCurrent:
-        return "ErrorOverCurrent";
-    case CPEvent::ErrorOverVoltage:
-        return "ErrorOverVoltage";
-    case CPEvent::ErrorUnderVoltage:
-        return "ErrorUnderVoltage";
-    case CPEvent::ErrorMotorLock:
-        return "ErrorMotorLock";
-    case CPEvent::ErrorOverTemperature:
-        return "ErrorOverTemperature";
     case CPEvent::ErrorBrownOut:
         return "ErrorBrownOut";
-    case CPEvent::ErrorCablePP:
-        return "ErrorCablePP";
     case CPEvent::ErrorEnergyManagement:
         return "ErrorEnergyManagement";
-    case CPEvent::ErrorNeutralPEN:
-        return "ErrorNeutralPEN";
-    case CPEvent::ErrorCpDriver:
-        return "ErrorCpDriver";
     case CPEvent::EFtoBCD:
         return "EFtoBCD";
     case CPEvent::BCDtoEF:
@@ -127,8 +124,40 @@ const std::string cpevent_to_string(CPEvent e) {
         return "EvseReplugStarted";
     case CPEvent::EvseReplugFinished:
         return "EvseReplugFinished";
+    case CPEvent::MREC_1_ConnectorLockFailure:
+        return "MREC_1_ConnectorLockFailure";
+    case CPEvent::MREC_2_GroundFailure:
+        return "MREC_2_GroundFailure";
+    case CPEvent::MREC_3_HighTemperature:
+        return "MREC_3_HighTemperature";
+    case CPEvent::MREC_4_OverCurrentFailure:
+        return "MREC_4_OverCurrentFailure";
+    case CPEvent::MREC_5_OverVoltage:
+        return "MREC_5_OverVoltage";
+    case CPEvent::MREC_6_UnderVoltage:
+        return "MREC_6_UnderVoltage";
+    case CPEvent::MREC_8_EmergencyStop:
+        return "MREC_8_EmergencyStop";
+    case CPEvent::MREC_15_PowerLoss:
+        return "MREC_15_PowerLoss";
+    case CPEvent::MREC_17_EVSEContactorFault:
+        return "MREC_17_EVSEContactorFault";
+    case CPEvent::MREC_18_CableOverTempDerate:
+        return "MREC_18_CableOverTempDerate";
+    case CPEvent::MREC_19_CableOverTempStop:
+        return "MREC_19_CableOverTempStop";
+    case CPEvent::MREC_20_PartialInsertion:
+        return "MREC_20_PartialInsertion";
+        return "MREC_19_CableOverTempStop";
+    case CPEvent::MREC_23_ProximityFault:
+        return "MREC_23_ProximityFault";
+    case CPEvent::MREC_24_ConnectorVoltageHigh:
+        return "MREC_24_ConnectorVoltageHigh";
+    case CPEvent::MREC_25_BrokenLatch:
+        return "MREC_25_BrokenLatch";
+    case CPEvent::MREC_26_CutCable:
+        return "MREC_26_CutCable";
     }
-
     throw std::out_of_range("No known string conversion for provided enum of type CPEvent");
 }
 
@@ -369,8 +398,8 @@ void IECStateMachine::call_allow_power_on_bsp(bool value) {
 }
 
 // High level state machine requests reading PP ampacity value.
-// We forware this request to the BSP driver. The high level state machine will never call this if it is not used (e.g.
-// in DC or AC tethered charging)
+// We forware this request to the BSP driver. The high level state machine will never call this if it is not used
+// (e.g. in DC or AC tethered charging)
 double IECStateMachine::read_pp_ampacity() {
     auto a = r_bsp->call_ac_read_pp_ampacity();
     switch (a.ampacity) {
@@ -392,8 +421,8 @@ void IECStateMachine::evse_replug(int ms) {
     r_bsp->call_evse_replug(ms);
 }
 
-// Forward special request to switch the number of phases during charging. BSP will need to implement a special sequence
-// to not destroy cars.
+// Forward special request to switch the number of phases during charging. BSP will need to implement a special
+// sequence to not destroy cars.
 void IECStateMachine::switch_three_phases_while_charging(bool n) {
     r_bsp->call_ac_switch_three_phases_while_charging(n);
 }
@@ -404,8 +433,8 @@ void IECStateMachine::setup(bool three_phases, bool has_ventilation, std::string
     this->has_ventilation = has_ventilation;
 }
 
-// Force an unlock now. This can be sent from OCPP. As locking/unlocking is handled in the BSP the BSP MCU will need to
-// decide how and when to fulfill this request in a safe manner.
+// Force an unlock now. This can be sent from OCPP. As locking/unlocking is handled in the BSP the BSP MCU will need
+// to decide how and when to fulfill this request in a safe manner.
 bool IECStateMachine::force_unlock() {
     return r_bsp->call_force_unlock();
 }
@@ -415,9 +444,9 @@ void IECStateMachine::enable(bool en) {
     r_bsp->call_enable(en);
 }
 
-// Forward the over current detection limit to the BSP. Many BSP MCUs monitor the charge current and trigger a fault in
-// case of over current. This sets the target charging current value to be used in OC detection. It cannot be derived
-// from the PWM duty cycle, use this value instead.
+// Forward the over current detection limit to the BSP. Many BSP MCUs monitor the charge current and trigger a fault
+// in case of over current. This sets the target charging current value to be used in OC detection. It cannot be
+// derived from the PWM duty cycle, use this value instead.
 void IECStateMachine::set_overcurrent_limit(double amps) {
     if (amps != last_amps) {
         r_bsp->call_ac_set_overcurrent_limit_A(amps);
