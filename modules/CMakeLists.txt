@@ -30,6 +30,7 @@ ev_add_module(DummyV2G)
 ev_add_module(MicroMegaWattBSP)
 ev_add_module(DPM1000)
 ev_add_module(OCPPExtensionExample)
+ev_add_module(SLIPCommHub)
 
 add_subdirectory(deprecated)
 add_subdirectory(examples)

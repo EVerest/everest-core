@@ -1,0 +1,9 @@
+settings:
+  telemetry_enabled: true
+active_modules:
+  instance_id_SLIPCommHub:
+    config_module:
+      serial_port: /dev/ttyUSB0   
+      baudrate: 115200
+      parity: 0
+    module: SLIPCommHub
