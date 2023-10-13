@@ -619,15 +619,6 @@ void Charger::processEvent(CPEvent cp_event) {
     case CPEvent::EFtoBCD:
         session_log.car(false, fmt::format("Event {}", cpevent_to_string(cp_event)));
         break;
-    case CPEvent::ErrorOverCurrent:
-    case CPEvent::ErrorRelais:
-    case CPEvent::ErrorVentilationNotAvailable:
-    case CPEvent::PermanentFault:
-    case CPEvent::PowerOff:
-    case CPEvent::PowerOn:
-    case CPEvent::EvseReplugStarted:
-    case CPEvent::EvseReplugFinished:
-
     default:
         session_log.evse(false, fmt::format("Event {}", cpevent_to_string(cp_event)));
         break;
@@ -744,53 +735,90 @@ void Charger::processCPEventsIndependent(CPEvent cp_event) {
         currentState = EvseState::Error;
         errorState = types::evse_manager::ErrorEnum::CarDiodeFault;
         break;
-    case CPEvent::ErrorRelais:
-        currentState = EvseState::Error;
-        errorState = types::evse_manager::ErrorEnum::Relais;
-        break;
+
     case CPEvent::ErrorVentilationNotAvailable:
         currentState = EvseState::Error;
         errorState = types::evse_manager::ErrorEnum::VentilationNotAvailable;
         break;
-    case CPEvent::ErrorOverCurrent:
-        currentState = EvseState::Error;
-        errorState = types::evse_manager::ErrorEnum::OverCurrent;
-        break;
-    case CPEvent::ErrorOverVoltage:
-        currentState = EvseState::Error;
-        errorState = types::evse_manager::ErrorEnum::OverVoltage;
-        break;
-    case CPEvent::ErrorUnderVoltage:
-        currentState = EvseState::Error;
-        errorState = types::evse_manager::ErrorEnum::UnderVoltage;
-        break;
-    case CPEvent::ErrorMotorLock:
-        currentState = EvseState::Error;
-        errorState = types::evse_manager::ErrorEnum::MotorLock;
-        break;
-    case CPEvent::ErrorOverTemperature:
-        currentState = EvseState::Error;
-        errorState = types::evse_manager::ErrorEnum::OverTemperature;
-        break;
+
     case CPEvent::ErrorBrownOut:
         currentState = EvseState::Error;
         errorState = types::evse_manager::ErrorEnum::BrownOut;
         break;
-    case CPEvent::ErrorCablePP:
-        currentState = EvseState::Error;
-        errorState = types::evse_manager::ErrorEnum::CablePP;
-        break;
+
     case CPEvent::ErrorEnergyManagement:
         currentState = EvseState::Error;
         errorState = types::evse_manager::ErrorEnum::EnergyManagement;
         break;
-    case CPEvent::ErrorNeutralPEN:
+
+    case CPEvent::MREC_1_ConnectorLockFailure:
         currentState = EvseState::Error;
-        errorState = types::evse_manager::ErrorEnum::NeutralPEN;
+        errorState = types::evse_manager::ErrorEnum::MREC_1_ConnectorLockFailure;
         break;
-    case CPEvent::ErrorCpDriver:
+    case CPEvent::MREC_3_HighTemperature:
         currentState = EvseState::Error;
-        errorState = types::evse_manager::ErrorEnum::CpDriver;
+        errorState = types::evse_manager::ErrorEnum::MREC_3_HighTemperature;
+        break;
+    case CPEvent::MREC_4_OverCurrentFailure:
+        currentState = EvseState::Error;
+        errorState = types::evse_manager::ErrorEnum::MREC_4_OverCurrentFailure;
+        break;
+    case CPEvent::MREC_5_OverVoltage:
+        currentState = EvseState::Error;
+        errorState = types::evse_manager::ErrorEnum::MREC_5_OverVoltage;
+        break;
+    case CPEvent::MREC_6_UnderVoltage:
+        currentState = EvseState::Error;
+        errorState = types::evse_manager::ErrorEnum::MREC_6_UnderVoltage;
+        break;
+    case CPEvent::MREC_8_EmergencyStop:
+        currentState = EvseState::Error;
+        errorState = types::evse_manager::ErrorEnum::MREC_8_EmergencyStop;
+        break;
+
+    case CPEvent::MREC_10_InvalidVehicleMode:
+        currentState = EvseState::Error;
+        errorState = types::evse_manager::ErrorEnum::MREC_10_InvalidVehicleMode;
+        break;
+    case CPEvent::MREC_14_PilotFault:
+        currentState = EvseState::Error;
+        errorState = types::evse_manager::ErrorEnum::MREC_14_PilotFault;
+        break;
+    case CPEvent::MREC_15_PowerLoss:
+        currentState = EvseState::Error;
+        errorState = types::evse_manager::ErrorEnum::MREC_15_PowerLoss;
+        break;
+    case CPEvent::MREC_17_EVSEContactorFault:
+        currentState = EvseState::Error;
+        errorState = types::evse_manager::ErrorEnum::MREC_17_EVSEContactorFault;
+        break;
+    case CPEvent::MREC_18_CableOverTempDerate:
+        // This is a non fatal error, issue a warning with the new fault handling
+        errorState = types::evse_manager::ErrorEnum::MREC_18_CableOverTempDerate;
+        break;
+    case CPEvent::MREC_19_CableOverTempStop:
+        currentState = EvseState::Error;
+        errorState = types::evse_manager::ErrorEnum::MREC_19_CableOverTempStop;
+        break;
+    case CPEvent::MREC_20_PartialInsertion:
+        currentState = EvseState::Error;
+        errorState = types::evse_manager::ErrorEnum::MREC_20_PartialInsertion;
+        break;
+    case CPEvent::MREC_23_ProximityFault:
+        currentState = EvseState::Error;
+        errorState = types::evse_manager::ErrorEnum::MREC_23_ProximityFault;
+        break;
+    case CPEvent::MREC_24_ConnectorVoltageHigh:
+        currentState = EvseState::Error;
+        errorState = types::evse_manager::ErrorEnum::MREC_24_ConnectorVoltageHigh;
+        break;
+    case CPEvent::MREC_25_BrokenLatch:
+        currentState = EvseState::Error;
+        errorState = types::evse_manager::ErrorEnum::MREC_25_BrokenLatch;
+        break;
+    case CPEvent::MREC_26_CutCable:
+        currentState = EvseState::Error;
+        errorState = types::evse_manager::ErrorEnum::MREC_26_CutCable;
         break;
     default:
         break;
@@ -1293,7 +1321,7 @@ void Charger::checkSoftOverCurrent() {
                                             currentDrawnByVehicle[0], currentDrawnByVehicle[1],
                                             currentDrawnByVehicle[2], limit));
         currentState = EvseState::Error;
-        errorState = types::evse_manager::ErrorEnum::OverCurrent;
+        errorState = types::evse_manager::ErrorEnum::MREC_4_OverCurrentFailure;
     }
 }
 
