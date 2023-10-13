@@ -236,24 +236,38 @@ types:
     enum:
       - Car
       - CarDiodeFault
-      - Relais
       - RCD
       - RCDDC
       - VentilationNotAvailable
-      - OverCurrent
-      - OverVoltage
-      - UnderVoltage
       - Internal
       - SLAC
       - HLC
       - Other
-      - MotorLock
-      - OverTemperature
       - BrownOut
-      - CablePP
       - EnergyManagement
-      - NeutralPEN
-      - CpDriver
+      - MREC_1_ConnectorLockFailure
+      - MREC_2_GroundFailure
+      - MREC_3_HighTemperature
+      - MREC_4_OverCurrentFailure
+      - MREC_5_OverVoltage
+      - MREC_6_UnderVoltage
+      - MREC_8_EmergencyStop
+      - MREC_10_InvalidVehicleMode
+      - MREC_11_CableCheckFailure
+      - MREC_12_PreChargeFailure
+      - MREC_14_PilotFault
+      - MREC_15_PowerLoss
+      - MREC_16_EVContactorFault
+      - MREC_17_EVSEContactorFault
+      - MREC_18_CableOverTempDerate
+      - MREC_19_CableOverTempStop
+      - MREC_20_PartialInsertion
+      - MREC_21_CapacitanceFault
+      - MREC_22_ResistanceFault
+      - MREC_23_ProximityFault
+      - MREC_24_ConnectorVoltageHigh
+      - MREC_25_BrokenLatch
+      - MREC_26_CutCable
   Error:
     description: >-
       Error object that contains information about the error and optional vendor error information
