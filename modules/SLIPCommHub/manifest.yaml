@@ -16,6 +16,10 @@ config:
     minimum: 0
     maximum: 2
     default: 0
+#  ignore_echo:
+#    description: On some hardware every message that is sent is read back, this setting filters the sent message in the reply.
+#    type: boolean
+#    default: false
 provides:
   main:
     interface: empty
