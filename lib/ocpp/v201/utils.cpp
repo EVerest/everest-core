@@ -3,6 +3,8 @@
 
 #include <everest/logging.hpp>
 
+#include <algorithm>
+
 #include <ocpp/common/utils.hpp>
 #include <ocpp/v201/utils.hpp>
 
@@ -22,6 +24,13 @@ std::vector<MeasurandEnum> get_measurands_vec(const std::string& measurands_csv)
         }
     }
     return measurands;
+}
+
+bool meter_value_has_any_measurand(const MeterValue& _meter_value, const std::vector<MeasurandEnum>& measurands) {
+    auto compare = [](const SampledValue& a, MeasurandEnum b) { return a.measurand == b; };
+
+    return std::find_first_of(_meter_value.sampledValue.begin(), _meter_value.sampledValue.end(), measurands.begin(),
+                              measurands.end(), compare) != _meter_value.sampledValue.end();
 }
 
 MeterValue get_meter_value_with_measurands_applied(const MeterValue& _meter_value,
@@ -61,14 +70,16 @@ get_meter_values_with_measurands_and_interval_applied(const std::vector<MeterVal
     for (const auto& meter_value : _meter_values) {
         if (!meter_value.sampledValue.empty() and meter_value.sampledValue.at(0).context.has_value()) {
             if ((meter_value.sampledValue.at(0).context.value() == ReadingContextEnum::Transaction_Begin or
-                 meter_value.sampledValue.at(0).context.value() == ReadingContextEnum::Transaction_End) or
-                meter_value.sampledValue.at(0).context.value() == ReadingContextEnum::Interruption_Begin or
-                meter_value.sampledValue.at(0).context.value() == ReadingContextEnum::Interruption_End) {
+                 meter_value.sampledValue.at(0).context.value() == ReadingContextEnum::Transaction_End or
+                 meter_value.sampledValue.at(0).context.value() == ReadingContextEnum::Interruption_Begin or
+                 meter_value.sampledValue.at(0).context.value() == ReadingContextEnum::Interruption_End) and
+                meter_value_has_any_measurand(meter_value, sample_measurands)) {
                 meter_values.push_back(get_meter_value_with_measurands_applied(meter_value, sample_measurands));
             }
             // ReadingContext is Sample_Clock so aligned_interval applies
             else if (aligned_interval > 0 and
-                     meter_value.sampledValue.at(0).context.value() == ReadingContextEnum::Sample_Clock) {
+                     meter_value.sampledValue.at(0).context.value() == ReadingContextEnum::Sample_Clock and
+                     meter_value_has_any_measurand(meter_value, aligned_measurands)) {
                 if (meter_value.timestamp.to_time_point() > next_aligned_timepoint) {
                     meter_values.push_back(get_meter_value_with_measurands_applied(meter_value, aligned_measurands));
                     next_aligned_timepoint =
@@ -77,7 +88,8 @@ get_meter_values_with_measurands_and_interval_applied(const std::vector<MeterVal
             }
             // ReadingContext is Sample_Periodic so sampled_interval applies
             else if (sampled_interval > 0 and
-                     meter_value.sampledValue.at(0).context.value() == ReadingContextEnum::Sample_Periodic) {
+                     meter_value.sampledValue.at(0).context.value() == ReadingContextEnum::Sample_Periodic and
+                     meter_value_has_any_measurand(meter_value, sample_measurands)) {
                 if (meter_value.timestamp.to_time_point() > next_sampled_timepoint) {
                     meter_values.push_back(get_meter_value_with_measurands_applied(meter_value, sample_measurands));
                     next_sampled_timepoint =

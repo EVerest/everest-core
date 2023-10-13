@@ -14,6 +14,10 @@ namespace utils {
 /// \brief std::vector<MeasurandEnum> of the configured AlignedDataMeasurands
 std::vector<MeasurandEnum> get_measurands_vec(const std::string& measurands_csv);
 
+///\brief This function determines if any of the \p measurands is present in the \p _meter_value at all
+///\return True if any measurand is found, false otherwise
+bool meter_value_has_any_measurand(const MeterValue& _meter_value, const std::vector<MeasurandEnum>& measurands);
+
 /// \brief Applies the given \p measurands to the given \p _meter_value . The returned meter value will only contain
 /// SampledValues which measurand is listed in the given \param measurands . If no measurand is set for the
 /// SampledValue, the SampledValue will also be omitted.
