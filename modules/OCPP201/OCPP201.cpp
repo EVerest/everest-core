@@ -274,7 +274,7 @@ ocpp::v201::MeterValue get_meter_value(const types::powermeter::Powermeter& powe
         }
         if (power_meter.voltage_V.value().DC.has_value()) {
             sampled_value = get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Voltage, "V", std::nullopt);
-            sampled_value.value = power_meter.voltage_V.value().L1.value();
+            sampled_value.value = power_meter.voltage_V.value().DC.value();
             meter_value.sampledValue.push_back(sampled_value);
         }
     }
