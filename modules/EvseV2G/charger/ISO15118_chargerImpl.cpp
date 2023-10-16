@@ -93,7 +93,8 @@ void ISO15118_chargerImpl::handle_set_PaymentOptions(Array& PaymentOptions) {
                         iso1paymentOptionType_ExternalPayment;
                     v2g_ctx->evse_v2g_data.payment_option_list_len++;
                 } else if (v2g_ctx->evse_v2g_data.payment_option_list_len == 0) {
-                    dlog(DLOG_LEVEL_WARNING, "Unable to configure PaymentOptions %s", element.get<std::string>().c_str());
+                    dlog(DLOG_LEVEL_WARNING, "Unable to configure PaymentOptions %s",
+                         element.get<std::string>().c_str());
                 }
             }
         }
