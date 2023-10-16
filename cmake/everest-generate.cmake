@@ -13,8 +13,6 @@ string(ASCII 27 ESCAPE)
 set(FMT_RESET "${ESCAPE}[m")
 set(FMT_BOLD "${ESCAPE}[1m")
 
-message(STATUS "${COLOR_BOLD}Should be bold?${COLOR_RESET}")
-
 # NOTE (aw): maybe this could be also implemented as an IMPORTED target?
 add_custom_target(generate_cpp_files)
 set_target_properties(generate_cpp_files
@@ -275,6 +273,13 @@ function (ev_add_module)
         return()
     endif()
 
+    # check if rust module
+    string(FIND ${MODULE_NAME} "Rs" MODULE_PREFIX_POS)
+    if (MODULE_PREFIX_POS EQUAL 0)
+        ev_add_rs_module(${MODULE_NAME})
+        return()
+    endif()
+
     # otherwise, should be cpp module
     ev_add_cpp_module(${MODULE_NAME})
 endfunction()
@@ -463,7 +468,7 @@ function (ev_add_js_module MODULE_NAME)
             add_subdirectory(${MODULE_PATH})
         endif()
     else()
-        message(WARNING "C++ module ${MODULE_NAME} does not exist at ${MODULE_PATH}")
+        message(WARNING "JavaScript module ${MODULE_NAME} does not exist at ${MODULE_PATH}")
         return()
     endif()
 
@@ -507,7 +512,82 @@ function (ev_add_py_module MODULE_NAME)
             add_subdirectory(${MODULE_PATH})
         endif()
     else()
-        message(WARNING "C++ module ${MODULE_NAME} does not exist at ${MODULE_PATH}")
+        message(WARNING "Python module ${MODULE_NAME} does not exist at ${MODULE_PATH}")
+        return()
+    endif()
+
+    # FIXME (aw): this will override EVEREST_MODULES, might not what we want
+    set_property(
+        GLOBAL
+        PROPERTY EVEREST_MODULES ${EVEREST_MODULES}
+    )
+endfunction()
+
+function (ev_add_rs_module MODULE_NAME)
+    set(EVEREST_MODULE_INSTALL_PREFIX "${CMAKE_INSTALL_LIBEXECDIR}/everest/modules")
+
+    set(MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}")
+    set(MODULE_BUILD_PATH "${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}")
+
+    if(IS_DIRECTORY ${MODULE_PATH})
+        if(NOT ${EVEREST_ENABLE_RS_SUPPORT})
+            message(STATUS "Excluding Rust module ${MODULE_NAME} because EVEREST_ENABLE_RS_SUPPORT=${EVEREST_ENABLE_RS_SUPPORT}")
+            return()
+        elseif("${MODULE_NAME}" IN_LIST EVEREST_EXCLUDE_MODULES)
+            message(STATUS "Excluding module ${MODULE_NAME}")
+            return()
+        elseif(EVEREST_INCLUDE_MODULES AND NOT ("${MODULE_NAME}" IN_LIST EVEREST_INCLUDE_MODULES))
+            message(STATUS "Excluding module ${MODULE_NAME}")
+            return()
+        else()
+            message(STATUS "Setting up Rust module ${MODULE_NAME}")
+
+            find_program(
+                    RSYNC
+                    rsync
+                    REQUIRED
+            )
+
+            # Copy source of module ${MODULE_NAME} to build dir
+            execute_process(
+                COMMAND ${RSYNC} -avq --delete "${MODULE_PATH}/" "${MODULE_BUILD_PATH}"
+            )
+
+            find_program(
+                SED
+                sed
+                REQUIRED
+            )
+
+            execute_process(
+                COMMAND ${SED} -i "/everestrs = /c\\everestrs = { path = \"${everest-framework_SOURCE_DIR}/everestrs/everestrs\" }" "${MODULE_BUILD_PATH}/Cargo.toml"
+            )
+
+            find_program(
+                CARGO
+                cargo
+                REQUIRED
+            )
+
+            add_custom_target(
+                ${MODULE_NAME} ALL
+                COMMAND ${CMAKE_COMMAND} -E env EVEREST_RS_FRAMEWORK_SOURCE_LOCATION="${everest-framework_SOURCE_DIR}" EVEREST_RS_FRAMEWORK_BINARY_LOCATION="${everest-framework_BINARY_DIR}" ${CARGO} build
+                WORKING_DIRECTORY ${MODULE_BUILD_PATH}
+                DEPENDS everest::framework
+            )
+
+            install(CODE "execute_process(COMMAND ${CARGO} install --path \"${MODULE_BUILD_PATH}\" \
+                                                                   --root \"${CMAKE_INSTALL_PREFIX}/${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}\" \
+                                          WORKING_DIRECTORY ${MODULE_BUILD_PATH} \
+                                          COMMAND echo \"hello there\" \
+                          )")
+
+            install(FILES ${MODULE_PATH}/manifest.yaml
+                DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
+            )
+        endif()
+    else()
+        message(WARNING "Rust module ${MODULE_NAME} does not exist at ${MODULE_PATH}")
         return()
     endif()
 
