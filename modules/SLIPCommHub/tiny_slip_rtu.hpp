@@ -63,9 +63,8 @@ public:
     bool open_device(const std::string& device, int baud, bool ignore_echo,
                      const Everest::GpioSettings& rxtx_gpio_settings, const Parity parity);
     std::vector<uint16_t> txrx(uint8_t device_address, uint16_t logical_address,
-                               uint8_t status_code, 
-                               std::vector<uint8_t> request = std::vector<uint8_t>(),
-                               bool wait_for_reply = true);
+                               bool wait_for_reply = true, 
+                               std::vector<uint8_t> request = std::vector<uint8_t>());
 
 private:
     // Serial interface

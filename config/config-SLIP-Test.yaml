@@ -1,5 +1,5 @@
-settings:
-  telemetry_enabled: true
+#settings:
+#  telemetry_enabled: true
 active_modules:
   instance_id_SLIPCommHub:
     config_module:

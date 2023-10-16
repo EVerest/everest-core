@@ -342,9 +342,9 @@ int TinySlipRTU::read_reply(uint8_t* rxbuf, int rxbuf_len) {
 
 */
 std::vector<uint16_t> TinySlipRTU::txrx(uint8_t device_address, uint16_t logical_address,
-                                        uint8_t status_code, 
-                                        std::vector<uint8_t> request,
-                                        bool wait_for_reply) {
+                                        bool wait_for_reply, 
+                                        std::vector<uint8_t> request) {
+    EVLOG_info << "txrx called";
     //calculating frame len 
     //(containing logical address(2), length field(2), status code(1) and request data)
     //excluding device address, CRC and SLIP START+END ID 
@@ -356,11 +356,12 @@ std::vector<uint16_t> TinySlipRTU::txrx(uint8_t device_address, uint16_t logical
 
     // add header
     req[DEVICE_ADDRESS_POS] = device_address;
-    logical_address = htobe16(logical_address);
+    //logical_address = htobe16(logical_address);
     memcpy(req.get() + REGISTER_ADDR_POS, &logical_address, 2);   
-    app_layer_frame_length = htobe16(app_layer_frame_length);
+    //app_layer_frame_length = htobe16(app_layer_frame_length);
     memcpy(req.get() + FRAME_LEN_POS, &app_layer_frame_length, 2);
-
+    req[STATUS_CODE] = 0;   //status is always zero in requests
+    
     //copy passed vector data
     int i = START_OF_PAYLOAD;
     for (auto r : request) {
@@ -386,6 +387,8 @@ std::vector<uint16_t> TinySlipRTU::txrx(uint8_t device_address, uint16_t logical
     std::unique_ptr<uint8_t[]> slipreq(new uint8_t[slipreq_len]);
     add_slip_characters(req.get(), req_len, slipreq.get(), slipreq_len);
 
+    EVLOG_info << "SEND:" << hexdump(slipreq.get(), slipreq_len);
+/*
     // clear input and output buffer
     tcflush(fd, TCIOFLUSH);
 
@@ -411,7 +414,7 @@ std::vector<uint16_t> TinySlipRTU::txrx(uint8_t device_address, uint16_t logical
         uint8_t rxbuf[SLIP_MAX_REPLY_SIZE];
         int bytes_read_total = read_reply(rxbuf, sizeof(rxbuf));
         return decode_reply(rxbuf, bytes_read_total, device_address, logical_address);
-    }
+    }*/
     return std::vector<uint16_t>();
 }
 

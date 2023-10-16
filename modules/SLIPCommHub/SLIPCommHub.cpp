@@ -11,7 +11,8 @@ void SLIPCommHub::init() {
 
 void SLIPCommHub::ready() {
     invoke_ready(*p_main);
-    slip.txrx(0xFF, 0x4114,0);
+    EVLOG_info << "ready() called";
+    slip.txrx(0xFF, 0x4114);
 }
 
 void SLIPCommHub::initHW(){
@@ -25,10 +26,12 @@ void SLIPCommHub::initHW(){
     rxtx_gpio_settings.line_number = 0;
     rxtx_gpio_settings.inverted = false;
 
-    if (!slip.open_device(config.serial_port, config.baudrate, /*config.ignore_echo*/false, rxtx_gpio_settings,
-                          static_cast<tiny_slip::Parity>(config.parity))) {
-        EVLOG_AND_THROW(Everest::EverestConfigError(fmt::format("Cannot open serial port {}.", config.serial_port)));
-    }
+    EVLOG_info << "initHW called";
+
+    // if (!slip.open_device(config.serial_port, config.baudrate, /*config.ignore_echo*/false, rxtx_gpio_settings,
+    //                       static_cast<tiny_slip::Parity>(config.parity))) {
+    //     EVLOG_AND_THROW(Everest::EverestConfigError(fmt::format("Cannot open serial port {}.", config.serial_port)));
+    // }
 }
 
 } // namespace module
