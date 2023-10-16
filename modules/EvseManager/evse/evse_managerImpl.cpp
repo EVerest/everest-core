@@ -28,7 +28,6 @@ bool str_to_bool(const std::string& data) {
 void evse_managerImpl::init() {
     limits.nr_of_phases_available = 1;
     limits.max_current = 0.;
-    connector_status_changed = false;
 
     // Interface to Node-RED debug UI
 
