@@ -22,17 +22,18 @@ void isolation_monitorImpl::init_registers() {
 }
 
 void isolation_monitorImpl::init_device() {
-    send_to_imd(3005,  config.threshold_resistance_kohm);        // set "pre-alarm" resistor R1 (default = 600k)
-    send_to_imd(3007, (config.threshold_resistance_kohm - 10));  // set "alarm" resistor R2 to slightly lower than R1 (= -10k)
-    send_to_imd(3008, 0);    // disable low-voltage alarm
-    send_to_imd(3010, 0);    // disable overvoltage alarm
-    send_to_imd(3023, 0);    // set mode to "dc"
-    send_to_imd(3021, 0);    // disable automatic test
-    send_to_imd(3024, 0);    // disable line voltage test
-    send_to_imd(3025, 0);    // disable self-test on power-up
-    if (config.threshold_resistance_kohm == 600) {  // only disable device, if it is in its default threshold setting
-        disable_device();                           // (otherwise it is assumed that the internal relays are being used
-                                                    //  and that automatic switching is desired)
+    send_to_imd(3005, config.threshold_resistance_kohm); // set "pre-alarm" resistor R1 (default = 600k)
+    send_to_imd(3007,
+                (config.threshold_resistance_kohm - 10)); // set "alarm" resistor R2 to slightly lower than R1 (= -10k)
+    send_to_imd(3008, 0);                                 // disable low-voltage alarm
+    send_to_imd(3010, 0);                                 // disable overvoltage alarm
+    send_to_imd(3023, 0);                                 // set mode to "dc"
+    send_to_imd(3021, 0);                                 // disable automatic test
+    send_to_imd(3024, 0);                                 // disable line voltage test
+    send_to_imd(3025, 0);                                 // disable self-test on power-up
+    if (config.threshold_resistance_kohm == 600) { // only disable device, if it is in its default threshold setting
+        disable_device();                          // (otherwise it is assumed that the internal relays are being used
+                                                   //  and that automatic switching is desired)
     } else {
         enable_device();
     }
@@ -44,25 +45,25 @@ void isolation_monitorImpl::enable_device() {
 }
 
 void isolation_monitorImpl::disable_device() {
-    if (config.threshold_resistance_kohm == 600) {  // only disable device, if it is in its default threshold setting
-        send_to_imd(3026, 0);                       // (otherwise it is assumed that the internal relays are being used
-                                                    //  and that automatic switching is desired)
+    if (config.threshold_resistance_kohm == 600) { // only disable device, if it is in its default threshold setting
+        send_to_imd(3026, 0);                      // (otherwise it is assumed that the internal relays are being used
+                                                   //  and that automatic switching is desired)
         EVLOG_debug << "IMD has stopped measurements.";
     }
 }
 
 void isolation_monitorImpl::send_to_imd(const uint16_t& command, const uint16_t& value) {
     if (mod->r_serial_comm_hub->call_modbus_write_multiple_registers(
-            config.imd_device_id, 
-            static_cast<int>(command), 
-            (types::serial_comm_hub_requests::VectorUint16){{value}}) != types::serial_comm_hub_requests::StatusCodeEnum::Success) {
+            config.imd_device_id, static_cast<int>(command),
+            (types::serial_comm_hub_requests::VectorUint16){{value}}) !=
+        types::serial_comm_hub_requests::StatusCodeEnum::Success) {
         EVLOG_AND_THROW(std::runtime_error("Sending configuration data failed!"));
     }
 }
 
 void isolation_monitorImpl::ready() {
     this->init_device();
-    std::thread ([this] {
+    std::thread([this] {
         while (42) {
             if (this->enable_publishing) {
                 read_imd_values();
@@ -81,7 +82,7 @@ void isolation_monitorImpl::dead_time_wait() {
 void isolation_monitorImpl::handle_start() {
     if (this->dead_time_flag != true) {
         request_start();
-    } else {  // if busy first time, try again later
+    } else { // if busy first time, try again later
         std::this_thread::sleep_for(std::chrono::seconds(DEAD_TIME_S));
         request_start();
     }
@@ -90,7 +91,7 @@ void isolation_monitorImpl::handle_start() {
 void isolation_monitorImpl::handle_stop() {
     if (this->dead_time_flag != true) {
         request_stop();
-    } else {  // if busy first time, try again later
+    } else { // if busy first time, try again later
         std::this_thread::sleep_for(std::chrono::seconds(DEAD_TIME_S));
         request_stop();
     }
@@ -101,7 +102,7 @@ void isolation_monitorImpl::request_start() {
         enable_device();
         this->enable_publishing = true;
         this->dead_time_flag = true;
-        std::thread ([this](){ dead_time_wait(); }).detach();
+        std::thread([this]() { dead_time_wait(); }).detach();
     }
 }
 
@@ -110,7 +111,7 @@ void isolation_monitorImpl::request_stop() {
         this->enable_publishing = false;
         disable_device();
         this->dead_time_flag = true;
-        std::thread ([this](){ dead_time_wait(); }).detach();
+        std::thread([this]() { dead_time_wait(); }).detach();
     }
 }
 
@@ -137,9 +138,7 @@ void isolation_monitorImpl::readRegister(const RegisterData& register_config) {
 
     if (register_config.register_function == ModbusFunctionType::READ_HOLDING_REGISTER) {
         register_response = mod->r_serial_comm_hub->call_modbus_read_holding_registers(
-            config.imd_device_id, 
-            register_config.start_register, 
-            register_config.num_registers);
+            config.imd_device_id, register_config.start_register, register_config.num_registers);
     }
     process_response(register_config, register_response);
     update_IsolationMeasurement();
@@ -167,7 +166,7 @@ void isolation_monitorImpl::process_response(const RegisterData& register_data,
     }
 }
 
-double isolation_monitorImpl::extract_register_values(const RegisterData& reg_data, 
+double isolation_monitorImpl::extract_register_values(const RegisterData& reg_data,
                                                       const types::serial_comm_hub_requests::Result& reg_message) {
     if (reg_message.value.has_value()) {
         uint32_t value{0};
@@ -196,8 +195,7 @@ double isolation_monitorImpl::extract_register_values(const RegisterData& reg_da
             val_scaled = 0.0;
         }
 
-        EVLOG_debug << "value: " << val 
-                    << "\nalarm_status: " << get_alarm_status(alarm_status)  
+        EVLOG_debug << "value: " << val << "\nalarm_status: " << get_alarm_status(alarm_status)
                     << "\nchannel_description: 0x" << std::hex << channel_description;
 
         return val_scaled;
@@ -253,14 +251,13 @@ void isolation_monitorImpl::output_error_with_content(const types::serial_comm_h
             ss << "0x" << std::setfill('0') << std::setw(2) << std::hex << int(response.value.value()[i]);
         }
     }
-    EVLOG_debug << "received error response: " 
-                << status_code_enum_to_string(response.status_code) 
-                << " (" << ss.str() << ")";
+    EVLOG_debug << "received error response: " << status_code_enum_to_string(response.status_code) << " (" << ss.str()
+                << ")";
 }
 
 void isolation_monitorImpl::update_IsolationMeasurement() {
     this->isolation_measurement_data.resistance_F_Ohm = this->imd_last_values.resistance_R_F_ohm;
-    this->isolation_measurement_data.voltage_V        = this->imd_last_values.voltage_U_N_V;
+    this->isolation_measurement_data.voltage_V = this->imd_last_values.voltage_U_N_V;
 }
 
 } // namespace main

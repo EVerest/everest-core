@@ -51,35 +51,35 @@ private:
     virtual void ready() override;
 
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
-    constexpr static uint8_t ALARM_BITS_MASK          {0b00000111};
-    constexpr static uint8_t ALARM_AND_TEST_BITS_MASK {0b11000111};
-    constexpr static uint8_t PRE_WARNING_STATE        {0b00000001};
-    constexpr static uint8_t DEVICE_ERROR_STATE       {0b00000010};
-    constexpr static uint8_t WARNING_STATE            {0b00000100};
-    constexpr static uint8_t ALARM_STATE              {0b00000101};
-    constexpr static uint8_t INTERNAL_TEST_STATE      {0b00000001};
-    constexpr static uint8_t EXTERNAL_TEST_STATE      {0b00000010};
+    constexpr static uint8_t ALARM_BITS_MASK{0b00000111};
+    constexpr static uint8_t ALARM_AND_TEST_BITS_MASK{0b11000111};
+    constexpr static uint8_t PRE_WARNING_STATE{0b00000001};
+    constexpr static uint8_t DEVICE_ERROR_STATE{0b00000010};
+    constexpr static uint8_t WARNING_STATE{0b00000100};
+    constexpr static uint8_t ALARM_STATE{0b00000101};
+    constexpr static uint8_t INTERNAL_TEST_STATE{0b00000001};
+    constexpr static uint8_t EXTERNAL_TEST_STATE{0b00000010};
 
     enum class ValueStatus : uint8_t {
-        VALUE_IS_TRUE      = 0,
+        VALUE_IS_TRUE = 0,
         TRUE_VALUE_SMALLER = 0b00000001,
-        TRUE_VALUE_LARGER  = 0b00000010,
-        VALUE_INVALID      = 0b00000011
+        TRUE_VALUE_LARGER = 0b00000010,
+        VALUE_INVALID = 0b00000011
     };
 
     enum class ImdRegisters : uint16_t {
-        RESISTANCE_R_F_OHM  = 1000,
-        VOLTAGE_U_N_V       = 1008,
-        VOLTAGE_U_L1E_V     = 1016,
-        VOLTAGE_U_L2E_V     = 1020,
+        RESISTANCE_R_F_OHM = 1000,
+        VOLTAGE_U_N_V = 1008,
+        VOLTAGE_U_L1E_V = 1016,
+        VOLTAGE_U_L2E_V = 1020,
         RESISTANCE_R_FU_OHM = 1028
     };
 
     enum class ModbusFunctionType : uint8_t {
-        READ_HOLDING_REGISTER    = 0x03,
-        READ_INPUT_REGISTER      = 0x04,
+        READ_HOLDING_REGISTER = 0x03,
+        READ_INPUT_REGISTER = 0x04,
         WRITE_MULTIPLE_REGISTERS = 0x10,
-        REGISTER_TYPE_UNDEFINED  = 0x00
+        REGISTER_TYPE_UNDEFINED = 0x00
     };
 
     struct RegisterData {
