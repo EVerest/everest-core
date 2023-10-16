@@ -115,13 +115,6 @@ TEST_F(EvseSecurityTests, verify_bundle_management) {
         }
     }
     ASSERT_TRUE(items == 1);
-
-    EXPECT_THROW(
-        {
-            // We don't support directory/bundle combination
-            X509CertificateBundle bundle_throw(std::filesystem::path("certs/ca/v2g/"), EncodingFormat::PEM);
-        },
-        CertificateLoadException);
 }
 
 /// \brief test verifyChargepointCertificate with valid cert
@@ -212,7 +205,7 @@ TEST_F(EvseSecurityTests, get_installed_certificates_and_delete_secc_leaf) {
     // ASSERT_EQ(r.status, GetInstalledCertificatesStatus::Accepted);
 
     ASSERT_EQ(r.status, GetInstalledCertificatesStatus::Accepted);
-    ASSERT_EQ(r.certificate_hash_data_chain.size(), 4);
+    ASSERT_EQ(r.certificate_hash_data_chain.size(), 5);
     bool found_v2g_chain = false;
 
     CertificateHashData secc_leaf_data;
@@ -231,7 +224,7 @@ TEST_F(EvseSecurityTests, get_installed_certificates_and_delete_secc_leaf) {
 
     const auto get_certs_response = this->evse_security->get_installed_certificates(certificate_types);
     // ASSERT_EQ(r.status, GetInstalledCertificatesStatus::Accepted);
-    ASSERT_EQ(get_certs_response.certificate_hash_data_chain.size(), 3);
+    ASSERT_EQ(get_certs_response.certificate_hash_data_chain.size(), 4);
 
     delete_response = this->evse_security->delete_certificate(secc_leaf_data);
     ASSERT_EQ(delete_response, DeleteCertificateResult::NotFound);

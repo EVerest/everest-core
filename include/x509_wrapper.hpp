@@ -34,6 +34,8 @@ const std::filesystem::path PEM_EXTENSION = ".pem";
 const std::filesystem::path DER_EXTENSION = ".der";
 const std::filesystem::path KEY_EXTENSION = ".key";
 
+using ossl_days_to_seconds = std::chrono::duration<std::int64_t, std::ratio<86400>>;
+
 /// @brief Convenience wrapper around openssl X509 certificate
 class X509Wrapper {
 public:
@@ -103,6 +105,9 @@ public:
     /// @brief Gets the export string representation for this certificate
     /// @return
     std::string get_export_string() const;
+
+    /// @brief If the certificate is within the validity date
+    bool is_valid() const;
 
 public:
     X509Wrapper& operator=(X509Wrapper&& other) = default;

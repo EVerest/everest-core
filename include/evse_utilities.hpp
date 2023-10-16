@@ -6,6 +6,8 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <limits>
+#include <random>
 
 #include <everest/logging.hpp>
 namespace evse_security {
@@ -16,6 +18,7 @@ public:
         if (std::filesystem::is_regular_file(file_path))
             return std::filesystem::remove(file_path);
 
+        EVLOG_error << "Error deleting file: " << file_path;
         return false;
     }
 
@@ -29,6 +32,7 @@ public:
             }
         }
 
+        EVLOG_error << "Error reading file: " << file_path;
         return false;
     }
 
@@ -56,10 +60,20 @@ public:
     }
 
     static std::string get_random_file_name(const std::string& extension) {
-        char path[] = "XXXXXX";
-        mktemp(path);
+        static std::random_device rd;
+        static std::mt19937 generator(rd());
+        static std::uniform_int_distribution<int> distribution(1, std::numeric_limits<int>::max());
 
-        return std::string(path) + extension;
+        static int increment = 0;
+
+        std::ostringstream buff;
+
+        auto now = std::chrono::system_clock::now();
+        std::time_t time = std::chrono::system_clock::to_time_t(now);
+        buff << std::put_time(std::gmtime(&time), "%m_%d_%Y_%H_%M_%S_") << std::to_string(++increment) << "_"
+             << distribution(generator) << extension;
+
+        return buff.str();
     }
 };
 
