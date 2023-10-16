@@ -19,6 +19,9 @@ namespace module {
 
 Charger::Charger(const std::unique_ptr<board_support_ACIntf>& r_bsp, const std::string& connector_type) :
     r_bsp(r_bsp), connector_type(connector_type) {
+
+    connectorEnabled = true;
+
     maxCurrent = 6.0;
     maxCurrentCable = r_bsp->call_read_pp_ampacity();
     authorized = false;
@@ -1185,18 +1188,27 @@ types::evse_manager::ErrorEnum Charger::getErrorState() {
 
 // bool Charger::isPowerOn() { return control_pilot.isPowerOn(); }
 
-bool Charger::disable() {
+bool Charger::disable(int connector_id) {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
+    if (connector_id != 0) {
+        connectorEnabled = false;
+    }
     currentState = EvseState::Disabled;
     signalEvent(types::evse_manager::SessionEventEnum::Disabled);
     return true;
 }
 
-bool Charger::enable() {
+bool Charger::enable(int connector_id) {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
+    if (connector_id != 0) {
+        connectorEnabled = true;
+    }
+
+    signalEvent(types::evse_manager::SessionEventEnum::Enabled);
     if (currentState == EvseState::Disabled) {
-        currentState = EvseState::Idle;
-        signalEvent(types::evse_manager::SessionEventEnum::Enabled);
+        if (connectorEnabled) {
+            currentState = EvseState::Idle;
+        }
         return true;
     }
     return false;

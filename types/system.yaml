@@ -209,3 +209,4 @@ types:
     enum:
       - Soft
       - Hard
+      - NotSpecified

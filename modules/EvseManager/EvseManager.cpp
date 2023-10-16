@@ -823,7 +823,7 @@ void EvseManager::ready() {
     //  caps.
     charger->setMaxCurrent(0.0F, date::utc_clock::now());
     charger->run();
-    charger->enable();
+    charger->enable(0);
 
     this->p_evse->publish_ready(true);
     EVLOG_info << fmt::format(fmt::emphasis::bold | fg(fmt::terminal_color::green),
