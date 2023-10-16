@@ -10,6 +10,45 @@ namespace ocpp {
 
 namespace v201 {
 
+static bool is_integer(const std::string& value) {
+    if (value.empty()) {
+        return false;
+    }
+
+    // Check for + or - in the beginning
+    size_t start_pos = 0;
+    if (value[0] == '+' or value[0] == '-') {
+        start_pos = 1;
+    }
+
+    return std::all_of(value.begin() + start_pos, value.end(), ::isdigit);
+}
+
+static bool is_decimal_number(const std::string& value) {
+    if (value.empty()) {
+        return false;
+    }
+
+    // Check for + or - in the beginning
+    size_t start_pos = 0;
+    if (value[0] == '+' || value[0] == '-')
+        start_pos = 1;
+
+    int decimal_point_count = 0;
+
+    for (size_t i = start_pos; i < value.length(); ++i) {
+        if (value[i] == '.') {
+            // Allow at most one decimal point
+            if (++decimal_point_count > 1) {
+                return false;
+            }
+        } else if (!std::isdigit(value[i])) {
+            return false;
+        }
+    }
+    return true;
+}
+
 bool DeviceModel::component_criteria_match(const Component& component,
                                            const std::vector<ComponentCriterionEnum>& component_criteria) {
     if (component_criteria.empty()) {
@@ -34,61 +73,77 @@ bool DeviceModel::component_criteria_match(const Component& component,
 }
 
 bool validate_value(const VariableCharacteristics& characteristics, const std::string& value) {
-    switch (characteristics.dataType) {
-    case DataEnum::string:
-        if (characteristics.minLimit.has_value() and value.size() < characteristics.minLimit.value()) {
-            return false;
-        }
-        if (characteristics.maxLimit.has_value() and value.size() > characteristics.maxLimit.value()) {
-            return false;
-        }
-        return true;
-    case DataEnum::decimal:
-        if (characteristics.minLimit.has_value() and std::stof(value) < characteristics.minLimit.value()) {
-            return false;
-        }
-        if (characteristics.maxLimit.has_value() and std::stof(value) > characteristics.maxLimit.value()) {
-            return false;
-        }
-        return true;
-    case DataEnum::integer:
-        if (characteristics.minLimit.has_value() and std::stoi(value) < characteristics.minLimit.value()) {
-            return false;
-        }
-        if (characteristics.maxLimit.has_value() and std::stoi(value) > characteristics.maxLimit.value()) {
-            return false;
-        }
-        return true;
-    case DataEnum::dateTime:
-        return true;
-    case DataEnum::boolean:
-        return (value == "true" or value == "false");
-    case DataEnum::OptionList: {
-        // OptionList: The (Actual) Variable value must be a single value from the reported (CSV) enumeration list.
-        if (!characteristics.valuesList.has_value()) {
+    try {
+        switch (characteristics.dataType) {
+        case DataEnum::string:
+            if (characteristics.minLimit.has_value() and value.size() < characteristics.minLimit.value()) {
+                return false;
+            }
+            if (characteristics.maxLimit.has_value() and value.size() > characteristics.maxLimit.value()) {
+                return false;
+            }
+            return true;
+        case DataEnum::decimal: {
+            if (!is_decimal_number(value)) {
+                return false;
+            }
+            float f = std::stof(value);
+            if (characteristics.minLimit.has_value() and f < characteristics.minLimit.value()) {
+                return false;
+            }
+            if (characteristics.maxLimit.has_value() and f > characteristics.maxLimit.value()) {
+                return false;
+            }
             return true;
         }
-        const auto values_list = ocpp::get_vector_from_csv(characteristics.valuesList.value().get());
-        return std::find(values_list.begin(), values_list.end(), value) != values_list.end();
-    }
-    default: // same validation for MemberList or SequenceList
-        // MemberList: The (Actual) Variable value may be an (unordered) (sub-)set of the reported (CSV) valid values
-        // list.
-        // SequenceList: The (Actual) Variable value may be an ordered (priority, etc) (sub-)set of the reported (CSV)
-        // valid values.
-        {
+        case DataEnum::integer: {
+            if (!is_integer(value)) {
+                return false;
+            }
+
+            int i = std::stoi(value);
+            if (characteristics.minLimit.has_value() and i < characteristics.minLimit.value()) {
+                return false;
+            }
+            if (characteristics.maxLimit.has_value() and i > characteristics.maxLimit.value()) {
+                return false;
+            }
+            return true;
+        }
+        case DataEnum::dateTime: {
+            DateTime d(value);
+            return true;
+        }
+        case DataEnum::boolean:
+            return (value == "true" or value == "false");
+        case DataEnum::OptionList: {
+            // OptionList: The (Actual) Variable value must be a single value from the reported (CSV) enumeration list.
             if (!characteristics.valuesList.has_value()) {
                 return true;
             }
             const auto values_list = ocpp::get_vector_from_csv(characteristics.valuesList.value().get());
-            const auto value_csv = get_vector_from_csv(value);
-            for (const auto& v : value_csv) {
-                if (std::find(values_list.begin(), values_list.end(), v) == values_list.end()) {
-                    return false;
-                }
-            }
-            return true;
+            return std::find(values_list.begin(), values_list.end(), value) != values_list.end();
         }
+        default: // same validation for MemberList or SequenceList
+            // MemberList: The (Actual) Variable value may be an (unordered) (sub-)set of the reported (CSV) valid
+            // values list. SequenceList: The (Actual) Variable value may be an ordered (priority, etc) (sub-)set of the
+            // reported (CSV) valid values.
+            {
+                if (!characteristics.valuesList.has_value()) {
+                    return true;
+                }
+                const auto values_list = ocpp::get_vector_from_csv(characteristics.valuesList.value().get());
+                const auto value_csv = get_vector_from_csv(value);
+                for (const auto& v : value_csv) {
+                    if (std::find(values_list.begin(), values_list.end(), v) == values_list.end()) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        }
+    } catch (const std::exception& e) {
+        return false;
     }
 }
 
