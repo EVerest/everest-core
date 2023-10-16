@@ -6,6 +6,8 @@
 #include <ocpp/v201/messages/FirmwareStatusNotification.hpp>
 #include <ocpp/v201/messages/LogStatusNotification.hpp>
 
+using namespace std::literals::chrono_literals;
+
 namespace ocpp {
 namespace v201 {
 
@@ -531,10 +533,11 @@ void ChargePoint::init_websocket() {
                                                     AttributeEnum::Actual, std::to_string(security_profile));
         }
 
-        if (this->registration_status == RegistrationStatusEnum::Accepted) {
+        if (this->registration_status == RegistrationStatusEnum::Accepted and
+            this->time_disconnected.time_since_epoch() != 0s) {
             // handle offline threshold
             //  Get the current time point using steady_clock
-            std::chrono::steady_clock::duration offline_duration = std::chrono::steady_clock::now() - time_disconnected;
+            auto offline_duration = std::chrono::steady_clock::now() - this->time_disconnected;
 
             // B04.FR.01
             // If offline period exceeds offline threshold then send the status notification for all connectors
@@ -559,6 +562,7 @@ void ChargePoint::init_websocket() {
                 }
             }
         }
+        this->time_disconnected = std::chrono::time_point<std::chrono::steady_clock>();
     });
 
     this->websocket->register_closed_callback(
@@ -585,7 +589,7 @@ void ChargePoint::init_websocket() {
                     }
                 }
                 // Get the current time point using steady_clock
-                time_disconnected = std::chrono::steady_clock::now();
+                this->time_disconnected = std::chrono::steady_clock::now();
             }
 
             if (!this->disable_automatic_websocket_reconnects) {
