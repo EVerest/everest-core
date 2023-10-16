@@ -375,6 +375,7 @@ systemImpl::handle_upload_logs(types::system::UploadLogsRequest& upload_logs_req
 };
 
 bool systemImpl::handle_is_reset_allowed(types::system::ResetType& type) {
+    // Right now we dont want to reject a reset ever
     return true;
 }
 

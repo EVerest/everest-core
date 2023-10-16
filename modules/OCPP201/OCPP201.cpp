@@ -11,6 +11,8 @@ namespace module {
 const std::string INIT_SQL = "init_core.sql";
 const std::string CERTS_DIR = "certs";
 
+const std::string KVS_OCPP201_INOPERATIVE_KEY_PREFIX = "OCPP201_INOPERATIVE_";
+
 namespace fs = std::filesystem;
 
 ocpp::v201::FirmwareStatusEnum get_firmware_status_notification(const types::system::FirmwareUpdateStatusEnum status) {
@@ -389,7 +391,7 @@ void OCPP201::init_evse_ready_map() {
 
 void OCPP201::init_evses() {
 
-    if (this->r_kvs->call_exists("0")) {
+    if (this->r_kvs->call_exists(KVS_OCPP201_INOPERATIVE_KEY_PREFIX + "0")) {
         this->cs_operational_status = ocpp::v201::OperationalStatusEnum::Inoperative;
     } else {
         this->cs_operational_status = ocpp::v201::OperationalStatusEnum::Operative;
@@ -410,7 +412,7 @@ void OCPP201::init_evses() {
         Evse module_evse;
         module_evse.evse_id = evse_id;
 
-        if (this->r_kvs->call_exists(std::to_string(evse_id))) {
+        if (this->r_kvs->call_exists(KVS_OCPP201_INOPERATIVE_KEY_PREFIX + std::to_string(evse_id))) {
             module_evse.operational_state = ocpp::v201::OperationalStatusEnum::Inoperative;
         } else {
             module_evse.operational_state = ocpp::v201::OperationalStatusEnum::Operative;
@@ -422,7 +424,7 @@ void OCPP201::init_evses() {
             }
 
             auto connector_id_str = std::to_string(evse_id) + "." + std::to_string(connector_id);
-            if (this->r_kvs->call_exists(connector_id_str)) {
+            if (this->r_kvs->call_exists(KVS_OCPP201_INOPERATIVE_KEY_PREFIX + connector_id_str)) {
                 module_evse.connectors[connector_id] = ocpp::v201::OperationalStatusEnum::Inoperative;
             } else {
                 module_evse.connectors[connector_id] = ocpp::v201::OperationalStatusEnum::Operative;
@@ -443,6 +445,29 @@ bool OCPP201::all_evse_ready() {
     }
     EVLOG_info << "All EVSE ready. Starting OCPP2.0.1 service";
     return true;
+}
+
+void OCPP201::set_connector_operational_status(const ocpp::v201::OperationalStatusEnum operational_status,
+                                               const int32_t evse_id, const int32_t connector_id) {
+    if (operational_status == ocpp::v201::OperationalStatusEnum::Operative) {
+        this->evses.at(evse_id).connectors.at(connector_id) = ocpp::v201::OperationalStatusEnum::Operative;
+        auto connector_id_str = std::to_string(evse_id) + "." + std::to_string(connector_id);
+        this->r_kvs->call_delete(KVS_OCPP201_INOPERATIVE_KEY_PREFIX + connector_id_str);
+    } else {
+        this->evses.at(evse_id).connectors.at(connector_id) = ocpp::v201::OperationalStatusEnum::Inoperative;
+        auto connector_id_str = std::to_string(evse_id) + "." + std::to_string(connector_id);
+        this->r_kvs->call_store(KVS_OCPP201_INOPERATIVE_KEY_PREFIX + connector_id_str, true);
+    }
+}
+
+void OCPP201::set_evse_operational_status(const ocpp::v201::OperationalStatusEnum operational_status, const int32_t evse_id) {
+    if (operational_status == ocpp::v201::OperationalStatusEnum::Operative) {
+        this->evses.at(evse_id).operational_state = ocpp::v201::OperationalStatusEnum::Operative;
+        this->r_kvs->call_delete(KVS_OCPP201_INOPERATIVE_KEY_PREFIX + std::to_string(evse_id));
+    } else {
+        this->evses.at(evse_id).operational_state = ocpp::v201::OperationalStatusEnum::Inoperative;
+        this->r_kvs->call_store(KVS_OCPP201_INOPERATIVE_KEY_PREFIX + std::to_string(evse_id), true);
+    }
 }
 
 void OCPP201::init() {
@@ -534,28 +559,22 @@ void OCPP201::ready() {
                 // change to operative
                 if (connector_id.has_value()) {
                     // connector is addressed
-                    this->evses.at(evse_id).connectors.at(connector_id.value()) =
-                        ocpp::v201::OperationalStatusEnum::Operative;
-                    auto connector_id_str = std::to_string(evse_id) + "." + std::to_string(connector_id.value());
-                    this->r_kvs->call_delete(connector_id_str);
+                    this->set_connector_operational_status(ocpp::v201::OperationalStatusEnum::Operative, evse_id,
+                                                           connector_id.value());
                 } else {
                     // EVSE is addressed
-                    this->evses.at(evse_id).operational_state = ocpp::v201::OperationalStatusEnum::Operative;
-                    this->r_kvs->call_delete(std::to_string(evse_id));
+                    this->set_evse_operational_status(ocpp::v201::OperationalStatusEnum::Operative, evse_id);
                 }
                 this->r_evse_manager.at(evse_id - 1)->call_enable(request.evse.value().connectorId.value_or(0));
             } else {
                 // change to inoperative
                 if (connector_id.has_value()) {
                     // connector is addressed
-                    this->evses.at(evse_id).connectors.at(connector_id.value()) =
-                        ocpp::v201::OperationalStatusEnum::Inoperative;
-                    auto connector_id_str = std::to_string(evse_id) + "." + std::to_string(connector_id.value());
-                    this->r_kvs->call_store(connector_id_str, true);
+                    this->set_connector_operational_status(ocpp::v201::OperationalStatusEnum::Inoperative, evse_id,
+                                                           connector_id.value());
                 } else {
                     // EVSE is addressed
-                    this->evses.at(evse_id).operational_state = ocpp::v201::OperationalStatusEnum::Inoperative;
-                    this->r_kvs->call_store(std::to_string(evse_id), true);
+                    this->set_evse_operational_status(ocpp::v201::OperationalStatusEnum::Inoperative, evse_id);
                 }
                 this->r_evse_manager.at(evse_id - 1)->call_disable(request.evse.value().connectorId.value_or(0));
             }
@@ -566,10 +585,10 @@ void OCPP201::ready() {
                 if (this->cs_operational_status == ocpp::v201::OperationalStatusEnum::Operative and
                     this->evses.at(evse_id).operational_state == ocpp::v201::OperationalStatusEnum::Operative) {
                     this->r_evse_manager.at(evse_id - 1)->call_enable(0);
-                    this->r_kvs->call_delete("0");
+                    this->r_kvs->call_delete(KVS_OCPP201_INOPERATIVE_KEY_PREFIX + "0");
                 } else if (request.operationalStatus == ocpp::v201::OperationalStatusEnum::Inoperative) {
                     this->r_evse_manager.at(evse_id - 1)->call_disable(0);
-                    this->r_kvs->call_store("0", true);
+                    this->r_kvs->call_store(KVS_OCPP201_INOPERATIVE_KEY_PREFIX + "0", true);
                 }
             }
         }
