@@ -106,7 +106,8 @@ private:
     void init_evses();
     bool all_evse_ready();
 
-    void set_connector_operational_status(const ocpp::v201::OperationalStatusEnum operational_status, const int32_t evse_id, const int32_t connector_id);
+    void set_connector_operational_status(const ocpp::v201::OperationalStatusEnum operational_status,
+                                          const int32_t evse_id, const int32_t connector_id);
     void set_evse_operational_status(const ocpp::v201::OperationalStatusEnum operational_status, const int32_t evse_id);
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };

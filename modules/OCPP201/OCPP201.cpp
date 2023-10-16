@@ -460,7 +460,8 @@ void OCPP201::set_connector_operational_status(const ocpp::v201::OperationalStat
     }
 }
 
-void OCPP201::set_evse_operational_status(const ocpp::v201::OperationalStatusEnum operational_status, const int32_t evse_id) {
+void OCPP201::set_evse_operational_status(const ocpp::v201::OperationalStatusEnum operational_status,
+                                          const int32_t evse_id) {
     if (operational_status == ocpp::v201::OperationalStatusEnum::Operative) {
         this->evses.at(evse_id).operational_state = ocpp::v201::OperationalStatusEnum::Operative;
         this->r_kvs->call_delete(KVS_OCPP201_INOPERATIVE_KEY_PREFIX + std::to_string(evse_id));
