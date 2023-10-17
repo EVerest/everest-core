@@ -165,6 +165,9 @@ private:
     std::map<EvseConnectorPair, ConnectorStatusEnum> conn_state_per_evse;
     std::chrono::time_point<std::chrono::steady_clock> time_disconnected;
 
+    MeterValue meter_value; // represents evseId = 0 meter value
+    std::mutex meter_value_mutex;
+
     /// \brief Used when an 'OnIdle' reset is requested, to perform the reset after the charging has stopped.
     bool reset_scheduled;
     /// \brief If `reset_scheduled` is true and the reset is for a specific evse id, it will be stored in this member.
@@ -262,6 +265,11 @@ private:
     /// @brief Get the value optional offline flag
     /// @return true if the charge point is offline. std::nullopt if it is online;
     bool is_offline();
+
+    /// \brief Returns the last present meter value for evseId 0
+    /// \return MeterValue
+    MeterValue get_meter_value();
+
     /* OCPP message requests */
 
     // Functional Block A: Security

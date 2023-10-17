@@ -428,6 +428,12 @@
                 "attributes": {
                     "Actual": "Energy.Active.Import.Register"
                 }
+            },
+            "AlignedDataSendDuringIdle": {
+                "variable_name": "SendDuringIdle",
+                "attributes": {
+                    "Actual": false
+                }
             }
         }
     },
@@ -496,6 +502,12 @@
                 "variable_name": "SupplyPhases",
                 "attributes": {
                     "Actual": 42
+                }
+            },
+            "ChargingStationPhaseRotation": {
+                "variable_name": "PhaseRotation",
+                "attributes": {
+                    "Actual": "RST"
                 }
             }
         }

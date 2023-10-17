@@ -35,6 +35,21 @@
       "description": "This variable reports current availability state for the ChargingStation",
       "type": "string"
     },
+    "ChargingStationPhaseRotation": {
+      "variable_name": "PhaseRotation",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "This variable describes the phase rotation of a Component relative to its parent Component, using a three letter string consisting of the letters: R, S, T and x.",
+      "type": "string"
+    },
     "ChargingStationAvailable": {
       "variable_name": "Available",
       "characteristics": {
