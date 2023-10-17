@@ -30,7 +30,7 @@ ev_add_module(DummyV2G)
 ev_add_module(MicroMegaWattBSP)
 ev_add_module(DPM1000)
 ev_add_module(OCPPExtensionExample)
-ev_add_module(SLIPCommHub)
+ev_add_module(PowermeterGSH01)
 
 add_subdirectory(deprecated)
 add_subdirectory(examples)

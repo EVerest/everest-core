@@ -14,6 +14,10 @@
 
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 // insert your custom include headers here
+#include "gsh01_app_layer.hpp"
+#include "diagnostics.hpp"
+#include "serial_device.hpp"
+#include "slip_protocol.hpp"
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 
 namespace module {
@@ -43,9 +47,9 @@ public:
 
 protected:
     // command handler functions (virtual)
-    virtual types::powermeter::TransactionStartResponse
-    handle_start_transaction(types::powermeter::TransactionReq& value) override;
-    virtual types::powermeter::TransactionStopResponse handle_stop_transaction(std::string& transaction_id) override;
+    virtual std::string handle_get_signed_meter_value(std::string& auth_token) override;
+    virtual int handle_start_transaction(types::powermeter::TransactionParameters& transaction_parameters) override;
+    virtual int handle_stop_transaction() override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
     // insert your protected definitions here
@@ -60,6 +64,51 @@ private:
 
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
     // insert your private definitions here
+
+    enum class MessageStatus : std::uint8_t {
+        NONE = 0,
+        SENT = 1,
+        RECEIVED = 2
+    };
+
+    MessageStatus start_transaction_msg_status{MessageStatus::NONE};
+    ast_app_layer::CommandResult start_transact_result{};
+    MessageStatus stop_transaction_msg_status{MessageStatus::NONE};
+    ast_app_layer::CommandResult stop_transact_result{};
+    MessageStatus get_transaction_values_msg_status{MessageStatus::NONE};
+
+    serial_device::SerialDevice serial_device{};
+    slip_protocol::SlipProtocol slip{};
+    ast_app_layer::AstAppLayer app_layer{};
+
+    types::powermeter::Powermeter pm_last_values;
+
+    DeviceData device_data_obj{};
+    DeviceDiagnostics device_diagnostics_obj{};
+    Logging logging_obj{};
+    ast_app_layer::ErrorCategory category_requested{};
+    ast_app_layer::ErrorSource source_requested{};
+    uint8_t error_diagnostics_target{0};
+    std::string last_ocmf_str{};
+
+    void init_default_values();
+    void read_powermeter_values();
+    void set_device_time();
+    void set_device_charge_point_id(ast_app_layer::UserIdType id_type, std::string charge_point_id);
+    void read_device_data();
+    void read_diagnostics_data();
+    void publish_device_data_topic();
+    void publish_device_diagnostics_topic();
+    void publish_logging_topic();
+    void get_device_public_key();
+    void readRegisters();
+    ast_app_layer::CommandResult process_response(const std::vector<uint8_t>& register_message);
+    void request_device_type();
+    void request_error_diagnostics(uint8_t addr);
+    void error_diagnostics(uint8_t addr);
+    ast_app_layer::CommandResult receive_response();
+
+    static constexpr auto TIMEOUT_2s{std::chrono::seconds(2)};
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 
