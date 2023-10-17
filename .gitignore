@@ -2,3 +2,4 @@
 *build-cross
 *.cache
 workspace.yaml
+.vscode/

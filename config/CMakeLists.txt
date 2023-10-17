@@ -10,6 +10,7 @@ generate_config_run_script(CONFIG sil-gen-pm)
 generate_config_run_script(CONFIG sil-ocpp)
 generate_config_run_script(CONFIG sil-ocpp-custom-extension)
 generate_config_run_script(CONFIG SLIP-Test)
+generate_config_run_script(CONFIG sil-pm-gsh01)
 
 # install configs
 install(
