@@ -1008,21 +1008,23 @@ ast_app_layer::CommandResult powermeterImpl::receive_response() {
 // ############################################################################################################################################
 // ############################################################################################################################################
 
-int powermeterImpl::handle_start_transaction(types::powermeter::TransactionParameters& transaction_parameters) {
+types::powermeter::TransactionStartResponse
+powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& value) {
+    types::powermeter::TransactionStartResponse r;
     this->start_transact_result = ast_app_layer::CommandResult::PENDING;
     ast_app_layer::UserIdStatus user_id_status = ast_app_layer::UserIdStatus::USER_NOT_ASSIGNED;
-    if (transaction_parameters.transaction_assigned_to_user) {
+    if (value.transaction_assigned_to_user) {
         user_id_status = ast_app_layer::UserIdStatus::USER_ASSIGNED;
     }
 
     ast_app_layer::UserIdType user_id_type = ast_app_layer::UserIdType::NONE;
-    if (transaction_parameters.user_identification_type.has_value()) {
-        user_id_type = ast_app_layer::user_id_type_conversion_everest_to_ast(transaction_parameters.user_identification_type.value());
+    if (value.user_identification_type.has_value()) {
+        user_id_type = ast_app_layer::user_id_type_conversion_everest_to_ast(value.user_identification_type.value());
     }
 
     std::string user_id_data = "unidentified_user";
-    if (transaction_parameters.user_identification_name.has_value()) {
-        user_id_data = transaction_parameters.user_identification_name.value();
+    if (value.user_identification_name.has_value()) {
+        user_id_data = value.user_identification_name.value();
     }
     
     std::vector<uint8_t> data_vect{};
@@ -1040,13 +1042,15 @@ int powermeterImpl::handle_start_transaction(types::powermeter::TransactionParam
     }
 
     if (this->start_transact_result != ast_app_layer::CommandResult::OK) {
-        return -1 * int(this->start_transact_result);  // error
+        r.status = types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR;
     } else {
-        return 0;
+        r.status = types::powermeter::TransactionRequestStatus::OK;
     }
+    return r;
 }
 
-int powermeterImpl::handle_stop_transaction() {
+types::powermeter::TransactionStopResponse powermeterImpl::handle_stop_transaction(std::string& transaction_id) {
+    types::powermeter::TransactionStopResponse r;
     this->stop_transact_result = ast_app_layer::CommandResult::PENDING;
     std::vector<uint8_t> data_vect{};
     app_layer.create_command_stop_transaction(data_vect);
@@ -1063,13 +1067,21 @@ int powermeterImpl::handle_stop_transaction() {
     }
 
     if (this->stop_transact_result != ast_app_layer::CommandResult::OK) {
-        return -1 * int(this->stop_transact_result);  // error
+        r.status = types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR;
     } else {
-        return 0;
+        std::string ocmf_result = get_meter_ocmf();
+        std::string error_substring{"Error: command failed with code "};
+        if (ocmf_result.find(error_substring) != std::string::npos) {
+            r.status = types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR;
+        } else {
+            r.status = types::powermeter::TransactionRequestStatus::OK;
+            r.ocmf = ocmf_result;
+        }
     }
+    return r;
 }
 
-std::string powermeterImpl::handle_get_signed_meter_value(std::string& auth_token) {
+std::string powermeterImpl::get_meter_ocmf() {
     std::vector<uint8_t> data_vect{};
     app_layer.create_command_get_last_transaction_ocmf(data_vect);
     std::vector<uint8_t> slip_msg_get_last_ocmf = std::move(this->slip.package_single(this->config.powermeter_device_id, data_vect));
