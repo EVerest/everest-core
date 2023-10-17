@@ -171,8 +171,9 @@ ScheduleReq Market::get_max_available_energy(const ScheduleReq& request) {
                     (*r).limits_to_leaves.ac_max_current_A.value() / (*r).conversion_efficiency.value_or(1.);
             }
             // do we have a lower ampere limit on root side?
-            if ((*r).limits_to_root.ac_max_current_A.has_value() &&
-                a.limits_to_root.ac_max_current_A > (*r).limits_to_root.ac_max_current_A.value()) {
+            if ((*r).limits_to_root.ac_max_current_A.has_value() and
+                (a.limits_to_root.ac_max_current_A > (*r).limits_to_root.ac_max_current_A.value() or
+                 not(*r).limits_to_leaves.ac_max_current_A.has_value())) {
                 a.limits_to_root.ac_max_current_A = (*r).limits_to_root.ac_max_current_A.value();
             }
             // all request limits have been merged on root side in available.
