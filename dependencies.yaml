@@ -33,7 +33,7 @@ libfsm:
 # LEM DCBM 400/600 module
 libcurl:
   git: https://github.com/curl/curl.git
-  git_tag: curl-8_3_0
+  git_tag: curl-8_4_0
 
 # OCPP
 libocpp:
