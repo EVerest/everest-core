@@ -1,7 +1,7 @@
 ---
 everest-framework:
   git: https://github.com/EVerest/everest-framework.git
-  git_tag: v0.7.0
+  git_tag: 3887a64
 sigslot:
   git: https://github.com/palacaze/sigslot
   git_tag: v1.2.0
@@ -33,7 +33,7 @@ libfsm:
 # LEM DCBM 400/600 module
 libcurl:
   git: https://github.com/curl/curl.git
-  git_tag: curl-8_3_0
+  git_tag: curl-8_4_0
 
 # OCPP
 libocpp:
