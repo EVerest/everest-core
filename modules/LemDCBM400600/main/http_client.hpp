@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
-#ifndef EVEREST_PODPOINT_HTTPCLIENT_H
-#define EVEREST_PODPOINT_HTTPCLIENT_H
+#ifndef EVEREST_CORE_MODULE_HTTPCLIENT_H
+#define EVEREST_CORE_MODULE_HTTPCLIENT_H
 
 #include "fmt/format.h"
 #include "http_client_interface.hpp"
@@ -63,4 +63,4 @@ private:
 
 } // namespace module::main
 
-#endif // EVEREST_PODPOINT_HTTPCLIENT_H
+#endif // EVEREST_CORE_MODULE_HTTPCLIENT_H

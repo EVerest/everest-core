@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
-#ifndef EVEREST_PODPOINT_LEMDCBM400600_H
-#define EVEREST_PODPOINT_LEMDCBM400600_H
+#ifndef EVEREST_CORE_MODULE_LEMDCBM400600_H
+#define EVEREST_CORE_MODULE_LEMDCBM400600_H
 
 #include "http_client_interface.hpp"
 #include "lem_dcbm_time_sync_helper.hpp"
@@ -130,4 +130,4 @@ public:
 
 } // namespace module::main
 
-#endif // EVEREST_PODPOINT_LEMDCBM400600_H
+#endif // EVEREST_CORE_MODULE_LEMDCBM400600_H
