@@ -7,7 +7,10 @@
 
 namespace module {
 
-Broker::Broker(Market& _market) : local_market(_market), first_trade(globals.schedule_length, true) {
+Broker::Broker(Market& _market) :
+    local_market(_market),
+    first_trade(globals.schedule_length, true),
+    slot_type(globals.schedule_length, SlotType::Undecided) {
 }
 
 Market& Broker::get_local_market() {

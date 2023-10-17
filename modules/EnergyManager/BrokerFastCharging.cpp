@@ -55,12 +55,20 @@ bool BrokerFastCharging::trade(Offer& _offer) {
         auto& total_power_export = offer->export_offer[i].limits_to_root.total_power_W;
 
         // in each timeslot: do we want to import or export energy?
-        bool can_import = !(total_power_import.has_value() && total_power_import.value() == 0. ||
-                            max_current_import.has_value() && max_current_import.value() == 0.);
+        if (slot_type[i] == SlotType::Undecided) {
+            bool can_import = !(total_power_import.has_value() && total_power_import.value() == 0. ||
+                                max_current_import.has_value() && max_current_import.value() == 0.);
 
-        bool can_export = !(total_power_export.has_value() && total_power_export.value() == 0. ||
-                            max_current_export.has_value() && max_current_export.value() == 0.);
-        if (can_import) {
+            bool can_export = !(total_power_export.has_value() && total_power_export.value() == 0. ||
+                                max_current_export.has_value() && max_current_export.value() == 0.);
+
+            if (can_import) {
+                slot_type[i] = SlotType::Import;
+            } else if (can_export) {
+                slot_type[i] = SlotType::Export;
+            }
+        }
+        if (slot_type[i] == SlotType::Import) {
             // EVLOG_info << "We can import.";
             if (max_current_import.has_value()) {
                 // A current limit is set
@@ -79,7 +87,7 @@ bool BrokerFastCharging::trade(Offer& _offer) {
                 // EVLOG_info << "I: Only watt limit is set." << total_power_import.value();
                 buy_watt_import(i, globals.slice_watt, true);
             }
-        } else if (can_export) {
+        } else if (slot_type[i] == SlotType::Export) {
             // EVLOG_info << "We can export.";
             //  we cannot import, try exporting in this timeslot.
             if (max_current_export.has_value()) {
