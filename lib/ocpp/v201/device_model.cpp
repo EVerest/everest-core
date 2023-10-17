@@ -31,9 +31,9 @@ static bool is_decimal_number(const std::string& value) {
 
     // Check for + or - in the beginning
     size_t start_pos = 0;
-    if (value[0] == '+' || value[0] == '-')
+    if (value[0] == '+' || value[0] == '-') {
         start_pos = 1;
-
+    }
     int decimal_point_count = 0;
 
     for (size_t i = start_pos; i < value.length(); ++i) {
