@@ -1,7 +1,7 @@
 ---
 everest-framework:
   git: https://github.com/EVerest/everest-framework.git
-  git_tag: v0.6.2
+  git_tag: v0.7.0
 sigslot:
   git: https://github.com/palacaze/sigslot
   git_tag: v1.2.0
@@ -30,25 +30,36 @@ libfsm:
   git: https://github.com/EVerest/libfsm.git
   git_tag: v0.2.0
 
+# LEM DCBM 400/600 module
+libcurl:
+  git: https://github.com/curl/curl.git
+  git_tag: curl-8_3_0
+
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: d2ef696
+  git_tag: v0.9.3
 # Josev
 Josev:
   git: https://github.com/EVerest/ext-switchev-iso15118.git
-  git_tag: 646ceca
+  git_tag: 2023.9.0
 # OpenV2G
 ext-openv2g:
   git: https://github.com/EVerest/ext-openv2g.git
-  git_tag: everest
+  git_tag: 2023.3.0
 # mbedtls
 ext-mbedtls:
   git: https://github.com/EVerest/ext-mbedtls.git
   git_tag: 8b3f26a
-  options: ["ENABLE_PROGRAMS OFF", "ENABLE_TESTING OFF"]
-
+  options:
+    - ENABLE_PROGRAMS OFF
+    - ENABLE_TESTING OFF
+    - MBEDTLS_FATAL_WARNINGS OFF  # disables setting warnings as errors  FIXME: workaround until upstream-fixes are included
 # everest-testing
 everest-utils:
   git: https://github.com/EVerest/everest-utils.git
-  git_tag: v0.1.4
+  git_tag: v0.1.5
+# evse-security
+libevse-security:
+  git: https://github.com/EVerest/libevse-security.git
+  git_tag: v0.1.0

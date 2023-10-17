@@ -19,7 +19,7 @@ config:
   DeviceModelDatabasePath:
     description: Path to the SQLite database for the device model
     type: string
-    default: /tmp/ocpp201/device_model_storage.db
+    default: device_model_storage.db
   EnableExternalWebsocketControl:
     description: If true websocket can be disconnected and connected externally
     type: boolean
@@ -41,6 +41,14 @@ requires:
     max_connections: 128
   system:
     interface: system
+    min_connections: 1
+    max_connections: 1
+  security:
+    interface: evse_security
+    min_connections: 1
+    max_connections: 1
+  kvs:
+    interface: kvs
     min_connections: 1
     max_connections: 1
 enable_external_mqtt: true

@@ -104,7 +104,11 @@ FSMSimpleState::CallbackReturnType MatchingState::callback() {
                 session_log(ctx, session, "Waiting for CM_START_ATTEN_CHAR_IND timeouted -> failed");
                 session.state = MatchingSubState::FAILED;
             } else if (session.state == MatchingSubState::SOUNDING) {
-                session_log(ctx, session, "Sounding not yet complete but timeouted, generating CM_ATTEN_CHAR_IND");
+                session_log(ctx, session,
+                            "Sounding not yet complete but timeouted, going to sub-state FINALIZE_SOUNDING");
+                session.state = MatchingSubState::FINALIZE_SOUNDING;
+                session.set_next_timeout(FINALIZE_SOUNDING_DELAY_MS);
+            } else if (session.state == MatchingSubState::FINALIZE_SOUNDING) {
                 finalize_sounding(session);
             } else if (session.state == MatchingSubState::WAIT_FOR_ATTEN_CHAR_RSP) {
                 session_log(ctx, session, "Waiting for CM_ATTEN_CHAR_RSP timeouted -> failed");

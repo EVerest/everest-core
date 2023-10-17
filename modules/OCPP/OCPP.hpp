@@ -18,6 +18,7 @@
 // headers for required interface implementations
 #include <generated/interfaces/auth/Interface.hpp>
 #include <generated/interfaces/evse_manager/Interface.hpp>
+#include <generated/interfaces/evse_security/Interface.hpp>
 #include <generated/interfaces/external_energy_limits/Interface.hpp>
 #include <generated/interfaces/reservation/Interface.hpp>
 #include <generated/interfaces/system/Interface.hpp>
@@ -34,6 +35,8 @@
 #include <ocpp/v16/charge_point.hpp>
 #include <ocpp/v16/types.hpp>
 #include <ocpp/v201/ocpp_types.hpp>
+
+using EvseConnectorMap = std::map<int32_t, std::map<int32_t, int32_t>>;
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -59,7 +62,7 @@ public:
          std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager,
          std::vector<std::unique_ptr<external_energy_limitsIntf>> r_connector_zero_sink,
          std::unique_ptr<reservationIntf> r_reservation, std::unique_ptr<authIntf> r_auth,
-         std::unique_ptr<systemIntf> r_system, Conf& config) :
+         std::unique_ptr<systemIntf> r_system, std::unique_ptr<evse_securityIntf> r_security, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_main(std::move(p_main)),
@@ -70,6 +73,7 @@ public:
         r_reservation(std::move(r_reservation)),
         r_auth(std::move(r_auth)),
         r_system(std::move(r_system)),
+        r_security(std::move(r_security)),
         config(config){};
 
     Everest::MqttProvider& mqtt;
@@ -81,6 +85,7 @@ public:
     const std::unique_ptr<reservationIntf> r_reservation;
     const std::unique_ptr<authIntf> r_auth;
     const std::unique_ptr<systemIntf> r_system;
+    const std::unique_ptr<evse_securityIntf> r_security;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
@@ -88,7 +93,7 @@ public:
     std::unique_ptr<ocpp::v16::ChargePoint> charge_point;
     std::unique_ptr<Everest::SteadyTimer> charging_schedules_timer;
     bool started = false;
-    std::map<int32_t, bool> connector_ready_map;
+    bool ocpp_stopped = false;
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
@@ -106,12 +111,20 @@ private:
     std::filesystem::path ocpp_share_path;
     void set_external_limits(const std::map<int32_t, ocpp::v16::ChargingSchedule>& charging_schedules);
     void publish_charging_schedules(const std::map<int32_t, ocpp::v16::ChargingSchedule>& charging_schedules);
-    bool all_evse_ready();
-    std::mutex evse_ready_mutex;
     std::thread upload_diagnostics_thread;
     std::thread upload_logs_thread;
     std::thread update_firmware_thread;
     std::thread signed_update_firmware_thread;
+
+    void init_evse_connector_map();
+    void init_evse_ready_map();
+    EvseConnectorMap evse_connector_map; // provides access to OCPP connector id by using EVerests evse and connector id
+    std::map<int32_t, int32_t>
+        connector_evse_index_map;        // provides access to r_evse_manager index by using OCPP connector id
+    std::map<int32_t, bool> evse_ready_map;
+    std::mutex evse_ready_mutex;
+    std::condition_variable evse_ready_cv;
+    bool all_evse_ready();
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

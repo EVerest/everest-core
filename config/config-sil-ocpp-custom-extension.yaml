@@ -142,14 +142,21 @@ active_modules:
       system:
         - module_id: system
           implementation_id: main
+      security:
+        - module_id: evse_security
+          implementation_id: main
+  evse_security:
+    module: EvseSecurity
   ocpp_extension:
     module: OCPPExtensionExample
+    config_module:
+      keys_to_monitor: HeartbeatInterval,SecurityProfile,ExampleConfigurationKey
     connections:
       ocpp:
         - module_id: ocpp
           implementation_id: main
   token_provider_1:
-    module: JsDummyTokenProviderManual
+    module: DummyTokenProviderManual
   energy_manager:
     module: EnergyManager
     connections:

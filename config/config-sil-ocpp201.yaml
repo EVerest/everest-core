@@ -117,8 +117,18 @@ active_modules:
       system:
         - module_id: system
           implementation_id: main
+      security:
+        - module_id: evse_security
+          implementation_id: main
+      kvs:
+        - module_id: persistent_store
+          implementation_id: main
+  persistent_store:
+    module: PersistentStore
+  evse_security:
+    module: EvseSecurity
   token_provider_1:
-    module: JsDummyTokenProviderManual
+    module: DummyTokenProviderManual
   auth:
     module: Auth
     config_module:

@@ -235,7 +235,7 @@ int main(int argc, char* argv[]) {
         fr = machine.feed();
     }
 
-    feed_machine_for(machine, 700, fr);
+    feed_machine_for(machine, 700 + 1 * 45, fr);
 
     // assert that CM_ATTEN_CHAR_IND gets set!
     if (!msg_in.has_value() ||

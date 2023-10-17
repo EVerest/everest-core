@@ -14,7 +14,7 @@
 volatile bool sw_version_received = false;
 
 void recvKeepAliveLo(KeepAliveLo s) {
-    printf("Current Yeti SW Version: %s (Protocol %i.%0.2i)\n", s.sw_version_string, s.protocol_version_major,
+    printf("Current Yeti SW Version: %s (Protocol %i.%i)\n", s.sw_version_string, s.protocol_version_major,
            s.protocol_version_minor);
     sw_version_received = true;
 }

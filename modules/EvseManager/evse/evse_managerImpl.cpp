@@ -40,10 +40,10 @@ void evse_managerImpl::init() {
         [&charger = mod->charger, this](std::string data) { mod->updateLocalMaxWattLimit(std::stof(data)); });
 
     mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/enable", mod->config.connector_id),
-                        [&charger = mod->charger](const std::string& data) { charger->enable(); });
+                        [&charger = mod->charger](const std::string& data) { charger->enable(0); });
 
     mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/disable", mod->config.connector_id),
-                        [&charger = mod->charger](const std::string& data) { charger->disable(); });
+                        [&charger = mod->charger](const std::string& data) { charger->disable(0); });
 
     mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/faulted", mod->config.connector_id),
                         [&charger = mod->charger](const std::string& data) { charger->set_faulted(); });
@@ -234,6 +234,11 @@ void evse_managerImpl::ready() {
             types::evse_manager::Error error;
             error.error_code = mod->charger->getErrorState();
             se.error = error;
+        } else if (e == types::evse_manager::SessionEventEnum::Enabled or
+                   e == types::evse_manager::SessionEventEnum::Disabled) {
+            if (connector_status_changed) {
+                se.connector_id = 1;
+            }
         }
 
         se.uuid = session_uuid;
@@ -283,7 +288,8 @@ types::evse_manager::Evse evse_managerImpl::handle_get_evse() {
 }
 
 bool evse_managerImpl::handle_enable(int& connector_id) {
-    return mod->charger->enable();
+    connector_status_changed = connector_id != 0;
+    return mod->charger->enable(connector_id);
 };
 
 void evse_managerImpl::handle_authorize_response(types::authorization::ProvidedIdToken& provided_token,
@@ -322,7 +328,8 @@ void evse_managerImpl::handle_cancel_reservation() {
 };
 
 bool evse_managerImpl::handle_disable(int& connector_id) {
-    return mod->charger->disable();
+    connector_status_changed = connector_id != 0;
+    return mod->charger->disable(connector_id);
 };
 
 void evse_managerImpl::handle_set_faulted() {

@@ -19,6 +19,9 @@ namespace module {
 
 Charger::Charger(const std::unique_ptr<board_support_ACIntf>& r_bsp, const std::string& connector_type) :
     r_bsp(r_bsp), connector_type(connector_type) {
+
+    connectorEnabled = true;
+
     maxCurrent = 6.0;
     maxCurrentCable = r_bsp->call_read_pp_ampacity();
     authorized = false;
@@ -635,11 +638,17 @@ void Charger::processEvent(types::board_support::Event cp_event) {
     }
 
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
+    runStateMachine();
+
     // Process all event actions that are independent of the current state
     processCPEventsIndependent(cp_event);
 
+    runStateMachine();
+
     // Process all events that depend on the current state
     processCPEventsState(cp_event);
+
+    runStateMachine();
 }
 
 void Charger::processCPEventsState(ControlPilotEvent cp_event) {
@@ -1179,18 +1188,27 @@ types::evse_manager::ErrorEnum Charger::getErrorState() {
 
 // bool Charger::isPowerOn() { return control_pilot.isPowerOn(); }
 
-bool Charger::disable() {
+bool Charger::disable(int connector_id) {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
+    if (connector_id != 0) {
+        connectorEnabled = false;
+    }
     currentState = EvseState::Disabled;
     signalEvent(types::evse_manager::SessionEventEnum::Disabled);
     return true;
 }
 
-bool Charger::enable() {
+bool Charger::enable(int connector_id) {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
+    if (connector_id != 0) {
+        connectorEnabled = true;
+    }
+
+    signalEvent(types::evse_manager::SessionEventEnum::Enabled);
     if (currentState == EvseState::Disabled) {
-        currentState = EvseState::Idle;
-        signalEvent(types::evse_manager::SessionEventEnum::Enabled);
+        if (connectorEnabled) {
+            currentState = EvseState::Idle;
+        }
         return true;
     }
     return false;
@@ -1410,7 +1428,7 @@ void Charger::dlink_error() {
             currentState = EvseState::T_step_X1;
 
             // After returning from T_step_EF, go to Waiting for Auth (We are restarting the session)
-            t_step_EF_returnState == EvseState::WaitingForAuthentication;
+            t_step_EF_returnState = EvseState::WaitingForAuthentication;
             // [V2G3-M07-09] After applying state E/F, the EVSE shall switch to contol pilot state X1 or X2 as soon
             // as the EVSE is ready control for pilot incoming duty matching cycle requests: This is already handled
             // in the Auth step.

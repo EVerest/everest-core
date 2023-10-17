@@ -110,9 +110,9 @@ active_modules:
         - module_id: evse_manager_2
           implementation_id: evse
   token_provider_1:
-    module: JsDummyTokenProviderManual
+    module: DummyTokenProviderManual
   token_validator:
-    module: JsDummyTokenValidator
+    module: DummyTokenValidator
     config_implementation:
       main:
         validation_result: Accepted
