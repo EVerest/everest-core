@@ -13,22 +13,22 @@ cmds:
       certificate_type:
         description: Indicates the type of the certificate
         type: string 
-        $ref: /evse_security#/CaCertificateType
+        $ref: '../types/evse_security.yaml#/types/CaCertificateType'
     result:
       description: Result of the attempt to install a CA certificate
       type: string
-      $ref: /evse_security#/InstallCertificateResult
+      $ref: '../types/evse_security.yaml#/types/InstallCertificateResult'
   delete_certificate:
     description: Command to delete a certificate
     arguments:
       certificate_hash_data:
         description: Indicates the certificate that should be deleted
         type: object
-        $ref: /evse_security#/CertificateHashData
+        $ref: '../types/evse_security.yaml#/types/CertificateHashData'
     result:
       description: Result of the attempt to delete a certificate
       type: string
-      $ref: /evse_security#/DeleteCertificateResult
+      $ref: '../types/evse_security.yaml#/types/DeleteCertificateResult'
   update_leaf_certificate:
     description: Command to install or update SECC or CSMS leaf certificate
     arguments:
@@ -38,11 +38,11 @@ cmds:
       certificate_type:
         description: Indicates the type of the certificate
         type: string
-        $ref: /evse_security#/LeafCertificateType
+        $ref: '../types/evse_security.yaml#/types/LeafCertificateType'
     result:
       description: Result of the attempt to install or update a leaf certificate
       type: string
-      $ref: /evse_security#/InstallCertificateResult
+      $ref: '../types/evse_security.yaml#/types/InstallCertificateResult'
   verify_certificate:
     description: Command to verify the given certificate
     arguments:
@@ -52,11 +52,11 @@ cmds:
       certificate_type:
         description: Indicates the type of the certificate
         type: string
-        $ref: /evse_security#/LeafCertificateType
+        $ref: '../types/evse_security.yaml#/types/LeafCertificateType'
     result:
       description: Result of the verification
       type: string
-      $ref: /evse_security#/InstallCertificateResult
+      $ref: '../types/evse_security.yaml#/types/InstallCertificateResult'
   get_installed_certificates:
     description: Command to retrieve installed certificates of the EVSE
     arguments:
@@ -66,24 +66,24 @@ cmds:
         items:
           minimum: 0
           type: string
-          $ref: /evse_security#/CertificateType
+          $ref: '../types/evse_security.yaml#/types/CertificateType'
     result:
       description: Indicates the result of the command and optional certificate hash data
       type: object
-      $ref: /evse_security#/GetInstalledCertificatesResult
+      $ref: '../types/evse_security.yaml#/types/GetInstalledCertificatesResult'
   get_ocsp_request_data:
     description: Command to retrieve the OCSP request data of the V2G certificates
     result:
       description: The OCSP request data of all V2G CA certificates including Sub CAs
       type: object
-      $ref: /evse_security#/OCSPRequestDataList
+      $ref: '../types/evse_security.yaml#/types/OCSPRequestDataList'
   update_ocsp_cache:
     description: Command to update the OCSP cache with the given data
     arguments:
       certificate_hash_data:
         description: Certificate hash data that identifies the certificate for which the cache should be updated
         type: object
-        $ref: /evse_security#/CertificateHashData
+        $ref: '../types/evse_security.yaml#/types/CertificateHashData'
       ocsp_response:
         description: OCSPResponse class as defined in IETF RFC 6960. DER and then base64 encoded
         type: string
@@ -93,7 +93,7 @@ cmds:
       certificate_type:
         description: Specifies that CA certificate type
         type: string
-        $ref: /evse_security#/CaCertificateType
+        $ref: '../types/evse_security.yaml#/types/CaCertificateType'
     result:
       description: True if CA certificate is installed, else false
       type: boolean
@@ -103,7 +103,7 @@ cmds:
       certificate_type: 
         description: Specifies the leaf certificate type
         type: string
-        $ref: /evse_security#/LeafCertificateType
+        $ref: '../types/evse_security.yaml#/types/LeafCertificateType'
       country:
         description: Specifies the country name (C) of the certificate
         type: string
@@ -122,22 +122,22 @@ cmds:
       certificate_type: 
         description: Specifies the leaf certificate type
         type: string
-        $ref: /evse_security#/LeafCertificateType
+        $ref: '../types/evse_security.yaml#/types/LeafCertificateType'
       encoding:
         description: Specifies the encoding of the key
         type: string
-        $ref: /evse_security#/EncodingFormat
+        $ref: '../types/evse_security.yaml#/types/EncodingFormat'
     result:
       description: The response to the requested command
       type: object
-      $ref: /evse_security#/GetKeyPairResult
+      $ref: '../types/evse_security.yaml#/types/GetKeyPairResult'
   get_verify_file:
     description: Command to get the file path of a CA bundle that can be used for verification
     arguments:
       certificate_type:
         description: Specifies that CA certificate type
         type: string
-        $ref: /evse_security#/CaCertificateType
+        $ref: '../types/evse_security.yaml#/types/CaCertificateType'
     result:
       description: The path of the CA bundle file
       type: string
@@ -149,7 +149,7 @@ cmds:
       certificate_type:
         description: Indicates the type of the certificate
         type: string
-        $ref: /evse_security#/LeafCertificateType
+        $ref: '../types/evse_security.yaml#/types/LeafCertificateType'
     result:
       description: days count until given leaf certificate expires
       type: integer

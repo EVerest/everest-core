@@ -11,7 +11,7 @@ types:
       reason:
         description: Reason for stopping the transaction
         type: string
-        $ref: /evse_manager#/StopTransactionReason
+        $ref: './evse_manager.yaml#/types/StopTransactionReason'
       id_tag:
         description: Id tag that was used to stop the transaction.
         type: string
@@ -149,7 +149,7 @@ types:
       reason:
         description: Reason for session start
         type: string
-        $ref: /evse_manager#/StartSessionReason
+        $ref: './evse_manager.yaml#/types/StartSessionReason'
       logging_path:
         description: >-
           File system path where additional log files are stored, such as
@@ -173,11 +173,11 @@ types:
       id_tag:
         description: The id tag assigned to this transaction
         type: object
-        $ref: /authorization#/ProvidedIdToken
+        $ref: './authorization.yaml#/types/ProvidedIdToken'
       meter_value:
         description: Transaction start exported meter value
         type: object
-        $ref: /powermeter#/Powermeter
+        $ref: './powermeter.yaml#/types/Powermeter'
       signed_meter_value:
         description: Signed meter value
         type: string
@@ -199,14 +199,14 @@ types:
       meter_value:
         description: Transaction finished meter value
         type: object
-        $ref: /powermeter#/Powermeter
+        $ref: './powermeter.yaml#/types/Powermeter'
       signed_meter_value:
         description: Signed meter value
         type: string
       reason:
         description: Reason for stopping transaction
         type: string
-        $ref: /evse_manager#/StopTransactionReason
+        $ref: './evse_manager.yaml#/types/StopTransactionReason'
       id_tag:
         description: Id tag that was used to stop the transaction
         type: string
@@ -265,7 +265,7 @@ types:
       error_code:
         description: The error enum
         type: string
-        $ref: /evse_manager#/ErrorEnum
+        $ref: './evse_manager.yaml#/types/ErrorEnum'
       vendor_error:
         description: The error code of the vendor
         type: string
@@ -292,25 +292,25 @@ types:
           Event enum. For some events an additional object is set, see
           below.
         type: string
-        $ref: /evse_manager#/SessionEventEnum
+        $ref: './evse_manager.yaml#/types/SessionEventEnum'
       session_started:
         description: data for SessionStarted event
         type: object
-        $ref: /evse_manager#/SessionStarted
+        $ref: './evse_manager.yaml#/types/SessionStarted'
       transaction_started:
         description: data for TransactionStarted event
         type: object
-        $ref: /evse_manager#/TransactionStarted
+        $ref: './evse_manager.yaml#/types/TransactionStarted'
       transaction_finished:
         description: >-
           data for TransactionFinished event that happens when car is plugged
           out
         type: object
-        $ref: /evse_manager#/TransactionFinished
+        $ref: './evse_manager.yaml#/types/TransactionFinished'
       error:
         description: Details on error type
         type: object
-        $ref: /evse_manager#/Error
+        $ref: './evse_manager.yaml#/types/Error'
   Limits:
     description: Limits of this EVSE
     type: object
@@ -421,7 +421,7 @@ types:
       type:
         description: Type of the connector
         type: string
-        $ref: /evse_manager#/ConnectorTypeEnum
+        $ref: './evse_manager.yaml#/types/ConnectorTypeEnum'
   ConnectorTypeEnum:
     description: >-
       Type of a physical connector
@@ -475,6 +475,6 @@ types:
         items:
           description: A single connector
           type: object
-          $ref: /evse_manager#/Connector
+          $ref: './evse_manager.yaml#/types/Connector'
         minItems: 1
         maxItems: 128

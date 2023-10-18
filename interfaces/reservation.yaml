@@ -11,13 +11,13 @@ cmds:
       reservation:
         description: The information about the Reservation to be placed
         type: object
-        $ref: /reservation#/Reservation
+        $ref: '../types/reservation.yaml#/types/Reservation'
     result:
       description: >-
         Returns Accepted if reservation was succesfull or specifies error
         code.
       type: string
-      $ref: /reservation#/ReservationResult
+      $ref: '../types/reservation.yaml#/types/ReservationResult'
   cancel_reservation:
     description: Cancels the reservation with the given reservation_id
     arguments:

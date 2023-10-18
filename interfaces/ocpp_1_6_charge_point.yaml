@@ -35,7 +35,7 @@ cmds:
       description: >-
         Result object containing data transfer response
       type: object
-      $ref: /ocpp#/DataTransferResponse
+      $ref: '../types/ocpp.yaml#/types/DataTransferResponse'
   get_configuration_key:
     description: >-
       Gets the response to the requested configuration key containing a list of the values of the requested keys 
@@ -50,7 +50,7 @@ cmds:
     result:
       description: Response to the requested operation
       type: object
-      $ref: /ocpp#/GetConfigurationResponse
+      $ref: '../types/ocpp.yaml#/types/GetConfigurationResponse'
   set_custom_configuration_key:
     description: >-
       Command to set a custom configuration key. Its not possible to set standardized configuration keys externally
@@ -66,7 +66,7 @@ cmds:
     result:
       description: Indicates the result of the requested operation
       type: string
-      $ref: /ocpp#/ConfigurationStatus
+      $ref: '../types/ocpp.yaml#/types/ConfigurationStatus'
   monitor_configuration_keys:
     description: >-
       Monitors the given configuration key. In case this configuration keys is changed by the CSMS the configuration key
@@ -106,9 +106,9 @@ vars:
       Published when a configuration key has been changed by the CSMS and a monitor has been registered
       using the command monitor_configuration_keys
     type: object
-    $ref: /ocpp#/KeyValue
+    $ref: '../types/ocpp.yaml#/types/KeyValue'
   security_event:
     description: Published when an internal security event occured
     type: object
-    $ref: /ocpp#/SecurityEvent
+    $ref: '../types/ocpp.yaml#/types/SecurityEvent
 

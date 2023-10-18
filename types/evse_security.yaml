@@ -85,7 +85,7 @@ types:
       hash_algorithm:
         description: Algorithm used for the hashes provided
         type: string
-        $ref: /evse_security#/HashAlgorithm
+        $ref: './evse_security.yaml#/types/HashAlgorithm'
       issuer_name_hash:
         description: >-
           The hash of the issuer's distinguished name (DN), calculated over the DER encoding of
@@ -114,11 +114,11 @@ types:
       certificate_type:
         description: Indicates the type of the certificate for which the hash data is provided
         type: string
-        $ref: /evse_security#/CertificateType
+        $ref: './evse_security.yaml#/types/CertificateType'
       certificate_hash_data:
         description: Contains the hash data of the certificate
         type: object
-        $ref: /evse_security#/CertificateHashData
+        $ref: './evse_security.yaml#/types/CertificateHashData'
       child_certificate_hash_data:
         description: Contains the hash data of the child's certificates
         type: array
@@ -126,7 +126,7 @@ types:
           minimum: 0
           maximum: 4
           type: object
-          $ref: /evse_security#/CertificateHashData
+          $ref: './evse_security.yaml#/types/CertificateHashData'
   GetInstalledCertificatesResult:
     description: Result to a request to retrieve certificates
     type: object
@@ -137,14 +137,14 @@ types:
       status:
         description: Indicates the status of the request
         type: string
-        $ref: /evse_security#/GetInstalledCertificatesStatus
+        $ref: './evse_security.yaml#/types/GetInstalledCertificatesStatus'
       certificate_hash_data_chain:
         description: the hashed certificate data for each requested certificates
         type: array
         items:
           minimum: 0
           type: object
-          $ref: /evse_security#/CertificateHashDataChain
+          $ref: './evse_security.yaml#/types/CertificateHashDataChain'
   OCSPRequestData:
     description: Type that specifies OCSP data
     type: object
@@ -152,7 +152,7 @@ types:
       certificate_hash_data:
         description: Contains the hash data of the certificate
         type: object
-        $ref: /evse_security#/CertificateHashData
+        $ref: './evse_security.yaml#/types/CertificateHashData'
       responder_url:
         description: Contains the responder URL
         type: string
@@ -169,7 +169,7 @@ types:
         items:
           minimum: 0
           type: object
-          $ref: /evse_security#/OCSPRequestData
+          $ref: './evse_security.yaml#/types/OCSPRequestData'
   KeyPair:
     description: Type that specifies the paths of a certificate and the respective private key
     type: object
@@ -195,9 +195,9 @@ types:
       status:
         description: The status of the requested command
         type: string
-        $ref: /evse_security#/GetKeyPairStatus
+        $ref: './evse_security.yaml#/types/GetKeyPairStatus'
       key_pair:
         description: The requested key pair
         type: object
-        $ref: /evse_security#/KeyPair
+        $ref: './evse_security.yaml#/types/KeyPair'
 

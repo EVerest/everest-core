@@ -18,7 +18,7 @@ types:
       status:
         description: Status of the data transfer
         type: string
-        $ref: /ocpp#/DataTransferStatus
+        $ref: './ocpp.yaml#/types/DataTransferStatus'
       data:
         description: Data provided by this data transfer
         type: string
@@ -54,7 +54,7 @@ types:
         items:
           description: Key value pair
           type: object
-          $ref: /ocpp#/KeyValue
+          $ref: './ocpp.yaml#/types/KeyValue'
       unknown_keys:
         description: List of unknown configuration keys
         type: array

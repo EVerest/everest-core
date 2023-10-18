@@ -38,7 +38,7 @@ cmds:
       EV_Parameters:
         description: Target parameters for dc charging
         type: object
-        $ref: /iso15118_ev#/DC_EVParameters
+        $ref: '../types/iso15118_ev.yaml#/types/DC_EVParameters'
 vars:
   V2G_Session_Finished:
     description: The v2g session between the charger and the car is finished

@@ -14,7 +14,7 @@ types:
     properties:
       status_code:
         type: string
-        $ref: /serial_comm_hub_requests#/StatusCodeEnum
+        $ref: './serial_comm_hub_requests.yaml#/types/StatusCodeEnum'
       value:
         type: array
         items:

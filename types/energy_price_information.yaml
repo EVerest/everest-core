@@ -39,7 +39,7 @@ types:
         items:
           description: One entry for the time series
           type: object
-          $ref: /energy_price_information#/PricePerkWh
+          $ref: './energy_price_information.yaml#/types/PricePerkWh'
       schedule_export:
         description: >-
           Pricing time series. The first entry is special as it will be
@@ -51,4 +51,4 @@ types:
         items:
           description: One entry for the time series
           type: object
-          $ref: /energy_price_information#/PricePerkWh
+          $ref: './energy_price_information.yaml#/types/PricePerkWh'

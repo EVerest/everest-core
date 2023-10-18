@@ -24,7 +24,7 @@ cmds:
     result:
       description: Result of the transfer
       type: object
-      $ref: /serial_comm_hub_requests#/Result
+      $ref: '../types/serial_comm_hub_requests.yaml#/types/Result'
   modbus_read_input_registers:
     description: "Send a Modbus RTU 'read input registers' command via serial
       interface to the target hardware. (return value: response)"
@@ -46,7 +46,7 @@ cmds:
     result:
       description: Result of the transfer
       type: object
-      $ref: /serial_comm_hub_requests#/Result
+      $ref: '../types/serial_comm_hub_requests.yaml#/types/Result'
   modbus_write_multiple_registers:
     description: >-
       Send a Modbus RTU 'write multiple registers' command via serial
@@ -67,11 +67,11 @@ cmds:
           Data content to be written to the above selected registers (in
           16 bit words)
         type: object
-        $ref: /serial_comm_hub_requests#/VectorUint16
+        $ref: '../types/serial_comm_hub_requests.yaml#/types/VectorUint16'
     result:
       description: Status code of the transfer
       type: string
-      $ref: /serial_comm_hub_requests#/StatusCodeEnum
+      $ref: '../types/serial_comm_hub_requests.yaml#/types/StatusCodeEnum'
   nonstd_write:
     description: >-
       Non standard mode to write registers in read discrete input mode
@@ -114,4 +114,4 @@ cmds:
     result:
       description: Result of the transfer
       type: object
-      $ref: /serial_comm_hub_requests#/Result
+      $ref: '../types/serial_comm_hub_requests.yaml#/types/Result'

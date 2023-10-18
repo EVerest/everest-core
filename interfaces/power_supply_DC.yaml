@@ -5,14 +5,14 @@ cmds:
     result:
       description: Capabilities
       type: object
-      $ref: /power_supply_DC#/Capabilities
+      $ref: '../types/power_supply_DC.yaml#/types/Capabilities'
   setMode:
     description: Set operation mode of the bidirectional DC power supply
     arguments:
       value:
         description: Operation mode of power supply
         type: string
-        $ref: /power_supply_DC#/Mode
+        $ref: '../types/power_supply_DC.yaml#/types/Mode'
   setExportVoltageCurrent:
     description: Set output target voltage limit. Must be within reported limits.
     arguments:
@@ -37,12 +37,12 @@ vars:
   voltage_current:
     description: Voltage/Current at the input/output
     type: object
-    $ref: /power_supply_DC#/VoltageCurrent
+    $ref: '../types/power_supply_DC.yaml#/types/VoltageCurrent'
   mode:
     description: Current mode. Published on change.
     type: string
-    $ref: /power_supply_DC#/Mode
+    $ref: '../types/power_supply_DC.yaml#/types/Mode'
   fault_code:
     description: Fault code. Published when fault happens.
     type: string
-    $ref: /power_supply_DC#/FaultCode
+    $ref: '../types/power_supply_DC.yaml#/types/FaultCode'

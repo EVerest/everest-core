@@ -3,4 +3,4 @@ vars:
   provided_token:
     description: The provided token
     type: object
-    $ref: /authorization#/ProvidedIdToken
+    $ref: '../types/authorization.yaml#/types/ProvidedIdToken'

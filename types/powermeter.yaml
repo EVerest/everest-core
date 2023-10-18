@@ -46,7 +46,7 @@ types:
     properties:
       status:
         description: Response status that indicates whether the transaction start request could successfully be performed.
-        $ref: /powermeter#/TransactionRequestStatus
+        $ref: './powermeter.yaml#/types/TransactionRequestStatus'
       error:
         description: If status is not OK, a verbose error message.
         type: string
@@ -67,7 +67,7 @@ types:
     properties:
       status:
         description: Response status that indicates whether the transaction stop request could successfully be performed.
-        $ref: /powermeter#/TransactionRequestStatus
+        $ref: './powermeter.yaml#/types/TransactionRequestStatus'
       ocmf:
         description: The signed OCMF report of the stopped transaction. Must be provided if status is OK.
         type: string
@@ -95,30 +95,30 @@ types:
       energy_Wh_import:
         description: Imported energy in Wh (from grid)
         type: object
-        $ref: /units#/Energy
+        $ref: './units.yaml#/types/Energy'
       energy_Wh_export:
         description: Exported energy in Wh (to grid)
         type: object
-        $ref: /units#/Energy
+        $ref: './units.yaml#/types/Energy'
       power_W:
         description:
           Instantaneous power in Watt. Negative values are exported, positive
           values imported Energy.
         type: object
-        $ref: /units#/Power
+        $ref: './units.yaml#/types/Power'
       voltage_V:
         description: Voltage in Volts
         type: object
-        $ref: /units#/Voltage
+        $ref: './units.yaml#/types/Voltage'
       VAR:
         description: Reactive power VAR
         type: object
-        $ref: /units#/ReactivePower
+        $ref: './units.yaml#/types/ReactivePower'
       current_A:
         description: Current in ampere
         type: object
-        $ref: /units#/Current
+        $ref: './units.yaml#/types/Current'
       frequency_Hz:
         description: Grid frequency in Hertz
         type: object
-        $ref: /units#/Frequency
+        $ref: './units.yaml#/types/Frequency'

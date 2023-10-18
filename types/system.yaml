@@ -119,7 +119,7 @@ types:
       upload_logs_status:
         description: The log status enum
         type: string
-        $ref: /system#/UploadLogsStatus
+        $ref: './system.yaml#/types/UploadLogsStatus'
   LogStatusEnum:
     description: >-
       State describing the current status of log upload of the system
@@ -149,7 +149,7 @@ types:
       log_status:
         description: State describing the current status of log upload of the system
         type: string
-        $ref: /system#/LogStatusEnum
+        $ref: './system.yaml#/types/LogStatusEnum'
       request_id:
         description: Id of the request
         type: integer
@@ -199,7 +199,7 @@ types:
           State describing the current status of firmware update of the
           system
         type: string
-        $ref: /system#/FirmwareUpdateStatusEnum
+        $ref: './system.yaml#/types/FirmwareUpdateStatusEnum'
       request_id:
         description: Id of the request
         type: integer

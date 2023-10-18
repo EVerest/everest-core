@@ -6,11 +6,11 @@ cmds:
       value:
         description: All information that should be included in the signed OCMF packet
         type: object
-        $ref: /powermeter#/TransactionReq
+        $ref: '../types/powermeter.yaml#/types/TransactionReq'
     result:
       description: True on success, False if transaction could not be started in the power meter
       type: object
-      $ref: /powermeter#/TransactionStartResponse
+      $ref: '../types/powermeter.yaml#/types/TransactionStartResponse'
   stop_transaction:
     description: Stop the transaction on the power meter and return the signed metering information
     arguments:
@@ -20,9 +20,9 @@ cmds:
     result:
       description: Response to transaction stop request including OCMF string.
       type: object
-      $ref: /powermeter#/TransactionStopResponse
+      $ref: '../types/powermeter.yaml#/types/TransactionStopResponse'
 vars:
   powermeter:
     description: Measured dataset
     type: object
-    $ref: /powermeter#/Powermeter
+    $ref: '../types/powermeter.yaml#/types/Powermeter'

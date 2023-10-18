@@ -7,11 +7,11 @@ cmds:
       value:
         description: Limit object that will be routed through the tree.
         type: object
-        $ref: /energy#/EnforcedLimits
+        $ref: '../types/energy.yaml#/types/EnforcedLimits'
 vars:
   energy_flow_request:
     description: >-
       Request energy flow to supply/limit energy import (direction from grid
       to car) and/or consume/limit energy export (car to grid).
     type: object
-    $ref: /energy#/EnergyFlowRequest
+    $ref: '../types/energy.yaml#/types/EnergyFlowRequest'

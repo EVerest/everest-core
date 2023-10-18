@@ -47,13 +47,13 @@ types:
       authorization_type:
         description: Authorization type of the token
         type: string
-        $ref: /authorization#/AuthorizationType
+        $ref: './authorization.yaml#/types/AuthorizationType'
         minLength: 2
         maxLength: 32
       id_token_type:
         description: IdTokenType of the token
         type: string
-        $ref: /authorization#/IdTokenType
+        $ref: './authorization.yaml#/types/IdTokenType'
       connectors:
         description: A list of connector ids to which the authorization can be assigned
         type: array
@@ -75,7 +75,7 @@ types:
         items:
           description: An array of contract certificate infos
           type: object
-          $ref: /iso15118_charger#/CertificateHashDataInfo
+          $ref: './iso15118_charger.yaml#/types/CertificateHashDataInfo'
         minItems: 1
         maxItems: 4
   ValidationResult:
@@ -89,10 +89,10 @@ types:
     properties:
       authorization_status:
         type: string
-        $ref: /authorization#/AuthorizationStatus
+        $ref: './authorization.yaml#/types/AuthorizationStatus'
       certificate_status:
         type: string
-        $ref: /authorization#/CertificateStatus
+        $ref: './authorization.yaml#/types/CertificateStatus'
       reason:
         type: string
         minLength: 5

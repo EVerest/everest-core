@@ -22,7 +22,7 @@ cmds:
     result:
       description: Hardware capability/limits
       type: object
-      $ref: /board_support#/HardwareCapabilities
+      $ref: '../types/board_support.yaml#/types/HardwareCapabilities'
   enable:
     description: >-
       Enables or disables the EVSE. Typically disabled results in control
@@ -86,7 +86,7 @@ vars:
   event:
     description: Event from ControlPilot signal/Relais/RCD
     type: string
-    $ref: /board_support#/Event
+    $ref: '../types/board_support.yaml#/types/Event'
   nr_of_phases_available:
     description: Instantaneous phase count available to car
     type: integer
@@ -95,4 +95,4 @@ vars:
   telemetry:
     description: Other telemetry
     type: object
-    $ref: /board_support#/Telemetry
+    $ref: '../types/board_support.yaml#/types/Telemetry'

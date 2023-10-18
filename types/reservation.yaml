@@ -59,7 +59,7 @@ types:
       reason:
         description: Reason why reservation ends
         type: string
-        $ref: /reservation#/ReservationEndReason
+        $ref: './reservation.yaml#/types/ReservationEndReason'
       reservation_id:
         description: reservation_id
         type: integer

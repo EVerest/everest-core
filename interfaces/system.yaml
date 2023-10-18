@@ -6,29 +6,29 @@ cmds:
       firmware_update_request:
         description: Meta data containing information about the firmware request
         type: object
-        $ref: /system#/FirmwareUpdateRequest
+        $ref: '../types/system.yaml#/types/FirmwareUpdateRequest'
     result:
       description: Returns the result of the attempt to update the firmware
       type: string
-      $ref: /system#/UpdateFirmwareResponse
+      $ref: '../types/system.yaml#/types/UpdateFirmwareResponse'
   upload_logs:
     description: Call to start a log upload
     arguments:
       upload_logs_request:
         description: Meta data containing information about the log request request
         type: object
-        $ref: /system#/UploadLogsRequest
+        $ref: '../types/system.yaml#/types/UploadLogsRequest'
     result:
       description: Returns the result of the attempt to upload the logs
       type: object
-      $ref: /system#/UploadLogsResponse
+      $ref: '../types/system.yaml#/types/UploadLogsResponse'
   is_reset_allowed:
     description: Call to determine if a reset of the system is allowed
     arguments:
       type:
         description: Type of the reset (Soft or Hard)
         type: string
-        $ref: /system#/ResetType
+        $ref: '../types/system.yaml#/types/ResetType'
     result:
       description: >-
         Indicates if the system can be reset
@@ -39,7 +39,7 @@ cmds:
       type:
         description: Type of the reset (Soft or Hard)
         type: string
-        $ref: /system#/ResetType
+        $ref: '../types/system.yaml#/types/ResetType'
       scheduled:
         description: >-
           Indicates if this reset command was scheduled or immediately executed. A scheduled reset means that the system was waiting for
@@ -67,9 +67,8 @@ vars:
   firmware_update_status:
     description: Describes the current status of a firmware update of the system
     type: object
-    $ref: /system#/FirmwareUpdateStatus
+    $ref: '../types/system.yaml#/types/FirmwareUpdateStatus'
   log_status:
     description: Describes the current status of log upload of the system
     type: object
-    $ref: /system#/LogStatus
-
+    $ref: '../types/system.yaml#/types/LogStatus'

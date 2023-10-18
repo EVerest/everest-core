@@ -7,7 +7,7 @@ cmds:
     result:
       description: Object that contains information of the EVSE including its connectors
       type: object
-      $ref: /evse_manager#/Evse
+      $ref: '../types/evse_manager.yaml#/types/Evse'
   enable:
     description: Enables the evse. EVSE is available for charging after this operation
     arguments:
@@ -41,11 +41,11 @@ cmds:
       provided_token:
         description: The token for which authorization was requested
         type: object
-        $ref: /authorization#/ProvidedIdToken
+        $ref: '../types/authorization.yaml#/types/ProvidedIdToken'
       validation_result:
         description: The validation result
         type: object
-        $ref: /authorization#/ValidationResult
+        $ref: '../types/authorization.yaml#/types/ValidationResult'
   withdraw_authorization:
     description: >-
       Call to signals that EVSE is not further authorized to start a transaction
@@ -93,7 +93,7 @@ cmds:
       request:
         description: Request to stop the transaction.
         type: object
-        $ref: /evse_manager#/StopTransactionRequest
+        $ref: '../types/evse_manager.yaml#/types/StopTransactionRequest'
     result:
       description: Returns true if successful
       type: boolean
@@ -115,7 +115,7 @@ cmds:
       value:
         description: UUID of node that this limit applies to
         type: object
-        $ref: /energy#/ExternalLimits
+        $ref: '../types/energy.yaml#/types/ExternalLimits'
   switch_three_phases_while_charging:
     description: Switch three phases while charging
     arguments:
@@ -125,7 +125,7 @@ cmds:
     result:
       description: Returns success or error code
       type: string
-      $ref: /evse_manager#/SwitchThreePhasesWhileChargingResult
+      $ref: '../types/evse_manager.yaml#/types/SwitchThreePhasesWhileChargingResult'
   set_get_certificate_response:
     description: >-
       CertificateInstallationRes/CertificateUpdateRes - Set the new/updated Contract Certificate (including the certificate chain)
@@ -135,50 +135,50 @@ cmds:
       certificate_reponse:
         description: The response raw exi stream and the status from the CSMS system
         type: object
-        $ref: /iso15118_charger#/Response_Exi_Stream_Status
+        $ref: '../types/iso15118_charger.yaml#/types/Response_Exi_Stream_Status'
 vars:
   session_event:
     description: Emits all events related to sessions
     type: object
-    $ref: /evse_manager#/SessionEvent
+    $ref: '../types/evse_manager.yaml#/types/SessionEvent'
   limits:
     description: Limits of this evse, published on change
     type: object
-    $ref: /evse_manager#/Limits
+    $ref: '../types/evse_manager.yaml#/types/Limits'
   ev_info:
     description: More details about the EV if available
     type: object
-    $ref: /evse_manager#/EVInfo
+    $ref: '../types/evse_manager.yaml#/types/EVInfo'
   car_manufacturer:
     description: Car manufacturer (if known)
     type: string
-    $ref: /evse_manager#/CarManufacturer
+    $ref: '../types/evse_manager.yaml#/types/CarManufacturer'
   telemetry:
     description: Other telemetry
     type: object
-    $ref: /board_support#/Telemetry
+    $ref: '../types/board_support.yaml#/types/Telemetry'
   powermeter:
     description: Measured dataset
     type: object
-    $ref: /powermeter#/Powermeter
+    $ref: '../types/powermeter.yaml#/types/Powermeter'
   evse_id:
     description: EVSE ID including the connector number, e.g. DE*PNX*E123456*1
     type: string
   hw_capabilities:
     description: "Hardware capability/limits"
     type: object
-    $ref: /board_support#/HardwareCapabilities
+    $ref: '../types/board_support.yaml#/types/HardwareCapabilities'
   iso15118_certificate_request:
     description: >-
       The vehicle requests the SECC to deliver the certificate that belong 
       to the currently valid contract of the vehicle.
       Response will be reported async via  set_get_certificate_response
     type: object
-    $ref: /iso15118_charger#/Request_Exi_Stream_Schema
+    $ref: '../types/iso15118_charger.yaml#/types/Request_Exi_Stream_Schema'
   enforced_limits:
     description: Enforced limits for this node (coming from the EnergyManager)
     type: object
-    $ref: /energy#/EnforcedLimits
+    $ref: '../types/energy.yaml#/types/EnforcedLimits'
   ready:
     description: Signals that the EVSE Manager is ready to start charging
     type: boolean

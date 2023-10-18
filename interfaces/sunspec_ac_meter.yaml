@@ -11,4 +11,4 @@ cmds:
     result:
       description: Sunspec ac meter model
       type: object
-      $ref: /sunspec_ac_meter#/Result
+      $ref: '../types/sunspec_ac_meter.yaml#/types/Result'

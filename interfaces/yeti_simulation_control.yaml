@@ -12,7 +12,7 @@ cmds:
       value:
         description: simulation data
         type: object
-        $ref: /yeti#/SimulationData
+        $ref: '../types/yeti.yaml#/types/SimulationData'
 vars:
   enabled:
     description: Indicates whether simulation interface is currently active or not

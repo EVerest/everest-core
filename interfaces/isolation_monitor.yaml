@@ -16,4 +16,4 @@ vars:
   IsolationMeasurement:
     description: Isolation monitoring measurement results
     type: object
-    $ref: /isolation_monitor#/IsolationMeasurement
+    $ref: '../types/isolation_monitor.yaml#/types/IsolationMeasurement'

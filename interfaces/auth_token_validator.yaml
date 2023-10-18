@@ -7,9 +7,9 @@ cmds:
         description: >-
           Contains information about the authorization request
         type: object
-        $ref: /authorization#/ProvidedIdToken
+        $ref: '../types/authorization.yaml#/types/ProvidedIdToken'
     result:
       description: >-
         Result object containing validation result
       type: object
-      $ref: /authorization#/ValidationResult
+      $ref: '../types/authorization.yaml#/types/ValidationResult'

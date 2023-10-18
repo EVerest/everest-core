@@ -167,7 +167,7 @@ types:
       DC_EVErrorCode:
         description: Indicates the EV internal status
         type: string
-        $ref: /iso15118_charger#/DC_EVErrorCode
+        $ref: './iso15118_charger.yaml#/types/DC_EVErrorCode'
       DC_EVRESSSOC:
         description: State of charge of the EVs battery (RESS)
         type: number
@@ -300,7 +300,7 @@ types:
         type: array
         items:
           type: object
-          $ref: /iso15118_charger#/AppProtocol
+          $ref: './iso15118_charger.yaml#/types/AppProtocol'
           additionalProperties: false
         minItems: 1
         maxItems: 20
@@ -314,7 +314,7 @@ types:
       V2G_Message_ID:
         description: This element contains the id of the v2g message body
         type: string
-        $ref: /iso15118_charger#/V2G_Message_ID
+        $ref: './iso15118_charger.yaml#/types/V2G_Message_ID'
       V2G_Message_XML:
         description: Contains the decoded EXI stream as V2G message XML file
         type: string
@@ -357,7 +357,7 @@ types:
       certificateAction:
         description: Type of the certificate request
         type: string
-        $ref: /iso15118_charger#/CertificateActionEnum
+        $ref: './iso15118_charger.yaml#/types/CertificateActionEnum'
   Request_Exi_Stream_Schema:
     description: The request raw exi stream and the schema version for the CSMS system
     type: object
@@ -380,7 +380,7 @@ types:
       certificateAction:
         description: Type of the certificate request
         type: string
-        $ref: /iso15118_charger#/CertificateActionEnum
+        $ref: './iso15118_charger.yaml#/types/CertificateActionEnum'
   CertificateHashDataInfo:
     description: Contains the certificate information
     type: object

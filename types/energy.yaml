@@ -108,11 +108,11 @@ types:
       limits_to_root:
         description: Limit for this timestamp, for the root facing side
         type: object
-        $ref: /energy#/LimitsReq
+        $ref: './energy.yaml#/types/LimitsReq'
       limits_to_leaves:
         description: Limit for this timestamp, for the leaves facing side
         type: object
-        $ref: /energy#/LimitsReq
+        $ref: './energy.yaml#/types/LimitsReq'
       conversion_efficiency:
         description: Conversion efficiency from root to leaves side (e.g. AC/DC efficiency). Defaults to one if not specified.
         type: number
@@ -121,7 +121,7 @@ types:
       price_per_kwh:
         description: Price information for this timepoint
         type: object
-        $ref: /energy_price_information#/PricePerkWh
+        $ref: './energy_price_information.yaml#/types/PricePerkWh'
   ScheduleResEntry:
     description: One entry for the time series (result)
     type: object
@@ -137,11 +137,11 @@ types:
       limits_to_root:
         description: Limit for this timestamp, for the root facing side
         type: object
-        $ref: /energy#/LimitsRes
+        $ref: './energy.yaml#/types/LimitsRes'
       price_per_kwh:
         description: Price information for this timepoint
         type: object
-        $ref: /energy_price_information#/PricePerkWh
+        $ref: './energy_price_information.yaml#/types/PricePerkWh'
   EnergyFlowRequest:
     description: >-
       Request energy flow parameters to supply/limit energy import (direction from grid
@@ -158,7 +158,7 @@ types:
         items:
           description: One entry per child node
           type: object
-          $ref: /energy#/EnergyFlowRequest
+          $ref: './energy.yaml#/types/EnergyFlowRequest'
       uuid:
         description: >-
           UUID for this node. This UUID will be used again when enforce_limits()
@@ -168,19 +168,19 @@ types:
         description: >-
           Node Type Enum
         type: string
-        $ref: /energy#/NodeType
+        $ref: './energy.yaml#/types/NodeType'
       optimizer_target:
         description: User defined optimizer targets for this evse
         type: object
-        $ref: /energy#/OptimizerTarget
+        $ref: './energy.yaml#/types/OptimizerTarget'
       energy_usage_root:
         description: Energy usage measurement of this node at root side
         type: object
-        $ref: /powermeter#/Powermeter
+        $ref: './powermeter.yaml#/types/Powermeter'
       energy_usage_leaves:
         description: Energy usage measurement of this node at leaves side
         type: object
-        $ref: /powermeter#/Powermeter
+        $ref: './powermeter.yaml#/types/Powermeter'
       schedule_import:
         description: >-
           Energy import/limits time series. The first entry is special
@@ -192,7 +192,7 @@ types:
         items:
           description: One entry for the time series. Values are always positive.
           type: object
-          $ref: /energy#/ScheduleReqEntry
+          $ref: './energy.yaml#/types/ScheduleReqEntry'
       schedule_export:
         description: >-
           Energy export/limits time series. The first entry is special
@@ -204,7 +204,7 @@ types:
         items:
           description: One entry for the time series. Values are always positive.
           type: object
-          $ref: /energy#/ScheduleReqEntry
+          $ref: './energy.yaml#/types/ScheduleReqEntry'
   EnforcedLimits:
     description: Enforce Limits data type
     type: object
@@ -224,7 +224,7 @@ types:
       limits_root_side:
         description: Enforced limits that must be respected at the root side.
         type: object
-        $ref: /energy#/LimitsRes
+        $ref: './energy.yaml#/types/LimitsRes'
       schedule:
         description: >-
           Informative only. Do not use for actual limiting. Energy import/export limits
@@ -236,7 +236,7 @@ types:
         items:
           description: One entry for the time series. Values are positive for import from grid and negative for export to grid.
           type: object
-          $ref: /energy#/ScheduleResEntry
+          $ref: './energy.yaml#/types/ScheduleResEntry'
   ExternalLimits:
     description: External Limits data type
     type: object
@@ -252,7 +252,7 @@ types:
         items:
           description: One entry for the time series
           type: object
-          $ref: /energy#/ScheduleReqEntry
+          $ref: './energy.yaml#/types/ScheduleReqEntry'
       schedule_export:
         description: >-
           Energy export/limits time series. The first entry is special as it will be active already now
@@ -264,4 +264,4 @@ types:
         items:
           description: One entry for the time series
           type: object
-          $ref: /energy#/ScheduleReqEntry
+          $ref: './energy.yaml#/types/ScheduleReqEntry'

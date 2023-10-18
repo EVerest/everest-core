@@ -7,9 +7,9 @@ cmds:
       value:
         description: External limits object
         type: object
-        $ref: /energy#/ExternalLimits
+        $ref: '../types/energy.yaml#/types/ExternalLimits'
 vars:
   enforced_limits:
     description: Enforced limits for this node (coming from the EnergyManager)
     type: object
-    $ref: /energy#/EnforcedLimits
+    $ref: '../types/energy.yaml#/types/EnforcedLimits'

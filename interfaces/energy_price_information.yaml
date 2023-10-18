@@ -5,4 +5,4 @@ vars:
       Forecast JSON Object containing timestamps and the price forecast
       for both import and export.
     type: object
-    $ref: /energy_price_information#/EnergyPriceSchedule
+    $ref: '../types/energy_price_information.yaml#/types/EnergyPriceSchedule'
