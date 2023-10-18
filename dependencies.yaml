@@ -43,6 +43,12 @@ libfsm:
   git_tag: v0.2.0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBFSM"
 
+# D20Evse module
+libiso15118:
+  git: https://github.com/EVerest/libiso15118.git
+  git_tag: 61735ab20df675a77136eea69f84ca5bcc0a5a46
+  # options: ['ISO15118_LINK_CUSTOM_MBEDTLS OFF']
+
 # LEM DCBM 400/600 module
 libcurl:
   git: https://github.com/curl/curl.git

@@ -1,0 +1,131 @@
+active_modules:
+  iso15118_charger:
+    module: D20Evse
+    # config_module:
+    #   private_key_password: "failed"
+    #   enable_ssl_logging: true
+    #   tls_negotiation_strategy: ENFORCE_NO_TLS
+  iso15118_car:
+    module: PyEvJosev
+    config_module:
+      device: auto
+      supported_DIN70121: true
+      supported_ISO15118_2: true
+      supported_ISO15118_20_DC: true
+      tls_active: true
+  evse_manager:
+    module: EvseManager
+    config_module:
+      connector_id: 1
+      country_code: DE
+      evse_id: DE*PNX*E12345*1
+      evse_id_din: 49A80737A45678
+      session_logging: true
+      session_logging_xml: false
+      session_logging_path: /tmp/everest-logs
+      charge_mode: DC
+      hack_allow_bpt_with_iso2: true
+      payment_enable_contract: false
+    connections:
+      bsp:
+        - module_id: yeti_driver
+          implementation_id: board_support
+      powermeter_car_side:
+        - module_id: powersupply_dc
+          implementation_id: powermeter
+      slac:
+        - module_id: slac
+          implementation_id: evse
+      hlc:
+        - module_id: iso15118_charger
+          implementation_id: charger
+      powersupply_DC:
+        - module_id: powersupply_dc
+          implementation_id: main
+      imd:
+        - module_id: imd
+          implementation_id: main
+  powersupply_dc:
+    module: JsDCSupplySimulator
+  yeti_driver:
+    module: JsYetiSimulator
+    config_module:
+      connector_id: 1
+  slac:
+    module: JsSlacSimulator
+  imd:
+    module: IMDSimulator
+  ev_manager:
+    module: JsEvManager
+    config_module:
+      connector_id: 1
+      auto_enable: true
+      auto_exec: true
+      auto_exec_commands: sleep 3;iso_wait_slac_matched;iso_start_v2g_session DC;iso_wait_pwr_ready;iso_wait_for_stop 15;iso_wait_v2g_session_stopped;unplug;
+      dc_target_current: 20
+      dc_target_voltage: 400
+    connections:
+      ev_board_support:
+        - module_id: yeti_driver
+          implementation_id: ev_board_support
+      ev:
+        - module_id: iso15118_car
+          implementation_id: ev
+      slac:
+        - module_id: slac
+          implementation_id: ev
+  auth:
+    module: Auth
+    config_module:
+      connection_timeout: 10
+      selection_algorithm: PlugEvents
+    connections:
+      token_provider:
+        - module_id: token_provider
+          implementation_id: main
+      token_validator:
+        - module_id: token_validator
+          implementation_id: main
+      evse_manager:
+        - module_id: evse_manager
+          implementation_id: evse
+  token_provider: 
+    module: DummyTokenProvider
+    config_implementation:
+      main:
+        token: TOKEN1
+    connections:
+      evse:
+        - module_id: evse_manager
+          implementation_id: evse
+  token_validator:
+    module: DummyTokenValidator
+    config_implementation:
+      main:
+        validation_result: Accepted
+        validation_reason: Token seems valid
+        sleep: 0.25
+  energy_manager:
+    module: EnergyManager
+    config_module:
+      schedule_total_duration: 1
+      schedule_interval_duration: 60
+      debug: false
+    connections:
+      energy_trunk:
+        - module_id: grid_connection_point
+          implementation_id: energy_grid
+  grid_connection_point:
+    module: EnergyNode
+    config_module:
+      fuse_limit_A: 40.0
+      phase_count: 3
+    connections:
+      price_information: []
+      energy_consumer:
+        - module_id: evse_manager
+          implementation_id: energy_grid
+      powermeter:
+        - module_id: yeti_driver
+          implementation_id: powermeter
+x-module-layout: {}
