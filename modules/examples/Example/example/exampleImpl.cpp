@@ -16,7 +16,8 @@ void exampleImpl::init() {
 void exampleImpl::ready() {
     publish_max_current(config.current);
     std::this_thread::sleep_for(std::chrono::seconds(2));
-    Everest::error::ErrorHandle my_error_uuid = raise_example_ExampleErrorA("This error is raised to test the error handling");
+    Everest::error::ErrorHandle my_error_uuid =
+        raise_example_ExampleErrorA("This error is raised to test the error handling");
     std::this_thread::sleep_for(std::chrono::seconds(2));
     mod->r_kvs->call_store("test", "test");
     std::this_thread::sleep_for(std::chrono::seconds(2));

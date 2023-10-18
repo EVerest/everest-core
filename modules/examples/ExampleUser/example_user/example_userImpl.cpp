@@ -13,14 +13,8 @@ void example_userImpl::init() {
     Everest::error::ErrorCallback error_cleared_callback = [](const Everest::error::Error& error) {
         EVLOG_info << "received error cleared from error manager: " << error.type;
     };
-    mod->r_example->subscribe_error_example_ExampleErrorA(
-        error_callback,
-        error_cleared_callback
-    );
-    mod->r_example->subscribe_all_errors(
-        error_callback,
-        error_cleared_callback
-    );
+    mod->r_example->subscribe_error_example_ExampleErrorA(error_callback, error_cleared_callback);
+    mod->r_example->subscribe_all_errors(error_callback, error_cleared_callback);
 }
 
 void example_userImpl::ready() {
