@@ -1,0 +1,23 @@
+description: >-
+  This module is a draft implementation of iso15118-20 for the EVSE side
+config:
+  device:
+    description: >-
+      Ethernet device used for HLC. Any local interface that has an ipv6
+      link-local and a MAC addr will work
+    type: string
+    default: eth0
+  certificate_path:
+    description: Path to certificate directories
+    type: string
+    default: ""
+provides:
+  charger:
+    interface: ISO15118_charger
+    description: >-
+      This interface provides limited access to iso15118-20
+enable_external_mqtt: true
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+  - aw

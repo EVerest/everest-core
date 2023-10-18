@@ -5,7 +5,7 @@ everest-framework:
 sigslot:
   git: https://github.com/palacaze/sigslot
   git_tag: v1.2.0
-  options: ["SIGSLOT_COMPILE_EXAMPLES OFF"]
+  options: ['SIGSLOT_COMPILE_EXAMPLES OFF']
 libmodbus:
   git: https://github.com/EVerest/libmodbus.git
   git_tag: v0.3.0
@@ -20,7 +20,7 @@ pugixml:
 libtimer:
   git: https://github.com/EVerest/libtimer.git
   git_tag: v0.1.1
-  options: ["BUILD_EXAMPLES OFF"]
+  options: ['BUILD_EXAMPLES OFF']
 
 # Slac module
 libslac:
@@ -29,6 +29,11 @@ libslac:
 libfsm:
   git: https://github.com/EVerest/libfsm.git
   git_tag: v0.2.0
+
+# D20Evse module
+libiso15118:
+  git: https://github.com/EVerest/libiso15118.git
+  git_tag: 4c4a65a
 
 # LEM DCBM 400/600 module
 libcurl:
@@ -47,14 +52,14 @@ Josev:
 ext-openv2g:
   git: https://github.com/EVerest/ext-openv2g.git
   git_tag: 2023.3.0
-# mbedtls
+# EvseV2G module and Iso15118 modules
 ext-mbedtls:
   git: https://github.com/EVerest/ext-mbedtls.git
   git_tag: 8b3f26a
   options:
     - ENABLE_PROGRAMS OFF
     - ENABLE_TESTING OFF
-    - MBEDTLS_FATAL_WARNINGS OFF  # disables setting warnings as errors  FIXME: workaround until upstream-fixes are included
+    - MBEDTLS_FATAL_WARNINGS OFF # disables setting warnings as errors  FIXME: workaround until upstream-fixes are included
 # everest-testing
 everest-utils:
   git: https://github.com/EVerest/everest-utils.git

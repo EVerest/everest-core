@@ -1,0 +1,105 @@
+active_modules:
+  iso15118_charger:
+    module: D20Evse
+    # config_module:
+    #   device: auto
+    #   tls_security: allow
+  iso15118_car:
+    module: PyEvJosev
+    config_module:
+      device: auto
+      supported_DIN70121: true
+      supported_ISO15118_2: true
+      supported_ISO15118_20_DC: true
+      tls_active: true
+  evse_manager:
+    module: EvseManager
+    config_module:
+      connector_id: 1
+      country_code: DE
+      rcd_enabled: true
+      evse_id: DE*PNX*E12345*1
+      evse_id_din: 49A80737A45678
+      session_logging: true
+      session_logging_xml: false
+      session_logging_path: /tmp/everest-logs
+      charge_mode: DC
+      hack_allow_bpt_with_iso2: true
+    connections:
+      bsp:
+        - module_id: yeti_driver
+          implementation_id: board_support
+      powermeter_car_side:
+        - module_id: powersupply_dc
+          implementation_id: powermeter
+      slac:
+        - module_id: slac
+          implementation_id: evse
+      hlc:
+        - module_id: iso15118_charger
+          implementation_id: charger
+      powersupply_DC:
+        - module_id: powersupply_dc
+          implementation_id: main
+      imd:
+        - module_id: imd
+          implementation_id: main
+  powersupply_dc:
+    module: JsDCSupplySimulator
+  yeti_driver:
+    module: JsYetiSimulator
+  slac:
+    module: JsSlacSimulator
+  imd:
+    module: JsIMDSimulator
+  car_simulator:
+    module: JsCarSimulator
+    config_module:
+      connector_id: 1
+      auto_enable: true
+      auto_exec: true
+      auto_exec_commands: sleep 3;iso_wait_slac_matched;iso_start_v2g_session ExternalPayment,DC_extended;iso_wait_pwr_ready;sleep 36000
+      dc_target_current: 20
+      dc_target_voltage: 400
+    connections:
+      simulation_control:
+        - module_id: yeti_driver
+          implementation_id: yeti_simulation_control
+      ev:
+        - module_id: iso15118_car
+          implementation_id: ev
+      slac:
+        - module_id: slac
+          implementation_id: ev
+  auth:
+    module: Auth
+    config_module:
+      connection_timeout: 10
+      selection_algorithm: PlugEvents
+    connections:
+      token_provider:
+        - module_id: token_provider
+          implementation_id: main
+      token_validator:
+        - module_id: token_validator
+          implementation_id: main
+      evse_manager:
+        - module_id: evse_manager
+          implementation_id: evse
+  token_provider: 
+    module: DummyTokenProvider
+    config_implementation:
+      main:
+        token: TOKEN1
+    connections:
+      evse:
+        - module_id: evse_manager
+          implementation_id: evse
+  token_validator:
+    module: DummyTokenValidator
+    config_implementation:
+      main:
+        validation_result: Accepted
+        validation_reason: Token seems valid
+        sleep: 0.25
+x-module-layout: {}

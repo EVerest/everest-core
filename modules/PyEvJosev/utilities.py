@@ -6,7 +6,8 @@ import netifaces
 from everest.framework import log
 
 from iso15118.evcc.evcc_config import EVCCConfig
-from iso15118.shared.utils import load_requested_protocols
+from iso15118.shared.utils import load_requested_protocols, load_requested_energy_services
+
 
 class EverestPyLoggingHandler(logging.Handler):
 
@@ -25,7 +26,8 @@ class EverestPyLoggingHandler(logging.Handler):
             log.warning(msg)
         # FIXME (aw): implicitely pipe everything with loglevel INFO into DEBUG
         else:
-            log.debug(msg)
+            log.info(msg)
+
 
 def setup_everest_logging():
     # remove all logging handler so that we'll have only our custom one
@@ -40,6 +42,7 @@ def setup_everest_logging():
 
     logging.getLogger().addHandler(handler)
 
+
 def choose_first_ipv6_local() -> str:
     for iface in netifaces.interfaces():
         if netifaces.AF_INET6 in netifaces.ifaddresses(iface):
@@ -50,13 +53,16 @@ def choose_first_ipv6_local() -> str:
     log.warning('No necessary IPv6 link-local address was found!')
     return 'eth0'
 
+
 def determine_network_interface(preferred_interface: str) -> str:
     if preferred_interface == "auto":
         return choose_first_ipv6_local()
     elif preferred_interface not in netifaces.interfaces():
-        log.warning(f"The network interface {preferred_interface} was not found!")
+        log.warning(
+            f"The network interface {preferred_interface} was not found!")
 
     return preferred_interface
+
 
 def patch_josev_config(josev_config: EVCCConfig, everest_config: dict) -> None:
 
@@ -91,3 +97,7 @@ def patch_josev_config(josev_config: EVCCConfig, everest_config: dict) -> None:
         log.error("The supporting hlc protocols were not specified")
 
     josev_config.supported_protocols = load_requested_protocols(protocols)
+
+    josev_config.supported_energy_services = load_requested_energy_services(
+        ['DC_BPT']
+    )
