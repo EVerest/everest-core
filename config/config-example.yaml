@@ -1,0 +1,23 @@
+settings:
+  telemetry_enabled: true
+  logging_config_file: /home/andreas/everest-logging-config.conf
+active_modules:
+  store:
+    module: Store
+  example:
+    config_implementation:
+      example:
+        current: 42
+        enum_test: one
+        enum_test2: 2
+    connections:
+      kvs:
+        - module_id: store
+          implementation_id: main
+    module: Example
+  example_user:
+    connections:
+      example:
+        - module_id: example
+          implementation_id: example
+    module: ExampleUser

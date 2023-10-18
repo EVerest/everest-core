@@ -16,3 +16,5 @@ vars:
   max_current:
     description: Provides maximum current of this supply in ampere
     type: number
+errors:
+  - $ref: '../errors/example.yaml#/errors'

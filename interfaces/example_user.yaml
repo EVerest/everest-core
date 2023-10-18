@@ -1,3 +1,5 @@
 description: >-
   This interface defines an example_user interface that uses the example
   interface
+errors:
+  - $ref: '../errors/example.yaml#/errors'
