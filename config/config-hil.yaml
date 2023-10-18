@@ -44,6 +44,10 @@ active_modules:
     config_module:
       device: auto
       tls_security: allow
+    connections:
+      security:
+        - module_id: evse_security
+          implementation_id: main
   evse_manager:
     module: EvseManager
     config_module:
@@ -81,6 +85,10 @@ active_modules:
       tokenValidator:
         - module_id: token_validator
           implementation_id: main
+  evse_security:
+    module: EvseSecurity
+    config_module:
+      private_key_password: "123456"
   token_provider_1:
     module: DummyTokenProvider
     connections:
