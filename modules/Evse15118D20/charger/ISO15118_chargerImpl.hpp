@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifndef MAIN_ISO15118_CHARGER_IMPL_HPP
-#define MAIN_ISO15118_CHARGER_IMPL_HPP
+#ifndef CHARGER_ISO15118_CHARGER_IMPL_HPP
+#define CHARGER_ISO15118_CHARGER_IMPL_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
@@ -10,22 +10,28 @@
 
 #include <generated/interfaces/ISO15118_charger/Implementation.hpp>
 
-#include "../DummyV2G.hpp"
+#include "../Evse15118D20.hpp"
 
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
-// insert your custom include headers here
+#include <bitset>
+
+#include "utils.hpp"
+
+#include <iso15118/d20/config.hpp>
+#include <iso15118/session/feedback.hpp>
+#include <iso15118/tbd_controller.hpp>
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 
 namespace module {
-namespace main {
+namespace charger {
 
 struct Conf {};
 
 class ISO15118_chargerImpl : public ISO15118_chargerImplBase {
 public:
     ISO15118_chargerImpl() = delete;
-    ISO15118_chargerImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<DummyV2G>& mod, Conf& config) :
-        ISO15118_chargerImplBase(ev, "main"), mod(mod), config(config){};
+    ISO15118_chargerImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<Evse15118D20>& mod, Conf& config) :
+        ISO15118_chargerImplBase(ev, "charger"), mod(mod), config(config){};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here
@@ -64,14 +70,19 @@ protected:
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
 
 private:
-    const Everest::PtrContainer<DummyV2G>& mod;
+    const Everest::PtrContainer<Evse15118D20>& mod;
     const Conf& config;
 
     virtual void init() override;
     virtual void ready() override;
 
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
-    // insert your private definitions here
+    iso15118::session::feedback::Callbacks create_callbacks();
+
+    std::unique_ptr<iso15118::TbdController> controller;
+
+    iso15118::d20::EvseSetupConfig setup_config;
+    std::bitset<NUMBER_OF_SETUP_STEPS> setup_steps_done{0};
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 
@@ -79,7 +90,7 @@ private:
 // insert other definitions here
 // ev@3d7da0ad-02c2-493d-9920-0bbbd56b9876:v1
 
-} // namespace main
+} // namespace charger
 } // namespace module
 
-#endif // MAIN_ISO15118_CHARGER_IMPL_HPP
+#endif // CHARGER_ISO15118_CHARGER_IMPL_HPP

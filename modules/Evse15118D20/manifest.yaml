@@ -1,0 +1,51 @@
+description: >-
+  This module is a draft implementation of iso15118-20 for the EVSE side
+config:
+  device:
+    description: >-
+      Ethernet device used for HLC. Any local interface that has an ipv6
+      link-local and a MAC addr will work
+    type: string
+    default: eth0
+  certificate_path:
+    description: Path to certificate directories
+    type: string
+    default: ""
+  logging_path:
+    description: Path to logging directory (will be created if non existent)
+    type: string
+    default: "."
+  tls_negotiation_strategy:
+    description: Select strategy on how to negotiate connection encryption
+    type: string
+    enum:
+      - ACCEPT_CLIENT_OFFER
+      - ENFORCE_TLS
+      - ENFORCE_NO_TLS
+    default: ACCEPT_CLIENT_OFFER
+  private_key_password:
+    description: Password for private key files (USE ONLY FOR TESTING)
+    type: string
+    default: "123456"
+  enable_ssl_logging:
+    description: Verbosely log the ssl/tls connection
+    type: boolean
+    default: false
+  enable_tls_key_logging:
+    description: >-
+      Enable/Disable the export of TLS session keys (pre-master-secret)
+      during a TLS handshake. Note that this option is for testing and
+      simulation purpose only
+    type: boolean
+    default: false
+provides:
+  charger:
+    interface: ISO15118_charger
+    description: >-
+      This interface provides limited access to iso15118-20
+enable_external_mqtt: false
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - aw@pionix.de
+    - Sebastian Lukas

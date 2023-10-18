@@ -226,6 +226,8 @@ public:
         types::iso15118_charger::DcEvseMinimumLimits evse_min_limits;
         evse_min_limits.evse_minimum_current_limit = powersupply_capabilities.min_export_current_A;
         evse_min_limits.evse_minimum_voltage_limit = powersupply_capabilities.min_export_voltage_V;
+        evse_min_limits.evse_minimum_power_limit =
+            evse_min_limits.evse_minimum_current_limit * evse_min_limits.evse_minimum_voltage_limit;
         r_hlc[0]->call_update_dc_minimum_limits(evse_min_limits);
 
         // HLC layer will also get new maximum current/voltage/watt limits etc, but those will need to run through
@@ -289,7 +291,7 @@ private:
 
     types::authorization::ProvidedIdToken autocharge_token;
 
-    void log_v2g_message(Object m);
+    void log_v2g_message(types::iso15118_charger::V2gMessages v2g_messages);
 
     // Reservations
     bool reserved;
