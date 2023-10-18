@@ -15,6 +15,19 @@ set(FMT_BOLD "${ESCAPE}[1m")
 
 message(STATUS "${COLOR_BOLD}Should be bold?${COLOR_RESET}")
 
+add_custom_target(convert_yaml_refs)
+set_target_properties(convert_yaml_refs
+    PROPERTIES
+        EVEREST_CONVERTED_YAML_DIR "${CMAKE_BINARY_DIR}/converted_yamls"
+
+)
+
+add_custom_target(convert_yaml_refs_installable)
+set_target_properties(convert_yaml_refs_installable
+    PROPERTIES
+        EVEREST_CONVERTED_YAML_INSTALLABLE_DIR "${CMAKE_BINARY_DIR}/converted_yamls_installable"
+)
+
 # NOTE (aw): maybe this could be also implemented as an IMPORTED target?
 add_custom_target(generate_cpp_files)
 set_target_properties(generate_cpp_files
@@ -61,16 +74,20 @@ function(ev_add_project)
         file(GLOB TYPES_FILES
             ${TYPES_DIR}/*.yaml
         )
-
         _ev_add_types(${TYPES_FILES})
+    endif ()
 
-        if (CALLED_FROM_WITHIN_PROJECT)
-            install(
-                DIRECTORY ${TYPES_DIR}
-                DESTINATION "${CMAKE_INSTALL_DATADIR}/everest"
-                FILES_MATCHING PATTERN "*.yaml"
-            )
-        endif ()
+    # check for errors
+    set(ERRORS_DIR "${EVEREST_PROJECT_DIR}/errors")
+    if (EXISTS ${ERRORS_DIR})
+        message(STATUS "Adding error definitions from ${ERRORS_DIR}")
+        file(GLOB ERRORS_FILES
+            ${ERRORS_DIR}/*.yaml
+        )
+        foreach(ERRORS_FILE ${ERRORS_FILES})
+            set(ERRORS_CONVERTED_REL_OUTPUT_DIR "errors")
+            _ev_convert_refs(${ERRORS_FILE} ${ERRORS_CONVERTED_REL_OUTPUT_DIR})
+        endforeach()
     endif ()
 
     # check for interfaces
@@ -80,16 +97,7 @@ function(ev_add_project)
         file(GLOB INTERFACE_FILES
             ${INTERFACES_DIR}/*.yaml
         )
-
         _ev_add_interfaces(${INTERFACE_FILES})
-
-        if (CALLED_FROM_WITHIN_PROJECT)
-            install(
-                DIRECTORY ${INTERFACES_DIR}
-                DESTINATION "${CMAKE_INSTALL_DATADIR}/everest"
-                FILES_MATCHING PATTERN "*.yaml"
-            )
-        endif ()
     endif ()
 
     # check for modules
@@ -103,12 +111,101 @@ function(ev_add_project)
 endfunction()
 
 #
+# convert relative references in yaml files to absolute references
+#
+function(_ev_convert_refs)
+    if (ARGC EQUAL 2)
+        set (CONVERT_REFS_INPUT_FILE ${ARGV0})
+        set (CONVERT_REFS_REL_OUTPUT_DIR ${ARGV1})
+    else()
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}() expects exactly two arguments")
+    endif()
+
+    get_filename_component(CONVERT_REFS_INPUT_FILE_NAME ${CONVERT_REFS_INPUT_FILE} NAME)
+
+    get_filename_component(CONVERT_REFS_INPUT_FILE_NAME_WITHOUT_EXT ${CONVERT_REFS_INPUT_FILE} NAME_WE)
+    get_filename_component(CONVERT_REFS_INPUT_FILE_PARENT ${CONVERT_REFS_INPUT_FILE} DIRECTORY)
+    cmake_path(GET CONVERT_REFS_INPUT_FILE_PARENT STEM CONVERT_REFS_INPUT_FILE_PARENT_NAME)
+    set(CONVERT_REFS_TARGET_NAME "convert_yaml_refs_${CONVERT_REFS_INPUT_FILE_PARENT_NAME}_${CONVERT_REFS_INPUT_FILE_NAME_WITHOUT_EXT}")
+
+    get_target_property(CONVERTED_YAML_DIR convert_yaml_refs EVEREST_CONVERTED_YAML_DIR)
+    set(CONVERT_REFS_OUTPUT_FILE "${CONVERTED_YAML_DIR}/${CONVERT_REFS_REL_OUTPUT_DIR}/${CONVERT_REFS_INPUT_FILE_NAME}")
+    add_custom_command(
+        OUTPUT
+            "${CONVERT_REFS_OUTPUT_FILE}"
+        DEPENDS
+            ${CONVERT_REFS_INPUT_FILE}
+        COMMENT
+            "Converting relative references in ${CONVERT_REFS_INPUT_FILE_NAME} to absolute references..."
+        VERBATIM
+        COMMAND
+            ${EV_CLI} helpers convert-refs
+                "${CONVERT_REFS_INPUT_FILE}"
+                "${CONVERT_REFS_OUTPUT_FILE}"
+        WORKING_DIRECTORY
+            ${PROJECT_SOURCE_DIR}
+    )
+    add_custom_target( ${CONVERT_REFS_TARGET_NAME}
+        DEPENDS
+            "${CONVERT_REFS_OUTPUT_FILE}"
+    )
+    add_dependencies( convert_yaml_refs
+        "${CONVERT_REFS_TARGET_NAME}"
+    )
+
+    # Install target
+    set(CONVERT_REFS_INSTALL_DIR "${CMAKE_INSTALL_DATADIR}/everest/${CONVERT_REFS_REL_OUTPUT_DIR}")
+    set(CONVERT_REFS_BASE_PATH "${CMAKE_INSTALL_PREFIX}/${CONVERT_REFS_INSTALL_DIR}/${CONVERT_REFS_INPUT_FILE_NAME}")
+
+    get_target_property(CONVERTED_YAML_INSTALLABLE_DIR convert_yaml_refs_installable EVEREST_CONVERTED_YAML_INSTALLABLE_DIR)
+    set(CONVERT_REFS_OUTPUT_FILE_INSTALLABLE "${CONVERTED_YAML_INSTALLABLE_DIR}/${CONVERT_REFS_REL_OUTPUT_DIR}/${CONVERT_REFS_INPUT_FILE_NAME}")
+    add_custom_command(
+        OUTPUT
+            "${CONVERT_REFS_OUTPUT_FILE_INSTALLABLE}"
+        DEPENDS
+            ${CONVERT_REFS_INPUT_FILE}
+        COMMENT
+            "Converting relative references in ${CONVERT_REFS_INPUT_FILE_NAME} to absolute references..."
+        VERBATIM
+        COMMAND
+            ${EV_CLI} helpers convert-refs
+                "${CONVERT_REFS_INPUT_FILE}"
+                "${CONVERT_REFS_OUTPUT_FILE_INSTALLABLE}"
+                --base-path "${CONVERT_REFS_BASE_PATH}"
+        WORKING_DIRECTORY
+            ${PROJECT_SOURCE_DIR}
+    )
+    add_custom_target( ${CONVERT_REFS_TARGET_NAME}_installable
+        ALL
+        DEPENDS
+            "${CONVERT_REFS_OUTPUT_FILE_INSTALLABLE}"
+    )
+    add_dependencies( convert_yaml_refs_installable
+        "${CONVERT_REFS_TARGET_NAME}_installable"
+    )
+    if (CALLED_FROM_WITHIN_PROJECT)
+        install(
+            FILES
+                "${CONVERT_REFS_OUTPUT_FILE_INSTALLABLE}"
+            DESTINATION
+                "${CONVERT_REFS_INSTALL_DIR}"
+        )
+    endif()
+endfunction()
+
+#
 # interfaces
 #
 function (_ev_add_interfaces)
     # FIXME (aw): check for duplicates here!
     get_target_property(GENERATED_OUTPUT_DIR generate_cpp_files EVEREST_GENERATED_OUTPUT_DIR)
     set(CHECK_DONE_FILE "${GENERATED_OUTPUT_DIR}/.interfaces_generated_${EVEREST_PROJECT_NAME}")
+
+    foreach(INTERFACE_PATH ${ARGV})
+        get_filename_component(INTERFACE_FILENAME ${INTERFACE_PATH} NAME)
+        set(INTERFACE_CONVERTED_REL_OUTPUT_DIR "interfaces")
+        _ev_convert_refs(${INTERFACE_PATH} ${INTERFACE_CONVERTED_REL_OUTPUT_DIR})
+    endforeach()
 
     add_custom_command(
         OUTPUT
@@ -142,11 +239,16 @@ endfunction()
 #
 # types
 #
-
 function (_ev_add_types)
     # FIXME (aw): check for duplicates here!
     get_target_property(GENERATED_OUTPUT_DIR generate_cpp_files EVEREST_GENERATED_OUTPUT_DIR)
     set(CHECK_DONE_FILE "${GENERATED_OUTPUT_DIR}/.types_generated_${EVEREST_PROJECT_NAME}")
+
+    foreach(TYPES_PATH ${ARGV})
+        get_filename_component(TYPES_FILENAME ${TYPES_PATH} NAME)
+        set(TYPES_CONVERTED_REL_OUTPUT_DIR "types")
+        _ev_convert_refs(${TYPES_PATH} ${TYPES_CONVERTED_REL_OUTPUT_DIR})
+    endforeach()
 
     add_custom_command(
         OUTPUT
@@ -181,7 +283,6 @@ endfunction()
 #
 # modules
 #
-
 function (ev_add_modules)
     set(EVEREST_MODULE_INSTALL_PREFIX "${CMAKE_INSTALL_LIBEXECDIR}/everest/modules")
 
@@ -351,6 +452,8 @@ function (ev_add_cpp_module MODULE_NAME)
             install(TARGETS ${MODULE_NAME}
                 DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
             )
+
+            # _ev_convert_refs(${MODULE_PATH}/manifest.yaml modules/${MODULE_NAME})
 
             install(FILES ${MODULE_PATH}/manifest.yaml
                 DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
