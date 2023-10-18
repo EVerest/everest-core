@@ -4,6 +4,10 @@ active_modules:
     config_module:
       device: auto
       tls_security: allow
+    connections:
+      security:
+        - module_id: evse_security
+          implementation_id: main
   iso15118_car:
     module: PyEvJosev
     config_module:
@@ -100,6 +104,10 @@ active_modules:
         validation_result: Accepted
         validation_reason: Token seems valid
         sleep: 0.25
+  evse_security:
+    module: EvseSecurity
+    config_module:
+      private_key_password: "123456"
   energy_manager:
     module: EnergyManager
     config_module:

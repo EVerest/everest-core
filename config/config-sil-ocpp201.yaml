@@ -4,6 +4,10 @@ active_modules:
     config_module:
       device: auto
       tls_security: allow
+    connections:
+      security:
+        - module_id: evse_security
+          implementation_id: main
   iso15118_car:
     module: PyEvJosev
     config_module:

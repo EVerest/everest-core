@@ -489,13 +489,16 @@ static bool connection_init_tls(struct v2g_context* ctx) {
     int rv;
     uint8_t max_idx = 0;
 
-    std::string v2g_root_cert_path = ctx->r_security->call_get_verify_file(types::evse_security::CaCertificateType::V2G);
-    
-    const auto key_pair_response = ctx->r_security->call_get_key_pair(types::evse_security::LeafCertificateType::V2G, types::evse_security::EncodingFormat::PEM);
+    std::string v2g_root_cert_path =
+        ctx->r_security->call_get_verify_file(types::evse_security::CaCertificateType::V2G);
+
+    const auto key_pair_response = ctx->r_security->call_get_key_pair(types::evse_security::LeafCertificateType::V2G,
+                                                                      types::evse_security::EncodingFormat::PEM);
     if (key_pair_response.status != types::evse_security::GetKeyPairStatus::Accepted) {
-        // TODO(piet): What should we do in this case?
+        dlog(DLOG_LEVEL_ERROR, "Failed to read key/pair!");
+        return false;
     }
-    
+
     std::string evse_leaf_cert_path = key_pair_response.key_pair.value().certificate;
     std::string evse_leaf_key_path = key_pair_response.key_pair.value().key;
     std::string secc_leaf_key_password = key_pair_response.key_pair.value().password.value_or("");
@@ -551,23 +554,6 @@ static bool connection_init_tls(struct v2g_context* ctx) {
              evse_leaf_cert_path.c_str(), -rv, error_buf);
         goto error_out;
     }
-
-    /* TODO: Comment out later
-    if ((rv = mbedtls_x509_crt_parse_file(&ctx->evseTlsCrt[0], cpo_sub2_cert_path.c_str())) != 0) {
-        char error_buf[100];
-        mbedtls_strerror(rv, error_buf, sizeof(error_buf));
-        dlog(DLOG_LEVEL_ERROR, "Unable to parse CPO-sub2 certficate %s (err: -0x%04x - %s)", cpo_sub2_cert_path.c_str(),
-             -rv, error_buf);
-        goto error_out;
-    }
-    if ((rv = mbedtls_x509_crt_parse_file(&ctx->evseTlsCrt[0], cpo_sub1_cert_path.c_str())) != 0) {
-        char error_buf[100];
-        mbedtls_strerror(rv, error_buf, sizeof(error_buf));
-        dlog(DLOG_LEVEL_ERROR, "Unable to parse CPO-sub1 certficate %s (err: -0x%04x - %s)", cpo_sub1_cert_path.c_str(),
-             -rv, error_buf);
-        goto error_out;
-    }
-    // */
 
     if ((rv = mbedtls_ssl_conf_own_cert(&ctx->ssl_config, &ctx->evseTlsCrt[0], &ctx->evse_tls_crt_key[0])) != 0) {
         char error_buf[100];

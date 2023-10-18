@@ -104,6 +104,14 @@ active_modules:
       tls_security: allow
     connections: {}
     module: EvseV2G
+    connections:
+      security:
+        - module_id: evse_security
+          implementation_id: main
+  evse_security:
+    module: EvseSecurity
+    config_module:
+      private_key_password: "123456"
   persistent_store:
     config_module:
       sqlite_db_file_path: everest_persistent_store.db
