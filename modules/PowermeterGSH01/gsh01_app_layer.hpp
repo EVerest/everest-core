@@ -19,27 +19,35 @@
 namespace ast_app_layer {
 
 enum class CommandType : std::uint16_t {
-    RESET_DC_METER = 0x4101,                            // reset the DC meter
+//    RESET_DC_METER = 0x4101,                            // reset the DC meter
     AB_MODE_SET = 0x4102,                               // get or set the mode of application board  
-    AB_SERVER_ID = 0x4110,                              // get or set the server ID of application board
-    AB_SERIAL_NR = 0x4111,                              // get or set the serial number
-    AB_HW_VERSION = 0x4112,                             // get or set the hardware version
-    AB_DEVICE_TYPE = 0x4113,                            // get or set the device type 
+    AB_TRANSPARENT_MODE = 0x4103,                       // get the transparent mode meter  
+    AB_SERVER_ID = 0x4110,                              // get the server ID of application board
+    AB_SERIAL_NR = 0x4111,                              // get the serial number
+    AB_HW_VERSION = 0x4112,                             // get the hardware version
+    AB_DEVICE_TYPE = 0x4113,                            // get the device type 
     AB_SW_VERSION = 0x4114,                             // get the software version of application board
     AB_FW_CHECKSUM = 0x4115,                            // get the checksum (crc16) of application board
     MB_SW_VERSION = 0x4116,                             // get the software version of metering board 
     MB_FW_CHECKSUM = 0x4117,                            // get the crc16 from software integrity check of metering board
+    AP_BL_VERSION = 0x4118,                             // get the bootloader version
     AB_FW_HASH = 0x4119,                                // get the firmware hash(crc16) of application board
     MEASUREMENT_MODE = 0x4120,                          // get the measurement mode
     GET_NORMAL_VOLTAGE = 0x4121,                        // get the normal voltage
     GET_NORMAL_CURRENT = 0x4122,                        // get the normal current
     GET_MAX_CURRENT = 0x4123,                           // get the maximum current
-    LINE_LOSS_IMPEDANCE = 0x4130,                       // get or set the line loss impedance 
+    REVERSE_MODE = 0x4124,                              // get and set(?) the reverse mode
+    CLEAR_METER_STATUS = 0x4125,                        // set the clear meter status command
+    INIT_METER = 0x4126,                                // set the initialize meter command
+    LINE_LOSS_IMPEDANCE = 0x4130,                       // get or set (in assembling mode) the line loss impedance 
     LINE_LOSS_MEAS_MODE = 0x4131,                       // get the line loss energy measurement mode
+    MB_MODE_SET = 0x4133,                               // get the mode of metering board  
     TIME = 0x4135,                                      // get or set the device time 
-    TEMPERATURE = 0x4136,                               // get the temperature
+    //TEMPERATURE = 0x4136,                               // get the temperature
     AB_STATUS = 0x4137,                                 // get the statusword of application board
+    AP_CONFIG_COMPLETE = 0x4211,                        // set the application configuration complete command 
     METER_BUS_ADDR = 0x4212,                            // get or set the meter bus address 
+    AS_CONFIG_COMPLETE = 0x4221,                        // set the assmbling configuration complete command 
     START_TRANSACTION = 0x1501,                         // start transaction
     STOP_TRANSACTION = 0x1502,                          // stop transaction 
     OCMF_STATS = 0x1510,                                // get the statistics of OCMF 
@@ -48,62 +56,65 @@ enum class CommandType : std::uint16_t {
     GET_OCMF_REVERSE = 0x1522,                          // get the OCMF reverse 
     GET_PUBKEY_ASN1 = 0x1530,                           // get public key in ASN1 format
     CHARGE_POINT_ID = 0x1531,                           // get or set the charge point identification 
-    GET_PUBKEY_BIN = 0x1532,                            // get public key as binary string
+    //GET_PUBKEY_BIN = 0x1532,                            // get public key as binary string
     GET_TRANSACT_IMPORT_LINE_LOSS_ENERGY = 0x1540,      // get total transaction import line loss energy
-    GET_TRANSACT_EXPORT_LINE_LOSS_ENERGY = 0x1541,      // get total transaction export line loss energy
+    //GET_TRANSACT_EXPORT_LINE_LOSS_ENERGY = 0x1541,      // get total transaction export line loss energy
     GET_TRANSACT_TOTAL_IMPORT_DEV_ENERGY = 0x1550,      // get total transaction import device energy 
-    GET_TRANSACT_TOTAL_EXPORT_DEV_ENERGY = 0x1551,      // get total transaction export device energy 
+    //GET_TRANSACT_TOTAL_EXPORT_DEV_ENERGY = 0x1551,      // get total transaction export device energy 
     GET_TRANSACT_TOTAL_IMPORT_MAINS_ENERGY = 0x1560,    // get total transaction import mains energy
-    GET_TRANSACT_TOTAL_EXPORT_MAINS_ENERGY = 0x1561,    // get total transaction export mains energy
+    //GET_TRANSACT_TOTAL_EXPORT_MAINS_ENERGY = 0x1561,    // get total transaction export mains energy
     GET_TRANSACT_TOTAL_DURATION = 0x156A,               // get total transaction duration.
     GET_TOTAL_START_IMPORT_LINE_LOSS_ENERGY = 0x1570,   // get total start import line loss energy
-    GET_TOTAL_START_EXPORT_LINE_LOSS_ENERGY = 0x1571,   // get total start export line loss energy
+    //GET_TOTAL_START_EXPORT_LINE_LOSS_ENERGY = 0x1571,   // get total start export line loss energy
     GET_TOTAL_START_IMPORT_DEV_ENERGY = 0x1580,         // get total start import device energy 
-    GET_TOTAL_START_EXPORT_DEV_ENERGY = 0x1581,         // get total start export device energy 
+    //GET_TOTAL_START_EXPORT_DEV_ENERGY = 0x1581,         // get total start export device energy 
     GET_TOTAL_START_IMPORT_MAINS_ENERGY = 0x1590,       // get total start import mains energy
-    GET_TOTAL_START_EXPORT_MAINS_ENERGY = 0x1591,       // get total start export mains energy
+    //GET_TOTAL_START_EXPORT_MAINS_ENERGY = 0x1591,       // get total start export mains energy
     GET_TOTAL_STOP_IMPORT_LINE_LOSS_ENERGY = 0x15A0,    // get total stop import line loss energy 
-    GET_TOTAL_STOP_EXPORT_LINE_LOSS_ENERGY = 0x15A1,    // get total stop export line loss energy 
+    //GET_TOTAL_STOP_EXPORT_LINE_LOSS_ENERGY = 0x15A1,    // get total stop export line loss energy 
     GET_TOTAL_STOP_IMPORT_DEV_ENERGY = 0x15B0,          // get total stop import device energy
-    GET_TOTAL_STOP_EXPORT_DEV_ENERGY = 0x15B1,          // get total stop export device energy
+    //GET_TOTAL_STOP_EXPORT_DEV_ENERGY = 0x15B1,          // get total stop export device energy
     GET_TOTAL_STOP_IMPORT_MAINS_ENERGY = 0x15C0,        // get total stop import mains energy 
-    GET_TOTAL_STOP_EXPORT_MAINS_ENERGY = 0x15C1,        // get total stop export mains energy
+    //GET_TOTAL_STOP_EXPORT_MAINS_ENERGY = 0x15C1,        // get total stop export mains energy
     GET_LOG_STATS = 0x1710,                             // get the statistic of log
     GET_LOG_ENTRY = 0x1720,                             // get the log entry
     GET_LAST_LOG_ENTRY = 0x1721,                        // get last log entry 
     GET_LOG_ENTRY_REVERSE = 0x1722,                     // get the log entry reverse
-    REGISTER_DISPLAY_PUBKEY = 0x1801,                   // register display public key
-    REQUEST_CHALLENGE = 0x1810,                         // request challenge
-    SET_SIGNED_CHALLENGE = 0x1811,                      // set signed challenge
-    REQUEST_METER_PUBKEY = 0x1830,                      // request meter public key 
+    //REGISTER_DISPLAY_PUBKEY = 0x1801,                   // register display public key
+    //REQUEST_CHALLENGE = 0x1810,                         // request challenge
+    //SET_SIGNED_CHALLENGE = 0x1811,                      // set signed challenge
+    //REQUEST_METER_PUBKEY = 0x1830,                      // request meter public key 
+
     GET_TOTAL_IMPORT_MAINS_ENERGY = 0x0110,             // get total import mains energy
-    GET_TOTAL_EXPORT_MAINS_ENERGY = 0x0120,             // get total export mains energy
+    //GET_TOTAL_EXPORT_MAINS_ENERGY = 0x0120,             // get total export mains energy
     GET_CURRENT_L1 = 0x0131,                            // get current (phase L1) 
     GET_VOLTAGE_L1 = 0x0132,                            // get voltage (phase L1) 
     GET_TOTAL_IMPORT_MAINS_POWER = 0x0133,              // total import mains power
-    GET_TOTAL_EXPORT_MAINS_POWER = 0x0134,              // total export mains power
-    GET_DEV_VOLTAGE_L1 = 0x0137,                        // get device voltage (phase L1)
+    //GET_TOTAL_EXPORT_MAINS_POWER = 0x0134,              // total export mains power
+    GET_POS_DEV_VOLTAGE = 0x0135,                       // get positive device voltage 
+    GET_NEG_DEV_VOLTAGE = 0x0136,                       // get negative device voltage 
+    GET_TOTAL_VOLTAGE = 0x0137,                         // get total device voltage 
     GET_IMPORT_DEV_POWER = 0x0138,                      // get import device power
-    GET_EXPORT_DEV_POWER = 0x0139,                      // get export device power
+    //GET_EXPORT_DEV_POWER = 0x0139,                      // get export device power
     GET_IMPORT_LINE_LOSS_POWER = 0x013A,                // get import line loss power 
-    GET_EXPORT_LINE_LOSS_POWER = 0x013B,                // get export line loss power 
+    //GET_EXPORT_LINE_LOSS_POWER = 0x013B,                // get export line loss power 
     GET_TOTAL_DEV_POWER = 0x013C,                       // get total device power 
     GET_TOTAL_IMPORT_LINE_LOSS_ENERGY = 0x0160,         // get the total import line loss energy
-    GET_TOTAL_EXPORT_LINE_LOSS_ENERGY = 0x0163,         // get the total export line loss energy
+    //GET_TOTAL_EXPORT_LINE_LOSS_ENERGY = 0x0163,         // get the total export line loss energy
     GET_TOTAL_IMPORT_DEV_ENERGY = 0x0170,               // get the total import device energy 
-    GET_TOTAL_EXPORT_DEV_ENERGY = 0x0173,               // get the total export device energy
+    //GET_TOTAL_EXPORT_DEV_ENERGY = 0x0173,               // get the total export device energy
     GET_SECOND_INDEX = 0x0180,                          // get the second index 
     GET_PUBKEY_STR16 = 0x0211,                          // get the public key in string format (base16) 
     GET_PUBKEY_STR32 = 0x0212,                          // get the public key in string format (base32) 
     GET_PUBKEY_CSTR16 = 0x0213,                         // get the public key compressed in string format (base16)
     GET_PUBKEY_CSTR32 = 0x0214,                         // get the public key compressed in string format (base32)
-    REPEAT_DATA = 0xA000,                               // repeat data
-    OCMF_INFO = 0xA001,                                 // get or set OCMF info 
-    OCMF_CONFIG = 0xA002,                               // get or set the table of OCMF configuration field 
-    GET_ERRORS = 0xA004,                                // get errors 
-    AB_DMC = 0xA006,                                    // get or set the DMC application board 
-    AB_PROD_DATE = 0xA00B,                              // get or set the production date of application board
-    SET_REQUEST_CHALLENGE = 0xA00C                      // enable/disable the request challenge
+    //REPEAT_DATA = 0xA000,                               // repeat data
+    //OCMF_INFO = 0xA001,                                 // get or set OCMF info 
+    //OCMF_CONFIG = 0xA002,                               // get or set the table of OCMF configuration field 
+    //GET_ERRORS = 0xA004,                                // get errors 
+    //AB_DMC = 0xA006,                                    // get or set the DMC application board 
+    //AB_PROD_DATE = 0xA00B,                              // get or set the production date of application board
+    //SET_REQUEST_CHALLENGE = 0xA00C                      // enable/disable the request challenge
 };
 
 enum class CommandStatus : std::uint8_t {
@@ -333,37 +344,37 @@ public:
     void create_command_get_voltage(std::vector<uint8_t>& command_data);
     void create_command_get_current(std::vector<uint8_t>& command_data);
     void create_command_get_import_power(std::vector<uint8_t>& command_data);
-    void create_command_get_export_power(std::vector<uint8_t>& command_data);
+    //void create_command_get_export_power(std::vector<uint8_t>& command_data);
     void create_command_get_total_power(std::vector<uint8_t>& command_data);
 
     void create_command_get_total_start_import_energy(std::vector<uint8_t>& command_data);
     void create_command_get_total_stop_import_energy(std::vector<uint8_t>& command_data);
-    void create_command_get_total_start_export_energy(std::vector<uint8_t>& command_data);
-    void create_command_get_total_stop_export_energy(std::vector<uint8_t>& command_data);
+    //void create_command_get_total_start_export_energy(std::vector<uint8_t>& command_data);
+    //void create_command_get_total_stop_export_energy(std::vector<uint8_t>& command_data);
     void create_command_get_total_dev_import_energy(std::vector<uint8_t>& command_data);
-    void create_command_get_total_dev_export_energy(std::vector<uint8_t>& command_data);
+    //void create_command_get_total_dev_export_energy(std::vector<uint8_t>& command_data);
 
     void create_command_get_total_transaction_duration(std::vector<uint8_t>& command_data);
 
     void create_command_get_pubkey_str16(std::vector<uint8_t>& command_data);
     void create_command_get_pubkey_asn1(std::vector<uint8_t>& command_data);
-    void create_command_get_meter_pubkey(std::vector<uint8_t>& command_data);
+    //void create_command_get_meter_pubkey(std::vector<uint8_t>& command_data);
 
     void create_command_get_ocmf_stats(std::vector<uint8_t>& command_data);
     void create_command_get_transaction_ocmf(uint32_t ocmf_id,
                                              std::vector<uint8_t>& command_data);
     void create_command_get_last_transaction_ocmf(std::vector<uint8_t>& command_data);
-    void create_command_get_ocmf_info(std::vector<uint8_t>& command_data);
-    void create_command_get_ocmf_config(std::vector<uint8_t>& command_data);
+    //void create_command_get_ocmf_info(std::vector<uint8_t>& command_data);
+    //void create_command_get_ocmf_config(std::vector<uint8_t>& command_data);
 
     void create_command_get_charge_point_id(std::vector<uint8_t>& command_data);
     void create_command_set_charge_point_id(ast_app_layer::UserIdType id_type,
                                             std::string id_data,
                                             std::vector<uint8_t>& command_data);
 
-    void create_command_get_errors(ast_app_layer::ErrorCategory category,
-                                   ast_app_layer::ErrorSource src,
-                                   std::vector<uint8_t>& command_data);
+    // void create_command_get_errors(ast_app_layer::ErrorCategory category,
+    //                                ast_app_layer::ErrorSource src,
+    //                                std::vector<uint8_t>& command_data);
 
     void create_command_get_log_stats(std::vector<uint8_t>& command_data);
     void create_command_get_log_entry(uint32_t log_entry_id,

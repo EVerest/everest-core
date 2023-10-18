@@ -150,17 +150,17 @@ void AstAppLayer::create_command_get_import_power(std::vector<uint8_t>& command_
     command_data = std::move(create_simple_command(ast_app_layer::CommandType::GET_IMPORT_DEV_POWER));
 }
 
-void AstAppLayer::create_command_get_export_power(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(ast_app_layer::CommandType::GET_EXPORT_DEV_POWER));
-}
+// void AstAppLayer::create_command_get_export_power(std::vector<uint8_t>& command_data) {
+//     command_data = std::move(create_simple_command(ast_app_layer::CommandType::GET_EXPORT_DEV_POWER));
+// }
 
 void AstAppLayer::create_command_get_total_dev_import_energy(std::vector<uint8_t>& command_data) {
     command_data = std::move(create_simple_command(ast_app_layer::CommandType::GET_TOTAL_IMPORT_DEV_ENERGY));
 }
 
-void AstAppLayer::create_command_get_total_dev_export_energy(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(ast_app_layer::CommandType::GET_TOTAL_EXPORT_DEV_ENERGY));
-}
+// void AstAppLayer::create_command_get_total_dev_export_energy(std::vector<uint8_t>& command_data) {
+//     command_data = std::move(create_simple_command(ast_app_layer::CommandType::GET_TOTAL_EXPORT_DEV_ENERGY));
+// }
 
 void AstAppLayer::create_command_get_total_power(std::vector<uint8_t>& command_data) {
     command_data = std::move(create_simple_command(ast_app_layer::CommandType::GET_TOTAL_DEV_POWER));
@@ -174,13 +174,13 @@ void AstAppLayer::create_command_get_total_stop_import_energy(std::vector<uint8_
     command_data = std::move(create_simple_command(ast_app_layer::CommandType::GET_TOTAL_STOP_IMPORT_DEV_ENERGY));
 }
 
-void AstAppLayer::create_command_get_total_start_export_energy(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(ast_app_layer::CommandType::GET_TOTAL_START_EXPORT_DEV_ENERGY));
-}
+// void AstAppLayer::create_command_get_total_start_export_energy(std::vector<uint8_t>& command_data) {
+//     command_data = std::move(create_simple_command(ast_app_layer::CommandType::GET_TOTAL_START_EXPORT_DEV_ENERGY));
+// }
 
-void AstAppLayer::create_command_get_total_stop_export_energy(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(ast_app_layer::CommandType::GET_TOTAL_STOP_EXPORT_DEV_ENERGY));
-}
+// void AstAppLayer::create_command_get_total_stop_export_energy(std::vector<uint8_t>& command_data) {
+//     command_data = std::move(create_simple_command(ast_app_layer::CommandType::GET_TOTAL_STOP_EXPORT_DEV_ENERGY));
+// }
 
 void AstAppLayer::create_command_get_total_transaction_duration(std::vector<uint8_t>& command_data) {
     command_data = std::move(create_simple_command(ast_app_layer::CommandType::GET_TRANSACT_TOTAL_DURATION));
@@ -194,9 +194,9 @@ void AstAppLayer::create_command_get_pubkey_asn1(std::vector<uint8_t>& command_d
     command_data = std::move(create_simple_command(ast_app_layer::CommandType::GET_PUBKEY_ASN1));
 }
 
-void AstAppLayer::create_command_get_meter_pubkey(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(ast_app_layer::CommandType::REQUEST_METER_PUBKEY));
-}
+// void AstAppLayer::create_command_get_meter_pubkey(std::vector<uint8_t>& command_data) {
+//     command_data = std::move(create_simple_command(ast_app_layer::CommandType::REQUEST_METER_PUBKEY));
+// }
 
 void AstAppLayer::create_command_get_ocmf_stats(std::vector<uint8_t>& command_data) {
     command_data = std::move(create_simple_command(ast_app_layer::CommandType::OCMF_STATS));
@@ -222,13 +222,13 @@ void AstAppLayer::create_command_get_last_transaction_ocmf(std::vector<uint8_t>&
     command_data = std::move(create_simple_command(ast_app_layer::CommandType::GET_LAST_OCMF));
 }
 
-void AstAppLayer::create_command_get_ocmf_info(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(ast_app_layer::CommandType::OCMF_INFO));
-}
+// void AstAppLayer::create_command_get_ocmf_info(std::vector<uint8_t>& command_data) {
+//     command_data = std::move(create_simple_command(ast_app_layer::CommandType::OCMF_INFO));
+// }
 
-void AstAppLayer::create_command_get_ocmf_config(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(ast_app_layer::CommandType::OCMF_CONFIG));
-}
+// void AstAppLayer::create_command_get_ocmf_config(std::vector<uint8_t>& command_data) {
+//     command_data = std::move(create_simple_command(ast_app_layer::CommandType::OCMF_CONFIG));
+// }
 
 void AstAppLayer::create_command_get_charge_point_id(std::vector<uint8_t>& command_data) {
     command_data = std::move(create_simple_command(ast_app_layer::CommandType::CHARGE_POINT_ID));
@@ -260,20 +260,20 @@ void AstAppLayer::create_command_set_charge_point_id(ast_app_layer::UserIdType i
     command_data = std::move(create_command(cmd));
 }
 
-void AstAppLayer::create_command_get_errors(ast_app_layer::ErrorCategory category,
-                                            ast_app_layer::ErrorSource src,
-                                            std::vector<uint8_t>& command_data) {
-    ast_app_layer::Command cmd{};
+// void AstAppLayer::create_command_get_errors(ast_app_layer::ErrorCategory category,
+//                                             ast_app_layer::ErrorSource src,
+//                                             std::vector<uint8_t>& command_data) {
+//     ast_app_layer::Command cmd{};
 
-    cmd.type = ast_app_layer::CommandType::GET_ERRORS;
-    cmd.length = 0x0007;
-    cmd.status = ast_app_layer::CommandStatus::OK;
+//     cmd.type = ast_app_layer::CommandType::GET_ERRORS;
+//     cmd.length = 0x0007;
+//     cmd.status = ast_app_layer::CommandStatus::OK;
 
-    cmd.data.push_back((uint8_t)category);
-    cmd.data.push_back((uint8_t)src);
+//     cmd.data.push_back((uint8_t)category);
+//     cmd.data.push_back((uint8_t)src);
 
-    command_data = std::move(create_command(cmd));
-}
+//     command_data = std::move(create_command(cmd));
+// }
 
 void AstAppLayer::create_command_get_log_stats(std::vector<uint8_t>& command_data) {
     command_data = std::move(create_simple_command(ast_app_layer::CommandType::GET_LOG_STATS));
