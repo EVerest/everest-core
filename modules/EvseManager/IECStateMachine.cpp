@@ -148,7 +148,6 @@ const std::string cpevent_to_string(CPEvent e) {
         return "MREC_19_CableOverTempStop";
     case CPEvent::MREC_20_PartialInsertion:
         return "MREC_20_PartialInsertion";
-        return "MREC_19_CableOverTempStop";
     case CPEvent::MREC_23_ProximityFault:
         return "MREC_23_ProximityFault";
     case CPEvent::MREC_24_ConnectorVoltageHigh:
