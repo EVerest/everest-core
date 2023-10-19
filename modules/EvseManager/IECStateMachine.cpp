@@ -398,7 +398,7 @@ void IECStateMachine::call_allow_power_on_bsp(bool value) {
 }
 
 // High level state machine requests reading PP ampacity value.
-// We forware this request to the BSP driver. The high level state machine will never call this if it is not used
+// We forward this request to the BSP driver. The high level state machine will never call this if it is not used
 // (e.g. in DC or AC tethered charging)
 double IECStateMachine::read_pp_ampacity() {
     auto a = r_bsp->call_ac_read_pp_ampacity();
