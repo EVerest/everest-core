@@ -31,7 +31,8 @@ void ISO15118_chargerImpl::init() {
 
     const auto cert_path = get_cert_path(default_cert_path, mod->config.certificate_path);
 
-    iso15118::TbdConfig tbd_config = {{iso15118::config::CertificateBackend::EVEREST_LAYOUT, cert_path.string()}};
+    iso15118::TbdConfig tbd_config = {{iso15118::config::CertificateBackend::EVEREST_LAYOUT, cert_path.string()},
+                                      mod->config.device};
 
     controller = std::make_unique<iso15118::TbdController>(std::move(tbd_config));
 }
