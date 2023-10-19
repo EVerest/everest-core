@@ -26,6 +26,14 @@ void exampleImpl::ready() {
     request_clear_error(my_error_uuid);
     raise_example_ExampleErrorB("This error is raised to test the error handling", Everest::error::Severity::High);
     request_clear_all_errors();
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+    raise_example_ExampleErrorC("This error 1 is raised to test the error handling", Everest::error::Severity::Mid);
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+    raise_example_ExampleErrorC("This error 2 is raised to test the error handling", Everest::error::Severity::Mid);
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+    raise_example_ExampleErrorC("This error 3 is raised to test the error handling", Everest::error::Severity::Mid);
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+    request_clear_all_example_ExampleErrorC();
 }
 
 bool exampleImpl::handle_uses_something(std::string& key) {
