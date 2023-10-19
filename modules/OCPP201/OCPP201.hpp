@@ -92,6 +92,8 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
+    types::evse_manager::StartSessionReason session_started_reason; // keep track of this to be able to report correct
+                                                                    // trigger reason in TransactionStarted event
     std::filesystem::path ocpp_share_path;
 
     // holds operational states of EVSE

@@ -697,6 +697,7 @@ void OCPP201::ready() {
             const auto connector_id = session_event.connector_id.value_or(1);
             switch (session_event.event) {
             case types::evse_manager::SessionEventEnum::SessionStarted: {
+                this->session_started_reason = session_event.session_started.value().reason;
                 this->charge_point->on_session_started(evse_id, connector_id);
                 break;
             }
@@ -724,10 +725,21 @@ void OCPP201::ready() {
                     id_token.type = ocpp::v201::IdTokenEnum::Local; // FIXME(piet)
                 }
 
+                // assume cable has been plugged in first and then authorized
+                auto trigger_reason = ocpp::v201::TriggerReasonEnum::Authorized;
+
+                // if session started reason was Authorized, Transaction is started because of EV plug in event
+                if (this->session_started_reason == types::evse_manager::StartSessionReason::Authorized) {
+                    trigger_reason = ocpp::v201::TriggerReasonEnum::CablePluggedIn;
+                }
+
+                if (transaction_started.id_tag.authorization_type == types::authorization::AuthorizationType::OCPP) {
+                    trigger_reason = ocpp::v201::TriggerReasonEnum::RemoteStart;
+                }
+
                 this->charge_point->on_transaction_started(
-                    evse_id, connector_id, session_id, timestamp,
-                    ocpp::v201::TriggerReasonEnum::RemoteStart,  // FIXME(piet): Use proper reason here
-                    meter_value, id_token, std::nullopt, reservation_id, remote_start_id,
+                    evse_id, connector_id, session_id, timestamp, trigger_reason, meter_value, id_token, std::nullopt,
+                    reservation_id, remote_start_id,
                     ocpp::v201::ChargingStateEnum::EVConnected); // FIXME(piet): add proper groupIdToken +
                                                                  // ChargingStateEnum
                 break;
