@@ -7,7 +7,7 @@ from everest.framework import log
 
 from iso15118.evcc.evcc_config import EVCCConfig
 from iso15118.shared.settings import set_ignoring_value_range
-from iso15118.shared.utils import load_requested_protocols
+from iso15118.shared.utils import load_requested_protocols, load_requested_energy_services
 
 class EverestPyLoggingHandler(logging.Handler):
 
@@ -94,3 +94,7 @@ def patch_josev_config(josev_config: EVCCConfig, everest_config: dict) -> None:
         log.error("The supporting hlc protocols were not specified")
 
     josev_config.supported_protocols = load_requested_protocols(protocols)
+
+    josev_config.supported_energy_services = load_requested_energy_services(
+        ['DC']
+    )

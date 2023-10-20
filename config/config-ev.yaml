@@ -34,5 +34,6 @@ active_modules:
       ignore_physical_values_limits: true
       supported_DIN70121: true
       supported_ISO15118_2: true
+      supported_ISO15118_20: true
       tls_active: false
       device: eth1
