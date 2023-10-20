@@ -776,10 +776,6 @@ void Charger::processCPEventsIndependent(CPEvent cp_event) {
         errorState = types::evse_manager::ErrorEnum::EnergyManagement;
         break;
 
-    case CPEvent::MREC_1_ConnectorLockFailure:
-        currentState = EvseState::Error;
-        errorState = types::evse_manager::ErrorEnum::MREC_1_ConnectorLockFailure;
-        break;
     case CPEvent::MREC_3_HighTemperature:
         currentState = EvseState::Error;
         errorState = types::evse_manager::ErrorEnum::MREC_3_HighTemperature;
@@ -1306,10 +1302,6 @@ std::string Charger::evseStateToString(EvseState s) {
 float Charger::getMaxCurrent() {
     std::lock_guard<std::recursive_mutex> lock(configMutex);
     return maxCurrent;
-}
-
-bool Charger::forceUnlock() {
-    return bsp->force_unlock();
 }
 
 void Charger::setCurrentDrawnByVehicle(float l1, float l2, float l3) {

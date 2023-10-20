@@ -52,7 +52,6 @@ enum class CPEvent {
     ErrorBrownOut,
     ErrorEnergyManagement,
     PermanentFault,
-    MREC_1_ConnectorLockFailure,
     MREC_2_GroundFailure,
     MREC_3_HighTemperature,
     MREC_4_OverCurrentFailure,

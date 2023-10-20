@@ -1,0 +1,13 @@
+description: >-
+  This interface defines one connector locking motor (e.g. for AC sockets with no fixed attached cable)
+cmds:
+  lock:
+    description: Lock connector lock
+  unlock:
+    description: unlock connector lock (e.g. normal unlock or enforced by OCPP)
+vars:
+  error:
+    description: Error events for locking motor
+    type: object
+    $ref: /connector_lock#/ConnectorLockError
+

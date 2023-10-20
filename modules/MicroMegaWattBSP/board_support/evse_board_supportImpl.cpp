@@ -68,10 +68,10 @@ void evse_board_supportImpl::init() {
         caps.max_phase_count_export = 3;
     }
 
- /*   mod->serial.signalEvent.connect([this](Event e) {
-        EVLOG_info << "CP EVENT: " << types::board_support::event_to_string(cast_event_type(e));
-        publish_event(cast_event_type(e));
-    });*/
+    /*   mod->serial.signalEvent.connect([this](Event e) {
+           EVLOG_info << "CP EVENT: " << types::board_support::event_to_string(cast_event_type(e));
+           publish_event(cast_event_type(e));
+       });*/
 }
 
 void evse_board_supportImpl::ready() {
@@ -107,10 +107,6 @@ void evse_board_supportImpl::handle_pwm_F() {
 
 void evse_board_supportImpl::handle_allow_power_on(types::evse_board_support::PowerOnOff& value) {
     mod->serial.allowPowerOn(value.allow_power_on);
-}
-
-bool evse_board_supportImpl::handle_force_unlock() {
-    return true;
 }
 
 void evse_board_supportImpl::handle_ac_switch_three_phases_while_charging(bool& value) {

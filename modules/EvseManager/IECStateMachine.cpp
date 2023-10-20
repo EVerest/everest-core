@@ -47,8 +47,6 @@ static std::variant<RawCPState, CPEvent> from_bsp_event(types::board_support_com
         return CPEvent::EvseReplugStarted;
     case types::board_support_common::Event::EvseReplugFinished:
         return CPEvent::EvseReplugFinished;
-    case types::board_support_common::Event::MREC_1_ConnectorLockFailure:
-        return CPEvent::MREC_1_ConnectorLockFailure;
     case types::board_support_common::Event::MREC_2_GroundFailure:
         return CPEvent::MREC_2_GroundFailure;
     case types::board_support_common::Event::MREC_3_HighTemperature:
@@ -124,8 +122,6 @@ const std::string cpevent_to_string(CPEvent e) {
         return "EvseReplugStarted";
     case CPEvent::EvseReplugFinished:
         return "EvseReplugFinished";
-    case CPEvent::MREC_1_ConnectorLockFailure:
-        return "MREC_1_ConnectorLockFailure";
     case CPEvent::MREC_2_GroundFailure:
         return "MREC_2_GroundFailure";
     case CPEvent::MREC_3_HighTemperature:
@@ -435,12 +431,6 @@ void IECStateMachine::setup(bool three_phases, bool has_ventilation, std::string
     r_bsp->call_setup(three_phases, has_ventilation, country_code);
     this->has_ventilation = has_ventilation;
     this->three_phases = three_phases;
-}
-
-// Force an unlock now. This can be sent from OCPP. As locking/unlocking is handled in the BSP the BSP MCU will need
-// to decide how and when to fulfill this request in a safe manner.
-bool IECStateMachine::force_unlock() {
-    return r_bsp->call_force_unlock();
 }
 
 // enable/disable the charging port and CP signal
