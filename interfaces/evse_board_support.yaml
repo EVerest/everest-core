@@ -81,7 +81,9 @@ cmds:
   ac_read_pp_ampacity:
     description: >-
       Read the current carrying capacity of the connected cable in ampere for AC charging
-      with a socket.
+      with a socket. This function will be used by EvseManager to get the PP value at 
+      a distinct time. You should also publish the var pp_ampacity whenever the PP ampacity reading changes
+      to signal changes e.g. during the charging time.
       This has no meaning for DC or AC charging with a fixed attached cable, it does not 
       need to be implemented and the returned value is not used in those cases.
     result:
@@ -114,5 +116,13 @@ vars:
     $ref: /evse_board_support#/Telemetry
   capabilities:
     description: Hardware capabilities/limits. This can be published during runtime whenever it changes to e.g. lower the limits when the hardware overheats.
+    type: object
+    $ref: /evse_board_support#/HardwareCapabilities
+  pp_ampacity:
+    description: >-
+      Current carrying capacity of the connected cable in ampere for AC charging
+      with a socket. Publish whenever it changes.
+      This has no meaning for DC or AC charging with a fixed attached cable, it does not 
+      need to be implemented and the returned value is not used in those cases.
     type: object
     $ref: /evse_board_support#/HardwareCapabilities
