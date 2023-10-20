@@ -242,11 +242,11 @@ void Config::load_and_validate_manifest(const std::string& module_id, const json
     // load and validate module manifest.json
     fs::path manifest_path = this->rs->modules_dir / module_name / "manifest.yaml";
     try {
-        EVLOG_debug << fmt::format("Loading module manifest file at: {}", fs::canonical(manifest_path).string());
 
         if (module_name != "ProbeModule") {
             // FIXME (aw): this is implicit logic, because we know, that the ProbeModule manifest had been set up
             // manually already
+            EVLOG_debug << fmt::format("Loading module manifest file at: {}", fs::canonical(manifest_path).string());
             this->manifests[module_name] = load_yaml(manifest_path);
         }
 
