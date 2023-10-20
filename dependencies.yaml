@@ -51,7 +51,7 @@ Josev:
 # OpenV2G
 ext-openv2g:
   git: https://github.com/EVerest/ext-openv2g.git
-  git_tag: 2023.3.0
+  git_tag: everest
 # EvseV2G module and Iso15118 modules
 ext-mbedtls:
   git: https://github.com/EVerest/ext-mbedtls.git
