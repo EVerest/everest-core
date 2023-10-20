@@ -3,10 +3,14 @@
 
 #include "ISO15118_chargerImpl.hpp"
 
+#include "session_logger.hpp"
+
 #include <iso15118/io/logging.hpp>
+#include <iso15118/session/logger.hpp>
 #include <iso15118/tbd_controller.hpp>
 
 std::unique_ptr<iso15118::TbdController> controller;
+std::unique_ptr<SessionLogger> session_logger;
 
 namespace module {
 namespace charger {
@@ -26,6 +30,8 @@ static std::filesystem::path get_cert_path(const std::filesystem::path& initial_
 void ISO15118_chargerImpl::init() {
     // setup logging routine
     iso15118::io::set_logging_callback([](const std::string& msg) { EVLOG_info << msg; });
+
+    session_logger = std::make_unique<SessionLogger>(mod->config.logging_path);
 
     const auto default_cert_path = mod->info.paths.etc / "certs";
 

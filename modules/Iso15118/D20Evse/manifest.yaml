@@ -11,6 +11,10 @@ config:
     description: Path to certificate directories
     type: string
     default: ""
+  logging_path:
+    description: Path to logging directory (will be created if non existent)
+    type: string
+    default: "."
 provides:
   charger:
     interface: ISO15118_charger

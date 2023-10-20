@@ -22,6 +22,7 @@ namespace module {
 struct Conf {
     std::string device;
     std::string certificate_path;
+    std::string logging_path;
 };
 
 class D20Evse : public Everest::ModuleBase {
