@@ -1,7 +1,7 @@
 description: >-
   This interface defines the board support driver for AC or DC minimal power path: ControlPilot,
-  output contactors and motor lock (only AC non-tethered). 
-  Other components of the power path such as IMD(DC) or RCD(AC) etc have their own interfaces.
+  output contactors. 
+  Other components of the power path such as IMD(DC)/RCD(AC)/Connector Lock etc have their own interfaces.
 cmds:
   setup:
     description: Setup config options
@@ -53,11 +53,6 @@ cmds:
         description: Flag and context
         type: object
         $ref: /evse_board_support#/PowerOnOff
-  force_unlock:
-    description: Force unlock motor lock (if e.g. enforced by OCPP. BSP should do regular lock/unlock by itself)
-    result:
-      description: Returns true if unlocking sequence was successfully executed
-      type: boolean
   ac_switch_three_phases_while_charging:
     description: >-
       Special command to force switching between one and three phases while
@@ -125,4 +120,4 @@ vars:
       This has no meaning for DC or AC charging with a fixed attached cable, it does not 
       need to be implemented and the returned value is not used in those cases.
     type: object
-    $ref: /evse_board_support#/HardwareCapabilities
+    $ref: /board_support_common#/ProximityPilot

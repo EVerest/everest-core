@@ -156,10 +156,6 @@ void evse_board_supportImpl::handle_allow_power_on(types::evse_board_support::Po
     mod->serial.allowPowerOn(value.allow_power_on);
 }
 
-bool evse_board_supportImpl::handle_force_unlock() {
-    return mod->serial.forceUnlock();
-}
-
 void evse_board_supportImpl::handle_ac_switch_three_phases_while_charging(bool& value) {
     mod->serial.switchThreePhasesWhileCharging(value);
 }
