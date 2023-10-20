@@ -15,8 +15,6 @@
 
 namespace evse_security {
 
-using ossl_days_to_seconds = std::chrono::duration<std::int64_t, std::ratio<86400>>;
-
 std::string x509_to_string(X509* x509) {
     if (x509) {
         BIO_ptr bio_write(BIO_new(BIO_s_mem()));
@@ -44,7 +42,10 @@ X509Wrapper::X509Wrapper(const std::filesystem::path& file, const EncodingFormat
 
     auto loaded = X509CertificateBundle::load_certificates(certificate, encoding);
     if (loaded.size() != 1) {
-        throw CertificateLoadException("X509Wrapper can only load a single certificate!");
+        std::string error = "X509Wrapper can only load a single certificate! Loaded: ";
+        error += std::to_string(loaded.size());
+
+        throw CertificateLoadException(error);
     }
 
     this->file = file;
@@ -55,7 +56,10 @@ X509Wrapper::X509Wrapper(const std::filesystem::path& file, const EncodingFormat
 X509Wrapper::X509Wrapper(const std::string& data, const EncodingFormat encoding) {
     auto loaded = X509CertificateBundle::load_certificates(data, encoding);
     if (loaded.size() != 1) {
-        throw CertificateLoadException("X509Wrapper can only load a single certificate!");
+        std::string error = "X509Wrapper can only load a single certificate! Loaded: ";
+        error += std::to_string(loaded.size());
+
+        throw CertificateLoadException(error);
     }
 
     x509 = std::move(loaded[0]);
@@ -118,6 +122,10 @@ int X509Wrapper::get_valid_in() const {
 /// \brief Gets valid_in
 int X509Wrapper::get_valid_to() const {
     return valid_to;
+}
+
+bool X509Wrapper::is_valid() const {
+    return (get_valid_in() >= 0);
 }
 
 std::optional<std::filesystem::path> X509Wrapper::get_file() const {

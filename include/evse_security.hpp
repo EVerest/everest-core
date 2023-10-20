@@ -132,19 +132,6 @@ private:
     std::optional<std::string> private_key_password; // used to decrypt encrypted private keys;
 };
 
-/// @brief Custom exception that is thrown when no private key could be found for a selected certificate
-class NoPrivateKeyException : public std::runtime_error {
-public:
-    using std::runtime_error::runtime_error;
-};
-
-/// @brief Custom exception that is thrown when no valid certificate could be found for the specified filesystem
-/// locations
-class NoCertificateValidException : public std::runtime_error {
-public:
-    using std::runtime_error::runtime_error;
-};
-
 } // namespace evse_security
 
 #endif // EVSE_SECURITY_HPP

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
+#include <everest/logging.hpp>
 #include <evse_utilities.hpp>
 #include <x509_bundle.hpp>
 
@@ -10,7 +11,28 @@
 
 namespace evse_security {
 
-/// @brief Loads all certificates from the string data that can contain multiple cetifs
+X509Wrapper X509CertificateBundle::get_latest_valid_certificate(const std::vector<X509Wrapper>& certificates) {
+    // Filter certificates with valid_in > 0
+    std::vector<X509Wrapper> valid_certificates;
+    for (const auto& cert : certificates) {
+        if (cert.is_valid()) {
+            valid_certificates.push_back(cert);
+        }
+    }
+
+    if (valid_certificates.empty()) {
+        // No valid certificates found
+        throw NoCertificateValidException("No valid certificates available.");
+    }
+
+    // Find the certificate with the latest valid_in
+    auto latest_certificate = std::max_element(
+        valid_certificates.begin(), valid_certificates.end(),
+        [](const X509Wrapper& cert1, const X509Wrapper& cert2) { return cert1.get_valid_in() < cert2.get_valid_in(); });
+
+    return *latest_certificate;
+}
+
 std::vector<X509_ptr> X509CertificateBundle::load_certificates(const std::string& data, const EncodingFormat encoding) {
     BIO_ptr bio(BIO_new_mem_buf(data.data(), static_cast<int>(data.size())));
 
@@ -78,10 +100,11 @@ X509CertificateBundle::X509CertificateBundle(const std::filesystem::path& path, 
         std::string certificate;
         if (EvseUtils::read_from_file(path, certificate))
             add_certifcates(certificate, encoding, path);
-    }
+    } else {
+        std::string error = "Failed to create certificate info from path: ";
+        error += path;
 
-    if (certificates.size() <= 0) {
-        throw CertificateLoadException("Failed to read X509 from BIO");
+        throw CertificateLoadException(error);
     }
 }
 
@@ -91,7 +114,8 @@ void X509CertificateBundle::add_certifcates(const std::string& data, const Encod
 
     // If we are using a directory we can't load certificate bundles
     if (is_using_directory() && loaded.size() > 1) {
-        throw CertificateLoadException("Failed to read single certificate from directory file!");
+        EVLOG_warning << "Failed to read single certificate from directory file, ignoring entry!";
+        return;
     }
 
     for (auto& x509 : loaded) {
@@ -106,7 +130,7 @@ std::vector<X509Wrapper> X509CertificateBundle::split() {
     return certificates;
 }
 
-bool X509CertificateBundle::contains_certificate(const X509Wrapper& certificate) {
+bool X509CertificateBundle::contains_certificate(const X509Wrapper& certificate) const {
     for (const auto& certif : certificates) {
         if (certif == certificate)
             return true;
@@ -115,7 +139,7 @@ bool X509CertificateBundle::contains_certificate(const X509Wrapper& certificate)
     return false;
 }
 
-bool X509CertificateBundle::contains_certificate(const CertificateHashData& certificate_hash) {
+bool X509CertificateBundle::contains_certificate(const CertificateHashData& certificate_hash) const {
     for (const auto& certif : certificates) {
         if (certif == certificate_hash)
             return true;
@@ -143,7 +167,11 @@ void X509CertificateBundle::delete_all_certificates() {
     certificates.clear();
 }
 
-bool X509CertificateBundle::update_certificate(X509Wrapper& certificate) {
+void X509CertificateBundle::add_certificate(X509Wrapper&& certificate) {
+    certificates.push_back(certificate);
+}
+
+bool X509CertificateBundle::update_certificate(X509Wrapper&& certificate) {
     for (int i = 0; i < certificates.size(); ++i) {
         if (certificates[i] == certificate) {
             certificates.at(i) = std::move(certificate);
@@ -156,12 +184,15 @@ bool X509CertificateBundle::update_certificate(X509Wrapper& certificate) {
 
 bool X509CertificateBundle::export_certificates() {
     if (source == X509CertificateSource::STRING) {
+        EVLOG_error << "Export for string is invalid!";
         return false;
     }
 
     // Add/delete certifs
-    if (!sync_to_certificate_store())
+    if (!sync_to_certificate_store()) {
+        EVLOG_error << "Sync to certificate store failed!";
         return false;
+    }
 
     if (source == X509CertificateSource::DIRECTORY) {
         bool exported_all = true;
@@ -188,36 +219,20 @@ bool X509CertificateBundle::export_certificates() {
 }
 
 bool X509CertificateBundle::sync_to_certificate_store() {
-    if (source == X509CertificateSource::STRING)
+    if (source == X509CertificateSource::STRING) {
+        EVLOG_error << "Sync for string is invalid!";
         return false;
+    }
 
     if (source == X509CertificateSource::DIRECTORY) {
-        // Delete inexistent certificates
-        std::vector<X509Wrapper> fs_certificates;
-
-        for (const auto& entry : std::filesystem::recursive_directory_iterator(path)) {
-            if (is_certificate_file(entry)) {
-                std::string certificate;
-                if (EvseUtils::read_from_file(entry.path(), certificate)) {
-                    auto certifs = load_certificates(certificate, EncodingFormat::PEM);
-
-                    if (certifs.size() > 1) {
-                        throw CertificateLoadException("Failed to read single certificate from directory file!");
-                    }
-
-                    // Emplace all filesystem certificates
-                    for (auto& x509 : certifs)
-                        fs_certificates.emplace_back(std::move(x509), entry);
-                }
-            }
-        }
+        // Get existing certificates from filesystem
+        std::vector<X509Wrapper> fs_certificates = X509CertificateBundle(path, EncodingFormat::PEM).split();
 
         bool success = true;
-
         // Delete filesystem certificates missing from our list
         for (const auto& fs_certif : fs_certificates) {
             if (std::find(certificates.begin(), certificates.end(), fs_certif) == certificates.end()) {
-                // fs certif not existing in our certificate list
+                // fs certif not existing in our certificate list, delete
                 if (!EvseUtils::delete_file(fs_certif.get_file().value()))
                     success = false;
             }
@@ -226,7 +241,7 @@ bool X509CertificateBundle::sync_to_certificate_store() {
         // Add the certificates that are not existing in the filesystem
         for (const auto& certif : certificates) {
             if (std::find(fs_certificates.begin(), fs_certificates.end(), certif) == fs_certificates.end()) {
-                // certif not existing in fs certificates write it out
+                // Certif not existing in fs certificates write it out
                 if (!EvseUtils::write_to_file(certif.get_file().value(), certif.get_export_string(), std::ios::trunc))
                     success = false;
             }
@@ -243,6 +258,10 @@ bool X509CertificateBundle::sync_to_certificate_store() {
     return true;
 }
 
+X509Wrapper X509CertificateBundle::get_latest_valid_certificate() {
+    return get_latest_valid_certificate(certificates);
+}
+
 std::string X509CertificateBundle::to_export_string() const {
     std::string export_string;
 
@@ -251,6 +270,18 @@ std::string X509CertificateBundle::to_export_string() const {
     }
 
     return export_string;
+}
+
+X509CertificateDirectory::X509CertificateDirectory(const std::filesystem::path& directory) {
+    if (std::filesystem::is_directory(directory)) {
+        for (const auto& entry : std::filesystem::recursive_directory_iterator(directory)) {
+            if (X509CertificateBundle::is_certificate_file(entry)) {
+                bundles.emplace_back(entry, EncodingFormat::PEM);
+            }
+        }
+    } else {
+        throw CertificateLoadException("X509CertificateDirectory can only load from directories!");
+    }
 }
 
 } // namespace evse_security
