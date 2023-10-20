@@ -108,7 +108,7 @@ active_modules:
     module: Auth
     config_module:
       connection_timeout: 10
-      selection_algorithm: PlugEvents
+      selection_algorithm: FindFirst
     connections:
       token_provider:
         - module_id: token_provider_1

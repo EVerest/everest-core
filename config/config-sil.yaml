@@ -11,7 +11,7 @@ active_modules:
     config_module:
       connection_timeout: 10
       prioritize_authorization_over_stopping_transaction: true
-      selection_algorithm: PlugEvents
+      selection_algorithm: FindFirst
     connections:
       evse_manager:
         - implementation_id: evse
