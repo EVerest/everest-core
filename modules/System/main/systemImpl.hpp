@@ -41,8 +41,9 @@ protected:
     virtual types::system::UploadLogsResponse
     handle_upload_logs(types::system::UploadLogsRequest& upload_logs_request) override;
     virtual bool handle_is_reset_allowed(types::system::ResetType& type) override;
-    virtual void handle_reset(types::system::ResetType& type) override;
+    virtual void handle_reset(types::system::ResetType& type, bool& scheduled) override;
     virtual bool handle_set_system_time(std::string& timestamp) override;
+    virtual types::system::BootReason handle_get_boot_reason() override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
     // insert your protected definitions here

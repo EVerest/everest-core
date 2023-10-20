@@ -210,3 +210,16 @@ types:
       - Soft
       - Hard
       - NotSpecified
+  BootReason:
+    description: Enum defining the boot reason
+    type: string
+    enum:
+      - ApplicationReset
+      - FirmwareUpdate
+      - LocalReset
+      - PowerUp
+      - RemoteReset
+      - ScheduledReset
+      - Triggered
+      - Unknown
+      - Watchdog

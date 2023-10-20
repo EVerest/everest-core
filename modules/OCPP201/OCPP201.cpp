@@ -382,6 +382,31 @@ ocpp::v201::UploadLogStatusEnum get_upload_log_status_enum(types::system::LogSta
     }
 }
 
+ocpp::v201::BootReasonEnum get_boot_reason(types::system::BootReason reason) {
+    switch (reason) {
+    case types::system::BootReason::ApplicationReset:
+        return ocpp::v201::BootReasonEnum::ApplicationReset;
+    case types::system::BootReason::FirmwareUpdate:
+        return ocpp::v201::BootReasonEnum::FirmwareUpdate;
+    case types::system::BootReason::LocalReset:
+        return ocpp::v201::BootReasonEnum::LocalReset;
+    case types::system::BootReason::PowerUp:
+        return ocpp::v201::BootReasonEnum::PowerUp;
+    case types::system::BootReason::RemoteReset:
+        return ocpp::v201::BootReasonEnum::RemoteReset;
+    case types::system::BootReason::ScheduledReset:
+        return ocpp::v201::BootReasonEnum::ScheduledReset;
+    case types::system::BootReason::Triggered:
+        return ocpp::v201::BootReasonEnum::Triggered;
+    case types::system::BootReason::Unknown:
+        return ocpp::v201::BootReasonEnum::Unknown;
+    case types::system::BootReason::Watchdog:
+        return ocpp::v201::BootReasonEnum::Watchdog;
+    default:
+        throw std::runtime_error("Could not convert BootReasonEnum");
+    }
+}
+
 void OCPP201::init_evse_ready_map() {
     std::lock_guard<std::mutex> lk(this->evse_ready_mutex);
     for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
@@ -542,8 +567,11 @@ void OCPP201::ready() {
             EVLOG_warning << "Reset of EVSE is currently not supported";
             return;
         }
+
+        bool scheduled = type == ocpp::v201::ResetEnum::OnIdle;
+
         try {
-            this->r_system->call_reset(types::system::ResetType::NotSpecified);
+            this->r_system->call_reset(types::system::ResetType::NotSpecified, scheduled);
         } catch (std::out_of_range& e) {
             EVLOG_warning << "Could not convert OCPP ResetEnum to EVerest ResetType while executing reset_callack. No "
                              "reset will be executed.";
@@ -842,7 +870,9 @@ void OCPP201::ready() {
             }
         }
     }
-    this->charge_point->start();
+
+    const auto boot_reason = get_boot_reason(this->r_system->call_get_boot_reason());
+    this->charge_point->start(boot_reason);
 }
 
 } // namespace module
