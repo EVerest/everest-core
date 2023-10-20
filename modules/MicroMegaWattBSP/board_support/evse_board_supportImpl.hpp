@@ -41,7 +41,6 @@ protected:
     virtual void handle_pwm_off() override;
     virtual void handle_pwm_F() override;
     virtual void handle_allow_power_on(types::evse_board_support::PowerOnOff& value) override;
-    virtual bool handle_force_unlock() override;
     virtual void handle_ac_switch_three_phases_while_charging(bool& value) override;
     virtual void handle_evse_replug(int& value) override;
     virtual types::board_support_common::ProximityPilot handle_ac_read_pp_ampacity() override;
