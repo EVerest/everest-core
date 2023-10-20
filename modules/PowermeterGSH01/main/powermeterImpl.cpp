@@ -136,7 +136,7 @@ void powermeterImpl::set_device_time() {
     receive_response();
 }
 
-void powermeterImpl::set_device_charge_point_id(ast_app_layer::UserIdType id_type, std::string charge_point_id) {
+void powermeterImpl::set_device_charge_point_id(gsh01_app_layer::UserIdType id_type, std::string charge_point_id) {
     std::vector<uint8_t> set_charge_point_id_cmd{};
     app_layer.create_command_set_charge_point_id(id_type, charge_point_id, set_charge_point_id_cmd);
     
@@ -282,6 +282,16 @@ void powermeterImpl::request_device_type() {
         this->serial_device.tx(slip_msg_device_type);
     receive_response();
 }
+
+void powermeterImpl::request_app_sw_version() {
+    std::vector<uint8_t> data_vect{};
+    app_layer.create_command_get_application_board_software_version(data_vect);
+    std::vector<uint8_t> slip_msg_app_sw_version= std::move(this->slip.package_single(this->config.powermeter_device_id, data_vect));
+    EVLOG_info << "\nFrame: " << module::conversions::hexdump(slip_msg_app_sw_version) << " length: " << slip_msg_app_sw_version.size() << "\n\n";
+    this->serial_device.tx(slip_msg_app_sw_version);
+    receive_response();
+}
+
 
 void powermeterImpl::request_error_diagnostics(uint8_t addr) {
     this->error_diagnostics_target = addr;
@@ -481,8 +491,8 @@ void powermeterImpl::readRegisters() {
 // ############################################################################################################################################
 // ############################################################################################################################################
 
-ast_app_layer::CommandResult powermeterImpl::process_response(const std::vector<uint8_t>& response_message) {
-    ast_app_layer::CommandResult response_status{ast_app_layer::CommandResult::OK};
+gsh01_app_layer::CommandResult powermeterImpl::process_response(const std::vector<uint8_t>& response_message) {
+    gsh01_app_layer::CommandResult response_status{gsh01_app_layer::CommandResult::OK};
     size_t response_size = response_message.size();
 
     // split into multiple command responses
@@ -492,8 +502,8 @@ ast_app_layer::CommandResult powermeterImpl::process_response(const std::vector<
         uint16_t part_cmd = ((uint16_t)response_message.at(i + 1) << 8) | response_message.at(i);
         uint16_t part_len = ((uint16_t)response_message.at(i + 3) << 8) | response_message.at(i + 2);
         uint16_t part_data_len = part_len - 5;
-        ast_app_layer::CommandResult part_status = static_cast<ast_app_layer::CommandResult>(response_message.at(i + 4));
-        if (response_status == ast_app_layer::CommandResult::OK) {  // only update response status if not already error present
+        gsh01_app_layer::CommandResult part_status = static_cast<gsh01_app_layer::CommandResult>(response_message.at(i + 4));
+        if (response_status == gsh01_app_layer::CommandResult::OK) {  // only update response status if not already error present
             response_status = part_status;
         }
 
@@ -508,20 +518,20 @@ ast_app_layer::CommandResult powermeterImpl::process_response(const std::vector<
             //             << "   data: " << ((part_len > 5) ? module::conversions::hexdump(part_data) : "none") 
             //             << "\n\n";
 
-            if (part_status != ast_app_layer::CommandResult::OK) {
+            if (part_status != gsh01_app_layer::CommandResult::OK) {
                 EVLOG_error << "Powermeter at address " << int(dest_addr) << " (" 
                             << module::conversions::hexdump(dest_addr) << ")"
                             << " has signaled an error (status: (" << (int)part_status << ") \"" 
-                            << ast_app_layer::command_result_to_string(part_status) 
+                            << gsh01_app_layer::command_result_to_string(part_status) 
                             << "\") at response " << module::conversions::hexdump(part_cmd) << " !";
 
                 // skip error diagnostics for transaction or error diagnostics related commands,
                 // request detailed error report for others
-                if ((part_cmd != (uint16_t)ast_app_layer::CommandType::START_TRANSACTION)  &&
-                    (part_cmd != (uint16_t)ast_app_layer::CommandType::STOP_TRANSACTION)   &&
-                    (part_cmd != (uint16_t)ast_app_layer::CommandType::GET_LAST_LOG_ENTRY) &&
+                if ((part_cmd != (uint16_t)gsh01_app_layer::CommandType::START_TRANSACTION)  &&
+                    (part_cmd != (uint16_t)gsh01_app_layer::CommandType::STOP_TRANSACTION)   &&
+                    (part_cmd != (uint16_t)gsh01_app_layer::CommandType::GET_LAST_LOG_ENTRY) &&
                     //(part_cmd != (uint16_t)ast_app_layer::CommandType::GET_ERRORS)         &&
-                    (part_cmd != (uint16_t)ast_app_layer::CommandType::GET_LAST_OCMF)) {
+                    (part_cmd != (uint16_t)gsh01_app_layer::CommandType::GET_LAST_OCMF)) {
                     EVLOG_info << "Retrieving diagnostics data for error at command " << module::conversions::hexdump(part_cmd) << "...";
                     request_error_diagnostics(dest_addr);
                     i += part_len;  // skip remaining data and go to next command in message
@@ -534,7 +544,7 @@ ast_app_layer::CommandResult powermeterImpl::process_response(const std::vector<
 
             // operational values
 
-                case (int)ast_app_layer::CommandType::START_TRANSACTION:
+                case (int)gsh01_app_layer::CommandType::START_TRANSACTION:
                     {
                         this->start_transaction_msg_status = MessageStatus::RECEIVED;
                         this->start_transact_result = part_status;
@@ -542,7 +552,7 @@ ast_app_layer::CommandResult powermeterImpl::process_response(const std::vector<
                     }
                     break;
 
-                case (int)ast_app_layer::CommandType::STOP_TRANSACTION:
+                case (int)gsh01_app_layer::CommandType::STOP_TRANSACTION:
                     {
                         this->stop_transaction_msg_status = MessageStatus::RECEIVED;
                         this->stop_transact_result = part_status;
@@ -550,7 +560,7 @@ ast_app_layer::CommandResult powermeterImpl::process_response(const std::vector<
                     }
                     break;
 
-                case (int)ast_app_layer::CommandType::TIME:
+                case (int)gsh01_app_layer::CommandType::TIME:
                     {
                         if (part_data_len < 5) break;
                         device_data_obj.utc_time_s = get_u32(part_data);
@@ -558,7 +568,7 @@ ast_app_layer::CommandResult powermeterImpl::process_response(const std::vector<
                     }
                     break;
 
-                case (int)ast_app_layer::CommandType::GET_VOLTAGE_L1:
+                case (int)gsh01_app_layer::CommandType::GET_VOLTAGE_L1:
                     {
                         if (part_data_len < 4) break;
                         types::units::Voltage volt = this->pm_last_values.voltage_V.value();
@@ -567,7 +577,7 @@ ast_app_layer::CommandResult powermeterImpl::process_response(const std::vector<
                     }
                     break;
 
-                case (int)ast_app_layer::CommandType::GET_CURRENT_L1:
+                case (int)gsh01_app_layer::CommandType::GET_CURRENT_L1:
                     {
                         if (part_data_len < 4) break;
                         types::units::Current amp = this->pm_last_values.current_A.value();
@@ -576,7 +586,7 @@ ast_app_layer::CommandResult powermeterImpl::process_response(const std::vector<
                     }
                     break;
 
-                case (int)ast_app_layer::CommandType::GET_IMPORT_DEV_POWER:
+                case (int)gsh01_app_layer::CommandType::GET_IMPORT_DEV_POWER:
                     {
                         if (part_data_len < 4) break;
                         types::units::Power power = this->pm_last_values.power_W.value();
@@ -585,19 +595,19 @@ ast_app_layer::CommandResult powermeterImpl::process_response(const std::vector<
                     }
                     break;
 
-                // case (int)ast_app_layer::CommandType::GET_EXPORT_DEV_POWER:
+                // case (int)gsh01_app_layer::CommandType::GET_EXPORT_DEV_POWER:
                 //     {
                 //         EVLOG_info << "(GET_EXPORT_DEV_POWER) Not yet implemented. [" << (float)get_u32(part_data) / 100.0  /* powermeter reports in [W * 100] */ << " W]";
                 //     }
                 //     break;
 
-                case (int)ast_app_layer::CommandType::GET_TOTAL_DEV_POWER:
+                case (int)gsh01_app_layer::CommandType::GET_TOTAL_DEV_POWER:
                     {
                         EVLOG_info << "(GET_TOTAL_DEV_POWER) Not yet implemented. [" << (float)get_u32(part_data) / 100.0  /* powermeter reports in [W * 100] */ << " W]";
                     }
                     break;
 
-                case (int)ast_app_layer::CommandType::GET_TOTAL_IMPORT_DEV_ENERGY:
+                case (int)gsh01_app_layer::CommandType::GET_TOTAL_IMPORT_DEV_ENERGY:
                     {
                         if (part_data_len < 8) break;
                         types::units::Energy energy_in = this->pm_last_values.energy_Wh_import;
@@ -608,7 +618,7 @@ ast_app_layer::CommandResult powermeterImpl::process_response(const std::vector<
                     }
                     break;
 
-                // case (int)ast_app_layer::CommandType::GET_TOTAL_EXPORT_DEV_ENERGY:
+                // case (int)gsh01_app_layer::CommandType::GET_TOTAL_EXPORT_DEV_ENERGY:
                 //     {
                 //         if (part_data_len < 8) break;
                 //         types::units::Energy energy_out{};
@@ -622,42 +632,42 @@ ast_app_layer::CommandResult powermeterImpl::process_response(const std::vector<
                 //     }
                 //     break;
 
-                case (int)ast_app_layer::CommandType::GET_TOTAL_START_IMPORT_DEV_ENERGY:
+                case (int)gsh01_app_layer::CommandType::GET_TOTAL_START_IMPORT_DEV_ENERGY:
                     {
                         if (part_data_len < 8) break;
                         device_data_obj.total_start_import_energy_Wh = get_u64(part_data) / 10.0;  // powermeter reports in [Wh * 10]
                     }
                     break;
 
-                case (int)ast_app_layer::CommandType::GET_TOTAL_STOP_IMPORT_DEV_ENERGY:
+                case (int)gsh01_app_layer::CommandType::GET_TOTAL_STOP_IMPORT_DEV_ENERGY:
                     {
                         if (part_data_len < 8) break;
                         device_data_obj.total_stop_import_energy_Wh = get_u64(part_data) / 10.0;  // powermeter reports in [Wh * 10]  
                     }
                     break;
 
-                // case (int)ast_app_layer::CommandType::GET_TOTAL_START_EXPORT_DEV_ENERGY:
+                // case (int)gsh01_app_layer::CommandType::GET_TOTAL_START_EXPORT_DEV_ENERGY:
                 //     {
                 //         if (part_data_len < 8) break;
                 //         device_data_obj.total_start_export_energy_Wh = get_u64(part_data) / 10.0;  // powermeter reports in [Wh * 10]  
                 //     }
                 //     break;
 
-                // case (int)ast_app_layer::CommandType::GET_TOTAL_STOP_EXPORT_DEV_ENERGY:
+                // case (int)gsh01_app_layer::CommandType::GET_TOTAL_STOP_EXPORT_DEV_ENERGY:
                 //     {
                 //         if (part_data_len < 8) break;
                 //         device_data_obj.total_stop_export_energy_Wh = get_u64(part_data) / 10.0;  // powermeter reports in [Wh * 10]
                 //     }
                 //     break;
 
-                case (int)ast_app_layer::CommandType::GET_TRANSACT_TOTAL_DURATION:
+                case (int)gsh01_app_layer::CommandType::GET_TRANSACT_TOTAL_DURATION:
                     {
                         if (part_data_len < 4) break;
                         device_data_obj.total_transaction_duration_s = get_u32(part_data);
                     }
                     break;
 
-                case (int)ast_app_layer::CommandType::GET_PUBKEY_STR16:
+                case (int)gsh01_app_layer::CommandType::GET_PUBKEY_STR16:
                     {
                         if (part_data_len < 130) break;
                         device_diagnostics_obj.pubkey_str16_format = part_data[0];
@@ -666,14 +676,14 @@ ast_app_layer::CommandResult powermeterImpl::process_response(const std::vector<
                     }
                     break;
 
-                case (int)ast_app_layer::CommandType::GET_PUBKEY_ASN1:
+                case (int)gsh01_app_layer::CommandType::GET_PUBKEY_ASN1:
                     {
                         if (part_data_len < 176) break;
                         device_diagnostics_obj.pubkey_asn1 = module::conversions::hexdump(part_data, 0, 176);
                     }
                     break;
 
-                // case (int)ast_app_layer::CommandType::REQUEST_METER_PUBKEY:
+                // case (int)gsh01_app_layer::CommandType::REQUEST_METER_PUBKEY:
                 //     {
                 //         if (part_data_len < 65) break;
                 //         device_diagnostics_obj.pubkey_format = part_data[0];
@@ -683,7 +693,7 @@ ast_app_layer::CommandResult powermeterImpl::process_response(const std::vector<
 
             // diagnostics
 
-                case (int)ast_app_layer::CommandType::OCMF_STATS:
+                case (int)gsh01_app_layer::CommandType::OCMF_STATS:
                     {
                         if (part_data_len < 16) break;
                         device_data_obj.ocmf_stats.number_transactions         = get_u32(part_data);
@@ -693,19 +703,19 @@ ast_app_layer::CommandResult powermeterImpl::process_response(const std::vector<
                     }
                     break;
 
-                case (int)ast_app_layer::CommandType::GET_OCMF:
+                case (int)gsh01_app_layer::CommandType::GET_OCMF:
                     {
                         if (part_data_len < 16) break;
                         device_data_obj.requested_ocmf = get_str(part_data, 0, part_data_len);
                     }
                     break;
 
-                case (int)ast_app_layer::CommandType::GET_LAST_OCMF:
+                case (int)gsh01_app_layer::CommandType::GET_LAST_OCMF:
                     {
                         if (this->get_transaction_values_msg_status == MessageStatus::SENT) {
                             this->get_transaction_values_msg_status = MessageStatus::RECEIVED;
                         }
-                        if (part_status == ast_app_layer::CommandResult::OK) {
+                        if (part_status == gsh01_app_layer::CommandResult::OK) {
                             device_data_obj.last_ocmf_transaction = get_str(part_data, 0, part_data_len);
                             this->last_ocmf_str = device_data_obj.last_ocmf_transaction;
                         } else {
@@ -714,7 +724,7 @@ ast_app_layer::CommandResult powermeterImpl::process_response(const std::vector<
                     }
                     break;
 
-                // case (int)ast_app_layer::CommandType::OCMF_INFO:
+                // case (int)gsh01_app_layer::CommandType::OCMF_INFO:
                 //     {
                 //         if (part_data_len < 1) break;
                 //         // gateway_id
@@ -753,7 +763,7 @@ ast_app_layer::CommandResult powermeterImpl::process_response(const std::vector<
                 //     }
                 //     break;
 
-                // case (int)ast_app_layer::CommandType::OCMF_CONFIG:
+                // case (int)gsh01_app_layer::CommandType::OCMF_CONFIG:
                 //     {
                 //         if (part_data_len < 16) break;
                 //         device_diagnostics_obj.ocmf_config_table.clear();
@@ -763,7 +773,7 @@ ast_app_layer::CommandResult powermeterImpl::process_response(const std::vector<
                 //     }
                 //     break;
 
-                case (int)ast_app_layer::CommandType::CHARGE_POINT_ID:
+                case (int)gsh01_app_layer::CommandType::CHARGE_POINT_ID:
                     {
                         if (part_data_len < 14) break;
                         device_diagnostics_obj.charge_point_id_type = part_data[0];
@@ -771,7 +781,7 @@ ast_app_layer::CommandResult powermeterImpl::process_response(const std::vector<
                     }
                     break;
 
-                // case (int)ast_app_layer::CommandType::GET_ERRORS:
+                // case (int)gsh01_app_layer::CommandType::GET_ERRORS:
                 //     {
                 //         if (part_data_len < 50) break;
                 //         uint j = 0;
@@ -788,7 +798,7 @@ ast_app_layer::CommandResult powermeterImpl::process_response(const std::vector<
                 //     }
                 //     break;
 
-                case (int)ast_app_layer::CommandType::GET_LOG_STATS:
+                case (int)gsh01_app_layer::CommandType::GET_LOG_STATS:
                     {
                         if (part_data_len < 16) break;
                         device_diagnostics_obj.log_stats.number_log_entries  = get_u32(part_data);
@@ -798,10 +808,10 @@ ast_app_layer::CommandResult powermeterImpl::process_response(const std::vector<
                     }
                     break;
 
-                case (int)ast_app_layer::CommandType::GET_LAST_LOG_ENTRY:
+                case (int)gsh01_app_layer::CommandType::GET_LAST_LOG_ENTRY:
                     {
                         if (part_data_len < 104) break;
-                        logging_obj.last_log.type         = static_cast<ast_app_layer::LogType>(part_data[0]);
+                        logging_obj.last_log.type         = static_cast<gsh01_app_layer::LogType>(part_data[0]);
                         logging_obj.last_log.second_index = get_u32(part_data, 1);
                         logging_obj.last_log.utc_time     = get_u32(part_data, 5);
                         logging_obj.last_log.utc_offset   = part_data[9];
@@ -822,14 +832,14 @@ ast_app_layer::CommandResult powermeterImpl::process_response(const std::vector<
 
             // device parameters
 
-                case (int)ast_app_layer::CommandType::AB_MODE_SET:
+                case (int)gsh01_app_layer::CommandType::AB_MODE_SET:
                     {
                         if (part_data_len < 1) break;
                         device_diagnostics_obj.app_board.mode = part_data[0];
                     }
                     break;
 
-                case (int)ast_app_layer::CommandType::AB_HW_VERSION:
+                case (int)gsh01_app_layer::CommandType::AB_HW_VERSION:
                     {
                         uint8_t delimiter_pos = 0;
                         for (uint8_t i = 0; i < part_data_len; i++) {
@@ -843,63 +853,63 @@ ast_app_layer::CommandResult powermeterImpl::process_response(const std::vector<
                     }
                     break;
 
-                case (int)ast_app_layer::CommandType::AB_SERVER_ID:
+                case (int)gsh01_app_layer::CommandType::AB_SERVER_ID:
                     {
                         if (part_data_len < 10) break;
                         device_diagnostics_obj.app_board.server_id = get_str(part_data, 0, 10);
                     }
                     break;
 
-                case (int)ast_app_layer::CommandType::AB_SERIAL_NR:
+                case (int)gsh01_app_layer::CommandType::AB_SERIAL_NR:
                     {
                         if (part_data_len < 4) break;
                         device_diagnostics_obj.app_board.serial_number = get_u32(part_data);
                     }
                     break;
 
-                case (int)ast_app_layer::CommandType::AB_SW_VERSION:
+                case (int)gsh01_app_layer::CommandType::AB_SW_VERSION:
                     {
                         if (part_data_len < 20) break;
                         device_diagnostics_obj.app_board.sw_ver = get_str(part_data, 0, 20);
                     }
                     break;
 
-                case (int)ast_app_layer::CommandType::AB_FW_CHECKSUM:
+                case (int)gsh01_app_layer::CommandType::AB_FW_CHECKSUM:
                     {
                         if (part_data_len < 2) break;
                         device_diagnostics_obj.app_board.fw_crc = get_u16(part_data);
                     }
                     break;
 
-                case (int)ast_app_layer::CommandType::AB_FW_HASH:
+                case (int)gsh01_app_layer::CommandType::AB_FW_HASH:
                     {
                         if (part_data_len < 2) break;
                         device_diagnostics_obj.app_board.fw_hash = get_u16(part_data);
                     }
                     break;
 
-                case (int)ast_app_layer::CommandType::MB_SW_VERSION:
+                case (int)gsh01_app_layer::CommandType::MB_SW_VERSION:
                     {
                         if (part_data_len < 20) break;
                         device_diagnostics_obj.m_board.sw_ver = get_str(part_data, 0, 20);
                     }
                     break;
 
-                case (int)ast_app_layer::CommandType::MB_FW_CHECKSUM:
+                case (int)gsh01_app_layer::CommandType::MB_FW_CHECKSUM:
                     {
                         if (part_data_len < 2) break;
                         device_diagnostics_obj.m_board.fw_crc = get_u16(part_data);
                     }
                     break;
 
-                case (int)ast_app_layer::CommandType::AB_DEVICE_TYPE:
+                case (int)gsh01_app_layer::CommandType::AB_DEVICE_TYPE:
                     {
                         if (part_data_len < 18) break;
                         device_diagnostics_obj.app_board.type = get_str(part_data, 0, 18);
                     }
                     break;
 
-                case (int)ast_app_layer::CommandType::AB_STATUS:
+                case (int)gsh01_app_layer::CommandType::AB_STATUS:
                     {
                         if (part_data_len < 8) break;
                         device_data_obj.ab_status = get_u64(part_data);
@@ -909,62 +919,62 @@ ast_app_layer::CommandResult powermeterImpl::process_response(const std::vector<
             // not (yet) implemented
 
                 //case (int)ast_app_layer::CommandType::RESET_DC_METER:
-                case (int)ast_app_layer::CommandType::AB_TRANSPARENT_MODE:
-                case (int)ast_app_layer::CommandType::AP_BL_VERSION:
-                case (int)ast_app_layer::CommandType::MEASUREMENT_MODE:
-                case (int)ast_app_layer::CommandType::GET_NORMAL_VOLTAGE:
-                case (int)ast_app_layer::CommandType::GET_NORMAL_CURRENT:
-                case (int)ast_app_layer::CommandType::GET_MAX_CURRENT:
-                case (int)ast_app_layer::CommandType::REVERSE_MODE:
-                case (int)ast_app_layer::CommandType::CLEAR_METER_STATUS:
-                case (int)ast_app_layer::CommandType::INIT_METER:
-                case (int)ast_app_layer::CommandType::LINE_LOSS_IMPEDANCE:
-                case (int)ast_app_layer::CommandType::LINE_LOSS_MEAS_MODE:
-                case (int)ast_app_layer::CommandType::MB_MODE_SET:
-                //case (int)ast_app_layer::CommandType::TEMPERATURE:
-                case (int)ast_app_layer::CommandType::AP_CONFIG_COMPLETE:
-                case (int)ast_app_layer::CommandType::METER_BUS_ADDR:
-                case (int)ast_app_layer::CommandType::AS_CONFIG_COMPLETE:
-                case (int)ast_app_layer::CommandType::GET_OCMF_REVERSE:
-                //case (int)ast_app_layer::CommandType::GET_PUBKEY_BIN:
-                case (int)ast_app_layer::CommandType::GET_TRANSACT_IMPORT_LINE_LOSS_ENERGY:
-                //case (int)ast_app_layer::CommandType::GET_TRANSACT_EXPORT_LINE_LOSS_ENERGY:
-                case (int)ast_app_layer::CommandType::GET_TRANSACT_TOTAL_IMPORT_DEV_ENERGY:
-                //case (int)ast_app_layer::CommandType::GET_TRANSACT_TOTAL_EXPORT_DEV_ENERGY:
-                case (int)ast_app_layer::CommandType::GET_TRANSACT_TOTAL_IMPORT_MAINS_ENERGY:
-                //case (int)ast_app_layer::CommandType::GET_TRANSACT_TOTAL_EXPORT_MAINS_ENERGY:
-                case (int)ast_app_layer::CommandType::GET_TOTAL_START_IMPORT_LINE_LOSS_ENERGY:
-                //case (int)ast_app_layer::CommandType::GET_TOTAL_START_EXPORT_LINE_LOSS_ENERGY:
-                case (int)ast_app_layer::CommandType::GET_TOTAL_START_IMPORT_MAINS_ENERGY:
-                //case (int)ast_app_layer::CommandType::GET_TOTAL_START_EXPORT_MAINS_ENERGY:
-                case (int)ast_app_layer::CommandType::GET_TOTAL_STOP_IMPORT_LINE_LOSS_ENERGY:
-                //case (int)ast_app_layer::CommandType::GET_TOTAL_STOP_EXPORT_LINE_LOSS_ENERGY:
-                case (int)ast_app_layer::CommandType::GET_TOTAL_STOP_IMPORT_MAINS_ENERGY:
-                //case (int)ast_app_layer::CommandType::GET_TOTAL_STOP_EXPORT_MAINS_ENERGY:
-                case (int)ast_app_layer::CommandType::GET_LOG_ENTRY:
-                case (int)ast_app_layer::CommandType::GET_LOG_ENTRY_REVERSE:
-                //case (int)ast_app_layer::CommandType::REGISTER_DISPLAY_PUBKEY:
-                //case (int)ast_app_layer::CommandType::REQUEST_CHALLENGE:
-                //case (int)ast_app_layer::CommandType::SET_SIGNED_CHALLENGE:
-                case (int)ast_app_layer::CommandType::GET_TOTAL_IMPORT_MAINS_ENERGY:
-                //case (int)ast_app_layer::CommandType::GET_TOTAL_EXPORT_MAINS_ENERGY:
-                case (int)ast_app_layer::CommandType::GET_TOTAL_IMPORT_MAINS_POWER:
-                //case (int)ast_app_layer::CommandType::GET_TOTAL_EXPORT_MAINS_POWER:
-                case (int)ast_app_layer::CommandType::GET_POS_DEV_VOLTAGE:
-                case (int)ast_app_layer::CommandType::GET_NEG_DEV_VOLTAGE:
-                case (int)ast_app_layer::CommandType::GET_TOTAL_VOLTAGE:
-                case (int)ast_app_layer::CommandType::GET_IMPORT_LINE_LOSS_POWER:
+                case (int)gsh01_app_layer::CommandType::AB_TRANSPARENT_MODE:
+                case (int)gsh01_app_layer::CommandType::AP_BL_VERSION:
+                case (int)gsh01_app_layer::CommandType::MEASUREMENT_MODE:
+                case (int)gsh01_app_layer::CommandType::GET_NORMAL_VOLTAGE:
+                case (int)gsh01_app_layer::CommandType::GET_NORMAL_CURRENT:
+                case (int)gsh01_app_layer::CommandType::GET_MAX_CURRENT:
+                case (int)gsh01_app_layer::CommandType::REVERSE_MODE:
+                case (int)gsh01_app_layer::CommandType::CLEAR_METER_STATUS:
+                case (int)gsh01_app_layer::CommandType::INIT_METER:
+                case (int)gsh01_app_layer::CommandType::LINE_LOSS_IMPEDANCE:
+                case (int)gsh01_app_layer::CommandType::LINE_LOSS_MEAS_MODE:
+                case (int)gsh01_app_layer::CommandType::MB_MODE_SET:
+                //case (int)gsh01_app_layer::CommandType::TEMPERATURE:
+                case (int)gsh01_app_layer::CommandType::AP_CONFIG_COMPLETE:
+                case (int)gsh01_app_layer::CommandType::METER_BUS_ADDR:
+                case (int)gsh01_app_layer::CommandType::AS_CONFIG_COMPLETE:
+                case (int)gsh01_app_layer::CommandType::GET_OCMF_REVERSE:
+                //case (int)gsh01_app_layer::CommandType::GET_PUBKEY_BIN:
+                case (int)gsh01_app_layer::CommandType::GET_TRANSACT_IMPORT_LINE_LOSS_ENERGY:
+                //case (int)gsh01_app_layer::CommandType::GET_TRANSACT_EXPORT_LINE_LOSS_ENERGY:
+                case (int)gsh01_app_layer::CommandType::GET_TRANSACT_TOTAL_IMPORT_DEV_ENERGY:
+                //case (int)gsh01_app_layer::CommandType::GET_TRANSACT_TOTAL_EXPORT_DEV_ENERGY:
+                case (int)gsh01_app_layer::CommandType::GET_TRANSACT_TOTAL_IMPORT_MAINS_ENERGY:
+                //case (int)gsh01_app_layer::CommandType::GET_TRANSACT_TOTAL_EXPORT_MAINS_ENERGY:
+                case (int)gsh01_app_layer::CommandType::GET_TOTAL_START_IMPORT_LINE_LOSS_ENERGY:
+                //case (int)gsh01_app_layer::CommandType::GET_TOTAL_START_EXPORT_LINE_LOSS_ENERGY:
+                case (int)gsh01_app_layer::CommandType::GET_TOTAL_START_IMPORT_MAINS_ENERGY:
+                //case (int)gsh01_app_layer::CommandType::GET_TOTAL_START_EXPORT_MAINS_ENERGY:
+                case (int)gsh01_app_layer::CommandType::GET_TOTAL_STOP_IMPORT_LINE_LOSS_ENERGY:
+                //case (int)gsh01_app_layer::CommandType::GET_TOTAL_STOP_EXPORT_LINE_LOSS_ENERGY:
+                case (int)gsh01_app_layer::CommandType::GET_TOTAL_STOP_IMPORT_MAINS_ENERGY:
+                //case (int)gsh01_app_layer::CommandType::GET_TOTAL_STOP_EXPORT_MAINS_ENERGY:
+                case (int)gsh01_app_layer::CommandType::GET_LOG_ENTRY:
+                case (int)gsh01_app_layer::CommandType::GET_LOG_ENTRY_REVERSE:
+                //case (int)gsh01_app_layer::CommandType::REGISTER_DISPLAY_PUBKEY:
+                //case (int)gsh01_app_layer::CommandType::REQUEST_CHALLENGE:
+                //case (int)gsh01_app_layer::CommandType::SET_SIGNED_CHALLENGE:
+                case (int)gsh01_app_layer::CommandType::GET_TOTAL_IMPORT_MAINS_ENERGY:
+                //case (int)gsh01_app_layer::CommandType::GET_TOTAL_EXPORT_MAINS_ENERGY:
+                case (int)gsh01_app_layer::CommandType::GET_TOTAL_IMPORT_MAINS_POWER:
+                //case (int)gsh01_app_layer::CommandType::GET_TOTAL_EXPORT_MAINS_POWER:
+                case (int)gsh01_app_layer::CommandType::GET_POS_DEV_VOLTAGE:
+                case (int)gsh01_app_layer::CommandType::GET_NEG_DEV_VOLTAGE:
+                case (int)gsh01_app_layer::CommandType::GET_TOTAL_VOLTAGE:
+                case (int)gsh01_app_layer::CommandType::GET_IMPORT_LINE_LOSS_POWER:
                 //case (int)ast_app_layer::CommandType::GET_EXPORT_LINE_LOSS_POWER:
-                case (int)ast_app_layer::CommandType::GET_TOTAL_IMPORT_LINE_LOSS_ENERGY:
-                //case (int)ast_app_layer::CommandType::GET_TOTAL_EXPORT_LINE_LOSS_ENERGY:
-                case (int)ast_app_layer::CommandType::GET_SECOND_INDEX:
-                case (int)ast_app_layer::CommandType::GET_PUBKEY_STR32:
-                case (int)ast_app_layer::CommandType::GET_PUBKEY_CSTR16:
-                case (int)ast_app_layer::CommandType::GET_PUBKEY_CSTR32:
-                //case (int)ast_app_layer::CommandType::REPEAT_DATA:
-                //case (int)ast_app_layer::CommandType::AB_DMC:
-                //case (int)ast_app_layer::CommandType::AB_PROD_DATE:
-                //case (int)ast_app_layer::CommandType::SET_REQUEST_CHALLENGE:
+                case (int)gsh01_app_layer::CommandType::GET_TOTAL_IMPORT_LINE_LOSS_ENERGY:
+                //case (int)gsh01_app_layer::CommandType::GET_TOTAL_EXPORT_LINE_LOSS_ENERGY:
+                case (int)gsh01_app_layer::CommandType::GET_SECOND_INDEX:
+                case (int)gsh01_app_layer::CommandType::GET_PUBKEY_STR32:
+                case (int)gsh01_app_layer::CommandType::GET_PUBKEY_CSTR16:
+                case (int)gsh01_app_layer::CommandType::GET_PUBKEY_CSTR32:
+                //case (int)gsh01_app_layer::CommandType::REPEAT_DATA:
+                //case (int)gsh01_app_layer::CommandType::AB_DMC:
+                //case (int)gsh01_app_layer::CommandType::AB_PROD_DATE:
+                //case (int)gsh01_app_layer::CommandType::SET_REQUEST_CHALLENGE:
                     {
                         EVLOG_error << "Command not (yet) implemented. (" << module::conversions::hexdump(part_cmd) << ")";
                     }
@@ -989,27 +999,27 @@ ast_app_layer::CommandResult powermeterImpl::process_response(const std::vector<
     return response_status;
 }
 
-ast_app_layer::CommandResult powermeterImpl::receive_response() {
-    ast_app_layer::CommandResult retval = ast_app_layer::CommandResult::OK;
+gsh01_app_layer::CommandResult powermeterImpl::receive_response() {
+    gsh01_app_layer::CommandResult retval = gsh01_app_layer::CommandResult::OK;
     std::vector<uint8_t> response{};
-    response.reserve(ast_app_layer::PM_AST_MAX_RX_LENGTH);
-    this->serial_device.rx(response, ast_app_layer::PM_AST_SERIAL_RX_INITIAL_TIMEOUT_MS, ast_app_layer::PM_AST_SERIAL_RX_WITHIN_MESSAGE_TIMEOUT_MS);
+    response.reserve(gsh01_app_layer::PM_AST_MAX_RX_LENGTH);
+    this->serial_device.rx(response, gsh01_app_layer::PM_AST_SERIAL_RX_INITIAL_TIMEOUT_MS, gsh01_app_layer::PM_AST_SERIAL_RX_WITHIN_MESSAGE_TIMEOUT_MS);
 
-    EVLOG_critical << "\n\nRECEIVE: " << module::conversions::hexdump(response) << " length: " << response.size() << "\n\n";
+    EVLOG_info << "\n\nRECEIVE: " << module::conversions::hexdump(response) << " length: " << response.size() << "\n\n";
     
     if (response.size() >= 5) {
-        ast_app_layer::CommandResult result{};
+        gsh01_app_layer::CommandResult result{};
         this->slip.unpack(response, config.powermeter_device_id);
         while (this->slip.get_message_counter() > 0) {
             std::vector<uint8_t> message_from_queue = std::move(this->slip.retrieve_single_message());
             result = process_response(message_from_queue);
-            if (result != ast_app_layer::CommandResult::OK) {  // always report (at least one) error instead of OK, if available
+            if (result != gsh01_app_layer::CommandResult::OK) {  // always report (at least one) error instead of OK, if available
                 retval = result;
             }
         }
     } else {
         EVLOG_info << "Received partial message. Skipping. [" << module::conversions::hexdump(response) << "]";
-        return ast_app_layer::CommandResult::COMMUNICATION_FAILED;
+        return gsh01_app_layer::CommandResult::COMMUNICATION_FAILED;
     }
     return retval;
 }
@@ -1021,15 +1031,15 @@ ast_app_layer::CommandResult powermeterImpl::receive_response() {
 types::powermeter::TransactionStartResponse
 powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& value) {
     types::powermeter::TransactionStartResponse r;
-    this->start_transact_result = ast_app_layer::CommandResult::PENDING;
-    ast_app_layer::UserIdStatus user_id_status = ast_app_layer::UserIdStatus::USER_NOT_ASSIGNED;
+    this->start_transact_result = gsh01_app_layer::CommandResult::PENDING;
+    gsh01_app_layer::UserIdStatus user_id_status = gsh01_app_layer::UserIdStatus::USER_NOT_ASSIGNED;
     if (value.transaction_assigned_to_user) {
-        user_id_status = ast_app_layer::UserIdStatus::USER_ASSIGNED;
+        user_id_status = gsh01_app_layer::UserIdStatus::USER_ASSIGNED;
     }
 
-    ast_app_layer::UserIdType user_id_type = ast_app_layer::UserIdType::NONE;
+    gsh01_app_layer::UserIdType user_id_type = gsh01_app_layer::UserIdType::NONE;
     if (value.user_identification_type.has_value()) {
-        user_id_type = ast_app_layer::user_id_type_conversion_everest_to_ast(value.user_identification_type.value());
+        user_id_type = gsh01_app_layer::user_id_type_conversion_everest_to_ast(value.user_identification_type.value());
     }
 
     std::string user_id_data = "unidentified_user";
@@ -1046,12 +1056,12 @@ powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& valu
     while (this->start_transaction_msg_status != MessageStatus::RECEIVED) {
         receive_response();
         if(timeout.reached()) {
-            this->stop_transact_result = ast_app_layer::CommandResult::TIMEOUT;
+            this->stop_transact_result = gsh01_app_layer::CommandResult::TIMEOUT;
             break;
         }
     }
 
-    if (this->start_transact_result != ast_app_layer::CommandResult::OK) {
+    if (this->start_transact_result != gsh01_app_layer::CommandResult::OK) {
         r.status = types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR;
     } else {
         r.status = types::powermeter::TransactionRequestStatus::OK;
@@ -1061,7 +1071,7 @@ powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& valu
 
 types::powermeter::TransactionStopResponse powermeterImpl::handle_stop_transaction(std::string& transaction_id) {
     types::powermeter::TransactionStopResponse r;
-    this->stop_transact_result = ast_app_layer::CommandResult::PENDING;
+    this->stop_transact_result = gsh01_app_layer::CommandResult::PENDING;
     std::vector<uint8_t> data_vect{};
     app_layer.create_command_stop_transaction(data_vect);
     std::vector<uint8_t> slip_msg_stop_transaction = std::move(this->slip.package_single(this->config.powermeter_device_id, data_vect));
@@ -1071,12 +1081,12 @@ types::powermeter::TransactionStopResponse powermeterImpl::handle_stop_transacti
     while (this->stop_transaction_msg_status != MessageStatus::RECEIVED) {
         receive_response();
         if(timeout.reached()) {
-            this->stop_transact_result = ast_app_layer::CommandResult::TIMEOUT;
+            this->stop_transact_result = gsh01_app_layer::CommandResult::TIMEOUT;
             break;
         }
     }
 
-    if (this->stop_transact_result != ast_app_layer::CommandResult::OK) {
+    if (this->stop_transact_result != gsh01_app_layer::CommandResult::OK) {
         r.status = types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR;
     } else {
         std::string ocmf_result = get_meter_ocmf();
@@ -1101,12 +1111,12 @@ std::string powermeterImpl::get_meter_ocmf() {
     while (this->get_transaction_values_msg_status != MessageStatus::RECEIVED) {
         receive_response();
         if(timeout.reached()) {
-            this->stop_transact_result = ast_app_layer::CommandResult::TIMEOUT;
+            this->stop_transact_result = gsh01_app_layer::CommandResult::TIMEOUT;
             break;
         }
     }
 
-    if (this->stop_transact_result != ast_app_layer::CommandResult::OK) {
+    if (this->stop_transact_result != gsh01_app_layer::CommandResult::OK) {
         std::stringstream ss;
         ss << "Error: command failed with code " << int(this->stop_transact_result) << ". (" << command_result_to_string(this->stop_transact_result) << ")";
         return ss.str();

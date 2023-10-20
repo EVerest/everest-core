@@ -139,28 +139,28 @@ void to_json(json& j, const Logging& k) {
     j["errors"]["system"] = json();
     j["errors"]["system"]["last"] = json::array();
     for (uint8_t n = 0; n < 5; n++) {
-        j["errors"]["system"]["last"][n]["id"] = k.source[(uint8_t)ast_app_layer::ErrorSource::SYSTEM].category[(uint8_t)ast_app_layer::ErrorCategory::LAST].error[n].id;
-        j["errors"]["system"]["last"][n]["priority"] = k.source[(uint8_t)ast_app_layer::ErrorSource::SYSTEM].category[(uint8_t)ast_app_layer::ErrorCategory::LAST].error[n].priority;
-        j["errors"]["system"]["last"][n]["counter"] = k.source[(uint8_t)ast_app_layer::ErrorSource::SYSTEM].category[(uint8_t)ast_app_layer::ErrorCategory::LAST].error[n].counter;
+        j["errors"]["system"]["last"][n]["id"] = k.source[(uint8_t)gsh01_app_layer::ErrorSource::SYSTEM].category[(uint8_t)gsh01_app_layer::ErrorCategory::LAST].error[n].id;
+        j["errors"]["system"]["last"][n]["priority"] = k.source[(uint8_t)gsh01_app_layer::ErrorSource::SYSTEM].category[(uint8_t)gsh01_app_layer::ErrorCategory::LAST].error[n].priority;
+        j["errors"]["system"]["last"][n]["counter"] = k.source[(uint8_t)gsh01_app_layer::ErrorSource::SYSTEM].category[(uint8_t)gsh01_app_layer::ErrorCategory::LAST].error[n].counter;
     }
     j["errors"]["system"]["last_critical"] = json::array();
     for (uint8_t n = 0; n < 5; n++) {
-        j["errors"]["system"]["last_critical"][n]["id"] = k.source[(uint8_t)ast_app_layer::ErrorSource::SYSTEM].category[(uint8_t)ast_app_layer::ErrorCategory::LAST_CRITICAL].error[n].id;
-        j["errors"]["system"]["last_critical"][n]["priority"] = k.source[(uint8_t)ast_app_layer::ErrorSource::SYSTEM].category[(uint8_t)ast_app_layer::ErrorCategory::LAST_CRITICAL].error[n].priority;
-        j["errors"]["system"]["last_critical"][n]["counter"] = k.source[(uint8_t)ast_app_layer::ErrorSource::SYSTEM].category[(uint8_t)ast_app_layer::ErrorCategory::LAST_CRITICAL].error[n].counter;
+        j["errors"]["system"]["last_critical"][n]["id"] = k.source[(uint8_t)gsh01_app_layer::ErrorSource::SYSTEM].category[(uint8_t)gsh01_app_layer::ErrorCategory::LAST_CRITICAL].error[n].id;
+        j["errors"]["system"]["last_critical"][n]["priority"] = k.source[(uint8_t)gsh01_app_layer::ErrorSource::SYSTEM].category[(uint8_t)gsh01_app_layer::ErrorCategory::LAST_CRITICAL].error[n].priority;
+        j["errors"]["system"]["last_critical"][n]["counter"] = k.source[(uint8_t)gsh01_app_layer::ErrorSource::SYSTEM].category[(uint8_t)gsh01_app_layer::ErrorCategory::LAST_CRITICAL].error[n].counter;
     }
     j["errors"]["communication"] = json();
     j["errors"]["communication"]["last"] = json::array();
     for (uint8_t n = 0; n < 5; n++) {
-        j["errors"]["communication"]["last"][n]["id"] = k.source[(uint8_t)ast_app_layer::ErrorSource::COMMUNICATION].category[(uint8_t)ast_app_layer::ErrorCategory::LAST].error[n].id;
-        j["errors"]["communication"]["last"][n]["priority"] = k.source[(uint8_t)ast_app_layer::ErrorSource::COMMUNICATION].category[(uint8_t)ast_app_layer::ErrorCategory::LAST].error[n].priority;
-        j["errors"]["communication"]["last"][n]["counter"] = k.source[(uint8_t)ast_app_layer::ErrorSource::COMMUNICATION].category[(uint8_t)ast_app_layer::ErrorCategory::LAST].error[n].counter;
+        j["errors"]["communication"]["last"][n]["id"] = k.source[(uint8_t)gsh01_app_layer::ErrorSource::COMMUNICATION].category[(uint8_t)gsh01_app_layer::ErrorCategory::LAST].error[n].id;
+        j["errors"]["communication"]["last"][n]["priority"] = k.source[(uint8_t)gsh01_app_layer::ErrorSource::COMMUNICATION].category[(uint8_t)gsh01_app_layer::ErrorCategory::LAST].error[n].priority;
+        j["errors"]["communication"]["last"][n]["counter"] = k.source[(uint8_t)gsh01_app_layer::ErrorSource::COMMUNICATION].category[(uint8_t)gsh01_app_layer::ErrorCategory::LAST].error[n].counter;
     }
     j["errors"]["communication"]["last_critical"] = json::array();
     for (uint8_t n = 0; n < 5; n++) {
-        j["errors"]["communication"]["last_critical"][n]["id"] = k.source[(uint8_t)ast_app_layer::ErrorSource::COMMUNICATION].category[(uint8_t)ast_app_layer::ErrorCategory::LAST_CRITICAL].error[n].id;
-        j["errors"]["communication"]["last_critical"][n]["priority"] = k.source[(uint8_t)ast_app_layer::ErrorSource::COMMUNICATION].category[(uint8_t)ast_app_layer::ErrorCategory::LAST_CRITICAL].error[n].priority;
-        j["errors"]["communication"]["last_critical"][n]["counter"] = k.source[(uint8_t)ast_app_layer::ErrorSource::COMMUNICATION].category[(uint8_t)ast_app_layer::ErrorCategory::LAST_CRITICAL].error[n].counter;
+        j["errors"]["communication"]["last_critical"][n]["id"] = k.source[(uint8_t)gsh01_app_layer::ErrorSource::COMMUNICATION].category[(uint8_t)gsh01_app_layer::ErrorCategory::LAST_CRITICAL].error[n].id;
+        j["errors"]["communication"]["last_critical"][n]["priority"] = k.source[(uint8_t)gsh01_app_layer::ErrorSource::COMMUNICATION].category[(uint8_t)gsh01_app_layer::ErrorCategory::LAST_CRITICAL].error[n].priority;
+        j["errors"]["communication"]["last_critical"][n]["counter"] = k.source[(uint8_t)gsh01_app_layer::ErrorSource::COMMUNICATION].category[(uint8_t)gsh01_app_layer::ErrorCategory::LAST_CRITICAL].error[n].counter;
     }
     // EVLOG_error << "[Logging][to_json()] end";
 }

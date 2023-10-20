@@ -18,7 +18,7 @@
 #include <fmt/core.h>
 
 
-namespace ast_app_layer {
+namespace gsh01_app_layer {
 
 uint32_t timepoint_to_uint32(date::utc_clock::time_point timepoint) {
     return (uint32_t)std::chrono::duration_cast<std::chrono::seconds>(timepoint.time_since_epoch()).count();
@@ -38,12 +38,12 @@ void insert_u32_as_u8s(std::vector<uint8_t>& vec, uint32_t u32) {
     vec.push_back(uint8_t((u32 >> 24) & 0x000000FF));
 }
 
-std::vector<uint8_t> AstAppLayer::create_command(ast_app_layer::Command cmd) {
+std::vector<uint8_t> Gsh01AppLayer::create_command(gsh01_app_layer::Command cmd) {
     std::vector<uint8_t> command_data{};
 
     insert_u16_as_u8s(command_data, (uint16_t)cmd.type);
     insert_u16_as_u8s(command_data, (uint16_t)cmd.length);
-    command_data.push_back((uint8_t)ast_app_layer::CommandStatus::OK);
+    command_data.push_back((uint8_t)gsh01_app_layer::CommandStatus::OK);
     
     for (uint16_t i = 0; i < cmd.data.size(); i++) {
         command_data.push_back(cmd.data[i]);
@@ -51,17 +51,17 @@ std::vector<uint8_t> AstAppLayer::create_command(ast_app_layer::Command cmd) {
     return std::move(command_data);
 }
 
-std::vector<uint8_t> AstAppLayer::create_simple_command(ast_app_layer::CommandType cmd_type) {
-    ast_app_layer::Command cmd{};
+std::vector<uint8_t> Gsh01AppLayer::create_simple_command(gsh01_app_layer::CommandType cmd_type) {
+    gsh01_app_layer::Command cmd{};
 
     cmd.type = cmd_type;
     cmd.length = 0x0005;
-    cmd.status = ast_app_layer::CommandStatus::OK;
+    cmd.status = gsh01_app_layer::CommandStatus::OK;
 
     return std::move(create_command(cmd));
 }
 
-int8_t AstAppLayer::get_utc_offset_in_quarter_hours(const std::chrono::time_point<std::chrono::system_clock>& timepoint_system_clock) {
+int8_t Gsh01AppLayer::get_utc_offset_in_quarter_hours(const std::chrono::time_point<std::chrono::system_clock>& timepoint_system_clock) {
     std::stringstream offset;
     int8_t offset_quarterhours = 0;
 
@@ -85,16 +85,16 @@ int8_t AstAppLayer::get_utc_offset_in_quarter_hours(const std::chrono::time_poin
     return offset_quarterhours;
 }
 
-void AstAppLayer::create_command_start_transaction(ast_app_layer::UserIdStatus user_id_status,
-                                                   ast_app_layer::UserIdType user_id_type,
+void Gsh01AppLayer::create_command_start_transaction(gsh01_app_layer::UserIdStatus user_id_status,
+                                                   gsh01_app_layer::UserIdType user_id_type,
                                                    std::string user_id_data,
                                                    int8_t gmt_offset_quarter_hours,
                                                    std::vector<uint8_t>& command_data) {
-    ast_app_layer::Command cmd{};
+    gsh01_app_layer::Command cmd{};
 
-    cmd.type = ast_app_layer::CommandType::START_TRANSACTION;
+    cmd.type = gsh01_app_layer::CommandType::START_TRANSACTION;
     cmd.length = 0x0034;
-    cmd.status = ast_app_layer::CommandStatus::OK;
+    cmd.status = gsh01_app_layer::CommandStatus::OK;
 
     insert_u32_as_u8s(cmd.data, (timepoint_to_uint32(date::utc_clock::now())));
     cmd.data.push_back(static_cast<uint8_t>(gmt_offset_quarter_hours)); // GMT offset in quarters of an hour, e.g. 0x08 = +2h
@@ -115,22 +115,22 @@ void AstAppLayer::create_command_start_transaction(ast_app_layer::UserIdStatus u
     command_data = std::move(create_command(cmd));
 }
 
-void AstAppLayer::create_command_stop_transaction(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(ast_app_layer::CommandType::STOP_TRANSACTION));
+void Gsh01AppLayer::create_command_stop_transaction(std::vector<uint8_t>& command_data) {
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::STOP_TRANSACTION));
 }
 
-void AstAppLayer::create_command_get_time(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(ast_app_layer::CommandType::TIME));
+void Gsh01AppLayer::create_command_get_time(std::vector<uint8_t>& command_data) {
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::TIME));
 }
 
-void AstAppLayer::create_command_set_time(date::utc_clock::time_point timepoint,
+void Gsh01AppLayer::create_command_set_time(date::utc_clock::time_point timepoint,
                                           int8_t gmt_offset_quarters_of_an_hour,
                                           std::vector<uint8_t>& command_data) {
-    ast_app_layer::Command cmd{};
+    gsh01_app_layer::Command cmd{};
 
-    cmd.type = ast_app_layer::CommandType::TIME;
+    cmd.type = gsh01_app_layer::CommandType::TIME;
     cmd.length = 0x000A;
-    cmd.status = ast_app_layer::CommandStatus::OK;
+    cmd.status = gsh01_app_layer::CommandStatus::OK;
     
     insert_u32_as_u8s(cmd.data, timepoint_to_uint32(timepoint));
     cmd.data.push_back(gmt_offset_quarters_of_an_hour);
@@ -138,111 +138,111 @@ void AstAppLayer::create_command_set_time(date::utc_clock::time_point timepoint,
     command_data = std::move(create_command(cmd));
 }
 
-void AstAppLayer::create_command_get_voltage(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(ast_app_layer::CommandType::GET_VOLTAGE_L1));
+void Gsh01AppLayer::create_command_get_voltage(std::vector<uint8_t>& command_data) {
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::GET_VOLTAGE_L1));
 }
 
-void AstAppLayer::create_command_get_current(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(ast_app_layer::CommandType::GET_CURRENT_L1));
+void Gsh01AppLayer::create_command_get_current(std::vector<uint8_t>& command_data) {
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::GET_CURRENT_L1));
 }
 
-void AstAppLayer::create_command_get_import_power(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(ast_app_layer::CommandType::GET_IMPORT_DEV_POWER));
+void Gsh01AppLayer::create_command_get_import_power(std::vector<uint8_t>& command_data) {
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::GET_IMPORT_DEV_POWER));
 }
 
-// void AstAppLayer::create_command_get_export_power(std::vector<uint8_t>& command_data) {
-//     command_data = std::move(create_simple_command(ast_app_layer::CommandType::GET_EXPORT_DEV_POWER));
+// void Gsh01AppLayer::create_command_get_export_power(std::vector<uint8_t>& command_data) {
+//     command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::GET_EXPORT_DEV_POWER));
 // }
 
-void AstAppLayer::create_command_get_total_dev_import_energy(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(ast_app_layer::CommandType::GET_TOTAL_IMPORT_DEV_ENERGY));
+void Gsh01AppLayer::create_command_get_total_dev_import_energy(std::vector<uint8_t>& command_data) {
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::GET_TOTAL_IMPORT_DEV_ENERGY));
 }
 
-// void AstAppLayer::create_command_get_total_dev_export_energy(std::vector<uint8_t>& command_data) {
-//     command_data = std::move(create_simple_command(ast_app_layer::CommandType::GET_TOTAL_EXPORT_DEV_ENERGY));
+// void Gsh01AppLayer::create_command_get_total_dev_export_energy(std::vector<uint8_t>& command_data) {
+//     command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::GET_TOTAL_EXPORT_DEV_ENERGY));
 // }
 
-void AstAppLayer::create_command_get_total_power(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(ast_app_layer::CommandType::GET_TOTAL_DEV_POWER));
+void Gsh01AppLayer::create_command_get_total_power(std::vector<uint8_t>& command_data) {
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::GET_TOTAL_DEV_POWER));
 }
 
-void AstAppLayer::create_command_get_total_start_import_energy(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(ast_app_layer::CommandType::GET_TOTAL_START_IMPORT_DEV_ENERGY));
+void Gsh01AppLayer::create_command_get_total_start_import_energy(std::vector<uint8_t>& command_data) {
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::GET_TOTAL_START_IMPORT_DEV_ENERGY));
 }
 
-void AstAppLayer::create_command_get_total_stop_import_energy(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(ast_app_layer::CommandType::GET_TOTAL_STOP_IMPORT_DEV_ENERGY));
+void Gsh01AppLayer::create_command_get_total_stop_import_energy(std::vector<uint8_t>& command_data) {
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::GET_TOTAL_STOP_IMPORT_DEV_ENERGY));
 }
 
-// void AstAppLayer::create_command_get_total_start_export_energy(std::vector<uint8_t>& command_data) {
-//     command_data = std::move(create_simple_command(ast_app_layer::CommandType::GET_TOTAL_START_EXPORT_DEV_ENERGY));
+// void Gsh01AppLayer::create_command_get_total_start_export_energy(std::vector<uint8_t>& command_data) {
+//     command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::GET_TOTAL_START_EXPORT_DEV_ENERGY));
 // }
 
-// void AstAppLayer::create_command_get_total_stop_export_energy(std::vector<uint8_t>& command_data) {
-//     command_data = std::move(create_simple_command(ast_app_layer::CommandType::GET_TOTAL_STOP_EXPORT_DEV_ENERGY));
+// void Gsh01AppLayer::create_command_get_total_stop_export_energy(std::vector<uint8_t>& command_data) {
+//     command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::GET_TOTAL_STOP_EXPORT_DEV_ENERGY));
 // }
 
-void AstAppLayer::create_command_get_total_transaction_duration(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(ast_app_layer::CommandType::GET_TRANSACT_TOTAL_DURATION));
+void Gsh01AppLayer::create_command_get_total_transaction_duration(std::vector<uint8_t>& command_data) {
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::GET_TRANSACT_TOTAL_DURATION));
 }
 
-void AstAppLayer::create_command_get_pubkey_str16(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(ast_app_layer::CommandType::GET_PUBKEY_STR16));
+void Gsh01AppLayer::create_command_get_pubkey_str16(std::vector<uint8_t>& command_data) {
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::GET_PUBKEY_STR16));
 }
 
-void AstAppLayer::create_command_get_pubkey_asn1(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(ast_app_layer::CommandType::GET_PUBKEY_ASN1));
+void Gsh01AppLayer::create_command_get_pubkey_asn1(std::vector<uint8_t>& command_data) {
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::GET_PUBKEY_ASN1));
 }
 
-// void AstAppLayer::create_command_get_meter_pubkey(std::vector<uint8_t>& command_data) {
-//     command_data = std::move(create_simple_command(ast_app_layer::CommandType::REQUEST_METER_PUBKEY));
+// void Gsh01AppLayer::create_command_get_meter_pubkey(std::vector<uint8_t>& command_data) {
+//     command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::REQUEST_METER_PUBKEY));
 // }
 
-void AstAppLayer::create_command_get_ocmf_stats(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(ast_app_layer::CommandType::OCMF_STATS));
+void Gsh01AppLayer::create_command_get_ocmf_stats(std::vector<uint8_t>& command_data) {
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::OCMF_STATS));
 }
 
 /* OCMF ID: 1..235000 
     OCMF data from specified transaction will be at minimum import energy of transaction
 */
-void AstAppLayer::create_command_get_transaction_ocmf(uint32_t ocmf_id,
+void Gsh01AppLayer::create_command_get_transaction_ocmf(uint32_t ocmf_id,
                                                       std::vector<uint8_t>& command_data) {
-    ast_app_layer::Command cmd{};
+    gsh01_app_layer::Command cmd{};
 
-    cmd.type = ast_app_layer::CommandType::GET_OCMF;
+    cmd.type = gsh01_app_layer::CommandType::GET_OCMF;
     cmd.length = 0x0009;
-    cmd.status = ast_app_layer::CommandStatus::OK;
+    cmd.status = gsh01_app_layer::CommandStatus::OK;
     
     insert_u32_as_u8s(cmd.data, ocmf_id);
 
     command_data = std::move(create_command(cmd));
 }
 
-void AstAppLayer::create_command_get_last_transaction_ocmf(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(ast_app_layer::CommandType::GET_LAST_OCMF));
+void Gsh01AppLayer::create_command_get_last_transaction_ocmf(std::vector<uint8_t>& command_data) {
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::GET_LAST_OCMF));
 }
 
-// void AstAppLayer::create_command_get_ocmf_info(std::vector<uint8_t>& command_data) {
-//     command_data = std::move(create_simple_command(ast_app_layer::CommandType::OCMF_INFO));
+// void Gsh01AppLayer::create_command_get_ocmf_info(std::vector<uint8_t>& command_data) {
+//     command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::OCMF_INFO));
 // }
 
-// void AstAppLayer::create_command_get_ocmf_config(std::vector<uint8_t>& command_data) {
-//     command_data = std::move(create_simple_command(ast_app_layer::CommandType::OCMF_CONFIG));
+// void Gsh01AppLayer::create_command_get_ocmf_config(std::vector<uint8_t>& command_data) {
+//     command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::OCMF_CONFIG));
 // }
 
-void AstAppLayer::create_command_get_charge_point_id(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(ast_app_layer::CommandType::CHARGE_POINT_ID));
+void Gsh01AppLayer::create_command_get_charge_point_id(std::vector<uint8_t>& command_data) {
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::CHARGE_POINT_ID));
 }
 
 /* only works in "assembly mode" */
-void AstAppLayer::create_command_set_charge_point_id(ast_app_layer::UserIdType id_type,
+void Gsh01AppLayer::create_command_set_charge_point_id(gsh01_app_layer::UserIdType id_type,
                                                      std::string id_data,
                                                      std::vector<uint8_t>& command_data) {
-    ast_app_layer::Command cmd{};
+    gsh01_app_layer::Command cmd{};
 
-    cmd.type = ast_app_layer::CommandType::CHARGE_POINT_ID;
+    cmd.type = gsh01_app_layer::CommandType::CHARGE_POINT_ID;
     cmd.length = 0x0013;
-    cmd.status = ast_app_layer::CommandStatus::OK;
+    cmd.status = gsh01_app_layer::CommandStatus::OK;
 
     cmd.data.push_back((uint8_t)id_type);
     
@@ -260,14 +260,14 @@ void AstAppLayer::create_command_set_charge_point_id(ast_app_layer::UserIdType i
     command_data = std::move(create_command(cmd));
 }
 
-// void AstAppLayer::create_command_get_errors(ast_app_layer::ErrorCategory category,
-//                                             ast_app_layer::ErrorSource src,
+// void AstAppLayer::create_command_get_errors(gsh01_app_layer::ErrorCategory category,
+//                                             gsh01_app_layer::ErrorSource src,
 //                                             std::vector<uint8_t>& command_data) {
-//     ast_app_layer::Command cmd{};
+//     gsh01_app_layer::Command cmd{};
 
-//     cmd.type = ast_app_layer::CommandType::GET_ERRORS;
+//     cmd.type = gsh01_app_layer::CommandType::GET_ERRORS;
 //     cmd.length = 0x0007;
-//     cmd.status = ast_app_layer::CommandStatus::OK;
+//     cmd.status = gsh01_app_layer::CommandStatus::OK;
 
 //     cmd.data.push_back((uint8_t)category);
 //     cmd.data.push_back((uint8_t)src);
@@ -275,55 +275,55 @@ void AstAppLayer::create_command_set_charge_point_id(ast_app_layer::UserIdType i
 //     command_data = std::move(create_command(cmd));
 // }
 
-void AstAppLayer::create_command_get_log_stats(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(ast_app_layer::CommandType::GET_LOG_STATS));
+void Gsh01AppLayer::create_command_get_log_stats(std::vector<uint8_t>& command_data) {
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::GET_LOG_STATS));
 }
 
 /* log entry ids: 1..2500 */
-void AstAppLayer::create_command_get_log_entry(uint32_t log_entry_id,
+void Gsh01AppLayer::create_command_get_log_entry(uint32_t log_entry_id,
                                                std::vector<uint8_t>& command_data) {
-    ast_app_layer::Command cmd{};
+    gsh01_app_layer::Command cmd{};
 
-    cmd.type = ast_app_layer::CommandType::GET_LOG_ENTRY;
+    cmd.type = gsh01_app_layer::CommandType::GET_LOG_ENTRY;
     cmd.length = 0x0009;
-    cmd.status = ast_app_layer::CommandStatus::OK;
+    cmd.status = gsh01_app_layer::CommandStatus::OK;
     
     insert_u32_as_u8s(cmd.data, log_entry_id);
 
     command_data = std::move(create_command(cmd));
 }
 
-void AstAppLayer::create_command_get_last_log_entry(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(ast_app_layer::CommandType::GET_LAST_LOG_ENTRY));
+void Gsh01AppLayer::create_command_get_last_log_entry(std::vector<uint8_t>& command_data) {
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::GET_LAST_LOG_ENTRY));
 }
 
 /* log entry ids: 1..2500 
    thus: if 20 log entries and log_entry_id == 2, then log entry 18 will be returned 
 */
-void AstAppLayer::create_command_get_log_entry_reverse(uint32_t log_entry_id,
+void Gsh01AppLayer::create_command_get_log_entry_reverse(uint32_t log_entry_id,
                                                        std::vector<uint8_t>& command_data) {
-    ast_app_layer::Command cmd{};
+    gsh01_app_layer::Command cmd{};
 
-    cmd.type = ast_app_layer::CommandType::GET_LOG_ENTRY_REVERSE;
+    cmd.type = gsh01_app_layer::CommandType::GET_LOG_ENTRY_REVERSE;
     cmd.length = 0x0009;
-    cmd.status = ast_app_layer::CommandStatus::OK;
+    cmd.status = gsh01_app_layer::CommandStatus::OK;
     
     insert_u32_as_u8s(cmd.data, log_entry_id);
 
     command_data = std::move(create_command(cmd));
 }
 
-void AstAppLayer::create_command_get_application_board_mode(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(ast_app_layer::CommandType::AB_MODE_SET));
+void Gsh01AppLayer::create_command_get_application_board_mode(std::vector<uint8_t>& command_data) {
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::AB_MODE_SET));
 }
 
-void AstAppLayer::create_command_set_application_board_mode(ast_app_layer::ApplicationBoardMode mode,
+void Gsh01AppLayer::create_command_set_application_board_mode(gsh01_app_layer::ApplicationBoardMode mode,
                                                             std::vector<uint8_t>& command_data) {
-    ast_app_layer::Command cmd{};
+    gsh01_app_layer::Command cmd{};
 
-    cmd.type = ast_app_layer::CommandType::AB_MODE_SET;
+    cmd.type = gsh01_app_layer::CommandType::AB_MODE_SET;
     cmd.length = 0x0006;
-    cmd.status = ast_app_layer::CommandStatus::OK;
+    cmd.status = gsh01_app_layer::CommandStatus::OK;
     
     cmd.data.push_back((uint8_t)mode);
 
@@ -332,45 +332,45 @@ void AstAppLayer::create_command_set_application_board_mode(ast_app_layer::Appli
 
 // diagnostics
 
-void AstAppLayer::create_command_get_hardware_version(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(ast_app_layer::CommandType::AB_HW_VERSION));
+void Gsh01AppLayer::create_command_get_hardware_version(std::vector<uint8_t>& command_data) {
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::AB_HW_VERSION));
 }
 
-void AstAppLayer::create_command_get_application_board_server_id(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(ast_app_layer::CommandType::AB_SERVER_ID));
+void Gsh01AppLayer::create_command_get_application_board_server_id(std::vector<uint8_t>& command_data) {
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::AB_SERVER_ID));
 }
 
-void AstAppLayer::create_command_get_application_board_serial_number(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(ast_app_layer::CommandType::AB_SERIAL_NR));
+void Gsh01AppLayer::create_command_get_application_board_serial_number(std::vector<uint8_t>& command_data) {
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::AB_SERIAL_NR));
 }
 
-void AstAppLayer::create_command_get_application_board_software_version(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(ast_app_layer::CommandType::AB_SW_VERSION));
+void Gsh01AppLayer::create_command_get_application_board_software_version(std::vector<uint8_t>& command_data) {
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::AB_SW_VERSION));
 }
 
-void AstAppLayer::create_command_get_application_board_fw_checksum(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(ast_app_layer::CommandType::AB_FW_CHECKSUM));
+void Gsh01AppLayer::create_command_get_application_board_fw_checksum(std::vector<uint8_t>& command_data) {
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::AB_FW_CHECKSUM));
 }
 
-void AstAppLayer::create_command_get_application_board_fw_hash(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(ast_app_layer::CommandType::AB_FW_HASH));
+void Gsh01AppLayer::create_command_get_application_board_fw_hash(std::vector<uint8_t>& command_data) {
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::AB_FW_HASH));
 }
 
-void AstAppLayer::create_command_get_application_board_status(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(ast_app_layer::CommandType::AB_STATUS));
+void Gsh01AppLayer::create_command_get_application_board_status(std::vector<uint8_t>& command_data) {
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::AB_STATUS));
 }
 
-void AstAppLayer::create_command_get_metering_board_software_version(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(ast_app_layer::CommandType::MB_SW_VERSION));
+void Gsh01AppLayer::create_command_get_metering_board_software_version(std::vector<uint8_t>& command_data) {
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::MB_SW_VERSION));
 }
 
-void AstAppLayer::create_command_get_metering_board_fw_checksum(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(ast_app_layer::CommandType::MB_FW_CHECKSUM));
+void Gsh01AppLayer::create_command_get_metering_board_fw_checksum(std::vector<uint8_t>& command_data) {
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::MB_FW_CHECKSUM));
 }
 
 /* doubles as OCMF "meter model name" */
-void AstAppLayer::create_command_get_device_type(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(ast_app_layer::CommandType::AB_DEVICE_TYPE));
+void Gsh01AppLayer::create_command_get_device_type(std::vector<uint8_t>& command_data) {
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::AB_DEVICE_TYPE));
 }
 
-} // namespace ast_app_layer
+} // namespace gsh01_app_layer

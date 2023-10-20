@@ -2,10 +2,10 @@
 // Copyright 2023 Pionix GmbH and Contributors to EVerest
 
 /*
- This is an implementation for the AST powermeter application layer
+ This is an implementation for the GSH01 powermeter application layer
 */
-#ifndef AST_APP_LAYER
-#define AST_APP_LAYER
+#ifndef GSH01_APP_LAYER
+#define GSH01_APP_LAYER
 
 #include <everest/logging.hpp>
 #include <optional>
@@ -16,7 +16,7 @@
 
 #include "crc16.hpp"
 
-namespace ast_app_layer {
+namespace gsh01_app_layer {
 
 enum class CommandType : std::uint16_t {
 //    RESET_DC_METER = 0x4101,                            // reset the DC meter
@@ -204,26 +204,26 @@ enum class UserIdType : std::uint8_t {
     KEY_CODE     = 90   // private user key (no fixed format)
 };
 
-inline ast_app_layer::UserIdType user_id_type_conversion_everest_to_ast(types::powermeter::UserIdType e) {
+inline gsh01_app_layer::UserIdType user_id_type_conversion_everest_to_ast(types::powermeter::UserIdType e) {
     switch (e) {
-        case types::powermeter::UserIdType::None: return ast_app_layer::UserIdType::NONE;
-        case types::powermeter::UserIdType::Denied: return ast_app_layer::UserIdType::DENIED;
-        case types::powermeter::UserIdType::Undefined: return ast_app_layer::UserIdType::UNDEFINED;
-        case types::powermeter::UserIdType::Iso14443: return ast_app_layer::UserIdType::ISO14443;
-        case types::powermeter::UserIdType::Iso15693: return ast_app_layer::UserIdType::ISO15693;
-        case types::powermeter::UserIdType::Emaid: return ast_app_layer::UserIdType::EMAID;
-        case types::powermeter::UserIdType::Evccid: return ast_app_layer::UserIdType::EVCCID;
-        case types::powermeter::UserIdType::Evcoid: return ast_app_layer::UserIdType::EVCOID;
-        case types::powermeter::UserIdType::Iso7812: return ast_app_layer::UserIdType::ISO7812;
-        case types::powermeter::UserIdType::Card_Tx_Nbr: return ast_app_layer::UserIdType::CAR_TXN_NR;
-        case types::powermeter::UserIdType::Central: return ast_app_layer::UserIdType::CENTRAL;
-        case types::powermeter::UserIdType::Central_1: return ast_app_layer::UserIdType::CENTRAL_1;
-        case types::powermeter::UserIdType::Central_2: return ast_app_layer::UserIdType::CENTRAL_2;
-        case types::powermeter::UserIdType::Local: return ast_app_layer::UserIdType::LOCAL;
-        case types::powermeter::UserIdType::Local_1: return ast_app_layer::UserIdType::LOCAL_1;
-        case types::powermeter::UserIdType::Local_2: return ast_app_layer::UserIdType::LOCAL_2;
-        case types::powermeter::UserIdType::Phone_Number: return ast_app_layer::UserIdType::PHONE_NUMBER;
-        case types::powermeter::UserIdType::Key_Code: return ast_app_layer::UserIdType::KEY_CODE;
+        case types::powermeter::UserIdType::None: return gsh01_app_layer::UserIdType::NONE;
+        case types::powermeter::UserIdType::Denied: return gsh01_app_layer::UserIdType::DENIED;
+        case types::powermeter::UserIdType::Undefined: return gsh01_app_layer::UserIdType::UNDEFINED;
+        case types::powermeter::UserIdType::Iso14443: return gsh01_app_layer::UserIdType::ISO14443;
+        case types::powermeter::UserIdType::Iso15693: return gsh01_app_layer::UserIdType::ISO15693;
+        case types::powermeter::UserIdType::Emaid: return gsh01_app_layer::UserIdType::EMAID;
+        case types::powermeter::UserIdType::Evccid: return gsh01_app_layer::UserIdType::EVCCID;
+        case types::powermeter::UserIdType::Evcoid: return gsh01_app_layer::UserIdType::EVCOID;
+        case types::powermeter::UserIdType::Iso7812: return gsh01_app_layer::UserIdType::ISO7812;
+        case types::powermeter::UserIdType::Card_Tx_Nbr: return gsh01_app_layer::UserIdType::CAR_TXN_NR;
+        case types::powermeter::UserIdType::Central: return gsh01_app_layer::UserIdType::CENTRAL;
+        case types::powermeter::UserIdType::Central_1: return gsh01_app_layer::UserIdType::CENTRAL_1;
+        case types::powermeter::UserIdType::Central_2: return gsh01_app_layer::UserIdType::CENTRAL_2;
+        case types::powermeter::UserIdType::Local: return gsh01_app_layer::UserIdType::LOCAL;
+        case types::powermeter::UserIdType::Local_1: return gsh01_app_layer::UserIdType::LOCAL_1;
+        case types::powermeter::UserIdType::Local_2: return gsh01_app_layer::UserIdType::LOCAL_2;
+        case types::powermeter::UserIdType::Phone_Number: return gsh01_app_layer::UserIdType::PHONE_NUMBER;
+        case types::powermeter::UserIdType::Key_Code: return gsh01_app_layer::UserIdType::KEY_CODE;
     }
 
     throw std::out_of_range("No known AST type conversion for provided enum of types::powermeter::UserIdType");
@@ -301,7 +301,7 @@ inline std::string log_type_to_string(LogType log) {
 
 class LogEntry {
 public:
-    ast_app_layer::LogType type;
+    gsh01_app_layer::LogType type;
     uint32_t second_index{};
     uint32_t utc_time{};
     uint8_t utc_offset{};
@@ -313,9 +313,9 @@ public:
 
 class Command {
 public:
-    ast_app_layer::CommandType type;
+    gsh01_app_layer::CommandType type;
     uint16_t length;
-    ast_app_layer::CommandStatus status;
+    gsh01_app_layer::CommandStatus status;
     std::vector<uint8_t> data;
 };
 
@@ -323,14 +323,14 @@ static constexpr uint16_t PM_AST_MAX_RX_LENGTH = 1000;
 static constexpr uint16_t PM_AST_SERIAL_RX_INITIAL_TIMEOUT_MS = 1100;
 static constexpr uint16_t PM_AST_SERIAL_RX_WITHIN_MESSAGE_TIMEOUT_MS = 100;
 
-class AstAppLayer {
+class Gsh01AppLayer {
 
 public:
-    AstAppLayer() = default;
-    ~AstAppLayer() = default;
+    Gsh01AppLayer() = default;
+    ~Gsh01AppLayer() = default;
 
-    void create_command_start_transaction(ast_app_layer::UserIdStatus user_id_status,
-                                          ast_app_layer::UserIdType user_id_type,
+    void create_command_start_transaction(gsh01_app_layer::UserIdStatus user_id_status,
+                                          gsh01_app_layer::UserIdType user_id_type,
                                           std::string user_id_data,
                                           int8_t gmt_offset_quarter_hours,
                                           std::vector<uint8_t>& command_data);
@@ -368,12 +368,12 @@ public:
     //void create_command_get_ocmf_config(std::vector<uint8_t>& command_data);
 
     void create_command_get_charge_point_id(std::vector<uint8_t>& command_data);
-    void create_command_set_charge_point_id(ast_app_layer::UserIdType id_type,
+    void create_command_set_charge_point_id(gsh01_app_layer::UserIdType id_type,
                                             std::string id_data,
                                             std::vector<uint8_t>& command_data);
 
-    // void create_command_get_errors(ast_app_layer::ErrorCategory category,
-    //                                ast_app_layer::ErrorSource src,
+    // void create_command_get_errors(gsh01_app_layer::ErrorCategory category,
+    //                                gsh01_app_layer::ErrorSource src,
     //                                std::vector<uint8_t>& command_data);
 
     void create_command_get_log_stats(std::vector<uint8_t>& command_data);
@@ -384,7 +384,7 @@ public:
                                               std::vector<uint8_t>& command_data);
 
     void create_command_get_application_board_mode(std::vector<uint8_t>& command_data);
-    void create_command_set_application_board_mode(ast_app_layer::ApplicationBoardMode mode,
+    void create_command_set_application_board_mode(gsh01_app_layer::ApplicationBoardMode mode,
                                                    std::vector<uint8_t>& command_data);
 
     void create_command_get_hardware_version(std::vector<uint8_t>& command_data);
@@ -402,9 +402,9 @@ public:
     int8_t get_utc_offset_in_quarter_hours(const std::chrono::time_point<std::chrono::system_clock>& timepoint_system_clock);
 
 private:
-    std::vector<uint8_t> create_command(ast_app_layer::Command cmd);
-    std::vector<uint8_t> create_simple_command(ast_app_layer::CommandType cmd_type);
+    std::vector<uint8_t> create_command(gsh01_app_layer::Command cmd);
+    std::vector<uint8_t> create_simple_command(gsh01_app_layer::CommandType cmd_type);
 };
 
-} // namespace ast_app_layer
-#endif // AST_APP_LAYER
+} // namespace gsh01_app_layer
+#endif // GSH01_APP_LAYER

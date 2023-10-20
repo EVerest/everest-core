@@ -72,29 +72,29 @@ private:
     };
 
     MessageStatus start_transaction_msg_status{MessageStatus::NONE};
-    ast_app_layer::CommandResult start_transact_result{};
+    gsh01_app_layer::CommandResult start_transact_result{};
     MessageStatus stop_transaction_msg_status{MessageStatus::NONE};
-    ast_app_layer::CommandResult stop_transact_result{};
+    gsh01_app_layer::CommandResult stop_transact_result{};
     MessageStatus get_transaction_values_msg_status{MessageStatus::NONE};
 
     serial_device::SerialDevice serial_device{};
     slip_protocol::SlipProtocol slip{};
-    ast_app_layer::AstAppLayer app_layer{};
+    gsh01_app_layer::Gsh01AppLayer app_layer{};
 
     types::powermeter::Powermeter pm_last_values;
 
     DeviceData device_data_obj{};
     DeviceDiagnostics device_diagnostics_obj{};
     Logging logging_obj{};
-    ast_app_layer::ErrorCategory category_requested{};
-    ast_app_layer::ErrorSource source_requested{};
+    gsh01_app_layer::ErrorCategory category_requested{};
+    gsh01_app_layer::ErrorSource source_requested{};
     uint8_t error_diagnostics_target{0};
     std::string last_ocmf_str{};
 
     void init_default_values();
     void read_powermeter_values();
     void set_device_time();
-    void set_device_charge_point_id(ast_app_layer::UserIdType id_type, std::string charge_point_id);
+    void set_device_charge_point_id(gsh01_app_layer::UserIdType id_type, std::string charge_point_id);
     void read_device_data();
     void read_diagnostics_data();
     void publish_device_data_topic();
@@ -102,11 +102,12 @@ private:
     void publish_logging_topic();
     void get_device_public_key();
     void readRegisters();
-    ast_app_layer::CommandResult process_response(const std::vector<uint8_t>& register_message);
+    gsh01_app_layer::CommandResult process_response(const std::vector<uint8_t>& register_message);
     void request_device_type();
+    void request_app_sw_version();
     void request_error_diagnostics(uint8_t addr);
     void error_diagnostics(uint8_t addr);
-    ast_app_layer::CommandResult receive_response();
+    gsh01_app_layer::CommandResult receive_response();
     std::string get_meter_ocmf();
 
     static constexpr auto TIMEOUT_2s{std::chrono::seconds(2)};

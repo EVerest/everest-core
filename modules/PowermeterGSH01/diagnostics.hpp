@@ -106,7 +106,7 @@ struct ErrorSet {
 };
 
 struct Logging {
-    ast_app_layer::LogEntry last_log;
+    gsh01_app_layer::LogEntry last_log;
     ErrorSet source[2];
 };
 
