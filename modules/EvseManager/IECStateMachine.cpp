@@ -408,8 +408,12 @@ double IECStateMachine::read_pp_ampacity() {
         return 20.;
     case types::board_support_common::Ampacity::A_32:
         return 32.;
-    case types::board_support_common::Ampacity::A_63:
-        return 63.;
+    case types::board_support_common::Ampacity::A_63_3ph_70_1ph:
+        if (three_phases) {
+            return 63.;
+        } else {
+            return 70.;
+        }
     default:
         return 0.;
     }
@@ -430,6 +434,7 @@ void IECStateMachine::switch_three_phases_while_charging(bool n) {
 void IECStateMachine::setup(bool three_phases, bool has_ventilation, std::string country_code) {
     r_bsp->call_setup(three_phases, has_ventilation, country_code);
     this->has_ventilation = has_ventilation;
+    this->three_phases = three_phases;
 }
 
 // Force an unlock now. This can be sent from OCPP. As locking/unlocking is handled in the BSP the BSP MCU will need

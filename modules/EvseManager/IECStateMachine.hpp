@@ -133,6 +133,8 @@ private:
 
     types::evse_board_support::Reason power_on_reason{types::evse_board_support::Reason::PowerOff};
     void call_allow_power_on_bsp(bool value);
+
+    std::atomic_bool three_phases{true};
 };
 
 } // namespace module
