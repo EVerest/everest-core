@@ -226,7 +226,7 @@ inline gsh01_app_layer::UserIdType user_id_type_conversion_everest_to_ast(types:
         case types::powermeter::UserIdType::Key_Code: return gsh01_app_layer::UserIdType::KEY_CODE;
     }
 
-    throw std::out_of_range("No known AST type conversion for provided enum of types::powermeter::UserIdType");
+    throw std::out_of_range("No known GSH01 type conversion for provided enum of types::powermeter::UserIdType");
 }
 
 

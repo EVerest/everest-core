@@ -64,8 +64,12 @@ void powermeterImpl::init() {
     }
     this->init_default_values();
 
-        request_device_type();
-        set_device_time();
+    request_device_type();
+    get_app_sw_version();
+    get_application_operation_mode();
+    //set_application_operation_mode(gsh01_app_layer::ApplicationBoardMode::APPLICATION);
+    set_device_time();
+    
 }
 
 void powermeterImpl::ready() {
@@ -132,7 +136,8 @@ void powermeterImpl::set_device_time() {
     app_layer.create_command_set_time(date::utc_clock::from_sys(timepoint), gmt_offset_quarters_of_an_hour, set_device_time_cmd);
 
     std::vector<uint8_t> slip_msg_set_device_time = std::move(this->slip.package_single(this->config.powermeter_device_id, set_device_time_cmd));
-        this->serial_device.tx(slip_msg_set_device_time);
+    EVLOG_info << "\nFrame: " << module::conversions::hexdump(slip_msg_set_device_time) << " length: " << slip_msg_set_device_time.size() << "\n\n";
+    this->serial_device.tx(slip_msg_set_device_time);
     receive_response();
 }
 
@@ -279,11 +284,12 @@ void powermeterImpl::request_device_type() {
     std::vector<uint8_t> data_vect{};
     app_layer.create_command_get_device_type(data_vect);
     std::vector<uint8_t> slip_msg_device_type = std::move(this->slip.package_single(this->config.powermeter_device_id, data_vect));
-        this->serial_device.tx(slip_msg_device_type);
+    EVLOG_info << "\nFrame: " << module::conversions::hexdump(slip_msg_device_type) << " length: " << slip_msg_device_type.size() << "\n\n";
+    this->serial_device.tx(slip_msg_device_type);
     receive_response();
 }
 
-void powermeterImpl::request_app_sw_version() {
+void powermeterImpl::get_app_sw_version() {
     std::vector<uint8_t> data_vect{};
     app_layer.create_command_get_application_board_software_version(data_vect);
     std::vector<uint8_t> slip_msg_app_sw_version= std::move(this->slip.package_single(this->config.powermeter_device_id, data_vect));
@@ -292,6 +298,22 @@ void powermeterImpl::request_app_sw_version() {
     receive_response();
 }
 
+void powermeterImpl::get_application_operation_mode() {
+    std::vector<uint8_t> data_vect{};
+    app_layer.create_command_get_application_board_mode(data_vect);
+    std::vector<uint8_t> slip_msg_get_operation_mode= std::move(this->slip.package_single(this->config.powermeter_device_id, data_vect));
+    EVLOG_info << "\nFrame: " << module::conversions::hexdump(slip_msg_get_operation_mode) << " length: " << slip_msg_get_operation_mode.size() << "\n\n";
+    this->serial_device.tx(slip_msg_get_operation_mode);
+    receive_response();
+}
+void powermeterImpl::set_application_operation_mode(gsh01_app_layer::ApplicationBoardMode mode) {
+    std::vector<uint8_t> set_operation_mode_cmd{};
+    app_layer.create_command_set_application_board_mode(mode, set_operation_mode_cmd);
+    std::vector<uint8_t> slip_msg_set_operation_mode= std::move(this->slip.package_single(this->config.powermeter_device_id, set_operation_mode_cmd));
+    EVLOG_info << "\nFrame: " << module::conversions::hexdump(slip_msg_set_operation_mode) << " length: " << slip_msg_set_operation_mode.size() << "\n\n";
+    this->serial_device.tx(slip_msg_set_operation_mode);
+    receive_response();
+}
 
 void powermeterImpl::request_error_diagnostics(uint8_t addr) {
     this->error_diagnostics_target = addr;
@@ -836,6 +858,15 @@ gsh01_app_layer::CommandResult powermeterImpl::process_response(const std::vecto
                     {
                         if (part_data_len < 1) break;
                         device_diagnostics_obj.app_board.mode = part_data[0];
+                        if(device_diagnostics_obj.app_board.mode == (uint8_t)gsh01_app_layer::ApplicationBoardMode::ASSEMBLY){
+                            EVLOG_info << "Operation mode is: ASSEMBLY";
+                        }
+                        else if(device_diagnostics_obj.app_board.mode == (uint8_t)gsh01_app_layer::ApplicationBoardMode::APPLICATION){
+                            EVLOG_info << "Operation mode is: APPLICATION";
+                        }
+                        else{
+                            EVLOG_info << "Operation mode is unknown";
+                        }
                     }
                     break;
 

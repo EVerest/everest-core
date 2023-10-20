@@ -104,7 +104,9 @@ private:
     void readRegisters();
     gsh01_app_layer::CommandResult process_response(const std::vector<uint8_t>& register_message);
     void request_device_type();
-    void request_app_sw_version();
+    void get_app_sw_version();
+    void get_application_operation_mode();
+    void set_application_operation_mode(gsh01_app_layer::ApplicationBoardMode mode);
     void request_error_diagnostics(uint8_t addr);
     void error_diagnostics(uint8_t addr);
     gsh01_app_layer::CommandResult receive_response();
