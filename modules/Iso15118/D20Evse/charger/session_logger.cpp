@@ -64,7 +64,7 @@ public:
         file << "- type: EXI\n";
         add_timestamp(event.time_point);
         file << "  direction: " << event.direction << "\n";
-        file << "  namespace: \"" << event.xml_namespace << "\"\n";
+        file << "  sdp_payload_type: " << event.payload_type << "\n";
         add_hex_encoded_data(event.data, event.len);
     }
 
@@ -76,8 +76,25 @@ private:
     std::fstream file;
 
     void add_timestamp(const iso15118::session::logging::TimePoint& timestamp) {
-        using namespace date;
-        file << "  timestamp: \"" << timestamp << "\"\n";
+        if (not timestamp_initialized) {
+            last_timestamp = timestamp;
+            timestamp_initialized = true;
+        }
+
+        const auto offset_ms = std::chrono::duration_cast<std::chrono::milliseconds>(timestamp - last_timestamp);
+        file << "  timestamp_offset: " <<  offset_ms.count() << "\n";
+
+        const auto dp = date::floor<date::days>(timestamp);
+        const auto time = date::make_time(timestamp-dp);
+        const auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(time.subseconds());
+        file << "  timestamp: \"";
+        file << std::setfill('0') << std::setw(2) << time.hours().count() << ":";
+        file << std::setfill('0') << std::setw(2) << time.minutes().count() << ":";
+        file << std::setfill('0') << std::setw(2) << time.seconds().count() << ".";
+        file << std::setfill('0') << std::setw(4) << milliseconds.count();
+        file << "\"\n";
+
+        last_timestamp = timestamp;
     }
 
     void add_hex_encoded_data(const uint8_t* data, size_t len) {
@@ -88,12 +105,15 @@ private:
         file << std::hex;
 
         for (int i = 0; i < len; ++i) {
-            file << "\\x" << std::setfill('0') << std::setw(2) << static_cast<int>(data[i]);
+            file << std::setfill('0') << std::setw(2) << static_cast<int>(data[i]);
         }
 
         file.flags(flags);
         file << "\"\n";
     }
+
+    iso15118::session::logging::TimePoint last_timestamp;
+    bool timestamp_initialized {false};
 };
 
 SessionLogger::SessionLogger(std::filesystem::path output_dir_) : output_dir(std::filesystem::absolute(output_dir_)) {
