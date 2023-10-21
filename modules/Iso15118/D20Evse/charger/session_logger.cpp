@@ -5,9 +5,12 @@
 #include <chrono>
 #include <cstdio>
 #include <fstream>
+#include <iomanip>
 #include <stdexcept>
 
 #include <time.h>
+
+#include <date/date.h>
 
 #include <iso15118/session/logger.hpp>
 
@@ -25,6 +28,23 @@ std::string get_filename_for_current_time() {
     return buffer;
 }
 
+// static auto timepoint_to_string(const iso15118::session::logging::TimePoint& timepoint) {
+//     using namespace date;
+//     return static_cast<std::string>(timepoint);
+// }
+
+std::ostream& operator<<(std::ostream& os, const iso15118::session::logging::ExiMessageDirection& direction) {
+    using Direction = iso15118::session::logging::ExiMessageDirection;
+    switch (direction) {
+    case Direction::FROM_EV:
+        return os << "FROM_EV";
+    case Direction::TO_EV:
+        return os << "TO_EV";
+    }
+
+    return os;
+}
+
 class SessionLog {
 public:
     SessionLog(const std::string& file_name) : file(file_name.c_str(), std::ios::out) {
@@ -35,10 +55,17 @@ public:
         printf("Created logfile at: %s\n", file_name.c_str());
     }
     void operator()(const iso15118::session::logging::SimpleEvent& event) {
-        file << "  " << event.info << "\n";
+        file << "- type: INFO\n";
+        add_timestamp(event.time_point);
+        file << "  info: \"" << event.info << "\"\n";
     }
 
     void operator()(const iso15118::session::logging::ExiMessageEvent& event) {
+        file << "- type: EXI\n";
+        add_timestamp(event.time_point);
+        file << "  direction: " << event.direction << "\n";
+        file << "  namespace: \"" << event.xml_namespace << "\"\n";
+        add_hex_encoded_data(event.data, event.len);
     }
 
     void flush() {
@@ -47,6 +74,26 @@ public:
 
 private:
     std::fstream file;
+
+    void add_timestamp(const iso15118::session::logging::TimePoint& timestamp) {
+        using namespace date;
+        file << "  timestamp: \"" << timestamp << "\"\n";
+    }
+
+    void add_hex_encoded_data(const uint8_t* data, size_t len) {
+        file << "  data: \"";
+
+        const auto flags = file.flags();
+
+        file << std::hex;
+
+        for (int i = 0; i < len; ++i) {
+            file << "\\x" << std::setfill('0') << std::setw(2) << static_cast<int>(data[i]);
+        }
+
+        file.flags(flags);
+        file << "\"\n";
+    }
 };
 
 SessionLogger::SessionLogger(std::filesystem::path output_dir_) : output_dir(std::filesystem::absolute(output_dir_)) {
