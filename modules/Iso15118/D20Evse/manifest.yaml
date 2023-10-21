@@ -15,6 +15,14 @@ config:
     description: Path to logging directory (will be created if non existent)
     type: string
     default: "."
+  tls_negotiation_strategy:
+    description: Select strategy on how to negotiate connection encryption
+    type: string
+    enum:
+      - ACCEPT_CLIENT_OFFER
+      - ENFORCE_TLS
+      - ENFORCE_NO_TLS
+    default: ACCEPT_CLIENT_OFFER
 provides:
   charger:
     interface: ISO15118_charger

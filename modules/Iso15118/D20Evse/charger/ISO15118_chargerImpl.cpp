@@ -27,6 +27,20 @@ static std::filesystem::path get_cert_path(const std::filesystem::path& initial_
     }
 }
 
+static iso15118::config::TlsNegotiationStrategy convert_tls_negotiation_strategy(const std::string& strategy) {
+    using Strategy = iso15118::config::TlsNegotiationStrategy;
+    if (strategy.compare("ACCEPT_CLIENT_OFFER") == 0) {
+        return Strategy::ACCEPT_CLIENT_OFFER;
+    } else if (strategy.compare("ENFORCE_TLS") == 0) {
+        return Strategy::ENFORCE_TLS;
+    } else if (strategy.compare("ENFORCE_NO_TLS") == 0) {
+        return Strategy::ENFORCE_NO_TLS;
+    } else {
+        EVLOG_AND_THROW(Everest::EverestConfigError("Invalid choice for tls_negotiation_strategy: " + strategy));
+        // better safe than sorry
+    }
+}
+
 void ISO15118_chargerImpl::init() {
     // setup logging routine
     iso15118::io::set_logging_callback([](const std::string& msg) { EVLOG_info << msg; });
@@ -37,8 +51,11 @@ void ISO15118_chargerImpl::init() {
 
     const auto cert_path = get_cert_path(default_cert_path, mod->config.certificate_path);
 
-    iso15118::TbdConfig tbd_config = {{iso15118::config::CertificateBackend::EVEREST_LAYOUT, cert_path.string()},
-                                      mod->config.device};
+    iso15118::TbdConfig tbd_config = {
+        {iso15118::config::CertificateBackend::EVEREST_LAYOUT, cert_path.string()},
+        mod->config.device,
+        convert_tls_negotiation_strategy(mod->config.tls_negotiation_strategy),
+    };
 
     controller = std::make_unique<iso15118::TbdController>(std::move(tbd_config));
 }
