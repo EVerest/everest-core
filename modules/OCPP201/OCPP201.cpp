@@ -766,8 +766,9 @@ void OCPP201::ready() {
                 }
 
                 this->charge_point->on_transaction_started(
-                    evse_id, connector_id, session_id, timestamp, trigger_reason, meter_value, id_token, std::nullopt,
-                    reservation_id, remote_start_id,
+                    evse_id, connector_id, session_id, timestamp,
+                    ocpp::v201::TriggerReasonEnum::RemoteStart, // FIXME(piet): Use proper reason here
+                    meter_value, id_token, std::nullopt, reservation_id, remote_start_id,
                     ocpp::v201::ChargingStateEnum::EVConnected); // FIXME(piet): add proper groupIdToken +
                                                                  // ChargingStateEnum
                 break;
@@ -840,18 +841,50 @@ void OCPP201::ready() {
             const auto meter_value = get_meter_value(power_meter, ocpp::v201::ReadingContextEnum::Sample_Periodic);
             this->charge_point->on_meter_value(evse_id, meter_value);
         });
+
+        evse->subscribe_iso15118_certificate_request(
+            [this, evse_id](const types::iso15118_charger::Request_Exi_Stream_Schema& certificate_request) {
+                // transform request forward to libocpp
+                ocpp::v201::Get15118EVCertificateRequest ocpp_request;
+                ocpp_request.exiRequest = certificate_request.exiRequest;
+                ocpp_request.iso15118SchemaVersion = certificate_request.iso15118SchemaVersion;
+                ocpp_request.action = [](const types::iso15118_charger::CertificateActionEnum& action) {
+                    switch (action) {
+                    case types::iso15118_charger::CertificateActionEnum::Install:
+                        return ocpp::v201::CertificateActionEnum::Install;
+                    case types::iso15118_charger::CertificateActionEnum::Update:
+                        return ocpp::v201::CertificateActionEnum::Update;
+                    }
+                }(certificate_request.certificateAction);
+
+                auto ocpp_response = this->charge_point->on_get_15118_ev_certificate_request(ocpp_request);
+                EVLOG_info << "received response: " << ocpp_response;
+                // transform response, inject action, send to associated EvseManager
+                const auto everest_response_status = [](const ocpp::v201::Iso15118EVCertificateStatusEnum& action) {
+                    switch (action) {
+                    case ocpp::v201::Iso15118EVCertificateStatusEnum::Accepted:
+                        return types::iso15118_charger::Status::Accepted;
+                    case ocpp::v201::Iso15118EVCertificateStatusEnum::Failed:
+                        return types::iso15118_charger::Status::Failed;
+                    }
+                }(ocpp_response.status);
+                const types::iso15118_charger::Response_Exi_Stream_Status everest_response{
+                    everest_response_status, certificate_request.certificateAction, ocpp_response.exiResponse};
+                EVLOG_info << "return response: " << everest_response;
+                this->r_evse_manager.at(evse_id - 1)->call_set_get_certificate_response(everest_response);
+            });
+
         evse_id++;
-
-        r_system->subscribe_firmware_update_status([this](const types::system::FirmwareUpdateStatus status) {
-            this->charge_point->on_firmware_update_status_notification(
-                status.request_id, get_firmware_status_notification(status.firmware_update_status));
-        });
-
-        r_system->subscribe_log_status([this](types::system::LogStatus status) {
-            this->charge_point->on_log_status_notification(get_upload_log_status_enum(status.log_status),
-                                                           status.request_id);
-        });
     }
+    r_system->subscribe_firmware_update_status([this](const types::system::FirmwareUpdateStatus status) {
+        this->charge_point->on_firmware_update_status_notification(
+            status.request_id, get_firmware_status_notification(status.firmware_update_status));
+    });
+
+    r_system->subscribe_log_status([this](types::system::LogStatus status) {
+        this->charge_point->on_log_status_notification(get_upload_log_status_enum(status.log_status),
+                                                       status.request_id);
+    });
 
     std::unique_lock lk(this->evse_ready_mutex);
     while (!this->all_evse_ready()) {

@@ -132,7 +132,7 @@ cmds:
       and the corresponding encrypted private key. Should be forwared to EVCC.
       This is an async response to a previously published iso15118_certificate_request
     arguments:
-      certificate_reponse:
+      certificate_response:
         description: The response raw exi stream and the status from the CSMS system
         type: object
         $ref: /iso15118_charger#/Response_Exi_Stream_Status

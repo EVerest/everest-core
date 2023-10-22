@@ -51,7 +51,7 @@ protected:
     virtual types::evse_manager::SwitchThreePhasesWhileChargingResult
     handle_switch_three_phases_while_charging(bool& three_phases) override;
     virtual void handle_set_get_certificate_response(
-        types::iso15118_charger::Response_Exi_Stream_Status& certificate_reponse) override;
+        types::iso15118_charger::Response_Exi_Stream_Status& certificate_response) override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
     // insert your protected definitions here
