@@ -688,7 +688,7 @@ TEST_F(AuthTest, test_complete_event_flow) {
     SessionEvent session_event_2;
     session_event_2.event = SessionEventEnum::TransactionStarted;
     TransactionStarted transaction_event;
-    transaction_event.energy_Wh_import.total = 0;
+    transaction_event.meter_value.energy_Wh_import.total = 0;
     transaction_event.id_tag = provided_token;
     transaction_event.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
 
@@ -873,7 +873,7 @@ TEST_F(AuthTest, test_two_transactions_start_stop) {
     transaction_event_1.meter_value.energy_Wh_import.total = 0;
     transaction_event_1.id_tag = provided_token_1;
     transaction_event_1.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
-    session_event2.meter_value.transaction_started = transaction_event_1;
+    session_event2.transaction_started = transaction_event_1;
 
     SessionEvent session_event3;
     session_event3.event = SessionEventEnum::TransactionStarted;
