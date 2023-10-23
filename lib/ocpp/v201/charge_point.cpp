@@ -1994,9 +1994,10 @@ void ChargePoint::handle_remote_start_transaction_request(Call<RequestStartTrans
     // Check if evse id is given.
     if (msg.evseId.has_value()) {
         const int32_t evse_id = msg.evseId.value();
-        const auto& evse = this->evses.at(evse_id);
+        const auto it_evse{this->evses.find(evse_id)};
 
-        if (evse != nullptr) {
+        if (it_evse != this->evses.cend()) {
+            const auto& evse{it_evse->second};
             // TODO F01.FR.26 If a Charging Station with support for Smart Charging receives a
             // RequestStartTransactionRequest with an invalid ChargingProfile: The Charging Station SHALL respond
             // with RequestStartTransactionResponse with status = Rejected and optionally with reasonCode =
@@ -2022,7 +2023,10 @@ void ChargePoint::handle_remote_start_transaction_request(Call<RequestStartTrans
 
                 remote_start_id_per_evse[evse_id] = {msg.idToken, msg.remoteStartId};
             }
+        } else {
+            EVLOG_warning << "Invalid evse id given. Can not remote start transaction.";
         }
+
     } else {
         // F01.FR.07 RequestStartTransactionRequest does not contain an evseId. The Charging Station MAY reject the
         // RequestStartTransactionRequest. We do this for now (send rejected) (TODO: eventually support the charging
