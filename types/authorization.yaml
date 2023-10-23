@@ -25,6 +25,14 @@ types:
       - NoCertificateAvailable
       - CertChainError
       - ContractCancelled
+  TokenValidationStatus:
+    description: Ongoing token validation status
+    type: string
+    enum:
+      - Idle
+      - Processing
+      - Accepted
+      - Rejected
   ProvidedIdToken:
     description: Type for Token provided by auth token providers
     type: object
