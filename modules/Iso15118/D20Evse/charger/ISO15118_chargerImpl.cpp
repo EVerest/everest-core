@@ -11,6 +11,9 @@
 #include <iso15118/tbd_controller.hpp>
 
 std::unique_ptr<iso15118::TbdController> controller;
+
+iso15118::TbdConfig tbd_config;
+
 std::unique_ptr<SessionLogger> session_logger;
 
 namespace module {
@@ -62,7 +65,7 @@ void ISO15118_chargerImpl::init() {
 
     const auto cert_path = get_cert_path(default_cert_path, mod->config.certificate_path);
 
-    iso15118::TbdConfig tbd_config = {
+    tbd_config = {
         {
             iso15118::config::CertificateBackend::EVEREST_LAYOUT,
             cert_path.string(),
@@ -73,11 +76,29 @@ void ISO15118_chargerImpl::init() {
         convert_tls_negotiation_strategy(mod->config.tls_negotiation_strategy),
     };
 
-    controller = std::make_unique<iso15118::TbdController>(std::move(tbd_config));
+    controller = std::make_unique<iso15118::TbdController>(tbd_config);
 }
 
 void ISO15118_chargerImpl::ready() {
-    controller->loop();
+    // FIXME (aw): this is just plain stupid ...
+    while (true) {
+        try {
+            controller->loop();
+        } catch (const std::exception& e) {
+            EVLOG_error << "D20Evse chrashed: " << e.what();
+            publish_dlink_error(nullptr);
+        }
+
+        controller.reset();
+
+        const auto RETRY_INTERVAL = std::chrono::milliseconds(1000);
+
+        EVLOG_info << "Trying to restart in " << std::to_string(RETRY_INTERVAL.count()) << " milliseconds";
+
+        std::this_thread::sleep_for(RETRY_INTERVAL);
+
+        controller = std::make_unique<iso15118::TbdController>(tbd_config);
+    }
 }
 
 void ISO15118_chargerImpl::handle_set_EVSEID(std::string& EVSEID, std::string& EVSEID_DIN) {
