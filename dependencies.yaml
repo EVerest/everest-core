@@ -58,7 +58,7 @@ ext-mbedtls:
 # everest-testing
 everest-utils:
   git: https://github.com/EVerest/everest-utils.git
-  git_tag: v0.1.5
+  git_tag: 14adc34
 # evse-security, since this is a direct dependency of libocpp it will get overwritten by the version set there
 # setting it here can be misleading since it does not affect the version being used
 libevse-security:
