@@ -103,7 +103,7 @@ void X509Wrapper::update_validity() {
     ASN1_TIME* notAfter = X509_get_notAfter(get());
 
     int day, sec;
-    ASN1_TIME_diff(&day, &sec, notBefore, nullptr);
+    ASN1_TIME_diff(&day, &sec, nullptr, notBefore);
     valid_in = std::chrono::duration_cast<std::chrono::seconds>(ossl_days_to_seconds(day)).count() +
                sec; // Convert days to seconds
     ASN1_TIME_diff(&day, &sec, nullptr, notAfter);
@@ -125,7 +125,12 @@ int X509Wrapper::get_valid_to() const {
 }
 
 bool X509Wrapper::is_valid() const {
-    return (get_valid_in() >= 0);
+    // The valid_in must be in the past and the valid_to must be in the future
+    return (get_valid_in() <= 0) && (get_valid_to() >= 0);
+}
+
+bool X509Wrapper::is_expired() const {
+    return (get_valid_to() < 0);
 }
 
 std::optional<std::filesystem::path> X509Wrapper::get_file() const {
