@@ -55,6 +55,9 @@ void ISO15118_chargerImpl::init() {
         publish_DC_EVTargetVoltageCurrent(target_values);
     });
 
+    iso15118::session::callbacks::set_dc_charge_loop_started([this]() { publish_currentDemand_Started(nullptr); });
+    iso15118::session::callbacks::set_v2g_setup_finished([this]() { publish_V2G_Setup_Finished(nullptr); });
+
     const auto default_cert_path = mod->info.paths.etc / "certs";
 
     const auto cert_path = get_cert_path(default_cert_path, mod->config.certificate_path);
