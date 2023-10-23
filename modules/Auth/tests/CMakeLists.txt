@@ -18,6 +18,7 @@ find_package(GTest REQUIRED)
 target_link_libraries(auth_tests PRIVATE
     ${GTEST_LIBRARIES} 
     ${GTEST_MAIN_LIBRARIES} 
+    GTest::gmock
     everest::timer
     ${CMAKE_DL_LIBS}
     everest::log
