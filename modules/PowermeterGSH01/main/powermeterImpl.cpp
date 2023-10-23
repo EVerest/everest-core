@@ -188,39 +188,19 @@ void powermeterImpl::read_device_data() {
         std::vector<uint8_t> get_total_stop_import_energy_cmd{};
         app_layer.create_command_get_total_stop_import_energy(get_total_stop_import_energy_cmd);
 
-        // std::vector<uint8_t> get_total_start_export_energy_cmd{};
-        // app_layer.create_command_get_total_start_export_energy(get_total_start_export_energy_cmd);
-
-        // std::vector<uint8_t> get_total_stop_export_energy_cmd{};
-        // app_layer.create_command_get_total_stop_export_energy(get_total_stop_export_energy_cmd);
-
-        // std::vector<uint8_t> get_total_transaction_duration_cmd{};
-        // app_layer.create_command_get_total_transaction_duration(get_total_transaction_duration_cmd);
-
         std::vector<uint8_t> get_ocmf_stats_cmd{};
         app_layer.create_command_get_ocmf_stats(get_ocmf_stats_cmd);
 
         std::vector<uint8_t> get_last_transaction_ocmf_cmd{};
         app_layer.create_command_get_last_transaction_ocmf(get_last_transaction_ocmf_cmd);
 
-        // std::vector<uint8_t> get_ocmf_info_cmd{};
-        // app_layer.create_command_get_ocmf_info(get_ocmf_info_cmd);
-
-        // std::vector<uint8_t> get_ocmf_config_cmd{};
-        // app_layer.create_command_get_ocmf_config(get_ocmf_config_cmd);
-
         std::vector<uint8_t> slip_msg_read_device_data = std::move(this->slip.package_multi(this->config.powermeter_device_id,
                                                                                             {
                                                                                                 get_time_cmd,
                                                                                                 get_total_start_import_energy_cmd,
                                                                                                 get_total_stop_import_energy_cmd,
-                                                                                                //get_total_start_export_energy_cmd,
-                                                                                                //get_total_stop_export_energy_cmd,
-                                                                                                // get_total_transaction_duration_cmd,
                                                                                                 get_ocmf_stats_cmd,
                                                                                                 get_last_transaction_ocmf_cmd
-                                                                                                //get_ocmf_info_cmd,
-                                                                                                //get_ocmf_config_cmd
                                                                                             }));
         this->serial_device.tx(slip_msg_read_device_data);
         receive_response();
@@ -229,16 +209,12 @@ void powermeterImpl::read_device_data() {
         std::vector<uint8_t> get_total_dev_import_energy_cmd{};
         app_layer.create_command_get_total_dev_import_energy(get_total_dev_import_energy_cmd);
 
-        // std::vector<uint8_t> get_total_dev_export_energy_cmd{};
-        // app_layer.create_command_get_total_dev_export_energy(get_total_dev_export_energy_cmd);
-
         std::vector<uint8_t> get_application_board_status_cmd{};
         app_layer.create_command_get_application_board_status(get_application_board_status_cmd);
 
         std::vector<uint8_t> slip_msg_read_device_data_2 = std::move(this->slip.package_multi(this->config.powermeter_device_id,
                                                                                               {
                                                                                                   get_total_dev_import_energy_cmd,
-                                                                                                  //get_total_dev_export_energy_cmd,
                                                                                                   get_application_board_status_cmd
                                                                                               }));
         this->serial_device.tx(slip_msg_read_device_data_2);
@@ -248,9 +224,6 @@ void powermeterImpl::read_device_data() {
 
 void powermeterImpl::get_device_public_key() {
     {
-        // std::vector<uint8_t> get_device_public_key_cmd{};
-        // app_layer.create_command_get_meter_pubkey(get_device_public_key_cmd);
-
         std::vector<uint8_t> get_device_public_key_asn1_cmd{};
         app_layer.create_command_get_pubkey_asn1(get_device_public_key_asn1_cmd);
 
@@ -259,7 +232,6 @@ void powermeterImpl::get_device_public_key() {
 
         std::vector<uint8_t> slip_msg_get_device_public_keys = std::move(this->slip.package_multi(this->config.powermeter_device_id,
                                                                                                   {
-                                                                                                      //get_device_public_key_cmd,
                                                                                                       get_device_public_key_asn1_cmd,
                                                                                                       get_device_public_key_str16_cmd
                                                                                                   }));
@@ -327,45 +299,6 @@ void powermeterImpl::error_diagnostics(uint8_t addr) {
     this->serial_device.tx(slip_msg_last_log_entry);
     receive_response();
 
-    // std::vector<uint8_t> last_system_errors_cmd{};
-    // app_layer.create_command_get_errors(ast_app_layer::ErrorCategory::LAST,
-    //                                     ast_app_layer::ErrorSource::SYSTEM,
-    //                                     last_system_errors_cmd);
-    // category_requested = ast_app_layer::ErrorCategory::LAST;
-    // source_requested = ast_app_layer::ErrorSource::SYSTEM;
-    // std::vector<uint8_t> slip_msg_last_system_errors = std::move(this->slip.package_single(this->config.powermeter_device_id, last_system_errors_cmd));
-    // this->serial_device.tx(slip_msg_last_system_errors);
-    // receive_response();
-
-    // std::vector<uint8_t> last_critical_system_errors_cmd{};
-    // app_layer.create_command_get_errors(ast_app_layer::ErrorCategory::LAST_CRITICAL,
-    //                                     ast_app_layer::ErrorSource::SYSTEM,
-    //                                     last_critical_system_errors_cmd);
-    // category_requested = ast_app_layer::ErrorCategory::LAST_CRITICAL;
-    // source_requested = ast_app_layer::ErrorSource::SYSTEM;
-    // std::vector<uint8_t> slip_msg_last_critical_system_errors = std::move(this->slip.package_single(this->config.powermeter_device_id, last_critical_system_errors_cmd));
-    // this->serial_device.tx(slip_msg_last_critical_system_errors);
-    // receive_response();
-
-    // std::vector<uint8_t> last_comm_errors_cmd{};
-    // app_layer.create_command_get_errors(ast_app_layer::ErrorCategory::LAST,
-    //                                     ast_app_layer::ErrorSource::COMMUNICATION,
-    //                                     last_comm_errors_cmd);
-    // category_requested = ast_app_layer::ErrorCategory::LAST;
-    // source_requested = ast_app_layer::ErrorSource::COMMUNICATION;
-    // std::vector<uint8_t> slip_msg_last_communication_errors = std::move(this->slip.package_single(this->config.powermeter_device_id, last_comm_errors_cmd));
-    // this->serial_device.tx(slip_msg_last_communication_errors);
-    // receive_response();
-
-    // std::vector<uint8_t> last_critical_comm_errors_cmd{};
-    // app_layer.create_command_get_errors(ast_app_layer::ErrorCategory::LAST_CRITICAL,
-    //                                     ast_app_layer::ErrorSource::COMMUNICATION,
-    //                                     last_critical_comm_errors_cmd);
-    // category_requested = ast_app_layer::ErrorCategory::LAST_CRITICAL;
-    // source_requested = ast_app_layer::ErrorSource::COMMUNICATION;
-    // std::vector<uint8_t> slip_msg_last_critical_communication_errors = std::move(this->slip.package_single(this->config.powermeter_device_id, last_critical_comm_errors_cmd));
-    // this->serial_device.tx(slip_msg_last_critical_communication_errors);
-    // receive_response();
 }
 
 void powermeterImpl::read_diagnostics_data() {
@@ -429,9 +362,6 @@ void powermeterImpl::read_diagnostics_data() {
         std::vector<uint8_t> get_metering_board_fw_checksum_cmd{};
         app_layer.create_command_get_metering_board_fw_checksum(get_metering_board_fw_checksum_cmd);
         
-        //std::vector<uint8_t> get_ocmf_config_cmd{};
-        //app_layer.create_command_get_ocmf_config(get_ocmf_config_cmd);
-
         std::vector<uint8_t> slip_msg_get_diagnostics_data_3 = std::move(this->slip.package_multi(this->config.powermeter_device_id,
                                                                                                   {
                                                                                                       get_application_board_serial_number_cmd,
@@ -491,9 +421,6 @@ void powermeterImpl::readRegisters() {
     std::vector<uint8_t> get_import_power_cmd{};
     app_layer.create_command_get_import_power(get_import_power_cmd);
 
-    //std::vector<uint8_t> export_power_cmd{};
-    //app_layer.create_command_get_export_power(export_power_cmd);
-
     std::vector<uint8_t> get_total_power_cmd{};
     app_layer.create_command_get_total_power(get_total_power_cmd);
 
@@ -552,7 +479,6 @@ gsh01_app_layer::CommandResult powermeterImpl::process_response(const std::vecto
                 if ((part_cmd != (uint16_t)gsh01_app_layer::CommandType::START_TRANSACTION)  &&
                     (part_cmd != (uint16_t)gsh01_app_layer::CommandType::STOP_TRANSACTION)   &&
                     (part_cmd != (uint16_t)gsh01_app_layer::CommandType::GET_LAST_LOG_ENTRY) &&
-                    //(part_cmd != (uint16_t)ast_app_layer::CommandType::GET_ERRORS)         &&
                     (part_cmd != (uint16_t)gsh01_app_layer::CommandType::GET_LAST_OCMF)) {
                     EVLOG_info << "Retrieving diagnostics data for error at command " << module::conversions::hexdump(part_cmd) << "...";
                     request_error_diagnostics(dest_addr);
@@ -617,12 +543,6 @@ gsh01_app_layer::CommandResult powermeterImpl::process_response(const std::vecto
                     }
                     break;
 
-                // case (int)gsh01_app_layer::CommandType::GET_EXPORT_DEV_POWER:
-                //     {
-                //         EVLOG_info << "(GET_EXPORT_DEV_POWER) Not yet implemented. [" << (float)get_u32(part_data) / 100.0  /* powermeter reports in [W * 100] */ << " W]";
-                //     }
-                //     break;
-
                 case (int)gsh01_app_layer::CommandType::GET_TOTAL_DEV_POWER:
                     {
                         EVLOG_info << "(GET_TOTAL_DEV_POWER) Not yet implemented. [" << (float)get_u32(part_data) / 100.0  /* powermeter reports in [W * 100] */ << " W]";
@@ -640,20 +560,6 @@ gsh01_app_layer::CommandResult powermeterImpl::process_response(const std::vecto
                     }
                     break;
 
-                // case (int)gsh01_app_layer::CommandType::GET_TOTAL_EXPORT_DEV_ENERGY:
-                //     {
-                //         if (part_data_len < 8) break;
-                //         types::units::Energy energy_out{};
-                //         if (this->pm_last_values.energy_Wh_export.has_value()) {
-                //             energy_out = this->pm_last_values.energy_Wh_export.value();
-                //         }
-                //         energy_out.total = (float)get_u64(part_data) / 10.0;  // powermeter reports in [Wh * 10]
-                //         this->pm_last_values.energy_Wh_export = energy_out;
-
-                //         device_data_obj.total_dev_export_energy_Wh = get_u64(part_data) / 10.0;  // powermeter reports in [Wh * 10]
-                //     }
-                //     break;
-
                 case (int)gsh01_app_layer::CommandType::GET_TOTAL_START_IMPORT_DEV_ENERGY:
                     {
                         if (part_data_len < 8) break;
@@ -668,20 +574,6 @@ gsh01_app_layer::CommandResult powermeterImpl::process_response(const std::vecto
                     }
                     break;
 
-                // case (int)gsh01_app_layer::CommandType::GET_TOTAL_START_EXPORT_DEV_ENERGY:
-                //     {
-                //         if (part_data_len < 8) break;
-                //         device_data_obj.total_start_export_energy_Wh = get_u64(part_data) / 10.0;  // powermeter reports in [Wh * 10]  
-                //     }
-                //     break;
-
-                // case (int)gsh01_app_layer::CommandType::GET_TOTAL_STOP_EXPORT_DEV_ENERGY:
-                //     {
-                //         if (part_data_len < 8) break;
-                //         device_data_obj.total_stop_export_energy_Wh = get_u64(part_data) / 10.0;  // powermeter reports in [Wh * 10]
-                //     }
-                //     break;
-
                 case (int)gsh01_app_layer::CommandType::GET_TRANSACT_TOTAL_DURATION:
                     {
                         if (part_data_len < 4) break;
@@ -694,7 +586,6 @@ gsh01_app_layer::CommandResult powermeterImpl::process_response(const std::vecto
                         if (part_data_len < 130) break;
                         device_diagnostics_obj.pubkey_str16_format = part_data[0];
                         device_diagnostics_obj.pubkey_str16 = module::conversions::hexdump(part_data, 1, 129);
-                        // device_diagnostics_obj.pubkey_str16 = module::conversions::hexdump(part_data, 0, 130);
                     }
                     break;
 
@@ -704,14 +595,6 @@ gsh01_app_layer::CommandResult powermeterImpl::process_response(const std::vecto
                         device_diagnostics_obj.pubkey_asn1 = module::conversions::hexdump(part_data, 0, 176);
                     }
                     break;
-
-                // case (int)gsh01_app_layer::CommandType::REQUEST_METER_PUBKEY:
-                //     {
-                //         if (part_data_len < 65) break;
-                //         device_diagnostics_obj.pubkey_format = part_data[0];
-                //         device_diagnostics_obj.pubkey = module::conversions::hexdump(part_data, 1, 64);
-                //     }
-                //     break;
 
             // diagnostics
 
@@ -746,55 +629,6 @@ gsh01_app_layer::CommandResult powermeterImpl::process_response(const std::vecto
                     }
                     break;
 
-                // case (int)gsh01_app_layer::CommandType::OCMF_INFO:
-                //     {
-                //         if (part_data_len < 1) break;
-                //         // gateway_id
-                //         if (part_data_len < part_data[0]) break;  // error, data too short
-                //         uint8_t length_gateway_id = part_data[0];
-                //         if (length_gateway_id > 18) length_gateway_id = 18; // max length
-                //         if (length_gateway_id > 0) {
-                //             device_data_obj.ocmf_info.gateway_id = get_str(part_data, 1, length_gateway_id);
-                //             length_gateway_id++;    // add length info byte for following calculations
-                //         } else {
-                //             device_data_obj.ocmf_info.gateway_id = "";
-                //             length_gateway_id = 1; // length info always requires at least one byte
-                //         }
-
-                //         // manufacturer
-                //         if (part_data_len < (length_gateway_id + part_data[length_gateway_id] + 1)) break;  // error, data too short
-                //         uint8_t length_manufacturer = part_data[length_gateway_id];
-                //         if (length_manufacturer > 4) length_manufacturer = 4; // max length
-                //         if (length_manufacturer > 0) {
-                //             device_data_obj.ocmf_info.manufacturer = get_str(part_data, length_gateway_id + 1, length_manufacturer);
-                //             length_manufacturer++;    // add length info byte for following calculations
-                //         } else {
-                //             device_data_obj.ocmf_info.manufacturer = "";
-                //             length_manufacturer = 1; // length info always requires at least one byte
-                //         }
-
-                //         // model
-                //         if (part_data_len < (length_gateway_id + length_manufacturer + part_data[length_gateway_id + length_manufacturer])) break;  // error, data too short
-                //         uint8_t length_model = part_data[length_gateway_id + length_manufacturer];
-                //         if (length_model > 18) length_model = 18; // max length
-                //         if (length_model > 0) {
-                //             device_data_obj.ocmf_info.model = get_str(part_data, (length_gateway_id + length_manufacturer + 1), length_model);
-                //         } else {
-                //             device_data_obj.ocmf_info.model = "";
-                //         }
-                //     }
-                //     break;
-
-                // case (int)gsh01_app_layer::CommandType::OCMF_CONFIG:
-                //     {
-                //         if (part_data_len < 16) break;
-                //         device_diagnostics_obj.ocmf_config_table.clear();
-                //         for (uint8_t n = 0; n < part_data_len; n++) {
-                //             device_diagnostics_obj.ocmf_config_table.push_back(part_data[n]);
-                //         }
-                //     }
-                //     break;
-
                 case (int)gsh01_app_layer::CommandType::CHARGE_POINT_ID:
                     {
                         if (part_data_len < 14) break;
@@ -802,23 +636,6 @@ gsh01_app_layer::CommandResult powermeterImpl::process_response(const std::vecto
                         device_diagnostics_obj.charge_point_id = get_str(part_data, 1, 13);
                     }
                     break;
-
-                // case (int)gsh01_app_layer::CommandType::GET_ERRORS:
-                //     {
-                //         if (part_data_len < 50) break;
-                //         uint j = 0;
-                //         for (uint8_t i = 0; i < 5; i++) {
-                //             j = i * 10;
-                //             logging_obj.source[(uint8_t)source_requested].category[(uint8_t)category_requested].error[i].id       = get_u32(part_data, j);
-                //             logging_obj.source[(uint8_t)source_requested].category[(uint8_t)category_requested].error[i].priority = get_u16(part_data, j + 4);
-                //             logging_obj.source[(uint8_t)source_requested].category[(uint8_t)category_requested].error[i].counter  = get_u32(part_data, j + 6);
-                //             EVLOG_info << "Error #" << (int)i << " for source (" << (int)source_requested << ") and category (" << (int)category_requested 
-                //                         << "):\nID:      " << get_u32(part_data, j)
-                //                         << "\nPrio:    " << get_u16(part_data, j + 4)
-                //                         << "\nCounter: " << get_u32(part_data, j + 6);
-                //         }
-                //     }
-                //     break;
 
                 case (int)gsh01_app_layer::CommandType::GET_LOG_STATS:
                     {
@@ -949,7 +766,6 @@ gsh01_app_layer::CommandResult powermeterImpl::process_response(const std::vecto
 
             // not (yet) implemented
 
-                //case (int)ast_app_layer::CommandType::RESET_DC_METER:
                 case (int)gsh01_app_layer::CommandType::AB_TRANSPARENT_MODE:
                 case (int)gsh01_app_layer::CommandType::AP_BL_VERSION:
                 case (int)gsh01_app_layer::CommandType::MEASUREMENT_MODE:
@@ -962,50 +778,30 @@ gsh01_app_layer::CommandResult powermeterImpl::process_response(const std::vecto
                 case (int)gsh01_app_layer::CommandType::LINE_LOSS_IMPEDANCE:
                 case (int)gsh01_app_layer::CommandType::LINE_LOSS_MEAS_MODE:
                 case (int)gsh01_app_layer::CommandType::MB_MODE_SET:
-                //case (int)gsh01_app_layer::CommandType::TEMPERATURE:
                 case (int)gsh01_app_layer::CommandType::AP_CONFIG_COMPLETE:
                 case (int)gsh01_app_layer::CommandType::METER_BUS_ADDR:
                 case (int)gsh01_app_layer::CommandType::AS_CONFIG_COMPLETE:
                 case (int)gsh01_app_layer::CommandType::GET_OCMF_REVERSE:
-                //case (int)gsh01_app_layer::CommandType::GET_PUBKEY_BIN:
                 case (int)gsh01_app_layer::CommandType::GET_TRANSACT_IMPORT_LINE_LOSS_ENERGY:
-                //case (int)gsh01_app_layer::CommandType::GET_TRANSACT_EXPORT_LINE_LOSS_ENERGY:
                 case (int)gsh01_app_layer::CommandType::GET_TRANSACT_TOTAL_IMPORT_DEV_ENERGY:
-                //case (int)gsh01_app_layer::CommandType::GET_TRANSACT_TOTAL_EXPORT_DEV_ENERGY:
                 case (int)gsh01_app_layer::CommandType::GET_TRANSACT_TOTAL_IMPORT_MAINS_ENERGY:
-                //case (int)gsh01_app_layer::CommandType::GET_TRANSACT_TOTAL_EXPORT_MAINS_ENERGY:
                 case (int)gsh01_app_layer::CommandType::GET_TOTAL_START_IMPORT_LINE_LOSS_ENERGY:
-                //case (int)gsh01_app_layer::CommandType::GET_TOTAL_START_EXPORT_LINE_LOSS_ENERGY:
                 case (int)gsh01_app_layer::CommandType::GET_TOTAL_START_IMPORT_MAINS_ENERGY:
-                //case (int)gsh01_app_layer::CommandType::GET_TOTAL_START_EXPORT_MAINS_ENERGY:
                 case (int)gsh01_app_layer::CommandType::GET_TOTAL_STOP_IMPORT_LINE_LOSS_ENERGY:
-                //case (int)gsh01_app_layer::CommandType::GET_TOTAL_STOP_EXPORT_LINE_LOSS_ENERGY:
                 case (int)gsh01_app_layer::CommandType::GET_TOTAL_STOP_IMPORT_MAINS_ENERGY:
-                //case (int)gsh01_app_layer::CommandType::GET_TOTAL_STOP_EXPORT_MAINS_ENERGY:
                 case (int)gsh01_app_layer::CommandType::GET_LOG_ENTRY:
                 case (int)gsh01_app_layer::CommandType::GET_LOG_ENTRY_REVERSE:
-                //case (int)gsh01_app_layer::CommandType::REGISTER_DISPLAY_PUBKEY:
-                //case (int)gsh01_app_layer::CommandType::REQUEST_CHALLENGE:
-                //case (int)gsh01_app_layer::CommandType::SET_SIGNED_CHALLENGE:
                 case (int)gsh01_app_layer::CommandType::GET_TOTAL_IMPORT_MAINS_ENERGY:
-                //case (int)gsh01_app_layer::CommandType::GET_TOTAL_EXPORT_MAINS_ENERGY:
                 case (int)gsh01_app_layer::CommandType::GET_TOTAL_IMPORT_MAINS_POWER:
-                //case (int)gsh01_app_layer::CommandType::GET_TOTAL_EXPORT_MAINS_POWER:
                 case (int)gsh01_app_layer::CommandType::GET_POS_DEV_VOLTAGE:
                 case (int)gsh01_app_layer::CommandType::GET_NEG_DEV_VOLTAGE:
                 case (int)gsh01_app_layer::CommandType::GET_TOTAL_VOLTAGE:
                 case (int)gsh01_app_layer::CommandType::GET_IMPORT_LINE_LOSS_POWER:
-                //case (int)ast_app_layer::CommandType::GET_EXPORT_LINE_LOSS_POWER:
                 case (int)gsh01_app_layer::CommandType::GET_TOTAL_IMPORT_LINE_LOSS_ENERGY:
-                //case (int)gsh01_app_layer::CommandType::GET_TOTAL_EXPORT_LINE_LOSS_ENERGY:
                 case (int)gsh01_app_layer::CommandType::GET_SECOND_INDEX:
                 case (int)gsh01_app_layer::CommandType::GET_PUBKEY_STR32:
                 case (int)gsh01_app_layer::CommandType::GET_PUBKEY_CSTR16:
                 case (int)gsh01_app_layer::CommandType::GET_PUBKEY_CSTR32:
-                //case (int)gsh01_app_layer::CommandType::REPEAT_DATA:
-                //case (int)gsh01_app_layer::CommandType::AB_DMC:
-                //case (int)gsh01_app_layer::CommandType::AB_PROD_DATE:
-                //case (int)gsh01_app_layer::CommandType::SET_REQUEST_CHALLENGE:
                     {
                         EVLOG_error << "Command not (yet) implemented. (" << module::conversions::hexdump(part_cmd) << ")";
                     }
