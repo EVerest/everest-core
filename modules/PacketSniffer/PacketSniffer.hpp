@@ -58,9 +58,8 @@ private:
     pcap_t* p_handle{nullptr};
     pcap_dumper_t* pdumpfile{nullptr};
     char errbuf[PCAP_ERRBUF_SIZE];
-    bool capturing_stopped;
-    std::mutex capture_mutex;
-    bool already_started;
+    std::atomic_bool capturing_stopped{false};
+    std::atomic_bool already_started{false};
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
