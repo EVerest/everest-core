@@ -60,6 +60,7 @@ void ISO15118_chargerImpl::init() {
 
     iso15118::session::callbacks::set_dc_charge_loop_started([this]() { publish_currentDemand_Started(nullptr); });
     iso15118::session::callbacks::set_v2g_setup_finished([this]() { publish_V2G_Setup_Finished(nullptr); });
+    iso15118::session::callbacks::set_start_cable_check([this]() { publish_Start_CableCheck(nullptr); });
 
     const auto default_cert_path = mod->info.paths.etc / "certs";
 
