@@ -71,6 +71,7 @@ void to_json(json& j, const DeviceDiagnostics& k) {
     j["app_board"]["HW_ver"] = k.app_board.hw_ver;
     j["app_board"]["server_id"] = k.app_board.server_id;
     j["app_board"]["mode"] = k.app_board.mode;
+    j["app_board"]["bus_address"] = k.app_board.bus_address;
     j["app_board"]["serial_nr"] = k.app_board.serial_number;
     j["app_board"]["SW_ver"] = k.app_board.sw_ver;
     j["app_board"]["FW_CRC"] = module::conversions::hexdump(k.app_board.fw_crc);
@@ -107,6 +108,7 @@ void from_json(const json& j, DeviceDiagnostics& k) {
     // k.app_board.hw_ver = j.at("");
     // k.app_board.server_id = j.at("");
     // k.app_board.mode = j.at("");
+    // k.app_board.bus_address = j.at("");
     // k.app_board.serial_number = j.at("");
     // k.app_board.sw_ver = j.at("");
     // k.app_board.fw_crc = j.at("");

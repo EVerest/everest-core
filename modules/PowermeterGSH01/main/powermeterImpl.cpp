@@ -64,10 +64,17 @@ void powermeterImpl::init() {
     }
     this->init_default_values();
 
+    get_meter_bus_address();
+    //ToDo: set bus address - not always broadcast
+        //set_meter_bus_address(0x4A);
+        //set_meter_bus_address(config.powermeter_device_id);
     request_device_type();
     get_app_sw_version();
     get_application_operation_mode();
-    //set_application_operation_mode(gsh01_app_layer::ApplicationBoardMode::APPLICATION);
+    if(device_diagnostics_obj.app_board.mode == (int)gsh01_app_layer::ApplicationBoardMode::ASSEMBLY){
+        //ToDo: set line loss impedance - must be added as config parameter        
+        set_application_operation_mode(gsh01_app_layer::ApplicationBoardMode::APPLICATION);
+    }
     set_device_time();
     
 }
@@ -140,6 +147,27 @@ void powermeterImpl::set_device_time() {
     this->serial_device.tx(slip_msg_set_device_time);
     receive_response();
 }
+
+void powermeterImpl::get_meter_bus_address() {
+    std::vector<uint8_t> data_vect{};
+    app_layer.create_command_get_bus_address(data_vect);
+    std::vector<uint8_t> slip_msg_get_bus_address = std::move(this->slip.package_single(0xFF, data_vect));
+    EVLOG_info << "\nFrame: " << module::conversions::hexdump(slip_msg_get_bus_address) << " length: " << slip_msg_get_bus_address.size() << "\n\n";
+    this->serial_device.tx(slip_msg_get_bus_address);
+    receive_response();
+}
+
+void powermeterImpl::set_meter_bus_address(uint8_t bus_address) {
+
+    std::vector<uint8_t> set_meter_bus_address_cmd{};
+    app_layer.create_command_set_bus_address(bus_address, set_meter_bus_address_cmd);
+
+    std::vector<uint8_t> slip_msg_set_bus_address = std::move(this->slip.package_single(this->config.powermeter_device_id, set_meter_bus_address_cmd));
+    EVLOG_info << "\nFrame: " << module::conversions::hexdump(slip_msg_set_bus_address) << " length: " << slip_msg_set_bus_address.size() << "\n\n";
+    this->serial_device.tx(slip_msg_set_bus_address);
+    receive_response();
+}
+
 
 void powermeterImpl::set_device_charge_point_id(gsh01_app_layer::UserIdType id_type, std::string charge_point_id) {
     std::vector<uint8_t> set_charge_point_id_cmd{};
@@ -687,6 +715,14 @@ gsh01_app_layer::CommandResult powermeterImpl::process_response(const std::vecto
                     }
                     break;
 
+                case (int)gsh01_app_layer::CommandType::METER_BUS_ADDR:
+                    {
+                        if (part_data_len < 1) break;
+                        device_diagnostics_obj.app_board.bus_address = part_data[0];
+                        EVLOG_info << "Meter bus address: " << module::conversions::hexdump(device_diagnostics_obj.app_board.bus_address);
+                    }
+                    break;
+
                 case (int)gsh01_app_layer::CommandType::AB_HW_VERSION:
                     {
                         uint8_t delimiter_pos = 0;
@@ -779,7 +815,6 @@ gsh01_app_layer::CommandResult powermeterImpl::process_response(const std::vecto
                 case (int)gsh01_app_layer::CommandType::LINE_LOSS_MEAS_MODE:
                 case (int)gsh01_app_layer::CommandType::MB_MODE_SET:
                 case (int)gsh01_app_layer::CommandType::AP_CONFIG_COMPLETE:
-                case (int)gsh01_app_layer::CommandType::METER_BUS_ADDR:
                 case (int)gsh01_app_layer::CommandType::AS_CONFIG_COMPLETE:
                 case (int)gsh01_app_layer::CommandType::GET_OCMF_REVERSE:
                 case (int)gsh01_app_layer::CommandType::GET_TRANSACT_IMPORT_LINE_LOSS_ENERGY:

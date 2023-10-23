@@ -137,6 +137,22 @@ void Gsh01AppLayer::create_command_set_time(date::utc_clock::time_point timepoin
 
     command_data = std::move(create_command(cmd));
 }
+void Gsh01AppLayer::create_command_get_bus_address(std::vector<uint8_t>& command_data) {
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::METER_BUS_ADDR));
+}
+
+void Gsh01AppLayer::create_command_set_bus_address(uint8_t bus_address,
+                                                   std::vector<uint8_t>& command_data) {
+    gsh01_app_layer::Command cmd{};
+
+    cmd.type = gsh01_app_layer::CommandType::METER_BUS_ADDR;
+    cmd.length = 0x0006;
+    cmd.status = gsh01_app_layer::CommandStatus::OK;
+    
+    cmd.data.push_back(bus_address);
+
+    command_data = std::move(create_command(cmd));
+}
 
 void Gsh01AppLayer::create_command_get_voltage(std::vector<uint8_t>& command_data) {
     command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::GET_VOLTAGE_L1));

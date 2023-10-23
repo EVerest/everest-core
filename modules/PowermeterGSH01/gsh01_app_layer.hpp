@@ -311,6 +311,9 @@ public:
     void create_command_set_time(date::utc_clock::time_point timepoint,
                                  int8_t gmt_offset_quarters_of_an_hour,
                                  std::vector<uint8_t>& command_data);
+    void create_command_get_bus_address(std::vector<uint8_t>& command_data);
+    void create_command_set_bus_address(uint8_t bus_address,
+                                        std::vector<uint8_t>& command_data);
 
     void create_command_get_voltage(std::vector<uint8_t>& command_data);
     void create_command_get_current(std::vector<uint8_t>& command_data);

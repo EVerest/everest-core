@@ -59,6 +59,7 @@ struct ApplicationBoardInfo {
     std::string hw_ver{};
     std::string server_id{};
     uint8_t mode{};
+    uint8_t bus_address{};
     uint32_t serial_number{};
     std::string sw_ver{};
     uint16_t fw_crc{};
