@@ -169,6 +169,13 @@ public:
      */
     void register_reservation_cancelled_callback(const std::function<void(const int& evse_index)>& callback);
 
+    /**
+     * @brief Registers the given \p callback to publish the intermediate token validation status.
+     *
+     * @param callback
+     */
+    void register_publish_token_validation_status_callback(const std::function<void(types::authorization::TokenValidationStatus)>& callback);
+
 private:
     SelectionAlgorithm selection_algorithm;
     int connection_timeout;
@@ -195,6 +202,7 @@ private:
     std::function<void(const Array& reservations)> reservation_update_callback;
     std::function<void(const int& evse_index, const int& reservation_id)> reserved_callback;
     std::function<void(const int& evse_index)> reservation_cancelled_callback;
+    std::function<void(types::authorization::TokenValidationStatus status)> publish_token_validation_status_callback;
 
     std::vector<int> get_referenced_connectors(const ProvidedIdToken& provided_token);
     int used_for_transaction(const std::vector<int>& connectors, const std::string& id_token);

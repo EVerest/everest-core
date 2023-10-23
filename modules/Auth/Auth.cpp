@@ -18,7 +18,14 @@ void Auth::init() {
 
     for (const auto& token_provider : this->r_token_provider) {
         token_provider->subscribe_provided_token([this](ProvidedIdToken provided_token) {
-            std::thread t([this, provided_token]() { this->auth_handler->on_token(provided_token); });
+            std::thread t([this, provided_token]() {
+                this->p_main->publish_token_validation_status(types::authorization::TokenValidationStatus::Processing);
+                const auto res = this->auth_handler->on_token(provided_token);
+                if (res == TokenHandlingResult::REJECTED) {
+                    this->p_main->publish_token_validation_status(types::authorization::TokenValidationStatus::Rejected);
+                }
+                this->p_main->publish_token_validation_status(types::authorization::TokenValidationStatus::Idle);
+                });
             t.detach();
         });
     }
@@ -40,6 +47,10 @@ void Auth::ready() {
         evse_index++;
     }
 
+    this->p_main->publish_token_validation_status(types::authorization::TokenValidationStatus::Idle);
+
+    this->auth_handler->register_publish_token_validation_status_callback(
+        [this](types::authorization::TokenValidationStatus status) { this->p_main->publish_token_validation_status(status); });
     this->auth_handler->register_notify_evse_callback([this](const int evse_index,
                                                                 const ProvidedIdToken& provided_token,
                                                                 const ValidationResult& validation_result) {

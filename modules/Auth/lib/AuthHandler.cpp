@@ -96,6 +96,7 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
             StopTransactionRequest req;
             req.reason = StopTransactionReason::Local;
             req.id_tag.emplace(provided_token.id_token);
+            this->publish_token_validation_status_callback(types::authorization::TokenValidationStatus::Accepted);
             this->stop_transaction_callback(this->connectors.at(connector_used_for_transaction)->evse_index, req);
             EVLOG_info << "Transaction was stopped because id_token was used for transaction";
             return TokenHandlingResult::USED_TO_STOP_TRANSACTION;
@@ -142,6 +143,7 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
                         this->stop_transaction_callback(this->connectors.at(connector_used_for_transaction)->evse_index,
                                                         req);
                         EVLOG_info << "Transaction was stopped because parent_id_token was used for transaction";
+                        this->publish_token_validation_status_callback(types::authorization::TokenValidationStatus::Accepted);
                         return TokenHandlingResult::USED_TO_STOP_TRANSACTION;
                     }
                 }
@@ -161,6 +163,7 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
         while (i < validation_results.size() && !authorized && !referenced_connectors.empty()) {
             auto validation_result = validation_results.at(i);
             if (validation_result.authorization_status == AuthorizationStatus::Accepted) {
+                this->publish_token_validation_status_callback(types::authorization::TokenValidationStatus::Accepted);
                 /* although validator accepts the authorization request, the Auth module still needs to
                     - select the connector for the authorization request
                     - process it against placed reservations
@@ -493,6 +496,10 @@ void AuthHandler::register_reservation_cancelled_callback(const std::function<vo
     this->reservation_cancelled_callback = callback;
     this->reservation_handler.register_reservation_cancelled_callback(
         [this](int connector_id) { this->call_reservation_cancelled(connector_id); });
+}
+
+void AuthHandler::register_publish_token_validation_status_callback(const std::function<void(types::authorization::TokenValidationStatus)>& callback) {
+    this->publish_token_validation_status_callback = callback;
 }
 
 } // namespace module
