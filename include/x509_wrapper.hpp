@@ -106,8 +106,13 @@ public:
     /// @return
     std::string get_export_string() const;
 
-    /// @brief If the certificate is within the validity date
+    /// @brief If the certificate is within the validity date. Can return false in 2 cases,
+    /// if it is expired (current date > valid_to) or if (current data < valid_in), that is
+    /// we are not in force yet
     bool is_valid() const;
+
+    /// @brief If the certificate has expired
+    bool is_expired() const;
 
 public:
     X509Wrapper& operator=(X509Wrapper&& other) = default;
