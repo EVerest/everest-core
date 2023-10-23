@@ -33,7 +33,8 @@ libfsm:
 # D20Evse module
 libiso15118:
   git: https://github.com/EVerest/libiso15118.git
-  git_tag: 215c3de
+  git_tag: 08c5fd6
+  # options: ['ISO15118_LINK_CUSTOM_MBEDTLS OFF']
 
 # LEM DCBM 400/600 module
 libcurl:

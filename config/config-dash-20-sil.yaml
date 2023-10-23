@@ -2,6 +2,7 @@ active_modules:
   iso15118_charger:
     module: D20Evse
     # config_module:
+    #   enable_ssl_logging: true
     #   tls_negotiation_strategy: ENFORCE_NO_TLS
   iso15118_car:
     module: PyEvJosev

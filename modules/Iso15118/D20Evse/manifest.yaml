@@ -23,6 +23,10 @@ config:
       - ENFORCE_TLS
       - ENFORCE_NO_TLS
     default: ACCEPT_CLIENT_OFFER
+  enable_ssl_logging:
+    description: Verbosely log the ssl/tls connection
+    type: boolean
+    default: false
 provides:
   charger:
     interface: ISO15118_charger
