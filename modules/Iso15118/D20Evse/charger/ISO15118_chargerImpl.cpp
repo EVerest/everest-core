@@ -212,7 +212,7 @@ void ISO15118_chargerImpl::handle_contactor_open(bool& status) {
 }
 
 void ISO15118_chargerImpl::handle_cableCheck_Finished(bool& status) {
-    // your code for cmd cableCheck_Finished goes here
+    controller->send_control_event(iso15118::d20::CableCheckFinished{status});
 }
 
 void ISO15118_chargerImpl::handle_set_Certificate_Service_Supported(bool& status) {
