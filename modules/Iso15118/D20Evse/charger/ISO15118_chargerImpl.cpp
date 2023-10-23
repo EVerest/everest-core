@@ -6,6 +6,7 @@
 #include "session_logger.hpp"
 
 #include <iso15118/io/logging.hpp>
+#include <iso15118/session/callbacks.hpp>
 #include <iso15118/session/logger.hpp>
 #include <iso15118/tbd_controller.hpp>
 
@@ -46,6 +47,13 @@ void ISO15118_chargerImpl::init() {
     iso15118::io::set_logging_callback([](const std::string& msg) { EVLOG_info << msg; });
 
     session_logger = std::make_unique<SessionLogger>(mod->config.logging_path);
+
+    iso15118::session::callbacks::set_dc_ev_target_voltage_current([this](float voltage, float current) {
+        types::iso15118_charger::DC_EVTargetValues target_values;
+        target_values.DC_EVTargetVoltage = voltage;
+        target_values.DC_EVTargetCurrent = current;
+        publish_DC_EVTargetVoltageCurrent(target_values);
+    });
 
     const auto default_cert_path = mod->info.paths.etc / "certs";
 
