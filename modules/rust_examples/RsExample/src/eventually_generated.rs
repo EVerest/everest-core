@@ -13,6 +13,7 @@
 
 use everestrs::{Error, Result, Runtime, Subscriber};
 use std::collections::HashMap;
+use std::pin::Pin;
 use std::sync::Arc;
 
 /// The trait for the user to provide. Always part of the generated code.
@@ -36,7 +37,7 @@ pub trait ExampleServiceSubscriber: Sync + Send {
 #[derive(Clone)]
 #[allow(unused)]
 pub struct ExampleServicePublisher {
-    runtime: Arc<Runtime>,
+    runtime: Pin<Arc<Runtime>>,
 }
 
 impl ExampleServicePublisher {
@@ -94,7 +95,7 @@ pub trait KvsServiceSubscriber: Sync + Send {
 #[derive(Clone)]
 pub struct KvsServicePublisher {
     #[allow(unused)]
-    runtime: Arc<Runtime>,
+    runtime: Pin<Arc<Runtime>>,
 }
 
 impl KvsServicePublisher {}
@@ -111,7 +112,7 @@ pub trait KvsClientSubscriber: Sync + Send {}
 /// `manifest.requires.their_store`.
 #[derive(Clone)]
 pub struct KvsClientPublisher {
-    runtime: Arc<Runtime>,
+    runtime: Pin<Arc<Runtime>>,
 }
 
 impl KvsClientPublisher {
@@ -193,7 +194,7 @@ impl Module {
         my_store: Arc<dyn KvsServiceSubscriber>,
         their_store: Arc<dyn KvsClientSubscriber>,
     ) -> Arc<Self> {
-        let runtime = Arc::new(Runtime::new());
+        let runtime = Runtime::new();
         let this = Arc::new(Self {
             on_ready,
             foobar,
@@ -212,7 +213,9 @@ impl Module {
             },
         });
 
-        runtime.set_subscriber(Arc::<Module>::downgrade(&this));
+        runtime
+            .as_ref()
+            .set_subscriber(Arc::<Module>::downgrade(&this));
 
         this
     }

@@ -1,5 +1,6 @@
 use everestrs::{Error, Result, Runtime, Subscriber};
 use std::collections::HashMap;
+use std::pin::Pin;
 use std::sync::Arc;
 
 /// Trait for the user to implement.
@@ -14,7 +15,7 @@ pub trait ExampleUserServiceSubscriber: Sync + Send {}
 #[derive(Clone)]
 pub struct ExampleUserServicePublisher {
     #[allow(unused)]
-    runtime: Arc<Runtime>,
+    runtime: Pin<Arc<Runtime>>,
 }
 
 impl ExampleUserServicePublisher {}
@@ -29,7 +30,7 @@ trait ExampleClientSubscriber {
 /// a shared-ptr to the cpp implementation.
 #[derive(Clone)]
 pub struct ExampleClientPublisher {
-    runtime: Arc<Runtime>,
+    runtime: Pin<Arc<Runtime>>,
 }
 
 impl ExampleClientPublisher {
@@ -90,7 +91,7 @@ impl Module {
         their_example: Arc<dyn ExampleSubscriber>,
         another_example: Arc<dyn ExampleSubscriber>,
     ) -> Arc<Self> {
-        let runtime = Arc::new(Runtime::new());
+        let runtime = Runtime::new();
         let publisher = ModulePublisher {
             main: ExampleUserServicePublisher {
                 runtime: runtime.clone(),
@@ -110,7 +111,9 @@ impl Module {
             another_example,
             publisher,
         });
-        runtime.set_subscriber(Arc::<Module>::downgrade(&this));
+        runtime
+            .as_ref()
+            .set_subscriber(Arc::<Module>::downgrade(&this));
         this
     }
 }
