@@ -125,7 +125,7 @@ function(_ev_convert_refs)
 
     get_filename_component(CONVERT_REFS_INPUT_FILE_NAME_WITHOUT_EXT ${CONVERT_REFS_INPUT_FILE} NAME_WE)
     get_filename_component(CONVERT_REFS_INPUT_FILE_PARENT ${CONVERT_REFS_INPUT_FILE} DIRECTORY)
-    cmake_path(GET CONVERT_REFS_INPUT_FILE_PARENT STEM CONVERT_REFS_INPUT_FILE_PARENT_NAME)
+    get_filename_component(CONVERT_REFS_INPUT_FILE_PARENTNAME ${CONVERT_REFS_INPUT_FILE_PARENT} NAME_WE)
     set(CONVERT_REFS_TARGET_NAME "convert_yaml_refs_${CONVERT_REFS_INPUT_FILE_PARENT_NAME}_${CONVERT_REFS_INPUT_FILE_NAME_WITHOUT_EXT}")
 
     get_target_property(CONVERTED_YAML_DIR convert_yaml_refs EVEREST_CONVERTED_YAML_DIR)
@@ -452,8 +452,6 @@ function (ev_add_cpp_module MODULE_NAME)
             install(TARGETS ${MODULE_NAME}
                 DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
             )
-
-            # _ev_convert_refs(${MODULE_PATH}/manifest.yaml modules/${MODULE_NAME})
 
             install(FILES ${MODULE_PATH}/manifest.yaml
                 DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
