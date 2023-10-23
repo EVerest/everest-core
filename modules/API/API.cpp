@@ -235,6 +235,7 @@ void API::init() {
 
         std::string var_datetime = var_base + "datetime";
         std::string var_session_info = var_base + "session_info";
+        std::string var_logging_path = var_base + "logging_path";
         this->api_threads.push_back(std::thread(
             [this, var_datetime, var_session_info, var_hw_caps, var_selected_protocol, &session_info, &hw_caps]() {
                 auto next_tick = std::chrono::steady_clock::now();
@@ -251,13 +252,21 @@ void API::init() {
             }));
 
         evse->subscribe_session_event(
-            [this, var_session_info, &session_info](types::evse_manager::SessionEvent session_event) {
+            [this, var_session_info, var_logging_path, &session_info](types::evse_manager::SessionEvent session_event) {
                 auto event = types::evse_manager::session_event_enum_to_string(session_event.event);
                 if (session_event.error) {
                     session_info->update_state(
                         event, types::evse_manager::error_enum_to_string(session_event.error.value().error_code));
                 } else {
                     session_info->update_state(event, "");
+                }
+                if (session_event.event == types::evse_manager::SessionEventEnum::SessionStarted) {
+                    if (session_event.session_started.has_value()) {
+                        auto session_started = session_event.session_started.value();
+                        if (session_started.logging_path.has_value()) {
+                            this->mqtt.publish(var_logging_path, session_started.logging_path.value());
+                        }
+                    }
                 }
                 if (event == "TransactionStarted") {
                     auto transaction_started = session_event.transaction_started.value();
