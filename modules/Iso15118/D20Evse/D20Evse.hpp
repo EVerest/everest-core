@@ -24,6 +24,7 @@ struct Conf {
     std::string certificate_path;
     std::string logging_path;
     std::string tls_negotiation_strategy;
+    std::string private_key_password;
     bool enable_ssl_logging;
 };
 

@@ -60,7 +60,12 @@ void ISO15118_chargerImpl::init() {
     const auto cert_path = get_cert_path(default_cert_path, mod->config.certificate_path);
 
     iso15118::TbdConfig tbd_config = {
-        {iso15118::config::CertificateBackend::EVEREST_LAYOUT, cert_path.string(), mod->config.enable_ssl_logging},
+        {
+            iso15118::config::CertificateBackend::EVEREST_LAYOUT,
+            cert_path.string(),
+            mod->config.private_key_password,
+            mod->config.enable_ssl_logging,
+        },
         mod->config.device,
         convert_tls_negotiation_strategy(mod->config.tls_negotiation_strategy),
     };

@@ -23,6 +23,10 @@ config:
       - ENFORCE_TLS
       - ENFORCE_NO_TLS
     default: ACCEPT_CLIENT_OFFER
+  private_key_password:
+    description: Password for private key files (USE ONLY FOR TESTING)
+    type: string
+    default: "123456"
   enable_ssl_logging:
     description: Verbosely log the ssl/tls connection
     type: boolean
