@@ -59,7 +59,7 @@ active_modules:
       connector_id: 1
       auto_enable: true
       auto_exec: true
-      auto_exec_commands: sleep 3;iso_wait_slac_matched;iso_start_v2g_session ExternalPayment,DC_extended;iso_wait_pwr_ready;sleep 36000
+      auto_exec_commands: sleep 3;iso_wait_slac_matched;iso_start_v2g_session ExternalPayment,DC_extended;iso_wait_pwr_ready;iso_wait_for_stop 15;iso_wait_v2g_session_stopped;unplug;
       dc_target_current: 20
       dc_target_voltage: 400
     connections:
