@@ -8,8 +8,11 @@
 #include <iostream>
 #include <openssl/bio.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
 #include <openssl/pem.h>
+#include <openssl/sha.h>
 #include <openssl/x509v3.h>
+#include <stdio.h>
 
 #include <evse_utilities.hpp>
 #include <x509_bundle.hpp>
@@ -620,6 +623,110 @@ int EvseSecurity::get_leaf_expiry_days_count(LeafCertificateType certificate_typ
         return std::chrono::duration_cast<ossl_days_to_seconds>(std::chrono::seconds(seconds)).count();
     }
     return 0;
+}
+
+bool EvseSecurity::verify_file_signature(const std::filesystem::path& path, const std::string& signing_certificate,
+                                         const std::string signature) {
+    EVLOG_info << "Verifying file signature for " << path.string();
+
+    // calculate sha256 of file
+    FILE_ptr file_ptr(fopen(path.string().c_str(), "rb"));
+    if (!file_ptr.get()) {
+        EVLOG_error << "Could not open file at: " << path.string();
+        return false;
+    }
+    EVP_MD_CTX_ptr md_context_ptr(EVP_MD_CTX_create());
+    if (!md_context_ptr.get()) {
+        EVLOG_error << "Could not create EVP_MD_CTX";
+        return false;
+    }
+    const EVP_MD* md = EVP_get_digestbyname("SHA256");
+    if (EVP_DigestInit_ex(md_context_ptr.get(), md, nullptr) == 0) {
+        EVLOG_error << "Error during EVP_DigestInit_ex";
+        return false;
+    }
+    size_t in_length;
+    unsigned char file_buffer[BUFSIZ];
+    do {
+        in_length = fread(file_buffer, 1, BUFSIZ, file_ptr.get());
+        if (EVP_DigestUpdate(md_context_ptr.get(), file_buffer, in_length) == 0) {
+            EVLOG_error << "Error during EVP_DigestUpdate";
+            return false;
+        }
+    } while (in_length == BUFSIZ);
+    unsigned int sha256_out_length;
+    unsigned char sha256_out[EVP_MAX_MD_SIZE];
+    if (EVP_DigestFinal_ex(md_context_ptr.get(), sha256_out, &sha256_out_length) == 0) {
+        EVLOG_error << "Error during EVP_DigestFinal_ex";
+        return false;
+    }
+
+    try {
+        X509Wrapper x509_signing_cerificate(signing_certificate, EncodingFormat::PEM);
+
+        // extract public key
+        EVP_PKEY_ptr public_key_ptr(X509_get_pubkey(x509_signing_cerificate.get()));
+        if (!public_key_ptr.get()) {
+            EVLOG_error << "Error during X509_get_pubkey";
+            return false;
+        }
+
+        // decode base64 encoded signature
+        EVP_ENCODE_CTX_ptr base64_decode_context_ptr(EVP_ENCODE_CTX_new());
+        if (!base64_decode_context_ptr.get()) {
+            EVLOG_error << "Error during EVP_ENCODE_CTX_new";
+            return false;
+        }
+        EVP_DecodeInit(base64_decode_context_ptr.get());
+        if (!base64_decode_context_ptr.get()) {
+            EVLOG_error << "Error during EVP_DecodeInit";
+            return false;
+        }
+        const unsigned char* signature_str = reinterpret_cast<const unsigned char*>(signature.data());
+        int base64_length = signature.size();
+        unsigned char signature_out[base64_length];
+        int signature_out_length;
+        if (EVP_DecodeUpdate(base64_decode_context_ptr.get(), signature_out, &signature_out_length, signature_str,
+                             base64_length) < 0) {
+            EVLOG_error << "Error during DecodeUpdate";
+            return false;
+        }
+        int decode_final_out;
+        if (EVP_DecodeFinal(base64_decode_context_ptr.get(), signature_out, &decode_final_out) < 0) {
+            EVLOG_error << "Error during EVP_DecodeFinal";
+            return false;
+        }
+
+        // verify file signature
+        EVP_PKEY_CTX_ptr public_key_context_ptr(EVP_PKEY_CTX_new(public_key_ptr.get(), nullptr));
+        if (!public_key_context_ptr.get()) {
+            EVLOG_error << "Error setting up public key context";
+        }
+        if (EVP_PKEY_verify_init(public_key_context_ptr.get()) <= 0) {
+            EVLOG_error << "Error during EVP_PKEY_verify_init";
+        }
+        if (EVP_PKEY_CTX_set_signature_md(public_key_context_ptr.get(), EVP_sha256()) <= 0) {
+            EVLOG_error << "Error during EVP_PKEY_CTX_set_signature_md";
+        };
+        int result =
+            EVP_PKEY_verify(public_key_context_ptr.get(), reinterpret_cast<const unsigned char*>(signature_out),
+                            signature_out_length, sha256_out, sha256_out_length);
+
+        EVP_cleanup();
+
+        if (result != 1) {
+            EVLOG_error << "Failure to verify: " << result;
+            return false;
+        } else {
+            EVLOG_error << "Succesful verification";
+            return true;
+        }
+    } catch (const CertificateLoadException& e) {
+        EVLOG_error << "Could not parse signing certificate: " << e.what();
+        return false;
+    }
+
+    return false;
 }
 
 InstallCertificateResult EvseSecurity::verify_certificate(const std::string& certificate_chain,
