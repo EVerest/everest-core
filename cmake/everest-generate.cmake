@@ -605,7 +605,12 @@ function (ev_add_rs_module MODULE_NAME)
                 DEPENDS everest::framework
             )
 
-            install(FILES ${MODULE_PATH}/manifest.yaml ${BIN_PATH}
+            install(FILES ${MODULE_PATH}/manifest.yaml
+                DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
+            )
+
+            install(FILES ${BIN_PATH}
+                PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
                 DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
             )
         endif()
