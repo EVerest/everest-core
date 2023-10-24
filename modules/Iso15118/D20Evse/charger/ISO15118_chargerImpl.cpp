@@ -6,13 +6,14 @@
 #include "session_logger.hpp"
 
 #include <iso15118/io/logging.hpp>
-#include <iso15118/session/callbacks.hpp>
+#include <iso15118/session/feedback.hpp>
 #include <iso15118/session/logger.hpp>
 #include <iso15118/tbd_controller.hpp>
 
 std::unique_ptr<iso15118::TbdController> controller;
 
 iso15118::TbdConfig tbd_config;
+iso15118::session::feedback::Callbacks callbacks;
 
 std::unique_ptr<SessionLogger> session_logger;
 
@@ -51,16 +52,34 @@ void ISO15118_chargerImpl::init() {
 
     session_logger = std::make_unique<SessionLogger>(mod->config.logging_path);
 
-    iso15118::session::callbacks::set_dc_ev_target_voltage_current([this](float voltage, float current) {
-        types::iso15118_charger::DC_EVTargetValues target_values;
-        target_values.DC_EVTargetVoltage = voltage;
-        target_values.DC_EVTargetCurrent = current;
-        publish_DC_EVTargetVoltageCurrent(target_values);
-    });
+    callbacks.dc_charge_target = [this](const iso15118::session::feedback::DcChargeTarget& charge_target) {
+        types::iso15118_charger::DC_EVTargetValues tmp;
+        tmp.DC_EVTargetVoltage = charge_target.voltage;
+        tmp.DC_EVTargetCurrent = charge_target.current;
+        publish_DC_EVTargetVoltageCurrent(tmp);
+    };
 
-    iso15118::session::callbacks::set_dc_charge_loop_started([this]() { publish_currentDemand_Started(nullptr); });
-    iso15118::session::callbacks::set_v2g_setup_finished([this]() { publish_V2G_Setup_Finished(nullptr); });
-    iso15118::session::callbacks::set_start_cable_check([this]() { publish_Start_CableCheck(nullptr); });
+    callbacks.dc_max_limits = [this](const iso15118::session::feedback::DcMaximumLimits& max_limits) {
+        types::iso15118_charger::DC_EVMaximumLimits tmp;
+        tmp.DC_EVMaximumVoltageLimit = max_limits.voltage;
+        tmp.DC_EVMaximumCurrentLimit = max_limits.current;
+        tmp.DC_EVMaximumPowerLimit = max_limits.power;
+        publish_DC_EVMaximumLimits(tmp);
+    };
+
+    callbacks.signal = [this](iso15118::session::feedback::Signal signal) {
+        using Signal = iso15118::session::feedback::Signal;
+        switch (signal) {
+        case Signal::CHARGE_LOOP_STARTED:
+            publish_currentDemand_Started(nullptr);
+            return;
+        case Signal::SETUP_FINISHED:
+            publish_V2G_Setup_Finished(nullptr);
+            return;
+        case Signal::START_CABLE_CHECK:
+            publish_Start_CableCheck(nullptr);
+        }
+    };
 
     const auto default_cert_path = mod->info.paths.etc / "certs";
 
@@ -77,7 +96,7 @@ void ISO15118_chargerImpl::init() {
         convert_tls_negotiation_strategy(mod->config.tls_negotiation_strategy),
     };
 
-    controller = std::make_unique<iso15118::TbdController>(tbd_config);
+    controller = std::make_unique<iso15118::TbdController>(tbd_config, callbacks);
 }
 
 void ISO15118_chargerImpl::ready() {
@@ -98,7 +117,7 @@ void ISO15118_chargerImpl::ready() {
 
         std::this_thread::sleep_for(RETRY_INTERVAL);
 
-        controller = std::make_unique<iso15118::TbdController>(tbd_config);
+        controller = std::make_unique<iso15118::TbdController>(tbd_config, callbacks);
     }
 }
 
