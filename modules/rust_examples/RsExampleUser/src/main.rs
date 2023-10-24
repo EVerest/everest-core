@@ -3,7 +3,7 @@
 #![allow(non_snake_case)]
 
 use std::sync::{Arc, Mutex};
-use std::thread;
+use std::{thread, time};
 
 mod eventually_generated;
 
@@ -67,10 +67,16 @@ fn main() {
         another_example: another_example.clone(),
         min_current: Mutex::new(None),
     });
-    let _ = eventually_generated::Module::new(
+    let _module = eventually_generated::Module::new(
         module.clone(),
         main_service.clone(),
         their_example.clone(),
         another_example.clone(),
     );
+
+    // Everest is driving execution in the background for us, nothing to do.
+    loop {
+        let dt = time::Duration::from_millis(250);
+        thread::sleep(dt);
+    }
 }

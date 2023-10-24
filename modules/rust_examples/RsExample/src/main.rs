@@ -74,7 +74,7 @@ impl OnReadySubscriber for OneClass {
 
 fn main() {
     let one_class = Arc::new(OneClass {});
-    let _ = Module::new(
+    let _module = Module::new(
         one_class.clone(),
         one_class.clone(),
         one_class.clone(),
