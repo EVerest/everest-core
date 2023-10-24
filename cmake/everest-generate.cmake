@@ -574,7 +574,7 @@ function (ev_add_rs_module MODULE_NAME)
             message(STATUS "Setting up Rust module ${MODULE_NAME}")
 
             # Symlink the source directory into the build directory
-            execute_process(COMMAND rm -rf "${MODULE_BUILD_PATH}")
+            execute_process(COMMAND rm -f "${MODULE_BUILD_PATH}")
             execute_process(COMMAND ln -s "${MODULE_PATH}/" "${MODULE_BUILD_PATH}")
 
             set(EVEREST_MODULE_DIR ${PROJECT_SOURCE_DIR}/modules)
