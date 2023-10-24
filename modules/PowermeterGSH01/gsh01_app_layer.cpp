@@ -287,14 +287,14 @@ void Gsh01AppLayer::create_command_get_log_entry_reverse(uint32_t log_entry_id,
 }
 
 void Gsh01AppLayer::create_command_get_application_board_mode(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::AB_MODE_SET));
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::APP_MODE_SET));
 }
 
 void Gsh01AppLayer::create_command_set_application_board_mode(gsh01_app_layer::ApplicationBoardMode mode,
                                                             std::vector<uint8_t>& command_data) {
     gsh01_app_layer::Command cmd{};
 
-    cmd.type = gsh01_app_layer::CommandType::AB_MODE_SET;
+    cmd.type = gsh01_app_layer::CommandType::APP_MODE_SET;
     cmd.length = 0x0006;
     cmd.status = gsh01_app_layer::CommandStatus::OK;
     
@@ -306,39 +306,39 @@ void Gsh01AppLayer::create_command_set_application_board_mode(gsh01_app_layer::A
 // diagnostics
 
 void Gsh01AppLayer::create_command_get_hardware_version(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::AB_HW_VERSION));
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::HW_VERSION));
 }
 
 void Gsh01AppLayer::create_command_get_application_board_server_id(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::AB_SERVER_ID));
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::SERVER_ID));
 }
 
 void Gsh01AppLayer::create_command_get_application_board_serial_number(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::AB_SERIAL_NR));
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::SERIAL_NR));
 }
 
 void Gsh01AppLayer::create_command_get_application_board_software_version(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::AB_SW_VERSION));
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::APP_FW_VERSION));
 }
 
 void Gsh01AppLayer::create_command_get_application_board_fw_checksum(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::AB_FW_CHECKSUM));
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::APP_FW_CHECKSUM));
 }
 
 void Gsh01AppLayer::create_command_get_application_board_fw_hash(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::AB_FW_HASH));
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::APP_FW_HASH));
 }
 
 void Gsh01AppLayer::create_command_get_application_board_status(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::AB_STATUS));
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::STATUS_WORD));
 }
 
 void Gsh01AppLayer::create_command_get_metering_board_software_version(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::MB_SW_VERSION));
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::MT_FW_VERSION));
 }
 
 void Gsh01AppLayer::create_command_get_metering_board_fw_checksum(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::MB_FW_CHECKSUM));
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::MT_FW_CHECKSUM));
 }
 
 void Gsh01AppLayer::create_command_get_bootloader_version(std::vector<uint8_t>& command_data) {
@@ -347,7 +347,7 @@ void Gsh01AppLayer::create_command_get_bootloader_version(std::vector<uint8_t>& 
 
 /* doubles as OCMF "meter model name" */
 void Gsh01AppLayer::create_command_get_device_type(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::AB_DEVICE_TYPE));
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::DEVICE_TYPE));
 }
 
 } // namespace gsh01_app_layer

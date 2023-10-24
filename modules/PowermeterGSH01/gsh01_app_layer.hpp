@@ -20,18 +20,18 @@ namespace gsh01_app_layer {
 
 enum class CommandType : std::uint16_t {
     ///---------------Device Information Registers-------------------
-    AB_MODE_SET = 0x4102,                               // get or set the mode of application board  
-    AB_TRANSPARENT_MODE = 0x4103,                       // get the transparent mode meter  
-    AB_SERVER_ID = 0x4110,                              // get the server ID of application board
-    AB_SERIAL_NR = 0x4111,                              // get the serial number
-    AB_HW_VERSION = 0x4112,                             // get the hardware version
-    AB_DEVICE_TYPE = 0x4113,                            // get the device type 
-    AB_SW_VERSION = 0x4114,                             // get the software version of application board
-    AB_FW_CHECKSUM = 0x4115,                            // get the checksum (crc16) of application board
-    MB_SW_VERSION = 0x4116,                             // get the software version of metering board 
-    MB_FW_CHECKSUM = 0x4117,                            // get the crc16 from software integrity check of metering board
+    APP_MODE_SET = 0x4102,                              // get or set the mode of application  
+    TRANSPARENT_MODE = 0x4103,                          // get the transparent mode meter  
+    SERVER_ID = 0x4110,                                 // get the server ID 
+    SERIAL_NR = 0x4111,                                 // get the serial number
+    HW_VERSION = 0x4112,                                // get the hardware version
+    DEVICE_TYPE = 0x4113,                               // get the device type 
+    APP_FW_VERSION = 0x4114,                            // get the software version of application
+    APP_FW_CHECKSUM = 0x4115,                           // get the checksum (crc16) of application
+    MT_FW_VERSION = 0x4116,                             // get the software version of metering firmware 
+    MT_FW_CHECKSUM = 0x4117,                            // get the crc16 from software integrity check of metering firmware
     BOOTL_VERSION = 0x4118,                             // get the bootloader version
-    AB_FW_HASH = 0x4119,                                // get the firmware hash(crc16) of application board
+    APP_FW_HASH = 0x4119,                               // get the application firmware hash(crc16)
     MEASUREMENT_MODE = 0x4120,                          // get the measurement mode
     GET_NORMAL_VOLTAGE = 0x4121,                        // get the normal voltage
     GET_NORMAL_CURRENT = 0x4122,                        // get the normal current
@@ -41,10 +41,10 @@ enum class CommandType : std::uint16_t {
     INIT_METER = 0x4126,                                // set the initialize meter command
     LINE_LOSS_IMPEDANCE = 0x4130,                       // get or set (in assembling mode) the line loss impedance 
     LINE_LOSS_MEAS_MODE = 0x4131,                       // get the line loss energy measurement mode
-    MB_MODE_SET = 0x4133,                               // get the mode of metering board  
+    MT_MODE_SET = 0x4133,                               // get the meter operation mode  
     TIME = 0x4135,                                      // get or set the device time 
-    AB_STATUS = 0x4137,                                 // get the statusword of application board
-    AP_CONFIG_COMPLETE = 0x4211,                        // set the application configuration complete command 
+    STATUS_WORD = 0x4137,                               // get the statusword
+    APP_CONFIG_COMPLETE = 0x4211,                        // set the application configuration complete command 
     METER_BUS_ADDR = 0x4212,                            // get or set the meter bus address 
     AS_CONFIG_COMPLETE = 0x4221,                        // set the assmbling configuration complete command 
     ///---------------Device Control Registers--------------------------

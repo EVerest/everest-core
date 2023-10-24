@@ -50,21 +50,15 @@ struct LogStats {
     uint32_t max_number_of_logs{};    // ???
 };
 
-struct ApplicationBoardInfo {
-    std::string type{};
-    std::string hw_ver{};
-    std::string server_id{};
+struct ApplicationInfo {
     uint8_t mode{};
-    uint8_t bus_address{};
-    uint32_t serial_number{};
-    std::string sw_ver{};
+    std::string fw_ver{};
     uint16_t fw_crc{};
     uint16_t fw_hash{};
 };
 
-struct MeteringBoardInfo {
-    std::string hw_ver{};
-    std::string sw_ver{};
+struct MeteringInfo {
+    std::string fw_ver{};
     uint16_t fw_crc{};
 };
 
@@ -72,8 +66,13 @@ struct DeviceDiagnostics {
     std::string charge_point_id{};
     uint8_t charge_point_id_type{0};
     LogStats log_stats;
-    ApplicationBoardInfo app_board;
-    MeteringBoardInfo m_board;
+    std::string type{};
+    std::string hw_ver{};
+    std::string server_id{};
+    uint32_t serial_number{};
+    ApplicationInfo application;
+    MeteringInfo metering;
+    uint8_t bus_address{};
     std::string bootl_ver{};
     std::string pubkey_asn1{};
     std::string pubkey_str16{};

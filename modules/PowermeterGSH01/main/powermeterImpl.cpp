@@ -71,7 +71,7 @@ void powermeterImpl::init() {
     request_device_type();
     get_app_sw_version();
     get_application_operation_mode();
-    if(device_diagnostics_obj.app_board.mode == (int)gsh01_app_layer::ApplicationBoardMode::ASSEMBLY){
+    if(device_diagnostics_obj.application.mode == (int)gsh01_app_layer::ApplicationBoardMode::ASSEMBLY){
         //ToDo: set line loss impedance - must be added as config parameter        
         set_application_operation_mode(gsh01_app_layer::ApplicationBoardMode::APPLICATION);
     }
@@ -712,14 +712,14 @@ gsh01_app_layer::CommandResult powermeterImpl::process_response(const std::vecto
 
             // device parameters
 
-                case (int)gsh01_app_layer::CommandType::AB_MODE_SET:
+                case (int)gsh01_app_layer::CommandType::APP_MODE_SET:
                     {
                         if (part_data_len < 1) break;
-                        device_diagnostics_obj.app_board.mode = part_data[0];
-                        if(device_diagnostics_obj.app_board.mode == (uint8_t)gsh01_app_layer::ApplicationBoardMode::ASSEMBLY){
+                        device_diagnostics_obj.application.mode = part_data[0];
+                        if(device_diagnostics_obj.application.mode == (uint8_t)gsh01_app_layer::ApplicationBoardMode::ASSEMBLY){
                             EVLOG_info << "Operation mode is: ASSEMBLY";
                         }
-                        else if(device_diagnostics_obj.app_board.mode == (uint8_t)gsh01_app_layer::ApplicationBoardMode::APPLICATION){
+                        else if(device_diagnostics_obj.application.mode == (uint8_t)gsh01_app_layer::ApplicationBoardMode::APPLICATION){
                             EVLOG_info << "Operation mode is: APPLICATION";
                         }
                         else{
@@ -731,12 +731,12 @@ gsh01_app_layer::CommandResult powermeterImpl::process_response(const std::vecto
                 case (int)gsh01_app_layer::CommandType::METER_BUS_ADDR:
                     {
                         if (part_data_len < 1) break;
-                        device_diagnostics_obj.app_board.bus_address = part_data[0];
-                        EVLOG_info << "Meter bus address: " << module::conversions::hexdump(device_diagnostics_obj.app_board.bus_address);
+                        device_diagnostics_obj.bus_address = part_data[0];
+                        EVLOG_info << "Meter bus address: " << module::conversions::hexdump(device_diagnostics_obj.bus_address);
                     }
                     break;
 
-                case (int)gsh01_app_layer::CommandType::AB_HW_VERSION:
+                case (int)gsh01_app_layer::CommandType::HW_VERSION:
                     {
                         uint8_t delimiter_pos = 0;
                         for (uint8_t i = 0; i < part_data_len; i++) {
@@ -744,58 +744,57 @@ gsh01_app_layer::CommandResult powermeterImpl::process_response(const std::vecto
                                 delimiter_pos = i;
                             }
                         }
-                        device_diagnostics_obj.app_board.hw_ver = get_str(part_data, 0, delimiter_pos);
-                        device_diagnostics_obj.m_board.hw_ver   = get_str(part_data, delimiter_pos + 1, 
-                                                                          (part_data_len - delimiter_pos - 1));
+                        device_diagnostics_obj.hw_ver = get_str(part_data, delimiter_pos + 1, 
+                                                                (part_data_len - delimiter_pos - 1));
                     }
                     break;
 
-                case (int)gsh01_app_layer::CommandType::AB_SERVER_ID:
+                case (int)gsh01_app_layer::CommandType::SERVER_ID:
                     {
                         if (part_data_len < 10) break;
-                        device_diagnostics_obj.app_board.server_id = get_str(part_data, 0, 10);
+                        device_diagnostics_obj.server_id = get_str(part_data, 0, 10);
                     }
                     break;
 
-                case (int)gsh01_app_layer::CommandType::AB_SERIAL_NR:
+                case (int)gsh01_app_layer::CommandType::SERIAL_NR:
                     {
                         if (part_data_len < 4) break;
-                        device_diagnostics_obj.app_board.serial_number = get_u32(part_data);
+                        device_diagnostics_obj.serial_number = get_u32(part_data);
                     }
                     break;
 
-                case (int)gsh01_app_layer::CommandType::AB_SW_VERSION:
+                case (int)gsh01_app_layer::CommandType::APP_FW_VERSION:
                     {
                         if (part_data_len < 20) break;
-                        device_diagnostics_obj.app_board.sw_ver = get_str(part_data, 0, 20);
+                        device_diagnostics_obj.application.fw_ver = get_str(part_data, 0, 20);
                     }
                     break;
 
-                case (int)gsh01_app_layer::CommandType::AB_FW_CHECKSUM:
+                case (int)gsh01_app_layer::CommandType::APP_FW_CHECKSUM:
                     {
                         if (part_data_len < 2) break;
-                        device_diagnostics_obj.app_board.fw_crc = get_u16(part_data);
+                        device_diagnostics_obj.application.fw_crc = get_u16(part_data);
                     }
                     break;
 
-                case (int)gsh01_app_layer::CommandType::AB_FW_HASH:
+                case (int)gsh01_app_layer::CommandType::APP_FW_HASH:
                     {
                         if (part_data_len < 2) break;
-                        device_diagnostics_obj.app_board.fw_hash = get_u16(part_data);
+                        device_diagnostics_obj.application.fw_hash = get_u16(part_data);
                     }
                     break;
 
-                case (int)gsh01_app_layer::CommandType::MB_SW_VERSION:
+                case (int)gsh01_app_layer::CommandType::MT_FW_VERSION:
                     {
                         if (part_data_len < 20) break;
-                        device_diagnostics_obj.m_board.sw_ver = get_str(part_data, 0, 20);
+                        device_diagnostics_obj.metering.fw_ver = get_str(part_data, 0, 20);
                     }
                     break;
 
-                case (int)gsh01_app_layer::CommandType::MB_FW_CHECKSUM:
+                case (int)gsh01_app_layer::CommandType::MT_FW_CHECKSUM:
                     {
                         if (part_data_len < 2) break;
-                        device_diagnostics_obj.m_board.fw_crc = get_u16(part_data);
+                        device_diagnostics_obj.metering.fw_crc = get_u16(part_data);
                     }
                     break;
 
@@ -806,14 +805,14 @@ gsh01_app_layer::CommandResult powermeterImpl::process_response(const std::vecto
                     }
                     break;
 
-                case (int)gsh01_app_layer::CommandType::AB_DEVICE_TYPE:
+                case (int)gsh01_app_layer::CommandType::DEVICE_TYPE:
                     {
                         if (part_data_len < 18) break;
-                        device_diagnostics_obj.app_board.type = get_str(part_data, 0, 18);
+                        device_diagnostics_obj.type = get_str(part_data, 0, 18);
                     }
                     break;
 
-                case (int)gsh01_app_layer::CommandType::AB_STATUS:
+                case (int)gsh01_app_layer::CommandType::STATUS_WORD:
                     {
                         if (part_data_len < 8) break;
                         device_data_obj.ab_status = get_u64(part_data);
@@ -822,7 +821,7 @@ gsh01_app_layer::CommandResult powermeterImpl::process_response(const std::vecto
 
             // not (yet) implemented
 
-                case (int)gsh01_app_layer::CommandType::AB_TRANSPARENT_MODE:
+                case (int)gsh01_app_layer::CommandType::TRANSPARENT_MODE:
                 case (int)gsh01_app_layer::CommandType::MEASUREMENT_MODE:
                 case (int)gsh01_app_layer::CommandType::GET_NORMAL_VOLTAGE:
                 case (int)gsh01_app_layer::CommandType::GET_NORMAL_CURRENT:
@@ -832,8 +831,8 @@ gsh01_app_layer::CommandResult powermeterImpl::process_response(const std::vecto
                 case (int)gsh01_app_layer::CommandType::INIT_METER:
                 case (int)gsh01_app_layer::CommandType::LINE_LOSS_IMPEDANCE:
                 case (int)gsh01_app_layer::CommandType::LINE_LOSS_MEAS_MODE:
-                case (int)gsh01_app_layer::CommandType::MB_MODE_SET:
-                case (int)gsh01_app_layer::CommandType::AP_CONFIG_COMPLETE:
+                case (int)gsh01_app_layer::CommandType::MT_MODE_SET:
+                case (int)gsh01_app_layer::CommandType::APP_CONFIG_COMPLETE:
                 case (int)gsh01_app_layer::CommandType::AS_CONFIG_COMPLETE:
                 case (int)gsh01_app_layer::CommandType::GET_OCMF_REVERSE:
                 case (int)gsh01_app_layer::CommandType::GET_TRANSACT_IMPORT_LINE_LOSS_ENERGY:
