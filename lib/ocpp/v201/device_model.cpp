@@ -73,77 +73,73 @@ bool DeviceModel::component_criteria_match(const Component& component,
 }
 
 bool validate_value(const VariableCharacteristics& characteristics, const std::string& value) {
-    try {
-        switch (characteristics.dataType) {
-        case DataEnum::string:
-            if (characteristics.minLimit.has_value() and value.size() < characteristics.minLimit.value()) {
-                return false;
-            }
-            if (characteristics.maxLimit.has_value() and value.size() > characteristics.maxLimit.value()) {
-                return false;
-            }
-            return true;
-        case DataEnum::decimal: {
-            if (!is_decimal_number(value)) {
-                return false;
-            }
-            float f = std::stof(value);
-            if (characteristics.minLimit.has_value() and f < characteristics.minLimit.value()) {
-                return false;
-            }
-            if (characteristics.maxLimit.has_value() and f > characteristics.maxLimit.value()) {
-                return false;
-            }
-            return true;
+    switch (characteristics.dataType) {
+    case DataEnum::string:
+        if (characteristics.minLimit.has_value() and value.size() < characteristics.minLimit.value()) {
+            return false;
         }
-        case DataEnum::integer: {
-            if (!is_integer(value)) {
-                return false;
-            }
+        if (characteristics.maxLimit.has_value() and value.size() > characteristics.maxLimit.value()) {
+            return false;
+        }
+        return true;
+    case DataEnum::decimal: {
+        if (!is_decimal_number(value)) {
+            return false;
+        }
+        float f = std::stof(value);
+        if (characteristics.minLimit.has_value() and f < characteristics.minLimit.value()) {
+            return false;
+        }
+        if (characteristics.maxLimit.has_value() and f > characteristics.maxLimit.value()) {
+            return false;
+        }
+        return true;
+    }
+    case DataEnum::integer: {
+        if (!is_integer(value)) {
+            return false;
+        }
 
-            int i = std::stoi(value);
-            if (characteristics.minLimit.has_value() and i < characteristics.minLimit.value()) {
-                return false;
-            }
-            if (characteristics.maxLimit.has_value() and i > characteristics.maxLimit.value()) {
-                return false;
-            }
+        int i = std::stoi(value);
+        if (characteristics.minLimit.has_value() and i < characteristics.minLimit.value()) {
+            return false;
+        }
+        if (characteristics.maxLimit.has_value() and i > characteristics.maxLimit.value()) {
+            return false;
+        }
+        return true;
+    }
+    case DataEnum::dateTime: {
+        DateTime d(value);
+        return true;
+    }
+    case DataEnum::boolean:
+        return (value == "true" or value == "false");
+    case DataEnum::OptionList: {
+        // OptionList: The (Actual) Variable value must be a single value from the reported (CSV) enumeration list.
+        if (!characteristics.valuesList.has_value()) {
             return true;
         }
-        case DataEnum::dateTime: {
-            DateTime d(value);
-            return true;
-        }
-        case DataEnum::boolean:
-            return (value == "true" or value == "false");
-        case DataEnum::OptionList: {
-            // OptionList: The (Actual) Variable value must be a single value from the reported (CSV) enumeration list.
+        const auto values_list = ocpp::get_vector_from_csv(characteristics.valuesList.value().get());
+        return std::find(values_list.begin(), values_list.end(), value) != values_list.end();
+    }
+    default: // same validation for MemberList or SequenceList
+        // MemberList: The (Actual) Variable value may be an (unordered) (sub-)set of the reported (CSV) valid
+        // values list. SequenceList: The (Actual) Variable value may be an ordered (priority, etc) (sub-)set of the
+        // reported (CSV) valid values.
+        {
             if (!characteristics.valuesList.has_value()) {
                 return true;
             }
             const auto values_list = ocpp::get_vector_from_csv(characteristics.valuesList.value().get());
-            return std::find(values_list.begin(), values_list.end(), value) != values_list.end();
-        }
-        default: // same validation for MemberList or SequenceList
-            // MemberList: The (Actual) Variable value may be an (unordered) (sub-)set of the reported (CSV) valid
-            // values list. SequenceList: The (Actual) Variable value may be an ordered (priority, etc) (sub-)set of the
-            // reported (CSV) valid values.
-            {
-                if (!characteristics.valuesList.has_value()) {
-                    return true;
+            const auto value_csv = get_vector_from_csv(value);
+            for (const auto& v : value_csv) {
+                if (std::find(values_list.begin(), values_list.end(), v) == values_list.end()) {
+                    return false;
                 }
-                const auto values_list = ocpp::get_vector_from_csv(characteristics.valuesList.value().get());
-                const auto value_csv = get_vector_from_csv(value);
-                for (const auto& v : value_csv) {
-                    if (std::find(values_list.begin(), values_list.end(), v) == values_list.end()) {
-                        return false;
-                    }
-                }
-                return true;
             }
+            return true;
         }
-    } catch (const std::exception& e) {
-        return false;
     }
 }
 
@@ -193,7 +189,12 @@ SetVariableStatusEnum DeviceModel::set_value_internal(const Component& component
     }
 
     const auto characteristics = variable_map[variable].characteristics;
-    if (!validate_value(characteristics, value)) {
+    try {
+        if (!validate_value(characteristics, value)) {
+            return SetVariableStatusEnum::Rejected;
+        }
+    } catch (const std::exception& e) {
+        EVLOG_warning << "Could not validate value: " << value << " for component: " << component << " and variable: " << variable;
         return SetVariableStatusEnum::Rejected;
     }
 
