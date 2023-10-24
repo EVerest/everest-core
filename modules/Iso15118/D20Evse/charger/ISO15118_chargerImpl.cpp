@@ -184,7 +184,13 @@ void ISO15118_chargerImpl::handle_stop_charging(bool& stop_charging) {
 
 void ISO15118_chargerImpl::handle_set_DC_EVSEPresentVoltageCurrent(
     types::iso15118_charger::DC_EVSEPresentVoltage_Current& EVSEPresentVoltage_Current) {
-    // your code for cmd set_DC_EVSEPresentVoltageCurrent goes here
+    
+    float voltage = EVSEPresentVoltage_Current.EVSEPresentVoltage;
+    float current = 0;
+    if (EVSEPresentVoltage_Current.EVSEPresentCurrent.has_value()) {
+        current = EVSEPresentVoltage_Current.EVSEPresentCurrent.value();
+    }
+    controller->send_control_event(iso15118::d20::PresentVoltageCurrent{voltage, current});
 }
 
 void ISO15118_chargerImpl::handle_set_AC_EVSEMaxCurrent(double& EVSEMaxCurrent) {
