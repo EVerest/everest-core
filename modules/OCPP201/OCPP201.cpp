@@ -858,7 +858,7 @@ void OCPP201::ready() {
                 }(certificate_request.certificateAction);
 
                 auto ocpp_response = this->charge_point->on_get_15118_ev_certificate_request(ocpp_request);
-                EVLOG_info << "received response: " << ocpp_response;
+                EVLOG_debug << "Received response from get_15118_ev_certificate_request: " << ocpp_response;
                 // transform response, inject action, send to associated EvseManager
                 const auto everest_response_status = [](const ocpp::v201::Iso15118EVCertificateStatusEnum& action) {
                     switch (action) {
@@ -870,7 +870,6 @@ void OCPP201::ready() {
                 }(ocpp_response.status);
                 const types::iso15118_charger::Response_Exi_Stream_Status everest_response{
                     everest_response_status, certificate_request.certificateAction, ocpp_response.exiResponse};
-                EVLOG_info << "return response: " << everest_response;
                 this->r_evse_manager.at(evse_id - 1)->call_set_get_certificate_response(everest_response);
             });
 
