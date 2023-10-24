@@ -108,7 +108,14 @@ function(ev_add_project)
     if (EXISTS "${MODULES_DIR}/CMakeLists.txt")
         # FIXME (aw): default handling of building all modules?
         if (EVC_MAIN_PROJECT OR NOT EVEREST_DONT_BUILD_ALL_MODULES)
+            # We need a list of all to-be-built rust modules to create our
+            # workspace Cargo.toml, but we cannot easily pass it through the
+            # ev_add_module calls without polluting all CMakeLists.txt files
+            # with it. We bypass this using a global.
+            set_property(GLOBAL PROPERTY RUST_MODULE_LIST "")
             add_subdirectory(${MODULES_DIR})
+            get_property(RUST_MODULE_LIST_GLOBAL GLOBAL PROPERTY RUST_MODULE_LIST)
+            create_rust_cargo_toml("${RUST_MODULE_LIST_GLOBAL}")
         endif()
     endif ()
 endfunction()
@@ -175,7 +182,7 @@ function (_ev_add_types)
                 --everest-dir ${EVEREST_PROJECT_DIRS}
         COMMAND
             ${CMAKE_COMMAND} -E touch "${CHECK_DONE_FILE}"
-        WORKING_DIRECTORY 
+        WORKING_DIRECTORY
             ${PROJECT_SOURCE_DIR}
     )
 
@@ -276,7 +283,7 @@ function (ev_add_module)
     # check if rust module
     string(FIND ${MODULE_NAME} "Rs" MODULE_PREFIX_POS)
     if (MODULE_PREFIX_POS EQUAL 0)
-        ev_add_rs_module(${MODULE_NAME})
+      ev_add_rs_module(${MODULE_NAME})
         return()
     endif()
 
@@ -297,6 +304,7 @@ function (ev_add_cpp_module MODULE_NAME)
 
     set(MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}")
 
+    # TODO(hikinggrass): This code is duplicated in ev_add_*_module and should be refactored.
     if(IS_DIRECTORY ${MODULE_PATH})
         if(${EVEREST_EXCLUDE_CPP_MODULES})
             message(STATUS "Excluding C++ module ${MODULE_NAME} because EVEREST_EXCLUDE_CPP_MODULES=${EVEREST_EXCLUDE_CPP_MODULES}")
@@ -523,6 +531,29 @@ function (ev_add_py_module MODULE_NAME)
     )
 endfunction()
 
+function (create_rust_cargo_toml RUST_MODULE_LIST)
+    if(NOT ${EVEREST_ENABLE_RS_SUPPORT})
+        return()
+    endif()
+
+    set(OUTPUT_FILE_PATH "${CMAKE_BINARY_DIR}/modules/Cargo.toml")
+
+    # Write the static parts
+    file(WRITE "${OUTPUT_FILE_PATH}" "[workspace]\nresolver = \"2\"\nmembers = [\n")
+
+    # Append each symlink path
+    foreach(SYMLINK ${RUST_MODULE_LIST})
+        file(APPEND "${OUTPUT_FILE_PATH}" "    \"${SYMLINK}\",\n")
+    endforeach()
+
+    # Close the list
+    file(APPEND "${OUTPUT_FILE_PATH}" "]\n\n")
+
+    file(APPEND "${OUTPUT_FILE_PATH}" "[workspace.dependencies]\neverestrs = { path = \"")
+    file(APPEND "${OUTPUT_FILE_PATH}" "${everest-framework_SOURCE_DIR}/everestrs/everestrs")
+    file(APPEND "${OUTPUT_FILE_PATH}" "\" }\n")
+endfunction()
+
 function (ev_add_rs_module MODULE_NAME)
     set(EVEREST_MODULE_INSTALL_PREFIX "${CMAKE_INSTALL_LIBEXECDIR}/everest/modules")
 
@@ -542,26 +573,15 @@ function (ev_add_rs_module MODULE_NAME)
         else()
             message(STATUS "Setting up Rust module ${MODULE_NAME}")
 
-            find_program(
-                    RSYNC
-                    rsync
-                    REQUIRED
-            )
+            # Symlink the source directory into the build directory
+            execute_process(COMMAND rm -rf "${MODULE_BUILD_PATH}")
+            execute_process(COMMAND ln -s "${MODULE_PATH}/" "${MODULE_BUILD_PATH}")
 
-            # Copy source of module ${MODULE_NAME} to build dir
-            execute_process(
-                COMMAND ${RSYNC} -avq --delete "${MODULE_PATH}/" "${MODULE_BUILD_PATH}"
-            )
-
-            find_program(
-                SED
-                sed
-                REQUIRED
-            )
-
-            execute_process(
-                COMMAND ${SED} -i "/everestrs = /c\\everestrs = { path = \"${everest-framework_SOURCE_DIR}/everestrs/everestrs\" }" "${MODULE_BUILD_PATH}/Cargo.toml"
-            )
+            set(EVEREST_MODULE_DIR ${PROJECT_SOURCE_DIR}/modules)
+            file(RELATIVE_PATH MODULE_PARENT_DIR ${EVEREST_MODULE_DIR} "${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}")
+            get_property(RUST_MODULE_LIST_GLOBAL GLOBAL PROPERTY RUST_MODULE_LIST)
+            list(APPEND RUST_MODULE_LIST_GLOBAL "${MODULE_PARENT_DIR}")
+            set_property(GLOBAL PROPERTY RUST_MODULE_LIST ${RUST_MODULE_LIST_GLOBAL})
 
             find_program(
                 CARGO
@@ -569,20 +589,23 @@ function (ev_add_rs_module MODULE_NAME)
                 REQUIRED
             )
 
+            if(CMAKE_BUILD_TYPE STREQUAL "Release")
+                set(CARGO_RELEASE_FLAG "--release")
+                set(BIN_PATH "${CMAKE_BINARY_DIR}/modules/target/release/${MODULE_NAME}")
+            else()
+                set(CARGO_RELEASE_FLAG "")
+                set(BIN_PATH "${CMAKE_BINARY_DIR}/modules/target/debug/${MODULE_NAME}")
+            endif()
+
+            # Note: We are building in the directory in which the Workspace Cargo.toml resides, to make sure it is used.
             add_custom_target(
                 ${MODULE_NAME} ALL
-                COMMAND ${CMAKE_COMMAND} -E env EVEREST_RS_FRAMEWORK_SOURCE_LOCATION="${everest-framework_SOURCE_DIR}" EVEREST_RS_FRAMEWORK_BINARY_LOCATION="${everest-framework_BINARY_DIR}" ${CARGO} build
-                WORKING_DIRECTORY ${MODULE_BUILD_PATH}
+                COMMAND ${CMAKE_COMMAND} -E env EVEREST_RS_FRAMEWORK_SOURCE_LOCATION="${everest-framework_SOURCE_DIR}" EVEREST_RS_FRAMEWORK_BINARY_LOCATION="${everest-framework_BINARY_DIR}" ${CARGO} build ${CARGO_RELEASE_FLAG} --bin ${MODULE_NAME}
+                WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/modules
                 DEPENDS everest::framework
             )
 
-            install(CODE "execute_process(COMMAND ${CARGO} install --path \"${MODULE_BUILD_PATH}\" \
-                                                                   --root \"${CMAKE_INSTALL_PREFIX}/${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}\" \
-                                          WORKING_DIRECTORY ${MODULE_BUILD_PATH} \
-                                          COMMAND echo \"hello there\" \
-                          )")
-
-            install(FILES ${MODULE_PATH}/manifest.yaml
+            install(FILES ${MODULE_PATH}/manifest.yaml ${BIN_PATH}
                 DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
             )
         endif()
@@ -600,7 +623,7 @@ endfunction()
 
 function(ev_install_project)
     set (LIBRARY_PACKAGE_NAME ${PROJECT_NAME})
-    
+
     include(CMakePackageConfigHelpers)
 
     set (EVEREST_DATADIR "${CMAKE_INSTALL_DATADIR}/everest")

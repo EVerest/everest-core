@@ -1,3 +1,7 @@
+// EVerest expects binaries to be CamelCased, and Rust wants them to be snake_case. We yield to
+// EVerest and shut up the compiler warning.
+#![allow(non_snake_case)]
+
 mod eventually_generated;
 use eventually_generated::{
     ExampleServiceSubscriber, KvsClientSubscriber, KvsServiceSubscriber, Module, ModulePublisher,
