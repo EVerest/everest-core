@@ -19,6 +19,7 @@
 namespace gsh01_app_layer {
 
 enum class CommandType : std::uint16_t {
+    ///---------------Device Information Registers-------------------
     AB_MODE_SET = 0x4102,                               // get or set the mode of application board  
     AB_TRANSPARENT_MODE = 0x4103,                       // get the transparent mode meter  
     AB_SERVER_ID = 0x4110,                              // get the server ID of application board
@@ -29,7 +30,7 @@ enum class CommandType : std::uint16_t {
     AB_FW_CHECKSUM = 0x4115,                            // get the checksum (crc16) of application board
     MB_SW_VERSION = 0x4116,                             // get the software version of metering board 
     MB_FW_CHECKSUM = 0x4117,                            // get the crc16 from software integrity check of metering board
-    AP_BL_VERSION = 0x4118,                             // get the bootloader version
+    BOOTL_VERSION = 0x4118,                             // get the bootloader version
     AB_FW_HASH = 0x4119,                                // get the firmware hash(crc16) of application board
     MEASUREMENT_MODE = 0x4120,                          // get the measurement mode
     GET_NORMAL_VOLTAGE = 0x4121,                        // get the normal voltage
@@ -46,6 +47,11 @@ enum class CommandType : std::uint16_t {
     AP_CONFIG_COMPLETE = 0x4211,                        // set the application configuration complete command 
     METER_BUS_ADDR = 0x4212,                            // get or set the meter bus address 
     AS_CONFIG_COMPLETE = 0x4221,                        // set the assmbling configuration complete command 
+    ///---------------Device Control Registers--------------------------
+    GET_PUBKEY_STR16 = 0x0211,                          // get the public key in string format (base16) 
+    GET_PUBKEY_STR32 = 0x0212,                          // get the public key in string format (base32) 
+    GET_PUBKEY_CSTR16 = 0x0213,                         // get the public key compressed in string format (base16)
+    GET_PUBKEY_CSTR32 = 0x0214,                         // get the public key compressed in string format (base32)
     START_TRANSACTION = 0x1501,                         // start transaction
     STOP_TRANSACTION = 0x1502,                          // stop transaction 
     OCMF_STATS = 0x1510,                                // get the statistics of OCMF 
@@ -68,7 +74,7 @@ enum class CommandType : std::uint16_t {
     GET_LOG_ENTRY = 0x1720,                             // get the log entry
     GET_LAST_LOG_ENTRY = 0x1721,                        // get last log entry 
     GET_LOG_ENTRY_REVERSE = 0x1722,                     // get the log entry reverse
-
+    ///----------------Instantaneous Registers------------------------
     GET_TOTAL_IMPORT_MAINS_ENERGY = 0x0110,             // get total import mains energy
     GET_CURRENT_L1 = 0x0131,                            // get current (phase L1) 
     GET_VOLTAGE_L1 = 0x0132,                            // get voltage (phase L1) 
@@ -82,10 +88,6 @@ enum class CommandType : std::uint16_t {
     GET_TOTAL_IMPORT_LINE_LOSS_ENERGY = 0x0160,         // get the total import line loss energy
     GET_TOTAL_IMPORT_DEV_ENERGY = 0x0170,               // get the total import device energy 
     GET_SECOND_INDEX = 0x0180,                          // get the second index 
-    GET_PUBKEY_STR16 = 0x0211,                          // get the public key in string format (base16) 
-    GET_PUBKEY_STR32 = 0x0212,                          // get the public key in string format (base32) 
-    GET_PUBKEY_CSTR16 = 0x0213,                         // get the public key compressed in string format (base16)
-    GET_PUBKEY_CSTR32 = 0x0214,                         // get the public key compressed in string format (base32)
 };
 
 enum class CommandStatus : std::uint8_t {
@@ -359,6 +361,7 @@ public:
     void create_command_get_application_board_fw_hash(std::vector<uint8_t>& command_data);
     void create_command_get_application_board_status(std::vector<uint8_t>& command_data);
     void create_command_get_metering_board_software_version(std::vector<uint8_t>& command_data);
+    void create_command_get_bootloader_version(std::vector<uint8_t>& command_data);
     void create_command_get_metering_board_fw_checksum(std::vector<uint8_t>& command_data);
     
     void create_command_get_device_type(std::vector<uint8_t>& command_data);

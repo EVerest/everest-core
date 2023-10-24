@@ -341,6 +341,10 @@ void Gsh01AppLayer::create_command_get_metering_board_fw_checksum(std::vector<ui
     command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::MB_FW_CHECKSUM));
 }
 
+void Gsh01AppLayer::create_command_get_bootloader_version(std::vector<uint8_t>& command_data) {
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::BOOTL_VERSION));
+}
+
 /* doubles as OCMF "meter model name" */
 void Gsh01AppLayer::create_command_get_device_type(std::vector<uint8_t>& command_data) {
     command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::AB_DEVICE_TYPE));

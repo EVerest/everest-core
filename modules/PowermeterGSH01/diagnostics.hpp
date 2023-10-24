@@ -31,15 +31,11 @@ struct DeviceData {
     uint8_t gmt_offset_quarterhours{};
     uint64_t total_start_import_energy_Wh{};  // meter value needs to be divided by 10 for Wh
     uint64_t total_stop_import_energy_Wh{};   // meter value needs to be divided by 10 for Wh
-    uint64_t total_start_export_energy_Wh{};  // meter value needs to be divided by 10 for Wh
-    uint64_t total_stop_export_energy_Wh{};   // meter value needs to be divided by 10 for Wh
     uint32_t total_transaction_duration_s{};  // must be less than 27 days in total
     OcmfStats ocmf_stats;
     std::string last_ocmf_transaction{};
     std::string requested_ocmf{};
-    OcmfInfo ocmf_info;
     uint64_t total_dev_import_energy_Wh{};  // meter value needs to be divided by 10 for Wh
-    uint64_t total_dev_export_energy_Wh{};  // meter value needs to be divided by 10 for Wh
     uint64_t ab_status{};
 };
 
@@ -78,6 +74,7 @@ struct DeviceDiagnostics {
     LogStats log_stats;
     ApplicationBoardInfo app_board;
     MeteringBoardInfo m_board;
+    std::string bootl_ver{};
     std::string pubkey_asn1{};
     std::string pubkey_str16{};
     std::string pubkey{};

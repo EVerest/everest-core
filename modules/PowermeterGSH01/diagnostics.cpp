@@ -11,8 +11,6 @@ void to_json(json& j, const DeviceData& k) {
     j["GMT_offset_quarterhours"] = k.gmt_offset_quarterhours;
     j["total_start_import_energy_Wh"] = k.total_start_import_energy_Wh;
     j["total_stop_import_energy_Wh"] = k.total_stop_import_energy_Wh;
-    j["total_start_export_energy_Wh"] = k.total_start_export_energy_Wh;
-    j["total_stop_export_energy_Wh"] = k.total_stop_export_energy_Wh;
     j["total_transaction_duration_s"] = k.total_transaction_duration_s;
     j["OCMF_stats"] = json();
     j["OCMF_stats"]["number_transactions"] = k.ocmf_stats.number_transactions;
@@ -21,12 +19,8 @@ void to_json(json& j, const DeviceData& k) {
     j["OCMF_stats"]["max_number_of_transactions"] = k.ocmf_stats.max_number_of_transactions;
     j["last_ocmf_transaction"] = k.last_ocmf_transaction;
     j["requested_ocmf"] = k.requested_ocmf;
-    j["OCMF_info"] = json();
-    j["OCMF_info"]["gateway_id"] = k.ocmf_info.gateway_id;
-    j["OCMF_info"]["manufacturer"] = k.ocmf_info.manufacturer;
-    j["OCMF_info"]["model"] = k.ocmf_info.model;
+//    j["OCMF_info"] = json();
     j["total_dev_import_energy_Wh"] = k.total_dev_import_energy_Wh;
-    j["total_dev_export_energy_Wh"] = k.total_dev_export_energy_Wh;
     j["status"] = module::conversions::to_bin_string(k.ab_status);
     // EVLOG_error << "[DeviceData][to_json()] end";
 }
@@ -36,19 +30,13 @@ void from_json(const json& j, DeviceData& k) {
     // k.gmt_offset_quarterhours = j.at("");
     // k.total_start_import_energy_Wh = j.at("");
     // k.total_stop_import_energy_Wh = j.at("");
-    // k.total_start_export_energy_Wh = j.at("");
-    // k.total_stop_export_energy_Wh = j.at("");
     // k.total_transaction_duration_s = j.at("");
     // k.ocmf_stats.number_transactions = j.at("");
     // k.ocmf_stats.timestamp_first_transaction = j.at("");
     // k.ocmf_stats.timestamp_last_transaction = j.at("");
     // k.ocmf_stats.max_number_of_transactions = j.at("");
     // k.last_ocmf_transaction = j.at("");
-    // k.ocmf_info.gateway_id = j.at("");
-    // k.ocmf_info.manufacturer = j.at("");
-    // k.ocmf_info.model = j.at("");
     // k.total_dev_import_energy_Wh = j.at("");
-    // k.total_dev_export_energy_Wh = j.at("");
     EVLOG_error << "[DeviceData][from_json()] not implemented";
 }
 
@@ -76,6 +64,7 @@ void to_json(json& j, const DeviceDiagnostics& k) {
     j["app_board"]["SW_ver"] = k.app_board.sw_ver;
     j["app_board"]["FW_CRC"] = module::conversions::hexdump(k.app_board.fw_crc);
     j["app_board"]["FW_hash"] = module::conversions::hexdump(k.app_board.fw_hash);
+    j["bootl_ver"] = k.bootl_ver;
     j["m_board"] = json();
     j["m_board"]["HW_ver"] = k.m_board.hw_ver;
     j["m_board"]["SW_ver"] = k.m_board.sw_ver;
@@ -113,6 +102,7 @@ void from_json(const json& j, DeviceDiagnostics& k) {
     // k.app_board.sw_ver = j.at("");
     // k.app_board.fw_crc = j.at("");
     // k.app_board.fw_hash = j.at("");
+    // k.bootl_ver = j.at("");
     // k.m_board.sw_ver = j.at("");
     // k.m_board.fw_crc = j.at("");
     EVLOG_error << "[DeviceDiagnostics][from_json()] not implemented";

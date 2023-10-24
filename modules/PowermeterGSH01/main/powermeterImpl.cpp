@@ -83,11 +83,14 @@ void powermeterImpl::ready() {
     std::thread ([this] {
         while (true) {
             read_powermeter_values();
+            // publish powermeter values
+            this->publish_powermeter(this->pm_last_values);
             std::this_thread::sleep_for(std::chrono::seconds(1));
         }
     }).detach();
 
     // create device_data publisher thread
+    //ToDo: start and stop a first transaction for reading values
     /*if (this->config.publish_device_data) {
         std::thread ([this] {
             while (true) {
@@ -100,7 +103,7 @@ void powermeterImpl::ready() {
     }*/
 
     // create device_diagnostics publisher thread
-    /*if (this->config.publish_device_diagnostics) {
+    if (this->config.publish_device_diagnostics) {
         std::thread ([this] {
             while (true) {
                 read_diagnostics_data();
@@ -109,7 +112,7 @@ void powermeterImpl::ready() {
                 std::this_thread::sleep_for(std::chrono::seconds(10));
             }
         }).detach();
-    }*/
+    }
 
     // create logging publisher thread
     /*if (this->config.publish_device_diagnostics) {
@@ -216,17 +219,22 @@ void powermeterImpl::read_device_data() {
         std::vector<uint8_t> get_total_stop_import_energy_cmd{};
         app_layer.create_command_get_total_stop_import_energy(get_total_stop_import_energy_cmd);
 
+        std::vector<uint8_t> get_total_transaction_duration_cmd{};
+        app_layer.create_command_get_total_transaction_duration(get_total_transaction_duration_cmd);
+
         std::vector<uint8_t> get_ocmf_stats_cmd{};
         app_layer.create_command_get_ocmf_stats(get_ocmf_stats_cmd);
 
         std::vector<uint8_t> get_last_transaction_ocmf_cmd{};
         app_layer.create_command_get_last_transaction_ocmf(get_last_transaction_ocmf_cmd);
 
+
         std::vector<uint8_t> slip_msg_read_device_data = std::move(this->slip.package_multi(this->config.powermeter_device_id,
                                                                                             {
                                                                                                 get_time_cmd,
                                                                                                 get_total_start_import_energy_cmd,
                                                                                                 get_total_stop_import_energy_cmd,
+                                                                                                get_total_transaction_duration_cmd,
                                                                                                 get_ocmf_stats_cmd,
                                                                                                 get_last_transaction_ocmf_cmd
                                                                                             }));
@@ -234,15 +242,11 @@ void powermeterImpl::read_device_data() {
         receive_response();
     }
     {
-        std::vector<uint8_t> get_total_dev_import_energy_cmd{};
-        app_layer.create_command_get_total_dev_import_energy(get_total_dev_import_energy_cmd);
-
         std::vector<uint8_t> get_application_board_status_cmd{};
         app_layer.create_command_get_application_board_status(get_application_board_status_cmd);
 
         std::vector<uint8_t> slip_msg_read_device_data_2 = std::move(this->slip.package_multi(this->config.powermeter_device_id,
                                                                                               {
-                                                                                                  get_total_dev_import_energy_cmd,
                                                                                                   get_application_board_status_cmd
                                                                                               }));
         this->serial_device.tx(slip_msg_read_device_data_2);
@@ -390,6 +394,9 @@ void powermeterImpl::read_diagnostics_data() {
         std::vector<uint8_t> get_metering_board_fw_checksum_cmd{};
         app_layer.create_command_get_metering_board_fw_checksum(get_metering_board_fw_checksum_cmd);
         
+        std::vector<uint8_t> get_bootloader_version_cmd{};
+        app_layer.create_command_get_bootloader_version(get_bootloader_version_cmd);
+
         std::vector<uint8_t> slip_msg_get_diagnostics_data_3 = std::move(this->slip.package_multi(this->config.powermeter_device_id,
                                                                                                   {
                                                                                                       get_application_board_serial_number_cmd,
@@ -397,8 +404,8 @@ void powermeterImpl::read_diagnostics_data() {
                                                                                                       get_application_board_fw_checksum_cmd,
                                                                                                       get_application_board_fw_hash_cmd,
                                                                                                       get_metering_board_software_version_cmd,
-                                                                                                      get_metering_board_fw_checksum_cmd
-                                                                                                      //get_ocmf_config_cmd
+                                                                                                      get_metering_board_fw_checksum_cmd,
+                                                                                                      get_bootloader_version_cmd
                                                                                                   }));
         this->serial_device.tx(slip_msg_get_diagnostics_data_3);
         receive_response();
@@ -414,19 +421,21 @@ void powermeterImpl::read_powermeter_values() {
 
 void powermeterImpl::init_default_values() {
     this->pm_last_values.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
-    this->pm_last_values.meter_id = "AST_Powermeter_addr_" + std::to_string(this->config.powermeter_device_id);
+    this->pm_last_values.meter_id = "GSH01_Powermeter_addr_" + std::to_string(this->config.powermeter_device_id);
 
-    this->pm_last_values.energy_Wh_import.total = 0.0f;
+    types::units::Energy import_device_energy_Wh;
+    import_device_energy_Wh.total = 0.0f;
+    this->pm_last_values.energy_Wh_import = import_device_energy_Wh;
     // this->pm_last_values.energy_Wh_import.L1 = 0.0f;
 
-    types::units::Energy energy_Wh;
-    energy_Wh.total = 0.0f;
-    this->pm_last_values.energy_Wh_export = energy_Wh;
+    //types::units::Energy energy_Wh;
+    //energy_Wh.total = 0.0f;
+    //this->pm_last_values.energy_Wh_export = energy_Wh;
     // this->pm_last_values.energy_Wh_export.L1 = 0.0f;
 
-    types::units::Power power_W;
-    power_W.total = 0.0f;
-    this->pm_last_values.power_W = power_W;
+    types::units::Power import_device_power_W;
+    import_device_power_W.total = 0.0f;
+    this->pm_last_values.power_W = import_device_power_W;
     // this->pm_last_values.power_W.L1 = 0.0f;
 
     types::units::Voltage voltage_V;
@@ -449,16 +458,20 @@ void powermeterImpl::readRegisters() {
     std::vector<uint8_t> get_import_power_cmd{};
     app_layer.create_command_get_import_power(get_import_power_cmd);
 
-    std::vector<uint8_t> get_total_power_cmd{};
-    app_layer.create_command_get_total_power(get_total_power_cmd);
+    std::vector<uint8_t> get_import_energy_cmd{};
+    app_layer.create_command_get_total_dev_import_energy(get_import_energy_cmd);
+
+    //std::vector<uint8_t> get_total_power_cmd{};
+    //app_layer.create_command_get_total_power(get_total_power_cmd);
+
+    //ToDo other instanceous registers: f.i. GET_TOTAL_IMPORT_MAINS_ENERGY
 
     std::vector<uint8_t> slip_msg_read_registers = std::move(this->slip.package_multi(this->config.powermeter_device_id,
                                                                                       {
                                                                                           get_voltage_cmd,
                                                                                           get_current_cmd,
                                                                                           get_import_power_cmd,
-                                                                                          //export_power_cmd,
-                                                                                          get_total_power_cmd
+                                                                                          get_import_energy_cmd
                                                                                       }));
     this->serial_device.tx(slip_msg_read_registers);
     receive_response();
@@ -584,7 +597,7 @@ gsh01_app_layer::CommandResult powermeterImpl::process_response(const std::vecto
                         energy_in.total = (float)get_u64(part_data) / 10.0;  // powermeter reports in [Wh * 10]
                         this->pm_last_values.energy_Wh_import = energy_in;
 
-                        device_data_obj.total_dev_import_energy_Wh = get_u64(part_data) / 10.0;  // powermeter reports in [Wh * 10]
+                        //device_data_obj.total_dev_import_energy_Wh = get_u64(part_data) / 10.0;  // powermeter reports in [Wh * 10]
                     }
                     break;
 
@@ -786,6 +799,13 @@ gsh01_app_layer::CommandResult powermeterImpl::process_response(const std::vecto
                     }
                     break;
 
+                case (int)gsh01_app_layer::CommandType::BOOTL_VERSION:
+                    {
+                        if (part_data_len < 5) break;
+                        device_diagnostics_obj.bootl_ver = get_str(part_data, 0, 5);
+                    }
+                    break;
+
                 case (int)gsh01_app_layer::CommandType::AB_DEVICE_TYPE:
                     {
                         if (part_data_len < 18) break;
@@ -803,7 +823,6 @@ gsh01_app_layer::CommandResult powermeterImpl::process_response(const std::vecto
             // not (yet) implemented
 
                 case (int)gsh01_app_layer::CommandType::AB_TRANSPARENT_MODE:
-                case (int)gsh01_app_layer::CommandType::AP_BL_VERSION:
                 case (int)gsh01_app_layer::CommandType::MEASUREMENT_MODE:
                 case (int)gsh01_app_layer::CommandType::GET_NORMAL_VOLTAGE:
                 case (int)gsh01_app_layer::CommandType::GET_NORMAL_CURRENT:
@@ -856,7 +875,7 @@ gsh01_app_layer::CommandResult powermeterImpl::process_response(const std::vecto
     }
 
     // publish powermeter values
-    this->publish_powermeter(this->pm_last_values);
+    //this->publish_powermeter(this->pm_last_values);
 
     return response_status;
 }
