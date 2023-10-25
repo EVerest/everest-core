@@ -349,20 +349,20 @@ public:
     void create_command_get_log_entry_reverse(uint32_t log_entry_id,
                                               std::vector<uint8_t>& command_data);
 
-    void create_command_get_application_board_mode(std::vector<uint8_t>& command_data);
-    void create_command_set_application_board_mode(gsh01_app_layer::ApplicationBoardMode mode,
-                                                   std::vector<uint8_t>& command_data);
+    void create_command_get_application_mode(std::vector<uint8_t>& command_data);
+    void create_command_set_application_mode(gsh01_app_layer::ApplicationBoardMode mode,
+                                             std::vector<uint8_t>& command_data);
 
     void create_command_get_hardware_version(std::vector<uint8_t>& command_data);
-    void create_command_get_application_board_server_id(std::vector<uint8_t>& command_data);
-    void create_command_get_application_board_serial_number(std::vector<uint8_t>& command_data);
-    void create_command_get_application_board_software_version(std::vector<uint8_t>& command_data);
-    void create_command_get_application_board_fw_checksum(std::vector<uint8_t>& command_data);
-    void create_command_get_application_board_fw_hash(std::vector<uint8_t>& command_data);
-    void create_command_get_application_board_status(std::vector<uint8_t>& command_data);
-    void create_command_get_metering_board_software_version(std::vector<uint8_t>& command_data);
+    void create_command_get_server_id(std::vector<uint8_t>& command_data);
+    void create_command_get_serial_number(std::vector<uint8_t>& command_data);
+    void create_command_get_application_fw_version(std::vector<uint8_t>& command_data);
+    void create_command_get_application_fw_checksum(std::vector<uint8_t>& command_data);
+    void create_command_get_application_fw_hash(std::vector<uint8_t>& command_data);
+    void create_command_get_status_word(std::vector<uint8_t>& command_data);
+    void create_command_get_metering_fw_version(std::vector<uint8_t>& command_data);
     void create_command_get_bootloader_version(std::vector<uint8_t>& command_data);
-    void create_command_get_metering_board_fw_checksum(std::vector<uint8_t>& command_data);
+    void create_command_get_metering_fw_checksum(std::vector<uint8_t>& command_data);
     
     void create_command_get_device_type(std::vector<uint8_t>& command_data);
 

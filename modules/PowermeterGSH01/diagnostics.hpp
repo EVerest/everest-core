@@ -62,18 +62,22 @@ struct MeteringInfo {
     uint16_t fw_crc{};
 };
 
-struct DeviceDiagnostics {
-    std::string charge_point_id{};
-    uint8_t charge_point_id_type{0};
-    LogStats log_stats;
+struct DeviceInfo {
     std::string type{};
     std::string hw_ver{};
     std::string server_id{};
     uint32_t serial_number{};
-    ApplicationInfo application;
-    MeteringInfo metering;
     uint8_t bus_address{};
     std::string bootl_ver{};
+    ApplicationInfo application;
+    MeteringInfo metering;
+};
+
+struct DeviceDiagnostics {
+    std::string charge_point_id{};
+    uint8_t charge_point_id_type{0};
+    DeviceInfo dev_info;
+    LogStats log_stats;
     std::string pubkey_asn1{};
     std::string pubkey_str16{};
     std::string pubkey{};

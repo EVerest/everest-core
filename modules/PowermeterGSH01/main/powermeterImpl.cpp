@@ -69,9 +69,9 @@ void powermeterImpl::init() {
         //set_meter_bus_address(0x4A);
         //set_meter_bus_address(config.powermeter_device_id);
     request_device_type();
-    get_app_sw_version();
+    get_app_fw_version();
     get_application_operation_mode();
-    if(device_diagnostics_obj.application.mode == (int)gsh01_app_layer::ApplicationBoardMode::ASSEMBLY){
+    if(device_diagnostics_obj.dev_info.application.mode == (int)gsh01_app_layer::ApplicationBoardMode::ASSEMBLY){
         //ToDo: set line loss impedance - must be added as config parameter        
         set_application_operation_mode(gsh01_app_layer::ApplicationBoardMode::APPLICATION);
     }
@@ -242,12 +242,12 @@ void powermeterImpl::read_device_data() {
         receive_response();
     }
     {
-        std::vector<uint8_t> get_application_board_status_cmd{};
-        app_layer.create_command_get_application_board_status(get_application_board_status_cmd);
+        std::vector<uint8_t> get_status_word_cmd{};
+        app_layer.create_command_get_status_word(get_status_word_cmd);
 
         std::vector<uint8_t> slip_msg_read_device_data_2 = std::move(this->slip.package_multi(this->config.powermeter_device_id,
                                                                                               {
-                                                                                                  get_application_board_status_cmd
+                                                                                                  get_status_word_cmd
                                                                                               }));
         this->serial_device.tx(slip_msg_read_device_data_2);
         receive_response();
@@ -293,18 +293,18 @@ void powermeterImpl::request_device_type() {
     receive_response();
 }
 
-void powermeterImpl::get_app_sw_version() {
+void powermeterImpl::get_app_fw_version() {
     std::vector<uint8_t> data_vect{};
-    app_layer.create_command_get_application_board_software_version(data_vect);
-    std::vector<uint8_t> slip_msg_app_sw_version= std::move(this->slip.package_single(this->config.powermeter_device_id, data_vect));
-    EVLOG_info << "\nFrame: " << module::conversions::hexdump(slip_msg_app_sw_version) << " length: " << slip_msg_app_sw_version.size() << "\n\n";
-    this->serial_device.tx(slip_msg_app_sw_version);
+    app_layer.create_command_get_application_fw_version(data_vect);
+    std::vector<uint8_t> slip_msg_app_fw_version= std::move(this->slip.package_single(this->config.powermeter_device_id, data_vect));
+    EVLOG_info << "\nFrame: " << module::conversions::hexdump(slip_msg_app_fw_version) << " length: " << slip_msg_app_fw_version.size() << "\n\n";
+    this->serial_device.tx(slip_msg_app_fw_version);
     receive_response();
 }
 
 void powermeterImpl::get_application_operation_mode() {
     std::vector<uint8_t> data_vect{};
-    app_layer.create_command_get_application_board_mode(data_vect);
+    app_layer.create_command_get_application_mode(data_vect);
     std::vector<uint8_t> slip_msg_get_operation_mode= std::move(this->slip.package_single(this->config.powermeter_device_id, data_vect));
     EVLOG_info << "\nFrame: " << module::conversions::hexdump(slip_msg_get_operation_mode) << " length: " << slip_msg_get_operation_mode.size() << "\n\n";
     this->serial_device.tx(slip_msg_get_operation_mode);
@@ -312,7 +312,7 @@ void powermeterImpl::get_application_operation_mode() {
 }
 void powermeterImpl::set_application_operation_mode(gsh01_app_layer::ApplicationBoardMode mode) {
     std::vector<uint8_t> set_operation_mode_cmd{};
-    app_layer.create_command_set_application_board_mode(mode, set_operation_mode_cmd);
+    app_layer.create_command_set_application_mode(mode, set_operation_mode_cmd);
     std::vector<uint8_t> slip_msg_set_operation_mode= std::move(this->slip.package_single(this->config.powermeter_device_id, set_operation_mode_cmd));
     EVLOG_info << "\nFrame: " << module::conversions::hexdump(slip_msg_set_operation_mode) << " length: " << slip_msg_set_operation_mode.size() << "\n\n";
     this->serial_device.tx(slip_msg_set_operation_mode);
@@ -346,19 +346,19 @@ void powermeterImpl::read_diagnostics_data() {
         std::vector<uint8_t> get_hardware_version_cmd{};
         app_layer.create_command_get_hardware_version(get_hardware_version_cmd);
 
-        std::vector<uint8_t> get_application_board_server_id_cmd{};
-        app_layer.create_command_get_application_board_server_id(get_application_board_server_id_cmd);
+        std::vector<uint8_t> get_server_id_cmd{};
+        app_layer.create_command_get_server_id(get_server_id_cmd);
 
-        std::vector<uint8_t> get_application_board_mode_cmd{};
-        app_layer.create_command_get_application_board_mode(get_application_board_mode_cmd);
+        std::vector<uint8_t> get_application_mode_cmd{};
+        app_layer.create_command_get_application_mode(get_application_mode_cmd);
 
         std::vector<uint8_t> slip_msg_get_diagnostics_data_1 = std::move(this->slip.package_multi(this->config.powermeter_device_id,
                                                                                                   {
                                                                                                       get_charge_point_id_cmd,
                                                                                                       get_device_type_cmd,
                                                                                                       get_hardware_version_cmd,
-                                                                                                      get_application_board_server_id_cmd,
-                                                                                                      get_application_board_mode_cmd
+                                                                                                      get_server_id_cmd,
+                                                                                                      get_application_mode_cmd
                                                                                                   }));
         this->serial_device.tx(slip_msg_get_diagnostics_data_1);
         receive_response();
@@ -376,35 +376,35 @@ void powermeterImpl::read_diagnostics_data() {
 
     // part 3 - HW/SW info
     {
-        std::vector<uint8_t> get_application_board_serial_number_cmd{};
-        app_layer.create_command_get_application_board_serial_number(get_application_board_serial_number_cmd);
+        std::vector<uint8_t> get_serial_number_cmd{};
+        app_layer.create_command_get_serial_number(get_serial_number_cmd);
 
-        std::vector<uint8_t> get_application_board_software_version_cmd{};
-        app_layer.create_command_get_application_board_software_version(get_application_board_software_version_cmd);
+        std::vector<uint8_t> get_application_fw_version_cmd{};
+        app_layer.create_command_get_application_fw_version(get_application_fw_version_cmd);
         
-        std::vector<uint8_t> get_application_board_fw_checksum_cmd{};
-        app_layer.create_command_get_application_board_fw_checksum(get_application_board_fw_checksum_cmd);
+        std::vector<uint8_t> get_application_fw_checksum_cmd{};
+        app_layer.create_command_get_application_fw_checksum(get_application_fw_checksum_cmd);
 
-        std::vector<uint8_t> get_application_board_fw_hash_cmd{};
-        app_layer.create_command_get_application_board_fw_hash(get_application_board_fw_hash_cmd);
+        std::vector<uint8_t> get_application_fw_hash_cmd{};
+        app_layer.create_command_get_application_fw_hash(get_application_fw_hash_cmd);
 
-        std::vector<uint8_t> get_metering_board_software_version_cmd{};
-        app_layer.create_command_get_metering_board_software_version(get_metering_board_software_version_cmd);
+        std::vector<uint8_t> get_metering_fw_version_cmd{};
+        app_layer.create_command_get_metering_fw_version(get_metering_fw_version_cmd);
 
-        std::vector<uint8_t> get_metering_board_fw_checksum_cmd{};
-        app_layer.create_command_get_metering_board_fw_checksum(get_metering_board_fw_checksum_cmd);
+        std::vector<uint8_t> get_metering_fw_checksum_cmd{};
+        app_layer.create_command_get_metering_fw_checksum(get_metering_fw_checksum_cmd);
         
         std::vector<uint8_t> get_bootloader_version_cmd{};
         app_layer.create_command_get_bootloader_version(get_bootloader_version_cmd);
 
         std::vector<uint8_t> slip_msg_get_diagnostics_data_3 = std::move(this->slip.package_multi(this->config.powermeter_device_id,
                                                                                                   {
-                                                                                                      get_application_board_serial_number_cmd,
-                                                                                                      get_application_board_software_version_cmd,
-                                                                                                      get_application_board_fw_checksum_cmd,
-                                                                                                      get_application_board_fw_hash_cmd,
-                                                                                                      get_metering_board_software_version_cmd,
-                                                                                                      get_metering_board_fw_checksum_cmd,
+                                                                                                      get_serial_number_cmd,
+                                                                                                      get_application_fw_version_cmd,
+                                                                                                      get_application_fw_checksum_cmd,
+                                                                                                      get_application_fw_hash_cmd,
+                                                                                                      get_metering_fw_version_cmd,
+                                                                                                      get_metering_fw_checksum_cmd,
                                                                                                       get_bootloader_version_cmd
                                                                                                   }));
         this->serial_device.tx(slip_msg_get_diagnostics_data_3);
@@ -715,11 +715,11 @@ gsh01_app_layer::CommandResult powermeterImpl::process_response(const std::vecto
                 case (int)gsh01_app_layer::CommandType::APP_MODE_SET:
                     {
                         if (part_data_len < 1) break;
-                        device_diagnostics_obj.application.mode = part_data[0];
-                        if(device_diagnostics_obj.application.mode == (uint8_t)gsh01_app_layer::ApplicationBoardMode::ASSEMBLY){
+                        device_diagnostics_obj.dev_info.application.mode = part_data[0];
+                        if(device_diagnostics_obj.dev_info.application.mode == (uint8_t)gsh01_app_layer::ApplicationBoardMode::ASSEMBLY){
                             EVLOG_info << "Operation mode is: ASSEMBLY";
                         }
-                        else if(device_diagnostics_obj.application.mode == (uint8_t)gsh01_app_layer::ApplicationBoardMode::APPLICATION){
+                        else if(device_diagnostics_obj.dev_info.application.mode == (uint8_t)gsh01_app_layer::ApplicationBoardMode::APPLICATION){
                             EVLOG_info << "Operation mode is: APPLICATION";
                         }
                         else{
@@ -731,8 +731,8 @@ gsh01_app_layer::CommandResult powermeterImpl::process_response(const std::vecto
                 case (int)gsh01_app_layer::CommandType::METER_BUS_ADDR:
                     {
                         if (part_data_len < 1) break;
-                        device_diagnostics_obj.bus_address = part_data[0];
-                        EVLOG_info << "Meter bus address: " << module::conversions::hexdump(device_diagnostics_obj.bus_address);
+                        device_diagnostics_obj.dev_info.bus_address = part_data[0];
+                        EVLOG_info << "Meter bus address: " << module::conversions::hexdump(device_diagnostics_obj.dev_info.bus_address);
                     }
                     break;
 
@@ -744,7 +744,7 @@ gsh01_app_layer::CommandResult powermeterImpl::process_response(const std::vecto
                                 delimiter_pos = i;
                             }
                         }
-                        device_diagnostics_obj.hw_ver = get_str(part_data, delimiter_pos + 1, 
+                        device_diagnostics_obj.dev_info.hw_ver = get_str(part_data, delimiter_pos + 1, 
                                                                 (part_data_len - delimiter_pos - 1));
                     }
                     break;
@@ -752,63 +752,63 @@ gsh01_app_layer::CommandResult powermeterImpl::process_response(const std::vecto
                 case (int)gsh01_app_layer::CommandType::SERVER_ID:
                     {
                         if (part_data_len < 10) break;
-                        device_diagnostics_obj.server_id = get_str(part_data, 0, 10);
+                        device_diagnostics_obj.dev_info.server_id = get_str(part_data, 0, 10);
                     }
                     break;
 
                 case (int)gsh01_app_layer::CommandType::SERIAL_NR:
                     {
                         if (part_data_len < 4) break;
-                        device_diagnostics_obj.serial_number = get_u32(part_data);
+                        device_diagnostics_obj.dev_info.serial_number = get_u32(part_data);
                     }
                     break;
 
                 case (int)gsh01_app_layer::CommandType::APP_FW_VERSION:
                     {
                         if (part_data_len < 20) break;
-                        device_diagnostics_obj.application.fw_ver = get_str(part_data, 0, 20);
+                        device_diagnostics_obj.dev_info.application.fw_ver = get_str(part_data, 0, 20);
                     }
                     break;
 
                 case (int)gsh01_app_layer::CommandType::APP_FW_CHECKSUM:
                     {
                         if (part_data_len < 2) break;
-                        device_diagnostics_obj.application.fw_crc = get_u16(part_data);
+                        device_diagnostics_obj.dev_info.application.fw_crc = get_u16(part_data);
                     }
                     break;
 
                 case (int)gsh01_app_layer::CommandType::APP_FW_HASH:
                     {
                         if (part_data_len < 2) break;
-                        device_diagnostics_obj.application.fw_hash = get_u16(part_data);
+                        device_diagnostics_obj.dev_info.application.fw_hash = get_u16(part_data);
                     }
                     break;
 
                 case (int)gsh01_app_layer::CommandType::MT_FW_VERSION:
                     {
                         if (part_data_len < 20) break;
-                        device_diagnostics_obj.metering.fw_ver = get_str(part_data, 0, 20);
+                        device_diagnostics_obj.dev_info.metering.fw_ver = get_str(part_data, 0, 20);
                     }
                     break;
 
                 case (int)gsh01_app_layer::CommandType::MT_FW_CHECKSUM:
                     {
                         if (part_data_len < 2) break;
-                        device_diagnostics_obj.metering.fw_crc = get_u16(part_data);
+                        device_diagnostics_obj.dev_info.metering.fw_crc = get_u16(part_data);
                     }
                     break;
 
                 case (int)gsh01_app_layer::CommandType::BOOTL_VERSION:
                     {
                         if (part_data_len < 5) break;
-                        device_diagnostics_obj.bootl_ver = get_str(part_data, 0, 5);
+                        device_diagnostics_obj.dev_info.bootl_ver = get_str(part_data, 0, 5);
                     }
                     break;
 
                 case (int)gsh01_app_layer::CommandType::DEVICE_TYPE:
                     {
                         if (part_data_len < 18) break;
-                        device_diagnostics_obj.type = get_str(part_data, 0, 18);
+                        device_diagnostics_obj.dev_info.type = get_str(part_data, 0, 18);
                     }
                     break;
 
