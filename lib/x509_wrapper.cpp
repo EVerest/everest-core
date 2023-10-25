@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <regex>
+#include <cctype>
 
 #include <everest/logging.hpp>
 #include <evse_utilities.hpp>
@@ -223,6 +224,7 @@ std::string X509Wrapper::get_serial_number() const {
     }
 
     std::string serial(hex_serial);
+    for (char & i : serial) { i = std::tolower(i); }
 
     BN_free(bn_serial);
 
