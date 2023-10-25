@@ -33,46 +33,50 @@ mkdir -p "$CLIENT_V2G_PATH"
 mkdir -p "$CLIENT_INVALID_PATH"
 mkdir -p "$TO_BE_INSTALLED_PATH"
 
-
 function create_certificate() {
-  NAME="$1"
-  SERIAL="$2"
-  CONFIG="$3"
-  CLIENT_PATH="$4"
-  CSR_PATH="$5"
-  CA_PATH="$6"
+  # Args:
+  # $1: name of the certificate (without the .pem extension)
+  # $2: directory to install the certificate and private key into
+  # $3: openssl config file for the certificate
+  # $4: serial number for the certificate
+  # $5: CA certificate file. If this is missing, we will create a self-signed certificate.
+  # $6: CA private key file. Likewise omit this to create a self-signed certificate.
 
-  openssl ecparam -genkey -name "$EC_CURVE" | openssl ec "$SYMMETRIC_CIPHER" -passout pass:"$password" -out "${CLIENT_PATH}/${NAME}.key"
-  openssl req -new -key "$CLIENT_PATH/${NAME}.key" -passin pass:"$password" -config configs/${CONFIG} -out "${CSR_PATH}/${NAME}.csr"
-  openssl x509 -req -in "$CSR_PATH/${NAME}.csr" -extfile configs/${CONFIG} -extensions ext -signkey "${CLIENT_PATH}/${NAME}.key" -passin pass:"$password" $SHA -set_serial ${SERIAL} -out "${CA_PATH}/${NAME}.pem" -days "$VALIDITY"
+  local name="$1"
+  local install_dir="$2"
+  local config="$3"
+  local serial_num="$4"
+  local signed_by_cert="$5"
+  local signed_by_key="$6"
+
+  openssl ecparam -genkey -name "$EC_CURVE" | openssl ec "$SYMMETRIC_CIPHER" -passout pass:"$password" -out "${install_dir}/${name}.key"
+
+  if [ -z $signed_by_cert ]
+  then
+    openssl req -new -key "${install_dir}/${name}.key" -passin pass:"$password" -config "configs/${config}" -out "${CSR_PATH}/${name}.csr"
+    openssl x509 -req -in "${CSR_PATH}/${name}.csr" -extfile "configs/${config}" -extensions ext -signkey "${install_dir}/${name}.key" -passin pass:"$password" $SHA -set_serial "${serial_num}" -out "${install_dir}/${name}.pem" -days "$VALIDITY"
+  else
+    openssl req -new -key "${install_dir}/${name}.key" -passin pass:"$password" -config "configs/${config}" -out "${CSR_PATH}/${name}.csr"
+    openssl x509 -req -in "${CSR_PATH}/${name}.csr" -extfile "configs/${config}" -extensions ext -CA "${signed_by_cert}" -CAkey "${signed_by_key}" -passin pass:"$password" -set_serial "${serial_num}" -out "${install_dir}/${name}.pem" -days "$VALIDITY"
+  fi
 }
 
-openssl ecparam -genkey -name "$EC_CURVE" | openssl ec "$SYMMETRIC_CIPHER" -passout pass:"$password" -out "$CLIENT_V2G_PATH/V2G_ROOT_CA.key"
-openssl req -new -key "$CLIENT_V2G_PATH/V2G_ROOT_CA.key" -passin pass:"$password" -config configs/v2gRootCACert.cnf -out "$CSR_PATH/V2G_ROOT_CA.csr"
-openssl x509 -req -in "$CSR_PATH/V2G_ROOT_CA.csr" -extfile configs/v2gRootCACert.cnf -extensions ext -signkey "$CLIENT_V2G_PATH/V2G_ROOT_CA.key" -passin pass:"$password" $SHA -set_serial 12345 -out "$CA_V2G_PATH/V2G_ROOT_CA.pem" -days "$VALIDITY"
+# V2G root CA
+create_certificate V2G_ROOT_CA "${CA_V2G_PATH}" v2gRootCACert.cnf 12345
+# Second V2G root CA
+create_certificate V2G_ROOT_CA_NEW "${CA_V2G_PATH}" v2gRootCACert.cnf 12349
+# Sub-CA 1
+create_certificate CPO_SUB_CA1 "${CA_CSMS_PATH}" cpoSubCA1Cert.cnf 12346 "${CA_V2G_PATH}/V2G_ROOT_CA.pem" "${CA_V2G_PATH}/V2G_ROOT_CA.key"
+# Sub-CA 2
+create_certificate CPO_SUB_CA2 "${CA_CSMS_PATH}" cpoSubCA2Cert.cnf 12347 "${CA_CSMS_PATH}/CPO_SUB_CA1.pem" "${CA_CSMS_PATH}/CPO_SUB_CA1.key"
+# Chargepoint leaf
+create_certificate SECC_LEAF "${CLIENT_CSO_PATH}" seccLeafCert.cnf 12348 "${CA_CSMS_PATH}/CPO_SUB_CA2.pem" "${CA_CSMS_PATH}/CPO_SUB_CA2.key"
+# Invalid self-signed CSMS cert
+create_certificate INVALID_CSMS "${CLIENT_INVALID_PATH}" v2gRootCACert.cnf 12345
 
-openssl ecparam -genkey -name "$EC_CURVE" | openssl ec "$SYMMETRIC_CIPHER" -passout pass:"$password" -out "$CA_V2G_PATH/V2G_ROOT_CA_NEW.key"
-openssl req -new -key "$CA_V2G_PATH/V2G_ROOT_CA_NEW.key" -passin pass:"$password" -config configs/v2gRootCACert.cnf -out "$CSR_PATH/V2G_ROOT_CA_NEW.csr"
-openssl x509 -req -in "$CSR_PATH/V2G_ROOT_CA_NEW.csr" -extfile configs/v2gRootCACert.cnf -extensions ext -CA "$CA_V2G_PATH/V2G_ROOT_CA.pem" -CAkey "$CLIENT_V2G_PATH/V2G_ROOT_CA.key" -passin pass:"$password" -set_serial 12349 -out "$CA_V2G_PATH/V2G_ROOT_CA_NEW.pem" -days "$VALIDITY"
-
-openssl ecparam -genkey -name "$EC_CURVE" | openssl ec "$SYMMETRIC_CIPHER" -passout pass:"$password" -out "$CLIENT_CSMS_PATH/CPO_SUB_CA1.key"
-openssl req -new -key "$CLIENT_CSMS_PATH/CPO_SUB_CA1.key" -passin pass:"$password" -config configs/cpoSubCA1Cert.cnf -out "$CSR_PATH/CPO_SUB_CA1.csr"
-openssl x509 -req -in "$CSR_PATH/CPO_SUB_CA1.csr" -extfile configs/cpoSubCA1Cert.cnf -extensions ext -CA "$CA_V2G_PATH/V2G_ROOT_CA.pem" -CAkey "$CLIENT_V2G_PATH/V2G_ROOT_CA.key" -passin pass:"$password" -set_serial 12346 -out "$CA_CSMS_PATH/CPO_SUB_CA1.pem" -days "$VALIDITY"
-
-openssl ecparam -genkey -name "$EC_CURVE" | openssl ec "$SYMMETRIC_CIPHER" -passout pass:"$password" -out "$CLIENT_CSMS_PATH/CPO_SUB_CA2.key"
-openssl req -new -key "$CLIENT_CSMS_PATH/CPO_SUB_CA2.key" -passin pass:"$password" -config configs/cpoSubCA2Cert.cnf -out "$CSR_PATH/CPO_SUB_CA2.csr"
-openssl x509 -req -in "$CSR_PATH/CPO_SUB_CA2.csr" -extfile configs/cpoSubCA2Cert.cnf -extensions ext -CA "$CA_CSMS_PATH/CPO_SUB_CA1.pem" -CAkey "$CLIENT_CSMS_PATH/CPO_SUB_CA1.key" -passin pass:"$password" -set_serial 12347 -days "$VALIDITY" -out "$CA_CSMS_PATH/CPO_SUB_CA2.pem"
-
-openssl ecparam -genkey -name "$EC_CURVE" | openssl ec "$SYMMETRIC_CIPHER" -passout pass:"$password" -out "$CLIENT_CSO_PATH/SECC_LEAF.key"
-openssl req -new -key "$CLIENT_CSO_PATH/SECC_LEAF.key" -passin pass:"$password" -config configs/seccLeafCert.cnf -out "$CSR_PATH/SECC_LEAF.csr"
-openssl x509 -req -in "$CSR_PATH/SECC_LEAF.csr" -extfile configs/seccLeafCert.cnf -extensions ext -CA "$CA_CSMS_PATH/CPO_SUB_CA2.pem" -CAkey "$CLIENT_CSMS_PATH/CPO_SUB_CA2.key" -passin pass:"$password" -set_serial 12348 -days "$VALIDITY" -out "$CLIENT_CSO_PATH/SECC_LEAF.pem"
-
+# create cert chain bundles in the V2G root ca and chargepoint leaf dirs
 cat "$CA_CSMS_PATH/CPO_SUB_CA2.pem" "$CA_CSMS_PATH/CPO_SUB_CA1.pem" "$CA_V2G_PATH/V2G_ROOT_CA.pem" > "$CA_V2G_PATH/V2G_CA_BUNDLE.pem"
-
-#Invalid
-openssl ecparam -genkey -name "$EC_CURVE" | openssl ec "$SYMMETRIC_CIPHER" -passout pass:"$password" -out "$CLIENT_INVALID_PATH/INVALID_CSMS.key"
-openssl req -new -key "$CLIENT_INVALID_PATH/INVALID_CSMS.key" -passin pass:"$password" -config configs/v2gRootCACert.cnf -out "$CSR_PATH/INVALID_CSMS.csr"
-openssl x509 -req -in "$CSR_PATH/INVALID_CSMS.csr" -extfile configs/v2gRootCACert.cnf -extensions ext -signkey "$CLIENT_INVALID_PATH/INVALID_CSMS.key" -passin pass:"$password" $SHA -set_serial 12345 -out "$CLIENT_INVALID_PATH/INVALID_CSMS.pem" -days "$VALIDITY"
+cat "$CLIENT_CSO_PATH/SECC_LEAF.pem" "$CA_CSMS_PATH/CPO_SUB_CA2.pem" "$CA_CSMS_PATH/CPO_SUB_CA1.pem" > "$CLIENT_CSO_PATH/CPO_CERT_CHAIN.pem"
 
 cp "$CLIENT_CSO_PATH/SECC_LEAF.key" "$CLIENT_CSMS_PATH/CSMS_LEAF.key"
 
@@ -83,10 +87,9 @@ cp "$CLIENT_CSO_PATH/SECC_LEAF.pem" "$CLIENT_CSMS_PATH/CSMS_LEAF.pem"
 # empty MO bundle
 touch "$CA_MO_PATH/MO_CA_BUNDLE.pem"
 
-# Certificates used for installation tests
-
-create_certificate INSTALL_TEST_ROOT_CA1 21234 install_test.cnf "${TO_BE_INSTALLED_PATH}" "${TO_BE_INSTALLED_PATH}" "${TO_BE_INSTALLED_PATH}"
-create_certificate INSTALL_TEST_ROOT_CA2 21235 install_test.cnf "${TO_BE_INSTALLED_PATH}" "${TO_BE_INSTALLED_PATH}" "${TO_BE_INSTALLED_PATH}"
-create_certificate INSTALL_TEST_ROOT_CA3 21236 install_test.cnf "${TO_BE_INSTALLED_PATH}" "${TO_BE_INSTALLED_PATH}" "${TO_BE_INSTALLED_PATH}"
-create_certificate INSTALL_TEST_ROOT_CA3_SUBCA1 21237 install_test_subca1.cnf "${TO_BE_INSTALLED_PATH}" "${TO_BE_INSTALLED_PATH}" "${TO_BE_INSTALLED_PATH}"
-create_certificate INSTALL_TEST_ROOT_CA3_SUBCA2 21238 install_test_subca2.cnf "${TO_BE_INSTALLED_PATH}" "${TO_BE_INSTALLED_PATH}" "${TO_BE_INSTALLED_PATH}"
+# Create certificates used for installation tests
+create_certificate INSTALL_TEST_ROOT_CA1 "${TO_BE_INSTALLED_PATH}" install_test.cnf 21234
+create_certificate INSTALL_TEST_ROOT_CA2 "${TO_BE_INSTALLED_PATH}" install_test.cnf 21235
+create_certificate INSTALL_TEST_ROOT_CA3 "${TO_BE_INSTALLED_PATH}" install_test.cnf 21236
+create_certificate INSTALL_TEST_ROOT_CA3_SUBCA1 "${TO_BE_INSTALLED_PATH}" install_test_subca1.cnf 21237 "${TO_BE_INSTALLED_PATH}/INSTALL_TEST_ROOT_CA3.pem" "${TO_BE_INSTALLED_PATH}/INSTALL_TEST_ROOT_CA3.key"
+create_certificate INSTALL_TEST_ROOT_CA3_SUBCA2 "${TO_BE_INSTALLED_PATH}" install_test_subca2.cnf 21238 "${TO_BE_INSTALLED_PATH}/INSTALL_TEST_ROOT_CA3.pem" "${TO_BE_INSTALLED_PATH}/INSTALL_TEST_ROOT_CA3.key"
