@@ -111,6 +111,26 @@ void X509Wrapper::update_validity() {
                sec; // Convert days to seconds
 }
 
+bool X509Wrapper::is_child(const X509Wrapper &parent) const {
+    X509_STORE_ptr store(X509_STORE_new());
+    X509_STORE_add_cert(store.get(), parent.get());
+
+    X509_STORE_CTX_ptr ctx(X509_STORE_CTX_new());
+    X509_STORE_CTX_init(ctx.get(), store.get(), this->get(), NULL);
+    X509_STORE_CTX_set_flags(ctx.get(), X509_V_FLAG_X509_STRICT);
+
+    // If the parent is not a self-signed certificate, assume we have a partial chain
+    if (parent.is_selfsigned() == false) {
+        X509_STORE_CTX_set_flags(ctx.get(), X509_V_FLAG_PARTIAL_CHAIN);
+    }
+
+    return (X509_verify_cert(ctx.get()) == 1);
+}
+
+bool X509Wrapper::is_selfsigned() const {
+    return (X509_self_signed(x509.get(), 0) == 1);
+}
+
 void X509Wrapper::reset(X509* _x509) {
     x509.reset(_x509);
 }

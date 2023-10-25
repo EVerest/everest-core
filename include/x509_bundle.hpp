@@ -1,4 +1,3 @@
-
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 #ifndef X509_BUNDLE_HPP
@@ -79,8 +78,12 @@ public:
     /// @brief If we already have the certificate
     bool contains_certificate(const CertificateHashData& certificate_hash) const;
 
-    /// @brief Updates a single certificate in the chain. Only in memory, use @ref export_certificates to filesystem
+    /// @brief Adds a single certificate in the chain. Only in memory, use @ref export_certificates to filesystem
     void add_certificate(X509Wrapper&& certificate);
+
+    /// @brief Adds a single certificate in the chain, only if it is not contained 
+    /// already. Only in memory, use @ref export_certificates to filesystem
+    void add_certificate_unique(X509Wrapper&& certificate);
 
     /// @brief Updates a single certificate in the chain. Only in memory, use @ref export_certificates to filesystem
     /// export

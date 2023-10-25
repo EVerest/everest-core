@@ -16,6 +16,7 @@
 
 #include <evse_utilities.hpp>
 #include <x509_bundle.hpp>
+#include <x509_hierarchy.hpp>
 #include <x509_wrapper.hpp>
 namespace evse_security {
 
@@ -331,20 +332,30 @@ EvseSecurity::get_installed_certificates(const std::vector<CertificateType>& cer
             X509CertificateBundle ca_bundle(ca_bundle_path, EncodingFormat::PEM);
             auto certificates_of_bundle = ca_bundle.split();
 
-            CertificateHashDataChain certificate_hash_data_chain;
-            certificate_hash_data_chain.certificate_type =
-                get_certificate_type(ca_certificate_type); // We always know type
+            // NOTE: presume as per OCPP 2.0.1 spec part 2 edition 2 V2GRootCAs are always self-signed
 
-            for (int i = 0; i < certificates_of_bundle.size(); i++) {
-                CertificateHashData certificate_hash_data = certificates_of_bundle[i].get_certificate_hash_data();
-                if (i == 0) {
-                    certificate_hash_data_chain.certificate_hash_data = certificate_hash_data;
-                } else {
-                    certificate_hash_data_chain.child_certificate_hash_data.push_back(certificate_hash_data);
-                }
+            // Build the certificate hierarchy
+            X509CertificateHierarchy hierarchy = X509CertificateHierarchy::build_hierarchy(certificates_of_bundle);
+
+            EVLOG_info << "Hierarchy:(" << conversions::ca_certificate_type_to_string(ca_certificate_type) <<
+                          ")\n" << hierarchy.to_debug_string() << std::endl;
+
+            // Iterate the hierarchy and add all the certificates to their respective locations
+            for(auto &root : hierarchy.get_hierarchy()) {
+                CertificateHashDataChain certificate_hash_data_chain;
+
+                certificate_hash_data_chain.certificate_type =
+                        get_certificate_type(ca_certificate_type); // We always know type
+                certificate_hash_data_chain.certificate_hash_data = root.hash;
+
+                // Add all owned children/certificates in order
+                X509CertificateHierarchy::for_each_child([&certificate_hash_data_chain](const X509Node &child, int depth) {
+                    certificate_hash_data_chain.child_certificate_hash_data.push_back(child.hash);
+                }, root);
+
+                // Add to our chains
+                certificate_chains.push_back(certificate_hash_data_chain);
             }
-
-            certificate_chains.push_back(certificate_hash_data_chain);
         } catch (const CertificateLoadException& e) {
             EVLOG_warning << "Could not load CA bundle file at: " << ca_bundle_path << " error: " << e.what();
         }
@@ -356,37 +367,56 @@ EvseSecurity::get_installed_certificates(const std::vector<CertificateType>& cer
 
         const auto secc_key_pair = this->get_key_pair(LeafCertificateType::V2G, EncodingFormat::PEM);
         if (secc_key_pair.status == GetKeyPairStatus::Accepted) {
-            X509Wrapper cert(secc_key_pair.pair.value().certificate, EncodingFormat::PEM);
-            CertificateHashDataChain certificate_hash_data_chain;
-            CertificateHashData certificate_hash_data = cert.get_certificate_hash_data();
-            certificate_hash_data_chain.certificate_hash_data = certificate_hash_data;
-            certificate_hash_data_chain.certificate_type = CertificateType::V2GCertificateChain;
+            // Leaf V2G chain
+            X509CertificateBundle leaf_bundle(secc_key_pair.pair.value().certificate, EncodingFormat::PEM);
+
+            // V2G chain
+            const auto ca_bundle_path = this->ca_bundle_path_map.at(CaCertificateType::V2G);
+            X509CertificateBundle ca_bundle(ca_bundle_path, EncodingFormat::PEM);
+
+            // Merge the bundles
+            for(auto &certif : leaf_bundle.split()) {
+                ca_bundle.add_certificate_unique(std::move(certif));
+            }
+
+            // Create the certificate hierarchy
+            auto ca_bundle_certifs = ca_bundle.split();
+
+            X509CertificateHierarchy hierarchy = X509CertificateHierarchy::build_hierarchy(ca_bundle_certifs);
+            EVLOG_info << "Hierarchy:(V2GCertificateChain)\n" << hierarchy.to_debug_string() << std::endl;
 
             // TODO (ioan): as per V2GCertificateChain: OCPP 2.0.1 part 2 spec 2 (3.36):
             // V2G certificate chain (excluding the V2GRootCertificate)
-            // Exclude V2G root when returning the V2GCertificateChain
-            const auto ca_bundle_path = this->ca_bundle_path_map.at(CaCertificateType::V2G);
-            X509CertificateBundle ca_bundle(ca_bundle_path, EncodingFormat::PEM);
-            const auto certificates_of_bundle = ca_bundle.split();
-            std::vector<CertificateHashData> child_certificate_hash_data;
+            // The first certificate is the 'leaf'
+            for(auto &root : hierarchy.get_hierarchy()) {
+                CertificateHashDataChain certificate_hash_data_chain;
 
-            bool keep_searching = true;
-            while (keep_searching) {
-                keep_searching = false;
-                for (const auto& ca_cert : certificates_of_bundle) {
-                    if (X509_check_issued(ca_cert.get(), cert.get()) == X509_V_OK and
-                        ca_cert.get_issuer_name_hash() != cert.get_issuer_name_hash()) {
-                        CertificateHashData sub_ca_certificate_hash_data = ca_cert.get_certificate_hash_data();
-                        child_certificate_hash_data.push_back(sub_ca_certificate_hash_data);
-                        cert.reset(ca_cert.get());
-                        keep_searching = true;
-                        break;
-                    }
+                certificate_hash_data_chain.certificate_type = CertificateType::V2GCertificateChain;
+                
+                // Since the hierarchy starts with V2G and SubCa1/SubCa2 we have to add:
+                // the leaf as the first when returning
+                // * Leaf
+                // --- SubCa1
+                // --- SubCa2
+                std::vector<X509Wrapper> ca_hierarchy;
+
+                bool first = true;
+                X509CertificateHierarchy::for_each_child([&](const X509Node &child, int depth) {
+                    ca_hierarchy.push_back(child.certificate);
+                }, root);
+
+                // Leaf is the last
+                certificate_hash_data_chain.certificate_hash_data = ca_hierarchy.back().get_certificate_hash_data();
+                ca_hierarchy.pop_back();
+
+                // Add others in order, except last
+                for (const auto &cert : ca_hierarchy)  {
+                    certificate_hash_data_chain.child_certificate_hash_data.push_back(cert.get_certificate_hash_data());
                 }
-            }
 
-            certificate_hash_data_chain.child_certificate_hash_data = child_certificate_hash_data;
-            certificate_chains.push_back(certificate_hash_data_chain);
+                // Add to our chains
+                certificate_chains.push_back(certificate_hash_data_chain);
+            }
         }
     }
 

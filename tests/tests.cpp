@@ -157,6 +157,48 @@ TEST_F(EvseSecurityTests, install_root_ca_02) {
     ASSERT_EQ(result, InstallCertificateResult::InvalidFormat);
 }
 
+/// \brief test install two new root certificates
+TEST_F(EvseSecurityTests, install_root_ca_03) {
+    const auto pre_installed_certificates = this->evse_security->get_installed_certificates({ CertificateType::CSMSRootCertificate });
+
+    const auto new_root_ca_1 = read_file_to_string(std::filesystem::path("certs/to_be_installed/INSTALL_TEST_ROOT_CA1.pem"));
+    const auto result = this->evse_security->install_ca_certificate(new_root_ca_1, CaCertificateType::CSMS);
+    ASSERT_TRUE(result == InstallCertificateResult::Accepted);
+
+    const auto new_root_ca_2 = read_file_to_string(std::filesystem::path("certs/to_be_installed/INSTALL_TEST_ROOT_CA2.pem"));
+    const auto result2 = this->evse_security->install_ca_certificate(new_root_ca_2, CaCertificateType::CSMS);
+    ASSERT_TRUE(result2 == InstallCertificateResult::Accepted);
+
+    const auto post_installed_certificates = this->evse_security->get_installed_certificates({ CertificateType::CSMSRootCertificate });
+    ASSERT_EQ(post_installed_certificates.certificate_hash_data_chain.size(), pre_installed_certificates.certificate_hash_data_chain.size() + 2);
+
+    // todo: validate installed certificates
+}
+
+/// \brief test install new root certificates + two child certificates
+TEST_F(EvseSecurityTests, install_root_ca_04) {
+    const auto pre_installed_certificates = this->evse_security->get_installed_certificates({ CertificateType::CSMSRootCertificate });
+
+    const auto new_root_ca_1 = read_file_to_string(std::filesystem::path("certs/to_be_installed/INSTALL_TEST_ROOT_CA3.pem"));
+    const auto result = this->evse_security->install_ca_certificate(new_root_ca_1, CaCertificateType::CSMS);
+    ASSERT_TRUE(result == InstallCertificateResult::Accepted);
+
+    const auto new_root_sub_ca_1 = read_file_to_string(std::filesystem::path("certs/to_be_installed/INSTALL_TEST_ROOT_CA3_SUBCA1.pem"));
+    const auto result2 = this->evse_security->install_ca_certificate(new_root_sub_ca_1, CaCertificateType::CSMS);
+    ASSERT_TRUE(result2 == InstallCertificateResult::Accepted);
+
+    const auto new_root_sub_ca_2 = read_file_to_string(std::filesystem::path("certs/to_be_installed/INSTALL_TEST_ROOT_CA3_SUBCA2.pem"));
+    const auto result3 = this->evse_security->install_ca_certificate(new_root_sub_ca_2, CaCertificateType::CSMS);
+    ASSERT_TRUE(result3 == InstallCertificateResult::Accepted);
+
+    const auto post_installed_certificates = this->evse_security->get_installed_certificates({ CertificateType::CSMSRootCertificate });
+    ASSERT_EQ(post_installed_certificates.certificate_hash_data_chain.size(), pre_installed_certificates.certificate_hash_data_chain.size() + 1);
+
+    // todo: clarify order of newly installed, to be corrected once assertions before pass!
+    ASSERT_EQ(post_installed_certificates.certificate_hash_data_chain[0].child_certificate_hash_data.size(), 2);
+}
+
+
 TEST_F(EvseSecurityTests, delete_root_ca_01) {
 
     std::vector<CertificateType> certificate_types;
@@ -201,10 +243,9 @@ TEST_F(EvseSecurityTests, get_installed_certificates_and_delete_secc_leaf) {
     certificate_types.push_back(CertificateType::MFRootCertificate);
 
     const auto r = this->evse_security->get_installed_certificates(certificate_types);
-    // ASSERT_EQ(r.status, GetInstalledCertificatesStatus::Accepted);
 
     ASSERT_EQ(r.status, GetInstalledCertificatesStatus::Accepted);
-    ASSERT_EQ(r.certificate_hash_data_chain.size(), 5);
+    ASSERT_EQ(r.certificate_hash_data_chain.size(), 4);
     bool found_v2g_chain = false;
 
     CertificateHashData secc_leaf_data;
@@ -223,7 +264,7 @@ TEST_F(EvseSecurityTests, get_installed_certificates_and_delete_secc_leaf) {
 
     const auto get_certs_response = this->evse_security->get_installed_certificates(certificate_types);
     // ASSERT_EQ(r.status, GetInstalledCertificatesStatus::Accepted);
-    ASSERT_EQ(get_certs_response.certificate_hash_data_chain.size(), 4);
+    ASSERT_EQ(get_certs_response.certificate_hash_data_chain.size(), 3);
 
     delete_response = this->evse_security->delete_certificate(secc_leaf_data);
     ASSERT_EQ(delete_response, DeleteCertificateResult::NotFound);

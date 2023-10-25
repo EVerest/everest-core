@@ -33,7 +33,7 @@ enum class CertificateType {
     V2GRootCertificate,
     MORootCertificate,
     CSMSRootCertificate,
-    V2GCertificateChain, // is the certificate chain a certificate type?
+    V2GCertificateChain,
     MFRootCertificate,
 };
 

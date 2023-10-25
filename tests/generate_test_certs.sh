@@ -17,8 +17,9 @@ CLIENT_CSMS_PATH="$CERT_PATH/client/csms"
 CLIENT_CSO_PATH="$CERT_PATH/client/cso"
 CLIENT_V2G_PATH="$CERT_PATH/client/v2g"
 CLIENT_INVALID_PATH="$CERT_PATH/client/invalid"
-
 VALIDITY=3650
+
+TO_BE_INSTALLED_PATH="$CERT_PATH/to_be_installed"
 
 mkdir -p "$CERT_PATH"
 mkdir -p "$CSR_PATH"
@@ -30,6 +31,21 @@ mkdir -p "$CLIENT_CSMS_PATH"
 mkdir -p "$CLIENT_CSO_PATH"
 mkdir -p "$CLIENT_V2G_PATH"
 mkdir -p "$CLIENT_INVALID_PATH"
+mkdir -p "$TO_BE_INSTALLED_PATH"
+
+
+function create_certificate() {
+  NAME="$1"
+  SERIAL="$2"
+  CONFIG="$3"
+  CLIENT_PATH="$4"
+  CSR_PATH="$5"
+  CA_PATH="$6"
+
+  openssl ecparam -genkey -name "$EC_CURVE" | openssl ec "$SYMMETRIC_CIPHER" -passout pass:"$password" -out "${CLIENT_PATH}/${NAME}.key"
+  openssl req -new -key "$CLIENT_PATH/${NAME}.key" -passin pass:"$password" -config configs/${CONFIG} -out "${CSR_PATH}/${NAME}.csr"
+  openssl x509 -req -in "$CSR_PATH/${NAME}.csr" -extfile configs/${CONFIG} -extensions ext -signkey "${CLIENT_PATH}/${NAME}.key" -passin pass:"$password" $SHA -set_serial ${SERIAL} -out "${CA_PATH}/${NAME}.pem" -days "$VALIDITY"
+}
 
 openssl ecparam -genkey -name "$EC_CURVE" | openssl ec "$SYMMETRIC_CIPHER" -passout pass:"$password" -out "$CLIENT_V2G_PATH/V2G_ROOT_CA.key"
 openssl req -new -key "$CLIENT_V2G_PATH/V2G_ROOT_CA.key" -passin pass:"$password" -config configs/v2gRootCACert.cnf -out "$CSR_PATH/V2G_ROOT_CA.csr"
@@ -66,3 +82,11 @@ cp "$CLIENT_CSO_PATH/SECC_LEAF.pem" "$CLIENT_CSMS_PATH/CSMS_LEAF.pem"
 
 # empty MO bundle
 touch "$CA_MO_PATH/MO_CA_BUNDLE.pem"
+
+# Certificates used for installation tests
+
+create_certificate INSTALL_TEST_ROOT_CA1 21234 install_test.cnf "${TO_BE_INSTALLED_PATH}" "${TO_BE_INSTALLED_PATH}" "${TO_BE_INSTALLED_PATH}"
+create_certificate INSTALL_TEST_ROOT_CA2 21235 install_test.cnf "${TO_BE_INSTALLED_PATH}" "${TO_BE_INSTALLED_PATH}" "${TO_BE_INSTALLED_PATH}"
+create_certificate INSTALL_TEST_ROOT_CA3 21236 install_test.cnf "${TO_BE_INSTALLED_PATH}" "${TO_BE_INSTALLED_PATH}" "${TO_BE_INSTALLED_PATH}"
+create_certificate INSTALL_TEST_ROOT_CA3_SUBCA1 21237 install_test_subca1.cnf "${TO_BE_INSTALLED_PATH}" "${TO_BE_INSTALLED_PATH}" "${TO_BE_INSTALLED_PATH}"
+create_certificate INSTALL_TEST_ROOT_CA3_SUBCA2 21238 install_test_subca2.cnf "${TO_BE_INSTALLED_PATH}" "${TO_BE_INSTALLED_PATH}" "${TO_BE_INSTALLED_PATH}"

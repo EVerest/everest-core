@@ -168,6 +168,12 @@ void X509CertificateBundle::add_certificate(X509Wrapper&& certificate) {
     certificates.push_back(certificate);
 }
 
+void X509CertificateBundle::add_certificate_unique(X509Wrapper&& certificate) {
+    if (!contains_certificate(certificate)) {
+        certificates.push_back(certificate);
+    }
+}
+
 bool X509CertificateBundle::update_certificate(X509Wrapper&& certificate) {
     for (int i = 0; i < certificates.size(); ++i) {
         if (certificates[i] == certificate) {

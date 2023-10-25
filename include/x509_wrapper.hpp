@@ -56,6 +56,14 @@ public:
 
     ~X509Wrapper();
 
+public:
+    /// @brief Returns true if this certificate is the child of the provided parent
+    bool is_child(const X509Wrapper &parent) const;
+    
+    /// @brief Returns true if this certificate is self-signed
+    bool is_selfsigned() const;
+
+public:
     /// @brief Gets raw X509 pointer
     /// @return
     inline X509* get() const {
