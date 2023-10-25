@@ -20,7 +20,7 @@ namespace gsh01_app_layer {
 
 enum class CommandType : std::uint16_t {
     ///---------------Device Information Registers-------------------
-    APP_MODE_SET = 0x4102,                              // get or set the mode of application  
+    APP_MODE = 0x4102,                                  // get or set the mode of application  
     TRANSPARENT_MODE = 0x4103,                          // get the transparent mode meter  
     SERVER_ID = 0x4110,                                 // get the server ID 
     SERIAL_NR = 0x4111,                                 // get the serial number
@@ -41,7 +41,7 @@ enum class CommandType : std::uint16_t {
     INIT_METER = 0x4126,                                // set the initialize meter command
     LINE_LOSS_IMPEDANCE = 0x4130,                       // get or set (in assembling mode) the line loss impedance 
     LINE_LOSS_MEAS_MODE = 0x4131,                       // get the line loss energy measurement mode
-    MT_MODE_SET = 0x4133,                               // get the meter operation mode  
+    MT_MODE = 0x4133,                                   // get the meter operation mode  
     TIME = 0x4135,                                      // get or set the device time 
     STATUS_WORD = 0x4137,                               // get the statusword
     APP_CONFIG_COMPLETE = 0x4211,                        // set the application configuration complete command 

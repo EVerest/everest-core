@@ -51,7 +51,7 @@ struct LogStats {
 };
 
 struct ApplicationInfo {
-    uint8_t mode{};
+    std::string mode{};
     std::string fw_ver{};
     uint16_t fw_crc{};
     uint16_t fw_hash{};

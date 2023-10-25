@@ -287,14 +287,14 @@ void Gsh01AppLayer::create_command_get_log_entry_reverse(uint32_t log_entry_id,
 }
 
 void Gsh01AppLayer::create_command_get_application_mode(std::vector<uint8_t>& command_data) {
-    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::APP_MODE_SET));
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::APP_MODE));
 }
 
 void Gsh01AppLayer::create_command_set_application_mode(gsh01_app_layer::ApplicationBoardMode mode,
                                                             std::vector<uint8_t>& command_data) {
     gsh01_app_layer::Command cmd{};
 
-    cmd.type = gsh01_app_layer::CommandType::APP_MODE_SET;
+    cmd.type = gsh01_app_layer::CommandType::APP_MODE;
     cmd.length = 0x0006;
     cmd.status = gsh01_app_layer::CommandStatus::OK;
     

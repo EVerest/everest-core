@@ -71,7 +71,7 @@ void powermeterImpl::init() {
     request_device_type();
     get_app_fw_version();
     get_application_operation_mode();
-    if(device_diagnostics_obj.dev_info.application.mode == (int)gsh01_app_layer::ApplicationBoardMode::ASSEMBLY){
+    if(device_diagnostics_obj.dev_info.application.mode == "Assembly") {
         //ToDo: set line loss impedance - must be added as config parameter        
         set_application_operation_mode(gsh01_app_layer::ApplicationBoardMode::APPLICATION);
     }
@@ -712,18 +712,21 @@ gsh01_app_layer::CommandResult powermeterImpl::process_response(const std::vecto
 
             // device parameters
 
-                case (int)gsh01_app_layer::CommandType::APP_MODE_SET:
+                case (int)gsh01_app_layer::CommandType::APP_MODE:
                     {
                         if (part_data_len < 1) break;
-                        device_diagnostics_obj.dev_info.application.mode = part_data[0];
-                        if(device_diagnostics_obj.dev_info.application.mode == (uint8_t)gsh01_app_layer::ApplicationBoardMode::ASSEMBLY){
-                            EVLOG_info << "Operation mode is: ASSEMBLY";
+                        uint8_t mode = part_data[0];                       
+                        if(mode == (uint8_t)gsh01_app_layer::ApplicationBoardMode::ASSEMBLY){
+                            //EVLOG_info << "Operation mode is: ASSEMBLY";
+                            device_diagnostics_obj.dev_info.application.mode = "Assembly";
                         }
-                        else if(device_diagnostics_obj.dev_info.application.mode == (uint8_t)gsh01_app_layer::ApplicationBoardMode::APPLICATION){
-                            EVLOG_info << "Operation mode is: APPLICATION";
+                        else if(mode == (uint8_t)gsh01_app_layer::ApplicationBoardMode::APPLICATION){
+                            //EVLOG_info << "Operation mode is: APPLICATION";
+                            device_diagnostics_obj.dev_info.application.mode = "Application";
                         }
                         else{
-                            EVLOG_info << "Operation mode is unknown";
+                            //EVLOG_info << "Operation mode is unknown";
+                            device_diagnostics_obj.dev_info.application.mode = "Unknown";
                         }
                     }
                     break;
@@ -831,7 +834,7 @@ gsh01_app_layer::CommandResult powermeterImpl::process_response(const std::vecto
                 case (int)gsh01_app_layer::CommandType::INIT_METER:
                 case (int)gsh01_app_layer::CommandType::LINE_LOSS_IMPEDANCE:
                 case (int)gsh01_app_layer::CommandType::LINE_LOSS_MEAS_MODE:
-                case (int)gsh01_app_layer::CommandType::MT_MODE_SET:
+                case (int)gsh01_app_layer::CommandType::MT_MODE:
                 case (int)gsh01_app_layer::CommandType::APP_CONFIG_COMPLETE:
                 case (int)gsh01_app_layer::CommandType::AS_CONFIG_COMPLETE:
                 case (int)gsh01_app_layer::CommandType::GET_OCMF_REVERSE:
