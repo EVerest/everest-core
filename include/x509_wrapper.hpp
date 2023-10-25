@@ -126,10 +126,7 @@ public:
     X509Wrapper& operator=(X509Wrapper&& other) = default;
 
     /// @return true if the two certificates are the same
-    bool operator==(const X509Wrapper& other) const {
-        return get_issuer_name_hash() == other.get_issuer_name_hash() &&
-               get_issuer_key_hash() == other.get_issuer_key_hash() && get_serial_number() == other.get_serial_number();
-    }
+    bool operator==(const X509Wrapper& other) const;
 
     bool operator==(const CertificateHashData& other) const {
         return get_issuer_name_hash() == other.issuer_name_hash && get_issuer_key_hash() == other.issuer_key_hash &&

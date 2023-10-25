@@ -400,22 +400,23 @@ EvseSecurity::get_installed_certificates(const std::vector<CertificateType>& cer
                 // --- SubCa2
                 std::vector<X509Wrapper> ca_hierarchy;
 
-                bool first = true;
                 X509CertificateHierarchy::for_each_child([&](const X509Node &child, int depth) {
                     ca_hierarchy.push_back(child.certificate);
                 }, root);
 
-                // Leaf is the last
-                certificate_hash_data_chain.certificate_hash_data = ca_hierarchy.back().get_certificate_hash_data();
-                ca_hierarchy.pop_back();
+                if (ca_hierarchy.size()) {
+                    // Leaf is the last
+                    certificate_hash_data_chain.certificate_hash_data = ca_hierarchy.back().get_certificate_hash_data();
+                    ca_hierarchy.pop_back();
 
-                // Add others in order, except last
-                for (const auto &cert : ca_hierarchy)  {
-                    certificate_hash_data_chain.child_certificate_hash_data.push_back(cert.get_certificate_hash_data());
+                    // Add others in order, except last
+                    for (const auto &cert : ca_hierarchy)  {
+                        certificate_hash_data_chain.child_certificate_hash_data.push_back(cert.get_certificate_hash_data());
+                    }
+
+                    // Add to our chains
+                    certificate_chains.push_back(certificate_hash_data_chain);
                 }
-
-                // Add to our chains
-                certificate_chains.push_back(certificate_hash_data_chain);
             }
         }
     }

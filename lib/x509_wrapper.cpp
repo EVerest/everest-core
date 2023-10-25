@@ -97,6 +97,11 @@ X509Wrapper::X509Wrapper(const X509Wrapper& other) :
 X509Wrapper::~X509Wrapper() {
 }
 
+
+bool X509Wrapper::operator==(const X509Wrapper& other) const {
+    return (X509_cmp(get(), other.get()) == 0);
+}
+
 void X509Wrapper::update_validity() {
     // For valid_in and valid_to
     ASN1_TIME* notBefore = X509_get_notBefore(get());
@@ -112,6 +117,10 @@ void X509Wrapper::update_validity() {
 }
 
 bool X509Wrapper::is_child(const X509Wrapper &parent) const {
+    if ((this == &parent) || (*this == parent)) {
+        return false;
+    }
+
     X509_STORE_ptr store(X509_STORE_new());
     X509_STORE_add_cert(store.get(), parent.get());
 
@@ -222,6 +231,8 @@ std::string X509Wrapper::get_serial_number() const {
 }
 
 std::string X509Wrapper::get_issuer_key_hash() const {
+    // TODO (ioan): Actually here we don't need OUR pubkey
+    // hash but as per the spec we need the issuer's key hash
     unsigned char tmphash[SHA256_DIGEST_LENGTH];
     X509_pubkey_digest(get(), EVP_sha256(), tmphash, NULL);
     std::stringstream ss;
