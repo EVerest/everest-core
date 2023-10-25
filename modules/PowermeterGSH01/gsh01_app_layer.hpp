@@ -353,18 +353,18 @@ public:
     void create_command_set_application_mode(gsh01_app_layer::ApplicationBoardMode mode,
                                              std::vector<uint8_t>& command_data);
 
-    void create_command_get_hardware_version(std::vector<uint8_t>& command_data);
     void create_command_get_server_id(std::vector<uint8_t>& command_data);
     void create_command_get_serial_number(std::vector<uint8_t>& command_data);
+    void create_command_get_hardware_version(std::vector<uint8_t>& command_data);
+    void create_command_get_device_type(std::vector<uint8_t>& command_data);
+    void create_command_get_bootloader_version(std::vector<uint8_t>& command_data);
+    void create_command_get_status_word(std::vector<uint8_t>& command_data);
     void create_command_get_application_fw_version(std::vector<uint8_t>& command_data);
     void create_command_get_application_fw_checksum(std::vector<uint8_t>& command_data);
     void create_command_get_application_fw_hash(std::vector<uint8_t>& command_data);
-    void create_command_get_status_word(std::vector<uint8_t>& command_data);
     void create_command_get_metering_fw_version(std::vector<uint8_t>& command_data);
-    void create_command_get_bootloader_version(std::vector<uint8_t>& command_data);
     void create_command_get_metering_fw_checksum(std::vector<uint8_t>& command_data);
-    
-    void create_command_get_device_type(std::vector<uint8_t>& command_data);
+    void create_command_get_metering_mode(std::vector<uint8_t>& command_data);    
 
     int8_t get_utc_offset_in_quarter_hours(const std::chrono::time_point<std::chrono::system_clock>& timepoint_system_clock);
 

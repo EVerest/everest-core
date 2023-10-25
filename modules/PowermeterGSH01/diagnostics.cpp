@@ -67,7 +67,8 @@ void to_json(json& j, const DeviceDiagnostics& k) {
     j["dev_info"]["metering"] = json();
     j["dev_info"]["metering"]["FW_ver"] = k.dev_info.metering.fw_ver;
     j["dev_info"]["metering"]["FW_CRC"] = module::conversions::hexdump(k.dev_info.metering.fw_crc);
-    j["dev_info"]["bus_address"] = k.dev_info.bus_address;
+    j["dev_info"]["metering"]["mode"] = k.dev_info.metering.mode;
+    j["dev_info"]["bus_address"] = module::conversions::hexdump(k.dev_info.bus_address);
     j["dev_info"]["bootl_ver"] = k.dev_info.bootl_ver;
     j["pubkey"] = json();
     j["pubkey"]["asn1"] = json();
@@ -103,6 +104,7 @@ void from_json(const json& j, DeviceDiagnostics& k) {
     // k.dev_info.application.fw_hash = j.at("");
     // k.dev_info.metering.fw_ver = j.at("");
     // k.dev_info.metering.fw_crc = j.at("");
+    // k.dev_info.metering.mode = j.at("");
     // k.dev_info.bus_address = j.at("");
     // k.dev_info.bootl_ver = j.at("");
     EVLOG_error << "[DeviceDiagnostics][from_json()] not implemented";

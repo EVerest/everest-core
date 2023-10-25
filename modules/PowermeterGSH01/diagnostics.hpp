@@ -60,6 +60,7 @@ struct ApplicationInfo {
 struct MeteringInfo {
     std::string fw_ver{};
     uint16_t fw_crc{};
+    uint8_t mode{};
 };
 
 struct DeviceInfo {

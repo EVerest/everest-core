@@ -341,6 +341,10 @@ void Gsh01AppLayer::create_command_get_metering_fw_checksum(std::vector<uint8_t>
     command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::MT_FW_CHECKSUM));
 }
 
+void Gsh01AppLayer::create_command_get_metering_mode(std::vector<uint8_t>& command_data) {
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::MT_MODE));
+}
+
 void Gsh01AppLayer::create_command_get_bootloader_version(std::vector<uint8_t>& command_data) {
     command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::BOOTL_VERSION));
 }
