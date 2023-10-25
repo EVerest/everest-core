@@ -338,7 +338,7 @@
     {
         "name": "ClockCtrlr",
         "variables": {
-            "ClockCtrlrDateTime": {
+            "DateTime": {
                 "variable_name": "DateTime",
                 "attributes": {
                     "Actual": ""
