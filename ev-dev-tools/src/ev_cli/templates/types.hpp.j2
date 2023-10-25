@@ -3,7 +3,7 @@
 #ifndef {{ info.hpp_guard }}
 #define {{ info.hpp_guard }}
 
-{{ print_template_info('3') }}
+{{ print_template_info('4') }}
 
 {% if 'type_headers' in info %}
 {% for type_header in info.type_headers %}
@@ -52,9 +52,6 @@ static const {{ enum.enum_type }} string_to_{{ enum.enum_type | snake_case }}(st
 
     throw std::out_of_range("Provided string " + s + " could not be converted to enum of type {{ enum.enum_type }}");
 }
-{% for namespace in info.namespace|reverse %}
-} // namespace {{namespace}}
-{% endfor %}
 
 /// \brief Writes the string representation of the given {{ enum.enum_type }} \p {{ enum.enum_type | snake_case }} to the given output stream \p os
 /// \returns an output stream with the {{ enum.enum_type }} written to
@@ -62,6 +59,10 @@ inline std::ostream& operator<<(std::ostream& os, const types::{{ info.interface
     os << types::{{info.interface_name}}::{{ enum.enum_type | snake_case }}_to_string({{ enum.enum_type | snake_case }});
     return os;
 }
+
+{% for namespace in info.namespace|reverse %}
+} // namespace {{namespace}}
+{% endfor %}
 
 {% endfor %}
 {% endif%}
