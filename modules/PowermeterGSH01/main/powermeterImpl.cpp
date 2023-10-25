@@ -68,14 +68,17 @@ void powermeterImpl::init() {
     //ToDo: set bus address - not always broadcast
         //set_meter_bus_address(0x4A);
         //set_meter_bus_address(config.powermeter_device_id);
+    //set_application_operation_mode(gsh01_app_layer::ApplicationBoardMode::ASSEMBLY);
     request_device_type();
-    get_app_fw_version();
+    //get_app_fw_version();
     get_application_operation_mode();
     if(device_diagnostics_obj.dev_info.application.mode == "Assembly") {
         //ToDo: set line loss impedance - must be added as config parameter        
+        set_line_loss_impedance((uint16_t)config.line_loss_impedance*10);
         set_application_operation_mode(gsh01_app_layer::ApplicationBoardMode::APPLICATION);
     }
-    set_device_time();
+    //set_device_time();
+    get_line_loss_impedance();
     
 }
 
@@ -296,7 +299,7 @@ void powermeterImpl::request_device_type() {
 void powermeterImpl::get_app_fw_version() {
     std::vector<uint8_t> data_vect{};
     app_layer.create_command_get_application_fw_version(data_vect);
-    std::vector<uint8_t> slip_msg_app_fw_version= std::move(this->slip.package_single(this->config.powermeter_device_id, data_vect));
+    std::vector<uint8_t> slip_msg_app_fw_version = std::move(this->slip.package_single(this->config.powermeter_device_id, data_vect));
     EVLOG_info << "\nFrame: " << module::conversions::hexdump(slip_msg_app_fw_version) << " length: " << slip_msg_app_fw_version.size() << "\n\n";
     this->serial_device.tx(slip_msg_app_fw_version);
     receive_response();
@@ -305,7 +308,7 @@ void powermeterImpl::get_app_fw_version() {
 void powermeterImpl::get_application_operation_mode() {
     std::vector<uint8_t> data_vect{};
     app_layer.create_command_get_application_mode(data_vect);
-    std::vector<uint8_t> slip_msg_get_operation_mode= std::move(this->slip.package_single(this->config.powermeter_device_id, data_vect));
+    std::vector<uint8_t> slip_msg_get_operation_mode = std::move(this->slip.package_single(this->config.powermeter_device_id, data_vect));
     EVLOG_info << "\nFrame: " << module::conversions::hexdump(slip_msg_get_operation_mode) << " length: " << slip_msg_get_operation_mode.size() << "\n\n";
     this->serial_device.tx(slip_msg_get_operation_mode);
     receive_response();
@@ -313,11 +316,29 @@ void powermeterImpl::get_application_operation_mode() {
 void powermeterImpl::set_application_operation_mode(gsh01_app_layer::ApplicationBoardMode mode) {
     std::vector<uint8_t> set_operation_mode_cmd{};
     app_layer.create_command_set_application_mode(mode, set_operation_mode_cmd);
-    std::vector<uint8_t> slip_msg_set_operation_mode= std::move(this->slip.package_single(this->config.powermeter_device_id, set_operation_mode_cmd));
+    std::vector<uint8_t> slip_msg_set_operation_mode = std::move(this->slip.package_single(this->config.powermeter_device_id, set_operation_mode_cmd));
     EVLOG_info << "\nFrame: " << module::conversions::hexdump(slip_msg_set_operation_mode) << " length: " << slip_msg_set_operation_mode.size() << "\n\n";
     this->serial_device.tx(slip_msg_set_operation_mode);
     receive_response();
 }
+
+void powermeterImpl::get_line_loss_impedance() {
+    std::vector<uint8_t> data_vect{};
+    app_layer.create_command_get_line_loss_impedance(data_vect);
+    std::vector<uint8_t> slip_msg_get_ll_impedance = std::move(this->slip.package_single(this->config.powermeter_device_id, data_vect));
+    EVLOG_info << "\nFrame: " << module::conversions::hexdump(slip_msg_get_ll_impedance) << " length: " << slip_msg_get_ll_impedance.size() << "\n\n";
+    this->serial_device.tx(slip_msg_get_ll_impedance);
+    receive_response();
+}
+void powermeterImpl::set_line_loss_impedance(uint16_t ll_impedance) {
+    std::vector<uint8_t> set_ll_impedance_cmd{};
+    app_layer.create_command_set_line_loss_impedance(ll_impedance, set_ll_impedance_cmd);
+    std::vector<uint8_t> slip_msg_set_ll_impedance = std::move(this->slip.package_single(this->config.powermeter_device_id, set_ll_impedance_cmd));
+    EVLOG_info << "\nFrame: " << module::conversions::hexdump(slip_msg_set_ll_impedance) << " length: " << slip_msg_set_ll_impedance.size() << "\n\n";
+    this->serial_device.tx(slip_msg_set_ll_impedance);
+    receive_response();
+}
+
 
 void powermeterImpl::request_error_diagnostics(uint8_t addr) {
     this->error_diagnostics_target = addr;
@@ -738,6 +759,13 @@ gsh01_app_layer::CommandResult powermeterImpl::process_response(const std::vecto
                     }
                     break;
 
+                case (int)gsh01_app_layer::CommandType::LINE_LOSS_IMPEDANCE:
+                    {
+                        if (part_data_len < 1) break;
+                        EVLOG_info << "Line loss impedance: " << get_u32(part_data)/10 << " mOhm";
+                    }
+                    break;
+
                 case (int)gsh01_app_layer::CommandType::METER_BUS_ADDR:
                     {
                         if (part_data_len < 1) break;
@@ -846,7 +874,6 @@ gsh01_app_layer::CommandResult powermeterImpl::process_response(const std::vecto
                 case (int)gsh01_app_layer::CommandType::REVERSE_MODE:
                 case (int)gsh01_app_layer::CommandType::CLEAR_METER_STATUS:
                 case (int)gsh01_app_layer::CommandType::INIT_METER:
-                case (int)gsh01_app_layer::CommandType::LINE_LOSS_IMPEDANCE:
                 case (int)gsh01_app_layer::CommandType::LINE_LOSS_MEAS_MODE:
                 case (int)gsh01_app_layer::CommandType::APP_CONFIG_COMPLETE:
                 case (int)gsh01_app_layer::CommandType::AS_CONFIG_COMPLETE:

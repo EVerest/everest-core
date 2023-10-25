@@ -30,6 +30,7 @@ struct Conf {
     int parity;
     int rs485_direction_gpio;
     bool ignore_echo;
+    int line_loss_impedance;
     int gmt_offset_quarter_hours;
     bool publish_device_data;
     bool publish_device_diagnostics;
@@ -109,6 +110,8 @@ private:
     void get_app_fw_version();
     void get_application_operation_mode();
     void set_application_operation_mode(gsh01_app_layer::ApplicationBoardMode mode);
+    void get_line_loss_impedance();
+    void set_line_loss_impedance(uint16_t ll_impedance);
     void request_error_diagnostics(uint8_t addr);
     void error_diagnostics(uint8_t addr);
     gsh01_app_layer::CommandResult receive_response();

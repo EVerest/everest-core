@@ -1,4 +1,4 @@
-description: Module that collects power and energy measurements from an AST powermeter
+description: Module that collects power and energy measurements from an GSH01 powermeter
 provides:
   main:
     description: Implementation of the driver functionality
@@ -34,6 +34,10 @@ provides:
         description: On some hardware every message that is sent is read back, this setting filters the sent message in the reply.
         type: boolean
         default: false
+      line_loss_impedance:
+        description: Total line loss impedance (R_line1 + R_line2), can only be set in Assembly Mode. unit = mOhm (10^⁻3)
+        type: integer
+        default: 0
       gmt_offset_quarter_hours:
         description: GMT offset in quarters of an hour, e.g. 8 = +2h
         type: integer

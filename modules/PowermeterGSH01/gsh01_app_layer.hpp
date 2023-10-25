@@ -353,6 +353,10 @@ public:
     void create_command_set_application_mode(gsh01_app_layer::ApplicationBoardMode mode,
                                              std::vector<uint8_t>& command_data);
 
+    void create_command_get_line_loss_impedance(std::vector<uint8_t>& command_data);
+    void create_command_set_line_loss_impedance(uint16_t ll_impedance,
+                                                std::vector<uint8_t>& command_data);
+
     void create_command_get_server_id(std::vector<uint8_t>& command_data);
     void create_command_get_serial_number(std::vector<uint8_t>& command_data);
     void create_command_get_hardware_version(std::vector<uint8_t>& command_data);

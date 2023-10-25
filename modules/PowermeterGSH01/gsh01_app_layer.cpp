@@ -303,6 +303,23 @@ void Gsh01AppLayer::create_command_set_application_mode(gsh01_app_layer::Applica
     command_data = std::move(create_command(cmd));
 }
 
+void Gsh01AppLayer::create_command_get_line_loss_impedance(std::vector<uint8_t>& command_data) {
+    command_data = std::move(create_simple_command(gsh01_app_layer::CommandType::LINE_LOSS_IMPEDANCE));
+}
+
+void Gsh01AppLayer::create_command_set_line_loss_impedance(uint16_t ll_impedance,
+                                                           std::vector<uint8_t>& command_data) {
+    gsh01_app_layer::Command cmd{};
+
+    cmd.type = gsh01_app_layer::CommandType::LINE_LOSS_IMPEDANCE;
+    cmd.length = 0x0009;
+    cmd.status = gsh01_app_layer::CommandStatus::OK;
+    
+    insert_u32_as_u8s(cmd.data, ll_impedance);
+
+    command_data = std::move(create_command(cmd));
+}
+
 // diagnostics
 
 void Gsh01AppLayer::create_command_get_hardware_version(std::vector<uint8_t>& command_data) {
