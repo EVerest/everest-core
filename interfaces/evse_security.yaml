@@ -153,6 +153,22 @@ cmds:
     result:
       description: days count until given leaf certificate expires
       type: integer
-     
+  verify_file_signature:
+    description: >-
+      Verify the file at the given path using the provided certificate and signature
+    arguments:
+      file_path:
+        description: Path to the file that should be verified
+        type: string
+      signing_certificate:
+        description: >-
+          Certificate with which the file was signed. PEM encoded X.509 certificate
+        type: string
+      signature:
+        description: Base64 encoded file signature
+        type: string
+    result:
+      description: True if verification succeeded, false if not
+      type: boolean
 
 
