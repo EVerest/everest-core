@@ -122,6 +122,14 @@ public:
     /// @return day count until the leaf certificate expires
     int get_leaf_expiry_days_count(LeafCertificateType certificate_type);
 
+    /// @brief Verifies the file at the given \p path using the provided \p signing_certificate and \p signature
+    /// @param path
+    /// @param signing_certificate
+    /// @param signature
+    /// @return true if the verification was successful, false if not
+    static bool verify_file_signature(const std::filesystem::path& path, const std::string& signing_certificate,
+                                      const std::string signature);
+
 private:
     // why not reusing the FilePaths here directly (storage duplication)
     std::map<CaCertificateType, std::filesystem::path> ca_bundle_path_map;
