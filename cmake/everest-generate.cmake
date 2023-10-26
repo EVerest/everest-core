@@ -147,7 +147,11 @@ if (EVEREST_ENABLE_RS_SUPPORT)
         COMMAND
             echo "[workspace.dependencies]" >> Cargo.toml
         COMMAND
-            echo "everestrs = { path = \"$<TARGET_PROPERTY:everest::framework,EVERESTRS_DIR>\" }" >> Cargo.toml
+            echo "everestrs = { path = \"$<TARGET_PROPERTY:everest::everestrs_sys,EVERESTRS_DIR>\" }" >> Cargo.toml
+        COMMAND
+            echo $<TARGET_FILE:everest::framework> > .everestrs_link_dependencies
+        COMMAND
+            echo $<TARGET_FILE:everest::log> >> .everestrs_link_dependencies
         WORKING_DIRECTORY
             ${RUST_WORKSPACE_DIR}
         VERBATIM
