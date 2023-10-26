@@ -93,19 +93,26 @@ TEST_F(EvseSecurityTests, verify_basics) {
     auto certificates = bundle.split();
     ASSERT_TRUE(certificates.size() == 3);
 
-    for (int i = 0; i < certificate_strings.size(); ++i) {
+    for (int i = 0; i < certificate_strings.size() - 1; ++i) {
         X509Wrapper cert(certificate_strings[i], EncodingFormat::PEM);
+        X509Wrapper parent(certificate_strings[i + 1],EncodingFormat::PEM);
 
-        ASSERT_TRUE(certificates[i].get_certificate_hash_data() == cert.get_certificate_hash_data());
+        ASSERT_TRUE(certificates[i].get_certificate_hash_data(parent) == cert.get_certificate_hash_data(parent));
         ASSERT_TRUE(equal_certificate_strings(cert.get_export_string(), certificate_strings[i]));
     }
+
+    auto root_cert_idx = certificate_strings.size() - 1;
+    X509Wrapper root_cert(certificate_strings[root_cert_idx], EncodingFormat::PEM);
+    ASSERT_TRUE(certificates[root_cert_idx].get_certificate_hash_data() == root_cert.get_certificate_hash_data());
+    ASSERT_TRUE(equal_certificate_strings(root_cert.get_export_string(), certificate_strings[root_cert_idx]));
 }
 
 TEST_F(EvseSecurityTests, verify_bundle_management) {
     const char* directory_path = "certs/ca/csms/";
     X509CertificateBundle bundle(fs::path(directory_path), EncodingFormat::PEM);
     ASSERT_TRUE(bundle.split().size() == 2);
-    bundle.delete_certificate(bundle.split()[0].get_certificate_hash_data());
+
+    bundle.delete_certificate(bundle.split()[0].get_certificate_hash_data(bundle.split()[1]));
     bundle.sync_to_certificate_store();
 
     int items = 0;
