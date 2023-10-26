@@ -490,3 +490,7 @@ vars:
       for debug purposes only
     type: object
     $ref: /iso15118_charger#/V2G_Messages
+  Selected_Protocol:
+    description: >-
+      Debug - Contains the selected protocol
+    type: string

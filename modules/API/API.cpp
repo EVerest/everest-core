@@ -2,6 +2,7 @@
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include "API.hpp"
 #include <utils/date.hpp>
+#include <utils/yaml_loader.hpp>
 
 namespace module {
 
@@ -227,16 +228,22 @@ void API::init() {
             this->mqtt.publish(var_ev_info, ev_info_json.dump());
         });
 
+        std::string var_selected_protocol = var_base + "selected_protocol";
+        evse->subscribe_selected_protocol([this, var_selected_protocol](const std::string& selected_protocol) {
+            this->selected_protocol = selected_protocol;
+        });
+
         std::string var_datetime = var_base + "datetime";
         std::string var_session_info = var_base + "session_info";
-        this->api_threads.push_back(
-            std::thread([this, var_datetime, var_session_info, var_hw_caps, &session_info, &hw_caps]() {
+        this->api_threads.push_back(std::thread(
+            [this, var_datetime, var_session_info, var_hw_caps, var_selected_protocol, &session_info, &hw_caps]() {
                 auto next_tick = std::chrono::steady_clock::now();
                 while (this->running) {
                     std::string datetime_str = Everest::Date::to_rfc3339(date::utc_clock::now());
                     this->mqtt.publish(var_datetime, datetime_str);
                     this->mqtt.publish(var_session_info, *session_info);
                     this->mqtt.publish(var_hw_caps, hw_caps.dump());
+                    this->mqtt.publish(var_selected_protocol, this->selected_protocol);
 
                     next_tick += NOTIFICATION_PERIOD;
                     std::this_thread::sleep_until(next_tick);
@@ -317,11 +324,25 @@ void API::init() {
         });
     }
 
-    this->api_threads.push_back(std::thread([this, var_connectors, connectors]() {
+    std::string var_info = api_base + "info/var/info";
+
+    if (this->config.charger_information_file != "") {
+        auto charger_information_path = std::filesystem::path(this->config.charger_information_file);
+        try {
+            this->charger_information = Everest::load_yaml(charger_information_path);
+
+        } catch (const std::exception& err) {
+            EVLOG_error << "Error parsing charger information file at " << this->config.charger_information_file << ": "
+                        << err.what();
+        }
+    }
+
+    this->api_threads.push_back(std::thread([this, var_connectors, connectors, var_info]() {
         auto next_tick = std::chrono::steady_clock::now();
         while (this->running) {
             json connectors_array = connectors;
             this->mqtt.publish(var_connectors, connectors_array.dump());
+            this->mqtt.publish(var_info, this->charger_information.dump());
 
             next_tick += NOTIFICATION_PERIOD;
             std::this_thread::sleep_until(next_tick);

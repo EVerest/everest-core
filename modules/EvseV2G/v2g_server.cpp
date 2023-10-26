@@ -294,18 +294,27 @@ static enum v2g_event v2g_handle_apphandshake(struct v2g_connection* conn) {
         publish_var_V2G_Message(conn, true);
     }
 
+    std::string selected_protocol_str;
     if (conn->handshake_resp.supportedAppProtocolRes.ResponseCode == appHandresponseCodeType_OK_SuccessfulNegotiation) {
         conn->handshake_resp.supportedAppProtocolRes.SchemaID_isUsed = (unsigned int)1;
         if (V2G_PROTO_DIN70121 == conn->ctx->selected_protocol) {
             dlog(DLOG_LEVEL_INFO, "Protocol negotiation was successful. Selected protocol is DIN70121");
+            selected_protocol_str = "DIN70121";
         } else if (V2G_PROTO_ISO15118_2013 == conn->ctx->selected_protocol) {
             dlog(DLOG_LEVEL_INFO, "Protocol negotiation was successful. Selected protocol is ISO15118");
+            selected_protocol_str = "ISO15118-2-2013";
         } else if (V2G_PROTO_ISO15118_2010 == conn->ctx->selected_protocol) {
             dlog(DLOG_LEVEL_INFO, "Protocol negotiation was successful. Selected protocol is ISO15118-2010");
+            selected_protocol_str = "ISO15118-2-2010";
         }
     } else {
         dlog(DLOG_LEVEL_ERROR, "No compatible protocol found");
+        selected_protocol_str = "None";
         next_event = V2G_EVENT_SEND_AND_TERMINATE; // Send response and terminate tcp-connection
+    }
+
+    if (conn->ctx->debugMode == true) {
+        conn->ctx->p_charger->publish_Selected_Protocol(selected_protocol_str);
     }
 
     if (conn->ctx->is_connection_terminated == true) {

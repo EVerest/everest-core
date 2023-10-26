@@ -30,6 +30,10 @@ void EvseManager::init() {
     local_three_phases = config.three_phases;
 
     session_log.setPath(config.session_logging_path);
+    session_log.setMqtt([this](json data) {
+        std::string hlc_log_topic = "everest_api/" + this->info.id + "/var/hlc_log";
+        mqtt.publish(hlc_log_topic, data.dump());
+    });
     if (config.session_logging) {
         session_log.enable();
     }
@@ -478,6 +482,9 @@ void EvseManager::ready() {
                 json v2g = v2g_messages;
                 log_v2g_message(v2g);
             });
+
+            r_hlc[0]->subscribe_Selected_Protocol(
+                [this](std::string selected_protocol) { this->selected_protocol = selected_protocol; });
         }
         // switch to DC mode for first session for AC with SoC
         if (config.ac_with_soc) {
