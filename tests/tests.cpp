@@ -124,6 +124,24 @@ TEST_F(EvseSecurityTests, verify_bundle_management) {
     ASSERT_TRUE(items == 1);
 }
 
+/// \brief get_certificate_hash_data() throws exception if called with no issuer and a non-self-signed cert
+TEST_F(EvseSecurityTests, get_certificate_hash_data_non_self_signed_requires_issuer) {
+    const auto non_self_signed_cert_str = read_file_to_string(std::filesystem::path("certs/to_be_installed/INSTALL_TEST_ROOT_CA3_SUBCA2.pem"));
+    const X509Wrapper non_self_signed_cert(non_self_signed_cert_str, EncodingFormat::PEM);
+    ASSERT_THROW(non_self_signed_cert.get_certificate_hash_data(), std::logic_error);
+}
+
+/// \brief get_certificate_hash_data() throws exception if called with the wrong issuer
+TEST_F(EvseSecurityTests, get_certificate_hash_data_wrong_issuer) {
+    const auto child_cert_str = read_file_to_string(std::filesystem::path("certs/to_be_installed/INSTALL_TEST_ROOT_CA3_SUBCA2.pem"));
+    const X509Wrapper child_cert(child_cert_str, EncodingFormat::PEM);
+
+    const auto wrong_parent_cert_str = read_file_to_string(std::filesystem::path("certs/to_be_installed/INSTALL_TEST_ROOT_CA3.pem"));
+    const X509Wrapper wrong_parent_cert(wrong_parent_cert_str, EncodingFormat::PEM);
+
+    ASSERT_THROW(child_cert.get_certificate_hash_data(wrong_parent_cert), std::logic_error);
+}
+
 /// \brief test verifyChargepointCertificate with valid cert
 TEST_F(EvseSecurityTests, verify_chargepoint_cert_01) {
     const auto client_certificate = read_file_to_string(fs::path("certs/client/csms/CSMS_LEAF.pem"));

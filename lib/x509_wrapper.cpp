@@ -258,6 +258,10 @@ CertificateHashData X509Wrapper::get_certificate_hash_data() const {
 }
 
 CertificateHashData X509Wrapper::get_certificate_hash_data(const X509Wrapper& issuer) const {
+    if (!this->is_child(issuer)) {
+        throw std::logic_error("The specified issuer is not the correct issuer for this certificate.");
+    }
+
     CertificateHashData certificate_hash_data;
     certificate_hash_data.hash_algorithm = HashAlgorithm::SHA256;
     certificate_hash_data.issuer_name_hash = this->get_issuer_name_hash();
