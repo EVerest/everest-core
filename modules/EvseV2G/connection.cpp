@@ -670,6 +670,8 @@ static void* connection_handle_tcp(void* data) {
     /* tear down connection gracefully */
     dlog(DLOG_LEVEL_INFO, "Closing TCP connection");
 
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+
     if (shutdown(conn->conn.socket_fd, SHUT_RDWR) == -1) {
         dlog(DLOG_LEVEL_ERROR, "shutdown() failed: %s", strerror(errno));
     }
