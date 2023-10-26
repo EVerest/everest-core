@@ -100,11 +100,15 @@ public:
 
     /// @brief Gets issuer key hash of certificate
     /// @result
-    std::string get_issuer_key_hash() const;
+    std::string get_key_hash() const;
 
-    /// @brief Gets certificate hash data of certificate
+    /// @brief Gets certificate hash data of a self-signed certificate
     /// @return
     CertificateHashData get_certificate_hash_data() const;
+
+    /// @brief Gets certificate hash data of certificate with an issuer
+    /// @return
+    CertificateHashData get_certificate_hash_data(const X509Wrapper& issuer) const;
 
     /// @brief Gets OCSP responder URL of certificate if present, else returns an empty string
     /// @return
@@ -129,7 +133,7 @@ public:
     bool operator==(const X509Wrapper& other) const;
 
     bool operator==(const CertificateHashData& other) const {
-        return get_issuer_name_hash() == other.issuer_name_hash && get_issuer_key_hash() == other.issuer_key_hash &&
+        return get_issuer_name_hash() == other.issuer_name_hash && get_key_hash() == other.issuer_key_hash &&
                get_serial_number() == other.serial_number;
     }
 

@@ -232,7 +232,7 @@ std::string X509Wrapper::get_serial_number() const {
     return serial;
 }
 
-std::string X509Wrapper::get_issuer_key_hash() const {
+std::string X509Wrapper::get_key_hash() const {
     // TODO (ioan): Actually here we don't need OUR pubkey
     // hash but as per the spec we need the issuer's key hash
     unsigned char tmphash[SHA256_DIGEST_LENGTH];
@@ -245,11 +245,25 @@ std::string X509Wrapper::get_issuer_key_hash() const {
 }
 
 CertificateHashData X509Wrapper::get_certificate_hash_data() const {
+    if (!this->is_selfsigned()) {
+        throw std::logic_error("get_certificate_hash_data must only be used on self-signed certs");
+    }
+
     CertificateHashData certificate_hash_data;
     certificate_hash_data.hash_algorithm = HashAlgorithm::SHA256;
     certificate_hash_data.issuer_name_hash = this->get_issuer_name_hash();
-    certificate_hash_data.issuer_key_hash = this->get_issuer_key_hash();
+    certificate_hash_data.issuer_key_hash = this->get_key_hash();
     certificate_hash_data.serial_number = this->get_serial_number();
+    return certificate_hash_data;
+}
+
+CertificateHashData X509Wrapper::get_certificate_hash_data(const X509Wrapper& issuer) const {
+    CertificateHashData certificate_hash_data;
+    certificate_hash_data.hash_algorithm = HashAlgorithm::SHA256;
+    certificate_hash_data.issuer_name_hash = this->get_issuer_name_hash();
+    certificate_hash_data.issuer_key_hash = issuer.get_key_hash();
+    certificate_hash_data.serial_number = this->get_serial_number();
+
     return certificate_hash_data;
 }
 

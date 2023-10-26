@@ -55,7 +55,7 @@ public:
                     str << "---";
             }
 
-            str << ' ' << node.certificate.get_common_name() << std::endl;
+            str << ' ' << node.certificate.get_common_name() << ", issuer name hash: " << node.hash.issuer_name_hash << ", issuer key hash: " << node.hash.issuer_key_hash << std::endl;
         });
 
         return str.str();
@@ -145,7 +145,7 @@ private:
 
             // Process node
             if (certificate.is_child(top.certificate)) {
-                auto hash = certificate.get_certificate_hash_data();
+                auto hash = certificate.get_certificate_hash_data(top.certificate);
                 top.children.push_back({std::move(certificate), hash, {}});
                 added = true;
                 break;
