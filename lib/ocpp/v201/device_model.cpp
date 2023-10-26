@@ -92,8 +92,9 @@ bool validate_value(const VariableCharacteristics& characteristics, const std::s
     }
 }
 
-GetVariableStatusEnum DeviceModel::request_value(const Component& component_id, const Variable& variable_id,
-                                                 const AttributeEnum& attribute_enum, std::string& value) {
+GetVariableStatusEnum DeviceModel::request_value_internal(const Component& component_id, const Variable& variable_id,
+                                                          const AttributeEnum& attribute_enum, std::string& value,
+                                                          bool allow_write_only) {
     const auto component_it = this->device_model.find(component_id);
     if (component_it == this->device_model.end()) {
         return GetVariableStatusEnum::UnknownComponent;
@@ -110,6 +111,12 @@ GetVariableStatusEnum DeviceModel::request_value(const Component& component_id, 
 
     if ((not attribute_opt) or (not attribute_opt->value)) {
         return GetVariableStatusEnum::NotSupportedAttributeType;
+    }
+
+    // only internal functions can access WriteOnly variables
+    if (!allow_write_only and attribute_opt.value().mutability.has_value() and
+        attribute_opt.value().mutability.value() == MutabilityEnum::WriteOnly) {
+        return GetVariableStatusEnum::Rejected;
     }
 
     value = attribute_opt->value->get();

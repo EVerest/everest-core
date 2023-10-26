@@ -30,6 +30,7 @@ const auto STANDARD_MESSAGE_TIMEOUT = std::chrono::seconds(30);
 /// \brief Contains a OCPP message in json form with additional information
 template <typename M> struct EnhancedMessage {
     json message;                     ///< The OCPP message as json
+    size_t message_size;              ///< size of the json message in bytes
     MessageId uniqueId;               ///< The unique ID of the json message
     M messageType = M::InternalError; ///< The OCPP message type
     MessageTypeId messageTypeId;      ///< The OCPP message type ID (CALL/CALLRESULT/CALLERROR)

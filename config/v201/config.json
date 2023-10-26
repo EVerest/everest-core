@@ -529,7 +529,7 @@
             "BytesPerMessageGetVariables": {
                 "variable_name": "BytesPerMessage",
                 "attributes": {
-                    "Actual": 42
+                    "Actual": 250
                 },
                 "instance": "GetVariables"
             },
@@ -550,7 +550,7 @@
             "ItemsPerMessageGetVariables": {
                 "variable_name": "ItemsPerMessage",
                 "attributes": {
-                    "Actual": 42
+                    "Actual": 2
                 },
                 "instance": "GetVariables"
             },

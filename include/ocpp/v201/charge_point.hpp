@@ -311,7 +311,7 @@ private:
     // Functional Block B: Provisioning
     void handle_boot_notification_response(CallResult<BootNotificationResponse> call_result);
     void handle_set_variables_req(Call<SetVariablesRequest> call);
-    void handle_get_variables_req(Call<GetVariablesRequest> call);
+    void handle_get_variables_req(const EnhancedMessage<v201::MessageType>& message);
     void handle_get_base_report_req(Call<GetBaseReportRequest> call);
     void handle_get_report_req(Call<GetReportRequest> call);
     void handle_set_network_profile_req(Call<SetNetworkProfileRequest> call);

@@ -55,9 +55,11 @@ private:
     /// \param variable_id
     /// \param attribute_enum
     /// \param value string reference to value: will be set to requested value if value is present
+    /// \param allow_write_only true to allow a writeOnly value to be read.
     /// \return GetVariableStatusEnum that indicates the result of the request
-    GetVariableStatusEnum request_value(const Component& component_id, const Variable& variable_id,
-                                        const AttributeEnum& attribute_enum, std::string& value);
+    GetVariableStatusEnum request_value_internal(const Component& component_id, const Variable& variable_id,
+                                                 const AttributeEnum& attribute_enum, std::string& value,
+                                                 bool allow_write_only);
 
     /// \brief Iterates over the given \p component_criteria and converts this to the variable names
     /// (Active,Available,Enabled,Problem). If any of the variables can not be find as part of a component this function
@@ -92,10 +94,11 @@ public:
     template <typename T>
     T get_value(const ComponentVariable& component_variable,
                 const AttributeEnum& attribute_enum = AttributeEnum::Actual) {
-        const auto response =
-            this->request_value<T>(component_variable.component, component_variable.variable.value(), attribute_enum);
-        if (response.value.has_value()) {
-            return response.value.value();
+        std::string value;
+        const auto response = this->request_value_internal(
+            component_variable.component, component_variable.variable.value(), attribute_enum, value, true);
+        if (response == GetVariableStatusEnum::Accepted) {
+            return to_specific_type<T>(value);
         } else {
             EVLOG_critical
                 << "Directly requested value for ComponentVariable that doesn't exist in the device model storage: "
@@ -114,10 +117,11 @@ public:
     template <typename T>
     std::optional<T> get_optional_value(const ComponentVariable& component_variable,
                                         const AttributeEnum& attribute_enum = AttributeEnum::Actual) {
-        const auto response =
-            this->request_value<T>(component_variable.component, component_variable.variable.value(), attribute_enum);
-        if (response.status == GetVariableStatusEnum::Accepted) {
-            return response.value.value();
+        std::string value;
+        const auto response = this->request_value_internal(
+            component_variable.component, component_variable.variable.value(), attribute_enum, value, true);
+        if (response == GetVariableStatusEnum::Accepted) {
+            return to_specific_type<T>(value);
         } else {
             return std::nullopt;
         }
@@ -135,7 +139,7 @@ public:
     RequestDeviceModelResponse<T> request_value(const Component& component_id, const Variable& variable_id,
                                                 const AttributeEnum& attribute_enum) {
         std::string value;
-        const auto req_status = this->request_value(component_id, variable_id, attribute_enum, value);
+        const auto req_status = this->request_value_internal(component_id, variable_id, attribute_enum, value, false);
 
         if (req_status == GetVariableStatusEnum::Accepted) {
             return {GetVariableStatusEnum::Accepted, to_specific_type<T>(value)};

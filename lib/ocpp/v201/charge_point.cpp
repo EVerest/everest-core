@@ -691,7 +691,7 @@ void ChargePoint::handle_message(const EnhancedMessage<v201::MessageType>& messa
         this->handle_set_variables_req(json_message);
         break;
     case MessageType::GetVariables:
-        this->handle_get_variables_req(json_message);
+        this->handle_get_variables_req(message);
         break;
     case MessageType::GetBaseReport:
         this->handle_get_base_report_req(json_message);
@@ -754,9 +754,9 @@ void ChargePoint::handle_message(const EnhancedMessage<v201::MessageType>& messa
 
 void ChargePoint::message_callback(const std::string& message) {
     auto enhanced_message = this->message_queue->receive(message);
+    enhanced_message.message_size = message.size();
     auto json_message = enhanced_message.message;
     this->logging->central_system(conversions::messagetype_to_string(enhanced_message.messageType), message);
-
     try {
         if (this->registration_status == RegistrationStatusEnum::Accepted) {
             this->handle_message(enhanced_message);
@@ -1493,11 +1493,30 @@ void ChargePoint::handle_set_variables_req(Call<SetVariablesRequest> call) {
     }
 }
 
-void ChargePoint::handle_get_variables_req(Call<GetVariablesRequest> call) {
+void ChargePoint::handle_get_variables_req(const EnhancedMessage<v201::MessageType>& message) {
+    Call<GetVariablesRequest> call = message.call_message;
     const auto msg = call.msg;
 
-    // FIXME(piet): add handling for B06.FR.16
-    // FIXME(piet): add handling for B06.FR.17
+    const auto max_variables_per_message =
+        this->device_model->get_value<int>(ControllerComponentVariables::ItemsPerMessageGetVariables);
+    const auto max_bytes_per_message =
+        this->device_model->get_value<int>(ControllerComponentVariables::BytesPerMessageGetVariables);
+
+    // B06.FR.16
+    if (msg.getVariableData.size() > max_variables_per_message) {
+        // send a CALLERROR
+        const auto call_error = CallError(call.uniqueId, "OccurenceConstraintViolation", "", json({}));
+        this->send(call_error);
+        return;
+    }
+
+    // B06.FR.17
+    if (message.message_size > max_bytes_per_message) {
+        // send a CALLERROR
+        const auto call_error = CallError(call.uniqueId, "FormatViolation", "", json({}));
+        this->send(call_error);
+        return;
+    }
 
     GetVariablesResponse response;
 
