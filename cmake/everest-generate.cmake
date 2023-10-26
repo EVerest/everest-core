@@ -108,17 +108,146 @@ function(ev_add_project)
     if (EXISTS "${MODULES_DIR}/CMakeLists.txt")
         # FIXME (aw): default handling of building all modules?
         if (EVC_MAIN_PROJECT OR NOT EVEREST_DONT_BUILD_ALL_MODULES)
-            # We need a list of all to-be-built rust modules to create our
-            # workspace Cargo.toml, but we cannot easily pass it through the
-            # ev_add_module calls without polluting all CMakeLists.txt files
-            # with it. We bypass this using a global.
-            set_property(GLOBAL PROPERTY RUST_MODULE_LIST "")
             add_subdirectory(${MODULES_DIR})
-            get_property(RUST_MODULE_LIST_GLOBAL GLOBAL PROPERTY RUST_MODULE_LIST)
-            create_rust_cargo_toml("${RUST_MODULE_LIST_GLOBAL}")
         endif()
     endif ()
 endfunction()
+
+#
+# rust support
+#
+# FIXME (aw): move this stuff to some other cmake file for more modularity
+if (EVEREST_ENABLE_RS_SUPPORT)
+    find_program(CARGO_EXECUTABLE cargo REQUIRED)
+
+    # FIXME (aw): the RUST_WORKSPACE_DIR could be user setable!
+    set(RUST_WORKSPACE_DIR ${PROJECT_BINARY_DIR}/rust_workspace)
+    set(RUST_WORKSPACE_CARGO_FILE ${RUST_WORKSPACE_DIR}/Cargo.toml)
+
+    add_custom_command(OUTPUT ${RUST_WORKSPACE_DIR}
+        COMMAND
+            ${CMAKE_COMMAND} -E make_directory ${RUST_WORKSPACE_DIR}
+        COMMENT
+            "Creating rust workspace at ${RUST_WORKSPACE_DIR}"
+        VERBATIM
+    )
+
+    # NOTE (aw): we could also write a small python script, which would do that for us
+    add_custom_command(OUTPUT ${RUST_WORKSPACE_CARGO_FILE}
+        COMMAND
+            echo "[workspace]" > Cargo.toml
+        COMMAND
+            echo "resolver = \"2\"" >> Cargo.toml
+        COMMAND
+            echo "members = [" >> Cargo.toml
+        COMMAND
+            echo "  \"$<JOIN:$<TARGET_PROPERTY:generate_rust,RUST_MODULE_LIST>,\",\\n  \">\"," >> Cargo.toml  # :)
+        COMMAND
+            echo "]" >> Cargo.toml && echo "" >> Cargo.toml
+        COMMAND
+            echo "[workspace.dependencies]" >> Cargo.toml
+        COMMAND
+            echo "everestrs = { path = \"$<TARGET_PROPERTY:everest::framework,EVERESTRS_DIR>\" }" >> Cargo.toml
+        WORKING_DIRECTORY
+            ${RUST_WORKSPACE_DIR}
+        VERBATIM
+        DEPENDS
+            ${RUST_WORKSPACE_DIR}
+    )
+
+    add_custom_target(generate_rust
+        DEPENDS
+            ${RUST_WORKSPACE_CARGO_FILE}
+    )
+
+    # FIXME (aw): use generator expressions here, but this first needs to be fixed in the build.rs file ...
+    add_custom_target(build_rust_modules ALL
+        COMMENT
+            "Build rust modules"
+        COMMAND
+            ${CMAKE_COMMAND} -E env
+            EVEREST_RS_FRAMEWORK_SOURCE_LOCATION="${everest-framework_SOURCE_DIR}"
+            EVEREST_RS_FRAMEWORK_BINARY_LOCATION="${everest-framework_BINARY_DIR}"
+            $<IF:$<STREQUAL:${CMAKE_BUILD_TYPE},"Release">,--release,>
+            ${CARGO} build
+        WORKING_DIRECTORY
+            ${RUST_WORKSPACE_DIR}
+        DEPENDS
+            everestrs_sys
+            generate_rust
+    )
+
+    # FIXME: cleaning up doesn't work on the first run
+    set_property(TARGET build_rust_modules
+        APPEND
+        PROPERTY
+            ADDITIONAL_CLEAN_FILES ${RUST_WORKSPACE_DIR}/target ${RUST_WORKSPACE_DIR}/Cargo.lock
+    )
+
+    function (ev_add_rs_module MODULE_NAME)
+        if(NOT ${EVEREST_ENABLE_RS_SUPPORT})
+            message(STATUS "Excluding Rust module ${MODULE_NAME} because EVEREST_ENABLE_RS_SUPPORT=${EVEREST_ENABLE_RS_SUPPORT}")
+            return()
+        elseif ("${MODULE_NAME}" IN_LIST EVEREST_EXCLUDE_MODULES)
+            message(STATUS "Excluding module ${MODULE_NAME}")
+            return()
+        elseif (EVEREST_INCLUDE_MODULES AND NOT ("${MODULE_NAME}" IN_LIST EVEREST_INCLUDE_MODULES))
+            message(STATUS "Excluding module ${MODULE_NAME}")
+            return()
+        endif ()
+
+        set(MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}")
+        if (NOT IS_DIRECTORY ${MODULE_PATH})
+            message(FATAL "Rust module ${MODULE_NAME} does not exist at ${MODULE_PATH}")
+            return()
+        endif ()
+
+        message(STATUS "Setting up Rust module ${MODULE_NAME}")
+
+        # FIXME (aw): we might also look for a CMakeFiles.txt in the module folder for custom logic
+        set_property(
+            TARGET generate_rust
+            APPEND
+            PROPERTY RUST_MODULE_LIST "${MODULE_NAME}"
+        )
+
+        add_custom_command(OUTPUT ${RUST_WORKSPACE_DIR}/${MODULE_NAME}
+            COMMAND
+                ${CMAKE_COMMAND} -E create_symlink ${MODULE_PATH} ${MODULE_NAME}
+            COMMENT
+                "Create symlink for rust module ${MODULE_NAME}"
+            VERBATIM
+            WORKING_DIRECTORY
+                ${RUST_WORKSPACE_DIR}
+        )
+
+        add_custom_target(rust_symlink_module_${MODULE_NAME}
+            DEPENDS ${RUST_WORKSPACE_DIR}/${MODULE_NAME}
+            COMMENT "Create symlink for rust module ${MODULE_NAME}"
+        )
+
+        add_dependencies(generate_rust rust_symlink_module_${MODULE_NAME})
+
+        set(EVEREST_MODULE_INSTALL_PREFIX "${CMAKE_INSTALL_LIBEXECDIR}/everest/modules")
+
+        if (CMAKE_BUILD_TYPE STREQUAL "Release")
+            set(BIN_PREFIX "target/release")
+        else ()
+            set(BIN_PREFIX "target/debug")
+        endif ()
+
+        install(PROGRAMS ${RUST_WORKSPACE_DIR}/${BIN_PREFIX}/${MODULE_NAME}
+            DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
+        )
+
+        # FIXME (aw): this should go into a general function for all add_module_* flavours
+        install(FILES ${MODULE_PATH}/manifest.yaml
+            DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
+        )
+    endfunction()
+
+endif () # EVEREST_ENABLE_RS_SUPPORT
+
 
 #
 # interfaces
@@ -200,36 +329,6 @@ endfunction()
 # modules
 #
 
-function (ev_add_modules)
-    set(EVEREST_MODULE_INSTALL_PREFIX "${CMAKE_INSTALL_LIBEXECDIR}/everest/modules")
-
-    # NOTE (aw): this logic could be customized in future
-    foreach(MODULE ${ARGV})
-        if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${ENTRY})
-            if("${MODULE}" IN_LIST EVEREST_EXCLUDE_MODULES)
-                message(STATUS "Excluding module ${MODULE}")
-            elseif(EVEREST_INCLUDE_MODULES AND NOT ("${MODULE}" IN_LIST EVEREST_INCLUDE_MODULES))
-                message(STATUS "Excluding module ${MODULE}")
-            else()
-                message(WARNING "ev_add_modules is deprecated in favor of ev_add_<cpp/js/py>_module()")
-                if("${MODULE}" MATCHES "^Js*")
-                    ev_add_js_module(${MODULE})
-                elseif("${MODULE}" MATCHES "^Py*")
-                    ev_add_py_module(${MODULE})
-                else()
-                    ev_add_cpp_module(${MODULE})
-                endif()
-            endif()
-        endif()
-    endforeach()
-
-    # FIXME (aw): this will override EVEREST_MODULES, might not what we want
-    set_property(
-        GLOBAL
-        PROPERTY EVEREST_MODULES ${EVEREST_MODULES}
-    )
-endfunction()
-
 function(ev_setup_cpp_module)
     # no-op to not break API
 endfunction()
@@ -283,7 +382,11 @@ function (ev_add_module)
     # check if rust module
     string(FIND ${MODULE_NAME} "Rs" MODULE_PREFIX_POS)
     if (MODULE_PREFIX_POS EQUAL 0)
-      ev_add_rs_module(${MODULE_NAME})
+        if (NOT EVEREST_ENABLE_RS_SUPPORT)
+            return() # NOTE (aw): could log here
+        endif ()
+
+        ev_add_rs_module(${MODULE_NAME})
         return()
     endif()
 
@@ -521,101 +624,6 @@ function (ev_add_py_module MODULE_NAME)
         endif()
     else()
         message(WARNING "Python module ${MODULE_NAME} does not exist at ${MODULE_PATH}")
-        return()
-    endif()
-
-    # FIXME (aw): this will override EVEREST_MODULES, might not what we want
-    set_property(
-        GLOBAL
-        PROPERTY EVEREST_MODULES ${EVEREST_MODULES}
-    )
-endfunction()
-
-function (create_rust_cargo_toml RUST_MODULE_LIST)
-    if(NOT ${EVEREST_ENABLE_RS_SUPPORT})
-        return()
-    endif()
-
-    set(OUTPUT_FILE_PATH "${CMAKE_BINARY_DIR}/modules/Cargo.toml")
-
-    # Write the static parts
-    file(WRITE "${OUTPUT_FILE_PATH}" "[workspace]\nresolver = \"2\"\nmembers = [\n")
-
-    # Append each symlink path
-    foreach(SYMLINK ${RUST_MODULE_LIST})
-        file(APPEND "${OUTPUT_FILE_PATH}" "    \"${SYMLINK}\",\n")
-    endforeach()
-
-    # Close the list
-    file(APPEND "${OUTPUT_FILE_PATH}" "]\n\n")
-
-    file(APPEND "${OUTPUT_FILE_PATH}" "[workspace.dependencies]\neverestrs = { path = \"")
-    file(APPEND "${OUTPUT_FILE_PATH}" "${everest-framework_SOURCE_DIR}/everestrs/everestrs")
-    file(APPEND "${OUTPUT_FILE_PATH}" "\" }\n")
-endfunction()
-
-function (ev_add_rs_module MODULE_NAME)
-    set(EVEREST_MODULE_INSTALL_PREFIX "${CMAKE_INSTALL_LIBEXECDIR}/everest/modules")
-
-    set(MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}")
-    set(MODULE_BUILD_PATH "${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}")
-
-    if(IS_DIRECTORY ${MODULE_PATH})
-        if(NOT ${EVEREST_ENABLE_RS_SUPPORT})
-            message(STATUS "Excluding Rust module ${MODULE_NAME} because EVEREST_ENABLE_RS_SUPPORT=${EVEREST_ENABLE_RS_SUPPORT}")
-            return()
-        elseif("${MODULE_NAME}" IN_LIST EVEREST_EXCLUDE_MODULES)
-            message(STATUS "Excluding module ${MODULE_NAME}")
-            return()
-        elseif(EVEREST_INCLUDE_MODULES AND NOT ("${MODULE_NAME}" IN_LIST EVEREST_INCLUDE_MODULES))
-            message(STATUS "Excluding module ${MODULE_NAME}")
-            return()
-        else()
-            message(STATUS "Setting up Rust module ${MODULE_NAME}")
-
-            # Symlink the source directory into the build directory
-            execute_process(COMMAND rm -f "${MODULE_BUILD_PATH}")
-            execute_process(COMMAND ln -s "${MODULE_PATH}/" "${MODULE_BUILD_PATH}")
-
-            set(EVEREST_MODULE_DIR ${PROJECT_SOURCE_DIR}/modules)
-            file(RELATIVE_PATH MODULE_PARENT_DIR ${EVEREST_MODULE_DIR} "${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}")
-            get_property(RUST_MODULE_LIST_GLOBAL GLOBAL PROPERTY RUST_MODULE_LIST)
-            list(APPEND RUST_MODULE_LIST_GLOBAL "${MODULE_PARENT_DIR}")
-            set_property(GLOBAL PROPERTY RUST_MODULE_LIST ${RUST_MODULE_LIST_GLOBAL})
-
-            find_program(
-                CARGO
-                cargo
-                REQUIRED
-            )
-
-            if(CMAKE_BUILD_TYPE STREQUAL "Release")
-                set(CARGO_RELEASE_FLAG "--release")
-                set(BIN_PATH "${CMAKE_BINARY_DIR}/modules/target/release/${MODULE_NAME}")
-            else()
-                set(CARGO_RELEASE_FLAG "")
-                set(BIN_PATH "${CMAKE_BINARY_DIR}/modules/target/debug/${MODULE_NAME}")
-            endif()
-
-            # Note: We are building in the directory in which the Workspace Cargo.toml resides, to make sure it is used.
-            add_custom_target(
-                ${MODULE_NAME} ALL
-                COMMAND ${CMAKE_COMMAND} -E env EVEREST_RS_FRAMEWORK_SOURCE_LOCATION="${everest-framework_SOURCE_DIR}" EVEREST_RS_FRAMEWORK_BINARY_LOCATION="${everest-framework_BINARY_DIR}" ${CARGO} build ${CARGO_RELEASE_FLAG} --bin ${MODULE_NAME}
-                WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/modules
-                DEPENDS everest::framework
-            )
-
-            install(FILES ${MODULE_PATH}/manifest.yaml
-                DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
-            )
-
-            install(FILES ${BIN_PATH}
-                PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-                DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
-            )
-        endif()
-    else()
-        message(WARNING "Rust module ${MODULE_NAME} does not exist at ${MODULE_PATH}")
         return()
     endif()
 
