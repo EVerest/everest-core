@@ -170,6 +170,10 @@ InstallCertificateResult EvseSecurity::install_ca_certificate(const std::string&
     try {
         X509Wrapper new_cert(certificate, EncodingFormat::PEM);
 
+        if (!new_cert.is_valid()) {
+            return InstallCertificateResult::Expired;
+        }
+
         // Load existing
         const auto ca_bundle_path = this->ca_bundle_path_map.at(certificate_type);
 
