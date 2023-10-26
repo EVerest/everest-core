@@ -21,6 +21,7 @@
 #include <ocpp/common/database_handler_base.hpp>
 #include <ocpp/common/types.hpp>
 #include <ocpp/v16/types.hpp>
+#include <ocpp/v201/messages/TransactionEvent.hpp>
 #include <ocpp/v201/types.hpp>
 
 namespace ocpp {
@@ -589,6 +590,24 @@ public:
         this->paused = false;
         this->cv.notify_one();
         EVLOG_debug << "resume() notified message queue";
+    }
+
+    bool is_transaction_message_queue_empty() {
+        std::lock_guard<std::mutex> lk(this->message_mutex);
+        return this->transaction_message_queue.empty();
+    }
+
+    bool contains_transaction_messages(const CiString<36> transaction_id) {
+        std::lock_guard<std::mutex> lk(this->message_mutex);
+        for (const auto control_message : this->transaction_message_queue) {
+            if (control_message->messageType == v201::MessageType::TransactionEvent) {
+                v201::TransactionEventRequest req = control_message->message.at(CALL_PAYLOAD);
+                if (req.transactionInfo.transactionId == transaction_id) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /// \brief Set transaction_message_attempts to given \p transaction_message_attempts

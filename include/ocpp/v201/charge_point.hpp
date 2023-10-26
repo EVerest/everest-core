@@ -25,6 +25,7 @@
 #include <ocpp/v201/messages/GetLocalListVersion.hpp>
 #include <ocpp/v201/messages/GetLog.hpp>
 #include <ocpp/v201/messages/GetReport.hpp>
+#include <ocpp/v201/messages/GetTransactionStatus.hpp>
 #include <ocpp/v201/messages/GetVariables.hpp>
 #include <ocpp/v201/messages/Heartbeat.hpp>
 #include <ocpp/v201/messages/MeterValues.hpp>
@@ -329,6 +330,7 @@ private:
 
     // Functional Block E: Transaction
     void handle_start_transaction_event_response(const EnhancedMessage<v201::MessageType>& message);
+    void handle_get_transaction_status(const Call<GetTransactionStatusRequest> call);
 
     // Function Block F: Remote transaction control
     void handle_unlock_connector(Call<UnlockConnectorRequest> call);
