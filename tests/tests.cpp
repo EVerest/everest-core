@@ -198,6 +198,31 @@ TEST_F(EvseSecurityTests, install_root_ca_04) {
     ASSERT_EQ(post_installed_certificates.certificate_hash_data_chain[0].child_certificate_hash_data.size(), 2);
 }
 
+/// \brief test install expired certificate must be rejected
+TEST_F(EvseSecurityTests, install_root_ca_05) {
+    const auto expired_cert =
+        std::string("-----BEGIN CERTIFICATE-----\n")
+        + "MIICsjCCAZqgAwIBAgICMDkwDQYJKoZIhvcNAQELBQAwHDEaMBgGA1UEAwwRT0NU\n"
+        + "VEV4cGlyZWRSb290Q0EwHhcNMjAwMTAxMDAwMDAwWhcNMjEwMTAxMDAwMDAwWjAc\n"
+        + "MRowGAYDVQQDDBFPQ1RURXhwaXJlZFJvb3RDQTCCASIwDQYJKoZIhvcNAQEBBQAD\n"
+        + "ggEPADCCAQoCggEBALA3xfKUgMaFfRHabFy27PhWvaeVDL6yd4qv4w4pe0NMJ0pE\n"
+        + "gr9ynzvXleVlOHF09rabgH99bW/ohLx3l7OliOjMk82e/77oGf0O8ZxViFrppA+z\n"
+        + "6WVhvRn7opso8KkrTCNUYyuzTH9u/n3EU9uFfueu+ifzD2qke7YJqTz7GY7aEqSb\n"
+        + "x7+3GDKhZV8lOw68T+WKkJxfuuafzczewHhu623ztc0bo5fTr3FSqWkuJXhB4Zg/\n"
+        + "GBMt1hS+O4IZeho8Ik9uu5zW39HQQNcJKN6dYDTIZdtQ8vNp6hYdOaRd05v77Ye0\n"
+        + "ywqqYVyUTgdfmqE5u7YeWUfO9vab3Qxq1IeHVd8CAwEAATANBgkqhkiG9w0BAQsF\n"
+        + "AAOCAQEAfDeemUzKXtqfCfuaGwTKTsj+Ld3A6VRiT/CSx1rh6BNAZZrve8OV2ckr\n"
+        + "2Ia+fol9mEkZPCBNLDzgxs5LLiJIOy4prjSTX4HJS5iqJBO8UJGakqXOAz0qBG1V\n"
+        + "8xWCJLeLGni9vi+dLVVFWpSfzTA/4iomtJPuvoXLdYzMvjLcGFT9RsE9q0oEbGHq\n"
+        + "ezKIzFaOdpCOtAt+FgW1lqqGHef2wNz15iWQLAU1juip+lgowI5YdhVJVPyqJTNz\n"
+        + "RUletvBeY2rFUKFWhj8QRPBwBlEDZqxRJSyIwQCe9t7Nhvbd9eyCFvRm9z3a8FDf\n"
+        + "FRmmZMWQkhBDQt15vxoDyyWn3hdwRA==\n"
+        + "-----END CERTIFICATE-----";
+
+    const auto result = this->evse_security->install_ca_certificate(expired_cert, CaCertificateType::CSMS);
+    ASSERT_EQ(result, InstallCertificateResult::Expired);
+}
+
 
 TEST_F(EvseSecurityTests, delete_root_ca_01) {
 
