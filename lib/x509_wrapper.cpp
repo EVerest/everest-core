@@ -32,12 +32,12 @@ std::string x509_to_string(X509* x509) {
     return {};
 }
 
-X509Wrapper::X509Wrapper(const std::filesystem::path& file, const EncodingFormat encoding) {
-    if (std::filesystem::is_regular_file(file) == false) {
+X509Wrapper::X509Wrapper(const fs::path& file, const EncodingFormat encoding) {
+    if (fs::is_regular_file(file) == false) {
         throw CertificateLoadException("X509Wrapper can only load from files!");
     }
 
-    std::ifstream read(file, std::ios::binary);
+    fsstd::ifstream read(file, std::ios::binary);
     std::string certificate((std::istreambuf_iterator<char>(read)), std::istreambuf_iterator<char>());
 
     auto loaded = X509CertificateBundle::load_certificates(certificate, encoding);
@@ -74,16 +74,16 @@ X509Wrapper::X509Wrapper(X509_ptr&& x509) : x509(std::move(x509)) {
     update_validity();
 }
 
-X509Wrapper::X509Wrapper(X509* x509, const std::filesystem::path& file) : x509(x509), file(file) {
-    if (std::filesystem::is_regular_file(file) == false) {
+X509Wrapper::X509Wrapper(X509* x509, const fs::path& file) : x509(x509), file(file) {
+    if (fs::is_regular_file(file) == false) {
         throw CertificateLoadException("X509Wrapper can only load from files!");
     }
 
     update_validity();
 }
 
-X509Wrapper::X509Wrapper(X509_ptr&& x509, const std::filesystem::path& file) : x509(std::move(x509)), file(file) {
-    if (std::filesystem::is_regular_file(file) == false) {
+X509Wrapper::X509Wrapper(X509_ptr&& x509, const fs::path& file) : x509(std::move(x509)), file(file) {
+    if (fs::is_regular_file(file) == false) {
         throw CertificateLoadException("X509Wrapper can only load from files!");
     }
 
@@ -133,7 +133,7 @@ bool X509Wrapper::is_expired() const {
     return (get_valid_to() < 0);
 }
 
-std::optional<std::filesystem::path> X509Wrapper::get_file() const {
+std::optional<fs::path> X509Wrapper::get_file() const {
     return this->file;
 }
 

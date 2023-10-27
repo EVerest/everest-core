@@ -21,6 +21,22 @@ else()
     find_package(everest-log REQUIRED)
 endif()
 
+option(LIBOCPP_USE_BOOST_FILESYSTEM "Usage of boost/filesystem.hpp instead of std::filesystem" OFF)
+
+if(LIBOCPP_USE_BOOST_FILESYSTEM)
+    message("blabl")
+    find_package(Boost REQUIRED COMPONENTS filesystem)
+    target_link_libraries(ocpp
+        PRIVATE
+            Boost::filesystem
+    )
+    target_compile_definitions(log
+        PRIVATE
+            LIBOCPP_USE_BOOST_FILESYSTEM
+    )
+endif()
+
+
 # dependencies
 find_package(OpenSSL REQUIRED)
 

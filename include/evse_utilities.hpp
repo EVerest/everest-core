@@ -3,7 +3,7 @@
 #ifndef EVSE_UTILITIES_HPP
 #define EVSE_UTILITIES_HPP
 
-#include <filesystem>
+#include <support_older_cpp_versions.hpp>
 #include <fstream>
 #include <iostream>
 #include <limits>
@@ -14,17 +14,17 @@ namespace evse_security {
 
 class EvseUtils {
 public:
-    static bool delete_file(const std::filesystem::path& file_path) {
-        if (std::filesystem::is_regular_file(file_path))
-            return std::filesystem::remove(file_path);
+    static bool delete_file(const fs::path& file_path) {
+        if (fs::is_regular_file(file_path))
+            return fs::remove(file_path);
 
         EVLOG_error << "Error deleting file: " << file_path;
         return false;
     }
 
-    static bool read_from_file(const std::filesystem::path& file_path, std::string& out_data) {
-        if (std::filesystem::is_regular_file(file_path)) {
-            std::ifstream file(file_path, std::ios::binary);
+    static bool read_from_file(const fs::path& file_path, std::string& out_data) {
+        if (fs::is_regular_file(file_path)) {
+            fsstd::ifstream file(file_path, std::ios::binary);
 
             if (file.is_open()) {
                 out_data = std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
@@ -37,11 +37,11 @@ public:
     }
 
     /// @brief Should be used to ensure file exists, not for directories
-    static bool create_file_if_nonexistent(const std::filesystem::path& file_path) {
-        if (!std::filesystem::exists(file_path)) {
+    static bool create_file_if_nonexistent(const fs::path& file_path) {
+        if (!fs::exists(file_path)) {
             std::ofstream file(file_path);
             return true;
-        } else if (std::filesystem::is_directory(file_path)) {
+        } else if (fs::is_directory(file_path)) {
             EVLOG_error << "Attempting to create file over existing directory: " << file_path;
             return false;
         }
@@ -49,10 +49,10 @@ public:
         return true;
     }
 
-    static bool write_to_file(const std::filesystem::path& file_path, const std::string& data,
+    static bool write_to_file(const fs::path& file_path, const std::string& data,
                               std::ios::openmode mode) {
         try {
-            std::ofstream fs(file_path, mode | std::ios::binary);
+            fsstd::ofstream fs(file_path, mode | std::ios::binary);
             if (!fs.is_open()) {
                 EVLOG_error << "Error opening file: " << file_path;
                 return false;

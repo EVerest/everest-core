@@ -3,7 +3,7 @@
 #ifndef X509_WRAPPER_HPP
 #define X509_WRAPPER_HPP
 
-#include <filesystem>
+#include <support_older_cpp_versions.hpp>
 #include <memory>
 #include <openssl/bio.h>
 #include <openssl/pem.h>
@@ -30,16 +30,16 @@ enum class X509CertificateSource {
     STRING
 };
 
-const std::filesystem::path PEM_EXTENSION = ".pem";
-const std::filesystem::path DER_EXTENSION = ".der";
-const std::filesystem::path KEY_EXTENSION = ".key";
+const fs::path PEM_EXTENSION = ".pem";
+const fs::path DER_EXTENSION = ".der";
+const fs::path KEY_EXTENSION = ".key";
 
 using ossl_days_to_seconds = std::chrono::duration<std::int64_t, std::ratio<86400>>;
 
 /// @brief Convenience wrapper around openssl X509 certificate
 class X509Wrapper {
 public:
-    X509Wrapper(const std::filesystem::path& file, const EncodingFormat encoding);
+    X509Wrapper(const fs::path& file, const EncodingFormat encoding);
     X509Wrapper(const std::string& data, const EncodingFormat encoding);
 
     /// @brief Since it implies ownership full transfer, must be very careful with this that's why it's explicit
@@ -48,8 +48,8 @@ public:
     explicit X509Wrapper(X509* x509);
     explicit X509Wrapper(X509_ptr&& x509);
 
-    X509Wrapper(X509* x509, const std::filesystem::path& file);
-    X509Wrapper(X509_ptr&& x509, const std::filesystem::path& file);
+    X509Wrapper(X509* x509, const fs::path& file);
+    X509Wrapper(X509_ptr&& x509, const fs::path& file);
 
     X509Wrapper(const X509Wrapper& other);
     X509Wrapper(X509Wrapper&& other) = default;
@@ -76,7 +76,7 @@ public:
 
     /// @brief Gets optional file of certificate
     /// @result
-    std::optional<std::filesystem::path> get_file() const;
+    std::optional<fs::path> get_file() const;
 
     /// @brief Gets CN of certificate
     /// @result
@@ -137,7 +137,7 @@ private:
     std::int64_t valid_to; // seconds; if < 0 cert has expired
 
     // Relevant file in which this certificate resides
-    std::optional<std::filesystem::path> file;
+    std::optional<fs::path> file;
 };
 
 } // namespace evse_security

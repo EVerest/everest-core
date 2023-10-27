@@ -28,7 +28,7 @@ public:
 /// will be ignored
 class X509CertificateBundle {
 public:
-    X509CertificateBundle(const std::filesystem::path& path, const EncodingFormat encoding);
+    X509CertificateBundle(const fs::path& path, const EncodingFormat encoding);
     X509CertificateBundle(const std::string& certificate, const EncodingFormat encoding);
 
     X509CertificateBundle(X509CertificateBundle&& other) = default;
@@ -61,7 +61,7 @@ public:
         return certificates.size();
     }
 
-    std::filesystem::path get_path() const {
+    fs::path get_path() const {
         return path;
     }
 
@@ -128,8 +128,8 @@ public:
     /// @brief Returns the latest valid certif that we might contain
     static X509Wrapper get_latest_valid_certificate(const std::vector<X509Wrapper>& certificates);
 
-    static bool is_certificate_file(const std::filesystem::path& file) {
-        return std::filesystem::is_regular_file(file) &&
+    static bool is_certificate_file(const fs::path& file) {
+        return fs::is_regular_file(file) &&
                ((file.extension() == PEM_EXTENSION) || (file.extension() == DER_EXTENSION));
     }
 
@@ -137,13 +137,13 @@ private:
     /// @brief Adds to our certificate list the certificates found in the file
     /// @return number of added certificates
     void add_certifcates(const std::string& data, const EncodingFormat encoding,
-                         const std::optional<std::filesystem::path>& path);
+                         const std::optional<fs::path>& path);
 
 private:
     // Certificates in this chain, can only be loaded either from a bundle or a dir folder, never combined
     std::vector<X509Wrapper> certificates;
     // Relevant bundle or directory for this certificate chain
-    std::filesystem::path path;
+    fs::path path;
     // Source from where we created the certificates. If 'string' the 'export' functions will not work
     X509CertificateSource source;
 };
@@ -153,7 +153,7 @@ private:
 /// directory structures. All bundles will use individual files instead of directories
 class X509CertificateDirectory {
 public:
-    X509CertificateDirectory(const std::filesystem::path& directory);
+    X509CertificateDirectory(const fs::path& directory);
 
 public:
     /// @brief Iterates through all the contained bundles, while the provided function
@@ -167,7 +167,7 @@ public:
 
 private:
     std::vector<X509CertificateBundle> bundles;
-    std::filesystem::path directory;
+    fs::path directory;
 };
 
 } // namespace evse_security

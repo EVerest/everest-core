@@ -73,15 +73,15 @@ static CertificateType get_certificate_type(const CaCertificateType ca_certifica
     }
 }
 
-static std::filesystem::path get_private_key_path(const X509Wrapper& certificate, const std::filesystem::path& key_path,
+static fs::path get_private_key_path(const X509Wrapper& certificate, const fs::path& key_path,
                                                   const std::optional<std::string> password) {
     // TODO(ioan): Before iterating the whole dir check by the filename first 'key_path'.key
-    for (const auto& entry : std::filesystem::recursive_directory_iterator(key_path)) {
-        if (std::filesystem::is_regular_file(entry)) {
+    for (const auto& entry : fs::recursive_directory_iterator(key_path)) {
+        if (fs::is_regular_file(entry)) {
             auto key_file_path = entry.path();
             if (key_file_path.extension() == KEY_EXTENSION) {
                 try {
-                    std::ifstream file(key_file_path, std::ios::binary);
+                    fsstd::ifstream file(key_file_path, std::ios::binary);
                     std::string private_key((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
                     BIO_ptr bio(BIO_new_mem_buf(private_key.c_str(), -1));
 
@@ -115,14 +115,14 @@ static std::filesystem::path get_private_key_path(const X509Wrapper& certificate
     throw NoPrivateKeyException(error);
 }
 
-X509CertificateBundle get_leaf_certificates(const std::filesystem::path& cert_dir) {
+X509CertificateBundle get_leaf_certificates(const fs::path& cert_dir) {
     return X509CertificateBundle(cert_dir, EncodingFormat::PEM);
 }
 
 EvseSecurity::EvseSecurity(const FilePaths& file_paths, const std::optional<std::string>& private_key_password) :
     private_key_password(private_key_password) {
 
-    std::vector<std::filesystem::path> dirs = {
+    std::vector<fs::path> dirs = {
         file_paths.directories.csms_leaf_cert_directory,
         file_paths.directories.csms_leaf_key_directory,
         file_paths.directories.secc_leaf_cert_directory,
@@ -130,13 +130,13 @@ EvseSecurity::EvseSecurity(const FilePaths& file_paths, const std::optional<std:
     };
 
     for (const auto& path : dirs) {
-        if (!std::filesystem::exists(path)) {
+        if (!fs::exists(path)) {
             EVLOG_warning << "Could not find configured leaf directory at: " << path.string()
                           << " creating default dir!";
-            if (!std::filesystem::create_directories(path)) {
+            if (!fs::create_directories(path)) {
                 EVLOG_error << "Could not create default dir for path: " << path.string();
             }
-        } else if (!std::filesystem::is_directory(path)) {
+        } else if (!fs::is_directory(path)) {
             throw std::runtime_error(path.string() + " is not a directory.");
         }
     }
@@ -147,7 +147,7 @@ EvseSecurity::EvseSecurity(const FilePaths& file_paths, const std::optional<std:
     this->ca_bundle_path_map[CaCertificateType::V2G] = file_paths.v2g_ca_bundle;
 
     for (const auto& pair : this->ca_bundle_path_map) {
-        if (!std::filesystem::exists(pair.second)) {
+        if (!fs::exists(pair.second)) {
             EVLOG_warning << "Could not find configured " << conversions::ca_certificate_type_to_string(pair.first)
                           << " bundle file at: " + pair.second.string() << ", creating default!";
             if (!EvseUtils::create_file_if_nonexistent(pair.second)) {
@@ -256,8 +256,8 @@ DeleteCertificateResult EvseSecurity::delete_certificate(const CertificateHashDa
 
 InstallCertificateResult EvseSecurity::update_leaf_certificate(const std::string& certificate_chain,
                                                                LeafCertificateType certificate_type) {
-    std::filesystem::path cert_path;
-    std::filesystem::path key_path;
+    fs::path cert_path;
+    fs::path key_path;
     if (certificate_type == LeafCertificateType::CSMS) {
         cert_path = this->directories.csms_leaf_cert_directory;
         key_path = this->directories.csms_leaf_key_directory;
@@ -434,8 +434,8 @@ void EvseSecurity::update_ocsp_cache(const CertificateHashData& certificate_hash
                     continue;
                 }
                 const auto ocsp_path = cert.get_file().value().parent_path() / "ocsp";
-                if (!std::filesystem::exists(ocsp_path)) {
-                    std::filesystem::create_directories(ocsp_path);
+                if (!fs::exists(ocsp_path)) {
+                    fs::create_directories(ocsp_path);
                 }
                 const auto ocsp_file_path =
                     ocsp_path / cert.get_file().value().filename().replace_extension(".ocsp.der");
@@ -465,7 +465,7 @@ std::string EvseSecurity::generate_certificate_signing_request(LeafCertificateTy
     int n_version = 0;
     int bits = 256;
 
-    std::filesystem::path key_path;
+    fs::path key_path;
 
     const auto file_name = std::string("SECC_LEAF_") + EvseUtils::get_random_file_name(KEY_EXTENSION.string());
     if (certificate_type == LeafCertificateType::CSMS) {
@@ -534,8 +534,8 @@ GetKeyPairResult EvseSecurity::get_key_pair(LeafCertificateType certificate_type
     GetKeyPairResult result;
     result.pair = std::nullopt;
 
-    std::filesystem::path key_dir;
-    std::filesystem::path cert_dir;
+    fs::path key_dir;
+    fs::path cert_dir;
 
     if (certificate_type == LeafCertificateType::CSMS) {
         key_dir = this->directories.csms_leaf_key_directory;
@@ -559,8 +559,8 @@ GetKeyPairResult EvseSecurity::get_key_pair(LeafCertificateType certificate_type
             return result;
         }
 
-        std::filesystem::path key_file;
-        std::filesystem::path certificate_file;
+        fs::path key_file;
+        fs::path certificate_file;
 
         auto certificate = std::move(leaf_certificates.get_latest_valid_certificate());
         auto private_key_path = get_private_key_path(certificate, key_dir, this->private_key_password);
@@ -636,7 +636,7 @@ int EvseSecurity::get_leaf_expiry_days_count(LeafCertificateType certificate_typ
     return 0;
 }
 
-bool EvseSecurity::verify_file_signature(const std::filesystem::path& path, const std::string& signing_certificate,
+bool EvseSecurity::verify_file_signature(const fs::path& path, const std::string& signing_certificate,
                                          const std::string signature) {
     EVLOG_info << "Verifying file signature for " << path.string();
 
