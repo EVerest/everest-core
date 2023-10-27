@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
+#include <cctype>
 #include <fstream>
 #include <iostream>
 #include <regex>
-#include <cctype>
 
 #include <everest/logging.hpp>
 #include <evse_utilities.hpp>
@@ -98,7 +98,6 @@ X509Wrapper::X509Wrapper(const X509Wrapper& other) :
 X509Wrapper::~X509Wrapper() {
 }
 
-
 bool X509Wrapper::operator==(const X509Wrapper& other) const {
     return (X509_cmp(get(), other.get()) == 0);
 }
@@ -117,7 +116,7 @@ void X509Wrapper::update_validity() {
                sec; // Convert days to seconds
 }
 
-bool X509Wrapper::is_child(const X509Wrapper &parent) const {
+bool X509Wrapper::is_child(const X509Wrapper& parent) const {
     if ((this == &parent) || (*this == parent)) {
         return false;
     }
@@ -127,10 +126,10 @@ bool X509Wrapper::is_child(const X509Wrapper &parent) const {
 
     X509_STORE_CTX_ptr ctx(X509_STORE_CTX_new());
     X509_STORE_CTX_init(ctx.get(), store.get(), this->get(), NULL);
-    X509_STORE_CTX_set_flags(ctx.get(), X509_V_FLAG_X509_STRICT);
 
     // If the parent is not a self-signed certificate, assume we have a partial chain
     if (parent.is_selfsigned() == false) {
+        X509_STORE_CTX_set_flags(ctx.get(), X509_V_FLAG_X509_STRICT);
         X509_STORE_CTX_set_flags(ctx.get(), X509_V_FLAG_PARTIAL_CHAIN);
     }
 
@@ -165,6 +164,14 @@ bool X509Wrapper::is_expired() const {
 
 std::optional<fs::path> X509Wrapper::get_file() const {
     return this->file;
+}
+
+X509CertificateSource X509Wrapper::get_source() const {
+    if (file.has_value()) {
+        return X509CertificateSource::FILE;
+    } else {
+        return X509CertificateSource::STRING;
+    }
 }
 
 std::string X509Wrapper::get_common_name() const {
@@ -224,7 +231,9 @@ std::string X509Wrapper::get_serial_number() const {
     }
 
     std::string serial(hex_serial);
-    for (char & i : serial) { i = std::tolower(i); }
+    for (char& i : serial) {
+        i = std::tolower(i);
+    }
 
     BN_free(bn_serial);
 
@@ -232,9 +241,15 @@ std::string X509Wrapper::get_serial_number() const {
     return serial;
 }
 
+std::string X509Wrapper::get_issuer_key_hash() const {
+    if (is_selfsigned()) {
+        return get_key_hash();
+    } else {
+        throw std::logic_error("get_issuer_key_hash must only be used on self-signed certs");
+    }
+}
+
 std::string X509Wrapper::get_key_hash() const {
-    // TODO (ioan): Actually here we don't need OUR pubkey
-    // hash but as per the spec we need the issuer's key hash
     unsigned char tmphash[SHA256_DIGEST_LENGTH];
     X509_pubkey_digest(get(), EVP_sha256(), tmphash, NULL);
     std::stringstream ss;
@@ -245,14 +260,10 @@ std::string X509Wrapper::get_key_hash() const {
 }
 
 CertificateHashData X509Wrapper::get_certificate_hash_data() const {
-    if (!this->is_selfsigned()) {
-        throw std::logic_error("get_certificate_hash_data must only be used on self-signed certs");
-    }
-
     CertificateHashData certificate_hash_data;
     certificate_hash_data.hash_algorithm = HashAlgorithm::SHA256;
     certificate_hash_data.issuer_name_hash = this->get_issuer_name_hash();
-    certificate_hash_data.issuer_key_hash = this->get_key_hash();
+    certificate_hash_data.issuer_key_hash = this->get_issuer_key_hash();
     certificate_hash_data.serial_number = this->get_serial_number();
     return certificate_hash_data;
 }
@@ -265,6 +276,7 @@ CertificateHashData X509Wrapper::get_certificate_hash_data(const X509Wrapper& is
     CertificateHashData certificate_hash_data;
     certificate_hash_data.hash_algorithm = HashAlgorithm::SHA256;
     certificate_hash_data.issuer_name_hash = this->get_issuer_name_hash();
+    // Issuer key hash
     certificate_hash_data.issuer_key_hash = issuer.get_key_hash();
     certificate_hash_data.serial_number = this->get_serial_number();
 

@@ -14,6 +14,11 @@ namespace evse_security {
 
 class EvseUtils {
 public:
+    static bool is_subdirectory(const fs::path& base, const fs::path& subdir) {
+        fs::path relativePath = fs::relative(subdir, base);
+        return !relativePath.empty();
+    }
+
     static bool delete_file(const fs::path& file_path) {
         if (fs::is_regular_file(file_path))
             return fs::remove(file_path);
@@ -82,8 +87,8 @@ public:
 
         auto now = std::chrono::system_clock::now();
         std::time_t time = std::chrono::system_clock::to_time_t(now);
-        buff << std::put_time(std::gmtime(&time), "%m_%d_%Y_%H_%M_%S_") << std::to_string(++increment) << "_"
-             << distribution(generator) << extension;
+        buff << std::put_time(std::gmtime(&time), "M%m_D%d_Y%Y_H%H_M%M_S%S_") << "i" << std::to_string(++increment)
+             << "_r" << distribution(generator) << extension;
 
         return buff.str();
     }

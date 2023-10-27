@@ -90,12 +90,14 @@ TEST_F(EvseSecurityTests, verify_basics) {
     X509CertificateBundle bundle(fs::path(bundle_path), EncodingFormat::PEM);
     ASSERT_TRUE(bundle.is_using_bundle_file());
 
+    std::cout << "Bundle hierarchy: " << std::endl << bundle.get_certficate_hierarchy().to_debug_string();
+
     auto certificates = bundle.split();
     ASSERT_TRUE(certificates.size() == 3);
 
     for (int i = 0; i < certificate_strings.size() - 1; ++i) {
         X509Wrapper cert(certificate_strings[i], EncodingFormat::PEM);
-        X509Wrapper parent(certificate_strings[i + 1],EncodingFormat::PEM);
+        X509Wrapper parent(certificate_strings[i + 1], EncodingFormat::PEM);
 
         ASSERT_TRUE(certificates[i].get_certificate_hash_data(parent) == cert.get_certificate_hash_data(parent));
         ASSERT_TRUE(equal_certificate_strings(cert.get_export_string(), certificate_strings[i]));
@@ -112,7 +114,12 @@ TEST_F(EvseSecurityTests, verify_bundle_management) {
     X509CertificateBundle bundle(fs::path(directory_path), EncodingFormat::PEM);
     ASSERT_TRUE(bundle.split().size() == 2);
 
-    bundle.delete_certificate(bundle.split()[0].get_certificate_hash_data(bundle.split()[1]));
+    std::cout << "Bundle hierarchy: " << std::endl << bundle.get_certficate_hierarchy().to_debug_string();
+
+    CertificateHashData hash = bundle.get_certficate_hierarchy().get_certificate_hash(bundle.split()[1]);
+    bundle.delete_certificate(hash, true);
+
+    // Sync deleted
     bundle.sync_to_certificate_store();
 
     int items = 0;
@@ -126,17 +133,20 @@ TEST_F(EvseSecurityTests, verify_bundle_management) {
 
 /// \brief get_certificate_hash_data() throws exception if called with no issuer and a non-self-signed cert
 TEST_F(EvseSecurityTests, get_certificate_hash_data_non_self_signed_requires_issuer) {
-    const auto non_self_signed_cert_str = read_file_to_string(std::filesystem::path("certs/to_be_installed/INSTALL_TEST_ROOT_CA3_SUBCA2.pem"));
+    const auto non_self_signed_cert_str =
+        read_file_to_string(std::filesystem::path("certs/to_be_installed/INSTALL_TEST_ROOT_CA3_SUBCA2.pem"));
     const X509Wrapper non_self_signed_cert(non_self_signed_cert_str, EncodingFormat::PEM);
     ASSERT_THROW(non_self_signed_cert.get_certificate_hash_data(), std::logic_error);
 }
 
 /// \brief get_certificate_hash_data() throws exception if called with the wrong issuer
 TEST_F(EvseSecurityTests, get_certificate_hash_data_wrong_issuer) {
-    const auto child_cert_str = read_file_to_string(std::filesystem::path("certs/to_be_installed/INSTALL_TEST_ROOT_CA3_SUBCA2.pem"));
+    const auto child_cert_str =
+        read_file_to_string(std::filesystem::path("certs/to_be_installed/INSTALL_TEST_ROOT_CA3_SUBCA2.pem"));
     const X509Wrapper child_cert(child_cert_str, EncodingFormat::PEM);
 
-    const auto wrong_parent_cert_str = read_file_to_string(std::filesystem::path("certs/to_be_installed/INSTALL_TEST_ROOT_CA3.pem"));
+    const auto wrong_parent_cert_str =
+        read_file_to_string(std::filesystem::path("certs/to_be_installed/INSTALL_TEST_ROOT_CA3.pem"));
     const X509Wrapper wrong_parent_cert(wrong_parent_cert_str, EncodingFormat::PEM);
 
     ASSERT_THROW(child_cert.get_certificate_hash_data(wrong_parent_cert), std::logic_error);
@@ -184,40 +194,51 @@ TEST_F(EvseSecurityTests, install_root_ca_02) {
 
 /// \brief test install two new root certificates
 TEST_F(EvseSecurityTests, install_root_ca_03) {
-    const auto pre_installed_certificates = this->evse_security->get_installed_certificates({ CertificateType::CSMSRootCertificate });
+    const auto pre_installed_certificates =
+        this->evse_security->get_installed_certificates({CertificateType::CSMSRootCertificate});
 
-    const auto new_root_ca_1 = read_file_to_string(std::filesystem::path("certs/to_be_installed/INSTALL_TEST_ROOT_CA1.pem"));
+    const auto new_root_ca_1 =
+        read_file_to_string(std::filesystem::path("certs/to_be_installed/INSTALL_TEST_ROOT_CA1.pem"));
     const auto result = this->evse_security->install_ca_certificate(new_root_ca_1, CaCertificateType::CSMS);
     ASSERT_TRUE(result == InstallCertificateResult::Accepted);
 
-    const auto new_root_ca_2 = read_file_to_string(std::filesystem::path("certs/to_be_installed/INSTALL_TEST_ROOT_CA2.pem"));
+    const auto new_root_ca_2 =
+        read_file_to_string(std::filesystem::path("certs/to_be_installed/INSTALL_TEST_ROOT_CA2.pem"));
     const auto result2 = this->evse_security->install_ca_certificate(new_root_ca_2, CaCertificateType::CSMS);
     ASSERT_TRUE(result2 == InstallCertificateResult::Accepted);
 
-    const auto post_installed_certificates = this->evse_security->get_installed_certificates({ CertificateType::CSMSRootCertificate });
-    ASSERT_EQ(post_installed_certificates.certificate_hash_data_chain.size(), pre_installed_certificates.certificate_hash_data_chain.size() + 2);
+    const auto post_installed_certificates =
+        this->evse_security->get_installed_certificates({CertificateType::CSMSRootCertificate});
+    ASSERT_EQ(post_installed_certificates.certificate_hash_data_chain.size(),
+              pre_installed_certificates.certificate_hash_data_chain.size() + 2);
 
     // todo: validate installed certificates
 }
 
 /// \brief test install new root certificates + two child certificates
 TEST_F(EvseSecurityTests, install_root_ca_04) {
-    const auto pre_installed_certificates = this->evse_security->get_installed_certificates({ CertificateType::CSMSRootCertificate });
+    const auto pre_installed_certificates =
+        this->evse_security->get_installed_certificates({CertificateType::CSMSRootCertificate});
 
-    const auto new_root_ca_1 = read_file_to_string(std::filesystem::path("certs/to_be_installed/INSTALL_TEST_ROOT_CA3.pem"));
+    const auto new_root_ca_1 =
+        read_file_to_string(std::filesystem::path("certs/to_be_installed/INSTALL_TEST_ROOT_CA3.pem"));
     const auto result = this->evse_security->install_ca_certificate(new_root_ca_1, CaCertificateType::CSMS);
     ASSERT_TRUE(result == InstallCertificateResult::Accepted);
 
-    const auto new_root_sub_ca_1 = read_file_to_string(std::filesystem::path("certs/to_be_installed/INSTALL_TEST_ROOT_CA3_SUBCA1.pem"));
+    const auto new_root_sub_ca_1 =
+        read_file_to_string(std::filesystem::path("certs/to_be_installed/INSTALL_TEST_ROOT_CA3_SUBCA1.pem"));
     const auto result2 = this->evse_security->install_ca_certificate(new_root_sub_ca_1, CaCertificateType::CSMS);
     ASSERT_TRUE(result2 == InstallCertificateResult::Accepted);
 
-    const auto new_root_sub_ca_2 = read_file_to_string(std::filesystem::path("certs/to_be_installed/INSTALL_TEST_ROOT_CA3_SUBCA2.pem"));
+    const auto new_root_sub_ca_2 =
+        read_file_to_string(std::filesystem::path("certs/to_be_installed/INSTALL_TEST_ROOT_CA3_SUBCA2.pem"));
     const auto result3 = this->evse_security->install_ca_certificate(new_root_sub_ca_2, CaCertificateType::CSMS);
     ASSERT_TRUE(result3 == InstallCertificateResult::Accepted);
 
-    const auto post_installed_certificates = this->evse_security->get_installed_certificates({ CertificateType::CSMSRootCertificate });
-    ASSERT_EQ(post_installed_certificates.certificate_hash_data_chain.size(), pre_installed_certificates.certificate_hash_data_chain.size() + 1);
+    const auto post_installed_certificates =
+        this->evse_security->get_installed_certificates({CertificateType::CSMSRootCertificate});
+    ASSERT_EQ(post_installed_certificates.certificate_hash_data_chain.size(),
+              pre_installed_certificates.certificate_hash_data_chain.size() + 1);
 
     // todo: clarify order of newly installed, to be corrected once assertions before pass!
     ASSERT_EQ(post_installed_certificates.certificate_hash_data_chain[0].child_certificate_hash_data.size(), 2);
@@ -225,29 +246,26 @@ TEST_F(EvseSecurityTests, install_root_ca_04) {
 
 /// \brief test install expired certificate must be rejected
 TEST_F(EvseSecurityTests, install_root_ca_05) {
-    const auto expired_cert =
-        std::string("-----BEGIN CERTIFICATE-----\n")
-        + "MIICsjCCAZqgAwIBAgICMDkwDQYJKoZIhvcNAQELBQAwHDEaMBgGA1UEAwwRT0NU\n"
-        + "VEV4cGlyZWRSb290Q0EwHhcNMjAwMTAxMDAwMDAwWhcNMjEwMTAxMDAwMDAwWjAc\n"
-        + "MRowGAYDVQQDDBFPQ1RURXhwaXJlZFJvb3RDQTCCASIwDQYJKoZIhvcNAQEBBQAD\n"
-        + "ggEPADCCAQoCggEBALA3xfKUgMaFfRHabFy27PhWvaeVDL6yd4qv4w4pe0NMJ0pE\n"
-        + "gr9ynzvXleVlOHF09rabgH99bW/ohLx3l7OliOjMk82e/77oGf0O8ZxViFrppA+z\n"
-        + "6WVhvRn7opso8KkrTCNUYyuzTH9u/n3EU9uFfueu+ifzD2qke7YJqTz7GY7aEqSb\n"
-        + "x7+3GDKhZV8lOw68T+WKkJxfuuafzczewHhu623ztc0bo5fTr3FSqWkuJXhB4Zg/\n"
-        + "GBMt1hS+O4IZeho8Ik9uu5zW39HQQNcJKN6dYDTIZdtQ8vNp6hYdOaRd05v77Ye0\n"
-        + "ywqqYVyUTgdfmqE5u7YeWUfO9vab3Qxq1IeHVd8CAwEAATANBgkqhkiG9w0BAQsF\n"
-        + "AAOCAQEAfDeemUzKXtqfCfuaGwTKTsj+Ld3A6VRiT/CSx1rh6BNAZZrve8OV2ckr\n"
-        + "2Ia+fol9mEkZPCBNLDzgxs5LLiJIOy4prjSTX4HJS5iqJBO8UJGakqXOAz0qBG1V\n"
-        + "8xWCJLeLGni9vi+dLVVFWpSfzTA/4iomtJPuvoXLdYzMvjLcGFT9RsE9q0oEbGHq\n"
-        + "ezKIzFaOdpCOtAt+FgW1lqqGHef2wNz15iWQLAU1juip+lgowI5YdhVJVPyqJTNz\n"
-        + "RUletvBeY2rFUKFWhj8QRPBwBlEDZqxRJSyIwQCe9t7Nhvbd9eyCFvRm9z3a8FDf\n"
-        + "FRmmZMWQkhBDQt15vxoDyyWn3hdwRA==\n"
-        + "-----END CERTIFICATE-----";
+    const auto expired_cert = std::string("-----BEGIN CERTIFICATE-----\n") +
+                              "MIICsjCCAZqgAwIBAgICMDkwDQYJKoZIhvcNAQELBQAwHDEaMBgGA1UEAwwRT0NU\n" +
+                              "VEV4cGlyZWRSb290Q0EwHhcNMjAwMTAxMDAwMDAwWhcNMjEwMTAxMDAwMDAwWjAc\n" +
+                              "MRowGAYDVQQDDBFPQ1RURXhwaXJlZFJvb3RDQTCCASIwDQYJKoZIhvcNAQEBBQAD\n" +
+                              "ggEPADCCAQoCggEBALA3xfKUgMaFfRHabFy27PhWvaeVDL6yd4qv4w4pe0NMJ0pE\n" +
+                              "gr9ynzvXleVlOHF09rabgH99bW/ohLx3l7OliOjMk82e/77oGf0O8ZxViFrppA+z\n" +
+                              "6WVhvRn7opso8KkrTCNUYyuzTH9u/n3EU9uFfueu+ifzD2qke7YJqTz7GY7aEqSb\n" +
+                              "x7+3GDKhZV8lOw68T+WKkJxfuuafzczewHhu623ztc0bo5fTr3FSqWkuJXhB4Zg/\n" +
+                              "GBMt1hS+O4IZeho8Ik9uu5zW39HQQNcJKN6dYDTIZdtQ8vNp6hYdOaRd05v77Ye0\n" +
+                              "ywqqYVyUTgdfmqE5u7YeWUfO9vab3Qxq1IeHVd8CAwEAATANBgkqhkiG9w0BAQsF\n" +
+                              "AAOCAQEAfDeemUzKXtqfCfuaGwTKTsj+Ld3A6VRiT/CSx1rh6BNAZZrve8OV2ckr\n" +
+                              "2Ia+fol9mEkZPCBNLDzgxs5LLiJIOy4prjSTX4HJS5iqJBO8UJGakqXOAz0qBG1V\n" +
+                              "8xWCJLeLGni9vi+dLVVFWpSfzTA/4iomtJPuvoXLdYzMvjLcGFT9RsE9q0oEbGHq\n" +
+                              "ezKIzFaOdpCOtAt+FgW1lqqGHef2wNz15iWQLAU1juip+lgowI5YdhVJVPyqJTNz\n" +
+                              "RUletvBeY2rFUKFWhj8QRPBwBlEDZqxRJSyIwQCe9t7Nhvbd9eyCFvRm9z3a8FDf\n" +
+                              "FRmmZMWQkhBDQt15vxoDyyWn3hdwRA==\n" + "-----END CERTIFICATE-----";
 
     const auto result = this->evse_security->install_ca_certificate(expired_cert, CaCertificateType::CSMS);
     ASSERT_EQ(result, InstallCertificateResult::Expired);
 }
-
 
 TEST_F(EvseSecurityTests, delete_root_ca_01) {
 
@@ -309,15 +327,9 @@ TEST_F(EvseSecurityTests, get_installed_certificates_and_delete_secc_leaf) {
     }
     ASSERT_TRUE(found_v2g_chain);
 
+    // Do not allow the SECC delete since it's the ChargingStationCertificate
     auto delete_response = this->evse_security->delete_certificate(secc_leaf_data);
-    ASSERT_EQ(delete_response, DeleteCertificateResult::Accepted);
-
-    const auto get_certs_response = this->evse_security->get_installed_certificates(certificate_types);
-    // ASSERT_EQ(r.status, GetInstalledCertificatesStatus::Accepted);
-    ASSERT_EQ(get_certs_response.certificate_hash_data_chain.size(), 3);
-
-    delete_response = this->evse_security->delete_certificate(secc_leaf_data);
-    ASSERT_EQ(delete_response, DeleteCertificateResult::NotFound);
+    ASSERT_EQ(delete_response, DeleteCertificateResult::Failed);
 }
 
 } // namespace evse_security

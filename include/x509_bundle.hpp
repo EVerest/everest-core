@@ -3,6 +3,7 @@
 #ifndef X509_BUNDLE_HPP
 #define X509_BUNDLE_HPP
 
+#include <x509_hierarchy.hpp>
 #include <x509_wrapper.hpp>
 
 namespace evse_security {
@@ -20,11 +21,17 @@ public:
     using std::runtime_error::runtime_error;
 };
 
+/// @brief Custom exception that is thrown when a invalid operation is with the current state
+/// on the certificate bundle
+class InvalidOperationException : public std::runtime_error {
+public:
+    using std::runtime_error::runtime_error;
+};
+
 /// @brief X509 certificate bundle, used for holding multiple X509Wrappers. Supports
 /// operations like add/delete importing/exporting certificates. Can use either a
-/// directory with multiple certificates or a single file with one or more certificates
-/// in it. A directory that contains certificate bundle files will not work, the entry
-/// will be ignored
+/// directory with multiple certificates (or bundles of certificates) or a single
+/// file with one or more certificates in it.
 class X509CertificateBundle {
 public:
     X509CertificateBundle(const fs::path& path, const EncodingFormat encoding);
@@ -57,7 +64,12 @@ public:
 
     /// @return Contained certificate count
     int get_certificate_count() const {
-        return certificates.size();
+        int count = 0;
+        for (const auto& chain : certificates) {
+            count += chain.second.size();
+        }
+
+        return count;
     }
 
     fs::path get_path() const {
@@ -68,41 +80,58 @@ public:
         return source;
     }
 
+    /// @brief Iterates through all the contained certificate chains (file, certificates)
+    /// while the provided function returns true
+    template <typename function> void for_each_chain(function func) {
+        for (const auto& chain : certificates) {
+            if (!func(chain.first, chain.second))
+                break;
+        }
+    }
+
 public:
     /// @brief Splits the certificate (chain) into single certificates
     /// @return vector containing single certificates
     std::vector<X509Wrapper> split();
 
     /// @brief If we already have the certificate
-    bool contains_certificate(const X509Wrapper& certificate) const;
-    /// @brief If we already have the certificate
-    bool contains_certificate(const CertificateHashData& certificate_hash) const;
+    bool contains_certificate(const X509Wrapper& certificate);
+    /// @brief If we already have the certificate hash
+    bool contains_certificate(const CertificateHashData& certificate_hash);
+
+    /// @brief Finds a certificate based on its hash
+    X509Wrapper find_certificate(const CertificateHashData& certificate_hash);
 
     /// @brief Adds a single certificate in the chain. Only in memory, use @ref export_certificates to filesystem
     void add_certificate(X509Wrapper&& certificate);
 
-    /// @brief Adds a single certificate in the chain, only if it is not contained 
+    /// @brief Adds a single certificate in the bundle, only if it is not contained
     /// already. Only in memory, use @ref export_certificates to filesystem
     void add_certificate_unique(X509Wrapper&& certificate);
 
-    /// @brief Updates a single certificate in the chain. Only in memory, use @ref export_certificates to filesystem
-    /// export
-    /// @param certificate certificate to update
-    /// @return true if the certificate was found and updated, false otherwise. If true is returned the provided
-    /// certificate is invalidated
+    /// @brief Updates an already existing certificate if it is found
     bool update_certificate(X509Wrapper&& certificate);
 
-    /// @brief Deletes a single certificate in the chain. Only in memory, use @ref export_certificates to filesystem
-    /// export
-    /// @return true if the certificate was found and deleted, false otherwise
-    bool delete_certificate(const X509Wrapper& certificate);
-    bool delete_certificate(const CertificateHashData& data);
+    /// @brief Deletes all instances of the provided certificate. Only in memory, use @ref export_certificates
+    /// to filesystem export
+    /// @param include_issued If true the child certificates will also be deleted, if any are found
+    /// @return count of certificates deleted
+    int delete_certificate(const X509Wrapper& certificate, bool include_issued);
+
+    /// @brief Deletes all certificates with the  provided certificate hash. Only in memory,
+    /// use @ref export_certificates to filesystem export
+    /// @param include_issued If true the child certificates will also be deleted, if any are found
+    /// @return count of certificates deleted
+    int delete_certificate(const CertificateHashData& data, bool include_issued);
 
     /// @brief Deletes all certificates. Only in memory, use @ref export_certificates to filesystem export
     void delete_all_certificates();
 
     /// @brief Returns a full exportable representation of a certificate bundle file in PEM format
     std::string to_export_string() const;
+
+    /// @brief Returns a full exportable representation of a certificate sub-chain, if found
+    std::string to_export_string(const std::filesystem::path& chain) const;
 
     /// @brief Exports the full certificate chain either as individual files if it is using a directory
     /// or as a bundle if it uses a bundle file, at the initially provided path. Also deletes/adds the updated
@@ -115,12 +144,12 @@ public:
     bool sync_to_certificate_store();
 
 public:
-    const X509Wrapper& get_at(int index) {
-        return certificates.at(index);
-    }
-
     /// @brief returns the latest valid certificate within this bundle
     X509Wrapper get_latest_valid_certificate();
+
+    /// @brief Utility that returns current the certificate hierarchy of this bundle
+    /// Invalidated on any add/delete operation
+    X509CertificateHierarchy& get_certficate_hierarchy();
 
 public:
     X509CertificateBundle& operator=(X509CertificateBundle&& other) = default;
@@ -141,35 +170,20 @@ private:
     /// @return number of added certificates
     void add_certifcates(const std::string& data, const EncodingFormat encoding, const std::optional<fs::path>& path);
 
+    /// @brief operation to be executed after each add/delete to this bundle
+    void invalidate_hierarchy();
+
 private:
-    // Certificates in this chain, can only be loaded either from a bundle or a dir folder, never combined
-    std::vector<X509Wrapper> certificates;
-    // Relevant bundle or directory for this certificate chain
+    // Certificates loaded, only loaded from files
+    std::unordered_map<fs::path, std::vector<X509Wrapper>> certificates;
+    // Relevant bundle file or directory for this certificates
     fs::path path;
     // Source from where we created the certificates. If 'string' the 'export' functions will not work
     X509CertificateSource source;
-};
 
-/// @brief Unlike the bundle, this is loaded only from a directory that can contain a
-/// combination of bundle files and single files. Used for easier operations on the
-/// directory structures. All bundles will use individual files instead of directories
-class X509CertificateDirectory {
-public:
-    X509CertificateDirectory(const fs::path& directory);
-
-public:
-    /// @brief Iterates through all the contained bundles, while the provided function
-    /// returns true
-    template <typename function> void for_each(function func) {
-        for (const auto& bundle : bundles) {
-            if (!func(bundle))
-                break;
-        }
-    }
-
-private:
-    std::vector<X509CertificateBundle> bundles;
-    fs::path directory;
+    // Cached certificate hierarchy, invalidated on any operation
+    X509CertificateHierarchy hierarchy;
+    bool hierarchy_invalidated;
 };
 
 } // namespace evse_security

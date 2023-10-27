@@ -9,66 +9,182 @@
 
 namespace evse_security {
 
+class NoCertificateFound : public std::runtime_error {
+public:
+    using std::runtime_error::runtime_error;
+};
+
 struct X509Node {
     X509Wrapper certificate;
+    // Issuer based, computed hash (for non-root) or simple computed hash for roots
     CertificateHashData hash;
 
-    // Storing a copy because a pointer might get invalidated by the parent being moved
-    X509Wrapper parent_certificate;
+    X509Wrapper issuer;
     std::vector<X509Node> children;
 };
 
-/// @brief Utility class that is able to build a certificate hierarchy, with a 
-/// list of self-signed root certificates and their respective sub-certificates
+/// @brief Utility class that is able to build a immutable certificate hierarchy
+/// with a  list of self-signed root certificates and their respective sub-certificates
 class X509CertificateHierarchy {
 public:
-    const std::vector<X509Node> &get_hierarchy() const {
+    const std::vector<X509Node>& get_hierarchy() const {
         return hierarchy;
     }
 
     /// @brief Checks if the provided certificate is a self-signed root CA certificate
     /// contained in our hierarchy
-    bool is_root(const X509Wrapper &certificate) const {
-        if(certificate.is_selfsigned()) {
-            return (std::find_if(hierarchy.begin(), hierarchy.end(), [&certificate](const X509Node &node) {
-                return node.certificate == certificate;
-            }) != hierarchy.end());
+    bool is_root(const X509Wrapper& certificate) const {
+        if (certificate.is_selfsigned()) {
+            return (std::find_if(hierarchy.begin(), hierarchy.end(), [&certificate](const X509Node& node) {
+                        return node.certificate == certificate;
+                    }) != hierarchy.end());
         }
 
         return false;
     }
 
-    /// @brief Iterate through all the hierarchy of certificates
+    /// @brief Collects all the descendants of the provided certificate
+    /// @param top Certificate that issued the descendants
+    std::vector<X509Wrapper> collect_descendants(const X509Wrapper& top) {
+        std::vector<X509Wrapper> descendants;
+
+        for_each([&](const X509Node& node) {
+            // If we found the certificate
+            if (node.certificate == top) {
+                // Collect all descendants
+                if (node.children.size()) {
+                    for_each_child(
+                        [&](const X509Node& descendant, int depth) { descendants.push_back(descendant.certificate); },
+                        node);
+                }
+
+                return false;
+            }
+
+            return true;
+        });
+
+        return descendants;
+    }
+
+    /// @brief correct method of finding a hash for a certificate, since it also checks the issuer
+    CertificateHashData get_certificate_hash(const X509Wrapper& certificate) {
+        if (certificate.is_selfsigned()) {
+            return certificate.get_certificate_hash_data();
+        }
+
+        // Search for certificate in the hierarchy and return the hash
+        CertificateHashData hash;
+        bool found;
+
+        for_each([&](const X509Node& node) {
+            if (node.certificate == certificate) {
+                hash = node.hash;
+                found = true;
+
+                return false;
+            }
+
+            return true;
+        });
+
+        if (found)
+            return hash;
+
+        throw NoCertificateFound("Could not find owner for certificate: " + certificate.get_common_name());
+    }
+
+    /// @brief returns true if we contain a certificate with the following hash
+    bool contains_certificate_hash(const CertificateHashData& hash) {
+        bool contains = false;
+
+        for_each([&](const X509Node& node) {
+            if (node.hash == hash) {
+                contains = true;
+                return false;
+            }
+
+            return true;
+        });
+
+        return contains;
+    }
+
+    X509Wrapper find_certificate(const CertificateHashData& hash) {
+        X509Wrapper* certificate = nullptr;
+
+        for_each([&](X509Node& node) {
+            if (node.hash == hash) {
+                certificate = &node.certificate;
+                return false;
+            }
+
+            return true;
+        });
+
+        if (certificate)
+            return *certificate;
+
+        throw NoCertificateFound("Could not find a certificate for hash: " + hash.issuer_name_hash);
+    }
+
+    /// @brief Iterate through all the hierarchy of certificates while the function returns true
     template <typename function> void for_each(function func) {
-        for (auto &root : hierarchy) {
-            func(root, 0);
-            for_each_child(func, root, 1);
+        std::queue<std::reference_wrapper<X509Node>> queue;
+        for (auto& roots : hierarchy) {
+            // Process roots
+            if (!func(roots))
+                return;
+
+            for (auto& child : roots.children) {
+                queue.push(child);
+            }
+        }
+
+        while (!queue.empty()) {
+            X509Node& top = queue.front();
+            queue.pop();
+
+            // Process node
+            if (!func(top))
+                return;
+
+            for (auto& child : top.children) {
+                queue.push(child);
+            }
         }
     }
 
     std::string to_debug_string() {
-        std::ostringstream str;
+        std::stringstream str;
 
-        for_each ([&str](const X509Node &node, int depth) {
-            if(depth == 0) {
-                str << '*';
-            } else {
-                while(depth-- > 0)
-                    str << "---";
-            }
+        for (const auto& root : hierarchy) {
+            if (root.certificate.is_selfsigned())
+                str << "* [ROOT]";
+            else
+                str << "+ [ORPH]";
 
-            str << ' ' << node.certificate.get_common_name() << ", issuer name hash: " << node.hash.issuer_name_hash << ", issuer key hash: " << node.hash.issuer_key_hash << std::endl;
-        });
+            str << ' ' << root.certificate.get_common_name() << std::endl;
+
+            for_each_child(
+                [&](const X509Node& node, int depth) {
+                    while (depth-- > 0)
+                        str << "---";
+
+                    str << ' ' << node.certificate.get_common_name() << std::endl;
+                },
+                root, 1);
+        }
 
         return str.str();
     }
 
 public:
-    template <typename function> static void for_each_child(function func, const X509Node &node, int depth = 0) {
+    template <typename function> static void for_each_child(function func, const X509Node& node, int depth = 0) {
         if (node.children.empty())
             return;
 
-        for (const auto &child : node.children) {
+        for (const auto& child : node.children) {
             func(child, depth);
 
             if (!child.children.empty()) {
@@ -77,40 +193,40 @@ public:
         }
     }
 
-    static X509CertificateHierarchy build_hierarchy(std::vector<X509Wrapper> &certificates)
-    {
-        X509CertificateHierarchy ordered;        
-        
+    static X509CertificateHierarchy build_hierarchy(std::vector<X509Wrapper>& certificates) {
+        X509CertificateHierarchy ordered;
+
         // Search for all self-signed certificates and add them as the roots, and also search for
         // all owner-less certificates and also add them as root, since they are  not self-signed
         // but we can't find any owner for them anyway
-        std::for_each(certificates.begin(), certificates.end(), [&](const X509Wrapper &certif) {
+        std::for_each(certificates.begin(), certificates.end(), [&](const X509Wrapper& certif) {
             if (certif.is_selfsigned()) {
                 ordered.hierarchy.push_back({certif, certif.get_certificate_hash_data(), certif, {}});
             } else {
                 // Search for a possible owner
-                bool has_owner = std::find_if(certificates.begin(), certificates.end(), [&](const X509Wrapper &owner) {
-                    return certif.is_child(owner);
-                }) != certificates.end();
+                bool has_owner = std::find_if(certificates.begin(), certificates.end(), [&](const X509Wrapper& owner) {
+                                     return certif.is_child(owner);
+                                 }) != certificates.end();
 
                 if (!has_owner) {
-                    auto hash = certif.get_certificate_hash_data();
-                    ordered.hierarchy.push_back({certif, hash, certif, {}});
+                    // If we don't have an owner we can't determine the proper hash, use invalid
+                    CertificateHashData invalid;
+                    ordered.hierarchy.push_back({certif, invalid, certif, {}});
                 }
             }
         });
 
         // Remove all root certificates from the provided certificate list
-        auto remove_roots = std::remove_if(certificates.begin(), certificates.end(), [&](const X509Wrapper &certif) {
-            return std::find_if(ordered.hierarchy.begin(), ordered.hierarchy.end(), [&](const X509Node &node) {
-                return (certif == node.hash);
-            }) != ordered.hierarchy.end();
+        auto remove_roots = std::remove_if(certificates.begin(), certificates.end(), [&](const X509Wrapper& certif) {
+            return std::find_if(ordered.hierarchy.begin(), ordered.hierarchy.end(), [&](const X509Node& node) {
+                       return (certif == node.certificate);
+                   }) != ordered.hierarchy.end();
         });
-        
+
         certificates.erase(remove_roots, certificates.end());
 
         // Try build the full hierarchy, we are not assuming any order
-        while(certificates.size()) {
+        while (certificates.size()) {
             // The current certificate that we're testing for
             auto current = std::move(certificates.back());
             certificates.pop_back();
@@ -127,32 +243,23 @@ public:
 
 private:
     /// @brief Attempts to add to the hierarchy the provided certificate
-    /// @return True if we found within our hierarchy any certificate that 
+    /// @return True if we found within our hierarchy any certificate that
     /// owns the provided certificate, false otherwise
-    bool try_add_to_hierarchy(X509Wrapper &&certificate) {
+    bool try_add_to_hierarchy(X509Wrapper&& certificate) {
         bool added = false;
 
-        std::queue<std::reference_wrapper<X509Node>> stack;
-        for (auto &roots : hierarchy) {
-            stack.push(roots);
-        }        
-
-        while (!stack.empty()) {
-            X509Node& top = stack.front();
-            stack.pop();
-
-            for (auto &child : top.children) {
-                stack.push(child);
-            }
-
-            // Process node
+        for_each([&](X509Node& top) {
             if (certificate.is_child(top.certificate)) {
+                // Problem: when the top is an intermediary certificate we have a crash, since the
                 auto hash = certificate.get_certificate_hash_data(top.certificate);
                 top.children.push_back({std::move(certificate), hash, top.certificate, {}});
                 added = true;
-                break;
+
+                return false;
             }
-        }
+
+            return true;
+        });
 
         return added;
     }
