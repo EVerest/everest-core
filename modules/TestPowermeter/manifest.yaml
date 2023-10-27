@@ -1,0 +1,13 @@
+description: Simple test module to start and stop transactions on a powermeter
+provides:
+  if_impl_id_empty:
+    interface: empty
+    description: Dummy interface (module provides nothing)
+requires:
+  powermeter:
+    interface: powermeter
+enable_external_mqtt: true
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Miriam Thome

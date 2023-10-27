@@ -33,6 +33,7 @@ ev_add_module(PowermeterGSH01)
 ev_add_module(DummyTokenValidator)
 ev_add_module(DummyTokenProvider)
 ev_add_module(DummyTokenProviderManual)
+ev_add_module(TestPowermeter)
 
 add_subdirectory(deprecated)
 add_subdirectory(examples)

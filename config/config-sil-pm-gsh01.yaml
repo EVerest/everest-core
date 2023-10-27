@@ -11,7 +11,13 @@ active_modules:
         parity: 0
         rs485_direction_gpio: -1
         ignore_echo: false
-        line_loss_impedance: 2
+        line_loss_impedance: 0
         gmt_offset_quarter_hours: 8
         publish_device_data: true
         publish_device_diagnostics: true
+  Test:
+    connections:
+      powermeter:
+        - implementation_id: main
+          module_id: PowerMeter
+    module: TestPowermeter
