@@ -146,7 +146,12 @@ bool X509CertificateBundle::contains_certificate(const CertificateHashData& cert
 }
 
 bool X509CertificateBundle::delete_certificate(const X509Wrapper& certificate) {
-    return delete_certificate(certificate.get_certificate_hash_data());
+    for (auto it = certificates.begin(); it != certificates.end(); ++it) {
+        if (*it == certificate) {
+            certificates.erase(it);
+            return true;
+        }
+    }
 }
 
 bool X509CertificateBundle::delete_certificate(const CertificateHashData& data) {

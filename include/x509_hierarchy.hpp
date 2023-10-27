@@ -13,6 +13,8 @@ struct X509Node {
     X509Wrapper certificate;
     CertificateHashData hash;
 
+    // Storing a copy because a pointer might get invalidated by the parent being moved
+    X509Wrapper parent_certificate;
     std::vector<X509Node> children;
 };
 
@@ -84,7 +86,7 @@ public:
         // but we can't find any owner for them anyway
         std::for_each(certificates.begin(), certificates.end(), [&](const X509Wrapper &certif) {
             if (certif.is_selfsigned()) {
-                ordered.hierarchy.push_back({std::move(certif), certif.get_certificate_hash_data(), {}});
+                ordered.hierarchy.push_back({certif, certif.get_certificate_hash_data(), certif, {}});
             } else {
                 // Search for a possible owner
                 bool has_owner = std::find_if(certificates.begin(), certificates.end(), [&](const X509Wrapper &owner) {
@@ -93,7 +95,7 @@ public:
 
                 if (!has_owner) {
                     auto hash = certif.get_certificate_hash_data();
-                    ordered.hierarchy.push_back({std::move(certif), hash, {}});
+                    ordered.hierarchy.push_back({certif, hash, certif, {}});
                 }
             }
         });
@@ -146,7 +148,7 @@ private:
             // Process node
             if (certificate.is_child(top.certificate)) {
                 auto hash = certificate.get_certificate_hash_data(top.certificate);
-                top.children.push_back({std::move(certificate), hash, {}});
+                top.children.push_back({std::move(certificate), hash, top.certificate, {}});
                 added = true;
                 break;
             }
