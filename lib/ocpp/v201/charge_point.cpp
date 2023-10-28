@@ -173,7 +173,7 @@ void ChargePoint::on_firmware_update_status_notification(int32_t request_id,
         this->security_event_notification_req(
             CiString<50>(ocpp::security_events::INVALIDFIRMWARESIGNATURE),
             std::optional<CiString<255>>("Signature of the provided firmware is not valid!"), true,
-            false); // L01.FR.03
+            true); // L01.FR.03 - critical because TC_L_06_CS requires this message to be sent
     }
 }
 
@@ -2153,7 +2153,8 @@ void ChargePoint::handle_firmware_update_req(Call<UpdateFirmwareRequest> call) {
         // L01.FR.02
         this->security_event_notification_req(
             CiString<50>(ocpp::security_events::INVALIDFIRMWARESIGNINGCERTIFICATE),
-            std::optional<CiString<255>>("Provided signing certificate is not valid!"), true, false);
+            std::optional<CiString<255>>("Provided signing certificate is not valid!"), true,
+            true); // critical because TC_L_05_CS requires this message to be sent
     }
 }
 
