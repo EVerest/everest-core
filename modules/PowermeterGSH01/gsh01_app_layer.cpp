@@ -21,24 +21,24 @@
 namespace gsh01_app_layer {
 
 //Status Word Bit Meaning - initialization in cpp-file necessary (static)
-std::map<uint64_t, std::string> StatusWord::bit_meaning = {{0x0000000000000001, "  Error Real time clock"},
-                                                           {0x0000000000000002, "  Error Configuration Memory"},
-                                                           {0x0000000000000008, "  Error Signature Module"},
-                                                           {0x0000000000000020, "  Error Meter Configuration"},
-                                                           {0x0000000000000040, "  Error Meter Communication"},
-                                                           {0x0000000000000080, "  Error Meter Fatal"},
-                                                           {0x0000000000000100, "  Error External Display Not Available"},
-                                                           {0x0000000000010000, "  Status Real time clock not in sync"},
-                                                           {0x0000000000020000, "  Status Charging"},
-                                                           {0x0000000000080000, "  Status Compensated Mode Impedance"},
-                                                           {0x0000000000100000, "  Status external Display used"},
-                                                           {0x0000000000200000, "  Status Is Ready for Charging"},
-                                                           {0x0000000000400000, "  Status Session Not Completed"},
-                                                           {0x0000000000800000, "  Status Eichlog Is Full"},
-                                                           {0x0000000001000000, "  Status Charge Process List is full"},
-                                                           {0x0000000400000000, "  Status Word Identification Bit Okay"},
-                                                           {0x0000000800000000, "  Error DC Line Loss Power Abnormal"},
-                                                           {0x0000001000000000, "  Factory Jumper set"}};
+std::map<uint64_t, std::string> StatusWord::bit_meaning = {{0x0000000000000001, "--> Error Real time clock"},
+                                                           {0x0000000000000002, "--> Error Configuration Memory"},
+                                                           {0x0000000000000008, "--> Error Signature Module"},
+                                                           {0x0000000000000020, "--> Error Meter Configuration"},
+                                                           {0x0000000000000040, "--> Error Meter Communication"},
+                                                           {0x0000000000000080, "--> Error Meter Fatal"},
+                                                           {0x0000000000000100, "--> Error External Display Not Available"},
+                                                           {0x0000000000010000, "--> Status Real time clock not in sync"},
+                                                           {0x0000000000020000, "--> Status Charging"},
+                                                           {0x0000000000080000, "--> Status Compensated Mode Impedance"},
+                                                           {0x0000000000100000, "--> Status external Display used"},
+                                                           {0x0000000000200000, "--> Status Is Ready for Charging"},
+                                                           {0x0000000000400000, "--> Status Session Not Completed"},
+                                                           {0x0000000000800000, "--> Status Eichlog Is Full"},
+                                                           {0x0000000001000000, "--> Status Charge Process List is full"},
+                                                           {0x0000000400000000, "--> Status Word Identification Bit Okay"},
+                                                           {0x0000000800000000, "--> Error DC Line Loss Power Abnormal"},
+                                                           {0x0000001000000000, "--> Factory Jumper set"}};
 
 uint32_t timepoint_to_uint32(date::utc_clock::time_point timepoint) {
     return (uint32_t)std::chrono::duration_cast<std::chrono::seconds>(timepoint.time_since_epoch()).count();
