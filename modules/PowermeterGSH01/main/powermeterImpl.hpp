@@ -97,6 +97,7 @@ private:
     void set_device_time();
     void get_meter_bus_address();
     void set_meter_bus_address(uint8_t bus_address);
+    void get_status_word();
     void set_device_charge_point_id(gsh01_app_layer::UserIdType id_type, std::string charge_point_id);
     void read_device_data();
     void read_diagnostics_data();

@@ -168,6 +168,12 @@ static std::string hexdump(uint16_t msg) {
     return ss.str();
 }
 
+static std::string hexdump(uint64_t msg) {
+    std::stringstream ss;
+    ss << "0x" << std::hex << std::uppercase << std::setw(16) << std::setfill('0') << (uint64_t)msg;
+    return ss.str();
+}
+
 static std::string get_string(std::vector<uint8_t>& vec) {
     std::string str = "";
     for (uint16_t n = 0; n < vec.size(); n++){

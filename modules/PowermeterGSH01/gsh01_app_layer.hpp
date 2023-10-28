@@ -284,6 +284,19 @@ public:
     std::vector<uint8_t> signature;  // 64 elements
 };
 
+class StatusWord{
+private:
+    static std::map<uint64_t, std::string> bit_meaning;
+public:
+    static void print(uint64_t status){
+        for(const auto& [key, value] : bit_meaning) {
+            if(status & key) {
+                EVLOG_info << value;
+            }
+        }   
+    }
+};
+
 class Command {
 public:
     gsh01_app_layer::CommandType type;
@@ -292,9 +305,9 @@ public:
     std::vector<uint8_t> data;
 };
 
-static constexpr uint16_t PM_AST_MAX_RX_LENGTH = 1000;
-static constexpr uint16_t PM_AST_SERIAL_RX_INITIAL_TIMEOUT_MS = 1100;
-static constexpr uint16_t PM_AST_SERIAL_RX_WITHIN_MESSAGE_TIMEOUT_MS = 100;
+static constexpr uint16_t PM_GSH01_MAX_RX_LENGTH = 1500;
+static constexpr uint16_t PM_GSH01_SERIAL_RX_INITIAL_TIMEOUT_MS = 1100;
+static constexpr uint16_t PM_GSH01_SERIAL_RX_WITHIN_MESSAGE_TIMEOUT_MS = 100;
 
 class Gsh01AppLayer {
 
