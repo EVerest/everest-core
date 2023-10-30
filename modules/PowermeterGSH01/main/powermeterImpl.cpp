@@ -70,7 +70,6 @@ void powermeterImpl::init() {
     //     set_meter_bus_address(config.powermeter_device_id);
     //     //set_meter_bus_address(0x4A);
     // }
-    get_status_word();
 
     //set_application_operation_mode(gsh01_app_layer::ApplicationBoardMode::ASSEMBLY);
     get_application_operation_mode();
@@ -82,7 +81,7 @@ void powermeterImpl::init() {
         get_status_word();
     }
     
-    set_device_time();
+    time_sync();
     get_status_word();
 }
 
@@ -92,25 +91,22 @@ void powermeterImpl::ready() {
             read_powermeter_values();
             // publish powermeter values
             this->publish_powermeter(this->pm_last_values);
-            std::this_thread::sleep_for(std::chrono::seconds(2));
-            get_status_word();
-            std::this_thread::sleep_for(std::chrono::seconds(2));
+            std::this_thread::sleep_for(std::chrono::seconds(5));
         }
     }).detach();
 
     // create device_data publisher thread
-    //ToDo: start and stop a first transaction for reading values
-    /*if (this->config.publish_device_data) {
+    if (this->config.publish_device_data) {
         std::thread ([this] {
             while (true) {
-                read_device_data();
+                //read_device_data();
                 get_status_word();
-                std::this_thread::sleep_for(std::chrono::seconds(1));
-                publish_device_data_topic();
+                std::this_thread::sleep_for(std::chrono::seconds(10));
+                //publish_device_data_topic();
                 std::this_thread::sleep_for(std::chrono::seconds(5));
             }
         }).detach();
-    }*/
+    }
 
 
     // create device_diagnostics publisher thread
@@ -157,7 +153,7 @@ void powermeterImpl::set_device_time() {
     app_layer.create_command_set_time(date::utc_clock::from_sys(timepoint), gmt_offset_quarters_of_an_hour, set_device_time_cmd);
 
     std::vector<uint8_t> slip_msg_set_device_time = std::move(this->slip.package_single(this->config.powermeter_device_id, set_device_time_cmd));
-    EVLOG_info << "\nFrame: " << module::conversions::hexdump(slip_msg_set_device_time) << " length: " << slip_msg_set_device_time.size() << "\n\n";
+    EVLOG_info << "Set device time\nSEND: " << module::conversions::hexdump(slip_msg_set_device_time) << " length: " << slip_msg_set_device_time.size() << "\n\n";
     this->serial_device.tx(slip_msg_set_device_time);
     receive_response();
 }
@@ -166,7 +162,7 @@ void powermeterImpl::get_meter_bus_address() {
     std::vector<uint8_t> data_vect{};
     app_layer.create_command_get_bus_address(data_vect);
     std::vector<uint8_t> slip_msg_get_bus_address = std::move(this->slip.package_single(0xFF, data_vect));
-    EVLOG_info << "\nFrame: " << module::conversions::hexdump(slip_msg_get_bus_address) << " length: " << slip_msg_get_bus_address.size() << "\n\n";
+    EVLOG_info << "Get meter bus address\nSEND: " << module::conversions::hexdump(slip_msg_get_bus_address) << " length: " << slip_msg_get_bus_address.size() << "\n\n";
     this->serial_device.tx(slip_msg_get_bus_address);
     receive_response();
 }
@@ -177,7 +173,7 @@ void powermeterImpl::set_meter_bus_address(uint8_t bus_address) {
     app_layer.create_command_set_bus_address(bus_address, set_meter_bus_address_cmd);
 
     std::vector<uint8_t> slip_msg_set_bus_address = std::move(this->slip.package_single(this->config.powermeter_device_id, set_meter_bus_address_cmd));
-    EVLOG_info << "\nFrame: " << module::conversions::hexdump(slip_msg_set_bus_address) << " length: " << slip_msg_set_bus_address.size() << "\n\n";
+    EVLOG_info << "Set meter bus address\nSEND: " << module::conversions::hexdump(slip_msg_set_bus_address) << " length: " << slip_msg_set_bus_address.size() << "\n\n";
     this->serial_device.tx(slip_msg_set_bus_address);
     receive_response();
 }
@@ -186,7 +182,7 @@ void powermeterImpl::get_status_word() {
     std::vector<uint8_t> data_vect{};
     app_layer.create_command_get_status_word(data_vect);
     std::vector<uint8_t> slip_msg_get_status_word = std::move(this->slip.package_single(this->config.powermeter_device_id, data_vect));
-    EVLOG_info << "\nFrame: " << module::conversions::hexdump(slip_msg_get_status_word) << " length: " << slip_msg_get_status_word.size() << "\n\n";
+    EVLOG_info << "Get status word\nSEND: " << module::conversions::hexdump(slip_msg_get_status_word) << " length: " << slip_msg_get_status_word.size() << "\n\n";
     this->serial_device.tx(slip_msg_get_status_word);
     receive_response();
 }
@@ -239,6 +235,7 @@ void powermeterImpl::read_device_data() {
         std::vector<uint8_t> get_total_stop_import_energy_cmd{};
         app_layer.create_command_get_total_stop_import_energy(get_total_stop_import_energy_cmd);
 
+        //This value is not available while charging
         std::vector<uint8_t> get_total_transaction_duration_cmd{};
         app_layer.create_command_get_total_transaction_duration(get_total_transaction_duration_cmd);
 
@@ -297,7 +294,7 @@ void powermeterImpl::request_device_type() {
     std::vector<uint8_t> data_vect{};
     app_layer.create_command_get_device_type(data_vect);
     std::vector<uint8_t> slip_msg_device_type = std::move(this->slip.package_single(this->config.powermeter_device_id, data_vect));
-    EVLOG_info << "\nFrame: " << module::conversions::hexdump(slip_msg_device_type) << " length: " << slip_msg_device_type.size() << "\n\n";
+    EVLOG_info << "Request device type\nSEND: " << module::conversions::hexdump(slip_msg_device_type) << " length: " << slip_msg_device_type.size() << "\n\n";
     this->serial_device.tx(slip_msg_device_type);
     receive_response();
 }
@@ -306,7 +303,7 @@ void powermeterImpl::get_app_fw_version() {
     std::vector<uint8_t> data_vect{};
     app_layer.create_command_get_application_fw_version(data_vect);
     std::vector<uint8_t> slip_msg_app_fw_version = std::move(this->slip.package_single(this->config.powermeter_device_id, data_vect));
-    EVLOG_info << "\nFrame: " << module::conversions::hexdump(slip_msg_app_fw_version) << " length: " << slip_msg_app_fw_version.size() << "\n\n";
+    EVLOG_info << "Get application FW version\nSEND: " << module::conversions::hexdump(slip_msg_app_fw_version) << " length: " << slip_msg_app_fw_version.size() << "\n\n";
     this->serial_device.tx(slip_msg_app_fw_version);
     receive_response();
 }
@@ -315,7 +312,7 @@ void powermeterImpl::get_application_operation_mode() {
     std::vector<uint8_t> data_vect{};
     app_layer.create_command_get_application_mode(data_vect);
     std::vector<uint8_t> slip_msg_get_operation_mode = std::move(this->slip.package_single(this->config.powermeter_device_id, data_vect));
-    EVLOG_info << "\nFrame: " << module::conversions::hexdump(slip_msg_get_operation_mode) << " length: " << slip_msg_get_operation_mode.size() << "\n\n";
+    EVLOG_info << "Get application operation mode\nSEND: " << module::conversions::hexdump(slip_msg_get_operation_mode) << " length: " << slip_msg_get_operation_mode.size() << "\n\n";
     this->serial_device.tx(slip_msg_get_operation_mode);
     receive_response();
 }
@@ -323,7 +320,7 @@ void powermeterImpl::set_application_operation_mode(gsh01_app_layer::Application
     std::vector<uint8_t> set_operation_mode_cmd{};
     app_layer.create_command_set_application_mode(mode, set_operation_mode_cmd);
     std::vector<uint8_t> slip_msg_set_operation_mode = std::move(this->slip.package_single(this->config.powermeter_device_id, set_operation_mode_cmd));
-    EVLOG_info << "\nFrame: " << module::conversions::hexdump(slip_msg_set_operation_mode) << " length: " << slip_msg_set_operation_mode.size() << "\n\n";
+    EVLOG_info << "Set Application operation mode\nSEND: " << module::conversions::hexdump(slip_msg_set_operation_mode) << " length: " << slip_msg_set_operation_mode.size() << "\n\n";
     this->serial_device.tx(slip_msg_set_operation_mode);
     receive_response();
 }
@@ -332,7 +329,7 @@ void powermeterImpl::get_line_loss_impedance() {
     std::vector<uint8_t> data_vect{};
     app_layer.create_command_get_line_loss_impedance(data_vect);
     std::vector<uint8_t> slip_msg_get_ll_impedance = std::move(this->slip.package_single(this->config.powermeter_device_id, data_vect));
-    EVLOG_info << "\nFrame: " << module::conversions::hexdump(slip_msg_get_ll_impedance) << " length: " << slip_msg_get_ll_impedance.size() << "\n\n";
+    EVLOG_info << "Get line loss impedance\nSEND: " << module::conversions::hexdump(slip_msg_get_ll_impedance) << " length: " << slip_msg_get_ll_impedance.size() << "\n\n";
     this->serial_device.tx(slip_msg_get_ll_impedance);
     receive_response();
 }
@@ -340,7 +337,7 @@ void powermeterImpl::set_line_loss_impedance(uint16_t ll_impedance) {
     std::vector<uint8_t> set_ll_impedance_cmd{};
     app_layer.create_command_set_line_loss_impedance(ll_impedance, set_ll_impedance_cmd);
     std::vector<uint8_t> slip_msg_set_ll_impedance = std::move(this->slip.package_single(this->config.powermeter_device_id, set_ll_impedance_cmd));
-    EVLOG_info << "\nFrame: " << module::conversions::hexdump(slip_msg_set_ll_impedance) << " length: " << slip_msg_set_ll_impedance.size() << "\n\n";
+    EVLOG_info << "Set line loss impedance\nSEND: " << module::conversions::hexdump(slip_msg_set_ll_impedance) << " length: " << slip_msg_set_ll_impedance.size() << "\n\n";
     this->serial_device.tx(slip_msg_set_ll_impedance);
     receive_response();
 }
@@ -480,6 +477,9 @@ void powermeterImpl::init_default_values() {
 }
 
 void powermeterImpl::readRegisters() {
+    std::vector<uint8_t> get_time_cmd{};
+    app_layer.create_command_get_time(get_time_cmd);
+
     std::vector<uint8_t> get_voltage_cmd{};
     app_layer.create_command_get_voltage(get_voltage_cmd);
 
@@ -499,11 +499,14 @@ void powermeterImpl::readRegisters() {
 
     std::vector<uint8_t> slip_msg_read_registers = std::move(this->slip.package_multi(this->config.powermeter_device_id,
                                                                                       {
+                                                                                          get_time_cmd,
                                                                                           get_voltage_cmd,
                                                                                           get_current_cmd,
                                                                                           get_import_power_cmd,
                                                                                           get_import_energy_cmd
                                                                                       }));
+    EVLOG_info << "Read multiple instanceous registers";
+    EVLOG_info << "SEND: " << module::conversions::hexdump(slip_msg_read_registers) << " length: " << slip_msg_read_registers.size() << "\n\n";
     this->serial_device.tx(slip_msg_read_registers);
     receive_response();
 }
@@ -933,7 +936,7 @@ gsh01_app_layer::CommandResult powermeterImpl::receive_response() {
     response.reserve(gsh01_app_layer::PM_GSH01_MAX_RX_LENGTH);
     this->serial_device.rx(response, gsh01_app_layer::PM_GSH01_SERIAL_RX_INITIAL_TIMEOUT_MS, gsh01_app_layer::PM_GSH01_SERIAL_RX_WITHIN_MESSAGE_TIMEOUT_MS);
 
-    EVLOG_info << "\n\nRECEIVE: " << module::conversions::hexdump(response) << " length: " << response.size() << "\n\n";
+    EVLOG_info << "\nRECEIVE: " << module::conversions::hexdump(response) << " length: " << response.size() << "\n\n";
     
     if (response.size() >= 5) {
         gsh01_app_layer::CommandResult result{};
@@ -958,6 +961,8 @@ gsh01_app_layer::CommandResult powermeterImpl::receive_response() {
 
 types::powermeter::TransactionStartResponse
 powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& value) {
+    time_sync();
+
     types::powermeter::TransactionStartResponse r;
     this->start_transact_result = gsh01_app_layer::CommandResult::PENDING;
     gsh01_app_layer::UserIdStatus user_id_status = gsh01_app_layer::UserIdStatus::USER_NOT_ASSIGNED;
@@ -976,8 +981,9 @@ powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& valu
     }
     
     std::vector<uint8_t> data_vect{};
-    app_layer.create_command_start_transaction(user_id_status, user_id_type, user_id_data, this->config.gmt_offset_quarter_hours, data_vect);
+    app_layer.create_command_start_transaction(user_id_status, user_id_type, user_id_data, /*this->config.gmt_offset_quarter_hours,*/ data_vect);
     std::vector<uint8_t> slip_msg_start_transaction = std::move(this->slip.package_single(this->config.powermeter_device_id, data_vect));
+    EVLOG_info << "\nStart-Transaction frame: " << module::conversions::hexdump(slip_msg_start_transaction) << " length: " << slip_msg_start_transaction.size() << "\n\n";
     this->serial_device.tx(slip_msg_start_transaction);
     this->start_transaction_msg_status = MessageStatus::SENT;
     Timeout timeout(TIMEOUT_2s);

@@ -190,7 +190,7 @@ static std::string u32_epoch_to_rfc3339(uint32_t epoch_time) {
     time_t tt = static_cast<time_t>(epoch_time);
     std::tm tm = *std::gmtime(&tt);
     std::stringstream ss;
-    ss << std::put_time(&tm, "%Y-%m-%dT%H:%M:%S.000Z");
+    ss << std::put_time(&tm, "%Y-%m-%d %H:%M:%S.000Z");
     return std::move(ss.str());
 }
 

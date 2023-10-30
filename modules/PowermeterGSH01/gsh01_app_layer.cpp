@@ -108,7 +108,6 @@ int8_t Gsh01AppLayer::get_utc_offset_in_quarter_hours(const std::chrono::time_po
 void Gsh01AppLayer::create_command_start_transaction(gsh01_app_layer::UserIdStatus user_id_status,
                                                    gsh01_app_layer::UserIdType user_id_type,
                                                    std::string user_id_data,
-                                                   int8_t gmt_offset_quarter_hours,
                                                    std::vector<uint8_t>& command_data) {
     gsh01_app_layer::Command cmd{};
 
@@ -116,8 +115,11 @@ void Gsh01AppLayer::create_command_start_transaction(gsh01_app_layer::UserIdStat
     cmd.length = 0x0034;
     cmd.status = gsh01_app_layer::CommandStatus::OK;
 
-    insert_u32_as_u8s(cmd.data, (timepoint_to_uint32(date::utc_clock::now())));
-    cmd.data.push_back(static_cast<uint8_t>(gmt_offset_quarter_hours)); // GMT offset in quarters of an hour, e.g. 0x08 = +2h
+    std::chrono::time_point<std::chrono::system_clock> timepoint = std::chrono::system_clock::now();
+    int8_t gmt_offset_quarters_of_an_hour = get_utc_offset_in_quarter_hours(timepoint);
+
+    insert_u32_as_u8s(cmd.data, timepoint_to_uint32(date::utc_clock::from_sys(timepoint)));
+    cmd.data.push_back(gmt_offset_quarters_of_an_hour);
     cmd.data.push_back((uint8_t)user_id_status);
     cmd.data.push_back((uint8_t)user_id_type);
 

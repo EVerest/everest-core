@@ -94,6 +94,8 @@ private:
 
     void init_default_values();
     void read_powermeter_values();
+    void time_sync();
+    void get_device_time();
     void set_device_time();
     void get_meter_bus_address();
     void set_meter_bus_address(uint8_t bus_address);

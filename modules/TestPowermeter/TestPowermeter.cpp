@@ -7,7 +7,7 @@ namespace module {
 void TestPowermeter::init() {
     invoke_init(*p_if_impl_id_empty);
     r_powermeter->subscribe_powermeter([this](types::powermeter::Powermeter pm){
-        EVLOG_info << "Powermeter values received:";
+        EVLOG_info << "Published powermeter values received:";
         EVLOG_info << "Import Device Energy: " << pm.energy_Wh_import.total << " Wh";
         if(pm.power_W.has_value()){
             EVLOG_info << "Import Device Power: " << pm.power_W.value().total << " W";
@@ -42,10 +42,11 @@ void TestPowermeter::ready() {
     reqData.user_identification_type = user_id_type;
 
     std::thread([this, reqData]{
+            sleep(10);
             r_powermeter->call_start_transaction(reqData);
             sleep(60);
             r_powermeter->call_stop_transaction(reqData.transaction_id);
-            sleep(1800);
+            sleep(120);
     }).detach();
 }
 
