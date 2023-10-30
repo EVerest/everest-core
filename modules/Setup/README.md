@@ -56,6 +56,7 @@ with the following payload format:
         "interface": "wlan0",
         "ipv4": ["192.0.2.23"],
         "ipv6": ["2001:db8:0:0:0:0:0:23"],
+        "mac": "00:11:22:33:44:55",
         "rfkill_id": "0",
         "wireless": true
     },
@@ -64,6 +65,7 @@ with the following payload format:
         "interface": "eth0",
         "ipv4": "192.0.2.42",
         "ipv6": ["2001:db8:0:0:0:0:0:42"],
+        "mac": "11:22:33:44:55:66",
         "rfkill_id": "",
         "wireless": false
     }
