@@ -30,7 +30,7 @@ public:
         {% elif var.json_type != 'null' %}
             listener({{ var_to_cpp(var) }}(value));
         {% else %}
-            if (value.type() != Everest::detail::FundamentalTypeTrait<{{ cpp_type(var) }}>::type) {
+            if (not Everest::detail::is_type_compatible<{{ cpp_type(var) }}>(value.type())) {
                 EVLOG_error << "Callback for variable '{{ var.name }}' in interface '{{ info.interface }}' has wrong type!";
             }
             listener();
