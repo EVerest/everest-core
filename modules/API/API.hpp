@@ -72,6 +72,30 @@ namespace module {
 
 struct Conf {
     std::string charger_information_file;
+    int powermeter_energy_import_decimal_places;
+    int powermeter_energy_export_decimal_places;
+    int powermeter_power_decimal_places;
+    int powermeter_voltage_decimal_places;
+    int powermeter_VAR_decimal_places;
+    int powermeter_current_decimal_places;
+    int powermeter_frequency_decimal_places;
+    int hw_caps_max_current_export_decimal_places;
+    int hw_caps_max_current_import_decimal_places;
+    int hw_caps_min_current_export_decimal_places;
+    int hw_caps_min_current_import_decimal_places;
+    int limits_max_current_decimal_places;
+    float powermeter_energy_import_round_to;
+    float powermeter_energy_export_round_to;
+    float powermeter_power_round_to;
+    float powermeter_voltage_round_to;
+    float powermeter_VAR_round_to;
+    float powermeter_current_round_to;
+    float powermeter_frequency_round_to;
+    float hw_caps_max_current_export_round_to;
+    float hw_caps_max_current_import_round_to;
+    float hw_caps_min_current_export_round_to;
+    float hw_caps_min_current_import_round_to;
+    float limits_max_current_round_to;
 };
 
 class API : public Everest::ModuleBase {
@@ -110,9 +134,13 @@ private:
     bool running = true;
 
     std::list<std::unique_ptr<SessionInfo>> info;
-    std::list<json> hw_capabilities_json;
+    std::list<std::string> hw_capabilities_str;
     std::string selected_protocol;
     json charger_information;
+    std::string limit_decimal_places(const types::powermeter::Powermeter& powermeter);
+    std::string limit_decimal_places(const types::board_support::HardwareCapabilities& hw_capabilities);
+    std::string limit_decimal_places(const types::evse_manager::Limits& limits);
+    float round_to_nearest_step(float value, float step);
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
