@@ -14,41 +14,36 @@ using json = nlohmann::json;
 
 namespace detail {
 
-template <typename FundamentalType> struct FundamentalTypeTrait {
-    static const auto type = nlohmann::json::value_t::discarded;
-};
+template <typename FundamentalType> constexpr bool is_type_compatible(nlohmann::json::value_t json_type);
 
-template <> struct FundamentalTypeTrait<std::nullptr_t> {
-    static const auto type = nlohmann::json::value_t::null;
-};
+template <> constexpr inline bool is_type_compatible<std::nullptr_t>(nlohmann::json::value_t json_type) {
+    return json_type == nlohmann::json::value_t::null;
+}
 
-template <> struct FundamentalTypeTrait<bool> {
-    static const auto type = nlohmann::json::value_t::boolean;
-};
+template <> constexpr inline bool is_type_compatible<bool>(nlohmann::json::value_t json_type) {
+    return json_type == nlohmann::json::value_t::boolean;
+}
 
-template <> struct FundamentalTypeTrait<int> {
-    static const auto type = nlohmann::json::value_t::number_integer;
-};
+template <> constexpr inline bool is_type_compatible<int>(nlohmann::json::value_t json_type) {
+    return json_type == nlohmann::json::value_t::number_integer ||
+           json_type == nlohmann::json::value_t::number_unsigned;
+}
 
-template <> struct FundamentalTypeTrait<unsigned int> {
-    static const auto type = nlohmann::json::value_t::number_unsigned;
-};
+template <> constexpr inline bool is_type_compatible<double>(nlohmann::json::value_t json_type) {
+    return json_type == nlohmann::json::value_t::number_float;
+}
 
-template <> struct FundamentalTypeTrait<double> {
-    static const auto type = nlohmann::json::value_t::number_float;
-};
+template <> constexpr inline bool is_type_compatible<std::string>(nlohmann::json::value_t json_type) {
+    return json_type == nlohmann::json::value_t::string;
+}
 
-template <> struct FundamentalTypeTrait<std::string> {
-    static const auto type = nlohmann::json::value_t::string;
-};
+template <> constexpr inline bool is_type_compatible<nlohmann::json::array_t>(nlohmann::json::value_t json_type) {
+    return json_type == nlohmann::json::value_t::array;
+}
 
-template <> struct FundamentalTypeTrait<nlohmann::json::array_t> {
-    static const auto type = nlohmann::json::value_t::array;
-};
-
-template <> struct FundamentalTypeTrait<nlohmann::json::object_t> {
-    static const auto type = nlohmann::json::value_t::object;
-};
+template <> constexpr inline bool is_type_compatible<nlohmann::json::object_t>(nlohmann::json::value_t json_type) {
+    return json_type == nlohmann::json::value_t::object;
+}
 
 template <typename T> bool json_to_variant_impl(T& to, const nlohmann::json& from) noexcept {
     return false;
@@ -56,7 +51,7 @@ template <typename T> bool json_to_variant_impl(T& to, const nlohmann::json& fro
 
 template <typename VariantType, typename CurrentType, typename... Rest>
 bool json_to_variant_impl(VariantType& to, const nlohmann::json& from) noexcept {
-    if (from.type() == FundamentalTypeTrait<CurrentType>::type) {
+    if (is_type_compatible<CurrentType>(from.type())) {
         to = from.get<CurrentType>();
         return true;
     }
