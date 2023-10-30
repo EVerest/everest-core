@@ -152,3 +152,6 @@ Command to set an amps limit for this EVSE that will be considered within the En
 
 ### everest_api/evse_manager/cmd/set_limit_watts
 Command to set a watt limit for this EVSE that will be considered within the EnergyManager. This does not automatically imply that this limit will be set by the EVSE because the energymanagement might consider limitations from other sources, too. The payload can be a positive or negative number.
+
+### everest_api/evse_manager/cmd/force_unlock
+Command to force unlock a connector on the EVSE. They payload should be a positive integer identifying the connector that should be unlocked. If the payload is empty or cannot be converted to an integer connector 1 is assumed.

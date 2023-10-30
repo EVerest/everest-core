@@ -329,6 +329,19 @@ void API::init() {
                 EVLOG_warning << "Invalid limit: Out of range.";
             }
         });
+        std::string cmd_force_unlock = cmd_base + "force_unlock";
+        this->mqtt.subscribe(cmd_force_unlock, [&evse](const std::string& data) {
+            int connector_id = 1;
+            if (!data.empty()) {
+                try {
+                    connector_id = std::stoi(data);
+                } catch (const std::exception& e) {
+                    EVLOG_error << "Could not parse connector id for force unlock, using " << connector_id
+                                << ", error: " << e.what();
+                }
+            }
+            evse->call_force_unlock(connector_id); //
+        });
     }
 
     std::string var_info = api_base + "info/var/info";
