@@ -283,6 +283,18 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
             timeout_state_c1.start(std::chrono::seconds(6));
         }
 
+        // PWM switches on while in state C
+        if (pwm_running && !last_pwm_running) {
+            // when resuming after a pause before the EV goes to state B, stop the timer.
+            timeout_state_c1.stop();
+
+            // If we resume charging and the EV never left state C during pause we allow non-compliant EVs to switch
+            // on again.
+            if (power_on_allowed) {
+                call_allow_power_on_bsp(true);
+            }
+        }
+
         if (timeout_state_c1.reached()) {
             EVLOG_warning << "Timeout of 6 seconds reached, EV did not go back to state B after PWM was switch off. "
                              "Power off under load.";
