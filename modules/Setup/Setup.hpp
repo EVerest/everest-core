@@ -57,6 +57,7 @@ struct WifiList {
     int network_id;
     std::string ssid;
     bool connected;
+    int signal_level;
 
     operator std::string() {
         json wifi_list = *this;

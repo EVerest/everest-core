@@ -80,12 +80,14 @@ with the following payload format:
         "connected": true,
         "interface": "wlan0",
         "network_id": 0,
+        "signal_level": -56,
         "ssid": "Example"
     },
     {
         "connected": false,
         "interface": "wlan0",
         "network_id": 1,
+        "signal_level": -100,
         "ssid": "Example2"
     }
 ]
