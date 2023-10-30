@@ -129,6 +129,7 @@ EvseSecurity::EvseSecurity(const FilePaths& file_paths, const std::optional<std:
         file_paths.directories.secc_leaf_key_directory,
     };
 
+    /*
     for (const auto& path : dirs) {
         if (!std::filesystem::exists(path)) {
             throw std::runtime_error("Could not find configured leaf directory at: " + path.string());
@@ -136,12 +137,14 @@ EvseSecurity::EvseSecurity(const FilePaths& file_paths, const std::optional<std:
             throw std::runtime_error(path.string() + " is not a directory.");
         }
     }
+    */
 
     this->ca_bundle_path_map[CaCertificateType::CSMS] = file_paths.csms_ca_bundle;
     this->ca_bundle_path_map[CaCertificateType::MF] = file_paths.mf_ca_bundle;
     this->ca_bundle_path_map[CaCertificateType::MO] = file_paths.mo_ca_bundle;
     this->ca_bundle_path_map[CaCertificateType::V2G] = file_paths.v2g_ca_bundle;
 
+    /*
     for (const auto& pair : this->ca_bundle_path_map) {
         if (!std::filesystem::exists(pair.second)) {
             throw std::runtime_error("Could not find configured " +
@@ -152,6 +155,7 @@ EvseSecurity::EvseSecurity(const FilePaths& file_paths, const std::optional<std:
                                      " is directory: " + pair.second.string());
         }
     }
+    */
 
     this->directories = file_paths.directories;
 }
