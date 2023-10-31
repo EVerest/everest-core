@@ -8,6 +8,7 @@
 #include <everest/timer.hpp>
 
 #include <ocpp/v201/connector.hpp>
+#include <ocpp/v201/device_model.hpp>
 #include <ocpp/v201/ocpp_types.hpp>
 #include <ocpp/v201/transaction.hpp>
 
@@ -20,26 +21,38 @@ class Evse {
 
 private:
     int32_t evse_id;
+    DeviceModel& device_model;
     std::map<int32_t, std::unique_ptr<Connector>> id_connector_map;
     std::function<void(const int32_t connector_id, const ConnectorStatusEnum& status)> status_notification_callback;
     std::function<void(const MeterValue& meter_value, const Transaction& transaction, const int32_t seq_no,
                        const std::optional<int32_t> reservation_id)>
         transaction_meter_value_req;
+    std::function<void()> pause_charging_callback;
     std::unique_ptr<EnhancedTransaction> transaction; // pointer to active transaction (can be nullptr)
     MeterValue meter_value;                           // represents current meter value
-    std::mutex meter_value_mutex;
+    std::recursive_mutex meter_value_mutex;
     Everest::SteadyTimer sampled_meter_values_timer;
+
+    /// \brief gets the active import energy meter value from meter_value, normalized to Wh.
+    std::optional<float> get_active_import_register_meter_value();
+
+    /// \brief function to check if the max energy has been exceeded, calls pause_charging_callback if so.
+    void check_max_energy_on_invalid_id();
 
 public:
     /// \brief Construct a new Evse object
     /// \param evse_id id of the evse
     /// \param number_of_connectors of the evse
+    /// \param device_model reference to the device model
     /// \param status_notification_callback that is called when the status of a connector changes
-    Evse(const int32_t evse_id, const int32_t number_of_connectors,
+    /// \param pause_charging_callback that is called when the charging should be paused due to max energy on invalid id
+    /// being exceeded
+    Evse(const int32_t evse_id, const int32_t number_of_connectors, DeviceModel& device_model,
          const std::function<void(const int32_t connector_id, const ConnectorStatusEnum& status)>&
              status_notification_callback,
          const std::function<void(const MeterValue& meter_value, const Transaction& transaction, const int32_t seq_no,
-                                  const std::optional<int32_t> reservation_id)>& transaction_meter_value_req);
+                                  const std::optional<int32_t> reservation_id)>& transaction_meter_value_req,
+         const std::function<void()> pause_charging_callback);
 
     /// \brief Returns an OCPP2.0.1 EVSE type
     /// \return
@@ -73,6 +86,10 @@ public:
     /// \param meter_stop
     /// \param reason
     void close_transaction(const DateTime& timestamp, const MeterValue& meter_stop, const ReasonEnum& reason);
+
+    /// \brief Start checking if the max energy on invalid id has exceeded.
+    ///        Will call pause_charging_callback when that happens.
+    void start_checking_max_energy_on_invalid_id();
 
     /// \brief Indicates if a transaction is active at this evse
     /// \return

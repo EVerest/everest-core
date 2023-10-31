@@ -94,9 +94,12 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
             }
         };
 
+        auto pause_charging_callback = [this, evse_id_]() { this->callbacks.pause_charging_callback(evse_id_); };
+
         this->evses.insert(
-            std::make_pair(evse_id, std::make_unique<Evse>(evse_id, number_of_connectors, status_notification_callback,
-                                                           transaction_meter_value_callback)));
+            std::make_pair(evse_id, std::make_unique<Evse>(evse_id, number_of_connectors, *this->device_model,
+                                                           status_notification_callback,
+                                                           transaction_meter_value_callback, pause_charging_callback)));
         for (int32_t connector_id = 1; connector_id <= number_of_connectors; connector_id++) {
             // operational status for this connector
             this->database_handler->insert_availability(evse_id, connector_id, OperationalStatusEnum::Operative, false);
@@ -1798,11 +1801,11 @@ void ChargePoint::handle_start_transaction_event_response(const EnhancedMessage<
             if (this->device_model->get_value<bool>(ControllerComponentVariables::StopTxOnInvalidId)) {
                 this->callbacks.stop_transaction_callback(evse_id, ReasonEnum::DeAuthorized);
             } else {
-                if (this->device_model->get_optional_value<bool>(ControllerComponentVariables::MaxEnergyOnInvalidId)
+                if (this->device_model->get_optional_value<int32_t>(ControllerComponentVariables::MaxEnergyOnInvalidId)
                         .has_value()) {
-                    // TODO(piet): E05.FR.03
                     // Energy delivery to the EV SHALL be allowed until the amount of energy specified in
                     // MaxEnergyOnInvalidId has been reached.
+                    this->evses.at(evse_id)->start_checking_max_energy_on_invalid_id();
                 } else {
                     this->callbacks.pause_charging_callback(evse_id);
                 }
