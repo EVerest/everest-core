@@ -70,7 +70,8 @@ void evse_managerImpl::init() {
     mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/emergency_stop", mod->config.connector_id),
                         [this](const std::string& data) {
                             if (mod->get_hlc_enabled()) {
-                                mod->r_hlc[0]->call_set_EVSE_EmergencyShutdown(true);
+                                mod->r_hlc[0]->call_send_error(
+                                    types::iso15118_charger::EvseError::Error_EmergencyShutdown);
                             }
                             types::evse_manager::StopTransactionRequest request;
                             request.reason = types::evse_manager::StopTransactionReason::EmergencyStop;
@@ -324,7 +325,7 @@ void evse_managerImpl::handle_authorize_response(types::authorization::ProvidedI
     }
 
     if (pnc) {
-        this->mod->r_hlc[0]->call_set_Auth_Okay_PnC(
+        this->mod->r_hlc[0]->call_authorization_response(
             validation_result.authorization_status,
             validation_result.certificate_status.value_or(types::authorization::CertificateStatus::Accepted));
     }
@@ -386,8 +387,8 @@ evse_managerImpl::handle_switch_three_phases_while_charging(bool& three_phases) 
 };
 
 void evse_managerImpl::handle_set_get_certificate_response(
-    types::iso15118_charger::Response_Exi_Stream_Status& certificate_response) {
-    mod->r_hlc[0]->call_set_Get_Certificate_Response(certificate_response);
+    types::iso15118_charger::Response_Exi_Stream_Status& certificate_reponse) {
+    mod->r_hlc[0]->call_certificate_response(certificate_reponse);
 }
 
 } // namespace evse

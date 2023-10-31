@@ -90,114 +90,118 @@ class PyJosevModule():
 
     # implementation handlers
 
-    def _handler_set_EVSEID(self, args):
-        self._cs.EVSEID = args['EVSEID']
-        self._cs.EVSEID_DIN = args['EVSEID_DIN']
+    def _handler_setup(self, args):
+        evseid = args['evse_id']
+        self._cs.EVSEID = evseid['EVSE_ID']
+        self._cs.EVSEID_DIN = evseid['EVSEID_DIN']
 
-    def _handler_set_PaymentOptions(self, args):
-        self._cs.PaymentOptions = args['PaymentOptions']
-
-    def _handler_set_SupportedEnergyTransferMode(self, args):
-        self._cs.SupportedEnergyTransferMode = args['SupportedEnergyTransferMode']
-
-    def _handler_set_AC_EVSENominalVoltage(self, args):
-        self._cs.EVSENominalVoltage = args['EVSENominalVoltage']
-
-    def _handler_set_DC_EVSECurrentRegulationTolerance(self, args):
-        self._cs.EVSECurrentRegulationTolerance = args['EVSECurrentRegulationTolerance']
-
-    def _handler_set_DC_EVSEPeakCurrentRipple(self, args):
-        self._cs.EVSEPeakCurrentRipple = args['EVSEPeakCurrentRipple']
-
-    def _handler_set_ReceiptRequired(self, args):
-        self._cs.ReceiptRequired = args['ReceiptRequired']
-
-    def _handler_set_FreeService(self, args):
-        self._cs.FreeService = args['FreeService']
-
-    def _handler_set_EVSEEnergyToBeDelivered(self, args):
-        self._cs.EVSEEnergyToBeDelivered = args['EVSEEnergyToBeDelivered']
-
-    def _handler_enable_debug_mode(self, args):
+        self._cs.SupportedEnergyTransferMode = args['supported_energy_transfer_modes']
         self._cs.debug_mode = args['debug_mode']
 
-    def _handler_set_Auth_Okay_EIM(self, args):
-        self._cs.auth_okay_eim = args['auth_okay_eim']
+        physical_values = args['physical_values']
+        if 'ac_max_current' in physical_values:
+            self._cs.EVSEMaxCurrent = physical_values['ac_max_current']
+        if 'ac_nominal_voltage' in physical_values:
+            self._cs.EVSENominalVoltage = physical_values['ac_nominal_voltage']
+        if 'dc_current_regulation_tolerance' in physical_values:
+            self._cs.EVSECurrentRegulationTolerance = physical_values[
+                'dc_current_regulation_tolerance']
+        if 'dc_peak_current_ripple' in physical_values:
+            self._cs.EVSEPeakCurrentRipple = physical_values['dc_peak_current_ripple']
+        if 'dc_energy_to_be_delivered' in physical_values:
+            self._cs.EVSEEnergyToBeDelivered = physical_values['dc_energy_to_be_delivered']
+        if 'dc_minimum_limits' in physical_values:
+            limits = physical_values['dc_minimum_limits']
+            self._cs.EVSEMinimumCurrentLimit = limits['EVSEMinimumCurrentLimit']
+            self._cs.EVSEMinimumVoltageLimit = limits['EVSEMinimumVoltageLimit']
+        if 'dc_maximum_limits' in physical_values:
+            limits = physical_values['dc_maximum_limits']
+            self._cs.EVSEMaximumCurrentLimit = limits['EVSEMaximumCurrentLimit']
+            self._cs.EVSEMaximumPowerLimit = limits['EVSEMaximumPowerLimit']
+            self._cs.EVSEMaximumVoltageLimit = limits['EVSEMaximumVoltageLimit']
 
-    def _handler_set_Auth_Okay_PnC(self, args):
-        self._cs.auth_pnc_status = args['status']
-        self._cs.auth_pnc_certificate_status = args['certificateStatus']
+        sae_mode = args['sae_j2847_mode']
 
-    def _handler_set_FAILED_ContactorError(self, args):
-        self._cs.ContactorError = args['ContactorError']
+        if sae_mode == 'V2H' or sae_mode == 'V2G':
+            log.warning(
+                "SAE J2847/2 Bidi Mode is currently not yet supported by the PyJosev module. Use instead EvseV2G.")
 
-    def _handler_set_RCD_Error(self, args):
-        self._cs.RCD_Error = args['RCD']
+    def _handler_session_setup(self, args):
+        self._cs.PaymentOptions = args['payment_options']
+        self._cs.certificate_service_supported = args['supported_certificate_service']
 
-    def _handler_stop_charging(self, args):
-        self._cs.stop_charging = args['stop_charging']
+    def _handler_certificate_response(self, args):
+        self._cs.existream_status = args['exi_stream_status']
 
-    def _handler_set_DC_EVSEPresentVoltageCurrent(self, args):
-        present_values = args['EVSEPresentVoltage_Current']
-        self._cs.EVSEPresentVoltage = present_values['EVSEPresentVoltage']
-        self._cs.EVSEPresentCurrent = present_values['EVSEPresentCurrent']
+    def _handler_authorization_response(self, args):
+        self._cs.auth_status = args['authorization_status']
+        self._cs.certificate_status = args['certificate_status']
 
-    def _handler_set_AC_EVSEMaxCurrent(self, args):
-        self._cs.EVSEMaxCurrent = args['EVSEMaxCurrent']
-
-    def _handler_set_DC_EVSEMaximumLimits(self, args):
-        limits = args['EVSEMaximumLimits']
-        self._cs.EVSEMaximumCurrentLimit = limits['EVSEMaximumCurrentLimit']
-        self._cs.EVSEMaximumPowerLimit = limits['EVSEMaximumPowerLimit']
-        self._cs.EVSEMaximumVoltageLimit = limits['EVSEMaximumVoltageLimit']
-
-    def _handler_set_DC_EVSEMinimumLimits(self, args):
-        limits = args['EVSEMinimumLimits']
-        self._cs.EVSEMinimumCurrentLimit = limits['EVSEMinimumCurrentLimit']
-        self._cs.EVSEMinimumVoltageLimit = limits['EVSEMinimumVoltageLimit']
-
-    def _handler_set_EVSEIsolationStatus(self, args):
-        self._cs.EVSEIsolationStatus = args['EVSEIsolationStatus']
-
-    def _handler_set_EVSE_UtilityInterruptEvent(self, args):
-        self._cs.EVSE_UtilityInterruptEvent = args['EVSE_UtilityInterruptEvent']
-
-    def _handler_set_EVSE_Malfunction(self, args):
-        self._cs.EVSE_Malfunction = args['EVSE_Malfunction']
-
-    def _handler_set_EVSE_EmergencyShutdown(self, args):
-        self._cs.EVSE_EmergencyShutdown = args['EVSE_EmergencyShutdown']
-
-    def _handler_set_MeterInfo(self, args):
-        self._cs.powermeter = args['powermeter']
-
-    def _handler_contactor_closed(self, args):
+    def _handler_ac_contactor_closed(self, args):
         closed = args['status']
         if closed:
             self._cs.contactorClosed = True
             self._cs.contactorOpen = False
-
-    def _handler_contactor_open(self, args):
-        opened = args['status']
-        if opened:
-            self._cs.contactorOpen = True
+        else:
             self._cs.contactorClosed = False
-
-    def _handler_cableCheck_Finished(self, args):
-        self._cs.cableCheck_Finished = args['status']
-
-    def _handler_set_Certificate_Service_Supported(self, args):
-        self._cs.certificate_service_supported = args['status']
-
-    def _handler_set_Get_Certificate_Response(self, args):
-        self._cs.existream_status = args['Existream_Status']
+            self._cs.contactorOpen = True
 
     def _handler_dlink_ready(self, args):
         self._cs.dlink_ready = args['value']
 
-    def _handler_supporting_sae_j2847_bidi(self, args):
-        log.warning(
-            "SAE J2847/2 Bidi Mode is currently not yet supported by the PyJosev module. Use instead EvseV2G.")
+    def _handler_cable_check_finished(self, args):
+        self._cs.cableCheck_Finished = args['status']
+
+    def _handler_receipt_is_required(self, args):
+        self._cs.ReceiptRequired = args['receipt_required']
+
+    def _handler_stop_charging(self, args):
+        self._cs.stop_charging = args['stop']
+
+    def _handler_update_ac_max_current(self, args):
+        self._cs.EVSEMaxCurrent = args['max_current']
+
+    def _handler_update_dc_maximum_limits(self, args):
+        limits = args['maximum_limits']
+        self._cs.EVSEMaximumCurrentLimit = limits['EVSEMaximumCurrentLimit']
+        self._cs.EVSEMaximumPowerLimit = limits['EVSEMaximumPowerLimit']
+        self._cs.EVSEMaximumVoltageLimit = limits['EVSEMaximumVoltageLimit']
+
+    def _handler_update_dc_minimum_limits(self, args):
+        limits = args['minimum_limits']
+        self._cs.EVSEMinimumCurrentLimit = limits['EVSEMinimumCurrentLimit']
+        self._cs.EVSEMinimumVoltageLimit = limits['EVSEMinimumVoltageLimit']
+
+    def _handler_update_isolation_status(self, args):
+        self._cs.EVSEIsolationStatus = args['isolation_status']
+
+    def _handler_update_dc_present_values(self, args):
+        present_values = args['present_voltage_current']
+        self._cs.EVSEPresentVoltage = present_values['EVSEPresentVoltage']
+        self._cs.EVSEPresentCurrent = present_values['EVSEPresentCurrent']
+
+    def _handler_update_meter_info(self, args):
+        self._cs.powermeter = args['powermeter']
+
+    def _handler_send_error(self, args):
+        error = args['error']
+        if error == 'Error_Contactor':
+            self._cs.ContactorError = True
+        elif error == 'Error_RCD':
+            self._cs.RCD_Error = True
+        elif error == 'Error_UtilityInterruptEvent':
+            self._cs.EVSE_UtilityInterruptEvent = True
+        elif error == 'Error_Malfunction':
+            self._cs.EVSE_Malfunction = True
+        elif error == 'Error_EmergencyShutdown':
+            self._cs.EVSE_EmergencyShutdown = True
+
+    def _handler_reset_error(self, args):
+        self._cs.ContactorError = False
+        self._cs.RCD_Error = False
+        self._cs.EVSE_UtilityInterruptEvent = False
+        self._cs.EVSE_Malfunction = False
+        self._cs.EVSE_EmergencyShutdown = False
 
 
 py_josev = PyJosevModule()

@@ -373,7 +373,7 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
                         fmt::format("Change HLC Limits: {}W/{}A, target_voltage {}, actual_voltage {}, hack_bpt {}",
                                     evseMaxLimits.EVSEMaximumPowerLimit, evseMaxLimits.EVSEMaximumCurrentLimit,
                                     target_voltage, actual_voltage, mod->is_actually_exporting_to_grid));
-                    mod->r_hlc[0]->call_set_DC_EVSEMaximumLimits(evseMaxLimits);
+                    mod->r_hlc[0]->call_update_dc_maximum_limits(evseMaxLimits);
                     mod->charger->inform_new_evse_max_hlc_limits(evseMaxLimits);
 
                     // This is just neccessary to switch between charging and discharging
