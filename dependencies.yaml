@@ -38,7 +38,7 @@ libcurl:
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: e865d20
+  git_tag: 08eb2fd
 # Josev
 Josev:
   git: https://github.com/EVerest/ext-switchev-iso15118.git
@@ -59,7 +59,8 @@ ext-mbedtls:
 everest-utils:
   git: https://github.com/EVerest/everest-utils.git
   git_tag: v0.1.5
-# evse-security
+# evse-security, since this is a direct dependency of libocpp it will get overwritten by the version set there
+# setting it here can be misleading since it does not affect the version being used
 libevse-security:
   git: https://github.com/EVerest/libevse-security.git
-  git_tag: v0.1.0
+  git_tag: 338dd2e
