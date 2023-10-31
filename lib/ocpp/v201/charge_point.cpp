@@ -1820,25 +1820,21 @@ void ChargePoint::handle_start_transaction_event_response(const EnhancedMessage<
 void ChargePoint::handle_get_transaction_status(const Call<GetTransactionStatusRequest> call) {
     const auto msg = call.msg;
 
-    std::optional<bool> ongoing_indicator;
-    bool messages_in_queue = false;
+    GetTransactionStatusResponse response;
+    response.messagesInQueue = false;
 
     if (msg.transactionId.has_value()) {
         if (this->get_transaction_evseid(msg.transactionId.value()).has_value()) {
-            ongoing_indicator = true;
+            response.ongoingIndicator = true;
         } else {
-            ongoing_indicator = false;
+            response.ongoingIndicator = false;
         }
         if (this->message_queue->contains_transaction_messages(msg.transactionId.value())) {
-            messages_in_queue = true;
+            response.messagesInQueue = true;
         }
     } else if (!this->message_queue->is_transaction_message_queue_empty()) {
-        messages_in_queue = true;
+        response.messagesInQueue = true;
     }
-
-    GetTransactionStatusResponse response;
-    response.ongoingIndicator = ongoing_indicator;
-    response.messagesInQueue = messages_in_queue;
 
     ocpp::CallResult<GetTransactionStatusResponse> call_result(response, call.uniqueId);
     this->send<GetTransactionStatusResponse>(call_result);
