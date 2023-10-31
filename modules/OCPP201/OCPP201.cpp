@@ -841,17 +841,17 @@ void OCPP201::ready() {
             this->charge_point->on_meter_value(evse_id, meter_value);
         });
         evse_id++;
-
-        r_system->subscribe_firmware_update_status([this](const types::system::FirmwareUpdateStatus status) {
-            this->charge_point->on_firmware_update_status_notification(
-                status.request_id, get_firmware_status_notification(status.firmware_update_status));
-        });
-
-        r_system->subscribe_log_status([this](types::system::LogStatus status) {
-            this->charge_point->on_log_status_notification(get_upload_log_status_enum(status.log_status),
-                                                           status.request_id);
-        });
     }
+
+    r_system->subscribe_firmware_update_status([this](const types::system::FirmwareUpdateStatus status) {
+        this->charge_point->on_firmware_update_status_notification(
+            status.request_id, get_firmware_status_notification(status.firmware_update_status));
+    });
+
+    r_system->subscribe_log_status([this](types::system::LogStatus status) {
+        this->charge_point->on_log_status_notification(get_upload_log_status_enum(status.log_status),
+                                                       status.request_id);
+    });
 
     std::unique_lock lk(this->evse_ready_mutex);
     while (!this->all_evse_ready()) {
