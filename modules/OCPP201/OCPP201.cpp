@@ -407,6 +407,51 @@ ocpp::v201::BootReasonEnum get_boot_reason(types::system::BootReason reason) {
     }
 }
 
+ocpp::v201::ReasonEnum get_reason(types::evse_manager::StopTransactionReason reason) {
+    switch (reason) {
+    case types::evse_manager::StopTransactionReason::DeAuthorized:
+        return ocpp::v201::ReasonEnum::DeAuthorized;
+    case types::evse_manager::StopTransactionReason::EmergencyStop:
+        return ocpp::v201::ReasonEnum::EmergencyStop;
+    case types::evse_manager::StopTransactionReason::EnergyLimitReached:
+        return ocpp::v201::ReasonEnum::EnergyLimitReached;
+    case types::evse_manager::StopTransactionReason::EVDisconnected:
+        return ocpp::v201::ReasonEnum::EVDisconnected;
+    case types::evse_manager::StopTransactionReason::GroundFault:
+        return ocpp::v201::ReasonEnum::GroundFault;
+    case types::evse_manager::StopTransactionReason::HardReset:
+        return ocpp::v201::ReasonEnum::ImmediateReset;
+    case types::evse_manager::StopTransactionReason::Local:
+        return ocpp::v201::ReasonEnum::Local;
+    case types::evse_manager::StopTransactionReason::LocalOutOfCredit:
+        return ocpp::v201::ReasonEnum::LocalOutOfCredit;
+    case types::evse_manager::StopTransactionReason::MasterPass:
+        return ocpp::v201::ReasonEnum::MasterPass;
+    case types::evse_manager::StopTransactionReason::Other:
+        return ocpp::v201::ReasonEnum::Other;
+    case types::evse_manager::StopTransactionReason::OvercurrentFault:
+        return ocpp::v201::ReasonEnum::OvercurrentFault;
+    case types::evse_manager::StopTransactionReason::PowerLoss:
+        return ocpp::v201::ReasonEnum::PowerLoss;
+    case types::evse_manager::StopTransactionReason::PowerQuality:
+        return ocpp::v201::ReasonEnum::PowerQuality;
+    case types::evse_manager::StopTransactionReason::Reboot:
+        return ocpp::v201::ReasonEnum::Reboot;
+    case types::evse_manager::StopTransactionReason::Remote:
+        return ocpp::v201::ReasonEnum::Remote;
+    case types::evse_manager::StopTransactionReason::SOCLimitReached:
+        return ocpp::v201::ReasonEnum::SOCLimitReached;
+    case types::evse_manager::StopTransactionReason::StoppedByEV:
+        return ocpp::v201::ReasonEnum::StoppedByEV;
+    case types::evse_manager::StopTransactionReason::TimeLimitReached:
+        return ocpp::v201::ReasonEnum::TimeLimitReached;
+    case types::evse_manager::StopTransactionReason::Timeout:
+        return ocpp::v201::ReasonEnum::Timeout;
+    default:
+        return ocpp::v201::ReasonEnum::Other;
+    }
+}
+
 void OCPP201::init_evse_ready_map() {
     std::lock_guard<std::mutex> lk(this->evse_ready_mutex);
     for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
@@ -473,12 +518,12 @@ bool OCPP201::all_evse_ready() {
 }
 
 void OCPP201::set_connector_operational_status(const ocpp::v201::OperationalStatusEnum operational_status,
-                                               const int32_t evse_id, const int32_t connector_id) {
+                                               const int32_t evse_id, const int32_t connector_id, const bool persist) {
     if (operational_status == ocpp::v201::OperationalStatusEnum::Operative) {
         this->evses.at(evse_id).connectors.at(connector_id) = ocpp::v201::OperationalStatusEnum::Operative;
         auto connector_id_str = std::to_string(evse_id) + "." + std::to_string(connector_id);
         this->r_kvs->call_delete(KVS_OCPP201_INOPERATIVE_KEY_PREFIX + connector_id_str);
-    } else {
+    } else if (persist) {
         this->evses.at(evse_id).connectors.at(connector_id) = ocpp::v201::OperationalStatusEnum::Inoperative;
         auto connector_id_str = std::to_string(evse_id) + "." + std::to_string(connector_id);
         this->r_kvs->call_store(KVS_OCPP201_INOPERATIVE_KEY_PREFIX + connector_id_str, true);
@@ -486,11 +531,11 @@ void OCPP201::set_connector_operational_status(const ocpp::v201::OperationalStat
 }
 
 void OCPP201::set_evse_operational_status(const ocpp::v201::OperationalStatusEnum operational_status,
-                                          const int32_t evse_id) {
+                                          const int32_t evse_id, const bool persist) {
     if (operational_status == ocpp::v201::OperationalStatusEnum::Operative) {
         this->evses.at(evse_id).operational_state = ocpp::v201::OperationalStatusEnum::Operative;
         this->r_kvs->call_delete(KVS_OCPP201_INOPERATIVE_KEY_PREFIX + std::to_string(evse_id));
-    } else {
+    } else if (persist) {
         this->evses.at(evse_id).operational_state = ocpp::v201::OperationalStatusEnum::Inoperative;
         this->r_kvs->call_store(KVS_OCPP201_INOPERATIVE_KEY_PREFIX + std::to_string(evse_id), true);
     }
@@ -580,7 +625,6 @@ void OCPP201::ready() {
 
     callbacks.change_availability_callback = [this](const ocpp::v201::ChangeAvailabilityRequest& request,
                                                     const bool persist) {
-        // FIXME: use persist flag!
         if (request.evse.has_value()) {
             auto evse_id = request.evse.value().id;
             auto connector_id = request.evse.value().connectorId;
@@ -589,10 +633,10 @@ void OCPP201::ready() {
                 if (connector_id.has_value()) {
                     // connector is addressed
                     this->set_connector_operational_status(ocpp::v201::OperationalStatusEnum::Operative, evse_id,
-                                                           connector_id.value());
+                                                           connector_id.value(), persist);
                 } else {
                     // EVSE is addressed
-                    this->set_evse_operational_status(ocpp::v201::OperationalStatusEnum::Operative, evse_id);
+                    this->set_evse_operational_status(ocpp::v201::OperationalStatusEnum::Operative, evse_id, persist);
                 }
                 this->r_evse_manager.at(evse_id - 1)->call_enable(request.evse.value().connectorId.value_or(0));
             } else {
@@ -600,10 +644,10 @@ void OCPP201::ready() {
                 if (connector_id.has_value()) {
                     // connector is addressed
                     this->set_connector_operational_status(ocpp::v201::OperationalStatusEnum::Inoperative, evse_id,
-                                                           connector_id.value());
+                                                           connector_id.value(), persist);
                 } else {
                     // EVSE is addressed
-                    this->set_evse_operational_status(ocpp::v201::OperationalStatusEnum::Inoperative, evse_id);
+                    this->set_evse_operational_status(ocpp::v201::OperationalStatusEnum::Inoperative, evse_id, persist);
                 }
                 this->r_evse_manager.at(evse_id - 1)->call_disable(request.evse.value().connectorId.value_or(0));
             }
@@ -777,13 +821,12 @@ void OCPP201::ready() {
                 const auto timestamp = ocpp::DateTime(transaction_finished.timestamp);
                 const auto meter_value =
                     get_meter_value(transaction_finished.meter_value, ocpp::v201::ReadingContextEnum::Transaction_End);
-                ocpp::v201::ReasonEnum reason;
-                try {
-                    reason = ocpp::v201::conversions::string_to_reason_enum(
-                        types::evse_manager::stop_transaction_reason_to_string(transaction_finished.reason.value()));
-                } catch (std::out_of_range& e) {
-                    reason = ocpp::v201::ReasonEnum::Other;
+                ocpp::v201::ReasonEnum reason = ocpp::v201::ReasonEnum::Other;
+
+                if (transaction_finished.reason.has_value()) {
+                    reason = get_reason(transaction_finished.reason.value());
                 }
+
                 const auto signed_meter_value = transaction_finished.signed_meter_value;
                 const auto id_token = transaction_finished.id_tag;
 
