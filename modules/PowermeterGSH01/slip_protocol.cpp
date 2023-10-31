@@ -51,13 +51,18 @@ inline void restore_special_characters(std::vector<uint8_t>& vec) {
     }
 }
 
-std::vector<uint8_t> SlipProtocol::package_single(const uint8_t address, const std::vector<uint8_t>& payload) {
+std::vector<uint8_t> SlipProtocol::package_single(const uint8_t address, std::vector<uint8_t>& payload) {
     std::vector<uint8_t> vec{};
 
-    // address
-    vec.push_back(address);
+    // address to the front
+    payload.insert(payload.begin(),address);
 
-    // payload
+    // CRC16 to the end
+    uint16_t crc = calculate_xModem_crc16(payload);
+    payload.push_back(uint8_t(crc & 0x00FF));         // LSB CRC16
+    payload.push_back(uint8_t((crc >> 8) & 0x00FF));  // MSB CRC16
+
+    //replacement of special characters (including address and CRC)
     for (auto payload_byte : payload) {
         if (payload_byte == 0xC0) {         // check for and replace special char 0xC0
             vec.push_back(0xDB);
@@ -70,12 +75,7 @@ std::vector<uint8_t> SlipProtocol::package_single(const uint8_t address, const s
         }
     }
 
-    // CRC16
-    uint16_t crc = calculate_xModem_crc16(vec);
-    vec.push_back(uint8_t(crc & 0x00FF));         // LSB CRC16
-    vec.push_back(uint8_t((crc >> 8) & 0x00FF));  // MSB CRC16
-    
-    // add start frame to front (can be done only after CRC has been calculated, as start frame is not part of CRC)
+    // add start frame to front (can be done only after special characters have been replaced)
     vec.insert(vec.begin(), SLIP_START_END_FRAME);
 
     // end frame
@@ -156,11 +156,12 @@ SlipReturnStatus SlipProtocol::unpack(std::vector<uint8_t>& message, uint8_t lis
 
         // from here on, we have all message parts as elements in sub_messages
         for (auto sub_message : sub_messages) {
+            remove_start_and_stop_frame(sub_message);
+            restore_special_characters(sub_message);
             // check all sub-messages' CRC and only process on match
             if (is_message_crc_correct(sub_message)) {
                 // on correct CRC
-                restore_special_characters(message);
-                this->message_queue.push_back(message);
+                this->message_queue.push_back(sub_message);
                 this->message_counter++;
                 if (retval == SlipReturnStatus::SLIP_ERROR_UNINITIALIZED) {  // only set SLIP_OK if no other error
                     retval = SlipReturnStatus::SLIP_OK;
@@ -182,9 +183,9 @@ SlipReturnStatus SlipProtocol::unpack(std::vector<uint8_t>& message, uint8_t lis
                 }
 
                 remove_start_and_stop_frame(message);
+                //check for special characters and restore to original contents
+                restore_special_characters(message);
                 if (is_message_crc_correct(message)) {
-                    // message intact, check for special characters and restore to original contents
-                    restore_special_characters(message);
                     this->message_queue.push_back(message);
                     this->message_counter++;
                     retval = SlipReturnStatus::SLIP_OK;

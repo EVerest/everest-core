@@ -39,7 +39,7 @@ public:
     SlipProtocol() = default;
     ~SlipProtocol() = default;
 
-    std::vector<uint8_t> package_single(const uint8_t address, const std::vector<uint8_t>& payload);
+    std::vector<uint8_t> package_single(const uint8_t address, std::vector<uint8_t>& payload);
     std::vector<uint8_t> package_multi(const uint8_t address, const std::vector<std::vector<uint8_t>>& multi_payload);
 
     SlipReturnStatus unpack(std::vector<uint8_t>& message, uint8_t listen_to_address);
