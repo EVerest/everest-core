@@ -122,17 +122,17 @@ void powermeterImpl::ready() {
     }*/
 
     // create logging publisher thread
-    /*if (this->config.publish_device_diagnostics) {
+    if (this->config.publish_device_diagnostics) {
         std::thread ([this] {
             while (true) {
                 publish_logging_topic();
                 std::this_thread::sleep_for(std::chrono::seconds(20));
             }
         }).detach();
-    }*/
+    }
 
     // create error diagnostics thread
-    /*if (this->config.publish_device_diagnostics) {
+    if (this->config.publish_device_diagnostics) {
         std::thread ([this] {
             while (true) {
                 if (this->error_diagnostics_target != 0) {
@@ -142,7 +142,39 @@ void powermeterImpl::ready() {
                 }
             }
         }).detach();
-    }*/
+    }
+}
+void powermeterImpl::time_sync(){
+    get_device_time();
+
+    EVLOG_info << "device time utc_time_s: " << module::conversions::u32_epoch_to_rfc3339(device_data_obj.utc_time_s);
+    EVLOG_info << "device time offset: " << module::conversions::hexdump(device_data_obj.gmt_offset_quarterhours);
+
+    std::chrono::time_point<std::chrono::system_clock> timepoint = std::chrono::system_clock::now();
+    int8_t gmt_offset_quarters_of_an_hour = app_layer.get_utc_offset_in_quarter_hours(timepoint);
+
+    EVLOG_info << "system time utc_time_s: " << date::utc_clock::from_sys(timepoint);
+    EVLOG_info << "system time offset: " << module::conversions::hexdump((uint8_t)gmt_offset_quarters_of_an_hour);
+    
+    uint64_t diff = abs((uint32_t)std::chrono::duration_cast<std::chrono::seconds>(timepoint.time_since_epoch()).count() - device_data_obj.utc_time_s); 
+    if(diff > 60){
+        EVLOG_info << "time diff is: " << diff << " s";
+        EVLOG_info << "clock is out of sync --> time is set";
+        set_device_time();
+    }
+    else{
+        EVLOG_info << "time diff is within tolerance: " << diff << " s";
+    }
+}
+
+
+void powermeterImpl::get_device_time() {
+    std::vector<uint8_t> data_vect{};
+    app_layer.create_command_get_time(data_vect);
+    std::vector<uint8_t> slip_msg_get_device_time = std::move(this->slip.package_single(this->config.powermeter_device_id, data_vect));
+    EVLOG_info << "Get device time\nSEND: " << module::conversions::hexdump(slip_msg_get_device_time) << " length: " << slip_msg_get_device_time.size() << "\n\n";
+    this->serial_device.tx(slip_msg_get_device_time);
+    receive_response();
 }
 
 void powermeterImpl::set_device_time() {
@@ -551,10 +583,10 @@ gsh01_app_layer::CommandResult powermeterImpl::process_response(const std::vecto
 
                 // skip error diagnostics for transaction or error diagnostics related commands,
                 // request detailed error report for others
-                if ((part_cmd != (uint16_t)gsh01_app_layer::CommandType::START_TRANSACTION)  &&
+                /*if ((part_cmd != (uint16_t)gsh01_app_layer::CommandType::START_TRANSACTION)  &&
                     (part_cmd != (uint16_t)gsh01_app_layer::CommandType::STOP_TRANSACTION)   &&
                     (part_cmd != (uint16_t)gsh01_app_layer::CommandType::GET_LAST_LOG_ENTRY) &&
-                    (part_cmd != (uint16_t)gsh01_app_layer::CommandType::GET_LAST_OCMF)) {
+                    (part_cmd != (uint16_t)gsh01_app_layer::CommandType::GET_LAST_OCMF))*/ {
                     EVLOG_info << "Retrieving diagnostics data for error at command " << module::conversions::hexdump(part_cmd) << "...";
                     request_error_diagnostics(dest_addr);
                     i += part_len;  // skip remaining data and go to next command in message
@@ -724,21 +756,28 @@ gsh01_app_layer::CommandResult powermeterImpl::process_response(const std::vecto
 
                 case (int)gsh01_app_layer::CommandType::GET_LAST_LOG_ENTRY:
                     {
-                        if (part_data_len < 104) break;
+                        if (part_data_len < 86) break;
                         logging_obj.last_log.type         = static_cast<gsh01_app_layer::LogType>(part_data[0]);
                         logging_obj.last_log.second_index = get_u32(part_data, 1);
                         logging_obj.last_log.utc_time     = get_u32(part_data, 5);
                         logging_obj.last_log.utc_offset   = part_data[9];
-                        for (uint8_t n = 10; n < 20; n++){
+                        EVLOG_info << "Frame legth = " << part_data_len;
+                        uint16_t value_len = (part_data_len-84)/2;
+                        EVLOG_info << "Value legth = " << value_len;
+                        logging_obj.last_log.old_value.clear();
+                        for (uint8_t n = 10; n < 10+value_len; n++){
                             logging_obj.last_log.old_value.push_back(part_data[n]);
                         }
-                        for (uint8_t n = 20; n < 30; n++){
+                        logging_obj.last_log.new_value.clear();
+                        for (uint8_t n = 10+value_len; n < 10+value_len*2; n++){
                             logging_obj.last_log.new_value.push_back(part_data[n]);
                         }
-                        for (uint8_t n = 30; n < 40; n++){
+                        logging_obj.last_log.server_id.clear();
+                        for (uint8_t n = part_data_len-74; n < part_data_len-64; n++){
                             logging_obj.last_log.server_id.push_back(part_data[n]);
                         }
-                        for (uint8_t n = 40; n < 104; n++){
+                        logging_obj.last_log.signature.clear();
+                        for (uint8_t n = part_data_len-64; n < part_data_len; n++){
                             logging_obj.last_log.signature.push_back(part_data[n]);
                         }
                     }
