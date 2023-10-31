@@ -38,7 +38,7 @@ libcurl:
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: df8a282
+  git_tag: 08eb2fd
 # Josev
 Josev:
   git: https://github.com/EVerest/ext-switchev-iso15118.git
