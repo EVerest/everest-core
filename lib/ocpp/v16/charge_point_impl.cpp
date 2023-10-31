@@ -2397,11 +2397,13 @@ template <class T> std::future<EnhancedMessage<v16::MessageType>> ChargePointImp
 }
 
 template <class T> bool ChargePointImpl::send(ocpp::CallResult<T> call_result) {
-    return this->websocket->send(json(call_result).dump());
+    this->message_queue->push(call_result);
+    return true;
 }
 
 bool ChargePointImpl::send(CallError call_error) {
-    return this->websocket->send(json(call_error).dump());
+    this->message_queue->push(call_error);
+    return true;
 }
 
 void ChargePointImpl::status_notification(int32_t connector, ChargePointErrorCode errorCode, CiString<50> info,

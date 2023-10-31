@@ -491,11 +491,13 @@ template <class T> std::future<EnhancedMessage<v201::MessageType>> ChargePoint::
 }
 
 template <class T> bool ChargePoint::send(ocpp::CallResult<T> call_result) {
-    return this->websocket->send(json(call_result).dump());
+    this->message_queue->push(call_result);
+    return true;
 }
 
 bool ChargePoint::send(CallError call_error) {
-    return this->websocket->send(json(call_error).dump());
+    this->message_queue->push(call_error);
+    return true;
 }
 
 void ChargePoint::init_websocket() {
