@@ -32,12 +32,12 @@ types:
       currents:
         description: Current in Ampere
         type: object
-        $ref: './units.yaml#/types/Current'
+        $ref: /units#/Current
       voltages:
         description: Voltage in Volt
         type: object
-        $ref: './units.yaml#/types/Voltage'
+        $ref: /units#/Voltage
       frequencies:
         description: Frequency in Hertz
         type: object
-        $ref: './units.yaml#/types/Frequency'
+        $ref: /units#/Frequency
