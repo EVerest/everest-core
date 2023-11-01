@@ -85,35 +85,6 @@ def create_dummy_result(json_type) -> str:
         return primitive_to_sample_value(json_type)
 
 
-def gather_git_info(repo):
-    git_path = shutil.which('git')
-    if git_path is None:
-        raise RuntimeError('Could not find git executable - I need it to tag auto generated files')
-
-    run_parms = {'cwd': repo, 'capture_output': True, 'encoding': 'utf-8'}
-
-    if subprocess.run([git_path, 'rev-parse', '--is-inside-work-tree'], **run_parms).returncode != 0:
-        raise RuntimeError(f'The directory "{repo}" doesn\'t seem to be a git repository!')
-
-    dirty_flag = False if (subprocess.run([git_path, 'diff', '--quiet'], **run_parms).returncode == 0) else True
-
-    branch = subprocess.run([git_path, 'rev-parse', '--abbrev-ref', 'HEAD'], **run_parms).stdout.rstrip()
-
-    remote_branch_cmd = subprocess.run([git_path, 'rev-parse', '--abbrev-ref',
-                                       '--symbolic-full-name', '@{upstream}'], **run_parms)
-
-    remote_branch = remote_branch_cmd.stdout.rstrip() if (remote_branch_cmd.returncode == 0) else None
-
-    commit = subprocess.run([git_path, 'rev-parse', 'HEAD'], **run_parms).stdout.rstrip()
-
-    return {
-        'dirty_flag': dirty_flag,
-        'branch': branch,
-        'remote_branch': remote_branch,
-        'commit': commit
-    }
-
-
 cpp_type_map = {
     "null": "std::nullptr_t",  # FIXME (aw): who gets the null, json? or the variant
     "integer": "int",
@@ -525,6 +496,7 @@ def yaml2json(yaml_file: Path, json_file: Path):
     with open(json_file, 'w') as json_content:
         json.dump(content_as_dict, json_content, indent=2)
 
+
 def json2yaml(json_file: Path, yaml_file: Path):
     if not json_file.exists():
         print(f'The input file ({json_file}) does not exist')
@@ -535,6 +507,7 @@ def json2yaml(json_file: Path, yaml_file: Path):
 
     with open(yaml_file, 'w') as yaml_content:
         yaml.safe_dump(content_as_dict, yaml_content, indent=2, sort_keys=False, width=120)
+
 
 def __check_for_match(blocks_def, line, line_no, file_path):
     match = re.search(blocks_def['regex_str'], line)
