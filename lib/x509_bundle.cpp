@@ -101,10 +101,7 @@ X509CertificateBundle::X509CertificateBundle(const std::filesystem::path& path, 
         if (EvseUtils::read_from_file(path, certificate))
             add_certifcates(certificate, encoding, path);
     } else {
-        std::string error = "Failed to create certificate info from path: ";
-        error += path;
-
-        throw CertificateLoadException(error);
+        throw CertificateLoadException("Failed to create certificate info from path: " + path.string());
     }
 }
 

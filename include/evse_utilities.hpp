@@ -36,6 +36,19 @@ public:
         return false;
     }
 
+    /// @brief Should be used to ensure file exists, not for directories
+    static bool create_file_if_nonexistent(const std::filesystem::path& file_path) {
+        if (!std::filesystem::exists(file_path)) {
+            std::ofstream file(file_path);
+            return true;
+        } else if (std::filesystem::is_directory(file_path)) {
+            EVLOG_error << "Attempting to create file over existing directory: " << file_path;
+            return false;
+        }
+
+        return true;
+    }
+
     static bool write_to_file(const std::filesystem::path& file_path, const std::string& data,
                               std::ios::openmode mode) {
         try {

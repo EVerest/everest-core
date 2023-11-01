@@ -131,7 +131,11 @@ EvseSecurity::EvseSecurity(const FilePaths& file_paths, const std::optional<std:
 
     for (const auto& path : dirs) {
         if (!std::filesystem::exists(path)) {
-            throw std::runtime_error("Could not find configured leaf directory at: " + path.string());
+            EVLOG_warning << "Could not find configured leaf directory at: " << path.string()
+                          << " creating default dir!";
+            if (!std::filesystem::create_directories(path)) {
+                EVLOG_error << "Could not create default dir for path: " << path.string();
+            }
         } else if (!std::filesystem::is_directory(path)) {
             throw std::runtime_error(path.string() + " is not a directory.");
         }
@@ -144,12 +148,11 @@ EvseSecurity::EvseSecurity(const FilePaths& file_paths, const std::optional<std:
 
     for (const auto& pair : this->ca_bundle_path_map) {
         if (!std::filesystem::exists(pair.second)) {
-            throw std::runtime_error("Could not find configured " +
-                                     conversions::ca_certificate_type_to_string(pair.first) +
-                                     " bundle file at: " + pair.second.string());
-        } else if (std::filesystem::is_directory(pair.second)) {
-            throw std::runtime_error("Provided bundle " + conversions::ca_certificate_type_to_string(pair.first) +
-                                     " is directory: " + pair.second.string());
+            EVLOG_warning << "Could not find configured " << conversions::ca_certificate_type_to_string(pair.first)
+                          << " bundle file at: " + pair.second.string() << ", creating default!";
+            if (!EvseUtils::create_file_if_nonexistent(pair.second)) {
+                EVLOG_error << "Could not create default bundle for path: " << pair.second;
+            }
         }
     }
 
@@ -169,11 +172,9 @@ InstallCertificateResult EvseSecurity::install_ca_certificate(const std::string&
         // Load existing
         const auto ca_bundle_path = this->ca_bundle_path_map.at(certificate_type);
 
-        // TODO: (ioan) check for directories too
+        // TODO: (ioan) check if we are in bundle directory mode too
         // Ensure file exists
-        if (!std::filesystem::exists(ca_bundle_path)) {
-            std::ofstream file(ca_bundle_path);
-        }
+        EvseUtils::create_file_if_nonexistent(ca_bundle_path);
 
         X509CertificateBundle existing_certs(ca_bundle_path, EncodingFormat::PEM);
 
@@ -421,24 +422,30 @@ OCSPRequestDataList EvseSecurity::get_ocsp_request_data() {
 void EvseSecurity::update_ocsp_cache(const CertificateHashData& certificate_hash_data,
                                      const std::string& ocsp_response) {
     const auto ca_bundle_path = this->ca_bundle_path_map.at(CaCertificateType::V2G);
-    X509CertificateBundle ca_bundle(ca_bundle_path, EncodingFormat::PEM);
-    const auto certificates_of_bundle = ca_bundle.split();
 
-    for (const auto& cert : certificates_of_bundle) {
-        if (cert == certificate_hash_data) {
-            EVLOG_info << "Writing OCSP Response to filesystem";
-            if (!cert.get_file().has_value()) {
-                continue;
+    try {
+        X509CertificateBundle ca_bundle(ca_bundle_path, EncodingFormat::PEM);
+        const auto certificates_of_bundle = ca_bundle.split();
+
+        for (const auto& cert : certificates_of_bundle) {
+            if (cert == certificate_hash_data) {
+                EVLOG_info << "Writing OCSP Response to filesystem";
+                if (!cert.get_file().has_value()) {
+                    continue;
+                }
+                const auto ocsp_path = cert.get_file().value().parent_path() / "ocsp";
+                if (!std::filesystem::exists(ocsp_path)) {
+                    std::filesystem::create_directories(ocsp_path);
+                }
+                const auto ocsp_file_path =
+                    ocsp_path / cert.get_file().value().filename().replace_extension(".ocsp.der");
+                std::ofstream fs(ocsp_file_path.c_str());
+                fs << ocsp_response;
+                fs.close();
             }
-            const auto ocsp_path = cert.get_file().value().parent_path() / "ocsp";
-            if (!std::filesystem::exists(ocsp_path)) {
-                std::filesystem::create_directories(ocsp_path);
-            }
-            const auto ocsp_file_path = ocsp_path / cert.get_file().value().filename().replace_extension(".ocsp.der");
-            std::ofstream fs(ocsp_file_path.c_str());
-            fs << ocsp_response;
-            fs.close();
         }
+    } catch (const CertificateLoadException& e) {
+        EVLOG_error << "Could update ocsp cache, certificate load failure!";
     }
 }
 
@@ -542,16 +549,16 @@ GetKeyPairResult EvseSecurity::get_key_pair(LeafCertificateType certificate_type
         return result;
     }
 
-    auto leaf_certificates = std::move(get_leaf_certificates(cert_dir));
-
-    if (leaf_certificates.empty()) {
-        EVLOG_warning << "Could not find any key pair";
-        result.status = GetKeyPairStatus::NotFound;
-        return result;
-    }
-
     // choose appropriate cert (valid_from / valid_to)
     try {
+        auto leaf_certificates = std::move(get_leaf_certificates(cert_dir));
+
+        if (leaf_certificates.empty()) {
+            EVLOG_warning << "Could not find any key pair";
+            result.status = GetKeyPairStatus::NotFound;
+            return result;
+        }
+
         std::filesystem::path key_file;
         std::filesystem::path certificate_file;
 
@@ -598,6 +605,10 @@ GetKeyPairResult EvseSecurity::get_key_pair(LeafCertificateType certificate_type
     } catch (const NoCertificateValidException& e) {
         EVLOG_warning << "Could not find valid cerificate";
         result.status = GetKeyPairStatus::NotFoundValid;
+        return result;
+    } catch (const CertificateLoadException& e) {
+        EVLOG_warning << "Leaf certificate load exception";
+        result.status = GetKeyPairStatus::NotFound;
         return result;
     }
 }
