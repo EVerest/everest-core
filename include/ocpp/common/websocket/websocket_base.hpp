@@ -45,6 +45,7 @@ protected:
     bool m_is_connected;
     WebsocketConnectionOptions connection_options;
     std::function<void(const int security_profile)> connected_callback;
+    std::function<void()> disconnected_callback;
     std::function<void(const websocketpp::close::status::value reason)> closed_callback;
     std::function<void(const std::string& message)> message_callback;
     websocketpp::lib::shared_ptr<boost::asio::steady_timer> reconnect_timer;
@@ -108,6 +109,9 @@ public:
 
     /// \brief register a \p callback that is called when the websocket is connected successfully
     void register_connected_callback(const std::function<void(const int security_profile)>& callback);
+
+    /// \brief register a \p callback that is called when the websocket connection is disconnected
+    void register_disconnected_callback(const std::function<void()>& callback);
 
     /// \brief register a \p callback that is called when the websocket connection has been closed and will not attempt
     /// to reconnect

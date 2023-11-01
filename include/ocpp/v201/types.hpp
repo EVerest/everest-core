@@ -157,26 +157,6 @@ MessageType string_to_messagetype(const std::string& s);
 /// \returns an output stream with the MessageType written to
 std::ostream& operator<<(std::ostream& os, const MessageType& message_type);
 
-enum class WebsocketConnectionStatusEnum {
-    Connected,
-    Disconnected
-};
-
-namespace conversions {
-/// \brief Converts the given WebsocketConnectionStatusEnum \p m to std::string
-/// \returns a string representation of the WebsocketConnectionStatusEnum
-std::string websocket_connection_status_to_string(WebsocketConnectionStatusEnum m);
-
-/// \brief Converts the given std::string \p s to WebsocketConnectionStatusEnum
-/// \returns a WebsocketConnectionStatusEnum from a string representation
-WebsocketConnectionStatusEnum string_to_websocket_connection_status(const std::string& s);
-
-} // namespace conversions
-
-/// \brief Writes the string representation of the given \p websocket_connection_status to the given output stream \p os
-/// \returns an output stream with the WebsocketConnectionStatusEnum written to
-std::ostream& operator<<(std::ostream& os, const WebsocketConnectionStatusEnum& websocket_connection_status);
-
 } // namespace v201
 } // namespace ocpp
 

@@ -58,13 +58,20 @@ void Websocket::register_connected_callback(const std::function<void(const int s
     });
 }
 
+void Websocket::register_disconnected_callback(const std::function<void()>& callback) {
+    this->disconnected_callback = callback;
+
+    this->websocket->register_disconnected_callback([this]() {
+        this->logging->sys("Disconnected");
+        this->disconnected_callback();
+    });
+}
+
 void Websocket::register_closed_callback(
     const std::function<void(const websocketpp::close::status::value reason)>& callback) {
     this->closed_callback = callback;
-    this->websocket->register_closed_callback([this](const websocketpp::close::status::value reason) {
-        this->logging->sys("Disconnected");
-        this->closed_callback(reason);
-    });
+    this->websocket->register_closed_callback(
+        [this](const websocketpp::close::status::value reason) { this->closed_callback(reason); });
 }
 
 void Websocket::register_message_callback(const std::function<void(const std::string& message)>& callback) {

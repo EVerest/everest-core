@@ -282,6 +282,7 @@ void WebsocketTLS::on_message_tls(websocketpp::connection_hdl hdl, tls_client::m
 void WebsocketTLS::on_close_tls(tls_client* c, websocketpp::connection_hdl hdl) {
     std::lock_guard<std::mutex> lk(this->connection_mutex);
     this->m_is_connected = false;
+    this->disconnected_callback();
     this->cancel_reconnect_timer();
     tls_client::connection_ptr con = c->get_con_from_hdl(hdl);
     auto error_code = con->get_ec();
@@ -299,6 +300,7 @@ void WebsocketTLS::on_close_tls(tls_client* c, websocketpp::connection_hdl hdl) 
 void WebsocketTLS::on_fail_tls(tls_client* c, websocketpp::connection_hdl hdl) {
     std::lock_guard<std::mutex> lk(this->connection_mutex);
     this->m_is_connected = false;
+    this->disconnected_callback();
     this->connection_attempts += 1;
     tls_client::connection_ptr con = c->get_con_from_hdl(hdl);
     const auto ec = con->get_ec();

@@ -193,13 +193,14 @@ void WebsocketPlain::on_message_plain(websocketpp::connection_hdl hdl, client::m
 void WebsocketPlain::on_close_plain(client* c, websocketpp::connection_hdl hdl) {
     std::lock_guard<std::mutex> lk(this->connection_mutex);
     this->m_is_connected = false;
+    this->disconnected_callback();
     this->cancel_reconnect_timer();
     client::connection_ptr con = c->get_con_from_hdl(hdl);
     auto error_code = con->get_ec();
     EVLOG_info << "Closed plain websocket connection with code: " << error_code << " ("
                << websocketpp::close::status::get_string(con->get_remote_close_code())
                << "), reason: " << con->get_remote_close_reason();
-    // dont reconnect on service restart code
+    // dont reconnect on normal code
     if (con->get_remote_close_code() != websocketpp::close::status::normal) {
         this->reconnect(error_code, this->get_reconnect_interval());
     } else {
@@ -210,6 +211,7 @@ void WebsocketPlain::on_close_plain(client* c, websocketpp::connection_hdl hdl) 
 void WebsocketPlain::on_fail_plain(client* c, websocketpp::connection_hdl hdl) {
     std::lock_guard<std::mutex> lk(this->connection_mutex);
     this->m_is_connected = false;
+    this->disconnected_callback();
     this->connection_attempts += 1;
     client::connection_ptr con = c->get_con_from_hdl(hdl);
     const auto ec = con->get_ec();

@@ -141,7 +141,6 @@ private:
 
     // states
     RegistrationStatusEnum registration_status;
-    WebsocketConnectionStatusEnum websocket_connection_status;
     OperationalStatusEnum operational_state;
     FirmwareStatusEnum firmware_status;
     int32_t firmware_status_id;

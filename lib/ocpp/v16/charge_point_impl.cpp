@@ -153,7 +153,7 @@ void ChargePointImpl::init_websocket() {
         this->message_queue->resume(); //
         this->connected_callback();    //
     });
-    this->websocket->register_closed_callback([this](const websocketpp::close::status::value reason) {
+    this->websocket->register_disconnected_callback([this]() {
         if (this->connection_state_changed_callback != nullptr) {
             this->connection_state_changed_callback(false);
         }
@@ -161,14 +161,16 @@ void ChargePointImpl::init_websocket() {
         if (this->ocsp_request_timer != nullptr) {
             this->ocsp_request_timer->stop();
         }
-        if (this->switch_security_profile_callback != nullptr) {
-            this->switch_security_profile_callback();
-        }
         if (this->client_certificate_timer != nullptr) {
             this->client_certificate_timer->stop();
         }
         if (this->v2g_certificate_timer != nullptr) {
             this->v2g_certificate_timer->stop();
+        }
+    });
+    this->websocket->register_closed_callback([this](const websocketpp::close::status::value reason) {
+        if (this->switch_security_profile_callback != nullptr) {
+            this->switch_security_profile_callback();
         }
     });
 
