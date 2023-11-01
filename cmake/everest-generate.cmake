@@ -637,6 +637,7 @@ endfunction()
 
 function(ev_install_project)
     set (LIBRARY_PACKAGE_NAME ${PROJECT_NAME})
+    set (LIBRARY_PACKAGE_CMAKE_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR}/cmake/${LIBRARY_PACKAGE_NAME})
 
     include(CMakePackageConfigHelpers)
 
@@ -646,9 +647,16 @@ function(ev_install_project)
         ${EV_CORE_CMAKE_SCRIPT_DIR}/project-config.cmake.in
         ${CMAKE_CURRENT_BINARY_DIR}/${LIBRARY_PACKAGE_NAME}-config.cmake
         INSTALL_DESTINATION
-            ${CMAKE_INSTALL_LIBDIR}/cmake/${LIBRARY_PACKAGE_NAME}
+            ${LIBRARY_PACKAGE_CMAKE_INSTALL_DIR}
         PATH_VARS
             EVEREST_DATADIR
+    )
+
+    install(
+        EXPORT everest-core-targets
+        FILE "everest-core-targets.cmake"
+        NAMESPACE everest::
+        DESTINATION ${LIBRARY_PACKAGE_CMAKE_INSTALL_DIR}
     )
 
     install(
