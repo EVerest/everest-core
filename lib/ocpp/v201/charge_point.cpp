@@ -1562,13 +1562,19 @@ void ChargePoint::handle_get_base_report_req(Call<GetBaseReportRequest> call) {
     GetBaseReportResponse response;
     response.status = GenericDeviceModelStatusEnum::Accepted;
 
+    if (msg.reportBase == ReportBaseEnum::SummaryInventory) {
+        response.status = GenericDeviceModelStatusEnum::NotSupported;
+    }
+
     ocpp::CallResult<GetBaseReportResponse> call_result(response, call.uniqueId);
     this->send<GetBaseReportResponse>(call_result);
 
-    // TODO(piet): Propably split this up into several NotifyReport.req depending on ItemsPerMessage /
-    // BytesPerMessage
-    const auto report_data = this->device_model->get_report_data(msg.reportBase);
-    this->notify_report_req(msg.requestId, 0, report_data);
+    if (response.status == GenericDeviceModelStatusEnum::Accepted) {
+        // TODO(piet): Propably split this up into several NotifyReport.req depending on ItemsPerMessage /
+        // BytesPerMessage
+        const auto report_data = this->device_model->get_report_data(msg.reportBase);
+        this->notify_report_req(msg.requestId, 0, report_data);
+    }
 }
 
 void ChargePoint::handle_get_report_req(Call<GetReportRequest> call) {
