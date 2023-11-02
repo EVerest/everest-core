@@ -1,6 +1,5 @@
 settings:
   telemetry_enabled: true
-  logging_config_file: /home/andreas/everest-logging-config.conf
 active_modules:
   store:
     module: Store
