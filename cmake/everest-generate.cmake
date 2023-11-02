@@ -124,13 +124,10 @@ if (EVEREST_ENABLE_RS_SUPPORT)
     set(RUST_WORKSPACE_DIR ${PROJECT_BINARY_DIR}/rust_workspace)
     set(RUST_WORKSPACE_CARGO_FILE ${RUST_WORKSPACE_DIR}/Cargo.toml)
 
-    add_custom_command(OUTPUT ${RUST_WORKSPACE_DIR}
-        COMMAND
-            ${CMAKE_COMMAND} -E make_directory ${RUST_WORKSPACE_DIR}
-        COMMENT
-            "Creating rust workspace at ${RUST_WORKSPACE_DIR}"
-        VERBATIM
-    )
+    if (NOT EXISTS ${RUST_WORKSPACE_DIR})
+        execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory "${RUST_WORKSPACE_DIR}")
+        message(STATUS "Creating rust workspace at ${RUST_WORKSPACE_DIR}")
+    endif ()
 
     # NOTE (aw): we could also write a small python script, which would do that for us
     add_custom_command(OUTPUT ${RUST_WORKSPACE_CARGO_FILE}
