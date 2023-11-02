@@ -84,6 +84,11 @@ struct Conf {
     int hw_caps_min_current_export_decimal_places;
     int hw_caps_min_current_import_decimal_places;
     int limits_max_current_decimal_places;
+    int telemetry_temperature_decimal_places;
+    int telemetry_fan_rpm_decimal_places;
+    int telemetry_supply_voltage_12V_decimal_places;
+    int telemetry_supply_voltage_minus_12V_decimal_places;
+    int telemetry_rcd_current_decimal_places;
     float powermeter_energy_import_round_to;
     float powermeter_energy_export_round_to;
     float powermeter_power_round_to;
@@ -96,6 +101,11 @@ struct Conf {
     float hw_caps_min_current_export_round_to;
     float hw_caps_min_current_import_round_to;
     float limits_max_current_round_to;
+    float telemetry_temperature_round_to;
+    float telemetry_fan_rpm_round_to;
+    float telemetry_supply_voltage_12V_round_to;
+    float telemetry_supply_voltage_minus_12V_round_to;
+    float telemetry_rcd_current_round_to;
 };
 
 class API : public Everest::ModuleBase {
@@ -140,6 +150,7 @@ private:
     std::string limit_decimal_places(const types::powermeter::Powermeter& powermeter);
     std::string limit_decimal_places(const types::board_support::HardwareCapabilities& hw_capabilities);
     std::string limit_decimal_places(const types::evse_manager::Limits& limits);
+    std::string limit_decimal_places(const types::board_support::Telemetry& telemetry);
     float round_to_nearest_step(float value, float step);
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };

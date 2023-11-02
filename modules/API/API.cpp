@@ -220,8 +220,7 @@ void API::init() {
 
         std::string var_telemetry = var_base + "telemetry";
         evse->subscribe_telemetry([this, var_telemetry](types::board_support::Telemetry telemetry) {
-            json telemetry_json = telemetry;
-            this->mqtt.publish(var_telemetry, telemetry_json.dump());
+            this->mqtt.publish(var_telemetry, this->limit_decimal_places(telemetry));
         });
 
         std::string var_ev_info = var_base + "ev_info";
@@ -629,6 +628,35 @@ std::string API::limit_decimal_places(const types::evse_manager::Limits& limits)
     std::stringstream limits_stream;
     limits_stream << ryml::as_json(tree);
     return limits_stream.str();
+}
+
+std::string API::limit_decimal_places(const types::board_support::Telemetry& telemetry) {
+    ryml::Tree tree;
+    ryml::NodeRef root = tree.rootref();
+    root |= ryml::MAP;
+
+    root["phase_seq_error"] << ryml::fmt::boolalpha(telemetry.relais_on);
+
+    // limit decimal places
+    root["temperature"] << ryml::fmt::real(
+        this->round_to_nearest_step(telemetry.temperature, this->config.telemetry_temperature_round_to),
+        this->config.telemetry_temperature_decimal_places);
+    root["fan_rpm"] << ryml::fmt::real(
+        this->round_to_nearest_step(telemetry.fan_rpm, this->config.telemetry_fan_rpm_round_to),
+        this->config.telemetry_fan_rpm_decimal_places);
+    root["supply_voltage_12V"] << ryml::fmt::real(
+        this->round_to_nearest_step(telemetry.supply_voltage_12V, this->config.telemetry_supply_voltage_12V_round_to),
+        this->config.telemetry_supply_voltage_12V_decimal_places);
+    root["supply_voltage_minus_12V"] << ryml::fmt::real(
+        this->round_to_nearest_step(telemetry.supply_voltage_minus_12V,
+                                    this->config.telemetry_supply_voltage_minus_12V_round_to),
+        this->config.telemetry_supply_voltage_minus_12V_decimal_places);
+    root["rcd_current"] << ryml::fmt::real(
+        this->round_to_nearest_step(telemetry.rcd_current, this->config.telemetry_rcd_current_round_to),
+        this->config.telemetry_rcd_current_decimal_places);
+    std::stringstream telemetry_stream;
+    telemetry_stream << ryml::as_json(tree);
+    return telemetry_stream.str();
 }
 
 float API::round_to_nearest_step(float value, float step) {

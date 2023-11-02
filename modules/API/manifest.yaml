@@ -66,6 +66,31 @@ config:
     type: integer
     default: 2
     minimum: 0
+  telemetry_temperature_decimal_places:
+    description: Maximum number of decimal places for temperature in telemetry
+    type: integer
+    default: 2
+    minimum: 0
+  telemetry_fan_rpm_decimal_places:
+    description: Maximum number of decimal places for fan RPM in telemetry
+    type: integer
+    default: 2
+    minimum: 0
+  telemetry_supply_voltage_12V_decimal_places:
+    description: Maximum number of decimal places for supply voltage 12V in telemetry
+    type: integer
+    default: 2
+    minimum: 0
+  telemetry_supply_voltage_minus_12V_decimal_places:
+    description: Maximum number of decimal places for supply voltage -12V in telemetry
+    type: integer
+    default: 2
+    minimum: 0
+  telemetry_rcd_current_decimal_places:
+    description: Maximum number of decimal places for RCD current in telemetry
+    type: integer
+    default: 2
+    minimum: 0
   powermeter_energy_import_round_to:
     description: Round import energy to the nearest step. Ignored if value is 0
     type: number
@@ -112,6 +137,26 @@ config:
     default: 0
   limits_max_current_round_to:
     description: Round maximum current in limits to the nearest step. Ignored if value is 0
+    type: number
+    default: 0
+  telemetry_temperature_round_to:
+    description: Round temperature in telemetry to the nearest step. Ignored if value is 0
+    type: number
+    default: 0
+  telemetry_fan_rpm_round_to:
+    description: Round fan RPM in telemetry to the nearest step. Ignored if value is 0
+    type: number
+    default: 0
+  telemetry_supply_voltage_12V_round_to:
+    description: Round supply voltage 12V in telemetry to the nearest step. Ignored if value is 0
+    type: number
+    default: 0
+  telemetry_supply_voltage_minus_12V_round_to:
+    description: Round supply voltage -12V in telemetry to the nearest step. Ignored if value is 0
+    type: number
+    default: 0
+  telemetry_rcd_current_round_to:
+    description: Round RCD current in telemetry to the nearest step. Ignored if value is 0
     type: number
     default: 0
 provides:
