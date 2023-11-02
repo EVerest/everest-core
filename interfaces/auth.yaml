@@ -11,5 +11,5 @@ cmds:
 vars:
   token_validation_status:
     description: Emits all events related to current token validation
-    type: string
-    $ref: /authorization#/TokenValidationStatus
+    type: object
+    $ref: /authorization#/TokenValidationStatusMessage
