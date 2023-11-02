@@ -65,8 +65,8 @@ ChargePointImpl::ChargePointImpl(const std::string& config, const fs::path& shar
         this->status_notification_timers.push_back(std::make_unique<Everest::SteadyTimer>(&this->io_service));
     }
 
-    this->clock_aligned_meter_values_timer = std::make_unique<Everest::SystemTimer>(
-        &this->io_service, [this]() { this->clock_aligned_meter_values_sample(); });
+    this->clock_aligned_meter_values_timer =
+        std::make_unique<ClockAlignedTimer>(&this->io_service, [this]() { this->clock_aligned_meter_values_sample(); });
 
     this->client_certificate_timer = std::make_unique<Everest::SteadyTimer>(&this->io_service, [this]() {
         EVLOG_info << "Checking if CSMS client certificate has expired";
@@ -285,7 +285,6 @@ void ChargePointImpl::clock_aligned_meter_values_sample() {
                               << connector;
             }
         }
-        this->update_clock_aligned_meter_values_interval();
     }
 }
 
@@ -301,9 +300,13 @@ void ChargePointImpl::update_meter_values_sample_interval() {
 
 void ChargePointImpl::update_clock_aligned_meter_values_interval() {
     const auto clock_aligned_data_interval = this->configuration->getClockAlignedDataInterval();
-    const auto next_timestamp = this->get_next_clock_aligned_meter_value_timestamp(clock_aligned_data_interval);
-    if (next_timestamp.has_value()) {
-        this->clock_aligned_meter_values_timer->at(next_timestamp.value().to_time_point());
+
+    if (clock_aligned_data_interval > 0) {
+        this->clock_aligned_meter_values_timer->interval_starting_from(
+            std::chrono::seconds(clock_aligned_data_interval),
+            std::chrono::floor<date::days>(date::utc_clock::to_sys(date::utc_clock::now())));
+    } else {
+        this->clock_aligned_meter_values_timer->stop();
     }
 }
 

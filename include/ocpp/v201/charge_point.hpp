@@ -134,7 +134,7 @@ private:
     // timers
     Everest::SteadyTimer heartbeat_timer;
     Everest::SteadyTimer boot_notification_timer;
-    Everest::SteadyTimer aligned_meter_values_timer;
+    ClockAlignedTimer aligned_meter_values_timer;
 
     // time keeping
     std::chrono::time_point<std::chrono::steady_clock> heartbeat_request_time;

@@ -6,7 +6,7 @@
 #include <ocpp/v201/messages/FirmwareStatusNotification.hpp>
 #include <ocpp/v201/messages/LogStatusNotification.hpp>
 
-using namespace std::literals::chrono_literals;
+using namespace std::chrono_literals;
 
 namespace ocpp {
 namespace v201 {
@@ -81,15 +81,31 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
         auto transaction_meter_value_callback = [this](const MeterValue& _meter_value, const Transaction& transaction,
                                                        const int32_t seq_no,
                                                        const std::optional<int32_t> reservation_id) {
-            const auto filtered_meter_value = utils::get_meter_value_with_measurands_applied(
-                _meter_value, utils::get_measurands_vec(this->device_model->get_value<std::string>(
-                                  ControllerComponentVariables::SampledDataTxUpdatedMeasurands)));
+            if (_meter_value.sampledValue.empty() or !_meter_value.sampledValue.at(0).context.has_value()) {
+                EVLOG_info << "Not sending MeterValue due to no values";
+                return;
+            }
+
+            auto type = _meter_value.sampledValue.at(0).context.value();
+            if (type != ReadingContextEnum::Sample_Clock and type != ReadingContextEnum::Sample_Periodic) {
+                EVLOG_info << "Not sending MeterValue due to wrong context";
+                return;
+            }
+
+            const auto filter_vec = utils::get_measurands_vec(this->device_model->get_value<std::string>(
+                type == ReadingContextEnum::Sample_Clock
+                    ? ControllerComponentVariables::AlignedDataMeasurands
+                    : ControllerComponentVariables::SampledDataTxUpdatedMeasurands));
+
+            const auto filtered_meter_value = utils::get_meter_value_with_measurands_applied(_meter_value, filter_vec);
 
             if (!filtered_meter_value.sampledValue.empty()) {
-                this->transaction_event_req(TransactionEventEnum::Updated, DateTime(), transaction,
-                                            TriggerReasonEnum::MeterValuePeriodic, seq_no, std::nullopt, std::nullopt,
-                                            std::nullopt, std::vector<MeterValue>(1, filtered_meter_value),
-                                            std::nullopt, this->is_offline(), reservation_id);
+                const auto trigger = type == ReadingContextEnum::Sample_Clock ? TriggerReasonEnum::MeterValueClock
+                                                                              : TriggerReasonEnum::MeterValuePeriodic;
+                this->transaction_event_req(TransactionEventEnum::Updated, DateTime(), transaction, trigger, seq_no,
+                                            std::nullopt, std::nullopt, std::nullopt,
+                                            std::vector<MeterValue>(1, filtered_meter_value), std::nullopt,
+                                            this->is_offline(), reservation_id);
             }
         };
 
@@ -97,8 +113,9 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
 
         this->evses.insert(
             std::make_pair(evse_id, std::make_unique<Evse>(evse_id, number_of_connectors, *this->device_model,
-                                                           status_notification_callback,
+                                                           this->database_handler, status_notification_callback,
                                                            transaction_meter_value_callback, pause_charging_callback)));
+
         for (int32_t connector_id = 1; connector_id <= number_of_connectors; connector_id++) {
             // operational status for this connector
             this->database_handler->insert_availability(evse_id, connector_id, OperationalStatusEnum::Operative, false);
@@ -192,7 +209,13 @@ void ChargePoint::on_transaction_started(
 
     this->evses.at(evse_id)->open_transaction(
         session_id, connector_id, timestamp, meter_start, id_token, group_id_token, reservation_id,
-        this->device_model->get_value<int>(ControllerComponentVariables::SampledDataTxUpdatedInterval));
+        std::chrono::seconds(
+            this->device_model->get_value<int>(ControllerComponentVariables::SampledDataTxUpdatedInterval)),
+        std::chrono::seconds(
+            this->device_model->get_value<int>(ControllerComponentVariables::SampledDataTxEndedInterval)),
+        std::chrono::seconds(this->device_model->get_value<int>(ControllerComponentVariables::AlignedDataInterval)),
+        std::chrono::seconds(
+            this->device_model->get_value<int>(ControllerComponentVariables::AlignedDataTxEndedInterval)));
     const auto& enhanced_transaction = this->evses.at(evse_id)->get_transaction();
     enhanced_transaction->chargingState = charging_state;
     const auto meter_value = utils::get_meter_value_with_measurands_applied(
@@ -233,14 +256,13 @@ void ChargePoint::on_transaction_finished(const int32_t evse_id, const DateTime&
 
     this->evses.at(evse_id)->close_transaction(timestamp, meter_stop, reason);
     const auto transaction = enhanced_transaction->get_transaction();
-    auto meter_values = std::make_optional(utils::get_meter_values_with_measurands_and_interval_applied(
-        enhanced_transaction->meter_values,
-        utils::get_measurands_vec(
-            this->device_model->get_value<std::string>(ControllerComponentVariables::AlignedDataTxEndedMeasurands)),
+    const auto transaction_id = enhanced_transaction->transactionId.get();
+    auto meter_values = std::make_optional(utils::get_meter_values_with_measurands_applied(
+        this->database_handler->transaction_metervalues_get_all(transaction_id),
         utils::get_measurands_vec(
             this->device_model->get_value<std::string>(ControllerComponentVariables::SampledDataTxEndedMeasurands)),
-        this->device_model->get_value<int>(ControllerComponentVariables::AlignedDataTxEndedInterval),
-        this->device_model->get_value<int>(ControllerComponentVariables::SampledDataTxEndedInterval)));
+        utils::get_measurands_vec(
+            this->device_model->get_value<std::string>(ControllerComponentVariables::AlignedDataTxEndedMeasurands))));
 
     if (meter_values.value().empty()) {
         meter_values.reset();
@@ -262,6 +284,8 @@ void ChargePoint::on_transaction_finished(const int32_t evse_id, const DateTime&
     this->transaction_event_req(TransactionEventEnum::Ended, timestamp, transaction, trigger_reason, seq_no,
                                 std::nullopt, std::nullopt, id_token_opt, meter_values, std::nullopt,
                                 this->is_offline(), std::nullopt);
+
+    this->database_handler->transaction_metervalues_clear(transaction_id);
 
     bool send_reset = false;
     if (this->reset_scheduled) {
@@ -911,69 +935,52 @@ SendLocalListStatusEnum ChargePoint::apply_local_authorization_list(const SendLo
 }
 
 void ChargePoint::update_aligned_data_interval() {
-    const auto next_timestamp = this->get_next_clock_aligned_meter_value_timestamp(
-        this->device_model->get_value<int>(ControllerComponentVariables::AlignedDataInterval));
-    if (next_timestamp.has_value()) {
-        EVLOG_debug << "Next meter value will be sent at: " << next_timestamp.value().to_rfc3339();
-        this->aligned_meter_values_timer.at(
-            [this]() {
-                bool transaction_active = false;
-                for (auto const& [evse_id, evse] : this->evses) {
-                    auto _meter_value = evse->get_meter_value();
-                    // this will apply configured measurands and possibly reduce the entries of sampledValue
-                    // according to the configuration
-                    const auto meter_value =
-                        get_latest_meter_value_filtered(_meter_value, ReadingContextEnum::Sample_Clock,
-                                                        ControllerComponentVariables::AlignedDataMeasurands);
-
-                    if (evse->has_active_transaction()) {
-                        transaction_active = true;
-                        // because we do not actively read meter values at clock aligned timepoint, we switch the
-                        // ReadingContext here
-                        for (auto& sampled_value : _meter_value.sampledValue) {
-                            sampled_value.context = ReadingContextEnum::Sample_Clock;
-                        }
-
-                        // add meter value to transaction meter values
-                        const auto& enhanced_transaction = evse->get_transaction();
-                        enhanced_transaction->meter_values.push_back(_meter_value);
-                        if (!meter_value.sampledValue.empty()) {
-                            this->transaction_event_req(
-                                TransactionEventEnum::Updated, DateTime(), enhanced_transaction->get_transaction(),
-                                TriggerReasonEnum::MeterValueClock, enhanced_transaction->get_seq_no(), std::nullopt,
-                                std::nullopt, std::nullopt, std::vector<MeterValue>(1, meter_value), std::nullopt,
-                                this->is_offline(), std::nullopt);
-                        }
-                    } else if (!evse->has_active_transaction() and
-                               this->device_model
-                                   ->get_optional_value<bool>(ControllerComponentVariables::AlignedDataSendDuringIdle)
-                                   .value_or(false)) {
-                        transaction_active = false;
-                        if (!meter_value.sampledValue.empty()) {
-                            // J01.FR.14 this is the only case where we send a MeterValue.req
-                            this->meter_values_req(evse_id, std::vector<ocpp::v201::MeterValue>(1, meter_value));
-                        }
-                    }
-                }
-                // also send meter values for evseId 0 if no transactions are on going
-                if (!transaction_active) {
-                    auto _meter_value = this->get_meter_value();
-
-                    // this will apply configured measurands and possibly reduce the entries of sampledValue
-                    // according to the configuration
-                    const auto meter_value =
-                        get_latest_meter_value_filtered(_meter_value, ReadingContextEnum::Sample_Clock,
-                                                        ControllerComponentVariables::AlignedDataMeasurands);
-
-                    if (!meter_value.sampledValue.empty()) {
-                        this->meter_values_req(0, std::vector<ocpp::v201::MeterValue>(1, meter_value));
-                    }
-                }
-
-                this->update_aligned_data_interval();
-            },
-            next_timestamp.value().to_time_point());
+    auto interval =
+        std::chrono::seconds(this->device_model->get_value<int>(ControllerComponentVariables::AlignedDataInterval));
+    if (interval <= 0s) {
+        this->aligned_meter_values_timer.stop();
+        return;
     }
+
+    this->aligned_meter_values_timer.interval_starting_from(
+        [this]() {
+            // J01.FR.20 if AlignedDataSendDuringIdle is true and any transaction is active, don't send clock aligned
+            // meter values
+            if (this->device_model->get_optional_value<bool>(ControllerComponentVariables::AlignedDataSendDuringIdle)
+                    .value_or(false)) {
+                for (auto const& [evse_id, evse] : this->evses) {
+                    if (evse->has_active_transaction()) {
+                        return;
+                    }
+                }
+            }
+
+            const auto meter_value =
+                get_latest_meter_value_filtered(this->get_meter_value(), ReadingContextEnum::Sample_Clock,
+                                                ControllerComponentVariables::AlignedDataMeasurands);
+
+            if (!meter_value.sampledValue.empty()) {
+                this->meter_values_req(0, std::vector<ocpp::v201::MeterValue>(1, meter_value));
+            }
+
+            for (auto const& [evse_id, evse] : this->evses) {
+                if (evse->has_active_transaction()) {
+                    continue;
+                }
+
+                // this will apply configured measurands and possibly reduce the entries of sampledValue
+                // according to the configuration
+                const auto meter_value =
+                    get_latest_meter_value_filtered(evse->get_meter_value(), ReadingContextEnum::Sample_Clock,
+                                                    ControllerComponentVariables::AlignedDataMeasurands);
+
+                if (!meter_value.sampledValue.empty()) {
+                    // J01.FR.14 this is the only case where we send a MeterValue.req
+                    this->meter_values_req(evse_id, std::vector<ocpp::v201::MeterValue>(1, meter_value));
+                }
+            }
+        },
+        interval, std::chrono::floor<date::days>(date::utc_clock::to_sys(date::utc_clock::now())));
 }
 
 bool ChargePoint::any_transaction_active(const std::optional<EVSE>& evse) {
@@ -1074,6 +1081,9 @@ void ChargePoint::handle_variable_changed(const SetVariableData& set_variable_da
         } catch (const std::out_of_range& e) {
             EVLOG_error << "Out of range exception while updating the heartbeat interval: " << e.what();
         }
+    }
+    if (component_variable == ControllerComponentVariables::AlignedDataInterval) {
+        this->update_aligned_data_interval();
     }
     // TODO(piet): other special handling of changed variables can be added here...
 }

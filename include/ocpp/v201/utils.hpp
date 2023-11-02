@@ -27,24 +27,15 @@ bool meter_value_has_any_measurand(const MeterValue& _meter_value, const std::ve
 MeterValue get_meter_value_with_measurands_applied(const MeterValue& _meter_value,
                                                    const std::vector<MeasurandEnum>& measurands);
 
-/// \brief Applies the given intervals \p aligned_interval and \p sampled_interval and the measurands \p
-/// aligned_measurands and \p sample_measurands to the given \p _meter_values based on their ReadingContext. The
-/// returned meter values will only contain SampledValues which measurand is listed in the given \p
-/// aligned_measurands or \p sample_measurands based on the ReadingContext of the SampledValue, If no context or
-/// measurand is set for the SampledValue, the SampledValue will be omitted.
-/// \param _meter_values the meter value to be filtered
-/// \param aligned_measurands applied aligned_measurands
-/// \param sample_measurands applied sample_measurands
-/// \param aligned_interval applied aligned_interval. Minimum interval between to MeterValues with ReadingContext
-/// Sample_Clock. The interval might be greater, based on the AlignedDataInterval configuration key
-/// \param sampled_interval applied sampled interval. Minimum interval between to MeterValues with ReadingContext
-/// Sample_Periodic. The interval might be greater, based on the SampledDataTxUpdatedInterval configuration key
-/// \return filtered meter values
+///\brief Applies the given measurands to \p meter_values based on their ReadingContext.
+/// Transaction_Begin, Interruption_Begin, Transaction_End, Interruption_End and Sample_Periodic will be filtered using
+/// \p sampled_tx_ended_measurands.
+/// Sample_Clock will be filtered using \p aligned_tx_ended_measurands
+///\retval filtered meter values
 std::vector<MeterValue>
-get_meter_values_with_measurands_and_interval_applied(const std::vector<MeterValue>& _meter_values,
-                                                      const std::vector<MeasurandEnum>& aligned_measurands,
-                                                      const std::vector<MeasurandEnum>& sample_measurands,
-                                                      const int32_t aligned_interval, const int32_t sampled_interval);
+get_meter_values_with_measurands_applied(const std::vector<MeterValue>& meter_values,
+                                         const std::vector<MeasurandEnum>& sampled_tx_ended_measurands,
+                                         const std::vector<MeasurandEnum>& aligned_tx_ended_measurands);
 
 /// \brief Converts the given \p stop_reason to a TriggerReasonEnum
 /// \param stop_reason

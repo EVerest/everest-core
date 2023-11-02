@@ -24,6 +24,13 @@ private:
     fs::path sql_init_path;
 
     void sql_init();
+
+    void inintialize_enum_tables();
+    void init_enum_table_inner(const std::string& table_name, const int begin, const int end,
+                               std::function<std::string(int)> conversion);
+    template <typename T>
+    void init_enum_table(const std::string& table_name, T begin, T end, std::function<std::string(T)> conversion);
+
     bool clear_table(const std::string& table_name);
 
 public:
@@ -94,6 +101,17 @@ public:
 
     /// \brief Get the number of entries currently in the authorization list
     int32_t get_local_authorization_list_number_of_entries();
+
+    // Transaction metervalues
+
+    /// \brief Inserts a \p meter_value to the database linked to transaction with id \p transaction_id
+    bool transaction_metervalues_insert(const std::string& transaction_id, const MeterValue& meter_value);
+
+    /// \brief Get all metervalues linked to transaction with id \p transaction_id
+    std::vector<MeterValue> transaction_metervalues_get_all(const std::string& transaction_id);
+
+    /// \brief Remove all metervalue entries linked to transaction with id \p transaction_id
+    bool transaction_metervalues_clear(const std::string& transaction_id);
 };
 
 } // namespace v201

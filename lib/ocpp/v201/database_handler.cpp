@@ -39,6 +39,70 @@ void DatabaseHandler::sql_init() {
         EVLOG_error << "Could not create tables: " << sqlite3_errmsg(this->db);
         throw std::runtime_error("Database access error");
     }
+
+    this->inintialize_enum_tables();
+}
+
+void DatabaseHandler::inintialize_enum_tables() {
+
+    // TODO: Don't throw away all meter value items to allow resuming transactions
+    // Also we should add functionality then to clean up old/unknown transactions from the database
+    if (!this->clear_table("METER_VALUE_ITEMS") or !this->clear_table("METER_VALUES")) {
+        EVLOG_error << "Could not clear tables: " << sqlite3_errmsg(this->db);
+        throw std::runtime_error("Could not clear tables");
+    }
+
+    init_enum_table<ReadingContextEnum>("READING_CONTEXT_ENUM", ReadingContextEnum::Interruption_Begin,
+                                        ReadingContextEnum::Trigger, conversions::reading_context_enum_to_string);
+
+    init_enum_table<MeasurandEnum>("MEASURAND_ENUM", MeasurandEnum::Current_Export, MeasurandEnum::Voltage,
+                                   conversions::measurand_enum_to_string);
+
+    init_enum_table<PhaseEnum>("PHASE_ENUM", PhaseEnum::L1, PhaseEnum::L3_L1, conversions::phase_enum_to_string);
+
+    init_enum_table<LocationEnum>("LOCATION_ENUM", LocationEnum::Body, LocationEnum::Outlet,
+                                  conversions::location_enum_to_string);
+}
+
+void DatabaseHandler::init_enum_table_inner(const std::string& table_name, const int begin, const int end,
+                                            std::function<std::string(int)> conversion) {
+    char* err_msg = 0;
+
+    if (!this->clear_table(table_name)) {
+        EVLOG_critical << "Table \"" + table_name + "\" does not exist";
+        throw std::runtime_error("Table does not exist.");
+    }
+
+    if (sqlite3_exec(this->db, "BEGIN TRANSACTION", NULL, NULL, &err_msg) != SQLITE_OK) {
+        throw std::runtime_error("Could not begin transaction.");
+    }
+
+    std::string sql = "INSERT INTO " + table_name + " VALUES (@id, @value);";
+    SQLiteStatement insert_stmt(this->db, sql);
+
+    for (int i = begin; i <= end; i++) {
+        auto string = conversion(i);
+
+        insert_stmt.bind_int("@id", i);
+        insert_stmt.bind_text("@value", string);
+
+        if (insert_stmt.step() != SQLITE_DONE) {
+            throw std::runtime_error("Could not perform step.");
+        }
+
+        insert_stmt.reset();
+    }
+
+    if (sqlite3_exec(this->db, "COMMIT TRANSACTION", NULL, NULL, &err_msg) != SQLITE_OK) {
+        throw std::runtime_error("Could not commit transaction.");
+    }
+}
+
+template <typename T>
+void DatabaseHandler::init_enum_table(const std::string& table_name, T begin, T end,
+                                      std::function<std::string(T)> conversion) {
+    auto conversion_func = [conversion](int value) { return conversion(static_cast<T>(value)); };
+    init_enum_table_inner(table_name, static_cast<int>(begin), static_cast<int>(end), conversion_func);
 }
 
 bool DatabaseHandler::clear_table(const std::string& table_name) {
@@ -289,6 +353,205 @@ int32_t DatabaseHandler::get_local_authorization_list_number_of_entries() {
     } catch (const std::exception& e) {
         throw std::runtime_error("Could not get local list count from database");
     }
+}
+
+bool DatabaseHandler::transaction_metervalues_insert(const std::string& transaction_id, const MeterValue& meter_value) {
+    if (meter_value.sampledValue.empty() or !meter_value.sampledValue.at(0).context.has_value()) {
+        return false;
+    }
+
+    auto context = meter_value.sampledValue.at(0).context.value();
+    if (std::find_if(meter_value.sampledValue.begin(), meter_value.sampledValue.end(), [context](const auto& item) {
+            return !item.context.has_value() or item.context.value() != context;
+        }) != meter_value.sampledValue.end()) {
+        throw std::invalid_argument("All metervalues must have the same context");
+    }
+
+    char* err_msg = 0;
+
+    std::string sql1 = "INSERT INTO METER_VALUES (TRANSACTION_ID, TIMESTAMP, READING_CONTEXT, CUSTOM_DATA) VALUES "
+                       "(@transaction_id, @timestamp, @context, @custom_data)";
+
+    SQLiteStatement stmt(this->db, sql1);
+
+    stmt.bind_text("@transaction_id", transaction_id);
+    stmt.bind_datetime("@timestamp", meter_value.timestamp);
+    stmt.bind_int("@context", static_cast<int>(context));
+    stmt.bind_null("@custom_data");
+
+    if (stmt.step() != SQLITE_DONE) {
+        EVLOG_critical << "Error: " << sqlite3_errmsg(db);
+        throw std::runtime_error("Could not perform step.");
+    }
+
+    auto last_row_id = sqlite3_last_insert_rowid(this->db);
+    stmt.reset();
+
+    std::string sql2 = "INSERT INTO METER_VALUE_ITEMS (METER_VALUE_ID, VALUE, MEASURAND, PHASE, LOCATION, CUSTOM_DATA, "
+                       "UNIT_CUSTOM_DATA, UNIT_TEXT, UNIT_MULTIPLIER) VALUES (@meter_value_id, @value, @measurand, "
+                       "@phase, @location, @custom_data, @unit_custom_data, @unit_text, @unit_multiplier);";
+
+    if (sqlite3_exec(this->db, "BEGIN TRANSACTION", NULL, NULL, &err_msg) != SQLITE_OK) {
+        throw std::runtime_error("Could not begin transaction.");
+    }
+
+    SQLiteStatement insert_stmt(this->db, sql2);
+
+    for (const auto& item : meter_value.sampledValue) {
+        insert_stmt.bind_int("@meter_value_id", last_row_id);
+        insert_stmt.bind_double("@value", item.value);
+
+        if (item.measurand.has_value()) {
+            insert_stmt.bind_int("@measurand", static_cast<int>(item.measurand.value()));
+        } else {
+            insert_stmt.bind_null("@measurand");
+        }
+
+        if (item.phase.has_value()) {
+            insert_stmt.bind_int("@phase", static_cast<int>(item.phase.value()));
+        } else {
+            insert_stmt.bind_null("@phase");
+        }
+
+        if (item.location.has_value()) {
+            insert_stmt.bind_int("@location", static_cast<int>(item.location.value()));
+        }
+
+        if (item.customData.has_value()) {
+            insert_stmt.bind_text("@custom_data", item.customData.value().vendorId.get(), SQLiteString::Transient);
+        }
+
+        if (item.unitOfMeasure.has_value()) {
+            const auto& unitOfMeasure = item.unitOfMeasure.value();
+
+            if (unitOfMeasure.customData.has_value()) {
+                insert_stmt.bind_text("@unit_custom_data", unitOfMeasure.customData.value().vendorId.get(),
+                                      SQLiteString::Transient);
+            }
+            if (unitOfMeasure.unit.has_value()) {
+                insert_stmt.bind_text("@unit_text", unitOfMeasure.unit.value().get(), SQLiteString::Transient);
+            }
+            if (unitOfMeasure.multiplier.has_value()) {
+                insert_stmt.bind_int("@unit_multiplier", unitOfMeasure.multiplier.value());
+            }
+        }
+
+        if (insert_stmt.step() != SQLITE_DONE) {
+            EVLOG_critical << "Error: " << sqlite3_errmsg(db);
+            throw std::runtime_error("Could not perform step.");
+        }
+
+        insert_stmt.reset();
+    }
+
+    if (sqlite3_exec(this->db, "COMMIT TRANSACTION", NULL, NULL, &err_msg) != SQLITE_OK) {
+        throw std::runtime_error("Could not commit transaction.");
+    }
+
+    return true;
+}
+
+std::vector<MeterValue> DatabaseHandler::transaction_metervalues_get_all(const std::string& transaction_id) {
+
+    std::string sql1 = "SELECT * FROM METER_VALUES WHERE TRANSACTION_ID = @transaction_id;";
+    std::string sql2 = "SELECT * FROM METER_VALUE_ITEMS WHERE METER_VALUE_ID = @row_id;";
+    SQLiteStatement select_stmt(this->db, sql1);
+    SQLiteStatement select_stmt2(this->db, sql2);
+
+    select_stmt.bind_text("@transaction_id", transaction_id);
+
+    std::vector<MeterValue> result;
+
+    while (select_stmt.step() == SQLITE_ROW) {
+        MeterValue value;
+
+        value.timestamp = select_stmt.column_datetime(2);
+
+        if (select_stmt.column_type(4) == SQLITE_TEXT) {
+            value.customData = CustomData{select_stmt.column_text(4)};
+        }
+
+        auto row_id = select_stmt.column_int(0);
+        auto context = static_cast<ReadingContextEnum>(select_stmt.column_int(3));
+
+        select_stmt2.bind_int("@row_id", row_id);
+
+        while (select_stmt2.step() == SQLITE_ROW) {
+            SampledValue sampled_value;
+
+            sampled_value.value = select_stmt2.column_double(1);
+            sampled_value.context = context;
+
+            if (select_stmt2.column_type(2) == SQLITE_INTEGER) {
+                sampled_value.measurand = static_cast<MeasurandEnum>(select_stmt2.column_int(2));
+            }
+
+            if (select_stmt2.column_type(3) == SQLITE_INTEGER) {
+                sampled_value.phase = static_cast<PhaseEnum>(select_stmt2.column_int(3));
+            }
+
+            if (select_stmt2.column_type(4) == SQLITE_INTEGER) {
+                sampled_value.location = static_cast<LocationEnum>(select_stmt2.column_int(4));
+            }
+
+            if (select_stmt2.column_type(5) == SQLITE_TEXT) {
+                sampled_value.customData = CustomData{select_stmt.column_text(5)};
+            }
+
+            if (select_stmt2.column_type(6) == SQLITE_TEXT or select_stmt2.column_type(7) == SQLITE_TEXT or
+                select_stmt2.column_type(8) == SQLITE_INTEGER) {
+                UnitOfMeasure unit;
+                if (select_stmt2.column_type(6) == SQLITE_TEXT) {
+                    unit.customData = CustomData{select_stmt2.column_text(6)};
+                }
+                if (select_stmt2.column_type(7) == SQLITE_TEXT) {
+                    unit.unit = select_stmt2.column_text(7);
+                }
+                if (select_stmt2.column_type(8) == SQLITE_INTEGER) {
+                    unit.multiplier = select_stmt2.column_int(8);
+                }
+                sampled_value.unitOfMeasure.emplace(unit);
+            }
+
+            value.sampledValue.push_back(std::move(sampled_value));
+        }
+
+        result.push_back(std::move(value));
+
+        select_stmt2.reset();
+    }
+
+    return result;
+}
+
+bool DatabaseHandler::transaction_metervalues_clear(const std::string& transaction_id) {
+
+    std::string sql1 = "SELECT ROWID FROM METER_VALUES WHERE TRANSACTION_ID = @transaction_id;";
+
+    SQLiteStatement select_stmt(this->db, sql1);
+
+    select_stmt.bind_text("@transaction_id", transaction_id);
+
+    std::string sql2 = "DELETE FROM METER_VALUE_ITEMS WHERE METER_VALUE_ID = @row_id";
+    SQLiteStatement delete_stmt(this->db, sql2);
+    while (select_stmt.step() == SQLITE_ROW) {
+        auto row_id = select_stmt.column_int(0);
+        delete_stmt.bind_int("@row_id", row_id);
+
+        if (delete_stmt.step() != SQLITE_DONE) {
+            EVLOG_error << "Could not delete from table: " << sqlite3_errmsg(this->db);
+        }
+        delete_stmt.reset();
+    }
+
+    std::string sql3 = "DELETE FROM METER_VALUES WHERE TRANSACTION_ID = @transaction_id";
+    SQLiteStatement delete_stmt2(this->db, sql3);
+    delete_stmt2.bind_text("@transaction_id", transaction_id);
+    if (delete_stmt2.step() != SQLITE_DONE) {
+        EVLOG_error << "Could not delete from table: " << sqlite3_errmsg(this->db);
+    }
+
+    return true;
 }
 
 } // namespace v201

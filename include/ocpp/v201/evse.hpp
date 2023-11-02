@@ -5,9 +5,8 @@
 #include <map>
 #include <memory>
 
-#include <everest/timer.hpp>
-
 #include <ocpp/v201/connector.hpp>
+#include <ocpp/v201/database_handler.hpp>
 #include <ocpp/v201/device_model.hpp>
 #include <ocpp/v201/ocpp_types.hpp>
 #include <ocpp/v201/transaction.hpp>
@@ -32,6 +31,7 @@ private:
     MeterValue meter_value;                           // represents current meter value
     std::recursive_mutex meter_value_mutex;
     Everest::SteadyTimer sampled_meter_values_timer;
+    std::shared_ptr<DatabaseHandler> database_handler;
 
     /// \brief gets the active import energy meter value from meter_value, normalized to Wh.
     std::optional<float> get_active_import_register_meter_value();
@@ -45,9 +45,10 @@ public:
     /// \param number_of_connectors of the evse
     /// \param device_model reference to the device model
     /// \param status_notification_callback that is called when the status of a connector changes
-    /// \param pause_charging_callback that is called when the charging should be paused due to max energy on invalid id
-    /// being exceeded
+    /// \param pause_charging_callback that is called when the charging should be paused due to max energy on
+    /// invalid id being exceeded
     Evse(const int32_t evse_id, const int32_t number_of_connectors, DeviceModel& device_model,
+         std::shared_ptr<DatabaseHandler> database_handler,
          const std::function<void(const int32_t connector_id, const ConnectorStatusEnum& status)>&
              status_notification_callback,
          const std::function<void(const MeterValue& meter_value, const Transaction& transaction, const int32_t seq_no,
@@ -62,10 +63,6 @@ public:
     /// \return
     uint32_t get_number_of_connectors();
 
-    /// \brief Returns a reference to the sampled meter values timer
-    /// \return
-    Everest::SteadyTimer& get_sampled_meter_values_timer();
-
     /// \brief Opens a new transaction
     /// \param transaction_id id of the transaction
     /// \param connector_id id of the connector
@@ -74,12 +71,15 @@ public:
     /// \param id_token id_token with which the transaction was authorized / started
     /// \param group_id_token optional group id_token
     /// \param reservation optional reservation_id if evse was reserved
-    /// \param sampled_data_tx_updated_interval Interval between sampling of metering (or other) data, intended to be
-    /// transmitted via TransactionEventRequest (eventType = Updated) messages
+    /// \param sampled_data_tx_updated_interval Interval between sampling of metering (or other) data, intended to
+    /// be transmitted via TransactionEventRequest (eventType = Updated) messages
     void open_transaction(const std::string& transaction_id, const int32_t connector_id, const DateTime& timestamp,
                           const MeterValue& meter_start, const IdToken& id_token,
                           const std::optional<IdToken>& group_id_token, const std::optional<int32_t> reservation_id,
-                          const int32_t sampled_data_tx_updated_interval);
+                          const std::chrono::seconds sampled_data_tx_updated_interval,
+                          const std::chrono::seconds sampled_data_tx_ended_interval,
+                          const std::chrono::seconds aligned_data_tx_updated_interval,
+                          const std::chrono::seconds aligned_data_tx_ended_interval);
 
     /// \brief Closes the transaction on this evse by adding the given \p timestamp \p meter_stop and \p reason .
     /// \param timestamp

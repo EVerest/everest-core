@@ -8,6 +8,8 @@
 #include <ocpp/v201/evse.hpp>
 #include <ocpp/v201/utils.hpp>
 
+using namespace std::chrono_literals;
+
 namespace ocpp {
 namespace v201 {
 
@@ -38,6 +40,7 @@ static float get_normalized_energy_value(SampledValue sampled_value) {
 }
 
 Evse::Evse(const int32_t evse_id, const int32_t number_of_connectors, DeviceModel& device_model,
+           std::shared_ptr<DatabaseHandler> database_handler,
            const std::function<void(const int32_t connector_id, const ConnectorStatusEnum& status)>&
                status_notification_callback,
            const std::function<void(const MeterValue& meter_value, const Transaction& transaction, const int32_t seq_no,
@@ -48,6 +51,7 @@ Evse::Evse(const int32_t evse_id, const int32_t number_of_connectors, DeviceMode
     status_notification_callback(status_notification_callback),
     transaction_meter_value_req(transaction_meter_value_req),
     pause_charging_callback(pause_charging_callback),
+    database_handler(database_handler),
     transaction(nullptr) {
     for (int connector_id = 1; connector_id <= number_of_connectors; connector_id++) {
         this->id_connector_map.insert(std::make_pair(
@@ -67,14 +71,13 @@ uint32_t Evse::get_number_of_connectors() {
     return static_cast<uint32_t>(this->id_connector_map.size());
 }
 
-Everest::SteadyTimer& Evse::get_sampled_meter_values_timer() {
-    return this->sampled_meter_values_timer;
-}
-
 void Evse::open_transaction(const std::string& transaction_id, const int32_t connector_id, const DateTime& timestamp,
                             const MeterValue& meter_start, const IdToken& id_token,
                             const std::optional<IdToken>& group_id_token, const std::optional<int32_t> reservation_id,
-                            const int32_t sampled_data_tx_updated_interval) {
+                            const std::chrono::seconds sampled_data_tx_updated_interval,
+                            const std::chrono::seconds sampled_data_tx_ended_interval,
+                            const std::chrono::seconds aligned_data_tx_updated_interval,
+                            const std::chrono::seconds aligned_data_tx_ended_interval) {
     if (!this->id_connector_map.count(connector_id)) {
         EVLOG_AND_THROW(std::runtime_error("Attempt to start transaction at invalid connector_id"));
     }
@@ -85,17 +88,56 @@ void Evse::open_transaction(const std::string& transaction_id, const int32_t con
     this->transaction->group_id_token = group_id_token;
     this->transaction->active_energy_import_start_value = this->get_active_import_register_meter_value();
 
-    transaction->meter_values.push_back(meter_start);
+    this->database_handler->transaction_metervalues_insert(this->transaction->transactionId.get(), meter_start);
 
-    if (sampled_data_tx_updated_interval > 0) {
-        this->sampled_meter_values_timer.interval(
+    if (sampled_data_tx_updated_interval > 0s) {
+        transaction->sampled_tx_updated_meter_values_timer.interval(
             [this] {
-                const auto meter_value = this->get_meter_value();
-                this->transaction->meter_values.push_back(meter_value);
+                this->transaction_meter_value_req(this->get_meter_value(), this->transaction->get_transaction(),
+                                                  transaction->get_seq_no(), this->transaction->reservation_id);
+            },
+            sampled_data_tx_updated_interval);
+    }
+
+    if (sampled_data_tx_ended_interval > 0s) {
+        transaction->sampled_tx_ended_meter_values_timer.interval(
+            [this] {
+                this->database_handler->transaction_metervalues_insert(this->transaction->transactionId.get(),
+                                                                       this->get_meter_value());
+            },
+            sampled_data_tx_ended_interval);
+    }
+
+    if (aligned_data_tx_updated_interval > 0s) {
+        transaction->aligned_tx_updated_meter_values_timer.interval_starting_from(
+            [this] {
+                if (this->device_model.get_optional_value<bool>(ControllerComponentVariables::AlignedDataSendDuringIdle)
+                        .value_or(false)) {
+                    return;
+                }
+                auto meter_value = this->get_meter_value();
+                for (auto& item : meter_value.sampledValue) {
+                    item.context = ReadingContextEnum::Sample_Clock;
+                }
                 this->transaction_meter_value_req(meter_value, this->transaction->get_transaction(),
                                                   transaction->get_seq_no(), this->transaction->reservation_id);
             },
-            std::chrono::seconds(sampled_data_tx_updated_interval));
+            aligned_data_tx_updated_interval,
+            std::chrono::floor<date::days>(date::utc_clock::to_sys(date::utc_clock::now())));
+    }
+
+    if (aligned_data_tx_ended_interval > 0s) {
+        transaction->aligned_tx_ended_meter_values_timer.interval_starting_from(
+            [this] {
+                auto meter_value = this->get_meter_value();
+                for (auto& item : meter_value.sampledValue) {
+                    item.context = ReadingContextEnum::Sample_Clock;
+                }
+                this->database_handler->transaction_metervalues_insert(this->transaction->transactionId.get(),
+                                                                       meter_value);
+            },
+            aligned_data_tx_ended_interval,
+            std::chrono::floor<date::days>(date::utc_clock::to_sys(date::utc_clock::now())));
     }
 }
 
@@ -106,8 +148,13 @@ void Evse::close_transaction(const DateTime& timestamp, const MeterValue& meter_
     }
 
     this->transaction->stoppedReason.emplace(reason);
-    this->transaction->meter_values.push_back(meter_stop);
-    this->sampled_meter_values_timer.stop();
+
+    // First stop all the timers to make sure the meter_stop is the last one in the database
+    this->transaction->sampled_tx_updated_meter_values_timer.stop();
+    this->transaction->sampled_tx_ended_meter_values_timer.stop();
+    this->transaction->aligned_tx_updated_meter_values_timer.stop();
+    this->transaction->aligned_tx_ended_meter_values_timer.stop();
+    this->database_handler->transaction_metervalues_insert(this->transaction->transactionId.get(), meter_stop);
 }
 
 void Evse::start_checking_max_energy_on_invalid_id() {

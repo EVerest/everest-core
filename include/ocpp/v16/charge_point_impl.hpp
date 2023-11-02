@@ -14,6 +14,7 @@
 
 #include <everest/timer.hpp>
 
+#include <ocpp/common/aligned_timer.hpp>
 #include <ocpp/common/charging_station_base.hpp>
 #include <ocpp/common/message_queue.hpp>
 #include <ocpp/common/schemas.hpp>
@@ -106,7 +107,7 @@ private:
     std::shared_ptr<ocpp::v16::DatabaseHandler> database_handler;
     std::unique_ptr<Everest::SteadyTimer> boot_notification_timer;
     std::unique_ptr<Everest::SteadyTimer> heartbeat_timer;
-    std::unique_ptr<Everest::SystemTimer> clock_aligned_meter_values_timer;
+    std::unique_ptr<ClockAlignedTimer> clock_aligned_meter_values_timer;
     std::vector<std::unique_ptr<Everest::SteadyTimer>> status_notification_timers;
     std::unique_ptr<Everest::SteadyTimer> ocsp_request_timer;
     std::unique_ptr<Everest::SteadyTimer> client_certificate_timer;
