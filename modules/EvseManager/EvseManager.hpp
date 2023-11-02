@@ -79,6 +79,7 @@ struct Conf {
     double soft_over_current_tolerance_percent;
     double soft_over_current_measurement_noise_A;
     bool hack_fix_hlc_integer_current_requests;
+    bool disable_authentication;
 };
 
 class EvseManager : public Everest::ModuleBase {
