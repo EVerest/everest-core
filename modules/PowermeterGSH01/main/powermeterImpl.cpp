@@ -64,23 +64,26 @@ void powermeterImpl::init() {
     }
     this->init_default_values();
 
-    get_meter_bus_address();
-    //ToDo: set bus address - not always broadcast
-    // if(device_diagnostics_obj.dev_info.bus_address != config.powermeter_device_id){
-    //     set_meter_bus_address(config.powermeter_device_id);
-    //     //set_meter_bus_address(0x4A);
-    // }
-
-    //set_application_operation_mode(gsh01_app_layer::ApplicationBoardMode::ASSEMBLY);
-    get_application_operation_mode();
-    if(device_diagnostics_obj.dev_info.application.mode == "Assembly") {
-        //ToDo: set line loss impedance - must be added as config parameter        
-        set_line_loss_impedance((uint16_t)config.line_loss_impedance*10);
-        set_application_operation_mode(gsh01_app_layer::ApplicationBoardMode::APPLICATION);
-        //get_line_loss_impedance();
-        get_status_word();
+    if(config.powermeter_device_id != 255){
+        get_meter_bus_address();
+        if(device_diagnostics_obj.dev_info.bus_address != config.powermeter_device_id){
+            //set bus address - not always broadcast
+            set_meter_bus_address(0xFF, config.powermeter_device_id);
+        }
     }
-    
+
+    if(config.config_by_meter){
+        get_application_operation_mode();
+        if(device_diagnostics_obj.dev_info.application.mode == "Assembly") {
+            //set line loss impedance        
+            set_line_loss_impedance((uint16_t)(config.line_loss_impedance*10000));
+            set_application_operation_mode(gsh01_app_layer::ApplicationBoardMode::APPLICATION);
+        }
+        else if(device_diagnostics_obj.dev_info.application.mode == "Application"){
+            EVLOG_info << "Powermeter in Application mode";
+        }
+    }
+
     time_sync();
     get_status_word();
 }
@@ -110,7 +113,7 @@ void powermeterImpl::ready() {
 
 
     // create device_diagnostics publisher thread
-/*    if (this->config.publish_device_diagnostics) {
+    if (this->config.publish_device_diagnostics) {
         std::thread ([this] {
             while (true) {
                 read_diagnostics_data();
@@ -119,7 +122,7 @@ void powermeterImpl::ready() {
                 std::this_thread::sleep_for(std::chrono::seconds(20));
             }
         }).detach();
-    }*/
+    }
 
     // create logging publisher thread
     if (this->config.publish_device_diagnostics) {
@@ -157,7 +160,7 @@ void powermeterImpl::time_sync(){
     EVLOG_info << "system time offset: " << module::conversions::hexdump((uint8_t)gmt_offset_quarters_of_an_hour);
     
     uint64_t diff = abs((uint32_t)std::chrono::duration_cast<std::chrono::seconds>(timepoint.time_since_epoch()).count() - device_data_obj.utc_time_s); 
-    if(diff > 60){
+    if(diff > config.max_clock_diff_s){
         EVLOG_info << "time diff is: " << diff << " s";
         EVLOG_info << "clock is out of sync --> time is set";
         set_device_time();
@@ -199,12 +202,12 @@ void powermeterImpl::get_meter_bus_address() {
     receive_response();
 }
 
-void powermeterImpl::set_meter_bus_address(uint8_t bus_address) {
+void powermeterImpl::set_meter_bus_address(uint8_t old_bus_address, uint8_t new_bus_address) {
 
     std::vector<uint8_t> set_meter_bus_address_cmd{};
-    app_layer.create_command_set_bus_address(bus_address, set_meter_bus_address_cmd);
+    app_layer.create_command_set_bus_address(new_bus_address, set_meter_bus_address_cmd);
 
-    std::vector<uint8_t> slip_msg_set_bus_address = std::move(this->slip.package_single(this->config.powermeter_device_id, set_meter_bus_address_cmd));
+    std::vector<uint8_t> slip_msg_set_bus_address = std::move(this->slip.package_single(old_bus_address, set_meter_bus_address_cmd));
     EVLOG_info << "Set meter bus address\nSEND: " << module::conversions::hexdump(slip_msg_set_bus_address) << " length: " << slip_msg_set_bus_address.size() << "\n\n";
     this->serial_device.tx(slip_msg_set_bus_address);
     receive_response();

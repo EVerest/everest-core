@@ -11,10 +11,11 @@ active_modules:
         parity: 0
         rs485_direction_gpio: -1
         ignore_echo: false
-        line_loss_impedance: 0
-        gmt_offset_quarter_hours: 8
-        publish_device_data: true
-        publish_device_diagnostics: true
+        line_loss_impedance: 0.0000
+        max_clock_diff_s: 60
+        config_by_meter: false
+        publish_device_data: false
+        publish_device_diagnostics: false
   Test:
     connections:
       powermeter:

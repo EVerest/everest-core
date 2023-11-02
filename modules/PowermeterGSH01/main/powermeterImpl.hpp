@@ -30,8 +30,9 @@ struct Conf {
     int parity;
     int rs485_direction_gpio;
     bool ignore_echo;
-    int line_loss_impedance;
-    int gmt_offset_quarter_hours;
+    double line_loss_impedance;
+    int max_clock_diff_s;
+    bool config_by_meter;
     bool publish_device_data;
     bool publish_device_diagnostics;
 };
@@ -98,7 +99,7 @@ private:
     void get_device_time();
     void set_device_time();
     void get_meter_bus_address();
-    void set_meter_bus_address(uint8_t bus_address);
+    void set_meter_bus_address(uint8_t old_bus_address, uint8_t new_bus_address);
     void get_status_word();
     void set_device_charge_point_id(gsh01_app_layer::UserIdType id_type, std::string charge_point_id);
     void read_device_data();

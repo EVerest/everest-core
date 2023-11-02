@@ -5,7 +5,7 @@ provides:
     interface: powermeter
     config:
       powermeter_device_id:
-        description: The powermeter's address on the serial bus
+        description: The powermeter's address on the serial bus, 255 is broadcast
         type: integer
         minimum: 0
         maximum: 255
@@ -35,15 +35,21 @@ provides:
         type: boolean
         default: false
       line_loss_impedance:
-        description: Total line loss impedance (R_line1 + R_line2), can only be set in Assembly Mode. unit = mOhm (10^⁻3)
+        description: Total line loss impedance (R_line1 + R_line2), can only be set in Assembly Mode. unit = Ohm 
+        type: number
+        minimum: 0.0000
+        maximum: 0.0050
+        default: 0.0000
+      max_clock_diff_s:
+        description: Maximal time difference (in seconds) between meter clock and system clock, until new set_time command is sent
         type: integer
-        default: 0
-      gmt_offset_quarter_hours:
-        description: GMT offset in quarters of an hour, e.g. 8 = +2h
-        type: integer
-        minimum: -47
-        maximum: 47
-        default: 0
+        minimum: 30
+        maximum: 300
+        default: 60
+      config_by_meter:
+        description: Configuration (line loss impedance) should be done by powermeter software module.
+        type: boolean
+        default: false
       publish_device_data:
         description: Regularly publish device data not covered by the "powermeter" interface (for debugging purposes).
         type: boolean
@@ -56,4 +62,4 @@ enable_external_mqtt: true
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
   authors:
-    - Lars Dieckmann
+    - Lars Dieckmann, Miriam Thome
