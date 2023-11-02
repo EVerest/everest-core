@@ -25,6 +25,7 @@ void exampleImpl::ready() {
     std::this_thread::sleep_for(std::chrono::seconds(10));
     request_clear_error(my_error_uuid);
     raise_example_ExampleErrorB("This error is raised to test the error handling", Everest::error::Severity::High);
+    std::this_thread::sleep_for(std::chrono::seconds(2));
     request_clear_all_errors();
     std::this_thread::sleep_for(std::chrono::seconds(2));
     raise_example_ExampleErrorC("This error 1 is raised to test the error handling", Everest::error::Severity::Mid);
