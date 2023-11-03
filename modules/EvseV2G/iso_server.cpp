@@ -33,6 +33,9 @@
 #define MAX_EMAID_LEN                 18
 #define GEN_CHALLENGE_SIZE            16
 
+const uint16_t SAE_V2H = 28472;
+const uint16_t SAE_V2G = 28473;
+
 /*!
  * \brief iso_validate_state This function checks whether the received message is expected and valid at this
  * point in the communication sequence state machine. The current V2G msg type must be set with the current V2G msg
@@ -1068,6 +1071,16 @@ static enum v2g_event handle_iso_payment_service_selection(struct v2g_connection
                     /* If it's stored, search for the next requested SelectedService entry */
                     dlog(DLOG_LEVEL_INFO, "Selected service id %i found",
                          conn->ctx->evse_v2g_data.evse_service_list[ci_idx].ServiceID);
+
+                    if (conn->ctx->evse_v2g_data.evse_service_list[ci_idx].ServiceID == SAE_V2H) {
+                        conn->ctx->evse_v2g_data.sae_bidi_data.enabled_sae_v2h = true;
+                        conn->ctx->evse_v2g_data.sae_bidi_data.enabled_sae_v2g = false;
+                        conn->ctx->p_charger->publish_sae_bidi_mode_active(nullptr);
+                    } else if (conn->ctx->evse_v2g_data.evse_service_list[ci_idx].ServiceID == SAE_V2G) {
+                        conn->ctx->evse_v2g_data.sae_bidi_data.enabled_sae_v2h = false;
+                        conn->ctx->evse_v2g_data.sae_bidi_data.enabled_sae_v2g = true;
+                        conn->ctx->p_charger->publish_sae_bidi_mode_active(nullptr);
+                    }
                     entry_found = true;
                     break;
                 }
@@ -1519,6 +1532,31 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
             res->ResponseCode = iso1responseCodeType_FAILED_WrongChargeParameter; // [V2G2-477]
         }
     } else {
+
+        if (conn->ctx->evse_v2g_data.sae_bidi_data.enabled_sae_v2h == true) {
+            static bool first_req = true;
+
+            if (first_req == true) {
+                res->EVSEProcessing = iso1EVSEProcessingType_Ongoing;
+                first_req = false;
+            } else {
+                // Check if second req message contains neg values
+                // Check if bulk soc is set
+                if (req->DC_EVChargeParameter.BulkSOC_isUsed == 1 &&
+                    req->DC_EVChargeParameter.EVMaximumCurrentLimit.Value < 0 &&
+                    req->DC_EVChargeParameter.EVMaximumPowerLimit_isUsed == 1 &&
+                    req->DC_EVChargeParameter.EVMaximumPowerLimit.Value < 0) {
+                    // Save bulk soc for minimal soc to stop
+                    conn->ctx->evse_v2g_data.sae_bidi_data.sae_v2h_minimal_soc = req->DC_EVChargeParameter.BulkSOC;
+                } else {
+                    res->ResponseCode = iso1responseCodeType::iso1responseCodeType_FAILED_WrongEnergyTransferMode;
+                }
+                res->EVSEProcessing = iso1EVSEProcessingType_Finished;
+                // reset first_req
+                first_req = true;
+            }
+        }
+
         /* Configure DC stucture elements */
         res->DC_EVSEChargeParameter_isUsed = 1;
         res->AC_EVSEChargeParameter_isUsed = 0;
@@ -2077,6 +2115,55 @@ static enum v2g_event handle_iso_current_demand(struct v2g_connection* conn) {
                                       : (unsigned int)0;
     res->ResponseCode = iso1responseCodeType_OK;
     res->SAScheduleTupleID = conn->ctx->session.sa_schedule_tuple_id;
+
+    static uint8_t req_pos_value_count = 0;
+
+    if (conn->ctx->evse_v2g_data.sae_bidi_data.enabled_sae_v2g == true) {
+
+        // case: evse initiated -> Negative PresentCurrent, EvseMaxCurrentLimit, EvseMaxCurrentLimit
+        if (conn->ctx->evse_v2g_data.sae_bidi_data.discharging == false &&
+            conn->ctx->evse_v2g_data.evse_present_current.Value < 0 &&
+            conn->ctx->evse_v2g_data.evse_maximum_current_limit_is_used == true &&
+            conn->ctx->evse_v2g_data.evse_maximum_current_limit.Value < 0 &&
+            conn->ctx->evse_v2g_data.evse_maximum_power_limit_is_used == true &&
+            conn->ctx->evse_v2g_data.evse_maximum_power_limit.Value < 0) {
+            if (req->EVTargetCurrent.Value > 0) {
+                if (req_pos_value_count++ >= 1) {
+                    dlog(DLOG_LEVEL_WARNING, "SAE V2G Bidi handshake was not recognized by the ev side. Instead of "
+                                             "shutting down, it is better to wait for a correct response");
+                    req_pos_value_count = 0;
+                } else {
+                    req_pos_value_count = 0;
+                    conn->ctx->evse_v2g_data.sae_bidi_data.discharging = true;
+                }
+            }
+        } else if (conn->ctx->evse_v2g_data.sae_bidi_data.discharging == true &&
+                   conn->ctx->evse_v2g_data.evse_present_current.Value > 0 &&
+                   conn->ctx->evse_v2g_data.evse_maximum_current_limit_is_used == true &&
+                   conn->ctx->evse_v2g_data.evse_maximum_current_limit.Value > 0 &&
+                   conn->ctx->evse_v2g_data.evse_maximum_power_limit_is_used == true &&
+                   conn->ctx->evse_v2g_data.evse_maximum_power_limit.Value > 0) {
+            if (req->EVTargetCurrent.Value < 0) {
+                if (req_pos_value_count++ >= 1) {
+                    dlog(DLOG_LEVEL_WARNING, "SAE V2G Bidi handshake was not recognized by the ev side. Instead of "
+                                             "shutting down, it is better to wait for a correct response");
+                    req_pos_value_count = 0;
+                } else {
+                    req_pos_value_count = 0;
+                    conn->ctx->evse_v2g_data.sae_bidi_data.discharging = false;
+                }
+            }
+        }
+
+        // case: ev initiated -> Negative EvTargetCurrent, EVMaxCurrentLimit, EVMaxPowerLimit
+        // Todo(SL): Is it necessary to notify the evse_manager that the ev want to give power/current?
+        // Or is it obvious because of the negative target current request.
+
+    } else if (conn->ctx->evse_v2g_data.sae_bidi_data.enabled_sae_v2h == true) {
+        if (req->DC_EVStatus.EVRESSSOC <= conn->ctx->evse_v2g_data.sae_bidi_data.sae_v2h_minimal_soc) {
+            res->DC_EVSEStatus.EVSEStatusCode = iso1DC_EVSEStatusCodeType_EVSE_Shutdown;
+        }
+    }
 
     /* Check the current response code and check if no external error has occurred */
     next_event = (v2g_event)iso_validate_response_code(&res->ResponseCode, conn);

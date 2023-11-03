@@ -339,6 +339,17 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
                             } else {
                                 mod->is_actually_exporting_to_grid = false;
                             }
+                        } else if (mod->sae_bidi_active) {
+                            if (evseMaxLimits.EVSEMaximumPowerLimit < 0) {
+                                mod->is_actually_exporting_to_grid = true;
+                            } else {
+                                mod->is_actually_exporting_to_grid = false;
+                            }
+                            if (evseMaxLimits.EVSEMaximumCurrentLimit < 0) {
+                                mod->is_actually_exporting_to_grid = true;
+                            } else {
+                                mod->is_actually_exporting_to_grid = false;
+                            }
                         } else {
                             EVLOG_error << "Bidirectional export back to grid requested, but not supported. Enable "
                                            "ISO-20 or set hack_allow_bpt_with_iso2 config option.";

@@ -168,6 +168,13 @@ typedef struct keylogDebugCtx {
     uint8_t hexdumpLinesToProcess;
 } keylogDebugCtx;
 
+struct SAE_Bidi_Data {
+    bool enabled_sae_v2h;
+    bool enabled_sae_v2g;
+    int8_t sae_v2h_minimal_soc;
+    bool discharging;
+};
+
 /**
  * Abstracts a charging port, i.e. a power outlet in this daemon.
  */
@@ -295,6 +302,10 @@ struct v2g_context {
 
         /* AC only power electronic values */
         struct iso1PhysicalValueType evse_nominal_voltage;
+
+        // Specific SAE J2847 bidi values
+        struct SAE_Bidi_Data sae_bidi_data;
+
     } evse_v2g_data;
 
     struct {

@@ -286,6 +286,14 @@ cmds:
       value:
         description: Set to true when link becomes ready, false when the link is terminated
         type: boolean
+  supporting_sae_j2847_bidi:
+    description: >-
+      Charger is supporting SAE J2847 V2G/V2H version
+    arguments:
+      mode:
+        description: Mode V2G or V2H
+        type: string
+        $ref: /iso15118_charger#/SAE_J2847_Bidi_Mode
 vars:
   Require_Auth_EIM:
     description: An EIM authorization is requiered
@@ -319,6 +327,9 @@ vars:
   currentDemand_Finished:
     description: The charging process was finished
     type: "null"
+  sae_bidi_mode_active:
+      description: The SAE J2847 bidi mode is active
+      type: "null"
   EVCCIDD:
     description:
       Specifies the EVs identification in a readable format. It contains

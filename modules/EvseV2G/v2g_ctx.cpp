@@ -262,6 +262,12 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
     ctx->contactor_is_closed = false;
     ctx->evse_v2g_data.receipt_required = (int)0;
 
+    // Specific SAE J2847 bidi values
+    ctx->evse_v2g_data.sae_bidi_data.enabled_sae_v2g = false;
+    ctx->evse_v2g_data.sae_bidi_data.enabled_sae_v2h = false;
+    ctx->evse_v2g_data.sae_bidi_data.sae_v2h_minimal_soc = 20;
+    ctx->evse_v2g_data.sae_bidi_data.discharging = false;
+
     // Init EV received v2g-data to an invalid state
     memset(&ctx->ev_v2g_data, 0xff, sizeof(ctx->ev_v2g_data));
 

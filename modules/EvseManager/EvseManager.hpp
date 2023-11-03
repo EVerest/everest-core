@@ -80,6 +80,8 @@ struct Conf {
     double soft_over_current_measurement_noise_A;
     bool hack_fix_hlc_integer_current_requests;
     bool disable_authentication;
+    bool sae_j2847_2_bpt_enabled;
+    std::string sae_j2847_2_bpt_mode;
 };
 
 class EvseManager : public Everest::ModuleBase {
@@ -158,6 +160,8 @@ public:
     void apply_new_target_voltage_current();
 
     std::string selected_protocol = "Unknown";
+
+    std::atomic_bool sae_bidi_active{false};
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:

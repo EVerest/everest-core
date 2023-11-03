@@ -137,5 +137,9 @@ void ISO15118_chargerImpl::handle_set_Get_Certificate_Response(
 void ISO15118_chargerImpl::handle_dlink_ready(bool& value) {
 }
 
+void ISO15118_chargerImpl::handle_supporting_sae_j2847_bidi(types::iso15118_charger::SAE_J2847_Bidi_Mode& mode){
+    // your code for cmd set_Certificate_Service_Supported goes here
+};
+
 } // namespace main
 } // namespace module

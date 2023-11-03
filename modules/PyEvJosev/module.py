@@ -120,5 +120,15 @@ class PyEVJosevModule():
         self._es.dc_target_current = parameters['TargetCurrent']
         self._es.dc_target_voltage = parameters['TargetVoltage']
 
+    def _handler_set_bpt_dc_params(self, args):
+        parameters = args['EV_BPT_Parameters']
+        self._es.dc_discharge_max_current_limit = parameters["DischargeMaxCurrentLimit"]
+        self._es.dc_discharge_max_power_limit = parameters['DischargeMaxPowerLimit']
+        self._es.dc_discharge_target_current = parameters['DischargeTargetCurrent']
+        self._es.minimal_soc = parameters["DischargeMinimalSoC"]
+
+    def _handler_enable_sae_j2847_v2g_v2h(self, args):
+        self._es.SAEJ2847_V2H_V2G_Active = True
+
 py_ev_josev = PyEVJosevModule()
 py_ev_josev.start_evcc_handler()

@@ -189,7 +189,10 @@ void EvseManager::ready() {
                 current_demand_active = true;
             });
 
-            r_hlc[0]->subscribe_currentDemand_Finished([this] { current_demand_active = false; });
+            r_hlc[0]->subscribe_currentDemand_Finished([this] {
+                current_demand_active = false;
+                sae_bidi_active = false;
+            });
 
             // Isolation monitoring for DC charging handler
             if (!r_imd.empty()) {
@@ -209,7 +212,11 @@ void EvseManager::ready() {
                     powersupply_measurement = m;
                     types::iso15118_charger::DC_EVSEPresentVoltage_Current present_values;
                     present_values.EVSEPresentVoltage = (m.voltage_V > 0 ? m.voltage_V : 0.0);
-                    present_values.EVSEPresentCurrent = (m.current_A > 0 ? m.current_A : 0.0);
+                    if (config.sae_j2847_2_bpt_enabled) {
+                        present_values.EVSEPresentCurrent = m.current_A;
+                    } else {
+                        present_values.EVSEPresentCurrent = (m.current_A > 0 ? m.current_A : 0.0);
+                    }
 
                     if (config.hack_present_current_offset > 0) {
                         present_values.EVSEPresentCurrent =
@@ -365,6 +372,69 @@ void EvseManager::ready() {
                 ev_info.soc = s.DC_EVRESSSOC;
                 p_evse->publish_ev_info(ev_info);
             });
+
+            // SAE J2847/2 Bidi
+            if (config.sae_j2847_2_bpt_enabled == true) {
+                r_hlc[0]->call_supporting_sae_j2847_bidi(
+                    types::iso15118_charger::string_to_sae_j2847_bidi_mode(config.sae_j2847_2_bpt_mode));
+
+                r_hlc[0]->subscribe_sae_bidi_mode_active([this] {
+                    sae_bidi_active = true;
+
+                    if (config.sae_j2847_2_bpt_mode == "V2H") {
+                        session_log.evse(true, "SAE J2847 V2H mode is active");
+                        types::iso15118_charger::DC_EVSEMaximumLimits evseMaxLimits;
+                        types::iso15118_charger::DC_EVSEMinimumLimits evseMinLimits;
+
+                        if (powersupply_capabilities.max_import_current_A.has_value() &&
+                            powersupply_capabilities.max_import_power_W.has_value() &&
+                            powersupply_capabilities.max_import_voltage_V.has_value()) {
+                            evseMaxLimits.EVSEMaximumCurrentLimit =
+                                -powersupply_capabilities.max_import_current_A.value();
+                            evseMaxLimits.EVSEMaximumPowerLimit = -powersupply_capabilities.max_import_power_W.value();
+                            evseMaxLimits.EVSEMaximumVoltageLimit =
+                                powersupply_capabilities.max_import_voltage_V.value();
+                            r_hlc[0]->call_set_DC_EVSEMaximumLimits(evseMaxLimits);
+                            charger->inform_new_evse_max_hlc_limits(evseMaxLimits);
+                        } else {
+                            EVLOG_error << "No Import Current, Power or Voltage is available!!!";
+                            return;
+                        }
+
+                        if (powersupply_capabilities.min_import_current_A.has_value() &&
+                            powersupply_capabilities.min_import_voltage_V.has_value()) {
+                            evseMinLimits.EVSEMinimumCurrentLimit =
+                                -powersupply_capabilities.min_import_current_A.value();
+                            evseMinLimits.EVSEMinimumVoltageLimit =
+                                powersupply_capabilities.min_import_voltage_V.value();
+                            r_hlc[0]->call_set_DC_EVSEMinimumLimits(evseMinLimits);
+                        } else {
+                            EVLOG_error << "No Import Current, Power or Voltage is available!!!";
+                            return;
+                        }
+
+                        const auto timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
+                        types::energy::ExternalLimits external_limits;
+                        types::energy::ScheduleReqEntry target_entry;
+                        target_entry.timestamp = timestamp;
+                        target_entry.limits_to_leaves.total_power_W =
+                            powersupply_capabilities.max_import_power_W.value();
+
+                        types::energy::ScheduleReqEntry zero_entry;
+                        zero_entry.timestamp = timestamp;
+                        zero_entry.limits_to_leaves.total_power_W = 0;
+
+                        external_limits.schedule_export.emplace(
+                            std::vector<types::energy::ScheduleReqEntry>(1, target_entry));
+                        external_limits.schedule_import.emplace(
+                            std::vector<types::energy::ScheduleReqEntry>(1, zero_entry));
+
+                        updateLocalEnergyLimit(external_limits);
+                    } else {
+                        session_log.evse(true, "SAE J2847 V2G mode is active");
+                    }
+                });
+            }
 
             // unused vars of HLC for now:
 
@@ -1229,7 +1299,12 @@ bool EvseManager::powersupply_DC_set(double _voltage, double _current) {
             current = hlc_limits.EVSEMaximumCurrentLimit;
     }
 
-    if (config.hack_allow_bpt_with_iso2 && current_demand_active && is_actually_exporting_to_grid) {
+    if (config.sae_j2847_2_bpt_enabled) {
+        current = std::abs(current);
+    }
+
+    if ((config.hack_allow_bpt_with_iso2 || config.sae_j2847_2_bpt_enabled) && current_demand_active &&
+        is_actually_exporting_to_grid) {
         if (!last_is_actually_exporting_to_grid) {
             // switching from import from grid to export to grid
             session_log.evse(false, "DC power supply: switch ON in import mode");
@@ -1267,7 +1342,8 @@ bool EvseManager::powersupply_DC_set(double _voltage, double _current) {
 
     } else {
 
-        if (config.hack_allow_bpt_with_iso2 && current_demand_active && last_is_actually_exporting_to_grid) {
+        if ((config.hack_allow_bpt_with_iso2 || config.sae_j2847_2_bpt_enabled) && current_demand_active &&
+            last_is_actually_exporting_to_grid) {
             // switching from export to grid to import from grid
             session_log.evse(false, "DC power supply: switch ON in export mode");
             r_powersupply_DC[0]->call_setMode(types::power_supply_DC::Mode::Export);
