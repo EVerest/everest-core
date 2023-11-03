@@ -428,13 +428,14 @@ static std::map<pid_t, std::string> start_modules(Config& config, MQTTAbstractio
             modules_to_spawn.emplace_back(module_name, printable_module_name, ModuleStartInfo::Language::python,
                                           fs::canonical(python_module_path));
         } else {
-            throw std::runtime_error(fmt::format("module: {} ({}) cannot be loaded because no C++ or JavaScript "
-                                                 "library has been found\n"
-                                                 "  checked paths:\n"
-                                                 "    cpp: {}\n"
-                                                 "    js:  {}\n",
-                                                 "    py:  {}\n", module_name, module_type, binary_path.string(),
-                                                 javascript_library_path.string(), python_module_path.string()));
+            throw std::runtime_error(
+                fmt::format("module: {} ({}) cannot be loaded because no Binary, JavaScript or Python "
+                            "module has been found\n"
+                            "  checked paths:\n"
+                            "    binary: {}\n"
+                            "    js:  {}\n",
+                            "    py:  {}\n", module_name, module_type, binary_path.string(),
+                            javascript_library_path.string(), python_module_path.string()));
         }
     }
 

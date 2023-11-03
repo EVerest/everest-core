@@ -7,6 +7,10 @@ struct Libraries {
 }
 
 fn find_everest_workspace_root() -> PathBuf {
+    if let Ok(everest_framework_dir) = env::var("EVEREST_RS_FRAMEWORK_SOURCE_LOCATION") {
+        return PathBuf::from(everest_framework_dir);
+    }
+
     let mut cur_dir =
         PathBuf::from(env::var("CARGO_MANIFEST_DIR").expect("always set in build.rs execution"));
 
@@ -24,8 +28,19 @@ fn find_everest_workspace_root() -> PathBuf {
 /// Returns the Libraries path if this is a standalone build of everest-framework or None if it is
 /// not.
 fn find_libs_in_everest_framework(root: &Path) -> Option<Libraries> {
-    let everestrs_sys = root.join("everest-framework/build/everestrs/libeverestrs_sys.a");
-    let framework = root.join("everest-framework/build/lib/libframework.so");
+    let (everestrs_sys, framework) =
+        if let Ok(everest_framework_dir) = env::var("EVEREST_RS_FRAMEWORK_BINARY_LOCATION") {
+            let everest_framework_path = PathBuf::from(everest_framework_dir);
+            (
+                everest_framework_path.join("everestrs/libeverestrs_sys.a"),
+                everest_framework_path.join("lib/libframework.so"),
+            )
+        } else {
+            (
+                root.join("everest-framework/build/everestrs/libeverestrs_sys.a"),
+                root.join("everest-framework/build/lib/libframework.so"),
+            )
+        };
     if everestrs_sys.exists() && framework.exists() {
         Some(Libraries {
             everestrs_sys,

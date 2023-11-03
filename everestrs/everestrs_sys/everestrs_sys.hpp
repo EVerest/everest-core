@@ -5,9 +5,8 @@
 #include <memory>
 #include <string>
 
-#include "rust/cxx.h"
+#include "cxxbridge/rust.h"
 
-struct CommandMeta;
 struct JsonBlob;
 struct Runtime;
 
@@ -15,13 +14,14 @@ class Module {
 public:
     Module(const std::string& module_id, const std::string& prefix, const std::string& conf);
 
-    JsonBlob initialize();
+    JsonBlob initialize() const;
     JsonBlob get_interface(rust::Str interface_name) const;
 
     void signal_ready(const Runtime& rt) const;
-    void provide_command(const Runtime& rt, const CommandMeta& meta) const;
-
-    // TODO(hrapp): Add call_command, publish_variable and subscribe_variable.
+    void provide_command(const Runtime& rt, rust::String implementation_id, rust::String name) const;
+    JsonBlob call_command(rust::Str implementation_id, rust::Str name, JsonBlob args) const;
+    void subscribe_variable(const Runtime& rt, rust::String implementation_id, rust::String name) const;
+    void publish_variable(rust::Str implementation_id, rust::Str name, JsonBlob blob) const;
 
 private:
     const std::string module_id_;
