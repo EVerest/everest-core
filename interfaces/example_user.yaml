@@ -2,4 +2,7 @@ description: >-
   This interface defines an example_user interface that uses the example
   interface
 errors:
-  - reference: /errors/example
+  - reference: /errors/example#/ExampleErrorA
+  - reference: /errors/example#/ExampleErrorB
+  - reference: /errors/example#/ExampleErrorC
+  - reference: /errors/example#/ExampleErrorD

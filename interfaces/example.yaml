@@ -18,4 +18,3 @@ vars:
     type: number
 errors:
   - reference: /errors/example
-  # - reference: /errors/example#/ExampleErrorA
