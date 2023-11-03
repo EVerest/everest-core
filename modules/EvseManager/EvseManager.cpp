@@ -386,9 +386,7 @@ void EvseManager::ready() {
 
         r_hlc[0]->call_set_ReceiptRequired(config.ev_receipt_required);
 
-        // We always go through the auth step with EIM even if it is free. This way EVerest auth manager has full
-        // control.
-        r_hlc[0]->call_set_FreeService(false);
+        r_hlc[0]->call_set_FreeService(config.disable_authentication);
 
         // set up debug mode for HLC
         if (config.session_logging) {

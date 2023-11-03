@@ -137,6 +137,16 @@ void evse_managerImpl::ready() {
 
             auto reason = mod->charger->getSessionStartedReason();
 
+            if (mod->config.disable_authentication && reason == types::evse_manager::StartSessionReason::EVConnected) {
+                // Free service, authorize immediately
+                types::authorization::ProvidedIdToken provided_token;
+                provided_token.authorization_type = types::authorization::AuthorizationType::RFID;
+                provided_token.id_token = "FREESERVICE";
+                provided_token.prevalidated = true;
+                mod->charger->Authorize(true, provided_token);
+                mod->charger_was_authorized();
+            }
+
             session_started.reason = reason;
 
             set_session_uuid();

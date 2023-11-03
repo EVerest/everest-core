@@ -176,6 +176,13 @@ config:
       between EV requested current (integer) and HLC current limit is less then 1.0
     type: boolean
     default: false
+  disable_authentication:
+    description: >-
+      Do not wait for authorization from Auth module, offer a free service. Start charging immediately after plug in.
+      Do not use with Auth manager or OCPP, this option is only to allow charging with a standalone EvseManager that is not connected to an Auth manager.
+      Use DummyTokenProvider/Validator when testing with Auth module and/or OCPP.
+    type: boolean
+    default: false
 provides:
   evse:
     interface: evse_manager
