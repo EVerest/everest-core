@@ -15,7 +15,7 @@ nlohmann_json_schema_validator:
     ]
 liblog:
   git: https://github.com/EVerest/liblog.git
-  git_tag: v0.2.0
+  git_tag: v0.2.1
   options: ["BUILD_EXAMPLES OFF"]
 libtimer:
   git: https://github.com/EVerest/libtimer.git
@@ -30,4 +30,4 @@ websocketpp:
   git_tag: 0.8.2
 libevse-security:
   git: https://github.com/EVerest/libevse-security.git
-  git_tag: 338dd2e
+  git_tag: v0.2.0
