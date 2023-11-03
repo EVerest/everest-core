@@ -1,7 +1,7 @@
 ---
 liblog:
   git: https://github.com/EVerest/liblog.git
-  git_tag: v0.2.0
+  git_tag: v0.2.1
   options: ["BUILD_EXAMPLES OFF"]
 
 gtest:
