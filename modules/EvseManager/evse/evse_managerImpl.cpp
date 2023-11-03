@@ -142,6 +142,7 @@ void evse_managerImpl::ready() {
                 types::authorization::ProvidedIdToken provided_token;
                 provided_token.authorization_type = types::authorization::AuthorizationType::RFID;
                 provided_token.id_token = "FREESERVICE";
+                provided_token.prevalidated = true;
                 mod->charger->Authorize(true, provided_token);
                 mod->charger_was_authorized();
             }
