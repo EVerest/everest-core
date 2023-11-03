@@ -121,6 +121,7 @@ ocpp::v201::CertificateHashDataChain to_ocpp_v201(ocpp::CertificateHashDataChain
 ocpp::v201::OCSPRequestData to_ocpp_v201(ocpp::OCSPRequestData other);
 
 ocpp::CertificateType from_ocpp_v201(ocpp::v201::GetCertificateIdUseEnum other);
+std::vector<ocpp::CertificateType> from_ocpp_v201(const std::vector<ocpp::v201::GetCertificateIdUseEnum>& other);
 ocpp::CaCertificateType from_ocpp_v201(ocpp::v201::InstallCertificateUseEnum other);
 ocpp::CertificateSigningUseEnum from_ocpp_v201(ocpp::v201::CertificateSigningUseEnum other);
 ocpp::HashAlgorithmEnumType from_ocpp_v201(ocpp::v201::HashAlgorithmEnum other);

@@ -114,7 +114,7 @@ ocpp::v201::CertificateHashDataChain to_ocpp_v201(ocpp::CertificateHashDataChain
     ocpp::v201::CertificateHashDataChain lhs;
     lhs.certificateType = to_ocpp_v201(other.certificateType);
     lhs.certificateHashData = to_ocpp_v201(other.certificateHashData);
-    if (other.childCertificateHashData.has_value()) {
+    if (other.childCertificateHashData.has_value() && !other.childCertificateHashData.value().empty()) {
         std::vector<ocpp::v201::CertificateHashDataType> v;
         for (const auto& certificate_hash_data : other.childCertificateHashData.value()) {
             v.push_back(to_ocpp_v201(certificate_hash_data));
@@ -149,6 +149,14 @@ ocpp::CertificateType from_ocpp_v201(ocpp::v201::GetCertificateIdUseEnum other) 
     default:
         throw std::runtime_error("Could not convert GetCertificateIdUseEnum to CertificateType");
     }
+}
+
+std::vector<ocpp::CertificateType> from_ocpp_v201(const std::vector<ocpp::v201::GetCertificateIdUseEnum>& other) {
+    std::vector<ocpp::CertificateType> certificate_types;
+    for (const auto& certificate_id_use_enum : other) {
+        certificate_types.push_back(from_ocpp_v201(certificate_id_use_enum));
+    }
+    return certificate_types;
 }
 
 ocpp::CaCertificateType from_ocpp_v201(ocpp::v201::InstallCertificateUseEnum other) {

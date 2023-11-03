@@ -2843,23 +2843,7 @@ void ChargePointImpl::handle_data_transfer_pnc_get_installed_certificates(Call<D
             // prepare argument for getRootCertificate
             std::vector<ocpp::CertificateType> certificate_types;
             if (req.certificateType.has_value()) {
-                for (const auto& certificate_id_use_enum : req.certificateType.value()) {
-                    if (certificate_id_use_enum == ocpp::v201::GetCertificateIdUseEnum::V2GRootCertificate) {
-                        certificate_types.push_back(ocpp::CertificateType::V2GRootCertificate);
-                    }
-                    if (certificate_id_use_enum == ocpp::v201::GetCertificateIdUseEnum::MORootCertificate) {
-                        certificate_types.push_back(ocpp::CertificateType::MORootCertificate);
-                    }
-                    if (certificate_id_use_enum == ocpp::v201::GetCertificateIdUseEnum::CSMSRootCertificate) {
-                        certificate_types.push_back(ocpp::CertificateType::CSMSRootCertificate);
-                    }
-                    if (certificate_id_use_enum == ocpp::v201::GetCertificateIdUseEnum::V2GCertificateChain) {
-                        certificate_types.push_back(ocpp::CertificateType::V2GCertificateChain);
-                    }
-                    if (certificate_id_use_enum == ocpp::v201::GetCertificateIdUseEnum::ManufacturerRootCertificate) {
-                        certificate_types.push_back(ocpp::CertificateType::MFRootCertificate);
-                    }
-                }
+                certificate_types = ocpp::evse_security_conversions::from_ocpp_v201(req.certificateType.value());
             }
 
             ocpp::v201::GetInstalledCertificateIdsResponse get_certificate_ids_response;

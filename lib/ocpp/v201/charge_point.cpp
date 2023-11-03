@@ -201,6 +201,23 @@ void ChargePoint::on_session_started(const int32_t evse_id, const int32_t connec
     this->evses.at(evse_id)->submit_event(connector_id, ConnectorEvent::PlugIn);
 }
 
+Get15118EVCertificateResponse
+ChargePoint::on_get_15118_ev_certificate_request(const Get15118EVCertificateRequest& request) {
+    EVLOG_debug << "Received Get15118EVCertificateRequest " << request;
+    auto future_res = this->send_async<Get15118EVCertificateRequest>(
+        ocpp::Call<Get15118EVCertificateRequest>(request, this->message_queue->createMessageId()));
+    const auto response_message = future_res.get();
+    EVLOG_debug << "Received Get15118EVCertificateResponse " << response_message.message;
+    if (response_message.messageType != MessageType::Get15118EVCertificateResponse) {
+        Get15118EVCertificateResponse response;
+        response.status = Iso15118EVCertificateStatusEnum::Failed;
+        return response;
+    }
+
+    ocpp::CallResult<Get15118EVCertificateResponse> call_result = response_message.message;
+    return call_result.msg;
+}
+
 void ChargePoint::on_transaction_started(
     const int32_t evse_id, const int32_t connector_id, const std::string& session_id, const DateTime& timestamp,
     const ocpp::v201::TriggerReasonEnum trigger_reason, const MeterValue& meter_start, const IdToken& id_token,
@@ -776,6 +793,15 @@ void ChargePoint::handle_message(const EnhancedMessage<v201::MessageType>& messa
         break;
     case MessageType::GetTransactionStatus:
         this->handle_get_transaction_status(json_message);
+        break;
+    case MessageType::GetInstalledCertificateIds:
+        this->handle_get_installed_certificate_ids_req(json_message);
+        break;
+    case MessageType::InstallCertificate:
+        this->handle_install_certificate_req(json_message);
+        break;
+    case MessageType::DeleteCertificate:
+        this->handle_delete_certificate_req(json_message);
         break;
     default:
         if (message.messageTypeId == MessageTypeId::CALL) {
@@ -2235,6 +2261,75 @@ void ChargePoint::handle_firmware_update_req(Call<UpdateFirmwareRequest> call) {
             std::optional<CiString<255>>("Provided signing certificate is not valid!"), true,
             true); // critical because TC_L_05_CS requires this message to be sent
     }
+}
+
+void ChargePoint::handle_get_installed_certificate_ids_req(Call<GetInstalledCertificateIdsRequest> call) {
+    EVLOG_debug << "Received GetInstalledCertificateIdsRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
+    GetInstalledCertificateIdsResponse response;
+
+    const auto msg = call.msg;
+
+    // prepare argument for getRootCertificate
+    std::vector<ocpp::CertificateType> certificate_types;
+    if (msg.certificateType.has_value()) {
+        certificate_types = ocpp::evse_security_conversions::from_ocpp_v201(msg.certificateType.value());
+    } else {
+        certificate_types.push_back(CertificateType::CSMSRootCertificate);
+        certificate_types.push_back(CertificateType::MFRootCertificate);
+        certificate_types.push_back(CertificateType::MORootCertificate);
+        certificate_types.push_back(CertificateType::V2GCertificateChain);
+        certificate_types.push_back(CertificateType::V2GRootCertificate);
+    }
+
+    // retrieve installed certificates
+    const auto certificate_hash_data_chains = this->evse_security->get_installed_certificates(certificate_types);
+
+    // convert the common type back to the v201 type(s) for the response
+    std::vector<CertificateHashDataChain> certificate_hash_data_chain_v201;
+    for (const auto& certificate_hash_data_chain_entry : certificate_hash_data_chains) {
+        certificate_hash_data_chain_v201.push_back(
+            ocpp::evse_security_conversions::to_ocpp_v201(certificate_hash_data_chain_entry));
+    }
+
+    if (certificate_hash_data_chain_v201.empty()) {
+        response.status = GetInstalledCertificateStatusEnum::NotFound;
+    } else {
+        response.certificateHashDataChain = certificate_hash_data_chain_v201;
+        response.status = GetInstalledCertificateStatusEnum::Accepted;
+    }
+
+    ocpp::CallResult<GetInstalledCertificateIdsResponse> call_result(response, call.uniqueId);
+    this->send<GetInstalledCertificateIdsResponse>(call_result);
+}
+
+void ChargePoint::handle_install_certificate_req(Call<InstallCertificateRequest> call) {
+    EVLOG_debug << "Received InstallCertificateRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
+
+    const auto msg = call.msg;
+    InstallCertificateResponse response;
+
+    const auto result = this->evse_security->install_ca_certificate(
+        msg.certificate.get(), ocpp::evse_security_conversions::from_ocpp_v201(msg.certificateType));
+    response.status = ocpp::evse_security_conversions::to_ocpp_v201(result);
+
+    ocpp::CallResult<InstallCertificateResponse> call_result(response, call.uniqueId);
+    this->send<InstallCertificateResponse>(call_result);
+}
+
+void ChargePoint::handle_delete_certificate_req(Call<DeleteCertificateRequest> call) {
+    EVLOG_debug << "Received DeleteCertificateRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
+
+    const auto msg = call.msg;
+    DeleteCertificateResponse response;
+
+    const auto certificate_hash_data = ocpp::evse_security_conversions::from_ocpp_v201(msg.certificateHashData);
+
+    const auto status = this->evse_security->delete_certificate(certificate_hash_data);
+
+    response.status = ocpp::evse_security_conversions::to_ocpp_v201(status);
+
+    ocpp::CallResult<DeleteCertificateResponse> call_result(response, call.uniqueId);
+    this->send<DeleteCertificateResponse>(call_result);
 }
 
 void ChargePoint::handle_data_transfer_req(Call<DataTransferRequest> call) {
