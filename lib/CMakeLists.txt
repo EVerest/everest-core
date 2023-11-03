@@ -15,11 +15,15 @@ set_target_properties(framework PROPERTIES SOVERSION ${PROJECT_VERSION})
 target_sources(framework
     PRIVATE
         config.cpp
+        error.cpp
+        error_database.cpp
+        error_manager.cpp
         everest.cpp
         message_queue.cpp
         mqtt_abstraction.cpp
         mqtt_abstraction_impl.cpp
         thread.cpp
+        types.cpp
         serial.cpp
         status_fifo.cpp
         date.cpp

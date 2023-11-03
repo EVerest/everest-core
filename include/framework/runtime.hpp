@@ -64,6 +64,7 @@ inline constexpr auto DATAROOT_DIR = "share";
 
 inline constexpr auto MODULES_DIR = "modules";
 inline constexpr auto TYPES_DIR = "types";
+inline constexpr auto ERRORS_DIR = "errors";
 inline constexpr auto INTERFACES_DIR = "interfaces";
 inline constexpr auto SCHEMAS_DIR = "schemas";
 inline constexpr auto CONFIG_NAME = "default.yaml";
@@ -102,6 +103,7 @@ struct RuntimeSettings {
     fs::path modules_dir;
     fs::path interfaces_dir;
     fs::path types_dir;
+    fs::path errors_dir;
     fs::path logging_config_file;
     fs::path config_file;
     fs::path www_dir;

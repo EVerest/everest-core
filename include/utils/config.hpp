@@ -4,6 +4,7 @@
 #define UTILS_CONFIG_HPP
 
 #include <filesystem>
+#include <list>
 #include <optional>
 #include <regex>
 #include <set>
@@ -13,6 +14,7 @@
 #include <nlohmann/json-schema.hpp>
 
 #include <utils/config_cache.hpp>
+#include <utils/error.hpp>
 #include <utils/types.hpp>
 
 namespace Everest {
@@ -26,10 +28,11 @@ struct RuntimeSettings;
 /// \brief A structure that contains all available schemas
 ///
 struct schemas {
-    json config;    ///< The config schema
-    json manifest;  ///< The manifest scheme
-    json interface; ///< The interface schema
-    json type;      ///< The type schema
+    json config;                 ///< The config schema
+    json manifest;               ///< The manifest scheme
+    json interface;              ///< The interface schema
+    json type;                   ///< The type schema
+    json error_declaration_list; ///< The error-declaration-list schema
 };
 
 ///
@@ -51,9 +54,22 @@ private:
     json interfaces;
     json interface_definitions;
     json types;
+    json errors;
     schemas _schemas;
 
     std::unordered_map<std::string, std::optional<TelemetryConfig>> telemetry_configs;
+
+    ///
+    /// \brief loads the contents of an error or an error list referenced by the given \p reference.
+    ///
+    /// \returns a list of json objects containing the error definitions
+    std::list<json> resolve_error_ref(const std::string& reference);
+
+    ///
+    /// \brief replaces all error references in the given \p interface_json with the actual error definitions
+    ///
+    /// \returns the interface_json with replaced error references
+    json replace_error_refs(json& interface_json);
 
     ///
     /// \brief loads the contents of the interface file referenced by the give \p intf_name from disk and validates its
@@ -90,7 +106,10 @@ private:
 
     void load_and_validate_manifest(const std::string& module_id, const json& module_config);
 
+    error::ErrorTypeMap error_map;
+
 public:
+    error::ErrorTypeMap get_error_map() const;
     std::string get_module_name(const std::string& module_id);
     bool module_provides(const std::string& module_name, const std::string& impl_id);
     json get_module_cmds(const std::string& module_name, const std::string& impl_id);

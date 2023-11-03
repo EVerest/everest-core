@@ -13,6 +13,7 @@
 #include <everest/exceptions.hpp>
 
 #include <utils/config.hpp>
+#include <utils/error.hpp>
 #include <utils/mqtt_abstraction.hpp>
 #include <utils/types.hpp>
 
@@ -72,6 +73,37 @@ public:
     /// var_name. The given \p callback is called when a new value becomes available
     ///
     void subscribe_var(const Requirement& req, const std::string& var_name, const JsonCallback& callback);
+
+    ///
+    /// \brief Subscribes to an error of another module indentified by the given \p req and error type
+    /// \p error_type. The given \p callback is called when a new error is raised
+    ///
+    void subscribe_error(const Requirement& req, const std::string& error_type, const JsonCallback& callback);
+
+    ///
+    /// \brief Subscribes to an error cleared event of another module indentified by the given \p req and error type
+    /// \p error_type. The given \p callback is called when an error is cleared
+    ///
+    void subscribe_error_cleared(const Requirement& req, const std::string& error_type, const JsonCallback& callback);
+
+    ///
+    /// \brief Requests to clear errors
+    /// If \p request_type is RequestClearErrorOption::ClearUUID, the error with the given \p uuid of the given \p
+    /// impl_id is cleared. \p error_type is ignored. If \p request_type is
+    /// RequestClearErrorOption::ClearAllOfTypeOfModule, all errors of the given \p impl_id with the given \p error_type
+    /// are cleared. \p uuid is ignored. If \p request_type is RequestClearErrorOption::ClearAllOfModule, all errors of
+    /// the given \p impl_id are cleared. \p uuid and \p error_type are ignored. Return a response json with the uuids
+    /// of the cleared errors
+    ///
+    json request_clear_error(const error::RequestClearErrorOption request_type, const std::string& impl_id,
+                             const std::string& uuid, const std::string& error_type);
+
+    ///
+    /// \brief Raises an given \p error of the given \p impl_id, with the given \p error_type. Returns the uuid of the
+    /// raised error
+    ///
+    std::string raise_error(const std::string& impl_id, const std::string& error_type, const std::string& message,
+                            const std::string& severity);
 
     ///
     /// \brief publishes the given \p data on the given \p topic

@@ -39,6 +39,8 @@ properties:
         type: string
       types_dir:
         type: string
+      errors_dir:
+        type: string
       www_dir:
         type: string
       logging_config_file:

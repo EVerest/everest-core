@@ -2,6 +2,8 @@
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
 #include <framework/runtime.hpp>
+#include <utils/error.hpp>
+#include <utils/error_json.hpp>
 
 #include <algorithm>
 #include <cstdlib>
@@ -208,6 +210,15 @@ RuntimeSettings::RuntimeSettings(const std::string& prefix_, const std::string& 
         types_dir = assert_dir(default_types_dir, "Default type directory");
     }
 
+    const auto settings_errors_dir_it = settings.find("errors_dir");
+    if (settings_errors_dir_it != settings.end()) {
+        const auto settings_errors_dir = get_prefixed_path_from_json(*settings_errors_dir_it, prefix);
+        errors_dir = assert_dir(settings_errors_dir, "Config provided error directory");
+    } else {
+        const auto default_errors_dir = data_dir / defaults::ERRORS_DIR;
+        errors_dir = assert_dir(default_errors_dir, "Default error directory");
+    }
+
     const auto settings_www_dir_it = settings.find("www_dir");
     if (settings_www_dir_it != settings.end()) {
         const auto settings_www_dir = get_prefixed_path_from_json(*settings_www_dir_it, prefix);
@@ -392,6 +403,38 @@ int ModuleLoader::initialize() {
         module_adapter.subscribe = [&everest](const Requirement& req, const std::string& var_name,
                                               const ValueCallback& callback) {
             return everest.subscribe_var(req, var_name, callback);
+        };
+
+        module_adapter.subscribe_error = [&everest](const Requirement& req, const std::string& error_type,
+                                                    const error::ErrorCallback& error_callback) {
+            JsonCallback json_callback = [error_callback](json j) { error_callback(error::json_to_error(j)); };
+            return everest.subscribe_error(req, error_type, json_callback);
+        };
+
+        module_adapter.subscribe_error_cleared = [&everest](const Requirement& req, const std::string& error_type,
+                                                            const error::ErrorCallback& error_callback) {
+            JsonCallback json_callback = [error_callback](json j) { return error_callback(error::json_to_error(j)); };
+            return everest.subscribe_error_cleared(req, error_type, json_callback);
+        };
+
+        module_adapter.raise_error = [&everest](const std::string& impl_id, const std::string& type,
+                                                const std::string& message, const error::Severity& severity) {
+            return error::ErrorHandle(everest.raise_error(impl_id, type, message, error::severity_to_string(severity)));
+        };
+
+        module_adapter.request_clear_all_errors_of_module = [&everest](const std::string& impl_id) {
+            return everest.request_clear_error(error::RequestClearErrorOption::ClearAllOfModule, impl_id, "", "");
+        };
+
+        module_adapter.request_clear_all_errors_of_type_of_module = [&everest](const std::string& impl_id,
+                                                                               const std::string& error_type) {
+            return everest.request_clear_error(error::RequestClearErrorOption::ClearAllOfTypeOfModule, impl_id, "",
+                                               error_type);
+        };
+
+        module_adapter.request_clear_error_uuid = [&everest](const std::string& impl_id,
+                                                             const error::ErrorHandle& handle) {
+            return everest.request_clear_error(error::RequestClearErrorOption::ClearUUID, impl_id, handle.uuid, "");
         };
 
         // NOLINTNEXTLINE(modernize-avoid-bind): prefer bind here for readability

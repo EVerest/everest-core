@@ -37,6 +37,8 @@ enum class HandlerType {
     Call,
     Result,
     SubscribeVar,
+    SubscribeError,
+    ClearErrorRequest,
     ExternalMQTT,
     Unknown
 };
@@ -47,16 +49,10 @@ struct TypedHandler {
     HandlerType type;
     std::shared_ptr<Handler> handler;
 
-    TypedHandler(const std::string& name, const std::string& id, HandlerType type, std::shared_ptr<Handler> handler) :
-        name(name), id(id), type(type), handler(handler) {
-    }
-
-    TypedHandler(const std::string& name, HandlerType type, std::shared_ptr<Handler> handler) :
-        TypedHandler(name, "", type, handler) {
-    }
-
-    TypedHandler(HandlerType type, std::shared_ptr<Handler> handler) : TypedHandler("", "", type, handler) {
-    }
+    TypedHandler(const std::string& name_, const std::string& id_, HandlerType type_,
+                 std::shared_ptr<Handler> handler_);
+    TypedHandler(const std::string& name_, HandlerType type_, std::shared_ptr<Handler> handler_);
+    TypedHandler(HandlerType type_, std::shared_ptr<Handler> handler_);
 };
 
 using Token = std::shared_ptr<TypedHandler>;
@@ -88,19 +84,20 @@ struct TelemetryConfig {
 };
 
 struct Requirement {
-    Requirement(const std::string& requirement_id, size_t index) : id(requirement_id), index(index){};
-    bool operator<(const Requirement& rhs) const {
-        if (id < rhs.id) {
-            return true;
-        } else if (id == rhs.id) {
-            return (index < rhs.index);
-        } else {
-            return false;
-        }
-    }
+    Requirement(const std::string& requirement_id_, size_t index_);
+    bool operator<(const Requirement& rhs) const;
     std::string id;
     size_t index;
 };
+
+struct ImplementationIdentifier {
+    ImplementationIdentifier(const std::string& module_id_, const std::string& implementation_id_);
+    std::string to_string() const;
+    std::string module_id;
+    std::string implementation_id;
+};
+bool operator==(const ImplementationIdentifier& lhs, const ImplementationIdentifier& rhs);
+bool operator!=(const ImplementationIdentifier& lhs, const ImplementationIdentifier& rhs);
 
 #define EVCALLBACK(function) [](auto&& PH1) { function(std::forward<decltype(PH1)>(PH1)); }
 

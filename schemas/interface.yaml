@@ -135,4 +135,24 @@ properties:
     additionalProperties: false
     # add empty vars if not already present
     default: {}
+  errors:
+    description: This describes a list of error list allowed to be raised by this unit
+    type: array
+    items:
+      type: object
+      required:
+        - reference
+      properties:
+        reference:
+          anyOf:
+              # reference to a complete error list
+              # (e.g. /errors/example)
+            - type: string
+              pattern: ^/errors/[a-z][a-zA-Z0-9_]*$
+              # reference to a single error
+              # (e.g. /errors/example#/ExampleErrorA)
+            - type: string
+              pattern: ^/errors/[a-z][a-zA-Z0-9_]*#/[A-Z][A-Za-z0-9]*$
+      additionalProperties: false
+    default: []
 additionalProperties: false

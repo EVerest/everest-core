@@ -1,0 +1,46 @@
+$schema: http://json-schema.org/draft-07/schema#
+description: Json schema for EVerest error objects
+type: object
+required:
+  - type
+  - description
+  - message
+  - persistent
+  - from
+  - timestamp
+  - uuid
+properties:
+  type:
+    type: string
+    minLength: 2
+  description:
+    type: string
+    minLength: 2
+  message:
+    type: string
+    minLength: 2
+  persistent:
+    type: boolean
+  from:
+    type: object
+    required:
+      - module
+      - implementation
+    properties:
+      module:
+        type: string
+        minLength: 2
+      implementation:
+        type: string
+        minLength: 2
+    additionalProperties: false
+  timestamp:
+    type: string
+    format: date-time
+  uuid:
+    type: string
+    minLength: 2
+  severity:
+    type: string
+    minLength: 2
+additionalProperties: false

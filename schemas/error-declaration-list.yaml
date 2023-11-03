@@ -1,0 +1,38 @@
+$schema: http://json-schema.org/draft-07/schema#
+description: Json schema for EVerest error definition files
+$defs:
+  error_list_subschema:
+    description: This describes a list of errors of this unit
+    type: array
+    items:
+      $ref: '#/$defs/error_subschema'
+    default: []
+  error_subschema:
+    type: object
+    description: json schema declaring the error
+    required:
+      - name
+      - description
+    properties:
+      name:
+        type: string
+        minLength: 2
+        pattern: ^[A-Z][A-Za-z0-9]*$
+      description:
+        type: string
+        minLength: 2
+      namespace:
+        type: string
+        minLength: 2
+        pattern: ^[a-z][a-z0-9]*$
+    additionalProperties: false
+type: object
+required:
+  - description
+properties:
+  description:
+    type: string
+    minLength: 2
+  errors:
+    $ref: '#/$defs/error_list_subschema'
+additionalProperties: false

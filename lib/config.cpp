@@ -2,6 +2,7 @@
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 #include <algorithm>
 #include <fstream>
+#include <list>
 #include <set>
 #include <sstream>
 
@@ -375,7 +376,9 @@ Config::Config(std::shared_ptr<RuntimeSettings> rs, bool manager) : rs(rs), mana
     this->interfaces = json({});
     this->interface_definitions = json({});
     this->types = json({});
+    this->errors = json({});
     this->_schemas = Config::load_schemas(this->rs->schemas_dir);
+    this->error_map = error::ErrorTypeMap(this->rs->errors_dir);
 
     // load and process config file
     fs::path config_path = rs->config_file;
@@ -458,6 +461,49 @@ Config::Config(std::shared_ptr<RuntimeSettings> rs, bool manager) : rs(rs), mana
         EVLOG_info << "- Types validated [" << total_time_validation_ms << "ms]";
     }
 
+    // load error files
+    if (manager or rs->validate_schema) {
+        int total_time_validation_ms = 0, total_time_parsing_ms = 0;
+        for (auto const& errors_entry : fs::recursive_directory_iterator(this->rs->errors_dir)) {
+            auto start_time = std::chrono::system_clock::now();
+            auto const& error_file_path = errors_entry.path();
+            if (fs::is_regular_file(error_file_path) && error_file_path.extension() == ".yaml") {
+                auto error_path =
+                    std::string("/") + fs::relative(error_file_path, this->rs->errors_dir).stem().string();
+
+                try {
+                    // load and validate error file, store validated result in this->errors
+                    EVLOG_verbose << fmt::format("Loading error file at: {}", fs::canonical(error_file_path).c_str());
+                    json error_json = load_yaml(error_file_path);
+                    auto start_time_validate = std::chrono::system_clock::now();
+                    json_validator validator(Config::loader, Config::format_checker);
+                    validator.set_root_schema(this->_schemas.error_declaration_list);
+                    validator.validate(error_json);
+                    auto end_time_validate = std::chrono::system_clock::now();
+                    EVLOG_debug << "YAML validation of " << errors_entry.path().string() << " took: "
+                                << std::chrono::duration_cast<std::chrono::milliseconds>(end_time_validate -
+                                                                                         start_time_validate)
+                                       .count()
+                                << "ms";
+                    total_time_validation_ms +=
+                        std::chrono::duration_cast<std::chrono::milliseconds>(end_time_validate - start_time_validate)
+                            .count();
+
+                    this->errors[error_path] = error_json["errors"];
+                } catch (const std::exception& e) {
+                    EVLOG_AND_THROW(EverestConfigError(fmt::format(
+                        "Failed to load and parse error file '{}', reason: {}", error_file_path.string(), e.what())));
+                }
+            }
+            auto end_time = std::chrono::system_clock::now();
+            total_time_parsing_ms +=
+                std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
+            EVLOG_debug << "Parsing of error " << errors_entry.path().string() << " took: "
+                        << std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count() << "ms";
+        }
+        EVLOG_info << "- Errors loaded in [" << total_time_parsing_ms - total_time_validation_ms << "ms]";
+        EVLOG_info << "- Errors validated [" << total_time_validation_ms << "ms]";
+    }
     std::optional<std::string> probe_module_id;
 
     // load manifest files of configured modules
@@ -497,6 +543,10 @@ Config::Config(std::shared_ptr<RuntimeSettings> rs, bool manager) : rs(rs), mana
     resolve_all_requirements();
 }
 
+error::ErrorTypeMap Config::get_error_map() const {
+    return this->error_map;
+}
+
 std::string Config::get_module_name(const std::string& module_id) {
     return this->module_names.at(module_id);
 }
@@ -518,6 +568,66 @@ json Config::resolve_interface(const std::string& intf_name) {
     return intf_definition;
 }
 
+std::list<json> Config::resolve_error_ref(const std::string& reference) {
+    BOOST_LOG_FUNCTION();
+    std::string ref_prefix = "/errors/";
+    std::string err_ref = reference.substr(ref_prefix.length());
+    auto result = err_ref.find("#/");
+    std::string err_namespace;
+    std::string err_name;
+    bool is_error_list;
+    if (result == std::string::npos) {
+        err_namespace = err_ref;
+        err_name = "";
+        is_error_list = true;
+    } else {
+        err_namespace = err_ref.substr(0, result);
+        err_name = err_ref.substr(result + 2);
+        is_error_list = false;
+    }
+    fs::path path = this->rs->errors_dir / (err_namespace + ".yaml");
+    json error_json = load_yaml(path);
+    std::list<json> errors;
+    if (is_error_list) {
+        for (auto& error : error_json.at("errors")) {
+            error["namespace"] = err_namespace;
+            errors.push_back(error);
+        }
+    } else {
+        for (auto& error : error_json.at("errors")) {
+            if (error.at("name") == err_name) {
+                error["namespace"] = err_namespace;
+                errors.push_back(error);
+                break;
+            }
+        }
+    }
+    return errors;
+}
+
+json Config::replace_error_refs(json& interface_json) {
+    BOOST_LOG_FUNCTION();
+    if (!interface_json.contains("errors")) {
+        return interface_json;
+    }
+    json errors_new = json::object();
+    for (auto& error_entry : interface_json.at("errors")) {
+        std::list<json> errors = resolve_error_ref(error_entry.at("reference"));
+        for (auto& error : errors) {
+            if (!errors_new.contains(error.at("namespace"))) {
+                errors_new[error.at("namespace")] = json::object();
+            }
+            if (errors_new.at(error.at("namespace")).contains(error.at("name"))) {
+                EVLOG_AND_THROW(EverestConfigError(fmt::format("Error name '{}' in namespace '{}' already referenced!",
+                                                               error.at("name"), error.at("namespace"))));
+            }
+            errors_new[error.at("namespace")][error.at("name")] = error;
+        }
+    }
+    interface_json["errors"] = errors_new;
+    return interface_json;
+}
+
 json Config::load_interface_file(const std::string& intf_name) {
     BOOST_LOG_FUNCTION();
     fs::path intf_path = this->rs->interfaces_dir / (intf_name + ".yaml");
@@ -536,6 +646,7 @@ json Config::load_interface_file(const std::string& intf_name) {
             // extend config entry with default values
             interface_json = interface_json.patch(patch);
         }
+        interface_json = Config::replace_error_refs(interface_json);
 
         // validate every cmd arg/result and var definition against draft-07 schema
         validator.set_root_schema(draft07);
@@ -681,7 +792,8 @@ json Config::load_schema(const fs::path& path) {
     try {
         validator.set_root_schema(schema);
     } catch (const std::exception& e) {
-        EVLOG_AND_THROW(EverestInternalError(fmt::format("Validation of schema failed, here is why: {}", e.what())));
+        EVLOG_AND_THROW(EverestInternalError(
+            fmt::format("Validation of schema '{}' failed, here is why: {}", path.string(), e.what())));
     }
 
     return schema;
@@ -696,6 +808,7 @@ schemas Config::load_schemas(const fs::path& schemas_dir) {
     schemas.manifest = Config::load_schema(schemas_dir / "manifest.yaml");
     schemas.interface = Config::load_schema(schemas_dir / "interface.yaml");
     schemas.type = Config::load_schema(schemas_dir / "type.yaml");
+    schemas.error_declaration_list = Config::load_schema(schemas_dir / "error-declaration-list.yaml");
 
     return schemas;
 }

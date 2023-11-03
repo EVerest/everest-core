@@ -16,6 +16,8 @@
 #include <framework/everest.hpp>
 #include <utils/conversions.hpp>
 #include <utils/date.hpp>
+#include <utils/error.hpp>
+#include <utils/error_json.hpp>
 #include <utils/formatter.hpp>
 
 namespace Everest {
@@ -368,6 +370,229 @@ void Everest::subscribe_var(const Requirement& req, const std::string& var_name,
     std::shared_ptr<TypedHandler> token =
         std::make_shared<TypedHandler>(var_name, HandlerType::SubscribeVar, std::make_shared<Handler>(handler));
     this->mqtt_abstraction.register_handler(var_topic, token, QOS::QOS2);
+}
+
+void Everest::subscribe_error(const Requirement& req, const std::string& error_type, const JsonCallback& callback) {
+    BOOST_LOG_FUNCTION();
+
+    EVLOG_debug << fmt::format("subscribing to error: {}:{}", req.id, error_type);
+
+    // resolve requirement
+    json connections = this->config.resolve_requirement(this->module_id, req.id);
+    json& connection = connections; // this is for a min/max == 1 requirement
+    if (connections.is_array()) {   // this is for every other requirement
+        connection = connections[req.index];
+    }
+
+    std::string requirement_module_id = connection.at("module_id");
+    std::string module_name = this->config.get_module_name(requirement_module_id);
+    std::string requirement_impl_id = connection.at("implementation_id");
+    json requirement_impl_if = this->config.get_interfaces().at(module_name).at(requirement_impl_id);
+
+    // check if requirement is allowed to publish this error_type
+    // split error_type at '/'
+    int pos = error_type.find('/');
+    if (pos == std::string::npos) {
+        EVLOG_AND_THROW(EverestApiError(
+            fmt::format("{}: Error {} not listed in interface!",
+                        this->config.printable_identifier(requirement_module_id, requirement_impl_id), error_type)));
+    }
+    std::string error_type_namespace = error_type.substr(0, pos);
+    std::string error_type_name = error_type.substr(pos + 1);
+    if (!requirement_impl_if.contains("errors") || !requirement_impl_if.at("errors").contains(error_type_namespace) ||
+        !requirement_impl_if.at("errors").at(error_type_namespace).contains(error_type_name)) {
+        EVLOG_AND_THROW(EverestApiError(
+            fmt::format("{}: Error {} not listed in interface!",
+                        this->config.printable_identifier(requirement_module_id, requirement_impl_id), error_type)));
+    }
+
+    Handler handler = [this, requirement_module_id, requirement_impl_id, error_type, callback](json const& data) {
+        EVLOG_debug << fmt::format("Incoming error {}->{}",
+                                   this->config.printable_identifier(requirement_module_id, requirement_impl_id),
+                                   error_type);
+
+        callback(data);
+    };
+
+    const auto error_topic =
+        fmt::format("{}/error/{}", this->config.mqtt_prefix(requirement_module_id, requirement_impl_id), error_type);
+
+    std::shared_ptr<TypedHandler> token =
+        std::make_shared<TypedHandler>(error_type, HandlerType::SubscribeError, std::make_shared<Handler>(handler));
+    this->mqtt_abstraction.register_handler(error_topic, token, QOS::QOS2);
+}
+
+void Everest::subscribe_error_cleared(const Requirement& req, const std::string& error_type,
+                                      const JsonCallback& callback) {
+    BOOST_LOG_FUNCTION();
+
+    EVLOG_debug << fmt::format("subscribing to error cleared: {}:{}", req.id, error_type);
+
+    // resolve requirement
+    json connections = this->config.resolve_requirement(this->module_id, req.id);
+    json& connection = connections; // this is for a min/max == 1 requirement
+    if (connections.is_array()) {   // this is for every other requirement
+        connection = connections[req.index];
+    }
+
+    std::string requirement_module_id = connection.at("module_id");
+    std::string module_name = this->config.get_module_name(requirement_module_id);
+    std::string requirement_impl_id = connection.at("implementation_id");
+    json requirement_impl_if = this->config.get_interfaces()[module_name][requirement_impl_id];
+
+    // check if requirement is allowed to publish this error_type
+    // split error_type at '/'
+    int pos = error_type.find('/');
+    if (pos == std::string::npos) {
+        EVLOG_AND_THROW(EverestApiError(
+            fmt::format("{}: Error {} not listed in interface!",
+                        this->config.printable_identifier(requirement_module_id, requirement_impl_id), error_type)));
+    }
+    std::string error_type_namespace = error_type.substr(0, pos);
+    std::string error_type_name = error_type.substr(pos + 1);
+    if (!requirement_impl_if.contains("errors") || !requirement_impl_if.at("errors").contains(error_type_namespace) ||
+        !requirement_impl_if.at("errors").at(error_type_namespace).contains(error_type_name)) {
+        EVLOG_AND_THROW(EverestApiError(
+            fmt::format("{}: Error {} not listed in interface!",
+                        this->config.printable_identifier(requirement_module_id, requirement_impl_id), error_type)));
+    }
+
+    Handler handler = [this, requirement_module_id, requirement_impl_id, error_type, callback](json const& data) {
+        EVLOG_debug << fmt::format("Incoming {}->{}",
+                                   this->config.printable_identifier(requirement_module_id, requirement_impl_id),
+                                   error_type);
+
+        callback(data);
+    };
+
+    const auto error_cleared_topic = fmt::format(
+        "{}/error-cleared/{}", this->config.mqtt_prefix(requirement_module_id, requirement_impl_id), error_type);
+
+    std::shared_ptr<TypedHandler> token =
+        std::make_shared<TypedHandler>(error_type, HandlerType::SubscribeError, std::make_shared<Handler>(handler));
+    this->mqtt_abstraction.register_handler(error_cleared_topic, token, QOS::QOS2);
+}
+
+std::string Everest::raise_error(const std::string& impl_id, const std::string& error_type, const std::string& message,
+                                 const std::string& severity) {
+    BOOST_LOG_FUNCTION();
+
+    std::string description = this->config.get_error_map().get_description(error_type);
+
+    error::Error error(error_type, message, description, this->module_id, impl_id);
+
+    json data = error::error_to_json(error);
+
+    const auto error_topic = fmt::format("{}/error/{}", this->config.mqtt_prefix(this->module_id, impl_id), error_type);
+
+    this->mqtt_abstraction.publish(error_topic, data, QOS::QOS2);
+    return error.uuid.uuid;
+}
+
+json Everest::request_clear_error(const error::RequestClearErrorOption request_type, const std::string& impl_id,
+                                  const std::string& uuid, const std::string& error_type) {
+    BOOST_LOG_FUNCTION();
+    // Check parameters
+    switch (request_type) {
+    case error::RequestClearErrorOption::ClearUUID:
+        if (uuid == "") {
+            EVLOG_AND_THROW(EverestApiError(fmt::format("No error id provided for request-clear-error in mode {}",
+                                                        error::request_clear_error_option_to_string(request_type))));
+        }
+        if (impl_id == "") {
+            EVLOG_AND_THROW(
+                EverestApiError(fmt::format("No implementation id provided for request-clear-error in mode {}",
+                                            error::request_clear_error_option_to_string(request_type))));
+        }
+        if (error_type != "") {
+            EVLOG_warning << fmt::format(
+                "Error type '{}' is ignored for request-clear-error in mode {} with error id '{}'", error_type,
+                error::request_clear_error_option_to_string(request_type), uuid);
+        }
+        break;
+    case error::RequestClearErrorOption::ClearAllOfTypeOfModule:
+        if (uuid != "") {
+            EVLOG_warning << fmt::format(
+                "Error id '{}' is ignored for request-clear-error in mode {} with error type '{}'", uuid,
+                error::request_clear_error_option_to_string(request_type), error_type);
+        }
+        if (impl_id == "") {
+            EVLOG_AND_THROW(
+                EverestApiError(fmt::format("No implementation id provided for request-clear-error in mode {}",
+                                            error::request_clear_error_option_to_string(request_type))));
+        }
+        if (error_type == "") {
+            EVLOG_AND_THROW(EverestApiError(fmt::format("No error type provided for request-clear-error in mode {}",
+                                                        error::request_clear_error_option_to_string(request_type))));
+        }
+        break;
+    case error::RequestClearErrorOption::ClearAllOfModule:
+        if (uuid != "") {
+            EVLOG_warning << fmt::format("Error id '{}' is ignored for request-clear-error in mode {}", uuid,
+                                         error::request_clear_error_option_to_string(request_type));
+        }
+        if (error_type != "") {
+            EVLOG_warning << fmt::format("Error type '{}' is ignored for request-clear-error in mode {}", error_type,
+                                         error::request_clear_error_option_to_string(request_type));
+        }
+        if (impl_id == "") {
+            EVLOG_AND_THROW(
+                EverestApiError(fmt::format("No implementation id provided for request-clear-error in mode {}",
+                                            error::request_clear_error_option_to_string(request_type))));
+        }
+    }
+
+    // Setup response handler
+    std::string request_id = error::UUID().uuid;
+    std::promise<json> res_promise;
+    std::future<json> res_future = res_promise.get_future();
+    Handler res_handler = [this, &res_promise, request_id](json data) {
+        auto& data_id = data.at("id");
+        if (data_id != request_id) {
+            EVLOG_debug << fmt::format("RES: data_id != request_id ({} != {})", data_id, request_id);
+            return;
+        }
+        EVLOG_debug << fmt::format("Incoming res {} for request clear error", data_id);
+        res_promise.set_value(std::move(data));
+    };
+    const auto request_topic = fmt::format("{}request-clear-error", this->mqtt_everest_prefix);
+    std::shared_ptr<TypedHandler> res_token = std::make_shared<TypedHandler>(
+        "request-clear-error", request_id, HandlerType::Result, std::make_shared<Handler>(res_handler));
+    this->mqtt_abstraction.register_handler(request_topic, res_token, QOS::QOS2);
+
+    // Setup request
+    json data;
+    data["request-id"] = request_id;
+    data["origin"]["module"] = this->module_id;
+    data["origin"]["implementation"] = impl_id;
+    data["request-clear-type"] = error::request_clear_error_option_to_string(request_type);
+    if (request_type == error::RequestClearErrorOption::ClearUUID) {
+        data["error_id"] = uuid;
+    } else if (request_type == error::RequestClearErrorOption::ClearAllOfTypeOfModule) {
+        data["error_type"] = error_type;
+    }
+    json request_data;
+    request_data["name"] = "request-clear-error";
+    request_data["type"] = "call";
+    request_data["data"] = data;
+    this->mqtt_abstraction.publish(request_topic, request_data, QOS::QOS2);
+
+    // wait for result future
+    std::chrono::time_point<date::utc_clock> res_wait = date::utc_clock::now() + this->remote_cmd_res_timeout;
+    std::future_status res_future_status;
+    do {
+        res_future_status = res_future.wait_until(res_wait);
+    } while (res_future_status == std::future_status::deferred);
+    json result;
+    if (res_future_status == std::future_status::timeout) {
+        EVLOG_AND_THROW(
+            EverestTimeoutError(fmt::format("Timeout while waiting for result of request-clear-error {}", uuid)));
+    } else if (res_future_status == std::future_status::ready) {
+        EVLOG_debug << "res future ready";
+        result = res_future.get();
+    }
+    this->mqtt_abstraction.unregister_handler(request_topic, res_token);
+    return result;
 }
 
 void Everest::external_mqtt_publish(const std::string& topic, const std::string& data) {

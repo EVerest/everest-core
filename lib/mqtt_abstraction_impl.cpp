@@ -294,6 +294,14 @@ void MQTTAbstractionImpl::register_handler(const std::string& topic, std::shared
         EVLOG_debug << fmt::format("Registering subscribe handler {} for variable {} on topic {}",
                                    fmt::ptr(&handler->handler), handler->name, topic);
         break;
+    case HandlerType::SubscribeError:
+        EVLOG_debug << fmt::format("Registering error handler {} for variable {} on topic {}",
+                                   fmt::ptr(&handler->handler), handler->name, topic);
+        break;
+    case HandlerType::ClearErrorRequest:
+        EVLOG_debug << fmt::format("Registering clear error handler {} for variable {} on topic {}",
+                                   fmt::ptr(&handler->handler), handler->name, topic);
+        break;
     case HandlerType::ExternalMQTT:
         EVLOG_debug << fmt::format("Registering external MQTT handler {} on topic {}", fmt::ptr(&handler->handler),
                                    topic);
