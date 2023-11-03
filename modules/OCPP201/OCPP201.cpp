@@ -560,6 +560,24 @@ void OCPP201::init() {
     }
 }
 
+ocpp::v201::CertificateActionEnum get_certificate_action(const types::iso15118_charger::CertificateActionEnum& action) {
+    switch (action) {
+    case types::iso15118_charger::CertificateActionEnum::Install:
+        return ocpp::v201::CertificateActionEnum::Install;
+    case types::iso15118_charger::CertificateActionEnum::Update:
+        return ocpp::v201::CertificateActionEnum::Update;
+    }
+}
+
+types::iso15118_charger::Status get_iso15118_charger_status(const ocpp::v201::Iso15118EVCertificateStatusEnum& status) {
+    switch (status) {
+    case ocpp::v201::Iso15118EVCertificateStatusEnum::Accepted:
+        return types::iso15118_charger::Status::Accepted;
+    case ocpp::v201::Iso15118EVCertificateStatusEnum::Failed:
+        return types::iso15118_charger::Status::Failed;
+    }
+}
+
 void OCPP201::ready() {
     invoke_ready(*p_main);
     invoke_ready(*p_auth_provider);
@@ -891,9 +909,26 @@ void OCPP201::ready() {
             const auto meter_value = get_meter_value(power_meter, ocpp::v201::ReadingContextEnum::Sample_Periodic);
             this->charge_point->on_meter_value(evse_id, meter_value);
         });
+
+        evse->subscribe_iso15118_certificate_request(
+            [this, evse_id](const types::iso15118_charger::Request_Exi_Stream_Schema& certificate_request) {
+                // transform request forward to libocpp
+                ocpp::v201::Get15118EVCertificateRequest ocpp_request;
+                ocpp_request.exiRequest = certificate_request.exiRequest;
+                ocpp_request.iso15118SchemaVersion = certificate_request.iso15118SchemaVersion;
+                ocpp_request.action = get_certificate_action(certificate_request.certificateAction);
+
+                auto ocpp_response = this->charge_point->on_get_15118_ev_certificate_request(ocpp_request);
+                EVLOG_debug << "Received response from get_15118_ev_certificate_request: " << ocpp_response;
+                // transform response, inject action, send to associated EvseManager
+                const auto everest_response_status = get_iso15118_charger_status(ocpp_response.status);
+                const types::iso15118_charger::Response_Exi_Stream_Status everest_response{
+                    everest_response_status, certificate_request.certificateAction, ocpp_response.exiResponse};
+                this->r_evse_manager.at(evse_id - 1)->call_set_get_certificate_response(everest_response);
+            });
+
         evse_id++;
     }
-
     r_system->subscribe_firmware_update_status([this](const types::system::FirmwareUpdateStatus status) {
         this->charge_point->on_firmware_update_status_notification(
             status.request_id, get_firmware_status_notification(status.firmware_update_status));
