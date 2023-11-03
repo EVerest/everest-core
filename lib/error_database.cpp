@@ -78,7 +78,7 @@ std::list<std::shared_ptr<Error>> ErrorDatabase::clear_all_errors_of_module(cons
     return cleared_errors;
 }
 
-bool ErrorDatabase::has_error(const ErrorHandle& handle) const {
+bool ErrorDatabase::has_error(const ErrorHandle& handle) {
     std::lock_guard<std::mutex> guard(this->errors_mutex);
     return this->errors.find(handle) != this->errors.end();
 }

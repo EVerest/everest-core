@@ -47,7 +47,7 @@ public:
     std::list<std::shared_ptr<Error>> clear_all_errors_of_module(const ImplementationIdentifier& impl);
 
 private:
-    bool has_error(const ErrorHandle& handle) const;
+    bool has_error(const ErrorHandle& handle);
 
     std::map<ErrorHandle, std::shared_ptr<Error>> errors;
     std::mutex errors_mutex;
