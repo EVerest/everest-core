@@ -2160,7 +2160,8 @@ void ChargePoint::handle_change_availability_req(Call<ChangeAvailabilityRequest>
         evse_id = msg.evse.value().id;
     }
 
-    if (!transaction_active or is_already_in_state) {
+    if (!transaction_active or is_already_in_state or
+        (evse_id == 0 and msg.operationalStatus == OperationalStatusEnum::Operative)) {
         response.status = ChangeAvailabilityStatusEnum::Accepted;
         // remove any scheduled availability request in case no transaction is scheduled or the component is already in
         // correct state to override possible requests that have been scheduled before
@@ -2179,6 +2180,31 @@ void ChargePoint::handle_change_availability_req(Call<ChangeAvailabilityRequest>
     if (!transaction_active) {
         // execute change availability if possible
         this->callbacks.change_availability_callback(msg, true);
+    } else if (response.status == ChangeAvailabilityStatusEnum::Scheduled) {
+        if (evse_id == 0) {
+            // put all EVSEs to unavailable that do not have active transaction
+            for (auto const& [evse_id, evse] : this->evses) {
+                if (!evse->has_active_transaction()) {
+                    this->set_evse_connectors_unavailable(evse, false);
+                }
+            }
+        } else {
+            // put all connectors of the EVSE to unavailable that do not have active transaction
+            int number_of_connectors = this->evses.at(evse_id)->get_number_of_connectors();
+            for (int connector_id = 1; connector_id <= number_of_connectors; connector_id++) {
+                if (!this->evses.at(evse_id)->has_active_transaction(connector_id)) {
+                    const auto _request = [this, evse_id, connector_id]() {
+                        ChangeAvailabilityRequest request;
+                        request.operationalStatus = OperationalStatusEnum::Inoperative;
+                        request.evse = EVSE();
+                        request.evse->id = evse_id;
+                        request.evse->connectorId = connector_id;
+                        return request;
+                    }();
+                    this->callbacks.change_availability_callback(_request, false);
+                }
+            }
+        }
     }
 }
 

@@ -95,6 +95,11 @@ public:
     /// \return
     bool has_active_transaction();
 
+    /// \brief Indicates if a transaction is active at this evse at the given \p connector_id
+    /// \param connector_id id of the connector of the evse
+    /// \return
+    bool has_active_transaction(const int32_t connector_id);
+
     /// \brief Releases the reference of the transaction on this evse
     void release_transaction();
 

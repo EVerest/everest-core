@@ -15,6 +15,7 @@ struct EnhancedTransaction : public Transaction {
     IdToken id_token;
     std::optional<IdToken> group_id_token;
     std::optional<int32_t> reservation_id;
+    int32_t connector_id;
     int32_t seq_no = 0;
     std::optional<float> active_energy_import_start_value;
     bool check_max_active_import_energy;
