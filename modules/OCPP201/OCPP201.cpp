@@ -4,6 +4,7 @@
 
 #include <fmt/core.h>
 #include <fstream>
+#include <websocketpp/uri.hpp>
 
 #include <evse_security_ocpp.hpp>
 namespace module {
@@ -751,7 +752,14 @@ void OCPP201::ready() {
     callbacks.validate_network_profile_callback =
         [this](const int32_t configuration_slot,
                const ocpp::v201::NetworkConnectionProfile& network_connection_profile) {
-            return ocpp::v201::SetNetworkProfileStatusEnum::Accepted;
+            auto ws_uri = websocketpp::uri(network_connection_profile.ocppCsmsUrl.get());
+
+            if (ws_uri.get_valid()) {
+                return ocpp::v201::SetNetworkProfileStatusEnum::Accepted;
+            } else {
+                return ocpp::v201::SetNetworkProfileStatusEnum::Rejected;
+            }
+            // TODO(piet): Add further validation of the NetworkConnectionProfile
         };
 
     callbacks.configure_network_connection_profile_callback =
