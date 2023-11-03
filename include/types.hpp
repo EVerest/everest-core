@@ -3,10 +3,10 @@
 #ifndef TYPES_HPP
 #define TYPES_HPP
 
-#include <filesystem>
 #include <map>
 #include <optional>
 #include <string>
+#include <support_older_cpp_versions.hpp>
 #include <vector>
 
 namespace evse_security {
@@ -111,8 +111,8 @@ struct OCSPRequestDataList {
     std::vector<OCSPRequestData> ocsp_request_data_list; ///< A list of OCSP request data
 };
 struct KeyPair {
-    std::filesystem::path key;           ///< The path of the PEM or DER encoded private key
-    std::filesystem::path certificate;   ///< The path of the PEM or DER encoded certificate
+    fs::path key;                        ///< The path of the PEM or DER encoded private key
+    fs::path certificate;                ///< The path of the PEM or DER encoded certificate
     std::optional<std::string> password; ///< Specifies the password for the private key if encrypted
 };
 struct GetKeyPairResult {

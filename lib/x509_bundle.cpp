@@ -80,14 +80,14 @@ X509CertificateBundle::X509CertificateBundle(const std::string& certificate, con
     add_certifcates(certificate, encoding, std::nullopt);
 }
 
-X509CertificateBundle::X509CertificateBundle(const std::filesystem::path& path, const EncodingFormat encoding) {
+X509CertificateBundle::X509CertificateBundle(const fs::path& path, const EncodingFormat encoding) {
     this->path = path;
 
-    if (std::filesystem::is_directory(path)) {
+    if (fs::is_directory(path)) {
         source = X509CertificateSource::DIRECTORY;
 
         // Iterate directory
-        for (const auto& entry : std::filesystem::recursive_directory_iterator(path)) {
+        for (const auto& entry : fs::recursive_directory_iterator(path)) {
             if (is_certificate_file(entry)) {
                 std::string certificate;
                 if (EvseUtils::read_from_file(entry.path(), certificate))
@@ -106,7 +106,7 @@ X509CertificateBundle::X509CertificateBundle(const std::filesystem::path& path, 
 }
 
 void X509CertificateBundle::add_certifcates(const std::string& data, const EncodingFormat encoding,
-                                            const std::optional<std::filesystem::path>& path) {
+                                            const std::optional<fs::path>& path) {
     auto loaded = load_certificates(data, encoding);
 
     // If we are using a directory we can't load certificate bundles
@@ -269,9 +269,9 @@ std::string X509CertificateBundle::to_export_string() const {
     return export_string;
 }
 
-X509CertificateDirectory::X509CertificateDirectory(const std::filesystem::path& directory) {
-    if (std::filesystem::is_directory(directory)) {
-        for (const auto& entry : std::filesystem::recursive_directory_iterator(directory)) {
+X509CertificateDirectory::X509CertificateDirectory(const fs::path& directory) {
+    if (fs::is_directory(directory)) {
+        for (const auto& entry : fs::recursive_directory_iterator(directory)) {
             if (X509CertificateBundle::is_certificate_file(entry)) {
                 bundles.emplace_back(entry, EncodingFormat::PEM);
             }

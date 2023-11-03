@@ -3,24 +3,24 @@
 #ifndef EVSE_SECURITY_HPP
 #define EVSE_SECURITY_HPP
 
-#include <filesystem>
 #include <fstream>
+#include <support_older_cpp_versions.hpp>
 #include <types.hpp>
 
 namespace evse_security {
 
 struct DirectoryPaths {
-    std::filesystem::path csms_leaf_cert_directory;
-    std::filesystem::path csms_leaf_key_directory;
-    std::filesystem::path secc_leaf_cert_directory;
-    std::filesystem::path secc_leaf_key_directory;
+    fs::path csms_leaf_cert_directory;
+    fs::path csms_leaf_key_directory;
+    fs::path secc_leaf_cert_directory;
+    fs::path secc_leaf_key_directory;
 };
 struct FilePaths {
     // bundle paths
-    std::filesystem::path csms_ca_bundle;
-    std::filesystem::path mf_ca_bundle;
-    std::filesystem::path mo_ca_bundle;
-    std::filesystem::path v2g_ca_bundle;
+    fs::path csms_ca_bundle;
+    fs::path mf_ca_bundle;
+    fs::path mo_ca_bundle;
+    fs::path v2g_ca_bundle;
 
     DirectoryPaths directories;
 };
@@ -127,12 +127,12 @@ public:
     /// @param signing_certificate
     /// @param signature
     /// @return true if the verification was successful, false if not
-    static bool verify_file_signature(const std::filesystem::path& path, const std::string& signing_certificate,
+    static bool verify_file_signature(const fs::path& path, const std::string& signing_certificate,
                                       const std::string signature);
 
 private:
     // why not reusing the FilePaths here directly (storage duplication)
-    std::map<CaCertificateType, std::filesystem::path> ca_bundle_path_map;
+    std::map<CaCertificateType, fs::path> ca_bundle_path_map;
     DirectoryPaths directories;
 
     // FIXME(piet): map passwords to encrypted private key files

@@ -50,4 +50,12 @@ target_link_libraries(evse_security
         OpenSSL::Crypto
 )
 
+if(LIBEVSE_SECURITY_USE_BOOST_FILESYSTEM)
+    find_package(Boost REQUIRED COMPONENTS filesystem)
+    target_link_libraries(evse_security
+        PRIVATE
+            Boost::filesystem
+    )
+endif()
+
 target_compile_features(evse_security PUBLIC cxx_std_17)

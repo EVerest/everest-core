@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
-#include <filesystem>
 #include <fstream>
 #include <gtest/gtest.h>
 #include <regex>
 #include <sstream>
+#include <support_older_cpp_versions.hpp>
 
 #include "evse_security.hpp"
 
@@ -14,8 +14,8 @@
 #include <x509_bundle.hpp>
 #include <x509_wrapper.hpp>
 
-std::string read_file_to_string(const std::filesystem::path filepath) {
-    std::ifstream t(filepath.string());
+std::string read_file_to_string(const fs::path filepath) {
+    fsstd::ifstream t(filepath.string());
     std::stringstream buffer;
     buffer << t.rdbuf();
     return buffer.str();
@@ -46,27 +46,27 @@ protected:
         install_certs();
 
         FilePaths file_paths;
-        file_paths.csms_ca_bundle = std::filesystem::path("certs/ca/v2g/V2G_CA_BUNDLE.pem");
-        file_paths.mf_ca_bundle = std::filesystem::path("certs/ca/v2g/V2G_CA_BUNDLE.pem");
-        file_paths.mo_ca_bundle = std::filesystem::path("certs/ca/mo/MO_CA_BUNDLE.pem");
-        file_paths.v2g_ca_bundle = std::filesystem::path("certs/ca/v2g/V2G_CA_BUNDLE.pem");
-        file_paths.directories.csms_leaf_cert_directory = std::filesystem::path("certs/client/csms/");
-        file_paths.directories.csms_leaf_key_directory = std::filesystem::path("certs/client/csms/");
-        file_paths.directories.secc_leaf_cert_directory = std::filesystem::path("certs/client/cso/");
-        file_paths.directories.secc_leaf_key_directory = std::filesystem::path("certs/client/cso/");
+        file_paths.csms_ca_bundle = fs::path("certs/ca/v2g/V2G_CA_BUNDLE.pem");
+        file_paths.mf_ca_bundle = fs::path("certs/ca/v2g/V2G_CA_BUNDLE.pem");
+        file_paths.mo_ca_bundle = fs::path("certs/ca/mo/MO_CA_BUNDLE.pem");
+        file_paths.v2g_ca_bundle = fs::path("certs/ca/v2g/V2G_CA_BUNDLE.pem");
+        file_paths.directories.csms_leaf_cert_directory = fs::path("certs/client/csms/");
+        file_paths.directories.csms_leaf_key_directory = fs::path("certs/client/csms/");
+        file_paths.directories.secc_leaf_cert_directory = fs::path("certs/client/cso/");
+        file_paths.directories.secc_leaf_key_directory = fs::path("certs/client/cso/");
 
         this->evse_security = std::make_unique<EvseSecurity>(file_paths, "123456");
     }
 
     void TearDown() override {
-        std::filesystem::remove_all("certs");
+        fs::remove_all("certs");
     }
 };
 
 TEST_F(EvseSecurityTests, verify_basics) {
     const char* bundle_path = "certs/ca/v2g/V2G_CA_BUNDLE.pem";
 
-    std::ifstream file(bundle_path, std::ios::binary);
+    fsstd::ifstream file(bundle_path, std::ios::binary);
     std::string certificate_file((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 
     std::vector<std::string> certificate_strings;
@@ -87,7 +87,7 @@ TEST_F(EvseSecurityTests, verify_basics) {
 
     ASSERT_TRUE(certificate_strings.size() == 3);
 
-    X509CertificateBundle bundle(std::filesystem::path(bundle_path), EncodingFormat::PEM);
+    X509CertificateBundle bundle(fs::path(bundle_path), EncodingFormat::PEM);
     ASSERT_TRUE(bundle.is_using_bundle_file());
 
     auto certificates = bundle.split();
@@ -103,13 +103,13 @@ TEST_F(EvseSecurityTests, verify_basics) {
 
 TEST_F(EvseSecurityTests, verify_bundle_management) {
     const char* directory_path = "certs/ca/csms/";
-    X509CertificateBundle bundle(std::filesystem::path(directory_path), EncodingFormat::PEM);
+    X509CertificateBundle bundle(fs::path(directory_path), EncodingFormat::PEM);
     ASSERT_TRUE(bundle.split().size() == 2);
     bundle.delete_certificate(bundle.split()[0].get_certificate_hash_data());
     bundle.sync_to_certificate_store();
 
     int items = 0;
-    for (const auto& entry : std::filesystem::recursive_directory_iterator(directory_path)) {
+    for (const auto& entry : fs::recursive_directory_iterator(directory_path)) {
         if (X509CertificateBundle::is_certificate_file(entry)) {
             items++;
         }
@@ -119,7 +119,7 @@ TEST_F(EvseSecurityTests, verify_bundle_management) {
 
 /// \brief test verifyChargepointCertificate with valid cert
 TEST_F(EvseSecurityTests, verify_chargepoint_cert_01) {
-    const auto client_certificate = read_file_to_string(std::filesystem::path("certs/client/csms/CSMS_LEAF.pem"));
+    const auto client_certificate = read_file_to_string(fs::path("certs/client/csms/CSMS_LEAF.pem"));
     std::cout << client_certificate << std::endl;
     const auto result = this->evse_security->update_leaf_certificate(client_certificate, LeafCertificateType::CSMS);
     ASSERT_TRUE(result == InstallCertificateResult::Accepted);
@@ -133,21 +133,20 @@ TEST_F(EvseSecurityTests, verify_chargepoint_cert_02) {
 
 /// \brief test verifyV2GChargingStationCertificate with valid cert
 TEST_F(EvseSecurityTests, verify_v2g_cert_01) {
-    const auto client_certificate = read_file_to_string(std::filesystem::path("certs/client/cso/SECC_LEAF.pem"));
+    const auto client_certificate = read_file_to_string(fs::path("certs/client/cso/SECC_LEAF.pem"));
     const auto result = this->evse_security->update_leaf_certificate(client_certificate, LeafCertificateType::V2G);
     ASSERT_TRUE(result == InstallCertificateResult::Accepted);
 }
 
 /// \brief test verifyV2GChargingStationCertificate with invalid cert
 TEST_F(EvseSecurityTests, verify_v2g_cert_02) {
-    const auto invalid_certificate =
-        read_file_to_string(std::filesystem::path("certs/client/invalid/INVALID_CSMS.pem"));
+    const auto invalid_certificate = read_file_to_string(fs::path("certs/client/invalid/INVALID_CSMS.pem"));
     const auto result = this->evse_security->update_leaf_certificate(invalid_certificate, LeafCertificateType::V2G);
     ASSERT_TRUE(result == InstallCertificateResult::InvalidCertificateChain);
 }
 
 TEST_F(EvseSecurityTests, install_root_ca_01) {
-    const auto v2g_root_ca = read_file_to_string(std::filesystem::path("certs/ca/v2g/V2G_ROOT_CA_NEW.pem"));
+    const auto v2g_root_ca = read_file_to_string(fs::path("certs/ca/v2g/V2G_ROOT_CA_NEW.pem"));
     const auto result = this->evse_security->install_ca_certificate(v2g_root_ca, CaCertificateType::V2G);
     ASSERT_TRUE(result == InstallCertificateResult::Accepted);
 }
