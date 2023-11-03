@@ -8,6 +8,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <ocpp/common/types.hpp>
 #include <thread>
 
 namespace ocpp {
@@ -33,6 +34,7 @@ private:
     std::ofstream output_file;
     std::ofstream html_log_file;
     std::mutex output_file_mutex;
+    std::function<void(const std::string& message, MessageDirection direction)> message_callback;
     std::map<std::string, std::string> lookup_map;
     std::map<std::string, std::shared_ptr<MessageLogging>> session_id_logging;
 
@@ -42,9 +44,10 @@ private:
 
 public:
     /// \brief Creates a new Websocket object with the providede \p configuration
-    explicit MessageLogging(bool log_messages, const std::string& message_log_path, const std::string& output_file_name,
-                            bool log_to_console, bool detailed_log_to_console, bool log_to_file, bool log_to_html,
-                            bool session_logging);
+    explicit MessageLogging(
+        bool log_messages, const std::string& message_log_path, const std::string& output_file_name,
+        bool log_to_console, bool detailed_log_to_console, bool log_to_file, bool log_to_html, bool session_logging,
+        std::function<void(const std::string& message, MessageDirection direction)> message_callback);
     ~MessageLogging();
 
     void charge_point(const std::string& message_type, const std::string& json_str);

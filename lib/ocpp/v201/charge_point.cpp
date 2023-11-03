@@ -26,7 +26,8 @@ bool Callbacks::all_callbacks_valid() const {
            (!this->configure_network_connection_profile_callback.has_value() or
             this->configure_network_connection_profile_callback.value() != nullptr) and
            (!this->time_sync_callback.has_value() or this->time_sync_callback.value() != nullptr) and
-           (!this->boot_notification_callback.has_value() or this->boot_notification_callback.value() != nullptr);
+           (!this->boot_notification_callback.has_value() or this->boot_notification_callback.value() != nullptr) and
+           (!this->ocpp_messages_callback.has_value() or this->ocpp_messages_callback.value() != nullptr);
 }
 
 ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_structure,
@@ -121,8 +122,10 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
             this->database_handler->insert_availability(evse_id, connector_id, OperationalStatusEnum::Operative, false);
         }
     }
-    this->logging = std::make_shared<ocpp::MessageLogging>(true, message_log_path, DateTime().to_rfc3339(), false,
-                                                           false, false, true, true);
+    this->logging =
+        std::make_shared<ocpp::MessageLogging>(true, message_log_path, DateTime().to_rfc3339(), false, false, false,
+                                               true, true, this->callbacks.ocpp_messages_callback.value_or(nullptr));
+
     this->message_queue = std::make_unique<ocpp::MessageQueue<v201::MessageType>>(
         [this](json message) -> bool { return this->websocket->send(message.dump()); },
         this->device_model->get_value<int>(ControllerComponentVariables::MessageAttempts),

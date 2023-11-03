@@ -12,9 +12,10 @@ using json = nlohmann::json;
 
 namespace ocpp {
 
-MessageLogging::MessageLogging(bool log_messages, const std::string& message_log_path,
-                               const std::string& output_file_name, bool log_to_console, bool detailed_log_to_console,
-                               bool log_to_file, bool log_to_html, bool session_logging) :
+MessageLogging::MessageLogging(
+    bool log_messages, const std::string& message_log_path, const std::string& output_file_name, bool log_to_console,
+    bool detailed_log_to_console, bool log_to_file, bool log_to_html, bool session_logging,
+    std::function<void(const std::string& message, MessageDirection direction)> message_callback) :
     log_messages(log_messages),
     message_log_path(message_log_path),
     output_file_name(output_file_name),
@@ -22,11 +23,15 @@ MessageLogging::MessageLogging(bool log_messages, const std::string& message_log
     detailed_log_to_console(detailed_log_to_console),
     log_to_file(log_to_file),
     log_to_html(log_to_html),
-    session_logging(session_logging) {
+    session_logging(session_logging),
+    message_callback(message_callback) {
 
     if (this->log_messages) {
         if (this->log_to_console) {
             EVLOG_info << "Logging OCPP messages to console";
+        }
+        if (this->message_callback != nullptr) {
+            EVLOG_info << "Logging OCPP messages to callback";
         }
         if (this->log_to_file) {
             auto output_file_path = message_log_path + "/" + output_file_name + ".log";
@@ -82,6 +87,9 @@ MessageLogging::~MessageLogging() {
 }
 
 void MessageLogging::charge_point(const std::string& message_type, const std::string& json_str) {
+    if (this->message_callback != nullptr) {
+        this->message_callback(json_str, MessageDirection::ChargingStationToCSMS);
+    }
     auto formatted = format_message(message_type, json_str);
     log_output(0, formatted.message_type, formatted.message);
     if (this->session_logging) {
@@ -92,6 +100,9 @@ void MessageLogging::charge_point(const std::string& message_type, const std::st
 }
 
 void MessageLogging::central_system(const std::string& message_type, const std::string& json_str) {
+    if (this->message_callback != nullptr) {
+        this->message_callback(json_str, MessageDirection::CSMSToChargingStation);
+    }
     auto formatted = format_message(message_type, json_str);
     log_output(1, formatted.message_type, formatted.message);
     if (this->session_logging) {
@@ -190,8 +201,8 @@ FormattedMessageWithType MessageLogging::format_message(const std::string& messa
 }
 
 void MessageLogging::start_session_logging(const std::string& session_id, const std::string& log_path) {
-    this->session_id_logging[session_id] =
-        std::make_shared<ocpp::MessageLogging>(true, log_path, "incomplete-ocpp", false, false, false, true, false);
+    this->session_id_logging[session_id] = std::make_shared<ocpp::MessageLogging>(
+        true, log_path, "incomplete-ocpp", false, false, false, true, false, nullptr);
 }
 
 void MessageLogging::stop_session_logging(const std::string& session_id) {

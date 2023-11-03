@@ -56,7 +56,7 @@ ChargePointImpl::ChargePointImpl(const std::string& config, const fs::path& shar
 
     this->logging = std::make_shared<ocpp::MessageLogging>(
         this->configuration->getLogMessages(), this->message_log_path, DateTime().to_rfc3339(), log_to_console,
-        detailed_log_to_console, log_to_file, log_to_html, session_logging);
+        detailed_log_to_console, log_to_file, log_to_html, session_logging, nullptr);
 
     this->boot_notification_timer =
         std::make_unique<Everest::SteadyTimer>(&this->io_service, [this]() { this->boot_notification(); });

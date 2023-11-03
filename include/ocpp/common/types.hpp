@@ -586,6 +586,11 @@ inline const std::string INVALIDTLSVERSION = "InvalidTLSVersion";
 inline const std::string INVALIDTLSCIPHERSUITE = "InvalidTLSCipherSuite";
 } // namespace security_events
 
+enum class MessageDirection {
+    CSMSToChargingStation,
+    ChargingStationToCSMS
+};
+
 } // namespace ocpp
 
 #endif
