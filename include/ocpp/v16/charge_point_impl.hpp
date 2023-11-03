@@ -180,7 +180,7 @@ private:
     void init_state_machine(const std::map<int, ChargePointStatus>& connector_status_map);
     WebsocketConnectionOptions get_ws_connection_options();
     void message_callback(const std::string& message);
-    void handle_message(const json& json_message, MessageType message_type);
+    void handle_message(const EnhancedMessage<v16::MessageType>& message);
     bool allowed_to_send_message(json::array_t message_type);
     template <class T> bool send(Call<T> call);
     template <class T> std::future<EnhancedMessage<v16::MessageType>> send_async(Call<T> call);
@@ -247,7 +247,7 @@ private:
     void handleRemoteStopTransactionRequest(Call<RemoteStopTransactionRequest> call);
     void handleResetRequest(Call<ResetRequest> call);
     void handleStartTransactionResponse(CallResult<StartTransactionResponse> call_result);
-    void handleStopTransactionResponse(CallResult<StopTransactionResponse> call_result);
+    void handleStopTransactionResponse(const EnhancedMessage<v16::MessageType>& message);
     void handleUnlockConnectorRequest(Call<UnlockConnectorRequest> call);
     void handleHeartbeatResponse(CallResult<HeartbeatResponse> call_result);
 

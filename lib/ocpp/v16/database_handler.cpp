@@ -167,12 +167,13 @@ void DatabaseHandler::update_transaction(const std::string& session_id, int32_t 
     }
 }
 
-void DatabaseHandler::update_transaction_csms_ack(const std::string& session_id) {
-    std::string sql = "UPDATE TRANSACTIONS SET CSMS_ACK=1, LAST_UPDATE=@last_update WHERE ID==@session_id";
+void DatabaseHandler::update_transaction_csms_ack(const int32_t transaction_id) {
+    std::string sql =
+        "UPDATE TRANSACTIONS SET CSMS_ACK=1, LAST_UPDATE=@last_update WHERE TRANSACTION_ID==@transaction_id";
     SQLiteStatement stmt(this->db, sql);
 
     stmt.bind_text("@last_update", ocpp::DateTime().to_rfc3339(), SQLiteString::Transient);
-    stmt.bind_text("@session_id", session_id);
+    stmt.bind_int("@transaction_id", transaction_id);
 
     if (stmt.step() != SQLITE_DONE) {
         EVLOG_error << "Could not insert into table: " << sqlite3_errmsg(this->db) << std::endl;

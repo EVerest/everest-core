@@ -313,10 +313,6 @@ void ChargePointImpl::update_clock_aligned_meter_values_interval() {
 void ChargePointImpl::stop_pending_transactions() {
     const auto transactions = this->database_handler->get_transactions(true);
 
-    if (!transactions.empty()) {
-        EVLOG_info << "Sending StopTransaction.req for " << transactions.size()
-                   << " open transactions that haven't been acknowledged by CSMS.";
-    }
     for (const auto& transaction_entry : transactions) {
         std::shared_ptr<Transaction> transaction = std::make_shared<Transaction>(
             transaction_entry.connector, transaction_entry.session_id, CiString<20>(transaction_entry.id_tag_start),
@@ -335,11 +331,17 @@ void ChargePointImpl::stop_pending_transactions() {
         const auto stop_energy_wh = std::make_shared<StampedEnergyWh>(timestamp, meter_stop);
         transaction->add_stop_energy_wh(stop_energy_wh);
         transaction->set_transaction_id(transaction_entry.transaction_id);
-        this->transaction_handler->add_transaction(transaction);
 
-        this->stop_transaction(transaction_entry.connector, Reason::PowerLoss, std::nullopt);
-        this->database_handler->update_transaction(transaction_entry.session_id, meter_stop, timestamp.to_rfc3339(),
-                                                   std::nullopt, Reason::PowerLoss);
+        // StopTransaction.req is not yet queued for the transaction in the database, so we add the transaction to the
+        // transaction_handler and initiate a StopTransaction.req
+        if (!this->message_queue->contains_stop_transaction_message(transaction_entry.transaction_id)) {
+            EVLOG_info << "Sending StopTransaction.req for transaction with id: " << transaction_entry.transaction_id
+                       << " because it hasn't been acknowledged by CSMS.";
+            this->transaction_handler->add_transaction(transaction);
+            this->stop_transaction(transaction_entry.connector, Reason::PowerLoss, std::nullopt);
+            this->database_handler->update_transaction(transaction_entry.session_id, meter_stop, timestamp.to_rfc3339(),
+                                                       std::nullopt, Reason::PowerLoss);
+        }
     }
 }
 
@@ -940,13 +942,13 @@ void ChargePointImpl::message_callback(const std::string& message) {
                 if (enhanced_message.messageType == MessageType::BootNotificationResponse) {
                     this->handleBootNotificationResponse(json_message);
                 } else {
-                    this->handle_message(json_message, enhanced_message.messageType);
+                    this->handle_message(enhanced_message);
                 }
             }
             break;
         }
         case ChargePointConnectionState::Booted: {
-            this->handle_message(json_message, enhanced_message.messageType);
+            this->handle_message(enhanced_message);
             break;
         }
 
@@ -964,9 +966,10 @@ void ChargePointImpl::message_callback(const std::string& message) {
     }
 }
 
-void ChargePointImpl::handle_message(const json& json_message, MessageType message_type) {
+void ChargePointImpl::handle_message(const EnhancedMessage<v16::MessageType>& message) {
+    const auto& json_message = message.message;
     // lots of messages are allowed here
-    switch (message_type) {
+    switch (message.messageType) {
 
     case MessageType::AuthorizeResponse:
         // handled by authorize_id_tag future
@@ -1017,7 +1020,7 @@ void ChargePointImpl::handle_message(const json& json_message, MessageType messa
         break;
 
     case MessageType::StopTransactionResponse:
-        this->handleStopTransactionResponse(json_message);
+        this->handleStopTransactionResponse(message);
         break;
 
     case MessageType::UnlockConnector:
@@ -1127,7 +1130,6 @@ void ChargePointImpl::handleBootNotificationResponse(ocpp::CallResult<BootNotifi
             this->status_notification(connector, ChargePointErrorCode::NoError, this->status->get_state(connector));
         }
 
-        this->stop_pending_transactions();
         this->message_queue->get_transaction_messages_from_db();
 
         if (this->is_pnc_enabled()) {
@@ -1143,6 +1145,8 @@ void ChargePointImpl::handleBootNotificationResponse(ocpp::CallResult<BootNotifi
         if (this->is_pnc_enabled()) {
             this->ocsp_request_timer->timeout(INITIAL_CERTIFICATE_REQUESTS_DELAY);
         }
+
+        this->stop_pending_transactions();
 
         break;
     }
@@ -1625,76 +1629,90 @@ void ChargePointImpl::handleStartTransactionResponse(ocpp::CallResult<StartTrans
 
     const auto transaction = this->transaction_handler->get_transaction(call_result.uniqueId);
 
-    // this can happen when a chargepoint was offline during transaction and StopTransaction.req is already queued
-    if (transaction->is_finished()) {
-        this->message_queue->add_stopped_transaction_id(transaction->get_stop_transaction_message_id(),
-                                                        start_transaction_response.transactionId);
-    }
-    this->message_queue->notify_start_transaction_handled(call_result.uniqueId.get(),
-                                                          start_transaction_response.transactionId);
-    int32_t connector = transaction->get_connector();
-    transaction->set_transaction_id(start_transaction_response.transactionId);
-
-    this->database_handler->update_transaction(transaction->get_session_id(), start_transaction_response.transactionId,
-                                               call_result.msg.idTagInfo.parentIdTag);
-
-    auto idTag = transaction->get_id_tag();
-    this->database_handler->insert_or_update_authorization_cache_entry(idTag, start_transaction_response.idTagInfo);
-
-    if (start_transaction_response.idTagInfo.status != AuthorizationStatus::Accepted) {
-        this->pause_charging_callback(connector);
-        if (this->configuration->getStopTransactionOnInvalidId()) {
-            this->stop_transaction_callback(connector, Reason::DeAuthorized);
+    if (transaction != nullptr) {
+        // this can happen when a chargepoint was offline during transaction and StopTransaction.req is already queued
+        if (transaction->is_finished()) {
+            this->message_queue->add_stopped_transaction_id(transaction->get_stop_transaction_message_id(),
+                                                            start_transaction_response.transactionId);
         }
-    } else if (this->transaction_started_callback != nullptr) {
-        this->transaction_started_callback(connector, start_transaction_response.transactionId);
+        this->message_queue->notify_start_transaction_handled(call_result.uniqueId.get(),
+                                                              start_transaction_response.transactionId);
+        int32_t connector = transaction->get_connector();
+        transaction->set_transaction_id(start_transaction_response.transactionId);
+
+        this->database_handler->update_transaction(transaction->get_session_id(),
+                                                   start_transaction_response.transactionId,
+                                                   call_result.msg.idTagInfo.parentIdTag);
+
+        auto idTag = transaction->get_id_tag();
+        this->database_handler->insert_or_update_authorization_cache_entry(idTag, start_transaction_response.idTagInfo);
+
+        if (start_transaction_response.idTagInfo.status != AuthorizationStatus::Accepted) {
+            this->pause_charging_callback(connector);
+            if (this->configuration->getStopTransactionOnInvalidId()) {
+                this->stop_transaction_callback(connector, Reason::DeAuthorized);
+            }
+        } else if (this->transaction_started_callback != nullptr) {
+            this->transaction_started_callback(connector, start_transaction_response.transactionId);
+        }
+    } else {
+        EVLOG_warning << "Received StartTransaction.conf for transaction that is not known to transaction_handler";
     }
 }
 
-void ChargePointImpl::handleStopTransactionResponse(ocpp::CallResult<StopTransactionResponse> call_result) {
+void ChargePointImpl::handleStopTransactionResponse(const EnhancedMessage<v16::MessageType>& message) {
+
+    CallResult<StopTransactionResponse> call_result = message.message;
+    const Call<StopTransactionRequest>& original_call = message.call_message;
 
     StopTransactionResponse stop_transaction_response = call_result.msg;
     const auto transaction = this->transaction_handler->get_transaction(call_result.uniqueId);
-    int32_t connector = transaction->get_connector();
 
-    if (stop_transaction_response.idTagInfo) {
-        auto id_tag = this->transaction_handler->get_authorized_id_tag(call_result.uniqueId.get());
-        if (id_tag) {
-            this->database_handler->insert_or_update_authorization_cache_entry(
-                id_tag.value(), stop_transaction_response.idTagInfo.value());
-        }
-    }
+    if (transaction != nullptr) {
+        int32_t connector = transaction->get_connector();
 
-    // perform a queued connector availability change
-    bool change_queued = false;
-    AvailabilityType connector_availability;
-    {
-        std::lock_guard<std::mutex> change_availability_lock(change_availability_mutex);
-        change_queued = this->change_availability_queue.count(connector) != 0;
-        connector_availability = this->change_availability_queue[connector];
-        this->change_availability_queue.erase(connector);
-    }
-
-    if (change_queued) {
-        this->database_handler->insert_or_update_connector_availability(connector, connector_availability);
-        EVLOG_debug << "Queued availability change of connector " << connector << " to "
-                    << conversions::availability_type_to_string(connector_availability);
-
-        if (connector_availability == AvailabilityType::Operative) {
-            if (this->enable_evse_callback != nullptr) {
-                // TODO(kai): check return value
-                this->enable_evse_callback(connector);
+        if (stop_transaction_response.idTagInfo) {
+            auto id_tag = this->transaction_handler->get_authorized_id_tag(call_result.uniqueId.get());
+            if (id_tag) {
+                this->database_handler->insert_or_update_authorization_cache_entry(
+                    id_tag.value(), stop_transaction_response.idTagInfo.value());
             }
-            this->status->submit_event(connector, FSMEvent::BecomeAvailable);
-        } else {
-            if (this->disable_evse_callback != nullptr) {
-                // TODO(kai): check return value
-                this->disable_evse_callback(connector);
-            }
-            this->status->submit_event(connector, FSMEvent::ChangeAvailabilityToUnavailable);
         }
+
+        // perform a queued connector availability change
+        bool change_queued = false;
+        AvailabilityType connector_availability;
+        {
+            std::lock_guard<std::mutex> change_availability_lock(change_availability_mutex);
+            change_queued = this->change_availability_queue.count(connector) != 0;
+            connector_availability = this->change_availability_queue[connector];
+            this->change_availability_queue.erase(connector);
+        }
+
+        if (change_queued) {
+            this->database_handler->insert_or_update_connector_availability(connector, connector_availability);
+            EVLOG_debug << "Queued availability change of connector " << connector << " to "
+                        << conversions::availability_type_to_string(connector_availability);
+
+            if (connector_availability == AvailabilityType::Operative) {
+                if (this->enable_evse_callback != nullptr) {
+                    // TODO(kai): check return value
+                    this->enable_evse_callback(connector);
+                }
+                this->status->submit_event(connector, FSMEvent::BecomeAvailable);
+            } else {
+                if (this->disable_evse_callback != nullptr) {
+                    // TODO(kai): check return value
+                    this->disable_evse_callback(connector);
+                }
+                this->status->submit_event(connector, FSMEvent::ChangeAvailabilityToUnavailable);
+            }
+        }
+    } else {
+        EVLOG_warning << "Received StopTransaction.conf for transaction that is not known to transaction_handler";
     }
-    this->database_handler->update_transaction_csms_ack(transaction->get_session_id());
+    this->database_handler->update_transaction_csms_ack(original_call.msg.transactionId);
+
     this->transaction_handler->erase_stopped_transaction(call_result.uniqueId.get());
     // when this transaction was stopped because of a Reset.req this signals that StopTransaction.conf has been received
     this->stop_transaction_cv.notify_one();

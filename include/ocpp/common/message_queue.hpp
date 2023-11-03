@@ -20,6 +20,7 @@
 #include <ocpp/common/call_types.hpp>
 #include <ocpp/common/database_handler_base.hpp>
 #include <ocpp/common/types.hpp>
+#include <ocpp/v16/messages/StopTransaction.hpp>
 #include <ocpp/v16/types.hpp>
 #include <ocpp/v201/messages/TransactionEvent.hpp>
 #include <ocpp/v201/types.hpp>
@@ -603,6 +604,19 @@ public:
             if (control_message->messageType == v201::MessageType::TransactionEvent) {
                 v201::TransactionEventRequest req = control_message->message.at(CALL_PAYLOAD);
                 if (req.transactionInfo.transactionId == transaction_id) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    bool contains_stop_transaction_message(const int32_t transaction_id) {
+        std::lock_guard<std::mutex> lk(this->message_mutex);
+        for (const auto control_message : this->transaction_message_queue) {
+            if (control_message->messageType == v16::MessageType::StopTransaction) {
+                v16::StopTransactionRequest req = control_message->message.at(CALL_PAYLOAD);
+                if (req.transactionId == transaction_id) {
                     return true;
                 }
             }

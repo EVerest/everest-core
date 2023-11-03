@@ -72,8 +72,9 @@ public:
     void update_transaction(const std::string& session_id, int32_t meter_stop, const std::string& time_end,
                             std::optional<CiString<20>> id_tag_end, std::optional<v16::Reason> stop_reason);
 
-    /// \brief Updates the CSMS_ACK column for the transaction with the given \p session_id in the TRANSACTIONS table
-    void update_transaction_csms_ack(const std::string& session_id);
+    /// \brief Updates the CSMS_ACK column for the transaction with the given \p transaction_id in the TRANSACTIONS
+    /// table
+    void update_transaction_csms_ack(const int32_t transaction_id);
 
     /// \brief Updates the METER_LAST and METER_LAST_TIME column for the transaction with the given \p session_id in the
     /// TRANSACTIONS table
