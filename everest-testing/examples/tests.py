@@ -7,8 +7,12 @@ from ocpp.v201 import call_result, call
 from ocpp.v201.datatypes import SetVariableResultType, IdTokenType
 from ocpp.v201.enums import SetVariableStatusType, IdTokenType as IdTokenTypeEnum, ClearCacheStatusType, ConnectorStatusType, RequestStartStopStatusType
 
-from everest.testing.ocpp_utils.fixtures import *
-from everest.testing.ocpp_utils.charge_point_utils import wait_for_and_validate, OcppTestConfiguration
+from everest.testing.core_utils.controller.everest_test_controller import EverestTestController
+from everest.testing.core_utils.controller.test_controller_interface import TestController
+from everest.testing.core_utils.fixtures import *
+# noinspection PyUnresolvedReferences
+from everest.testing.ocpp_utils.fixtures import test_utility, charge_point_v16, central_system, test_config, ocpp_config, charge_point, ocpp_version
+from everest.testing.ocpp_utils.charge_point_utils import wait_for_and_validate, OcppTestConfiguration, TestUtility
 from everest.testing.ocpp_utils.charge_point_v201 import ChargePoint201
 from everest.testing.ocpp_utils.charge_point_v16 import ChargePoint16
 
@@ -55,7 +59,7 @@ async def test_ocpp_16(test_config: OcppTestConfiguration, charge_point_v16: Cha
 @ pytest.mark.asyncio
 @pytest.mark.ocpp_version("ocpp2.0.1")
 @pytest.mark.everest_core_config("conf/everest-config-ocpp201.yaml")
-async def test_ocpp_201(charge_point_v201: ChargePoint201, test_controller: TestController, test_utility: TestUtility):
+async def test_ocpp_201(charge_point_v201: ChargePoint201, test_controller: EverestTestController, test_utility: TestUtility):
     """This test case tests some requirements around AuthorizationCache of OCPP2.0.1
 
     Args:

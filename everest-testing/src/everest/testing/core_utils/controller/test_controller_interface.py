@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
-class TestController:
+class TestController():
 
     """This abstract class defines methods that are used within the test cases
     and should be implemented by you for your specific chargepoint and test
@@ -45,6 +45,7 @@ class TestController:
         """
         Swipe the given RFID card at the RFID reader of the chargepoint.
         """
+
 
     def connect_websocket(self):
         """

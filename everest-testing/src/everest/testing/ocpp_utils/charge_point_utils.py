@@ -54,6 +54,7 @@ class FirmwareInfo:
 @dataclass
 class OcppTestConfiguration:
     csms_port: str = 9000
+    csms_host: str = "127.0.0.1"
     charge_point_info: ChargePointInfo = ChargePointInfo()
     config_path: Optional[Path] = None
     authorization_info: Optional[AuthorizationInfo] = None
@@ -232,3 +233,5 @@ def create_cert(serial_no, not_before, not_after, ca_cert, csr, ca_private_key):
     cert.sign(ca_private_key, 'SHA256')
 
     return crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
+
+

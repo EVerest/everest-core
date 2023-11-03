@@ -4,8 +4,13 @@
 import asyncio
 import time
 import logging
+from contextlib import asynccontextmanager
+from functools import wraps
+from typing import Union, Optional
+from unittest.mock import Mock
+
 import websockets
-from ocpp.routing import create_route_map
+from ocpp.routing import create_route_map, on
 from ocpp.charge_point import ChargePoint
 
 from everest.testing.ocpp_utils.charge_point_v16 import ChargePoint16
@@ -20,7 +25,7 @@ class CentralSystem:
     """Wrapper for CSMS websocket server. Holds a reference to a single connected chargepoint
     """
 
-    def __init__(self, port, chargepoint_id, ocpp_version):
+    def __init__(self,  chargepoint_id, ocpp_version, port: Optional[int] = None):
         self.name = "CentralSystem"
         self.port = port
         self.chargepoint_id = chargepoint_id
@@ -74,7 +79,7 @@ class CentralSystem:
                 f"Connection on invalid path {chargepoint_id} received. Check the configuration of the ChargePointId.")
             return await websocket.close()
 
-    async def wait_for_chargepoint(self, timeout=30, wait_for_bootnotification=True) -> ChargePoint:
+    async def wait_for_chargepoint(self, timeout=30, wait_for_bootnotification=True) -> Union[ChargePoint16, ChargePoint201]:
         """Waits for the chargepoint to connect to the CSMS
 
         Args:
@@ -106,12 +111,13 @@ class CentralSystem:
         await asyncio.sleep(1)
         return self.chargepoint
 
+    @asynccontextmanager
     async def start(self, ssl_context=None):
         """Starts the websocket server
         """
         self.ws_server = await websockets.serve(
             self.on_connect,
-            '127.0.0.1',
+            '0.0.0.0',
             self.port,
             subprotocols=[self.ocpp_version],
             ssl=ssl_context
@@ -121,8 +127,82 @@ class CentralSystem:
             logging.info(f"Server port was not set, setting to {self.port}")
         logging.debug(f"Server Started listening to new {self.ocpp_version} connections.")
 
-    async def stop(self):
-        """Stops the websocket server
-        """
+        yield
+
         self.ws_server.close()
         await self.ws_server.wait_closed()
+
+
+
+
+
+def inject_csms_v201_mock(cs: CentralSystem) -> Mock:
+    """ Given a not yet started CentralSystem, add mock overrides for _any_ action handler.
+
+    If not touched, those will simply proxy any request.
+
+    However, they allow later change of the CSMS return values:
+
+    Example:
+
+    @inject_csms_mock
+    async def test_foo(central_system_v201: CentralSystem):
+        central_system_v201.mock.on_get_15118_ev_certificate.side_effect = [
+                call_result201.Get15118EVCertificatePayload(status=response_status,
+                                                            exi_response=exi_response)]
+    """
+
+    def catch_mock(mock, method_name, method):
+        method_mock = getattr(mock, method_name)
+
+        @on(method._on_action)
+        @wraps(method)
+        def _method(*args, **kwargs):
+            mock_res = method_mock(*args, **kwargs)
+            if method_mock.side_effect:
+                return mock_res
+            return method(cs.chargepoint, *args, **kwargs)
+
+        return _method
+
+    mock = Mock(spec=ChargePoint201)
+    charge_point_action_handlers = {k: v for k, v in ChargePoint201.__dict__.items() if hasattr(v, "_on_action")}
+    for action_name, action_method in charge_point_action_handlers.items():
+        cs.function_overrides.append((action_name, catch_mock(mock, action_name, action_method)))
+    return mock
+
+
+def inject_csms_v16_mock(cs: CentralSystem) -> Mock:
+    """ Given a not yet started CentralSystem, add mock overrides for _any_ action handler.
+
+    If not touched, those will simply proxy any request.
+
+    However, they allow later change of the CSMS return values:
+
+    Example:
+
+    @inject_csms_mock
+    async def test_foo(central_system_v201: CentralSystem):
+        central_system_v201.mock.on_get_15118_ev_certificate.side_effect = [
+                call_result201.Get15118EVCertificatePayload(status=response_status,
+                                                            exi_response=exi_response)]
+    """
+
+    def catch_mock(mock, method_name, method):
+        method_mock = getattr(mock, method_name)
+
+        @on(method._on_action)
+        @wraps(method)
+        def _method(*args, **kwargs):
+            mock_res = method_mock(*args, **kwargs)
+            if method_mock.side_effect:
+                return mock_res
+            return method(cs.chargepoint, *args, **kwargs)
+
+        return _method
+
+    mock = Mock(spec=ChargePoint16)
+    charge_point_action_handlers = {k: v for k, v in ChargePoint16.__dict__.items() if hasattr(v, "_on_action")}
+    for action_name, action_method in charge_point_action_handlers.items():
+        cs.function_overrides.append((action_name, catch_mock(mock, action_name, action_method)))
+    return mock

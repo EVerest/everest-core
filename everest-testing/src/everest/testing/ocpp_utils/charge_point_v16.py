@@ -72,7 +72,7 @@ class ChargePoint16(cp):
     async def stop(self):
         """Drops the websocket connection
         """
-        self._connection.close()
+        await self._connection.close()
 
     async def _send(self, message):
         """Saves the given message to the MessageHistory and sends the message over the ws connection

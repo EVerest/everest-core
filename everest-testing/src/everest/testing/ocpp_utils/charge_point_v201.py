@@ -3,14 +3,12 @@
 
 import asyncio
 import logging
-import time
 from datetime import datetime
-from websockets.exceptions import ConnectionClosedOK, ConnectionClosedError
 
-from ocpp.messages import unpack
-from ocpp.charge_point import camel_to_snake_case
+from ocpp.routing import on
 from ocpp.v201 import ChargePoint as cp
 from ocpp.v201 import call, call_result
+from ocpp.v201.datatypes import IdTokenInfoType, SetVariableDataType, GetVariableDataType, ComponentType, VariableType
 from ocpp.v201.enums import (
     Action,
     RegistrationStatusType,
@@ -19,8 +17,7 @@ from ocpp.v201.enums import (
     NotifyEVChargingNeedsStatusType,
     GenericStatusType
 )
-from ocpp.v201.datatypes import IdTokenInfoType, SetVariableDataType, GetVariableDataType, ComponentType, VariableType
-from ocpp.routing import on
+from websockets.exceptions import ConnectionClosedOK, ConnectionClosedError
 
 from everest.testing.ocpp_utils.charge_point_utils import MessageHistory
 
@@ -28,7 +25,6 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 class ChargePoint201(cp):
-
     """Wrapper for the OCPP2.0.1 chargepoint websocket client. Implementes the communication
      of messages sent from CSMS to chargepoint.
     """
@@ -162,6 +158,11 @@ class ChargePoint201(cp):
     @on(Action.SignCertificate)
     def on_sign_certificate(self, **kwargs):
         return call_result.SignCertificatePayload(status=GenericStatusType.accepted)
+
+    @on(Action.Get15118EVCertificate)
+    def on_get_15118_ev_certificate(self, **kwargs):
+        return call_result.Get15118EVCertificatePayload(status=GenericStatusType.accepted,
+                                                        exi_response="")
 
     async def set_variables_req(self, **kwargs):
         payload = call.SetVariablesPayload(**kwargs)

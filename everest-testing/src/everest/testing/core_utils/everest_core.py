@@ -10,27 +10,29 @@ import time
 import subprocess
 from pathlib import Path
 import tempfile
-from typing import List, Optional
+from typing import List, Optional, Union, Dict
 import uuid
 import yaml
 import selectors
 from signal import SIGINT
 
+from everest.framework import RuntimeSession
+from everest.testing.core_utils.common import Requirement
+from everest.testing.core_utils.configuration.everest_configuration_visitors.everest_configuration_visitor import \
+    EverestConfigAdjustmentVisitor
+from everest.testing.core_utils.configuration.everest_configuration_visitors.mqtt_configuration_visitor import \
+    EverestMqttConfigurationAdjustmentVisitor
+from everest.testing.core_utils.configuration.everest_configuration_visitors.probe_module_configuration_visitor import \
+    ProbeModuleConfigurationVisitor
+
 STARTUP_TIMEOUT = 30
-
-
-class Requirement:
-    def __init__(self, module_id: str, implementation_id: str):
-        self.module_id = module_id
-        self.implementation_id = implementation_id
-
 
 Connections = dict[str, List[Requirement]]
 
 
 class StatusFifoListener:
     def __init__(self, status_fifo_path: Path):
-        if (not status_fifo_path.exists()):
+        if not status_fifo_path.exists():
             os.mkfifo(status_fifo_path)
 
         # note: open doesn't support non-blocking, so we use os.open to get the fd
@@ -75,46 +77,49 @@ class EverestCore:
     """This class can be used to configure, start and stop a full build of everest-core
     """
 
-    def __init__(self, prefix_path: Path, config_path: Path = None) -> None:
+    def __init__(self,
+                 prefix_path: Path,
+                 config_path: Path = None,
+                 standalone_module: Optional[Union[str, List[str]]] = None,
+                 everest_configuration_adjustment_visitors: Optional[
+                     List[EverestConfigAdjustmentVisitor]] = None,
+                 tmp_path: Optional[Path] = None) -> None:
         """Initialize EVerest using everest_core_path and everest_config_path
 
         Args:
             everest_prefix (Path): location of installed everest distribution".
+            standalone_module (str): Standalone module parameter provided to EVerest manager app (can be overwritten in startup)
         """
 
         self.process = None
         self.everest_uuid = uuid.uuid4().hex
-        self.temp_dir = Path(tempfile.mkdtemp(prefix=self.everest_uuid))
-        self.temp_everest_config_file = tempfile.NamedTemporaryFile(
-            delete=False, mode="w+", suffix=".yaml", dir=self.temp_dir)
-        self.everest_core_user_config_path = Path(
-            self.temp_everest_config_file.name).parent / 'user-config'
-        self.everest_core_user_config_path.mkdir(parents=True, exist_ok=True)
+
+        if not tmp_path:
+            temp_dir = Path(tempfile.mkdtemp(prefix=self.everest_uuid))
+            temp_everest_config_file = tempfile.NamedTemporaryFile(
+                delete=False, mode="w+", suffix=".yaml", dir=temp_dir)
+            self.everest_config_path = Path(temp_everest_config_file.name)
+            self.everest_core_user_config_path = Path(
+                temp_everest_config_file.name).parent / 'user-config'
+            self.everest_core_user_config_path.mkdir(parents=True, exist_ok=True)
+            self._status_fifo_path = temp_dir / "status.fifo"
+        else:
+            config_dir = tmp_path / "everest_config"
+            config_dir.mkdir()
+            self.everest_core_user_config_path = config_dir / "user-config"
+            self.everest_core_user_config_path.mkdir()
+            self.everest_config_path = config_dir / "everest_config.yaml"
+            self._status_fifo_path = tmp_path / "status.fifo"
+
         self.prefix_path = prefix_path
         self.etc_path = Path('/etc/everest') if prefix_path == '/usr' else prefix_path / 'etc/everest'
 
         if config_path is None:
             config_path = self.etc_path / 'config-sil.yaml'
 
-        everest_config = yaml.safe_load(config_path.read_text())
-
         self.mqtt_external_prefix = f"external_{self.everest_uuid}"
-        everest_config["settings"] = {}
-        everest_config["settings"]["mqtt_everest_prefix"] = f"everest_{self.everest_uuid}"
-        everest_config["settings"]["mqtt_external_prefix"] = self.mqtt_external_prefix
-        everest_config["settings"]["telemetry_prefix"] = f"telemetry_{self.everest_uuid}"
 
-        # make sure controller starts with a dynamic port
-        everest_config["settings"]["controller_port"] = 0
-
-        try:
-            everest_config["active_modules"]["iso15118_car"]["config_implementation"]["main"]["mqtt_prefix"] = self.mqtt_external_prefix
-        except KeyError:
-            logging.warning("Missing key in iso15118_car config")
-
-        yaml.dump(everest_config, self.temp_everest_config_file)
-
-        self.everest_config_path = Path(self.temp_everest_config_file.name)
+        self._write_temporary_config(config_path, everest_configuration_adjustment_visitors)
 
         logging.info(f"everest uuid: {self.everest_uuid}")
         logging.info(f"temp everest config: {self.everest_config_path} based on {config_path}")
@@ -125,7 +130,26 @@ class EverestCore:
         self.everest_running = False
         self.all_modules_started_event = threading.Event()
 
-    def start(self, standalone_module: Optional[str] = None, test_connections: Connections = None):
+        self._standalone_module = standalone_module
+
+    @property
+    def everest_config(self) -> Dict:
+        with self.everest_config_path.open("r") as f:
+            return yaml.safe_load(f)
+
+    def _write_temporary_config(self, template_config_path: Path, everest_configuration_adjustment_visitors: Optional[
+        List[EverestConfigAdjustmentVisitor]]):
+        everest_configuration_adjustment_visitors = everest_configuration_adjustment_visitors if everest_configuration_adjustment_visitors else []
+        everest_configuration_adjustment_visitors.append(
+            EverestMqttConfigurationAdjustmentVisitor(everest_uuid=self.everest_uuid,
+                                                      mqtt_external_prefix=self.mqtt_external_prefix))
+        everest_config = yaml.safe_load(template_config_path.read_text())
+        for visitor in everest_configuration_adjustment_visitors:
+            everest_config = visitor.adjust_everest_configuration(everest_config)
+        with self.everest_config_path.open("w") as f:
+            yaml.dump(everest_config, f)
+
+    def start(self, standalone_module: Optional[Union[str, List[str]]] = None, test_connections: Connections = None):
         """Starts everest-core in a subprocess
 
         Args:
@@ -133,24 +157,28 @@ class EverestCore:
              Defaults to None.
         """
 
+        standalone_module = standalone_module if standalone_module is not None else self._standalone_module
+
         manager_path = self.prefix_path / 'bin/manager'
 
         logging.info(f'config: {self.everest_config_path}')
 
         # FIXME (aw): clean up passing of modules_to_test
         self.test_connections = test_connections if test_connections != None else {}
-        self.create_testing_user_config()
+        self._create_testing_user_config()
 
-        status_fifo_path = self.temp_dir / "status.fifo"
-        self.status_listener = StatusFifoListener(status_fifo_path)
-        logging.info(status_fifo_path)
+        self.status_listener = StatusFifoListener(self._status_fifo_path)
+        logging.info(self._status_fifo_path)
 
         args = [str(manager_path.resolve()), '--config', str(self.everest_config_path),
-                '--status-fifo', str(status_fifo_path)]
+                '--status-fifo', str(self._status_fifo_path)]
 
-        if standalone_module is not None:
+        if standalone_module:
             logging.info(f"Standalone module {standalone_module} was specified")
-            args.extend(['--standalone', standalone_module])
+            if not isinstance(standalone_module, list):
+                standalone_module = [standalone_module]
+            for s in standalone_module:
+                args.extend(['--standalone', s])
 
         logging.info(" ".join(args))
 
@@ -200,7 +228,7 @@ class EverestCore:
         if self.log_reader_thread:
             self.log_reader_thread.join()
 
-    def create_testing_user_config(self):
+    def _create_testing_user_config(self):
         """Creates a user-config file to include the PyTestControlModule in the current SIL simulation.
         If a user-config already exists, it will be re-named
         """
@@ -214,11 +242,10 @@ class EverestCore:
 
         # FIXME (aw): we need some agreement, if the module id of the probe module should be fixed or not
         logging.info(f'Adding test control module(s) to user-config: {self.test_control_modules}')
-        user_config = {'active_modules': {
-            'probe': {
-                'connections': self.test_connections,
-                'module': 'ProbeModule'
-            }
-        }}
+        user_config = {}
+        user_config = ProbeModuleConfigurationVisitor(connections=self.test_connections).adjust_everest_configuration(user_config)
 
         file.write_text(yaml.dump(user_config))
+
+    def get_runtime_session(self):
+        return RuntimeSession(str(self.prefix_path), str(self.everest_config_path))
