@@ -241,6 +241,13 @@ void Setup::publish_hostname() {
 void Setup::publish_ap_state() {
     std::string ap_state_var = this->var_base + "ap_state";
 
+    auto hostapd_enabled_output = this->run_application("systemctl", {"is-active", "--quiet", "hostapd"});
+    if (hostapd_enabled_output.exit_code == 0) {
+        this->ap_state = "enabled";
+    } else {
+        this->ap_state = "disabled";
+    }
+
     this->mqtt.publish(ap_state_var, this->ap_state);
 }
 
@@ -757,9 +764,6 @@ void Setup::enable_ap() {
     if (add_static_ip_output.exit_code != 0) {
         EVLOG_error << "Could not add static ip to interface " << this->config.ap_interface;
     }
-
-    // FIXME
-    this->ap_state = "enabled";
 }
 
 void Setup::disable_ap() {
@@ -782,8 +786,6 @@ void Setup::disable_ap() {
     if (wpa_cli_output.exit_code != 0) {
         EVLOG_error << "Could not reconnect to wireless LAN";
     }
-
-    this->ap_state = "disabled";
 }
 
 static void add_addr_infos_to_device(const json& addr_infos, NetworkDeviceInfo& device) {
