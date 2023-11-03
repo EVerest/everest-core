@@ -1541,6 +1541,18 @@ bool ChargePointConfiguration::isConnectorPhaseRotationValid(std::string str) {
     str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
     boost::split(elements, str, boost::is_any_of(","));
 
+    // Filter per element of type 0.NotApplicable, 1.NotApplicable, or 0.Unknown etc
+    for (int connector_id = 0; connector_id <= this->getNumberOfConnectors(); connector_id++) {
+        std::string myNotApplicable = std::to_string(connector_id) + ".NotApplicable";
+        std::string myNotDefined = std::to_string(connector_id) + ".Unknown";
+        elements.erase(std::remove(elements.begin(), elements.end(), myNotApplicable), elements.end());
+        elements.erase(std::remove(elements.begin(), elements.end(), myNotDefined), elements.end());
+    };
+    // if all elemens are hit, accept it, else check the remaining
+    if (elements.size() == 0) {
+        return true;
+    };
+
     for (const std::string& e : elements) {
         if (e.size() != 5) {
             return false;
