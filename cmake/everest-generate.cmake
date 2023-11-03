@@ -138,7 +138,7 @@ if (EVEREST_ENABLE_RS_SUPPORT)
         COMMAND
             echo "members = [" >> Cargo.toml
         COMMAND
-            echo "  \"$<JOIN:$<TARGET_PROPERTY:generate_rust,RUST_MODULE_LIST>,\",\\n  \">\"," >> Cargo.toml  # :)
+            echo "  \"$<JOIN:$<TARGET_PROPERTY:generate_rust,RUST_MODULE_LIST>,\", \">\"," >> Cargo.toml  # :)
         COMMAND
             echo "]" >> Cargo.toml && echo "" >> Cargo.toml
         COMMAND
