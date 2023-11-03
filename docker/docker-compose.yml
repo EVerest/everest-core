@@ -21,7 +21,7 @@ services:
       - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
 
   ocpp-db:
-    image: mariadb:10.4
+    image: mariadb:10.4.30 # pinned to patch-version because https://github.com/steve-community/steve/pull/1213
     volumes:
       - ocpp-db-data:/var/lib/mysql
     ports:

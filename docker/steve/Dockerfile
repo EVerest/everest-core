@@ -9,7 +9,7 @@ RUN wget --no-verbose https://github.com/jwilder/dockerize/releases/download/$DO
     && tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
     && rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
 
-RUN wget -qO- https://github.com/RWTH-i5-IDSG/steve/archive/steve-3.4.5.tar.gz | tar xz --strip-components=1
+RUN wget -qO- https://github.com/steve-community/steve/archive/steve-3.6.0.tar.gz | tar xz --strip-components=1
 COPY main.properties src/main/resources/config/docker
 COPY init.sh .
 COPY keystore.jks .
