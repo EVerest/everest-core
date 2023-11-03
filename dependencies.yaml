@@ -1,7 +1,7 @@
 ---
 everest-framework:
   git: https://github.com/EVerest/everest-framework.git
-  git_tag: 0a6e447
+  git_tag: v0.8.0
 sigslot:
   git: https://github.com/palacaze/sigslot
   git_tag: v1.2.0
@@ -38,7 +38,7 @@ libcurl:
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: 4c30a76
+  git_tag: v0.9.4
 # Josev
 Josev:
   git: https://github.com/EVerest/ext-switchev-iso15118.git
@@ -58,9 +58,9 @@ ext-mbedtls:
 # everest-testing
 everest-utils:
   git: https://github.com/EVerest/everest-utils.git
-  git_tag: b862a94
+  git_tag: v0.1.6
 # evse-security, since this is a direct dependency of libocpp it will get overwritten by the version set there
 # setting it here can be misleading since it does not affect the version being used
 libevse-security:
   git: https://github.com/EVerest/libevse-security.git
-  git_tag: 338dd2e
+  git_tag: v0.2.0
