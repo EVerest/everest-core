@@ -51,3 +51,5 @@ if (BUILD_BACKTRACE_SUPPORT)
     )
     target_compile_definitions(log PRIVATE WITH_LIBBACKTRACE)
 endif()
+
+target_compile_features(log PUBLIC cxx_std_17)
