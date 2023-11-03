@@ -74,7 +74,7 @@ static CertificateType get_certificate_type(const CaCertificateType ca_certifica
 }
 
 static fs::path get_private_key_path(const X509Wrapper& certificate, const fs::path& key_path,
-                                                  const std::optional<std::string> password) {
+                                     const std::optional<std::string> password) {
     // TODO(ioan): Before iterating the whole dir check by the filename first 'key_path'.key
     for (const auto& entry : fs::recursive_directory_iterator(key_path)) {
         if (fs::is_regular_file(entry)) {

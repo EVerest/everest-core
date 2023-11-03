@@ -3,13 +3,13 @@
 #ifndef X509_WRAPPER_HPP
 #define X509_WRAPPER_HPP
 
-#include <support_older_cpp_versions.hpp>
 #include <memory>
 #include <openssl/bio.h>
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 #include <stdexcept>
 #include <string>
+#include <support_older_cpp_versions.hpp>
 
 #include <sec_types.hpp>
 #include <types.hpp>

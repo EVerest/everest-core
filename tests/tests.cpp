@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
-#include <support_older_cpp_versions.hpp>
 #include <fstream>
 #include <gtest/gtest.h>
 #include <regex>
 #include <sstream>
+#include <support_older_cpp_versions.hpp>
 
 #include "evse_security.hpp"
 
@@ -140,8 +140,7 @@ TEST_F(EvseSecurityTests, verify_v2g_cert_01) {
 
 /// \brief test verifyV2GChargingStationCertificate with invalid cert
 TEST_F(EvseSecurityTests, verify_v2g_cert_02) {
-    const auto invalid_certificate =
-        read_file_to_string(fs::path("certs/client/invalid/INVALID_CSMS.pem"));
+    const auto invalid_certificate = read_file_to_string(fs::path("certs/client/invalid/INVALID_CSMS.pem"));
     const auto result = this->evse_security->update_leaf_certificate(invalid_certificate, LeafCertificateType::V2G);
     ASSERT_TRUE(result == InstallCertificateResult::InvalidCertificateChain);
 }

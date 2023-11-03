@@ -136,8 +136,7 @@ public:
 private:
     /// @brief Adds to our certificate list the certificates found in the file
     /// @return number of added certificates
-    void add_certifcates(const std::string& data, const EncodingFormat encoding,
-                         const std::optional<fs::path>& path);
+    void add_certifcates(const std::string& data, const EncodingFormat encoding, const std::optional<fs::path>& path);
 
 private:
     // Certificates in this chain, can only be loaded either from a bundle or a dir folder, never combined

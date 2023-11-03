@@ -3,11 +3,11 @@
 #ifndef EVSE_UTILITIES_HPP
 #define EVSE_UTILITIES_HPP
 
-#include <support_older_cpp_versions.hpp>
 #include <fstream>
 #include <iostream>
 #include <limits>
 #include <random>
+#include <support_older_cpp_versions.hpp>
 
 #include <everest/logging.hpp>
 namespace evse_security {
@@ -49,8 +49,7 @@ public:
         return true;
     }
 
-    static bool write_to_file(const fs::path& file_path, const std::string& data,
-                              std::ios::openmode mode) {
+    static bool write_to_file(const fs::path& file_path, const std::string& data, std::ios::openmode mode) {
         try {
             fsstd::ofstream fs(file_path, mode | std::ios::binary);
             if (!fs.is_open()) {
