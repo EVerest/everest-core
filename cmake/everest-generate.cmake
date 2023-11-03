@@ -73,6 +73,19 @@ function(ev_add_project)
         endif ()
     endif ()
 
+    # check for errors
+    set(ERRORS_DIR "${EVEREST_PROJECT_DIR}/errors")
+    if (EXISTS ${ERRORS_DIR})
+        message(STATUS "Adding error definitions from ${ERRORS_DIR}")
+        if (CALLED_FROM_WITHIN_PROJECT)
+            install(
+                DIRECTORY ${ERRORS_DIR}
+                DESTINATION "${CMAKE_INSTALL_DATADIR}/everest"
+                FILES_MATCHING PATTERN "*.yaml"
+            )
+        endif ()
+    endif ()
+
     # check for interfaces
     set (INTERFACES_DIR "${EVEREST_PROJECT_DIR}/interfaces")
     if (EXISTS ${INTERFACES_DIR})
