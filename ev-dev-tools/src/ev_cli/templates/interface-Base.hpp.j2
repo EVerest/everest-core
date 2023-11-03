@@ -6,6 +6,8 @@
 {{ print_template_info('3') }}
 
 #include <framework/ModuleAdapter.hpp>
+#include <utils/types.hpp>
+#include <utils/error.hpp>
 
 #include "Types.hpp"
 
@@ -39,6 +41,34 @@ public:
     {% endif %}
     }
     {% endfor %}
+    {% endif %}
+
+    {% if not errors %}
+    // no errors defined for this interface
+    {% else %}
+    // raise functions for errors
+    {% for error in errors %}
+    Everest::error::ErrorHandle raise_{{ error.namespace }}_{{ error.name }}(const std::string& message, const Everest::error::Severity& severity=Everest::error::Severity::Low) {
+        return _ev->raise_error(
+            _name,
+            "{{ error.namespace }}/{{ error.name }}",
+            message,
+            severity
+        );
+    }
+    {% endfor %}
+    // request clear functions for errors
+    {% for error in errors %}
+    void request_clear_all_{{ error.namespace }}_{{ error.name }}() {
+        _ev->request_clear_all_errors_of_type_of_module(_name, "{{ error.namespace }}/{{ error.name }}");
+    }
+    {% endfor %}
+    void request_clear_error(const Everest::error::ErrorHandle& handle) {
+        _ev->request_clear_error_uuid(_name, handle);
+    }
+    void request_clear_all_errors() {
+        _ev->request_clear_all_errors_of_module(_name);
+    }
     {% endif %}
 
 protected:

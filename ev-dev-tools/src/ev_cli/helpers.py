@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # SPDX-License-Identifier: Apache-2.0
-# Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+# Copyright Pionix GmbH and Contributors to EVerest
 #
 """
 author: aw@pionix.de
@@ -86,13 +86,13 @@ def create_dummy_result(json_type) -> str:
 
 
 cpp_type_map = {
-    "null": "std::nullptr_t",  # FIXME (aw): who gets the null, json? or the variant
-    "integer": "int",
-    "number": "double",
-    "string": "std::string",
-    "boolean": "bool",
-    "array": "Array",
-    "object": "Object",
+    'null': 'std::nullptr_t',  # FIXME (aw): who gets the null, json? or the variant
+    'integer': 'int',
+    'number': 'double',
+    'string': 'std::string',
+    'boolean': 'bool',
+    'array': 'Array',
+    'object': 'Object',
 }
 
 
@@ -199,7 +199,7 @@ def parse_ref(ref: str, prop_type, prop_info: Dict) -> Tuple[str, dict]:
 
     type_path = resolve_everest_dir_path('types' / type_dict['type_relative_path'] .with_suffix('.yaml'))
     if not type_path or not type_path.exists():
-        raise EVerestParsingException('$ref: ' + ref + f' referenced type file "{type_path} does not exist.')
+        raise EVerestParsingException('$ref: ' + ref + f' referenced type file "{type_path}" does not exist.')
 
     (td, _mod) = TypeParser.load_type_definition(type_path)
     if 'types' in td and type_dict['type_name'] in td['types']:
@@ -295,7 +295,7 @@ def parse_object(ob_name: str, json_schema: Dict, type_file: bool):
             type_path = resolve_everest_dir_path('types' / type_dict['type_relative_path'].with_suffix('.yaml'))
             if not type_path or not type_path.exists():
                 raise EVerestParsingException(
-                    '$ref: ' + json_schema['$ref'] + f' referenced type file "{type_path} does not exist.')
+                    '$ref: ' + json_schema['$ref'] + f' referenced type file "{type_path}" does not exist.')
             TypeParser.does_type_exist(type_url=json_schema['$ref'], json_type=json_schema['type'])
 
             prop_type = type_dict['namespaced_type']
@@ -350,7 +350,7 @@ def extended_build_type_info(name: str, info: dict, type_file=False) -> Tuple[di
             type_path = resolve_everest_dir_path('types' / type_dict['type_relative_path'] .with_suffix('.yaml'))
             if not type_path or not type_path.exists():
                 raise EVerestParsingException('$ref: ' + info['$ref'] +
-                                              f' referenced type file "{type_path} does not exist.')
+                                              f' referenced type file "{type_path}" does not exist.')
 
             (td, _mod) = TypeParser.load_type_definition(type_path)
             if 'types' in td and type_dict['type_name'] in td['types']:
@@ -383,7 +383,7 @@ def extended_build_type_info(name: str, info: dict, type_file=False) -> Tuple[di
             type_path = resolve_everest_dir_path('types' / type_dict['type_relative_path'] .with_suffix('.yaml'))
             if not type_path or not type_path.exists():
                 raise EVerestParsingException(
-                    '$ref: ' + info['items']['$ref'] + f' referenced type file "{type_path} does not exist.')
+                    '$ref: ' + info['items']['$ref'] + f' referenced type file "{type_path}" does not exist.')
 
             (td, _mod) = TypeParser.load_type_definition(type_path)
             if 'types' in td and type_dict['type_name'] in td['types']:
@@ -402,8 +402,8 @@ def load_validators(schema_path: Path):
     # FIXME (aw): we should also patch the schemas like in everest-framework
     validators = {}
     for validator, filename in zip(
-        ['interface', 'module', 'config', 'type'],
-            ['interface', 'manifest', 'config', 'type']):
+        ['interface', 'module', 'config', 'type', 'error_declaration_list'],
+            ['interface', 'manifest', 'config', 'type', 'error-declaration-list']):
         try:
             schema = yaml.safe_load((schema_path / f'{filename}.yaml').read_text())
             jsonschema.Draft7Validator.check_schema(schema)
@@ -427,16 +427,16 @@ def load_validated_interface_def(if_def_path: Path, validator):
         # validating interface
         validator.validate(if_def)
         # validate var/cmd subparts
-        if "vars" in if_def:
-            for _var_name, var_def in if_def["vars"].items():
+        if 'vars' in if_def:
+            for _var_name, var_def in if_def['vars'].items():
                 jsonschema.Draft7Validator.check_schema(var_def)
-        if "cmds" in if_def:
-            for _cmd_name, cmd_def in if_def["cmds"].items():
-                if "arguments" in cmd_def:
-                    for _arg_name, arg_def in cmd_def["arguments"].items():
+        if 'cmds' in if_def:
+            for _cmd_name, cmd_def in if_def['cmds'].items():
+                if 'arguments' in cmd_def:
+                    for _arg_name, arg_def in cmd_def['arguments'].items():
                         jsonschema.Draft7Validator.check_schema(arg_def)
-                if "result" in cmd_def:
-                    jsonschema.Draft7Validator.check_schema(cmd_def["result"])
+                if 'result' in cmd_def:
+                    jsonschema.Draft7Validator.check_schema(cmd_def['result'])
     except OSError as err:
         raise Exception(f'Could not open interface definition file {err.filename}: {err.strerror}') from err
     except jsonschema.ValidationError as err:

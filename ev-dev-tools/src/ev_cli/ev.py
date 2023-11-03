@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # SPDX-License-Identifier: Apache-2.0
-# Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+# Copyright Pionix GmbH and Contributors to EVerest
 #
 """
 author: aw@pionix.de
@@ -12,6 +12,7 @@ FIXME (aw): Module documentation.
 from . import __version__
 from . import helpers
 from .type_parsing import TypeParser
+from .error_parsing import ErrorParser
 
 from datetime import datetime
 from pathlib import Path
@@ -116,6 +117,22 @@ def generate_tmpl_data_for_if(interface, if_def, type_file):
 
             types.append(parsed_type)
 
+    error_lists = if_def.get('errors', [])
+    # Use a dict to avoid duplicate error definitions
+    errors_dict = {}
+    for entry in error_lists:
+        if not 'reference' in entry:
+            raise Exception(f'Error definition {entry} does not have a reference.')
+        for error in ErrorParser.resolve_error_reference(entry['reference']):
+            if error.namespace not in errors_dict:
+                errors_dict[error.namespace] = {}
+            if error.name in errors_dict[error.namespace]:
+                raise Exception(f'Error definition {error.namespace}/{error.name} already referenced.')
+            errors_dict[error.namespace][error.name] = error
+    errors = []
+    for value in errors_dict.values():
+        errors.extend(value.values())
+
     tmpl_data = {
         'info': {
             'base_class_header': f'generated/interfaces/{interface}/Implementation.hpp',
@@ -126,7 +143,8 @@ def generate_tmpl_data_for_if(interface, if_def, type_file):
         'enums': enums,
         'types': types,
         'vars': vars,
-        'cmds': cmds
+        'cmds': cmds,
+        'errors': errors,
     }
 
     return tmpl_data
@@ -612,7 +630,7 @@ def list_types_with_namespace(types=None) -> List:
         types = []
         for everest_dir in everest_dirs:
             types_dir = everest_dir / 'types'
-            types += list(types_dir.glob("**/*.yaml"))
+            types += list(types_dir.glob('**/*.yaml'))
 
     types_with_namespace = []
     for type_path in types:
@@ -641,7 +659,7 @@ def list_types_with_namespace(types=None) -> List:
 
 
 def types_genhdr(args):
-    print("Generating global type headers.")
+    print('Generating global type headers.')
     output_dir = Path(args.output_dir).resolve() if args.output_dir else work_dir / \
         'build/generated/generated/types'
 
@@ -673,17 +691,17 @@ def main():
 
     common_parser = argparse.ArgumentParser(add_help=False)
 
-    common_parser.add_argument("--work-dir", "-wd", type=str,
+    common_parser.add_argument('--work-dir', '-wd', type=str,
                                help='work directory containing the manifest definitions (default: .)', default=str(Path.cwd()))
-    common_parser.add_argument("--everest-dir", "-ed", nargs='*',
+    common_parser.add_argument('--everest-dir', '-ed', nargs='*',
                                help='everest directory containing the interface definitions (default: .)', default=[str(Path.cwd())])
-    common_parser.add_argument("--schemas-dir", "-sd", type=str,
+    common_parser.add_argument('--schemas-dir', '-sd', type=str,
                                help='everest framework directory containing the schema definitions (default: ../everest-framework/schemas)',
                                default=str(Path.cwd() / '../everest-framework/schemas'))
-    common_parser.add_argument("--clang-format-file", type=str, default=str(Path.cwd()),
+    common_parser.add_argument('--clang-format-file', type=str, default=str(Path.cwd()),
                                help='Path to the directory, containing the .clang-format file (default: .)')
-    common_parser.add_argument("--disable-clang-format", action='store_true', default=False,
-                               help="Set this flag to disable clang-format")
+    common_parser.add_argument('--disable-clang-format', action='store_true', default=False,
+                               help='Set this flag to disable clang-format')
 
     subparsers = parser.add_subparsers(metavar='<command>', help='available commands', required=True)
     parser_mod = subparsers.add_parser('module', aliases=['mod'], help='module related actions')
@@ -787,6 +805,8 @@ def main():
 
         TypeParser.validators = validators
         TypeParser.templates = templates
+
+        ErrorParser.validators = validators
 
     args.action_handler(args)
 

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # SPDX-License-Identifier: Apache-2.0
-# Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+# Copyright Pionix GmbH and Contributors to EVerest
 #
 """
 Provide type parsing functionality.
@@ -57,7 +57,7 @@ class TypeParser:
         type_path = helpers.resolve_everest_dir_path('types' / type_dict['type_relative_path'].with_suffix('.yaml'))
         if not type_path or not type_path.exists():
             raise helpers.EVerestParsingException(
-                '$ref: ' + type_url + f' referenced type file "{type_path} does not exist.')
+                '$ref: ' + type_url + f' referenced type file "{type_path}" does not exist.')
         if type_path not in TypeParser.validated_type_defs:
             TypeParser.validated_type_defs[type_path] = helpers.load_validated_type_def(
                 type_path, TypeParser.validators['type'])
@@ -172,12 +172,12 @@ class TypeParser:
         output_path.mkdir(parents=True, exist_ok=True)
 
         namespaces = ['types']
-        namespaces.extend(type_with_namespace["relative_path"].parts)
+        namespaces.extend(type_with_namespace['relative_path'].parts)
 
         tmpl_data['info']['interface_name'] = f'{type_with_namespace["namespace"]}'
         tmpl_data['info']['namespace'] = namespaces
         tmpl_data['info']['hpp_guard'] = 'TYPES_' + helpers.snake_case(
-            ''.join(type_with_namespace["uppercase_path"])).upper() + '_TYPES_HPP'
+            ''.join(type_with_namespace['uppercase_path'])).upper() + '_TYPES_HPP'
 
         types_parts['types'] = {
             'path': types_file,

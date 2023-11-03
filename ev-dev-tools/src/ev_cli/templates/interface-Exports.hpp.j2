@@ -44,6 +44,32 @@ public:
     {% endfor %}
     {% endif %}
 
+    {% if not errors %}
+    // This interface does not export any errors to subscribe to
+    {% else %}
+    // errors available for subscription
+    {% for error in errors %}
+    void subscribe_error_{{ error.namespace }}_{{ error.name }}(
+        const Everest::error::ErrorCallback& error_listener,
+        const Everest::error::ErrorCallback& error_cleared_listener
+    ) {
+        _adapter->subscribe_error(_req, "{{ error.namespace }}/{{ error.name }}", error_listener);
+        _adapter->subscribe_error_cleared(_req, "{{ error.namespace }}/{{ error.name }}", error_cleared_listener);
+    }
+    {% if not loop.last %}
+
+    {% endif %}
+    {% endfor %}
+    void subscribe_all_errors(
+        const Everest::error::ErrorCallback& error_listener,
+        const Everest::error::ErrorCallback& error_cleared_listener
+    ) {
+        {% for error in errors %}
+        subscribe_error_{{ error.namespace }}_{{ error.name }}(error_listener, error_cleared_listener);
+        {% endfor %}
+    }
+    {% endif %}
+
     {% if not cmds %}
     // this interface does not export any commands to call
     {% else %}
