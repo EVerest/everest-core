@@ -5,16 +5,25 @@
 
 {{ print_template_info('4') }}
 
+#include <optional>
+#include <ostream>
+#include <stdexcept>
+#include <string>
+#include <vector>
+
+#include <nlohmann/json.hpp>
+
 {% if 'type_headers' in info %}
 {% for type_header in info.type_headers %}
 #include <{{type_header}}>
 {% endfor %}
 {% endif %}
+
+using nlohmann::json;
+
 {% if not enums %}
 // no enums defined for this interface
 {% else %}
-#include <map>
-#include <string>
 
 // enums of {{ info.interface_name }}
 
@@ -43,7 +52,7 @@ static const std::string {{ enum.enum_type | snake_case }}_to_string({{ enum.enu
 
 /// \brief Converts the given std::string \p s to {{ enum.enum_type }}
 /// \returns a {{ enum.enum_type }} from a string representation
-static const {{ enum.enum_type }} string_to_{{ enum.enum_type | snake_case }}(std::string s) {
+static const {{ enum.enum_type }} string_to_{{ enum.enum_type | snake_case }}(const std::string& s) {
     {% for e in enum.enum %}
     if(s == "{{e}}") {
         return {{ enum.enum_type }}::{{ e }};
@@ -194,7 +203,7 @@ struct {{ parsed_type.name }} {
         {% endfor %}
     }
 
-    // \brief Writes the string representation of the given {{ parsed_type.name }} \p k to the given output stream \p os
+    /// \brief Writes the string representation of the given {{ parsed_type.name }} \p k to the given output stream \p os
     /// \returns an output stream with the {{ parsed_type.name }} written to
     friend std::ostream& operator<<(std::ostream& os, const {{ parsed_type.name }}& k) {
         os << json(k).dump(4);
