@@ -410,7 +410,8 @@ public:
     void connect_websocket();
 
     /// \brief Disconnects the the websocket connection to the CSMS if it is connected
-    void disconnect_websocket();
+    /// \param code Optional websocket close status code (default: normal).
+    void disconnect_websocket(websocketpp::close::status::value code = websocketpp::close::status::normal);
 
     /// \brief Chargepoint notifies about new firmware update status firmware_update_status. This function should be
     ///        called during a Firmware Update to indicate the current firmware_update_status.
