@@ -195,5 +195,10 @@ class PyJosevModule():
     def _handler_dlink_ready(self, args):
         self._cs.dlink_ready = args['value']
 
+    def _handler_supporting_sae_j2847_bidi(self, args):
+        log.warning(
+            "SAE J2847/2 Bidi Mode is currently not yet supported by the PyJosev module. Use instead EvseV2G.")
+
+
 py_josev = PyJosevModule()
 py_josev.start_secc_handler()
