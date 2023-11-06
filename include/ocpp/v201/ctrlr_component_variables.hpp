@@ -59,6 +59,7 @@ extern const ComponentVariable& UseSslDefaultVerifyPaths;
 extern const ComponentVariable& OcspRequestInterval;
 extern const ComponentVariable& WebsocketPingPayload;
 extern const ComponentVariable& WebsocketPongTimeout;
+extern const ComponentVariable& MaxCustomerInformationDataLength;
 extern const ComponentVariable& AlignedDataCtrlrEnabled;
 extern const ComponentVariable& AlignedDataCtrlrAvailable;
 extern const ComponentVariable& AlignedDataInterval;

@@ -200,6 +200,13 @@ const ComponentVariable& WebsocketPongTimeout = {
         "WebsocketPongTimeout",
     }),
 };
+const ComponentVariable& MaxCustomerInformationDataLength = {
+    ControllerComponents::InternalCtrlr,
+    std::nullopt,
+    std::optional<Variable>({
+        "MaxCustomerInformationDataLength",
+    }),
+};
 const ComponentVariable& AlignedDataCtrlrEnabled = {
     ControllerComponents::AlignedDataCtrlr,
     std::nullopt,

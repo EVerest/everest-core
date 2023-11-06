@@ -369,6 +369,24 @@
       ],
       "default": "hello there",
       "type": "string"
+    },
+    "MaxCustomerInformationDataLength": {
+      "variable_name": "MaxCustomerInformationDataLength",
+      "characteristics": {
+        "minLimit": 0,
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Maximum number of characters of Customer Information data",
+      "minimum": 0,
+      "default": "51200",
+      "type": "integer"
     }
   },
   "required": [

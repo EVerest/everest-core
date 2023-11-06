@@ -8,6 +8,8 @@
 
 using namespace std::chrono_literals;
 
+const auto DEFAULT_MAX_CUSTOMER_INFORMATION_DATA_LENGTH = 51200;
+
 namespace ocpp {
 namespace v201 {
 
@@ -381,6 +383,45 @@ void ChargePoint::on_meter_value(const int32_t evse_id, const MeterValue& meter_
 MeterValue ChargePoint::get_meter_value() {
     std::lock_guard<std::mutex> lk(this->meter_value_mutex);
     return this->meter_value;
+}
+
+std::string ChargePoint::get_customer_information(const std::optional<CertificateHashDataType> customer_certificate,
+                                                  const std::optional<IdToken> id_token,
+                                                  const std::optional<CiString<64>> customer_identifier) {
+    std::stringstream s;
+
+    // Retrieve possible customer information from application that uses this library
+    if (this->callbacks.get_customer_information_callback.has_value()) {
+        s << this->callbacks.get_customer_information_callback.value()(customer_certificate, id_token,
+                                                                       customer_identifier);
+    }
+
+    // Retrieve information from auth cache
+    if (id_token.has_value()) {
+        const auto hashed_id_token = utils::generate_token_hash(id_token.value());
+        const auto entry = this->database_handler->authorization_cache_get_entry(hashed_id_token);
+        if (entry.has_value()) {
+            s << "Hashed id_token stored in cache: " + hashed_id_token + "\n";
+            s << "IdTokenInfo: " << entry.value();
+        }
+    }
+
+    return s.str();
+}
+
+void ChargePoint::clear_customer_information(const std::optional<CertificateHashDataType> customer_certificate,
+                                             const std::optional<IdToken> id_token,
+                                             const std::optional<CiString<64>> customer_identifier) {
+    if (this->callbacks.clear_customer_information_callback.has_value()) {
+        this->callbacks.clear_customer_information_callback.value()(customer_certificate, id_token,
+                                                                    customer_identifier);
+    }
+
+    if (id_token.has_value()) {
+        const auto hashed_id_token = utils::generate_token_hash(id_token.value());
+        this->database_handler->authorization_cache_delete_entry(hashed_id_token);
+        this->update_authorization_cache_size();
+    }
 }
 
 void ChargePoint::on_unavailable(const int32_t evse_id, const int32_t connector_id) {
@@ -807,6 +848,9 @@ void ChargePoint::handle_message(const EnhancedMessage<v201::MessageType>& messa
         break;
     case MessageType::DeleteCertificate:
         this->handle_delete_certificate_req(json_message);
+        break;
+    case MessageType::CustomerInformation:
+        this->handle_customer_information_req(json_message);
         break;
     default:
         if (message.messageTypeId == MessageTypeId::CALL) {
@@ -1419,13 +1463,6 @@ void ChargePoint::meter_values_req(const int32_t evse_id, const std::vector<Mete
     this->send<MeterValuesRequest>(call);
 }
 
-void ChargePoint::handle_get_log_req(Call<GetLogRequest> call) {
-    const GetLogResponse response = this->callbacks.get_log_request_callback(call.msg);
-
-    ocpp::CallResult<GetLogResponse> call_result(response, call.uniqueId);
-    this->send<GetLogResponse>(call_result);
-}
-
 void ChargePoint::notify_event_req(const std::vector<EventData>& events) {
     NotifyEventRequest req;
     req.eventData = events;
@@ -1434,6 +1471,30 @@ void ChargePoint::notify_event_req(const std::vector<EventData>& events) {
 
     ocpp::Call<NotifyEventRequest> call(req, this->message_queue->createMessageId());
     this->send<NotifyEventRequest>(call);
+}
+
+void ChargePoint::notify_customer_information_req(const std::string& data, const int32_t seq_no,
+                                                  const int32_t request_id) {
+    const auto req = [&]() {
+        NotifyCustomerInformationRequest req;
+        req.data = CiString<512>(data.substr(0, 512));
+        req.seqNo = seq_no;
+        req.requestId = request_id;
+        req.generatedAt = DateTime();
+        req.tbc = data.length() > 512;
+        return req;
+    }();
+
+    ocpp::Call<NotifyCustomerInformationRequest> call(req, this->message_queue->createMessageId());
+    this->send<NotifyCustomerInformationRequest>(call);
+
+    if (data.length() > 512) {
+        // Recursively send next sequence
+        EVLOG_info << "data field of NotifyCustomerInformation.req contains more than 512 characters - sending another "
+                      "sequence with seqNo"
+                   << seq_no + 1;
+        this->notify_customer_information_req(data.substr(512), seq_no + 1, request_id);
+    }
 }
 
 void ChargePoint::handle_boot_notification_response(CallResult<BootNotificationResponse> call_result) {
@@ -2335,6 +2396,54 @@ void ChargePoint::handle_delete_certificate_req(Call<DeleteCertificateRequest> c
 
     ocpp::CallResult<DeleteCertificateResponse> call_result(response, call.uniqueId);
     this->send<DeleteCertificateResponse>(call_result);
+}
+
+void ChargePoint::handle_get_log_req(Call<GetLogRequest> call) {
+    const GetLogResponse response = this->callbacks.get_log_request_callback(call.msg);
+
+    ocpp::CallResult<GetLogResponse> call_result(response, call.uniqueId);
+    this->send<GetLogResponse>(call_result);
+}
+
+void ChargePoint::handle_customer_information_req(Call<CustomerInformationRequest> call) {
+    CustomerInformationResponse response;
+    const auto& msg = call.msg;
+    response.status = CustomerInformationStatusEnum::Accepted;
+
+    if (!msg.report and !msg.clear) {
+        EVLOG_warning << "CSMS sent CustomerInformation.req with both report and clear flags being false";
+        response.status = CustomerInformationStatusEnum::Rejected;
+    }
+
+    if (!msg.customerCertificate.has_value() and !msg.idToken.has_value() and !msg.customerIdentifier.has_value()) {
+        EVLOG_warning << "CSMS sent CustomerInformation.req without setting one of customerCertificate, idToken, "
+                         "customerIdentifier fields";
+        response.status = CustomerInformationStatusEnum::Invalid;
+    }
+
+    ocpp::CallResult<CustomerInformationResponse> call_result(response, call.uniqueId);
+    this->send<CustomerInformationResponse>(call_result);
+
+    if (response.status == CustomerInformationStatusEnum::Accepted) {
+        std::string data = "";
+        if (msg.report) {
+            data += this->get_customer_information(msg.customerCertificate, msg.idToken, msg.customerIdentifier);
+        }
+        if (msg.clear) {
+            this->clear_customer_information(msg.customerCertificate, msg.idToken, msg.customerIdentifier);
+        }
+
+        const auto max_customer_information_data_length =
+            this->device_model->get_optional_value<bool>(ControllerComponentVariables::MaxCustomerInformationDataLength)
+                .value_or(DEFAULT_MAX_CUSTOMER_INFORMATION_DATA_LENGTH);
+        if (data.length() > max_customer_information_data_length) {
+            EVLOG_warning << "NotifyCustomerInformation.req data field is too large. Cropping it down to: "
+                          << max_customer_information_data_length << "characters";
+            data = data.substr(0, max_customer_information_data_length);
+        }
+
+        this->notify_customer_information_req(data, 0, msg.requestId);
+    }
 }
 
 void ChargePoint::handle_data_transfer_req(Call<DataTransferRequest> call) {
