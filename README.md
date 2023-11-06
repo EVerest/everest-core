@@ -65,6 +65,9 @@ https://github.com/EVerest/EVerest/blob/main/tsc/ROADMAP.md
 
 ### CSMS Compatibility OCPP 1.6
 
+The EVerest implementation of OCPP 1.6 has been tested against the
+OCPP Compliance Test Tool (OCTT and OCTT2) during the implementation.
+
 The following table shows CSMS with which this library was tested. If you provide a CSMS that is not yet listed here, feel free to [contact us](https://lists.lfenergy.org/g/everest)!
 
 -   chargecloud
@@ -78,12 +81,16 @@ The following table shows CSMS with which this library was tested. If you provid
 -   Fastned
 -   GraphDefined
 -   Electrip Global
+-   EnergyStacks
 -   EV-Meter
+-   Fraunhofer IAO (ubstack CHARGE)
 -   Green Motion
 -   gridundco
--   ihomer
+-   ihomer (Infuse CPMS)
 -   iLumen
--   EnergyStacks
+-   JibeCompany (CharlieV CMS and Chargebroker proxy)
+-   MSI
+-   Scoptvision (Scopt Powerconnect)
 -   Siemens
 -   SteVe
 -   Syntech
@@ -93,7 +100,12 @@ The following table shows CSMS with which this library was tested. If you provid
 
 ### CSMS Compatibility OCPP 2.0.1
 
-The current, basic implementation of OCPP 2.0.1 has been tested against a few CSMS and is continously tested against the OCPP Compliance Test Tool 2 (OCTT2) during the implementation.  
+The current, ongoing implementation of OCPP 2.0.1 has been tested against a
+few CSMS and is continuously tested against OCTT2.
+
+Additionally, the implementation has been tested against those CSMS:
+
+-   Current
 
 ## Integration with EVerest
 
