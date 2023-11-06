@@ -62,6 +62,15 @@ def persistent_store_config(request) -> Optional[EverestEnvironmentPersistentSto
     return None
 
 
+@pytest.fixture
+def everest_config_visitors(request) -> list[EverestConfigAdjustmentVisitor]:
+    additional_configuration_visitors = []
+    additional_configuration_visitors_marker = request.node.get_closest_marker('everest_config_adaptions')
+    if additional_configuration_visitors_marker:
+        for v in additional_configuration_visitors_marker.args:
+            assert isinstance(v, EverestConfigAdjustmentVisitor), "Arguments to 'everest_config_adaptions' must all be instances of EverestConfigAdjustmentVisitor"
+            additional_configuration_visitors.append(v)
+    return additional_configuration_visitors
 
 @pytest.fixture
 def everest_core(request,
@@ -71,17 +80,12 @@ def everest_core(request,
                  probe_module_config: Optional[EverestEnvironmentProbeModuleConfiguration],
                  evse_security_config: Optional[EverestEnvironmentEvseSecurityConfiguration],
                  persistent_store_config: Optional[EverestEnvironmentPersistentStoreConfiguration],
+                 everest_config_visitors: list[EverestConfigAdjustmentVisitor]
                  ) -> EverestCore:
     """Fixture that can be used to start and stop everest-core"""
 
     standalone_module_marker = request.node.get_closest_marker('standalone_module')
 
-    additional_configuration_visitors = []
-    additional_configuration_visitors_marker = request.node.get_closest_marker('everest_config_adaptions')
-    if additional_configuration_visitors_marker:
-        for v in additional_configuration_visitors_marker.args:
-            assert isinstance(v, EverestConfigAdjustmentVisitor), "Arguments to 'everest_config_adaptions' must all be instances of EverestConfigAdjustmentVisitor"
-            additional_configuration_visitors.append(v)
 
     environment_setup = EverestTestEnvironmentSetup(
         core_config=core_config,
@@ -90,7 +94,7 @@ def everest_core(request,
         evse_security_config=evse_security_config,
         persistent_store_config=persistent_store_config,
         standalone_module=list(standalone_module_marker.args) if standalone_module_marker else None,
-        everest_config_visitors=additional_configuration_visitors
+        everest_config_visitors=everest_config_visitors
     )
 
     environment_setup.setup_environment(tmp_path=tmp_path)
