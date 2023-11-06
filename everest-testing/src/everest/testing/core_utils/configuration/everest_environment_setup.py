@@ -35,8 +35,6 @@ class EverestEnvironmentOCPPConfiguration:
     central_system_port: int
     central_system_host: str = "127.0.0.1"
     ocpp_module_id: str = "ocpp"
-    source_certificates_directory: Optional[
-        Path] = None  # If none, the certificates of the everest-core directory / installation will be used
     template_ocpp_config: Optional[
         Path] = None  # Path for OCPP config to be used; if not provided, will be determined from everest config
     device_model_schemas_path: Optional[
@@ -47,7 +45,7 @@ class EverestEnvironmentOCPPConfiguration:
 class EverestEnvironmentEvseSecurityConfiguration:
     use_temporary_certificates_folder: bool = True  # if true, configuration will be adapted to use temporary certifcates folder, this assumes a "default" file tree structure, cf. the EvseSecurityModuleConfiguration dataclass
     module_id: Optional[str] = None  # if None, auto-detected
-    source_certificate_directory: Optional[Path] = None  # if provided, this will be copied to temporary path and
+    source_certificate_directory: Optional[Path] = None  # if provided, this will be copied to temporary path; If none, the certificates of the everest-core directory / installation will be used
     module_configuration: Optional[
         EvseSecurityModuleConfiguration] = None  # if provided, will be merged into configuration; paths will be adapted if use_temporary_certificates_folder is true
 
@@ -192,20 +190,12 @@ class EverestTestEnvironmentSetup:
 
     def _setup_libocpp_configuration(self, temporary_paths: _EverestEnvironmentTemporaryPaths):
 
-        source_certs_directory = self._ocpp_config.source_certificates_directory \
-            if self._ocpp_config.source_certificates_directory \
-            else self._everest_core.etc_path / 'certs'
-
         liboccp_configuration_helper = LibOCPP16ConfigurationHelper() if self._ocpp_config.ocpp_version == OCPPVersion.ocpp16 else LibOCPP201ConfigurationHelper()
 
         if self._ocpp_config.template_ocpp_config:
             source_ocpp_config = self._ocpp_config.template_ocpp_config
         else:
             source_ocpp_config = self._determine_configured_charge_point_config_path_from_everest_config()
-
-        liboccp_configuration_helper.install_default_ocpp_certificates(
-            source_certs_directory=source_certs_directory,
-            target_certs_directory=temporary_paths.certs_dir)
 
         liboccp_configuration_helper.generate_ocpp_config(
             central_system_port=self._ocpp_config.central_system_port,
@@ -270,5 +260,10 @@ class EverestTestEnvironmentSetup:
 
     def _setup_evse_security_configuration(self, temporary_paths: _EverestEnvironmentTemporaryPaths):
         """ If configures, copies the source certificate trees"""
-        if self._evse_security_config and self._evse_security_config.source_certificate_directory:
-            shutil.copytree(self._evse_security_config.source_certificate_directory, temporary_paths.certs_dir, dirs_exist_ok=True)
+        if self._evse_security_config.source_certificate_directory:
+            source_certs_directory = self._evse_security_config.source_certificate_directory
+        else:
+            source_certs_directory = self._everest_core.etc_path / 'certs'
+            logging.warning("No 'source_certificate_directory' configured in EverestEnvironmentEvseSecurityConfiguration. "
+                            f"Will use certificates from local installation {source_certs_directory}', which might lead to flaky tests.")
+        shutil.copytree(source_certs_directory, temporary_paths.certs_dir, dirs_exist_ok=True)

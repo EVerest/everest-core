@@ -26,14 +26,6 @@ class LibOCPPConfigurationHelperBase(ABC):
     def _get_occp_config(self, central_system_port, central_system_host, source_ocpp_config_file: Path):
         pass
 
-    @staticmethod
-    def install_default_ocpp_certificates(source_certs_directory: Path, target_certs_directory: Path, ):
-        # install default certificates
-        shutil.copytree(
-            str(source_certs_directory / "ca"), str(target_certs_directory / "ca"), dirs_exist_ok=True)
-        shutil.copytree(
-            str(source_certs_directory / "client"), str(target_certs_directory / "client"), dirs_exist_ok=True)
-
 
 class LibOCPP16ConfigurationHelper(LibOCPPConfigurationHelperBase):
 
