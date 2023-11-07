@@ -327,6 +327,10 @@ def parse_object(ob_name: str, json_schema: Dict, type_file: bool):
     return ob_dict
 
 
+def generate_header_for_type(type_name: str) -> Path:
+    return (Path('generated/types') / type_name).with_suffix('.hpp')
+
+
 def extended_build_type_info(name: str, info: dict, type_file=False) -> Tuple[dict, dict]:
     """Extend build_type_info with enum and object type handling."""
     type_info = build_type_info(name, info['type'])
@@ -364,8 +368,7 @@ def extended_build_type_info(name: str, info: dict, type_file=False) -> Tuple[di
                     }
 
                     type_info['enum_type'] = enum_info['enum_type']
-            path = Path('generated/types') / \
-                type_dict['type_relative_path'].with_suffix('.hpp')
+            path = generate_header_for_type(type_dict['type_relative_path'])
             type_headers.add(path.as_posix())
     elif type_info['json_type'] == 'object':
         try:
@@ -391,8 +394,7 @@ def extended_build_type_info(name: str, info: dict, type_file=False) -> Tuple[di
                 if 'enum' in local_type_info:
                     type_info['array_type_contains_enum'] = True
                 type_info['array_type'] = type_dict['namespaced_type']
-            path = Path('generated/types') / \
-                type_dict['type_relative_path'].with_suffix('.hpp')
+            path = generate_header_for_type(type_dict['type_relative_path'])
             type_headers.add(path.as_posix())
 
     return (type_info, enum_info)

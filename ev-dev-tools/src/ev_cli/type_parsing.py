@@ -108,6 +108,10 @@ class TypeParser:
 
         type_headers = sorted(helpers.type_headers)
 
+        # Remove the header itself from the includes.
+        own_header = helpers.generate_header_for_type(type_with_namespace["relative_path"])
+        type_headers = [header for header in type_headers if str(header) != str(own_header)]
+
         # sort types, so no forward declaration is necessary
         sorted_types: List = []
         for struct_type in types:
