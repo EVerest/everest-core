@@ -1476,7 +1476,7 @@ void ChargePoint::notify_event_req(const std::vector<EventData>& events) {
 void ChargePoint::notify_customer_information_req(const std::string& data, const int32_t request_id) {
     size_t pos = 0;
     int32_t seq_no = 0;
-    while (pos < data.length()) {
+    while (pos < data.length() or pos == 0 && data.empty()) {
         const auto req = [&]() {
             NotifyCustomerInformationRequest req;
             req.data = CiString<512>(data.substr(pos, 512));
@@ -2432,7 +2432,7 @@ void ChargePoint::handle_customer_information_req(Call<CustomerInformationReques
         }
 
         const auto max_customer_information_data_length =
-            this->device_model->get_optional_value<bool>(ControllerComponentVariables::MaxCustomerInformationDataLength)
+            this->device_model->get_optional_value<int>(ControllerComponentVariables::MaxCustomerInformationDataLength)
                 .value_or(DEFAULT_MAX_CUSTOMER_INFORMATION_DATA_LENGTH);
         if (data.length() > max_customer_information_data_length) {
             EVLOG_warning << "NotifyCustomerInformation.req data field is too large. Cropping it down to: "
