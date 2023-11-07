@@ -128,8 +128,8 @@ struct Callbacks {
 
     /// \brief Callback function that can be called to clear customer information based on the given arguments
     std::optional<std::function<void(const std::optional<CertificateHashDataType> customer_certificate,
-                                            const std::optional<IdToken> id_token,
-                                            const std::optional<CiString<64>> customer_identifier)>>
+                                     const std::optional<IdToken> id_token,
+                                     const std::optional<CiString<64>> customer_identifier)>>
         clear_customer_information_callback;
 };
 
@@ -304,8 +304,8 @@ private:
     /// field contains a custom identifier other than IdToken and Certificate
     /// \return customer information
     std::string get_customer_information(const std::optional<CertificateHashDataType> customer_certificate,
-                                           const std::optional<IdToken> id_token,
-                                           const std::optional<CiString<64>> customer_identifier);
+                                         const std::optional<IdToken> id_token,
+                                         const std::optional<CiString<64>> customer_identifier);
 
     /// \brief Clears customer information based on the given arguments. This function also executes the
     /// clear_customer_information_callback in case it is present
