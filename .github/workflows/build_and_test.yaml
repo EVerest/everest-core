@@ -6,17 +6,17 @@ on:
       runner:
         description: Which runner to use
         type: choice
-        default: 'ubuntu-latest'
+        default: 'ubuntu-22.04'
         required: true
         options:
-          - 'ubuntu-latest'
+          - 'ubuntu-22.04'
           - 'large-ubuntu-22.04-xxl'
 
 
 jobs:
   build:
     name: Build
-    runs-on: ${{ inputs.runner || 'ubuntu-latest' }}
+    runs-on: ${{ inputs.runner || 'ubuntu-22.04' }}
     steps:
       - name: Format branch name for cache key
         run: |
