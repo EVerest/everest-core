@@ -11,7 +11,8 @@ on:
         options:
           - 'ubuntu-22.04'
           - 'large-ubuntu-22.04-xxl'
-
+  schedule:
+    - cron: '37 13,1 * * *'
 
 jobs:
   build:
