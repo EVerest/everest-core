@@ -384,7 +384,7 @@
         }
       ],
       "description": "Maximum number of characters of Customer Information data",
-      "minimum": 0,
+      "minimum": 512,
       "default": "51200",
       "type": "integer"
     }
