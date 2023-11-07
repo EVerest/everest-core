@@ -351,7 +351,7 @@ private:
 
     // Functional Block N: Diagnostics
     void notify_event_req(const std::vector<EventData>& events);
-    void notify_customer_information_req(const std::string& data, const int32_t seq_no, const int32_t request_id);
+    void notify_customer_information_req(const std::string& data, const int32_t request_id);
 
     /* OCPP message handlers */
 

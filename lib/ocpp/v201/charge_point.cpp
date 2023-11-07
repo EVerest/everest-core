@@ -1473,27 +1473,25 @@ void ChargePoint::notify_event_req(const std::vector<EventData>& events) {
     this->send<NotifyEventRequest>(call);
 }
 
-void ChargePoint::notify_customer_information_req(const std::string& data, const int32_t seq_no,
-                                                  const int32_t request_id) {
-    const auto req = [&]() {
-        NotifyCustomerInformationRequest req;
-        req.data = CiString<512>(data.substr(0, 512));
-        req.seqNo = seq_no;
-        req.requestId = request_id;
-        req.generatedAt = DateTime();
-        req.tbc = data.length() > 512;
-        return req;
-    }();
+void ChargePoint::notify_customer_information_req(const std::string& data, const int32_t request_id) {
+    size_t pos = 0;
+    int32_t seq_no = 0;
+    while (pos < data.length()) {
+        const auto req = [&]() {
+            NotifyCustomerInformationRequest req;
+            req.data = CiString<512>(data.substr(pos, 512));
+            req.seqNo = seq_no;
+            req.requestId = request_id;
+            req.generatedAt = DateTime();
+            req.tbc = data.length() - pos > 512;
+            return req;
+        }();
 
-    ocpp::Call<NotifyCustomerInformationRequest> call(req, this->message_queue->createMessageId());
-    this->send<NotifyCustomerInformationRequest>(call);
+        ocpp::Call<NotifyCustomerInformationRequest> call(req, this->message_queue->createMessageId());
+        this->send<NotifyCustomerInformationRequest>(call);
 
-    if (data.length() > 512) {
-        // Recursively send next sequence
-        EVLOG_info << "data field of NotifyCustomerInformation.req contains more than 512 characters - sending another "
-                      "sequence with seqNo"
-                   << seq_no + 1;
-        this->notify_customer_information_req(data.substr(512), seq_no + 1, request_id);
+        pos += 512;
+        seq_no++;
     }
 }
 
@@ -2442,7 +2440,7 @@ void ChargePoint::handle_customer_information_req(Call<CustomerInformationReques
             data.erase(max_customer_information_data_length);
         }
 
-        this->notify_customer_information_req(data, 0, msg.requestId);
+        this->notify_customer_information_req(data, msg.requestId);
     }
 }
 
