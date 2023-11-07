@@ -169,8 +169,8 @@ if (EVEREST_ENABLE_RS_SUPPORT)
             ${CMAKE_COMMAND} -E env
             EVEREST_RS_FRAMEWORK_SOURCE_LOCATION="${everest-framework_SOURCE_DIR}"
             EVEREST_RS_FRAMEWORK_BINARY_LOCATION="${everest-framework_BINARY_DIR}"
-            $<IF:$<STREQUAL:${CMAKE_BUILD_TYPE},"Release">,--release,>
             ${CARGO_EXECUTABLE} build
+            $<IF:$<STREQUAL:${CMAKE_BUILD_TYPE},Release>,--release,>
         WORKING_DIRECTORY
             ${RUST_WORKSPACE_DIR}
         DEPENDS
