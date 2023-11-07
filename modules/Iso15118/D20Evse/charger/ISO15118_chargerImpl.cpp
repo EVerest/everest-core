@@ -184,7 +184,7 @@ void ISO15118_chargerImpl::handle_stop_charging(bool& stop_charging) {
 
 void ISO15118_chargerImpl::handle_set_DC_EVSEPresentVoltageCurrent(
     types::iso15118_charger::DC_EVSEPresentVoltage_Current& EVSEPresentVoltage_Current) {
-    
+
     float voltage = EVSEPresentVoltage_Current.EVSEPresentVoltage;
     float current = 0;
     if (EVSEPresentVoltage_Current.EVSEPresentCurrent.has_value()) {
@@ -250,6 +250,10 @@ void ISO15118_chargerImpl::handle_set_Get_Certificate_Response(
 }
 
 void ISO15118_chargerImpl::handle_dlink_ready(bool& value) {
+    // your code for cmd dlink_ready goes here
+}
+
+void ISO15118_chargerImpl::handle_supporting_sae_j2847_bidi(types::iso15118_charger::SAE_J2847_Bidi_Mode& mode) {
     // your code for cmd dlink_ready goes here
 }
 
