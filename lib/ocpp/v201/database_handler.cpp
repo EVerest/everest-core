@@ -19,15 +19,20 @@ DatabaseHandler::DatabaseHandler(const fs::path& database_path, const fs::path& 
 };
 
 DatabaseHandler::~DatabaseHandler() {
-    if (sqlite3_close_v2(this->db) == SQLITE_OK) {
-        EVLOG_debug << "Successfully closed database file";
-    } else {
-        EVLOG_error << "Error closing database file: " << sqlite3_errmsg(this->db);
-    }
+    close_connection();
 }
 
 void DatabaseHandler::sql_init() {
-    EVLOG_debug << "Running SQL initialization script.";
+    EVLOG_debug << "Running SQL initialization script: " << this->sql_init_path;
+
+    if (!fs::exists(this->sql_init_path)) {
+        EVLOG_AND_THROW(std::runtime_error("SQL initialization script does not exist"));
+    }
+
+    if (fs::file_size(this->sql_init_path) == 0) {
+        EVLOG_AND_THROW(std::runtime_error("SQL initialization script empty"));
+    }
+
     std::ifstream t(this->sql_init_path.string());
     std::stringstream init_sql;
 
@@ -119,13 +124,13 @@ void DatabaseHandler::open_connection() {
         EVLOG_error << "Error opening database at " << this->database_file_path.c_str() << ": " << sqlite3_errmsg(db);
         throw std::runtime_error("Could not open database at provided path.");
     }
-    EVLOG_debug << "Established connection to Database.";
+    EVLOG_debug << "Established connection to Database: " << this->database_file_path;
     this->sql_init();
 }
 
 void DatabaseHandler::close_connection() {
     if (sqlite3_close(this->db) == SQLITE_OK) {
-        EVLOG_debug << "Successfully closed database file";
+        EVLOG_debug << "Successfully closed database: " << this->database_file_path;
     } else {
         EVLOG_error << "Error closing database file: " << sqlite3_errmsg(this->db);
     }
