@@ -87,7 +87,7 @@ enum class CommandType : std::uint16_t {
     GET_TOTAL_DEV_POWER = 0x013C,                       // get total device power 
     GET_TOTAL_IMPORT_LINE_LOSS_ENERGY = 0x0160,         // get the total import line loss energy
     GET_TOTAL_IMPORT_DEV_ENERGY = 0x0170,               // get the total import device energy 
-    GET_SECOND_INDEX = 0x0180,                          // get the second index 
+    GET_SECOND_INDEX = 0x0180                          // get the second index 
 };
 
 enum class CommandStatus : std::uint8_t {
@@ -217,7 +217,7 @@ enum class ErrorSource : std::uint8_t {
 
 enum class ApplicationBoardMode : std::uint8_t {
     APPLICATION = 0,
-    ASSEMBLY = 1,
+    ASSEMBLY = 1
     // PRODUCTION = 2
 };
 
