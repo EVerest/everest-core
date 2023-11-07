@@ -1,21 +1,34 @@
 name: Build and test
-on: [workflow_dispatch, pull_request]
+on:
+  pull_request: {}
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: Which runner to use
+        type: choice
+        default: 'ubuntu-latest'
+        required: true
+        options:
+          - 'ubuntu-latest'
+          - 'large-ubuntu-22.04-xxl'
+
 
 jobs:
   build:
     name: Build
-    strategy:
-      matrix:
-        os: [large-ubuntu-22.04-xxl]
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ inputs.runner || 'ubuntu-latest' }}
     steps:
+      - name: Format branch name for cache key
+        run: |
+          BRANCH_NAME_FOR_CACHE="${GITHUB_REF_NAME//-/_}"
+          echo "branch_name_for_cache=${BRANCH_NAME_FOR_CACHE}" >> "$GITHUB_ENV"
       - name: Setup cache
         uses: actions/cache@v3
         with:
           path: cache
-          key: compile-${{ github.ref }}-${{ github.sha }}
+          key: compile-${{ env.branch_name_for_cache }}-${{ github.sha }}
           restore-keys: |
-            compile-${{ github.ref }}-
+            compile-${{ env.branch_name_for_cache }}-
             compile-
       - name: Checkout everest-core
         uses: actions/checkout@v3
