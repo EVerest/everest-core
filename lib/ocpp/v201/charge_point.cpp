@@ -2439,7 +2439,7 @@ void ChargePoint::handle_customer_information_req(Call<CustomerInformationReques
         if (data.length() > max_customer_information_data_length) {
             EVLOG_warning << "NotifyCustomerInformation.req data field is too large. Cropping it down to: "
                           << max_customer_information_data_length << "characters";
-            data = data.substr(0, max_customer_information_data_length);
+            data.erase(max_customer_information_data_length);
         }
 
         this->notify_customer_information_req(data, 0, msg.requestId);
