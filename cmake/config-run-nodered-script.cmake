@@ -21,6 +21,8 @@ function(generate_nodered_run_script)
     if (NOT EXISTS ${FLOW_FILE})
         message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: flow file '${FLOW_FILE}' does not exist")
     endif()
+    get_filename_component(FLOW_FILE_NAME ${FLOW_FILE} NAME)
+    get_filename_component(FLOW_FILE_DIRECTORY ${FLOW_FILE} DIRECTORY)
 
     set(SCRIPT_OUTPUT_PATH "${CMAKE_BINARY_DIR}/run-scripts")
     set(SCRIPT_OUTPUT_FILE "${SCRIPT_OUTPUT_PATH}/nodered-${OPTNS_FLOW}.sh")

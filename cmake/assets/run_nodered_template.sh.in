@@ -1,3 +1,9 @@
 cd @EVEREST_DOCKER_DIR@
 docker build -t everest-nodered .
-docker run --rm --network host --name everest_nodered --mount type=bind,source=@FLOW_FILE@,target=/data/flows.json everest-nodered
+docker run \
+    --rm \
+    --network host \
+    --name everest_nodered \
+    -e FLOWS=@FLOW_FILE_NAME@ \
+    --mount type=bind,source=@FLOW_FILE_DIRECTORY@,target=/data/ \
+    everest-nodered
