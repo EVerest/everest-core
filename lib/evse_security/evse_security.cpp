@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <set>
 #include <stdio.h>
 
 #include <evse_security/certificate/x509_bundle.hpp>
@@ -460,6 +461,35 @@ EvseSecurity::get_installed_certificates(const std::vector<CertificateType>& cer
 
     result.certificate_hash_data_chain = certificate_chains;
     return result;
+}
+
+int EvseSecurity::get_count_of_installed_certificates(const std::vector<CertificateType>& certificate_types) {
+    int count = 0;
+
+    std::set<fs::path> directories;
+    const auto ca_certificate_types = get_ca_certificate_types(certificate_types);
+
+    // Collect unique directories
+    for (const auto& ca_certificate_type : ca_certificate_types) {
+        directories.emplace(this->ca_bundle_path_map.at(ca_certificate_type));
+    }
+
+    for (const auto& unique_dir : directories) {
+        X509CertificateBundle ca_bundle(unique_dir, EncodingFormat::PEM);
+        count += ca_bundle.get_certificate_count();
+    }
+
+    // V2G Chain
+    if (std::find(certificate_types.begin(), certificate_types.end(), CertificateType::V2GCertificateChain) !=
+        certificate_types.end()) {
+        auto leaf_dir = this->directories.secc_leaf_cert_directory;
+
+        // Load all from chain, including expired/unused
+        X509CertificateBundle leaf_bundle(leaf_dir, EncodingFormat::PEM);
+        count += leaf_bundle.get_certificate_count();
+    }
+
+    return count;
 }
 
 OCSPRequestDataList EvseSecurity::get_ocsp_request_data() {

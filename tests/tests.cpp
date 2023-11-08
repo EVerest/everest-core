@@ -135,6 +135,17 @@ TEST_F(EvseSecurityTests, verify_bundle_management) {
     ASSERT_TRUE(items == 1);
 }
 
+TEST_F(EvseSecurityTests, verify_certificate_counts) {
+    // This contains the 'real' fs certifs, we have the leaf chain + the leaf in a seaparate folder
+    ASSERT_EQ(this->evse_security->get_count_of_installed_certificates({CertificateType::V2GCertificateChain}), 4);
+    // We have 3 certs in the root bundle
+    ASSERT_EQ(this->evse_security->get_count_of_installed_certificates({CertificateType::V2GRootCertificate}), 3);
+    // MF is using the same V2G bundle in our case
+    ASSERT_EQ(this->evse_security->get_count_of_installed_certificates({CertificateType::MFRootCertificate}), 3);
+    // None were defined
+    ASSERT_EQ(this->evse_security->get_count_of_installed_certificates({CertificateType::MORootCertificate}), 0);
+}
+
 /// \brief get_certificate_hash_data() throws exception if called with no issuer and a non-self-signed cert
 TEST_F(EvseSecurityTests, get_certificate_hash_data_non_self_signed_requires_issuer) {
     const auto non_self_signed_cert_str =
