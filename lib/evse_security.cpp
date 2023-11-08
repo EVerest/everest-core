@@ -422,9 +422,6 @@ EvseSecurity::get_installed_certificates(const std::vector<CertificateType>& cer
             X509CertificateHierarchy& hierarchy = ca_bundle.get_certficate_hierarchy();
             EVLOG_info << "Hierarchy:(V2GCertificateChain)\n" << hierarchy.to_debug_string();
 
-            // TODO (ioan): as per V2GCertificateChain: OCPP 2.0.1 part 2 spec 2 (3.36):
-            // V2G certificate chain (excluding the V2GRootCertificate)
-            // The first certificate is the 'leaf'
             for (auto& root : hierarchy.get_hierarchy()) {
                 CertificateHashDataChain certificate_hash_data_chain;
 

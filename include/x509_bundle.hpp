@@ -102,7 +102,7 @@ public:
     /// @brief Finds a certificate based on its hash
     X509Wrapper find_certificate(const CertificateHashData& certificate_hash);
 
-    /// @brief Adds a single certificate in the chain. Only in memory, use @ref export_certificates to filesystem
+    /// @brief Adds a single certificate in the bundle. Only in memory, use @ref export_certificates to filesystem
     void add_certificate(X509Wrapper&& certificate);
 
     /// @brief Adds a single certificate in the bundle, only if it is not contained
@@ -174,7 +174,8 @@ private:
     void invalidate_hierarchy();
 
 private:
-    // Certificates loaded, only loaded from files
+    // Structure of the bundle - maps files to the certificates stored in them
+    // For certificates coming from a string, uses a default empty path
     std::unordered_map<fs::path, std::vector<X509Wrapper>> certificates;
     // Relevant bundle file or directory for this certificates
     fs::path path;

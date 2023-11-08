@@ -241,7 +241,7 @@ void X509CertificateBundle::add_certificate(X509Wrapper&& certificate) {
                 "Added certificate with directory bundle, must be subdir of the main directory: " + path.string());
         }
     } else {
-        // Only one entry, no need to worry
+        // The bundle came from a file, so there is only one file we could add the certificate to
         certificates.begin()->second.push_back(certificate);
         invalidate_hierarchy();
     }
@@ -293,8 +293,6 @@ bool X509CertificateBundle::export_certificates() {
             // Each chain is a single file
             if (!EvseUtils::write_to_file(chains.first, to_export_string(chains.first), std::ios::trunc)) {
                 exported_all = false;
-            } else {
-                exported_all = true;
             }
         }
 

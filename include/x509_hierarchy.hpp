@@ -16,7 +16,6 @@ public:
 
 struct X509Node {
     X509Wrapper certificate;
-    // Issuer based, computed hash (for non-root) or simple computed hash for roots
     CertificateHashData hash;
 
     X509Wrapper issuer;
@@ -67,7 +66,7 @@ public:
         return descendants;
     }
 
-    /// @brief correct method of finding a hash for a certificate, since it also checks the issuer
+    /// @brief obtains the hash data of the certificate, finding its issuer if needed
     CertificateHashData get_certificate_hash(const X509Wrapper& certificate) {
         if (certificate.is_selfsigned()) {
             return certificate.get_certificate_hash_data();
@@ -131,12 +130,12 @@ public:
     /// @brief Iterate through all the hierarchy of certificates while the function returns true
     template <typename function> void for_each(function func) {
         std::queue<std::reference_wrapper<X509Node>> queue;
-        for (auto& roots : hierarchy) {
+        for (auto& root : hierarchy) {
             // Process roots
-            if (!func(roots))
+            if (!func(root))
                 return;
 
-            for (auto& child : roots.children) {
+            for (auto& child : root.children) {
                 queue.push(child);
             }
         }
@@ -210,7 +209,10 @@ public:
 
                 if (!has_owner) {
                     // If we don't have an owner we can't determine the proper hash, use invalid
+                    // We can identify the invalid hash data by the fact that its has strings are null
                     CertificateHashData invalid;
+                    // Set the hash algorithm, leaving it undefined leads to UB
+                    invalid.hash_algorithm = HashAlgorithm::SHA256;
                     ordered.hierarchy.push_back({certif, invalid, certif, {}});
                 }
             }
@@ -226,6 +228,8 @@ public:
         certificates.erase(remove_roots, certificates.end());
 
         // Try build the full hierarchy, we are not assuming any order
+        // This will not get stuck in a loop, because we removed the orphaned certificates already
+        // Note: the logic is fairly simple here, but has worst-case cubic runtime in the number of certs
         while (certificates.size()) {
             // The current certificate that we're testing for
             auto current = std::move(certificates.back());
@@ -250,7 +254,6 @@ private:
 
         for_each([&](X509Node& top) {
             if (certificate.is_child(top.certificate)) {
-                // Problem: when the top is an intermediary certificate we have a crash, since the
                 auto hash = certificate.get_certificate_hash_data(top.certificate);
                 top.children.push_back({std::move(certificate), hash, top.certificate, {}});
                 added = true;
