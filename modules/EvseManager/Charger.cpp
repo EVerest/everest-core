@@ -644,9 +644,9 @@ void Charger::processEvent(CPEvent cp_event) {
 
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
 
-    if (cp_event == ControlPilotEvent::PowerOn) {
+    if (cp_event == CPEvent::PowerOn) {
         contactors_closed = true;
-    } else if (cp_event == ControlPilotEvent::PowerOff) {
+    } else if (cp_event == CPEvent::PowerOff) {
         contactors_closed = false;
     }
 
