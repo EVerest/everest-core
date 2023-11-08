@@ -4,6 +4,6 @@ docker run \
     --rm \
     --network host \
     --name everest_nodered \
-    -e FLOWS=@FLOW_FILE_NAME@ \
-    --mount type=bind,source=@FLOW_FILE_DIRECTORY@,target=/data/ \
+    -e FLOWS=flows/@FLOW_FILE_NAME@ \
+    --mount type=bind,source=@FLOW_FILE_DIRECTORY@,target=/data/flows \
     everest-nodered
