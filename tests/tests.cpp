@@ -212,28 +212,26 @@ TEST_F(EvseSecurityTests, install_root_ca_03) {
 
     ASSERT_EQ(post_installed_certificates.certificate_hash_data_chain.size(),
               pre_installed_certificates.certificate_hash_data_chain.size() + 2);
-    for (auto &old_cert : pre_installed_certificates.certificate_hash_data_chain) {
-        ASSERT_NE(std::find_if(post_installed_certificates.certificate_hash_data_chain.begin(),
-                               post_installed_certificates.certificate_hash_data_chain.end(),
-                               [&] (auto value) {
-                                   return value.certificate_hash_data == old_cert.certificate_hash_data;
-                               }),
-                  post_installed_certificates.certificate_hash_data_chain.end());
+    for (auto& old_cert : pre_installed_certificates.certificate_hash_data_chain) {
+        ASSERT_NE(
+            std::find_if(post_installed_certificates.certificate_hash_data_chain.begin(),
+                         post_installed_certificates.certificate_hash_data_chain.end(),
+                         [&](auto value) { return value.certificate_hash_data == old_cert.certificate_hash_data; }),
+            post_installed_certificates.certificate_hash_data_chain.end());
     }
     ASSERT_NE(std::find_if(post_installed_certificates.certificate_hash_data_chain.begin(),
                            post_installed_certificates.certificate_hash_data_chain.end(),
-                           [&] (auto value) {
-                               return X509Wrapper(new_root_ca_1, EncodingFormat::PEM)
-                                          .get_certificate_hash_data() == value.certificate_hash_data;
-                           }
-                        ),
+                           [&](auto value) {
+                               return X509Wrapper(new_root_ca_1, EncodingFormat::PEM).get_certificate_hash_data() ==
+                                      value.certificate_hash_data;
+                           }),
               post_installed_certificates.certificate_hash_data_chain.end());
     ASSERT_NE(std::find_if(post_installed_certificates.certificate_hash_data_chain.begin(),
                            post_installed_certificates.certificate_hash_data_chain.end(),
-                           [&] (auto value) {
-                               return X509Wrapper(new_root_ca_2, EncodingFormat::PEM)
-                                          .get_certificate_hash_data() == value.certificate_hash_data;
-                           } ),
+                           [&](auto value) {
+                               return X509Wrapper(new_root_ca_2, EncodingFormat::PEM).get_certificate_hash_data() ==
+                                      value.certificate_hash_data;
+                           }),
               post_installed_certificates.certificate_hash_data_chain.end());
 }
 
@@ -262,7 +260,6 @@ TEST_F(EvseSecurityTests, install_root_ca_04) {
     ASSERT_EQ(post_installed_certificates.certificate_hash_data_chain.size(),
               pre_installed_certificates.certificate_hash_data_chain.size() + 1);
 
-
     const auto root_x509 = X509Wrapper(new_root_ca_1, EncodingFormat::PEM);
     const auto subca1_x509 = X509Wrapper(new_root_sub_ca_1, EncodingFormat::PEM);
     const auto subca2_x509 = X509Wrapper(new_root_sub_ca_2, EncodingFormat::PEM);
@@ -270,10 +267,8 @@ TEST_F(EvseSecurityTests, install_root_ca_04) {
     const auto subca1_hash_data = subca1_x509.get_certificate_hash_data(root_x509);
     const auto subca2_hash_data = subca2_x509.get_certificate_hash_data(subca1_x509);
     auto result_hash_chain = std::find_if(post_installed_certificates.certificate_hash_data_chain.begin(),
-                                 post_installed_certificates.certificate_hash_data_chain.end(),
-                                 [&] (auto chain) {
-                                     return chain.certificate_hash_data == root_hash_data;
-                                 });
+                                          post_installed_certificates.certificate_hash_data_chain.end(),
+                                          [&](auto chain) { return chain.certificate_hash_data == root_hash_data; });
     ASSERT_NE(result_hash_chain, post_installed_certificates.certificate_hash_data_chain.end());
     ASSERT_EQ(result_hash_chain->certificate_hash_data, root_hash_data);
     ASSERT_EQ(result_hash_chain->child_certificate_hash_data.size(), 2);
