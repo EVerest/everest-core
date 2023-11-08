@@ -765,6 +765,11 @@ void OCPP201::ready() {
     callbacks.configure_network_connection_profile_callback =
         [this](const ocpp::v201::NetworkConnectionProfile& network_connection_profile) { return true; };
 
+    callbacks.all_connectors_unavailable_callback = [this]() {
+        EVLOG_info << "All connectors unavailable, proceed with firmware installation";
+        this->r_system->call_allow_firmware_installation();
+    };
+
     const auto sql_init_path = this->ocpp_share_path / INIT_SQL;
 
     this->init_evses();

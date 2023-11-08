@@ -11,6 +11,8 @@ cmds:
       description: Returns the result of the attempt to update the firmware
       type: string
       $ref: /system#/UpdateFirmwareResponse
+  allow_firmware_installation:
+    description: Call to allow a firmware installation to proceed
   upload_logs:
     description: Call to start a log upload
     arguments:

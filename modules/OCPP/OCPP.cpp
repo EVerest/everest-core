@@ -434,6 +434,11 @@ void OCPP::ready() {
             types::system::update_firmware_response_to_string(system_response));
     });
 
+    this->charge_point->register_all_connectors_unavailable_callback([this]() {
+        EVLOG_info << "All connectors unavailable, proceed with firmware installation";
+        this->r_system->call_allow_firmware_installation();
+    });
+
     this->r_system->subscribe_log_status([this](types::system::LogStatus log_status) {
         this->charge_point->on_log_status_notification(log_status.request_id,
                                                        types::system::log_status_enum_to_string(log_status.log_status));

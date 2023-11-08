@@ -38,6 +38,7 @@ protected:
     // command handler functions (virtual)
     virtual types::system::UpdateFirmwareResponse
     handle_update_firmware(types::system::FirmwareUpdateRequest& firmware_update_request) override;
+    virtual void handle_allow_firmware_installation() override;
     virtual types::system::UploadLogsResponse
     handle_upload_logs(types::system::UploadLogsRequest& upload_logs_request) override;
     virtual bool handle_is_reset_allowed(types::system::ResetType& type) override;
