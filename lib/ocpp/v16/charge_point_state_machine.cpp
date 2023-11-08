@@ -129,15 +129,19 @@ bool ChargePointFSM::handle_event(FSMEvent event) {
     state = dest_state_it->second;
 
     if (!faulted) {
-        status_notification_callback(state, ChargePointErrorCode::NoError);
+        status_notification_callback(state, this->error_code);
     }
 
     return true;
 }
 
 bool ChargePointFSM::handle_fault(const ChargePointErrorCode& error_code) {
-    this->error_code = error_code;
+    if (error_code == this->error_code) {
+        // has already been handled and reported
+        return false;
+    }
 
+    this->error_code = error_code;
     if (this->error_code == ChargePointErrorCode::NoError) {
         faulted = false;
         status_notification_callback(state, this->error_code);
@@ -150,6 +154,11 @@ bool ChargePointFSM::handle_fault(const ChargePointErrorCode& error_code) {
 }
 
 bool ChargePointFSM::handle_error(const ChargePointErrorCode& error_code) {
+    if (error_code == this->error_code) {
+        // has already been handled and reported
+        return false;
+    }
+
     this->error_code = error_code;
     if (!faulted) {
         status_notification_callback(this->state, error_code);
