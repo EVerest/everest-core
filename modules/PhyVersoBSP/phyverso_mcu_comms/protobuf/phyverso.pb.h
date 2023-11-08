@@ -3,7 +3,8 @@
 
 #ifndef PB_PHYVERSO_PB_H_INCLUDED
 #define PB_PHYVERSO_PB_H_INCLUDED
-#include <nanopb/pb.h>
+#include <everest/3rd_party/nanopb/pb_decode.h>
+#include <everest/3rd_party/nanopb/pb_encode.h>
 
 #if PB_PROTO_HEADER_VERSION != 40
 #error Regenerate this file with the current version of nanopb generator.
