@@ -2,6 +2,7 @@
 # Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
 import asyncio
+import ssl
 import time
 import logging
 from contextlib import asynccontextmanager
@@ -10,6 +11,9 @@ from typing import Union, Optional
 from unittest.mock import Mock
 
 import websockets
+from pytest import FixtureRequest
+
+from everest.testing.ocpp_utils.charge_point_utils import OcppTestConfiguration
 from ocpp.routing import create_route_map, on
 from ocpp.charge_point import ChargePoint
 
@@ -206,3 +210,49 @@ def inject_csms_v16_mock(cs: CentralSystem) -> Mock:
     for action_name, action_method in charge_point_action_handlers.items():
         cs.function_overrides.append((action_name, catch_mock(mock, action_name, action_method)))
     return mock
+
+
+def determine_ssl_context(request: FixtureRequest, test_config: OcppTestConfiguration) -> ssl.SSLContext | None:
+    """ Determine CSMS SSL Context: Default take from test_config, can be overwritten by csms_tls marker """
+
+    csms_tls_enabled = test_config.csms_tls_enabled
+    if test_config.certificate_info:
+        csms_tls_cert = test_config.certificate_info.csms_cert
+        csms_tls_key = test_config.certificate_info.csms_key
+        csms_tls_passphrase = test_config.certificate_info.csms_passphrase
+        csms_tls_root_ca = test_config.certificate_info.csms_root_ca
+    else:
+        csms_tls_cert = None
+        csms_tls_key = None
+        csms_tls_passphrase = None
+        csms_tls_root_ca = None
+    csms_tls_verify_client_certificate = test_config.csms_tls_verify_client_certificate
+
+    if csms_tls_marker := request.node.get_closest_marker("csms_tls"):
+        if csms_tls_marker.args:
+            csms_tls_enabled = csms_tls_marker.args[0]
+        else:
+            csms_tls_enabled = True  # provided marker always enabled tls if not explicitly set to False
+        marker_kwargs = csms_tls_marker.kwargs
+        if "certificate" in marker_kwargs:
+            csms_tls_cert = marker_kwargs["certificate"]
+        if "private_key" in marker_kwargs:
+            csms_tls_key = marker_kwargs["private_key"]
+        if "passphrase" in marker_kwargs:
+            csms_tls_passphrase = marker_kwargs["passphrase"]
+        if "root_ca" in marker_kwargs:
+            csms_tls_root_ca = marker_kwargs["root_ca"]
+        if "verify_client_certificate" in marker_kwargs:
+            csms_tls_verify_client_certificate = marker_kwargs["verify_client_certificate"]
+
+    if csms_tls_enabled:
+        ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        ssl_context.load_cert_chain(csms_tls_cert,
+                                    csms_tls_key,
+                                    csms_tls_passphrase)
+        if csms_tls_verify_client_certificate:
+            ssl_context.verify_mode = ssl.CERT_REQUIRED
+            ssl_context.load_verify_locations(csms_tls_root_ca)
+        return ssl_context
+    else:
+        return None

@@ -7,6 +7,7 @@ import socket
 import ssl
 import sys
 import tempfile
+from dataclasses import dataclass
 from pathlib import Path
 from threading import Thread
 
@@ -19,7 +20,8 @@ from pyftpdlib.handlers import FTPHandler
 from everest.testing.core_utils.common import OCPPVersion
 from everest.testing.core_utils.configuration.everest_environment_setup import EverestEnvironmentOCPPConfiguration
 from everest.testing.core_utils.controller.everest_test_controller import EverestTestController
-from everest.testing.ocpp_utils.central_system import CentralSystem, inject_csms_v201_mock, inject_csms_v16_mock
+from everest.testing.ocpp_utils.central_system import CentralSystem, inject_csms_v201_mock, inject_csms_v16_mock, \
+    determine_ssl_context
 from everest.testing.ocpp_utils.charge_point_utils import TestUtility, OcppTestConfiguration
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), ".")))
@@ -52,13 +54,9 @@ async def central_system(request, ocpp_version: OCPPVersion, test_config):
     """Fixture for CentralSystem. Can be started as TLS or
         plain websocket depending on the request parameter.
     """
-    if (hasattr(request, 'param')):
-        ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-        ssl_context.load_cert_chain(test_config.certificate_info.csms_cert,
-                                    test_config.certificate_info.csms_key,
-                                    test_config.certificate_info.csms_passphrase)
-    else:
-        ssl_context = None
+
+    ssl_context = determine_ssl_context(request, test_config)
+
     cs = CentralSystem(test_config.charge_point_info.charge_point_id,
                        ocpp_version=ocpp_version)
 
