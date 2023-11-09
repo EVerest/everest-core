@@ -82,6 +82,7 @@ struct Conf {
     bool disable_authentication;
     bool sae_j2847_2_bpt_enabled;
     std::string sae_j2847_2_bpt_mode;
+    bool request_zero_power_in_idle;
 };
 
 class EvseManager : public Everest::ModuleBase {

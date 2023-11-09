@@ -306,7 +306,7 @@ private:
     types::iso15118_charger::DC_EVSEMaximumLimits currentEvseMaxLimits;
 
     static constexpr auto SLEEP_BEFORE_ENABLING_PWM_HLC_MODE = std::chrono::seconds(1);
-    static constexpr auto MAINLOOP_UPDATE_RATE = std::chrono::milliseconds(50);
+    static constexpr auto MAINLOOP_UPDATE_RATE = std::chrono::milliseconds(100);
 
     float soft_over_current_tolerance_percent{10.};
     float soft_over_current_measurement_noise_A{0.5};
