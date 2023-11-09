@@ -165,6 +165,13 @@ tls_context WebsocketTLS::on_tls_init(std::string hostname, websocketpp::connect
         if (security_profile == 3) {
             const auto certificate_key_pair =
                 this->evse_security->get_key_pair(CertificateSigningUseEnum::ChargingStationCertificate);
+
+            if (certificate_key_pair.has_value() && certificate_key_pair.value().password.has_value()) {
+                std::string passwd = certificate_key_pair.value().password.value();
+                context->set_password_callback(
+                    [passwd](auto max_len, auto purpose) { return passwd.substr(0, max_len); });
+            }
+
             if (!certificate_key_pair.has_value()) {
                 EVLOG_AND_THROW(std::runtime_error(
                     "Connecting with security profile 3 but no client side certificate is present or valid"));
