@@ -477,17 +477,18 @@ std::string EvseSecurity::generate_certificate_signing_request(LeafCertificateTy
     }
 
     // csr req
+    // Ignore deprecation warnings on the EC gen functions since we need OpenSSL 1.1 support
     X509_REQ_ptr x509ReqPtr(X509_REQ_new());
     EVP_PKEY_ptr evpKey(EVP_PKEY_new());
-    EC_KEY* ecKey = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1); // FIXME: Deprecation warning
+    EC_KEY* ecKey = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
     X509_NAME* x509Name = X509_REQ_get_subject_name(x509ReqPtr.get());
 
     BIO_ptr prkey(BIO_new_file(key_path.c_str(), "w"));
     BIO_ptr bio(BIO_new(BIO_s_mem()));
 
     // generate ec key pair
-    EC_KEY_generate_key(ecKey); // FIXME: Deprecation warning
-    EVP_PKEY_assign_EC_KEY(evpKey.get(), ecKey); // FIXME: Deprecation warning
+    EC_KEY_generate_key(ecKey);
+    EVP_PKEY_assign_EC_KEY(evpKey.get(), ecKey);
     // write private key to file
     int success;
     if (this->private_key_password.has_value()) {
