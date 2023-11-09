@@ -659,7 +659,7 @@ std::string API::limit_decimal_places(const types::board_support::Telemetry& tel
     return telemetry_stream.str();
 }
 
-float API::round_to_nearest_step(float value, float step) {
+double API::round_to_nearest_step(double value, double step) {
     if (step <= 0) {
         return value;
     }
