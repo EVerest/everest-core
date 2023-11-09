@@ -492,7 +492,8 @@ std::string EvseSecurity::generate_certificate_signing_request(LeafCertificateTy
     // write private key to file
     int success;
     if (this->private_key_password.has_value()) {
-        success = PEM_write_bio_PrivateKey(prkey.get(), evpKey.get(), EVP_aes_128_cbc(), NULL, 0, NULL, (void*) this->private_key_password.value().c_str());
+        success = PEM_write_bio_PrivateKey(prkey.get(), evpKey.get(), EVP_aes_128_cbc(), NULL, 0, NULL,
+                                           (void*)this->private_key_password.value().c_str());
     } else {
         success = PEM_write_bio_PrivateKey(prkey.get(), evpKey.get(), NULL, NULL, 0, NULL, NULL);
     }
