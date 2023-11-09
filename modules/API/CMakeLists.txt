@@ -18,6 +18,7 @@ target_link_libraries(${MODULE_NAME}
 target_sources(${MODULE_NAME}
     PRIVATE
         "main/emptyImpl.cpp"
+        "limit_decimal_places.cpp"
 )
 
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1

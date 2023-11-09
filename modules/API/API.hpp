@@ -27,7 +27,11 @@
 #include <date/date.h>
 #include <date/tz.h>
 
+#include "limit_decimal_places.hpp"
+
 namespace module {
+
+class LimitDecimalPlaces;
 
 class SessionInfo {
 private:
@@ -152,11 +156,7 @@ private:
     std::string selected_protocol;
     json charger_information;
     std::string ocpp_connection_status = "unknown";
-    std::string limit_decimal_places(const types::powermeter::Powermeter& powermeter);
-    std::string limit_decimal_places(const types::board_support::HardwareCapabilities& hw_capabilities);
-    std::string limit_decimal_places(const types::evse_manager::Limits& limits);
-    std::string limit_decimal_places(const types::board_support::Telemetry& telemetry);
-    double round_to_nearest_step(double value, double step);
+    std::unique_ptr<LimitDecimalPlaces> limit_decimal_places;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
