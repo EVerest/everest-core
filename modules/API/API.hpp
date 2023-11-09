@@ -5,7 +5,7 @@
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 1
+// template version 2
 //
 
 #include "ld-ev.hpp"
@@ -15,6 +15,7 @@
 
 // headers for required interface implementations
 #include <generated/interfaces/evse_manager/Interface.hpp>
+#include <generated/interfaces/ocpp_1_6_charge_point/Interface.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
@@ -112,17 +113,20 @@ class API : public Everest::ModuleBase {
 public:
     API() = delete;
     API(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, std::unique_ptr<emptyImplBase> p_main,
-        std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager, Conf& config) :
+        std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager,
+        std::vector<std::unique_ptr<ocpp_1_6_charge_pointIntf>> r_ocpp, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_main(std::move(p_main)),
         r_evse_manager(std::move(r_evse_manager)),
+        r_ocpp(std::move(r_ocpp)),
         config(config){};
 
-    const Conf& config;
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<emptyImplBase> p_main;
     const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;
+    const std::vector<std::unique_ptr<ocpp_1_6_charge_pointIntf>> r_ocpp;
+    const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
@@ -147,6 +151,7 @@ private:
     std::list<std::string> hw_capabilities_str;
     std::string selected_protocol;
     json charger_information;
+    std::string ocpp_connection_status = "unknown";
     std::string limit_decimal_places(const types::powermeter::Powermeter& powermeter);
     std::string limit_decimal_places(const types::board_support::HardwareCapabilities& hw_capabilities);
     std::string limit_decimal_places(const types::evse_manager::Limits& limits);

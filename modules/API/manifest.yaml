@@ -168,6 +168,10 @@ requires:
     interface: evse_manager
     min_connections: 1
     max_connections: 128
+  ocpp:
+    interface: ocpp_1_6_charge_point
+    min_connections: 0
+    max_connections: 1
 enable_external_mqtt: true
 metadata:
   license: https://opensource.org/licenses/Apache-2.0

@@ -347,6 +347,18 @@ void API::init() {
         });
     }
 
+    std::string var_ocpp_connection_status = api_base + "ocpp/var/connection_status";
+
+    if (this->r_ocpp.size() == 1) {
+        this->r_ocpp.at(0)->subscribe_is_connected([this](bool is_connected) {
+            if (is_connected) {
+                this->ocpp_connection_status = "connected";
+            } else {
+                this->ocpp_connection_status = "disconnected";
+            }
+        });
+    }
+
     std::string var_info = api_base + "info/var/info";
 
     if (this->config.charger_information_file != "") {
@@ -360,12 +372,13 @@ void API::init() {
         }
     }
 
-    this->api_threads.push_back(std::thread([this, var_connectors, connectors, var_info]() {
+    this->api_threads.push_back(std::thread([this, var_connectors, connectors, var_info, var_ocpp_connection_status]() {
         auto next_tick = std::chrono::steady_clock::now();
         while (this->running) {
             json connectors_array = connectors;
             this->mqtt.publish(var_connectors, connectors_array.dump());
             this->mqtt.publish(var_info, this->charger_information.dump());
+            this->mqtt.publish(var_ocpp_connection_status, this->ocpp_connection_status);
 
             next_tick += NOTIFICATION_PERIOD;
             std::this_thread::sleep_until(next_tick);

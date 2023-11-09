@@ -1,7 +1,7 @@
 # API module documentation
 This module is responsible for providing a simple MQTT based API to EVerest internals
 
-## Periodically published variables
+## Periodically published variables for each connected EvseManager
 This module periodically publishes the following variables for each connected EvseManager.
 
 ### everest_api/connectors
@@ -139,6 +139,13 @@ This variable is published every second and contains powermeter information of t
         }
     }
 ```
+
+## Periodically published variables for OCPP
+
+### everest_api/ocpp/var/connection_status
+This variable is published every second and contains the connection status of the OCPP module.
+If the OCPP module has not yet published its "is_connected" status or no OCPP module is configured "unknown" is published. Otherwise "connected" or "disconnected" are published.
+
 
 ## Commands and variables published in response
 ### everest_api/evse_manager/cmd/pause_charging
