@@ -40,12 +40,21 @@ def ocpp_version(request) -> OCPPVersion:
 def ocpp_config(request, central_system: CentralSystem, test_config: OcppTestConfiguration, ocpp_version: OCPPVersion):
     ocpp_config_marker = request.node.get_closest_marker("ocpp_config")
 
+    ocpp_configuration_visitors_marker = request.node.get_closest_marker("ocpp_config_adaptions")
+    ocpp_configuration_visitors = []
+    if ocpp_configuration_visitors_marker:
+        for v in ocpp_configuration_visitors_marker.args:
+            assert hasattr(v,
+                           "adjust_ocpp_configuration"), "Arguments to 'ocpp_config_adaptions' must all provide interface of OCPPConfigAdjustmentVisitor"
+            ocpp_configuration_visitors.append(v)
+
     return EverestEnvironmentOCPPConfiguration(
         central_system_port=central_system.port,
         central_system_host="127.0.0.1",
         ocpp_version=ocpp_version,
         libocpp_path=Path(request.config.getoption("--libocpp")),
-        template_ocpp_config=Path(ocpp_config_marker.args[0]) if ocpp_config_marker else None
+        template_ocpp_config=Path(ocpp_config_marker.args[0]) if ocpp_config_marker else None,
+        configuration_visitors=ocpp_configuration_visitors
     )
 
 

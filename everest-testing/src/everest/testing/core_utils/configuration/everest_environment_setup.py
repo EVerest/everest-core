@@ -39,13 +39,15 @@ class EverestEnvironmentOCPPConfiguration:
         Path] = None  # Path for OCPP config to be used; if not provided, will be determined from everest config
     device_model_schemas_path: Optional[
         Path] = None  # Path of the OCPP device model json schemas. If not set, {libocpp_path} / 'config/v201/component_schemas' will  be used
+    configuration_visitors: list[OCPPModuleConfigurationVisitor] | None = None
 
 
 @dataclass
 class EverestEnvironmentEvseSecurityConfiguration:
     use_temporary_certificates_folder: bool = True  # if true, configuration will be adapted to use temporary certifcates folder, this assumes a "default" file tree structure, cf. the EvseSecurityModuleConfiguration dataclass
     module_id: Optional[str] = None  # if None, auto-detected
-    source_certificate_directory: Optional[Path] = None  # if provided, this will be copied to temporary path; If none, the certificates of the everest-core directory / installation will be used
+    source_certificate_directory: Optional[
+        Path] = None  # if provided, this will be copied to temporary path; If none, the certificates of the everest-core directory / installation will be used
     module_configuration: Optional[
         EvseSecurityModuleConfiguration] = None  # if provided, will be merged into configuration; paths will be adapted if use_temporary_certificates_folder is true
 
@@ -203,6 +205,7 @@ class EverestTestEnvironmentSetup:
             source_ocpp_config_file=source_ocpp_config,
             target_ocpp_config_file=temporary_paths.ocpp_config_file,
             target_ocpp_user_config_file=temporary_paths.ocpp_user_config_file,
+            configuration_visitors=self._ocpp_config.configuration_visitors
         )
 
         if self._ocpp_config.ocpp_version == OCPPVersion.ocpp201:
@@ -264,6 +267,7 @@ class EverestTestEnvironmentSetup:
             source_certs_directory = self._evse_security_config.source_certificate_directory
         else:
             source_certs_directory = self._everest_core.etc_path / 'certs'
-            logging.warning("No 'source_certificate_directory' configured in EverestEnvironmentEvseSecurityConfiguration. "
-                            f"Will use certificates from local installation {source_certs_directory}', which might lead to flaky tests.")
+            logging.warning(
+                "No 'source_certificate_directory' configured in EverestEnvironmentEvseSecurityConfiguration. "
+                f"Will use certificates from local installation {source_certs_directory}', which might lead to flaky tests.")
         shutil.copytree(source_certs_directory, temporary_paths.certs_dir, dirs_exist_ok=True)

@@ -1,9 +1,31 @@
 import json
-import shutil
 import subprocess
 from abc import ABC, abstractmethod
+from copy import deepcopy
 from pathlib import Path
-from typing import Union
+from typing import Union, Callable
+
+
+class OCPPConfigAdjustmentVisitor(ABC):
+    """ Visitor that manipulates a OCPP config when called. Cf. EverestConfigurationAdjustmentVisitor class
+    """
+
+    @abstractmethod
+    def adjust_ocpp_configuration(self, config: dict) -> dict:
+        """ Adjusts the provided configuration by making a (deep) copy and returning the adjusted configuration. """
+
+
+class OCPPConfigAdjustmentVisitorWrapper(OCPPConfigAdjustmentVisitor):
+    """ Simple OCPPConfigAdjustmentVisitor from a callback function.
+    """
+
+    def __init__(self, callback: Callable[[dict], dict]):
+        self._callback = callback
+
+    def adjust_ocpp_configuration(self, config: dict) -> dict:
+        """ Adjusts the provided configuration by making a (deep) copy and returning the adjusted configuration. """
+        config = deepcopy(config)
+        return self._callback(config)
 
 
 class LibOCPPConfigurationHelperBase(ABC):
@@ -14,31 +36,82 @@ class LibOCPPConfigurationHelperBase(ABC):
                              target_ocpp_user_config_file: Path,
                              source_ocpp_config_file: Path,
                              central_system_host: str,
-                             central_system_port: Union[str, int]):
-        config = self._get_occp_config(central_system_port=central_system_port,
-                                       central_system_host=central_system_host,
-                                       source_ocpp_config_file=source_ocpp_config_file)
+                             central_system_port: Union[str, int],
+                             configuration_visitors: list[OCPPConfigAdjustmentVisitor] | None = None):
+        config = json.loads(source_ocpp_config_file.read_text())
+
+        configuration_visitors = configuration_visitors if configuration_visitors else []
+
+        for v in [self._get_default_visitor(central_system_port, central_system_host)] + configuration_visitors:
+            config = v.adjust_ocpp_configuration(config)
+
         with target_ocpp_config_file.open("w") as f:
             json.dump(config, f)
         target_ocpp_user_config_file.write_text("{}")
 
     @abstractmethod
-    def _get_occp_config(self, central_system_port, central_system_host, source_ocpp_config_file: Path):
+    def _get_default_visitor(self, central_system_port: int | str,
+                             central_system_host: str) -> OCPPConfigAdjustmentVisitor:
         pass
 
 
 class LibOCPP16ConfigurationHelper(LibOCPPConfigurationHelperBase):
+    def _get_default_visitor(self, central_system_port, central_system_host):
+        def adjust_ocpp_configuration(config: dict) -> dict:
+            config = deepcopy(config)
+            charge_point_id = config["Internal"]["ChargePointId"]
+            config["Internal"][
+                "CentralSystemURI"] = f"{central_system_host}:{central_system_port}/{charge_point_id}"
+            return config
 
-    def _get_occp_config(self,  central_system_port, central_system_host, source_ocpp_config_file: Path):
-        ocpp_config = json.loads(source_ocpp_config_file.read_text())
-        charge_point_id = ocpp_config["Internal"]["ChargePointId"]
-        ocpp_config["Internal"]["CentralSystemURI"] = f"{central_system_host}:{central_system_port}/{charge_point_id}"
-        return ocpp_config
+        return OCPPConfigAdjustmentVisitorWrapper(adjust_ocpp_configuration)
+
+
+class _OCPP201NetworkConnectionProfileAdjustment(OCPPConfigAdjustmentVisitor):
+    """ Adjusts the OCPP 2.0.1 Network Connection Profile by injecting the right host, port and chargepoint id.
+
+    This is utilized by the `LibOCPP201ConfigurationHelper`.
+
+    """
+
+    def __init__(self, central_system_port: int | str, central_system_host: str):
+        self._central_system_port = central_system_port
+        self._central_system_host = central_system_host
+
+    def adjust_ocpp_configuration(self, config: dict):
+        config = deepcopy(config)
+        charge_point_id = self._get_value_from_v201_config(
+            config, "InternalCtrlr", "ChargePointId", "Actual")
+        network_connection_profiles = json.loads(self._get_value_from_v201_config(
+            config, "InternalCtrlr", "NetworkConnectionProfiles", "Actual"))
+        network_connection_profiles[0]["connectionData"][
+            "ocppCsmsUrl"] = f"ws://{self._central_system_host}:{self._central_system_port}/{charge_point_id}"
+        self._set_value_in_v201_config(config, "InternalCtrlr", "NetworkConnectionProfiles",
+                                       "Actual", json.dumps(network_connection_profiles))
+        return config
+
+    @staticmethod
+    def _get_value_from_v201_config(ocpp_config: json, component_name: str, variable_name: str,
+                                    variable_attribute_type: str):
+        for component in ocpp_config:
+            if (component["name"] == component_name):
+                return component["variables"][variable_name]["attributes"][variable_attribute_type]
+
+    @staticmethod
+    def _set_value_in_v201_config(ocpp_config: json, component_name: str, variable_name: str,
+                                  variable_attribute_type: str,
+                                  value: str):
+        for component in ocpp_config:
+            if (component["name"] == component_name):
+                component["variables"][variable_name]["attributes"][variable_attribute_type] = value
+                return
 
 
 class LibOCPP201ConfigurationHelper(LibOCPPConfigurationHelperBase):
 
-
+    def _get_default_visitor(self, central_system_port: int | str,
+                             central_system_host: str) -> OCPPConfigAdjustmentVisitor:
+        return _OCPP201NetworkConnectionProfileAdjustment(central_system_port, central_system_host)
 
     @staticmethod
     def create_temporary_ocpp_configuration_db(libocpp_path: Path,
@@ -58,31 +131,3 @@ class LibOCPP201ConfigurationHelper(LibOCPPConfigurationHelperBase):
             check=True,
             shell=True
         )
-
-    def _get_occp_config(self, central_system_port, central_system_host,  source_ocpp_config_file: Path):
-        ocpp_config = json.loads(source_ocpp_config_file.read_text())
-        charge_point_id = self._get_value_from_v201_config(
-            ocpp_config, "InternalCtrlr", "ChargePointId", "Actual")
-        network_connection_profiles = json.loads(self._get_value_from_v201_config(
-            ocpp_config, "InternalCtrlr", "NetworkConnectionProfiles", "Actual"))
-        network_connection_profiles[0]["connectionData"][
-            "ocppCsmsUrl"] = f"ws://{central_system_host}:{central_system_port}/{charge_point_id}"
-        self._set_value_in_v201_config(ocpp_config, "InternalCtrlr", "NetworkConnectionProfiles",
-                                       "Actual", json.dumps(network_connection_profiles))
-        return ocpp_config
-
-    @staticmethod
-    def _get_value_from_v201_config(ocpp_config: json, component_name: str, variable_name: str,
-                                    variable_attribute_type: str):
-        for component in ocpp_config:
-            if (component["name"] == component_name):
-                return component["variables"][variable_name]["attributes"][variable_attribute_type]
-
-    @staticmethod
-    def _set_value_in_v201_config(ocpp_config: json, component_name: str, variable_name: str,
-                                  variable_attribute_type: str,
-                                  value: str):
-        for component in ocpp_config:
-            if (component["name"] == component_name):
-                component["variables"][variable_name]["attributes"][variable_attribute_type] = value
-                return
