@@ -365,13 +365,14 @@ TEST_F(EvseSecurityTests, delete_sub_ca_1) {
     const auto certs_after_delete =
         this->evse_security->get_installed_certificates(certificate_types).certificate_hash_data_chain;
     ASSERT_EQ(std::find_if(certs_after_delete.begin(), certs_after_delete.end(),
-                           [&] (auto value) {
+                           [&](auto value) {
                                return value.certificate_hash_data == subca1_hash_data ||
-                                      (std::find_if(value.child_certificate_hash_data.begin(), value.child_certificate_hash_data.end(),
-                                                    [&] (auto child_value) {
+                                      (std::find_if(value.child_certificate_hash_data.begin(),
+                                                    value.child_certificate_hash_data.end(), [&](auto child_value) {
                                                         return child_value == subca1_hash_data;
                                                     }) != value.child_certificate_hash_data.end());
-                           }), certs_after_delete.end());
+                           }),
+              certs_after_delete.end());
 }
 
 TEST_F(EvseSecurityTests, delete_sub_ca_2) {
@@ -407,13 +408,14 @@ TEST_F(EvseSecurityTests, delete_sub_ca_2) {
         this->evse_security->get_installed_certificates(certificate_types).certificate_hash_data_chain;
 
     ASSERT_EQ(std::find_if(certs_after_delete.begin(), certs_after_delete.end(),
-                 [&] (auto value) {
-                     return value.certificate_hash_data == subca2_hash_data ||
-                            (std::find_if(value.child_certificate_hash_data.begin(), value.child_certificate_hash_data.end(),
-                                          [&] (auto child_value) {
-                                              return child_value == subca2_hash_data;
-                                          }) != value.child_certificate_hash_data.end());
-                 }), certs_after_delete.end());
+                           [&](auto value) {
+                               return value.certificate_hash_data == subca2_hash_data ||
+                                      (std::find_if(value.child_certificate_hash_data.begin(),
+                                                    value.child_certificate_hash_data.end(), [&](auto child_value) {
+                                                        return child_value == subca2_hash_data;
+                                                    }) != value.child_certificate_hash_data.end());
+                           }),
+              certs_after_delete.end());
 }
 
 TEST_F(EvseSecurityTests, get_installed_certificates_and_delete_secc_leaf) {
