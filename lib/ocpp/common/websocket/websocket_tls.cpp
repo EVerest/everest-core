@@ -168,7 +168,8 @@ tls_context WebsocketTLS::on_tls_init(std::string hostname, websocketpp::connect
 
             if (certificate_key_pair.has_value() && certificate_key_pair.value().password.has_value()) {
                 std::string passwd = certificate_key_pair.value().password.value();
-                context->set_password_callback([passwd](auto max_len, auto purpose) { return passwd; });
+                context->set_password_callback(
+                    [passwd](auto max_len, auto purpose) { return passwd.substr(0, max_len); });
             }
 
             if (!certificate_key_pair.has_value()) {
@@ -264,7 +265,7 @@ void WebsocketTLS::connect_tls() {
     this->wss_client.connect(con);
 }
 void WebsocketTLS::on_open_tls(tls_client* c, websocketpp::connection_hdl hdl) {
-    (void)c;                       // tls_client is not used in this function
+    (void)c; // tls_client is not used in this function
     EVLOG_info << "OCPP client successfully connected to TLS websocket server";
     this->connection_attempts = 1; // reset connection attempts
     this->m_is_connected = true;
