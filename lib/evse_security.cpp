@@ -183,6 +183,15 @@ InstallCertificateResult EvseSecurity::install_ca_certificate(const std::string&
 
         X509CertificateBundle existing_certs(ca_bundle_path, EncodingFormat::PEM);
 
+        if (existing_certs.is_using_directory()) {
+            std::string filename = conversions::ca_certificate_type_to_string(certificate_type) + "_" +
+                                EvseUtils::get_random_file_name(PEM_EXTENSION.string());
+            fs::path new_path = ca_bundle_path / filename;
+
+            // Sets the path of the new certificate
+            new_cert.update_file(new_path);
+        }
+
         // Check if cert is already installed
         if (existing_certs.contains_certificate(new_cert) == false) {
             existing_certs.add_certificate(std::move(new_cert));

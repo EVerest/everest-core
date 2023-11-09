@@ -166,6 +166,13 @@ std::optional<fs::path> X509Wrapper::get_file() const {
     return this->file;
 }
 
+void X509Wrapper::update_file(fs::path &path) {
+    if(fs::is_directory(path))
+        throw std::logic_error("update_file must only be used for files, not directories!");
+
+    file = path;
+}
+
 X509CertificateSource X509Wrapper::get_source() const {
     if (file.has_value()) {
         return X509CertificateSource::FILE;
