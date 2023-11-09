@@ -2611,6 +2611,13 @@ ocpp::v201::AuthorizeResponse ChargePointImpl::data_transfer_pnc_authorize(
 
 void ChargePointImpl::data_transfer_pnc_sign_certificate() {
 
+    if (!this->configuration->getCpoName().has_value() and
+        !this->configuration->getSeccLeafSubjectOrganization().has_value()) {
+        EVLOG_warning
+            << "Can not request new V2GCertificate because neither CpoName nor SeccLeafSubjectOrganization is set.";
+        return;
+    }
+
     DataTransferRequest req;
     req.vendorId = ISO15118_PNC_VENDOR_ID;
     req.messageId.emplace(CiString<50>(std::string("SignCertificate")));
