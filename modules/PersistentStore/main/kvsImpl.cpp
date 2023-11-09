@@ -10,6 +10,43 @@ namespace fs = std::filesystem;
 namespace module {
 namespace main {
 
+/**
+ * Wrapper class around a sqlite3_stmt pointer to ensure it is always
+ * finalised via sqlite3_finalize()
+ */
+class Sqlite3_Stmt {
+private:
+    sqlite3_stmt* m_statement_ptr = nullptr;
+
+public:
+    void finalize(const char* error_message = nullptr) {
+        const auto res = sqlite3_finalize(m_statement_ptr);
+        m_statement_ptr = nullptr; // prevent double free
+        if (res != SQLITE_OK) {
+            if (error_message != nullptr) {
+                EVLOG_error << error_message;
+            }
+            throw std::runtime_error("PersistentStore db access error");
+        }
+    }
+
+    ~Sqlite3_Stmt() {
+        (void)sqlite3_finalize(m_statement_ptr);
+    }
+
+    constexpr operator sqlite3_stmt*() {
+        return m_statement_ptr;
+    }
+
+    constexpr operator sqlite3_stmt**() {
+        return &m_statement_ptr;
+    }
+
+    constexpr sqlite3_stmt** operator&() {
+        return &m_statement_ptr;
+    }
+};
+
 void kvsImpl::init() {
     // open and initialize database
     fs::path sqlite_db_path = fs::absolute(fs::path(mod->config.sqlite_db_file_path));
@@ -33,7 +70,7 @@ void kvsImpl::init() {
                              "VALUE TEXT,"
                              "TYPE  TEXT);";
 
-    sqlite3_stmt* create_statement;
+    Sqlite3_Stmt create_statement;
     sqlite3_prepare_v2(this->db, create_sql.c_str(), create_sql.size(), &create_statement, NULL);
     int res = sqlite3_step(create_statement);
     if (res != SQLITE_DONE) {
@@ -41,10 +78,7 @@ void kvsImpl::init() {
         throw std::runtime_error("PersistentStore db access error");
     }
 
-    if (sqlite3_finalize(create_statement) != SQLITE_OK) {
-        EVLOG_error << "Error creating KVS table";
-        throw std::runtime_error("PersistentStore db access error");
-    }
+    create_statement.finalize("Error creating KVS table");
 }
 
 void kvsImpl::ready() {
@@ -125,7 +159,7 @@ void kvsImpl::handle_store(std::string& key,
 
     std::string insert_sql_str = "INSERT OR REPLACE INTO KVS (KEY, VALUE, TYPE) VALUES "
                                  "(@key, @value, @type)";
-    sqlite3_stmt* insert_statement;
+    Sqlite3_Stmt insert_statement;
     sqlite3_prepare_v2(db, insert_sql_str.c_str(), insert_sql_str.size(), &insert_statement, NULL);
 
     sqlite3_bind_text(insert_statement, 1, key.c_str(), -1, NULL);
@@ -138,15 +172,12 @@ void kvsImpl::handle_store(std::string& key,
         throw std::runtime_error("PersistentStore db access error");
     }
 
-    if (sqlite3_finalize(insert_statement) != SQLITE_OK) {
-        EVLOG_error << "Error inserting into KVS table";
-        throw std::runtime_error("PersistentStore db access error");
-    }
+    insert_statement.finalize("Error inserting into KVS table");
 };
 
 std::variant<std::nullptr_t, Array, Object, bool, double, int, std::string> kvsImpl::handle_load(std::string& key) {
     std::string select_sql_str = "SELECT KEY, VALUE, TYPE FROM KVS WHERE KEY = @key";
-    sqlite3_stmt* select_statement;
+    Sqlite3_Stmt select_statement;
     sqlite3_prepare_v2(db, select_sql_str.c_str(), select_sql_str.size(), &select_statement, NULL);
 
     sqlite3_bind_text(select_statement, 1, key.c_str(), -1, NULL);
@@ -187,17 +218,13 @@ std::variant<std::nullptr_t, Array, Object, bool, double, int, std::string> kvsI
         }
     }
 
-    if (sqlite3_finalize(select_statement) != SQLITE_OK) {
-        EVLOG_error << "Error selecting from KVS table";
-        throw std::runtime_error("PersistentStore db access error");
-    }
-
+    select_statement.finalize("Error selecting from KVS table");
     return value;
 };
 
 void kvsImpl::handle_delete(std::string& key) {
     std::string delete_sql_str = "DELETE FROM KVS WHERE KEY = @key";
-    sqlite3_stmt* delete_statement;
+    Sqlite3_Stmt delete_statement;
     sqlite3_prepare_v2(db, delete_sql_str.c_str(), delete_sql_str.size(), &delete_statement, NULL);
 
     sqlite3_bind_text(delete_statement, 1, key.c_str(), -1, NULL);
@@ -208,15 +235,12 @@ void kvsImpl::handle_delete(std::string& key) {
         throw std::runtime_error("PersistentStore db access error");
     }
 
-    if (sqlite3_finalize(delete_statement) != SQLITE_OK) {
-        EVLOG_error << "Error deleting from KVS table";
-        throw std::runtime_error("PersistentStore db access error");
-    }
+    delete_statement.finalize("Error deleting from KVS table");
 };
 
 bool kvsImpl::handle_exists(std::string& key) {
     std::string select_sql_str = "SELECT KEY FROM KVS WHERE KEY = @key";
-    sqlite3_stmt* select_statement;
+    Sqlite3_Stmt select_statement;
     sqlite3_prepare_v2(db, select_sql_str.c_str(), select_sql_str.size(), &select_statement, NULL);
 
     sqlite3_bind_text(select_statement, 1, key.c_str(), -1, NULL);
