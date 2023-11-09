@@ -159,6 +159,8 @@ private:
     // timers
     Everest::SteadyTimer heartbeat_timer;
     Everest::SteadyTimer boot_notification_timer;
+    Everest::SteadyTimer client_certificate_expiration_check_timer;
+    Everest::SteadyTimer v2g_certificate_expiration_check_timer;
     ClockAlignedTimer aligned_meter_values_timer;
 
     // time keeping
@@ -218,6 +220,9 @@ private:
     // internal helper functions
     void init_websocket();
     WebsocketConnectionOptions get_ws_connection_options(const int32_t configuration_slot);
+    void init_certificate_expiration_check_timers();
+    void scheduled_check_client_certificate_expiration();
+    void scheduled_check_v2g_certificate_expiration();
 
     /// \brief Gets the configured NetworkConnectionProfile based on the given \p configuration_slot . The
     /// central system uri ofthe connection options will not contain ws:// or wss:// because this method removes it if

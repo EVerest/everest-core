@@ -387,6 +387,70 @@
       "minimum": 512,
       "default": "51200",
       "type": "integer"
+    },
+    "V2GCertificateExpireCheckInitialDelaySeconds": {
+      "description": "Seconds to wait after boot notification to first check the V2G leaf certificate for expiration and potential renewal",
+      "variable_name": "V2GCertificateExpireCheckInitialDelaySeconds",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "default": "60",
+      "type": "integer"
+    },
+    "V2GCertificateExpireCheckIntervalSeconds": {
+      "description": "Seconds between two checks for V2G leaf certificate expiration and potential renewal",
+      "variable_name": "V2GCertificateExpireCheckIntervalSeconds",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "default": "43200",
+      "type": "integer"
+    },
+    "ClientCertificateExpireCheckInitialDelaySeconds": {
+      "description": "Seconds to wait after boot notification to first check the client certificate for expiration and potential renewal",
+      "variable_name": "ClientCertificateExpireCheckInitialDelaySeconds",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "default": "60",
+      "type": "integer"
+    },
+    "ClientCertificateExpireCheckIntervalSeconds": {
+      "description": "Seconds between two checks for client certificate expiration and potential renewal",
+      "variable_name": "ClientCertificateExpireCheckIntervalSeconds",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "default": "43200",
+      "type": "integer"
     }
   },
   "required": [

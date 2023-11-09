@@ -15,7 +15,6 @@ namespace v201 {
 
 const auto DEFAULT_BOOT_NOTIFICATION_RETRY_INTERVAL = std::chrono::seconds(30);
 const auto WEBSOCKET_INIT_DELAY = std::chrono::seconds(2);
-const auto INITIAL_CERTIFICATE_REQUESTS_DELAY = std::chrono::seconds(60);
 
 bool Callbacks::all_callbacks_valid() const {
     return this->is_reset_allowed_callback != nullptr and this->reset_callback != nullptr and
@@ -58,6 +57,8 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
     upload_log_status(UploadLogStatusEnum::Idle),
     bootreason(BootReasonEnum::PowerUp),
     csr_attempt(1),
+    client_certificate_expiration_check_timer([this]() { this->scheduled_check_client_certificate_expiration(); }),
+    v2g_certificate_expiration_check_timer([this]() { this->scheduled_check_v2g_certificate_expiration(); }),
     callbacks(callbacks) {
     // Make sure the received callback struct is completely filled early before we actually start running
     if (!this->callbacks.all_callbacks_valid()) {
@@ -156,6 +157,8 @@ void ChargePoint::stop() {
     this->boot_notification_timer.stop();
     this->certificate_signed_timer.stop();
     this->websocket_timer.stop();
+    this->client_certificate_expiration_check_timer.stop();
+    this->v2g_certificate_expiration_check_timer.stop();
     this->disconnect_websocket(websocketpp::close::status::going_away);
     this->message_queue->stop();
 }
@@ -666,6 +669,7 @@ void ChargePoint::init_websocket() {
                     }
                 }
             }
+            this->init_certificate_expiration_check_timers(); // re-init as timers are stopped on disconnect
         }
         this->time_disconnected = std::chrono::time_point<std::chrono::steady_clock>();
     });
@@ -691,6 +695,9 @@ void ChargePoint::init_websocket() {
             // Get the current time point using steady_clock
             this->time_disconnected = std::chrono::steady_clock::now();
         }
+
+        this->client_certificate_expiration_check_timer.stop();
+        this->v2g_certificate_expiration_check_timer.stop();
     });
 
     this->websocket->register_closed_callback(
@@ -712,6 +719,27 @@ void ChargePoint::init_websocket() {
         });
 
     this->websocket->register_message_callback([this](const std::string& message) { this->message_callback(message); });
+}
+
+void ChargePoint::init_certificate_expiration_check_timers() {
+
+    // Timers started with initial delays; callback functions are supposed to re-schedule on their own!
+
+    // Client Certificate only needs to be checked for SecurityProfile 3; if SecurityProfile changes, timers get
+    // re-initialized at reconnect
+    if (this->device_model->get_value<int>(ControllerComponentVariables::SecurityProfile) == 3) {
+        this->client_certificate_expiration_check_timer.timeout(std::chrono::seconds(
+            this->device_model
+                ->get_optional_value<int>(ControllerComponentVariables::ClientCertificateExpireCheckInitialDelaySeconds)
+                .value_or(60)));
+    }
+
+    // V2G Certificate timer is started in any case; condition (V2GCertificateInstallationEnabled) is validated in
+    // callback (ChargePoint::scheduled_check_v2g_certificate_expiration)
+    this->v2g_certificate_expiration_check_timer.timeout(std::chrono::seconds(
+        this->device_model
+            ->get_optional_value<int>(ControllerComponentVariables::V2GCertificateExpireCheckInitialDelaySeconds)
+            .value_or(60)));
 }
 
 WebsocketConnectionOptions ChargePoint::get_ws_connection_options(const int32_t configuration_slot) {
@@ -1664,6 +1692,7 @@ void ChargePoint::handle_boot_notification_response(CallResult<BootNotificationR
         if (msg.interval > 0) {
             this->heartbeat_timer.interval([this]() { this->heartbeat_req(); }, std::chrono::seconds(msg.interval));
         }
+        this->init_certificate_expiration_check_timers();
         this->update_aligned_data_interval();
         // B01.FR.06 Only use boot timestamp if TimeSource contains Heartbeat
         if (this->callbacks.time_sync_callback.has_value() &&
@@ -2687,6 +2716,51 @@ void ChargePoint::handle_get_local_authorization_list_version_req(Call<GetLocalL
 
     ocpp::CallResult<GetLocalListVersionResponse> call_result(response, call.uniqueId);
     this->send<GetLocalListVersionResponse>(call_result);
+}
+
+void ChargePoint::scheduled_check_client_certificate_expiration() {
+
+    EVLOG_info << "Checking if CSMS client certificate has expired";
+    int expiry_days_count =
+        this->evse_security->get_leaf_expiry_days_count(ocpp::CertificateSigningUseEnum::ChargingStationCertificate);
+    if (expiry_days_count < 30) {
+        EVLOG_info << "CSMS client certificate is invalid in " << expiry_days_count
+                   << " days. Requesting new certificate with certificate signing request";
+        this->sign_certificate_req(ocpp::CertificateSigningUseEnum::ChargingStationCertificate);
+    } else {
+        EVLOG_info << "CSMS client certificate is still valid.";
+    }
+
+    this->client_certificate_expiration_check_timer.interval(std::chrono::seconds(
+        this->device_model
+            ->get_optional_value<int>(ControllerComponentVariables::ClientCertificateExpireCheckIntervalSeconds)
+            .value_or(12 * 60 * 60)));
+}
+
+void ChargePoint::scheduled_check_v2g_certificate_expiration() {
+    if (this->device_model->get_optional_value<bool>(ControllerComponentVariables::V2GCertificateInstallationEnabled)
+            .value_or(false)) {
+        EVLOG_info << "Checking if V2GCertificate has expired";
+        int expiry_days_count =
+            this->evse_security->get_leaf_expiry_days_count(ocpp::CertificateSigningUseEnum::V2GCertificate);
+        if (expiry_days_count < 30) {
+            EVLOG_info << "V2GCertificate is invalid in " << expiry_days_count
+                       << " days. Requesting new certificate with certificate signing request";
+            this->sign_certificate_req(ocpp::CertificateSigningUseEnum::V2GCertificate);
+        } else {
+            EVLOG_info << "V2GCertificate is still valid.";
+        }
+    } else {
+        if (this->device_model->get_optional_value<bool>(ControllerComponentVariables::PnCEnabled).value_or(false)) {
+            EVLOG_warning << "PnC is enabled but V2G certificate installation is not, so no certificate expiration "
+                             "check is performed.";
+        }
+    }
+
+    this->v2g_certificate_expiration_check_timer.interval(std::chrono::seconds(
+        this->device_model
+            ->get_optional_value<int>(ControllerComponentVariables::V2GCertificateExpireCheckIntervalSeconds)
+            .value_or(12 * 60 * 60)));
 }
 
 } // namespace v201

@@ -207,6 +207,34 @@ const ComponentVariable& MaxCustomerInformationDataLength = {
         "MaxCustomerInformationDataLength",
     }),
 };
+const ComponentVariable& V2GCertificateExpireCheckInitialDelaySeconds = {
+    ControllerComponents::InternalCtrlr,
+    std::nullopt,
+    std::optional<Variable>({
+        "V2GCertificateExpireCheckInitialDelaySeconds",
+    }),
+};
+const ComponentVariable& V2GCertificateExpireCheckIntervalSeconds = {
+    ControllerComponents::InternalCtrlr,
+    std::nullopt,
+    std::optional<Variable>({
+        "V2GCertificateExpireCheckIntervalSeconds",
+    }),
+};
+const ComponentVariable& ClientCertificateExpireCheckInitialDelaySeconds = {
+    ControllerComponents::InternalCtrlr,
+    std::nullopt,
+    std::optional<Variable>({
+        "ClientCertificateExpireCheckInitialDelaySeconds",
+    }),
+};
+const ComponentVariable& ClientCertificateExpireCheckIntervalSeconds = {
+    ControllerComponents::InternalCtrlr,
+    std::nullopt,
+    std::optional<Variable>({
+        "ClientCertificateExpireCheckIntervalSeconds",
+    }),
+};
 const ComponentVariable& AlignedDataCtrlrEnabled = {
     ControllerComponents::AlignedDataCtrlr,
     std::nullopt,
