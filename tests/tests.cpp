@@ -334,6 +334,88 @@ TEST_F(EvseSecurityTests, delete_root_ca_02) {
     ASSERT_EQ(result, DeleteCertificateResult::NotFound);
 }
 
+TEST_F(EvseSecurityTests, delete_sub_ca_1) {
+    const auto new_root_ca_1 =
+        read_file_to_string(std::filesystem::path("certs/to_be_installed/INSTALL_TEST_ROOT_CA3.pem"));
+    const auto result = this->evse_security->install_ca_certificate(new_root_ca_1, CaCertificateType::CSMS);
+    ASSERT_TRUE(result == InstallCertificateResult::Accepted);
+
+    const auto new_root_sub_ca_1 =
+        read_file_to_string(std::filesystem::path("certs/to_be_installed/INSTALL_TEST_ROOT_CA3_SUBCA1.pem"));
+    const auto result2 = this->evse_security->install_ca_certificate(new_root_sub_ca_1, CaCertificateType::CSMS);
+    ASSERT_TRUE(result2 == InstallCertificateResult::Accepted);
+
+    const auto new_root_sub_ca_2 =
+        read_file_to_string(std::filesystem::path("certs/to_be_installed/INSTALL_TEST_ROOT_CA3_SUBCA2.pem"));
+    const auto result3 = this->evse_security->install_ca_certificate(new_root_sub_ca_2, CaCertificateType::CSMS);
+    ASSERT_TRUE(result3 == InstallCertificateResult::Accepted);
+
+    const auto root_x509 = X509Wrapper(new_root_ca_1, EncodingFormat::PEM);
+    const auto subca1_x509 = X509Wrapper(new_root_sub_ca_1, EncodingFormat::PEM);
+    const auto subca1_hash_data = subca1_x509.get_certificate_hash_data(root_x509);
+
+    ASSERT_EQ(this->evse_security->delete_certificate(subca1_hash_data), DeleteCertificateResult::Accepted);
+
+    std::vector<CertificateType> certificate_types;
+    certificate_types.push_back(CertificateType::V2GRootCertificate);
+    certificate_types.push_back(CertificateType::MORootCertificate);
+    certificate_types.push_back(CertificateType::CSMSRootCertificate);
+    certificate_types.push_back(CertificateType::V2GCertificateChain);
+    certificate_types.push_back(CertificateType::MFRootCertificate);
+    const auto certs_after_delete =
+        this->evse_security->get_installed_certificates(certificate_types).certificate_hash_data_chain;
+    ASSERT_EQ(std::find_if(certs_after_delete.begin(), certs_after_delete.end(),
+                           [&] (auto value) {
+                               return value.certificate_hash_data == subca1_hash_data ||
+                                      (std::find_if(value.child_certificate_hash_data.begin(), value.child_certificate_hash_data.end(),
+                                                    [&] (auto child_value) {
+                                                        return child_value == subca1_hash_data;
+                                                    }) != value.child_certificate_hash_data.end());
+                           }), certs_after_delete.end());
+}
+
+TEST_F(EvseSecurityTests, delete_sub_ca_2) {
+    const auto new_root_ca_1 =
+        read_file_to_string(std::filesystem::path("certs/to_be_installed/INSTALL_TEST_ROOT_CA3.pem"));
+    const auto result = this->evse_security->install_ca_certificate(new_root_ca_1, CaCertificateType::CSMS);
+    ASSERT_TRUE(result == InstallCertificateResult::Accepted);
+
+    const auto new_root_sub_ca_1 =
+        read_file_to_string(std::filesystem::path("certs/to_be_installed/INSTALL_TEST_ROOT_CA3_SUBCA1.pem"));
+    const auto result2 = this->evse_security->install_ca_certificate(new_root_sub_ca_1, CaCertificateType::CSMS);
+    ASSERT_TRUE(result2 == InstallCertificateResult::Accepted);
+
+    const auto new_root_sub_ca_2 =
+        read_file_to_string(std::filesystem::path("certs/to_be_installed/INSTALL_TEST_ROOT_CA3_SUBCA2.pem"));
+    const auto result3 = this->evse_security->install_ca_certificate(new_root_sub_ca_2, CaCertificateType::CSMS);
+    ASSERT_TRUE(result3 == InstallCertificateResult::Accepted);
+
+    const auto root_x509 = X509Wrapper(new_root_ca_1, EncodingFormat::PEM);
+    const auto subca1_x509 = X509Wrapper(new_root_sub_ca_1, EncodingFormat::PEM);
+    const auto subca2_x509 = X509Wrapper(new_root_sub_ca_2, EncodingFormat::PEM);
+    const auto subca2_hash_data = subca2_x509.get_certificate_hash_data(subca1_x509);
+
+    ASSERT_EQ(this->evse_security->delete_certificate(subca2_hash_data), DeleteCertificateResult::Accepted);
+
+    std::vector<CertificateType> certificate_types;
+    certificate_types.push_back(CertificateType::V2GRootCertificate);
+    certificate_types.push_back(CertificateType::MORootCertificate);
+    certificate_types.push_back(CertificateType::CSMSRootCertificate);
+    certificate_types.push_back(CertificateType::V2GCertificateChain);
+    certificate_types.push_back(CertificateType::MFRootCertificate);
+    const auto certs_after_delete =
+        this->evse_security->get_installed_certificates(certificate_types).certificate_hash_data_chain;
+
+    ASSERT_EQ(std::find_if(certs_after_delete.begin(), certs_after_delete.end(),
+                 [&] (auto value) {
+                     return value.certificate_hash_data == subca2_hash_data ||
+                            (std::find_if(value.child_certificate_hash_data.begin(), value.child_certificate_hash_data.end(),
+                                          [&] (auto child_value) {
+                                              return child_value == subca2_hash_data;
+                                          }) != value.child_certificate_hash_data.end());
+                 }), certs_after_delete.end());
+}
+
 TEST_F(EvseSecurityTests, get_installed_certificates_and_delete_secc_leaf) {
     std::vector<CertificateType> certificate_types;
     certificate_types.push_back(CertificateType::V2GRootCertificate);
