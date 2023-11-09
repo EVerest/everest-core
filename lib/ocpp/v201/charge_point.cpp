@@ -15,6 +15,7 @@ namespace v201 {
 
 const auto DEFAULT_BOOT_NOTIFICATION_RETRY_INTERVAL = std::chrono::seconds(30);
 const auto WEBSOCKET_INIT_DELAY = std::chrono::seconds(2);
+const auto INITIAL_CERTIFICATE_REQUESTS_DELAY = std::chrono::seconds(60);
 
 bool Callbacks::all_callbacks_valid() const {
     return this->is_reset_allowed_callback != nullptr and this->reset_callback != nullptr and
@@ -56,6 +57,7 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
     firmware_status(FirmwareStatusEnum::Idle),
     upload_log_status(UploadLogStatusEnum::Idle),
     bootreason(BootReasonEnum::PowerUp),
+    csr_attempt(1),
     callbacks(callbacks) {
     // Make sure the received callback struct is completely filled early before we actually start running
     if (!this->callbacks.all_callbacks_valid()) {
@@ -152,6 +154,7 @@ void ChargePoint::start_websocket() {
 void ChargePoint::stop() {
     this->heartbeat_timer.stop();
     this->boot_notification_timer.stop();
+    this->certificate_signed_timer.stop();
     this->websocket_timer.stop();
     this->disconnect_websocket(websocketpp::close::status::going_away);
     this->message_queue->stop();
@@ -828,6 +831,9 @@ void ChargePoint::handle_message(const EnhancedMessage<v201::MessageType>& messa
     case MessageType::TriggerMessage:
         this->handle_trigger_message(json_message);
         break;
+    case MessageType::SignCertificateResponse:
+        this->handle_sign_certificate_response(json_message);
+        break;
     case MessageType::HeartbeatResponse:
         this->handle_heartbeat_response(json_message);
         break;
@@ -836,6 +842,9 @@ void ChargePoint::handle_message(const EnhancedMessage<v201::MessageType>& messa
         break;
     case MessageType::GetLocalListVersion:
         this->handle_get_local_authorization_list_version_req(json_message);
+        break;
+    case MessageType::CertificateSigned:
+        this->handle_certificate_signed_req(json_message);
         break;
     case MessageType::GetTransactionStatus:
         this->handle_get_transaction_status(json_message);
@@ -857,6 +866,7 @@ void ChargePoint::handle_message(const EnhancedMessage<v201::MessageType>& messa
             const auto call_error = CallError(message.uniqueId, "NotImplemented", "", json({}));
             this->send(call_error);
         }
+        break;
     }
 }
 
@@ -1306,6 +1316,51 @@ void ChargePoint::security_event_notification_req(const CiString<50>& event_type
     }
 }
 
+void ChargePoint::sign_certificate_req(const ocpp::CertificateSigningUseEnum& certificate_signing_use) {
+    if (this->awaited_certificate_signing_use_enum.has_value()) {
+        EVLOG_warning
+            << "Not sending new SignCertificate.req because still waiting for CertificateSigned.req from CSMS";
+        return;
+    }
+
+    SignCertificateRequest req;
+
+    std::optional<std::string> common;
+    std::optional<std::string> country;
+    std::optional<std::string> organization;
+
+    if (certificate_signing_use == ocpp::CertificateSigningUseEnum::ChargingStationCertificate) {
+        common =
+            this->device_model->get_optional_value<std::string>(ControllerComponentVariables::ChargeBoxSerialNumber);
+        organization =
+            this->device_model->get_optional_value<std::string>(ControllerComponentVariables::OrganizationName);
+        country =
+            this->device_model->get_optional_value<std::string>(ControllerComponentVariables::ISO15118CtrlrCountryName)
+                .value_or("DE");
+    } else {
+        common =
+            this->device_model->get_optional_value<std::string>(ControllerComponentVariables::ChargeBoxSerialNumber);
+        organization = this->device_model->get_optional_value<std::string>(
+            ControllerComponentVariables::ISO15118CtrlrOrganizationName);
+        country =
+            this->device_model->get_optional_value<std::string>(ControllerComponentVariables::ISO15118CtrlrCountryName);
+    }
+
+    if (!common.has_value() or !country.has_value() or !organization.has_value()) {
+        EVLOG_warning << "Missing configuration of either organizationName, commonName or country to generate CSR";
+        return;
+    }
+
+    const auto csr = this->evse_security->generate_certificate_signing_request(certificate_signing_use, country.value(),
+                                                                               organization.value(), common.value());
+    req.csr = csr;
+
+    this->awaited_certificate_signing_use_enum = certificate_signing_use;
+
+    ocpp::Call<SignCertificateRequest> call(req, this->message_queue->createMessageId());
+    this->send<SignCertificateRequest>(call);
+}
+
 void ChargePoint::boot_notification_req(const BootReasonEnum& reason) {
     EVLOG_debug << "Sending BootNotification";
     BootNotificationRequest req;
@@ -1492,6 +1547,99 @@ void ChargePoint::notify_customer_information_req(const std::string& data, const
 
         pos += 512;
         seq_no++;
+    }
+}
+
+void ChargePoint::handle_certificate_signed_req(Call<CertificateSignedRequest> call) {
+    // reset these parameters
+    this->csr_attempt = 1;
+    this->awaited_certificate_signing_use_enum = std::nullopt;
+    this->certificate_signed_timer.stop();
+
+    CertificateSignedResponse response;
+    response.status = CertificateSignedStatusEnum::Rejected;
+
+    const auto certificate_chain = call.msg.certificateChain.get();
+    ocpp::CertificateSigningUseEnum cert_signing_use;
+
+    if (!call.msg.certificateType.has_value() or
+        call.msg.certificateType.value() == CertificateSigningUseEnum::ChargingStationCertificate) {
+        cert_signing_use = ocpp::CertificateSigningUseEnum::ChargingStationCertificate;
+    } else {
+        cert_signing_use = ocpp::CertificateSigningUseEnum::V2GCertificate;
+    }
+
+    const auto result = this->evse_security->update_leaf_certificate(certificate_chain, cert_signing_use);
+
+    if (result == ocpp::InstallCertificateResult::Accepted) {
+        response.status = CertificateSignedStatusEnum::Accepted;
+    }
+
+    ocpp::CallResult<CertificateSignedResponse> call_result(response, call.uniqueId);
+    this->send<CertificateSignedResponse>(call_result);
+
+    if (result != ocpp::InstallCertificateResult::Accepted) {
+        this->security_event_notification_req("InvalidChargingStationCertificate",
+                                              ocpp::conversions::install_certificate_result_to_string(result), true,
+                                              true);
+    }
+
+    // reconnect with new certificate if valid and security profile is 3
+    if (response.status == CertificateSignedStatusEnum::Accepted and
+        cert_signing_use == ocpp::CertificateSigningUseEnum::ChargingStationCertificate and
+        this->device_model->get_value<int>(ControllerComponentVariables::SecurityProfile) == 3) {
+        this->websocket->disconnect(websocketpp::close::status::service_restart);
+    }
+}
+
+void ChargePoint::handle_sign_certificate_response(CallResult<SignCertificateResponse> call_result) {
+    if (!this->awaited_certificate_signing_use_enum.has_value()) {
+        EVLOG_warning
+            << "Received SignCertificate.conf while not awaiting a CertificateSigned.req . This should not happen.";
+        return;
+    }
+
+    if (call_result.msg.status == GenericStatusEnum::Accepted) {
+        // set timer waiting for certificate signed
+        const auto cert_signing_wait_minimum =
+            this->device_model->get_optional_value<int>(ControllerComponentVariables::CertSigningWaitMinimum);
+        const auto cert_signing_repeat_times =
+            this->device_model->get_optional_value<int>(ControllerComponentVariables::CertSigningRepeatTimes);
+
+        if (!cert_signing_wait_minimum.has_value()) {
+            EVLOG_warning << "No CertSigningWaitMinimum is configured, will not attempt to retry SignCertificate.req "
+                             "in case CSMS doesn't send CertificateSigned.req";
+            return;
+        }
+        if (!cert_signing_repeat_times.has_value()) {
+            EVLOG_warning << "No CertSigningRepeatTimes is configured, will not attempt to retry SignCertificate.req "
+                             "in case CSMS doesn't send CertificateSigned.req";
+            return;
+        }
+
+        if (this->csr_attempt > cert_signing_repeat_times.value()) {
+            this->csr_attempt = 1;
+            this->certificate_signed_timer.stop();
+            this->awaited_certificate_signing_use_enum = std::nullopt;
+            return;
+        }
+        int retry_backoff_milliseconds =
+            std::max(250, 1000 * cert_signing_wait_minimum.value()) *
+            std::pow(2, this->csr_attempt); // prevent immediate repetition in case of value 0
+        this->certificate_signed_timer.timeout(
+            [this]() {
+                EVLOG_info << "Did not receive CertificateSigned.req in time. Will retry with SignCertificate.req";
+                this->csr_attempt++;
+                const auto current_awaited_certificate_signing_use_enum =
+                    this->awaited_certificate_signing_use_enum.value();
+                this->awaited_certificate_signing_use_enum.reset();
+                this->sign_certificate_req(current_awaited_certificate_signing_use_enum);
+            },
+            std::chrono::milliseconds(retry_backoff_milliseconds));
+    } else {
+        this->awaited_certificate_signing_use_enum = std::nullopt;
+        this->csr_attempt = 1;
+        EVLOG_warning << "SignCertificate.req has not been accepted by CSMS";
     }
 }
 
@@ -2029,10 +2177,14 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
         }
         break;
 
+    case MessageTriggerEnum::SignChargingStationCertificate:
+        response.status = TriggerMessageStatusEnum::Accepted;
+        break;
+    case MessageTriggerEnum::SignV2GCertificate:
+        response.status = TriggerMessageStatusEnum::Accepted;
+        break;
         // TODO:
         // PublishFirmwareStatusNotification
-        // SignChargingStationCertificate
-        // SignV2GCertificate
         // SignCombinedCertificate
 
     default:
@@ -2139,6 +2291,14 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
 
         ocpp::Call<FirmwareStatusNotificationRequest> call(request, this->message_queue->createMessageId());
         this->send<FirmwareStatusNotificationRequest>(call);
+    } break;
+
+    case MessageTriggerEnum::SignChargingStationCertificate: {
+        sign_certificate_req(ocpp::CertificateSigningUseEnum::ChargingStationCertificate);
+    } break;
+
+    case MessageTriggerEnum::SignV2GCertificate: {
+        sign_certificate_req(ocpp::CertificateSigningUseEnum::V2GCertificate);
     } break;
 
     default:

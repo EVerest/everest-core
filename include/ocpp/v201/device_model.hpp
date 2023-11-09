@@ -106,7 +106,7 @@ public:
             EVLOG_AND_THROW(std::runtime_error(
                 "Directly requested value for ComponentVariable that doesn't exist in the device model storage."));
         }
-    };
+    }
 
     /// \brief  Access to std::optional of a VariableAttribute for the given component, variable and attribute_enum.
     /// \tparam T Tatatype of the value that is requested
@@ -125,7 +125,7 @@ public:
         } else {
             return std::nullopt;
         }
-    };
+    }
 
     /// \brief Requests a value of a VariableAttribute specified by combination of \p component_id and \p variable_id
     /// from the device model storage

@@ -164,6 +164,8 @@ extern const ComponentVariable& SampledDataTxUpdatedMeasurands;
 extern const ComponentVariable& AdditionalRootCertificateCheck;
 extern const ComponentVariable& BasicAuthPassword;
 extern const ComponentVariable& CertificateEntries;
+extern const ComponentVariable& CertSigningRepeatTimes;
+extern const ComponentVariable& CertSigningWaitMinimum;
 extern const ComponentVariable& SecurityCtrlrIdentity;
 extern const ComponentVariable& MaxCertificateChainSize;
 extern const ComponentVariable& OrganizationName;
