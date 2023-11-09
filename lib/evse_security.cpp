@@ -479,17 +479,26 @@ std::string EvseSecurity::generate_certificate_signing_request(LeafCertificateTy
     // csr req
     X509_REQ_ptr x509ReqPtr(X509_REQ_new());
     EVP_PKEY_ptr evpKey(EVP_PKEY_new());
-    EC_KEY* ecKey = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
+    EC_KEY* ecKey = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1); // FIXME: Deprecation warning
     X509_NAME* x509Name = X509_REQ_get_subject_name(x509ReqPtr.get());
 
     BIO_ptr prkey(BIO_new_file(key_path.c_str(), "w"));
     BIO_ptr bio(BIO_new(BIO_s_mem()));
 
     // generate ec key pair
-    EC_KEY_generate_key(ecKey);
-    EVP_PKEY_assign_EC_KEY(evpKey.get(), ecKey);
+    EC_KEY_generate_key(ecKey); // FIXME: Deprecation warning
+    EVP_PKEY_assign_EC_KEY(evpKey.get(), ecKey); // FIXME: Deprecation warning
     // write private key to file
-    PEM_write_bio_PrivateKey(prkey.get(), evpKey.get(), NULL, NULL, 0, NULL, NULL);
+    int success;
+    if (this->private_key_password.has_value()) {
+        success = PEM_write_bio_PrivateKey(prkey.get(), evpKey.get(), EVP_aes_128_cbc(), NULL, 0, NULL, (void*) this->private_key_password.value().c_str());
+    } else {
+        success = PEM_write_bio_PrivateKey(prkey.get(), evpKey.get(), NULL, NULL, 0, NULL, NULL);
+    }
+
+    if (!success) {
+        throw std::runtime_error("Failed to write private key");
+    }
 
     // set version of x509 req
     X509_REQ_set_version(x509ReqPtr.get(), n_version);
