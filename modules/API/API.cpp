@@ -385,6 +385,4 @@ void API::ready() {
     invoke_ready(*p_main);
 }
 
-
-
 } // namespace module

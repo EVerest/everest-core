@@ -205,8 +205,7 @@ std::string LimitDecimalPlaces::limit(const types::powermeter::Powermeter& power
     return power_meter_stream.str();
 }
 
-std::string
-LimitDecimalPlaces::limit(const types::board_support::HardwareCapabilities& hw_capabilities) {
+std::string LimitDecimalPlaces::limit(const types::board_support::HardwareCapabilities& hw_capabilities) {
     ryml::Tree tree;
     ryml::NodeRef root = tree.rootref();
     root |= ryml::MAP;
