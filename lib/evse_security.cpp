@@ -185,7 +185,7 @@ InstallCertificateResult EvseSecurity::install_ca_certificate(const std::string&
 
         if (existing_certs.is_using_directory()) {
             std::string filename = conversions::ca_certificate_type_to_string(certificate_type) + "_" +
-                                EvseUtils::get_random_file_name(PEM_EXTENSION.string());
+                                   EvseUtils::get_random_file_name(PEM_EXTENSION.string());
             fs::path new_path = ca_bundle_path / filename;
 
             // Sets the path of the new certificate

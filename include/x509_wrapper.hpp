@@ -140,6 +140,8 @@ public:
 public:
     X509Wrapper& operator=(X509Wrapper&& other) = default;
 
+    void update_file(fs::path& path);
+
     /// @return true if the two certificates are the same
     bool operator==(const X509Wrapper& other) const;
 
