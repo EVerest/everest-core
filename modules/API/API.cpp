@@ -84,11 +84,13 @@ void SessionInfo::update_state(const std::string& event, const std::string& stat
     } else if (event == "WaitingForEnergy") {
         this->state = "WaitingForEnergy";
     } else if (event == "TransactionStarted") {
-        this->state = "Charging";
+        this->state = "Preparing";
     } else if (event == "ChargingPausedEV") {
         this->state = "ChargingPausedEV";
     } else if (event == "ChargingPausedEVSE") {
         this->state = "ChargingPausedEVSE";
+    } else if (event == "ChargingStarted") {
+        this->state = "Charging";
     } else if (event == "ChargingResumed") {
         this->state = "Charging";
     } else if (event == "TransactionFinished") {
