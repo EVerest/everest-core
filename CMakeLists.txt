@@ -17,6 +17,8 @@ option(CMAKE_RUN_CLANG_TIDY "Run clang-tidy" OFF)
 option(EVEREST_ENABLE_JS_SUPPORT "Enable everestjs for JavaScript modules" ON)
 option(EVEREST_ENABLE_PY_SUPPORT "Enable everestpy for Python modules" ON)
 option(EVEREST_ENABLE_RS_SUPPORT "Enable everestrs for Rust modules" OFF)
+option(EVEREST_ENABLE_ADMIN_PANEL_BACKEND "Enable everest admin panel backend" ON)
+option(EVEREST_INSTALL_ADMIN_PANEL "Download and install everest admin panel" ON)
 
 # make own cmake modules available
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake")

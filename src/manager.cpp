@@ -86,6 +86,7 @@ private:
     friend SubprocessHandle create_subprocess(bool set_pdeathsig);
 };
 
+#ifdef ENABLE_ADMIN_PANEL
 class ControllerHandle {
 public:
     ControllerHandle(pid_t pid, int socket_fd) : pid(pid), socket_fd(socket_fd) {
@@ -110,6 +111,21 @@ public:
 private:
     const int socket_fd;
 };
+
+#else
+// FIXME (aw): this is just a dummy controller, so we do not need put major changes into the application code
+struct ControllerHandle {
+    void send_message(const nlohmann::json& msg){};
+    controller_ipc::Message receive_message() const {
+        static auto TIMEOUT_MSG = controller_ipc::Message(controller_ipc::MESSAGE_RETURN_STATUS::TIMEOUT, {});
+        return TIMEOUT_MSG;
+    }
+
+    void shutdown();
+    const int pid{0};
+};
+
+#endif
 
 SubprocessHandle create_subprocess(bool set_pdeathsig = true) {
     int pipefd[2];
@@ -480,6 +496,7 @@ static void shutdown_modules(const std::map<pid_t, std::string>& modules, Config
 }
 
 static ControllerHandle start_controller(std::shared_ptr<RuntimeSettings> rs) {
+#ifdef ENABLE_ADMIN_PANEL
     int socket_pair[2];
 
     // FIXME (aw): destroy this socketpair somewhere
@@ -524,6 +541,9 @@ static ControllerHandle start_controller(std::shared_ptr<RuntimeSettings> rs) {
                                                  });
 
     return {handle.check_child_executed(), manager_socket};
+#else
+    return {};
+#endif
 }
 
 int boot(const po::variables_map& vm) {

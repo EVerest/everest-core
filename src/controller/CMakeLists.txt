@@ -40,7 +40,9 @@ target_link_libraries(controller
 
 target_compile_features(controller PRIVATE cxx_std_17)
 
-if (NOT NO_FETCH_CONTENT)
+install(TARGETS controller RUNTIME)
+
+if (EVEREST_INSTALL_ADMIN_PANEL)
     include(FetchContent)
     message(STATUS "Fetching everest-admin-panel")
     FetchContent_Declare(admin-panel
@@ -53,5 +55,3 @@ if (NOT NO_FETCH_CONTENT)
         DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/everest/www"
     )
 endif ()
-
-install(TARGETS controller RUNTIME)
