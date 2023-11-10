@@ -1462,6 +1462,8 @@ void ChargePointImpl::handleRemoteStartTransactionRequest(ocpp::Call<RemoteStart
     // a charge point may reject a remote start transaction request without a connectorId
     // TODO(kai): what is our policy here? reject for now
     RemoteStartTransactionResponse response;
+    std::vector<int32_t> referenced_connectors;
+
     if (call.msg.connectorId) {
         if (call.msg.connectorId.value() == 0) {
             EVLOG_warning << "Received RemoteStartTransactionRequest with connector id 0";
@@ -1470,25 +1472,51 @@ void ChargePointImpl::handleRemoteStartTransactionRequest(ocpp::Call<RemoteStart
             this->send<RemoteStartTransactionResponse>(call_result);
             return;
         }
-        int32_t connector = call.msg.connectorId.value();
-        if (this->status->get_state(connector) == ChargePointStatus::Unavailable or
-            this->status->get_state(connector) == ChargePointStatus::Faulted) {
-            EVLOG_warning << "Received RemoteStartTransactionRequest for inoperative connector";
-            response.status = RemoteStartStopStatus::Rejected;
-            ocpp::CallResult<RemoteStartTransactionResponse> call_result(response, call.uniqueId);
-            this->send<RemoteStartTransactionResponse>(call_result);
-            return;
-        }
-        if (this->transaction_handler->get_transaction(connector) != nullptr ||
-            this->status->get_state(connector) == ChargePointStatus::Finishing) {
-            EVLOG_debug
-                << "Received RemoteStartTransactionRequest for a connector with an active or finished transaction.";
-            response.status = RemoteStartStopStatus::Rejected;
-            ocpp::CallResult<RemoteStartTransactionResponse> call_result(response, call.uniqueId);
-            this->send<RemoteStartTransactionResponse>(call_result);
-            return;
+        referenced_connectors.push_back(call.msg.connectorId.value());
+    } else {
+        for (int connector = 1; connector <= this->configuration->getNumberOfConnectors(); connector++) {
+            referenced_connectors.push_back(connector);
         }
     }
+
+    // Check if at least one conenctor is able to execute RemoteStart (obtainable == true).
+    bool obtainable = true;
+    for (const auto connector : referenced_connectors) {
+        obtainable = true;
+
+        if (this->status->get_state(connector) == ChargePointStatus::Unavailable or
+            this->status->get_state(connector) == ChargePointStatus::Faulted) {
+            obtainable = false;
+            continue;
+        }
+
+        if (this->transaction_handler->get_transaction(connector) != nullptr ||
+            this->status->get_state(connector) == ChargePointStatus::Finishing) {
+            obtainable = false;
+            continue;
+        }
+
+        if (this->is_token_reserved_for_connector_callback != nullptr &&
+            this->status->get_state(connector) == ChargePointStatus::Reserved &&
+            !this->is_token_reserved_for_connector_callback(connector, call.msg.idTag.get())) {
+            obtainable = false;
+            continue;
+        }
+
+        if (obtainable) {
+            // at least one connector can do the remote start
+            break;
+        }
+    }
+
+    if (!obtainable) {
+        EVLOG_debug << "Received RemoteStartTransactionRequest for reserved connector and rejected";
+        response.status = RemoteStartStopStatus::Rejected;
+        ocpp::CallResult<RemoteStartTransactionResponse> call_result(response, call.uniqueId);
+        this->send<RemoteStartTransactionResponse>(call_result);
+        return;
+    }
+
     if (call.msg.chargingProfile) {
         // TODO(kai): A charging profile was provided, forward to the charger
         if (call.msg.connectorId &&
@@ -3386,6 +3414,11 @@ void ChargePointImpl::register_configuration_key_changed_callback(
 void ChargePointImpl::register_security_event_callback(
     const std::function<void(const std::string& type, const std::string& tech_info)>& callback) {
     this->security_event_callback = callback;
+}
+
+void ChargePointImpl::register_is_token_reserved_for_connector_callback(
+    const std::function<bool(const int32_t connector, const std::string& id_token)>& callback) {
+    this->is_token_reserved_for_connector_callback = callback;
 }
 
 void ChargePointImpl::on_reservation_start(int32_t connector) {

@@ -441,6 +441,13 @@ public:
     /// \param value
     /// \return Indicates the result of the operation
     ConfigurationStatus set_custom_configuration_key(CiString<50> key, CiString<500> value);
+
+    /// \brief registers a \p callback function that can be used to check, if the \p connector is reserved for the given
+    /// \p id_token. The is_token_reserved_for_connector_callback is called when a RemoteStartTransaction.req is
+    /// received.
+    /// \param callback
+    void register_is_token_reserved_for_connector_callback(
+        const std::function<bool(const int32_t connector, const std::string& id_token)>& callback);
 };
 
 } // namespace v16

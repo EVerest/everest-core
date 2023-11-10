@@ -168,6 +168,7 @@ private:
     std::function<void(int32_t connection_timeout)> set_connection_timeout_callback;
 
     std::function<void(const int32_t connector, const int32_t transaction_id)> transaction_started_callback;
+    std::function<bool(const int32_t connector, const std::string& id_token)> is_token_reserved_for_connector_callback;
 
     // iso15118 callback
     std::function<void(const int32_t connector, const ocpp::v201::Get15118EVCertificateResponse& certificate_response,
@@ -687,6 +688,13 @@ public:
     /// called only if the SecurityEvent occured internally within libocpp
     void register_security_event_callback(
         const std::function<void(const std::string& type, const std::string& tech_info)>& callback);
+
+    /// \brief registers a \p callback function that can be used to check, if the \p connector is reserved for the given
+    /// \p id_token. The is_token_reserved_for_connector_callback is called when a RemoteStartTransaction.req is
+    /// received.
+    /// \param callback
+    void register_is_token_reserved_for_connector_callback(
+        const std::function<bool(const int32_t connector, const std::string& id_token)>& callback);
 
     /// \brief Gets the configured configuration key requested in the given \p request
     /// \param request specifies the keys that should be returned. If empty or not set, all keys will be reported
