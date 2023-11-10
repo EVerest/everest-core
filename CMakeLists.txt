@@ -165,7 +165,7 @@ if(BUILD_TESTING)
         DEPENDENCIES tests everest
     )
 else()
-    message("Not running unit tests")
+    message(STATUS "Not running unit tests")
 endif()
 
 # configure clang-tidy if requested
