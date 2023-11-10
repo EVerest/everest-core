@@ -4,8 +4,8 @@
 
 mod eventually_generated;
 use eventually_generated::{
-    ExampleServiceSubscriber, KvsClientSubscriber, KvsServiceSubscriber, Module, ModulePublisher,
-    OnReadySubscriber,
+    get_config, ExampleServiceSubscriber, KvsClientSubscriber, KvsServiceSubscriber, Module,
+    ModulePublisher, OnReadySubscriber,
 };
 use std::sync::Arc;
 use std::{thread, time};
@@ -73,6 +73,8 @@ impl OnReadySubscriber for OneClass {
 }
 
 fn main() {
+    let config = get_config();
+    println!("Received the config {config:?}");
     let one_class = Arc::new(OneClass {});
     let _module = Module::new(
         one_class.clone(),

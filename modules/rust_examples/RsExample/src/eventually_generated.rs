@@ -16,6 +16,71 @@ use std::collections::HashMap;
 use std::pin::Pin;
 use std::sync::Arc;
 
+/// Struct holding the config for the `foobar` interface.
+#[derive(Debug)]
+pub struct FoobarConfig {
+    /// An interface level bool config.
+    pub some_bool_config: bool,
+
+    /// An interface level integer config.
+    pub some_integer_config: i64,
+}
+
+/// Struct holding the module level config.
+#[derive(Debug)]
+pub struct ModuleConfig {
+    /// A module level string config.
+    pub some_string_config: String,
+
+    /// A module level number config   
+    pub some_number_config: f64,
+
+    /// The config for the `foobar` interface.
+    pub foobar_config: FoobarConfig,
+}
+
+/// Returns the config for the whole module. You can call this function at any
+/// time in your code.
+pub fn get_config() -> ModuleConfig {
+    let raw_config = everestrs::get_module_configs();
+    let foobar_config = FoobarConfig {
+        some_bool_config: raw_config
+            .get("foobar")
+            .unwrap()
+            .get("some_bool_config")
+            .unwrap()
+            .try_into()
+            .unwrap(),
+
+        some_integer_config: raw_config
+            .get("foobar")
+            .unwrap()
+            .get("some_integer_config")
+            .unwrap()
+            .try_into()
+            .unwrap(),
+    };
+
+    ModuleConfig {
+        some_string_config: raw_config
+            .get("!module")
+            .unwrap()
+            .get("some_string_config")
+            .unwrap()
+            .try_into()
+            .unwrap(),
+
+        some_number_config: raw_config
+            .get("!module")
+            .unwrap()
+            .get("some_number_config")
+            .unwrap()
+            .try_into()
+            .unwrap(),
+        foobar_config,
+    }
+}
+
 /// The trait for the user to provide. Always part of the generated code.
 pub trait OnReadySubscriber: Sync + Send {
     fn on_ready(&self, pub_impl: &ModulePublisher);
