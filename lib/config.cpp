@@ -697,7 +697,7 @@ json Config::resolve_requirement(const std::string& module_id, const std::string
     return module_config["connections"][requirement_id];
 }
 
-bool Config::contains(const std::string& module_id) {
+bool Config::contains(const std::string& module_id) const {
     BOOST_LOG_FUNCTION();
     return this->main.contains(module_id);
 }
@@ -713,7 +713,7 @@ json Config::get_module_json_config(const std::string& module_id) {
     return this->main[module_id]["config_maps"];
 }
 
-ModuleConfigs Config::get_module_configs(const std::string& module_id) {
+ModuleConfigs Config::get_module_configs(const std::string& module_id) const {
     BOOST_LOG_FUNCTION();
     ModuleConfigs module_configs;
 

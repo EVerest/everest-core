@@ -127,7 +127,7 @@ public:
     ///
     /// \brief checks if the config contains the given \p module_id
     ///
-    bool contains(const std::string& module_id);
+    bool contains(const std::string& module_id) const;
 
     ///
     /// \returns a json object that contains the main config
@@ -136,7 +136,7 @@ public:
 
     ///
     /// \returns a map of module config options
-    ModuleConfigs get_module_configs(const std::string& module_id);
+    ModuleConfigs get_module_configs(const std::string& module_id) const;
 
     ///
     /// \returns a json object that contains the module config options

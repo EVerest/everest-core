@@ -1,7 +1,10 @@
 #include "everestrs_sys.hpp"
+#include "utils/types.hpp"
 
 #include <cstdlib>
 #include <stdexcept>
+#include <type_traits>
+#include <variant>
 
 #include "cxxbridge/lib.rs.h"
 
@@ -28,6 +31,41 @@ JsonBlob json2blob(const json& j) {
     vec.reserve(dumped.size());
     std::copy(dumped.begin(), dumped.end(), std::back_inserter(vec));
     return JsonBlob{vec};
+}
+
+// Below are overloads to be used with std::visit and our std::variant. We force
+// a compilation error if someone changes the underlying std::variant without
+// extending/adjusting the functions below.
+
+template <typename T, typename... VARIANT_T> struct VariantMemberImpl : public std::false_type {};
+
+template <typename T, typename... VARIANT_T>
+struct VariantMemberImpl<T, std::variant<VARIANT_T...>> : public std::disjunction<std::is_same<T, VARIANT_T>...> {};
+
+/// @brief Static checker if the type T can be converted to `ConfigEntry`.
+///
+/// We use this to detect `get_config_field` overloads which receive arguments
+/// which aren't part of our `ConfigEntry` variant.
+template <typename T> struct ConfigEntryMember : public VariantMemberImpl<T, ConfigEntry> {};
+
+inline ConfigField get_config_field(const std::string& _name, bool _value) {
+    static_assert(ConfigEntryMember<decltype(_value)>::value);
+    return {_name, ConfigType::Boolean, _value, {}, 0, 0};
+}
+
+inline ConfigField get_config_field(const std::string& _name, const std::string& _value) {
+    static_assert(ConfigEntryMember<std::remove_cv_t<std::remove_reference_t<decltype(_value)>>>::value);
+    return {_name, ConfigType::String, false, _value, 0, 0};
+}
+
+inline ConfigField get_config_field(const std::string& _name, double _value) {
+    static_assert(ConfigEntryMember<decltype(_value)>::value);
+    return {_name, ConfigType::Number, false, {}, _value, 0};
+}
+
+inline ConfigField get_config_field(const std::string& _name, int _value) {
+    static_assert(ConfigEntryMember<decltype(_value)>::value);
+    return {_name, ConfigType::Integer, false, {}, 0, _value};
 }
 
 } // namespace
@@ -80,11 +118,36 @@ JsonBlob Module::call_command(rust::Str implementation_id, rust::Str name, JsonB
     return json2blob(return_value);
 }
 
+void Module::publish_variable(rust::Str implementation_id, rust::Str name, JsonBlob blob) const {
+    handle_->publish_var(std::string(implementation_id), std::string(name),
+                         json::parse(blob.data.begin(), blob.data.end()));
+}
+
 std::unique_ptr<Module> create_module(rust::Str module_id, rust::Str prefix, rust::Str conf) {
     return std::make_unique<Module>(std::string(module_id), std::string(prefix), std::string(conf));
 }
 
-void Module::publish_variable(rust::Str implementation_id, rust::Str name, JsonBlob blob) const {
-    handle_->publish_var(std::string(implementation_id), std::string(name),
-                         json::parse(blob.data.begin(), blob.data.end()));
+rust::Vec<RsModuleConfig> get_module_configs(rust::Str module_id, rust::Str prefix, rust::Str config_file) {
+    const auto rs = std::make_shared<Everest::RuntimeSettings>(std::string(prefix), std::string(config_file));
+    const Everest::Config config{rs};
+    // TODO(ddo) We call this before initializing the logger.
+    const auto module_configs = config.get_module_configs(std::string(module_id));
+
+    rust::Vec<RsModuleConfig> out;
+    out.reserve(module_configs.size());
+
+    // Iterate over all modules stored in the module_config.
+    for (const auto& mm : module_configs) {
+        RsModuleConfig mm_out{mm.first, {}};
+        mm_out.data.reserve(mm.second.size());
+
+        // Iterate over all configs stored in the mm (our current module).
+        for (const auto& cc : mm.second) {
+            mm_out.data.emplace_back(
+                std::visit([&](auto&& _value) { return ::get_config_field(cc.first, _value); }, cc.second));
+        }
+        out.emplace_back(std::move(mm_out));
+    }
+
+    return out;
 }
