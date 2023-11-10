@@ -203,7 +203,7 @@ void energyImpl::request_energy_from_energy_manager() {
         }
 
         publish_energy_flow_request(energy_flow_request);
-        //EVLOG_info << "Outgoing request " << energy_flow_request;
+        // EVLOG_info << "Outgoing request " << energy_flow_request;
     }
 }
 
