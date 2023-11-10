@@ -174,7 +174,8 @@ public:
      *
      * @param callback
      */
-    void register_publish_token_validation_status_callback(const std::function<void(const ProvidedIdToken&, TokenValidationStatus)>& callback);
+    void register_publish_token_validation_status_callback(
+        const std::function<void(const ProvidedIdToken&, TokenValidationStatus)>& callback);
 
 private:
     SelectionAlgorithm selection_algorithm;
@@ -202,7 +203,8 @@ private:
     std::function<void(const Array& reservations)> reservation_update_callback;
     std::function<void(const int& evse_index, const int& reservation_id)> reserved_callback;
     std::function<void(const int& evse_index)> reservation_cancelled_callback;
-    std::function<void(const ProvidedIdToken& token, TokenValidationStatus status)> publish_token_validation_status_callback;
+    std::function<void(const ProvidedIdToken& token, TokenValidationStatus status)>
+        publish_token_validation_status_callback;
 
     std::vector<int> get_referenced_connectors(const ProvidedIdToken& provided_token);
     int used_for_transaction(const std::vector<int>& connectors, const std::string& id_token);
