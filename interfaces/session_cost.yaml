@@ -1,0 +1,11 @@
+description: >-
+  This interface publishes the running or finished session costs. This interface
+  provides cost of one session. If we have more than one EVESEID, we need to 
+  instantiate this interface for each EVSE.
+vars:
+  session_cost:
+    description: >-
+      Session cost object containing the total cost of the session and a list
+      of chunks
+    type: object
+    $ref: /session_cost#/SessionCost
