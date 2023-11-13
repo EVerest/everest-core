@@ -24,6 +24,7 @@
 
 #include <ocpp/common/cistring.hpp>
 #include <ocpp/common/string.hpp>
+#include <ocpp/common/support_older_cpp_versions.hpp>
 
 namespace po = boost::program_options;
 
@@ -100,8 +101,42 @@ int main(int argc, char* argv[]) {
         fs::create_directories(cso_path);
     }
 
+    const fs::path csms_path = "/tmp/client/csms";
+    if (!fs::exists(csms_path)) {
+        fs::create_directories(csms_path);
+    }
+
+    const fs::path ca_v2g_path = "/tmp/certs/ca/v2g/";
+    if (!fs::exists(ca_v2g_path)) {
+        fs::create_directories(ca_v2g_path);
+    }
+
+    const fs::path ca_mo_path = "/tmp/certs/ca/mo/";
+    if (!fs::exists(ca_mo_path)) {
+        fs::create_directories(ca_mo_path);
+    }
+
+    if (!fs::is_regular_file("/tmp/certs/ca/v2g/V2G_CA_BUNDLE.pem")) {
+        fsstd::ofstream("/tmp/certs/ca/v2g/V2G_CA_BUNDLE.pem");
+    }
+
+    if (!fs::is_regular_file("/tmp/certs/ca/mo/MO_CA_BUNDLE.pem")) {
+        fsstd::ofstream("/tmp/certs/ca/mo//MO_CA_BUNDLE.pem");
+    }
+
+    ocpp::SecurityConfiguration secConfig;
+    secConfig.csms_ca_bundle = fs::path("/tmp/certs/ca/v2g/V2G_CA_BUNDLE.pem");
+    secConfig.mf_ca_bundle = fs::path("/tmp/certs/ca/v2g/V2G_CA_BUNDLE.pem");
+    secConfig.v2g_ca_bundle = fs::path("/tmp/certs/ca/v2g/V2G_CA_BUNDLE.pem");
+    secConfig.mo_ca_bundle = fs::path("/tmp/certs/ca/mo/MO_CA_BUNDLE.pem");
+
+    secConfig.csms_leaf_cert_directory = fs::path("/tmp/client/csms/");
+    secConfig.csms_leaf_key_directory = fs::path("/tmp/client/csms/");
+    secConfig.secc_leaf_cert_directory = fs::path("/tmp/client/cso/");
+    secConfig.secc_leaf_key_directory = fs::path("/tmp/client/cso/");
+
     charge_point = new ocpp::v16::ChargePoint(json_config.dump(), share_path, user_config_path, database_path,
-                                              sql_init_path, fs::path("/tmp"), nullptr);
+                                              sql_init_path, fs::path("/tmp"), nullptr, secConfig);
 
     /************************************** START REGISTERING CALLBACKS **************************************/
 
