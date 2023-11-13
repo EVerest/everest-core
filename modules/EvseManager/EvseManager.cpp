@@ -896,7 +896,7 @@ void EvseManager::ready() {
 
     //  start with a limit of 0 amps. We will get a budget from EnergyManager that is locally limited by hw
     //  caps.
-    charger->setMaxCurrent(0.0F, date::utc_clock::now());
+    charger->setMaxCurrent(0.0F, date::utc_clock::now() + std::chrono::seconds(10));
     charger->run();
     charger->enable(0);
 
