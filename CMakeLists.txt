@@ -69,6 +69,7 @@ else()
 
     find_package(pugixml REQUIRED)
     find_package(CURL 7.84.0 REQUIRED)
+    find_package(ryml REQUIRED)
 endif()
 
 add_subdirectory(lib)
