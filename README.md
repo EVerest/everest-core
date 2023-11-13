@@ -68,7 +68,9 @@ https://github.com/EVerest/EVerest/blob/main/tsc/ROADMAP.md
 The EVerest implementation of OCPP 1.6 has been tested against the
 OCPP Compliance Test Tool (OCTT and OCTT2) during the implementation.
 
-The following table shows CSMS with which this library was tested. If you provide a CSMS that is not yet listed here, feel free to [contact us](https://lists.lfenergy.org/g/everest)!
+The following table shows CSMS with which this library was tested.
+If you provide a CSMS that is not yet listed here, feel free to
+[contact us](https://lists.lfenergy.org/g/everest)!
 
 -   chargecloud
 -   chargeIQ
@@ -90,6 +92,7 @@ The following table shows CSMS with which this library was tested. If you provid
 -   iLumen
 -   JibeCompany (CharlieV CMS and Chargebroker proxy)
 -   MSI
+-   PUMP (PUMP Connect)
 -   Scoptvision (Scopt Powerconnect)
 -   Siemens
 -   SteVe
