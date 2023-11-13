@@ -137,8 +137,12 @@ bool X509Wrapper::is_child(const X509Wrapper& parent) const {
 }
 
 bool X509Wrapper::is_selfsigned() const {
-    //return (X509_self_signed(x509.get(), 0) == 1);
+// X509_self_signed() was added in OpenSSL 3.0, use a workaround for earlier versions
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+    return (X509_self_signed(x509.get(), 0) == 1);
+#else
     return (X509_verify(x509.get(), X509_get_pubkey(x509.get())));
+#endif
 }
 
 void X509Wrapper::reset(X509* _x509) {
