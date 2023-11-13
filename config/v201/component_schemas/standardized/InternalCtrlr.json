@@ -268,7 +268,7 @@
           "mutability": "ReadOnly"
         }
       ],
-      "description": "Supported log formats are console, log, html and console_detailed",
+      "description": "Supported log formats are console, log, html, console_detailed and callback",
       "default": "log,html",
       "type": "string"
     },

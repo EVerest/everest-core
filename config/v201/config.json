@@ -223,7 +223,13 @@
                 "attributes": {
                     "Actual": "1"
                 }
+            },
+            "LogMessagesFormat": {
+            "variable_name": "LogMessagesFormat",
+            "attributes": {
+              "Actual": "log,html"
             }
+          }
         }
     },
     {

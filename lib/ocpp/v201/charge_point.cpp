@@ -132,9 +132,9 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
             this->database_handler->insert_availability(evse_id, connector_id, OperationalStatusEnum::Operative, false);
         }
     }
-    this->logging =
-        std::make_shared<ocpp::MessageLogging>(true, message_log_path, DateTime().to_rfc3339(), false, false, false,
-                                               true, true, this->callbacks.ocpp_messages_callback.value_or(nullptr));
+
+    // configure logging
+    this->configure_message_logging_format(message_log_path);
 
     this->message_queue = std::make_unique<ocpp::MessageQueue<v201::MessageType>>(
         [this](json message) -> bool { return this->websocket->send(message.dump()); },
@@ -433,6 +433,25 @@ void ChargePoint::clear_customer_information(const std::optional<CertificateHash
         this->database_handler->authorization_cache_delete_entry(hashed_id_token);
         this->update_authorization_cache_size();
     }
+}
+
+void ChargePoint::configure_message_logging_format(const std::string& message_log_path) {
+    auto log_formats = this->device_model->get_value<std::string>(ControllerComponentVariables::LogMessagesFormat);
+    bool log_to_console = log_formats.find("console") != log_formats.npos;
+    bool detailed_log_to_console = log_formats.find("console_detailed") != log_formats.npos;
+    bool log_to_file = log_formats.find("log") != log_formats.npos;
+    bool log_to_html = log_formats.find("html") != log_formats.npos;
+    bool session_logging = log_formats.find("session_logging") != log_formats.npos;
+    bool message_callback = log_formats.find("callback") != log_formats.npos;
+    std::function<void(const std::string& message, MessageDirection direction)> logging_callback = nullptr;
+
+    if (message_callback) {
+        logging_callback = this->callbacks.ocpp_messages_callback.value_or(nullptr);
+    }
+
+    this->logging = std::make_shared<ocpp::MessageLogging>(
+        !log_formats.empty(), message_log_path, DateTime().to_rfc3339(), log_to_console, detailed_log_to_console,
+        log_to_file, log_to_html, session_logging, logging_callback);
 }
 
 void ChargePoint::on_unavailable(const int32_t evse_id, const int32_t connector_id) {
