@@ -182,6 +182,9 @@ active_modules:
       evse_manager:
         - module_id: evse_manager_1
           implementation_id: evse
+      ocpp:
+        - module_id: ocpp
+          implementation_id: main
   system:
     module: System
 

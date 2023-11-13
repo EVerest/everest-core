@@ -6,6 +6,159 @@ config:
     description: Path to a file containing information about the charger like its serial number
     type: string
     default: ""
+  powermeter_energy_import_decimal_places:
+    description: Maximum number of decimal places for import energy in the power meter
+    type: integer
+    default: 2
+    minimum: 0
+  powermeter_energy_export_decimal_places:
+    description: Maximum number of decimal places for export energy in the power meter
+    type: integer
+    default: 2
+    minimum: 0
+  powermeter_power_decimal_places:
+    description: Maximum number of decimal places for power in the power meter
+    type: integer
+    default: 2
+    minimum: 0
+  powermeter_voltage_decimal_places:
+    description: Maximum number of decimal places for voltage in the power meter
+    type: integer
+    default: 2
+    minimum: 0
+  powermeter_VAR_decimal_places:
+    description: Maximum number of decimal places for VAR in the power meter
+    type: integer
+    default: 2
+    minimum: 0
+  powermeter_current_decimal_places:
+    description: Maximum number of decimal places for current in the power meter
+    type: integer
+    default: 2
+    minimum: 0
+  powermeter_frequency_decimal_places:
+    description: Maximum number of decimal places for frequency in the power meter
+    type: integer
+    default: 2
+    minimum: 0
+  hw_caps_max_current_export_decimal_places:
+    description: Maximum number of decimal places for maximum export current in the hardware capabilities
+    type: integer
+    default: 2
+    minimum: 0
+  hw_caps_max_current_import_decimal_places:
+    description: Maximum number of decimal places for maximum import current in the hardware capabilities
+    type: integer
+    default: 2
+    minimum: 0
+  hw_caps_min_current_export_decimal_places:
+    description: Maximum number of decimal places for minimum import current in the hardware capabilities
+    type: integer
+    default: 2
+    minimum: 0
+  hw_caps_min_current_import_decimal_places:
+    description: Maximum number of decimal places for minimum import current in the hardware capabilities
+    type: integer
+    default: 2
+    minimum: 0
+  limits_max_current_decimal_places:
+    description: Maximum number of decimal places for maximum current in the limits
+    type: integer
+    default: 2
+    minimum: 0
+  telemetry_temperature_decimal_places:
+    description: Maximum number of decimal places for temperature in telemetry
+    type: integer
+    default: 2
+    minimum: 0
+  telemetry_fan_rpm_decimal_places:
+    description: Maximum number of decimal places for fan RPM in telemetry
+    type: integer
+    default: 2
+    minimum: 0
+  telemetry_supply_voltage_12V_decimal_places:
+    description: Maximum number of decimal places for supply voltage 12V in telemetry
+    type: integer
+    default: 2
+    minimum: 0
+  telemetry_supply_voltage_minus_12V_decimal_places:
+    description: Maximum number of decimal places for supply voltage -12V in telemetry
+    type: integer
+    default: 2
+    minimum: 0
+  telemetry_rcd_current_decimal_places:
+    description: Maximum number of decimal places for RCD current in telemetry
+    type: integer
+    default: 2
+    minimum: 0
+  powermeter_energy_import_round_to:
+    description: Round import energy to the nearest step. Ignored if value is 0
+    type: number
+    default: 0
+  powermeter_energy_export_round_to:
+    description: Round export energy to the nearest step. Ignored if value is 0
+    type: number
+    default: 0
+  powermeter_power_round_to:
+    description: Round power to the nearest step. Ignored if value is 0
+    type: number
+    default: 0
+  powermeter_voltage_round_to:
+    description: Round voltage to the nearest step. Ignored if value is 0
+    type: number
+    default: 0
+  powermeter_VAR_round_to:
+    description: Round VAR to the nearest step. Ignored if value is 0
+    type: number
+    default: 0
+  powermeter_current_round_to:
+    description: Round current to the nearest step. Ignored if value is 0
+    type: number
+    default: 0
+  powermeter_frequency_round_to:
+    description: Round frequency to the nearest step. Ignored if value is 0
+    type: number
+    default: 0
+  hw_caps_max_current_export_round_to:
+    description: Round maximum export current in hardware limits to the nearest step. Ignored if value is 0
+    type: number
+    default: 0
+  hw_caps_max_current_import_round_to:
+    description: Round maximum import current in hardware limits to the nearest step. Ignored if value is 0
+    type: number
+    default: 0
+  hw_caps_min_current_export_round_to:
+    description: Round minimum export current in hardware limits to the nearest step. Ignored if value is 0
+    type: number
+    default: 0
+  hw_caps_min_current_import_round_to:
+    description: Round minimum import current in hardware limits to the nearest step. Ignored if value is 0
+    type: number
+    default: 0
+  limits_max_current_round_to:
+    description: Round maximum current in limits to the nearest step. Ignored if value is 0
+    type: number
+    default: 0
+  telemetry_temperature_round_to:
+    description: Round temperature in telemetry to the nearest step. Ignored if value is 0
+    type: number
+    default: 0
+  telemetry_fan_rpm_round_to:
+    description: Round fan RPM in telemetry to the nearest step. Ignored if value is 0
+    type: number
+    default: 0
+  telemetry_supply_voltage_12V_round_to:
+    description: Round supply voltage 12V in telemetry to the nearest step. Ignored if value is 0
+    type: number
+    default: 0
+  telemetry_supply_voltage_minus_12V_round_to:
+    description: Round supply voltage -12V in telemetry to the nearest step. Ignored if value is 0
+    type: number
+    default: 0
+  telemetry_rcd_current_round_to:
+    description: Round RCD current in telemetry to the nearest step. Ignored if value is 0
+    type: number
+    default: 0
 provides:
   main:
     description: EVerest API
@@ -15,6 +168,10 @@ requires:
     interface: evse_manager
     min_connections: 1
     max_connections: 128
+  ocpp:
+    interface: ocpp_1_6_charge_point
+    min_connections: 0
+    max_connections: 1
 enable_external_mqtt: true
 metadata:
   license: https://opensource.org/licenses/Apache-2.0

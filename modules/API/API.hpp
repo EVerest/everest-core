@@ -5,7 +5,7 @@
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 1
+// template version 2
 //
 
 #include "ld-ev.hpp"
@@ -15,6 +15,7 @@
 
 // headers for required interface implementations
 #include <generated/interfaces/evse_manager/Interface.hpp>
+#include <generated/interfaces/ocpp_1_6_charge_point/Interface.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
@@ -26,7 +27,11 @@
 #include <date/date.h>
 #include <date/tz.h>
 
+#include "limit_decimal_places.hpp"
+
 namespace module {
+
+class LimitDecimalPlaces;
 
 class SessionInfo {
 private:
@@ -72,23 +77,60 @@ namespace module {
 
 struct Conf {
     std::string charger_information_file;
+    int powermeter_energy_import_decimal_places;
+    int powermeter_energy_export_decimal_places;
+    int powermeter_power_decimal_places;
+    int powermeter_voltage_decimal_places;
+    int powermeter_VAR_decimal_places;
+    int powermeter_current_decimal_places;
+    int powermeter_frequency_decimal_places;
+    int hw_caps_max_current_export_decimal_places;
+    int hw_caps_max_current_import_decimal_places;
+    int hw_caps_min_current_export_decimal_places;
+    int hw_caps_min_current_import_decimal_places;
+    int limits_max_current_decimal_places;
+    int telemetry_temperature_decimal_places;
+    int telemetry_fan_rpm_decimal_places;
+    int telemetry_supply_voltage_12V_decimal_places;
+    int telemetry_supply_voltage_minus_12V_decimal_places;
+    int telemetry_rcd_current_decimal_places;
+    double powermeter_energy_import_round_to;
+    double powermeter_energy_export_round_to;
+    double powermeter_power_round_to;
+    double powermeter_voltage_round_to;
+    double powermeter_VAR_round_to;
+    double powermeter_current_round_to;
+    double powermeter_frequency_round_to;
+    double hw_caps_max_current_export_round_to;
+    double hw_caps_max_current_import_round_to;
+    double hw_caps_min_current_export_round_to;
+    double hw_caps_min_current_import_round_to;
+    double limits_max_current_round_to;
+    double telemetry_temperature_round_to;
+    double telemetry_fan_rpm_round_to;
+    double telemetry_supply_voltage_12V_round_to;
+    double telemetry_supply_voltage_minus_12V_round_to;
+    double telemetry_rcd_current_round_to;
 };
 
 class API : public Everest::ModuleBase {
 public:
     API() = delete;
     API(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, std::unique_ptr<emptyImplBase> p_main,
-        std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager, Conf& config) :
+        std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager,
+        std::vector<std::unique_ptr<ocpp_1_6_charge_pointIntf>> r_ocpp, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_main(std::move(p_main)),
         r_evse_manager(std::move(r_evse_manager)),
+        r_ocpp(std::move(r_ocpp)),
         config(config){};
 
-    const Conf& config;
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<emptyImplBase> p_main;
     const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;
+    const std::vector<std::unique_ptr<ocpp_1_6_charge_pointIntf>> r_ocpp;
+    const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
@@ -110,9 +152,11 @@ private:
     bool running = true;
 
     std::list<std::unique_ptr<SessionInfo>> info;
-    std::list<json> hw_capabilities_json;
+    std::list<std::string> hw_capabilities_str;
     std::string selected_protocol;
     json charger_information;
+    std::string ocpp_connection_status = "unknown";
+    std::unique_ptr<LimitDecimalPlaces> limit_decimal_places;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

@@ -46,8 +46,11 @@ void from_json(const json& j, WifiCredentials& k) {
 }
 
 void to_json(json& j, const WifiList& k) {
-    j = json::object(
-        {{"interface", k.interface}, {"network_id", k.network_id}, {"ssid", k.ssid}, {"connected", k.connected}});
+    j = json::object({{"interface", k.interface},
+                      {"network_id", k.network_id},
+                      {"ssid", k.ssid},
+                      {"connected", k.connected},
+                      {"signal_level", k.signal_level}});
 }
 
 void to_json(json& j, const InterfaceAndNetworkId& k) {
@@ -489,6 +492,20 @@ std::vector<WifiList> Setup::list_configured_networks(std::string interface) {
             }
         }
     }
+    std::map<std::string, std::string> wpa_cli_signal_poll_map;
+    auto wpa_cli_signal_poll_output = this->run_application("wpa_cli", {"-i", interface, "signal_poll"});
+    if (wpa_cli_signal_poll_output.exit_code == 0) {
+
+        for (auto wpa_cli_signal_poll_it = wpa_cli_signal_poll_output.split_output.begin();
+             wpa_cli_signal_poll_it != wpa_cli_signal_poll_output.split_output.end(); ++wpa_cli_signal_poll_it) {
+            std::vector<std::string> wpa_cli_signal_poll_columns;
+            // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks)
+            boost::split(wpa_cli_signal_poll_columns, *wpa_cli_signal_poll_it, boost::is_any_of("="));
+            if (wpa_cli_signal_poll_columns.size() == 2) {
+                wpa_cli_signal_poll_map[wpa_cli_signal_poll_columns.at(0)] = wpa_cli_signal_poll_columns.at(1);
+            }
+        }
+    }
 
     auto list_networks_results = wpa_cli_list_networks_output.split_output;
     if (list_networks_results.size() >= 2) {
@@ -504,12 +521,17 @@ std::vector<WifiList> Setup::list_configured_networks(std::string interface) {
             wifi_list.network_id = std::stoi(list_networks_results_columns.at(0));
             wifi_list.ssid = list_networks_results_columns.at(1);
             wifi_list.connected = false;
+            wifi_list.signal_level = -100; // -100 dBm is the minimum for wifi
+
             if (wpa_cli_status_map.count("id") && wpa_cli_status_map.count("ssid") &&
                 wpa_cli_status_map.count("wpa_state")) {
                 if (wpa_cli_status_map.at("id") == list_networks_results_columns.at(0) &&
                     wpa_cli_status_map.at("ssid") == wifi_list.ssid &&
                     wpa_cli_status_map.at("wpa_state") == "COMPLETED") {
                     wifi_list.connected = true;
+                    if (wpa_cli_signal_poll_map.count("RSSI")) {
+                        wifi_list.signal_level = std::stoi(wpa_cli_signal_poll_map.at("RSSI"));
+                    }
                 }
             }
 

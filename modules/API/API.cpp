@@ -84,11 +84,13 @@ void SessionInfo::update_state(const std::string& event, const std::string& stat
     } else if (event == "WaitingForEnergy") {
         this->state = "WaitingForEnergy";
     } else if (event == "TransactionStarted") {
-        this->state = "Charging";
+        this->state = "Preparing";
     } else if (event == "ChargingPausedEV") {
         this->state = "ChargingPausedEV";
     } else if (event == "ChargingPausedEVSE") {
         this->state = "ChargingPausedEVSE";
+    } else if (event == "ChargingStarted") {
+        this->state = "Charging";
     } else if (event == "ChargingResumed") {
         this->state = "Charging";
     } else if (event == "TransactionFinished") {
@@ -176,13 +178,14 @@ SessionInfo::operator std::string() {
 
 void API::init() {
     invoke_init(*p_main);
+    this->limit_decimal_places = std::make_unique<LimitDecimalPlaces>(this->config);
     std::string api_base = "everest_api/";
     std::vector<std::string> connectors;
     std::string var_connectors = api_base + "connectors";
 
     for (auto& evse : this->r_evse_manager) {
         auto& session_info = this->info.emplace_back(std::make_unique<SessionInfo>());
-        auto& hw_caps = this->hw_capabilities_json.emplace_back(json{});
+        auto& hw_caps = this->hw_capabilities_str.emplace_back("");
         std::string evse_base = api_base + evse->module_id;
         connectors.push_back(evse->module_id);
 
@@ -192,14 +195,13 @@ void API::init() {
         std::string var_hw_caps = var_base + "hardware_capabilities";
         evse->subscribe_hw_capabilities(
             [this, var_hw_caps, &hw_caps](types::board_support::HardwareCapabilities hw_capabilities) {
-                hw_caps = hw_capabilities;
-                this->mqtt.publish(var_hw_caps, hw_caps.dump());
+                hw_caps = this->limit_decimal_places->limit(hw_capabilities);
+                this->mqtt.publish(var_hw_caps, hw_caps);
             });
 
         std::string var_powermeter = var_base + "powermeter";
         evse->subscribe_powermeter([this, var_powermeter, &session_info](types::powermeter::Powermeter powermeter) {
-            json powermeter_json = powermeter;
-            this->mqtt.publish(var_powermeter, powermeter_json.dump());
+            this->mqtt.publish(var_powermeter, this->limit_decimal_places->limit(powermeter));
             session_info->set_latest_energy_import_wh(powermeter.energy_Wh_import.total);
             if (powermeter.energy_Wh_export.has_value()) {
                 session_info->set_latest_energy_export_wh(powermeter.energy_Wh_export.value().total);
@@ -210,14 +212,12 @@ void API::init() {
 
         std::string var_limits = var_base + "limits";
         evse->subscribe_limits([this, var_limits](types::evse_manager::Limits limits) {
-            json limits_json = limits;
-            this->mqtt.publish(var_limits, limits_json.dump());
+            this->mqtt.publish(var_limits, this->limit_decimal_places->limit(limits));
         });
 
         std::string var_telemetry = var_base + "telemetry";
         evse->subscribe_telemetry([this, var_telemetry](types::board_support::Telemetry telemetry) {
-            json telemetry_json = telemetry;
-            this->mqtt.publish(var_telemetry, telemetry_json.dump());
+            this->mqtt.publish(var_telemetry, this->limit_decimal_places->limit(telemetry));
         });
 
         std::string var_ev_info = var_base + "ev_info";
@@ -241,7 +241,7 @@ void API::init() {
                     std::string datetime_str = Everest::Date::to_rfc3339(date::utc_clock::now());
                     this->mqtt.publish(var_datetime, datetime_str);
                     this->mqtt.publish(var_session_info, *session_info);
-                    this->mqtt.publish(var_hw_caps, hw_caps.dump());
+                    this->mqtt.publish(var_hw_caps, hw_caps);
                     this->mqtt.publish(var_selected_protocol, this->selected_protocol);
 
                     next_tick += NOTIFICATION_PERIOD;
@@ -329,6 +329,31 @@ void API::init() {
                 EVLOG_warning << "Invalid limit: Out of range.";
             }
         });
+        std::string cmd_force_unlock = cmd_base + "force_unlock";
+        this->mqtt.subscribe(cmd_force_unlock, [&evse](const std::string& data) {
+            int connector_id = 1;
+            if (!data.empty()) {
+                try {
+                    connector_id = std::stoi(data);
+                } catch (const std::exception& e) {
+                    EVLOG_error << "Could not parse connector id for force unlock, using " << connector_id
+                                << ", error: " << e.what();
+                }
+            }
+            evse->call_force_unlock(connector_id); //
+        });
+    }
+
+    std::string var_ocpp_connection_status = api_base + "ocpp/var/connection_status";
+
+    if (this->r_ocpp.size() == 1) {
+        this->r_ocpp.at(0)->subscribe_is_connected([this](bool is_connected) {
+            if (is_connected) {
+                this->ocpp_connection_status = "connected";
+            } else {
+                this->ocpp_connection_status = "disconnected";
+            }
+        });
     }
 
     std::string var_info = api_base + "info/var/info";
@@ -344,12 +369,13 @@ void API::init() {
         }
     }
 
-    this->api_threads.push_back(std::thread([this, var_connectors, connectors, var_info]() {
+    this->api_threads.push_back(std::thread([this, var_connectors, connectors, var_info, var_ocpp_connection_status]() {
         auto next_tick = std::chrono::steady_clock::now();
         while (this->running) {
             json connectors_array = connectors;
             this->mqtt.publish(var_connectors, connectors_array.dump());
             this->mqtt.publish(var_info, this->charger_information.dump());
+            this->mqtt.publish(var_ocpp_connection_status, this->ocpp_connection_status);
 
             next_tick += NOTIFICATION_PERIOD;
             std::this_thread::sleep_until(next_tick);
