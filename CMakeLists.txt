@@ -68,6 +68,7 @@ else()
     find_package(slac REQUIRED)
 
     find_package(pugixml REQUIRED)
+    find_package(CURL REQUIRED)
 endif()
 
 add_subdirectory(lib)
