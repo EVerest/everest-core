@@ -1,37 +1,58 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
-#include <everest/logging.hpp>
-
+#include <ocpp/common/types.hpp>
 #include <ocpp/common/websocket/websocket_plain.hpp>
+
+#include <everest/logging.hpp>
 
 #include <boost/optional/optional.hpp>
 
+#include <memory>
+#include <stdexcept>
+
 namespace ocpp {
 
-WebsocketPlain::WebsocketPlain(const WebsocketConnectionOptions& connection_options) :
-    WebsocketBase(connection_options) {
+WebsocketPlain::WebsocketPlain(const WebsocketConnectionOptions& connection_options) : WebsocketBase() {
+    set_connection_options(connection_options);
+
+    EVLOG_debug << "Initialised WebsocketPlain with URI: " << this->connection_options.csms_uri.string();
+}
+
+void WebsocketPlain::set_connection_options(const WebsocketConnectionOptions& connection_options) {
+    switch (connection_options.security_profile) { // `switch` used to lint on missing enum-values
+    case security::SecurityProfile::OCPP_1_6_ONLY_UNSECURED_TRANSPORT_WITHOUT_BASIC_AUTHENTICATION:
+    case security::SecurityProfile::UNSECURED_TRANSPORT_WITH_BASIC_AUTHENTICATION:
+        break;
+    case security::SecurityProfile::TLS_WITH_BASIC_AUTHENTICATION:
+    case security::SecurityProfile::TLS_WITH_CLIENT_SIDE_CERTIFICATES:
+        throw std::invalid_argument("`security_profile` is not a plain, unsecured one.");
+    default:
+        throw std::invalid_argument("unknown `security_profile`, value = " +
+                                    std::to_string(connection_options.security_profile));
+    }
+
+    set_connection_options_base(connection_options);
+    this->connection_options.csms_uri.set_secure(false);
 }
 
 bool WebsocketPlain::connect() {
     if (!this->initialized()) {
         return false;
     }
-    const auto uri = this->connection_options.cs_uri.insert(0, "ws://");
 
-    EVLOG_info << "Connecting to plain websocket at uri: " << uri
-               << " with profile: " << this->connection_options.security_profile;
+    EVLOG_info << "Connecting to plain websocket at uri: " << this->connection_options.csms_uri.string()
+               << " with security profile: " << this->connection_options.security_profile;
 
     this->ws_client.clear_access_channels(websocketpp::log::alevel::all);
     this->ws_client.clear_error_channels(websocketpp::log::elevel::all);
     this->ws_client.init_asio();
     this->ws_client.start_perpetual();
-    this->uri = uri;
 
     websocket_thread.reset(new websocketpp::lib::thread(&client::run, &this->ws_client));
 
     this->reconnect_callback = [this](const websocketpp::lib::error_code& ec) {
-        EVLOG_info << "Reconnecting to plain websocket at uri: " << this->connection_options.cs_uri
-                   << " with profile: " << this->connection_options.security_profile;
+        EVLOG_info << "Reconnecting to plain websocket at uri: " << this->connection_options.csms_uri.string()
+                   << " with security profile: " << this->connection_options.security_profile;
 
         // close connection before reconnecting
         if (this->m_is_connected) {
@@ -120,7 +141,8 @@ void WebsocketPlain::connect_plain() {
 
     websocketpp::lib::error_code ec;
 
-    client::connection_ptr con = this->ws_client.get_connection(this->uri, ec);
+    const client::connection_ptr con = this->ws_client.get_connection(
+        std::make_shared<websocketpp::uri>(this->connection_options.csms_uri.get_websocketpp_uri()), ec);
 
     if (ec) {
         EVLOG_error << "Connection initialization error for plain websocket: " << ec.message();

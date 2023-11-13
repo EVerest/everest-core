@@ -6,6 +6,7 @@
 #include <websocketpp/client.hpp>
 #include <websocketpp/config/asio_client.hpp>
 
+#include <ocpp/common/evse_security.hpp>
 #include <ocpp/common/websocket/websocket_base.hpp>
 
 namespace ocpp {
@@ -25,12 +26,6 @@ private:
     tls_client wss_client;
     std::shared_ptr<EvseSecurity> evse_security;
     websocketpp::lib::shared_ptr<websocketpp::lib::thread> websocket_thread;
-
-    /// \brief Extracts the hostname from the provided \p uri
-    /// FIXME(kai): this only works with a very limited subset of hostnames and should be extended to work spec conform
-    /// \returns the extracted hostname
-    std::string get_hostname(std::string uri);
-
     /// \brief Called when a TLS websocket connection gets initialized, manages the supported TLS versions, cipher lists
     /// and how verification of the server certificate is handled
     tls_context on_tls_init(std::string hostname, websocketpp::connection_hdl hdl, int32_t security_profile);
@@ -49,6 +44,8 @@ private:
 
     /// \brief Called when a TLS websocket connection fails to be established
     void on_fail_tls(tls_client* c, websocketpp::connection_hdl hdl);
+
+    void set_connection_options(const WebsocketConnectionOptions& connection_options) override;
 
 public:
     /// \brief Creates a new Websocket object with the providede \p connection_options

@@ -558,6 +558,17 @@ firmware_status_notification_to_firmware_status_enum_type(const FirmwareStatusNo
 
 } // namespace conversions
 
+namespace security {
+// The security profiles defined in OCPP 2.0.1 resp. in the OCPP 1.6 security-whitepaper.
+enum SecurityProfile { // no "enum class" because values are used in implicit `switch`-comparisons to `int
+                       // security_profile`
+    OCPP_1_6_ONLY_UNSECURED_TRANSPORT_WITHOUT_BASIC_AUTHENTICATION = 0,
+    UNSECURED_TRANSPORT_WITH_BASIC_AUTHENTICATION = 1,
+    TLS_WITH_BASIC_AUTHENTICATION = 2,
+    TLS_WITH_CLIENT_SIDE_CERTIFICATES = 3,
+};
+} // namespace security
+
 namespace security_events {
 
 // This is the list of security events defined in OCPP 2.0.1 (and the 1.6 security whitepper).

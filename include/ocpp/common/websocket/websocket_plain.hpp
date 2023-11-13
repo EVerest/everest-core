@@ -41,6 +41,8 @@ private:
     /// \brief Called when a plaintext websocket connection fails to be established
     void on_fail_plain(client* c, websocketpp::connection_hdl hdl);
 
+    void set_connection_options(const WebsocketConnectionOptions& connection_options) override;
+
 public:
     /// \brief Creates a new WebsocketPlain object with the providede \p connection_options
     explicit WebsocketPlain(const WebsocketConnectionOptions& connection_options);

@@ -613,6 +613,12 @@
                     "Actual": "1"
                 }
             },
+            "Identity": {
+                "variable_name": "Identity",
+                "attributes": {
+                    "Actual": "cp001"
+                }
+            },
             "BasicAuthPassword": {
                 "variable_name": "BasicAuthPassword",
                 "attributes": {

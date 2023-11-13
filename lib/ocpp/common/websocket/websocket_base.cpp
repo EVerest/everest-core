@@ -6,9 +6,8 @@
 #include <ocpp/common/websocket/websocket_base.hpp>
 namespace ocpp {
 
-WebsocketBase::WebsocketBase(const WebsocketConnectionOptions& connection_options) :
+WebsocketBase::WebsocketBase() :
     m_is_connected(false),
-    connection_options(connection_options),
     connected_callback(nullptr),
     closed_callback(nullptr),
     message_callback(nullptr),
@@ -17,6 +16,9 @@ WebsocketBase::WebsocketBase(const WebsocketConnectionOptions& connection_option
     reconnect_backoff_ms(0),
     shutting_down(false),
     reconnecting(false) {
+
+    set_connection_options_base(connection_options);
+
     this->ping_timer = std::make_unique<Everest::SteadyTimer>();
     const auto auth_key = connection_options.authorization_key;
     if (auth_key.has_value() and auth_key.value().length() < 16) {
@@ -28,7 +30,7 @@ WebsocketBase::WebsocketBase(const WebsocketConnectionOptions& connection_option
 WebsocketBase::~WebsocketBase() {
 }
 
-void WebsocketBase::set_connection_options(const WebsocketConnectionOptions& connection_options) {
+void WebsocketBase::set_connection_options_base(const WebsocketConnectionOptions& connection_options) {
     this->connection_attempts = 0;
     this->connection_options = connection_options;
 }
@@ -95,7 +97,8 @@ std::optional<std::string> WebsocketBase::getAuthorizationHeader() {
     const auto authorization_key = this->connection_options.authorization_key;
     if (authorization_key.has_value()) {
         EVLOG_debug << "AuthorizationKey present, encoding authentication header";
-        std::string plain_auth_header = this->connection_options.chargepoint_id + ":" + authorization_key.value();
+        std::string plain_auth_header =
+            this->connection_options.csms_uri.get_chargepoint_id() + ":" + authorization_key.value();
         auth_header.emplace(std::string("Basic ") + websocketpp::base64_encode(plain_auth_header));
         EVLOG_debug << "Basic Auth header: " << auth_header.value();
     }

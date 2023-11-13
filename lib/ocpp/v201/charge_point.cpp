@@ -1,10 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
+#include <ocpp/common/types.hpp>
 #include <ocpp/v201/charge_point.hpp>
+#include <ocpp/v201/ctrlr_component_variables.hpp>
 #include <ocpp/v201/device_model_storage_sqlite.hpp>
 #include <ocpp/v201/messages/FirmwareStatusNotification.hpp>
 #include <ocpp/v201/messages/LogStatusNotification.hpp>
+
+#include <stdexcept>
+#include <string>
 
 using namespace std::chrono_literals;
 
@@ -751,19 +756,16 @@ WebsocketConnectionOptions ChargePoint::get_ws_connection_options(const int32_t 
     }
 
     const auto network_connection_profile = network_connection_profile_opt.value();
-    auto ocpp_csms_url = network_connection_profile.ocppCsmsUrl.get();
 
-    if (ocpp_csms_url.compare(0, 5, "ws://") == 0) {
-        ocpp_csms_url.erase(0, 5);
-    } else if (ocpp_csms_url.compare(0, 6, "wss://") == 0) {
-        ocpp_csms_url.erase(0, 6);
-    }
+    auto uri = Uri::parse_and_validate(
+        network_connection_profile.ocppCsmsUrl.get(),
+        this->device_model->get_value<std::string>(ControllerComponentVariables::SecurityCtrlrIdentity),
+        network_connection_profile.securityProfile);
 
     WebsocketConnectionOptions connection_options{
         OcppProtocolVersion::v201,
-        ocpp_csms_url,
+        uri,
         network_connection_profile.securityProfile,
-        this->device_model->get_value<std::string>(ControllerComponentVariables::ChargePointId),
         this->device_model->get_optional_value<std::string>(ControllerComponentVariables::BasicAuthPassword),
         this->device_model->get_value<int>(ControllerComponentVariables::RetryBackOffRandomRange),
         this->device_model->get_value<int>(ControllerComponentVariables::RetryBackOffRepeatTimes),
@@ -789,6 +791,15 @@ std::optional<NetworkConnectionProfile> ChargePoint::get_network_connection_prof
 
     for (const auto& network_profile : network_connection_profiles) {
         if (network_profile.configurationSlot == configuration_slot) {
+            auto security_profile = network_profile.connectionData.securityProfile;
+            switch (security_profile) {
+            case security::OCPP_1_6_ONLY_UNSECURED_TRANSPORT_WITHOUT_BASIC_AUTHENTICATION:
+                throw std::invalid_argument("security_profile = " + std::to_string(security_profile) +
+                                            " not officially allowed in OCPP 2.0.1");
+            default:
+                break;
+            }
+
             return network_profile.connectionData;
         }
     }

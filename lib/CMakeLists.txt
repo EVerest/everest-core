@@ -1,6 +1,13 @@
 # OCPP library
 add_library(ocpp)
 add_library(everest::ocpp ALIAS ocpp)
+
+target_compile_options(ocpp
+    PRIVATE
+         #-Werror # turn warnings into errors
+        -Wimplicit-fallthrough  # avoid unintended fallthroughs
+)
+
 target_sources(ocpp
     PRIVATE
         ocpp/common/call_types.cpp

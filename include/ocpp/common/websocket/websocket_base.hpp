@@ -9,19 +9,18 @@
 #include <thread>
 
 #include <everest/timer.hpp>
-
-#include <ocpp/common/types.hpp>
-
 #include <websocketpp/client.hpp>
 #include <websocketpp/config/asio_client.hpp>
+
+#include <ocpp/common/types.hpp>
+#include <ocpp/common/websocket/websocket_uri.hpp>
 
 namespace ocpp {
 
 struct WebsocketConnectionOptions {
     OcppProtocolVersion ocpp_version;
-    std::string cs_uri;
-    int security_profile;
-    std::string chargepoint_id;
+    Uri csms_uri;         // the URI of the CSMS
+    int security_profile; // FIXME: change type to `SecurityProfile`
     std::optional<std::string> authorization_key;
     int retry_backoff_random_range_s;
     int retry_backoff_repeat_times;
@@ -50,7 +49,6 @@ protected:
     std::function<void(const std::string& message)> message_callback;
     websocketpp::lib::shared_ptr<boost::asio::steady_timer> reconnect_timer;
     std::unique_ptr<Everest::SteadyTimer> ping_timer;
-    std::string uri;
     websocketpp::connection_hdl handle;
     std::mutex reconnect_mutex;
     std::mutex connection_mutex;
@@ -84,8 +82,9 @@ protected:
     void on_pong_timeout(websocketpp::connection_hdl hdl, std::string msg);
 
 public:
-    /// \brief Creates a new WebsocketBase object with the providede \p connection_options
-    explicit WebsocketBase(const WebsocketConnectionOptions& connection_options);
+    /// \brief Creates a new WebsocketBase object. The `connection_options` must be initialised with
+    /// `set_connection_options()`
+    explicit WebsocketBase();
     virtual ~WebsocketBase();
 
     /// \brief connect to a websocket
@@ -93,7 +92,8 @@ public:
     virtual bool connect() = 0;
 
     /// \brief sets this connection_options to the given \p connection_options and resets the connection_attempts
-    void set_connection_options(const WebsocketConnectionOptions& connection_options);
+    virtual void set_connection_options(const WebsocketConnectionOptions& connection_options) = 0;
+    void set_connection_options_base(const WebsocketConnectionOptions& connection_options);
 
     /// \brief reconnect the websocket after the delay
     virtual void reconnect(std::error_code reason, long delay) = 0;
