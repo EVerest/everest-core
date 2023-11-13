@@ -229,7 +229,6 @@ public:
     std::string getStopTxnAlignedData();
     bool setStopTxnAlignedData(std::string stop_txn_aligned_data);
     KeyValue getStopTxnAlignedDataKeyValue();
-    std::vector<MeasurandWithPhase> getStopTxnAlignedDataVector();
 
     // Core Profile - optional
     std::optional<int32_t> getStopTxnAlignedDataMaxLength();
@@ -239,7 +238,6 @@ public:
     std::string getStopTxnSampledData();
     bool setStopTxnSampledData(std::string stop_txn_sampled_data);
     KeyValue getStopTxnSampledDataKeyValue();
-    std::vector<MeasurandWithPhase> getStopTxnSampledDataVector();
 
     // Core Profile - optional
     std::optional<int32_t> getStopTxnSampledDataMaxLength();

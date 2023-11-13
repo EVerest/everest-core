@@ -219,6 +219,11 @@ private:
     void stop_pending_transactions();
     void stop_transaction(int32_t connector, Reason reason, std::optional<CiString<20>> id_tag_end);
 
+    /// \brief Converts the given \p measurands_csv to a vector of Measurands
+    /// \param measurands_csv
+    /// \return
+    std::vector<Measurand> get_measurands_vec(const std::string& measurands_csv);
+
     /// \brief Returns transaction data that can be used to set the transactionData field in StopTransaction.req.
     /// Filters the meter values of the transaction according to the values set within StopTxnAlignedData and
     /// StopTxnSampledData

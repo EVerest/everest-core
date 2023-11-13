@@ -1189,9 +1189,6 @@ KeyValue ChargePointConfiguration::getStopTxnAlignedDataKeyValue() {
     kv.value.emplace(this->getStopTxnAlignedData());
     return kv;
 }
-std::vector<MeasurandWithPhase> ChargePointConfiguration::getStopTxnAlignedDataVector() {
-    return this->csv_to_measurand_with_phase_vector(this->getStopTxnAlignedData());
-}
 
 // Core Profile - optional
 std::optional<int32_t> ChargePointConfiguration::getStopTxnAlignedDataMaxLength() {
@@ -1233,9 +1230,6 @@ KeyValue ChargePointConfiguration::getStopTxnSampledDataKeyValue() {
     kv.readonly = false;
     kv.value.emplace(this->getStopTxnSampledData());
     return kv;
-}
-std::vector<MeasurandWithPhase> ChargePointConfiguration::getStopTxnSampledDataVector() {
-    return this->csv_to_measurand_with_phase_vector(this->getStopTxnSampledData());
 }
 
 // Core Profile - optional

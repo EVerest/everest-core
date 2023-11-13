@@ -3196,13 +3196,30 @@ void ChargePointImpl::stop_transaction(int32_t connector, Reason reason, std::op
     this->transaction_handler->add_stopped_transaction(transaction->get_connector());
 }
 
+std::vector<Measurand> ChargePointImpl::get_measurands_vec(const std::string& measurands_csv) {
+    std::vector<Measurand> measurands;
+    std::vector<std::string> measurands_strings = ocpp::get_vector_from_csv(measurands_csv);
+
+    for (const auto& measurand_string : measurands_strings) {
+        try {
+            measurands.push_back(conversions::string_to_measurand(measurand_string));
+        } catch (std::out_of_range& e) {
+            EVLOG_warning << "Could not convert string: " << measurand_string << " to MeasurandEnum";
+        }
+    }
+    return measurands;
+}
+
 std::vector<TransactionData>
 ChargePointImpl::get_filtered_transaction_data(const std::shared_ptr<Transaction>& transaction) {
-    const auto stop_txn_sampled_data = this->configuration->getStopTxnSampledDataVector();
-    const auto stop_txn_aligned_data = this->configuration->getStopTxnAlignedDataVector();
+    const auto stop_txn_sampled_data_measurands =
+        this->get_measurands_vec(this->configuration->getStopTxnSampledData());
+    const auto stop_txn_aligned_data_measurands =
+        this->get_measurands_vec(this->configuration->getStopTxnAlignedData());
+
     std::vector<TransactionData> filtered_transaction_data_vec;
 
-    if (!stop_txn_sampled_data.empty() or !stop_txn_aligned_data.empty()) {
+    if (!stop_txn_sampled_data_measurands.empty() or !stop_txn_aligned_data_measurands.empty()) {
         std::vector<TransactionData> transaction_data_vec = transaction->get_transaction_data();
         for (const auto& entry : transaction_data_vec) {
             std::vector<SampledValue> sampled_values;
@@ -3210,20 +3227,18 @@ ChargePointImpl::get_filtered_transaction_data(const std::shared_ptr<Transaction
                 if (meter_value.measurand.has_value()) {
                     // if Sample.Clock use StopTxnAlignedData
                     if (meter_value.context.has_value() and meter_value.context == ReadingContext::Sample_Clock) {
-                        for (const auto& stop_txn_aligned_entry : stop_txn_aligned_data) {
-                            if (stop_txn_aligned_entry.measurand == meter_value.measurand.value()) {
-                                sampled_values.push_back(meter_value);
-                                continue;
-                            }
+                        if (std::find(stop_txn_aligned_data_measurands.begin(), stop_txn_aligned_data_measurands.end(),
+                                      meter_value.measurand.value()) != stop_txn_aligned_data_measurands.end()) {
+                            sampled_values.push_back(meter_value);
+                            continue;
                         }
                     } else {
                         // else use StopTxnSampledData although spec is unclear about how to filter other ReadingContext
                         // values like Transaction.Begin , Trigger , etc.
-                        for (const auto& stop_txn_sampled_entry : stop_txn_sampled_data) {
-                            if (stop_txn_sampled_entry.measurand == meter_value.measurand.value()) {
-                                sampled_values.push_back(meter_value);
-                                continue;
-                            }
+                        if (std::find(stop_txn_sampled_data_measurands.begin(), stop_txn_sampled_data_measurands.end(),
+                                      meter_value.measurand.value()) != stop_txn_sampled_data_measurands.end()) {
+                            sampled_values.push_back(meter_value);
+                            continue;
                         }
                     }
                 } else {
