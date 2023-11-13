@@ -137,7 +137,8 @@ bool X509Wrapper::is_child(const X509Wrapper& parent) const {
 }
 
 bool X509Wrapper::is_selfsigned() const {
-    return (X509_self_signed(x509.get(), 0) == 1);
+    //return (X509_self_signed(x509.get(), 0) == 1);
+    return (X509_verify(x509.get(), X509_get_pubkey(x509.get())));
 }
 
 void X509Wrapper::reset(X509* _x509) {

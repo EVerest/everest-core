@@ -3,6 +3,8 @@
 #ifndef X509_BUNDLE_HPP
 #define X509_BUNDLE_HPP
 
+#include <map>
+
 #include <x509_hierarchy.hpp>
 #include <x509_wrapper.hpp>
 
@@ -176,7 +178,7 @@ private:
 private:
     // Structure of the bundle - maps files to the certificates stored in them
     // For certificates coming from a string, uses a default empty path
-    std::unordered_map<fs::path, std::vector<X509Wrapper>> certificates;
+    std::map<fs::path, std::vector<X509Wrapper>> certificates;
     // Relevant bundle file or directory for this certificates
     fs::path path;
     // Source from where we created the certificates. If 'string' the 'export' functions will not work

@@ -4,6 +4,7 @@
 #define X509_HIERARCHY_HPP
 
 #include <queue>
+#include <algorithm>
 
 #include <x509_wrapper.hpp>
 
