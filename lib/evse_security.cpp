@@ -16,6 +16,7 @@
 
 #include <evse_utilities.hpp>
 #include <x509_bundle.hpp>
+#include <x509_hierarchy.hpp>
 #include <x509_wrapper.hpp>
 namespace evse_security {
 
@@ -98,11 +99,11 @@ static fs::path get_private_key_path(const X509Wrapper& certificate, const fs::p
                     }
 
                     if (X509_check_private_key(certificate.get(), evp_pkey.get())) {
-                        EVLOG_info << "Key found for certificate at path: " << key_file_path;
+                        EVLOG_debug << "Key found for certificate at path: " << key_file_path;
                         return key_file_path;
                     }
                 } catch (const std::exception& e) {
-                    EVLOG_info << "Could not load or verify private key at: " << key_file_path << ": " << e.what();
+                    EVLOG_debug << "Could not load or verify private key at: " << key_file_path << ": " << e.what();
                 }
             }
         }
@@ -164,10 +165,14 @@ EvseSecurity::~EvseSecurity() {
 
 InstallCertificateResult EvseSecurity::install_ca_certificate(const std::string& certificate,
                                                               CaCertificateType certificate_type) {
-    EVLOG_info << "Installing ca certificate: " << conversions::ca_certificate_type_to_string(certificate_type);
+    EVLOG_debug << "Installing ca certificate: " << conversions::ca_certificate_type_to_string(certificate_type);
     // TODO(piet): Check CertificateStoreMaxEntries
     try {
         X509Wrapper new_cert(certificate, EncodingFormat::PEM);
+
+        if (!new_cert.is_valid()) {
+            return InstallCertificateResult::Expired;
+        }
 
         // Load existing
         const auto ca_bundle_path = this->ca_bundle_path_map.at(certificate_type);
@@ -177,6 +182,15 @@ InstallCertificateResult EvseSecurity::install_ca_certificate(const std::string&
         EvseUtils::create_file_if_nonexistent(ca_bundle_path);
 
         X509CertificateBundle existing_certs(ca_bundle_path, EncodingFormat::PEM);
+
+        if (existing_certs.is_using_directory()) {
+            std::string filename = conversions::ca_certificate_type_to_string(certificate_type) + "_" +
+                                   EvseUtils::get_random_file_name(PEM_EXTENSION.string());
+            fs::path new_path = ca_bundle_path / filename;
+
+            // Sets the path of the new certificate
+            new_cert.update_file(new_path);
+        }
 
         // Check if cert is already installed
         if (existing_certs.contains_certificate(new_cert) == false) {
@@ -211,11 +225,13 @@ DeleteCertificateResult EvseSecurity::delete_certificate(const CertificateHashDa
     bool found_certificate = false;
     bool failed_to_write = false;
 
+    // TODO (ioan): load all the bundles since if it's the V2G root in that case we might have to delete
+    // whole hierarchies
     for (auto const& [certificate_type, ca_bundle_path] : ca_bundle_path_map) {
         try {
             X509CertificateBundle ca_bundle(ca_bundle_path, EncodingFormat::PEM);
 
-            if (ca_bundle.delete_certificate(certificate_hash_data)) {
+            if (ca_bundle.delete_certificate(certificate_hash_data, true)) {
                 found_certificate = true;
                 if (!ca_bundle.export_certificates()) {
                     failed_to_write = true;
@@ -223,24 +239,60 @@ DeleteCertificateResult EvseSecurity::delete_certificate(const CertificateHashDa
             }
 
         } catch (const CertificateLoadException& e) {
-            EVLOG_info << "Could not load ca bundle from file: " << ca_bundle_path;
+            EVLOG_debug << "Could not load ca bundle from file: " << ca_bundle_path;
         }
     }
 
     for (const auto& leaf_certificate_path :
          {directories.secc_leaf_cert_directory, directories.csms_leaf_cert_directory}) {
         try {
+            bool secc = (leaf_certificate_path == directories.secc_leaf_cert_directory);
+            bool csms = (leaf_certificate_path == directories.csms_leaf_cert_directory) ||
+                        (directories.csms_leaf_cert_directory == directories.secc_leaf_cert_directory);
+
+            CaCertificateType load;
+
+            if (secc)
+                load = CaCertificateType::V2G;
+            else if (csms)
+                load = CaCertificateType::CSMS;
+
+            // Also load the roots since we need to build the hierarchy for correct certificate hashes
+            X509CertificateBundle root_bundle(ca_bundle_path_map[load], EncodingFormat::PEM);
             X509CertificateBundle leaf_bundle(leaf_certificate_path, EncodingFormat::PEM);
 
-            if (leaf_bundle.delete_certificate(certificate_hash_data)) {
-                found_certificate = true;
-                if (!leaf_bundle.export_certificates()) {
-                    failed_to_write = true;
-                    EVLOG_error << "Error removing leaf certificate: " << certificate_hash_data.issuer_name_hash;
+            auto full_list = root_bundle.split();
+            for (X509Wrapper& certif : leaf_bundle.split()) {
+                full_list.push_back(std::move(certif));
+            }
+
+            X509CertificateHierarchy hierarchy = X509CertificateHierarchy::build_hierarchy(full_list);
+
+            EVLOG_debug << "Delete hierarchy:(" << leaf_certificate_path.string() << ")\n"
+                        << hierarchy.to_debug_string();
+
+            try {
+                X509Wrapper to_delete = hierarchy.find_certificate(certificate_hash_data);
+
+                if (leaf_bundle.delete_certificate(to_delete, true)) {
+                    found_certificate = true;
+
+                    if (csms) {
+                        // Per M04.FR.06 we are not allowed to delete the CSMS (ChargingStationCertificate), we should
+                        // return 'Failed'
+                        failed_to_write = true;
+                        EVLOG_error << "Error, not allowed to delete ChargingStationCertificate: "
+                                    << to_delete.get_common_name();
+                    } else if (!leaf_bundle.export_certificates()) {
+                        failed_to_write = true;
+                        EVLOG_error << "Error removing leaf certificate: " << certificate_hash_data.issuer_name_hash;
+                    }
                 }
+            } catch (NoCertificateFound& e) {
+                // Ignore, case is handled later
             }
         } catch (const CertificateLoadException& e) {
-            EVLOG_info << "Could not load ca bundle from file: " << leaf_certificate_path;
+            EVLOG_debug << "Could not load ca bundle from file: " << leaf_certificate_path;
         }
     }
 
@@ -329,22 +381,29 @@ EvseSecurity::get_installed_certificates(const std::vector<CertificateType>& cer
         auto ca_bundle_path = this->ca_bundle_path_map.at(ca_certificate_type);
         try {
             X509CertificateBundle ca_bundle(ca_bundle_path, EncodingFormat::PEM);
-            auto certificates_of_bundle = ca_bundle.split();
+            X509CertificateHierarchy& hierarchy = ca_bundle.get_certficate_hierarchy();
 
-            CertificateHashDataChain certificate_hash_data_chain;
-            certificate_hash_data_chain.certificate_type =
-                get_certificate_type(ca_certificate_type); // We always know type
+            EVLOG_debug << "Hierarchy:(" << conversions::ca_certificate_type_to_string(ca_certificate_type) << ")\n"
+                        << hierarchy.to_debug_string();
 
-            for (int i = 0; i < certificates_of_bundle.size(); i++) {
-                CertificateHashData certificate_hash_data = certificates_of_bundle[i].get_certificate_hash_data();
-                if (i == 0) {
-                    certificate_hash_data_chain.certificate_hash_data = certificate_hash_data;
-                } else {
-                    certificate_hash_data_chain.child_certificate_hash_data.push_back(certificate_hash_data);
-                }
+            // Iterate the hierarchy and add all the certificates to their respective locations
+            for (auto& root : hierarchy.get_hierarchy()) {
+                CertificateHashDataChain certificate_hash_data_chain;
+
+                certificate_hash_data_chain.certificate_type =
+                    get_certificate_type(ca_certificate_type); // We always know type
+                certificate_hash_data_chain.certificate_hash_data = root.hash;
+
+                // Add all owned children/certificates in order
+                X509CertificateHierarchy::for_each_child(
+                    [&certificate_hash_data_chain](const X509Node& child, int depth) {
+                        certificate_hash_data_chain.child_certificate_hash_data.push_back(child.hash);
+                    },
+                    root);
+
+                // Add to our chains
+                certificate_chains.push_back(certificate_hash_data_chain);
             }
-
-            certificate_chains.push_back(certificate_hash_data_chain);
         } catch (const CertificateLoadException& e) {
             EVLOG_warning << "Could not load CA bundle file at: " << ca_bundle_path << " error: " << e.what();
         }
@@ -356,37 +415,51 @@ EvseSecurity::get_installed_certificates(const std::vector<CertificateType>& cer
 
         const auto secc_key_pair = this->get_key_pair(LeafCertificateType::V2G, EncodingFormat::PEM);
         if (secc_key_pair.status == GetKeyPairStatus::Accepted) {
-            X509Wrapper cert(secc_key_pair.pair.value().certificate, EncodingFormat::PEM);
-            CertificateHashDataChain certificate_hash_data_chain;
-            CertificateHashData certificate_hash_data = cert.get_certificate_hash_data();
-            certificate_hash_data_chain.certificate_hash_data = certificate_hash_data;
-            certificate_hash_data_chain.certificate_type = CertificateType::V2GCertificateChain;
+            // Leaf V2G chain
+            X509CertificateBundle leaf_bundle(secc_key_pair.pair.value().certificate, EncodingFormat::PEM);
 
-            // TODO (ioan): as per V2GCertificateChain: OCPP 2.0.1 part 2 spec 2 (3.36):
-            // V2G certificate chain (excluding the V2GRootCertificate)
-            // Exclude V2G root when returning the V2GCertificateChain
+            // V2G chain
             const auto ca_bundle_path = this->ca_bundle_path_map.at(CaCertificateType::V2G);
             X509CertificateBundle ca_bundle(ca_bundle_path, EncodingFormat::PEM);
-            const auto certificates_of_bundle = ca_bundle.split();
-            std::vector<CertificateHashData> child_certificate_hash_data;
 
-            bool keep_searching = true;
-            while (keep_searching) {
-                keep_searching = false;
-                for (const auto& ca_cert : certificates_of_bundle) {
-                    if (X509_check_issued(ca_cert.get(), cert.get()) == X509_V_OK and
-                        ca_cert.get_issuer_name_hash() != cert.get_issuer_name_hash()) {
-                        CertificateHashData sub_ca_certificate_hash_data = ca_cert.get_certificate_hash_data();
-                        child_certificate_hash_data.push_back(sub_ca_certificate_hash_data);
-                        cert.reset(ca_cert.get());
-                        keep_searching = true;
-                        break;
-                    }
-                }
+            // Merge the bundles
+            for (auto& certif : leaf_bundle.split()) {
+                ca_bundle.add_certificate_unique(std::move(certif));
             }
 
-            certificate_hash_data_chain.child_certificate_hash_data = child_certificate_hash_data;
-            certificate_chains.push_back(certificate_hash_data_chain);
+            // Create the certificate hierarchy
+            X509CertificateHierarchy& hierarchy = ca_bundle.get_certficate_hierarchy();
+            EVLOG_debug << "Hierarchy:(V2GCertificateChain)\n" << hierarchy.to_debug_string();
+
+            for (auto& root : hierarchy.get_hierarchy()) {
+                CertificateHashDataChain certificate_hash_data_chain;
+
+                certificate_hash_data_chain.certificate_type = CertificateType::V2GCertificateChain;
+
+                // Since the hierarchy starts with V2G and SubCa1/SubCa2 we have to add:
+                // the leaf as the first when returning
+                // * Leaf
+                // --- SubCa1
+                // --- SubCa2
+                std::vector<CertificateHashData> hierarchy_hash_data;
+
+                X509CertificateHierarchy::for_each_child(
+                    [&](const X509Node& child, int depth) { hierarchy_hash_data.push_back(child.hash); }, root);
+
+                if (hierarchy_hash_data.size()) {
+                    // Leaf is the last
+                    certificate_hash_data_chain.certificate_hash_data = hierarchy_hash_data.back();
+                    hierarchy_hash_data.pop_back();
+
+                    // Add others in order, except last
+                    for (const auto& hash_data : hierarchy_hash_data) {
+                        certificate_hash_data_chain.child_certificate_hash_data.push_back(hash_data);
+                    }
+
+                    // Add to our chains
+                    certificate_chains.push_back(certificate_hash_data_chain);
+                }
+            }
         }
     }
 
@@ -429,7 +502,7 @@ void EvseSecurity::update_ocsp_cache(const CertificateHashData& certificate_hash
 
         for (const auto& cert : certificates_of_bundle) {
             if (cert == certificate_hash_data) {
-                EVLOG_info << "Writing OCSP Response to filesystem";
+                EVLOG_debug << "Writing OCSP Response to filesystem";
                 if (!cert.get_file().has_value()) {
                     continue;
                 }
@@ -540,7 +613,7 @@ std::string EvseSecurity::generate_certificate_signing_request(LeafCertificateTy
 }
 
 GetKeyPairResult EvseSecurity::get_key_pair(LeafCertificateType certificate_type, EncodingFormat encoding) {
-    EVLOG_info << "Requesting key/pair: " << conversions::leaf_certificate_type_to_string(certificate_type);
+    EVLOG_debug << "Requesting key/pair: " << conversions::leaf_certificate_type_to_string(certificate_type);
 
     GetKeyPairResult result;
     result.pair = std::nullopt;
@@ -580,14 +653,14 @@ GetKeyPairResult EvseSecurity::get_key_pair(LeafCertificateType certificate_type
         key_file = private_key_path;
 
         // We are searching for the full leaf bundle, containing both the leaf and the cso1/2
-        X509CertificateDirectory leaf_directory(cert_dir);
-        const X509CertificateBundle* leaf_fullchain = nullptr;
+        X509CertificateBundle leaf_directory(cert_dir, EncodingFormat::PEM);
+        const std::vector<X509Wrapper>* leaf_fullchain = nullptr;
 
         // Collect the correct bundle
-        leaf_directory.for_each([&certificate, &leaf_fullchain](const X509CertificateBundle& bundle) {
+        leaf_directory.for_each_chain([&](const std::filesystem::path& path, const std::vector<X509Wrapper>& chain) {
             // If we contain the latest valid, we found our generated bundle
-            if (bundle.is_bundle() && bundle.contains_certificate(certificate)) {
-                leaf_fullchain = &bundle;
+            if (chain.size() > 1 && std::find(chain.begin(), chain.end(), certificate) != chain.end()) {
+                leaf_fullchain = &chain;
                 return false;
             }
 
@@ -595,7 +668,7 @@ GetKeyPairResult EvseSecurity::get_key_pair(LeafCertificateType certificate_type
         });
 
         if (leaf_fullchain != nullptr) {
-            certificate_file = leaf_fullchain->get_path();
+            certificate_file = leaf_fullchain->at(0).get_file().value();
         } else {
             EVLOG_warning << "V2G leaf requires full bundle, but full bundle not found at path: " << cert_dir;
         }
@@ -625,23 +698,25 @@ GetKeyPairResult EvseSecurity::get_key_pair(LeafCertificateType certificate_type
 }
 
 std::string EvseSecurity::get_verify_file(CaCertificateType certificate_type) {
-    EVLOG_info << "Requesting certificate file: " << conversions::ca_certificate_type_to_string(certificate_type);
-
     // Support bundle files, in case the certificates contain
     // multiple entries (should be 3) as per the specification
     X509CertificateBundle verify_file(this->ca_bundle_path_map.at(certificate_type), EncodingFormat::PEM);
+
+    EVLOG_debug << "Requesting certificate file: [" << conversions::ca_certificate_type_to_string(certificate_type)
+                << "] file:" << verify_file.get_path();
+
     return verify_file.get_path().string();
 }
 
 int EvseSecurity::get_leaf_expiry_days_count(LeafCertificateType certificate_type) {
-    EVLOG_info << "Requesting certificate expiry: " << conversions::leaf_certificate_type_to_string(certificate_type);
+    EVLOG_debug << "Requesting certificate expiry: " << conversions::leaf_certificate_type_to_string(certificate_type);
 
     const auto key_pair = this->get_key_pair(certificate_type, EncodingFormat::PEM);
     if (key_pair.status == GetKeyPairStatus::Accepted) {
         // In case it is a bundle, we know the leaf is always the first
         X509CertificateBundle cert(key_pair.pair.value().certificate, EncodingFormat::PEM);
 
-        int64_t seconds = cert.get_at(0).get_valid_to();
+        int64_t seconds = cert.split().at(0).get_valid_to();
         return std::chrono::duration_cast<ossl_days_to_seconds>(std::chrono::seconds(seconds)).count();
     }
     return 0;
@@ -649,7 +724,7 @@ int EvseSecurity::get_leaf_expiry_days_count(LeafCertificateType certificate_typ
 
 bool EvseSecurity::verify_file_signature(const fs::path& path, const std::string& signing_certificate,
                                          const std::string signature) {
-    EVLOG_info << "Verifying file signature for " << path.string();
+    EVLOG_debug << "Verifying file signature for " << path.string();
 
     // calculate sha256 of file
     FILE_ptr file_ptr(fopen(path.string().c_str(), "rb"));

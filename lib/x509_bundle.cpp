@@ -50,7 +50,7 @@ std::vector<X509_ptr> X509CertificateBundle::load_certificates(const std::string
                 X509_INFO* xi = sk_X509_INFO_value(allcerts, i);
 
                 if (xi && xi->x509) {
-                    // Transfer owneship
+                    // Transfer ownership
                     certificates.emplace_back(xi->x509);
                     xi->x509 = nullptr;
                 }
@@ -75,12 +75,13 @@ std::vector<X509_ptr> X509CertificateBundle::load_certificates(const std::string
     return certificates;
 }
 
-X509CertificateBundle::X509CertificateBundle(const std::string& certificate, const EncodingFormat encoding) {
-    source = X509CertificateSource::STRING;
+X509CertificateBundle::X509CertificateBundle(const std::string& certificate, const EncodingFormat encoding) :
+    hierarchy_invalidated(true), source(X509CertificateSource::STRING) {
     add_certifcates(certificate, encoding, std::nullopt);
 }
 
-X509CertificateBundle::X509CertificateBundle(const fs::path& path, const EncodingFormat encoding) {
+X509CertificateBundle::X509CertificateBundle(const fs::path& path, const EncodingFormat encoding) :
+    hierarchy_invalidated(true) {
     this->path = path;
 
     if (fs::is_directory(path)) {
@@ -108,56 +109,119 @@ X509CertificateBundle::X509CertificateBundle(const fs::path& path, const Encodin
 void X509CertificateBundle::add_certifcates(const std::string& data, const EncodingFormat encoding,
                                             const std::optional<fs::path>& path) {
     auto loaded = load_certificates(data, encoding);
-
-    // If we are using a directory we can't load certificate bundles
-    if (is_using_directory() && loaded.size() > 1) {
-        EVLOG_warning << "Failed to read single certificate from directory file, ignoring entry!";
-        return;
-    }
+    auto& list = certificates[path.value_or(std::filesystem::path())];
 
     for (auto& x509 : loaded) {
         if (path.has_value())
-            certificates.emplace_back(std::move(x509), path.value());
+            list.emplace_back(std::move(x509), path.value());
         else
-            certificates.emplace_back(std::move(x509));
+            list.emplace_back(std::move(x509));
     }
 }
 
 std::vector<X509Wrapper> X509CertificateBundle::split() {
-    return certificates;
-}
+    std::vector<X509Wrapper> full_certificates;
 
-bool X509CertificateBundle::contains_certificate(const X509Wrapper& certificate) const {
-    for (const auto& certif : certificates) {
-        if (certif == certificate)
-            return true;
+    // Append all chains
+    for (const auto& chains : certificates) {
+        for (const auto& cert : chains.second)
+            full_certificates.push_back(cert);
     }
 
-    return false;
+    return full_certificates;
 }
 
-bool X509CertificateBundle::contains_certificate(const CertificateHashData& certificate_hash) const {
-    for (const auto& certif : certificates) {
-        if (certif == certificate_hash)
-            return true;
-    }
-
-    return false;
-}
-
-bool X509CertificateBundle::delete_certificate(const X509Wrapper& certificate) {
-    return delete_certificate(certificate.get_certificate_hash_data());
-}
-
-bool X509CertificateBundle::delete_certificate(const CertificateHashData& data) {
-    for (auto it = certificates.begin(); it != certificates.end(); ++it) {
-        if (*it == data) {
-            certificates.erase(it);
-            return true;
+bool X509CertificateBundle::contains_certificate(const X509Wrapper& certificate) {
+    // Search through all the chains
+    for (const auto& chain : certificates) {
+        for (const auto& certif : chain.second) {
+            if (certif == certificate)
+                return true;
         }
     }
 
     return false;
+}
+
+bool X509CertificateBundle::contains_certificate(const CertificateHashData& certificate_hash) {
+    // Try an initial search for root certificates, else a hierarchy build will be required
+    for (const auto& chain : certificates) {
+        bool found = std::find_if(std::begin(chain.second), std::end(chain.second), [&](const X509Wrapper& cert) {
+                         return cert.is_selfsigned() && cert == certificate_hash;
+                     }) != std::end(chain.second);
+
+        if (found)
+            return true;
+    }
+
+    // Nothing found, build the hierarchy and search by the issued hash
+    X509CertificateHierarchy& hierarchy = get_certficate_hierarchy();
+    return hierarchy.contains_certificate_hash(certificate_hash);
+}
+
+X509Wrapper X509CertificateBundle::find_certificate(const CertificateHashData& certificate_hash) {
+    // Try an initial search for root certificates, else a hierarchy build will be required
+    for (const auto& chain : certificates) {
+        for (const auto& certif : chain.second) {
+            if (certif.is_selfsigned() && certif == certificate_hash) {
+                return certif;
+            }
+        }
+    }
+
+    // Nothing found, build the hierarchy and search by the issued hash
+    X509CertificateHierarchy& hierarchy = get_certficate_hierarchy();
+    return hierarchy.find_certificate(certificate_hash);
+}
+
+int X509CertificateBundle::delete_certificate(const X509Wrapper& certificate, bool include_issued) {
+    std::vector<X509Wrapper> to_delete;
+
+    if (include_issued) {
+        // Include all descendants in the delete list
+        auto& hierarchy = get_certficate_hierarchy();
+        to_delete = hierarchy.collect_descendants(certificate);
+    }
+
+    // Include default delete
+    to_delete.push_back(certificate);
+    int deleted = 0;
+
+    for (auto& chains : certificates) {
+        auto& certifs = chains.second;
+
+        certifs.erase(std::remove_if(certifs.begin(), certifs.end(),
+                                     [&](const auto& certif) {
+                                         bool found =
+                                             std::find(to_delete.begin(), to_delete.end(), certif) != to_delete.end();
+
+                                         if (found)
+                                             deleted++;
+
+                                         return found;
+                                     }),
+                      certifs.end());
+    }
+
+    // If we deleted any, invalidate the built hierarchy
+    if (deleted) {
+        invalidate_hierarchy();
+    }
+
+    return deleted;
+}
+
+int X509CertificateBundle::delete_certificate(const CertificateHashData& data, bool include_issued) {
+    auto& hierarchy = get_certficate_hierarchy();
+
+    try {
+        // Try to find the certificate by correct hierarchy hash
+        X509Wrapper to_delete = hierarchy.find_certificate(data);
+        return delete_certificate(to_delete, include_issued);
+    } catch (NoCertificateFound& e) {
+    }
+
+    return 0;
 }
 
 void X509CertificateBundle::delete_all_certificates() {
@@ -165,14 +229,40 @@ void X509CertificateBundle::delete_all_certificates() {
 }
 
 void X509CertificateBundle::add_certificate(X509Wrapper&& certificate) {
-    certificates.push_back(certificate);
+    if (source == X509CertificateSource::DIRECTORY) {
+        // If it is in directory mode only allow sub-directories of that directory
+        std::filesystem::path certif_path = certificate.get_file().value_or(std::filesystem::path());
+
+        if (EvseUtils::is_subdirectory(path, certif_path)) {
+            certificates[certif_path].push_back(std::move(certificate));
+            invalidate_hierarchy();
+        } else {
+            throw InvalidOperationException(
+                "Added certificate with directory bundle, must be subdir of the main directory: " + path.string());
+        }
+    } else {
+        // The bundle came from a file, so there is only one file we could add the certificate to
+        certificates.begin()->second.push_back(certificate);
+        invalidate_hierarchy();
+    }
+}
+
+void X509CertificateBundle::add_certificate_unique(X509Wrapper&& certificate) {
+    if (!contains_certificate(certificate)) {
+        return add_certificate(std::move(certificate));
+        invalidate_hierarchy();
+    }
 }
 
 bool X509CertificateBundle::update_certificate(X509Wrapper&& certificate) {
-    for (int i = 0; i < certificates.size(); ++i) {
-        if (certificates[i] == certificate) {
-            certificates.at(i) = std::move(certificate);
-            return true;
+    for (auto& chain : certificates) {
+        for (auto& certif : chain.second) {
+            if (certif == certificate) {
+                certif = std::move(certificate);
+                invalidate_hierarchy();
+
+                return true;
+            }
         }
     }
 
@@ -195,13 +285,13 @@ bool X509CertificateBundle::export_certificates() {
         bool exported_all = true;
 
         // Write updated certificates
-        for (auto& certificate : certificates) {
-            if (certificate.get_file().has_value()) {
-                if (!EvseUtils::write_to_file(certificate.get_file().value(), certificate.get_export_string(),
-                                              std::ios::trunc)) {
-                    exported_all = false;
-                }
-            } else {
+        for (auto& chains : certificates) {
+            // Ignore empty chains (the file was deleted)
+            if (chains.second.empty())
+                continue;
+
+            // Each chain is a single file
+            if (!EvseUtils::write_to_file(chains.first, to_export_string(chains.first), std::ios::trunc)) {
                 exported_all = false;
             }
         }
@@ -223,25 +313,37 @@ bool X509CertificateBundle::sync_to_certificate_store() {
 
     if (source == X509CertificateSource::DIRECTORY) {
         // Get existing certificates from filesystem
-        std::vector<X509Wrapper> fs_certificates = X509CertificateBundle(path, EncodingFormat::PEM).split();
-
+        X509CertificateBundle fs_certificates(path, EncodingFormat::PEM);
         bool success = true;
-        // Delete filesystem certificates missing from our list
-        for (const auto& fs_certif : fs_certificates) {
-            if (std::find(certificates.begin(), certificates.end(), fs_certif) == certificates.end()) {
-                // fs certif not existing in our certificate list, delete
-                if (!EvseUtils::delete_file(fs_certif.get_file().value()))
+
+        // Delete filesystem certificate chains missing from our map
+        for (const auto& fs_chain : fs_certificates.certificates) {
+            if (certificates.find(fs_chain.first) == certificates.end()) {
+                // fs certif chain not existing in our certificate list, delete
+                if (!EvseUtils::delete_file(fs_chain.first))
                     success = false;
             }
         }
 
-        // Add the certificates that are not existing in the filesystem
-        for (const auto& certif : certificates) {
-            if (std::find(fs_certificates.begin(), fs_certificates.end(), certif) == fs_certificates.end()) {
+        // Add the certificates that are not existing in the filesystem. Each chain represents a single file
+        for (const auto& chain : certificates) {
+            if (chain.second.empty()) {
+                // If it's an empty chain, delete
+                if (!EvseUtils::delete_file(chain.first))
+                    success = false;
+            } else if (fs_certificates.certificates.find(chain.first) == fs_certificates.certificates.end()) {
                 // Certif not existing in fs certificates write it out
-                if (!EvseUtils::write_to_file(certif.get_file().value(), certif.get_export_string(), std::ios::trunc))
+                if (!EvseUtils::write_to_file(chain.first, to_export_string(chain.first), std::ios::trunc))
                     success = false;
             }
+        }
+
+        // After fs deletion erase all empty files from our certificate list, so that we don't write them out
+        for (auto first = certificates.begin(); first != certificates.end();) {
+            if (first->second.empty())
+                first = certificates.erase(first);
+            else
+                ++first;
         }
 
         return success;
@@ -250,35 +352,54 @@ bool X509CertificateBundle::sync_to_certificate_store() {
         if (certificates.empty()) {
             return EvseUtils::delete_file(path);
         }
+
+        return true;
     }
 
-    return true;
+    return false;
 }
 
 X509Wrapper X509CertificateBundle::get_latest_valid_certificate() {
-    return get_latest_valid_certificate(certificates);
+    return get_latest_valid_certificate(split());
+}
+
+void X509CertificateBundle::invalidate_hierarchy() {
+    hierarchy_invalidated = true;
+}
+
+X509CertificateHierarchy& X509CertificateBundle::get_certficate_hierarchy() {
+    if (hierarchy_invalidated) {
+        hierarchy_invalidated = false;
+
+        auto certificates = split();
+        hierarchy = X509CertificateHierarchy::build_hierarchy(certificates);
+    }
+
+    return hierarchy;
 }
 
 std::string X509CertificateBundle::to_export_string() const {
     std::string export_string;
 
-    for (auto& certificate : certificates) {
-        export_string += certificate.get_export_string();
+    for (auto& chain : certificates) {
+        for (auto& certificate : chain.second) {
+            export_string += certificate.get_export_string();
+        }
     }
 
     return export_string;
 }
 
-X509CertificateDirectory::X509CertificateDirectory(const fs::path& directory) {
-    if (fs::is_directory(directory)) {
-        for (const auto& entry : fs::recursive_directory_iterator(directory)) {
-            if (X509CertificateBundle::is_certificate_file(entry)) {
-                bundles.emplace_back(entry, EncodingFormat::PEM);
-            }
-        }
-    } else {
-        throw CertificateLoadException("X509CertificateDirectory can only load from directories!");
+std::string X509CertificateBundle::to_export_string(const std::filesystem::path& chain) const {
+    std::string export_string;
+
+    auto found = certificates.find(chain);
+    if (found != certificates.end()) {
+        for (auto& certificate : found->second)
+            export_string += certificate.get_export_string();
     }
+
+    return export_string;
 }
 
 } // namespace evse_security

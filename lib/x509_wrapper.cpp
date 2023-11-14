@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
+#include <cctype>
 #include <fstream>
 #include <iostream>
 #include <regex>
@@ -97,6 +98,10 @@ X509Wrapper::X509Wrapper(const X509Wrapper& other) :
 X509Wrapper::~X509Wrapper() {
 }
 
+bool X509Wrapper::operator==(const X509Wrapper& other) const {
+    return (X509_cmp(get(), other.get()) == 0);
+}
+
 void X509Wrapper::update_validity() {
     // For valid_in and valid_to
     ASN1_TIME* notBefore = X509_get_notBefore(get());
@@ -109,6 +114,30 @@ void X509Wrapper::update_validity() {
     ASN1_TIME_diff(&day, &sec, nullptr, notAfter);
     valid_to = std::chrono::duration_cast<std::chrono::seconds>(ossl_days_to_seconds(day)).count() +
                sec; // Convert days to seconds
+}
+
+bool X509Wrapper::is_child(const X509Wrapper& parent) const {
+    if ((this == &parent) || (*this == parent)) {
+        return false;
+    }
+
+    X509_STORE_ptr store(X509_STORE_new());
+    X509_STORE_add_cert(store.get(), parent.get());
+
+    X509_STORE_CTX_ptr ctx(X509_STORE_CTX_new());
+    X509_STORE_CTX_init(ctx.get(), store.get(), this->get(), NULL);
+
+    // If the parent is not a self-signed certificate, assume we have a partial chain
+    if (parent.is_selfsigned() == false) {
+        X509_STORE_CTX_set_flags(ctx.get(), X509_V_FLAG_X509_STRICT);
+        X509_STORE_CTX_set_flags(ctx.get(), X509_V_FLAG_PARTIAL_CHAIN);
+    }
+
+    return (X509_verify_cert(ctx.get()) == 1);
+}
+
+bool X509Wrapper::is_selfsigned() const {
+    return (X509_self_signed(x509.get(), 0) == 1);
 }
 
 void X509Wrapper::reset(X509* _x509) {
@@ -135,6 +164,21 @@ bool X509Wrapper::is_expired() const {
 
 std::optional<fs::path> X509Wrapper::get_file() const {
     return this->file;
+}
+
+void X509Wrapper::update_file(fs::path& path) {
+    if (fs::is_directory(path))
+        throw std::logic_error("update_file must only be used for files, not directories!");
+
+    file = path;
+}
+
+X509CertificateSource X509Wrapper::get_source() const {
+    if (file.has_value()) {
+        return X509CertificateSource::FILE;
+    } else {
+        return X509CertificateSource::STRING;
+    }
 }
 
 std::string X509Wrapper::get_common_name() const {
@@ -194,6 +238,9 @@ std::string X509Wrapper::get_serial_number() const {
     }
 
     std::string serial(hex_serial);
+    for (char& i : serial) {
+        i = std::tolower(i);
+    }
 
     BN_free(bn_serial);
 
@@ -202,6 +249,14 @@ std::string X509Wrapper::get_serial_number() const {
 }
 
 std::string X509Wrapper::get_issuer_key_hash() const {
+    if (is_selfsigned()) {
+        return get_key_hash();
+    } else {
+        throw std::logic_error("get_issuer_key_hash must only be used on self-signed certs");
+    }
+}
+
+std::string X509Wrapper::get_key_hash() const {
     unsigned char tmphash[SHA256_DIGEST_LENGTH];
     X509_pubkey_digest(get(), EVP_sha256(), tmphash, NULL);
     std::stringstream ss;
@@ -217,6 +272,21 @@ CertificateHashData X509Wrapper::get_certificate_hash_data() const {
     certificate_hash_data.issuer_name_hash = this->get_issuer_name_hash();
     certificate_hash_data.issuer_key_hash = this->get_issuer_key_hash();
     certificate_hash_data.serial_number = this->get_serial_number();
+    return certificate_hash_data;
+}
+
+CertificateHashData X509Wrapper::get_certificate_hash_data(const X509Wrapper& issuer) const {
+    if (!this->is_child(issuer)) {
+        throw std::logic_error("The specified issuer is not the correct issuer for this certificate.");
+    }
+
+    CertificateHashData certificate_hash_data;
+    certificate_hash_data.hash_algorithm = HashAlgorithm::SHA256;
+    certificate_hash_data.issuer_name_hash = this->get_issuer_name_hash();
+    // Issuer key hash
+    certificate_hash_data.issuer_key_hash = issuer.get_key_hash();
+    certificate_hash_data.serial_number = this->get_serial_number();
+
     return certificate_hash_data;
 }
 

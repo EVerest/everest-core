@@ -56,6 +56,14 @@ public:
 
     ~X509Wrapper();
 
+public:
+    /// @brief Returns true if this certificate is the child of the provided parent
+    bool is_child(const X509Wrapper& parent) const;
+
+    /// @brief Returns true if this certificate is self-signed
+    bool is_selfsigned() const;
+
+public:
     /// @brief Gets raw X509 pointer
     /// @return
     inline X509* get() const {
@@ -78,6 +86,10 @@ public:
     /// @result
     std::optional<fs::path> get_file() const;
 
+    /// @brief Gets the source of this certificate, if it is from a file it's 'FILE'
+    /// but it can also be constructed from a string, or another certificate
+    X509CertificateSource get_source() const;
+
     /// @brief Gets CN of certificate
     /// @result
     std::string get_common_name() const;
@@ -86,17 +98,28 @@ public:
     /// @result
     std::string get_issuer_name_hash() const;
 
+    /// @brief Gets issuer key hash of certificate. As per the specification
+    /// this is not the hash of our public key, but the hash of the pubkey of
+    /// the parent certificate. If it is a self-signed root, then the key hash
+    /// and the issuer key hash are the same
+    /// @result
+    std::string get_issuer_key_hash() const;
+
+    /// @brief Gets key hash of this certificate
+    /// @result
+    std::string get_key_hash() const;
+
     /// @brief Gets serial number of certificate
     /// @result
     std::string get_serial_number() const;
 
-    /// @brief Gets issuer key hash of certificate
-    /// @result
-    std::string get_issuer_key_hash() const;
-
-    /// @brief Gets certificate hash data of certificate
+    /// @brief Gets certificate hash data of a self-signed certificate
     /// @return
     CertificateHashData get_certificate_hash_data() const;
+
+    /// @brief Gets certificate hash data of certificate with an issuer
+    /// @return
+    CertificateHashData get_certificate_hash_data(const X509Wrapper& issuer) const;
 
     /// @brief Gets OCSP responder URL of certificate if present, else returns an empty string
     /// @return
@@ -117,11 +140,10 @@ public:
 public:
     X509Wrapper& operator=(X509Wrapper&& other) = default;
 
+    void update_file(fs::path& path);
+
     /// @return true if the two certificates are the same
-    bool operator==(const X509Wrapper& other) const {
-        return get_issuer_name_hash() == other.get_issuer_name_hash() &&
-               get_issuer_key_hash() == other.get_issuer_key_hash() && get_serial_number() == other.get_serial_number();
-    }
+    bool operator==(const X509Wrapper& other) const;
 
     bool operator==(const CertificateHashData& other) const {
         return get_issuer_name_hash() == other.issuer_name_hash && get_issuer_key_hash() == other.issuer_key_hash &&
@@ -133,8 +155,8 @@ private:
 
 private:
     X509_ptr x509;         // X509 wrapper object
-    std::int64_t valid_in; // seconds; if > 0 cert is not yet valid
-    std::int64_t valid_to; // seconds; if < 0 cert has expired
+    std::int64_t valid_in; // seconds; if > 0 cert is not yet valid, negative value means past, positive is in future
+    std::int64_t valid_to; // seconds; if < 0 cert has expired, negative value means past, positive is in future
 
     // Relevant file in which this certificate resides
     std::optional<fs::path> file;
