@@ -117,7 +117,8 @@ void WebsocketBase::log_on_fail(const std::error_code& ec, const boost::system::
 
 long WebsocketBase::get_reconnect_interval() {
 
-    if (this->connection_attempts > this->connection_options.retry_backoff_repeat_times) {
+    // We need to add 1 to the repeat times since the first try is already connection_attempt 1
+    if (this->connection_attempts > (this->connection_options.retry_backoff_repeat_times + 1)) {
         return this->reconnect_backoff_ms;
     }
 
