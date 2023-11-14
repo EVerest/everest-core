@@ -24,7 +24,7 @@ void evse_board_supportImpl::init() {
     }
 
     mod->serial.signal_cp_state.connect([this](int connector, CpState s) {
-        if (connector == 1 && s not_eq last_cp_state) {
+        if (connector == 1 and s not_eq last_cp_state) {
             publish_event(to_bsp_event(s));
             EVLOG_info << "[1] CP State changed: " << to_bsp_event(s);
             last_cp_state = s;
