@@ -42,6 +42,11 @@ typedef struct _KeepAlive {
     char sw_version_string[51];
 } KeepAlive;
 
+typedef struct _Telemetry { 
+    uint32_t cp_voltage_hi;
+    uint32_t cp_voltage_lo;
+} Telemetry;
+
 /* This container message is send from EVerest to MCU and may contain any allowed message in that direction. */
 typedef struct _EverestToMcu { 
     pb_size_t which_payload;
@@ -65,6 +70,7 @@ typedef struct _McuToEverest {
         CpState cp_state;
         bool relais_state; /* false: relais are off, true: relais are on */
         ErrorFlags error_flags;
+        Telemetry telemetry;
     } payload;
     int32_t connector; /* 0: None, 1: Connector 1, 2: Connector 2 */
 } McuToEverest;
@@ -89,10 +95,12 @@ extern "C" {
 #define McuToEverest_init_default                {0, {KeepAlive_init_default}, 0}
 #define ErrorFlags_init_default                  {0, 0, 0, 0, 0, 0}
 #define KeepAlive_init_default                   {0, 0, 0, ""}
+#define Telemetry_init_default                   {0, 0}
 #define EverestToMcu_init_zero                   {0, {KeepAlive_init_zero}, 0}
 #define McuToEverest_init_zero                   {0, {KeepAlive_init_zero}, 0}
 #define ErrorFlags_init_zero                     {0, 0, 0, 0, 0, 0}
 #define KeepAlive_init_zero                      {0, 0, 0, ""}
+#define Telemetry_init_zero                      {0, 0}
 
 /* Field tags (for use in manual encoding/decoding) */
 #define ErrorFlags_diode_fault_tag               1
@@ -105,6 +113,8 @@ extern "C" {
 #define KeepAlive_hw_type_tag                    2
 #define KeepAlive_hw_revision_tag                3
 #define KeepAlive_sw_version_string_tag          6
+#define Telemetry_cp_voltage_hi_tag              1
+#define Telemetry_cp_voltage_lo_tag              2
 #define EverestToMcu_keep_alive_tag              1
 #define EverestToMcu_firmware_update_tag         2
 #define EverestToMcu_connector_lock_tag          3
@@ -117,6 +127,7 @@ extern "C" {
 #define McuToEverest_cp_state_tag                3
 #define McuToEverest_relais_state_tag            4
 #define McuToEverest_error_flags_tag             5
+#define McuToEverest_telemetry_tag               7
 #define McuToEverest_connector_tag               6
 
 /* Struct field encoding specification for nanopb */
@@ -138,11 +149,13 @@ X(a, STATIC,   ONEOF,    UENUM,    (payload,reset,payload.reset),   2) \
 X(a, STATIC,   ONEOF,    UENUM,    (payload,cp_state,payload.cp_state),   3) \
 X(a, STATIC,   ONEOF,    BOOL,     (payload,relais_state,payload.relais_state),   4) \
 X(a, STATIC,   ONEOF,    MESSAGE,  (payload,error_flags,payload.error_flags),   5) \
-X(a, STATIC,   SINGULAR, INT32,    connector,         6)
+X(a, STATIC,   SINGULAR, INT32,    connector,         6) \
+X(a, STATIC,   ONEOF,    MESSAGE,  (payload,telemetry,payload.telemetry),   7)
 #define McuToEverest_CALLBACK NULL
 #define McuToEverest_DEFAULT NULL
 #define McuToEverest_payload_keep_alive_MSGTYPE KeepAlive
 #define McuToEverest_payload_error_flags_MSGTYPE ErrorFlags
+#define McuToEverest_payload_telemetry_MSGTYPE Telemetry
 
 #define ErrorFlags_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, BOOL,     diode_fault,       1) \
@@ -162,22 +175,31 @@ X(a, STATIC,   SINGULAR, STRING,   sw_version_string,   6)
 #define KeepAlive_CALLBACK NULL
 #define KeepAlive_DEFAULT NULL
 
+#define Telemetry_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, UINT32,   cp_voltage_hi,     1) \
+X(a, STATIC,   SINGULAR, UINT32,   cp_voltage_lo,     2)
+#define Telemetry_CALLBACK NULL
+#define Telemetry_DEFAULT NULL
+
 extern const pb_msgdesc_t EverestToMcu_msg;
 extern const pb_msgdesc_t McuToEverest_msg;
 extern const pb_msgdesc_t ErrorFlags_msg;
 extern const pb_msgdesc_t KeepAlive_msg;
+extern const pb_msgdesc_t Telemetry_msg;
 
 /* Defines for backwards compatibility with code written before nanopb-0.4.0 */
 #define EverestToMcu_fields &EverestToMcu_msg
 #define McuToEverest_fields &McuToEverest_msg
 #define ErrorFlags_fields &ErrorFlags_msg
 #define KeepAlive_fields &KeepAlive_msg
+#define Telemetry_fields &Telemetry_msg
 
 /* Maximum encoded size of messages (where known) */
 #define ErrorFlags_size                          12
 #define EverestToMcu_size                        83
 #define KeepAlive_size                           70
 #define McuToEverest_size                        83
+#define Telemetry_size                           12
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -159,6 +159,10 @@ void evSerial::handle_packet(uint8_t* buf, int len) {
             signal_error_flags(msg_in.connector, msg_in.payload.error_flags);
             break;
 
+        case McuToEverest_telemetry_tag:
+            signal_telemetry(msg_in.connector, msg_in.payload.telemetry);
+            break;
+
         case McuToEverest_reset_tag:
             reset_done_flag = true;
             if (!forced_reset)

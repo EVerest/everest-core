@@ -59,6 +59,10 @@ int main(int argc, char* argv[]) {
                 printf(">> Connector %i: Relais OPEN\n", connector);
         });
 
+        p.signal_telemetry.connect([](int connector, Telemetry t) {
+            printf(">> Connector %i: CP Voltage %i %i\n", connector, t.cp_voltage_hi, t.cp_voltage_lo);
+        });
+
         p.signal_cp_state.connect([](int connector, CpState s) {
             switch (s) {
             case CpState_STATE_A:

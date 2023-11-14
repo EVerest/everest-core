@@ -32,8 +32,14 @@ void evse_board_supportImpl::init() {
     });
     mod->serial.signal_relais_state.connect([this](int connector, bool s) {
         if (connector == 1) {
-            EVLOG_info << "[1] Relais: "<<(s?"ON":"OFF"); 
+            EVLOG_info << "[1] Relais: " << (s ? "ON" : "OFF");
             publish_event(to_bsp_event(s));
+        }
+    });
+
+    mod->serial.signal_telemetry.connect([this](int connector, Telemetry t) {
+        if (connector == 1) {
+            EVLOG_info << "[1] CP Voltage: " << t.cp_voltage_hi << " " << t.cp_voltage_lo;
         }
     });
 }

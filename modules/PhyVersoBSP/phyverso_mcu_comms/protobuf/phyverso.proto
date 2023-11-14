@@ -25,6 +25,7 @@ message McuToEverest {
   CpState cp_state = 3;
   bool relais_state = 4; // false: relais are off, true: relais are on
   ErrorFlags error_flags = 5;
+  Telemetry telemetry = 7;
  }
  int32 connector = 6; // 0: None, 1: Connector 1, 2: Connector 2
 }
@@ -57,4 +58,9 @@ message KeepAlive {
   uint32 hw_type = 2;
   uint32 hw_revision = 3;
   string sw_version_string = 6;
+}
+
+message Telemetry {
+  uint32 cp_voltage_hi = 1;
+  uint32 cp_voltage_lo = 2;
 }

@@ -35,6 +35,7 @@ public:
     sigslot::signal<int, CpState> signal_cp_state;
     sigslot::signal<int, bool> signal_relais_state;
     sigslot::signal<int, ErrorFlags> signal_error_flags;
+    sigslot::signal<int, Telemetry> signal_telemetry;
     sigslot::signal<ResetReason> signal_spurious_reset;
     sigslot::signal<> signal_connection_timeout;
 

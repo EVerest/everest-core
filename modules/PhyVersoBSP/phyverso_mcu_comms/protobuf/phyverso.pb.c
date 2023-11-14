@@ -18,6 +18,9 @@ PB_BIND(ErrorFlags, ErrorFlags, AUTO)
 PB_BIND(KeepAlive, KeepAlive, AUTO)
 
 
+PB_BIND(Telemetry, Telemetry, AUTO)
+
+
 
 
 
