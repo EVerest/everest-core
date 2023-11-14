@@ -15,7 +15,7 @@ boot_module(async ({
     handle = mod.provides.example.raise.example_ExampleErrorA('Example error', 'Low');
     evlog.info('Raised error example_ExampleErrorA: ' + JSON.stringify(handle, null, " "));
     await sleep(2000);
-    mod.provides.example.raise.example_ExampleErrorA('Example error', 'Mid');
+    mod.provides.example.raise.example_ExampleErrorA('Example error', 'Medium');
     await sleep(2000);
     mod.provides.example.raise.example_ExampleErrorA('Example error', 'High');
     await sleep(2000);
@@ -24,7 +24,7 @@ boot_module(async ({
     mod.provides.example.request_clear_all_of_type.example_ExampleErrorA();
     await sleep(2000);
     mod.provides.example.raise.example_ExampleErrorB('Example error', 'Low');
-    mod.provides.example.raise.example_ExampleErrorC('Example error', 'Mid');
+    mod.provides.example.raise.example_ExampleErrorC('Example error', 'Medium');
     await sleep(2000);
     mod.provides.example.request_clear_all();
 
