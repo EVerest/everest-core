@@ -116,11 +116,16 @@ TEST_F(EvseSecurityTests, verify_bundle_management) {
 
     std::cout << "Bundle hierarchy: " << std::endl << bundle.get_certficate_hierarchy().to_debug_string();
 
-    CertificateHashData hash = bundle.get_certficate_hierarchy().get_certificate_hash(bundle.split()[1]);
+    // Lowest in hierarchy
+    X509Wrapper intermediate_cert = bundle.get_certficate_hierarchy().get_hierarchy().at(0).children.at(0).certificate;
+
+    CertificateHashData hash = bundle.get_certficate_hierarchy().get_certificate_hash(intermediate_cert);
     bundle.delete_certificate(hash, true);
 
     // Sync deleted
     bundle.sync_to_certificate_store();
+
+    std::cout << "Deleted intermediate: " << std::endl << bundle.get_certficate_hierarchy().to_debug_string();
 
     int items = 0;
     for (const auto& entry : fs::recursive_directory_iterator(directory_path)) {
