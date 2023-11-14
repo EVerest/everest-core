@@ -177,9 +177,10 @@ InstallCertificateResult EvseSecurity::install_ca_certificate(const std::string&
         // Load existing
         const auto ca_bundle_path = this->ca_bundle_path_map.at(certificate_type);
 
-        // TODO: (ioan) check if we are in bundle directory mode too
-        // Ensure file exists
-        EvseUtils::create_file_if_nonexistent(ca_bundle_path);
+        if (!fs::is_directory(ca_bundle_path)) {
+            // Ensure file exists
+            EvseUtils::create_file_if_nonexistent(ca_bundle_path);
+        }
 
         X509CertificateBundle existing_certs(ca_bundle_path, EncodingFormat::PEM);
 
