@@ -75,18 +75,18 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
         result = TokenHandlingResult::ALREADY_IN_PROCESS;
     }
 
-    switch(result) {
-        case TokenHandlingResult::ALREADY_IN_PROCESS:
-        case TokenHandlingResult::TIMEOUT: // Timeout means accepted but failed to pick contactor
-        case TokenHandlingResult::ACCEPTED: // Handled in handle_token internally
-            break;
-        case TokenHandlingResult::NO_CONNECTOR_AVAILABLE:
-        case TokenHandlingResult::REJECTED:
-            this->publish_token_validation_status_callback(provided_token, TokenValidationStatus::Rejected);
-            break;
-        case TokenHandlingResult::USED_TO_STOP_TRANSACTION:
-            this->publish_token_validation_status_callback(provided_token, TokenValidationStatus::Accepted);
-            break;
+    switch (result) {
+    case TokenHandlingResult::ALREADY_IN_PROCESS:
+    case TokenHandlingResult::TIMEOUT:  // Timeout means accepted but failed to pick contactor
+    case TokenHandlingResult::ACCEPTED: // Handled in handle_token internally
+        break;
+    case TokenHandlingResult::NO_CONNECTOR_AVAILABLE:
+    case TokenHandlingResult::REJECTED:
+        this->publish_token_validation_status_callback(provided_token, TokenValidationStatus::Rejected);
+        break;
+    case TokenHandlingResult::USED_TO_STOP_TRANSACTION:
+        this->publish_token_validation_status_callback(provided_token, TokenValidationStatus::Accepted);
+        break;
     }
 
     if (result != TokenHandlingResult::ALREADY_IN_PROCESS) {
@@ -176,7 +176,8 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
         while (i < validation_results.size() && !authorized && !referenced_connectors.empty()) {
             auto validation_result = validation_results.at(i);
             if (validation_result.authorization_status == AuthorizationStatus::Accepted) {
-                this->publish_token_validation_status_callback(provided_token, types::authorization::TokenValidationStatus::Accepted);
+                this->publish_token_validation_status_callback(provided_token,
+                                                               types::authorization::TokenValidationStatus::Accepted);
                 /* although validator accepts the authorization request, the Auth module still needs to
                     - select the connector for the authorization request
                     - process it against placed reservations
@@ -527,7 +528,8 @@ void AuthHandler::register_reservation_cancelled_callback(const std::function<vo
         [this](int connector_id) { this->call_reservation_cancelled(connector_id); });
 }
 
-void AuthHandler::register_publish_token_validation_status_callback(const std::function<void(const ProvidedIdToken&, TokenValidationStatus)>& callback) {
+void AuthHandler::register_publish_token_validation_status_callback(
+    const std::function<void(const ProvidedIdToken&, TokenValidationStatus)>& callback) {
     this->publish_token_validation_status_callback = callback;
 }
 
