@@ -23,6 +23,7 @@ endif()
 
 option(LIBEVSE_SECURITY_USE_BOOST_FILESYSTEM "Usage of boost/filesystem.hpp instead of std::filesystem" OFF)
 
+option(LIBEVSE_CRYPTO_SUPPLIER_OPENSSL "Default OpenSSL cryptography supplier" ON)
 
 # dependencies
 find_package(OpenSSL REQUIRED)
@@ -40,6 +41,7 @@ if (EVSE_SECURITY_INSTALL)
     install(
         DIRECTORY include/
         TYPE INCLUDE
+        PATTERN "detail" EXCLUDE
     )
 
     evc_setup_package(

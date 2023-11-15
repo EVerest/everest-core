@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifndef X509_BUNDLE_HPP
-#define X509_BUNDLE_HPP
+#pragma once
 
 #include <map>
 
-#include <x509_hierarchy.hpp>
-#include <x509_wrapper.hpp>
+#include <evse_security/certificate/x509_hierarchy.hpp>
+#include <evse_security/certificate/x509_wrapper.hpp>
 
 namespace evse_security {
 
@@ -65,14 +64,7 @@ public:
     }
 
     /// @return Contained certificate count
-    int get_certificate_count() const {
-        int count = 0;
-        for (const auto& chain : certificates) {
-            count += chain.second.size();
-        }
-
-        return count;
-    }
+    int get_certificate_count() const;
 
     fs::path get_path() const {
         return path;
@@ -157,8 +149,6 @@ public:
     X509CertificateBundle& operator=(X509CertificateBundle&& other) = default;
 
 public:
-    /// @brief Loads all certificates from the string data that can contain multiple cetifs
-    static std::vector<X509_ptr> load_certificates(const std::string& data, const EncodingFormat encoding);
     /// @brief Returns the latest valid certif that we might contain
     static X509Wrapper get_latest_valid_certificate(const std::vector<X509Wrapper>& certificates);
 
@@ -170,7 +160,7 @@ public:
 private:
     /// @brief Adds to our certificate list the certificates found in the file
     /// @return number of added certificates
-    void add_certifcates(const std::string& data, const EncodingFormat encoding, const std::optional<fs::path>& path);
+    void add_certificates(const std::string& data, const EncodingFormat encoding, const std::optional<fs::path>& path);
 
     /// @brief operation to be executed after each add/delete to this bundle
     void invalidate_hierarchy();
@@ -190,5 +180,3 @@ private:
 };
 
 } // namespace evse_security
-
-#endif // X509_BUNDLE_HPP

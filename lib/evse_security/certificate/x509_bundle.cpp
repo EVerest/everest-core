@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-
-#include <everest/logging.hpp>
-#include <evse_utilities.hpp>
-#include <x509_bundle.hpp>
+#include <evse_security/certificate/x509_bundle.hpp>
 
 #include <algorithm>
+
+#include <everest/logging.hpp>
+#include <evse_security/crypto/evse_crypto.hpp>
+#include <evse_security/utils/evse_filesystem.hpp>
+
 #include <openssl/err.h>
 #include <openssl/x509v3.h>
 
@@ -33,51 +35,9 @@ X509Wrapper X509CertificateBundle::get_latest_valid_certificate(const std::vecto
     return *latest_certificate;
 }
 
-std::vector<X509_ptr> X509CertificateBundle::load_certificates(const std::string& data, const EncodingFormat encoding) {
-    BIO_ptr bio(BIO_new_mem_buf(data.data(), static_cast<int>(data.size())));
-
-    if (!bio) {
-        throw CertificateLoadException("Failed to create BIO from data");
-    }
-
-    std::vector<X509_ptr> certificates;
-
-    if (encoding == EncodingFormat::PEM) {
-        STACK_OF(X509_INFO)* allcerts = PEM_X509_INFO_read_bio(bio.get(), nullptr, nullptr, nullptr);
-
-        if (allcerts) {
-            for (int i = 0; i < sk_X509_INFO_num(allcerts); i++) {
-                X509_INFO* xi = sk_X509_INFO_value(allcerts, i);
-
-                if (xi && xi->x509) {
-                    // Transfer ownership
-                    certificates.emplace_back(xi->x509);
-                    xi->x509 = nullptr;
-                }
-            }
-
-            sk_X509_INFO_pop_free(allcerts, X509_INFO_free);
-        } else {
-            throw CertificateLoadException("Certificate (PEM) parsing error");
-        }
-    } else if (encoding == EncodingFormat::DER) {
-        X509* x509 = d2i_X509_bio(bio.get(), nullptr);
-
-        if (x509) {
-            certificates.emplace_back(x509);
-        } else {
-            throw CertificateLoadException("Certificate (DER) parsing error");
-        }
-    } else {
-        throw CertificateLoadException("Unsupported encoding format");
-    }
-
-    return certificates;
-}
-
 X509CertificateBundle::X509CertificateBundle(const std::string& certificate, const EncodingFormat encoding) :
     hierarchy_invalidated(true), source(X509CertificateSource::STRING) {
-    add_certifcates(certificate, encoding, std::nullopt);
+    add_certificates(certificate, encoding, std::nullopt);
 }
 
 X509CertificateBundle::X509CertificateBundle(const fs::path& path, const EncodingFormat encoding) :
@@ -91,31 +51,18 @@ X509CertificateBundle::X509CertificateBundle(const fs::path& path, const Encodin
         for (const auto& entry : fs::recursive_directory_iterator(path)) {
             if (is_certificate_file(entry)) {
                 std::string certificate;
-                if (EvseUtils::read_from_file(entry.path(), certificate))
-                    add_certifcates(certificate, encoding, entry.path());
+                if (filesystem_utils::read_from_file(entry.path(), certificate))
+                    add_certificates(certificate, encoding, entry.path());
             }
         }
     } else if (is_certificate_file(path)) {
         source = X509CertificateSource::FILE;
 
         std::string certificate;
-        if (EvseUtils::read_from_file(path, certificate))
-            add_certifcates(certificate, encoding, path);
+        if (filesystem_utils::read_from_file(path, certificate))
+            add_certificates(certificate, encoding, path);
     } else {
         throw CertificateLoadException("Failed to create certificate info from path: " + path.string());
-    }
-}
-
-void X509CertificateBundle::add_certifcates(const std::string& data, const EncodingFormat encoding,
-                                            const std::optional<fs::path>& path) {
-    auto loaded = load_certificates(data, encoding);
-    auto& list = certificates[path.value_or(std::filesystem::path())];
-
-    for (auto& x509 : loaded) {
-        if (path.has_value())
-            list.emplace_back(std::move(x509), path.value());
-        else
-            list.emplace_back(std::move(x509));
     }
 }
 
@@ -129,6 +76,28 @@ std::vector<X509Wrapper> X509CertificateBundle::split() {
     }
 
     return full_certificates;
+}
+
+int X509CertificateBundle::get_certificate_count() const {
+    int count = 0;
+    for (const auto& chain : certificates) {
+        count += chain.second.size();
+    }
+
+    return count;
+}
+
+void X509CertificateBundle::add_certificates(const std::string& data, const EncodingFormat encoding,
+                                             const std::optional<fs::path>& path) {
+    auto loaded = CryptoSupplier::load_certificates(data, encoding);
+    auto& list = certificates[path.value_or(std::filesystem::path())];
+
+    for (auto& x509 : loaded) {
+        if (path.has_value())
+            list.emplace_back(std::move(x509), path.value());
+        else
+            list.emplace_back(std::move(x509));
+    }
 }
 
 bool X509CertificateBundle::contains_certificate(const X509Wrapper& certificate) {
@@ -233,7 +202,7 @@ void X509CertificateBundle::add_certificate(X509Wrapper&& certificate) {
         // If it is in directory mode only allow sub-directories of that directory
         std::filesystem::path certif_path = certificate.get_file().value_or(std::filesystem::path());
 
-        if (EvseUtils::is_subdirectory(path, certif_path)) {
+        if (filesystem_utils::is_subdirectory(path, certif_path)) {
             certificates[certif_path].push_back(std::move(certificate));
             invalidate_hierarchy();
         } else {
@@ -291,7 +260,7 @@ bool X509CertificateBundle::export_certificates() {
                 continue;
 
             // Each chain is a single file
-            if (!EvseUtils::write_to_file(chains.first, to_export_string(chains.first), std::ios::trunc)) {
+            if (!filesystem_utils::write_to_file(chains.first, to_export_string(chains.first), std::ios::trunc)) {
                 exported_all = false;
             }
         }
@@ -299,7 +268,7 @@ bool X509CertificateBundle::export_certificates() {
         return exported_all;
     } else if (source == X509CertificateSource::FILE) {
         // We're using a single file, no need to check for deleted certificates
-        return EvseUtils::write_to_file(path, to_export_string(), std::ios::trunc);
+        return filesystem_utils::write_to_file(path, to_export_string(), std::ios::trunc);
     }
 
     return false;
@@ -320,7 +289,7 @@ bool X509CertificateBundle::sync_to_certificate_store() {
         for (const auto& fs_chain : fs_certificates.certificates) {
             if (certificates.find(fs_chain.first) == certificates.end()) {
                 // fs certif chain not existing in our certificate list, delete
-                if (!EvseUtils::delete_file(fs_chain.first))
+                if (!filesystem_utils::delete_file(fs_chain.first))
                     success = false;
             }
         }
@@ -329,11 +298,11 @@ bool X509CertificateBundle::sync_to_certificate_store() {
         for (const auto& chain : certificates) {
             if (chain.second.empty()) {
                 // If it's an empty chain, delete
-                if (!EvseUtils::delete_file(chain.first))
+                if (!filesystem_utils::delete_file(chain.first))
                     success = false;
             } else if (fs_certificates.certificates.find(chain.first) == fs_certificates.certificates.end()) {
                 // Certif not existing in fs certificates write it out
-                if (!EvseUtils::write_to_file(chain.first, to_export_string(chain.first), std::ios::trunc))
+                if (!filesystem_utils::write_to_file(chain.first, to_export_string(chain.first), std::ios::trunc))
                     success = false;
             }
         }
@@ -350,7 +319,7 @@ bool X509CertificateBundle::sync_to_certificate_store() {
     } else if (source == X509CertificateSource::FILE) {
         // Delete source file if we're empty
         if (certificates.empty()) {
-            return EvseUtils::delete_file(path);
+            return filesystem_utils::delete_file(path);
         }
 
         return true;

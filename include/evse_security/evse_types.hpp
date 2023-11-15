@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifndef TYPES_HPP
-#define TYPES_HPP
+#pragma once
 
-#include <map>
 #include <optional>
 #include <string>
-#include <support_older_cpp_versions.hpp>
 #include <vector>
+
+#include <evse_security/utils/evse_filesystem_types.hpp>
 
 namespace evse_security {
 
@@ -130,9 +129,6 @@ std::string install_certificate_result_to_string(InstallCertificateResult e);
 std::string delete_certificate_result_to_string(DeleteCertificateResult e);
 std::string get_installed_certificates_status_to_string(GetInstalledCertificatesStatus e);
 std::string get_key_pair_status_to_string(GetKeyPairStatus e);
-
 } // namespace conversions
 
 } // namespace evse_security
-
-#endif // TYPES_HPP

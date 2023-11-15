@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifndef EVSE_SECURITY_HPP
-#define EVSE_SECURITY_HPP
+#pragma once
 
-#include <fstream>
-#include <support_older_cpp_versions.hpp>
-#include <types.hpp>
+#include <evse_security/evse_types.hpp>
+#include <evse_security/utils/evse_filesystem_types.hpp>
 
+#include <map>
 namespace evse_security {
 
 struct DirectoryPaths {
@@ -141,5 +140,3 @@ private:
 };
 
 } // namespace evse_security
-
-#endif // EVSE_SECURITY_HPP
