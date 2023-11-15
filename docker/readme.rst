@@ -6,11 +6,11 @@ You need to install docker_ and docker-compose_.  Furthermore, `visual
 studio code`_ might be handy as a common integrated development
 environment.
 
-In order for custom or local containers being able to talk to the
+In order for custom or local containers to be able to talk to the
 services, provided by the *docker-compose* containers, we need to create
 a common docker network.  It is called ``infranet_network`` and needs to
 be created by the following command (IPv6 is enabled for containers
-which might it)::
+which might need it)::
 
   docker network create --driver bridge --ipv6  --subnet fd00::/80 infranet_network --attachable
 
@@ -44,7 +44,7 @@ they live inside the docker network ``docker_default`` with their
 respective ports.  By default these ports are not directly accessible by
 using ``localhost:8080`` for example.  The current configuration exposes
 all these ports to the local host with some port mapping, so the often
-used ports will not clash with other services running already on your
+used ports will not clash with other services already running on your
 host system.  The mapping is as follows:
 
 - ``1883`` -> ``1883``, ``9001`` -> ``9001`` for

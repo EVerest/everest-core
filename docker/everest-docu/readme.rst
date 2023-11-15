@@ -14,7 +14,7 @@ Setup
 
     git clone https://github.com/EVerest/everest-utils.git
 
-  Copy the folder ``docker/everest-docu`` to a place, you like.  For the
+  Copy the folder ``docker/everest-docu`` to a place of your choice.  For the
   remainder of this setup, we'll call that folder ``everest-doc``.
 
   .. note::
@@ -51,16 +51,16 @@ Usage
 
 * `Editing and previewing rst files from external folders`: This is
   unfortunately a bit more complicated, because this whole setup runs in a `Dev
-  Container` which can't reach the outside.  One possibility is copy the files
-  in the ``everest-docu`` folder, so you can use them directly.  This approach
-  might not suite you, because you will need to put your folders into this
-  project.
+  Container` which can't reach the outside.  One possibility is to copy the
+  files in the ``everest-docu`` folder, so you can use them directly.  This
+  approach might not suit you, because you will need to put your folders into
+  this project.
 
   Another possibility is to add an external folder as a mount point to this
   container.  In order to do so, open the file
   ``.devcontainer/devcontainer.json`` and uncomment the mount configuration.
   There you can insert your local folder, which will then be mounted into this
-  container at ``/ext_source``.  The create a symlink into this containers
+  container at ``/ext_source``.  Then create a symlink into this container's
   source folder by::
 
     # change into this containers source folder
@@ -77,7 +77,7 @@ Usage
 
   inside the ``.vscode/settings.json`` file.
 
-Usefull resources
+Useful resources
 -----------------
 
 * `Restructured text primer <https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html>`_
