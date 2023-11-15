@@ -12,7 +12,7 @@ boot_module(async ({
   evlog.info('Nothing to set up');
 }).then(async (mod) => {
   evlog.info('JsExample started');
-  let handle = mod.provides.example.raise.example_ExampleErrorA('Example error', 'Low');
+  const handle = mod.provides.example.raise.example_ExampleErrorA('Example error', 'Low');
   evlog.info(`Raised error example_ExampleErrorA: ${JSON.stringify(handle, null, '  ')}`);
   await sleep(2000);
   mod.provides.example.raise.example_ExampleErrorA('Example error', 'Medium');
