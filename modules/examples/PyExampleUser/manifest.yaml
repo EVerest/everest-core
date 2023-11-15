@@ -1,4 +1,4 @@
-description: Simple example module written in JS and using the other example module
+description: Simple example module written in Python and using the other example module
 provides:
   example_user:
     interface: example_user

@@ -3,7 +3,6 @@
 
 from everest.framework import Module, RuntimeSession, log
 import threading
-import time
 import json
 
 class PyExampleUserModule():
