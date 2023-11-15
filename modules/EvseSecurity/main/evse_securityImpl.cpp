@@ -107,5 +107,11 @@ int evse_securityImpl::handle_get_leaf_expiry_days_count(types::evse_security::L
     return this->evse_security->get_leaf_expiry_days_count(conversions::from_everest(certificate_type));
 }
 
+bool evse_securityImpl::handle_verify_file_signature(std::string& file_path, std::string& signing_certificate,
+                                                     std::string& signature) {
+    return evse_security::EvseSecurity::verify_file_signature(std::filesystem::path(file_path), signing_certificate,
+                                                              signature);
+}
+
 } // namespace main
 } // namespace module

@@ -6,17 +6,17 @@ config:
     type: number
     default: 230.0
   update_interval:
-    description: Update interval for energy distribution [ms]
+    description: Update interval for energy distribution [s]
     type: integer
     default: 1
   schedule_interval_duration:
     description: Duration of the schedule interval for forecast [min]
     type: integer
-    default: 15
+    default: 60
   schedule_total_duration:
     description: Total duration of schedule forcast [h]
     type: integer
-    default: 24
+    default: 1
   slice_ampere:
     description: Ampere slice for trading. Lower values will give more even distribution but increase processing time [A].
     type: number

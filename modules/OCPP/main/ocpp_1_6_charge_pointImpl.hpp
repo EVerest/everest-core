@@ -41,6 +41,7 @@ protected:
     virtual types::ocpp::ConfigurationStatus handle_set_custom_configuration_key(std::string& key,
                                                                                  std::string& value) override;
     virtual void handle_monitor_configuration_keys(Array& keys) override;
+    virtual void handle_security_event(std::string& type, std::string& info) override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
     // insert your protected definitions here

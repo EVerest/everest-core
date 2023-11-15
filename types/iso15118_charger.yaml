@@ -93,6 +93,12 @@ types:
       - CertificateUpdateReq
       - CertificateUpdateRes
       - UnknownMessage
+  SAE_J2847_Bidi_Mode:
+    description: Bidi mode for sae j2847_2 
+    type: string
+    enum:
+      - V2G
+      - V2H
   DC_EVSEPresentVoltage_Current:
     description: Set the present voltage and current for the EVSE
     type: object

@@ -57,6 +57,7 @@ struct WifiList {
     int network_id;
     std::string ssid;
     bool connected;
+    int signal_level;
 
     operator std::string() {
         json wifi_list = *this;
@@ -86,6 +87,7 @@ struct NetworkDeviceInfo {
     std::string rfkill_id;
     std::vector<std::string> ipv4;
     std::vector<std::string> ipv6;
+    std::string mac;
 
     operator std::string() {
         json device_info = *this;
@@ -178,9 +180,11 @@ private:
     std::thread discover_network_thread;
     std::thread publish_application_info_thread;
     bool wifi_scan_enabled = false;
+    std::string ap_state = "unknown";
     void publish_supported_features();
     void publish_application_info();
     void publish_hostname();
+    void publish_ap_state();
     void set_default_language(std::string language);
     std::string get_default_language();
     std::string current_language;

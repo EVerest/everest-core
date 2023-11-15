@@ -176,6 +176,32 @@ config:
       between EV requested current (integer) and HLC current limit is less then 1.0
     type: boolean
     default: false
+  disable_authentication:
+    description: >-
+      Do not wait for authorization from Auth module, offer a free service. Start charging immediately after plug in.
+      Do not use with Auth manager or OCPP, this option is only to allow charging with a standalone EvseManager that is not connected to an Auth manager.
+      Use DummyTokenProvider/Validator when testing with Auth module and/or OCPP.
+    type: boolean
+    default: false
+  sae_j2847_2_bpt_enabled:
+    description: Enable SAE J2847 2 V2G or V2H mode
+    type: boolean
+    default: false
+  sae_j2847_2_bpt_mode:
+    description: SAE J2847 2 BPT mode
+    type: string
+    enum:
+      - V2H
+      - V2G
+    default: V2G
+  request_zero_power_in_idle:
+    description: >-
+      "true: In Idle mode (no car connected), request 0A from energy management. In installations with many charging stations this should be set"
+      "to allow the power to be distributed to the chargers that are connected to a car."
+      "false: Request the normal current even if no car is connected. This speeds up the start of charging on AC BASIC charging as"
+      "EvseManager does not need to wait for energy from the energy manager after plug in."
+    type: boolean
+    default: false
 provides:
   evse:
     interface: evse_manager

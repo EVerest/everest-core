@@ -234,7 +234,8 @@ private:
     std::recursive_mutex stateMutex;
 
     EvseState currentState;
-    EvseState lastState;
+    EvseState last_state;
+    EvseState last_state_detect_state_change;
     types::evse_manager::ErrorEnum errorState{types::evse_manager::ErrorEnum::Internal};
     std::chrono::system_clock::time_point currentStateStarted;
 
@@ -305,7 +306,7 @@ private:
     types::iso15118_charger::DC_EVSEMaximumLimits currentEvseMaxLimits;
 
     static constexpr auto SLEEP_BEFORE_ENABLING_PWM_HLC_MODE = std::chrono::seconds(1);
-    static constexpr auto MAINLOOP_UPDATE_RATE = std::chrono::milliseconds(50);
+    static constexpr auto MAINLOOP_UPDATE_RATE = std::chrono::milliseconds(100);
 
     float soft_over_current_tolerance_percent{10.};
     float soft_over_current_measurement_noise_A{0.5};
@@ -329,6 +330,12 @@ private:
     std::chrono::time_point<std::chrono::steady_clock> hlc_ev_pause_start_of_bcb_sequence;
     int hlc_ev_pause_bcb_count{0};
     bool hlc_bcb_sequence_started{false};
+
+    bool contactors_closed{false};
+
+    // As per IEC61851-1 A.5.3
+    bool legacy_wakeup_done{false};
+    constexpr static int legacy_wakeup_timeout{30000};
 };
 
 #define CHARGER_ABSOLUTE_MAX_CURRENT double(80.0F)

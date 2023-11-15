@@ -144,10 +144,12 @@ types:
       SelectionAlgorithm enum:
         UserInput: This algorithm waits for a user to input for which connector the authorization is provided
         PlugEvents: This algorithms derives the selected connector based on the order of plug in events of EVs
+        FindFirst: This algorithm chooses the first referenced EVSE that is available
     type: string
     enum:
       - UserInput
       - PlugEvents
+      - FindFirst
   AuthorizationType:
     description: >-
       Type of authorization of the provided token

@@ -3,7 +3,7 @@
 
 #ifndef PB_LO2HI_PB_H_INCLUDED
 #define PB_LO2HI_PB_H_INCLUDED
-#include <nanopb/pb.h>
+#include <everest/3rd_party/nanopb/pb.h>
 #include "common.pb.h"
 
 #if PB_PROTO_HEADER_VERSION != 40

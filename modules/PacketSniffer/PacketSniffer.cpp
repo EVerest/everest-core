@@ -9,14 +9,11 @@ namespace module {
 const bool PROMISC_MODE = true;
 const int PACKET_BUFFER_TIMEOUT_MS = 1000;
 const int ALL_PACKETS_PROCESSED = -1;
-const int WAIT_FOR_MS = 1;
+const int WAIT_FOR_MS = 10;
 const int BUFFERSIZE = 8192;
 
 void PacketSniffer::init() {
     invoke_init(*p_main);
-
-    capturing_stopped = false;
-    already_started = false;
 
     p_handle = pcap_open_live(config.device.c_str(), BUFFERSIZE, PROMISC_MODE, PACKET_BUFFER_TIMEOUT_MS, errbuf);
     if (p_handle == nullptr) {
@@ -31,10 +28,9 @@ void PacketSniffer::init() {
     }
 
     r_evse_manager->subscribe_session_event([this](types::evse_manager::SessionEvent session_event) {
-        std::lock_guard<std::mutex> lock(this->capture_mutex);
         if (session_event.event == types::evse_manager::SessionEventEnum::SessionStarted) {
             if (!already_started) {
-                already_started = true;
+
                 capturing_stopped = false;
                 if (session_event.session_started && session_event.session_started->logging_path) {
                     std::thread(&PacketSniffer::capture, this, session_event.session_started->logging_path.value(),
@@ -46,7 +42,7 @@ void PacketSniffer::init() {
             }
         } else if (session_event.event == types::evse_manager::SessionEventEnum::SessionFinished) {
             capturing_stopped = true;
-            already_started = false;
+            pcap_breakloop(p_handle);
         }
     });
 }
@@ -56,6 +52,8 @@ void PacketSniffer::ready() {
 }
 
 void PacketSniffer::capture(const std::string& logpath, const std::string& session_id) {
+    already_started = true;
+    EVLOG_info << fmt::format("Start capturing");
 
     const std::string fn = fmt::format("{}/ethernet-traffic.dump", logpath);
 
@@ -74,6 +72,8 @@ void PacketSniffer::capture(const std::string& logpath, const std::string& sessi
     }
 
     pcap_dump_close(pdumpfile);
+    EVLOG_info << fmt::format("Capturing stopped.");
+    already_started = false;
 }
 
 } // namespace module

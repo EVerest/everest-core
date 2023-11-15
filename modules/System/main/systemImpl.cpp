@@ -379,7 +379,7 @@ bool systemImpl::handle_is_reset_allowed(types::system::ResetType& type) {
     return true;
 }
 
-void systemImpl::handle_reset(types::system::ResetType& type) {
+void systemImpl::handle_reset(types::system::ResetType& type, bool& scheduled) {
     if (type == types::system::ResetType::Soft) {
         EVLOG_info << "Performing soft reset";
         kill(getpid(), SIGINT);
@@ -393,6 +393,11 @@ bool systemImpl::handle_set_system_time(std::string& timestamp) {
     // your code for cmd set_system_time goes here
     return true;
 };
+
+types::system::BootReason systemImpl::handle_get_boot_reason() {
+    // FIXME(piet): Provide proper BootReason
+    return types::system::BootReason::PowerUp;
+}
 
 } // namespace main
 } // namespace module

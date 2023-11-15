@@ -39,6 +39,15 @@ cmds:
         description: Target parameters for dc charging
         type: object
         $ref: /iso15118_ev#/DC_EVParameters
+  set_bpt_dc_params:
+    description: Set the bpt parameters for dc charging
+    arguments:
+      EV_BPT_Parameters:
+        description: BPT parameters for dc charging
+        type: object
+        $ref: /iso15118_ev#/DC_EV_BPT_Parameters
+  enable_sae_j2847_v2g_v2h:
+    description: Enable the SAE J2847 2 V2H V2G
 vars:
   V2G_Session_Finished:
     description: The v2g session between the charger and the car is finished

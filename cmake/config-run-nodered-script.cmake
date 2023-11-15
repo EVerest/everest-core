@@ -1,5 +1,9 @@
 function(generate_nodered_run_script)
 
+    if (NOT EVEREST_ENABLE_RUN_SCRIPT_GENERATION)
+        return ()
+    endif ()
+
     set(options "")
     set(one_value_args
         FLOW

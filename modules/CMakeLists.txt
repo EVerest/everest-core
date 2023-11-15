@@ -36,3 +36,7 @@ ev_add_module(DummyTokenProviderManual)
 add_subdirectory(deprecated)
 add_subdirectory(examples)
 add_subdirectory(simulation)
+
+if(${EVEREST_ENABLE_RS_SUPPORT})
+    add_subdirectory(rust_examples)
+endif()

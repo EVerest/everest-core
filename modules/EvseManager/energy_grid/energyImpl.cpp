@@ -86,116 +86,125 @@ void energyImpl::clear_request_schedules() {
 }
 
 void energyImpl::ready() {
-
+    hw_caps = mod->get_hw_capabilities();
     clear_request_schedules();
 
-    // start thread to publish our energy object
+    // request energy now
+    request_energy_from_energy_manager();
+
+    // request energy every second
     std::thread([this] {
-        auto hw_caps = mod->get_hw_capabilities();
-
         while (true) {
+            request_energy_from_energy_manager();
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
+    }).detach();
 
-            auto s = mod->charger->getCurrentState();
+    // request energy at the start and end of a charging session
+    mod->charger->signalState.connect([this](Charger::EvseState s) {
+        if (s == Charger::EvseState::WaitingForAuthentication || s == Charger::EvseState::Finished) {
+            request_energy_from_energy_manager();
+        }
+    });
+}
 
-            {
-                std::lock_guard<std::mutex> lock(this->energy_mutex);
-                clear_import_request_schedule();
-                clear_export_request_schedule();
+void energyImpl::request_energy_from_energy_manager() {
+    auto s = mod->charger->getCurrentState();
+    {
+        std::lock_guard<std::mutex> lock(this->energy_mutex);
+        clear_import_request_schedule();
+        clear_export_request_schedule();
 
-                // If we need energy, copy local limit schedules to energy_flow_request.
-                if (s == Charger::EvseState::Charging || s == Charger::EvseState::PrepareCharging ||
-                    s == Charger::EvseState::WaitingForEnergy || s == Charger::EvseState::WaitingForAuthentication ||
-                    s == Charger::EvseState::ChargingPausedEV) {
+        // If we need energy, copy local limit schedules to energy_flow_request.
+        if (s == Charger::EvseState::Charging || s == Charger::EvseState::PrepareCharging ||
+            s == Charger::EvseState::WaitingForEnergy || s == Charger::EvseState::WaitingForAuthentication ||
+            s == Charger::EvseState::ChargingPausedEV || !mod->config.request_zero_power_in_idle) {
 
-                    // copy complete external limit schedules
-                    if (mod->getLocalEnergyLimits().schedule_import.has_value() &&
-                        !mod->getLocalEnergyLimits().schedule_import.value().empty()) {
-                        energy_flow_request.schedule_import = mod->getLocalEnergyLimits().schedule_import;
-                    }
+            // copy complete external limit schedules
+            if (mod->getLocalEnergyLimits().schedule_import.has_value() &&
+                !mod->getLocalEnergyLimits().schedule_import.value().empty()) {
+                energy_flow_request.schedule_import = mod->getLocalEnergyLimits().schedule_import;
+            }
 
-                    // apply our local hardware limits on root side
-                    for (auto& e : energy_flow_request.schedule_import.value()) {
-                        if (!e.limits_to_root.ac_max_current_A.has_value() ||
-                            e.limits_to_root.ac_max_current_A.value() > hw_caps.max_current_A_import) {
-                            e.limits_to_root.ac_max_current_A = hw_caps.max_current_A_import;
+            // apply our local hardware limits on root side
+            for (auto& e : energy_flow_request.schedule_import.value()) {
+                if (!e.limits_to_root.ac_max_current_A.has_value() ||
+                    e.limits_to_root.ac_max_current_A.value() > hw_caps.max_current_A_import) {
+                    e.limits_to_root.ac_max_current_A = hw_caps.max_current_A_import;
 
-                            // are we in EV pause mode? -> Reduce requested current to minimum just to see when car
-                            // wants to start charging again. The energy manager may pause us externally to reduce to
-                            // zero
-                            if (s == Charger::EvseState::ChargingPausedEV) {
-                                e.limits_to_root.ac_max_current_A = hw_caps.min_current_A_import;
-                            }
-                        }
-
-                        if (!e.limits_to_root.ac_max_phase_count.has_value() ||
-                            e.limits_to_root.ac_max_phase_count.value() > hw_caps.max_phase_count_import)
-                            e.limits_to_root.ac_max_phase_count = hw_caps.max_phase_count_import;
-
-                        // copy remaining hw limits on root side
-                        e.limits_to_root.ac_min_phase_count = hw_caps.min_phase_count_import;
-                        e.limits_to_root.ac_min_current_A = hw_caps.min_current_A_import;
-                        e.limits_to_root.ac_supports_changing_phases_during_charging =
-                            hw_caps.supports_changing_phases_during_charging;
-                    }
-
-                    if (mod->getLocalEnergyLimits().schedule_export.has_value() &&
-                        !mod->getLocalEnergyLimits().schedule_export.value().empty()) {
-                        energy_flow_request.schedule_export = mod->getLocalEnergyLimits().schedule_export;
-                    }
-
-                    // apply our local hardware limits on root side
-                    for (auto& e : energy_flow_request.schedule_export.value()) {
-                        if (!e.limits_to_root.ac_max_current_A.has_value() ||
-                            e.limits_to_root.ac_max_current_A.value() > hw_caps.max_current_A_export) {
-                            e.limits_to_root.ac_max_current_A = hw_caps.max_current_A_export;
-
-                            // are we in EV pause mode? -> Reduce requested current to minimum just to see when car
-                            // wants to start discharging again. The energy manager may pause us externally to reduce to
-                            // zero
-                            if (s == Charger::EvseState::ChargingPausedEV) {
-                                e.limits_to_root.ac_max_current_A = hw_caps.min_current_A_export;
-                            }
-                        }
-
-                        if (!e.limits_to_root.ac_max_phase_count.has_value() ||
-                            e.limits_to_root.ac_max_phase_count.value() > hw_caps.max_phase_count_export)
-                            e.limits_to_root.ac_max_phase_count = hw_caps.max_phase_count_export;
-
-                        // copy remaining hw limits on root side
-                        e.limits_to_root.ac_min_phase_count = hw_caps.min_phase_count_export;
-                        e.limits_to_root.ac_min_current_A = hw_caps.min_current_A_export;
-                        e.limits_to_root.ac_supports_changing_phases_during_charging =
-                            hw_caps.supports_changing_phases_during_charging;
-                    }
-
-                    if (mod->config.charge_mode == "DC") {
-                        // For DC mode remove amp limit on leave side if any
-                        for (auto& e : energy_flow_request.schedule_import.value()) {
-                            e.limits_to_leaves.ac_max_current_A.reset();
-                        }
-                        for (auto& e : energy_flow_request.schedule_export.value()) {
-                            e.limits_to_leaves.ac_max_current_A.reset();
-                        }
-                    }
-
-                } else {
-                    if (mod->config.charge_mode == "DC") {
-                        // we dont need power at the moment
-                        energy_flow_request.schedule_import.value()[0].limits_to_leaves.total_power_W = 0.;
-                        energy_flow_request.schedule_export.value()[0].limits_to_leaves.total_power_W = 0.;
-                    } else {
-                        energy_flow_request.schedule_import.value()[0].limits_to_leaves.ac_max_current_A = 0.;
-                        energy_flow_request.schedule_export.value()[0].limits_to_leaves.ac_max_current_A = 0.;
+                    // are we in EV pause mode? -> Reduce requested current to minimum just to see when car
+                    // wants to start charging again. The energy manager may pause us externally to reduce to
+                    // zero
+                    if (s == Charger::EvseState::ChargingPausedEV && mod->config.request_zero_power_in_idle) {
+                        e.limits_to_root.ac_max_current_A = hw_caps.min_current_A_import;
                     }
                 }
 
-                publish_energy_flow_request(energy_flow_request);
-                // EVLOG_info << "Outgoing request " << energy_flow_request;
+                if (!e.limits_to_root.ac_max_phase_count.has_value() ||
+                    e.limits_to_root.ac_max_phase_count.value() > hw_caps.max_phase_count_import)
+                    e.limits_to_root.ac_max_phase_count = hw_caps.max_phase_count_import;
+
+                // copy remaining hw limits on root side
+                e.limits_to_root.ac_min_phase_count = hw_caps.min_phase_count_import;
+                e.limits_to_root.ac_min_current_A = hw_caps.min_current_A_import;
+                e.limits_to_root.ac_supports_changing_phases_during_charging =
+                    hw_caps.supports_changing_phases_during_charging;
             }
 
-            sleep(1);
+            if (mod->getLocalEnergyLimits().schedule_export.has_value() &&
+                !mod->getLocalEnergyLimits().schedule_export.value().empty()) {
+                energy_flow_request.schedule_export = mod->getLocalEnergyLimits().schedule_export;
+            }
+
+            // apply our local hardware limits on root side
+            for (auto& e : energy_flow_request.schedule_export.value()) {
+                if (!e.limits_to_root.ac_max_current_A.has_value() ||
+                    e.limits_to_root.ac_max_current_A.value() > hw_caps.max_current_A_export) {
+                    e.limits_to_root.ac_max_current_A = hw_caps.max_current_A_export;
+
+                    // are we in EV pause mode? -> Reduce requested current to minimum just to see when car
+                    // wants to start discharging again. The energy manager may pause us externally to reduce to
+                    // zero
+                    if (s == Charger::EvseState::ChargingPausedEV) {
+                        e.limits_to_root.ac_max_current_A = hw_caps.min_current_A_export;
+                    }
+                }
+
+                if (!e.limits_to_root.ac_max_phase_count.has_value() ||
+                    e.limits_to_root.ac_max_phase_count.value() > hw_caps.max_phase_count_export)
+                    e.limits_to_root.ac_max_phase_count = hw_caps.max_phase_count_export;
+
+                // copy remaining hw limits on root side
+                e.limits_to_root.ac_min_phase_count = hw_caps.min_phase_count_export;
+                e.limits_to_root.ac_min_current_A = hw_caps.min_current_A_export;
+                e.limits_to_root.ac_supports_changing_phases_during_charging =
+                    hw_caps.supports_changing_phases_during_charging;
+            }
+
+            if (mod->config.charge_mode == "DC") {
+                // For DC mode remove amp limit on leave side if any
+                for (auto& e : energy_flow_request.schedule_import.value()) {
+                    e.limits_to_leaves.ac_max_current_A.reset();
+                }
+                for (auto& e : energy_flow_request.schedule_export.value()) {
+                    e.limits_to_leaves.ac_max_current_A.reset();
+                }
+            }
+
+        } else {
+            if (mod->config.charge_mode == "DC") {
+                // we dont need power at the moment
+                energy_flow_request.schedule_import.value()[0].limits_to_leaves.total_power_W = 0.;
+                energy_flow_request.schedule_export.value()[0].limits_to_leaves.total_power_W = 0.;
+            } else {
+                energy_flow_request.schedule_import.value()[0].limits_to_leaves.ac_max_current_A = 0.;
+                energy_flow_request.schedule_export.value()[0].limits_to_leaves.ac_max_current_A = 0.;
+            }
         }
-    }).detach();
+
+        publish_energy_flow_request(energy_flow_request);
+        // EVLOG_info << "Outgoing request " << energy_flow_request;
+    }
 }
 
 void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
@@ -243,7 +252,6 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
         }
 
         // update limit at the charger
-        // EVLOG_warning << "charger->setMaxCurrent" << limit;
         if (limit >= 0) {
             // import
             mod->charger->setMaxCurrent(limit, Everest::Date::from_rfc3339(value.valid_until));
@@ -335,6 +343,17 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
 
                             if (evseMaxLimits.EVSEMaximumCurrentLimit < 0) {
                                 evseMaxLimits.EVSEMaximumCurrentLimit = -evseMaxLimits.EVSEMaximumCurrentLimit;
+                                mod->is_actually_exporting_to_grid = true;
+                            } else {
+                                mod->is_actually_exporting_to_grid = false;
+                            }
+                        } else if (mod->sae_bidi_active) {
+                            if (evseMaxLimits.EVSEMaximumPowerLimit < 0) {
+                                mod->is_actually_exporting_to_grid = true;
+                            } else {
+                                mod->is_actually_exporting_to_grid = false;
+                            }
+                            if (evseMaxLimits.EVSEMaximumCurrentLimit < 0) {
                                 mod->is_actually_exporting_to_grid = true;
                             } else {
                                 mod->is_actually_exporting_to_grid = false;

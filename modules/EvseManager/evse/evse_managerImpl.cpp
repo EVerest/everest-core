@@ -129,12 +129,23 @@ void evse_managerImpl::ready() {
         se.event = e;
 
         if (e == types::evse_manager::SessionEventEnum::SessionStarted) {
+            this->mod->selected_protocol = "IEC61851-1";
             types::evse_manager::SessionStarted session_started;
 
             session_started.timestamp =
                 date::format("%FT%TZ", std::chrono::time_point_cast<std::chrono::milliseconds>(date::utc_clock::now()));
 
             auto reason = mod->charger->getSessionStartedReason();
+
+            if (mod->config.disable_authentication && reason == types::evse_manager::StartSessionReason::EVConnected) {
+                // Free service, authorize immediately
+                types::authorization::ProvidedIdToken provided_token;
+                provided_token.authorization_type = types::authorization::AuthorizationType::RFID;
+                provided_token.id_token = "FREESERVICE";
+                provided_token.prevalidated = true;
+                mod->charger->Authorize(true, provided_token);
+                mod->charger_was_authorized();
+            }
 
             session_started.reason = reason;
 
@@ -194,6 +205,7 @@ void evse_managerImpl::ready() {
 
             se.transaction_started.emplace(transaction_started);
         } else if (e == types::evse_manager::SessionEventEnum::TransactionFinished) {
+            this->mod->selected_protocol = "Unknown";
             types::evse_manager::TransactionFinished transaction_finished;
 
             transaction_finished.timestamp =
@@ -246,7 +258,10 @@ void evse_managerImpl::ready() {
         publish_session_event(se);
         if (e == types::evse_manager::SessionEventEnum::SessionFinished) {
             session_uuid = "";
+            this->mod->selected_protocol = "Unknown";
         }
+
+        publish_selected_protocol(this->mod->selected_protocol);
     });
 
     // Note: Deprecated. Only kept for Node red compatibility, will be removed in the future
@@ -371,8 +386,8 @@ evse_managerImpl::handle_switch_three_phases_while_charging(bool& three_phases) 
 };
 
 void evse_managerImpl::handle_set_get_certificate_response(
-    types::iso15118_charger::Response_Exi_Stream_Status& certificate_reponse) {
-    mod->r_hlc[0]->call_set_Get_Certificate_Response(certificate_reponse);
+    types::iso15118_charger::Response_Exi_Stream_Status& certificate_response) {
+    mod->r_hlc[0]->call_set_Get_Certificate_Response(certificate_response);
 }
 
 } // namespace evse

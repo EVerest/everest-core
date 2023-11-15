@@ -1,7 +1,7 @@
 # API module documentation
 This module is responsible for providing a simple MQTT based API to EVerest internals
 
-## Periodically published variables
+## Periodically published variables for each connected EvseManager
 This module periodically publishes the following variables for each connected EvseManager.
 
 ### everest_api/connectors
@@ -140,6 +140,13 @@ This variable is published every second and contains powermeter information of t
     }
 ```
 
+## Periodically published variables for OCPP
+
+### everest_api/ocpp/var/connection_status
+This variable is published every second and contains the connection status of the OCPP module.
+If the OCPP module has not yet published its "is_connected" status or no OCPP module is configured "unknown" is published. Otherwise "connected" or "disconnected" are published.
+
+
 ## Commands and variables published in response
 ### everest_api/evse_manager/cmd/pause_charging
 If any arbitrary payload is published to this topic charging will be paused by the EVSE.
@@ -152,3 +159,6 @@ Command to set an amps limit for this EVSE that will be considered within the En
 
 ### everest_api/evse_manager/cmd/set_limit_watts
 Command to set a watt limit for this EVSE that will be considered within the EnergyManager. This does not automatically imply that this limit will be set by the EVSE because the energymanagement might consider limitations from other sources, too. The payload can be a positive or negative number.
+
+### everest_api/evse_manager/cmd/force_unlock
+Command to force unlock a connector on the EVSE. They payload should be a positive integer identifying the connector that should be unlocked. If the payload is empty or cannot be converted to an integer connector 1 is assumed.

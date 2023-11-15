@@ -262,6 +262,12 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
     ctx->contactor_is_closed = false;
     ctx->evse_v2g_data.receipt_required = (int)0;
 
+    // Specific SAE J2847 bidi values
+    ctx->evse_v2g_data.sae_bidi_data.enabled_sae_v2g = false;
+    ctx->evse_v2g_data.sae_bidi_data.enabled_sae_v2h = false;
+    ctx->evse_v2g_data.sae_bidi_data.sae_v2h_minimal_soc = 20;
+    ctx->evse_v2g_data.sae_bidi_data.discharging = false;
+
     // Init EV received v2g-data to an invalid state
     memset(&ctx->ev_v2g_data, 0xff, sizeof(ctx->ev_v2g_data));
 
@@ -277,13 +283,14 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
     initialize_once = true;
 }
 
-struct v2g_context* v2g_ctx_create(ISO15118_chargerImplBase* p_chargerImplBase) {
+struct v2g_context* v2g_ctx_create(ISO15118_chargerImplBase* p_chargerImplBase, evse_securityIntf* r_security) {
     struct v2g_context* ctx;
 
     ctx = static_cast<v2g_context*>(calloc(1, sizeof(*ctx)));
     if (!ctx)
         return NULL;
 
+    ctx->r_security = r_security;
     ctx->p_charger = p_chargerImplBase;
 
     ctx->tls_security = TLS_SECURITY_PROHIBIT; // default

@@ -333,6 +333,7 @@ int AuthHandler::select_connector(const std::vector<int>& connectors) {
     if (this->selection_algorithm == SelectionAlgorithm::PlugEvents) {
         this->lock_plug_in_mutex(connectors);
         if (this->get_latest_plugin(connectors) == -1) {
+            // no EV has been plugged in yet at the referenced connectors
             this->unlock_plug_in_mutex(connectors);
             EVLOG_debug << "No connector in authorization queue. Waiting for a plug in...";
             std::unique_lock<std::mutex> lk(this->plug_in_mutex);
@@ -345,12 +346,27 @@ int AuthHandler::select_connector(const std::vector<int>& connectors) {
         }
         const auto connector_id = this->get_latest_plugin(connectors);
         return connector_id;
-    } else if (this->selection_algorithm == SelectionAlgorithm::UserInput) {
-        EVLOG_warning << "SelectionAlgorithm UserInput not yet implemented. Selecting first available connector";
-        return connectors.at(0);
-
+    } else if (this->selection_algorithm == SelectionAlgorithm::FindFirst) {
+        EVLOG_debug
+            << "SelectionAlgorithm FindFirst: Selecting first available connector without an active transaction";
+        this->lock_plug_in_mutex(connectors);
+        const auto selected_connector_id = this->get_latest_plugin(connectors);
+        if (selected_connector_id != -1 and !this->connectors.at(selected_connector_id)->connector.transaction_active) {
+            // an EV has been plugged in yet at the referenced connectors
+            return this->get_latest_plugin(connectors);
+        } else {
+            // no EV has been plugged in yet at the referenced connectors; choosing the first one where no transaction
+            // is active
+            for (const auto connector_id : connectors) {
+                const auto connector = this->connectors.at(connector_id)->connector;
+                if (!connector.transaction_active) {
+                    return connector_id;
+                }
+            }
+        }
+        return -1;
     } else {
-        throw std::runtime_error("No known SelectionAlgorithm provided: " +
+        throw std::runtime_error("SelectionAlgorithm not implemented: " +
                                  selection_algorithm_to_string(this->selection_algorithm));
     }
 }

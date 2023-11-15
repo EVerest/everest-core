@@ -128,5 +128,9 @@ void ocpp_1_6_charge_pointImpl::handle_monitor_configuration_keys(Array& keys) {
     }
 }
 
+void ocpp_1_6_charge_pointImpl::handle_security_event(std::string& type, std::string& info) {
+    this->mod->charge_point->on_security_event(type, info);
+}
+
 } // namespace main
 } // namespace module

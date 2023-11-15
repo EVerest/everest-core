@@ -1,0 +1,10 @@
+description: Example group of errors used by example modules to demonstrate error handling
+errors:
+  - name: ExampleErrorA
+    description: Example error A
+  - name: ExampleErrorB
+    description: Example error B
+  - name: ExampleErrorC
+    description: Example error C
+  - name: ExampleErrorD
+    description: Example error D

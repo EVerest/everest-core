@@ -71,6 +71,10 @@ provides:
     description: >-
       This module implements the ISO15118-2 implementation of
       an AC or DC charger
+requires:
+  security:
+    interface: evse_security
+
 enable_external_mqtt: true
 metadata:
   license: https://opensource.org/licenses/Apache-2.0

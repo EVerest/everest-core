@@ -498,7 +498,7 @@ void OCPP::ready() {
 
     this->charge_point->register_reset_callback([this](ocpp::v16::ResetType type) {
         const auto reset_type = types::system::string_to_reset_type(ocpp::v16::conversions::reset_type_to_string(type));
-        this->r_system->call_reset(reset_type);
+        this->r_system->call_reset(reset_type, false);
     });
 
     this->charge_point->register_connection_state_changed_callback(
@@ -516,6 +516,14 @@ void OCPP::ready() {
             this->r_evse_manager.at(this->connector_evse_index_map.at(connector_id))
                 ->call_set_get_certificate_response(response);
         });
+
+    this->charge_point->register_security_event_callback([this](const std::string& type, const std::string& tech_info) {
+        EVLOG_info << "Security Event in OCPP occured: " << type;
+        types::ocpp::SecurityEvent event;
+        event.type = type;
+        event.info = tech_info;
+        this->p_main->publish_security_event(event);
+    });
 
     int32_t evse_id = 1;
     for (auto& evse : this->r_evse_manager) {
