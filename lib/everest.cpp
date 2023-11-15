@@ -478,8 +478,9 @@ std::string Everest::raise_error(const std::string& impl_id, const std::string& 
     BOOST_LOG_FUNCTION();
 
     std::string description = this->config.get_error_map().get_description(error_type);
+    error::Severity severity_enum = error::string_to_severity(severity);
 
-    error::Error error(error_type, message, description, this->module_id, impl_id);
+    error::Error error(error_type, message, description, this->module_id, impl_id, severity_enum);
 
     json data = error::error_to_json(error);
 

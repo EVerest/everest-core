@@ -42,6 +42,8 @@ struct EvModCtx {
     std::unique_ptr<JsExecCtx> js_cb;
 
     std::map<std::pair<Requirement, std::string>, Napi::FunctionReference> var_subscriptions;
+    std::map<std::pair<Requirement, std::string>, Napi::FunctionReference> error_subscriptions;
+    std::map<std::pair<Requirement, std::string>, Napi::FunctionReference> error_cleared_subscriptions;
     std::map<std::pair<std::string, std::string>, Napi::FunctionReference> cmd_handlers;
 
     std::map<std::string, Napi::FunctionReference> mqtt_subscriptions;
@@ -279,6 +281,99 @@ static Napi::Value call_cmd(const Requirement& req, const std::string& cmd_name,
     return cmd_result;
 }
 
+static Napi::Value raise_error(const std::string& impl_id, const std::string& error_type, const std::string& message,
+                               const std::string& severity, const Napi::Env& env) {
+    BOOST_LOG_FUNCTION();
+
+    std::string uuid;
+    try {
+        uuid = ctx->everest->raise_error(impl_id, error_type, message, severity);
+    } catch (std::exception& e) {
+        EVLOG_AND_RETHROW(env);
+    }
+
+    return Napi::String::New(env, uuid);
+}
+
+static Napi::Value subscribe_error(const Requirement& req, const std::string& error_type, Napi::Function& handler,
+                                   const Napi::Env& env) {
+    BOOST_LOG_FUNCTION();
+
+    try {
+
+        auto sub_key = std::make_pair(req, error_type);
+        auto& error_subs = ctx->error_subscriptions;
+
+        if (error_subs.find(sub_key) != error_subs.end()) {
+            EVTHROW(EVEXCEPTION(Everest::EverestApiError, "Subscribing to error ", req.id, "->", error_type,
+                                " more than once is not yet supported!"));
+        }
+        error_subs.insert({sub_key, Napi::Persistent(handler)});
+
+        ctx->everest->subscribe_error(req, error_type, [sub_key](Everest::json input) {
+            ctx->js_cb->exec(
+                [&input, &sub_key](Napi::Env& env) {
+                    const auto& arg = convertToNapiValue(env, input);
+                    std::vector<napi_value> args{ctx->error_subscriptions[sub_key].Value(), ctx->js_module_ref.Value(),
+                                                 arg};
+                    return args;
+                },
+                nullptr);
+        });
+    } catch (std::exception& e) {
+        EVLOG_AND_RETHROW(env);
+    }
+
+    return env.Undefined();
+}
+
+static Napi::Value subscribe_error_cleared(const Requirement& req, const std::string& error_type,
+                                           Napi::Function& handler, const Napi::Env& env) {
+    BOOST_LOG_FUNCTION();
+
+    try {
+        auto sub_key = std::make_pair(req, error_type);
+        auto& error_cleared_subs = ctx->error_cleared_subscriptions;
+
+        if (error_cleared_subs.find(sub_key) != error_cleared_subs.end()) {
+            EVTHROW(EVEXCEPTION(Everest::EverestApiError, "Subscribing to error cleared ", req.id, "->", error_type,
+                                " more than once is not yet supported!"));
+        }
+        error_cleared_subs.insert({sub_key, Napi::Persistent(handler)});
+
+        ctx->everest->subscribe_error_cleared(req, error_type, [sub_key](Everest::json input) {
+            ctx->js_cb->exec(
+                [&input, &sub_key](Napi::Env& env) {
+                    const auto& arg = convertToNapiValue(env, input);
+                    std::vector<napi_value> args{ctx->error_cleared_subscriptions[sub_key].Value(),
+                                                 ctx->js_module_ref.Value(), arg};
+                    return args;
+                },
+                nullptr);
+        });
+    } catch (std::exception& e) {
+        EVLOG_AND_RETHROW(env);
+    }
+
+    return env.Undefined();
+}
+
+static Napi::Value request_clear_error(const Everest::error::RequestClearErrorOption request_type,
+                                       const std::string& impl_id, const std::string& uuid,
+                                       const std::string& error_type, const Napi::Env& env) {
+    BOOST_LOG_FUNCTION();
+
+    Napi::Value result;
+    try {
+        const auto& retval = ctx->everest->request_clear_error(request_type, impl_id, uuid, error_type);
+
+        result = convertToNapiValue(env, retval);
+    } catch (std::exception& e) {
+        EVLOG_AND_RETHROW(env);
+    }
+    return result;
+}
+
 static Napi::Value boot_module(const Napi::CallbackInfo& info) {
     BOOST_LOG_FUNCTION();
 
@@ -328,11 +423,13 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
         //
 
         // provides property: iterate over every implementation that this modules provides
-        auto provided_vars_prop = Napi::Object::New(env);
+        auto provided_impls_prop = Napi::Object::New(env);
         auto provided_cmds_prop = Napi::Object::New(env);
         for (const auto& impl_definition : module_impls.items()) {
             const auto& impl_id = impl_definition.key();
             const auto& impl_intf = module_impls[impl_id];
+
+            auto impl_prop = Napi::Object::New(env);
 
             // iterator over every variable, that the interface of this implementation provides
             auto impl_vars_prop = Napi::Object::New(env);
@@ -351,11 +448,7 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
             }
 
             if (impl_vars_prop.GetPropertyNames().Length()) {
-                auto var_publish_prop = Napi::Object::New(env);
-                var_publish_prop.DefineProperty(
-                    Napi::PropertyDescriptor::Value("publish", impl_vars_prop, napi_enumerable));
-                provided_vars_prop.DefineProperty(
-                    Napi::PropertyDescriptor::Value(impl_id, var_publish_prop, napi_enumerable));
+                impl_prop.DefineProperty(Napi::PropertyDescriptor::Value("publish", impl_vars_prop, napi_enumerable));
             }
 
             auto cmd_register_prop = Napi::Object::New(env);
@@ -380,17 +473,75 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
                 provided_cmds_prop.DefineProperty(
                     Napi::PropertyDescriptor::Value(impl_id, impl_cmds_prop, napi_enumerable));
             }
+
+            // iterate over every error type, that the interface of this implementation is allowed to raise
+            if (impl_intf.contains("errors")) {
+                auto impl_raise_errors_prop = Napi::Object::New(env);
+                auto impl_request_clear_errors_prop = Napi::Object::New(env);
+                for (const auto& error_namespace_it : impl_intf["errors"].items()) {
+                    for (const auto& error_name_it : error_namespace_it.value().items()) {
+                        const std::string error_type = error_namespace_it.key() + "/" + error_name_it.key();
+                        const std::string prop_key = error_namespace_it.key() + "_" + error_name_it.key();
+                        impl_raise_errors_prop.DefineProperty(Napi::PropertyDescriptor::Value(
+                            prop_key,
+                            Napi::Function::New(env,
+                                                [impl_id, error_type](const Napi::CallbackInfo& info) {
+                                                    const std::string message = info[0].ToString().Utf8Value();
+                                                    const std::string severity = info[1].ToString().Utf8Value();
+                                                    return raise_error(impl_id, error_type,
+                                                                       message, severity, info.Env());
+                                                }),
+                            napi_enumerable));
+                        impl_request_clear_errors_prop.DefineProperty(Napi::PropertyDescriptor::Value(
+                            prop_key,
+                            Napi::Function::New(env,
+                                                [impl_id, error_type](const Napi::CallbackInfo& info) {
+                                                    return request_clear_error(
+                                                        Everest::error::RequestClearErrorOption::ClearAllOfTypeOfModule,
+                                                        impl_id, "", error_type, info.Env());
+                                                }),
+                            napi_enumerable));
+                    }
+                }
+                impl_prop.DefineProperty(
+                    Napi::PropertyDescriptor::Value("raise", impl_raise_errors_prop, napi_enumerable));
+                impl_prop.DefineProperty(Napi::PropertyDescriptor::Value(
+                    "request_clear_all_of_type", impl_request_clear_errors_prop, napi_enumerable));
+
+                impl_prop.DefineProperty(Napi::PropertyDescriptor::Value(
+                    "request_clear_uuid",
+                    Napi::Function::New(env,
+                                        [impl_id](const Napi::CallbackInfo& info) {
+                                            const std::string uuid = info[0].ToString().Utf8Value();
+                                            return request_clear_error(
+                                                Everest::error::RequestClearErrorOption::ClearUUID, impl_id, uuid, "",
+                                                info.Env());
+                                        }),
+                    napi_enumerable));
+
+                impl_prop.DefineProperty(Napi::PropertyDescriptor::Value(
+                    "request_clear_all",
+                    Napi::Function::New(env,
+                                        [impl_id](const Napi::CallbackInfo& info) {
+                                            return request_clear_error(
+                                                Everest::error::RequestClearErrorOption::ClearAllOfModule, impl_id, "",
+                                                "", info.Env());
+                                        }),
+                    napi_enumerable));
+            }
+            provided_impls_prop.DefineProperty(Napi::PropertyDescriptor::Value(impl_id, impl_prop, napi_enumerable));
         }
-        module_this.DefineProperty(Napi::PropertyDescriptor::Value("provides", provided_vars_prop, napi_enumerable));
+        module_this.DefineProperty(Napi::PropertyDescriptor::Value("provides", provided_impls_prop, napi_enumerable));
         available_handlers_prop.DefineProperty(
             Napi::PropertyDescriptor::Value("provides", provided_cmds_prop, napi_enumerable));
 
         // uses[_optional] property
-        auto uses_vars_prop = Napi::Object::New(env);
-        auto uses_list_vars_prop = Napi::Object::New(env);
+        auto uses_reqs_prop = Napi::Object::New(env);
+        auto uses_list_reqs_prop = Napi::Object::New(env);
         auto uses_cmds_prop = Napi::Object::New(env);
         auto uses_list_cmds_prop = Napi::Object::New(env);
         for (auto& requirement : module_manifest["requires"].items()) {
+            auto req_prop = Napi::Object::New(env);
             auto const& requirement_id = requirement.key();
             json req_route_list = config->resolve_requirement(module_id, requirement_id);
             // if this was a requirement with min_connections == 1 and max_connections == 1,
@@ -400,7 +551,7 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
             if (!is_list) {
                 req_route_list = json::array({req_route_list});
             }
-            auto req_mod_vars_array = Napi::Array::New(env);
+            auto req_array_prop = Napi::Array::New(env);
             auto req_mod_cmds_array = Napi::Array::New(env);
             for (size_t i = 0; i < req_route_list.size(); i++) {
                 auto req_route = req_route_list[i];
@@ -412,6 +563,7 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
                 auto requirement_impl_intf = config->get_interface_definition(interface_name);
                 auto requirement_vars = Everest::Config::keys(requirement_impl_intf["vars"]);
                 auto requirement_cmds = Everest::Config::keys(requirement_impl_intf["cmds"]);
+                auto requirement_errors = requirement_impl_intf["errors"];
 
                 auto var_subscribe_prop = Napi::Object::New(env);
                 for (auto const& var_name : requirement_vars) {
@@ -425,17 +577,9 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
                         napi_enumerable));
                 }
 
-                auto req_mod_vars_prop = Napi::Object::New(env);
-                req_mod_vars_prop.DefineProperty(
-                    Napi::PropertyDescriptor::Value("subscribe", var_subscribe_prop, napi_enumerable));
-
                 if (requirement_vars.size()) {
-                    if (is_list) {
-                        req_mod_vars_array.Set(i, req_mod_vars_prop);
-                    } else {
-                        uses_vars_prop.DefineProperty(
-                            Napi::PropertyDescriptor::Value(requirement_id, req_mod_vars_prop, napi_enumerable));
-                    }
+                    req_prop.DefineProperty(
+                        Napi::PropertyDescriptor::Value("subscribe", var_subscribe_prop, napi_enumerable));
                 }
 
                 auto cmd_prop = Napi::Object::New(env);
@@ -460,20 +604,64 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
                             Napi::PropertyDescriptor::Value(requirement_id, req_mod_cmds_prop, napi_enumerable));
                     }
                 }
-            }
 
-            uses_list_vars_prop.DefineProperty(
-                Napi::PropertyDescriptor::Value(requirement_id, req_mod_vars_array, napi_enumerable));
+                auto error_subscribe_prop = Napi::Object::New(env);
+                auto error_cleared_subscribe_prop = Napi::Object::New(env);
+                std::list<std::function<Napi::Value(const Napi::CallbackInfo&)>> error_subscribe_funcs;
+                for (auto const& error_namespace_it : requirement_errors.items()) {
+                    for (auto const& error_name_it : error_namespace_it.value().items()) {
+                        const std::string error_type = error_namespace_it.key() + "/" + error_name_it.key();
+                        const std::string prop_key = error_namespace_it.key() + "_" + error_name_it.key();
+                        auto subscribe_error_func = [requirement_id, i, error_type](const Napi::CallbackInfo& info) {
+                            Napi::Function error_subscribe_cb = info[0].As<Napi::Function>();
+                            Napi::Function error_cleared_subscribe_cb = info[1].As<Napi::Function>();
+                            subscribe_error({requirement_id, i}, error_type, error_subscribe_cb,
+                                            info.Env());
+                            subscribe_error_cleared({requirement_id, i}, error_type,
+                                                    error_cleared_subscribe_cb, info.Env());
+                            return info.Env().Undefined();
+                        };
+                        error_subscribe_prop.DefineProperty(Napi::PropertyDescriptor::Value(
+                            prop_key, Napi::Function::New(env, subscribe_error_func),
+                            napi_enumerable));
+                        error_subscribe_funcs.push_back(subscribe_error_func);
+                    }
+                }
+
+                if (requirement_errors.size()) {
+                    req_prop.DefineProperty(
+                        Napi::PropertyDescriptor::Value("subscribe_error", error_subscribe_prop, napi_enumerable));
+                    req_prop.DefineProperty(Napi::PropertyDescriptor::Value(
+                        "subscribe_all_errors",
+                        Napi::Function::New(env,
+                                            [error_subscribe_funcs](const Napi::CallbackInfo& info) {
+                                                for (auto const& func : error_subscribe_funcs) {
+                                                    func(info);
+                                                }
+                                                return info.Env().Undefined();
+                                            }),
+                        napi_enumerable));
+                }
+
+                if (is_list) {
+                    req_array_prop.Set(i, req_prop);
+                } else {
+                    uses_reqs_prop.DefineProperty(
+                        Napi::PropertyDescriptor::Value(requirement_id, req_prop, napi_enumerable));
+                }
+            }
+            uses_list_reqs_prop.DefineProperty(
+                Napi::PropertyDescriptor::Value(requirement_id, req_array_prop, napi_enumerable));
             uses_list_cmds_prop.DefineProperty(
                 Napi::PropertyDescriptor::Value(requirement_id, req_mod_cmds_array, napi_enumerable));
         }
 
-        if (uses_vars_prop.GetPropertyNames().Length())
+        if (uses_reqs_prop.GetPropertyNames().Length())
             available_handlers_prop.DefineProperty(
-                Napi::PropertyDescriptor::Value("uses", uses_vars_prop, napi_enumerable));
-        if (uses_list_vars_prop.GetPropertyNames().Length())
+                Napi::PropertyDescriptor::Value("uses", uses_reqs_prop, napi_enumerable));
+        if (uses_list_reqs_prop.GetPropertyNames().Length())
             available_handlers_prop.DefineProperty(
-                Napi::PropertyDescriptor::Value("uses_list", uses_list_vars_prop, napi_enumerable));
+                Napi::PropertyDescriptor::Value("uses_list", uses_list_reqs_prop, napi_enumerable));
 
         if (uses_cmds_prop.GetPropertyNames().Length())
             module_this.DefineProperty(Napi::PropertyDescriptor::Value("uses", uses_cmds_prop, napi_enumerable));

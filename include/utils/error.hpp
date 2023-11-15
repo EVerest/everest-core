@@ -35,7 +35,7 @@ private:
 
 enum class Severity {
     Low,
-    Mid,
+    Medium,
     High
 };
 

@@ -113,8 +113,8 @@ std::string severity_to_string(const Severity& s) {
     switch (s) {
     case Severity::Low:
         return "Low";
-    case Severity::Mid:
-        return "Mid";
+    case Severity::Medium:
+        return "Medium";
     case Severity::High:
         return "High";
     }
@@ -124,8 +124,8 @@ std::string severity_to_string(const Severity& s) {
 Severity string_to_severity(const std::string& s) {
     if (s == "Low") {
         return Severity::Low;
-    } else if (s == "Mid") {
-        return Severity::Mid;
+    } else if (s == "Medium") {
+        return Severity::Medium;
     } else if (s == "High") {
         return Severity::High;
     } else {
