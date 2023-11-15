@@ -488,8 +488,8 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
                                                 [impl_id, error_type](const Napi::CallbackInfo& info) {
                                                     const std::string message = info[0].ToString().Utf8Value();
                                                     const std::string severity = info[1].ToString().Utf8Value();
-                                                    return raise_error(impl_id, error_type,
-                                                                       message, severity, info.Env());
+                                                    return raise_error(impl_id, error_type, message, severity,
+                                                                       info.Env());
                                                 }),
                             napi_enumerable));
                         impl_request_clear_errors_prop.DefineProperty(Napi::PropertyDescriptor::Value(
@@ -615,15 +615,13 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
                         auto subscribe_error_func = [requirement_id, i, error_type](const Napi::CallbackInfo& info) {
                             Napi::Function error_subscribe_cb = info[0].As<Napi::Function>();
                             Napi::Function error_cleared_subscribe_cb = info[1].As<Napi::Function>();
-                            subscribe_error({requirement_id, i}, error_type, error_subscribe_cb,
-                                            info.Env());
-                            subscribe_error_cleared({requirement_id, i}, error_type,
-                                                    error_cleared_subscribe_cb, info.Env());
+                            subscribe_error({requirement_id, i}, error_type, error_subscribe_cb, info.Env());
+                            subscribe_error_cleared({requirement_id, i}, error_type, error_cleared_subscribe_cb,
+                                                    info.Env());
                             return info.Env().Undefined();
                         };
                         error_subscribe_prop.DefineProperty(Napi::PropertyDescriptor::Value(
-                            prop_key, Napi::Function::New(env, subscribe_error_func),
-                            napi_enumerable));
+                            prop_key, Napi::Function::New(env, subscribe_error_func), napi_enumerable));
                         error_subscribe_funcs.push_back(subscribe_error_func);
                     }
                 }
