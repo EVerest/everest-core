@@ -164,7 +164,7 @@ void ChargePoint::stop() {
     this->websocket_timer.stop();
     this->client_certificate_expiration_check_timer.stop();
     this->v2g_certificate_expiration_check_timer.stop();
-    this->disconnect_websocket(websocketpp::close::status::going_away);
+    this->disconnect_websocket(websocketpp::close::status::normal);
     this->message_queue->stop();
 }
 
@@ -719,7 +719,7 @@ void ChargePoint::init_websocket() {
 
     this->websocket->register_closed_callback(
         [this, connection_options, configuration_slot](const websocketpp::close::status::value reason) {
-            EVLOG_warning << "Failed to connect to NetworkConfigurationPriority: "
+            EVLOG_warning << "Closed websocket of NetworkConfigurationPriority: "
                           << this->network_configuration_priority + 1
                           << " which is configurationSlot: " << configuration_slot;
 
