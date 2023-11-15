@@ -80,12 +80,12 @@ class _OCPP201NetworkConnectionProfileAdjustment(OCPPConfigAdjustmentVisitor):
 
     def adjust_ocpp_configuration(self, config: dict):
         config = deepcopy(config)
-        charge_point_id = self._get_value_from_v201_config(
-            config, "InternalCtrlr", "ChargePointId", "Actual")
         network_connection_profiles = json.loads(self._get_value_from_v201_config(
             config, "InternalCtrlr", "NetworkConnectionProfiles", "Actual"))
-        network_connection_profiles[0]["connectionData"][
-            "ocppCsmsUrl"] = f"ws://{self._central_system_host}:{self._central_system_port}/{charge_point_id}"
+        for network_connection_profile in network_connection_profiles:
+            security_profile = network_connection_profile["connectionData"]["securityProfile"]
+            protocol = "ws" if security_profile == 1 else "wss"
+            network_connection_profile["connectionData"]["ocppCsmsUrl"] = f"{protocol}://{self._central_system_host}:{self._central_system_port}"
         self._set_value_in_v201_config(config, "InternalCtrlr", "NetworkConnectionProfiles",
                                        "Actual", json.dumps(network_connection_profiles))
         return config
