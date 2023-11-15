@@ -149,6 +149,9 @@ active_modules:
       security:
         - module_id: evse_security
           implementation_id: main
+      data_transfer:
+        - module_id: ocpp_extension
+          implementation_id: data_transfer
   evse_security:
     module: EvseSecurity
     config_module:
@@ -161,6 +164,9 @@ active_modules:
       ocpp:
         - module_id: ocpp
           implementation_id: main
+      data_transfer:
+        - module_id: ocpp
+          implementation_id: data_transfer
   token_provider_1:
     module: DummyTokenProviderManual
   energy_manager:

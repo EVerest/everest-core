@@ -187,10 +187,26 @@ bool OCPP::all_evse_ready() {
     return true;
 }
 
+ocpp::v16::DataTransferStatus to_ocpp(types::ocpp::DataTransferStatus status) {
+    switch (status) {
+    case types::ocpp::DataTransferStatus::Accepted:
+        return ocpp::v16::DataTransferStatus::Accepted;
+    case types::ocpp::DataTransferStatus::Rejected:
+        return ocpp::v16::DataTransferStatus::Rejected;
+    case types::ocpp::DataTransferStatus::UnknownMessageId:
+        return ocpp::v16::DataTransferStatus::UnknownMessageId;
+    case types::ocpp::DataTransferStatus::UnknownVendorId:
+        return ocpp::v16::DataTransferStatus::UnknownVendorId;
+    default:
+        return ocpp::v16::DataTransferStatus::UnknownVendorId;
+    }
+}
+
 void OCPP::init() {
     invoke_init(*p_main);
     invoke_init(*p_auth_validator);
     invoke_init(*p_auth_provider);
+    invoke_init(*p_data_transfer);
 
     this->init_evse_ready_map();
 
@@ -270,6 +286,7 @@ void OCPP::ready() {
     invoke_ready(*p_main);
     invoke_ready(*p_auth_validator);
     invoke_ready(*p_auth_provider);
+    invoke_ready(*p_data_transfer);
 
     this->init_evse_connector_map();
 
@@ -524,6 +541,23 @@ void OCPP::ready() {
         event.info = tech_info;
         this->p_main->publish_security_event(event);
     });
+
+    if (!this->r_data_transfer.empty()) {
+        this->charge_point->register_data_transfer_callback([this](const ocpp::v16::DataTransferRequest& request) {
+            types::ocpp::DataTransferRequest data_transfer_request;
+            data_transfer_request.vendor_id = request.vendorId.get();
+            if (request.messageId.has_value()) {
+                data_transfer_request.message_id = request.messageId.value().get();
+            }
+            data_transfer_request.data = request.data;
+            types::ocpp::DataTransferResponse data_transfer_response =
+                this->r_data_transfer.at(0)->call_data_transfer(data_transfer_request);
+            ocpp::v16::DataTransferResponse response;
+            response.status = to_ocpp(data_transfer_response.status);
+            response.data = data_transfer_response.data;
+            return response;
+        });
+    }
 
     int32_t evse_id = 1;
     for (auto& evse : this->r_evse_manager) {

@@ -35,8 +35,6 @@ protected:
     // command handler functions (virtual)
     virtual bool handle_stop() override;
     virtual bool handle_restart() override;
-    virtual types::ocpp::DataTransferResponse handle_data_transfer(std::string& vendor_id, std::string& message_id,
-                                                                   std::string& data) override;
     virtual types::ocpp::GetConfigurationResponse handle_get_configuration_key(Array& keys) override;
     virtual types::ocpp::ConfigurationStatus handle_set_custom_configuration_key(std::string& key,
                                                                                  std::string& value) override;

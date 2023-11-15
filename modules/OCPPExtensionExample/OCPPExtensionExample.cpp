@@ -5,11 +5,11 @@
 namespace module {
 
 void OCPPExtensionExample::init() {
-    invoke_init(*p_empty);
+    invoke_init(*p_data_transfer);
 }
 
 void OCPPExtensionExample::ready() {
-    invoke_ready(*p_empty);
+    invoke_ready(*p_data_transfer);
 
     std::istringstream ss(this->config.keys_to_monitor);
     Array keys;
@@ -54,6 +54,28 @@ void OCPPExtensionExample::ready() {
 
     for (const auto& unknown_key : result.unknown_keys) {
         EVLOG_info << "Unknown: " << unknown_key;
+    }
+
+    types::ocpp::DataTransferRequest data_transfer_request;
+    data_transfer_request.vendor_id = "EVerest";
+    data_transfer_request.data.emplace("hi");
+    auto data_transfer_response = this->r_data_transfer->call_data_transfer(data_transfer_request);
+    switch (data_transfer_response.status) {
+    case types::ocpp::DataTransferStatus::Accepted:
+        EVLOG_info << "Data transfer was accepted";
+        break;
+    case types::ocpp::DataTransferStatus::Rejected:
+        EVLOG_info << "Data transfer was rejected";
+        break;
+    case types::ocpp::DataTransferStatus::UnknownVendorId:
+        EVLOG_info << "Data transfer was rejected (UnknownVendorId)";
+        break;
+    case types::ocpp::DataTransferStatus::UnknownMessageId:
+        EVLOG_info << "Data transfer was rejected (UnknownMessageId)";
+        break;
+
+    default:
+        break;
     }
 }
 

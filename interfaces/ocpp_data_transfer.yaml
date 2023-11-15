@@ -1,0 +1,16 @@
+description: This interface defines a OCPP data transfer
+cmds:
+  data_transfer:
+    description: >-
+      Performs a OCPP data transfer request and returns the response
+    arguments:
+      request:
+        description: >-
+          Request object containing data transfer request
+        type: object
+        $ref: /ocpp#/DataTransferRequest
+    result:
+      description: >-
+        Result object containing data transfer response
+      type: object
+      $ref: /ocpp#/DataTransferResponse

@@ -7,12 +7,16 @@ config:
     type: string
     default: "HeartbeatInterval,SecurityProfile,ExampleConfigurationKey"
 provides:
-  empty:
-    description: This module doesnt implement any interface
-    interface: empty
+  data_transfer:
+    description: OCPP data transfer
+    interface: ocpp_data_transfer
 requires:
   ocpp:
     interface: ocpp_1_6_charge_point
+    min_connections: 1
+    max_connections: 1
+  data_transfer:
+    interface: ocpp_data_transfer
     min_connections: 1
     max_connections: 1
 metadata:
