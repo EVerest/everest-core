@@ -28,11 +28,11 @@ void exampleImpl::ready() {
     std::this_thread::sleep_for(std::chrono::seconds(2));
     request_clear_all_errors();
     std::this_thread::sleep_for(std::chrono::seconds(2));
-    raise_example_ExampleErrorC("This error 1 is raised to test the error handling", Everest::error::Severity::Mid);
+    raise_example_ExampleErrorC("This error 1 is raised to test the error handling", Everest::error::Severity::Medium);
     std::this_thread::sleep_for(std::chrono::seconds(2));
-    raise_example_ExampleErrorC("This error 2 is raised to test the error handling", Everest::error::Severity::Mid);
+    raise_example_ExampleErrorC("This error 2 is raised to test the error handling", Everest::error::Severity::Medium);
     std::this_thread::sleep_for(std::chrono::seconds(2));
-    raise_example_ExampleErrorC("This error 3 is raised to test the error handling", Everest::error::Severity::Mid);
+    raise_example_ExampleErrorC("This error 3 is raised to test the error handling", Everest::error::Severity::Medium);
     std::this_thread::sleep_for(std::chrono::seconds(2));
     request_clear_all_example_ExampleErrorC();
 }
