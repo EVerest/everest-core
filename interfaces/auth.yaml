@@ -8,3 +8,8 @@ cmds:
         type: integer
         minimum: 10
         maximum: 300
+vars:
+  token_validation_status:
+    description: Emits all events related to current token validation
+    type: object
+    $ref: /authorization#/TokenValidationStatusMessage

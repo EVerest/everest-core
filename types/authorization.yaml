@@ -25,6 +25,13 @@ types:
       - NoCertificateAvailable
       - CertChainError
       - ContractCancelled
+  TokenValidationStatus:
+    description: Ongoing token validation status
+    type: string
+    enum:
+      - Processing
+      - Accepted
+      - Rejected
   ProvidedIdToken:
     description: Type for Token provided by auth token providers
     type: object
@@ -78,6 +85,21 @@ types:
           $ref: /iso15118_charger#/CertificateHashDataInfo
         minItems: 1
         maxItems: 4
+  TokenValidationStatusMessage:
+    description: The token validation status
+    type: object
+    additionalProperties: false
+    required:
+      - token
+      - status
+    properties:
+      token:
+        description: The id tag assigned to this transaction
+        type: object
+        $ref: /authorization#/ProvidedIdToken
+      status:
+        type: string
+        $ref: /authorization#/TokenValidationStatus
   ValidationResult:
     description: >-
       Result object containing authorization status enum value and an optional
