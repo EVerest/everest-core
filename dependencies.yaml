@@ -1,7 +1,7 @@
 ---
 everest-framework:
   git: https://github.com/EVerest/everest-framework.git
-  git_tag: 49f5f30
+  git_tag: 89debed
 sigslot:
   git: https://github.com/palacaze/sigslot
   git_tag: v1.2.0
