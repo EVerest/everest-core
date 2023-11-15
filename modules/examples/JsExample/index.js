@@ -3,7 +3,7 @@
 const { evlog, boot_module } = require('everestjs');
 
 function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => { setTimeout(resolve, ms) });
 }
 
 boot_module(async ({
@@ -12,8 +12,8 @@ boot_module(async ({
   evlog.info('Nothing to set up');
 }).then(async (mod) => {
   evlog.info('JsExample started');
-  handle = mod.provides.example.raise.example_ExampleErrorA('Example error', 'Low');
-  evlog.info('Raised error example_ExampleErrorA: ' + JSON.stringify(handle, null, '  '));
+  var handle = mod.provides.example.raise.example_ExampleErrorA('Example error', 'Low');
+  evlog.info( `Raised error example_ExampleErrorA: ${ JSON.stringify(handle, null, '  ') }`);
   await sleep(2000);
   mod.provides.example.raise.example_ExampleErrorA('Example error', 'Medium');
   await sleep(2000);

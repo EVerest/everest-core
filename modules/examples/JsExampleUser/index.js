@@ -15,10 +15,10 @@ boot_module(async ({
   // );
   setup.uses.example.subscribe_all_errors(
     (mod, error) => {
-      evlog.info('Received error: ' + JSON.stringify(error, null, '  '));
+      evlog.info(`Received error: ${ JSON.stringify(error, null, '  ') }`);
     },
     (mod, error) => {
-      evlog.info('Received error cleared: ' + JSON.stringify(error, null, '  '));
+      evlog.info(`Received error cleared: ${ JSON.stringify(error, null, '  ') }`);
     }
   );
 }).then((mod) => {
