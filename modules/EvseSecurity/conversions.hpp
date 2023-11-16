@@ -3,7 +3,7 @@
 #ifndef EVSE_SECURITY_CONVERSIONS_HPP
 #define EVSE_SECURITY_CONVERSIONS_HPP
 
-#include <evse_security.hpp>
+#include <evse_security/evse_security.hpp>
 #include <generated/interfaces/evse_security/Implementation.hpp>
 
 namespace module {
