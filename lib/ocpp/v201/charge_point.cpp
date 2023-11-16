@@ -1198,6 +1198,23 @@ void ChargePoint::handle_scheduled_change_availability_requests(const int32_t ev
     }
 }
 
+/**
+ * Determine for a component variable whether it affects the Websocket Connection Options (cf.
+ * get_ws_connection_options); return true if it is furthermore writable and does not require a reconnect
+ *
+ * @param component_variable
+ * @return
+ */
+static bool component_variable_change_requires_websocket_option_update_without_reconnect(
+    const ComponentVariable& component_variable) {
+
+    return component_variable == ControllerComponentVariables::RetryBackOffRandomRange ||
+           component_variable == ControllerComponentVariables::RetryBackOffRepeatTimes ||
+           component_variable == ControllerComponentVariables::RetryBackOffWaitMinimum ||
+           component_variable == ControllerComponentVariables::NetworkProfileConnectionAttempts ||
+           component_variable == ControllerComponentVariables::WebSocketPingInterval;
+}
+
 void ChargePoint::handle_variable_changed(const SetVariableData& set_variable_data) {
 
     ComponentVariable component_variable = {set_variable_data.component, std::nullopt, set_variable_data.variable};
@@ -1228,6 +1245,17 @@ void ChargePoint::handle_variable_changed(const SetVariableData& set_variable_da
     if (component_variable == ControllerComponentVariables::AlignedDataInterval) {
         this->update_aligned_data_interval();
     }
+
+    if (component_variable_change_requires_websocket_option_update_without_reconnect(component_variable)) {
+        EVLOG_debug << "Reconfigure websocket due to relevant change of ControllerComponentVariable";
+        const auto configuration_slot =
+            ocpp::get_vector_from_csv(
+                this->device_model->get_value<std::string>(ControllerComponentVariables::NetworkConfigurationPriority))
+                .at(this->network_configuration_priority);
+        const auto connection_options = this->get_ws_connection_options(std::stoi(configuration_slot));
+        this->websocket->set_connection_options(connection_options);
+    }
+
     // TODO(piet): other special handling of changed variables can be added here...
 }
 

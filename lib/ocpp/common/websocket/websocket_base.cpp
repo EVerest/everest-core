@@ -31,7 +31,6 @@ WebsocketBase::~WebsocketBase() {
 }
 
 void WebsocketBase::set_connection_options_base(const WebsocketConnectionOptions& connection_options) {
-    this->connection_attempts = 0;
     this->connection_options = connection_options;
 }
 
