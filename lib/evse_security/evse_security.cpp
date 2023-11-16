@@ -507,17 +507,29 @@ void EvseSecurity::update_ocsp_cache(const CertificateHashData& certificate_hash
             }
         }
     } catch (const CertificateLoadException& e) {
-        EVLOG_error << "Could update ocsp cache, certificate load failure!";
+        EVLOG_error << "Could not update ocsp cache, certificate load failure!";
     }
 }
 
 bool EvseSecurity::is_ca_certificate_installed(CaCertificateType certificate_type) {
     try {
-        X509Wrapper(this->ca_bundle_path_map.at(certificate_type), EncodingFormat::PEM);
-        return true;
+        X509CertificateBundle bundle(this->ca_bundle_path_map.at(certificate_type), EncodingFormat::PEM);
+
+        // Search for a valid self-signed root
+        auto& hierarchy = bundle.get_certficate_hierarchy();
+
+        // Get all roots and search for a valid self-signed
+        for (auto& root : hierarchy.get_hierarchy()) {
+            if (root.certificate.is_selfsigned() && root.certificate.is_valid())
+                return true;
+        }
     } catch (const CertificateLoadException& e) {
+        EVLOG_error << "Could not load ca certificate type:"
+                    << conversions::ca_certificate_type_to_string(certificate_type);
         return false;
     }
+
+    return false;
 }
 
 std::string EvseSecurity::generate_certificate_signing_request(LeafCertificateType certificate_type,
@@ -647,6 +659,17 @@ std::string EvseSecurity::get_verify_file(CaCertificateType certificate_type) {
 
     EVLOG_debug << "Requesting certificate file: [" << conversions::ca_certificate_type_to_string(certificate_type)
                 << "] file:" << verify_file.get_path();
+
+    // If we are using a directory, search for the first valid root file
+    if (verify_file.is_using_directory()) {
+        auto& hierarchy = verify_file.get_certficate_hierarchy();
+
+        // Get all roots and search for a valid self-signed
+        for (auto& root : hierarchy.get_hierarchy()) {
+            if (root.certificate.is_selfsigned() && root.certificate.is_valid())
+                return root.certificate.get_file().value_or("");
+        }
+    }
 
     return verify_file.get_path().string();
 }
