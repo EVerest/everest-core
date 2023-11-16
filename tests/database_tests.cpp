@@ -53,7 +53,7 @@ class DatabaseTest : public ::testing::Test {
 protected:
     void SetUp() override {
         this->db_handler = std::make_unique<DatabaseHandler>(CP_ID, std::filesystem::path("/tmp"),
-                                                             std::filesystem::path("../config/v16/init.sql"));
+                                                             std::filesystem::path("../../config/v16/init.sql"));
         this->db_handler->open_db_connection(2);
     }
 
@@ -258,7 +258,7 @@ TEST_F(DatabaseTest, test_insert_and_get_transaction) {
     this->db_handler->insert_transaction("id-42", -1, 1, "DEADBEEF", "2022-08-18T09:42:41", 42, false, 42);
     this->db_handler->update_transaction("id-42", 42);
     this->db_handler->update_transaction("id-42", 5000, "2022-08-18T10:42:41", id_tag, Reason::EVDisconnected);
-    this->db_handler->update_transaction_csms_ack("id-42");
+    this->db_handler->update_transaction_csms_ack(42);
 
     this->db_handler->insert_transaction("id-43", -1, 1, "BEEFDEAD", "2022-08-18T09:42:41", 43, false, 43);
 
@@ -287,7 +287,7 @@ TEST_F(DatabaseTest, test_insert_and_get_transaction_without_id_tag) {
     this->db_handler->insert_transaction("id-42", -1, 1, "DEADBEEF", "2022-08-18T09:42:41", 42, false, 42);
     this->db_handler->update_transaction("id-42", 42);
     this->db_handler->update_transaction("id-42", 5000, "2022-08-18T10:42:41", id_tag, Reason::EVDisconnected);
-    this->db_handler->update_transaction_csms_ack("id-42");
+    this->db_handler->update_transaction_csms_ack(42);
 
     this->db_handler->insert_transaction("id-43", -1, 1, "BEEFDEAD", "2022-08-18T09:42:41", 43, false, 43);
 
