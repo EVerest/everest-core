@@ -141,6 +141,7 @@ void Charger::runStateMachine() {
                 iec_allow_close_contactor = false;
                 hlc_charging_active = false;
                 hlc_allow_close_contactor = false;
+                maxCurrentCable = 0;
                 hlc_charging_terminate_pause = HlcTerminatePause::Unknown;
                 pwm_off();
                 DeAuthorize();
@@ -186,6 +187,15 @@ void Charger::runStateMachine() {
                     // enabling PWM.
                     std::this_thread::sleep_for(SLEEP_BEFORE_ENABLING_PWM_HLC_MODE);
                     update_pwm_now(PWM_5_PERCENT);
+                }
+            }
+
+            // Read PP value in case of AC socket
+            if (connector_type == IEC62196Type2Socket && maxCurrentCable == 0) {
+                maxCurrentCable = r_bsp->call_read_pp_ampacity();
+                // retry if the value is not yet available. Some BSPs may take some time to measure the PP.
+                if (maxCurrentCable == 0) {
+                    break;
                 }
             }
 
@@ -688,8 +698,6 @@ void Charger::processCPEventsState(ControlPilotEvent cp_event) {
 
     case EvseState::Idle:
         if (cp_event == ControlPilotEvent::CarPluggedIn) {
-            // Set cable current limit from PP resistor value for this session
-            maxCurrentCable = r_bsp->call_read_pp_ampacity();
             currentState = EvseState::WaitingForAuthentication;
         }
         break;
