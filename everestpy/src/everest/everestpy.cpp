@@ -38,7 +38,8 @@ PYBIND11_MODULE(everestpy, m) {
 
     py::class_<Interface>(m, "Interface")
         .def_readonly("variables", &Interface::variables)
-        .def_readonly("commands", &Interface::commands);
+        .def_readonly("commands", &Interface::commands)
+        .def_readonly("errors", &Interface::errors);
 
     py::class_<Fulfillment>(m, "Fulfillment")
         .def("__repr__",
@@ -66,6 +67,12 @@ PYBIND11_MODULE(everestpy, m) {
         .def("publish_variable", &Module::publish_variable)
         .def("implement_command", &Module::implement_command)
         .def("subscribe_variable", &Module::subscribe_variable)
+        .def("raise_error", &Module::raise_error)
+        .def("request_clear_error_uuid", &Module::request_clear_error_uuid)
+        .def("request_clear_error_all_of_type", &Module::request_clear_error_all_of_type)
+        .def("request_clear_error_all_of_module", &Module::request_clear_error_all_of_module)
+        .def("subscribe_error", &Module::subscribe_error)
+        .def("subscribe_all_errors", &Module::subscribe_all_errors)
         .def_property_readonly("fulfillments", &Module::get_fulfillments)
         .def_property_readonly("implementations", &Module::get_implementations)
         .def_property_readonly("requirements", &Module::get_requirements)

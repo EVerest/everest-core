@@ -102,5 +102,21 @@ Interface create_everest_interface_from_definition(const json& def) {
         }
     }
 
+    if (def.contains("errors")) {
+        const auto& errors = def.at("errors");
+
+        int errors_size = 0;
+        for (const auto& error_namespace_it : errors.items()) {
+            errors_size += error_namespace_it.value().size();
+        }
+        intf.errors.reserve(errors_size);
+
+        for (const auto& error_namespace_it : errors.items()) {
+            for (const auto& error_name_it : error_namespace_it.value().items()) {
+                intf.errors.push_back(error_namespace_it.key() + "/" + error_name_it.key());
+            }
+        }
+    }
+
     return intf;
 }

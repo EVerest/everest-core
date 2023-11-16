@@ -37,6 +37,7 @@ struct Fulfillment {
 struct Interface {
     std::vector<std::string> variables;
     std::vector<std::string> commands;
+    std::vector<std::string> errors;
 };
 
 Interface create_everest_interface_from_definition(const json& def);
