@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
-#include <types.hpp>
+#include <evse_security/evse_types.hpp>
 
 namespace evse_security {
 

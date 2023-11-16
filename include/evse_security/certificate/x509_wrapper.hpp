@@ -1,25 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifndef X509_WRAPPER_HPP
-#define X509_WRAPPER_HPP
+#pragma once
 
 #include <memory>
-#include <openssl/bio.h>
-#include <openssl/pem.h>
-#include <openssl/x509.h>
 #include <stdexcept>
 #include <string>
-#include <support_older_cpp_versions.hpp>
 
-#include <sec_types.hpp>
-#include <types.hpp>
+#include <evse_security/crypto/interface/crypto_types.hpp>
+#include <evse_security/evse_types.hpp>
+#include <evse_security/utils/evse_filesystem_types.hpp>
 
 namespace evse_security {
-
-class CertificateLoadException : public std::runtime_error {
-public:
-    using std::runtime_error::runtime_error;
-};
 
 enum class X509CertificateSource {
     // Built from a certificate file
@@ -34,22 +25,14 @@ const fs::path PEM_EXTENSION = ".pem";
 const fs::path DER_EXTENSION = ".der";
 const fs::path KEY_EXTENSION = ".key";
 
-using ossl_days_to_seconds = std::chrono::duration<std::int64_t, std::ratio<86400>>;
-
 /// @brief Convenience wrapper around openssl X509 certificate
 class X509Wrapper {
 public:
     X509Wrapper(const fs::path& file, const EncodingFormat encoding);
     X509Wrapper(const std::string& data, const EncodingFormat encoding);
 
-    /// @brief Since it implies ownership full transfer, must be very careful with this that's why it's explicit
-    /// If another object owns the x509 will destroy it and if another one tries to use the dead reference will crash
-    /// the program
-    explicit X509Wrapper(X509* x509);
-    explicit X509Wrapper(X509_ptr&& x509);
-
-    X509Wrapper(X509* x509, const fs::path& file);
-    X509Wrapper(X509_ptr&& x509, const fs::path& file);
+    explicit X509Wrapper(X509Handle_ptr&& x509);
+    X509Wrapper(X509Handle_ptr&& x509, const fs::path& file);
 
     X509Wrapper(const X509Wrapper& other);
     X509Wrapper(X509Wrapper&& other) = default;
@@ -64,15 +47,10 @@ public:
     bool is_selfsigned() const;
 
 public:
-    /// @brief Gets raw X509 pointer
-    /// @return
-    inline X509* get() const {
+    /// @brief Gets x509 raw handle
+    inline X509Handle* get() const {
         return x509.get();
     }
-
-    /// @brief Resets raw X509 pointer to given \p x509
-    /// @param x509
-    void reset(X509* x509);
 
     /// @brief Gets valid_in
     /// @return seconds until certificate is valid; if > 0 cert is not yet valid
@@ -85,6 +63,8 @@ public:
     /// @brief Gets optional file of certificate
     /// @result
     std::optional<fs::path> get_file() const;
+
+    void set_file(fs::path& path);
 
     /// @brief Gets the source of this certificate, if it is from a file it's 'FILE'
     /// but it can also be constructed from a string, or another certificate
@@ -140,8 +120,6 @@ public:
 public:
     X509Wrapper& operator=(X509Wrapper&& other) = default;
 
-    void update_file(fs::path& path);
-
     /// @return true if the two certificates are the same
     bool operator==(const X509Wrapper& other) const;
 
@@ -154,7 +132,7 @@ private:
     void update_validity();
 
 private:
-    X509_ptr x509;         // X509 wrapper object
+    X509Handle_ptr x509;   // X509 wrapper object
     std::int64_t valid_in; // seconds; if > 0 cert is not yet valid, negative value means past, positive is in future
     std::int64_t valid_to; // seconds; if < 0 cert has expired, negative value means past, positive is in future
 
@@ -163,5 +141,3 @@ private:
 };
 
 } // namespace evse_security
-
-#endif // X509_WRAPPER_HPP

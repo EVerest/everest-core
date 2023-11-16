@@ -1,41 +1,39 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
-#include "evse_security.hpp"
 #include <everest/logging.hpp>
+#include <evse_security/evse_security.hpp>
 
 #include <algorithm>
+#include <fstream>
 #include <iostream>
-#include <openssl/bio.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <openssl/pem.h>
-#include <openssl/sha.h>
-#include <openssl/x509v3.h>
 #include <stdio.h>
 
-#include <evse_utilities.hpp>
-#include <x509_bundle.hpp>
-#include <x509_hierarchy.hpp>
-#include <x509_wrapper.hpp>
+#include <evse_security/certificate/x509_bundle.hpp>
+#include <evse_security/certificate/x509_hierarchy.hpp>
+#include <evse_security/certificate/x509_wrapper.hpp>
+#include <evse_security/crypto/evse_crypto.hpp>
+#include <evse_security/utils/evse_filesystem.hpp>
 namespace evse_security {
 
-static InstallCertificateResult to_install_certificate_result(const int ec) {
-    switch (ec) {
-    case X509_V_ERR_CERT_HAS_EXPIRED:
+static InstallCertificateResult to_install_certificate_result(CertificateValidationError error) {
+    switch (error) {
+    case CertificateValidationError::Expired:
         EVLOG_warning << "Certificate has expired";
         return InstallCertificateResult::Expired;
-    case X509_V_ERR_CERT_SIGNATURE_FAILURE:
+    case CertificateValidationError::InvalidSignature:
         EVLOG_warning << "Invalid signature";
         return InstallCertificateResult::InvalidSignature;
-    case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT:
+    case CertificateValidationError::InvalidChain:
         EVLOG_warning << "Invalid certificate chain";
         return InstallCertificateResult::InvalidCertificateChain;
-    case X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE:
+    case CertificateValidationError::InvalidLeafSignature:
         EVLOG_warning << "Unable to verify leaf signature";
         return InstallCertificateResult::InvalidSignature;
+    case CertificateValidationError::IssuerNotFound:
+        EVLOG_warning << "Issuer not found";
+        return InstallCertificateResult::InvalidCertificateChain;
     default:
-        EVLOG_warning << X509_verify_cert_error_string(ec);
         return InstallCertificateResult::InvalidCertificateChain;
     }
 }
@@ -84,21 +82,8 @@ static fs::path get_private_key_path(const X509Wrapper& certificate, const fs::p
                 try {
                     fsstd::ifstream file(key_file_path, std::ios::binary);
                     std::string private_key((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-                    BIO_ptr bio(BIO_new_mem_buf(private_key.c_str(), -1));
 
-                    EVP_PKEY_ptr evp_pkey(
-                        PEM_read_bio_PrivateKey(bio.get(), nullptr, nullptr, (void*)password.value_or("").c_str()));
-
-                    if (!evp_pkey) {
-                        EVLOG_warning << "Invalid evp_pkey: " << key_path
-                                      << " error: " << ERR_error_string(ERR_get_error(), NULL)
-                                      << " Password configured correctly?";
-
-                        // Next entry if the key was null
-                        continue;
-                    }
-
-                    if (X509_check_private_key(certificate.get(), evp_pkey.get())) {
+                    if (CryptoSupplier::x509_check_private_key(certificate.get(), private_key, password)) {
                         EVLOG_debug << "Key found for certificate at path: " << key_file_path;
                         return key_file_path;
                     }
@@ -151,7 +136,7 @@ EvseSecurity::EvseSecurity(const FilePaths& file_paths, const std::optional<std:
         if (!fs::exists(pair.second)) {
             EVLOG_warning << "Could not find configured " << conversions::ca_certificate_type_to_string(pair.first)
                           << " bundle file at: " + pair.second.string() << ", creating default!";
-            if (!EvseUtils::create_file_if_nonexistent(pair.second)) {
+            if (!filesystem_utils::create_file_if_nonexistent(pair.second)) {
                 EVLOG_error << "Could not create default bundle for path: " << pair.second;
             }
         }
@@ -179,18 +164,18 @@ InstallCertificateResult EvseSecurity::install_ca_certificate(const std::string&
 
         if (!fs::is_directory(ca_bundle_path)) {
             // Ensure file exists
-            EvseUtils::create_file_if_nonexistent(ca_bundle_path);
+            filesystem_utils::create_file_if_nonexistent(ca_bundle_path);
         }
 
         X509CertificateBundle existing_certs(ca_bundle_path, EncodingFormat::PEM);
 
         if (existing_certs.is_using_directory()) {
             std::string filename = conversions::ca_certificate_type_to_string(certificate_type) + "_" +
-                                   EvseUtils::get_random_file_name(PEM_EXTENSION.string());
+                                   filesystem_utils::get_random_file_name(PEM_EXTENSION.string());
             fs::path new_path = ca_bundle_path / filename;
 
             // Sets the path of the new certificate
-            new_cert.update_file(new_path);
+            new_cert.set_file(new_path);
         }
 
         // Check if cert is already installed
@@ -221,6 +206,8 @@ InstallCertificateResult EvseSecurity::install_ca_certificate(const std::string&
 }
 
 DeleteCertificateResult EvseSecurity::delete_certificate(const CertificateHashData& certificate_hash_data) {
+    EVLOG_debug << "Delete ca certificate: " << certificate_hash_data.serial_number;
+
     auto response = DeleteCertificateResult::NotFound;
 
     bool found_certificate = false;
@@ -240,7 +227,7 @@ DeleteCertificateResult EvseSecurity::delete_certificate(const CertificateHashDa
             }
 
         } catch (const CertificateLoadException& e) {
-            EVLOG_debug << "Could not load ca bundle from file: " << ca_bundle_path;
+            EVLOG_warning << "Could not load ca bundle from file: " << ca_bundle_path;
         }
     }
 
@@ -293,7 +280,7 @@ DeleteCertificateResult EvseSecurity::delete_certificate(const CertificateHashDa
                 // Ignore, case is handled later
             }
         } catch (const CertificateLoadException& e) {
-            EVLOG_debug << "Could not load ca bundle from file: " << leaf_certificate_path;
+            EVLOG_warning << "Could not load ca bundle from file: " << leaf_certificate_path;
         }
     }
 
@@ -342,18 +329,19 @@ InstallCertificateResult EvseSecurity::update_leaf_certificate(const std::string
         }
 
         // Write certificate to file
-        const auto file_name = std::string("SECC_LEAF_") + EvseUtils::get_random_file_name(PEM_EXTENSION.string());
+        const auto file_name =
+            std::string("SECC_LEAF_") + filesystem_utils::get_random_file_name(PEM_EXTENSION.string());
         const auto file_path = cert_path / file_name;
         std::string str_cert = leaf_certificate.get_export_string();
 
         // Also write chain to file
         const auto chain_file_name =
-            std::string("CPO_CERT_CHAIN_") + EvseUtils::get_random_file_name(PEM_EXTENSION.string());
+            std::string("CPO_CERT_CHAIN_") + filesystem_utils::get_random_file_name(PEM_EXTENSION.string());
         const auto chain_file_path = cert_path / chain_file_name;
         std::string str_chain_cert = chain_certificate.to_export_string();
 
-        if (EvseUtils::write_to_file(file_path, str_cert, std::ios::out) &&
-            EvseUtils::write_to_file(chain_file_path, str_chain_cert, std::ios::out)) {
+        if (filesystem_utils::write_to_file(file_path, str_cert, std::ios::out) &&
+            filesystem_utils::write_to_file(chain_file_path, str_chain_cert, std::ios::out)) {
             return InstallCertificateResult::Accepted;
         } else {
             return InstallCertificateResult::WriteError;
@@ -396,7 +384,7 @@ EvseSecurity::get_installed_certificates(const std::vector<CertificateType>& cer
                 certificate_hash_data_chain.certificate_hash_data = root.hash;
 
                 // Add all owned children/certificates in order
-                X509CertificateHierarchy::for_each_child(
+                X509CertificateHierarchy::for_each_descendant(
                     [&certificate_hash_data_chain](const X509Node& child, int depth) {
                         certificate_hash_data_chain.child_certificate_hash_data.push_back(child.hash);
                     },
@@ -444,7 +432,7 @@ EvseSecurity::get_installed_certificates(const std::vector<CertificateType>& cer
                 // --- SubCa2
                 std::vector<CertificateHashData> hierarchy_hash_data;
 
-                X509CertificateHierarchy::for_each_child(
+                X509CertificateHierarchy::for_each_descendant(
                     [&](const X509Node& child, int depth) { hierarchy_hash_data.push_back(child.hash); }, root);
 
                 if (hierarchy_hash_data.size()) {
@@ -536,12 +524,9 @@ std::string EvseSecurity::generate_certificate_signing_request(LeafCertificateTy
                                                                const std::string& country,
                                                                const std::string& organization,
                                                                const std::string& common) {
-    int n_version = 0;
-    int bits = 256;
-
     fs::path key_path;
 
-    const auto file_name = std::string("SECC_LEAF_") + EvseUtils::get_random_file_name(KEY_EXTENSION.string());
+    const auto file_name = std::string("SECC_LEAF_") + filesystem_utils::get_random_file_name(KEY_EXTENSION.string());
     if (certificate_type == LeafCertificateType::CSMS) {
         key_path = this->directories.csms_leaf_key_directory / file_name;
     } else if (certificate_type == LeafCertificateType::V2G) {
@@ -550,66 +535,23 @@ std::string EvseSecurity::generate_certificate_signing_request(LeafCertificateTy
         throw std::runtime_error("Attempt to generate CSR for MF certificate");
     }
 
-    // csr req
-    // Ignore deprecation warnings on the EC gen functions since we need OpenSSL 1.1 support
-    X509_REQ_ptr x509ReqPtr(X509_REQ_new());
-    EVP_PKEY_ptr evpKey(EVP_PKEY_new());
-    EC_KEY* ecKey = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
-    X509_NAME* x509Name = X509_REQ_get_subject_name(x509ReqPtr.get());
+    std::string csr;
+    CertificateSigningRequestInfo info;
 
-    BIO_ptr prkey(BIO_new_file(key_path.c_str(), "w"));
-    BIO_ptr bio(BIO_new(BIO_s_mem()));
+    info.n_version = 0;
+    info.commonName = common;
+    info.country = country;
+    info.organization = organization;
 
-    // generate ec key pair
-    EC_KEY_generate_key(ecKey);
-    EVP_PKEY_assign_EC_KEY(evpKey.get(), ecKey);
-    // write private key to file
-    int success;
-    if (this->private_key_password.has_value()) {
-        success = PEM_write_bio_PrivateKey(prkey.get(), evpKey.get(), EVP_aes_128_cbc(), NULL, 0, NULL,
-                                           (void*)this->private_key_password.value().c_str());
-    } else {
-        success = PEM_write_bio_PrivateKey(prkey.get(), evpKey.get(), NULL, NULL, 0, NULL, NULL);
+    info.private_key_file = key_path;
+    if (private_key_password.has_value())
+        info.private_key_pass = private_key_password;
+
+    if (false == CryptoSupplier::x509_generate_csr(info, csr)) {
+        throw std::runtime_error("Failed to generate certificate signing request!");
     }
-
-    if (!success) {
-        throw std::runtime_error("Failed to write private key");
-    }
-
-    // set version of x509 req
-    X509_REQ_set_version(x509ReqPtr.get(), n_version);
-
-    // set subject of x509 req
-    X509_NAME_add_entry_by_txt(x509Name, "C", MBSTRING_ASC, reinterpret_cast<const unsigned char*>(country.c_str()), -1,
-                               -1, 0);
-    X509_NAME_add_entry_by_txt(x509Name, "O", MBSTRING_ASC,
-                               reinterpret_cast<const unsigned char*>(organization.c_str()), -1, -1, 0);
-    X509_NAME_add_entry_by_txt(x509Name, "CN", MBSTRING_ASC, reinterpret_cast<const unsigned char*>(common.c_str()), -1,
-                               -1, 0);
-    X509_NAME_add_entry_by_txt(x509Name, "DC", MBSTRING_ASC, reinterpret_cast<const unsigned char*>("CPO"), -1, -1, 0);
-    // set public key of x509 req
-    X509_REQ_set_pubkey(x509ReqPtr.get(), evpKey.get());
-
-    STACK_OF(X509_EXTENSION)* extensions = sk_X509_EXTENSION_new_null();
-    X509_EXTENSION* ext_key_usage = X509V3_EXT_conf_nid(NULL, NULL, NID_key_usage, "digitalSignature, keyAgreement");
-    X509_EXTENSION* ext_basic_constraints = X509V3_EXT_conf_nid(NULL, NULL, NID_basic_constraints, "critical,CA:false");
-    sk_X509_EXTENSION_push(extensions, ext_key_usage);
-    sk_X509_EXTENSION_push(extensions, ext_basic_constraints);
-
-    X509_REQ_add_extensions(x509ReqPtr.get(), extensions);
-
-    // set sign key of x509 req
-    X509_REQ_sign(x509ReqPtr.get(), evpKey.get(), EVP_sha256());
-
-    // write csr
-    PEM_write_bio_X509_REQ(bio.get(), x509ReqPtr.get());
-
-    BUF_MEM* mem_csr = NULL;
-    BIO_get_mem_ptr(bio.get(), &mem_csr);
-    std::string csr(mem_csr->data, mem_csr->length);
 
     EVLOG_debug << csr;
-
     return csr;
 }
 
@@ -718,7 +660,7 @@ int EvseSecurity::get_leaf_expiry_days_count(LeafCertificateType certificate_typ
         X509CertificateBundle cert(key_pair.pair.value().certificate, EncodingFormat::PEM);
 
         int64_t seconds = cert.split().at(0).get_valid_to();
-        return std::chrono::duration_cast<ossl_days_to_seconds>(std::chrono::seconds(seconds)).count();
+        return std::chrono::duration_cast<days_to_seconds>(std::chrono::seconds(seconds)).count();
     }
     return 0;
 }
@@ -727,97 +669,29 @@ bool EvseSecurity::verify_file_signature(const fs::path& path, const std::string
                                          const std::string signature) {
     EVLOG_debug << "Verifying file signature for " << path.string();
 
-    // calculate sha256 of file
-    FILE_ptr file_ptr(fopen(path.string().c_str(), "rb"));
-    if (!file_ptr.get()) {
-        EVLOG_error << "Could not open file at: " << path.string();
+    std::vector<std::byte> sha256_digest;
+
+    if (false == CryptoSupplier::digest_file_sha256(path, sha256_digest)) {
+        EVLOG_error << "Error during digesting file: " << path;
         return false;
     }
-    EVP_MD_CTX_ptr md_context_ptr(EVP_MD_CTX_create());
-    if (!md_context_ptr.get()) {
-        EVLOG_error << "Could not create EVP_MD_CTX";
-        return false;
-    }
-    const EVP_MD* md = EVP_get_digestbyname("SHA256");
-    if (EVP_DigestInit_ex(md_context_ptr.get(), md, nullptr) == 0) {
-        EVLOG_error << "Error during EVP_DigestInit_ex";
-        return false;
-    }
-    size_t in_length;
-    unsigned char file_buffer[BUFSIZ];
-    do {
-        in_length = fread(file_buffer, 1, BUFSIZ, file_ptr.get());
-        if (EVP_DigestUpdate(md_context_ptr.get(), file_buffer, in_length) == 0) {
-            EVLOG_error << "Error during EVP_DigestUpdate";
-            return false;
-        }
-    } while (in_length == BUFSIZ);
-    unsigned int sha256_out_length;
-    unsigned char sha256_out[EVP_MAX_MD_SIZE];
-    if (EVP_DigestFinal_ex(md_context_ptr.get(), sha256_out, &sha256_out_length) == 0) {
-        EVLOG_error << "Error during EVP_DigestFinal_ex";
+
+    std::vector<std::byte> signature_decoded;
+
+    if (false == CryptoSupplier::decode_base64_signature(signature, signature_decoded)) {
+        EVLOG_error << "Error during decoding signature: " << signature;
         return false;
     }
 
     try {
         X509Wrapper x509_signing_cerificate(signing_certificate, EncodingFormat::PEM);
 
-        // extract public key
-        EVP_PKEY_ptr public_key_ptr(X509_get_pubkey(x509_signing_cerificate.get()));
-        if (!public_key_ptr.get()) {
-            EVLOG_error << "Error during X509_get_pubkey";
-            return false;
-        }
-
-        // decode base64 encoded signature
-        EVP_ENCODE_CTX_ptr base64_decode_context_ptr(EVP_ENCODE_CTX_new());
-        if (!base64_decode_context_ptr.get()) {
-            EVLOG_error << "Error during EVP_ENCODE_CTX_new";
-            return false;
-        }
-        EVP_DecodeInit(base64_decode_context_ptr.get());
-        if (!base64_decode_context_ptr.get()) {
-            EVLOG_error << "Error during EVP_DecodeInit";
-            return false;
-        }
-        const unsigned char* signature_str = reinterpret_cast<const unsigned char*>(signature.data());
-        int base64_length = signature.size();
-        unsigned char signature_out[base64_length];
-        int signature_out_length;
-        if (EVP_DecodeUpdate(base64_decode_context_ptr.get(), signature_out, &signature_out_length, signature_str,
-                             base64_length) < 0) {
-            EVLOG_error << "Error during DecodeUpdate";
-            return false;
-        }
-        int decode_final_out;
-        if (EVP_DecodeFinal(base64_decode_context_ptr.get(), signature_out, &decode_final_out) < 0) {
-            EVLOG_error << "Error during EVP_DecodeFinal";
-            return false;
-        }
-
-        // verify file signature
-        EVP_PKEY_CTX_ptr public_key_context_ptr(EVP_PKEY_CTX_new(public_key_ptr.get(), nullptr));
-        if (!public_key_context_ptr.get()) {
-            EVLOG_error << "Error setting up public key context";
-        }
-        if (EVP_PKEY_verify_init(public_key_context_ptr.get()) <= 0) {
-            EVLOG_error << "Error during EVP_PKEY_verify_init";
-        }
-        if (EVP_PKEY_CTX_set_signature_md(public_key_context_ptr.get(), EVP_sha256()) <= 0) {
-            EVLOG_error << "Error during EVP_PKEY_CTX_set_signature_md";
-        };
-        int result =
-            EVP_PKEY_verify(public_key_context_ptr.get(), reinterpret_cast<const unsigned char*>(signature_out),
-                            signature_out_length, sha256_out, sha256_out_length);
-
-        EVP_cleanup();
-
-        if (result != 1) {
-            EVLOG_error << "Failure to verify: " << result;
-            return false;
-        } else {
-            EVLOG_error << "Succesful verification";
+        if (CryptoSupplier::x509_verify_signature(x509_signing_cerificate.get(), signature_decoded, sha256_digest)) {
+            EVLOG_debug << "Signature successful verification";
             return true;
+        } else {
+            EVLOG_error << "Failure to verify signature";
+            return false;
         }
     } catch (const CertificateLoadException& e) {
         EVLOG_error << "Could not parse signing certificate: " << e.what();
@@ -837,32 +711,26 @@ InstallCertificateResult EvseSecurity::verify_certificate(const std::string& cer
         }
 
         const auto leaf_certificate = _certificate_chain.at(0);
-
-        X509_STORE_ptr store_ptr(X509_STORE_new());
-        X509_STORE_CTX_ptr store_ctx_ptr(X509_STORE_CTX_new());
+        std::vector<X509Handle*> parent_certificates;
+        std::optional<fs::path> store_file;
 
         for (size_t i = 1; i < _certificate_chain.size(); i++) {
-            X509_STORE_add_cert(store_ptr.get(), _certificate_chain[i].get());
+            parent_certificates.emplace_back(_certificate_chain[i].get());
         }
 
         if (certificate_type == LeafCertificateType::CSMS) {
-            X509_STORE_load_locations(store_ptr.get(), this->ca_bundle_path_map.at(CaCertificateType::CSMS).c_str(),
-                                      NULL);
+            store_file = this->ca_bundle_path_map.at(CaCertificateType::CSMS);
         } else if (certificate_type == LeafCertificateType::V2G) {
-            X509_STORE_load_locations(store_ptr.get(), this->ca_bundle_path_map.at(CaCertificateType::V2G).c_str(),
-                                      NULL);
+            store_file = this->ca_bundle_path_map.at(CaCertificateType::V2G);
         } else {
-            X509_STORE_load_locations(store_ptr.get(), this->ca_bundle_path_map.at(CaCertificateType::MF).c_str(),
-                                      NULL);
+            store_file = this->ca_bundle_path_map.at(CaCertificateType::MF);
         }
 
-        X509_STORE_CTX_init(store_ctx_ptr.get(), store_ptr.get(), leaf_certificate.get(), NULL);
+        CertificateValidationError validated = CryptoSupplier::x509_verify_certificate_chain(
+            leaf_certificate.get(), parent_certificates, std::nullopt, store_file);
 
-        // verifies the certificate chain based on ctx
-        // verifies the certificate has not expired and is already valid
-        if (X509_verify_cert(store_ctx_ptr.get()) != 1) {
-            int ec = X509_STORE_CTX_get_error(store_ctx_ptr.get());
-            return to_install_certificate_result(ec);
+        if (validated != CertificateValidationError::NoError) {
+            return to_install_certificate_result(validated);
         }
 
         return InstallCertificateResult::Accepted;

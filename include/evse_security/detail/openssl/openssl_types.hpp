@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifndef EVSE_SEC_TYPES_HPP
-#define EVSE_SEC_TYPES_HPP
+#pragma once
 
 #include <memory>
 #include <openssl/x509v3.h>
@@ -90,5 +89,3 @@ using EVP_MD_CTX_ptr = std::unique_ptr<EVP_MD_CTX>;
 using EVP_ENCODE_CTX_ptr = std::unique_ptr<EVP_ENCODE_CTX>;
 
 } // namespace evse_security
-
-#endif

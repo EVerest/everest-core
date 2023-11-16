@@ -5,14 +5,13 @@
 #include <gtest/gtest.h>
 #include <regex>
 #include <sstream>
-#include <support_older_cpp_versions.hpp>
-
-#include "evse_security.hpp"
 
 #include <openssl/err.h>
 #include <openssl/x509v3.h>
-#include <x509_bundle.hpp>
-#include <x509_wrapper.hpp>
+
+#include <evse_security/certificate/x509_bundle.hpp>
+#include <evse_security/certificate/x509_wrapper.hpp>
+#include <evse_security/evse_security.hpp>
 
 std::string read_file_to_string(const fs::path filepath) {
     fsstd::ifstream t(filepath.string());
