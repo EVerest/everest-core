@@ -15,18 +15,28 @@ class ProbeModule:
 
     def __init__(self, session: RuntimeSession, module_id="probe"):
         """
-        Construct a probe module and connect it to EVerest.
+        Construct a probe module and connect it to EVerest. This does not mark the module as ready yet.
         - session: runtime session information (path to EVerest installation and location of run config file)
         - module_id: the module ID to register with EVerest. By default, this will be "probe".
+        - start: whether to start the module immediately. Set to false if you need to add implementations or subscriptions before starting.
         """
         logging.info("ProbeModule init start")
         m = Module(module_id, session)
         self._setup = m.say_hello()
         self._mod = m
         self._ready_event = asyncio.Event()
+        self._started = False
 
+    def start(self):
+        """
+        Send the "ready" signal for the probe module.
+        You should do this after implementing all commands needed in your test.
+        """
+        if self._started:
+            raise RuntimeError("Called start(), but ProbeModule is started already!")
+        self._started = True
         # subscribe to session events
-        m.init_done(self._ready)
+        self._mod.init_done(self._ready)
         logging.info("Probe module initialized")
 
     async def call_command(self, connection_id: str, command_name: str, args: dict) -> Any:
@@ -103,4 +113,7 @@ class ProbeModule:
         """
         Convenience method which allows you to wait until the _ready() callback is triggered (i.e. until EVerest is up and running)
         """
+        if not self._started:
+            raise RuntimeError("Called wait_to_be_ready(), but probe module has not been started yet! "
+                               "Please use start() to start the module first.")
         await asyncio.wait_for(self._ready_event.wait(), timeout)
