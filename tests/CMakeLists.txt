@@ -10,6 +10,10 @@ target_link_libraries(tests PRIVATE
     ${GTEST_MAIN_LIBRARIES} 
 )
 
+if(LIBEVSE_CRYPTO_SUPPLIER_OPENSSL)
+    add_compile_definitions(LIBEVSE_CRYPTO_SUPPLIER_OPENSSL)
+endif()
+
 add_test(tests tests)
 
 install(

@@ -6,13 +6,14 @@
 #include <regex>
 #include <sstream>
 
-#include <openssl/err.h>
-#include <openssl/x509v3.h>
-
 #include <evse_security/certificate/x509_bundle.hpp>
 #include <evse_security/certificate/x509_wrapper.hpp>
 #include <evse_security/evse_security.hpp>
+#include <evse_security/utils/evse_filesystem.hpp>
 #include <evse_security/utils/fix_pem_string.hpp>
+
+#include <evse_security/crypto/evse_crypto.hpp>
+#include <evse_security/detail/openssl/openssl_providers.hpp>
 
 std::string read_file_to_string(const fs::path filepath) {
     fsstd::ifstream t(filepath.string());
@@ -32,10 +33,57 @@ bool equal_certificate_strings(const std::string& cert1, const std::string& cert
     return true;
 }
 
+bool supports_tpm_usage() {
+    bool supports_tpm = false;
+
+    OSSL_PROVIDER* tpm2_provider = OSSL_PROVIDER_load(nullptr, evse_security::PROVIDER_TPM);
+
+    if (tpm2_provider != nullptr) {
+        supports_tpm =
+            OSSL_PROVIDER_available(nullptr, evse_security::PROVIDER_TPM) && OSSL_PROVIDER_self_test(tpm2_provider);
+        OSSL_PROVIDER_unload(tpm2_provider);
+    } else {
+        supports_tpm = false;
+    }
+
+    // Load default again
+    OSSL_PROVIDER_load(nullptr, evse_security::PROVIDER_DEFAULT);
+
+    std::cout << "Supports TPM usage: " << supports_tpm << std::endl;
+    return supports_tpm;
+}
+
+// Checks if we have the following providers active
+bool check_openssl_providers(const std::vector<std::string>& required_providers) {
+    struct Info {
+        std::set<std::string> providers;
+    };
+
+    auto collector = [](OSSL_PROVIDER* provider, void* cbdata) {
+        Info* info = (Info*)cbdata;
+        info->providers.emplace(OSSL_PROVIDER_get0_name(provider));
+        return 1;
+    };
+
+    Info info;
+    OSSL_PROVIDER_do_all(nullptr, collector, &info);
+
+    if (info.providers.size() != required_providers.size())
+        return false;
+
+    for (auto& required : required_providers) {
+        if (info.providers.find(required) == info.providers.end())
+            return false;
+    }
+
+    return true;
+}
+
 void install_certs() {
     std::system("./generate_test_certs.sh");
 }
 
+static bool supports_tpm = supports_tpm_usage();
 namespace evse_security {
 
 class EvseSecurityTests : public ::testing::Test {
@@ -44,6 +92,9 @@ protected:
 
     void SetUp() override {
         install_certs();
+
+        if (!fs::exists("key"))
+            fs::create_directory("key");
 
         FilePaths file_paths;
         file_paths.csms_ca_bundle = fs::path("certs/ca/v2g/V2G_CA_BUNDLE.pem");
@@ -65,6 +116,9 @@ protected:
 };
 
 TEST_F(EvseSecurityTests, verify_basics) {
+    // Check that we have the default provider
+    ASSERT_TRUE(check_openssl_providers({PROVIDER_DEFAULT}));
+
     const char* bundle_path = "certs/ca/v2g/V2G_CA_BUNDLE.pem";
 
     fsstd::ifstream file(bundle_path, std::ios::binary);
@@ -111,6 +165,9 @@ TEST_F(EvseSecurityTests, verify_basics) {
 }
 
 TEST_F(EvseSecurityTests, verify_bundle_management) {
+    // Check that we have the default provider
+    ASSERT_TRUE(check_openssl_providers({PROVIDER_DEFAULT}));
+
     const char* directory_path = "certs/ca/csms/";
     X509CertificateBundle bundle(fs::path(directory_path), EncodingFormat::PEM);
     ASSERT_TRUE(bundle.split().size() == 2);
@@ -146,6 +203,155 @@ TEST_F(EvseSecurityTests, verify_certificate_counts) {
     ASSERT_EQ(this->evse_security->get_count_of_installed_certificates({CertificateType::MFRootCertificate}), 3);
     // None were defined
     ASSERT_EQ(this->evse_security->get_count_of_installed_certificates({CertificateType::MORootCertificate}), 0);
+}
+
+TEST_F(EvseSecurityTests, providers_tests) {
+    if (supports_tpm == false)
+        return;
+
+    // Unload all current providers for a clean state
+    std::vector<OSSL_PROVIDER*> current_providers;
+
+    auto clean_fct = [](OSSL_PROVIDER* provider, void* cbdata) {
+        static_cast<std::vector<OSSL_PROVIDER*>*>(cbdata)->push_back(provider);
+        return 1;
+    };
+
+    OSSL_PROVIDER_do_all(nullptr, clean_fct, &current_providers);
+
+    for (auto& provider : current_providers) {
+        OSSL_PROVIDER_unload(provider);
+    }
+
+    OSSL_PROVIDER* default_provider = OSSL_PROVIDER_load(nullptr, PROVIDER_DEFAULT);
+    ASSERT_TRUE(default_provider);
+
+    OSSL_PROVIDER* tpm2_provider = OSSL_PROVIDER_load(nullptr, PROVIDER_TPM);
+    ASSERT_TRUE(tpm2_provider);
+
+    ASSERT_TRUE(OSSL_PROVIDER_available(nullptr, PROVIDER_DEFAULT));
+    ASSERT_TRUE(OSSL_PROVIDER_available(nullptr, PROVIDER_TPM));
+
+    ASSERT_TRUE(OSSL_PROVIDER_self_test(default_provider));
+    ASSERT_TRUE(OSSL_PROVIDER_self_test(tpm2_provider));
+
+    // Check that we have only 2 providers
+    ASSERT_TRUE(check_openssl_providers({PROVIDER_DEFAULT, PROVIDER_TPM}));
+
+    auto fct = [](OSSL_PROVIDER* provider, void* cbdata) {
+        std::cout << "Provider: " << OSSL_PROVIDER_get0_name(provider) << std::endl;
+
+        const char* build = NULL;
+        const char* name = NULL;
+        const char* status = NULL;
+
+        OSSL_PARAM request[] = {{"buildinfo", OSSL_PARAM_UTF8_PTR, &build, 0, 0},
+                                {"name", OSSL_PARAM_UTF8_PTR, &name, 0, 0},
+                                {"status", OSSL_PARAM_UTF8_PTR, &status, 0, 0},
+                                {NULL, 0, NULL, 0, 0}};
+
+        OSSL_PROVIDER_get_params(provider, request);
+
+        std::cout << "Info: " << (build != nullptr ? build : "N/A") << "|" << (name != nullptr ? name : "N/A") << "|"
+                  << (status != nullptr ? status : "N/A") << std::endl;
+
+        return 1;
+    };
+
+    OSSL_PROVIDER_do_all(nullptr, fct, nullptr);
+
+    // Unload providers
+    ASSERT_TRUE(OSSL_PROVIDER_unload(default_provider));
+    ASSERT_TRUE(OSSL_PROVIDER_unload(tpm2_provider));
+
+    // Check that we don't have providers
+    ASSERT_TRUE(check_openssl_providers({}));
+
+    // Load default again
+    OSSL_PROVIDER_load(nullptr, PROVIDER_DEFAULT);
+
+    // Check that we have the default provider
+    ASSERT_TRUE(check_openssl_providers({PROVIDER_DEFAULT}));
+}
+
+TEST_F(EvseSecurityTests, verify_provider_scope) {
+    if (supports_tpm == false)
+        return;
+
+    EXPECT_NO_THROW({ TPMScopedProvider provider; });
+
+    std::cout << "Testing TPM scoped provider" << std::endl;
+    ASSERT_TRUE(check_openssl_providers({PROVIDER_DEFAULT}));
+
+    {
+        TPMScopedProvider provider;
+        ASSERT_TRUE(check_openssl_providers({PROVIDER_TPM}));
+    }
+
+    ASSERT_TRUE(check_openssl_providers({PROVIDER_DEFAULT}));
+    std::cout << "Ending test TPM scoped provider" << std::endl;
+}
+
+TEST_F(EvseSecurityTests, verify_normal_keygen) {
+    KeyGenerationInfo info;
+    KeyHandle_ptr key;
+
+    info.key_type = CryptoKeyType::RSA_3072;
+    info.generate_on_tpm = false;
+
+    info.public_key_file = fs::path("key/nrm_pubkey.key");
+    info.private_key_file = fs::path("key/nrm_privkey.key");
+
+    bool gen = CryptoSupplier::generate_key(info, key);
+    ASSERT_TRUE(gen);
+}
+
+TEST_F(EvseSecurityTests, verify_tpm_keygen_csr) {
+    if (supports_tpm == false)
+        return;
+
+    KeyGenerationInfo info;
+    KeyHandle_ptr key;
+
+    info.key_type = CryptoKeyType::EC_prime256v1;
+    info.generate_on_tpm = true;
+
+    info.public_key_file = fs::path("key/tpm_pubkey.tkey");
+    info.private_key_file = fs::path("key/tpm_privkey.tkey");
+
+    bool gen = CryptoSupplier::generate_key(info, key);
+    ASSERT_TRUE(gen);
+
+    CertificateSigningRequestInfo csr_info;
+    csr_info.n_version = 0;
+    csr_info.commonName = "pionix_01";
+    csr_info.organization = "PionixDE";
+    csr_info.country = "DE";
+
+    info.public_key_file = fs::path("key/csr_tpm_pubkey.tkey");
+    info.private_key_file = fs::path("key/csr_tpm_privkey.tkey");
+    info.key_type = CryptoKeyType::RSA_TPM20;
+
+    csr_info.key_info = info;
+
+    std::string csr;
+
+    gen = CryptoSupplier::x509_generate_csr(csr_info, csr);
+    ASSERT_TRUE(gen);
+
+    std::cout << "TPM csr: " << std::endl << csr << std::endl;
+
+    info.public_key_file = fs::path("key/csr_nrm_pubkey.tkey");
+    info.private_key_file = fs::path("key/csr_nrm_privkey.tkey");
+    info.generate_on_tpm = false;
+    info.key_type = CryptoKeyType::RSA_3072;
+
+    csr_info.key_info = info;
+
+    gen = CryptoSupplier::x509_generate_csr(csr_info, csr);
+    ASSERT_TRUE(gen);
+
+    std::cout << "normal csr: " << std::endl << csr << std::endl;
 }
 
 /// \brief get_certificate_hash_data() throws exception if called with no issuer and a non-self-signed cert

@@ -102,7 +102,6 @@ public:
     /// @param organization
     /// @param common
     /// @return the PEM formatted certificate signing request
-    // are these 4 params enough for a full request? I guess there are much more
     std::string generate_certificate_signing_request(LeafCertificateType certificate_type, const std::string& country,
                                                      const std::string& organization, const std::string& common);
 

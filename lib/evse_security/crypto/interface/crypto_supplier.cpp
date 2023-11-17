@@ -8,6 +8,22 @@
 
 namespace evse_security {
 
+const char* AbstractCryptoSupplier::get_supplier_name() {
+    return "AbstractCryptoSupplier";
+}
+
+bool AbstractCryptoSupplier::supports_tpm() {
+    default_crypto_supplier_usage_error() return false;
+}
+
+bool AbstractCryptoSupplier::supports_tpm_key_creation() {
+    default_crypto_supplier_usage_error() return false;
+}
+
+bool AbstractCryptoSupplier::generate_key(const KeyGenerationInfo& key_info, KeyHandle_ptr& out_key) {
+    default_crypto_supplier_usage_error() return false;
+}
+
 /// @brief Loads all certificates from the string data that can contain multiple cetifs
 std::vector<X509Handle_ptr> AbstractCryptoSupplier::load_certificates(const std::string& data,
                                                                       const EncodingFormat encoding) {
@@ -75,8 +91,7 @@ bool AbstractCryptoSupplier::x509_verify_signature(X509Handle* handle, const std
     default_crypto_supplier_usage_error() return false;
 }
 
-bool AbstractCryptoSupplier::x509_generate_csr(const CertificateSigningRequestInfo& generation_info,
-                                               std::string& out_csr) {
+bool AbstractCryptoSupplier::x509_generate_csr(const CertificateSigningRequestInfo& csr_info, std::string& out_csr) {
     default_crypto_supplier_usage_error() return false;
 }
 

@@ -574,14 +574,21 @@ std::string EvseSecurity::generate_certificate_signing_request(LeafCertificateTy
     std::string csr;
     CertificateSigningRequestInfo info;
 
+    // TODO(ioan): get this from the parameter when the interface will support it
+    bool use_tpm = false;
+
     info.n_version = 0;
     info.commonName = common;
     info.country = country;
     info.organization = organization;
 
-    info.private_key_file = key_path;
-    if (private_key_password.has_value())
-        info.private_key_pass = private_key_password;
+    info.key_info.key_type = CryptoKeyType::EC_prime256v1;
+    info.key_info.generate_on_tpm = use_tpm;
+    info.key_info.private_key_file = key_path;
+
+    if ((use_tpm == false) && private_key_password.has_value()) {
+        info.key_info.private_key_pass = private_key_password;
+    }
 
     if (false == CryptoSupplier::x509_generate_csr(info, csr)) {
         throw std::runtime_error("Failed to generate certificate signing request!");
