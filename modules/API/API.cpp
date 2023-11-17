@@ -206,8 +206,9 @@ void API::init() {
             if (powermeter.energy_Wh_export.has_value()) {
                 session_info->set_latest_energy_export_wh(powermeter.energy_Wh_export.value().total);
             }
-            if (powermeter.power_W.has_value())
+            if (powermeter.power_W.has_value()) {
                 session_info->set_latest_total_w(powermeter.power_W.value().total);
+            }
         });
 
         std::string var_limits = var_base + "limits";
@@ -252,12 +253,12 @@ void API::init() {
         evse->subscribe_session_event(
             [this, var_session_info, var_logging_path, &session_info](types::evse_manager::SessionEvent session_event) {
                 auto event = types::evse_manager::session_event_enum_to_string(session_event.event);
-                if (session_event.error) {
-                    session_info->update_state(
-                        event, types::evse_manager::error_enum_to_string(session_event.error.value().error_code));
-                } else {
-                    session_info->update_state(event, "");
+                auto state_info = "";
+                if (session_event.error.has_value()) {
+                    state_info = types::evse_manager::error_enum_to_string(session_event.error.value().error_code);
                 }
+                session_info->update_state(event, state_info);
+
                 if (session_event.event == types::evse_manager::SessionEventEnum::SessionStarted) {
                     if (session_event.session_started.has_value()) {
                         auto session_started = session_event.session_started.value();
@@ -266,27 +267,31 @@ void API::init() {
                         }
                     }
                 }
-                if (event == "TransactionStarted") {
-                    auto transaction_started = session_event.transaction_started.value();
-                    auto energy_Wh_import = transaction_started.meter_value.energy_Wh_import.total;
-                    session_info->set_start_energy_import_wh(energy_Wh_import);
+                if (session_event.event == types::evse_manager::SessionEventEnum::TransactionStarted) {
+                    if (session_event.transaction_started.has_value()) {
+                        auto transaction_started = session_event.transaction_started.value();
+                        auto energy_Wh_import = transaction_started.meter_value.energy_Wh_import.total;
+                        session_info->set_start_energy_import_wh(energy_Wh_import);
 
-                    if (transaction_started.meter_value.energy_Wh_export.has_value()) {
-                        auto energy_Wh_export = transaction_started.meter_value.energy_Wh_export.value().total;
-                        session_info->set_start_energy_export_wh(energy_Wh_export);
-                    } else {
-                        session_info->start_energy_export_wh_was_set = false;
+                        if (transaction_started.meter_value.energy_Wh_export.has_value()) {
+                            auto energy_Wh_export = transaction_started.meter_value.energy_Wh_export.value().total;
+                            session_info->set_start_energy_export_wh(energy_Wh_export);
+                        } else {
+                            session_info->start_energy_export_wh_was_set = false;
+                        }
                     }
-                } else if (event == "TransactionFinished") {
-                    auto transaction_finished = session_event.transaction_finished.value();
-                    auto energy_Wh_import = transaction_finished.meter_value.energy_Wh_import.total;
-                    session_info->set_end_energy_import_wh(energy_Wh_import);
+                } else if (session_event.event == types::evse_manager::SessionEventEnum::TransactionFinished) {
+                    if (session_event.transaction_finished.has_value()) {
+                        auto transaction_finished = session_event.transaction_finished.value();
+                        auto energy_Wh_import = transaction_finished.meter_value.energy_Wh_import.total;
+                        session_info->set_end_energy_import_wh(energy_Wh_import);
 
-                    if (transaction_finished.meter_value.energy_Wh_export.has_value()) {
-                        auto energy_Wh_export = transaction_finished.meter_value.energy_Wh_export.value().total;
-                        session_info->set_end_energy_export_wh(energy_Wh_export);
-                    } else {
-                        session_info->end_energy_export_wh_was_set = false;
+                        if (transaction_finished.meter_value.energy_Wh_export.has_value()) {
+                            auto energy_Wh_export = transaction_finished.meter_value.energy_Wh_export.value().total;
+                            session_info->set_end_energy_export_wh(energy_Wh_export);
+                        } else {
+                            session_info->end_energy_export_wh_was_set = false;
+                        }
                     }
 
                     this->mqtt.publish(var_session_info, *session_info);
