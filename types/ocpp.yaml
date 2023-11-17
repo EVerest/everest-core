@@ -8,6 +8,22 @@ types:
       - Rejected
       - UnknownMessageId
       - UnknownVendorId
+  DataTransferRequest:
+    description: Type for data transfer request provided by OCPP
+    type: object
+    additionalProperties: false
+    required:
+      - vendor_id
+    properties:
+      vendor_id:
+        description: Identifies the vendor
+        type: string
+      message_id:
+        description: Identifies the message
+        type: string
+      data:
+        description: Data provided by this data transfer
+        type: string
   DataTransferResponse:
     description: Type for data transfer response provided by OCPP
     type: object

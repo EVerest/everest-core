@@ -11,10 +11,11 @@
 #include "ld-ev.hpp"
 
 // headers for provided interface implementations
-#include <generated/interfaces/empty/Implementation.hpp>
+#include <generated/interfaces/ocpp_data_transfer/Implementation.hpp>
 
 // headers for required interface implementations
 #include <generated/interfaces/ocpp_1_6_charge_point/Interface.hpp>
+#include <generated/interfaces/ocpp_data_transfer/Interface.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
@@ -29,12 +30,18 @@ struct Conf {
 class OCPPExtensionExample : public Everest::ModuleBase {
 public:
     OCPPExtensionExample() = delete;
-    OCPPExtensionExample(const ModuleInfo& info, std::unique_ptr<emptyImplBase> p_empty,
-                         std::unique_ptr<ocpp_1_6_charge_pointIntf> r_ocpp, Conf& config) :
-        ModuleBase(info), p_empty(std::move(p_empty)), r_ocpp(std::move(r_ocpp)), config(config){};
+    OCPPExtensionExample(const ModuleInfo& info, std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer,
+                         std::unique_ptr<ocpp_1_6_charge_pointIntf> r_ocpp,
+                         std::unique_ptr<ocpp_data_transferIntf> r_data_transfer, Conf& config) :
+        ModuleBase(info),
+        p_data_transfer(std::move(p_data_transfer)),
+        r_ocpp(std::move(r_ocpp)),
+        r_data_transfer(std::move(r_data_transfer)),
+        config(config){};
 
-    const std::unique_ptr<emptyImplBase> p_empty;
+    const std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer;
     const std::unique_ptr<ocpp_1_6_charge_pointIntf> r_ocpp;
+    const std::unique_ptr<ocpp_data_transferIntf> r_data_transfer;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1

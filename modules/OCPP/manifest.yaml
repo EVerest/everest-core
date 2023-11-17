@@ -24,7 +24,7 @@ config:
     type: integer
     default: 30
   PublishChargingScheduleDurationS:
-    description:  Duration in seconds that defines the duration of the requested charging schedules starting from now
+    description: Duration in seconds that defines the duration of the requested charging schedules starting from now
     type: integer
     default: 600
   MessageLogPath:
@@ -45,6 +45,9 @@ provides:
   auth_provider:
     description: Provides auth tokens from OCPP
     interface: auth_token_provider
+  data_transfer:
+    description: OCPP data transfer towards the CSMS
+    interface: ocpp_data_transfer
 requires:
   evse_manager:
     interface: evse_manager
@@ -69,6 +72,10 @@ requires:
   security:
     interface: evse_security
     min_connections: 1
+    max_connections: 1
+  data_transfer:
+    interface: ocpp_data_transfer
+    min_connections: 0
     max_connections: 1
 enable_external_mqtt: true
 metadata:

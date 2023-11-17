@@ -30,21 +30,6 @@ bool ocpp_1_6_charge_pointImpl::handle_restart() {
     return success;
 }
 
-types::ocpp::DataTransferStatus convert_ocpp_data_transfer_status(ocpp::v16::DataTransferStatus status) {
-    switch (status) {
-    case ocpp::v16::DataTransferStatus::Accepted:
-        return types::ocpp::DataTransferStatus::Accepted;
-    case ocpp::v16::DataTransferStatus::Rejected:
-        return types::ocpp::DataTransferStatus::Rejected;
-    case ocpp::v16::DataTransferStatus::UnknownMessageId:
-        return types::ocpp::DataTransferStatus::UnknownMessageId;
-    case ocpp::v16::DataTransferStatus::UnknownVendorId:
-        return types::ocpp::DataTransferStatus::UnknownVendorId;
-    default:
-        return types::ocpp::DataTransferStatus::UnknownVendorId;
-    }
-}
-
 types::ocpp::KeyValue to_everest(const ocpp::v16::KeyValue& key_value) {
     types::ocpp::KeyValue _key_value;
     _key_value.key = key_value.key.get();
@@ -91,15 +76,6 @@ types::ocpp::GetConfigurationResponse to_everest(const ocpp::v16::GetConfigurati
     _response.configuration_keys = configuration_keys;
     _response.unknown_keys = unknown_keys;
     return _response;
-}
-
-types::ocpp::DataTransferResponse
-ocpp_1_6_charge_pointImpl::handle_data_transfer(std::string& vendor_id, std::string& message_id, std::string& data) {
-    auto ocpp_response = mod->charge_point->data_transfer(vendor_id, message_id, data);
-    types::ocpp::DataTransferResponse response;
-    response.status = convert_ocpp_data_transfer_status(ocpp_response.status);
-    response.data = ocpp_response.data;
-    return response;
 }
 
 types::ocpp::GetConfigurationResponse ocpp_1_6_charge_pointImpl::handle_get_configuration_key(Array& keys) {
