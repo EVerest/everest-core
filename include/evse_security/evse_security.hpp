@@ -78,6 +78,9 @@ public:
     /// @return contains the certificate hash data chains of the requested \p certificate_types
     GetInstalledCertificatesResult get_installed_certificates(const std::vector<CertificateType>& certificate_types);
 
+    /// @brief Retrieves the certificate count applying the \p certificate_types filter.
+    int get_count_of_installed_certificates(const std::vector<CertificateType>& certificate_types);
+
     /// @brief Retrieves the OCSP request data of the V2G certificates
     /// @return contains OCSP request data
     OCSPRequestDataList get_ocsp_request_data();
