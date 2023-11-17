@@ -64,8 +64,9 @@ void ChargePoint::data_transfer_pnc_get_15118_ev_certificate(
                                                                    certificate_action);
 }
 
-DataTransferResponse ChargePoint::data_transfer(const CiString<255>& vendorId, const CiString<50>& messageId,
-                                                const std::string& data) {
+DataTransferResponse ChargePoint::data_transfer(const CiString<255>& vendorId,
+                                                const std::optional<CiString<50>>& messageId,
+                                                const std::optional<std::string>& data) {
     return this->charge_point->data_transfer(vendorId, messageId, data);
 }
 
@@ -165,6 +166,11 @@ void ChargePoint::register_data_transfer_callback(
     const CiString<255>& vendorId, const CiString<50>& messageId,
     const std::function<DataTransferResponse(const std::optional<std::string>& msg)>& callback) {
     this->charge_point->register_data_transfer_callback(vendorId, messageId, callback);
+}
+
+void ChargePoint::register_data_transfer_callback(
+    const std::function<DataTransferResponse(const DataTransferRequest& request)>& callback) {
+    this->charge_point->register_data_transfer_callback(callback);
 }
 
 void ChargePoint::register_enable_evse_callback(const std::function<bool(int32_t connector)>& callback) {

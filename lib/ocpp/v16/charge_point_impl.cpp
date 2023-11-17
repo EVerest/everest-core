@@ -1420,6 +1420,8 @@ void ChargePointImpl::handleDataTransferRequest(ocpp::Call<DataTransferRequest> 
 
     auto vendorId = call.msg.vendorId.get();
     auto messageId = call.msg.messageId.value_or(CiString<50>()).get();
+
+    // first try the callbacks that are explicitly registered for a vendorId or messageId
     {
         std::lock_guard<std::mutex> lock(data_transfer_callbacks_mutex);
         if (vendorId == ISO15118_PNC_VENDOR_ID and !this->is_pnc_enabled()) {
@@ -1444,6 +1446,14 @@ void ChargePointImpl::handleDataTransferRequest(ocpp::Call<DataTransferRequest> 
         } else {
             // there is a callback registered for this vendorId and messageId
             response = this->data_transfer_callbacks[vendorId][messageId](call.msg.data);
+        }
+    }
+
+    // only try the general data_transfer_callback if a explicity registered callback was not found
+    if (response.status == DataTransferStatus::UnknownVendorId or
+        response.status == DataTransferStatus::UnknownMessageId) {
+        if (this->data_transfer_callback != nullptr) {
+            response = this->data_transfer_callback(call.msg);
         }
     }
 
@@ -2973,12 +2983,13 @@ void ChargePointImpl::handle_data_transfer_install_certificate(Call<DataTransfer
     this->send<DataTransferResponse>(call_result);
 }
 
-DataTransferResponse ChargePointImpl::data_transfer(const CiString<255>& vendorId, const CiString<50>& messageId,
-                                                    const std::string& data) {
+DataTransferResponse ChargePointImpl::data_transfer(const CiString<255>& vendorId,
+                                                    const std::optional<CiString<50>>& messageId,
+                                                    const std::optional<std::string>& data) {
     DataTransferRequest req;
     req.vendorId = vendorId;
     req.messageId = messageId;
-    req.data.emplace(data);
+    req.data = data;
 
     DataTransferResponse response;
     ocpp::Call<DataTransferRequest> call(req, this->message_queue->createMessageId());
@@ -3009,6 +3020,11 @@ void ChargePointImpl::register_data_transfer_callback(
     const std::function<DataTransferResponse(const std::optional<std::string>& msg)>& callback) {
     std::lock_guard<std::mutex> lock(data_transfer_callbacks_mutex);
     this->data_transfer_callbacks[vendorId.get()][messageId.get()] = callback;
+}
+
+void ChargePointImpl::register_data_transfer_callback(
+    const std::function<DataTransferResponse(const DataTransferRequest& request)>& callback) {
+    this->data_transfer_callback = callback;
 }
 
 void ChargePointImpl::on_meter_values(int32_t connector, const Measurement& measurement) {

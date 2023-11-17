@@ -139,8 +139,8 @@ public:
     /// \param messageId
     /// \param data
     /// \return
-    DataTransferResponse data_transfer(const CiString<255>& vendorId, const CiString<50>& messageId,
-                                       const std::string& data);
+    DataTransferResponse data_transfer(const CiString<255>& vendorId, const std::optional<CiString<50>>& messageId,
+                                       const std::optional<std::string>& data);
 
     /// \brief Calculates ChargingProfiles configured by the CSMS of all connectors from now until now + given \p
     /// duration_s
@@ -284,6 +284,12 @@ public:
     void register_data_transfer_callback(
         const CiString<255>& vendorId, const CiString<50>& messageId,
         const std::function<DataTransferResponse(const std::optional<std::string>& msg)>& callback);
+
+    /// registers a \p callback function that can be used to handle arbitrary data transfers for all vendorId an
+    /// messageId
+    /// \param callback
+    void register_data_transfer_callback(
+        const std::function<DataTransferResponse(const DataTransferRequest& request)>& callback);
 
     /// \brief registers a \p callback function that can be used to enable the evse. The enable_evse_callback is called
     /// when a ChangeAvailaibility.req is received.

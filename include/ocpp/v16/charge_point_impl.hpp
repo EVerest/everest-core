@@ -123,6 +123,7 @@ private:
     std::map<std::string,
              std::map<std::string, std::function<DataTransferResponse(const std::optional<std::string>& msg)>>>
         data_transfer_callbacks;
+    std::function<DataTransferResponse(const DataTransferRequest& request)> data_transfer_callback;
     std::map<std::string, std::function<void(Call<DataTransferRequest> call)>> data_transfer_pnc_callbacks;
     std::mutex data_transfer_callbacks_mutex;
     std::map<CiString<50>, std::function<void(const KeyValue& key_value)>> configuration_key_changed_callbacks;
@@ -402,8 +403,8 @@ public:
     /// \param messageId
     /// \param data
     /// \return
-    DataTransferResponse data_transfer(const CiString<255>& vendorId, const CiString<50>& messageId,
-                                       const std::string& data);
+    DataTransferResponse data_transfer(const CiString<255>& vendorId, const std::optional<CiString<50>>& messageId,
+                                       const std::optional<std::string>& data);
 
     /// \brief Calculates ChargingProfiles configured by the CSMS of all connectors from now until now + given \p
     /// duration_s
@@ -547,6 +548,12 @@ public:
     void register_data_transfer_callback(
         const CiString<255>& vendorId, const CiString<50>& messageId,
         const std::function<DataTransferResponse(const std::optional<std::string>& msg)>& callback);
+
+    /// registers a \p callback function that can be used to handle arbitrary data transfers for all vendorId an
+    /// messageId
+    /// \param callback
+    void register_data_transfer_callback(
+        const std::function<DataTransferResponse(const DataTransferRequest& request)>& callback);
 
     /// \brief registers a \p callback function that can be used to enable the evse. The enable_evse_callback is called
     /// when a ChangeAvailaibility.req is received.
