@@ -253,7 +253,7 @@ void API::init() {
         evse->subscribe_session_event(
             [this, var_session_info, var_logging_path, &session_info](types::evse_manager::SessionEvent session_event) {
                 auto event = types::evse_manager::session_event_enum_to_string(session_event.event);
-                auto state_info = "";
+                std::string state_info = "";
                 if (session_event.error.has_value()) {
                     state_info = types::evse_manager::error_enum_to_string(session_event.error.value().error_code);
                 }
