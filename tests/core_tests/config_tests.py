@@ -5,14 +5,10 @@
 
 import logging
 import pytest
-import time
-import threading
-import queue
 
 from everest.testing.core_utils.fixtures import *
-from everest.testing.core_utils.everest_core import EverestCore, Requirement
+from everest.testing.core_utils.everest_core import EverestCore
 
-from everest.framework import Module, RuntimeSession
 
 @pytest.mark.everest_core_config('config-example.yaml')
 @pytest.mark.asyncio
