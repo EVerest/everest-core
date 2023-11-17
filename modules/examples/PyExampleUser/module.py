@@ -27,7 +27,7 @@ class PyExampleUserModule():
 
     def handle_error(self, error):
         log.info("Received error: " + json.dumps(error, indent=1))
-    
+
     def handle_error_cleared(self, error):
         log.info("Received error cleared: " + json.dumps(error, indent=1))
 
