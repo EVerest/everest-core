@@ -18,9 +18,13 @@ class ProbeModuleConfigurationVisitor(EverestConfigAdjustmentVisitor):
     def adjust_everest_configuration(self, everest_config: Dict) -> Dict:
         adjusted_config = deepcopy(everest_config)
 
+        probe_connections = {}
+        for k, v in self._connections.items():
+            probe_connections[k] = [{"module_id": v.module_id, "implementation_id": v.implementation_id}]
+
         active_modules = adjusted_config.setdefault("active_modules", {})
         active_modules[self._module_id] = {
-            'connections': self._connections,
+            'connections': probe_connections,
             'module': 'ProbeModule'
         }
 
