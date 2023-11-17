@@ -107,7 +107,7 @@ std::string LimitDecimalPlaces::limit(const types::powermeter::Powermeter& power
         root["voltage_V"] |= ryml::MAP;
         if (voltage_V.DC.has_value()) {
             root["voltage_V"]["DC"] << ryml::fmt::real(
-                this->round_to_nearest_step(voltage_V.L1.value(), this->config.powermeter_voltage_round_to),
+                this->round_to_nearest_step(voltage_V.DC.value(), this->config.powermeter_voltage_round_to),
                 this->config.powermeter_voltage_decimal_places);
         }
         if (voltage_V.L1.has_value()) {
@@ -155,7 +155,7 @@ std::string LimitDecimalPlaces::limit(const types::powermeter::Powermeter& power
         root["current_A"] |= ryml::MAP;
         if (current_A.DC.has_value()) {
             root["current_A"]["DC"] << ryml::fmt::real(
-                this->round_to_nearest_step(current_A.L1.value(), this->config.powermeter_current_round_to),
+                this->round_to_nearest_step(current_A.DC.value(), this->config.powermeter_current_round_to),
                 this->config.powermeter_current_decimal_places);
         }
         if (current_A.L1.has_value()) {
