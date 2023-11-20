@@ -5,9 +5,10 @@
 
 from copy import deepcopy
 import logging
+import os
 from pathlib import Path
+import pty
 import pytest
-import subprocess
 from tempfile import mkdtemp
 from typing import Dict
 
@@ -56,31 +57,21 @@ async def test_start_config_sil_energy_management(everest_core: EverestCore):
 class EverestCoreConfigSilGenPmConfigurationVisitor(EverestConfigAdjustmentVisitor):
     def __init__(self):
         self.temporary_directory = mkdtemp()
-        self.serial_port_0 = Path(self.temporary_directory) / 'serial_port_0'
-        self.serial_port_1 = Path(self.temporary_directory) / 'serial_port_1'
+        self.serial_port_0, self.serial_port_1 = pty.openpty()
+        self.serial_port_0_name = os.ttyname(self.serial_port_0) # FIXME: cleanup socket after test
 
     def adjust_everest_configuration(self, everest_config: Dict):
         adjusted_config = deepcopy(everest_config)
 
-        adjusted_config["active_modules"]["serial_comm_hub"]["config_implementation"]["main"]["serial_port"] = self.serial_port_0.as_posix()
+        adjusted_config["active_modules"]["serial_comm_hub"]["config_implementation"]["main"]["serial_port"] = self.serial_port_0_name
 
         return adjusted_config
-
-
-@pytest.yield_fixture
-def run_serial_port_subprocess(request):
-    config_adaption = request.node.get_closest_marker(
-        'everest_config_adaptions').args[0]
-    serial_port_process = subprocess.Popen(
-        ['socat', f'PTY,link={config_adaption.serial_port_0}', f'PTY,link={config_adaption.serial_port_1}'])
-    yield serial_port_process
-    serial_port_process.kill()
 
 
 @pytest.mark.everest_core_config('config-sil-gen-pm.yaml')
 @pytest.mark.everest_config_adaptions(EverestCoreConfigSilGenPmConfigurationVisitor())
 @pytest.mark.asyncio
-async def test_start_config_sil_gen_pm(run_serial_port_subprocess, everest_core: EverestCore):
+async def test_start_config_sil_gen_pm(everest_core: EverestCore):
     logging.info(">>>>>>>>> test_start_config_sil_gen_pm <<<<<<<<<")
 
     everest_core.start()
