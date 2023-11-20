@@ -31,11 +31,14 @@
 #include <date/tz.h>
 #include <generated/interfaces/ISO15118_charger/Interface.hpp>
 #include <generated/interfaces/board_support_AC/Interface.hpp>
+#include <generated/interfaces/powermeter/Interface.hpp>
 #include <generated/types/authorization.hpp>
 #include <generated/types/evse_manager.hpp>
+#include <memory>
 #include <mutex>
 #include <queue>
 #include <sigslot/signal.hpp>
+#include <vector>
 
 namespace module {
 
@@ -46,7 +49,9 @@ using ControlPilotEvent = types::board_support::Event;
 
 class Charger {
 public:
-    Charger(const std::unique_ptr<board_support_ACIntf>& r_bsp, const std::string& connector_type);
+    Charger(const std::unique_ptr<board_support_ACIntf>& r_bsp,
+            const std::vector<std::unique_ptr<powermeterIntf>>& r_powermeter_billing, const std::string& connector_type,
+            const std::string& evse_id);
     ~Charger();
 
     // Public interface to configure Charger
@@ -201,7 +206,9 @@ private:
     Everest::Thread mainThreadHandle;
 
     const std::unique_ptr<board_support_ACIntf>& r_bsp;
+    const std::vector<std::unique_ptr<powermeterIntf>>& r_powermeter_billing;
     const std::string& connector_type;
+    const std::string evse_id;
 
     void mainThread();
 
@@ -218,7 +225,7 @@ private:
     void stopSession();
     bool sessionActive();
 
-    void startTransaction();
+    bool startTransaction();
     void stopTransaction();
     bool transactionActive();
     bool transaction_active;
