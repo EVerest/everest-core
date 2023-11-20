@@ -39,9 +39,7 @@ struct RymlCallbackInitializer {
 };
 
 static nlohmann::ordered_json ryml_to_nlohmann_json(const c4::yml::NodeRef& ryml_node) {
-    if (ryml_node.empty()) {
-        return nullptr;
-    } else if (ryml_node.is_map()) {
+    if (ryml_node.is_map()) {
         // handle object
         auto object = nlohmann::ordered_json::object();
         for (const auto& child : ryml_node) {
@@ -55,7 +53,7 @@ static nlohmann::ordered_json ryml_to_nlohmann_json(const c4::yml::NodeRef& ryml
             array.emplace_back(ryml_to_nlohmann_json(child));
         }
         return array;
-    } else if (ryml_node.val_is_null()) {
+    } else if (ryml_node.empty() or ryml_node.val_is_null()) {
         return nullptr;
     } else {
         // check type of data

@@ -132,6 +132,12 @@ RuntimeSettings::RuntimeSettings(const std::string& prefix_, const std::string& 
     }
 
     config = load_yaml(config_file);
+    if (config == nullptr) {
+        EVLOG_info << "Config file is null, treating it as empty";
+        config = json::object();
+    } else if (!config.is_object()) {
+        throw BootException(fmt::format("Config file '{}' is not an object", config_file.string()));
+    }
 
     const auto settings = config.value("settings", json::object());
 
