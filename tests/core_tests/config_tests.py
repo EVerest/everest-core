@@ -7,7 +7,6 @@ from copy import deepcopy
 import logging
 from pathlib import Path
 import pytest
-import subprocess
 from tempfile import mkdtemp
 from typing import Dict
 
@@ -75,7 +74,6 @@ async def test_start_config_sil_gen_pm(request, everest_core: EverestCore):
     config_adaptation = request.node.get_closest_marker(
         'everest_config_adaptations').args[0]
     logging.info(f"config_adaptation: {config_adaptation.serial_port_0}")
-    # serial_port_process = subprocess.Popen(['socat', 'PTY,link=/tmp/serial_port', 'PTY,link=/tmp/serial_port_1'])
     everest_core.start()
 
 
