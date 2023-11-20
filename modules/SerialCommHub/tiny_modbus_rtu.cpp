@@ -281,7 +281,7 @@ int TinyModbusRTU::read_reply(uint8_t* rxbuf, int rxbuf_len) {
         // reduce timeout after first chunk, no unnecessary waiting at the end of the message
         timeout.tv_sec = 0;
         timeout.tv_usec = MODBUS_RX_WITHIN_MESSAGE_TIMEOUT_MS * 1000;
-        if (rv == -1) {         // error in select function call
+        if (rv == -1) { // error in select function call
             perror("txrx: select:");
             break;
         } else if (rv == 0) { // no more bytes to read within timeout, so transfer is complete
