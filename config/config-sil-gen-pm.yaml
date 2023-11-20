@@ -6,7 +6,6 @@ active_modules:
         serial_port: /dev/ttyUSB0
         baudrate: 19200
         parity: 0
-        rs485_direction_gpio: -1
         ignore_echo: false
   PowerMeter:
     module: GenericPowermeter
