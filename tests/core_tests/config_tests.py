@@ -7,6 +7,7 @@ from copy import deepcopy
 import logging
 from pathlib import Path
 import pytest
+import subprocess
 from tempfile import mkdtemp
 from typing import Dict
 
@@ -66,14 +67,22 @@ class EverestCoreConfigSilGenPmConfigurationVisitor(EverestConfigAdjustmentVisit
         return adjusted_config
 
 
+@pytest.yield_fixture
+def run_serial_port_subprocess(request):
+    config_adaption = request.node.get_closest_marker(
+        'everest_config_adaptions').args[0]
+    serial_port_process = subprocess.Popen(
+        ['socat', f'PTY,link={config_adaption.serial_port_0}', f'PTY,link={config_adaption.serial_port_1}'])
+    yield serial_port_process
+    serial_port_process.kill()
+
+
 @pytest.mark.everest_core_config('config-sil-gen-pm.yaml')
-@pytest.mark.everest_config_adaptations(EverestCoreConfigSilGenPmConfigurationVisitor())
+@pytest.mark.everest_config_adaptions(EverestCoreConfigSilGenPmConfigurationVisitor())
 @pytest.mark.asyncio
-async def test_start_config_sil_gen_pm(request, everest_core: EverestCore):
+async def test_start_config_sil_gen_pm(run_serial_port_subprocess, everest_core: EverestCore):
     logging.info(">>>>>>>>> test_start_config_sil_gen_pm <<<<<<<<<")
-    config_adaptation = request.node.get_closest_marker(
-        'everest_config_adaptations').args[0]
-    logging.info(f"config_adaptation: {config_adaptation.serial_port_0}")
+
     everest_core.start()
 
 
