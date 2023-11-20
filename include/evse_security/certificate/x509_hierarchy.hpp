@@ -13,7 +13,20 @@ public:
     using std::runtime_error::runtime_error;
 };
 
+class InvalidStateException : public std::runtime_error {
+public:
+    using std::runtime_error::runtime_error;
+};
+
+struct NodeState {
+    std::uint32_t is_selfsigned : 1;
+    std::uint32_t is_orphan : 1; // 0 means temporary orphan, 1 is permanent orphan, no relevance if it is self-signed
+    std::uint32_t is_hash_computed : 1; // if the hash was correctly computed or if a placeholder hash is set
+};
+
 struct X509Node {
+    NodeState state;
+
     X509Wrapper certificate;
     CertificateHashData hash;
 
@@ -98,10 +111,14 @@ public:
     static X509CertificateHierarchy build_hierarchy(std::vector<X509Wrapper>& certificates);
 
 private:
-    /// @brief Attempts to add to the hierarchy the provided certificate
-    /// @return True if we found within our hierarchy any certificate that
-    /// owns the provided certificate, false otherwise
-    bool try_add_to_hierarchy(X509Wrapper&& certificate);
+    /// @brief Inserts the certificate in the hierarchy. If it is not a root
+    /// and a parent is not found, it will be inserted as a temporary orphan
+    void insert(X509Wrapper&& certificate);
+
+    /// @brief After inserting all certificates in the hierarchy, attempts
+    /// to parent all temporarly orphan certificates, marking the ones that
+    /// were not successfully parented as permanently orphan
+    void prune();
 
 private:
     std::vector<X509Node> hierarchy;
