@@ -21,7 +21,10 @@
 #include <sys/select.h>
 #include <sys/time.h>
 
+#include <algorithm>
 #include <fmt/core.h>
+#include <iterator>
+#include <ostream>
 
 #include "crc16.hpp"
 
@@ -174,6 +177,9 @@ static std::vector<uint16_t> decode_reply(const uint8_t* buf, int len, uint8_t e
         case 0x0B:
             EVLOG_error << "Modbus exception: Gateway target device failed to respond";
             break;
+        default: {
+            EVLOG_error << "Modbus exception: Unknown";
+        }
         }
         return result;
     }
@@ -263,8 +269,8 @@ bool TinyModbusRTU::open_device(const std::string& device, int _baud, bool _igno
 
 int TinyModbusRTU::read_reply(uint8_t* rxbuf, int rxbuf_len) {
     struct timeval timeout;
-    timeout.tv_sec = 0;
-    timeout.tv_usec = MODBUS_RX_INITIAL_TIMEOUT_MS * 1000; // 500msec intial timeout until device responds
+    timeout.tv_sec = 6;
+    timeout.tv_usec = MODBUS_RX_INITIAL_TIMEOUT_MS * 1000; // 500msec initial timeout until device responds
     fd_set set;
     FD_ZERO(&set);
     FD_SET(fd, &set);
@@ -272,8 +278,9 @@ int TinyModbusRTU::read_reply(uint8_t* rxbuf, int rxbuf_len) {
     int bytes_read_total = 0;
     while (true) {
         int rv = select(fd + 1, &set, NULL, NULL, &timeout);
-        timeout.tv_usec = MODBUS_RX_WITHIN_MESSAGE_TIMEOUT_MS *
-                          1000; // reduce timeout after first chunk, no uneccesary waiting at the end of the message
+        // reduce timeout after first chunk, no unnecessary waiting at the end of the message
+        timeout.tv_sec = 0;
+        timeout.tv_usec = MODBUS_RX_WITHIN_MESSAGE_TIMEOUT_MS * 1000;
         if (rv == -1) {         // error in select function call
             perror("txrx: select:");
             break;
@@ -296,13 +303,51 @@ int TinyModbusRTU::read_reply(uint8_t* rxbuf, int rxbuf_len) {
     return bytes_read_total;
 }
 
+std::vector<uint16_t> TinyModbusRTU::txrx(uint8_t device_address, FunctionCode function,
+                                          uint16_t first_register_address, uint16_t register_quantity,
+                                          uint16_t max_packet_size, bool wait_for_reply,
+                                          std::vector<uint16_t> request) {
+    // This only supports chunking of the read-requests.
+    std::vector<uint16_t> out;
+
+    const uint16_t register_chunk = (max_packet_size - MODBUS_MIN_REPLY_SIZE) / 2;
+    size_t written_elements = 0;
+    while (register_quantity) {
+
+        const auto current_register_quantity = std::min(register_quantity, register_chunk);
+        std::vector<uint16_t> current_request;
+        if (request.size() > written_elements + current_register_quantity) {
+            current_request = std::vector<uint16_t>(request.begin() + written_elements,
+                                                    request.begin() + written_elements + current_register_quantity);
+            written_elements += current_register_quantity;
+        } else {
+            current_request = std::vector<uint16_t>(request.begin() + written_elements, request.end());
+            written_elements = request.size();
+        }
+
+        const auto res = txrx_impl(device_address, function, first_register_address, current_register_quantity,
+                                   wait_for_reply, current_request);
+
+        // We failed to read/write.
+        if (res.empty()) {
+            return res;
+        }
+
+        out.insert(out.end(), res.begin(), res.end());
+        first_register_address += current_register_quantity;
+        register_quantity -= current_register_quantity;
+    }
+
+    return out;
+}
+
 /*
     This function transmits a modbus request and waits for the reply.
     Parameter request is optional and is only used for writing multiple registers.
 */
-std::vector<uint16_t> TinyModbusRTU::txrx(uint8_t device_address, FunctionCode function,
-                                          uint16_t first_register_address, uint16_t register_quantity,
-                                          bool wait_for_reply, std::vector<uint16_t> request) {
+std::vector<uint16_t> TinyModbusRTU::txrx_impl(uint8_t device_address, FunctionCode function,
+                                               uint16_t first_register_address, uint16_t register_quantity,
+                                               bool wait_for_reply, std::vector<uint16_t> request) {
     {
         // size of request
         int req_len = (request.size() == 0 ? 0 : 2 * request.size() + 1) + MODBUS_BASE_PAYLOAD_SIZE;

@@ -33,6 +33,7 @@ struct Conf {
     std::string rxtx_gpio_chip;
     int rxtx_gpio_line;
     bool rxtx_gpio_tx_high;
+    int max_packet_size;
 };
 
 class serial_communication_hubImpl : public serial_communication_hubImplBase {

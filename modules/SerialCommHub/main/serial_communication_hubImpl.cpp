@@ -66,7 +66,7 @@ serial_communication_hubImpl::handle_modbus_read_holding_registers(int& target_d
             //                           (uint16_t)first_register_address, (uint16_t)num_registers_to_read);
 
             response = modbus.txrx(target_device_id, tiny_modbus::FunctionCode::READ_MULTIPLE_HOLDING_REGISTERS,
-                                   first_register_address, num_registers_to_read);
+                                   first_register_address, num_registers_to_read, config.max_packet_size);
             if (response.size() > 0) {
                 break;
             }
@@ -102,7 +102,7 @@ serial_communication_hubImpl::handle_modbus_read_input_registers(int& target_dev
             //                           (uint16_t)first_register_address, (uint16_t)num_registers_to_read);
 
             response = modbus.txrx(target_device_id, tiny_modbus::FunctionCode::READ_INPUT_REGISTERS,
-                                   first_register_address, num_registers_to_read);
+                                   first_register_address, num_registers_to_read, config.max_packet_size);
             if (response.size() > 0) {
                 break;
             }
@@ -140,7 +140,7 @@ types::serial_comm_hub_requests::StatusCodeEnum serial_communication_hubImpl::ha
                                        (uint16_t)data.size());
 
             response = modbus.txrx(target_device_id, tiny_modbus::FunctionCode::WRITE_MULTIPLE_HOLDING_REGISTERS,
-                                   first_register_address, data.size(), true, data);
+                                   first_register_address, data.size(), config.max_packet_size, true, data);
             if (response.size() > 0) {
                 break;
             }

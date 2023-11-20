@@ -36,6 +36,12 @@ provides:
         description: GPIO direction, false means low for TX, true means high for TX
         type: boolean
         default: false
+      max_packet_size:
+        description: Maximum size of a packet to read/write in bytes. Payload exceeding the size will be chunked.
+        type: integer
+        minimum: 0
+        maximum: 65536
+        default: 256
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
   authors:
