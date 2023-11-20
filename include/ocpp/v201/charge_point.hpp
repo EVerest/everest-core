@@ -6,6 +6,7 @@
 
 #include <ocpp/common/charging_station_base.hpp>
 
+#include <ocpp/v201/average_meter_values.hpp>
 #include <ocpp/v201/ctrlr_component_variables.hpp>
 #include <ocpp/v201/database_handler.hpp>
 #include <ocpp/v201/device_model.hpp>
@@ -196,9 +197,7 @@ private:
 
     std::map<EvseConnectorPair, ConnectorStatusEnum> conn_state_per_evse;
     std::chrono::time_point<std::chrono::steady_clock> time_disconnected;
-
-    MeterValue meter_value; // represents evseId = 0 meter value
-    std::mutex meter_value_mutex;
+    AverageMeterValues aligned_data_evse0; // represents evseId = 0 meter value
 
     /// \brief Used when an 'OnIdle' reset is requested, to perform the reset after the charging has stopped.
     bool reset_scheduled;
@@ -303,10 +302,6 @@ private:
     /// \brief Get the value optional offline flag
     /// \return true if the charge point is offline. std::nullopt if it is online;
     bool is_offline();
-
-    /// \brief Returns the last present meter value for evseId 0
-    /// \return MeterValue
-    MeterValue get_meter_value();
 
     /// \brief Returns customer information based on the given arguments. This function also executes the
     /// get_customer_information_callback in case it is present

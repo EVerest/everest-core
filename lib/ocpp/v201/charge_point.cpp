@@ -383,17 +383,11 @@ void ChargePoint::on_session_finished(const int32_t evse_id, const int32_t conne
 
 void ChargePoint::on_meter_value(const int32_t evse_id, const MeterValue& meter_value) {
     if (evse_id == 0) {
-        std::lock_guard<std::mutex> lk(this->meter_value_mutex);
         // if evseId = 0 then store in the chargepoint metervalues
-        this->meter_value = meter_value;
+        this->aligned_data_evse0.set_values(meter_value);
     } else {
         this->evses.at(evse_id)->on_meter_value(meter_value);
     }
-}
-
-MeterValue ChargePoint::get_meter_value() {
-    std::lock_guard<std::mutex> lk(this->meter_value_mutex);
-    return this->meter_value;
 }
 
 std::string ChargePoint::get_customer_information(const std::optional<CertificateHashDataType> customer_certificate,
@@ -453,7 +447,6 @@ void ChargePoint::configure_message_logging_format(const std::string& message_lo
         !log_formats.empty(), message_log_path, DateTime().to_rfc3339(), log_to_console, detailed_log_to_console,
         log_to_file, log_to_html, session_logging, logging_callback);
 }
-
 void ChargePoint::on_unavailable(const int32_t evse_id, const int32_t connector_id) {
     this->evses.at(evse_id)->submit_event(connector_id, ConnectorEvent::Unavailable);
 }
@@ -1098,13 +1091,15 @@ void ChargePoint::update_aligned_data_interval() {
                 }
             }
 
-            const auto meter_value =
-                get_latest_meter_value_filtered(this->get_meter_value(), ReadingContextEnum::Sample_Clock,
-                                                ControllerComponentVariables::AlignedDataMeasurands);
+            // send evseID = 0 values
+            const auto meter_value = get_latest_meter_value_filtered(
+                this->aligned_data_evse0.retrieve_processed_values(), ReadingContextEnum::Sample_Clock,
+                ControllerComponentVariables::AlignedDataMeasurands);
 
             if (!meter_value.sampledValue.empty()) {
                 this->meter_values_req(0, std::vector<ocpp::v201::MeterValue>(1, meter_value));
             }
+            this->aligned_data_evse0.clear_values();
 
             for (auto const& [evse_id, evse] : this->evses) {
                 if (evse->has_active_transaction()) {
@@ -1114,13 +1109,15 @@ void ChargePoint::update_aligned_data_interval() {
                 // this will apply configured measurands and possibly reduce the entries of sampledValue
                 // according to the configuration
                 const auto meter_value =
-                    get_latest_meter_value_filtered(evse->get_meter_value(), ReadingContextEnum::Sample_Clock,
+                    get_latest_meter_value_filtered(evse->get_idle_meter_value(), ReadingContextEnum::Sample_Clock,
                                                     ControllerComponentVariables::AlignedDataMeasurands);
 
                 if (!meter_value.sampledValue.empty()) {
                     // J01.FR.14 this is the only case where we send a MeterValue.req
                     this->meter_values_req(evse_id, std::vector<ocpp::v201::MeterValue>(1, meter_value));
+                    // clear the values
                 }
+                evse->clear_idle_meter_values();
             }
         },
         interval, std::chrono::floor<date::days>(date::utc_clock::to_sys(date::utc_clock::now())));

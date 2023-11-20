@@ -4,10 +4,10 @@
 #include <utility>
 
 #include <everest/logging.hpp>
+#include <ocpp/v201/average_meter_values.hpp>
 #include <ocpp/v201/ctrlr_component_variables.hpp>
 #include <ocpp/v201/evse.hpp>
 #include <ocpp/v201/utils.hpp>
-
 using namespace std::chrono_literals;
 
 namespace ocpp {
@@ -116,12 +116,13 @@ void Evse::open_transaction(const std::string& transaction_id, const int32_t con
                         .value_or(false)) {
                     return;
                 }
-                auto meter_value = this->get_meter_value();
+                auto meter_value = this->aligned_data_updated.retrieve_processed_values();
                 for (auto& item : meter_value.sampledValue) {
                     item.context = ReadingContextEnum::Sample_Clock;
                 }
                 this->transaction_meter_value_req(meter_value, this->transaction->get_transaction(),
                                                   transaction->get_seq_no(), this->transaction->reservation_id);
+                this->aligned_data_updated.clear_values();
             },
             aligned_data_tx_updated_interval,
             std::chrono::floor<date::days>(date::utc_clock::to_sys(date::utc_clock::now())));
@@ -130,12 +131,13 @@ void Evse::open_transaction(const std::string& transaction_id, const int32_t con
     if (aligned_data_tx_ended_interval > 0s) {
         transaction->aligned_tx_ended_meter_values_timer.interval_starting_from(
             [this] {
-                auto meter_value = this->get_meter_value();
+                auto meter_value = this->aligned_data_tx_end.retrieve_processed_values();
                 for (auto& item : meter_value.sampledValue) {
                     item.context = ReadingContextEnum::Sample_Clock;
                 }
                 this->database_handler->transaction_metervalues_insert(this->transaction->transactionId.get(),
                                                                        meter_value);
+                this->aligned_data_tx_end.clear_values();
             },
             aligned_data_tx_ended_interval,
             std::chrono::floor<date::days>(date::utc_clock::to_sys(date::utc_clock::now())));
@@ -213,12 +215,22 @@ void Evse::trigger_status_notification_callback(const int32_t connector_id) {
 void Evse::on_meter_value(const MeterValue& meter_value) {
     std::lock_guard<std::recursive_mutex> lk(this->meter_value_mutex);
     this->meter_value = meter_value;
+    this->aligned_data_updated.set_values(meter_value);
+    this->aligned_data_tx_end.set_values(meter_value);
     this->check_max_energy_on_invalid_id();
 }
 
 MeterValue Evse::get_meter_value() {
     std::lock_guard<std::recursive_mutex> lk(this->meter_value_mutex);
     return this->meter_value;
+}
+
+MeterValue Evse::get_idle_meter_value() {
+    return this->aligned_data_updated.retrieve_processed_values();
+}
+
+void Evse::clear_idle_meter_values() {
+    this->aligned_data_updated.clear_values();
 }
 
 std::optional<float> Evse::get_active_import_register_meter_value() {
