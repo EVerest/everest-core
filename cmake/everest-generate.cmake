@@ -34,7 +34,7 @@ function(ev_add_project)
     endif ()
 
     if (NOT EVEREST_PROJECT_DIR)
-        # assume current project dir
+        # if we don't get a directory, we're assuming project directory
         set (EVEREST_PROJECT_DIR ${PROJECT_SOURCE_DIR})
         set (CALLED_FROM_WITHIN_PROJECT TRUE)
     elseif (NOT EXISTS ${EVEREST_PROJECT_DIR})
@@ -45,8 +45,7 @@ function(ev_add_project)
         set (EVEREST_PROJECT_NAME ${PROJECT_NAME})
     endif ()
 
-    # if we don't get a directory, we're assuming current source directory
-    message(STATUS "APPENDING ${PROJECT_SOURCE_DIR} to EVEREST_PROJECT_DIRS")
+    message(STATUS "APPENDING ${EVEREST_PROJECT_DIR} to EVEREST_PROJECT_DIRS")
     set_property(TARGET generate_cpp_files
         APPEND PROPERTY EVEREST_PROJECT_DIRS ${EVEREST_PROJECT_DIR}
     )
