@@ -45,7 +45,7 @@ boot_module(async ({
 
   setup.provides.yeti_extras.register.firmware_update((mod, args) => { });
   setup.provides.powermeter.register.stop_transaction((mod, args) => ({
-    status: 'NOT_IMPLEMENTED',
+    status: 'NOT_SUPPORTED',
     error: 'YetiDriver does not support stop transaction request.',
   }));
   setup.provides.powermeter.register.start_transaction((mod, args) => ({ status: 'OK' }));
