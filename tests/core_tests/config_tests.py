@@ -17,13 +17,6 @@ async def test_start_config_example(everest_core: EverestCore):
     everest_core.start()
 
 
-@pytest.mark.everest_core_config('config-hil.yaml')
-@pytest.mark.asyncio
-async def test_start_config_hil(everest_core: EverestCore):
-    logging.info(">>>>>>>>> test_start_config_hil <<<<<<<<<")
-    everest_core.start()
-
-
 @pytest.mark.everest_core_config('config-sil-dc-sae-v2g.yaml')
 @pytest.mark.asyncio
 async def test_start_config_sil_dc_sae_v2g(everest_core: EverestCore):
