@@ -1,7 +1,7 @@
 
 #!/usr/bin/env python3
 # SPDX-License-Identifier: Apache-2.0
-# Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+# Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
 import logging
 import pytest
@@ -55,7 +55,8 @@ async def test_start_config_sil_gen_pm(everest_core: EverestCore):
 @pytest.mark.everest_core_config('config-sil-ocpp-custom-extension.yaml')
 @pytest.mark.asyncio
 async def test_start_config_sil_ocpp_custom_extension(everest_core: EverestCore):
-    logging.info(">>>>>>>>> test_start_config_sil_ocpp_custom_extension <<<<<<<<<")
+    logging.info(
+        ">>>>>>>>> test_start_config_sil_ocpp_custom_extension <<<<<<<<<")
     everest_core.start()
 
 
