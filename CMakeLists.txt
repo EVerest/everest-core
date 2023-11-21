@@ -124,12 +124,12 @@ if (FRAMEWORK_INSTALL)
         EXPORT framework-targets
         NAMESPACE everest
         ADDITIONAL_CONTENT
-            "find_package(nlohmann_json REQUIRED)"
-            "find_package(nlohmann_json_schema_validator REQUIRED)"
-            "find_package(everest-timer REQUIRED)"
-            "find_package(everest-log REQUIRED)"
-            "find_package(fmt REQUIRED)"
-            "find_package(date REQUIRED)"
+            "find_dependency(nlohmann_json)"
+            "find_dependency(nlohmann_json_schema_validator)"
+            "find_dependency(everest-timer)"
+            "find_dependency(everest-log)"
+            "find_dependency(fmt)"
+            "find_dependency(date)"
             "set(EVEREST_SCHEMA_DIR \"@PACKAGE_EVEREST_SCHEMA_DIR@\")"
         PATH_VARS
             EVEREST_SCHEMA_DIR "${CMAKE_INSTALL_DATADIR}/everest/schemas"
