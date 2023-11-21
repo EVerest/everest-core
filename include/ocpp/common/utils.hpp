@@ -4,6 +4,7 @@
 #define OCPP_COMMON_UTILS_HPP
 
 #include <string>
+#include <tuple>
 #include <vector>
 
 namespace ocpp {
@@ -12,6 +13,10 @@ namespace ocpp {
 bool iequals(const std::string& lhs, const std::string rhs);
 
 std::vector<std::string> get_vector_from_csv(const std::string& csv_str);
+
+bool is_integer(const std::string& value);
+std::tuple<bool, int> is_positive_integer(const std::string& value);
+bool is_decimal_number(const std::string& value);
 
 } // namespace ocpp
 

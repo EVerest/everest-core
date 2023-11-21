@@ -22,4 +22,55 @@ std::vector<std::string> get_vector_from_csv(const std::string& csv_str) {
     return csv;
 }
 
+bool is_integer(const std::string& value) {
+    if (value.empty()) {
+        return false;
+    }
+
+    // Check for + or - in the beginning
+    size_t start_pos = 0;
+    if (value[0] == '+' or value[0] == '-') {
+        start_pos = 1;
+    }
+
+    return std::all_of(value.begin() + start_pos, value.end(), ::isdigit);
+}
+
+std::tuple<bool, int> is_positive_integer(const std::string& value) {
+    bool valid = is_integer(value);
+    auto value_int = 0;
+    if (valid) {
+        value_int = std::stoi(value);
+        if (value_int < 0) {
+            valid = false;
+        }
+    }
+    return {valid, value_int};
+}
+
+bool is_decimal_number(const std::string& value) {
+    if (value.empty()) {
+        return false;
+    }
+
+    // Check for + or - in the beginning
+    size_t start_pos = 0;
+    if (value[0] == '+' || value[0] == '-') {
+        start_pos = 1;
+    }
+    int decimal_point_count = 0;
+
+    for (size_t i = start_pos; i < value.length(); ++i) {
+        if (value[i] == '.') {
+            // Allow at most one decimal point
+            if (++decimal_point_count > 1) {
+                return false;
+            }
+        } else if (!std::isdigit(value[i])) {
+            return false;
+        }
+    }
+    return true;
+}
+
 } // namespace ocpp
