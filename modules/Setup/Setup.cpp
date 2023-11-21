@@ -13,8 +13,6 @@
 
 namespace module {
 
-namespace fs = std::filesystem;
-
 void to_json(json& j, const NetworkDeviceInfo& k) {
     j = json::object({{"interface", k.interface},
                       {"wireless", k.wireless},
@@ -22,7 +20,8 @@ void to_json(json& j, const NetworkDeviceInfo& k) {
                       {"rfkill_id", k.rfkill_id},
                       {"ipv4", k.ipv4},
                       {"ipv6", k.ipv6},
-                      {"mac", k.mac}});
+                      {"mac", k.mac},
+                      {"link_type", k.link_type}});
 }
 
 void to_json(json& j, const WifiInfo& k) {
@@ -327,6 +326,19 @@ void Setup::discover_network() {
     this->publish_configured_networks();
 }
 
+std::string Setup::read_type_file(const fs::path& type_path) {
+    if (!fs::exists(type_path)) {
+        return "";
+    }
+
+    std::ifstream ifs(type_path.c_str());
+    std::string type_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+    // trim newlines
+    type_file.erase(std::remove(type_file.begin(), type_file.end(), '\n'), type_file.end());
+
+    return type_file;
+}
+
 std::vector<NetworkDeviceInfo> Setup::get_network_devices() {
     auto sys_net_path = fs::path("/sys/class/net");
     auto sys_virtual_net_path = fs::path("/sys/devices/virtual/net");
@@ -340,22 +352,20 @@ std::vector<NetworkDeviceInfo> Setup::get_network_devices() {
             continue;
         }
 
-        std::ifstream ifs(type_path.c_str());
-        std::string type_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-        // trim newlines
-        type_file.erase(std::remove(type_file.begin(), type_file.end(), '\n'), type_file.end());
+        std::string type_file = this->read_type_file(type_path);
+
+        auto interface = net_path.filename();
+        auto virtual_interface = sys_virtual_net_path / interface;
 
         // check if type is ethernet:
         if (type_file == "1") {
-            auto interface = net_path.filename();
-
-            auto virtual_interface = sys_virtual_net_path / interface;
             if (fs::exists(virtual_interface)) {
                 continue;
             }
 
             auto device = NetworkDeviceInfo();
             device.interface = interface.string();
+            device.link_type = "ether";
 
             // check if its wireless or not:
             auto wireless_path = net_path / "wireless";
@@ -374,6 +384,36 @@ std::vector<NetworkDeviceInfo> Setup::get_network_devices() {
             }
 
             device_info.push_back(device);
+        } else if (type_file == "65534") {
+            if (!fs::exists(virtual_interface)) {
+                continue;
+            }
+
+            auto virtual_type_path = virtual_interface / "type";
+
+            if (!fs::exists(virtual_type_path)) {
+                continue;
+            }
+
+            std::string virtual_type_file = this->read_type_file(virtual_type_path);
+            if (virtual_type_file == type_file) {
+                // assume it's a vpn, but check ip link
+                auto ip_output = this->run_application("ip", {"--json", "-details", "link", "show", interface});
+                if (ip_output.exit_code != 0) {
+                    continue;
+                }
+                const auto ip_json = json::parse(ip_output.output);
+                if (ip_json.size() < 1) {
+                    continue;
+                }
+                const auto& entry = ip_json.at(0);
+                if (entry.contains("linkinfo") and entry.at("linkinfo").contains("info_kind")) {
+                    auto device = NetworkDeviceInfo();
+                    device.interface = interface.string();
+                    device.link_type = entry.at("linkinfo").at("info_kind");
+                    device_info.push_back(device);
+                }
+            }
         }
     }
 

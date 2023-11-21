@@ -88,6 +88,7 @@ struct NetworkDeviceInfo {
     std::vector<std::string> ipv4;
     std::vector<std::string> ipv6;
     std::string mac;
+    std::string link_type;
 
     operator std::string() {
         json device_info = *this;
@@ -134,6 +135,8 @@ struct CmdOutput {
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
+
+namespace fs = std::filesystem;
 
 struct Conf {
     bool setup_wifi;
@@ -195,6 +198,7 @@ private:
     void set_initialized(bool initialized);
     bool get_initialized();
     void discover_network();
+    std::string read_type_file(const fs::path& type_path);
     std::vector<NetworkDeviceInfo> get_network_devices();
     void populate_rfkill_status(std::vector<NetworkDeviceInfo>& device_info);
     bool rfkill_unblock(std::string rfkill_id);
