@@ -896,13 +896,15 @@ json Everest::get_cmd_definition(const std::string& module_id, const std::string
     }
 
     if (!cmds.contains(cmd_name)) {
+        const std::string intf =
+            this->config.get_manifests().at(module_name).at("provides").at(impl_id).at("interface");
         if (!is_call) {
             EVLOG_AND_THROW(
-                EverestApiError(fmt::format("{} tries to provide cmd '{}' not declared in manifest!",
-                                            this->config.printable_identifier(module_id, impl_id), cmd_name)));
+                EverestApiError(fmt::format("{} tries to provide cmd '{}' not declared in its interface {}!",
+                                            this->config.printable_identifier(module_id, impl_id), cmd_name, intf)));
         } else {
-            EVLOG_AND_THROW(EverestApiError(fmt::format("{} tries to call cmd '{}' not declared in manifest of {}!",
-                                                        this->config.printable_identifier(module_id), cmd_name,
+            EVLOG_AND_THROW(EverestApiError(fmt::format("{} tries to call cmd '{}' not declared in interface {} of {}!",
+                                                        this->config.printable_identifier(module_id), cmd_name, intf,
                                                         this->config.printable_identifier(module_id, impl_id))));
         }
     }
