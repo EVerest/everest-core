@@ -9,6 +9,7 @@
 #include <regex>
 #include <set>
 #include <string>
+#include <tuple>
 #include <unordered_map>
 
 #include <nlohmann/json-schema.hpp>
@@ -107,6 +108,12 @@ private:
     void load_and_validate_manifest(const std::string& module_id, const json& module_config);
 
     error::ErrorTypeMap error_map;
+
+    ///
+    /// \brief loads and validates the given file \p file_path with the schema \p schema
+    ///
+    /// \returns the loaded json and how long the validation took in ms
+    std::tuple<json, int> load_and_validate_with_schema(const fs::path& file_path, const json& schema);
 
 public:
     error::ErrorTypeMap get_error_map() const;
