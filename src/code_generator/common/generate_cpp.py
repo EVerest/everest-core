@@ -46,6 +46,13 @@ def snake_case(word: str) -> str:
     return out
 
 
+def remove_last(input_string: str, search: str) -> str:
+    """Removes the last occurence of search"""
+    if input_string.endswith(search):
+        return input_string[:input_string.rfind(search)]
+    return input_string
+
+
 def uses_optional(types):
     for t in types:
         for property in t['properties']:
@@ -81,6 +88,7 @@ env = Environment(
         enabled_extensions=('html'))
 )
 env.filters['snake_case'] = snake_case
+env.filters['remove_last'] = remove_last
 env.globals['timestamp'] = datetime.utcnow
 env.globals['year'] = datetime.utcnow().year
 message_hpp_template = env.get_template('message.hpp.jinja')

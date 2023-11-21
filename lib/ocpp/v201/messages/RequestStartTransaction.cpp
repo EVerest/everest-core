@@ -14,7 +14,7 @@ namespace ocpp {
 namespace v201 {
 
 std::string RequestStartTransactionRequest::get_type() const {
-    return "StartTransaction";
+    return "RequestStartTransaction";
 }
 
 void to_json(json& j, const RequestStartTransactionRequest& k) {
@@ -66,7 +66,7 @@ std::ostream& operator<<(std::ostream& os, const RequestStartTransactionRequest&
 }
 
 std::string RequestStartTransactionResponse::get_type() const {
-    return "StartTransactionResponse";
+    return "RequestStartTransactionResponse";
 }
 
 void to_json(json& j, const RequestStartTransactionResponse& k) {
