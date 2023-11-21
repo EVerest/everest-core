@@ -36,8 +36,10 @@
 #include <generated/types/evse_manager.hpp>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <queue>
 #include <sigslot/signal.hpp>
+#include <string>
 #include <vector>
 
 namespace module {
@@ -196,6 +198,12 @@ public:
     void set_hlc_charging_active();
     void set_hlc_allow_close_contactor(bool on);
 
+    std::optional<std::string> getOcmfData() {
+        std::optional<std::string> out;
+        std::swap(out, ocmfData);
+        return out;
+    }
+
 private:
     void bcb_toggle_reset();
     void bcb_toggle_detect_start_pulse();
@@ -301,6 +309,7 @@ private:
     int ac_with_soc_timer;
 
     std::chrono::time_point<date::utc_clock> lastPwmUpdate;
+    std::optional<std::string> ocmfData;
 
     float update_pwm_last_dc;
     void update_pwm_now(float dc);

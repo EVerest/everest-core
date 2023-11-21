@@ -750,6 +750,7 @@ void EvseManager::ready() {
     });
 
     charger->signalEvent.connect([this](types::evse_manager::SessionEventEnum s) {
+        // TODO(ddo) this is not publishing the session event???
         // Cancel reservations if charger is disabled or faulted
         if (s == types::evse_manager::SessionEventEnum::Disabled ||
             s == types::evse_manager::SessionEventEnum::PermanentFault) {

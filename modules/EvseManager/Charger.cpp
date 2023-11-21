@@ -1068,6 +1068,8 @@ bool Charger::startTransaction() {
         if (response.status == types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR) {
             currentState = EvseState::Error;
             return false;
+        } else if (response.status == types::powermeter::TransactionRequestStatus::OK) {
+            break;
         }
     }
 
@@ -1081,9 +1083,15 @@ void Charger::stopTransaction() {
     last_stop_transaction_reason = types::evse_manager::StopTransactionReason::EVDisconnected;
 
     const std::string transaction_id{};
+
     for (const auto& meter : r_powermeter_billing) {
-        // TODO publish an error together with TransactionFinished and ChargingFinished.
-        const auto _ = meter->call_stop_transaction(transaction_id);
+        const auto response = meter->call_stop_transaction(transaction_id);
+        // If we fail to stop the transaction, we ignore since there is no
+        // path to recovery. Its also not clear what to do
+        if (response.status == types::powermeter::TransactionRequestStatus::OK) {
+            ocmfData = response.ocmf;
+            break;
+        }
     }
 
     signalEvent(types::evse_manager::SessionEventEnum::ChargingFinished);
