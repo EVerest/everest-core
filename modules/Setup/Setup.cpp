@@ -834,8 +834,9 @@ void Setup::populate_ip_addresses(std::vector<NetworkDeviceInfo>& device_info) {
         if (device == device_info.end()) {
             continue;
         }
-
-        device->mac = ip_object.at("address");
+        if (ip_object.contains("address")) {
+            device->mac = ip_object.at("address");
+        }
         add_addr_infos_to_device(ip_object.at("addr_info"), *device);
     }
 }
