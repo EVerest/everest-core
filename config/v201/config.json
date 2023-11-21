@@ -209,13 +209,13 @@
             "SupportedCiphers12": {
                 "variable_name": "SupportedCiphers12",
                 "attributes": {
-                    "Actual": "ECDHE-ECDSA-AES128-GCM-SHA256,ECDHE-ECDSA-AES256,GCM-SHA384,AES128-GCM-SHA256,AES256-GCM-SHA384,TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256"
+                    "Actual": "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:AES128-GCM-SHA256:AES256-GCM-SHA384"
                 }
             },
             "SupportedCiphers13": {
                 "variable_name": "SupportedCiphers13",
                 "attributes": {
-                    "Actual": "TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256"
+                    "Actual": "TLS_AES_256_GCM_SHA384:TLS_AES_128_GCM_SHA256"
                 }
             },
             "NumberOfConnectors": {
