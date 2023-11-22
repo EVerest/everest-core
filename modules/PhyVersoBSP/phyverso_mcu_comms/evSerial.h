@@ -38,6 +38,8 @@ public:
     sigslot::signal<int, Telemetry> signal_telemetry;
     sigslot::signal<ResetReason> signal_spurious_reset;
     sigslot::signal<> signal_connection_timeout;
+    
+    sigslot::signal<int, PpState> signal_pp_state;
 
 private:
     // Serial interface

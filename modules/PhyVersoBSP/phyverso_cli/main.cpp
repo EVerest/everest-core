@@ -86,6 +86,30 @@ int main(int argc, char* argv[]) {
             }
         });
 
+        p.signal_pp_state.connect([](int connector, PpState s) {
+            switch (s) {
+            case PpState_STATE_NC:
+                printf(">> Connector %i: PP state NC\n", connector);
+                break;
+            case PpState_STATE_13A:
+                printf(">> Connector %i: PP state 13A\n", connector);
+                break;
+            case PpState_STATE_20A:
+                printf(">> Connector %i: PP state 20A\n", connector);
+                break;
+            case PpState_STATE_32A:
+                printf(">> Connector %i: PP state 32A\n", connector);
+                break;
+            case PpState_STATE_70A:
+                printf(">> Connector %i: PP state 70A\n", connector);
+                break;
+            case PpState_STATE_FAULT:
+                printf(">> Connector %i: PP state FAULT\n", connector);
+                break;
+            }
+        });
+
+
         while (true) {
             char c = getc(stdin);
             switch (c) {

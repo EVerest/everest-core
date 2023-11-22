@@ -168,6 +168,10 @@ void evSerial::handle_packet(uint8_t* buf, int len) {
             if (!forced_reset)
                 signal_spurious_reset(msg_in.payload.reset);
             break;
+
+        case McuToEverest_pp_state_tag:
+            signal_pp_state(msg_in.connector, msg_in.payload.pp_state);
+            break;
         }
 }
 
