@@ -21,6 +21,9 @@ PB_BIND(KeepAlive, KeepAlive, AUTO)
 PB_BIND(Telemetry, Telemetry, AUTO)
 
 
+PB_BIND(FanState, FanState, AUTO)
+
+
 
 
 

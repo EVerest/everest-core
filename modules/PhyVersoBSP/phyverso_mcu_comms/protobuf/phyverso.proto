@@ -27,6 +27,7 @@ message McuToEverest {
   ErrorFlags error_flags = 5;
   Telemetry telemetry = 7;
   PpState pp_state = 8;
+  FanState fan_state = 9;
  }
  int32 connector = 6; // 0: None, 1: Connector 1, 2: Connector 2
 }
@@ -73,4 +74,11 @@ enum PpState {
   STATE_32A = 3;
   STATE_70A = 4;
   STATE_FAULT = 5;
+}
+
+message FanState {
+  uint32 fan_id = 1;
+  bool enabled = 2;
+  uint32 duty = 3;  // in 0.1%, 1000 = 100%
+  uint32 rpm = 4;
 }

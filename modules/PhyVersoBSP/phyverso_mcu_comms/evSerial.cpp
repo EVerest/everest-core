@@ -172,6 +172,11 @@ void evSerial::handle_packet(uint8_t* buf, int len) {
         case McuToEverest_pp_state_tag:
             signal_pp_state(msg_in.connector, msg_in.payload.pp_state);
             break;
+
+        case McuToEverest_fan_state_tag:
+            signal_fan_state(msg_in.payload.fan_state);
+            break;
+
         }
 }
 

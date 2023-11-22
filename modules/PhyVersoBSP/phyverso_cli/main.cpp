@@ -109,6 +109,10 @@ int main(int argc, char* argv[]) {
             }
         });
 
+        p.signal_fan_state.connect([](FanState s) {
+            printf(">> Fan %i: EN=%s, Duty=%d RPM=%d\n", s.fan_id, (s.enabled ? "ON" : "OFF"), s.duty, s.rpm);
+        });
+
 
         while (true) {
             char c = getc(stdin);

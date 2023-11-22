@@ -69,6 +69,13 @@ typedef struct _Telemetry {
     uint32_t cp_voltage_lo;
 } Telemetry;
 
+typedef struct _FanState {
+    uint8_t fan_id;
+    bool enabled;
+    uint32_t duty; /* in 0.1%, 1000 = 100% */
+    uint16_t rpm;
+} FanState;
+
 /* This container message is send from MCU to EVerest and may contain any allowed message in that direction. */
 typedef struct _McuToEverest {
     pb_size_t which_payload;
@@ -80,6 +87,7 @@ typedef struct _McuToEverest {
         ErrorFlags error_flags;
         Telemetry telemetry;
         PpState pp_state;
+        FanState fan_state;
     } payload;
     int32_t connector; /* 0: None, 1: Connector 1, 2: Connector 2 */
 } McuToEverest;
@@ -111,17 +119,20 @@ extern "C" {
 
 
 
+
 /* Initializer values for message structs */
 #define EverestToMcu_init_default                {0, {KeepAlive_init_default}, 0}
 #define McuToEverest_init_default                {0, {KeepAlive_init_default}, 0}
 #define ErrorFlags_init_default                  {0, 0, 0, 0, 0, 0}
 #define KeepAlive_init_default                   {0, 0, 0, ""}
 #define Telemetry_init_default                   {0, 0}
+#define FanState_init_default                    {0, 0, 0, 0}
 #define EverestToMcu_init_zero                   {0, {KeepAlive_init_zero}, 0}
 #define McuToEverest_init_zero                   {0, {KeepAlive_init_zero}, 0}
 #define ErrorFlags_init_zero                     {0, 0, 0, 0, 0, 0}
 #define KeepAlive_init_zero                      {0, 0, 0, ""}
 #define Telemetry_init_zero                      {0, 0}
+#define FanState_init_zero                       {0, 0, 0, 0}
 
 /* Field tags (for use in manual encoding/decoding) */
 #define ErrorFlags_diode_fault_tag               1
@@ -143,6 +154,10 @@ extern "C" {
 #define EverestToMcu_connector_tag               7
 #define Telemetry_cp_voltage_hi_tag              1
 #define Telemetry_cp_voltage_lo_tag              2
+#define FanState_fan_id_tag                      1
+#define FanState_enabled_tag                     2
+#define FanState_duty_tag                        3
+#define FanState_rpm_tag                         4
 #define McuToEverest_keep_alive_tag              1
 #define McuToEverest_reset_tag                   2
 #define McuToEverest_cp_state_tag                3
@@ -150,6 +165,7 @@ extern "C" {
 #define McuToEverest_error_flags_tag             5
 #define McuToEverest_telemetry_tag               7
 #define McuToEverest_pp_state_tag                8
+#define McuToEverest_fan_state_tag               9
 #define McuToEverest_connector_tag               6
 
 /* Struct field encoding specification for nanopb */
@@ -173,12 +189,14 @@ X(a, STATIC,   ONEOF,    BOOL,     (payload,relais_state,payload.relais_state), 
 X(a, STATIC,   ONEOF,    MESSAGE,  (payload,error_flags,payload.error_flags),   5) \
 X(a, STATIC,   SINGULAR, INT32,    connector,         6) \
 X(a, STATIC,   ONEOF,    MESSAGE,  (payload,telemetry,payload.telemetry),   7) \
-X(a, STATIC,   ONEOF,    UENUM,    (payload,pp_state,payload.pp_state),   8)
+X(a, STATIC,   ONEOF,    UENUM,    (payload,pp_state,payload.pp_state),   8) \
+X(a, STATIC,   ONEOF,    MESSAGE,  (payload,fan_state,payload.fan_state),   9)
 #define McuToEverest_CALLBACK NULL
 #define McuToEverest_DEFAULT NULL
 #define McuToEverest_payload_keep_alive_MSGTYPE KeepAlive
 #define McuToEverest_payload_error_flags_MSGTYPE ErrorFlags
 #define McuToEverest_payload_telemetry_MSGTYPE Telemetry
+#define McuToEverest_payload_fan_state_MSGTYPE FanState
 
 #define ErrorFlags_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, BOOL,     diode_fault,       1) \
@@ -204,11 +222,20 @@ X(a, STATIC,   SINGULAR, UINT32,   cp_voltage_lo,     2)
 #define Telemetry_CALLBACK NULL
 #define Telemetry_DEFAULT NULL
 
+#define FanState_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, UINT32,   fan_id,            1) \
+X(a, STATIC,   SINGULAR, BOOL,     enabled,           2) \
+X(a, STATIC,   SINGULAR, UINT32,   duty,              3) \
+X(a, STATIC,   SINGULAR, UINT32,   rpm,               4)
+#define FanState_CALLBACK NULL
+#define FanState_DEFAULT NULL
+
 extern const pb_msgdesc_t EverestToMcu_msg;
 extern const pb_msgdesc_t McuToEverest_msg;
 extern const pb_msgdesc_t ErrorFlags_msg;
 extern const pb_msgdesc_t KeepAlive_msg;
 extern const pb_msgdesc_t Telemetry_msg;
+extern const pb_msgdesc_t FanState_msg;
 
 /* Defines for backwards compatibility with code written before nanopb-0.4.0 */
 #define EverestToMcu_fields &EverestToMcu_msg
@@ -216,10 +243,12 @@ extern const pb_msgdesc_t Telemetry_msg;
 #define ErrorFlags_fields &ErrorFlags_msg
 #define KeepAlive_fields &KeepAlive_msg
 #define Telemetry_fields &Telemetry_msg
+#define FanState_fields &FanState_msg
 
 /* Maximum encoded size of messages (where known) */
 #define ErrorFlags_size                          12
 #define EverestToMcu_size                        83
+#define FanState_size                            15
 #define KeepAlive_size                           70
 #define McuToEverest_size                        83
 #define PHYVERSO_PB_H_MAX_SIZE                   EverestToMcu_size
