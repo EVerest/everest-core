@@ -42,6 +42,7 @@ target_sources(ocpp
         ocpp/v201/evse.cpp
         ocpp/v201/utils.cpp
         ocpp/v201/ctrlr_component_variables.cpp
+        ocpp/v201/ocsp_updater.cpp
         ocpp/v201/average_meter_values.cpp
 )
 

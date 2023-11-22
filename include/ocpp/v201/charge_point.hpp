@@ -14,6 +14,7 @@
 #include <ocpp/v201/enums.hpp>
 #include <ocpp/v201/evse.hpp>
 #include <ocpp/v201/ocpp_types.hpp>
+#include <ocpp/v201/ocsp_updater.hpp>
 #include <ocpp/v201/types.hpp>
 #include <ocpp/v201/utils.hpp>
 
@@ -55,6 +56,10 @@
 
 namespace ocpp {
 namespace v201 {
+
+class UnexpectedMessageTypeFromCSMS : public std::runtime_error {
+    using std::runtime_error::runtime_error;
+};
 
 struct Callbacks {
     ///\brief Function to check if the callback struct is completely filled. All std::functions should hold a function,
@@ -220,10 +225,9 @@ private:
     // callback struct
     Callbacks callbacks;
 
-    // general message handling
-    template <class T> bool send(Call<T> call);
-    template <class T> std::future<EnhancedMessage<v201::MessageType>> send_async(Call<T> call);
-    template <class T> bool send(CallResult<T> call_result);
+    /// \brief Handler for automatic or explicit OCSP cache updates
+    OcspUpdater ocsp_updater;
+
     bool send(CallError call_error);
 
     // internal helper functions
@@ -440,6 +444,36 @@ private:
 
     // Functional Block P: DataTransfer
     void handle_data_transfer_req(Call<DataTransferRequest> call);
+
+    // general message handling
+    template <class T> bool send(ocpp::Call<T> call) {
+        this->message_queue->push(call);
+        return true;
+    }
+    template <class T> std::future<EnhancedMessage<v201::MessageType>> send_async(ocpp::Call<T> call) {
+        return this->message_queue->push_async(call);
+    }
+    template <class T> bool send(ocpp::CallResult<T> call_result) {
+        this->message_queue->push(call_result);
+        return true;
+    }
+    // Generates async sending callbacks
+    template <class RequestType, class ResponseType>
+    std::function<ResponseType(RequestType)> send_callback(MessageType expected_response_message_type) {
+        return [this, expected_response_message_type](auto request) {
+            MessageId message_id = MessageId(to_string(this->uuid_generator()));
+            const auto enhanced_response =
+                this->send_async<RequestType>(ocpp::Call<RequestType>(request, message_id)).get();
+            if (enhanced_response.messageType != expected_response_message_type) {
+                throw UnexpectedMessageTypeFromCSMS(
+                    std::string("Got unexpected message type from CSMS, expected: ") +
+                    conversions::messagetype_to_string(expected_response_message_type) +
+                    ", got: " + conversions::messagetype_to_string(enhanced_response.messageType));
+            }
+            ocpp::CallResult<ResponseType> call_result = enhanced_response.message;
+            return call_result.msg;
+        };
+    };
 
 public:
     /// \brief Construct a new ChargePoint object
