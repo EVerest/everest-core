@@ -422,6 +422,47 @@ void Everest::subscribe_error(const Requirement& req, const std::string& error_t
     this->mqtt_abstraction.register_handler(error_topic, token, QOS::QOS2);
 }
 
+void Everest::subscribe_all_errors(const JsonCallback& callback) {
+    BOOST_LOG_FUNCTION();
+
+    EVLOG_debug << fmt::format("subscribing to all errors");
+
+    if (not this->config.get_module_info(this->module_id).global_errors_enabled) {
+        EVLOG_AND_THROW(EverestApiError(fmt::format("Module {} is not allowed to subscribe to all errors!",
+                                                    this->config.printable_identifier(this->module_id))));
+    }
+
+    Handler handler = [this, callback](json const& data) {
+        EVLOG_debug << fmt::format(
+            "Incoming error {}->{}",
+            this->config.printable_identifier(data.at("origin").at("module"), data.at("origin").at("implementation")),
+            data.at("type"));
+        callback(data);
+    };
+
+    for (std::string module_id : Config::keys(this->config.get_main_config())) {
+        const std::string module_name = this->config.get_module_name(module_id);
+        const json provides = this->config.get_manifests().at(module_name).at("provides");
+        for (const auto& impl : provides.items()) {
+            const std::string impl_id = impl.key();
+            const std::string interface = impl.value().at("interface");
+            const json errors = this->config.get_interface_definition(interface).at("errors");
+            for (const auto& error_namespace_it : errors.items()) {
+                const std::string error_type_namespace = error_namespace_it.key();
+                for (const auto& error_name_it : error_namespace_it.value().items()) {
+                    const std::string error_type_name = error_name_it.key();
+                    const std::string error_topic =
+                        fmt::format("{}/error/{}/{}", this->config.mqtt_prefix(module_id, impl_id),
+                                    error_type_namespace, error_type_name);
+                    std::shared_ptr<TypedHandler> token =
+                        std::make_shared<TypedHandler>(HandlerType::SubscribeError, std::make_shared<Handler>(handler));
+                    this->mqtt_abstraction.register_handler(error_topic, token, QOS::QOS2);
+                }
+            }
+        }
+    }
+}
+
 void Everest::subscribe_error_cleared(const Requirement& req, const std::string& error_type,
                                       const JsonCallback& callback) {
     BOOST_LOG_FUNCTION();
@@ -471,6 +512,46 @@ void Everest::subscribe_error_cleared(const Requirement& req, const std::string&
     std::shared_ptr<TypedHandler> token =
         std::make_shared<TypedHandler>(error_type, HandlerType::SubscribeError, std::make_shared<Handler>(handler));
     this->mqtt_abstraction.register_handler(error_cleared_topic, token, QOS::QOS2);
+}
+
+void Everest::subscribe_all_errors_cleared(const JsonCallback& callback) {
+    BOOST_LOG_FUNCTION();
+
+    EVLOG_debug << fmt::format("subscribing to all errors cleared");
+    if (not this->config.get_module_info(this->module_id).global_errors_enabled) {
+        EVLOG_AND_THROW(EverestApiError(fmt::format("Module {} is not allowed to subscribe to all errors cleared!",
+                                                    this->config.printable_identifier(this->module_id))));
+    }
+
+    Handler handler = [this, callback](json const& data) {
+        EVLOG_debug << fmt::format(
+            "Incoming error cleared {}->{}",
+            this->config.printable_identifier(data.at("origin").at("module"), data.at("origin").at("implementation")),
+            data.at("type"));
+        callback(data);
+    };
+
+    for (std::string module_id : Config::keys(this->config.get_main_config())) {
+        const std::string module_name = this->config.get_module_name(module_id);
+        const json provides = this->config.get_manifests().at(module_name).at("provides");
+        for (const auto& impl : provides.items()) {
+            const std::string impl_id = impl.key();
+            const std::string interface = impl.value().at("interface");
+            const json errors = this->config.get_interface_definition(interface).at("errors");
+            for (const auto& error_namespace_it : errors.items()) {
+                const std::string error_type_namespace = error_namespace_it.key();
+                for (const auto& error_name_it : error_namespace_it.value().items()) {
+                    const std::string error_type_name = error_name_it.key();
+                    const std::string error_topic =
+                        fmt::format("{}/error-cleared/{}/{}", this->config.mqtt_prefix(module_id, impl_id),
+                                    error_type_namespace, error_type_name);
+                    std::shared_ptr<TypedHandler> token =
+                        std::make_shared<TypedHandler>(HandlerType::SubscribeError, std::make_shared<Handler>(handler));
+                    this->mqtt_abstraction.register_handler(error_topic, token, QOS::QOS2);
+                }
+            }
+        }
+    }
 }
 
 std::string Everest::raise_error(const std::string& impl_id, const std::string& error_type, const std::string& message,

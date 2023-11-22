@@ -73,7 +73,9 @@ struct ModuleAdapter {
     using PublishFunc = std::function<void(const std::string&, const std::string&, Value)>;
     using SubscribeFunc = std::function<void(const Requirement&, const std::string&, ValueCallback)>;
     using SubscribeErrorFunc = std::function<void(const Requirement&, const std::string&, error::ErrorCallback)>;
-    using SubscribeErrorClearedFunc = std::function<void(const Requirement&, const std::string&, error::ErrorCallback)>;
+    using SubscribeAllErrorsFunc = std::function<void(error::ErrorCallback)>;
+    using SubscribeErrorClearedFunc = SubscribeErrorFunc;
+    using SubscribeAllErrorsClearedFunc = SubscribeAllErrorsFunc;
     using RaiseErrorFunc = std::function<error::ErrorHandle(const std::string&, const std::string&, const std::string&,
                                                             const error::Severity&)>;
     using RequestClearErrorUUIDFunc = std::function<Result(const std::string&, const error::ErrorHandle&)>;
@@ -88,7 +90,9 @@ struct ModuleAdapter {
     PublishFunc publish;
     SubscribeFunc subscribe;
     SubscribeErrorFunc subscribe_error;
+    SubscribeAllErrorsFunc subscribe_all_errors;
     SubscribeErrorClearedFunc subscribe_error_cleared;
+    SubscribeAllErrorsClearedFunc subscribe_all_errors_cleared;
     RaiseErrorFunc raise_error;
     RequestClearErrorUUIDFunc request_clear_error_uuid;
     RequestClearAllErrorsOfMouduleFunc request_clear_all_errors_of_module;

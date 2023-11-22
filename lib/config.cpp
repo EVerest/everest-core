@@ -945,6 +945,7 @@ ModuleInfo Config::get_module_info(const std::string& module_id) {
     ModuleInfo module_info;
     module_info.id = module_id;
     module_info.name = this->main[module_id]["module"].get<std::string>();
+    module_info.global_errors_enabled = this->manifests.at(module_info.name).at("enable_global_errors");
     auto& module_metadata = this->manifests[module_info.name]["metadata"];
     for (auto& author : module_metadata["authors"]) {
         module_info.authors.emplace_back(author.get<std::string>());

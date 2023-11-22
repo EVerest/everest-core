@@ -155,4 +155,8 @@ properties:
     description: this requests access to the telemetry publishing interface
     type: boolean
     default: false
+  enable_global_errors:
+    description: this requests access to the global error subscription interface
+    type: boolean
+    default: false
 additionalProperties: false

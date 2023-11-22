@@ -77,6 +77,7 @@ struct ModuleInfo {
     std::string id;
     Paths paths;
     bool telemetry_enabled;
+    bool global_errors_enabled;
 };
 
 struct TelemetryConfig {

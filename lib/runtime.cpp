@@ -417,10 +417,20 @@ int ModuleLoader::initialize() {
             return everest.subscribe_error(req, error_type, json_callback);
         };
 
+        module_adapter.subscribe_all_errors = [&everest](const error::ErrorCallback& error_callback) {
+            JsonCallback json_callback = [error_callback](json j) { error_callback(error::json_to_error(j)); };
+            return everest.subscribe_all_errors(json_callback);
+        };
+
         module_adapter.subscribe_error_cleared = [&everest](const Requirement& req, const std::string& error_type,
                                                             const error::ErrorCallback& error_callback) {
             JsonCallback json_callback = [error_callback](json j) { return error_callback(error::json_to_error(j)); };
             return everest.subscribe_error_cleared(req, error_type, json_callback);
+        };
+
+        module_adapter.subscribe_all_errors_cleared = [&everest](const error::ErrorCallback& error_callback) {
+            JsonCallback json_callback = [error_callback](json j) { return error_callback(error::json_to_error(j)); };
+            return everest.subscribe_all_errors_cleared(json_callback);
         };
 
         module_adapter.raise_error = [&everest](const std::string& impl_id, const std::string& type,

@@ -81,11 +81,20 @@ public:
     void subscribe_error(const Requirement& req, const std::string& error_type, const JsonCallback& callback);
 
     ///
+    /// \brief Subscribes to all errors. The given \p callback is called when a new error is raised.
+    ///
+    void subscribe_all_errors(const JsonCallback& callback);
+
+    ///
     /// \brief Subscribes to an error cleared event of another module indentified by the given \p req and error type
     /// \p error_type. The given \p callback is called when an error is cleared
     ///
     void subscribe_error_cleared(const Requirement& req, const std::string& error_type, const JsonCallback& callback);
 
+    ///
+    /// \brief Subscribes to all errors cleared events. The given \p callback is called when an error is cleared.
+    ///
+    void subscribe_all_errors_cleared(const JsonCallback& callback);
     ///
     /// \brief Requests to clear errors
     /// If \p request_type is RequestClearErrorOption::ClearUUID, the error with the given \p uuid of the given \p
