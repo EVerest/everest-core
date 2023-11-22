@@ -19,6 +19,7 @@ target_link_libraries(${MODULE_NAME}
 target_sources(${MODULE_NAME}
     PRIVATE
         "main/ocpp_1_6_charge_pointImpl.cpp"
+        "ocpp_generic/ocppImpl.cpp"
         "auth_validator/auth_token_validatorImpl.cpp"
         "auth_provider/auth_token_providerImpl.cpp"
         "data_transfer/ocpp_data_transferImpl.cpp"

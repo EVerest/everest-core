@@ -138,7 +138,7 @@ void OCPP::publish_charging_schedules(const std::map<int32_t, ocpp::v16::Chargin
     for (const auto charging_schedule : charging_schedules) {
         j[std::to_string(charging_schedule.first)] = charging_schedule.second;
     }
-    this->p_main->publish_charging_schedules(j);
+    this->p_ocpp_generic->publish_charging_schedules(j);
 }
 
 void OCPP::init_evse_connector_map() {
@@ -204,6 +204,7 @@ ocpp::v16::DataTransferStatus to_ocpp(types::ocpp::DataTransferStatus status) {
 
 void OCPP::init() {
     invoke_init(*p_main);
+    invoke_init(*p_ocpp_generic);
     invoke_init(*p_auth_validator);
     invoke_init(*p_auth_provider);
     invoke_init(*p_data_transfer);
@@ -284,6 +285,7 @@ void OCPP::init() {
 
 void OCPP::ready() {
     invoke_ready(*p_main);
+    invoke_ready(*p_ocpp_generic);
     invoke_ready(*p_auth_validator);
     invoke_ready(*p_auth_provider);
     invoke_ready(*p_data_transfer);
@@ -524,7 +526,7 @@ void OCPP::ready() {
     });
 
     this->charge_point->register_connection_state_changed_callback(
-        [this](bool is_connected) { this->p_main->publish_is_connected(is_connected); });
+        [this](bool is_connected) { this->p_ocpp_generic->publish_is_connected(is_connected); });
 
     this->charge_point->register_get_15118_ev_certificate_response_callback(
         [this](const int32_t connector_id, const ocpp::v201::Get15118EVCertificateResponse& certificate_response,
@@ -544,7 +546,7 @@ void OCPP::ready() {
         types::ocpp::SecurityEvent event;
         event.type = type;
         event.info = tech_info;
-        this->p_main->publish_security_event(event);
+        this->p_ocpp_generic->publish_security_event(event);
     });
 
     if (!this->r_data_transfer.empty()) {

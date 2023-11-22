@@ -13,6 +13,7 @@
 // headers for provided interface implementations
 #include <generated/interfaces/auth_token_provider/Implementation.hpp>
 #include <generated/interfaces/auth_token_validator/Implementation.hpp>
+#include <generated/interfaces/ocpp/Implementation.hpp>
 #include <generated/interfaces/ocpp_1_6_charge_point/Implementation.hpp>
 #include <generated/interfaces/ocpp_data_transfer/Implementation.hpp>
 
@@ -58,7 +59,7 @@ class OCPP : public Everest::ModuleBase {
 public:
     OCPP() = delete;
     OCPP(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
-         std::unique_ptr<ocpp_1_6_charge_pointImplBase> p_main,
+         std::unique_ptr<ocpp_1_6_charge_pointImplBase> p_main, std::unique_ptr<ocppImplBase> p_ocpp_generic,
          std::unique_ptr<auth_token_validatorImplBase> p_auth_validator,
          std::unique_ptr<auth_token_providerImplBase> p_auth_provider,
          std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer,
@@ -70,6 +71,7 @@ public:
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_main(std::move(p_main)),
+        p_ocpp_generic(std::move(p_ocpp_generic)),
         p_auth_validator(std::move(p_auth_validator)),
         p_auth_provider(std::move(p_auth_provider)),
         p_data_transfer(std::move(p_data_transfer)),
@@ -84,6 +86,7 @@ public:
 
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<ocpp_1_6_charge_pointImplBase> p_main;
+    const std::unique_ptr<ocppImplBase> p_ocpp_generic;
     const std::unique_ptr<auth_token_validatorImplBase> p_auth_validator;
     const std::unique_ptr<auth_token_providerImplBase> p_auth_provider;
     const std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer;
@@ -128,7 +131,7 @@ private:
     void init_evse_ready_map();
     EvseConnectorMap evse_connector_map; // provides access to OCPP connector id by using EVerests evse and connector id
     std::map<int32_t, int32_t>
-        connector_evse_index_map;        // provides access to r_evse_manager index by using OCPP connector id
+        connector_evse_index_map; // provides access to r_evse_manager index by using OCPP connector id
     std::map<int32_t, bool> evse_ready_map;
     std::mutex evse_ready_mutex;
     std::condition_variable evse_ready_cv;
