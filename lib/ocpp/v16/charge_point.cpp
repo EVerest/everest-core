@@ -229,6 +229,10 @@ void ChargePoint::register_signed_update_firmware_callback(
     this->charge_point->register_signed_update_firmware_callback(callback);
 }
 
+void ChargePoint::register_all_connectors_unavailable_callback(const std::function<void()>& callback) {
+    this->charge_point->register_all_connectors_unavailable_callback(callback);
+}
+
 void ChargePoint::register_upload_logs_callback(const std::function<GetLogResponse(GetLogRequest req)>& callback) {
     this->charge_point->register_upload_logs_callback(callback);
 }

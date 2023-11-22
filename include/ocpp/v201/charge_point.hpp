@@ -134,6 +134,15 @@ struct Callbacks {
                                      const std::optional<IdToken> id_token,
                                      const std::optional<CiString<64>> customer_identifier)>>
         clear_customer_information_callback;
+
+    /// \brief Callback function that can be called when all connectors are unavailable
+    std::optional<std::function<void()>> all_connectors_unavailable_callback;
+};
+
+/// \brief Combines ChangeAvailabilityRequest with persist flag for scheduled Availability changes
+struct AvailabilityChange {
+    ChangeAvailabilityRequest request;
+    bool persist;
 };
 
 /// \brief Class implements OCPP2.0.1 Charging Station
@@ -148,7 +157,7 @@ private:
     std::unique_ptr<DeviceModel> device_model;
     std::shared_ptr<DatabaseHandler> database_handler;
 
-    std::map<int32_t, ChangeAvailabilityRequest> scheduled_change_availability_requests;
+    std::map<int32_t, AvailabilityChange> scheduled_change_availability_requests;
 
     std::map<std::string,
              std::map<std::string, std::function<DataTransferResponse(const std::optional<std::string>& msg)>>>
@@ -174,6 +183,7 @@ private:
     OperationalStatusEnum operational_state;
     FirmwareStatusEnum firmware_status;
     int32_t firmware_status_id;
+    FirmwareStatusEnum firmware_status_before_installing = FirmwareStatusEnum::SignatureVerified;
     UploadLogStatusEnum upload_log_status;
     int32_t upload_log_status_id;
     BootReasonEnum bootreason;
@@ -253,6 +263,12 @@ private:
     bool validate_set_variable(const SetVariableData& set_variable_data);
     MeterValue get_latest_meter_value_filtered(const MeterValue& meter_value, ReadingContextEnum context,
                                                const ComponentVariable& component_variable);
+
+    /// \brief Changes all unoccupied connectors to unavailable. If a transaction is running schedule an availabilty
+    /// change
+    /// If all connectors are unavailable signal to the firmware updater that installation of the firmware update can
+    /// proceed
+    void change_all_connectors_to_unavailable_for_firmware_update();
 
     ///\brief Calculate and update the authorization cache size in the device model
     ///

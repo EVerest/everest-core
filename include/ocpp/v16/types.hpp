@@ -180,6 +180,12 @@ struct MeasurandWithPhases {
     std::vector<Phase> phases; ///< A list of Phases
 };
 
+/// \brief Combines AvailabilityType with persist flag for scheduled Availability changes
+struct AvailabilityChange {
+    AvailabilityType availability;
+    bool persist;
+};
+
 } // namespace v16
 } // namespace ocpp
 

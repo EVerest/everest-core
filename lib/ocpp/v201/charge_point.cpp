@@ -213,6 +213,15 @@ void ChargePoint::on_firmware_update_status_notification(int32_t request_id,
             std::optional<CiString<255>>("Signature of the provided firmware is not valid!"), true,
             true); // L01.FR.03 - critical because TC_L_06_CS requires this message to be sent
     }
+
+    if (this->firmware_status_before_installing == req.status) {
+        this->firmware_status = FirmwareStatusEnum::InstallScheduled;
+        req.status = firmware_status;
+        ocpp::Call<FirmwareStatusNotificationRequest> call(req, this->message_queue->createMessageId());
+        this->send_async<FirmwareStatusNotificationRequest>(call);
+
+        this->change_all_connectors_to_unavailable_for_firmware_update();
+    }
 }
 
 void ChargePoint::on_session_started(const int32_t evse_id, const int32_t connector_id) {
@@ -1048,6 +1057,41 @@ MeterValue ChargePoint::get_latest_meter_value_filtered(const MeterValue& meter_
     return filtered_meter_value;
 }
 
+void ChargePoint::change_all_connectors_to_unavailable_for_firmware_update() {
+    ChangeAvailabilityResponse response;
+    response.status = ChangeAvailabilityStatusEnum::Scheduled;
+
+    ChangeAvailabilityRequest msg;
+    msg.operationalStatus = OperationalStatusEnum::Inoperative;
+
+    const auto transaction_active = this->any_transaction_active(std::nullopt);
+
+    if (!transaction_active) {
+        // execute change availability if possible
+        for (auto const& [evse_id, evse] : this->evses) {
+            if (!evse->has_active_transaction()) {
+                this->set_evse_connectors_unavailable(evse, false);
+            }
+        }
+
+        if (this->callbacks.all_connectors_unavailable_callback.has_value()) {
+            this->callbacks.all_connectors_unavailable_callback.value()();
+        }
+    } else if (response.status == ChangeAvailabilityStatusEnum::Scheduled) {
+        // put all EVSEs to unavailable that do not have active transaction
+        for (auto const& [evse_id, evse] : this->evses) {
+            if (!evse->has_active_transaction()) {
+                this->set_evse_connectors_unavailable(evse, false);
+            } else {
+                EVSE e;
+                e.id = evse_id;
+                msg.evse = e;
+                this->scheduled_change_availability_requests[evse_id] = {msg, false};
+            }
+        }
+    }
+}
+
 void ChargePoint::update_authorization_cache_size() {
     auto& auth_cache_size = ControllerComponentVariables::AuthCacheStorage;
     if (auth_cache_size.variable.has_value()) {
@@ -1229,11 +1273,15 @@ bool ChargePoint::is_valid_evse(const EVSE& evse) {
 void ChargePoint::handle_scheduled_change_availability_requests(const int32_t evse_id) {
     if (this->scheduled_change_availability_requests.count(evse_id)) {
         EVLOG_info << "Found scheduled ChangeAvailability.req for evse_id:" << evse_id;
-        const auto req = this->scheduled_change_availability_requests[evse_id];
+        const auto req = this->scheduled_change_availability_requests[evse_id].request;
+        const auto persist = this->scheduled_change_availability_requests[evse_id].persist;
         if (!this->any_transaction_active(req.evse)) {
             EVLOG_info << "Changing availability of evse:" << evse_id;
-            this->callbacks.change_availability_callback(req, true);
+            this->callbacks.change_availability_callback(req, persist);
             this->scheduled_change_availability_requests.erase(evse_id);
+            if (this->callbacks.all_connectors_unavailable_callback.has_value()) {
+                this->callbacks.all_connectors_unavailable_callback.value()();
+            }
         } else {
             EVLOG_info << "Cannot change availability because transaction is still active";
         }
@@ -2550,7 +2598,7 @@ void ChargePoint::handle_change_availability_req(Call<ChangeAvailabilityRequest>
     } else {
         // add to map of scheduled operational_states. This also overrides successive ChangeAvailability.req with
         // the same EVSE, which is propably desirable
-        this->scheduled_change_availability_requests[evse_id] = msg;
+        this->scheduled_change_availability_requests[evse_id] = {msg, true};
     }
 
     // send reply before applying changes to EVSE / Connector because this could trigger StatusNotification.req
@@ -2603,6 +2651,11 @@ void ChargePoint::handle_heartbeat_response(CallResult<HeartbeatResponse> call) 
 
 void ChargePoint::handle_firmware_update_req(Call<UpdateFirmwareRequest> call) {
     EVLOG_debug << "Received UpdateFirmwareRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
+    if (call.msg.firmware.signingCertificate.has_value() or call.msg.firmware.signature.has_value()) {
+        this->firmware_status_before_installing = FirmwareStatusEnum::SignatureVerified;
+    } else {
+        this->firmware_status_before_installing = FirmwareStatusEnum::Downloaded;
+    }
     UpdateFirmwareResponse response = callbacks.update_firmware_request_callback(call.msg);
 
     ocpp::CallResult<UpdateFirmwareResponse> call_result(response, call.uniqueId);

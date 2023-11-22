@@ -371,6 +371,10 @@ public:
     void register_signed_update_firmware_callback(
         const std::function<UpdateFirmwareStatusEnumType(const SignedUpdateFirmwareRequest msg)>& callback);
 
+    /// \brief registers a \p callback function that is called when all connectors are set to unavailable.
+    /// This can be used to then trigger the installation of the firmware update
+    void register_all_connectors_unavailable_callback(const std::function<void()>& callback);
+
     /// \brief registers a \p callback function that can be used to upload logfiles. This callback
     /// should trigger a process of a log upload using the given parameters of the request. This process should
     /// call the on_log_status_notification handler in order to update the status of the file upload. The
