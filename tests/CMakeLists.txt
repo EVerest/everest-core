@@ -1,6 +1,15 @@
 include(Catch)
 
-add_executable(tests test_config.cpp)
+add_executable(tests)
+
+target_include_directories(tests PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_sources(tests PRIVATE
+    test_config.cpp
+    helpers.cpp
+)
 
 target_link_libraries(tests
     PRIVATE
@@ -11,33 +20,14 @@ target_link_libraries(tests
 
 catch_discover_tests(tests)
 
-# NOTE: using configure_file() here, because file(COPY) can't rename
-
-# valid config.json
-configure_file(test_configs/valid_config.yaml valid/config.yaml COPYONLY)
-
-# broken config.json
-configure_file(test_configs/broken_config.yaml broken_config/config.yaml COPYONLY)
-
-# missing module config.json
-configure_file(test_configs/missing_module_config.yaml missing_module_config/config.yaml COPYONLY)
-
-# broken manifest.json
-configure_file(test_configs/broken_manifest_config.yaml broken_manifest/config.yaml COPYONLY)
-file(COPY test_modules/TESTBrokenManifest DESTINATION broken_manifest/modules)
-
-# broken manifest.json
-configure_file(test_configs/broken_manifest2_config.yaml broken_manifest2/config.yaml COPYONLY)
-file(COPY test_modules/TESTBrokenManifest2 DESTINATION broken_manifest2/modules)
-
-# valid manifest.json, missing interface
-configure_file(test_configs/valid_manifest_missing_interface_config.yaml valid_manifest_missing_interface/config.yaml COPYONLY)
-file(COPY test_modules/TESTValidManifestMissingInterface DESTINATION valid_manifest_missing_interface/modules)
-
-# valid manifest.json, valid interface
-configure_file(test_interfaces/TESTmissinginterface.yaml valid_manifest_valid_interface/interfaces/TESTmissinginterface.yaml COPYONLY)
-configure_file(test_configs/valid_manifest_missing_interface_config.yaml valid_manifest_valid_interface/config.yaml COPYONLY)
-file(COPY test_modules/TESTValidManifestMissingInterface DESTINATION valid_manifest_valid_interface/modules)
-
-# create dummy directory for types
-file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/dummy_types")
+include(test_directory_setups/empty_config.cmake)
+include(test_directory_setups/broken_yaml.cmake)
+include(test_directory_setups/missing_module.cmake)
+include(test_directory_setups/broken_manifest_1.cmake)
+include(test_directory_setups/broken_manifest_2.cmake)
+include(test_directory_setups/missing_interface.cmake)
+include(test_directory_setups/valid_config.cmake)
+include(test_directory_setups/empty_yaml_object.cmake)
+include(test_directory_setups/empty_yaml.cmake)
+include(test_directory_setups/null_yaml.cmake)
+include(test_directory_setups/string_yaml.cmake)

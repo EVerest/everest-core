@@ -2,5 +2,5 @@ description: "This is an invalid manifest (metadata is missing)."
 provides:
   main:
     description: "This unit has an invalid manifest without metadata"
-    interface: "TESTmissinginterface"
+    interface: "test_interface"
 

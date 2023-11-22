@@ -1,0 +1,13 @@
+set(SETUP_NAME "empty_yaml")
+set(PREFIX_DIR ${CMAKE_CURRENT_BINARY_DIR}/${SETUP_NAME})
+
+configure_file(test_configs/${SETUP_NAME}_config.yaml ${SETUP_NAME}/config.yaml COPYONLY)
+file(MAKE_DIRECTORY "${PREFIX_DIR}/etc/everest")
+configure_file(test_logging.ini ${SETUP_NAME}/etc/everest/default_logging.cfg COPYONLY)
+file(MAKE_DIRECTORY "${PREFIX_DIR}/share/everest")
+file(COPY ../schemas/ DESTINATION ${SETUP_NAME}/share/everest/schemas)
+file(MAKE_DIRECTORY "${PREFIX_DIR}/share/everest/interfaces")
+file(MAKE_DIRECTORY "${PREFIX_DIR}/share/everest/types")
+file(MAKE_DIRECTORY "${PREFIX_DIR}/share/everest/errors")
+file(MAKE_DIRECTORY "${PREFIX_DIR}/share/everest/www")
+file(MAKE_DIRECTORY "${PREFIX_DIR}/libexec/everest/modules")

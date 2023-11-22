@@ -2,7 +2,7 @@ description: "This is a valid manifest."
 provides:
   main:
     description: "This unit has a valid manifest but no corresponding class"
-    interface: "TESTmissinginterface"
+    interface: "missing_interface"
 metadata:
   license: "https://opensource.org/licenses/Apache-2.0"
   authors: ["Kai-Uwe Hermann"]

@@ -1,6 +1,4 @@
-active_modules:
-  test_missing:
-    module: "TESTMissingModule"
+active_modules: {}
 settings:
   interfaces_dir: "interfaces"
   modules_dir: "modules"

@@ -1,3 +1,0 @@
-active_modules:
-  test_missing:
-    module: "TESTBrokenManifest"

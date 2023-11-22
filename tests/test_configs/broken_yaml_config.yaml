@@ -1,7 +1,5 @@
-active_modules:
-  test_missing:
-    module: "TESTMissingModule"
-settings:
+active_modules: {}
+settings::::
   interfaces_dir: "interfaces"
   modules_dir: "modules"
   types_dir: "types"
