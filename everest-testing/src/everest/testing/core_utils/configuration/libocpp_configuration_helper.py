@@ -1,5 +1,5 @@
 import json
-import subprocess
+import sys
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from pathlib import Path
@@ -85,7 +85,8 @@ class _OCPP201NetworkConnectionProfileAdjustment(OCPPConfigAdjustmentVisitor):
         for network_connection_profile in network_connection_profiles:
             security_profile = network_connection_profile["connectionData"]["securityProfile"]
             protocol = "ws" if security_profile == 1 else "wss"
-            network_connection_profile["connectionData"]["ocppCsmsUrl"] = f"{protocol}://{self._central_system_host}:{self._central_system_port}"
+            network_connection_profile["connectionData"][
+                "ocppCsmsUrl"] = f"{protocol}://{self._central_system_host}:{self._central_system_port}"
         self._set_value_in_v201_config(config, "InternalCtrlr", "NetworkConnectionProfiles",
                                        "Actual", json.dumps(network_connection_profiles))
         return config
@@ -118,16 +119,14 @@ class LibOCPP201ConfigurationHelper(LibOCPPConfigurationHelperBase):
                                                device_model_schemas_path: Path,
                                                ocpp_configuration_file: Path,
                                                target_directory: Path):
-        wd = libocpp_path / "config/v201"
-        subprocess.run(
-            f"python3 {libocpp_path / 'config/v201/init_device_model_db.py'} --out {target_directory / 'device_model_storage.db'} --schemas {device_model_schemas_path}",
-            cwd=wd,
-            check=True,
-            shell=True
-        )
-        subprocess.run(
-            f"python3 {libocpp_path / 'config/v201/insert_device_model_config.py'} --config {ocpp_configuration_file} --db {target_directory / 'device_model_storage.db'}",
-            cwd=wd,
-            check=True,
-            shell=True
-        )
+        import_path = libocpp_path / "config/v201"
+        sys.path.append(str(import_path))
+        from init_device_model_db import DeviceModelDatabaseInitializer
+
+        database_file = target_directory / 'device_model_storage.db'
+        database_initializer = DeviceModelDatabaseInitializer(database_file)
+
+        database_initializer.initialize_database(schemas_path=device_model_schemas_path)
+        database_initializer.insert_config_and_default_values(
+            config_file=ocpp_configuration_file,
+            schemas_path=device_model_schemas_path)
