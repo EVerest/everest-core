@@ -1,1 +1,1 @@
-# Add empty file to not brake cmake option -DENABLE_TESTING=ON
+add_subdirectory(everest-core_tests)
