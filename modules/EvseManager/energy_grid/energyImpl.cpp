@@ -251,7 +251,7 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
             // export
             // FIXME: we cannot discharge on PWM charging or with -2, so we fake a charging current here.
             // this needs to be fixed in transition to -20 AC bidirectional.
-            mod->charger->setMaxCurrent(-limit, Everest::Date::from_rfc3339(value.valid_until));
+            mod->charger->setMaxCurrent(0, Everest::Date::from_rfc3339(value.valid_until));
         }
 
         if (limit > 1e-5 || limit < -1e-5)
@@ -335,6 +335,17 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
 
                             if (evseMaxLimits.EVSEMaximumCurrentLimit < 0) {
                                 evseMaxLimits.EVSEMaximumCurrentLimit = -evseMaxLimits.EVSEMaximumCurrentLimit;
+                                mod->is_actually_exporting_to_grid = true;
+                            } else {
+                                mod->is_actually_exporting_to_grid = false;
+                            }
+                        } else if (mod->sae_bidi_active) {
+                            if (evseMaxLimits.EVSEMaximumPowerLimit < 0) {
+                                mod->is_actually_exporting_to_grid = true;
+                            } else {
+                                mod->is_actually_exporting_to_grid = false;
+                            }
+                            if (evseMaxLimits.EVSEMaximumCurrentLimit < 0) {
                                 mod->is_actually_exporting_to_grid = true;
                             } else {
                                 mod->is_actually_exporting_to_grid = false;

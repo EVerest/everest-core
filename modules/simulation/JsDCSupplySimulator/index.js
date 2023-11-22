@@ -10,10 +10,10 @@ let config_max_current;
 let config_bidirectional;
 let config_max_power;
 
-let settings_connector_export_voltage;
-let settings_connector_import_voltage;
-let settings_connector_max_export_current;
-let settings_connector_max_import_current;
+let settings_connector_export_voltage = 0;
+let settings_connector_import_voltage = 0;
+let settings_connector_max_export_current = 0;
+let settings_connector_max_import_current = 0;
 
 let connector_voltage = 0.0;
 let connector_current = 0.0;
@@ -133,7 +133,10 @@ boot_module(async ({
     settings_connector_import_voltage = voltage;
     settings_connector_max_import_current = current;
 
-    if (mode === 'Import') connector_voltage = settings_connector_import_voltage;
+    if (mode === 'Import') {
+      connector_voltage = settings_connector_import_voltage;
+      connector_current = -settings_connector_max_import_current;
+    }
   });
 }).then((mod) => {
   setInterval(() => {

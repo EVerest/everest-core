@@ -68,6 +68,7 @@ protected:
     virtual void
     handle_set_Get_Certificate_Response(types::iso15118_charger::Response_Exi_Stream_Status& Existream_Status) override;
     virtual void handle_dlink_ready(bool& value) override;
+    virtual void handle_supporting_sae_j2847_bidi(types::iso15118_charger::SAE_J2847_Bidi_Mode& mode) override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
     // insert your protected definitions here

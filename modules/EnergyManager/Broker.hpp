@@ -8,6 +8,12 @@
 
 namespace module {
 
+enum class SlotType {
+    Import,
+    Export,
+    Undecided
+};
+
 // base class for different Brokers
 class Broker {
 public:
@@ -20,6 +26,7 @@ protected:
     // reference to local market at the broker's node
     Market& local_market;
     std::vector<bool> first_trade;
+    std::vector<SlotType> slot_type;
 };
 
 } // namespace module

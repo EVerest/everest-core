@@ -15,8 +15,8 @@
 #include <date/date.h>
 #include <date/tz.h>
 
-#include <nanopb/pb_decode.h>
-#include <nanopb/pb_encode.h>
+#include <everest/3rd_party/nanopb/pb_decode.h>
+#include <everest/3rd_party/nanopb/pb_encode.h>
 
 #include "hi2lo.pb.h"
 #include "lo2hi.pb.h"

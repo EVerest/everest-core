@@ -4,6 +4,8 @@
 #define SESSION_LOG_HPP
 
 #include <fstream>
+#include <functional>
+#include <nlohmann/json_fwd.hpp>
 #include <optional>
 #include <string>
 
@@ -18,6 +20,7 @@ public:
     ~SessionLog();
 
     void setPath(const std::string& path);
+    void setMqtt(const std::function<void(nlohmann::json data)>& mqtt_provider);
     void enable();
     std::optional<std::string> startSession(const std::string& suffix_string);
     void stopSession();
@@ -47,6 +50,7 @@ private:
 
     std::ofstream logfile_csv;
     std::ofstream logfile_html;
+    std::function<void(nlohmann::json data)> mqtt;
 };
 
 extern SessionLog session_log;

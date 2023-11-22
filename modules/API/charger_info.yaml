@@ -1,0 +1,5 @@
+model_name: "BelayBox"
+pcb_serial_number: "0123"
+charger_serial_number: "0123"
+firmware_version: "v0.1.2"
+hardware_version: "v0.1.2"

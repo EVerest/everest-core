@@ -5,7 +5,7 @@ config:
   selection_algorithm:
     description: The algorithm that is used to map an incoming token to a connector
     type: string
-    default: PlugEvents
+    default: FindFirst
   connection_timeout:
     description: >-
       Defines how many seconds an authorization is valid before it is discarded.

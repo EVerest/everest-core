@@ -114,7 +114,11 @@ boot_module(async ({
   registerAllCmds(mod);
   mod.enabled = false;
   if (mod.uses_list.ev.length > 0) mod.uses_list.ev[0].call.set_dc_params(get_hlc_dc_parameters(mod));
-  if (globalconf.module.auto_enable) enable(mod, { value: true });
+  if (mod.uses_list.ev.length > 0 && globalconf.module.support_sae_j2847 === true) {
+    mod.uses_list.ev[0].call.enable_sae_j2847_v2g_v2h();
+    mod.uses_list.ev[0].call.set_bpt_dc_params(get_hlc_bpt_dc_parameters(mod));
+  }
+  if(globalconf.module.auto_enable) enable(mod, { value: true });
   if (globalconf.module.auto_exec) execute_charging_session(mod, { value: globalconf.module.auto_exec_commands });
 });
 
@@ -564,6 +568,17 @@ function get_hlc_dc_parameters(mod) {
       EnergyCapacity: mod.config.module.dc_energy_capacity,
       TargetCurrent: mod.config.module.dc_target_current,
       TargetVoltage: mod.config.module.dc_target_voltage,
+    }
+  };
+}
+
+function get_hlc_bpt_dc_parameters(mod) {
+  return {
+    EV_BPT_Parameters: {
+      DischargeMaxCurrentLimit: mod.config.module.dc_discharge_max_current_limit,
+      DischargeMaxPowerLimit: mod.config.module.dc_discharge_max_power_limit,
+      DischargeTargetCurrent: mod.config.module.dc_discharge_target_current,
+      DischargeMinimalSoC: mod.config.module.dc_discharge_v2g_minimal_soc,
     }
   };
 }

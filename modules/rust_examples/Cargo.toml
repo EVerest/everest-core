@@ -1,0 +1,11 @@
+[workspace]
+resolver = "2"
+members = [
+   "RsExample",
+   "RsExampleUser",
+]
+
+[workspace.dependencies]
+# This is not used when building with cmake, but you can change this for local
+# development to point to a directory that works for you to build with cargo.
+everestrs = { path = "../everest-framework/everestrs/everestrs" }

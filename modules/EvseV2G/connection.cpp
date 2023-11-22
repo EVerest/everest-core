@@ -489,23 +489,19 @@ static bool connection_init_tls(struct v2g_context* ctx) {
     int rv;
     uint8_t max_idx = 0;
 
-    std::string v2g_root_cert_path = ctx->certs_path + "/ca/v2g/V2G_ROOT_CA.pem";
-    std::string cpo_sub1_cert_path = ctx->certs_path + "/ca/cso/CPO_SUB_CA1.pem";
-    std::string cpo_sub2_cert_path = ctx->certs_path + "/ca/cso/CPO_SUB_CA2.pem";
-    std::string evse_leaf_cert_path = ctx->certs_path + "/client/cso/SECC_LEAF.pem";
-    std::string evse_leaf_key_path = ctx->certs_path + "/client/cso/SECC_LEAF.key";
-    std::string evse_leaf_key_password_path = ctx->certs_path + "/client/cso/SECC_LEAF_PASSWORD.txt";
+    std::string v2g_root_cert_path =
+        ctx->r_security->call_get_verify_file(types::evse_security::CaCertificateType::V2G);
 
-    /* Read SECC leaf private key password */
-    std::string secc_leaf_key_password;
-    std::fstream password_file;
-
-    password_file.open(evse_leaf_key_password_path, std::ios::in);
-
-    if (password_file.is_open()) {
-        getline(password_file, secc_leaf_key_password);
-        password_file.close();
+    const auto key_pair_response = ctx->r_security->call_get_key_pair(types::evse_security::LeafCertificateType::V2G,
+                                                                      types::evse_security::EncodingFormat::PEM);
+    if (key_pair_response.status != types::evse_security::GetKeyPairStatus::Accepted) {
+        dlog(DLOG_LEVEL_ERROR, "Failed to read key/pair!");
+        return false;
     }
+
+    std::string evse_leaf_cert_path = key_pair_response.key_pair.value().certificate;
+    std::string evse_leaf_key_path = key_pair_response.key_pair.value().key;
+    std::string secc_leaf_key_password = key_pair_response.key_pair.value().password.value_or("");
 
     uint8_t num_of_v2g_root = 1;
     mbedtls_x509_crt* root_crt = &ctx->v2g_root_crt;
@@ -556,20 +552,6 @@ static bool connection_init_tls(struct v2g_context* ctx) {
         mbedtls_strerror(rv, error_buf, sizeof(error_buf));
         dlog(DLOG_LEVEL_ERROR, "Unable to parse evse-leaf certficate %s (err: -0x%04x - %s)",
              evse_leaf_cert_path.c_str(), -rv, error_buf);
-        goto error_out;
-    }
-    if ((rv = mbedtls_x509_crt_parse_file(&ctx->evseTlsCrt[0], cpo_sub2_cert_path.c_str())) != 0) {
-        char error_buf[100];
-        mbedtls_strerror(rv, error_buf, sizeof(error_buf));
-        dlog(DLOG_LEVEL_ERROR, "Unable to parse CPO-sub2 certficate %s (err: -0x%04x - %s)", cpo_sub2_cert_path.c_str(),
-             -rv, error_buf);
-        goto error_out;
-    }
-    if ((rv = mbedtls_x509_crt_parse_file(&ctx->evseTlsCrt[0], cpo_sub1_cert_path.c_str())) != 0) {
-        char error_buf[100];
-        mbedtls_strerror(rv, error_buf, sizeof(error_buf));
-        dlog(DLOG_LEVEL_ERROR, "Unable to parse CPO-sub1 certficate %s (err: -0x%04x - %s)", cpo_sub1_cert_path.c_str(),
-             -rv, error_buf);
         goto error_out;
     }
 
