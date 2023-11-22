@@ -1,0 +1,103 @@
+description: This file contains the types for the error history interface
+types:
+  ImplementationIdentifier:
+    description: Identifier of an implementation
+    type: object
+    required:
+      - module_id
+      - implementation_id
+    properties:
+      module_id:
+        type: string
+        minLength: 2
+      implementation_id:
+        type: string
+        minLength: 2
+  State:
+    description: State of an error
+    type: string
+    enum:
+      - Active
+      - ClearedByModule
+      - ClearedByReboot
+  SeverityFilter:
+    description: Severity filter for errors
+    type: string
+    enum:
+      - HIGH_GE
+      - MEDIUM_GE
+      - LOW_GE
+  TimeperiodFilter:
+    description: Timeperiod filter for errors
+    type: object
+    required:
+      - timestamp_from
+      - timestamp_to
+    properties:
+      timestamp_from:
+        type: string
+        format: date-time
+      timestamp_to:
+        type: string
+        format: date-time
+  FilterArguments:
+    description: Arguments for the get_errors command
+    type: object
+    required: []
+    properties:
+      state_filter:
+        $ref: /error_history#/State
+      origin_filter:
+        $ref: /error_history#/ImplementationIdentifier
+      type_filter:
+        type: string
+      severity_filter:
+        $ref: /error_history#/SeverityFilter
+      timeperiod_filter:
+        $ref: /error_history#/TimeperiodFilter
+      handle_filter:
+        type: string
+        description: Handle of an error
+  Severity:
+    description: Severity of an error
+    type: string
+    enum:
+      - High
+      - Medium
+      - Low
+  ErrorObject:
+    description: Represents an error
+    type: object
+    required:
+      - type
+      - description
+      - message
+      - origin
+      - timestamp
+      - uuid
+      - severity
+      - state
+    properties:
+      type:
+        type: string
+        minLength: 2
+      description:
+        type: string
+        minLength: 2
+      message:
+        type: string
+        minLength: 2
+      severity:
+        $ref: /error_history#/Severity
+      origin:
+        $ref: /error_history#/ImplementationIdentifier
+      timestamp:
+        type: string
+        format: date-time
+      uuid:
+        type: string
+        minLength: 2
+      state:
+        $ref: /error_history#/State
+    additionalProperties: false
+  
