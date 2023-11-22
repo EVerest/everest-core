@@ -330,7 +330,7 @@ void WebsocketTLS::on_fail_tls(tls_client* c, websocketpp::connection_hdl hdl) {
 
     // -1 indicates to always attempt to reconnect
     if (this->connection_options.max_connection_attempts == -1 or
-        this->connection_attempts < this->connection_options.max_connection_attempts) {
+        this->connection_attempts <= this->connection_options.max_connection_attempts) {
         this->reconnect(ec, this->get_reconnect_interval());
     } else {
         this->close(websocketpp::close::status::normal, "Connection failed");
