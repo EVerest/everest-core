@@ -575,6 +575,7 @@ AuthorizeResponse ChargePoint::validate_token(const IdToken id_token, const std:
     response = this->authorize_req(id_token, certificate, ocsp_request_data);
 
     if (auth_cache_enabled) {
+        this->update_id_token_cache_lifetime(response.idTokenInfo);
         this->database_handler->authorization_cache_insert_entry(hashed_id_token, response.idTokenInfo);
         this->update_authorization_cache_size();
     }
@@ -1092,6 +1093,16 @@ void ChargePoint::change_all_connectors_to_unavailable_for_firmware_update() {
     }
 }
 
+void ChargePoint::update_id_token_cache_lifetime(IdTokenInfo& id_token_info) {
+    // C10.FR.08
+    // when CSMS does not set cacheExpiryDateTime and config variable for AuthCacheLifeTime is present use the
+    // configured AuthCacheLifeTime
+    auto lifetime = this->device_model->get_optional_value<int>(ControllerComponentVariables::AuthCacheLifeTime);
+    if (!id_token_info.cacheExpiryDateTime.has_value() and lifetime.has_value()) {
+        id_token_info.cacheExpiryDateTime = DateTime(date::utc_clock::now() + std::chrono::seconds(lifetime.value()));
+    }
+}
+
 void ChargePoint::update_authorization_cache_size() {
     auto& auth_cache_size = ControllerComponentVariables::AuthCacheStorage;
     if (auth_cache_size.variable.has_value()) {
@@ -1581,27 +1592,14 @@ AuthorizeResponse ChargePoint::authorize_req(const IdToken id_token, const std::
     auto future = this->send_async<AuthorizeRequest>(call);
     const auto enhanced_message = future.get();
 
-    AuthorizeResponse response;
-
     if (enhanced_message.messageType != MessageType::AuthorizeResponse) {
+        AuthorizeResponse response;
         response.idTokenInfo.status = AuthorizationStatusEnum::Unknown;
         return response;
     }
 
     ocpp::CallResult<AuthorizeResponse> call_result = enhanced_message.message;
-    if (call_result.msg.idTokenInfo.cacheExpiryDateTime.has_value() or
-        !this->device_model->get_optional_value<int>(ControllerComponentVariables::AuthCacheLifeTime).has_value()) {
-        return call_result.msg;
-    }
-
-    // C10.FR.08
-    // when CSMS does not set cacheExpiryDateTime and config variable for AuthCacheLifeTime is present use the
-    // configured AuthCacheLifeTime
-    response = call_result.msg;
-    response.idTokenInfo.cacheExpiryDateTime = DateTime(
-        date::utc_clock::now() +
-        std::chrono::seconds(this->device_model->get_value<int>(ControllerComponentVariables::AuthCacheLifeTime)));
-    return response;
+    return call_result.msg;
 }
 
 void ChargePoint::status_notification_req(const int32_t evse_id, const int32_t connector_id,
@@ -2229,8 +2227,10 @@ void ChargePoint::handle_start_transaction_event_response(const EnhancedMessage<
         if (id_token.type != IdTokenEnum::Central and
             this->device_model->get_optional_value<bool>(ControllerComponentVariables::AuthCacheCtrlrEnabled)
                 .value_or(true)) {
+            auto id_token_info = msg.idTokenInfo.value();
+            this->update_id_token_cache_lifetime(id_token_info);
             this->database_handler->authorization_cache_insert_entry(utils::generate_token_hash(id_token),
-                                                                     msg.idTokenInfo.value());
+                                                                     id_token_info);
             this->update_authorization_cache_size();
         }
         if (msg.idTokenInfo.value().status != AuthorizationStatusEnum::Accepted) {
