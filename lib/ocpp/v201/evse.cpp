@@ -251,11 +251,11 @@ void Evse::check_max_energy_on_invalid_id() {
         this->device_model.get_optional_value<int32_t>(ControllerComponentVariables::MaxEnergyOnInvalidId);
     auto& transaction = this->transaction;
     if (transaction != nullptr and max_energy_on_invalid_id.has_value() and
-        transaction->active_energy_import_start_value.has_value() and transaction->check_max_active_import_energy) {
+        transaction->check_max_active_import_energy) {
         const auto opt_energy_value = this->get_active_import_register_meter_value();
-
-        if (opt_energy_value.has_value()) {
-            auto charged_energy = opt_energy_value.value() - transaction->active_energy_import_start_value.value();
+        auto active_energy_import_start_value = transaction->active_energy_import_start_value;
+        if (opt_energy_value.has_value() and active_energy_import_start_value.has_value()) {
+            auto charged_energy = opt_energy_value.value() - active_energy_import_start_value.value();
 
             if (charged_energy > static_cast<float>(max_energy_on_invalid_id.value())) {
                 this->pause_charging_callback();

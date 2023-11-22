@@ -95,8 +95,11 @@ public:
     T get_value(const ComponentVariable& component_variable,
                 const AttributeEnum& attribute_enum = AttributeEnum::Actual) {
         std::string value;
-        const auto response = this->request_value_internal(
-            component_variable.component, component_variable.variable.value(), attribute_enum, value, true);
+        auto response = GetVariableStatusEnum::UnknownVariable;
+        if (component_variable.variable.has_value()) {
+            response = this->request_value_internal(component_variable.component, component_variable.variable.value(),
+                                                    attribute_enum, value, true);
+        }
         if (response == GetVariableStatusEnum::Accepted) {
             return to_specific_type<T>(value);
         } else {
@@ -118,8 +121,11 @@ public:
     std::optional<T> get_optional_value(const ComponentVariable& component_variable,
                                         const AttributeEnum& attribute_enum = AttributeEnum::Actual) {
         std::string value;
-        const auto response = this->request_value_internal(
-            component_variable.component, component_variable.variable.value(), attribute_enum, value, true);
+        auto response = GetVariableStatusEnum::UnknownVariable;
+        if (component_variable.variable.has_value()) {
+            response = this->request_value_internal(component_variable.component, component_variable.variable.value(),
+                                                    attribute_enum, value, true);
+        }
         if (response == GetVariableStatusEnum::Accepted) {
             return to_specific_type<T>(value);
         } else {

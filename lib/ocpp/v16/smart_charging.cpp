@@ -143,7 +143,8 @@ void SmartChargingHandler::clear_expired_profiles() {
     std::lock_guard<std::mutex> lk(this->charge_point_max_profiles_map_mutex);
     for (auto it = this->stack_level_charge_point_max_profiles_map.cbegin();
          it != this->stack_level_charge_point_max_profiles_map.cend();) {
-        if (it->second.validTo and it->second.validTo.value().to_time_point() < now) {
+        const auto& validTo = it->second.validTo;
+        if (validTo.has_value() and validTo.value().to_time_point() < now) {
             this->stack_level_charge_point_max_profiles_map.erase(it++);
             this->database_handler->delete_charging_profile(it->second.chargingProfileId);
         } else {

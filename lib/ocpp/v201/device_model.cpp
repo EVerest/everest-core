@@ -25,7 +25,8 @@ bool DeviceModel::component_criteria_match(const Component& component,
             return true;
         } else {
             const auto response = this->request_value<bool>(component, variable, AttributeEnum::Actual);
-            if (response.status == GetVariableStatusEnum::Accepted and response.value.value()) {
+            auto value = response.value;
+            if (response.status == GetVariableStatusEnum::Accepted and value.has_value() and value.value()) {
                 return true;
             }
         }

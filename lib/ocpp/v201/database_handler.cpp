@@ -361,11 +361,12 @@ int32_t DatabaseHandler::get_local_authorization_list_number_of_entries() {
 }
 
 bool DatabaseHandler::transaction_metervalues_insert(const std::string& transaction_id, const MeterValue& meter_value) {
-    if (meter_value.sampledValue.empty() or !meter_value.sampledValue.at(0).context.has_value()) {
+    auto sampled_value_context = meter_value.sampledValue.at(0).context;
+    if (meter_value.sampledValue.empty() or !sampled_value_context.has_value()) {
         return false;
     }
 
-    auto context = meter_value.sampledValue.at(0).context.value();
+    auto context = sampled_value_context.value();
     if (std::find_if(meter_value.sampledValue.begin(), meter_value.sampledValue.end(), [context](const auto& item) {
             return !item.context.has_value() or item.context.value() != context;
         }) != meter_value.sampledValue.end()) {

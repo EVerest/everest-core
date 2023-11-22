@@ -37,8 +37,9 @@ MeterValue get_meter_value_with_measurands_applied(const MeterValue& _meter_valu
                                                    const std::vector<MeasurandEnum>& measurands) {
     auto meter_value = _meter_value;
     for (auto it = meter_value.sampledValue.begin(); it != meter_value.sampledValue.end();) {
-        if (it->measurand.has_value()) {
-            if (std::find(measurands.begin(), measurands.end(), it->measurand.value()) == measurands.end()) {
+        auto measurand = it->measurand;
+        if (measurand.has_value()) {
+            if (std::find(measurands.begin(), measurands.end(), measurand.value()) == measurands.end()) {
                 it = meter_value.sampledValue.erase(it);
             } else {
                 ++it;
@@ -57,11 +58,16 @@ get_meter_values_with_measurands_applied(const std::vector<MeterValue>& meter_va
     std::vector<MeterValue> meter_values_result;
 
     for (const auto& meter_value : meter_values) {
-        if (meter_value.sampledValue.empty() or !meter_value.sampledValue.at(0).context.has_value()) {
+        if (meter_value.sampledValue.empty()) {
             continue;
         }
 
-        switch (meter_value.sampledValue.at(0).context.value()) {
+        auto context = meter_value.sampledValue.at(0).context;
+        if (!context.has_value()) {
+            continue;
+        }
+
+        switch (context.value()) {
         case ReadingContextEnum::Transaction_Begin:
         case ReadingContextEnum::Interruption_Begin:
         case ReadingContextEnum::Transaction_End:

@@ -344,7 +344,7 @@ std::optional<KeyValue> ChargePointConfiguration::getChargePointSerialNumberKeyV
         KeyValue kv;
         kv.key = "ChargePointSerialNumber";
         kv.readonly = true;
-        kv.value.emplace(this->getChargePointSerialNumber().value());
+        kv.value.emplace(charge_point_serial_number.value());
         charge_point_serial_number_kv.emplace(kv);
     }
     return charge_point_serial_number_kv;
@@ -561,7 +561,7 @@ std::vector<MeasurandWithPhase> ChargePointConfiguration::csv_to_measurand_with_
     if (csv.empty()) {
         return measurand_with_phase_vector;
     }
-    for (auto component : components) {
+    for (const auto& component : components) {
         MeasurandWithPhase measurand_with_phase;
         Measurand measurand = conversions::string_to_measurand(component);
         // check if this measurand can be provided on multiple phases
@@ -1405,7 +1405,7 @@ std::vector<ChargingRateUnit> ChargePointConfiguration::getChargingScheduleAllow
     auto csv = this->getChargingScheduleAllowedChargingRateUnit();
     boost::split(components, csv, boost::is_any_of(","));
     std::vector<ChargingRateUnit> charging_rate_unit_vector;
-    for (auto component : components) {
+    for (const auto& component : components) {
         if (component == "Current") {
             charging_rate_unit_vector.push_back(ChargingRateUnit::A);
         } else if (component == "Power") {
@@ -1469,11 +1469,17 @@ std::optional<bool> ChargePointConfiguration::getAdditionalRootCertificateCheck(
 }
 
 std::optional<KeyValue> ChargePointConfiguration::getAdditionalRootCertificateCheckKeyValue() {
-    KeyValue kv;
-    kv.key = "AdditionalRootCertificateCheck";
-    kv.readonly = true;
-    kv.value.emplace(ocpp::conversions::bool_to_string(this->getAdditionalRootCertificateCheck().value()));
-    return kv;
+    std::optional<KeyValue> additional_root_certificate_check_kv = std::nullopt;
+
+    auto additional_root_certificate_check = this->getAdditionalRootCertificateCheck();
+    if (additional_root_certificate_check.has_value()) {
+        KeyValue kv;
+        kv.key = "AdditionalRootCertificateCheck";
+        kv.readonly = true;
+        kv.value.emplace(ocpp::conversions::bool_to_string(additional_root_certificate_check.value()));
+        additional_root_certificate_check_kv.emplace(kv);
+    }
+    return additional_root_certificate_check_kv;
 }
 
 // Security Profile - optional
