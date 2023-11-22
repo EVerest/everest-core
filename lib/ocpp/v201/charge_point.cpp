@@ -828,6 +828,51 @@ void ChargePoint::next_network_configuration_priority() {
         (this->network_configuration_priority + 1) % (network_connection_profiles.size());
 }
 
+void ChargePoint::remove_network_connection_profiles_below_actual_security_profile() {
+    // Remove all the profiles that are a lower security level than security_level
+    const auto security_level = this->device_model->get_value<int>(ControllerComponentVariables::SecurityProfile);
+
+    auto network_connection_profiles = json::parse(
+        this->device_model->get_value<std::string>(ControllerComponentVariables::NetworkConnectionProfiles));
+
+    auto is_lower_security_level = [security_level](const SetNetworkProfileRequest& item) {
+        return item.connectionData.securityProfile < security_level;
+    };
+
+    network_connection_profiles.erase(
+        std::remove_if(network_connection_profiles.begin(), network_connection_profiles.end(), is_lower_security_level),
+        network_connection_profiles.end());
+
+    this->device_model->set_value(ControllerComponentVariables::NetworkConnectionProfiles.component,
+                                  ControllerComponentVariables::NetworkConnectionProfiles.variable.value(),
+                                  AttributeEnum::Actual, network_connection_profiles.dump());
+
+    // Update the NetworkConfigurationPriority so only remaining profiles are in there
+    const auto network_priority = ocpp::get_vector_from_csv(
+        this->device_model->get_value<std::string>(ControllerComponentVariables::NetworkConfigurationPriority));
+
+    auto in_network_profiles = [&network_connection_profiles](const std::string& item) {
+        auto is_same_slot = [&item](const SetNetworkProfileRequest& profile) {
+            return std::to_string(profile.configurationSlot) == item;
+        };
+        return std::any_of(network_connection_profiles.begin(), network_connection_profiles.end(), is_same_slot);
+    };
+
+    std::string new_network_priority;
+    for (const auto& item : network_priority) {
+        if (in_network_profiles(item)) {
+            if (!new_network_priority.empty()) {
+                new_network_priority += ',';
+            }
+            new_network_priority += item;
+        }
+    }
+
+    this->device_model->set_value(ControllerComponentVariables::NetworkConfigurationPriority.component,
+                                  ControllerComponentVariables::NetworkConfigurationPriority.variable.value(),
+                                  AttributeEnum::Actual, new_network_priority);
+}
+
 void ChargePoint::handle_message(const EnhancedMessage<v201::MessageType>& message) {
     const auto& json_message = message.message;
     switch (message.messageType) {
@@ -1740,6 +1785,8 @@ void ChargePoint::handle_boot_notification_response(CallResult<BootNotificationR
     this->registration_status = msg.status;
 
     if (this->registration_status == RegistrationStatusEnum::Accepted) {
+        this->remove_network_connection_profiles_below_actual_security_profile();
+
         // get transaction messages from db (if there are any) so they can be sent again.
         message_queue->get_transaction_messages_from_db();
 
