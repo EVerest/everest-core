@@ -30,9 +30,7 @@ struct Conf {
     int parity;
     int rs485_direction_gpio;
     bool ignore_echo;
-    double line_loss_impedance;
     int max_clock_diff_s;
-    bool config_by_meter;
     bool publish_device_data;
     bool publish_device_diagnostics;
 };

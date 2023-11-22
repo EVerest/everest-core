@@ -175,6 +175,11 @@ void SerialDevice::tx(std::vector<uint8_t>& request) {
 
         // EVLOG_info << "TXD: " << hexdump(request) << " size: " << request.size();
 
+        if(SERIAL_MAX_RETRIES > 0 && this->retry_struct.num_of_retries_done == 0){
+            //save request for retries
+            this->retry_struct.tx_data = request;
+        }
+
         // write to serial port
         write(this->fd, request.data(), request.size());
         tcdrain(this->fd);
@@ -186,5 +191,21 @@ void SerialDevice::tx(std::vector<uint8_t>& request) {
         this->rx(req_buf, std::nullopt, std::nullopt);
     }
 }
+
+
+void SerialDevice::retry(std::vector<uint8_t>& rxbuf) {
+    int bytes_rx = 0;
+    while(bytes_rx == 0 && retry_struct.num_of_retries_done < SERIAL_MAX_RETRIES){
+        EVLOG_info << "retry no " << (int)retry_struct.num_of_retries_done << " started";
+        tx(retry_struct.tx_data);
+        bytes_rx = rx(rxbuf, SERIAL_RX_INITIAL_TIMEOUT_MS, SERIAL_RX_WITHIN_MESSAGE_TIMEOUT_MS);
+        EVLOG_info << "retry no " << (int)retry_struct.num_of_retries_done << " ended";
+        retry_struct.num_of_retries_done++;
+    }
+    retry_struct.num_of_retries_done = 0;
+    retry_struct.tx_data.clear();
+    EVLOG_info << "retries finished";
+}
+
 
 } // namespace serial_device

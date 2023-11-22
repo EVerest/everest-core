@@ -5,17 +5,15 @@ active_modules:
     module: PowermeterGSH01
     config_implementation:
       main:
-        powermeter_device_id: 255
+        powermeter_device_id: 1
         serial_port: /dev/ttyUSB0
         baudrate: 115200
         parity: 0
         rs485_direction_gpio: -1
         ignore_echo: false
-        line_loss_impedance: 0.0000
         max_clock_diff_s: 60
-        config_by_meter: false
-        publish_device_data: false
-        publish_device_diagnostics: false
+#        publish_device_data: false
+#        publish_device_diagnostics: false
   Test:
     connections:
       powermeter:

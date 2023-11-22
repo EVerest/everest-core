@@ -7,19 +7,19 @@ namespace module {
 void TestPowermeter::init() {
     invoke_init(*p_if_impl_id_empty);
     r_powermeter->subscribe_powermeter([this](types::powermeter::Powermeter pm){
-        EVLOG_info << "Published powermeter values received:";
-        EVLOG_info << "Import Device Energy: " << pm.energy_Wh_import.total << " Wh";
+//        EVLOG_info << "Published powermeter values received:";
+//        EVLOG_info << "Import Device Energy: " << pm.energy_Wh_import.total << " Wh";
         if(pm.power_W.has_value()){
-            EVLOG_info << "Import Device Power: " << pm.power_W.value().total << " W";
+//            EVLOG_info << "Import Device Power: " << pm.power_W.value().total << " W";
         }
         if(pm.voltage_V.has_value()){
             if(pm.voltage_V.value().DC.has_value()){
-                EVLOG_info << "Voltage: " << pm.voltage_V.value().DC.value() << " V";
+//                EVLOG_info << "Voltage: " << pm.voltage_V.value().DC.value() << " V";
             }
         }
         if(pm.current_A.has_value()){
             if(pm.current_A.value().DC.has_value()){
-                EVLOG_info << "Current: " << pm.current_A.value().DC.value() << " A";
+//                EVLOG_info << "Current: " << pm.current_A.value().DC.value() << " A";
             }
         }
     });

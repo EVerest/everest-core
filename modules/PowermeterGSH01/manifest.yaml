@@ -9,7 +9,7 @@ provides:
         type: integer
         minimum: 0
         maximum: 255
-        default: 1
+        default: 255
       serial_port:
         description: Serial port the hardware is connected to
         type: string
@@ -19,7 +19,7 @@ provides:
         type: integer
         minimum: 0
         maximum: 230400
-        default: 9600
+        default: 115200
       parity:
         description: 'Parity bit: 0: None, 1: Odd, 2: Even'
         type: integer
@@ -34,22 +34,12 @@ provides:
         description: On some hardware every message that is sent is read back, this setting filters the sent message in the reply.
         type: boolean
         default: false
-      line_loss_impedance:
-        description: Total line loss impedance (R_line1 + R_line2), can only be set in Assembly Mode. unit = Ohm 
-        type: number
-        minimum: 0.0000
-        maximum: 0.0050
-        default: 0.0000
       max_clock_diff_s:
         description: Maximal time difference (in seconds) between meter clock and system clock, until new set_time command is sent
         type: integer
         minimum: 30
         maximum: 300
         default: 60
-      config_by_meter:
-        description: Configuration (line loss impedance) should be done by powermeter software module.
-        type: boolean
-        default: false
       publish_device_data:
         description: Regularly publish device data not covered by the "powermeter" interface (for debugging purposes).
         type: boolean

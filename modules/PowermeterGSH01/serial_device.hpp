@@ -18,6 +18,12 @@ namespace serial_device {
 constexpr int SERIAL_RX_INITIAL_TIMEOUT_MS = 500;
 constexpr int SERIAL_RX_WITHIN_MESSAGE_TIMEOUT_MS = 100;
 
+constexpr int SERIAL_MAX_RETRIES = 3;
+struct Retry{
+    std::vector<uint8_t> tx_data{};
+    uint8_t num_of_retries_done{0}; 
+};
+
 class SerialDevice {
 
 public:
@@ -29,6 +35,7 @@ public:
     int rx(std::vector<uint8_t>& rxbuf,
            std::optional<int> initial_timeout_ms, 
            std::optional<int> in_msg_timeout_ms);
+    void retry(std::vector<uint8_t>& rxbuf);
 
 private:
     // Serial interface
@@ -36,6 +43,7 @@ private:
     bool ignore_echo{false};
 
     std::mutex serial_mutex;
+    Retry retry_struct;
 };
 
 } // namespace serial_device
