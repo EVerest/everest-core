@@ -286,6 +286,10 @@ systemImpl::handle_update_firmware(types::system::FirmwareUpdateRequest& firmwar
     }
 };
 
+void systemImpl::handle_allow_firmware_installation() {
+    // TODO: implement me
+}
+
 types::system::UploadLogsResponse
 systemImpl::handle_upload_logs(types::system::UploadLogsRequest& upload_logs_request) {
 
