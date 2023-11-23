@@ -22,6 +22,7 @@ int main(int argc, char* argv[]) {
 
     printf("Use the following keys to send packets:\n");
     printf("A or a: allow_power_on true or false\n");
+    printf("L or l: motorlock lock or unlock\n");
     printf("r: soft reset\n");
     printf("1: use connector 1\n");
     printf("2: use connector 2\n\n");
@@ -124,6 +125,14 @@ int main(int argc, char* argv[]) {
             case 'a':
                 printf("Setting allow_power_on to false\n");
                 p.allow_power_on(selected_connector, false);
+                break;
+            case 'L':
+                printf("Locking connector\n");
+                p.lock(selected_connector, true);
+                break;
+            case 'l':
+                printf("Unlocking connector\n");
+                p.lock(selected_connector, false);
                 break;
             case 'r':
                 // p.reset();
