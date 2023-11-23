@@ -220,11 +220,6 @@ void ChargePoint::on_firmware_update_status_notification(int32_t request_id,
     }
 
     if (this->firmware_status_before_installing == req.status) {
-        this->firmware_status = FirmwareStatusEnum::InstallScheduled;
-        req.status = firmware_status;
-        ocpp::Call<FirmwareStatusNotificationRequest> call(req, this->message_queue->createMessageId());
-        this->send_async<FirmwareStatusNotificationRequest>(call);
-
         this->change_all_connectors_to_unavailable_for_firmware_update();
     }
 }
