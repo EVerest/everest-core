@@ -96,11 +96,14 @@ ChargePointImpl::ChargePointImpl(const std::string& config, const fs::path& shar
         this->v2g_certificate_timer->interval(V2G_CERTIFICATE_TIMER_INTERVAL);
     });
 
-    this->status = std::make_unique<ChargePointStates>(
-        [this](int32_t connector, ChargePointErrorCode errorCode, ChargePointStatus status) {
+    this->status =
+        std::make_unique<ChargePointStates>([this](const int32_t connector, const ChargePointErrorCode errorCode,
+                                                   const ChargePointStatus status, const ocpp::DateTime& timestamp) {
             this->status_notification_timers.at(connector)->stop();
             this->status_notification_timers.at(connector)->timeout(
-                [this, connector, errorCode, status]() { this->status_notification(connector, errorCode, status); },
+                [this, connector, errorCode, status, timestamp]() {
+                    this->status_notification(connector, errorCode, status, timestamp);
+                },
                 std::chrono::seconds(this->configuration->getMinimumStatusDuration().value_or(0)));
         });
 
@@ -824,7 +827,7 @@ void ChargePointImpl::change_all_connectors_to_unavailable_for_firmware_update()
 
     for (const auto& [connector, availability_status] : connector_availability_status) {
         if (connector == 0) {
-            this->status->submit_event(0, FSMEvent::ChangeAvailabilityToUnavailable);
+            this->status->submit_event(0, FSMEvent::ChangeAvailabilityToUnavailable, ocpp::DateTime());
         } else if (this->disable_evse_callback != nullptr and availability_status == AvailabilityStatus::Accepted) {
             this->disable_evse_callback(connector);
         }
@@ -903,7 +906,8 @@ void ChargePointImpl::connected_callback() {
         // according to spec, a charge point should not send a BootNotification after a reconnect
         // still we send StatusNotification.req for all connectors after a reconnect
         for (int32_t connector = 0; connector <= this->configuration->getNumberOfConnectors(); connector++) {
-            this->status_notification(connector, ChargePointErrorCode::NoError, this->status->get_state(connector));
+            this->status_notification(connector, ChargePointErrorCode::NoError, this->status->get_state(connector),
+                                      ocpp::DateTime());
         }
         break;
     }
@@ -1161,7 +1165,8 @@ void ChargePointImpl::handleBootNotificationResponse(ocpp::CallResult<BootNotifi
 
         // send initial StatusNotification.req
         for (int32_t connector = 0; connector <= this->configuration->getNumberOfConnectors(); connector++) {
-            this->status_notification(connector, ChargePointErrorCode::NoError, this->status->get_state(connector));
+            this->status_notification(connector, ChargePointErrorCode::NoError, this->status->get_state(connector),
+                                      ocpp::DateTime());
         }
 
         this->message_queue->get_transaction_messages_from_db();
@@ -1259,14 +1264,14 @@ void ChargePointImpl::handleChangeAvailabilityRequest(ocpp::Call<ChangeAvailabil
             this->database_handler->insert_or_update_connector_availability(connector, call.msg.type);
             if (call.msg.type == AvailabilityType::Operative) {
                 if (connector == 0) {
-                    this->status->submit_event(0, FSMEvent::BecomeAvailable);
+                    this->status->submit_event(0, FSMEvent::BecomeAvailable, ocpp::DateTime());
                 } else if (this->enable_evse_callback != nullptr and
                            availability_status == AvailabilityStatus::Accepted) {
                     this->enable_evse_callback(connector);
                 }
             } else {
                 if (connector == 0) {
-                    this->status->submit_event(0, FSMEvent::ChangeAvailabilityToUnavailable);
+                    this->status->submit_event(0, FSMEvent::ChangeAvailabilityToUnavailable, ocpp::DateTime());
                 } else if (this->disable_evse_callback != nullptr and
                            availability_status == AvailabilityStatus::Accepted) {
                     this->disable_evse_callback(connector);
@@ -1775,13 +1780,13 @@ void ChargePointImpl::handleStopTransactionResponse(const EnhancedMessage<v16::M
                     // TODO(kai): check return value
                     this->enable_evse_callback(connector);
                 }
-                this->status->submit_event(connector, FSMEvent::BecomeAvailable);
+                this->status->submit_event(connector, FSMEvent::BecomeAvailable, ocpp::DateTime());
             } else {
                 if (this->disable_evse_callback != nullptr) {
                     // TODO(kai): check return value
                     this->disable_evse_callback(connector);
                 }
-                this->status->submit_event(connector, FSMEvent::ChangeAvailabilityToUnavailable);
+                this->status->submit_event(connector, FSMEvent::ChangeAvailabilityToUnavailable, ocpp::DateTime());
             }
         }
     } else {
@@ -2022,10 +2027,12 @@ void ChargePointImpl::handleTriggerMessageRequest(ocpp::Call<TriggerMessageReque
         if (!call.msg.connectorId.has_value()) {
             // send a status notification for every connector
             for (int32_t c = 0; c <= this->configuration->getNumberOfConnectors(); c++) {
-                this->status_notification(c, ChargePointErrorCode::NoError, this->status->get_state(c));
+                this->status_notification(c, ChargePointErrorCode::NoError, this->status->get_state(c),
+                                          ocpp::DateTime());
             }
         } else {
-            this->status_notification(connector, ChargePointErrorCode::NoError, this->status->get_state(connector));
+            this->status_notification(connector, ChargePointErrorCode::NoError, this->status->get_state(connector),
+                                      ocpp::DateTime());
         }
         break;
     }
@@ -2135,10 +2142,12 @@ void ChargePointImpl::handleExtendedTriggerMessageRequest(ocpp::Call<ExtendedTri
         if (!call.msg.connectorId.has_value()) {
             // send a status notification for every connector
             for (int32_t c = 0; c <= this->configuration->getNumberOfConnectors(); c++) {
-                this->status_notification(c, ChargePointErrorCode::NoError, this->status->get_state(c));
+                this->status_notification(c, ChargePointErrorCode::NoError, this->status->get_state(c),
+                                          ocpp::DateTime());
             }
         } else {
-            this->status_notification(connector, ChargePointErrorCode::NoError, this->status->get_state(connector));
+            this->status_notification(connector, ChargePointErrorCode::NoError, this->status->get_state(connector),
+                                      ocpp::DateTime());
         }
         break;
     }
@@ -2514,23 +2523,13 @@ bool ChargePointImpl::send(CallError call_error) {
     return true;
 }
 
-void ChargePointImpl::status_notification(int32_t connector, ChargePointErrorCode errorCode, CiString<50> info,
-                                          ChargePointStatus status, ocpp::DateTime timestamp) {
-    StatusNotificationRequest request;
-    request.connectorId = connector;
-    request.errorCode = errorCode;
-    request.info.emplace(info);
-    request.status = status;
-    request.timestamp.emplace(timestamp);
-    ocpp::Call<StatusNotificationRequest> call(request, this->message_queue->createMessageId());
-    this->send<StatusNotificationRequest>(call);
-}
-
-void ChargePointImpl::status_notification(int32_t connector, ChargePointErrorCode errorCode, ChargePointStatus status) {
+void ChargePointImpl::status_notification(const int32_t connector, const ChargePointErrorCode errorCode,
+                                          const ChargePointStatus status, const ocpp::DateTime& timestamp) {
     StatusNotificationRequest request;
     request.connectorId = connector;
     request.errorCode = errorCode;
     request.status = status;
+    request.timestamp = timestamp;
     ocpp::Call<StatusNotificationRequest> call(request, this->message_queue->createMessageId());
     this->send<StatusNotificationRequest>(call);
 }
@@ -3120,17 +3119,17 @@ void ChargePointImpl::on_session_started(int32_t connector, const std::string& s
     if ((this->status->get_state(connector) == ChargePointStatus::Reserved &&
          session_started_reason == SessionStartedReason::Authorized) ||
         this->status->get_state(connector) != ChargePointStatus::Reserved) {
-        this->status->submit_event(connector, FSMEvent::UsageInitiated);
+        this->status->submit_event(connector, FSMEvent::UsageInitiated, ocpp::DateTime());
     }
 }
 
 void ChargePointImpl::on_session_stopped(const int32_t connector, const std::string& session_id) {
     // TODO(piet) fix this when evse manager signals clearance of an error
     if (this->status->get_state(connector) == ChargePointStatus::Faulted) {
-        this->status->submit_event(connector, FSMEvent::I1_ReturnToAvailable);
+        this->status->submit_event(connector, FSMEvent::I1_ReturnToAvailable, ocpp::DateTime());
     } else if (this->status->get_state(connector) != ChargePointStatus::Reserved &&
                this->status->get_state(connector) != ChargePointStatus::Unavailable) {
-        this->status->submit_event(connector, FSMEvent::BecomeAvailable);
+        this->status->submit_event(connector, FSMEvent::BecomeAvailable, ocpp::DateTime());
     }
 
     if (this->logging->session_logging_active()) {
@@ -3143,7 +3142,7 @@ void ChargePointImpl::on_transaction_started(const int32_t& connector, const std
                                              std::optional<int32_t> reservation_id, const ocpp::DateTime& timestamp,
                                              std::optional<std::string> signed_meter_value) {
     if (this->status->get_state(connector) == ChargePointStatus::Reserved) {
-        this->status->submit_event(connector, FSMEvent::UsageInitiated);
+        this->status->submit_event(connector, FSMEvent::UsageInitiated, ocpp::DateTime());
     }
 
     auto meter_values_sample_timer = std::make_unique<Everest::SteadyTimer>(&this->io_service, [this, connector]() {
@@ -3206,7 +3205,7 @@ void ChargePointImpl::on_transaction_stopped(const int32_t connector, const std:
     const auto stop_energy_wh = std::make_shared<StampedEnergyWh>(timestamp, energy_wh_import);
     this->transaction_handler->get_transaction(connector)->add_stop_energy_wh(stop_energy_wh);
 
-    this->status->submit_event(connector, FSMEvent::TransactionStoppedAndUserActionRequired);
+    this->status->submit_event(connector, FSMEvent::TransactionStoppedAndUserActionRequired, ocpp::DateTime());
     this->stop_transaction(connector, reason, id_tag_end);
     this->database_handler->update_transaction(session_id, energy_wh_import, timestamp.to_rfc3339(), id_tag_end,
                                                reason);
@@ -3317,23 +3316,23 @@ ChargePointImpl::get_filtered_transaction_data(const std::shared_ptr<Transaction
 }
 
 void ChargePointImpl::on_suspend_charging_ev(int32_t connector) {
-    this->status->submit_event(connector, FSMEvent::PauseChargingEV);
+    this->status->submit_event(connector, FSMEvent::PauseChargingEV, ocpp::DateTime());
 }
 
 void ChargePointImpl::on_suspend_charging_evse(int32_t connector) {
-    this->status->submit_event(connector, FSMEvent::PauseChargingEVSE);
+    this->status->submit_event(connector, FSMEvent::PauseChargingEVSE, ocpp::DateTime());
 }
 
 void ChargePointImpl::on_resume_charging(int32_t connector) {
-    this->status->submit_event(connector, FSMEvent::StartCharging);
+    this->status->submit_event(connector, FSMEvent::StartCharging, ocpp::DateTime());
 }
 
 void ChargePointImpl::on_error(int32_t connector, const ChargePointErrorCode& error_code) {
-    this->status->submit_error(connector, error_code);
+    this->status->submit_error(connector, error_code, ocpp::DateTime());
 }
 
 void ChargePointImpl::on_fault(int32_t connector, const ChargePointErrorCode& error_code) {
-    this->status->submit_fault(connector, error_code);
+    this->status->submit_fault(connector, error_code, ocpp::DateTime());
 }
 
 void ChargePointImpl::on_log_status_notification(int32_t request_id, std::string log_status) {
@@ -3508,23 +3507,23 @@ void ChargePointImpl::register_is_token_reserved_for_connector_callback(
 }
 
 void ChargePointImpl::on_reservation_start(int32_t connector) {
-    this->status->submit_event(connector, FSMEvent::ReserveConnector);
+    this->status->submit_event(connector, FSMEvent::ReserveConnector, ocpp::DateTime());
 }
 
 void ChargePointImpl::on_reservation_end(int32_t connector) {
-    this->status->submit_event(connector, FSMEvent::BecomeAvailable);
+    this->status->submit_event(connector, FSMEvent::BecomeAvailable, ocpp::DateTime());
 }
 
 void ChargePointImpl::on_enabled(int32_t connector) {
-    this->status->submit_event(connector, FSMEvent::BecomeAvailable);
+    this->status->submit_event(connector, FSMEvent::BecomeAvailable, ocpp::DateTime());
 }
 
 void ChargePointImpl::on_disabled(int32_t connector) {
-    this->status->submit_event(connector, FSMEvent::ChangeAvailabilityToUnavailable);
+    this->status->submit_event(connector, FSMEvent::ChangeAvailabilityToUnavailable, ocpp::DateTime());
 }
 
 void ChargePointImpl::on_plugin_timeout(int32_t connector) {
-    this->status->submit_event(connector, FSMEvent::TransactionStoppedAndUserActionRequired);
+    this->status->submit_event(connector, FSMEvent::TransactionStoppedAndUserActionRequired, ocpp::DateTime());
 }
 
 void ChargePointImpl::on_security_event(const std::string& type, const std::string& tech_info) {

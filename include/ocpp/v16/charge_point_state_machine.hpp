@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 
+#include <ocpp/common/types.hpp>
 #include <ocpp/v16/enums.hpp>
 
 namespace ocpp {
@@ -43,12 +44,13 @@ using FSMDefinition = std::map<FSMState, FSMStateTransitions>;
 
 class ChargePointFSM {
 public:
-    using StatusNotificationCallback = std::function<void(ChargePointStatus status, ChargePointErrorCode error_code)>;
+    using StatusNotificationCallback = std::function<void(
+        const ChargePointStatus status, const ChargePointErrorCode error_code, const ocpp::DateTime& timestamp)>;
     explicit ChargePointFSM(const StatusNotificationCallback& status_notification_callback, FSMState initial_state);
 
-    bool handle_event(FSMEvent event);
-    bool handle_error(const ChargePointErrorCode& error_code);
-    bool handle_fault(const ChargePointErrorCode& error_code);
+    bool handle_event(FSMEvent event, const ocpp::DateTime timestamp);
+    bool handle_error(const ChargePointErrorCode& error_code, const ocpp::DateTime& timestamp);
+    bool handle_fault(const ChargePointErrorCode& error_code, const ocpp::DateTime& timestamp);
 
     FSMState get_state() const;
 
@@ -64,13 +66,14 @@ private:
 class ChargePointStates {
 public:
     using ConnectorStatusCallback =
-        std::function<void(int connector_id, ChargePointErrorCode errorCode, ChargePointStatus status)>;
+        std::function<void(const int connector_id, const ChargePointErrorCode errorCode, const ChargePointStatus status,
+                           const ocpp::DateTime& timestamp)>;
     ChargePointStates(const ConnectorStatusCallback& connector_status_callback);
     void reset(std::map<int, ChargePointStatus> connector_status_map);
 
-    void submit_event(int connector_id, FSMEvent event);
-    void submit_fault(int connector_id, const ChargePointErrorCode& error_code);
-    void submit_error(int connector_id, const ChargePointErrorCode& error_code);
+    void submit_event(const int connector_id, FSMEvent event, const ocpp::DateTime& timestamp);
+    void submit_fault(const int connector_id, const ChargePointErrorCode& error_code, const ocpp::DateTime& timestamp);
+    void submit_error(const int connector_id, const ChargePointErrorCode& error_code, const ocpp::DateTime& timestamp);
 
     ChargePointStatus get_state(int connector_id);
 

@@ -202,9 +202,8 @@ private:
     MeterValue get_signed_meter_value(const std::string& signed_value, const ReadingContext& context,
                                       const ocpp::DateTime& datetime);
     void send_meter_value(int32_t connector, MeterValue meter_value);
-    void status_notification(int32_t connector, ChargePointErrorCode errorCode, CiString<50> info,
-                             ChargePointStatus status, ocpp::DateTime timestamp);
-    void status_notification(int32_t connector, ChargePointErrorCode errorCode, ChargePointStatus status);
+    void status_notification(const int32_t connector, const ChargePointErrorCode errorCode,
+                             const ChargePointStatus status, const ocpp::DateTime& timestamp);
     void diagnostic_status_notification(DiagnosticsStatus status);
     void firmware_status_notification(FirmwareStatus status);
     void log_status_notification(UploadLogStatusEnumType status, int requestId);
