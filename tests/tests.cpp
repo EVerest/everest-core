@@ -12,6 +12,7 @@
 #include <evse_security/certificate/x509_bundle.hpp>
 #include <evse_security/certificate/x509_wrapper.hpp>
 #include <evse_security/evse_security.hpp>
+#include <evse_security/utils/fix_pem_string.hpp>
 
 std::string read_file_to_string(const fs::path filepath) {
     fsstd::ifstream t(filepath.string());
@@ -202,7 +203,7 @@ TEST_F(EvseSecurityTests, install_root_ca_01) {
 }
 
 TEST_F(EvseSecurityTests, install_root_ca_02) {
-    const auto invalid_csms_ca = "InvalidCertificate";
+    const auto invalid_csms_ca = "-----BEGIN CERTIFICATE-----InvalidCertificate-----END CERTIFICATE-----";
     const auto result = this->evse_security->install_ca_certificate(invalid_csms_ca, CaCertificateType::CSMS);
     ASSERT_EQ(result, InstallCertificateResult::InvalidFormat);
 }
@@ -461,6 +462,26 @@ TEST_F(EvseSecurityTests, get_installed_certificates_and_delete_secc_leaf) {
     // Do not allow the SECC delete since it's the ChargingStationCertificate
     auto delete_response = this->evse_security->delete_certificate(secc_leaf_data);
     ASSERT_EQ(delete_response, DeleteCertificateResult::Failed);
+}
+
+TEST_F(EvseSecurityTests, fix_pem_string) {
+    std::string test_input("-----BEGIN TEST INPUT-----\n");
+    test_input += "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/";
+    test_input += "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/\n";
+    test_input += "abcdefghijklmnopqrstuvwxyzABCD EFGHIJKLMNOPQRSTUVWXYZ0123456789+/";
+    test_input += "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKL\r\nMNOPQRSTUVWXYZ0123456789+/";
+    test_input += "abcdefghijklmnopqrstuvwxyzABCDEFG==";
+    test_input += "\n\n-----END TEST INPUT-----";
+
+    std::string expected_output("-----BEGIN TEST INPUT-----\n");
+    expected_output += "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/\n";
+    expected_output += "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/\n";
+    expected_output += "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/\n";
+    expected_output += "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/\n";
+    expected_output += "abcdefghijklmnopqrstuvwxyzABCDEFG==\n";
+    expected_output += "-----END TEST INPUT-----";
+
+    ASSERT_EQ(fix_pem_string(test_input), expected_output);
 }
 
 } // namespace evse_security
