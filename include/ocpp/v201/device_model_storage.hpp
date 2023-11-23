@@ -70,6 +70,22 @@ inline bool operator<(const ComponentVariable& lhs, const ComponentVariable& rhs
 using VariableMap = std::map<Variable, VariableMetaData>;
 using DeviceModelMap = std::map<Component, VariableMap>;
 
+class DeviceModelStorageError : public std::exception {
+public:
+    [[nodiscard]] const char* what() const noexcept override {
+        return this->reason.c_str();
+    }
+    explicit DeviceModelStorageError(std::string msg) {
+        this->reason = std::move(msg);
+    }
+    explicit DeviceModelStorageError(const char* msg) {
+        this->reason = std::string(msg);
+    }
+
+private:
+    std::string reason;
+};
+
 /// \brief Abstract base class for device model storage. This class provides an interface for accessing and modifying
 /// device model data. Implementations of this class should provide concrete implementations for the virtual methods
 /// declared here.
@@ -110,6 +126,10 @@ public:
     /// \return true if the value could be set in the storage, else false
     virtual bool set_variable_attribute_value(const Component& component_id, const Variable& variable_id,
                                               const AttributeEnum& attribute_enum, const std::string& value) = 0;
+
+    /// \brief Check data integrity of the stored data:
+    /// For "required" variables, assert values exist. Checks might be extended in the future.
+    virtual void check_integrity() = 0;
 };
 
 } // namespace v201

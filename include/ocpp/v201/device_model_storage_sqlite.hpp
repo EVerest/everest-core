@@ -37,6 +37,8 @@ public:
 
     bool set_variable_attribute_value(const Component& component_id, const Variable& variable_id,
                                       const AttributeEnum& attribute_enum, const std::string& value) final;
+
+    void check_integrity() final;
 };
 
 } // namespace v201

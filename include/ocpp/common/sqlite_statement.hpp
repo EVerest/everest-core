@@ -122,6 +122,15 @@ public:
         return reinterpret_cast<const char*>(sqlite3_column_text(this->stmt, idx));
     }
 
+    std::optional<std::string> column_text_nullable(const int idx) {
+        auto p = sqlite3_column_text(this->stmt, idx);
+        if (p != nullptr) {
+            return reinterpret_cast<const char*>(p);
+        } else {
+            return std::optional<std::string>{};
+        }
+    }
+
     int column_int(const int idx) {
         return sqlite3_column_int(this->stmt, idx);
     }

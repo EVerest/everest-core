@@ -14,6 +14,8 @@ target_link_libraries(database_tests PRIVATE
     pthread
     )
 
+add_subdirectory(lib/ocpp/v201)
+
 add_test(database_tests database_tests)
 
 

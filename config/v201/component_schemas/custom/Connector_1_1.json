@@ -33,7 +33,8 @@
         }
       ],
       "description": "Component exists",
-      "type": "boolean"
+      "type": "boolean",
+      "default": "0"
     },
     "ChargeProtocol": {
       "variable_name": "ChargeProtocol",
@@ -62,7 +63,8 @@
         }
       ],
       "description": "A value of ConnectorEnumType (See part 2) plus additionally: cGBT, cChaoJi, OppCharge. Specific type of connector, including sub-variant information. Note: Distinct and orthogonal to Charging Protocol, Power Type, Phases.",
-      "type": "string"
+      "type": "string",
+      "default": ""
     },
     "ConnectorSupplyPhases": {
       "variable_name": "SupplyPhases",
@@ -77,7 +79,8 @@
         }
       ],
       "description": "Number of alternating current phases connected/available.",
-      "type": "integer"
+      "type": "integer",
+      "default": "0"
     }
   },
   "required": [

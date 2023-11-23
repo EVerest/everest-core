@@ -74,6 +74,8 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
     }
 
     this->device_model = std::make_unique<DeviceModel>(std::move(device_model_storage));
+    this->device_model->check_integrity();
+
     this->database_handler = std::make_unique<DatabaseHandler>(core_database_path, sql_init_path);
     this->database_handler->open_connection();
 

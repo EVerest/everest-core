@@ -112,7 +112,7 @@ public:
     }
 
     /// \brief  Access to std::optional of a VariableAttribute for the given component, variable and attribute_enum.
-    /// \tparam T Tatatype of the value that is requested
+    /// \tparam T Type of the value that is requested
     /// \param component_variable Combination of Component and Variable that identifies the Variable
     /// \param attribute_enum
     /// \return std::optional<T> if the combination of \p component_variable and \p attribute_enum could successfully
@@ -190,6 +190,10 @@ public:
     get_report_data(const std::optional<ReportBaseEnum>& report_base = std::nullopt,
                     const std::optional<std::vector<ComponentVariable>>& component_variables = std::nullopt,
                     const std::optional<std::vector<ComponentCriterionEnum>>& component_criteria = std::nullopt);
+
+    /// \brief Check data integrity of the device model provided by the device model data storage:
+    /// For "required" variables, assert values exist. Checks might be extended in the future.
+    void check_integrity();
 };
 
 } // namespace v201
