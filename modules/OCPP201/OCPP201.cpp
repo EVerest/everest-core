@@ -566,9 +566,8 @@ ocpp::v201::CertificateActionEnum get_certificate_action(const types::iso15118_c
         return ocpp::v201::CertificateActionEnum::Install;
     case types::iso15118_charger::CertificateActionEnum::Update:
         return ocpp::v201::CertificateActionEnum::Update;
-    default:
-        throw std::out_of_range("Could not convert CertificateActionEnum"); // this should never happen
     }
+    throw std::out_of_range("Could not convert CertificateActionEnum"); // this should never happen
 }
 
 types::iso15118_charger::Status get_iso15118_charger_status(const ocpp::v201::Iso15118EVCertificateStatusEnum& status) {
@@ -577,9 +576,8 @@ types::iso15118_charger::Status get_iso15118_charger_status(const ocpp::v201::Is
         return types::iso15118_charger::Status::Accepted;
     case ocpp::v201::Iso15118EVCertificateStatusEnum::Failed:
         return types::iso15118_charger::Status::Failed;
-    default:
-        throw std::out_of_range("Could not convert Iso15118EVCertificateStatusEnum"); // this should never happen
     }
+    throw std::out_of_range("Could not convert Iso15118EVCertificateStatusEnum"); // this should never happen
 }
 
 void OCPP201::ready() {
