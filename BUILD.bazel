@@ -1,0 +1,83 @@
+genrule(
+    name = "compile_time_settings",
+    outs = ["include/everest/compile_time_settings.hpp"],
+    cmd = """
+    echo "#define EVEREST_INSTALL_PREFIX \\"/usr\\"" > $@
+    echo "#define EVEREST_NAMESPACE (\\"everest\\")" >> $@
+  """,
+)
+
+cc_library(
+    name = "framework",
+    srcs = glob(["lib/*.cpp"]),
+    hdrs = glob(["include/**/*.hpp"]) + [":compile_time_settings"],
+    copts = ["-std=c++17"],
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@boost//:program_options",
+        "@boost//:uuid",
+        "@com_github_HowardHinnant_date//:date",
+        "@com_github_LiamBindle_mqtt-c//:libmqtt",
+        "@com_github_biojppm_rapidyaml//:ryml",
+        "@com_github_everest_liblog//:liblog",
+        "@com_github_fmtlib_fmt//:fmt",
+        "@com_github_nlohmann_json//:json",
+        "@com_github_pboettch_json-schema-validator//:json-schema-validator",
+    ],
+)
+
+cc_library(
+    name = "controller-ipc",
+    srcs = glob(["src/controller/*.cpp"]),
+    hdrs = glob(["src/controller/*.hpp"]),
+    copts = ["-std=c++17"],
+    strip_include_prefix = "src",
+    deps = [
+        ":framework",
+        "@com_github_biojppm_rapidyaml//:ryml",
+        "@com_github_everest_liblog//:liblog",
+        "@com_github_fmtlib_fmt//:fmt",
+        "@com_github_nlohmann_json//:json",
+        "@com_github_warmcatt_libwebsockets//:libwebsockets",
+    ],
+)
+
+cc_binary(
+    name = "controller",
+    srcs = glob(
+        [
+            "src/controller/*.cpp",
+            "src/controller/*.hpp",
+        ],
+        exclude = [
+            "src/controller/ipc.cpp",
+            "src/controller/ipc.hpp",
+        ],
+    ),
+    copts = ["-std=c++17"],
+    deps = [
+        ":controller-ipc",
+        ":framework",
+        "@com_github_biojppm_rapidyaml//:ryml",
+        "@com_github_everest_liblog//:liblog",
+        "@com_github_fmtlib_fmt//:fmt",
+        "@com_github_warmcatt_libwebsockets//:libwebsockets",
+    ],
+)
+
+cc_binary(
+    name = "manager",
+    srcs = [
+        "src/manager.cpp",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":controller-ipc",
+        ":framework",
+        "@boost//:program_options",
+        "@com_github_everest_liblog//:liblog",
+        "@com_github_fmtlib_fmt//:fmt",
+        "@com_github_pboettch_json-schema-validator//:json-schema-validator",
+    ],
+)

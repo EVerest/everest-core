@@ -1,0 +1,115 @@
+# This file is copied from https://github.com/3rdparty/bazel-rules-curl/tree/f64665f4614beb19f08b45b755d7c77f487287bb
+# Where it was published under "Apache 2.0" license.
+
+load("@rules_foreign_cc//foreign_cc:defs.bzl", "cmake")
+
+filegroup(
+    name = "all",
+    srcs = glob(["**"]),
+    # Putting private visibility breaks the build whenever we use libcurl
+    # as a dependency somewhere else because this target stops being
+    # visible to other targets provided in here.
+    # By providing visibility to targets inside @com_github_curl_curl
+    # we can provide the needed visibility to targets in here but not to any
+    # other packages.
+    visibility = ["@com_github_curl_curl//:__pkg__"],
+)
+
+libcurl_boringssl_cache_entries_common = {
+    "BUILD_SHARED_LIBS": "OFF",
+    "BUILD_TESTING": "OFF",
+    "BUILD_CURL_EXE": "OFF",
+    "CURL_USE_OPENSSL": "ON",
+    # NOTE: Disable unused dependencies so we won't have any linker issues.
+    # At least on MacOS if libssh or libssh2 happens to be installed then
+    # cmake will attempt to link against the library but Bazel will expect
+    # all the symbols to be available and then the binary will crash
+    # when it attempts to dynamically find the symbols at runtime.
+    "CURL_USE_LIBSSH": "OFF",
+    "CURL_USE_LIBSSH2": "OFF",
+    "CURL_USE_BEARSSL": "OFF",
+    "CURL_USE_WOLFSSL": "OFF",
+    "CURL_USE_MBEDTLS": "OFF",
+    "CURL_USE_NSS": "OFF",
+}
+
+libcurl_defines = [
+    "CURL_STATICLIB",
+]
+
+cmake(
+    name = "libcurl_boringssl_windows",
+    cache_entries = libcurl_boringssl_cache_entries_common,
+    defines = libcurl_defines,
+    lib_source = "//:all",
+    linkopts = [
+        "WS2_32.Lib",
+        "Advapi32.lib",
+        "Iphlpapi.lib",
+        "Userenv.lib",
+        "User32.lib",
+        "Wldap32.lib",
+        "Crypt32.lib",
+    ],
+    out_static_libs = select({
+        "//:debug_build": [
+            "libcurl-d.lib",
+        ],
+        "//conditions:default": [
+            "libcurl.lib",
+        ],
+    }),
+    # Just using "@boringssl//:crypto" and "@boringssl//:ssl" as our 'deps'
+    # as in linux and macos variant doesn't work because the 'cmake' rule seems to
+    # try and force boringssl to create BOTH static and shared libraries the
+    # latter of which does not work on Windows. Our workaround is to create
+    # our own "//:boringssl_lib" which only has the static libraries.
+    deps = [
+        "@boringssl_with_bazel_rules_curl_build_file//:boringssl_lib",
+    ],
+)
+
+cmake(
+    name = "libcurl_boringssl_linux_macos",
+    cache_entries = dict(libcurl_boringssl_cache_entries_common.items() + {
+        # Disable linkage to an OpenLDAP library, since it's currently not
+        # being built by us.
+        "CURL_DISABLE_LDAP": "ON",
+        "CURL_DISABLE_LDAPS": "ON",
+    }.items()),
+    defines = libcurl_defines,
+    lib_source = "//:all",
+    linkopts = [
+        # NOTE: We are relying on user-installed libdl and zlib.
+        "-ldl",
+        "-lz",
+    ],
+    out_static_libs = select({
+        "//:debug_build": [
+            "libcurl-d.a",
+        ],
+        "//conditions:default": [
+            "libcurl.a",
+        ],
+    }),
+    deps = [
+        "@boringssl//:crypto",
+        "@boringssl//:ssl",
+    ],
+)
+
+alias(
+    name = "libcurl_boringssl",
+    actual = select({
+        "@bazel_tools//src/conditions:windows": "libcurl_boringssl_windows",
+        "//conditions:default": "libcurl_boringssl_linux_macos",
+    }),
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "debug_build",
+    values = {
+        "compilation_mode": "dbg",
+    },
+)

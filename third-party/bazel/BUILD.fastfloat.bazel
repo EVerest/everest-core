@@ -1,0 +1,7 @@
+cc_library(
+    name = "fastfloat",
+    hdrs = glob(["include/**/*.h"]),
+    include_prefix = "c4/ext/fastfloat",
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+)

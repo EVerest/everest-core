@@ -1,0 +1,16 @@
+cc_library(
+    name = "c4",
+    srcs = glob(["src/**/*.cpp"]),
+    hdrs = glob([
+        "src/**/*.hpp",
+        "src/**/*.h",
+    ]),
+    strip_include_prefix = "src",
+    visibility = [
+        "//visibility:public",
+    ],
+    deps = [
+        "@com_github_biojppm_debugbreak//:debugbreak",
+        "@com_github_fastfloat_fastfloat//:fastfloat",
+    ],
+)

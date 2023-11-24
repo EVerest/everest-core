@@ -1,0 +1,9 @@
+workspace(name = "com_github_everest_everest-framework")
+
+load("//third-party/bazel:repos.bzl", "everest_framework_repos")
+
+everest_framework_repos()
+
+load("//third-party/bazel:defs.bzl", "everest_framework_deps")
+
+everest_framework_deps()

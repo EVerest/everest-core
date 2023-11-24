@@ -1,0 +1,44 @@
+load("@rules_foreign_cc//foreign_cc:defs.bzl", "cmake")
+
+filegroup(
+    name = "all_srcs",
+    srcs = glob(["**"]),
+    visibility = ["//visibility:public"],
+)
+
+cmake(
+    name = "libwebsockets",
+    cache_entries = {
+        "CMAKE_POLICY_DEFAULT_CMP0077": "NEW",
+        "LWS_ROLE_RAW_FILE": "OFF",
+        "LWS_UNIX_SOCK": "OFF",
+        "LWS_WITH_SYS_STATE": "OFF",
+        "LWS_WITH_SYS_SMD": "OFF",
+        "LWS_WITH_BORINGSSL": "ON",
+        "LWS_WITH_UPNG": "OFF",
+        "LWS_WITH_JPEG": "OFF",
+        "LWS_WITH_DLO": "OFF",
+        "LWS_WITH_SECURE_STREAMS": "OFF",
+        "LWS_WITH_STATIC": "ON",
+        "LWS_WITH_LHP": "OFF",
+        "LWS_WITH_LEJP_CONF": "OFF",
+        "LWS_WITH_MINIMAL_EXAMPLES": "OFF",
+        "LWS_WITH_CACHE_NSCOOKIEJAR": "OFF",
+        "LWS_WITHOUT_TESTAPPS": "ON",
+        "LWS_WITHOUT_TEST_SERVER": "ON",
+        "LWS_WITHOUT_TEST_SERVER_EXTPOLL": "ON",
+        "LWS_WITHOUT_TEST_PING": "ON",
+        "LWS_WITHOUT_TEST_CLIENT": "ON",
+        "CMAKE_VERBOSE_MAKEFILE": "ON",
+        "LWS_WITH_SSL": "OFF",
+    },
+    lib_source = ":all_srcs",
+    out_static_libs = ["libwebsockets.a"],
+    visibility = [
+        "//visibility:public",
+    ],
+    deps = [
+        "@boringssl//:crypto",
+        "@boringssl//:ssl",
+    ],
+)

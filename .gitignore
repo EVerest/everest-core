@@ -6,3 +6,6 @@ workspace.yaml
 
 # Clang
 .cache/
+
+# Bazel
+/bazel-*
