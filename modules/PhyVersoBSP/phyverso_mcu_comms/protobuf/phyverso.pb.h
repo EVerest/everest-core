@@ -33,6 +33,12 @@ typedef enum _PpState {
     PpState_STATE_FAULT = 5
 } PpState;
 
+typedef enum _LockState {
+    LockState_UNDEFINED = 0,
+    LockState_UNLOCKED = 1,
+    LockState_LOCKED = 2
+} LockState;
+
 /* Struct definitions */
 typedef struct _ErrorFlags {
     bool diode_fault;
@@ -88,6 +94,7 @@ typedef struct _McuToEverest {
         Telemetry telemetry;
         PpState pp_state;
         FanState fan_state;
+        LockState lock_state;
     } payload;
     int32_t connector; /* 0: None, 1: Connector 1, 2: Connector 2 */
 } McuToEverest;
@@ -110,10 +117,15 @@ extern "C" {
 #define _PpState_MAX PpState_STATE_FAULT
 #define _PpState_ARRAYSIZE ((PpState)(PpState_STATE_FAULT+1))
 
+#define _LockState_MIN LockState_UNDEFINED
+#define _LockState_MAX LockState_LOCKED
+#define _LockState_ARRAYSIZE ((LockState)(LockState_LOCKED+1))
+
 
 #define McuToEverest_payload_reset_ENUMTYPE ResetReason
 #define McuToEverest_payload_cp_state_ENUMTYPE CpState
 #define McuToEverest_payload_pp_state_ENUMTYPE PpState
+#define McuToEverest_payload_lock_state_ENUMTYPE LockState
 
 
 
@@ -166,6 +178,7 @@ extern "C" {
 #define McuToEverest_telemetry_tag               7
 #define McuToEverest_pp_state_tag                8
 #define McuToEverest_fan_state_tag               9
+#define McuToEverest_lock_state_tag              10
 #define McuToEverest_connector_tag               6
 
 /* Struct field encoding specification for nanopb */
@@ -190,7 +203,8 @@ X(a, STATIC,   ONEOF,    MESSAGE,  (payload,error_flags,payload.error_flags),   
 X(a, STATIC,   SINGULAR, INT32,    connector,         6) \
 X(a, STATIC,   ONEOF,    MESSAGE,  (payload,telemetry,payload.telemetry),   7) \
 X(a, STATIC,   ONEOF,    UENUM,    (payload,pp_state,payload.pp_state),   8) \
-X(a, STATIC,   ONEOF,    MESSAGE,  (payload,fan_state,payload.fan_state),   9)
+X(a, STATIC,   ONEOF,    MESSAGE,  (payload,fan_state,payload.fan_state),   9) \
+X(a, STATIC,   ONEOF,    UENUM,    (payload,lock_state,payload.lock_state),  10)
 #define McuToEverest_CALLBACK NULL
 #define McuToEverest_DEFAULT NULL
 #define McuToEverest_payload_keep_alive_MSGTYPE KeepAlive

@@ -40,6 +40,7 @@ public:
     sigslot::signal<> signal_connection_timeout;
     sigslot::signal<int, PpState> signal_pp_state;
     sigslot::signal<FanState> signal_fan_state;
+    sigslot::signal<int, LockState> signal_lock_state;
 
 private:
     // Serial interface

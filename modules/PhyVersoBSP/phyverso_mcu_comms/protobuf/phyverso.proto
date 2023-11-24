@@ -28,6 +28,7 @@ message McuToEverest {
   Telemetry telemetry = 7;
   PpState pp_state = 8;
   FanState fan_state = 9;
+  LockState lock_state = 10;
  }
  int32 connector = 6; // 0: None, 1: Connector 1, 2: Connector 2
 }
@@ -81,4 +82,10 @@ message FanState {
   bool enabled = 2;
   uint32 duty = 3;  // in 0.1%, 1000 = 100%
   uint32 rpm = 4;
+}
+
+enum LockState {
+  UNDEFINED = 0;
+  UNLOCKED = 1;
+  LOCKED = 2;
 }
