@@ -1,299 +1,174 @@
 description: This interface defines a ISO15118 charger.
 cmds:
-  set_EVSEID:
-    description: >-
-      One Time Setup at Boot - Set an ID that uniquely identifies the EVSE
-      and the power outlet the vehicle is connected to
+# Setup the module
+  setup:
+    description: At startup all necessary info should be sent to the module once.
     arguments:
-      EVSEID:
-        description: EVSE ID
-        type: string
-      EVSEID_DIN:
-        description: EVSE ID (DIN70121) after DIN SPEC 91286
-        type: string
-  set_PaymentOptions:
-    description: >-
-      One Time Setup at Boot - Providing a list of payment options to
-      the EVCC
-    arguments:
-      PaymentOptions:
-        description: An array of payment options
+      evse_id:
+        description: >-
+          Set an ID that uniquely identifies the EVSE and the power outlet the
+          vehicle is connected to 
+        type: object
+        $ref: /iso15118_charger#/EVSEID
+      supported_energy_transfer_modes:
+        description: Available energy transfer modes supported by the EVSE
         type: array
         items:
-          description: These are the payment options an SECC offers to the EVCC
+          description: The different energy modes supported by the SECC
           type: string
-          enum:
-            - Contract
-            - ExternalPayment
-        minItems: 1
-        maxItems: 2
-  set_SupportedEnergyTransferMode:
-    description: >-
-      One Time Setup at Boot - Available energy transfer modes supported
-      by the EVSE
-    arguments:
-      SupportedEnergyTransferMode:
-        description: An array of supported engery modes
-        type: array
-        items:
-          description: The single modes
-          type: string
-          enum:
-            - AC_single_phase_core
-            - AC_three_phase_core
-            - DC_core
-            - DC_extended
-            - DC_combo_core
-            - DC_unique
+          $ref: /iso15118_charger#/EnergyTransferMode
         minItems: 1
         maxItems: 6
-  set_AC_EVSENominalVoltage:
-    description: >-
-      One Time Setup at Boot - Set Line voltage supported by the EVSE.
-      This is the voltage measured between one phases and neutral
-    arguments:
-      EVSENominalVoltage:
-        description: "[V] Nominal Voltage"
-        type: number
-        minimum: 0
-        maximum: 1000
-  set_DC_EVSECurrentRegulationTolerance:
-    description: >-
-      One Time Setup at Boot (Optional) - Set the absolute magnitude of
-      the regulation tolerance of the EVSA
-    arguments:
-      EVSECurrentRegulationTolerance:
-        description: Set EVSECurrentRegulationTolerance [A]
-        type: number
-        minimum: 0
-        maximum: 400
-  set_DC_EVSEPeakCurrentRipple:
-    description: >-
-      One Time Setup at Boot - Set the peak-to-peak magnitude of the current
-      ripple of the EVSE
-    arguments:
-      EVSEPeakCurrentRipple:
-        description: Set EVSEPeakCurrentRipple [A]
-        type: number
-        minimum: 0
-        maximum: 400
-  set_ReceiptRequired:
-    description: >-
-      One Time Setup at Boot (Optional) - This element is used by the SECC
-      to indicate that the EVCC is required to send a MeteringReceiptReq message for
-      the purpose of signing the meter info record
-    arguments:
-      ReceiptRequired:
-        description: "True: Receipt is required, False: Receipt is not required"
-        type: boolean
-  set_FreeService:
-    description: >-
-      On Session Setup - Set FreeService so the EVCC can use the service
-      free of charge or not
-    arguments:
-      FreeService:
-        description: "True: Charging is free, False: Charging is not free"
-        type: boolean
-  set_EVSEEnergyToBeDelivered:
-    description: >-
-      On Session Setup (Optional) - Set the Amount of energy to be delivered
-      by the EVSE
-    arguments:
-      EVSEEnergyToBeDelivered:
-        description: Set EVSEEnergyToBeDelivered [Wh]
-        type: number
-        minimum: 0
-        maximum: 200000
-  enable_debug_mode:
-    description: "On Session Setup - Set different modes for the debug mode."
-    arguments:
-      debug_mode:
-        description: The various debug modes
+      sae_j2847_mode:
+        description: Charger is supporting SAE J2847 V2G/V2H version
         type: string
-        $ref: /iso15118_charger#/DebugMode
-  set_Auth_Okay_EIM:
-    description: >-
-      Response on Require_Auth_EIM - Set this element if the authorization
-      was either successful or unsuccessful
-    arguments:
-      auth_okay_eim:
-        description: "True: Authentication is okay"
+        $ref: /iso15118_charger#/SAE_J2847_Bidi_Mode
+      debug_mode:
+        description: Enable/Disable debug mode
         type: boolean
-  set_Auth_Okay_PnC:
-    description: >-
-      PaymentDetails - With this message the SECC informs the EVCC whether the previously provided
-      payment details were accepted or not
+      physical_values:
+        description: Set up initial physical values for a AC or DC charging session
+        type: object
+        $ref: /iso15118_charger#/SetupPhysicalValues
+  session_setup:
+    description: At each session start this info should be sent to the module.
     arguments:
-      status:
+      payment_options:
+        description: Providing a list of payment options to the EVCC
+        type: array
+        items:
+          description: These are the payment options a SECC offers to the EVCC
+          type: string
+          $ref: /iso15118_charger#/PaymentOption
+        minItems: 1
+        maxItems: 2
+      supported_certificate_service:
+        description: >-
+          The charger supports the certificate installation/update service and has a
+          connection to an SA for this purpose
+        type: boolean
+# Response messages to vars:
+  certificate_response:
+    description: >-
+      This message is an async response to a previously published Certificate_Request.
+      The new/updated Contract Certificate (including the certificate chain) and the
+      corresponding encrypted private key are sent via the SECC to the EVCC.
+    arguments:
+      exi_stream_status:
+        description: The response raw EXI stream and the status from the CSMS
+        type: object
+        $ref: /iso15118_charger#/Response_Exi_Stream_Status
+  authorization_response:
+    description: >-
+      This message is an async response to a previously published Require_Auth_EIM
+      or Require_Auth_PnC. The SECC informs the EVCC whether the authorization
+      is accecpted or not.
+    arguments:
+      authorization_status:
         description: Authorization status of the ID Token
         type: string
         $ref: /authorization#/AuthorizationStatus
-      certificateStatus:
+      certificate_status:
         description: Certificate status information
         type: string
         $ref: /authorization#/CertificateStatus
-  set_FAILED_ContactorError:
+  ac_contactor_closed:
     description: >-
-      Any Time - Set this error when the contactor is opened or closed
-      at the wrong moment
-    arguments:
-      ContactorError:
-        description: "True: ContactError happend"
-        type: boolean
-  set_RCD_Error:
-    description: >-
-      Any Time - Indicates the current status of the Residual Current Device
-      (RCD)
-    arguments:
-      RCD:
-        description: >-
-          If RCD is equal to true, the RCD has detected an error. If RCD
-          is equal to false, the RCD has not detected an error
-        type: boolean
-  stop_charging:
-    description: During charging - Stops the charging process
-    arguments:
-      stop_charging:
-        description: "True: Stop, False: Continue"
-        type: boolean
-  set_DC_EVSEPresentVoltageCurrent:
-    description: >-
-      Starting from PowerDelivery to WeldingDetection - Set the present
-      voltage and current for the EVSE
-    arguments:
-      EVSEPresentVoltage_Current:
-        description: Present values (current and voltage) for the EVSE
-        type: object
-        $ref: /iso15118_charger#/DC_EVSEPresentVoltage_Current
-  set_AC_EVSEMaxCurrent:
-    description: >-
-      ChargeParameterDiscovery and during charging - Set the Maximum allowed
-      line current restriction per phase
-    arguments:
-      EVSEMaxCurrent:
-        description: "[A] Max current"
-        type: number
-        minimum: 0
-        maximum: 400
-  set_DC_EVSEMaximumLimits:
-    description: >-
-      ChargeParameterDiscovery and during charging - Set the maximum current,
-      power and voltage for the EVSE
-    arguments:
-      EVSEMaximumLimits:
-        description: Maximum Values (current, power and voltage) the EVSE can deliver
-        type: object
-        $ref: /iso15118_charger#/DC_EVSEMaximumLimits
-  set_DC_EVSEMinimumLimits:
-    description:
-      ChargeParameterDiscovery - Set the minimum current and voltage for
-      the EVSE
-    arguments:
-      EVSEMinimumLimits:
-        description: Minimum Values (current and voltage) the EVSE can deliver
-        type: object
-        $ref: /iso15118_charger#/DC_EVSEMinimumLimits
-  set_EVSEIsolationStatus:
-    description: >-
-      From ChargeParameterDiscovery to WeldingDetection (Optional) - Set
-      the isolation condition (result of the isolation monitoring)
-    arguments:
-      EVSEIsolationStatus:
-        description: Set the isolation status
-        type: string
-        $ref: /iso15118_charger#/IsolationStatus
-  set_EVSE_UtilityInterruptEvent:
-    description: >-
-      From ChargeParameterDiscovery to WeldingDetection - Utility Interrupt
-      Event, Utility or Equipment operator has requested a temporary reduction in
-      load
-    arguments:
-      EVSE_UtilityInterruptEvent:
-        description: "True: Interrupt Event happend"
-        type: boolean
-  set_EVSE_Malfunction:
-    description: >-
-      Any Time - A non-recoverable charger fault has occurred (Isolation
-      Failure, ...). It is permanently faulted
-    arguments:
-      EVSE_Malfunction:
-        description: "True: Malfunction fault"
-        type: boolean
-  set_EVSE_EmergencyShutdown:
-    description: >-
-      Any Time - Charging System Incompatibility, Emergency Shutdown or
-      'E-Stop' button pressed at charging station
-    arguments:
-      EVSE_EmergencyShutdown:
-        description: "True: Emergency Stop"
-        type: boolean
-  set_MeterInfo:
-    description: >-
-      During charging (Optional) - Includes the meterInfo record containing
-      the latest meter reading and other meter relevant data
-    arguments:
-      powermeter:
-        description: Measured dataset
-        type: object
-        $ref: /powermeter#/Powermeter
-  contactor_closed:
-    description: >-
-      Response on AC_Close_Contactor - Set this element if the contactor
-      is closed
+      This message is an async response to a previously published AC_Close_Contactor
+      or AC_Open_Contactor.
     arguments:
       status:
-        description: "True: Contactor is closed"
+        description: Set to true when contactor is closed, false when contactor is open
         type: boolean
-  contactor_open:
-    description: >-
-      Response on AC_Open_Contactor - Set this element if the contactor
-      is open
-    arguments:
-      status:
-        description: "True: Contactor is open"
-        type: boolean
-  cableCheck_Finished:
-    description: >-
-      Cable check is finished, voltage is under 20V and insulation resistor
-      on the cable is alright
-    arguments:
-      status:
-        description: "True: Cable check is okay"
-        type: boolean
-  set_Certificate_Service_Supported:
-    description: >-
-      ServiceDiscoveryRes - The charger supports the certificate installation/update
-      service and has a connection to an SA for this purpose
-    arguments:
-      status:
-        description: "True: The service is supported"
-        type: boolean
-  set_Get_Certificate_Response:
-    description: >-
-      CertificateInstallationRes/CertificateUpdateRes - The new/updated
-       Contract Certificate (including the certificate chain)
-      and the corresponding encrypted private key are sent via the SECC to the EVCC
-      This is an async response to a previously published Certificate_Request
-    arguments:
-      Existream_Status:
-        description: The response raw exi stream and the status from the CSMS system
-        type: object
-        $ref: /iso15118_charger#/Response_Exi_Stream_Status
+# Events 
   dlink_ready:
     description: >-
       Signals dlink_ready from SLAC layer according to ISO15118-3
     arguments:
       value:
-        description: Set to true when link becomes ready, false when the link is terminated
+        description: >-
+          Set to true when link becomes ready, false when the link is terminated
         type: boolean
-  supporting_sae_j2847_bidi:
+  cable_check_finished:
     description: >-
-      Charger is supporting SAE J2847 V2G/V2H version
+      Cable check is finished, voltage is under 20V and insulation resistor
+      on the cable is alright
     arguments:
-      mode:
-        description: Mode V2G or V2H
+      status:
+        description: Set to true when cable check is okay
+        type: boolean
+  receipt_is_required:
+    description: >-
+      This element is used by the SECC to indicate that the EVCC is required
+      to send a MeteringReceiptReq message for the purpose of signing the
+      meter info record.
+    arguments:
+      receipt_required:
+        description: >-
+          Set to true when receipt is required, set to false when not
+        type: boolean
+  stop_charging:
+    description: Stops the charging process
+    arguments:
+      stop:
+        description: Set to true when to stop, set to false when to continue
+        type: boolean
+# Update physical values
+  update_ac_max_current:
+    description: Update the maximum allowed line current restriction per phase
+    arguments:
+      max_current:
+        description: Max current in A
+        type: number
+        minimum: 0
+        maximum: 400
+  update_dc_maximum_limits:
+    description: Update the maximum limits
+    arguments:
+      maximum_limits:
+        description: Maximum values (current, power and voltage) the EVSE can deliver
+        type: object
+        $ref: /iso15118_charger#/DC_EVSEMaximumLimits
+  update_dc_minimum_limits:
+    description: Update the minimum limits
+    arguments:
+      minimum_limits:
+        description: Minimum values (current and voltage) the EVSE can deliver
+        type: object
+        $ref: /iso15118_charger#/DC_EVSEMinimumLimits
+  update_isolation_status:
+    description: Update the isolation condition 
+    arguments:
+      isolation_status:
+        description: Result of the isolation monitoring
         type: string
-        $ref: /iso15118_charger#/SAE_J2847_Bidi_Mode
+        $ref: /iso15118_charger#/IsolationStatus
+  update_dc_present_values:
+    description: Update the present values from the DC powersupply
+    arguments:
+      present_voltage_current:
+        description: Present voltage and current
+        type: object
+        $ref: /iso15118_charger#/DC_EVSEPresentVoltage_Current
+  update_meter_info:
+    description: Update meter info
+    arguments:
+      powermeter:
+        description: >-
+          Includes the meterInfo record containing the latest meter reading
+          and other meter relevant data
+        type: object
+        $ref: /powermeter#/Powermeter
+# Error handling
+  send_error:
+    description: An error has happend. Send this error to inform the EV.
+    arguments:
+      error:
+        description: The EVSE error enum
+        type: string
+        $ref: /iso15118_charger#/EvseError
+  reset_error:
+    description: Reset all errors
 vars:
   Require_Auth_EIM:
     description: An EIM authorization is requiered

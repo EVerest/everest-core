@@ -239,6 +239,9 @@ private:
 
     void fail_session();
 
+    // setup sae j2847/2 v2h mode
+    void setup_v2h_mode();
+
     static constexpr auto CABLECHECK_CONTACTORS_CLOSE_TIMEOUT{std::chrono::seconds(5)};
 
     std::atomic_bool current_demand_active{false};

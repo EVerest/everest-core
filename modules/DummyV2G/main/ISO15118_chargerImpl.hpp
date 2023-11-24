@@ -33,42 +33,32 @@ public:
 
 protected:
     // command handler functions (virtual)
-    virtual void handle_set_EVSEID(std::string& EVSEID, std::string& EVSEID_DIN) override;
-    virtual void handle_set_PaymentOptions(Array& PaymentOptions) override;
-    virtual void handle_set_SupportedEnergyTransferMode(Array& SupportedEnergyTransferMode) override;
-    virtual void handle_set_AC_EVSENominalVoltage(double& EVSENominalVoltage) override;
-    virtual void handle_set_DC_EVSECurrentRegulationTolerance(double& EVSECurrentRegulationTolerance) override;
-    virtual void handle_set_DC_EVSEPeakCurrentRipple(double& EVSEPeakCurrentRipple) override;
-    virtual void handle_set_ReceiptRequired(bool& ReceiptRequired) override;
-    virtual void handle_set_FreeService(bool& FreeService) override;
-    virtual void handle_set_EVSEEnergyToBeDelivered(double& EVSEEnergyToBeDelivered) override;
-    virtual void handle_enable_debug_mode(types::iso15118_charger::DebugMode& debug_mode) override;
-    virtual void handle_set_Auth_Okay_EIM(bool& auth_okay_eim) override;
-    virtual void handle_set_Auth_Okay_PnC(types::authorization::AuthorizationStatus& status,
-                                          types::authorization::CertificateStatus& certificateStatus) override;
-    virtual void handle_set_FAILED_ContactorError(bool& ContactorError) override;
-    virtual void handle_set_RCD_Error(bool& RCD) override;
-    virtual void handle_stop_charging(bool& stop_charging) override;
-    virtual void handle_set_DC_EVSEPresentVoltageCurrent(
-        types::iso15118_charger::DC_EVSEPresentVoltage_Current& EVSEPresentVoltage_Current) override;
-    virtual void handle_set_AC_EVSEMaxCurrent(double& EVSEMaxCurrent) override;
+    virtual void handle_setup(types::iso15118_charger::EVSEID& evse_id,
+                              std::vector<types::iso15118_charger::EnergyTransferMode>& supported_energy_transfer_modes,
+                              types::iso15118_charger::SAE_J2847_Bidi_Mode& sae_j2847_mode, bool& debug_mode,
+                              types::iso15118_charger::SetupPhysicalValues& physical_values) override;
+    virtual void handle_session_setup(std::vector<types::iso15118_charger::PaymentOption>& payment_options,
+                                      bool& supported_certificate_service) override;
     virtual void
-    handle_set_DC_EVSEMaximumLimits(types::iso15118_charger::DC_EVSEMaximumLimits& EVSEMaximumLimits) override;
-    virtual void
-    handle_set_DC_EVSEMinimumLimits(types::iso15118_charger::DC_EVSEMinimumLimits& EVSEMinimumLimits) override;
-    virtual void handle_set_EVSEIsolationStatus(types::iso15118_charger::IsolationStatus& EVSEIsolationStatus) override;
-    virtual void handle_set_EVSE_UtilityInterruptEvent(bool& EVSE_UtilityInterruptEvent) override;
-    virtual void handle_set_EVSE_Malfunction(bool& EVSE_Malfunction) override;
-    virtual void handle_set_EVSE_EmergencyShutdown(bool& EVSE_EmergencyShutdown) override;
-    virtual void handle_set_MeterInfo(types::powermeter::Powermeter& powermeter) override;
-    virtual void handle_contactor_closed(bool& status) override;
-    virtual void handle_contactor_open(bool& status) override;
-    virtual void handle_cableCheck_Finished(bool& status) override;
-    virtual void handle_set_Certificate_Service_Supported(bool& status) override;
-    virtual void
-    handle_set_Get_Certificate_Response(types::iso15118_charger::Response_Exi_Stream_Status& Existream_Status) override;
+    handle_certificate_response(types::iso15118_charger::Response_Exi_Stream_Status& exi_stream_status) override;
+    virtual void handle_authorization_response(types::authorization::AuthorizationStatus& authorization_status,
+                                               types::authorization::CertificateStatus& certificate_status) override;
+    virtual void handle_ac_contactor_closed(bool& status) override;
     virtual void handle_dlink_ready(bool& value) override;
-    virtual void handle_supporting_sae_j2847_bidi(types::iso15118_charger::SAE_J2847_Bidi_Mode& mode) override;
+    virtual void handle_cable_check_finished(bool& status) override;
+    virtual void handle_receipt_is_required(bool& receipt_required) override;
+    virtual void handle_stop_charging(bool& stop) override;
+    virtual void handle_update_ac_max_current(double& max_current) override;
+    virtual void
+    handle_update_dc_maximum_limits(types::iso15118_charger::DC_EVSEMaximumLimits& maximum_limits) override;
+    virtual void
+    handle_update_dc_minimum_limits(types::iso15118_charger::DC_EVSEMinimumLimits& minimum_limits) override;
+    virtual void handle_update_isolation_status(types::iso15118_charger::IsolationStatus& isolation_status) override;
+    virtual void handle_update_dc_present_values(
+        types::iso15118_charger::DC_EVSEPresentVoltage_Current& present_voltage_current) override;
+    virtual void handle_update_meter_info(types::powermeter::Powermeter& powermeter) override;
+    virtual void handle_send_error(types::iso15118_charger::EvseError& error) override;
+    virtual void handle_reset_error() override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
     // insert your protected definitions here
