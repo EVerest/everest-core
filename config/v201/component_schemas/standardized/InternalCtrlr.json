@@ -197,6 +197,7 @@
     "SupportedCiphers12": {
       "variable_name": "SupportedCiphers12",
       "characteristics": {
+        "valuesList": "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:AES128-GCM-SHA256:AES256-GCM-SHA384",
         "supportsMonitoring": true,
         "dataType": "MemberList"
       },
@@ -213,6 +214,7 @@
     "SupportedCiphers13": {
       "variable_name": "SupportedCiphers13",
       "characteristics": {
+        "valuesList": "TLS_AES_256_GCM_SHA384:TLS_AES_128_GCM_SHA256",
         "supportsMonitoring": true,
         "dataType": "MemberList"
       },
@@ -259,6 +261,7 @@
     "LogMessagesFormat": {
       "variable_name": "LogMessagesFormat",
       "characteristics": {
+        "valuesList": "log,html,console,console_detailed",
         "supportsMonitoring": true,
         "dataType": "MemberList"
       },
@@ -275,6 +278,7 @@
     "SupportedChargingProfilePurposeTypes": {
       "variable_name": "SupportedChargingProfilePurposeTypes",
       "characteristics": {
+        "valuesList": "ChargePointMaxProfile,TxDefaultProfile,TxProfile",
         "supportsMonitoring": true,
         "dataType": "MemberList"
       },
@@ -370,10 +374,25 @@
       "default": "hello there",
       "type": "string"
     },
+    "WebsocketPongTimeout": {
+      "variable_name": "WebsocketPongTimeout",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "default": "5",
+      "type": "integer"
+    },
     "MaxCustomerInformationDataLength": {
       "variable_name": "MaxCustomerInformationDataLength",
       "characteristics": {
-        "minLimit": 0,
+        "minLimit": 512,
         "supportsMonitoring": true,
         "dataType": "integer"
       },
@@ -389,7 +408,6 @@
       "type": "integer"
     },
     "V2GCertificateExpireCheckInitialDelaySeconds": {
-      "description": "Seconds to wait after boot notification to first check the V2G leaf certificate for expiration and potential renewal",
       "variable_name": "V2GCertificateExpireCheckInitialDelaySeconds",
       "characteristics": {
         "supportsMonitoring": true,
@@ -401,11 +419,11 @@
           "mutability": "ReadOnly"
         }
       ],
+      "description": "Seconds to wait after boot notification to first check the V2G leaf certificate for expiration and potential renewal",
       "default": "60",
       "type": "integer"
     },
     "V2GCertificateExpireCheckIntervalSeconds": {
-      "description": "Seconds between two checks for V2G leaf certificate expiration and potential renewal",
       "variable_name": "V2GCertificateExpireCheckIntervalSeconds",
       "characteristics": {
         "supportsMonitoring": true,
@@ -417,11 +435,11 @@
           "mutability": "ReadOnly"
         }
       ],
+      "description": "Seconds between two checks for V2G leaf certificate expiration and potential renewal",
       "default": "43200",
       "type": "integer"
     },
     "ClientCertificateExpireCheckInitialDelaySeconds": {
-      "description": "Seconds to wait after boot notification to first check the client certificate for expiration and potential renewal",
       "variable_name": "ClientCertificateExpireCheckInitialDelaySeconds",
       "characteristics": {
         "supportsMonitoring": true,
@@ -433,11 +451,11 @@
           "mutability": "ReadOnly"
         }
       ],
+      "description": "Seconds to wait after boot notification to first check the client certificate for expiration and potential renewal",
       "default": "60",
       "type": "integer"
     },
     "ClientCertificateExpireCheckIntervalSeconds": {
-      "description": "Seconds between two checks for client certificate expiration and potential renewal",
       "variable_name": "ClientCertificateExpireCheckIntervalSeconds",
       "characteristics": {
         "supportsMonitoring": true,
@@ -449,6 +467,7 @@
           "mutability": "ReadOnly"
         }
       ],
+      "description": "Seconds between two checks for client certificate expiration and potential renewal",
       "default": "43200",
       "type": "integer"
     }
@@ -459,6 +478,7 @@
     "ChargePointModel",
     "ChargePointVendor",
     "FirmwareVersion",
+    "LogMessagesFormat",
     "NetworkConnectionProfiles",
     "NumberOfConnectors",
     "SupportedCiphers12",

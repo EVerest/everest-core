@@ -71,6 +71,7 @@
     "SampledDataTxEndedMeasurands": {
       "variable_name": "TxEndedMeasurands",
       "characteristics": {
+        "valuesList": "Current.Export,Current.Import,Current.Offered,Energy.Active.Export.Register,Energy.Active.Import.Register,Energy.Reactive.Export.Register,Energy.Reactive.Import.Register,Energy.Active.Export.Interval,Energy.Active.Import.Interval,Energy.Reactive.Export.Interval,Energy.Reactive.Import.Interval,Frequency,Power.Active.Export,Power.Active.Import,Power.Factor,Power.Offered,Power.Reactive.Export,Power.Reactive.Import,Voltage",
         "supportsMonitoring": true,
         "dataType": "MemberList"
       },
@@ -87,6 +88,7 @@
     "SampledDataTxStartedMeasurands": {
       "variable_name": "TxStartedMeasurands",
       "characteristics": {
+        "valuesList": "Current.Export,Current.Import,Current.Offered,Energy.Active.Export.Register,Energy.Active.Import.Register,Energy.Reactive.Export.Register,Energy.Reactive.Import.Register,Energy.Active.Export.Interval,Energy.Active.Import.Interval,Energy.Reactive.Export.Interval,Energy.Reactive.Import.Interval,Frequency,Power.Active.Export,Power.Active.Import,Power.Factor,Power.Offered,Power.Reactive.Export,Power.Reactive.Import,Voltage",
         "supportsMonitoring": true,
         "dataType": "MemberList"
       },
@@ -120,6 +122,7 @@
     "SampledDataTxUpdatedMeasurands": {
       "variable_name": "TxUpdatedMeasurands",
       "characteristics": {
+        "valuesList": "Current.Export,Current.Import,Current.Offered,Energy.Active.Export.Register,Energy.Active.Import.Register,Energy.Reactive.Export.Register,Energy.Reactive.Import.Register,Energy.Active.Export.Interval,Energy.Active.Import.Interval,Energy.Reactive.Export.Interval,Energy.Reactive.Import.Interval,Frequency,Power.Active.Export,Power.Active.Import,Power.Factor,Power.Offered,Power.Reactive.Export,Power.Reactive.Import,Voltage",
         "supportsMonitoring": true,
         "dataType": "MemberList"
       },

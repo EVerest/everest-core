@@ -37,6 +37,7 @@
     "FileTransferProtocols": {
       "variable_name": "FileTransferProtocols",
       "characteristics": {
+        "valuesList": "FTP,FTPS,HTTP,HTTPS,SFTP",
         "supportsMonitoring": true,
         "dataType": "MemberList"
       },
@@ -121,6 +122,7 @@
     "NetworkConfigurationPriority": {
       "variable_name": "NetworkConfigurationPriority",
       "characteristics": {
+        "valuesList": "1,2",
         "supportsMonitoring": true,
         "dataType": "string"
       },
@@ -170,6 +172,7 @@
     "PublicKeyWithSignedMeterValue": {
       "variable_name": "PublicKeyWithSignedMeterValue",
       "characteristics": {
+        "valuesList": "Never,OncePerTransaction,EveryMeterValue",
         "supportsMonitoring": true,
         "dataType": "OptionList"
       },

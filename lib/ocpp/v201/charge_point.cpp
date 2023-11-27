@@ -1037,7 +1037,7 @@ void ChargePoint::message_callback(const std::string& message) {
 }
 
 MeterValue ChargePoint::get_latest_meter_value_filtered(const MeterValue& meter_value, ReadingContextEnum context,
-                                                        const ComponentVariable& component_variable) {
+                                                        const RequiredComponentVariable& component_variable) {
     auto filtered_meter_value = utils::get_meter_value_with_measurands_applied(
         meter_value, utils::get_measurands_vec(this->device_model->get_value<std::string>(component_variable)));
     for (auto& sampled_value : filtered_meter_value.sampledValue) {

@@ -39,28 +39,28 @@ const ComponentVariable& InternalCtrlrEnabled = {
         "Enabled",
     }),
 };
-const ComponentVariable& ChargePointId = {
+const RequiredComponentVariable& ChargePointId = {
     ControllerComponents::InternalCtrlr,
     std::nullopt,
     std::optional<Variable>({
         "ChargePointId",
     }),
 };
-const ComponentVariable& NetworkConnectionProfiles = {
+const RequiredComponentVariable& NetworkConnectionProfiles = {
     ControllerComponents::InternalCtrlr,
     std::nullopt,
     std::optional<Variable>({
         "NetworkConnectionProfiles",
     }),
 };
-const ComponentVariable& ChargeBoxSerialNumber = {
+const RequiredComponentVariable& ChargeBoxSerialNumber = {
     ControllerComponents::InternalCtrlr,
     std::nullopt,
     std::optional<Variable>({
         "ChargeBoxSerialNumber",
     }),
 };
-const ComponentVariable& ChargePointModel = {
+const RequiredComponentVariable& ChargePointModel = {
     ControllerComponents::InternalCtrlr,
     std::nullopt,
     std::optional<Variable>({
@@ -74,14 +74,14 @@ const ComponentVariable& ChargePointSerialNumber = {
         "ChargePointSerialNumber",
     }),
 };
-const ComponentVariable& ChargePointVendor = {
+const RequiredComponentVariable& ChargePointVendor = {
     ControllerComponents::InternalCtrlr,
     std::nullopt,
     std::optional<Variable>({
         "ChargePointVendor",
     }),
 };
-const ComponentVariable& FirmwareVersion = {
+const RequiredComponentVariable& FirmwareVersion = {
     ControllerComponents::InternalCtrlr,
     std::nullopt,
     std::optional<Variable>({
@@ -116,14 +116,14 @@ const ComponentVariable& MeterType = {
         "MeterType",
     }),
 };
-const ComponentVariable& SupportedCiphers12 = {
+const RequiredComponentVariable& SupportedCiphers12 = {
     ControllerComponents::InternalCtrlr,
     std::nullopt,
     std::optional<Variable>({
         "SupportedCiphers12",
     }),
 };
-const ComponentVariable& SupportedCiphers13 = {
+const RequiredComponentVariable& SupportedCiphers13 = {
     ControllerComponents::InternalCtrlr,
     std::nullopt,
     std::optional<Variable>({
@@ -144,7 +144,7 @@ const ComponentVariable& LogMessages = {
         "LogMessages",
     }),
 };
-const ComponentVariable& LogMessagesFormat = {
+const RequiredComponentVariable& LogMessagesFormat = {
     ControllerComponents::InternalCtrlr,
     std::nullopt,
     std::optional<Variable>({
@@ -165,7 +165,7 @@ const ComponentVariable& MaxCompositeScheduleDuration = {
         "MaxCompositeScheduleDuration",
     }),
 };
-const ComponentVariable& NumberOfConnectors = {
+const RequiredComponentVariable& NumberOfConnectors = {
     ControllerComponents::InternalCtrlr,
     std::nullopt,
     std::optional<Variable>({
@@ -249,14 +249,14 @@ const ComponentVariable& AlignedDataCtrlrAvailable = {
         "Available",
     }),
 };
-const ComponentVariable& AlignedDataInterval = {
+const RequiredComponentVariable& AlignedDataInterval = {
     ControllerComponents::AlignedDataCtrlr,
     std::nullopt,
     std::optional<Variable>({
         "Interval",
     }),
 };
-const ComponentVariable& AlignedDataMeasurands = {
+const RequiredComponentVariable& AlignedDataMeasurands = {
     ControllerComponents::AlignedDataCtrlr,
     std::nullopt,
     std::optional<Variable>({
@@ -277,14 +277,14 @@ const ComponentVariable& AlignedDataSignReadings = {
         "SignReadings",
     }),
 };
-const ComponentVariable& AlignedDataTxEndedInterval = {
+const RequiredComponentVariable& AlignedDataTxEndedInterval = {
     ControllerComponents::AlignedDataCtrlr,
     std::nullopt,
     std::optional<Variable>({
         "TxEndedInterval",
     }),
 };
-const ComponentVariable& AlignedDataTxEndedMeasurands = {
+const RequiredComponentVariable& AlignedDataTxEndedMeasurands = {
     ControllerComponents::AlignedDataCtrlr,
     std::nullopt,
     std::optional<Variable>({
@@ -340,21 +340,21 @@ const ComponentVariable& AdditionalInfoItemsPerMessage = {
         "AdditionalInfoItemsPerMessage",
     }),
 };
-const ComponentVariable& AuthorizeRemoteStart = {
+const RequiredComponentVariable& AuthorizeRemoteStart = {
     ControllerComponents::AuthCtrlr,
     std::nullopt,
     std::optional<Variable>({
         "AuthorizeRemoteStart",
     }),
 };
-const ComponentVariable& LocalAuthorizeOffline = {
+const RequiredComponentVariable& LocalAuthorizeOffline = {
     ControllerComponents::AuthCtrlr,
     std::nullopt,
     std::optional<Variable>({
         "LocalAuthorizeOffline",
     }),
 };
-const ComponentVariable& LocalPreAuthorize = {
+const RequiredComponentVariable& LocalPreAuthorize = {
     ControllerComponents::AuthCtrlr,
     std::nullopt,
     std::optional<Variable>({
@@ -380,36 +380,28 @@ const ComponentVariable& AllowNewSessionsPendingFirmwareUpdate = {
     std::nullopt,
     std::optional<Variable>({"AllowNewSessionsPendingFirmwareUpdate", std::nullopt, "BytesPerMessage"}),
 };
-const ComponentVariable& ChargingStationAvailabilityState = {
+const RequiredComponentVariable& ChargingStationAvailabilityState = {
     ControllerComponents::ChargingStation,
     std::nullopt,
     std::optional<Variable>({
         "AvailabilityState",
     }),
 };
-const ComponentVariable& ChargingStationPhaseRotation = {
-    ControllerComponents::ChargingStation,
-    std::nullopt,
-    std::optional<Variable>({
-        "PhaseRotation",
-    }),
-};
-
-const ComponentVariable& ChargingStationAvailable = {
+const RequiredComponentVariable& ChargingStationAvailable = {
     ControllerComponents::ChargingStation,
     std::nullopt,
     std::optional<Variable>({
         "Available",
     }),
 };
-const ComponentVariable& ChargingStationSupplyPhases = {
+const RequiredComponentVariable& ChargingStationSupplyPhases = {
     ControllerComponents::ChargingStation,
     std::nullopt,
     std::optional<Variable>({
         "SupplyPhases",
     }),
 };
-const ComponentVariable& ClockCtrlrDateTime = {
+const RequiredComponentVariable& ClockCtrlrDateTime = {
     ControllerComponents::ClockCtrlr,
     std::nullopt,
     std::optional<Variable>({
@@ -456,7 +448,7 @@ const ComponentVariable& TimeOffsetNextTransition = {
     std::nullopt,
     std::optional<Variable>({"TimeOffset", std::nullopt, "NextTransition"}),
 };
-const ComponentVariable& TimeSource = {
+const RequiredComponentVariable& TimeSource = {
     ControllerComponents::ClockCtrlr,
     std::nullopt,
     std::optional<Variable>({
@@ -470,21 +462,21 @@ const ComponentVariable& TimeZone = {
         "TimeZone",
     }),
 };
-const ComponentVariable& ConnectorAvailable = {
+const RequiredComponentVariable& ConnectorAvailable = {
     ControllerComponents::Connector,
     std::nullopt,
     std::optional<Variable>({
         "Available",
     }),
 };
-const ComponentVariable& ConnectorType = {
+const RequiredComponentVariable& ConnectorType = {
     ControllerComponents::Connector,
     std::nullopt,
     std::optional<Variable>({
         "ConnectorType",
     }),
 };
-const ComponentVariable& ConnectorSupplyPhases = {
+const RequiredComponentVariable& ConnectorSupplyPhases = {
     ControllerComponents::Connector,
     std::nullopt,
     std::optional<Variable>({
@@ -498,17 +490,17 @@ const ComponentVariable& CustomImplementationEnabled = {
         "CustomImplementationEnabled",
     }),
 };
-const ComponentVariable& BytesPerMessageGetReport = {
+const RequiredComponentVariable& BytesPerMessageGetReport = {
     ControllerComponents::DeviceDataCtrlr,
     std::nullopt,
     std::optional<Variable>({"BytesPerMessage", std::nullopt, "GetReport"}),
 };
-const ComponentVariable& BytesPerMessageGetVariables = {
+const RequiredComponentVariable& BytesPerMessageGetVariables = {
     ControllerComponents::DeviceDataCtrlr,
     std::nullopt,
     std::optional<Variable>({"BytesPerMessage", std::nullopt, "GetVariables"}),
 };
-const ComponentVariable& BytesPerMessageSetVariables = {
+const RequiredComponentVariable& BytesPerMessageSetVariables = {
     ControllerComponents::DeviceDataCtrlr,
     std::nullopt,
     std::optional<Variable>({"BytesPerMessage", std::nullopt, "SetVariables"}),
@@ -520,17 +512,17 @@ const ComponentVariable& ConfigurationValueSize = {
         "ConfigurationValueSize",
     }),
 };
-const ComponentVariable& ItemsPerMessageGetReport = {
+const RequiredComponentVariable& ItemsPerMessageGetReport = {
     ControllerComponents::DeviceDataCtrlr,
     std::nullopt,
     std::optional<Variable>({"ItemsPerMessage", std::nullopt, "GetReport"}),
 };
-const ComponentVariable& ItemsPerMessageGetVariables = {
+const RequiredComponentVariable& ItemsPerMessageGetVariables = {
     ControllerComponents::DeviceDataCtrlr,
     std::nullopt,
     std::optional<Variable>({"ItemsPerMessage", std::nullopt, "GetVariables"}),
 };
-const ComponentVariable& ItemsPerMessageSetVariables = {
+const RequiredComponentVariable& ItemsPerMessageSetVariables = {
     ControllerComponents::DeviceDataCtrlr,
     std::nullopt,
     std::optional<Variable>({"ItemsPerMessage", std::nullopt, "SetVariables"}),
@@ -549,21 +541,21 @@ const ComponentVariable& DisplayMessageCtrlrAvailable = {
         "Available",
     }),
 };
-const ComponentVariable& NumberOfDisplayMessages = {
+const RequiredComponentVariable& NumberOfDisplayMessages = {
     ControllerComponents::DisplayMessageCtrlr,
     std::nullopt,
     std::optional<Variable>({
         "NumberOfDisplayMessages",
     }),
 };
-const ComponentVariable& DisplayMessageSupportedFormats = {
+const RequiredComponentVariable& DisplayMessageSupportedFormats = {
     ControllerComponents::DisplayMessageCtrlr,
     std::nullopt,
     std::optional<Variable>({
         "SupportedFormats",
     }),
 };
-const ComponentVariable& DisplayMessageSupportedPriorities = {
+const RequiredComponentVariable& DisplayMessageSupportedPriorities = {
     ControllerComponents::DisplayMessageCtrlr,
     std::nullopt,
     std::optional<Variable>({
@@ -577,21 +569,21 @@ const ComponentVariable& EVSEAllowReset = {
         "AllowReset",
     }),
 };
-const ComponentVariable& EVSEAvailable = {
+const RequiredComponentVariable& EVSEAvailable = {
     ControllerComponents::EVSE,
     std::nullopt,
     std::optional<Variable>({
         "Available",
     }),
 };
-const ComponentVariable& EVSEPower = {
+const RequiredComponentVariable& EVSEPower = {
     ControllerComponents::EVSE,
     std::nullopt,
     std::optional<Variable>({
         "Power",
     }),
 };
-const ComponentVariable& EVSESupplyPhases = {
+const RequiredComponentVariable& EVSESupplyPhases = {
     ControllerComponents::EVSE,
     std::nullopt,
     std::optional<Variable>({
@@ -605,7 +597,7 @@ const ComponentVariable& CentralContractValidationAllowed = {
         "CentralContractValidationAllowed",
     }),
 };
-const ComponentVariable& ContractValidationOffline = {
+const RequiredComponentVariable& ContractValidationOffline = {
     ControllerComponents::ISO15118Ctrlr,
     std::nullopt,
     std::optional<Variable>({
@@ -661,7 +653,7 @@ const ComponentVariable& LocalAuthListCtrlrAvailable = {
         "Available",
     }),
 };
-const ComponentVariable& BytesPerMessageSendLocalList = {
+const RequiredComponentVariable& BytesPerMessageSendLocalList = {
     ControllerComponents::LocalAuthListCtrlr,
     std::nullopt,
     std::optional<Variable>({
@@ -675,14 +667,14 @@ const ComponentVariable& LocalAuthListCtrlrEnabled = {
         "Enabled",
     }),
 };
-const ComponentVariable& LocalAuthListCtrlrEntries = {
+const RequiredComponentVariable& LocalAuthListCtrlrEntries = {
     ControllerComponents::LocalAuthListCtrlr,
     std::nullopt,
     std::optional<Variable>({
         "Entries",
     }),
 };
-const ComponentVariable& ItemsPerMessageSendLocalList = {
+const RequiredComponentVariable& ItemsPerMessageSendLocalList = {
     ControllerComponents::LocalAuthListCtrlr,
     std::nullopt,
     std::optional<Variable>({
@@ -708,7 +700,7 @@ const ComponentVariable& BytesPerMessageClearVariableMonitoring = {
     std::nullopt,
     std::optional<Variable>({"BytesPerMessage", std::nullopt, "ClearVariableMonitoring"}),
 };
-const ComponentVariable& BytesPerMessageSetVariableMonitoring = {
+const RequiredComponentVariable& BytesPerMessageSetVariableMonitoring = {
     ControllerComponents::MonitoringCtrlr,
     std::nullopt,
     std::optional<Variable>({"BytesPerMessage", std::nullopt, "SetVariableMonitoring"}),
@@ -725,7 +717,7 @@ const ComponentVariable& ItemsPerMessageClearVariableMonitoring = {
     std::nullopt,
     std::optional<Variable>({"ItemsPerMessage", std::nullopt, "ClearVariableMonitoring"}),
 };
-const ComponentVariable& ItemsPerMessageSetVariableMonitoring = {
+const RequiredComponentVariable& ItemsPerMessageSetVariableMonitoring = {
     ControllerComponents::MonitoringCtrlr,
     std::nullopt,
     std::optional<Variable>({"ItemsPerMessage", std::nullopt, "SetVariableMonitoring"}),
@@ -744,7 +736,7 @@ const ComponentVariable& ActiveNetworkProfile = {
         "ActiveNetworkProfile",
     }),
 };
-const ComponentVariable& FileTransferProtocols = {
+const RequiredComponentVariable& FileTransferProtocols = {
     ControllerComponents::OCPPCommCtrlr,
     std::nullopt,
     std::optional<Variable>({
@@ -758,36 +750,36 @@ const ComponentVariable& HeartbeatInterval = {
         "HeartbeatInterval",
     }),
 };
-const ComponentVariable& MessageTimeout = {
+const RequiredComponentVariable& MessageTimeout = {
     ControllerComponents::OCPPCommCtrlr,
     std::nullopt,
     std::optional<Variable>({"MessageTimeout", std::nullopt, "Default"}),
 };
-const ComponentVariable& MessageAttemptInterval = {
+const RequiredComponentVariable& MessageAttemptInterval = {
     ControllerComponents::OCPPCommCtrlr,
     std::nullopt,
     std::optional<Variable>({"MessageAttemptInterval", std::nullopt, "TransactionEvent"}),
 };
-const ComponentVariable& MessageAttempts = {
+const RequiredComponentVariable& MessageAttempts = {
     ControllerComponents::OCPPCommCtrlr,
     std::nullopt,
     std::optional<Variable>({"MessageAttempts", std::nullopt, "TransactionEvent"}),
 };
-const ComponentVariable& NetworkConfigurationPriority = {
+const RequiredComponentVariable& NetworkConfigurationPriority = {
     ControllerComponents::OCPPCommCtrlr,
     std::nullopt,
     std::optional<Variable>({
         "NetworkConfigurationPriority",
     }),
 };
-const ComponentVariable& NetworkProfileConnectionAttempts = {
+const RequiredComponentVariable& NetworkProfileConnectionAttempts = {
     ControllerComponents::OCPPCommCtrlr,
     std::nullopt,
     std::optional<Variable>({
         "NetworkProfileConnectionAttempts",
     }),
 };
-const ComponentVariable& OfflineThreshold = {
+const RequiredComponentVariable& OfflineThreshold = {
     ControllerComponents::OCPPCommCtrlr,
     std::nullopt,
     std::optional<Variable>({
@@ -801,42 +793,42 @@ const ComponentVariable& QueueAllMessages = {
         "QueueAllMessages",
     }),
 };
-const ComponentVariable& ResetRetries = {
+const RequiredComponentVariable& ResetRetries = {
     ControllerComponents::OCPPCommCtrlr,
     std::nullopt,
     std::optional<Variable>({
         "ResetRetries",
     }),
 };
-const ComponentVariable& RetryBackOffRandomRange = {
+const RequiredComponentVariable& RetryBackOffRandomRange = {
     ControllerComponents::OCPPCommCtrlr,
     std::nullopt,
     std::optional<Variable>({
         "RetryBackOffRandomRange",
     }),
 };
-const ComponentVariable& RetryBackOffRepeatTimes = {
+const RequiredComponentVariable& RetryBackOffRepeatTimes = {
     ControllerComponents::OCPPCommCtrlr,
     std::nullopt,
     std::optional<Variable>({
         "RetryBackOffRepeatTimes",
     }),
 };
-const ComponentVariable& RetryBackOffWaitMinimum = {
+const RequiredComponentVariable& RetryBackOffWaitMinimum = {
     ControllerComponents::OCPPCommCtrlr,
     std::nullopt,
     std::optional<Variable>({
         "RetryBackOffWaitMinimum",
     }),
 };
-const ComponentVariable& UnlockOnEVSideDisconnect = {
+const RequiredComponentVariable& UnlockOnEVSideDisconnect = {
     ControllerComponents::OCPPCommCtrlr,
     std::nullopt,
     std::optional<Variable>({
         "UnlockOnEVSideDisconnect",
     }),
 };
-const ComponentVariable& WebSocketPingInterval = {
+const RequiredComponentVariable& WebSocketPingInterval = {
     ControllerComponents::OCPPCommCtrlr,
     std::nullopt,
     std::optional<Variable>({
@@ -885,35 +877,35 @@ const ComponentVariable& SampledDataSignReadings = {
         "SignReadings",
     }),
 };
-const ComponentVariable& SampledDataTxEndedInterval = {
+const RequiredComponentVariable& SampledDataTxEndedInterval = {
     ControllerComponents::SampledDataCtrlr,
     std::nullopt,
     std::optional<Variable>({
         "TxEndedInterval",
     }),
 };
-const ComponentVariable& SampledDataTxEndedMeasurands = {
+const RequiredComponentVariable& SampledDataTxEndedMeasurands = {
     ControllerComponents::SampledDataCtrlr,
     std::nullopt,
     std::optional<Variable>({
         "TxEndedMeasurands",
     }),
 };
-const ComponentVariable& SampledDataTxStartedMeasurands = {
+const RequiredComponentVariable& SampledDataTxStartedMeasurands = {
     ControllerComponents::SampledDataCtrlr,
     std::nullopt,
     std::optional<Variable>({
         "TxStartedMeasurands",
     }),
 };
-const ComponentVariable& SampledDataTxUpdatedInterval = {
+const RequiredComponentVariable& SampledDataTxUpdatedInterval = {
     ControllerComponents::SampledDataCtrlr,
     std::nullopt,
     std::optional<Variable>({
         "TxUpdatedInterval",
     }),
 };
-const ComponentVariable& SampledDataTxUpdatedMeasurands = {
+const RequiredComponentVariable& SampledDataTxUpdatedMeasurands = {
     ControllerComponents::SampledDataCtrlr,
     std::nullopt,
     std::optional<Variable>({
@@ -934,7 +926,7 @@ const ComponentVariable& BasicAuthPassword = {
         "BasicAuthPassword",
     }),
 };
-const ComponentVariable& CertificateEntries = {
+const RequiredComponentVariable& CertificateEntries = {
     ControllerComponents::SecurityCtrlr,
     std::nullopt,
     std::optional<Variable>({
@@ -955,7 +947,7 @@ const ComponentVariable& CertSigningWaitMinimum = {
         "CertSigningWaitMinimum",
     }),
 };
-const ComponentVariable& SecurityCtrlrIdentity = {
+const RequiredComponentVariable& SecurityCtrlrIdentity = {
     ControllerComponents::SecurityCtrlr,
     std::nullopt,
     std::optional<Variable>({
@@ -969,14 +961,14 @@ const ComponentVariable& MaxCertificateChainSize = {
         "MaxCertificateChainSize",
     }),
 };
-const ComponentVariable& OrganizationName = {
+const RequiredComponentVariable& OrganizationName = {
     ControllerComponents::SecurityCtrlr,
     std::nullopt,
     std::optional<Variable>({
         "OrganizationName",
     }),
 };
-const ComponentVariable& SecurityProfile = {
+const RequiredComponentVariable& SecurityProfile = {
     ControllerComponents::SecurityCtrlr,
     std::nullopt,
     std::optional<Variable>({
@@ -1004,7 +996,7 @@ const ComponentVariable& SmartChargingCtrlrAvailableEnabled = {
         "Enabled",
     }),
 };
-const ComponentVariable& EntriesChargingProfiles = {
+const RequiredComponentVariable& EntriesChargingProfiles = {
     ControllerComponents::SmartChargingCtrlr,
     std::nullopt,
     std::optional<Variable>({"Entries", std::nullopt, "ChargingProfiles"}),
@@ -1016,7 +1008,7 @@ const ComponentVariable& ExternalControlSignalsEnabled = {
         "ExternalControlSignalsEnabled",
     }),
 };
-const ComponentVariable& LimitChangeSignificance = {
+const RequiredComponentVariable& LimitChangeSignificance = {
     ControllerComponents::SmartChargingCtrlr,
     std::nullopt,
     std::optional<Variable>({
@@ -1030,7 +1022,7 @@ const ComponentVariable& NotifyChargingLimitWithSchedules = {
         "NotifyChargingLimitWithSchedules",
     }),
 };
-const ComponentVariable& PeriodsPerSchedule = {
+const RequiredComponentVariable& PeriodsPerSchedule = {
     ControllerComponents::SmartChargingCtrlr,
     std::nullopt,
     std::optional<Variable>({
@@ -1044,14 +1036,14 @@ const ComponentVariable& Phases3to1 = {
         "Phases3to1",
     }),
 };
-const ComponentVariable& ChargingProfileMaxStackLevel = {
+const RequiredComponentVariable& ChargingProfileMaxStackLevel = {
     ControllerComponents::SmartChargingCtrlr,
     std::nullopt,
     std::optional<Variable>({
         "ProfileStackLevel",
     }),
 };
-const ComponentVariable& ChargingScheduleChargingRateUnit = {
+const RequiredComponentVariable& ChargingScheduleChargingRateUnit = {
     ControllerComponents::SmartChargingCtrlr,
     std::nullopt,
     std::optional<Variable>({
@@ -1068,7 +1060,7 @@ const ComponentVariable& TariffCostCtrlrAvailableCost = {
     std::nullopt,
     std::optional<Variable>({"Available", std::nullopt, "Cost"}),
 };
-const ComponentVariable& TariffCostCtrlrCurrency = {
+const RequiredComponentVariable& TariffCostCtrlrCurrency = {
     ControllerComponents::TariffCostCtrlr,
     std::nullopt,
     std::optional<Variable>({
@@ -1085,21 +1077,21 @@ const ComponentVariable& TariffCostCtrlrEnabledCost = {
     std::nullopt,
     std::optional<Variable>({"Enabled", std::nullopt, "Cost"}),
 };
-const ComponentVariable& TariffFallbackMessage = {
+const RequiredComponentVariable& TariffFallbackMessage = {
     ControllerComponents::TariffCostCtrlr,
     std::nullopt,
     std::optional<Variable>({
         "TariffFallbackMessage",
     }),
 };
-const ComponentVariable& TotalCostFallbackMessage = {
+const RequiredComponentVariable& TotalCostFallbackMessage = {
     ControllerComponents::TariffCostCtrlr,
     std::nullopt,
     std::optional<Variable>({
         "TotalCostFallbackMessage",
     }),
 };
-const ComponentVariable& EVConnectionTimeOut = {
+const RequiredComponentVariable& EVConnectionTimeOut = {
     ControllerComponents::TxCtrlr,
     std::nullopt,
     std::optional<Variable>({
@@ -1113,14 +1105,14 @@ const ComponentVariable& MaxEnergyOnInvalidId = {
         "MaxEnergyOnInvalidId",
     }),
 };
-const ComponentVariable& StopTxOnEVSideDisconnect = {
+const RequiredComponentVariable& StopTxOnEVSideDisconnect = {
     ControllerComponents::TxCtrlr,
     std::nullopt,
     std::optional<Variable>({
         "StopTxOnEVSideDisconnect",
     }),
 };
-const ComponentVariable& StopTxOnInvalidId = {
+const RequiredComponentVariable& StopTxOnInvalidId = {
     ControllerComponents::TxCtrlr,
     std::nullopt,
     std::optional<Variable>({
@@ -1134,14 +1126,14 @@ const ComponentVariable& TxBeforeAcceptedEnabled = {
         "TxBeforeAcceptedEnabled",
     }),
 };
-const ComponentVariable& TxStartPoint = {
+const RequiredComponentVariable& TxStartPoint = {
     ControllerComponents::TxCtrlr,
     std::nullopt,
     std::optional<Variable>({
         "TxStartPoint",
     }),
 };
-const ComponentVariable& TxStopPoint = {
+const RequiredComponentVariable& TxStopPoint = {
     ControllerComponents::TxCtrlr,
     std::nullopt,
     std::optional<Variable>({

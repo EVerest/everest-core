@@ -13,16 +13,17 @@ namespace ControllerComponents {
 {% for component in components %}
 extern const Component& {{ component }};
 {% endfor %}
-} // ControllerComponents
+} // namespace ControllerComponents
 
 // Provides access to standardized variables of OCPP2.0.1 spec
 namespace ControllerComponentVariables {
 {% for variable in variables %}
-extern const ComponentVariable& {{ variable.unique_variable_name }};
+extern const {% if variable.required %}Required{% endif %}ComponentVariable& {{ variable.unique_variable_name }};
 {% endfor %}
 
 } // namespace ComponentVariables
-} // namespace ocpp
 } // namespace v201
+} // namespace ocpp
 
 #endif // OCPP_V201_CTRLR_COMPONENT_VARIABLES
+

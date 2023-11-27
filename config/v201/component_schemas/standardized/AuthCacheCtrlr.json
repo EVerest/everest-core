@@ -54,6 +54,7 @@
     "AuthCachePolicy": {
       "variable_name": "Policy",
       "characteristics": {
+        "valuesList": "LRU,LFU,FIFO,CUSTOM",
         "supportsMonitoring": true,
         "dataType": "OptionList"
       },

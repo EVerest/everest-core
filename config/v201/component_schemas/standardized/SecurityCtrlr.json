@@ -174,7 +174,7 @@
   "required": [
     "CertificateEntries",
     "OrganizationName",
-    "SecurityProfile",
-    "Identity"
+    "SecurityCtrlrIdentity",
+    "SecurityProfile"
   ]
 }

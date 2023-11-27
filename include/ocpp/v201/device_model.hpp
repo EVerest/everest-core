@@ -92,7 +92,7 @@ public:
     /// \param attribute_enum defaults to AttributeEnum::Actual
     /// \return the requested value from the device model storage
     template <typename T>
-    T get_value(const ComponentVariable& component_variable,
+    T get_value(const RequiredComponentVariable& component_variable,
                 const AttributeEnum& attribute_enum = AttributeEnum::Actual) {
         std::string value;
         auto response = GetVariableStatusEnum::UnknownVariable;

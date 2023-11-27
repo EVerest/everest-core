@@ -266,7 +266,7 @@ private:
     void handle_variable_changed(const SetVariableData& set_variable_data);
     bool validate_set_variable(const SetVariableData& set_variable_data);
     MeterValue get_latest_meter_value_filtered(const MeterValue& meter_value, ReadingContextEnum context,
-                                               const ComponentVariable& component_variable);
+                                               const RequiredComponentVariable& component_variable);
 
     /// \brief Changes all unoccupied connectors to unavailable. If a transaction is running schedule an availabilty
     /// change

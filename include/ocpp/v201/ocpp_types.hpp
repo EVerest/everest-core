@@ -345,6 +345,9 @@ struct ComponentVariable {
     std::optional<CustomData> customData;
     std::optional<Variable> variable;
 };
+
+struct RequiredComponentVariable : ComponentVariable {};
+
 /// \brief Conversion from a given ComponentVariable \p k to a given json object \p j
 void to_json(json& j, const ComponentVariable& k);
 

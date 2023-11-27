@@ -6,7 +6,7 @@
 """This script generates the ctrlr_component_variables cpp and hpp file of this lib for v201. 
 These files provide access to ComponentVariables with a role standardized in the OCPP2.0.1 specification.
 """
-
+import subprocess
 from pathlib import Path
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 import csv
@@ -57,7 +57,7 @@ def generate_ctrlr_component_vars(csv_path: Path, libocpp_dir: Path):
                     "variable_name": variable_entry["variable_name"],
                     "instance": variable_entry["instance"],
                     "description": f"Schema for {component}",
-                    "required": []
+                    "required": variable_entry["required"] == '1'
                 })
 
     with open(hpp_file, 'w') as f:
@@ -71,6 +71,16 @@ def generate_ctrlr_component_vars(csv_path: Path, libocpp_dir: Path):
             "components": components,
             "variables": variables
         }))
+
+    _clang_format_file(hpp_file, libocpp_dir)
+    _clang_format_file(cpp_file, libocpp_dir)
+
+
+def _clang_format_file(target: Path, ocpp_project_dir):
+    try:
+        subprocess.run(["clang-format", "-i", str(target)], cwd=str(ocpp_project_dir))
+    except Exception as e:
+        print(f"failed to run clang-format on {target}: {e}")
 
 
 if __name__ == "__main__":

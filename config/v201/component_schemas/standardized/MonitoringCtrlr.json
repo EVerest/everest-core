@@ -116,6 +116,7 @@
     "MonitoringBase": {
       "variable_name": "MonitoringBase",
       "characteristics": {
+        "valuesList": "All,FactoryDefault,HardwiredOnly",
         "supportsMonitoring": true,
         "dataType": "OptionList"
       },
@@ -146,6 +147,7 @@
     "ActiveMonitoringBase": {
       "variable_name": "ActiveMonitoringBase",
       "characteristics": {
+        "valuesList": "All,FactoryDefault,HardwiredOnly",
         "supportsMonitoring": true,
         "dataType": "OptionList"
       },

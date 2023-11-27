@@ -10,12 +10,12 @@ namespace ControllerComponents {
 {% for component in components %}
 const Component& {{ component }} = {"{{ component }}"};
 {% endfor %}
-} // ControllerComponents
+} // namespace ControllerComponents
 
 namespace ControllerComponentVariables {
 
 {% for variable in variables %}
-const ComponentVariable& {{ variable.unique_variable_name }} = {
+const {% if variable.required %}Required{% endif %}ComponentVariable& {{variable.unique_variable_name}} = {
     ControllerComponents::{{ variable.component_name }},
     std::nullopt,
     std::optional<Variable>({ "{{ variable.variable_name }}",{% if variable.instance != "" %} std::nullopt, "{{ variable.instance }}" {% endif %}}),

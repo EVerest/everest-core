@@ -80,6 +80,7 @@
     "RequestedEnergyTransferMode": {
       "variable_name": "RequestedEnergyTransferMode",
       "characteristics": {
+        "valuesList": "DC,AC_single_phase,AC_two_phase,AC_three_phase",
         "supportsMonitoring": true,
         "dataType": "OptionList"
       },

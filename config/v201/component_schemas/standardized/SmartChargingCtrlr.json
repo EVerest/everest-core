@@ -159,6 +159,7 @@
     "ChargingScheduleChargingRateUnit": {
       "variable_name": "RateUnit",
       "characteristics": {
+        "valuesList": "A,W",
         "supportsMonitoring": true,
         "dataType": "MemberList"
       },

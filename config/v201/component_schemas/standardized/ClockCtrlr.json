@@ -66,6 +66,7 @@
     "NtpSource": {
       "variable_name": "NtpSource",
       "characteristics": {
+        "valuesList": "DHCP,manual",
         "supportsMonitoring": true,
         "dataType": "OptionList"
       },
@@ -127,6 +128,7 @@
     "TimeSource": {
       "variable_name": "TimeSource",
       "characteristics": {
+        "valuesList": "Heartbeat,NTP,GPS,RealTimeClock,MobileNetwork,RadioTimeTransmitter",
         "supportsMonitoring": true,
         "dataType": "SequenceList"
       },

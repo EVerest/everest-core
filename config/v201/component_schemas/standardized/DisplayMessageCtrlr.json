@@ -66,6 +66,7 @@
     "DisplayMessageSupportedFormats": {
       "variable_name": "SupportedFormats",
       "characteristics": {
+        "valuesList": "ASCII,HTML,URI,UTF8",
         "supportsMonitoring": true,
         "dataType": "MemberList"
       },
@@ -81,6 +82,7 @@
     "DisplayMessageSupportedPriorities": {
       "variable_name": "SupportedPriorities",
       "characteristics": {
+        "valuesList": "AlwaysFront,InFront,NormalCycle",
         "supportsMonitoring": true,
         "dataType": "MemberList"
       },
