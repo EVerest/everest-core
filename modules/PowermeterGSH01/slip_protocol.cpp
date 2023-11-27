@@ -18,6 +18,7 @@
 #include <fmt/core.h>
 
 #include "crc16.hpp"
+//#include "diagnostics.hpp"
 
 namespace slip_protocol {
 
@@ -36,6 +37,7 @@ inline bool is_message_crc_correct(std::vector<uint8_t>& vec) {
     if (crc_check == crc_calc) {
         return true;
     }
+    //EVLOG_info << "CRC calc = " << crc_calc << " = 0x" << std::hex << crc_calc;
     return false;
 }
 
@@ -156,7 +158,7 @@ SlipReturnStatus SlipProtocol::unpack(std::vector<uint8_t>& message, uint8_t lis
 
         // from here on, we have all message parts as elements in sub_messages
         for (auto sub_message : sub_messages) {
-            remove_start_and_stop_frame(sub_message);
+            //remove_start_and_stop_frame(sub_message);
             restore_special_characters(sub_message);
             // check all sub-messages' CRC and only process on match
             if (is_message_crc_correct(sub_message)) {

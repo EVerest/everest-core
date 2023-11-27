@@ -30,6 +30,12 @@ provides:
         description: GPIO to use for direction switching. Set to -1 to disable.
         type: integer
         default: -1
+      num_of_retries:
+        description: Number of retries sent via serial interface. Set to 0 to disable retry.
+        type: integer
+        minimum: 0
+        maximum: 3
+        default: 0
       ignore_echo:
         description: On some hardware every message that is sent is read back, this setting filters the sent message in the reply.
         type: boolean

@@ -41,9 +41,10 @@ SerialDevice::~SerialDevice() {
     }
 }
 
-bool SerialDevice::open_device(const std::string& device, int _baud, bool _ignore_echo) {
+bool SerialDevice::open_device(const std::string& device, int _baud, bool _ignore_echo, uint8_t _num_of_retries) {
 
     this->ignore_echo = _ignore_echo;
+    this->retry_struct.num_of_retries = _num_of_retries;
 
     this->fd = open(device.c_str(), O_RDWR | O_NOCTTY | O_SYNC);
     if (this->fd < 0) {
@@ -173,13 +174,6 @@ void SerialDevice::tx(std::vector<uint8_t>& request) {
         // clear input and output buffer
         tcflush(this->fd, TCIOFLUSH);
 
-        // EVLOG_info << "TXD: " << hexdump(request) << " size: " << request.size();
-
-        if(SERIAL_MAX_RETRIES > 0 && this->retry_struct.num_of_retries_done == 0){
-            //save request for retries
-            this->retry_struct.tx_data = request;
-        }
-
         // write to serial port
         write(this->fd, request.data(), request.size());
         tcdrain(this->fd);
@@ -192,19 +186,24 @@ void SerialDevice::tx(std::vector<uint8_t>& request) {
     }
 }
 
-
-void SerialDevice::retry(std::vector<uint8_t>& rxbuf) {
+int SerialDevice::tx_rx_blocking(std::vector<uint8_t>& request,
+                                 std::vector<uint8_t>& rxbuf,
+                                 std::optional<int> initial_timeout_ms, 
+                                 std::optional<int> in_msg_timeout_ms) {
+    std::scoped_lock lock(this->txrx_mutex);
     int bytes_rx = 0;
-    while(bytes_rx == 0 && retry_struct.num_of_retries_done < SERIAL_MAX_RETRIES){
-        EVLOG_info << "retry no " << (int)retry_struct.num_of_retries_done << " started";
-        tx(retry_struct.tx_data);
-        bytes_rx = rx(rxbuf, SERIAL_RX_INITIAL_TIMEOUT_MS, SERIAL_RX_WITHIN_MESSAGE_TIMEOUT_MS);
-        EVLOG_info << "retry no " << (int)retry_struct.num_of_retries_done << " ended";
+
+    this->tx(request);
+    bytes_rx = this->rx(rxbuf,initial_timeout_ms,in_msg_timeout_ms);
+    
+    while(bytes_rx == 0 && retry_struct.num_of_retries_done < retry_struct.num_of_retries){
+        tx(request);
+        bytes_rx = rx(rxbuf, initial_timeout_ms,in_msg_timeout_ms);
         retry_struct.num_of_retries_done++;
     }
     retry_struct.num_of_retries_done = 0;
-    retry_struct.tx_data.clear();
-    EVLOG_info << "retries finished";
+
+    return bytes_rx;
 }
 
 

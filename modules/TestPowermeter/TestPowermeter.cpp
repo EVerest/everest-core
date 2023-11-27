@@ -42,11 +42,17 @@ void TestPowermeter::ready() {
     reqData.user_identification_type = user_id_type;
 
     std::thread([this, reqData]{
+        int i = 0;
+        while (true) {
             sleep(10);
-            r_powermeter->call_start_transaction(reqData);
+            types::powermeter::TransactionStartResponse ret = r_powermeter->call_start_transaction(reqData);
+            EVLOG_info << "START_TRANSACTION = " << transaction_request_status_to_string(ret.status);
+            sleep(30+i);
+            i+=5;
+            types::powermeter::TransactionStopResponse ret2 = r_powermeter->call_stop_transaction(reqData.transaction_id);
+            EVLOG_info << "STOP_TRANSACTOIN = " << transaction_request_status_to_string(ret2.status);
             sleep(60);
-            r_powermeter->call_stop_transaction(reqData.transaction_id);
-            sleep(120);
+        }
     }).detach();
 }
 

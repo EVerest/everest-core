@@ -12,8 +12,9 @@ active_modules:
         rs485_direction_gpio: -1
         ignore_echo: false
         max_clock_diff_s: 60
-#        publish_device_data: false
-#        publish_device_diagnostics: false
+        num_of_retries: 1
+#        publish_device_data: true
+#        publish_device_diagnostics: true
   Test:
     connections:
       powermeter:

@@ -29,6 +29,7 @@ struct Conf {
     int baudrate;
     int parity;
     int rs485_direction_gpio;
+    int num_of_retries;
     bool ignore_echo;
     int max_clock_diff_s;
     bool publish_device_data;
@@ -77,6 +78,9 @@ private:
     gsh01_app_layer::CommandResult stop_transact_result{};
     MessageStatus get_transaction_values_msg_status{MessageStatus::NONE};
 
+    bool charging_in_progress{false};
+    bool no_charging_done{true};
+
     serial_device::SerialDevice serial_device{};
     slip_protocol::SlipProtocol slip{};
     gsh01_app_layer::Gsh01AppLayer app_layer{};
@@ -116,7 +120,8 @@ private:
     void set_line_loss_impedance(uint16_t ll_impedance);
     void request_error_diagnostics(uint8_t addr);
     void error_diagnostics(uint8_t addr);
-    gsh01_app_layer::CommandResult receive_response();
+    void send_receive(std::vector<uint8_t>& request);
+    gsh01_app_layer::CommandResult handle_response(std::vector<uint8_t>& response);
     std::string get_meter_ocmf();
 
     static constexpr auto TIMEOUT_2s{std::chrono::seconds(2)};

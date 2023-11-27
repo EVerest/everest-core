@@ -18,9 +18,8 @@ namespace serial_device {
 constexpr int SERIAL_RX_INITIAL_TIMEOUT_MS = 500;
 constexpr int SERIAL_RX_WITHIN_MESSAGE_TIMEOUT_MS = 100;
 
-constexpr int SERIAL_MAX_RETRIES = 3;
 struct Retry{
-    std::vector<uint8_t> tx_data{};
+    uint8_t num_of_retries{0};
     uint8_t num_of_retries_done{0}; 
 };
 
@@ -30,19 +29,24 @@ public:
     SerialDevice() = default;
     ~SerialDevice();
 
-    bool open_device(const std::string& device, int baud, bool ignore_echo);
-    void tx(std::vector<uint8_t>& request);
-    int rx(std::vector<uint8_t>& rxbuf,
-           std::optional<int> initial_timeout_ms, 
-           std::optional<int> in_msg_timeout_ms);
-    void retry(std::vector<uint8_t>& rxbuf);
+    bool open_device(const std::string& device, int baud, bool ignore_echo, uint8_t _num_of_retries);
+    int tx_rx_blocking(std::vector<uint8_t>& request,
+                       std::vector<uint8_t>& rxbuf,
+                       std::optional<int> initial_timeout_ms, 
+                       std::optional<int> in_msg_timeout_ms);
 
 private:
     // Serial interface
     int fd{0};
     bool ignore_echo{false};
 
+    void tx(std::vector<uint8_t>& request);
+    int rx(std::vector<uint8_t>& rxbuf,
+           std::optional<int> initial_timeout_ms, 
+           std::optional<int> in_msg_timeout_ms);
+
     std::mutex serial_mutex;
+    std::mutex txrx_mutex;
     Retry retry_struct;
 };
 
