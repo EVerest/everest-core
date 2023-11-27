@@ -198,11 +198,11 @@ public:
     void set_hlc_charging_active();
     void set_hlc_allow_close_contactor(bool on);
 
-    std::optional<std::string> getOcmfData() {
-        std::optional<std::string> out;
-        std::swap(out, ocmfData);
-        return out;
-    }
+    /// @brief Returns the OCMF data.
+    ///
+    /// The data is generated when stopping the transaction. The call resets the
+    /// internal variable and is thus not idem potent.
+    std::optional<std::string> getOcmfData();
 
 private:
     void bcb_toggle_reset();

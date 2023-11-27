@@ -1064,8 +1064,10 @@ bool Charger::startTransaction() {
     const types::powermeter::TransactionReq req{evse_id, id_token.id_token, "", 0, 0, ""};
     for (const auto& meter : r_powermeter_billing) {
         const auto response = meter->call_start_transaction(req);
-        // If we want to start the session but fail, we stop the charging.
+        // If we want to start the session but fail, we stop the charging since
+        // we can't bill the customer.
         if (response.status == types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR) {
+            EVLOG_error << "Failed to start a transaction on the power meter " << response.error.value_or("");
             currentState = EvseState::Error;
             return false;
         } else if (response.status == types::powermeter::TransactionRequestStatus::OK) {
@@ -1088,7 +1090,10 @@ void Charger::stopTransaction() {
         const auto response = meter->call_stop_transaction(transaction_id);
         // If we fail to stop the transaction, we ignore since there is no
         // path to recovery. Its also not clear what to do
-        if (response.status == types::powermeter::TransactionRequestStatus::OK) {
+        if (response.status == types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR) {
+            EVLOG_error << "Failed to stop a transaction on the power meter " << response.error.value_or("");
+            break;
+        } else if (response.status == types::powermeter::TransactionRequestStatus::OK) {
             ocmfData = response.ocmf;
             break;
         }
@@ -1096,6 +1101,13 @@ void Charger::stopTransaction() {
 
     signalEvent(types::evse_manager::SessionEventEnum::ChargingFinished);
     signalEvent(types::evse_manager::SessionEventEnum::TransactionFinished);
+}
+
+std::optional<std::string> Charger::getOcmfData() {
+    std::lock_guard<std::recursive_mutex> lock(stateMutex);
+    std::optional<std::string> out;
+    std::swap(out, ocmfData);
+    return out;
 }
 
 std::string Charger::getStopTransactionIdTag() {
