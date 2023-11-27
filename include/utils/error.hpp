@@ -24,13 +24,14 @@ RequestClearErrorOption string_to_request_clear_error_option(const std::string& 
 
 class NotValidErrorType : public std::exception {
 public:
-    explicit NotValidErrorType(const std::string& error_type_) : error_type(error_type_){};
-    virtual const char* what() const throw() {
-        return fmt::format("Error type '{}' is not valid.", error_type).c_str();
+    explicit NotValidErrorType(const std::string& error_type) :
+        explanatory_string(fmt::format("Error type '{}' is not valid.", error_type)){};
+    const char* what() const noexcept override {
+        return explanatory_string.c_str();
     }
 
 private:
-    const std::string error_type;
+    const std::string explanatory_string;
 };
 
 enum class Severity {
