@@ -29,5 +29,4 @@ Full support for requiring and providing interfaces is implemented, missing
 currently is:
 
   - Support for EVerest logging
-  - Support for Configuration options of Modules
   - Support for implementations with `max_connections != 1` or `min_connections != 1`

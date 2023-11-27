@@ -62,7 +62,7 @@ set_property(
     TARGET
         everestrs_sys
     PROPERTY
-        EVERESTRS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/everestrs
+        EVERESTRS_BUILD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/everestrs-build
 )
 
 target_include_directories(everestrs_sys

@@ -1,4 +1,4 @@
-mod schema;
+use everestrs_build::schema;
 
 use argh::FromArgs;
 use serde::de::DeserializeOwned;

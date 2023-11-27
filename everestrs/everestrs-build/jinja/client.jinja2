@@ -1,0 +1,64 @@
+/// {{trait.description | replace("\n", " ")}}
+pub(crate) trait {{trait.name | title}}ClientSubscriber: Sync + Send {
+{% for var in trait.vars %}
+   fn on_{{ var.name | snake }}(&self, publishers: &ModulePublisher, value: {{ var.data_type.name }});
+{% endfor %}
+}
+
+fn dispatch_variable_to_{{ trait.name | snake }}(
+   publishers: &ModulePublisher,
+   client_subscriber: &dyn {{trait.name | title}}ClientSubscriber,
+   name: &str,
+   value: ::serde_json::Value,
+) -> ::everestrs::Result<()> {
+   match name {
+{%- for var in trait.vars %}
+   "{{ var.name }}" => {
+   let v: {{ var.data_type.name }} = ::serde_json::from_value(value)
+         .map_err(|_| ::everestrs::Error::InvalidArgument("{{ var.name }}"))?;
+         client_subscriber.on_{{ var.name }}(publishers, v);
+                Ok(())
+    },
+{%- endfor %}
+     _ => Err(::everestrs::Error::InvalidArgument("Unknown variable received.")),
+   }
+}
+
+#[derive(Clone)]
+pub(crate) struct {{trait.name | title }}ClientPublisher {
+    implementation_id: &'static str,
+    runtime: ::std::pin::Pin<::std::sync::Arc<::everestrs::Runtime>>,
+}
+
+impl {{trait.name | title }}ClientPublisher {
+{%- for cmd in trait.cmds %}
+   /// {{cmd.description | replace("\n", " ")}}
+   ///
+   {%- for arg in cmd.arguments %}
+   /// `{{arg.name}}`: {{arg.description | replace("\n", " ")}}
+   {%- endfor %}
+   {%- if cmd.result -%}
+   ///
+   /// Returns: {{cmd.result.description | replace("\n", " ")}}
+   {% endif %}
+   pub(crate) fn {{cmd.name | snake}}(&self,
+   {%- for arg in cmd.arguments %}
+      {{arg.name | snake }}: {{arg.data_type.name}},
+   {%- endfor %}
+   ) -> ::everestrs::Result<{%- if cmd.result -%}
+      {{cmd.result.data_type.name}}
+   {%- else -%}
+      ()
+   {%- endif -%}
+      > {
+        let args = serde_json::json!({
+{%- for arg in cmd.arguments %}
+            "{{arg.name}}": {{arg.name | snake}},
+{%- endfor %}
+        });
+        let blob = self.runtime.call_command(self.implementation_id, "{{ cmd.name }}", &args);
+        ::serde_json::from_value(blob).map_err(|_| ::everestrs::Error::InvalidArgument("return_value"))
+
+      }
+{% endfor %}
+}

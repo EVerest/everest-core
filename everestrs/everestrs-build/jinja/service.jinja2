@@ -1,0 +1,67 @@
+/// {{trait.description | replace("\n", " ")}}
+pub(crate) trait {{trait.name | title}}ServiceSubscriber: Sync + Send {
+{%- for cmd in trait.cmds %}
+   /// {{cmd.description | replace("\n", " ")}}
+   ///
+   {%- for arg in cmd.arguments %}
+   /// `{{arg.name}}`: {{arg.description | replace("\n", " ")}}
+   {%- endfor %}
+   {%- if cmd.result -%}
+   ///
+   /// Returns: {{cmd.result.description | replace("\n", " ")}}
+   {% endif %}
+   fn {{cmd.name}}(&self,
+      publishers: &ModulePublisher,
+   {%- for arg in cmd.arguments %}
+      {{arg.name | snake }}: {{arg.data_type.name}},
+   {%- endfor %}
+   ) -> ::everestrs::Result<{%- if cmd.result -%}
+      {{cmd.result.data_type.name}}
+   {%- else -%}
+      ()
+   {%- endif -%}>;
+{% endfor %}
+}
+
+fn dispatch_command_to_{{ trait.name | snake }}(
+   publishers: &ModulePublisher,
+   service: &dyn {{trait.name | title}}ServiceSubscriber,
+   name: &str,
+   mut parameters: ::std::collections::HashMap<String, ::serde_json::Value>,
+) -> ::everestrs::Result<::serde_json::Value> {
+   match name {
+{%- for cmd in trait.cmds %}
+   "{{ cmd.name }}" => {
+{%- for arg in cmd.arguments %}
+      let {{ arg.name | snake }}: {{ arg.data_type.name }} = ::serde_json::from_value(
+         parameters.remove("{{ arg.name }}")
+            .ok_or(::everestrs::Error::MissingArgument("{{ arg.name }}"))?,
+          )
+          .map_err(|_| ::everestrs::Error::InvalidArgument("{{ arg.name }}"))?;
+{%- endfor %}
+       let retval = service.{{ cmd.name }}(publishers, 
+{%- for arg in cmd.arguments %}
+            {{ arg.name | snake }},
+{%- endfor %}
+       )?;
+       serde_json::to_value(retval).map_err(|e| ::everestrs::Error::MismatchedType("Failed to dispacth".to_string()))
+    },
+{%- endfor %}
+      _ => Err(::everestrs::Error::InvalidArgument("Unknown command called.")),
+   }
+}
+
+#[derive(Clone)]
+pub(crate) struct {{trait.name | title }}ServicePublisher {
+    implementation_id: &'static str,
+    runtime: ::std::pin::Pin<::std::sync::Arc<::everestrs::Runtime>>,
+}
+
+impl {{trait.name | title }}ServicePublisher {
+{% for var in trait.vars %}
+   pub(crate) fn {{ var.name | snake }}(&self, value: {{ var.data_type.name }}) -> ::everestrs::Result<()> {
+      self.runtime.publish_variable(self.implementation_id, "{{ var.name }}", &value);
+      Ok(())
+   }
+{% endfor %}
+}

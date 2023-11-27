@@ -1,0 +1,49 @@
+{% for p_config in provided_config %}
+/// The configuration for the {{ p_config.name }}.
+#[derive(Debug)]
+pub(crate) struct {{ p_config.name | title }}Config {
+    {% for config in p_config.config %}
+    /// {{ config.description }}
+    pub(crate) {{ config.name }}: {{ config.data_type.name }},
+    {% endfor %}
+}
+{% endfor %}
+
+/// The configuration for the module. It also contains the config for all other
+/// interfaces.
+#[derive(Debug)]
+pub(crate) struct ModuleConfig {
+    {% for config in module_config %}
+    /// {{ config.description }}
+    pub(crate) {{ config.name }}: {{ config.data_type.name }},
+    {% endfor %}
+
+    {% for p_config in provided_config %}
+    /// The config for the `{{ p_config.name }}` interface.
+    pub(crate) {{ p_config.name }}_config: {{ p_config.name | title }}Config,
+    {% endfor %}
+}
+
+/// Returns the config for the whole module.
+///
+/// This function can be called before [Module] initialization.
+pub(crate) fn get_config() -> ModuleConfig {
+    let raw_config = everestrs::get_module_configs();
+
+    {% for p_config in provided_config %}
+    let {{ p_config.name }}_config = {{ p_config.name | title }}Config {
+        {% for config in p_config.config %}
+        {{ config.name }}: raw_config.get("{{ p_config.name }}").unwrap().get("{{ config.name }}").unwrap().try_into().unwrap(),
+        {% endfor %} 
+    };
+    {% endfor %}
+    ModuleConfig {
+    {% for config in module_config %}
+    {{ config.name }}: raw_config.get("!module").unwrap().get("{{ config.name }}").unwrap().try_into().unwrap(),
+    {% endfor %}
+
+    {% for p_config in provided_config %}
+    {{ p_config.name }}_config,
+    {% endfor %}
+    }
+}
