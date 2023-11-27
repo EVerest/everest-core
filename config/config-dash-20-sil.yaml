@@ -103,4 +103,27 @@ active_modules:
         validation_result: Accepted
         validation_reason: Token seems valid
         sleep: 0.25
+  energy_manager:
+    module: EnergyManager
+    config_module:
+      schedule_total_duration: 1
+      schedule_interval_duration: 60
+      debug: false
+    connections:
+      energy_trunk:
+        - module_id: grid_connection_point
+          implementation_id: energy_grid
+  grid_connection_point:
+    module: EnergyNode
+    config_module:
+      fuse_limit_A: 40.0
+      phase_count: 3
+    connections:
+      price_information: []
+      energy_consumer:
+        - module_id: evse_manager
+          implementation_id: energy_grid
+      powermeter:
+        - module_id: yeti_driver
+          implementation_id: powermeter
 x-module-layout: {}

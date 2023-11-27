@@ -81,7 +81,7 @@ void evse_managerImpl::init() {
     mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/evse_malfunction", mod->config.connector_id),
                         [this](const std::string& data) {
                             if (mod->get_hlc_enabled()) {
-                                mod->r_hlc[0]->call_set_EVSE_Malfunction(true);
+                                mod->r_hlc[0]->call_send_error(types::iso15118_charger::EvseError::Error_Malfunction);
                             }
                             types::evse_manager::StopTransactionRequest request;
                             request.reason = types::evse_manager::StopTransactionReason::Other;
@@ -91,7 +91,8 @@ void evse_managerImpl::init() {
     mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/evse_utility_int", mod->config.connector_id),
                         [this](const std::string& data) {
                             if (mod->get_hlc_enabled()) {
-                                mod->r_hlc[0]->call_set_EVSE_UtilityInterruptEvent(true);
+                                mod->r_hlc[0]->call_send_error(
+                                    types::iso15118_charger::EvseError::Error_UtilityInterruptEvent);
                             }
                             types::evse_manager::StopTransactionRequest request;
                             request.reason = types::evse_manager::StopTransactionReason::Other;

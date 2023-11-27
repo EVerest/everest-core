@@ -121,140 +121,89 @@ void ISO15118_chargerImpl::ready() {
     }
 }
 
-void ISO15118_chargerImpl::handle_set_EVSEID(std::string& EVSEID, std::string& EVSEID_DIN) {
-    // your code for cmd set_EVSEID goes here
+void ISO15118_chargerImpl::handle_setup(
+    types::iso15118_charger::EVSEID& evse_id,
+    std::vector<types::iso15118_charger::EnergyTransferMode>& supported_energy_transfer_modes,
+    types::iso15118_charger::SAE_J2847_Bidi_Mode& sae_j2847_mode, bool& debug_mode,
+    types::iso15118_charger::SetupPhysicalValues& physical_values) {
+    // your code for cmd setup goes here
 }
 
-void ISO15118_chargerImpl::handle_set_PaymentOptions(Array& PaymentOptions) {
-    // your code for cmd set_PaymentOptions goes here
+void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118_charger::PaymentOption>& payment_options,
+                                                bool& supported_certificate_service) {
+    // your code for cmd session_setup goes here
 }
 
-void ISO15118_chargerImpl::handle_set_SupportedEnergyTransferMode(Array& SupportedEnergyTransferMode) {
-    // your code for cmd set_SupportedEnergyTransferMode goes here
+void ISO15118_chargerImpl::handle_certificate_response(
+    types::iso15118_charger::Response_Exi_Stream_Status& exi_stream_status) {
+    // your code for cmd certificate_response goes here
 }
 
-void ISO15118_chargerImpl::handle_set_AC_EVSENominalVoltage(double& EVSENominalVoltage) {
-    // your code for cmd set_AC_EVSENominalVoltage goes here
+void ISO15118_chargerImpl::handle_authorization_response(
+    types::authorization::AuthorizationStatus& authorization_status,
+    types::authorization::CertificateStatus& certificate_status) {
+    // your code for cmd authorization_response goes here
 }
 
-void ISO15118_chargerImpl::handle_set_DC_EVSECurrentRegulationTolerance(double& EVSECurrentRegulationTolerance) {
-    // your code for cmd set_DC_EVSECurrentRegulationTolerance goes here
-}
-
-void ISO15118_chargerImpl::handle_set_DC_EVSEPeakCurrentRipple(double& EVSEPeakCurrentRipple) {
-    // your code for cmd set_DC_EVSEPeakCurrentRipple goes here
-}
-
-void ISO15118_chargerImpl::handle_set_ReceiptRequired(bool& ReceiptRequired) {
-    // your code for cmd set_ReceiptRequired goes here
-}
-
-void ISO15118_chargerImpl::handle_set_FreeService(bool& FreeService) {
-    // your code for cmd set_FreeService goes here
-}
-
-void ISO15118_chargerImpl::handle_set_EVSEEnergyToBeDelivered(double& EVSEEnergyToBeDelivered) {
-    // your code for cmd set_EVSEEnergyToBeDelivered goes here
-}
-
-void ISO15118_chargerImpl::handle_enable_debug_mode(types::iso15118_charger::DebugMode& debug_mode) {
-    // your code for cmd enable_debug_mode goes here
-}
-
-void ISO15118_chargerImpl::handle_set_Auth_Okay_EIM(bool& auth_okay_eim) {
-    // your code for cmd set_Auth_Okay_EIM goes here
-}
-
-void ISO15118_chargerImpl::handle_set_Auth_Okay_PnC(types::authorization::AuthorizationStatus& status,
-                                                    types::authorization::CertificateStatus& certificateStatus) {
-    // your code for cmd set_Auth_Okay_PnC goes here
-}
-
-void ISO15118_chargerImpl::handle_set_FAILED_ContactorError(bool& ContactorError) {
-    // your code for cmd set_FAILED_ContactorError goes here
-}
-
-void ISO15118_chargerImpl::handle_set_RCD_Error(bool& RCD) {
-    // your code for cmd set_RCD_Error goes here
-}
-
-void ISO15118_chargerImpl::handle_stop_charging(bool& stop_charging) {
-    // your code for cmd stop_charging goes here
-}
-
-void ISO15118_chargerImpl::handle_set_DC_EVSEPresentVoltageCurrent(
-    types::iso15118_charger::DC_EVSEPresentVoltage_Current& EVSEPresentVoltage_Current) {
-
-    float voltage = EVSEPresentVoltage_Current.EVSEPresentVoltage;
-    float current = 0;
-    if (EVSEPresentVoltage_Current.EVSEPresentCurrent.has_value()) {
-        current = EVSEPresentVoltage_Current.EVSEPresentCurrent.value();
-    }
-    controller->send_control_event(iso15118::d20::PresentVoltageCurrent{voltage, current});
-}
-
-void ISO15118_chargerImpl::handle_set_AC_EVSEMaxCurrent(double& EVSEMaxCurrent) {
-    // your code for cmd set_AC_EVSEMaxCurrent goes here
-}
-
-void ISO15118_chargerImpl::handle_set_DC_EVSEMaximumLimits(
-    types::iso15118_charger::DC_EVSEMaximumLimits& EVSEMaximumLimits) {
-    // your code for cmd set_DC_EVSEMaximumLimits goes here
-}
-
-void ISO15118_chargerImpl::handle_set_DC_EVSEMinimumLimits(
-    types::iso15118_charger::DC_EVSEMinimumLimits& EVSEMinimumLimits) {
-    // your code for cmd set_DC_EVSEMinimumLimits goes here
-}
-
-void ISO15118_chargerImpl::handle_set_EVSEIsolationStatus(
-    types::iso15118_charger::IsolationStatus& EVSEIsolationStatus) {
-    // your code for cmd set_EVSEIsolationStatus goes here
-}
-
-void ISO15118_chargerImpl::handle_set_EVSE_UtilityInterruptEvent(bool& EVSE_UtilityInterruptEvent) {
-    // your code for cmd set_EVSE_UtilityInterruptEvent goes here
-}
-
-void ISO15118_chargerImpl::handle_set_EVSE_Malfunction(bool& EVSE_Malfunction) {
-    // your code for cmd set_EVSE_Malfunction goes here
-}
-
-void ISO15118_chargerImpl::handle_set_EVSE_EmergencyShutdown(bool& EVSE_EmergencyShutdown) {
-    // your code for cmd set_EVSE_EmergencyShutdown goes here
-}
-
-void ISO15118_chargerImpl::handle_set_MeterInfo(types::powermeter::Powermeter& powermeter) {
-    // your code for cmd set_MeterInfo goes here
-}
-
-void ISO15118_chargerImpl::handle_contactor_closed(bool& status) {
-    // your code for cmd contactor_closed goes here
-}
-
-void ISO15118_chargerImpl::handle_contactor_open(bool& status) {
-    // your code for cmd contactor_open goes here
-}
-
-void ISO15118_chargerImpl::handle_cableCheck_Finished(bool& status) {
-    controller->send_control_event(iso15118::d20::CableCheckFinished{status});
-}
-
-void ISO15118_chargerImpl::handle_set_Certificate_Service_Supported(bool& status) {
-    // your code for cmd set_Certificate_Service_Supported goes here
-}
-
-void ISO15118_chargerImpl::handle_set_Get_Certificate_Response(
-    types::iso15118_charger::Response_Exi_Stream_Status& Existream_Status) {
-    // your code for cmd set_Get_Certificate_Response goes here
+void ISO15118_chargerImpl::handle_ac_contactor_closed(bool& status) {
+    // your code for cmd ac_contactor_closed goes here
 }
 
 void ISO15118_chargerImpl::handle_dlink_ready(bool& value) {
     // your code for cmd dlink_ready goes here
 }
 
-void ISO15118_chargerImpl::handle_supporting_sae_j2847_bidi(types::iso15118_charger::SAE_J2847_Bidi_Mode& mode) {
-    // your code for cmd dlink_ready goes here
+void ISO15118_chargerImpl::handle_cable_check_finished(bool& status) {
+    controller->send_control_event(iso15118::d20::CableCheckFinished{status});
+}
+
+void ISO15118_chargerImpl::handle_receipt_is_required(bool& receipt_required) {
+    // your code for cmd receipt_is_required goes here
+}
+
+void ISO15118_chargerImpl::handle_stop_charging(bool& stop) {
+    // your code for cmd stop_charging goes here
+}
+
+void ISO15118_chargerImpl::handle_update_ac_max_current(double& max_current) {
+    // your code for cmd update_ac_max_current goes here
+}
+
+void ISO15118_chargerImpl::handle_update_dc_maximum_limits(
+    types::iso15118_charger::DC_EVSEMaximumLimits& maximum_limits) {
+    // your code for cmd update_dc_maximum_limits goes here
+}
+
+void ISO15118_chargerImpl::handle_update_dc_minimum_limits(
+    types::iso15118_charger::DC_EVSEMinimumLimits& minimum_limits) {
+    // your code for cmd update_dc_minimum_limits goes here
+}
+
+void ISO15118_chargerImpl::handle_update_isolation_status(types::iso15118_charger::IsolationStatus& isolation_status) {
+    // your code for cmd update_isolation_status goes here
+}
+
+void ISO15118_chargerImpl::handle_update_dc_present_values(
+    types::iso15118_charger::DC_EVSEPresentVoltage_Current& present_voltage_current) {
+
+    float voltage = present_voltage_current.EVSEPresentVoltage;
+    float current = 0;
+    if (present_voltage_current.EVSEPresentCurrent.has_value()) {
+        current = present_voltage_current.EVSEPresentCurrent.value();
+    }
+    controller->send_control_event(iso15118::d20::PresentVoltageCurrent{voltage, current});
+}
+
+void ISO15118_chargerImpl::handle_update_meter_info(types::powermeter::Powermeter& powermeter) {
+    // your code for cmd update_meter_info goes here
+}
+
+void ISO15118_chargerImpl::handle_send_error(types::iso15118_charger::EvseError& error) {
+    // your code for cmd send_error goes here
+}
+
+void ISO15118_chargerImpl::handle_reset_error() {
+    // your code for cmd reset_error goes here
 }
 
 } // namespace charger
