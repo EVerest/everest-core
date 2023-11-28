@@ -51,7 +51,7 @@ types::powermeter::TransactionStopResponse powermeterImpl::handle_stop_transacti
     if (mod->r_specific_power_meter.empty())
         return {types::powermeter::TransactionRequestStatus::NOT_SUPPORTED,
                 {},
-                "Generic powermeter does not support the stop_transaction command"};
+                "No specific powermeter configured to start a transaction"};
     return mod->r_specific_power_meter.front()->call_stop_transaction(transaction_id);
 };
 
@@ -59,7 +59,7 @@ types::powermeter::TransactionStartResponse
 powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& value) {
     if (mod->r_specific_power_meter.empty())
         return {types::powermeter::TransactionRequestStatus::NOT_SUPPORTED,
-                "Generic powermeter does not support the start_transaction command"};
+                "No specific powermeter configured to stop a transaction"};
     return mod->r_specific_power_meter.front()->call_start_transaction(value);
 }
 
