@@ -47,6 +47,7 @@ types:
       status:
         description: Response status that indicates whether the transaction start request could successfully be performed.
         $ref: /powermeter#/TransactionRequestStatus
+        type: object
       error:
         description: If status is not OK, a verbose error message.
         type: string
@@ -68,6 +69,7 @@ types:
       status:
         description: Response status that indicates whether the transaction stop request could successfully be performed.
         $ref: /powermeter#/TransactionRequestStatus
+        type: object
       ocmf:
         description: The signed OCMF report of the stopped transaction. Must be provided if status is OK.
         type: string
