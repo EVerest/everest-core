@@ -42,6 +42,14 @@ provides:
         minimum: 0
         maximum: 65536
         default: 256
+      initial_timeout_ms:
+        description: Timeout in ms for the first packet.
+        type: integer
+        default: 500
+      within_message_timeout_ms:
+        description: Timeout in ms for subsequent packets.
+        type: integer
+        default: 100
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
   authors:

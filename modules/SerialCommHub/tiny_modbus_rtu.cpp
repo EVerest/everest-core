@@ -177,9 +177,8 @@ static std::vector<uint16_t> decode_reply(const uint8_t* buf, int len, uint8_t e
         case 0x0B:
             EVLOG_error << "Modbus exception: Gateway target device failed to respond";
             break;
-        default: {
+        default:
             EVLOG_error << "Modbus exception: Unknown";
-        }
         }
         return result;
     }
@@ -191,8 +190,12 @@ TinyModbusRTU::~TinyModbusRTU() {
 }
 
 bool TinyModbusRTU::open_device(const std::string& device, int _baud, bool _ignore_echo,
-                                const Everest::GpioSettings& rxtx_gpio_settings, const Parity parity) {
+                                const Everest::GpioSettings& rxtx_gpio_settings, const Parity parity,
+                                std::chrono::milliseconds _initial_timeout,
+                                std::chrono::milliseconds _within_message_timeout) {
 
+    initial_timeout = _initial_timeout;
+    within_message_timeout = _within_message_timeout;
     ignore_echo = _ignore_echo;
 
     rxtx_gpio.open(rxtx_gpio_settings);
@@ -268,9 +271,19 @@ bool TinyModbusRTU::open_device(const std::string& device, int _baud, bool _igno
 }
 
 int TinyModbusRTU::read_reply(uint8_t* rxbuf, int rxbuf_len) {
-    struct timeval timeout;
-    timeout.tv_sec = 6;
-    timeout.tv_usec = MODBUS_RX_INITIAL_TIMEOUT_MS * 1000; // 500msec initial timeout until device responds
+    // Lambda to convert std::chrono to timeval.
+    auto to_timeval = [](const auto& time) {
+        using namespace std::chrono;
+        struct timeval timeout;
+        auto sec = duration_cast<seconds>(time);
+        timeout.tv_sec = sec.count();
+        timeout.tv_usec = duration_cast<microseconds>(time - sec).count();
+        return timeout;
+    };
+
+    auto timeout = to_timeval(initial_timeout);
+    const auto within_message_timeval = to_timeval(within_message_timeout);
+
     fd_set set;
     FD_ZERO(&set);
     FD_SET(fd, &set);
@@ -278,9 +291,7 @@ int TinyModbusRTU::read_reply(uint8_t* rxbuf, int rxbuf_len) {
     int bytes_read_total = 0;
     while (true) {
         int rv = select(fd + 1, &set, NULL, NULL, &timeout);
-        // reduce timeout after first chunk, no unnecessary waiting at the end of the message
-        timeout.tv_sec = 0;
-        timeout.tv_usec = MODBUS_RX_WITHIN_MESSAGE_TIMEOUT_MS * 1000;
+        timeout = within_message_timeval;
         if (rv == -1) { // error in select function call
             perror("txrx: select:");
             break;
@@ -313,7 +324,6 @@ std::vector<uint16_t> TinyModbusRTU::txrx(uint8_t device_address, FunctionCode f
     const uint16_t register_chunk = (max_packet_size - MODBUS_MIN_REPLY_SIZE) / 2;
     size_t written_elements = 0;
     while (register_quantity) {
-
         const auto current_register_quantity = std::min(register_quantity, register_chunk);
         std::vector<uint16_t> current_request;
         if (request.size() > written_elements + current_register_quantity) {

@@ -34,6 +34,8 @@ struct Conf {
     int rxtx_gpio_line;
     bool rxtx_gpio_tx_high;
     int max_packet_size;
+    int initial_timeout_ms;
+    int within_message_timeout_ms;
 };
 
 class serial_communication_hubImpl : public serial_communication_hubImplBase {
