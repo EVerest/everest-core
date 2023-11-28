@@ -23,7 +23,7 @@ int main(int argc, char* argv[]) {
     printf("Use the following keys to send packets:\n");
     printf("A or a: allow_power_on true or false\n");
     printf("L or l: motorlock lock or unlock\n");
-    printf("r: soft reset\n");
+    printf("R or r: hard or soft reset\n");
     printf("1: use connector 1\n");
     printf("2: use connector 2\n\n");
 
@@ -149,7 +149,8 @@ int main(int argc, char* argv[]) {
                 p.lock(selected_connector, false);
                 break;
             case 'r':
-                // p.reset();
+                printf("Soft reset\n");
+                p.reset(-1);
                 break;
             case '1':
                 printf("Connector 1 selected.\n");
