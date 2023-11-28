@@ -158,7 +158,6 @@ SlipReturnStatus SlipProtocol::unpack(std::vector<uint8_t>& message, uint8_t lis
 
         // from here on, we have all message parts as elements in sub_messages
         for (auto sub_message : sub_messages) {
-            //remove_start_and_stop_frame(sub_message);
             restore_special_characters(sub_message);
             // check all sub-messages' CRC and only process on match
             if (is_message_crc_correct(sub_message)) {
