@@ -1,0 +1,14 @@
+[
+    alias(
+        name = "boost_{}".format(name),
+        actual = "@boost//:{}".format(name),
+        visibility = ["//visibility:public"],
+    )
+    for name in [
+        "program_options",
+        "log",
+        "current_function",
+        "uuid",
+        "exception",
+    ]
+]

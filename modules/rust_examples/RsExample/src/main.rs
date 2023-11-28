@@ -1,9 +1,9 @@
 // EVerest expects binaries to be CamelCased, and Rust wants them to be snake_case. We yield to
 // EVerest and shut up the compiler warning.
 #![allow(non_snake_case)]
+include!(concat!(env!("OUT_DIR"), "/generated.rs"));
 
-mod eventually_generated;
-use eventually_generated::{
+use generated::{
     get_config, ExampleServiceSubscriber, KvsClientSubscriber, KvsServiceSubscriber, Module,
     ModulePublisher, OnReadySubscriber,
 };

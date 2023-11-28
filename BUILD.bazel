@@ -1,0 +1,16 @@
+package(default_visibility = ["//visibility:public"])
+
+filegroup(
+    name = "types",
+    srcs = glob(["types/**/*.yaml"]),
+)
+
+filegroup(
+    name = "interfaces",
+    srcs = glob(["interfaces/**/*.yaml"]),
+)
+
+filegroup(
+    name = "errors",
+    srcs = glob(["errors/**/*.yaml"]),
+)
