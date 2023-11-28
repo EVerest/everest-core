@@ -145,6 +145,8 @@ if (EVEREST_ENABLE_RS_SUPPORT)
         COMMAND
             echo "everestrs = { path = \"$<TARGET_PROPERTY:everest::everestrs_sys,EVERESTRS_DIR>\" }" >> Cargo.toml
         COMMAND
+            echo "everestrs-build = { path = \"$<TARGET_PROPERTY:everest::everestrs_sys,EVERESTRS_BUILD_DIR>\" }" >> Cargo.toml
+        COMMAND
             echo $<TARGET_FILE:everest::framework> > .everestrs_link_dependencies
         COMMAND
             echo $<TARGET_FILE:everest::log> >> .everestrs_link_dependencies
