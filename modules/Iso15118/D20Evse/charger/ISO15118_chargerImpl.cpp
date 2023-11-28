@@ -72,12 +72,32 @@ void ISO15118_chargerImpl::init() {
         switch (signal) {
         case Signal::CHARGE_LOOP_STARTED:
             publish_currentDemand_Started(nullptr);
-            return;
+            break;
         case Signal::SETUP_FINISHED:
             publish_V2G_Setup_Finished(nullptr);
-            return;
+            break;
+            ;
         case Signal::START_CABLE_CHECK:
             publish_Start_CableCheck(nullptr);
+            break;
+        case Signal::REQUIRE_AUTH_EIM:
+            publish_Require_Auth_EIM(nullptr);
+            break;
+        case Signal::CHARGE_LOOP_FINISHED:
+            publish_currentDemand_Finished(nullptr);
+            break;
+        case Signal::DC_OPEN_CONTACTOR:
+            publish_DC_Open_Contactor(nullptr);
+            break;
+        case Signal::DLINK_TERMINATE:
+            publish_dlink_terminate(nullptr);
+            break;
+        case Signal::DLINK_PAUSE:
+            publish_dlink_pause(nullptr);
+            break;
+        case Signal::DLINK_ERROR:
+            publish_dlink_error(nullptr);
+            break;
         }
     };
 
@@ -142,7 +162,15 @@ void ISO15118_chargerImpl::handle_certificate_response(
 void ISO15118_chargerImpl::handle_authorization_response(
     types::authorization::AuthorizationStatus& authorization_status,
     types::authorization::CertificateStatus& certificate_status) {
-    // your code for cmd authorization_response goes here
+
+    // Todo(sl): Currently PnC is not supported
+    bool authorized = false;
+
+    if (authorization_status == types::authorization::AuthorizationStatus::Accepted) {
+        authorized = true;
+    }
+
+    controller->send_control_event(iso15118::d20::AuthorizationResponse{authorized});
 }
 
 void ISO15118_chargerImpl::handle_ac_contactor_closed(bool& status) {
