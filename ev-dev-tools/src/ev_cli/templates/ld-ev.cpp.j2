@@ -115,6 +115,15 @@ std::vector<Everest::cmd> everest_register(const json& connections) {
     return adapter.registered_commands;
 }
 
+{% if info.enable_global_errors %}
+void subscribe_global_all_errors(
+    const Everest::error::ErrorCallback& error_listener,
+    const Everest::error::ErrorCallback& error_cleared_listener
+) {
+    adapter.subscribe_all_errors(error_listener);
+    adapter.subscribe_all_errors_cleared(error_cleared_listener);
+}
+{% endif %}
 } // namespace module
 
 int main(int argc, char* argv[]) {
