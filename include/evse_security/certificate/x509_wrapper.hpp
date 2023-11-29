@@ -54,11 +54,11 @@ public:
 
     /// @brief Gets valid_in
     /// @return seconds until certificate is valid; if > 0 cert is not yet valid
-    int get_valid_in() const;
+    int64_t get_valid_in() const;
 
     /// @brief Gets valid_in
     /// @return seconds until certificate is expired; if < 0 cert has expired
-    int get_valid_to() const;
+    int64_t get_valid_to() const;
 
     /// @brief Gets optional file of certificate
     /// @result

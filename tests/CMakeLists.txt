@@ -13,12 +13,24 @@ target_link_libraries(tests PRIVATE
 add_test(tests tests)
 
 install(
-    PROGRAMS "generate_test_certs.sh"
+    PROGRAMS "${CMAKE_CURRENT_SOURCE_DIR}/generate_test_certs.sh"
     DESTINATION "${CMAKE_BINARY_DIR}/tests"
 )
 
 install(
-    DIRECTORY "configs"
+    DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/configs"
     DESTINATION "${CMAKE_BINARY_DIR}/tests"
     FILES_MATCHING PATTERN "*.cnf"
+)
+
+install(
+    DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/future_leaf"
+    DESTINATION "${CMAKE_BINARY_DIR}/tests"
+    FILES_MATCHING PATTERN "*"
+)
+
+install(
+        DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/expired_leaf"
+        DESTINATION "${CMAKE_BINARY_DIR}/tests"
+        FILES_MATCHING PATTERN "*"
 )

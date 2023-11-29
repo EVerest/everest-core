@@ -766,7 +766,7 @@ InstallCertificateResult EvseSecurity::verify_certificate(const std::string& cer
         }
 
         CertificateValidationError validated = CryptoSupplier::x509_verify_certificate_chain(
-            leaf_certificate.get(), parent_certificates, std::nullopt, store_file);
+            leaf_certificate.get(), parent_certificates, true, std::nullopt, store_file);
 
         if (validated != CertificateValidationError::NoError) {
             return to_install_certificate_result(validated);

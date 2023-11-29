@@ -298,6 +298,7 @@ X509Handle_ptr OpenSSLSupplier::x509_duplicate_unique(X509Handle* handle) {
 
 CertificateValidationError OpenSSLSupplier::x509_verify_certificate_chain(X509Handle* target,
                                                                           const std::vector<X509Handle*>& parents,
+                                                                          bool allow_future_certificates,
                                                                           const std::optional<fs::path> dir_path,
                                                                           const std::optional<fs::path> file_path) {
     X509_STORE_ptr store_ptr(X509_STORE_new());
@@ -315,6 +316,18 @@ CertificateValidationError OpenSSLSupplier::x509_verify_certificate_chain(X509Ha
     }
 
     X509_STORE_CTX_init(store_ctx_ptr.get(), store_ptr.get(), get(target), NULL);
+
+    if (allow_future_certificates) {
+        // Manually check if cert is expired
+        int day, sec;
+        ASN1_TIME_diff(&day, &sec, nullptr, X509_get_notAfter(get(target)));
+        if (day < 0 || sec < 0) {
+            // certificate is expired
+            return CertificateValidationError::Expired;
+        }
+        // certificate is not expired, but may not be valid yet. Since we allow future certs, disable time checks.
+        X509_STORE_CTX_set_flags(store_ctx_ptr.get(), X509_V_FLAG_NO_CHECK_TIME);
+    }
 
     // verifies the certificate chain based on ctx
     // verifies the certificate has not expired and is already valid

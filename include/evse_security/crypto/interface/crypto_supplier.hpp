@@ -48,6 +48,7 @@ public: // X509 certificate utilities
     /// @return
     static CertificateValidationError x509_verify_certificate_chain(X509Handle* target,
                                                                     const std::vector<X509Handle*>& parents,
+                                                                    bool allow_future_certificates,
                                                                     const std::optional<fs::path> dir_path,
                                                                     const std::optional<fs::path> file_path);
 

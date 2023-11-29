@@ -92,12 +92,12 @@ bool X509Wrapper::is_selfsigned() const {
     return CryptoSupplier::x509_is_selfsigned(get());
 }
 
-int X509Wrapper::get_valid_in() const {
+int64_t X509Wrapper::get_valid_in() const {
     return valid_in;
 }
 
 /// \brief Gets valid_in
-int X509Wrapper::get_valid_to() const {
+int64_t X509Wrapper::get_valid_to() const {
     return valid_to;
 }
 
