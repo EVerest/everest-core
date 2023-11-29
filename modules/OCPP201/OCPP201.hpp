@@ -46,6 +46,7 @@ struct Conf {
     std::string CoreDatabasePath;
     std::string DeviceModelDatabasePath;
     bool EnableExternalWebsocketControl;
+    int MessageQueueResumeDelay;
 };
 
 class OCPP201 : public Everest::ModuleBase {

@@ -998,6 +998,7 @@ void OCPP201::ready() {
     }
 
     const auto boot_reason = get_boot_reason(this->r_system->call_get_boot_reason());
+    this->charge_point->set_message_queue_resume_delay(std::chrono::seconds(this->config.MessageQueueResumeDelay));
     this->charge_point->start(boot_reason);
 }
 
