@@ -301,6 +301,34 @@ void API::init() {
         // API commands
         std::string cmd_base = evse_base + "/cmd/";
 
+        std::string cmd_enable = cmd_base + "enable";
+        this->mqtt.subscribe(cmd_enable, [&evse](const std::string& data) {
+            auto connector_id = 0;
+            if (!data.empty()) {
+                try {
+                    connector_id = std::stoi(data);
+                } catch (const std::exception& e) {
+                    EVLOG_error << "Could not parse connector id for enable connector, using " << connector_id
+                                << ", error: " << e.what();
+                }
+            }
+            evse->call_enable(connector_id);
+        });
+
+        std::string cmd_disable = cmd_base + "disable";
+        this->mqtt.subscribe(cmd_disable, [&evse](const std::string& data) {
+            auto connector_id = 0;
+            if (!data.empty()) {
+                try {
+                    connector_id = std::stoi(data);
+                } catch (const std::exception& e) {
+                    EVLOG_error << "Could not parse connector id for disable connector, using " << connector_id
+                                << ", error: " << e.what();
+                }
+            }
+            evse->call_disable(connector_id);
+        });
+
         std::string cmd_pause_charging = cmd_base + "pause_charging";
         this->mqtt.subscribe(cmd_pause_charging, [&evse](const std::string& data) {
             evse->call_pause_charging(); //
