@@ -129,7 +129,7 @@ void DatabaseHandler::open_connection() {
 }
 
 void DatabaseHandler::close_connection() {
-    if (sqlite3_close(this->db) == SQLITE_OK) {
+    if (sqlite3_close_v2(this->db) == SQLITE_OK) {
         EVLOG_debug << "Successfully closed database: " << this->database_file_path;
     } else {
         EVLOG_error << "Error closing database file: " << sqlite3_errmsg(this->db);
