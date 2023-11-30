@@ -1,11 +1,11 @@
 from copy import deepcopy
 from typing import Dict
 
-from everest.testing.core_utils.configuration.everest_configuration_visitors.everest_configuration_visitor import \
-    EverestConfigAdjustmentVisitor
+from everest.testing.core_utils._configuration.everest_configuration_strategies.everest_configuration_strategy import \
+    EverestConfigAdjustmentStrategy
 
 
-class EverestMqttConfigurationAdjustmentVisitor(EverestConfigAdjustmentVisitor):
+class EverestMqttConfigurationAdjustmentStrategy(EverestConfigAdjustmentStrategy):
     """ Adjusts the Everest configuration by manipulating the "settings" block to use the prober Everest UUID and
     external prefix.
 

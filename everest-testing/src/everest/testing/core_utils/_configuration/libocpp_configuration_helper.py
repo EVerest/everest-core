@@ -6,8 +6,8 @@ from pathlib import Path
 from typing import Union, Callable
 
 
-class OCPPConfigAdjustmentVisitor(ABC):
-    """ Visitor that manipulates a OCPP config when called. Cf. EverestConfigurationAdjustmentVisitor class
+class OCPPConfigAdjustmentStrategy(ABC):
+    """ Strategy that manipulates a OCPP config when called. Cf. EverestConfigurationAdjustmentStrategy class
     """
 
     @abstractmethod
@@ -15,8 +15,8 @@ class OCPPConfigAdjustmentVisitor(ABC):
         """ Adjusts the provided configuration by making a (deep) copy and returning the adjusted configuration. """
 
 
-class OCPPConfigAdjustmentVisitorWrapper(OCPPConfigAdjustmentVisitor):
-    """ Simple OCPPConfigAdjustmentVisitor from a callback function.
+class OCPPConfigAdjustmentStrategyWrapper(OCPPConfigAdjustmentStrategy):
+    """ Simple OCPPConfigAdjustmentStrategy from a callback function.
     """
 
     def __init__(self, callback: Callable[[dict], dict]):
@@ -37,12 +37,12 @@ class LibOCPPConfigurationHelperBase(ABC):
                              source_ocpp_config_file: Path,
                              central_system_host: str,
                              central_system_port: Union[str, int],
-                             configuration_visitors: list[OCPPConfigAdjustmentVisitor] | None = None):
+                             configuration_strategies: list[OCPPConfigAdjustmentStrategy] | None = None):
         config = json.loads(source_ocpp_config_file.read_text())
 
-        configuration_visitors = configuration_visitors if configuration_visitors else []
+        configuration_strategies = configuration_strategies if configuration_strategies else []
 
-        for v in [self._get_default_visitor(central_system_port, central_system_host)] + configuration_visitors:
+        for v in [self._get_default_strategy(central_system_port, central_system_host)] + configuration_strategies:
             config = v.adjust_ocpp_configuration(config)
 
         with target_ocpp_config_file.open("w") as f:
@@ -50,13 +50,13 @@ class LibOCPPConfigurationHelperBase(ABC):
         target_ocpp_user_config_file.write_text("{}")
 
     @abstractmethod
-    def _get_default_visitor(self, central_system_port: int | str,
-                             central_system_host: str) -> OCPPConfigAdjustmentVisitor:
+    def _get_default_strategy(self, central_system_port: int | str,
+                              central_system_host: str) -> OCPPConfigAdjustmentStrategy:
         pass
 
 
 class LibOCPP16ConfigurationHelper(LibOCPPConfigurationHelperBase):
-    def _get_default_visitor(self, central_system_port, central_system_host):
+    def _get_default_strategy(self, central_system_port, central_system_host):
         def adjust_ocpp_configuration(config: dict) -> dict:
             config = deepcopy(config)
             charge_point_id = config["Internal"]["ChargePointId"]
@@ -64,10 +64,10 @@ class LibOCPP16ConfigurationHelper(LibOCPPConfigurationHelperBase):
                 "CentralSystemURI"] = f"{central_system_host}:{central_system_port}/{charge_point_id}"
             return config
 
-        return OCPPConfigAdjustmentVisitorWrapper(adjust_ocpp_configuration)
+        return OCPPConfigAdjustmentStrategyWrapper(adjust_ocpp_configuration)
 
 
-class _OCPP201NetworkConnectionProfileAdjustment(OCPPConfigAdjustmentVisitor):
+class _OCPP201NetworkConnectionProfileAdjustment(OCPPConfigAdjustmentStrategy):
     """ Adjusts the OCPP 2.0.1 Network Connection Profile by injecting the right host, port and chargepoint id.
 
     This is utilized by the `LibOCPP201ConfigurationHelper`.
@@ -110,8 +110,8 @@ class _OCPP201NetworkConnectionProfileAdjustment(OCPPConfigAdjustmentVisitor):
 
 class LibOCPP201ConfigurationHelper(LibOCPPConfigurationHelperBase):
 
-    def _get_default_visitor(self, central_system_port: int | str,
-                             central_system_host: str) -> OCPPConfigAdjustmentVisitor:
+    def _get_default_strategy(self, central_system_port: int | str,
+                              central_system_host: str) -> OCPPConfigAdjustmentStrategy:
         return _OCPP201NetworkConnectionProfileAdjustment(central_system_port, central_system_host)
 
     @staticmethod

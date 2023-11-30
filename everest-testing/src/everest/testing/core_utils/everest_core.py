@@ -18,12 +18,12 @@ from signal import SIGINT
 
 from everest.framework import RuntimeSession
 from everest.testing.core_utils.common import Requirement
-from everest.testing.core_utils.configuration.everest_configuration_visitors.everest_configuration_visitor import \
-    EverestConfigAdjustmentVisitor
-from everest.testing.core_utils.configuration.everest_configuration_visitors.mqtt_configuration_visitor import \
-    EverestMqttConfigurationAdjustmentVisitor
-from everest.testing.core_utils.configuration.everest_configuration_visitors.probe_module_configuration_visitor import \
-    ProbeModuleConfigurationVisitor
+from ._configuration.everest_configuration_strategies.everest_configuration_strategy import \
+    EverestConfigAdjustmentStrategy
+from ._configuration.everest_configuration_strategies.mqtt_configuration_strategy import \
+    EverestMqttConfigurationAdjustmentStrategy
+from ._configuration.everest_configuration_strategies.probe_module_configuration_strategy import \
+    ProbeModuleConfigurationStrategy
 
 STARTUP_TIMEOUT = 30
 
@@ -81,8 +81,8 @@ class EverestCore:
                  prefix_path: Path,
                  config_path: Path = None,
                  standalone_module: Optional[Union[str, List[str]]] = None,
-                 everest_configuration_adjustment_visitors: Optional[
-                     List[EverestConfigAdjustmentVisitor]] = None,
+                 everest_configuration_adjustment_strategies: Optional[
+                     List[EverestConfigAdjustmentStrategy]] = None,
                  tmp_path: Optional[Path] = None) -> None:
         """Initialize EVerest using everest_core_path and everest_config_path
 
@@ -119,7 +119,7 @@ class EverestCore:
 
         self.mqtt_external_prefix = f"external_{self.everest_uuid}"
 
-        self._write_temporary_config(config_path, everest_configuration_adjustment_visitors)
+        self._write_temporary_config(config_path, everest_configuration_adjustment_strategies)
 
         logging.info(f"everest uuid: {self.everest_uuid}")
         logging.info(f"temp everest config: {self.everest_config_path} based on {config_path}")
@@ -137,15 +137,15 @@ class EverestCore:
         with self.everest_config_path.open("r") as f:
             return yaml.safe_load(f)
 
-    def _write_temporary_config(self, template_config_path: Path, everest_configuration_adjustment_visitors: Optional[
-        List[EverestConfigAdjustmentVisitor]]):
-        everest_configuration_adjustment_visitors = everest_configuration_adjustment_visitors if everest_configuration_adjustment_visitors else []
-        everest_configuration_adjustment_visitors.append(
-            EverestMqttConfigurationAdjustmentVisitor(everest_uuid=self.everest_uuid,
-                                                      mqtt_external_prefix=self.mqtt_external_prefix))
+    def _write_temporary_config(self, template_config_path: Path, everest_configuration_adjustment_strategies: Optional[
+        List[EverestConfigAdjustmentStrategy]]):
+        everest_configuration_adjustment_strategies = everest_configuration_adjustment_strategies if everest_configuration_adjustment_strategies else []
+        everest_configuration_adjustment_strategies.append(
+            EverestMqttConfigurationAdjustmentStrategy(everest_uuid=self.everest_uuid,
+                                                       mqtt_external_prefix=self.mqtt_external_prefix))
         everest_config = yaml.safe_load(template_config_path.read_text())
-        for visitor in everest_configuration_adjustment_visitors:
-            everest_config = visitor.adjust_everest_configuration(everest_config)
+        for strategy in everest_configuration_adjustment_strategies:
+            everest_config = strategy.adjust_everest_configuration(everest_config)
         with self.everest_config_path.open("w") as f:
             yaml.dump(everest_config, f)
 
@@ -243,7 +243,7 @@ class EverestCore:
         # FIXME (aw): we need some agreement, if the module id of the probe module should be fixed or not
         logging.info(f'Adding test control module(s) to user-config: {self.test_control_modules}')
         user_config = {}
-        user_config = ProbeModuleConfigurationVisitor(connections=self.test_connections).adjust_everest_configuration(user_config)
+        user_config = ProbeModuleConfigurationStrategy(connections=self.test_connections).adjust_everest_configuration(user_config)
 
         file.write_text(yaml.dump(user_config))
 

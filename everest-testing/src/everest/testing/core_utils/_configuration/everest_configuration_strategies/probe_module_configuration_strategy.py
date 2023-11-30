@@ -2,10 +2,10 @@ from copy import deepcopy
 from typing import Dict, List
 
 from everest.testing.core_utils.common import Requirement
-from everest.testing.core_utils.configuration.everest_configuration_visitors.everest_configuration_visitor import EverestConfigAdjustmentVisitor
+from everest.testing.core_utils._configuration.everest_configuration_strategies.everest_configuration_strategy import EverestConfigAdjustmentStrategy
 
 
-class ProbeModuleConfigurationVisitor(EverestConfigAdjustmentVisitor):
+class ProbeModuleConfigurationStrategy(EverestConfigAdjustmentStrategy):
     """ Adjusts the Everest configuration by adding the probe module into an EVerest config """
 
     def __init__(self,

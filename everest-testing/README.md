@@ -32,7 +32,7 @@ The core_utils basically provide two fixtures that you can require in your test 
 - **ocpp_config**  Used to provide the configuration, i.e. the JSON device model,  to set up the OCPP (1.6 or 2.0.1) module.
 - **evse_security_config** Used to provide the configuration to set up the EvseSecurity module.
 - **persistent_storage_config** Used to provide the configuration to set up the PersistentStorage module.
-- **everest_config_visitors**: Provides a list of additional `EverestConfigAdjustmentVisitor` instances that are called to manipulate the resulting Everest configuration.
+- **everest_config_strategies**: Provides a list of additional `EverestConfigAdjustmentStrategy` instances that are called to manipulate the resulting Everest configuration.
 
 ### pytest markers
 
@@ -42,7 +42,7 @@ Some OCPP fixtures will parse pytest markers of test cases. The following marker
 - **probe_module**: If set, the ProbeModule will be injected into the config (used by the `probe_module_config` fixture). This marker accepts optional keyword arguments `connections` and `module_id` to configure the probe module. 
 - **source_certs_dir**: If set and the  default `evse_security_config` fixture is used, this will cause the  `EvseSecurity` module configuration to use a  temporary certificates folder into which the source certificate folder trees are copied.
 - **use_temporary_persistent_store**: If set and the  default `persistent_storage_config` fixture is used, this will cause the  `PersistentStore` module configuration to use a  temporary database.
-- **everest_config_adaptions**: Can be given instances of `EverestConfigAdjustmentVisitor` as positional arguments which will be applied to the resulting Everest configuration.
+- **everest_config_adaptions**: Can be given instances of `EverestConfigAdjustmentStrategy` as positional arguments which will be applied to the resulting Everest configuration.
 
 ## OCPP utils
 
@@ -70,7 +70,7 @@ An important function that you will frequently use when writing test cases is th
 - **ocpp_config_adaptions**: Specification of the .json OCPP config file. Used in `ocpp_config` fixture and used as template configuration (if not specified, the OCPP config as specified in the EVerest configuration is used) 
 - **inject_csms_mock**: (currently only OCPP 2.0.1) If set, the `central_system_v201` will wrap any csms handler method into an unittest mock. In particular, this allows changing the CSMS behavior even after the chargepoint is started by setting side effects of the mock. See `everest.testing.ocpp_utils.charge_point_v201.inject_csms_v201_mock` docstring for an example.
 - **csms_tls**: Enable/disable TLS for the CSMS websocket server. If given without arguments, enables TLS. First argument can be `False` to explicitly disable TLS. Further optional keyword arguments  `certificate`, `private_key`,`passphrase`, `root_ca` , and `verify_client_certificate` allow to overwrite SSL context options.
-- **ocpp_config_adaptions**: Can be given instances of `OCPPConfigAdjustmentVisitor` as positional arguments which will be applied to the resulting OCPP configuration.
+- **ocpp_config_adaptions**: Can be given instances of `OCPPConfigAdjustmentStrategy` as positional arguments which will be applied to the resulting OCPP configuration.
 
 
 ## Add a conftest.py

@@ -3,8 +3,8 @@ from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Dict, Optional, Union
 
-from everest.testing.core_utils.configuration.everest_configuration_visitors.everest_configuration_visitor import \
-    EverestConfigAdjustmentVisitor
+from everest.testing.core_utils._configuration.everest_configuration_strategies.everest_configuration_strategy import \
+    EverestConfigAdjustmentStrategy
 
 
 @dataclass
@@ -20,7 +20,7 @@ class EvseSecurityModuleConfiguration:
     private_key_password: Optional[str] = None
 
 
-class EvseSecurityModuleConfigurationVisitor(EverestConfigAdjustmentVisitor):
+class EvseSecurityModuleConfigurationStrategy(EverestConfigAdjustmentStrategy):
     """ Adjusts the Evse security module configuration in the Everest configuration merging a provided configuration into it (if provided) and adapt
     all paths relative to a certificate target directory (if provided).
     """

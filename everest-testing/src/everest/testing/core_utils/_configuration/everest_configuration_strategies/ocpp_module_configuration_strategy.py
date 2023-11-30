@@ -3,7 +3,7 @@ from dataclasses import dataclass, asdict
 from typing import Union, Dict
 
 from everest.testing.core_utils.common import OCPPVersion
-from everest.testing.core_utils.configuration.everest_configuration_visitors.everest_configuration_visitor import EverestConfigAdjustmentVisitor
+from everest.testing.core_utils._configuration.everest_configuration_strategies.everest_configuration_strategy import EverestConfigAdjustmentStrategy
 
 
 
@@ -24,7 +24,7 @@ class OCPPModulePaths201(OCPPModuleConfigurationBase):
     DeviceModelDatabasePath: str
 
 
-class OCPPModuleConfigurationVisitor(EverestConfigAdjustmentVisitor):
+class OCPPModuleConfigurationStrategy(EverestConfigAdjustmentStrategy):
     """ Adjusts the Everest configuration by manipulating the OCPP module configuration to use proper (temporary test) paths.
 
     """

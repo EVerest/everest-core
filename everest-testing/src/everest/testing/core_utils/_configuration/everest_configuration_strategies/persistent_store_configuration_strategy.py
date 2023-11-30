@@ -2,11 +2,11 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Dict, Optional
 
-from everest.testing.core_utils.configuration.everest_configuration_visitors.everest_configuration_visitor import \
-    EverestConfigAdjustmentVisitor
+from everest.testing.core_utils._configuration.everest_configuration_strategies.everest_configuration_strategy import \
+    EverestConfigAdjustmentStrategy
 
 
-class PersistentStoreConfigurationVisitor(EverestConfigAdjustmentVisitor):
+class PersistentStoreConfigurationStrategy(EverestConfigAdjustmentStrategy):
     """ Adjusts the Everest configuration by manipulating the PersistentStore module configuration to point
     to the desired (temporary) storage
 

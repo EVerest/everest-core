@@ -5,9 +5,9 @@ from typing import Optional
 
 import pytest
 
-from everest.testing.core_utils.configuration.everest_configuration_visitors.everest_configuration_visitor import \
-    EverestConfigAdjustmentVisitor
-from everest.testing.core_utils.configuration.everest_environment_setup import \
+from ._configuration.everest_configuration_strategies.everest_configuration_strategy import \
+    EverestConfigAdjustmentStrategy
+from ._configuration.everest_environment_setup import \
     EverestEnvironmentProbeModuleConfiguration, \
     EverestTestEnvironmentSetup, EverestEnvironmentOCPPConfiguration, EverestEnvironmentCoreConfiguration, \
     EverestEnvironmentEvseSecurityConfiguration, EverestEnvironmentPersistentStoreConfiguration
@@ -63,14 +63,14 @@ def persistent_store_config(request) -> Optional[EverestEnvironmentPersistentSto
 
 
 @pytest.fixture
-def everest_config_visitors(request) -> list[EverestConfigAdjustmentVisitor]:
-    additional_configuration_visitors = []
-    additional_configuration_visitors_marker = request.node.get_closest_marker('everest_config_adaptions')
-    if additional_configuration_visitors_marker:
-        for v in additional_configuration_visitors_marker.args:
-            assert isinstance(v, EverestConfigAdjustmentVisitor), "Arguments to 'everest_config_adaptions' must all be instances of EverestConfigAdjustmentVisitor"
-            additional_configuration_visitors.append(v)
-    return additional_configuration_visitors
+def everest_config_strategies(request) -> list[EverestConfigAdjustmentStrategy]:
+    additional_configuration_strategies = []
+    additional_configuration_strategies_marker = request.node.get_closest_marker('everest_config_adaptions')
+    if additional_configuration_strategies_marker:
+        for v in additional_configuration_strategies_marker.args:
+            assert isinstance(v, EverestConfigAdjustmentStrategy), "Arguments to 'everest_config_adaptions' must all be instances of EverestConfigAdjustmentStrategy"
+            additional_configuration_strategies.append(v)
+    return additional_configuration_strategies
 
 @pytest.fixture
 def everest_core(request,
@@ -80,7 +80,7 @@ def everest_core(request,
                  probe_module_config: Optional[EverestEnvironmentProbeModuleConfiguration],
                  evse_security_config: Optional[EverestEnvironmentEvseSecurityConfiguration],
                  persistent_store_config: Optional[EverestEnvironmentPersistentStoreConfiguration],
-                 everest_config_visitors: list[EverestConfigAdjustmentVisitor]
+                 everest_config_strategies
                  ) -> EverestCore:
     """Fixture that can be used to start and stop everest-core"""
 
@@ -94,7 +94,7 @@ def everest_core(request,
         evse_security_config=evse_security_config,
         persistent_store_config=persistent_store_config,
         standalone_module=list(standalone_module_marker.args) if standalone_module_marker else None,
-        everest_config_visitors=everest_config_visitors
+        everest_config_strategies=everest_config_strategies
     )
 
     environment_setup.setup_environment(tmp_path=tmp_path)

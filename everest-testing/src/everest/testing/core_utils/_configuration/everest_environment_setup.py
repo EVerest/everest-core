@@ -10,22 +10,20 @@ from typing import Optional, Dict, List, Union
 import yaml
 
 from everest.testing.core_utils.common import OCPPVersion
-from everest.testing.core_utils.configuration.everest_configuration_visitors.everest_configuration_visitor import \
-    EverestConfigAdjustmentVisitor
-from everest.testing.core_utils.configuration.everest_configuration_visitors.evse_security_configuration_visitor import \
-    EvseSecurityModuleConfigurationVisitor, EvseSecurityModuleConfiguration
-from everest.testing.core_utils.configuration.everest_configuration_visitors.ocpp_module_configuration_visitor import \
-    OCPPModuleConfigurationVisitor, \
-    OCPPModulePaths16, OCPPModulePaths201
-from everest.testing.core_utils.configuration.everest_configuration_visitors.persistent_store_configuration_visitor import \
-    PersistentStoreConfigurationVisitor
-from everest.testing.core_utils.configuration.everest_configuration_visitors.probe_module_configuration_visitor import \
-    ProbeModuleConfigurationVisitor
-from everest.testing.core_utils.configuration.libocpp_configuration_helper import \
-    LibOCPP201ConfigurationHelper, LibOCPP16ConfigurationHelper
 from everest.testing.core_utils.everest_core import EverestCore, Requirement
-
-logging.basicConfig(level=logging.DEBUG)
+from .everest_configuration_strategies.everest_configuration_strategy import \
+    EverestConfigAdjustmentStrategy
+from .everest_configuration_strategies.evse_security_configuration_strategy import \
+    EvseSecurityModuleConfigurationStrategy, EvseSecurityModuleConfiguration
+from .everest_configuration_strategies.ocpp_module_configuration_strategy import \
+    OCPPModuleConfigurationStrategy, \
+    OCPPModulePaths16, OCPPModulePaths201
+from .everest_configuration_strategies.persistent_store_configuration_strategy import \
+    PersistentStoreConfigurationStrategy
+from .everest_configuration_strategies.probe_module_configuration_strategy import \
+    ProbeModuleConfigurationStrategy
+from .libocpp_configuration_helper import \
+    LibOCPP201ConfigurationHelper, LibOCPP16ConfigurationHelper
 
 
 @dataclass
@@ -39,7 +37,7 @@ class EverestEnvironmentOCPPConfiguration:
         Path] = None  # Path for OCPP config to be used; if not provided, will be determined from everest config
     device_model_schemas_path: Optional[
         Path] = None  # Path of the OCPP device model json schemas. If not set, {libocpp_path} / 'config/v201/component_schemas' will  be used
-    configuration_visitors: list[OCPPModuleConfigurationVisitor] | None = None
+    configuration_strategies: list[OCPPModuleConfigurationStrategy] | None = None
 
 
 @dataclass
@@ -102,7 +100,7 @@ class EverestTestEnvironmentSetup:
                  evse_security_config: Optional[EverestEnvironmentEvseSecurityConfiguration] = None,
                  persistent_store_config: Optional[EverestEnvironmentPersistentStoreConfiguration] = None,
                  standalone_module: Optional[Union[str, List[str]]] = None,
-                 everest_config_visitors: Optional[List[EverestConfigAdjustmentVisitor]] = None
+                 everest_config_strategies: Optional[List[EverestConfigAdjustmentStrategy]] = None
                  ) -> None:
         self._core_config = core_config
         self._ocpp_config = ocpp_config
@@ -112,18 +110,18 @@ class EverestTestEnvironmentSetup:
         self._standalone_module = standalone_module
         if not self._standalone_module and self._probe_config:
             self._standalone_module = self._probe_config.module_id
-        self._additional_everest_config_visitors = everest_config_visitors if everest_config_visitors else []
+        self._additional_everest_config_strategies = everest_config_strategies if everest_config_strategies else []
         self._everest_core = None
 
     def setup_environment(self, tmp_path: Path):
 
         temporary_paths = self._create_temporary_directory_structure(tmp_path)
 
-        configuration_visitors = self._create_everest_configuration_visitors(temporary_paths)
+        configuration_strategies = self._create_everest_configuration_strategies(temporary_paths)
 
         self._everest_core = EverestCore(self._core_config.everest_core_path,
                                          self._core_config.template_everest_config_path,
-                                         everest_configuration_adjustment_visitors=configuration_visitors + self._additional_everest_config_visitors,
+                                         everest_configuration_adjustment_strategies=configuration_strategies + self._additional_everest_config_strategies,
                                          standalone_module=self._standalone_module,
                                          tmp_path=tmp_path)
 
@@ -162,8 +160,8 @@ class EverestTestEnvironmentSetup:
             persistent_store_db_path=persistent_store_dir / "persistent_store.db"
         )
 
-    def _create_ocpp_module_configuration_visitor(self,
-                                                  temporary_paths: _EverestEnvironmentTemporaryPaths) -> OCPPModuleConfigurationVisitor:
+    def _create_ocpp_module_configuration_strategy(self,
+                                                   temporary_paths: _EverestEnvironmentTemporaryPaths) -> OCPPModuleConfigurationStrategy:
 
         if self._ocpp_config.ocpp_version == OCPPVersion.ocpp16:
             ocpp_paths = OCPPModulePaths16(
@@ -184,9 +182,9 @@ class EverestTestEnvironmentSetup:
         else:
             raise ValueError(f"unknown  ocpp version {self._ocpp_config.ocpp_version}")
 
-        occp_module_configuration_helper = OCPPModuleConfigurationVisitor(ocpp_paths=ocpp_paths,
-                                                                          ocpp_module_id=self._ocpp_config.ocpp_module_id,
-                                                                          ocpp_version=self._ocpp_config.ocpp_version)
+        occp_module_configuration_helper = OCPPModuleConfigurationStrategy(ocpp_paths=ocpp_paths,
+                                                                           ocpp_module_id=self._ocpp_config.ocpp_module_id,
+                                                                           ocpp_version=self._ocpp_config.ocpp_version)
 
         return occp_module_configuration_helper
 
@@ -205,7 +203,7 @@ class EverestTestEnvironmentSetup:
             source_ocpp_config_file=source_ocpp_config,
             target_ocpp_config_file=temporary_paths.ocpp_config_file,
             target_ocpp_user_config_file=temporary_paths.ocpp_user_config_file,
-            configuration_visitors=self._ocpp_config.configuration_visitors
+            configuration_strategies=self._ocpp_config.configuration_strategies
         )
 
         if self._ocpp_config.ocpp_version == OCPPVersion.ocpp201:
@@ -218,31 +216,31 @@ class EverestTestEnvironmentSetup:
                 target_directory=temporary_paths.ocpp_database_dir
             )
 
-    def _create_everest_configuration_visitors(self, temporary_paths: _EverestEnvironmentTemporaryPaths):
-        configuration_visitors = []
+    def _create_everest_configuration_strategies(self, temporary_paths: _EverestEnvironmentTemporaryPaths):
+        configuration_strategies = []
         if self._ocpp_config:
-            configuration_visitors.append(self._create_ocpp_module_configuration_visitor(temporary_paths))
+            configuration_strategies.append(self._create_ocpp_module_configuration_strategy(temporary_paths))
         if self._probe_config:
-            configuration_visitors.append(
-                ProbeModuleConfigurationVisitor(connections=self._probe_config.connections,
-                                                module_id=self._probe_config.module_id))
+            configuration_strategies.append(
+                ProbeModuleConfigurationStrategy(connections=self._probe_config.connections,
+                                                 module_id=self._probe_config.module_id))
 
         if self._evse_security_config:
-            configuration_visitors.append(
-                EvseSecurityModuleConfigurationVisitor(module_id=self._evse_security_config.module_id,
-                                                       configuration=self._evse_security_config.module_configuration,
-                                                       source_certificates_directory=self._evse_security_config.source_certificate_directory,
-                                                       target_certificates_directory=temporary_paths.certs_dir \
-                                                           if self._evse_security_config.use_temporary_certificates_folder \
-                                                           else None
-                                                       ))
+            configuration_strategies.append(
+                EvseSecurityModuleConfigurationStrategy(module_id=self._evse_security_config.module_id,
+                                                        configuration=self._evse_security_config.module_configuration,
+                                                        source_certificates_directory=self._evse_security_config.source_certificate_directory,
+                                                        target_certificates_directory=temporary_paths.certs_dir \
+                                                            if self._evse_security_config.use_temporary_certificates_folder \
+                                                            else None
+                                                        ))
 
         if self._persistent_store_config and self._persistent_store_config.use_temporary_folder:
-            configuration_visitors.append(
-                PersistentStoreConfigurationVisitor(sqlite_db_file_path=temporary_paths.persistent_store_db_path)
+            configuration_strategies.append(
+                PersistentStoreConfigurationStrategy(sqlite_db_file_path=temporary_paths.persistent_store_db_path)
             )
 
-        return configuration_visitors
+        return configuration_strategies
 
     def _determine_configured_charge_point_config_path_from_everest_config(self):
 

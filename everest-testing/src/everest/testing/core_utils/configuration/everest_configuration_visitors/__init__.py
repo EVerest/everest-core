@@ -1,4 +1,0 @@
-"""
-See base class `EverestConfigAdjustmentVisitor`
-
-"""

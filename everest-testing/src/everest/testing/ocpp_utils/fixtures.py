@@ -18,7 +18,7 @@ from pyftpdlib.authorizers import DummyAuthorizer
 from pyftpdlib.handlers import FTPHandler
 
 from everest.testing.core_utils.common import OCPPVersion
-from everest.testing.core_utils.configuration.everest_environment_setup import EverestEnvironmentOCPPConfiguration
+from everest.testing.core_utils._configuration.everest_environment_setup import EverestEnvironmentOCPPConfiguration
 from everest.testing.core_utils.controller.everest_test_controller import EverestTestController
 from everest.testing.ocpp_utils.central_system import CentralSystem, inject_csms_v201_mock, inject_csms_v16_mock, \
     determine_ssl_context
@@ -40,13 +40,13 @@ def ocpp_version(request) -> OCPPVersion:
 def ocpp_config(request, central_system: CentralSystem, test_config: OcppTestConfiguration, ocpp_version: OCPPVersion):
     ocpp_config_marker = request.node.get_closest_marker("ocpp_config")
 
-    ocpp_configuration_visitors_marker = request.node.get_closest_marker("ocpp_config_adaptions")
-    ocpp_configuration_visitors = []
-    if ocpp_configuration_visitors_marker:
-        for v in ocpp_configuration_visitors_marker.args:
+    ocpp_configuration_strategies_marker = request.node.get_closest_marker("ocpp_config_adaptions")
+    ocpp_configuration_strategies = []
+    if ocpp_configuration_strategies_marker:
+        for v in ocpp_configuration_strategies_marker.args:
             assert hasattr(v,
-                           "adjust_ocpp_configuration"), "Arguments to 'ocpp_config_adaptions' must all provide interface of OCPPConfigAdjustmentVisitor"
-            ocpp_configuration_visitors.append(v)
+                           "adjust_ocpp_configuration"), "Arguments to 'ocpp_config_adaptions' must all provide interface of OCPPConfigAdjustmentStrategy"
+            ocpp_configuration_strategies.append(v)
 
     return EverestEnvironmentOCPPConfiguration(
         central_system_port=central_system.port,
@@ -54,7 +54,7 @@ def ocpp_config(request, central_system: CentralSystem, test_config: OcppTestCon
         ocpp_version=ocpp_version,
         libocpp_path=Path(request.config.getoption("--libocpp")),
         template_ocpp_config=Path(ocpp_config_marker.args[0]) if ocpp_config_marker else None,
-        configuration_visitors=ocpp_configuration_visitors
+        configuration_strategies=ocpp_configuration_strategies
     )
 
 

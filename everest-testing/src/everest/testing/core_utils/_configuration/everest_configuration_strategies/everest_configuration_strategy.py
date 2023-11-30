@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 from typing import Dict
 
 
-class EverestConfigAdjustmentVisitor(ABC):
-    """ Visitor that manipulates a (parsed) EVerest config when called.
+class EverestConfigAdjustmentStrategy(ABC):
+    """ Strategy that manipulates a (parsed) EVerest config when called.
 
      Used to build up / adapt EVerest configurations for tests.
 
