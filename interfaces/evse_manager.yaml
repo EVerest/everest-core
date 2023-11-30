@@ -12,7 +12,7 @@ cmds:
     description: Enables the evse. EVSE is available for charging after this operation
     arguments:
       connector_id:
-        description: Specifies the ID of the connector to disable. If 0, the whole EVSE should be enabled
+        description: Specifies the ID of the connector to enable. If 0, the whole EVSE should be enabled
         type: integer
     result:
       description: >-
