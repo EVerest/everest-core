@@ -2,7 +2,8 @@ from copy import deepcopy
 from typing import Dict, List
 
 from everest.testing.core_utils.common import Requirement
-from everest.testing.core_utils._configuration.everest_configuration_strategies.everest_configuration_strategy import EverestConfigAdjustmentStrategy
+from everest.testing.core_utils._configuration.everest_configuration_strategies.everest_configuration_strategy import \
+    EverestConfigAdjustmentStrategy
 
 
 class ProbeModuleConfigurationStrategy(EverestConfigAdjustmentStrategy):
@@ -18,9 +19,10 @@ class ProbeModuleConfigurationStrategy(EverestConfigAdjustmentStrategy):
     def adjust_everest_configuration(self, everest_config: Dict) -> Dict:
         adjusted_config = deepcopy(everest_config)
 
-        probe_connections = {}
-        for k, v in self._connections.items():
-            probe_connections[k] = [{"module_id": v.module_id, "implementation_id": v.implementation_id}]
+        probe_connections = {
+            requirement_id: [{"module_id": requirement.module_id, "implementation_id": requirement.implementation_id}
+                             for requirement in requirements_list]
+            for requirement_id, requirements_list in self._connections.items()}
 
         active_modules = adjusted_config.setdefault("active_modules", {})
         active_modules[self._module_id] = {
