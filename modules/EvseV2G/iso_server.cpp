@@ -1223,8 +1223,8 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
         std::string contract_cert_chain_pem = "";
         /* Only if certificate chain verification should be done locally by the EVSE */
         if (conn->ctx->session.verify_contract_cert_chain == true) {
-            std::string v2g_root_cert_path = conn->ctx->certs_path + "/ca/v2g/V2G_ROOT_CA.pem";
-            std::string mo_root_cert_path = conn->ctx->certs_path + "/ca/mo/MO_ROOT_CA.pem";
+            std::string v2g_root_cert_path = conn->ctx->r_security->call_get_verify_file(types::evse_security::CaCertificateType::V2G);
+            std::string mo_root_cert_path = conn->ctx->r_security->call_get_verify_file(types::evse_security::CaCertificateType::MO);
             mbedtls_x509_crt contract_root_crt;
             mbedtls_x509_crt_init(&contract_root_crt);
             uint32_t flags;
