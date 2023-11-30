@@ -1,5 +1,26 @@
 description: Powermeter types
 types:
+  SignedMeterValue:
+    description: Representation of a signed meter value
+    type: object
+    additionalProperties: false
+    required:
+      - signed_meter_data
+      - signing_method
+      - encoding_method
+    properties:
+      signed_meter_data:
+        description: Base64 encoded signed meter data
+        type: string
+      signing_method:
+        description: Method used to create the signature
+        type: string
+      encoding_method:
+        description: Method used to encode the meter values before signing them
+        type: string
+      public_key:
+        description: Base64 encoded public key
+        type: string
   TransactionReq:
     description: Required input parameter for starting an OCMF transaction. These values will be included in the signed OCMF packet.
     type: object
@@ -68,9 +89,10 @@ types:
       status:
         description: Response status that indicates whether the transaction stop request could successfully be performed.
         $ref: /powermeter#/TransactionRequestStatus
-      ocmf:
+      signed_meter_value:
         description: The signed OCMF report of the stopped transaction. Must be provided if status is OK.
-        type: string
+        type: object
+        $ref: /powermeter#/SignedMeterValue
       error:
         description: If status is not OK, a verbose error message.
         type: string
@@ -122,3 +144,7 @@ types:
         description: Grid frequency in Hertz
         type: object
         $ref: /units#/Frequency
+      signed_meter_value:
+        description: Signed instantaneous meter values if supported by the meter
+        type: object
+        $ref: /powermeter#/SignedMeterValue

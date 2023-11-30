@@ -44,8 +44,9 @@ types::powermeter::TransactionStopResponse powermeterImpl::handle_stop_transacti
         transport::DataVector data = transport->fetch(known_model::BSM_OCMF_CurrentSnapshot);
 
         bsm::SignedOCMFSnapshot signed_snapshot(data);
+        auto signed_meter_value = types::powermeter::SignedMeterValue{signed_snapshot.O(), "OCMF", "OCMF"};
 
-        return {types::powermeter::TransactionRequestStatus::OK, signed_snapshot.O()};
+        return {types::powermeter::TransactionRequestStatus::OK, signed_meter_value};
 
     } catch (const std::runtime_error& e) {
         EVLOG_error << __PRETTY_FUNCTION__ << " Error: " << e.what() << std::endl;
