@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifndef OCPP_OCPP_IMPL_HPP
-#define OCPP_OCPP_IMPL_HPP
+#ifndef OCPP_GENERIC_OCPP_IMPL_HPP
+#define OCPP_GENERIC_OCPP_IMPL_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
@@ -25,7 +25,7 @@ class ocppImpl : public ocppImplBase {
 public:
     ocppImpl() = delete;
     ocppImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<OCPP>& mod, Conf& config) :
-        ocppImplBase(ev, "ocpp"), mod(mod), config(config){};
+        ocppImplBase(ev, "ocpp_generic"), mod(mod), config(config){};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here
@@ -63,7 +63,7 @@ private:
 // insert other definitions here
 // ev@3d7da0ad-02c2-493d-9920-0bbbd56b9876:v1
 
-} // namespace ocpp
+} // namespace ocpp_generic
 } // namespace module
 
-#endif // OCPP_OCPP_IMPL_HPP
+#endif // OCPP_GENERIC_OCPP_IMPL_HPP

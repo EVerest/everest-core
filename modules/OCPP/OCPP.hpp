@@ -59,10 +59,10 @@ class OCPP : public Everest::ModuleBase {
 public:
     OCPP() = delete;
     OCPP(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
-         std::unique_ptr<ocpp_1_6_charge_pointImplBase> p_main, std::unique_ptr<ocppImplBase> p_ocpp_generic,
+         std::unique_ptr<ocpp_1_6_charge_pointImplBase> p_main,
          std::unique_ptr<auth_token_validatorImplBase> p_auth_validator,
          std::unique_ptr<auth_token_providerImplBase> p_auth_provider,
-         std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer,
+         std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer, std::unique_ptr<ocppImplBase> p_ocpp_generic,
          std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager,
          std::vector<std::unique_ptr<external_energy_limitsIntf>> r_connector_zero_sink,
          std::unique_ptr<reservationIntf> r_reservation, std::unique_ptr<authIntf> r_auth,
@@ -71,10 +71,10 @@ public:
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_main(std::move(p_main)),
-        p_ocpp_generic(std::move(p_ocpp_generic)),
         p_auth_validator(std::move(p_auth_validator)),
         p_auth_provider(std::move(p_auth_provider)),
         p_data_transfer(std::move(p_data_transfer)),
+        p_ocpp_generic(std::move(p_ocpp_generic)),
         r_evse_manager(std::move(r_evse_manager)),
         r_connector_zero_sink(std::move(r_connector_zero_sink)),
         r_reservation(std::move(r_reservation)),
@@ -86,10 +86,10 @@ public:
 
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<ocpp_1_6_charge_pointImplBase> p_main;
-    const std::unique_ptr<ocppImplBase> p_ocpp_generic;
     const std::unique_ptr<auth_token_validatorImplBase> p_auth_validator;
     const std::unique_ptr<auth_token_providerImplBase> p_auth_provider;
     const std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer;
+    const std::unique_ptr<ocppImplBase> p_ocpp_generic;
     const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;
     const std::vector<std::unique_ptr<external_energy_limitsIntf>> r_connector_zero_sink;
     const std::unique_ptr<reservationIntf> r_reservation;
