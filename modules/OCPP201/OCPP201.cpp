@@ -553,6 +553,7 @@ void OCPP201::init() {
         this->r_evse_manager.at(evse_id - 1)->subscribe_ready([this, evse_id](bool ready) {
             std::lock_guard<std::mutex> lk(this->evse_ready_mutex);
             if (ready) {
+                EVLOG_info << "EVSE " << evse_id << " ready.";
                 this->evse_ready_map[evse_id] = true;
                 this->evse_ready_cv.notify_one();
             }
