@@ -2,10 +2,13 @@
 everest-framework:
   git: https://github.com/EVerest/everest-framework.git
   git_tag: 9604e06
+  options: ["BUILD_TESTING OFF"]
 sigslot:
   git: https://github.com/palacaze/sigslot
   git_tag: v1.2.0
-  options: ["SIGSLOT_COMPILE_EXAMPLES OFF"]
+  options:
+    - "SIGSLOT_COMPILE_EXAMPLES OFF"
+    - "SIGSLOT_COMPILE_TESTS OFF"
 libmodbus:
   git: https://github.com/EVerest/libmodbus.git
   git_tag: v0.3.0
