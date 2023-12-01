@@ -48,7 +48,7 @@ cmds:
           $ref: /ocpp#/GetVariableRequest
     result:
       description: >-
-        List of GetVariableResult containing the result for every requested value
+        List of GetVariableResult containing the result for every requested value. Does not guarantee preservation of order!
       type: array
       items:
         type: object
@@ -56,7 +56,7 @@ cmds:
   set_variables:
     description: >-
       Command to set a variable at OCPP. 
-      With OCPP1.6: This command can be used to set custom configuration keys
+      With OCPP1.6: This command can be used to set custom configuration keys (others will be rejected)
       With OCPP2.0.1: This command can be used to set variables in the device model storage
     arguments:
       requests:

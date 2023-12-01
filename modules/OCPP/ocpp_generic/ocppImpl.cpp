@@ -93,7 +93,7 @@ ocppImpl::handle_get_variables(std::vector<types::ocpp::GetVariableRequest>& req
     std::vector<ocpp::CiString<50>> configuration_keys;
     for (const auto& request : requests) {
         // only variable.name is relevant for OCPP1.6
-        configuration_keys.push_back(request.component_variable.variable.name);
+        configuration_keys.emplace_back(request.component_variable.variable.name);
     }
     ocpp_request.key = configuration_keys;
 
@@ -106,7 +106,7 @@ ocppImpl::handle_get_variables(std::vector<types::ocpp::GetVariableRequest>& req
             types::ocpp::GetVariableResult result;
             result.component_variable = {
                 {""},
-                {key_value.key.get()}}; // we dont care about the component, only about the variable.name in OCPP1.6
+                {key_value.key.get()}}; // we don't care about the component, only about the variable.name in OCPP1.6
             if (key_value.value.has_value()) {
                 result.value = key_value.value.value().get();
                 result.status = types::ocpp::GetVariableStatusEnumType::Accepted;
@@ -123,7 +123,7 @@ ocppImpl::handle_get_variables(std::vector<types::ocpp::GetVariableRequest>& req
             // add result for each unknownKey in the response
             types::ocpp::GetVariableResult result;
             result.component_variable = {
-                {""}, {key.get()}}; // we dont care about the component, only about the variable.name in OCPP1.6
+                {""}, {key.get()}}; // we don't care about the component, only about the variable.name in OCPP1.6
             result.status = types::ocpp::GetVariableStatusEnumType::UnknownVariable;
             results.push_back(result);
         }
@@ -157,7 +157,7 @@ ocppImpl::handle_set_variables(std::vector<types::ocpp::SetVariableRequest>& req
             result.status = types::ocpp::SetVariableStatusEnumType::Rejected;
             break;
         case ocpp::v16::ConfigurationStatus::NotSupported:
-            // NotSupported in OCPP1.6 means that the configuration key is not known / not supported, so its best to go
+            // NotSupported in OCPP1.6 means that the configuration key is not known / not supported, so it's best to go
             // with UnknownVariable
             result.status = types::ocpp::SetVariableStatusEnumType::UnknownVariable;
             break;
