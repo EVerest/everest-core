@@ -140,7 +140,7 @@ ocppImpl::handle_set_variables(std::vector<types::ocpp::SetVariableRequest>& req
         // add result for each present SetVariableRequest in the response
         types::ocpp::SetVariableResult result;
         result.component_variable = request.component_variable;
-        
+
         // retrieve key and value from the request
         auto key = request.component_variable.variable.name;
         auto value = request.value;
@@ -186,5 +186,5 @@ void ocppImpl::handle_monitor_variables(std::vector<types::ocpp::ComponentVariab
     }
 }
 
-} // namespace main
+} // namespace ocpp_generic
 } // namespace module
