@@ -29,12 +29,13 @@ void ocppImpl::handle_security_event(std::string& type, std::string& info) {
 std::vector<types::ocpp::GetVariableResult>
 ocppImpl::handle_get_variables(std::vector<types::ocpp::GetVariableRequest>& requests) {
     // your code for cmd get_variables goes here
-    return {};
+    return [];
 }
 
 std::vector<types::ocpp::SetVariableResult>
 ocppImpl::handle_set_variables(std::vector<types::ocpp::SetVariableRequest>& requests) {
-    return {};
+    // your code for cmd set_variables goes here
+    return [];
 }
 
 void ocppImpl::handle_monitor_variables(std::vector<types::ocpp::ComponentVariable>& component_variables) {
