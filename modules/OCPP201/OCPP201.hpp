@@ -13,7 +13,7 @@
 // headers for provided interface implementations
 #include <generated/interfaces/auth_token_provider/Implementation.hpp>
 #include <generated/interfaces/auth_token_validator/Implementation.hpp>
-#include <generated/interfaces/ocpp/Implementation.hpp>
+#include <generated/interfaces/empty/Implementation.hpp>
 
 // headers for required interface implementations
 #include <generated/interfaces/evse_manager/Interface.hpp>
@@ -49,7 +49,7 @@ struct Conf {
 class OCPP201 : public Everest::ModuleBase {
 public:
     OCPP201() = delete;
-    OCPP201(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, std::unique_ptr<ocppImplBase> p_main,
+    OCPP201(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, std::unique_ptr<emptyImplBase> p_main,
             std::unique_ptr<auth_token_validatorImplBase> p_auth_validator,
             std::unique_ptr<auth_token_providerImplBase> p_auth_provider,
             std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager, std::unique_ptr<systemIntf> r_system,
@@ -66,7 +66,7 @@ public:
         config(config){};
 
     Everest::MqttProvider& mqtt;
-    const std::unique_ptr<ocppImplBase> p_main;
+    const std::unique_ptr<emptyImplBase> p_main;
     const std::unique_ptr<auth_token_validatorImplBase> p_auth_validator;
     const std::unique_ptr<auth_token_providerImplBase> p_auth_provider;
     const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;

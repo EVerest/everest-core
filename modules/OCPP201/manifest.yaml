@@ -27,7 +27,7 @@ config:
 provides:
   main:
     description: This is a OCPP 2.0.1 charge point
-    interface: ocpp
+    interface: empty
   auth_validator:
     description: Validates the provided token using CSMS, AuthorizationList or AuthorizationCache
     interface: auth_token_validator
