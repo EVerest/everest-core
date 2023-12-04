@@ -116,4 +116,4 @@ class ProbeModule:
         if not self._started:
             raise RuntimeError("Called wait_to_be_ready(), but probe module has not been started yet! "
                                "Please use start() to start the module first.")
-        await asyncio.wait_for(self._ready_event.wait(), timeout)
+        await asyncio.wait_for(asyncio.to_thread(self._ready_event.wait), timeout)
