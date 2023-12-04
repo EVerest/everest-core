@@ -48,6 +48,7 @@ void powermeterImpl::init() {
 }
 
 void powermeterImpl::ready() {
+    // TODO(ddo) Remove this once done testing
     std::thread([this]() {
         while (true) {
 
