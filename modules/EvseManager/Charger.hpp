@@ -31,11 +31,16 @@
 #include <date/tz.h>
 #include <generated/interfaces/ISO15118_charger/Interface.hpp>
 #include <generated/interfaces/board_support_AC/Interface.hpp>
+#include <generated/interfaces/powermeter/Interface.hpp>
 #include <generated/types/authorization.hpp>
 #include <generated/types/evse_manager.hpp>
+#include <memory>
 #include <mutex>
+#include <optional>
 #include <queue>
 #include <sigslot/signal.hpp>
+#include <string>
+#include <vector>
 
 namespace module {
 
@@ -46,7 +51,9 @@ using ControlPilotEvent = types::board_support::Event;
 
 class Charger {
 public:
-    Charger(const std::unique_ptr<board_support_ACIntf>& r_bsp, const std::string& connector_type);
+    Charger(const std::unique_ptr<board_support_ACIntf>& r_bsp,
+            const std::vector<std::unique_ptr<powermeterIntf>>& r_powermeter_billing, const std::string& connector_type,
+            const std::string& evse_id);
     ~Charger();
 
     // Public interface to configure Charger
@@ -191,6 +198,12 @@ public:
     void set_hlc_charging_active();
     void set_hlc_allow_close_contactor(bool on);
 
+    /// @brief Returns the OCMF data.
+    ///
+    /// The data is generated when stopping the transaction. The call resets the
+    /// internal variable and is thus not idempotent.
+    std::optional<std::string> getOcmfData();
+
 private:
     void bcb_toggle_reset();
     void bcb_toggle_detect_start_pulse();
@@ -201,7 +214,9 @@ private:
     Everest::Thread mainThreadHandle;
 
     const std::unique_ptr<board_support_ACIntf>& r_bsp;
+    const std::vector<std::unique_ptr<powermeterIntf>>& r_powermeter_billing;
     const std::string& connector_type;
+    const std::string evse_id;
 
     void mainThread();
 
@@ -218,7 +233,7 @@ private:
     void stopSession();
     bool sessionActive();
 
-    void startTransaction();
+    bool startTransaction();
     void stopTransaction();
     bool transactionActive();
     bool transaction_active;
@@ -294,6 +309,7 @@ private:
     int ac_with_soc_timer;
 
     std::chrono::time_point<date::utc_clock> lastPwmUpdate;
+    std::optional<std::string> ocmfData;
 
     float update_pwm_last_dc;
     void update_pwm_now(float dc);

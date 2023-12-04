@@ -10,6 +10,7 @@
 
 #include "Charger.hpp"
 
+#include <generated/types/powermeter.hpp>
 #include <math.h>
 #include <string.h>
 
@@ -17,11 +18,11 @@
 
 namespace module {
 
-Charger::Charger(const std::unique_ptr<board_support_ACIntf>& r_bsp, const std::string& connector_type) :
-    r_bsp(r_bsp), connector_type(connector_type) {
-
+Charger::Charger(const std::unique_ptr<board_support_ACIntf>& r_bsp,
+                 const std::vector<std::unique_ptr<powermeterIntf>>& r_powermeter_billing,
+                 const std::string& connector_type, const std::string& evse_id) :
+    r_bsp(r_bsp), r_powermeter_billing(r_powermeter_billing), connector_type(connector_type), evse_id{evse_id} {
     connectorEnabled = true;
-
     maxCurrent = 6.0;
     maxCurrentCable = r_bsp->call_read_pp_ampacity();
     authorized = false;
@@ -230,7 +231,8 @@ void Charger::runStateMachine() {
 
                 // If we are restarting, the transaction may already be active
                 if (!transactionActive()) {
-                    startTransaction();
+                    if (!startTransaction())
+                        break;
                 }
 
                 const EvseState targetState(EvseState::PrepareCharging);
@@ -313,7 +315,8 @@ void Charger::runStateMachine() {
                 }
             } else if (AuthorizedPnC()) {
 
-                startTransaction();
+                if (!startTransaction())
+                    break;
 
                 const EvseState targetState(EvseState::PrepareCharging);
 
@@ -1023,6 +1026,7 @@ bool Charger::cancelTransaction(const types::evse_manager::StopTransactionReques
         if (request.id_tag) {
             stop_transaction_id_tag = request.id_tag.value();
         }
+
         signalEvent(types::evse_manager::SessionEventEnum::ChargingFinished);
         signalEvent(types::evse_manager::SessionEventEnum::TransactionFinished);
         return true;
@@ -1058,19 +1062,60 @@ void Charger::stopSession() {
     signalEvent(types::evse_manager::SessionEventEnum::SessionFinished);
 }
 
-void Charger::startTransaction() {
+bool Charger::startTransaction() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
     stop_transaction_id_tag.clear();
     transaction_active = true;
+
+    // TODO(ddo) client_id, tariff_id, cable_id and user_data are currently not
+    // set.
+    const types::powermeter::TransactionReq req{evse_id, id_token.id_token, "", 0, 0, ""};
+    for (const auto& meter : r_powermeter_billing) {
+        const auto response = meter->call_start_transaction(req);
+        // If we want to start the session but fail, we stop the charging since
+        // we can't bill the customer.
+        if (response.status == types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR) {
+            EVLOG_error << "Failed to start a transaction on the power meter " << response.error.value_or("");
+            currentState = EvseState::Error;
+            return false;
+        } else if (response.status == types::powermeter::TransactionRequestStatus::OK) {
+            break;
+        }
+    }
+
     signalEvent(types::evse_manager::SessionEventEnum::TransactionStarted);
+    return true;
 }
 
 void Charger::stopTransaction() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
     transaction_active = false;
     last_stop_transaction_reason = types::evse_manager::StopTransactionReason::EVDisconnected;
+
+    const std::string transaction_id{};
+
+    for (const auto& meter : r_powermeter_billing) {
+        const auto response = meter->call_stop_transaction(transaction_id);
+        // If we fail to stop the transaction, we ignore since there is no
+        // path to recovery. Its also not clear what to do
+        if (response.status == types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR) {
+            EVLOG_error << "Failed to stop a transaction on the power meter " << response.error.value_or("");
+            break;
+        } else if (response.status == types::powermeter::TransactionRequestStatus::OK) {
+            ocmfData = response.ocmf;
+            break;
+        }
+    }
+
     signalEvent(types::evse_manager::SessionEventEnum::ChargingFinished);
     signalEvent(types::evse_manager::SessionEventEnum::TransactionFinished);
+}
+
+std::optional<std::string> Charger::getOcmfData() {
+    std::lock_guard<std::recursive_mutex> lock(stateMutex);
+    std::optional<std::string> out;
+    std::swap(out, ocmfData);
+    return out;
 }
 
 std::string Charger::getStopTransactionIdTag() {
