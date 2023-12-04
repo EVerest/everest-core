@@ -23,6 +23,11 @@ provides:
 requires:
   serial_comm_hub:
     interface: serial_communication_hub
+  transactional_power_meter:
+    # Optional power meter which supports transactions.
+    interface: powermeter
+    min_connections: 0
+    max_connections: 1
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
   authors:
