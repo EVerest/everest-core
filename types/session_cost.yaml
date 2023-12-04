@@ -1,0 +1,79 @@
+description: Types to provide the session price
+types:
+  SessionCostChunk:
+    description: >-
+      A chunk of the session cost. The total cost of the session is the sum of
+      all chunks.
+    type: object
+    additionalProperties: false
+    properties:
+      timestamp_from:
+        description: >-
+          Absolute timestamp for the start of this chunk in RFC3339 UTC format
+        type: string
+        format: date-time
+      timestamp_to:
+        description: >-
+          Absolute timestamp for the end of this chunk in RFC3339 UTC format
+        type: string
+        format: date-time
+      cost:
+        description: >-
+          Cost of the energy consumed during this chunk in the currency
+          specified in the session price
+        type: object
+        $ref: /price#/Price
+      category:
+        description: >-
+          Cost category. Typically this is energy or time.
+        type: string
+        enum:
+          - Energy
+          - Time
+          - Other
+  SessionStatus:
+    description: >-
+      Session status enum. Session can be running or finished. Costs of the
+      running session are not final and can change.
+    type: string
+    enum:
+      - Running
+      - Finished
+  SessionCost:
+    description: >-
+      Session cost object containing the total cost of the session and a list
+      of chunks
+    type: object
+    additionalProperties: false
+    required:
+      - id_tag
+      - currency
+      - status
+    properties:
+      id_tag:
+        description: The id tag assigned to this transaction
+        type: object
+        $ref: /authorization#/ProvidedIdToken
+      currency:
+        description: >-
+          Currency of the session cost. It applies to all chunks.
+        type: object
+        $ref: /price#/Currency
+      cost_chunks:
+        description: >-
+          List of cost chunks. The total cost of the session is the sum of
+          all chunks.
+        type: array
+        items:
+          description: One chunk of the session cost
+          type: object
+          $ref: /session_cost#/SessionCostChunk  
+        default: []
+      status:
+        description: >-
+          Session status. Session can be running or finished. Costs of the
+          running session are not final and can change.
+          Only afeter the session is finished, the session cost can be commited
+          to bank and/or backend.
+        type: object
+        $ref: /session_cost#/SessionStatus

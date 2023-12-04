@@ -1,0 +1,159 @@
+description: >-
+  The definition of the currency and price types.
+types:
+  Currency:
+    description: >-
+      Currency in 3 alphabetical characters according to  ISO 4217.
+    type: string
+    minLength: 3
+    maxLength: 3
+    example: EUR
+    enum:
+      - ADP
+      - AFA
+      - ALK
+      - AOK
+      - AON
+      - AOR
+      - ARA
+      - ARP
+      - ARY
+      - ATS
+      - AYM
+      - AZM
+      - BAD
+      - BEC
+      - BEF
+      - BEL
+      - BGJ
+      - BGK
+      - BGL
+      - BOP
+      - BRB
+      - BRC
+      - BRE
+      - BRN
+      - BRR
+      - BUK
+      - BYB
+      - BYR
+      - CHC
+      - CSD
+      - CSJ
+      - CSK
+      - CUC
+      - CYP
+      - DDM
+      - DEM
+      - ECS
+      - ECV
+      - EEK
+      - ESA
+      - ESB
+      - ESP
+      - FIM
+      - FRF
+      - GEK
+      - GHC
+      - GHP
+      - GNE
+      - GNS
+      - GQE
+      - GRD
+      - GWE
+      - GWP
+      - HRD
+      - HRK
+      - IEP
+      - ILP
+      - ILR
+      - ISJ
+      - ITL
+      - LAJ
+      - LSM
+      - LTL
+      - LTT
+      - LUC
+      - LUF
+      - LUL
+      - LVL
+      - LVR
+      - MGF
+      - MLF
+      - MRO
+      - MTL
+      - MTP
+      - MVQ
+      - MXP
+      - MZE
+      - MZM
+      - NIC
+      - NLG
+      - PEH
+      - PEI
+      - PES
+      - PLZ
+      - PTE
+      - RHD
+      - ROK
+      - ROL
+      - RUR
+      - SDD
+      - SDP
+      - SIT
+      - SKK
+      - SRG
+      - STD
+      - SUR
+      - TJR
+      - TMM
+      - TPE
+      - TRL
+      - UAK
+      - UGS
+      - UGW
+      - USS
+      - UYN
+      - UYP
+      - VEB
+      - VEF
+      - VNC
+      - XEU
+      - XFO
+      - XFU
+      - XRE
+      - YDD
+      - YUD
+      - YUM
+      - YUN
+      - ZAL
+      - ZMK
+      - ZRN
+      - ZRZ
+      - ZWC
+      - ZWD
+      - ZWN
+      - ZWR
+  Price:
+    description: >-
+      Price is expressed as an amount of minor units of the currency.
+      In ISO 4217 this is the number of digits after the decimal separator.
+      And we use it here as well.
+      Example price of 1.23 EUR is expressed as:
+        value: 123
+        decimals: 2
+    type: object
+    additionalProperties: false
+    required:
+      - value
+      - decimals
+    properties:
+      value:
+        description: >-
+          The amount of minor units of the currency. 
+        type: integer
+      decimals:
+        description: >-
+          The number of digits after the decimal separator.
+        type: integer
+        minimum: 0
