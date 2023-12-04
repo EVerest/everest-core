@@ -142,6 +142,10 @@ struct Callbacks {
 
     /// \brief Callback function that can be called when all connectors are unavailable
     std::optional<std::function<void()>> all_connectors_unavailable_callback;
+
+    /// \brief Callback function that can be used to handle arbitrary data transfers for all vendorId and
+    /// messageId
+    std::optional<std::function<DataTransferResponse(const DataTransferRequest& request)>> data_transfer_callback;
 };
 
 /// \brief Combines ChangeAvailabilityRequest with persist flag for scheduled Availability changes
@@ -163,11 +167,6 @@ private:
     std::shared_ptr<DatabaseHandler> database_handler;
 
     std::map<int32_t, AvailabilityChange> scheduled_change_availability_requests;
-
-    std::map<std::string,
-             std::map<std::string, std::function<DataTransferResponse(const std::optional<std::string>& msg)>>>
-        data_transfer_callbacks;
-    std::mutex data_transfer_callbacks_mutex;
 
     std::map<int32_t, std::pair<IdToken, int32_t>> remote_start_id_per_evse;
 
@@ -642,8 +641,8 @@ public:
     /// \param messageId
     /// \param data
     /// \return DataTransferResponse contaning the result from CSMS
-    DataTransferResponse data_transfer_req(const CiString<255>& vendorId, const CiString<50>& messageId,
-                                           const std::string& data);
+    DataTransferResponse data_transfer_req(const CiString<255>& vendorId, const std::optional<CiString<50>>& messageId,
+                                           const std::optional<std::string>& data);
 };
 
 } // namespace v201
