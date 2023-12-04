@@ -308,8 +308,9 @@ void API::init() {
                 try {
                     connector_id = std::stoi(data);
                 } catch (const std::exception& e) {
-                    EVLOG_error << "Could not parse connector id for enable connector, using " << connector_id
-                                << ", error: " << e.what();
+                    EVLOG_error << "Could not parse connector id for enable connector, ignoring command, error: "
+                                << e.what();
+                    return;
                 }
             }
             evse->call_enable(connector_id);
@@ -322,8 +323,9 @@ void API::init() {
                 try {
                     connector_id = std::stoi(data);
                 } catch (const std::exception& e) {
-                    EVLOG_error << "Could not parse connector id for disable connector, using " << connector_id
-                                << ", error: " << e.what();
+                    EVLOG_error << "Could not parse connector id for disable connector, ignoring command, error: "
+                                << e.what();
+                    return;
                 }
             }
             evse->call_disable(connector_id);
