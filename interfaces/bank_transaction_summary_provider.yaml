@@ -7,4 +7,4 @@ vars:
       Summary of a bank transaction. Depends on bank and the backend. Therefore
       it's mostly opaque data at the moment.
     type: object
-    $ref: bank_transaction#/BankTransactionSummary
+    $ref: /bank_transaction#/BankTransactionSummary
