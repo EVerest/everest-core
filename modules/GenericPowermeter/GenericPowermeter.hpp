@@ -30,16 +30,16 @@ public:
     GenericPowermeter() = delete;
     GenericPowermeter(const ModuleInfo& info, std::unique_ptr<powermeterImplBase> p_main,
                       std::unique_ptr<serial_communication_hubIntf> r_serial_comm_hub,
-                      std::vector<std::unique_ptr<powermeterIntf>> r_specific_power_meter, Conf& config) :
+                      std::vector<std::unique_ptr<powermeterIntf>> r_transactional_power_meter, Conf& config) :
         ModuleBase(info),
         p_main(std::move(p_main)),
         r_serial_comm_hub(std::move(r_serial_comm_hub)),
-        r_specific_power_meter(std::move(r_specific_power_meter)),
+        r_transactional_power_meter(std::move(r_transactional_power_meter)),
         config(config){};
 
     const std::unique_ptr<powermeterImplBase> p_main;
     const std::unique_ptr<serial_communication_hubIntf> r_serial_comm_hub;
-    const std::vector<std::unique_ptr<powermeterIntf>> r_specific_power_meter;
+    const std::vector<std::unique_ptr<powermeterIntf>> r_transactional_power_meter;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1

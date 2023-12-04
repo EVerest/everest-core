@@ -48,19 +48,19 @@ void powermeterImpl::ready() {
 }
 
 types::powermeter::TransactionStopResponse powermeterImpl::handle_stop_transaction(std::string& transaction_id) {
-    if (mod->r_specific_power_meter.empty())
+    if (mod->r_transactional_power_meter.empty())
         return {types::powermeter::TransactionRequestStatus::NOT_SUPPORTED,
                 {},
                 "No specific powermeter configured to start a transaction"};
-    return mod->r_specific_power_meter.front()->call_stop_transaction(transaction_id);
+    return mod->r_transactional_power_meter.front()->call_stop_transaction(transaction_id);
 };
 
 types::powermeter::TransactionStartResponse
 powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& value) {
-    if (mod->r_specific_power_meter.empty())
+    if (mod->r_transactional_power_meter.empty())
         return {types::powermeter::TransactionRequestStatus::NOT_SUPPORTED,
                 "No specific powermeter configured to stop a transaction"};
-    return mod->r_specific_power_meter.front()->call_start_transaction(value);
+    return mod->r_transactional_power_meter.front()->call_start_transaction(value);
 }
 
 void powermeterImpl::init_default_values() {

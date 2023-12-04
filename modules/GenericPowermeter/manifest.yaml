@@ -23,7 +23,8 @@ provides:
 requires:
   serial_comm_hub:
     interface: serial_communication_hub
-  specific_power_meter:
+  transactional_power_meter:
+    # Optional power meter which supports transactions.
     interface: powermeter
     min_connections: 0
     max_connections: 1
