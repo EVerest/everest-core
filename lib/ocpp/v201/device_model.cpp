@@ -72,8 +72,7 @@ bool validate_value(const VariableCharacteristics& characteristics, const std::s
         return true;
     }
     case DataEnum::dateTime: {
-        DateTime d(value);
-        return true;
+        return is_rfc3339_datetime(value);
     }
     case DataEnum::boolean:
         return (value == "true" or value == "false");

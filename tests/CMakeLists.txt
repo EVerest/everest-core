@@ -34,3 +34,15 @@ target_link_libraries(ocsp_updater_tests PRIVATE
 
 add_test(ocsp_updater_tests ocsp_updater_tests)
 
+
+add_executable(utils_tests utils_tests.cpp)
+
+target_include_directories(utils_tests PUBLIC${GTEST_INCLUDE_DIRS})
+
+target_link_libraries(utils_tests PRIVATE
+        ocpp
+        ${GTEST_LIBRARIES}
+        ${GTEST_MAIN_LIBRARIES}
+)
+
+add_test(utils_tests utils_tests)
