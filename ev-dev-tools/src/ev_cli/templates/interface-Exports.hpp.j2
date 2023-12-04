@@ -107,6 +107,8 @@ public:
         {% elif 'object_type' in cmd.result %}
         json retval_json = result.value();
         {{ result_type(cmd.result) }} retval = retval_json;
+        {% elif 'array_type' in cmd.result %}
+        {{ result_type(cmd.result) }} retval (result.value().begin(), result.value().end());
         {% else %}
         auto retval = {{ var_to_cpp(cmd.result) }}(result.value());
         {% endif %}

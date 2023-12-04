@@ -76,6 +76,8 @@ def create_dummy_result(json_type) -> str:
             return '"everest"'
         elif type == 'object':
             return '{}'
+        elif type == 'array':
+            return '{}'
         else:
             raise Exception(f'This json type "{type}" is not known or not implemented')
 
