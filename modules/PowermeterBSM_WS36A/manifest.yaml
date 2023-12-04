@@ -1,0 +1,25 @@
+description: Powermeter driver for BAUER-BSM-WS36A
+provides:
+  main:
+    description: Implementation of the driver functionality
+    interface: powermeter
+    config:
+      powermeter_device_id:
+        description: The powermeter's address on the serial bus
+        type: integer
+        minimum: 0
+        maximum: 255
+        default: 1
+      modbus_base_address:
+        description: The base address for register access
+        type: integer
+        minimum: 0
+        maximum: 65535
+        default: 30001
+requires:
+  serial_comm_hub:
+    interface: serial_communication_hub
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Dima Dorezyuk
