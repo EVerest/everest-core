@@ -80,7 +80,7 @@ types:
         type: string
         format: date-time
   TransactionStopResponse:
-    description: Report returned when a OCMF transaction is requested to stop. If successful, includes the signed OCMF string. In case of an error, an additional error message can be provided.
+    description: Report returned when a signed transaction is requested to stop. If successful, includes the signed meter value object. In case of an error, an additional error message can be provided.
     type: object
     additionalProperties: false
     required:
@@ -90,7 +90,7 @@ types:
         description: Response status that indicates whether the transaction stop request could successfully be performed.
         $ref: /powermeter#/TransactionRequestStatus
       signed_meter_value:
-        description: The signed OCMF report of the stopped transaction. Must be provided if status is OK.
+        description: The signed meter value report of the stopped transaction. Must be provided if status is OK.
         type: object
         $ref: /powermeter#/SignedMeterValue
       error:
