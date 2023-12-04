@@ -201,7 +201,7 @@ public:
     /// @brief Returns the OCMF data.
     ///
     /// The data is generated when stopping the transaction. The call resets the
-    /// internal variable and is thus not idem potent.
+    /// internal variable and is thus not idempotent.
     std::optional<std::string> getOcmfData();
 
 private:
