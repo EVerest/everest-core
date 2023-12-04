@@ -86,7 +86,7 @@ LemDCBM400600Controller::stop_transaction(const std::string& transaction_id) {
             [this, transaction_id]() {
                 this->request_device_to_stop_transaction(transaction_id);
                 auto signed_meter_value =
-                    types::powermeter::SignedMeterValue{fetch_ocmf_result(transaction_id), "OCMF", "OCMF"};
+                    types::powermeter::SignedMeterValue{fetch_ocmf_result(transaction_id), "", "OCMF"};
                 return types::powermeter::TransactionStopResponse{types::powermeter::TransactionRequestStatus::OK,
                                                                   signed_meter_value};
             },
