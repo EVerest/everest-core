@@ -25,11 +25,10 @@ Charger::Charger(const std::unique_ptr<board_support_ACIntf>& r_bsp, const std::
     maxCurrent = 6.0;
     maxCurrentCable = r_bsp->call_read_pp_ampacity();
     authorized = false;
-    r_bsp->call_enable(false);
 
     update_pwm_last_dc = 0.;
 
-    currentState = EvseState::Disabled;
+    currentState = EvseState::Idle;
     last_state = EvseState::Disabled;
 
     currentDrawnByVehicle[0] = 0.;
