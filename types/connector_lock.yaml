@@ -1,0 +1,37 @@
+description: EV and EVSE board support types
+types:
+  ConnectorLockError:
+    description: >-
+      Errors for Connector Lock
+
+      These following error types give more details about connector lock errors.
+      You should consider setting a MREC_1_ConnectorLockFailure to indicated a generic lock failure with an MREC error code as well
+      as one of the more detailed but custom error codes to specify the reason:
+
+      ConnectorLockCapNotCharged: The capacitor for connector lock motor failed to charge within expected time
+      ConnectorLockUnexpectedOpen: The connector lock feedback does return open while it should be close
+      ConnectorLockUnexpectedClose: The connector lock feedback does return closed while it should be open
+      ConnectorLockFailedLock: The connector lock failed to lock (feedback still returns open)
+      ConnectorLockFailedUnlock: The connector lock failed to unlock (feedback still returns closed)
+
+      All error codes that begin with MREC needs to be implemented to fulfill the Minimum Required Error Codes defined by the ChargeX consortium:
+
+      https://inl.gov/content/uploads/2023/07/ChargeX_MREC_Rev5_09.12.23.pdf
+
+      MREC_1_ConnectorLockFailure: Failure to lock or unlock connector on the vehicle side. 
+            How should that be implemented? We can only find out about locking on the EVSE side,
+            so we will use this error to report EVSE side lock failures.
+    type: object
+    additionalProperties: false
+    required:
+      - event
+    properties:
+      event:
+        type: string
+        enum:
+          - 'ConnectorLockCapNotCharged'
+          - 'ConnectorLockUnexpectedOpen'
+          - 'ConnectorLockUnexpectedClose'
+          - 'ConnectorLockFailedLock'
+          - 'ConnectorLockFailedUnlock'
+          - 'MREC_1_ConnectorLockFailure'

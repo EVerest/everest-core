@@ -1,54 +1,54 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
-#include "board_support_ACImpl.hpp"
+// Copyright Pionix GmbH and Contributors to EVerest
 
-using namespace std::chrono_literals;
+#include "evse_board_supportImpl.hpp"
 
 namespace module {
 namespace board_support {
-
-types::board_support::Event cast_event_type(const Event& e) {
+/*
+    types::board_support_common::Event cast_event_type(const Event& e) {
     switch (e.type) {
     case Event_InterfaceEvent_CAR_PLUGGED_IN:
-        return types::board_support::Event::CarPluggedIn;
+        return types::board_support_common::Event::CarPluggedIn;
     case Event_InterfaceEvent_CAR_REQUESTED_POWER:
-        return types::board_support::Event::CarRequestedPower;
+        return types::board_support_common::Event::CarRequestedPower;
     case Event_InterfaceEvent_POWER_ON:
-        return types::board_support::Event::PowerOn;
+        return types::board_support_common::Event::PowerOn;
     case Event_InterfaceEvent_POWER_OFF:
-        return types::board_support::Event::PowerOff;
+        return types::board_support_common::Event::PowerOff;
     case Event_InterfaceEvent_CAR_REQUESTED_STOP_POWER:
-        return types::board_support::Event::CarRequestedStopPower;
+        return types::board_support_common::Event::CarRequestedStopPower;
     case Event_InterfaceEvent_CAR_UNPLUGGED:
-        return types::board_support::Event::CarUnplugged;
+        return types::board_support_common::Event::CarUnplugged;
     case Event_InterfaceEvent_ERROR_E:
-        return types::board_support::Event::ErrorE;
+        return types::board_support_common::Event::ErrorE;
     case Event_InterfaceEvent_ERROR_DF:
-        return types::board_support::Event::ErrorDF;
+        return types::board_support_common::Event::ErrorDF;
     case Event_InterfaceEvent_ERROR_RELAIS:
-        return types::board_support::Event::ErrorRelais;
+        return types::board_support_common::Event::ErrorRelais;
     case Event_InterfaceEvent_ERROR_RCD:
-        return types::board_support::Event::ErrorRCD;
+        return types::board_support_common::Event::ErrorRCD;
     case Event_InterfaceEvent_ERROR_VENTILATION_NOT_AVAILABLE:
-        return types::board_support::Event::ErrorVentilationNotAvailable;
+        return types::board_support_common::Event::ErrorVentilationNotAvailable;
     case Event_InterfaceEvent_ERROR_OVER_CURRENT:
-        return types::board_support::Event::ErrorOverCurrent;
+        return types::board_support_common::Event::ErrorOverCurrent;
     case Event_InterfaceEvent_ENTER_BCD:
-        return types::board_support::Event::EFtoBCD;
+        return types::board_support_common::Event::EFtoBCD;
     case Event_InterfaceEvent_LEAVE_BCD:
-        return types::board_support::Event::BCDtoEF;
+        return types::board_support_common::Event::BCDtoEF;
     case Event_InterfaceEvent_PERMANENT_FAULT:
-        return types::board_support::Event::PermanentFault;
+        return types::board_support_common::Event::PermanentFault;
     case Event_InterfaceEvent_EVSE_REPLUG_STARTED:
-        return types::board_support::Event::EvseReplugStarted;
+        return types::board_support_common::Event::EvseReplugStarted;
     case Event_InterfaceEvent_EVSE_REPLUG_FINISHED:
-        return types::board_support::Event::EvseReplugFinished;
+        return types::board_support_common::Event::EvseReplugFinished;
     }
 
     EVLOG_AND_THROW(Everest::EverestConfigError("Received an unknown interface event from Yeti"));
-}
 
-void board_support_ACImpl::init() {
+}*/
+
+void evse_board_supportImpl::init() {
     {
         std::lock_guard<std::mutex> lock(capsMutex);
 
@@ -65,19 +65,19 @@ void board_support_ACImpl::init() {
         caps.supports_changing_phases_during_charging = false;
     }
 
-    mod->serial.signalEvent.connect([this](Event e) { publish_event(cast_event_type(e)); });
+    mod->serial.signalEvent.connect([this](Event e) { /*publish_event(cast_event_type(e));*/ });
 
     // FIXME
     // Everything used here should be moved out of debug update in protobuf
     mod->serial.signalDebugUpdate.connect([this](DebugUpdate d) {
-        publish_nr_of_phases_available((d.use_three_phases ? 3 : 1));
+        publish_ac_nr_of_phases_available((d.use_three_phases ? 3 : 1));
 
-        types::board_support::Telemetry telemetry;
-        telemetry.temperature = d.cpu_temperature;
+        types::evse_board_support::Telemetry telemetry;
+        telemetry.evse_temperature_C = d.cpu_temperature;
         telemetry.fan_rpm = 0.;
         telemetry.supply_voltage_12V = d.supply_voltage_12V;
         telemetry.supply_voltage_minus_12V = d.supply_voltage_N12V;
-        telemetry.rcd_current = d.rcd_current;
+        // FIXME        telemetry.rcd_current = d.rcd_current;
         telemetry.relais_on = d.relais_on;
 
         publish_telemetry(telemetry);
@@ -101,9 +101,9 @@ void board_support_ACImpl::init() {
         caps.supports_changing_phases_during_charging = l.supports_changing_phases_during_charging;
         caps_received = true;
     });
-} // namespace board_support
+}
 
-void board_support_ACImpl::ready() {
+void evse_board_supportImpl::ready() {
     // Wait for caps to be received at least once
     int i;
     for (i = 0; i < 50; i++) {
@@ -113,7 +113,7 @@ void board_support_ACImpl::ready() {
                 break;
         }
 
-        std::this_thread::sleep_for(100ms);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     if (i == 49) {
         EVLOG_AND_THROW(
@@ -121,59 +121,58 @@ void board_support_ACImpl::ready() {
     }
 }
 
-void board_support_ACImpl::handle_setup(bool& three_phases, bool& has_ventilation, std::string& country_code,
-                                        bool& rcd_enabled) {
+void evse_board_supportImpl::handle_setup(bool& three_phases, bool& has_ventilation, std::string& country_code) {
     mod->serial.setCountryCode(country_code.c_str());
     mod->serial.setHasVentilation(has_ventilation);
     mod->serial.setThreePhases(three_phases);
-    mod->serial.enableRCD(rcd_enabled);
-};
+    // mod->serial.enableRCD(rcd_enabled);
+}
 
-void board_support_ACImpl::handle_enable(bool& value) {
+types::evse_board_support::HardwareCapabilities evse_board_supportImpl::handle_get_hw_capabilities() {
+    std::lock_guard<std::mutex> lock(capsMutex);
+    return caps;
+}
+
+void evse_board_supportImpl::handle_enable(bool& value) {
     if (value)
         mod->serial.enable();
     else
         mod->serial.disable();
-};
-
-void board_support_ACImpl::handle_pwm_on(double& value) {
-    mod->serial.setPWM(1, value);
-};
-
-void board_support_ACImpl::handle_pwm_off() {
-    mod->serial.setPWM(0, 0.);
-};
-
-void board_support_ACImpl::handle_pwm_F() {
-    mod->serial.setPWM(2, 0.);
-};
-
-void board_support_ACImpl::handle_allow_power_on(bool& value) {
-    mod->serial.allowPowerOn(value);
-};
-
-bool board_support_ACImpl::handle_force_unlock() {
-    return mod->serial.forceUnlock();
-};
-
-void board_support_ACImpl::handle_switch_three_phases_while_charging(bool& value) {
-    mod->serial.switchThreePhasesWhileCharging(value);
-};
-
-void board_support_ACImpl::handle_evse_replug(int& value) {
-    mod->serial.replug(value);
-};
-
-double board_support_ACImpl::handle_read_pp_ampacity() {
-    // FIXME: read PP ampacity from yeti, report back maximum current the hardware can handle for now
-    std::lock_guard<std::mutex> lock(capsMutex);
-    return caps.max_current_A_import;
 }
 
-types::board_support::HardwareCapabilities board_support_ACImpl::handle_get_hw_capabilities() {
+void evse_board_supportImpl::handle_pwm_on(double& value) {
+    mod->serial.setPWM(1, value);
+}
+
+void evse_board_supportImpl::handle_pwm_off() {
+    mod->serial.setPWM(0, 0.);
+}
+
+void evse_board_supportImpl::handle_pwm_F() {
+    mod->serial.setPWM(2, 0.);
+}
+
+void evse_board_supportImpl::handle_allow_power_on(types::evse_board_support::PowerOnOff& value) {
+    mod->serial.allowPowerOn(value.allow_power_on);
+}
+
+void evse_board_supportImpl::handle_ac_switch_three_phases_while_charging(bool& value) {
+    mod->serial.switchThreePhasesWhileCharging(value);
+}
+
+void evse_board_supportImpl::handle_evse_replug(int& value) {
+    mod->serial.replug(value);
+}
+
+types::board_support_common::ProximityPilot evse_board_supportImpl::handle_ac_read_pp_ampacity() {
+    // FIXME: read PP ampacity from yeti, report back maximum current the hardware can handle for now
     std::lock_guard<std::mutex> lock(capsMutex);
-    return caps;
-};
+    return {types::board_support_common::Ampacity::A_32};
+}
+
+void evse_board_supportImpl::handle_ac_set_overcurrent_limit_A(double& value) {
+    // your code for cmd ac_set_overcurrent_limit_A goes here
+}
 
 } // namespace board_support
 } // namespace module

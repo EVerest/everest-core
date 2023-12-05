@@ -1,0 +1,103 @@
+description: EV and EVSE board support types
+types:
+  BspEvent:
+    description: >-
+      Event stream from ControlPilot signal/Relais.
+
+      A-F: CP states as defined in IEC61851-1
+      PowerOn: Hardware confirms that contactors switched on correctly (typically mirror contacts indicated successful switch on)
+      PowerOff: Hardware confirms that contactors switched off correctly and are not welded (typically mirror contacts indicated successful switch off)
+
+      ErrorDF: The CP diode in the EV is shorted.
+      ErrorVentilationNotAvailable: EV requested state D but no ventilation is available.
+      ErrorBrownOut: The hardware/MCU detected a brown out.
+      ErrorEnergyManagement: Energy could not be delivered because an (external) energy management failed.
+      PermanentFault: The EVSE is permanently broken and requires repair.
+      EvseReplugStarted: Special testing sequence: virtual replugging started
+      EvseReplugFinished: Special testing sequence: virtual replugging stopped
+      Disconnected: Only used on EV side: Not connected to a charging station. Do not use on EVSE side.
+
+      All error codes that begin with MREC needs to be implemented to fulfill the Minimum Required Error Codes defined by the ChargeX consortium:
+
+      https://inl.gov/content/uploads/2023/07/ChargeX_MREC_Rev5_09.12.23.pdf
+
+      MREC_1_ConnectorLockFailure: does not apply here
+      MREC_2_GroundFailure: Ground fault circuit interrupter has been activated.
+      MREC_3_HighTemperature: High temperature inside the EVSE is derating power delivery.
+      MREC_4_OverCurrentFailure: Over current protection device has tripped.
+      MREC_5_OverVoltage: Input voltage to the vehicle has risen above an acceptable level.
+      MREC_6_UnderVoltage: Input voltage to the vehicle has dropped below an acceptable level.
+      MREC_7 does not apply here
+      MREC_8_EmergencyStop: Emergency stop is pressed by the user (required if equipped).
+      MREC_9 does not apply here
+      MREC_10_InvalidVehicleMode: The vehicle is in an invalid mode for charging. This error can also be emitted by other modules, e.g. ISO communication.
+      MREC_11/12/13 do not apply here
+      MREC_14_PilotFault: The control pilot voltage is out of range.
+      MREC_15_PowerLoss: The EVSE is unable to supply any power due to mains failure
+      MREC_16 does not apply here, that is for ISO protocol
+      MREC_17_EVSEContactorFault: Contactors fail to open or close on EVSE's side. May also include welding related errors.
+      MREC_18_CableOverTempDerate: Temperature of charging cable or connector assembly is too high, resulting in reduced power operation.
+      MREC_19_CableOverTempStop: Temperature of charging cable or connector assembly is too high, resulting in a stopped charging session.
+      MREC_20_PartialInsertion: Cable latch is raised due to incomplete insertion into the vehicle charging port.
+      MREC_21/22 does not apply here
+      MREC_23_ProximityFault: The proximity voltage is out of range.
+      MREC_24_ConnectorVoltageHigh: The output voltage of EVSE is high before charging starts or after charging ends.
+      MREC_25_BrokenLatch: The latch on the connector is broken.
+      MREC_26_CutCable: The output cable has been severed from the EVSE.
+    type: object
+    additionalProperties: false
+    required:
+      - event
+    properties:
+      event:
+        type: string
+        enum:
+          - 'A'
+          - 'B'
+          - 'C'
+          - 'D'
+          - 'E'
+          - 'F'
+          - 'PowerOn'
+          - 'PowerOff'
+          - 'ErrorDF'
+          - 'ErrorVentilationNotAvailable'
+          - 'ErrorBrownOut'
+          - 'ErrorEnergyManagement'
+          - 'PermanentFault'
+          - 'EvseReplugStarted'
+          - 'EvseReplugFinished'
+          - 'Disconnected'
+          - 'MREC_2_GroundFailure'
+          - 'MREC_3_HighTemperature'
+          - 'MREC_4_OverCurrentFailure'
+          - 'MREC_5_OverVoltage'
+          - 'MREC_6_UnderVoltage'
+          - 'MREC_8_EmergencyStop'
+          - 'MREC_10_InvalidVehicleMode'
+          - 'MREC_14_PilotFault'
+          - 'MREC_15_PowerLoss'
+          - 'MREC_17_EVSEContactorFault'
+          - 'MREC_18_CableOverTempDerate'
+          - 'MREC_19_CableOverTempStop'
+          - 'MREC_20_PartialInsertion'
+          - 'MREC_23_ProximityFault'
+          - 'MREC_24_ConnectorVoltageHigh'
+          - 'MREC_25_BrokenLatch'
+          - 'MREC_26_CutCable'
+  ProximityPilot:
+    description: Current capability (ampacity) of the cable
+    type: object
+    additionalProperties: false
+    required:
+      - ampacity
+    properties:
+      ampacity:
+        description: Ampacity value of the cable assembly
+        type: string
+        enum:
+          - None
+          - A_13
+          - A_20
+          - A_32
+          - A_63_3ph_70_1ph

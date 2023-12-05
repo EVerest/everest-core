@@ -54,10 +54,6 @@ config:
     description: Country Code
     type: string
     default: DE
-  rcd_enabled:
-    description: Enable or disable RCD
-    type: boolean
-    default: true
   max_current_import_A:
     description: User configurable current limit for this EVSE in Ampere
     type: number
@@ -214,7 +210,11 @@ provides:
     interface: auth_token_provider
 requires:
   bsp:
-    interface: board_support_AC
+    interface: evse_board_support
+  ac_rcd:
+    interface: ac_rcd
+    min_connections: 0
+    max_connections: 1
   powermeter_grid_side:
     interface: powermeter
     min_connections: 0

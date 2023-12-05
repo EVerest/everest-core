@@ -14,23 +14,19 @@ const STATE_E = 5;
 const STATE_F = 6;
 const STATE_DF = 7;
 
-const Event_CarPluggedIn = 0;
-const Event_CarRequestedPower = 1;
-const Event_PowerOn = 2;
-const Event_PowerOff = 3;
-const Event_CarRequestedStopPower = 4;
-const Event_CarUnplugged = 5;
-const Event_Error_E = 6;
-const Event_Error_DF = 7;
-const Event_Error_Relais = 8;
-const Event_Error_RCD = 9;
-const Event_Error_VentilationNotAvailable = 10;
-const Event_EFtoBCD = 11;
-const Event_BCDtoEF = 12;
+const Event_PowerOn = 8;
+const Event_PowerOff = 9;
+const Event_Error_Relais = 10;
+const Event_Error_RCD = 11;
+const Event_Error_VentilationNotAvailable = 12;
 const Event_PermanentFault = 13;
 
 var module_id;
 let global_info;
+
+function publish_ac_nr_of_phases_available(mod, n) {
+  mod.provides.board_support.publish.ac_nr_of_phases_available(n);
+}
 
 boot_module(async ({
   setup, info, config, mqtt,
@@ -39,11 +35,9 @@ boot_module(async ({
   // register commands
   setup.provides.yeti_simulation_control.register.enable(enable_simulation);
   setup.provides.yeti_simulation_control.register.setSimulationData((mod, args) => {
-    /* evlog.error(args.value); */
     mod.simulation_data = args.value;
   });
 
-  setup.provides.yeti_extras.register.firmware_update((mod, args) => { });
   setup.provides.powermeter.register.stop_transaction((mod, args) => ({
     status: 'NOT_SUPPORTED',
     error: 'YetiDriver does not support stop transaction request.',
@@ -54,8 +48,10 @@ boot_module(async ({
     mod.three_phases = args.three_phases;
     mod.has_ventilation = args.has_ventilation;
     mod.country_code = args.country_code;
-    mod.rcd_enabled = args.rcd_enabled;
-    publish_nr_of_phases_available(mod, (mod.use_three_phases_confirmed ? 3 : 1));
+    publish_ac_nr_of_phases_available(mod, (mod.use_three_phases_confirmed ? 3 : 1));
+  });
+
+  setup.provides.board_support.register.ac_set_overcurrent_limit_A((mod, args) => {
   });
 
   setup.provides.board_support.register.enable((mod, args) => {
@@ -64,20 +60,22 @@ boot_module(async ({
     } else mod.current_state = STATE_DISABLED;
   });
 
-  setup.provides.board_support.register.pwm_on((mod, args) => { pwmOn(mod, args.value); });
+  setup.provides.board_support.register.pwm_on((mod, args) => { pwmOn(mod, args.value / 100.0); });
   setup.provides.board_support.register.pwm_off((mod, args) => { pwmOff(mod); });
   setup.provides.board_support.register.pwm_F((mod, args) => { pwmF(mod); });
   setup.provides.board_support.register.evse_replug((mod, args) => {
     evlog.error('Replugging not supported');
   });
+
   setup.provides.board_support.register.allow_power_on((mod, args) => {
-    mod.power_on_allowed = args.value;
+    mod.power_on_allowed = args.value.allow_power_on;
   });
+
   setup.provides.board_support.register.force_unlock((mod, args) => /* lock/unlock not implemented */ true);
-  setup.provides.board_support.register.switch_three_phases_while_charging((mod, args) => {
+  setup.provides.board_support.register.ac_switch_three_phases_while_charging((mod, args) => {
     mod.use_three_phases = args.value;
     mod.use_three_phases_confirmed = args.value;
-    publish_nr_of_phases_available(mod, (mod.use_three_phases_confirmed ? 3 : 1));
+    ac_publish_nr_of_phases_available(mod, (mod.use_three_phases_confirmed ? 3 : 1));
   });
   setup.provides.board_support.register.get_hw_capabilities((mod, args) => ({
     max_current_A_import: 32.0,
@@ -90,8 +88,8 @@ boot_module(async ({
     min_phase_count_export: 1,
     supports_changing_phases_during_charging: true,
   }));
-  setup.provides.board_support.register.read_pp_ampacity((mod, args) => {
-    let amp = read_pp_ampacity(mod);
+  setup.provides.board_support.register.ac_read_pp_ampacity((mod, args) => {
+    let amp = { ampacity: read_pp_ampacity(mod) };
     return amp;
   });
 
@@ -117,7 +115,7 @@ function telemetry_fast(mod) {
   mod.telemetry_data.power_path_controller.timestamp = date.toISOString();
   mod.telemetry_data.power_path_controller.cp_voltage_high = mod.cpHi;
   mod.telemetry_data.power_path_controller.cp_voltage_low = mod.cpLo;
-  mod.telemetry_data.power_path_controller.cp_pwm_duty_cycle = mod.pwm_duty_cycle * 100.;
+  mod.telemetry_data.power_path_controller.cp_pwm_duty_cycle = mod.pwm_duty_cycle * 100.0;
   mod.telemetry_data.power_path_controller.cp_state = stateToString(mod);
 
   mod.telemetry_data.power_path_controller.temperature_controller = mod.powermeter.tempL1;
@@ -143,13 +141,14 @@ function telemetry_fast(mod) {
 }
 
 function publish_event(mod, event) {
-  // console.log("------------ EVENT PUB "+event);
-  mod.provides.board_support.publish.event(event_to_enum(event));
+  //console.log("------------ EVENT PUB " + event);
+  mod.provides.board_support.publish.event({ event: event_to_enum(event) });
 }
+
 
 function enable_simulation(mod, args) {
   if (mod.simulation_enabled && !args.value) {
-    publish_event(mod, Event_CarUnplugged);
+    publish_event(mod, Event_A);
     clearData(mod);
   }
   mod.simulation_enabled = args.value;
@@ -172,7 +171,6 @@ function simulation_loop(mod) {
       publish_telemetry(mod);
       break;
     case 2:
-      publish_yeti_extras(mod);
       break;
     case 3:
       publish_keepalive(mod);
@@ -187,6 +185,10 @@ function simulation_loop(mod) {
 
 // state machine for the evse
 function simulation_statemachine(mod) {
+  if (mod.last_state != mod.current_state) {
+    publish_event(mod, mod.current_state);
+  }
+
   switch (mod.current_state) {
     case STATE_DISABLED:
       powerOff();
@@ -199,15 +201,9 @@ function simulation_statemachine(mod) {
       reset_powermeter(mod);
       mod.simplified_mode = false;
 
-      if (mod.last_state === STATE_B || mod.last_state === STATE_C || mod.last_state === STATE_D) {
-        publish_event(mod, Event_BCDtoEF);
-      }
-
       if (mod.last_state != STATE_A && mod.last_state != STATE_DISABLED
         && mod.last_state != STATE_F) {
-        publish_event(mod, Event_CarRequestedStopPower);
         powerOff(mod);
-        publish_event(mod, Event_CarUnplugged);
 
         // If car was unplugged, reset RCD flag.
         mod.rcd_current = 0.1;
@@ -220,69 +216,40 @@ function simulation_statemachine(mod) {
       // responds to EV opens S2 (w/o PWM)
 
       if (mod.last_state != STATE_A && mod.last_state != STATE_B) {
-        publish_event(mod, Event_CarRequestedStopPower);
+
         // Need to switch off according to Table A.6 Sequence 8.1 within
         powerOff(mod);
       }
 
       // Table A.6: Sequence 1.1 Plug-in
       if (mod.last_state === STATE_A) {
-        publish_event(mod, Event_CarPluggedIn);
         mod.simplified_mode = false;
       }
 
-      if (mod.last_state === STATE_E || mod.last_state === STATE_F) {
-        publish_event(mod, Event_EFtoBCD);
-      }
       break;
     case STATE_C:
       // Table A.6: Sequence 1.2 Plug-in
       if (mod.last_state === STATE_A) {
-        publish_event(mod, Event_CarPluggedIn);
         mod.simplified_mode = true;
-      }
-      if (mod.last_state === STATE_B) {
-        publish_event(mod, Event_CarRequestedPower);
-      }
-      if (mod.last_state === STATE_E || mod.last_state === STATE_F) {
-        publish_event(mod, Event_EFtoBCD);
       }
 
       if (!mod.pwm_running) { // C1
         // Table A.6 Sequence 10.2: EV does not stop drawing power even
         // if PWM stops. Stop within 6 seconds (E.g. Kona1!)
-        // if (mod.last_pwm_running) FIXME implement 6 second timer!
-        //     startTimer(6000);
-        // if (timerElapsed()) {
-        // force power off under load
-        powerOff(mod);
-        // }
+        // This is implemented in EvseManager
+        if (!mod.power_on_allowed) powerOff(mod);
       } else { // C2
         if (mod.power_on_allowed) {
           // Table A.6: Sequence 4 EV ready to charge.
           // Must enable power within 3 seconds.
           powerOn(mod);
-
-          // Simulate Request power Event here for simplified mode to
-          // ensure that this mode behaves similar for higher layers.
-          // Note this does not work with 5% mode correctly, but
-          // simplified mode does not support HLC anyway.
-          if (!mod.last_pwm_running && mod.simplified_mode) publish_event(mod, Event_CarRequestedPower);
         }
       }
       break;
     case STATE_D:
       // Table A.6: Sequence 1.2 Plug-in (w/ventilation)
       if (mod.last_state === STATE_A) {
-        publish_event(mod, Event_CarPluggedIn);
-        publish_event(mod, Event_CarRequestedPower);
         mod.simplified_mode = true;
-      }
-      if (mod.last_state === STATE_B) {
-        publish_event(mod, Event_CarRequestedPower);
-      }
-      if (mod.last_state === STATE_E || mod.last_state === STATE_F) {
-        publish_event(mod, Event_EFtoBCD);
       }
 
       if (!mod.pwm_running) {
@@ -298,34 +265,18 @@ function simulation_statemachine(mod) {
         if (mod.power_on_allowed && !mod.relais_on) {
           // Table A.6: Sequence 4 EV ready to charge.
           // Must enable power within 3 seconds.
-          if (!mod.has_ventilation) publish_event(mod, Event_Error_VentilationNotAvailable);
-          else powerOn(mod);
-        }
-        if (mod.last_state === STATE_C) {
-          // Car switches to ventilation while charging.
-          if (!mod.has_ventilation) publish_event(mod, Event_Error_VentilationNotAvailable);
+          if (mod.has_ventilation) powerOn(mod);
         }
       }
       break;
     case STATE_E:
-      if (mod.last_state != mod.current_state) publish_event(mod, Event_Error_E);
-      if (mod.last_state === STATE_B || mod.last_state === STATE_C || mod.last_state === STATE_D) {
-        publish_event(mod, Event_BCDtoEF);
-      }
       powerOff(mod);
       pwmOff(mod);
       break;
     case STATE_F:
-      if (mod.last_state === STATE_B || mod.last_state === STATE_C || mod.last_state === STATE_D) {
-        publish_event(mod, Event_BCDtoEF);
-      }
       powerOff(mod);
       break;
     case STATE_DF:
-      if (mod.last_state != mod.current_state) publish_event(mod, Event_Error_DF);
-      if (mod.last_state === STATE_B || mod.last_state === STATE_C || mod.last_state === STATE_D) {
-        publish_event(mod, Event_BCDtoEF);
-      }
       powerOff(mod);
       break;
   }
@@ -335,32 +286,37 @@ function simulation_statemachine(mod) {
 
 function check_error_rcd(mod) {
   if (mod.rcd_enabled && mod.simulation_data.rcd_current > 5.0) {
-    publish_event(mod, Event_Error_RCD);
+    if (!mod.rcd_error_reported) {
+      mod.provides.rcd.publish.fault_dc();
+      mod.rcd_error_reported = true;
+    }
+  } else {
+    mod.rcd_error_reported = false;
   }
-}
-
-function publish_nr_of_phases_available(mod, n) {
-  // console.log("------------ NR PHASE PUB "+n);
-  mod.provides.board_support.publish.nr_of_phases_available(n);
+  mod.provides.rcd.publish.rcd_current_mA = mod.simulation_data.rcd_current;
 }
 
 function event_to_enum(event) {
   switch (event) {
-    case Event_CarPluggedIn:
-      return 'CarPluggedIn';
-    case Event_CarRequestedPower:
-      return 'CarRequestedPower';
+    case STATE_A:
+      return 'A';
+    case STATE_B:
+      return 'B';
+    case STATE_C:
+      return 'C';
+    case STATE_D:
+      return 'D';
+    case STATE_E:
+      return 'E';
+    case STATE_F:
+      return 'F';
+    case STATE_DISABLED:
+      return 'F';
     case Event_PowerOn:
       return 'PowerOn';
     case Event_PowerOff:
       return 'PowerOff';
-    case Event_CarRequestedStopPower:
-      return 'CarRequestedStopPower';
-    case Event_CarUnplugged:
-      return 'CarUnplugged';
-    case Event_Error_E:
-      return 'ErrorE';
-    case Event_Error_DF:
+    case STATE_DF:
       return 'ErrorDF';
     case Event_Error_Relais:
       return 'ErrorRelais';
@@ -368,13 +324,10 @@ function event_to_enum(event) {
       return 'ErrorRCD';
     case Event_Error_VentilationNotAvailable:
       return 'VentilationNotAvailable';
-    case Event_EFtoBCD:
-      return 'EFtoBCD';
-    case Event_BCDtoEF:
-      return 'BCDtoEF';
     case Event_PermanentFault:
       return 'PermanentFault';
     default:
+      evlog.error("Invalid event: " + event);
       return 'invalid';
   }
 }
@@ -516,6 +469,7 @@ function clearData(mod) {
   mod.rcd_current = 0.1;
   mod.rcd_enabled = true;
   mod.rcd_error = false;
+  mod.rcd_error_reported = false;
 
   mod.simulation_enabled = false;
   mod.pwm_duty_cycle = 0;
@@ -699,9 +653,6 @@ function power_meter_external(p) {
 function publish_powermeter(mod) {
   mod.provides.powermeter.publish.powermeter(power_meter_external(mod.powermeter));
 
-  // Publish raw packet for debugging purposes
-  mod.provides.debug_powermeter.publish.debug_json(mod.powermeter);
-
   // Deprecated external stuff
   mod.mqtt.publish('/external/powermeter/vrmsL1', mod.powermeter.vrmsL1);
   mod.mqtt.publish('/external/powermeter/phaseSeqError', false);
@@ -743,22 +694,12 @@ function publish_keepalive(mod) {
 
 function publish_telemetry(mod) {
   mod.provides.board_support.publish.telemetry({
-    temperature: mod.powermeter.tempL1,
+    evse_temperature_C: mod.powermeter.tempL1,
     fan_rpm: 1500.0,
     supply_voltage_12V: 12.01,
     supply_voltage_minus_12V: -11.8,
-    rcd_current: mod.rcd_current,
     relais_on: mod.relais_on,
   });
-}
-
-function publish_yeti_extras(mod) {
-  mod.provides.yeti_extras.publish.time_stamp(Math.round(new Date().getTime() / 1000));
-  mod.provides.yeti_extras.publish.hw_type(0);
-  mod.provides.yeti_extras.publish.hw_revision(0);
-  mod.provides.yeti_extras.publish.protocol_version_major(0);
-  mod.provides.yeti_extras.publish.protocol_version_minor(1);
-  mod.provides.yeti_extras.publish.sw_version_string('simulation');
 }
 
 function publish_yeti_simulation_control(mod) {
@@ -770,13 +711,6 @@ function publish_yeti_simulation_control(mod) {
     evse_pwm_voltage_hi: mod.pwm_voltage_hi,
     evse_pwm_voltage_lo: mod.pwm_voltage_lo,
   });
-  /* evlog.error({
-    pwm_duty_cycle: mod.pwm_duty_cycle,
-    relais_on: (mod.relais_on?(mod.use_three_phases_confirmed?3:1):0),
-    evse_pwm_running: mod.pwm_running,
-    evse_pwm_voltage_hi: mod.pwm_voltage_hi,
-    evse_pwm_voltage_lo: mod.pwm_voltage_lo
-  }); */
 }
 
 function simulate_powermeter(mod) {
@@ -828,19 +762,19 @@ function read_pp_ampacity(mod) {
   let pp_resistor = mod.simulation_data.pp_resistor;
   if (pp_resistor < 80.0 || pp_resistor > 2460) {
     evlog.error(`PP resistor value "${pp_resistor}" Ohm seems to be outside the allowed range.`);
-    return 0.0
+    return "None"
   }
 
   // PP resistor value in spec, use a conservative interpretation of the resistance ranges
   if (pp_resistor > 936.0 && pp_resistor <= 2460.0) {
-    return 13.0;
+    return "A_13";
   } else if (pp_resistor > 308.0 && pp_resistor <= 936.0) {
-    return 20.0;
+    return "A_20";
   } else if (pp_resistor > 140.0 && pp_resistor <= 308.0) {
-    return 32.0;
+    return "A_32";
   } else if (pp_resistor > 80.0 && pp_resistor <= 140.0) {
-    return 63.0;
+    return "A_63";
   }
 
-  return 0.0;
+  return "None";
 }

@@ -15,9 +15,9 @@ class LimitDecimalPlaces {
 public:
     LimitDecimalPlaces(const Conf& config) : config(config){};
     std::string limit(const types::powermeter::Powermeter& powermeter);
-    std::string limit(const types::board_support::HardwareCapabilities& hw_capabilities);
+    std::string limit(const types::evse_board_support::HardwareCapabilities& hw_capabilities);
     std::string limit(const types::evse_manager::Limits& limits);
-    std::string limit(const types::board_support::Telemetry& telemetry);
+    std::string limit(const types::evse_board_support::Telemetry& telemetry);
     double round_to_nearest_step(double value, double step);
 
 private:
