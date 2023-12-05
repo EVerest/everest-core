@@ -1,0 +1,4 @@
+description: >-
+  This interface defines a test interface that allows to raise errors
+errors:
+  - reference: /errors/test_errors
