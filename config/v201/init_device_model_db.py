@@ -19,6 +19,8 @@ The schema files of both folders will be used to create the tables and entries f
 components and variables.
 """
 
+from __future__ import annotations
+
 import argparse
 import json
 import sqlite3
