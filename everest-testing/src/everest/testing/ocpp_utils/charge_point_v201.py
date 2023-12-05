@@ -169,6 +169,10 @@ class ChargePoint201(cp):
         return call_result.GetCertificateStatusPayload(status=GenericStatusType.accepted,
                                                        ocsp_result="")
 
+    @on(Action.DataTransfer)
+    def on_data_transfer(self, **kwargs):
+        return call_result.DataTransferPayload(status=GenericStatusType.accepted, data="")
+
     async def set_variables_req(self, **kwargs):
         payload = call.SetVariablesPayload(**kwargs)
         return await self.call(payload)
