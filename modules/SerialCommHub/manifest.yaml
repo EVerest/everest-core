@@ -1,4 +1,4 @@
-description: Hub to communicate with attached serial devices
+description: Hub to communicate with attached serial devices or friends
 provides:
   main:
     description: Implementation of serial communication hub
