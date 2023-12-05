@@ -1,0 +1,11 @@
+description: >-
+  Set of test error definitions
+errors:
+  - name: TestErrorA
+    description: Test error A
+  - name: TestErrorB
+    description: Test error B
+  - name: TestErrorC
+    description: Test error C
+  - name: TestErrorD
+    description: Test error D
