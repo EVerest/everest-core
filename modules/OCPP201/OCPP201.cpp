@@ -96,6 +96,21 @@ types::evse_manager::StopTransactionReason get_stop_reason(const ocpp::v201::Rea
     }
 }
 
+ocpp::v201::DataTransferStatusEnum to_ocpp(types::ocpp::DataTransferStatus status) {
+    switch (status) {
+    case types::ocpp::DataTransferStatus::Accepted:
+        return ocpp::v201::DataTransferStatusEnum::Accepted;
+    case types::ocpp::DataTransferStatus::Rejected:
+        return ocpp::v201::DataTransferStatusEnum::Rejected;
+    case types::ocpp::DataTransferStatus::UnknownMessageId:
+        return ocpp::v201::DataTransferStatusEnum::UnknownMessageId;
+    case types::ocpp::DataTransferStatus::UnknownVendorId:
+        return ocpp::v201::DataTransferStatusEnum::UnknownVendorId;
+    default:
+        return ocpp::v201::DataTransferStatusEnum::UnknownVendorId;
+    }
+}
+
 ocpp::v201::SampledValue get_sampled_value(const ocpp::v201::ReadingContextEnum& reading_context,
                                            const ocpp::v201::MeasurandEnum& measurand, const std::string& unit,
                                            const std::optional<ocpp::v201::PhaseEnum> phase) {
@@ -553,6 +568,7 @@ void OCPP201::init() {
         this->r_evse_manager.at(evse_id - 1)->subscribe_ready([this, evse_id](bool ready) {
             std::lock_guard<std::mutex> lk(this->evse_ready_mutex);
             if (ready) {
+                EVLOG_info << "EVSE " << evse_id << " ready.";
                 this->evse_ready_map[evse_id] = true;
                 this->evse_ready_cv.notify_one();
             }
@@ -771,6 +787,23 @@ void OCPP201::ready() {
         EVLOG_info << "All connectors unavailable, proceed with firmware installation";
         this->r_system->call_allow_firmware_installation();
     };
+
+    if (!this->r_data_transfer.empty()) {
+        callbacks.data_transfer_callback = [this](const ocpp::v201::DataTransferRequest& request) {
+            types::ocpp::DataTransferRequest data_transfer_request;
+            data_transfer_request.vendor_id = request.vendorId.get();
+            if (request.messageId.has_value()) {
+                data_transfer_request.message_id = request.messageId.value().get();
+            }
+            data_transfer_request.data = request.data;
+            types::ocpp::DataTransferResponse data_transfer_response =
+                this->r_data_transfer.at(0)->call_data_transfer(data_transfer_request);
+            ocpp::v201::DataTransferResponse response;
+            response.status = to_ocpp(data_transfer_response.status);
+            response.data = data_transfer_response.data;
+            return response;
+        };
+    }
 
     const auto sql_init_path = this->ocpp_share_path / INIT_SQL;
 
