@@ -102,7 +102,7 @@ This variable is published every second and contains telemetry of the EVSE.
     }
 ```
 
-### everest_api/evse_manager/var/telemetry
+### everest_api/evse_manager/var/powermeter
 This variable is published every second and contains powermeter information of the EVSE.
 ```json
     {
