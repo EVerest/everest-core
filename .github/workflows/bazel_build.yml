@@ -1,9 +1,20 @@
 name: Bazel Build
 run-name: ${{ github.actor }} is building with bazel
-on: [push]
+on: 
+  pull_request: {}
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: Which runner to use
+        type: choice
+        default: 'ubuntu-22.04'
+        required: true
+        options:
+          - 'ubuntu-22.04'
+          - 'large-ubuntu-22.04-xxl'
 jobs:
   bazel-build:
-    runs-on: ubuntu-22.04
+    runs-on: ${{ inputs.runner || 'ubuntu-22.04' }}
     steps:
       - run: echo branch name is ${{ github.ref }}
       - name: Checkout
