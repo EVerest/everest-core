@@ -183,6 +183,7 @@ private:
     void init_websocket();
     void init_state_machine(const std::map<int, ChargePointStatus>& connector_status_map);
     WebsocketConnectionOptions get_ws_connection_options();
+    std::unique_ptr<ocpp::MessageQueue<v16::MessageType>> create_message_queue();
     void message_callback(const std::string& message);
     void handle_message(const EnhancedMessage<v16::MessageType>& message);
     bool allowed_to_send_message(json::array_t message_type);

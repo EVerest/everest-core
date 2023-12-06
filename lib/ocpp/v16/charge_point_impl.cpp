@@ -18,6 +18,7 @@ const auto V2G_CERTIFICATE_TIMER_INTERVAL = std::chrono::hours(12);
 const auto OCSP_REQUEST_TIMER_INTERVAL = std::chrono::hours(12);
 const auto INITIAL_CERTIFICATE_REQUESTS_DELAY = std::chrono::seconds(60);
 const auto WEBSOCKET_INIT_DELAY = std::chrono::seconds(2);
+const auto DEFAULT_MESSAGE_QUEUE_SIZE_THRESHOLD = 2E5;
 
 ChargePointImpl::ChargePointImpl(const std::string& config, const fs::path& share_path,
                                  const fs::path& user_config_path, const fs::path& database_path,
@@ -42,10 +43,7 @@ ChargePointImpl::ChargePointImpl(const std::string& config, const fs::path& shar
     this->database_handler->open_db_connection(this->configuration->getNumberOfConnectors());
     this->transaction_handler = std::make_unique<TransactionHandler>(this->configuration->getNumberOfConnectors());
     this->external_notify = {v16::MessageType::StartTransactionResponse};
-    this->message_queue = std::make_unique<ocpp::MessageQueue<v16::MessageType>>(
-        [this](json message) -> bool { return this->websocket->send(message.dump()); },
-        this->configuration->getTransactionMessageAttempts(), this->configuration->getTransactionMessageRetryInterval(),
-        this->external_notify, this->database_handler);
+    this->message_queue = this->create_message_queue();
     auto log_formats = this->configuration->getLogMessagesFormat();
     bool log_to_console = std::find(log_formats.begin(), log_formats.end(), "console") != log_formats.end();
     bool detailed_log_to_console =
@@ -142,6 +140,17 @@ ChargePointImpl::ChargePointImpl(const std::string& config, const fs::path& shar
             this->ocsp_request_timer->interval(OCSP_REQUEST_TIMER_INTERVAL);
         });
     }
+}
+
+std::unique_ptr<ocpp::MessageQueue<v16::MessageType>> ChargePointImpl::create_message_queue() {
+    return std::make_unique<ocpp::MessageQueue<v16::MessageType>>(
+        [this](json message) -> bool { return this->websocket->send(message.dump()); },
+        MessageQueueConfig{
+            this->configuration->getTransactionMessageAttempts(),
+            this->configuration->getTransactionMessageRetryInterval(),
+            this->configuration->getMessageQueueSizeThreshold().value_or(DEFAULT_MESSAGE_QUEUE_SIZE_THRESHOLD),
+            this->configuration->getQueueAllMessages().value_or(false)},
+        this->external_notify, this->database_handler);
 }
 
 void ChargePointImpl::init_websocket() {
@@ -792,10 +801,7 @@ bool ChargePointImpl::restart(const std::map<int, ChargePointStatus>& connector_
         EVLOG_info << "Restarting OCPP Chargepoint";
         this->database_handler->open_db_connection(this->configuration->getNumberOfConnectors());
         // instantiating new message queue on restart
-        this->message_queue = std::make_unique<ocpp::MessageQueue<v16::MessageType>>(
-            [this](json message) -> bool { return this->websocket->send(message.dump()); },
-            this->configuration->getTransactionMessageAttempts(),
-            this->configuration->getTransactionMessageRetryInterval(), this->external_notify, this->database_handler);
+        this->message_queue = this->create_message_queue();
         this->initialized = true;
 
         return this->start(connector_status_map);

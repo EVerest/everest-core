@@ -222,6 +222,17 @@
             "readOnly": false,
             "minimum": 0,
             "default": 60
+        },
+        "QueueAllMessages": {
+            "$comment": "If set to true, also non-transactional messages are queued in memory in case they cannot be sent immediately.",
+            "type": "boolean",
+            "readOnly": true
+        },
+        "MessageQueueSizeThreshold": {
+            "$comment": "Threshold for the size of in-memory message queues used to buffer messages (and store e.g. while offline). If threshold is exceeded, messages  will be dropped according to OCPP specification to avoid memory issues.",
+            "type": "integer",
+            "readOnly": true,
+            "minimum": 1
         }
     },
     "additionalProperties": false

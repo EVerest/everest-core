@@ -470,6 +470,23 @@
       "description": "Seconds between two checks for client certificate expiration and potential renewal",
       "default": "43200",
       "type": "integer"
+    },
+    "MessageQueueSizeThreshold": {
+      "variable_name": "MessageQueueSizeThreshold",
+      "characteristics": {
+        "minLimit": 1,
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Threshold for the size of in-memory message queues used to buffer messages (and store e.g. while offline). If threshold is exceeded, messages  will be dropped according to OCPP specification to avoid memory issues.",
+      "minimum": 1,
+      "type": "integer"
     }
   },
   "required": [

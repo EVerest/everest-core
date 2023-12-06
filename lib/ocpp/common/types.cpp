@@ -75,23 +75,23 @@ std::ostream& operator<<(std::ostream& os, const DateTimeImpl& dt) {
 }
 
 bool operator>(const DateTimeImpl& lhs, const DateTimeImpl& rhs) {
-    return lhs.to_rfc3339() > rhs.to_rfc3339();
+    return lhs.timepoint > rhs.timepoint;
 }
 
 bool operator>=(const DateTimeImpl& lhs, const DateTimeImpl& rhs) {
-    return lhs.to_rfc3339() >= rhs.to_rfc3339();
+    return lhs.timepoint >= rhs.timepoint;
 }
 
 bool operator<(const DateTimeImpl& lhs, const DateTimeImpl& rhs) {
-    return lhs.to_rfc3339() < rhs.to_rfc3339();
+    return lhs.timepoint < rhs.timepoint;
 }
 
 bool operator<=(const DateTimeImpl& lhs, const DateTimeImpl& rhs) {
-    return lhs.to_rfc3339() <= rhs.to_rfc3339();
+    return lhs.timepoint <= rhs.timepoint;
 }
 
 bool operator==(const DateTimeImpl& lhs, const DateTimeImpl& rhs) {
-    return lhs.to_rfc3339() == rhs.to_rfc3339();
+    return lhs.timepoint == rhs.timepoint;
 }
 
 CallError::CallError() {

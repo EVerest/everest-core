@@ -677,6 +677,22 @@ std::optional<std::string> ChargePointConfiguration::getHostName() {
     return hostName_key;
 }
 
+std::optional<bool> ChargePointConfiguration::getQueueAllMessages() {
+    std::optional<bool> queue_all_messages = std::nullopt;
+    if (this->config["Internal"].contains("QueueAllMessages")) {
+        queue_all_messages.emplace(this->config["Internal"]["QueueAllMessages"]);
+    }
+    return queue_all_messages;
+}
+
+std::optional<int> ChargePointConfiguration::getMessageQueueSizeThreshold() {
+    std::optional<int> message_queue_size_threshold = std::nullopt;
+    if (this->config["Internal"].contains("MessageQueueSizeThreshold")) {
+        message_queue_size_threshold.emplace(this->config["Internal"]["MessageQueueSizeThreshold"]);
+    }
+    return message_queue_size_threshold;
+}
+
 // Core Profile - optional
 std::optional<bool> ChargePointConfiguration::getAllowOfflineTxForUnknownId() {
     std::optional<bool> unknown_offline_auth = std::nullopt;

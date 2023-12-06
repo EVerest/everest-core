@@ -29,6 +29,17 @@ namespace ocpp {
 
 const auto STANDARD_MESSAGE_TIMEOUT = std::chrono::seconds(30);
 
+struct MessageQueueConfig {
+    int transaction_message_attempts;
+    int transaction_message_retry_interval; // seconds
+
+    // threshold for the accumulated sizes of the queues; if the queues exceed this limit,
+    // messages are potentially dropped in accordance with OCPP 2.0.1. Specification (cf. QueueAllMessages parameter)
+    int queues_total_size_threshold;
+
+    bool queue_all_messages; // cf. OCPP 2.0.1. "QueueAllMessages" in OCPPCommCtrlr
+};
+
 /// \brief Contains a OCPP message in json form with additional information
 template <typename M> struct EnhancedMessage {
     json message;                     ///< The OCPP message as json
@@ -68,9 +79,9 @@ template <typename M> struct ControlMessage {
 /// \brief contains a message queue that makes sure that OCPPs synchronicity requirements are met
 template <typename M> class MessageQueue {
 private:
+    MessageQueueConfig config;
     std::shared_ptr<ocpp::common::DatabaseHandlerBase> database_handler;
-    int transaction_message_attempts;
-    int transaction_message_retry_interval; // seconds
+
     std::thread worker_thread;
     /// message deque for transaction related messages
     std::deque<std::shared_ptr<ControlMessage<M>>> transaction_message_queue;
@@ -135,6 +146,7 @@ private:
             std::lock_guard<std::mutex> lk(this->message_mutex);
             this->normal_message_queue.push(message);
             this->new_message = true;
+            this->check_queue_sizes();
         }
         this->cv.notify_all();
         EVLOG_debug << "Notified message queue worker";
@@ -149,19 +161,46 @@ private:
                                                           message->uniqueId()};
             this->database_handler->insert_transaction_message(db_message);
             this->new_message = true;
+            this->check_queue_sizes();
         }
         this->cv.notify_all();
         EVLOG_debug << "Notified message queue worker";
     }
 
+    void check_queue_sizes() {
+        if (this->transaction_message_queue.size() + this->normal_message_queue.size() <=
+            this->config.queues_total_size_threshold) {
+            return;
+        }
+        EVLOG_warning << "Queue sizes exceed threshold (" << this->config.queues_total_size_threshold << ") with "
+                      << this->transaction_message_queue.size() << " transaction and "
+                      << this->normal_message_queue.size() << " normal messages in queue";
+
+        while (this->transaction_message_queue.size() + this->normal_message_queue.size() >
+                   this->config.queues_total_size_threshold &&
+               !this->normal_message_queue.empty()) {
+            this->drop_messages_from_normal_message_queue();
+        }
+    }
+
+    void drop_messages_from_normal_message_queue() {
+        // try to drop approx 10% of the allowed size (at least 1)
+        int number_of_dropped_messages = std::min((int)this->normal_message_queue.size(),
+                                                  std::max(this->config.queues_total_size_threshold / 10, 1));
+
+        EVLOG_warning << "Dropping " << number_of_dropped_messages << " messages from normal message queue.";
+
+        for (int i = 0; i < number_of_dropped_messages; i++) {
+            this->normal_message_queue.pop();
+        }
+    }
+
 public:
     /// \brief Creates a new MessageQueue object with the provided \p configuration and \p send_callback
-    MessageQueue(const std::function<bool(json message)>& send_callback, const int transaction_message_attempts,
-                 const int transaction_message_retry_interval, const std::vector<M>& external_notify,
-                 std::shared_ptr<common::DatabaseHandlerBase> database_handler) :
-        database_handler(database_handler),
-        transaction_message_attempts(transaction_message_attempts),
-        transaction_message_retry_interval(transaction_message_retry_interval),
+    MessageQueue(const std::function<bool(json message)>& send_callback, const MessageQueueConfig& config,
+                 const std::vector<M>& external_notify, std::shared_ptr<common::DatabaseHandlerBase> database_handler) :
+        database_handler(std::move(database_handler)),
+        config(config),
         external_notify(external_notify),
         paused(true),
         running(true),
@@ -272,8 +311,11 @@ public:
                         EVLOG_info << "The message in flight is transaction related and will be sent again once the "
                                       "connection can be established again.";
                         if (this->in_flight->message.at(CALL_ACTION) == "TransactionEvent") {
-                            this->in_flight->message.at(3)["offline"] = true;
+                            this->in_flight->message.at(CALL_PAYLOAD)["offline"] = true;
                         }
+                    } else if (this->config.queue_all_messages) {
+                        EVLOG_info << "The message in flight  will be sent again once the connection can be "
+                                      "established again since QueueAllMessages is set to 'true'.";
                     } else {
                         EVLOG_info << "The message in flight is not transaction related and will be dropped";
                         if (queue_type == QueueType::Normal) {
@@ -310,11 +352,9 @@ public:
         });
     }
 
-    MessageQueue(const std::function<bool(json message)>& send_callback, const int transaction_message_attempts,
-                 const int transaction_message_retry_interval,
+    MessageQueue(const std::function<bool(json message)>& send_callback, const MessageQueueConfig& config,
                  std::shared_ptr<common::DatabaseHandlerBase> databaseHandler) :
-        MessageQueue(send_callback, transaction_message_attempts, transaction_message_retry_interval, {},
-                     databaseHandler) {
+        MessageQueue(send_callback, config, {}, databaseHandler) {
     }
 
     void get_transaction_messages_from_db() {
@@ -352,7 +392,7 @@ public:
         } else {
             // all other messages are allowed to "jump the queue" to improve user experience
             // TODO: decide if we only want to allow this for a subset of messages
-            if (!this->paused || message->messageType == M::BootNotification) {
+            if (!this->paused || this->config.queue_all_messages || message->messageType == M::BootNotification) {
                 this->add_to_normal_message_queue(message);
             }
         }
@@ -512,16 +552,16 @@ public:
         EVLOG_warning << "Message timeout or CALLERROR for: " << this->in_flight->messageType << " ("
                       << this->in_flight->uniqueId() << ")";
         if (this->isTransactionMessage(this->in_flight)) {
-            if (this->in_flight->message_attempts < this->transaction_message_attempts) {
+            if (this->in_flight->message_attempts < this->config.transaction_message_attempts) {
                 EVLOG_warning << "Message is transaction related and will therefore be sent again";
                 this->in_flight->message[MESSAGE_ID] = this->createMessageId();
-                if (this->transaction_message_retry_interval > 0) {
+                if (this->config.transaction_message_retry_interval > 0) {
                     // exponential backoff
                     this->in_flight->timestamp =
                         DateTime(this->in_flight->timestamp.to_time_point() +
-                                 std::chrono::seconds(this->transaction_message_retry_interval) *
+                                 std::chrono::seconds(this->config.transaction_message_retry_interval) *
                                      this->in_flight->message_attempts);
-                    EVLOG_debug << "Retry interval > 0: " << this->transaction_message_retry_interval
+                    EVLOG_debug << "Retry interval > 0: " << this->config.transaction_message_retry_interval
                                 << " attempting to retry message at: " << this->in_flight->timestamp;
                 } else {
                     // immediate retry
@@ -530,7 +570,7 @@ public:
                 }
 
                 EVLOG_warning << "Attempt: " << this->in_flight->message_attempts + 1 << "/"
-                              << this->transaction_message_attempts << " will be sent at "
+                              << this->config.transaction_message_attempts << " will be sent at "
                               << this->in_flight->timestamp;
 
                 this->transaction_message_queue.push_front(this->in_flight);
@@ -626,12 +666,12 @@ public:
 
     /// \brief Set transaction_message_attempts to given \p transaction_message_attempts
     void update_transaction_message_attempts(const int transaction_message_attempts) {
-        this->transaction_message_attempts = transaction_message_attempts;
+        this->config.transaction_message_attempts = transaction_message_attempts;
     }
 
     /// \brief Set transaction_message_retry_interval to given \p transaction_message_retry_interval in seconds
     void update_transaction_message_retry_interval(const int transaction_message_retry_interval) {
-        this->transaction_message_retry_interval = transaction_message_retry_interval;
+        this->config.transaction_message_retry_interval = transaction_message_retry_interval;
     }
 
     /// \brief Creates a unique message ID

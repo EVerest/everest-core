@@ -235,6 +235,13 @@ const ComponentVariable& ClientCertificateExpireCheckIntervalSeconds = {
         "ClientCertificateExpireCheckIntervalSeconds",
     }),
 };
+const ComponentVariable& MessageQueueSizeThreshold = {
+    ControllerComponents::InternalCtrlr,
+    std::nullopt,
+    std::optional<Variable>({
+        "MessageQueueSizeThreshold",
+    }),
+};
 const ComponentVariable& AlignedDataCtrlrEnabled = {
     ControllerComponents::AlignedDataCtrlr,
     std::nullopt,
