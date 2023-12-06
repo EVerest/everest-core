@@ -71,9 +71,15 @@ template <typename M> struct ControlMessage {
 
     /// \brief Provides the unique message ID stored in the message
     /// \returns the unique ID of the contained message
-    MessageId uniqueId() const {
+    [[nodiscard]] MessageId uniqueId() const {
         return this->message[MESSAGE_ID];
     }
+
+    /// \brief Determine whether message is considered as transaction-related.
+    bool isTransactionMessage() const;
+
+    /// \brief True for transactional messages containing updates (measurements) for a transaction
+    bool isTransactionUpdateMessage() const;
 };
 
 /// \brief contains a message queue that makes sure that OCPPs synchronicity requirements are met
@@ -138,8 +144,6 @@ private:
         return false;
     }
 
-    bool isTransactionMessage(const std::shared_ptr<ControlMessage<M>> message) const;
-
     void add_to_normal_message_queue(std::shared_ptr<ControlMessage<M>> message) {
         EVLOG_debug << "Adding message to normal message queue";
         {
@@ -181,6 +185,11 @@ private:
                !this->normal_message_queue.empty()) {
             this->drop_messages_from_normal_message_queue();
         }
+
+        while (this->transaction_message_queue.size() + this->normal_message_queue.size() >
+                   this->config.queues_total_size_threshold &&
+               this->drop_update_messages_from_transactional_message_queue()) {
+        }
     }
 
     void drop_messages_from_normal_message_queue() {
@@ -192,6 +201,43 @@ private:
 
         for (int i = 0; i < number_of_dropped_messages; i++) {
             this->normal_message_queue.pop();
+        }
+    }
+
+    /**
+     *  Heuristically drops every second update messag.
+     *  Drops every first, third, ... update message in between two non-update message; disregards transaction
+     * ids etc!
+     * Cf. OCPP 2.0.1. specification 2.1.9 "QueueAllMessages"
+     */
+    bool drop_update_messages_from_transactional_message_queue() {
+        int drop_count = 0;
+        std::deque<std::shared_ptr<ControlMessage<M>>> temporary_swap_queue;
+        bool remove_next_update_message = true;
+        while (!transaction_message_queue.empty()) {
+            auto element = transaction_message_queue.front();
+            transaction_message_queue.pop_front();
+            // drop every second update message (except last one)
+            if (remove_next_update_message && element->isTransactionUpdateMessage() &&
+                transaction_message_queue.size() > 1) {
+                EVLOG_debug << "Drop transactional message " << element->uniqueId();
+                database_handler->remove_transaction_message(element->uniqueId());
+                drop_count++;
+                remove_next_update_message = false;
+            } else {
+                remove_next_update_message = true;
+                temporary_swap_queue.push_back(element);
+            }
+        }
+
+        std::swap(transaction_message_queue, temporary_swap_queue);
+
+        if (drop_count > 0) {
+            EVLOG_warning << "Dropped " << drop_count << " transactional update messages to reduce queue size.";
+            return true;
+        } else {
+            EVLOG_warning << "There are no further transaction update messages to drop!";
+            return false;
         }
     }
 
@@ -307,7 +353,7 @@ public:
                 if (!this->send_callback(this->in_flight->message)) {
                     this->paused = true;
                     EVLOG_error << "Could not send message, this is most likely because the charge point is offline.";
-                    if (this->isTransactionMessage(this->in_flight)) {
+                    if (this->in_flight && this->in_flight->isTransactionMessage()) {
                         EVLOG_info << "The message in flight is transaction related and will be sent again once the "
                                       "connection can be established again.";
                         if (this->in_flight->message.at(CALL_ACTION) == "TransactionEvent") {
@@ -382,7 +428,7 @@ public:
         }
 
         auto message = std::make_shared<ControlMessage<M>>(call);
-        if (this->isTransactionMessage(message)) {
+        if (message->isTransactionMessage()) {
             // according to the spec the "transaction related messages" StartTransaction, StopTransaction and
             // MeterValues have to be delivered in chronological order
 
@@ -440,7 +486,7 @@ public:
             auto enhanced_message = EnhancedMessage<M>();
             enhanced_message.offline = true;
             message->promise.set_value(enhanced_message);
-        } else if (this->isTransactionMessage(message)) {
+        } else if (message->isTransactionMessage()) {
             // according to the spec the "transaction related messages" StartTransaction, StopTransaction and
             // MeterValues have to be delivered in chronological order
             this->add_to_transaction_message_queue(message);
@@ -528,7 +574,7 @@ public:
                 this->in_flight->message.at(CALL_ACTION).template get<std::string>() + std::string("Response"));
             this->in_flight->promise.set_value(enhanced_message);
 
-            if (isTransactionMessage(this->in_flight)) {
+            if (this->in_flight->isTransactionMessage()) {
                 // We only remove the message as soon as a response is received. Otherwise we might miss a message if
                 // the charging station just boots after sending, but before receiving the result.
                 this->database_handler->remove_transaction_message(this->in_flight->uniqueId());
@@ -551,7 +597,7 @@ public:
         std::lock_guard<std::mutex> lk(this->message_mutex);
         EVLOG_warning << "Message timeout or CALLERROR for: " << this->in_flight->messageType << " ("
                       << this->in_flight->uniqueId() << ")";
-        if (this->isTransactionMessage(this->in_flight)) {
+        if (this->in_flight->isTransactionMessage()) {
             if (this->in_flight->message_attempts < this->config.transaction_message_attempts) {
                 EVLOG_warning << "Message is transaction related and will therefore be sent again";
                 this->in_flight->message[MESSAGE_ID] = this->createMessageId();

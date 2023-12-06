@@ -1,18 +1,28 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
-
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <nlohmann/json.hpp>
 #include <ocpp/common/message_queue.hpp>
+#include <ocpp/v16/messages/Authorize.hpp>
+#include <ocpp/v16/messages/MeterValues.hpp>
+#include <ocpp/v16/messages/SecurityEventNotification.hpp>
+#include <ocpp/v16/messages/StartTransaction.hpp>
+#include <ocpp/v201/messages/Authorize.hpp>
 
 namespace ocpp {
 
 using json = nlohmann::json;
 
+/************************************************************************************************
+ * Test Message Types
+ */
+
 enum class TestMessageType {
     TRANSACTIONAL,
     TRANSACTIONAL_RESPONSE,
+    TRANSACTIONAL_UPDATE,
+    TRANSACTIONAL_UPDATE_RESPONSE,
     NON_TRANSACTIONAL,
     NON_TRANSACTIONAL_RESPONSE,
     InternalError,
@@ -25,6 +35,10 @@ static std::string to_string(TestMessageType m) {
         return "transactional";
     case TestMessageType::TRANSACTIONAL_RESPONSE:
         return "transactionalResponse";
+    case TestMessageType::TRANSACTIONAL_UPDATE:
+        return "transactional_update";
+    case TestMessageType::TRANSACTIONAL_UPDATE_RESPONSE:
+        return "transactional_updateResponse";
     case TestMessageType::NON_TRANSACTIONAL:
         return "non_transactional";
     case TestMessageType::NON_TRANSACTIONAL_RESPONSE:
@@ -43,6 +57,12 @@ static TestMessageType to_test_message_type(const std::string& s) {
     }
     if (s == "transactionalResponse") {
         return TestMessageType::TRANSACTIONAL_RESPONSE;
+    }
+    if (s == "transactional_update") {
+        return TestMessageType::TRANSACTIONAL_UPDATE;
+    }
+    if (s == "transactional_updateResponse") {
+        return TestMessageType::TRANSACTIONAL_UPDATE_RESPONSE;
     }
     if (s == "non_transactional") {
         return TestMessageType::NON_TRANSACTIONAL;
@@ -100,14 +120,101 @@ std::ostream& operator<<(std::ostream& os, const TestMessageType& message_type) 
     return os;
 };
 
-template <>
-bool MessageQueue<TestMessageType>::isTransactionMessage(
-    const std::shared_ptr<ControlMessage<TestMessageType>> message) const {
-    if (message == nullptr) {
-        return false;
-    }
-    return message->messageType == TestMessageType::TRANSACTIONAL;
+template <> bool ControlMessage<TestMessageType>::isTransactionMessage() const {
+    return this->messageType == TestMessageType::TRANSACTIONAL ||
+           this->messageType == TestMessageType::TRANSACTIONAL_UPDATE;
 }
+
+template <> bool ControlMessage<TestMessageType>::isTransactionUpdateMessage() const {
+    return this->messageType == TestMessageType::TRANSACTIONAL_UPDATE;
+}
+
+/************************************************************************************************
+ * ControlMessage
+ *
+ * Test implementations of ControlMessage template
+ */
+class ControlMessageV16Test : public ::testing::Test {
+
+protected:
+};
+
+TEST_F(ControlMessageV16Test, test_is_transactional) {
+
+    EXPECT_TRUE(
+        (ControlMessage<v16::MessageType>{Call<v16::StartTransactionRequest>{v16::StartTransactionRequest{}, "0"}})
+            .isTransactionMessage());
+    EXPECT_TRUE(
+        (ControlMessage<v16::MessageType>{Call<v16::StopTransactionRequest>{v16::StopTransactionRequest{}, "0"}})
+            .isTransactionMessage());
+    EXPECT_TRUE((ControlMessage<v16::MessageType>{
+                     Call<v16::SecurityEventNotificationRequest>{v16::SecurityEventNotificationRequest{}, "0"}})
+                    .isTransactionMessage());
+    EXPECT_TRUE((ControlMessage<v16::MessageType>{Call<v16::MeterValuesRequest>{v16::MeterValuesRequest{}, "0"}})
+                    .isTransactionMessage());
+
+    EXPECT_TRUE(!(ControlMessage<v16::MessageType>{Call<v16::AuthorizeRequest>{v16::AuthorizeRequest{}, "0"}})
+                     .isTransactionMessage());
+}
+
+TEST_F(ControlMessageV16Test, test_is_transactional_update) {
+
+    EXPECT_TRUE(
+        !(ControlMessage<v16::MessageType>{Call<v16::StartTransactionRequest>{v16::StartTransactionRequest{}, "0"}})
+             .isTransactionUpdateMessage());
+    EXPECT_TRUE(
+        !(ControlMessage<v16::MessageType>{Call<v16::StopTransactionRequest>{v16::StopTransactionRequest{}, "0"}})
+             .isTransactionUpdateMessage());
+    EXPECT_TRUE(!(ControlMessage<v16::MessageType>{
+                      Call<v16::SecurityEventNotificationRequest>{v16::SecurityEventNotificationRequest{}, "0"}})
+                     .isTransactionUpdateMessage());
+    EXPECT_TRUE((ControlMessage<v16::MessageType>{Call<v16::MeterValuesRequest>{v16::MeterValuesRequest{}, "0"}})
+                    .isTransactionUpdateMessage());
+
+    EXPECT_TRUE(!(ControlMessage<v16::MessageType>{Call<v16::AuthorizeRequest>{v16::AuthorizeRequest{}, "0"}})
+                     .isTransactionUpdateMessage());
+}
+
+class ControlMessageV201Test : public ::testing::Test {
+
+protected:
+};
+
+TEST_F(ControlMessageV201Test, test_is_transactional) {
+
+    EXPECT_TRUE(
+        (ControlMessage<v201::MessageType>{Call<v201::TransactionEventRequest>{v201::TransactionEventRequest{}, "0"}})
+            .isTransactionMessage());
+
+    EXPECT_TRUE(!(ControlMessage<v201::MessageType>{Call<v201::AuthorizeRequest>{v201::AuthorizeRequest{}, "0"}})
+                     .isTransactionMessage());
+}
+
+TEST_F(ControlMessageV201Test, test_is_transactional_update) {
+
+    v201::TransactionEventRequest transaction_event_request{};
+    transaction_event_request.eventType = v201::TransactionEventEnum::Updated;
+
+    EXPECT_TRUE((ControlMessage<v201::MessageType>{Call<v201::TransactionEventRequest>{transaction_event_request, "0"}})
+                    .isTransactionUpdateMessage());
+
+    transaction_event_request.eventType = v201::TransactionEventEnum::Started;
+    EXPECT_TRUE(
+        !(ControlMessage<v201::MessageType>{Call<v201::TransactionEventRequest>{transaction_event_request, "0"}})
+             .isTransactionUpdateMessage());
+
+    transaction_event_request.eventType = v201::TransactionEventEnum::Ended;
+    EXPECT_TRUE(
+        !(ControlMessage<v201::MessageType>{Call<v201::TransactionEventRequest>{transaction_event_request, "0"}})
+             .isTransactionUpdateMessage());
+
+    EXPECT_TRUE(!(ControlMessage<v201::MessageType>{Call<v201::AuthorizeRequest>{v201::AuthorizeRequest{}, "0"}})
+                     .isTransactionUpdateMessage());
+}
+
+/************************************************************************************************
+ * MessageQueueTest
+ */
 
 class DatabaseHandlerBaseMock : public common::DatabaseHandlerBase {
 public:
@@ -121,7 +228,7 @@ class MessageQueueTest : public ::testing::Test {
     int call_count{0};
 
 protected:
-    MessageQueueConfig config;
+    MessageQueueConfig config{};
     std::shared_ptr<DatabaseHandlerBaseMock> db;
     std::mutex call_marker_mutex;
     std::condition_variable call_marker_cond_var;
@@ -135,7 +242,7 @@ protected:
     }
 
     template <typename R> auto MarkAndReturn(R value, bool respond = false) {
-        return testing::Invoke([this, value, respond](json::array_t s) -> R {
+        return testing::Invoke([this, value, respond](const json::array_t& s) -> R {
             if (respond) {
                 reception_timer.timeout(
                     [this, s]() {
@@ -360,6 +467,83 @@ TEST_F(MessageQueueTest, test_clean_up_non_transactional_queue) {
     // assert no further calls
     EXPECT_EQ(sent_transactional_messages + sent_non_transactional_messages - expected_skipped_transactional_messages,
               get_call_count());
+}
+
+// \brief Test that if the max size threshold is exceeded, intermediate transactional (update) messages are dropped
+//  Sends both non-transactions and transactional messages while on pause, expects all non-transactional, and any except
+//  every forth transactional to be dropped
+TEST_F(MessageQueueTest, test_clean_up_transactional_queue) {
+
+    const int sent_non_transactional_messages = 10;
+    const std::vector<int> transaction_update_messages{0, 4, 6,
+                                                       2}; // meaning there are 4 transactions, each with a "start" and
+                                                           // "stop" message and the provided number of updates;
+    // in total 4*2 + 4+ 6 +2 = 20 messages
+    config.queues_total_size_threshold = 13;
+    /**
+     *  Message IDs:
+     *   non-transactional:  0 -  9
+     *   Transaction I:     10 - 11
+     *   Transaction II:    12 - 17
+     *   Transaction III:   18 - 25
+     *   Transaction IV:    26 - 29
+     *
+     *   Expected dropping behavior
+     *   - adding msg 13-22 -> each drop 1 non-transactional (floored 10% of queue thresholds)
+     *   - adding msg 23 (update of third transaction) -> drop 4 messages with ids 13,15,19,21
+     *   - adding msg 27 (update of fourth transaction) -> drop 3 message with ids 14,20,23
+     */
+    const std::set<std::string> expected_dropped_transaction_messages = {
+        "test_call_13", "test_call_15", "test_call_19", "test_call_21", "test_call_14", "test_call_20", "test_call_23",
+    };
+    const int expected_sent_messages = 13;
+    config.queue_all_messages = true;
+    init_message_queue();
+
+    EXPECT_CALL(*db, insert_transaction_message(testing::_)).Times(20).WillRepeatedly(testing::Return(true));
+    EXPECT_CALL(*db, remove_transaction_message(testing::_)).Times(20).WillRepeatedly(testing::Return());
+
+    // go offline
+    message_queue->pause();
+
+    // Send messages / set up expected calls
+    testing::Sequence s;
+    for (int i = 0; i < sent_non_transactional_messages; i++) {
+        push_message_call(TestMessageType::NON_TRANSACTIONAL);
+    }
+
+    for (int update_messages : transaction_update_messages) {
+        // transaction "start"
+        auto start_msg_id = push_message_call(TestMessageType::TRANSACTIONAL);
+        EXPECT_CALL(send_callback_mock, Call(json{2, start_msg_id, to_string(TestMessageType::TRANSACTIONAL),
+                                                  json{{"data", start_msg_id}}}))
+            .InSequence(s)
+            .WillOnce(MarkAndReturn(true, true));
+
+        for (int i = 0; i < update_messages; i++) {
+            auto update_msg_id = push_message_call(TestMessageType::TRANSACTIONAL_UPDATE);
+
+            if (!expected_dropped_transaction_messages.count(update_msg_id)) {
+                EXPECT_CALL(send_callback_mock,
+                            Call(json{2, update_msg_id, to_string(TestMessageType::TRANSACTIONAL_UPDATE),
+                                      json{{"data", update_msg_id}}}))
+                    .InSequence(s)
+                    .WillOnce(MarkAndReturn(true, true));
+            }
+        }
+
+        auto stop_msg_id = push_message_call(TestMessageType::TRANSACTIONAL);
+        // transaction "end"
+        EXPECT_CALL(send_callback_mock,
+                    Call(json{2, stop_msg_id, to_string(TestMessageType::TRANSACTIONAL), json{{"data", stop_msg_id}}}))
+            .InSequence(s)
+            .WillOnce(MarkAndReturn(true, true));
+    }
+
+    // Resume & verify
+    message_queue->resume();
+
+    wait_for_calls(expected_sent_messages);
 }
 
 } // namespace ocpp

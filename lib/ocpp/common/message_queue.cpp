@@ -13,36 +13,37 @@ template <> ControlMessage<v16::MessageType>::ControlMessage(json message) {
     this->message_attempts = 0;
 }
 
+template <> bool ControlMessage<v16::MessageType>::isTransactionMessage() const {
+    if (this->messageType == v16::MessageType::StartTransaction ||
+        this->messageType == v16::MessageType::StopTransaction || this->messageType == v16::MessageType::MeterValues ||
+        this->messageType == v16::MessageType::SecurityEventNotification) {
+        return true;
+    }
+    return false;
+}
+
+template <> bool ControlMessage<v16::MessageType>::isTransactionUpdateMessage() const {
+    return (this->messageType == v16::MessageType::MeterValues);
+}
+
 template <> ControlMessage<v201::MessageType>::ControlMessage(json message) {
     this->message = message.get<json::array_t>();
     this->messageType = v201::conversions::string_to_messagetype(message.at(CALL_ACTION));
     this->message_attempts = 0;
 }
 
-template <>
-bool MessageQueue<v16::MessageType>::isTransactionMessage(
-    const std::shared_ptr<ControlMessage<v16::MessageType>> message) const {
-    if (message == nullptr) {
-        return false;
-    }
-    if (message->messageType == v16::MessageType::StartTransaction ||
-        message->messageType == v16::MessageType::StopTransaction ||
-        message->messageType == v16::MessageType::MeterValues ||
-        message->messageType == v16::MessageType::SecurityEventNotification) {
+template <> bool ControlMessage<v201::MessageType>::isTransactionMessage() const {
+    if (this->messageType == v201::MessageType::TransactionEvent ||
+        this->messageType == v201::MessageType::SecurityEventNotification) { // A04.FR.02
         return true;
     }
     return false;
 }
 
-template <>
-bool MessageQueue<v201::MessageType>::isTransactionMessage(
-    const std::shared_ptr<ControlMessage<v201::MessageType>> message) const {
-    if (message == nullptr) {
-        return false;
-    }
-    if (message->messageType == v201::MessageType::TransactionEvent ||
-        message->messageType == v201::MessageType::SecurityEventNotification) { // A04.FR.02
-        return true;
+template <> bool ControlMessage<v201::MessageType>::isTransactionUpdateMessage() const {
+    if (this->messageType == v201::MessageType::TransactionEvent) {
+        return v201::TransactionEventRequest{this->message.at(CALL_PAYLOAD)}.eventType ==
+               v201::TransactionEventEnum::Updated;
     }
     return false;
 }
