@@ -307,7 +307,7 @@ int TinyModbusRTU::read_reply(uint8_t* rxbuf, int rxbuf_len) {
             int bytes_read = read(fd, rxbuf + bytes_read_total, rxbuf_len - bytes_read_total);
             if (bytes_read > 0) {
                 bytes_read_total += bytes_read;
-                // EVLOG_info << "RECVD: " << hexdump(rxbuf, bytes_read_total);
+                EVLOG_debug << "RECVD: " << hexdump(rxbuf, bytes_read_total);
             }
         }
     }
@@ -386,7 +386,7 @@ std::vector<uint16_t> TinyModbusRTU::txrx_impl(uint8_t device_address, FunctionC
         // set checksum in the last 2 bytes
         append_checksum(req.get(), req_len);
 
-        // EVLOG_info << "SEND: " << hexdump(req.get(), req_len);
+        EVLOG_debug << "SEND: " << hexdump(req.get(), req_len);
 
         // clear input and output buffer
         tcflush(fd, TCIOFLUSH);

@@ -37,7 +37,10 @@ provides:
         type: boolean
         default: false
       max_packet_size:
-        description: Maximum size of a packet to read/write in bytes. Payload exceeding the size will be chunked.
+        description: >-
+          Maximum size of a packet to read/write in bytes. Payload exceeding the size will be chunked.
+          The APU size according to [wikipedia](https://en.wikipedia.org/wiki/Modbus) is 256 bytes,
+          which is used as default here.
         type: integer
         minimum: 0
         maximum: 65536

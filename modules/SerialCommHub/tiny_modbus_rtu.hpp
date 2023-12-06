@@ -57,9 +57,6 @@ public:
     bool open_device(const std::string& device, int baud, bool ignore_echo,
                      const Everest::GpioSettings& rxtx_gpio_settings, const Parity parity,
                      std::chrono::milliseconds initial_timeout, std::chrono::milliseconds within_message_timeout);
-    std::vector<uint16_t> txrx_impl(uint8_t device_address, FunctionCode function, uint16_t first_register_address,
-                                    uint16_t register_quantity, bool wait_for_reply = true,
-                                    std::vector<uint16_t> request = std::vector<uint16_t>());
 
     std::vector<uint16_t> txrx(uint8_t device_address, FunctionCode function, uint16_t first_register_address,
                                uint16_t register_quantity, uint16_t chunk_size, bool wait_for_reply = true,
@@ -69,6 +66,11 @@ private:
     // Serial interface
     int fd{0};
     bool ignore_echo{false};
+
+    std::vector<uint16_t> txrx_impl(uint8_t device_address, FunctionCode function, uint16_t first_register_address,
+                                    uint16_t register_quantity, bool wait_for_reply = true,
+                                    std::vector<uint16_t> request = std::vector<uint16_t>());
+
     int read_reply(uint8_t* rxbuf, int rxbuf_len);
 
     Everest::Gpio rxtx_gpio;
