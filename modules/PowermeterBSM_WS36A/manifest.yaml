@@ -1,4 +1,4 @@
-description: Powermeter driver for BAUER-BSM-WS36A
+description: Powermeter driver for BAUER-BSM-WS36A using the serial_comm_hub as interface.
 provides:
   main:
     description: Implementation of the driver functionality
@@ -22,4 +22,4 @@ requires:
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
   authors:
-    - Dima Dorezyuk
+    - Qwello GmbH embedded-team@qwello.eu
