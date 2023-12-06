@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+using namespace modbus;
 using namespace types::serial_comm_hub_requests;
 using Request = types::serial_comm_hub_requests::Result;
 

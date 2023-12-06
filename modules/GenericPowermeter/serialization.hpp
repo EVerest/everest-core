@@ -22,6 +22,8 @@
 
 #include <generated/types/serial_comm_hub_requests.hpp>
 
+namespace modbus {
+
 namespace internal {
 
 using Result = types::serial_comm_hub_requests::Result;
@@ -176,3 +178,4 @@ types::serial_comm_hub_requests::VectorUint16 serialize(const std::chrono::time_
         static_cast<uint32_t>(std::chrono::duration_cast<std::chrono::seconds>(time_point.time_since_epoch()).count());
     return serialize(seconds);
 }
+} // namespace modbus
