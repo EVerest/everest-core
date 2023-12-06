@@ -163,7 +163,7 @@ active_modules:
     connections:
       ocpp:
         - module_id: ocpp
-          implementation_id: main
+          implementation_id: ocpp_generic
       data_transfer:
         - module_id: ocpp
           implementation_id: data_transfer
