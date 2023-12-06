@@ -91,15 +91,19 @@ ocppImpl::handle_get_variables(std::vector<types::ocpp::GetVariableRequest>& req
     // prepare ocpp_request to request configuration keys from ocpp::v16::ChargePoint
     ocpp::v16::GetConfigurationRequest ocpp_request;
     std::vector<ocpp::CiString<50>> configuration_keys;
+    std::map<std::string, int> configuration_key_indices{};
+    int request_index = 0;
     for (const auto& request : requests) {
         // only variable.name is relevant for OCPP1.6
         configuration_keys.emplace_back(request.component_variable.variable.name);
+        configuration_key_indices[request.component_variable.variable.name] = request_index++;
     }
     ocpp_request.key = configuration_keys;
 
     // request configuration keys from ocpp::v16::ChargePoint
     const auto ocpp_response = this->mod->charge_point->get_configuration_key(ocpp_request);
 
+    std::map<std::string, types::ocpp::GetVariableRequest> results_map{};
     if (ocpp_response.configurationKey.has_value()) {
         for (const auto& key_value : ocpp_response.configurationKey.value()) {
             // add result for each present configurationKey in the response
@@ -128,6 +132,14 @@ ocppImpl::handle_get_variables(std::vector<types::ocpp::GetVariableRequest>& req
             results.push_back(result);
         }
     }
+
+    std::sort(results.begin(), results.end(),
+              [&configuration_key_indices](const types::ocpp::GetVariableResult& result_a,
+                                           const types::ocpp::GetVariableResult& result_b) {
+                  return configuration_key_indices[result_a.component_variable.variable.name] <
+                         configuration_key_indices[result_b.component_variable.variable.name];
+              });
+
     return results;
 }
 

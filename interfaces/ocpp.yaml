@@ -48,7 +48,7 @@ cmds:
           $ref: /ocpp#/GetVariableRequest
     result:
       description: >-
-        List of GetVariableResult containing the result for every requested value. Does not guarantee preservation of order!
+        List of GetVariableResult containing the result for every requested value. Preserves the order of the input requests.
       type: array
       items:
         type: object
