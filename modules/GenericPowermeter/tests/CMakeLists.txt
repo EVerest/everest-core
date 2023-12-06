@@ -4,6 +4,7 @@ set(INCLUDE_DIR
     "${PROJECT_SOURCE_DIR}/modules/GenericPowermeter"
     "${PROJECT_SOURCE_DIR}/modules/GenericPowermeter/tests")
 
+add_dependencies(generic_powermeter_tests generate_cpp_files)
 get_target_property(GENERATED_INCLUDE_DIR generate_cpp_files EVEREST_GENERATED_INCLUDE_DIR)
 
 target_include_directories(generic_powermeter_tests PUBLIC 
