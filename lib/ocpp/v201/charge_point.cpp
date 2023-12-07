@@ -200,6 +200,13 @@ void ChargePoint::disconnect_websocket(websocketpp::close::status::value code) {
 
 void ChargePoint::on_firmware_update_status_notification(int32_t request_id,
                                                          const FirmwareStatusEnum& firmware_update_status) {
+    if (this->firmware_status == firmware_update_status) {
+        if (request_id == -1 or
+            this->firmware_status_id.has_value() and this->firmware_status_id.value() == request_id) {
+            // already sent, do not send again
+            return;
+        }
+    }
     FirmwareStatusNotificationRequest req;
     req.status = firmware_update_status;
     // Firmware status and id are stored for future trigger message request.
@@ -228,6 +235,17 @@ void ChargePoint::on_firmware_update_status_notification(int32_t request_id,
     }
 
     if (this->firmware_status_before_installing == req.status) {
+        // FIXME(Kai): This is a temporary workaround, because the EVerest System module does not keep track of
+        // transactions and can't inquire about their status from the OCPP modules. If the firmware status is expected
+        // to become "Installing", but we still have a transaction running, the update will wait for the transaction to
+        // finish, and so we send an "InstallScheduled" status. This is necessary for OCTT TC_L_15_CS to pass.
+        const auto transaction_active = this->any_transaction_active(std::nullopt);
+        if (transaction_active) {
+            this->firmware_status = FirmwareStatusEnum::InstallScheduled;
+            req.status = firmware_status;
+            ocpp::Call<FirmwareStatusNotificationRequest> call(req, this->message_queue->createMessageId());
+            this->send_async<FirmwareStatusNotificationRequest>(call);
+        }
         this->change_all_connectors_to_unavailable_for_firmware_update();
     }
 }

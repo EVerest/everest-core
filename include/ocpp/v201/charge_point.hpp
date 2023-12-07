@@ -186,7 +186,9 @@ private:
     RegistrationStatusEnum registration_status;
     OperationalStatusEnum operational_state;
     FirmwareStatusEnum firmware_status;
-    int32_t firmware_status_id;
+    // The request ID in the last firmware update status received
+    std::optional<int32_t> firmware_status_id;
+    // The last firmware status which will be posted before the firmware is installed.
     FirmwareStatusEnum firmware_status_before_installing = FirmwareStatusEnum::SignatureVerified;
     UploadLogStatusEnum upload_log_status;
     int32_t upload_log_status_id;
