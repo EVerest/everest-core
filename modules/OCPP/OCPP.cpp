@@ -247,8 +247,14 @@ void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::Ses
         if (transaction_started.reservation_id) {
             reservation_id_opt.emplace(transaction_started.reservation_id.value());
         }
+        std::optional<std::string> signed_meter_data;
+        if (signed_meter_value.has_value()) {
+            // there is no specified way of transmitting signing method, encoding method and public key
+            // this has to be negotiated beforehand or done in a custom data transfer
+            signed_meter_data.emplace(signed_meter_value.value().signed_meter_data);
+        }
         this->charge_point->on_transaction_started(ocpp_connector_id, session_event.uuid, id_token, energy_Wh_import,
-                                                   reservation_id_opt, timestamp, signed_meter_value);
+                                                   reservation_id_opt, timestamp, signed_meter_data);
     } else if (event == "ChargingPausedEV") {
         EVLOG_debug << "Connector#" << ocpp_connector_id << ": "
                     << "Received ChargingPausedEV";
@@ -274,8 +280,14 @@ void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::Ses
         if (transaction_finished.id_tag.has_value()) {
             id_tag_opt.emplace(ocpp::CiString<20>(transaction_finished.id_tag.value().id_token));
         }
+        std::optional<std::string> signed_meter_data;
+        if (signed_meter_value.has_value()) {
+            // there is no specified way of transmitting signing method, encoding method and public key
+            // this has to be negotiated beforehand or done in a custom data transfer
+            signed_meter_data.emplace(signed_meter_value.value().signed_meter_data);
+        }
         this->charge_point->on_transaction_stopped(ocpp_connector_id, session_event.uuid, reason, timestamp,
-                                                   energy_Wh_import, id_tag_opt, signed_meter_value);
+                                                   energy_Wh_import, id_tag_opt, signed_meter_data);
         // always triggered by libocpp
     } else if (event == "SessionStarted") {
         EVLOG_info << "Connector#" << ocpp_connector_id << ": "
