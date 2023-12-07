@@ -281,6 +281,8 @@ void OCPP::init() {
         json_config.dump(), this->ocpp_share_path, user_config_path, std::filesystem::path(this->config.DatabasePath),
         sql_init_path, std::filesystem::path(this->config.MessageLogPath),
         std::make_shared<EvseSecurity>(*this->r_security));
+
+    this->charge_point->set_message_queue_resume_delay(std::chrono::seconds(config.MessageQueueResumeDelay));
 }
 
 void OCPP::ready() {
