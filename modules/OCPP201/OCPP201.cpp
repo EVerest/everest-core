@@ -123,8 +123,19 @@ ocpp::v201::SampledValue get_sampled_value(const ocpp::v201::ReadingContextEnum&
     return sampled_value;
 }
 
+ocpp::v201::SignedMeterValue get_signed_meter_value(const types::powermeter::SignedMeterValue& signed_meter_value) {
+    ocpp::v201::SignedMeterValue ocpp_signed_meter_value;
+    ocpp_signed_meter_value.signedMeterData = signed_meter_value.signed_meter_data;
+    ocpp_signed_meter_value.signingMethod = signed_meter_value.signing_method;
+    ocpp_signed_meter_value.encodingMethod = signed_meter_value.encoding_method;
+    ocpp_signed_meter_value.publicKey = signed_meter_value.public_key.value_or("");
+
+    return ocpp_signed_meter_value;
+}
+
 ocpp::v201::MeterValue get_meter_value(const types::powermeter::Powermeter& power_meter,
-                                       const ocpp::v201::ReadingContextEnum& reading_context) {
+                                       const ocpp::v201::ReadingContextEnum& reading_context,
+                                       const std::optional<types::powermeter::SignedMeterValue> signed_meter_value) {
     ocpp::v201::MeterValue meter_value;
     meter_value.timestamp = ocpp::DateTime(power_meter.timestamp);
 
@@ -132,6 +143,10 @@ ocpp::v201::MeterValue get_meter_value(const types::powermeter::Powermeter& powe
     ocpp::v201::SampledValue sampled_value = get_sampled_value(
         reading_context, ocpp::v201::MeasurandEnum::Energy_Active_Import_Register, "Wh", std::nullopt);
     sampled_value.value = power_meter.energy_Wh_import.total;
+    // assume a signed meter value is related to the Energy.Active.Import.Register for now
+    if (signed_meter_value.has_value()) {
+        sampled_value.signedMeterValue.emplace(get_signed_meter_value(signed_meter_value.value()));
+    }
     meter_value.sampledValue.push_back(sampled_value);
     if (power_meter.energy_Wh_import.L1.has_value()) {
         sampled_value = get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Energy_Active_Import_Register,
@@ -865,8 +880,8 @@ void OCPP201::ready() {
             case types::evse_manager::SessionEventEnum::TransactionStarted: {
                 const auto transaction_started = session_event.transaction_started.value();
                 const auto timestamp = ocpp::DateTime(transaction_started.timestamp);
-                const auto meter_value =
-                    get_meter_value(transaction_started.meter_value, ocpp::v201::ReadingContextEnum::Transaction_Begin);
+                const auto meter_value = get_meter_value(
+                    transaction_started.meter_value, ocpp::v201::ReadingContextEnum::Transaction_Begin, std::nullopt);
                 const auto session_id = session_event.uuid;
                 const auto signed_meter_value = transaction_started.signed_meter_value;
                 const auto reservation_id = transaction_started.reservation_id;
@@ -904,8 +919,11 @@ void OCPP201::ready() {
             case types::evse_manager::SessionEventEnum::TransactionFinished: {
                 const auto transaction_finished = session_event.transaction_finished.value();
                 const auto timestamp = ocpp::DateTime(transaction_finished.timestamp);
+                const auto signed_meter_value = transaction_finished.signed_meter_value;
+
                 const auto meter_value =
-                    get_meter_value(transaction_finished.meter_value, ocpp::v201::ReadingContextEnum::Transaction_End);
+                    get_meter_value(transaction_finished.meter_value, ocpp::v201::ReadingContextEnum::Transaction_End,
+                                    signed_meter_value);
                 ocpp::v201::ReasonEnum reason = ocpp::v201::ReasonEnum::Other;
 
                 if (transaction_finished.reason.has_value()) {
@@ -917,10 +935,7 @@ void OCPP201::ready() {
                     id_token = get_id_token(transaction_finished.id_tag.value());
                 }
 
-                const auto signed_meter_value = transaction_finished.signed_meter_value;
-
-                this->charge_point->on_transaction_finished(evse_id, timestamp, meter_value, reason, id_token,
-                                                            signed_meter_value,
+                this->charge_point->on_transaction_finished(evse_id, timestamp, meter_value, reason, id_token, "",
                                                             ocpp::v201::ChargingStateEnum::EVConnected);
                 break;
             }
@@ -968,7 +983,8 @@ void OCPP201::ready() {
         });
 
         evse->subscribe_powermeter([this, evse_id](const types::powermeter::Powermeter& power_meter) {
-            const auto meter_value = get_meter_value(power_meter, ocpp::v201::ReadingContextEnum::Sample_Periodic);
+            const auto meter_value =
+                get_meter_value(power_meter, ocpp::v201::ReadingContextEnum::Sample_Periodic, std::nullopt);
             this->charge_point->on_meter_value(evse_id, meter_value);
         });
 
