@@ -341,6 +341,7 @@ RuntimeSettings::RuntimeSettings(const std::string& prefix_, const std::string& 
     } else {
         validate_schema = defaults::VALIDATE_SCHEMA;
     }
+    run_as_user = settings.value("run_as_user", "");
 }
 
 ModuleCallbacks::ModuleCallbacks(const std::function<void(ModuleAdapter module_adapter)>& register_module_adapter,

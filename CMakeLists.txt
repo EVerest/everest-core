@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 
 project(everest-framework
-    VERSION 0.8.1
+    VERSION 0.9
     DESCRIPTION "The open operating system for e-mobility charging stations"
 	LANGUAGES CXX C
 )
@@ -30,6 +30,13 @@ find_package(Boost
         system
         thread
     REQUIRED
+)
+
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(libcap
+    REQUIRED
+    IMPORTED_TARGET
+    libcap
 )
 
 if(NOT DISABLE_EDM)

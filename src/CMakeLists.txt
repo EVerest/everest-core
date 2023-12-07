@@ -1,9 +1,15 @@
-add_executable(manager manager.cpp)
+add_executable(manager)
+target_sources(manager
+    PRIVATE
+        system_unix.cpp
+        manager.cpp
+)
 
 target_link_libraries(manager
     PRIVATE
         everest::framework
         Boost::program_options
+        PkgConfig::libcap
 )
 
 if (EVEREST_ENABLE_ADMIN_PANEL_BACKEND)

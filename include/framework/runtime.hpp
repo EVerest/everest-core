@@ -116,6 +116,8 @@ struct RuntimeSettings {
     std::string telemetry_prefix;
     bool telemetry_enabled;
 
+    std::string run_as_user;
+
     nlohmann::json config;
 
     bool validate_schema;
