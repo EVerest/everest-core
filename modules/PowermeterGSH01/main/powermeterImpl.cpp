@@ -47,7 +47,7 @@ inline uint64_t get_u64(std::vector<uint8_t>& vec) {
     return std::move(get_u64(vec, 0));
 }
 
-inline std::string get_str(std::vector<uint8_t>& vec, uint8_t start_index, uint8_t length) {
+inline std::string get_str(std::vector<uint8_t>& vec, uint16_t start_index, uint16_t length) {
     std::string str = "";
     if ((start_index + length) <= vec.size()) {
         for (uint16_t n = start_index; n < (start_index + length); n++){
