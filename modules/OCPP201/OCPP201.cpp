@@ -123,7 +123,7 @@ ocpp::v201::SampledValue get_sampled_value(const ocpp::v201::ReadingContextEnum&
     return sampled_value;
 }
 
-ocpp::v201::SignedMeterValue get_signed_meter_value(const types::powermeter::SignedMeterValue& signed_meter_value) {
+ocpp::v201::SignedMeterValue get_signed_meter_value(const types::units_signed::SignedMeterValue& signed_meter_value) {
     ocpp::v201::SignedMeterValue ocpp_signed_meter_value;
     ocpp_signed_meter_value.signedMeterData = signed_meter_value.signed_meter_data;
     ocpp_signed_meter_value.signingMethod = signed_meter_value.signing_method;
@@ -135,7 +135,7 @@ ocpp::v201::SignedMeterValue get_signed_meter_value(const types::powermeter::Sig
 
 ocpp::v201::MeterValue get_meter_value(const types::powermeter::Powermeter& power_meter,
                                        const ocpp::v201::ReadingContextEnum& reading_context,
-                                       const std::optional<types::powermeter::SignedMeterValue> signed_meter_value) {
+                                       const std::optional<types::units_signed::SignedMeterValue> signed_meter_value) {
     ocpp::v201::MeterValue meter_value;
     meter_value.timestamp = ocpp::DateTime(power_meter.timestamp);
 

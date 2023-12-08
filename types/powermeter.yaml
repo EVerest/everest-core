@@ -1,26 +1,5 @@
 description: Powermeter types
 types:
-  SignedMeterValue:
-    description: Representation of a signed meter value
-    type: object
-    additionalProperties: false
-    required:
-      - signed_meter_data
-      - signing_method
-      - encoding_method
-    properties:
-      signed_meter_data:
-        description: Base64 encoded signed meter data
-        type: string
-      signing_method:
-        description: Method used to create the signature
-        type: string
-      encoding_method:
-        description: Method used to encode the meter values before signing them
-        type: string
-      public_key:
-        description: Base64 encoded public key
-        type: string
   TransactionReq:
     description: Required input parameter for starting an OCMF transaction. These values will be included in the signed OCMF packet.
     type: object
@@ -92,7 +71,7 @@ types:
       signed_meter_value:
         description: The signed meter value report of the stopped transaction. Must be provided if status is OK.
         type: object
-        $ref: /powermeter#/SignedMeterValue
+        $ref: /units_signed#/SignedMeterValue
       error:
         description: If status is not OK, a verbose error message.
         type: string
@@ -144,7 +123,37 @@ types:
         description: Grid frequency in Hertz
         type: object
         $ref: /units#/Frequency
+      energy_Wh_import_signed:
+        description: Imported energy in Wh (from grid)
+        type: object
+        $ref: /units_signed#/Energy
+      energy_Wh_export_signed:
+        description: Exported energy in Wh (to grid)
+        type: object
+        $ref: /units_signed#/Energy
+      power_W_signed:
+        description:
+          Instantaneous power in Watt. Negative values are exported, positive
+          values imported Energy.
+        type: object
+        $ref: /units_signed#/Power
+      voltage_V_signed:
+        description: Voltage in Volts
+        type: object
+        $ref: /units_signed#/Voltage
+      VAR_signed:
+        description: Reactive power VAR
+        type: object
+        $ref: /units_signed#/ReactivePower
+      current_A_signed:
+        description: Current in ampere
+        type: object
+        $ref: /units_signed#/Current
+      frequency_Hz_signed:
+        description: Grid frequency in Hertz
+        type: object
+        $ref: /units_signed#/Frequency
       signed_meter_value:
         description: Signed instantaneous meter values if supported by the meter
         type: object
-        $ref: /powermeter#/SignedMeterValue
+        $ref: /units_signed#/SignedMeterValue

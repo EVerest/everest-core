@@ -195,7 +195,7 @@ types:
       signed_meter_value:
         description: The signed meter value report of the started transation
         type: object
-        $ref: /powermeter#/SignedMeterValue
+        $ref: /units_signed#/SignedMeterValue
       reservation_id:
         description: Id of the reservation
         type: integer
@@ -218,7 +218,7 @@ types:
       signed_meter_value:
         description: The signed meter value report of the stopped transation
         type: object
-        $ref: /powermeter#/SignedMeterValue
+        $ref: /units_signed#/SignedMeterValue
       reason:
         description: Reason for stopping transaction
         type: string
