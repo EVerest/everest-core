@@ -162,14 +162,14 @@ void ChargePointImpl::init_websocket() {
         if (this->connection_state_changed_callback != nullptr) {
             this->connection_state_changed_callback(true);
         }
-        this->message_queue->resume(); //
-        this->connected_callback();    //
+        this->message_queue->resume(this->message_queue_resume_delay);
+        this->connected_callback();
     });
     this->websocket->register_disconnected_callback([this]() {
         if (this->connection_state_changed_callback != nullptr) {
             this->connection_state_changed_callback(false);
         }
-        this->message_queue->pause(); //
+        this->message_queue->pause();
         if (this->ocsp_request_timer != nullptr) {
             this->ocsp_request_timer->stop();
         }

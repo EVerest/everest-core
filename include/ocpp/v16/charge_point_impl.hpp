@@ -138,6 +138,9 @@ private:
     FirmwareStatusEnumType signed_firmware_status;
     int signed_firmware_status_request_id;
 
+    /// \brief optional delay to resumption of message queue after reconnecting to the CSMS
+    std::chrono::seconds message_queue_resume_delay = std::chrono::seconds(0);
+
     // callbacks
     std::function<bool(int32_t connector)> enable_evse_callback;
     std::function<bool(int32_t connector)> disable_evse_callback;
@@ -729,6 +732,12 @@ public:
     /// \param value
     /// \return Indicates the result of the operation
     ConfigurationStatus set_custom_configuration_key(CiString<50> key, CiString<500> value);
+
+    /// \brief Delay draining the message queue after reconnecting, so the CSMS can perform post-reconnect checks first
+    /// \param delay The delay period (seconds)
+    void set_message_queue_resume_delay(std::chrono::seconds delay) {
+        this->message_queue_resume_delay = delay;
+    }
 };
 
 } // namespace v16

@@ -298,5 +298,9 @@ void ChargePoint::register_is_token_reserved_for_connector_callback(
     this->charge_point->register_is_token_reserved_for_connector_callback(callback);
 }
 
+void ChargePoint::set_message_queue_resume_delay(std::chrono::seconds delay) {
+    this->charge_point->set_message_queue_resume_delay(delay);
+}
+
 } // namespace v16
 } // namespace ocpp

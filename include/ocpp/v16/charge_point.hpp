@@ -458,6 +458,10 @@ public:
     /// \param callback
     void register_is_token_reserved_for_connector_callback(
         const std::function<bool(const int32_t connector, const std::string& id_token)>& callback);
+
+    /// \brief Delay draining the message queue after reconnecting, so the CSMS can perform post-reconnect checks first
+    /// \param delay The delay period (seconds)
+    void set_message_queue_resume_delay(std::chrono::seconds delay);
 };
 
 } // namespace v16
