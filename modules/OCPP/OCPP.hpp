@@ -53,6 +53,7 @@ struct Conf {
     int PublishChargingScheduleDurationS;
     std::string MessageLogPath;
     std::string CertsPath;
+    int MessageQueueResumeDelay;
 };
 
 class OCPP : public Everest::ModuleBase {

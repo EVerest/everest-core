@@ -24,6 +24,10 @@ config:
     description: If true websocket can be disconnected and connected externally
     type: boolean
     default: false
+  MessageQueueResumeDelay:
+    description: Time (seconds) to delay resuming the message queue after reconnecting
+    type: integer
+    default: 0
 provides:
   main:
     description: This is a OCPP 2.0.1 charge point
