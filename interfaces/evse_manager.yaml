@@ -136,6 +136,13 @@ cmds:
         description: The response raw exi stream and the status from the CSMS system
         type: object
         $ref: /iso15118_charger#/Response_Exi_Stream_Status
+  external_ready_to_start_charging:
+    description: >-
+      There are situations where another module needs to do some initialization after evse manager is in principle ready to start charging.
+      This command can be used (optimally in combination with a configuration option) to delay charging ready until the external module is done with its initialization
+    result:
+      description: Returns true if the signal was used by the evse manager implementation
+      type: boolean
 vars:
   session_event:
     description: Emits all events related to sessions
@@ -179,6 +186,11 @@ vars:
     description: Enforced limits for this node (coming from the EnergyManager)
     type: object
     $ref: /energy#/EnforcedLimits
+  waiting_for_external_ready:
+    description: >-
+      Signals that the EVSE Manager is in principle ready to start charging,
+      but delays sending its ready signal waiting for the external_ready_to_start_charging command.
+    type: boolean
   ready:
     description: Signals that the EVSE Manager is ready to start charging
     type: boolean

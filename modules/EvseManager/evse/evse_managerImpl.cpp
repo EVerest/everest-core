@@ -391,5 +391,19 @@ void evse_managerImpl::handle_set_get_certificate_response(
     mod->r_hlc[0]->call_certificate_response(certificate_reponse);
 }
 
+bool evse_managerImpl::handle_external_ready_to_start_charging() {
+    if (mod->config.external_ready_to_start_charging) {
+        EVLOG_info << "Recived external ready to start charging command.";
+        mod->ready_to_start_charging();
+        return true;
+    } else {
+        EVLOG_warning
+            << "Ignoring external ready to start charging command, this could be a configuration issue. Please check "
+               "if 'external_ready_to_start_charging' is set to true if you want to use this feature.";
+    }
+
+    return false;
+}
+
 } // namespace evse
 } // namespace module
