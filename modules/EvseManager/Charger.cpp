@@ -703,11 +703,11 @@ void Charger::processCPEventsState(ControlPilotEvent cp_event) {
 
     case EvseState::WaitingForAuthentication:
         if (cp_event == ControlPilotEvent::CarRequestedPower) {
-            session_log.car(false, "Ignoring CarRequestedPower in WaitingForAuth state. Probably a BCB toggle that "
-                                   "does not make sense here.");
+            session_log.car(false, "B->C transition before PWM is enabled at this stage violates IEC61851-1");
+            iec_allow_close_contactor = true;
         } else if (cp_event == ControlPilotEvent::CarRequestedStopPower) {
-            session_log.car(false, "Ignoring CarRequestedStopPower in WaitingForAuth state. Probably a BCB toggle that "
-                                   "does not make sense here.");
+            session_log.car(false, "C->B transition at this stage violates IEC61851-1");
+            iec_allow_close_contactor = false;
         }
         break;
 
