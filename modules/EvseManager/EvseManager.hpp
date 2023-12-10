@@ -83,6 +83,7 @@ struct Conf {
     bool sae_j2847_2_bpt_enabled;
     std::string sae_j2847_2_bpt_mode;
     bool request_zero_power_in_idle;
+    bool external_ready_to_start_charging;
 };
 
 class EvseManager : public Everest::ModuleBase {
@@ -163,6 +164,8 @@ public:
     std::string selected_protocol = "Unknown";
 
     std::atomic_bool sae_bidi_active{false};
+
+    void ready_to_start_charging();
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
