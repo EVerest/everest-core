@@ -36,6 +36,7 @@ private:
     std::mutex output_file_mutex;
     std::function<void(const std::string& message, MessageDirection direction)> message_callback;
     std::map<std::string, std::string> lookup_map;
+    std::recursive_mutex session_id_logging_mutex;
     std::map<std::string, std::shared_ptr<MessageLogging>> session_id_logging;
 
     void log_output(unsigned int typ, const std::string& message_type, const std::string& json_str);

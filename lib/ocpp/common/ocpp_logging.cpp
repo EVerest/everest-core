@@ -93,6 +93,7 @@ void MessageLogging::charge_point(const std::string& message_type, const std::st
     auto formatted = format_message(message_type, json_str);
     log_output(0, formatted.message_type, formatted.message);
     if (this->session_logging) {
+        std::scoped_lock lock(this->session_id_logging_mutex);
         for (auto const& [session_id, logging] : this->session_id_logging) {
             logging->charge_point(message_type, json_str);
         }
@@ -106,6 +107,7 @@ void MessageLogging::central_system(const std::string& message_type, const std::
     auto formatted = format_message(message_type, json_str);
     log_output(1, formatted.message_type, formatted.message);
     if (this->session_logging) {
+        std::scoped_lock lock(this->session_id_logging_mutex);
         for (auto const& [session_id, logging] : this->session_id_logging) {
             logging->central_system(message_type, json_str);
         }
@@ -115,6 +117,7 @@ void MessageLogging::central_system(const std::string& message_type, const std::
 void MessageLogging::sys(const std::string& msg) {
     log_output(2, msg, "");
     if (this->session_logging) {
+        std::scoped_lock lock(this->session_id_logging_mutex);
         for (auto const& [session_id, logging] : this->session_id_logging) {
             log_output(2, msg, "");
         }
@@ -201,11 +204,13 @@ FormattedMessageWithType MessageLogging::format_message(const std::string& messa
 }
 
 void MessageLogging::start_session_logging(const std::string& session_id, const std::string& log_path) {
+    std::scoped_lock lock(this->session_id_logging_mutex);
     this->session_id_logging[session_id] = std::make_shared<ocpp::MessageLogging>(
         true, log_path, "incomplete-ocpp", false, false, false, true, false, nullptr);
 }
 
 void MessageLogging::stop_session_logging(const std::string& session_id) {
+    std::scoped_lock lock(this->session_id_logging_mutex);
     if (this->session_id_logging.count(session_id)) {
         auto old_file_path =
             this->session_id_logging.at(session_id)->get_message_log_path() + "/" + "incomplete-ocpp.html";
