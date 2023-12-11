@@ -138,6 +138,8 @@ private:
     bool all_evse_ready();
 
     std::atomic_bool started{false};
+    std::mutex session_event_mutex;
+    std::map<int32_t, std::queue<types::evse_manager::SessionEvent>> session_event_queue;
     void process_session_event(int32_t evse_id, const types::evse_manager::SessionEvent& session_event);
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
