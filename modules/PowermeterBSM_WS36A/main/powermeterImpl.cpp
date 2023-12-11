@@ -48,20 +48,6 @@ void powermeterImpl::init() {
 }
 
 void powermeterImpl::ready() {
-    // TODO(ddo) Remove this once done testing
-    std::thread([this]() {
-        while (true) {
-
-            TransactionReq req;
-            req.evse_id = "my-id";
-            req.transaction_id = "my-transaction";
-            handle_start_transaction(req);
-            std::string fin = "my-done";
-            handle_stop_transaction(fin);
-
-            std::this_thread::sleep_for(std::chrono::seconds{2});
-        }
-    }).detach();
 }
 
 TransactionStartResponse powermeterImpl::handle_start_transaction_impl(const TransactionReq& value) {
