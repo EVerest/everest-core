@@ -803,7 +803,7 @@ void Charger::processCPEventsIndependent(ControlPilotEvent cp_event) {
         break;
     case ControlPilotEvent::ErrorRCD_DC:
         currentState = EvseState::Error;
-        errorState = types::evse_manager::ErrorEnum::OverCurrent;
+        errorState = types::evse_manager::ErrorEnum::RCDDC;
         break;
     case ControlPilotEvent::ErrorOverVoltage:
         currentState = EvseState::Error;
