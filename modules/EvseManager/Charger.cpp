@@ -951,7 +951,6 @@ bool Charger::setMaxCurrent(float c, std::chrono::time_point<date::utc_clock> va
     return false;
 }
 
-
 // pause if currently charging, else do nothing.
 bool Charger::pauseCharging() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);

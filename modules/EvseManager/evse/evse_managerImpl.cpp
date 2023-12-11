@@ -389,7 +389,7 @@ void evse_managerImpl::handle_set_get_certificate_response(
     mod->r_hlc[0]->call_certificate_response(certificate_reponse);
 }
 
-bool evse_managerImpl::handle_force_unlock(int& connector_id){
+bool evse_managerImpl::handle_force_unlock(int& connector_id) {
     // FIXME IMPLEMENT ME
     return false;
 };

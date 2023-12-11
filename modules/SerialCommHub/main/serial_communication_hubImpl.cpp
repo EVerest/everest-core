@@ -64,8 +64,8 @@ serial_communication_hubImpl::handle_modbus_read_holding_registers(int& target_d
         while (retry_counter > 0) {
 
             EVLOG_debug << fmt::format("Try {} Call modbus_client->read_holding_register(id {} addr {} len {})",
-                                      (int)retry_counter, (uint8_t)target_device_id,
-                                      (uint16_t)first_register_address, (uint16_t)num_registers_to_read);
+                                       (int)retry_counter, (uint8_t)target_device_id, (uint16_t)first_register_address,
+                                       (uint16_t)num_registers_to_read);
 
             response = modbus.txrx(target_device_id, tiny_modbus::FunctionCode::READ_MULTIPLE_HOLDING_REGISTERS,
                                    first_register_address, num_registers_to_read, config.max_packet_size);
@@ -100,8 +100,8 @@ serial_communication_hubImpl::handle_modbus_read_input_registers(int& target_dev
         while (retry_counter-- > 0) {
 
             EVLOG_debug << fmt::format("Try {} Call modbus_client->read_input_register(id {} addr {} len {})",
-                                      (int)retry_counter, (uint8_t)target_device_id,
-                                      (uint16_t)first_register_address, (uint16_t)num_registers_to_read);
+                                       (int)retry_counter, (uint8_t)target_device_id, (uint16_t)first_register_address,
+                                       (uint16_t)num_registers_to_read);
 
             response = modbus.txrx(target_device_id, tiny_modbus::FunctionCode::READ_INPUT_REGISTERS,
                                    first_register_address, num_registers_to_read, config.max_packet_size);

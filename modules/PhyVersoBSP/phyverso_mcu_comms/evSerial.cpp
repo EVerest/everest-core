@@ -84,11 +84,11 @@ bool evSerial::set_serial_attributes() {
     // disable IGNBRK for mismatched speed tests; otherwise receive break
     // as \000 chars
     tty.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON | IXOFF | IXANY);
-    tty.c_lflag = 0;     // no signaling chars, no echo,
-                         // no canonical processing
-    tty.c_oflag = 0;     // no remapping, no delays
-    tty.c_cc[VMIN] = 0;  // read blocks
-    tty.c_cc[VTIME] = 5; // 0.5 seconds read timeout
+    tty.c_lflag = 0;                   // no signaling chars, no echo,
+                                       // no canonical processing
+    tty.c_oflag = 0;                   // no remapping, no delays
+    tty.c_cc[VMIN] = 0;                // read blocks
+    tty.c_cc[VTIME] = 5;               // 0.5 seconds read timeout
 
     tty.c_cflag |= (CLOCAL | CREAD);   // ignore modem controls,
                                        // enable reading
@@ -180,7 +180,6 @@ void evSerial::handle_packet(uint8_t* buf, int len) {
         case McuToEverest_lock_state_tag:
             signal_lock_state(msg_in.connector, msg_in.payload.lock_state);
             break;
-
         }
 }
 

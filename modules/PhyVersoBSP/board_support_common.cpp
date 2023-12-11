@@ -32,4 +32,4 @@ types::board_support_common::BspEvent to_bsp_event(bool relais_state) {
         return {types::board_support_common::Event::PowerOff};
     }
 }
-}
+} // namespace module

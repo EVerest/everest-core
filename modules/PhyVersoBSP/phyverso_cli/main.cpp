@@ -115,19 +115,18 @@ int main(int argc, char* argv[]) {
         });
 
         p.signal_lock_state.connect([](int connector, LockState s) {
-            switch(s) {
-                case LockState_UNDEFINED:
-                    printf(">> Connector %i: Lock State UNDEFINED\n", connector);
-                    break;
-                case LockState_LOCKED:
-                    printf(">> Connector %i: Lock State Locked\n", connector);
-                    break;
-                case LockState_UNLOCKED:
-                    printf(">> Connector %i: Lock State Unlocked\n", connector);
-                    break;
+            switch (s) {
+            case LockState_UNDEFINED:
+                printf(">> Connector %i: Lock State UNDEFINED\n", connector);
+                break;
+            case LockState_LOCKED:
+                printf(">> Connector %i: Lock State Locked\n", connector);
+                break;
+            case LockState_UNLOCKED:
+                printf(">> Connector %i: Lock State Unlocked\n", connector);
+                break;
             }
         });
-
 
         while (true) {
             char c = getc(stdin);

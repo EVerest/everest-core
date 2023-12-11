@@ -3,8 +3,8 @@
 #ifndef EVSE_BOARD_SUPPORT_COMMON_HPP
 #define EVSE_BOARD_SUPPORT_COMMON_HPP
 
-#include <generated/interfaces/evse_board_support/Implementation.hpp>
 #include "phyverso.pb.h"
+#include <generated/interfaces/evse_board_support/Implementation.hpp>
 
 namespace module {
 types::board_support_common::BspEvent to_bsp_event(CpState s);
