@@ -38,7 +38,7 @@
       "variable_name": "NetworkConnectionProfiles",
       "characteristics": {
         "supportsMonitoring": true,
-        "dataType": "MemberList"
+        "dataType": "string"
       },
       "attributes": [
         {
@@ -486,6 +486,24 @@
       ],
       "description": "Threshold for the size of in-memory message queues used to buffer messages (and store e.g. while offline). If threshold is exceeded, messages  will be dropped according to OCPP specification to avoid memory issues.",
       "minimum": 1,
+      "type": "integer"
+    },
+    "MaxMessageSize": {
+      "variable_name": "MaxMessageSize",
+      "characteristics": {
+        "minLimit": 1,
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Maximum size in bytes for messages sent to the CSMS via websocket. If a message exceeds this size and is eligible to be split into multiple messages, it will be split. Otherwise, this value is ignored.",
+      "minimum": 1,
+      "default": "65000",
       "type": "integer"
     }
   },

@@ -67,7 +67,7 @@ template <typename M> struct ControlMessage {
     DateTime timestamp;                       ///< A timestamp that shows when this message can be sent
 
     /// \brief Creates a new ControlMessage object from the provided \p message
-    explicit ControlMessage(json message);
+    explicit ControlMessage(const json& message);
 
     /// \brief Provides the unique message ID stored in the message
     /// \returns the unique ID of the contained message
@@ -443,20 +443,29 @@ public:
         if (!running) {
             return;
         }
+        json call_json = call;
+        push(call_json);
+    }
 
-        auto message = std::make_shared<ControlMessage<M>>(call);
-        if (message->isTransactionMessage()) {
+    void push(const json& message) {
+        if (!running) {
+            return;
+        }
+
+        auto control_message = std::make_shared<ControlMessage<M>>(message);
+        if (control_message->isTransactionMessage()) {
             // according to the spec the "transaction related messages" StartTransaction, StopTransaction and
             // MeterValues have to be delivered in chronological order
 
             // intentionally break this message for testing...
             // message->message[CALL_PAYLOAD]["broken"] = this->createMessageId();
-            this->add_to_transaction_message_queue(message);
+            this->add_to_transaction_message_queue(control_message);
         } else {
             // all other messages are allowed to "jump the queue" to improve user experience
             // TODO: decide if we only want to allow this for a subset of messages
-            if (!this->paused || this->config.queue_all_messages || message->messageType == M::BootNotification) {
-                this->add_to_normal_message_queue(message);
+            if (!this->paused || this->config.queue_all_messages ||
+                control_message->messageType == M::BootNotification) {
+                this->add_to_normal_message_queue(control_message);
             }
         }
         this->cv.notify_all();

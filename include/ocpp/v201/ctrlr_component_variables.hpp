@@ -65,6 +65,7 @@ extern const ComponentVariable& V2GCertificateExpireCheckIntervalSeconds;
 extern const ComponentVariable& ClientCertificateExpireCheckInitialDelaySeconds;
 extern const ComponentVariable& ClientCertificateExpireCheckIntervalSeconds;
 extern const ComponentVariable& MessageQueueSizeThreshold;
+extern const ComponentVariable& MaxMessageSize;
 extern const ComponentVariable& AlignedDataCtrlrEnabled;
 extern const ComponentVariable& AlignedDataCtrlrAvailable;
 extern const RequiredComponentVariable& AlignedDataInterval;

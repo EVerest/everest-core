@@ -7,6 +7,7 @@
 #include <ocpp/v201/device_model_storage_sqlite.hpp>
 #include <ocpp/v201/messages/FirmwareStatusNotification.hpp>
 #include <ocpp/v201/messages/LogStatusNotification.hpp>
+#include <ocpp/v201/notify_report_requests_splitter.hpp>
 
 #include <stdexcept>
 #include <string>
@@ -21,6 +22,7 @@ namespace v201 {
 const auto DEFAULT_BOOT_NOTIFICATION_RETRY_INTERVAL = std::chrono::seconds(30);
 const auto WEBSOCKET_INIT_DELAY = std::chrono::seconds(2);
 const auto DEFAULT_MESSAGE_QUEUE_SIZE_THRESHOLD = 2E5;
+const auto DEFAULT_MAX_MESSAGE_SIZE = 65000;
 
 bool Callbacks::all_callbacks_valid() const {
     return this->is_reset_allowed_callback != nullptr and this->reset_callback != nullptr and
@@ -1580,17 +1582,28 @@ void ChargePoint::boot_notification_req(const BootReasonEnum& reason) {
     this->send<BootNotificationRequest>(call);
 }
 
-void ChargePoint::notify_report_req(const int request_id, const int seq_no,
-                                    const std::vector<ReportData>& report_data) {
+void ChargePoint::notify_report_req(const int request_id, const std::vector<ReportData>& report_data) {
 
     NotifyReportRequest req;
     req.requestId = request_id;
-    req.seqNo = seq_no;
+    req.seqNo = 0;
     req.generatedAt = ocpp::DateTime();
     req.reportData.emplace(report_data);
+    req.tbc = false;
 
-    ocpp::Call<NotifyReportRequest> call(req, this->message_queue->createMessageId());
-    this->send<NotifyReportRequest>(call);
+    if (report_data.size() <= 1) {
+        ocpp::Call<NotifyReportRequest> call(req, this->message_queue->createMessageId());
+        this->send<NotifyReportRequest>(call);
+    } else {
+        NotifyReportRequestsSplitter splitter{
+            req,
+            this->device_model->get_optional_value<size_t>(ControllerComponentVariables::MaxMessageSize)
+                .value_or(DEFAULT_MAX_MESSAGE_SIZE),
+            [this]() { return this->message_queue->createMessageId(); }};
+        for (const auto& msg : splitter.create_call_payloads()) {
+            this->message_queue->push(msg);
+        }
+    }
 }
 
 AuthorizeResponse ChargePoint::authorize_req(const IdToken id_token, const std::optional<CiString<5500>>& certificate,
@@ -2014,7 +2027,7 @@ void ChargePoint::handle_get_base_report_req(Call<GetBaseReportRequest> call) {
         // TODO(piet): Propably split this up into several NotifyReport.req depending on ItemsPerMessage /
         // BytesPerMessage
         const auto report_data = this->device_model->get_report_data(msg.reportBase);
-        this->notify_report_req(msg.requestId, 0, report_data);
+        this->notify_report_req(msg.requestId, report_data);
     }
 }
 
@@ -2037,7 +2050,7 @@ void ChargePoint::handle_get_report_req(Call<GetReportRequest> call) {
     this->send<GetReportResponse>(call_result);
 
     if (response.status == GenericDeviceModelStatusEnum::Accepted) {
-        this->notify_report_req(msg.requestId, 0, report_data);
+        this->notify_report_req(msg.requestId, report_data);
     }
 }
 

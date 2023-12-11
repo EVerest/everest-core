@@ -31,6 +31,11 @@ template <typename T> T to_specific_type(const std::string& value) {
         return std::stoi(value);
     } else if constexpr (std::is_same<T, double>::value) {
         return std::stod(value);
+    } else if constexpr (std::is_same<T, size_t>::value) {
+        std::stringstream s(value);
+        size_t res;
+        s >> res;
+        return res;
     } else if constexpr (std::is_same<T, DateTime>::value) {
         return DateTime(value);
     } else if constexpr (std::is_same<T, bool>::value) {

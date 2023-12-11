@@ -369,7 +369,7 @@ private:
 
     // Functional Block B: Provisioning
     void boot_notification_req(const BootReasonEnum& reason);
-    void notify_report_req(const int request_id, const int seq_no, const std::vector<ReportData>& report_data);
+    void notify_report_req(const int request_id, const std::vector<ReportData>& report_data);
 
     // Functional Block C: Authorization
     AuthorizeResponse authorize_req(const IdToken id_token, const std::optional<CiString<5500>>& certificate,

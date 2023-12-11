@@ -10,7 +10,8 @@
       "variable_name": "AvailabilityState",
       "characteristics": {
         "supportsMonitoring": true,
-        "dataType": "OptionList"
+        "dataType": "OptionList",
+        "valuesList": "Available,Occupied,Reserved,Unavailable,Faulted"
       },
       "attributes": [
         {

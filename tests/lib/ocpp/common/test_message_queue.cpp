@@ -108,7 +108,7 @@ template <> TestMessageType MessageQueue<TestMessageType>::string_to_messagetype
     return to_test_message_type(s);
 }
 
-template <> ControlMessage<TestMessageType>::ControlMessage(json message) {
+template <> ControlMessage<TestMessageType>::ControlMessage(const json& message) {
     this->message = message.get<json::array_t>();
     EVLOG_info << this->message;
     this->messageType = to_test_message_type(this->message[2]);
@@ -285,7 +285,7 @@ protected:
             message_queue->stop();
         }
         message_queue = std::make_unique<MessageQueue<TestMessageType>>(send_callback_mock.AsStdFunction(), config, db);
-        message_queue->resume();
+        message_queue->resume(std::chrono::seconds(0));
     }
 
     void SetUp() override {
@@ -355,7 +355,7 @@ TEST_F(MessageQueueTest, test_queuing_up_of_transactional_messages) {
         push_message_call(TestMessageType::TRANSACTIONAL);
     }
 
-    message_queue->resume();
+    message_queue->resume(std::chrono::seconds(0));
 
     // expect one repeated and all other calls been made
     wait_for_calls(message_count + 1);
@@ -380,7 +380,7 @@ TEST_F(MessageQueueTest, test_non_queuing_up_of_non_transactional_messages) {
         push_message_call(TestMessageType::NON_TRANSACTIONAL);
     }
 
-    message_queue->resume();
+    message_queue->resume(std::chrono::seconds(0));
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
     // expect calls not repeated
@@ -408,7 +408,7 @@ TEST_F(MessageQueueTest, test_queuing_up_of_non_transactional_messages) {
         push_message_call(TestMessageType::NON_TRANSACTIONAL);
     }
 
-    message_queue->resume();
+    message_queue->resume(std::chrono::seconds(0));
 
     // expect calls _are_ repeated
     wait_for_calls(message_count + 1);
@@ -457,7 +457,7 @@ TEST_F(MessageQueueTest, test_clean_up_non_transactional_queue) {
     }
 
     // go online again
-    message_queue->resume();
+    message_queue->resume(std::chrono::seconds(0));
 
     // expect calls _are_ repeated
     wait_for_calls(sent_transactional_messages + sent_non_transactional_messages -
@@ -541,7 +541,7 @@ TEST_F(MessageQueueTest, test_clean_up_transactional_queue) {
     }
 
     // Resume & verify
-    message_queue->resume();
+    message_queue->resume(std::chrono::seconds(0));
 
     wait_for_calls(expected_sent_messages);
 }

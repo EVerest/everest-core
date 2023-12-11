@@ -242,6 +242,13 @@ const ComponentVariable& MessageQueueSizeThreshold = {
         "MessageQueueSizeThreshold",
     }),
 };
+const ComponentVariable& MaxMessageSize = {
+    ControllerComponents::InternalCtrlr,
+    std::nullopt,
+    std::optional<Variable>({
+        "MaxMessageSize",
+    }),
+};
 const ComponentVariable& AlignedDataCtrlrEnabled = {
     ControllerComponents::AlignedDataCtrlr,
     std::nullopt,
