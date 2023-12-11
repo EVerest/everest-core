@@ -57,6 +57,7 @@ active_modules:
       ac_hlc_enabled: false
       ac_hlc_use_5percent: false
       ac_enforce_hlc: false
+      external_ready_to_start_charging: true
     connections:
       bsp:
         - module_id: yeti_driver_2
