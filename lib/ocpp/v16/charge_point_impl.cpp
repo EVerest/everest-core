@@ -1865,7 +1865,7 @@ void ChargePointImpl::handleSetChargingProfileRequest(ocpp::Call<SetChargingProf
                       << call.msg.csChargingProfiles.chargingProfilePurpose;
         response.status = ChargingProfileStatus::Rejected;
     } else if (this->smart_charging_handler->validate_profile(
-                   profile, connector_id, false, this->configuration->getChargeProfileMaxStackLevel(),
+                   profile, connector_id, true, this->configuration->getChargeProfileMaxStackLevel(),
                    this->configuration->getMaxChargingProfilesInstalled(),
                    this->configuration->getChargingScheduleMaxPeriods(),
                    this->configuration->getChargingScheduleAllowedChargingRateUnitVector())) {
@@ -2550,8 +2550,10 @@ IdTagInfo ChargePointImpl::authorize_id_token(CiString<20> idTag) {
     // - LocalPreAuthorize is true and CP is online
     // OR
     // - LocalAuthorizeOffline is true and CP is offline
-    if ((this->configuration->getLocalPreAuthorize() && this->websocket->is_connected()) ||
-        (this->configuration->getLocalAuthorizeOffline() && !this->websocket->is_connected())) {
+    if ((this->configuration->getLocalPreAuthorize() &&
+         (this->websocket != nullptr && this->websocket->is_connected())) ||
+        (this->configuration->getLocalAuthorizeOffline() &&
+         (this->websocket == nullptr || !this->websocket->is_connected()))) {
         if (this->configuration->getLocalAuthListEnabled()) {
             const auto auth_list_entry_opt = this->database_handler->get_local_authorization_list_entry(idTag);
             if (auth_list_entry_opt.has_value()) {
@@ -3203,13 +3205,19 @@ void ChargePointImpl::on_transaction_stopped(const int32_t connector, const std:
                                              const Reason& reason, ocpp::DateTime timestamp, float energy_wh_import,
                                              std::optional<CiString<20>> id_tag_end,
                                              std::optional<std::string> signed_meter_value) {
+    auto transaction = this->transaction_handler->get_transaction(connector);
+    if (transaction == nullptr) {
+        EVLOG_error << "Trying to stop a transaction that is unknown on connector: " << connector
+                    << ", with session_id: " << session_id;
+        return;
+    }
     if (signed_meter_value) {
         const auto meter_value =
             this->get_signed_meter_value(signed_meter_value.value(), ReadingContext::Transaction_End, timestamp);
-        this->transaction_handler->get_transaction(connector)->add_meter_value(meter_value);
+        transaction->add_meter_value(meter_value);
     }
     const auto stop_energy_wh = std::make_shared<StampedEnergyWh>(timestamp, energy_wh_import);
-    this->transaction_handler->get_transaction(connector)->add_stop_energy_wh(stop_energy_wh);
+    transaction->add_stop_energy_wh(stop_energy_wh);
 
     this->status->submit_event(connector, FSMEvent::TransactionStoppedAndUserActionRequired, ocpp::DateTime());
     this->stop_transaction(connector, reason, id_tag_end);
