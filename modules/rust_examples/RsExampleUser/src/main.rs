@@ -7,7 +7,7 @@ use std::sync::{Arc, Mutex};
 use std::{thread, time};
 
 use generated::{
-    ExampleClientSubscriber, ExampleUserServiceSubscriber, Module, ModulePublisher,
+    Context, ExampleClientSubscriber, ExampleUserServiceSubscriber, Module, ModulePublisher,
     OnReadySubscriber,
 };
 
@@ -26,16 +26,17 @@ impl ExampleClient {
 }
 
 impl ExampleClientSubscriber for ExampleClient {
-    fn on_max_current(&self, publishers: &ModulePublisher, value: f64) {
+    fn on_max_current(&self, context: &Context, value: f64) {
         println!("Received the value {value}");
-        let _ = publishers
+        let _ = context
+            .publisher
             .their_example
             .uses_something("hello_there".to_string());
         *self.max_current.lock().unwrap() = Some(value);
 
         // Example where we start a thread with the publisher. The cloning is
         // only done if the user wants to offload the publisher into a thread.
-        let clone = publishers.clone();
+        let clone = context.publisher.clone();
         *self.thread.lock().unwrap() = Some(thread::spawn(move || {
             let _ = clone.another_example.uses_something("foo".to_string());
         }))
