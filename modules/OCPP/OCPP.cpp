@@ -252,8 +252,10 @@ void OCPP::init_evse_subscriptions() {
             }
 
             if (!this->started) {
-                EVLOG_error << "OCPP not fully initialized, but received a session event on evse_id: " << evse_id
-                            << " that will be discarded: " << session_event.event;
+                EVLOG_info << "OCPP not fully initialized, but received a session event on evse_id: " << evse_id
+                           << " that will be queued up: " << session_event.event;
+                std::scoped_lock lock(this->session_event_mutex);
+                this->session_event_queue[evse_id].push(session_event);
                 return;
             }
 
@@ -626,8 +628,6 @@ void OCPP::ready() {
 
     this->charge_point->register_enable_evse_callback([this](int32_t connector) {
         if (this->connector_evse_index_map.count(connector)) {
-            // FIXME(kai): these callbacks can already be called from within libocpp during its startup, so we might see
-            // some issues here...
             return this->r_evse_manager.at(this->connector_evse_index_map.at(connector))->call_enable(0);
         } else {
             return false;
@@ -727,6 +727,18 @@ void OCPP::ready() {
         // signal that we're started
         this->started = true;
         EVLOG_info << "OCPP initialized";
+
+        // process session event queue
+        std::scoped_lock lock(this->session_event_mutex);
+        for (auto& [evse_id, evse_session_event_queue] : this->session_event_queue) {
+            while (!evse_session_event_queue.empty()) {
+                auto queued_session_event = evse_session_event_queue.front();
+                EVLOG_info << "Processing queued session event for evse_id: " << evse_id
+                           << ", event: " << queued_session_event.event;
+                this->process_session_event(evse_id, queued_session_event);
+                evse_session_event_queue.pop();
+            }
+        }
     }
 
     // signal to the EVSEs that OCPP is initialized
