@@ -1,4 +1,4 @@
-name: Build and test
+name: Build, Lint and Test
 on:
   pull_request: {}
   workflow_dispatch:
@@ -16,7 +16,7 @@ on:
 
 jobs:
   build:
-    name: Build
+    name: Build, Lint and Test
     runs-on: ${{ inputs.runner || 'ubuntu-22.04' }}
     steps:
       - name: Format branch name for cache key
@@ -45,7 +45,7 @@ jobs:
         run: |
           mkdir scripts
           rsync -a source/.ci/build-kit/ scripts
-      - name: Pull docker container
+      - name: Pull build-kit image
         run: |
           docker pull --quiet ghcr.io/everest/build-kit-alpine:latest
           docker image tag ghcr.io/everest/build-kit-alpine:latest build-kit
@@ -55,15 +55,15 @@ jobs:
           --volume "$(pwd):/ext" \
           --name compile-container \
           build-kit run-script compile
-      - name: Unit tests and install
+      - name: Create integration-image
         run: |
           docker commit compile-container build-image
           docker run \
           --volume "$(pwd):/ext" \
           --name test-container \
           build-image run-script test_and_install
+          docker commit test-container integration-image
       - name: Run integration tests
         run: |
-          docker commit test-container integration-image
           pushd source/.ci/e2e
           docker-compose run e2e-test-server run-script tests
