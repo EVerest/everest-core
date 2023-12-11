@@ -393,7 +393,7 @@ void evse_managerImpl::handle_set_get_certificate_response(
 
 bool evse_managerImpl::handle_external_ready_to_start_charging() {
     if (mod->config.external_ready_to_start_charging) {
-        EVLOG_info << "Recived external ready to start charging command.";
+        EVLOG_info << "Received external ready to start charging command.";
         mod->ready_to_start_charging();
         return true;
     } else {
