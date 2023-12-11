@@ -1,0 +1,149 @@
+settings:
+  telemetry_enabled: true
+active_modules:
+  api:
+    connections:
+      evse_manager:
+        - implementation_id: evse
+          module_id: connector_1
+    module: API
+  auth:
+    config_module:
+      connection_timeout: 10
+      prioritize_authorization_over_stopping_transaction: true
+      selection_algorithm: FindFirst
+    connections:
+      evse_manager:
+        - implementation_id: evse
+          module_id: connector_1
+      token_provider:
+        - implementation_id: main
+          module_id: token_provider
+      token_validator:
+        - implementation_id: main
+          module_id: token_validator
+    module: Auth
+  car_simulator:
+    config_module:
+      auto_enable: true
+      auto_exec: false
+      auto_exec_commands: sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 30;unplug
+      connector_id: 1
+    connections:
+      ev:
+        - implementation_id: ev
+          module_id: iso15118_car
+      simulation_control:
+        - implementation_id: yeti_simulation_control
+          module_id: connector_1_powerpath
+      slac:
+        - implementation_id: ev
+          module_id: slac
+    module: JsCarSimulator
+  energy_manager:
+    connections:
+      energy_trunk:
+        - implementation_id: energy_grid
+          module_id: grid_connection_point
+    module: EnergyManager
+  connector_1:
+    config_module:
+      ac_enforce_hlc: false
+      ac_hlc_enabled: true
+      ac_hlc_use_5percent: false
+      ac_nominal_voltage: 230
+      charge_mode: AC
+      connector_id: 1
+      country_code: DE
+      ev_receipt_required: false
+      evse_id: DE*PNX*E12345*1
+      has_ventilation: true
+      max_current_import_A: 32
+      max_current_export_A: 32
+      payment_enable_contract: true
+      payment_enable_eim: true
+      session_logging: true
+      session_logging_path: /tmp/everest-logs
+      session_logging_xml: false
+      three_phases: true
+    connections:
+      bsp:
+        - implementation_id: board_support
+          module_id: connector_1_powerpath
+      powermeter_grid_side:
+        - implementation_id: powermeter
+          module_id: connector_1_powerpath
+      slac:
+        - implementation_id: evse
+          module_id: slac
+      ac_rcd:
+        - implementation_id: rcd
+          module_id: connector_1_powerpath
+    module: EvseManager
+    telemetry:
+      id: 1
+  grid_connection_point:
+    config_module:
+      fuse_limit_A: 40
+      phase_count: 3
+    connections:
+      energy_consumer:
+        - implementation_id: energy_grid
+          module_id: connector_1
+    module: EnergyNode
+  iso15118_car:
+    config_module:
+      device: auto
+      supported_ISO15118_2: true
+    connections: {}
+    module: PyEvJosev
+  persistent_store:
+    config_module:
+      sqlite_db_file_path: everest_persistent_store.db
+    connections: {}
+    module: PersistentStore
+  setup:
+    config_module:
+      initialized_by_default: true
+      localization: true
+      online_check_host: lfenergy.org
+      setup_simulation: true
+      setup_wifi: true
+    connections:
+      store:
+        - implementation_id: main
+          module_id: persistent_store
+    module: Setup
+  slac:
+    config_implementation:
+      ev:
+        ev_id: PIONIX_SAYS_HELLO
+      evse:
+        evse_id: PIONIX_SAYS_HELLO
+        nid: pionix!
+        number_of_sounds: 10
+    connections: {}
+    module: JsSlacSimulator
+  token_provider:
+    config_implementation:
+      main:
+        timeout: 10
+        token: DEADBEEF
+    connections:
+      evse:
+        - implementation_id: evse
+          module_id: connector_1
+    module: DummyTokenProvider
+  token_validator:
+    config_implementation:
+      main:
+        sleep: 0.25
+        validation_reason: Token seems valid
+        validation_result: Accepted
+    connections: {}
+    module: DummyTokenValidator
+  connector_1_powerpath:
+    connections: {}
+    module: JsYetiSimulator
+    telemetry:
+      id: 1
