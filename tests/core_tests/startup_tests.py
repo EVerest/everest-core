@@ -78,8 +78,7 @@ class ProbeModule:
         return True
 
 
-@pytest.mark.skip(reason="Fix the config for qwello")
-@pytest.mark.everest_core_config('config-sil.yaml')
+@pytest.mark.everest_core_config('qwello-test-config-sil.yaml')
 @pytest.mark.asyncio
 async def test_001_start_test_module(everest_core: EverestCore):
     logging.info(">>>>>>>>> test_001_start_test_module <<<<<<<<<")
