@@ -2221,15 +2221,6 @@ void ChargePoint::handle_reset_req(Call<ResetRequest> call) {
     }
 
     if (response.status == ResetStatusEnum::Accepted) {
-        if (call.msg.evseId.has_value()) {
-            // B11.FR.08
-            this->evses.at(call.msg.evseId.value())->submit_event(1, ConnectorEvent::Unavailable);
-        } else {
-            // B11.FR.03
-            for (auto const& [evse_id, evse] : this->evses) {
-                evse->submit_event(1, ConnectorEvent::Unavailable);
-            }
-        }
         this->callbacks.reset_callback(call.msg.evseId, ResetEnum::Immediate);
     }
 }
