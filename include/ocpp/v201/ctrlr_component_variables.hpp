@@ -122,6 +122,7 @@ extern const RequiredComponentVariable& EVSESupplyPhases;
 extern const ComponentVariable& CentralContractValidationAllowed;
 extern const RequiredComponentVariable& ContractValidationOffline;
 extern const ComponentVariable& RequestMeteringReceipt;
+extern const ComponentVariable& ISO15118CtrlrSeccId;
 extern const ComponentVariable& ISO15118CtrlrCountryName;
 extern const ComponentVariable& ISO15118CtrlrOrganizationName;
 extern const ComponentVariable& PnCEnabled;

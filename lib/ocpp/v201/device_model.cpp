@@ -109,6 +109,7 @@ GetVariableStatusEnum DeviceModel::request_value_internal(const Component& compo
                                                           bool allow_write_only) {
     const auto component_it = this->device_model.find(component_id);
     if (component_it == this->device_model.end()) {
+        EVLOG_warning << "unknown component in " << component_id.name << "." << variable_id.name;
         return GetVariableStatusEnum::UnknownComponent;
     }
 
@@ -116,6 +117,7 @@ GetVariableStatusEnum DeviceModel::request_value_internal(const Component& compo
     const auto& variable_it = component.find(variable_id);
 
     if (variable_it == component.end()) {
+        EVLOG_warning << "unknown variable in " << component_id.name << "." << variable_id.name;
         return GetVariableStatusEnum::UnknownVariable;
     }
 

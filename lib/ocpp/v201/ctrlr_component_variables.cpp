@@ -625,6 +625,13 @@ const ComponentVariable& RequestMeteringReceipt = {
         "RequestMeteringReceipt",
     }),
 };
+const ComponentVariable& ISO15118CtrlrSeccId = {
+    ControllerComponents::ISO15118Ctrlr,
+    std::nullopt,
+    std::optional<Variable>({
+        "SeccId",
+    }),
+};
 const ComponentVariable& ISO15118CtrlrCountryName = {
     ControllerComponents::ISO15118Ctrlr,
     std::nullopt,
