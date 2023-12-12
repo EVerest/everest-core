@@ -83,7 +83,7 @@ std::string EvseSecurityImpl::generate_certificate_signing_request(const Certifi
                                                                    const std::string& country,
                                                                    const std::string& organization,
                                                                    const std::string& common) {
-    return this->evse_security->generate_certificate_signing_request(evse_security::LeafCertificateType::CSMS, country,
+    return this->evse_security->generate_certificate_signing_request(conversions::from_ocpp(certificate_type), country,
                                                                      organization, common);
 }
 
