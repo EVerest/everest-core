@@ -52,7 +52,6 @@ void powermeterImpl::ready() {
 
 TransactionStartResponse powermeterImpl::handle_start_transaction_impl(const TransactionReq& value) {
     EVLOG_info << "Starting transaction";
-    // No need to proceed without the `signature_start`.
 
     // Set the time.
     const auto time = read_register<uint32_t>(UNIX_TIME);
@@ -77,7 +76,9 @@ TransactionStartResponse powermeterImpl::handle_start_transaction_impl(const Tra
     const auto response = read_register<std::string>(SIGNATURE_START);
     EVLOG_info << "Started the transaction with " << response;
 
-    return {TransactionRequestStatus::OK};
+    TransactionStartResponse out{TransactionRequestStatus::OK};
+    out.ocmf = response;
+    return out;
 }
 
 TransactionStopResponse powermeterImpl::handle_stop_transaction_impl(const std::string& _) {
@@ -100,6 +101,7 @@ TransactionStartResponse powermeterImpl::handle_start_transaction(TransactionReq
         return handle_start_transaction_impl(value);
     } catch (const std::exception& _ex) {
         EVLOG_error << "Failed to start the transaction: " << _ex.what();
+        // TODO(ddo) Ignore the errors for now to keep going.
         return {TransactionRequestStatus::OK, _ex.what()};
     }
 }
@@ -109,7 +111,7 @@ TransactionStopResponse powermeterImpl::handle_stop_transaction(std::string& tra
         return handle_stop_transaction_impl(transaction_id);
     } catch (const std::exception& _ex) {
         EVLOG_error << "Failed to stop the transaction: " << _ex.what();
-        return {TransactionRequestStatus::OK, {}, _ex.what()};
+        return {TransactionRequestStatus::UNEXPECTED_ERROR, {}, _ex.what()};
     }
 }
 

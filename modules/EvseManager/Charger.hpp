@@ -197,13 +197,21 @@ public:
     void set_hlc_charging_active();
     void set_hlc_allow_close_contactor(bool on);
 
-    /// @brief Returns the OCMF data.
+    /// @brief Returns the OCMF start data.
+    ///
+    /// The data is generated when starting the transaction. The call resets the
+    /// internal variable and is thus not idempotent.
+    std::optional<std::string> getOcmfStartData();
+
+    /// @brief Returns the OCMF stop data.
     ///
     /// The data is generated when stopping the transaction. The call resets the
     /// internal variable and is thus not idempotent.
-    std::optional<std::string> getOcmfData();
+    std::optional<std::string> getOcmfStopData();
 
 private:
+    std::optional<std::string> takeOcmfData(std::optional<std::string>& data);
+
     void bcb_toggle_reset();
     void bcb_toggle_detect_start_pulse();
     void bcb_toggle_detect_stop_pulse();
@@ -306,7 +314,8 @@ private:
     int ac_with_soc_timer;
 
     std::chrono::time_point<date::utc_clock> lastPwmUpdate;
-    std::optional<std::string> ocmfData;
+    std::optional<std::string> ocmfStopData;
+    std::optional<std::string> ocmfStartData;
 
     float update_pwm_last_dc;
     void update_pwm_now(float dc);

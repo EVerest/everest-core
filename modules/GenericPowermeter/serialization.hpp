@@ -116,7 +116,7 @@ inline types::serial_comm_hub_requests::VectorUint16 serialize(const Input& data
     constexpr size_t factor = sizeof(Input) / sizeof(int16_t);
     std::vector<int32_t> out(factor);
     for (size_t ii = 0; ii != out.size(); ++ii)
-        out.at(ii) = static_cast<uint16_t>(data >> (factor - 1 - ii) * 16);
+        out.at(ii) = static_cast<uint16_t>(data >> ((factor - 1 - ii) * 16));
 
     return {out};
 }

@@ -1080,6 +1080,7 @@ bool Charger::startTransaction() {
             currentState = EvseState::Error;
             return false;
         } else if (response.status == types::powermeter::TransactionRequestStatus::OK) {
+            ocmfStartData = response.ocmf;
             break;
         }
     }
@@ -1103,7 +1104,7 @@ void Charger::stopTransaction() {
             EVLOG_error << "Failed to stop a transaction on the power meter " << response.error.value_or("");
             break;
         } else if (response.status == types::powermeter::TransactionRequestStatus::OK) {
-            ocmfData = response.ocmf;
+            ocmfStopData = response.ocmf;
             break;
         }
     }
@@ -1112,11 +1113,19 @@ void Charger::stopTransaction() {
     signalEvent(types::evse_manager::SessionEventEnum::TransactionFinished);
 }
 
-std::optional<std::string> Charger::getOcmfData() {
+std::optional<std::string> Charger::takeOcmfData(std::optional<std::string>& in) {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
     std::optional<std::string> out;
-    std::swap(out, ocmfData);
+    std::swap(out, in);
     return out;
+}
+
+std::optional<std::string> Charger::getOcmfStopData() {
+    return takeOcmfData(ocmfStopData);
+}
+
+std::optional<std::string> Charger::getOcmfStartData() {
+    return takeOcmfData(ocmfStartData);
 }
 
 std::string Charger::getStopTransactionIdTag() {

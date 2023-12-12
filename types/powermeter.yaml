@@ -51,6 +51,9 @@ types:
       error:
         description: If status is not OK, a verbose error message.
         type: string
+      ocmf:
+        description: The signed OCMF report of the started transaction. Must be provided if status is OK.
+        type: string
       transaction_min_stop_time:
         description: Earliest point in time the started transaction can be stopped again (if a minimum duration is required by the meter); yields a RFC3339 timestamp.
         type: string
