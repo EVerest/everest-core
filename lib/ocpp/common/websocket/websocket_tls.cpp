@@ -14,6 +14,41 @@
 
 namespace ocpp {
 
+// verify that the csms certificate's commonName matches the CSMS FQDN
+bool verify_csms_cn(const std::string& hostname, bool preverified, boost::asio::ssl::verify_context& ctx) {
+
+    if (!preverified) {
+        EVLOG_error << "Could not verify CSMS server certificate";
+        return false;
+    }
+
+    int depth = X509_STORE_CTX_get_error_depth(ctx.native_handle());
+
+    // only check for CSMS server certificate
+    if (depth == 0) {
+        // Get server certificate
+        X509* server_cert = X509_STORE_CTX_get_current_cert(ctx.native_handle());
+
+        // Extract CN from csms server's certificate
+        X509_NAME* subject_name = X509_get_subject_name(server_cert);
+        char common_name[256];
+        if (X509_NAME_get_text_by_NID(subject_name, NID_commonName, common_name, sizeof(common_name)) <= 0) {
+            EVLOG_error << "Could not extract CN from CSMS server certificate";
+            return false;
+        }
+
+        // Compare the extracted CN with the expected FQDN
+        if (hostname != common_name) {
+            EVLOG_error << "Server certificate CN does not match CSMS FQDN";
+            return false;
+        }
+
+        EVLOG_info << "FQDN matches CN of server certificate";
+    }
+
+    return true;
+}
+
 WebsocketTLS::WebsocketTLS(const WebsocketConnectionOptions& connection_options,
                            std::shared_ptr<EvseSecurity> evse_security) :
     WebsocketBase(), evse_security(evse_security) {
@@ -200,6 +235,8 @@ tls_context WebsocketTLS::on_tls_init(std::string hostname, websocketpp::connect
         }
 
         context->set_verify_mode(boost::asio::ssl::verify_peer);
+        context->set_verify_callback(websocketpp::lib::bind(
+            &verify_csms_cn, hostname, websocketpp::lib::placeholders::_1, websocketpp::lib::placeholders::_2));
         if (this->evse_security->is_ca_certificate_installed(ocpp::CaCertificateType::CSMS)) {
             EVLOG_info << "Loading ca csms bundle to verify server certificate: "
                        << this->evse_security->get_verify_file(ocpp::CaCertificateType::CSMS);
