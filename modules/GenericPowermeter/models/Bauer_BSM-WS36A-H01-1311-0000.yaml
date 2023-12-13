@@ -8,7 +8,7 @@
 # 
 # if measuring AC, the first level of registers is always "total/sum" of a certain value and the L1/2/3 registers are for the distinct phases
 # if measuring DC, only use the first level of registers
-energy_Wh_import:
+energy_Wh_export:
   start_register: 0
   function_code_start_reg: 3
   num_registers: 0
@@ -36,7 +36,7 @@ energy_Wh_import:
     multiplier: 1
     exponent_register: 0
     function_code_exp_reg: 3
-energy_Wh_export:
+energy_Wh_import:
   start_register: 40136
   function_code_start_reg: 3
   num_registers: 2
