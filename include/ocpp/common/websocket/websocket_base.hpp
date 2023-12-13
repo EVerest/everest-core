@@ -34,6 +34,7 @@ struct WebsocketConnectionOptions {
     bool use_ssl_default_verify_paths;
     std::optional<bool> additional_root_certificate_check;
     std::optional<std::string> hostName;
+    bool verify_csms_common_name;
 };
 
 ///

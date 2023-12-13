@@ -184,6 +184,12 @@
             "readOnly": true,
             "default": true
         },
+        "VerifyCsmsCommonName": {
+            "$comment": "Verify that the CSMS certificates commonName matches the CSMS FQDN",
+            "type": "boolean",
+            "readOnly": true,
+            "default": true
+        },
         "OcspRequestInterval": {
             "$comment": "Interval in seconds used to request OCSP revocation status information on the CSO Sub-CA certificates",
             "type": "integer",
