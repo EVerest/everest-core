@@ -71,7 +71,7 @@ boot_module(async ({
     mod.power_on_allowed = args.value.allow_power_on;
   });
 
-  setup.provides.board_support.register.force_unlock((mod, args) => /* lock/unlock not implemented */ true);
+  // setup.provides.board_support.register.force_unlock((mod, args) => /* lock/unlock not implemented */ true);
   setup.provides.board_support.register.ac_switch_three_phases_while_charging((mod, args) => {
     mod.use_three_phases = args.value;
     mod.use_three_phases_confirmed = args.value;
