@@ -203,7 +203,6 @@ void evse_managerImpl::ready() {
                 telemetry_data["energy_counter_export_wh"] =
                     transaction_started.meter_value.energy_Wh_export.value().total;
             }
-            transaction_started.signed_meter_value = mod->charger->getOcmfStartData();
             mod->telemetry.publish("session", "events", telemetry_data);
 
             se.transaction_started.emplace(transaction_started);
@@ -242,7 +241,8 @@ void evse_managerImpl::ready() {
                     transaction_finished.meter_value.energy_Wh_export.value().total;
             }
 
-            transaction_finished.signed_meter_value = mod->charger->getOcmfStopData();
+            transaction_finished.start_signed_meter_value = mod->charger->getOcmfStartData();
+            transaction_finished.stop_signed_meter_value = mod->charger->getOcmfStopData();
             mod->telemetry.publish("session", "events", telemetry_data);
 
             se.transaction_finished.emplace(transaction_finished);

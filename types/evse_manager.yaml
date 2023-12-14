@@ -178,9 +178,6 @@ types:
         description: Transaction start exported meter value
         type: object
         $ref: /powermeter#/Powermeter
-      signed_meter_value:
-        description: Signed meter value
-        type: string
       reservation_id:
         description: Id of the reservation
         type: integer
@@ -200,7 +197,14 @@ types:
         description: Transaction finished meter value
         type: object
         $ref: /powermeter#/Powermeter
-      signed_meter_value:
+      # Signing the meter values takes some time and is only needed at the
+      # session end. We move the `start_signed_meter_value` from
+      # `TransactionStarted` to `TransactionFinished` - such that the time
+      # critical `TransactionStarted` is not deferred by the signing.
+      start_signed_meter_value:
+        description: Signed meter value
+        type: string
+      stop_signed_meter_value:
         description: Signed meter value
         type: string
       reason:
