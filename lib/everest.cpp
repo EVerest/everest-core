@@ -255,7 +255,8 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
     this->mqtt_abstraction.publish(cmd_topic, cmd_publish_data, QOS::QOS2);
 
     // wait for result future
-    std::chrono::time_point<date::utc_clock> res_wait = date::utc_clock::now() + this->remote_cmd_res_timeout;
+    std::chrono::time_point<std::chrono::steady_clock> res_wait =
+        std::chrono::steady_clock::now() + this->remote_cmd_res_timeout;
     std::future_status res_future_status;
     do {
         res_future_status = res_future.wait_until(res_wait);
