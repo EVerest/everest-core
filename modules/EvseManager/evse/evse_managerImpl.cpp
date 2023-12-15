@@ -169,12 +169,16 @@ void evse_managerImpl::ready() {
 
             se.session_started = session_started;
         } else if (e == types::evse_manager::SessionEventEnum::SessionFinished) {
+            types::evse_manager::SessionFinished session_finished;
+            session_finished.timestamp =
+                date::format("%FT%TZ", std::chrono::time_point_cast<std::chrono::milliseconds>(date::utc_clock::now()));
             session_log.evse(false, fmt::format("Session Finished"));
             session_log.stopSession();
             mod->telemetry.publish("session", "events",
                                    {{"timestamp", Everest::Date::to_rfc3339(date::utc_clock::now())},
                                     {"type", "session_finished"},
                                     {"session_id", session_uuid}});
+            se.session_finished = session_finished;
         } else if (e == types::evse_manager::SessionEventEnum::TransactionStarted) {
             types::evse_manager::TransactionStarted transaction_started;
             transaction_started.timestamp =

@@ -157,6 +157,17 @@ types:
           Filenames should start with "incomplete-" when they are not finished yet,
           this allows other process to wait for the completion after the SessionFinished event.
         type: string
+  SessionFinished:
+    description: Data for the SessionFinished event
+    type: object
+    additionalProperties: false
+    required:
+      - timestamp
+    properties:
+      timestamp:
+        description: Session start time in RFC3339 format
+        type: string
+        format: date-time   
   TransactionStarted:
     description: Data for the TransactionStarted event
     type: object
@@ -315,6 +326,10 @@ types:
         description: data for SessionStarted event
         type: object
         $ref: /evse_manager#/SessionStarted
+      session_finished:
+        description: data for the SessionFinished event
+        type: object
+        $ref: /evse_manager#/SessionFinished
       transaction_started:
         description: data for TransactionStarted event
         type: object
