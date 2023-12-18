@@ -4,7 +4,7 @@ config:
   number_of_commands_to_call:
     description: Number of commands to call
     type: integer
-    default: 10
+    default: 100
   test_commands:
     description: test commands
     type: boolean

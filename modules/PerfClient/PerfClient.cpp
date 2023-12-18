@@ -21,29 +21,47 @@ void PerfClient::ready() {
         if (config.test_commands) {
             test_commands();
         }
+
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+
         if (config.test_vars) {
             test_vars();
         }
+
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+
         if (config.test_external_mqtt) {
             test_external_mqtt();
         }
+
+        std::this_thread::sleep_for(std::chrono::seconds(1));
         EVLOG_info << "------------------";
     }
 }
 
 void PerfClient::test_external_mqtt() {
     std::chrono::milliseconds total_time_to_client{0};
+    std::chrono::milliseconds max_time_to_client{0};
+    std::chrono::milliseconds min_time_to_client{1000000};
+
     auto start_vars = std::chrono::steady_clock::now();
 
     const int number_of_vars_to_receive = config.number_of_commands_to_call;
 
-    r_server->call_start_publishing_external_mqtt(number_of_vars_to_receive, 50);
+    r_server->call_start_publishing_external_mqtt(number_of_vars_to_receive, 250);
 
     for (int i = 0; i < number_of_vars_to_receive; i++) {
         std::string trace;
         if (external_mqtt_object.wait_for(trace, std::chrono::milliseconds(500))) {
-            total_time_to_client += std::chrono::duration_cast<std::chrono::milliseconds>(
-                date::utc_clock::now() - Everest::Date::from_rfc3339(trace));
+            auto dur = std::chrono::duration_cast<std::chrono::milliseconds>(date::utc_clock::now() -
+                                                                             Everest::Date::from_rfc3339(trace));
+            total_time_to_client += dur;
+            if (dur > max_time_to_client) {
+                max_time_to_client = dur;
+            }
+            if (dur < min_time_to_client) {
+                min_time_to_client = dur;
+            }
         } else {
             EVLOG_error << "Timeout when waiting for external mqtt!";
         }
@@ -54,22 +72,33 @@ void PerfClient::test_external_mqtt() {
 
     auto avg_time_to_client = total_time_to_client / number_of_vars_to_receive;
 
-    EVLOG_info << fmt::format("EXTERNAL MQTT: {}ms server-client", avg_time_to_client.count());
+    EVLOG_info << fmt::format("EXTERNAL MQTT: {}/{}/{}ms server-client", avg_time_to_client.count(),
+                              max_time_to_client.count(), min_time_to_client.count());
 }
 
 void PerfClient::test_vars() {
     std::chrono::milliseconds total_time_to_client{0};
+    std::chrono::milliseconds max_time_to_client{0};
+    std::chrono::milliseconds min_time_to_client{1000000};
     auto start_vars = std::chrono::steady_clock::now();
 
     const int number_of_vars_to_receive = config.number_of_commands_to_call;
 
-    r_server->call_start_publishing_var(number_of_vars_to_receive, 50);
+    r_server->call_start_publishing_var(number_of_vars_to_receive, 250);
 
     for (int i = 0; i < number_of_vars_to_receive; i++) {
         types::performance_testing::PerformanceTracing trace;
         if (tracing_object.wait_for(trace, std::chrono::milliseconds(500))) {
-            total_time_to_client += std::chrono::duration_cast<std::chrono::milliseconds>(
+            auto dur = std::chrono::duration_cast<std::chrono::milliseconds>(
                 date::utc_clock::now() - Everest::Date::from_rfc3339(trace.timestamps[0].timestamp));
+
+            total_time_to_client += dur;
+            if (dur > max_time_to_client) {
+                max_time_to_client = dur;
+            }
+            if (dur < min_time_to_client) {
+                min_time_to_client = dur;
+            }
         } else {
             EVLOG_error << "Timeout when waiting for var!";
         }
@@ -80,20 +109,41 @@ void PerfClient::test_vars() {
 
     auto avg_time_to_client = total_time_to_client / number_of_vars_to_receive;
 
-    EVLOG_info << fmt::format("VARS         : {}ms server-client", avg_time_to_client.count());
+    EVLOG_info << fmt::format("VARS         : {}/{}/{}ms server-client", avg_time_to_client.count(),
+                              max_time_to_client.count(), min_time_to_client.count());
 }
 
 void PerfClient::test_commands() {
     std::chrono::milliseconds total_time_to_server{0};
     std::chrono::milliseconds total_time_to_client{0};
+
+    std::chrono::milliseconds max_time_to_server{0};
+    std::chrono::milliseconds max_time_to_client{0};
+
+    std::chrono::milliseconds min_time_to_server{100000};
+    std::chrono::milliseconds min_time_to_client{100000};
     auto start_cmds = std::chrono::steady_clock::now();
 
     const int number_of_commands_to_call = config.number_of_commands_to_call;
 
     for (int i = 0; i < number_of_commands_to_call; i++) {
         auto ret = send_simple_command();
+
         total_time_to_server += ret[0];
         total_time_to_client += ret[1];
+
+        if (ret[0] > max_time_to_server) {
+            max_time_to_server = ret[0];
+        }
+        if (ret[0] < min_time_to_server) {
+            min_time_to_server = ret[0];
+        }
+        if (ret[1] > max_time_to_client) {
+            max_time_to_client = ret[0];
+        }
+        if (ret[1] < min_time_to_client) {
+            min_time_to_client = ret[0];
+        }
     }
 
     auto total_time_running_commands =
@@ -101,8 +151,10 @@ void PerfClient::test_commands() {
     auto avg_time_to_server = total_time_to_server / number_of_commands_to_call;
     auto avg_time_to_client = total_time_to_client / number_of_commands_to_call;
 
-    EVLOG_info << fmt::format("CMDS         : {}ms    ({}+{}ms) client-server-client", avg_time_to_server.count()+avg_time_to_client.count(), avg_time_to_server.count(),
-                              avg_time_to_client.count());
+    EVLOG_info << fmt::format("CMDS         : {}ms    ({}+{}/{}+{}/{}+{}) client-server-client",
+                              avg_time_to_server.count() + avg_time_to_client.count(), avg_time_to_server.count(),
+                              avg_time_to_client.count(), max_time_to_server.count(), min_time_to_server.count(),
+                              max_time_to_client.count(), min_time_to_client.count());
 }
 
 static std::string to_str(types::performance_testing::PerformanceTracing trace) {
