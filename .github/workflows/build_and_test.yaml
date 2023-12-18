@@ -53,7 +53,7 @@ jobs:
           # for reusable workflow
           repository: EVerest/everest-core
           ref: CI/reusable-workflow  # TODO get reference in general, see https://stackoverflow.com/questions/74784735 resp. https://github.com/actions/toolkit/issues/1264
-      - name: Checkout repo {{ inputs.repository }} to directory `source/`
+      - name: Checkout repo ${{ inputs.repository }} to directory `source/`
         uses: actions/checkout@v4
         with:
           path: source/
@@ -89,6 +89,7 @@ jobs:
       - name: Run integration tests
         if: ${{ inputs.run_integration_tests }}
         run: |
+          
           docker commit test-container integration-image
           pushd .ci/e2e
           docker-compose run e2e-test-server run-script tests
