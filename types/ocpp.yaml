@@ -411,3 +411,65 @@ types:
       variable_monitoring_id:
         description: Identifies the VariableMonitoring which triggered the event
         type: integer
+  OperationalStatusEnumType:
+    description: >-
+      Operational status of Charging Station /EVSE / Connector
+    type: string
+    enum:
+      - Inoperative
+      - Operative
+  ChangeAvailabilityRequest:
+    description: Request type to change the availability of the Charging Station/ an EVSE / a Connector.
+    type: object
+    required:
+      - operationalStatus
+    properties:
+      operationalStatus:
+        description: Type of availability change that the Charging Station should perform.
+        type: string
+        $ref: /ocpp#/OperationalStatusEnumType
+      evse:
+        description: >-
+          Specify EVSE/Connector whose status is changed. When omitted, the
+          message refers to the Charging Station as a whole.
+        type: object
+        $ref: /ocpp#/EVSE
+  ChangeAvailabilityStatusEnumType:
+    description: >-
+      Status returned in response to ChangeAvailabilityRequest.
+    type: string
+    enum:
+      - Accepted
+      - Rejected
+      - Scheduled
+  StatusInfoType:
+    description: >-
+      Element providing more information about the status.
+    type: object
+    required:
+      - reasonCode
+    properties:
+      reasonCode:
+        description: >-
+          A predefined code for the reason why the status is returned in this response. 
+          The string is case-insensitive.
+        type: string
+      additionalInfo:
+        description: >-
+          Additional text to provide detailed information
+        type: string
+  ChangeAvailabilityResponse:
+    description: Response type to request to change the availability of the Charging Station/ an EVSE / a Connector.
+    type: object
+    required:
+      - status
+    properties:
+      status:
+        description: Indicates whether the Charging Station is able to perform the availability change.
+        type: string
+        $ref: /ocpp#/ChangeAvailabilityStatusEnumType
+      statusInfo:
+        description: Detailed status information.
+        type: object
+        $ref: /ocpp#/StatusInfoType
+

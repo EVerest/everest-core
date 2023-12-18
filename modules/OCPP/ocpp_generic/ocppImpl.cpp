@@ -2,6 +2,7 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 
 #include "ocppImpl.hpp"
+#include "ocpp/v16/messages/ChangeAvailability.hpp"
 
 namespace module {
 namespace ocpp_generic {
@@ -52,6 +53,45 @@ types::ocpp::GetConfigurationResponse to_everest(const ocpp::v16::GetConfigurati
     _response.configuration_keys = configuration_keys;
     _response.unknown_keys = unknown_keys;
     return _response;
+}
+
+ocpp::v16::AvailabilityStatus to_ocpp(const types::ocpp::ChangeAvailabilityStatusEnumType& status) {
+    switch (status) {
+    case types::ocpp::ChangeAvailabilityStatusEnumType::Accepted:
+        return ocpp::v16::AvailabilityStatus::Accepted;
+    case types::ocpp::ChangeAvailabilityStatusEnumType::Rejected:
+        return ocpp::v16::AvailabilityStatus::Rejected;
+    case types::ocpp::ChangeAvailabilityStatusEnumType::Scheduled:
+        return ocpp::v16::AvailabilityStatus::Scheduled;
+    }
+    throw std::out_of_range("unknown ChangeAvailabilityStatusEnumType");
+}
+
+ocpp::v16::AvailabilityType to_ocpp(const types::ocpp::OperationalStatusEnumType& status) {
+    switch (status) {
+    case types::ocpp::OperationalStatusEnumType::Operative:
+        return ocpp::v16::AvailabilityType::Operative;
+    case types::ocpp::OperationalStatusEnumType::Inoperative:
+        return ocpp::v16::AvailabilityType::Inoperative;
+    }
+    throw std::out_of_range("unknown OperationalStatusEnumType");
+}
+
+ocpp::v16::ChangeAvailabilityRequest to_ocpp(const types::ocpp::ChangeAvailabilityRequest& request) {
+    ocpp::v16::ChangeAvailabilityRequest ocpp_request{};
+    ocpp_request.type = to_ocpp(request.operationalStatus);
+    if (request.evse.has_value()) {
+        const auto& evse = request.evse.value();
+        if (evse.id != 1) {
+            EVLOG_warning << "OCPP 1.6 does not support multiple EVSEs, ignoring EVSE id " << request.evse.value().id;
+        }
+        if (!evse.connector_id.has_value()) {
+            throw InputParsingException{
+                "No connector id specified; if the whole charging station is supposed to be addressed, parameter evse "
+                "must have no value."};
+        }
+        ocpp_request.connectorId = evse.connector_id.value();
+    }
 }
 
 void ocppImpl::init() {
@@ -187,7 +227,7 @@ void ocppImpl::handle_monitor_variables(std::vector<types::ocpp::ComponentVariab
             [this, cv](const ocpp::v16::KeyValue key_value) {
                 types::ocpp::EventData event_data;
                 event_data.component_variable = cv;
-                event_data.event_id = 0;                                      // irrelevant for OCPP1.6
+                event_data.event_id = 0; // irrelevant for OCPP1.6
                 event_data.timestamp = ocpp::DateTime();
                 event_data.trigger = types::ocpp::EventTriggerEnum::Alerting; // default for OCPP1.6
                 event_data.actual_value = key_value.value.value_or("");
@@ -196,6 +236,19 @@ void ocppImpl::handle_monitor_variables(std::vector<types::ocpp::ComponentVariab
                 this->publish_event_data(event_data);
             });
     }
+}
+types::ocpp::ChangeAvailabilityResponse
+ocppImpl::handle_change_availability(types::ocpp::ChangeAvailabilityRequest& request) {
+
+    try {
+        auto ocpp_request = to_ocpp(request);
+
+        auto response = this->mod->charge_point->change_availability(ocpp_request);
+
+    } catch (InputParsingException& exc) {
+        return types::ocpp::ChangeAvailabilityResponse{types::ocpp::ChangeAvailabilityStatusEnumType::Rejected,
+                                                       types::ocpp::StatusInfoType{"InvalidInput", exc.what()}};
+    };
 }
 
 } // namespace ocpp_generic
