@@ -4,9 +4,14 @@
 #include "powermeterImpl.hpp"
 
 #include <GenericPowermeter/serialization.hpp>
+#include <array>
 #include <chrono>
 #include <ctime>
 #include <fmt/core.h>
+#include <ios>
+#include <limits>
+#include <random>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 
@@ -34,6 +39,36 @@ constexpr module::utils::Register META_DATA_1{40279, 70};
 
 /// @brief The status when reading the
 constexpr uint16_t SIGNATURE_STATUS_DONE = 2;
+
+/// @brief returns a random id consisting of the current timestamp padded with
+/// a random hex string until it reaches 20 chars.
+std::string get_random_id() {
+    // Get the current seconds as stirng.
+    using namespace std::chrono;
+    const auto now = system_clock::now();
+    const auto secs = duration_cast<seconds>(now.time_since_epoch()).count();
+    auto out = std::to_string(secs);
+
+    // Pad them with a random hex number until we have reached the expected
+    // length.
+    constexpr size_t length = 20;
+    out.reserve(length);
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<size_t> uniform_dist(0, std::numeric_limits<size_t>::max());
+    // If we have a machine where we can't generate `length` chars at once
+    // we loop.
+    while (out.size() < length) {
+        std::stringstream sst;
+        sst << std::hex << uniform_dist(gen);
+        const auto str = sst.str();
+        const auto size = std::min(length - out.size(), str.size());
+        for (auto ii = 0; ii != size; ++ii)
+            out.push_back(str.at(ii));
+    }
+
+    return out;
+}
 
 } // namespace
 
@@ -64,7 +99,8 @@ TransactionStartResponse powermeterImpl::handle_start_transaction_impl(const Tra
     write_register(UTC_OFFSET, utc_offset);
 
     // Set the meta-data.
-    std::string data = fmt::format("{} {}", value.evse_id, value.transaction_id);
+    const auto transaction_id = get_random_id();
+    std::string data = fmt::format("{} {}", value.evse_id, transaction_id);
     write_register(META_DATA_1, data);
 
     // Wait for the signature to finish.
