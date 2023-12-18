@@ -1,0 +1,31 @@
+description: >-
+  Performance testing client
+config:
+  number_of_commands_to_call:
+    description: Number of commands to call
+    type: integer
+    default: 10
+  test_commands:
+    description: test commands
+    type: boolean
+    default: true
+  test_vars:
+    description: test vars
+    type: boolean
+    default: true
+  test_external_mqtt:
+    description: test external mqtt
+    type: boolean
+    default: true
+provides:
+  main:
+    interface: empty
+    description: Does not provide anything
+requires:
+  server:
+    interface: performance_testing
+enable_external_mqtt: true
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Cornelius Claussen

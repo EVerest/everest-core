@@ -30,6 +30,8 @@ ev_add_module(OCPPExtensionExample)
 ev_add_module(DummyTokenValidator)
 ev_add_module(DummyTokenProvider)
 ev_add_module(DummyTokenProviderManual)
+ev_add_module(PerfClient)
+ev_add_module(PerfServer)
 
 add_subdirectory(deprecated)
 add_subdirectory(examples)

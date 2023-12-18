@@ -1,0 +1,11 @@
+description: >-
+  Performance testing server
+provides:
+  main:
+    description: Testing Server API
+    interface: performance_testing
+enable_external_mqtt: true
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Cornelius Claussen

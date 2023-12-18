@@ -1,0 +1,38 @@
+description: >-
+  Interface to use for framework performance testing
+cmds:
+  simple_command:
+    description: This is a simple command with one argument
+    arguments:
+      value:
+        description: Performance tracing object
+        type: object
+        $ref: /performance_testing#/PerformanceTracing
+    result:
+      description: Returns the performance tracing object
+      type: object
+      $ref: /performance_testing#/PerformanceTracing
+  start_publishing_var:
+    description: Starts the publishing of the vars
+    arguments:
+      nr_of_pubs:
+        description: Number of vars to publish
+        type: integer
+      sleep_time_ms:
+        description: sleep time in ms between publishes
+        type: integer   
+  start_publishing_external_mqtt:
+    description: Starts the publishing via external mqtt
+    arguments:
+      nr_of_pubs:
+        description: Number of vars to publish
+        type: integer
+      sleep_time_ms:
+        description: sleep time in ms between publishes
+        type: integer   
+vars:
+  simple_var:
+    description: A simple var that publishes something
+    type: object
+    $ref: /performance_testing#/PerformanceTracing
+

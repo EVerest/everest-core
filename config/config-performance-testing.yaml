@@ -1,0 +1,11 @@
+settings:
+  telemetry_enabled: true
+active_modules:
+  client:
+    connections:
+      server:
+        - implementation_id: main
+          module_id: server
+    module: PerfClient
+  server:
+    module: PerfServer

@@ -1,0 +1,29 @@
+description: Performance testing
+types:
+  PerformanceTimestamp:
+    description: One entry in the array
+    type: object
+    additionalProperties: false
+    required:
+      - timestamp
+      - name
+    properties:
+      timestamp:
+        description: Timestamp
+        type: string
+        format: date-time
+      name:
+        description: Some user definced string
+        type: string
+  PerformanceTracing:
+    description: Object used to trace performance
+    type: object
+    additionalProperties: false
+    required:
+      - timestamps
+    properties:
+      timestamps:
+        type: array
+        items:
+          type: object
+          $ref: /performance_testing#/PerformanceTimestamp
