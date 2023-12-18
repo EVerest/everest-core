@@ -1,6 +1,7 @@
 name: Build and test
 on:
   pull_request: {}
+  workflow_call:  # defines it as reusable workflow
   workflow_dispatch:
     inputs:
       runner:
