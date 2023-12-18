@@ -476,9 +476,11 @@ static void connection_teardown(struct v2g_connection* conn) {
         dlog(DLOG_LEVEL_TRACE, "d_link/error");
         break;
     case MQTT_DLINK_ACTION_TERMINATE:
+        conn->ctx->p_charger->publish_dlink_terminate(nullptr);
         dlog(DLOG_LEVEL_TRACE, "d_link/terminate");
         break;
     case MQTT_DLINK_ACTION_PAUSE:
+        conn->ctx->p_charger->publish_dlink_pause(nullptr);
         dlog(DLOG_LEVEL_TRACE, "d_link/pause");
         break;
     }
@@ -670,9 +672,15 @@ static void* connection_handle_tcp(void* data) {
     /* tear down connection gracefully */
     dlog(DLOG_LEVEL_INFO, "Closing TCP connection");
 
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+
     if (shutdown(conn->conn.socket_fd, SHUT_RDWR) == -1) {
         dlog(DLOG_LEVEL_ERROR, "shutdown() failed: %s", strerror(errno));
     }
+
+    // Waiting for client closing the connection
+    std::this_thread::sleep_for(std::chrono::seconds(3));
+
     if (close(conn->conn.socket_fd) == -1) {
         dlog(DLOG_LEVEL_ERROR, "close() failed: %s", strerror(errno));
     }
@@ -818,6 +826,9 @@ static void* connection_handle_tls(void* data) {
 
     /* tear down TLS connection gracefully */
     dlog(DLOG_LEVEL_INFO, "Closing TLS connection");
+
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+
     while ((rv = mbedtls_ssl_close_notify(ssl)) < 0) {
         if ((rv != MBEDTLS_ERR_SSL_WANT_READ) && (rv != MBEDTLS_ERR_SSL_WANT_WRITE)) {
             dlog(DLOG_LEVEL_ERROR, "mbedtls_ssl_close_notify returned -0x%04x", -rv);

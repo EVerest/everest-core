@@ -202,6 +202,10 @@ config:
       "EvseManager does not need to wait for energy from the energy manager after plug in."
     type: boolean
     default: false
+  external_ready_to_start_charging:
+    description: Enable the external ready to start charging signal that delays charging ready until it has been received
+    type: boolean
+    default: false
 provides:
   evse:
     interface: evse_manager

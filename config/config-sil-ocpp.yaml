@@ -28,6 +28,7 @@ active_modules:
       ac_hlc_enabled: false
       ac_hlc_use_5percent: false
       ac_enforce_hlc: false
+      external_ready_to_start_charging: true
     connections:
       bsp:
         - module_id: yeti_driver_1
@@ -56,6 +57,7 @@ active_modules:
       ac_hlc_enabled: false
       ac_hlc_use_5percent: false
       ac_enforce_hlc: false
+      external_ready_to_start_charging: true
     connections:
       bsp:
         - module_id: yeti_driver_2
@@ -184,7 +186,7 @@ active_modules:
           implementation_id: evse
       ocpp:
         - module_id: ocpp
-          implementation_id: main
+          implementation_id: ocpp_generic
   system:
     module: System
 

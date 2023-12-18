@@ -13,6 +13,7 @@
 // headers for provided interface implementations
 #include <generated/interfaces/auth_token_provider/Implementation.hpp>
 #include <generated/interfaces/auth_token_validator/Implementation.hpp>
+#include <generated/interfaces/ocpp/Implementation.hpp>
 #include <generated/interfaces/ocpp_1_6_charge_point/Implementation.hpp>
 #include <generated/interfaces/ocpp_data_transfer/Implementation.hpp>
 
@@ -32,7 +33,10 @@
 #include <date/tz.h>
 #include <everest/timer.hpp>
 #include <filesystem>
+#include <memory>
 #include <mutex>
+#include <queue>
+
 #include <ocpp/common/types.hpp>
 #include <ocpp/v16/charge_point.hpp>
 #include <ocpp/v16/types.hpp>
@@ -52,6 +56,7 @@ struct Conf {
     int PublishChargingScheduleDurationS;
     std::string MessageLogPath;
     std::string CertsPath;
+    int MessageQueueResumeDelay;
 };
 
 class OCPP : public Everest::ModuleBase {
@@ -61,7 +66,7 @@ public:
          std::unique_ptr<ocpp_1_6_charge_pointImplBase> p_main,
          std::unique_ptr<auth_token_validatorImplBase> p_auth_validator,
          std::unique_ptr<auth_token_providerImplBase> p_auth_provider,
-         std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer,
+         std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer, std::unique_ptr<ocppImplBase> p_ocpp_generic,
          std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager,
          std::vector<std::unique_ptr<external_energy_limitsIntf>> r_connector_zero_sink,
          std::unique_ptr<reservationIntf> r_reservation, std::unique_ptr<authIntf> r_auth,
@@ -73,6 +78,7 @@ public:
         p_auth_validator(std::move(p_auth_validator)),
         p_auth_provider(std::move(p_auth_provider)),
         p_data_transfer(std::move(p_data_transfer)),
+        p_ocpp_generic(std::move(p_ocpp_generic)),
         r_evse_manager(std::move(r_evse_manager)),
         r_connector_zero_sink(std::move(r_connector_zero_sink)),
         r_reservation(std::move(r_reservation)),
@@ -87,6 +93,7 @@ public:
     const std::unique_ptr<auth_token_validatorImplBase> p_auth_validator;
     const std::unique_ptr<auth_token_providerImplBase> p_auth_provider;
     const std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer;
+    const std::unique_ptr<ocppImplBase> p_ocpp_generic;
     const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;
     const std::vector<std::unique_ptr<external_energy_limitsIntf>> r_connector_zero_sink;
     const std::unique_ptr<reservationIntf> r_reservation;
@@ -100,7 +107,6 @@ public:
     // insert your public definitions here
     std::unique_ptr<ocpp::v16::ChargePoint> charge_point;
     std::unique_ptr<Everest::SteadyTimer> charging_schedules_timer;
-    bool started = false;
     bool ocpp_stopped = false;
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
@@ -119,11 +125,8 @@ private:
     std::filesystem::path ocpp_share_path;
     void set_external_limits(const std::map<int32_t, ocpp::v16::ChargingSchedule>& charging_schedules);
     void publish_charging_schedules(const std::map<int32_t, ocpp::v16::ChargingSchedule>& charging_schedules);
-    std::thread upload_diagnostics_thread;
-    std::thread upload_logs_thread;
-    std::thread update_firmware_thread;
-    std::thread signed_update_firmware_thread;
 
+    void init_evse_subscriptions(); // initialize subscriptions to all EVSEs provided by r_evse_manager
     void init_evse_connector_map();
     void init_evse_ready_map();
     EvseConnectorMap evse_connector_map; // provides access to OCPP connector id by using EVerests evse and connector id
@@ -133,6 +136,11 @@ private:
     std::mutex evse_ready_mutex;
     std::condition_variable evse_ready_cv;
     bool all_evse_ready();
+
+    std::atomic_bool started{false};
+    std::mutex session_event_mutex;
+    std::map<int32_t, std::queue<types::evse_manager::SessionEvent>> session_event_queue;
+    void process_session_event(int32_t evse_id, const types::evse_manager::SessionEvent& session_event);
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

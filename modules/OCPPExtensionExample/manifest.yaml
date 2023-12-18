@@ -12,7 +12,7 @@ provides:
     interface: ocpp_data_transfer
 requires:
   ocpp:
-    interface: ocpp_1_6_charge_point
+    interface: ocpp
     min_connections: 1
     max_connections: 1
   data_transfer:

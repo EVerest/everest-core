@@ -1,6 +1,9 @@
 # Setup module API documentation
 This module is responsible for setup tasks that might need privileged access, for example wifi configuration.
 
+If not run as root user, set at least the following capabilities in your EVerest config file: CAP_NET_ADMIN, CAP_NET_RAW, CAP_DAC_OVERRIDE.
+They will be passed on to the child processes such as wpa_cli etc.
+
 ## Periodically published variables
 ### everest_api/setup/var/supported_setup_features
 This variable is published periodically and contains a JSON object with the supported features in the following form:

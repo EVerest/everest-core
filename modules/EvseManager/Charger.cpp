@@ -25,11 +25,10 @@ Charger::Charger(const std::unique_ptr<board_support_ACIntf>& r_bsp, const std::
     maxCurrent = 6.0;
     maxCurrentCable = r_bsp->call_read_pp_ampacity();
     authorized = false;
-    r_bsp->call_enable(false);
 
     update_pwm_last_dc = 0.;
 
-    currentState = EvseState::Disabled;
+    currentState = EvseState::Idle;
     last_state = EvseState::Disabled;
 
     currentDrawnByVehicle[0] = 0.;
@@ -415,6 +414,15 @@ void Charger::runStateMachine() {
                 }
             }
 
+            if (!hlc_charging_active && !legacy_wakeup_done && timeInCurrentState > legacy_wakeup_timeout) {
+                session_log.evse(
+                    false, "EV did not transition to state C, trying one legacy wakeup according to IEC61851-1 A.5.3");
+                legacy_wakeup_done = true;
+                t_step_EF_returnState = EvseState::PrepareCharging;
+                t_step_EF_returnPWM = ampereToDutyCycle(getMaxCurrent());
+                currentState = EvseState::T_step_EF;
+            }
+
             // if (charge_mode == ChargeMode::DC) {
             //  DC: wait until car requests power on CP (B->C/D).
             //  Then we close contactor and wait for instructions from HLC.
@@ -456,18 +464,6 @@ void Charger::runStateMachine() {
                     // update PWM if it has changed and 5 seconds have passed since last update
                     if (!hlc_use_5percent_current_session)
                         update_pwm_max_every_5seconds(ampereToDutyCycle(getMaxCurrent()));
-                }
-
-                // If we are in charging for some time now, but relais did not close something is wrong.
-                // Try a T_step_EF to restart charging once (legacy wakeup according to IEC61851-1 A.5.3)
-                if (!hlc_charging_active && !legacy_wakeup_done && timeInCurrentState > legacy_wakeup_timeout &&
-                    !contactors_closed) {
-                    session_log.evse(
-                        false, "Relais not closed after timeout, trying legacy wakeup according to IEC61851-1 A.5.3");
-                    legacy_wakeup_done = true;
-                    t_step_EF_returnState = EvseState::Charging;
-                    t_step_EF_returnPWM = ampereToDutyCycle(getMaxCurrent());
-                    currentState = EvseState::T_step_EF;
                 }
             }
             break;
@@ -704,11 +700,11 @@ void Charger::processCPEventsState(ControlPilotEvent cp_event) {
 
     case EvseState::WaitingForAuthentication:
         if (cp_event == ControlPilotEvent::CarRequestedPower) {
-            session_log.car(false, "Ignoring CarRequestedPower in WaitingForAuth state. Probably a BCB toggle that "
-                                   "does not make sense here.");
+            session_log.car(false, "B->C transition before PWM is enabled at this stage violates IEC61851-1");
+            iec_allow_close_contactor = true;
         } else if (cp_event == ControlPilotEvent::CarRequestedStopPower) {
-            session_log.car(false, "Ignoring CarRequestedStopPower in WaitingForAuth state. Probably a BCB toggle that "
-                                   "does not make sense here.");
+            session_log.car(false, "C->B transition at this stage violates IEC61851-1");
+            iec_allow_close_contactor = false;
         }
         break;
 
@@ -804,7 +800,7 @@ void Charger::processCPEventsIndependent(ControlPilotEvent cp_event) {
         break;
     case ControlPilotEvent::ErrorRCD_DC:
         currentState = EvseState::Error;
-        errorState = types::evse_manager::ErrorEnum::OverCurrent;
+        errorState = types::evse_manager::ErrorEnum::RCDDC;
         break;
     case ControlPilotEvent::ErrorOverVoltage:
         currentState = EvseState::Error;
