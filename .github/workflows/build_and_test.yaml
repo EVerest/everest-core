@@ -1,7 +1,20 @@
 name: Build and test
 on:
-  pull_request: {}
+  pull_request: {}  # TODO set `repository` and `repository_ref` to still be used in `everest-core`
   workflow_call:  # defines it as reusable workflow
+    inputs:
+      repository:
+        description: The repo to checkout and run the workflow steps in
+        type: string
+        required: true
+      repository_ref:
+        description: The ref (branch, tag, commit-hash) of the `inputs.repository`
+        type: string
+        required: true
+      run_integration_tests:
+        description: Wether to run integration-tests or not
+        type: boolean
+        default: false
   workflow_dispatch:
     inputs:
       runner:
@@ -32,20 +45,30 @@ jobs:
           restore-keys: |
             compile-${{ env.branch_name_for_cache }}-
             compile-
-      - name: Checkout everest-core
-        uses: actions/checkout@v3
+      - name: Checkout from `everest-core` the `.ci/` directory 
+        uses: actions/checkout@v4
         with:
-          path: source
+          sparse-checkout: |
+            .ci
+          # for reusable workflow
+          repository: EVerest/everest-core
+          ref: CI/reusable-workflow  # TODO get reference in general, see https://stackoverflow.com/questions/74784735 resp. https://github.com/actions/toolkit/issues/1264
+      - name: Checkout repo {{ inputs.repository }} to directory `source/`
+        uses: actions/checkout@v4
+        with:
+          path: source/
+          repository: "{{ inputs.repository }}"
+          ref: "{{ inputs.repository_ref }}"
       - name: Run clang-format
         uses: everest/everest-ci/github-actions/run-clang-format@v1.0.0
         with:
           source-dir: source
           extensions: hpp,cpp
           exclude: cache
-      - name: Setup run scripts
+      - name: Setup run scripts  # FIXME update `build-kit` to not use the `scripts/`-dir implicitly
         run: |
           mkdir scripts
-          rsync -a source/.ci/build-kit/ scripts
+          rsync -a .ci/build-kit/ scripts
       - name: Pull docker container
         run: |
           docker pull --quiet ghcr.io/everest/build-kit-alpine:latest
@@ -64,7 +87,8 @@ jobs:
           --name test-container \
           build-image run-script test_and_install
       - name: Run integration tests
+        if: ${{ inputs.run_integration_tests }}
         run: |
           docker commit test-container integration-image
-          pushd source/.ci/e2e
+          pushd .ci/e2e
           docker-compose run e2e-test-server run-script tests
