@@ -824,6 +824,9 @@ void ChargePointImpl::change_all_connectors_to_unavailable_for_firmware_update()
     int32_t number_of_connectors = this->configuration->getNumberOfConnectors();
     for (int32_t connector = 1; connector <= number_of_connectors; connector++) {
         if (this->transaction_handler->transaction_active(connector)) {
+            EVLOG_debug << "change_all_connectors_to_unavailable_for_firmware_update: detected running Transaction on "
+                           "connector "
+                        << connector;
             transaction_running = true;
             std::lock_guard<std::mutex> change_availability_lock(change_availability_mutex);
             this->change_availability_queue[connector] = {AvailabilityType::Inoperative, false};
@@ -1805,8 +1808,7 @@ void ChargePointImpl::handleStopTransactionResponse(const EnhancedMessage<v16::M
     // when this transaction was stopped because of a Reset.req this signals that StopTransaction.conf has been received
     this->stop_transaction_cv.notify_one();
 
-    if (this->firmware_status == FirmwareStatus::Downloaded or
-        this->signed_firmware_status == FirmwareStatusEnumType::SignatureVerified) {
+    if (this->firmware_update_is_pending) {
         this->change_all_connectors_to_unavailable_for_firmware_update();
     }
 }
@@ -2371,10 +2373,23 @@ void ChargePointImpl::log_status_notification(UploadLogStatusEnumType status, in
 }
 
 void ChargePointImpl::signed_firmware_update_status_notification(FirmwareStatusEnumType status, int requestId) {
-    EVLOG_debug << "Sending FirmwareUpdateStatusNotification";
+    EVLOG_debug << "Sending FirmwareUpdateStatusNotification with status"
+                << conversions::firmware_status_enum_type_to_string(status);
     SignedFirmwareStatusNotificationRequest req;
     req.status = status;
     req.requestId = requestId;
+
+    // The "SignatureVerified" status signals a firmware update is pending which will cause connectors to be set
+    // inoperative (now or after pending transactions are stopped); in case of a status that signals a failed firmware
+    // update this is revoked
+    if (status == FirmwareStatusEnumType::SignatureVerified) {
+        this->firmware_update_is_pending = true;
+    } else if (status == FirmwareStatusEnumType::InstallationFailed ||
+               status == FirmwareStatusEnumType::DownloadFailed ||
+               status == FirmwareStatusEnumType::InstallVerificationFailed ||
+               status == FirmwareStatusEnumType::InvalidSignature) {
+        this->firmware_update_is_pending = false;
+    }
 
     this->signed_firmware_status = status;
     this->signed_firmware_status_request_id = requestId;
@@ -2386,7 +2401,7 @@ void ChargePointImpl::signed_firmware_update_status_notification(FirmwareStatusE
         this->securityEventNotification("InvalidFirmwareSignature", "", true);
     }
 
-    if (this->signed_firmware_status == FirmwareStatusEnumType::SignatureVerified) {
+    if (this->firmware_update_is_pending) {
         this->change_all_connectors_to_unavailable_for_firmware_update();
     }
 }
@@ -3390,14 +3405,27 @@ void ChargePointImpl::diagnostic_status_notification(DiagnosticsStatus status) {
 }
 
 void ChargePointImpl::firmware_status_notification(FirmwareStatus status) {
+
+    EVLOG_debug << "Received FirmwareUpdateStatusNotification with status"
+                << conversions::firmware_status_to_string(status);
     FirmwareStatusNotificationRequest req;
     req.status = status;
+
+    // The "Downloaded" status signals a firmware update is pending which will cause connectors to be set inoperative
+    // (now or after pending transactions are stopped); in case of a status that signals a failed firmware update this
+    // is revoked
+    if (status == FirmwareStatus::Downloaded) {
+        this->firmware_update_is_pending = true;
+    } else if (status == FirmwareStatus::DownloadFailed || status == FirmwareStatus::InstallationFailed) {
+        this->firmware_update_is_pending = false;
+    }
+
     this->firmware_status = status;
 
     ocpp::Call<FirmwareStatusNotificationRequest> call(req, this->message_queue->createMessageId());
     this->send_async<FirmwareStatusNotificationRequest>(call);
 
-    if (this->firmware_status == FirmwareStatus::Downloaded) {
+    if (this->firmware_update_is_pending) {
         this->change_all_connectors_to_unavailable_for_firmware_update();
     }
 }

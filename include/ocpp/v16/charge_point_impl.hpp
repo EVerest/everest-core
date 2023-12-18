@@ -91,6 +91,7 @@ private:
     RegistrationStatus registration_status;
     DiagnosticsStatus diagnostics_status;
     FirmwareStatus firmware_status;
+    bool firmware_update_is_pending = false;
     UploadLogStatusEnumType log_status;
     std::string message_log_path;
 
