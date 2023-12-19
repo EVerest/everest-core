@@ -1,6 +1,6 @@
 name: Build and test
 on:
-  pull_request: {}  # TODO set `repository` and `repository_ref` to still be used in `everest-core`
+  pull_request: {}
   workflow_call:  # defines it as reusable workflow
     inputs:
       repository:
@@ -12,13 +12,13 @@ on:
         type: string
         required: true
       run_unit_tests:
-        default: false
         description: Whether to run unit-tests or not
         type: boolean
+        required: true
       run_integration_tests:
-        default: false
         description: Wether to run integration-tests or not
         type: boolean
+        required: true
   workflow_dispatch:
     inputs:
       runner:
@@ -57,12 +57,12 @@ jobs:
             .ci
           repository: EVerest/everest-core
           ref: CI/reusable-workflow  # TODO get reference in general, see https://stackoverflow.com/questions/74784735 resp. https://github.com/actions/toolkit/issues/1264
-      - name: Checkout repo ${{ inputs.repository }} to directory `source/`
+      - name: Checkout repo ${{ inputs.repository || 'EVerest/everest-core' }} to directory `source/`
         uses: actions/checkout@v4
         with:
           path: source/
-          repository: ${{ inputs.repository }}
-          ref: ${{ inputs.repository_ref }}
+          repository: ${{ inputs.repository || 'EVerest/everest-core' }}
+          ref: ${{ inputs.repository_ref || env.branch_name_for_cache }}
       - name: Run clang-format
         uses: everest/everest-ci/github-actions/run-clang-format@v1.0.0
         with:
@@ -84,7 +84,7 @@ jobs:
           --name compile-container \
           build-kit run-script compile
       - name: Unit tests and install
-        if: ${{ inputs.run_unit_tests }}
+        if: ${{ inputs.run_unit_tests || false }}
         run: |
           docker commit compile-container build-image
           docker run \
@@ -92,7 +92,7 @@ jobs:
           --name test-container \
           build-image run-script unit_tests
       - name: Run integration tests
-        if: ${{ inputs.run_integration_tests }}
+        if: ${{ inputs.run_integration_tests || true }}
         run: |
           docker commit test-container integration-image
           pushd .ci/e2e
