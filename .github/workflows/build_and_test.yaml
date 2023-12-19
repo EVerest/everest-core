@@ -41,10 +41,11 @@ jobs:
         run: |
           BRANCH_NAME_FOR_CACHE="${GITHUB_REF_NAME//-/_}"
           echo "branch_name_for_cache=${BRANCH_NAME_FOR_CACHE}" >> "$GITHUB_ENV"
-      - name: Setup cache
-        uses: actions/cache@v3
+      - name: Restore cache
+        uses: actions/cache/restore@v3
+        id: restore-cache
         with:
-          path: cache
+          path: cache  # keep in sync with "Store cache"
           key: compile-${{ env.branch_name_for_cache }}-${{ github.sha }}
           restore-keys: |
             compile-${{ env.branch_name_for_cache }}-
@@ -95,4 +96,10 @@ jobs:
         run: |
           docker commit test-container integration-image
           pushd .ci/e2e
-          docker-compose run e2e-test-server run-script tests
+          docker-compose run e2e-test-server run-script e2e-test-server
+      - name: Store cache
+        uses: actions/cache/save@v3
+        if: always()
+        with:
+          path: cache  # keep in sync with "Restore cache"
+          key: ${{ steps.restore-cache.outputs.cache-primary-key }}
