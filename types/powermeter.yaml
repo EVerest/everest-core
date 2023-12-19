@@ -154,6 +154,8 @@ types:
         type: object
         $ref: /units_signed#/Frequency
       signed_meter_value:
-        description: Signed instantaneous meter values if supported by the meter
+        description: >-
+          Signed collection of instantaneous meter values if supported by the meter.
+          This is intended for meters that only support signing a collection of meter values.
         type: object
         $ref: /units_signed#/SignedMeterValue
