@@ -1022,6 +1022,11 @@ bool Charger::cancelTransaction(const types::evse_manager::StopTransactionReques
             currentState = EvseState::ChargingPausedEVSE;
         }
 
+        // FIXME(evgeny): We disable pwm here since we need to get signed meter values.
+        // Maybe state machine should be refactored and cancelTransaction should trigger
+        // transition to EvseState::Finished, with active transaction.
+        // This way, the signed meter values will be retrieved there.
+        pwm_off();
         transaction_active = false;
         last_stop_transaction_reason = request.reason;
         stop_transaction_id_tag.clear();
