@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/usr/bin/env sh
+set -x
 
 cmake \
     -B build \

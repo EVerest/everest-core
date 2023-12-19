@@ -11,10 +11,14 @@ on:
         description: The ref (branch, tag, commit-hash) of the `inputs.repository`
         type: string
         required: true
+      run_unit_tests:
+        default: false
+        description: Whether to run unit-tests or not
+        type: boolean
       run_integration_tests:
+        default: false
         description: Wether to run integration-tests or not
         type: boolean
-        default: false
   workflow_dispatch:
     inputs:
       runner:
@@ -79,12 +83,13 @@ jobs:
           --name compile-container \
           build-kit run-script compile
       - name: Unit tests and install
+        if: ${{ inputs.run_unit_tests }}
         run: |
           docker commit compile-container build-image
           docker run \
           --volume "$(pwd):/ext" \
           --name test-container \
-          build-image run-script test_and_install
+          build-image run-script unit_tests
       - name: Run integration tests
         if: ${{ inputs.run_integration_tests }}
         run: |

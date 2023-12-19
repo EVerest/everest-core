@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/usr/bin/env sh
+set -x
 
 ninja -j$(nproc) -C build install
 
