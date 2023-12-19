@@ -139,14 +139,24 @@ ocpp::v201::MeterValue get_meter_value(const types::powermeter::Powermeter& powe
     ocpp::v201::MeterValue meter_value;
     meter_value.timestamp = ocpp::DateTime(power_meter.timestamp);
 
+    // signed_meter_value is for OCMF style blobs of signed meter value reports during transaction start or end
+    // individual signed meter values are provided by the power_meter itself
+
     // Energy.Active.Import.Register
     ocpp::v201::SampledValue sampled_value = get_sampled_value(
         reading_context, ocpp::v201::MeasurandEnum::Energy_Active_Import_Register, "Wh", std::nullopt);
     sampled_value.value = power_meter.energy_Wh_import.total;
-    // assume a signed meter value is related to the Energy.Active.Import.Register for now
-    if (signed_meter_value.has_value()) {
-        sampled_value.signedMeterValue.emplace(get_signed_meter_value(signed_meter_value.value()));
+    // add signedMeterValue if present
+    if (power_meter.energy_Wh_import_signed.has_value()) {
+        const auto& energy_Wh_import_signed = power_meter.energy_Wh_import_signed.value();
+        if (energy_Wh_import_signed.total.has_value()) {
+            const auto& energy_Wh_import_signed_total = energy_Wh_import_signed.total.value();
+            sampled_value.signedMeterValue = get_signed_meter_value(energy_Wh_import_signed_total);
+        }
     }
+
+    // TODO(kai): add all other possible signed meter values
+
     meter_value.sampledValue.push_back(sampled_value);
     if (power_meter.energy_Wh_import.L1.has_value()) {
         sampled_value = get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Energy_Active_Import_Register,
@@ -880,8 +890,9 @@ void OCPP201::ready() {
             case types::evse_manager::SessionEventEnum::TransactionStarted: {
                 const auto transaction_started = session_event.transaction_started.value();
                 const auto timestamp = ocpp::DateTime(transaction_started.timestamp);
-                const auto meter_value = get_meter_value(
-                    transaction_started.meter_value, ocpp::v201::ReadingContextEnum::Transaction_Begin, std::nullopt);
+                const auto meter_value =
+                    get_meter_value(transaction_started.meter_value, ocpp::v201::ReadingContextEnum::Transaction_Begin,
+                                    transaction_started.signed_meter_value);
                 const auto session_id = session_event.uuid;
                 const auto signed_meter_value = transaction_started.signed_meter_value;
                 const auto reservation_id = transaction_started.reservation_id;
