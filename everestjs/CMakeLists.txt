@@ -65,6 +65,7 @@ find_path(NODEJS_INCLUDE_DIR "node_api.h"
         "node18"
         "node19"
         "node20"
+        "node21"
         "nodejs/src"
     HINTS
         "$ENV{HOME}/.nvm/versions/node/${NODE_VERSION}/include"
