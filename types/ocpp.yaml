@@ -422,9 +422,9 @@ types:
     description: Request type to change the availability of the Charging Station/ an EVSE / a Connector.
     type: object
     required:
-      - operationalStatus
+      - operational_status
     properties:
-      operationalStatus:
+      operational_status:
         description: Type of availability change that the Charging Station should perform.
         type: string
         $ref: /ocpp#/OperationalStatusEnumType
@@ -447,14 +447,14 @@ types:
       Element providing more information about the status.
     type: object
     required:
-      - reasonCode
+      - reason_code
     properties:
-      reasonCode:
+      reason_code:
         description: >-
           A predefined code for the reason why the status is returned in this response. 
           The string is case-insensitive.
         type: string
-      additionalInfo:
+      additional_info:
         description: >-
           Additional text to provide detailed information
         type: string
@@ -468,7 +468,7 @@ types:
         description: Indicates whether the Charging Station is able to perform the availability change.
         type: string
         $ref: /ocpp#/ChangeAvailabilityStatusEnumType
-      statusInfo:
+      status_info:
         description: Detailed status information.
         type: object
         $ref: /ocpp#/StatusInfoType

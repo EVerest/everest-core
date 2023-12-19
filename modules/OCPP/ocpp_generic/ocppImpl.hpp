@@ -15,20 +15,6 @@
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 // insert your custom include headers here
 
-namespace module::ocpp_generic {
-class InputParsingException : public std::exception {
-public:
-    const char* what() {
-        return this->reason.c_str();
-    }
-
-    explicit InputParsingException(std::string reason) : reason(std::move(reason)) {
-    }
-
-private:
-    std::string reason;
-};
-} // namespace module::ocpp_generic
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 
 namespace module {

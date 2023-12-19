@@ -67,6 +67,18 @@ ocpp::v16::AvailabilityStatus to_ocpp(const types::ocpp::ChangeAvailabilityStatu
     throw std::out_of_range("unknown ChangeAvailabilityStatusEnumType");
 }
 
+types::ocpp::ChangeAvailabilityStatusEnumType to_everest(const ocpp::v16::AvailabilityStatus& status) {
+    switch (status) {
+    case ocpp::v16::AvailabilityStatus::Accepted:
+        return types::ocpp::ChangeAvailabilityStatusEnumType::Accepted;
+    case ocpp::v16::AvailabilityStatus::Rejected:
+        return types::ocpp::ChangeAvailabilityStatusEnumType::Rejected;
+    case ocpp::v16::AvailabilityStatus::Scheduled:
+        return types::ocpp::ChangeAvailabilityStatusEnumType::Scheduled;
+    }
+    throw std::out_of_range("unknown AvailabilityStatus");
+}
+
 ocpp::v16::AvailabilityType to_ocpp(const types::ocpp::OperationalStatusEnumType& status) {
     switch (status) {
     case types::ocpp::OperationalStatusEnumType::Operative:
@@ -77,21 +89,10 @@ ocpp::v16::AvailabilityType to_ocpp(const types::ocpp::OperationalStatusEnumType
     throw std::out_of_range("unknown OperationalStatusEnumType");
 }
 
-ocpp::v16::ChangeAvailabilityRequest to_ocpp(const types::ocpp::ChangeAvailabilityRequest& request) {
-    ocpp::v16::ChangeAvailabilityRequest ocpp_request{};
-    ocpp_request.type = to_ocpp(request.operationalStatus);
-    if (request.evse.has_value()) {
-        const auto& evse = request.evse.value();
-        if (evse.id != 1) {
-            EVLOG_warning << "OCPP 1.6 does not support multiple EVSEs, ignoring EVSE id " << request.evse.value().id;
-        }
-        if (!evse.connector_id.has_value()) {
-            throw InputParsingException{
-                "No connector id specified; if the whole charging station is supposed to be addressed, parameter evse "
-                "must have no value."};
-        }
-        ocpp_request.connectorId = evse.connector_id.value();
-    }
+types::ocpp::ChangeAvailabilityResponse to_everest(const ocpp::v16::ChangeAvailabilityResponse& response) {
+    types::ocpp::ChangeAvailabilityResponse everest_response{};
+    everest_response.status = to_everest(response.status);
+    return everest_response;
 }
 
 void ocppImpl::init() {
@@ -240,15 +241,30 @@ void ocppImpl::handle_monitor_variables(std::vector<types::ocpp::ComponentVariab
 types::ocpp::ChangeAvailabilityResponse
 ocppImpl::handle_change_availability(types::ocpp::ChangeAvailabilityRequest& request) {
 
-    try {
-        auto ocpp_request = to_ocpp(request);
-
-        auto response = this->mod->charge_point->change_availability(ocpp_request);
-
-    } catch (InputParsingException& exc) {
-        return types::ocpp::ChangeAvailabilityResponse{types::ocpp::ChangeAvailabilityStatusEnumType::Rejected,
-                                                       types::ocpp::StatusInfoType{"InvalidInput", exc.what()}};
-    };
+    ocpp::v16::ChangeAvailabilityRequest ocpp_request{};
+    ocpp_request.type = to_ocpp(request.operational_status);
+    if (request.evse.has_value()) {
+        const auto& evse = request.evse.value();
+        if (!evse.connector_id.has_value()) {
+            return types::ocpp::ChangeAvailabilityResponse{
+                types::ocpp::ChangeAvailabilityStatusEnumType::Rejected,
+                types::ocpp::StatusInfoType{"InvalidInput",
+                                            "No connector id specified; if the whole charging station is supposed to "
+                                            "be addressed, parameter evse "
+                                            "must have no value."}};
+        }
+        try {
+            ocpp_request.connectorId = this->mod->get_ocpp_connector_id(evse.id, evse.connector_id.value());
+        } catch (const std::out_of_range&) {
+            return types::ocpp::ChangeAvailabilityResponse{
+                types::ocpp::ChangeAvailabilityStatusEnumType::Rejected,
+                types::ocpp::StatusInfoType{
+                    "InvalidInput",
+                    "Could not determine OCPP connector id from provided EVerest EVSE and Connector Ids."}};
+        }
+    }
+    auto response = this->mod->charge_point->on_change_availability(ocpp_request);
+    return to_everest(response);
 }
 
 } // namespace ocpp_generic
