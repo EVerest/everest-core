@@ -99,6 +99,8 @@ private:
     std::function<bool(json message)> send_callback;
     std::vector<M> external_notify;
     bool paused;
+    // Transiently true while the queue is paused, but is waiting to unpause
+    bool resuming;
     bool running;
     bool new_message;
     boost::uuids::random_generator uuid_generator;
@@ -252,6 +254,7 @@ private:
         std::lock_guard<std::recursive_mutex> lk(this->message_mutex);
         if (this->pause_resume_ctr == expected_pause_resume_ctr) {
             this->paused = false;
+            this->resuming = false;
             this->cv.notify_one();
             EVLOG_debug << "resume() notified message queue";
         }
@@ -271,6 +274,7 @@ public:
         config(config),
         external_notify(external_notify),
         paused(true),
+        resuming(false),
         running(true),
         new_message(false),
         uuid_generator(boost::uuids::random_generator()) {
@@ -469,7 +473,7 @@ public:
         } else {
             // all other messages are allowed to "jump the queue" to improve user experience
             // TODO: decide if we only want to allow this for a subset of messages
-            if (!this->paused || this->config.queue_all_messages ||
+            if (!this->paused || this->resuming || this->config.queue_all_messages ||
                 control_message->messageType == M::BootNotification) {
                 this->add_to_normal_message_queue(control_message);
             }
@@ -525,7 +529,7 @@ public:
         } else {
             // all other messages are allowed to "jump the queue" to improve user experience
             // TODO: decide if we only want to allow this for a subset of messages
-            if (this->paused && message->messageType != M::BootNotification) {
+            if (this->paused && !this->resuming && message->messageType != M::BootNotification) {
                 // do not add a normal message to the queue if the queue is paused/offline
                 auto enhanced_message = EnhancedMessage<M>();
                 enhanced_message.offline = true;
@@ -709,6 +713,7 @@ public:
         this->pause_resume_ctr++;
         this->resume_timer.stop();
         this->paused = true;
+        this->resuming = false;
         this->cv.notify_one();
         EVLOG_debug << "pause() notified message queue";
     }
@@ -717,9 +722,13 @@ public:
     void resume(std::chrono::seconds delay_on_reconnect) {
         EVLOG_debug << "resume() called";
         std::lock_guard<std::recursive_mutex> lk(this->message_mutex);
+        if (!this->paused) {
+            return;
+        }
         this->pause_resume_ctr++;
         // Do not delay if this is the first call to resume(), i.e. this is the initial connection
         if (this->pause_resume_ctr > 1 && delay_on_reconnect > std::chrono::seconds(0)) {
+            this->resuming = true;
             EVLOG_debug << "Delaying message queue resume by " << delay_on_reconnect.count() << " seconds";
             u_int64_t expected_pause_resume_ctr = this->pause_resume_ctr;
             this->resume_timer.timeout(
