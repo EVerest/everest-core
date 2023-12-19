@@ -137,8 +137,8 @@ active_modules:
       evse_manager:
         - module_id: evse_manager_1
           implementation_id: evse
-        # - module_id: evse_manager_2
-        #   implementation_id: evse
+        - module_id: evse_manager_2
+          implementation_id: evse
       reservation:
         - module_id: auth
           implementation_id: reservation
