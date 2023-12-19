@@ -45,12 +45,11 @@ jobs:
           restore-keys: |
             compile-${{ env.branch_name_for_cache }}-
             compile-
-      - name: Checkout from `everest-core` the `.ci/` directory 
+      - name: Checkout from `everest-core` the `.ci/` directory (reusable workflow mode, see https://stackoverflow.com/a/74123003/1168315)
         uses: actions/checkout@v4
         with:
           sparse-checkout: |
             .ci
-          # for reusable workflow
           repository: EVerest/everest-core
           ref: CI/reusable-workflow  # TODO get reference in general, see https://stackoverflow.com/questions/74784735 resp. https://github.com/actions/toolkit/issues/1264
       - name: Checkout repo ${{ inputs.repository }} to directory `source/`
@@ -89,7 +88,6 @@ jobs:
       - name: Run integration tests
         if: ${{ inputs.run_integration_tests }}
         run: |
-          
           docker commit test-container integration-image
           pushd .ci/e2e
           docker-compose run e2e-test-server run-script tests
