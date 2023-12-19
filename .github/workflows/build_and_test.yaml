@@ -61,8 +61,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: source/
-          repository: ${{ inputs.repository || 'EVerest/everest-core' }}
-          ref: ${{ inputs.repository_ref || env.branch_name_for_cache }}
+          repository: ${{ inputs.repository }}
+          ref: ${{ inputs.repository_ref }}
       - name: Run clang-format
         uses: everest/everest-ci/github-actions/run-clang-format@v1.0.0
         with:
