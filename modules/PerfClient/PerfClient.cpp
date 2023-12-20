@@ -144,6 +144,7 @@ void PerfClient::test_commands() {
         if (ret[1] < min_time_to_client) {
             min_time_to_client = ret[0];
         }
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
     auto total_time_running_commands =
