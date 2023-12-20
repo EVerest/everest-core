@@ -10,6 +10,7 @@
 #include <fmt/core.h>
 #include <ios>
 #include <limits>
+#include <math.h> /* ceil */
 #include <random>
 #include <sstream>
 #include <stdexcept>
@@ -36,6 +37,10 @@ constexpr module::utils::Register UNIX_TIME{40260, 2};
 constexpr module::utils::Register UNIX_TIME_WITH_UTC_OFFSET{40260, 3};
 constexpr module::utils::Register UTC_OFFSET{40262, 1};
 constexpr module::utils::Register META_DATA_1{40279, 70};
+
+// Public key related fields
+constexpr module::utils::Register PUBLIC_KEY{40452, 32};
+constexpr module::utils::Register PUBLIC_KEY_LEN{40451, 1};
 
 /// @brief The status when reading the
 constexpr uint16_t SIGNATURE_STATUS_DONE = 2;
@@ -83,6 +88,13 @@ void powermeterImpl::init() {
 }
 
 void powermeterImpl::ready() {
+    // Read the length of the register in bytes
+    const auto public_key_length = read_register<uint16_t>(PUBLIC_KEY_LEN);
+    uint32_t reg_num = ceil(public_key_length / 2);
+    const auto public_key_ending =
+        read_register<std::string>(module::utils::Register{PUBLIC_KEY.start_register, reg_num});
+
+    this->publish_public_key(public_key_ending.substr(0, public_key_length));
 }
 
 TransactionStartResponse powermeterImpl::handle_start_transaction_impl(const TransactionReq& value) {
