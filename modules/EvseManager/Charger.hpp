@@ -142,11 +142,6 @@ public:
 
     void notifyCurrentDemandStarted();
 
-    // Note: Deprecated, do not use EvseState externally.
-    // Kept for compatibility, will be removed from public interface
-    // in the future.
-    // Use new EvseEvent interface instead.
-
     enum class EvseState {
         Disabled,
         Idle,
@@ -173,8 +168,6 @@ public:
 
     EvseState getCurrentState();
     sigslot::signal<EvseState> signalState;
-    // sigslot::signal<types::evse_manager::ErrorEnum> signalError;
-    //  /Deprecated
 
     void inform_new_evse_max_hlc_limits(const types::iso15118_charger::DC_EVSEMaximumLimits& l);
     types::iso15118_charger::DC_EVSEMaximumLimits get_evse_max_hlc_limits();

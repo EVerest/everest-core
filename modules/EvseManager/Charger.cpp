@@ -461,7 +461,6 @@ void Charger::runStateMachine() {
 
                 if (!powerAvailable()) {
                     pauseChargingWaitForPower();
-                    // FIXME new in state breaks
                     break;
                 }
 
@@ -545,9 +544,6 @@ void Charger::runStateMachine() {
 
                 if (initialize_state) {
                     signalEvent(types::evse_manager::SessionEventEnum::ChargingPausedEV);
-                    // bsp->allow_power_on(true, types::evse_board_support::Reason::FullPowerCharging);
-                    //  make sure we are enabling PWM
-                    // update_pwm_now(ampereToDutyCycle(getMaxCurrent()));
                 } else {
                     // update PWM if it has changed and 5 seconds have passed since last update
                     if (!errors_prevent_charging()) {
