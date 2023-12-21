@@ -23,8 +23,10 @@ void AverageMeterValues::set_values(const MeterValue& meter_value) {
     // avg all the possible measurerands
     for (auto& element : meter_value.sampledValue) {
         if (is_avg_meas(element)) {
-            MeterValueCalc& temp =
-                this->aligned_meter_values[{element.measurand.value(), element.phase, element.location}];
+            const MeterValueMeasurands key{element.measurand.value(), element.phase, element.location};
+            this->aligned_meter_values.try_emplace(key, MeterValueCalc{0.0, 0}); // If not exists yet, set to default
+
+            MeterValueCalc& temp = this->aligned_meter_values.at(key);
             temp.sum += element.value;
             temp.num_elements++;
         }
@@ -40,11 +42,13 @@ MeterValue AverageMeterValues::retrieve_processed_values() {
 void AverageMeterValues::average_meter_value() {
     for (auto& element : this->averaged_meter_values.sampledValue) {
         if (is_avg_meas(element)) {
-
-            MeterValueCalc& temp =
-                this->aligned_meter_values[{element.measurand.value(), element.phase, element.location}];
-
-            element.value = temp.sum / temp.num_elements;
+            const MeterValueMeasurands key{element.measurand.value(), element.phase, element.location};
+            if (this->aligned_meter_values.find(key) == this->aligned_meter_values.end()) {
+                EVLOG_warning << "Measurand: " << element.measurand.value() << " not present in map";
+            } else {
+                MeterValueCalc& temp = this->aligned_meter_values.at(key);
+                element.value = temp.sum / temp.num_elements;
+            }
         }
     }
 }

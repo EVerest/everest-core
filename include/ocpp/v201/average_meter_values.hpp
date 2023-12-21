@@ -38,8 +38,8 @@ private:
 
         // Define a comparison operator for the struct
         bool operator<(const MeterValueMeasurands& other) const {
-
-            return measurand < other.measurand or location < other.location or phase < other.phase;
+            // Using tie here to compare the two lexicographically instead of writing it all out
+            return std::tie(measurand, location, phase) < std::tie(other.measurand, other.location, other.phase);
         }
     };
 
