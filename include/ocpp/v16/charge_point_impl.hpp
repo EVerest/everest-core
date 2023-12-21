@@ -316,6 +316,25 @@ private:
     void handleSendLocalListRequest(Call<SendLocalListRequest> call);
     void handleGetLocalListVersionRequest(Call<GetLocalListVersionRequest> call);
 
+    // //brief Preprocess a ChangeAvailabilityRequest: Determine response;
+    // - if connector is 0, availability change is also propagated for all connectors
+    // - for each connector (except "0"), if transaction is ongoing the change is scheduled,
+    //    otherwise the OCPP connector id is appended to the `accepted_connector_availability_changes` vector
+    void preprocess_change_availability_request(const ChangeAvailabilityRequest& request,
+                                                ChangeAvailabilityResponse& response,
+                                                std::vector<int32_t>& accepted_connector_availability_changes);
+
+    // \brief TExecutes availability change for the provided connectors:
+    // - if persist == true: store availability in database
+    // - submit state event (for the whole ChargePoint if "0" in set of connectors; otherwise for each connector
+    // individually)
+    // - call according EVSE enable or disable callback, respectively
+    /// \param changed_connectors list of OCPP connector ids (and 0 for whole chargepoint)
+    /// \param availability new availabillity
+    /// \param persist if true, persists availability in database
+    void execute_connectors_availability_change(const std::vector<int32_t>& changed_connectors,
+                                                const ocpp::v16::AvailabilityType availability, bool persist);
+
 public:
     /// \brief The main entrypoint for libOCPP for OCPP 1.6
     /// \param config a nlohmann json config object that contains the libocpp 1.6 config. There are example configs that
@@ -550,6 +569,10 @@ public:
     /// \param type type of the security event
     /// \param tech_info additional info of the security event
     void on_security_event(const std::string& type, const std::string& tech_info);
+
+    /// \brief Handles an internal ChangeAvailabilityRequest (in the same way as if it was emitted by the CSMS).
+    /// \param request
+    ChangeAvailabilityResponse on_change_availability(const ChangeAvailabilityRequest& request);
 
     /// registers a \p callback function that can be used to receive a arbitrary data transfer for the given \p
     /// vendorId and \p messageId

@@ -18,6 +18,7 @@
 #include <ocpp/v16/messages/UpdateFirmware.hpp>
 
 // for OCPP1.6 PnC
+#include "ocpp/v16/messages/ChangeAvailability.hpp"
 #include <ocpp/v201/messages/Authorize.hpp>
 #include <ocpp/v201/messages/CertificateSigned.hpp>
 #include <ocpp/v201/messages/DeleteCertificate.hpp>
@@ -275,6 +276,10 @@ public:
     /// \param type type of the security event
     /// \param tech_info additional info of the security event
     void on_security_event(const std::string& type, const std::string& tech_info);
+
+    /// \brief Handles an internal ChangeAvailabilityRequest (in the same way as if it was emitted by the CSMS).
+    /// \param request
+    ChangeAvailabilityResponse on_change_availability(const ChangeAvailabilityRequest& request);
 
     /// registers a \p callback function that can be used to receive a arbitrary data transfer for the given \p
     /// vendorId and \p messageId
