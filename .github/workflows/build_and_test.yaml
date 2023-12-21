@@ -85,23 +85,28 @@ jobs:
           CMAKE_FLAGS_EXTRA: ${{ inputs.cmake_flags_extra || '-DEVC_ENABLE_CCACHE=1 -DISO15118_2_GENERATE_AND_INSTALL_CERTIFICATES=OFF' }}
         run: |
           docker run \
-          --volume "$(pwd):/ext" \
-          --name compile-container \
-          build-kit run-script compile
+            --volume "$(pwd):/ext" \
+            --name compile-container \
+            build-kit run-script compile
       - name: Unit tests
         if: ${{ inputs.unit_tests || false }}
         run: |
           docker commit compile-container unit-tests-image
           docker run \
-          --volume "$(pwd):/ext" \
-          --name test-container \
-          unit-tests-image run-script unit_tests
+            --volume "$(pwd):/ext" \
+            --name test-container \
+            unit-tests-image run-script unit_tests
       - name: Integration tests
         if: ${{ inputs.integration_tests || true }}
         run: |
           docker commit compile-container integration-tests-image
           pushd .ci/e2e
-          docker-compose run e2e-test-server run-script e2e-test-server
+          docker-compose run e2e-test-server run-script tests
+      - name: FIXME make all files in `cache/` readable
+        # FIXME Workaround for non-readable certs in `cache/josev/[ID]/Josev/iso15118/shared/pki/iso15118_2/certs . See https://github.com/EVerest/everest-core/actions/runs/7286554315/job/19855498928#step:13:10
+        if: always()
+        run: |
+          chmod --recursive +r cache/
       - name: Store cache
         uses: actions/cache/save@v3
         if: always()
