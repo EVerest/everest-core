@@ -83,18 +83,18 @@ jobs:
           --volume "$(pwd):/ext" \
           --name compile-container \
           build-kit run-script compile
-      - name: Unit tests and install
+      - name: Unit tests
         if: ${{ inputs.run_unit_tests || false }}
         run: |
-          docker commit compile-container build-image
+          docker commit compile-container unit-tests-image
           docker run \
           --volume "$(pwd):/ext" \
           --name test-container \
-          build-image run-script unit_tests
-      - name: Run integration tests
+          unit-tests-image run-script unit_tests
+      - name: Integration tests
         if: ${{ inputs.run_integration_tests || true }}
         run: |
-          docker commit test-container integration-image
+          docker commit compile-container integration-tests-image
           pushd .ci/e2e
           docker-compose run e2e-test-server run-script e2e-test-server
       - name: Store cache
