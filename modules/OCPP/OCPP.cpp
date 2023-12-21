@@ -747,4 +747,8 @@ void OCPP::ready() {
     }
 }
 
+int32_t OCPP::get_ocpp_connector_id(int32_t evse_id, int32_t connector_id) {
+    return this->evse_connector_map.at(evse_id).at(connector_id);
+}
+
 } // namespace module
