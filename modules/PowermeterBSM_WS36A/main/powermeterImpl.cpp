@@ -107,8 +107,8 @@ void powermeterImpl::ready() {
     EVLOG_info << "Length of public key in registers: " << reg_num;
     const auto str = to_hex(read_register<std::string>(module::utils::Register{PUBLIC_KEY.start_register, reg_num})
                                 .substr(0, public_key_length));
-    EVLOG_info << "Publishing the public key: " << this->PUBLIC_KEY_HEADER + str;
-    this->publish_public_key(this->PUBLIC_KEY_HEADER + str);
+    EVLOG_info << "Publishing the public key: " << str;
+    this->publish_public_key(str);
 }
 
 TransactionStartResponse powermeterImpl::handle_start_transaction_impl(const TransactionReq& value) {
