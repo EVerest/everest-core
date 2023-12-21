@@ -1401,8 +1401,9 @@ void Charger::bcb_toggle_detect_start_pulse() {
 
 // call this on C->B transitions
 void Charger::bcb_toggle_detect_stop_pulse() {
-    if (!hlc_bcb_sequence_started)
+    if (!hlc_bcb_sequence_started) {
         return;
+    }
 
     // This is probably and end of BCB toggle, verify it was not too long or too short
     auto pulse_length = std::chrono::steady_clock::now() - hlc_ev_pause_start_of_bcb;
