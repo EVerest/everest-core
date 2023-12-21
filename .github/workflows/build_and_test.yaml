@@ -11,6 +11,9 @@ on:
         description: The ref (branch, tag, commit-hash) of the `inputs.repository`
         type: string
         required: true
+      cmake_flags_extra:
+        description: additional flags to add to the common set of flags (see `.ci/build-kit/compile.sh`)
+        type: string
       run_unit_tests:
         description: Whether to run unit-tests or not
         type: boolean
@@ -78,6 +81,8 @@ jobs:
           docker pull --quiet ghcr.io/everest/build-kit-alpine:latest
           docker image tag ghcr.io/everest/build-kit-alpine:latest build-kit
       - name: Compile
+        env:
+          CMAKE_FLAGS_EXTRA: ${{ inputs.cmake_flags_extra || '-DEVC_ENABLE_CCACHE=1 -DISO15118_2_GENERATE_AND_INSTALL_CERTIFICATES=OFF' }}
         run: |
           docker run \
           --volume "$(pwd):/ext" \
