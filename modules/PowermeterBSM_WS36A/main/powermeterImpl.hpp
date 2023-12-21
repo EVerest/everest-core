@@ -67,6 +67,8 @@ protected:
 private:
     const Everest::PtrContainer<PowermeterBSM_WS36A>& mod;
     const Conf& config;
+    // We need to prepend the public key with this for the transparency software to work
+    inline static const std::string PUBLIC_KEY_HEADER = "3059301306072A8648CE3D020106082A8648CE3D03010703420004";
 
     virtual void init() override;
     virtual void ready() override;
