@@ -1,5 +1,4 @@
-*build
-*build-cross
+/build*/
 .cache/
 workspace.yaml
 .vscode/
