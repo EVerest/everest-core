@@ -48,16 +48,21 @@ static std::vector<std::string> get_subject_alt_names(const X509* x509) {
 // verify that the csms certificate's commonName matches the CSMS FQDN
 bool verify_csms_cn(const std::string& hostname, bool preverified, boost::asio::ssl::verify_context& ctx) {
 
-    /*
-    FIXME(cc): This does not work, always returns false here
-    if (!preverified) {
-         EVLOG_error << "Could not verify CSMS server certificate";
-         return false;
-     }*/
-
+    // Error depth gives the depth in the chain (with 0 = leaf certificate) where
+    // a potential (!) error occurred; error here means current error code and can also be "OK".
+    // This thus gives also the position (in the chain)  of the currently to be verified certificate.
+    // If depth is 0, we need to check the leaf certificate;
+    // If depth > 0, we are verifying a CA (or SUB-CA) certificate and thus trust "preverified"
     int depth = X509_STORE_CTX_get_error_depth(ctx.native_handle());
+
+    if (!preverified) {
+        int error = X509_STORE_CTX_get_error(ctx.native_handle());
+        EVLOG_warning << "Invalid certificate error '" << X509_verify_cert_error_string(error) << "' (at chain depth '"
+                      << depth << "')";
+    }
+
     // only check for CSMS server certificate
-    if (depth == 0) {
+    if (depth == 0 and preverified) {
         // Get server certificate
         X509* server_cert = X509_STORE_CTX_get_current_cert(ctx.native_handle());
 
@@ -73,23 +78,28 @@ bool verify_csms_cn(const std::string& hostname, bool preverified, boost::asio::
 
         // Compare the extracted CN with the expected FQDN
         if (hostname == common_name) {
-            EVLOG_info << "FQDN matches CN of server certificate: " << hostname;
+            EVLOG_debug << "FQDN matches CN of server certificate: " << hostname;
             return true;
         }
 
         // If the CN does not match, go through all alternative names
         for (auto name : alt_names) {
             if (hostname == name) {
-                EVLOG_info << "FQDN matches alternative name of server certificate: " << hostname;
+                EVLOG_debug << "FQDN matches alternative name of server certificate: " << hostname;
                 return true;
             }
         }
 
-        EVLOG_info << "FQDN does not match CN or alternative names.";
+        std::stringstream s;
+        s << "FQDN '" << hostname << "' does not match CN '" << common_name << "' or any alternative names";
+        for (auto alt_name : alt_names) {
+            s << " '" << alt_name << "'";
+        }
+        EVLOG_warning << s.str();
         return false;
     }
 
-    return true;
+    return preverified;
 }
 
 WebsocketTLS::WebsocketTLS(const WebsocketConnectionOptions& connection_options,
@@ -118,7 +128,6 @@ void WebsocketTLS::set_connection_options(const WebsocketConnectionOptions& conn
 
     this->connection_options.csms_uri.set_secure(true);
 }
-
 bool WebsocketTLS::connect() {
     if (!this->initialized()) {
         return false;
