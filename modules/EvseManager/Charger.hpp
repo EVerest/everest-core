@@ -330,6 +330,8 @@ private:
     // As per IEC61851-1 A.5.3
     bool legacy_wakeup_done{false};
     constexpr static int legacy_wakeup_timeout{30000};
+
+    void clear_errors_on_unplug();
 };
 
 #define CHARGER_ABSOLUTE_MAX_CURRENT double(80.0F)

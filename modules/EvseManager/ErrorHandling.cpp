@@ -86,7 +86,7 @@ ErrorHandling::ErrorHandling(const std::unique_ptr<evse_board_supportIntf>& _r_b
 
 void ErrorHandling::raise_overcurrent_error(const std::string& description) {
     // raise externally
-    p_evse->raise_evse_manager_MREC4OverCurrentFailure("Slow overcurrent detected", Everest::error::Severity::High);
+    p_evse->raise_evse_manager_MREC4OverCurrentFailure(description, Everest::error::Severity::High);
 
     if (modify_error_evse_manager("evse_manager/MREC4OverCurrentFailure", true)) {
         // signal to charger a new error has been set
@@ -112,7 +112,7 @@ void ErrorHandling::clear_overcurrent_error() {
 
 void ErrorHandling::raise_internal_error(const std::string& description) {
     // raise externally
-    // FIXME raise_evse_manager_MREC4OverCurrentFailure(description);
+    p_evse->raise_evse_manager_Internal(description, Everest::error::Severity::High);
 
     if (modify_error_evse_manager("evse_manager/Internal", true)) {
         // signal to charger a new error has been set
@@ -122,9 +122,35 @@ void ErrorHandling::raise_internal_error(const std::string& description) {
 
 void ErrorHandling::clear_internal_error() {
     // clear externally
-    // FIXME clear_evse_manager_MREC4OverCurrentFailure();
+    p_evse->request_clear_all_evse_manager_Internal();
 
     modify_error_evse_manager("evse_manager/Internal", false);
+
+    if (active_errors.all_cleared()) {
+        // signal to charger that all errors are cleared now
+        signal_all_errors_cleared();
+        // clear errors with HLC stack
+        if (hlc) {
+            r_hlc[0]->call_reset_error();
+        }
+    }
+}
+
+void ErrorHandling::raise_powermeter_transaction_start_failed_error(const std::string& description) {
+    // raise externally
+    p_evse->raise_evse_manager_PowermeterTransactionStartFailed(description, Everest::error::Severity::High);
+
+    if (modify_error_evse_manager("evse_manager/PowermeterTransactionStartFailed", true)) {
+        // signal to charger a new error has been set
+        signal_error();
+    };
+}
+
+void ErrorHandling::clear_powermeter_transaction_start_failed_error() {
+    // clear externally
+    p_evse->request_clear_all_evse_manager_PowermeterTransactionStartFailed();
+
+    modify_error_evse_manager("evse_manager/PowermeterTransactionStartFailed", false);
 
     if (active_errors.all_cleared()) {
         // signal to charger that all errors are cleared now
@@ -325,6 +351,12 @@ bool ErrorHandling::modify_error_ac_rcd(const Everest::error::Error& error, bool
 bool ErrorHandling::modify_error_evse_manager(const std::string& error_type, bool active) {
     if (error_type == "evse_manager/MREC4OverCurrentFailure") {
         active_errors.bsp.MREC4OverCurrentFailure = active;
+        if (hlc && active) {
+            r_hlc[0]->call_send_error(types::iso15118_charger::EvseError::Error_Malfunction);
+        }
+
+    } else if (error_type == "evse_manager/PowermeterTransactionStartFailed") {
+        active_errors.evse_manager.PowermeterTransactionStartFailed = active;
         if (hlc && active) {
             r_hlc[0]->call_send_error(types::iso15118_charger::EvseError::Error_Malfunction);
         }

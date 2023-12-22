@@ -9,3 +9,5 @@ errors:
     description: Internal error of the state machine
   - name: MREC4OverCurrentFailure
     description: Over current event
+  - name: PowermeterTransactionStartFailed
+    description: Transaction could not be started at the powermeter

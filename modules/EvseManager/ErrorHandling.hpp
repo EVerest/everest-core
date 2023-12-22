@@ -64,6 +64,7 @@ struct ActiveErrors {
     struct evse_manager_errors {
         std::atomic_bool MREC4OverCurrentFailure{false};
         std::atomic_bool Internal{false};
+        std::atomic_bool PowermeterTransactionStartFailed{false};
     } evse_manager;
 
     struct ac_rcd_errors {
@@ -92,11 +93,11 @@ struct ActiveErrors {
                    bsp.MREC17EVSEContactorFault or bsp.MREC19CableOverTempStop or bsp.MREC20PartialInsertion or
                    bsp.MREC23ProximityFault or bsp.MREC24ConnectorVoltageHigh or bsp.MREC25BrokenLatch or
                    bsp.MREC26CutCable or evse_manager.MREC4OverCurrentFailure or evse_manager.Internal or
-                   ac_rcd.MREC2GroundFailure or ac_rcd.VendorError or ac_rcd.Selftest or ac_rcd.AC or ac_rcd.DC or
-                   connector_lock.ConnectorLockCapNotCharged or connector_lock.ConnectorLockUnexpectedOpen or
-                   connector_lock.ConnectorLockUnexpectedClose or connector_lock.ConnectorLockFailedLock or
-                   connector_lock.ConnectorLockFailedUnlock or connector_lock.MREC1ConnectorLockFailure or
-                   connector_lock.VendorError);
+                   evse_manager.PowermeterTransactionStartFailed or ac_rcd.MREC2GroundFailure or ac_rcd.VendorError or
+                   ac_rcd.Selftest or ac_rcd.AC or ac_rcd.DC or connector_lock.ConnectorLockCapNotCharged or
+                   connector_lock.ConnectorLockUnexpectedOpen or connector_lock.ConnectorLockUnexpectedClose or
+                   connector_lock.ConnectorLockFailedLock or connector_lock.ConnectorLockFailedUnlock or
+                   connector_lock.MREC1ConnectorLockFailure or connector_lock.VendorError);
     }
 };
 
@@ -118,6 +119,9 @@ public:
 
     void raise_internal_error(const std::string& description);
     void clear_internal_error();
+
+    void raise_powermeter_transaction_start_failed_error(const std::string& description);
+    void clear_powermeter_transaction_start_failed_error();
 
 private:
     const std::unique_ptr<evse_board_supportIntf>& r_bsp;
