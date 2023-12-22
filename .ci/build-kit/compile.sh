@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-set -x
+set -ex
 
 cmake \
     -B build \

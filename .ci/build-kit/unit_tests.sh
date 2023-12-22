@@ -1,4 +1,4 @@
 #!/usr/bin/env sh
-set -x
+set -ex
 
 ninja -j$(nproc) -C build tests/test
