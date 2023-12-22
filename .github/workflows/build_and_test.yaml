@@ -106,7 +106,7 @@ jobs:
         # FIXME Workaround for non-readable certs in `cache/josev/[ID]/Josev/iso15118/shared/pki/iso15118_2/certs . See https://github.com/EVerest/everest-core/actions/runs/7286554315/job/19855498928#step:13:10
         if: always()
         run: |
-          chmod --recursive +r cache/
+          sudo chown --recursive $(id --user --name):$(id --user --name) cache/josev/
       - name: Store cache
         uses: actions/cache/save@v3
         if: always()
