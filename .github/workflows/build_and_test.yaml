@@ -93,6 +93,7 @@ jobs:
         if: ${{ inputs.unit_tests || false }}
         run: |
           docker commit compile-container unit-tests-image
+          trap "cp build/Testing/Temporary/LastTest.log /tmp/ctest-report" EXIT
           docker run \
             --volume "$(pwd):/ext" \
             --workdir /ext \
@@ -118,3 +119,9 @@ jobs:
         with:
           path: cache  # keep in sync with "Restore cache"
           key: ${{ steps.restore-cache.outputs.cache-primary-key }}
+      - name: Archive test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: ctest-report
+          path: /tmp/ctest-report
