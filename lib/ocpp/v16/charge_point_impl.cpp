@@ -2174,7 +2174,8 @@ void ChargePointImpl::sign_certificate(const ocpp::CertificateSigningUseEnum& ce
 
     const auto csr = this->evse_security->generate_certificate_signing_request(
         certificate_signing_use, this->configuration->getSeccLeafSubjectCountry().value_or("DE"),
-        this->configuration->getCpoName().value(), this->configuration->getChargeBoxSerialNumber());
+        this->configuration->getCpoName().value(), this->configuration->getChargeBoxSerialNumber(),
+        this->configuration->getUseTPM());
 
     req.csr = csr;
     ocpp::Call<SignCertificateRequest> call(req, this->message_queue->createMessageId());
@@ -2742,7 +2743,8 @@ void ChargePointImpl::data_transfer_pnc_sign_certificate() {
         ocpp::CertificateSigningUseEnum::V2GCertificate,
         this->configuration->getSeccLeafSubjectCountry().value_or("DE"),
         this->configuration->getSeccLeafSubjectOrganization().value_or(this->configuration->getCpoName().value()),
-        this->configuration->getSeccLeafSubjectCommonName().value_or(this->configuration->getChargeBoxSerialNumber()));
+        this->configuration->getSeccLeafSubjectCommonName().value_or(this->configuration->getChargeBoxSerialNumber()),
+        this->configuration->getUseTPM());
 
     csr_req.csr = csr;
     csr_req.certificateType = ocpp::v201::CertificateSigningUseEnum::V2GCertificate;

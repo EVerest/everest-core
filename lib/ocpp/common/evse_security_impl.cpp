@@ -82,9 +82,9 @@ bool EvseSecurityImpl::is_ca_certificate_installed(const CaCertificateType& cert
 std::string EvseSecurityImpl::generate_certificate_signing_request(const CertificateSigningUseEnum& certificate_type,
                                                                    const std::string& country,
                                                                    const std::string& organization,
-                                                                   const std::string& common) {
+                                                                   const std::string& common, bool use_tpm) {
     return this->evse_security->generate_certificate_signing_request(conversions::from_ocpp(certificate_type), country,
-                                                                     organization, common);
+                                                                     organization, common, use_tpm);
 }
 
 std::optional<KeyPair> EvseSecurityImpl::get_key_pair(const CertificateSigningUseEnum& certificate_type) {

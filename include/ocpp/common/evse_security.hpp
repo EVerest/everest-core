@@ -83,8 +83,8 @@ public:
     /// \return the PEM formatted certificate signing request
     virtual std::string generate_certificate_signing_request(const CertificateSigningUseEnum& certificate_type,
                                                              const std::string& country,
-                                                             const std::string& organization,
-                                                             const std::string& common) = 0;
+                                                             const std::string& organization, const std::string& common,
+                                                             bool use_tpm) = 0;
 
     /// \brief Searches the leaf certificate for the given \p certificate_type and retrieves the most recent certificate
     /// that is already valid and the respective key . If no certificate is present or no key is matching the

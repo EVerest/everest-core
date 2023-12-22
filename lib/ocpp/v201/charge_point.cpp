@@ -1575,8 +1575,9 @@ void ChargePoint::sign_certificate_req(const ocpp::CertificateSigningUseEnum& ce
         return;
     }
 
-    const auto csr = this->evse_security->generate_certificate_signing_request(certificate_signing_use, country.value(),
-                                                                               organization.value(), common.value());
+    // TODO: use_tpm is hardcoded false here, see if it will require change
+    const auto csr = this->evse_security->generate_certificate_signing_request(
+        certificate_signing_use, country.value(), organization.value(), common.value(), false);
     req.csr = csr;
 
     this->awaited_certificate_signing_use_enum = certificate_signing_use;
