@@ -88,7 +88,8 @@ void EvseManager::ready() {
 
     hw_capabilities = r_bsp->call_get_hw_capabilities();
 
-    charger = std::unique_ptr<Charger>(new Charger(bsp, error_handling, hw_capabilities.connector_type));
+    charger =
+        std::unique_ptr<Charger>(new Charger(bsp, error_handling, hw_capabilities.connector_type, watchdog_supervisor));
 
     if (r_connector_lock.size() > 0) {
         bsp->signal_lock.connect([this]() { r_connector_lock[0]->call_lock(); });
@@ -729,8 +730,12 @@ void EvseManager::ready() {
     }
 
     telemetryThreadHandle = std::thread([this]() {
+        auto watchdog = watchdog_supervisor.register_watchdog("Telemetry thread", std::chrono::seconds(20));
+
         while (!telemetryThreadHandle.shouldExit()) {
             sleep(10);
+            watchdog();
+
             auto p = get_latest_powermeter_data_billing();
             Everest::TelemetryMap telemetry_data{{"timestamp", p.timestamp},
                                                  {"type", "power_meter"},

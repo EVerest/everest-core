@@ -24,6 +24,7 @@
 #include <utils/date.hpp>
 
 #include <mutex>
+#include <watchdog.hpp>
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -73,6 +74,7 @@ private:
 
     void enforce_limits(const std::vector<types::energy::EnforcedLimits>& limits);
     std::vector<types::energy::EnforcedLimits> run_optimizer(types::energy::EnergyFlowRequest request);
+    Everest::WatchdogSupervisor watchdog_supervisor;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

@@ -23,6 +23,7 @@ target_link_libraries(${MODULE_NAME}
     PRIVATE
         Pal::Sigslot
         pugixml::pugixml
+        everest::watchdog
 )
 
 if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9)

@@ -42,6 +42,7 @@
 #include "ErrorHandling.hpp"
 #include "SessionLog.hpp"
 #include "VarContainer.hpp"
+#include <watchdog.hpp>
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -176,6 +177,7 @@ public:
 
     std::unique_ptr<IECStateMachine> bsp;
     std::unique_ptr<ErrorHandling> error_handling;
+    Everest::WatchdogSupervisor watchdog_supervisor;
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
@@ -193,7 +195,6 @@ private:
     std::mutex power_mutex;
     types::powermeter::Powermeter latest_powermeter_data_billing;
 
-    Everest::Thread energyThreadHandle;
     types::evse_board_support::HardwareCapabilities hw_capabilities;
     bool local_three_phases;
     types::energy::ExternalLimits local_energy_limits;
@@ -258,7 +259,6 @@ private:
     static constexpr auto CABLECHECK_CONTACTORS_CLOSE_TIMEOUT{std::chrono::seconds(5)};
 
     std::atomic_bool current_demand_active{false};
-
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

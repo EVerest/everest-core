@@ -30,7 +30,6 @@
 #include <sigslot/signal.hpp>
 
 #include "Timeout.hpp"
-#include "utils/thread.hpp"
 
 namespace module {
 

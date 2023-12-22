@@ -18,8 +18,13 @@
 namespace module {
 
 Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_ptr<ErrorHandling>& error_handling,
-                 const types::evse_board_support::Connector_type& connector_type) :
-    bsp(bsp), error_handling(error_handling), connector_type(connector_type) {
+                 const types::evse_board_support::Connector_type& connector_type,
+                 Everest::WatchdogSupervisor& _watchdog_supervisor) :
+    bsp(bsp),
+    error_handling(error_handling),
+    connector_type(connector_type),
+    watchdog_supervisor(_watchdog_supervisor) {
+
     connectorEnabled = true;
     maxCurrent = 6.0;
     if (connector_type == types::evse_board_support::Connector_type::IEC62196Type2Socket) {
@@ -67,6 +72,10 @@ Charger::~Charger() {
 }
 
 void Charger::mainThread() {
+
+    // Register our watchdog for the main loop thread
+    auto watchdog = watchdog_supervisor.register_watchdog("Charger main loop", std::chrono::seconds(5));
+
     // Enable CP output
     bsp->enable(true);
 
@@ -89,6 +98,8 @@ void Charger::mainThread() {
             // to be done on regular intervals independent from events)
             runStateMachine();
         }
+
+        watchdog();
     }
 }
 
