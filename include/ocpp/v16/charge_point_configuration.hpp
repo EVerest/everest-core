@@ -81,6 +81,7 @@ public:
     KeyValue getUseSslDefaultVerifyPathsKeyValue();
     bool getVerifyCsmsCommonName();
     KeyValue getVerifyCsmsCommonNameKeyValue();
+    bool getUseTPM();
 
     int32_t getRetryBackoffRandomRange();
     void setRetryBackoffRandomRange(int32_t retry_backoff_random_range);

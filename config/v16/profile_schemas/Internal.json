@@ -104,6 +104,11 @@
                 "TLS_AES_128_GCM_SHA256"
             ]
         },
+        "UseTPM": {
+            "type": "boolean",
+            "readOnly": true,
+            "default": false
+        },
         "RetryBackoffRandomRange": {
             "$comment": "maximum value for the random part of the websocket reconnect back-off time",
             "type": "integer",

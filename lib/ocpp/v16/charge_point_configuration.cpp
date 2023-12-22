@@ -309,6 +309,10 @@ bool ChargePointConfiguration::getVerifyCsmsCommonName() {
     return this->config["Internal"]["VerifyCsmsCommonName"];
 }
 
+bool ChargePointConfiguration::getUseTPM() {
+    return this->config["Internal"]["UseTPM"];
+}
+
 KeyValue ChargePointConfiguration::getChargePointIdKeyValue() {
     KeyValue kv;
     kv.key = "ChargePointId";

@@ -40,6 +40,14 @@ public:
         return this->chargepoint_id;
     }
 
+    std::string get_path() {
+        return this->path_without_chargepoint_id;
+    }
+
+    uint16_t get_port() {
+        return this->port;
+    }
+
     std::string string() {
         auto uri = get_websocketpp_uri();
         return uri.str();

@@ -33,6 +33,7 @@ Libocpp provides a complete implementation of OCPP 1.6. The implementation of OC
   - [Building the doxygen documentation](#building-the-doxygen-documentation)
   - [Unit testing](#unit-testing)
   - [Building with FetchContent instead of EDM](#building-with-fetchcontent-instead-of-edm)
+  - [Support for security profile 2 and 3 with TPM in OCPP 1.6 using libwebsockets](#support-for-security-profile-2-and-3-with-tpm-in-ocpp-16-using-libwebsockets)
 
 ## Feature Support
 
@@ -514,3 +515,11 @@ Run the unit tests
 
 ## Building with FetchContent instead of EDM
 In [doc/build-with-fetchcontent](doc/build-with-fetchcontent) you can find an example how to build libocpp with FetchContent instead of EDM.
+
+## Support for security profile 2 and 3 with TPM in OCPP 1.6 using libwebsockets
+
+If you want to try the new websocket implementation based on libwebsockets (supporting security profile 2 and 3 with TPM) you can set the following cmake option.
+
+```bash
+  cmake .. -DLIBOCPP_ENABLE_LIBWEBSOCKETS=ON
+```

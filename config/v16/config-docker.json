@@ -6,7 +6,8 @@
         "ChargePointModel": "Yeti",
         "ChargePointVendor": "Pionix",
         "FirmwareVersion": "0.1",
-        "AllowChargingProfileWithoutStartSchedule": true
+        "AllowChargingProfileWithoutStartSchedule": true,
+        "UseTPM" : false
     },
     "Core": {
         "AuthorizeRemoteTxRequests": false,
