@@ -11,7 +11,7 @@
 #include "ld-ev.hpp"
 
 // headers for provided interface implementations
-#include <generated/interfaces/board_support_AC/Implementation.hpp>
+#include <generated/interfaces/evse_board_support/Implementation.hpp>
 #include <generated/interfaces/power_supply_DC/Implementation.hpp>
 #include <generated/interfaces/powermeter/Implementation.hpp>
 
@@ -35,7 +35,7 @@ public:
     MicroMegaWattBSP(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
                      std::unique_ptr<power_supply_DCImplBase> p_dc_supply,
                      std::unique_ptr<powermeterImplBase> p_powermeter,
-                     std::unique_ptr<board_support_ACImplBase> p_board_support, Conf& config) :
+                     std::unique_ptr<evse_board_supportImplBase> p_board_support, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_dc_supply(std::move(p_dc_supply)),
@@ -46,7 +46,7 @@ public:
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<power_supply_DCImplBase> p_dc_supply;
     const std::unique_ptr<powermeterImplBase> p_powermeter;
-    const std::unique_ptr<board_support_ACImplBase> p_board_support;
+    const std::unique_ptr<evse_board_supportImplBase> p_board_support;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1

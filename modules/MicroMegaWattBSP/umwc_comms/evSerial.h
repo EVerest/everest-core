@@ -3,8 +3,7 @@
 #ifndef YETI_SERIAL
 #define YETI_SERIAL
 
-#include "hi2lo.pb.h"
-#include "lo2hi.pb.h"
+#include "umwc.pb.h"
 #include <date/date.h>
 #include <date/tz.h>
 #include <sigslot/signal.hpp>
@@ -23,22 +22,27 @@ public:
     void readThread();
     void run();
 
-    void enable();
+    void enable(bool en);
     void disable();
-    void replug(int t);
+    void replug();
     bool reset(const int reset_pin);
     void firmwareUpdate(bool rom);
     void keepAlive();
 
-    void setPWM(uint32_t mode, float dc);
+    void setPWM(uint32_t dc);
     void allowPowerOn(bool p);
 
     void setOutputVoltageCurrent(float v, float c);
 
     sigslot::signal<KeepAliveLo> signalKeepAliveLo;
     sigslot::signal<PowerMeter> signalPowerMeter;
-    sigslot::signal<Event> signalEvent;
     sigslot::signal<Telemetry> signalTelemetry;
+
+    sigslot::signal<CpState> signalCPState;
+    sigslot::signal<PpState> signalPPState;
+    sigslot::signal<ErrorFlags> signalErrorFlags;
+    sigslot::signal<bool> signalRelaisState;
+
     sigslot::signal<> signalSpuriousReset;
     sigslot::signal<> signalConnectionTimeout;
 
@@ -64,7 +68,7 @@ private:
     Everest::Thread readThreadHandle;
     Everest::Thread timeoutDetectionThreadHandle;
 
-    bool linkWrite(HiToLo* m);
+    bool linkWrite(EverestToMcu* m);
     volatile bool reset_done_flag;
     volatile bool forced_reset;
 

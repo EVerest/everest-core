@@ -14,6 +14,7 @@
 
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 // insert your custom include headers here
+
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 
 namespace module {
@@ -40,6 +41,8 @@ protected:
     handle_get_variables(std::vector<types::ocpp::GetVariableRequest>& requests) override;
     virtual std::vector<types::ocpp::SetVariableResult>
     handle_set_variables(std::vector<types::ocpp::SetVariableRequest>& requests) override;
+    virtual types::ocpp::ChangeAvailabilityResponse
+    handle_change_availability(types::ocpp::ChangeAvailabilityRequest& request) override;
     virtual void handle_monitor_variables(std::vector<types::ocpp::ComponentVariable>& component_variables) override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1

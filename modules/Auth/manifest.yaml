@@ -25,6 +25,20 @@ config:
       transaction can be stopped using the given parent_id_token
     type: boolean
     default: true
+  ignore_connector_faults:
+    description: >-
+      Boolean value to describe the handling of faults on connectors.
+
+      If true, faults reported on connectors are ignored, i.e. they can still be authorized. This should be disabled in
+      most use cases, but e.g. in free charging applications it may be useful to allow a charging session in the following case:
+      A connector e.g. has an overtemperature fault that at some point will clear once it is cooled down. A car is plugged in before 
+      the error is cleared. The user would expect that the charging starts once it is cooled down. When this option is set to false, 
+      it will not be authorized on plug in as the connector is in fault state and it will never recover until the car is replugged.
+      If it is set to true, the authorization happens on the faulty connector and charging will start once the fault is cleared.
+
+      If false, faulty connectors are treated as not available and will not be authorized. This is a good setting for e.g. public chargers.
+    type: boolean
+    default: false
 provides:
   main:
     description: This implements the auth interface for EVerest

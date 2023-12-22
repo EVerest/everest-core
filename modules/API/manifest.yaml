@@ -52,7 +52,7 @@ config:
     default: 2
     minimum: 0
   hw_caps_min_current_export_decimal_places:
-    description: Maximum number of decimal places for minimum import current in the hardware capabilities
+    description: Maximum number of decimal places for minimum export current in the hardware capabilities
     type: integer
     default: 2
     minimum: 0
@@ -61,13 +61,18 @@ config:
     type: integer
     default: 2
     minimum: 0
+  hw_caps_max_plug_temperature_C_decimal_places:
+    description: Maximum number of decimal places for max_plug_temperature_C in the hardware capabilities
+    type: integer
+    default: 2
+    minimum: 0
   limits_max_current_decimal_places:
     description: Maximum number of decimal places for maximum current in the limits
     type: integer
     default: 2
     minimum: 0
-  telemetry_temperature_decimal_places:
-    description: Maximum number of decimal places for temperature in telemetry
+  telemetry_evse_temperature_C_decimal_places:
+    description: Maximum number of decimal places for evse_temperature_C in telemetry
     type: integer
     default: 2
     minimum: 0
@@ -86,7 +91,7 @@ config:
     type: integer
     default: 2
     minimum: 0
-  telemetry_rcd_current_decimal_places:
+  telemetry_plug_temperature_C_decimal_places:
     description: Maximum number of decimal places for RCD current in telemetry
     type: integer
     default: 2
@@ -135,12 +140,16 @@ config:
     description: Round minimum import current in hardware limits to the nearest step. Ignored if value is 0
     type: number
     default: 0
+  hw_caps_max_plug_temperature_C_round_to:
+    description: Round max_plug_temperature_C in hardware limits to the nearest step. Ignored if value is 0
+    type: number
+    default: 0
   limits_max_current_round_to:
     description: Round maximum current in limits to the nearest step. Ignored if value is 0
     type: number
     default: 0
-  telemetry_temperature_round_to:
-    description: Round temperature in telemetry to the nearest step. Ignored if value is 0
+  telemetry_evse_temperature_C_round_to:
+    description: Round evse_temperature_C in telemetry to the nearest step. Ignored if value is 0
     type: number
     default: 0
   telemetry_fan_rpm_round_to:
@@ -155,8 +164,8 @@ config:
     description: Round supply voltage -12V in telemetry to the nearest step. Ignored if value is 0
     type: number
     default: 0
-  telemetry_rcd_current_round_to:
-    description: Round RCD current in telemetry to the nearest step. Ignored if value is 0
+  telemetry_plug_temperature_C_round_to:
+    description: Round plug_temperature_C in telemetry to the nearest step. Ignored if value is 0
     type: number
     default: 0
 provides:

@@ -11,10 +11,10 @@
 #include "ld-ev.hpp"
 
 // headers for provided interface implementations
-#include <generated/interfaces/board_support_AC/Implementation.hpp>
+#include <generated/interfaces/ac_rcd/Implementation.hpp>
+#include <generated/interfaces/connector_lock/Implementation.hpp>
+#include <generated/interfaces/evse_board_support/Implementation.hpp>
 #include <generated/interfaces/powermeter/Implementation.hpp>
-#include <generated/interfaces/yeti_extras/Implementation.hpp>
-#include <generated/interfaces/yeti_simulation_control/Implementation.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 #include "yeti_comms/evSerial.h"
@@ -33,31 +33,29 @@ struct Conf {
 class YetiDriver : public Everest::ModuleBase {
 public:
     YetiDriver() = delete;
-    YetiDriver(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, Everest::TelemetryProvider& telemetry,
+    YetiDriver(const ModuleInfo& info, Everest::TelemetryProvider& telemetry,
                std::unique_ptr<powermeterImplBase> p_powermeter,
-               std::unique_ptr<board_support_ACImplBase> p_board_support,
-               std::unique_ptr<yeti_extrasImplBase> p_yeti_extras,
-               std::unique_ptr<yeti_simulation_controlImplBase> p_yeti_simulation_control, Conf& config) :
+               std::unique_ptr<evse_board_supportImplBase> p_board_support, std::unique_ptr<ac_rcdImplBase> p_rcd,
+               std::unique_ptr<connector_lockImplBase> p_connector_lock, Conf& config) :
         ModuleBase(info),
-        mqtt(mqtt_provider),
         telemetry(telemetry),
         p_powermeter(std::move(p_powermeter)),
         p_board_support(std::move(p_board_support)),
-        p_yeti_extras(std::move(p_yeti_extras)),
-        p_yeti_simulation_control(std::move(p_yeti_simulation_control)),
+        p_rcd(std::move(p_rcd)),
+        p_connector_lock(std::move(p_connector_lock)),
         config(config){};
 
-    Everest::MqttProvider& mqtt;
     Everest::TelemetryProvider& telemetry;
     const std::unique_ptr<powermeterImplBase> p_powermeter;
-    const std::unique_ptr<board_support_ACImplBase> p_board_support;
-    const std::unique_ptr<yeti_extrasImplBase> p_yeti_extras;
-    const std::unique_ptr<yeti_simulation_controlImplBase> p_yeti_simulation_control;
+    const std::unique_ptr<evse_board_supportImplBase> p_board_support;
+    const std::unique_ptr<ac_rcdImplBase> p_rcd;
+    const std::unique_ptr<connector_lockImplBase> p_connector_lock;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     void publish_external_telemetry_livedata(const std::string& topic, const Everest::TelemetryMap& data);
     evSerial serial;
+    void clear_errors_on_unplug();
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
@@ -78,17 +76,15 @@ private:
     Everest::TelemetryMap telemetry_rcd;
     std::mutex telemetry_mutex;
     Everest::Thread telemetryThreadHandle;
+    void error_handling(ErrorFlags e);
+    ErrorFlags last_error_flags;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
 // ev@087e516b-124c-48df-94fb-109508c7cda9:v1
 Everest::json power_meter_data_to_json(const PowerMeter& p);
-Everest::json debug_update_to_json(const DebugUpdate& d);
-Everest::json state_update_to_json(const StateUpdate& s);
 Everest::json keep_alive_lo_to_json(const KeepAliveLo& k);
 std::string error_type_to_string(ErrorFlags s);
-std::string state_to_string(const StateUpdate& s);
-InterfaceControlMode str_to_control_mode(std::string data);
 // ev@087e516b-124c-48df-94fb-109508c7cda9:v1
 
 } // namespace module

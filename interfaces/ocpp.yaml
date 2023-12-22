@@ -73,6 +73,21 @@ cmds:
       items:
         type: object
         $ref: /ocpp#/SetVariableResult
+  change_availability:
+    description: >-
+      Allows to send a ChangeAvailabilityRequest internally (as can be done by the CSMS).
+    arguments:
+      request:
+        description: >-
+          The ChangeAvailabilityRequest as specified in OCPP2.0.1.
+          For OCPP 1.6:
+        type: object
+        $ref: /ocpp#/ChangeAvailabilityRequest
+    result:
+      description: >-
+        Response to ChangeAvailabilityRequest as specified in OCPP 2.0.1
+      type: object
+      $ref: /ocpp#/ChangeAvailabilityResponse
   monitor_variables:
     description: >-
       Command to start monitoring the given ComponentVariable(s). Any of the provided
