@@ -15,11 +15,10 @@ from typing import Dict
 from everest.testing.core_utils.fixtures import *
 from everest.testing.core_utils.everest_core import EverestCore
 
-from everest.testing.core_utils.configuration.everest_configuration_visitors.everest_configuration_visitor import \
-    EverestConfigAdjustmentVisitor
+from everest.testing.core_utils import EverestConfigAdjustmentStrategy
 
 
-class EverestCoreConfigSilGenPmConfigurationVisitor(EverestConfigAdjustmentVisitor):
+class EverestCoreConfigSilGenPmConfigurationAdjustment(EverestConfigAdjustmentStrategy):
     def __init__(self):
         self.temporary_directory = mkdtemp()
         self.serial_port_0, self.serial_port_1 = pty.openpty()
@@ -35,7 +34,7 @@ class EverestCoreConfigSilGenPmConfigurationVisitor(EverestConfigAdjustmentVisit
 
 
 @pytest.mark.everest_core_config('config-sil-gen-pm.yaml')
-@pytest.mark.everest_config_adaptions(EverestCoreConfigSilGenPmConfigurationVisitor())
+@pytest.mark.everest_config_adaptions(EverestCoreConfigSilGenPmConfigurationAdjustment())
 @pytest.mark.asyncio
 async def test_start_config_sil_gen_pm(everest_core: EverestCore):
     logging.info(">>>>>>>>> test_start_config_sil_gen_pm <<<<<<<<<")
