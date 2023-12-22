@@ -12,6 +12,7 @@ active_modules:
       connection_timeout: 10
       prioritize_authorization_over_stopping_transaction: true
       selection_algorithm: FindFirst
+      ignore_connector_faults: true
     connections:
       evse_manager:
         - implementation_id: evse
@@ -62,7 +63,6 @@ active_modules:
       max_current_export_A: 32
       payment_enable_contract: true
       payment_enable_eim: true
-      rcd_enabled: true
       session_logging: true
       session_logging_path: /tmp/everest-logs
       session_logging_xml: false
@@ -80,6 +80,12 @@ active_modules:
       slac:
         - implementation_id: evse
           module_id: slac
+      ac_rcd:
+        - implementation_id: rcd
+          module_id: connector_1_powerpath
+      connector_lock:
+        - implementation_id: connector_lock
+          module_id: connector_1_powerpath
     module: EvseManager
     telemetry:
       id: 1
@@ -158,6 +164,8 @@ active_modules:
     connections: {}
     module: DummyTokenValidator
   connector_1_powerpath:
+    config_module:
+      connector_id: 1
     connections: {}
     module: JsYetiSimulator
     telemetry:

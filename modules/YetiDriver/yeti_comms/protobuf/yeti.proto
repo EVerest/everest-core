@@ -1,0 +1,132 @@
+syntax = "proto3";
+
+/*
+ This container message is send from EVerest to MCU and may contain any allowed message in that direction.
+*/
+message EverestToMcu {
+ oneof payload {
+    // Needs to remain the same to allow firmware updates of older versions
+    FirmwareUpdate firmware_update = 16;
+
+    // Other IDs are 100+ to avoid compatibility issues with older firmware versions
+    KeepAlive keep_alive = 100;
+    bool connector_lock = 102; // false: unlock, true: lock
+    uint32 pwm_duty_cycle = 103; // in 0.01 %, 0 = State F, 10000 = X1
+    bool allow_power_on = 104;
+    bool reset = 105;
+  }
+}
+
+/*
+ This container message is send from MCU to EVerest and may contain any allowed message in that direction.
+*/
+message McuToEverest {
+ oneof payload {
+  // Needs to remain the same to allow firmware updates of older versions
+  KeepAliveLo keep_alive = 3;
+
+  // Other IDs are 100+ to avoid compatibility issues with older firmware versions
+  ResetReason reset = 101;
+  CpState cp_state = 102;
+  bool relais_state = 103; // false: relais are off, true: relais are on
+  ErrorFlags error_flags = 104;
+  Telemetry telemetry = 105;
+  PpState pp_state = 106;
+  LockState lock_state = 107;
+  PowerMeter power_meter = 108;
+ }
+}
+
+enum CpState {
+  STATE_A = 0;
+  STATE_B = 1;
+  STATE_C = 2;
+  STATE_D = 3;
+  STATE_E = 4;
+  STATE_F = 5;
+}
+
+message ErrorFlags {
+  bool diode_fault = 1;
+  bool rcd_selftest_failed = 2;
+  bool rcd_triggered = 3;
+  bool ventilation_not_available = 4;
+  bool connector_lock_failed = 5;
+  bool cp_signal_fault = 6;
+}
+
+enum ResetReason {
+  USER = 0;
+  WATCHDOG = 1;
+}
+
+message KeepAliveLo {
+  uint32 time_stamp = 1;
+  uint32 hw_type = 2;
+  uint32 hw_revision = 3;
+  uint32 protocol_version_major = 4;
+  uint32 protocol_version_minor = 5;
+  string sw_version_string = 6;
+  float hwcap_max_current = 7;
+  float hwcap_min_current = 8;
+  uint32 hwcap_max_phase_count = 9;
+  uint32 hwcap_min_phase_count = 10;
+  bool supports_changing_phases_during_charging = 11;
+}
+
+message KeepAlive {
+  uint32 time_stamp = 1;
+  uint32 hw_type = 2;
+  uint32 hw_revision = 3;
+  string sw_version_string = 6;
+}
+
+message Telemetry {
+  uint32 cp_voltage_hi = 1;
+  uint32 cp_voltage_lo = 2;
+}
+
+enum PpState {
+  STATE_NC = 0;
+  STATE_13A = 1;
+  STATE_20A = 2;
+  STATE_32A = 3;
+  STATE_70A = 4;
+  STATE_FAULT = 5;
+}
+
+enum LockState {
+  UNDEFINED = 0;
+  UNLOCKED = 1;
+  LOCKED = 2;
+}
+
+message PowerMeter {
+  uint32 time_stamp = 1;
+  float vrmsL1 = 2;
+  float vrmsL2 = 3;
+  float vrmsL3 = 4;
+  float irmsL1 = 5;
+  float irmsL2 = 6;
+  float irmsL3 = 7;
+  float irmsN = 8;
+  float wattHrL1 = 9;
+  float wattHrL2 = 10;
+  float wattHrL3 = 11;
+  float totalWattHr = 12;
+  float tempL1 = 13;
+  float tempL2 = 14;
+  float tempL3 = 15;
+  float tempN = 16;
+  float wattL1 = 17;
+  float wattL2 = 18;
+  float wattL3 = 19;
+  float freqL1 = 20;
+  float freqL2 = 21;
+  float freqL3 = 22;
+  bool phaseSeqError = 23;
+}
+
+message FirmwareUpdate {
+  bool invoke_rom_bootloader = 1;
+}

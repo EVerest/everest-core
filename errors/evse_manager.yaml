@@ -1,0 +1,13 @@
+description: >-
+  Errors for EvseManager
+
+  All error codes that begin with MREC needs to be implemented to fulfill the Minimum Required Error Codes defined by the ChargeX consortium:
+
+  https://inl.gov/content/uploads/2023/07/ChargeX_MREC_Rev5_09.12.23.pdf
+errors:
+  - name: Internal
+    description: Internal error of the state machine
+  - name: MREC4OverCurrentFailure
+    description: Over current event
+  - name: PowermeterTransactionStartFailed
+    description: Transaction could not be started at the powermeter

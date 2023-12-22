@@ -1,4 +1,4 @@
-name: Build and test
+name: Build, Lint and Test
 on:
   pull_request: {}
   workflow_call:  # defines it as reusable workflow
@@ -37,7 +37,7 @@ on:
 
 jobs:
   build:
-    name: Build
+    name: Build, Lint and Test
     runs-on: ${{ inputs.runner || 'ubuntu-22.04' }}
     steps:
       - name: Format branch name for cache key
@@ -76,7 +76,7 @@ jobs:
         run: |
           mkdir scripts
           rsync -a .ci/build-kit/ scripts
-      - name: Pull docker container
+      - name: Pull build-kit image
         run: |
           docker pull --quiet ghcr.io/everest/build-kit-alpine:latest
           docker image tag ghcr.io/everest/build-kit-alpine:latest build-kit

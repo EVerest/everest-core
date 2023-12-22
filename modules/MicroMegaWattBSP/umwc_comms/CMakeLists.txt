@@ -6,8 +6,6 @@ project(umwc_comms VERSION 0.1)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-
-configure_file(config.h.in config.h)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
@@ -16,8 +14,7 @@ add_library(umwc_comms STATIC)
 target_sources(umwc_comms
     PRIVATE
         evSerial.cpp
-        protobuf/hi2lo.pb.c
-        protobuf/lo2hi.pb.c
+        protobuf/umwc.pb.c
 )
 
 target_include_directories(umwc_comms

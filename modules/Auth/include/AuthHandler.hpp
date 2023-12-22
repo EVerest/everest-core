@@ -48,7 +48,7 @@ class AuthHandler {
 
 public:
     AuthHandler(const SelectionAlgorithm& selection_algorithm, const int connection_timeout,
-                bool prioritize_authorization_over_stopping_transaction);
+                bool prioritize_authorization_over_stopping_transaction, bool ignore_connector_faults);
     virtual ~AuthHandler();
 
     /**
@@ -181,6 +181,7 @@ private:
     SelectionAlgorithm selection_algorithm;
     int connection_timeout;
     bool prioritize_authorization_over_stopping_transaction;
+    bool ignore_faults;
     ReservationHandler reservation_handler;
 
     std::map<int, std::unique_ptr<ConnectorContext>> connectors;

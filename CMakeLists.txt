@@ -144,7 +144,7 @@ add_custom_target(install_everest_testing
              ${PYTHON_EXECUTABLE} -m pip install "${CPM_PACKAGE_everest-utils_SOURCE_DIR}/everest-testing" \;
         fi\;
     DEPENDS
-        everestpy_pip_install_dist iso15118_pip_install_dist iso15118_requirements_pip_install_dist
+        everestpy_pip_install_dist
     COMMENT
         "Installing dependencies for testing EVerest"
 )
