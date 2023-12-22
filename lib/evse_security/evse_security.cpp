@@ -559,7 +559,7 @@ bool EvseSecurity::is_ca_certificate_installed(CaCertificateType certificate_typ
 std::string EvseSecurity::generate_certificate_signing_request(LeafCertificateType certificate_type,
                                                                const std::string& country,
                                                                const std::string& organization,
-                                                               const std::string& common) {
+                                                               const std::string& common, bool use_tpm) {
     fs::path key_path;
 
     const auto file_name = std::string("SECC_LEAF_") + filesystem_utils::get_random_file_name(KEY_EXTENSION.string());
@@ -573,9 +573,6 @@ std::string EvseSecurity::generate_certificate_signing_request(LeafCertificateTy
 
     std::string csr;
     CertificateSigningRequestInfo info;
-
-    // TODO(ioan): get this from the parameter when the interface will support it
-    bool use_tpm = false;
 
     info.n_version = 0;
     info.commonName = common;
@@ -596,6 +593,13 @@ std::string EvseSecurity::generate_certificate_signing_request(LeafCertificateTy
 
     EVLOG_debug << csr;
     return csr;
+}
+
+std::string EvseSecurity::generate_certificate_signing_request(LeafCertificateType certificate_type,
+                                                               const std::string& country,
+                                                               const std::string& organization,
+                                                               const std::string& common) {
+    return generate_certificate_signing_request(certificate_type, country, organization, common, false);
 }
 
 GetKeyPairResult EvseSecurity::get_key_pair(LeafCertificateType certificate_type, EncodingFormat encoding) {
