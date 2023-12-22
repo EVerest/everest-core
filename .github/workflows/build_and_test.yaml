@@ -71,10 +71,6 @@ jobs:
           source-dir: .  # FIXME Make sure `.` is the default to remove this line.
           extensions: hpp,cpp
           exclude: cache
-      - name: Setup run scripts  # FIXME update `build-kit` to not use the `scripts/`-dir implicitly
-        run: |
-          mkdir scripts
-          rsync -a .ci/build-kit/ scripts
       - name: Pull build-kit image
         run: |
           docker pull --quiet ghcr.io/everest/build-kit-alpine:latest
@@ -87,7 +83,7 @@ jobs:
             --volume "$(pwd):/ext" \
             --workdir /ext \
             --name compile-container \
-            build-kit run-script compile
+            build-kit .ci/build-kit/compile.sh
       - name: Unit tests
         if: ${{ inputs.unit_tests || false }}
         run: |
@@ -97,15 +93,15 @@ jobs:
             --volume "$(pwd):/ext" \
             --workdir /ext \
             --name test-container \
-            unit-tests-image run-script unit_tests
+            unit-tests-image .ci/build-kit/unit_tests.sh
       - name: Integration tests
         if: ${{ inputs.integration_tests || true }}
+        working-directory: .ci/e2e/
         run: |
           docker commit compile-container integration-tests-image
-          pushd .ci/e2e
           docker-compose run \
             --workdir /ext \
-            e2e-test-server run-script tests
+            e2e-test-server scripts/tests.sh
       - name: FIXME make all files in `cache/` readable
         # FIXME Workaround for non-readable certs in `cache/josev/[ID]/Josev/iso15118/shared/pki/iso15118_2/certs . See https://github.com/EVerest/everest-core/actions/runs/7286554315/job/19855498928#step:13:10
         if: always()
