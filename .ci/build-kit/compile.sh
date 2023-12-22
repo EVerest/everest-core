@@ -3,7 +3,6 @@ set -x
 
 cmake \
     -B build \
-    -S "$EXT_MOUNT/source" \
     -G Ninja \
     -DCMAKE_INSTALL_PREFIX="$WORKSPACE_PATH/dist" \
     -DBUILD_TESTING=ON \
