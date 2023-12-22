@@ -82,7 +82,7 @@ If you provide a CSMS that is not yet listed here, feel free to
 -   ev.energy
 -   eDRV
 -   Fastned
--   GraphDefined
+-   [Open Charging Cloud (GraphDefined)](https://github.com/OpenChargingCloud/WWCP_OCPP)
 -   Electrip Global
 -   EnergyStacks
 -   EV-Meter
@@ -110,6 +110,7 @@ few CSMS and is continuously tested against OCTT2.
 Additionally, the implementation has been tested against those CSMS:
 
 -   Current
+-   [Open Charging Cloud (GraphDefined)](https://github.com/OpenChargingCloud/WWCP_OCPP)
 
 ## Integration with EVerest
 
@@ -120,6 +121,7 @@ If you run libocpp with OCPP1.6 with EVerest, the build process of [everest-core
 
 ### Run OCPP2.0.1 with EVerest
 If you run libocpp with OCPP1.6 with EVerest, the build process of [everest-core](https://github.com/EVerest/everest-core) will take care of installing all necessary dependencies for you. This includes the initialization of the device model database using the [config.json](config/v201/config.json) file.
+
 ## Integrate this library with your Charging Station Implementation for OCPP1.6
 
 OCPP is a protocol that affects, controls and monitors many areas of a charging station's operation.
