@@ -60,16 +60,15 @@ jobs:
             .ci
           repository: EVerest/everest-core
           ref: CI/reusable-workflow  # TODO get reference in general, see https://stackoverflow.com/questions/74784735 resp. https://github.com/actions/toolkit/issues/1264
-      - name: Checkout repo ${{ inputs.repository || 'EVerest/everest-core' }} to directory `source/`
+      - name: Checkout repo ${{ inputs.repository || 'EVerest/everest-core' }}
         uses: actions/checkout@v4
         with:
-          path: source/
           repository: ${{ inputs.repository }}
           ref: ${{ inputs.repository_ref }}
       - name: Run clang-format
         uses: everest/everest-ci/github-actions/run-clang-format@v1.0.0
         with:
-          source-dir: source
+          source-dir: .  # FIXME Make sure `.` is the default to remove this line.
           extensions: hpp,cpp
           exclude: cache
       - name: Setup run scripts  # FIXME update `build-kit` to not use the `scripts/`-dir implicitly
@@ -101,7 +100,6 @@ jobs:
             unit-tests-image run-script unit_tests
       - name: Integration tests
         if: ${{ inputs.integration_tests || true }}
-        working-directory: source/
         run: |
           docker commit compile-container integration-tests-image
           pushd .ci/e2e
