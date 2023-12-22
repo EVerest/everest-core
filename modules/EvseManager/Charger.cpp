@@ -156,6 +156,7 @@ void Charger::runStateMachine() {
                 pwm_off();
                 DeAuthorize();
                 transaction_active = false;
+                clear_errors_on_unplug();
             }
             break;
 
@@ -1461,6 +1462,12 @@ void Charger::graceful_stop_charging() {
     if (contactors_closed) {
         bsp->allow_power_on(false, types::evse_board_support::Reason::PowerOff);
     }
+}
+
+void Charger::clear_errors_on_unplug() {
+    error_handling->clear_overcurrent_error();
+    error_handling->clear_internal_error();
+    error_handling->clear_powermeter_transaction_start_failed_error();
 }
 
 } // namespace module
