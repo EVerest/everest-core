@@ -47,17 +47,24 @@ public:
     }
 };
 
+template <> class std::default_delete<EC_KEY> {
+public:
+    void operator()(EC_KEY* ptr) const {
+        ::EC_KEY_free(ptr);
+    }
+};
+
+template <> class std::default_delete<RSA> {
+public:
+    void operator()(RSA* ptr) const {
+        ::RSA_free(ptr);
+    }
+};
+
 template <> class std::default_delete<BIO> {
 public:
     void operator()(BIO* ptr) const {
         ::BIO_free(ptr);
-    }
-};
-
-template <> class std::default_delete<FILE> {
-public:
-    void operator()(FILE* ptr) const {
-        ::fclose(ptr);
     }
 };
 
@@ -83,8 +90,9 @@ using X509_STORE_CTX_ptr = std::unique_ptr<X509_STORE_CTX>;
 using X509_REQ_ptr = std::unique_ptr<X509_REQ>;
 using EVP_PKEY_ptr = std::unique_ptr<EVP_PKEY>;
 using EVP_PKEY_CTX_ptr = std::unique_ptr<EVP_PKEY_CTX>;
+using EC_KEY_ptr = std::unique_ptr<EC_KEY>;
+using RSA_ptr = std::unique_ptr<RSA>;
 using BIO_ptr = std::unique_ptr<BIO>;
-using FILE_ptr = std::unique_ptr<FILE>;
 using EVP_MD_CTX_ptr = std::unique_ptr<EVP_MD_CTX>;
 using EVP_ENCODE_CTX_ptr = std::unique_ptr<EVP_ENCODE_CTX>;
 

@@ -18,6 +18,39 @@ enum class CertificateValidationError {
     Unknown,
 };
 
+enum class CryptoKeyType {
+    EC_prime256v1, // Default EC. P-256, ~equiv to rsa 3072
+    EC_secp384r1,  // P-384, ~equiv to rsa 7680
+    RSA_TPM20,     // Default TPM RSA, only option allowed for TPM (universal support), 2048 bits
+    RSA_3072,      // Default RSA. Protection lifetime: ~2030
+    RSA_7680,      // Protection lifetime: >2031
+};
+
+struct KeyGenerationInfo {
+    CryptoKeyType key_type;
+
+    /// @brief If the key should be generated on the TPM, should check before if
+    /// the provider supports the operation, or the operation will fail by default
+    bool generate_on_tpm;
+
+    /// @brief If we should export the public key to a file
+    std::optional<std::string> public_key_file;
+
+    /// @brief If we should export the private key to a file
+    std::optional<std::string> private_key_file;
+    /// @brief If we should have a pass for the private key file
+    std::optional<std::string> private_key_pass;
+};
+
+struct CertificateSigningRequestInfo {
+    // Minimal mandatory
+    int n_version;
+    std::string country;
+    std::string organization;
+    std::string commonName;
+
+    KeyGenerationInfo key_info;
+};
 class CertificateLoadException : public std::runtime_error {
 public:
     using std::runtime_error::runtime_error;
@@ -33,17 +66,6 @@ struct X509Handle : public CryptoHandle {};
 
 /// @brief Handle abstraction to crypto lib key
 struct KeyHandle : public CryptoHandle {};
-
-struct CertificateSigningRequestInfo {
-    // Minimal mandatory
-    int n_version;
-    std::string country;
-    std::string organization;
-    std::string commonName;
-
-    std::optional<std::string> private_key_file;
-    std::optional<std::string> private_key_pass;
-};
 
 using X509Handle_ptr = std::unique_ptr<X509Handle>;
 using KeyHandle_ptr = std::unique_ptr<KeyHandle>;

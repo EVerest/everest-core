@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 #include <evse_security/crypto/openssl/openssl_supplier.hpp>
+
+#include <evse_security/detail/openssl/openssl_providers.hpp>
 #include <evse_security/detail/openssl/openssl_types.hpp>
 #include <evse_security/utils/evse_filesystem.hpp>
 
@@ -11,7 +13,9 @@
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/opensslv.h>
 #include <openssl/pem.h>
+#include <openssl/provider.h>
 #include <openssl/sha.h>
 #include <openssl/x509v3.h>
 
@@ -29,8 +33,28 @@ private:
     X509_ptr x509;
 };
 
+struct KeyHandleOpenSSL : public KeyHandle {
+    KeyHandleOpenSSL(EVP_PKEY* key) : key(key) {
+    }
+
+    EVP_PKEY* get() {
+        return key.get();
+    }
+
+private:
+    EVP_PKEY_ptr key;
+};
+
 static X509* get(X509Handle* handle) {
     if (X509HandleOpenSSL* ssl_handle = dynamic_cast<X509HandleOpenSSL*>(handle)) {
+        return ssl_handle->get();
+    }
+
+    return nullptr;
+}
+
+static EVP_PKEY* get(KeyHandle* handle) {
+    if (KeyHandleOpenSSL* ssl_handle = dynamic_cast<KeyHandleOpenSSL*>(handle)) {
         return ssl_handle->get();
     }
 
@@ -51,6 +75,236 @@ static CertificateValidationError to_certificate_error(const int ec) {
         EVLOG_warning << X509_verify_cert_error_string(ec);
         return CertificateValidationError::Unknown;
     }
+}
+
+const char* OpenSSLSupplier::get_supplier_name() {
+    return OPENSSL_VERSION_TEXT;
+}
+
+bool OpenSSLSupplier::supports_tpm() {
+    static bool support_checked = false;
+    static bool supports_tpm = false;
+
+    // TODO (ioan): Check if somehow the TPM provider was already
+    // loaded case in which we just need to do the self-test
+    if (support_checked == false) {
+        OSSL_PROVIDER* tpm2_provider = OSSL_PROVIDER_load(nullptr, PROVIDER_TPM);
+
+        if (tpm2_provider != nullptr) {
+            supports_tpm = OSSL_PROVIDER_available(nullptr, PROVIDER_TPM) && OSSL_PROVIDER_self_test(tpm2_provider);
+            OSSL_PROVIDER_unload(tpm2_provider);
+        } else {
+            supports_tpm = false;
+        }
+    }
+
+    return supports_tpm;
+}
+
+bool OpenSSLSupplier::supports_tpm_key_creation() {
+    if (supports_tpm()) {
+        return true;
+    }
+
+    return false;
+}
+
+static bool export_key_internal(const KeyGenerationInfo& key_info, const EVP_PKEY_ptr& evp_key) {
+    // write private key to file
+    if (key_info.private_key_file.has_value()) {
+        BIO_ptr key_bio(BIO_new_file(key_info.private_key_file.value().c_str(), "w"));
+
+        if (!key_bio) {
+            EVLOG_error << "Failed to create private key file!";
+            return false;
+        }
+
+        int success;
+        if (key_info.private_key_pass.has_value()) {
+            success = PEM_write_bio_PrivateKey(key_bio.get(), evp_key.get(), EVP_aes_128_cbc(), NULL, 0, NULL,
+                                               (void*)key_info.private_key_pass.value().c_str());
+        } else {
+            success = PEM_write_bio_PrivateKey(key_bio.get(), evp_key.get(), NULL, NULL, 0, NULL, NULL);
+        }
+
+        if (false == success) {
+            EVLOG_error << "Failed to write private key!";
+            return false;
+        }
+    }
+
+    if (key_info.public_key_file.has_value()) {
+        BIO_ptr key_bio(BIO_new_file(key_info.public_key_file.value().c_str(), "w"));
+
+        if (!key_bio) {
+            EVLOG_error << "Failed to create private key file!";
+            return false;
+        }
+
+        if (false == PEM_write_bio_PUBKEY(key_bio.get(), evp_key.get())) {
+            EVLOG_error << "Failed to write pubkey!";
+            return false;
+        }
+    }
+
+    return true;
+}
+
+static bool generate_key_internal_tpm(const KeyGenerationInfo& key_info, EVP_PKEY_ptr& out_key) {
+    // Acquire TPM context
+    TPMScopedProvider tpm_provider;
+
+    // Generate TPM key. For reference see:
+    // https://github.com/Infineon/optiga-tpm-cheatsheet/blob/master/openssl3-lib-general-examples/examples.c#L104
+
+    OSSL_PARAM params[2];
+    EVP_PKEY_CTX_ptr ctx;
+
+    CryptoKeyType type = key_info.key_type;
+    if (type == CryptoKeyType::RSA_TPM20) {
+        unsigned int bits = 2048;
+        params[0] = OSSL_PARAM_construct_uint("bits", &bits);
+        ctx = EVP_PKEY_CTX_ptr(EVP_PKEY_CTX_new_from_name(NULL, "RSA", "provider=tpm2"));
+    } else if (type == CryptoKeyType::EC_prime256v1 || type == CryptoKeyType::EC_secp384r1) {
+        char* group_256 = "P-256";
+        char* group_384 = "P-384";
+
+        if (type == CryptoKeyType::EC_prime256v1) {
+            params[0] = OSSL_PARAM_construct_utf8_string("group", group_256, sizeof(group_256));
+        } else {
+            params[0] = OSSL_PARAM_construct_utf8_string("group", group_384, sizeof(group_384));
+        }
+
+        ctx = EVP_PKEY_CTX_ptr(EVP_PKEY_CTX_new_from_name(NULL, "EC", "provider=tpm2"));
+    } else {
+        EVLOG_error << "Failed to find TPM keygen generation type!";
+        return false;
+    }
+
+    params[1] = OSSL_PARAM_construct_end();
+
+    if (nullptr == ctx.get()) {
+        EVLOG_error << "Failed to create tpm2 provider context!";
+        return false;
+    }
+
+    if (EVP_PKEY_keygen_init(ctx.get()) <= 0 || EVP_PKEY_CTX_set_params(ctx.get(), params) <= 0) {
+        EVLOG_error << "Failed to init tpm2 provider context!";
+        return false;
+    }
+
+    EVP_PKEY* pkey = NULL;
+    if (EVP_PKEY_generate(ctx.get(), &pkey) <= 0) {
+        EVLOG_error << "Failed to generate tpm2 key!";
+        return false;
+    }
+
+    out_key = EVP_PKEY_ptr(pkey);
+
+    // Export keys too
+    return export_key_internal(key_info, out_key);
+}
+
+static bool generate_key_internal(const KeyGenerationInfo& key_info, EVP_PKEY_ptr& out_key) {
+    static unsigned long RSA_PRIME = 65537;
+
+    EVP_PKEY_ptr evp_key;
+
+    CryptoKeyType type = key_info.key_type;
+    if (type == CryptoKeyType::RSA_3072 || type == CryptoKeyType::RSA_7680) {
+        evp_key = EVP_PKEY_ptr(EVP_PKEY_new());
+
+        int bits = 0;
+        if (type == CryptoKeyType::RSA_3072) {
+            bits = 3072;
+        } else {
+            bits = 7680;
+        }
+
+        RSA_ptr rsa_key(RSA_generate_key(bits, RSA_PRIME, nullptr, nullptr));
+
+        if (rsa_key.get() == nullptr) {
+            EVLOG_error << "Failed create RSA key!";
+            return false;
+        }
+
+        // Not auto-released since on assign the ec_key will be released with the owner evp_pkey
+        RSA* key = rsa_key.release();
+
+        // Assigns the key, we must not release it here, since it is 'owned' by the evp_key
+        EVP_PKEY_assign_RSA(evp_key.get(), key);
+    } else if (type == CryptoKeyType::EC_prime256v1 || type == CryptoKeyType::EC_secp384r1) {
+        evp_key = EVP_PKEY_ptr(EVP_PKEY_new());
+
+        int nid = NID_undef;
+
+        if (type == CryptoKeyType::EC_prime256v1) {
+            nid = NID_X9_62_prime256v1;
+        } else {
+            nid = NID_secp384r1;
+        }
+
+        // Ignore deprecation warnings on the EC gen functions since we need OpenSSL 1.1 support
+        EC_KEY_ptr ec_key(EC_KEY_new_by_curve_name(nid));
+
+        if (ec_key.get() == nullptr) {
+            EVLOG_error << "Failed create EC key by curve!";
+            return false;
+        }
+
+        // generate ec key pair
+        if (false == EC_KEY_generate_key(ec_key.get())) {
+            EVLOG_error << "Failed to generate EC key!";
+            return false;
+        }
+
+        // Not auto-released since on assign the ec_key will be released with the owner evp_pkey
+        EC_KEY* key = ec_key.release();
+
+        // Assigns the key, we must not release it here, since it is 'owned' by the evp_key
+        EVP_PKEY_assign_EC_KEY(evp_key.get(), key);
+    } else {
+        EVLOG_error << "Failed to find keygen generation type!";
+        return false;
+    }
+
+    // Attempt export key
+    if (evp_key) {
+        out_key = std::move(evp_key);
+        return export_key_internal(key_info, out_key);
+    }
+
+    EVLOG_error << "Undefined key generation failure!";
+    return false;
+}
+
+bool OpenSSLSupplier::generate_key(const KeyGenerationInfo& key_info, KeyHandle_ptr& out_key) {
+    // Sanity checks
+    if (key_info.generate_on_tpm && false == supports_tpm()) {
+        EVLOG_error << "Failed to generate TPM key! The TPM is not supported!";
+        return false;
+    }
+
+    EVP_PKEY_ptr evp_key;
+
+    if (key_info.generate_on_tpm) {
+        // Generate key internally
+        if (false == generate_key_internal_tpm(key_info, evp_key)) {
+            EVLOG_error << "Failed to internally generate TPM key!";
+            return false;
+        }
+    } else {
+        if (false == generate_key_internal(key_info, evp_key)) {
+            EVLOG_error << "Failed to internally generate key!";
+            return false;
+        }
+    }
+
+    // Errors passed, transfer key handle ownership
+    EVP_PKEY* raw_key_handle = evp_key.release();
+    out_key = std::make_unique<KeyHandleOpenSSL>(raw_key_handle);
+
+    return true;
 }
 
 std::vector<X509Handle_ptr> OpenSSLSupplier::load_certificates(const std::string& data, const EncodingFormat encoding) {
@@ -407,50 +661,43 @@ bool OpenSSLSupplier::x509_verify_signature(X509Handle* handle, const std::vecto
     }
 }
 
-bool OpenSSLSupplier::x509_generate_csr(const CertificateSigningRequestInfo& generation_info, std::string& out_csr) {
-    // csr req
-    // Ignore deprecation warnings on the EC gen functions since we need OpenSSL 1.1 support
-    X509_REQ_ptr x509ReqPtr(X509_REQ_new());
-    EVP_PKEY_ptr evpKey(EVP_PKEY_new());
-    EC_KEY* ecKey = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
-    X509_NAME* x509Name = X509_REQ_get_subject_name(x509ReqPtr.get());
+bool OpenSSLSupplier::x509_generate_csr(const CertificateSigningRequestInfo& csr_info, std::string& out_csr) {
+    KeyHandle_ptr gen_key;
 
-    // generate ec key pair
-    EC_KEY_generate_key(ecKey);
-    EVP_PKEY_assign_EC_KEY(evpKey.get(), ecKey);
-
-    // write private key to file
-    if (generation_info.private_key_file.has_value()) {
-        BIO_ptr prkey_bio(BIO_new_file(generation_info.private_key_file.value().c_str(), "w"));
-
-        int success;
-        if (generation_info.private_key_pass.has_value()) {
-            success = PEM_write_bio_PrivateKey(prkey_bio.get(), evpKey.get(), EVP_aes_128_cbc(), NULL, 0, NULL,
-                                               (void*)generation_info.private_key_pass.value().c_str());
-        } else {
-            success = PEM_write_bio_PrivateKey(prkey_bio.get(), evpKey.get(), NULL, NULL, 0, NULL, NULL);
-        }
-
-        if (!success) {
-            EVLOG_error << "Failed to write private key";
-            return false;
-        }
+    if (false == generate_key(csr_info.key_info, gen_key)) {
+        EVLOG_error << "Failed to generate csr pub/priv key!";
+        return false;
     }
 
+    EVP_PKEY* key = get(gen_key.get());
+
+    // X509 CSR request
+    X509_REQ_ptr x509_req_ptr(X509_REQ_new());
+
     // set version of x509 req
-    int n_version = generation_info.n_version;
-    X509_REQ_set_version(x509ReqPtr.get(), n_version);
+    int n_version = csr_info.n_version;
+
+    if (false == X509_REQ_set_version(x509_req_ptr.get(), n_version)) {
+        EVLOG_error << "Failed to set csr version!";
+        return false;
+    }
+
+    // set public key of x509 req
+    if (false == X509_REQ_set_pubkey(x509_req_ptr.get(), key)) {
+        EVLOG_error << "Failed to set csr pubkey!";
+        return false;
+    }
+
+    X509_NAME* x509Name = X509_REQ_get_subject_name(x509_req_ptr.get());
 
     // set subject of x509 req
     X509_NAME_add_entry_by_txt(x509Name, "C", MBSTRING_ASC,
-                               reinterpret_cast<const unsigned char*>(generation_info.country.c_str()), -1, -1, 0);
+                               reinterpret_cast<const unsigned char*>(csr_info.country.c_str()), -1, -1, 0);
     X509_NAME_add_entry_by_txt(x509Name, "O", MBSTRING_ASC,
-                               reinterpret_cast<const unsigned char*>(generation_info.organization.c_str()), -1, -1, 0);
+                               reinterpret_cast<const unsigned char*>(csr_info.organization.c_str()), -1, -1, 0);
     X509_NAME_add_entry_by_txt(x509Name, "CN", MBSTRING_ASC,
-                               reinterpret_cast<const unsigned char*>(generation_info.commonName.c_str()), -1, -1, 0);
+                               reinterpret_cast<const unsigned char*>(csr_info.commonName.c_str()), -1, -1, 0);
     X509_NAME_add_entry_by_txt(x509Name, "DC", MBSTRING_ASC, reinterpret_cast<const unsigned char*>("CPO"), -1, -1, 0);
-    // set public key of x509 req
-    X509_REQ_set_pubkey(x509ReqPtr.get(), evpKey.get());
 
     STACK_OF(X509_EXTENSION)* extensions = sk_X509_EXTENSION_new_null();
     X509_EXTENSION* ext_key_usage = X509V3_EXT_conf_nid(NULL, NULL, NID_key_usage, "digitalSignature, keyAgreement");
@@ -458,14 +705,29 @@ bool OpenSSLSupplier::x509_generate_csr(const CertificateSigningRequestInfo& gen
     sk_X509_EXTENSION_push(extensions, ext_key_usage);
     sk_X509_EXTENSION_push(extensions, ext_basic_constraints);
 
-    X509_REQ_add_extensions(x509ReqPtr.get(), extensions);
+    if (false == X509_REQ_add_extensions(x509_req_ptr.get(), extensions)) {
+        EVLOG_error << "Failed to add csr extensions!";
+        return false;
+    }
 
-    // set sign key of x509 req
-    X509_REQ_sign(x509ReqPtr.get(), evpKey.get(), EVP_sha256());
+    // sign the certificate with the private key
+    bool x509_signed = false;
+
+    if (csr_info.key_info.generate_on_tpm) {
+        TPMScopedProvider tpm_provider;
+        x509_signed = X509_REQ_sign(x509_req_ptr.get(), key, EVP_sha256());
+    } else {
+        x509_signed = X509_REQ_sign(x509_req_ptr.get(), key, EVP_sha256());
+    }
+
+    if (x509_signed == false) {
+        EVLOG_error << "Failed to sign csr!";
+        return false;
+    }
 
     // write csr
     BIO_ptr bio(BIO_new(BIO_s_mem()));
-    PEM_write_bio_X509_REQ(bio.get(), x509ReqPtr.get());
+    PEM_write_bio_X509_REQ(bio.get(), x509_req_ptr.get());
 
     BUF_MEM* mem_csr = NULL;
     BIO_get_mem_ptr(bio.get(), &mem_csr);

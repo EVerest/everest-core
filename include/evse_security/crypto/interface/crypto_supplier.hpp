@@ -16,6 +16,17 @@ namespace evse_security {
 /// use this class directly, just include the evse_crypto.hpp
 class AbstractCryptoSupplier {
 public:
+    /// @brief Name of supplier, char is not required to be released
+    static const char* get_supplier_name();
+
+    /// @brief If any TPM operations are supported
+    static bool supports_tpm();
+    static bool supports_tpm_key_creation();
+
+public: // Key utilities
+    static bool generate_key(const KeyGenerationInfo& generation_info, KeyHandle_ptr& out_key);
+
+public:
     /// @brief Loads all certificates from the string data that can contain multiple cetifs
     static std::vector<X509Handle_ptr> load_certificates(const std::string& data, const EncodingFormat encoding);
 

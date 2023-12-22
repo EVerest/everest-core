@@ -8,6 +8,15 @@ namespace evse_security {
 
 class OpenSSLSupplier : public AbstractCryptoSupplier {
 public:
+    static const char* get_supplier_name();
+
+    static bool supports_tpm();
+    static bool supports_tpm_key_creation();
+
+public:
+    static bool generate_key(const KeyGenerationInfo& key_info, KeyHandle_ptr& out_key);
+
+public:
     static std::vector<X509Handle_ptr> load_certificates(const std::string& data, const EncodingFormat encoding);
 
 public:
@@ -32,7 +41,7 @@ public:
     static bool x509_verify_signature(X509Handle* handle, const std::vector<std::byte>& signature,
                                       const std::vector<std::byte>& data);
 
-    static bool x509_generate_csr(const CertificateSigningRequestInfo& generation_info, std::string& out_csr);
+    static bool x509_generate_csr(const CertificateSigningRequestInfo& csr_info, std::string& out_csr);
 
 public:
     static bool digest_file_sha256(const fs::path& path, std::vector<std::byte>& out_digest);
