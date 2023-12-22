@@ -82,6 +82,7 @@ jobs:
           docker run \
             --volume "$(pwd):/ext" \
             --workdir /ext \
+            --env CMAKE_FLAGS_EXTRA="${CMAKE_FLAGS_EXTRA:?}" \
             --name compile-container \
             build-kit .ci/build-kit/compile.sh
       - name: Unit tests
