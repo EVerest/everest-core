@@ -40,7 +40,7 @@ jobs:
     name: Build and Test
     runs-on: ${{ inputs.runner || 'ubuntu-22.04' }}
     env:
-      CACHE_PATH: /tmp/cache
+      CACHE_PATH: cache
       CI_REPO: EVerest/everest-core
       CI_REPO_DIR: ci-repo
       SOURCE_DIR: source
