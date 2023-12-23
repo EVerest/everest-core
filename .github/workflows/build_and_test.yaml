@@ -76,13 +76,14 @@ jobs:
         env:
           CMAKE_FLAGS_EXTRA: ${{ inputs.cmake_flags_extra || '-DEVC_ENABLE_CCACHE=1 -DISO15118_2_GENERATE_AND_INSTALL_CERTIFICATES=OFF' }}
         run: |
+          ls -hal .
           docker run \
             --volume "${CACHE_PATH:?}:/ext/cache" \
             --volume "$(pwd):$(pwd)" \
             --workdir "$(pwd)" \
             --env CMAKE_FLAGS_EXTRA="${CMAKE_FLAGS_EXTRA:?}" \
             --name build-container \
-            build-kit .ci/build-kit/build_install.sh
+            build-kit sh -c "ls -hal . && .ci/build-kit/build_install.sh'
       - name: upload CMake output & error logs
         if: always()
         uses: actions/upload-artifact@v3
@@ -124,6 +125,7 @@ jobs:
           path: /tmp/ctest-report
   lint:
     name: Lint C++/C files
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repo ${{ inputs.repository || 'EVerest/everest-core' }}
         uses: actions/checkout@v4
