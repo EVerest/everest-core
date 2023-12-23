@@ -5,7 +5,7 @@ nlohmann_json:
   options: ["JSON_BuildTests OFF", "JSON_MultipleHeaders ON"]
 nlohmann_json_schema_validator:
   git: https://github.com/pboettch/json-schema-validator
-  git_tag: 2.2.0
+  git_tag: 2.3.0
   options:
     [
       "JSON_VALIDATOR_INSTALL OFF",
