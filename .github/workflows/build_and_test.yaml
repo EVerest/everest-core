@@ -97,7 +97,6 @@ jobs:
         if: ${{ inputs.unit_tests || false }}
         run: |
           docker commit build-container unit-tests-image
-          trap "cp build/Testing/Temporary/LastTest.log /tmp/ctest-report" EXIT
           docker run \
             --volume "$(pwd)/${CI_REPO_DIR:?}/.ci:/.ci" \
             --volume "$(pwd)/${SOURCE_DIR:?}:/source" \
@@ -130,7 +129,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: ctest-report
-          path: /tmp/ctest-report
+          path: ${{ env.SOURCE_DIR }}/build/Testing/Temporary/
   lint:
     name: Lint C++/C files
     runs-on: ubuntu-latest
