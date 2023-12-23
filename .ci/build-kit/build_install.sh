@@ -9,6 +9,3 @@ cmake \
     "${CMAKE_FLAGS_EXTRA}"
 
 ninja -j$(nproc) -C build install
-
-# install everest testing by cmake target to make sure using the version defined in dependencies.yaml
-ninja -C build install_everest_testing

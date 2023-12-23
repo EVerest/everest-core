@@ -113,11 +113,11 @@ jobs:
             --volume "$(pwd)/${SOURCE_DIR:?}:/source" \
             --workdir "/source" \
             e2e-test-server /.ci/e2e/scripts/tests.sh
-      - name: FIXME make all files in `cache/` readable
+      - name: FIXME own all files in cache by current user and group
         # FIXME Workaround for non-readable certs in `cache/josev/[ID]/Josev/iso15118/shared/pki/iso15118_2/certs . See https://github.com/EVerest/everest-core/actions/runs/7286554315/job/19855498928#step:13:10
         if: always()
         run: |
-          sudo chown --recursive $(id --user --name):$(id --user --name) cache/josev/
+          sudo chown --recursive $(id --user --name):$(id --user --name) ${CACHE_PATH}
       - name: Store cache
         uses: actions/cache/save@v3
         if: always()
