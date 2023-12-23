@@ -37,7 +37,7 @@ on:
 
 jobs:
   build:
-    name: Build, Lint and Test
+    name: Build and Test
     runs-on: ${{ inputs.runner || 'ubuntu-22.04' }}
     env:
       CACHE_PATH: /tmp/cache
@@ -67,12 +67,7 @@ jobs:
         with:
           repository: ${{ inputs.repository }}
           ref: ${{ inputs.repository_ref }}
-      - name: Run clang-format
-        uses: everest/everest-ci/github-actions/run-clang-format@v1.0.0
-        with:
-          source-dir: .  # FIXME Make sure `.` is the default to remove this line.
-          extensions: hpp,cpp
-          exclude: cache
+
       - name: Pull build-kit image
         run: |
           docker pull --quiet ghcr.io/everest/build-kit-alpine:latest
@@ -88,7 +83,7 @@ jobs:
             --env CMAKE_FLAGS_EXTRA="${CMAKE_FLAGS_EXTRA:?}" \
             --name build-container \
             build-kit .ci/build-kit/build_install.sh
-      - name: Archive CMake output & error logs
+      - name: upload CMake output & error logs
         if: always()
         uses: actions/upload-artifact@v3
         with:
@@ -121,9 +116,22 @@ jobs:
         with:
           path: ${{ env.CACHE_PATH }}
           key: ${{ steps.restore-cache.outputs.cache-primary-key }}
-      - name: Archive test results
+      - name: upload test results
         if: always()
         uses: actions/upload-artifact@v3
         with:
           name: ctest-report
           path: /tmp/ctest-report
+  lint:
+    name: Lint C++/C files
+    steps:
+      - name: Checkout repo ${{ inputs.repository || 'EVerest/everest-core' }}
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.repository }}
+          ref: ${{ inputs.repository_ref }}
+      - name: Run clang-format
+        uses: everest/everest-ci/github-actions/run-clang-format@v1.0.0
+        with:
+          source-dir: .  # FIXME Make sure `.` is the default to remove this line.
+          extensions: hpp,cpp
