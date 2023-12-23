@@ -62,12 +62,19 @@ jobs:
             .ci
           repository: EVerest/everest-core
           ref: CI/reusable-workflow  # TODO get reference in general, see https://stackoverflow.com/questions/74784735 resp. https://github.com/actions/toolkit/issues/1264
+      - name: Move `.ci/` to `/tmp` and remove `everest-core`
+        run: |
+          mv .ci /tmp
+          pwd && ls -hal .
+          cd ..
+          pwd && ls -hal .
+          rm -rf everest-core
+          pwd && ls -hal .
       - name: Checkout repo ${{ inputs.repository || 'EVerest/everest-core' }}
         uses: actions/checkout@v4
         with:
           repository: ${{ inputs.repository }}
           ref: ${{ inputs.repository_ref }}
-
       - name: Pull build-kit image
         run: |
           docker pull --quiet ghcr.io/everest/build-kit-alpine:latest
@@ -79,11 +86,12 @@ jobs:
           ls -hal .
           docker run \
             --volume "${CACHE_PATH:?}:/ext/cache" \
+            --volume "/tmp/.ci:/.ci" \
             --volume "$(pwd):$(pwd)" \
             --workdir "$(pwd)" \
             --env CMAKE_FLAGS_EXTRA="${CMAKE_FLAGS_EXTRA:?}" \
             --name build-container \
-            build-kit sh -c "ls -hal . && .ci/build-kit/build_install.sh'
+            build-kit /.ci/build-kit/build_install.sh
       - name: upload CMake output & error logs
         if: always()
         uses: actions/upload-artifact@v3
@@ -97,12 +105,13 @@ jobs:
           trap "cp build/Testing/Temporary/LastTest.log /tmp/ctest-report" EXIT
           docker run \
             --volume "$(pwd):$(pwd)" \
+            --volume "/tmp/.ci:/.ci" \
             --workdir "$(pwd)" \
             --name test-container \
-            unit-tests-image .ci/build-kit/unit_tests.sh
+            unit-tests-image /.ci/build-kit/unit_tests.sh
       - name: Integration tests
         if: ${{ inputs.integration_tests || true }}
-        working-directory: .ci/e2e/
+        working-directory: /tmp/.ci/e2e/
         run: |
           docker commit build-container integration-tests-image
           docker-compose run e2e-test-server scripts/tests.sh
