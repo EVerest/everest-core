@@ -80,29 +80,27 @@ jobs:
           CMAKE_FLAGS_EXTRA: ${{ inputs.cmake_flags_extra || '-DEVC_ENABLE_CCACHE=1 -DISO15118_2_GENERATE_AND_INSTALL_CERTIFICATES=OFF' }}
         run: |
           docker run \
-            --volume "$(pwd):/ext" \
-            --workdir /ext \
+            --volume "$(pwd):$(pwd)" \
+            --workdir "$(pwd)" \
             --env CMAKE_FLAGS_EXTRA="${CMAKE_FLAGS_EXTRA:?}" \
-            --name compile-container \
-            build-kit .ci/build-kit/compile.sh
+            --name build-container \
+            build-kit .ci/build-kit/build_install.sh
       - name: Unit tests
         if: ${{ inputs.unit_tests || false }}
         run: |
-          docker commit compile-container unit-tests-image
+          docker commit build-container unit-tests-image
           trap "cp build/Testing/Temporary/LastTest.log /tmp/ctest-report" EXIT
           docker run \
-            --volume "$(pwd):/ext" \
-            --workdir /ext \
+            --volume "$(pwd):$(pwd)" \
+            --workdir "$(pwd)" \
             --name test-container \
             unit-tests-image .ci/build-kit/unit_tests.sh
       - name: Integration tests
         if: ${{ inputs.integration_tests || true }}
         working-directory: .ci/e2e/
         run: |
-          docker commit compile-container integration-tests-image
-          docker-compose run \
-            --workdir /ext \
-            e2e-test-server scripts/tests.sh
+          docker commit build-container integration-tests-image
+          docker-compose run e2e-test-server scripts/tests.sh
       - name: FIXME make all files in `cache/` readable
         # FIXME Workaround for non-readable certs in `cache/josev/[ID]/Josev/iso15118/shared/pki/iso15118_2/certs . See https://github.com/EVerest/everest-core/actions/runs/7286554315/job/19855498928#step:13:10
         if: always()
