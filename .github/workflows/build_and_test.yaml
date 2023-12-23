@@ -39,6 +39,8 @@ jobs:
   build:
     name: Build, Lint and Test
     runs-on: ${{ inputs.runner || 'ubuntu-22.04' }}
+    env:
+      CACHE_PATH: /tmp/cache
     steps:
       - name: Format branch name for cache key
         run: |
@@ -48,7 +50,7 @@ jobs:
         uses: actions/cache/restore@v3
         id: restore-cache
         with:
-          path: cache  # keep in sync with "Store cache"
+          path: ${{ env.CACHE_PATH }}
           key: compile-${{ env.branch_name_for_cache }}-${{ github.sha }}
           restore-keys: |
             compile-${{ env.branch_name_for_cache }}-
@@ -80,6 +82,7 @@ jobs:
           CMAKE_FLAGS_EXTRA: ${{ inputs.cmake_flags_extra || '-DEVC_ENABLE_CCACHE=1 -DISO15118_2_GENERATE_AND_INSTALL_CERTIFICATES=OFF' }}
         run: |
           docker run \
+            --volume "${CACHE_PATH:?}:/ext/cache" \
             --volume "$(pwd):$(pwd)" \
             --workdir "$(pwd)" \
             --env CMAKE_FLAGS_EXTRA="${CMAKE_FLAGS_EXTRA:?}" \
@@ -110,7 +113,7 @@ jobs:
         uses: actions/cache/save@v3
         if: always()
         with:
-          path: cache  # keep in sync with "Restore cache"
+          path: ${{ env.CACHE_PATH }}
           key: ${{ steps.restore-cache.outputs.cache-primary-key }}
       - name: Archive test results
         if: always()
