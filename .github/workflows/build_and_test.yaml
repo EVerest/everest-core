@@ -42,6 +42,8 @@ jobs:
     env:
       CACHE_PATH: /tmp/cache
       CI_REPO: EVerest/everest-core
+      CI_REPO_DIR: ci-repo
+      SOURCE_DIR: source
     steps:
       - name: Format branch name for cache key
         run: |
@@ -56,17 +58,16 @@ jobs:
           restore-keys: |
             compile-${{ env.branch_name_for_cache }}-
             compile-
-      - name: Checkout `${{ env.CI_REPO }}` (to only get the `.ci/` directory if reusable workflow mode, see https://stackoverflow.com/a/74123003/1168315)
+      - name: Checkout `${{ env.CI_REPO }}` to `${{ env.CI_REPO_DIR }}/` (for reusable workflow mode, see https://stackoverflow.com/a/74123003/1168315)
         uses: actions/checkout@v4
         with:
-          path: ci-repo
+          path: ${{ env.CI_REPO_DIR }}
           repository: ${{ env.CI_REPO }}
           ref: CI/reusable-workflow  # TODO get reference in general, see https://stackoverflow.com/questions/74784735 resp. https://github.com/actions/toolkit/issues/1264
-      - name: Checkout repo ${{ inputs.repository }}
-        if: ${{ github.repository != env.CI_REPO }}
+      - name: Checkout repo ${{ inputs.repository }} to `${{ env.SOURCE_DIR }}/`
         uses: actions/checkout@v4
         with:
-          path: source
+          path: ${{ env.SOURCE_DIR }}
           repository: ${{ inputs.repository }}
           ref: ${{ inputs.repository_ref }}
       - name: Pull build-kit image
@@ -76,14 +77,13 @@ jobs:
       - name: Build and install
         env:
           CMAKE_FLAGS_EXTRA: ${{ inputs.cmake_flags_extra || '-DEVC_ENABLE_CCACHE=1 -DISO15118_2_GENERATE_AND_INSTALL_CERTIFICATES=OFF' }}
-        working-directory: source
         run: |
           ls -hal .
           docker run \
             --volume "${CACHE_PATH:?}:/ext/cache" \
-            --volume "ci-repo/.ci:/.ci" \
-            --volume "$(pwd):$(pwd)" \
-            --workdir "$(pwd)" \
+            --volume "$(pwd)/${CI_REPO_DIR:?}/.ci:/.ci" \
+            --volume "$(pwd)/${SOURCE_DIR:?}:/source" \
+            --workdir "/source" \
             --env CMAKE_FLAGS_EXTRA="${CMAKE_FLAGS_EXTRA:?}" \
             --name build-container \
             build-kit /.ci/build-kit/build_install.sh
@@ -95,23 +95,24 @@ jobs:
           path: build/CMakeFiles/
       - name: Unit tests
         if: ${{ inputs.unit_tests || false }}
-        working-directory: source
         run: |
           docker commit build-container unit-tests-image
           trap "cp build/Testing/Temporary/LastTest.log /tmp/ctest-report" EXIT
           docker run \
-            --volume "ci-repo/.ci:/.ci" \
-            --volume "$(pwd):$(pwd)" \
-            --workdir "$(pwd)" \
+            --volume "$(pwd)/${CI_REPO_DIR:?}/.ci:/.ci" \
+            --volume "$(pwd)/${SOURCE_DIR:?}:/source" \
+            --workdir "/source" \
             --name test-container \
             unit-tests-image /.ci/build-kit/unit_tests.sh
       - name: Integration tests
         if: ${{ inputs.integration_tests || true }}
-        working-directory: source
         run: |
           docker commit build-container integration-tests-image
-          pushd ci-repo/.ci/e2e/
-          docker-compose run e2e-test-server scripts/tests.sh
+          docker-compose run \
+            --volume "$(pwd)/${CI_REPO_DIR:?}/.ci:/.ci" \
+            --volume "$(pwd)/${SOURCE_DIR:?}:/source" \
+            --workdir "/source" \
+            e2e-test-server /.ci/e2e/scripts/tests.sh
       - name: FIXME make all files in `cache/` readable
         # FIXME Workaround for non-readable certs in `cache/josev/[ID]/Josev/iso15118/shared/pki/iso15118_2/certs . See https://github.com/EVerest/everest-core/actions/runs/7286554315/job/19855498928#step:13:10
         if: always()
