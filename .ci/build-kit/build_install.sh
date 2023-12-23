@@ -2,9 +2,9 @@
 set -ex
 
 cmake \
-    -B build \
+    -B build/ \
     -G Ninja \
-    -DCMAKE_INSTALL_PREFIX="$WORKSPACE_PATH/dist" \
+    -DCMAKE_INSTALL_PREFIX="build/dist/" \
     -DBUILD_TESTING=ON \
     "${CMAKE_FLAGS_EXTRA}"
 
