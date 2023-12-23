@@ -107,8 +107,8 @@ jobs:
         if: ${{ inputs.integration_tests || true }}
         run: |
           docker commit build-container integration-tests-image
-          docker-compose run \
-            --file ${CI_REPO_DIR:?}/.ci/e2e/docker-compose.yaml \
+          docker-compose --file ${CI_REPO_DIR:?}/.ci/e2e/docker-compose.yaml \
+            run \
             --volume "$(pwd)/${CI_REPO_DIR:?}/.ci:/.ci" \
             --volume "$(pwd)/${SOURCE_DIR:?}:/source" \
             --workdir "/source" \
