@@ -654,9 +654,6 @@ void EvseManager::ready() {
     }
 
     if (slac_enabled) {
-        // Reset once on startup and disable modem
-        r_slac[0]->call_reset(false);
-
         r_slac[0]->subscribe_state([this](const std::string& s) {
             session_log.evse(true, fmt::format("SLAC {}", s));
             // Notify charger whether matching was started (or is done) or not

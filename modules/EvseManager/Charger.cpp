@@ -423,15 +423,16 @@ void Charger::runStateMachine() {
                         pauseChargingWaitForPower();
                     }
                 }
-            }
 
-            if (!hlc_charging_active && !legacy_wakeup_done && timeInCurrentState > legacy_wakeup_timeout) {
-                session_log.evse(
-                    false, "EV did not transition to state C, trying one legacy wakeup according to IEC61851-1 A.5.3");
-                legacy_wakeup_done = true;
-                t_step_EF_returnState = EvseState::PrepareCharging;
-                t_step_EF_returnPWM = ampereToDutyCycle(getMaxCurrent());
-                currentState = EvseState::T_step_EF;
+                if (!hlc_charging_active && !legacy_wakeup_done && timeInCurrentState > legacy_wakeup_timeout) {
+                    session_log.evse(
+                        false,
+                        "EV did not transition to state C, trying one legacy wakeup according to IEC61851-1 A.5.3");
+                    legacy_wakeup_done = true;
+                    t_step_EF_returnState = EvseState::PrepareCharging;
+                    t_step_EF_returnPWM = ampereToDutyCycle(getMaxCurrent());
+                    currentState = EvseState::T_step_EF;
+                }
             }
 
             // if (charge_mode == ChargeMode::DC) {

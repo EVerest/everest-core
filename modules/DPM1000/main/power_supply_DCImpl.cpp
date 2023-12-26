@@ -121,10 +121,13 @@ void power_supply_DCImpl::init() {
     if (mod->config.series_parallel_mode == "Series") {
         series_parallel_mode = 1050.;
         config_min_voltage_limit = 300.;
+        parallel_mode = false;
     } else if (mod->config.series_parallel_mode == "Parallel") {
         series_parallel_mode = 520.;
-        if (config_voltage_limit > 520)
+        if (config_voltage_limit > 520) {
             config_voltage_limit = 520;
+        }
+        parallel_mode = true;
     }
 
     // WTF: This really uses a float to set one of the three modes automatic, series or parallel.
@@ -169,7 +172,11 @@ void power_supply_DCImpl::ready() {
         }
 
         // Publish voltage and current var
-        vc.current_A = tmp * 100.;
+        // Current scaling depends on series/parallel mode operation.
+        vc.current_A = tmp;
+        if (parallel_mode) {
+            vc.current_A *= 2.;
+        }
         publish_voltage_current(vc);
 
         // read alarm flags
