@@ -53,8 +53,8 @@ protected:
     virtual bool handle_is_ca_certificate_installed(types::evse_security::CaCertificateType& certificate_type) override;
     virtual std::string
     handle_generate_certificate_signing_request(types::evse_security::LeafCertificateType& certificate_type,
-                                                std::string& country, std::string& organization,
-                                                std::string& common) override;
+                                                std::string& country, std::string& organization, std::string& common,
+                                                bool& use_tpm) override;
     virtual types::evse_security::GetKeyPairResult
     handle_get_key_pair(types::evse_security::LeafCertificateType& certificate_type,
                         types::evse_security::EncodingFormat& encoding) override;
