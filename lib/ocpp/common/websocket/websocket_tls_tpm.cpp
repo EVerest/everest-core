@@ -600,8 +600,10 @@ void WebsocketTlsTPM::on_conn_fail() {
     EVLOG_error << "OCPP client connection failed to TLS websocket server";
 
     std::lock_guard<std::mutex> lk(this->connection_mutex);
+    if (this->m_is_connected) {
+        this->disconnected_callback();
+    }
     this->m_is_connected = false;
-    this->disconnected_callback();
     this->connection_attempts += 1;
 
     // -1 indicates to always attempt to reconnect

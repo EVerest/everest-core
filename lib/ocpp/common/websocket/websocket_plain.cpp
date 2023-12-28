@@ -232,8 +232,10 @@ void WebsocketPlain::on_close_plain(client* c, websocketpp::connection_hdl hdl) 
 
 void WebsocketPlain::on_fail_plain(client* c, websocketpp::connection_hdl hdl) {
     std::lock_guard<std::mutex> lk(this->connection_mutex);
+    if (this->m_is_connected) {
+        this->disconnected_callback();
+    }
     this->m_is_connected = false;
-    this->disconnected_callback();
     this->connection_attempts += 1;
     client::connection_ptr con = c->get_con_from_hdl(hdl);
     const auto ec = con->get_ec();
