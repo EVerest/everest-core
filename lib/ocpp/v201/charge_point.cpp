@@ -317,7 +317,7 @@ void ChargePoint::on_transaction_started(
 
 void ChargePoint::on_transaction_finished(const int32_t evse_id, const DateTime& timestamp,
                                           const MeterValue& meter_stop, const ReasonEnum reason,
-                                          const std::optional<std::string>& id_token,
+                                          const std::optional<IdToken>& id_token,
                                           const std::optional<std::string>& signed_meter_value,
                                           const ChargingStateEnum charging_state) {
     auto& enhanced_transaction = this->evses.at(evse_id)->get_transaction();
@@ -346,16 +346,8 @@ void ChargePoint::on_transaction_finished(const int32_t evse_id, const DateTime&
 
     const auto trigger_reason = utils::stop_reason_to_trigger_reason_enum(reason);
 
-    std::optional<IdToken> id_token_opt;
-    if (id_token.has_value()) {
-        IdToken _id_token;
-        _id_token.idToken = id_token.value();
-        _id_token.type = IdTokenEnum::ISO14443;
-        id_token_opt = _id_token;
-    }
-
     this->transaction_event_req(TransactionEventEnum::Ended, timestamp, transaction, trigger_reason, seq_no,
-                                std::nullopt, std::nullopt, id_token_opt, meter_values, std::nullopt,
+                                std::nullopt, std::nullopt, id_token, meter_values, std::nullopt,
                                 this->is_offline(), std::nullopt);
 
     this->database_handler->transaction_metervalues_clear(transaction_id);
