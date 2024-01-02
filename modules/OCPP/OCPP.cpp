@@ -191,8 +191,8 @@ void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::Ses
             types::evse_manager::stop_transaction_reason_to_string(transaction_finished.reason.value()));
         const auto signed_meter_value = transaction_finished.signed_meter_value;
         std::optional<ocpp::CiString<20>> id_tag_opt = std::nullopt;
-        if (transaction_finished.id_tag) {
-            id_tag_opt.emplace(ocpp::CiString<20>(transaction_finished.id_tag.value()));
+        if (transaction_finished.id_tag.has_value()) {
+            id_tag_opt.emplace(ocpp::CiString<20>(transaction_finished.id_tag.value().id_token));
         }
         this->charge_point->on_transaction_stopped(ocpp_connector_id, session_event.uuid, reason, timestamp,
                                                    energy_Wh_import, id_tag_opt, signed_meter_value);

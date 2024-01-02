@@ -218,12 +218,8 @@ void evse_managerImpl::ready() {
             transaction_finished.meter_value = mod->get_latest_powermeter_data_billing();
 
             auto reason = mod->charger->getTransactionFinishedReason();
-            const auto id_tag = mod->charger->getStopTransactionIdTag();
-
             transaction_finished.reason.emplace(reason);
-            if (!id_tag.empty()) {
-                transaction_finished.id_tag.emplace(id_tag);
-            }
+            transaction_finished.id_tag = mod->charger->getStopTransactionIdToken();
 
             double energy_import = transaction_finished.meter_value.energy_Wh_import.total;
 

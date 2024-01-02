@@ -13,8 +13,9 @@ types:
         type: string
         $ref: /evse_manager#/StopTransactionReason
       id_tag:
-        description: Id tag that was used to stop the transaction.
-        type: string
+        description: Id tag that was used to stop the transaction. Only present if transaction was stopped locally.
+        type: object
+        $ref: /authorization#/ProvidedIdToken
   StopTransactionReason:
     description: >-
       Reason for stopping transaction
@@ -219,8 +220,9 @@ types:
         type: string
         $ref: /evse_manager#/StopTransactionReason
       id_tag:
-        description: Id tag that was used to stop the transaction
-        type: string
+        description: Id tag that was used to stop the transaction. Only present if transaction was stopped locally.
+        type: object
+        $ref: /authorization#/ProvidedIdToken
   ErrorEnum:
     description: >-
       Note this is only kept for compatibility with the legacy error handling and will be removed soon.
