@@ -96,7 +96,7 @@ If you provide a CSMS that is not yet listed here, feel free to
 -   PUMP (PUMP Connect)
 -   Scoptvision (Scopt Powerconnect)
 -   Siemens
--   SteVe
+-   [SteVe](https://github.com/steve-community/steve)
 -   Syntech
 -   Trialog
 -   ubitricity
