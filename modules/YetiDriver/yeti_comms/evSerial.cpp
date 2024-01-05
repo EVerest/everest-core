@@ -256,7 +256,7 @@ bool evSerial::linkWrite(EverestToMcu* m) {
     uint8_t tx_packet_buf[1024];
     uint8_t encode_buf[1500];
     pb_ostream_t ostream = pb_ostream_from_buffer(tx_packet_buf, sizeof(tx_packet_buf) - 4);
-    bool status = pb_encode(&ostream, McuToEverest_fields, m);
+    bool status = pb_encode(&ostream, EverestToMcu_fields, m);
 
     if (!status) {
         // couldn't encode
