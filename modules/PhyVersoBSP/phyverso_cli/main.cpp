@@ -24,6 +24,7 @@ int main(int argc, char* argv[]) {
     printf("A or a: allow_power_on true or false\n");
     printf("L or l: motorlock lock or unlock\n");
     printf("R or r: hard or soft reset\n");
+    printf("V: send keep alive/get version\n");
     printf("1: use connector 1\n");
     printf("2: use connector 2\n\n");
 
@@ -48,8 +49,8 @@ int main(int argc, char* argv[]) {
     } else {
         p.run();
         p.signal_keep_alive.connect([](KeepAlive s) {
-            printf(">> KeepAlive: phyverso MCU SW Version: %s, Hardware %i/rev %i\n", s.sw_version_string, s.hw_type,
-                   s.hw_revision);
+            printf(">> KeepAlive: phyverso MCU SW Version: %s, Hardware %i/rev %i, MCU Timestamp %i\n", s.sw_version_string, s.hw_type,
+                   s.hw_revision, s.time_stamp);
             sw_version_received = true;
         });
 
@@ -151,6 +152,10 @@ int main(int argc, char* argv[]) {
             case 'r':
                 printf("Soft reset\n");
                 p.reset(-1);
+                break;
+            case 'V':
+                printf("Sending keep alive\n");
+                p.keep_alive();
                 break;
             case '1':
                 printf("Connector 1 selected.\n");
