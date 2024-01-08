@@ -6,30 +6,6 @@
 
 namespace module {
 
-std::string lowlevelstate_to_string(const DebugUpdate_LoLevelState s, bool pwm_on) {
-    const std::string pwm = (pwm_on ? "2" : "1");
-    switch (s) {
-    case DebugUpdate_LoLevelState_DISABLED:
-        return "Disabled";
-    case DebugUpdate_LoLevelState_A:
-        return "A" + pwm;
-    case DebugUpdate_LoLevelState_B:
-        return "B" + pwm;
-    case DebugUpdate_LoLevelState_C:
-        return "C" + pwm;
-    case DebugUpdate_LoLevelState_D:
-        return "D" + pwm;
-    case DebugUpdate_LoLevelState_E:
-        return "E";
-    case DebugUpdate_LoLevelState_F:
-        return "F";
-    case DebugUpdate_LoLevelState_DF:
-        return "DF";
-    default:
-        return "Unknown";
-    }
-}
-
 void YetiDriver::init() {
 
     // initialize serial driver
@@ -85,6 +61,8 @@ void YetiDriver::init() {
 
     invoke_init(*p_powermeter);
     invoke_init(*p_board_support);
+    invoke_init(*p_connector_lock);
+    invoke_init(*p_rcd);
 }
 
 void YetiDriver::ready() {
@@ -99,15 +77,10 @@ void YetiDriver::ready() {
     serial.signalConnectionTimeout.connect(
         [this]() { EVLOG_AND_THROW(EVEXCEPTION(Everest::EverestInternalError, "Yeti UART timeout!")); });
 
-    serial.setControlMode(str_to_control_mode(config.control_mode));
-
     invoke_ready(*p_powermeter);
     invoke_ready(*p_board_support);
-
-    serial.signalKeepAliveLo.connect([this](const KeepAliveLo& k) {
-        auto k_json = keep_alive_lo_to_json(k);
-        mqtt.publish("/external/keepalive_json", k_json.dump());
-    });
+    invoke_ready(*p_connector_lock);
+    invoke_ready(*p_rcd);
 
     telemetryThreadHandle = std::thread([this]() {
         while (!telemetryThreadHandle.shouldExit()) {
@@ -122,179 +95,57 @@ void YetiDriver::ready() {
         }
     });
 
-    serial.signalDebugUpdate.connect([this](const DebugUpdate& d) {
-        static bool relay_was_on = true;
-        auto d_json = debug_update_to_json(d);
-        mqtt.publish("/external/debug_json", d_json.dump());
-        {
-            std::scoped_lock lock(telemetry_mutex);
-            // update external telemetry data
-            telemetry_power_path_controller.at("timestamp") = Everest::Date::to_rfc3339(date::utc_clock::now());
-            telemetry_power_path_controller.at("cp_voltage_high") = d.evse_pwm_voltage_hi;
-            telemetry_power_path_controller.at("cp_voltage_low") = d.evse_pwm_voltage_lo;
-            telemetry_power_path_controller.at("cp_pwm_duty_cycle") = 0.; // FIXME this should be included
-            telemetry_power_path_controller.at("cp_state") =
-                lowlevelstate_to_string(d.lowlevel_state, d.evse_pwm_running);
-            telemetry_power_path_controller.at("pp_ohm") = 0.; // FIXME this should be included
-            telemetry_power_path_controller.at("supply_voltage_12V") = d.supply_voltage_12V;
-            telemetry_power_path_controller.at("supply_voltage_minus_12V") = d.supply_voltage_N12V;
-            telemetry_power_path_controller.at("temperature_controller") = d.cpu_temperature;
-            telemetry_power_path_controller.at("temperature_car_connector") = 0.;
-            telemetry_power_path_controller.at("watchdog_reset_count") = d.watchdog_reset_count;
-
-            telemetry_rcd.at("timestamp") = Everest::Date::to_rfc3339(date::utc_clock::now());
-            telemetry_rcd.at("current_mA") = d.rcd_current;
-            telemetry_rcd.at("enabled") = d.rcd_enabled;
-
-            telemetry_power_switch.at("timestamp") = Everest::Date::to_rfc3339(date::utc_clock::now());
-            telemetry_power_switch.at("is_on") = d.relais_on;
-            if (relay_was_on != d.relais_on) {
-                publish_external_telemetry_livedata("power_switch", telemetry_power_switch);
-            }
-            relay_was_on = d.relais_on;
-        }
-    });
-}
-
-Everest::json power_meter_data_to_json(const PowerMeter& p) {
-    Everest::json j;
-    j["time_stamp"] = p.time_stamp;
-    j["vrmsL1"] = p.vrmsL1;
-    j["vrmsL2"] = p.vrmsL2;
-    j["vrmsL3"] = p.vrmsL3;
-
-    j["irmsL1"] = p.irmsL1;
-    j["irmsL2"] = p.irmsL2;
-    j["irmsL3"] = p.irmsL3;
-    j["irmsN"] = p.irmsN;
-    j["wattHrL1"] = p.wattHrL1;
-    j["wattHrL2"] = p.wattHrL2;
-    j["wattHrL3"] = p.wattHrL3;
-    j["totalWattHr_Out"] = p.totalWattHr;
-    j["tempL1"] = p.tempL1;
-    j["tempL2"] = p.tempL2;
-    j["tempL3"] = p.tempL3;
-    j["wattL1"] = p.wattL1;
-    j["wattL2"] = p.wattL2;
-    j["wattL3"] = p.wattL3;
-    j["freqL1"] = p.freqL1;
-    j["freqL2"] = p.freqL2;
-    j["freqL3"] = p.freqL3;
-    j["phaseSeqError"] = p.phaseSeqError;
-    return j;
-}
-
-std::string state_to_string(const StateUpdate& s) {
-    switch (s.state) {
-    case StateUpdate_State_DISABLED:
-        return "Disabled";
-    case StateUpdate_State_IDLE:
-        return "Idle";
-    case StateUpdate_State_WAITING_FOR_AUTHENTICATION:
-        return "Waiting for Auth";
-    case StateUpdate_State_CHARGING:
-        return "Charging";
-    case StateUpdate_State_CHARGING_PAUSED_EV:
-        return "Car Paused";
-    case StateUpdate_State_CHARGING_PAUSED_EVSE:
-        return "EVSE Paused";
-    case StateUpdate_State_CHARGING_FINSIHED:
-        return "Finished";
-    case StateUpdate_State_ERROR:
-        return "Error";
-    case StateUpdate_State_FAULTED:
-        return "Faulted";
-    default:
-        return "Unknown";
-    }
-}
-
-std::string error_type_to_string(ErrorFlags s) {
-    switch (s.type) {
-    case ErrorFlags_ErrorType_ERROR_F:
-        return "EVSE Fault";
-    case ErrorFlags_ErrorType_ERROR_E:
-        return "Car Fault";
-    case ErrorFlags_ErrorType_ERROR_DF:
-        return "Diode Fault";
-    case ErrorFlags_ErrorType_ERROR_RELAIS:
-        return "Relais Fault";
-    case ErrorFlags_ErrorType_ERROR_VENTILATION_NOT_AVAILABLE:
-        return "Ventilation n/a";
-    case ErrorFlags_ErrorType_ERROR_RCD:
-        return "RCD Fault";
-    default:
-        return "Unknown";
-    }
-}
-
-Everest::json state_update_to_json(const StateUpdate& s) {
-    Everest::json j;
-    j["time_stamp"] = (int)s.time_stamp;
-
-    j["state"] = s.state;
-    j["state_string"] = state_to_string(s);
-
-    if (s.which_state_flags == StateUpdate_error_type_tag) {
-        j["error_type"] = static_cast<int>(s.state_flags.error_type.type);
-        j["error_string"] = error_type_to_string(s.state_flags.error_type);
-    }
-
-    return j;
-}
-
-Everest::json debug_update_to_json(const DebugUpdate& d) {
-    Everest::json j;
-    j["time_stamp"] = static_cast<int>(d.time_stamp);
-    j["evse_pwm_voltage_hi"] = d.evse_pwm_voltage_hi;
-    j["evse_pwm_voltage_lo"] = d.evse_pwm_voltage_lo;
-    j["supply_voltage_12V"] = d.supply_voltage_12V;
-    j["supply_voltage_N12V"] = d.supply_voltage_N12V;
-    j["lowlevel_state"] = d.lowlevel_state;
-    j["evse_pwm_running"] = d.evse_pwm_running;
-    j["ev_simplified_mode"] = d.ev_simplified_mode;
-    j["has_ventilation"] = d.has_ventilation;
-    j["ventilated_charging_active"] = d.ventilated_charging_active;
-    j["rcd_reclosing_allowed"] = d.rcd_reclosing_allowed;
-    j["control_mode"] = d.control_mode;
-    j["authorized"] = d.authorized;
-    j["cpu_temperature"] = d.cpu_temperature;
-    j["rcd_enabled"] = d.rcd_enabled;
-    j["evse_pp_voltage"] = d.evse_pp_voltage;
-    j["max_current_cable"] = d.max_current_cable;
-    j["watchdog_reset_count"] = d.watchdog_reset_count;
-    j["simulation"] = d.simulation;
-    j["max_current"] = d.max_current;
-    j["use_three_phases"] = d.use_three_phases;
-    j["rcd_current"] = d.rcd_current;
-    j["relais_on"] = d.relais_on;
-    return j;
-}
-
-Everest::json keep_alive_lo_to_json(const KeepAliveLo& k) {
-    Everest::json j;
-    j["time_stamp"] = static_cast<int>(k.time_stamp);
-    j["hw_type"] = static_cast<int>(k.hw_type);
-    j["hw_revision"] = static_cast<int>(k.hw_revision);
-    j["protocol_version_major"] = static_cast<int>(k.protocol_version_major);
-    j["protocol_version_minor"] = static_cast<int>(k.protocol_version_minor);
-    j["sw_version_string"] = std::string(k.sw_version_string);
-    return j;
-}
-
-InterfaceControlMode str_to_control_mode(std::string data) {
-    if (data == "low")
-        return InterfaceControlMode_LOW;
-    else if (data == "high")
-        return InterfaceControlMode_HIGH;
-    else
-        return InterfaceControlMode_NONE;
+    serial.signalErrorFlags.connect([this](ErrorFlags e) { error_handling(e); });
 }
 
 void YetiDriver::publish_external_telemetry_livedata(const std::string& topic, const Everest::TelemetryMap& data) {
     if (info.telemetry_enabled) {
         telemetry.publish("livedata", topic, data);
     }
+}
+
+bool rcd_selftest_failed;
+
+bool connector_lock_failed;
+bool cp_signal_fault;
+
+void YetiDriver::clear_errors_on_unplug() {
+    p_board_support->request_clear_all_evse_board_support_MREC2GroundFailure();
+    p_connector_lock->request_clear_all_connector_lock_MREC1ConnectorLockFailure();
+}
+
+void YetiDriver::error_handling(ErrorFlags e) {
+
+    if (e.diode_fault and not last_error_flags.diode_fault) {
+        p_board_support->raise_evse_board_support_DiodeFault("Diode Fault", Everest::error::Severity::High);
+    } else if (not e.diode_fault and last_error_flags.diode_fault) {
+        p_board_support->request_clear_all_evse_board_support_DiodeFault();
+    }
+
+    if (e.rcd_triggered and not last_error_flags.rcd_triggered) {
+        p_board_support->raise_evse_board_support_MREC2GroundFailure("Onboard RCD triggered",
+                                                                     Everest::error::Severity::High);
+    }
+
+    if (e.ventilation_not_available and not last_error_flags.ventilation_not_available) {
+        p_board_support->raise_evse_board_support_VentilationNotAvailable("State D is not supported",
+                                                                          Everest::error::Severity::High);
+    } else if (not e.ventilation_not_available and last_error_flags.ventilation_not_available) {
+        p_board_support->request_clear_all_evse_board_support_VentilationNotAvailable();
+    }
+
+    if (e.connector_lock_failed and not last_error_flags.connector_lock_failed) {
+        p_connector_lock->raise_connector_lock_MREC1ConnectorLockFailure("Lock motor failure",
+                                                                         Everest::error::Severity::High);
+    }
+
+    if (e.cp_signal_fault and not last_error_flags.cp_signal_fault) {
+        p_board_support->raise_evse_board_support_MREC14PilotFault("CP error", Everest::error::Severity::High);
+    } else if (not e.cp_signal_fault and last_error_flags.cp_signal_fault) {
+        p_board_support->request_clear_all_evse_board_support_MREC14PilotFault();
+    }
+
+    last_error_flags = e;
 }
 
 } // namespace module

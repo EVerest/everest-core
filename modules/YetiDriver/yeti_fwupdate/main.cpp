@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
-#include "config.h"
 #include <stdio.h>
 #include <string.h>
 
 #include "evSerial.h"
 #include <unistd.h>
 
-#include "hi2lo.pb.h"
-#include "lo2hi.pb.h"
+#include "yeti.pb.h"
 #include <sigslot/signal.hpp>
 
 volatile bool sw_version_received = false;
@@ -25,7 +23,7 @@ void help() {
 }
 
 int main(int argc, char* argv[]) {
-    printf("Yeti ROM Bootloader Firmware Updater %i.%i\n", yeti_fwupdate_VERSION_MAJOR, yeti_fwupdate_VERSION_MINOR);
+    printf("Yeti ROM Bootloader Firmware Updater\n");
     if (argc != 3) {
         help();
         exit(0);
@@ -46,8 +44,9 @@ int main(int argc, char* argv[]) {
         }
         printf("\nRebooting Yeti in ROM Bootloader mode...\n");
         // send some dummy commands to make sure protocol is in sync
-        p->setMaxCurrent(6.);
-        p->setMaxCurrent(6.);
+        p->keepAlive();
+        p->keepAlive();
+
         // now reboot uC in boot loader mode
         p->firmwareUpdate(true);
         sleep(1);

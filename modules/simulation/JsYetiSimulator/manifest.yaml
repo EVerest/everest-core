@@ -1,4 +1,8 @@
 description: SIL simulator for YETI hardware v1.0
+config:
+  connector_id:
+    description: Connector id of the evse manager to which this simulator is connected to
+    type: integer
 provides:
   powermeter:
     interface: powermeter
@@ -12,6 +16,9 @@ provides:
   rcd:
     interface: ac_rcd
     description: Interface for the simulated AC RCD
+  connector_lock:
+    interface: connector_lock
+    description: Interface for the simulated Connector lock
 enable_external_mqtt: true
 enable_telemetry: true
 metadata:

@@ -1,12 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
-/*
- * Charger.cpp
- *
- *  Created on: 08.03.2021
- *      Author: cornelius
- *
- */
+// Copyright 2023 Pionix GmbH and Contributors to EVerest
 
 #include "IECStateMachine.hpp"
 
@@ -14,6 +7,12 @@
 #include <string.h>
 
 namespace module {
+
+// helper type for visitor
+template <class... Ts> struct overloaded : Ts... {
+    using Ts::operator()...;
+};
+template <class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 
 static std::variant<RawCPState, CPEvent> from_bsp_event(types::board_support_common::Event e) {
     switch (e) {
@@ -33,54 +32,10 @@ static std::variant<RawCPState, CPEvent> from_bsp_event(types::board_support_com
         return CPEvent::PowerOn;
     case types::board_support_common::Event::PowerOff:
         return CPEvent::PowerOff;
-    case types::board_support_common::Event::ErrorDF:
-        return CPEvent::ErrorDF;
-    case types::board_support_common::Event::ErrorVentilationNotAvailable:
-        return CPEvent::ErrorVentilationNotAvailable;
-    case types::board_support_common::Event::ErrorBrownOut:
-        return CPEvent::ErrorBrownOut;
-    case types::board_support_common::Event::ErrorEnergyManagement:
-        return CPEvent::ErrorEnergyManagement;
-    case types::board_support_common::Event::PermanentFault:
-        return CPEvent::PermanentFault;
     case types::board_support_common::Event::EvseReplugStarted:
         return CPEvent::EvseReplugStarted;
     case types::board_support_common::Event::EvseReplugFinished:
         return CPEvent::EvseReplugFinished;
-    case types::board_support_common::Event::MREC_2_GroundFailure:
-        return CPEvent::MREC_2_GroundFailure;
-    case types::board_support_common::Event::MREC_3_HighTemperature:
-        return CPEvent::MREC_3_HighTemperature;
-    case types::board_support_common::Event::MREC_4_OverCurrentFailure:
-        return CPEvent::MREC_4_OverCurrentFailure;
-    case types::board_support_common::Event::MREC_5_OverVoltage:
-        return CPEvent::MREC_5_OverVoltage;
-    case types::board_support_common::Event::MREC_6_UnderVoltage:
-        return CPEvent::MREC_6_UnderVoltage;
-    case types::board_support_common::Event::MREC_8_EmergencyStop:
-        return CPEvent::MREC_8_EmergencyStop;
-    case types::board_support_common::Event::MREC_10_InvalidVehicleMode:
-        return CPEvent::MREC_10_InvalidVehicleMode;
-    case types::board_support_common::Event::MREC_14_PilotFault:
-        return CPEvent::MREC_14_PilotFault;
-    case types::board_support_common::Event::MREC_15_PowerLoss:
-        return CPEvent::MREC_15_PowerLoss;
-    case types::board_support_common::Event::MREC_17_EVSEContactorFault:
-        return CPEvent::MREC_17_EVSEContactorFault;
-    case types::board_support_common::Event::MREC_18_CableOverTempDerate:
-        return CPEvent::MREC_18_CableOverTempDerate;
-    case types::board_support_common::Event::MREC_19_CableOverTempStop:
-        return CPEvent::MREC_19_CableOverTempStop;
-    case types::board_support_common::Event::MREC_20_PartialInsertion:
-        return CPEvent::MREC_20_PartialInsertion;
-    case types::board_support_common::Event::MREC_23_ProximityFault:
-        return CPEvent::MREC_23_ProximityFault;
-    case types::board_support_common::Event::MREC_24_ConnectorVoltageHigh:
-        return CPEvent::MREC_24_ConnectorVoltageHigh;
-    case types::board_support_common::Event::MREC_25_BrokenLatch:
-        return CPEvent::MREC_25_BrokenLatch;
-    case types::board_support_common::Event::MREC_26_CutCable:
-        return CPEvent::MREC_26_CutCable;
     default:
         return RawCPState::Disabled;
     }
@@ -102,56 +57,14 @@ const std::string cpevent_to_string(CPEvent e) {
         return "CarRequestedStopPower";
     case CPEvent::CarUnplugged:
         return "CarUnplugged";
-    case CPEvent::ErrorE:
-        return "ErrorE";
-    case CPEvent::ErrorDF:
-        return "ErrorDF";
-    case CPEvent::ErrorVentilationNotAvailable:
-        return "ErrorVentilationNotAvailable";
-    case CPEvent::ErrorBrownOut:
-        return "ErrorBrownOut";
-    case CPEvent::ErrorEnergyManagement:
-        return "ErrorEnergyManagement";
     case CPEvent::EFtoBCD:
         return "EFtoBCD";
     case CPEvent::BCDtoEF:
         return "BCDtoEF";
-    case CPEvent::PermanentFault:
-        return "PermanentFault";
     case CPEvent::EvseReplugStarted:
         return "EvseReplugStarted";
     case CPEvent::EvseReplugFinished:
         return "EvseReplugFinished";
-    case CPEvent::MREC_2_GroundFailure:
-        return "MREC_2_GroundFailure";
-    case CPEvent::MREC_3_HighTemperature:
-        return "MREC_3_HighTemperature";
-    case CPEvent::MREC_4_OverCurrentFailure:
-        return "MREC_4_OverCurrentFailure";
-    case CPEvent::MREC_5_OverVoltage:
-        return "MREC_5_OverVoltage";
-    case CPEvent::MREC_6_UnderVoltage:
-        return "MREC_6_UnderVoltage";
-    case CPEvent::MREC_8_EmergencyStop:
-        return "MREC_8_EmergencyStop";
-    case CPEvent::MREC_15_PowerLoss:
-        return "MREC_15_PowerLoss";
-    case CPEvent::MREC_17_EVSEContactorFault:
-        return "MREC_17_EVSEContactorFault";
-    case CPEvent::MREC_18_CableOverTempDerate:
-        return "MREC_18_CableOverTempDerate";
-    case CPEvent::MREC_19_CableOverTempStop:
-        return "MREC_19_CableOverTempStop";
-    case CPEvent::MREC_20_PartialInsertion:
-        return "MREC_20_PartialInsertion";
-    case CPEvent::MREC_23_ProximityFault:
-        return "MREC_23_ProximityFault";
-    case CPEvent::MREC_24_ConnectorVoltageHigh:
-        return "MREC_24_ConnectorVoltageHigh";
-    case CPEvent::MREC_25_BrokenLatch:
-        return "MREC_25_BrokenLatch";
-    case CPEvent::MREC_26_CutCable:
-        return "MREC_26_CutCable";
     }
     throw std::out_of_range("No known string conversion for provided enum of type CPEvent");
 }
@@ -162,25 +75,28 @@ IECStateMachine::IECStateMachine(const std::unique_ptr<evse_board_supportIntf>& 
 
     // Subscribe to bsp driver to receive BspEvents from the hardware
     r_bsp->subscribe_event([this](const types::board_support_common::BspEvent event) {
-        // feed into state machine
-        process_bsp_event(event);
+        if (enabled) {
+            // feed into state machine
+            process_bsp_event(event);
+        } else {
+            EVLOG_info << "Ignoring BSP Event, BSP is not enabled yet.";
+        }
     });
 }
 
-void IECStateMachine::process_bsp_event(types::board_support_common::BspEvent bsp_event) {
-
-    auto event_or_error = from_bsp_event(bsp_event.event);
-
-    // If it was a CP change: feed state machine, else forward error
-    if (std::holds_alternative<RawCPState>(event_or_error)) {
-        {
-            std::lock_guard l(state_mutex);
-            cp_state = std::get<RawCPState>(event_or_error);
-        }
-        feed_state_machine();
-    } else {
-        signal_event(std::get<CPEvent>(event_or_error));
-    }
+void IECStateMachine::process_bsp_event(const types::board_support_common::BspEvent bsp_event) {
+    auto event = from_bsp_event(bsp_event.event);
+    std::visit(overloaded{[this](RawCPState& raw_state) {
+                              // If it is a raw CP state, run it through the state machine
+                              {
+                                  std::lock_guard l(state_machine_mutex);
+                                  cp_state = raw_state;
+                              }
+                              feed_state_machine();
+                          },
+                          // If it is another CP event, pass through
+                          [this](CPEvent& event) { signal_event(event); }},
+               event);
 }
 
 void IECStateMachine::feed_state_machine() {
@@ -200,7 +116,7 @@ void IECStateMachine::feed_state_machine() {
 std::queue<CPEvent> IECStateMachine::state_machine() {
 
     std::queue<CPEvent> events;
-    std::lock_guard lock(state_mutex);
+    std::lock_guard lock(state_machine_mutex);
 
     switch (cp_state) {
 
@@ -211,6 +127,7 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
             ev_simplified_mode = false;
             timeout_state_c1.stop();
             call_allow_power_on_bsp(false);
+            connector_unlock();
         }
         break;
 
@@ -219,14 +136,15 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
             pwm_running = false;
             r_bsp->call_pwm_off();
             ev_simplified_mode = false;
+            car_plugged_in = false;
             call_allow_power_on_bsp(false);
             timeout_state_c1.stop();
+            connector_unlock();
         }
 
         // Table A.6: Sequence 2.1 Unplug at state Bx (or any other
         // state) Table A.6: Sequence 2.2 Unplug at state Cx, Dx
         if (last_cp_state != RawCPState::A && last_cp_state != RawCPState::Disabled) {
-            events.push(CPEvent::CarRequestedStopPower);
             events.push(CPEvent::CarUnplugged);
         }
         break;
@@ -235,6 +153,7 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
         // Table A.6: Sequence 7 EV stops charging
         // Table A.6: Sequence 8.2 EV supply equipment
         // responds to EV opens S2 (w/o PWM)
+        connector_lock();
 
         if (last_cp_state != RawCPState::A && last_cp_state != RawCPState::B) {
 
@@ -246,7 +165,8 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
         }
 
         // Table A.6: Sequence 1.1 Plug-in
-        if (last_cp_state == RawCPState::A || last_cp_state == RawCPState::Disabled) {
+        if (last_cp_state == RawCPState::A || last_cp_state == RawCPState::Disabled ||
+            (!car_plugged_in && last_cp_state == RawCPState::F)) {
             events.push(CPEvent::CarPluggedIn);
             ev_simplified_mode = false;
         }
@@ -258,22 +178,25 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
         break;
 
     case RawCPState::D:
-        // If state D is not supported, signal an error event here and switch off.
+        connector_lock();
+        // If state D is not supported switch off.
         if (not has_ventilation) {
             call_allow_power_on_bsp(false);
-            events.push(CPEvent::ErrorVentilationNotAvailable);
             timeout_state_c1.stop();
             break;
         }
         // no break, intended fall through: If we support state D it is handled the same way as state C
+        [[fallthrough]];
+
     case RawCPState::C:
+        connector_lock();
         // Table A.6: Sequence 1.2 Plug-in
-        if (last_cp_state == RawCPState::A) {
+        if (last_cp_state == RawCPState::A || last_cp_state == RawCPState::Disabled ||
+            (!car_plugged_in && last_cp_state == RawCPState::F)) {
             events.push(CPEvent::CarPluggedIn);
             EVLOG_info << "Detected simplified mode.";
             ev_simplified_mode = true;
-        }
-        if (last_cp_state == RawCPState::B) {
+        } else if (last_cp_state == RawCPState::B) {
             events.push(CPEvent::CarRequestedPower);
         }
 
@@ -323,14 +246,15 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
         break;
 
     case RawCPState::E:
+        connector_unlock();
         if (last_cp_state != RawCPState::E) {
-            events.push(CPEvent::ErrorE);
             timeout_state_c1.stop();
             call_allow_power_on_bsp(false);
         }
         break;
 
     case RawCPState::F:
+        connector_unlock();
         timeout_state_c1.stop();
         call_allow_power_on_bsp(false);
         break;
@@ -346,7 +270,7 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
 // High level state machine sets PWM duty cycle
 void IECStateMachine::set_pwm(double value) {
     {
-        std::scoped_lock lock(state_mutex);
+        std::scoped_lock lock(state_machine_mutex);
         if (value > 0 && value < 1) {
             pwm_running = true;
         } else {
@@ -361,7 +285,7 @@ void IECStateMachine::set_pwm(double value) {
 // High level state machine sets state X1
 void IECStateMachine::set_pwm_off() {
     {
-        std::scoped_lock lock(state_mutex);
+        std::scoped_lock lock(state_machine_mutex);
         pwm_running = false;
     }
     r_bsp->call_pwm_off();
@@ -371,7 +295,7 @@ void IECStateMachine::set_pwm_off() {
 // High level state machine sets state F
 void IECStateMachine::set_pwm_F() {
     {
-        std::scoped_lock lock(state_mutex);
+        std::scoped_lock lock(state_machine_mutex);
         pwm_running = false;
     }
     r_bsp->call_pwm_F();
@@ -381,7 +305,7 @@ void IECStateMachine::set_pwm_F() {
 // The higher level state machine in Charger.cpp calls this to indicate it allows contactors to be switched on
 void IECStateMachine::allow_power_on(bool value, types::evse_board_support::Reason reason) {
     {
-        std::scoped_lock lock(state_mutex);
+        std::scoped_lock lock(state_machine_mutex);
         // Only set the flags here in case of power on.
         power_on_allowed = value;
         power_on_reason = reason;
@@ -447,6 +371,7 @@ void IECStateMachine::setup(bool three_phases, bool has_ventilation, std::string
 
 // enable/disable the charging port and CP signal
 void IECStateMachine::enable(bool en) {
+    enabled = en;
     r_bsp->call_enable(en);
 }
 
@@ -457,6 +382,20 @@ void IECStateMachine::set_overcurrent_limit(double amps) {
     if (amps != last_amps) {
         r_bsp->call_ac_set_overcurrent_limit_A(amps);
         last_amps = amps;
+    }
+}
+
+void IECStateMachine::connector_lock() {
+    if (not locked) {
+        signal_lock();
+        locked = true;
+    }
+}
+
+void IECStateMachine::connector_unlock() {
+    if (locked) {
+        signal_unlock();
+        locked = false;
     }
 }
 

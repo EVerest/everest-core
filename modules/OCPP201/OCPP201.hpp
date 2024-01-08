@@ -14,11 +14,13 @@
 #include <generated/interfaces/auth_token_provider/Implementation.hpp>
 #include <generated/interfaces/auth_token_validator/Implementation.hpp>
 #include <generated/interfaces/empty/Implementation.hpp>
+#include <generated/interfaces/ocpp_data_transfer/Implementation.hpp>
 
 // headers for required interface implementations
 #include <generated/interfaces/evse_manager/Interface.hpp>
 #include <generated/interfaces/evse_security/Interface.hpp>
 #include <generated/interfaces/kvs/Interface.hpp>
+#include <generated/interfaces/ocpp_data_transfer/Interface.hpp>
 #include <generated/interfaces/system/Interface.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
@@ -44,6 +46,7 @@ struct Conf {
     std::string CoreDatabasePath;
     std::string DeviceModelDatabasePath;
     bool EnableExternalWebsocketControl;
+    int MessageQueueResumeDelay;
 };
 
 class OCPP201 : public Everest::ModuleBase {
@@ -52,27 +55,33 @@ public:
     OCPP201(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, std::unique_ptr<emptyImplBase> p_main,
             std::unique_ptr<auth_token_validatorImplBase> p_auth_validator,
             std::unique_ptr<auth_token_providerImplBase> p_auth_provider,
+            std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer,
             std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager, std::unique_ptr<systemIntf> r_system,
-            std::unique_ptr<evse_securityIntf> r_security, std::unique_ptr<kvsIntf> r_kvs, Conf& config) :
+            std::unique_ptr<evse_securityIntf> r_security, std::unique_ptr<kvsIntf> r_kvs,
+            std::vector<std::unique_ptr<ocpp_data_transferIntf>> r_data_transfer, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_main(std::move(p_main)),
         p_auth_validator(std::move(p_auth_validator)),
         p_auth_provider(std::move(p_auth_provider)),
+        p_data_transfer(std::move(p_data_transfer)),
         r_evse_manager(std::move(r_evse_manager)),
         r_system(std::move(r_system)),
         r_security(std::move(r_security)),
         r_kvs(std::move(r_kvs)),
+        r_data_transfer(std::move(r_data_transfer)),
         config(config){};
 
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<emptyImplBase> p_main;
     const std::unique_ptr<auth_token_validatorImplBase> p_auth_validator;
     const std::unique_ptr<auth_token_providerImplBase> p_auth_provider;
+    const std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer;
     const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;
     const std::unique_ptr<systemIntf> r_system;
     const std::unique_ptr<evse_securityIntf> r_security;
     const std::unique_ptr<kvsIntf> r_kvs;
+    const std::vector<std::unique_ptr<ocpp_data_transferIntf>> r_data_transfer;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1

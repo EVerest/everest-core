@@ -9,9 +9,7 @@
 
 #include <sigslot/signal.hpp>
 
-#include "config.h"
-#include "hi2lo.pb.h"
-#include "lo2hi.pb.h"
+#include "umwc.pb.h"
 
 using namespace std::chrono_literals;
 
@@ -29,7 +27,7 @@ void help() {
 }
 
 int main(int argc, char* argv[]) {
-    printf("uMWC ROM Bootloader Firmware Updater %i.%i\n", umwc_fwupdate_VERSION_MAJOR, umwc_fwupdate_VERSION_MINOR);
+    printf("uMWC ROM Bootloader Firmware Updater\n");
     if (argc != 3) {
         help();
         exit(0);
@@ -50,8 +48,8 @@ int main(int argc, char* argv[]) {
         }
         printf("\nRebooting uMWC in ROM Bootloader mode...\n");
         // send some dummy commands to make sure protocol is in sync
-        p->disable();
-        p->disable();
+        p->enable(false);
+        p->enable(false);
         // now reboot uC in boot loader mode
         p->firmwareUpdate(true);
         sleep(1);

@@ -69,8 +69,12 @@ active_modules:
           implementation_id: charger
   yeti_driver_1:
     module: JsYetiSimulator
+    config_module:
+      connector_id: 1
   yeti_driver_2:
     module: JsYetiSimulator
+    config_module:
+      connector_id: 2
   slac:
     module: JsSlacSimulator
   car_simulator_1:
@@ -161,7 +165,7 @@ active_modules:
     connections:
       ocpp:
         - module_id: ocpp
-          implementation_id: main
+          implementation_id: ocpp_generic
       data_transfer:
         - module_id: ocpp
           implementation_id: data_transfer

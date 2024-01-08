@@ -129,13 +129,6 @@ config:
       Set to 0 unless you really know what you are doing.
     type: integer
     default: 0
-  connector_type:
-    description: Type of charging connector available at this EVSE
-    type: string
-    enum:
-      - IEC62196Type2Cable
-      - IEC62196Type2Socket
-    default: IEC62196Type2Cable
   hack_pause_imd_during_precharge:
     description: >-
       Disable IMD at the end of CableCheck and re-enable when current is flowing in CurrentDemand.
@@ -198,6 +191,10 @@ config:
       "EvseManager does not need to wait for energy from the energy manager after plug in."
     type: boolean
     default: false
+  external_ready_to_start_charging:
+    description: Enable the external ready to start charging signal that delays charging ready until it has been received
+    type: boolean
+    default: false
 provides:
   evse:
     interface: evse_manager
@@ -213,6 +210,10 @@ requires:
     interface: evse_board_support
   ac_rcd:
     interface: ac_rcd
+    min_connections: 0
+    max_connections: 1
+  connector_lock:
+    interface: connector_lock
     min_connections: 0
     max_connections: 1
   powermeter_grid_side:

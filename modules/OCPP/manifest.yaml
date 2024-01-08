@@ -35,6 +35,10 @@ config:
     description: Path to folder where certificates are located. If empty uses everest prefix + etc/everest/certs
     type: string
     default: ""
+  MessageQueueResumeDelay:
+    description: Time (seconds) to delay resuming the message queue after reconnecting
+    type: integer
+    default: 0
 provides:
   main:
     description: This is a OCPP 1.6 charge point
@@ -48,6 +52,9 @@ provides:
   data_transfer:
     description: OCPP data transfer towards the CSMS
     interface: ocpp_data_transfer
+  ocpp_generic:
+    description: Generic OCPP interface.
+    interface: ocpp
 requires:
   evse_manager:
     interface: evse_manager

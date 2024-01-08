@@ -1,0 +1,28 @@
+
+name: Unit tests
+on:
+  pull_request: {}
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: Which runner to use
+        type: choice
+        default: 'ubuntu-22.04'
+        required: true
+        options:
+          - 'ubuntu-22.04'
+          - 'large-ubuntu-22.04-xxl'
+
+jobs:
+  manifests_tes:
+    name: Manifests test
+    runs-on: ${{ inputs.runner || 'ubuntu-22.04' }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install deps
+        run: pip3 install pytest
+      - name: Test mainfests
+        run: |
+          cd ${{ github.workspace }}
+          python3 -m pytest tests/manifest_tests/*.py
+      

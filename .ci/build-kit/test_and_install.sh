@@ -3,8 +3,8 @@
 # ninja -j$(nproc) -C build tests
 ninja -j$(nproc) -C build install
 
-# install everestpy via cmake target from everest-framework
-ninja -C build everestpy_pip_install_dist
+# install everest testing by cmake target to make sure using the version defined in dependencies.yaml
+ninja -C build install_everest_testing
 
 rsync -a "$EXT_MOUNT/source/tests" ./
 

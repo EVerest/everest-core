@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14.7)
 
 project(everest-core
-    VERSION 2023.10.0
+    VERSION 2023.12.0
     DESCRIPTION "The open operating system for e-mobility charging stations"
 	LANGUAGES CXX C
 )
@@ -144,7 +144,7 @@ add_custom_target(install_everest_testing
              ${PYTHON_EXECUTABLE} -m pip install "${CPM_PACKAGE_everest-utils_SOURCE_DIR}/everest-testing" \;
         fi\;
     DEPENDS
-        everestpy_pip_install_dist iso15118_pip_install_dist iso15118_requirements_pip_install_dist
+        everestpy_pip_install_dist
     COMMENT
         "Installing dependencies for testing EVerest"
 )

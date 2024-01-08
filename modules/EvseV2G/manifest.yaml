@@ -45,6 +45,11 @@ config:
       Output directory for the TLS key log file
     type: string
     default: /tmp
+  tls_timeout:
+    description: >-
+      Set the TLS timeout in ms when establishing a tls connection 
+    type: integer
+    default: 15000
   verify_contract_cert_chain:
     description: >-
       Specifies if the EVSE should verify the contract certificate

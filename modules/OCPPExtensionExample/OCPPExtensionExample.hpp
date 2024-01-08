@@ -14,7 +14,7 @@
 #include <generated/interfaces/ocpp_data_transfer/Implementation.hpp>
 
 // headers for required interface implementations
-#include <generated/interfaces/ocpp_1_6_charge_point/Interface.hpp>
+#include <generated/interfaces/ocpp/Interface.hpp>
 #include <generated/interfaces/ocpp_data_transfer/Interface.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
@@ -31,8 +31,8 @@ class OCPPExtensionExample : public Everest::ModuleBase {
 public:
     OCPPExtensionExample() = delete;
     OCPPExtensionExample(const ModuleInfo& info, std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer,
-                         std::unique_ptr<ocpp_1_6_charge_pointIntf> r_ocpp,
-                         std::unique_ptr<ocpp_data_transferIntf> r_data_transfer, Conf& config) :
+                         std::unique_ptr<ocppIntf> r_ocpp, std::unique_ptr<ocpp_data_transferIntf> r_data_transfer,
+                         Conf& config) :
         ModuleBase(info),
         p_data_transfer(std::move(p_data_transfer)),
         r_ocpp(std::move(r_ocpp)),
@@ -40,7 +40,7 @@ public:
         config(config){};
 
     const std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer;
-    const std::unique_ptr<ocpp_1_6_charge_pointIntf> r_ocpp;
+    const std::unique_ptr<ocppIntf> r_ocpp;
     const std::unique_ptr<ocpp_data_transferIntf> r_data_transfer;
     const Conf& config;
 

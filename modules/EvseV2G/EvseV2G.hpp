@@ -31,6 +31,7 @@ struct Conf {
     bool terminate_connection_on_failed_response;
     bool tls_key_logging;
     std::string tls_key_logging_path;
+    int tls_timeout;
     bool verify_contract_cert_chain;
     int auth_timeout_pnc;
     int auth_timeout_eim;

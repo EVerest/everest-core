@@ -21,7 +21,7 @@ types::board_support_common::BspEvent to_bsp_event(CpState s) {
         return {types::board_support_common::Event::F};
 
     default:
-        return {types::board_support_common::Event::PermanentFault};
+        return {types::board_support_common::Event::F};
     }
 }
 

@@ -52,6 +52,8 @@ void ISO15118_chargerImpl::init() {
         dlog(DLOG_LEVEL_DEBUG, "tls-key-logging enabled (path: %s)", mod->config.tls_key_logging_path.c_str());
     }
 
+    v2g_ctx->network_read_timeout_tls = mod->config.tls_timeout;
+
     v2g_ctx->certs_path = mod->info.paths.etc / CERTS_SUB_DIR;
 
     /* Configure if the contract certificate chain should be verified locally */

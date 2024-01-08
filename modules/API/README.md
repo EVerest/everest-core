@@ -102,7 +102,7 @@ This variable is published every second and contains telemetry of the EVSE.
     }
 ```
 
-### everest_api/evse_manager/var/telemetry
+### everest_api/evse_manager/var/powermeter
 This variable is published every second and contains powermeter information of the EVSE.
 ```json
     {
@@ -148,6 +148,12 @@ If the OCPP module has not yet published its "is_connected" status or no OCPP mo
 
 
 ## Commands and variables published in response
+### everest_api/evse_manager/cmd/enable
+Command to enable a connector on the EVSE. They payload should be a positive integer identifying the connector that should be enabled. If the payload is 0 the whole EVSE is enabled.
+
+### everest_api/evse_manager/cmd/disable
+Command to disable a connector on the EVSE. They payload should be a positive integer identifying the connector that should be disabled. If the payload is 0 the whole EVSE is disabled.
+
 ### everest_api/evse_manager/cmd/pause_charging
 If any arbitrary payload is published to this topic charging will be paused by the EVSE.
 

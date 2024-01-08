@@ -1,4 +1,6 @@
-description: OCPP types
+description: >-
+  OCPP types (OCPP1.6 and OCPP2.0.1). The types are based more on the type definitions of OCPP201, 
+  as these offer more flexibility and are easier to transfer to OCPP1.6 than vice versa.
 types:
   DataTransferStatus:
     description: Data Transfer Status enum
@@ -122,3 +124,352 @@ types:
       info:
         description: Additional information about the occurred security event
         type: string
+  EVSE:
+    description: >-
+      Type of an EVSE. If only the id is present, this type identifies an EVSE.
+      If also a connector_id is given, this type identifies a Connector of the EVSE
+    type: object
+    required:
+      - id
+    properties:
+      id:
+        description: Id of the EVSE
+        type: integer
+        minimum: 1
+      connector_id:
+        description: An id to designate a specific connector (on an EVSE) by connector index number
+        type: integer
+        minimum: 1
+  Variable:
+    description: >-
+      Type for a variable with a name and an optional instance
+      For OCPP1.6: A Variable should only contain a name. The name identifies
+        the configuration key.
+      For OCPP2.0.1: All properties of the Variable can be used
+    type: object
+    required:
+      - name
+    properties:
+      name:
+        description: Name of a variable
+        type: string
+        minLength: 0
+        maxLength: 50
+      instance:
+        description: Name of instance in case the variable exists as multiple instances
+        type: string
+        minLength: 0
+        maxLength: 50
+  Component:
+    description: >-
+      Type for a component with name, optional instance and optional evse
+      For OCPP1.6: A definition of a Component doesn't exist in OCPP1.6; In the context of OCPP1.6
+        this type may not be relevant or used.
+      For OCPP2.0.1: All properties of the Component can be used 
+    type: object
+    required:
+      - name
+    properties:
+      name:
+        description: Name of a component
+        type: string
+        minLength: 0
+        maxLength: 50
+      instance:
+        description: Name of instance in case the component exists as multiple instances
+        type: string
+        minLength: 0
+        maxLength: 50
+      evse:
+        description: >-
+          Specifies the EVSE when component is located at EVSE level, also specifies 
+          the connector when component is located at Connector level
+        type: object
+        $ref: /ocpp#/EVSE
+  ComponentVariable:
+    description: >-
+      Type for a combination of component and variable.
+      Note that for OCPP1.6 only the Variable.name (configuration key) is sufficient to identify a 
+      configuration key. For OCPP2.0.1 all properties of the type(s) can be used. 
+    type: object
+    required:
+      - component
+      - variable
+    properties:
+      component:
+        description: Component
+        type: object
+        $ref: /ocpp#/Component
+      variable:
+        description: Variable
+        type: object
+        $ref: /ocpp#/Variable
+  AttributeEnum:
+    description: >-
+      Attribute enum
+      Actual: The actual value of a variable
+      Target: The target value of a variable
+      MinSet: The minimal allowed value of a variable
+      MaxSet: The maximum allowed value of a variable
+    type: string
+    enum:
+      - Actual
+      - Target
+      - MinSet
+      - MaxSet
+  GetVariableStatusEnumType:
+    description: >-
+      Indicates the status of the GetVariableRequest as part of the GetVariableResult operation
+      Accepted: Variable successfully retrieved
+      Rejected: Request is rejected
+      UnknownComponent: Component is not known
+      UnknownVariable: Variable is not known
+      NotSupportedAttributeType: The AttributeType is not supported
+    type: string
+    enum:
+      - Accepted
+      - Rejected
+      - UnknownComponent
+      - UnknownVariable
+      - NotSupportedAttributeType
+  SetVariableStatusEnumType:
+    description: >-
+      Indicates the status of the SetVariableRequest operation as part of the SetVariableResult
+      Accepted: Variable successfully set
+      Rejected: Request is rejected
+      UnknownComponent: Component is not known
+      UnknownVariable: Variable is not known
+      NotSupportedAttributeType: The AttributeType is not supported
+      RebootRequired: A reboot is required
+    type: string
+    enum:
+      - Accepted
+      - Rejected
+      - UnknownComponent
+      - UnknownVariable
+      - NotSupportedAttributeType
+      - RebootRequired
+  EventTriggerEnum:
+    description: >-
+      Indicates the trigger reason of a generic event as part of the type EventData
+      Alerting: Monitored variable has passed an Lower or Upper Threshold
+      Delta: Delta Monitored Variable value has changed by more than specified amount
+      Periodic: Periodic Monitored Variable has been sampled for reporting at the specified interval
+    type: string
+    enum:
+      - Alerting
+      - Delta
+      - Periodic
+  EventNotificationType:
+    description: >-
+      Indicates the event notification type as part of the type EventData
+      HardWiredNotification: The software implemented by the manufacturer triggered a hardwired notification
+      HardWiredMonitor: Triggered by a monitor, which is hardwired by the manufacturer
+      PreconfiguredMonitor: Triggered by a monitor, which is preconfigured by the manufacturer.
+      CustomMonitor: Triggered by a monitor which is set by a message by the Charging Station Operator.
+    type: string
+    enum:
+      - HardWiredNotification
+      - HardWiredMonitor
+      - PreconfiguredMonitor
+      - CustomMonitor
+  GetVariableRequest:
+    description: >-
+      Type to request a variable value (OCPP2.0.1) or configuration value (OCPP1.6)
+    type: object
+    required:
+      - component_variable
+    properties:
+      component_variable:
+        description: >-
+          Identifier for which the value should be requested
+        type: object
+        $ref: /ocpp#/ComponentVariable
+      attribute_type:
+        description: AttributeEnum for which the value should be requested. When absent, actual is assumed
+        type: string
+        $ref: /ocpp#/AttributeEnum
+  GetVariableResult:
+    description: Result of a GetVariableRequest
+    type: object
+    required:
+      - status
+      - component_variable
+    properties:
+      status:
+        description: Status of the GetVariableResult
+        type: string
+        $ref: /ocpp#/GetVariableStatusEnumType
+      attribute_type:
+        description: AttributeEnum for which the value was requested. When absent, actual is assumed
+        type: string
+        $ref: /ocpp#/AttributeEnum
+      value:
+        description: >-
+          Value of the requested variable and AttributeEnum. This field can only be empty when the given
+          status is NOT accepted
+        type: string
+        minLength: 0
+        maxLength: 2500
+      component_variable:
+        description: Identifier for which the value was requested
+        type: object
+        $ref: /ocpp#/ComponentVariable
+  SetVariableRequest:
+    description: Type to request to set a variable or configuration key
+    type: object
+    required:
+      - component_variable
+      - value
+    properties:
+      component_variable:
+        description: Identifier for which the value should be set
+        type: object
+        $ref: /ocpp#/ComponentVariable
+      value:
+        description: Value of the variable that should be set
+        type: string
+        minLength: 0
+        maxLength: 1000
+      attribute_type:
+        description: AttributeEnum for which the value should be set. When absent, actual is assumed
+        type: string
+        $ref: /ocpp#/AttributeEnum
+  SetVariableResult:
+    description: Result of a SetVariableRequest
+    type: object
+    required:
+      - status
+      - component_variable
+    properties:
+      status:
+        description: Status of the SetVariableResult
+        type: string
+        $ref: /ocpp#/SetVariableStatusEnumType
+      component_variable:
+        description: Identifier for which the set of the value should be requested
+        type: object
+        $ref: /ocpp#/ComponentVariable
+      attribute_type:
+        description: AttributeEnum for which the set of the value is requested. When absent, actual is assumed
+        type: string
+        $ref: /ocpp#/AttributeEnum
+  EventData:
+    description: Type to report an event notification for a component-variable
+    type: object
+    required:
+      - component_variable
+      - event_id
+      - timestamp
+      - trigger
+      - actual_value
+      - event_notification_type
+    properties:
+      component_variable:
+        description: Identifier for which the event occured
+        type: object
+        $ref: /ocpp#/ComponentVariable
+      event_id:
+        description: Identifies the event
+        type: integer
+      timestamp:
+        description: Timestamp of the moment the report was generated
+        type: string
+        format: date-time
+      trigger:
+        description: Type of the monitor that triggered this event
+        type: string
+        $ref: /ocpp#/EventTriggerEnum
+      actual_value:
+        description: Actual value of the variable
+        type: string
+        maxLength: 2500      
+      event_notification_type:
+        description: Type of the event notification
+        type: string
+        $ref: /ocpp#/EventNotificationType
+      cause:
+        description: Refers to the Id of an event that is considered to be the cause for this event
+        type: integer
+      tech_code:
+        description: Technical (error) code as reported by component
+        type: string
+        maxLength: 50
+      tech_info:
+        description: Technical detail information as reported by component
+        type: string
+        maxLength: 500
+      cleared:
+        description: Cleared is set to true to report the clearing of a monitored situation
+        type: boolean
+      transaction_id:
+        description: >-
+          If an event notification is linked to a specific transaction, this field can be used
+          to specify its transactionId
+        type: string
+        maxLength: 36
+      variable_monitoring_id:
+        description: Identifies the VariableMonitoring which triggered the event
+        type: integer
+  OperationalStatusEnumType:
+    description: >-
+      Operational status of Charging Station /EVSE / Connector
+    type: string
+    enum:
+      - Inoperative
+      - Operative
+  ChangeAvailabilityRequest:
+    description: Request type to change the availability of the Charging Station/ an EVSE / a Connector.
+    type: object
+    required:
+      - operational_status
+    properties:
+      operational_status:
+        description: Type of availability change that the Charging Station should perform.
+        type: string
+        $ref: /ocpp#/OperationalStatusEnumType
+      evse:
+        description: >-
+          Specify EVSE/Connector whose status is changed. When omitted, the
+          message refers to the Charging Station as a whole.
+        type: object
+        $ref: /ocpp#/EVSE
+  ChangeAvailabilityStatusEnumType:
+    description: >-
+      Status returned in response to ChangeAvailabilityRequest.
+    type: string
+    enum:
+      - Accepted
+      - Rejected
+      - Scheduled
+  StatusInfoType:
+    description: >-
+      Element providing more information about the status.
+    type: object
+    required:
+      - reason_code
+    properties:
+      reason_code:
+        description: >-
+          A predefined code for the reason why the status is returned in this response. 
+          The string is case-insensitive.
+        type: string
+      additional_info:
+        description: >-
+          Additional text to provide detailed information
+        type: string
+  ChangeAvailabilityResponse:
+    description: Response type to request to change the availability of the Charging Station/ an EVSE / a Connector.
+    type: object
+    required:
+      - status
+    properties:
+      status:
+        description: Indicates whether the Charging Station is able to perform the availability change.
+        type: string
+        $ref: /ocpp#/ChangeAvailabilityStatusEnumType
+      status_info:
+        description: Detailed status information.
+        type: object
+        $ref: /ocpp#/StatusInfoType
+

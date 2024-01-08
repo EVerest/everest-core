@@ -24,9 +24,9 @@ types::power_supply_DC::Capabilities power_supply_DCImpl::handle_getCapabilities
     caps.bidirectional = false;
     caps.conversion_efficiency_export = 0.9;
     caps.max_export_current_A = 25;
-    caps.max_export_voltage_V = 1000;
+    caps.max_export_voltage_V = mod->config.dc_max_voltage;
     caps.min_export_current_A = 0;
-    caps.min_export_voltage_V = 180;
+    caps.min_export_voltage_V = 50;
     caps.max_export_power_W = 10000;
     caps.current_regulation_tolerance_A = 1;
     caps.peak_current_ripple_A = 0;

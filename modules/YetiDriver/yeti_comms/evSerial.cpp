@@ -18,9 +18,7 @@
 #include <everest/3rd_party/nanopb/pb_decode.h>
 #include <everest/3rd_party/nanopb/pb_encode.h>
 
-#include "common.pb.h"
-#include "hi2lo.pb.h"
-#include "lo2hi.pb.h"
+#include "yeti.pb.h"
 
 evSerial::evSerial() {
     fd = 0;
@@ -142,44 +140,39 @@ void evSerial::handlePacket(uint8_t* buf, int len) {
 
     len -= 4;
 
-    LoToHi msg_in;
+    McuToEverest msg_in;
     pb_istream_t istream = pb_istream_from_buffer(buf, len);
 
-    if (pb_decode(&istream, LoToHi_fields, &msg_in))
+    if (pb_decode(&istream, McuToEverest_fields, &msg_in))
         switch (msg_in.which_payload) {
 
-        case LoToHi_state_update_tag:
-            // printf("Received state_update\n");
-            signalStateUpdate(msg_in.payload.state_update);
-            break;
-        case LoToHi_debug_update_tag:
-            // printf("Received debug_update\n");
-            signalDebugUpdate(msg_in.payload.debug_update);
-            break;
-        case LoToHi_keep_alive_tag:
+        case McuToEverest_keep_alive_tag:
             // printf("Received keep_alive_lo\n");
             signalKeepAliveLo(msg_in.payload.keep_alive);
             // detect connection timeout if keep_alive packets stop coming...
             last_keep_alive_lo_timestamp = date::utc_clock::now();
             break;
-        case LoToHi_power_meter_tag:
-            // printf("Received power_meter\n");
-            // FIXME: in the long run we could set the clock in the uC. But for now we just fix the timestamp here...
-            {
-                auto unix_timestamp = std::chrono::seconds(std::time(NULL));
-                msg_in.payload.power_meter.time_stamp = unix_timestamp.count();
-            }
+        case McuToEverest_power_meter_tag: {
+            auto unix_timestamp = std::chrono::seconds(std::time(NULL));
+            msg_in.payload.power_meter.time_stamp = unix_timestamp.count();
             signalPowerMeter(msg_in.payload.power_meter);
+        } break;
+        case McuToEverest_cp_state_tag:
+            signalCPState(msg_in.payload.cp_state);
             break;
-        case LoToHi_simulation_feedback_tag:
-            // printf("Received power_meter\n");
-            signalSimulationFeedback(msg_in.payload.simulation_feedback);
+        case McuToEverest_pp_state_tag:
+            signalPPState(msg_in.payload.pp_state);
             break;
-        case LoToHi_event_tag:
-            // printf("Received event %i\n",msg_in.payload.event);
-            signalEvent(msg_in.payload.event);
+        case McuToEverest_relais_state_tag:
+            signalRelaisState(msg_in.payload.relais_state);
             break;
-        case LoToHi_reset_done_tag:
+        case McuToEverest_lock_state_tag:
+            signalLockState(msg_in.payload.lock_state);
+            break;
+        case McuToEverest_error_flags_tag:
+            signalErrorFlags(msg_in.payload.error_flags);
+            break;
+        case McuToEverest_reset_tag:
             // printf("Received reset_done\n");
             reset_done_flag = true;
             if (!forced_reset)
@@ -259,11 +252,11 @@ void evSerial::readThread() {
     }
 }
 
-bool evSerial::linkWrite(HiToLo* m) {
+bool evSerial::linkWrite(EverestToMcu* m) {
     uint8_t tx_packet_buf[1024];
     uint8_t encode_buf[1500];
     pb_ostream_t ostream = pb_ostream_from_buffer(tx_packet_buf, sizeof(tx_packet_buf) - 4);
-    bool status = pb_encode(&ostream, HiToLo_fields, m);
+    bool status = pb_encode(&ostream, EverestToMcu_fields, m);
 
     if (!status) {
         // couldn't encode
@@ -320,122 +313,24 @@ bool evSerial::serial_timed_out() {
     return false;
 }
 
-void evSerial::setMaxCurrent(float c) {
-    HiToLo msg_out = HiToLo_init_default;
-    msg_out.which_payload = HiToLo_set_max_current_tag;
-    msg_out.payload.set_max_current.ampere = c;
-    linkWrite(&msg_out);
-}
-
-void evSerial::setThreePhases(bool n) {
-    HiToLo msg_out = HiToLo_init_default;
-    msg_out.which_payload = HiToLo_set_three_phases_tag;
-    msg_out.payload.set_three_phases.n = n;
-    linkWrite(&msg_out);
-}
-
-void evSerial::enableRCD(bool e) {
-    HiToLo msg_out = HiToLo_init_default;
-    msg_out.which_payload = HiToLo_enable_rcd_tag;
-    msg_out.payload.enable_rcd.e = e;
-    linkWrite(&msg_out);
-}
-
-void evSerial::setHasVentilation(bool v) {
-    HiToLo msg_out = HiToLo_init_default;
-    msg_out.which_payload = HiToLo_set_has_ventilation_tag;
-    msg_out.payload.set_has_ventilation.v = v;
-    linkWrite(&msg_out);
-}
-
-void evSerial::setCountryCode(const char* iso3166_alpha2_code) {
-    HiToLo msg_out = HiToLo_init_default;
-    msg_out.which_payload = HiToLo_set_country_code_tag;
-    if (strlen(iso3166_alpha2_code) < 10) {
-        strcpy(msg_out.payload.set_country_code.iso3166_alpha2_code, iso3166_alpha2_code);
-        linkWrite(&msg_out);
-    }
-}
-
-void evSerial::setControlMode(InterfaceControlMode c) {
-    HiToLo msg_out = HiToLo_init_default;
-    msg_out.which_payload = HiToLo_set_control_mode_tag;
-    msg_out.payload.set_control_mode.control_mode = c;
-    linkWrite(&msg_out);
-}
-
-void evSerial::setAuth(const char* userid) {
-    HiToLo msg_out = HiToLo_init_default;
-    msg_out.which_payload = HiToLo_set_auth_tag;
-    if (strlen(userid) < 50) {
-        strcpy(msg_out.payload.set_auth.userid, userid);
-        linkWrite(&msg_out);
-    }
-}
-
-void evSerial::setPWM(uint32_t mode, float dc) {
-    HiToLo msg_out = HiToLo_init_default;
-    msg_out.which_payload = HiToLo_set_pwm_tag;
-    msg_out.payload.set_pwm.mode = mode;
-    msg_out.payload.set_pwm.duty_cycle = dc;
+void evSerial::setPWM(uint32_t dc) {
+    EverestToMcu msg_out = EverestToMcu_init_default;
+    msg_out.which_payload = EverestToMcu_pwm_duty_cycle_tag;
+    msg_out.payload.pwm_duty_cycle = dc;
     linkWrite(&msg_out);
 }
 
 void evSerial::allowPowerOn(bool p) {
-    HiToLo msg_out = HiToLo_init_default;
-    msg_out.which_payload = HiToLo_allow_power_on_tag;
-    msg_out.payload.allow_power_on.p = p;
+    EverestToMcu msg_out = EverestToMcu_init_default;
+    msg_out.which_payload = EverestToMcu_allow_power_on_tag;
+    msg_out.payload.allow_power_on = p;
     linkWrite(&msg_out);
 }
 
-bool evSerial::forceUnlock() {
-    HiToLo msg_out = HiToLo_init_default;
-    msg_out.which_payload = HiToLo_force_unlock_tag;
-    linkWrite(&msg_out);
-    return true; // FIXME: actuall return success value from uC
-}
-
-void evSerial::enable() {
-    HiToLo msg_out = HiToLo_init_default;
-    msg_out.which_payload = HiToLo_enable_tag;
-    linkWrite(&msg_out);
-}
-
-void evSerial::disable() {
-    HiToLo msg_out = HiToLo_init_default;
-    msg_out.which_payload = HiToLo_disable_tag;
-    linkWrite(&msg_out);
-}
-
-void evSerial::switchThreePhasesWhileCharging(bool n) {
-    HiToLo msg_out = HiToLo_init_default;
-    msg_out.which_payload = HiToLo_switch_three_phases_while_charging_tag;
-    msg_out.payload.switch_three_phases_while_charging.n = n;
-    linkWrite(&msg_out);
-}
-
-void evSerial::replug(int t) {
-    HiToLo msg_out = HiToLo_init_default;
-    msg_out.which_payload = HiToLo_replug_tag;
-    msg_out.payload.replug.time = t;
-    linkWrite(&msg_out);
-}
-
-void evSerial::pauseCharging() {
-    HiToLo msg_out = HiToLo_init_default;
-    msg_out.which_payload = HiToLo_pause_charging_tag;
-    linkWrite(&msg_out);
-}
-
-void evSerial::resumeCharging() {
-    HiToLo msg_out = HiToLo_init_default;
-    msg_out.which_payload = HiToLo_resume_charging_tag;
-    linkWrite(&msg_out);
-}
-
-void evSerial::restart() {
-    HiToLo msg_out = HiToLo_init_default;
-    msg_out.which_payload = HiToLo_restart_tag;
+void evSerial::forceUnlock() {
+    EverestToMcu msg_out = EverestToMcu_init_default;
+    msg_out.which_payload = EverestToMcu_connector_lock_tag;
+    msg_out.payload.connector_lock = false;
     linkWrite(&msg_out);
 }
 
@@ -457,8 +352,8 @@ bool evSerial::reset(const int reset_pin) {
         system(cmd);
     } else {
         // Try to soft reset Yeti controller to be in a known state
-        HiToLo msg_out = HiToLo_init_default;
-        msg_out.which_payload = HiToLo_reset_tag;
+        EverestToMcu msg_out = EverestToMcu_init_default;
+        msg_out.which_payload = EverestToMcu_reset_tag;
         linkWrite(&msg_out);
     }
 
@@ -486,34 +381,18 @@ bool evSerial::reset(const int reset_pin) {
 }
 
 void evSerial::firmwareUpdate(bool rom) {
-    HiToLo msg_out = HiToLo_init_default;
-    msg_out.which_payload = HiToLo_firmware_update_tag;
+    EverestToMcu msg_out = EverestToMcu_init_default;
+    msg_out.which_payload = EverestToMcu_firmware_update_tag;
     msg_out.payload.firmware_update.invoke_rom_bootloader = rom;
     linkWrite(&msg_out);
 }
 
-void evSerial::enableSimulation(bool s) {
-    HiToLo msg_out = HiToLo_init_default;
-    msg_out.which_payload = HiToLo_enable_simulation_tag;
-    msg_out.payload.enable_simulation.s = s;
-    linkWrite(&msg_out);
-}
-
-void evSerial::setSimulationData(SimulationData s) {
-    HiToLo msg_out = HiToLo_init_default;
-    msg_out.which_payload = HiToLo_simulation_data_tag;
-    msg_out.payload.simulation_data = s;
-    linkWrite(&msg_out);
-}
-
 void evSerial::keepAlive() {
-    HiToLo msg_out = HiToLo_init_default;
-    msg_out.which_payload = HiToLo_keep_alive_tag;
+    EverestToMcu msg_out = EverestToMcu_init_default;
+    msg_out.which_payload = EverestToMcu_keep_alive_tag;
     msg_out.payload.keep_alive.time_stamp = 0;
     msg_out.payload.keep_alive.hw_type = 0;
     msg_out.payload.keep_alive.hw_revision = 0;
-    msg_out.payload.keep_alive.protocol_version_major = 0;
-    msg_out.payload.keep_alive.protocol_version_minor = 1;
     strcpy(msg_out.payload.keep_alive.sw_version_string, "n/a");
     linkWrite(&msg_out);
 }
