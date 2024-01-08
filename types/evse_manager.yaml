@@ -228,17 +228,39 @@ types:
       Note this is only kept for compatibility with the legacy error handling and will be removed soon.
     type: string
     enum:
-      - Car
-      - CarDiodeFault
-      - RCD
-      - RCDDC
+      - RCD_Selftest
+      - RCD_DC
+      - RCD_AC
+      - VendorError
+      - VendorWarning
+      - ConnectorLockCapNotCharged
+      - ConnectorLockUnexpectedOpen
+      - ConnectorLockUnexpectedClose
+      - ConnectorLockFailedLock
+      - ConnectorLockFailedUnlock
+      - MREC1ConnectorLockFailure
+      - MREC2GroundFailure
+      - MREC3HighTemperature
+      - MREC4OverCurrentFailure
+      - MREC5OverVoltage
+      - MREC6UnderVoltage
+      - MREC8EmergencyStop
+      - MREC10InvalidVehicleMode
+      - MREC14PilotFault
+      - MREC15PowerLoss
+      - MREC17EVSEContactorFault
+      - MREC18CableOverTempDerate
+      - MREC19CableOverTempStop
+      - MREC20PartialInsertion
+      - MREC23ProximityFault
+      - MREC24ConnectorVoltageHigh
+      - MREC25BrokenLatch
+      - MREC26CutCable
+      - DiodeFault
       - VentilationNotAvailable
-      - Internal
-      - SLAC
-      - HLC
-      - Other
       - BrownOut
       - EnergyManagement
+      - PermanentFault
   Error:
     description: >-
       Error object that contains information about the error and optional vendor error information

@@ -1374,7 +1374,7 @@ void Charger::set_hlc_allow_close_contactor(bool on) {
     hlc_allow_close_contactor = on;
 }
 
-void Charger::set_hlc_error(types::evse_manager::ErrorEnum e) {
+void Charger::set_hlc_error() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
     error_prevent_charging_flag = true;
 }

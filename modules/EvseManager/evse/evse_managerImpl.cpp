@@ -245,7 +245,7 @@ void evse_managerImpl::ready() {
         } else if (e == types::evse_manager::SessionEventEnum::Error) {
             types::evse_manager::Error error;
             // FIXME this should report something useful instead!
-            error.error_code = types::evse_manager::ErrorEnum::Other;
+            error.error_code = types::evse_manager::ErrorEnum::PermanentFault;
             se.error = error;
         } else if (e == types::evse_manager::SessionEventEnum::Enabled or
                    e == types::evse_manager::SessionEventEnum::Disabled) {

@@ -74,7 +74,7 @@ public:
     bool enable(int connector_id);
     bool disable(int connector_id);
     void set_faulted();
-    void set_hlc_error(types::evse_manager::ErrorEnum e);
+    void set_hlc_error();
     void set_rcd_error();
     // switch to next charging session after Finished
     bool restart();
@@ -227,7 +227,6 @@ private:
     EvseState last_state;
     EvseState last_state_detect_state_change;
 
-    types::evse_manager::ErrorEnum errorState{types::evse_manager::ErrorEnum::Internal};
     std::chrono::system_clock::time_point currentStateStarted;
 
     bool connectorEnabled;
