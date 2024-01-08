@@ -1465,7 +1465,7 @@ void EvseManager::fail_session() {
     if (config.charge_mode == "DC") {
         powersupply_DC_off();
     }
-    charger->set_hlc_error(types::evse_manager::ErrorEnum::HLC);
+    charger->set_hlc_error();
 }
 
 types::evse_manager::EVInfo EvseManager::get_ev_info() {
