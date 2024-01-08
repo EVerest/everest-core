@@ -153,6 +153,10 @@ int main(int argc, char* argv[]) {
                 printf("Soft reset\n");
                 p.reset(-1);
                 break;
+            case 'R':
+                // hard reset
+                p.reset(1);
+                break;
             case 'V':
                 printf("Sending keep alive\n");
                 p.keep_alive();

@@ -20,6 +20,8 @@
 
 #include "phyverso.pb.h"
 
+#include "bsl_gpio.h"
+
 evSerial::evSerial() {
     fd = 0;
     baud = 0;
@@ -353,16 +355,9 @@ bool evSerial::reset(const int reset_pin) {
     forced_reset = true;
 
     if (reset_pin > 0) {
-        // Try to hardware reset Yeti controller to be in a known state
-        char cmd[100];
-        sprintf(cmd, "echo %i >/sys/class/gpio/export", reset_pin);
-        system(cmd);
-        sprintf(cmd, "echo out > /sys/class/gpio/gpio%i/direction", reset_pin);
-        system(cmd);
-        sprintf(cmd, "echo 0 > /sys/class/gpio/gpio%i/value", reset_pin);
-        system(cmd);
-        sprintf(cmd, "echo 1 > /sys/class/gpio/gpio%i/value", reset_pin);
-        system(cmd);
+        printf("Hard reset\n");
+        auto bsl_gpio = BSL_GPIO();
+        bsl_gpio.hard_reset();
     } else {
         // Try to soft reset Yeti controller to be in a known state
         EverestToMcu msg_out = EverestToMcu_init_default;
