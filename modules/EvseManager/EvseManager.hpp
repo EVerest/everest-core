@@ -175,6 +175,7 @@ public:
     void ready_to_start_charging();
 
     std::unique_ptr<IECStateMachine> bsp;
+    std::unique_ptr<ErrorHandling> error_handling;
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
@@ -258,7 +259,6 @@ private:
 
     std::atomic_bool current_demand_active{false};
 
-    std::unique_ptr<ErrorHandling> error_handling;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
