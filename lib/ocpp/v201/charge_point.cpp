@@ -839,13 +839,13 @@ std::optional<NetworkConnectionProfile> ChargePoint::get_network_connection_prof
 }
 
 void ChargePoint::next_network_configuration_priority() {
-    std::vector<SetNetworkProfileRequest> network_connection_profiles = json::parse(
-        this->device_model->get_value<std::string>(ControllerComponentVariables::NetworkConnectionProfiles));
-    if (network_connection_profiles.size() > 1) {
+    std::vector<SetNetworkProfileRequest> network_connection_priorities = json::parse(
+        this->device_model->get_value<std::string>(ControllerComponentVariables::NetworkConfigurationPriority));
+    if (network_connection_priorities.size() > 1) {
         EVLOG_info << "Switching to next network configuration priority";
     }
     this->network_configuration_priority =
-        (this->network_configuration_priority + 1) % (network_connection_profiles.size());
+        (this->network_configuration_priority + 1) % (network_connection_priorities.size());
 }
 
 void ChargePoint::remove_network_connection_profiles_below_actual_security_profile() {
