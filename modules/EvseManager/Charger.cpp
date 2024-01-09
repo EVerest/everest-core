@@ -18,12 +18,14 @@
 
 namespace module {
 
-Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, 
-                 const std::unique_ptr<ErrorHandling>& error_handling,
+Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_ptr<ErrorHandling>& error_handling,
                  const std::vector<std::unique_ptr<powermeterIntf>>& r_powermeter_billing,
-                 const types::evse_board_support::Connector_type& connector_type,
-                 const std::string& evse_id) :
-    bsp(bsp), error_handling(error_handling), r_powermeter_billing(r_powermeter_billing), connector_type(connector_type),  evse_id(evse_id) {
+                 const types::evse_board_support::Connector_type& connector_type, const std::string& evse_id) :
+    bsp(bsp),
+    error_handling(error_handling),
+    r_powermeter_billing(r_powermeter_billing),
+    connector_type(connector_type),
+    evse_id(evse_id) {
     connectorEnabled = true;
     maxCurrent = 6.0;
     if (connector_type == types::evse_board_support::Connector_type::IEC62196Type2Socket) {
