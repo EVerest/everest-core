@@ -14,6 +14,13 @@ const std::string INIT_SQL = "init.sql";
 
 namespace fs = std::filesystem;
 
+struct ErrorInfo {
+    ocpp::v16::ChargePointErrorCode ocpp_error_code;
+    std::optional<std::string> info;
+    std::optional<std::string> vendor_id;
+    std::optional<std::string> vendor_error_code;
+};
+
 static ocpp::FirmwareStatusNotification
 get_firmware_status_notification(const types::system::FirmwareUpdateStatusEnum status) {
     switch (status) {
@@ -50,29 +57,62 @@ get_firmware_status_notification(const types::system::FirmwareUpdateStatusEnum s
     }
 }
 
-static ocpp::v16::ChargePointErrorCode get_ocpp_error_code(const std::string& evse_error) {
-    if (evse_error == "Car") {
-        return ocpp::v16::ChargePointErrorCode::OtherError;
-    } else if (evse_error == "CarDiodeFault") {
-        return ocpp::v16::ChargePointErrorCode::EVCommunicationError;
-    } else if (evse_error == "Relais") {
-        return ocpp::v16::ChargePointErrorCode::OtherError;
-    } else if (evse_error == "RCD") {
-        return ocpp::v16::ChargePointErrorCode::GroundFailure;
-    } else if (evse_error == "VentilationNotAvailable") {
-        return ocpp::v16::ChargePointErrorCode::OtherError;
-    } else if (evse_error == "OverCurrent") {
-        return ocpp::v16::ChargePointErrorCode::OverCurrentFailure;
-    } else if (evse_error == "Internal") {
-        return ocpp::v16::ChargePointErrorCode::OtherError;
-    } else if (evse_error == "SLAC") {
-        return ocpp::v16::ChargePointErrorCode::EVCommunicationError;
-    } else if (evse_error == "HLC") {
-        return ocpp::v16::ChargePointErrorCode::EVCommunicationError;
-    } else if (evse_error == "NoError") {
-        return ocpp::v16::ChargePointErrorCode::NoError;
+static ErrorInfo get_error_info(const std::string& evse_error) {
+    if (evse_error == "MREC1ConnectorLockFailure" or evse_error == "ConnectorLockFailure") {
+        return {ocpp::v16::ChargePointErrorCode::ConnectorLockFailure};
+    }
+    if (evse_error == "MREC2GroundFailure" or evse_error == "GroundFailure") {
+        return {ocpp::v16::ChargePointErrorCode::GroundFailure};
+    }
+    if (evse_error == "MREC3HighTemperature" or evse_error == "HighTemperature") {
+        return {ocpp::v16::ChargePointErrorCode::HighTemperature};
+    }
+    if (evse_error == "MREC4OverCurrentFailure" or evse_error == "OverCurrentFailure") {
+        return {ocpp::v16::ChargePointErrorCode::OverCurrentFailure};
+    }
+    if (evse_error == "MREC5OverVoltage" or evse_error == "OverVoltage") {
+        return {ocpp::v16::ChargePointErrorCode::OverVoltage};
+    }
+    if (evse_error == "MREC6UnderVoltage" or evse_error == "UnderVoltage") {
+        return {ocpp::v16::ChargePointErrorCode::UnderVoltage};
+    }
+    if (evse_error == "MREC8EmergencyStop") {
+        return {ocpp::v16::ChargePointErrorCode::OtherError, "", "https://chargex.inl.gov", "CX008"};
+    }
+    if (evse_error == "MREC10InvalidVehicleMode") {
+        return {ocpp::v16::ChargePointErrorCode::OtherError, "", "https://chargex.inl.gov", "CX010"};
+    }
+    if (evse_error == "MREC14PilotFault") {
+        return {ocpp::v16::ChargePointErrorCode::OtherError, "", "https://chargex.inl.gov", "CX014"};
+    }
+    if (evse_error == "MREC15PowerLoss") {
+        return {ocpp::v16::ChargePointErrorCode::OtherError, "", "https://chargex.inl.gov", "CX015"};
+    }
+    if (evse_error == "MREC17EVSEContactorFault") {
+        return {ocpp::v16::ChargePointErrorCode::OtherError, "", "https://chargex.inl.gov", "CX017"};
+    }
+    if (evse_error == "MREC18CableOverTempDerate") {
+        return {ocpp::v16::ChargePointErrorCode::OtherError, "", "https://chargex.inl.gov", "CX018"};
+    }
+    if (evse_error == "MREC19CableOverTempStop") {
+        return {ocpp::v16::ChargePointErrorCode::OtherError, "", "https://chargex.inl.gov", "CX019"};
+    }
+    if (evse_error == "MREC20PartialInsertion") {
+        return {ocpp::v16::ChargePointErrorCode::OtherError, "", "https://chargex.inl.gov", "CX020"};
+    }
+    if (evse_error == "MREC23ProximityFault") {
+        return {ocpp::v16::ChargePointErrorCode::OtherError, "", "https://chargex.inl.gov", "CX023"};
+    }
+    if (evse_error == "MREC24ConnectorVoltageHigh") {
+        return {ocpp::v16::ChargePointErrorCode::OtherError, "", "https://chargex.inl.gov", "CX024"};
+    }
+    if (evse_error == "MREC25BrokenLatch") {
+        return {ocpp::v16::ChargePointErrorCode::OtherError, "", "https://chargex.inl.gov", "CX025"};
+    }
+    if (evse_error == "MREC26CutCable") {
+        return {ocpp::v16::ChargePointErrorCode::OtherError, "", "https://chargex.inl.gov", "CX026"};
     } else {
-        return ocpp::v16::ChargePointErrorCode::OtherError;
+        return {ocpp::v16::ChargePointErrorCode::OtherError};
     }
 }
 
@@ -214,14 +254,16 @@ void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::Ses
         EVLOG_debug << "Connector#" << ocpp_connector_id << ": "
                     << "Received Error";
         const auto evse_error = types::evse_manager::error_enum_to_string(session_event.error.value().error_code);
-        ocpp::v16::ChargePointErrorCode ocpp_error_code = get_ocpp_error_code(evse_error);
-        this->charge_point->on_error(ocpp_connector_id, ocpp_error_code);
+        const auto error_info = get_error_info(evse_error);
+        this->charge_point->on_error(ocpp_connector_id, error_info.ocpp_error_code, error_info.info,
+                                     error_info.vendor_id, error_info.vendor_error_code);
     } else if (event == "AllErrorsCleared") {
         this->charge_point->on_fault(ocpp_connector_id, ocpp::v16::ChargePointErrorCode::NoError);
     } else if (event == "PermanentFault") {
         const auto evse_error = types::evse_manager::error_enum_to_string(session_event.error.value().error_code);
-        ocpp::v16::ChargePointErrorCode ocpp_error_code = get_ocpp_error_code(evse_error);
-        this->charge_point->on_fault(ocpp_connector_id, ocpp_error_code);
+        const auto error_info = get_error_info(evse_error);
+        this->charge_point->on_fault(ocpp_connector_id, error_info.ocpp_error_code, error_info.info, error_info.vendor_id,
+                                     error_info.vendor_error_code);
     } else if (event == "ReservationStart") {
         this->charge_point->on_reservation_start(ocpp_connector_id);
     } else if (event == "ReservationEnd") {
