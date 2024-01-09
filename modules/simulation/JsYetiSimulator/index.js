@@ -466,7 +466,7 @@ function simulation_statemachine(mod) {
 function check_error_rcd(mod) {
   if (mod.rcd_enabled && mod.simulation_data.rcd_current > 5.0) {
     if (!mod.rcd_error_reported) {
-      mod.provides.board_support.raise.ac_rcd_DC('Simulated fault event', 'High');
+      mod.provides.rcd.raise.ac_rcd_DC('Simulated fault event', 'High');
       mod.rcd_error_reported = true;
     }
   } else {
