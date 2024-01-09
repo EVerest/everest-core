@@ -86,6 +86,15 @@ void evse_managerImpl::init() {
             publish_powermeter(p);
         });
     }
+}
+
+void evse_managerImpl::set_session_uuid() {
+    if (session_uuid.empty()) {
+        session_uuid = generate_session_uuid();
+    }
+}
+
+void evse_managerImpl::ready() {
 
     // Register callbacks for errors/permanent faults
     mod->error_handling->signal_error.connect(
@@ -104,15 +113,6 @@ void evse_managerImpl::init() {
             }
             publish_session_event(se);
         });
-}
-
-void evse_managerImpl::set_session_uuid() {
-    if (session_uuid.empty()) {
-        session_uuid = generate_session_uuid();
-    }
-}
-
-void evse_managerImpl::ready() {
 
     // publish evse id at least once
     publish_evse_id(mod->config.evse_id);
