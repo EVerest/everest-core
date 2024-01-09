@@ -71,6 +71,7 @@
       "variable_name": "Power",
       "characteristics": {
         "unit": "W",
+        "maxLimit": 22000,
         "supportsMonitoring": true,
         "dataType": "decimal"
       },

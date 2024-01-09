@@ -678,7 +678,7 @@ const RequiredComponentVariable& BytesPerMessageSendLocalList = {
     ControllerComponents::LocalAuthListCtrlr,
     std::nullopt,
     std::optional<Variable>({
-        "BytesPerMessageSendLocalList",
+        "BytesPerMessage",
     }),
 };
 const ComponentVariable& LocalAuthListCtrlrEnabled = {
@@ -699,7 +699,7 @@ const RequiredComponentVariable& ItemsPerMessageSendLocalList = {
     ControllerComponents::LocalAuthListCtrlr,
     std::nullopt,
     std::optional<Variable>({
-        "ItemsPerMessageSendLocalList",
+        "ItemsPerMessage",
     }),
 };
 const ComponentVariable& LocalAuthListCtrlrStorage = {

@@ -134,7 +134,7 @@
     "TxStopPoint": {
       "variable_name": "TxStopPoint",
       "characteristics": {
-        "valuesList": "ParkingBayOccupancy,EVConnected,Authorized,PowerPathClosed,EnergyTransfer,DataSigned",
+        "valuesList": "ParkingBayOccupancy,EVConnected,Authorized,PowerPathClosed,EnergyTransfer",
         "supportsMonitoring": true,
         "dataType": "MemberList"
       },

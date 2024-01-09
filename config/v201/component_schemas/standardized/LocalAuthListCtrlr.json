@@ -21,7 +21,7 @@
       "type": "boolean"
     },
     "BytesPerMessageSendLocalList": {
-      "variable_name": "BytesPerMessageSendLocalList",
+      "variable_name": "BytesPerMessage",
       "characteristics": {
         "supportsMonitoring": true,
         "dataType": "integer"
@@ -67,7 +67,7 @@
       "type": "integer"
     },
     "ItemsPerMessageSendLocalList": {
-      "variable_name": "ItemsPerMessageSendLocalList",
+      "variable_name": "ItemsPerMessage",
       "characteristics": {
         "supportsMonitoring": true,
         "dataType": "integer"

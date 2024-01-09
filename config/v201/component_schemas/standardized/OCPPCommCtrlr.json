@@ -89,7 +89,8 @@
       "variable_name": "MessageAttemptInterval",
       "characteristics": {
         "supportsMonitoring": true,
-        "dataType": "integer"
+        "dataType": "integer",
+        "unit": "s"
       },
       "attributes": [
         {
@@ -124,7 +125,7 @@
       "characteristics": {
         "valuesList": "1,2",
         "supportsMonitoring": true,
-        "dataType": "string"
+        "dataType": "SequenceList"
       },
       "attributes": [
         {
