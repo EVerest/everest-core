@@ -927,10 +927,29 @@ bool Charger::cancelTransaction(const types::evse_manager::StopTransactionReques
             currentState = EvseState::ChargingPausedEVSE;
         }
 
+        // FIXME(evgeny): We disable pwm here since we need to get signed meter values.
+        // Maybe state machine should be refactored and cancelTransaction should trigger
+        // transition to EvseState::Finished, with active transaction.
+        // This way, the signed meter values will be retrieved there.
+        pwm_off();
         transaction_active = false;
         last_stop_transaction_reason = request.reason;
+        stop_transaction_id_tag.clear();
         if (request.id_tag) {
             stop_transaction_id_tag = request.id_tag.value();
+        }
+
+        for (const auto& meter : r_powermeter_billing) {
+            const auto response = meter->call_stop_transaction(stop_transaction_id_tag);
+            // If we fail to stop the transaction, we ignore since there is no
+            // path to recovery. Its also not clear what to do
+            if (response.status == types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR) {
+                EVLOG_error << "Failed to stop a transaction on the power meter " << response.error.value_or("");
+                break;
+            } else if (response.status == types::powermeter::TransactionRequestStatus::OK) {
+                ocmfStopData = response.ocmf;
+                break;
+            }
         }
 
         signalEvent(types::evse_manager::SessionEventEnum::ChargingFinished);
@@ -976,9 +995,7 @@ bool Charger::startTransaction() {
     // The `TransactionStarted` is a time critical event. We send it before
     // trying to sign the meter values, which takes time to complete.
     signalEvent(types::evse_manager::SessionEventEnum::TransactionStarted);
-    // TODO(ddo) client_id, tariff_id, cable_id and user_data are currently not
-    // set.
-    const types::powermeter::TransactionReq req{evse_id, id_token.id_token, "", 0, 0, ""};
+    const types::powermeter::TransactionReq req{evse_id, "", "", 0, 0, ""};
     for (const auto& meter : r_powermeter_billing) {
         const auto response = meter->call_start_transaction(req);
         // If we want to start the session but fail, we stop the charging since

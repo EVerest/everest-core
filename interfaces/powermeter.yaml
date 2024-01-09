@@ -26,3 +26,6 @@ vars:
     description: Measured dataset
     type: object
     $ref: /powermeter#/Powermeter
+  public_key:
+    description: Public key of the meter
+    type: string
