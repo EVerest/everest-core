@@ -121,12 +121,16 @@ void ChargePoint::on_resume_charging(int32_t connector) {
     this->charge_point->on_resume_charging(connector);
 }
 
-void ChargePoint::on_error(int32_t connector, const ChargePointErrorCode& error_code) {
-    this->charge_point->on_error(connector, error_code);
+void ChargePoint::on_error(int32_t connector, const ChargePointErrorCode& error_code,
+                           const std::optional<CiString<50>>& info, const std::optional<CiString<255>>& vendor_id,
+                           const std::optional<CiString<50>>& vendor_error_code) {
+    this->charge_point->on_error(connector, error_code, info, vendor_id, vendor_error_code);
 }
 
-void ChargePoint::on_fault(int32_t connector, const ChargePointErrorCode& error_code) {
-    this->charge_point->on_fault(connector, error_code);
+void ChargePoint::on_fault(int32_t connector, const ChargePointErrorCode& error_code,
+                           const std::optional<CiString<50>>& info, const std::optional<CiString<255>>& vendor_id,
+                           const std::optional<CiString<50>>& vendor_error_code) {
+    this->charge_point->on_fault(connector, error_code, info, vendor_id, vendor_error_code);
 }
 
 void ChargePoint::on_log_status_notification(int32_t request_id, std::string log_status) {

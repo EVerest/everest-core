@@ -208,7 +208,10 @@ private:
                                       const ocpp::DateTime& datetime);
     void send_meter_value(int32_t connector, MeterValue meter_value);
     void status_notification(const int32_t connector, const ChargePointErrorCode errorCode,
-                             const ChargePointStatus status, const ocpp::DateTime& timestamp);
+                             const ChargePointStatus status, const ocpp::DateTime& timestamp,
+                             const std::optional<CiString<50>>& info = std::nullopt,
+                             const std::optional<CiString<255>>& vendor_id = std::nullopt,
+                             const std::optional<CiString<50>>& vendor_error_code = std::nullopt);
     void diagnostic_status_notification(DiagnosticsStatus status);
     void firmware_status_notification(FirmwareStatus status);
     void log_status_notification(UploadLogStatusEnumType status, int requestId);
@@ -518,12 +521,19 @@ public:
     /// the state machine.
     /// \param connector
     /// \param error_code
-    void on_error(int32_t connector, const ChargePointErrorCode& error);
+    /// \param info Additional free format information related to the error
+    /// \param vendor_id This identifies the vendor-specific implementation
+    /// \param vendor_error_code This contains the vendor-specific error code
+    void on_error(int32_t connector, const ChargePointErrorCode& error_code, const std::optional<CiString<50>>& info,
+                  const std::optional<CiString<255>>& vendor_id, const std::optional<CiString<50>>& vendor_error_code);
 
     /// \brief This function should be called if a fault is detected that prevents further charging operations. The \p
     /// error_code indicates the reason for the fault.
-    /// \param error_code
-    void on_fault(int32_t connector, const ChargePointErrorCode& error_code);
+    /// \param info Additional free format information related to the error
+    /// \param vendor_id This identifies the vendor-specific implementation
+    /// \param vendor_error_code This contains the vendor-specific error code
+    void on_fault(int32_t connector, const ChargePointErrorCode& error_code, const std::optional<CiString<50>>& info,
+                  const std::optional<CiString<255>>& vendor_id, const std::optional<CiString<50>>& vendor_error_code);
 
     /// \brief Chargepoint notifies about new log status \p log_status . This function should be called during a
     /// Diagnostics / Log upload to indicate the current \p log_status .

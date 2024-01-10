@@ -129,13 +129,16 @@ bool ChargePointFSM::handle_event(FSMEvent event, const ocpp::DateTime timestamp
     state = dest_state_it->second;
 
     if (!faulted) {
-        status_notification_callback(state, this->error_code, timestamp);
+        status_notification_callback(state, this->error_code, timestamp, std::nullopt, std::nullopt, std::nullopt);
     }
 
     return true;
 }
 
-bool ChargePointFSM::handle_fault(const ChargePointErrorCode& error_code, const ocpp::DateTime& timestamp) {
+bool ChargePointFSM::handle_fault(const ChargePointErrorCode& error_code, const ocpp::DateTime& timestamp,
+                                  const std::optional<CiString<50>>& info,
+                                  const std::optional<CiString<255>>& vendor_id,
+                                  const std::optional<CiString<50>>& vendor_error_code) {
     if (error_code == this->error_code) {
         // has already been handled and reported
         return false;
@@ -144,16 +147,19 @@ bool ChargePointFSM::handle_fault(const ChargePointErrorCode& error_code, const 
     this->error_code = error_code;
     if (this->error_code == ChargePointErrorCode::NoError) {
         faulted = false;
-        status_notification_callback(state, this->error_code, timestamp);
+        status_notification_callback(state, this->error_code, timestamp, info, vendor_id, vendor_error_code);
     } else {
         faulted = true;
-        status_notification_callback(FSMState::Faulted, error_code, timestamp);
+        status_notification_callback(FSMState::Faulted, error_code, timestamp, info, vendor_id, vendor_error_code);
     }
 
     return true;
 }
 
-bool ChargePointFSM::handle_error(const ChargePointErrorCode& error_code, const ocpp::DateTime& timestamp) {
+bool ChargePointFSM::handle_error(const ChargePointErrorCode& error_code, const ocpp::DateTime& timestamp,
+                                  const std::optional<CiString<50>>& info,
+                                  const std::optional<CiString<255>>& vendor_id,
+                                  const std::optional<CiString<50>>& vendor_error_code) {
     if (error_code == this->error_code) {
         // has already been handled and reported
         return false;
@@ -161,9 +167,9 @@ bool ChargePointFSM::handle_error(const ChargePointErrorCode& error_code, const 
 
     this->error_code = error_code;
     if (!faulted) {
-        status_notification_callback(this->state, error_code, timestamp);
+        status_notification_callback(this->state, error_code, timestamp, info, vendor_id, vendor_error_code);
     } else {
-        status_notification_callback(FSMState::Faulted, error_code, timestamp);
+        status_notification_callback(FSMState::Faulted, error_code, timestamp, info, vendor_id, vendor_error_code);
     }
     return true;
 }
@@ -185,15 +191,21 @@ void ChargePointStates::reset(std::map<int, ChargePointStatus> connector_status_
         } else if (connector_id == 0) {
             state_machine_connector_zero = std::make_unique<ChargePointFSM>(
                 [this](const ChargePointStatus status, const ChargePointErrorCode error_code,
-                       const ocpp::DateTime& timestamp) {
-                    this->connector_status_callback(0, error_code, status, timestamp);
+                       const ocpp::DateTime& timestamp, const std::optional<CiString<50>>& info,
+                       const std::optional<CiString<255>>& vendor_id,
+                       const std::optional<CiString<50>>& vendor_error_code) {
+                    this->connector_status_callback(0, error_code, status, timestamp, info, vendor_id,
+                                                    vendor_error_code);
                 },
                 initial_state);
         } else {
             state_machines.emplace_back(
                 [this, connector_id](ChargePointStatus status, ChargePointErrorCode error_code,
-                                     ocpp::DateTime timestamp) {
-                    this->connector_status_callback(connector_id, error_code, status, timestamp);
+                                     ocpp::DateTime timestamp, std::optional<CiString<50>> info,
+                                     std::optional<CiString<255>> vendor_id,
+                                     std::optional<CiString<50>> vendor_error_code) {
+                    this->connector_status_callback(connector_id, error_code, status, timestamp, info, vendor_id,
+                                                    vendor_error_code);
                 },
                 initial_state);
         }
@@ -211,22 +223,26 @@ void ChargePointStates::submit_event(const int connector_id, FSMEvent event, con
 }
 
 void ChargePointStates::submit_fault(const int connector_id, const ChargePointErrorCode& error_code,
-                                     const ocpp::DateTime& timestamp) {
+                                     const ocpp::DateTime& timestamp, const std::optional<CiString<50>>& info,
+                                     const std::optional<CiString<255>>& vendor_id,
+                                     const std::optional<CiString<50>>& vendor_error_code) {
     const std::lock_guard<std::mutex> lck(state_machines_mutex);
     if (connector_id == 0) {
-        this->state_machine_connector_zero->handle_fault(error_code, timestamp);
+        this->state_machine_connector_zero->handle_fault(error_code, timestamp, info, vendor_id, vendor_error_code);
     } else if (connector_id > 0 && (size_t)connector_id <= state_machines.size()) {
-        state_machines.at(connector_id - 1).handle_fault(error_code, timestamp);
+        state_machines.at(connector_id - 1).handle_fault(error_code, timestamp, info, vendor_id, vendor_error_code);
     }
 }
 
 void ChargePointStates::submit_error(const int connector_id, const ChargePointErrorCode& error_code,
-                                     const ocpp::DateTime& timestamp) {
+                                     const ocpp::DateTime& timestamp, const std::optional<CiString<50>>& info,
+                                     const std::optional<CiString<255>>& vendor_id,
+                                     const std::optional<CiString<50>>& vendor_error_code) {
     const std::lock_guard<std::mutex> lck(state_machines_mutex);
     if (connector_id == 0) {
-        this->state_machine_connector_zero->handle_error(error_code, timestamp);
+        this->state_machine_connector_zero->handle_error(error_code, timestamp, info, vendor_id, vendor_error_code);
     } else if (connector_id > 0 && (size_t)connector_id <= state_machines.size()) {
-        state_machines.at(connector_id - 1).handle_error(error_code, timestamp);
+        state_machines.at(connector_id - 1).handle_error(error_code, timestamp, info, vendor_id, vendor_error_code);
     }
 }
 

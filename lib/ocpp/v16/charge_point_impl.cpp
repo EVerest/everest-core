@@ -94,13 +94,15 @@ ChargePointImpl::ChargePointImpl(const std::string& config, const fs::path& shar
         this->v2g_certificate_timer->interval(V2G_CERTIFICATE_TIMER_INTERVAL);
     });
 
-    this->status =
-        std::make_unique<ChargePointStates>([this](const int32_t connector, const ChargePointErrorCode errorCode,
-                                                   const ChargePointStatus status, const ocpp::DateTime& timestamp) {
+    this->status = std::make_unique<ChargePointStates>(
+        [this](const int32_t connector, const ChargePointErrorCode errorCode, const ChargePointStatus status,
+               const ocpp::DateTime& timestamp, const std::optional<CiString<50>>& info,
+               const std::optional<CiString<255>>& vendor_id, const std::optional<CiString<50>>& vendor_error_code) {
             this->status_notification_timers.at(connector)->stop();
             this->status_notification_timers.at(connector)->timeout(
-                [this, connector, errorCode, status, timestamp]() {
-                    this->status_notification(connector, errorCode, status, timestamp);
+                [this, connector, errorCode, status, timestamp, info, vendor_id, vendor_error_code]() {
+                    this->status_notification(connector, errorCode, status, timestamp, info, vendor_id,
+                                              vendor_error_code);
                 },
                 std::chrono::seconds(this->configuration->getMinimumStatusDuration().value_or(0)));
         });
@@ -2553,12 +2555,18 @@ bool ChargePointImpl::send(CallError call_error) {
 }
 
 void ChargePointImpl::status_notification(const int32_t connector, const ChargePointErrorCode errorCode,
-                                          const ChargePointStatus status, const ocpp::DateTime& timestamp) {
+                                          const ChargePointStatus status, const ocpp::DateTime& timestamp,
+                                          const std::optional<CiString<50>>& info,
+                                          const std::optional<CiString<255>>& vendor_id,
+                                          const std::optional<CiString<50>>& vendor_error_code) {
     StatusNotificationRequest request;
     request.connectorId = connector;
     request.errorCode = errorCode;
     request.status = status;
     request.timestamp = timestamp;
+    request.info = info;
+    request.vendorId = vendor_id;
+    request.vendorErrorCode = vendor_error_code;
     ocpp::Call<StatusNotificationRequest> call(request, this->message_queue->createMessageId());
     this->send<StatusNotificationRequest>(call);
 }
@@ -3365,12 +3373,16 @@ void ChargePointImpl::on_resume_charging(int32_t connector) {
     this->status->submit_event(connector, FSMEvent::StartCharging, ocpp::DateTime());
 }
 
-void ChargePointImpl::on_error(int32_t connector, const ChargePointErrorCode& error_code) {
-    this->status->submit_error(connector, error_code, ocpp::DateTime());
+void ChargePointImpl::on_error(int32_t connector, const ChargePointErrorCode& error_code,
+                               const std::optional<CiString<50>>& info, const std::optional<CiString<255>>& vendor_id,
+                               const std::optional<CiString<50>>& vendor_error_code) {
+    this->status->submit_error(connector, error_code, ocpp::DateTime(), info, vendor_id, vendor_error_code);
 }
 
-void ChargePointImpl::on_fault(int32_t connector, const ChargePointErrorCode& error_code) {
-    this->status->submit_fault(connector, error_code, ocpp::DateTime());
+void ChargePointImpl::on_fault(int32_t connector, const ChargePointErrorCode& error_code,
+                               const std::optional<CiString<50>>& info, const std::optional<CiString<255>>& vendor_id,
+                               const std::optional<CiString<50>>& vendor_error_code) {
+    this->status->submit_fault(connector, error_code, ocpp::DateTime(), info, vendor_id, vendor_error_code);
 }
 
 void ChargePointImpl::on_log_status_notification(int32_t request_id, std::string log_status) {

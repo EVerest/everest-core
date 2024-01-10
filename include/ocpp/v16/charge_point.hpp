@@ -225,12 +225,23 @@ public:
     /// the state machine.
     /// \param connector
     /// \param error_code
-    void on_error(int32_t connector, const ChargePointErrorCode& error_code);
+    /// \param info Additional free format information related to the error
+    /// \param vendor_id This identifies the vendor-specific implementation
+    /// \param vendor_error_code This contains the vendor-specific error code
+    void on_error(int32_t connector, const ChargePointErrorCode& error_code,
+                  const std::optional<CiString<50>>& info = std::nullopt,
+                  const std::optional<CiString<255>>& vendor_id = std::nullopt,
+                  const std::optional<CiString<50>>& vendor_error_code = std::nullopt);
 
     /// \brief This function should be called if a fault is detected that prevents further charging operations. The \p
     /// error_code indicates the reason for the fault.
-    /// \param error_code
-    void on_fault(int32_t connector, const ChargePointErrorCode& error_code);
+    /// \param info Additional free format information related to the error
+    /// \param vendor_id This identifies the vendor-specific implementation
+    /// \param vendor_error_code This contains the vendor-specific error code
+    void on_fault(int32_t connector, const ChargePointErrorCode& error_code,
+                  const std::optional<CiString<50>>& info = std::nullopt,
+                  const std::optional<CiString<255>>& vendor_id = std::nullopt,
+                  const std::optional<CiString<50>>& vendor_error_code = std::nullopt);
 
     /// \brief Chargepoint notifies about new log status \p log_status . This function should be called during a
     /// Diagnostics / Log upload to indicate the current \p log_status .

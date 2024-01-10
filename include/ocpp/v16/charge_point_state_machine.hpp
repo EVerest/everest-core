@@ -45,12 +45,18 @@ using FSMDefinition = std::map<FSMState, FSMStateTransitions>;
 class ChargePointFSM {
 public:
     using StatusNotificationCallback = std::function<void(
-        const ChargePointStatus status, const ChargePointErrorCode error_code, const ocpp::DateTime& timestamp)>;
+        const ChargePointStatus status, const ChargePointErrorCode error_code, const ocpp::DateTime& timestamp,
+        const std::optional<CiString<50>>& info, const std::optional<CiString<255>>& vendor_id,
+        const std::optional<CiString<50>>& vendor_error_code)>;
     explicit ChargePointFSM(const StatusNotificationCallback& status_notification_callback, FSMState initial_state);
 
     bool handle_event(FSMEvent event, const ocpp::DateTime timestamp);
-    bool handle_error(const ChargePointErrorCode& error_code, const ocpp::DateTime& timestamp);
-    bool handle_fault(const ChargePointErrorCode& error_code, const ocpp::DateTime& timestamp);
+    bool handle_error(const ChargePointErrorCode& error_code, const ocpp::DateTime& timestamp,
+                      const std::optional<CiString<50>>& info, const std::optional<CiString<255>>& vendor_id,
+                      const std::optional<CiString<50>>& vendor_error_code);
+    bool handle_fault(const ChargePointErrorCode& error_code, const ocpp::DateTime& timestamp,
+                      const std::optional<CiString<50>>& info, const std::optional<CiString<255>>& vendor_id,
+                      const std::optional<CiString<50>>& vendor_error_code);
 
     FSMState get_state() const;
 
@@ -65,15 +71,20 @@ private:
 
 class ChargePointStates {
 public:
-    using ConnectorStatusCallback =
-        std::function<void(const int connector_id, const ChargePointErrorCode errorCode, const ChargePointStatus status,
-                           const ocpp::DateTime& timestamp)>;
+    using ConnectorStatusCallback = std::function<void(
+        const int connector_id, const ChargePointErrorCode errorCode, const ChargePointStatus status,
+        const ocpp::DateTime& timestamp, const std::optional<CiString<50>>& info,
+        const std::optional<CiString<255>>& vendor_id, const std::optional<CiString<50>>& vendor_error_code)>;
     ChargePointStates(const ConnectorStatusCallback& connector_status_callback);
     void reset(std::map<int, ChargePointStatus> connector_status_map);
 
     void submit_event(const int connector_id, FSMEvent event, const ocpp::DateTime& timestamp);
-    void submit_fault(const int connector_id, const ChargePointErrorCode& error_code, const ocpp::DateTime& timestamp);
-    void submit_error(const int connector_id, const ChargePointErrorCode& error_code, const ocpp::DateTime& timestamp);
+    void submit_fault(const int connector_id, const ChargePointErrorCode& error_code, const ocpp::DateTime& timestamp,
+                      const std::optional<CiString<50>>& info, const std::optional<CiString<255>>& vendor_id,
+                      const std::optional<CiString<50>>& vendor_error_code);
+    void submit_error(const int connector_id, const ChargePointErrorCode& error_code, const ocpp::DateTime& timestamp,
+                      const std::optional<CiString<50>>& info, const std::optional<CiString<255>>& vendor_id,
+                      const std::optional<CiString<50>>& vendor_error_code);
 
     ChargePointStatus get_state(int connector_id);
 
