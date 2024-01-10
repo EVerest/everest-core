@@ -53,6 +53,7 @@ extern const ComponentVariable& AuthorizeConnectorZeroOnConnectorOne;
 extern const ComponentVariable& LogMessages;
 extern const RequiredComponentVariable& LogMessagesFormat;
 extern const ComponentVariable& SupportedChargingProfilePurposeTypes;
+extern const ComponentVariable& SupportedCriteria;
 extern const ComponentVariable& MaxCompositeScheduleDuration;
 extern const RequiredComponentVariable& NumberOfConnectors;
 extern const ComponentVariable& UseSslDefaultVerifyPaths;

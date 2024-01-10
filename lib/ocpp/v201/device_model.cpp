@@ -34,6 +34,42 @@ bool DeviceModel::component_criteria_match(const Component& component,
     return false;
 }
 
+bool DeviceModel::component_criteria_match_custom(const Component& component,
+                                                  const std::vector<ComponentCriterionEnum>& component_criteria) {
+    if (component_criteria.empty()) {
+        return false;
+    }
+    for (const auto& criteria : component_criteria) {
+        const Variable variable = {conversions::component_criterion_enum_to_string(criteria)};
+
+        const auto response = this->request_value<bool>(component, variable, AttributeEnum::Actual);
+        auto value = response.value;
+        if (response.status == GetVariableStatusEnum::Accepted and value.has_value() and value.value()) {
+            return true;
+        }
+        // also send true if the component crietria isn't part of the component except "problem"
+        else if (!value.has_value() and (variable.name != "Problem")) {
+            return true;
+        }
+    }
+    return false;
+}
+bool DeviceModel::component_variables_match(const std::vector<ComponentVariable>& component_variables,
+                                            const ocpp::v201::Component& component,
+                                            const ocpp::v201::Variable& variable) {
+
+    return std::find_if(
+               component_variables.begin(), component_variables.end(), [component, variable](ComponentVariable v) {
+                   return (component == v.component and !v.variable.has_value()) or // if component has no variable
+                          (component == v.component and v.variable.has_value() and
+                           variable == v.variable.value()) or                       // if component has variables
+                          (component == v.component and v.variable.has_value() and
+                           !v.variable.value().instance.has_value() and
+                           variable.name == v.variable.value().name) or // if component has no variable instances
+                          (!v.component.evse.has_value() and (component.name == v.component.name) and
+                           (component.instance == v.component.instance) and (variable == v.variable)); // B08.FR.23
+               }) != component_variables.end();
+}
 bool validate_value(const VariableCharacteristics& characteristics, const std::string& value) {
     switch (characteristics.dataType) {
     case DataEnum::string:
@@ -247,6 +283,39 @@ DeviceModel::get_report_data(const std::optional<ReportBaseEnum>& report_base,
                             report_data.variableCharacteristics = variable_map.at(variable).characteristics;
                         }
                     }
+                    if (!report_data.variableAttribute.empty()) {
+                        report_data_vec.push_back(report_data);
+                    }
+                }
+            }
+        }
+    }
+    return report_data_vec;
+}
+
+std::vector<ReportData>
+DeviceModel::get_custom_report_data(const std::optional<std::vector<ComponentVariable>>& component_variables,
+                                    const std::optional<std::vector<ComponentCriterionEnum>>& component_criteria) {
+    std::vector<ReportData> report_data_vec;
+
+    for (auto const& [component, variable_map] : this->device_model) {
+        if (!component_criteria.has_value() or component_criteria_match_custom(component, component_criteria.value())) {
+
+            for (auto const& [variable, variable_meta_data] : variable_map) {
+                if (!component_variables.has_value() or
+                    component_variables_match(component_variables.value(), component, variable)) {
+                    ReportData report_data;
+                    report_data.component = component;
+                    report_data.variable = variable;
+
+                    //  request the variable attribute from the device model storage
+                    const auto variable_attributes = this->storage->get_variable_attributes(component, variable);
+
+                    for (const auto& variable_attribute : variable_attributes) {
+                        report_data.variableAttribute.push_back(variable_attribute);
+                        report_data.variableCharacteristics = variable_map.at(variable).characteristics;
+                    }
+
                     if (!report_data.variableAttribute.empty()) {
                         report_data_vec.push_back(report_data);
                     }

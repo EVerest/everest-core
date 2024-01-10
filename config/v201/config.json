@@ -1,5 +1,23 @@
 [
     {
+        "name": "ChargingStatusIndicator",
+        "variables": {
+            "ChargingStatusIndicatorActive": {
+                "variable_name": "Active",
+                "attributes": {
+                    "Actual": false
+                }
+            },
+            "ChargingStatusIndicatorColor": {
+                "variable_name": "Color",
+                "attributes": {
+                    "Actual": "FFFF00"
+                }
+            }
+        }
+    },
+
+    {
         "name": "Connector",
         "evse_id": 1,
         "connector_id": 1,
@@ -56,8 +74,8 @@
     },
     {
         "name": "Connector",
-        "evse_id": 1,
-        "connector_id": 2,
+        "evse_id": 2,
+        "connector_id": 1,
         "variables": {
             "ConnectorAvailable": {
                 "variable_name": "Available",
@@ -81,7 +99,7 @@
     },
     {
         "name": "EVSE",
-        "evse_id": 1,
+        "evse_id": 2,
         "variables": {
             "EVSEAvailabilityState": {
                 "variable_name": "AvailabilityState",
@@ -112,6 +130,12 @@
     {
         "name": "SampledDataCtrlr",
         "variables": {
+            "SampledDataCtrlrEnabled": {
+                "variable_name": "Enabled",
+                "attributes": {
+                    "Actual": true
+                }
+            },
             "SampledDataTxEndedInterval": {
                 "variable_name": "TxEndedInterval",
                 "attributes": {
@@ -163,6 +187,12 @@
                 "variable_name": "ItemsPerMessageSendLocalList",
                 "attributes": {
                     "Actual": 42
+                }
+            },
+            "LocalAuthListCtrlrEnabled": {
+                "variable_name": "Enabled",
+                "attributes": {
+                    "Actual": true
                 }
             }
         }
@@ -225,11 +255,17 @@
                 }
             },
             "LogMessagesFormat": {
-            "variable_name": "LogMessagesFormat",
-            "attributes": {
-              "Actual": "log,html"
+                "variable_name": "LogMessagesFormat",
+                "attributes": {
+                    "Actual": "log,html"
+                }
+            },
+            "SupportedCriteria": {
+                "variable_name": "SupportedCriteria",
+                "attributes": {
+                    "Actual": "Enabled,Active,Available"
+                }
             }
-          }
         }
     },
     {
@@ -315,6 +351,12 @@
                 "attributes": {
                     "Actual": "30"
                 }
+            },
+            "OCPPCommCtrlrEnabled": {
+                "variable_name": "Enabled",
+                "attributes": {
+                    "Actual": true
+                }
             }
         }
     },
@@ -338,6 +380,12 @@
                 "attributes": {
                     "Actual": ""
                 }
+            },
+            "DisplayMessageCtrlrEnabled": {
+                "variable_name": "Enabled",
+                "attributes": {
+                    "Actual": true
+                }
             }
         }
     },
@@ -355,6 +403,12 @@
                 "attributes": {
                     "Actual": "Heartbeat"
                 }
+            },
+            "ClockCtrlrEnabled": {
+                "variable_name": "Enabled",
+                "attributes": {
+                    "Actual": true
+                }
             }
         }
     },
@@ -367,6 +421,12 @@
         "variables": {
             "ContractValidationOffline": {
                 "variable_name": "ContractValidationOffline",
+                "attributes": {
+                    "Actual": true
+                }
+            },
+            "ReservationCtrlrEnabled": {
+                "variable_name": "Enabled",
                 "attributes": {
                     "Actual": true
                 }
@@ -405,6 +465,12 @@
                 "attributes": {
                     "Actual": "EVConnected,Authorized"
                 }
+            },
+            "TxCtrlrEnabled": {
+                "variable_name": "Enabled",
+                "attributes": {
+                    "Actual": false
+                }
             }
         }
     },
@@ -440,6 +506,12 @@
                 "attributes": {
                     "Actual": false
                 }
+            },
+            "AlignedDataCtrlrEnabled": {
+                "variable_name": "Enabled",
+                "attributes": {
+                    "Actual": true
+                }
             }
         }
     },
@@ -469,6 +541,12 @@
                 "attributes": {
                     "Actual": "123"
                 }
+            },
+            "AuthCtrlrEnabled": {
+                "variable_name": "Enabled",
+                "attributes": {
+                    "Actual": true
+                }
             }
         }
     },
@@ -484,7 +562,7 @@
             "AuthCacheCtrlrEnabled": {
                 "variable_name": "Enabled",
                 "attributes": {
-                    "Actual": false
+                    "Actual": true
                 }
             },
             "AuthCacheStorage": {
@@ -521,6 +599,12 @@
                 "attributes": {
                     "Actual": "RST"
                 }
+            },
+            "ChargingStationProblem": {
+                "variable_name": "Problem",
+                "attributes": {
+                    "Actual": false
+                }
             }
         }
     },
@@ -534,7 +618,7 @@
             "BytesPerMessageGetReport": {
                 "variable_name": "BytesPerMessage",
                 "attributes": {
-                    "Actual": 42
+                    "Actual": 250
                 },
                 "instance": "GetReport"
             },
@@ -555,7 +639,7 @@
             "ItemsPerMessageGetReport": {
                 "variable_name": "ItemsPerMessage",
                 "attributes": {
-                    "Actual": 42
+                    "Actual": 4
                 },
                 "instance": "GetReport"
             },
@@ -572,6 +656,26 @@
                     "Actual": 42
                 },
                 "instance": "SetVariables"
+            },
+            "ReportingValueSize": {
+                "variable_name": "ReportingValueSize",
+                "attributes": {
+                    "Actual": 42
+                },
+                "instance": "SetVariables"
+            },
+            "ValueSize": {
+                "variable_name": "ValueSize",
+                "attributes": {
+                    "Actual": 42
+                },
+                "instance": "SetVariables"
+            },
+            "DeviceDataCtrlrEnabled": {
+                "variable_name": "Enabled",
+                "attributes": {
+                    "Actual": true
+                }
             }
         }
     },
@@ -594,6 +698,12 @@
                 "variable_name": "TotalCostFallbackMessage",
                 "attributes": {
                     "Actual": ""
+                }
+            },
+            "TariffCostCtrlrEnabledCost": {
+                "variable_name": "Enabled",
+                "attributes": {
+                    "Actual": false
                 }
             }
         }
@@ -629,6 +739,12 @@
                 "variable_name": "BasicAuthPassword",
                 "attributes": {
                     "Actual": "DEADBEEFDEADBEEF"
+                }
+            },
+            "SecurityCtrlrEnabled": {
+                "variable_name": "Enabled",
+                "attributes": {
+                    "Actual": false
                 }
             }
         }
@@ -666,6 +782,12 @@
                 "attributes": {
                     "Actual": ""
                 }
+            },
+            "SmartChargingCtrlrAvailableEnabled": {
+                "variable_name": "Enabled",
+                "attributes": {
+                    "Actual": false
+                }
             }
         }
     },
@@ -685,6 +807,12 @@
                     "Actual": 42
                 },
                 "instance": "SetVariableMonitoring"
+            },
+            "MonitoringCtrlrEnabled": {
+                "variable_name": "Enabled",
+                "attributes": {
+                    "Actual": false
+                }
             }
         }
     }
