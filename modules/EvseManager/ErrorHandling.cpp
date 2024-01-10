@@ -440,7 +440,7 @@ bool ErrorHandling::modify_error_evse_manager(const std::string& error_type, boo
     } else {
         return false; // Error does not stop charging, ignored here
     }
-    return true; // Error stops charging
+    return true;      // Error stops charging
 };
 
 } // namespace module

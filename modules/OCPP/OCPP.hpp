@@ -149,7 +149,7 @@ private:
 
 // ev@087e516b-124c-48df-94fb-109508c7cda9:v1
 // insert other definitions here
-/// \brief Contains information about an error 
+/// \brief Contains information about an error
 struct ErrorInfo {
     ocpp::v16::ChargePointErrorCode ocpp_error_code;
     std::optional<std::string> info;
