@@ -159,6 +159,7 @@ types:
       - RFID
       - Autocharge
       - PlugAndCharge
+      - BankCard
   IdTokenType:
     description: >-
       IdTokenType of the provided token

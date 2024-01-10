@@ -654,9 +654,6 @@ void EvseManager::ready() {
     }
 
     if (slac_enabled) {
-        // Reset once on startup and disable modem
-        r_slac[0]->call_reset(false);
-
         r_slac[0]->subscribe_state([this](const std::string& s) {
             session_log.evse(true, fmt::format("SLAC {}", s));
             // Notify charger whether matching was started (or is done) or not
@@ -1468,7 +1465,7 @@ void EvseManager::fail_session() {
     if (config.charge_mode == "DC") {
         powersupply_DC_off();
     }
-    charger->set_hlc_error(types::evse_manager::ErrorEnum::HLC);
+    charger->set_hlc_error();
 }
 
 types::evse_manager::EVInfo EvseManager::get_ev_info() {

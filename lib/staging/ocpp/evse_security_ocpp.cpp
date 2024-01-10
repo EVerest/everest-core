@@ -75,9 +75,9 @@ bool EvseSecurity::is_ca_certificate_installed(const ocpp::CaCertificateType& ce
 std::string EvseSecurity::generate_certificate_signing_request(const ocpp::CertificateSigningUseEnum& certificate_type,
                                                                const std::string& country,
                                                                const std::string& organization,
-                                                               const std::string& common) {
+                                                               const std::string& common, bool use_tpm) {
     return this->r_security.call_generate_certificate_signing_request(conversions::from_ocpp(certificate_type), country,
-                                                                      organization, common);
+                                                                      organization, common, use_tpm);
 }
 
 std::optional<ocpp::KeyPair> EvseSecurity::get_key_pair(const ocpp::CertificateSigningUseEnum& certificate_type) {

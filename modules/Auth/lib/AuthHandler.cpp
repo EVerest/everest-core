@@ -111,7 +111,7 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
         if (connector_used_for_transaction != -1) {
             StopTransactionRequest req;
             req.reason = StopTransactionReason::Local;
-            req.id_tag.emplace(provided_token.id_token);
+            req.id_tag.emplace(provided_token);
             this->stop_transaction_callback(this->connectors.at(connector_used_for_transaction)->evse_index, req);
             EVLOG_info << "Transaction was stopped because id_token was used for transaction";
             return TokenHandlingResult::USED_TO_STOP_TRANSACTION;
@@ -154,7 +154,7 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
                     } else {
                         StopTransactionRequest req;
                         req.reason = StopTransactionReason::Local;
-                        req.id_tag.emplace(provided_token.id_token);
+                        req.id_tag.emplace(provided_token);
                         this->stop_transaction_callback(this->connectors.at(connector_used_for_transaction)->evse_index,
                                                         req);
                         EVLOG_info << "Transaction was stopped because parent_id_token was used for transaction";

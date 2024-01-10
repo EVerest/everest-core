@@ -47,10 +47,11 @@ Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_
     hlc_use_5percent_current_session = false;
 
     // Register callbacks for errors/error clearings
-    error_handling->signal_error.connect([this]() {
+    error_handling->signal_error.connect([this](const types::evse_manager::ErrorEnum e, const bool prevent_charging) {
         std::scoped_lock lock(stateMutex);
-        signalEvent(types::evse_manager::SessionEventEnum::Error);
-        error_prevent_charging_flag = true;
+        if (prevent_charging) {
+            error_prevent_charging_flag = true;
+        }
     });
 
     error_handling->signal_all_errors_cleared.connect([this]() {
@@ -423,15 +424,16 @@ void Charger::runStateMachine() {
                         pauseChargingWaitForPower();
                     }
                 }
-            }
 
-            if (!hlc_charging_active && !legacy_wakeup_done && timeInCurrentState > legacy_wakeup_timeout) {
-                session_log.evse(
-                    false, "EV did not transition to state C, trying one legacy wakeup according to IEC61851-1 A.5.3");
-                legacy_wakeup_done = true;
-                t_step_EF_returnState = EvseState::PrepareCharging;
-                t_step_EF_returnPWM = ampereToDutyCycle(getMaxCurrent());
-                currentState = EvseState::T_step_EF;
+                if (!hlc_charging_active && !legacy_wakeup_done && timeInCurrentState > legacy_wakeup_timeout) {
+                    session_log.evse(
+                        false,
+                        "EV did not transition to state C, trying one legacy wakeup according to IEC61851-1 A.5.3");
+                    legacy_wakeup_done = true;
+                    t_step_EF_returnState = EvseState::PrepareCharging;
+                    t_step_EF_returnPWM = ampereToDutyCycle(getMaxCurrent());
+                    currentState = EvseState::T_step_EF;
+                }
             }
 
             // if (charge_mode == ChargeMode::DC) {
@@ -923,7 +925,7 @@ bool Charger::cancelTransaction(const types::evse_manager::StopTransactionReques
         transaction_active = false;
         last_stop_transaction_reason = request.reason;
         if (request.id_tag) {
-            stop_transaction_id_tag = request.id_tag.value();
+            stop_transaction_id_token = request.id_tag.value();
         }
         signalEvent(types::evse_manager::SessionEventEnum::ChargingFinished);
         signalEvent(types::evse_manager::SessionEventEnum::TransactionFinished);
@@ -962,7 +964,7 @@ void Charger::stopSession() {
 
 void Charger::startTransaction() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
-    stop_transaction_id_tag.clear();
+    stop_transaction_id_token.reset();
     transaction_active = true;
     signalEvent(types::evse_manager::SessionEventEnum::TransactionStarted);
 }
@@ -975,9 +977,9 @@ void Charger::stopTransaction() {
     signalEvent(types::evse_manager::SessionEventEnum::TransactionFinished);
 }
 
-std::string Charger::getStopTransactionIdTag() {
+std::optional<types::authorization::ProvidedIdToken> Charger::getStopTransactionIdToken() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
-    return stop_transaction_id_tag;
+    return stop_transaction_id_token;
 }
 
 types::evse_manager::StopTransactionReason Charger::getTransactionFinishedReason() {
@@ -1373,7 +1375,7 @@ void Charger::set_hlc_allow_close_contactor(bool on) {
     hlc_allow_close_contactor = on;
 }
 
-void Charger::set_hlc_error(types::evse_manager::ErrorEnum e) {
+void Charger::set_hlc_error() {
     std::lock_guard<std::recursive_mutex> lock(stateMutex);
     error_prevent_charging_flag = true;
 }

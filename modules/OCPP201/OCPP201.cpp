@@ -468,6 +468,38 @@ ocpp::v201::ReasonEnum get_reason(types::evse_manager::StopTransactionReason rea
     }
 }
 
+ocpp::v201::IdTokenEnum get_id_token_enum(types::authorization::IdTokenType id_token_type) {
+    switch (id_token_type) {
+    case types::authorization::IdTokenType::Central:
+        return ocpp::v201::IdTokenEnum::Central;
+    case types::authorization::IdTokenType::eMAID:
+        return ocpp::v201::IdTokenEnum::eMAID;
+    case types::authorization::IdTokenType::MacAddress:
+        return ocpp::v201::IdTokenEnum::MacAddress;
+    case types::authorization::IdTokenType::ISO14443:
+        return ocpp::v201::IdTokenEnum::ISO14443;
+    case types::authorization::IdTokenType::ISO15693:
+        return ocpp::v201::IdTokenEnum::ISO15693;
+    case types::authorization::IdTokenType::KeyCode:
+        return ocpp::v201::IdTokenEnum::KeyCode;
+    case types::authorization::IdTokenType::Local:
+        return ocpp::v201::IdTokenEnum::Local;
+    case types::authorization::IdTokenType::NoAuthorization:
+        return ocpp::v201::IdTokenEnum::NoAuthorization;
+    default:
+        throw std::runtime_error("Could not convert IdTokenEnum");
+    }
+}
+
+ocpp::v201::IdToken get_id_token(const types::authorization::ProvidedIdToken& provided_id_token) {
+    ocpp::v201::IdToken id_token;
+    id_token.idToken = provided_id_token.id_token;
+    if (provided_id_token.id_token_type.has_value()) {
+        id_token.type = get_id_token_enum(provided_id_token.id_token_type.value());
+    }
+    return id_token;
+}
+
 void OCPP201::init_evse_ready_map() {
     std::lock_guard<std::mutex> lk(this->evse_ready_mutex);
     for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
@@ -853,15 +885,7 @@ void OCPP201::ready() {
                 const auto reservation_id = transaction_started.reservation_id;
                 const auto remote_start_id = transaction_started.id_tag.request_id;
 
-                ocpp::v201::IdToken id_token;
-                id_token.idToken = transaction_started.id_tag.id_token;
-                if (transaction_started.id_tag.id_token_type.has_value()) {
-                    id_token.type =
-                        ocpp::v201::conversions::string_to_id_token_enum(types::authorization::id_token_type_to_string(
-                            transaction_started.id_tag.id_token_type.value()));
-                } else {
-                    id_token.type = ocpp::v201::IdTokenEnum::Local; // FIXME(piet)
-                }
+                ocpp::v201::IdToken id_token = get_id_token(transaction_started.id_tag);
 
                 // assume cable has been plugged in first and then authorized
                 auto trigger_reason = ocpp::v201::TriggerReasonEnum::Authorized;
@@ -893,8 +917,12 @@ void OCPP201::ready() {
                     reason = get_reason(transaction_finished.reason.value());
                 }
 
+                std::optional<ocpp::v201::IdToken> id_token = std::nullopt;
+                if (transaction_finished.id_tag.has_value()) {
+                    id_token = get_id_token(transaction_finished.id_tag.value());
+                }
+
                 const auto signed_meter_value = transaction_finished.signed_meter_value;
-                const auto id_token = transaction_finished.id_tag;
 
                 this->charge_point->on_transaction_finished(evse_id, timestamp, meter_value, reason, id_token,
                                                             signed_meter_value,

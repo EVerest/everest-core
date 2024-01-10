@@ -62,6 +62,7 @@ private:
     float config_min_voltage_limit{50.};
 
     Everest::Gpio discharge_gpio;
+    bool parallel_mode{false};
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 

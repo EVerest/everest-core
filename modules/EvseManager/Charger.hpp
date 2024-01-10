@@ -74,7 +74,7 @@ public:
     bool enable(int connector_id);
     bool disable(int connector_id);
     void set_faulted();
-    void set_hlc_error(types::evse_manager::ErrorEnum e);
+    void set_hlc_error();
     void set_rcd_error();
     // switch to next charging session after Finished
     bool restart();
@@ -88,6 +88,7 @@ public:
     void Authorize(bool a, const types::authorization::ProvidedIdToken& token);
     bool DeAuthorize();
     types::authorization::ProvidedIdToken getIdToken();
+    std::optional<types::authorization::ProvidedIdToken> getStopTransactionIdToken();
 
     bool Authorized_PnC();
     bool Authorized_EIM();
@@ -107,7 +108,6 @@ public:
 
     bool cancelTransaction(const types::evse_manager::StopTransactionRequest&
                                request); // cancel transaction ahead of time when car is still plugged
-    std::string getStopTransactionIdTag();
     types::evse_manager::StopTransactionReason getTransactionFinishedReason(); // get reason for last finished event
     types::evse_manager::StartSessionReason getSessionStartedReason(); // get reason for last session start event
 
@@ -214,7 +214,6 @@ private:
     bool transactionActive();
     bool transaction_active;
     bool session_active;
-    std::string stop_transaction_id_tag;
     types::evse_manager::StopTransactionReason last_stop_transaction_reason;
     types::evse_manager::StartSessionReason last_start_session_reason;
 
@@ -228,7 +227,6 @@ private:
     EvseState last_state;
     EvseState last_state_detect_state_change;
 
-    types::evse_manager::ErrorEnum errorState{types::evse_manager::ErrorEnum::Internal};
     std::chrono::system_clock::time_point currentStateStarted;
 
     bool connectorEnabled;
@@ -270,6 +268,8 @@ private:
     bool authorized_pnc;
 
     types::authorization::ProvidedIdToken id_token;
+    std::optional<types::authorization::ProvidedIdToken>
+        stop_transaction_id_token; // only set in case transaction was stopped locally
 
     // AC or DC
     ChargeMode charge_mode{0};
