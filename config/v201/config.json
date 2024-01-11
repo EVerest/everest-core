@@ -172,7 +172,7 @@
         "name": "LocalAuthListCtrlr",
         "variables": {
             "BytesPerMessageSendLocalList": {
-                "variable_name": "BytesPerMessageSendLocalList",
+                "variable_name": "BytesPerMessage",
                 "attributes": {
                     "Actual": 42
                 }
@@ -184,7 +184,7 @@
                 }
             },
             "ItemsPerMessageSendLocalList": {
-                "variable_name": "ItemsPerMessageSendLocalList",
+                "variable_name": "ItemsPerMessage",
                 "attributes": {
                     "Actual": 42
                 }
@@ -263,7 +263,7 @@
             "SupportedCriteria": {
                 "variable_name": "SupportedCriteria",
                 "attributes": {
-                    "Actual": "Enabled,Active,Available"
+                    "Actual": "Enabled,Active,Available,Problem"
                 }
             }
         }
