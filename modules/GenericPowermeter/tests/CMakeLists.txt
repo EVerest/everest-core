@@ -22,4 +22,6 @@ target_link_libraries(generic_powermeter_tests PRIVATE
     nlohmann_json::nlohmann_json
 )
 
+add_dependencies(generic_powermeter_tests generate_cpp_files)
+
 add_test(generic_powermeter_tests generic_powermeter_tests)
