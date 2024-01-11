@@ -145,5 +145,6 @@ active_modules:
   connector_1_powerpath:
     connections: {}
     module: JsYetiSimulator
+    connector_id: 1
     telemetry:
       id: 1
