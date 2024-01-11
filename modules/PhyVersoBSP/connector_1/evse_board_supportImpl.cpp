@@ -11,7 +11,7 @@ void evse_board_supportImpl::init() {
         std::scoped_lock lock(caps_mutex);
 
         caps.min_current_A_import = mod->config.caps_min_current_A;
-        caps.max_current_A_import = 16;
+        caps.max_current_A_import = 32;
         caps.min_phase_count_import = 1;
         caps.max_phase_count_import = 3;
         caps.supports_changing_phases_during_charging = false;
