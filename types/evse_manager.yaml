@@ -72,6 +72,8 @@ types:
     enum:
       - EVConnected
       - Authorized
+      - EnergyTransfer
+      - None
   SwitchThreePhasesWhileChargingResult:
     description: >-
       Returns success or error code

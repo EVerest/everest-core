@@ -507,6 +507,30 @@ void OCPP201::init_evse_ready_map() {
     }
 }
 
+// Sync to Operational status
+void OCPP201::post_init_evses() {
+    bool charge_point_operational = cs_operational_status == ocpp::v201::OperationalStatusEnum::Operative;
+
+    // If the ChargePoint is Nonoperational tell all the EVSE's about it
+    for (const auto& [evse_id, evse] : evses) {
+        // Is the EVSE Operational
+        bool evse_operational = evse.operational_state == ocpp::v201::OperationalStatusEnum::Operative;
+
+        for (const auto [connector_id, operational_state] : evse.connectors) {
+            bool connector_operational = operational_state == ocpp::v201::OperationalStatusEnum::Operative;
+            // Any combination the connector is Unavailable
+            if (!charge_point_operational || !evse_operational || !connector_operational) {
+                charge_point->mark_unavailable(evse_id, connector_id);
+            }
+        }
+    }
+
+    for (size_t evse_id = 0; evse_id < this->r_evse_manager.size(); evse_id++) {
+      auto& evse_ref = r_evse_manager.at(evse_id);
+      evse_ref->call_external_ready_to_start_charging();
+    }
+}
+
 void OCPP201::init_evses() {
 
     if (this->r_kvs->call_exists(KVS_OCPP201_INOPERATIVE_KEY_PREFIX + "0")) {
@@ -867,12 +891,22 @@ void OCPP201::ready() {
             const auto connector_id = session_event.connector_id.value_or(1);
             switch (session_event.event) {
             case types::evse_manager::SessionEventEnum::SessionStarted: {
-                this->session_started_reason = session_event.session_started.value().reason;
-                this->charge_point->on_session_started(evse_id, connector_id);
+                types::evse_manager::StartSessionReason reason = session_event.session_started.value().reason;
+                // If first session started reason not set then set it for the TransactionStart reason
+                // Can be Authorized, EVConnected or EnergyTransfer
+                if (this->session_started_reason == types::evse_manager::StartSessionReason::None) {
+                    this->session_started_reason = reason;
+                }
+
+                if (reason != types::evse_manager::StartSessionReason::EnergyTransfer) {
+                    // Either Authorized or plug in event
+                    this->charge_point->on_session_started(evse_id, connector_id);
+                }
                 break;
             }
             case types::evse_manager::SessionEventEnum::SessionFinished: {
                 this->charge_point->on_session_finished(evse_id, connector_id);
+                this->session_started_reason = types::evse_manager::StartSessionReason::None;
                 break;
             }
             case types::evse_manager::SessionEventEnum::TransactionStarted: {
@@ -890,20 +924,26 @@ void OCPP201::ready() {
                 // assume cable has been plugged in first and then authorized
                 auto trigger_reason = ocpp::v201::TriggerReasonEnum::Authorized;
 
+                ocpp::v201::ChargingStateEnum charging_state{ocpp::v201::ChargingStateEnum::EVConnected};
+
                 // if session started reason was Authorized, Transaction is started because of EV plug in event
                 if (this->session_started_reason == types::evse_manager::StartSessionReason::Authorized) {
                     trigger_reason = ocpp::v201::TriggerReasonEnum::CablePluggedIn;
+                } else if (this->session_started_reason == types::evse_manager::StartSessionReason::EnergyTransfer) {
+                    // If session_started_reason was EnergyTransfer
+                    trigger_reason = ocpp::v201::TriggerReasonEnum::EnergyTransfer;
+                    charging_state = ocpp::v201::ChargingStateEnum::Charging;
                 }
 
                 if (transaction_started.id_tag.authorization_type == types::authorization::AuthorizationType::OCPP) {
                     trigger_reason = ocpp::v201::TriggerReasonEnum::RemoteStart;
                 }
 
-                this->charge_point->on_transaction_started(
-                    evse_id, connector_id, session_id, timestamp, trigger_reason, meter_value, id_token, std::nullopt,
-                    reservation_id, remote_start_id,
-                    ocpp::v201::ChargingStateEnum::EVConnected); // FIXME(piet): add proper groupIdToken +
-                                                                 // ChargingStateEnum
+                this->charge_point->on_transaction_started(evse_id, connector_id, session_id, timestamp, trigger_reason,
+                                                           meter_value, id_token, std::nullopt, reservation_id,
+                                                           remote_start_id,
+                                                           charging_state); // FIXME(piet): add proper groupIdToken +
+                                                                            // ChargingStateEnum
                 break;
             }
             case types::evse_manager::SessionEventEnum::TransactionFinished: {
@@ -1006,6 +1046,10 @@ void OCPP201::ready() {
         this->charge_point->on_log_status_notification(get_upload_log_status_enum(status.log_status),
                                                        status.request_id);
     });
+
+    // Done with settings from those interested
+    // Now the charge point has been created, synch connector state
+    post_init_evses();
 
     std::unique_lock lk(this->evse_ready_mutex);
     while (!this->all_evse_ready()) {

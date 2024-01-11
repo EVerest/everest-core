@@ -115,6 +115,7 @@ private:
     std::condition_variable evse_ready_cv;
     void init_evse_ready_map();
     void init_evses();
+    void post_init_evses();
     bool all_evse_ready();
 
     void set_connector_operational_status(const ocpp::v201::OperationalStatusEnum operational_status,
