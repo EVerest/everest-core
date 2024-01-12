@@ -15,7 +15,7 @@
 
 // headers for required interface implementations
 #include <generated/interfaces/evse_manager/Interface.hpp>
-#include <generated/interfaces/ocpp_1_6_charge_point/Interface.hpp>
+#include <generated/interfaces/ocpp/Interface.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
@@ -88,12 +88,13 @@ struct Conf {
     int hw_caps_max_current_import_decimal_places;
     int hw_caps_min_current_export_decimal_places;
     int hw_caps_min_current_import_decimal_places;
+    int hw_caps_max_plug_temperature_C_decimal_places;
     int limits_max_current_decimal_places;
-    int telemetry_temperature_decimal_places;
+    int telemetry_evse_temperature_C_decimal_places;
     int telemetry_fan_rpm_decimal_places;
     int telemetry_supply_voltage_12V_decimal_places;
     int telemetry_supply_voltage_minus_12V_decimal_places;
-    int telemetry_rcd_current_decimal_places;
+    int telemetry_plug_temperature_C_decimal_places;
     double powermeter_energy_import_round_to;
     double powermeter_energy_export_round_to;
     double powermeter_power_round_to;
@@ -105,20 +106,21 @@ struct Conf {
     double hw_caps_max_current_import_round_to;
     double hw_caps_min_current_export_round_to;
     double hw_caps_min_current_import_round_to;
+    double hw_caps_max_plug_temperature_C_round_to;
     double limits_max_current_round_to;
-    double telemetry_temperature_round_to;
+    double telemetry_evse_temperature_C_round_to;
     double telemetry_fan_rpm_round_to;
     double telemetry_supply_voltage_12V_round_to;
     double telemetry_supply_voltage_minus_12V_round_to;
-    double telemetry_rcd_current_round_to;
+    double telemetry_plug_temperature_C_round_to;
 };
 
 class API : public Everest::ModuleBase {
 public:
     API() = delete;
     API(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, std::unique_ptr<emptyImplBase> p_main,
-        std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager,
-        std::vector<std::unique_ptr<ocpp_1_6_charge_pointIntf>> r_ocpp, Conf& config) :
+        std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager, std::vector<std::unique_ptr<ocppIntf>> r_ocpp,
+        Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_main(std::move(p_main)),
@@ -129,7 +131,7 @@ public:
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<emptyImplBase> p_main;
     const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;
-    const std::vector<std::unique_ptr<ocpp_1_6_charge_pointIntf>> r_ocpp;
+    const std::vector<std::unique_ptr<ocppIntf>> r_ocpp;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1

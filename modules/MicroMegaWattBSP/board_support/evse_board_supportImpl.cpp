@@ -87,22 +87,19 @@ types::evse_board_support::HardwareCapabilities evse_board_supportImpl::handle_g
 }
 
 void evse_board_supportImpl::handle_enable(bool& value) {
-    if (value)
-        mod->serial.enable();
-    else
-        mod->serial.disable();
+    mod->serial.enable(value);
 }
 
 void evse_board_supportImpl::handle_pwm_on(double& value) {
-    mod->serial.setPWM(1, value);
+    mod->serial.setPWM(value * 100);
 }
 
 void evse_board_supportImpl::handle_pwm_off() {
-    mod->serial.setPWM(0, 0.);
+    mod->serial.setPWM(10001.);
 }
 
 void evse_board_supportImpl::handle_pwm_F() {
-    mod->serial.setPWM(2, 0.);
+    mod->serial.setPWM(0);
 }
 
 void evse_board_supportImpl::handle_allow_power_on(types::evse_board_support::PowerOnOff& value) {
@@ -114,7 +111,7 @@ void evse_board_supportImpl::handle_ac_switch_three_phases_while_charging(bool& 
 }
 
 void evse_board_supportImpl::handle_evse_replug(int& value) {
-    mod->serial.replug(value);
+    mod->serial.replug();
 }
 
 types::board_support_common::ProximityPilot evse_board_supportImpl::handle_ac_read_pp_ampacity() {

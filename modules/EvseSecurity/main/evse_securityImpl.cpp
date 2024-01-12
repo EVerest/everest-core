@@ -78,9 +78,9 @@ bool evse_securityImpl::handle_is_ca_certificate_installed(types::evse_security:
 
 std::string evse_securityImpl::handle_generate_certificate_signing_request(
     types::evse_security::LeafCertificateType& certificate_type, std::string& country, std::string& organization,
-    std::string& common) {
+    std::string& common, bool& use_tpm) {
     return this->evse_security->generate_certificate_signing_request(conversions::from_everest(certificate_type),
-                                                                     country, organization, common);
+                                                                     country, organization, common, use_tpm);
 }
 
 types::evse_security::GetKeyPairResult

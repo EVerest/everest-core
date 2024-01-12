@@ -252,7 +252,8 @@ void evse_managerImpl::ready() {
             se.transaction_finished.emplace(transaction_finished);
         } else if (e == types::evse_manager::SessionEventEnum::Error) {
             types::evse_manager::Error error;
-            error.error_code = mod->charger->getErrorState();
+            // FIXME this should report something useful instead!
+            error.error_code = types::evse_manager::ErrorEnum::Other;
             se.error = error;
         } else if (e == types::evse_manager::SessionEventEnum::Enabled or
                    e == types::evse_manager::SessionEventEnum::Disabled) {
@@ -287,13 +288,6 @@ void evse_managerImpl::ready() {
                           mod->charger->evseStateToString(s));
         mod->mqtt.publish(fmt::format("everest_external/nodered/{}/state/state", mod->config.connector_id),
                           static_cast<int>(s));
-    });
-
-    mod->charger->signalError.connect([this](types::evse_manager::ErrorEnum s) {
-        mod->mqtt.publish(fmt::format("everest_external/nodered/{}/state/error_type", mod->config.connector_id),
-                          static_cast<int>(s));
-        mod->mqtt.publish(fmt::format("everest_external/nodered/{}/state/error_string", mod->config.connector_id),
-                          types::evse_manager::error_enum_to_string(s));
     });
     // /Deprecated
 }
@@ -394,9 +388,23 @@ void evse_managerImpl::handle_set_get_certificate_response(
     mod->r_hlc[0]->call_certificate_response(certificate_reponse);
 }
 
-bool evse_managerImpl::handle_force_unlock(int& connector_id) {
-    // FIXME IMPLEMENT ME
+bool evse_managerImpl::handle_external_ready_to_start_charging() {
+    if (mod->config.external_ready_to_start_charging) {
+        EVLOG_info << "Received external ready to start charging command.";
+        mod->ready_to_start_charging();
+        return true;
+    } else {
+        EVLOG_warning
+            << "Ignoring external ready to start charging command, this could be a configuration issue. Please check "
+               "if 'external_ready_to_start_charging' is set to true if you want to use this feature.";
+    }
+
     return false;
+}
+
+bool evse_managerImpl::handle_force_unlock(int& connector_id) {
+    mod->bsp->connector_unlock();
+    return true;
 };
 
 } // namespace evse

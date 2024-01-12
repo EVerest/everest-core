@@ -22,6 +22,7 @@ target_sources(${MODULE_NAME}
         "auth_validator/auth_token_validatorImpl.cpp"
         "auth_provider/auth_token_providerImpl.cpp"
         "data_transfer/ocpp_data_transferImpl.cpp"
+        "ocpp_generic/ocppImpl.cpp"
 )
 
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1

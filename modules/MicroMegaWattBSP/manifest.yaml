@@ -16,6 +16,12 @@ config:
     minimum: -1
     maximum: 1000
     default: -1
+  dc_max_voltage:
+    description: Maximum voltage to support
+    type: integer
+    minimum: 50
+    maximum: 1000
+    default: 1000
 provides:
   dc_supply:
     interface: power_supply_DC

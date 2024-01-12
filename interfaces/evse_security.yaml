@@ -113,6 +113,9 @@ cmds:
       common:
         description: Specifies the common name (CN) of the certificate
         type: string
+      use_tpm:
+        description: Specifies if the CSR should store the private key on the TPM
+        type: boolean 
     result:
       description: The certificate signing request in PEM format
       type: string

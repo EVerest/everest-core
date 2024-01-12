@@ -61,6 +61,7 @@ private:
     types::evse_board_support::HardwareCapabilities caps;
     bool caps_received{false};
     std::mutex capsMutex;
+    types::board_support_common::ProximityPilot last_pp;
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 

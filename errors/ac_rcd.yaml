@@ -1,0 +1,25 @@
+description: >-
+  Errors for AC RCD
+
+  MREC error code should be triggered in parallel with the more fine grained non-standardized AC/DC errors.
+
+  All error codes that begin with MREC needs to be implemented to fulfill the Minimum Required Error Codes defined by the ChargeX consortium:
+
+  https://inl.gov/content/uploads/2023/07/ChargeX_MREC_Rev5_09.12.23.pdf
+errors:
+  - name: Selftest
+    description: The Selftest failed, device permanently broken
+  - name: DC
+    description: RCD was triggered by a DC fault
+  - name: AC
+    description: RCD was triggered by an AC fault
+  - name: MREC2GroundFailure
+    description: >-
+      MREC compliant fault code
+  - name: VendorError
+    description: >-
+      Vendor specific error code. Will stop charging session.
+  - name: VendorWarning
+    description: >-
+      Vendor specific error code. Charging may continue.
+ 

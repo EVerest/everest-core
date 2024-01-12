@@ -26,6 +26,7 @@ struct Conf {
     std::string serial_port;
     int baud_rate;
     int reset_gpio;
+    int dc_max_voltage;
 };
 
 class MicroMegaWattBSP : public Everest::ModuleBase {

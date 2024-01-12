@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright 2023 Pionix GmbH and Contributors to EVerest
 
 /*
  The IECStateMachine class provides an adapter between the board support package driver (in a seperate module) and the
@@ -46,29 +46,6 @@ enum class CPEvent {
     BCDtoEF,
     EvseReplugStarted,
     EvseReplugFinished,
-    ErrorE,
-    ErrorDF,
-    ErrorVentilationNotAvailable,
-    ErrorBrownOut,
-    ErrorEnergyManagement,
-    PermanentFault,
-    MREC_2_GroundFailure,
-    MREC_3_HighTemperature,
-    MREC_4_OverCurrentFailure,
-    MREC_5_OverVoltage,
-    MREC_6_UnderVoltage,
-    MREC_8_EmergencyStop,
-    MREC_10_InvalidVehicleMode,
-    MREC_14_PilotFault,
-    MREC_15_PowerLoss,
-    MREC_17_EVSEContactorFault,
-    MREC_18_CableOverTempDerate,
-    MREC_19_CableOverTempStop,
-    MREC_20_PartialInsertion,
-    MREC_23_ProximityFault,
-    MREC_24_ConnectorVoltageHigh,
-    MREC_25_BrokenLatch,
-    MREC_26_CutCable,
 };
 
 // Just a helper for log printing
@@ -91,7 +68,7 @@ public:
     explicit IECStateMachine(const std::unique_ptr<evse_board_supportIntf>& r_bsp);
 
     // Call when new events from BSP requirement come in. Will signal internal events
-    void process_bsp_event(types::board_support_common::BspEvent bsp_event);
+    void process_bsp_event(const types::board_support_common::BspEvent bsp_event);
     // Allow power on from Charger state machine
     void allow_power_on(bool value, types::evse_board_support::Reason reason);
 
@@ -99,7 +76,7 @@ public:
     void evse_replug(int ms);
     void switch_three_phases_while_charging(bool n);
     void setup(bool three_phases, bool has_ventilation, std::string country_code);
-    bool force_unlock();
+
     void set_overcurrent_limit(double amps);
 
     void set_pwm(double value);
@@ -108,8 +85,13 @@ public:
 
     void enable(bool en);
 
+    void connector_lock();
+    void connector_unlock();
+
     // Signal for internal events type
     sigslot::signal<CPEvent> signal_event;
+    sigslot::signal<> signal_lock;
+    sigslot::signal<> signal_unlock;
 
 private:
     const std::unique_ptr<evse_board_supportIntf>& r_bsp;
@@ -123,10 +105,12 @@ private:
     bool last_power_on_allowed{false};
     std::atomic<double> last_amps{-1};
 
+    bool car_plugged_in{false};
+
     RawCPState cp_state{RawCPState::Disabled}, last_cp_state{RawCPState::Disabled};
     AsyncTimeout timeout_state_c1;
 
-    std::mutex state_mutex;
+    std::mutex state_machine_mutex;
     void feed_state_machine();
     std::queue<CPEvent> state_machine();
 
@@ -134,6 +118,9 @@ private:
     void call_allow_power_on_bsp(bool value);
 
     std::atomic_bool three_phases{true};
+    std::atomic_bool locked{false};
+
+    std::atomic_bool enabled{false};
 };
 
 } // namespace module

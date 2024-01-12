@@ -30,7 +30,6 @@
 #include <date/date.h>
 #include <date/tz.h>
 #include <generated/interfaces/ISO15118_charger/Interface.hpp>
-#include <generated/interfaces/evse_board_support/Interface.hpp>
 #include <generated/interfaces/powermeter/Interface.hpp>
 #include <generated/types/authorization.hpp>
 #include <generated/types/evse_manager.hpp>
@@ -42,6 +41,7 @@
 #include <string>
 #include <vector>
 
+#include "ErrorHandling.hpp"
 #include "IECStateMachine.hpp"
 
 namespace module {
@@ -51,9 +51,9 @@ const std::string IEC62196Type2Socket = "IEC62196Type2Socket";
 
 class Charger {
 public:
-    Charger(const std::unique_ptr<IECStateMachine>& bsp,
-            const std::vector<std::unique_ptr<powermeterIntf>>& r_powermeter_billing, const std::string& connector_type,
-            const std::string& evse_id);
+    Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_ptr<ErrorHandling>& error_handling,
+            const std::vector<std::unique_ptr<powermeterIntf>>& r_powermeter_billing,
+            const types::evse_board_support::Connector_type& connector_type, const std::string& evse_id);
     ~Charger();
 
     // Public interface to configure Charger
@@ -137,9 +137,6 @@ public:
 
     sigslot::signal<> signal_hlc_stop_charging;
 
-    // Request more details about the error that happend
-    types::evse_manager::ErrorEnum getErrorState();
-
     void processEvent(CPEvent event);
 
     void run();
@@ -150,11 +147,6 @@ public:
     bool getMatchingStarted();
 
     void notifyCurrentDemandStarted();
-
-    // Note: Deprecated, do not use EvseState externally.
-    // Kept for compatibility, will be removed from public interface
-    // in the future.
-    // Use new EvseEvent interface instead.
 
     enum class EvseState {
         Disabled,
@@ -167,8 +159,6 @@ public:
         ChargingPausedEVSE,
         StoppingCharging,
         Finished,
-        Error,
-        Faulted,
         T_step_EF,
         T_step_X1,
         Replug
@@ -184,8 +174,6 @@ public:
 
     EvseState getCurrentState();
     sigslot::signal<EvseState> signalState;
-    sigslot::signal<types::evse_manager::ErrorEnum> signalError;
-    // /Deprecated
 
     void inform_new_evse_max_hlc_limits(const types::iso15118_charger::DC_EVSEMaximumLimits& l);
     types::iso15118_charger::DC_EVSEMaximumLimits get_evse_max_hlc_limits();
@@ -196,6 +184,8 @@ public:
 
     void set_hlc_charging_active();
     void set_hlc_allow_close_contactor(bool on);
+
+    bool errors_prevent_charging();
 
     /// @brief Returns the OCMF start data.
     ///
@@ -221,8 +211,9 @@ private:
     Everest::Thread mainThreadHandle;
 
     const std::unique_ptr<IECStateMachine>& bsp;
+    const std::unique_ptr<ErrorHandling>& error_handling;
     const std::vector<std::unique_ptr<powermeterIntf>>& r_powermeter_billing;
-    const std::string& connector_type;
+    const types::evse_board_support::Connector_type& connector_type;
     const std::string evse_id;
 
     void mainThread();
@@ -258,10 +249,15 @@ private:
     EvseState currentState;
     EvseState last_state;
     EvseState last_state_detect_state_change;
+
     types::evse_manager::ErrorEnum errorState{types::evse_manager::ErrorEnum::Internal};
     std::chrono::system_clock::time_point currentStateStarted;
 
     bool connectorEnabled;
+
+    bool error_prevent_charging_flag{false};
+    bool last_error_prevent_charging_flag{false};
+    void graceful_stop_charging();
 
     float ampereToDutyCycle(float ampere);
 
@@ -358,6 +354,8 @@ private:
     // As per IEC61851-1 A.5.3
     bool legacy_wakeup_done{false};
     constexpr static int legacy_wakeup_timeout{30000};
+
+    void clear_errors_on_unplug();
 };
 
 #define CHARGER_ABSOLUTE_MAX_CURRENT double(80.0F)

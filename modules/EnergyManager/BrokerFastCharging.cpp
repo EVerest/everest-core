@@ -194,24 +194,30 @@ bool BrokerFastCharging::buy_ampere(const types::energy::ScheduleReqEntry& _offe
 
         // we have an additional watt limit
         if (total_power.has_value()) {
-            // is the watt limit high enough?
-            if (total_power.value() >= max_current.value() * max_phases * local_market.nominal_ac_voltage()) {
-                // yes, buy both ampere and watt
-                // EVLOG_info << "[OK leftovers] total power is big enough for trade of "
-                //           << a * max_phases * local_market.nominal_ac_voltage();
-                buy_ampere_unchecked(index, (import ? +1 : -1) * max_current.value());
-                buy_watt_unchecked(index, (import ? +1 : -1) * max_current.value() * max_phases *
-                                              local_market.nominal_ac_voltage());
-                return true;
+            if (total_power.value() > 0) {
+                // is the watt limit high enough?
+                if (total_power.value() >= max_current.value() * max_phases * local_market.nominal_ac_voltage()) {
+                    // yes, buy both ampere and watt
+                    // EVLOG_info << "[OK leftovers] total power is big enough for trade of "
+                    //           << a * max_phases * local_market.nominal_ac_voltage();
+                    buy_ampere_unchecked(index, (import ? +1 : -1) * max_current.value());
+                    buy_watt_unchecked(index, (import ? +1 : -1) * max_current.value() * max_phases *
+                                                  local_market.nominal_ac_voltage());
+                    return true;
+                } else {
+                    // watt limit is lower, try to reduce ampere
+                    float reduced_ampere = total_power.value() / max_phases / local_market.nominal_ac_voltage();
+                    // EVLOG_info << "[OK leftovers] total power is not big enough, buy reduced current " <<
+                    // reduced_ampere
+                    //            << reduced_ampere * max_phases * local_market.nominal_ac_voltage();
+                    buy_ampere_unchecked(index, (import ? +1 : -1) * reduced_ampere);
+                    buy_watt_unchecked(index, (import ? +1 : -1) * reduced_ampere * max_phases *
+                                                  local_market.nominal_ac_voltage());
+                    return true;
+                }
             } else {
-                // watt limit is lower, try to reduce ampere
-                float reduced_ampere = total_power.value() / max_phases / local_market.nominal_ac_voltage();
-                // EVLOG_info << "[OK leftovers] total power is not big enough, buy reduced current " << reduced_ampere
-                //            << reduced_ampere * max_phases * local_market.nominal_ac_voltage();
-                buy_ampere_unchecked(index, (import ? +1 : -1) * reduced_ampere);
-                buy_watt_unchecked(index, (import ? +1 : -1) * reduced_ampere * max_phases *
-                                              local_market.nominal_ac_voltage());
-                return true;
+                // Don't buy anything if the total power limit is 0
+                return false;
             }
         } else {
             buy_ampere_unchecked(index, (import ? +1 : -1) * max_current.value());

@@ -12,20 +12,74 @@ const STATE_C = 3;
 const STATE_D = 4;
 const STATE_E = 5;
 const STATE_F = 6;
-const STATE_DF = 7;
 
 const Event_PowerOn = 8;
 const Event_PowerOff = 9;
-const Event_Error_Relais = 10;
-const Event_Error_RCD = 11;
-const Event_Error_VentilationNotAvailable = 12;
-const Event_PermanentFault = 13;
 
 var module_id;
 let global_info;
 
+let active_errors = {
+  DiodeFault: false,
+  BrownOut: false,
+  EnergyManagement: false,
+  PermanentFault: false,
+  MREC2GroundFailure: false,
+  MREC3HighTemperature: false,
+  MREC4OverCurrentFailure: false,
+  MREC5OverVoltage: false,
+  MREC6UnderVoltage: false,
+  MREC8EmergencyStop: false,
+  MREC10InvalidVehicleMode: false,
+  MREC14PilotFault: false,
+  MREC15PowerLoss: false,
+  MREC17EVSEContactorFault: false,
+  MREC18CableOverTempDerate: false,
+  MREC19CableOverTempStop: false,
+  MREC20PartialInsertion: false,
+  MREC23ProximityFault: false,
+  MREC24ConnectorVoltageHigh: false,
+  MREC25BrokenLatch: false,
+  MREC26CutCable: false,
+
+  ac_rcd_MREC2GroundFailure: false,
+  ac_rcd_VendorError: false,
+  ac_rcd_Selftest: false,
+  ac_rcd_AC: false,
+  ac_rcd_DC: false,
+
+  lock_ConnectorLockCapNotCharged: false,
+  lock_ConnectorLockUnexpectedOpen: false,
+  lock_ConnectorLockUnexpectedClose: false,
+  lock_ConnectorLockFailedLock: false,
+  lock_ConnectorLockFailedUnlock: false,
+  lock_MREC1ConnectorLockFailure: false,
+  lock_VendorError: false,
+};
+
 function publish_ac_nr_of_phases_available(mod, n) {
   mod.provides.board_support.publish.ac_nr_of_phases_available(n);
+}
+
+function read_pp_ampacity(mod) {
+  let pp_resistor = mod.simulation_data.pp_resistor;
+  if (pp_resistor < 80.0 || pp_resistor > 2460) {
+    evlog.error(`PP resistor value "${pp_resistor}" Ohm seems to be outside the allowed range.`);
+    return "None"
+  }
+
+  // PP resistor value in spec, use a conservative interpretation of the resistance ranges
+  if (pp_resistor > 936.0 && pp_resistor <= 2460.0) {
+    return "A_13";
+  } else if (pp_resistor > 308.0 && pp_resistor <= 936.0) {
+    return "A_20";
+  } else if (pp_resistor > 140.0 && pp_resistor <= 308.0) {
+    return "A_32";
+  } else if (pp_resistor > 80.0 && pp_resistor <= 140.0) {
+    return "A_63";
+  }
+
+  return "None";
 }
 
 boot_module(async ({
@@ -71,7 +125,6 @@ boot_module(async ({
     mod.power_on_allowed = args.value.allow_power_on;
   });
 
-  // setup.provides.board_support.register.force_unlock((mod, args) => /* lock/unlock not implemented */ true);
   setup.provides.board_support.register.ac_switch_three_phases_while_charging((mod, args) => {
     mod.use_three_phases = args.value;
     mod.use_three_phases_confirmed = args.value;
@@ -87,13 +140,142 @@ boot_module(async ({
     max_phase_count_export: 3,
     min_phase_count_export: 1,
     supports_changing_phases_during_charging: true,
+    connector_type: "IEC62196Type2Cable",
   }));
   setup.provides.board_support.register.ac_read_pp_ampacity((mod, args) => {
     let amp = { ampacity: read_pp_ampacity(mod) };
     return amp;
   });
+  setup.provides.connector_lock.register.lock((mod, args) => {
+    evlog.info('Lock connector');
+  });
+  setup.provides.connector_lock.register.unlock((mod, args) => {
+    evlog.info('Unlock connector');
+  });
 
-  // subscribe vars of used modules
+  // Subscribe to nodered error injection
+  mqtt.subscribe(`everest_external/nodered/${config.module.connector_id}/carsim/error`, (mod, en) => {
+    let e = JSON.parse(en);
+    let raise = e.raise == 'true';
+
+    switch (e.error_type) {
+      case "DiodeFault":
+        error_DiodeFault(mod, raise);
+        break;
+      case "BrownOut":
+        error_BrownOut(mod, raise);
+        break;
+      case "EnergyManagement":
+        error_EnergyManagement(mod, raise);
+        break;
+      case "PermanentFault":
+        error_PermanentFault(mod, raise);
+        break;
+      case "MREC2GroundFailure":
+        error_MREC2GroundFailure(mod, raise);
+        break;
+      case "MREC3HighTemperature":
+        error_MREC3HighTemperature(mod, raise);
+        break;
+      case "MREC4OverCurrentFailure":
+        error_MREC4OverCurrentFailure(mod, raise);
+        break;
+      case "MREC5OverVoltage":
+        error_MREC5OverVoltage(mod, raise);
+        break;
+      case "MREC6UnderVoltage":
+        error_MREC6UnderVoltage(mod, raise);
+        break;
+      case "MREC8EmergencyStop":
+        error_MREC8EmergencyStop(mod, raise);
+        break;
+      case "MREC10InvalidVehicleMode":
+        error_MREC10InvalidVehicleMode(mod, raise);
+        break;
+      case "MREC14PilotFault":
+        error_MREC14PilotFault(mod, raise);
+        break;
+      case "MREC15PowerLoss":
+        error_MREC15PowerLoss(mod, raise);
+        break;
+      case "MREC17EVSEContactorFault":
+        error_MREC17EVSEContactorFault(mod, raise);
+        break;
+      case "MREC18CableOverTempDerate":
+        error_MREC18CableOverTempDerate(mod, raise);
+        break;
+      case "MREC19CableOverTempStop":
+        error_MREC19CableOverTempStop(mod, raise);
+        break;
+      case "MREC20PartialInsertion":
+        error_MREC20PartialInsertion(mod, raise);
+        break;
+      case "MREC23ProximityFault":
+        error_MREC23ProximityFault(mod, raise);
+        break;
+      case "MREC24ConnectorVoltageHigh":
+        error_MREC24ConnectorVoltageHigh(mod, raise);
+        break;
+      case "MREC25BrokenLatch":
+        error_MREC25BrokenLatch(mod, raise);
+        break;
+      case "MREC26CutCable":
+        error_MREC26CutCable(mod, raise);
+        break;
+
+      case "ac_rcd_MREC2GroundFailure":
+        error_ac_rcd_MREC2GroundFailure(mod, raise);
+        break;
+
+      case "ac_rcd_VendorError":
+        error_ac_rcd_VendorError(mod, raise);
+        break;
+
+      case "ac_rcd_Selftest":
+        error_ac_rcd_Selftest(mod, raise);
+        break;
+
+      case "ac_rcd_AC":
+        error_ac_rcd_AC(mod, raise);
+        break;
+      case "ac_rcd_DC":
+        error_ac_rcd_DC(mod, raise);
+        break;
+
+      case "lock_ConnectorLockCapNotCharged":
+        error_lock_ConnectorLockCapNotCharged(mod, raise);
+        break;
+
+      case "lock_ConnectorLockUnexpectedOpen":
+        error_lock_ConnectorLockUnexpectedOpen(mod, raise);
+        break;
+
+      case "lock_ConnectorLockUnexpectedClose":
+        error_lock_ConnectorLockUnexpectedClose(mod, raise);
+        break;
+
+
+      case "lock_ConnectorLockFailedLock":
+        error_lock_ConnectorLockFailedLock(mod, raise);
+        break;
+
+      case "lock_ConnectorLockFailedUnlock":
+        error_lock_ConnectorLockFailedUnlock(mod, raise);
+        break;
+
+      case "lock_MREC1ConnectorLockFailure":
+        error_lock_MREC1ConnectorLockFailure(mod, raise);
+        break;
+
+      case "lock_VendorError":
+        error_lock_VendorError(mod, raise);
+        break;
+
+      default:
+        evlog.error("Unknown error raised via MQTT");
+    }
+  });
+
 }).then((mod) => {
   mod.pubCnt = 0;
   clearData(mod);
@@ -276,9 +458,6 @@ function simulation_statemachine(mod) {
     case STATE_F:
       powerOff(mod);
       break;
-    case STATE_DF:
-      powerOff(mod);
-      break;
   }
   mod.last_state = mod.current_state;
   mod.last_pwm_running = mod.pwm_running;
@@ -287,7 +466,7 @@ function simulation_statemachine(mod) {
 function check_error_rcd(mod) {
   if (mod.rcd_enabled && mod.simulation_data.rcd_current > 5.0) {
     if (!mod.rcd_error_reported) {
-      mod.provides.rcd.publish.fault_dc();
+      mod.provides.board_support.raise.ac_rcd_DC('Simulated fault event', 'High');
       mod.rcd_error_reported = true;
     }
   } else {
@@ -316,16 +495,6 @@ function event_to_enum(event) {
       return 'PowerOn';
     case Event_PowerOff:
       return 'PowerOff';
-    case STATE_DF:
-      return 'ErrorDF';
-    case Event_Error_Relais:
-      return 'ErrorRelais';
-    case Event_Error_RCD:
-      return 'ErrorRCD';
-    case Event_Error_VentilationNotAvailable:
-      return 'VentilationNotAvailable';
-    case Event_PermanentFault:
-      return 'PermanentFault';
     default:
       evlog.error("Invalid event: " + event);
       return 'invalid';
@@ -401,10 +570,13 @@ function read_from_car(mod) {
     if (is_voltage_in_range(cpLo, 0.0) && is_voltage_in_range(cpHi, 0.0)) mod.current_state = STATE_E;
     // Diode fault
     else if (is_voltage_in_range(cpHi + cpLo, 0.0)) {
-      mod.current_state = STATE_DF;
+      // throw DF error
+      error_DiodeFault(mod, true);
     } else return;
   } else if (is_voltage_in_range(cpHi, 12.0)) {
     // +12V State A IDLE (open circuit)
+    // clear all errors that clear on disconnection
+    clear_disconnect_errors(mod);
     mod.current_state = STATE_A;
   } else if (is_voltage_in_range(cpHi, 9.0)) {
     mod.current_state = STATE_B;
@@ -416,6 +588,351 @@ function read_from_car(mod) {
     mod.current_state = STATE_F;
   } else {
 
+  }
+}
+
+function error_BrownOut(mod, raise) {
+  if (!active_errors.BrownOut) {
+    mod.provides.board_support.raise.evse_board_support_BrownOut('Simulated fault event', 'High');
+    active_errors.BrownOut = true;
+  } else if (!raise && active_errors.BrownOut) {
+    mod.provides.board_support.request_clear_all_of_type.evse_board_support_BrownOut();
+    active_errors.BrownOut = false;
+  }
+}
+
+function error_EnergyManagement(mod, raise) {
+  if (!active_errors.EnergyManagement) {
+    mod.provides.board_support.raise.evse_board_support_EnergyManagement('Simulated fault event', 'High');
+    active_errors.EnergyManagement = true;
+  } else if (!raise && active_errors.EnergyManagement) {
+    mod.provides.board_support.request_clear_all_of_type.evse_board_support_EnergyManagement();
+    active_errors.EnergyManagement = false;
+  }
+}
+
+function error_PermanentFault(mod, raise) {
+  if (!active_errors.PermanentFault) {
+    mod.provides.board_support.raise.evse_board_support_PermanentFault('Simulated fault event', 'High');
+    active_errors.PermanentFault = true;
+  } else if (!raise && active_errors.PermanentFault) {
+    mod.provides.board_support.request_clear_all_of_type.evse_board_support_PermanentFault();
+    active_errors.PermanentFault = false;
+  }
+}
+
+function error_MREC2GroundFailure(mod, raise) {
+  if (!active_errors.MREC2GroundFailure) {
+    mod.provides.board_support.raise.evse_board_support_MREC2GroundFailure('Simulated fault event', 'High');
+    active_errors.MREC2GroundFailure = true;
+  } else if (!raise && active_errors.MREC2GroundFailure) {
+    mod.provides.board_support.request_clear_all_of_type.evse_board_support_MREC2GroundFailure();
+    active_errors.MREC2GroundFailure = false;
+  }
+}
+
+function error_MREC3HighTemperature(mod, raise) {
+  if (!active_errors.MREC3HighTemperature) {
+    mod.provides.board_support.raise.evse_board_support_MREC3HighTemperature('Simulated fault event', 'High');
+    active_errors.MREC3HighTemperature = true;
+  } else if (!raise && active_errors.MREC3HighTemperature) {
+    mod.provides.board_support.request_clear_all_of_type.evse_board_support_MREC3HighTemperature();
+    active_errors.MREC3HighTemperature = false;
+  }
+}
+
+function error_MREC4OverCurrentFailure(mod, raise) {
+  if (!active_errors.MREC4OverCurrentFailure) {
+    mod.provides.board_support.raise.evse_board_support_MREC4OverCurrentFailure('Simulated fault event', 'High');
+    active_errors.MREC4OverCurrentFailure = true;
+  } else if (!raise && active_errors.MREC4OverCurrentFailure) {
+    mod.provides.board_support.request_clear_all_of_type.evse_board_support_MREC4OverCurrentFailure();
+    active_errors.MREC4OverCurrentFailure = false;
+  }
+}
+
+function error_MREC5OverVoltage(mod, raise) {
+  if (!active_errors.MREC5OverVoltage) {
+    mod.provides.board_support.raise.evse_board_support_MREC5OverVoltage('Simulated fault event', 'High');
+    active_errors.MREC5OverVoltage = true;
+  } else if (!raise && active_errors.MREC5OverVoltage) {
+    mod.provides.board_support.request_clear_all_of_type.evse_board_support_MREC5OverVoltage();
+    active_errors.MREC5OverVoltage = false;
+  }
+}
+
+function error_MREC6UnderVoltage(mod, raise) {
+  if (!active_errors.MREC6UnderVoltage) {
+    mod.provides.board_support.raise.evse_board_support_MREC6UnderVoltage('Simulated fault event', 'High');
+    active_errors.MREC6UnderVoltage = true;
+  } else if (!raise && active_errors.MREC6UnderVoltage) {
+    mod.provides.board_support.request_clear_all_of_type.evse_board_support_MREC6UnderVoltage();
+    active_errors.MREC6UnderVoltage = false;
+  }
+}
+
+function error_MREC8EmergencyStop(mod, raise) {
+  if (!active_errors.MREC8EmergencyStop) {
+    mod.provides.board_support.raise.evse_board_support_MREC8EmergencyStop('Simulated fault event', 'High');
+    active_errors.MREC8EmergencyStop = true;
+  } else if (!raise && active_errors.MREC8EmergencyStop) {
+    mod.provides.board_support.request_clear_all_of_type.evse_board_support_MREC8EmergencyStop();
+    active_errors.MREC8EmergencyStop = false;
+  }
+}
+
+function error_MREC10InvalidVehicleMode(mod, raise) {
+  if (!active_errors.MREC10InvalidVehicleMode) {
+    mod.provides.board_support.raise.evse_board_support_MREC10InvalidVehicleMode('Simulated fault event', 'High');
+    active_errors.MREC10InvalidVehicleMode = true;
+  } else if (!raise && active_errors.MREC10InvalidVehicleMode) {
+    mod.provides.board_support.request_clear_all_of_type.evse_board_support_MREC10InvalidVehicleMode();
+    active_errors.MREC10InvalidVehicleMode = false;
+  }
+}
+
+function error_MREC14PilotFault(mod, raise) {
+  if (!active_errors.MREC14PilotFault) {
+    mod.provides.board_support.raise.evse_board_support_MREC14PilotFault('Simulated fault event', 'High');
+    active_errors.MREC14PilotFault = true;
+  } else if (!raise && active_errors.MREC14PilotFault) {
+    mod.provides.board_support.request_clear_all_of_type.evse_board_support_MREC14PilotFault();
+    active_errors.MREC14PilotFault = false;
+  }
+}
+
+function error_MREC15PowerLoss(mod, raise) {
+  if (!active_errors.MREC15PowerLoss) {
+    mod.provides.board_support.raise.evse_board_support_MREC15PowerLoss('Simulated fault event', 'High');
+    active_errors.MREC15PowerLoss = true;
+  } else if (!raise && active_errors.MREC15PowerLoss) {
+    mod.provides.board_support.request_clear_all_of_type.evse_board_support_MREC15PowerLoss();
+    active_errors.MREC15PowerLoss = false;
+  }
+}
+
+function error_MREC17EVSEContactorFault(mod, raise) {
+  if (!active_errors.MREC17EVSEContactorFault) {
+    mod.provides.board_support.raise.evse_board_support_MREC17EVSEContactorFault('Simulated fault event', 'High');
+    active_errors.MREC17EVSEContactorFault = true;
+  } else if (!raise && active_errors.MREC17EVSEContactorFault) {
+    mod.provides.board_support.request_clear_all_of_type.evse_board_support_MREC17EVSEContactorFault();
+    active_errors.MREC17EVSEContactorFault = false;
+  }
+}
+
+function error_MREC18CableOverTempDerate(mod, raise) {
+  if (!active_errors.MREC18CableOverTempDerate) {
+    mod.provides.board_support.raise.evse_board_support_MREC18CableOverTempDerate('Simulated fault event', 'High');
+    active_errors.MREC18CableOverTempDerate = true;
+  } else if (!raise && active_errors.MREC18CableOverTempDerate) {
+    mod.provides.board_support.request_clear_all_of_type.evse_board_support_MREC18CableOverTempDerate();
+    active_errors.MREC18CableOverTempDerate = false;
+  }
+}
+
+function error_MREC19CableOverTempStop(mod, raise) {
+  if (!active_errors.MREC19CableOverTempStop) {
+    mod.provides.board_support.raise.evse_board_support_MREC19CableOverTempStop('Simulated fault event', 'High');
+    active_errors.MREC19CableOverTempStop = true;
+  } else if (!raise && active_errors.MREC19CableOverTempStop) {
+    mod.provides.board_support.request_clear_all_of_type.evse_board_support_MREC19CableOverTempStop();
+    active_errors.MREC19CableOverTempStop = false;
+  }
+}
+
+function error_MREC20PartialInsertion(mod, raise) {
+  if (!active_errors.MREC20PartialInsertion) {
+    mod.provides.board_support.raise.evse_board_support_MREC20PartialInsertion('Simulated fault event', 'High');
+    active_errors.MREC20PartialInsertion = true;
+  } else if (!raise && active_errors.MREC20PartialInsertion) {
+    mod.provides.board_support.request_clear_all_of_type.evse_board_support_MREC20PartialInsertion();
+    active_errors.MREC20PartialInsertion = false;
+  }
+}
+
+function error_MREC23ProximityFault(mod, raise) {
+  if (!active_errors.MREC23ProximityFault) {
+    mod.provides.board_support.raise.evse_board_support_MREC23ProximityFault('Simulated fault event', 'High');
+    active_errors.MREC23ProximityFault = true;
+  } else if (!raise && active_errors.MREC23ProximityFault) {
+    mod.provides.board_support.request_clear_all_of_type.evse_board_support_MREC23ProximityFault();
+    active_errors.MREC23ProximityFault = false;
+  }
+}
+
+function error_MREC24ConnectorVoltageHigh(mod, raise) {
+  if (!active_errors.MREC24ConnectorVoltageHigh) {
+    mod.provides.board_support.raise.evse_board_support_MREC24ConnectorVoltageHigh('Simulated fault event', 'High');
+    active_errors.MREC24ConnectorVoltageHigh = true;
+  } else if (!raise && active_errors.MREC24ConnectorVoltageHigh) {
+    mod.provides.board_support.request_clear_all_of_type.evse_board_support_MREC24ConnectorVoltageHigh();
+    active_errors.MREC24ConnectorVoltageHigh = false;
+  }
+}
+
+function error_MREC25BrokenLatch(mod, raise) {
+  if (!active_errors.MREC25BrokenLatch) {
+    mod.provides.board_support.raise.evse_board_support_MREC25BrokenLatch('Simulated fault event', 'High');
+    active_errors.MREC25BrokenLatch = true;
+  } else if (!raise && active_errors.MREC25BrokenLatch) {
+    mod.provides.board_support.request_clear_all_of_type.evse_board_support_MREC25BrokenLatch();
+    active_errors.MREC25BrokenLatch = false;
+  }
+}
+
+function error_MREC26CutCable(mod, raise) {
+  if (raise && !active_errors.MREC26CutCable) {
+    mod.provides.board_support.raise.evse_board_support_MREC26CutCable('Simulated fault event', 'High');
+    active_errors.MREC26CutCable = true;
+  } else if (!raise && active_errors.MREC26CutCable) {
+    mod.provides.board_support.request_clear_all_of_type.evse_board_support_MREC26CutCable('Simulated fault event', 'High');
+    active_errors.MREC26CutCable = false;
+  }
+}
+
+function error_DiodeFault(mod, raise) {
+  if (raise && !active_errors.DiodeFault) {
+    mod.provides.board_support.raise.evse_board_support_DiodeFault('Simulated fault event', 'High');
+    active_errors.DiodeFault = true;
+  } else if (!raise && active_errors.DiodeFault) {
+    mod.provides.board_support.request_clear_all_of_type.evse_board_support_DiodeFault();
+    active_errors.DiodeFault = false;
+  }
+}
+
+function error_ac_rcd_MREC2GroundFailure(mod, raise) {
+
+  if (raise && !active_errors.ac_rcd_MREC2GroundFailure) {
+    mod.provides.rcd.raise.ac_rcd_MREC2GroundFailure('Simulated fault event', 'High');
+    active_errors.ac_rcd_MREC2GroundFailure = true;
+  } else if (!raise && active_errors.ac_rcd_MREC2GroundFailure) {
+
+    mod.provides.rcd.request_clear_all_of_type.ac_rcd_MREC2GroundFailure();
+    active_errors.ac_rcd_MREC2GroundFailure = false;
+  }
+}
+
+function error_ac_rcd_VendorError(mod, raise) {
+  if (raise && !active_errors.ac_rcd_VendorError) {
+    mod.provides.rcd.raise.ac_rcd_VendorError('Simulated fault event', 'High');
+    active_errors.ac_rcd_VendorError = true;
+  } else if (!raise && active_errors.ac_rcd_VendorError) {
+    mod.provides.rcd.request_clear_all_of_type.ac_rcd_VendorError();
+    active_errors.ac_rcd_VendorError = false;
+  }
+}
+
+
+function error_ac_rcd_Selftest(mod, raise) {
+  if (raise && !active_errors.ac_rcd_Selftest) {
+    mod.provides.rcd.raise.ac_rcd_Selftest('Simulated fault event', 'High');
+    active_errors.ac_rcd_Selftest = true;
+  } else if (!raise && active_errors.ac_rcd_Selftest) {
+    mod.provides.rcd.request_clear_all_of_type.ac_rcd_Selftest();
+    active_errors.ac_rcd_Selftest = false;
+  }
+}
+
+function error_ac_rcd_AC(mod, raise) {
+  if (raise && !active_errors.ac_rcd_AC) {
+    mod.provides.rcd.raise.ac_rcd_AC('Simulated fault event', 'High');
+    active_errors.ac_rcd_AC = true;
+  } else if (!raise && active_errors.ac_rcd_AC) {
+    mod.provides.rcd.request_clear_all_of_type.ac_rcd_AC();
+    active_errors.ac_rcd_AC = false;
+  }
+}
+
+function error_ac_rcd_DC(mod, raise) {
+  if (raise && !active_errors.ac_rcd_DC) {
+    mod.provides.rcd.raise.ac_rcd_DC('Simulated fault event', 'High');
+    active_errors.ac_rcd_DC = true;
+  } else if (!raise && active_errors.ac_rcd_DC) {
+    mod.provides.rcd.request_clear_all_of_type.ac_rcd_DC();
+    active_errors.ac_rcd_DC = false;
+  }
+}
+
+
+function error_lock_ConnectorLockCapNotCharged(mod, raise) {
+  if (raise && !active_errors.lock_ConnectorLockCapNotCharged) {
+    mod.provides.connector_lock.raise.connector_lock_ConnectorLockCapNotCharged('Simulated fault event', 'High');
+    active_errors.lock_ConnectorLockCapNotCharged = true;
+  } else if (!raise && active_errors.lock_ConnectorLockCapNotCharged) {
+    mod.provides.connector_lock.request_clear_all_of_type.connector_lock_ConnectorLockCapNotCharged();
+    active_errors.lock_ConnectorLockCapNotCharged = false;
+  }
+}
+
+function error_lock_ConnectorLockUnexpectedOpen(mod, raise) {
+  if (raise && !active_errors.lock_ConnectorLockUnexpectedOpen) {
+    mod.provides.connector_lock.raise.connector_lock_ConnectorLockUnexpectedOpen('Simulated fault event', 'High');
+    active_errors.lock_ConnectorLockUnexpectedOpen = true;
+  } else if (!raise && active_errors.lock_ConnectorLockUnexpectedOpen) {
+    mod.provides.connector_lock.request_clear_all_of_type.connector_lock_ConnectorLockUnexpectedOpen();
+    active_errors.lock_ConnectorLockUnexpectedOpen = false;
+  }
+}
+
+function error_lock_ConnectorLockUnexpectedClose(mod, raise) {
+  if (raise && !active_errors.lock_ConnectorLockUnexpectedClose) {
+    mod.provides.connector_lock.raise.connector_lock_ConnectorLockUnexpectedClose('Simulated fault event', 'High');
+    active_errors.lock_ConnectorLockUnexpectedClose = true;
+  } else if (!raise && active_errors.lock_ConnectorLockUnexpectedClose) {
+    mod.provides.connector_lock.request_clear_all_of_type.connector_lock_ConnectorLockUnexpectedClose();
+    active_errors.lock_ConnectorLockUnexpectedClose = false;
+  }
+}
+
+function error_lock_ConnectorLockFailedLock(mod, raise) {
+  if (raise && !active_errors.lock_ConnectorLockFailedLock) {
+    mod.provides.connector_lock.raise.connector_lock_ConnectorLockFailedLock('Simulated fault event', 'High');
+    active_errors.lock_ConnectorLockFailedLock = true;
+  } else if (!raise && active_errors.ConnectorLockFailedLock) {
+    mod.provides.connector_lock.request_clear_all_of_type.connector_lock_ConnectorLockFailedLock();
+    active_errors.lock_ConnectorLockFailedLock = false;
+  }
+}
+
+function error_lock_ConnectorLockFailedUnlock(mod, raise) {
+  if (raise && !active_errors.lock_ConnectorLockFailedUnlock) {
+    mod.provides.connector_lock.raise.connector_lock_ConnectorLockFailedUnlock('Simulated fault event', 'High');
+    active_errors.lock_ConnectorLockFailedUnlock = true;
+  } else if (!raise && active_errors.lock_ConnectorLockFailedUnlock) {
+    mod.provides.connector_lock.request_clear_all_of_type.connector_lock_ConnectorLockFailedUnlock();
+    active_errors.lock_ConnectorLockFailedUnlock = false;
+  }
+}
+
+
+function error_lock_MREC1ConnectorLockFailure(mod, raise) {
+  if (raise && !active_errors.lock_MREC1ConnectorLockFailure) {
+    mod.provides.connector_lock.raise.connector_lock_MREC1ConnectorLockFailure('Simulated fault event', 'High');
+    active_errors.lock_MREC1ConnectorLockFailure = true;
+  } else if (!raise && active_errors.lock_MREC1ConnectorLockFailure) {
+    mod.provides.connector_lock.request_clear_all_of_type.connector_lock_MREC1ConnectorLockFailure();
+    active_errors.lock_MREC1ConnectorLockFailure = false;
+  }
+}
+
+function error_lock_VendorError(mod, raise) {
+  if (raise && !active_errors.lock_VendorError) {
+    mod.provides.connector_lock.raise.connector_lock_VendorError('Simulated fault event', 'High');
+    active_errors.lock_VendorError = true;
+  } else if (!raise && active_errors.lock_VendorError) {
+    mod.provides.connector_lock.request_clear_all_of_type.connector_lock_VendorError();
+    active_errors.lock_VendorError = false;
+  }
+}
+
+// Example of automatically reset errors up on disconnection of the vehicle.
+// All other errors need to be cleared explicitly.
+// Note that in real life the clearing of errors may differ between BSPs depending on the
+// hardware implementation.
+function clear_disconnect_errors(mod) {
+  if (active_errors.DiodeFault) {
+    error_DiodeFault(mod, false);
   }
 }
 
@@ -607,9 +1124,6 @@ function stateToString(mod) {
     case STATE_F:
       return 'F';
       break;
-    case STATE_DF:
-      return 'DF';
-      break;
   }
 }
 
@@ -758,23 +1272,4 @@ function simulate_powermeter(mod) {
   };
 }
 
-function read_pp_ampacity(mod) {
-  let pp_resistor = mod.simulation_data.pp_resistor;
-  if (pp_resistor < 80.0 || pp_resistor > 2460) {
-    evlog.error(`PP resistor value "${pp_resistor}" Ohm seems to be outside the allowed range.`);
-    return "None"
-  }
 
-  // PP resistor value in spec, use a conservative interpretation of the resistance ranges
-  if (pp_resistor > 936.0 && pp_resistor <= 2460.0) {
-    return "A_13";
-  } else if (pp_resistor > 308.0 && pp_resistor <= 936.0) {
-    return "A_20";
-  } else if (pp_resistor > 140.0 && pp_resistor <= 308.0) {
-    return "A_32";
-  } else if (pp_resistor > 80.0 && pp_resistor <= 140.0) {
-    return "A_63";
-  }
-
-  return "None";
-}

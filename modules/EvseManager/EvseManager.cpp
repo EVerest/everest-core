@@ -70,26 +70,6 @@ void EvseManager::init() {
     if (config.charge_mode == "DC" && r_imd.empty()) {
         EVLOG_warning << "DC mode without isolation monitoring configured, please check your national regulations.";
     }
-    if (r_ac_rcd.size() > 0) {
-        r_ac_rcd[0]->subscribe_fault_ac([this] {
-            session_log.evse(true, "RCD: AC Fault");
-            // Inform charger
-            charger->set_rcd_error();
-            // Inform HLC
-            if (hlc_enabled) {
-                r_hlc[0]->call_send_error(types::iso15118_charger::EvseError::Error_RCD);
-            }
-        });
-        r_ac_rcd[0]->subscribe_fault_dc([this] {
-            session_log.evse(true, "RCD: DC Fault");
-            // Inform charger
-            charger->set_rcd_error();
-            // Inform HLC
-            if (hlc_enabled) {
-                r_hlc[0]->call_send_error(types::iso15118_charger::EvseError::Error_RCD);
-            }
-        });
-    }
 
     reserved = false;
     reservation_id = 0;
@@ -102,9 +82,19 @@ void EvseManager::init() {
 }
 
 void EvseManager::ready() {
-
     bsp = std::unique_ptr<IECStateMachine>(new IECStateMachine(r_bsp));
-    charger = std::unique_ptr<Charger>(new Charger(bsp, r_powermeter_billing(), config.connector_type, config.evse_id));
+    error_handling =
+        std::unique_ptr<ErrorHandling>(new ErrorHandling(r_bsp, r_hlc, r_connector_lock, r_ac_rcd, p_evse));
+
+    hw_capabilities = r_bsp->call_get_hw_capabilities();
+
+    charger = std::unique_ptr<Charger>(
+        new Charger(bsp, error_handling, r_powermeter_billing(), hw_capabilities.connector_type, config.evse_id));
+
+    if (r_connector_lock.size() > 0) {
+        bsp->signal_lock.connect([this]() { r_connector_lock[0]->call_lock(); });
+        bsp->signal_unlock.connect([this]() { r_connector_lock[0]->call_unlock(); });
+    }
 
     if (get_hlc_enabled()) {
 
@@ -530,8 +520,6 @@ void EvseManager::ready() {
         });
     }
 
-    hw_capabilities = r_bsp->call_get_hw_capabilities();
-
     // Maybe override with user setting for this EVSE
     if (config.max_current_import_A < hw_capabilities.max_current_A_import) {
         hw_capabilities.max_current_A_import = config.max_current_import_A;
@@ -602,28 +590,6 @@ void EvseManager::ready() {
                 }
             }
 
-            if (event == CPEvent::MREC_17_EVSEContactorFault) {
-                session_log.evse(false, "Error Relais");
-                r_hlc[0]->call_send_error(types::iso15118_charger::EvseError::Error_Contactor);
-            }
-
-            if (event == CPEvent::PermanentFault || event == CPEvent::MREC_26_CutCable ||
-                event == CPEvent::MREC_25_BrokenLatch) {
-                session_log.evse(false, "Error Permanent Fault");
-                r_hlc[0]->call_send_error(types::iso15118_charger::EvseError::Error_Malfunction);
-            }
-
-            if (event == CPEvent::MREC_2_GroundFailure || event == CPEvent::MREC_4_OverCurrentFailure ||
-                event == CPEvent::MREC_5_OverVoltage || event == CPEvent::MREC_6_UnderVoltage ||
-                event == CPEvent::MREC_8_EmergencyStop || event == CPEvent::MREC_19_CableOverTempStop ||
-                event == CPEvent::MREC_10_InvalidVehicleMode || event == CPEvent::MREC_14_PilotFault ||
-                event == CPEvent::MREC_15_PowerLoss || event == CPEvent::MREC_17_EVSEContactorFault ||
-                event == CPEvent::MREC_19_CableOverTempStop || event == CPEvent::MREC_20_PartialInsertion ||
-                event == CPEvent::MREC_23_ProximityFault || event == CPEvent::MREC_24_ConnectorVoltageHigh) {
-                session_log.evse(false, "Fatal error, emergency stop: " + cpevent_to_string(event));
-                r_hlc[0]->call_send_error(types::iso15118_charger::EvseError::Error_EmergencyShutdown);
-            }
-
             if (event == CPEvent::PowerOn) {
                 contactor_open = false;
                 r_hlc[0]->call_ac_contactor_closed(true);
@@ -689,9 +655,6 @@ void EvseManager::ready() {
     }
 
     if (slac_enabled) {
-        // Reset once on startup and disable modem
-        r_slac[0]->call_reset(false);
-
         r_slac[0]->subscribe_state([this](const std::string& s) {
             session_log.evse(true, fmt::format("SLAC {}", s));
             // Notify charger whether matching was started (or is done) or not
@@ -872,6 +835,14 @@ void EvseManager::ready() {
     //  start with a limit of 0 amps. We will get a budget from EnergyManager that is locally limited by hw
     //  caps.
     charger->setMaxCurrent(0.0F, date::utc_clock::now() + std::chrono::seconds(10));
+    this->p_evse->publish_waiting_for_external_ready(config.external_ready_to_start_charging);
+    if (!config.external_ready_to_start_charging) {
+        // immediately ready, otherwise delay until we get the external signal
+        this->ready_to_start_charging();
+    }
+}
+
+void EvseManager::ready_to_start_charging() {
     charger->run();
     charger->enable(0);
 
@@ -1090,7 +1061,7 @@ bool EvseManager::reserve(int32_t id) {
     }
 
     // is the evse faulted?
-    if (charger->getCurrentState() == Charger::EvseState::Faulted) {
+    if (charger->errors_prevent_charging()) {
         return false;
     }
 
@@ -1417,9 +1388,11 @@ bool EvseManager::powersupply_DC_set(double _voltage, double _current) {
 }
 
 void EvseManager::powersupply_DC_off() {
-    session_log.evse(false, "DC power supply OFF");
-    r_powersupply_DC[0]->call_setMode(types::power_supply_DC::Mode::Off);
-    powersupply_dc_is_on = false;
+    if (powersupply_dc_is_on) {
+        session_log.evse(false, "DC power supply OFF");
+        r_powersupply_DC[0]->call_setMode(types::power_supply_DC::Mode::Off);
+        powersupply_dc_is_on = false;
+    }
 }
 
 bool EvseManager::wait_powersupply_DC_voltage_reached(double target_voltage) {

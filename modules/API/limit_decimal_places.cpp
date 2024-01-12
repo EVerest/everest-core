@@ -236,6 +236,14 @@ std::string LimitDecimalPlaces::limit(const types::evse_board_support::HardwareC
         this->round_to_nearest_step(hw_capabilities.min_current_A_export,
                                     this->config.hw_caps_min_current_export_round_to),
         this->config.hw_caps_min_current_export_decimal_places);
+    if (hw_capabilities.max_plug_temperature_C.has_value()) {
+        root["max_plug_temperature_C"] << ryml::fmt::real(
+            this->round_to_nearest_step(hw_capabilities.max_plug_temperature_C.value(),
+                                        this->config.hw_caps_max_plug_temperature_C_round_to),
+            this->config.hw_caps_max_plug_temperature_C_decimal_places);
+    }
+
+    root["connector_type"] << types::evse_board_support::connector_type_to_string(hw_capabilities.connector_type);
 
     std::stringstream hardware_capabilities_stream;
     hardware_capabilities_stream << ryml::as_json(tree);
@@ -272,8 +280,8 @@ std::string LimitDecimalPlaces::limit(const types::evse_board_support::Telemetry
 
     // limit decimal places
     root["temperature"] << ryml::fmt::real(
-        this->round_to_nearest_step(telemetry.evse_temperature_C, this->config.telemetry_temperature_round_to),
-        this->config.telemetry_temperature_decimal_places);
+        this->round_to_nearest_step(telemetry.evse_temperature_C, this->config.telemetry_evse_temperature_C_round_to),
+        this->config.telemetry_evse_temperature_C_decimal_places);
     root["fan_rpm"] << ryml::fmt::real(
         this->round_to_nearest_step(telemetry.fan_rpm, this->config.telemetry_fan_rpm_round_to),
         this->config.telemetry_fan_rpm_decimal_places);
@@ -284,9 +292,12 @@ std::string LimitDecimalPlaces::limit(const types::evse_board_support::Telemetry
         this->round_to_nearest_step(telemetry.supply_voltage_minus_12V,
                                     this->config.telemetry_supply_voltage_minus_12V_round_to),
         this->config.telemetry_supply_voltage_minus_12V_decimal_places);
-    // root["rcd_current"] << ryml::fmt::real(
-    //     this->round_to_nearest_step(telemetry.rcd_current, this->config.telemetry_rcd_current_round_to),
-    //     this->config.telemetry_rcd_current_decimal_places);
+    if (telemetry.plug_temperature_C.has_value()) {
+        root["plug_temperature_C"] << ryml::fmt::real(
+            this->round_to_nearest_step(telemetry.plug_temperature_C.value(),
+                                        this->config.telemetry_plug_temperature_C_round_to),
+            this->config.telemetry_plug_temperature_C_decimal_places);
+    }
     std::stringstream telemetry_stream;
     telemetry_stream << ryml::as_json(tree);
     return telemetry_stream.str();

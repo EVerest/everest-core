@@ -4,10 +4,6 @@ cmds:
   lock:
     description: Lock connector lock
   unlock:
-    description: unlock connector lock (e.g. normal unlock or enforced by OCPP)
-vars:
-  error:
-    description: Error events for locking motor
-    type: object
-    $ref: /connector_lock#/ConnectorLockError
-
+    description: Unlock connector lock (e.g. normal unlock or enforced by OCPP)
+errors:
+  - reference: /errors/connector_lock

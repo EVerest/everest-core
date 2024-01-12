@@ -14,6 +14,7 @@ types:
       - max_phase_count_export
       - min_phase_count_export
       - supports_changing_phases_during_charging
+      - connector_type
     properties:
       max_current_A_import:
         description: Maximum current (ampere) the hardware can handle (import from grid)
@@ -56,8 +57,14 @@ types:
           Indicates whether changing number of phases is supported during
           charging (true) or not (false)
         type: boolean
-      max_gun_temperature_C:
+      max_plug_temperature_C:
         type: number
+      connector_type:
+        description: Type of charging connector available at this EVSE
+        type: string
+        enum:
+          - IEC62196Type2Cable
+          - IEC62196Type2Socket
   Telemetry:
     description: Other telemetry
     type: object
@@ -72,8 +79,8 @@ types:
       evse_temperature_C:
         description: Current temperature of the EVSE in degree celsius
         type: number
-      gun_temperature_C:
-        description: Current temperature of the gun in degree celsius
+      plug_temperature_C:
+        description: Current temperature of the plug in degree celsius
         type: number
       fan_rpm:
         description: RPM of the fan. 0 if off or no fan available.

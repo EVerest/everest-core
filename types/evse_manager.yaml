@@ -227,26 +227,7 @@ types:
         type: string
   ErrorEnum:
     description: >-
-      Details on error type
-        Car: Signals a car error
-        CarDiodeFault: Signals a car diode fault
-        Relais: Signals a relais error
-        RCD: Signals an RCD error (AC)
-        RCDDC: Signal an RCD error (DC)
-        VentilationNotAvailable: Signals that ventilation is not available
-        OverCurrent: Signals an overcurrent error
-        OverVoltage: Signals on overvoltage error
-        UnderVoltage: Signals on overvoltage error
-        Internal: Signals an internal error
-        SLAC: Signals a SLAC communication error
-        HLC: Signals a HLC error
-        MotorLock: Signals an error with the motor lock of the connector
-        OverTemperature: Signals an over temperature error
-        BrownOut: Brown out detected in electronics
-        CablePP: PP resistor value in cable is out of range
-        EnergyManagement: An error from the energy management was reported
-        NeutralPEN: Nutral/PEN fault
-        CpDriver: The CP output driver has a fault
+      Note this is only kept for compatibility with the legacy error handling and will be removed soon.
     type: string
     enum:
       - Car
@@ -260,29 +241,6 @@ types:
       - Other
       - BrownOut
       - EnergyManagement
-      - MREC_1_ConnectorLockFailure
-      - MREC_2_GroundFailure
-      - MREC_3_HighTemperature
-      - MREC_4_OverCurrentFailure
-      - MREC_5_OverVoltage
-      - MREC_6_UnderVoltage
-      - MREC_8_EmergencyStop
-      - MREC_10_InvalidVehicleMode
-      - MREC_11_CableCheckFailure
-      - MREC_12_PreChargeFailure
-      - MREC_14_PilotFault
-      - MREC_15_PowerLoss
-      - MREC_16_EVContactorFault
-      - MREC_17_EVSEContactorFault
-      - MREC_18_CableOverTempDerate
-      - MREC_19_CableOverTempStop
-      - MREC_20_PartialInsertion
-      - MREC_21_CapacitanceFault
-      - MREC_22_ResistanceFault
-      - MREC_23_ProximityFault
-      - MREC_24_ConnectorVoltageHigh
-      - MREC_25_BrokenLatch
-      - MREC_26_CutCable
   Error:
     description: >-
       Error object that contains information about the error and optional vendor error information

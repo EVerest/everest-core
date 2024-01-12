@@ -34,6 +34,7 @@ struct Conf {
     std::string selection_algorithm;
     int connection_timeout;
     bool prioritize_authorization_over_stopping_transaction;
+    bool ignore_connector_faults;
 };
 
 class Auth : public Everest::ModuleBase {

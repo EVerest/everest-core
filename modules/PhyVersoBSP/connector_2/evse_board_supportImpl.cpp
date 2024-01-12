@@ -21,6 +21,7 @@ void evse_board_supportImpl::init() {
         caps.min_phase_count_export = 1;
         caps.max_phase_count_export = 3;
         caps.supports_changing_phases_during_charging = false;
+        caps.connector_type = types::evse_board_support::Connector_type::IEC62196Type2Socket;
     }
 
     mod->serial.signal_cp_state.connect([this](int connector, CpState s) {

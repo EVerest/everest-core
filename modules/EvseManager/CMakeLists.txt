@@ -16,6 +16,7 @@ target_sources(${MODULE_NAME}
         v2gMessage.cpp
         CarManufacturer.cpp
         IECStateMachine.cpp
+        ErrorHandling.cpp
 )
 
 target_link_libraries(${MODULE_NAME}
