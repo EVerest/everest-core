@@ -13,10 +13,12 @@ void connector_lockImpl::ready() {
 }
 
 void connector_lockImpl::handle_lock() {
+    EVLOG_info << "Locking connector 1";
     mod->serial.lock(1, true);
 }
 
 void connector_lockImpl::handle_unlock() {
+    EVLOG_info << "Unlocking connector 1";
     mod->serial.lock(1, false);
 }
 

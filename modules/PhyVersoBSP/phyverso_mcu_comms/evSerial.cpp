@@ -17,6 +17,7 @@
 
 #include <everest/3rd_party/nanopb/pb_decode.h>
 #include <everest/3rd_party/nanopb/pb_encode.h>
+#include <everest/logging.hpp>
 
 #include "phyverso.pb.h"
 
@@ -332,6 +333,7 @@ void evSerial::allow_power_on(int target_connector, bool power_on) {
 }
 
 void evSerial::lock(int target_connector, bool _lock) {
+    EVLOG_info << "Locking connector " << target_connector << " to " << _lock;
     EverestToMcu msg_out = EverestToMcu_init_default;
     msg_out.which_payload = EverestToMcu_connector_lock_tag;
     msg_out.payload.connector_lock = _lock;
