@@ -13,11 +13,11 @@ void connector_lockImpl::ready() {
 }
 
 void connector_lockImpl::handle_lock() {
-    // your code for cmd lock goes here
+    mod->serial.lock(1, true);
 }
 
 void connector_lockImpl::handle_unlock() {
-    // your code for cmd unlock goes here
+    mod->serial.lock(1, false);
 }
 
 } // namespace connector_lock_1
