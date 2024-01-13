@@ -9,9 +9,10 @@ Libocpp provides a complete implementation of OCPP 1.6. The implementation of OC
 ## Table of contents
 - [C++ implementation of OCPP](#c-implementation-of-ocpp)
   - [Table of contents](#table-of-contents)
-  - [Feature Support](#feature-support)
+  - [OCPP 1.6 Support](#feature-support)
     - [Feature Profile Support OCPP 1.6](#feature-profile-support-ocpp-16)
-    - [Support for OCPP 2.0.1](#support-for-ocpp-201)
+  - [Support for OCPP 2.0.1](#support-for-ocpp-201)
+    - [Feature Profile Support OCPP 2.0.1](#feature-profile-support-ocpp-201)
   - [CSMS Compatibility](#csms-compatibility)
     - [CSMS Compatibility OCPP 1.6](#csms-compatibility-ocpp-16)
     - [CSMS Compatibility OCPP 2.0.1](#csms-compatibility-ocpp-201)
@@ -35,9 +36,9 @@ Libocpp provides a complete implementation of OCPP 1.6. The implementation of OC
   - [Building with FetchContent instead of EDM](#building-with-fetchcontent-instead-of-edm)
   - [Support for security profile 2 and 3 with TPM in OCPP 1.6 using libwebsockets](#support-for-security-profile-2-and-3-with-tpm-in-ocpp-16-using-libwebsockets)
 
-## Feature Support
+## OCPP 1.6 Support
 
-The following tables show the current support for the listed feature profiles / functional blocks and application notes.
+The following tables show the current support for the listed OCPP 1.6 feature profiles / functional blocks and application notes.
 
 All documentation and the issue tracking can be found in our main repository here: https://github.com/EVerest/
 
@@ -52,15 +53,35 @@ All documentation and the issue tracking can be found in our main repository her
 | Smart Charging             | :heavy_check_mark: yes    |
 | Remote Trigger             | :heavy_check_mark: yes    |
 
-| Whitepapers                                                                                                                               | Supported              |
+| Whitepapers & Application Notes                                                                                                                              | Supported              |
 | ----------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
 | [OCPP 1.6 Security Whitepaper (3rd edition)](https://www.openchargealliance.org/uploads/files/OCPP-1.6-security-whitepaper-edition-3.zip) | :heavy_check_mark: yes |
 | [Using ISO 15118 Plug & Charge with OCPP 1.6](https://www.openchargealliance.org/uploads/files/ocpp_1_6_ISO_15118_v10.pdf)                | :heavy_check_mark: yes                    |
+| [OCPP & California Pricing Requirements](https://www.openchargealliance.org/uploads/files/ocpp_and_dms_evse_regulation-v2.0.pdf)                |                               |
 
-### Support for OCPP 2.0.1
+## Support for OCPP 2.0.1
 
-The development of OCPP2.0.1 has already started and is in progress. See also the general roadmap of EVerest:
-https://github.com/EVerest/EVerest/blob/main/tsc/ROADMAP.md
+The development of OCPP2.0.1 is in progress. 
+[For details, see the sheet with the current implementation status.](https://docs.google.com/spreadsheets/d/1NXEa7d0pkT4_1L9lZ9RpiLHGPtTKoqwPsKLJPjTZ_vM/edit?usp=sharing)
+
+### Feature Profile Support OCPP 2.0.1
+
+| Feature Profile            | Supported                 |
+| -------------------------- | ------------------------- |
+| Core                       | :heavy_check_mark: yes    |
+| Advanced Security          | WIP                       |
+| Local Auth List Management |                           |
+| Smart Charging             | WIP                       |
+| Advanced Device Management |                           |
+| Advanced User Interface    |                           |
+| Reservation                |                           |
+| ISO 15118 support          | WIP                       |
+
+| Whitepapers & Application Notes                                                                                                                              | Supported              |
+| ----------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| [OCPP & California Pricing Requirements](https://www.openchargealliance.org/uploads/files/ocpp_and_dms_evse_regulation-v2.0.pdf)                |                               |
+
+
 
 ## CSMS Compatibility
 
