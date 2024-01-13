@@ -190,13 +190,13 @@ private:
     std::unique_ptr<ocpp::MessageQueue<v16::MessageType>> create_message_queue();
     void message_callback(const std::string& message);
     void handle_message(const EnhancedMessage<v16::MessageType>& message);
-    bool allowed_to_send_message(json::array_t message_type);
-    template <class T> bool send(Call<T> call);
+    bool allowed_to_send_message(json::array_t message_type, bool initiated_by_trigger_message);
+    template <class T> bool send(Call<T> call, bool initiated_by_trigger_message = false);
     template <class T> std::future<EnhancedMessage<v16::MessageType>> send_async(Call<T> call);
     template <class T> bool send(CallResult<T> call_result);
     bool send(CallError call_error);
-    void heartbeat();
-    void boot_notification();
+    void heartbeat(bool initiated_by_trigger_message = false);
+    void boot_notification(bool initiated_by_trigger_message = false);
     void clock_aligned_meter_values_sample();
     void update_heartbeat_interval();
     void update_meter_values_sample_interval();
@@ -206,16 +206,19 @@ private:
                                                      ReadingContext context);
     MeterValue get_signed_meter_value(const std::string& signed_value, const ReadingContext& context,
                                       const ocpp::DateTime& datetime);
-    void send_meter_value(int32_t connector, MeterValue meter_value);
+    void send_meter_value(int32_t connector, MeterValue meter_value, bool initiated_by_trigger_message = false);
     void status_notification(const int32_t connector, const ChargePointErrorCode errorCode,
                              const ChargePointStatus status, const ocpp::DateTime& timestamp,
                              const std::optional<CiString<50>>& info = std::nullopt,
                              const std::optional<CiString<255>>& vendor_id = std::nullopt,
-                             const std::optional<CiString<50>>& vendor_error_code = std::nullopt);
+                             const std::optional<CiString<50>>& vendor_error_code = std::nullopt,
+                             bool initiated_by_trigger_message = false);
     void diagnostic_status_notification(DiagnosticsStatus status);
     void firmware_status_notification(FirmwareStatus status);
-    void log_status_notification(UploadLogStatusEnumType status, int requestId);
-    void signed_firmware_update_status_notification(FirmwareStatusEnumType status, int requestId);
+    void log_status_notification(UploadLogStatusEnumType status, int requestId,
+                                 bool initiated_by_trigger_message = false);
+    void signed_firmware_update_status_notification(FirmwareStatusEnumType status, int requestId,
+                                                    bool initiated_by_trigger_message = false);
 
     /// \brief Changes all unoccupied connectors to unavailable. If a transaction is running schedule an availabilty
     /// change. If all connectors are unavailable signal to the firmware updater that installation of the firmware
@@ -250,7 +253,8 @@ private:
     // security
     /// \brief Creates a new public/private key pair and sends a certificate signing request to the central system for
     /// the given \p certificate_signing_use
-    void sign_certificate(const ocpp::CertificateSigningUseEnum& certificate_signing_use);
+    void sign_certificate(const ocpp::CertificateSigningUseEnum& certificate_signing_use,
+                          bool initiated_by_trigger_message = false);
 
     /// \brief Checks if OCSP cache needs to be updated and executes update if necessary by using
     /// DataTransfer(GetCertificateStatus.req)
