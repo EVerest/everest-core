@@ -116,6 +116,18 @@ static ErrorInfo get_error_info(const std::optional<types::evse_manager::Error> 
     }
 }
 
+ocpp::SessionStartedReason get_session_started_reason(const types::evse_manager::StartSessionReason reason) {
+    switch (reason) {
+    case types::evse_manager::StartSessionReason::EVConnected:
+        return ocpp::SessionStartedReason::EVConnected;
+    case types::evse_manager::StartSessionReason::Authorized:
+        return ocpp::SessionStartedReason::Authorized;
+    default:
+        throw std::out_of_range(
+            "Could not convert types::evse_manager::StartSessionReason to ocpp::SessionStartedReason");
+    }
+}
+
 void create_empty_user_config(const fs::path& user_config_path) {
     if (fs::exists(user_config_path.parent_path())) {
         std::ofstream fs(user_config_path.c_str());
@@ -242,9 +254,9 @@ void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::Ses
                    << "Received SessionStarted";
         // ev side disconnect
         auto session_started = session_event.session_started.value();
-        this->charge_point->on_session_started(
-            ocpp_connector_id, session_event.uuid,
-            types::evse_manager::start_session_reason_to_string(session_started.reason), session_started.logging_path);
+        this->charge_point->on_session_started(ocpp_connector_id, session_event.uuid,
+                                               get_session_started_reason(session_started.reason),
+                                               session_started.logging_path);
     } else if (event == "SessionFinished") {
         EVLOG_debug << "Connector#" << ocpp_connector_id << ": "
                     << "Received SessionFinished";
