@@ -68,23 +68,13 @@ private:
 
     /// \brief Iterates over the given \p component_criteria and converts this to the variable names
     /// (Active,Available,Enabled,Problem). If any of the variables can not be found as part of a component this
-    /// function returns false. If any of those variable's value is true, this function returns true. If all variable's
-    /// value are false, this function returns false
-    ///  \param component_id
-    ///  \param /// component_criteria
-    ///  \return
-    bool component_criteria_match(const Component& component_id,
-                                  const std::vector<ComponentCriterionEnum>& component_criteria);
-
-    /// \brief Iterates over the given \p component_criteria and converts this to the variable names
-    /// (Active,Available,Enabled,Problem). If any of the variables can not be found as part of a component this
     /// function returns false. If any of those variable's value is true, this function returns true (except for
     /// criteria problem). If all variable's value are false, this function returns false
     ///  \param component_id
     ///  \param /// component_criteria
     ///  \return
-    bool component_criteria_match_custom(const Component& component_id,
-                                         const std::vector<ComponentCriterionEnum>& component_criteria);
+    bool component_criteria_match(const Component& component_id,
+                                  const std::vector<ComponentCriterionEnum>& component_criteria);
 
     /// @brief Iterates over the given \p component_variables and filters them according to the requirement conditions.
     /// @param component_variables
@@ -210,10 +200,7 @@ public:
     /// \param component_variables
     /// \param component_criteria
     /// \return
-    std::vector<ReportData>
-    get_report_data(const std::optional<ReportBaseEnum>& report_base = std::nullopt,
-                    const std::optional<std::vector<ComponentVariable>>& component_variables = std::nullopt,
-                    const std::optional<std::vector<ComponentCriterionEnum>>& component_criteria = std::nullopt);
+    std::vector<ReportData> get_base_report_data(const ReportBaseEnum& report_base);
 
     /// \brief Gets the ReportData for the specifed filter \p component_variables and \p
     /// component_criteria
