@@ -50,6 +50,7 @@ private:
     double latest_total_w;                                     ///< Latest total power reading in W
 
     enum class State {
+        Unknown,
         Unplugged,
         Disabled,
         Preparing,

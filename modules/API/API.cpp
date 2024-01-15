@@ -9,7 +9,7 @@ namespace module {
 static const auto NOTIFICATION_PERIOD = std::chrono::seconds(1);
 
 SessionInfo::SessionInfo() :
-    state(State::Unplugged),
+    state(State::Unknown),
     start_energy_import_wh(0),
     end_energy_import_wh(0),
     latest_total_w(0),
@@ -29,7 +29,7 @@ bool SessionInfo::is_state_charging(const SessionInfo::State current_state) {
 
 void SessionInfo::reset() {
     std::lock_guard<std::mutex> lock(this->session_info_mutex);
-    this->state = State::Unplugged;
+    this->state = State::Unknown;
     this->active_permanent_faults.clear();
     this->active_errors.clear();
     this->start_energy_import_wh = 0;
