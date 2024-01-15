@@ -39,6 +39,10 @@ option(EVEREST_ENABLE_RUN_SCRIPT_GENERATION "Enables the generation of run scrip
 # tests requires hardware.
 option(BUILD_DEV_TESTS "Build dev tests" OFF)
 
+include(ev-define-dependency)
+
+include("module-dependencies.cmake")
+
 find_package(Boost
     COMPONENTS
         filesystem
