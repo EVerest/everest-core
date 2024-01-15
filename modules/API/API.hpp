@@ -37,8 +37,10 @@ class SessionInfo {
 private:
     std::mutex session_info_mutex;
 
-    std::string state;              ///< Latest state of the EVSE
-    std::string state_info;         ///< Additional information of this state
+    std::vector<std::string>
+        active_permanent_faults;    ///< Array of currently active permanent faults that prevent charging
+    std::vector<std::string>
+        active_errors;              ///< Array of currently active errors that do not prevent charging
     int32_t start_energy_import_wh; ///< Energy reading (import) at the beginning of this charging session in Wh
     int32_t end_energy_import_wh;   ///< Energy reading (import) at the end of this charging session in Wh
     int32_t start_energy_export_wh; ///< Energy reading (export) at the beginning of this charging session in Wh
@@ -47,7 +49,22 @@ private:
     std::chrono::time_point<date::utc_clock> end_time_point;   ///< End of the charging session
     double latest_total_w;                                     ///< Latest total power reading in W
 
-    bool is_state_charging(const std::string& current_state);
+    enum class State {
+        Unplugged,
+        Disabled,
+        Preparing,
+        Reserved,
+        AuthRequired,
+        WaitingForEnergy,
+        ChargingPausedEV,
+        ChargingPausedEVSE,
+        Charging,
+        Finished
+    } state;
+
+    bool is_state_charging(const SessionInfo::State current_state);
+
+    std::string state_to_string(State s);
 
 public:
     SessionInfo();
@@ -58,7 +75,7 @@ public:
         false}; ///< Indicate if end export energy value (optional) has been received or not
 
     void reset();
-    void update_state(const std::string& event, const std::string& state_info);
+    void update_state(const types::evse_manager::SessionEventEnum event, const std::string& state_info);
     void set_start_energy_import_wh(int32_t start_energy_import_wh);
     void set_end_energy_import_wh(int32_t end_energy_import_wh);
     void set_latest_energy_import_wh(int32_t latest_energy_wh);

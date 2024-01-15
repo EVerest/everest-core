@@ -44,7 +44,8 @@ This variable is published every second and contains a json object with informat
         "discharged_energy_wh": 0,
         "latest_total_w": 0.0,
         "state": "Unplugged",
-        "state_info": ""
+        "active_permanent_faults": "",
+        "active_errors": "",
     }
 ```
 
@@ -64,20 +65,10 @@ This variable is published every second and contains a json object with informat
     - ChargingPausedEV
     - ChargingPausedEVSE
     - Finished
-    - Error
-    - PermanentFault
 
+- **active_permanent_faults** array of all active errors that are permanent faults (i.e. that block charging). If anything is set here it should be shown as an error to the user instead of showing the current state.
 
-- **state_info** contains additional information for the current state, at the moment this is only set to a meaningful value in the Error state. Here it can have the following values:
-    - Car
-    - CarDiodeFault
-    - Relais
-    - RCD
-    - VentilationNotAvailable
-    - OverCurrent
-    - Internal
-    - SLAC
-    - HLC
+- **active_errors** array of all active errors that do not block charging. This could be shown to the user but the current state should still be shown as it does not interfere with charging.
 
 ### everest_api/evse_manager/var/limits
 This variable is published every second and contains a json object with information relating to the current limits of this EVSE.
