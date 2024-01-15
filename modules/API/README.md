@@ -44,8 +44,8 @@ This variable is published every second and contains a json object with informat
         "discharged_energy_wh": 0,
         "latest_total_w": 0.0,
         "state": "Unplugged",
-        "active_permanent_faults": "",
-        "active_errors": "",
+        "active_permanent_faults": [],
+        "active_errors": []
     }
 ```
 
