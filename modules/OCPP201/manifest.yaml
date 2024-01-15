@@ -54,10 +54,6 @@ requires:
     interface: evse_security
     min_connections: 1
     max_connections: 1
-  kvs:
-    interface: kvs
-    min_connections: 1
-    max_connections: 1
   data_transfer:
     interface: ocpp_data_transfer
     min_connections: 0
