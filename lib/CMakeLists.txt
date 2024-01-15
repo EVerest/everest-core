@@ -19,6 +19,7 @@ target_sources(framework
         error_database.cpp
         error_manager.cpp
         everest.cpp
+        formatter.cpp
         message_queue.cpp
         mqtt_abstraction.cpp
         mqtt_abstraction_impl.cpp

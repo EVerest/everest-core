@@ -9,12 +9,14 @@ target_compile_options(controller-ipc PRIVATE ${COMPILER_WARNING_OPTIONS})
 
 find_package(Threads REQUIRED)
 
-# FIXME (aw): refactor the yaml_loader into on lib, so it can be shared somehow, similar to the controller-ipc
+# FIXME (aw): refactor the yaml_loader and formatter into a lib
+# so it can be shared somehow, similar to the controller-ipc
 add_executable(controller 
     controller.cpp
     command_api.cpp
     rpc.cpp
     server.cpp
+    ${PROJECT_SOURCE_DIR}/lib/formatter.cpp
     ${PROJECT_SOURCE_DIR}/lib/yaml_loader.cpp
 )
 

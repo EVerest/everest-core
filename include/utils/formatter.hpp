@@ -8,12 +8,22 @@
 #include <nlohmann/json.hpp>
 #include <string>
 
+namespace everest::formatting {
+// NOTE (aw): this function is only here to hide the implementation of
+// fmt::format_error in <fmt/format.h>
+// in fmt version < 10, the function throw_format_error is not exposed
+// in the public api
+// NOTE (aw): this is only for backward compatibility, once finally
+// switching to version 10, this function could be removed again
+void throw_format_error(const char* message);
+} // namespace everest::formatting
+
 template <> struct fmt::formatter<nlohmann::json> {
     constexpr auto parse(fmt::format_parse_context& ctx) -> fmt::format_parse_context::iterator {
         auto it = ctx.begin(), end = ctx.end();
 
         if (it != end && *it != '}') {
-            fmt::throw_format_error("Invalid format");
+            everest::formatting::throw_format_error("Invalid format");
         }
 
         return it;
@@ -29,7 +39,7 @@ template <> struct fmt::formatter<std::atomic_bool> {
         auto it = ctx.begin(), end = ctx.end();
 
         if (it != end && *it != '}') {
-            fmt::throw_format_error("Invalid format");
+            everest::formatting::throw_format_error("Invalid format");
         }
 
         return it;
@@ -48,7 +58,7 @@ template <typename T> struct fmt::formatter<std::atomic<T>> {
         auto it = ctx.begin(), end = ctx.end();
 
         if (it != end && *it != '}') {
-            fmt::throw_format_error("Invalid format");
+            everest::formatting::throw_format_error("Invalid format");
         }
 
         return it;
