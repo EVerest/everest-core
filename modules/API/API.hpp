@@ -34,13 +34,38 @@ namespace module {
 class LimitDecimalPlaces;
 
 class SessionInfo {
+public:
+    SessionInfo();
+
+    struct Error {
+        std::string type;
+        std::string description;
+        std::string severity;
+    };
+
+    bool start_energy_export_wh_was_set{
+        false}; ///< Indicate if start export energy value (optional) has been received or not
+    bool end_energy_export_wh_was_set{
+        false}; ///< Indicate if end export energy value (optional) has been received or not
+
+    void reset();
+    void update_state(const types::evse_manager::SessionEventEnum event, const SessionInfo::Error& error);
+    void set_start_energy_import_wh(int32_t start_energy_import_wh);
+    void set_end_energy_import_wh(int32_t end_energy_import_wh);
+    void set_latest_energy_import_wh(int32_t latest_energy_wh);
+    void set_start_energy_export_wh(int32_t start_energy_export_wh);
+    void set_end_energy_export_wh(int32_t end_energy_export_wh);
+    void set_latest_energy_export_wh(int32_t latest_export_energy_wh);
+    void set_latest_total_w(double latest_total_w);
+
+    /// \brief Converts this struct into a serialized json object
+    operator std::string();
+
 private:
     std::mutex session_info_mutex;
 
-    std::vector<std::string>
-        active_permanent_faults;    ///< Array of currently active permanent faults that prevent charging
-    std::vector<std::string>
-        active_errors;              ///< Array of currently active errors that do not prevent charging
+    std::vector<Error> active_permanent_faults; ///< Array of currently active permanent faults that prevent charging
+    std::vector<Error> active_errors;           ///< Array of currently active errors that do not prevent charging
     int32_t start_energy_import_wh; ///< Energy reading (import) at the beginning of this charging session in Wh
     int32_t end_energy_import_wh;   ///< Energy reading (import) at the end of this charging session in Wh
     int32_t start_energy_export_wh; ///< Energy reading (export) at the beginning of this charging session in Wh
@@ -66,27 +91,6 @@ private:
     bool is_state_charging(const SessionInfo::State current_state);
 
     std::string state_to_string(State s);
-
-public:
-    SessionInfo();
-
-    bool start_energy_export_wh_was_set{
-        false}; ///< Indicate if start export energy value (optional) has been received or not
-    bool end_energy_export_wh_was_set{
-        false}; ///< Indicate if end export energy value (optional) has been received or not
-
-    void reset();
-    void update_state(const types::evse_manager::SessionEventEnum event, const std::string& state_info);
-    void set_start_energy_import_wh(int32_t start_energy_import_wh);
-    void set_end_energy_import_wh(int32_t end_energy_import_wh);
-    void set_latest_energy_import_wh(int32_t latest_energy_wh);
-    void set_start_energy_export_wh(int32_t start_energy_export_wh);
-    void set_end_energy_export_wh(int32_t end_energy_export_wh);
-    void set_latest_energy_export_wh(int32_t latest_export_energy_wh);
-    void set_latest_total_w(double latest_total_w);
-
-    /// \brief Converts this struct into a serialized json object
-    operator std::string();
 };
 } // namespace module
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1

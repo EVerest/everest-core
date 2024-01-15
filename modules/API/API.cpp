@@ -66,7 +66,13 @@ types::energy::ExternalLimits get_external_limits(const std::string& data, bool 
     return external_limits;
 }
 
-void SessionInfo::update_state(const types::evse_manager::SessionEventEnum event, const std::string& error_type) {
+static void remove_error_from_list(std::vector<module::SessionInfo::Error>& list, const std::string& error_type) {
+    list.erase(std::remove_if(list.begin(), list.end(),
+                              [error_type](const module::SessionInfo::Error& err) { return err.type == error_type; }),
+               list.end());
+}
+
+void SessionInfo::update_state(const types::evse_manager::SessionEventEnum event, const SessionInfo::Error& error) {
     std::lock_guard<std::mutex> lock(this->session_info_mutex);
     using Event = types::evse_manager::SessionEventEnum;
 
@@ -99,9 +105,11 @@ void SessionInfo::update_state(const types::evse_manager::SessionEventEnum event
     } else if (event == Event::SessionFinished) {
         this->state = State::Unplugged;
     } else if (event == Event::PermanentFault) {
-        this->active_permanent_faults.push_back(error_type);
+        this->active_permanent_faults.push_back(error);
     } else if (event == Event::Error) {
-        this->active_errors.push_back(error_type);
+        this->active_errors.push_back(error);
+    } else if (event == Event::PermanentFaultCleared or event == Event::ErrorCleared) {
+        remove_error_from_list(this->active_permanent_faults, error.type);
     } else if (event == Event::AllErrorsCleared) {
         this->active_permanent_faults.clear();
         this->active_errors.clear();
@@ -180,6 +188,10 @@ void SessionInfo::set_latest_energy_export_wh(int32_t latest_export_energy_wh) {
 void SessionInfo::set_latest_total_w(double latest_total_w) {
     std::lock_guard<std::mutex> lock(this->session_info_mutex);
     this->latest_total_w = latest_total_w;
+}
+
+static void to_json(json& j, const SessionInfo::Error& e) {
+    j = json{{"type", e.type}, {"description", e.description}, {"severity", e.severity}};
 }
 
 SessionInfo::operator std::string() {
@@ -283,11 +295,15 @@ void API::init() {
 
         evse->subscribe_session_event(
             [this, var_session_info, var_logging_path, &session_info](types::evse_manager::SessionEvent session_event) {
-                std::string state_info = "";
+                SessionInfo::Error error;
                 if (session_event.error.has_value()) {
-                    state_info = types::evse_manager::error_enum_to_string(session_event.error.value().error_code);
+                    error.type = types::evse_manager::error_enum_to_string(session_event.error.value().error_code);
+                    error.description = session_event.error.value().error_description;
+                    error.severity =
+                        types::evse_manager::error_severity_to_string(session_event.error.value().error_severity);
                 }
-                session_info->update_state(session_event.event, state_info);
+
+                session_info->update_state(session_event.event, error);
 
                 if (session_event.event == types::evse_manager::SessionEventEnum::SessionStarted) {
                     if (session_event.session_started.has_value()) {
