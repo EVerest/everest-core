@@ -93,40 +93,40 @@ Example with permanent faults being active:
     - Finished
 
 - **active_permanent_faults** array of all active errors that are permanent faults (i.e. that block charging). If anything is set here it should be shown as an error to the user instead of showing the current state:
-  - RCD_Selftest
-  - RCD_DC
-  - RCD_AC
-  - VendorError
-  - VendorWarning
-  - ConnectorLockCapNotCharged
-  - ConnectorLockUnexpectedOpen
-  - ConnectorLockUnexpectedClose
-  - ConnectorLockFailedLock
-  - ConnectorLockFailedUnlock
-  - MREC1ConnectorLockFailure
-  - MREC2GroundFailure
-  - MREC3HighTemperature
-  - MREC4OverCurrentFailure
-  - MREC5OverVoltage
-  - MREC6UnderVoltage
-  - MREC8EmergencyStop
-  - MREC10InvalidVehicleMode
-  - MREC14PilotFault
-  - MREC15PowerLoss
-  - MREC17EVSEContactorFault
-  - MREC18CableOverTempDerate
-  - MREC19CableOverTempStop
-  - MREC20PartialInsertion
-  - MREC23ProximityFault
-  - MREC24ConnectorVoltageHigh
-  - MREC25BrokenLatch
-  - MREC26CutCable
-  - DiodeFault
-  - VentilationNotAvailable
-  - BrownOut
-  - EnergyManagement
-  - PermanentFault
-  - PowermeterTransactionStartFailed
+    - RCD_Selftest
+    - RCD_DC
+    - RCD_AC
+    - VendorError
+    - VendorWarning
+    - ConnectorLockCapNotCharged
+    - ConnectorLockUnexpectedOpen
+    - ConnectorLockUnexpectedClose
+    - ConnectorLockFailedLock
+    - ConnectorLockFailedUnlock
+    - MREC1ConnectorLockFailure
+    - MREC2GroundFailure
+    - MREC3HighTemperature
+    - MREC4OverCurrentFailure
+    - MREC5OverVoltage
+    - MREC6UnderVoltage
+    - MREC8EmergencyStop
+    - MREC10InvalidVehicleMode
+    - MREC14PilotFault
+    - MREC15PowerLoss
+    - MREC17EVSEContactorFault
+    - MREC18CableOverTempDerate
+    - MREC19CableOverTempStop
+    - MREC20PartialInsertion
+    - MREC23ProximityFault
+    - MREC24ConnectorVoltageHigh
+    - MREC25BrokenLatch
+    - MREC26CutCable
+    - DiodeFault
+    - VentilationNotAvailable
+    - BrownOut
+    - EnergyManagement
+    - PermanentFault
+    - PowermeterTransactionStartFailed
 
 - **active_errors** array of all active errors that do not block charging. This could be shown to the user but the current state should still be shown as it does not interfere with charging. The enum is the same as for active_permanent_faults.
 
