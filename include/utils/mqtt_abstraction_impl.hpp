@@ -104,6 +104,7 @@ public:
     static void publish_callback(void** unused, struct mqtt_response_publish* published);
 
 private:
+    static constexpr int mqtt_poll_timeout_ms{100};
     bool mqtt_is_connected;
     std::map<std::string, MessageHandler> message_handlers;
     std::mutex handlers_mutex;
@@ -126,6 +127,11 @@ private:
     void on_mqtt_message(std::shared_ptr<Message> message);
     void on_mqtt_connect();
     static void on_mqtt_disconnect();
+
+    void notify_write_data();
+
+    int mqtt_socket_fd{-1};
+    int event_fd{-1};
 };
 } // namespace Everest
 

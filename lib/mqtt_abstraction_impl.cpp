@@ -8,6 +8,9 @@
 
 #include <fcntl.h>
 #include <netdb.h>
+#include <netinet/tcp.h>
+#include <poll.h>
+#include <sys/eventfd.h>
 #include <sys/socket.h>
 
 #include <boost/algorithm/string.hpp>
@@ -20,7 +23,6 @@
 #include <utils/mqtt_abstraction_impl.hpp>
 
 namespace Everest {
-const auto mqtt_sync_sleep_milliseconds = 10;
 const auto mqtt_keep_alive = 400;
 
 MessageWithQOS::MessageWithQOS(const std::string& topic, const std::string& payload, QOS qos) :
@@ -119,6 +121,7 @@ void MQTTAbstractionImpl::publish(const std::string& topic, const std::string& d
     if (error != MQTT_OK) {
         EVLOG_error << fmt::format("MQTT Error {}", mqtt_error_str(error));
     }
+    notify_write_data();
 
     EVLOG_debug << fmt::format("publishing to {}", topic);
 }
@@ -148,12 +151,19 @@ void MQTTAbstractionImpl::subscribe(const std::string& topic, QOS qos) {
     }
 
     mqtt_subscribe(&this->mqtt_client, topic.c_str(), max_qos_level);
+    notify_write_data();
 }
 
 void MQTTAbstractionImpl::unsubscribe(const std::string& topic) {
     BOOST_LOG_FUNCTION();
 
     mqtt_unsubscribe(&this->mqtt_client, topic.c_str());
+    notify_write_data();
+}
+
+void MQTTAbstractionImpl::notify_write_data() {
+    // FIXME (aw): error handling
+    eventfd_write(this->event_fd, 1);
 }
 
 std::future<void> MQTTAbstractionImpl::spawn_main_loop_thread() {
@@ -162,15 +172,27 @@ std::future<void> MQTTAbstractionImpl::spawn_main_loop_thread() {
     std::packaged_task<void(void)> task([this]() {
         try {
             while (this->mqtt_is_connected) {
-                MQTTErrors error = mqtt_sync(&this->mqtt_client);
-                if (error != MQTT_OK) {
-                    EVLOG_error << fmt::format("Error during MQTT sync: {}", mqtt_error_str(error));
 
-                    on_mqtt_disconnect();
+                eventfd_t eventfd_buffer;
+                struct pollfd pollfds[2] = {{this->mqtt_socket_fd, POLLIN, 0}, {this->event_fd, POLLIN, 0}};
+                auto retval = ::poll(pollfds, 2, mqtt_poll_timeout_ms);
 
-                    return;
+                if (retval >= 0) {
+                    // check for write notification and reset it
+                    if (pollfds[1].revents & POLLIN) {
+                        // FIXME (aw): check for failure
+                        eventfd_read(this->event_fd, &eventfd_buffer);
+                    }
+
+                    MQTTErrors error = mqtt_sync(&this->mqtt_client);
+                    if (error != MQTT_OK) {
+                        EVLOG_error << fmt::format("Error during MQTT sync: {}", mqtt_error_str(error));
+
+                        on_mqtt_disconnect();
+
+                        return;
+                    }
                 }
-                std::this_thread::sleep_for(std::chrono::milliseconds(mqtt_sync_sleep_milliseconds));
             }
         } catch (boost::exception& e) {
             EVLOG_critical << fmt::format("Caught MQTT mainloop boost::exception:\n{}",
@@ -359,14 +381,26 @@ bool MQTTAbstractionImpl::connectBroker(const char* host, const char* port) {
     BOOST_LOG_FUNCTION();
 
     /* open the non-blocking TCP socket (connecting to the broker) */
-    int sockfd = open_nb_socket(host, port);
+    mqtt_socket_fd = open_nb_socket(host, port);
 
-    if (sockfd == -1) {
+    if (mqtt_socket_fd == -1) {
         EVLOG_error << fmt::format("Failed to open socket: {}", strerror(errno));
         return false;
     }
 
-    mqtt_init(&this->mqtt_client, sockfd, static_cast<uint8_t*>(this->sendbuf), sizeof(this->sendbuf),
+    this->event_fd = eventfd(0, 0);
+    if (this->event_fd == -1) {
+        close(this->mqtt_socket_fd);
+        EVLOG_error << "Could not setup eventfd for mqttc io";
+        return false;
+    }
+
+    // Set TCP_NODELAY option. To take full advantage, this should also be set in mosquitto config.
+    // This avoids about 40ms latency on small MQTT publishes
+    int enable = 1;
+    setsockopt(mqtt_socket_fd, IPPROTO_TCP, TCP_NODELAY, &enable, sizeof(enable));
+
+    mqtt_init(&this->mqtt_client, mqtt_socket_fd, static_cast<uint8_t*>(this->sendbuf), sizeof(this->sendbuf),
               static_cast<uint8_t*>(this->recvbuf), sizeof(this->recvbuf), MQTTAbstractionImpl::publish_callback);
     uint8_t connect_flags = MQTT_CONNECT_CLEAN_SESSION;
     /* Send connection request to the broker. */

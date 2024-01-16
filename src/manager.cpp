@@ -69,20 +69,6 @@ public:
 private:
     const int socket_fd;
 };
-
-#else
-// FIXME (aw): this is just a dummy controller, so we do not need put major changes into the application code
-struct ControllerHandle {
-    void send_message(const nlohmann::json& msg){};
-    controller_ipc::Message receive_message() const {
-        static auto TIMEOUT_MSG = controller_ipc::Message(controller_ipc::MESSAGE_RETURN_STATUS::TIMEOUT, {});
-        return TIMEOUT_MSG;
-    }
-
-    void shutdown();
-    const int pid{0};
-};
-
 #endif
 
 // Helper struct keeping information on how to start module
@@ -436,8 +422,8 @@ static void shutdown_modules(const std::map<pid_t, std::string>& modules, Config
     }
 }
 
-static ControllerHandle start_controller(std::shared_ptr<RuntimeSettings> rs) {
 #ifdef ENABLE_ADMIN_PANEL
+static ControllerHandle start_controller(std::shared_ptr<RuntimeSettings> rs) {
     int socket_pair[2];
 
     // FIXME (aw): destroy this socketpair somewhere
@@ -482,10 +468,8 @@ static ControllerHandle start_controller(std::shared_ptr<RuntimeSettings> rs) {
                                                  });
 
     return {proc_handle.check_child_executed(), manager_socket};
-#else
-    return {};
-#endif
 }
+#endif
 
 int boot(const po::variables_map& vm) {
     bool check = (vm.count("check") != 0);
@@ -513,7 +497,9 @@ int boot(const po::variables_map& vm) {
         EVLOG_info << "EVerest will run as system user: " << rs->run_as_user;
     }
 
+#ifdef ENABLE_ADMIN_PANEL
     auto controller_handle = start_controller(rs);
+#endif
 
     EVLOG_verbose << fmt::format("EVerest prefix was set to {}", rs->prefix.string());
 
@@ -648,19 +634,28 @@ int boot(const po::variables_map& vm) {
 #endif
 
     while (true) {
-        // check if anyone died
+// check if anyone died
+#ifdef ENABLE_ADMIN_PANEL
+        // non-blocking if admin panel is enabled, as this main loop also processes controller RPC
         auto pid = waitpid(-1, &wstatus, WNOHANG);
+#else
+        // block if admin panel is disabled, no controller RPC is handled by main loop
+        auto pid = waitpid(-1, &wstatus, 0);
+#endif
 
         if (pid == 0) {
             // nothing new from our child process
         } else if (pid == -1) {
             throw std::runtime_error(fmt::format("Syscall to waitpid() failed ({})", strerror(errno)));
         } else {
+
+#ifdef ENABLE_ADMIN_PANEL
             // one of our children exited (first check controller, then modules)
             if (pid == controller_handle.pid) {
                 // FIXME (aw): what to do, if the controller exited? Restart it?
                 throw std::runtime_error("The controller process exited.");
             }
+#endif
 
             auto module_iter = module_handles.find(pid);
             if (module_iter == module_handles.end()) {
@@ -684,6 +679,7 @@ int boot(const po::variables_map& vm) {
             }
         }
 
+#ifdef ENABLE_ADMIN_PANEL
         if (module_handles.size() == 0 && restart_modules) {
             module_handles = start_modules(*config, mqtt_abstraction, ignored_modules, standalone_modules, rs,
                                            status_fifo, err_manager);
@@ -722,6 +718,7 @@ int boot(const po::variables_map& vm) {
         } else {
             // TIMEOUT fall-through
         }
+#endif
     }
 
     return EXIT_SUCCESS;
