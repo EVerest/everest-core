@@ -34,23 +34,14 @@ namespace module {
 class LimitDecimalPlaces;
 
 class SessionInfo {
-private:
-    std::mutex session_info_mutex;
-
-    std::string state;              ///< Latest state of the EVSE
-    std::string state_info;         ///< Additional information of this state
-    int32_t start_energy_import_wh; ///< Energy reading (import) at the beginning of this charging session in Wh
-    int32_t end_energy_import_wh;   ///< Energy reading (import) at the end of this charging session in Wh
-    int32_t start_energy_export_wh; ///< Energy reading (export) at the beginning of this charging session in Wh
-    int32_t end_energy_export_wh;   ///< Energy reading (export) at the end of this charging session in Wh
-    std::chrono::time_point<date::utc_clock> start_time_point; ///< Start of the charging session
-    std::chrono::time_point<date::utc_clock> end_time_point;   ///< End of the charging session
-    double latest_total_w;                                     ///< Latest total power reading in W
-
-    bool is_state_charging(const std::string& current_state);
-
 public:
     SessionInfo();
+
+    struct Error {
+        std::string type;
+        std::string description;
+        std::string severity;
+    };
 
     bool start_energy_export_wh_was_set{
         false}; ///< Indicate if start export energy value (optional) has been received or not
@@ -58,7 +49,7 @@ public:
         false}; ///< Indicate if end export energy value (optional) has been received or not
 
     void reset();
-    void update_state(const std::string& event, const std::string& state_info);
+    void update_state(const types::evse_manager::SessionEventEnum event, const SessionInfo::Error& error);
     void set_start_energy_import_wh(int32_t start_energy_import_wh);
     void set_end_energy_import_wh(int32_t end_energy_import_wh);
     void set_latest_energy_import_wh(int32_t latest_energy_wh);
@@ -69,6 +60,37 @@ public:
 
     /// \brief Converts this struct into a serialized json object
     operator std::string();
+
+private:
+    std::mutex session_info_mutex;
+
+    std::vector<Error> active_permanent_faults; ///< Array of currently active permanent faults that prevent charging
+    std::vector<Error> active_errors;           ///< Array of currently active errors that do not prevent charging
+    int32_t start_energy_import_wh; ///< Energy reading (import) at the beginning of this charging session in Wh
+    int32_t end_energy_import_wh;   ///< Energy reading (import) at the end of this charging session in Wh
+    int32_t start_energy_export_wh; ///< Energy reading (export) at the beginning of this charging session in Wh
+    int32_t end_energy_export_wh;   ///< Energy reading (export) at the end of this charging session in Wh
+    std::chrono::time_point<date::utc_clock> start_time_point; ///< Start of the charging session
+    std::chrono::time_point<date::utc_clock> end_time_point;   ///< End of the charging session
+    double latest_total_w;                                     ///< Latest total power reading in W
+
+    enum class State {
+        Unknown,
+        Unplugged,
+        Disabled,
+        Preparing,
+        Reserved,
+        AuthRequired,
+        WaitingForEnergy,
+        ChargingPausedEV,
+        ChargingPausedEVSE,
+        Charging,
+        Finished
+    } state;
+
+    bool is_state_charging(const SessionInfo::State current_state);
+
+    std::string state_to_string(State s);
 };
 } // namespace module
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1

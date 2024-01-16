@@ -9,7 +9,7 @@ namespace module {
 static const auto NOTIFICATION_PERIOD = std::chrono::seconds(1);
 
 SessionInfo::SessionInfo() :
-    state("Unknown"),
+    state(State::Unknown),
     start_energy_import_wh(0),
     end_energy_import_wh(0),
     latest_total_w(0),
@@ -19,9 +19,9 @@ SessionInfo::SessionInfo() :
     this->end_time_point = this->start_time_point;
 }
 
-bool SessionInfo::is_state_charging(const std::string& current_state) {
-    if (current_state == "AuthRequired" || current_state == "Charging" || current_state == "ChargingPausedEV" ||
-        current_state == "ChargingPausedEVSE") {
+bool SessionInfo::is_state_charging(const SessionInfo::State current_state) {
+    if (current_state == State::AuthRequired || current_state == State::Charging ||
+        current_state == State::ChargingPausedEV || current_state == State::ChargingPausedEVSE) {
         return true;
     }
     return false;
@@ -29,8 +29,9 @@ bool SessionInfo::is_state_charging(const std::string& current_state) {
 
 void SessionInfo::reset() {
     std::lock_guard<std::mutex> lock(this->session_info_mutex);
-    this->state = "Unknown";
-    this->state_info = "";
+    this->state = State::Unknown;
+    this->active_permanent_faults.clear();
+    this->active_errors.clear();
     this->start_energy_import_wh = 0;
     this->end_energy_import_wh = 0;
     this->start_energy_export_wh = 0;
@@ -65,43 +66,80 @@ types::energy::ExternalLimits get_external_limits(const std::string& data, bool 
     return external_limits;
 }
 
-void SessionInfo::update_state(const std::string& event, const std::string& state_info) {
-    std::lock_guard<std::mutex> lock(this->session_info_mutex);
+static void remove_error_from_list(std::vector<module::SessionInfo::Error>& list, const std::string& error_type) {
+    list.erase(std::remove_if(list.begin(), list.end(),
+                              [error_type](const module::SessionInfo::Error& err) { return err.type == error_type; }),
+               list.end());
+}
 
-    this->state_info = state_info;
-    if (event == "Enabled") {
-        this->state = "Unplugged";
-    } else if (event == "Disabled") {
-        this->state = "Disabled";
-    } else if (event == "SessionStarted") {
-        this->state = "Preparing";
-    } else if (event == "ReservationStart") {
-        this->state = "Reserved";
-    } else if (event == "ReservationEnd") {
-        this->state = "Unplugged";
-    } else if (event == "AuthRequired") {
-        this->state = "AuthRequired";
-    } else if (event == "WaitingForEnergy") {
-        this->state = "WaitingForEnergy";
-    } else if (event == "TransactionStarted") {
-        this->state = "Preparing";
-    } else if (event == "ChargingPausedEV") {
-        this->state = "ChargingPausedEV";
-    } else if (event == "ChargingPausedEVSE") {
-        this->state = "ChargingPausedEVSE";
-    } else if (event == "ChargingStarted") {
-        this->state = "Charging";
-    } else if (event == "ChargingResumed") {
-        this->state = "Charging";
-    } else if (event == "TransactionFinished") {
-        this->state = "Finished";
-    } else if (event == "SessionFinished") {
-        this->state = "Unplugged";
-    } else if (event == "Error") {
-        this->state = "Error";
-    } else if (event == "PermanentFault") {
-        this->state = "PermanentFault";
+void SessionInfo::update_state(const types::evse_manager::SessionEventEnum event, const SessionInfo::Error& error) {
+    std::lock_guard<std::mutex> lock(this->session_info_mutex);
+    using Event = types::evse_manager::SessionEventEnum;
+
+    if (event == Event::Enabled) {
+        this->state = State::Unplugged;
+    } else if (event == Event::Disabled) {
+        this->state = State::Disabled;
+    } else if (event == Event::SessionStarted) {
+        this->state = State::Preparing;
+    } else if (event == Event::ReservationStart) {
+        this->state = State::Reserved;
+    } else if (event == Event::ReservationEnd) {
+        this->state = State::Unplugged;
+    } else if (event == Event::AuthRequired) {
+        this->state = State::AuthRequired;
+    } else if (event == Event::WaitingForEnergy) {
+        this->state = State::WaitingForEnergy;
+    } else if (event == Event::TransactionStarted) {
+        this->state = State::Preparing;
+    } else if (event == Event::ChargingPausedEV) {
+        this->state = State::ChargingPausedEV;
+    } else if (event == Event::ChargingPausedEVSE) {
+        this->state = State::ChargingPausedEVSE;
+    } else if (event == Event::ChargingStarted) {
+        this->state = State::Charging;
+    } else if (event == Event::ChargingResumed) {
+        this->state = State::Charging;
+    } else if (event == Event::TransactionFinished) {
+        this->state = State::Finished;
+    } else if (event == Event::SessionFinished) {
+        this->state = State::Unplugged;
+    } else if (event == Event::PermanentFault) {
+        this->active_permanent_faults.push_back(error);
+    } else if (event == Event::Error) {
+        this->active_errors.push_back(error);
+    } else if (event == Event::PermanentFaultCleared or event == Event::ErrorCleared) {
+        remove_error_from_list(this->active_permanent_faults, error.type);
+    } else if (event == Event::AllErrorsCleared) {
+        this->active_permanent_faults.clear();
+        this->active_errors.clear();
     }
+}
+
+std::string SessionInfo::state_to_string(SessionInfo::State s) {
+    switch (s) {
+    case SessionInfo::State::Unplugged:
+        return "Unplugged";
+    case SessionInfo::State::Disabled:
+        return "Disabled";
+    case SessionInfo::State::Preparing:
+        return "Preparing";
+    case SessionInfo::State::Reserved:
+        return "Reserved";
+    case SessionInfo::State::AuthRequired:
+        return "AuthRequired";
+    case SessionInfo::State::WaitingForEnergy:
+        return "WaitingForEnergy";
+    case SessionInfo::State::ChargingPausedEV:
+        return "ChargingPausedEV";
+    case SessionInfo::State::ChargingPausedEVSE:
+        return "ChargingPausedEVSE";
+    case SessionInfo::State::Charging:
+        return "Charging";
+    case SessionInfo::State::Finished:
+        return "Finished";
+    }
+    return "Unknown";
 }
 
 void SessionInfo::set_start_energy_import_wh(int32_t start_energy_import_wh) {
@@ -152,6 +190,10 @@ void SessionInfo::set_latest_total_w(double latest_total_w) {
     this->latest_total_w = latest_total_w;
 }
 
+static void to_json(json& j, const SessionInfo::Error& e) {
+    j = json{{"type", e.type}, {"description", e.description}, {"severity", e.severity}};
+}
+
 SessionInfo::operator std::string() {
     std::lock_guard<std::mutex> lock(this->session_info_mutex);
 
@@ -165,8 +207,9 @@ SessionInfo::operator std::string() {
     auto charging_duration_s =
         std::chrono::duration_cast<std::chrono::seconds>(this->end_time_point - this->start_time_point);
 
-    json session_info = json::object({{"state", this->state},
-                                      {"state_info", this->state_info},
+    json session_info = json::object({{"state", state_to_string(this->state)},
+                                      {"active_permanent_faults", this->active_permanent_faults},
+                                      {"active_errors", this->active_errors},
                                       {"charged_energy_wh", charged_energy_wh},
                                       {"discharged_energy_wh", discharged_energy_wh},
                                       {"latest_total_w", this->latest_total_w},
@@ -252,12 +295,15 @@ void API::init() {
 
         evse->subscribe_session_event(
             [this, var_session_info, var_logging_path, &session_info](types::evse_manager::SessionEvent session_event) {
-                auto event = types::evse_manager::session_event_enum_to_string(session_event.event);
-                std::string state_info = "";
+                SessionInfo::Error error;
                 if (session_event.error.has_value()) {
-                    state_info = types::evse_manager::error_enum_to_string(session_event.error.value().error_code);
+                    error.type = types::evse_manager::error_enum_to_string(session_event.error.value().error_code);
+                    error.description = session_event.error.value().error_description;
+                    error.severity =
+                        types::evse_manager::error_severity_to_string(session_event.error.value().error_severity);
                 }
-                session_info->update_state(event, state_info);
+
+                session_info->update_state(session_event.event, error);
 
                 if (session_event.event == types::evse_manager::SessionEventEnum::SessionStarted) {
                     if (session_event.session_started.has_value()) {

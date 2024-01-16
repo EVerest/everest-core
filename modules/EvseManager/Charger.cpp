@@ -47,7 +47,7 @@ Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_
     hlc_use_5percent_current_session = false;
 
     // Register callbacks for errors/error clearings
-    error_handling->signal_error.connect([this](const types::evse_manager::ErrorEnum e, const bool prevent_charging) {
+    error_handling->signal_error.connect([this](const types::evse_manager::Error e, const bool prevent_charging) {
         std::scoped_lock lock(stateMutex);
         if (prevent_charging) {
             error_prevent_charging_flag = true;
