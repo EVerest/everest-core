@@ -63,6 +63,7 @@ cc_binary(
         "@com_github_everest_liblog//:liblog",
         "@com_github_fmtlib_fmt//:fmt",
         "@com_github_warmcatt_libwebsockets//:libwebsockets",
+        "@libcap//:libcap",
     ],
 )
 
@@ -82,5 +83,6 @@ cc_binary(
         "@com_github_everest_liblog//:liblog",
         "@com_github_fmtlib_fmt//:fmt",
         "@com_github_pboettch_json-schema-validator//:json-schema-validator",
+        "@libcap//:libcap",
     ],
 )

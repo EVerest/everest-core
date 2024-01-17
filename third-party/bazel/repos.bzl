@@ -151,3 +151,34 @@ def everest_framework_repos(repo_mapping = {}):
         build_file = "@com_github_everest_everest-framework//third-party/bazel:BUILD.fmt.bazel",
         repo_mapping = repo_mapping,
     )
+    maybe(
+        git_repository,
+        name = "libcap",
+        commit = "011eb766ce43f943a4138837bdf742ac31590d26",
+        remote = "https://git.kernel.org/pub/scm/libs/libcap/libcap.git",
+        build_file_content = """
+load("@rules_foreign_cc//foreign_cc:defs.bzl", "make")
+
+filegroup(
+    name = "all_srcs",
+    srcs = glob(["**"]),
+    visibility = ["//visibility:public"],
+)
+
+make(
+    name = "libcap",
+    lib_source = ":all_srcs",
+    args = [
+        "prefix=$$INSTALLDIR$$",
+        "GO=false"
+    ],
+    out_static_libs = [
+        "../lib64/libcap.a",
+    ],
+    visibility = [
+        "//visibility:public",
+    ],
+)
+""",    
+    )
+
