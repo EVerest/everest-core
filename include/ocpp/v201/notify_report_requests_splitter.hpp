@@ -20,7 +20,7 @@ private:
     const NotifyReportRequest& original_request;
     // cppcheck-suppress unusedStructMember
     size_t max_size;
-    const std::function<MessageId()>& message_id_generator_callback;
+    const std::function<MessageId()> message_id_generator_callback;
     json request_json_template; // json that is used  as template for request json
     // cppcheck-suppress unusedStructMember
     const size_t json_skeleton_size; // size of the json skeleton for a call json object which includes everything
@@ -28,7 +28,7 @@ private:
 
 public:
     NotifyReportRequestsSplitter(const NotifyReportRequest& originalRequest, size_t max_size,
-                                 const std::function<MessageId()>& message_id_generator_callback);
+                                 std::function<MessageId()>&& message_id_generator_callback);
     NotifyReportRequestsSplitter() = delete;
 
     /// \brief Splits the provided NotifyReportRequest into (potentially) several Call payloads

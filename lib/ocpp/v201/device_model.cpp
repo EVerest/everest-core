@@ -256,7 +256,7 @@ std::vector<ReportData> DeviceModel::get_base_report_data(const ReportBaseEnum& 
 
 std::vector<ReportData>
 DeviceModel::get_custom_report_data(const std::optional<std::vector<ComponentVariable>>& component_variables,
-                             const std::optional<std::vector<ComponentCriterionEnum>>& component_criteria) {
+                                    const std::optional<std::vector<ComponentCriterionEnum>>& component_criteria) {
     std::vector<ReportData> report_data_vec;
 
     for (auto const& [component, variable_map] : this->device_model) {
