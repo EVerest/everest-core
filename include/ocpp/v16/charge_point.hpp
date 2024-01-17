@@ -168,9 +168,9 @@ public:
     /// authorization or the connection of cable and/or EV to the given \p connector
     /// \param connector
     /// \param session_id unique id of the session
-    /// \param reason "Authorized" or "EVConnected" TODO(piet): Convert to enum
+    /// \param reason for the initiation of the session
     /// \param session_logging_path optional filesystem path to where the session log should be written
-    void on_session_started(int32_t connector, const std::string& session_id, const std::string& reason,
+    void on_session_started(int32_t connector, const std::string& session_id, const SessionStartedReason reason,
                             const std::optional<std::string>& session_logging_path);
 
     /// \brief Notifies chargepoint that a session has been stopped at the given \p connector. This function must be

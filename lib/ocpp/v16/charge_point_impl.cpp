@@ -3152,7 +3152,8 @@ void ChargePointImpl::start_transaction(std::shared_ptr<Transaction> transaction
     this->send<StartTransactionRequest>(call);
 }
 
-void ChargePointImpl::on_session_started(int32_t connector, const std::string& session_id, const std::string& reason,
+void ChargePointImpl::on_session_started(int32_t connector, const std::string& session_id,
+                                         const ocpp::SessionStartedReason reason,
                                          const std::optional<std::string>& session_logging_path) {
 
     EVLOG_debug << "Session on connector#" << connector << " started with reason " << reason;
@@ -3161,13 +3162,12 @@ void ChargePointImpl::on_session_started(int32_t connector, const std::string& s
         this->logging->start_session_logging(session_id, session_logging_path.value());
     }
 
-    const auto session_started_reason = ocpp::conversions::string_to_session_started_reason(reason);
-
     // dont change to preparing when in reserved
     if ((this->status->get_state(connector) == ChargePointStatus::Reserved &&
-         session_started_reason == SessionStartedReason::Authorized) ||
+         reason == SessionStartedReason::Authorized) ||
         this->status->get_state(connector) != ChargePointStatus::Reserved) {
-        this->status->submit_event(connector, FSMEvent::UsageInitiated, ocpp::DateTime());
+        this->status->submit_event(connector, FSMEvent::UsageInitiated, ocpp::DateTime(),
+                                   ocpp::conversions::session_started_reason_to_string(reason));
     }
 }
 
@@ -3594,7 +3594,8 @@ void ChargePointImpl::on_disabled(int32_t connector) {
 }
 
 void ChargePointImpl::on_plugin_timeout(int32_t connector) {
-    this->status->submit_event(connector, FSMEvent::TransactionStoppedAndUserActionRequired, ocpp::DateTime());
+    this->status->submit_event(connector, FSMEvent::TransactionStoppedAndUserActionRequired, ocpp::DateTime(),
+                               "ConnectionTimeout");
 }
 
 void ChargePointImpl::on_security_event(const std::string& type, const std::string& tech_info) {

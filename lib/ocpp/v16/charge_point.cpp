@@ -83,7 +83,8 @@ void ChargePoint::on_max_current_offered(int32_t connector, int32_t max_current)
     this->charge_point->on_max_current_offered(connector, max_current);
 }
 
-void ChargePoint::on_session_started(int32_t connector, const std::string& session_id, const std::string& reason,
+void ChargePoint::on_session_started(int32_t connector, const std::string& session_id,
+                                     const ocpp::SessionStartedReason reason,
                                      const std::optional<std::string>& session_logging_path) {
 
     this->charge_point->on_session_started(connector, session_id, reason, session_logging_path);

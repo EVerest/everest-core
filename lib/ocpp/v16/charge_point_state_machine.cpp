@@ -116,7 +116,8 @@ FSMState ChargePointFSM::get_state() const {
     return state;
 }
 
-bool ChargePointFSM::handle_event(FSMEvent event, const ocpp::DateTime timestamp) {
+bool ChargePointFSM::handle_event(FSMEvent event, const ocpp::DateTime timestamp,
+                                  const std::optional<CiString<50>>& info) {
     const auto& transitions = FSM_DEF.at(state);
     const auto dest_state_it = transitions.find(event);
 
@@ -129,7 +130,7 @@ bool ChargePointFSM::handle_event(FSMEvent event, const ocpp::DateTime timestamp
     state = dest_state_it->second;
 
     if (!faulted) {
-        status_notification_callback(state, this->error_code, timestamp, std::nullopt, std::nullopt, std::nullopt);
+        status_notification_callback(state, this->error_code, timestamp, info, std::nullopt, std::nullopt);
     }
 
     return true;
@@ -212,13 +213,14 @@ void ChargePointStates::reset(std::map<int, ChargePointStatus> connector_status_
     }
 }
 
-void ChargePointStates::submit_event(const int connector_id, FSMEvent event, const ocpp::DateTime& timestamp) {
+void ChargePointStates::submit_event(const int connector_id, FSMEvent event, const ocpp::DateTime& timestamp,
+                                     const std::optional<CiString<50>>& info) {
     const std::lock_guard<std::mutex> lck(state_machines_mutex);
 
     if (connector_id == 0) {
-        this->state_machine_connector_zero->handle_event(event, timestamp);
+        this->state_machine_connector_zero->handle_event(event, timestamp, info);
     } else if (connector_id > 0 && (size_t)connector_id <= this->state_machines.size()) {
-        this->state_machines.at(connector_id - 1).handle_event(event, timestamp);
+        this->state_machines.at(connector_id - 1).handle_event(event, timestamp, info);
     }
 }
 
