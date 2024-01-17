@@ -653,6 +653,20 @@ public:
     void set_message_queue_resume_delay(std::chrono::seconds delay) {
         this->message_queue_resume_delay = delay;
     }
+
+    /// \brief Requests a value of a VariableAttribute specified by combination of \p component_id and \p variable_id
+    /// from the device model
+    /// \tparam T datatype of the value that is requested
+    /// \param component_id
+    /// \param variable_id
+    /// \param attribute_enum
+    /// \return Response to request that contains status of the request and the requested value as std::optional<T> .
+    /// The value is present if the status is GetVariableStatusEnum::Accepted
+    template <typename T>
+    RequestDeviceModelResponse<T> request_value(const Component& component_id, const Variable& variable_id,
+                                                const AttributeEnum& attribute_enum) {
+        return this->device_model->request_value<T>(component_id, variable_id, attribute_enum);
+    }
 };
 
 } // namespace v201
