@@ -742,6 +742,20 @@ void OCPP201::ready() {
         return get_update_firmware_response(response);
     };
 
+    callbacks.variable_changed_callback = [this](const ocpp::v201::SetVariableData& set_variable_data) {
+        if (set_variable_data.component.name == "TxCtrlr" and
+            set_variable_data.variable.name == "EVConnectionTimeOut") {
+            try {
+                auto ev_connection_timeout = std::stoi(set_variable_data.attributeValue.get());
+                this->r_auth->call_set_connection_timeout(ev_connection_timeout);
+            } catch (const std::exception& e) {
+                EVLOG_error << "Could not parse EVConnectionTimeOut and did not set it in Auth module, error: "
+                            << e.what();
+                return;
+            }
+        }
+    };
+
     callbacks.validate_network_profile_callback =
         [this](const int32_t configuration_slot,
                const ocpp::v201::NetworkConnectionProfile& network_connection_profile) {
@@ -797,6 +811,14 @@ void OCPP201::ready() {
         EVLOG_info << "TxStartPoint from device model: " << tx_start_point_string;
     } else {
         this->tx_start_point = TxStartPoint::PowerPathClosed;
+    }
+
+    const auto ev_connection_timeout_request_value_response = this->charge_point->request_value<int32_t>(
+        ocpp::v201::Component{"TxCtrlr"}, ocpp::v201::Variable{"EVConnectionTimeOut"},
+        ocpp::v201::AttributeEnum::Actual);
+    if (ev_connection_timeout_request_value_response.status == ocpp::v201::GetVariableStatusEnum::Accepted and
+        ev_connection_timeout_request_value_response.value.has_value()) {
+        this->r_auth->call_set_connection_timeout(ev_connection_timeout_request_value_response.value.value());
     }
 
     if (this->config.EnableExternalWebsocketControl) {

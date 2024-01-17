@@ -17,6 +17,7 @@
 #include <generated/interfaces/ocpp_data_transfer/Implementation.hpp>
 
 // headers for required interface implementations
+#include <generated/interfaces/auth/Interface.hpp>
 #include <generated/interfaces/evse_manager/Interface.hpp>
 #include <generated/interfaces/evse_security/Interface.hpp>
 #include <generated/interfaces/ocpp_data_transfer/Interface.hpp>
@@ -73,7 +74,8 @@ public:
             std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer,
             std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager, std::unique_ptr<systemIntf> r_system,
             std::unique_ptr<evse_securityIntf> r_security,
-            std::vector<std::unique_ptr<ocpp_data_transferIntf>> r_data_transfer, Conf& config) :
+            std::vector<std::unique_ptr<ocpp_data_transferIntf>> r_data_transfer, std::unique_ptr<authIntf> r_auth,
+            Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_main(std::move(p_main)),
@@ -84,6 +86,7 @@ public:
         r_system(std::move(r_system)),
         r_security(std::move(r_security)),
         r_data_transfer(std::move(r_data_transfer)),
+        r_auth(std::move(r_auth)),
         config(config){};
 
     Everest::MqttProvider& mqtt;
@@ -95,6 +98,7 @@ public:
     const std::unique_ptr<systemIntf> r_system;
     const std::unique_ptr<evse_securityIntf> r_security;
     const std::vector<std::unique_ptr<ocpp_data_transferIntf>> r_data_transfer;
+    const std::unique_ptr<authIntf> r_auth;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1

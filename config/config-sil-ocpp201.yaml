@@ -120,6 +120,9 @@ active_modules:
           implementation_id: evse
         - module_id: evse_manager_2
           implementation_id: evse
+      auth:
+        - module_id: auth
+          implementation_id: main
       system:
         - module_id: system
           implementation_id: main
