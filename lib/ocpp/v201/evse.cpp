@@ -4,10 +4,9 @@
 #include <utility>
 
 #include <everest/logging.hpp>
-#include <ocpp/v201/average_meter_values.hpp>
 #include <ocpp/v201/ctrlr_component_variables.hpp>
 #include <ocpp/v201/evse.hpp>
-#include <ocpp/v201/utils.hpp>
+
 using namespace std::chrono_literals;
 
 namespace ocpp {
@@ -41,24 +40,20 @@ static float get_normalized_energy_value(SampledValue sampled_value) {
 
 Evse::Evse(const int32_t evse_id, const int32_t number_of_connectors, DeviceModel& device_model,
            std::shared_ptr<DatabaseHandler> database_handler,
-           const std::function<void(const int32_t connector_id, const ConnectorStatusEnum& status)>&
-               status_notification_callback,
+           std::shared_ptr<ComponentStateManager> component_state_manager,
            const std::function<void(const MeterValue& meter_value, const Transaction& transaction, const int32_t seq_no,
                                     const std::optional<int32_t> reservation_id)>& transaction_meter_value_req,
            const std::function<void()> pause_charging_callback) :
     evse_id(evse_id),
     device_model(device_model),
-    status_notification_callback(status_notification_callback),
     transaction_meter_value_req(transaction_meter_value_req),
     pause_charging_callback(pause_charging_callback),
     database_handler(database_handler),
+    component_state_manager(component_state_manager),
     transaction(nullptr) {
     for (int connector_id = 1; connector_id <= number_of_connectors; connector_id++) {
-        this->id_connector_map.insert(std::make_pair(
-            connector_id,
-            std::make_unique<Connector>(connector_id, [this, connector_id](const ConnectorStatusEnum& status) {
-                this->status_notification_callback(connector_id, status);
-            })));
+        this->id_connector_map.insert(
+            std::make_pair(connector_id, std::make_unique<Connector>(evse_id, connector_id, component_state_manager)));
     }
 }
 
@@ -194,22 +189,8 @@ std::unique_ptr<EnhancedTransaction>& Evse::get_transaction() {
     return this->transaction;
 }
 
-ConnectorStatusEnum Evse::get_state(const int32_t connector_id) {
-    return this->id_connector_map.at(connector_id)->get_state();
-}
-
 void Evse::submit_event(const int32_t connector_id, ConnectorEvent event) {
     return this->id_connector_map.at(connector_id)->submit_event(event);
-}
-
-void Evse::trigger_status_notification_callbacks() {
-    for (auto const& [connector_id, connector] : this->id_connector_map) {
-        this->status_notification_callback(connector_id, connector->get_state());
-    }
-}
-
-void Evse::trigger_status_notification_callback(const int32_t connector_id) {
-    this->status_notification_callback(connector_id, this->id_connector_map.at(connector_id)->get_state());
 }
 
 void Evse::on_meter_value(const MeterValue& meter_value) {
@@ -263,6 +244,27 @@ void Evse::check_max_energy_on_invalid_id() {
             }
         }
     }
+}
+
+void Evse::set_evse_operative_status(OperationalStatusEnum new_status, bool persist) {
+    this->component_state_manager->set_evse_individual_operational_status(this->evse_id, new_status, persist);
+}
+
+void Evse::set_connector_operative_status(int32_t connector_id, OperationalStatusEnum new_status, bool persist) {
+    this->id_connector_map.at(connector_id)->set_connector_operative_status(new_status, persist);
+}
+
+OperationalStatusEnum Evse::get_effective_operational_status() {
+    return this->component_state_manager->get_evse_effective_operational_status(this->evse_id);
+}
+
+Connector* Evse::get_connector(int32_t connector_id) {
+    if (connector_id <= 0 || connector_id > this->get_number_of_connectors()) {
+        std::stringstream err_msg;
+        err_msg << "ConnectorID " << connector_id << " out of bounds for EVSE " << this->evse_id;
+        throw std::logic_error(err_msg.str());
+    }
+    return this->id_connector_map.at(connector_id).get();
 }
 
 } // namespace v201

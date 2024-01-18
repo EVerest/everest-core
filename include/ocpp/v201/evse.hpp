@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
+#pragma once
+
 #include <functional>
 #include <map>
 #include <memory>
 
 #include <ocpp/v201/average_meter_values.hpp>
+#include <ocpp/v201/component_state_manager.hpp>
 #include <ocpp/v201/connector.hpp>
 #include <ocpp/v201/database_handler.hpp>
 #include <ocpp/v201/device_model.hpp>
@@ -23,7 +26,6 @@ private:
     int32_t evse_id;
     DeviceModel& device_model;
     std::map<int32_t, std::unique_ptr<Connector>> id_connector_map;
-    std::function<void(const int32_t connector_id, const ConnectorStatusEnum& status)> status_notification_callback;
     std::function<void(const MeterValue& meter_value, const Transaction& transaction, const int32_t seq_no,
                        const std::optional<int32_t> reservation_id)>
         transaction_meter_value_req;
@@ -43,6 +45,9 @@ private:
     AverageMeterValues aligned_data_updated;
     AverageMeterValues aligned_data_tx_end;
 
+    /// \brief Component responsible for maintaining and persisting the operational status of CS, EVSEs, and connectors.
+    std::shared_ptr<ComponentStateManager> component_state_manager;
+
 public:
     /// \brief Construct a new Evse object
     /// \param evse_id id of the evse
@@ -53,8 +58,7 @@ public:
     /// invalid id being exceeded
     Evse(const int32_t evse_id, const int32_t number_of_connectors, DeviceModel& device_model,
          std::shared_ptr<DatabaseHandler> database_handler,
-         const std::function<void(const int32_t connector_id, const ConnectorStatusEnum& status)>&
-             status_notification_callback,
+         std::shared_ptr<ComponentStateManager> component_state_manager,
          const std::function<void(const MeterValue& meter_value, const Transaction& transaction, const int32_t seq_no,
                                   const std::optional<int32_t> reservation_id)>& transaction_meter_value_req,
          const std::function<void()> pause_charging_callback);
@@ -111,23 +115,11 @@ public:
     /// \return pointer to transaction (nullptr if no transaction is active)
     std::unique_ptr<EnhancedTransaction>& get_transaction();
 
-    /// \brief Get the state of the connector with the given \p connector_id
-    /// \param connector_id id of the connector of the evse
-    /// \return ConnectorStatusEnum
-    ConnectorStatusEnum get_state(const int32_t connector_id);
-
     /// \brief Submits the given \p event to the state machine controller of the connector with the given
     /// \p connector_id
     /// \param connector_id id of the connector of the evse
     /// \param event
     void submit_event(const int32_t connector_id, ConnectorEvent event);
-
-    /// \brief Triggers status notification callback for all connectors of the evse
-    void trigger_status_notification_callbacks();
-
-    /// \brief Triggers a status notification callback for connector_id of the evse
-    /// \param connector_id id of the connector of the evse
-    void trigger_status_notification_callback(const int32_t connector_id);
 
     /// \brief Event handler that should be called when a new meter_value for this evse is present
     /// \param meter_value
@@ -143,6 +135,23 @@ public:
 
     /// @brief Clear the idle meter values for this evse
     void clear_idle_meter_values();
+
+    /// \brief Returns a pointer to the connector with ID \param connector_id in this EVSE.
+    Connector* get_connector(int32_t connector_id);
+
+    /// \brief Gets the effective Operative/Inoperative status of this EVSE
+    OperationalStatusEnum get_effective_operational_status();
+
+    /// \brief Switches the operative status of the EVSE
+    /// \param new_status The operative status to switch to
+    /// \param persist True the updated operative state should be persisted
+    void set_evse_operative_status(OperationalStatusEnum new_status, bool persist);
+
+    /// \brief Switches the operative status of a connector within this EVSE
+    /// \param connector_id The ID of the connector
+    /// \param new_status The operative status to switch to
+    /// \param persist True the updated operative state should be persisted
+    void set_connector_operative_status(int32_t connector_id, OperationalStatusEnum new_status, bool persist);
 };
 
 } // namespace v201

@@ -6,11 +6,15 @@ CREATE TABLE IF NOT EXISTS AUTH_CACHE(
     ID_TOKEN_INFO TEXT NOT NULL
 );
 
--- Availability --
+-- OCPP 2.0.1. Availability --
+-- Rows are the operative state (Operative/Inoperative) of the CS, all EVSEs, and all Connectors
 CREATE TABLE IF NOT EXISTS AVAILABILITY(
-    EVSE_ID INT PRIMARY KEY NOT NULL,
-    CONNECTOR_ID INT,
-    OPERATIONAL_STATUS TEXT NOT NULL
+    EVSE_ID INT NOT NULL, -- EVSE_ID=0 AND CONNECTOR_ID=0 addresses the whole CS
+    CONNECTOR_ID INT NOT NULL, -- A CONNECTOR_ID of 0 when EVSE_ID > 0 addresses the whole connector
+    OPERATIONAL_STATUS TEXT NOT NULL, -- "Operative" or "Inoperative"
+    PRIMARY KEY (EVSE_ID, CONNECTOR_ID),
+    -- Consistency check: EVSE and connector IDs are positive, and if EVSE_ID is 0, CONNECTOR_ID must also be 0
+    CHECK (EVSE_ID >= 0 AND CONNECTOR_ID >= 0 AND (EVSE_ID > 0 OR CONNECTOR_ID = 0))
 );
 
 CREATE TABLE IF NOT EXISTS TRANSACTION_QUEUE(

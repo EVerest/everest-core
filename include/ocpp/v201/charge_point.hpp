@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
+#pragma once
+
 #include <future>
 #include <set>
 
@@ -54,6 +56,8 @@
 #include <ocpp/v201/messages/UnlockConnector.hpp>
 #include <ocpp/v201/messages/UpdateFirmware.hpp>
 
+#include "component_state_manager.hpp"
+
 namespace ocpp {
 namespace v201 {
 
@@ -78,16 +82,32 @@ struct Callbacks {
     std::function<void(const std::optional<const int32_t> evse_id, const ResetEnum& reset_type)> reset_callback;
     std::function<void(const int32_t evse_id, const ReasonEnum& stop_reason)> stop_transaction_callback;
     std::function<void(const int32_t evse_id)> pause_charging_callback;
-    ///
-    /// \brief Change availability of charging station / evse / connector.
-    /// \param request The request.
-    /// \param persist True to persist the status after reboot.
-    ///
-    /// Persist is set to 'false' if the status does not need to be stored after restarting. Otherwise it is true.
-    /// False is for example during a reset OnIdle where first an 'unavailable' is sent until the charging session
-    /// stopped. True is for example when the CSMS sent an 'inoperative' request.
-    ///
-    std::function<void(const ChangeAvailabilityRequest& request, const bool persist)> change_availability_callback;
+
+    /// \brief Used to notify the user of libocpp that the Operative/Inoperative state of the charging station changed
+    /// If as a result the state of EVSEs or connectors changed as well, libocpp will additionally call the
+    /// evse_effective_operative_status_changed_callback once for each EVSE whose status changed, and
+    /// connector_effective_operative_status_changed_callback once for each connector whose status changed.
+    /// If left empty, the callback is ignored.
+    /// \param new_status The operational status the CS switched to
+    std::optional<std::function<void(const OperationalStatusEnum new_status)>>
+        cs_effective_operative_status_changed_callback;
+
+    /// \brief Used to notify the user of libocpp that the Operative/Inoperative state of an EVSE changed
+    /// If as a result the state of connectors changed as well, libocpp will additionally call the
+    /// connector_effective_operative_status_changed_callback once for each connector whose status changed.
+    /// If left empty, the callback is ignored.
+    /// \param evse_id The id of the EVSE
+    /// \param new_status The operational status the EVSE switched to
+    std::optional<std::function<void(const int32_t evse_id, const OperationalStatusEnum new_status)>>
+        evse_effective_operative_status_changed_callback;
+
+    /// \brief Used to notify the user of libocpp that the Operative/Inoperative state of a connector changed.
+    /// \param evse_id The id of the EVSE
+    /// \param connector_id The ID of the connector within the EVSE
+    /// \param new_status The operational status the connector switched to
+    std::function<void(const int32_t evse_id, const int32_t connector_id, const OperationalStatusEnum new_status)>
+        connector_effective_operative_status_changed_callback;
+
     std::function<GetLogResponse(const GetLogRequest& request)> get_log_request_callback;
     std::function<UnlockConnectorResponse(const int32_t evse_id, const int32_t connecor_id)> unlock_connector_callback;
     // callback to be called when the request can be accepted. authorize_remote_start indicates if Authorize.req needs
@@ -184,7 +204,6 @@ private:
 
     // states
     RegistrationStatusEnum registration_status;
-    OperationalStatusEnum operational_state;
     FirmwareStatusEnum firmware_status;
     // The request ID in the last firmware update status received
     std::optional<int32_t> firmware_status_id;
@@ -195,6 +214,9 @@ private:
     BootReasonEnum bootreason;
     int network_configuration_priority;
     bool disable_automatic_websocket_reconnects;
+
+    /// \brief Component responsible for maintaining and persisting the operational status of CS, EVSEs, and connectors.
+    std::shared_ptr<ComponentStateManager> component_state_manager;
 
     // store the connector status
     struct EvseConnectorPair {
@@ -211,7 +233,6 @@ private:
         }
     };
 
-    std::map<EvseConnectorPair, ConnectorStatusEnum> conn_state_per_evse;
     std::chrono::time_point<std::chrono::steady_clock> time_disconnected;
     AverageMeterValues aligned_data_evse0; // represents evseId = 0 meter value
 
@@ -478,6 +499,21 @@ private:
         };
     };
 
+    /// \brief Checks if all connectors are effectively inoperative.
+    /// If this is the case, calls the all_connectors_unavailable_callback
+    /// This is used e.g. to allow firmware updates once all transactions have finished
+    bool are_all_connectors_effectively_inoperative();
+
+    /// \brief Returns a pointer to the EVSE with ID \param evse_id
+    Evse* get_evse(int32_t evse_id);
+
+    /// \brief Returns a pointer to the connector with ID \param connector_id in the EVSE with ID \param evse_id
+    Connector* get_connector(int32_t evse_id, int32_t connector_id);
+
+    /// \brief Immediately execute the given \param request to change the operational state of a component
+    /// If \param persist is set to true, the change will be persisted across a reboot
+    void execute_change_availability_request(ChangeAvailabilityRequest request, bool persist);
+
 public:
     /// \brief Construct a new ChargePoint object
     /// \param evse_connector_structure Map that defines the structure of EVSE and connectors of the chargepoint. The
@@ -591,9 +627,9 @@ public:
     /// becomes unavailable
     void on_unavailable(const int32_t evse_id, const int32_t connector_id);
 
-    /// \brief Event handler that should be called when the connector on the given \p evse_id and \p connector_id
-    /// becomes operative again
-    void on_operative(const int32_t evse_id, const int32_t connector_id);
+    /// \brief Event handler that should be called when the connector returns from unavailable on the given \p evse_id
+    /// and \p connector_id .
+    void on_enabled(const int32_t evse_id, const int32_t connector_id);
 
     /// \brief Event handler that should be called when the connector on the given evse_id and connector_id is faulted.
     /// \param evse_id          Faulted EVSE id
@@ -647,6 +683,25 @@ public:
     /// \return DataTransferResponse contaning the result from CSMS
     DataTransferResponse data_transfer_req(const CiString<255>& vendorId, const std::optional<CiString<50>>& messageId,
                                            const std::optional<std::string>& data);
+
+    /// \brief Switches the operative status of the CS
+    /// \param new_status: The new operative status to switch to
+    /// \param persist: True if the updated state should be persisted in the database
+    void set_cs_operative_status(OperationalStatusEnum new_status, bool persist);
+
+    /// \brief Switches the operative status of an EVSE
+    /// \param evse_id: The ID of the EVSE, empty if the CS is addressed
+    /// \param new_status: The new operative status to switch to
+    /// \param persist: True if the updated state should be persisted in the database
+    void set_evse_operative_status(int32_t evse_id, OperationalStatusEnum new_status, bool persist);
+
+    /// \brief Switches the operative status of the CS, an EVSE, or a connector, and recomputes effective statuses
+    /// \param evse_id: The ID of the EVSE, empty if the CS is addressed
+    /// \param connector_id: The ID of the connector, empty if an EVSE or the CS is addressed
+    /// \param new_status: The new operative status to switch to
+    /// \param persist: True if the updated state should be persisted in the database
+    void set_connector_operative_status(int32_t evse_id, int32_t connector_id, OperationalStatusEnum new_status,
+                                        bool persist);
 
     /// \brief Delay draining the message queue after reconnecting, so the CSMS can perform post-reconnect checks first
     /// \param delay The delay period (seconds)

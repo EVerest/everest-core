@@ -18,7 +18,8 @@ target_link_libraries(database_tests PRIVATE
 
 add_test(database_tests database_tests)
 
-add_executable(libocpp_unit_tests)
+add_executable(libocpp_unit_tests
+        lib/ocpp/v201/test_component_state_manager.cpp)
 
 add_custom_command(TARGET libocpp_unit_tests POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/resources/unittest_device_model.db ${CMAKE_CURRENT_BINARY_DIR}/resources/unittest_device_model.db
@@ -43,7 +44,7 @@ add_subdirectory(lib/ocpp/common)
 
 add_executable(utils_tests utils_tests.cpp)
 
-target_include_directories(utils_tests PUBLIC${GTEST_INCLUDE_DIRS})
+target_include_directories(utils_tests PUBLIC ${GTEST_INCLUDE_DIRS})
 
 target_link_libraries(utils_tests PRIVATE
         ocpp

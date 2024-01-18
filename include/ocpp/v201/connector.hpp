@@ -1,10 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
+#pragma once
+
 #include <functional>
 #include <mutex>
 
+#include "component_state_manager.hpp"
+#include "database_handler.hpp"
 #include <ocpp/v201/enums.hpp>
+#include <optional>
 
 namespace ocpp {
 namespace v201 {
@@ -14,55 +19,52 @@ enum class ConnectorEvent {
     PlugIn,
     PlugOut,
     Reserve,
+    ReservationCleared,
     Error,
-    Unavailable,
-    ReservationFinished,
-    PlugInAndTokenValid,
     ErrorCleared,
-    ErrorCleardOnOccupied,
-    ErrorCleardOnReserved,
-    UnavailableToAvailable,
-    UnavailableToOccupied,
-    UnavailableToReserved,
-    UnavailableFaulted,
-    ReturnToOperativeState
+    Unavailable,
+    UnavailableCleared
 };
 
 namespace conversions {
 /// \brief Converts the given ConnectorEvent \p e to human readable string
 /// \returns a string representation of the ConnectorEvent
 std::string connector_event_to_string(ConnectorEvent e);
-
-/// \brief Converts the given std::string \p s to ConnectorEvent
-/// \returns a ConnectorEvent from a string representation
-ConnectorEvent string_to_connector_event(const std::string& s);
 } // namespace conversions
 
 /// \brief Represents a Connector, thus electrical outlet on a Charging Station. Single physical Connector.
 class Connector {
 private:
+    /// \brief ID of the EVSE this connector belongs to (>0)
+    // cppcheck-suppress unusedStructMember
+    int32_t evse_id;
+    /// \brief ID of the connector itself (>0)
     int32_t connector_id;
-    ConnectorStatusEnum state;
-    ConnectorStatusEnum last_state;
-    std::mutex state_mutex;
 
-    void set_state(const ConnectorStatusEnum new_state);
-    std::function<void(const ConnectorStatusEnum& status)> status_notification_callback;
+    /// \brief Component responsible for maintaining and monitoring the operational status of CS, EVSEs, and connectors.
+    std::shared_ptr<ComponentStateManager> component_state_manager;
 
 public:
     /// \brief Construct a new Connector object
+    /// \param evse_id id of the EVSE the connector is ap art of
     /// \param connector_id id of the connector
-    /// \param status_notification_callback callback executed when the state of the connector changes
-    Connector(const int32_t connector_id,
-              const std::function<void(const ConnectorStatusEnum& status)>& status_notification_callback);
+    /// \param component_state_manager A shared reference to the component state manager
+    Connector(const int32_t evse_id, const int32_t connector_id,
+              std::shared_ptr<ComponentStateManager> component_state_manager);
 
-    /// \brief Get the state object
-    /// \return ConnectorStatusEnum
-    ConnectorStatusEnum get_state();
+    /// \brief Gets the effective Operative/Inoperative status of this connector
+    OperationalStatusEnum get_effective_operational_status();
+    /// \brief Gets the effective Available/Unavailable/Faulted/Reserved/Occupied status of this connector
+    ConnectorStatusEnum get_effective_connector_status();
 
-    /// \brief Submits the given \p event to the state machine controller
+    /// \brief Adjust the state of the connector according to the \p event that was submitted.
     /// \param event
     void submit_event(ConnectorEvent event);
+
+    /// \brief Switches the operative status of the connector and recomputes its effective status
+    /// \param new_status: The operative status to switch to
+    /// \param persist: True if the updated operative status setting should be persisted
+    void set_connector_operative_status(OperationalStatusEnum new_status, bool persist);
 };
 
 } // namespace v201
