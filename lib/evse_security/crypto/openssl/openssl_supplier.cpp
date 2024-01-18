@@ -2,7 +2,6 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 #include <evse_security/crypto/openssl/openssl_supplier.hpp>
 
-#include <evse_security/detail/openssl/openssl_providers.hpp>
 #include <evse_security/detail/openssl/openssl_types.hpp>
 #include <evse_security/utils/evse_filesystem.hpp>
 
@@ -15,9 +14,14 @@
 #include <openssl/evp.h>
 #include <openssl/opensslv.h>
 #include <openssl/pem.h>
-#include <openssl/provider.h>
 #include <openssl/sha.h>
 #include <openssl/x509v3.h>
+
+#define EVSE_OPENSSL_VER_3 (OPENSSL_VERSION_NUMBER >= 0x30000000L)
+
+#if EVSE_OPENSSL_VER_3
+#include <evse_security/detail/openssl/openssl_providers.hpp>
+#endif
 
 namespace evse_security {
 
@@ -82,6 +86,7 @@ const char* OpenSSLSupplier::get_supplier_name() {
 }
 
 bool OpenSSLSupplier::supports_tpm() {
+#if EVSE_OPENSSL_VER_3
     static bool support_checked = false;
     static bool supports_tpm = false;
 
@@ -99,6 +104,9 @@ bool OpenSSLSupplier::supports_tpm() {
     }
 
     return supports_tpm;
+#else
+    return false;
+#endif
 }
 
 bool OpenSSLSupplier::supports_tpm_key_creation() {
@@ -151,6 +159,7 @@ static bool export_key_internal(const KeyGenerationInfo& key_info, const EVP_PKE
 }
 
 static bool generate_key_internal_tpm(const KeyGenerationInfo& key_info, EVP_PKEY_ptr& out_key) {
+#if EVSE_OPENSSL_VER_3
     // Acquire TPM context
     TPMScopedProvider tpm_provider;
 
@@ -203,6 +212,9 @@ static bool generate_key_internal_tpm(const KeyGenerationInfo& key_info, EVP_PKE
 
     // Export keys too
     return export_key_internal(key_info, out_key);
+#else
+    return false;
+#endif
 }
 
 static bool generate_key_internal(const KeyGenerationInfo& key_info, EVP_PKEY_ptr& out_key) {
@@ -535,7 +547,7 @@ bool OpenSSLSupplier::x509_is_selfsigned(X509Handle* handle) {
         return false;
 
 // X509_self_signed() was added in OpenSSL 3.0, use a workaround for earlier versions
-#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+#if EVSE_OPENSSL_VER_3
     return (X509_self_signed(x509, 0) == 1);
 #else
     return (X509_verify(x509, X509_get_pubkey(x509)));
@@ -714,8 +726,13 @@ bool OpenSSLSupplier::x509_generate_csr(const CertificateSigningRequestInfo& csr
     bool x509_signed = false;
 
     if (csr_info.key_info.generate_on_tpm) {
+#if EVSE_OPENSSL_VER_3
         TPMScopedProvider tpm_provider;
         x509_signed = X509_REQ_sign(x509_req_ptr.get(), key, EVP_sha256());
+#else
+        EVLOG_error << "TPM operations not supported for CSR signing!";
+        return false;
+#endif
     } else {
         x509_signed = X509_REQ_sign(x509_req_ptr.get(), key, EVP_sha256());
     }
