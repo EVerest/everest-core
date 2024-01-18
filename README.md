@@ -1,4 +1,5 @@
 # C++ implementation of OCPP
+![Github Actions](https://github.com/EVerest/libocpp/actions/workflows/build_and_test.yaml/badge.svg)
 
 This is a C++ library implementation of OCPP for version 1.6 (https://www.openchargealliance.org/protocols/ocpp-16/) and 2.0.1 (https://www.openchargealliance.org/protocols/ocpp-201/). It enables charging stations to communicate with cloud backends for remote control, monitoring and billing of charging processes.
 
@@ -522,19 +523,10 @@ The main reference for the integration of libocpp for OCPP1.6 is the ocpp::v16::
 
 ## Unit testing
 
-If you want to run the unit tests in the tests subdirectory: install the needed dependencies.
-For Debian GNU/Linux 11 you can install it like this:
-
-```bash
-sudo apt install libgtest-dev lcov
-python3 -m pip install gcovr
-```
-
-Run the unit tests
-  
-```bash
-  cmake .. -DBUILD_TESTING=ON
-```
+GTest is required for building the test cases target.
+To build the target and run the tests you can reference the script `.ci/build-kit/install_and_test.sh`.
+The script allows the GitHub Actions runner to execute.
+Local testing is still in progress.
 
 ## Building with FetchContent instead of EDM
 In [doc/build-with-fetchcontent](doc/build-with-fetchcontent) you can find an example how to build libocpp with FetchContent instead of EDM.

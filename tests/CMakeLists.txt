@@ -1,3 +1,4 @@
+add_definitions(-D_SQL_INIT_FILE="${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/everest/modules/OCPP/init.sql")
 add_executable(database_tests database_tests.cpp)
 
 target_include_directories(database_tests PUBLIC ${GTEST_INCLUDE_DIRS})
