@@ -7,7 +7,8 @@
         "ChargePointVendor": "Pionix",
         "FirmwareVersion": "0.1",
         "AllowChargingProfileWithoutStartSchedule": true,
-        "UseTPM" : false
+        "UseTPM" : false,
+        "LogMessagesFormat": ["html","security"]
     },
     "Core": {
         "AuthorizeRemoteTxRequests": false,

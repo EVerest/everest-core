@@ -465,6 +465,7 @@ void ChargePoint::configure_message_logging_format(const std::string& message_lo
     bool detailed_log_to_console = log_formats.find("console_detailed") != log_formats.npos;
     bool log_to_file = log_formats.find("log") != log_formats.npos;
     bool log_to_html = log_formats.find("html") != log_formats.npos;
+    bool log_security = log_formats.find("security") != log_formats.npos;
     bool session_logging = log_formats.find("session_logging") != log_formats.npos;
     bool message_callback = log_formats.find("callback") != log_formats.npos;
     std::function<void(const std::string& message, MessageDirection direction)> logging_callback = nullptr;
@@ -475,7 +476,7 @@ void ChargePoint::configure_message_logging_format(const std::string& message_lo
 
     this->logging = std::make_shared<ocpp::MessageLogging>(
         !log_formats.empty(), message_log_path, DateTime().to_rfc3339(), log_to_console, detailed_log_to_console,
-        log_to_file, log_to_html, session_logging, logging_callback);
+        log_to_file, log_to_html, log_security, session_logging, logging_callback);
 }
 void ChargePoint::on_unavailable(const int32_t evse_id, const int32_t connector_id) {
     this->evses.at(evse_id)->submit_event(connector_id, ConnectorEvent::Unavailable);
@@ -1518,14 +1519,14 @@ bool ChargePoint::is_offline() {
 void ChargePoint::security_event_notification_req(const CiString<50>& event_type,
                                                   const std::optional<CiString<255>>& tech_info,
                                                   const bool triggered_internally, const bool critical) {
+    EVLOG_debug << "Sending SecurityEventNotification";
+    SecurityEventNotificationRequest req;
+
+    req.type = event_type;
+    req.timestamp = DateTime().to_rfc3339();
+    req.techInfo = tech_info;
+    this->logging->security(json(req).dump());
     if (critical) {
-        EVLOG_debug << "Sending SecurityEventNotification";
-        SecurityEventNotificationRequest req;
-
-        req.type = event_type;
-        req.timestamp = DateTime().to_rfc3339();
-        req.techInfo = tech_info;
-
         ocpp::Call<SecurityEventNotificationRequest> call(req, this->message_queue->createMessageId());
         this->send<SecurityEventNotificationRequest>(call);
     }

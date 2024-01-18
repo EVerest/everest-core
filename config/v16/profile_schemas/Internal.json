@@ -140,7 +140,7 @@
             "default": true
         },
         "LogMessagesFormat": {
-            "$comment": "Supported log formats are console, log, html, console_detailed and session_logging",
+            "$comment": "Supported log formats are console, log, html, console_detailed, session_logging, callback and security. \"security\" logs security events into a seperate logfile",
             "type": "array",
             "items": {
                 "type": "string"
@@ -149,7 +149,8 @@
             "default": [
                 "log",
                 "html",
-                "session_logging"
+                "session_logging",
+                "security"
             ]
         },
         "SupportedChargingProfilePurposeTypes": {

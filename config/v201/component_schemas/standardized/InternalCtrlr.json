@@ -261,7 +261,7 @@
       "LogMessagesFormat": {
           "variable_name": "LogMessagesFormat",
           "characteristics": {
-              "valuesList": "log,html,console,console_detailed",
+              "valuesList": "log,html,console,console_detailed,security",
               "supportsMonitoring": true,
               "dataType": "MemberList"
           },
@@ -271,8 +271,8 @@
                   "mutability": "ReadOnly"
               }
           ],
-          "description": "Supported log formats are console, log, html, console_detailed and callback",
-          "default": "log,html",
+          "description": "Supported log formats are console, log, html, console_detailed, callback and security. \"security\" logs security events into a seperate logfile",
+          "default": "log,html,security",
           "type": "string"
       },
       "SupportedChargingProfilePurposeTypes": {

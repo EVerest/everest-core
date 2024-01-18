@@ -14,7 +14,7 @@ namespace ocpp {
 
 MessageLogging::MessageLogging(
     bool log_messages, const std::string& message_log_path, const std::string& output_file_name, bool log_to_console,
-    bool detailed_log_to_console, bool log_to_file, bool log_to_html, bool session_logging,
+    bool detailed_log_to_console, bool log_to_file, bool log_to_html, bool log_security, bool session_logging,
     std::function<void(const std::string& message, MessageDirection direction)> message_callback) :
     log_messages(log_messages),
     message_log_path(message_log_path),
@@ -23,6 +23,7 @@ MessageLogging::MessageLogging(
     detailed_log_to_console(detailed_log_to_console),
     log_to_file(log_to_file),
     log_to_html(log_to_html),
+    log_security(log_security),
     session_logging(session_logging),
     message_callback(message_callback) {
 
@@ -69,6 +70,10 @@ MessageLogging::MessageLogging(
                                    "</style>";
             this->html_log_file << "</head><body><table class=\"log\">\n";
         }
+        if (this->log_security) {
+            EVLOG_info << "Logging SecurityEvents to file";
+            this->security_log_file.open(message_log_path + "/" + output_file_name + ".security.log");
+        }
         sys("Session logging started.");
     }
 }
@@ -82,6 +87,10 @@ MessageLogging::~MessageLogging() {
         if (this->log_to_html) {
             this->html_log_file << "</table></body></html>\n";
             this->html_log_file.close();
+        }
+
+        if (this->log_security) {
+            this->security_log_file.close();
         }
     }
 }
@@ -122,6 +131,11 @@ void MessageLogging::sys(const std::string& msg) {
             log_output(2, msg, "");
         }
     }
+}
+
+void MessageLogging::security(const std::string& msg) {
+    this->security_log_file << msg << "\n";
+    this->security_log_file.flush();
 }
 
 void MessageLogging::log_output(unsigned int typ, const std::string& message_type, const std::string& json_str) {
@@ -206,7 +220,7 @@ FormattedMessageWithType MessageLogging::format_message(const std::string& messa
 void MessageLogging::start_session_logging(const std::string& session_id, const std::string& log_path) {
     std::scoped_lock lock(this->session_id_logging_mutex);
     this->session_id_logging[session_id] = std::make_shared<ocpp::MessageLogging>(
-        true, log_path, "incomplete-ocpp", false, false, false, true, false, nullptr);
+        true, log_path, "incomplete-ocpp", false, false, false, true, false, false, nullptr);
 }
 
 void MessageLogging::stop_session_logging(const std::string& session_id) {

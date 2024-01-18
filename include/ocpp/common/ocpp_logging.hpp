@@ -30,9 +30,11 @@ private:
     bool detailed_log_to_console;
     bool log_to_file;
     bool log_to_html;
+    bool log_security;
     bool session_logging;
     std::ofstream output_file;
     std::ofstream html_log_file;
+    std::ofstream security_log_file;
     std::mutex output_file_mutex;
     std::function<void(const std::string& message, MessageDirection direction)> message_callback;
     std::map<std::string, std::string> lookup_map;
@@ -47,13 +49,15 @@ public:
     /// \brief Creates a new Websocket object with the providede \p configuration
     explicit MessageLogging(
         bool log_messages, const std::string& message_log_path, const std::string& output_file_name,
-        bool log_to_console, bool detailed_log_to_console, bool log_to_file, bool log_to_html, bool session_logging,
+        bool log_to_console, bool detailed_log_to_console, bool log_to_file, bool log_to_html, bool log_security,
+        bool session_logging,
         std::function<void(const std::string& message, MessageDirection direction)> message_callback);
     ~MessageLogging();
 
     void charge_point(const std::string& message_type, const std::string& json_str);
     void central_system(const std::string& message_type, const std::string& json_str);
     void sys(const std::string& msg);
+    void security(const std::string& msg);
     void start_session_logging(const std::string& session_id, const std::string& log_path);
     void stop_session_logging(const std::string& session_id);
     std::string get_message_log_path();

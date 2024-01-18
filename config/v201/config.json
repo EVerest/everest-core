@@ -257,7 +257,7 @@
             "LogMessagesFormat": {
                 "variable_name": "LogMessagesFormat",
                 "attributes": {
-                    "Actual": "log,html"
+                    "Actual": "log,html,security"
                 }
             },
             "SupportedCriteria": {
