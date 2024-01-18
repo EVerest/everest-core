@@ -41,7 +41,7 @@ libcurl:
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: 536ec6e
+  git_tag: 35195e6
 # Josev
 Josev:
   git: https://github.com/EVerest/ext-switchev-iso15118.git
@@ -66,4 +66,4 @@ everest-utils:
 # setting it here can be misleading since it does not affect the version being used
 libevse-security:
   git: https://github.com/EVerest/libevse-security.git
-  git_tag: v0.4.0
+  git_tag: v0.4.1
