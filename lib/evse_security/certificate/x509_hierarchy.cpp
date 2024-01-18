@@ -101,7 +101,7 @@ std::string X509CertificateHierarchy::to_debug_string() {
     std::stringstream str;
 
     for (const auto& root : hierarchy) {
-        if (root.certificate.is_selfsigned())
+        if (root.state.is_selfsigned)
             str << "* [ROOT]";
         else
             str << "+ [ORPH]";
@@ -121,73 +121,156 @@ std::string X509CertificateHierarchy::to_debug_string() {
     return str.str();
 }
 
-bool X509CertificateHierarchy::try_add_to_hierarchy(X509Wrapper&& certificate) {
-    bool added = false;
+void X509CertificateHierarchy::insert(X509Wrapper&& certificate) {
+    // Invalid hash
+    static CertificateHashData invalid_hash{HashAlgorithm::SHA256, {}, {}, {}};
 
-    for_each([&](X509Node& top) {
-        if (certificate.is_child(top.certificate)) {
-            auto hash = certificate.get_certificate_hash_data(top.certificate);
-            top.children.push_back({std::move(certificate), hash, top.certificate, {}});
-            added = true;
+    if (false == certificate.is_selfsigned()) {
+        // If this certif has any link to any of the existing certificates
+        bool hierarchy_found = false;
 
-            return false;
+        // Create a new node, is not self-signed and is not a permanent orphan
+        X509Node new_node = {{0, 0, 0}, certificate, invalid_hash, certificate, {}};
+
+        // Search through all the list for a link
+        for_each([&](X509Node& top) {
+            if (top.certificate.is_child(certificate)) {
+                // Some sanity checks
+                if (top.state.is_selfsigned)
+                    throw InvalidStateException(
+                        "Newly added certificate can't be parent of a self-signed certificate!");
+                if (top.state.is_hash_computed)
+                    throw InvalidStateException("Existing non-root top certificate can't have a valid hash!");
+
+                // If the top certificate is a descendant of the certificate we're adding
+
+                // Cache top node
+                auto temp_top = std::move(top);
+
+                // Set the new state of the top node
+                temp_top.state = {0, 0, 1};
+                temp_top.hash = temp_top.certificate.get_certificate_hash_data(new_node.certificate);
+                temp_top.issuer = X509Wrapper(new_node.certificate);
+
+                // Set the top as a child of the new_node
+                new_node.children.push_back(std::move(temp_top));
+
+                // Set the new top
+                top = std::move(new_node);
+                hierarchy_found = true; // Found a link
+            } else if (certificate.is_child(top.certificate)) {
+                // If the certificate is the descendant of top certificate
+
+                // Calculate hash and set issuer
+                new_node.state = {0, 0, 1};
+                new_node.hash = certificate.get_certificate_hash_data(top.certificate);
+                new_node.issuer = X509Wrapper(top.certificate); // Set the new issuer
+
+                // Add it to the top's descendant list
+                top.children.push_back(new_node);
+                hierarchy_found = true; // Found a link
+            }
+
+            // Keep iterating while we did not find a link
+            return (false == hierarchy_found);
+        });
+
+        // Else insert it in the roots as a potentially orphan certificate
+        if (hierarchy_found == false) {
+            hierarchy.push_back(new_node);
         }
+    } else {
+        // If it is self-signed insert it in the roots, with the state set as a self-signed and a properly computed hash
+        hierarchy.push_back({{1, 0, 1}, certificate, certificate.get_certificate_hash_data(), certificate, {}});
 
-        return true;
-    });
+        // Attempt a partial prune, by searching through all the contained temporary orphan certificates
+        // and trying to add them to the newly inserted root certificate, if that is possible
 
-    return added;
+        // Only iterate until last (not including) since the last is the new node
+        for (int i = 0; i < (hierarchy.size() - 1); ++i) {
+            auto& node = hierarchy[i];
+            auto& state = node.state;
+
+            // If we have a temporary orphan
+            if (state.is_selfsigned == 0) {
+                // Some sanity checks
+                if (state.is_hash_computed)
+                    throw InvalidStateException("Orphan certificate can't have a proper hash!");
+
+                // If it is a child of the new root certificate insert it to it's list and break
+                if (node.certificate.is_child(certificate)) {
+                    auto& new_root = hierarchy.back();
+
+                    // Hash is properly computed now
+                    node.hash = node.certificate.get_certificate_hash_data(new_root.certificate);
+                    node.state.is_hash_computed = 1;
+                    node.state.is_orphan = 0;               // Not an orphan any more
+                    node.issuer = X509Wrapper(certificate); // Set the new valid issuer
+
+                    // Add to the newly inserted root child list
+                    new_root.children.push_back(std::move(node));
+
+                    // Erase element since it was added to the root's descendants
+                    hierarchy.erase(hierarchy.begin() + i);
+                    // Decrement i again since it was erased
+                    i--;
+                }
+            }
+        }
+    }
+} // End insert
+
+void X509CertificateHierarchy::prune() {
+    if (hierarchy.size() <= 1)
+        return;
+
+    for (int i = 0; i < hierarchy.size(); ++i) {
+        // Possible orphan
+        auto& orphan = hierarchy[i];
+
+        bool is_orphan = (orphan.state.is_selfsigned) == 0 && (orphan.state.is_orphan == 0);
+        if (is_orphan == false)
+            continue;
+
+        // Found a non-permanent orphan, search for a issuer
+        bool found_issuer = false;
+
+        for_each([&](X509Node& top) {
+            if (orphan.certificate.is_child(top.certificate)) {
+                orphan.hash = orphan.certificate.get_certificate_hash_data(top.certificate);
+                orphan.state.is_hash_computed = 1;
+                orphan.state.is_orphan = 0;                   // Not an orphan any more
+                orphan.issuer = X509Wrapper(top.certificate); // Set the new valid issuer
+
+                top.children.push_back(std::move(orphan));
+                found_issuer = true;
+            }
+
+            return (false == found_issuer);
+        });
+
+        if (false == found_issuer) {
+            // Mark as permanent orphan
+            orphan.state.is_orphan = 1; // Permanent orphan
+            orphan.state.is_hash_computed = 0;
+        } else {
+            // Erase from hierarchy list and decrement iterator
+            hierarchy.erase(std::begin(hierarchy) + i);
+            i--;
+        }
+    }
 }
 
 X509CertificateHierarchy X509CertificateHierarchy::build_hierarchy(std::vector<X509Wrapper>& certificates) {
     X509CertificateHierarchy ordered;
 
-    // Search for all self-signed certificates and add them as the roots, and also search for
-    // all owner-less certificates and also add them as root, since they are  not self-signed
-    // but we can't find any owner for them anyway
-    std::for_each(certificates.begin(), certificates.end(), [&](const X509Wrapper& certif) {
-        if (certif.is_selfsigned()) {
-            ordered.hierarchy.push_back({certif, certif.get_certificate_hash_data(), certif, {}});
-        } else {
-            // Search for a possible owner
-            bool has_owner = std::find_if(certificates.begin(), certificates.end(), [&](const X509Wrapper& owner) {
-                                 return certif.is_child(owner);
-                             }) != certificates.end();
-
-            if (!has_owner) {
-                // If we don't have an owner we can't determine the proper hash, use invalid
-                // We can identify the invalid hash data by the fact that its hash strings are empty
-                CertificateHashData invalid;
-                // Set the hash algorithm, leaving it undefined leads to UB
-                invalid.hash_algorithm = HashAlgorithm::SHA256;
-                ordered.hierarchy.push_back({certif, invalid, certif, {}});
-            }
-        }
-    });
-
-    // Remove all root certificates from the provided certificate list
-    auto remove_roots = std::remove_if(certificates.begin(), certificates.end(), [&](const X509Wrapper& certif) {
-        return std::find_if(ordered.hierarchy.begin(), ordered.hierarchy.end(), [&](const X509Node& node) {
-                   return (certif == node.certificate);
-               }) != ordered.hierarchy.end();
-    });
-
-    certificates.erase(remove_roots, certificates.end());
-
-    // Try build the full hierarchy, we are not assuming any order
-    // This will not get stuck in a loop, because we removed the orphaned certificates already
-    // Note: the logic is fairly simple here, but has worst-case cubic runtime in the number of certs
     while (certificates.size()) {
-        // The current certificate that we're testing for
-        auto current = std::move(certificates.back());
+        ordered.insert(std::move(certificates.back()));
         certificates.pop_back();
-
-        // If we have any roots try and search in the hierarchy the owner
-        if (!ordered.try_add_to_hierarchy(std::move(current))) {
-            // If we couldn't add to the hierarchy move it down in the queue and try again later
-            certificates.insert(certificates.begin(), std::move(current));
-        }
     }
+
+    // Prune the tree
+    ordered.prune();
 
     return ordered;
 }

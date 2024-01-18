@@ -90,6 +90,11 @@ struct CertificateHashData {
         return hash_algorithm == Other.hash_algorithm && issuer_name_hash == Other.issuer_name_hash &&
                issuer_key_hash == Other.issuer_key_hash && serial_number == Other.serial_number;
     }
+
+    bool is_valid() {
+        return (false == issuer_name_hash.empty()) && (false == issuer_key_hash.empty()) &&
+               (false == serial_number.empty());
+    }
 };
 struct CertificateHashDataChain {
     CertificateType certificate_type; ///< Indicates the type of the certificate for which the hash data is provided
