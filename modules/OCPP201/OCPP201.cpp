@@ -496,6 +496,8 @@ ocpp::v201::IdToken get_id_token(const types::authorization::ProvidedIdToken& pr
     id_token.idToken = provided_id_token.id_token;
     if (provided_id_token.id_token_type.has_value()) {
         id_token.type = get_id_token_enum(provided_id_token.id_token_type.value());
+    } else {
+        id_token.type = ocpp::v201::IdTokenEnum::Local;
     }
     return id_token;
 }
