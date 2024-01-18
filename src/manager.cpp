@@ -625,7 +625,7 @@ int boot(const po::variables_map& vm) {
 #ifndef ENABLE_ADMIN_PANEL
     // switch to low privilege user if configured
     if (not rs->run_as_user.empty()) {
-        auto err_set_user = Everest::system::set_real_user(rs->run_as_user);
+        auto err_set_user = system::set_real_user(rs->run_as_user);
         if (not err_set_user.empty()) {
             EVLOG_error << "Error switching manager to user " << rs->run_as_user << ": " << err_set_user;
             return EXIT_FAILURE;
