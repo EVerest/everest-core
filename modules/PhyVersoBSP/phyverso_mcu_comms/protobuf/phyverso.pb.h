@@ -39,6 +39,12 @@ typedef enum _LockState {
     LockState_LOCKED = 2
 } LockState;
 
+typedef enum _CoilType {
+    CoilType_COIL_UNKNOWN = 0,
+    CoilType_COIL_AC = 1,
+    CoilType_COIL_DC1 = 2 /* add precharge and discharge coils here later */
+} CoilType;
+
 /* Struct definitions */
 typedef struct _ErrorFlags {
     bool diode_fault;
@@ -56,20 +62,6 @@ typedef struct _KeepAlive {
     char sw_version_string[51];
 } KeepAlive;
 
-/* This container message is send from EVerest to MCU and may contain any allowed message in that direction. */
-typedef struct _EverestToMcu {
-    pb_size_t which_payload;
-    union {
-        KeepAlive keep_alive;
-        bool firmware_update;
-        bool connector_lock; /* false: unlock, true: lock */
-        uint32_t pwm_duty_cycle; /* in 0.01 %, 0 = State F, 10000 = X1 */
-        bool allow_power_on;
-        bool reset;
-    } payload;
-    int32_t connector; /* 0: None, 1: Connector 1, 2: Connector 2 */
-} EverestToMcu;
-
 typedef struct _Telemetry {
     uint32_t cp_voltage_hi;
     uint32_t cp_voltage_lo;
@@ -82,6 +74,25 @@ typedef struct _FanState {
     uint16_t rpm;
 } FanState;
 
+typedef struct _CoilState {
+    CoilType coil_type;
+    bool coil_state; /* true -> on; false -> off */
+} CoilState;
+
+/* This container message is send from EVerest to MCU and may contain any allowed message in that direction. */
+typedef struct _EverestToMcu {
+    pb_size_t which_payload;
+    union {
+        KeepAlive keep_alive;
+        bool firmware_update;
+        bool connector_lock; /* false: unlock, true: lock */
+        uint32_t pwm_duty_cycle; /* in 0.01 %, 0 = State F, 10000 = X1 */
+        CoilState set_coil_state_request;
+        bool reset;
+    } payload;
+    int32_t connector; /* 0: None, 1: Connector 1, 2: Connector 2 */
+} EverestToMcu;
+
 /* This container message is send from MCU to EVerest and may contain any allowed message in that direction. */
 typedef struct _McuToEverest {
     pb_size_t which_payload;
@@ -89,7 +100,7 @@ typedef struct _McuToEverest {
         KeepAlive keep_alive;
         ResetReason reset;
         CpState cp_state;
-        bool relais_state; /* false: relais are off, true: relais are on */
+        CoilState set_coil_state_response;
         ErrorFlags error_flags;
         Telemetry telemetry;
         PpState pp_state;
@@ -121,6 +132,10 @@ extern "C" {
 #define _LockState_MAX LockState_LOCKED
 #define _LockState_ARRAYSIZE ((LockState)(LockState_LOCKED+1))
 
+#define _CoilType_MIN CoilType_COIL_UNKNOWN
+#define _CoilType_MAX CoilType_COIL_DC1
+#define _CoilType_ARRAYSIZE ((CoilType)(CoilType_COIL_DC1+1))
+
 
 #define McuToEverest_payload_reset_ENUMTYPE ResetReason
 #define McuToEverest_payload_cp_state_ENUMTYPE CpState
@@ -131,6 +146,8 @@ extern "C" {
 
 
 
+#define CoilState_coil_type_ENUMTYPE CoilType
+
 
 /* Initializer values for message structs */
 #define EverestToMcu_init_default                {0, {KeepAlive_init_default}, 0}
@@ -139,12 +156,14 @@ extern "C" {
 #define KeepAlive_init_default                   {0, 0, 0, ""}
 #define Telemetry_init_default                   {0, 0}
 #define FanState_init_default                    {0, 0, 0, 0}
+#define CoilState_init_default                   {_CoilType_MIN, 0}
 #define EverestToMcu_init_zero                   {0, {KeepAlive_init_zero}, 0}
 #define McuToEverest_init_zero                   {0, {KeepAlive_init_zero}, 0}
 #define ErrorFlags_init_zero                     {0, 0, 0, 0, 0, 0}
 #define KeepAlive_init_zero                      {0, 0, 0, ""}
 #define Telemetry_init_zero                      {0, 0}
 #define FanState_init_zero                       {0, 0, 0, 0}
+#define CoilState_init_zero                      {_CoilType_MIN, 0}
 
 /* Field tags (for use in manual encoding/decoding) */
 #define ErrorFlags_diode_fault_tag               1
@@ -157,23 +176,25 @@ extern "C" {
 #define KeepAlive_hw_type_tag                    2
 #define KeepAlive_hw_revision_tag                3
 #define KeepAlive_sw_version_string_tag          6
-#define EverestToMcu_keep_alive_tag              1
-#define EverestToMcu_firmware_update_tag         2
-#define EverestToMcu_connector_lock_tag          3
-#define EverestToMcu_pwm_duty_cycle_tag          4
-#define EverestToMcu_allow_power_on_tag          5
-#define EverestToMcu_reset_tag                   6
-#define EverestToMcu_connector_tag               7
 #define Telemetry_cp_voltage_hi_tag              1
 #define Telemetry_cp_voltage_lo_tag              2
 #define FanState_fan_id_tag                      1
 #define FanState_enabled_tag                     2
 #define FanState_duty_tag                        3
 #define FanState_rpm_tag                         4
+#define CoilState_coil_type_tag                  1
+#define CoilState_coil_state_tag                 2
+#define EverestToMcu_keep_alive_tag              1
+#define EverestToMcu_firmware_update_tag         2
+#define EverestToMcu_connector_lock_tag          3
+#define EverestToMcu_pwm_duty_cycle_tag          4
+#define EverestToMcu_set_coil_state_request_tag  5
+#define EverestToMcu_reset_tag                   6
+#define EverestToMcu_connector_tag               7
 #define McuToEverest_keep_alive_tag              1
 #define McuToEverest_reset_tag                   2
 #define McuToEverest_cp_state_tag                3
-#define McuToEverest_relais_state_tag            4
+#define McuToEverest_set_coil_state_response_tag 4
 #define McuToEverest_error_flags_tag             5
 #define McuToEverest_telemetry_tag               7
 #define McuToEverest_pp_state_tag                8
@@ -187,18 +208,19 @@ X(a, STATIC,   ONEOF,    MESSAGE,  (payload,keep_alive,payload.keep_alive),   1)
 X(a, STATIC,   ONEOF,    BOOL,     (payload,firmware_update,payload.firmware_update),   2) \
 X(a, STATIC,   ONEOF,    BOOL,     (payload,connector_lock,payload.connector_lock),   3) \
 X(a, STATIC,   ONEOF,    UINT32,   (payload,pwm_duty_cycle,payload.pwm_duty_cycle),   4) \
-X(a, STATIC,   ONEOF,    BOOL,     (payload,allow_power_on,payload.allow_power_on),   5) \
+X(a, STATIC,   ONEOF,    MESSAGE,  (payload,set_coil_state_request,payload.set_coil_state_request),   5) \
 X(a, STATIC,   ONEOF,    BOOL,     (payload,reset,payload.reset),   6) \
 X(a, STATIC,   SINGULAR, INT32,    connector,         7)
 #define EverestToMcu_CALLBACK NULL
 #define EverestToMcu_DEFAULT NULL
 #define EverestToMcu_payload_keep_alive_MSGTYPE KeepAlive
+#define EverestToMcu_payload_set_coil_state_request_MSGTYPE CoilState
 
 #define McuToEverest_FIELDLIST(X, a) \
 X(a, STATIC,   ONEOF,    MESSAGE,  (payload,keep_alive,payload.keep_alive),   1) \
 X(a, STATIC,   ONEOF,    UENUM,    (payload,reset,payload.reset),   2) \
 X(a, STATIC,   ONEOF,    UENUM,    (payload,cp_state,payload.cp_state),   3) \
-X(a, STATIC,   ONEOF,    BOOL,     (payload,relais_state,payload.relais_state),   4) \
+X(a, STATIC,   ONEOF,    MESSAGE,  (payload,set_coil_state_response,payload.set_coil_state_response),   4) \
 X(a, STATIC,   ONEOF,    MESSAGE,  (payload,error_flags,payload.error_flags),   5) \
 X(a, STATIC,   SINGULAR, INT32,    connector,         6) \
 X(a, STATIC,   ONEOF,    MESSAGE,  (payload,telemetry,payload.telemetry),   7) \
@@ -208,6 +230,7 @@ X(a, STATIC,   ONEOF,    UENUM,    (payload,lock_state,payload.lock_state),  10)
 #define McuToEverest_CALLBACK NULL
 #define McuToEverest_DEFAULT NULL
 #define McuToEverest_payload_keep_alive_MSGTYPE KeepAlive
+#define McuToEverest_payload_set_coil_state_response_MSGTYPE CoilState
 #define McuToEverest_payload_error_flags_MSGTYPE ErrorFlags
 #define McuToEverest_payload_telemetry_MSGTYPE Telemetry
 #define McuToEverest_payload_fan_state_MSGTYPE FanState
@@ -244,12 +267,19 @@ X(a, STATIC,   SINGULAR, UINT32,   rpm,               4)
 #define FanState_CALLBACK NULL
 #define FanState_DEFAULT NULL
 
+#define CoilState_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, UENUM,    coil_type,         1) \
+X(a, STATIC,   SINGULAR, BOOL,     coil_state,        2)
+#define CoilState_CALLBACK NULL
+#define CoilState_DEFAULT NULL
+
 extern const pb_msgdesc_t EverestToMcu_msg;
 extern const pb_msgdesc_t McuToEverest_msg;
 extern const pb_msgdesc_t ErrorFlags_msg;
 extern const pb_msgdesc_t KeepAlive_msg;
 extern const pb_msgdesc_t Telemetry_msg;
 extern const pb_msgdesc_t FanState_msg;
+extern const pb_msgdesc_t CoilState_msg;
 
 /* Defines for backwards compatibility with code written before nanopb-0.4.0 */
 #define EverestToMcu_fields &EverestToMcu_msg
@@ -258,8 +288,10 @@ extern const pb_msgdesc_t FanState_msg;
 #define KeepAlive_fields &KeepAlive_msg
 #define Telemetry_fields &Telemetry_msg
 #define FanState_fields &FanState_msg
+#define CoilState_fields &CoilState_msg
 
 /* Maximum encoded size of messages (where known) */
+#define CoilState_size                           4
 #define ErrorFlags_size                          12
 #define EverestToMcu_size                        83
 #define FanState_size                            15

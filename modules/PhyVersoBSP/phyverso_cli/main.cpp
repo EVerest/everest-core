@@ -21,7 +21,8 @@ int main(int argc, char* argv[]) {
     printf("-- Phyverso CLI tool --\n");
 
     printf("Use the following keys to send packets:\n");
-    printf("A or a: allow_power_on true or false\n");
+    printf("A or a: set AC coil on or off\n");
+    printf("D or d: set DC coil on or off\n");
     printf("L or l: motorlock lock or unlock\n");
     printf("R or r: hard or soft reset\n");
     printf("V: send keep alive/get version\n");
@@ -54,11 +55,11 @@ int main(int argc, char* argv[]) {
             sw_version_received = true;
         });
 
-        p.signal_relais_state.connect([](int connector, bool s) {
-            if (s)
-                printf(">> Connector %i: Relais CLOSED\n", connector);
+        p.signal_set_coil_state_response.connect([](int connector, CoilState s) {
+            if (s.coil_state)
+                printf(">> Connector %i, Coil %d: Relais CLOSED\n", connector, s.coil_type);
             else
-                printf(">> Connector %i: Relais OPEN\n", connector);
+                printf(">> Connector %i, Coil %d: Relais OPEN\n", connector, s.coil_type);
         });
 
         p.signal_telemetry.connect([](int connector, Telemetry t) {
@@ -134,12 +135,20 @@ int main(int argc, char* argv[]) {
             char c = getc(stdin);
             switch (c) {
             case 'A':
-                printf("Setting allow_power_on to true\n");
-                p.allow_power_on(selected_connector, true);
+                printf("Setting AC coil to ON\n");
+                p.set_coil_state_request(selected_connector, CoilType_COIL_AC, true);
                 break;
             case 'a':
-                printf("Setting allow_power_on to false\n");
-                p.allow_power_on(selected_connector, false);
+                printf("Setting AC coil to OFF\n");
+                p.set_coil_state_request(selected_connector, CoilType_COIL_AC, false);
+                break;
+            case 'D':
+                printf("Setting DC coil to ON\n");
+                p.set_coil_state_request(selected_connector, CoilType_COIL_DC1, true);
+                break;
+            case 'd':
+                printf("Setting DC coil to OFF\n");
+                p.set_coil_state_request(selected_connector, CoilType_COIL_DC1, false);
                 break;
             case 'L':
                 printf("Locking connector\n");

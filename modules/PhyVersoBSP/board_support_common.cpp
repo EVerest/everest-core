@@ -32,4 +32,13 @@ types::board_support_common::BspEvent to_bsp_event(bool relais_state) {
         return {types::board_support_common::Event::PowerOff};
     }
 }
+
+types::board_support_common::BspEvent to_bsp_event(CoilState s) {
+    // TODO: implement coil type handling
+    if (s.coil_state) {
+        return {types::board_support_common::Event::PowerOn};
+    } else {
+        return {types::board_support_common::Event::PowerOff};
+    }
+}
 }

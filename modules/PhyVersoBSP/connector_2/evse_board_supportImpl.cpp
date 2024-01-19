@@ -30,9 +30,9 @@ void evse_board_supportImpl::init() {
             last_cp_state = s;
         }
     });
-    mod->serial.signal_relais_state.connect([this](int connector, bool s) {
-        if (connector == 2) {
-            EVLOG_info << "[2] Relais: " << (s ? "ON" : "OFF");
+    mod->serial.signal_set_coil_state_response.connect([this](int connector, CoilState s) {
+        if (connector == 1) {
+            EVLOG_info << "[1] Relais: " << (s.coil_state ? "ON" : "OFF");
             publish_event(to_bsp_event(s));
         }
     });
@@ -73,7 +73,8 @@ void evse_board_supportImpl::handle_pwm_F() {
 }
 
 void evse_board_supportImpl::handle_allow_power_on(types::evse_board_support::PowerOnOff& value) {
-    mod->serial.allow_power_on(2, value.allow_power_on);
+    // ToDo: implement handling of DC coils
+    mod->serial.set_coil_state_request(2, CoilType_COIL_AC, value.allow_power_on);
 }
 
 void evse_board_supportImpl::handle_ac_switch_three_phases_while_charging(bool& value) {

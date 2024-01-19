@@ -27,13 +27,13 @@ public:
     void keep_alive();
 
     void set_pwm(int target_connector, uint32_t duty_cycle_e2);
-    void allow_power_on(int target_connector, bool p);
+    void set_coil_state_request(int target_connector, CoilType type, bool power_on);
     void lock(int target_connector, bool _lock);
     void unlock(int target_connector);
 
     sigslot::signal<KeepAlive> signal_keep_alive;
     sigslot::signal<int, CpState> signal_cp_state;
-    sigslot::signal<int, bool> signal_relais_state;
+    sigslot::signal<int, CoilState> signal_set_coil_state_response;
     sigslot::signal<int, ErrorFlags> signal_error_flags;
     sigslot::signal<int, Telemetry> signal_telemetry;
     sigslot::signal<ResetReason> signal_spurious_reset;

@@ -24,6 +24,10 @@ PB_BIND(Telemetry, Telemetry, AUTO)
 PB_BIND(FanState, FanState, AUTO)
 
 
+PB_BIND(CoilState, CoilState, AUTO)
+
+
+
 
 
 

@@ -153,8 +153,8 @@ void evSerial::handle_packet(uint8_t* buf, int len) {
             signal_cp_state(msg_in.connector, msg_in.payload.cp_state);
             break;
 
-        case McuToEverest_relais_state_tag:
-            signal_relais_state(msg_in.connector, msg_in.payload.relais_state);
+        case McuToEverest_set_coil_state_response_tag:
+            signal_set_coil_state_response(msg_in.connector, msg_in.payload.set_coil_state_response);
             break;
 
         case McuToEverest_error_flags_tag:
@@ -326,10 +326,11 @@ void evSerial::set_pwm(int target_connector, uint32_t duty_cycle_e2) {
     link_write(&msg_out);
 }
 
-void evSerial::allow_power_on(int target_connector, bool power_on) {
+void evSerial::set_coil_state_request(int target_connector, CoilType type, bool power_on) {
     EverestToMcu msg_out = EverestToMcu_init_default;
-    msg_out.which_payload = EverestToMcu_allow_power_on_tag;
-    msg_out.payload.allow_power_on = power_on;
+    msg_out.which_payload = EverestToMcu_set_coil_state_request_tag;
+    msg_out.payload.set_coil_state_request.coil_type = type;
+    msg_out.payload.set_coil_state_request.coil_state = power_on;
     msg_out.connector = target_connector;
     link_write(&msg_out);
 }

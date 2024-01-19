@@ -8,7 +8,7 @@
 
 namespace module {
 types::board_support_common::BspEvent to_bsp_event(CpState s);
-types::board_support_common::BspEvent to_bsp_event(bool relais_state);
+types::board_support_common::BspEvent to_bsp_event(CoilState s);
 } // namespace module
 
 #endif // EVSE_BOARD_SUPPORT_COMMON_HPP

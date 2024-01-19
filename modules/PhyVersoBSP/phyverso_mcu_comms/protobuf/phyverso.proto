@@ -9,7 +9,7 @@ message EverestToMcu {
     bool firmware_update = 2;
     bool connector_lock = 3; // false: unlock, true: lock
     uint32 pwm_duty_cycle = 4; // in 0.01 %, 0 = State F, 10000 = X1
-    bool allow_power_on = 5;
+    CoilState set_coil_state_request = 5;
     bool reset = 6;
   }
   int32 connector = 7; // 0: None, 1: Connector 1, 2: Connector 2
@@ -23,7 +23,7 @@ message McuToEverest {
   KeepAlive keep_alive = 1;
   ResetReason reset = 2;
   CpState cp_state = 3;
-  bool relais_state = 4; // false: relais are off, true: relais are on
+  CoilState set_coil_state_response = 4;
   ErrorFlags error_flags = 5;
   Telemetry telemetry = 7;
   PpState pp_state = 8;
@@ -88,4 +88,16 @@ enum LockState {
   UNDEFINED = 0;
   UNLOCKED = 1;
   LOCKED = 2;
+}
+
+message CoilState {
+  CoilType coil_type = 1;
+  bool coil_state = 2;		// true -> on; false -> off
+}
+
+enum CoilType {
+	COIL_UNKNOWN = 0;
+	COIL_AC = 1;
+	COIL_DC1 = 2;
+	// add precharge and discharge coils here later
 }
