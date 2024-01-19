@@ -18,24 +18,10 @@
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
+#include "WiFiSetup.hpp"
 #include <regex>
 
 namespace module {
-
-struct WifiInfo {
-    std::string bssid;
-    std::string ssid;
-    int frequency;
-    int signal_level;
-    std::vector<std::string> flags;
-
-    operator std::string() {
-        json wifi_info = *this;
-
-        return wifi_info.dump();
-    }
-};
-void to_json(json& j, const WifiInfo& k);
 
 struct WifiCredentials {
     std::string interface;
@@ -51,21 +37,6 @@ struct WifiCredentials {
 };
 void to_json(json& j, const WifiCredentials& k);
 void from_json(const json& j, WifiCredentials& k);
-
-struct WifiList {
-    std::string interface;
-    int network_id;
-    std::string ssid;
-    bool connected;
-    int signal_level;
-
-    operator std::string() {
-        json wifi_list = *this;
-
-        return wifi_list.dump();
-    }
-};
-void to_json(json& j, const WifiList& k);
 
 struct InterfaceAndNetworkId {
     std::string interface;
@@ -125,12 +96,6 @@ struct ApplicationInfo {
     }
 };
 void to_json(json& j, const ApplicationInfo& k);
-
-struct CmdOutput {
-    std::string output;
-    std::vector<std::string> split_output;
-    int exit_code;
-};
 } // namespace module
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
@@ -204,31 +169,17 @@ private:
     bool rfkill_unblock(std::string rfkill_id);
     bool rfkill_block(std::string rfkill_id);
 
-    bool is_wifi_interface(std::string interface);
-    std::vector<WifiList> list_configured_networks(std::string interface);
     void publish_configured_networks();
-    int add_network(std::string interface);
-    bool add_and_enable_network(WifiCredentials wifi_credentials);
-    bool add_and_enable_network(std::string interface, std::string ssid, std::string psk);
-    bool set_network(std::string interface, int network_id, std::string ssid, std::string psk);
-    bool enable_network(std::string interface, int network_id);
-    bool disable_network(std::string interface, int network_id);
-    bool select_network(std::string interface, int network_id);
-    bool remove_network(std::string interface, int network_id);
-    bool remove_networks(std::string interface);
+    bool add_and_enable_network(const std::string& interface, const std::string& ssid, const std::string& psk);
     bool remove_all_networks();
-    bool save_config(std::string interface);
     bool reboot();
     bool is_online();
     void check_online_status();
     void enable_ap();
     void disable_ap();
     void populate_ip_addresses(std::vector<NetworkDeviceInfo>& device_info);
-    std::vector<WifiInfo> scan_wifi(const std::vector<NetworkDeviceInfo>& device_info);
+    WpaCliSetup::WifiScanList scan_wifi(const std::vector<NetworkDeviceInfo>& device_info);
     std::string get_hostname();
-
-    CmdOutput run_application(const std::string& name, std::vector<std::string> args);
-    std::vector<std::string> parse_wpa_cli_flags(std::string flags);
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
