@@ -27,13 +27,19 @@ void to_json(json& j, const NetworkDeviceInfo& k) {
 }
 
 void to_json(json& j, const WifiCredentials& k) {
-    j = json::object({{"interface", k.interface}, {"ssid", k.ssid}, {"psk", k.psk}});
+    j = json::object({{"interface", k.interface}, {"ssid", k.ssid}, {"psk", k.psk}, {"hidden", k.hidden}});
 }
 
 void from_json(const json& j, WifiCredentials& k) {
     k.interface = j.at("interface");
     k.ssid = j.at("ssid");
     k.psk = j.at("psk");
+    k.hidden = false;
+    // optional item
+    auto it = j.find("hidden");
+    if ((it != j.end() && *it)) {
+        k.hidden = true;
+    }
 }
 
 void to_json(json& j, const InterfaceAndNetworkId& k) {
@@ -148,7 +154,8 @@ void Setup::ready() {
         this->mqtt.subscribe(add_network_cmd, [this](const std::string& data) {
             WifiCredentials wifi_credentials = json::parse(data);
             WifiConfigureClass wifi;
-            this->add_and_enable_network(wifi_credentials.interface, wifi_credentials.ssid, wifi_credentials.psk);
+            this->add_and_enable_network(wifi_credentials.interface, wifi_credentials.ssid, wifi_credentials.psk,
+                                         wifi_credentials.hidden);
             wifi.save_config(wifi_credentials.interface);
             this->publish_configured_networks();
         });
@@ -521,7 +528,8 @@ void Setup::publish_configured_networks() {
     }
 }
 
-bool Setup::add_and_enable_network(const std::string& interface, const std::string& ssid, const std::string& psk) {
+bool Setup::add_and_enable_network(const std::string& interface, const std::string& ssid, const std::string& psk,
+                                   bool hidden) {
     WifiConfigureClass wifi;
 
     std::string net_if = interface;
@@ -538,7 +546,7 @@ bool Setup::add_and_enable_network(const std::string& interface, const std::stri
 
     auto network_id = wifi.add_network(net_if);
     bool bResult = network_id != -1;
-    bResult = bResult && wifi.set_network(net_if, network_id, ssid, psk);
+    bResult = bResult && wifi.set_network(net_if, network_id, ssid, psk, hidden);
     bResult = bResult && wifi.enable_network(net_if, network_id);
     return bResult;
 }

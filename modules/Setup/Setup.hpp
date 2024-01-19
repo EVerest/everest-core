@@ -27,6 +27,7 @@ struct WifiCredentials {
     std::string interface;
     std::string ssid;
     std::string psk;
+    bool hidden;
 
     operator std::string() {
 
@@ -170,7 +171,8 @@ private:
     bool rfkill_block(std::string rfkill_id);
 
     void publish_configured_networks();
-    bool add_and_enable_network(const std::string& interface, const std::string& ssid, const std::string& psk);
+    bool add_and_enable_network(const std::string& interface, const std::string& ssid, const std::string& psk,
+                                bool hidden = false);
     bool remove_all_networks();
     bool reboot();
     bool is_online();
