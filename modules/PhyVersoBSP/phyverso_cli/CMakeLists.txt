@@ -8,8 +8,22 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # add the executable
 add_executable(phyverso_cli main.cpp)
-target_include_directories(phyverso_cli PUBLIC "${PROJECT_BINARY_DIR}" PUBLIC "../phyverso_mcu_comms/protobuf" PUBLIC "../phyverso_mcu_comms")
-target_link_libraries(phyverso_cli PRIVATE Pal::Sigslot Threads::Threads phyverso_mcu_comms everest::framework everest::nanopb)
+target_include_directories(phyverso_cli
+	PUBLIC
+		"${PROJECT_BINARY_DIR}"
+        "../phyverso_mcu_comms/protobuf"
+        "../phyverso_mcu_comms"
+		"../phyverso_config"
+)
+target_link_libraries(phyverso_cli
+	PRIVATE
+		Pal::Sigslot
+		Threads::Threads
+		phyverso_mcu_comms
+		everest::framework
+		everest::nanopb
+		phyverso_config
+)
 
 install(TARGETS phyverso_cli
         DESTINATION ${EVEREST_MOD_YETIDRIVER_DESTINATION})

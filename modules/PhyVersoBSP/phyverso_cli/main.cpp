@@ -12,7 +12,7 @@
 std::atomic_bool sw_version_received = false;
 
 void help() {
-    printf("\nUsage: ./phyverso_cli /dev/ttyXXX\n\n");
+    printf("\nUsage: ./phyverso_cli /dev/ttyXXX /path/to/config.json\n\n");
 }
 
 int main(int argc, char* argv[]) {
@@ -37,13 +37,20 @@ int main(int argc, char* argv[]) {
     printf("9: PWM X1 (100%%)\n");
     printf("9: PWM X1 (100%%)\n");
 
-    if (argc != 2) {
+    if (argc != 3) {
         help();
         exit(0);
     }
     const char* device = argv[1];
+    const char* config_path = argv[2];
 
-    evSerial p;
+    evConfig verso_config;
+    if(!verso_config.open_file(config_path)) {
+        printf("Could not open config file \"%s\"\n", config_path);
+        return -1;
+    }
+
+    evSerial p; 
 
     if (!p.open_device(device, 115200)) {
         printf("Cannot open device \"%s\"\n", device);

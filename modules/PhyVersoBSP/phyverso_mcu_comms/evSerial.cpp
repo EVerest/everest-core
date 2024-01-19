@@ -183,6 +183,11 @@ void evSerial::handle_packet(uint8_t* buf, int len) {
             signal_lock_state(msg_in.connector, msg_in.payload.lock_state);
             break;
 
+        // send config in response to bootmsg
+        //case McuToEverest_bootmsg_tag:
+        //    signal_bootmsg(msg_in.payload.bootmsg);
+        //    break;
+
         }
 }
 
@@ -400,3 +405,14 @@ void evSerial::keep_alive() {
     msg_out.connector = 0;
     link_write(&msg_out);
 }
+
+/* TODO: implement
+void evSerial::send_config(BootMsg _bootmsg, evConfig &config)
+{
+    EverestToMcu msg_out = EverestToMcu_init_default;
+    // TODO
+    msg_out.connector = 0;
+    link_write(&msg_out);
+}
+*/
+

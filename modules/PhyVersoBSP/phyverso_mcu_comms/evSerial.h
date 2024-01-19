@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <termios.h>
 #include <utils/thread.hpp>
+#include "evConfig.h"
 
 class evSerial {
 
@@ -31,6 +32,8 @@ public:
     void lock(int target_connector, bool _lock);
     void unlock(int target_connector);
 
+    //void send_config(BootMsg _bootmsg, evConfig &config);
+
     sigslot::signal<KeepAlive> signal_keep_alive;
     sigslot::signal<int, CpState> signal_cp_state;
     sigslot::signal<int, CoilState> signal_set_coil_state_response;
@@ -41,6 +44,7 @@ public:
     sigslot::signal<int, PpState> signal_pp_state;
     sigslot::signal<FanState> signal_fan_state;
     sigslot::signal<int, LockState> signal_lock_state;
+    //sigslot::signal<BootMsg> signal_bootmsg;  // TODO
 
 private:
     // Serial interface
