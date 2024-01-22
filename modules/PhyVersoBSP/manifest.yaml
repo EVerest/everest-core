@@ -1,0 +1,48 @@
+description: Driver module for Phytec PhyVerso EV Charging controller with Pionix MCU firmware
+config:
+  serial_port:
+    description: Serial port the Yeti hardware is connected to
+    type: string
+    default: /dev/ttyUSB0
+  baud_rate:
+    description: Serial baud rate to use when communicating with the hardware
+    type: integer
+    minimum: 9600
+    maximum: 230400
+    default: 115200
+  reset_gpio:
+    description: Reset GPIO number to use to HW reset Yeti. If set <0 it is disabled.
+    type: integer
+    minimum: -1
+    maximum: 1000
+    default: -1
+  caps_min_current_A:
+    description: Minimal current on AC side. For AC this is typically 6, but for HLC this can be less. -1 means use limit reported by HW.
+    type: integer
+    default: -1
+provides:
+  connector_1:
+    interface: evse_board_support
+    description: provides the board support Interface to low level control control pilot, relais, motor lock
+  connector_2:
+    interface: evse_board_support
+    description: provides the board support Interface to low level control control pilot, relais, motor lock
+  rcd_1:
+    interface: ac_rcd
+    description: RCD interface of the onboard RCD
+  rcd_2:
+    interface: ac_rcd
+    description: RCD interface of the onboard RCD
+  connector_lock_1:
+    interface: connector_lock
+    description: RCD interface of the onboard RCD
+  connector_lock_2:
+    interface: connector_lock
+    description: RCD interface of the onboard RCD
+enable_external_mqtt: true
+enable_telemetry: true
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Cornelius Claussen
+
