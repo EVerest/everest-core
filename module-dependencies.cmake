@@ -62,6 +62,11 @@ ev_define_dependency(
     DEPENDENCY_NAME ftxui
     DEPENDENT_MODULES_LIST BUDisplayMessage BUEvseBoardSupport BUIsolationMonitor BUmMWcar BUNfcReader BUOverVoltageMonitor BUPowermeter BUPowerSupplyDC BUSystem)
 
+ev_define_dependency(
+    DEPENDENCY_NAME sdbus-cpp
+    OUTPUT_VARIABLE_SUFFIX SDBUS_CPP
+    DEPENDENT_MODULES_LIST Linux_Systemd_Rauc)
+
 if(NOT everest-gpio IN_LIST EVEREST_EXCLUDE_DEPENDENCIES)
     set(EVEREST_DEPENDENCY_ENABLED_EVEREST_GPIO ON)
 else()

@@ -105,6 +105,11 @@ mqttc:
   git: https://github.com/LiamBindle/MQTT-C.git
   git_tag: v1.1.6
   options: ["MQTT_C_EXAMPLES OFF", "CMAKE_POSITION_INDEPENDENT_CODE ON"]
+# Linux_Systemd_Rauc module
+sdbus-cpp:
+  git:  https://github.com/Kistler-Group/sdbus-cpp.git
+  git_tag: v2.1.0
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_SDBUS_CPP"
 # unit testing
 gtest:
   # GoogleTest now follows the Abseil Live at Head philosophy. We recommend updating to the latest commit in the main branch as often as possible.
