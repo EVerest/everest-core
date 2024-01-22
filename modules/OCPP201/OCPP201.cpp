@@ -500,6 +500,25 @@ ocpp::v201::IdToken get_id_token(const types::authorization::ProvidedIdToken& pr
     return id_token;
 }
 
+TxStartPoint get_tx_start_point(const std::string& tx_start_point_string) {
+    if (tx_start_point_string == "ParkingBayOccupancy") {
+        return TxStartPoint::ParkingBayOccupancy;
+    } else if (tx_start_point_string == "EVConnected") {
+        return TxStartPoint::EVConnected;
+    } else if (tx_start_point_string == "Authorized") {
+        return TxStartPoint::Authorized;
+    } else if (tx_start_point_string == "PowerPathClosed") {
+        return TxStartPoint::PowerPathClosed;
+    } else if (tx_start_point_string == "EnergyTransfer") {
+        return TxStartPoint::EnergyTransfer;
+    } else if (tx_start_point_string == "DataSigned") {
+        return TxStartPoint::DataSigned;
+    }
+
+    // default to PowerPathClosed for now
+    return TxStartPoint::PowerPathClosed;
+}
+
 void OCPP201::init_evse_ready_map() {
     std::lock_guard<std::mutex> lk(this->evse_ready_mutex);
     for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
@@ -769,6 +788,17 @@ void OCPP201::ready() {
         this->config.CoreDatabasePath, sql_init_path.string(), this->config.MessageLogPath,
         std::make_shared<EvseSecurity>(*this->r_security), callbacks);
 
+    const auto tx_start_point_request_value_response = this->charge_point->request_value<std::string>(
+        ocpp::v201::Component{"TxCtrlr"}, ocpp::v201::Variable{"TxStartPoint"}, ocpp::v201::AttributeEnum::Actual);
+    if (tx_start_point_request_value_response.status == ocpp::v201::GetVariableStatusEnum::Accepted and
+        tx_start_point_request_value_response.value.has_value()) {
+        auto tx_start_point_string = tx_start_point_request_value_response.value.value();
+        this->tx_start_point = get_tx_start_point(tx_start_point_string);
+        EVLOG_info << "TxStartPoint from device model: " << tx_start_point_string;
+    } else {
+        this->tx_start_point = TxStartPoint::PowerPathClosed;
+    }
+
     if (this->config.EnableExternalWebsocketControl) {
         const std::string connect_topic = "everest_api/ocpp/cmd/connect";
         this->mqtt.subscribe(connect_topic,
@@ -783,10 +813,27 @@ void OCPP201::ready() {
     for (const auto& evse : this->r_evse_manager) {
         evse->subscribe_session_event([this, evse_id](types::evse_manager::SessionEvent session_event) {
             const auto connector_id = session_event.connector_id.value_or(1);
+            const auto evse_connector = std::make_pair(evse_id, connector_id);
             switch (session_event.event) {
             case types::evse_manager::SessionEventEnum::SessionStarted: {
-                this->session_started_reason = session_event.session_started.value().reason;
-                this->charge_point->on_session_started(evse_id, connector_id);
+                if (!session_event.session_started.has_value()) {
+                    this->session_started_reasons[evse_connector] =
+                        types::evse_manager::StartSessionReason::EVConnected;
+                } else {
+                    this->session_started_reasons[evse_connector] = session_event.session_started.value().reason;
+                }
+
+                switch (this->tx_start_point) {
+                case TxStartPoint::EVConnected:
+                    [[fallthrough]];
+                case TxStartPoint::Authorized:
+                    [[fallthrough]];
+                case TxStartPoint::PowerPathClosed:
+                    [[fallthrough]];
+                case TxStartPoint::EnergyTransfer:
+                    this->charge_point->on_session_started(evse_id, connector_id);
+                    break;
+                }
                 break;
             }
             case types::evse_manager::SessionEventEnum::SessionFinished: {
@@ -809,7 +856,8 @@ void OCPP201::ready() {
                 auto trigger_reason = ocpp::v201::TriggerReasonEnum::Authorized;
 
                 // if session started reason was Authorized, Transaction is started because of EV plug in event
-                if (this->session_started_reason == types::evse_manager::StartSessionReason::Authorized) {
+                if (this->session_started_reasons[evse_connector] ==
+                    types::evse_manager::StartSessionReason::Authorized) {
                     trigger_reason = ocpp::v201::TriggerReasonEnum::CablePluggedIn;
                 }
 
@@ -817,11 +865,18 @@ void OCPP201::ready() {
                     trigger_reason = ocpp::v201::TriggerReasonEnum::RemoteStart;
                 }
 
-                this->charge_point->on_transaction_started(
-                    evse_id, connector_id, session_id, timestamp, trigger_reason, meter_value, id_token, std::nullopt,
-                    reservation_id, remote_start_id,
-                    ocpp::v201::ChargingStateEnum::EVConnected); // FIXME(piet): add proper groupIdToken +
-                                                                 // ChargingStateEnum
+                if (this->tx_start_point == TxStartPoint::EnergyTransfer) {
+                    this->transaction_starts[evse_connector].emplace(TransactionStart{
+                        evse_id, connector_id, session_id, timestamp, trigger_reason, meter_value, id_token,
+                        std::nullopt, reservation_id, remote_start_id, ocpp::v201::ChargingStateEnum::Charging});
+                } else {
+                    this->charge_point->on_transaction_started(
+                        evse_id, connector_id, session_id, timestamp, trigger_reason, meter_value, id_token,
+                        std::nullopt, reservation_id, remote_start_id,
+                        ocpp::v201::ChargingStateEnum::EVConnected); // FIXME(piet): add proper groupIdToken +
+                                                                     // ChargingStateEnum
+                }
+
                 break;
             }
             case types::evse_manager::SessionEventEnum::TransactionFinished: {
@@ -848,6 +903,21 @@ void OCPP201::ready() {
                 break;
             }
             case types::evse_manager::SessionEventEnum::ChargingStarted: {
+                if (this->tx_start_point == TxStartPoint::EnergyTransfer) {
+                    if (this->transaction_starts[evse_connector].has_value()) {
+                        auto transaction_start = this->transaction_starts[evse_connector].value();
+                        this->charge_point->on_transaction_started(
+                            transaction_start.evse_id, transaction_start.connector_id, transaction_start.session_id,
+                            transaction_start.timestamp, transaction_start.trigger_reason,
+                            transaction_start.meter_start, transaction_start.id_token, transaction_start.group_id_token,
+                            transaction_start.reservation_id, transaction_start.remote_start_id,
+                            transaction_start.charging_state);
+                        this->transaction_starts[evse_connector].reset();
+                    } else {
+                        EVLOG_error
+                            << "ChargingStarted with TxStartPoint EnergyTransfer but no TransactionStart was available";
+                    }
+                }
                 this->charge_point->on_charging_state_changed(evse_id, ocpp::v201::ChargingStateEnum::Charging);
                 break;
             }

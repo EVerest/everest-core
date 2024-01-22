@@ -24,7 +24,32 @@
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
+#include <tuple>
+
 #include <ocpp/v201/charge_point.hpp>
+
+enum class TxStartPoint {
+    ParkingBayOccupancy,
+    EVConnected,
+    Authorized,
+    PowerPathClosed,
+    EnergyTransfer,
+    DataSigned
+};
+
+struct TransactionStart {
+    int32_t evse_id;
+    int32_t connector_id;
+    std::string session_id;
+    ocpp::DateTime timestamp;
+    ocpp::v201::TriggerReasonEnum trigger_reason;
+    ocpp::v201::MeterValue meter_start;
+    ocpp::v201::IdToken id_token;
+    std::optional<ocpp::v201::IdToken> group_id_token;
+    std::optional<int32_t> reservation_id;
+    std::optional<int32_t> remote_start_id;
+    ocpp::v201::ChargingStateEnum charging_state;
+};
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -89,8 +114,13 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
-    types::evse_manager::StartSessionReason session_started_reason; // keep track of this to be able to report correct
-                                                                    // trigger reason in TransactionStarted event
+    // track the session started reasons for every EVSE+Connector combination to be able to report correct trigger
+    // reason in TransactionStarted event
+    std::map<std::pair<int32_t, int32_t>, types::evse_manager::StartSessionReason> session_started_reasons;
+    std::map<std::pair<int32_t, int32_t>, std::optional<TransactionStart>> transaction_starts;
+
+    TxStartPoint tx_start_point;
+
     std::filesystem::path ocpp_share_path;
 
     // key represents evse_id, value indicates if ready
