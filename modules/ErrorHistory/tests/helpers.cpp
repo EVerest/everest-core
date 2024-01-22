@@ -4,7 +4,7 @@
 #include "helpers.hpp"
 
 #include <catch2/catch_all.hpp>
-#include <utils/error/error.hpp>
+#include <utils/error.hpp>
 
 fs::path get_bin_dir() {
     return fs::canonical("/proc/self/exe").parent_path();

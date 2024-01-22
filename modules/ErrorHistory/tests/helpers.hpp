@@ -6,7 +6,7 @@
 #include "../ErrorDatabaseSqlite.hpp"
 #include <filesystem>
 #include <list>
-#include <utils/error/error.hpp>
+#include <utils/error.hpp>
 
 namespace fs = std::filesystem;
 
