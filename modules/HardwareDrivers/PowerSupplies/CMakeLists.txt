@@ -1,1 +1,2 @@
 ev_add_module(DPM1000)
+ev_add_module(InfyPower_BEG1K075G)
