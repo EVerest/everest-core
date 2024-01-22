@@ -832,7 +832,7 @@ void OCPP201::ready() {
                     this->charge_point->on_session_started(evse_id, connector_id);
                     break;
                 case TxStartPoint::EnergyTransfer:
-                    // TODO: does this need a session_started/PlugIn event later?
+                    this->charge_point->on_session_started(evse_id, connector_id);
                     break;
                 }
                 break;
