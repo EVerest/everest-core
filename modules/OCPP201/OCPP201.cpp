@@ -829,8 +829,7 @@ void OCPP201::ready() {
                 case TxStartPoint::Authorized:
                     [[fallthrough]];
                 case TxStartPoint::PowerPathClosed:
-                    this->charge_point->on_session_started(evse_id, connector_id);
-                    break;
+                    [[fallthrough]];
                 case TxStartPoint::EnergyTransfer:
                     this->charge_point->on_session_started(evse_id, connector_id);
                     break;
