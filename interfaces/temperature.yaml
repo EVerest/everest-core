@@ -1,0 +1,6 @@
+description: Temperatures from MCU
+vars:
+  temperatures:
+    description: Temperatures
+    type: object
+    $ref: /temperature#/Temperatures

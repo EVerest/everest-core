@@ -41,6 +41,7 @@ public:
     sigslot::signal<int, PpState> signal_pp_state;
     sigslot::signal<FanState> signal_fan_state;
     sigslot::signal<int, LockState> signal_lock_state;
+    sigslot::signal<Temperature> signal_temperature;
 
 private:
     // Serial interface
