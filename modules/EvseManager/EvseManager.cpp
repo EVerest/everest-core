@@ -891,9 +891,11 @@ void EvseManager::ready_to_start_charging() {
     // this will publish a session event Enabled or Disabled that allows other modules the retrieve this state on
     // startup
     if (this->charger->get_current_state() == Charger::EvseState::Disabled) {
-        this->charger->disable(0);
+        charger->enable_disable(
+            0, {types::evse_manager::Enable_source::Unspecified, types::evse_manager::Enable_state::Disable, 10000});
     } else {
-        this->charger->enable(0);
+        charger->enable_disable(
+            0, {types::evse_manager::Enable_source::Unspecified, types::evse_manager::Enable_state::Enable, 10000});
     }
 
     this->p_evse->publish_ready(true);
