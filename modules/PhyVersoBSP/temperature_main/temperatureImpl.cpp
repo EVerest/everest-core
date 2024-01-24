@@ -14,7 +14,7 @@ constexpr auto VOLTAGE_TO_TEMPERATURE_SLOPE = -31.0;
 constexpr auto VOLTAGE_TO_TEMPERATURE_OFFSET = 92.8;
 
 float get_temp(int raw) {
-    int voltage = (raw / ((1 << NUMBER_OF_BITS) - 1)) * REFERENCE_VOLTAGE;
+    float voltage = ((float) raw / ((1 << NUMBER_OF_BITS) - 1)) * REFERENCE_VOLTAGE;
     return VOLTAGE_TO_TEMPERATURE_SLOPE * voltage + VOLTAGE_TO_TEMPERATURE_OFFSET;
 }
 
