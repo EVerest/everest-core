@@ -21,10 +21,13 @@ float get_temp(int raw) {
 void temperatureImpl::init() {
     mod->serial.signal_temperature.connect([this](Temperature temperature) {
         types::temperature::Temperatures temperatures;
+        temperatures.temperatures = std::vector<float>();
+        printf("Got %d items\n", temperature.temp_count);
         for(size_t i=0; i < temperature.temp_count; ++i) {
             temperatures.temperatures->push_back(get_temp(temperature.temp[i]));
+            printf("T: %.1f\n", temperatures.temperatures->at(i));
         }
-        publish_temperatures(temperatures);
+        this->publish_temperatures(temperatures);
     });
 }
 
