@@ -7,6 +7,7 @@
 #include <unistd.h>
 
 #include "phyverso.pb.h"
+#include <everest/logging.hpp>
 #include <sigslot/signal.hpp>
 
 std::atomic_bool sw_version_received = false;
@@ -126,6 +127,12 @@ int main(int argc, char* argv[]) {
                 printf(">> Connector %i: Lock State Unlocked\n", connector);
                 break;
             }
+        });
+
+        p.signal_opaque_data.connect([](int connector, const std::vector<int32_t>& data) {
+            EVLOG_info << "Received data from " << connector;
+            for (const auto a : data)
+                EVLOG_info << a;
         });
 
         while (true) {

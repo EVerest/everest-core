@@ -99,6 +99,22 @@ typedef struct _McuToEverest {
     int32_t connector; /* 0: None, 1: Connector 1, 2: Connector 2 */
 } McuToEverest;
 
+/* Message for parking sensor data. */
+typedef struct _OpaqueData {
+    /* The data itself. */
+    pb_size_t data_count;
+    uint16_t data[64];
+    /* The id of the message - this allows the receiver to assemble chunks of the
+ same message. */
+    uint32_t id;
+    /* The total number of chunks belonging to the `id`. */
+    uint32_t chunks_total;
+    /* The current chunk. */
+    uint32_t chunk_current;
+    /* The connector or parking sensor. */
+    int32_t connector;
+} OpaqueData;
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -132,6 +148,7 @@ extern "C" {
 
 
 
+
 /* Initializer values for message structs */
 #define EverestToMcu_init_default                {0, {KeepAlive_init_default}, 0}
 #define McuToEverest_init_default                {0, {KeepAlive_init_default}, 0}
@@ -139,12 +156,14 @@ extern "C" {
 #define KeepAlive_init_default                   {0, 0, 0, ""}
 #define Telemetry_init_default                   {0, 0}
 #define FanState_init_default                    {0, 0, 0, 0}
+#define OpaqueData_init_default                  {0, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 0, 0, 0, 0}
 #define EverestToMcu_init_zero                   {0, {KeepAlive_init_zero}, 0}
 #define McuToEverest_init_zero                   {0, {KeepAlive_init_zero}, 0}
 #define ErrorFlags_init_zero                     {0, 0, 0, 0, 0, 0}
 #define KeepAlive_init_zero                      {0, 0, 0, ""}
 #define Telemetry_init_zero                      {0, 0}
 #define FanState_init_zero                       {0, 0, 0, 0}
+#define OpaqueData_init_zero                     {0, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 0, 0, 0, 0}
 
 /* Field tags (for use in manual encoding/decoding) */
 #define ErrorFlags_diode_fault_tag               1
@@ -180,6 +199,11 @@ extern "C" {
 #define McuToEverest_fan_state_tag               9
 #define McuToEverest_lock_state_tag              10
 #define McuToEverest_connector_tag               6
+#define OpaqueData_data_tag                      1
+#define OpaqueData_id_tag                        2
+#define OpaqueData_chunks_total_tag              3
+#define OpaqueData_chunk_current_tag             4
+#define OpaqueData_connector_tag                 5
 
 /* Struct field encoding specification for nanopb */
 #define EverestToMcu_FIELDLIST(X, a) \
@@ -244,12 +268,22 @@ X(a, STATIC,   SINGULAR, UINT32,   rpm,               4)
 #define FanState_CALLBACK NULL
 #define FanState_DEFAULT NULL
 
+#define OpaqueData_FIELDLIST(X, a) \
+X(a, STATIC,   REPEATED, UINT32,   data,              1) \
+X(a, STATIC,   SINGULAR, UINT32,   id,                2) \
+X(a, STATIC,   SINGULAR, UINT32,   chunks_total,      3) \
+X(a, STATIC,   SINGULAR, UINT32,   chunk_current,     4) \
+X(a, STATIC,   SINGULAR, INT32,    connector,         5)
+#define OpaqueData_CALLBACK NULL
+#define OpaqueData_DEFAULT NULL
+
 extern const pb_msgdesc_t EverestToMcu_msg;
 extern const pb_msgdesc_t McuToEverest_msg;
 extern const pb_msgdesc_t ErrorFlags_msg;
 extern const pb_msgdesc_t KeepAlive_msg;
 extern const pb_msgdesc_t Telemetry_msg;
 extern const pb_msgdesc_t FanState_msg;
+extern const pb_msgdesc_t OpaqueData_msg;
 
 /* Defines for backwards compatibility with code written before nanopb-0.4.0 */
 #define EverestToMcu_fields &EverestToMcu_msg
@@ -258,6 +292,7 @@ extern const pb_msgdesc_t FanState_msg;
 #define KeepAlive_fields &KeepAlive_msg
 #define Telemetry_fields &Telemetry_msg
 #define FanState_fields &FanState_msg
+#define OpaqueData_fields &OpaqueData_msg
 
 /* Maximum encoded size of messages (where known) */
 #define ErrorFlags_size                          12
@@ -265,7 +300,8 @@ extern const pb_msgdesc_t FanState_msg;
 #define FanState_size                            15
 #define KeepAlive_size                           70
 #define McuToEverest_size                        83
-#define PHYVERSO_PB_H_MAX_SIZE                   EverestToMcu_size
+#define OpaqueData_size                          285
+#define PHYVERSO_PB_H_MAX_SIZE                   OpaqueData_size
 #define Telemetry_size                           12
 
 #ifdef __cplusplus
