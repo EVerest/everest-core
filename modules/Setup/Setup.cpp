@@ -1,17 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2022 - 2022 Pionix GmbH and Contributors to EVerest
 #include "Setup.hpp"
+#include "RunApplication.hpp"
 
 #include <algorithm>
 #include <cstdlib>
 #include <fstream>
 #include <locale>
 
-#include <boost/process.hpp>
-
 #include <fmt/core.h>
 
 namespace module {
+
+// set WifiConfigureClass to the class to use for configuring WiFi
+typedef WpaCliSetup WifiConfigureClass;
 
 void to_json(json& j, const NetworkDeviceInfo& k) {
     j = json::object({{"interface", k.interface},
@@ -24,32 +26,20 @@ void to_json(json& j, const NetworkDeviceInfo& k) {
                       {"link_type", k.link_type}});
 }
 
-void to_json(json& j, const WifiInfo& k) {
-    auto flags_array = json::array();
-    flags_array = k.flags;
-    j = json::object({{"bssid", k.bssid},
-                      {"ssid", k.ssid},
-                      {"frequency", k.frequency},
-                      {"signal_level", k.signal_level},
-                      {"flags", flags_array}});
-}
-
 void to_json(json& j, const WifiCredentials& k) {
-    j = json::object({{"interface", k.interface}, {"ssid", k.ssid}, {"psk", k.psk}});
+    j = json::object({{"interface", k.interface}, {"ssid", k.ssid}, {"psk", k.psk}, {"hidden", k.hidden}});
 }
 
 void from_json(const json& j, WifiCredentials& k) {
     k.interface = j.at("interface");
     k.ssid = j.at("ssid");
     k.psk = j.at("psk");
-}
-
-void to_json(json& j, const WifiList& k) {
-    j = json::object({{"interface", k.interface},
-                      {"network_id", k.network_id},
-                      {"ssid", k.ssid},
-                      {"connected", k.connected},
-                      {"signal_level", k.signal_level}});
+    k.hidden = false;
+    // optional item
+    auto it = j.find("hidden");
+    if ((it != j.end() && *it)) {
+        k.hidden = true;
+    }
 }
 
 void to_json(json& j, const InterfaceAndNetworkId& k) {
@@ -73,6 +63,27 @@ void to_json(json& j, const ApplicationInfo& k) {
                       {"release_metadata_file", k.release_metadata_file}});
 }
 
+//------------------------------------------------------------------------------
+// JSON conversion for WifiConfigureClass types
+static void to_json(json& j, const WifiConfigureClass::WifiNetworkStatus& k) {
+    j = json::object({{"interface", k.interface},
+                      {"network_id", k.network_id},
+                      {"ssid", k.ssid},
+                      {"connected", k.connected},
+                      {"signal_level", k.signal_level}});
+}
+
+static void to_json(json& j, const WifiConfigureClass::WifiScan& k) {
+    auto flags_array = json::array();
+    flags_array = k.flags;
+    j = json::object({{"bssid", k.bssid},
+                      {"ssid", k.ssid},
+                      {"frequency", k.frequency},
+                      {"signal_level", k.signal_level},
+                      {"flags", flags_array}});
+}
+
+//------------------------------------------------------------------------------
 void Setup::init() {
     invoke_init(*p_main);
 
@@ -142,37 +153,46 @@ void Setup::ready() {
         std::string add_network_cmd = this->cmd_base + "add_network";
         this->mqtt.subscribe(add_network_cmd, [this](const std::string& data) {
             WifiCredentials wifi_credentials = json::parse(data);
-            this->add_and_enable_network(wifi_credentials);
-            this->save_config(wifi_credentials.interface);
+            WifiConfigureClass wifi;
+            this->add_and_enable_network(wifi_credentials.interface, wifi_credentials.ssid, wifi_credentials.psk,
+                                         wifi_credentials.hidden);
+            wifi.save_config(wifi_credentials.interface);
             this->publish_configured_networks();
         });
 
         std::string enable_network_cmd = this->cmd_base + "enable_network";
         this->mqtt.subscribe(enable_network_cmd, [this](const std::string& data) {
-            InterfaceAndNetworkId wifi = json::parse(data);
-            this->enable_network(wifi.interface, wifi.network_id);
+            InterfaceAndNetworkId wifi_details = json::parse(data);
+            WifiConfigureClass wifi;
+            wifi.enable_network(wifi_details.interface, wifi_details.network_id);
+            wifi.save_config(wifi_details.interface);
             this->publish_configured_networks();
         });
 
         std::string disable_network_cmd = this->cmd_base + "disable_network";
         this->mqtt.subscribe(disable_network_cmd, [this](const std::string& data) {
-            InterfaceAndNetworkId wifi = json::parse(data);
-            this->disable_network(wifi.interface, wifi.network_id);
+            InterfaceAndNetworkId wifi_details = json::parse(data);
+            WifiConfigureClass wifi;
+            wifi.disable_network(wifi_details.interface, wifi_details.network_id);
+            wifi.save_config(wifi_details.interface);
             this->publish_configured_networks();
         });
 
         std::string select_network_cmd = this->cmd_base + "select_network";
         this->mqtt.subscribe(select_network_cmd, [this](const std::string& data) {
-            InterfaceAndNetworkId wifi = json::parse(data);
-            this->select_network(wifi.interface, wifi.network_id);
+            InterfaceAndNetworkId wifi_details = json::parse(data);
+            WifiConfigureClass wifi;
+            wifi.select_network(wifi_details.interface, wifi_details.network_id);
+            wifi.save_config(wifi_details.interface);
             this->publish_configured_networks();
         });
 
         std::string remove_network_cmd = this->cmd_base + "remove_network";
         this->mqtt.subscribe(remove_network_cmd, [this](const std::string& data) {
-            InterfaceAndNetworkId wifi = json::parse(data);
-            this->remove_network(wifi.interface, wifi.network_id);
-            this->save_config(wifi.interface);
+            InterfaceAndNetworkId wifi_details = json::parse(data);
+            WifiConfigureClass wifi;
+            wifi.remove_network(wifi_details.interface, wifi_details.network_id);
+            wifi.save_config(wifi_details.interface);
             this->publish_configured_networks();
         });
 
@@ -244,7 +264,7 @@ void Setup::publish_hostname() {
 void Setup::publish_ap_state() {
     std::string ap_state_var = this->var_base + "ap_state";
 
-    auto hostapd_enabled_output = this->run_application("systemctl", {"is-active", "--quiet", "hostapd"});
+    auto hostapd_enabled_output = run_application("systemctl", {"is-active", "--quiet", "hostapd"});
     if (hostapd_enabled_output.exit_code == 0) {
         this->ap_state = "enabled";
     } else {
@@ -398,7 +418,7 @@ std::vector<NetworkDeviceInfo> Setup::get_network_devices() {
             std::string virtual_type_file = this->read_type_file(virtual_type_path);
             if (virtual_type_file == type_file) {
                 // assume it's a vpn, but check ip link
-                auto ip_output = this->run_application("ip", {"--json", "-details", "link", "show", interface});
+                auto ip_output = run_application("ip", {"--json", "-details", "link", "show", interface});
                 if (ip_output.exit_code != 0) {
                     continue;
                 }
@@ -421,7 +441,7 @@ std::vector<NetworkDeviceInfo> Setup::get_network_devices() {
 }
 
 void Setup::populate_rfkill_status(std::vector<NetworkDeviceInfo>& device_info) {
-    auto rfkill_output = this->run_application("rfkill", {"--json"});
+    auto rfkill_output = run_application("rfkill", {"--json"});
     if (rfkill_output.exit_code != 0) {
         return;
     }
@@ -459,7 +479,7 @@ bool Setup::rfkill_unblock(std::string rfkill_id) {
         return false;
     }
 
-    auto rfkill_output = this->run_application("rfkill", {"unblock", rfkill_id});
+    auto rfkill_output = run_application("rfkill", {"unblock", rfkill_id});
     if (rfkill_output.exit_code != 0) {
         return false;
     }
@@ -485,101 +505,12 @@ bool Setup::rfkill_block(std::string rfkill_id) {
         return false;
     }
 
-    auto rfkill_output = this->run_application("rfkill", {"block", rfkill_id});
+    auto rfkill_output = run_application("rfkill", {"block", rfkill_id});
     if (rfkill_output.exit_code != 0) {
         return false;
     }
 
     return true;
-}
-
-bool Setup::is_wifi_interface(std::string interface) {
-    // TODO: maybe cache these results for some time?
-    auto network_devices = this->get_network_devices();
-
-    for (auto device : network_devices) {
-        if (device.interface == interface && device.wireless) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-std::vector<WifiList> Setup::list_configured_networks(std::string interface) {
-    if (!this->is_wifi_interface(interface)) {
-        return {};
-    }
-
-    // use wpa_cli to query wifi info
-    auto wpa_cli_list_networks_output = this->run_application("wpa_cli", {"-i", interface, "list_networks"});
-    if (wpa_cli_list_networks_output.exit_code != 0) {
-        return {};
-    }
-
-    std::vector<WifiList> configured_networks;
-    std::map<std::string, std::string> wpa_cli_status_map;
-
-    auto wpa_cli_status_output = this->run_application("wpa_cli", {"-i", interface, "status"});
-    if (wpa_cli_status_output.exit_code == 0) {
-        for (auto wpa_cli_status_it = wpa_cli_status_output.split_output.begin();
-             wpa_cli_status_it != wpa_cli_status_output.split_output.end(); ++wpa_cli_status_it) {
-            std::vector<std::string> wpa_cli_status_columns;
-            // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks)
-            boost::split(wpa_cli_status_columns, *wpa_cli_status_it, boost::is_any_of("="));
-            if (wpa_cli_status_columns.size() == 2) {
-                wpa_cli_status_map[wpa_cli_status_columns.at(0)] = wpa_cli_status_columns.at(1);
-            }
-        }
-    }
-    std::map<std::string, std::string> wpa_cli_signal_poll_map;
-    auto wpa_cli_signal_poll_output = this->run_application("wpa_cli", {"-i", interface, "signal_poll"});
-    if (wpa_cli_signal_poll_output.exit_code == 0) {
-
-        for (auto wpa_cli_signal_poll_it = wpa_cli_signal_poll_output.split_output.begin();
-             wpa_cli_signal_poll_it != wpa_cli_signal_poll_output.split_output.end(); ++wpa_cli_signal_poll_it) {
-            std::vector<std::string> wpa_cli_signal_poll_columns;
-            // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks)
-            boost::split(wpa_cli_signal_poll_columns, *wpa_cli_signal_poll_it, boost::is_any_of("="));
-            if (wpa_cli_signal_poll_columns.size() == 2) {
-                wpa_cli_signal_poll_map[wpa_cli_signal_poll_columns.at(0)] = wpa_cli_signal_poll_columns.at(1);
-            }
-        }
-    }
-
-    auto list_networks_results = wpa_cli_list_networks_output.split_output;
-    if (list_networks_results.size() >= 2) {
-        // skip header
-        for (auto list_networks_results_it = std::next(list_networks_results.begin());
-             list_networks_results_it != list_networks_results.end(); ++list_networks_results_it) {
-            std::vector<std::string> list_networks_results_columns;
-            // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks)
-            boost::split(list_networks_results_columns, *list_networks_results_it, boost::is_any_of("\t"));
-
-            WifiList wifi_list;
-            wifi_list.interface = interface;
-            wifi_list.network_id = std::stoi(list_networks_results_columns.at(0));
-            wifi_list.ssid = list_networks_results_columns.at(1);
-            wifi_list.connected = false;
-            wifi_list.signal_level = -100; // -100 dBm is the minimum for wifi
-
-            if (wpa_cli_status_map.count("id") && wpa_cli_status_map.count("ssid") &&
-                wpa_cli_status_map.count("wpa_state")) {
-                if (wpa_cli_status_map.at("id") == list_networks_results_columns.at(0) &&
-                    wpa_cli_status_map.at("ssid") == wifi_list.ssid &&
-                    wpa_cli_status_map.at("wpa_state") == "COMPLETED") {
-                    wifi_list.connected = true;
-                    if (wpa_cli_signal_poll_map.count("RSSI")) {
-                        wifi_list.signal_level = std::stoi(wpa_cli_signal_poll_map.at("RSSI"));
-                    }
-                }
-            }
-
-            configured_networks.push_back(wifi_list);
-        }
-    }
-
-    return configured_networks;
 }
 
 void Setup::publish_configured_networks() {
@@ -588,7 +519,8 @@ void Setup::publish_configured_networks() {
         if (!device.wireless) {
             continue;
         }
-        auto network_list = this->list_configured_networks(device.interface);
+        WifiConfigureClass wifi;
+        auto network_list = wifi.list_networks_status(device.interface);
         std::string network_list_var = this->var_base + "configured_networks";
         json configured_networks_json = json::array();
         configured_networks_json = network_list;
@@ -596,193 +528,56 @@ void Setup::publish_configured_networks() {
     }
 }
 
-int Setup::add_network(std::string interface) {
-    if (!this->is_wifi_interface(interface)) {
-        return -1;
-    }
+bool Setup::add_and_enable_network(const std::string& interface, const std::string& ssid, const std::string& psk,
+                                   bool hidden) {
+    WifiConfigureClass wifi;
 
-    auto wpa_cli_output = this->run_application("wpa_cli", {"-i", interface, "add_network"});
-    if (wpa_cli_output.exit_code != 0) {
-        return -1;
-    }
-
-    if (wpa_cli_output.split_output.size() != 1) {
-        return -1;
-    }
-    return std::stoi(wpa_cli_output.split_output.at(0));
-}
-
-bool Setup::add_and_enable_network(WifiCredentials wifi_credentials) {
-    return this->add_and_enable_network(wifi_credentials.interface, wifi_credentials.ssid, wifi_credentials.psk);
-}
-
-bool Setup::add_and_enable_network(std::string interface, std::string ssid, std::string psk) {
-    if (interface.empty()) {
+    std::string net_if = interface;
+    if (net_if.empty()) {
         EVLOG_warning << "Attempting to add a network without an interface, attempting to use the first one";
         auto network_devices = this->get_network_devices();
         for (auto device : network_devices) {
             if (device.wireless) {
-                interface = device.interface;
+                net_if = device.interface;
                 break;
             }
         }
     }
 
-    if (!this->is_wifi_interface(interface)) {
-        return false;
-    }
-
-    auto network_id = this->add_network(interface);
-    if (network_id == -1) {
-        return false;
-    }
-
-    if (!this->set_network(interface, network_id, ssid, psk)) {
-        return false;
-    }
-
-    return this->enable_network(interface, network_id);
-}
-
-bool Setup::set_network(std::string interface, int network_id, std::string ssid, std::string psk) {
-    if (!this->is_wifi_interface(interface)) {
-        return false;
-    }
-
-    auto network_id_string = std::to_string(network_id);
-
-    auto ssid_parameter = "\"" + ssid + "\"";
-
-    auto wpa_cli_set_ssid_output =
-        this->run_application("wpa_cli", {"-i", interface, "set_network", network_id_string, "ssid", ssid_parameter});
-    if (wpa_cli_set_ssid_output.exit_code != 0) {
-        return false;
-    }
-
-    auto wpa_cli_set_psk_output =
-        this->run_application("wpa_cli", {"-i", interface, "set_network", network_id_string, "psk", psk});
-
-    if (wpa_cli_set_psk_output.exit_code != 0) {
-        return false;
-    }
-
-    return true;
-}
-
-bool Setup::enable_network(std::string interface, int network_id) {
-    if (!this->is_wifi_interface(interface)) {
-        return false;
-    }
-
-    auto network_id_string = std::to_string(network_id);
-
-    auto wpa_cli_enable_network_output =
-        this->run_application("wpa_cli", {"-i", interface, "enable_network", network_id_string});
-    if (wpa_cli_enable_network_output.exit_code != 0) {
-        return false;
-    }
-
-    return true;
-}
-
-bool Setup::disable_network(std::string interface, int network_id) {
-    if (!this->is_wifi_interface(interface)) {
-        return false;
-    }
-
-    auto network_id_string = std::to_string(network_id);
-
-    auto wpa_cli_disable_network_output =
-        this->run_application("wpa_cli", {"-i", interface, "disable_network", network_id_string});
-    if (wpa_cli_disable_network_output.exit_code != 0) {
-        return false;
-    }
-
-    return true;
-}
-
-bool Setup::select_network(std::string interface, int network_id) {
-    if (!this->is_wifi_interface(interface)) {
-        return false;
-    }
-
-    auto network_id_string = std::to_string(network_id);
-
-    auto wpa_cli_disable_network_output =
-        this->run_application("wpa_cli", {"-i", interface, "select_network", network_id_string});
-    if (wpa_cli_disable_network_output.exit_code != 0) {
-        return false;
-    }
-
-    return true;
-}
-
-bool Setup::remove_network(std::string interface, int network_id) {
-    if (!this->is_wifi_interface(interface)) {
-        return false;
-    }
-
-    auto network_id_string = std::to_string(network_id);
-
-    auto wpa_cli_remove_network_output =
-        this->run_application("wpa_cli", {"-i", interface, "remove_network", network_id_string});
-    if (wpa_cli_remove_network_output.exit_code != 0) {
-        return false;
-    }
-
-    return true;
-}
-
-bool Setup::remove_networks(std::string interface) {
-    if (!this->is_wifi_interface(interface)) {
-        return false;
-    }
-
-    auto networks = this->list_configured_networks(interface);
-
-    bool success = true;
-    for (auto network : networks) {
-        auto network_id_string = std::to_string(network.network_id);
-
-        auto wpa_cli_remove_network_output =
-            this->run_application("wpa_cli", {"-i", interface, "remove_network", network_id_string});
-        if (wpa_cli_remove_network_output.exit_code != 0) {
-            success = false;
-        }
-    }
-
-    return success;
+    auto network_id = wifi.add_network(net_if);
+    bool bResult = network_id != -1;
+    bResult = bResult && wifi.set_network(net_if, network_id, ssid, psk, hidden);
+    bResult = bResult && wifi.enable_network(net_if, network_id);
+    return bResult;
 }
 
 bool Setup::remove_all_networks() {
     auto network_devices = this->get_network_devices();
-    bool success = true;
+    std::uint32_t remove_fail = 0;
+
     for (auto device : network_devices) {
         if (!device.wireless) {
             continue;
         }
 
-        if (!this->remove_networks(device.interface)) {
-            success = false;
+        WifiConfigureClass wifi;
+        auto networks = wifi.list_networks(device.interface);
+
+        for (auto network : networks) {
+            if (!wifi.remove_network(device.interface, network.network_id)) {
+                remove_fail++;
+            }
         }
-        this->save_config(device.interface);
+
+        wifi.save_config(device.interface);
     }
 
-    return success;
-}
-
-bool Setup::save_config(std::string interface) {
-    bool success = true;
-    auto wpa_cli_save_config_output = this->run_application("wpa_cli", {"-i", interface, "save_config"});
-    if (wpa_cli_save_config_output.exit_code != 0) {
-        success = false;
-    }
-    return success;
+    return remove_fail == 0;
 }
 
 bool Setup::reboot() {
     bool success = true;
-    auto reboot_output = this->run_application("systemctl", {"reboot"});
+    auto reboot_output = run_application("systemctl", {"reboot"});
     if (reboot_output.exit_code != 0) {
         success = false;
     }
@@ -791,7 +586,7 @@ bool Setup::reboot() {
 
 bool Setup::is_online() {
     bool success = true;
-    auto reboot_output = this->run_application("ping", {"-c", "1", this->config.online_check_host});
+    auto reboot_output = run_application("ping", {"-c", "1", this->config.online_check_host});
     if (reboot_output.exit_code != 0) {
         success = false;
     }
@@ -810,20 +605,20 @@ void Setup::check_online_status() {
 
 void Setup::enable_ap() {
     bool success = true;
-    auto wpa_cli_output = this->run_application("wpa_cli", {"-i", this->config.ap_interface, "disconnect"});
+    auto wpa_cli_output = run_application("wpa_cli", {"-i", this->config.ap_interface, "disconnect"});
     if (wpa_cli_output.exit_code != 0) {
         EVLOG_error << "Could not disconnect from wireless LAN";
     }
-    auto start_hostapd_output = this->run_application("systemctl", {"start", "hostapd"});
+    auto start_hostapd_output = run_application("systemctl", {"start", "hostapd"});
     if (start_hostapd_output.exit_code != 0) {
         EVLOG_error << "Could not start hostapd";
     }
-    auto start_dnsmasq_output = this->run_application("systemctl", {"start", "dnsmasq"});
+    auto start_dnsmasq_output = run_application("systemctl", {"start", "dnsmasq"});
     if (start_dnsmasq_output.exit_code != 0) {
         EVLOG_error << "Could not start dnsmasq";
     }
     auto add_static_ip_output =
-        this->run_application("ip", {"addr", "add", this->config.ap_ipv4, "dev", this->config.ap_interface});
+        run_application("ip", {"addr", "add", this->config.ap_ipv4, "dev", this->config.ap_interface});
     if (add_static_ip_output.exit_code != 0) {
         EVLOG_error << "Could not add static ip to interface " << this->config.ap_interface;
     }
@@ -831,21 +626,21 @@ void Setup::enable_ap() {
 
 void Setup::disable_ap() {
     auto del_static_ip_output =
-        this->run_application("ip", {"addr", "del", this->config.ap_ipv4, "dev", this->config.ap_interface});
+        run_application("ip", {"addr", "del", this->config.ap_ipv4, "dev", this->config.ap_interface});
     if (del_static_ip_output.exit_code != 0) {
         EVLOG_error << "Could not del static ip " << this->config.ap_ipv4 << " from interface "
                     << this->config.ap_interface;
     }
-    auto stop_dnsmasq_output = this->run_application("systemctl", {"stop", "dnsmasq"});
+    auto stop_dnsmasq_output = run_application("systemctl", {"stop", "dnsmasq"});
     if (stop_dnsmasq_output.exit_code != 0) {
         EVLOG_error << "Could not stop dnsmasq";
     }
-    auto stop_hostapd_output = this->run_application("systemctl", {"stop", "hostapd"});
+    auto stop_hostapd_output = run_application("systemctl", {"stop", "hostapd"});
     if (stop_hostapd_output.exit_code != 0) {
         EVLOG_error << "Could not stop hostapd";
     }
 
-    auto wpa_cli_output = this->run_application("wpa_cli", {"-i", this->config.ap_interface, "reconnect"});
+    auto wpa_cli_output = run_application("wpa_cli", {"-i", this->config.ap_interface, "reconnect"});
     if (wpa_cli_output.exit_code != 0) {
         EVLOG_error << "Could not reconnect to wireless LAN";
     }
@@ -862,7 +657,7 @@ static void add_addr_infos_to_device(const json& addr_infos, NetworkDeviceInfo& 
 }
 
 void Setup::populate_ip_addresses(std::vector<NetworkDeviceInfo>& device_info) {
-    auto ip_output = this->run_application("ip", {"--json", "address", "show"});
+    auto ip_output = run_application("ip", {"--json", "address", "show"});
     if (ip_output.exit_code != 0) {
         return;
     }
@@ -881,90 +676,28 @@ void Setup::populate_ip_addresses(std::vector<NetworkDeviceInfo>& device_info) {
     }
 }
 
-std::vector<WifiInfo> Setup::scan_wifi(const std::vector<NetworkDeviceInfo>& device_info) {
-    std::vector<WifiInfo> wifi_info;
+WifiConfigureClass::WifiScanList Setup::scan_wifi(const std::vector<NetworkDeviceInfo>& device_info) {
+    WifiConfigureClass::WifiScanList wifi_info;
+    WifiConfigureClass wifi;
 
     for (auto device : device_info) {
         if (!device.wireless) {
             continue;
         }
-        // use wpa_cli to query wifi info
-        auto wpa_cli_scan_output = this->run_application("wpa_cli", {"-i", device.interface, "scan"});
-        if (wpa_cli_scan_output.exit_code != 0) {
-            continue;
-        }
 
-        // FIXME: is there a proper signal to check if the scan is ready? Maybe in the socket based interface
-        std::this_thread::sleep_for(std::chrono::seconds(3));
-        auto wpa_cli_scan_results_output = this->run_application("wpa_cli", {"-i", device.interface, "scan_results"});
-        if (wpa_cli_scan_results_output.exit_code != 0) {
-            continue;
-        }
-
-        auto scan_results = wpa_cli_scan_results_output.split_output;
-        if (scan_results.size() >= 2) {
-            // skip header
-            for (auto scan_results_it = std::next(scan_results.begin()); scan_results_it != scan_results.end();
-                 ++scan_results_it) {
-                std::vector<std::string> scan_results_columns;
-                // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks)
-                boost::split(scan_results_columns, *scan_results_it, boost::is_any_of("\t"));
-
-                WifiInfo info;
-                info.bssid = scan_results_columns.at(0);
-                info.ssid = scan_results_columns.at(4);
-                info.frequency = std::stoi(scan_results_columns.at(1));
-                info.signal_level = std::stoi(scan_results_columns.at(2));
-                info.flags = this->parse_wpa_cli_flags(scan_results_columns.at(3));
-
-                wifi_info.push_back(info);
-            }
-        }
+        auto dev_list = wifi.scan_wifi(device.interface);
+        wifi_info.insert(wifi_info.end(), dev_list.begin(), dev_list.end());
     }
 
     return wifi_info;
 }
 
 std::string Setup::get_hostname() {
-    auto hostname_output = this->run_application("hostname", {});
+    auto hostname_output = run_application("hostname", {});
     if (hostname_output.exit_code == 0 && hostname_output.split_output.size() > 0) {
         return hostname_output.split_output.at(0);
     }
     return "";
-}
-
-CmdOutput Setup::run_application(const std::string& name, std::vector<std::string> args) {
-    const auto path = boost::process::search_path(name);
-
-    if (path.empty()) {
-        EVLOG_debug << fmt::format("The application '{}' could not be found", name);
-        return CmdOutput{"", {}, 1};
-    }
-
-    boost::process::ipstream stream;
-    boost::process::child cmd(path, boost::process::args(args), boost::process::std_out > stream);
-    std::string output;
-    std::vector<std::string> split_output;
-    std::string temp;
-    while (std::getline(stream, temp)) {
-        output += temp + "\n";
-        split_output.push_back(temp);
-    }
-    cmd.wait();
-    return CmdOutput{output, split_output, cmd.exit_code()};
-}
-
-std::vector<std::string> Setup::parse_wpa_cli_flags(std::string flags) {
-    const std::regex wpa_cli_flags_regex("\\[(.*?)\\]");
-
-    std::vector<std::string> parsed_flags;
-
-    for (auto regex_it = std::sregex_iterator(flags.begin(), flags.end(), wpa_cli_flags_regex);
-         regex_it != std::sregex_iterator(); ++regex_it) {
-        parsed_flags.push_back((*regex_it).str(1));
-    }
-
-    return parsed_flags;
 }
 
 } // namespace module

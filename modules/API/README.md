@@ -44,8 +44,35 @@ This variable is published every second and contains a json object with informat
         "discharged_energy_wh": 0,
         "latest_total_w": 0.0,
         "state": "Unplugged",
-        "state_info": ""
+        "active_permanent_faults": [],
+        "active_errors": []
     }
+```
+
+Example with permanent faults being active:
+
+```json
+{
+  "active_errors": [],
+  "active_permanent_faults": [
+    {
+      "description": "The control pilot voltage is out of range.",
+      "severity": "High",
+      "type": "MREC14PilotFault"
+    },
+    {
+      "description": "The vehicle is in an invalid mode for charging (Reported by IEC stack)",
+      "severity": "High",
+      "type": "MREC10InvalidVehicleMode"
+    }
+  ],
+  "charged_energy_wh": 0,
+  "charging_duration_s": 0,
+  "datetime": "2024-01-15T14:58:15.172Z",
+  "discharged_energy_wh": 0,
+  "latest_total_w": 0,
+  "state": "Preparing"
+}
 ```
 
 - **charged_energy_wh** contains the charged energy in Wh
@@ -64,20 +91,44 @@ This variable is published every second and contains a json object with informat
     - ChargingPausedEV
     - ChargingPausedEVSE
     - Finished
-    - Error
-    - PermanentFault
 
-
-- **state_info** contains additional information for the current state, at the moment this is only set to a meaningful value in the Error state. Here it can have the following values:
-    - Car
-    - CarDiodeFault
-    - Relais
-    - RCD
+- **active_permanent_faults** array of all active errors that are permanent faults (i.e. that block charging). If anything is set here it should be shown as an error to the user instead of showing the current state:
+    - RCD_Selftest
+    - RCD_DC
+    - RCD_AC
+    - VendorError
+    - VendorWarning
+    - ConnectorLockCapNotCharged
+    - ConnectorLockUnexpectedOpen
+    - ConnectorLockUnexpectedClose
+    - ConnectorLockFailedLock
+    - ConnectorLockFailedUnlock
+    - MREC1ConnectorLockFailure
+    - MREC2GroundFailure
+    - MREC3HighTemperature
+    - MREC4OverCurrentFailure
+    - MREC5OverVoltage
+    - MREC6UnderVoltage
+    - MREC8EmergencyStop
+    - MREC10InvalidVehicleMode
+    - MREC14PilotFault
+    - MREC15PowerLoss
+    - MREC17EVSEContactorFault
+    - MREC18CableOverTempDerate
+    - MREC19CableOverTempStop
+    - MREC20PartialInsertion
+    - MREC23ProximityFault
+    - MREC24ConnectorVoltageHigh
+    - MREC25BrokenLatch
+    - MREC26CutCable
+    - DiodeFault
     - VentilationNotAvailable
-    - OverCurrent
-    - Internal
-    - SLAC
-    - HLC
+    - BrownOut
+    - EnergyManagement
+    - PermanentFault
+    - PowermeterTransactionStartFailed
+
+- **active_errors** array of all active errors that do not block charging. This could be shown to the user but the current state should still be shown as it does not interfere with charging. The enum is the same as for active_permanent_faults.
 
 ### everest_api/evse_manager/var/limits
 This variable is published every second and contains a json object with information relating to the current limits of this EVSE.

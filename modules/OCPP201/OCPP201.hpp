@@ -17,23 +17,39 @@
 #include <generated/interfaces/ocpp_data_transfer/Implementation.hpp>
 
 // headers for required interface implementations
+#include <generated/interfaces/auth/Interface.hpp>
 #include <generated/interfaces/evse_manager/Interface.hpp>
 #include <generated/interfaces/evse_security/Interface.hpp>
-#include <generated/interfaces/kvs/Interface.hpp>
 #include <generated/interfaces/ocpp_data_transfer/Interface.hpp>
 #include <generated/interfaces/system/Interface.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
+#include <tuple>
+
 #include <ocpp/v201/charge_point.hpp>
 
-struct Evse {
-    uint16_t evse_id;
-    ocpp::v201::OperationalStatusEnum operational_state;
-    std::map<uint16_t, ocpp::v201::OperationalStatusEnum> connectors;
-    ocpp::v201::OperationalStatusEnum get_connector_state(uint16_t connector_id) {
-        return connectors.at(connector_id);
-    }
+enum class TxStartPoint {
+    ParkingBayOccupancy,
+    EVConnected,
+    Authorized,
+    PowerPathClosed,
+    EnergyTransfer,
+    DataSigned
+};
+
+struct TransactionStart {
+    int32_t evse_id;
+    int32_t connector_id;
+    std::string session_id;
+    ocpp::DateTime timestamp;
+    ocpp::v201::TriggerReasonEnum trigger_reason;
+    ocpp::v201::MeterValue meter_start;
+    ocpp::v201::IdToken id_token;
+    std::optional<ocpp::v201::IdToken> group_id_token;
+    std::optional<int32_t> reservation_id;
+    std::optional<int32_t> remote_start_id;
+    ocpp::v201::ChargingStateEnum charging_state;
 };
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
@@ -57,8 +73,9 @@ public:
             std::unique_ptr<auth_token_providerImplBase> p_auth_provider,
             std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer,
             std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager, std::unique_ptr<systemIntf> r_system,
-            std::unique_ptr<evse_securityIntf> r_security, std::unique_ptr<kvsIntf> r_kvs,
-            std::vector<std::unique_ptr<ocpp_data_transferIntf>> r_data_transfer, Conf& config) :
+            std::unique_ptr<evse_securityIntf> r_security,
+            std::vector<std::unique_ptr<ocpp_data_transferIntf>> r_data_transfer, std::unique_ptr<authIntf> r_auth,
+            Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_main(std::move(p_main)),
@@ -68,8 +85,8 @@ public:
         r_evse_manager(std::move(r_evse_manager)),
         r_system(std::move(r_system)),
         r_security(std::move(r_security)),
-        r_kvs(std::move(r_kvs)),
         r_data_transfer(std::move(r_data_transfer)),
+        r_auth(std::move(r_auth)),
         config(config){};
 
     Everest::MqttProvider& mqtt;
@@ -80,8 +97,8 @@ public:
     const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;
     const std::unique_ptr<systemIntf> r_system;
     const std::unique_ptr<evse_securityIntf> r_security;
-    const std::unique_ptr<kvsIntf> r_kvs;
     const std::vector<std::unique_ptr<ocpp_data_transferIntf>> r_data_transfer;
+    const std::unique_ptr<authIntf> r_auth;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
@@ -101,26 +118,22 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
-    types::evse_manager::StartSessionReason session_started_reason; // keep track of this to be able to report correct
-                                                                    // trigger reason in TransactionStarted event
-    std::filesystem::path ocpp_share_path;
+    // track the session started reasons for every EVSE+Connector combination to be able to report correct trigger
+    // reason in TransactionStarted event
+    std::map<std::pair<int32_t, int32_t>, types::evse_manager::StartSessionReason> session_started_reasons;
+    std::map<std::pair<int32_t, int32_t>, std::optional<TransactionStart>> transaction_starts;
 
-    // holds operational states of EVSE
-    ocpp::v201::OperationalStatusEnum cs_operational_status;
-    std::map<uint16_t, Evse> evses;
+    TxStartPoint tx_start_point;
+
+    std::filesystem::path ocpp_share_path;
 
     // key represents evse_id, value indicates if ready
     std::map<int32_t, bool> evse_ready_map;
     std::mutex evse_ready_mutex;
     std::condition_variable evse_ready_cv;
     void init_evse_ready_map();
-    void init_evses();
     bool all_evse_ready();
-
-    void set_connector_operational_status(const ocpp::v201::OperationalStatusEnum operational_status,
-                                          const int32_t evse_id, const int32_t connector_id, const bool persist);
-    void set_evse_operational_status(const ocpp::v201::OperationalStatusEnum operational_status, const int32_t evse_id,
-                                     const bool persist);
+    std::map<int32_t, int32_t> get_connector_structure();
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

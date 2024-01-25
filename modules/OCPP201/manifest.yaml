@@ -54,13 +54,13 @@ requires:
     interface: evse_security
     min_connections: 1
     max_connections: 1
-  kvs:
-    interface: kvs
-    min_connections: 1
-    max_connections: 1
   data_transfer:
     interface: ocpp_data_transfer
     min_connections: 0
+    max_connections: 1
+  auth:
+    interface: auth
+    min_connections: 1
     max_connections: 1
 enable_external_mqtt: true
 metadata:

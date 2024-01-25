@@ -110,8 +110,11 @@ public:
                            const std::vector<std::unique_ptr<ac_rcdIntf>>& r_ac_rcd,
                            const std::unique_ptr<evse_managerImplBase>& _p_evse);
 
-    // Signal for internal events type
-    sigslot::signal<types::evse_manager::ErrorEnum, bool> signal_error;
+    // Signal that one error has been raised. Bool argument is true if it preventing charging.
+    sigslot::signal<types::evse_manager::Error, bool> signal_error;
+    // Signal that one error has been cleared. Bool argument is true if it was preventing charging.
+    sigslot::signal<types::evse_manager::Error, bool> signal_error_cleared;
+    // Signal that all errors are cleared (both those preventing charging and not)
     sigslot::signal<> signal_all_errors_cleared;
 
     void raise_overcurrent_error(const std::string& description);

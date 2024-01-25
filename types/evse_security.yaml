@@ -176,12 +176,16 @@ types:
     required:
       - key
       - certificate
+      - certificate_single
     properties:
       key:
         description: The path of the PEM or DER encoded private key
         type: string
       certificate:
-        description: The path of the PEM or DER encoded certificate
+        description: The path of the PEM or DER encoded certificate chain
+        type: string
+      certificate_single:
+        description: The path of the PEM or DER encoded single certificate
         type: string
       password:
         description: Specifies the password for the private key if encrypted

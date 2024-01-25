@@ -35,6 +35,7 @@ public:
                                                      const std::string& country, const std::string& organization,
                                                      const std::string& common, bool use_tpm) override;
     std::optional<ocpp::KeyPair> get_key_pair(const ocpp::CertificateSigningUseEnum& certificate_type) override;
+    bool update_certificate_links(const ocpp::CertificateSigningUseEnum& certificate_type) override;
     std::string get_verify_file(const ocpp::CaCertificateType& certificate_type) override;
     int get_leaf_expiry_days_count(const ocpp::CertificateSigningUseEnum& certificate_type) override;
 };

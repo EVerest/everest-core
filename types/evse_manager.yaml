@@ -128,8 +128,10 @@ types:
       - TransactionFinished
       - SessionFinished
       - Error
+      - ErrorCleared
       - AllErrorsCleared
       - PermanentFault
+      - PermanentFaultCleared
       - ReservationStart
       - ReservationEnd
       - ReplugStarted
@@ -269,11 +271,23 @@ types:
     additionalProperties: false
     required:
       - error_code
+      - error_description
+      - error_severity
     properties:
       error_code:
         description: The error enum
         type: string
         $ref: /evse_manager#/ErrorEnum
+      error_description:
+        description: Description of the error (human readable)
+        type: string
+      error_severity:
+        description: Severity of the error
+        type: string
+        enum:
+          - High
+          - Medium
+          - Low
       vendor_error:
         description: The error code of the vendor
         type: string

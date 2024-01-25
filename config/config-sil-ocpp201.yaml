@@ -120,14 +120,14 @@ active_modules:
           implementation_id: evse
         - module_id: evse_manager_2
           implementation_id: evse
+      auth:
+        - module_id: auth
+          implementation_id: main
       system:
         - module_id: system
           implementation_id: main
       security:
         - module_id: evse_security
-          implementation_id: main
-      kvs:
-        - module_id: persistent_store
           implementation_id: main
   persistent_store:
     module: PersistentStore
