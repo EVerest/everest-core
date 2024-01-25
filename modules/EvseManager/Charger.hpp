@@ -216,7 +216,7 @@ private:
     // This mutex locks all variables related to the state machine
     std::mutex state_machine_mutex;
 
-    EvseState currentState;
+    EvseState current_state;
     EvseState last_state;
     EvseState last_state_detect_state_change;
 
