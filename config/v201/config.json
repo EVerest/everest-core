@@ -265,7 +265,14 @@
                 "attributes": {
                     "Actual": "Enabled,Active,Available,Problem"
                 }
+            },
+            "UpdateCertificateSymlinks": {
+                "variable_name": "UpdateCertificateSymlinks",
+                "attributes": {
+                    "Actual": "0"
+                }
             }
+            
         }
     },
     {

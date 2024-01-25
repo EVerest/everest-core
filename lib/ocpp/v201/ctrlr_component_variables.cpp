@@ -989,6 +989,13 @@ const ComponentVariable& MaxCertificateChainSize = {
         "MaxCertificateChainSize",
     }),
 };
+const ComponentVariable& UpdateCertificateSymlinks = {
+    ControllerComponents::InternalCtrlr,
+    std::nullopt,
+    std::optional<Variable>({
+        "UpdateCertificateSymlinks",
+    }),
+};
 const RequiredComponentVariable& OrganizationName = {
     ControllerComponents::SecurityCtrlr,
     std::nullopt,

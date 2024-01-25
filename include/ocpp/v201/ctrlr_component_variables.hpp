@@ -176,6 +176,7 @@ extern const ComponentVariable& CertSigningRepeatTimes;
 extern const ComponentVariable& CertSigningWaitMinimum;
 extern const RequiredComponentVariable& SecurityCtrlrIdentity;
 extern const ComponentVariable& MaxCertificateChainSize;
+extern const ComponentVariable& UpdateCertificateSymlinks;
 extern const RequiredComponentVariable& OrganizationName;
 extern const RequiredComponentVariable& SecurityProfile;
 extern const ComponentVariable& ACPhaseSwitchingSupported;

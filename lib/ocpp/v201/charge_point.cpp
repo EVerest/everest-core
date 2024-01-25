@@ -1763,6 +1763,13 @@ void ChargePoint::handle_certificate_signed_req(Call<CertificateSignedRequest> c
         }
     }
 
+    // Trigger a symlink update for V2G certificates
+    if ((cert_signing_use == ocpp::CertificateSigningUseEnum::V2GCertificate) and
+        this->device_model->get_optional_value<bool>(ControllerComponentVariables::UpdateCertificateSymlinks)
+            .value_or(false)) {
+        this->evse_security->update_certificate_links(cert_signing_use);
+    }
+
     ocpp::CallResult<CertificateSignedResponse> call_result(response, call.uniqueId);
     this->send<CertificateSignedResponse>(call_result);
 

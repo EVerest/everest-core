@@ -471,6 +471,21 @@
           "default": "43200",
           "type": "integer"
       },
+      "UpdateCertificateSymlinks": {
+        "variable_name": "UpdateCertificateSymlinks",
+        "characteristics": {
+            "supportsMonitoring": false,
+            "dataType": "boolean"
+        },
+        "attributes": [
+            {
+                "type": "Actual",
+                "mutability": "ReadOnly"
+            }
+        ],
+        "default": "0",
+        "type": "boolean"
+      },
       "MessageQueueSizeThreshold": {
           "variable_name": "MessageQueueSizeThreshold",
           "characteristics": {
