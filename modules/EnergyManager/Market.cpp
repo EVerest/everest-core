@@ -268,7 +268,7 @@ void Market::get_list_of_evses(std::vector<Market*>& list) {
         list.push_back(this);
     }
 
-    for (auto child : _children) {
+    for (auto& child : _children) {
         child.get_list_of_evses(list);
     }
 }
