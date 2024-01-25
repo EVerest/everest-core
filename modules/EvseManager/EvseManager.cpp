@@ -145,9 +145,9 @@ void EvseManager::ready() {
         });
 
         // Trigger SLAC restart
-        charger->signal_SLAC_start.connect([this] { r_slac[0]->call_enter_bcd(); });
+        charger->signal_slac_start.connect([this] { r_slac[0]->call_enter_bcd(); });
         // Trigger SLAC reset
-        charger->signal_SLAC_reset.connect([this] { r_slac[0]->call_reset(false); });
+        charger->signal_slac_reset.connect([this] { r_slac[0]->call_reset(false); });
 
         // Ask HLC to stop charging session
         charger->signal_hlc_stop_charging.connect([this] { r_hlc[0]->call_stop_charging(true); });
@@ -202,7 +202,7 @@ void EvseManager::ready() {
 
             // Notification that current demand has started
             r_hlc[0]->subscribe_currentDemand_Started([this] {
-                charger->notifyCurrentDemandStarted();
+                charger->notify_currentdemand_started();
                 current_demand_active = true;
             });
 
@@ -297,7 +297,7 @@ void EvseManager::ready() {
 
             // Back up switch off - charger signalled that it needs to switch off now.
             // During normal operation this should be done earlier before switching off relais by HLC protocol.
-            charger->signal_DC_supply_off.connect([this] {
+            charger->signal_dc_supply_off.connect([this] {
                 powersupply_DC_off();
                 imd_stop();
             });
@@ -436,8 +436,8 @@ void EvseManager::ready() {
         // implement Auth handlers
         r_hlc[0]->subscribe_Require_Auth_EIM([this]() {
             //  Do we have auth already (i.e. delayed HLC after charging already running)?
-            if ((config.dbg_hlc_auth_after_tstep && charger->Authorized_EIM_ready_for_HLC()) ||
-                (!config.dbg_hlc_auth_after_tstep && charger->Authorized_EIM())) {
+            if ((config.dbg_hlc_auth_after_tstep && charger->get_authorized_eim_ready_for_hlc()) ||
+                (!config.dbg_hlc_auth_after_tstep && charger->get_authorized_eim())) {
                 {
                     std::scoped_lock lock(hlc_mutex);
                     hlc_waiting_for_auth_eim = false;
@@ -473,7 +473,7 @@ void EvseManager::ready() {
             std::vector<int> referenced_connectors = {this->config.connector_id};
             _token.connectors.emplace(referenced_connectors);
             p_token_provider->publish_provided_token(_token);
-            if (charger->Authorized_PnC()) {
+            if (charger->get_authorized_pnc()) {
                 {
                     std::scoped_lock lock(hlc_mutex);
                     hlc_waiting_for_auth_eim = false;
@@ -506,7 +506,7 @@ void EvseManager::ready() {
                 }
             });
 
-            charger->signalACWithSoCTimeout.connect([this]() { switch_DC_mode(); });
+            charger->signal_ac_with_soc_timeout.connect([this]() { switch_DC_mode(); });
 
             r_hlc[0]->subscribe_DC_EVStatus([this](types::iso15118_charger::DC_EVStatusType status) {
                 EVLOG_info << fmt::format("SoC received: {}.", status.DC_EVRESSSOC);
@@ -571,7 +571,7 @@ void EvseManager::ready() {
             }
         }
 
-        charger->processEvent(event);
+        charger->process_event(event);
 
         // Forward some events to HLC
         if (get_hlc_enabled()) {
@@ -603,7 +603,7 @@ void EvseManager::ready() {
         }
 
         if (config.ac_with_soc)
-            charger->signalACWithSoCTimeout.connect([this]() {
+            charger->signal_ac_with_soc_timeout.connect([this]() {
                 EVLOG_info << "AC with SoC timeout";
                 switch_DC_mode();
             });
@@ -615,8 +615,8 @@ void EvseManager::ready() {
         r_powermeter_billing()[0]->subscribe_powermeter([this](types::powermeter::Powermeter p) {
             // Inform charger about current charging current. This is used for slow OC detection.
             if (p.current_A && p.current_A.value().L1 && p.current_A.value().L2 && p.current_A.value().L3) {
-                charger->setCurrentDrawnByVehicle(p.current_A.value().L1.value(), p.current_A.value().L2.value(),
-                                                  p.current_A.value().L3.value());
+                charger->set_current_drawn_by_vehicle(p.current_A.value().L1.value(), p.current_A.value().L2.value(),
+                                                      p.current_A.value().L3.value());
             }
 
             // Inform HLC about the power meter data
@@ -658,15 +658,15 @@ void EvseManager::ready() {
             session_log.evse(true, fmt::format("SLAC {}", s));
             // Notify charger whether matching was started (or is done) or not
             if (s == "UNMATCHED") {
-                charger->setMatchingStarted(false);
+                charger->set_matching_started(false);
             } else {
-                charger->setMatchingStarted(true);
+                charger->set_matching_started(true);
             }
         });
 
         r_slac[0]->subscribe_request_error_routine([this]() {
             EVLOG_info << "Received request error routine from SLAC in evsemanager\n";
-            charger->requestErrorSequence();
+            charger->request_error_sequence();
         });
 
         r_slac[0]->subscribe_dlink_ready([this](const bool value) {
@@ -677,14 +677,14 @@ void EvseManager::ready() {
         });
     }
 
-    charger->signalMaxCurrent.connect([this](float ampere) {
+    charger->signal_max_current.connect([this](float ampere) {
         // The charger changed the max current setting. Forward to HLC
         if (get_hlc_enabled()) {
             r_hlc[0]->call_update_ac_max_current(ampere);
         }
     });
 
-    charger->signalEvent.connect([this](types::evse_manager::SessionEventEnum s) {
+    charger->signal_event.connect([this](types::evse_manager::SessionEventEnum s) {
         // Cancel reservations if charger is disabled or faulted
         if (s == types::evse_manager::SessionEventEnum::Disabled ||
             s == types::evse_manager::SessionEventEnum::PermanentFault) {
@@ -700,7 +700,7 @@ void EvseManager::ready() {
         std::vector<types::iso15118_charger::PaymentOption> payment_options;
 
         if (get_hlc_enabled() && s == types::evse_manager::SessionEventEnum::SessionStarted &&
-            charger->getSessionStartedReason() == types::evse_manager::StartSessionReason::Authorized) {
+            charger->get_session_started_reason() == types::evse_manager::StartSessionReason::Authorized) {
 
             payment_options.push_back(types::iso15118_charger::PaymentOption::ExternalPayment);
             r_hlc[0]->call_session_setup(payment_options, false);
@@ -833,7 +833,7 @@ void EvseManager::ready() {
 
     //  start with a limit of 0 amps. We will get a budget from EnergyManager that is locally limited by hw
     //  caps.
-    charger->setMaxCurrent(0.0F, date::utc_clock::now() + std::chrono::seconds(10));
+    charger->set_max_current(0.0F, date::utc_clock::now() + std::chrono::seconds(10));
     this->p_evse->publish_waiting_for_external_ready(config.external_ready_to_start_charging);
     if (!config.external_ready_to_start_charging) {
         // immediately ready, otherwise delay until we get the external signal
@@ -865,12 +865,12 @@ int32_t EvseManager::get_reservation_id() {
 }
 
 void EvseManager::switch_DC_mode() {
-    charger->evseReplug();
+    charger->evse_replug();
     setup_fake_DC_mode();
 }
 
 void EvseManager::switch_AC_mode() {
-    charger->evseReplug();
+    charger->evse_replug();
     setup_AC_mode();
 }
 
@@ -1055,7 +1055,7 @@ bool EvseManager::updateLocalMaxCurrentLimit(float max_current) {
 bool EvseManager::reserve(int32_t id) {
 
     // is the evse Unavailable?
-    if (charger->getCurrentState() == Charger::EvseState::Disabled) {
+    if (charger->get_current_state() == Charger::EvseState::Disabled) {
         return false;
     }
 
@@ -1065,7 +1065,7 @@ bool EvseManager::reserve(int32_t id) {
     }
 
     // is the connector currently ready to accept a new car?
-    if (charger->getCurrentState() != Charger::EvseState::Idle) {
+    if (charger->get_current_state() != Charger::EvseState::Idle) {
         return false;
     }
 
@@ -1145,14 +1145,14 @@ void EvseManager::log_v2g_message(Object m) {
 void EvseManager::charger_was_authorized() {
 
     std::scoped_lock lock(hlc_mutex);
-    if (hlc_waiting_for_auth_pnc && charger->Authorized_PnC()) {
+    if (hlc_waiting_for_auth_pnc && charger->get_authorized_pnc()) {
         r_hlc[0]->call_authorization_response(types::authorization::AuthorizationStatus::Accepted,
                                               types::authorization::CertificateStatus::Accepted);
         hlc_waiting_for_auth_eim = false;
         hlc_waiting_for_auth_pnc = false;
     }
 
-    if (hlc_waiting_for_auth_eim && charger->Authorized_EIM()) {
+    if (hlc_waiting_for_auth_eim && charger->get_authorized_eim()) {
         r_hlc[0]->call_authorization_response(types::authorization::AuthorizationStatus::Accepted,
                                               types::authorization::CertificateStatus::NoCertificateAvailable);
         hlc_waiting_for_auth_eim = false;
