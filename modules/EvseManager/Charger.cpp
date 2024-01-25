@@ -249,7 +249,7 @@ void Charger::run_state_machine() {
                     start_transaction();
                 }
 
-                const EvseState targetState(EvseState::PrepareCharging);
+                const EvseState target_state(EvseState::PrepareCharging);
 
                 // EIM done and matching process not started -> we need to go through t_step_EF and fall back to nominal
                 // PWM. This is a complete waste of 4 precious seconds.
@@ -261,7 +261,7 @@ void Charger::run_state_machine() {
                                 false, "AC mode, HLC enabled(ac_enforce_hlc), keeping 5 percent on until a dlink error "
                                        "is signalled.");
                             hlc_use_5percent_current_session = true;
-                            current_state = targetState;
+                            current_state = target_state;
                         } else {
                             if (not get_matching_started()) {
                                 // SLAC matching was not started when EIM arrived
@@ -275,7 +275,7 @@ void Charger::run_state_machine() {
 
                                 // Figure 3 of ISO15118-3: 5 percent start, PnC and EIM
                                 // Figure 4 of ISO15118-3: X1 start, PnC and EIM
-                                t_step_EF_return_state = targetState;
+                                t_step_EF_return_state = target_state;
                                 t_step_EF_return_pwm = 0.;
                                 // fall back to nominal PWM after the t_step_EF break. Note that
                                 // ac_hlc_enabled_current_session remains untouched as HLC can still start later in
@@ -290,7 +290,7 @@ void Charger::run_state_machine() {
                                     session_log.evse(
                                         false, "AC mode, HLC enabled(5percent), matching already started. Go through "
                                                "t_step_X1 and disable 5 percent.");
-                                    t_step_X1_return_state = targetState;
+                                    t_step_X1_return_state = target_state;
                                     t_step_X1_return_pwm = 0.;
                                     hlc_use_5percent_current_session = false;
                                     current_state = EvseState::T_step_X1;
@@ -302,7 +302,7 @@ void Charger::run_state_machine() {
                                         false,
                                         "AC mode, HLC enabled(X1), matching already started. We are in X1 so we can "
                                         "go directly to nominal PWM.");
-                                    current_state = targetState;
+                                    current_state = target_state;
                                 }
                             }
                         }
@@ -313,14 +313,14 @@ void Charger::run_state_machine() {
                         // wants to.
                         session_log.evse(false, "AC mode, HLC disabled. We are in X1 so we can "
                                                 "go directly to nominal PWM.");
-                        current_state = targetState;
+                        current_state = target_state;
                     }
                 } else if (charge_mode == ChargeMode::DC) {
                     // Figure 8 of ISO15118-3: DC with EIM before or after plugin or PnC
                     // simple here as we always stay within 5 percent mode anyway.
                     session_log.evse(false,
                                      "DC mode. We are in 5percent mode so we can continue without further action.");
-                    current_state = targetState;
+                    current_state = target_state;
                 } else {
                     // unsupported charging mode, give up here.
                     error_handling->raise_internal_error("Unsupported charging mode.");
@@ -329,7 +329,7 @@ void Charger::run_state_machine() {
 
                 start_transaction();
 
-                const EvseState targetState(EvseState::PrepareCharging);
+                const EvseState target_state(EvseState::PrepareCharging);
 
                 // We got authorization by Plug and Charge
                 session_log.evse(false, "PnC Authorization received");
@@ -341,14 +341,14 @@ void Charger::run_state_machine() {
                         false, "AC mode, HLC enabled, PnC auth received. We will continue with 5percent independent on "
                                "how we started.");
                     hlc_use_5percent_current_session = true;
-                    current_state = targetState;
+                    current_state = target_state;
 
                 } else if (charge_mode == ChargeMode::DC) {
                     // Figure 8 of ISO15118-3: DC with EIM before or after plugin or PnC
                     // simple here as we always stay within 5 percent mode anyway.
                     session_log.evse(false,
                                      "DC mode. We are in 5percent mode so we can continue without further action.");
-                    current_state = targetState;
+                    current_state = target_state;
                 } else {
                     // unsupported charging mode, give up here.
                     error_handling->raise_internal_error("Unsupported charging mode.");
