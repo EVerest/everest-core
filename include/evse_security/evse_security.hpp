@@ -8,6 +8,12 @@
 #include <map>
 namespace evse_security {
 
+struct LinkPaths {
+    fs::path secc_leaf_cert_link;
+    fs::path secc_leaf_key_link;
+    fs::path cpo_cert_chain_link;
+};
+
 struct DirectoryPaths {
     fs::path csms_leaf_cert_directory;
     fs::path csms_leaf_key_directory;
@@ -22,6 +28,7 @@ struct FilePaths {
     fs::path v2g_ca_bundle;
 
     DirectoryPaths directories;
+    LinkPaths links;
 };
 
 /// @brief This class holds filesystem paths to CA bundle file locations and directories for leaf certificates
@@ -125,6 +132,10 @@ public:
     /// @return contains response result
     GetKeyPairResult get_key_pair(LeafCertificateType certificate_type, EncodingFormat encoding);
 
+    /// @brief Checks and updates the symlinks for the V2G leaf certificates and keys to the most recent valid one
+    /// @return true if one of the links was updated
+    bool update_certificate_links(LeafCertificateType certificate_type);
+
     /// @brief Retrieves the PEM formatted CA bundle file for the given \p certificate_type
     /// @param certificate_type
     /// @return CA certificate file
@@ -147,6 +158,7 @@ private:
     // why not reusing the FilePaths here directly (storage duplication)
     std::map<CaCertificateType, fs::path> ca_bundle_path_map;
     DirectoryPaths directories;
+    LinkPaths links;
 
     // FIXME(piet): map passwords to encrypted private key files
     // is there only one password for all private keys?
