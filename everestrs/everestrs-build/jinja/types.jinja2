@@ -10,7 +10,7 @@ pub struct {{ object.name }} {
 {% for p in object.properties %}
 /// {{ p.description | replace("\n", " ") }}
 #[serde(rename="{{ p.name }}"{% if p.data_type.extra_serde_annotations %},{{ p.data_type.extra_serde_annotations | join(",") }}{% endif %})]
-pub {{ p.name | snake }}: {{ p.data_type.name }},
+pub {{ p.name | identifier }}: {{ p.data_type.name }},
 {% endfor %}
 }
 {% endfor %}

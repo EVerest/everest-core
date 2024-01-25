@@ -4,7 +4,7 @@
 pub(crate) struct {{ p_config.name | title }}Config {
     {% for config in p_config.config %}
     /// {{ config.description }}
-    pub(crate) {{ config.name }}: {{ config.data_type.name }},
+    pub(crate) {{ config.name | identifier }}: {{ config.data_type.name }},
     {% endfor %}
 }
 {% endfor %}
@@ -15,7 +15,7 @@ pub(crate) struct {{ p_config.name | title }}Config {
 pub(crate) struct ModuleConfig {
     {% for config in module_config %}
     /// {{ config.description }}
-    pub(crate) {{ config.name }}: {{ config.data_type.name }},
+    pub(crate) {{ config.name | identifier }}: {{ config.data_type.name }},
     {% endfor %}
 
     {% for p_config in provided_config %}
@@ -33,13 +33,13 @@ pub(crate) fn get_config() -> ModuleConfig {
     {% for p_config in provided_config %}
     let {{ p_config.name }}_config = {{ p_config.name | title }}Config {
         {% for config in p_config.config %}
-        {{ config.name }}: raw_config.get("{{ p_config.name }}").unwrap().get("{{ config.name }}").unwrap().try_into().unwrap(),
+        {{ config.name | identifier }}: raw_config.get("{{ p_config.name }}").unwrap().get("{{ config.name }}").unwrap().try_into().unwrap(),
         {% endfor %} 
     };
     {% endfor %}
     ModuleConfig {
     {% for config in module_config %}
-    {{ config.name }}: raw_config.get("!module").unwrap().get("{{ config.name }}").unwrap().try_into().unwrap(),
+    {{ config.name | identifier }}: raw_config.get("!module").unwrap().get("{{ config.name }}").unwrap().try_into().unwrap(),
     {% endfor %}
 
     {% for p_config in provided_config %}

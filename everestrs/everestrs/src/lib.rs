@@ -1,6 +1,7 @@
 use everestrs_build::schema;
 
 use argh::FromArgs;
+use log::debug;
 use serde::de::DeserializeOwned;
 use std::collections::HashMap;
 use std::convert::TryFrom;
@@ -89,7 +90,7 @@ mod ffi {
     }
 
     unsafe extern "C++" {
-        include!("everestrs_sys/everestrs_sys.hpp");
+        include!("everestrs/src/everestrs_sys.hpp");
 
         type Module;
         fn create_module(module_id: &str, prefix: &str, conf: &str) -> UniquePtr<Module>;
@@ -231,6 +232,8 @@ impl Runtime {
     }
 
     fn handle_command(&self, impl_id: &str, name: &str, json: ffi::JsonBlob) -> ffi::JsonBlob {
+        debug!("handle_command: {impl_id}, {name}, '{:?}'", json.as_bytes());
+        let parameters: Option<HashMap<String, serde_json::Value>> = json.deserialize();
         let blob = self
             .sub_impl
             .read()
@@ -239,12 +242,16 @@ impl Runtime {
             .unwrap()
             .upgrade()
             .unwrap()
-            .handle_command(impl_id, name, json.deserialize())
+            .handle_command(impl_id, name, parameters.unwrap_or_default())
             .unwrap();
         ffi::JsonBlob::from_vec(serde_json::to_vec(&blob).unwrap())
     }
 
     fn handle_variable(&self, impl_id: &str, name: &str, json: ffi::JsonBlob) {
+        debug!(
+            "handle_variable: {impl_id}, {name}, '{:?}'",
+            json.as_bytes()
+        );
         self.sub_impl
             .read()
             .unwrap()

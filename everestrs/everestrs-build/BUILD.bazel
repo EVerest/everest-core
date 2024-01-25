@@ -1,0 +1,40 @@
+load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_library")
+
+filegroup(
+    name = "templates",
+    srcs = glob(["jinja/**/*"]),
+)
+
+rust_library(
+    name = "everestrs-build",
+    srcs = glob(["src/**/*.rs"], exclude = ["src/bin/**"]),
+    deps = [
+        "@crate_index//:anyhow",
+        "@crate_index//:argh",
+        "@crate_index//:convert_case",
+        "@crate_index//:minijinja",
+        "@crate_index//:serde",
+        "@crate_index//:serde_json",
+        "@crate_index//:serde_yaml",
+    ],
+    data = ["@everest-framework//everestrs/everestrs-build:templates"],
+    visibility = ["//visibility:public"],
+    edition = "2021",
+)
+
+rust_binary(
+    name = "codegen",
+    srcs = glob(["src/bin/**/*.rs"]),
+    deps = [
+        "@crate_index//:anyhow",
+        "@crate_index//:argh",
+        "@crate_index//:convert_case",
+        "@crate_index//:minijinja",
+        "@crate_index//:serde",
+        "@crate_index//:serde_json",
+        "@crate_index//:serde_yaml",
+        "@everest-framework//everestrs/everestrs-build:everestrs-build",
+    ],
+    visibility = ["//visibility:public"],
+    edition = "2021",
+)

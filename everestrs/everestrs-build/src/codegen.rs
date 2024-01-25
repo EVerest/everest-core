@@ -21,6 +21,65 @@ const MODULE_JINJA: &str = include_str!("../jinja/module.jinja2");
 const SERVICE_JINJA: &str = include_str!("../jinja/service.jinja2");
 const TYPES_JINJA: &str = include_str!("../jinja/types.jinja2");
 
+fn is_reserved_keyword(s: &str) -> bool {
+    // From https://doc.rust-lang.org/reference/keywords.html.
+    matches!(
+        s,
+        "abstract"
+            | "as"
+            | "async"
+            | "await"
+            | "become"
+            | "box"
+            | "break"
+            | "const"
+            | "continue"
+            | "crate"
+            | "do"
+            | "dyn"
+            | "else"
+            | "enum"
+            | "extern"
+            | "false"
+            | "final"
+            | "fn"
+            | "for"
+            | "if"
+            | "impl"
+            | "in"
+            | "let"
+            | "loop"
+            | "macro"
+            | "macro_rules"
+            | "match"
+            | "mod"
+            | "move"
+            | "mut"
+            | "override"
+            | "priv"
+            | "pub"
+            | "ref"
+            | "return"
+            | "self"
+            | "static"
+            | "struct"
+            | "super"
+            | "trait"
+            | "true"
+            | "try"
+            | "type"
+            | "typeof"
+            | "union"
+            | "unsafe"
+            | "unsized"
+            | "use"
+            | "virtual"
+            | "where"
+            | "while"
+            | "yield"
+    )
+}
+
 fn lazy_load<'a, T: DeserializeOwned>(
     storage: &'a mut HashMap<String, T>,
     everest_core: &Vec<PathBuf>,
@@ -397,6 +456,16 @@ fn snake_case(arg: String) -> String {
     arg.to_case(Case::Snake)
 }
 
+/// Like `snake_case`, but can deal with reserved names (and will then use raw identifiers).
+fn identifier_case(arg: String) -> String {
+    let arg = snake_case(arg);
+    if is_reserved_keyword(&arg) {
+        format!("r#{arg}")
+    } else {
+        arg
+    }
+}
+
 fn handle_implementations(
     yaml_repo: &mut YamlRepo,
     entries: impl Iterator<Item = (String, String)>,
@@ -474,6 +543,7 @@ pub fn emit(manifest_path: PathBuf, everest_core: Vec<PathBuf>) -> Result<String
     env.set_undefined_behavior(UndefinedBehavior::Strict);
     env.add_filter("title", title_case);
     env.add_filter("snake", snake_case);
+    env.add_filter("identifier", identifier_case);
     env.add_template("client", CLIENT_JINJA)?;
     env.add_template("config", CONFIG_JINJA)?;
     env.add_template("module", MODULE_JINJA)?;

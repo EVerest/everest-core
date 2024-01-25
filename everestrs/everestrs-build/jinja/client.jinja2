@@ -1,12 +1,12 @@
 /// {{trait.description | replace("\n", " ")}}
 pub(crate) trait {{trait.name | title}}ClientSubscriber: Sync + Send {
 {% for var in trait.vars %}
-   fn on_{{ var.name | snake }}(&self, publishers: &ModulePublisher, value: {{ var.data_type.name }});
+   fn on_{{ var.name | snake }}(&self, context: &Context, value: {{ var.data_type.name }});
 {% endfor %}
 }
 
 fn dispatch_variable_to_{{ trait.name | snake }}(
-   publishers: &ModulePublisher,
+   context: &Context,
    client_subscriber: &dyn {{trait.name | title}}ClientSubscriber,
    name: &str,
    value: ::serde_json::Value,
@@ -16,7 +16,7 @@ fn dispatch_variable_to_{{ trait.name | snake }}(
    "{{ var.name }}" => {
    let v: {{ var.data_type.name }} = ::serde_json::from_value(value)
          .map_err(|_| ::everestrs::Error::InvalidArgument("{{ var.name }}"))?;
-         client_subscriber.on_{{ var.name }}(publishers, v);
+         client_subscriber.on_{{ var.name | snake }}(context, v);
                 Ok(())
     },
 {%- endfor %}
@@ -37,13 +37,13 @@ impl {{trait.name | title }}ClientPublisher {
    {%- for arg in cmd.arguments %}
    /// `{{arg.name}}`: {{arg.description | replace("\n", " ")}}
    {%- endfor %}
-   {%- if cmd.result -%}
+   {% if cmd.result -%}
    ///
    /// Returns: {{cmd.result.description | replace("\n", " ")}}
-   {% endif %}
-   pub(crate) fn {{cmd.name | snake}}(&self,
+   {% endif -%}
+   pub(crate) fn {{cmd.name | identifier}}(&self,
    {%- for arg in cmd.arguments %}
-      {{arg.name | snake }}: {{arg.data_type.name}},
+      {{arg.name | identifier }}: {{arg.data_type.name}},
    {%- endfor %}
    ) -> ::everestrs::Result<{%- if cmd.result -%}
       {{cmd.result.data_type.name}}
@@ -53,7 +53,7 @@ impl {{trait.name | title }}ClientPublisher {
       > {
         let args = serde_json::json!({
 {%- for arg in cmd.arguments %}
-            "{{arg.name}}": {{arg.name | snake}},
+            "{{arg.name}}": {{arg.name | identifier}},
 {%- endfor %}
         });
         let blob = self.runtime.call_command(self.implementation_id, "{{ cmd.name }}", &args);

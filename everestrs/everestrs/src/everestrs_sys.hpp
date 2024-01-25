@@ -6,7 +6,7 @@
 #include <string>
 #include <utils/types.hpp>
 
-#include "cxxbridge/rust.h"
+#include "rust/cxx.h"
 
 struct JsonBlob;
 struct Runtime;

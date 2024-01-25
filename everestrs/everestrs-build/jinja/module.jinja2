@@ -1,6 +1,15 @@
 mod generated {
 
-#![allow(clippy::let_unit_value, clippy::useless_conversion, clippy::match_single_binding, dead_code, unused_mut, unused_variables)]
+#![allow(
+    clippy::let_unit_value,
+    clippy::match_single_binding,
+    clippy::upper_case_acronyms,
+    clippy::useless_conversion,
+    dead_code,
+    non_camel_case_types,
+    unused_mut,
+    unused_variables,
+)]
 
 pub mod types {
 {% include "types" %}
@@ -24,23 +33,30 @@ pub(crate) trait OnReadySubscriber: Sync + Send {
 #[derive(Clone)]
 pub(crate) struct ModulePublisher {
 {% for provide in provides %}
-   pub(crate) {{ provide.implementation_id }}: {{provide.interface | title}}ServicePublisher,
+   pub(crate) {{ provide.implementation_id | identifier }}: {{provide.interface | title}}ServicePublisher,
 {% endfor %}
 {% for require in requires %}
-   pub(crate) {{ require.implementation_id }}: {{require.interface | title}}ClientPublisher,
+   pub(crate) {{ require.implementation_id | identifier }}: {{require.interface | title}}ClientPublisher,
 {% endfor %}
 }
 
 pub(crate) struct Module {
     on_ready: ::std::sync::Arc<dyn OnReadySubscriber>,
 {% for provide in provides %}
-   {{ provide.implementation_id }}: ::std::sync::Arc<dyn {{provide.interface | title}}ServiceSubscriber>,
+   {{ provide.implementation_id | identifier }}: ::std::sync::Arc<dyn {{provide.interface | title}}ServiceSubscriber>,
 {% endfor %}
 {% for require in requires %}
-   {{ require.implementation_id }}: ::std::sync::Arc<dyn {{require.interface | title}}ClientSubscriber>,
+   {{ require.implementation_id | identifier }}: ::std::sync::Arc<dyn {{require.interface | title}}ClientSubscriber>,
 {% endfor %}
 
     publisher: ModulePublisher,
+}
+
+/// The context structure.
+pub(crate) struct Context<'a> {
+    pub(crate) publisher: &'a ModulePublisher,
+    {# TODO(ddo) Clarify the naming. #}
+    pub name: &'a str,
 }
 
 impl Module {
@@ -48,30 +64,30 @@ impl Module {
     pub(crate) fn new(
         on_ready: ::std::sync::Arc<dyn OnReadySubscriber>,
 {% for provide in provides %}
-        {{ provide.implementation_id }}: ::std::sync::Arc<dyn {{provide.interface | title}}ServiceSubscriber>,
+        {{ provide.implementation_id | identifier }}: ::std::sync::Arc<dyn {{provide.interface | title}}ServiceSubscriber>,
 {% endfor %}
 {% for require in requires %}
-      {{ require.implementation_id }}: ::std::sync::Arc<dyn {{require.interface | title}}ClientSubscriber>,
+      {{ require.implementation_id | identifier }}: ::std::sync::Arc<dyn {{require.interface | title}}ClientSubscriber>,
 {% endfor %}
     ) -> ::std::sync::Arc<Self> {
         let runtime = ::everestrs::Runtime::new();
         let this = ::std::sync::Arc::new(Self {
             on_ready,
 {% for provide in provides %}
-            {{ provide.implementation_id }},
+            {{ provide.implementation_id | identifier }},
 {% endfor %}
 {% for require in requires %}
-            {{ require.implementation_id }},
+            {{ require.implementation_id | identifier }},
 {% endfor %}
             publisher: ModulePublisher {
 {% for provide in provides %}
-   {{ provide.implementation_id }}: {{provide.interface | title}}ServicePublisher {
+   {{ provide.implementation_id | identifier }}: {{provide.interface | title}}ServicePublisher {
       implementation_id: "{{ provide.implementation_id }}",
       runtime: runtime.clone(),
       },
 {% endfor %}
 {% for require in requires %}
-        {{ require.implementation_id }}: {{require.interface | title}}ClientPublisher {
+        {{ require.implementation_id | identifier }}: {{require.interface | title}}ClientPublisher {
       implementation_id: "{{ require.implementation_id }}",
       runtime: runtime.clone(),
       },
@@ -91,11 +107,15 @@ impl ::everestrs::Subscriber for Module {
         name: &str,
         parameters: ::std::collections::HashMap<String, serde_json::Value>,
     ) -> ::everestrs::Result<serde_json::Value> {
+        let context = Context {
+            publisher: &self.publisher,
+            name: implementation_id,
+        };
         match implementation_id {
 {% for provide in provides %}
-   "{{ provide.implementation_id }}" => {
-   dispatch_command_to_{{ provide.interface | snake }}(&self.publisher, self.{{ provide.implementation_id }}.as_ref(), name, parameters)
-},
+    "{{ provide.implementation_id }}" => {
+        dispatch_command_to_{{ provide.interface | snake }}(&context, self.{{ provide.implementation_id | identifier }}.as_ref(), name, parameters)
+    },
 {% endfor %}
             _ => Err(::everestrs::Error::InvalidArgument(
                 "Unknown implementation_id called.",
@@ -109,12 +129,16 @@ impl ::everestrs::Subscriber for Module {
         name: &str,
         value: serde_json::Value,
     ) -> ::everestrs::Result<()> {
+        let context = Context {
+            publisher: &self.publisher,
+            name: implementation_id,
+        };
         match implementation_id {
 {% for req in requires %}
-         "{{ req.implementation_id }}" => {
-         dispatch_variable_to_{{ req.interface | snake }}(&self.publisher, self.{{ req.implementation_id }}.as_ref(), name, value)
-      },
-      {% endfor %}
+    "{{ req.implementation_id }}" => {
+         dispatch_variable_to_{{ req.interface | snake }}(&context, self.{{ req.implementation_id  | identifier }}.as_ref(), name, value)
+    },
+{% endfor %}
       _ => Err(::everestrs::Error::InvalidArgument(
                   "Unknown variable received.",
               ))

@@ -51,11 +51,9 @@ fn find_libs_in_everest_framework(root: &Path) -> Option<Libraries> {
     }
 }
 
-/// Returns the Libraries path if this is an EVerest workspace where make install was run in
-/// everest-core/build or None if not.
-fn find_libs_in_everest_core_build_dist(root: &Path) -> Option<Libraries> {
-    let everestrs_sys = root.join("everest-core/build/dist/lib/libeverestrs_sys.a");
-    let framework = root.join("everest-core/build/dist/lib/libframework.so");
+fn find_libs_in_dir(lib_dir: &Path) -> Option<Libraries> {
+    let everestrs_sys = lib_dir.join("libeverestrs_sys.a");
+    let framework = lib_dir.join("libframework.so");
     if everestrs_sys.exists() && framework.exists() {
         Some(Libraries {
             everestrs_sys,
@@ -64,6 +62,12 @@ fn find_libs_in_everest_core_build_dist(root: &Path) -> Option<Libraries> {
     } else {
         None
     }
+}
+
+/// Returns the Libraries path if this is an EVerest workspace where make install was run in
+/// everest-core/build or None if not.
+fn find_libs_in_everest_core_build_dist(root: &Path) -> Option<Libraries> {
+    find_libs_in_dir(&root.join("everest-core/build/dist/lib"))
 }
 
 /// Takes a path to a library like `libframework.so` and returns the name for the linker, aka
@@ -85,18 +89,31 @@ fn print_link_options(p: &Path) {
     println!("cargo:rustc-link-lib={}", libname_from_path(p));
 }
 
-fn find_libs(root: &Path) -> Libraries {
+fn find_libs_in_everest_workspace() -> Option<Libraries> {
+    let root = find_everest_workspace_root();
     let libs = find_libs_in_everest_core_build_dist(&root);
     if libs.is_some() {
-        return libs.unwrap();
+        return libs;
     }
     find_libs_in_everest_framework(&root)
-        .expect("everestrs is not build in a EVerest workspace that already ran cmake build")
 }
 
 fn main() {
-    let root = find_everest_workspace_root();
-    let libs = find_libs(&root);
+    // See https://doc.rust-lang.org/cargo/reference/features.html#build-scripts
+    // for details.
+    if env::var("CARGO_FEATURE_BUILD_BAZEL").is_ok() {
+        println!("Skipping due to bazel");
+        return;
+    }
+
+    let libs = match env::var("EVEREST_LIB_DIR") {
+        Ok(p) => find_libs_in_dir(&Path::new(&p)),
+        Err(_) => find_libs_in_everest_workspace(),
+    };
+
+    let libs = libs
+        .expect("Could not find libframework.so and libeverestrs_sys. Either set EVEREST_LIB_DIR to a path
+        that contains them or run the build again with everestrs being inside an everest workspace.");
 
     print_link_options(&libs.everestrs_sys);
     print_link_options(&libs.framework);

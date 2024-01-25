@@ -22,6 +22,9 @@ pub struct Manifest {
 
     #[serde(default)]
     pub capabilities: Vec<String>,
+
+    #[serde(default)]
+    pub enable_global_errors: bool,
 }
 
 #[derive(Debug, Deserialize)]

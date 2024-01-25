@@ -18,19 +18,18 @@ if (NOT EXISTS ${CXXBRIDGE_BINARY})
     endif ()
 endif ()
 
-set(CXXBRIDGE_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/cxxbridge)
-set(EVERESTRS_FFI_HEADER ${CXXBRIDGE_OUTPUT_DIR}/lib.rs.h)
-set(EVERESTRS_FFI_SOURCE ${CXXBRIDGE_OUTPUT_DIR}/lib.rs.cc)
-set(CXXBRIDGE_HEADER ${CXXBRIDGE_OUTPUT_DIR}/rust.h)
+set(CXXBRIDGE_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR})
+set(CXXBRIDGE_HEADER ${CXXBRIDGE_OUTPUT_DIR}/rust/cxx.h)
+set(EVERESTRS_FFI_HEADER ${CXXBRIDGE_OUTPUT_DIR}/everestrs/src/lib.rs.h)
+set(EVERESTRS_FFI_SOURCE ${CXXBRIDGE_OUTPUT_DIR}/everestrs/src/lib.rs.cc)
 
 add_custom_command(
     OUTPUT
-        ${CXXBRIDGE_OUTPUT_DIR}
         ${EVERESTRS_FFI_HEADER}
         ${EVERESTRS_FFI_SOURCE}
         ${CXXBRIDGE_HEADER}
     COMMAND
-        ${CMAKE_COMMAND} -E make_directory ${CXXBRIDGE_OUTPUT_DIR}
+        ${CMAKE_COMMAND} -E make_directory ${CXXBRIDGE_OUTPUT_DIR}/everestrs/src ${CXXBRIDGE_OUTPUT_DIR}/rust
     COMMAND
         ${CXXBRIDGE_BINARY} --header -o ${CXXBRIDGE_HEADER}
     COMMAND
@@ -47,7 +46,7 @@ add_custom_command(
 
 add_library(everestrs_sys STATIC
     ${EVERESTRS_FFI_SOURCE}
-    everestrs_sys/everestrs_sys.cpp
+    everestrs/src/everestrs_sys.cpp
 )
 add_library(everest::everestrs_sys ALIAS everestrs_sys)
 

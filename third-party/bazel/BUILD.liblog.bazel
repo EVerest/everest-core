@@ -2,13 +2,14 @@ cc_library(
     name = "liblog",
     srcs = glob(["lib/*.cpp"]),
     hdrs = glob(["include/**/*.hpp"]),
-    strip_include_prefix = "include",
+    deps = [
+        "@//third-party/bazel:boost_current_function",
+        "@//third-party/bazel:boost_exception",
+        "@//third-party/bazel:boost_log",
+    ],
     visibility = [
         "//visibility:public",
     ],
-    deps = [
-        "@boost//:current_function",
-        "@boost//:exception",
-        "@boost//:log",
-    ],
+    strip_include_prefix = "include",
+    copts = ["-std=c++17"]
 )

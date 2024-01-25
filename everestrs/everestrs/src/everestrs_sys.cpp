@@ -1,12 +1,12 @@
-#include "everestrs_sys.hpp"
+#include "everestrs/src/everestrs_sys.hpp"
+#include "everestrs/src/lib.rs.h"
+
 #include "utils/types.hpp"
 
 #include <cstdlib>
 #include <stdexcept>
 #include <type_traits>
 #include <variant>
-
-#include "cxxbridge/lib.rs.h"
 
 namespace {
 
