@@ -92,6 +92,11 @@ std::optional<ocpp::KeyPair> EvseSecurity::get_key_pair(const ocpp::CertificateS
     }
 }
 
+bool EvseSecurity::update_certificate_links(const ocpp::CertificateSigningUseEnum& certificate_type) {
+    // TODO: Implement if required
+    return false;
+}
+
 std::string EvseSecurity::get_verify_file(const ocpp::CaCertificateType& certificate_type) {
     return this->r_security.call_get_verify_file(conversions::from_ocpp(certificate_type));
 }

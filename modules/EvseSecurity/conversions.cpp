@@ -190,6 +190,7 @@ evse_security::KeyPair from_everest(types::evse_security::KeyPair other) {
     evse_security::KeyPair lhs;
     lhs.key = other.key;
     lhs.certificate = other.certificate;
+    lhs.certificate_single = other.certificate_single;
     lhs.password = other.password;
     return lhs;
 }
@@ -393,6 +394,7 @@ types::evse_security::KeyPair to_everest(evse_security::KeyPair other) {
     types::evse_security::KeyPair lhs;
     lhs.key = other.key;
     lhs.certificate = other.certificate;
+    lhs.certificate_single = other.certificate_single;
     lhs.password = other.password;
     return lhs;
 }
