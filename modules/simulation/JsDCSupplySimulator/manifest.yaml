@@ -5,7 +5,7 @@ provides:
     description: Main interface for the power supply
     config:
       bidirectional:
-        description: Set to true to for bidirectional supply
+        description: Set to true for bidirectional supply
         type: boolean
         default: true
       max_power:

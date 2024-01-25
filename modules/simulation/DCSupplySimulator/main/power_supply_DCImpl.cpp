@@ -17,28 +17,33 @@ void power_supply_DCImpl::init() {
     this->power_supply_thread_handle = std::thread(&power_supply_DCImpl::power_supply_worker, this);
 }
 
+static auto get_capabilities_from_config(const Conf& config) {
+    types::power_supply_DC::Capabilities cap;
+
+    cap.bidirectional = config.bidirectional;
+    cap.current_regulation_tolerance_A = 2.0f;
+    cap.peak_current_ripple_A = 2.0f;
+    cap.max_export_voltage_V = static_cast<float>(config.max_voltage);
+    cap.min_export_voltage_V = static_cast<float>(config.min_voltage);
+    cap.max_export_current_A = static_cast<float>(config.max_current);
+    cap.min_export_current_A = static_cast<float>(config.min_current);
+    cap.max_export_power_W = static_cast<float>(config.max_power);
+    cap.max_import_voltage_V = static_cast<float>(config.max_voltage);
+    cap.min_import_voltage_V = static_cast<float>(config.min_voltage);
+    cap.max_import_current_A = static_cast<float>(config.max_current);
+    cap.min_import_current_A = static_cast<float>(config.min_current);
+    cap.max_import_power_W = static_cast<float>(config.max_power);
+    cap.conversion_efficiency_import = 0.85f;
+    cap.conversion_efficiency_export = 0.9f;
+
+    return cap;
+}
+
 void power_supply_DCImpl::ready() {
 }
 
 types::power_supply_DC::Capabilities power_supply_DCImpl::handle_getCapabilities() {
-    types::power_supply_DC::Capabilities Capabilities = {
-        .bidirectional = this->config.bidirectional,
-        .current_regulation_tolerance_A = 2.0,
-        .peak_current_ripple_A = 2.0,
-        .max_export_voltage_V = static_cast<float>(this->config.max_voltage),
-        .min_export_voltage_V = static_cast<float>(this->config.min_voltage),
-        .max_export_current_A = static_cast<float>(this->config.max_current),
-        .min_export_current_A = static_cast<float>(this->config.min_current),
-        .max_export_power_W = static_cast<float>(this->config.max_power),
-        .max_import_voltage_V = static_cast<float>(this->config.max_voltage),
-        .min_import_voltage_V = static_cast<float>(this->config.min_voltage),
-        .max_import_current_A = static_cast<float>(this->config.max_current),
-        .min_import_current_A = static_cast<float>(this->config.min_current),
-        .max_import_power_W = static_cast<float>(this->config.max_power),
-        .conversion_efficiency_import = 0.85,
-        .conversion_efficiency_export = 0.9,
-    };
-    return Capabilities;
+    return get_capabilities_from_config(this->config);
 }
 
 void power_supply_DCImpl::handle_setMode(types::power_supply_DC::Mode& value) {
