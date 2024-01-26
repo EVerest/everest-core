@@ -15,7 +15,6 @@
 #include <evse_security/certificate/x509_wrapper.hpp>
 #include <evse_security/crypto/evse_crypto.hpp>
 #include <evse_security/utils/evse_filesystem.hpp>
-#include <evse_security/utils/fix_pem_string.hpp>
 
 namespace evse_security {
 
@@ -156,12 +155,9 @@ InstallCertificateResult EvseSecurity::install_ca_certificate(const std::string&
                                                               CaCertificateType certificate_type) {
     EVLOG_debug << "Installing ca certificate: " << conversions::ca_certificate_type_to_string(certificate_type);
 
-    // Function may be called with malformed PEM strings. Canonicalize them here.
-    const auto fixed_certificate = fix_pem_string(certificate);
-
     // TODO(piet): Check CertificateStoreMaxEntries
     try {
-        X509Wrapper new_cert(fixed_certificate, EncodingFormat::PEM);
+        X509Wrapper new_cert(certificate, EncodingFormat::PEM);
 
         if (!new_cert.is_valid()) {
             return InstallCertificateResult::Expired;
@@ -834,9 +830,6 @@ bool EvseSecurity::verify_file_signature(const fs::path& path, const std::string
                                          const std::string signature) {
     EVLOG_debug << "Verifying file signature for " << path.string();
 
-    // Make sure the signing certificate is proper PEM
-    const auto fixed_signing_certificate = fix_pem_string(signing_certificate);
-
     std::vector<std::byte> sha256_digest;
 
     if (false == CryptoSupplier::digest_file_sha256(path, sha256_digest)) {
@@ -852,7 +845,7 @@ bool EvseSecurity::verify_file_signature(const fs::path& path, const std::string
     }
 
     try {
-        X509Wrapper x509_signing_cerificate(fixed_signing_certificate, EncodingFormat::PEM);
+        X509Wrapper x509_signing_cerificate(signing_certificate, EncodingFormat::PEM);
 
         if (CryptoSupplier::x509_verify_signature(x509_signing_cerificate.get(), signature_decoded, sha256_digest)) {
             EVLOG_debug << "Signature successful verification";

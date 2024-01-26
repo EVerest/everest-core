@@ -10,7 +10,6 @@
 #include <evse_security/certificate/x509_wrapper.hpp>
 #include <evse_security/evse_security.hpp>
 #include <evse_security/utils/evse_filesystem.hpp>
-#include <evse_security/utils/fix_pem_string.hpp>
 
 #include <evse_security/crypto/evse_crypto.hpp>
 #include <evse_security/detail/openssl/openssl_providers.hpp>
@@ -669,26 +668,6 @@ TEST_F(EvseSecurityTests, get_installed_certificates_and_delete_secc_leaf) {
     // Do not allow the SECC delete since it's the ChargingStationCertificate
     auto delete_response = this->evse_security->delete_certificate(secc_leaf_data);
     ASSERT_EQ(delete_response, DeleteCertificateResult::Failed);
-}
-
-TEST_F(EvseSecurityTests, fix_pem_string) {
-    std::string test_input("-----BEGIN TEST INPUT-----\n");
-    test_input += "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/";
-    test_input += "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/\n";
-    test_input += "abcdefghijklmnopqrstuvwxyzABCD EFGHIJKLMNOPQRSTUVWXYZ0123456789+/";
-    test_input += "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKL\r\nMNOPQRSTUVWXYZ0123456789+/";
-    test_input += "abcdefghijklmnopqrstuvwxyzABCDEFG==";
-    test_input += "\n\n-----END TEST INPUT-----";
-
-    std::string expected_output("-----BEGIN TEST INPUT-----\n");
-    expected_output += "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/\n";
-    expected_output += "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/\n";
-    expected_output += "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/\n";
-    expected_output += "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/\n";
-    expected_output += "abcdefghijklmnopqrstuvwxyzABCDEFG==\n";
-    expected_output += "-----END TEST INPUT-----";
-
-    ASSERT_EQ(fix_pem_string(test_input), expected_output);
 }
 
 TEST_F(EvseSecurityTests, leaf_cert_starts_in_future_accepted) {
