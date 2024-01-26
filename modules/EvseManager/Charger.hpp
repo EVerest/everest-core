@@ -214,7 +214,7 @@ private:
     types::evse_manager::StartSessionReason last_start_session_reason;
 
     // This mutex locks all variables related to the state machine
-    std::mutex state_machine_mutex;
+    std::recursive_mutex state_machine_mutex;
 
     EvseState current_state;
     EvseState last_state;
