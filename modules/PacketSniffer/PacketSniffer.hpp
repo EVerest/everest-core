@@ -5,7 +5,7 @@
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 1
+// template version 2
 //
 
 #include "ld-ev.hpp"
@@ -31,15 +31,22 @@ struct Conf {
 class PacketSniffer : public Everest::ModuleBase {
 public:
     PacketSniffer() = delete;
-    PacketSniffer(const ModuleInfo& info, std::unique_ptr<emptyImplBase> p_main,
-                  std::unique_ptr<evse_managerIntf> r_evse_manager, Conf& config) :
-        ModuleBase(info), p_main(std::move(p_main)), r_evse_manager(std::move(r_evse_manager)), config(config){};
+    PacketSniffer(const ModuleInfo& info, Everest::WatchdogSupervisor& watchdog_supervisor,
+                  std::unique_ptr<emptyImplBase> p_main, std::unique_ptr<evse_managerIntf> r_evse_manager,
+                  Conf& config) :
+        ModuleBase(info),
+        watchdog_supervisor(watchdog_supervisor),
+        p_main(std::move(p_main)),
+        r_evse_manager(std::move(r_evse_manager)),
+        config(config){};
 
-    const Conf& config;
+    Everest::WatchdogSupervisor& watchdog_supervisor;
     const std::unique_ptr<emptyImplBase> p_main;
     const std::unique_ptr<evse_managerIntf> r_evse_manager;
+    const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
+    // insert your public definitions here
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:

@@ -25,10 +25,16 @@ class DummyTokenProviderManual : public Everest::ModuleBase {
 public:
     DummyTokenProviderManual() = delete;
     DummyTokenProviderManual(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
+                             Everest::WatchdogSupervisor& watchdog_supervisor,
                              std::unique_ptr<auth_token_providerImplBase> p_main, Conf& config) :
-        ModuleBase(info), mqtt(mqtt_provider), p_main(std::move(p_main)), config(config){};
+        ModuleBase(info),
+        mqtt(mqtt_provider),
+        watchdog_supervisor(watchdog_supervisor),
+        p_main(std::move(p_main)),
+        config(config){};
 
     Everest::MqttProvider& mqtt;
+    Everest::WatchdogSupervisor& watchdog_supervisor;
     const std::unique_ptr<auth_token_providerImplBase> p_main;
     const Conf& config;
 

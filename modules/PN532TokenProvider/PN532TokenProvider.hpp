@@ -5,7 +5,7 @@
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 1
+// template version 2
 //
 
 #include "ld-ev.hpp"
@@ -24,11 +24,13 @@ struct Conf {};
 class PN532TokenProvider : public Everest::ModuleBase {
 public:
     PN532TokenProvider() = delete;
-    PN532TokenProvider(const ModuleInfo& info, std::unique_ptr<auth_token_providerImplBase> p_main, Conf& config) :
-        ModuleBase(info), p_main(std::move(p_main)), config(config){};
+    PN532TokenProvider(const ModuleInfo& info, Everest::WatchdogSupervisor& watchdog_supervisor,
+                       std::unique_ptr<auth_token_providerImplBase> p_main, Conf& config) :
+        ModuleBase(info), watchdog_supervisor(watchdog_supervisor), p_main(std::move(p_main)), config(config){};
 
-    const Conf& config;
+    Everest::WatchdogSupervisor& watchdog_supervisor;
     const std::unique_ptr<auth_token_providerImplBase> p_main;
+    const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here

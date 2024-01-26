@@ -5,8 +5,6 @@
 
 # module setup:
 #   - ${MODULE_NAME}: module name
-add_compile_options(-Wpedantic)
-
 ev_setup_cpp_module()
 
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1

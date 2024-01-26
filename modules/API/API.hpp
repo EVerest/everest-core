@@ -140,17 +140,19 @@ struct Conf {
 class API : public Everest::ModuleBase {
 public:
     API() = delete;
-    API(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, std::unique_ptr<emptyImplBase> p_main,
-        std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager, std::vector<std::unique_ptr<ocppIntf>> r_ocpp,
-        Conf& config) :
+    API(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, Everest::WatchdogSupervisor& watchdog_supervisor,
+        std::unique_ptr<emptyImplBase> p_main, std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager,
+        std::vector<std::unique_ptr<ocppIntf>> r_ocpp, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
+        watchdog_supervisor(watchdog_supervisor),
         p_main(std::move(p_main)),
         r_evse_manager(std::move(r_evse_manager)),
         r_ocpp(std::move(r_ocpp)),
         config(config){};
 
     Everest::MqttProvider& mqtt;
+    Everest::WatchdogSupervisor& watchdog_supervisor;
     const std::unique_ptr<emptyImplBase> p_main;
     const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;
     const std::vector<std::unique_ptr<ocppIntf>> r_ocpp;

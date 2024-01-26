@@ -34,12 +34,14 @@ struct Conf {
 class EnergyNode : public Everest::ModuleBase {
 public:
     EnergyNode() = delete;
-    EnergyNode(const ModuleInfo& info, std::unique_ptr<energyImplBase> p_energy_grid,
+    EnergyNode(const ModuleInfo& info, Everest::WatchdogSupervisor& watchdog_supervisor,
+               std::unique_ptr<energyImplBase> p_energy_grid,
                std::unique_ptr<external_energy_limitsImplBase> p_external_limits,
                std::vector<std::unique_ptr<energyIntf>> r_energy_consumer,
                std::vector<std::unique_ptr<powermeterIntf>> r_powermeter,
                std::vector<std::unique_ptr<energy_price_informationIntf>> r_price_information, Conf& config) :
         ModuleBase(info),
+        watchdog_supervisor(watchdog_supervisor),
         p_energy_grid(std::move(p_energy_grid)),
         p_external_limits(std::move(p_external_limits)),
         r_energy_consumer(std::move(r_energy_consumer)),
@@ -47,6 +49,7 @@ public:
         r_price_information(std::move(r_price_information)),
         config(config){};
 
+    Everest::WatchdogSupervisor& watchdog_supervisor;
     const std::unique_ptr<energyImplBase> p_energy_grid;
     const std::unique_ptr<external_energy_limitsImplBase> p_external_limits;
     const std::vector<std::unique_ptr<energyIntf>> r_energy_consumer;

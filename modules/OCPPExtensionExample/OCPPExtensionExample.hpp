@@ -30,15 +30,17 @@ struct Conf {
 class OCPPExtensionExample : public Everest::ModuleBase {
 public:
     OCPPExtensionExample() = delete;
-    OCPPExtensionExample(const ModuleInfo& info, std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer,
-                         std::unique_ptr<ocppIntf> r_ocpp, std::unique_ptr<ocpp_data_transferIntf> r_data_transfer,
-                         Conf& config) :
+    OCPPExtensionExample(const ModuleInfo& info, Everest::WatchdogSupervisor& watchdog_supervisor,
+                         std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer, std::unique_ptr<ocppIntf> r_ocpp,
+                         std::unique_ptr<ocpp_data_transferIntf> r_data_transfer, Conf& config) :
         ModuleBase(info),
+        watchdog_supervisor(watchdog_supervisor),
         p_data_transfer(std::move(p_data_transfer)),
         r_ocpp(std::move(r_ocpp)),
         r_data_transfer(std::move(r_data_transfer)),
         config(config){};
 
+    Everest::WatchdogSupervisor& watchdog_supervisor;
     const std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer;
     const std::unique_ptr<ocppIntf> r_ocpp;
     const std::unique_ptr<ocpp_data_transferIntf> r_data_transfer;

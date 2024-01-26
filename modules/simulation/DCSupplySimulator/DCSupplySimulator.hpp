@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright chargebyte GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 #ifndef DCSUPPLY_SIMULATOR_HPP
 #define DCSUPPLY_SIMULATOR_HPP
 
@@ -24,9 +24,11 @@ struct Conf {};
 class DCSupplySimulator : public Everest::ModuleBase {
 public:
     DCSupplySimulator() = delete;
-    DCSupplySimulator(const ModuleInfo& info, std::unique_ptr<power_supply_DCImplBase> p_main, Conf& config) :
-        ModuleBase(info), p_main(std::move(p_main)), config(config){};
+    DCSupplySimulator(const ModuleInfo& info, Everest::WatchdogSupervisor& watchdog_supervisor,
+                      std::unique_ptr<power_supply_DCImplBase> p_main, Conf& config) :
+        ModuleBase(info), watchdog_supervisor(watchdog_supervisor), p_main(std::move(p_main)), config(config){};
 
+    Everest::WatchdogSupervisor& watchdog_supervisor;
     const std::unique_ptr<power_supply_DCImplBase> p_main;
     const Conf& config;
 

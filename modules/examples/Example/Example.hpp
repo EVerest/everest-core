@@ -5,7 +5,7 @@
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 1
+// template version 2
 //
 
 #include "ld-ev.hpp"
@@ -28,20 +28,23 @@ struct Conf {};
 class Example : public Everest::ModuleBase {
 public:
     Example() = delete;
-    Example(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, std::unique_ptr<exampleImplBase> p_example,
+    Example(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
+            Everest::WatchdogSupervisor& watchdog_supervisor, std::unique_ptr<exampleImplBase> p_example,
             std::unique_ptr<kvsImplBase> p_store, std::unique_ptr<kvsIntf> r_kvs, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
+        watchdog_supervisor(watchdog_supervisor),
         p_example(std::move(p_example)),
         p_store(std::move(p_store)),
         r_kvs(std::move(r_kvs)),
         config(config){};
 
-    const Conf& config;
     Everest::MqttProvider& mqtt;
+    Everest::WatchdogSupervisor& watchdog_supervisor;
     const std::unique_ptr<exampleImplBase> p_example;
     const std::unique_ptr<kvsImplBase> p_store;
     const std::unique_ptr<kvsIntf> r_kvs;
+    const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here

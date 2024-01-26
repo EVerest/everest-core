@@ -93,7 +93,8 @@ class EvseManager : public Everest::ModuleBase {
 public:
     EvseManager() = delete;
     EvseManager(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, Everest::TelemetryProvider& telemetry,
-                std::unique_ptr<evse_managerImplBase> p_evse, std::unique_ptr<energyImplBase> p_energy_grid,
+                Everest::WatchdogSupervisor& watchdog_supervisor, std::unique_ptr<evse_managerImplBase> p_evse,
+                std::unique_ptr<energyImplBase> p_energy_grid,
                 std::unique_ptr<auth_token_providerImplBase> p_token_provider,
                 std::unique_ptr<evse_board_supportIntf> r_bsp, std::vector<std::unique_ptr<ac_rcdIntf>> r_ac_rcd,
                 std::vector<std::unique_ptr<connector_lockIntf>> r_connector_lock,
@@ -105,6 +106,7 @@ public:
         ModuleBase(info),
         mqtt(mqtt_provider),
         telemetry(telemetry),
+        watchdog_supervisor(watchdog_supervisor),
         p_evse(std::move(p_evse)),
         p_energy_grid(std::move(p_energy_grid)),
         p_token_provider(std::move(p_token_provider)),
@@ -121,6 +123,7 @@ public:
 
     Everest::MqttProvider& mqtt;
     Everest::TelemetryProvider& telemetry;
+    Everest::WatchdogSupervisor& watchdog_supervisor;
     const std::unique_ptr<evse_managerImplBase> p_evse;
     const std::unique_ptr<energyImplBase> p_energy_grid;
     const std::unique_ptr<auth_token_providerImplBase> p_token_provider;
@@ -259,7 +262,6 @@ private:
     static constexpr auto CABLECHECK_CONTACTORS_CLOSE_TIMEOUT{std::chrono::seconds(5)};
 
     std::atomic_bool current_demand_active{false};
-
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

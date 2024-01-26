@@ -24,9 +24,11 @@ struct Conf {};
 class DummyV2G : public Everest::ModuleBase {
 public:
     DummyV2G() = delete;
-    DummyV2G(const ModuleInfo& info, std::unique_ptr<ISO15118_chargerImplBase> p_main, Conf& config) :
-        ModuleBase(info), p_main(std::move(p_main)), config(config){};
+    DummyV2G(const ModuleInfo& info, Everest::WatchdogSupervisor& watchdog_supervisor,
+             std::unique_ptr<ISO15118_chargerImplBase> p_main, Conf& config) :
+        ModuleBase(info), watchdog_supervisor(watchdog_supervisor), p_main(std::move(p_main)), config(config){};
 
+    Everest::WatchdogSupervisor& watchdog_supervisor;
     const std::unique_ptr<ISO15118_chargerImplBase> p_main;
     const Conf& config;
 
