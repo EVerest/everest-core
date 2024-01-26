@@ -21,7 +21,7 @@ constexpr auto VOLTAGE_TO_TEMPERATURE_SLOPE = -31.0;
 constexpr auto VOLTAGE_TO_TEMPERATURE_OFFSET = 92.8;
 
 float get_temp(int raw) {
-    int voltage = (raw / ((1 << NUMBER_OF_BITS) - 1)) * REFERENCE_VOLTAGE;
+    float voltage = ((float) raw / ((1 << NUMBER_OF_BITS) - 1)) * REFERENCE_VOLTAGE;
     return VOLTAGE_TO_TEMPERATURE_SLOPE * voltage + VOLTAGE_TO_TEMPERATURE_OFFSET;
 }
 
@@ -139,10 +139,11 @@ int main(int argc, char* argv[]) {
         });
 
         p.signal_temperature.connect([](Temperature t){
-            printf("Temperatures reported:\n");
+            printf("Temperatures reported: ");
             for (size_t i = 0; i < t.temp_count; ++i) {
-                printf("[T_%i]: %.1f\n", i, get_temp(t.temp[i]));
+                printf("[T_%i]: %.1f\t", i, get_temp(t.temp[i]));
             }
+            printf("\n");
         });
 
         while (true) {
