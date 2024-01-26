@@ -114,6 +114,8 @@ static ErrorInfo get_error_info(const std::optional<types::evse_manager::Error> 
     case types::evse_manager::ErrorEnum::PowermeterTransactionStartFailed:
         return {ocpp::v16::ChargePointErrorCode::InternalError, types::evse_manager::error_enum_to_string(error_code)};
     }
+
+    return {ocpp::v16::ChargePointErrorCode::InternalError};
 }
 
 ocpp::SessionStartedReason get_session_started_reason(const types::evse_manager::StartSessionReason reason) {
