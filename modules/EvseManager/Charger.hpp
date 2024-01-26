@@ -36,6 +36,8 @@
 #include <queue>
 #include <sigslot/signal.hpp>
 
+#include <utils/watchdog.hpp>
+
 #include "ErrorHandling.hpp"
 #include "IECStateMachine.hpp"
 #include "scoped_lock_timeout.hpp"
@@ -48,7 +50,8 @@ const std::string IEC62196Type2Socket = "IEC62196Type2Socket";
 class Charger {
 public:
     Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_ptr<ErrorHandling>& error_handling,
-            const types::evse_board_support::Connector_type& connector_type);
+            const types::evse_board_support::Connector_type& connector_type,
+            Everest::WatchdogSupervisor& watchdog_supervisor);
     ~Charger();
 
     enum class ChargeMode {
@@ -299,6 +302,7 @@ private:
     const std::unique_ptr<IECStateMachine>& bsp;
     const std::unique_ptr<ErrorHandling>& error_handling;
     const types::evse_board_support::Connector_type& connector_type;
+    Everest::WatchdogSupervisor& watchdog_supervisor;
 
     // constants
     static constexpr float CHARGER_ABSOLUTE_MAX_CURRENT{80.};

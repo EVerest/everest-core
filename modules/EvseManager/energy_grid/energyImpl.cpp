@@ -94,9 +94,12 @@ void energyImpl::ready() {
 
     // request energy every second
     std::thread([this] {
+        auto watchdog = mod->watchdog_supervisor.register_watchdog("Energy request thread", std::chrono::seconds(10));
+
         while (true) {
             request_energy_from_energy_manager();
             std::this_thread::sleep_for(std::chrono::seconds(1));
+            watchdog();
         }
     }).detach();
 

@@ -20,15 +20,15 @@
 namespace module {
 
 Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_ptr<ErrorHandling>& error_handling,
-                 const types::evse_board_support::Connector_type& connector_type) :
-    bsp(bsp), error_handling(error_handling), connector_type(connector_type) {
+                 const types::evse_board_support::Connector_type& connector_type,
+                 Everest::WatchdogSupervisor& _watchdog_supervisor) :
+    bsp(bsp),
+    error_handling(error_handling),
+    connector_type(connector_type),
+    watchdog_supervisor(_watchdog_supervisor) {
 
-#ifdef EVEREST_USE_BACKTRACES
-    Everest::install_backtrace_handler();
-#endif
-
-    shared_context.connector_enabled = true;
-    shared_context.max_current = 6.0;
+    connectorEnabled = true;
+    maxCurrent = 6.0;
     if (connector_type == types::evse_board_support::Connector_type::IEC62196Type2Socket) {
         shared_context.max_current_cable = bsp->read_pp_ampacity();
     }
@@ -82,7 +82,11 @@ Charger::~Charger() {
     pwm_F();
 }
 
-void Charger::main_thread() {
+void Charger::mainThread() {
+
+    // Register our watchdog for the main loop thread
+    auto watchdog = watchdog_supervisor.register_watchdog("Charger main loop", std::chrono::seconds(5));
+
     // Enable CP output
     bsp->enable(true);
 
@@ -105,6 +109,8 @@ void Charger::main_thread() {
             // to be done on regular intervals independent from events)
             run_state_machine();
         }
+
+        watchdog();
     }
 }
 
