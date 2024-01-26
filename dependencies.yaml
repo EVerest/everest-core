@@ -6,6 +6,7 @@ ryml:
 libwebsockets:
   git: https://github.com/warmcat/libwebsockets.git
   git_tag: v4.3.2
+  cmake_condition: "EVEREST_ENABLE_ADMIN_PANEL_BACKEND"
   options:
     - CMAKE_POLICY_DEFAULT_CMP0077 NEW
     - LWS_ROLE_RAW_FILE OFF
@@ -67,9 +68,12 @@ date:
 catch2:
   git: https://github.com/catchorg/Catch2.git
   git_tag: v3.4.0
+  cmake_condition: "BUILD_TESTING"
 pybind11:
   git: https://github.com/pybind/pybind11.git
   git_tag: v2.11.1
+  cmake_condition: "EVEREST_ENABLE_PY_SUPPORT"
 pybind11_json:
   git: https://github.com/pybind/pybind11_json.git
   git_tag: 0.2.13
+  cmake_condition: "EVEREST_ENABLE_PY_SUPPORT"
