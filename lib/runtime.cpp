@@ -3,7 +3,8 @@
 
 #include <framework/runtime.hpp>
 #include <utils/error.hpp>
-#include <utils/error_json.hpp>
+#include <utils/error/error_json.hpp>
+#include <utils/error/error_manager.hpp>
 
 #include <algorithm>
 #include <cstdlib>
@@ -440,18 +441,20 @@ int ModuleLoader::initialize() {
         };
 
         module_adapter.request_clear_all_errors_of_module = [&everest](const std::string& impl_id) {
-            return everest.request_clear_error(error::RequestClearErrorOption::ClearAllOfModule, impl_id, "", "");
+            return everest.request_clear_error(error::RequestClearErrorOption::ClearAllOfModule, impl_id, std::nullopt,
+                                               std::nullopt);
         };
 
         module_adapter.request_clear_all_errors_of_type_of_module = [&everest](const std::string& impl_id,
                                                                                const std::string& error_type) {
-            return everest.request_clear_error(error::RequestClearErrorOption::ClearAllOfTypeOfModule, impl_id, "",
-                                               error_type);
+            return everest.request_clear_error(error::RequestClearErrorOption::ClearAllOfTypeOfModule, impl_id,
+                                               std::nullopt, error_type);
         };
 
         module_adapter.request_clear_error_uuid = [&everest](const std::string& impl_id,
                                                              const error::ErrorHandle& handle) {
-            return everest.request_clear_error(error::RequestClearErrorOption::ClearUUID, impl_id, handle.uuid, "");
+            return everest.request_clear_error(error::RequestClearErrorOption::ClearUUID, impl_id, handle.uuid,
+                                               std::nullopt);
         };
 
         // NOLINTNEXTLINE(modernize-avoid-bind): prefer bind here for readability

@@ -14,6 +14,7 @@
 #include <future>
 #include <iostream>
 #include <map>
+#include <optional>
 #include <thread>
 #include <vector>
 
@@ -359,8 +360,8 @@ static Napi::Value subscribe_error_cleared(const Requirement& req, const std::st
 }
 
 static Napi::Value request_clear_error(const Everest::error::RequestClearErrorOption request_type,
-                                       const std::string& impl_id, const std::string& uuid,
-                                       const std::string& error_type, const Napi::Env& env) {
+                                       const std::string& impl_id, const std::optional<std::string>& uuid,
+                                       const std::optional<std::string>& error_type, const Napi::Env& env) {
     BOOST_LOG_FUNCTION();
 
     Napi::Value result;
@@ -498,7 +499,7 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
                                                 [impl_id, error_type](const Napi::CallbackInfo& info) {
                                                     return request_clear_error(
                                                         Everest::error::RequestClearErrorOption::ClearAllOfTypeOfModule,
-                                                        impl_id, "", error_type, info.Env());
+                                                        impl_id, std::nullopt, error_type, info.Env());
                                                 }),
                             napi_enumerable));
                     }
@@ -514,8 +515,8 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
                                         [impl_id](const Napi::CallbackInfo& info) {
                                             const std::string uuid = info[0].ToString().Utf8Value();
                                             return request_clear_error(
-                                                Everest::error::RequestClearErrorOption::ClearUUID, impl_id, uuid, "",
-                                                info.Env());
+                                                Everest::error::RequestClearErrorOption::ClearUUID, impl_id, uuid,
+                                                std::nullopt, info.Env());
                                         }),
                     napi_enumerable));
 
@@ -524,8 +525,8 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
                     Napi::Function::New(env,
                                         [impl_id](const Napi::CallbackInfo& info) {
                                             return request_clear_error(
-                                                Everest::error::RequestClearErrorOption::ClearAllOfModule, impl_id, "",
-                                                "", info.Env());
+                                                Everest::error::RequestClearErrorOption::ClearAllOfModule, impl_id,
+                                                std::nullopt, std::nullopt, info.Env());
                                         }),
                     napi_enumerable));
             }

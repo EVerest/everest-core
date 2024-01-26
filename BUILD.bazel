@@ -9,7 +9,7 @@ genrule(
 
 cc_library(
     name = "framework",
-    srcs = glob(["lib/*.cpp"]),
+    srcs = glob(["lib/**/*.cpp"]),
     hdrs = glob(["include/**/*.hpp"]) + [":compile_time_settings"],
     copts = ["-std=c++17"],
     strip_include_prefix = "include",

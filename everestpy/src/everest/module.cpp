@@ -96,21 +96,21 @@ std::string Module::raise_error(const std::string& impl_id, const std::string& e
 json Module::request_clear_error_uuid(const std::string& impl_id, const std::string& uuid) {
     pybind11::gil_scoped_release release;
     const auto& result =
-        handle->request_clear_error(Everest::error::RequestClearErrorOption::ClearUUID, impl_id, uuid, "");
+        handle->request_clear_error(Everest::error::RequestClearErrorOption::ClearUUID, impl_id, uuid, std::nullopt);
     return result;
 }
 
 json Module::request_clear_error_all_of_type(const std::string& impl_id, const std::string& error_type) {
     pybind11::gil_scoped_release release;
     const auto& result = handle->request_clear_error(Everest::error::RequestClearErrorOption::ClearAllOfTypeOfModule,
-                                                     impl_id, "", error_type);
+                                                     impl_id, std::nullopt, error_type);
     return result;
 }
 
 json Module::request_clear_error_all_of_module(const std::string& impl_id) {
     pybind11::gil_scoped_release release;
-    const auto& result =
-        handle->request_clear_error(Everest::error::RequestClearErrorOption::ClearAllOfModule, impl_id, "", "");
+    const auto& result = handle->request_clear_error(Everest::error::RequestClearErrorOption::ClearAllOfModule, impl_id,
+                                                     std::nullopt, std::nullopt);
     return result;
 }
 

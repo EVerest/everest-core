@@ -17,7 +17,9 @@
 #include <utils/conversions.hpp>
 #include <utils/date.hpp>
 #include <utils/error.hpp>
-#include <utils/error_json.hpp>
+#include <utils/error/error_exceptions.hpp>
+#include <utils/error/error_json.hpp>
+#include <utils/error/error_manager.hpp>
 #include <utils/formatter.hpp>
 
 namespace Everest {
@@ -394,17 +396,15 @@ void Everest::subscribe_error(const Requirement& req, const std::string& error_t
     // split error_type at '/'
     int pos = error_type.find('/');
     if (pos == std::string::npos) {
-        EVLOG_AND_THROW(EverestApiError(
-            fmt::format("{}: Error {} not listed in interface!",
-                        this->config.printable_identifier(requirement_module_id, requirement_impl_id), error_type)));
+        throw error::EverestNotValidErrorTypeError(error_type);
     }
     std::string error_type_namespace = error_type.substr(0, pos);
     std::string error_type_name = error_type.substr(pos + 1);
     if (!requirement_impl_if.contains("errors") || !requirement_impl_if.at("errors").contains(error_type_namespace) ||
         !requirement_impl_if.at("errors").at(error_type_namespace).contains(error_type_name)) {
-        EVLOG_AND_THROW(EverestApiError(
+        throw error::EverestInterfaceMissingDeclartionError(
             fmt::format("{}: Error {} not listed in interface!",
-                        this->config.printable_identifier(requirement_module_id, requirement_impl_id), error_type)));
+                        this->config.printable_identifier(requirement_module_id, requirement_impl_id), error_type));
     }
 
     Handler handler = [this, requirement_module_id, requirement_impl_id, error_type, callback](json const& data) {
@@ -429,8 +429,8 @@ void Everest::subscribe_all_errors(const JsonCallback& callback) {
     EVLOG_debug << fmt::format("subscribing to all errors");
 
     if (not this->config.get_module_info(this->module_id).global_errors_enabled) {
-        EVLOG_AND_THROW(EverestApiError(fmt::format("Module {} is not allowed to subscribe to all errors!",
-                                                    this->config.printable_identifier(this->module_id))));
+        throw error::EverestNotAllowedError(fmt::format("Module {} is not allowed to subscribe to all errors!",
+                                                        this->config.printable_identifier(this->module_id)));
     }
 
     Handler handler = [this, callback](json const& data) {
@@ -486,17 +486,15 @@ void Everest::subscribe_error_cleared(const Requirement& req, const std::string&
     // split error_type at '/'
     int pos = error_type.find('/');
     if (pos == std::string::npos) {
-        EVLOG_AND_THROW(EverestApiError(
-            fmt::format("{}: Error {} not listed in interface!",
-                        this->config.printable_identifier(requirement_module_id, requirement_impl_id), error_type)));
+        throw error::EverestNotValidErrorTypeError(error_type);
     }
     std::string error_type_namespace = error_type.substr(0, pos);
     std::string error_type_name = error_type.substr(pos + 1);
     if (!requirement_impl_if.contains("errors") || !requirement_impl_if.at("errors").contains(error_type_namespace) ||
         !requirement_impl_if.at("errors").at(error_type_namespace).contains(error_type_name)) {
-        EVLOG_AND_THROW(EverestApiError(
+        throw error::EverestInterfaceMissingDeclartionError(
             fmt::format("{}: Error {} not listed in interface!",
-                        this->config.printable_identifier(requirement_module_id, requirement_impl_id), error_type)));
+                        this->config.printable_identifier(requirement_module_id, requirement_impl_id), error_type));
     }
 
     Handler handler = [this, requirement_module_id, requirement_impl_id, error_type, callback](json const& data) {
@@ -520,8 +518,8 @@ void Everest::subscribe_all_errors_cleared(const JsonCallback& callback) {
 
     EVLOG_debug << fmt::format("subscribing to all errors cleared");
     if (not this->config.get_module_info(this->module_id).global_errors_enabled) {
-        EVLOG_AND_THROW(EverestApiError(fmt::format("Module {} is not allowed to subscribe to all errors cleared!",
-                                                    this->config.printable_identifier(this->module_id))));
+        throw error::EverestNotAllowedError(fmt::format("Module {} is not allowed to subscribe to all errors cleared!",
+                                                        this->config.printable_identifier(this->module_id)));
     }
 
     Handler handler = [this, callback](json const& data) {
@@ -573,56 +571,48 @@ std::string Everest::raise_error(const std::string& impl_id, const std::string& 
 }
 
 json Everest::request_clear_error(const error::RequestClearErrorOption request_type, const std::string& impl_id,
-                                  const std::string& uuid, const std::string& error_type) {
+                                  const std::optional<std::string>& uuid,
+                                  const std::optional<std::string>& error_type) {
     BOOST_LOG_FUNCTION();
     // Check parameters
+    if (impl_id.empty()) {
+        throw error::EverestArgumentError("No implementation id provided for request-clear-error");
+    }
     switch (request_type) {
     case error::RequestClearErrorOption::ClearUUID:
-        if (uuid == "") {
-            EVLOG_AND_THROW(EverestApiError(fmt::format("No error id provided for request-clear-error in mode {}",
-                                                        error::request_clear_error_option_to_string(request_type))));
+        if (!uuid.has_value()) {
+            throw error::EverestArgumentError(fmt::format("No error id provided for request-clear-error in mode {}",
+                                                          error::request_clear_error_option_to_string(request_type)));
         }
-        if (impl_id == "") {
-            EVLOG_AND_THROW(
-                EverestApiError(fmt::format("No implementation id provided for request-clear-error in mode {}",
-                                            error::request_clear_error_option_to_string(request_type))));
-        }
-        if (error_type != "") {
+        if (error_type.has_value()) {
             EVLOG_warning << fmt::format(
-                "Error type '{}' is ignored for request-clear-error in mode {} with error id '{}'", error_type,
-                error::request_clear_error_option_to_string(request_type), uuid);
+                "Error type '{}' is ignored for request-clear-error in mode {} with error id '{}'", error_type.value(),
+                error::request_clear_error_option_to_string(request_type), uuid.value());
         }
         break;
     case error::RequestClearErrorOption::ClearAllOfTypeOfModule:
-        if (uuid != "") {
+        if (uuid.has_value()) {
             EVLOG_warning << fmt::format(
-                "Error id '{}' is ignored for request-clear-error in mode {} with error type '{}'", uuid,
-                error::request_clear_error_option_to_string(request_type), error_type);
+                "Error id '{}' is ignored for request-clear-error in mode {} with error type '{}'", uuid.value(),
+                error::request_clear_error_option_to_string(request_type), error_type.value());
         }
-        if (impl_id == "") {
-            EVLOG_AND_THROW(
-                EverestApiError(fmt::format("No implementation id provided for request-clear-error in mode {}",
-                                            error::request_clear_error_option_to_string(request_type))));
-        }
-        if (error_type == "") {
-            EVLOG_AND_THROW(EverestApiError(fmt::format("No error type provided for request-clear-error in mode {}",
-                                                        error::request_clear_error_option_to_string(request_type))));
+        if (!error_type.has_value()) {
+            throw error::EverestArgumentError(fmt::format("No error type provided for request-clear-error in mode {}",
+                                                          error::request_clear_error_option_to_string(request_type)));
         }
         break;
     case error::RequestClearErrorOption::ClearAllOfModule:
-        if (uuid != "") {
-            EVLOG_warning << fmt::format("Error id '{}' is ignored for request-clear-error in mode {}", uuid,
+        if (uuid.has_value()) {
+            EVLOG_warning << fmt::format("Error id '{}' is ignored for request-clear-error in mode {}", uuid.value(),
                                          error::request_clear_error_option_to_string(request_type));
         }
-        if (error_type != "") {
-            EVLOG_warning << fmt::format("Error type '{}' is ignored for request-clear-error in mode {}", error_type,
-                                         error::request_clear_error_option_to_string(request_type));
+        if (error_type.has_value()) {
+            EVLOG_warning << fmt::format("Error type '{}' is ignored for request-clear-error in mode {}",
+                                         error_type.value(), error::request_clear_error_option_to_string(request_type));
         }
-        if (impl_id == "") {
-            EVLOG_AND_THROW(
-                EverestApiError(fmt::format("No implementation id provided for request-clear-error in mode {}",
-                                            error::request_clear_error_option_to_string(request_type))));
-        }
+        break;
+    default:
+        throw std::out_of_range("No valid request-clear-error mode provided");
     }
 
     // Setup response handler
@@ -650,9 +640,9 @@ json Everest::request_clear_error(const error::RequestClearErrorOption request_t
     data["origin"]["implementation"] = impl_id;
     data["request-clear-type"] = error::request_clear_error_option_to_string(request_type);
     if (request_type == error::RequestClearErrorOption::ClearUUID) {
-        data["error_id"] = uuid;
+        data["error_id"] = uuid.value();
     } else if (request_type == error::RequestClearErrorOption::ClearAllOfTypeOfModule) {
-        data["error_type"] = error_type;
+        data["error_type"] = error_type.value();
     }
     json request_data;
     request_data["name"] = "request-clear-error";
@@ -668,8 +658,8 @@ json Everest::request_clear_error(const error::RequestClearErrorOption request_t
     } while (res_future_status == std::future_status::deferred);
     json result;
     if (res_future_status == std::future_status::timeout) {
-        EVLOG_AND_THROW(
-            EverestTimeoutError(fmt::format("Timeout while waiting for result of request-clear-error {}", uuid)));
+        EVLOG_AND_THROW(EverestTimeoutError(
+            fmt::format("Timeout while waiting for result of request-clear-error {}", uuid.value())));
     } else if (res_future_status == std::future_status::ready) {
         EVLOG_debug << "res future ready";
         result = res_future.get();

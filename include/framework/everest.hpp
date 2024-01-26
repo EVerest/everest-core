@@ -14,6 +14,7 @@
 
 #include <utils/config.hpp>
 #include <utils/error.hpp>
+#include <utils/error/error_manager.hpp>
 #include <utils/mqtt_abstraction.hpp>
 #include <utils/types.hpp>
 
@@ -105,7 +106,7 @@ public:
     /// of the cleared errors
     ///
     json request_clear_error(const error::RequestClearErrorOption request_type, const std::string& impl_id,
-                             const std::string& uuid, const std::string& error_type);
+                             const std::optional<std::string>& uuid, const std::optional<std::string>& error_type);
 
     ///
     /// \brief Raises an given \p error of the given \p impl_id, with the given \p error_type. Returns the uuid of the

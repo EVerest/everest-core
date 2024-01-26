@@ -28,7 +28,10 @@
 #include <framework/everest.hpp>
 #include <framework/runtime.hpp>
 #include <utils/config.hpp>
-#include <utils/error_manager.hpp>
+#include <utils/error/error_comm_bridge.hpp>
+#include <utils/error/error_database.hpp>
+#include <utils/error/error_database_map.hpp>
+#include <utils/error/error_manager.hpp>
 #include <utils/mqtt_abstraction.hpp>
 #include <utils/status_fifo.hpp>
 
@@ -248,7 +251,7 @@ static std::map<pid_t, std::string> start_modules(Config& config, MQTTAbstractio
                                                   const std::vector<std::string>& ignored_modules,
                                                   const std::vector<std::string>& standalone_modules,
                                                   std::shared_ptr<RuntimeSettings> rs, StatusFifo& status_fifo,
-                                                  error::ErrorManager& err_manager) {
+                                                  error::ErrorCommBridge& err_comm_bridge) {
     BOOST_LOG_FUNCTION();
 
     std::vector<ModuleStartInfo> modules_to_spawn;
@@ -338,7 +341,7 @@ static std::map<pid_t, std::string> start_modules(Config& config, MQTTAbstractio
                     std::string err_name = it_err.at("name");
                     std::string err_topic =
                         fmt::format("{}/{}/error/{}/{}", module_name, impl_name, err_namespace, err_name);
-                    err_manager.add_error_topic(err_topic);
+                    err_comm_bridge.add_error_topic(err_topic);
                 }
             }
         }
@@ -596,27 +599,30 @@ int boot(const po::variables_map& vm) {
 
     mqtt_abstraction.spawn_main_loop_thread();
 
-    // setup error manager
-    auto send_json_message = [&rs, &mqtt_abstraction](const std::string& topic, const nlohmann::json& msg) {
+    // setup error comm bridge
+    error::ErrorCommBridge::SendMessageFunc send_json_message = [&rs, &mqtt_abstraction](const std::string& topic,
+                                                                                         const json& msg) {
         mqtt_abstraction.publish(rs->mqtt_everest_prefix + topic, msg, QOS::QOS2);
     };
-    auto register_call_handler = [&rs, &mqtt_abstraction](const std::string& topic,
-                                                          error::ErrorManager::HandlerFunc& handler) {
-        auto token = std::make_shared<TypedHandler>(topic, HandlerType::Call, std::make_shared<Handler>(handler));
-        mqtt_abstraction.register_handler(rs->mqtt_everest_prefix + topic, token, QOS::QOS2);
-    };
-    auto register_error_handler = [&rs, &mqtt_abstraction](const std::string& topic,
-                                                           error::ErrorManager::HandlerFunc& handler) {
-        auto token = std::make_shared<TypedHandler>(HandlerType::SubscribeError, std::make_shared<Handler>(handler));
-        mqtt_abstraction.register_handler(rs->mqtt_everest_prefix + topic, token, QOS::QOS2);
-    };
+    error::ErrorCommBridge::RegisterCallHandlerFunc register_call_handler =
+        [&rs, &mqtt_abstraction](const std::string& topic, error::ErrorCommBridge::HandlerFunc& handler) {
+            auto token = std::make_shared<TypedHandler>(topic, HandlerType::Call, std::make_shared<Handler>(handler));
+            mqtt_abstraction.register_handler(rs->mqtt_everest_prefix + topic, token, QOS::QOS2);
+        };
+    error::ErrorCommBridge::RegisterErrorHandlerFunc register_error_handler =
+        [&rs, &mqtt_abstraction](const std::string& topic, error::ErrorCommBridge::HandlerFunc& handler) {
+            auto token =
+                std::make_shared<TypedHandler>(HandlerType::SubscribeError, std::make_shared<Handler>(handler));
+            mqtt_abstraction.register_handler(rs->mqtt_everest_prefix + topic, token, QOS::QOS2);
+        };
     std::string request_clear_error_topic = "request-clear-error";
-
-    error::ErrorManager err_manager = error::ErrorManager(send_json_message, register_call_handler,
-                                                          register_error_handler, request_clear_error_topic);
+    std::shared_ptr<error::ErrorDatabase> err_database = std::make_shared<error::ErrorDatabaseMap>();
+    std::shared_ptr<error::ErrorManager> err_manager = std::make_shared<error::ErrorManager>(err_database);
+    error::ErrorCommBridge err_comm_bridge = error::ErrorCommBridge(
+        err_manager, send_json_message, register_call_handler, register_error_handler, request_clear_error_topic);
 
     auto module_handles =
-        start_modules(*config, mqtt_abstraction, ignored_modules, standalone_modules, rs, status_fifo, err_manager);
+        start_modules(*config, mqtt_abstraction, ignored_modules, standalone_modules, rs, status_fifo, err_comm_bridge);
     bool modules_started = true;
     bool restart_modules = false;
 
@@ -682,7 +688,7 @@ int boot(const po::variables_map& vm) {
 #ifdef ENABLE_ADMIN_PANEL
         if (module_handles.size() == 0 && restart_modules) {
             module_handles = start_modules(*config, mqtt_abstraction, ignored_modules, standalone_modules, rs,
-                                           status_fifo, err_manager);
+                                           status_fifo, err_comm_bridge);
             restart_modules = false;
             modules_started = true;
         }
