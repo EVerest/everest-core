@@ -27,8 +27,5 @@ PB_BIND(FanState, FanState, AUTO)
 PB_BIND(Temperature, Temperature, AUTO)
 
 
-
-
-
-
+PB_BIND(OpaqueData, OpaqueData, AUTO)
 

@@ -7,6 +7,7 @@
 #include <unistd.h>
 
 #include "phyverso.pb.h"
+#include <everest/logging.hpp>
 #include <sigslot/signal.hpp>
 
 std::atomic_bool sw_version_received = false;
@@ -144,6 +145,12 @@ int main(int argc, char* argv[]) {
                 printf("[T_%i]: %.1f\t", i, get_temp(t.temp[i]));
             }
             printf("\n");
+        });
+
+        p.signal_opaque_data.connect([](int connector, const std::vector<int32_t>& data) {
+            EVLOG_info << "Received data from " << connector;
+            for (const auto a : data)
+                EVLOG_info << a;
         });
 
         while (true) {

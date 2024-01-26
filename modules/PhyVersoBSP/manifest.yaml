@@ -42,6 +42,12 @@ provides:
   temperature_main:
     interface: temperature
     description: Temperatures from MCU
+  system_specific_data_1:
+    interface: generic_array
+    description: Opaque data blobs coming from connector 1
+  system_specific_data_2:
+    interface: generic_array
+    description: Opaque data blobs coming from connector 2
 enable_external_mqtt: true
 enable_telemetry: true
 metadata:
