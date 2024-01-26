@@ -1061,9 +1061,9 @@ void Charger::authorize(bool a, const types::authorization::ProvidedIdToken& tok
     std::scoped_lock lock(state_machine_mutex);
     if (a) {
         // First user interaction was auth? Then start session already here and not at plug in
-        if (not session_active)
+        if (not session_active) {
             start_session(true);
-
+        }
         authorized = true;
         authorized_pnc = token.authorization_type == types::authorization::AuthorizationType::PlugAndCharge;
         id_token = token;
