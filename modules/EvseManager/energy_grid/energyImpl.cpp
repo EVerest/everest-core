@@ -101,7 +101,7 @@ void energyImpl::ready() {
     }).detach();
 
     // request energy at the start and end of a charging session
-    mod->charger->signalState.connect([this](Charger::EvseState s) {
+    mod->charger->signal_state.connect([this](Charger::EvseState s) {
         if (s == Charger::EvseState::WaitingForAuthentication || s == Charger::EvseState::Finished) {
             request_energy_from_energy_manager();
         }
@@ -109,7 +109,7 @@ void energyImpl::ready() {
 }
 
 void energyImpl::request_energy_from_energy_manager() {
-    auto s = mod->charger->getCurrentState();
+    auto s = mod->charger->get_current_state();
     {
         std::lock_guard<std::mutex> lock(this->energy_mutex);
         clear_import_request_schedule();
@@ -230,7 +230,7 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
                 value.limits_root_side.value().ac_max_phase_count.value() < phasecount) {
                 if (mod->get_hw_capabilities().supports_changing_phases_during_charging) {
                     phasecount = value.limits_root_side.value().ac_max_phase_count.value();
-                    mod->charger->switchThreePhasesWhileCharging(phasecount == 3);
+                    mod->charger->switch_three_phases_while_charging(phasecount == 3);
                 } else {
                     EVLOG_error << fmt::format("Energy manager limits #ph to {}, but switching phases during "
                                                "charging is not supported by HW.",
@@ -254,16 +254,16 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
         // update limit at the charger
         if (limit >= 0) {
             // import
-            mod->charger->setMaxCurrent(limit, Everest::Date::from_rfc3339(value.valid_until));
+            mod->charger->set_max_current(limit, Everest::Date::from_rfc3339(value.valid_until));
         } else {
             // export
             // FIXME: we cannot discharge on PWM charging or with -2, so we fake a charging current here.
             // this needs to be fixed in transition to -20 AC bidirectional.
-            mod->charger->setMaxCurrent(0, Everest::Date::from_rfc3339(value.valid_until));
+            mod->charger->set_max_current(0, Everest::Date::from_rfc3339(value.valid_until));
         }
 
         if (limit > 1e-5 || limit < -1e-5)
-            mod->charger->resumeChargingPowerAvailable();
+            mod->charger->resume_charging_power_available();
 
         if (mod->config.charge_mode == "DC") {
             // DC mode apply limit at the leave side, we get root side limits here from EnergyManager on ACDC!

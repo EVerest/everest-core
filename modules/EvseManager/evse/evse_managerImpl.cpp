@@ -51,20 +51,20 @@ void evse_managerImpl::init() {
     mod->mqtt.subscribe(
         fmt::format("everest_external/nodered/{}/cmd/switch_three_phases_while_charging", mod->config.connector_id),
         [&charger = mod->charger](const std::string& data) {
-            charger->switchThreePhasesWhileCharging(str_to_bool(data));
+            charger->switch_three_phases_while_charging(str_to_bool(data));
         });
 
     mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/pause_charging", mod->config.connector_id),
-                        [&charger = mod->charger](const std::string& data) { charger->pauseCharging(); });
+                        [&charger = mod->charger](const std::string& data) { charger->pause_charging(); });
 
     mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/resume_charging", mod->config.connector_id),
-                        [&charger = mod->charger](const std::string& data) { charger->resumeCharging(); });
+                        [&charger = mod->charger](const std::string& data) { charger->resume_charging(); });
 
     mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/stop_transaction", mod->config.connector_id),
                         [this](const std::string& data) {
                             types::evse_manager::StopTransactionRequest request;
                             request.reason = types::evse_manager::StopTransactionReason::Local;
-                            mod->charger->cancelTransaction(request);
+                            mod->charger->cancel_transaction(request);
                         });
 
     mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/emergency_stop", mod->config.connector_id),
@@ -75,7 +75,7 @@ void evse_managerImpl::init() {
                             }
                             types::evse_manager::StopTransactionRequest request;
                             request.reason = types::evse_manager::StopTransactionReason::EmergencyStop;
-                            mod->charger->cancelTransaction(request);
+                            mod->charger->cancel_transaction(request);
                         });
 
     // /Interface to Node-RED debug UI
@@ -154,7 +154,7 @@ void evse_managerImpl::ready() {
         publish_session_event(j);
     });
 
-    mod->charger->signalEvent.connect([this](const types::evse_manager::SessionEventEnum& e) {
+    mod->charger->signal_event.connect([this](const types::evse_manager::SessionEventEnum& e) {
         types::evse_manager::SessionEvent se;
 
         se.event = e;
@@ -166,7 +166,7 @@ void evse_managerImpl::ready() {
             session_started.timestamp =
                 date::format("%FT%TZ", std::chrono::time_point_cast<std::chrono::milliseconds>(date::utc_clock::now()));
 
-            auto reason = mod->charger->getSessionStartedReason();
+            auto reason = mod->charger->get_session_started_reason();
 
             if (mod->config.disable_authentication && reason == types::evse_manager::StartSessionReason::EVConnected) {
                 // Free service, authorize immediately
@@ -174,7 +174,7 @@ void evse_managerImpl::ready() {
                 provided_token.authorization_type = types::authorization::AuthorizationType::RFID;
                 provided_token.id_token = "FREESERVICE";
                 provided_token.prevalidated = true;
-                mod->charger->Authorize(true, provided_token);
+                mod->charger->authorize(true, provided_token);
                 mod->charger_was_authorized();
             }
 
@@ -218,7 +218,7 @@ void evse_managerImpl::ready() {
                 mod->cancel_reservation(false);
             }
 
-            transaction_started.id_tag = mod->charger->getIdToken();
+            transaction_started.id_tag = mod->charger->get_id_token();
 
             double energy_import = transaction_started.meter_value.energy_Wh_import.total;
 
@@ -247,9 +247,9 @@ void evse_managerImpl::ready() {
 
             transaction_finished.meter_value = mod->get_latest_powermeter_data_billing();
 
-            auto reason = mod->charger->getTransactionFinishedReason();
+            auto reason = mod->charger->get_transaction_finished_reason();
             transaction_finished.reason.emplace(reason);
-            transaction_finished.id_tag = mod->charger->getStopTransactionIdToken();
+            transaction_finished.id_tag = mod->charger->get_stop_transaction_id_token();
 
             double energy_import = transaction_finished.meter_value.energy_Wh_import.total;
 
@@ -292,7 +292,7 @@ void evse_managerImpl::ready() {
 
     // Note: Deprecated. Only kept for Node red compatibility, will be removed in the future
     // Legacy external mqtt pubs
-    mod->charger->signalMaxCurrent.connect([this](float c) {
+    mod->charger->signal_max_current.connect([this](float c) {
         mod->mqtt.publish(fmt::format("everest_external/nodered/{}/state/max_current", mod->config.connector_id), c);
 
         limits.uuid = mod->info.id;
@@ -300,9 +300,9 @@ void evse_managerImpl::ready() {
         publish_limits(limits);
     });
 
-    mod->charger->signalState.connect([this](Charger::EvseState s) {
+    mod->charger->signal_state.connect([this](Charger::EvseState s) {
         mod->mqtt.publish(fmt::format("everest_external/nodered/{}/state/state_string", mod->config.connector_id),
-                          mod->charger->evseStateToString(s));
+                          mod->charger->evse_state_to_string(s));
         mod->mqtt.publish(fmt::format("everest_external/nodered/{}/state/state", mod->config.connector_id),
                           static_cast<int>(s));
     });
@@ -338,7 +338,7 @@ void evse_managerImpl::handle_authorize_response(types::authorization::ProvidedI
             return;
         }
 
-        this->mod->charger->Authorize(true, provided_token);
+        this->mod->charger->authorize(true, provided_token);
         mod->charger_was_authorized();
     }
 
@@ -350,7 +350,7 @@ void evse_managerImpl::handle_authorize_response(types::authorization::ProvidedI
 };
 
 void evse_managerImpl::handle_withdraw_authorization() {
-    this->mod->charger->DeAuthorize();
+    this->mod->charger->deauthorize();
 };
 
 bool evse_managerImpl::handle_reserve(int& reservation_id) {
@@ -371,15 +371,15 @@ void evse_managerImpl::handle_set_faulted() {
 };
 
 bool evse_managerImpl::handle_pause_charging() {
-    return mod->charger->pauseCharging();
+    return mod->charger->pause_charging();
 };
 
 bool evse_managerImpl::handle_resume_charging() {
-    return mod->charger->resumeCharging();
+    return mod->charger->resume_charging();
 };
 
 bool evse_managerImpl::handle_stop_transaction(types::evse_manager::StopTransactionRequest& request) {
-    return mod->charger->cancelTransaction(request);
+    return mod->charger->cancel_transaction(request);
 };
 
 std::string evse_managerImpl::generate_session_uuid() {
@@ -393,7 +393,7 @@ void evse_managerImpl::handle_set_external_limits(types::energy::ExternalLimits&
 types::evse_manager::SwitchThreePhasesWhileChargingResult
 evse_managerImpl::handle_switch_three_phases_while_charging(bool& three_phases) {
     // FIXME implement more sophisticated error code return once feature is really implemented
-    if (mod->charger->switchThreePhasesWhileCharging(three_phases)) {
+    if (mod->charger->switch_three_phases_while_charging(three_phases)) {
         return types::evse_manager::SwitchThreePhasesWhileChargingResult::Success;
     } else {
         return types::evse_manager::SwitchThreePhasesWhileChargingResult::Error_NotSupported;
