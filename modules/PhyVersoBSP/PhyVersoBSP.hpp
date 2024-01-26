@@ -39,7 +39,7 @@ public:
                 std::unique_ptr<evse_board_supportImplBase> p_connector_1,
                 std::unique_ptr<evse_board_supportImplBase> p_connector_2, std::unique_ptr<ac_rcdImplBase> p_rcd_1,
                 std::unique_ptr<ac_rcdImplBase> p_rcd_2, std::unique_ptr<connector_lockImplBase> p_connector_lock_1,
-                std::unique_ptr<connector_lockImplBase> p_connector_lock_2, 
+                std::unique_ptr<connector_lockImplBase> p_connector_lock_2,
                 std::unique_ptr<temperatureImplBase> p_temperature,
                 std::unique_ptr<generic_arrayImplBase> p_system_specific_data_1,
                 std::unique_ptr<generic_arrayImplBase> p_system_specific_data_2, Conf& config) :
