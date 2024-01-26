@@ -22,6 +22,7 @@
 #include <regex>
 
 namespace module {
+namespace fs = std::filesystem;
 
 struct WifiCredentials {
     std::string interface;
@@ -101,8 +102,6 @@ void to_json(json& j, const ApplicationInfo& k);
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
-
-namespace fs = std::filesystem;
 
 struct Conf {
     bool setup_wifi;
