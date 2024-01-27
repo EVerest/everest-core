@@ -486,6 +486,7 @@ function (ev_add_cpp_module MODULE_NAME)
             target_link_libraries(${MODULE_NAME}
                 PRIVATE
                     everest::framework
+                    ${ATOMIC_LIBS}
             )
 
             add_dependencies(${MODULE_NAME} generate_cpp_files)
