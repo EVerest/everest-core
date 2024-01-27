@@ -28,6 +28,13 @@ endif()
 # make own cmake modules available
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
+# test whether linking with libatomic is required on some platforms
+include(CheckAtomic)
+if(HAVE_CXX_ATOMICS_WITH_LIB OR HAVE_CXX_ATOMICS64_WITH_LIB)
+    set(ATOMIC_LIBS "atomic")
+else()
+    set(ATOMIC_LIBS "")
+endif()
 
 option(CREATE_SYMLINKS "Create symlinks to javascript modules and auxillary files - for development purposes" OFF)
 option(CMAKE_RUN_CLANG_TIDY "Run clang-tidy" OFF)
