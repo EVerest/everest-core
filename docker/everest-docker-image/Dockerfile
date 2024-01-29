@@ -92,7 +92,7 @@ RUN apt-get update \
     libboost-system1.74.0 \
     libssl1.1 \
     libcurl4 \
-    libcap \
+    libcap2 \
     less \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
