@@ -134,7 +134,7 @@ private:
     std::atomic_bool reset_done_flag;
     std::atomic_bool forced_reset;
     /// @brief Maps the connectors to OpaqueDataHandlers.
-    std::unordered_map<unsigned, OpaqueDataHandler> psensor_handlers;
+    std::unordered_map<unsigned, OpaqueDataHandler> opaque_handlers;
 
     bool serial_timed_out();
     void timeout_detection_thread();

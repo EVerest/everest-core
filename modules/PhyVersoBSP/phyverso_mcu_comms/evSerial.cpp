@@ -209,11 +209,11 @@ bool evSerial::handle_OpaqueData(const uint8_t* buf, const int len) {
     // Lambda for updating OpaqueDataHandler - here just to simplify the return
     // logic.
     [this](const OpaqueData& data) {
-        auto iter = psensor_handlers.find(data.connector);
-        if (iter == psensor_handlers.end()) {
+        auto iter = opaque_handlers.find(data.connector);
+        if (iter == opaque_handlers.end()) {
             // The item does not exist - try to insert it.
             try {
-                iter = psensor_handlers.emplace(data.connector, data).first;
+                iter = opaque_handlers.emplace(data.connector, data).first;
             } catch (...) {
                 // We can't do anything here - the chunk is ill formed and does
                 // not start with 0.
@@ -226,7 +226,7 @@ bool evSerial::handle_OpaqueData(const uint8_t* buf, const int len) {
             } catch (...) {
                 // We've failed to insert the data.. Drop the current buffer.
                 EVLOG_debug << "Stray chunk " << data.id << "; Resetting";
-                psensor_handlers.erase(iter);
+                opaque_handlers.erase(iter);
                 return;
             }
         }
@@ -236,7 +236,7 @@ bool evSerial::handle_OpaqueData(const uint8_t* buf, const int len) {
         const auto readings = iter->second.get_data();
         EVLOG_debug << "Received sensor data with the size " << readings.size();
         signal_opaque_data(iter->first, readings);
-        psensor_handlers.erase(iter);
+        opaque_handlers.erase(iter);
     }(data);
 
     return true;

@@ -129,11 +129,8 @@ int main(int argc, char* argv[]) {
             }
         });
 
-        p.signal_opaque_data.connect([](int connector, const std::vector<int32_t>& data) {
-            EVLOG_info << "Received data from " << connector;
-            for (const auto a : data)
-                EVLOG_info << a;
-        });
+        p.signal_opaque_data.connect(
+            [](int connector, const std::vector<int32_t>& data) { EVLOG_info << "Received data from " << connector; });
 
         while (true) {
             char c = getc(stdin);
