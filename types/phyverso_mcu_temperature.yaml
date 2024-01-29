@@ -1,11 +1,11 @@
 description: Provides temperature readings from all 6 sensors we have
 types:
-  Temperatures:
-    description: Temperatures read from MCU
+  MCUTemperatures:
+    description: Temperatures read from phyverso MCU
     type: object
     properties:
-      phyverso_mcu_temperature:
-        description: Temperatures read from phyversoMCU
+      temperatures:
+        description: Temperatures read from phyverso MCU
         type: array
         items:
           type: number

@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
-#include "temperatureImpl.hpp"
-#include <generated/types/temperature.hpp>
+#include "phyverso_mcu_temperatureImpl.hpp"
 
 namespace module {
-namespace temperature_main {
+namespace temperature {
 
 constexpr auto REFERENCE_VOLTAGE = 3.3;
 constexpr auto NUMBER_OF_BITS = 12;
@@ -17,20 +16,20 @@ float get_temp(int raw) {
     return VOLTAGE_TO_TEMPERATURE_SLOPE * voltage + VOLTAGE_TO_TEMPERATURE_OFFSET;
 }
 
-void temperatureImpl::init() {
+void phyverso_mcu_temperatureImpl::init() {
     mod->serial.signal_temperature.connect([this](Temperature temperature) {
-        types::temperature::Temperatures t;
-        t.phyverso_mcu_temperature = std::vector<float>();
+        types::phyverso_mcu_temperature::MCUTemperatures t;
+        t.temperatures = std::vector<float>();
 
         for (size_t i = 0; i < temperature.temp_count; ++i) {
-            t.phyverso_mcu_temperature->push_back(get_temp(temperature.temp[i]));
+            t.temperatures->push_back(get_temp(temperature.temp[i]));
         }
-        this->publish_temperatures(t);
+        this->publish_MCUTemperatures(t);
     });
 }
 
-void temperatureImpl::ready() {
+void phyverso_mcu_temperatureImpl::ready() {
 }
 
-} // namespace temperature_main
+} // namespace temperature
 } // namespace module

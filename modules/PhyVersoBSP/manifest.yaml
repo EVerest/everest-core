@@ -39,8 +39,8 @@ provides:
   connector_lock_2:
     interface: connector_lock
     description: RCD interface of the onboard RCD
-  temperature_main:
-    interface: temperature
+  temperature:
+    interface: phyverso_mcu_temperature
     description: Temperatures from MCU
   system_specific_data_1:
     interface: generic_array
