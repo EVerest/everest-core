@@ -14,6 +14,8 @@
 #include <generated/interfaces/ac_rcd/Implementation.hpp>
 #include <generated/interfaces/connector_lock/Implementation.hpp>
 #include <generated/interfaces/evse_board_support/Implementation.hpp>
+#include <generated/interfaces/temperature/Implementation.hpp>
+
 #include <generated/interfaces/generic_array/Implementation.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
@@ -38,6 +40,7 @@ public:
                 std::unique_ptr<evse_board_supportImplBase> p_connector_2, std::unique_ptr<ac_rcdImplBase> p_rcd_1,
                 std::unique_ptr<ac_rcdImplBase> p_rcd_2, std::unique_ptr<connector_lockImplBase> p_connector_lock_1,
                 std::unique_ptr<connector_lockImplBase> p_connector_lock_2,
+                std::unique_ptr<temperatureImplBase> p_temperature,
                 std::unique_ptr<generic_arrayImplBase> p_system_specific_data_1,
                 std::unique_ptr<generic_arrayImplBase> p_system_specific_data_2, Conf& config) :
         ModuleBase(info),
@@ -49,6 +52,7 @@ public:
         p_rcd_2(std::move(p_rcd_2)),
         p_connector_lock_1(std::move(p_connector_lock_1)),
         p_connector_lock_2(std::move(p_connector_lock_2)),
+        p_temperature(std::move(p_temperature)),
         p_system_specific_data_1(std::move(p_system_specific_data_1)),
         p_system_specific_data_2(std::move(p_system_specific_data_2)),
         config(config){};
@@ -61,6 +65,7 @@ public:
     const std::unique_ptr<ac_rcdImplBase> p_rcd_2;
     const std::unique_ptr<connector_lockImplBase> p_connector_lock_1;
     const std::unique_ptr<connector_lockImplBase> p_connector_lock_2;
+    const std::unique_ptr<temperatureImplBase> p_temperature;
     const std::unique_ptr<generic_arrayImplBase> p_system_specific_data_1;
     const std::unique_ptr<generic_arrayImplBase> p_system_specific_data_2;
     const Conf& config;

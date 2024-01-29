@@ -82,6 +82,12 @@ typedef struct _FanState {
     uint16_t rpm;
 } FanState;
 
+typedef struct _Temperature {
+    /* The temperature readings */
+    pb_size_t temp_count;
+    uint16_t temp[6];
+} Temperature;
+
 /* This container message is send from MCU to EVerest and may contain any allowed message in that direction. */
 typedef struct _McuToEverest {
     pb_size_t which_payload;
@@ -95,6 +101,7 @@ typedef struct _McuToEverest {
         PpState pp_state;
         FanState fan_state;
         LockState lock_state;
+        Temperature temperature;
     } payload;
     int32_t connector; /* 0: None, 1: Connector 1, 2: Connector 2 */
 } McuToEverest;
@@ -156,6 +163,7 @@ extern "C" {
 #define KeepAlive_init_default                   {0, 0, 0, ""}
 #define Telemetry_init_default                   {0, 0}
 #define FanState_init_default                    {0, 0, 0, 0}
+#define Temperature_init_default                 {0, {0, 0, 0, 0, 0, 0}}
 #define OpaqueData_init_default                  {0, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 0, 0, 0, 0}
 #define EverestToMcu_init_zero                   {0, {KeepAlive_init_zero}, 0}
 #define McuToEverest_init_zero                   {0, {KeepAlive_init_zero}, 0}
@@ -163,6 +171,7 @@ extern "C" {
 #define KeepAlive_init_zero                      {0, 0, 0, ""}
 #define Telemetry_init_zero                      {0, 0}
 #define FanState_init_zero                       {0, 0, 0, 0}
+#define Temperature_init_zero                    {0, {0, 0, 0, 0, 0, 0}}
 #define OpaqueData_init_zero                     {0, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 0, 0, 0, 0}
 
 /* Field tags (for use in manual encoding/decoding) */
@@ -189,6 +198,7 @@ extern "C" {
 #define FanState_enabled_tag                     2
 #define FanState_duty_tag                        3
 #define FanState_rpm_tag                         4
+#define Temperature_temp_tag                     1
 #define McuToEverest_keep_alive_tag              1
 #define McuToEverest_reset_tag                   2
 #define McuToEverest_cp_state_tag                3
@@ -198,6 +208,7 @@ extern "C" {
 #define McuToEverest_pp_state_tag                8
 #define McuToEverest_fan_state_tag               9
 #define McuToEverest_lock_state_tag              10
+#define McuToEverest_temperature_tag             11
 #define McuToEverest_connector_tag               6
 #define OpaqueData_data_tag                      1
 #define OpaqueData_id_tag                        2
@@ -228,13 +239,15 @@ X(a, STATIC,   SINGULAR, INT32,    connector,         6) \
 X(a, STATIC,   ONEOF,    MESSAGE,  (payload,telemetry,payload.telemetry),   7) \
 X(a, STATIC,   ONEOF,    UENUM,    (payload,pp_state,payload.pp_state),   8) \
 X(a, STATIC,   ONEOF,    MESSAGE,  (payload,fan_state,payload.fan_state),   9) \
-X(a, STATIC,   ONEOF,    UENUM,    (payload,lock_state,payload.lock_state),  10)
+X(a, STATIC,   ONEOF,    UENUM,    (payload,lock_state,payload.lock_state),  10) \
+X(a, STATIC,   ONEOF,    MESSAGE,  (payload,temperature,payload.temperature),  11)
 #define McuToEverest_CALLBACK NULL
 #define McuToEverest_DEFAULT NULL
 #define McuToEverest_payload_keep_alive_MSGTYPE KeepAlive
 #define McuToEverest_payload_error_flags_MSGTYPE ErrorFlags
 #define McuToEverest_payload_telemetry_MSGTYPE Telemetry
 #define McuToEverest_payload_fan_state_MSGTYPE FanState
+#define McuToEverest_payload_temperature_MSGTYPE Temperature
 
 #define ErrorFlags_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, BOOL,     diode_fault,       1) \
@@ -268,6 +281,10 @@ X(a, STATIC,   SINGULAR, UINT32,   rpm,               4)
 #define FanState_CALLBACK NULL
 #define FanState_DEFAULT NULL
 
+#define Temperature_FIELDLIST(X, a) \
+X(a, STATIC,   REPEATED, UINT32,   temp,              1)
+#define Temperature_CALLBACK NULL
+#define Temperature_DEFAULT NULL
 #define OpaqueData_FIELDLIST(X, a) \
 X(a, STATIC,   REPEATED, UINT32,   data,              1) \
 X(a, STATIC,   SINGULAR, UINT32,   id,                2) \
@@ -283,6 +300,7 @@ extern const pb_msgdesc_t ErrorFlags_msg;
 extern const pb_msgdesc_t KeepAlive_msg;
 extern const pb_msgdesc_t Telemetry_msg;
 extern const pb_msgdesc_t FanState_msg;
+extern const pb_msgdesc_t Temperature_msg;
 extern const pb_msgdesc_t OpaqueData_msg;
 
 /* Defines for backwards compatibility with code written before nanopb-0.4.0 */
@@ -292,6 +310,7 @@ extern const pb_msgdesc_t OpaqueData_msg;
 #define KeepAlive_fields &KeepAlive_msg
 #define Telemetry_fields &Telemetry_msg
 #define FanState_fields &FanState_msg
+#define Temperature_fields &Temperature_msg
 #define OpaqueData_fields &OpaqueData_msg
 
 /* Maximum encoded size of messages (where known) */
@@ -303,6 +322,7 @@ extern const pb_msgdesc_t OpaqueData_msg;
 #define OpaqueData_size                          285
 #define PHYVERSO_PB_H_MAX_SIZE                   OpaqueData_size
 #define Telemetry_size                           12
+#define Temperature_size                         24
 
 #ifdef __cplusplus
 } /* extern "C" */

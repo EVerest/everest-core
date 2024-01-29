@@ -184,6 +184,10 @@ bool evSerial::handle_McuToEverest(const uint8_t* buf, const int len) {
         signal_pp_state(msg_in.connector, msg_in.payload.pp_state);
         break;
 
+    case McuToEverest_temperature_tag:
+        signal_temperature(msg_in.payload.temperature);
+        break;
+
     case McuToEverest_fan_state_tag:
         signal_fan_state(msg_in.payload.fan_state);
         break;

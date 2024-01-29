@@ -24,11 +24,8 @@ PB_BIND(Telemetry, Telemetry, AUTO)
 PB_BIND(FanState, FanState, AUTO)
 
 
+PB_BIND(Temperature, Temperature, AUTO)
+
+
 PB_BIND(OpaqueData, OpaqueData, AUTO)
-
-
-
-
-
-
 
