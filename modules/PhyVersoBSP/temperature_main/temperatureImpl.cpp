@@ -19,13 +19,13 @@ float get_temp(int raw) {
 
 void temperatureImpl::init() {
     mod->serial.signal_temperature.connect([this](Temperature temperature) {
-        types::temperature::Temperatures temperatures;
-        temperatures.temperatures = std::vector<float>();
+        types::temperature::Temperatures t;
+        t.phyverso_mcu_temperature = std::vector<float>();
 
         for (size_t i = 0; i < temperature.temp_count; ++i) {
-            temperatures.temperatures->push_back(get_temp(temperature.temp[i]));
+            t.phyverso_mcu_temperature->push_back(get_temp(temperature.temp[i]));
         }
-        this->publish_temperatures(temperatures);
+        this->publish_temperatures(t);
     });
 }
 

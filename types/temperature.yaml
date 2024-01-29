@@ -4,8 +4,8 @@ types:
     description: Temperatures read from MCU
     type: object
     properties:
-      temperatures:
-        description: Temperatures read from MCU
+      phyverso_mcu_temperature:
+        description: Temperatures read from phyversoMCU
         type: array
         items:
           type: number
