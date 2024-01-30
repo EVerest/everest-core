@@ -768,7 +768,7 @@ bool OpenSSLSupplier::digest_file_sha256(const fs::path& path, std::vector<std::
 
     bool digest_error = false;
 
-    unsigned int sha256_out_length;
+    unsigned int sha256_out_length = 0;
     std::byte sha256_out[EVP_MAX_MD_SIZE];
 
     // calculate sha256 of file
@@ -778,7 +778,7 @@ bool OpenSSLSupplier::digest_file_sha256(const fs::path& path, std::vector<std::
                 if (EVP_DigestUpdate(md_context_ptr.get(), bytes, read) == 0) {
                     EVLOG_error << "Error during EVP_DigestUpdate";
                     digest_error = true;
-                    return false;
+                    return true;
                 }
             }
 
@@ -787,11 +787,11 @@ bool OpenSSLSupplier::digest_file_sha256(const fs::path& path, std::vector<std::
                                        &sha256_out_length) == 0) {
                     EVLOG_error << "Error during EVP_DigestFinal_ex";
                     digest_error = true;
-                    return false;
+                    return true;
                 }
             }
 
-            return true;
+            return false;
         });
 
     if ((processed_file == false) || (digest_error == true)) {

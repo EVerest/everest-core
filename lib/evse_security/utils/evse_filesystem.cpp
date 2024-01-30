@@ -87,8 +87,9 @@ bool process_file(const fs::path& file_path, size_t buffer_size,
     while (file.read(reinterpret_cast<char*>(buffer.data()), buffer_size)) {
         interupted = func(buffer.data(), buffer_size, false);
 
-        if (interupted)
+        if (interupted) {
             break;
+        }
     }
 
     // Process the remaining bytes
