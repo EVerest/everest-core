@@ -446,7 +446,8 @@ public:
         const std::function<void(const int32_t connector, const int32_t transaction_id)>& callback);
 
     /// \brief registers a \p callback function that can be used to react on changed configuration keys. This
-    /// callback is called when a configuration key has been changed by the CSMS
+    /// callback is called when a configuration key has been successfully changed by the CSMS or internally using the
+    /// set_custom_configuration_key function
     /// \param key the configuration key for which the callback is registered
     /// \param callback executed when this configuration key changed
     void register_configuration_key_changed_callback(const CiString<50>& key,

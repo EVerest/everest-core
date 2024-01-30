@@ -3658,7 +3658,21 @@ GetConfigurationResponse ChargePointImpl::get_configuration_key(const GetConfigu
 }
 
 ConfigurationStatus ChargePointImpl::set_custom_configuration_key(CiString<50> key, CiString<500> value) {
-    return this->configuration->setCustomKey(key, value, true);
+    // attempt to set the custom key
+    const auto result = this->configuration->setCustomKey(key, value, true);
+    if (result != ConfigurationStatus::Accepted) {
+        // return immediately if not "Accepted"
+        return result;
+    }
+
+    // notify callback if registered and change was accepted
+    if (this->configuration_key_changed_callbacks.count(key) and
+        this->configuration_key_changed_callbacks[key] != nullptr and result == ConfigurationStatus::Accepted) {
+        KeyValue kv = {key, false, value};
+        this->configuration_key_changed_callbacks[key](kv);
+    }
+
+    return result;
 }
 
 } // namespace v16
