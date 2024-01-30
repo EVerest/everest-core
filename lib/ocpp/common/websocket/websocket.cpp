@@ -87,6 +87,10 @@ void Websocket::register_message_callback(const std::function<void(const std::st
     this->websocket->register_message_callback([this](const std::string& message) { this->message_callback(message); });
 }
 
+void Websocket::register_connection_failed_callback(const std::function<void(ConnectionFailedReason)>& callback) {
+    this->websocket->register_connection_failed_callback(callback);
+}
+
 bool Websocket::send(const std::string& message) {
     this->logging->charge_point("Unknown", message);
     return this->websocket->send(message);

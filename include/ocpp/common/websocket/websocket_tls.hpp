@@ -30,6 +30,9 @@ private:
     /// and how verification of the server certificate is handled
     tls_context on_tls_init(std::string hostname, websocketpp::connection_hdl hdl, int32_t security_profile);
 
+    /// \brief Verify that the csms certificate's commonName matches the CSMS FQDN
+    bool verify_csms_cn(const std::string& hostname, bool preverified, boost::asio::ssl::verify_context& ctx);
+
     /// \brief Connect to a TLS websocket
     void connect_tls();
 

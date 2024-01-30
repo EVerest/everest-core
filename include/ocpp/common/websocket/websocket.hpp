@@ -55,6 +55,9 @@ public:
     /// \brief register a \p callback that is called when the websocket receives a message
     void register_message_callback(const std::function<void(const std::string& message)>& callback);
 
+    /// \brief register a \p callback that is called when the websocket could not connect with a specific reason
+    void register_connection_failed_callback(const std::function<void(ConnectionFailedReason)>& callback);
+
     /// \brief send a \p message over the websocket
     /// \returns true if the message was sent successfully
     bool send(const std::string& message);

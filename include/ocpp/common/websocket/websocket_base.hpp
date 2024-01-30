@@ -38,6 +38,10 @@ struct WebsocketConnectionOptions {
     bool use_tpm_tls;
 };
 
+enum class ConnectionFailedReason {
+    InvalidCSMSCertificate = 0,
+};
+
 ///
 /// \brief contains a websocket abstraction
 ///
@@ -49,6 +53,7 @@ protected:
     std::function<void()> disconnected_callback;
     std::function<void(const websocketpp::close::status::value reason)> closed_callback;
     std::function<void(const std::string& message)> message_callback;
+    std::function<void(ConnectionFailedReason)> connection_failed_callback;
     websocketpp::lib::shared_ptr<boost::asio::steady_timer> reconnect_timer;
     std::unique_ptr<Everest::SteadyTimer> ping_timer;
     websocketpp::connection_hdl handle;
@@ -121,6 +126,9 @@ public:
 
     /// \brief register a \p callback that is called when the websocket receives a message
     void register_message_callback(const std::function<void(const std::string& message)>& callback);
+
+    /// \brief register a \p callback that is called when the websocket could not connect with a specific reason
+    void register_connection_failed_callback(const std::function<void(ConnectionFailedReason)>& callback);
 
     /// \brief send a \p message over the websocket
     /// \returns true if the message was sent successfully

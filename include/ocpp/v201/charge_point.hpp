@@ -214,6 +214,7 @@ private:
     BootReasonEnum bootreason;
     int network_configuration_priority;
     bool disable_automatic_websocket_reconnects;
+    bool skip_invalid_csms_certificate_notifications;
 
     /// \brief Component responsible for maintaining and persisting the operational status of CS, EVSEs, and connectors.
     std::shared_ptr<ComponentStateManager> component_state_manager;

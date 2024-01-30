@@ -45,8 +45,8 @@ static std::vector<std::string> get_subject_alt_names(const X509* x509) {
     return list;
 }
 
-// verify that the csms certificate's commonName matches the CSMS FQDN
-bool verify_csms_cn(const std::string& hostname, bool preverified, boost::asio::ssl::verify_context& ctx) {
+bool WebsocketTLS::verify_csms_cn(const std::string& hostname, bool preverified,
+                                  boost::asio::ssl::verify_context& ctx) {
 
     // Error depth gives the depth in the chain (with 0 = leaf certificate) where
     // a potential (!) error occurred; error here means current error code and can also be "OK".
@@ -59,6 +59,8 @@ bool verify_csms_cn(const std::string& hostname, bool preverified, boost::asio::
         int error = X509_STORE_CTX_get_error(ctx.native_handle());
         EVLOG_warning << "Invalid certificate error '" << X509_verify_cert_error_string(error) << "' (at chain depth '"
                       << depth << "')";
+
+        this->connection_failed_callback(ConnectionFailedReason::InvalidCSMSCertificate);
     }
 
     // only check for CSMS server certificate
@@ -71,6 +73,7 @@ bool verify_csms_cn(const std::string& hostname, bool preverified, boost::asio::
         char common_name[256];
         if (X509_NAME_get_text_by_NID(subject_name, NID_commonName, common_name, sizeof(common_name)) <= 0) {
             EVLOG_error << "Could not extract CN from CSMS server certificate";
+            this->connection_failed_callback(ConnectionFailedReason::InvalidCSMSCertificate);
             return false;
         }
 
@@ -96,6 +99,7 @@ bool verify_csms_cn(const std::string& hostname, bool preverified, boost::asio::
             s << " '" << alt_name << "'";
         }
         EVLOG_warning << s.str();
+        this->connection_failed_callback(ConnectionFailedReason::InvalidCSMSCertificate);
         return false;
     }
 
@@ -289,8 +293,9 @@ tls_context WebsocketTLS::on_tls_init(std::string hostname, websocketpp::connect
 
         context->set_verify_mode(boost::asio::ssl::verify_peer);
         if (this->connection_options.verify_csms_common_name) {
-            context->set_verify_callback(websocketpp::lib::bind(
-                &verify_csms_cn, hostname, websocketpp::lib::placeholders::_1, websocketpp::lib::placeholders::_2));
+            context->set_verify_callback([this, hostname](bool preverified, boost::asio::ssl::verify_context& ctx) {
+                return this->verify_csms_cn(hostname, preverified, ctx);
+            });
 
         } else {
             EVLOG_warning << "Not verifying the CSMS certificates commonName with the Fully Qualified Domain Name "
@@ -423,8 +428,6 @@ void WebsocketTLS::on_fail_tls(tls_client* c, websocketpp::connection_hdl hdl) {
     tls_client::connection_ptr con = c->get_con_from_hdl(hdl);
     const auto ec = con->get_ec();
     this->log_on_fail(ec, con->get_transport_ec(), con->get_response_code());
-
-    // TODO(piet): Trigger SecurityEvent in case InvalidCentralSystemCertificate
 
     // -1 indicates to always attempt to reconnect
     if (this->connection_options.max_connection_attempts == -1 or

@@ -59,6 +59,7 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
     registration_status(RegistrationStatusEnum::Rejected),
     network_configuration_priority(0),
     disable_automatic_websocket_reconnects(false),
+    skip_invalid_csms_certificate_notifications(false),
     reset_scheduled(false),
     reset_scheduled_evseids{},
     firmware_status(FirmwareStatusEnum::Idle),
@@ -713,6 +714,9 @@ void ChargePoint::init_websocket() {
             this->init_certificate_expiration_check_timers(); // re-init as timers are stopped on disconnect
         }
         this->time_disconnected = std::chrono::time_point<std::chrono::steady_clock>();
+
+        // We have a connection again so next time it fails we should send the notification again
+        this->skip_invalid_csms_certificate_notifications = false;
     });
 
     this->websocket->register_disconnected_callback([this]() {
@@ -745,6 +749,20 @@ void ChargePoint::init_websocket() {
                     WEBSOCKET_INIT_DELAY);
             }
         });
+
+    this->websocket->register_connection_failed_callback([this](ConnectionFailedReason reason) {
+        switch (reason) {
+        case ConnectionFailedReason::InvalidCSMSCertificate:
+            if (!this->skip_invalid_csms_certificate_notifications) {
+                this->security_event_notification_req(CiString<50>(ocpp::security_events::INVALIDCSMSCERTIFICATE),
+                                                      std::nullopt, true, true);
+                this->skip_invalid_csms_certificate_notifications = true;
+            } else {
+                EVLOG_debug << "Skipping InvalidCsmsCertificate SecurityEvent since it has been sent already";
+            }
+            break;
+        }
+    });
 
     this->websocket->register_message_callback([this](const std::string& message) { this->message_callback(message); });
 }
