@@ -19,6 +19,8 @@ void PhyVersoBSP::init() {
     invoke_init(*p_connector_lock_1);
     invoke_init(*p_connector_lock_2);
     invoke_init(*p_temperature);
+    invoke_init(*p_system_specific_data_1);
+    invoke_init(*p_system_specific_data_2);
 }
 
 void PhyVersoBSP::ready() {
@@ -43,6 +45,8 @@ void PhyVersoBSP::ready() {
     invoke_ready(*p_connector_lock_1);
     invoke_ready(*p_connector_lock_2);
     invoke_ready(*p_temperature);
+    invoke_ready(*p_system_specific_data_1);
+    invoke_ready(*p_system_specific_data_2);
 }
 
 } // namespace module
