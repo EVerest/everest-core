@@ -26,6 +26,10 @@ template <> bool ControlMessage<v16::MessageType>::isTransactionUpdateMessage() 
     return (this->messageType == v16::MessageType::MeterValues);
 }
 
+template <> bool ControlMessage<v16::MessageType>::isBootNotificationMessage() const {
+    return this->messageType == v16::MessageType::BootNotification;
+}
+
 template <> ControlMessage<v201::MessageType>::ControlMessage(const json& message) {
     this->message = message.get<json::array_t>();
     this->messageType = v201::conversions::string_to_messagetype(message.at(CALL_ACTION));
@@ -46,6 +50,10 @@ template <> bool ControlMessage<v201::MessageType>::isTransactionUpdateMessage()
                v201::TransactionEventEnum::Updated;
     }
     return false;
+}
+
+template <> bool ControlMessage<v201::MessageType>::isBootNotificationMessage() const {
+    return this->messageType == v201::MessageType::BootNotification;
 }
 
 template <> v16::MessageType MessageQueue<v16::MessageType>::string_to_messagetype(const std::string& s) {

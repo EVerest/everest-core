@@ -26,7 +26,6 @@ ChargePointImpl::ChargePointImpl(const std::string& config, const fs::path& shar
                                  const std::shared_ptr<EvseSecurity> evse_security,
                                  const std::optional<SecurityConfiguration> security_configuration) :
     ocpp::ChargingStationBase(evse_security, security_configuration),
-    boot_notification_callerror(false),
     initialized(false),
     bootreason(BootReasonEnum::PowerUp),
     connection_state(ChargePointConnectionState::Disconnected),
@@ -932,15 +931,8 @@ void ChargePointImpl::connected_callback() {
         break;
     }
     default:
-        if (this->connection_state == ChargePointConnectionState::Connected && this->boot_notification_callerror) {
-            EVLOG_error << "Connected but not in state 'Disconnected' or 'Booted' and previous BootNotification "
-                           "failed. Trying again...";
-            this->boot_notification_callerror = false;
-            this->boot_notification();
-            break;
-        }
-        EVLOG_error << "Connected but not in state 'Disconnected' or 'Booted', something is wrong: "
-                    << this->connection_state;
+        EVLOG_error << "Connected but not in state 'Disconnected' or 'Booted'. This can happen when the CSMS does not "
+                       "respond to the initial BootNotification.req at all or with a CALLERROR";
         break;
     }
 }
@@ -960,14 +952,9 @@ void ChargePointImpl::message_callback(const std::string& message) {
                 auto call_error = CallError(enhanced_message.uniqueId, "NotSupported", "", json({}, true));
                 this->send(call_error);
             } else if (enhanced_message.messageTypeId == MessageTypeId::CALLERROR) {
-                auto call_messagetype =
-                    this->message_queue->string_to_messagetype(enhanced_message.call_message.at(CALL_ACTION));
-                if (call_messagetype == MessageType::BootNotification) {
-                    EVLOG_error << "Received a CALLERROR in response to a BootNotification";
-                    this->boot_notification_callerror = true;
-                }
+                EVLOG_error << "Received a CALLERROR in response to a "
+                            << conversions::messagetype_to_string(enhanced_message.messageType) << ": " << message;
             }
-
             // in any case stop message handling here:
             return;
         }

@@ -38,6 +38,9 @@ struct MessageQueueConfig {
     bool queue_all_messages; // cf. OCPP 2.0.1. "QueueAllMessages" in OCPPCommCtrlr
 
     int message_timeout_seconds = 30;
+    int boot_notification_retry_interval_seconds =
+        60; // interval for BootNotification.req in case response by CSMS is CALLERROR or CSMS does not respond at all
+            // (within specified MessageTimeout)
 };
 
 /// \brief Contains a OCPP message in json form with additional information
@@ -80,6 +83,9 @@ template <typename M> struct ControlMessage {
 
     /// \brief True for transactional messages containing updates (measurements) for a transaction
     bool isTransactionUpdateMessage() const;
+
+    /// \brief Determine whether message is a BootNotification.
+    bool isBootNotificationMessage() const;
 };
 
 /// \brief contains a message queue that makes sure that OCPPs synchronicity requirements are met
@@ -689,6 +695,22 @@ public:
                     this->in_flight->promise.set_value(enhanced_message);
                 }
             }
+        } else if (this->in_flight->isBootNotificationMessage()) {
+            EVLOG_warning << "Message is BootNotification.req and will therefore be sent again";
+            // Generate a new message ID for the retry
+            this->in_flight->message[MESSAGE_ID] = this->createMessageId();
+            // Spec does not define how to handle retries for BootNotification.req: We use the
+            // the boot_notification_retry_interval_seconds
+            this->in_flight->timestamp =
+                DateTime(this->in_flight->timestamp.to_time_point() +
+                         std::chrono::seconds(this->config.boot_notification_retry_interval_seconds));
+            this->transaction_message_queue.push_front(this->in_flight);
+            this->notify_queue_timer.at(
+                [this]() {
+                    this->new_message = true;
+                    this->cv.notify_all();
+                },
+                this->in_flight->timestamp.to_time_point());
         } else {
             EVLOG_warning << "Message is not transaction related, dropping it";
             if (enhanced_message_opt) {

@@ -129,6 +129,10 @@ template <> bool ControlMessage<TestMessageType>::isTransactionUpdateMessage() c
     return this->messageType == TestMessageType::TRANSACTIONAL_UPDATE;
 }
 
+template <> bool ControlMessage<TestMessageType>::isBootNotificationMessage() const {
+    return this->messageType == TestMessageType::BootNotification;
+}
+
 /************************************************************************************************
  * ControlMessage
  *
