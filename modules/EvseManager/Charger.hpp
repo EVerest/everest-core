@@ -218,48 +218,49 @@ private:
     // This mutex locks all variables related to the state machine
     std::recursive_mutex state_machine_mutex;
 
-    //----------------------------------------------------------------------------------------------------------
-    // used by different threads, complete main loop should be locked
-    // As per IEC61851-1 A.5.3
-    bool legacy_wakeup_done{false};
-    bool hlc_allow_close_contactor{false};
-    bool iec_allow_close_contactor{false};
-    bool hlc_charging_active{false};
-    HlcTerminatePause hlc_charging_terminate_pause;
-    types::iso15118_charger::DC_EVSEMaximumLimits current_evse_max_limits;
-    bool pwm_running{false};
-    std::optional<types::authorization::ProvidedIdToken>
-        stop_transaction_id_token; // only set in case transaction was stopped locally
-    types::authorization::ProvidedIdToken id_token;
-    bool authorized;
-    // set to true if auth is from PnC, otherwise to false (EIM)
-    bool authorized_pnc;
-    bool matching_started;
-    float max_current;
-    std::chrono::time_point<date::utc_clock> max_current_valid_until;
-    float max_current_cable{0.};
-    bool transaction_active;
-    bool session_active;
-    bool connector_enabled;
-    EvseState current_state;
-    types::evse_manager::StopTransactionReason last_stop_transaction_reason;
-    types::evse_manager::StartSessionReason last_start_session_reason;
+    // used by different threads, complete main loop must be locked for write access
+    struct SharedContext {
+        // As per IEC61851-1 A.5.3
+        bool legacy_wakeup_done{false};
+        bool hlc_allow_close_contactor{false};
+        bool iec_allow_close_contactor{false};
+        bool hlc_charging_active{false};
+        HlcTerminatePause hlc_charging_terminate_pause;
+        types::iso15118_charger::DC_EVSEMaximumLimits current_evse_max_limits;
+        bool pwm_running{false};
+        std::optional<types::authorization::ProvidedIdToken>
+            stop_transaction_id_token; // only set in case transaction was stopped locally
+        types::authorization::ProvidedIdToken id_token;
+        bool authorized;
+        // set to true if auth is from PnC, otherwise to false (EIM)
+        bool authorized_pnc;
+        bool matching_started;
+        float max_current;
+        std::chrono::time_point<date::utc_clock> max_current_valid_until;
+        float max_current_cable{0.};
+        bool transaction_active;
+        bool session_active;
+        bool connector_enabled;
+        EvseState current_state;
+        types::evse_manager::StopTransactionReason last_stop_transaction_reason;
+        types::evse_manager::StartSessionReason last_start_session_reason;
+        float current_drawn_by_vehicle[3];
+        bool error_prevent_charging_flag{false};
+        int ac_with_soc_timer;
+        // non standard compliant option: time out after a while and switch back to DC to get SoC update
+        bool ac_with_soc_timeout;
+    } shared_context;
 
-    // State machine and setup (aka config locking)
-    int ac_with_soc_timer;
-    // non standard compliant option: time out after a while and switch back to DC to get SoC update
-    bool ac_with_soc_timeout;
-    // non standard compliant option to enforce HLC in AC mode
-    bool ac_enforce_hlc;
-    // Config option
-    bool ac_hlc_use_5percent;
-    // HLC enabled in current AC session. This can change during the session if e.g. HLC fails.
-    bool ac_hlc_enabled_current_session;
-    // Config option
-    bool ac_hlc_enabled;
-    // AC or DC
-    ChargeMode charge_mode{0};
-    float current_drawn_by_vehicle[3];
+    struct ConfigContext {
+        // non standard compliant option to enforce HLC in AC mode
+        bool ac_enforce_hlc;
+        // Config option to use 5 percent PWM in HLC AC mode
+        bool ac_hlc_use_5percent;
+        // Config option to enable HLC in AC mode
+        bool ac_hlc_enabled;
+        // AC or DC
+        ChargeMode charge_mode{0};
+    } config_context;
 
     // Used by different threads, but requires no complete state machine locking
     std::atomic_bool contactors_closed{false};
@@ -267,36 +268,42 @@ private:
     std::atomic<float> soft_over_current_measurement_noise_A{0.5};
     // HLC uses 5 percent signalling. Used both for AC and DC modes.
     std::atomic_bool hlc_use_5percent_current_session;
+    // HLC enabled in current AC session. This can change during the session if e.g. HLC fails.
+    std::atomic_bool ac_hlc_enabled_current_session;
 
-    // Only used from main loop thread
-    bool hlc_bcb_sequence_started{false};
-    int hlc_ev_pause_bcb_count{0};
-    std::chrono::time_point<std::chrono::steady_clock> hlc_ev_pause_start_of_bcb;
-    std::chrono::time_point<std::chrono::steady_clock> hlc_ev_pause_start_of_bcb_sequence;
-    float update_pwm_last_dc;
-    std::chrono::time_point<date::utc_clock> last_pwm_update;
-    const std::unique_ptr<IECStateMachine>& bsp;
-    const std::unique_ptr<ErrorHandling>& error_handling;
-    const types::evse_board_support::Connector_type& connector_type;
-    EvseState t_step_EF_return_state;
-    float t_step_EF_return_pwm;
+    // This struct is only used from main loop thread
+    struct InternalContext {
+        bool hlc_bcb_sequence_started{false};
+        int hlc_ev_pause_bcb_count{0};
+        std::chrono::time_point<std::chrono::steady_clock> hlc_ev_pause_start_of_bcb;
+        std::chrono::time_point<std::chrono::steady_clock> hlc_ev_pause_start_of_bcb_sequence;
+        float update_pwm_last_dc;
+        std::chrono::time_point<date::utc_clock> last_pwm_update;
 
-    EvseState t_step_X1_return_state;
-    float t_step_X1_return_pwm;
-    std::chrono::time_point<std::chrono::steady_clock> last_over_current_event;
-    bool over_current{false};
-    bool error_prevent_charging_flag{false};
-    bool last_error_prevent_charging_flag{false};
-    std::chrono::system_clock::time_point current_state_started;
-    EvseState last_state_detect_state_change;
-    EvseState last_state;
+        EvseState t_step_EF_return_state;
+        float t_step_EF_return_pwm;
+
+        EvseState t_step_X1_return_state;
+        float t_step_X1_return_pwm;
+        std::chrono::time_point<std::chrono::steady_clock> last_over_current_event;
+        bool over_current{false};
+
+        bool last_error_prevent_charging_flag{false};
+        std::chrono::system_clock::time_point current_state_started;
+        EvseState last_state_detect_state_change;
+        EvseState last_state;
+    } internal_context;
 
     // main Charger thread
     Everest::Thread main_thread_handle;
 
+    const std::unique_ptr<IECStateMachine>& bsp;
+    const std::unique_ptr<ErrorHandling>& error_handling;
+    const types::evse_board_support::Connector_type& connector_type;
+
     // constants
     static constexpr float CHARGER_ABSOLUTE_MAX_CURRENT{80.};
-    constexpr static int legacy_wakeup_timeout{30000};
+    constexpr static int LEGACY_WAKEUP_TIMEOUT{30000};
     // valid Length of BCB toggles
     static constexpr auto TP_EV_VALD_STATE_DURATION_MIN =
         std::chrono::milliseconds(200 - 50); // We give 50 msecs tolerance to the norm values (table 3 ISO15118-3)
@@ -310,10 +317,10 @@ private:
     static constexpr float PWM_5_PERCENT = 0.05;
     static constexpr int T_REPLUG_MS = 4000;
     // 3 seconds according to IEC61851-1
-    static constexpr int t_step_X1 = 3000;
+    static constexpr int T_STEP_X1 = 3000;
     // 4 seconds according to table 3 of ISO15118-3
-    static constexpr int t_step_EF = 4000;
-    static constexpr int soft_over_current_timeout = 7000;
+    static constexpr int T_STEP_EF = 4000;
+    static constexpr int SOFT_OVER_CURRENT_TIMEOUT = 7000;
 };
 
 } // namespace module
