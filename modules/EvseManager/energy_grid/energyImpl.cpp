@@ -103,7 +103,8 @@ void energyImpl::ready() {
     // request energy at the start and end of a charging session
     mod->charger->signal_state.connect([this](Charger::EvseState s) {
         if (s == Charger::EvseState::WaitingForAuthentication || s == Charger::EvseState::Finished) {
-            request_energy_from_energy_manager();
+            std::thread request_energy_thread([this]() { request_energy_from_energy_manager(); });
+            request_energy_thread.detach();
         }
     });
 }

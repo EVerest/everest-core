@@ -42,6 +42,7 @@
 #include "ErrorHandling.hpp"
 #include "SessionLog.hpp"
 #include "VarContainer.hpp"
+#include "scoped_lock_timeout.hpp"
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -190,7 +191,7 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
-    std::mutex power_mutex;
+    Everest::timed_mutex_traceable power_mutex;
     types::powermeter::Powermeter latest_powermeter_data_billing;
 
     Everest::Thread energyThreadHandle;
@@ -202,7 +203,7 @@ private:
 
     std::atomic_bool contactor_open{true};
 
-    std::mutex hlc_mutex;
+    Everest::timed_mutex_traceable hlc_mutex;
 
     bool hlc_enabled;
 
@@ -222,7 +223,7 @@ private:
     // Reservations
     bool reserved;
     int32_t reservation_id;
-    std::mutex reservation_mutex;
+    Everest::timed_mutex_traceable reservation_mutex;
 
     void setup_AC_mode();
     void setup_fake_DC_mode();
@@ -242,7 +243,7 @@ private:
     bool wait_powersupply_DC_below_voltage(double target_voltage);
 
     // EV information
-    std::mutex ev_info_mutex;
+    Everest::timed_mutex_traceable ev_info_mutex;
     types::evse_manager::EVInfo ev_info;
     types::evse_manager::CarManufacturer car_manufacturer{types::evse_manager::CarManufacturer::Unknown};
 

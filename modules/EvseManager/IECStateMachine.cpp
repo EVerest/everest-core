@@ -89,7 +89,8 @@ void IECStateMachine::process_bsp_event(const types::board_support_common::BspEv
     std::visit(overloaded{[this](RawCPState& raw_state) {
                               // If it is a raw CP state, run it through the state machine
                               {
-                                  std::lock_guard l(state_machine_mutex);
+                                  Everest::scoped_lock_timeout lock(state_machine_mutex,
+                                                                    "IECStateMachine::process_bsp_event");
                                   cp_state = raw_state;
                               }
                               feed_state_machine();
@@ -110,13 +111,16 @@ void IECStateMachine::process_bsp_event(const types::board_support_common::BspEv
 }
 
 void IECStateMachine::feed_state_machine() {
-    auto events = state_machine();
+    std::thread feed([this]() {
+        auto events = state_machine();
 
-    // Process all events
-    while (not events.empty()) {
-        signal_event(events.front());
-        events.pop();
-    }
+        // Process all events
+        while (not events.empty()) {
+            signal_event(events.front());
+            events.pop();
+        }
+    });
+    feed.detach();
 }
 
 // Main IEC state machine. Needs to be called whenever:
@@ -126,7 +130,7 @@ void IECStateMachine::feed_state_machine() {
 std::queue<CPEvent> IECStateMachine::state_machine() {
 
     std::queue<CPEvent> events;
-    std::lock_guard lock(state_machine_mutex);
+    Everest::scoped_lock_timeout lock(state_machine_mutex, "IECStateMachine::state_machine");
 
     switch (cp_state) {
 
@@ -282,7 +286,7 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
 // High level state machine sets PWM duty cycle
 void IECStateMachine::set_pwm(double value) {
     {
-        std::scoped_lock lock(state_machine_mutex);
+        Everest::scoped_lock_timeout lock(state_machine_mutex, "IECStateMachine::set_pwm");
         if (value > 0 && value < 1) {
             pwm_running = true;
         } else {
@@ -291,33 +295,36 @@ void IECStateMachine::set_pwm(double value) {
     }
 
     r_bsp->call_pwm_on(value * 100);
+
     feed_state_machine();
 }
 
 // High level state machine sets state X1
 void IECStateMachine::set_pwm_off() {
     {
-        std::scoped_lock lock(state_machine_mutex);
+        Everest::scoped_lock_timeout lock(state_machine_mutex, "IECStateMachine::set_pwm_off");
         pwm_running = false;
     }
     r_bsp->call_pwm_off();
+    // Don't run the state machine in the callers context
     feed_state_machine();
 }
 
 // High level state machine sets state F
 void IECStateMachine::set_pwm_F() {
     {
-        std::scoped_lock lock(state_machine_mutex);
+        Everest::scoped_lock_timeout lock(state_machine_mutex, "IECStateMachine::set_pwm_F");
         pwm_running = false;
     }
     r_bsp->call_pwm_F();
+    // Don't run the state machine in the callers context
     feed_state_machine();
 }
 
 // The higher level state machine in Charger.cpp calls this to indicate it allows contactors to be switched on
 void IECStateMachine::allow_power_on(bool value, types::evse_board_support::Reason reason) {
     {
-        std::scoped_lock lock(state_machine_mutex);
+        Everest::scoped_lock_timeout lock(state_machine_mutex, "IECStateMachine::allow_power_on");
         // Only set the flags here in case of power on.
         power_on_allowed = value;
         power_on_reason = reason;
@@ -327,6 +334,7 @@ void IECStateMachine::allow_power_on(bool value, types::evse_board_support::Reas
         }
     }
     // The actual power on will be handled in the state machine to verify it is in the correct CP state etc.
+    // Don't run the state machine in the callers context
     feed_state_machine();
 }
 
