@@ -96,8 +96,12 @@ void Charger::main_thread() {
 
 void Charger::run_state_machine() {
 
+    constexpr int max_mainloop_runs = 10;
+    int mainloop_runs = 0;
+
     // run over state machine loop until current_state does not change anymore
     do {
+        mainloop_runs++;
         // If a state change happened or an error recovered during a state we reinitialize the state
         bool initialize_state = (last_state_detect_state_change not_eq current_state) or
                                 (last_error_prevent_charging_flag not_eq error_prevent_charging_flag);
@@ -217,9 +221,12 @@ void Charger::run_state_machine() {
 
             // Wait for Energy Manager to supply some power, otherwise wait here.
             // If we have zero power, some cars will not like the ChargingParameter message.
-            if (charge_mode == ChargeMode::DC and not(current_evse_max_limits.EVSEMaximumCurrentLimit > 0 and
-                                                      current_evse_max_limits.EVSEMaximumPowerLimit > 0)) {
-                break;
+            if (charge_mode == ChargeMode::DC) {
+                // Create a copy of the atomic struct
+                types::iso15118_charger::DC_EVSEMaximumLimits evse_limit = current_evse_max_limits;
+                if (not(evse_limit.EVSEMaximumCurrentLimit > 0 and evse_limit.EVSEMaximumPowerLimit > 0)) {
+                    break;
+                }
             }
 
             // SLAC is running in the background trying to setup a PLC connection.
@@ -263,7 +270,7 @@ void Charger::run_state_machine() {
                             hlc_use_5percent_current_session = true;
                             current_state = target_state;
                         } else {
-                            if (not get_matching_started()) {
+                            if (not matching_started) {
                                 // SLAC matching was not started when EIM arrived
 
                                 session_log.evse(
@@ -649,6 +656,13 @@ void Charger::run_state_machine() {
             current_state = EvseState::Idle;
             break;
         }
+
+        if (mainloop_runs > max_mainloop_runs) {
+            EVLOG_warning << "Charger main loop exceeded maximum number of runs, last_state "
+                          << evse_state_to_string(last_state_detect_state_change)
+                          << " current_state: " << evse_state_to_string(current_state);
+        }
+
     } while (last_state_detect_state_change not_eq current_state);
 }
 
@@ -957,10 +971,11 @@ bool Charger::cancel_transaction(const types::evse_manager::StopTransactionReque
 void Charger::start_session(bool authfirst) {
     session_active = true;
     authorized = false;
-    if (authfirst)
+    if (authfirst) {
         last_start_session_reason = types::evse_manager::StartSessionReason::Authorized;
-    else
+    } else {
         last_start_session_reason = types::evse_manager::StartSessionReason::EVConnected;
+    }
     signal_event(types::evse_manager::SessionEventEnum::SessionStarted);
 }
 
@@ -1214,7 +1229,7 @@ void Charger::check_soft_over_current() {
         if (not over_current) {
             over_current = true;
             // timestamp when over current happend first
-            last_over_current_event = date::utc_clock::now();
+            last_over_current_event = std::chrono::steady_clock::now();
             session_log.evse(false,
                              fmt::format("Soft overcurrent event (L1:{}, L2:{}, L3:{}, limit {}), starting timer.",
                                          current_drawn_by_vehicle[0], current_drawn_by_vehicle[1],
@@ -1223,7 +1238,7 @@ void Charger::check_soft_over_current() {
     } else {
         over_current = false;
     }
-    auto now = date::utc_clock::now();
+    auto now = std::chrono::steady_clock::now();
     auto timeSinceOverCurrentStarted =
         std::chrono::duration_cast<std::chrono::milliseconds>(now - last_over_current_event).count();
     if (over_current and timeSinceOverCurrentStarted >= soft_over_current_timeout) {
