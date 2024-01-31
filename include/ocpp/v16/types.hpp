@@ -186,6 +186,19 @@ struct AvailabilityChange {
     bool persist;
 };
 
+/// \brief BootReasonEnum contains the different boot reasons of the charge point (copied from OCPP2.0.1 definition)
+enum BootReasonEnum {
+    ApplicationReset,
+    FirmwareUpdate,
+    LocalReset,
+    PowerUp,
+    RemoteReset,
+    ScheduledReset,
+    Triggered,
+    Unknown,
+    Watchdog
+};
+
 } // namespace v16
 } // namespace ocpp
 

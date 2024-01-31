@@ -430,18 +430,25 @@ public:
         MessageQueue(send_callback, config, {}, databaseHandler) {
     }
 
-    void get_transaction_messages_from_db() {
+    void get_transaction_messages_from_db(bool ignore_security_event_notifications = false) {
         std::vector<ocpp::common::DBTransactionMessage> transaction_messages =
             database_handler->get_transaction_messages();
 
         if (!transaction_messages.empty()) {
             for (auto& transaction_message : transaction_messages) {
-                std::shared_ptr<ControlMessage<M>> message =
-                    std::make_shared<ControlMessage<M>>(transaction_message.json_message);
-                message->messageType = string_to_messagetype(transaction_message.message_type);
-                message->timestamp = transaction_message.timestamp;
-                message->message_attempts = transaction_message.message_attempts;
-                transaction_message_queue.push_back(message);
+
+                if (ignore_security_event_notifications &&
+                    transaction_message.message_type == "SecurityEventNotification") {
+                    // remove from database in case SecurityEventNotification.req should not be sent
+                    this->database_handler->remove_transaction_message(transaction_message.unique_id);
+                } else {
+                    std::shared_ptr<ControlMessage<M>> message =
+                        std::make_shared<ControlMessage<M>>(transaction_message.json_message);
+                    message->messageType = string_to_messagetype(transaction_message.message_type);
+                    message->timestamp = transaction_message.timestamp;
+                    message->message_attempts = transaction_message.message_attempts;
+                    transaction_message_queue.push_back(message);
+                }
             }
 
             this->new_message = true;

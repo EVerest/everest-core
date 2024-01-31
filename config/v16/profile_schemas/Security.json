@@ -41,6 +41,12 @@
             "maximum": 3,
             "description": "This configuration key is used to set the security profile used by the Charge Point",
             "readOnly": false
+        },
+        "DisableSecurityEventNotifications": {
+            "type": "boolean",
+            "description": "When set to true, no SecurityEventNotification.req messages will be sent by the Charge Point",
+            "readOnly": false,
+            "default": false
         }
     }
 }

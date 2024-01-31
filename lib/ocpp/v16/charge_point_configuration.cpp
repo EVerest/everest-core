@@ -1719,6 +1719,23 @@ KeyValue ChargePointConfiguration::getSecurityProfileKeyValue() {
     return kv;
 }
 
+bool ChargePointConfiguration::getDisableSecurityEventNotifications() {
+    return this->config["Security"]["DisableSecurityEventNotifications"];
+}
+
+void ChargePointConfiguration::setDisableSecurityEventNotifications(bool disable_security_event_notifications) {
+    this->config["Security"]["DisableSecurityEventNotifications"] = disable_security_event_notifications;
+    this->setInUserConfig("Security", "DisableSecurityEventNotifications", disable_security_event_notifications);
+}
+
+KeyValue ChargePointConfiguration::getDisableSecurityEventNotificationsKeyValue() {
+    KeyValue kv;
+    kv.key = "DisableSecurityEventNotifications";
+    kv.readonly = false;
+    kv.value.emplace(ocpp::conversions::bool_to_string(this->getDisableSecurityEventNotifications()));
+    return kv;
+}
+
 // Local Auth List Management Profile
 bool ChargePointConfiguration::getLocalAuthListEnabled() {
     if (this->config.contains("LocalAuthListManagement")) {
@@ -2287,6 +2304,9 @@ std::optional<KeyValue> ChargePointConfiguration::get(CiString<50> key) {
     if (key == "SecurityProfile") {
         return this->getSecurityProfileKeyValue();
     }
+    if (key == "DisableSecurityEventNotifications") {
+        return this->getDisableSecurityEventNotificationsKeyValue();
+    }
     if (key == "StopTransactionOnEVSideDisconnect") {
         return this->getStopTransactionOnEVSideDisconnectKeyValue();
     }
@@ -2529,6 +2549,9 @@ ConfigurationStatus ChargePointConfiguration::set(CiString<50> key, CiString<500
     }
     if (key == "CpoName") {
         this->setCpoName(value.get());
+    }
+    if (key == "DisableSecurityEventNotifications") {
+        this->setDisableSecurityEventNotifications(ocpp::conversions::string_to_bool(value.get()));
     }
     if (key == "HeartbeatInterval") {
         try {

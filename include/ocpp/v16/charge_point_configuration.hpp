@@ -330,6 +330,11 @@ public:
     void setSecurityProfile(int32_t security_profile);
     KeyValue getSecurityProfileKeyValue();
 
+    // // Security profile - optional with default
+    bool getDisableSecurityEventNotifications();
+    void setDisableSecurityEventNotifications(bool disable_security_event_notifications);
+    KeyValue getDisableSecurityEventNotificationsKeyValue();
+
     // Local Auth List Management Profile
     bool getLocalAuthListEnabled();
     void setLocalAuthListEnabled(bool local_auth_list_enabled);

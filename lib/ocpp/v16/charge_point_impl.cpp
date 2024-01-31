@@ -28,6 +28,7 @@ ChargePointImpl::ChargePointImpl(const std::string& config, const fs::path& shar
     ocpp::ChargingStationBase(evse_security, security_configuration),
     boot_notification_callerror(false),
     initialized(false),
+    bootreason(BootReasonEnum::PowerUp),
     connection_state(ChargePointConnectionState::Disconnected),
     registration_status(RegistrationStatus::Pending),
     diagnostics_status(DiagnosticsStatus::Idle),
@@ -790,7 +791,8 @@ void ChargePointImpl::send_meter_value(int32_t connector, MeterValue meter_value
     this->send<MeterValuesRequest>(call, initiated_by_trigger_message);
 }
 
-bool ChargePointImpl::start(const std::map<int, ChargePointStatus>& connector_status_map) {
+bool ChargePointImpl::start(const std::map<int, ChargePointStatus>& connector_status_map, BootReasonEnum bootreason) {
+    this->bootreason = bootreason;
     this->init_state_machine(connector_status_map);
     this->init_websocket();
     this->websocket->connect();
@@ -801,7 +803,7 @@ bool ChargePointImpl::start(const std::map<int, ChargePointStatus>& connector_st
     return true;
 }
 
-bool ChargePointImpl::restart(const std::map<int, ChargePointStatus>& connector_status_map) {
+bool ChargePointImpl::restart(const std::map<int, ChargePointStatus>& connector_status_map, BootReasonEnum bootreason) {
     if (this->stopped) {
         EVLOG_info << "Restarting OCPP Chargepoint";
         this->database_handler->open_db_connection(this->configuration->getNumberOfConnectors());
@@ -809,7 +811,7 @@ bool ChargePointImpl::restart(const std::map<int, ChargePointStatus>& connector_
         this->message_queue = this->create_message_queue();
         this->initialized = true;
 
-        return this->start(connector_status_map);
+        return this->start(connector_status_map, bootreason);
     } else {
         EVLOG_warning << "Attempting to restart Chargepoint while it has not been stopped before";
         return false;
@@ -1014,6 +1016,7 @@ void ChargePointImpl::message_callback(const std::string& message) {
             auto call_error = CallError(MessageId(json_message.at(MESSAGE_ID).get<std::string>()), "FormationViolation",
                                         e.what(), json({}, true));
             this->send(call_error);
+            this->securityEventNotification(ocpp::security_events::INVALIDMESSAGES, message, true);
         }
     }
 }
@@ -1183,7 +1186,9 @@ void ChargePointImpl::handleBootNotificationResponse(ocpp::CallResult<BootNotifi
                                       ocpp::DateTime());
         }
 
-        this->message_queue->get_transaction_messages_from_db();
+        // push transaction messages including SecurityEventNotification.req onto the message queue
+        this->message_queue->get_transaction_messages_from_db(
+            this->configuration->getDisableSecurityEventNotifications());
 
         if (this->is_pnc_enabled()) {
             this->ocsp_request_timer->timeout(INITIAL_CERTIFICATE_REQUESTS_DELAY);
@@ -1197,6 +1202,17 @@ void ChargePointImpl::handleBootNotificationResponse(ocpp::CallResult<BootNotifi
 
         if (this->is_pnc_enabled()) {
             this->ocsp_request_timer->timeout(INITIAL_CERTIFICATE_REQUESTS_DELAY);
+        }
+
+        if (this->bootreason == BootReasonEnum::RemoteReset) {
+            this->securityEventNotification(CiString<50>(ocpp::security_events::RESET_OR_REBOOT),
+                                            "Charging Station rebooted due to requested remote reset!", true);
+        } else if (this->bootreason == BootReasonEnum::ScheduledReset) {
+            this->securityEventNotification(CiString<50>(ocpp::security_events::RESET_OR_REBOOT),
+                                            "Charging Station rebooted due to a scheduled reset!", true);
+        } else if (this->bootreason == BootReasonEnum::PowerUp) {
+            this->securityEventNotification(CiString<50>(ocpp::security_events::STARTUP_OF_THE_DEVICE),
+                                            "The Charge Point has booted", true);
         }
 
         this->stop_pending_transactions();
@@ -2230,7 +2246,7 @@ void ChargePointImpl::handleCertificateSignedRequest(ocpp::Call<CertificateSigne
     this->send<CertificateSignedResponse>(call_result);
 
     if (response.status == CertificateSignedStatusEnumType::Rejected) {
-        this->securityEventNotification("InvalidChargePointCertificate",
+        this->securityEventNotification(ocpp::security_events::INVALIDCHARGEPOINTCERTIFICATE,
                                         ocpp::conversions::install_certificate_result_to_string(result), true);
     }
 
@@ -2313,7 +2329,7 @@ void ChargePointImpl::handleInstallCertificateRequest(ocpp::Call<InstallCertific
     this->send<InstallCertificateResponse>(call_result);
 
     if (response.status == InstallCertificateStatusEnumType::Rejected) {
-        this->securityEventNotification("InvalidCentralSystemCertificate",
+        this->securityEventNotification(ocpp::security_events::INVALIDCSMSCERTIFICATE,
                                         ocpp::conversions::install_certificate_result_to_string(result), true);
     }
 }
@@ -2349,7 +2365,8 @@ void ChargePointImpl::handleSignedUpdateFirmware(ocpp::Call<SignedUpdateFirmware
     }
 
     if (response.status == UpdateFirmwareStatusEnumType::InvalidCertificate) {
-        this->securityEventNotification("InvalidFirmwareSigningCertificate", "Certificate is invalid.", true);
+        this->securityEventNotification(ocpp::security_events::INVALIDFIRMWARESIGNINGCERTIFICATE,
+                                        "Certificate is invalid.", true);
     }
 }
 
@@ -2363,8 +2380,10 @@ void ChargePointImpl::securityEventNotification(const std::string& type, const s
 
     this->logging->security(json(req).dump());
 
-    ocpp::Call<SecurityEventNotificationRequest> call(req, this->message_queue->createMessageId());
-    this->send<SecurityEventNotificationRequest>(call);
+    if (!this->configuration->getDisableSecurityEventNotifications()) {
+        ocpp::Call<SecurityEventNotificationRequest> call(req, this->message_queue->createMessageId());
+        this->send<SecurityEventNotificationRequest>(call);
+    }
 
     if (triggered_internally and this->security_event_callback != nullptr) {
         this->security_event_callback(type, tech_info);
@@ -2414,7 +2433,7 @@ void ChargePointImpl::signed_firmware_update_status_notification(FirmwareStatusE
     this->send<SignedFirmwareStatusNotificationRequest>(call, initiated_by_trigger_message);
 
     if (status == FirmwareStatusEnumType::InvalidSignature) {
-        this->securityEventNotification("InvalidFirmwareSignature", "", true);
+        this->securityEventNotification(ocpp::security_events::INVALIDFIRMWARESIGNATURE, "", true);
     }
 
     if (this->firmware_update_is_pending) {
@@ -2958,7 +2977,7 @@ void ChargePointImpl::handle_data_transfer_pnc_certificate_signed(Call<DataTrans
         this->send<DataTransferResponse>(call_result);
 
         if (certificate_response.status == CertificateSignedStatusEnumType::Rejected) {
-            this->securityEventNotification("InvalidChargePointCertificate", tech_info, true);
+            this->securityEventNotification(ocpp::security_events::INVALIDCHARGEPOINTCERTIFICATE, tech_info, true);
         }
     } catch (const json::exception& e) {
         EVLOG_warning << "Could not parse data of DataTransfer message CertificateSigned.req: " << e.what();
@@ -3424,6 +3443,10 @@ void ChargePointImpl::on_firmware_update_status_notification(int32_t request_id,
         }
     } catch (const std::out_of_range& e) {
         EVLOG_debug << "Could not convert incoming FirmwareStatusNotification to OCPP type";
+    }
+
+    if (firmware_update_status == FirmwareStatusNotification::Installed) {
+        this->securityEventNotification(ocpp::security_events::FIRMWARE_UPDATED, "Firmware update was installed", true);
     }
 }
 

@@ -86,6 +86,7 @@ namespace v16 {
 class ChargePointImpl : ocpp::ChargingStationBase {
 private:
     bool initialized;
+    BootReasonEnum bootreason;
     ChargePointConnectionState connection_state;
     bool boot_notification_callerror;
     RegistrationStatus registration_status;
@@ -373,15 +374,18 @@ public:
     /// \brief Starts the ChargePoint, initializes and connects to the Websocket endpoint and initializes a
     /// BootNotification.req
     /// \param connector_status_map initial state of connectors including connector 0 with reduced set of states
-    /// (Available, Unavailable, Faulted) \return
-    bool start(const std::map<int, ChargePointStatus>& connector_status_map);
+    /// (Available, Unavailable, Faulted)
+    /// \param bootreason reason for calling the start function
+    /// \return
+    bool start(const std::map<int, ChargePointStatus>& connector_status_map, BootReasonEnum bootreason);
 
     /// \brief Restarts the ChargePoint if it has been stopped before. The ChargePoint is reinitialized, connects to the
     /// websocket and starts to communicate OCPP messages again
     /// \param connector_status_map initial state of connectors including connector 0 with reduced set of states
     /// (Available, Unavailable, Faulted). connector_status_map is empty, last availability states from the persistant
     /// storage will be used
-    bool restart(const std::map<int, ChargePointStatus>& connector_status_map);
+    /// \param bootreason reason for calling the restart function
+    bool restart(const std::map<int, ChargePointStatus>& connector_status_map, BootReasonEnum bootreason);
 
     /// \brief Resets the internal state machine for the connectors using the given \p connector_status_map
     /// \param connector_status_map state of connectors including connector 0 with reduced set of states (Available,
