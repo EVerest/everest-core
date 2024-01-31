@@ -240,7 +240,8 @@ WebsocketConnectionOptions ChargePointImpl::get_ws_connection_options() {
                                                   this->configuration->getUseSslDefaultVerifyPaths(),
                                                   this->configuration->getAdditionalRootCertificateCheck(),
                                                   this->configuration->getHostName(),
-                                                  this->configuration->getVerifyCsmsCommonName()};
+                                                  this->configuration->getVerifyCsmsCommonName(),
+                                                  this->configuration->getUseTPM()};
     return connection_options;
 }
 

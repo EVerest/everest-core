@@ -46,15 +46,19 @@ enum class EConnectionState {
     FINALIZED,  ///< We finalized the connection and we're never going to connect again
 };
 
+/// \brief Message to return in the callback to close the socket connection
+static constexpr int LWS_CLOSE_SOCKET_RESPONSE_MESSAGE = -1;
+
 /// \brief Per thread connection data
 struct ConnectionData {
-    ConnectionData() : is_running(true), state(EConnectionState::INITIALIZE), wsi(nullptr) {
+    ConnectionData() : is_running(true), state(EConnectionState::INITIALIZE), wsi(nullptr), owner(nullptr) {
     }
 
     ~ConnectionData() {
         state = EConnectionState::FINALIZED;
         is_running = false;
         wsi = nullptr;
+        owner = nullptr;
     }
 
     void bind_thread(std::thread::id id) {
@@ -94,13 +98,15 @@ struct ConnectionData {
     }
 
 public:
-    // openssl context
+    // Openssl context, must be destroyed in this order
     std::unique_ptr<SSL_CTX> sec_context;
     std::unique_ptr<OSSL_LIB_CTX> sec_lib_context;
 
     // libwebsockets state
     std::unique_ptr<lws_context> lws_ctx;
     lws* wsi;
+
+    WebsocketTlsTPM* owner;
 
 private:
     std::thread::id lws_thread_id;
@@ -170,10 +176,10 @@ void WebsocketTlsTPM::set_connection_options(const WebsocketConnectionOptions& c
 }
 
 static int callback_minimal(struct lws* wsi, enum lws_callback_reasons reason, void* user, void* in, size_t len) {
-    // Get user safely, since on some callbacks (void *user) can be different
+    // Get user safely, since on some callbacks (void *user) can be different than what we set
     if (wsi != nullptr) {
-        if (WebsocketTlsTPM* websocket = reinterpret_cast<WebsocketTlsTPM*>(lws_wsi_user(wsi))) {
-            return websocket->process_callback(wsi, static_cast<int>(reason), user, in, len);
+        if (ConnectionData* data = reinterpret_cast<ConnectionData*>(lws_wsi_user(wsi))) {
+            return data->owner->process_callback(wsi, static_cast<int>(reason), user, in, len);
         }
     }
 
@@ -314,7 +320,8 @@ void WebsocketTlsTPM::recv_loop() {
     EVLOG_debug << "Init recv loop with ID: " << std::this_thread::get_id();
 
     while (false == data->is_interupted()) {
-        if (false == recv_message_queue.empty()) {
+        // Process all messages
+        while (false == recv_message_queue.empty()) {
             std::string message{};
 
             {
@@ -326,9 +333,12 @@ void WebsocketTlsTPM::recv_loop() {
             // Invoke our processing callback, that might trigger a send back that
             // can cause a deadlock if is not managed on a different thread
             this->message_callback(message);
-        } else {
+        }
+
+        // While we are empty, sleep
+        {
             std::unique_lock<std::mutex> lock(this->recv_mutex);
-            recv_message_cv.wait_for(lock, std::chrono::seconds(10),
+            recv_message_cv.wait_for(lock, std::chrono::seconds(1),
                                      [&]() { return (false == recv_message_queue.empty()); });
         }
     }
@@ -358,7 +368,9 @@ void WebsocketTlsTPM::client_loop() {
     info.options = LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
     info.port = CONTEXT_PORT_NO_LISTEN; /* we do not run any server */
     info.protocols = protocols;
-    info.user = this;
+
+    // Set reference to ConnectionData since 'data' can go away in the websocket
+    info.user = data;
 
     info.fd_limit_per_thread = 1 + 1 + 1;
 
@@ -413,7 +425,7 @@ void WebsocketTlsTPM::client_loop() {
     i.protocol = strdup(conversions::ocpp_protocol_version_to_string(this->connection_options.ocpp_version).c_str());
     i.local_protocol_name = local_protocol_name;
     i.pwsi = &conn_data->wsi;
-    i.userdata = this;
+    i.userdata = data; // See lws_context 'user'
 
     // TODO (ioan): See if we need retry policy since we handle this manually
     // i.retry_and_idle_policy = &retry;
@@ -436,6 +448,7 @@ void WebsocketTlsTPM::client_loop() {
     int n = 0;
 
     while (n >= 0 && (false == data->is_interupted())) {
+        // Set to -1 for continuous servicing, of required, not recommended
         n = lws_service(data->get_ctx(), 0);
 
         if (false == message_queue.empty()) {
@@ -462,6 +475,8 @@ bool WebsocketTlsTPM::connect() {
     }
 
     auto conn_data = new ConnectionData();
+    conn_data->owner = this;
+
     this->conn_data.reset(conn_data);
 
     // Wait old thread for a clean state
@@ -563,7 +578,6 @@ void WebsocketTlsTPM::close(websocketpp::close::status::value code, const std::s
 
     if (conn_data) {
         if (auto* data = conn_data.get()) {
-            // lws_close_reason(data->get_conn(), LWS_CLOSE_STATUS_NORMAL, NULL, 0);
             data->do_interrupt();
         }
 
@@ -693,8 +707,8 @@ void WebsocketTlsTPM::on_writable() {
         return;
     }
 
-    if (data->get_state() == EConnectionState::FINALIZED) {
-        EVLOG_error << "Trying to write message to finalized state!";
+    if (data->is_interupted() || data->get_state() == EConnectionState::FINALIZED) {
+        EVLOG_error << "Trying to write message to interrupted/finalized state!";
         return;
     }
 
@@ -712,7 +726,7 @@ void WebsocketTlsTPM::on_writable() {
 
         // Pop all sent messages
         if (message->sent_bytes >= message->payload.length()) {
-            EVLOG_debug << "Message fully written, popping from queue!";
+            EVLOG_info << "Websocket message fully written, popping processing thread from queue!";
 
             // If we have written all bytes to libwebsockets it means that if we received
             // this writable callback everything is sent over the wire, mark the message
@@ -723,6 +737,7 @@ void WebsocketTlsTPM::on_writable() {
                 message_queue.pop();
             }
 
+            EVLOG_debug << "Notifying waiting thread!";
             // Notify any waiting thread to check it's state
             msg_send_cv.notify_one();
         } else {
@@ -745,9 +760,13 @@ void WebsocketTlsTPM::on_writable() {
 void WebsocketTlsTPM::request_write() {
     if (this->m_is_connected) {
         if (auto* data = conn_data.get()) {
-            if (data->get_conn())
-                lws_callback_on_writable(data->get_conn());
+            if (data->get_conn()) {
+                // Notify waiting processing thread to wake up
+                lws_cancel_service(data->get_ctx());
+            }
         }
+    } else {
+        EVLOG_warning << "Requested write with offline TLS websocket!";
     }
 }
 
@@ -772,7 +791,7 @@ void WebsocketTlsTPM::poll_message(const std::shared_ptr<WebsocketMessage>& msg,
     }
 
     if (msg->message_sent)
-        EVLOG_debug << "Successfully sent last message over TLS websocket!";
+        EVLOG_info << "Successfully sent last message over TLS websocket!";
     else
         EVLOG_warning << "Could not send last message over TLS websocket!";
 }
@@ -805,14 +824,27 @@ void WebsocketTlsTPM::ping() {
 }
 
 int WebsocketTlsTPM::process_callback(void* wsi_ptr, int callback_reason, void* user, void* in, size_t len) {
+    enum lws_callback_reasons reason = static_cast<lws_callback_reasons>(callback_reason);
+
     lws* wsi = reinterpret_cast<lws*>(wsi_ptr);
 
-    enum lws_callback_reasons reason = static_cast<lws_callback_reasons>(callback_reason);
-    ConnectionData* data = this->conn_data.get();
+    // The ConnectionData is thread bound, so that if we clear it in the 'WebsocketTlsTPM'
+    // we still have a chance to close the connection here
+    ConnectionData* data = reinterpret_cast<ConnectionData*>(lws_wsi_user(wsi));
 
     // If we are in the process of deletion, just close socket and return
-    if (nullptr == data)
-        return -1;
+    if (nullptr == data) {
+        return LWS_CLOSE_SOCKET_RESPONSE_MESSAGE;
+    }
+
+    // If we are interrupted, close the socket cleanly
+    if (data->is_interupted()) {
+        EVLOG_info << "Conn interrupted/closed, closing socket!";
+
+        // Set the normal reason if we are interrupted
+        lws_close_reason(data->get_conn(), LWS_CLOSE_STATUS_NORMAL, NULL, 0);
+        return LWS_CLOSE_SOCKET_RESPONSE_MESSAGE;
+    }
 
     switch (reason) {
     // TODO: If required in the future
@@ -903,22 +935,34 @@ int WebsocketTlsTPM::process_callback(void* wsi_ptr, int callback_reason, void* 
     case LWS_CALLBACK_CLIENT_WRITEABLE:
         on_writable();
 
-        if (false == message_queue.empty())
+        if (false == message_queue.empty()) {
             lws_callback_on_writable(wsi);
+        }
+        break;
+
+    case LWS_CALLBACK_CLIENT_RECEIVE_PONG:
+        if (false == message_queue.empty()) {
+            lws_callback_on_writable(data->get_conn());
+        }
         break;
 
     case LWS_CALLBACK_CLIENT_RECEIVE:
         on_message(in, len);
+
+        if (false == message_queue.empty()) {
+            lws_callback_on_writable(data->get_conn());
+        }
+        break;
+
+    case LWS_CALLBACK_EVENT_WAIT_CANCELLED:
+        if (false == message_queue.empty()) {
+            lws_callback_on_writable(data->get_conn());
+        }
         break;
 
     default:
         EVLOG_info << "Callback with unhandled reason: " << reason;
         break;
-    }
-
-    if (data->is_interupted()) {
-        EVLOG_info << "Conn interrupted, closing socket!";
-        return -1;
     }
 
     // Return -1 on fatal error (-1 is request to close the socket)
