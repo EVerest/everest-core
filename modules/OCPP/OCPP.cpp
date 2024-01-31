@@ -536,11 +536,6 @@ void OCPP::ready() {
     this->charge_point->register_reserve_now_callback([this](int32_t reservation_id, int32_t connector,
                                                              ocpp::DateTime expiryDate, ocpp::CiString<20> idTag,
                                                              std::optional<ocpp::CiString<20>> parent_id) {
-        if (connector == 0) {
-            EVLOG_info << "Reservation for connector 0 is not supported";
-            return ocpp::v16::ReservationStatus::Rejected;
-        }
-
         types::reservation::Reservation reservation;
         reservation.id_token = idTag.get();
         reservation.reservation_id = reservation_id;
