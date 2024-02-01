@@ -1101,11 +1101,6 @@ void Charger::authorize(bool a, const types::authorization::ProvidedIdToken& tok
     }
 }
 
-types::authorization::ProvidedIdToken Charger::get_id_token() {
-    Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: get_id_token");
-    return shared_context.id_token;
-}
-
 bool Charger::deauthorize() {
     Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: deauthorize");
     return deauthorize_internal();
@@ -1295,11 +1290,6 @@ void Charger::set_matching_started(bool m) {
     shared_context.matching_started = m;
 }
 
-bool Charger::get_matching_started() {
-    Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: get_matching_started");
-    return shared_context.matching_started;
-}
-
 void Charger::notify_currentdemand_started() {
     Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: notify_currentdemand_started");
     if (shared_context.current_state == EvseState::PrepareCharging) {
@@ -1451,11 +1441,6 @@ bool Charger::bcb_toggle_detected() {
         return true;
     }
     return false;
-}
-
-void Charger::set_rcd_error() {
-    Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: set_rcd_error");
-    shared_context.error_prevent_charging_flag = true;
 }
 
 bool Charger::errors_prevent_charging() {

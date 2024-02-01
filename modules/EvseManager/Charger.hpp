@@ -98,7 +98,6 @@ public:
 
     void set_faulted();
     void set_hlc_error();
-    void set_rcd_error();
 
     // Public interface during charging
     //
@@ -108,7 +107,6 @@ public:
     // call when in state WaitingForAuthentication
     void authorize(bool a, const types::authorization::ProvidedIdToken& token);
     bool deauthorize();
-    types::authorization::ProvidedIdToken get_id_token();
 
     bool get_authorized_pnc();
     bool get_authorized_eim();
@@ -157,7 +155,6 @@ public:
     void request_error_sequence();
 
     void set_matching_started(bool m);
-    bool get_matching_started();
 
     void notify_currentdemand_started();
 
