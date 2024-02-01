@@ -98,7 +98,7 @@ private:
     /// message deque for transaction related messages
     std::deque<std::shared_ptr<ControlMessage<M>>> transaction_message_queue;
     /// message queue for non-transaction related messages
-    std::queue<std::shared_ptr<ControlMessage<M>>> normal_message_queue;
+    std::deque<std::shared_ptr<ControlMessage<M>>> normal_message_queue;
     std::shared_ptr<ControlMessage<M>> in_flight;
     std::recursive_mutex message_mutex;
     std::condition_variable_any cv;
@@ -162,7 +162,12 @@ private:
         EVLOG_debug << "Adding message to normal message queue";
         {
             std::lock_guard<std::recursive_mutex> lk(this->message_mutex);
-            this->normal_message_queue.push(message);
+            // A BootNotification message should always jump the queue
+            if (message->messageType == M::BootNotification) {
+                this->normal_message_queue.push_front(message);
+            } else {
+                this->normal_message_queue.push_back(message);
+            }
             this->new_message = true;
             this->check_queue_sizes();
         }
@@ -214,7 +219,7 @@ private:
         EVLOG_warning << "Dropping " << number_of_dropped_messages << " messages from normal message queue.";
 
         for (int i = 0; i < number_of_dropped_messages; i++) {
-            this->normal_message_queue.pop();
+            this->normal_message_queue.pop_front();
         }
     }
 
@@ -401,7 +406,7 @@ public:
                             EnhancedMessage<M> enhanced_message;
                             enhanced_message.offline = true;
                             this->in_flight->promise.set_value(enhanced_message);
-                            this->normal_message_queue.pop();
+                            this->normal_message_queue.pop_front();
                         }
                     }
                     this->reset_in_flight();
@@ -411,7 +416,7 @@ public:
                                                           this->current_message_timeout(message->message_attempts));
                     switch (queue_type) {
                     case QueueType::Normal:
-                        this->normal_message_queue.pop();
+                        this->normal_message_queue.pop_front();
                         break;
                     case QueueType::Transaction:
                         this->transaction_message_queue.pop_front();

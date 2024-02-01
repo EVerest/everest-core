@@ -175,8 +175,8 @@ void ChargePoint::start(BootReasonEnum bootreason) {
     // Trigger all initial status notifications and callbacks related to component state
     // Should be done before sending the BootNotification.req so that the correct states can be reported
     this->component_state_manager->trigger_all_effective_availability_changed_callbacks();
-    this->start_websocket();
     this->boot_notification_req(bootreason);
+    this->start_websocket();
     this->ocsp_updater.start();
     // FIXME(piet): Run state machine with correct initial state
 }
