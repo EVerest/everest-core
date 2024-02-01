@@ -795,7 +795,7 @@ void Charger::process_cp_events_independent(CPEvent cp_event) {
 
 void Charger::update_pwm_max_every_5seconds(float dc) {
     if (dc not_eq internal_context.update_pwm_last_dc) {
-        auto now = date::utc_clock::now();
+        auto now = std::chrono::steady_clock::now();
         auto timeSinceLastUpdate =
             std::chrono::duration_cast<std::chrono::milliseconds>(now - internal_context.last_pwm_update).count();
         if (timeSinceLastUpdate >= 5000) {
@@ -805,16 +805,17 @@ void Charger::update_pwm_max_every_5seconds(float dc) {
 }
 
 void Charger::update_pwm_now(float dc) {
-    auto start = date::utc_clock::now();
+    auto start = std::chrono::steady_clock::now();
     internal_context.update_pwm_last_dc = dc;
     shared_context.pwm_running = true;
     bsp->set_pwm(dc);
 
     session_log.evse(
         false,
-        fmt::format("Set PWM On ({}%) took {} ms", dc * 100.,
-                    (std::chrono::duration_cast<std::chrono::milliseconds>(date::utc_clock::now() - start)).count()));
-    internal_context.last_pwm_update = date::utc_clock::now();
+        fmt::format(
+            "Set PWM On ({}%) took {} ms", dc * 100.,
+            (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start)).count()));
+    internal_context.last_pwm_update = std::chrono::steady_clock::now();
 }
 
 void Charger::update_pwm_now_if_changed(float dc) {

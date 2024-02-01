@@ -278,7 +278,7 @@ private:
         std::chrono::time_point<std::chrono::steady_clock> hlc_ev_pause_start_of_bcb;
         std::chrono::time_point<std::chrono::steady_clock> hlc_ev_pause_start_of_bcb_sequence;
         float update_pwm_last_dc;
-        std::chrono::time_point<date::utc_clock> last_pwm_update;
+        std::chrono::time_point<std::chrono::steady_clock> last_pwm_update;
 
         EvseState t_step_EF_return_state;
         float t_step_EF_return_pwm;
