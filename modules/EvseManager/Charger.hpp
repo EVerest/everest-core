@@ -77,8 +77,6 @@ public:
         Pause
     };
 
-    using EventQueue = std::vector<types::evse_manager::SessionEventEnum>;
-
     // Public interface to configure Charger
     //
     // Call anytime also during charging, but call setters in this block at
@@ -88,6 +86,7 @@ public:
     // external input to charger: update max_current and new validUntil
     bool set_max_current(float ampere, std::chrono::time_point<date::utc_clock> validUntil);
     float get_max_current();
+    sigslot::signal<float> signal_max_current;
 
     void setup(bool three_phases, bool has_ventilation, const std::string& country_code, const ChargeMode charge_mode,
                bool ac_hlc_enabled, bool ac_hlc_use_5percent, bool ac_enforce_hlc, bool ac_with_soc_timeout,
@@ -139,15 +138,15 @@ public:
     void set_current_drawn_by_vehicle(float l1, float l2, float l3);
 
     // Signal for EvseEvents
-    sigslot::signal<types::evse_manager::SessionEventEnum> signal_event; // only called in non-locked scope
-    sigslot::signal<EvseState> signal_state;                             // only called in non-locked scope
+    sigslot::signal<types::evse_manager::SessionEventEnum> signal_event;
 
-    sigslot::signal<float> signal_max_current;    // still locked from power_available context
-    sigslot::signal<> signal_ac_with_soc_timeout; // in locked
-    sigslot::signal<> signal_dc_supply_off;       // locked in graceful_stop_charging from main state machine
-    sigslot::signal<> signal_slac_reset;          // locked from external handler
-    sigslot::signal<> signal_slac_start;          // locked from external handler
-    sigslot::signal<> signal_hlc_stop_charging;   // locked from state machine
+    sigslot::signal<> signal_ac_with_soc_timeout;
+
+    sigslot::signal<> signal_dc_supply_off;
+    sigslot::signal<> signal_slac_reset;
+    sigslot::signal<> signal_slac_start;
+
+    sigslot::signal<> signal_hlc_stop_charging;
 
     void process_event(CPEvent event);
 
@@ -163,6 +162,7 @@ public:
     std::string evse_state_to_string(EvseState s);
 
     EvseState get_current_state();
+    sigslot::signal<EvseState> signal_state;
 
     void inform_new_evse_max_hlc_limits(const types::iso15118_charger::DC_EVSEMaximumLimits& l);
     types::iso15118_charger::DC_EVSEMaximumLimits get_evse_max_hlc_limits();
@@ -177,8 +177,9 @@ public:
     bool errors_prevent_charging();
 
 private:
+    bool errors_prevent_charging_internal();
     float get_max_current_internal();
-    bool deauthorize_internal(EventQueue& queue);
+    bool deauthorize_internal();
     bool pause_charging_wait_for_power_internal();
 
     void bcb_toggle_reset();
@@ -208,12 +209,11 @@ private:
 
     bool power_available();
 
-    void start_session(bool authfirst, EventQueue& queue);
-    void stop_session(EventQueue& queue);
+    void start_session(bool authfirst);
+    void stop_session();
 
-    void start_transaction(EventQueue& queue);
-    void stop_transaction(EventQueue& queue);
-    void signal_all_events(EventQueue& queue);
+    void start_transaction();
+    void stop_transaction();
 
     // This mutex locks all variables related to the state machine
     std::recursive_mutex state_machine_mutex;
