@@ -1877,6 +1877,13 @@ void ChargePoint::handle_boot_notification_response(CallResult<BootNotificationR
     this->registration_status = msg.status;
 
     if (this->registration_status == RegistrationStatusEnum::Accepted) {
+        // B01.FR.06 Only use boot timestamp if TimeSource contains Heartbeat
+        if (this->callbacks.time_sync_callback.has_value() &&
+            this->device_model->get_value<std::string>(ControllerComponentVariables::TimeSource).find("Heartbeat") !=
+                std::string::npos) {
+            this->callbacks.time_sync_callback.value()(msg.currentTime);
+        }
+
         this->remove_network_connection_profiles_below_actual_security_profile();
 
         // get transaction messages from db (if there are any) so they can be sent again.
@@ -1888,12 +1895,6 @@ void ChargePoint::handle_boot_notification_response(CallResult<BootNotificationR
         }
         this->init_certificate_expiration_check_timers();
         this->update_aligned_data_interval();
-        // B01.FR.06 Only use boot timestamp if TimeSource contains Heartbeat
-        if (this->callbacks.time_sync_callback.has_value() &&
-            this->device_model->get_value<std::string>(ControllerComponentVariables::TimeSource).find("Heartbeat") !=
-                std::string::npos) {
-            this->callbacks.time_sync_callback.value()(msg.currentTime);
-        }
         this->component_state_manager->send_status_notification_all_connectors();
 
         if (this->bootreason == BootReasonEnum::RemoteReset) {
