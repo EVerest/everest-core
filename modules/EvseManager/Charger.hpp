@@ -38,6 +38,7 @@
 
 #include "ErrorHandling.hpp"
 #include "IECStateMachine.hpp"
+#include "scoped_lock_timeout.hpp"
 
 namespace module {
 
@@ -108,7 +109,6 @@ public:
     void authorize(bool a, const types::authorization::ProvidedIdToken& token);
     bool deauthorize();
     types::authorization::ProvidedIdToken get_id_token();
-    std::optional<types::authorization::ProvidedIdToken> get_stop_transaction_id_token();
 
     bool get_authorized_pnc();
     bool get_authorized_eim();
@@ -127,8 +127,6 @@ public:
 
     bool cancel_transaction(const types::evse_manager::StopTransactionRequest&
                                 request); // cancel transaction ahead of time when car is still plugged
-    types::evse_manager::StopTransactionReason get_transaction_finished_reason(); // get reason for last finished event
-    types::evse_manager::StartSessionReason get_session_started_reason(); // get reason for last session start event
 
     // execute a virtual replug sequence. Does NOT generate a Car plugged in event etc,
     // since the session is not restarted. It can be used to e.g. restart the ISO session
@@ -138,7 +136,11 @@ public:
     void set_current_drawn_by_vehicle(float l1, float l2, float l3);
 
     // Signal for EvseEvents
-    sigslot::signal<types::evse_manager::SessionEventEnum> signal_event;
+    sigslot::signal<types::evse_manager::SessionEventEnum> signal_simple_event;
+    sigslot::signal<types::evse_manager::StartSessionReason> signal_session_started_event;
+    sigslot::signal<types::authorization::ProvidedIdToken> signal_transaction_started_event;
+    sigslot::signal<types::evse_manager::StopTransactionReason, std::optional<types::authorization::ProvidedIdToken>>
+        signal_transaction_finished_event;
 
     sigslot::signal<> signal_ac_with_soc_timeout;
 
@@ -216,7 +218,7 @@ private:
     void stop_transaction();
 
     // This mutex locks all variables related to the state machine
-    std::recursive_mutex state_machine_mutex;
+    Everest::timed_mutex_traceable state_machine_mutex;
 
     // used by different threads, complete main loop must be locked for write access
     struct SharedContext {

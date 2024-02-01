@@ -8,6 +8,7 @@
 #include "IECStateMachine.hpp"
 #include "SessionLog.hpp"
 #include "Timeout.hpp"
+#include "scoped_lock_timeout.hpp"
 using namespace std::literals::chrono_literals;
 
 namespace module {
@@ -251,7 +252,8 @@ void EvseManager::ready() {
                     {
                         // dont publish ev_info here, it will be published when other values change.
                         // otherwise we will create too much traffic on mqtt
-                        std::scoped_lock lock(ev_info_mutex);
+                        Everest::scoped_lock_timeout lock(ev_info_mutex,
+                                                          "EvseManager.cpp: set ev_info present_voltage/current");
                         ev_info.present_voltage = present_values.EVSEPresentVoltage;
                         ev_info.present_current = present_values.EVSEPresentCurrent;
                         // p_evse->publish_ev_info(ev_info);
@@ -281,7 +283,7 @@ void EvseManager::ready() {
                     }
 
                     {
-                        std::scoped_lock lock(ev_info_mutex);
+                        Everest::scoped_lock_timeout lock(ev_info_mutex, "EvseManager.cpp: publish_ev_info");
                         ev_info.target_voltage = latest_target_voltage;
                         ev_info.target_current = latest_target_current;
                         p_evse->publish_ev_info(ev_info);
@@ -307,7 +309,7 @@ void EvseManager::ready() {
             r_hlc[0]->subscribe_currentDemand_Finished([this] { powersupply_DC_off(); });
 
             r_hlc[0]->subscribe_DC_EVMaximumLimits([this](types::iso15118_charger::DC_EVMaximumLimits l) {
-                std::scoped_lock lock(ev_info_mutex);
+                Everest::scoped_lock_timeout lock(ev_info_mutex, "EvseManager.cpp: subscribe_DC_EVMaximumLimits");
                 ev_info.maximum_current_limit = l.DC_EVMaximumCurrentLimit;
                 ev_info.maximum_power_limit = l.DC_EVMaximumPowerLimit;
                 ev_info.maximum_voltage_limit = l.DC_EVMaximumVoltageLimit;
@@ -315,70 +317,70 @@ void EvseManager::ready() {
             });
 
             r_hlc[0]->subscribe_DepartureTime([this](const std::string& t) {
-                std::scoped_lock lock(ev_info_mutex);
+                Everest::scoped_lock_timeout lock(ev_info_mutex, "EvseManager.cpp: subscribe_DepartureTime");
                 ev_info.departure_time = t;
                 p_evse->publish_ev_info(ev_info);
             });
 
             r_hlc[0]->subscribe_AC_EAmount([this](double e) {
                 // FIXME send only on change / throttle messages
-                std::scoped_lock lock(ev_info_mutex);
+                Everest::scoped_lock_timeout lock(ev_info_mutex, "EvseManager.cpp: subscribe_AC_EAmount");
                 ev_info.remaining_energy_needed = e;
                 p_evse->publish_ev_info(ev_info);
             });
 
             r_hlc[0]->subscribe_AC_EVMaxVoltage([this](double v) {
                 // FIXME send only on change / throttle messages
-                std::scoped_lock lock(ev_info_mutex);
+                Everest::scoped_lock_timeout lock(ev_info_mutex, "EvseManager.cpp: subscribe_AC_EVMaxVoltage");
                 ev_info.maximum_voltage_limit = v;
                 p_evse->publish_ev_info(ev_info);
             });
 
             r_hlc[0]->subscribe_AC_EVMaxCurrent([this](double c) {
                 // FIXME send only on change / throttle messages
-                std::scoped_lock lock(ev_info_mutex);
+                Everest::scoped_lock_timeout lock(ev_info_mutex, "EvseManager.cpp: subscribe_AC_EVMaxCurrent");
                 ev_info.maximum_current_limit = c;
                 p_evse->publish_ev_info(ev_info);
             });
 
             r_hlc[0]->subscribe_AC_EVMinCurrent([this](double c) {
                 // FIXME send only on change / throttle messages
-                std::scoped_lock lock(ev_info_mutex);
+                Everest::scoped_lock_timeout lock(ev_info_mutex, "EvseManager.cpp: subscribe_AC_EVMinCurrent");
                 ev_info.minimum_current_limit = c;
                 p_evse->publish_ev_info(ev_info);
             });
 
             r_hlc[0]->subscribe_DC_EVEnergyCapacity([this](double c) {
                 // FIXME send only on change / throttle messages
-                std::scoped_lock lock(ev_info_mutex);
+                Everest::scoped_lock_timeout lock(ev_info_mutex, "EvseManager.cpp: subscribe_DC_EVEnergyCapacity");
                 ev_info.battery_capacity = c;
                 p_evse->publish_ev_info(ev_info);
             });
 
             r_hlc[0]->subscribe_DC_EVEnergyRequest([this](double c) {
                 // FIXME send only on change / throttle messages
-                std::scoped_lock lock(ev_info_mutex);
+                Everest::scoped_lock_timeout lock(ev_info_mutex, "EvseManager.cpp: subscribe_DC_EVEnergyCapacity");
                 ev_info.remaining_energy_needed = c;
                 p_evse->publish_ev_info(ev_info);
             });
 
             r_hlc[0]->subscribe_DC_FullSOC([this](double c) {
                 // FIXME send only on change / throttle messages
-                std::scoped_lock lock(ev_info_mutex);
+                Everest::scoped_lock_timeout lock(ev_info_mutex, "EvseManager.cpp: subscribe_DC_FullSOC");
                 ev_info.battery_full_soc = c;
                 p_evse->publish_ev_info(ev_info);
             });
 
             r_hlc[0]->subscribe_DC_BulkSOC([this](double c) {
                 // FIXME send only on change / throttle messages
-                std::scoped_lock lock(ev_info_mutex);
+                Everest::scoped_lock_timeout lock(ev_info_mutex, "EvseManager.cpp: subscribe_DC_BulkSOC");
                 ev_info.battery_bulk_soc = c;
                 p_evse->publish_ev_info(ev_info);
             });
 
             r_hlc[0]->subscribe_DC_EVRemainingTime([this](types::iso15118_charger::DC_EVRemainingTime t) {
                 // FIXME send only on change / throttle messages
-                std::scoped_lock lock(ev_info_mutex);
+                Everest::scoped_lock_timeout lock(ev_info_mutex, "EvseManager.cpp: subscribe_DC_EVRemainingTime");
                 ev_info.estimated_time_full = t.EV_RemainingTimeToFullSoC;
                 ev_info.estimated_time_bulk = t.EV_RemainingTimeToBulkSoC;
                 p_evse->publish_ev_info(ev_info);
@@ -386,7 +388,7 @@ void EvseManager::ready() {
 
             r_hlc[0]->subscribe_DC_EVStatus([this](types::iso15118_charger::DC_EVStatusType s) {
                 // FIXME send only on change / throttle messages
-                std::scoped_lock lock(ev_info_mutex);
+                Everest::scoped_lock_timeout lock(ev_info_mutex, "EvseManager.cpp subscribe_DC_EVStatus");
                 ev_info.soc = s.DC_EVRESSSOC;
                 p_evse->publish_ev_info(ev_info);
             });
@@ -440,7 +442,7 @@ void EvseManager::ready() {
             if ((config.dbg_hlc_auth_after_tstep and charger->get_authorized_eim_ready_for_hlc()) or
                 (not config.dbg_hlc_auth_after_tstep and charger->get_authorized_eim())) {
                 {
-                    std::scoped_lock lock(hlc_mutex);
+                    Everest::scoped_lock_timeout lock(hlc_mutex, "EvseManager.cpp: subscribe_Require_Auth_EIM");
                     hlc_waiting_for_auth_eim = false;
                     hlc_waiting_for_auth_pnc = false;
                 }
@@ -448,7 +450,7 @@ void EvseManager::ready() {
                                                       types::authorization::CertificateStatus::NoCertificateAvailable);
             } else {
                 p_token_provider->publish_provided_token(autocharge_token);
-                std::scoped_lock lock(hlc_mutex);
+                Everest::scoped_lock_timeout lock(hlc_mutex, "EvseManager.cpp: publish_provided_token");
                 hlc_waiting_for_auth_eim = true;
                 hlc_waiting_for_auth_pnc = false;
             }
@@ -461,7 +463,7 @@ void EvseManager::ready() {
                 p_evse->publish_car_manufacturer(car_manufacturer);
 
                 {
-                    std::scoped_lock lock(ev_info_mutex);
+                    Everest::scoped_lock_timeout lock(ev_info_mutex, "EvseManager.cpp: subscribe_EVCCIDD");
                     ev_info.evcc_id = token;
                     p_evse->publish_ev_info(ev_info);
                 }
@@ -476,12 +478,12 @@ void EvseManager::ready() {
             p_token_provider->publish_provided_token(_token);
             if (charger->get_authorized_pnc()) {
                 {
-                    std::scoped_lock lock(hlc_mutex);
+                    Everest::scoped_lock_timeout lock(hlc_mutex, "EvseManager.cpp: subscribe_Require_Auth_PnC 1");
                     hlc_waiting_for_auth_eim = false;
                     hlc_waiting_for_auth_pnc = false;
                 }
             } else {
-                std::scoped_lock lock(hlc_mutex);
+                Everest::scoped_lock_timeout lock(hlc_mutex, "EvseManager.cpp: subscribe_Require_Auth_PnC 2");
                 hlc_waiting_for_auth_eim = false;
                 hlc_waiting_for_auth_pnc = true;
             }
@@ -584,7 +586,7 @@ void EvseManager::ready() {
                 latest_target_voltage = 0;
                 latest_target_current = 0;
                 {
-                    std::scoped_lock lock(hlc_mutex);
+                    Everest::scoped_lock_timeout lock(hlc_mutex, "EvseManager.cpp: bsp->signal_event.connect");
                     hlc_waiting_for_auth_eim = false;
                     hlc_waiting_for_auth_pnc = false;
                 }
@@ -602,12 +604,6 @@ void EvseManager::ready() {
                 r_hlc[0]->call_ac_contactor_closed(false);
             }
         }
-
-        if (config.ac_with_soc)
-            charger->signal_ac_with_soc_timeout.connect([this]() {
-                EVLOG_info << "AC with SoC timeout";
-                switch_DC_mode();
-            });
     });
 
     r_bsp->subscribe_ac_nr_of_phases_available([this](int n) { signalNrOfPhasesAvailable(n); });
@@ -627,7 +623,7 @@ void EvseManager::ready() {
 
             // Store local cache
             {
-                std::scoped_lock lock(power_mutex);
+                Everest::scoped_lock_timeout lock(power_mutex, "EvseManager.cpp: subscribe_powermeter");
                 latest_powermeter_data_billing = p;
             }
 
@@ -685,14 +681,13 @@ void EvseManager::ready() {
         }
     });
 
-    charger->signal_event.connect([this](types::evse_manager::SessionEventEnum s) {
+    charger->signal_simple_event.connect([this](types::evse_manager::SessionEventEnum s) {
         // Cancel reservations if charger is disabled or faulted
         if (s == types::evse_manager::SessionEventEnum::Disabled or
             s == types::evse_manager::SessionEventEnum::PermanentFault) {
             cancel_reservation(true);
         }
-        if (s == types::evse_manager::SessionEventEnum::SessionStarted or
-            s == types::evse_manager::SessionEventEnum::SessionFinished) {
+        if (s == types::evse_manager::SessionEventEnum::SessionFinished) {
             // Reset EV information on Session start and end
             ev_info = types::evse_manager::EVInfo();
             p_evse->publish_ev_info(ev_info);
@@ -700,13 +695,7 @@ void EvseManager::ready() {
 
         std::vector<types::iso15118_charger::PaymentOption> payment_options;
 
-        if (get_hlc_enabled() and s == types::evse_manager::SessionEventEnum::SessionStarted and
-            charger->get_session_started_reason() == types::evse_manager::StartSessionReason::Authorized) {
-
-            payment_options.push_back(types::iso15118_charger::PaymentOption::ExternalPayment);
-            r_hlc[0]->call_session_setup(payment_options, false);
-
-        } else if (get_hlc_enabled() and s == types::evse_manager::SessionEventEnum::SessionFinished) {
+        if (get_hlc_enabled() and s == types::evse_manager::SessionEventEnum::SessionFinished) {
             if (config.payment_enable_eim) {
                 payment_options.push_back(types::iso15118_charger::PaymentOption::ExternalPayment);
             }
@@ -714,6 +703,19 @@ void EvseManager::ready() {
                 payment_options.push_back(types::iso15118_charger::PaymentOption::Contract);
             }
             r_hlc[0]->call_session_setup(payment_options, config.payment_enable_contract);
+        }
+    });
+
+    charger->signal_session_started_event.connect([this](types::evse_manager::StartSessionReason start_reason) {
+        // Reset EV information on Session start and end
+        ev_info = types::evse_manager::EVInfo();
+        p_evse->publish_ev_info(ev_info);
+
+        std::vector<types::iso15118_charger::PaymentOption> payment_options;
+
+        if (get_hlc_enabled() and start_reason == types::evse_manager::StartSessionReason::Authorized) {
+            payment_options.push_back(types::iso15118_charger::PaymentOption::ExternalPayment);
+            r_hlc[0]->call_session_setup(payment_options, false);
         }
     });
 
@@ -852,7 +854,7 @@ void EvseManager::ready_to_start_charging() {
 }
 
 types::powermeter::Powermeter EvseManager::get_latest_powermeter_data_billing() {
-    std::scoped_lock lock(power_mutex);
+    Everest::scoped_lock_timeout lock(power_mutex, "EvseManager.cpp: get_latest_powermeter_data_billing");
     return latest_powermeter_data_billing;
 }
 
@@ -861,7 +863,7 @@ types::evse_board_support::HardwareCapabilities EvseManager::get_hw_capabilities
 }
 
 int32_t EvseManager::get_reservation_id() {
-    std::lock_guard<std::mutex> lock(reservation_mutex);
+    Everest::scoped_lock_timeout lock(reservation_mutex, "EvseManager.cpp: get_reservation_id");
     return reservation_id;
 }
 
@@ -1071,7 +1073,7 @@ bool EvseManager::reserve(int32_t id) {
         return false;
     }
 
-    std::lock_guard<std::mutex> lock(reservation_mutex);
+    Everest::scoped_lock_timeout lock(reservation_mutex, "EvseManager.cpp: reserve");
 
     if (not reserved) {
         reserved = true;
@@ -1090,7 +1092,7 @@ bool EvseManager::reserve(int32_t id) {
 
 void EvseManager::cancel_reservation(bool signal_event) {
 
-    std::lock_guard<std::mutex> lock(reservation_mutex);
+    Everest::scoped_lock_timeout lock(reservation_mutex, "EvseManager.cpp: cancel_reservation");
     if (reserved) {
         reserved = false;
         reservation_id = 0;
@@ -1105,7 +1107,7 @@ void EvseManager::cancel_reservation(bool signal_event) {
 }
 
 bool EvseManager::is_reserved() {
-    std::lock_guard<std::mutex> lock(reservation_mutex);
+    Everest::scoped_lock_timeout lock(reservation_mutex, "EvseManager.cpp: is_reserved");
     return reserved;
 }
 
@@ -1114,12 +1116,12 @@ bool EvseManager::getLocalThreePhases() {
 }
 
 bool EvseManager::get_hlc_enabled() {
-    std::lock_guard<std::mutex> lock(hlc_mutex);
+    Everest::scoped_lock_timeout lock(hlc_mutex, "EvseManager.cpp: get_hlc_enabled");
     return hlc_enabled;
 }
 
 bool EvseManager::get_hlc_waiting_for_auth_pnc() {
-    std::lock_guard<std::mutex> lock(hlc_mutex);
+    Everest::scoped_lock_timeout lock(hlc_mutex, "EvseManager.cpp: get_hlc_waiting_for_auth_pnc");
     return hlc_waiting_for_auth_pnc;
 }
 
@@ -1146,7 +1148,7 @@ void EvseManager::log_v2g_message(Object m) {
 
 void EvseManager::charger_was_authorized() {
 
-    std::scoped_lock lock(hlc_mutex);
+    Everest::scoped_lock_timeout lock(hlc_mutex, "EvseManager.cpp: charger_was_authorized");
     if (hlc_waiting_for_auth_pnc and charger->get_authorized_pnc()) {
         r_hlc[0]->call_authorization_response(types::authorization::AuthorizationStatus::Accepted,
                                               types::authorization::CertificateStatus::Accepted);
@@ -1472,7 +1474,7 @@ void EvseManager::fail_session() {
 }
 
 types::evse_manager::EVInfo EvseManager::get_ev_info() {
-    std::scoped_lock l(ev_info_mutex);
+    Everest::scoped_lock_timeout l(ev_info_mutex, "EvseManager.cpp: get_ev_info");
     return ev_info;
 }
 

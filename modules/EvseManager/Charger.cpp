@@ -15,6 +15,8 @@
 
 #include <fmt/core.h>
 
+#include "scoped_lock_timeout.hpp"
+
 namespace module {
 
 Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_ptr<ErrorHandling>& error_handling,
@@ -49,17 +51,24 @@ Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_
     // Register callbacks for errors/error clearings
     error_handling->signal_error.connect([this](const types::evse_manager::Error e, const bool prevent_charging) {
         if (prevent_charging) {
-            std::scoped_lock lock(state_machine_mutex);
-            shared_context.error_prevent_charging_flag = true;
+            std::thread error_thread([this]() {
+                Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: error_handling->signal_error");
+                shared_context.error_prevent_charging_flag = true;
+            });
+            error_thread.detach();
         }
     });
 
     error_handling->signal_all_errors_cleared.connect([this]() {
         EVLOG_info << "All errors cleared";
-        signal_event(types::evse_manager::SessionEventEnum::AllErrorsCleared);
+        signal_simple_event(types::evse_manager::SessionEventEnum::AllErrorsCleared);
         {
-            std::scoped_lock lock(state_machine_mutex);
-            shared_context.error_prevent_charging_flag = false;
+            std::thread error_thread([this]() {
+                Everest::scoped_lock_timeout lock(state_machine_mutex,
+                                                  "Charger.cpp: error_handling->signal_all_errors_cleared");
+                shared_context.error_prevent_charging_flag = false;
+            });
+            error_thread.detach();
         }
     });
 }
@@ -84,7 +93,7 @@ void Charger::main_thread() {
         std::this_thread::sleep_for(MAINLOOP_UPDATE_RATE);
 
         {
-            std::scoped_lock lock(state_machine_mutex);
+            Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: mainloop");
             // update power limits
             power_available();
             // Run our own state machine update (i.e. run everything that needs
@@ -137,14 +146,14 @@ void Charger::run_state_machine() {
         switch (shared_context.current_state) {
         case EvseState::Disabled:
             if (initialize_state) {
-                signal_event(types::evse_manager::SessionEventEnum::Disabled);
+                signal_simple_event(types::evse_manager::SessionEventEnum::Disabled);
                 pwm_F();
             }
             break;
 
         case EvseState::Replug:
             if (initialize_state) {
-                signal_event(types::evse_manager::SessionEventEnum::ReplugStarted);
+                signal_simple_event(types::evse_manager::SessionEventEnum::ReplugStarted);
                 // start timer in case we need to
                 if (shared_context.ac_with_soc_timeout) {
                     shared_context.ac_with_soc_timer = 120000;
@@ -178,14 +187,14 @@ void Charger::run_state_machine() {
                 bsp->allow_power_on(false, types::evse_board_support::Reason::PowerOff);
 
                 if (internal_context.last_state == EvseState::Replug) {
-                    signal_event(types::evse_manager::SessionEventEnum::ReplugFinished);
+                    signal_simple_event(types::evse_manager::SessionEventEnum::ReplugFinished);
                 } else {
                     // First user interaction was plug in of car? Start session here.
                     if (not shared_context.session_active) {
                         start_session(false);
                     }
                     // External signal on MQTT
-                    signal_event(types::evse_manager::SessionEventEnum::AuthRequired);
+                    signal_simple_event(types::evse_manager::SessionEventEnum::AuthRequired);
                 }
                 hlc_use_5percent_current_session = false;
 
@@ -398,9 +407,8 @@ void Charger::run_state_machine() {
             break;
 
         case EvseState::PrepareCharging:
-
             if (initialize_state) {
-                signal_event(types::evse_manager::SessionEventEnum::PrepareCharging);
+                signal_simple_event(types::evse_manager::SessionEventEnum::PrepareCharging);
                 bcb_toggle_reset();
             }
 
@@ -417,7 +425,8 @@ void Charger::run_state_machine() {
 
             // make sure we are enabling PWM
             if (not hlc_use_5percent_current_session) {
-                update_pwm_now_if_changed(ampere_to_duty_cycle(get_max_current_internal()));
+                auto m = get_max_current_internal();
+                update_pwm_now_if_changed(ampere_to_duty_cycle(m));
             } else {
                 update_pwm_now_if_changed(PWM_5_PERCENT);
             }
@@ -430,7 +439,7 @@ void Charger::run_state_machine() {
                     (shared_context.iec_allow_close_contactor and shared_context.hlc_allow_close_contactor and
                      hlc_use_5percent_current_session)) {
 
-                    signal_event(types::evse_manager::SessionEventEnum::ChargingStarted);
+                    signal_simple_event(types::evse_manager::SessionEventEnum::ChargingStarted);
 
                     if (power_available()) {
                         shared_context.current_state = EvseState::Charging;
@@ -485,7 +494,7 @@ void Charger::run_state_machine() {
 
                 if (initialize_state) {
                     if (internal_context.last_state not_eq EvseState::PrepareCharging) {
-                        signal_event(types::evse_manager::SessionEventEnum::ChargingResumed);
+                        signal_simple_event(types::evse_manager::SessionEventEnum::ChargingResumed);
                     }
 
                     // Allow another wake-up sequence
@@ -531,7 +540,7 @@ void Charger::run_state_machine() {
                     if (config_context.charge_mode == ChargeMode::DC) {
                         signal_dc_supply_off();
                     }
-                    signal_event(types::evse_manager::SessionEventEnum::ChargingPausedEV);
+                    signal_simple_event(types::evse_manager::SessionEventEnum::ChargingPausedEV);
                 }
 
                 if (bcb_toggle_detected()) {
@@ -566,7 +575,7 @@ void Charger::run_state_machine() {
                 }
 
                 if (initialize_state) {
-                    signal_event(types::evse_manager::SessionEventEnum::ChargingPausedEV);
+                    signal_simple_event(types::evse_manager::SessionEventEnum::ChargingPausedEV);
                 } else {
                     // update PWM if it has changed and 5 seconds have passed since last update
                     if (not errors_prevent_charging_internal()) {
@@ -578,7 +587,7 @@ void Charger::run_state_machine() {
 
         case EvseState::ChargingPausedEVSE:
             if (initialize_state) {
-                signal_event(types::evse_manager::SessionEventEnum::ChargingPausedEVSE);
+                signal_simple_event(types::evse_manager::SessionEventEnum::ChargingPausedEVSE);
                 if (shared_context.hlc_charging_active) {
                     // currentState = EvseState::StoppingCharging;
                     shared_context.last_stop_transaction_reason = types::evse_manager::StopTransactionReason::Local;
@@ -593,7 +602,7 @@ void Charger::run_state_machine() {
 
         case EvseState::WaitingForEnergy:
             if (initialize_state) {
-                signal_event(types::evse_manager::SessionEventEnum::WaitingForEnergy);
+                signal_simple_event(types::evse_manager::SessionEventEnum::WaitingForEnergy);
                 if (not hlc_use_5percent_current_session) {
                     pwm_off();
                 }
@@ -604,7 +613,7 @@ void Charger::run_state_machine() {
             if (initialize_state) {
                 bcb_toggle_reset();
                 if (shared_context.transaction_active or shared_context.session_active) {
-                    signal_event(types::evse_manager::SessionEventEnum::StoppingCharging);
+                    signal_simple_event(types::evse_manager::SessionEventEnum::StoppingCharging);
                 }
 
                 if (shared_context.hlc_charging_active) {
@@ -646,6 +655,7 @@ void Charger::run_state_machine() {
                 if (shared_context.transaction_active) {
                     stop_transaction();
                 }
+
                 // We may come here from an error state, so a session was maybe not active.
                 if (shared_context.session_active) {
                     stop_session();
@@ -684,13 +694,13 @@ void Charger::process_event(CPEvent cp_event) {
         break;
     }
 
-    std::scoped_lock lock(state_machine_mutex);
-
     if (cp_event == CPEvent::PowerOn) {
         contactors_closed = true;
     } else if (cp_event == CPEvent::PowerOff) {
         contactors_closed = false;
     }
+
+    Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: process_event");
 
     run_state_machine();
 
@@ -808,7 +818,6 @@ void Charger::update_pwm_now(float dc) {
     auto start = std::chrono::steady_clock::now();
     internal_context.update_pwm_last_dc = dc;
     shared_context.pwm_running = true;
-    bsp->set_pwm(dc);
 
     session_log.evse(
         false,
@@ -816,6 +825,8 @@ void Charger::update_pwm_now(float dc) {
             "Set PWM On ({}%) took {} ms", dc * 100.,
             (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start)).count()));
     internal_context.last_pwm_update = std::chrono::steady_clock::now();
+
+    bsp->set_pwm(dc);
 }
 
 void Charger::update_pwm_now_if_changed(float dc) {
@@ -888,7 +899,7 @@ bool Charger::set_max_current(float c, std::chrono::time_point<date::utc_clock> 
 
 // pause if currently charging, else do nothing.
 bool Charger::pause_charging() {
-    std::scoped_lock lock(state_machine_mutex);
+    Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: pause_charging");
     if (shared_context.current_state == EvseState::Charging) {
         shared_context.legacy_wakeup_done = false;
         shared_context.current_state = EvseState::ChargingPausedEVSE;
@@ -898,7 +909,7 @@ bool Charger::pause_charging() {
 }
 
 bool Charger::resume_charging() {
-    std::scoped_lock lock(state_machine_mutex);
+    Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: resume_charging");
 
     if (shared_context.hlc_charging_active and shared_context.transaction_active and
         shared_context.current_state == EvseState::ChargingPausedEVSE) {
@@ -916,7 +927,7 @@ bool Charger::resume_charging() {
 
 // pause charging since no power is available at the moment
 bool Charger::pause_charging_wait_for_power() {
-    std::scoped_lock lock(state_machine_mutex);
+    Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: pause_charging_wait_for_power");
     return pause_charging_wait_for_power_internal();
 }
 
@@ -931,7 +942,7 @@ bool Charger::pause_charging_wait_for_power_internal() {
 
 // resume charging since power became available. Does not resume if user paused charging.
 bool Charger::resume_charging_power_available() {
-    std::scoped_lock lock(state_machine_mutex);
+    Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: resume_charging_power_available");
 
     if (shared_context.transaction_active and shared_context.current_state == EvseState::WaitingForEnergy and
         power_available()) {
@@ -954,7 +965,7 @@ bool Charger::evse_replug() {
 
 // Cancel transaction/charging from external EvseManager interface (e.g. via OCPP)
 bool Charger::cancel_transaction(const types::evse_manager::StopTransactionRequest& request) {
-    std::scoped_lock lock(state_machine_mutex);
+    Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: cancel_transaction");
 
     if (shared_context.transaction_active) {
         if (shared_context.hlc_charging_active) {
@@ -969,8 +980,9 @@ bool Charger::cancel_transaction(const types::evse_manager::StopTransactionReque
         if (request.id_tag) {
             shared_context.stop_transaction_id_token = request.id_tag.value();
         }
-        signal_event(types::evse_manager::SessionEventEnum::ChargingFinished);
-        signal_event(types::evse_manager::SessionEventEnum::TransactionFinished);
+        signal_simple_event(types::evse_manager::SessionEventEnum::ChargingFinished);
+        signal_transaction_finished_event(shared_context.last_stop_transaction_reason,
+                                          shared_context.stop_transaction_id_token);
         return true;
     }
     return false;
@@ -984,41 +996,27 @@ void Charger::start_session(bool authfirst) {
     } else {
         shared_context.last_start_session_reason = types::evse_manager::StartSessionReason::EVConnected;
     }
-    signal_event(types::evse_manager::SessionEventEnum::SessionStarted);
+    signal_session_started_event(shared_context.last_start_session_reason);
 }
 
 void Charger::stop_session() {
     shared_context.session_active = false;
     shared_context.authorized = false;
-    signal_event(types::evse_manager::SessionEventEnum::SessionFinished);
+    signal_simple_event(types::evse_manager::SessionEventEnum::SessionFinished);
 }
 
 void Charger::start_transaction() {
     shared_context.stop_transaction_id_token.reset();
     shared_context.transaction_active = true;
-    signal_event(types::evse_manager::SessionEventEnum::TransactionStarted);
+    signal_transaction_started_event(shared_context.id_token);
 }
 
 void Charger::stop_transaction() {
     shared_context.transaction_active = false;
     shared_context.last_stop_transaction_reason = types::evse_manager::StopTransactionReason::EVDisconnected;
-    signal_event(types::evse_manager::SessionEventEnum::ChargingFinished);
-    signal_event(types::evse_manager::SessionEventEnum::TransactionFinished);
-}
-
-std::optional<types::authorization::ProvidedIdToken> Charger::get_stop_transaction_id_token() {
-    std::lock_guard lock(state_machine_mutex);
-    return shared_context.stop_transaction_id_token;
-}
-
-types::evse_manager::StopTransactionReason Charger::get_transaction_finished_reason() {
-    std::scoped_lock lock(state_machine_mutex);
-    return shared_context.last_stop_transaction_reason;
-}
-
-types::evse_manager::StartSessionReason Charger::get_session_started_reason() {
-    std::scoped_lock lock(state_machine_mutex);
-    return shared_context.last_start_session_reason;
+    signal_simple_event(types::evse_manager::SessionEventEnum::ChargingFinished);
+    signal_transaction_finished_event(shared_context.last_stop_transaction_reason,
+                                      shared_context.stop_transaction_id_token);
 }
 
 bool Charger::switch_three_phases_while_charging(bool n) {
@@ -1033,7 +1031,7 @@ void Charger::setup(bool three_phases, bool has_ventilation, const std::string& 
     // set up board support package
     bsp->setup(three_phases, has_ventilation, country_code);
 
-    std::scoped_lock lock(state_machine_mutex);
+    Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: setup");
     // cache our config variables
     config_context.charge_mode = _charge_mode;
     ac_hlc_enabled_current_session = config_context.ac_hlc_enabled = _ac_hlc_enabled;
@@ -1048,23 +1046,23 @@ void Charger::setup(bool three_phases, bool has_ventilation, const std::string& 
 }
 
 Charger::EvseState Charger::get_current_state() {
-    std::scoped_lock lock(state_machine_mutex);
+    Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: get_current_state");
     return shared_context.current_state;
 }
 
 bool Charger::get_authorized_pnc() {
-    std::scoped_lock lock(state_machine_mutex);
+    Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: get_authorized_pnc");
     return (shared_context.authorized and shared_context.authorized_pnc);
 }
 
 bool Charger::get_authorized_eim() {
-    std::scoped_lock lock(state_machine_mutex);
+    Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: get_authorized_eim");
     return (shared_context.authorized and not shared_context.authorized_pnc);
 }
 
 bool Charger::get_authorized_pnc_ready_for_hlc() {
     bool auth = false, ready = false;
-    std::scoped_lock lock(state_machine_mutex);
+    Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: get_authorized_pnc_ready_for_hlc");
     auth = (shared_context.authorized and shared_context.authorized_pnc);
     ready = (shared_context.current_state == EvseState::ChargingPausedEV) or
             (shared_context.current_state == EvseState::ChargingPausedEVSE) or
@@ -1075,7 +1073,7 @@ bool Charger::get_authorized_pnc_ready_for_hlc() {
 
 bool Charger::get_authorized_eim_ready_for_hlc() {
     bool auth = false, ready = false;
-    std::scoped_lock lock(state_machine_mutex);
+    Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: get_authorized_eim_ready_for_hlc");
     auth = (shared_context.authorized and not shared_context.authorized_pnc);
     ready = (shared_context.current_state == EvseState::ChargingPausedEV) or
             (shared_context.current_state == EvseState::ChargingPausedEVSE) or
@@ -1085,7 +1083,7 @@ bool Charger::get_authorized_eim_ready_for_hlc() {
 }
 
 void Charger::authorize(bool a, const types::authorization::ProvidedIdToken& token) {
-    std::scoped_lock lock(state_machine_mutex);
+    Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: authorize");
     if (a) {
         // First user interaction was auth? Then start session already here and not at plug in
         if (not shared_context.session_active) {
@@ -1104,12 +1102,12 @@ void Charger::authorize(bool a, const types::authorization::ProvidedIdToken& tok
 }
 
 types::authorization::ProvidedIdToken Charger::get_id_token() {
-    std::scoped_lock lock(state_machine_mutex);
+    Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: get_id_token");
     return shared_context.id_token;
 }
 
 bool Charger::deauthorize() {
-    std::scoped_lock lock(state_machine_mutex);
+    Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: deauthorize");
     return deauthorize_internal();
 }
 
@@ -1121,7 +1119,7 @@ bool Charger::deauthorize_internal() {
 
             // We can safely remove auth as it is not in use right now
             if (not shared_context.authorized) {
-                signal_event(types::evse_manager::SessionEventEnum::PluginTimeout);
+                signal_simple_event(types::evse_manager::SessionEventEnum::PluginTimeout);
                 return false;
             }
             shared_context.authorized = false;
@@ -1133,23 +1131,23 @@ bool Charger::deauthorize_internal() {
 }
 
 bool Charger::disable(int connector_id) {
-    std::scoped_lock lock(state_machine_mutex);
+    Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: disable");
     if (connector_id not_eq 0) {
         shared_context.connector_enabled = false;
     }
     shared_context.current_state = EvseState::Disabled;
-    signal_event(types::evse_manager::SessionEventEnum::Disabled);
+    signal_simple_event(types::evse_manager::SessionEventEnum::Disabled);
     return true;
 }
 
 bool Charger::enable(int connector_id) {
-    std::scoped_lock lock(state_machine_mutex);
+    Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: enable");
 
     if (connector_id not_eq 0) {
         shared_context.connector_enabled = true;
     }
 
-    signal_event(types::evse_manager::SessionEventEnum::Enabled);
+    signal_simple_event(types::evse_manager::SessionEventEnum::Enabled);
     if (shared_context.current_state == EvseState::Disabled) {
         if (shared_context.connector_enabled) {
             shared_context.current_state = EvseState::Idle;
@@ -1160,7 +1158,7 @@ bool Charger::enable(int connector_id) {
 }
 
 void Charger::set_faulted() {
-    std::scoped_lock lock(state_machine_mutex);
+    Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: set_faulted");
     shared_context.error_prevent_charging_flag = true;
 }
 
@@ -1210,7 +1208,7 @@ std::string Charger::evse_state_to_string(EvseState s) {
 }
 
 float Charger::get_max_current() {
-    std::scoped_lock lock(state_machine_mutex);
+    Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: get_max_current");
     return get_max_current_internal();
 }
 
@@ -1226,7 +1224,7 @@ float Charger::get_max_current_internal() {
 }
 
 void Charger::set_current_drawn_by_vehicle(float l1, float l2, float l3) {
-    std::scoped_lock lock(state_machine_mutex);
+    Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: set_current_drawn_by_vehicle");
     shared_context.current_drawn_by_vehicle[0] = l1;
     shared_context.current_drawn_by_vehicle[1] = l2;
     shared_context.current_drawn_by_vehicle[2] = l3;
@@ -1278,7 +1276,7 @@ bool Charger::power_available() {
 }
 
 void Charger::request_error_sequence() {
-    std::scoped_lock lock(state_machine_mutex);
+    Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: request_error_sequence");
     if (shared_context.current_state == EvseState::WaitingForAuthentication or
         shared_context.current_state == EvseState::PrepareCharging) {
         internal_context.t_step_EF_return_state = shared_context.current_state;
@@ -1293,37 +1291,37 @@ void Charger::request_error_sequence() {
 }
 
 void Charger::set_matching_started(bool m) {
-    std::scoped_lock lock(state_machine_mutex);
+    Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: set_matching_started");
     shared_context.matching_started = m;
 }
 
 bool Charger::get_matching_started() {
-    std::scoped_lock lock(state_machine_mutex);
+    Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: get_matching_started");
     return shared_context.matching_started;
 }
 
 void Charger::notify_currentdemand_started() {
-    std::scoped_lock lock(state_machine_mutex);
+    Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: notify_currentdemand_started");
     if (shared_context.current_state == EvseState::PrepareCharging) {
-        signal_event(types::evse_manager::SessionEventEnum::ChargingStarted);
+        signal_simple_event(types::evse_manager::SessionEventEnum::ChargingStarted);
         shared_context.current_state = EvseState::Charging;
     }
 }
 
 void Charger::inform_new_evse_max_hlc_limits(
     const types::iso15118_charger::DC_EVSEMaximumLimits& _currentEvseMaxLimits) {
-    std::scoped_lock lock(state_machine_mutex);
+    Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: inform_new_evse_max_hlc_limits");
     shared_context.current_evse_max_limits = _currentEvseMaxLimits;
 }
 
 types::iso15118_charger::DC_EVSEMaximumLimits Charger::get_evse_max_hlc_limits() {
-    std::scoped_lock lock(state_machine_mutex);
+    Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: get_evse_max_hlc_limits");
     return shared_context.current_evse_max_limits;
 }
 
 // HLC stack signalled a pause request for the lower layers.
 void Charger::dlink_pause() {
-    std::scoped_lock lock(state_machine_mutex);
+    Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: dlink_pause");
     shared_context.hlc_allow_close_contactor = false;
     pwm_off();
     shared_context.hlc_charging_terminate_pause = HlcTerminatePause::Pause;
@@ -1331,14 +1329,14 @@ void Charger::dlink_pause() {
 
 // HLC requested end of charging session, so we can stop the 5% PWM
 void Charger::dlink_terminate() {
-    std::scoped_lock lock(state_machine_mutex);
+    Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: dlink_terminate");
     shared_context.hlc_allow_close_contactor = false;
     pwm_off();
     shared_context.hlc_charging_terminate_pause = HlcTerminatePause::Terminate;
 }
 
 void Charger::dlink_error() {
-    std::scoped_lock lock(state_machine_mutex);
+    Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: dlink_error");
 
     shared_context.hlc_allow_close_contactor = false;
 
@@ -1384,17 +1382,17 @@ void Charger::dlink_error() {
 }
 
 void Charger::set_hlc_charging_active() {
-    std::scoped_lock lock(state_machine_mutex);
+    Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: set_hlc_charging_active");
     shared_context.hlc_charging_active = true;
 }
 
 void Charger::set_hlc_allow_close_contactor(bool on) {
-    std::scoped_lock lock(state_machine_mutex);
+    Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: set_hlc_allow_close_contactor");
     shared_context.hlc_allow_close_contactor = on;
 }
 
 void Charger::set_hlc_error() {
-    std::scoped_lock lock(state_machine_mutex);
+    Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: set_hlc_error");
     shared_context.error_prevent_charging_flag = true;
 }
 
@@ -1456,12 +1454,12 @@ bool Charger::bcb_toggle_detected() {
 }
 
 void Charger::set_rcd_error() {
-    std::scoped_lock lock(state_machine_mutex);
+    Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: set_rcd_error");
     shared_context.error_prevent_charging_flag = true;
 }
 
 bool Charger::errors_prevent_charging() {
-    std::scoped_lock lock(state_machine_mutex);
+    Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: errors_prevent_charging");
     return errors_prevent_charging_internal();
 }
 
@@ -1474,7 +1472,6 @@ bool Charger::errors_prevent_charging_internal() {
 }
 
 void Charger::graceful_stop_charging() {
-
     if (shared_context.pwm_running) {
         pwm_off();
     }

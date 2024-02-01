@@ -291,7 +291,10 @@ void IECStateMachine::set_pwm(double value) {
     }
 
     r_bsp->call_pwm_on(value * 100);
-    feed_state_machine();
+
+    // Don't run the state machine in the callers context
+    std::thread feed([this]() { feed_state_machine(); });
+    feed.detach();
 }
 
 // High level state machine sets state X1
@@ -301,7 +304,9 @@ void IECStateMachine::set_pwm_off() {
         pwm_running = false;
     }
     r_bsp->call_pwm_off();
-    feed_state_machine();
+    // Don't run the state machine in the callers context
+    std::thread feed([this]() { feed_state_machine(); });
+    feed.detach();
 }
 
 // High level state machine sets state F
@@ -311,7 +316,9 @@ void IECStateMachine::set_pwm_F() {
         pwm_running = false;
     }
     r_bsp->call_pwm_F();
-    feed_state_machine();
+    // Don't run the state machine in the callers context
+    std::thread feed([this]() { feed_state_machine(); });
+    feed.detach();
 }
 
 // The higher level state machine in Charger.cpp calls this to indicate it allows contactors to be switched on
@@ -327,7 +334,9 @@ void IECStateMachine::allow_power_on(bool value, types::evse_board_support::Reas
         }
     }
     // The actual power on will be handled in the state machine to verify it is in the correct CP state etc.
-    feed_state_machine();
+    // Don't run the state machine in the callers context
+    std::thread feed([this]() { feed_state_machine(); });
+    feed.detach();
 }
 
 // Private member function used to actually call the BSP driver's allow_power_on
