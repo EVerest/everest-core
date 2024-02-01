@@ -23,6 +23,11 @@ types::reservation::ReservationResult ReservationHandler::reserve(int connector,
                                                                   bool is_reservable,
                                                                   const types::reservation::Reservation& reservation) {
 
+    if (connector == 0) {
+        EVLOG_info << "Reservation for connector 0 is not supported";
+        return types::reservation::ReservationResult::Rejected;
+    }
+
     if (state == ConnectorState::UNAVAILABLE) {
         EVLOG_debug << "Rejecting reservation because connector is unavailable";
         return types::reservation::ReservationResult::Unavailable;
