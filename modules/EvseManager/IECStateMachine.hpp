@@ -87,6 +87,7 @@ public:
 
     void connector_lock();
     void connector_unlock();
+    void check_connector_lock();
 
     // Signal for internal events type
     sigslot::signal<CPEvent> signal_event;
@@ -118,9 +119,11 @@ private:
     void call_allow_power_on_bsp(bool value);
 
     std::atomic_bool three_phases{true};
-    std::atomic_bool locked{false};
+    std::atomic_bool is_locked{false};
+    std::atomic_bool should_be_locked{false};
 
     std::atomic_bool enabled{false};
+    std::atomic_bool relais_on{false};
 };
 
 } // namespace module
