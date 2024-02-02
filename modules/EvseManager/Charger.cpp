@@ -121,9 +121,6 @@ void Charger::run_state_machine() {
     constexpr int max_mainloop_runs = 10;
     int mainloop_runs = 0;
 
-    while (true) {
-    };
-
     // run over state machine loop until current_state does not change anymore
     do {
         mainloop_runs++;
