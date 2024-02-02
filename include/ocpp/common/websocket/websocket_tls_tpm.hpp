@@ -73,7 +73,7 @@ private:
     std::shared_ptr<EvseSecurity> evse_security;
 
     // Connection related data
-    std::unique_ptr<Everest::SteadyTimer> reconnect_timer_tpm;
+    Everest::SteadyTimer reconnect_timer_tpm;
     std::unique_ptr<std::thread> websocket_thread;
     std::shared_ptr<ConnectionData> conn_data;
     std::condition_variable conn_cv;

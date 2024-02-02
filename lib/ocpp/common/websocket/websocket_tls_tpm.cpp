@@ -51,7 +51,8 @@ static constexpr int LWS_CLOSE_SOCKET_RESPONSE_MESSAGE = -1;
 
 /// \brief Per thread connection data
 struct ConnectionData {
-    ConnectionData() : is_running(true), state(EConnectionState::INITIALIZE), wsi(nullptr), owner(nullptr) {
+    ConnectionData() :
+        is_running(true), is_marked_close(false), state(EConnectionState::INITIALIZE), wsi(nullptr), owner(nullptr) {
     }
 
     ~ConnectionData() {
@@ -77,12 +78,20 @@ struct ConnectionData {
         is_running = false;
     }
 
+    void request_close() {
+        is_marked_close = true;
+    }
+
     bool is_interupted() {
         return (is_running == false);
     }
 
     bool is_connecting() {
         return (state == EConnectionState::CONNECTING);
+    }
+
+    bool is_close_requested() {
+        return is_marked_close;
     }
 
     auto get_state() {
@@ -111,6 +120,7 @@ public:
 private:
     std::thread::id lws_thread_id;
     bool is_running;
+    bool is_marked_close;
     EConnectionState state;
 };
 
@@ -488,6 +498,25 @@ bool WebsocketTlsTPM::connect() {
         this->recv_message_thread->join();
     }
 
+    // Bind reconnect callback
+    this->reconnect_callback = [this](const websocketpp::lib::error_code& ec) {
+        EVLOG_info << "Reconnecting to TLS websocket at uri: " << this->connection_options.csms_uri.string()
+                   << " with security profile: " << this->connection_options.security_profile;
+
+        // close connection before reconnecting
+        if (this->m_is_connected) {
+            EVLOG_info << "Closing websocket connection before reconnecting";
+            this->close(websocketpp::close::status::abnormal_close, "Reconnect");
+        }
+
+        {
+            std::lock_guard<std::mutex> lk(this->reconnect_mutex);
+            this->reconnect_timer_tpm.stop();
+        }
+
+        this->connect();
+    };
+
     std::unique_lock<std::mutex> lock(connection_mutex);
 
     // Release other threads
@@ -517,31 +546,12 @@ bool WebsocketTlsTPM::connect() {
         this->conn_data.reset();
     }
 
-    this->reconnect_callback = [this](const websocketpp::lib::error_code& ec) {
-        EVLOG_info << "Reconnecting to TLS websocket at uri: " << this->connection_options.csms_uri.string()
-                   << " with security profile: " << this->connection_options.security_profile;
-
-        // close connection before reconnecting
-        if (this->m_is_connected) {
-            EVLOG_info << "Closing websocket connection before reconnecting";
-            this->close(websocketpp::close::status::abnormal_close, "Reconnect");
-        }
-
-        {
-            std::lock_guard<std::mutex> lk(this->reconnect_mutex);
-            if (this->reconnect_timer_tpm) {
-                this->reconnect_timer_tpm->stop();
-            }
-            this->reconnect_timer_tpm = nullptr;
-        }
-
-        this->connect();
-    };
-
     return (connected);
 }
 
 void WebsocketTlsTPM::reconnect(std::error_code reason, long delay) {
+    EVLOG_info << "Attempting TLS TPM reconnect with reason: " << reason << " and delay:" << delay;
+
     if (this->shutting_down) {
         EVLOG_info << "Not reconnecting because the websocket is being shutdown.";
         return;
@@ -553,16 +563,11 @@ void WebsocketTlsTPM::reconnect(std::error_code reason, long delay) {
         this->close(websocketpp::close::status::abnormal_close, "Reconnect");
     }
 
-    if (!this->reconnect_timer_tpm) {
-        EVLOG_info << "Reconnecting in: " << delay << "ms"
-                   << ", attempt: " << this->connection_attempts;
+    EVLOG_info << "Reconnecting in: " << delay << "ms"
+               << ", attempt: " << this->connection_attempts;
 
-        this->reconnect_timer_tpm = std::make_unique<Everest::SteadyTimer>(
-            [this]() { this->reconnect_callback(websocketpp::lib::error_code()); });
-        this->reconnect_timer_tpm->timeout(std::chrono::seconds(delay));
-    } else {
-        EVLOG_info << "Reconnect timer already running";
-    }
+    this->reconnect_timer_tpm.timeout([this]() { this->reconnect_callback(websocketpp::lib::error_code()); },
+                                      std::chrono::milliseconds(delay));
 }
 
 void WebsocketTlsTPM::close(websocketpp::close::status::value code, const std::string& reason) {
@@ -570,14 +575,13 @@ void WebsocketTlsTPM::close(websocketpp::close::status::value code, const std::s
 
     {
         std::lock_guard<std::mutex> lk(this->reconnect_mutex);
-        if (this->reconnect_timer_tpm) {
-            this->reconnect_timer_tpm->stop();
-        }
-        this->reconnect_timer_tpm = nullptr;
+        this->reconnect_timer_tpm.stop();
     }
 
     if (conn_data) {
         if (auto* data = conn_data.get()) {
+            // Set the trigger from us
+            data->request_close();
             data->do_interrupt();
         }
 
@@ -617,6 +621,7 @@ void WebsocketTlsTPM::on_conn_fail() {
     if (this->m_is_connected) {
         this->disconnected_callback();
     }
+
     this->m_is_connected = false;
     this->connection_attempts += 1;
 
@@ -837,15 +842,6 @@ int WebsocketTlsTPM::process_callback(void* wsi_ptr, int callback_reason, void* 
         return LWS_CLOSE_SOCKET_RESPONSE_MESSAGE;
     }
 
-    // If we are interrupted, close the socket cleanly
-    if (data->is_interupted()) {
-        EVLOG_info << "Conn interrupted/closed, closing socket!";
-
-        // Set the normal reason if we are interrupted
-        lws_close_reason(data->get_conn(), LWS_CLOSE_STATUS_NORMAL, NULL, 0);
-        return LWS_CLOSE_SOCKET_RESPONSE_MESSAGE;
-    }
-
     switch (reason) {
     // TODO: If required in the future
     case LWS_CALLBACK_OPENSSL_PERFORM_SERVER_CERT_VERIFICATION:
@@ -918,15 +914,34 @@ int WebsocketTlsTPM::process_callback(void* wsi_ptr, int callback_reason, void* 
         std::string close_reason(reinterpret_cast<char*>(in), len);
         unsigned char* pp = reinterpret_cast<unsigned char*>(in);
         unsigned short close_code = (unsigned short)((pp[0] << 8) | pp[1]);
-        EVLOG_info << "Client close reason: " << close_reason << " close code: " << close_code;
+
+        EVLOG_info << "Unsolicited client close reason: " << close_reason << " close code: " << close_code;
+
+        if (close_code != LWS_CLOSE_STATUS_NORMAL) {
+            data->update_state(EConnectionState::ERROR);
+            data->do_interrupt();
+            on_conn_fail();
+        }
+
         // Return 0 to print peer close reason
         return 0;
     }
 
     case LWS_CALLBACK_CLIENT_CLOSED:
-        data->update_state(EConnectionState::FINALIZED);
-        data->do_interrupt();
-        on_conn_close();
+        EVLOG_info << "Client closed, was requested: " << data->is_close_requested();
+
+        // Determine if the close connection was requested or if the server went away
+        if (data->is_close_requested()) {
+            data->update_state(EConnectionState::FINALIZED);
+            data->do_interrupt();
+            on_conn_close();
+        } else {
+            // It means the server went away, attempt to reconnect
+            data->update_state(EConnectionState::ERROR);
+            data->do_interrupt();
+            on_conn_fail();
+        }
+
         break;
 
     case LWS_CALLBACK_WS_CLIENT_DROP_PROTOCOL:
@@ -963,6 +978,12 @@ int WebsocketTlsTPM::process_callback(void* wsi_ptr, int callback_reason, void* 
     default:
         EVLOG_info << "Callback with unhandled reason: " << reason;
         break;
+    }
+
+    // If we are interrupted, close the socket cleanly
+    if (data->is_interupted()) {
+        EVLOG_info << "Conn interrupted/closed, closing socket!";
+        return LWS_CLOSE_SOCKET_RESPONSE_MESSAGE;
     }
 
     // Return -1 on fatal error (-1 is request to close the socket)
