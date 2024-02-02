@@ -89,7 +89,7 @@ void IECStateMachine::process_bsp_event(const types::board_support_common::BspEv
     std::visit(overloaded{[this](RawCPState& raw_state) {
                               // If it is a raw CP state, run it through the state machine
                               {
-                                  std::lock_guard l(state_machine_mutex);
+                                  Everest::scoped_lock_timeout lock(state_machine_mutex, "IECStateMachine::process_bsp_event");
                                   cp_state = raw_state;
                               }
                               feed_state_machine();
@@ -126,7 +126,7 @@ void IECStateMachine::feed_state_machine() {
 std::queue<CPEvent> IECStateMachine::state_machine() {
 
     std::queue<CPEvent> events;
-    std::lock_guard lock(state_machine_mutex);
+    Everest::scoped_lock_timeout lock(state_machine_mutex, "IECStateMachine::state_machine");
 
     switch (cp_state) {
 
