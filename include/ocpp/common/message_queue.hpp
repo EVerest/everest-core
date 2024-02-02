@@ -352,7 +352,8 @@ public:
                             queue_type = QueueType::Transaction;
                         }
                     } else {
-                        if (transaction_message->timestamp <= message->timestamp) {
+                        if (transaction_message->timestamp <= message->timestamp and
+                            message->messageType != M::BootNotification) {
                             EVLOG_debug << "transaction message timestamp <= normal message timestamp";
                             message = transaction_message;
                             queue_type = QueueType::Transaction;
