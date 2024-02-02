@@ -110,6 +110,12 @@ function(ev_add_project)
             add_subdirectory(${MODULES_DIR})
         endif()
     endif ()
+
+    get_property(EVEREST_MODULES
+        GLOBAL
+        PROPERTY EVEREST_MODULES
+    )
+    message(STATUS "${EVEREST_PROJECT_NAME} modules that will be built: ${EVEREST_MODULES}")
 endfunction()
 
 #
@@ -409,6 +415,11 @@ function (ev_add_cpp_module MODULE_NAME)
 
     set(MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}")
 
+    get_property(EVEREST_MODULES
+        GLOBAL
+        PROPERTY EVEREST_MODULES
+    )
+
     # TODO(hikinggrass): This code is duplicated in ev_add_*_module and should be refactored.
     if(IS_DIRECTORY ${MODULE_PATH})
         if(${EVEREST_EXCLUDE_CPP_MODULES})
@@ -487,7 +498,7 @@ function (ev_add_cpp_module MODULE_NAME)
                 DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
             )
 
-            list(APPEND MODULES ${MODULE_NAME})
+            list(APPEND EVEREST_MODULES ${MODULE_NAME})
             add_subdirectory(${MODULE_PATH})
         endif()
     else()
@@ -495,7 +506,9 @@ function (ev_add_cpp_module MODULE_NAME)
         return()
     endif()
 
-    # FIXME (aw): this will override EVEREST_MODULES, might not what we want
+    # this will override EVEREST_MODULES, but that is ok because we appended the list earlier
+    # rename EVEREST_MODULES to EVEREST_MODULES
+    # use set_property APPEND
     set_property(
         GLOBAL
         PROPERTY EVEREST_MODULES ${EVEREST_MODULES}
@@ -506,6 +519,11 @@ function (ev_add_js_module MODULE_NAME)
     set(EVEREST_MODULE_INSTALL_PREFIX "${CMAKE_INSTALL_LIBEXECDIR}/everest/modules")
 
     set(MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}")
+
+    get_property(EVEREST_MODULES
+        GLOBAL
+        PROPERTY EVEREST_MODULES
+    )
 
     if(IS_DIRECTORY ${MODULE_PATH})
         if(NOT ${EVEREST_ENABLE_JS_SUPPORT})
@@ -577,7 +595,7 @@ function (ev_add_js_module MODULE_NAME)
                     PATTERN "CMakeFiles" EXCLUDE)
             endif()
 
-            list(APPEND MODULES ${MODULE_NAME})
+            list(APPEND EVEREST_MODULES ${MODULE_NAME})
             add_subdirectory(${MODULE_PATH})
         endif()
     else()
@@ -585,7 +603,7 @@ function (ev_add_js_module MODULE_NAME)
         return()
     endif()
 
-    # FIXME (aw): this will override EVEREST_MODULES, might not what we want
+    # this will override EVEREST_MODULES, but that is ok because we appended the list earlier
     set_property(
         GLOBAL
         PROPERTY EVEREST_MODULES ${EVEREST_MODULES}
@@ -596,6 +614,11 @@ function (ev_add_py_module MODULE_NAME)
     set(EVEREST_MODULE_INSTALL_PREFIX "${CMAKE_INSTALL_LIBEXECDIR}/everest/modules")
 
     set(MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}")
+
+    get_property(EVEREST_MODULES
+        GLOBAL
+        PROPERTY EVEREST_MODULES
+    )
 
     if(IS_DIRECTORY ${MODULE_PATH})
         if(NOT ${EVEREST_ENABLE_PY_SUPPORT})
@@ -621,7 +644,7 @@ function (ev_add_py_module MODULE_NAME)
                 PATTERN "CMakeLists.txt" EXCLUDE
                 PATTERN "CMakeFiles" EXCLUDE)
 
-            list(APPEND MODULES ${MODULE_NAME})
+            list(APPEND EVEREST_MODULES ${MODULE_NAME})
             add_subdirectory(${MODULE_PATH})
         endif()
     else()
@@ -629,7 +652,7 @@ function (ev_add_py_module MODULE_NAME)
         return()
     endif()
 
-    # FIXME (aw): this will override EVEREST_MODULES, might not what we want
+    # this will override EVEREST_MODULES, but that is ok because we appended the list earlier
     set_property(
         GLOBAL
         PROPERTY EVEREST_MODULES ${EVEREST_MODULES}

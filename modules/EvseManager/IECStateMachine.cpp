@@ -95,7 +95,17 @@ void IECStateMachine::process_bsp_event(const types::board_support_common::BspEv
                               feed_state_machine();
                           },
                           // If it is another CP event, pass through
-                          [this](CPEvent& event) { signal_event(event); }},
+                          [this](CPEvent& event) {
+                              // track relais state as confirmed by BSP
+                              if (event == CPEvent::PowerOn) {
+                                  relais_on = true;
+                              } else if (event == CPEvent::PowerOff) {
+                                  relais_on = false;
+                              }
+                              check_connector_lock();
+
+                              signal_event(event);
+                          }},
                event);
 }
 
@@ -260,6 +270,8 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
         break;
     }
 
+    check_connector_lock();
+
     last_cp_state = cp_state;
     last_pwm_running = pwm_running;
     last_power_on_allowed = power_on_allowed;
@@ -386,16 +398,20 @@ void IECStateMachine::set_overcurrent_limit(double amps) {
 }
 
 void IECStateMachine::connector_lock() {
-    if (not locked) {
-        signal_lock();
-        locked = true;
-    }
+    should_be_locked = true;
 }
 
 void IECStateMachine::connector_unlock() {
-    if (locked) {
+    should_be_locked = false;
+}
+
+void IECStateMachine::check_connector_lock() {
+    if (should_be_locked and not is_locked) {
+        signal_lock();
+        is_locked = true;
+    } else if (not should_be_locked and is_locked and not relais_on) {
         signal_unlock();
-        locked = false;
+        is_locked = false;
     }
 }
 

@@ -6,54 +6,66 @@ everest-framework:
 sigslot:
   git: https://github.com/palacaze/sigslot
   git_tag: v1.2.0
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_SIGSLOT"
   options:
     - "SIGSLOT_COMPILE_EXAMPLES OFF"
     - "SIGSLOT_COMPILE_TESTS OFF"
 libmodbus:
   git: https://github.com/EVerest/libmodbus.git
   git_tag: v0.3.0
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBMODBUS"
 libsunspec:
   git: https://github.com/EVerest/libsunspec.git
   git_tag: v0.2.0
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBSUNSPEC"
 pugixml:
   git: https://github.com/zeux/pugixml
   git_tag: v1.12.1
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_PUGIXML"
 
 # Auth module
 libtimer:
   git: https://github.com/EVerest/libtimer.git
   git_tag: v0.1.1
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBTIMER"
   options: ["BUILD_EXAMPLES OFF"]
 
 # Slac module
 libslac:
   git: https://github.com/EVerest/libslac.git
   git_tag: 486cd8b
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBSLAC"
 libfsm:
   git: https://github.com/EVerest/libfsm.git
   git_tag: v0.2.0
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBFSM"
 
 # LEM DCBM 400/600 module
 libcurl:
   git: https://github.com/curl/curl.git
   git_tag: curl-8_4_0
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBCURL"
 
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
   git_tag: v0.9.7
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:
   git: https://github.com/EVerest/ext-switchev-iso15118.git
   git_tag: 2023.12.0
+  cmake_condition: "EVEREST_ENABLE_PY_SUPPORT AND EVEREST_DEPENDENCY_ENABLED_JOSEV"
 # OpenV2G
 ext-openv2g:
   git: https://github.com/EVerest/ext-openv2g.git
   git_tag: 2023.3.0
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_OPENV2G"
 # mbedtls
 ext-mbedtls:
   git: https://github.com/EVerest/ext-mbedtls.git
   git_tag: 8b3f26a
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_MBEDTLS"
   options:
     - ENABLE_PROGRAMS OFF
     - ENABLE_TESTING OFF
@@ -62,8 +74,10 @@ ext-mbedtls:
 everest-utils:
   git: https://github.com/EVerest/everest-utils.git
   git_tag: v0.2.0
+  cmake_condition: "BUILD_TESTING"
 # evse-security, since this is a direct dependency of libocpp it will get overwritten by the version set there
 # setting it here can be misleading since it does not affect the version being used
 libevse-security:
   git: https://github.com/EVerest/libevse-security.git
   git_tag: v0.4.2
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBEVSE_SECURITY"
