@@ -25,7 +25,7 @@ template <typename mutex_type> class scoped_lock_timeout {
 public:
     explicit scoped_lock_timeout(mutex_type& __m, const std::string _description) :
         mutex(__m), description(_description) {
-        if (not mutex.try_lock_for(std::chrono::seconds(10))) {
+        if (not mutex.try_lock_for(std::chrono::seconds(120))) {
             std::stringstream ss;
             ss << "Mutex deadlock detected: Failed to lock " << description << " (Thread id "
                << std::this_thread::get_id() << "), mutex held by " << mutex.description;
