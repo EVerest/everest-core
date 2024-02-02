@@ -304,7 +304,7 @@ void Charger::run_state_machine() {
                                     fmt::format(
                                         "AC mode, HLC enabled, matching not started yet. Go through t_step_EF and "
                                         "disable 5 percent if it was enabled before: {}",
-                                        hlc_use_5percent_current_session));
+                                        (bool)hlc_use_5percent_current_session));
 
                                 // Figure 3 of ISO15118-3: 5 percent start, PnC and EIM
                                 // Figure 4 of ISO15118-3: X1 start, PnC and EIM
