@@ -17,6 +17,7 @@ target_sources(${MODULE_NAME}
         CarManufacturer.cpp
         IECStateMachine.cpp
         ErrorHandling.cpp
+        backtrace.cpp
 )
 
 target_link_libraries(${MODULE_NAME}
@@ -31,6 +32,16 @@ target_link_libraries(${MODULE_NAME}
         stdc++fs
 )
 endif()
+
+target_compile_options(${MODULE_NAME}
+PRIVATE
+    "-rdynamic"
+)
+
+target_link_options(${MODULE_NAME}
+PRIVATE
+    "-rdynamic"
+)
 
 # needed for std::filesystem
 target_compile_features(${MODULE_NAME} PUBLIC cxx_std_17)

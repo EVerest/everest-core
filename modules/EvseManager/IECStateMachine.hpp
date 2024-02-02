@@ -32,6 +32,8 @@
 #include "Timeout.hpp"
 #include "utils/thread.hpp"
 
+#include "scoped_lock_timeout.hpp"
+
 namespace module {
 
 // Abstract events that drive the higher level state machine in Charger.cpp
@@ -111,7 +113,7 @@ private:
     RawCPState cp_state{RawCPState::Disabled}, last_cp_state{RawCPState::Disabled};
     AsyncTimeout timeout_state_c1;
 
-    std::mutex state_machine_mutex;
+    Everest::timed_mutex_traceable state_machine_mutex;
     void feed_state_machine();
     std::queue<CPEvent> state_machine();
 

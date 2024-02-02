@@ -22,6 +22,9 @@ namespace module {
 Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_ptr<ErrorHandling>& error_handling,
                  const types::evse_board_support::Connector_type& connector_type) :
     bsp(bsp), error_handling(error_handling), connector_type(connector_type) {
+
+    Everest::install_backtrace_handler();
+
     shared_context.connector_enabled = true;
     shared_context.max_current = 6.0;
     if (connector_type == types::evse_board_support::Connector_type::IEC62196Type2Socket) {
@@ -52,6 +55,9 @@ Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_
     error_handling->signal_error.connect([this](const types::evse_manager::Error e, const bool prevent_charging) {
         if (prevent_charging) {
             std::thread error_thread([this]() {
+                std::stringstream ss;
+                ss << "signal_error thread id: " << std::this_thread::get_id();
+                EVLOG_info << ss.str();
                 Everest::scoped_lock_timeout lock(state_machine_mutex, "Charger.cpp: error_handling->signal_error");
                 shared_context.error_prevent_charging_flag = true;
             });
@@ -64,6 +70,9 @@ Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_
         signal_simple_event(types::evse_manager::SessionEventEnum::AllErrorsCleared);
         {
             std::thread error_thread([this]() {
+                std::stringstream ss;
+                ss << "all errors cleared thread id: " << std::this_thread::get_id();
+                EVLOG_info << ss.str();
                 Everest::scoped_lock_timeout lock(state_machine_mutex,
                                                   "Charger.cpp: error_handling->signal_all_errors_cleared");
                 shared_context.error_prevent_charging_flag = false;
@@ -78,6 +87,10 @@ Charger::~Charger() {
 }
 
 void Charger::main_thread() {
+    std::stringstream ss;
+    ss << "Charger main thread id: " << std::this_thread::get_id();
+    EVLOG_info << ss.str();
+
     // Enable CP output
     bsp->enable(true);
 
@@ -107,6 +120,9 @@ void Charger::run_state_machine() {
 
     constexpr int max_mainloop_runs = 10;
     int mainloop_runs = 0;
+
+    while (true) {
+    };
 
     // run over state machine loop until current_state does not change anymore
     do {

@@ -282,7 +282,7 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
 // High level state machine sets PWM duty cycle
 void IECStateMachine::set_pwm(double value) {
     {
-        std::scoped_lock lock(state_machine_mutex);
+        Everest::scoped_lock_timeout lock(state_machine_mutex, "IECStateMachine::set_pwm");
         if (value > 0 && value < 1) {
             pwm_running = true;
         } else {
@@ -300,7 +300,7 @@ void IECStateMachine::set_pwm(double value) {
 // High level state machine sets state X1
 void IECStateMachine::set_pwm_off() {
     {
-        std::scoped_lock lock(state_machine_mutex);
+        Everest::scoped_lock_timeout lock(state_machine_mutex, "IECStateMachine::set_pwm_off");
         pwm_running = false;
     }
     r_bsp->call_pwm_off();
@@ -312,7 +312,7 @@ void IECStateMachine::set_pwm_off() {
 // High level state machine sets state F
 void IECStateMachine::set_pwm_F() {
     {
-        std::scoped_lock lock(state_machine_mutex);
+        Everest::scoped_lock_timeout lock(state_machine_mutex, "IECStateMachine::set_pwm_F");
         pwm_running = false;
     }
     r_bsp->call_pwm_F();
@@ -324,7 +324,7 @@ void IECStateMachine::set_pwm_F() {
 // The higher level state machine in Charger.cpp calls this to indicate it allows contactors to be switched on
 void IECStateMachine::allow_power_on(bool value, types::evse_board_support::Reason reason) {
     {
-        std::scoped_lock lock(state_machine_mutex);
+        Everest::scoped_lock_timeout lock(state_machine_mutex, "IECStateMachine::allow_power_on");
         // Only set the flags here in case of power on.
         power_on_allowed = value;
         power_on_reason = reason;
