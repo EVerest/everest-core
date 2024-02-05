@@ -16,6 +16,7 @@
 // headers for required interface implementations
 #include <generated/interfaces/evse_manager/Interface.hpp>
 #include <generated/interfaces/ocpp/Interface.hpp>
+#include <generated/interfaces/uk_random_delay/Interface.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
@@ -57,6 +58,7 @@ public:
     void set_end_energy_export_wh(int32_t end_energy_export_wh);
     void set_latest_energy_export_wh(int32_t latest_export_energy_wh);
     void set_latest_total_w(double latest_total_w);
+    void set_uk_random_delay_remaining(int seconds_remaining);
 
     /// \brief Converts this struct into a serialized json object
     operator std::string();
@@ -66,10 +68,12 @@ private:
 
     std::vector<Error> active_permanent_faults; ///< Array of currently active permanent faults that prevent charging
     std::vector<Error> active_errors;           ///< Array of currently active errors that do not prevent charging
-    int32_t start_energy_import_wh; ///< Energy reading (import) at the beginning of this charging session in Wh
-    int32_t end_energy_import_wh;   ///< Energy reading (import) at the end of this charging session in Wh
-    int32_t start_energy_export_wh; ///< Energy reading (export) at the beginning of this charging session in Wh
-    int32_t end_energy_export_wh;   ///< Energy reading (export) at the end of this charging session in Wh
+    int32_t start_energy_import_wh;         ///< Energy reading (import) at the beginning of this charging session in Wh
+    int32_t end_energy_import_wh;           ///< Energy reading (import) at the end of this charging session in Wh
+    int32_t start_energy_export_wh;         ///< Energy reading (export) at the beginning of this charging session in Wh
+    int32_t end_energy_export_wh;           ///< Energy reading (export) at the end of this charging session in Wh
+    int32_t uk_random_delay_remaining_s{0}; ///< Remaining time of a UK smart charging regs delay. Set to 0 if no delay
+                                            ///< is active
     std::chrono::time_point<date::utc_clock> start_time_point; ///< Start of the charging session
     std::chrono::time_point<date::utc_clock> end_time_point;   ///< End of the charging session
     double latest_total_w;                                     ///< Latest total power reading in W
@@ -142,18 +146,20 @@ public:
     API() = delete;
     API(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, std::unique_ptr<emptyImplBase> p_main,
         std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager, std::vector<std::unique_ptr<ocppIntf>> r_ocpp,
-        Conf& config) :
+        std::vector<std::unique_ptr<uk_random_delayIntf>> r_random_delay, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_main(std::move(p_main)),
         r_evse_manager(std::move(r_evse_manager)),
         r_ocpp(std::move(r_ocpp)),
+        r_random_delay(std::move(r_random_delay)),
         config(config){};
 
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<emptyImplBase> p_main;
     const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;
     const std::vector<std::unique_ptr<ocppIntf>> r_ocpp;
+    const std::vector<std::unique_ptr<uk_random_delayIntf>> r_random_delay;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
@@ -179,8 +185,11 @@ private:
     std::list<std::string> hw_capabilities_str;
     std::string selected_protocol;
     json charger_information;
-    std::string ocpp_connection_status = "unknown";
     std::unique_ptr<LimitDecimalPlaces> limit_decimal_places;
+
+    std::mutex ocpp_data_mutex;
+    json ocpp_charging_schedule;
+    std::string ocpp_connection_status = "unknown";
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

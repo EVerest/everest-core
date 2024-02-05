@@ -85,7 +85,7 @@ void globals_t::add_timestamps(const types::energy::EnergyFlowRequest& energy_fl
     }
 
     // recurse to all children
-    for (auto c : energy_flow_request.children)
+    for (auto& c : energy_flow_request.children)
         add_timestamps(c);
 }
 

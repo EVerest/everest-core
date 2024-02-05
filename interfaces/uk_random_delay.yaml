@@ -1,0 +1,23 @@
+description: >-
+  This interface provides functions for a random delay feature as required by the UK smart charging regulations
+  The logic whether to use a random delay or not is not included in EvseManager, a different module can use this
+  interface to enable/disable the feature during runtime and cancel a running random delay.
+  This always applies to all connectors of this EVSE.
+  By default, on start up, random delays are disabled.
+cmds:
+  enable:
+    description: Call to enable the random delay feature
+  disable:
+    description: Call to enable the random delay feature
+  cancel:
+    description: Cancels a running random delay. The effect is the same as if the time expired just now.
+  set_duration_s:
+    description: Set the maximum duration of the random delay. Default is 600 seconds.
+    arguments:
+      value:
+        description: Maximum duration in seconds
+        type: integer
+vars:
+  countdown_s:
+    description: Countdown of the currently running random delay in seconds. If it is 0, no random delay is active.
+    type: integer
