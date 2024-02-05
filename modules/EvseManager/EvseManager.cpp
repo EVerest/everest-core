@@ -252,8 +252,7 @@ void EvseManager::ready() {
                     {
                         // dont publish ev_info here, it will be published when other values change.
                         // otherwise we will create too much traffic on mqtt
-                        Everest::scoped_lock_timeout lock(ev_info_mutex,
-                                                          "EvseManager.cpp: set ev_info present_voltage/current");
+                        Everest::scoped_lock_timeout lock(ev_info_mutex, Everest::MutexDescription::EVSE_set_ev_info);
                         ev_info.present_voltage = present_values.EVSEPresentVoltage;
                         ev_info.present_current = present_values.EVSEPresentCurrent;
                         // p_evse->publish_ev_info(ev_info);
@@ -283,7 +282,8 @@ void EvseManager::ready() {
                     }
 
                     {
-                        Everest::scoped_lock_timeout lock(ev_info_mutex, "EvseManager.cpp: publish_ev_info");
+                        Everest::scoped_lock_timeout lock(ev_info_mutex,
+                                                          Everest::MutexDescription::EVSE_publish_ev_info);
                         ev_info.target_voltage = latest_target_voltage;
                         ev_info.target_current = latest_target_current;
                         p_evse->publish_ev_info(ev_info);
@@ -309,7 +309,8 @@ void EvseManager::ready() {
             r_hlc[0]->subscribe_currentDemand_Finished([this] { powersupply_DC_off(); });
 
             r_hlc[0]->subscribe_DC_EVMaximumLimits([this](types::iso15118_charger::DC_EVMaximumLimits l) {
-                Everest::scoped_lock_timeout lock(ev_info_mutex, "EvseManager.cpp: subscribe_DC_EVMaximumLimits");
+                Everest::scoped_lock_timeout lock(ev_info_mutex,
+                                                  Everest::MutexDescription::EVSE_subscribe_DC_EVMaximumLimits);
                 ev_info.maximum_current_limit = l.DC_EVMaximumCurrentLimit;
                 ev_info.maximum_power_limit = l.DC_EVMaximumPowerLimit;
                 ev_info.maximum_voltage_limit = l.DC_EVMaximumVoltageLimit;
@@ -317,70 +318,77 @@ void EvseManager::ready() {
             });
 
             r_hlc[0]->subscribe_DepartureTime([this](const std::string& t) {
-                Everest::scoped_lock_timeout lock(ev_info_mutex, "EvseManager.cpp: subscribe_DepartureTime");
+                Everest::scoped_lock_timeout lock(ev_info_mutex,
+                                                  Everest::MutexDescription::EVSE_subscribe_DepartureTime);
                 ev_info.departure_time = t;
                 p_evse->publish_ev_info(ev_info);
             });
 
             r_hlc[0]->subscribe_AC_EAmount([this](double e) {
                 // FIXME send only on change / throttle messages
-                Everest::scoped_lock_timeout lock(ev_info_mutex, "EvseManager.cpp: subscribe_AC_EAmount");
+                Everest::scoped_lock_timeout lock(ev_info_mutex, Everest::MutexDescription::EVSE_subscribe_AC_EAmount);
                 ev_info.remaining_energy_needed = e;
                 p_evse->publish_ev_info(ev_info);
             });
 
             r_hlc[0]->subscribe_AC_EVMaxVoltage([this](double v) {
                 // FIXME send only on change / throttle messages
-                Everest::scoped_lock_timeout lock(ev_info_mutex, "EvseManager.cpp: subscribe_AC_EVMaxVoltage");
+                Everest::scoped_lock_timeout lock(ev_info_mutex,
+                                                  Everest::MutexDescription::EVSE_subscribe_AC_EVMaxVoltage);
                 ev_info.maximum_voltage_limit = v;
                 p_evse->publish_ev_info(ev_info);
             });
 
             r_hlc[0]->subscribe_AC_EVMaxCurrent([this](double c) {
                 // FIXME send only on change / throttle messages
-                Everest::scoped_lock_timeout lock(ev_info_mutex, "EvseManager.cpp: subscribe_AC_EVMaxCurrent");
+                Everest::scoped_lock_timeout lock(ev_info_mutex,
+                                                  Everest::MutexDescription::EVSE_subscribe_AC_EVMaxCurrent);
                 ev_info.maximum_current_limit = c;
                 p_evse->publish_ev_info(ev_info);
             });
 
             r_hlc[0]->subscribe_AC_EVMinCurrent([this](double c) {
                 // FIXME send only on change / throttle messages
-                Everest::scoped_lock_timeout lock(ev_info_mutex, "EvseManager.cpp: subscribe_AC_EVMinCurrent");
+                Everest::scoped_lock_timeout lock(ev_info_mutex,
+                                                  Everest::MutexDescription::EVSE_subscribe_AC_EVMinCurrent);
                 ev_info.minimum_current_limit = c;
                 p_evse->publish_ev_info(ev_info);
             });
 
             r_hlc[0]->subscribe_DC_EVEnergyCapacity([this](double c) {
                 // FIXME send only on change / throttle messages
-                Everest::scoped_lock_timeout lock(ev_info_mutex, "EvseManager.cpp: subscribe_DC_EVEnergyCapacity");
+                Everest::scoped_lock_timeout lock(ev_info_mutex,
+                                                  Everest::MutexDescription::EVSE_subscribe_DC_EVEnergyCapacity);
                 ev_info.battery_capacity = c;
                 p_evse->publish_ev_info(ev_info);
             });
 
             r_hlc[0]->subscribe_DC_EVEnergyRequest([this](double c) {
                 // FIXME send only on change / throttle messages
-                Everest::scoped_lock_timeout lock(ev_info_mutex, "EvseManager.cpp: subscribe_DC_EVEnergyCapacity");
+                Everest::scoped_lock_timeout lock(ev_info_mutex,
+                                                  Everest::MutexDescription::EVSE_subscribe_DC_EVEnergyRequest);
                 ev_info.remaining_energy_needed = c;
                 p_evse->publish_ev_info(ev_info);
             });
 
             r_hlc[0]->subscribe_DC_FullSOC([this](double c) {
                 // FIXME send only on change / throttle messages
-                Everest::scoped_lock_timeout lock(ev_info_mutex, "EvseManager.cpp: subscribe_DC_FullSOC");
+                Everest::scoped_lock_timeout lock(ev_info_mutex, Everest::MutexDescription::EVSE_subscribe_DC_FullSOC);
                 ev_info.battery_full_soc = c;
                 p_evse->publish_ev_info(ev_info);
             });
 
             r_hlc[0]->subscribe_DC_BulkSOC([this](double c) {
                 // FIXME send only on change / throttle messages
-                Everest::scoped_lock_timeout lock(ev_info_mutex, "EvseManager.cpp: subscribe_DC_BulkSOC");
+                Everest::scoped_lock_timeout lock(ev_info_mutex, Everest::MutexDescription::EVSE_subscribe_DC_BulkSOC);
                 ev_info.battery_bulk_soc = c;
                 p_evse->publish_ev_info(ev_info);
             });
 
             r_hlc[0]->subscribe_DC_EVRemainingTime([this](types::iso15118_charger::DC_EVRemainingTime t) {
                 // FIXME send only on change / throttle messages
-                Everest::scoped_lock_timeout lock(ev_info_mutex, "EvseManager.cpp: subscribe_DC_EVRemainingTime");
+                Everest::scoped_lock_timeout lock(ev_info_mutex,
+                                                  Everest::MutexDescription::EVSE_subscribe_DC_EVRemainingTime);
                 ev_info.estimated_time_full = t.EV_RemainingTimeToFullSoC;
                 ev_info.estimated_time_bulk = t.EV_RemainingTimeToBulkSoC;
                 p_evse->publish_ev_info(ev_info);
@@ -388,7 +396,7 @@ void EvseManager::ready() {
 
             r_hlc[0]->subscribe_DC_EVStatus([this](types::iso15118_charger::DC_EVStatusType s) {
                 // FIXME send only on change / throttle messages
-                Everest::scoped_lock_timeout lock(ev_info_mutex, "EvseManager.cpp subscribe_DC_EVStatus");
+                Everest::scoped_lock_timeout lock(ev_info_mutex, Everest::MutexDescription::EVSE_subscribe_DC_EVStatus);
                 ev_info.soc = s.DC_EVRESSSOC;
                 p_evse->publish_ev_info(ev_info);
             });
@@ -442,7 +450,8 @@ void EvseManager::ready() {
             if ((config.dbg_hlc_auth_after_tstep and charger->get_authorized_eim_ready_for_hlc()) or
                 (not config.dbg_hlc_auth_after_tstep and charger->get_authorized_eim())) {
                 {
-                    Everest::scoped_lock_timeout lock(hlc_mutex, "EvseManager.cpp: subscribe_Require_Auth_EIM");
+                    Everest::scoped_lock_timeout lock(hlc_mutex,
+                                                      Everest::MutexDescription::EVSE_subscribe_Require_Auth_EIM);
                     hlc_waiting_for_auth_eim = false;
                     hlc_waiting_for_auth_pnc = false;
                 }
@@ -450,7 +459,7 @@ void EvseManager::ready() {
                                                       types::authorization::CertificateStatus::NoCertificateAvailable);
             } else {
                 p_token_provider->publish_provided_token(autocharge_token);
-                Everest::scoped_lock_timeout lock(hlc_mutex, "EvseManager.cpp: publish_provided_token");
+                Everest::scoped_lock_timeout lock(hlc_mutex, Everest::MutexDescription::EVSE_publish_provided_token);
                 hlc_waiting_for_auth_eim = true;
                 hlc_waiting_for_auth_pnc = false;
             }
@@ -463,7 +472,7 @@ void EvseManager::ready() {
                 p_evse->publish_car_manufacturer(car_manufacturer);
 
                 {
-                    Everest::scoped_lock_timeout lock(ev_info_mutex, "EvseManager.cpp: subscribe_EVCCIDD");
+                    Everest::scoped_lock_timeout lock(ev_info_mutex, Everest::MutexDescription::EVSE_subscribe_EVCCIDD);
                     ev_info.evcc_id = token;
                     p_evse->publish_ev_info(ev_info);
                 }
@@ -478,12 +487,14 @@ void EvseManager::ready() {
             p_token_provider->publish_provided_token(_token);
             if (charger->get_authorized_pnc()) {
                 {
-                    Everest::scoped_lock_timeout lock(hlc_mutex, "EvseManager.cpp: subscribe_Require_Auth_PnC 1");
+                    Everest::scoped_lock_timeout lock(hlc_mutex,
+                                                      Everest::MutexDescription::EVSE_subscribe_Require_Auth_PnC);
                     hlc_waiting_for_auth_eim = false;
                     hlc_waiting_for_auth_pnc = false;
                 }
             } else {
-                Everest::scoped_lock_timeout lock(hlc_mutex, "EvseManager.cpp: subscribe_Require_Auth_PnC 2");
+                Everest::scoped_lock_timeout lock(hlc_mutex,
+                                                  Everest::MutexDescription::EVSE_subscribe_Require_Auth_PnC2);
                 hlc_waiting_for_auth_eim = false;
                 hlc_waiting_for_auth_pnc = true;
             }
@@ -586,7 +597,7 @@ void EvseManager::ready() {
                 latest_target_voltage = 0;
                 latest_target_current = 0;
                 {
-                    Everest::scoped_lock_timeout lock(hlc_mutex, "EvseManager.cpp: bsp->signal_event.connect");
+                    Everest::scoped_lock_timeout lock(hlc_mutex, Everest::MutexDescription::EVSE_signal_event);
                     hlc_waiting_for_auth_eim = false;
                     hlc_waiting_for_auth_pnc = false;
                 }
@@ -623,7 +634,7 @@ void EvseManager::ready() {
 
             // Store local cache
             {
-                Everest::scoped_lock_timeout lock(power_mutex, "EvseManager.cpp: subscribe_powermeter");
+                Everest::scoped_lock_timeout lock(power_mutex, Everest::MutexDescription::EVSE_subscribe_powermeter);
                 latest_powermeter_data_billing = p;
             }
 
@@ -854,7 +865,7 @@ void EvseManager::ready_to_start_charging() {
 }
 
 types::powermeter::Powermeter EvseManager::get_latest_powermeter_data_billing() {
-    Everest::scoped_lock_timeout lock(power_mutex, "EvseManager.cpp: get_latest_powermeter_data_billing");
+    Everest::scoped_lock_timeout lock(power_mutex, Everest::MutexDescription::EVSE_get_latest_powermeter_data_billing);
     return latest_powermeter_data_billing;
 }
 
@@ -863,7 +874,7 @@ types::evse_board_support::HardwareCapabilities EvseManager::get_hw_capabilities
 }
 
 int32_t EvseManager::get_reservation_id() {
-    Everest::scoped_lock_timeout lock(reservation_mutex, "EvseManager.cpp: get_reservation_id");
+    Everest::scoped_lock_timeout lock(reservation_mutex, Everest::MutexDescription::EVSE_get_reservation_id);
     return reservation_id;
 }
 
@@ -1073,7 +1084,7 @@ bool EvseManager::reserve(int32_t id) {
         return false;
     }
 
-    Everest::scoped_lock_timeout lock(reservation_mutex, "EvseManager.cpp: reserve");
+    Everest::scoped_lock_timeout lock(reservation_mutex, Everest::MutexDescription::EVSE_reserve);
 
     if (not reserved) {
         reserved = true;
@@ -1092,7 +1103,7 @@ bool EvseManager::reserve(int32_t id) {
 
 void EvseManager::cancel_reservation(bool signal_event) {
 
-    Everest::scoped_lock_timeout lock(reservation_mutex, "EvseManager.cpp: cancel_reservation");
+    Everest::scoped_lock_timeout lock(reservation_mutex, Everest::MutexDescription::EVSE_cancel_reservation);
     if (reserved) {
         reserved = false;
         reservation_id = 0;
@@ -1107,7 +1118,7 @@ void EvseManager::cancel_reservation(bool signal_event) {
 }
 
 bool EvseManager::is_reserved() {
-    Everest::scoped_lock_timeout lock(reservation_mutex, "EvseManager.cpp: is_reserved");
+    Everest::scoped_lock_timeout lock(reservation_mutex, Everest::MutexDescription::EVSE_is_reserved);
     return reserved;
 }
 
@@ -1116,12 +1127,12 @@ bool EvseManager::getLocalThreePhases() {
 }
 
 bool EvseManager::get_hlc_enabled() {
-    Everest::scoped_lock_timeout lock(hlc_mutex, "EvseManager.cpp: get_hlc_enabled");
+    Everest::scoped_lock_timeout lock(hlc_mutex, Everest::MutexDescription::EVSE_get_hlc_enabled);
     return hlc_enabled;
 }
 
 bool EvseManager::get_hlc_waiting_for_auth_pnc() {
-    Everest::scoped_lock_timeout lock(hlc_mutex, "EvseManager.cpp: get_hlc_waiting_for_auth_pnc");
+    Everest::scoped_lock_timeout lock(hlc_mutex, Everest::MutexDescription::EVSE_get_hlc_waiting_for_auth_pnc);
     return hlc_waiting_for_auth_pnc;
 }
 
@@ -1148,7 +1159,7 @@ void EvseManager::log_v2g_message(Object m) {
 
 void EvseManager::charger_was_authorized() {
 
-    Everest::scoped_lock_timeout lock(hlc_mutex, "EvseManager.cpp: charger_was_authorized");
+    Everest::scoped_lock_timeout lock(hlc_mutex, Everest::MutexDescription::EVSE_charger_was_authorized);
     if (hlc_waiting_for_auth_pnc and charger->get_authorized_pnc()) {
         r_hlc[0]->call_authorization_response(types::authorization::AuthorizationStatus::Accepted,
                                               types::authorization::CertificateStatus::Accepted);
@@ -1474,7 +1485,7 @@ void EvseManager::fail_session() {
 }
 
 types::evse_manager::EVInfo EvseManager::get_ev_info() {
-    Everest::scoped_lock_timeout l(ev_info_mutex, "EvseManager.cpp: get_ev_info");
+    Everest::scoped_lock_timeout l(ev_info_mutex, Everest::MutexDescription::EVSE_get_ev_info);
     return ev_info;
 }
 

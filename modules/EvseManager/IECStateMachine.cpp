@@ -90,7 +90,7 @@ void IECStateMachine::process_bsp_event(const types::board_support_common::BspEv
                               // If it is a raw CP state, run it through the state machine
                               {
                                   Everest::scoped_lock_timeout lock(state_machine_mutex,
-                                                                    "IECStateMachine::process_bsp_event");
+                                                                    Everest::MutexDescription::IEC_process_bsp_event);
                                   cp_state = raw_state;
                               }
                               feed_state_machine();
@@ -130,7 +130,7 @@ void IECStateMachine::feed_state_machine() {
 std::queue<CPEvent> IECStateMachine::state_machine() {
 
     std::queue<CPEvent> events;
-    Everest::scoped_lock_timeout lock(state_machine_mutex, "IECStateMachine::state_machine");
+    Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::IEC_state_machine);
 
     switch (cp_state) {
 
@@ -286,7 +286,7 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
 // High level state machine sets PWM duty cycle
 void IECStateMachine::set_pwm(double value) {
     {
-        Everest::scoped_lock_timeout lock(state_machine_mutex, "IECStateMachine::set_pwm");
+        Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::IEC_set_pwm);
         if (value > 0 && value < 1) {
             pwm_running = true;
         } else {
@@ -302,7 +302,7 @@ void IECStateMachine::set_pwm(double value) {
 // High level state machine sets state X1
 void IECStateMachine::set_pwm_off() {
     {
-        Everest::scoped_lock_timeout lock(state_machine_mutex, "IECStateMachine::set_pwm_off");
+        Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::IEC_set_pwm_off);
         pwm_running = false;
     }
     r_bsp->call_pwm_off();
@@ -313,7 +313,7 @@ void IECStateMachine::set_pwm_off() {
 // High level state machine sets state F
 void IECStateMachine::set_pwm_F() {
     {
-        Everest::scoped_lock_timeout lock(state_machine_mutex, "IECStateMachine::set_pwm_F");
+        Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::IEC_set_pwm_F);
         pwm_running = false;
     }
     r_bsp->call_pwm_F();
@@ -324,7 +324,7 @@ void IECStateMachine::set_pwm_F() {
 // The higher level state machine in Charger.cpp calls this to indicate it allows contactors to be switched on
 void IECStateMachine::allow_power_on(bool value, types::evse_board_support::Reason reason) {
     {
-        Everest::scoped_lock_timeout lock(state_machine_mutex, "IECStateMachine::allow_power_on");
+        Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::IEC_allow_power_on);
         // Only set the flags here in case of power on.
         power_on_allowed = value;
         power_on_reason = reason;
