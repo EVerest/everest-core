@@ -206,7 +206,7 @@ SetVariableStatusEnum DeviceModel::set_read_only_value(const Component& componen
                                                        const AttributeEnum& attribute_enum, const std::string& value) {
 
     if (component == ControllerComponents::AuthCacheCtrlr or component == ControllerComponents::LocalAuthListCtrlr or
-        component == ControllerComponents::SecurityCtrlr) {
+        component == ControllerComponents::OCPPCommCtrlr or component == ControllerComponents::SecurityCtrlr) {
         return this->set_value_internal(component, variable, attribute_enum, value, true);
     }
     throw std::invalid_argument("Not allowed to set read only value for component " + component.name.get());

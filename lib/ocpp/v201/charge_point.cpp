@@ -675,6 +675,13 @@ void ChargePoint::init_websocket() {
         return;
     }
 
+    const auto& active_network_profile_cv = ControllerComponentVariables::ActiveNetworkProfile;
+    if (active_network_profile_cv.variable.has_value()) {
+        this->device_model->set_read_only_value(active_network_profile_cv.component,
+                                                active_network_profile_cv.variable.value(), AttributeEnum::Actual,
+                                                configuration_slot);
+    }
+
     const auto& security_profile_cv = ControllerComponentVariables::SecurityProfile;
     if (security_profile_cv.variable.has_value()) {
         this->device_model->set_read_only_value(security_profile_cv.component, security_profile_cv.variable.value(),
