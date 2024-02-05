@@ -41,7 +41,8 @@ option(CMAKE_RUN_CLANG_TIDY "Run clang-tidy" OFF)
 option(BUILD_TESTING "Run unit tests" OFF)
 option(ISO15118_2_GENERATE_AND_INSTALL_CERTIFICATES "Automatically generate and install certificates for development purposes" ON)
 option(EVEREST_ENABLE_RUN_SCRIPT_GENERATION "Enables the generation of run scripts (convenience scripts for starting available configurations)" ON)
-
+option(${PROJECT_NAME}_BUILD_TESTING "Build unit tests, used if included as dependency" ON)
+option(BUILD_TESTING "Build unit tests, used if standalone project" ON)
 # This is a flag for building development tests, but not necessarily to run them, for expample in case
 # tests requires hardware.
 option(BUILD_DEV_TESTS "Build dev tests" OFF)
@@ -121,7 +122,7 @@ if(DOXYGEN_FOUND)
 endif()
 
 # testing
-if(BUILD_TESTING)
+if((${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME} OR ${PROJECT_NAME}_BUILD_TESTING) AND BUILD_TESTING)
     include(CTest)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
 
@@ -132,13 +133,13 @@ if(BUILD_TESTING)
     add_subdirectory(tests)
 
     setup_target_for_coverage_gcovr_html(
-        NAME gcovr_coverage
+        NAME ${PROJECT_NAME}_gcovr_coverage
         EXECUTABLE test_config
         DEPENDENCIES test_config everest
     )
 
     setup_target_for_coverage_lcov(
-        NAME lcov_coverage
+        NAME ${PROJECT_NAME}_lcov_coverage
         EXECUTABLE test_config
         DEPENDENCIES test_config everest
     )
