@@ -2258,19 +2258,20 @@ void ChargePointImpl::handleGetInstalledCertificateIdsRequest(ocpp::Call<GetInst
     if (call.msg.certificateType == CertificateUseEnumType::ManufacturerRootCertificate) {
         certificate_types.push_back(ocpp::CertificateType::MFRootCertificate);
     }
-
     // this is common CertificateHashDataChain
     const auto certificate_hash_data_chains = this->evse_security->get_installed_certificates(certificate_types);
-    // convert ocpp::CertificateHashData to v16::CertificateHashData
-    std::optional<std::vector<CertificateHashDataType>> certificate_hash_data_16_vec_opt;
-    std::vector<CertificateHashDataType> certificate_hash_data_16_vec;
-    for (const auto certificate_hash_data_chain_entry : certificate_hash_data_chains) {
-        certificate_hash_data_16_vec.push_back(
-            CertificateHashDataType(json(certificate_hash_data_chain_entry.certificateHashData)));
+    if (!certificate_hash_data_chains.empty()) {
+        // convert ocpp::CertificateHashData to v16::CertificateHashData
+        std::optional<std::vector<CertificateHashDataType>> certificate_hash_data_16_vec_opt;
+        std::vector<CertificateHashDataType> certificate_hash_data_16_vec;
+        for (const auto certificate_hash_data_chain_entry : certificate_hash_data_chains) {
+            certificate_hash_data_16_vec.push_back(
+                CertificateHashDataType(json(certificate_hash_data_chain_entry.certificateHashData)));
+        }
+        certificate_hash_data_16_vec_opt.emplace(certificate_hash_data_16_vec);
+        response.certificateHashData = certificate_hash_data_16_vec_opt;
+        response.status = GetInstalledCertificateStatusEnumType::Accepted;
     }
-    certificate_hash_data_16_vec_opt.emplace(certificate_hash_data_16_vec);
-    response.certificateHashData = certificate_hash_data_16_vec_opt;
-    response.status = GetInstalledCertificateStatusEnumType::Accepted;
 
     ocpp::CallResult<GetInstalledCertificateIdsResponse> call_result(response, call.uniqueId);
     this->send<GetInstalledCertificateIdsResponse>(call_result);
