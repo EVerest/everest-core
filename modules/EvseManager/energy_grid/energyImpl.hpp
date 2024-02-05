@@ -48,6 +48,7 @@ private:
 
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
     std::mutex energy_mutex;
+    bool random_delay_needed(float last_limit, float limit);
     // types::energy_price_information::PricePerkWh price_limit;
     // types::energy::OptimizerTarget optimizer_target;
     types::energy::EnergyFlowRequest energy_flow_request;
@@ -57,8 +58,12 @@ private:
     void clear_import_request_schedule();
     void clear_export_request_schedule();
     void clear_request_schedules();
-    void request_energy_from_energy_manager();
+    void request_energy_from_energy_manager(bool priority_request);
     types::evse_board_support::HardwareCapabilities hw_caps;
+    float last_enforced_limit{0.};
+    float limit_when_random_delay_started{0.};
+    std::atomic<Charger::EvseState> charger_state;
+    static constexpr std::chrono::seconds detect_startup_with_ev_attached_duration{5};
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 

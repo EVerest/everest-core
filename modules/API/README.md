@@ -45,7 +45,8 @@ This variable is published every second and contains a json object with informat
         "latest_total_w": 0.0,
         "state": "Unplugged",
         "active_permanent_faults": [],
-        "active_errors": []
+        "active_errors": [],
+        "uk_random_delay_remaining_s": 320
     }
 ```
 
@@ -80,6 +81,7 @@ Example with permanent faults being active:
 - **datetime** contains a string representation of the current UTC datetime in RFC3339 format
 - **discharged_energy_wh** contains the energy fed into the power grid by the EV in Wh
 - **latest_total_w** contains the latest total power reading over all phases in Watt
+- **uk_random_delay_remaining_s** Remaining time of a currently active random delay according to UK smart charging regulations. Not set if no delay is active.
 - **state** contains the current state of the charging session, from a list of the following possible states:
     - Unplugged
     - Disabled
@@ -219,3 +221,9 @@ Command to set a watt limit for this EVSE that will be considered within the Ene
 
 ### everest_api/evse_manager/cmd/force_unlock
 Command to force unlock a connector on the EVSE. They payload should be a positive integer identifying the connector that should be unlocked. If the payload is empty or cannot be converted to an integer connector 1 is assumed.
+
+### everest_api/evse_manager/cmd/uk_random_delay
+Command to control the UK Smart Charging random delay feature. The payload can be the following enum: "enable" and "disable" to enable/disable the feature entirely or "cancel" to cancel an ongoing delay.
+
+### everest_api/evse_manager/cmd/uk_random_delay_set_max_duration_s
+Command to set the UK Smart Charging random delay maximum duration. Payload is an integer in seconds.

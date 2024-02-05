@@ -14,6 +14,7 @@
 #include <generated/interfaces/auth_token_provider/Implementation.hpp>
 #include <generated/interfaces/energy/Implementation.hpp>
 #include <generated/interfaces/evse_manager/Implementation.hpp>
+#include <generated/interfaces/uk_random_delay/Implementation.hpp>
 
 // headers for required interface implementations
 #include <generated/interfaces/ISO15118_charger/Interface.hpp>
@@ -87,6 +88,9 @@ struct Conf {
     std::string sae_j2847_2_bpt_mode;
     bool request_zero_power_in_idle;
     bool external_ready_to_start_charging;
+    bool uk_smartcharging_random_delay_enable;
+    int uk_smartcharging_random_delay_max_duration;
+    bool uk_smartcharging_random_delay_at_any_change;
 };
 
 class EvseManager : public Everest::ModuleBase {
@@ -95,7 +99,8 @@ public:
     EvseManager(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, Everest::TelemetryProvider& telemetry,
                 std::unique_ptr<evse_managerImplBase> p_evse, std::unique_ptr<energyImplBase> p_energy_grid,
                 std::unique_ptr<auth_token_providerImplBase> p_token_provider,
-                std::unique_ptr<evse_board_supportIntf> r_bsp, std::vector<std::unique_ptr<ac_rcdIntf>> r_ac_rcd,
+                std::unique_ptr<uk_random_delayImplBase> p_random_delay, std::unique_ptr<evse_board_supportIntf> r_bsp,
+                std::vector<std::unique_ptr<ac_rcdIntf>> r_ac_rcd,
                 std::vector<std::unique_ptr<connector_lockIntf>> r_connector_lock,
                 std::vector<std::unique_ptr<powermeterIntf>> r_powermeter_grid_side,
                 std::vector<std::unique_ptr<powermeterIntf>> r_powermeter_car_side,
@@ -108,6 +113,7 @@ public:
         p_evse(std::move(p_evse)),
         p_energy_grid(std::move(p_energy_grid)),
         p_token_provider(std::move(p_token_provider)),
+        p_random_delay(std::move(p_random_delay)),
         r_bsp(std::move(r_bsp)),
         r_ac_rcd(std::move(r_ac_rcd)),
         r_connector_lock(std::move(r_connector_lock)),
@@ -124,6 +130,7 @@ public:
     const std::unique_ptr<evse_managerImplBase> p_evse;
     const std::unique_ptr<energyImplBase> p_energy_grid;
     const std::unique_ptr<auth_token_providerImplBase> p_token_provider;
+    const std::unique_ptr<uk_random_delayImplBase> p_random_delay;
     const std::unique_ptr<evse_board_supportIntf> r_bsp;
     const std::vector<std::unique_ptr<ac_rcdIntf>> r_ac_rcd;
     const std::vector<std::unique_ptr<connector_lockIntf>> r_connector_lock;
@@ -177,6 +184,12 @@ public:
 
     std::unique_ptr<IECStateMachine> bsp;
     std::unique_ptr<ErrorHandling> error_handling;
+
+    std::atomic_bool random_delay_enabled{false};
+    std::atomic_bool random_delay_running{false};
+    std::chrono::time_point<std::chrono::steady_clock> random_delay_end_time;
+    std::atomic<std::chrono::seconds> random_delay_max_duration;
+    std::atomic<std::chrono::time_point<std::chrono::steady_clock>> timepoint_ready_for_charging;
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
@@ -259,7 +272,6 @@ private:
     static constexpr auto CABLECHECK_CONTACTORS_CLOSE_TIMEOUT{std::chrono::seconds(5)};
 
     std::atomic_bool current_demand_active{false};
-
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

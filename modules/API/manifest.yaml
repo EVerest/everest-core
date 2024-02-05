@@ -181,6 +181,10 @@ requires:
     interface: ocpp
     min_connections: 0
     max_connections: 1
+  random_delay:
+    interface: uk_random_delay
+    min_connections: 0
+    max_connections: 128
 enable_external_mqtt: true
 metadata:
   license: https://opensource.org/licenses/Apache-2.0

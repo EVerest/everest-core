@@ -87,6 +87,7 @@ Charger::~Charger() {
 }
 
 void Charger::main_thread() {
+
     // Enable CP output
     bsp->enable(true);
 

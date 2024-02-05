@@ -65,7 +65,7 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
-
+    bool is_priority_request(const types::energy::EnergyFlowRequest& e);
     std::mutex energy_mutex;
 
     // complete energy tree requests
@@ -73,6 +73,9 @@ private:
 
     void enforce_limits(const std::vector<types::energy::EnforcedLimits>& limits);
     std::vector<types::energy::EnforcedLimits> run_optimizer(types::energy::EnergyFlowRequest request);
+
+    std::condition_variable mainloop_sleep_condvar;
+    std::mutex mainloop_sleep_mutex;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
