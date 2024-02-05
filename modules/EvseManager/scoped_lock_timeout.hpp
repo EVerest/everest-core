@@ -244,7 +244,7 @@ public:
 template <typename mutex_type> class scoped_lock_timeout {
 public:
     explicit scoped_lock_timeout(mutex_type& __m, MutexDescription description) : mutex(__m) {
-        if (not mutex.try_lock_for(std::chrono::seconds(120))) {
+        if (not mutex.try_lock_for(deadlock_timeout)) {
             request_backtrace(pthread_self());
             request_backtrace(mutex.p_id);
             // Give some time for other timeouts to report their state and backtraces
@@ -278,6 +278,9 @@ public:
 private:
     bool locked{false};
     mutex_type& mutex;
+
+    // This should be lower then command timeouts from framework (by default 300s)
+    static constexpr auto deadlock_timeout = std::chrono::seconds(120);
 };
 } // namespace Everest
 
