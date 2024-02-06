@@ -1,24 +1,25 @@
 include(Catch)
 
-add_executable(tests)
+set(TEST_TARGET_NAME ${PROJECT_NAME}_tests)
+add_executable(${TEST_TARGET_NAME})
 
-target_include_directories(tests PRIVATE
+target_include_directories(${TEST_TARGET_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
-target_sources(tests PRIVATE
+target_sources(${TEST_TARGET_NAME} PRIVATE
     test_config.cpp
     helpers.cpp
 )
 
-target_link_libraries(tests
+target_link_libraries(${TEST_TARGET_NAME}
     PRIVATE
         everest::framework
         everest::log
         Catch2::Catch2WithMain
 )
 
-catch_discover_tests(tests)
+catch_discover_tests(${TEST_TARGET_NAME})
 
 include(test_directory_setups/empty_config.cmake)
 include(test_directory_setups/broken_yaml.cmake)

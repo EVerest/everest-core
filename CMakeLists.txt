@@ -11,7 +11,8 @@ find_package(everest-cmake 0.1 REQUIRED
 )
 
 # options
-option(BUILD_TESTING "Run unit tests" OFF)
+option(${PROJECT_NAME}_BUILD_TESTING "Build unit tests, used if included as dependency" OFF)
+option(BUILD_TESTING "Build unit tests, used if standalone project" OFF)
 option(FRAMEWORK_INSTALL "Install the library (shared data might be installed anyway)" ${EVC_MAIN_PROJECT})
 option(CMAKE_RUN_CLANG_TIDY "Run clang-tidy" OFF)
 option(EVEREST_ENABLE_JS_SUPPORT "Enable everestjs for JavaScript modules" ON)
@@ -151,7 +152,8 @@ endif ()
 
 # testing
 # FIXME (aw): move testing logic into tests/CMakeLists.txt
-if(BUILD_TESTING)
+if((${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME} OR ${PROJECT_NAME}_BUILD_TESTING) AND BUILD_TESTING)
+if((CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME OR ${PROJECT_NAME}_BUILD_TESTING) AND BUILD_TESTING)
     if(NOT DISABLE_EDM)
         list(APPEND CMAKE_MODULE_PATH ${CPM_PACKAGE_catch2_SOURCE_DIR}/extras)
     endif()
@@ -165,14 +167,14 @@ if(BUILD_TESTING)
     add_subdirectory(tests)
 
     setup_target_for_coverage_gcovr_html(
-        NAME gcovr_coverage
+        NAME ${PROJECT_NAME}_gcovr_coverage
         EXECUTABLE ctest --output-on-failure
         EXCLUDE "${CMAKE_SOURCE_DIR}/tests" "${CMAKE_BINARY_DIR}"
         DEPENDENCIES tests everest
     )
 
     setup_target_for_coverage_lcov(
-        NAME lcov_coverage
+        NAME ${PROJECT_NAME}_lcov_coverage
         EXECUTABLE ctest --output-on-failure
         EXCLUDE "${CMAKE_SOURCE_DIR}/tests" "${CMAKE_BINARY_DIR}"
         DEPENDENCIES tests everest
