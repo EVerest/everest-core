@@ -236,15 +236,18 @@ static std::string to_string(MutexDescription d) {
 }
 
 class timed_mutex_traceable : public std::timed_mutex {
+#ifdef __linux__
 public:
     MutexDescription description;
     pthread_t p_id;
+#endif
 };
 
 template <typename mutex_type> class scoped_lock_timeout {
 public:
     explicit scoped_lock_timeout(mutex_type& __m, MutexDescription description) : mutex(__m) {
         if (not mutex.try_lock_for(deadlock_timeout)) {
+#ifdef __linux__
             request_backtrace(pthread_self());
             request_backtrace(mutex.p_id);
             // Give some time for other timeouts to report their state and backtraces
@@ -259,10 +262,13 @@ public:
 
             EVLOG_AND_THROW(EverestTimeoutError("Mutex deadlock detected: Failed to lock " + to_string(description) +
                                                 ", mutex held by " + to_string(mutex.description) + different_thread));
+#endif
         } else {
             locked = true;
+#ifdef __linux__
             mutex.description = description;
             mutex.p_id = pthread_self();
+#endif
         }
     }
 

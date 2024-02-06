@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-
+#ifdef __linux__
 #include <cstring>
 #include <execinfo.h>
 #include <stdio.h>
@@ -41,3 +41,4 @@ void request_backtrace(pthread_t id) {
 }
 
 } // namespace Everest
+#endif
