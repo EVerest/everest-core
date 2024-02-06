@@ -5,6 +5,10 @@
 #ifdef __linux__
 #include <signal.h>
 
+#include <features.h>
+#ifdef __USE_GNU
+#include "backtrace.hpp"
+#define EVEREST_USE_BACKTRACES
 /*
  Simple backtrace signal handler
 */
@@ -13,5 +17,6 @@ void signal_handler(int signo);
 void install_backtrace_handler();
 void request_backtrace(pthread_t id);
 } // namespace Everest
+#endif
 #endif
 #endif

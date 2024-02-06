@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifdef __linux__
+
+#include "backtrace.hpp"
+
+#ifdef EVEREST_USE_BACKTRACES
+
 #include <cstring>
 #include <execinfo.h>
 #include <stdio.h>
-
-#include "backtrace.hpp"
 
 /*
  Simple backtrace signal handler

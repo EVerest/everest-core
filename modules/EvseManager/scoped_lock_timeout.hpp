@@ -236,7 +236,7 @@ static std::string to_string(MutexDescription d) {
 }
 
 class timed_mutex_traceable : public std::timed_mutex {
-#ifdef __linux__
+#ifdef EVEREST_USE_BACKTRACES
 public:
     MutexDescription description;
     pthread_t p_id;
@@ -247,7 +247,7 @@ template <typename mutex_type> class scoped_lock_timeout {
 public:
     explicit scoped_lock_timeout(mutex_type& __m, MutexDescription description) : mutex(__m) {
         if (not mutex.try_lock_for(deadlock_timeout)) {
-#ifdef __linux__
+#ifdef EVEREST_USE_BACKTRACES
             request_backtrace(pthread_self());
             request_backtrace(mutex.p_id);
             // Give some time for other timeouts to report their state and backtraces
@@ -265,7 +265,7 @@ public:
 #endif
         } else {
             locked = true;
-#ifdef __linux__
+#ifdef EVEREST_USE_BACKTRACES
             mutex.description = description;
             mutex.p_id = pthread_self();
 #endif
