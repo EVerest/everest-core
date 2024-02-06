@@ -28,8 +28,7 @@ GTest is required for building the test cases target. To build the target and ru
 
 ```bash
 mkdir build && cd build
-cmake -DBUILD_TESTING_EVSE_SECURITY=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=./dist ..
+cmake -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=./dist ..
 make -j$(nproc) install
-cd tests
-./tests
+make test
 ```
