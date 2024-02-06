@@ -124,6 +124,7 @@ endif()
 # testing
 if((${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME} OR ${PROJECT_NAME}_BUILD_TESTING) AND BUILD_TESTING)
     include(CTest)
+    enable_testing()
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
 
     evc_include(CodeCoverage)
