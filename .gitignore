@@ -3,3 +3,4 @@
 .cache/
 workspace.yaml
 .vscode/
+/bazel-*

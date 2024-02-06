@@ -6,6 +6,5 @@ members = [
 ]
 
 [workspace.dependencies]
-# This is not used when building with cmake, but you can change this for local
-# development to point to a directory that works for you to build with cargo.
-everestrs = { path = "../everest-framework/everestrs/everestrs" }
+everestrs = { git = "https://github.com/everest/everest-framework.git", rev = "21b5371ec38158ddfcbe9eea0f92a18154ca3c76" }
+everestrs-build = { git = "https://github.com/everest/everest-framework.git", rev = "21b5371ec38158ddfcbe9eea0f92a18154ca3c76" }
