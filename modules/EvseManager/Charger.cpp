@@ -23,7 +23,7 @@ Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_
                  const types::evse_board_support::Connector_type& connector_type) :
     bsp(bsp), error_handling(error_handling), connector_type(connector_type) {
 
-#ifdef __linux__
+#ifdef EVEREST_USE_BACKTRACES
     Everest::install_backtrace_handler();
 #endif
 
