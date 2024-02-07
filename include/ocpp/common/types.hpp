@@ -507,9 +507,10 @@ struct OCSPRequestData {
 };
 
 struct KeyPair {
-    fs::path certificate_path;
-    fs::path key_path;
-    std::optional<std::string> password;
+    fs::path certificate_path;           // path to the full certificate chain
+    fs::path certificate_single_path;    // path to the single leaf certificate
+    fs::path key_path;                   // path to private key of the leaf certificate
+    std::optional<std::string> password; // optional password for the private key
 };
 
 namespace conversions {

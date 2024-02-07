@@ -279,9 +279,16 @@ tls_context WebsocketTLS::on_tls_init(std::string hostname, websocketpp::connect
                 EVLOG_AND_THROW(std::runtime_error(
                     "Connecting with security profile 3 but no client side certificate is present or valid"));
             }
-            EVLOG_info << "Using certificate: " << certificate_key_pair.value().certificate_path;
-            if (SSL_CTX_use_certificate_chain_file(context->native_handle(),
-                                                   certificate_key_pair.value().certificate_path.c_str()) != 1) {
+
+            // certificate_path contains the chain if not empty. Use certificate chain if available, else use
+            // certificate_single_path
+            auto certificate_path = certificate_key_pair.value().certificate_path;
+            if (certificate_path.empty()) {
+                certificate_path = certificate_key_pair.value().certificate_single_path;
+            }
+
+            EVLOG_info << "Using certificate: " << certificate_path;
+            if (SSL_CTX_use_certificate_chain_file(context->native_handle(), certificate_path.c_str()) != 1) {
                 EVLOG_AND_THROW(std::runtime_error("Could not use client certificate file within SSL context"));
             }
             EVLOG_info << "Using key file: " << certificate_key_pair.value().key_path;
