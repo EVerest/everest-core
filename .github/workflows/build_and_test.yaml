@@ -1,0 +1,57 @@
+name: Build and test libevse-security
+on:
+  pull_request: {}
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: Which runner to use
+        type: choice
+        default: 'ubuntu-22.04'
+        required: true
+        options:
+          - 'ubuntu-22.04'
+          - 'large-ubuntu-22.04-xxl'
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ${{ inputs.runner || 'ubuntu-22.04' }}
+    steps:
+      - name: Checkout libevse-security
+        uses: actions/checkout@v3
+        with:
+          path: source
+      - name: Run clang-format
+        uses: everest/everest-ci/github-actions/run-clang-format@v1.0.0
+        with:
+          source-dir: source
+          extensions: hpp,cpp
+          exclude: cache
+  test:
+    name: Build and test libevse-security
+    runs-on: ${{ inputs.runner || 'ubuntu-22.04' }}
+    steps:
+      - name: Checkout libevse-security
+        uses: actions/checkout@v3
+        with:
+          path: source
+      - name: Setup run scripts
+        run: |
+          mkdir scripts
+          rsync -a source/.ci/build-kit/ scripts
+      - name: Pull docker container
+        run: |
+          docker pull --platform=linux/x86_64 --quiet ghcr.io/everest/build-kit-alpine:latest
+          docker image tag ghcr.io/everest/build-kit-alpine:latest build-kit
+      - name: Unit test and install
+        run: |
+          docker run \
+          --volume "$(pwd):/ext" \
+          --name test-container \
+          build-kit run-script install_and_test
+      - name: Archive test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: ctest-report
+          path: ${{ github.workspace }}/ctest-report

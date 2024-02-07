@@ -1,5 +1,7 @@
 # libevse-security
 
+![Github Actions](https://github.com/EVerest/libevse-security/actions/workflows/build_and_test.yml/badge.svg)
+
 This is a C++ library for security related operations for charging stations. It respects the requirements specified in OCPP and ISO15118 and can be used in combination with OCPP and ISO15118 implementations.
 
 In the near future this library will also contain support for secure storage on TPM2.0.
@@ -24,7 +26,8 @@ make -j$(nproc) install
 
 ## Tests
 
-GTest is required for building the test cases target. To build the target and run the tests use
+GTest is required for building the test cases target.
+To build the target and run the tests use:
 
 ```bash
 mkdir build && cd build
