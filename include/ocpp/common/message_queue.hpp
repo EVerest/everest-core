@@ -110,6 +110,7 @@ private:
     bool running;
     bool new_message;
     boost::uuids::random_generator uuid_generator;
+    std::recursive_mutex next_message_mutex;
     std::optional<MessageId> next_message_to_send;
 
     Everest::SteadyTimer in_flight_timeout_timer;
@@ -368,12 +369,15 @@ public:
                     continue;
                 }
 
-                if (next_message_to_send.has_value()) {
-                    if (next_message_to_send.value() != message->uniqueId()) {
-                        EVLOG_debug << "Message with id " << message->uniqueId()
-                                    << " held back because message with id " << next_message_to_send.value()
-                                    << " should be sent first";
-                        continue;
+                {
+                    std::lock_guard<std::recursive_mutex> lk(this->next_message_mutex);
+                    if (next_message_to_send.has_value()) {
+                        if (next_message_to_send.value() != message->uniqueId()) {
+                            EVLOG_debug << "Message with id " << message->uniqueId()
+                                        << " held back because message with id " << next_message_to_send.value()
+                                        << " should be sent first";
+                            continue;
+                        }
                     }
                 }
 
@@ -507,9 +511,12 @@ public:
         }
 
         this->send_callback(call_result);
-        if (next_message_to_send.has_value()) {
-            if (next_message_to_send.value() == call_result.uniqueId) {
-                next_message_to_send.reset();
+        {
+            std::lock_guard<std::recursive_mutex> lk(this->next_message_mutex);
+            if (next_message_to_send.has_value()) {
+                if (next_message_to_send.value() == call_result.uniqueId) {
+                    next_message_to_send.reset();
+                }
             }
         }
 
@@ -523,9 +530,12 @@ public:
         }
 
         this->send_callback(call_error);
-        if (next_message_to_send.has_value()) {
-            if (next_message_to_send.value() == call_error.uniqueId) {
-                next_message_to_send.reset();
+        {
+            std::lock_guard<std::recursive_mutex> lk(this->next_message_mutex);
+            if (next_message_to_send.has_value()) {
+                if (next_message_to_send.value() == call_error.uniqueId) {
+                    next_message_to_send.reset();
+                }
             }
         }
 
@@ -575,15 +585,21 @@ public:
                 enhanced_message.messageType = this->string_to_messagetype(enhanced_message.message.at(CALL_ACTION));
                 enhanced_message.call_message = enhanced_message.message;
 
-                // save the uid of the message we just received to ensure the next message we send is a response to this
-                // message
-                next_message_to_send.emplace(enhanced_message.uniqueId);
+                {
+                    std::lock_guard<std::recursive_mutex> lk(this->next_message_mutex);
+                    // save the uid of the message we just received to ensure the next message we send is a response to
+                    // this message
+                    next_message_to_send.emplace(enhanced_message.uniqueId);
+                }
             }
 
             // TODO(kai): what happens if we receive a CallResult or CallError out of order?
             if (enhanced_message.messageTypeId == MessageTypeId::CALLRESULT ||
                 enhanced_message.messageTypeId == MessageTypeId::CALLERROR) {
-                next_message_to_send.reset();
+                {
+                    std::lock_guard<std::recursive_mutex> lk(this->next_message_mutex);
+                    next_message_to_send.reset();
+                }
                 // we need to remove Call messages from in_flight if we receive a CallResult OR a CallError
 
                 // TODO(kai): we need to do some error handling in the CallError case
