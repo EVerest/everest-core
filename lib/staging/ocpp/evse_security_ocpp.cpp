@@ -248,6 +248,7 @@ ocpp::OCSPRequestData to_ocpp(types::evse_security::OCSPRequestData other) {
 ocpp::KeyPair to_ocpp(types::evse_security::KeyPair other) {
     ocpp::KeyPair lhs;
     lhs.certificate_path = other.certificate;
+    lhs.certificate_single_path = other.certificate_single;
     lhs.key_path = other.key;
     lhs.password = other.password;
     return lhs;
