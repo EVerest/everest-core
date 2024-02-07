@@ -44,6 +44,9 @@ private:
     /// \brief Component responsible for maintaining and monitoring the operational status of CS, EVSEs, and connectors.
     std::shared_ptr<ComponentStateManager> component_state_manager;
 
+    /// \brief status mutex to protect the status of the connector against concurrent updates
+    std::mutex status_mutex;
+
 public:
     /// \brief Construct a new Connector object
     /// \param evse_id id of the EVSE the connector is ap art of

@@ -38,6 +38,7 @@ Connector::Connector(const int32_t evse_id, const int32_t connector_id,
 }
 
 void Connector::submit_event(ConnectorEvent event) {
+    std::lock_guard lk(this->status_mutex);
     switch (event) {
     case ConnectorEvent::PlugIn:
         this->component_state_manager->set_connector_occupied(this->evse_id, this->connector_id, true);
