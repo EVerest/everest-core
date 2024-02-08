@@ -408,8 +408,15 @@ EvseSecurity::get_installed_certificates(const std::vector<CertificateType>& cer
 
         const auto secc_key_pair = this->get_key_pair(LeafCertificateType::V2G, EncodingFormat::PEM);
         if (secc_key_pair.status == GetKeyPairStatus::Accepted) {
+            fs::path certificate_path;
+
+            if (secc_key_pair.pair.value().certificate.empty() == false)
+                certificate_path = secc_key_pair.pair.value().certificate;
+            else
+                certificate_path = secc_key_pair.pair.value().certificate_single;
+
             // Leaf V2G chain
-            X509CertificateBundle leaf_bundle(secc_key_pair.pair.value().certificate, EncodingFormat::PEM);
+            X509CertificateBundle leaf_bundle(certificate_path, EncodingFormat::PEM);
 
             // V2G chain
             const auto ca_bundle_path = this->ca_bundle_path_map.at(CaCertificateType::V2G);
@@ -681,13 +688,15 @@ GetKeyPairResult EvseSecurity::get_key_pair(LeafCertificateType certificate_type
         if (leaf_fullchain != nullptr) {
             chain_file = leaf_fullchain->at(0).get_file().value();
         } else {
-            EVLOG_warning << "V2G leaf requires full bundle, but full bundle not found at path: " << cert_dir;
+            EVLOG_warning << conversions::leaf_certificate_type_to_string(certificate_type)
+                          << " leaf requires full bundle, but full bundle not found at path: " << cert_dir;
         }
 
         if (leaf_single != nullptr) {
             certificate_file = leaf_single->at(0).get_file().value();
         } else {
-            EVLOG_warning << "V2G single leaf not found at path: " << cert_dir;
+            EVLOG_warning << conversions::leaf_certificate_type_to_string(certificate_type)
+                          << " single leaf not found at path: " << cert_dir;
         }
 
         result.pair = {key_file, chain_file, certificate_file, this->private_key_password};
@@ -817,11 +826,22 @@ int EvseSecurity::get_leaf_expiry_days_count(LeafCertificateType certificate_typ
 
     const auto key_pair = this->get_key_pair(certificate_type, EncodingFormat::PEM);
     if (key_pair.status == GetKeyPairStatus::Accepted) {
-        // In case it is a bundle, we know the leaf is always the first
-        X509CertificateBundle cert(key_pair.pair.value().certificate, EncodingFormat::PEM);
+        try {
+            fs::path certificate_path;
 
-        int64_t seconds = cert.split().at(0).get_valid_to();
-        return std::chrono::duration_cast<days_to_seconds>(std::chrono::seconds(seconds)).count();
+            if (key_pair.pair.value().certificate.empty() == false)
+                certificate_path = key_pair.pair.value().certificate;
+            else
+                certificate_path = key_pair.pair.value().certificate_single;
+
+            // In case it is a bundle, we know the leaf is always the first
+            X509CertificateBundle cert(certificate_path, EncodingFormat::PEM);
+
+            int64_t seconds = cert.split().at(0).get_valid_to();
+            return std::chrono::duration_cast<days_to_seconds>(std::chrono::seconds(seconds)).count();
+        } catch (const CertificateLoadException& e) {
+            EVLOG_error << "Could not obtain leaf expiry certificate: " << e.what();
+        }
     }
     return 0;
 }
