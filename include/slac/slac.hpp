@@ -39,7 +39,7 @@ const int C_EV_START_ATTEN_CHAR_INDS = 3;
 const int C_EV_MATCH_RETRY = 2;
 const int C_EV_MATCH_MNBC = 10;
 const int TP_EV_BATCH_MSG_INTERVAL_MS = 40; // 20ms - 50ms, interval between start_atten_char and mnbc_sound msgs
-const int TT_EV_ATTEN_RESULTS_MS = 1200; // max. 1200ms
+const int TT_EV_ATTEN_RESULTS_MS = 1200;    // max. 1200ms
 const int TT_EVSE_MATCH_MNBC_MS = 600;
 const int TT_MATCH_SEQUENCE_MS = 400;
 const int TT_MATCH_RESPONSE_MS = 200;
@@ -82,9 +82,9 @@ const uint16_t CM_SLAC_MATCH_REQ_MVF_LENGTH = 0x3e;
 
 const uint16_t CM_SLAC_MATCH_CNF_MVF_LENGTH = 0x56;
 
-const uint8_t CM_SLAC_PARM_CNF_RESP_TYPE = 0x01; // = other GP station
-const uint8_t CM_SLAC_PARM_CNF_NUM_SOUNDS = 10;  // typical value
-const uint8_t CM_SLAC_PARM_CNF_TIMEOUT = 0x06;   // 600ms
+const uint8_t CM_SLAC_PARM_CNF_RESP_TYPE = 0x01;  // = other GP station
+const uint8_t CM_SLAC_PARM_CNF_NUM_SOUNDS = 10;   // typical value
+const uint8_t CM_SLAC_PARM_CNF_TIMEOUT = 0x06;    // 600ms
 
 const uint8_t CM_SET_KEY_REQ_KEY_TYPE_NMK = 0x01; // NMK (AES-128), Network Management Key
 const uint8_t CM_SET_KEY_REQ_PID_HLE = 0x04;
@@ -194,13 +194,13 @@ typedef struct {
 } __attribute__((packed)) cm_start_atten_char_ind;
 
 typedef struct {
-    uint8_t application_type;         // fixed to 0x00, indicating 'pev-evse matching'
-    uint8_t security_type;            // fixed to 0x00, indicating 'no security'
-    uint8_t source_address[ETH_ALEN]; // mac address of EV host, which initiates matching
-    uint8_t run_id[defs::RUN_ID_LEN]; // indentifier for a matching run
-    uint8_t source_id[SOURCE_ID_LEN]; // unique id of the station, that sent the m-sounds
-    uint8_t resp_id[RESP_ID_LEN];     // unique id of the station, that is sending this message
-    uint8_t num_sounds;               // number of sounds used for attenuation profile
+    uint8_t application_type;            // fixed to 0x00, indicating 'pev-evse matching'
+    uint8_t security_type;               // fixed to 0x00, indicating 'no security'
+    uint8_t source_address[ETH_ALEN];    // mac address of EV host, which initiates matching
+    uint8_t run_id[defs::RUN_ID_LEN];    // indentifier for a matching run
+    uint8_t source_id[SOURCE_ID_LEN];    // unique id of the station, that sent the m-sounds
+    uint8_t resp_id[RESP_ID_LEN];        // unique id of the station, that is sending this message
+    uint8_t num_sounds;                  // number of sounds used for attenuation profile
     struct {
         uint8_t num_groups;              // number of OFDM carrier groups
         uint8_t aag[defs::AAG_LIST_LEN]; // AAG_1 .. AAG_N
@@ -229,8 +229,8 @@ typedef struct {
 
 // note: this message doesn't seem to part of hpgp, it is defined in ISO15118-3
 typedef struct {
-    uint8_t pev_mac[ETH_ALEN]; // mac address of the EV host
-    uint8_t num_groups;        // number of OFDM carrier groups
+    uint8_t pev_mac[ETH_ALEN];       // mac address of the EV host
+    uint8_t num_groups;              // number of OFDM carrier groups
     uint8_t _reserved;
     uint8_t aag[defs::AAG_LIST_LEN]; // list of average attenuation for each group
 } __attribute__((packed)) cm_atten_profile_ind;

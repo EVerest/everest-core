@@ -35,8 +35,7 @@ private:
 
 class PacketSocket {
 public:
-    enum class IOResult
-    {
+    enum class IOResult {
         Ok,
         Failure,
         Timeout

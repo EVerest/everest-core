@@ -12,8 +12,7 @@
 #include "slac_io.hpp"
 
 // FIXME (aw): could we separate out the internal events, somehow?
-enum class EventID
-{
+enum class EventID {
     ResetDone,
     EnterBCD,
     LeaveBCD,
@@ -36,8 +35,7 @@ using EventSlacMessage = EventTypeFactory::Derived<EventID::SlacMessage, slac::m
 using EventLinkDetected = EventTypeFactory::Derived<EventID::LinkDetected>;
 using EventErrorSequenceDone = EventTypeFactory::Derived<EventID::ErrorSequenceDone>;
 
-enum class State
-{
+enum class State {
     Reset,
     Idle,
     WaitForMatchingStart,

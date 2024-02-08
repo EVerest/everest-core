@@ -422,7 +422,7 @@ void EvseFSM::sd_reset_hsm(FSMContextType& ctx, const EventSlacMessage& ev) {
         return;
     }
 
-        ctx.submit_event(EventResetDone());
+    ctx.submit_event(EventResetDone());
 }
 
 bool EvseFSM::received_slac_match() {

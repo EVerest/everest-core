@@ -22,8 +22,7 @@
 // sudo ip link set veth-ev-host up
 // sudo ip link set veth-ev-plc up
 
-enum class NodeType
-{
+enum class NodeType {
     EVSE,
     EV
 };
@@ -157,8 +156,7 @@ void process_packet(PLCDeviceInformation& in, PLCDeviceInformation& out) {
     int bytes_read = read(in.fd, &incoming, sizeof(incoming));
     int return_to_fd = -1;
 
-    enum
-    {
+    enum {
         IN,
         OUT,
         NONE
