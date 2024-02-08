@@ -1489,15 +1489,7 @@ void ChargePoint::set_evse_connectors_unavailable(const std::unique_ptr<Evse>& e
     uint32_t number_of_connectors = evse->get_number_of_connectors();
 
     for (uint32_t i = 1; i <= number_of_connectors; ++i) {
-        bool should_persist = persist;
-        // TODO: Why is this condition here? What requirement does it fulfill?
-        if (!should_persist && evse->get_connector(static_cast<int32_t>(i))->get_effective_connector_status() ==
-                                   ocpp::v201::ConnectorStatusEnum::Unavailable) {
-            should_persist = true;
-        }
-
-        evse->set_connector_operative_status(static_cast<int32_t>(i), OperationalStatusEnum::Inoperative,
-                                             should_persist);
+        evse->set_connector_operative_status(static_cast<int32_t>(i), OperationalStatusEnum::Inoperative, persist);
     }
 }
 
