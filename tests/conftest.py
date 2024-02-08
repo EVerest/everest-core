@@ -13,6 +13,8 @@ def pytest_addoption(parser):
 def pytest_configure(config):
     everest_prefix = config.getoption('--everest-prefix')
     everest_config_path = Path(everest_prefix) / 'etc/everest'
+    if not everest_config_path.exists():
+        return
     everest_configs = [path for path in everest_config_path.iterdir(
     ) if path.name.startswith('config-') and path.name.endswith('.yaml')]
     pytest.everest_configs = {}
