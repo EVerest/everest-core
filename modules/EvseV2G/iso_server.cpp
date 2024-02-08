@@ -1251,6 +1251,10 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
                 } else {
                     res->ResponseCode = iso1responseCodeType_FAILED_CertChainError;
                 }
+                // EVSETimeStamp and GenChallenge are mandatory, GenChallenge has fixed size
+                res->EVSETimeStamp = time(NULL);
+                memset(res->GenChallenge.bytes, 0, GEN_CHALLENGE_SIZE);
+                res->GenChallenge.bytesLen = GEN_CHALLENGE_SIZE;
                 goto error_out;
             }
 
