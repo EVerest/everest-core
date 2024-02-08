@@ -11,6 +11,8 @@ find_package(everest-cmake 0.1 REQUIRED
 )
 
 # options
+option(${PROJECT_NAME}_BUILD_TESTING "Build unit tests, used if included as dependency" OFF)
+option(BUILD_TESTING "Build unit tests, used if standalone project" OFF)
 option(BUILD_EXAMPLES "Build examples" OFF)
 option(TIMER_INSTALL "Install the library (shared data might be installed anyway)" ${EVC_MAIN_PROJECT})
 option(CMAKE_RUN_CLANG_TIDY "Run clang-tidy" OFF)
@@ -82,4 +84,10 @@ if(CMAKE_RUN_CLANG_TIDY)
     clang-tidy;
     -header-filter='.*'
     -checks=${CLANG_TIDY_CHECKS})
+endif()
+
+if((${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME} OR ${PROJECT_NAME}_BUILD_TESTING) AND BUILD_TESTING)
+    include(CTest)
+    enable_testing()
+    add_subdirectory(tests)
 endif()
