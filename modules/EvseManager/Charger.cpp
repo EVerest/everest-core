@@ -487,8 +487,9 @@ void Charger::run_state_machine() {
             }
 
             if (config_context.charge_mode == ChargeMode::DC) {
-                // FIXME: handle DC pause/resume here
-                // FIXME: handle DC no power available from Energy management
+                if (initialize_state) {
+                    bsp->allow_power_on(true, types::evse_board_support::Reason::FullPowerCharging);
+                }
             } else {
                 check_soft_over_current();
 
@@ -744,7 +745,7 @@ void Charger::process_cp_events_state(CPEvent cp_event) {
             shared_context.iec_allow_close_contactor = true;
         } else if (cp_event == CPEvent::CarRequestedStopPower) {
             shared_context.iec_allow_close_contactor = false;
-            // current_state = EvseState::StoppingCharging;
+            signal_dc_supply_off();
         }
         break;
 
