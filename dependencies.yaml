@@ -79,5 +79,5 @@ everest-utils:
 # setting it here can be misleading since it does not affect the version being used
 libevse-security:
   git: https://github.com/EVerest/libevse-security.git
-  git_tag: v0.4.2
+  git_tag: 69410a8
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBEVSE_SECURITY"
