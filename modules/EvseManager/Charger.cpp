@@ -952,7 +952,7 @@ bool Charger::resume_charging_power_available() {
 
     if (shared_context.transaction_active and shared_context.current_state == EvseState::WaitingForEnergy and
         power_available()) {
-        shared_context.current_state = EvseState::Charging;
+        shared_context.current_state = EvseState::PrepareCharging;
         return true;
     }
     return false;
