@@ -1,0 +1,55 @@
+name: CMake Build and Test
+on:
+  pull_request: {}
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: Which runner to use
+        type: choice
+        default: 'ubuntu-22.04'
+        required: true
+        options:
+          - 'ubuntu-22.04'
+          - 'large-ubuntu-22.04-xxl'
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ${{ inputs.runner || 'ubuntu-22.04' }}
+    steps:
+      - name: Format branch name for cache key
+        run: |
+          BRANCH_NAME_FOR_CACHE="${GITHUB_REF_NAME//-/_}"
+          echo "branch_name_for_cache=${BRANCH_NAME_FOR_CACHE}" >> "$GITHUB_ENV"
+      - name: Setup cache
+        uses: actions/cache@v3
+        with:
+          path: cache
+          key: compile-${{ env.branch_name_for_cache }}-${{ github.sha }}
+          restore-keys: |
+            compile-${{ env.branch_name_for_cache }}-
+            compile-
+      - name: Checkout everest-framework
+        uses: actions/checkout@v3
+        with:
+          path: source
+      - name: Setup run scripts
+        run: |
+          mkdir scripts
+          rsync -a source/.ci/build-kit/ scripts
+      - name: Pull build-kit docker image
+        run: |
+          docker pull --quiet ghcr.io/everest/build-kit-alpine:latest
+          docker image tag ghcr.io/everest/build-kit-alpine:latest build-kit
+      - name: Compile
+        run: |
+          docker run \
+          --volume "$(pwd):/ext" \
+          --name compile-container \
+          build-kit run-script compile
+      - name: Test
+        run: |
+          docker commit compile-container build-image
+          docker run \
+          --volume "$(pwd):/ext" \
+          build-image run-script test
