@@ -203,6 +203,7 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
         [[fallthrough]];
 
     case RawCPState::C:
+        force_unlocked = false;
         connector_lock();
         // Table A.6: Sequence 1.2 Plug-in
         if (last_cp_state == RawCPState::A || last_cp_state == RawCPState::Disabled ||
@@ -411,13 +412,18 @@ void IECStateMachine::connector_lock() {
 
 void IECStateMachine::connector_unlock() {
     should_be_locked = false;
+    force_unlocked = false;
+}
+
+void IECStateMachine::connector_force_unlock() {
+    force_unlocked = true;
 }
 
 void IECStateMachine::check_connector_lock() {
-    if (should_be_locked and not is_locked) {
+    if (should_be_locked and not force_unlocked and not is_locked) {
         signal_lock();
         is_locked = true;
-    } else if (not should_be_locked and is_locked and not relais_on) {
+    } else if ((not should_be_locked or force_unlocked) and is_locked and not relais_on) {
         signal_unlock();
         is_locked = false;
     }

@@ -87,9 +87,7 @@ public:
 
     void enable(bool en);
 
-    void connector_lock();
-    void connector_unlock();
-    void check_connector_lock();
+    void connector_force_unlock();
 
     // Signal for internal events type
     sigslot::signal<CPEvent> signal_event;
@@ -97,6 +95,9 @@ public:
     sigslot::signal<> signal_unlock;
 
 private:
+    void connector_lock();
+    void connector_unlock();
+    void check_connector_lock();
     const std::unique_ptr<evse_board_supportIntf>& r_bsp;
 
     bool pwm_running{false};
@@ -123,6 +124,7 @@ private:
     std::atomic_bool three_phases{true};
     std::atomic_bool is_locked{false};
     std::atomic_bool should_be_locked{false};
+    std::atomic_bool force_unlocked{false};
 
     std::atomic_bool enabled{false};
     std::atomic_bool relais_on{false};
