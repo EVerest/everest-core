@@ -28,7 +28,7 @@ Go to your "everest-core/**tests**" folder and execute *pytest*:
 
 ```bash
 cd ~/checkout/everest-workspace/everest-core/tests
-pytest-3 -s ./core_tests/startup_tests.py --path .. --junitxml=results.xml
+pytest --everest-prefix ../build/dist core_tests/*.py framework_tests/*.py
 ```
 
 After execution a "results.xml" file should be available in the "everest-core/**tests**" folder, which details the current test results.
