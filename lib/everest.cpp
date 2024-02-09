@@ -682,7 +682,7 @@ void Everest::external_mqtt_publish(const std::string& topic, const std::string&
     this->mqtt_abstraction.publish(fmt::format("{}{}", this->mqtt_external_prefix, topic), data);
 }
 
-void Everest::provide_external_mqtt_handler(const std::string& topic, const StringHandler& handler) {
+UnsubscribeToken Everest::provide_external_mqtt_handler(const std::string& topic, const StringHandler& handler) {
     BOOST_LOG_FUNCTION();
 
     // check if external mqtt is enabled
@@ -706,6 +706,7 @@ void Everest::provide_external_mqtt_handler(const std::string& topic, const Stri
     std::shared_ptr<TypedHandler> token =
         std::make_shared<TypedHandler>(HandlerType::ExternalMQTT, std::make_shared<Handler>(external_handler));
     this->mqtt_abstraction.register_handler(external_topic, token, QOS::QOS0);
+    return [this, topic, token]() { this->mqtt_abstraction.unregister_handler(topic, token); };
 }
 
 void Everest::telemetry_publish(const std::string& topic, const std::string& data) {

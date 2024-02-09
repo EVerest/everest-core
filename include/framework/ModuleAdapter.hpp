@@ -82,7 +82,7 @@ struct ModuleAdapter {
     using RequestClearAllErrorsOfMouduleFunc = std::function<Result(const std::string&)>;
     using RequestClearAllErrorsOfTypeOfModuleFunc = std::function<Result(const std::string&, const std::string&)>;
     using ExtMqttPublishFunc = std::function<void(const std::string&, const std::string&)>;
-    using ExtMqttSubscribeFunc = std::function<void(const std::string&, StringHandler)>;
+    using ExtMqttSubscribeFunc = std::function<UnsubscribeToken(const std::string&, StringHandler)>;
     using TelemetryPublishFunc =
         std::function<void(const std::string&, const std::string&, const std::string&, const TelemetryMap&)>;
 
@@ -146,8 +146,8 @@ public:
         this->publish(topic, data, 5);
     }
 
-    void subscribe(const std::string& topic, StringHandler handler) {
-        ev.ext_mqtt_subscribe(topic, handler);
+    UnsubscribeToken subscribe(const std::string& topic, StringHandler handler) const {
+        return ev.ext_mqtt_subscribe(topic, std::move(handler));
     }
 
 private:

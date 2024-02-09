@@ -32,6 +32,7 @@ struct cmd {
 
 using TelemetryEntry = std::variant<std::string, const char*, bool, int32_t, uint32_t, int64_t, uint64_t, double>;
 using TelemetryMap = std::map<std::string, TelemetryEntry>;
+using UnsubscribeToken = std::function<void()>;
 
 ///
 /// \brief Contains the EVerest framework that provides convenience functionality for implementing EVerest modules
@@ -123,7 +124,7 @@ public:
     ///
     /// \brief Allows a module to indicate that it provides a external mqtt \p handler at the given \p topic
     ///
-    void provide_external_mqtt_handler(const std::string& topic, const StringHandler& handler);
+    UnsubscribeToken provide_external_mqtt_handler(const std::string& topic, const StringHandler& handler);
 
     ///
     /// \brief publishes the given telemetry \p data on the given \p topic
