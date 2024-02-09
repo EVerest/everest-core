@@ -3035,12 +3035,12 @@ void ChargePoint::execute_change_availability_request(ChangeAvailabilityRequest 
     if (request.evse.has_value()) {
         if (request.evse.value().connectorId.has_value()) {
             this->set_connector_operative_status(request.evse.value().id, request.evse.value().connectorId.value(),
-                                                 request.operationalStatus, true);
+                                                 request.operationalStatus, persist);
         } else {
-            this->set_evse_operative_status(request.evse.value().id, request.operationalStatus, true);
+            this->set_evse_operative_status(request.evse.value().id, request.operationalStatus, persist);
         }
     } else {
-        this->set_cs_operative_status(request.operationalStatus, true);
+        this->set_cs_operative_status(request.operationalStatus, persist);
     }
 }
 
