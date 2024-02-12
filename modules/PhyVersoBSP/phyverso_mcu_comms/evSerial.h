@@ -44,7 +44,7 @@ public:
     sigslot::signal<int, PpState> signal_pp_state;
     sigslot::signal<FanState> signal_fan_state;
     sigslot::signal<int, LockState> signal_lock_state;
-    //sigslot::signal<BootMsg> signal_bootmsg;  // TODO
+    sigslot::signal<> signal_config_request;
 
 private:
     // Serial interface

@@ -56,6 +56,11 @@ int main(int argc, char* argv[]) {
         printf("Cannot open device \"%s\"\n", device);
     } else {
         p.run();
+
+        p.signal_config_request.connect([]() {
+            printf("Received config request\n");
+        });
+
         p.signal_keep_alive.connect([](KeepAlive s) {
             printf(">> KeepAlive: phyverso MCU SW Version: %s, Hardware %i/rev %i, MCU Timestamp %i\n", s.sw_version_string, s.hw_type,
                    s.hw_revision, s.time_stamp);

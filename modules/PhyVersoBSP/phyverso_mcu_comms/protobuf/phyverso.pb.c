@@ -27,6 +27,17 @@ PB_BIND(FanState, FanState, AUTO)
 PB_BIND(CoilState, CoilState, AUTO)
 
 
+PB_BIND(BootConfigRequest, BootConfigRequest, AUTO)
+
+
+PB_BIND(BootConfigResponse, BootConfigResponse, AUTO)
+
+
+PB_BIND(ConfigMotorLockType, ConfigMotorLockType, AUTO)
+
+
+
+
 
 
 

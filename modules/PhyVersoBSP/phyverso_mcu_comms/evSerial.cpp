@@ -183,10 +183,9 @@ void evSerial::handle_packet(uint8_t* buf, int len) {
             signal_lock_state(msg_in.connector, msg_in.payload.lock_state);
             break;
 
-        // send config in response to bootmsg
-        //case McuToEverest_bootmsg_tag:
-        //    signal_bootmsg(msg_in.payload.bootmsg);
-        //    break;
+        case McuToEverest_config_request_tag:
+            signal_config_request();
+            break;
 
         }
 }

@@ -23,6 +23,7 @@ bool evConfig::open_file(const char* path)
         // check validity first
         // TODO
         config_valid = true;
+        return true;
     }
     catch(exception& e) {
         cerr << "error: " << e.what() << "\n";
