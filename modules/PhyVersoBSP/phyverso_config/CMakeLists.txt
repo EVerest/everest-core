@@ -18,6 +18,7 @@ target_sources(phyverso_config
 target_include_directories(phyverso_config
     PUBLIC
         "${PROJECT_BINARY_DIR}"
+        "../phyverso_mcu_comms/protobuf"
 )
 
 target_link_libraries(phyverso_config

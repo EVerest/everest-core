@@ -57,8 +57,10 @@ int main(int argc, char* argv[]) {
     } else {
         p.run();
 
-        p.signal_config_request.connect([]() {
+        p.signal_config_request.connect([&]() {
             printf("Received config request\n");
+            p.send_config(verso_config);
+            printf("Sent config packet\n");
         });
 
         p.signal_keep_alive.connect([](KeepAlive s) {

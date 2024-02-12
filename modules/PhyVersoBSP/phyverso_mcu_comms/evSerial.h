@@ -32,7 +32,7 @@ public:
     void lock(int target_connector, bool _lock);
     void unlock(int target_connector);
 
-    //void send_config(BootMsg _bootmsg, evConfig &config);
+    void send_config(evConfig &config);
 
     sigslot::signal<KeepAlive> signal_keep_alive;
     sigslot::signal<int, CpState> signal_cp_state;

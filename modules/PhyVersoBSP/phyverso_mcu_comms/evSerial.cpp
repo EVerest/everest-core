@@ -405,13 +405,9 @@ void evSerial::keep_alive() {
     link_write(&msg_out);
 }
 
-/* TODO: implement
-void evSerial::send_config(BootMsg _bootmsg, evConfig &config)
+void evSerial::send_config(evConfig &config)
 {
-    EverestToMcu msg_out = EverestToMcu_init_default;
-    // TODO
-    msg_out.connector = 0;
-    link_write(&msg_out);
+    EverestToMcu config_packet = config.get_config_packet();
+    link_write(&config_packet);
 }
-*/
 
