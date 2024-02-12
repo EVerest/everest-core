@@ -11,8 +11,8 @@ cargo_build_script(
     },
     deps = all_crate_deps(build=True),
     data= [
-        "//:types",
-        "//:interfaces",
+        "//types:types",
+        "//interfaces:interfaces",
         "manifest.yaml",
     ],
 )

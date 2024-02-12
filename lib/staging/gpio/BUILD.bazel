@@ -1,0 +1,7 @@
+cc_library(
+    name = "gpio",
+    srcs = ["gpio.cpp"],
+    hdrs = ["gpio.hpp"],
+    visibility = ["//visibility:public"],
+    includes = ["."],
+)

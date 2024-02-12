@@ -1,0 +1,18 @@
+load("//modules:module.bzl", "cc_everest_module")
+
+SLOTS = [
+    "main",
+]
+
+cc_everest_module(
+    name = "EnergyManager",
+    deps = [
+    ],
+    slots = SLOTS,
+    srcs = glob(
+        [
+            "*.cpp",
+            "*.hpp",
+        ],
+    ),
+)

@@ -10,5 +10,6 @@
         "current_function",
         "uuid",
         "exception",
+        "asio"
     ]
 ]

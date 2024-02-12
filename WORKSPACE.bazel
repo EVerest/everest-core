@@ -50,6 +50,7 @@ load("//third-party/bazel:defs.bzl", "everest_core_defs")
 
 everest_core_defs()
 
+
 load("@everest-framework//third-party/bazel:repos.bzl", "everest_framework_repos")
 
 everest_framework_repos()
@@ -57,3 +58,15 @@ everest_framework_repos()
 load("@everest-framework//third-party/bazel:defs.bzl", "everest_framework_deps")
 
 everest_framework_deps()
+
+
+load("@rules_python//python:pip.bzl", "pip_parse")
+
+pip_parse(
+    name = "ev_cli_pip_deps",
+    requirements_lock = "//third-party/bazel:ev-cli.requirements.txt",
+)
+
+load("@ev_cli_pip_deps//:requirements.bzl", "install_deps")
+
+install_deps()

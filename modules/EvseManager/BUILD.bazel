@@ -1,0 +1,26 @@
+load("//modules:module.bzl", "cc_everest_module")
+
+SLOTS = [
+    "energy_grid",
+    "evse",
+    "token_provider",
+]
+
+cc_everest_module(
+    name = "EvseManager",
+    deps = [
+        "@pugixml//:libpugixml",
+        "@sigslot//:sigslot",
+    ],
+    slots = SLOTS,
+    srcs = glob(
+        [
+            "*.cpp",
+            "*.hpp",
+        ],
+        exclude = [
+            "EvseManager.cpp",
+            "EvseManager.hpp",
+        ],
+    ),
+)

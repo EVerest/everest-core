@@ -1,0 +1,14 @@
+load("//modules:module.bzl", "cc_everest_module")
+
+SLOTS = [
+    "main",
+]
+
+cc_everest_module(
+    name = "SerialCommHub",
+    deps = [
+        "//lib/staging/gpio",
+    ],
+    slots = SLOTS,
+    srcs = glob(["*.cpp", "*.hpp"]),
+)
