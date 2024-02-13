@@ -248,6 +248,7 @@ private:
         int ac_with_soc_timer;
         // non standard compliant option: time out after a while and switch back to DC to get SoC update
         bool ac_with_soc_timeout;
+        bool contactor_welded{false};
     } shared_context;
 
     struct ConfigContext {
