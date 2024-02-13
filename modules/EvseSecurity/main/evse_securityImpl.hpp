@@ -59,9 +59,12 @@ protected:
     handle_get_key_pair(types::evse_security::LeafCertificateType& certificate_type,
                         types::evse_security::EncodingFormat& encoding) override;
     virtual std::string handle_get_verify_file(types::evse_security::CaCertificateType& certificate_type) override;
+    virtual std::string handle_get_csms_verify_file(bool& attempt_fallback) override;
     virtual int handle_get_leaf_expiry_days_count(types::evse_security::LeafCertificateType& certificate_type) override;
     virtual bool handle_verify_file_signature(std::string& file_path, std::string& signing_certificate,
                                               std::string& signature) override;
+    virtual bool handle_set_configuration_value(std::string& name, std::string& value) override;
+    virtual types::evse_security::DeleteCertificateResult handle_delete_certificate_csms_fallback() override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
     // insert your protected definitions here

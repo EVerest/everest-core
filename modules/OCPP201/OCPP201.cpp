@@ -753,6 +753,9 @@ void OCPP201::ready() {
                             << e.what();
                 return;
             }
+        } else if (set_variable_data.component.name == "SecurityCtrlr" and
+                   set_variable_data.variable.name == "AdditionalRootCertificateCheck") {
+            this->r_security->call_set_configuration_value("AdditionalRootCertificateCheck", set_variable_data.attributeValue.get());
         }
     };
 
@@ -1011,6 +1014,13 @@ void OCPP201::ready() {
     const auto boot_reason = get_boot_reason(this->r_system->call_get_boot_reason());
     this->charge_point->set_message_queue_resume_delay(std::chrono::seconds(this->config.MessageQueueResumeDelay));
     this->charge_point->start(boot_reason);
+
+    const auto result = this->charge_point->request_value<bool>(ocpp::v201::Component{"SecurityCtrlr"},
+                                                                ocpp::v201::Variable{"AddtionalRootCertificateCheck"},
+                                                                ocpp::v201::AttributeEnum::Actual);
+    if (result.status == ocpp::v201::GetVariableStatusEnum::Accepted) {
+        this->r_security->call_set_configuration_value("AdditionalRootCertificateCheck", result.value.value() ? "true" : "false");
+    }
 }
 
 } // namespace module

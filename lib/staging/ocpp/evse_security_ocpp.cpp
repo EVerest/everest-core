@@ -101,8 +101,20 @@ std::string EvseSecurity::get_verify_file(const ocpp::CaCertificateType& certifi
     return this->r_security.call_get_verify_file(conversions::from_ocpp(certificate_type));
 }
 
+std::string EvseSecurity::get_csms_verify_file(bool attempt_fallback) {
+    return this->r_security.call_get_csms_verify_file(attempt_fallback);
+}
+
 int EvseSecurity::get_leaf_expiry_days_count(const ocpp::CertificateSigningUseEnum& certificate_type) {
     return this->r_security.call_get_leaf_expiry_days_count(conversions::from_ocpp(certificate_type));
+}
+
+bool EvseSecurity::set_configuration_value(std::string& name, std::string& value) {
+    return this->r_security.call_set_configuration_value(name, value);
+}
+
+ocpp::DeleteCertificateResult EvseSecurity::delete_certificate_csms_fallback() {
+    return conversions::to_ocpp(this->r_security.call_delete_certificate_csms_fallback());
 }
 
 namespace conversions {

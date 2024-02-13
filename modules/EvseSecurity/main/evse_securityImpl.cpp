@@ -103,6 +103,10 @@ std::string evse_securityImpl::handle_get_verify_file(types::evse_security::CaCe
     return this->evse_security->get_verify_file(conversions::from_everest(certificate_type));
 }
 
+std::string evse_securityImpl::handle_get_csms_verify_file(bool& attempt_fallback) {
+    return this->evse_security->get_csms_verify_file(attempt_fallback);
+}
+
 int evse_securityImpl::handle_get_leaf_expiry_days_count(types::evse_security::LeafCertificateType& certificate_type) {
     return this->evse_security->get_leaf_expiry_days_count(conversions::from_everest(certificate_type));
 }
@@ -111,6 +115,14 @@ bool evse_securityImpl::handle_verify_file_signature(std::string& file_path, std
                                                      std::string& signature) {
     return evse_security::EvseSecurity::verify_file_signature(std::filesystem::path(file_path), signing_certificate,
                                                               signature);
+}
+
+bool evse_securityImpl::handle_set_configuration_value(std::string& name, std::string& value) {
+    return this->evse_security->set_configuration_value(name, value);
+}
+
+types::evse_security::DeleteCertificateResult evse_securityImpl::handle_delete_certificate_csms_fallback() {
+    return conversions::to_everest(this->evse_security->delete_certificate_csms_fallback());
 }
 
 } // namespace main

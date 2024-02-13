@@ -37,7 +37,10 @@ public:
     std::optional<ocpp::KeyPair> get_key_pair(const ocpp::CertificateSigningUseEnum& certificate_type) override;
     bool update_certificate_links(const ocpp::CertificateSigningUseEnum& certificate_type) override;
     std::string get_verify_file(const ocpp::CaCertificateType& certificate_type) override;
+    std::string get_csms_verify_file(bool attempt_fallback) override;
     int get_leaf_expiry_days_count(const ocpp::CertificateSigningUseEnum& certificate_type) override;
+    bool set_configuration_value(std::string& name, std::string& value) override;
+    ocpp::DeleteCertificateResult delete_certificate_csms_fallback() override;
 };
 
 namespace conversions {

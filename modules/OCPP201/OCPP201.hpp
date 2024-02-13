@@ -29,7 +29,8 @@
 
 #include <ocpp/v201/charge_point.hpp>
 
-enum class TxStartPoint {
+enum class TxStartPoint
+{
     ParkingBayOccupancy,
     EVConnected,
     Authorized,

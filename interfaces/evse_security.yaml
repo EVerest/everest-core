@@ -144,6 +144,15 @@ cmds:
     result:
       description: The path of the CA bundle file
       type: string
+  get_csms_verify_file:
+    description: Command to get the file path of a CSMS CA bundle that can be used for verification
+    arguments:
+      attempt_fallback:
+        description: If true it will return the fallback CSMS CA if present, else it will return the most recent CSMS CA
+        type: boolean
+    result:
+      description: The path of the CSMS CA bundle file
+      type: string
   get_leaf_expiry_days_count:
     description: >-
       Command to get the days count until the given leaf certificate expires. 
@@ -173,5 +182,25 @@ cmds:
     result:
       description: True if verification succeeded, false if not
       type: boolean
+  set_configuration_value:
+    description: >-
+      Sets a configuration within the module
+    arguments:
+      name:
+        description: Name of the configuration that should be set
+        type: string
+      value:
+        description: Value of the configuration that should be set
+        type: string
+    result:
+      description: True if the configuration was set, false if not
+      type: boolean
+  delete_certificate_csms_fallback:
+    description: >-
+      Command to delete the CSMS fallback certificate if present
+    result:
+      description: Result of the attempt to delete a certificate
+      type: string
+      $ref: /evse_security#/DeleteCertificateResult
 
 
