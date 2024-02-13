@@ -20,6 +20,7 @@ target_include_directories(phyverso_mcu_comms
         "${PROJECT_BINARY_DIR}"
         protobuf
         bsl
+        "../phyverso_config"
 )
 
 target_link_libraries(phyverso_mcu_comms
@@ -29,4 +30,5 @@ target_link_libraries(phyverso_mcu_comms
     PRIVATE
         Pal::Sigslot
         everest::framework
+        phyverso_config
 )

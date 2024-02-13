@@ -11,6 +11,7 @@ message EverestToMcu {
     uint32 pwm_duty_cycle = 4; // in 0.01 %, 0 = State F, 10000 = X1
     CoilState set_coil_state_request = 5;
     bool reset = 6;
+    BootConfigResponse config_response = 8;
   }
   int32 connector = 7; // 0: None, 1: Connector 1, 2: Connector 2
 }
@@ -29,6 +30,7 @@ message McuToEverest {
   PpState pp_state = 8;
   FanState fan_state = 9;
   LockState lock_state = 10;
+  BootConfigRequest config_request = 11;
  }
  int32 connector = 6; // 0: None, 1: Connector 1, 2: Connector 2
 }
@@ -100,4 +102,30 @@ enum CoilType {
 	COIL_AC = 1;
 	COIL_DC1 = 2;
 	// add precharge and discharge coils here later
+}
+
+message BootConfigRequest {
+  // TODO
+}
+
+message BootConfigResponse {
+  ConfigHardwareRevision hw_rev = 1;
+  ConfigMotorLockType lock_1 = 2;
+  ConfigMotorLockType lock_2 = 3;
+}
+
+message ConfigMotorLockType {
+  MotorLockType type = 1;
+}
+
+enum ConfigHardwareRevision {
+  HW_REV_UNKNOWN = 0;
+  HW_REV_A = 1;
+  HW_REV_B = 2;
+}
+
+enum MotorLockType {
+  MOTOR_LOCK_UNKNOWN = 0;
+  MOTOR_LOCK_QWELLO = 1;
+  MOTOR_LOCK_DEBUG_VALEO_HVAC = 2;
 }
