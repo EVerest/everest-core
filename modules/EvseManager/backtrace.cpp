@@ -8,6 +8,7 @@
 #include <cstring>
 #include <execinfo.h>
 #include <stdio.h>
+#include <unistd.h>
 
 /*
  Simple backtrace signal handler
