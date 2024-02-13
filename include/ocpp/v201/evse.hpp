@@ -152,6 +152,10 @@ public:
     /// \param new_status The operative status to switch to
     /// \param persist True the updated operative state should be persisted
     void set_connector_operative_status(int32_t connector_id, OperationalStatusEnum new_status, bool persist);
+
+    /// \brief Restores the operative status of a connector within this EVSE to the persisted status and recomputes its
+    /// effective status \param connector_id The ID of the connector
+    void restore_connector_operative_status(int32_t connector_id);
 };
 
 } // namespace v201

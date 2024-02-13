@@ -254,6 +254,10 @@ void Evse::set_connector_operative_status(int32_t connector_id, OperationalStatu
     this->id_connector_map.at(connector_id)->set_connector_operative_status(new_status, persist);
 }
 
+void Evse::restore_connector_operative_status(int32_t connector_id) {
+    this->id_connector_map.at(connector_id)->restore_connector_operative_status();
+}
+
 OperationalStatusEnum Evse::get_effective_operational_status() {
     return this->component_state_manager->get_evse_effective_operational_status(this->evse_id);
 }

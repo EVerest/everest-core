@@ -251,6 +251,9 @@ void ChargePoint::on_firmware_update_status_notification(int32_t request_id,
             CiString<50>(ocpp::security_events::INVALIDFIRMWARESIGNATURE),
             std::optional<CiString<255>>("Signature of the provided firmware is not valid!"), true,
             true); // L01.FR.03 - critical because TC_L_06_CS requires this message to be sent
+    } else if (req.status == FirmwareStatusEnum::InstallVerificationFailed ||
+               req.status == FirmwareStatusEnum::InstallationFailed) {
+        this->restore_all_connector_states();
     }
 
     if (this->firmware_status_before_installing == req.status) {
@@ -1119,6 +1122,16 @@ void ChargePoint::change_all_connectors_to_unavailable_for_firmware_update() {
                 msg.evse = e;
                 this->scheduled_change_availability_requests[evse_id] = {msg, false};
             }
+        }
+    }
+}
+
+void ChargePoint::restore_all_connector_states() {
+    for (auto const& [evse_id, evse] : this->evses) {
+        uint32_t number_of_connectors = evse->get_number_of_connectors();
+
+        for (uint32_t i = 1; i <= number_of_connectors; ++i) {
+            evse->restore_connector_operative_status(static_cast<int32_t>(i));
         }
     }
 }

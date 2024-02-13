@@ -68,6 +68,10 @@ public:
     /// \param new_status: The operative status to switch to
     /// \param persist: True if the updated operative status setting should be persisted
     void set_connector_operative_status(OperationalStatusEnum new_status, bool persist);
+
+    /// \brief Restores the operative status of the connector to the persisted status and recomputes its effective
+    /// status
+    void restore_connector_operative_status();
 };
 
 } // namespace v201

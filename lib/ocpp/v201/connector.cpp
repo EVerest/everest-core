@@ -72,6 +72,13 @@ void Connector::set_connector_operative_status(OperationalStatusEnum new_status,
                                                                                new_status, persist);
 }
 
+void Connector::restore_connector_operative_status() {
+    auto persisted_status =
+        this->component_state_manager->get_connector_persisted_operational_status(this->evse_id, this->connector_id);
+    this->component_state_manager->set_connector_individual_operational_status(this->evse_id, this->connector_id,
+                                                                               persisted_status, false);
+}
+
 OperationalStatusEnum Connector::get_effective_operational_status() {
     return this->component_state_manager->get_connector_effective_operational_status(this->evse_id, this->connector_id);
 }
