@@ -115,6 +115,54 @@ protected:
     }
 };
 
+TEST_F(EvseSecurityTests, verify_expired_csr_deletion) {
+    // Generate a CSR
+    std::string csr =
+        evse_security->generate_certificate_signing_request(LeafCertificateType::CSMS, "DE", "Pionix", "NA");
+    fs::path csr_key_path = evse_security->managed_csr.begin()->first;
+
+    // Simulate a full fs else no deletion will take place
+    evse_security->max_fs_usage_bytes = 1;
+
+    ASSERT_EQ(evse_security->managed_csr.size(), 1);
+    ASSERT_TRUE(fs::exists(csr_key_path));
+
+    // Check that is is NOT deleted
+    evse_security->garbage_collect();
+    ASSERT_TRUE(fs::exists(csr_key_path));
+
+    // Sleep 1 second AND it must be deleted
+    evse_security->csr_expiry = std::chrono::seconds(0);
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    evse_security->garbage_collect();
+
+    ASSERT_FALSE(fs::exists(csr_key_path));
+    ASSERT_EQ(evse_security->managed_csr.size(), 0);
+
+    // Delete unmanaged, future expired CSRs
+    csr = evse_security->generate_certificate_signing_request(LeafCertificateType::CSMS, "DE", "Pionix", "NA");
+    csr_key_path = evse_security->managed_csr.begin()->first;
+
+    ASSERT_EQ(evse_security->managed_csr.size(), 1);
+
+    // Remove from managed (simulate a reboot/reinit)
+    evse_security->managed_csr.clear();
+
+    // at this GC the should re-add the key to our managed list
+    evse_security->csr_expiry = std::chrono::seconds(10);
+    evse_security->garbage_collect();
+    ASSERT_EQ(evse_security->managed_csr.size(), 1);
+    ASSERT_TRUE(fs::exists(csr_key_path));
+
+    // Now it is technically expired again
+    evse_security->csr_expiry = std::chrono::seconds(0);
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    // Garbage collect should delete the expired managed key
+    evse_security->garbage_collect();
+    ASSERT_FALSE(fs::exists(csr_key_path));
+}
+
 TEST_F(EvseSecurityTests, verify_expired_leaf_deletion) {
     // Copy many expired certificates
     std::set<fs::path> existing;
@@ -137,7 +185,7 @@ TEST_F(EvseSecurityTests, verify_expired_leaf_deletion) {
     evse_security->max_fs_certificate_store_entries = 20;
 
     // Garbage collect
-    evse_security->garbage_collect(true);
+    evse_security->garbage_collect();
 
     // Assert the files/keys do not exist any more
     std::size_t existing_count = 0;
@@ -757,45 +805,6 @@ TEST_F(EvseSecurityTests, verify_full_filesystem_install_reject) {
         read_file_to_string(std::filesystem::path("certs/to_be_installed/INSTALL_TEST_ROOT_CA1.pem"));
     const auto result = this->evse_security->install_ca_certificate(new_root_ca_1, CaCertificateType::CSMS);
     ASSERT_TRUE(result == InstallCertificateResult::CertificateStoreMaxLengthExceeded);
-}
-
-TEST_F(EvseSecurityTests, verify_expired_csr_deletion) {
-    // Generate a CSR
-    std::string csr =
-        evse_security->generate_certificate_signing_request(LeafCertificateType::CSMS, "DE", "Pionix", "NA");
-    fs::path csr_key_path = evse_security->managed_csr.begin()->first;
-
-    // Simulate a full fs else no deletion will take place
-    evse_security->max_fs_usage_bytes = 1;
-
-    ASSERT_EQ(evse_security->managed_csr.size(), 1);
-    ASSERT_TRUE(fs::exists(csr_key_path));
-
-    // Check that is is NOT deleted
-    evse_security->garbage_collect(false);
-    ASSERT_TRUE(fs::exists(csr_key_path));
-
-    // Sleep 1 second AND it must be deleted
-    evse_security->csr_expiry = std::chrono::seconds(0);
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-    evse_security->garbage_collect(false);
-
-    ASSERT_FALSE(fs::exists(csr_key_path));
-    ASSERT_EQ(evse_security->managed_csr.size(), 0);
-
-    // Delete unmanaged CSRs
-    csr = evse_security->generate_certificate_signing_request(LeafCertificateType::CSMS, "DE", "Pionix", "NA");
-    csr_key_path = evse_security->managed_csr.begin()->first;
-
-    // Remove from managed (simulate a reboot/reinit)
-    evse_security->managed_csr.clear();
-
-    ASSERT_EQ(evse_security->managed_csr.size(), 0);
-    ASSERT_TRUE(fs::exists(csr_key_path));
-
-    // Garbage collect should delete the unmanaged key
-    evse_security->garbage_collect(false);
-    ASSERT_FALSE(fs::exists(csr_key_path));
 }
 
 } // namespace evse_security

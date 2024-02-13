@@ -52,6 +52,8 @@ endif()
 #############
 
 target_link_libraries(evse_security
+    PUBLIC
+        everest::timer
     PRIVATE
         OpenSSL::SSL
         OpenSSL::Crypto

@@ -2,6 +2,7 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 
 #include <everest/logging.hpp>
+
 #include <evse_security/evse_security.hpp>
 
 #include <algorithm>
@@ -160,10 +161,13 @@ X509CertificateBundle get_leaf_certificates(const fs::path& cert_dir) {
     return X509CertificateBundle(cert_dir, EncodingFormat::PEM);
 }
 
+std::mutex EvseSecurity::security_mutex;
+
 EvseSecurity::EvseSecurity(const FilePaths& file_paths, const std::optional<std::string>& private_key_password,
                            const std::optional<std::uintmax_t>& max_fs_usage_bytes,
                            const std::optional<std::uintmax_t>& max_fs_certificate_store_entries,
-                           const std::optional<std::chrono::seconds>& csr_expiry) :
+                           const std::optional<std::chrono::seconds>& csr_expiry,
+                           const std::optional<std::chrono::seconds>& garbage_collect_time) :
     private_key_password(private_key_password) {
 
     std::vector<fs::path> dirs = {
@@ -217,6 +221,10 @@ EvseSecurity::EvseSecurity(const FilePaths& file_paths, const std::optional<std:
     this->max_fs_usage_bytes = max_fs_usage_bytes.value_or(DEFAULT_MAX_FILESYSTEM_SIZE);
     this->max_fs_certificate_store_entries = max_fs_certificate_store_entries.value_or(DEFAULT_MAX_CERTIFICATE_ENTRIES);
     this->csr_expiry = csr_expiry.value_or(DEFAULT_CSR_EXPIRY);
+    this->garbage_collect_time = garbage_collect_time.value_or(DEFAULT_GARBAGE_COLLECT_TIME);
+
+    // Start GC timer
+    garbage_collect_timer.interval([this]() { this->garbage_collect(); }, this->garbage_collect_time);
 }
 
 EvseSecurity::~EvseSecurity() {
@@ -224,6 +232,8 @@ EvseSecurity::~EvseSecurity() {
 
 InstallCertificateResult EvseSecurity::install_ca_certificate(const std::string& certificate,
                                                               CaCertificateType certificate_type) {
+    std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
+
     EVLOG_debug << "Installing ca certificate: " << conversions::ca_certificate_type_to_string(certificate_type);
 
     if (is_filesystem_full()) {
@@ -285,6 +295,8 @@ InstallCertificateResult EvseSecurity::install_ca_certificate(const std::string&
 }
 
 DeleteCertificateResult EvseSecurity::delete_certificate(const CertificateHashData& certificate_hash_data) {
+    std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
+
     EVLOG_debug << "Delete ca certificate: " << certificate_hash_data.serial_number;
 
     auto response = DeleteCertificateResult::NotFound;
@@ -375,8 +387,8 @@ DeleteCertificateResult EvseSecurity::delete_certificate(const CertificateHashDa
 
 InstallCertificateResult EvseSecurity::update_leaf_certificate(const std::string& certificate_chain,
                                                                LeafCertificateType certificate_type) {
+    std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
 
-    // TODO(piet): Check CertificateStoreMaxEntries too
     if (is_filesystem_full()) {
         EVLOG_error << "Filesystem full, can't install new CA certificate!";
         return InstallCertificateResult::CertificateStoreMaxLengthExceeded;
@@ -399,7 +411,9 @@ InstallCertificateResult EvseSecurity::update_leaf_certificate(const std::string
         if (_certificate_chain.empty()) {
             return InstallCertificateResult::InvalidFormat;
         }
-        const auto result = this->verify_certificate(certificate_chain, certificate_type);
+
+        // Internal since we already acquired the lock
+        const auto result = this->verify_certificate_internal(certificate_chain, certificate_type);
         if (result != InstallCertificateResult::Accepted) {
             return result;
         }
@@ -457,6 +471,8 @@ GetInstalledCertificatesResult EvseSecurity::get_installed_certificate(Certifica
 
 GetInstalledCertificatesResult
 EvseSecurity::get_installed_certificates(const std::vector<CertificateType>& certificate_types) {
+    std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
+
     GetInstalledCertificatesResult result;
     std::vector<CertificateHashDataChain> certificate_chains;
     const auto ca_certificate_types = get_ca_certificate_types(certificate_types);
@@ -498,7 +514,8 @@ EvseSecurity::get_installed_certificates(const std::vector<CertificateType>& cer
     if (std::find(certificate_types.begin(), certificate_types.end(), CertificateType::V2GCertificateChain) !=
         certificate_types.end()) {
 
-        const auto secc_key_pair = this->get_key_pair(LeafCertificateType::V2G, EncodingFormat::PEM);
+        // Internal since we already acquired the lock
+        const auto secc_key_pair = this->get_key_pair_internal(LeafCertificateType::V2G, EncodingFormat::PEM);
         if (secc_key_pair.status == GetKeyPairStatus::Accepted) {
             fs::path certificate_path;
 
@@ -566,6 +583,8 @@ EvseSecurity::get_installed_certificates(const std::vector<CertificateType>& cer
 }
 
 int EvseSecurity::get_count_of_installed_certificates(const std::vector<CertificateType>& certificate_types) {
+    std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
+
     int count = 0;
 
     std::set<fs::path> directories;
@@ -595,6 +614,8 @@ int EvseSecurity::get_count_of_installed_certificates(const std::vector<Certific
 }
 
 OCSPRequestDataList EvseSecurity::get_ocsp_request_data() {
+    std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
+
     OCSPRequestDataList response;
     std::vector<OCSPRequestData> ocsp_request_data_list;
 
@@ -615,6 +636,8 @@ OCSPRequestDataList EvseSecurity::get_ocsp_request_data() {
 
 void EvseSecurity::update_ocsp_cache(const CertificateHashData& certificate_hash_data,
                                      const std::string& ocsp_response) {
+    std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
+
     const auto ca_bundle_path = this->ca_bundle_path_map.at(CaCertificateType::V2G);
 
     try {
@@ -644,6 +667,8 @@ void EvseSecurity::update_ocsp_cache(const CertificateHashData& certificate_hash
 }
 
 bool EvseSecurity::is_ca_certificate_installed(CaCertificateType certificate_type) {
+    std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
+
     try {
         X509CertificateBundle bundle(this->ca_bundle_path_map.at(certificate_type), EncodingFormat::PEM);
 
@@ -664,10 +689,16 @@ bool EvseSecurity::is_ca_certificate_installed(CaCertificateType certificate_typ
     return false;
 }
 
+void EvseSecurity::certificate_signing_request_failed(const std::string& csr, LeafCertificateType certificate_type) {
+    // TODO(ioan): delete the pairing key of the CSR
+}
+
 std::string EvseSecurity::generate_certificate_signing_request(LeafCertificateType certificate_type,
                                                                const std::string& country,
                                                                const std::string& organization,
                                                                const std::string& common, bool use_tpm) {
+    std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
+
     fs::path key_path;
 
     // Make a difference between normal and tpm keys for identification
@@ -718,6 +749,12 @@ std::string EvseSecurity::generate_certificate_signing_request(LeafCertificateTy
 }
 
 GetKeyPairResult EvseSecurity::get_key_pair(LeafCertificateType certificate_type, EncodingFormat encoding) {
+    std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
+
+    return get_key_pair_internal(certificate_type, encoding);
+}
+
+GetKeyPairResult EvseSecurity::get_key_pair_internal(LeafCertificateType certificate_type, EncodingFormat encoding) {
     EVLOG_debug << "Requesting key/pair: " << conversions::leaf_certificate_type_to_string(certificate_type);
 
     GetKeyPairResult result;
@@ -824,12 +861,14 @@ bool EvseSecurity::update_certificate_links(LeafCertificateType certificate_type
         throw std::runtime_error("Link updating only supported for V2G certificates");
     }
 
+    std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
+
     fs::path cert_link_path = this->links.secc_leaf_cert_link;
     fs::path key_link_path = this->links.secc_leaf_key_link;
     fs::path chain_link_path = this->links.cpo_cert_chain_link;
 
-    // Get the most recent valid certificate
-    const auto key_pair = this->get_key_pair(certificate_type, EncodingFormat::PEM);
+    // Get the most recent valid certificate (internal since we already locked mutex)
+    const auto key_pair = this->get_key_pair_internal(certificate_type, EncodingFormat::PEM);
     if ((key_pair.status == GetKeyPairStatus::Accepted) && key_pair.pair.has_value()) {
 
         // Create or update symlinks to SECC leaf cert
@@ -899,6 +938,8 @@ bool EvseSecurity::update_certificate_links(LeafCertificateType certificate_type
 }
 
 std::string EvseSecurity::get_verify_file(CaCertificateType certificate_type) {
+    std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
+
     // Support bundle files, in case the certificates contain
     // multiple entries (should be 3) as per the specification
     X509CertificateBundle verify_file(this->ca_bundle_path_map.at(certificate_type), EncodingFormat::PEM);
@@ -921,9 +962,12 @@ std::string EvseSecurity::get_verify_file(CaCertificateType certificate_type) {
 }
 
 int EvseSecurity::get_leaf_expiry_days_count(LeafCertificateType certificate_type) {
+    std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
+
     EVLOG_debug << "Requesting certificate expiry: " << conversions::leaf_certificate_type_to_string(certificate_type);
 
-    const auto key_pair = this->get_key_pair(certificate_type, EncodingFormat::PEM);
+    // Internal since we already locked mutex
+    const auto key_pair = this->get_key_pair_internal(certificate_type, EncodingFormat::PEM);
     if (key_pair.status == GetKeyPairStatus::Accepted) {
         try {
             fs::path certificate_path;
@@ -948,6 +992,8 @@ int EvseSecurity::get_leaf_expiry_days_count(LeafCertificateType certificate_typ
 
 bool EvseSecurity::verify_file_signature(const fs::path& path, const std::string& signing_certificate,
                                          const std::string signature) {
+    std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
+
     EVLOG_debug << "Verifying file signature for " << path.string();
 
     std::vector<std::byte> sha256_digest;
@@ -984,6 +1030,13 @@ bool EvseSecurity::verify_file_signature(const fs::path& path, const std::string
 
 InstallCertificateResult EvseSecurity::verify_certificate(const std::string& certificate_chain,
                                                           LeafCertificateType certificate_type) {
+    std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
+
+    return verify_certificate_internal(certificate_chain, certificate_type);
+}
+
+InstallCertificateResult EvseSecurity::verify_certificate_internal(const std::string& certificate_chain,
+                                                                   LeafCertificateType certificate_type) {
     try {
         X509CertificateBundle certificate(certificate_chain, EncodingFormat::PEM);
         std::vector<X509Wrapper> _certificate_chain = certificate.split();
@@ -1021,14 +1074,16 @@ InstallCertificateResult EvseSecurity::verify_certificate(const std::string& cer
     }
 }
 
-void EvseSecurity::garbage_collect(bool delete_expired_certificates) {
+void EvseSecurity::garbage_collect() {
+    std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
+
     // Only garbage collect if we are full
     if (is_filesystem_full() == false) {
         EVLOG_debug << "Garbage collect postponed, filesystem is not full";
         return;
     }
 
-    EVLOG_debug << "Starting garbage collect!";
+    EVLOG_info << "Starting garbage collect!";
 
     std::vector<std::pair<fs::path, fs::path>> leaf_paths;
 
@@ -1038,62 +1093,57 @@ void EvseSecurity::garbage_collect(bool delete_expired_certificates) {
         std::make_pair(this->directories.secc_leaf_cert_directory, this->directories.secc_leaf_key_directory));
 
     // Delete certificates first, give the option to cleanup the dangling keys afterwards
-    if (delete_expired_certificates) {
-        EVLOG_debug << "Expired certificates deletion requested!";
+    std::set<fs::path> invalid_certificate_files;
 
-        std::set<fs::path> invalid_certificate_files;
+    // Order by latest valid, and keep newest with a safety limit
+    for (auto const& [cert_dir, key_dir] : leaf_paths) {
+        X509CertificateBundle expired_certs(cert_dir, EncodingFormat::PEM);
 
-        // Order by latest valid, and keep newest with a safety limit
-        for (auto const& [cert_dir, key_dir] : leaf_paths) {
-            X509CertificateBundle expired_certs(cert_dir, EncodingFormat::PEM);
+        // Only handle if we have more than the minimum certificates entry
+        if (expired_certs.get_certificate_chains_count() > DEFAULT_MINIMUM_CERTIFICATE_ENTRIES) {
+            int skipped = 0;
 
-            // Only handle if we have more than the minimum certificates entry
-            if (expired_certs.get_certificate_chains_count() > DEFAULT_MINIMUM_CERTIFICATE_ENTRIES) {
-                int skipped = 0;
+            // Order by expiry date, and keep even expired certificates with a minimum of 10 certificates
+            expired_certs.for_each_chain_ordered(
+                [&invalid_certificate_files, &skipped](const fs::path& file, const std::vector<X509Wrapper>& chain) {
+                    // By default delete all empty
+                    if (chain.size() <= 0) {
+                        invalid_certificate_files.emplace(file);
+                    }
 
-                // Order by expiry date, and keep even expired certificates with a minimum of 10 certificates
-                expired_certs.for_each_chain_ordered(
-                    [&invalid_certificate_files, &skipped](const fs::path& file,
-                                                           const std::vector<X509Wrapper>& chain) {
-                        // By default delete all empty
-                        if (chain.size() <= 0) {
-                            invalid_certificate_files.emplace(file);
-                        }
-
-                        if (skipped++ > DEFAULT_MINIMUM_CERTIFICATE_ENTRIES) {
-                            // If the chain contains the first expired (leafs are the first)
-                            if (chain.size()) {
-                                if (chain[0].is_expired()) {
-                                    invalid_certificate_files.emplace(file);
-                                }
+                    if (skipped++ > DEFAULT_MINIMUM_CERTIFICATE_ENTRIES) {
+                        // If the chain contains the first expired (leafs are the first)
+                        if (chain.size()) {
+                            if (chain[0].is_expired()) {
+                                invalid_certificate_files.emplace(file);
                             }
                         }
+                    }
 
-                        return true;
-                    },
-                    [](const std::vector<X509Wrapper>& a, const std::vector<X509Wrapper>& b) {
-                        // Order from newest to oldest (newest DEFAULT_MINIMUM_CERTIFICATE_ENTRIES) are kept
-                        // even if they are expired
-                        if (a.size() && b.size()) {
-                            return a.at(0).get_valid_to() > b.at(0).get_valid_to();
-                        } else {
-                            return false;
-                        }
-                    });
-            }
-        }
-
-        for (const auto& expired_certificate_file : invalid_certificate_files) {
-            EVLOG_debug << "Deleted expired certificate file: " << expired_certificate_file;
-            filesystem_utils::delete_file(expired_certificate_file);
+                    return true;
+                },
+                [](const std::vector<X509Wrapper>& a, const std::vector<X509Wrapper>& b) {
+                    // Order from newest to oldest (newest DEFAULT_MINIMUM_CERTIFICATE_ENTRIES) are kept
+                    // even if they are expired
+                    if (a.size() && b.size()) {
+                        return a.at(0).get_valid_to() > b.at(0).get_valid_to();
+                    } else {
+                        return false;
+                    }
+                });
         }
     }
 
-    // Delete all private keys that were lost from the managed_csr since at a
-    // reboot or other error the 'managed_csr' map can be emptied
-    std::set<fs::path> unpaired_key_files;
+    for (const auto& expired_certificate_file : invalid_certificate_files) {
+        EVLOG_debug << "Deleted expired certificate file: " << expired_certificate_file;
+        filesystem_utils::delete_file(expired_certificate_file);
+    }
 
-    // Populate private key files for csms/secc
+    // In case of a reset, the managed CSRs can be lost. In that case add them back to the list
+    // to give the change of a CSR to be fulfilled. Eventually the GC will delete those CSRs
+    // at a further invocation after the GC timer will elapse a few times. This behavior
+    // was added so that if we have a reset and the CSMS sends us a CSR response while we were
+    // down it should still be processed when we boot up and NOT delete the CSRs
     for (auto const& [cert_dir, key_dir] : leaf_paths) {
         fs::path cert_path = cert_dir;
         fs::path key_path = key_dir;
@@ -1102,32 +1152,19 @@ void EvseSecurity::garbage_collect(bool delete_expired_certificates) {
             auto key_file_path = key_entry.path();
 
             if (is_keyfile(key_entry)) {
-                bool any_found = false;
-
-                try {
-                    any_found =
-                        (false ==
-                         get_certificate_path_of_key(key_file_path, cert_path, this->private_key_password).empty());
-                } catch (const std::exception& e) {
-                }
-
-                // No certificate pair is found, and it is also unmanaged, add to delete list
-                if (any_found == false && (managed_csr.find(key_file_path) == managed_csr.end())) {
-                    unpaired_key_files.emplace(key_file_path);
+                // No certificate pair is found, and it is also unmanaged, add it again to give it the
+                // chance to be fulfilled by the CSMS
+                if (managed_csr.find(key_file_path) == managed_csr.end()) {
+                    managed_csr.emplace(key_file_path, std::chrono::steady_clock::now());
                 }
             }
         }
     }
 
-    // If they are not managed (probably lost on a reboot) and not having any pair certificate, delete them
-    for (const auto& unmanaged_key_file : unpaired_key_files) {
-        EVLOG_debug << "Deleted unmanaged keyfile: " << unmanaged_key_file;
-        filesystem_utils::delete_file(unmanaged_key_file);
-    }
-
     // Delete all managed private keys of a CSR that we did not had a response to
     auto now_timepoint = std::chrono::steady_clock::now();
 
+    // The update_leaf_certificate function is responsible for removing responded CSRs from this managed list
     for (auto it = managed_csr.begin(); it != managed_csr.end();) {
         std::chrono::seconds elapsed = std::chrono::duration_cast<std::chrono::seconds>(now_timepoint - it->second);
 
