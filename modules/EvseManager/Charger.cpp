@@ -56,9 +56,12 @@ Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_
     // Register callbacks for errors/error clearings
     error_handling->signal_error.connect([this](const types::evse_manager::Error e, const bool prevent_charging) {
         if (prevent_charging) {
-            std::thread error_thread([this]() {
+            std::thread error_thread([this, e]() {
                 Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_signal_error);
                 shared_context.error_prevent_charging_flag = true;
+                if (e.error_code == types::evse_manager::ErrorEnum::MREC17EVSEContactorFault) {
+                    shared_context.contactor_welded = true;
+                }
             });
             error_thread.detach();
         }
@@ -72,6 +75,7 @@ Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_
                 Everest::scoped_lock_timeout lock(state_machine_mutex,
                                                   Everest::MutexDescription::Charger_signal_error_cleared);
                 shared_context.error_prevent_charging_flag = false;
+                shared_context.contactor_welded = false;
             });
             error_thread.detach();
         }
@@ -1479,7 +1483,7 @@ void Charger::graceful_stop_charging() {
     }
 
     // open contactors
-    if (contactors_closed) {
+    if (contactors_closed and not shared_context.contactor_welded) {
         bsp->allow_power_on(false, types::evse_board_support::Reason::PowerOff);
     }
 }
