@@ -167,7 +167,8 @@ bool WpaCliSetup::set_network(const std::string& interface, int network_id, cons
         if (psk.empty()) {
             output = run_application(wpa_cli, {"-i", interface, "set_network", network_id_string, "key_mgmt", "NONE"});
         } else {
-            output = run_application(wpa_cli, {"-i", interface, "set_network", network_id_string, "psk", psk});
+            output = run_application(wpa_cli, {"-i", interface, "set_network", network_id_string, "psk", psk,
+                                               "key_mgmt", "\"SAE WPA-PSK WPA-PSK-SHA256\"", "ieee80211w", "1"});
         }
     }
 
