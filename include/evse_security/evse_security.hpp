@@ -6,6 +6,12 @@
 #include <evse_security/utils/evse_filesystem_types.hpp>
 
 #include <map>
+#include <mutex>
+
+#ifdef BUILD_TESTING_EVSE_SECURITY
+#include <gtest/gtest_prod.h>
+#endif
+
 namespace evse_security {
 
 struct LinkPaths {
@@ -31,6 +37,16 @@ struct FilePaths {
     LinkPaths links;
 };
 
+// Unchangeable security limit for certificate deletion, a min entry count will be always kept (newest)
+static constexpr std::size_t DEFAULT_MINIMUM_CERTIFICATE_ENTRIES = 10;
+// 50 MB default limit for filesystem usage
+static constexpr std::uintmax_t DEFAULT_MAX_FILESYSTEM_SIZE = 1024 * 1024 * 50;
+// Default maximum 2000 certificate entries
+static constexpr std::uintmax_t DEFAULT_MAX_CERTIFICATE_ENTRIES = 2000;
+
+// Expiry for CSRs that did not receive a response CSR, 10 minutes or reboot
+static std::chrono::seconds DEFAULT_CSR_EXPIRY(10 * 60);
+
 /// @brief This class holds filesystem paths to CA bundle file locations and directories for leaf certificates
 class EvseSecurity {
 
@@ -40,7 +56,10 @@ public:
     /// directories are specified.
     /// @param file_paths specifies the certificate and key storage locations on the filesystem
     /// @param private_key_password optional password for encrypted private keys
-    EvseSecurity(const FilePaths& file_paths, const std::optional<std::string>& private_key_password = std::nullopt);
+    EvseSecurity(const FilePaths& file_paths, const std::optional<std::string>& private_key_password = std::nullopt,
+                 const std::optional<std::uintmax_t>& max_fs_usage_bytes = std::nullopt,
+                 const std::optional<std::uintmax_t>& max_fs_certificate_store_entries = std::nullopt,
+                 const std::optional<std::chrono::seconds>& csr_expiry = std::nullopt);
 
     /// @brief Destructor
     ~EvseSecurity();
@@ -146,6 +165,11 @@ public:
     /// @return day count until the leaf certificate expires
     int get_leaf_expiry_days_count(LeafCertificateType certificate_type);
 
+    /// @brief Collects and deletes unfulfilled CSR private keys. If also deleting the expired
+    /// certificates, make sure the system clock is properly set for detecting expired certificates
+    /// @param delete_expired if the expired certificates should be deleted
+    void garbage_collect(bool delete_expired_certificates);
+
     /// @brief Verifies the file at the given \p path using the provided \p signing_certificate and \p signature
     /// @param path
     /// @param signing_certificate
@@ -155,14 +179,40 @@ public:
                                       const std::string signature);
 
 private:
+    /// @brief Determines if the total filesize of certificates is > than the max_filesystem_usage bytes
+    bool is_filesystem_full();
+
+private:
+    // TODO(ioan): implement library thread-safety
+    std::mutex security_mutex;
+
     // why not reusing the FilePaths here directly (storage duplication)
     std::map<CaCertificateType, fs::path> ca_bundle_path_map;
     DirectoryPaths directories;
     LinkPaths links;
 
+    // CSRs that were generated and require an expiry time
+    std::map<fs::path, std::chrono::time_point<std::chrono::steady_clock>> managed_csr;
+
+    // Maximum filesystem usage
+    std::uintmax_t max_fs_usage_bytes;
+    // Maximum filesystem certificate entries
+    std::uintmax_t max_fs_certificate_store_entries;
+    // Default csr expiry in seconds
+    std::chrono::seconds csr_expiry;
+
     // FIXME(piet): map passwords to encrypted private key files
     // is there only one password for all private keys?
-    std::optional<std::string> private_key_password; // used to decrypt encrypted private keys;
+    std::optional<std::string> private_key_password; // used to decrypt encrypted private keys
+
+private:
+// Define here all tests that require internal function usage
+#ifdef BUILD_TESTING_EVSE_SECURITY
+    FRIEND_TEST(EvseSecurityTests, verify_full_filesystem_install_reject);
+    FRIEND_TEST(EvseSecurityTests, verify_full_filesystem);
+    FRIEND_TEST(EvseSecurityTests, verify_expired_csr_deletion);
+    FRIEND_TEST(EvseSecurityTests, verify_expired_leaf_deletion);
+#endif
 };
 
 } // namespace evse_security

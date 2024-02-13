@@ -74,13 +74,27 @@ static CertificateType get_certificate_type(const CaCertificateType ca_certifica
     }
 }
 
-static fs::path get_private_key_path(const X509Wrapper& certificate, const fs::path& key_path,
-                                     const std::optional<std::string> password) {
+static bool is_keyfile(const fs::path& file_path) {
+    if (fs::is_regular_file(file_path)) {
+        if (file_path.has_extension()) {
+            auto extension = file_path.extension();
+            if (extension == KEY_EXTENSION || extension == TPM_KEY_EXTENSION) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+/// @brief Searches for the private key linked to the provided certificate
+static fs::path get_private_key_path_of_certificate(const X509Wrapper& certificate, const fs::path& key_path_directory,
+                                                    const std::optional<std::string> password) {
     // TODO(ioan): Before iterating the whole dir check by the filename first 'key_path'.key
-    for (const auto& entry : fs::recursive_directory_iterator(key_path)) {
+    for (const auto& entry : fs::recursive_directory_iterator(key_path_directory)) {
         if (fs::is_regular_file(entry)) {
             auto key_file_path = entry.path();
-            if (key_file_path.extension() == KEY_EXTENSION) {
+            if (is_keyfile(key_file_path)) {
                 try {
                     fsstd::ifstream file(key_file_path, std::ios::binary);
                     std::string private_key((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
@@ -95,19 +109,61 @@ static fs::path get_private_key_path(const X509Wrapper& certificate, const fs::p
             }
         }
     }
+
     std::string error = "Could not find private key for given certificate: ";
     error += certificate.get_file().value_or("N/A");
     error += " key path: ";
-    error += key_path;
+    error += key_path_directory;
 
     throw NoPrivateKeyException(error);
+}
+
+/// @brief Searches for the certificate linked to the provided key
+/// @return The files where the certificates were found, more than one can be returned in case it is
+/// present in a bundle too
+static std::set<fs::path> get_certificate_path_of_key(const fs::path& key, const fs::path& certificate_path_directory,
+                                                      const std::optional<std::string> password) {
+    fsstd::ifstream file(key, std::ios::binary);
+    std::string private_key((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+
+    try {
+        std::set<fs::path> bundles;
+        X509CertificateBundle certificate_bundles(certificate_path_directory, EncodingFormat::PEM);
+
+        certificate_bundles.for_each_chain([&](const fs::path& bundle, const std::vector<X509Wrapper>& certificates) {
+            for (const auto& certificate : certificates) {
+                if (CryptoSupplier::x509_check_private_key(certificate.get(), private_key, password)) {
+                    bundles.emplace(bundle);
+                }
+            }
+
+            // Continue iterating
+            return true;
+        });
+
+        if (bundles.empty() == false) {
+            return bundles;
+        }
+    } catch (const CertificateLoadException& e) {
+        throw e;
+    }
+
+    std::string error = "Could not find certificate for given private key: ";
+    error += key;
+    error += " certificates path: ";
+    error += certificate_path_directory;
+
+    throw NoCertificateValidException(error);
 }
 
 X509CertificateBundle get_leaf_certificates(const fs::path& cert_dir) {
     return X509CertificateBundle(cert_dir, EncodingFormat::PEM);
 }
 
-EvseSecurity::EvseSecurity(const FilePaths& file_paths, const std::optional<std::string>& private_key_password) :
+EvseSecurity::EvseSecurity(const FilePaths& file_paths, const std::optional<std::string>& private_key_password,
+                           const std::optional<std::uintmax_t>& max_fs_usage_bytes,
+                           const std::optional<std::uintmax_t>& max_fs_certificate_store_entries,
+                           const std::optional<std::chrono::seconds>& csr_expiry) :
     private_key_password(private_key_password) {
 
     std::vector<fs::path> dirs = {
@@ -144,8 +200,23 @@ EvseSecurity::EvseSecurity(const FilePaths& file_paths, const std::optional<std:
         }
     }
 
+    // Check that the leafs directory is not related to the bundle directory because
+    // on garbage collect that can delete relevant CA certificates instead of leaf ones
+    for (const auto& leaf_dir : dirs) {
+        for (auto const& [certificate_type, ca_bundle_path] : ca_bundle_path_map) {
+            if (ca_bundle_path == leaf_dir) {
+                throw std::runtime_error(leaf_dir.string() +
+                                         " leaf directory can not overlap CA directory: " + ca_bundle_path.string());
+            }
+        }
+    }
+
     this->directories = file_paths.directories;
     this->links = file_paths.links;
+
+    this->max_fs_usage_bytes = max_fs_usage_bytes.value_or(DEFAULT_MAX_FILESYSTEM_SIZE);
+    this->max_fs_certificate_store_entries = max_fs_certificate_store_entries.value_or(DEFAULT_MAX_CERTIFICATE_ENTRIES);
+    this->csr_expiry = csr_expiry.value_or(DEFAULT_CSR_EXPIRY);
 }
 
 EvseSecurity::~EvseSecurity() {
@@ -155,7 +226,11 @@ InstallCertificateResult EvseSecurity::install_ca_certificate(const std::string&
                                                               CaCertificateType certificate_type) {
     EVLOG_debug << "Installing ca certificate: " << conversions::ca_certificate_type_to_string(certificate_type);
 
-    // TODO(piet): Check CertificateStoreMaxEntries
+    if (is_filesystem_full()) {
+        EVLOG_error << "Filesystem full, can't install new CA certificate!";
+        return InstallCertificateResult::CertificateStoreMaxLengthExceeded;
+    }
+
     try {
         X509Wrapper new_cert(certificate, EncodingFormat::PEM);
 
@@ -300,8 +375,16 @@ DeleteCertificateResult EvseSecurity::delete_certificate(const CertificateHashDa
 
 InstallCertificateResult EvseSecurity::update_leaf_certificate(const std::string& certificate_chain,
                                                                LeafCertificateType certificate_type) {
+
+    // TODO(piet): Check CertificateStoreMaxEntries too
+    if (is_filesystem_full()) {
+        EVLOG_error << "Filesystem full, can't install new CA certificate!";
+        return InstallCertificateResult::CertificateStoreMaxLengthExceeded;
+    }
+
     fs::path cert_path;
     fs::path key_path;
+
     if (certificate_type == LeafCertificateType::CSMS) {
         cert_path = this->directories.csms_leaf_cert_directory;
         key_path = this->directories.csms_leaf_key_directory;
@@ -325,27 +408,36 @@ InstallCertificateResult EvseSecurity::update_leaf_certificate(const std::string
         const auto& leaf_certificate = _certificate_chain[0];
 
         // Check if a private key belongs to the provided certificate
+        fs::path private_key_path;
+
         try {
-            const auto private_key_path = get_private_key_path(leaf_certificate, key_path, this->private_key_password);
+            private_key_path =
+                get_private_key_path_of_certificate(leaf_certificate, key_path, this->private_key_password);
         } catch (const NoPrivateKeyException& e) {
             EVLOG_warning << "Provided certificate does not belong to any private key";
             return InstallCertificateResult::WriteError;
         }
 
         // Write certificate to file
-        const auto file_name =
-            std::string("SECC_LEAF_") + filesystem_utils::get_random_file_name(PEM_EXTENSION.string());
+        std::string extra_filename = filesystem_utils::get_random_file_name(PEM_EXTENSION.string());
+
+        const auto file_name = std::string("SECC_LEAF_") + extra_filename;
         const auto file_path = cert_path / file_name;
         std::string str_cert = leaf_certificate.get_export_string();
 
         // Also write chain to file
-        const auto chain_file_name =
-            std::string("CPO_CERT_CHAIN_") + filesystem_utils::get_random_file_name(PEM_EXTENSION.string());
+        const auto chain_file_name = std::string("CPO_CERT_CHAIN_") + extra_filename;
         const auto chain_file_path = cert_path / chain_file_name;
         std::string str_chain_cert = chain_certificate.to_export_string();
 
         if (filesystem_utils::write_to_file(file_path, str_cert, std::ios::out) &&
             filesystem_utils::write_to_file(chain_file_path, str_chain_cert, std::ios::out)) {
+
+            // Remove from managed certificate keys, it is safe, no need to delete
+            if (managed_csr.find(private_key_path) != managed_csr.end()) {
+                managed_csr.erase(managed_csr.find(private_key_path));
+            }
+
             return InstallCertificateResult::Accepted;
         } else {
             return InstallCertificateResult::WriteError;
@@ -578,7 +670,11 @@ std::string EvseSecurity::generate_certificate_signing_request(LeafCertificateTy
                                                                const std::string& common, bool use_tpm) {
     fs::path key_path;
 
-    const auto file_name = std::string("SECC_LEAF_") + filesystem_utils::get_random_file_name(KEY_EXTENSION.string());
+    // Make a difference between normal and tpm keys for identification
+    const auto file_name =
+        std::string("SECC_LEAF_") +
+        filesystem_utils::get_random_file_name(use_tpm ? TPM_KEY_EXTENSION.string() : KEY_EXTENSION.string());
+
     if (certificate_type == LeafCertificateType::CSMS) {
         key_path = this->directories.csms_leaf_key_directory / file_name;
     } else if (certificate_type == LeafCertificateType::V2G) {
@@ -606,6 +702,9 @@ std::string EvseSecurity::generate_certificate_signing_request(LeafCertificateTy
     if (false == CryptoSupplier::x509_generate_csr(info, csr)) {
         throw std::runtime_error("Failed to generate certificate signing request!");
     }
+
+    // Add the key to the managed CRS that we will delete if we can't find a certificate pair within the time
+    managed_csr.emplace(key_path, std::chrono::steady_clock::now());
 
     EVLOG_debug << csr;
     return csr;
@@ -654,7 +753,7 @@ GetKeyPairResult EvseSecurity::get_key_pair(LeafCertificateType certificate_type
         fs::path chain_file;
 
         auto certificate = std::move(leaf_certificates.get_latest_valid_certificate());
-        auto private_key_path = get_private_key_path(certificate, key_dir, this->private_key_password);
+        auto private_key_path = get_private_key_path_of_certificate(certificate, key_dir, this->private_key_password);
 
         // Key path doesn't change
         key_file = private_key_path;
@@ -843,6 +942,7 @@ int EvseSecurity::get_leaf_expiry_days_count(LeafCertificateType certificate_typ
             EVLOG_error << "Could not obtain leaf expiry certificate: " << e.what();
         }
     }
+
     return 0;
 }
 
@@ -919,6 +1019,185 @@ InstallCertificateResult EvseSecurity::verify_certificate(const std::string& cer
         EVLOG_warning << "Could not load update leaf certificate because of invalid format";
         return InstallCertificateResult::InvalidFormat;
     }
+}
+
+void EvseSecurity::garbage_collect(bool delete_expired_certificates) {
+    // Only garbage collect if we are full
+    if (is_filesystem_full() == false) {
+        EVLOG_debug << "Garbage collect postponed, filesystem is not full";
+        return;
+    }
+
+    EVLOG_debug << "Starting garbage collect!";
+
+    std::vector<std::pair<fs::path, fs::path>> leaf_paths;
+
+    leaf_paths.push_back(
+        std::make_pair(this->directories.csms_leaf_cert_directory, this->directories.csms_leaf_key_directory));
+    leaf_paths.push_back(
+        std::make_pair(this->directories.secc_leaf_cert_directory, this->directories.secc_leaf_key_directory));
+
+    // Delete certificates first, give the option to cleanup the dangling keys afterwards
+    if (delete_expired_certificates) {
+        EVLOG_debug << "Expired certificates deletion requested!";
+
+        std::set<fs::path> invalid_certificate_files;
+
+        // Order by latest valid, and keep newest with a safety limit
+        for (auto const& [cert_dir, key_dir] : leaf_paths) {
+            X509CertificateBundle expired_certs(cert_dir, EncodingFormat::PEM);
+
+            // Only handle if we have more than the minimum certificates entry
+            if (expired_certs.get_certificate_chains_count() > DEFAULT_MINIMUM_CERTIFICATE_ENTRIES) {
+                int skipped = 0;
+
+                // Order by expiry date, and keep even expired certificates with a minimum of 10 certificates
+                expired_certs.for_each_chain_ordered(
+                    [&invalid_certificate_files, &skipped](const fs::path& file,
+                                                           const std::vector<X509Wrapper>& chain) {
+                        // By default delete all empty
+                        if (chain.size() <= 0) {
+                            invalid_certificate_files.emplace(file);
+                        }
+
+                        if (skipped++ > DEFAULT_MINIMUM_CERTIFICATE_ENTRIES) {
+                            // If the chain contains the first expired (leafs are the first)
+                            if (chain.size()) {
+                                if (chain[0].is_expired()) {
+                                    invalid_certificate_files.emplace(file);
+                                }
+                            }
+                        }
+
+                        return true;
+                    },
+                    [](const std::vector<X509Wrapper>& a, const std::vector<X509Wrapper>& b) {
+                        // Order from newest to oldest (newest DEFAULT_MINIMUM_CERTIFICATE_ENTRIES) are kept
+                        // even if they are expired
+                        if (a.size() && b.size()) {
+                            return a.at(0).get_valid_to() > b.at(0).get_valid_to();
+                        } else {
+                            return false;
+                        }
+                    });
+            }
+        }
+
+        for (const auto& expired_certificate_file : invalid_certificate_files) {
+            EVLOG_debug << "Deleted expired certificate file: " << expired_certificate_file;
+            filesystem_utils::delete_file(expired_certificate_file);
+        }
+    }
+
+    // Delete all private keys that were lost from the managed_csr since at a
+    // reboot or other error the 'managed_csr' map can be emptied
+    std::set<fs::path> unpaired_key_files;
+
+    // Populate private key files for csms/secc
+    for (auto const& [cert_dir, key_dir] : leaf_paths) {
+        fs::path cert_path = cert_dir;
+        fs::path key_path = key_dir;
+
+        for (const auto& key_entry : fs::recursive_directory_iterator(key_path)) {
+            auto key_file_path = key_entry.path();
+
+            if (is_keyfile(key_entry)) {
+                bool any_found = false;
+
+                try {
+                    any_found =
+                        (false ==
+                         get_certificate_path_of_key(key_file_path, cert_path, this->private_key_password).empty());
+                } catch (const std::exception& e) {
+                }
+
+                // No certificate pair is found, and it is also unmanaged, add to delete list
+                if (any_found == false && (managed_csr.find(key_file_path) == managed_csr.end())) {
+                    unpaired_key_files.emplace(key_file_path);
+                }
+            }
+        }
+    }
+
+    // If they are not managed (probably lost on a reboot) and not having any pair certificate, delete them
+    for (const auto& unmanaged_key_file : unpaired_key_files) {
+        EVLOG_debug << "Deleted unmanaged keyfile: " << unmanaged_key_file;
+        filesystem_utils::delete_file(unmanaged_key_file);
+    }
+
+    // Delete all managed private keys of a CSR that we did not had a response to
+    auto now_timepoint = std::chrono::steady_clock::now();
+
+    for (auto it = managed_csr.begin(); it != managed_csr.end();) {
+        std::chrono::seconds elapsed = std::chrono::duration_cast<std::chrono::seconds>(now_timepoint - it->second);
+
+        if (elapsed > csr_expiry) {
+            EVLOG_debug << "Found expired csr key, deleting: " << it->first;
+            filesystem_utils::delete_file(it->first);
+
+            it = managed_csr.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
+
+bool EvseSecurity::is_filesystem_full() {
+    std::set<fs::path> unique_paths;
+
+    // Collect all bundles
+    for (auto const& [certificate_type, ca_bundle_path] : ca_bundle_path_map) {
+        if (fs::is_regular_file(ca_bundle_path)) {
+            unique_paths.emplace(ca_bundle_path);
+        } else if (fs::is_directory(ca_bundle_path)) {
+            for (const auto& entry : fs::recursive_directory_iterator(ca_bundle_path)) {
+                if (fs::is_regular_file(entry)) {
+                    unique_paths.emplace(entry);
+                }
+            }
+        }
+    }
+
+    // Collect all key/leafs
+    std::vector<fs::path> key_pairs;
+
+    key_pairs.push_back(directories.csms_leaf_cert_directory);
+    key_pairs.push_back(directories.csms_leaf_key_directory);
+    key_pairs.push_back(directories.secc_leaf_cert_directory);
+    key_pairs.push_back(directories.secc_leaf_key_directory);
+
+    for (auto const& directory : key_pairs) {
+        if (fs::is_regular_file(directory)) {
+            unique_paths.emplace(directory);
+        } else if (fs::is_directory(directory)) {
+            for (const auto& entry : fs::recursive_directory_iterator(directory)) {
+                if (fs::is_regular_file(entry)) {
+                    unique_paths.emplace(entry);
+                }
+            }
+        }
+    }
+
+    uintmax_t total_entries = unique_paths.size();
+    EVLOG_debug << "Total entries used: " << total_entries;
+
+    if (total_entries > max_fs_certificate_store_entries) {
+        EVLOG_warning << "Exceeded maximum entries: " << total_entries;
+        return true;
+    }
+
+    uintmax_t total_size_bytes = 0;
+    for (const auto& path : unique_paths) {
+        total_size_bytes = fs::file_size(path);
+    }
+
+    EVLOG_debug << "Total bytes used: " << total_size_bytes;
+    if (total_size_bytes >= max_fs_usage_bytes) {
+        EVLOG_warning << "Exceeded maximum byte size: " << total_size_bytes;
+        return true;
+    }
+
+    return false;
 }
 
 } // namespace evse_security

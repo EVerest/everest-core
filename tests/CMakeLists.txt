@@ -21,6 +21,8 @@ if(LIBEVSE_CRYPTO_SUPPLIER_OPENSSL)
     add_compile_definitions(LIBEVSE_CRYPTO_SUPPLIER_OPENSSL)
 endif()
 
+add_compile_definitions(BUILD_TESTING_EVSE_SECURITY)
+
 add_test(${TEST_TARGET_NAME} ${TEST_TARGET_NAME})
 
 install(

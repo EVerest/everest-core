@@ -2,6 +2,7 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 #pragma once
 
+#include <algorithm>
 #include <map>
 
 #include <evse_security/certificate/x509_hierarchy.hpp>
@@ -66,6 +67,9 @@ public:
     /// @return Contained certificate count
     int get_certificate_count() const;
 
+    /// @return Contained certificate chains count
+    int get_certificate_chains_count() const;
+
     fs::path get_path() const {
         return path;
     }
@@ -79,6 +83,28 @@ public:
     template <typename function> void for_each_chain(function func) {
         for (const auto& chain : certificates) {
             if (!func(chain.first, chain.second))
+                break;
+        }
+    }
+
+    /// @brief Same as 'for_each_chain' but it also uses a predicate for ordering
+    template <typename function, typename ordering> void for_each_chain_ordered(function func, ordering order) {
+        struct Chain {
+            const fs::path* path;
+            const std::vector<X509Wrapper>* certificates;
+        };
+
+        std::vector<Chain> ordered;
+
+        for (auto& [path, certs] : certificates) {
+            ordered.push_back(Chain{&path, &certs});
+        }
+
+        std::sort(std::begin(ordered), std::end(ordered),
+                  [&order](Chain& a, Chain& b) { return order(*a.certificates, *b.certificates); });
+
+        for (const auto& chain : ordered) {
+            if (!func(*chain.path, *chain.certificates))
                 break;
         }
     }

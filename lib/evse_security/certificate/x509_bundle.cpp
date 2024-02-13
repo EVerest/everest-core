@@ -87,6 +87,10 @@ int X509CertificateBundle::get_certificate_count() const {
     return count;
 }
 
+int X509CertificateBundle::get_certificate_chains_count() const {
+    return certificates.size();
+}
+
 void X509CertificateBundle::add_certificates(const std::string& data, const EncodingFormat encoding,
                                              const std::optional<fs::path>& path) {
     auto loaded = CryptoSupplier::load_certificates(data, encoding);
