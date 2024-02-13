@@ -57,6 +57,7 @@ enum class MutexDescription {
     IEC_set_pwm_off,
     IEC_set_pwm_F,
     IEC_allow_power_on,
+    IEC_force_unlock,
     EVSE_set_ev_info,
     EVSE_publish_ev_info,
     EVSE_subscribe_DC_EVMaximumLimits,
@@ -171,6 +172,8 @@ static std::string to_string(MutexDescription d) {
         return "IECStateMachine::set_pwm_F";
     case MutexDescription::IEC_allow_power_on:
         return "IECStateMachine::allow_power_on";
+    case MutexDescription::IEC_force_unlock:
+        return "IECStateMachine::force_unlock";
     case MutexDescription::EVSE_set_ev_info:
         return "EvseManager.cpp: set ev_info present_voltage/current";
     case MutexDescription::EVSE_publish_ev_info:

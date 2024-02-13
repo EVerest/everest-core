@@ -415,7 +415,17 @@ void IECStateMachine::connector_unlock() {
 }
 
 void IECStateMachine::connector_force_unlock() {
-    force_unlocked = true;
+    RawCPState cp;
+
+    {
+        Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::IEC_force_unlock);
+        cp = cp_state;
+    }
+
+    if (cp == RawCPState::B or cp == RawCPState::C) {
+        force_unlocked = true;
+        check_connector_lock();
+    }
 }
 
 void IECStateMachine::check_connector_lock() {
