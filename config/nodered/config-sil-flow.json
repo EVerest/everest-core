@@ -1853,7 +1853,7 @@
             },
             {
                 "label": "AC ISO15118-2",
-                "value": "sleep 1;iso_wait_slac_matched;iso_start_v2g_session ExternalPayment,AC_three_phase_core;iso_wait_pwr_ready;iso_draw_power_regulated 16,3;sleep 36000#iso_stop_charging;iso_wait_v2g_session_stopped;unplug#iso_pause_charging;iso_wait_for_resume#iso_start_bcb_toogle 3;iso_wait_pwm_is_running;iso_start_v2g_session ExternalPayment,AC_three_phase_core;iso_wait_pwr_ready;iso_draw_power_regulated 16,3;sleep 36000",
+                "value": "sleep 1;iso_wait_slac_matched;iso_start_v2g_session AC_three_phase_core;iso_wait_pwr_ready;iso_draw_power_regulated 16,3;sleep 36000#iso_stop_charging;iso_wait_v2g_session_stopped;unplug#iso_pause_charging;iso_wait_for_resume#iso_start_bcb_toogle 3;iso_wait_pwm_is_running;iso_start_v2g_session AC_three_phase_core;iso_wait_pwr_ready;iso_draw_power_regulated 16,3;sleep 36000",
                 "type": "str"
             }
         ],

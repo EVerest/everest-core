@@ -213,8 +213,6 @@ struct Context {
 
     ModemVendor modem_vendor{ModemVendor::Unknown};
 
-    void set_mac_addr(const uint8_t* mac);
-
 private:
     const ContextCallbacks& callbacks;
 };
