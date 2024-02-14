@@ -271,8 +271,13 @@
                 "attributes": {
                     "Actual": "0"
                 }
+            },
+            "RoundClockAlignedTimestamps": {
+                "variable_name": "RoundClockAlignedTimestamps",
+                "attributes": {
+                    "Actual": "0"
+                }
             }
-            
         }
     },
     {

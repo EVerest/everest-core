@@ -17,7 +17,7 @@
         }
       ],
       "description": "Local Authorization List is available.",
-      "default": "1",
+      "default": true,
       "type": "boolean"
     },
     "BytesPerMessageSendLocalList": {
@@ -48,7 +48,7 @@
         }
       ],
       "description": "If this variable exists and reports a value of true, Local Authorization List is enabled.",
-      "default": "1",
+      "default": true,
       "type": "boolean"
     },
     "LocalAuthListCtrlrEntries": {

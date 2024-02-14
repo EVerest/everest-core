@@ -16,7 +16,7 @@
                   "mutability": "ReadWrite"
               }
           ],
-          "default": "1",
+          "default": true,
           "type": "boolean"
       },
       "ChargePointId": {
@@ -240,7 +240,7 @@
                   "mutability": "ReadOnly"
               }
           ],
-          "default": "1",
+          "default": true,
           "type": "boolean"
       },
       "LogMessages": {
@@ -255,7 +255,7 @@
                   "mutability": "ReadOnly"
               }
           ],
-          "default": "1",
+          "default": true,
           "type": "boolean"
       },
       "LogMessagesFormat": {
@@ -338,7 +338,7 @@
               }
           ],
           "description": "Use default verify paths for validating CSMS server certificate",
-          "default": "1",
+          "default": true,
           "type": "boolean"
       },
       "OcspRequestInterval": {
@@ -483,7 +483,7 @@
                 "mutability": "ReadOnly"
             }
         ],
-        "default": "0",
+        "default": false,
         "type": "boolean"
       },
       "MessageQueueSizeThreshold": {
@@ -537,6 +537,22 @@
           "description": "List of criteria supported for a get custom report. Enabled,Active,Problem,Available",
           "default": "Enabled,Active,Problem,Available",
           "type": "string"
+      },
+      "RoundClockAlignedTimestamps": {
+          "variable_name": "RoundClockAlignedTimestamps",
+          "characteristics": {
+              "supportsMonitoring": false,
+              "dataType": "boolean"
+          },
+          "attributes": [
+              {
+                  "type": "Actual",
+                  "mutability": "ReadOnly"
+              }
+          ],
+          "description": "If enabled the metervalues configured with the AlignedDataCtrlr will be rounded to the exact time intervals",
+          "default": false,
+          "type": "boolean"
       }
   },
   "required": [

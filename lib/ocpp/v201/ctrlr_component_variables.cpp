@@ -158,6 +158,13 @@ const ComponentVariable& SupportedCriteria = {
         "SupportedCriteria",
     }),
 };
+const ComponentVariable& RoundClockAlignedTimestamps = {
+    ControllerComponents::InternalCtrlr,
+    std::nullopt,
+    std::optional<Variable>({
+        "RoundClockAlignedTimestamps",
+    }),
+};
 const ComponentVariable& SupportedChargingProfilePurposeTypes = {
     ControllerComponents::InternalCtrlr,
     std::nullopt,

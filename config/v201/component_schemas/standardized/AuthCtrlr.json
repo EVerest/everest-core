@@ -16,7 +16,7 @@
           "mutability": "ReadWrite"
         }
       ],
-      "default": "1",
+      "default": true,
       "type": "boolean"
     },
     "AdditionalInfoItemsPerMessage": {
@@ -47,7 +47,7 @@
         }
       ],
       "description": "Whether a remote request to start a transaction in the form of RequestStartTransactionRequest message should be authorized beforehand like a local action to start a transaction.",
-      "default": "1",
+      "default": true,
       "type": "boolean"
     },
     "LocalAuthorizeOffline": {
@@ -63,7 +63,7 @@
         }
       ],
       "description": "Whether the Charging Station, when Offline, will start a transaction for locally-authorized identifiers,",
-      "default": "1",
+      "default": true,
       "type": "boolean"
     },
     "LocalPreAuthorize": {
@@ -79,7 +79,7 @@
         }
       ],
       "description": "Whether the Charging Station, when online, will start a transaction for locally-authorized identifiers without waiting for or requesting an AuthorizeResponse from the CSMS.",
-      "default": "1",
+      "default": true,
       "type": "boolean"
     },
     "MasterPassGroupId": {
@@ -110,7 +110,7 @@
         }
       ],
       "description": "Support for unknown offline transactions.",
-      "default": "1",
+      "default": true,
       "type": "boolean"
     },
     "DisableRemoteAuthorization": {

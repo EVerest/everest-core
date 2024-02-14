@@ -35,7 +35,7 @@
       ],
       "description": "Component exists",
       "type": "boolean",
-      "default": "0"
+      "default": false
     },
     "ChargeProtocol": {
       "variable_name": "ChargeProtocol",

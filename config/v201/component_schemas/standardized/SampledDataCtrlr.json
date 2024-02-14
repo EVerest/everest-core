@@ -17,7 +17,7 @@
         }
       ],
       "description": "If this variable reports a value of true, Sampled Data is supported",
-      "default": "1",
+      "default": true,
       "type": "boolean"
     },
     "SampledDataCtrlrEnabled": {
@@ -33,7 +33,7 @@
         }
       ],
       "description": "If this variable reports a value of true, Sampled Data is enabled.",
-      "default": "1",
+      "default": true,
       "type": "boolean"
     },
     "SampledDataSignReadings": {

@@ -278,7 +278,7 @@
         }
       ],
       "description": "When set to true, the Charging Station SHALL unlock the cable on the Charging Station side when the cable is unplugged at the EV. For an EVSE with only fixed cables, the mutability SHALL be ReadOnly and the actual value SHALL be false. For a charging station with fixed cables and sockets, the variable is only applicable to the sockets.",
-      "default": "1",
+      "default": true,
       "type": "boolean"
     },
     "WebSocketPingInterval": {

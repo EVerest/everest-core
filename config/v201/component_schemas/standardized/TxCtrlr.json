@@ -16,7 +16,7 @@
           "mutability": "ReadWrite"
         }
       ],
-      "default": "1",
+      "default": true,
       "type": "boolean"
     },
     "ChargingTime": {
@@ -80,7 +80,7 @@
         }
       ],
       "description": "When set to true, the Charging Station SHALL deauthorize the transaction when the cable is unplugged from the EV.",
-      "default": "1",
+      "default": true,
       "type": "boolean"
     },
     "StopTxOnInvalidId": {
@@ -96,7 +96,7 @@
         }
       ],
       "description": "Whether the Charging Station will deauthorize an ongoing transaction when it receives a non- Accepted authorization status in TransactionEventResponse for this transaction.",
-      "default": "1",
+      "default": true,
       "type": "boolean"
     },
     "TxBeforeAcceptedEnabled": {

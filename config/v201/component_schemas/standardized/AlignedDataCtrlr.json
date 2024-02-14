@@ -16,7 +16,7 @@
           "mutability": "ReadWrite"
         }
       ],
-      "default": "1",
+      "default": true,
       "type": "boolean"
     },
     "AlignedDataCtrlrAvailable": {
@@ -32,7 +32,7 @@
         }
       ],
       "description": "If this variable reports a value of true, Clock-Aligned Data is supported.",
-      "default": "1",
+      "default": true,
       "type": "boolean"
     },
     "AlignedDataInterval": {
@@ -97,7 +97,7 @@
         }
       ],
       "description": "If set to true, the Charging Station SHALL include signed meter values in the SampledValueType in the MeterValuesRequest to the CSMS.",
-      "default": "0",
+      "default": false,
       "type": "boolean"
     },
     "AlignedDataTxEndedInterval": {

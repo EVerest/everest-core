@@ -41,9 +41,9 @@ private:
         return next_time;
     }
 
-    void call_next() {
+    system_time_point call_next() {
         if (this->callback == nullptr) {
-            return;
+            return system_time_point{};
         }
 
         auto wrapper = [this]() {
@@ -51,7 +51,9 @@ private:
             this->at(this->get_next_timepoint());
         };
 
-        this->at(wrapper, this->get_next_timepoint());
+        auto next_timepoint = this->get_next_timepoint();
+        this->at(wrapper, next_timepoint);
+        return next_timepoint;
     }
 
 public:
@@ -65,23 +67,26 @@ public:
     }
 
     template <class Rep, class Period>
-    void interval_starting_from(const std::function<void()>& callback,
-                                const std::chrono::duration<Rep, Period> interval, system_time_point start_point) {
+    system_time_point interval_starting_from(const std::function<void()>& callback,
+                                             const std::chrono::duration<Rep, Period> interval,
+                                             system_time_point start_point) {
         this->callback = callback;
-        this->interval_starting_from(interval, start_point);
+        return this->interval_starting_from(interval, start_point);
     }
 
     template <class Rep, class Period>
-    void interval_starting_from(const std::chrono::duration<Rep, Period> interval, system_time_point start_point) {
+    system_time_point interval_starting_from(const std::chrono::duration<Rep, Period> interval,
+                                             system_time_point start_point) {
         this->start_point = start_point;
         this->call_interval = interval;
 
-        this->call_next();
+        return this->call_next();
     }
 
-    template <class Rep, class Period> void set_interval(const std::chrono::duration<Rep, Period>& interval) {
+    template <class Rep, class Period>
+    system_time_point set_interval(const std::chrono::duration<Rep, Period>& interval) {
         this->call_interval = interval;
-        this->call_next();
+        return this->call_next();
     }
 
     using Everest::Timer<std::chrono::system_clock>::stop;

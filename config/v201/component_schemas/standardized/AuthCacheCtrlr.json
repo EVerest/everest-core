@@ -17,7 +17,7 @@
         }
       ],
       "description": "Authorization caching is available, but not necessarily enabled.",
-      "default": "1",
+      "default": true,
       "type": "boolean"
     },
     "AuthCacheCtrlrEnabled": {
@@ -33,7 +33,7 @@
         }
       ],
       "description": "If set to true, Authorization caching is enabled.",
-      "default": "1",
+      "default": true,
       "type": "boolean"
     },
     "AuthCacheLifeTime": {

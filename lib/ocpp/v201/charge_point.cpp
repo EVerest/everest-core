@@ -354,7 +354,8 @@ void ChargePoint::on_transaction_finished(const int32_t evse_id, const DateTime&
         utils::get_measurands_vec(
             this->device_model->get_value<std::string>(ControllerComponentVariables::SampledDataTxEndedMeasurands)),
         utils::get_measurands_vec(
-            this->device_model->get_value<std::string>(ControllerComponentVariables::AlignedDataTxEndedMeasurands))));
+            this->device_model->get_value<std::string>(ControllerComponentVariables::AlignedDataTxEndedMeasurands)),
+        timestamp));
 
     if (meter_values.value().empty()) {
         meter_values.reset();
@@ -1222,7 +1223,7 @@ void ChargePoint::update_aligned_data_interval() {
     }
 
     this->aligned_meter_values_timer.interval_starting_from(
-        [this]() {
+        [this, interval]() {
             // J01.FR.20 if AlignedDataSendDuringIdle is true and any transaction is active, don't send clock aligned
             // meter values
             if (this->device_model->get_optional_value<bool>(ControllerComponentVariables::AlignedDataSendDuringIdle)
@@ -1234,12 +1235,19 @@ void ChargePoint::update_aligned_data_interval() {
                 }
             }
 
+            const bool align_timestamps =
+                this->device_model->get_optional_value<bool>(ControllerComponentVariables::RoundClockAlignedTimestamps)
+                    .value_or(false);
+
             // send evseID = 0 values
-            const auto meter_value = get_latest_meter_value_filtered(
-                this->aligned_data_evse0.retrieve_processed_values(), ReadingContextEnum::Sample_Clock,
-                ControllerComponentVariables::AlignedDataMeasurands);
+            auto meter_value = get_latest_meter_value_filtered(this->aligned_data_evse0.retrieve_processed_values(),
+                                                               ReadingContextEnum::Sample_Clock,
+                                                               ControllerComponentVariables::AlignedDataMeasurands);
 
             if (!meter_value.sampledValue.empty()) {
+                if (align_timestamps) {
+                    meter_value.timestamp = utils::align_timestamp(DateTime{}, interval);
+                }
                 this->meter_values_req(0, std::vector<ocpp::v201::MeterValue>(1, meter_value));
             }
             this->aligned_data_evse0.clear_values();
@@ -1251,9 +1259,13 @@ void ChargePoint::update_aligned_data_interval() {
 
                 // this will apply configured measurands and possibly reduce the entries of sampledValue
                 // according to the configuration
-                const auto meter_value =
+                auto meter_value =
                     get_latest_meter_value_filtered(evse->get_idle_meter_value(), ReadingContextEnum::Sample_Clock,
                                                     ControllerComponentVariables::AlignedDataMeasurands);
+
+                if (align_timestamps) {
+                    meter_value.timestamp = utils::align_timestamp(DateTime{}, interval);
+                }
 
                 if (!meter_value.sampledValue.empty()) {
                     // J01.FR.14 this is the only case where we send a MeterValue.req

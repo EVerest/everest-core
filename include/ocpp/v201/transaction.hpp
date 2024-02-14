@@ -20,8 +20,8 @@ struct EnhancedTransaction : public Transaction {
     std::optional<float> active_energy_import_start_value;
     bool check_max_active_import_energy;
 
-    Everest::SteadyTimer sampled_tx_updated_meter_values_timer;
-    Everest::SteadyTimer sampled_tx_ended_meter_values_timer;
+    ClockAlignedTimer sampled_tx_updated_meter_values_timer;
+    ClockAlignedTimer sampled_tx_ended_meter_values_timer;
     ClockAlignedTimer aligned_tx_updated_meter_values_timer;
     ClockAlignedTimer aligned_tx_ended_meter_values_timer;
 
