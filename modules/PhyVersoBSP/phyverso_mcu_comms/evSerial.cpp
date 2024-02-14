@@ -411,3 +411,12 @@ void evSerial::send_config(evConfig &config)
     link_write(&config_packet);
 }
 
+void evSerial::set_fan_state(uint8_t fan_id, bool enabled, uint32_t duty) {
+    EverestToMcu msg_out = EverestToMcu_init_default;
+    msg_out.which_payload = EverestToMcu_set_fan_state_tag;
+    msg_out.payload.set_fan_state.fan_id = fan_id;
+    msg_out.payload.set_fan_state.enabled = enabled;
+    msg_out.payload.set_fan_state.duty = duty;
+    msg_out.connector = 0;
+    link_write(&msg_out);
+}

@@ -12,6 +12,7 @@ message EverestToMcu {
     CoilState set_coil_state_request = 5;
     bool reset = 6;
     BootConfigResponse config_response = 8;
+    FanState set_fan_state = 9;
   }
   int32 connector = 7; // 0: None, 1: Connector 1, 2: Connector 2
 }

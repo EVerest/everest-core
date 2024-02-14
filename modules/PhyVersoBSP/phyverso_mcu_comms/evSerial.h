@@ -31,6 +31,7 @@ public:
     void set_coil_state_request(int target_connector, CoilType type, bool power_on);
     void lock(int target_connector, bool _lock);
     void unlock(int target_connector);
+    void set_fan_state(uint8_t fan_id, bool enabled, uint32_t duty);
 
     void send_config(evConfig &config);
 

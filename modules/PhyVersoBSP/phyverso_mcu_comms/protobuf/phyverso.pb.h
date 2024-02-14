@@ -136,6 +136,7 @@ typedef struct _EverestToMcu {
         CoilState set_coil_state_request;
         bool reset;
         BootConfigResponse config_response;
+        FanState set_fan_state;
     } payload;
     int32_t connector; /* 0: None, 1: Connector 1, 2: Connector 2 */
 } EverestToMcu;
@@ -255,6 +256,7 @@ extern "C" {
 #define EverestToMcu_set_coil_state_request_tag  5
 #define EverestToMcu_reset_tag                   6
 #define EverestToMcu_config_response_tag         8
+#define EverestToMcu_set_fan_state_tag           9
 #define EverestToMcu_connector_tag               7
 
 /* Struct field encoding specification for nanopb */
@@ -266,12 +268,14 @@ X(a, STATIC,   ONEOF,    UINT32,   (payload,pwm_duty_cycle,payload.pwm_duty_cycl
 X(a, STATIC,   ONEOF,    MESSAGE,  (payload,set_coil_state_request,payload.set_coil_state_request),   5) \
 X(a, STATIC,   ONEOF,    BOOL,     (payload,reset,payload.reset),   6) \
 X(a, STATIC,   SINGULAR, INT32,    connector,         7) \
-X(a, STATIC,   ONEOF,    MESSAGE,  (payload,config_response,payload.config_response),   8)
+X(a, STATIC,   ONEOF,    MESSAGE,  (payload,config_response,payload.config_response),   8) \
+X(a, STATIC,   ONEOF,    MESSAGE,  (payload,set_fan_state,payload.set_fan_state),   9)
 #define EverestToMcu_CALLBACK NULL
 #define EverestToMcu_DEFAULT NULL
 #define EverestToMcu_payload_keep_alive_MSGTYPE KeepAlive
 #define EverestToMcu_payload_set_coil_state_request_MSGTYPE CoilState
 #define EverestToMcu_payload_config_response_MSGTYPE BootConfigResponse
+#define EverestToMcu_payload_set_fan_state_MSGTYPE FanState
 
 #define McuToEverest_FIELDLIST(X, a) \
 X(a, STATIC,   ONEOF,    MESSAGE,  (payload,keep_alive,payload.keep_alive),   1) \

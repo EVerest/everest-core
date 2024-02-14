@@ -37,6 +37,9 @@ int main(int argc, char* argv[]) {
     printf("9: PWM X1 (100%%)\n");
     printf("9: PWM X1 (100%%)\n");
 
+    printf("U or u: Fan1 50%% or OFF (if your fan supports 0%% duty cycle)\n");
+    printf("I or i: Fan2 ON or 20%%\n");
+
     if (argc != 3) {
         help();
         exit(0);
@@ -214,6 +217,24 @@ int main(int argc, char* argv[]) {
             case '9':
                 printf("Set 100%% PWM\n");
                 p.set_pwm(selected_connector, 10000);
+                break;
+            case 'U':
+                printf("Set fan1 to 50%%\n");
+                p.set_fan_state(0, true, 500);
+                break;
+            case 'u':
+                printf("Set fan1 to OFF\n");
+                p.set_fan_state(0, false, 500); // example for setting fan off via enable param
+                // check if your fan supports full OFF on PWM 0% duty (also check PWM on oscilloscope)
+                // some PWM fans wont turn fully off without switching 12V supply
+                break;
+            case 'I':
+                printf("Set fan2 to ON\n");
+                p.set_fan_state(1, true, 1000);
+                break;
+            case 'i':
+                printf("Set fan2 to 20%%\n");
+                p.set_fan_state(1, true, 200);
                 break;
             }
         }
