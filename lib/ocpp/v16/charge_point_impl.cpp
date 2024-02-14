@@ -894,7 +894,7 @@ bool ChargePointImpl::stop() {
 
         this->stop_all_transactions();
 
-        this->database_handler->close_db_connection();
+        this->database_handler->close_connection();
         this->websocket->disconnect(websocketpp::close::status::normal);
         this->message_queue->stop();
 

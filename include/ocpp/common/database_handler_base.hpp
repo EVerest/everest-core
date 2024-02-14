@@ -35,6 +35,10 @@ public:
     ///
     DatabaseHandlerBase() noexcept;
 
+    ~DatabaseHandlerBase();
+
+    void close_connection();
+
     /// \brief Get transaction messages from transaction messages queue table.
     /// \return The transaction messages.
     virtual std::vector<DBTransactionMessage> get_transaction_messages();

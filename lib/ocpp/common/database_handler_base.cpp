@@ -9,6 +9,32 @@ namespace ocpp::common {
 DatabaseHandlerBase::DatabaseHandlerBase() noexcept : db(nullptr) {
 }
 
+DatabaseHandlerBase::~DatabaseHandlerBase() {
+    if (this->db != nullptr) {
+        this->close_connection();
+    }
+}
+
+void DatabaseHandlerBase::close_connection() {
+    EVLOG_info << "Closing database connection...";
+
+    if (this->db == nullptr) {
+        return;
+    }
+
+    // forcefully finalize all statements before calling sqlite3_close
+    sqlite3_stmt* stmt = nullptr;
+    while ((stmt = sqlite3_next_stmt(db, stmt)) != nullptr) {
+        sqlite3_finalize(stmt);
+    }
+
+    if (sqlite3_close(this->db) == SQLITE_OK) {
+        EVLOG_info << "Successfully closed database connection";
+    } else {
+        EVLOG_error << "Error closing database connection: " << sqlite3_errmsg(this->db);
+    }
+}
+
 std::vector<DBTransactionMessage> DatabaseHandlerBase::get_transaction_messages() {
     std::vector<DBTransactionMessage> transaction_messages;
 

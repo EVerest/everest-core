@@ -49,7 +49,6 @@ private:
 
 public:
     DatabaseHandler(const std::string& chargepoint_id, const fs::path& database_path, const fs::path& init_script_path);
-    ~DatabaseHandler();
 
     /// \brief Opens the database connection, runs initialization script and initializes the CONNECTORS and
     /// AUTH_LIST_VERSION table.
@@ -110,6 +109,9 @@ public:
     std::map<int32_t, v16::AvailabilityType> get_connector_availability();
 
     // local auth list management
+
+    /// \brief Inserts or ignores the given \p version in the AUTH_LIST_VERSION table.
+    void insert_or_ignore_local_list_version(int32_t version);
 
     /// \brief Inserts or updates the given \p version in the AUTH_LIST_VERSION table.
     void insert_or_update_local_list_version(int32_t version);

@@ -76,9 +76,13 @@ TEST_F(DatabaseTest, test_init_connector_table) {
 }
 
 TEST_F(DatabaseTest, test_list_version) {
+
+    int32_t list_version = this->db_handler->get_local_list_version();
+    ASSERT_EQ(0, list_version);
+
     int32_t exp_list_version = 42;
     this->db_handler->insert_or_update_local_list_version(exp_list_version);
-    int32_t list_version = this->db_handler->get_local_list_version();
+    list_version = this->db_handler->get_local_list_version();
     ASSERT_EQ(exp_list_version, list_version);
 
     exp_list_version = 17;

@@ -41,7 +41,6 @@ private:
 
 public:
     DatabaseHandler(const fs::path& database_path, const fs::path& sql_init_path);
-    ~DatabaseHandler();
 
     /// \brief Opens connection to database file
     void open_connection();

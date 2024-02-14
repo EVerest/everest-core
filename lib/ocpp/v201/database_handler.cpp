@@ -18,10 +18,6 @@ DatabaseHandler::DatabaseHandler(const fs::path& database_path, const fs::path& 
     this->database_file_path = database_path / "cp.db";
 };
 
-DatabaseHandler::~DatabaseHandler() {
-    close_connection();
-}
-
 void DatabaseHandler::sql_init() {
     EVLOG_debug << "Running SQL initialization script: " << this->sql_init_path;
 
