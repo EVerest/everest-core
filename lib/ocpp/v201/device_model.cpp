@@ -10,6 +10,14 @@ namespace ocpp {
 
 namespace v201 {
 
+/// \brief For AlignedDataInterval, SampledDataTxUpdatedInterval and SampledDataTxEndedInterval, zero is allowed
+static bool allow_zero(const Component& component, const Variable& variable) {
+    ComponentVariable component_variable = {component, std::nullopt, variable};
+    return component_variable == ControllerComponentVariables::AlignedDataInterval or
+           component_variable == ControllerComponentVariables::SampledDataTxUpdatedInterval or
+           component_variable == ControllerComponentVariables::SampledDataTxEndedInterval;
+}
+
 bool DeviceModel::component_criteria_match(const Component& component,
                                            const std::vector<ComponentCriterionEnum>& component_criteria) {
     if (component_criteria.empty()) {
@@ -46,7 +54,7 @@ bool DeviceModel::component_variables_match(const std::vector<ComponentVariable>
                            (component.instance == v.component.instance) and (variable == v.variable)); // B08.FR.23
                }) != component_variables.end();
 }
-bool validate_value(const VariableCharacteristics& characteristics, const std::string& value) {
+bool validate_value(const VariableCharacteristics& characteristics, const std::string& value, bool allow_zero) {
     switch (characteristics.dataType) {
     case DataEnum::string:
         if (characteristics.minLimit.has_value() and value.size() < characteristics.minLimit.value()) {
@@ -61,6 +69,10 @@ bool validate_value(const VariableCharacteristics& characteristics, const std::s
             return false;
         }
         float f = std::stof(value);
+
+        if (allow_zero and f == 0) {
+            return true;
+        }
         if (characteristics.minLimit.has_value() and f < characteristics.minLimit.value()) {
             return false;
         }
@@ -165,7 +177,7 @@ SetVariableStatusEnum DeviceModel::set_value_internal(const Component& component
 
     const auto characteristics = variable_map[variable].characteristics;
     try {
-        if (!validate_value(characteristics, value)) {
+        if (!validate_value(characteristics, value, allow_zero(component, variable))) {
             return SetVariableStatusEnum::Rejected;
         }
     } catch (const std::exception& e) {
