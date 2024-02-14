@@ -7,6 +7,10 @@ Libocpp can be used for the communication of one charging station and multiple E
 
 Libocpp provides a complete implementation of OCPP 1.6. The implementation of OCPP 2.0.1 is currently under development.
 
+## Get Involved
+
+See the [COMMUNITY.md](https://github.com/EVerest/EVerest/blob/main/COMMUNITY.md) and [CONTRIBUTING.md](https://github.com/EVerest/EVerest/blob/main/CONTRIBUTING.md) of the EVerest project to get involved.
+
 ## Table of contents
 - [C++ implementation of OCPP](#c-implementation-of-ocpp)
   - [Table of contents](#table-of-contents)
