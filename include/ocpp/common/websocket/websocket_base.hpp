@@ -47,7 +47,7 @@ enum class ConnectionFailedReason {
 ///
 class WebsocketBase {
 protected:
-    bool m_is_connected;
+    std::atomic_bool m_is_connected;
     WebsocketConnectionOptions connection_options;
     std::function<void(const int security_profile)> connected_callback;
     std::function<void()> disconnected_callback;
@@ -59,11 +59,11 @@ protected:
     websocketpp::connection_hdl handle;
     std::mutex reconnect_mutex;
     std::mutex connection_mutex;
-    long reconnect_backoff_ms;
+    std::atomic_int reconnect_backoff_ms;
     websocketpp::transport::timer_handler reconnect_callback;
-    int connection_attempts;
-    bool shutting_down;
-    bool reconnecting;
+    std::atomic_int connection_attempts;
+    std::atomic_bool shutting_down;
+    std::atomic_bool reconnecting;
 
     /// \brief Indicates if the required callbacks are registered
     /// \returns true if the websocket is properly initialized

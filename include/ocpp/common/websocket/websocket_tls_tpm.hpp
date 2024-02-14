@@ -67,7 +67,7 @@ private:
 
     void request_write();
 
-    void poll_message(const std::shared_ptr<WebsocketMessage>& msg, bool wait_sendaf);
+    void poll_message(const std::shared_ptr<WebsocketMessage>& msg);
 
 private:
     std::shared_ptr<EvseSecurity> evse_security;
@@ -79,8 +79,10 @@ private:
     std::condition_variable conn_cv;
 
     std::mutex queue_mutex;
+
     std::queue<std::shared_ptr<WebsocketMessage>> message_queue;
     std::condition_variable msg_send_cv;
+    std::mutex msg_send_cv_mutex;
 
     std::unique_ptr<std::thread> recv_message_thread;
     std::mutex recv_mutex;
