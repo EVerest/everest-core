@@ -54,7 +54,7 @@ libocpp:
 # Josev
 Josev:
   git: https://github.com/EVerest/ext-switchev-iso15118.git
-  git_tag: 2023.12.0
+  git_tag: 2024.2.0
   cmake_condition: "EVEREST_ENABLE_PY_SUPPORT AND EVEREST_DEPENDENCY_ENABLED_JOSEV"
 # OpenV2G
 ext-openv2g:
