@@ -3,6 +3,7 @@
 #ifndef OCPP_V16_CHARGE_POINT_CONFIGURATION_HPP
 #define OCPP_V16_CHARGE_POINT_CONFIGURATION_HPP
 
+#include <mutex>
 #include <set>
 
 #include <ocpp/common/support_older_cpp_versions.hpp>

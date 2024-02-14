@@ -2074,7 +2074,7 @@ KeyValue ChargePointConfiguration::getWaitForStopTransactionsOnResetTimeoutKeyVa
 }
 
 std::optional<KeyValue> ChargePointConfiguration::getCustomKeyValue(CiString<50> key) {
-    std::lock_guard<std::recursive_mutex> lock(configuration_mutex);
+    std::lock_guard<std::recursive_mutex> lock(this->configuration_mutex);
     if (!this->config["Custom"].contains(key.get())) {
         return std::nullopt;
     }
@@ -2099,7 +2099,7 @@ ConfigurationStatus ChargePointConfiguration::setCustomKey(CiString<50> key, CiS
     if (!kv.has_value() or (kv.value().readonly and !force)) {
         return ConfigurationStatus::Rejected;
     }
-    std::lock_guard<std::recursive_mutex> lock(configuration_mutex);
+    std::lock_guard<std::recursive_mutex> lock(this->configuration_mutex);
     try {
         const auto type = this->custom_schema["properties"][key]["type"];
         if (type == "integer") {
@@ -2123,7 +2123,7 @@ ConfigurationStatus ChargePointConfiguration::setCustomKey(CiString<50> key, CiS
 }
 
 std::optional<KeyValue> ChargePointConfiguration::get(CiString<50> key) {
-    std::lock_guard<std::mutex> lock(configuration_mutex);
+    std::lock_guard<std::recursive_mutex> lock(this->configuration_mutex);
     // Internal Profile
     if (key == "ChargePointId") {
         return this->getChargePointIdKeyValue();
@@ -2422,7 +2422,7 @@ std::vector<KeyValue> ChargePointConfiguration::get_all_key_value() {
 }
 
 ConfigurationStatus ChargePointConfiguration::set(CiString<50> key, CiString<500> value) {
-    std::lock_guard<std::mutex> lock(configuration_mutex);
+    std::lock_guard<std::recursive_mutex> lock(this->configuration_mutex);
     if (key == "AllowOfflineTxForUnknownId") {
         if (this->getAllowOfflineTxForUnknownId() == std::nullopt) {
             return ConfigurationStatus::NotSupported;
