@@ -448,7 +448,7 @@ bool evse_managerImpl::handle_external_ready_to_start_charging() {
 }
 
 bool evse_managerImpl::handle_force_unlock(int& connector_id) {
-    mod->bsp->connector_unlock();
+    mod->bsp->connector_force_unlock();
     return true;
 };
 
