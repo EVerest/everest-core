@@ -50,6 +50,9 @@ struct Context {
     // MAC address of our PLC modem (EV side)
     uint8_t plc_mac[ETH_ALEN] = {0x00, 0xB0, 0x52, 0x00, 0x00, 0x01};
 
+    // will be set from channel
+    uint8_t host_mac[ETH_ALEN] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
     // event specific payloads
     // FIXME (aw): due to the synchroneous nature of the fsm, this could be even a ptr/ref
     slac::messages::HomeplugMessage slac_message;
@@ -67,6 +70,8 @@ struct Context {
 
     // logging util
     void log_info(const std::string& text);
+
+    void set_mac_addr(const uint8_t* mac);
 
 private:
     const ContextCallbacks& callbacks;

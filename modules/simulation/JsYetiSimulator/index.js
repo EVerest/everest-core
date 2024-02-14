@@ -87,11 +87,6 @@ boot_module(async ({
 }) => {
   global_info = info;
   // register commands
-  setup.provides.yeti_simulation_control.register.enable(enable_simulation);
-  setup.provides.yeti_simulation_control.register.setSimulationData((mod, args) => {
-    mod.simulation_data = args.value;
-  });
-
   setup.provides.powermeter.register.stop_transaction((mod, args) => ({
     status: 'NOT_IMPLEMENTED',
     error: 'YetiDriver does not support stop transaction request.',
@@ -151,6 +146,49 @@ boot_module(async ({
   });
   setup.provides.connector_lock.register.unlock((mod, args) => {
     evlog.info('Unlock connector');
+  });
+
+  // bsp ev
+  setup.provides.ev_board_support.register.enable(enable_simulation);
+
+  setup.provides.ev_board_support.register.set_cp_state((mod, args) => {
+    switch (args.cp_state) {
+      case 'A':
+        mod.simdata_setting.cp_voltage = 12.0;
+        break;
+      case 'B':
+        mod.simdata_setting.cp_voltage = 9.0;
+        break;
+      case 'C':
+        mod.simdata_setting.cp_voltage = 6.0;
+        break;
+      case 'D':
+        mod.simdata_setting.cp_voltage = 3.0;
+        break;
+      case 'E':
+        mod.simdata_setting.error_e = true;
+        break;
+    }
+
+    // Todo(sl)
+    // mod.provides.ev_board_support.publish.bsp_event(mod.relais_on ? "PowerOn" : "PowerOff");
+
+  });
+
+  setup.provides.ev_board_support.register.diode_fail((mod, args) => {
+    mod.simdata_setting.diode_fail = args.value;
+  });
+
+  setup.provides.ev_board_support.register.allow_power_on((mod, args) => {
+    // Todo(sl): not implemented?
+  });
+
+  setup.provides.ev_board_support.register.set_ac_max_current((mod, args) => {
+    mod.ev_max_current = args.current;
+  });
+  setup.provides.ev_board_support.register.set_three_phases((mod, args) => {
+    if (args.three_phases) mod.ev_three_phases = 3.0
+    else mod.ev_three_phases = 1.0
   });
 
   // Subscribe to nodered error injection
@@ -222,55 +260,42 @@ boot_module(async ({
       case "MREC26CutCable":
         error_MREC26CutCable(mod, raise);
         break;
-
       case "ac_rcd_MREC2GroundFailure":
         error_ac_rcd_MREC2GroundFailure(mod, raise);
         break;
-
       case "ac_rcd_VendorError":
         error_ac_rcd_VendorError(mod, raise);
         break;
-
       case "ac_rcd_Selftest":
         error_ac_rcd_Selftest(mod, raise);
         break;
-
       case "ac_rcd_AC":
         error_ac_rcd_AC(mod, raise);
         break;
       case "ac_rcd_DC":
         error_ac_rcd_DC(mod, raise);
         break;
-
       case "lock_ConnectorLockCapNotCharged":
         error_lock_ConnectorLockCapNotCharged(mod, raise);
         break;
-
       case "lock_ConnectorLockUnexpectedOpen":
         error_lock_ConnectorLockUnexpectedOpen(mod, raise);
         break;
-
       case "lock_ConnectorLockUnexpectedClose":
         error_lock_ConnectorLockUnexpectedClose(mod, raise);
         break;
-
-
       case "lock_ConnectorLockFailedLock":
         error_lock_ConnectorLockFailedLock(mod, raise);
         break;
-
       case "lock_ConnectorLockFailedUnlock":
         error_lock_ConnectorLockFailedUnlock(mod, raise);
         break;
-
       case "lock_MREC1ConnectorLockFailure":
         error_lock_MREC1ConnectorLockFailure(mod, raise);
         break;
-
       case "lock_VendorError":
         error_lock_VendorError(mod, raise);
         break;
-
       default:
         evlog.error("Unknown error raised via MQTT");
     }
@@ -323,7 +348,6 @@ function telemetry_fast(mod) {
 }
 
 function publish_event(mod, event) {
-  //console.log("------------ EVENT PUB " + event);
   mod.provides.board_support.publish.event({ event: event_to_enum(event) });
 }
 
@@ -340,9 +364,10 @@ function simulation_loop(mod) {
   if (mod.simulation_enabled) {
     check_error_rcd(mod);
     read_from_car(mod);
-    simulate_powermeter(mod);
     simulation_statemachine(mod);
-    publish_yeti_simulation_control(mod);
+    addNoise(mod);
+    simulate_powermeter(mod);
+    publish_ev_board_support(mod);
   }
 
   // console.error(mod);
@@ -539,8 +564,62 @@ function powerOff(mod) {
   }
 }
 
+function drawPower(mod, l1, l2, l3, n) {
+  mod.simdata_setting.currents.L1 = l1;
+  mod.simdata_setting.currents.L2 = l2;
+  mod.simdata_setting.currents.L3 = l3;
+  mod.simdata_setting.currents.N = n;
+}
+
+function addNoise(mod) {
+  const noise = (1 + (Math.random() - 0.5) * 0.02);
+  const lonoise = (1 + (Math.random() - 0.5) * 0.005);
+  const impedance = mod.simdata_setting.impedance / 1000.0;
+
+  mod.simulation_data.currents.L1 = mod.simdata_setting.currents.L1 * noise;
+  mod.simulation_data.currents.L2 = mod.simdata_setting.currents.L2 * noise;
+  mod.simulation_data.currents.L3 = mod.simdata_setting.currents.L3 * noise;
+  mod.simulation_data.currents.N = mod.simdata_setting.currents.N * noise;
+
+  mod.simulation_data.voltages.L1 = mod.simdata_setting.voltages.L1 * noise - impedance * mod.simulation_data.currents.L1;
+  mod.simulation_data.voltages.L2 = mod.simdata_setting.voltages.L2 * noise - impedance * mod.simulation_data.currents.L2;
+  mod.simulation_data.voltages.L3 = mod.simdata_setting.voltages.L3 * noise - impedance * mod.simulation_data.currents.L3;
+
+  mod.simulation_data.frequencies.L1 = mod.simdata_setting.frequencies.L1 * lonoise;
+  mod.simulation_data.frequencies.L2 = mod.simdata_setting.frequencies.L2 * lonoise;
+  mod.simulation_data.frequencies.L3 = mod.simdata_setting.frequencies.L3 * lonoise;
+
+  mod.simulation_data.cp_voltage = mod.simdata_setting.cp_voltage * noise;
+  mod.simulation_data.rcd_current = mod.simdata_setting.rcd_current * noise;
+  mod.simulation_data.pp_resistor = mod.simdata_setting.pp_resistor * noise;
+}
+
+// IEC61851 Table A.8
+function dutyCycleToAmps(dc) {
+  if (dc < 8.0 / 100.0) return 0;
+  if (dc < 85.0 / 100.0) return dc * 100.0 * 0.6;
+  if (dc < 96.0 / 100.0) return (dc * 100.0 - 64) * 2.5;
+  if (dc < 97.0 / 100.0) return 80;
+  return 0;
+}
+
 // Translate ADC readings for lo and hi part of PWM to IEC61851 states.
 function read_from_car(mod) {
+
+  let amps1 = 0.0;
+  let amps2 = 0.0;
+  let amps3 = 0.0;
+
+  let amps = dutyCycleToAmps(mod.pwm_duty_cycle);
+  if (amps > mod.ev_max_current) amps = mod.ev_max_current;
+
+  if (mod.relais_on === true && mod.ev_three_phases > 0) amps1 = amps;
+  else amps1 = 0;
+  if (mod.relais_on === true && mod.ev_three_phases > 1) amps2 = amps;
+  else amps2 = 0;
+  if (mod.relais_on === true && mod.ev_three_phases > 2) amps3 = amps;
+  else amps3 = 0;
+
   if (mod.pwm_running) {
     mod.pwm_voltage_hi = mod.simulation_data.cp_voltage;
     mod.pwm_voltage_lo = -12.0;
@@ -567,25 +646,31 @@ function read_from_car(mod) {
   // sth is wrong with negative signal
   if (mod.pwm_running && !is_voltage_in_range(cpLo, -12.0)) {
     // CP-PE short or signal somehow gone
-    if (is_voltage_in_range(cpLo, 0.0) && is_voltage_in_range(cpHi, 0.0)) mod.current_state = STATE_E;
-    // Diode fault
-    else if (is_voltage_in_range(cpHi + cpLo, 0.0)) {
-      // throw DF error
+    if (is_voltage_in_range(cpLo, 0.0) && is_voltage_in_range(cpHi, 0.0)) {
+      mod.current_state = STATE_E;
+      drawPower(mod, 0, 0, 0, 0);
+    } else if (is_voltage_in_range(cpHi + cpLo, 0.0)) { // Diode fault
       error_DiodeFault(mod, true);
+      drawPower(mod, 0, 0, 0, 0);
     } else return;
   } else if (is_voltage_in_range(cpHi, 12.0)) {
     // +12V State A IDLE (open circuit)
     // clear all errors that clear on disconnection
     clear_disconnect_errors(mod);
     mod.current_state = STATE_A;
+    drawPower(mod, 0, 0, 0, 0);
   } else if (is_voltage_in_range(cpHi, 9.0)) {
     mod.current_state = STATE_B;
+    drawPower(mod, 0, 0, 0, 0);
   } else if (is_voltage_in_range(cpHi, 6.0)) {
     mod.current_state = STATE_C;
+    drawPower(mod, amps1, amps2, amps3, 0.2);
   } else if (is_voltage_in_range(cpHi, 3.0)) {
     mod.current_state = STATE_D;
+    drawPower(mod, amps1, amps2, amps3, 0.2);
   } else if (is_voltage_in_range(cpHi, -12.0)) {
     mod.current_state = STATE_F;
+    drawPower(mod, 0, 0, 0, 0);
   } else {
 
   }
@@ -1024,6 +1109,18 @@ function clearData(mod) {
 
   };
 
+  mod.simdata_setting = {
+    cp_voltage: 12.0,
+    pp_resistor: 220.1,
+    impedance: 500.0,
+    rcd_current: 0.1,
+    voltages: { L1: 230.0, L2: 230.0, L3: 230.0 },
+    currents: {
+      L1: 0.0, L2: 0.0, L3: 0.0, N: 0.0,
+    },
+    frequencies: { L1: 50.0, L2: 50.0, L3: 50.0 },
+  };
+
   mod.country_code = 'DE';
   mod.lastPwmUpdate = 0;
 
@@ -1088,6 +1185,8 @@ function clearData(mod) {
     }
   }
 
+  mod.ev_max_current = 0.0;
+  mod.ev_three_phases = 3;
 }
 
 function reset_powermeter(mod) {
@@ -1215,14 +1314,13 @@ function publish_telemetry(mod) {
   });
 }
 
-function publish_yeti_simulation_control(mod) {
-  mod.provides.yeti_simulation_control.publish.enabled(mod.simulation_enabled);
-  mod.provides.yeti_simulation_control.publish.simulation_feedback({
-    pwm_duty_cycle: mod.pwm_duty_cycle,
-    relais_on: (mod.relais_on ? (mod.use_three_phases_confirmed ? 3 : 1) : 0),
-    evse_pwm_running: mod.pwm_running,
-    evse_pwm_voltage_hi: mod.pwm_voltage_hi,
-    evse_pwm_voltage_lo: mod.pwm_voltage_lo,
+function publish_ev_board_support(mod) {
+  // mod.provides.yeti_simulation_control.publish.enabled(mod.simulation_enabled);
+
+  mod.provides.ev_board_support.publish.bsp_measurement({
+    'cp_pwm_duty_cycle': mod.pwm_duty_cycle * 100.0,
+    'rcd_current_mA': mod.rcd_current,
+    'proximity_pilot': "A_32" //FIXME(piet)
   });
 }
 

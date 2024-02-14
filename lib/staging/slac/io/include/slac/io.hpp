@@ -19,6 +19,7 @@ public:
     void run(std::function<InputHandlerFnType> callback);
     void send(slac::messages::HomeplugMessage& msg);
     void quit();
+    const uint8_t* get_mac_addr();
 
 private:
     void loop();

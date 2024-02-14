@@ -17,7 +17,7 @@ provides:
         type: integer
         default: 10
   ev:
-    interface: slac
+    interface: ev_slac
     description: SLAC interface implementation for EV side
     config:
       ev_id:
