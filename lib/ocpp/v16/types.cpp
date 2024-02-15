@@ -562,5 +562,67 @@ bool MeasurandWithPhase::operator==(MeasurandWithPhase measurand_with_phase) {
     return false;
 }
 
+/// \brief Conversion from a given ChargingSchedulePeriod \p k to a given json object \p j
+void to_json(json& j, const EnhancedChargingSchedulePeriod& k) {
+    // the required parts of the message
+    j = json{{"startPeriod", k.startPeriod}, {"limit", k.limit}, {"stackLevel", k.stackLevel}};
+    // the optional parts of the message
+    if (k.numberPhases) {
+        j["numberPhases"] = k.numberPhases.value();
+    }
+}
+
+/// \brief Conversion from a given json object \p j to a given ChargingSchedulePeriod \p k
+void from_json(const json& j, EnhancedChargingSchedulePeriod& k) {
+    // the required parts of the message
+    k.startPeriod = j.at("startPeriod");
+    k.limit = j.at("limit");
+    k.stackLevel = j.at("stackLevel");
+
+    // the optional parts of the message
+    if (j.contains("numberPhases")) {
+        k.numberPhases.emplace(j.at("numberPhases"));
+    }
+}
+
+/// \brief Conversion from a given ChargingSchedule \p k to a given json object \p j
+void to_json(json& j, const EnhancedChargingSchedule& k) {
+    // the required parts of the message
+    j = json{
+        {"chargingRateUnit", conversions::charging_rate_unit_to_string(k.chargingRateUnit)},
+        {"chargingSchedulePeriod", k.chargingSchedulePeriod},
+    };
+    // the optional parts of the message
+    if (k.duration) {
+        j["duration"] = k.duration.value();
+    }
+    if (k.startSchedule) {
+        j["startSchedule"] = k.startSchedule.value().to_rfc3339();
+    }
+    if (k.minChargingRate) {
+        j["minChargingRate"] = k.minChargingRate.value();
+    }
+}
+
+/// \brief Conversion from a given json object \p j to a given ChargingSchedule \p k
+void from_json(const json& j, EnhancedChargingSchedule& k) {
+    // the required parts of the message
+    k.chargingRateUnit = conversions::string_to_charging_rate_unit(j.at("chargingRateUnit"));
+    for (auto val : j.at("chargingSchedulePeriod")) {
+        k.chargingSchedulePeriod.push_back(val);
+    }
+
+    // the optional parts of the message
+    if (j.contains("duration")) {
+        k.duration.emplace(j.at("duration"));
+    }
+    if (j.contains("startSchedule")) {
+        k.startSchedule.emplace(j.at("startSchedule").get<std::string>());
+    }
+    if (j.contains("minChargingRate")) {
+        k.minChargingRate.emplace(j.at("minChargingRate"));
+    }
+}
+
 } // namespace v16
 } // namespace ocpp

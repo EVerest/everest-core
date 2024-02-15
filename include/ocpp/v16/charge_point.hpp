@@ -8,6 +8,7 @@
 #include <ocpp/common/evse_security_impl.hpp>
 #include <ocpp/common/support_older_cpp_versions.hpp>
 #include <ocpp/v16/ocpp_types.hpp>
+#include <ocpp/v16/smart_charging.hpp>
 #include <ocpp/v16/types.hpp>
 
 #include <ocpp/v16/messages/DataTransfer.hpp>
@@ -152,6 +153,13 @@ public:
     /// \param duration_s
     /// \return ChargingSchedules of all connectors
     std::map<int32_t, ChargingSchedule> get_all_composite_charging_schedules(const int32_t duration_s);
+
+    /// \brief Calculates EnhancedChargingSchedule(s) configured by the CSMS of all connectors from now until now +
+    /// given \p duration_s . EnhancedChargingSchedules contain EnhancedChargingSchedulePeriod(s) that are enhanced by
+    /// the stackLevel that was provided for the ChargingProfile
+    /// \param duration_s
+    /// \return ChargingSchedules of all connectors
+    std::map<int32_t, EnhancedChargingSchedule> get_all_enhanced_composite_charging_schedules(const int32_t duration_s);
 
     /// \brief Stores the given \p powermeter values for the given \p connector . This function can be called when a new
     /// meter value is present.

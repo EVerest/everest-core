@@ -125,7 +125,15 @@ public:
     std::vector<ChargingProfile> get_valid_profiles(const ocpp::DateTime& start_time, const ocpp::DateTime& end_time,
                                                     const int connector_id);
     ///
-    /// \brief Calculates the composite schedule for the given \p valid_profiles and the given \p connector_id .
+    /// \brief Calculates the enhanced composite schedule for the given \p valid_profiles and the given \p connector_id
+    ///
+    EnhancedChargingSchedule calculate_enhanced_composite_schedule(std::vector<ChargingProfile> valid_profiles,
+                                                                   const ocpp::DateTime& start_time,
+                                                                   const ocpp::DateTime& end_time,
+                                                                   const int connector_id,
+                                                                   std::optional<ChargingRateUnit> charging_rate_unit);
+    ///
+    /// \brief Calculates the composite schedule for the given \p valid_profiles and the given \p connector_id
     ///
     ChargingSchedule calculate_composite_schedule(std::vector<ChargingProfile> valid_profiles,
                                                   const ocpp::DateTime& start_time, const ocpp::DateTime& end_time,

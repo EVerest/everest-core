@@ -71,8 +71,12 @@ DataTransferResponse ChargePoint::data_transfer(const CiString<255>& vendorId,
 }
 
 std::map<int32_t, ChargingSchedule> ChargePoint::get_all_composite_charging_schedules(const int32_t duration_s) {
-
     return this->charge_point->get_all_composite_charging_schedules(duration_s);
+}
+
+std::map<int32_t, EnhancedChargingSchedule>
+ChargePoint::get_all_enhanced_composite_charging_schedules(const int32_t duration_s) {
+    return this->charge_point->get_all_enhanced_composite_charging_schedules(duration_s);
 }
 
 void ChargePoint::on_meter_values(int32_t connector, const Measurement& measurement) {

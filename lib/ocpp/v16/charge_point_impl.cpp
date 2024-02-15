@@ -2668,6 +2668,26 @@ std::map<int32_t, ChargingSchedule> ChargePointImpl::get_all_composite_charging_
     return charging_schedules;
 }
 
+std::map<int32_t, EnhancedChargingSchedule>
+ChargePointImpl::get_all_enhanced_composite_charging_schedules(const int32_t duration_s) {
+
+    std::map<int32_t, EnhancedChargingSchedule> charging_schedules;
+
+    for (int connector_id = 0; connector_id <= this->configuration->getNumberOfConnectors(); connector_id++) {
+        const auto start_time = ocpp::DateTime();
+        const auto duration = std::chrono::seconds(duration_s);
+        const auto end_time = ocpp::DateTime(start_time.to_time_point() + duration);
+
+        const auto valid_profiles =
+            this->smart_charging_handler->get_valid_profiles(start_time, end_time, connector_id);
+        const auto composite_schedule = this->smart_charging_handler->calculate_enhanced_composite_schedule(
+            valid_profiles, start_time, end_time, connector_id, ChargingRateUnit::A);
+        charging_schedules[connector_id] = composite_schedule;
+    }
+
+    return charging_schedules;
+}
+
 bool ChargePointImpl::is_pnc_enabled() {
     return this->configuration->getSupportedFeatureProfilesSet().count(SupportedFeatureProfiles::PnC) and
            this->configuration->getISO15118PnCEnabled();
