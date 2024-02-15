@@ -667,12 +667,14 @@ void WebsocketTlsTPM::on_conn_fail() {
     }
 
     this->m_is_connected = false;
-    this->connection_attempts += 1;
 
     // -1 indicates to always attempt to reconnect
     if (this->connection_options.max_connection_attempts == -1 or
         this->connection_attempts <= this->connection_options.max_connection_attempts) {
         this->reconnect(std::error_code(), this->get_reconnect_interval());
+
+        // Increment reconn attempts
+        this->connection_attempts += 1;
     } else {
         EVLOG_info << "Closed TLS websocket, reconnect attempts exhausted";
         this->close(websocketpp::close::status::normal, "Connection failed");
