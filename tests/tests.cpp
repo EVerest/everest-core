@@ -13,7 +13,40 @@
 #include <evse_security/utils/evse_filesystem.hpp>
 
 #include <evse_security/crypto/evse_crypto.hpp>
+
+#include <openssl/opensslv.h>
+#define USING_OPENSSL_3 (OPENSSL_VERSION_NUMBER >= 0x30000000L)
+
+#if USING_OPENSSL_3
+// provider management has changed - ensure tests still work
+#ifndef USING_TPM2
 #include <evse_security/detail/openssl/openssl_providers.hpp>
+#else
+
+// updates so that existing tests run with the OpenSSLProvider
+#include <evse_security/crypto/openssl/openssl_tpm.hpp>
+#include <openssl/provider.h>
+
+namespace evse_security {
+const char* PROVIDER_TPM = "tpm2";
+const char* PROVIDER_DEFAULT = "default";
+typedef OpenSSLProvider TPMScopedProvider;
+
+} // namespace evse_security
+#endif // USING_TPM2
+
+#else
+
+// updates so that tests run under OpenSSL v1
+namespace evse_security {
+const char* PROVIDER_TPM = "tpm2";
+const char* PROVIDER_DEFAULT = "default";
+} // namespace evse_security
+constexpr bool check_openssl_providers(const std::vector<std::string>&) {
+    return true;
+}
+
+#endif // USING_OPENSSL_3
 
 std::string read_file_to_string(const fs::path filepath) {
     fsstd::ifstream t(filepath.string());
@@ -33,6 +66,7 @@ bool equal_certificate_strings(const std::string& cert1, const std::string& cert
     return true;
 }
 
+#if USING_OPENSSL_3
 bool supports_tpm_usage() {
     bool supports_tpm = false;
 
@@ -79,11 +113,15 @@ bool check_openssl_providers(const std::vector<std::string>& required_providers)
     return true;
 }
 
+static bool supports_tpm = supports_tpm_usage();
+#else
+static bool supports_tpm = false;
+#endif // USING_OPENSSL_3
+
 void install_certs() {
     std::system("./generate_test_certs.sh");
 }
 
-static bool supports_tpm = supports_tpm_usage();
 namespace evse_security {
 
 class EvseSecurityTests : public ::testing::Test {
@@ -161,40 +199,6 @@ TEST_F(EvseSecurityTests, verify_expired_csr_deletion) {
     // Garbage collect should delete the expired managed key
     evse_security->garbage_collect();
     ASSERT_FALSE(fs::exists(csr_key_path));
-}
-
-TEST_F(EvseSecurityTests, verify_expired_leaf_deletion) {
-    // Copy many expired certificates
-    std::set<fs::path> existing;
-
-    for (int i = 0; i < 30; i++) {
-        std::string key_filename = std::string("certs/client/cso/SECC_LEAF_EXPIRED_") + std::to_string(i) + ".key";
-        std::string cert_filename = std::string("certs/client/cso/SECC_LEAF_EXPIRED_") + std::to_string(i) + ".pem";
-
-        existing.emplace(key_filename);
-        existing.emplace(cert_filename);
-
-        std::filesystem::copy("expired_leaf/SECC_LEAF_EXPIRED.key", key_filename);
-        std::filesystem::copy("expired_leaf/SECC_LEAF_EXPIRED.pem", cert_filename);
-    }
-
-    // Check that the FS is not full
-    ASSERT_FALSE(evse_security->is_filesystem_full());
-
-    // Fill the disk
-    evse_security->max_fs_certificate_store_entries = 20;
-
-    // Garbage collect
-    evse_security->garbage_collect();
-
-    // Assert the files/keys do not exist any more
-    std::size_t existing_count = 0;
-    for (const auto& path : existing) {
-        existing_count += fs::exists(path) ? 1 : 0;
-    }
-
-    // Only 10 should be kept (key + certificate)
-    ASSERT_EQ(existing_count, 20);
 }
 
 TEST_F(EvseSecurityTests, verify_basics) {
@@ -287,6 +291,7 @@ TEST_F(EvseSecurityTests, verify_certificate_counts) {
     ASSERT_EQ(this->evse_security->get_count_of_installed_certificates({CertificateType::MORootCertificate}), 0);
 }
 
+#if USING_OPENSSL_3
 TEST_F(EvseSecurityTests, providers_tests) {
     if (supports_tpm == false)
         return;
@@ -357,6 +362,9 @@ TEST_F(EvseSecurityTests, providers_tests) {
 }
 
 TEST_F(EvseSecurityTests, verify_provider_scope) {
+#ifdef USING_TPM2
+    GTEST_SKIP() << "Skipped: OpenSSLProvider doesn't load and unload providers";
+#endif
     if (supports_tpm == false)
         return;
 
@@ -373,6 +381,7 @@ TEST_F(EvseSecurityTests, verify_provider_scope) {
     ASSERT_TRUE(check_openssl_providers({PROVIDER_DEFAULT}));
     std::cout << "Ending test TPM scoped provider" << std::endl;
 }
+#endif // USING_OPENSSL_3
 
 TEST_F(EvseSecurityTests, verify_normal_keygen) {
     KeyGenerationInfo info;

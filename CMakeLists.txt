@@ -13,6 +13,15 @@ find_package(everest-cmake 0.1 REQUIRED
 option(${PROJECT_NAME}_BUILD_TESTING "Build unit tests, used if included as dependency" OFF)
 option(BUILD_TESTING "Build unit tests, used if standalone project" OFF)
 option(EVSE_SECURITY_INSTALL "Install the library (shared data might be installed anyway)" ${EVC_MAIN_PROJECT})
+option(USING_TPM2 "Include code for using OpenSSL 3 and the tpm2 provider" OFF)
+
+if(USING_TPM2)
+    # OpenSSL property string when using the default provider
+    set(PROPQUERY_DEFAULT "provider!=tpm2")
+    # OpenSSL property string when using the tpm2 provider
+    set(PROPQUERY_TPM2 "?provider=tpm2,tpm2.digest!=yes,tpm2.cipher!=yes")
+endif()
+
 
 # dependencies
 if (NOT DISABLE_EDM)
@@ -30,6 +39,7 @@ option(LIBEVSE_CRYPTO_SUPPLIER_OPENSSL "Default OpenSSL cryptography supplier" O
 
 # dependencies
 find_package(OpenSSL REQUIRED)
+find_package(date)
 
 add_subdirectory(lib)
 

@@ -701,6 +701,8 @@ std::string EvseSecurity::generate_certificate_signing_request(LeafCertificateTy
 
     fs::path key_path;
 
+    EVLOG_info << "generate_certificate_signing_request: create filename";
+
     // Make a difference between normal and tpm keys for identification
     const auto file_name =
         std::string("SECC_LEAF_") +
@@ -711,6 +713,7 @@ std::string EvseSecurity::generate_certificate_signing_request(LeafCertificateTy
     } else if (certificate_type == LeafCertificateType::V2G) {
         key_path = this->directories.secc_leaf_key_directory / file_name;
     } else {
+        EVLOG_error << "generate_certificate_signing_request: create filename failed";
         throw std::runtime_error("Attempt to generate CSR for MF certificate");
     }
 
@@ -730,6 +733,7 @@ std::string EvseSecurity::generate_certificate_signing_request(LeafCertificateTy
         info.key_info.private_key_pass = private_key_password;
     }
 
+    EVLOG_info << "generate_certificate_signing_request: start";
     if (false == CryptoSupplier::x509_generate_csr(info, csr)) {
         throw std::runtime_error("Failed to generate certificate signing request!");
     }

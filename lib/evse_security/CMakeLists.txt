@@ -15,6 +15,7 @@ target_sources(evse_security
 
         crypto/interface/crypto_supplier.cpp
         crypto/openssl/openssl_supplier.cpp
+        crypto/openssl/openssl_tpm.cpp
 )
 
 target_include_directories(evse_security
@@ -69,6 +70,14 @@ endif()
 
 if(LIBEVSE_CRYPTO_SUPPLIER_OPENSSL)
     add_compile_definitions(LIBEVSE_CRYPTO_SUPPLIER_OPENSSL)
+endif()
+
+if(USING_TPM2)
+    target_compile_definitions(evse_security PRIVATE
+        USING_TPM2
+        PROPQUERY_DEFAULT="${PROPQUERY_DEFAULT}"
+        PROPQUERY_TPM2="${PROPQUERY_TPM2}"
+    )
 endif()
 
 target_compile_features(evse_security PUBLIC cxx_std_17)

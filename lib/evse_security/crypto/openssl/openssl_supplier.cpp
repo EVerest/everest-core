@@ -19,9 +19,7 @@
 
 #define EVSE_OPENSSL_VER_3 (OPENSSL_VERSION_NUMBER >= 0x30000000L)
 
-#if EVSE_OPENSSL_VER_3
-#include <evse_security/detail/openssl/openssl_providers.hpp>
-#endif
+#include <evse_security/crypto/openssl/openssl_tpm.hpp>
 
 namespace evse_security {
 
@@ -85,36 +83,9 @@ const char* OpenSSLSupplier::get_supplier_name() {
     return OPENSSL_VERSION_TEXT;
 }
 
-bool OpenSSLSupplier::supports_tpm() {
-#if EVSE_OPENSSL_VER_3
-    static bool support_checked = false;
-    static bool supports_tpm = false;
-
-    // TODO (ioan): Check if somehow the TPM provider was already
-    // loaded case in which we just need to do the self-test
-    if (support_checked == false) {
-        OSSL_PROVIDER* tpm2_provider = OSSL_PROVIDER_load(nullptr, PROVIDER_TPM);
-
-        if (tpm2_provider != nullptr) {
-            supports_tpm = OSSL_PROVIDER_available(nullptr, PROVIDER_TPM) && OSSL_PROVIDER_self_test(tpm2_provider);
-            OSSL_PROVIDER_unload(tpm2_provider);
-        } else {
-            supports_tpm = false;
-        }
-    }
-
-    return supports_tpm;
-#else
-    return false;
-#endif
-}
-
 bool OpenSSLSupplier::supports_tpm_key_creation() {
-    if (supports_tpm()) {
-        return true;
-    }
-
-    return false;
+    OpenSSLProvider provider;
+    return provider.supports_tpm();
 }
 
 static bool export_key_internal(const KeyGenerationInfo& key_info, const EVP_PKEY_ptr& evp_key) {
@@ -158,175 +129,184 @@ static bool export_key_internal(const KeyGenerationInfo& key_info, const EVP_PKE
     return true;
 }
 
-static bool generate_key_internal_tpm(const KeyGenerationInfo& key_info, EVP_PKEY_ptr& out_key) {
+constexpr const char* kt_rsa = "RSA";
+constexpr const char* kt_ec = "EC";
+
+static bool s_generate_key(const KeyGenerationInfo& key_info, KeyHandle_ptr& out_key, EVP_PKEY_CTX_ptr& ctx) {
+
+    unsigned int bits = 0;
+    char group_256[] = "P-256";
+    char group_384[] = "P-384";
+    char* group = nullptr;
+    std::size_t group_sz = 0;
+    int nid = NID_undef;
+
+    bool bResult = true;
+    bool bEC = true;
+
+    // note when using tpm2 some key_types may not be supported.
+
+    EVLOG_info << "Key parameters";
+    switch (key_info.key_type) {
+    case CryptoKeyType::RSA_TPM20:
+        bits = 2048;
+        bEC = false;
+        break;
+    case CryptoKeyType::RSA_3072:
+        bits = 3072;
+        bEC = false;
+        break;
+    case CryptoKeyType::RSA_7680:
+        bits = 7680;
+        bEC = false;
+        break;
+    case CryptoKeyType::EC_prime256v1:
+        group = group_256;
+        group_sz = sizeof(group_256);
+        nid = NID_X9_62_prime256v1;
+        break;
+    case CryptoKeyType::EC_secp384r1:
+    default:
+        group = group_384;
+        group_sz = sizeof(group_384);
+        nid = NID_secp384r1;
+        break;
+    }
+
 #if EVSE_OPENSSL_VER_3
-    // Acquire TPM context
-    TPMScopedProvider tpm_provider;
-
-    // Generate TPM key. For reference see:
-    // https://github.com/Infineon/optiga-tpm-cheatsheet/blob/master/openssl3-lib-general-examples/examples.c#L104
-
     OSSL_PARAM params[2];
-    EVP_PKEY_CTX_ptr ctx;
+    std::memset(&params[0], 0, sizeof(params));
 
-    CryptoKeyType type = key_info.key_type;
-    if (type == CryptoKeyType::RSA_TPM20) {
-        unsigned int bits = 2048;
-        params[0] = OSSL_PARAM_construct_uint("bits", &bits);
-        ctx = EVP_PKEY_CTX_ptr(EVP_PKEY_CTX_new_from_name(NULL, "RSA", "provider=tpm2"));
-    } else if (type == CryptoKeyType::EC_prime256v1 || type == CryptoKeyType::EC_secp384r1) {
-        char* group_256 = "P-256";
-        char* group_384 = "P-384";
-
-        if (type == CryptoKeyType::EC_prime256v1) {
-            params[0] = OSSL_PARAM_construct_utf8_string("group", group_256, sizeof(group_256));
-        } else {
-            params[0] = OSSL_PARAM_construct_utf8_string("group", group_384, sizeof(group_384));
-        }
-
-        ctx = EVP_PKEY_CTX_ptr(EVP_PKEY_CTX_new_from_name(NULL, "EC", "provider=tpm2"));
+    if (bEC) {
+        params[0] = OSSL_PARAM_construct_utf8_string("group", group, group_sz);
+        EVLOG_info << "Key parameters: EC";
+        ctx = EVP_PKEY_CTX_ptr(EVP_PKEY_CTX_new_from_name(nullptr, kt_ec, nullptr));
     } else {
-        EVLOG_error << "Failed to find TPM keygen generation type!";
-        return false;
+        params[0] = OSSL_PARAM_construct_uint("bits", &bits);
+        EVLOG_info << "Key parameters: RSA";
+        ctx = EVP_PKEY_CTX_ptr(EVP_PKEY_CTX_new_from_name(nullptr, kt_rsa, nullptr));
     }
 
     params[1] = OSSL_PARAM_construct_end();
 
-    if (nullptr == ctx.get()) {
-        EVLOG_error << "Failed to create tpm2 provider context!";
-        return false;
+    if (bResult) {
+        EVLOG_info << "Key parameters done";
+        if (nullptr == ctx.get()) {
+            EVLOG_error << "create key context failed!";
+            ERR_print_errors_fp(stderr);
+            bResult = false;
+        }
     }
 
-    if (EVP_PKEY_keygen_init(ctx.get()) <= 0 || EVP_PKEY_CTX_set_params(ctx.get(), params) <= 0) {
-        EVLOG_error << "Failed to init tpm2 provider context!";
-        return false;
+    if (bResult) {
+        EVLOG_info << "Keygen init";
+        if (EVP_PKEY_keygen_init(ctx.get()) <= 0 || EVP_PKEY_CTX_set_params(ctx.get(), params) <= 0) {
+            EVLOG_error << "Keygen init failed";
+            ERR_print_errors_fp(stderr);
+            bResult = false;
+        }
     }
 
-    EVP_PKEY* pkey = NULL;
-    if (EVP_PKEY_generate(ctx.get(), &pkey) <= 0) {
-        EVLOG_error << "Failed to generate tpm2 key!";
-        return false;
+    EVP_PKEY* pkey = nullptr;
+
+    if (bResult) {
+        EVLOG_info << "Key generate";
+        if (EVP_PKEY_generate(ctx.get(), &pkey) <= 0) {
+            EVLOG_error << "Failed to generate tpm2 key!";
+            ERR_print_errors_fp(stderr);
+            bResult = false;
+        }
     }
 
-    out_key = EVP_PKEY_ptr(pkey);
+    auto evp_key = EVP_PKEY_ptr(pkey);
 
-    // Export keys too
-    return export_key_internal(key_info, out_key);
 #else
-    return false;
-#endif
-}
+    constexpr unsigned long RSA_PRIME = 65537;
+    EVP_PKEY_ptr evp_key = EVP_PKEY_ptr(EVP_PKEY_new());
 
-static bool generate_key_internal(const KeyGenerationInfo& key_info, EVP_PKEY_ptr& out_key) {
-    static unsigned long RSA_PRIME = 65537;
-
-    EVP_PKEY_ptr evp_key;
-
-    CryptoKeyType type = key_info.key_type;
-    if (type == CryptoKeyType::RSA_3072 || type == CryptoKeyType::RSA_7680) {
-        evp_key = EVP_PKEY_ptr(EVP_PKEY_new());
-
-        int bits = 0;
-        if (type == CryptoKeyType::RSA_3072) {
-            bits = 3072;
-        } else {
-            bits = 7680;
-        }
-
-        RSA_ptr rsa_key(RSA_generate_key(bits, RSA_PRIME, nullptr, nullptr));
-
-        if (rsa_key.get() == nullptr) {
-            EVLOG_error << "Failed create RSA key!";
-            return false;
-        }
-
-        // Not auto-released since on assign the ec_key will be released with the owner evp_pkey
-        RSA* key = rsa_key.release();
-
-        // Assigns the key, we must not release it here, since it is 'owned' by the evp_key
-        EVP_PKEY_assign_RSA(evp_key.get(), key);
-    } else if (type == CryptoKeyType::EC_prime256v1 || type == CryptoKeyType::EC_secp384r1) {
-        evp_key = EVP_PKEY_ptr(EVP_PKEY_new());
-
-        int nid = NID_undef;
-
-        if (type == CryptoKeyType::EC_prime256v1) {
-            nid = NID_X9_62_prime256v1;
-        } else {
-            nid = NID_secp384r1;
-        }
-
+    if (bEC) {
         // Ignore deprecation warnings on the EC gen functions since we need OpenSSL 1.1 support
         EC_KEY_ptr ec_key(EC_KEY_new_by_curve_name(nid));
 
         if (ec_key.get() == nullptr) {
             EVLOG_error << "Failed create EC key by curve!";
-            return false;
+            bResult = false;
         }
 
-        // generate ec key pair
-        if (false == EC_KEY_generate_key(ec_key.get())) {
-            EVLOG_error << "Failed to generate EC key!";
-            return false;
+        if (bResult) {
+            // generate ec key pair
+            if (EC_KEY_generate_key(ec_key.get()) != 1) {
+                EVLOG_error << "Failed to generate EC key!";
+                bResult = false;
+            }
         }
 
-        // Not auto-released since on assign the ec_key will be released with the owner evp_pkey
-        EC_KEY* key = ec_key.release();
+        if (bResult) {
+            // Not auto-released since on assign the ec_key will be released with the owner evp_pkey
+            EC_KEY* key = ec_key.release();
 
-        // Assigns the key, we must not release it here, since it is 'owned' by the evp_key
-        EVP_PKEY_assign_EC_KEY(evp_key.get(), key);
+            // Assigns the key, we must not release it here, since it is 'owned' by the evp_key
+            EVP_PKEY_assign_EC_KEY(evp_key.get(), key);
+        }
     } else {
-        EVLOG_error << "Failed to find keygen generation type!";
-        return false;
+        RSA_ptr rsa_key(RSA_generate_key(bits, RSA_PRIME, nullptr, nullptr));
+
+        if (rsa_key.get() == nullptr) {
+            EVLOG_error << "Failed create RSA key!";
+            ERR_print_errors_fp(stderr);
+            bResult = false;
+        }
+
+        if (bResult) {
+            // Not auto-released since on assign the ec_key will be released with the owner evp_pkey
+            RSA* key = rsa_key.release();
+
+            // Assigns the key, we must not release it here, since it is 'owned' by the evp_key
+            EVP_PKEY_assign_RSA(evp_key.get(), key);
+        }
     }
 
-    // Attempt export key
-    if (evp_key) {
-        out_key = std::move(evp_key);
-        return export_key_internal(key_info, out_key);
+#endif
+
+    if (bResult) {
+        EVLOG_info << "Key export";
+        // Export keys too
+        bResult = export_key_internal(key_info, evp_key);
+        EVP_PKEY* raw_key_handle = evp_key.release();
+        out_key = std::make_unique<KeyHandleOpenSSL>(raw_key_handle);
     }
 
-    EVLOG_error << "Undefined key generation failure!";
-    return false;
+    return bResult;
 }
 
 bool OpenSSLSupplier::generate_key(const KeyGenerationInfo& key_info, KeyHandle_ptr& out_key) {
-    // Sanity checks
-    if (key_info.generate_on_tpm && false == supports_tpm()) {
-        EVLOG_error << "Failed to generate TPM key! The TPM is not supported!";
-        return false;
-    }
-
-    EVP_PKEY_ptr evp_key;
+    KeyHandle_ptr gen_key;
+    EVP_PKEY_CTX_ptr ctx;
+    OpenSSLProvider provider;
+    bool bResult = true;
 
     if (key_info.generate_on_tpm) {
-        // Generate key internally
-        if (false == generate_key_internal_tpm(key_info, evp_key)) {
-            EVLOG_error << "Failed to internally generate TPM key!";
-            return false;
-        }
+        provider.set_global_mode(OpenSSLProvider::mode_t::tpm2_provider);
+
     } else {
-        if (false == generate_key_internal(key_info, evp_key)) {
-            EVLOG_error << "Failed to internally generate key!";
-            return false;
-        }
+        provider.set_global_mode(OpenSSLProvider::mode_t::default_provider);
     }
 
-    // Errors passed, transfer key handle ownership
-    EVP_PKEY* raw_key_handle = evp_key.release();
-    out_key = std::make_unique<KeyHandleOpenSSL>(raw_key_handle);
-
-    return true;
+    bResult = s_generate_key(key_info, gen_key, ctx);
+    if (!bResult) {
+        EVLOG_error << "Failed to generate csr pub/priv key!";
+    }
+    return bResult;
 }
 
 std::vector<X509Handle_ptr> OpenSSLSupplier::load_certificates(const std::string& data, const EncodingFormat encoding) {
+    std::vector<X509Handle_ptr> certificates;
+
     BIO_ptr bio(BIO_new_mem_buf(data.data(), static_cast<int>(data.size())));
 
     if (!bio) {
         throw CertificateLoadException("Failed to create BIO from data");
     }
-
-    std::vector<X509Handle_ptr> certificates;
 
     if (encoding == EncodingFormat::PEM) {
         STACK_OF(X509_INFO)* allcerts = PEM_X509_INFO_read_bio(bio.get(), nullptr, nullptr, nullptr);
@@ -567,6 +547,8 @@ CertificateValidationError OpenSSLSupplier::x509_verify_certificate_chain(X509Ha
                                                                           bool allow_future_certificates,
                                                                           const std::optional<fs::path> dir_path,
                                                                           const std::optional<fs::path> file_path) {
+    OpenSSLProvider provider;
+    provider.set_global_mode(OpenSSLProvider::mode_t::default_provider);
     X509_STORE_ptr store_ptr(X509_STORE_new());
     X509_STORE_CTX_ptr store_ctx_ptr(X509_STORE_CTX_new());
 
@@ -612,22 +594,37 @@ bool OpenSSLSupplier::x509_check_private_key(X509Handle* handle, std::string pri
     if (x509 == nullptr)
         return false;
 
+    OpenSSLProvider provider;
+
+    const bool tpm_key = is_tpm_key_string(private_key);
+    if (tpm_key) {
+        provider.set_global_mode(OpenSSLProvider::mode_t::tpm2_provider);
+    } else {
+        provider.set_global_mode(OpenSSLProvider::mode_t::default_provider);
+    }
+    EVLOG_info << "TPM Key: " << tpm_key;
+
     BIO_ptr bio(BIO_new_mem_buf(private_key.c_str(), -1));
     // Passing password string since if NULL is provided, the password CB will be called
     EVP_PKEY_ptr evp_pkey(PEM_read_bio_PrivateKey(bio.get(), nullptr, nullptr, (void*)password.value_or("").c_str()));
 
+    bool bResult = true;
     if (!evp_pkey) {
         EVLOG_warning << "Invalid evp_pkey: " << private_key << " error: " << ERR_error_string(ERR_get_error(), NULL)
                       << " Password configured correctly?";
+        ERR_print_errors_fp(stderr);
 
-        return false;
+        bResult = false;
     }
 
-    return (X509_check_private_key(x509, evp_pkey.get()) == 1);
+    bResult = bResult && X509_check_private_key(x509, evp_pkey.get()) == 1;
+    return bResult;
 }
 
 bool OpenSSLSupplier::x509_verify_signature(X509Handle* handle, const std::vector<std::byte>& signature,
                                             const std::vector<std::byte>& data) {
+    OpenSSLProvider provider;
+    provider.set_global_mode(OpenSSLProvider::mode_t::default_provider);
     // extract public key
     X509* x509 = get(handle);
 
@@ -674,10 +671,19 @@ bool OpenSSLSupplier::x509_verify_signature(X509Handle* handle, const std::vecto
 }
 
 bool OpenSSLSupplier::x509_generate_csr(const CertificateSigningRequestInfo& csr_info, std::string& out_csr) {
-    KeyHandle_ptr gen_key;
 
-    if (false == generate_key(csr_info.key_info, gen_key)) {
-        EVLOG_error << "Failed to generate csr pub/priv key!";
+    KeyHandle_ptr gen_key;
+    EVP_PKEY_CTX_ptr ctx;
+    OpenSSLProvider provider;
+
+    if (csr_info.key_info.generate_on_tpm) {
+        provider.set_global_mode(OpenSSLProvider::mode_t::tpm2_provider);
+
+    } else {
+        provider.set_global_mode(OpenSSLProvider::mode_t::default_provider);
+    }
+
+    if (false == s_generate_key(csr_info.key_info, gen_key, ctx)) {
         return false;
     }
 
@@ -717,7 +723,11 @@ bool OpenSSLSupplier::x509_generate_csr(const CertificateSigningRequestInfo& csr
     sk_X509_EXTENSION_push(extensions, ext_key_usage);
     sk_X509_EXTENSION_push(extensions, ext_basic_constraints);
 
-    if (false == X509_REQ_add_extensions(x509_req_ptr.get(), extensions)) {
+    const bool result = X509_REQ_add_extensions(x509_req_ptr.get(), extensions);
+    X509_EXTENSION_free(ext_key_usage);
+    X509_EXTENSION_free(ext_basic_constraints);
+    sk_X509_EXTENSION_free(extensions);
+    if (!result) {
         EVLOG_error << "Failed to add csr extensions!";
         return false;
     }
@@ -725,17 +735,7 @@ bool OpenSSLSupplier::x509_generate_csr(const CertificateSigningRequestInfo& csr
     // sign the certificate with the private key
     bool x509_signed = false;
 
-    if (csr_info.key_info.generate_on_tpm) {
-#if EVSE_OPENSSL_VER_3
-        TPMScopedProvider tpm_provider;
-        x509_signed = X509_REQ_sign(x509_req_ptr.get(), key, EVP_sha256());
-#else
-        EVLOG_error << "TPM operations not supported for CSR signing!";
-        return false;
-#endif
-    } else {
-        x509_signed = X509_REQ_sign(x509_req_ptr.get(), key, EVP_sha256());
-    }
+    x509_signed = X509_REQ_sign(x509_req_ptr.get(), key, EVP_sha256());
 
     if (x509_signed == false) {
         EVLOG_error << "Failed to sign csr!";
