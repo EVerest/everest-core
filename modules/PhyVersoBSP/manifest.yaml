@@ -20,6 +20,10 @@ config:
     description: Minimal current on AC side. For AC this is typically 6, but for HLC this can be less. -1 means use limit reported by HW.
     type: integer
     default: -1
+  mcu_config_file:
+    description: config file that should be sent to the MCU
+    type: string
+    default: example_config_pionix.json
 provides:
   connector_1:
     interface: evse_board_support

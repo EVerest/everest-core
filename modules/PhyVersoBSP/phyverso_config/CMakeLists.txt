@@ -6,7 +6,7 @@ project(phyverso_config VERSION 0.1)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-find_package(nlohmann_json 3.2.0 REQUIRED)
+#find_package(nlohmann_json 3.2.0 REQUIRED)
 
 # add the executable
 add_library(phyverso_config STATIC)

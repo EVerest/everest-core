@@ -45,4 +45,6 @@ target_sources(${MODULE_NAME}
     PRIVATE
         "board_support_common.cpp"
 )
+
+install(FILES example_config_pionix.json DESTINATION ${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME})
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1

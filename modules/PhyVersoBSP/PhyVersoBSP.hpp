@@ -27,6 +27,7 @@ struct Conf {
     int baud_rate;
     int reset_gpio;
     int caps_min_current_A;
+    std::string mcu_config_file;
 };
 
 class PhyVersoBSP : public Everest::ModuleBase {
@@ -75,6 +76,7 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
+    evConfig verso_config;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

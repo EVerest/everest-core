@@ -26,6 +26,6 @@ target_link_libraries(phyverso_cli
 )
 
 install(TARGETS phyverso_cli
-        DESTINATION ${EVEREST_MOD_YETIDRIVER_DESTINATION})
+        DESTINATION ${EVEREST_MOD_PHYVERSOBSP_DESTINATION})
 
 

@@ -18,6 +18,17 @@ void PhyVersoBSP::init() {
     invoke_init(*p_rcd_2);
     invoke_init(*p_connector_lock_1);
     invoke_init(*p_connector_lock_2);
+
+    if (!verso_config.open_file(config.mcu_config_file.c_str())) {
+        printf("Could not open config file \"%s\"\n", config.mcu_config_file);
+        exit(255);
+    }
+
+    serial.signal_config_request.connect([&]() {
+        printf("Received config request\n");
+        serial.send_config(verso_config);
+        printf("Sent config packet\n");
+    });
 }
 
 void PhyVersoBSP::ready() {
