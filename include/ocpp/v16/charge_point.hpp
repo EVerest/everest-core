@@ -174,6 +174,13 @@ public:
     /// \param max_current in Amps
     void on_max_current_offered(int32_t connector, int32_t max_current);
 
+    /// \brief Stores the given \p max_power for the given \p connector offered to the EV. This function can be called
+    /// when the value for the maximum power for the connector changes. It will be used to report the Measurand
+    /// Power_Offered if it is configured
+    /// \param connector
+    /// \param max_power in Watts
+    void on_max_power_offered(int32_t connector, int32_t max_power);
+
     /// \brief Notifies chargepoint that a new session with the given \p session_id has been started at the given \p
     /// connector with the given \p reason . The logs of the session will be written into \p session_logging_path if
     /// present. This function must be called when first interaction with user or EV occurs. This can be a valid

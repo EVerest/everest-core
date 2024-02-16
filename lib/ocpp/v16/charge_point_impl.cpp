@@ -680,6 +680,14 @@ std::optional<MeterValue> ChargePointImpl::get_latest_meter_value(int32_t connec
                 sample.value = ocpp::conversions::double_to_string(this->connectors.at(connector)->max_current_offered);
                 break;
             }
+            case Measurand::Power_Offered: {
+                // power offered to EV
+                sample.unit.emplace(UnitOfMeasure::W);
+                sample.location.emplace(Location::Outlet);
+
+                sample.value = ocpp::conversions::double_to_string(this->connectors.at(connector)->max_power_offered);
+                break;
+            }
             case Measurand::SoC: {
                 // state of charge
                 const auto soc = measurement.soc_Percent;
@@ -3161,6 +3169,13 @@ void ChargePointImpl::on_max_current_offered(int32_t connector, int32_t max_curr
     // TODO(kai): uses power meter mutex because the reading context is similar, think about storing
     // this information in a unified struct
     this->connectors.at(connector)->max_current_offered = max_current;
+}
+
+void ChargePointImpl::on_max_power_offered(int32_t connector, int32_t max_power) {
+    std::lock_guard<std::mutex> lock(measurement_mutex);
+    // TODO(kai): uses power meter mutex because the reading context is similar, think about storing
+    // this information in a unified struct
+    this->connectors.at(connector)->max_power_offered = max_power;
 }
 
 void ChargePointImpl::start_transaction(std::shared_ptr<Transaction> transaction) {
