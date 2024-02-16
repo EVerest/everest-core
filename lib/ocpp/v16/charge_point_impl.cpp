@@ -2186,6 +2186,7 @@ void ChargePointImpl::handleExtendedTriggerMessageRequest(ocpp::Call<ExtendedTri
 void ChargePointImpl::sign_certificate(const ocpp::CertificateSigningUseEnum& certificate_signing_use,
                                        bool initiated_by_trigger_message) {
 
+    EVLOG_info << "Create CSR (TPM=" << this->configuration->getUseTPM() << ")";
     SignCertificateRequest req;
 
     const auto csr = this->evse_security->generate_certificate_signing_request(
