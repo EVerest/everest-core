@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 #include <regex>
 #include <sstream>
+#include <string>
 #include <thread>
 
 #include <evse_security/certificate/x509_bundle.hpp>
@@ -129,6 +130,9 @@ protected:
     std::unique_ptr<EvseSecurity> evse_security;
 
     void SetUp() override {
+        fs::remove_all("certs");
+        fs::remove_all("csr");
+
         install_certs();
 
         if (!fs::exists("key"))
@@ -152,6 +156,153 @@ protected:
         fs::remove_all("csr");
     }
 };
+
+class EvseSecurityTestsExpired : public EvseSecurityTests {
+protected:
+    static constexpr int GEN_CERTIFICATES = 30;
+
+    std::set<fs::path> generated_bulk_certificates;
+
+    void SetUp() override {
+        EvseSecurityTests::SetUp();
+        fs::remove_all("expired_bulk");
+
+        fs::create_directory("expired_bulk");
+        std::system("touch expired_bulk/index.txt");
+        std::system("echo \"1000\" > expired_bulk/serial");
+
+        // Generate many expired certificates
+        int serial = 4096; // Hex 1000
+
+        // Generate N certificates, N-5 expired, 5 non-expired
+        std::time_t t = std::time(nullptr);
+        std::tm* const time_info = std::localtime(&t);
+        int current_year = 1900 + time_info->tm_year;
+
+        for (int i = 0; i < GEN_CERTIFICATES; i++) {
+            std::string CN = "Pionix";
+            CN += std::to_string(i);
+
+            std::vector<char> buffer;
+            buffer.resize(2048);
+
+            bool expired = (i < (GEN_CERTIFICATES - 5));
+            int start_year;
+            int end_year;
+
+            if (expired) {
+                start_year = (current_year - 5 - i);
+                end_year = (current_year - 1 - i);
+            } else {
+                start_year = current_year;
+                end_year = (current_year + i);
+            }
+
+            std::sprintf(
+                buffer.data(),
+                "openssl req -newkey rsa:512 -keyout expired_bulk/cert.key -out expired_bulk/cert.csr -nodes -subj "
+                "\"/C=DE/L=Schonborn/CN=[%s]/emailAddress=email@pionix.com\"",
+                CN.c_str());
+            std::system(buffer.data());
+
+            std::sprintf(
+                buffer.data(),
+                "openssl ca -selfsign -config expired_runtime/conf.cnf -batch -keyfile expired_bulk/cert.key -in "
+                "expired_bulk/cert.csr -out expired_bulk/cert.pem -notext -startdate %d1213000000Z -enddate "
+                "%d1213000000Z",
+                start_year, end_year);
+            std::system(buffer.data());
+
+            // Copy certificates/keys over
+            std::string cert_filename = "expired_bulk/cert.pem";
+            std::string ckey_filename = "expired_bulk/cert.key";
+
+            std::string target_cert =
+                std::string(expired ? "certs/client/cso/SECC_LEAF_EXPIRED_" : "certs/client/cso/SECC_LEAF_VALID_") +
+                +"st_" + std::to_string(start_year) + "_en_" + std::to_string(end_year) + ".pem";
+            std::string target_ckey =
+                std::string(expired ? "certs/client/cso/SECC_LEAF_EXPIRED_" : "certs/client/cso/SECC_LEAF_VALID_") +
+                +"st_" + std::to_string(start_year) + "_en_" + std::to_string(end_year) + ".key";
+
+            fs::copy(cert_filename, target_cert);
+            fs::copy(ckey_filename, target_ckey);
+
+            generated_bulk_certificates.emplace(target_cert);
+            generated_bulk_certificates.emplace(target_ckey);
+
+            fs::remove(cert_filename);
+            fs::remove(ckey_filename);
+        }
+    }
+
+    void TearDown() override {
+        EvseSecurityTests::TearDown();
+
+        fs::remove_all("expired_bulk");
+    }
+};
+
+TEST_F(EvseSecurityTestsExpired, verify_expired_leaf_deletion) {
+    // Check that the FS is not full
+    ASSERT_FALSE(evse_security->is_filesystem_full());
+
+    // List of date sorted certificates
+    std::vector<X509Wrapper> sorted;
+    std::vector<fs::path> sorded_should_delete;
+    std::vector<fs::path> sorded_should_keep;
+
+    // Ensure that we have GEN_CERTIFICATES + 2 (CPO_CERT_CHAIN.pem + SECC_LEAF.pem)
+    {
+        X509CertificateBundle full_certs(fs::path("certs/client/cso"), EncodingFormat::PEM);
+        ASSERT_EQ(full_certs.get_certificate_chains_count(), GEN_CERTIFICATES + 2);
+
+        full_certs.for_each_chain([&sorted](const fs::path& path, const std::vector<X509Wrapper>& certifs) {
+            sorted.push_back(certifs.at(0));
+
+            return true;
+        });
+
+        ASSERT_EQ(sorted.size(), GEN_CERTIFICATES + 2);
+    }
+
+    // Sort by end expiry date
+    std::sort(std::begin(sorted), std::end(sorted),
+              [](X509Wrapper& a, X509Wrapper& b) { return (a.get_valid_to() > b.get_valid_to()); });
+
+    // Collect all should-delete and kept certificates
+    int skipped = 0;
+
+    for (const auto& cert : sorted) {
+        if (++skipped > DEFAULT_MINIMUM_CERTIFICATE_ENTRIES) {
+            sorded_should_delete.push_back(cert.get_file().value());
+        } else {
+            sorded_should_keep.push_back(cert.get_file().value());
+        }
+    }
+
+    // Fill the disk
+    evse_security->max_fs_certificate_store_entries = 20;
+
+    ASSERT_TRUE(evse_security->is_filesystem_full());
+
+    // Garbage collect
+    evse_security->garbage_collect();
+
+    // Ensure that we have 10 certificates, since we only keep 10, the newest
+    {
+        X509CertificateBundle full_certs(fs::path("certs/client/cso"), EncodingFormat::PEM);
+        ASSERT_EQ(full_certs.get_certificate_chains_count(), DEFAULT_MINIMUM_CERTIFICATE_ENTRIES);
+
+        // Ensure that we only have the newest ones
+        for (const auto& deleted : sorded_should_delete) {
+            ASSERT_FALSE(fs::exists(deleted));
+        }
+
+        for (const auto& deleted : sorded_should_keep) {
+            ASSERT_TRUE(fs::exists(deleted));
+        }
+    }
+}
 
 TEST_F(EvseSecurityTests, verify_expired_csr_deletion) {
     // Generate a CSR

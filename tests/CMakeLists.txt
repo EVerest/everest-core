@@ -60,6 +60,12 @@ install(
 )
 
 install(
+    DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/expired_runtime"
+    DESTINATION "${CMAKE_BINARY_DIR}/tests"
+    FILES_MATCHING PATTERN "*"
+)
+
+install(
     PROGRAMS "${CMAKE_CURRENT_SOURCE_DIR}/create-pki.sh"
     DESTINATION "${CMAKE_BINARY_DIR}/tests"
 )

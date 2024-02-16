@@ -1105,21 +1105,31 @@ void EvseSecurity::garbage_collect() {
 
         // Only handle if we have more than the minimum certificates entry
         if (expired_certs.get_certificate_chains_count() > DEFAULT_MINIMUM_CERTIFICATE_ENTRIES) {
+            fs::path key_directory = key_dir;
             int skipped = 0;
 
             // Order by expiry date, and keep even expired certificates with a minimum of 10 certificates
             expired_certs.for_each_chain_ordered(
-                [&invalid_certificate_files, &skipped](const fs::path& file, const std::vector<X509Wrapper>& chain) {
+                [this, &invalid_certificate_files, &skipped, &key_directory](const fs::path& file,
+                                                                             const std::vector<X509Wrapper>& chain) {
                     // By default delete all empty
                     if (chain.size() <= 0) {
                         invalid_certificate_files.emplace(file);
                     }
 
-                    if (skipped++ > DEFAULT_MINIMUM_CERTIFICATE_ENTRIES) {
+                    if (++skipped > DEFAULT_MINIMUM_CERTIFICATE_ENTRIES) {
                         // If the chain contains the first expired (leafs are the first)
                         if (chain.size()) {
                             if (chain[0].is_expired()) {
                                 invalid_certificate_files.emplace(file);
+
+                                // Also attempt to add the key for deletion
+                                try {
+                                    fs::path key_file = get_private_key_path_of_certificate(chain[0], key_directory,
+                                                                                            this->private_key_password);
+                                    invalid_certificate_files.emplace(key_file);
+                                } catch (NoPrivateKeyException& e) {
+                                }
                             }
                         }
                     }
@@ -1139,8 +1149,10 @@ void EvseSecurity::garbage_collect() {
     }
 
     for (const auto& expired_certificate_file : invalid_certificate_files) {
-        EVLOG_debug << "Deleted expired certificate file: " << expired_certificate_file;
-        filesystem_utils::delete_file(expired_certificate_file);
+        if (filesystem_utils::delete_file(expired_certificate_file))
+            EVLOG_debug << "Deleted expired certificate file: " << expired_certificate_file;
+        else
+            EVLOG_warning << "Error deleting expired certificate file: " << expired_certificate_file;
     }
 
     // In case of a reset, the managed CSRs can be lost. In that case add them back to the list
@@ -1223,7 +1235,8 @@ bool EvseSecurity::is_filesystem_full() {
     EVLOG_debug << "Total entries used: " << total_entries;
 
     if (total_entries > max_fs_certificate_store_entries) {
-        EVLOG_warning << "Exceeded maximum entries: " << total_entries;
+        EVLOG_warning << "Exceeded maximum entries: " << max_fs_certificate_store_entries << " with :" << total_entries
+                      << " total entries";
         return true;
     }
 
