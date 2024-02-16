@@ -26,8 +26,25 @@ struct Conf {
     std::string serial_port;
     int baud_rate;
     int reset_gpio;
-    int caps_min_current_A;
     std::string mcu_config_file;
+    int conn1_max_current_A_import;
+    int conn1_min_current_A_import;
+    int conn1_min_phase_count_import;
+    int conn1_max_phase_count_import;
+    int conn1_min_current_A_export;
+    int conn1_max_current_A_export;
+    int conn1_min_phase_count_export;
+    int conn1_max_phase_count_export;
+    bool conn1_has_socket;
+    int conn2_max_current_A_import;
+    int conn2_min_current_A_import;
+    int conn2_min_phase_count_import;
+    int conn2_max_phase_count_import;
+    int conn2_min_current_A_export;
+    int conn2_max_current_A_export;
+    int conn2_min_phase_count_export;
+    int conn2_max_phase_count_export;
+    bool conn2_has_socket;
 };
 
 class PhyVersoBSP : public Everest::ModuleBase {

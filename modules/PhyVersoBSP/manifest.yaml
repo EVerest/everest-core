@@ -16,14 +16,114 @@ config:
     minimum: -1
     maximum: 1000
     default: -1
-  caps_min_current_A:
-    description: Minimal current on AC side. For AC this is typically 6, but for HLC this can be less. -1 means use limit reported by HW.
-    type: integer
-    default: -1
   mcu_config_file:
     description: config file that should be sent to the MCU
     type: string
     default: example_config_pionix.json
+  conn1_max_current_A_import:
+    description: Maximum import current in amps
+    type: integer
+    minimum: 0
+    maximum: 63
+    default: 16
+  conn1_min_current_A_import:
+    description: Minimum import current in amps
+    type: integer
+    minimum: 0
+    maximum: 63
+    default: 6
+  conn1_min_phase_count_import:
+    description: Minimum phase count it can switch
+    type: integer
+    minimum: 1
+    maximum: 3
+    default: 3
+  conn1_max_phase_count_import:
+    description: Maximum phase count it can switch
+    type: integer
+    minimum: 1
+    maximum: 3
+    default: 3
+  conn1_min_current_A_export:
+    description: Minimum export current in amps
+    type: integer
+    minimum: 0
+    maximum: 63
+    default: 0
+  conn1_max_current_A_export:
+    description: Maximum export current in amps
+    type: integer
+    minimum: 0
+    maximum: 63
+    default: 0
+  conn1_min_phase_count_export:
+    description: Minimum phase count it can switch
+    type: integer
+    minimum: 1
+    maximum: 3
+    default: 3
+  conn1_max_phase_count_export:
+    description: Maximum phase count it can switch
+    type: integer
+    minimum: 1
+    maximum: 3
+    default: 3
+  conn1_has_socket:
+    description: Set to true if it has a socket, false if it has a permanently attached cable
+    type: boolean
+    default: false
+  conn2_max_current_A_import:
+    description: Maximum import current in amps
+    type: integer
+    minimum: 0
+    maximum: 63
+    default: 16
+  conn2_min_current_A_import:
+    description: Minimum import current in amps
+    type: integer
+    minimum: 0
+    maximum: 63
+    default: 6
+  conn2_min_phase_count_import:
+    description: Minimum phase count it can switch
+    type: integer
+    minimum: 1
+    maximum: 3
+    default: 3
+  conn2_max_phase_count_import:
+    description: Maximum phase count it can switch
+    type: integer
+    minimum: 1
+    maximum: 3
+    default: 3
+  conn2_min_current_A_export:
+    description: Minimum export current in amps
+    type: integer
+    minimum: 0
+    maximum: 63
+    default: 0
+  conn2_max_current_A_export:
+    description: Maximum export current in amps
+    type: integer
+    minimum: 0
+    maximum: 63
+    default: 0
+  conn2_min_phase_count_export:
+    description: Minimum phase count it can switch
+    type: integer
+    minimum: 1
+    maximum: 3
+    default: 3
+  conn2_max_phase_count_export:
+    description: Maximum phase count it can switch
+    type: integer
+    minimum: 1
+    maximum: 3
+    default: 3
+  conn2_has_socket:
+    description: Set to true if it has a socket, false if it has a permanently attached cable
+    type: boolean
+    default: false
 provides:
   connector_1:
     interface: evse_board_support

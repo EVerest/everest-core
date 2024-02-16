@@ -20,14 +20,14 @@ void PhyVersoBSP::init() {
     invoke_init(*p_connector_lock_2);
 
     if (!verso_config.open_file(config.mcu_config_file.c_str())) {
-        printf("Could not open config file \"%s\"\n", config.mcu_config_file);
-        exit(255);
+        EVLOG_AND_THROW(
+            EVEXCEPTION(Everest::EverestConfigError, "Could not open config file ", config.mcu_config_file));
+        return;
     }
 
     serial.signal_config_request.connect([&]() {
-        printf("Received config request\n");
         serial.send_config(verso_config);
-        printf("Sent config packet\n");
+        EVLOG_info << "Sent config packet to MCU";
     });
 }
 
