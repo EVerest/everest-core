@@ -59,3 +59,16 @@ For more information see:
 - [Provider for integration of TPM 2.0 to OpenSSL 3.x](https://github.com/tpm2-software/tpm2-openssl)
 - [OpenSSL property](https://www.openssl.org/docs/man3.0/man7/property.html)
 - [OpenSSL provider](https://www.openssl.org/docs/man3.0/man7/provider.html)
+
+## Garbage Collect
+
+By default a garbage collect function will run and delete all expired leaf certificates and their respective keys, only if the certificate storage is full. A minimum count of leaf certificates of will be kept even if they are expired. 
+
+Certificate signing requests have an expiry time. If the CSMS does not respond to them within that timeframe, CSRs will be deleted.
+
+Defaults:
+- Garbage collect time: 20 minutes
+- CSR expiry: 60 minutes
+- Minimum certificates kept: 10
+- Maximum storage space: 50 MB
+- Maximum certificate entries: 2000
