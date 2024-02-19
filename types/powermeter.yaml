@@ -123,36 +123,37 @@ types:
         description: Grid frequency in Hertz
         type: object
         $ref: /units#/Frequency
-      energy_Wh_import_signed:
-        description: Imported energy in Wh (from grid)
-        type: object
-        $ref: /units_signed#/Energy
-      energy_Wh_export_signed:
-        description: Exported energy in Wh (to grid)
-        type: object
-        $ref: /units_signed#/Energy
-      power_W_signed:
-        description:
-          Instantaneous power in Watt. Negative values are exported, positive
-          values imported Energy.
-        type: object
-        $ref: /units_signed#/Power
-      voltage_V_signed:
-        description: Voltage in Volts
-        type: object
-        $ref: /units_signed#/Voltage
-      VAR_signed:
-        description: Reactive power VAR
-        type: object
-        $ref: /units_signed#/ReactivePower
-      current_A_signed:
-        description: Current in ampere
-        type: object
-        $ref: /units_signed#/Current
-      frequency_Hz_signed:
-        description: Grid frequency in Hertz
-        type: object
-        $ref: /units_signed#/Frequency
+      # Possible extension for individual signed meter values
+      # energy_Wh_import_signed:
+      #   description: Imported energy in Wh (from grid)
+      #   type: object
+      #   $ref: /units_signed#/Energy
+      # energy_Wh_export_signed:
+      #   description: Exported energy in Wh (to grid)
+      #   type: object
+      #   $ref: /units_signed#/Energy
+      # power_W_signed:
+      #   description:
+      #     Instantaneous power in Watt. Negative values are exported, positive
+      #     values imported Energy.
+      #   type: object
+      #   $ref: /units_signed#/Power
+      # voltage_V_signed:
+      #   description: Voltage in Volts
+      #   type: object
+      #   $ref: /units_signed#/Voltage
+      # VAR_signed:
+      #   description: Reactive power VAR
+      #   type: object
+      #   $ref: /units_signed#/ReactivePower
+      # current_A_signed:
+      #   description: Current in ampere
+      #   type: object
+      #   $ref: /units_signed#/Current
+      # frequency_Hz_signed:
+      #   description: Grid frequency in Hertz
+      #   type: object
+      #   $ref: /units_signed#/Frequency
       signed_meter_value:
         description: >-
           Signed collection of instantaneous meter values if supported by the meter.
