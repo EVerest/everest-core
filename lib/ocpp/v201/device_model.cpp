@@ -87,6 +87,10 @@ bool validate_value(const VariableCharacteristics& characteristics, const std::s
         }
 
         int i = std::stoi(value);
+
+        if (allow_zero and i == 0) {
+            return true;
+        }
         if (characteristics.minLimit.has_value() and i < characteristics.minLimit.value()) {
             return false;
         }
