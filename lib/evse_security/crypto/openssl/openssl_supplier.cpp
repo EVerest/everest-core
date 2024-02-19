@@ -8,6 +8,7 @@
 #include <everest/logging.hpp>
 
 #include <chrono>
+#include <cstring>
 
 #include <openssl/bio.h>
 #include <openssl/err.h>
