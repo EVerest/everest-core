@@ -142,7 +142,7 @@ void create_empty_user_config(const fs::path& user_config_path) {
     }
 }
 
-void OCPP::set_external_limits(const std::map<int32_t, ocpp::v16::ChargingSchedule>& charging_schedules) {
+void OCPP::set_external_limits(const std::map<int32_t, ocpp::v16::EnhancedChargingSchedule>& charging_schedules) {
     const auto start_time = ocpp::DateTime();
 
     // iterate over all schedules reported by the libocpp to create ExternalLimits
@@ -186,7 +186,8 @@ void OCPP::set_external_limits(const std::map<int32_t, ocpp::v16::ChargingSchedu
     }
 }
 
-void OCPP::publish_charging_schedules(const std::map<int32_t, ocpp::v16::ChargingSchedule>& charging_schedules) {
+void OCPP::publish_charging_schedules(
+    const std::map<int32_t, ocpp::v16::EnhancedChargingSchedule>& charging_schedules) {
     // publish the schedule over mqtt
     Object j;
     for (const auto charging_schedule : charging_schedules) {
@@ -702,8 +703,8 @@ void OCPP::ready() {
     }
 
     this->charging_schedules_timer = std::make_unique<Everest::SteadyTimer>([this]() {
-        const auto charging_schedules =
-            this->charge_point->get_all_composite_charging_schedules(this->config.PublishChargingScheduleDurationS);
+        const auto charging_schedules = this->charge_point->get_all_enhanced_composite_charging_schedules(
+            this->config.PublishChargingScheduleDurationS);
         this->set_external_limits(charging_schedules);
         this->publish_charging_schedules(charging_schedules);
     });
@@ -715,8 +716,8 @@ void OCPP::ready() {
         // this is executed when CSMS sends new ChargingProfile that is accepted by
         // the ChargePoint
         EVLOG_info << "Received new Charging Schedules from CSMS";
-        const auto charging_schedules =
-            this->charge_point->get_all_composite_charging_schedules(this->config.PublishChargingScheduleDurationS);
+        const auto charging_schedules = this->charge_point->get_all_enhanced_composite_charging_schedules(
+            this->config.PublishChargingScheduleDurationS);
         this->set_external_limits(charging_schedules);
         this->publish_charging_schedules(charging_schedules);
     });

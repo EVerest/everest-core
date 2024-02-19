@@ -126,8 +126,8 @@ private:
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
     std::filesystem::path ocpp_share_path;
-    void set_external_limits(const std::map<int32_t, ocpp::v16::ChargingSchedule>& charging_schedules);
-    void publish_charging_schedules(const std::map<int32_t, ocpp::v16::ChargingSchedule>& charging_schedules);
+    void set_external_limits(const std::map<int32_t, ocpp::v16::EnhancedChargingSchedule>& charging_schedules);
+    void publish_charging_schedules(const std::map<int32_t, ocpp::v16::EnhancedChargingSchedule>& charging_schedules);
 
     void init_evse_subscriptions(); // initialize subscriptions to all EVSEs provided by r_evse_manager
     void init_evse_connector_map();
