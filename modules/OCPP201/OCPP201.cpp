@@ -889,7 +889,6 @@ void OCPP201::ready() {
                     get_meter_value(transaction_started.meter_value, ocpp::v201::ReadingContextEnum::Transaction_Begin,
                                     transaction_started.signed_meter_value);
                 const auto session_id = session_event.uuid;
-                const auto signed_meter_value = transaction_started.signed_meter_value;
                 const auto reservation_id = transaction_started.reservation_id;
                 const auto remote_start_id = transaction_started.id_tag.request_id;
 
@@ -989,8 +988,8 @@ void OCPP201::ready() {
         });
 
         evse->subscribe_powermeter([this, evse_id](const types::powermeter::Powermeter& power_meter) {
-            const auto meter_value =
-                get_meter_value(power_meter, ocpp::v201::ReadingContextEnum::Sample_Periodic, std::nullopt);
+            const auto meter_value = get_meter_value(power_meter, ocpp::v201::ReadingContextEnum::Sample_Periodic,
+                                                     power_meter.signed_meter_value);
             this->charge_point->on_meter_value(evse_id, meter_value);
         });
 
