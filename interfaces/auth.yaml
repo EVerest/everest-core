@@ -8,6 +8,17 @@ cmds:
         type: integer
         minimum: 10
         maximum: 300
+  set_master_pass_group_id:
+    description: >-
+      Sets the master pass group id. IdTokens that have this id as parent_id_token belong to the Master Pass Group. 
+      This means they can stop any ongoing transaction, but cannot start transactions. This can, for example, be used by
+      law enforcement personal to stop any ongoing transaction when an EV has to be towed away. If master_pass_group_id 
+      is an empty string, it is not used.
+    arguments:
+      master_pass_group_id:
+        description: The master pass group id
+        type: string
+        maxLength: 36
 vars:
   token_validation_status:
     description: Emits all events related to current token validation

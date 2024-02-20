@@ -18,10 +18,7 @@ void auth_token_validatorImpl::ready() {
 
 types::authorization::ValidationResult
 auth_token_validatorImpl::handle_validate_token(types::authorization::ProvidedIdToken& provided_token) {
-    ocpp::v201::IdToken id_token = {provided_token.id_token, ocpp::v201::IdTokenEnum::Local};
-    if (provided_token.id_token_type.has_value()) {
-        id_token.type = conversions::to_ocpp_id_token_enum(provided_token.id_token_type.value());
-    }
+    const auto id_token = conversions::to_ocpp_id_token(provided_token.id_token);
     std::optional<ocpp::CiString<5500>> certificate_opt;
     if (provided_token.certificate.has_value()) {
         certificate_opt.emplace(provided_token.certificate.value());

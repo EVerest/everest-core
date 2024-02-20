@@ -72,4 +72,8 @@ void Auth::set_connection_timeout(int& connection_timeout) {
     this->auth_handler->set_connection_timeout(connection_timeout);
 }
 
+void Auth::set_master_pass_group_id(const std::string& master_pass_group_id) {
+    this->auth_handler->set_master_pass_group_id(master_pass_group_id);
+}
+
 } // namespace module

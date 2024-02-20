@@ -14,7 +14,7 @@ void auth_token_validatorImpl::ready() {
 
 types::authorization::ValidationResult
 auth_token_validatorImpl::handle_validate_token(types::authorization::ProvidedIdToken& provided_token) {
-    EVLOG_info << "Got validation request for token: " << provided_token.id_token;
+    EVLOG_info << "Got validation request for token: " << provided_token.id_token.value;
     types::authorization::ValidationResult ret;
     ret.authorization_status = types::authorization::string_to_authorization_status(config.validation_result);
     ret.reason = config.validation_reason;

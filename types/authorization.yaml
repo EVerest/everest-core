@@ -32,8 +32,26 @@ types:
       - Processing
       - Accepted
       - Rejected
+  IdToken:
+    description: Type for an id token
+    type: object
+    additionalProperties: false
+    required:
+      - value
+      - type
+    properties:
+      value:
+        description: >-
+          Arbitrary value of the IdToken: This has to be printable case insensitive ascii
+        type: string
+        minLength: 1
+        maxLength: 36
+      type:
+        description: Type of the token
+        type: string
+        $ref: /authorization#/IdTokenType
   ProvidedIdToken:
-    description: Type for Token provided by auth token providers
+    description: Type for IdToken provided by auth token providers. Contains additional information about the IdToken like the source and purpose
     type: object
     additionalProperties: false
     required:
@@ -45,22 +63,19 @@ types:
           Id of the authorization request of this token. Could be used to put remoteStartId of OCPP2.0.1
         type: integer
       id_token:
-        description: >-
-          Arbitrary token string: this has to be printable case insensitive
-          ascii: !!!FIXME!!! write a regex to allow only printable ascii
-        type: string
-        minLength: 1
-        maxLength: 36
+        description: IdToken of the provided token
+        type: object
+        $ref: /authorization#/IdToken
+      parent_id_token:
+        description: Parent IdToken of the provided token
+        type: object
+        $ref: /authorization#/IdToken
       authorization_type:
-        description: Authorization type of the token
+        description: Authorization type of the token.
         type: string
         $ref: /authorization#/AuthorizationType
         minLength: 2
         maxLength: 32
-      id_token_type:
-        description: IdTokenType of the token
-        type: string
-        $ref: /authorization#/IdTokenType
       connectors:
         description: A list of connector ids to which the authorization can be assigned
         type: array
@@ -124,9 +139,8 @@ types:
         format: date-time
       parent_id_token:
         description: Parent Id Tag of the validated token
-        type: string
-        minLength: 1
-        maxLength: 20
+        type: object
+        $ref: /authorization#/IdToken
       evse_ids:
         description: >-
           Only used when the id token is valid for one or more specific evses, 
@@ -152,7 +166,8 @@ types:
       - FindFirst
   AuthorizationType:
     description: >-
-      Type of authorization of the provided token
+      Type of authorization of the provided token. The value 
+      of AuthorizationType can influence the authorization process
     type: string
     enum:
       - OCPP
@@ -162,7 +177,7 @@ types:
       - BankCard
   IdTokenType:
     description: >-
-      IdTokenType of the provided token
+      IdTokenType of the provided token. Required by OCPP2.0.1 to distinguish between different types of tokens.
     type: string
     enum:
       - Central

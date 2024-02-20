@@ -11,7 +11,7 @@ void auth_token_providerImpl::init() {
         if (event.event == types::evse_manager::SessionEventEnum::SessionStarted) {
             types::authorization::ProvidedIdToken token;
 
-            token.id_token = config.token;
+            token.id_token = {config.token, types::authorization::IdTokenType::ISO14443};
             token.authorization_type = types::authorization::string_to_authorization_type(config.type);
 
             EVLOG_info << "Publishing new dummy token: " << token.id_token << " ("

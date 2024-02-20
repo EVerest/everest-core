@@ -580,6 +580,10 @@ ocpp::v201::IdTokenEnum to_ocpp_id_token_enum(types::authorization::IdTokenType 
     }
 }
 
+ocpp::v201::IdToken to_ocpp_id_token(const types::authorization::IdToken& id_token) {
+    return {id_token.value, to_ocpp_id_token_enum(id_token.type)};
+}
+
 ocpp::v201::CertificateActionEnum
 to_ocpp_certificate_action_enum(const types::iso15118_charger::CertificateActionEnum& action) {
     switch (action) {
@@ -738,7 +742,7 @@ types::authorization::ValidationResult to_everest_validation_result(const ocpp::
         validation_result.expiry_time.emplace(response.idTokenInfo.cacheExpiryDateTime.value().to_rfc3339());
     }
     if (response.idTokenInfo.groupIdToken.has_value()) {
-        validation_result.parent_id_token = response.idTokenInfo.groupIdToken.value().idToken.get();
+        validation_result.parent_id_token = to_everest_id_token(response.idTokenInfo.groupIdToken.value());
     }
     if (response.idTokenInfo.personalMessage.has_value()) {
         validation_result.reason.emplace(response.idTokenInfo.personalMessage.value().content.get());
@@ -802,6 +806,13 @@ types::authorization::IdTokenType to_everest_id_token_type(const ocpp::v201::IdT
     default:
         throw std::out_of_range("Could not convert ocpp::v201::IdTokenEnum to types::authorization::IdTokenType");
     }
+}
+
+types::authorization::IdToken to_everest_id_token(const ocpp::v201::IdToken& id_token) {
+    types::authorization::IdToken _id_token;
+    _id_token.value = id_token.idToken.get();
+    _id_token.type = to_everest_id_token_type(id_token.type);
+    return _id_token;
 }
 
 types::authorization::CertificateStatus
