@@ -152,6 +152,13 @@ bool WpaCliSetup::set_network(const std::string& interface, int network_id, cons
      * - psk "<Passphrase>" or ABCDEF0123456789... (for WPA2)
      * - key_mgmt NONE (for open networks)
      * - scan_ssid 1 (for hidden networks)
+     *
+     * Support for WPA3 requires:
+     * - key_mgmt WPA-PSK WPA-PSK-SHA256 SAE or SAE if WPA3 only
+     * - psk with hex values doesn't work (on its own) "<Passphrase>" is fine
+     * - sae_password "<Passphrase>" or ABCDEF0123456789...
+     *
+     * For WPA2 and WPA3 support both psk and sae_password will be configured
      */
 
     if (!is_wifi_interface(interface)) {
@@ -164,11 +171,16 @@ bool WpaCliSetup::set_network(const std::string& interface, int network_id, cons
     auto output = run_application(wpa_cli, {"-i", interface, "set_network", network_id_string, "ssid", ssid_parameter});
 
     if (output.exit_code == 0) {
-        if (psk.empty()) {
-            output = run_application(wpa_cli, {"-i", interface, "set_network", network_id_string, "key_mgmt", "NONE"});
-        } else {
-            output = run_application(wpa_cli, {"-i", interface, "set_network", network_id_string, "psk", psk});
-        }
+        const char* key_mgmt = (psk.empty()) ? "NONE" : "WPA-PSK WPA-PSK-SHA256 SAE";
+        output = run_application(wpa_cli, {"-i", interface, "set_network", network_id_string, "key_mgmt", key_mgmt});
+    }
+
+    if ((output.exit_code == 0) && (!psk.empty())) {
+        output = run_application(wpa_cli, {"-i", interface, "set_network", network_id_string, "psk", psk});
+    }
+
+    if ((output.exit_code == 0) && (!psk.empty())) {
+        output = run_application(wpa_cli, {"-i", interface, "set_network", network_id_string, "sae_password", psk});
     }
 
     if (hidden && (output.exit_code == 0)) {
