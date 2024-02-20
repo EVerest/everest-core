@@ -154,12 +154,14 @@ ocpp::v201::MeterValue get_meter_value(const types::powermeter::Powermeter& powe
 
     // Energy.Active.Import.Register
     if (power_meter.energy_Wh_import_signed.has_value()) {
+        sampled_value = get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Energy_Active_Import_Register,
+                                          "Wh", std::nullopt);
         const auto& energy_Wh_import_signed = power_meter.energy_Wh_import_signed.value();
         if (energy_Wh_import_signed.total.has_value()) {
             sampled_value.signedMeterValue = get_signed_meter_value(energy_Wh_import_signed.total.value());
         }
+        meter_value.sampledValue.push_back(sampled_value);
     }
-    meter_value.sampledValue.push_back(sampled_value);
 
     if (power_meter.energy_Wh_import.L1.has_value()) {
         sampled_value = get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Energy_Active_Import_Register,
