@@ -129,7 +129,7 @@ active_modules:
       localization: true
       online_check_host: lfenergy.org
       setup_simulation: true
-      setup_wifi: true
+      setup_wifi: false
     connections:
       store:
         - implementation_id: main
