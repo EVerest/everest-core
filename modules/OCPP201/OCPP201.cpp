@@ -140,16 +140,16 @@ ocpp::v201::MeterValue get_meter_value(const types::powermeter::Powermeter& powe
     meter_value.timestamp = ocpp::DateTime(power_meter.timestamp);
 
     // signed_meter_value is intended for OCMF style blobs of signed meter value reports during transaction start or end
-    // this is added to Energy.Active.Import.Register
-
-    // Energy.Active.Import.Register
+    // This is interpreted as Energy.Active.Import.Register
     ocpp::v201::SampledValue sampled_value = get_sampled_value(
         reading_context, ocpp::v201::MeasurandEnum::Energy_Active_Import_Register, "Wh", std::nullopt);
     sampled_value.value = power_meter.energy_Wh_import.total;
     // add signedMeterValue if present
     if (signed_meter_value.has_value()) {
-        const auto& energy_Wh_import_signed = signed_meter_value.value();
-        sampled_value.signedMeterValue = get_signed_meter_value(energy_Wh_import_signed);
+        sampled_value.signedMeterValue = get_signed_meter_value(signed_meter_value.value());
+    }
+    meter_value.sampledValue.push_back(sampled_value);
+
     // individual signed meter values can be provided by the power_meter itself
 
     // Energy.Active.Import.Register
