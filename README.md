@@ -62,7 +62,7 @@ For more information see:
 
 ## Garbage Collect
 
-By default a garbage collect function will run and delete all expired leaf certificates and their respective keys, only if the certificate storage is full. A minimum count of leaf certificates of will be kept even if they are expired. 
+By default a garbage collect function will run and delete all expired leaf certificates and their respective keys, only if the certificate storage is full. A minimum count of leaf certificates will be kept even if they are expired. 
 
 Certificate signing requests have an expiry time. If the CSMS does not respond to them within that timeframe, CSRs will be deleted.
 
