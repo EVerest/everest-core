@@ -130,6 +130,31 @@ ocpp::SessionStartedReason get_session_started_reason(const types::evse_manager:
     }
 }
 
+ocpp::v16::BootReasonEnum get_boot_reason(types::system::BootReason reason) {
+    switch (reason) {
+    case types::system::BootReason::ApplicationReset:
+        return ocpp::v16::BootReasonEnum::ApplicationReset;
+    case types::system::BootReason::FirmwareUpdate:
+        return ocpp::v16::BootReasonEnum::FirmwareUpdate;
+    case types::system::BootReason::LocalReset:
+        return ocpp::v16::BootReasonEnum::LocalReset;
+    case types::system::BootReason::PowerUp:
+        return ocpp::v16::BootReasonEnum::PowerUp;
+    case types::system::BootReason::RemoteReset:
+        return ocpp::v16::BootReasonEnum::RemoteReset;
+    case types::system::BootReason::ScheduledReset:
+        return ocpp::v16::BootReasonEnum::ScheduledReset;
+    case types::system::BootReason::Triggered:
+        return ocpp::v16::BootReasonEnum::Triggered;
+    case types::system::BootReason::Unknown:
+        return ocpp::v16::BootReasonEnum::Unknown;
+    case types::system::BootReason::Watchdog:
+        return ocpp::v16::BootReasonEnum::Watchdog;
+    default:
+        throw std::runtime_error("Could not convert BootReasonEnum");
+    }
+}
+
 void create_empty_user_config(const fs::path& user_config_path) {
     if (fs::exists(user_config_path.parent_path())) {
         std::ofstream fs(user_config_path.c_str());
@@ -778,7 +803,8 @@ void OCPP::ready() {
         this->evse_ready_cv.wait(lk);
     }
 
-    if (this->charge_point->start()) {
+    const auto boot_reason = get_boot_reason(this->r_system->call_get_boot_reason());
+    if (this->charge_point->start({}, boot_reason)) {
         // signal that we're started
         this->started = true;
         EVLOG_info << "OCPP initialized";
