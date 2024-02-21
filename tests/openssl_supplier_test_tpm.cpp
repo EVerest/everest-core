@@ -109,6 +109,8 @@ TEST_F(OpenSSLSupplierTpmTest, x509_generate_csr) {
         "UK",
         "Pionix",
         "0123456789",
+        .dns_name = std::nullopt,
+        .ip_address = std::nullopt,
         {CryptoKeyType::EC_prime256v1, true, std::nullopt, "tpm_pki/csr_key.pem", std::nullopt}};
 
     // std::cout << "tpm2 pre: " << OSSL_PROVIDER_available(nullptr, "tpm2") << std::endl;

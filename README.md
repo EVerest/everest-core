@@ -36,6 +36,15 @@ make -j$(nproc) install
 make test
 ```
 
+## Certificate Signing Request
+
+There are two configuration options that will add a DNS name and IP address to the
+subject alternative name in the certificate signing request.
+By default they are not added.
+
+- `cmake -DCSR_DNS_NAME=charger.pionix.de ...` to include a DNS name
+- `cmake -DCSR_IP_ADDRESS=192.168.2.1 ...` to include an IPv4 address
+
 ## TPM
 There is a configuration option to configure OpenSSL for use with a TPM.<br>
 `cmake` ... `-DUSING_TPM2=ON`<br>
@@ -45,6 +54,7 @@ The library will use the `UseTPM` flag and the PEM private key file to
 configure whether to use the `default` provider or the `tpm2` provider.
 
 Configuration is managed via propquery strings (see CMakeLists.txt)
+
 - `PROPQUERY_DEFAULT` is the string to use when selecting the default provider
 - `PROPQUERY_TPM2` is the string to use when selecting the tpm2 provider
 
@@ -56,6 +66,7 @@ propquery|action
 "?provider=tpm2,tpm2.digest!=yes"|prefer the tpm2 provider but not for message digests
 
 For more information see:
+
 - [Provider for integration of TPM 2.0 to OpenSSL 3.x](https://github.com/tpm2-software/tpm2-openssl)
 - [OpenSSL property](https://www.openssl.org/docs/man3.0/man7/property.html)
 - [OpenSSL provider](https://www.openssl.org/docs/man3.0/man7/provider.html)

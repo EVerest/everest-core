@@ -80,4 +80,16 @@ if(USING_TPM2)
     )
 endif()
 
+if(CSR_DNS_NAME)
+    target_compile_definitions(evse_security PRIVATE
+        CSR_DNS_NAME="${CSR_DNS_NAME}"
+    )
+endif()
+
+if(CSR_IP_ADDRESS)
+    target_compile_definitions(evse_security PRIVATE
+        CSR_IP_ADDRESS="${CSR_IP_ADDRESS}"
+    )
+endif()
+
 target_compile_features(evse_security PUBLIC cxx_std_17)

@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <optional>
 #include <set>
 #include <stdio.h>
 
@@ -724,6 +725,16 @@ std::string EvseSecurity::generate_certificate_signing_request(LeafCertificateTy
     info.commonName = common;
     info.country = country;
     info.organization = organization;
+#ifdef CSR_DNS_NAME
+    info.dns_name = CSR_DNS_NAME;
+#else
+    info.dns_name = std::nullopt;
+#endif
+#ifdef CSR_IP_ADDRESS
+    info.ip_address = CSR_IP_ADDRESS;
+#else
+    info.ip_address = std::nullopt;
+#endif
 
     info.key_info.key_type = CryptoKeyType::EC_prime256v1;
     info.key_info.generate_on_tpm = use_tpm;

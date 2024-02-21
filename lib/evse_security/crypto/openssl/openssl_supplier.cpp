@@ -7,8 +7,12 @@
 
 #include <everest/logging.hpp>
 
+#include <algorithm>
 #include <chrono>
 #include <cstring>
+#include <numeric>
+#include <string>
+#include <vector>
 
 #include <openssl/bio.h>
 #include <openssl/err.h>
@@ -724,9 +728,26 @@ bool OpenSSLSupplier::x509_generate_csr(const CertificateSigningRequestInfo& csr
     sk_X509_EXTENSION_push(extensions, ext_key_usage);
     sk_X509_EXTENSION_push(extensions, ext_basic_constraints);
 
+    std::vector<std::string> names;
+    if (csr_info.dns_name.has_value()) {
+        names.push_back({std::string("DNS:") + csr_info.dns_name.value()});
+    }
+    if (csr_info.ip_address.has_value()) {
+        names.push_back({std::string("IP:") + csr_info.ip_address.value()});
+    }
+
+    X509_EXTENSION* ext_san = nullptr;
+    if (!names.empty()) {
+        auto comma_fold = [](std::string a, const std::string& b) { return std::move(a) + ',' + b; };
+        std::string value = std::accumulate(std::next(names.begin()), names.end(), std::string(names[0]), comma_fold);
+        ext_san = X509V3_EXT_conf_nid(NULL, NULL, NID_subject_alt_name, value.c_str());
+        sk_X509_EXTENSION_push(extensions, ext_san);
+    }
+
     const bool result = X509_REQ_add_extensions(x509_req_ptr.get(), extensions);
     X509_EXTENSION_free(ext_key_usage);
     X509_EXTENSION_free(ext_basic_constraints);
+    X509_EXTENSION_free(ext_san);
     sk_X509_EXTENSION_free(extensions);
     if (!result) {
         EVLOG_error << "Failed to add csr extensions!";

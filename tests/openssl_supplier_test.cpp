@@ -1,10 +1,11 @@
 #include <cstdlib>
-#include <filesystem>
 #include <fstream>
 #include <gtest/gtest.h>
-#include <iostream>
 
 #include <evse_security/crypto/openssl/openssl_supplier.hpp>
+#include <optional>
+
+// #define OUTPUT_CSR
 
 using namespace evse_security;
 
@@ -107,9 +108,81 @@ TEST_F(OpenSSLSupplierTest, x509_generate_csr) {
         "UK",
         "Pionix",
         "0123456789",
+        .dns_name = std::nullopt,
+        .ip_address = std::nullopt,
         {CryptoKeyType::EC_prime256v1, false, std::nullopt, "pki/csr_key.pem", std::nullopt}};
     auto res = OpenSSLSupplier::x509_generate_csr(csr_info, csr);
     ASSERT_TRUE(res);
+
+    std::ofstream out("csr.pem");
+    out << csr;
+    out.close();
+
+    ASSERT_GT(csr.size(), 0);
+}
+
+TEST_F(OpenSSLSupplierTest, x509_generate_csr_dns) {
+    std::string csr;
+    CertificateSigningRequestInfo csr_info = {
+        0,
+        "UK",
+        "Pionix",
+        "0123456789",
+        .dns_name = "cs.pionix.de",
+        .ip_address = std::nullopt,
+        {CryptoKeyType::EC_prime256v1, false, std::nullopt, "pki/csr_key.pem", std::nullopt}};
+    auto res = OpenSSLSupplier::x509_generate_csr(csr_info, csr);
+    ASSERT_TRUE(res);
+
+#ifdef OUTPUT_CSR
+    std::ofstream out("csr_dns.pem");
+    out << csr;
+    out.close();
+#endif
+
+    ASSERT_GT(csr.size(), 0);
+}
+
+TEST_F(OpenSSLSupplierTest, x509_generate_csr_ip) {
+    std::string csr;
+    CertificateSigningRequestInfo csr_info = {
+        0,
+        "UK",
+        "Pionix",
+        "0123456789",
+        .dns_name = std::nullopt,
+        .ip_address = "127.0.0.1",
+        {CryptoKeyType::EC_prime256v1, false, std::nullopt, "pki/csr_key.pem", std::nullopt}};
+    auto res = OpenSSLSupplier::x509_generate_csr(csr_info, csr);
+    ASSERT_TRUE(res);
+
+#ifdef OUTPUT_CSR
+    std::ofstream out("csr_ip.pem");
+    out << csr;
+    out.close();
+#endif
+
+    ASSERT_GT(csr.size(), 0);
+}
+
+TEST_F(OpenSSLSupplierTest, x509_generate_csr_dns_ip) {
+    std::string csr;
+    CertificateSigningRequestInfo csr_info = {
+        0,
+        "UK",
+        "Pionix",
+        "0123456789",
+        .dns_name = "cs.pionix.de",
+        .ip_address = "127.0.0.1",
+        {CryptoKeyType::EC_prime256v1, false, std::nullopt, "pki/csr_key.pem", std::nullopt}};
+    auto res = OpenSSLSupplier::x509_generate_csr(csr_info, csr);
+    ASSERT_TRUE(res);
+
+#ifdef OUTPUT_CSR
+    std::ofstream out("csr_dns_ip.pem");
+    out << csr;
+    out.close();
+#endif
 
     ASSERT_GT(csr.size(), 0);
 }

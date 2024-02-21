@@ -3,6 +3,7 @@
 
 #include <fstream>
 #include <gtest/gtest.h>
+#include <openssl/crypto.h>
 #include <regex>
 #include <sstream>
 #include <string>
@@ -70,19 +71,22 @@ bool equal_certificate_strings(const std::string& cert1, const std::string& cert
 #if USING_OPENSSL_3
 bool supports_tpm_usage() {
     bool supports_tpm = false;
+    auto libctx = OSSL_LIB_CTX_new();
 
-    OSSL_PROVIDER* tpm2_provider = OSSL_PROVIDER_load(nullptr, evse_security::PROVIDER_TPM);
+    OSSL_PROVIDER* tpm2_provider = OSSL_PROVIDER_load(libctx, evse_security::PROVIDER_TPM);
 
     if (tpm2_provider != nullptr) {
         supports_tpm =
-            OSSL_PROVIDER_available(nullptr, evse_security::PROVIDER_TPM) && OSSL_PROVIDER_self_test(tpm2_provider);
+            OSSL_PROVIDER_available(libctx, evse_security::PROVIDER_TPM) && OSSL_PROVIDER_self_test(tpm2_provider);
         OSSL_PROVIDER_unload(tpm2_provider);
     } else {
         supports_tpm = false;
     }
 
-    // Load default again
-    OSSL_PROVIDER_load(nullptr, evse_security::PROVIDER_DEFAULT);
+    // Load default again (removed - not needed and causes a memory leak)
+    // OSSL_PROVIDER_load(nullptr, evse_security::PROVIDER_DEFAULT);
+
+    OSSL_LIB_CTX_free(libctx);
 
     std::cout << "Supports TPM usage: " << supports_tpm << std::endl;
     return supports_tpm;

@@ -5,6 +5,8 @@
 #include <chrono>
 #include <memory>
 #include <optional>
+#include <stdexcept>
+#include <string>
 
 namespace evse_security {
 
@@ -48,6 +50,11 @@ struct CertificateSigningRequestInfo {
     std::string country;
     std::string organization;
     std::string commonName;
+
+    /// @brief incude a subjectAlternativeName DNSName
+    std::optional<std::string> dns_name;
+    /// @brief incude a subjectAlternativeName IPAddress
+    std::optional<std::string> ip_address;
 
     KeyGenerationInfo key_info;
 };
