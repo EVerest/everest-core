@@ -23,6 +23,9 @@ public:
     CiString(const char* data) : String<L>(data) {
     }
 
+    CiString(const CiString<L>& data) : String<L>(data.get()) {
+    }
+
     /// \brief Creates a string
     CiString() : String<L>() {
     }
@@ -39,7 +42,7 @@ public:
     }
 
     /// \brief Conversion operator to turn a String into std::string
-    operator std::string() {
+    operator std::string() const {
         return this->get();
     }
 };
