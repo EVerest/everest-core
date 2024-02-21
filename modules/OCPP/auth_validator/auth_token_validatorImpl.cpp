@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include "auth_token_validatorImpl.hpp"
+#include <conversions.hpp>
 #include <ocpp/common/types.hpp>
 #include <ocpp/v16/enums.hpp>
 #include <ocpp/v201/ocpp_types.hpp>
@@ -33,8 +34,8 @@ auth_token_validatorImpl::validate_pnc_request(const types::authorization::Provi
         std::vector<ocpp::v201::OCSPRequestData> iso15118_certificate_hash_data;
         for (const auto& certificate_hash_data : provided_token.iso15118CertificateHashData.value()) {
             ocpp::v201::OCSPRequestData v201_certificate_hash_data;
-            v201_certificate_hash_data.hashAlgorithm = ocpp::v201::conversions::string_to_hash_algorithm_enum(
-                types::iso15118_charger::hash_algorithm_to_string(certificate_hash_data.hashAlgorithm));
+            v201_certificate_hash_data.hashAlgorithm =
+                conversions::to_ocpp_hash_algorithm_enum(certificate_hash_data.hashAlgorithm);
             v201_certificate_hash_data.issuerKeyHash = certificate_hash_data.issuerKeyHash;
             v201_certificate_hash_data.issuerNameHash = certificate_hash_data.issuerNameHash;
             v201_certificate_hash_data.responderURL = certificate_hash_data.responderURL;
@@ -51,13 +52,12 @@ auth_token_validatorImpl::validate_pnc_request(const types::authorization::Provi
 
     // preparing the validation result
     types::authorization::ValidationResult validation_result;
-    validation_result.authorization_status = types::authorization::string_to_authorization_status(
-        ocpp::v201::conversions::authorization_status_enum_to_string(authorize_response.idTokenInfo.status));
+    validation_result.authorization_status =
+        conversions::to_everest_authorization_status(authorize_response.idTokenInfo.status);
     validation_result.evse_ids = authorize_response.idTokenInfo.evseId;
     if (authorize_response.certificateStatus.has_value()) {
-        validation_result.certificate_status.emplace(types::authorization::string_to_certificate_status(
-            ocpp::v201::conversions::authorize_certificate_status_enum_to_string(
-                authorize_response.certificateStatus.value())));
+        validation_result.certificate_status.emplace(
+            conversions::to_everest_certificate_status(authorize_response.certificateStatus.value()));
     }
     if (authorize_response.idTokenInfo.cacheExpiryDateTime.has_value()) {
         validation_result.expiry_time.emplace(authorize_response.idTokenInfo.cacheExpiryDateTime.value().to_rfc3339());
@@ -74,8 +74,7 @@ auth_token_validatorImpl::validate_standard_request(const types::authorization::
     const auto id_tag_info = mod->charge_point->authorize_id_token(ocpp::CiString<20>(provided_token.id_token));
     types::authorization::ValidationResult result;
 
-    result.authorization_status = types::authorization::string_to_authorization_status(
-        ocpp::v16::conversions::authorization_status_to_string(id_tag_info.status));
+    result.authorization_status = conversions::to_everest_authorization_status(id_tag_info.status);
     if (id_tag_info.expiryDate) {
         result.expiry_time = id_tag_info.expiryDate->to_rfc3339();
     }
