@@ -264,7 +264,10 @@ class DeviceModelDatabaseInitializer:
         """
 
         if delete_db_if_exists:
-            self._database_file.unlink(missing_ok=True)
+            try:
+                self._database_file.unlink()
+            except FileNotFoundError:
+                print(f"Could not remove database file {self._database_file}, file not found.")
 
         with self._connect() as cur:
             with self.INIT_DEVICE_MODEL_SQL.open("r") as sql_file:
@@ -348,8 +351,9 @@ if __name__ == '__main__':
     database_initializer = DeviceModelDatabaseInitializer(database_file)
 
     if "init" in commands:
-        if database_file.is_relative_to(Path("/tmp/ocpp201")):  # nosec
-            Path("/tmp/ocpp201").mkdir(parents=True, exist_ok=True)
+        tmp_path = Path("/tmp/ocpp201") # nosec
+        if tmp_path == database_file or tmp_path in database_file.parents:
+            tmp_path.mkdir(parents=True, exist_ok=True)
         database_initializer.initialize_database(schemas_path)
 
     if "insert" in commands:
