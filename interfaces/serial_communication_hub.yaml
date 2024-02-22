@@ -72,6 +72,30 @@ cmds:
       description: Status code of the transfer
       type: string
       $ref: /serial_comm_hub_requests#/StatusCodeEnum
+  modbus_write_single_register:
+    description: >-
+      Send a Modbus RTU 'write single register' command via serial interface
+      to the target hardware. (return value: response)
+    arguments:
+      target_device_id:
+        description: ID (1 byte) of the device to send the commands to
+        type: integer
+        minimum: 0
+        maximum: 255
+      register_address:
+        description: Address of the register to write to (16 bit address)
+        type: integer
+        minimum: 0
+        maximum: 65535
+      data:
+        description: Data content to be written to the above selected register
+        type: integer
+        minimum: 0
+        maximum: 65535
+    result:
+      description: Status code of the transfer
+      type: string
+      $ref: /serial_comm_hub_requests#/StatusCodeEnum
   nonstd_write:
     description: >-
       Non standard mode to write registers in read discrete input mode

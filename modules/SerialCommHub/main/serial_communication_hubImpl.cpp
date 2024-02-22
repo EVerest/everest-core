@@ -31,6 +31,7 @@ static std::vector<int> vector_to_int(const std::vector<uint16_t>& response) {
 // Implementation
 
 void serial_communication_hubImpl::init() {
+    using namespace std::chrono;
     Everest::GpioSettings rxtx_gpio_settings;
 
     rxtx_gpio_settings.chip_name = config.rxtx_gpio_chip;
@@ -38,7 +39,8 @@ void serial_communication_hubImpl::init() {
     rxtx_gpio_settings.inverted = config.rxtx_gpio_tx_high;
 
     if (!modbus.open_device(config.serial_port, config.baudrate, config.ignore_echo, rxtx_gpio_settings,
-                            static_cast<tiny_modbus::Parity>(config.parity))) {
+                            static_cast<tiny_modbus::Parity>(config.parity), milliseconds(config.initial_timeout_ms),
+                            milliseconds(config.within_message_timeout_ms))) {
         EVLOG_AND_THROW(Everest::EverestConfigError(fmt::format("Cannot open serial port {}.", config.serial_port)));
     }
 }
@@ -66,7 +68,7 @@ serial_communication_hubImpl::handle_modbus_read_holding_registers(int& target_d
             //                           (uint16_t)first_register_address, (uint16_t)num_registers_to_read);
 
             response = modbus.txrx(target_device_id, tiny_modbus::FunctionCode::READ_MULTIPLE_HOLDING_REGISTERS,
-                                   first_register_address, num_registers_to_read);
+                                   first_register_address, num_registers_to_read, config.max_packet_size);
             if (response.size() > 0) {
                 break;
             }
@@ -102,7 +104,7 @@ serial_communication_hubImpl::handle_modbus_read_input_registers(int& target_dev
             //                           (uint16_t)first_register_address, (uint16_t)num_registers_to_read);
 
             response = modbus.txrx(target_device_id, tiny_modbus::FunctionCode::READ_INPUT_REGISTERS,
-                                   first_register_address, num_registers_to_read);
+                                   first_register_address, num_registers_to_read, config.max_packet_size);
             if (response.size() > 0) {
                 break;
             }
@@ -140,13 +142,45 @@ types::serial_comm_hub_requests::StatusCodeEnum serial_communication_hubImpl::ha
                                        (uint16_t)data.size());
 
             response = modbus.txrx(target_device_id, tiny_modbus::FunctionCode::WRITE_MULTIPLE_HOLDING_REGISTERS,
-                                   first_register_address, data.size(), true, data);
+                                   first_register_address, data.size(), config.max_packet_size, true, data);
             if (response.size() > 0) {
                 break;
             }
         }
     }
 
+    EVLOG_debug << fmt::format("Done writing");
+    // process response
+    if (response.size() > 0) {
+        return types::serial_comm_hub_requests::StatusCodeEnum::Success;
+    } else {
+        return types::serial_comm_hub_requests::StatusCodeEnum::Error;
+    }
+}
+
+types::serial_comm_hub_requests::StatusCodeEnum
+serial_communication_hubImpl::handle_modbus_write_single_register(int& target_device_id, int& register_address,
+                                                                  int& data) {
+    types::serial_comm_hub_requests::Result result;
+    std::vector<uint16_t> response;
+
+    {
+        std::scoped_lock lock(serial_mutex);
+
+        uint8_t retry_counter{this->num_resends_on_error};
+        while (retry_counter-- > 0) {
+
+            EVLOG_debug << fmt::format("Try {} Call modbus_client->write_single_register(id {} addr {} data {})",
+                                       (int)retry_counter, (uint8_t)target_device_id, (uint16_t)register_address,
+                                       (uint16_t)data);
+
+            response = modbus.txrx(target_device_id, tiny_modbus::FunctionCode::WRITE_SINGLE_HOLDING_REGISTER,
+                                   register_address, 1, config.max_packet_size, true, {static_cast<uint16_t>(data)});
+            if (response.size() > 0) {
+                break;
+            }
+        }
+    }
     EVLOG_debug << fmt::format("Done writing");
     // process response
     if (response.size() > 0) {

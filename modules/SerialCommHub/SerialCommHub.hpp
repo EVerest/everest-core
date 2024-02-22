@@ -27,8 +27,8 @@ public:
     SerialCommHub(const ModuleInfo& info, std::unique_ptr<serial_communication_hubImplBase> p_main, Conf& config) :
         ModuleBase(info), p_main(std::move(p_main)), config(config){};
 
-    const Conf& config;
     const std::unique_ptr<serial_communication_hubImplBase> p_main;
+    const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
