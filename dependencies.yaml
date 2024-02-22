@@ -74,10 +74,16 @@ ext-mbedtls:
 everest-utils:
   git: https://github.com/EVerest/everest-utils.git
   git_tag: v0.2.0
-  cmake_condition: "BUILD_TESTING"
+  cmake_condition: "EVEREST_CORE_BUILD_TESTING"
 # evse-security, since this is a direct dependency of libocpp it will get overwritten by the version set there
 # setting it here can be misleading since it does not affect the version being used
 libevse-security:
   git: https://github.com/EVerest/libevse-security.git
   git_tag: 69410a8
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBEVSE_SECURITY"
+# unit testing
+gtest:
+  # GoogleTest now follows the Abseil Live at Head philosophy. We recommend updating to the latest commit in the main branch as often as possible.
+  git: https://github.com/google/googletest.git
+  git_tag: release-1.12.1
+  cmake_condition: "EVEREST_CORE_BUILD_TESTING"

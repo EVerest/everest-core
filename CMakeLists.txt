@@ -42,6 +42,9 @@ option(ISO15118_2_GENERATE_AND_INSTALL_CERTIFICATES "Automatically generate and 
 option(EVEREST_ENABLE_RUN_SCRIPT_GENERATION "Enables the generation of run scripts (convenience scripts for starting available configurations)" ON)
 option(${PROJECT_NAME}_BUILD_TESTING "Build unit tests, used if included as dependency" OFF)
 option(BUILD_TESTING "Build unit tests, used if standalone project" OFF)
+if((${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME} OR ${PROJECT_NAME}_BUILD_TESTING) AND BUILD_TESTING)
+    set(EVEREST_CORE_BUILD_TESTING ON)
+endif()
 # This is a flag for building development tests, but not necessarily to run them, for expample in case
 # tests requires hardware.
 option(BUILD_DEV_TESTS "Build dev tests" OFF)
@@ -121,7 +124,7 @@ if(DOXYGEN_FOUND)
 endif()
 
 # testing
-if((${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME} OR ${PROJECT_NAME}_BUILD_TESTING) AND BUILD_TESTING)
+if(EVEREST_CORE_BUILD_TESTING)
     include(CTest)
     enable_testing()
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)

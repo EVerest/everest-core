@@ -8,17 +8,13 @@ set(INCLUDE_DIR
 get_target_property(GENERATED_INCLUDE_DIR generate_cpp_files EVEREST_GENERATED_INCLUDE_DIR)
 
 target_include_directories(auth_tests PUBLIC 
-    ${GTEST_INCLUDE_DIRS}
     ${INCLUDE_DIR}
     ${GENERATED_INCLUDE_DIR}
 )
 
-find_package(GTest REQUIRED)
-
 target_link_libraries(auth_tests PRIVATE
-    ${GTEST_LIBRARIES} 
-    ${GTEST_MAIN_LIBRARIES} 
     GTest::gmock
+    GTest::gtest_main
     everest::timer
     ${CMAKE_DL_LIBS}
     everest::log
