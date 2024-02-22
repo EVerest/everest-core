@@ -34,11 +34,12 @@ class YetiDriver : public Everest::ModuleBase {
 public:
     YetiDriver() = delete;
     YetiDriver(const ModuleInfo& info, Everest::TelemetryProvider& telemetry,
-               std::unique_ptr<powermeterImplBase> p_powermeter,
+               Everest::WatchdogSupervisor& watchdog_supervisor, std::unique_ptr<powermeterImplBase> p_powermeter,
                std::unique_ptr<evse_board_supportImplBase> p_board_support, std::unique_ptr<ac_rcdImplBase> p_rcd,
                std::unique_ptr<connector_lockImplBase> p_connector_lock, Conf& config) :
         ModuleBase(info),
         telemetry(telemetry),
+        watchdog_supervisor(watchdog_supervisor),
         p_powermeter(std::move(p_powermeter)),
         p_board_support(std::move(p_board_support)),
         p_rcd(std::move(p_rcd)),
@@ -46,6 +47,7 @@ public:
         config(config){};
 
     Everest::TelemetryProvider& telemetry;
+    Everest::WatchdogSupervisor& watchdog_supervisor;
     const std::unique_ptr<powermeterImplBase> p_powermeter;
     const std::unique_ptr<evse_board_supportImplBase> p_board_support;
     const std::unique_ptr<ac_rcdImplBase> p_rcd;

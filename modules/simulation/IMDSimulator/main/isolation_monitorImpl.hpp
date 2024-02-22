@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (C) 2023 chargebyte GmbH
-// Copyright (C) 2023 Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 #ifndef MAIN_ISOLATION_MONITOR_IMPL_HPP
 #define MAIN_ISOLATION_MONITOR_IMPL_HPP
 
@@ -33,7 +32,6 @@ public:
     isolation_monitorImpl() = delete;
     isolation_monitorImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<IMDSimulator>& mod, Conf& config) :
         isolation_monitorImplBase(ev, "main"), mod(mod), config(config){};
-    ~isolation_monitorImpl();
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here

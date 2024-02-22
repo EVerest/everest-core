@@ -27,10 +27,16 @@ struct Conf {};
 class DummyTokenProvider : public Everest::ModuleBase {
 public:
     DummyTokenProvider() = delete;
-    DummyTokenProvider(const ModuleInfo& info, std::unique_ptr<auth_token_providerImplBase> p_main,
-                       std::unique_ptr<evse_managerIntf> r_evse, Conf& config) :
-        ModuleBase(info), p_main(std::move(p_main)), r_evse(std::move(r_evse)), config(config){};
+    DummyTokenProvider(const ModuleInfo& info, Everest::WatchdogSupervisor& watchdog_supervisor,
+                       std::unique_ptr<auth_token_providerImplBase> p_main, std::unique_ptr<evse_managerIntf> r_evse,
+                       Conf& config) :
+        ModuleBase(info),
+        watchdog_supervisor(watchdog_supervisor),
+        p_main(std::move(p_main)),
+        r_evse(std::move(r_evse)),
+        config(config){};
 
+    Everest::WatchdogSupervisor& watchdog_supervisor;
     const std::unique_ptr<auth_token_providerImplBase> p_main;
     const std::unique_ptr<evse_managerIntf> r_evse;
     const Conf& config;

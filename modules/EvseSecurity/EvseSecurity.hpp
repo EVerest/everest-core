@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifndef EVSE_SECURITY_FS_HPP
-#define EVSE_SECURITY_FS_HPP
+#ifndef EVSE_SECURITY_HPP
+#define EVSE_SECURITY_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
@@ -34,9 +34,11 @@ struct Conf {
 class EvseSecurity : public Everest::ModuleBase {
 public:
     EvseSecurity() = delete;
-    EvseSecurity(const ModuleInfo& info, std::unique_ptr<evse_securityImplBase> p_main, Conf& config) :
-        ModuleBase(info), p_main(std::move(p_main)), config(config){};
+    EvseSecurity(const ModuleInfo& info, Everest::WatchdogSupervisor& watchdog_supervisor,
+                 std::unique_ptr<evse_securityImplBase> p_main, Conf& config) :
+        ModuleBase(info), watchdog_supervisor(watchdog_supervisor), p_main(std::move(p_main)), config(config){};
 
+    Everest::WatchdogSupervisor& watchdog_supervisor;
     const std::unique_ptr<evse_securityImplBase> p_main;
     const Conf& config;
 
@@ -65,4 +67,4 @@ private:
 
 } // namespace module
 
-#endif // EVSE_SECURITY_FS_HPP
+#endif // EVSE_SECURITY_HPP

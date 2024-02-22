@@ -18,6 +18,8 @@
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
+namespace fs = std::filesystem;
+
 #include "WiFiSetup.hpp"
 #include <regex>
 
@@ -117,11 +119,18 @@ struct Conf {
 class Setup : public Everest::ModuleBase {
 public:
     Setup() = delete;
-    Setup(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, std::unique_ptr<emptyImplBase> p_main,
+    Setup(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
+          Everest::WatchdogSupervisor& watchdog_supervisor, std::unique_ptr<emptyImplBase> p_main,
           std::unique_ptr<kvsIntf> r_store, Conf& config) :
-        ModuleBase(info), mqtt(mqtt_provider), p_main(std::move(p_main)), r_store(std::move(r_store)), config(config){};
+        ModuleBase(info),
+        mqtt(mqtt_provider),
+        watchdog_supervisor(watchdog_supervisor),
+        p_main(std::move(p_main)),
+        r_store(std::move(r_store)),
+        config(config){};
 
     Everest::MqttProvider& mqtt;
+    Everest::WatchdogSupervisor& watchdog_supervisor;
     const std::unique_ptr<emptyImplBase> p_main;
     const std::unique_ptr<kvsIntf> r_store;
     const Conf& config;

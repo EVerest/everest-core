@@ -40,12 +40,13 @@ struct Conf {
 class Auth : public Everest::ModuleBase {
 public:
     Auth() = delete;
-    Auth(const ModuleInfo& info, std::unique_ptr<authImplBase> p_main,
+    Auth(const ModuleInfo& info, Everest::WatchdogSupervisor& watchdog_supervisor, std::unique_ptr<authImplBase> p_main,
          std::unique_ptr<reservationImplBase> p_reservation,
          std::vector<std::unique_ptr<auth_token_providerIntf>> r_token_provider,
          std::vector<std::unique_ptr<auth_token_validatorIntf>> r_token_validator,
          std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager, Conf& config) :
         ModuleBase(info),
+        watchdog_supervisor(watchdog_supervisor),
         p_main(std::move(p_main)),
         p_reservation(std::move(p_reservation)),
         r_token_provider(std::move(r_token_provider)),
@@ -53,6 +54,7 @@ public:
         r_evse_manager(std::move(r_evse_manager)),
         config(config){};
 
+    Everest::WatchdogSupervisor& watchdog_supervisor;
     const std::unique_ptr<authImplBase> p_main;
     const std::unique_ptr<reservationImplBase> p_reservation;
     const std::vector<std::unique_ptr<auth_token_providerIntf>> r_token_provider;

@@ -30,7 +30,6 @@
 #include <sigslot/signal.hpp>
 
 #include "Timeout.hpp"
-#include "utils/thread.hpp"
 
 #include "scoped_lock_timeout.hpp"
 

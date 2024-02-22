@@ -24,9 +24,11 @@ struct Conf {};
 class DummyTokenValidator : public Everest::ModuleBase {
 public:
     DummyTokenValidator() = delete;
-    DummyTokenValidator(const ModuleInfo& info, std::unique_ptr<auth_token_validatorImplBase> p_main, Conf& config) :
-        ModuleBase(info), p_main(std::move(p_main)), config(config){};
+    DummyTokenValidator(const ModuleInfo& info, Everest::WatchdogSupervisor& watchdog_supervisor,
+                        std::unique_ptr<auth_token_validatorImplBase> p_main, Conf& config) :
+        ModuleBase(info), watchdog_supervisor(watchdog_supervisor), p_main(std::move(p_main)), config(config){};
 
+    Everest::WatchdogSupervisor& watchdog_supervisor;
     const std::unique_ptr<auth_token_validatorImplBase> p_main;
     const Conf& config;
 

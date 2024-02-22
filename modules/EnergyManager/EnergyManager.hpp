@@ -41,10 +41,16 @@ struct Conf {
 class EnergyManager : public Everest::ModuleBase {
 public:
     EnergyManager() = delete;
-    EnergyManager(const ModuleInfo& info, std::unique_ptr<energy_managerImplBase> p_main,
-                  std::unique_ptr<energyIntf> r_energy_trunk, Conf& config) :
-        ModuleBase(info), p_main(std::move(p_main)), r_energy_trunk(std::move(r_energy_trunk)), config(config){};
+    EnergyManager(const ModuleInfo& info, Everest::WatchdogSupervisor& watchdog_supervisor,
+                  std::unique_ptr<energy_managerImplBase> p_main, std::unique_ptr<energyIntf> r_energy_trunk,
+                  Conf& config) :
+        ModuleBase(info),
+        watchdog_supervisor(watchdog_supervisor),
+        p_main(std::move(p_main)),
+        r_energy_trunk(std::move(r_energy_trunk)),
+        config(config){};
 
+    Everest::WatchdogSupervisor& watchdog_supervisor;
     const std::unique_ptr<energy_managerImplBase> p_main;
     const std::unique_ptr<energyIntf> r_energy_trunk;
     const Conf& config;

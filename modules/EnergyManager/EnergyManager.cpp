@@ -25,12 +25,15 @@ void EnergyManager::ready() {
 
     // start thread to update energy optimization
     std::thread([this] {
+        auto watchdog = watchdog_supervisor.register_watchdog("Energy optimization thread",
+                                                              std::chrono::seconds(config.update_interval * 10));
         while (true) {
             globals.init(date::utc_clock::now(), config.schedule_interval_duration, config.schedule_total_duration,
                          config.slice_ampere, config.slice_watt, config.debug, energy_flow_request);
             auto optimized_values = run_optimizer(energy_flow_request);
             enforce_limits(optimized_values);
             sleep(config.update_interval);
+            watchdog();
         }
     }).detach();
 }

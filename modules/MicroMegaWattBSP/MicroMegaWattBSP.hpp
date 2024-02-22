@@ -33,17 +33,20 @@ class MicroMegaWattBSP : public Everest::ModuleBase {
 public:
     MicroMegaWattBSP() = delete;
     MicroMegaWattBSP(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
+                     Everest::WatchdogSupervisor& watchdog_supervisor,
                      std::unique_ptr<power_supply_DCImplBase> p_dc_supply,
                      std::unique_ptr<powermeterImplBase> p_powermeter,
                      std::unique_ptr<evse_board_supportImplBase> p_board_support, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
+        watchdog_supervisor(watchdog_supervisor),
         p_dc_supply(std::move(p_dc_supply)),
         p_powermeter(std::move(p_powermeter)),
         p_board_support(std::move(p_board_support)),
         config(config){};
 
     Everest::MqttProvider& mqtt;
+    Everest::WatchdogSupervisor& watchdog_supervisor;
     const std::unique_ptr<power_supply_DCImplBase> p_dc_supply;
     const std::unique_ptr<powermeterImplBase> p_powermeter;
     const std::unique_ptr<evse_board_supportImplBase> p_board_support;

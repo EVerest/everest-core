@@ -24,9 +24,11 @@ struct Conf {};
 class EvseSlac : public Everest::ModuleBase {
 public:
     EvseSlac() = delete;
-    EvseSlac(const ModuleInfo& info, std::unique_ptr<slacImplBase> p_main, Conf& config) :
-        ModuleBase(info), p_main(std::move(p_main)), config(config){};
+    EvseSlac(const ModuleInfo& info, Everest::WatchdogSupervisor& watchdog_supervisor,
+             std::unique_ptr<slacImplBase> p_main, Conf& config) :
+        ModuleBase(info), watchdog_supervisor(watchdog_supervisor), p_main(std::move(p_main)), config(config){};
 
+    Everest::WatchdogSupervisor& watchdog_supervisor;
     const std::unique_ptr<slacImplBase> p_main;
     const Conf& config;
 

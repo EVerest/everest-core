@@ -41,15 +41,17 @@ class EvseV2G : public Everest::ModuleBase {
 public:
     EvseV2G() = delete;
     EvseV2G(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
-            std::unique_ptr<ISO15118_chargerImplBase> p_charger, std::unique_ptr<evse_securityIntf> r_security,
-            Conf& config) :
+            Everest::WatchdogSupervisor& watchdog_supervisor, std::unique_ptr<ISO15118_chargerImplBase> p_charger,
+            std::unique_ptr<evse_securityIntf> r_security, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
+        watchdog_supervisor(watchdog_supervisor),
         p_charger(std::move(p_charger)),
         r_security(std::move(r_security)),
         config(config){};
 
     Everest::MqttProvider& mqtt;
+    Everest::WatchdogSupervisor& watchdog_supervisor;
     const std::unique_ptr<ISO15118_chargerImplBase> p_charger;
     const std::unique_ptr<evse_securityIntf> r_security;
     const Conf& config;

@@ -39,16 +39,19 @@ class PowermeterBSM : public Everest::ModuleBase {
 public:
     PowermeterBSM() = delete;
     PowermeterBSM(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
-                  std::unique_ptr<powermeterImplBase> p_main, std::unique_ptr<sunspec_ac_meterImplBase> p_ac_meter,
+                  Everest::WatchdogSupervisor& watchdog_supervisor, std::unique_ptr<powermeterImplBase> p_main,
+                  std::unique_ptr<sunspec_ac_meterImplBase> p_ac_meter,
                   std::vector<std::unique_ptr<serial_communication_hubIntf>> r_serial_com_0_connection, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
+        watchdog_supervisor(watchdog_supervisor),
         p_main(std::move(p_main)),
         p_ac_meter(std::move(p_ac_meter)),
         r_serial_com_0_connection(std::move(r_serial_com_0_connection)),
         config(config){};
 
     Everest::MqttProvider& mqtt;
+    Everest::WatchdogSupervisor& watchdog_supervisor;
     const std::unique_ptr<powermeterImplBase> p_main;
     const std::unique_ptr<sunspec_ac_meterImplBase> p_ac_meter;
     const std::vector<std::unique_ptr<serial_communication_hubIntf>> r_serial_com_0_connection;
