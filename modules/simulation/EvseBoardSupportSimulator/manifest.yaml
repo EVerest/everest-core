@@ -1,0 +1,15 @@
+description: SIL simulator for YETI hardware v1.0
+config:
+  connector_id:
+    description: Connector id of the evse manager to which this simulator is connected to
+    type: integer
+provides:
+  board_support:
+    interface: evse_board_support
+    description: provides the board support Interface to low level control control pilot, relais, rcd, motor lock
+enable_external_mqtt: true
+enable_telemetry: true
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Kai-Uwe Hermann

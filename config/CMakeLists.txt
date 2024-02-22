@@ -1,4 +1,5 @@
 generate_config_run_script(CONFIG sil)
+generate_config_run_script(CONFIG sil-evse-bsp-sim)
 generate_config_run_script(CONFIG sil-two-evse)
 generate_config_run_script(CONFIG sil-ocpp)
 generate_config_run_script(CONFIG sil-ocpp201)
