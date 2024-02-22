@@ -14,10 +14,12 @@ void EnergyManager::init() {
     r_energy_trunk->subscribe_energy_flow_request([this](types::energy::EnergyFlowRequest e) {
         // Received new energy object from a child.
         std::scoped_lock lock(energy_mutex);
+        EVLOG_info << "<<<< Received new energy flow request";
         energy_flow_request = e;
 
         if (is_priority_request(e)) {
             // trigger optimization now
+            EVLOG_info << "<<<< PRIO REQUEST: handling NOW";
             mainloop_sleep_condvar.notify_all();
         }
     });
@@ -32,7 +34,7 @@ void EnergyManager::ready() {
     std::thread([this] {
         while (true) {
             globals.init(date::utc_clock::now(), config.schedule_interval_duration, config.schedule_total_duration,
-                         config.slice_ampere, config.slice_watt, config.debug, energy_flow_request);
+                         config.slice_ampere, config.slice_watt, true, energy_flow_request);
             auto optimized_values = run_optimizer(energy_flow_request);
             enforce_limits(optimized_values);
             {
@@ -69,6 +71,7 @@ void EnergyManager::enforce_limits(const std::vector<types::energy::EnforcedLimi
                                       it.limits_root_side.value().ac_max_current_A.value_or(-9999),
                                       it.limits_root_side.value().total_power_W.value_or(-9999));
         r_energy_trunk->call_enforce_limits(it);
+        EVLOG_info << "Enforce limits done.";
     }
 }
 
@@ -80,6 +83,8 @@ std::vector<types::energy::EnforcedLimits> EnergyManager::run_optimizer(types::e
     optimizer_start.start();
     if (globals.debug)
         EVLOG_info << "\033[1;44m---------------- Run energy optimizer ---------------- \033[1;0m";
+
+    EVLOG_info << "Incoming energy tree: " << request;
 
     time_probe market_tp;
 
