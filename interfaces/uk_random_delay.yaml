@@ -8,7 +8,7 @@ cmds:
   enable:
     description: Call to enable the random delay feature
   disable:
-    description: Call to enable the random delay feature
+    description: Call to disable the random delay feature
   cancel:
     description: Cancels a running random delay. The effect is the same as if the time expired just now.
   set_duration_s:
