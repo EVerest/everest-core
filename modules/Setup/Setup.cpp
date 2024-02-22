@@ -104,7 +104,9 @@ void Setup::ready() {
                 this->discover_network();
             }
             this->publish_hostname();
-            this->publish_configured_networks();
+            if (this->config.setup_wifi) {
+                this->publish_configured_networks();
+            }
             std::this_thread::sleep_for(std::chrono::seconds(5));
         }
     });
