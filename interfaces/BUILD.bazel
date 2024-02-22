@@ -23,8 +23,8 @@ genrule(
     outs = cpp_headers,
     srcs = interface_srcs + [
         "@everest-framework//schemas:schemas",
-        "@everest-core//types:types",
-        "@everest-core//:errors",
+        "@everest-core//types",
+        "@everest-core//errors",
         "@everest-core//:WORKSPACE.bazel",
     ],
     tools = [
