@@ -116,6 +116,7 @@ private:
 
     Everest::timed_mutex_traceable state_machine_mutex;
     void feed_state_machine();
+    void feed_state_machine_no_thread();
     std::queue<CPEvent> state_machine();
 
     types::evse_board_support::Reason power_on_reason{types::evse_board_support::Reason::PowerOff};
