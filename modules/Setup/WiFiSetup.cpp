@@ -47,9 +47,8 @@ WpaCliSetup::WifiScanList WpaCliSetup::do_scan_results(const std::string& interf
                  ++scan_results_it) {
 
                 std::vector<std::string> columns;
-                std::istringstream ss(*scan_results_it);
-                std::string value;
-                while (std::getline(ss, value, '\t')) {
+                std::istringstream stream(*scan_results_it);
+                for (std::string value; std::getline(stream, value, '\t');) {
                     columns.push_back(std::move(value));
                 }
 
@@ -74,13 +73,10 @@ WpaCliSetup::Status WpaCliSetup::do_status(const std::string& interface) {
         auto output = run_application(wpa_cli, {"-i", interface, "status"});
         if (output.exit_code == 0) {
             auto scan_results = output.split_output;
-            for (auto scan_results_it = scan_results.begin(); scan_results_it != scan_results.end();
-                 ++scan_results_it) {
-
+            for (auto& scan_result : scan_results) {
                 std::vector<std::string> columns;
-                std::istringstream ss(*scan_results_it);
-                std::string value;
-                while (std::getline(ss, value, '=')) {
+                std::istringstream ss(scan_result);
+                for (std::string value; std::getline(ss, value, '=');) {
                     columns.push_back(std::move(value));
                 }
 
@@ -99,13 +95,10 @@ WpaCliSetup::Poll WpaCliSetup::do_signal_poll(const std::string& interface) {
         auto output = run_application(wpa_cli, {"-i", interface, "signal_poll"});
         if (output.exit_code == 0) {
             auto scan_results = output.split_output;
-            for (auto scan_results_it = scan_results.begin(); scan_results_it != scan_results.end();
-                 ++scan_results_it) {
-
+            for (auto& scan_result : scan_results) {
                 std::vector<std::string> columns;
-                std::istringstream ss(*scan_results_it);
-                std::string value;
-                while (std::getline(ss, value, '=')) {
+                std::istringstream ss(scan_result);
+                for (std::string value; std::getline(ss, value, '=');) {
                     columns.push_back(std::move(value));
                 }
 
@@ -145,24 +138,64 @@ int WpaCliSetup::add_network(const std::string& interface) {
 }
 
 bool WpaCliSetup::set_network(const std::string& interface, int network_id, const std::string& ssid,
-                              const std::string& psk, bool hidden) {
+                              const std::string& psk, network_security_t mode, bool hidden) {
     /*
      * configuring a network needs:
      * - ssid "<SSID>"
      * - psk "<Passphrase>" or ABCDEF0123456789... (for WPA2)
+     * - sae_password "<Passphrase>" (for WPA3)
      * - key_mgmt NONE (for open networks)
      * - scan_ssid 1 (for hidden networks)
      *
      * Support for WPA3 requires:
      * - key_mgmt WPA-PSK WPA-PSK-SHA256 SAE or SAE if WPA3 only
-     * - psk with hex values doesn't work (on its own) "<Passphrase>" is fine
-     * - sae_password "<Passphrase>" or ABCDEF0123456789...
-     *
-     * For WPA2 and WPA3 support both psk and sae_password will be configured
+     * - sae_password replaces psk, WPA3 doesn't support PreSharedKey (64 hex digits)
+     *   the passphrase is required
+     * - for interworking WPA2 and WPA3 the passphrase is needed
+     * - psk with hex digits (PreSharedKey) doesn't work
      */
+
+    constexpr std::uint8_t wpa2_psk_size = 64U;
 
     if (!is_wifi_interface(interface)) {
         return false;
+    }
+
+    if (psk.empty()) {
+        // force security mode to none
+        mode = network_security_t::none;
+    }
+
+    const char* key_mgt = nullptr;
+    const char* psk_name = nullptr;
+
+    switch (mode) {
+    case network_security_t::none:
+        key_mgt = "NONE";
+        break;
+    case network_security_t::wpa2_only:
+        key_mgt = "WPA-PSK";
+        psk_name = "psk";
+        break;
+    case network_security_t::wpa3_only:
+        key_mgt = "SAE";
+        psk_name = "sae_password";
+        break;
+    case network_security_t::wpa2_and_wpa3:
+    default:
+        if (psk.size() == wpa2_psk_size) {
+            // WPA3 doesn't support PSK (hex digits), it needs a passphrase
+            key_mgt = "WPA-PSK";
+            psk_name = "psk";
+        } else if (psk.size() > wpa2_psk_size) {
+            // WPA2 doesn't support passphrases > 63 characters
+            key_mgt = "SAE";
+            psk_name = "sae_password";
+        } else {
+            key_mgt = "WPA-PSK WPA-PSK-SHA256 SAE";
+            psk_name = "psk";
+        }
+        break;
     }
 
     auto network_id_string = std::to_string(network_id);
@@ -170,17 +203,12 @@ bool WpaCliSetup::set_network(const std::string& interface, int network_id, cons
 
     auto output = run_application(wpa_cli, {"-i", interface, "set_network", network_id_string, "ssid", ssid_parameter});
 
+    if ((output.exit_code == 0) && (psk_name != nullptr)) {
+        output = run_application(wpa_cli, {"-i", interface, "set_network", network_id_string, psk_name, psk});
+    }
+
     if (output.exit_code == 0) {
-        const char* key_mgmt = (psk.empty()) ? "NONE" : "WPA-PSK WPA-PSK-SHA256 SAE";
-        output = run_application(wpa_cli, {"-i", interface, "set_network", network_id_string, "key_mgmt", key_mgmt});
-    }
-
-    if ((output.exit_code == 0) && (!psk.empty())) {
-        output = run_application(wpa_cli, {"-i", interface, "set_network", network_id_string, "psk", psk});
-    }
-
-    if ((output.exit_code == 0) && (!psk.empty())) {
-        output = run_application(wpa_cli, {"-i", interface, "set_network", network_id_string, "sae_password", psk});
+        output = run_application(wpa_cli, {"-i", interface, "set_network", network_id_string, "key_mgmt", key_mgt});
     }
 
     if (hidden && (output.exit_code == 0)) {
@@ -264,8 +292,7 @@ WpaCliSetup::WifiNetworkList WpaCliSetup::list_networks(const std::string& inter
 
                     std::vector<std::string> columns;
                     std::istringstream ss(*scan_results_it);
-                    std::string value;
-                    while (std::getline(ss, value, '\t')) {
+                    for (std::string value; std::getline(ss, value, '\t');) {
                         columns.push_back(std::move(value));
                     }
 

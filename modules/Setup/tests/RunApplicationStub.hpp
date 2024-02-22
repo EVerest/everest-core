@@ -17,8 +17,10 @@ public:
     std::map<std::string, module::CmdOutput> results;
     bool signal_poll_called;
     bool psk_called;
+    bool sae_password_called;
     bool key_mgmt_called;
     bool scan_ssid_called;
+    std::string key_mgmt_value;
 
     RunApplication();
     virtual ~RunApplication();
