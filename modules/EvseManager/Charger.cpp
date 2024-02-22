@@ -801,6 +801,9 @@ void Charger::process_cp_events_independent(CPEvent cp_event) {
     case CPEvent::EvseReplugFinished:
         shared_context.current_state = EvseState::WaitingForAuthentication;
         break;
+    case CPEvent::CarRequestedStopPower:
+        shared_context.iec_allow_close_contactor = false;
+        break;
     case CPEvent::CarUnplugged:
         if (not shared_context.hlc_charging_active) {
             shared_context.current_state = EvseState::StoppingCharging;
@@ -808,6 +811,7 @@ void Charger::process_cp_events_independent(CPEvent cp_event) {
             shared_context.current_state = EvseState::Finished;
         }
         break;
+
     default:
         break;
     }
