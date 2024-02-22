@@ -4,3 +4,7 @@ filegroup(
     name = "errors",
     srcs = glob(["errors/**/*.yaml"]),
 )
+
+exports_files(
+    ["WORKSPACE.bazel"],
+)

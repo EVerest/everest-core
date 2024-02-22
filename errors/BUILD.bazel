@@ -1,0 +1,7 @@
+
+filegroup(
+    name = "errors",
+    srcs = glob(["*.yaml"]),
+    visibility = ["//visibility:public"],
+)
+

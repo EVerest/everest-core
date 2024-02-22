@@ -1,4 +1,4 @@
-load("//modules:module.bzl", "cc_everest_module")
+load("@everest-core//modules:module.bzl", "cc_everest_module")
 
 cc_library(
     name = "auth_handler",
@@ -6,11 +6,11 @@ cc_library(
     hdrs = glob(["include/*.hpp"]),
     strip_include_prefix = "include",
     deps = [
-        "@libtimer//:libtimer",
-        "//third-party/bazel:boost_asio",
-        "@everest-framework//:framework",
         "@com_github_HowardHinnant_date//:date",
-        "//types:types_lib",
+        "@everest-core//third-party/bazel:boost_asio",
+        "@everest-core//types:types_lib",
+        "@everest-framework//:framework",
+        "@libtimer//:libtimer",
     ],
     copts = ["-std=c++17"],
 )

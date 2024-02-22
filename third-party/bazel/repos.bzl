@@ -21,9 +21,16 @@ def everest_core_repos():
     maybe(
         http_archive,
         name = "everest-framework",
-        url = "https://github.com/golovasteek/everest-framework/archive/e75752db299940219b2fae2cfddc23482129f921.tar.gz",
-        strip_prefix = "everest-framework-e75752db299940219b2fae2cfddc23482129f921",
+        url = "https://github.com/qwello/everest-framework/archive/3750de5e82b06ff24ed557a8caa8e2a815677bee.tar.gz",
+        strip_prefix = "everest-framework-3750de5e82b06ff24ed557a8caa8e2a815677bee",
     )
+
+    # maybe(
+    #     http_archive,
+    #     name = "everest-utils",
+    #     url = "https://github.com/Qwello/everest-utils/archive/e75752db299940219b2fae2cfddc23482129f921.tar.gz",
+    #     strip_prefix = "everest-framework-e75752db299940219b2fae2cfddc23482129f921",
+    # )
 
     maybe(
         http_archive,
@@ -169,55 +176,3 @@ cc_library(
 )
         """
     )
-
-    maybe(
-        git_repository,
-        name = "everest-utils",
-        remote = "https://github.com/EVerest/everest-utils.git",
-        tag = "v0.1.6",
-        build_file_content = """
-load("@ev_cli_pip_deps//:requirements.bzl", "requirement")
-
-genrule(
-    name = "main",
-    outs = ["ev-cli.py"],
-    cmd = '''
-echo "from ev_cli.ev import main" > $@
-echo "main()" >> $@
-'''
-)
-genrule(
-    name = "version",
-    outs = ["ev-dev-tools/src/ev_cli/__version__.py"],
-    cmd = "echo 0.1.6 > $@"
-)
-
-py_library(
-    name = "lib",
-    srcs = glob(
-        ["ev-dev-tools/src/ev_cli/*.py"]
-    ) + [
-        ":version",
-    ],
-    deps = [
-        requirement("jinja2"),
-        requirement("jsonschema"),
-        requirement("stringcase"),
-        requirement("pyyaml"),
-    ],
-    imports = ["ev-dev-tools/src"],
-)
-
-py_binary(
-    name = "ev-cli",
-    data = glob(
-        ["ev-dev-tools/src/ev_cli/templates/**"],
-    ),
-    srcs = [":main"],
-    deps = [":lib"],
-    legacy_create_init = False,
-    visibility = ["//visibility:public"],
-)
-        """
-    )
-
