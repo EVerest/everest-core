@@ -215,7 +215,7 @@ ocpp::v201::MeterValue get_meter_value(const types::powermeter::Powermeter& powe
         if (power_meter.energy_Wh_export.value().L1.has_value()) {
             sampled_value = get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Energy_Active_Export_Register,
                                               "Wh", ocpp::v201::PhaseEnum::L1);
-            sampled_value.value = power_meter.energy_Wh_import.L1.value();
+            sampled_value.value = power_meter.energy_Wh_export.L1.value();
             if (power_meter.energy_Wh_export_signed.has_value()) {
                 const auto& energy_Wh_export_signed = power_meter.energy_Wh_export_signed.value();
                 if (energy_Wh_export_signed.L1.has_value()) {
@@ -227,7 +227,7 @@ ocpp::v201::MeterValue get_meter_value(const types::powermeter::Powermeter& powe
         if (power_meter.energy_Wh_export.value().L2.has_value()) {
             sampled_value = get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Energy_Active_Export_Register,
                                               "Wh", ocpp::v201::PhaseEnum::L2);
-            sampled_value.value = power_meter.energy_Wh_import.L2.value();
+            sampled_value.value = power_meter.energy_Wh_export.L2.value();
             if (power_meter.energy_Wh_export_signed.has_value()) {
                 const auto& energy_Wh_export_signed = power_meter.energy_Wh_export_signed.value();
                 if (energy_Wh_export_signed.L2.has_value()) {
@@ -239,7 +239,7 @@ ocpp::v201::MeterValue get_meter_value(const types::powermeter::Powermeter& powe
         if (power_meter.energy_Wh_export.value().L3.has_value()) {
             sampled_value = get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Energy_Active_Export_Register,
                                               "Wh", ocpp::v201::PhaseEnum::L3);
-            sampled_value.value = power_meter.energy_Wh_import.L3.value();
+            sampled_value.value = power_meter.energy_Wh_export.L3.value();
             if (power_meter.energy_Wh_export_signed.has_value()) {
                 const auto& energy_Wh_export_signed = power_meter.energy_Wh_export_signed.value();
                 if (energy_Wh_export_signed.L3.has_value()) {
@@ -265,7 +265,7 @@ ocpp::v201::MeterValue get_meter_value(const types::powermeter::Powermeter& powe
         if (power_meter.power_W.value().L1.has_value()) {
             sampled_value = get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Power_Active_Import, "W",
                                               ocpp::v201::PhaseEnum::L1);
-            sampled_value.value = power_meter.energy_Wh_import.L1.value();
+            sampled_value.value = power_meter.power_W.L1.value();
             if (power_meter.power_W_signed.has_value()) {
                 const auto& power_W_signed = power_meter.power_W_signed.value();
                 if (power_W_signed.L1.has_value()) {
@@ -277,7 +277,7 @@ ocpp::v201::MeterValue get_meter_value(const types::powermeter::Powermeter& powe
         if (power_meter.power_W.value().L2.has_value()) {
             sampled_value = get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Power_Active_Import, "W",
                                               ocpp::v201::PhaseEnum::L2);
-            sampled_value.value = power_meter.energy_Wh_import.L2.value();
+            sampled_value.value = power_meter.power_W.L2.value();
             if (power_meter.power_W_signed.has_value()) {
                 const auto& power_W_signed = power_meter.power_W_signed.value();
                 if (power_W_signed.L2.has_value()) {
@@ -289,7 +289,7 @@ ocpp::v201::MeterValue get_meter_value(const types::powermeter::Powermeter& powe
         if (power_meter.power_W.value().L3.has_value()) {
             sampled_value = get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Power_Active_Import, "W",
                                               ocpp::v201::PhaseEnum::L3);
-            sampled_value.value = power_meter.energy_Wh_import.L3.value();
+            sampled_value.value = power_meter.power_W.L3.value();
             if (power_meter.power_W_signed.has_value()) {
                 const auto& power_W_signed = power_meter.power_W_signed.value();
                 if (power_W_signed.L3.has_value()) {
@@ -315,7 +315,7 @@ ocpp::v201::MeterValue get_meter_value(const types::powermeter::Powermeter& powe
         if (power_meter.VAR.value().L1.has_value()) {
             sampled_value = get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Power_Reactive_Import, "var",
                                               ocpp::v201::PhaseEnum::L1);
-            sampled_value.value = power_meter.energy_Wh_import.L1.value();
+            sampled_value.value = power_meter.VAR.value().L1.value();
             if (power_meter.VAR_signed.has_value()) {
                 const auto& VAR_signed = power_meter.VAR_signed.value();
                 if (VAR_signed.L1.has_value()) {
@@ -327,7 +327,7 @@ ocpp::v201::MeterValue get_meter_value(const types::powermeter::Powermeter& powe
         if (power_meter.VAR.value().L2.has_value()) {
             sampled_value = get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Power_Reactive_Import, "var",
                                               ocpp::v201::PhaseEnum::L2);
-            sampled_value.value = power_meter.energy_Wh_import.L2.value();
+            sampled_value.value = power_meter.VAR.value().L2.value();
             if (power_meter.VAR_signed.has_value()) {
                 const auto& VAR_signed = power_meter.VAR_signed.value();
                 if (VAR_signed.L2.has_value()) {
@@ -339,7 +339,7 @@ ocpp::v201::MeterValue get_meter_value(const types::powermeter::Powermeter& powe
         if (power_meter.VAR.value().L3.has_value()) {
             sampled_value = get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Power_Reactive_Import, "var",
                                               ocpp::v201::PhaseEnum::L3);
-            sampled_value.value = power_meter.energy_Wh_import.L3.value();
+            sampled_value.value = power_meter.VAR.value().L3.value();
             if (power_meter.VAR_signed.has_value()) {
                 const auto& VAR_signed = power_meter.VAR_signed.value();
                 if (VAR_signed.L3.has_value()) {
