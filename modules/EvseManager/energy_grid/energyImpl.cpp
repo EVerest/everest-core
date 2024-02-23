@@ -327,7 +327,11 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
                 auto seconds_left = std::chrono::duration_cast<std::chrono::seconds>(mod->random_delay_end_time -
                                                                                      std::chrono::steady_clock::now())
                                         .count();
-                mod->p_random_delay->publish_countdown_s(seconds_left);
+                types::uk_random_delay::CountDown c;
+                c.countdown_s = seconds_left;
+                c.current_limit_after_delay_A = enforced_limit;
+                c.current_limit_during_delay_A = limit_when_random_delay_started;
+                mod->p_random_delay->publish_countdown(c);
                 EVLOG_debug << "Random delay running, " << seconds_left
                             << "s left. Applying the limit before the random delay (" << limit_when_random_delay_started
                             << "A) instead of requested limit (" << enforced_limit << "A)";
@@ -335,7 +339,11 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
                     EVLOG_info << "UK Smart Charging regulations: Random delay elapsed.";
                 }
             } else {
-                mod->p_random_delay->publish_countdown_s(0);
+                types::uk_random_delay::CountDown c;
+                c.countdown_s = 0;
+                c.current_limit_after_delay_A = enforced_limit;
+                c.current_limit_during_delay_A = limit_when_random_delay_started;
+                mod->p_random_delay->publish_countdown(c);
             }
         }
 

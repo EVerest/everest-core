@@ -190,9 +190,9 @@ void SessionInfo::set_latest_total_w(double latest_total_w) {
     this->latest_total_w = latest_total_w;
 }
 
-void SessionInfo::set_uk_random_delay_remaining(int seconds_remaining) {
+void SessionInfo::set_uk_random_delay_remaining(const types::uk_random_delay::CountDown& cd) {
     std::lock_guard<std::mutex> lock(this->session_info_mutex);
-    this->uk_random_delay_remaining_s = seconds_remaining;
+    this->uk_random_delay_remaining = cd;
 }
 
 static void to_json(json& j, const SessionInfo::Error& e) {
@@ -220,8 +220,12 @@ SessionInfo::operator std::string() {
                                       {"latest_total_w", this->latest_total_w},
                                       {"charging_duration_s", charging_duration_s.count()},
                                       {"datetime", Everest::Date::to_rfc3339(now)}});
-    if (uk_random_delay_remaining_s > 0) {
-        session_info["uk_random_delay_remaining_s"] = uk_random_delay_remaining_s;
+    if (uk_random_delay_remaining.countdown_s > 0) {
+        json random_delay =
+            json::object({{"remaining_s", uk_random_delay_remaining.countdown_s},
+                          {"current_limit_after_delay_A", uk_random_delay_remaining.current_limit_after_delay_A},
+                          {"current_limit_during_delay_A", uk_random_delay_remaining.current_limit_during_delay_A}});
+        session_info["uk_random_delay"] = random_delay;
     }
 
     return session_info.dump();
@@ -436,8 +440,9 @@ void API::init() {
         for (auto& random_delay : this->r_random_delay) {
             if (random_delay->module_id == evse->module_id) {
 
-                random_delay->subscribe_countdown_s(
-                    [&session_info](int s) { session_info->set_uk_random_delay_remaining(s); });
+                random_delay->subscribe_countdown([&session_info](const types::uk_random_delay::CountDown& s) {
+                    session_info->set_uk_random_delay_remaining(s);
+                });
 
                 std::string cmd_uk_random_delay = cmd_base + "uk_random_delay";
                 this->mqtt.subscribe(cmd_uk_random_delay, [&random_delay](const std::string& data) {

@@ -18,6 +18,7 @@ cmds:
         description: Maximum duration in seconds
         type: integer
 vars:
-  countdown_s:
-    description: Countdown of the currently running random delay in seconds. If it is 0, no random delay is active.
-    type: integer
+  countdown:
+    description: Countdown of the currently running random delay
+    type: object
+    $ref: /uk_random_delay#/CountDown

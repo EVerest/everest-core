@@ -46,7 +46,11 @@ This variable is published every second and contains a json object with informat
         "state": "Unplugged",
         "active_permanent_faults": [],
         "active_errors": [],
-        "uk_random_delay_remaining_s": 320
+        "uk_random_delay": {
+            "remaining_s": 34,
+            "current_limit_after_delay_A": 16.0,
+            "current_limit_during_delay_A": 0.0
+        }
     }
 ```
 

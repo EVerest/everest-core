@@ -58,7 +58,7 @@ public:
     void set_end_energy_export_wh(int32_t end_energy_export_wh);
     void set_latest_energy_export_wh(int32_t latest_export_energy_wh);
     void set_latest_total_w(double latest_total_w);
-    void set_uk_random_delay_remaining(int seconds_remaining);
+    void set_uk_random_delay_remaining(const types::uk_random_delay::CountDown& c);
 
     /// \brief Converts this struct into a serialized json object
     operator std::string();
@@ -68,15 +68,15 @@ private:
 
     std::vector<Error> active_permanent_faults; ///< Array of currently active permanent faults that prevent charging
     std::vector<Error> active_errors;           ///< Array of currently active errors that do not prevent charging
-    int32_t start_energy_import_wh;         ///< Energy reading (import) at the beginning of this charging session in Wh
-    int32_t end_energy_import_wh;           ///< Energy reading (import) at the end of this charging session in Wh
-    int32_t start_energy_export_wh;         ///< Energy reading (export) at the beginning of this charging session in Wh
-    int32_t end_energy_export_wh;           ///< Energy reading (export) at the end of this charging session in Wh
-    int32_t uk_random_delay_remaining_s{0}; ///< Remaining time of a UK smart charging regs delay. Set to 0 if no delay
-                                            ///< is active
-    std::chrono::time_point<date::utc_clock> start_time_point; ///< Start of the charging session
-    std::chrono::time_point<date::utc_clock> end_time_point;   ///< End of the charging session
-    double latest_total_w;                                     ///< Latest total power reading in W
+    int32_t start_energy_import_wh; ///< Energy reading (import) at the beginning of this charging session in Wh
+    int32_t end_energy_import_wh;   ///< Energy reading (import) at the end of this charging session in Wh
+    int32_t start_energy_export_wh; ///< Energy reading (export) at the beginning of this charging session in Wh
+    int32_t end_energy_export_wh;   ///< Energy reading (export) at the end of this charging session in Wh
+    types::uk_random_delay::CountDown uk_random_delay_remaining; ///< Remaining time of a UK smart charging regs
+                                                                 ///< delay. Set to 0 if no delay is active
+    std::chrono::time_point<date::utc_clock> start_time_point;   ///< Start of the charging session
+    std::chrono::time_point<date::utc_clock> end_time_point;     ///< End of the charging session
+    double latest_total_w;                                       ///< Latest total power reading in W
 
     enum class State {
         Unknown,
