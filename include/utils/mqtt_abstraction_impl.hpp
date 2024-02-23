@@ -38,6 +38,9 @@ class MQTTAbstractionImpl {
 public:
     MQTTAbstractionImpl(const std::string& mqtt_server_address, const std::string& mqtt_server_port,
                         const std::string& mqtt_everest_prefix, const std::string& mqtt_external_prefix);
+    MQTTAbstractionImpl(const std::string& mqtt_server_socket_path, const std::string& mqtt_everest_prefix,
+                        const std::string& mqtt_external_prefix);
+
     ~MQTTAbstractionImpl();
 
     MQTTAbstractionImpl(MQTTAbstractionImpl const&) = delete;
@@ -104,7 +107,7 @@ public:
     static void publish_callback(void** unused, struct mqtt_response_publish* published);
 
 private:
-    static constexpr int mqtt_poll_timeout_ms{100};
+    static constexpr int mqtt_poll_timeout_ms{300000};
     bool mqtt_is_connected;
     std::map<std::string, MessageHandler> message_handlers;
     std::mutex handlers_mutex;
@@ -114,6 +117,7 @@ private:
 
     Thread mqtt_mainloop_thread;
 
+    std::string mqtt_server_socket_path;
     std::string mqtt_server_address;
     std::string mqtt_server_port;
     std::string mqtt_everest_prefix;
@@ -123,6 +127,7 @@ private:
     uint8_t recvbuf[MQTT_BUF_SIZE];
 
     static int open_nb_socket(const char* addr, const char* port);
+    bool connectBroker(std::string& socket_path);
     bool connectBroker(const char* host, const char* port);
     void on_mqtt_message(std::shared_ptr<Message> message);
     void on_mqtt_connect();

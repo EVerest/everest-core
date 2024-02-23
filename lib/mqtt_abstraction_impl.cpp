@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdio>
+#include <cstring>
 #include <sstream>
 #include <thread>
 
@@ -12,6 +13,7 @@
 #include <poll.h>
 #include <sys/eventfd.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/split.hpp>
@@ -23,7 +25,7 @@
 #include <utils/mqtt_abstraction_impl.hpp>
 
 namespace Everest {
-const auto mqtt_keep_alive = 400;
+const auto mqtt_keep_alive = 600;
 
 MessageWithQOS::MessageWithQOS(const std::string& topic, const std::string& payload, QOS qos) :
     Message(topic, payload), qos(qos) {
@@ -49,6 +51,25 @@ MQTTAbstractionImpl::MQTTAbstractionImpl(const std::string& mqtt_server_address,
     this->mqtt_client.publish_response_callback_state = &this->message_queue;
 }
 
+MQTTAbstractionImpl::MQTTAbstractionImpl(const std::string& mqtt_server_socket_path,
+                                         const std::string& mqtt_everest_prefix,
+                                         const std::string& mqtt_external_prefix) :
+    message_queue(([this](std::shared_ptr<Message> message) { this->on_mqtt_message(message); })),
+    mqtt_server_socket_path(mqtt_server_socket_path),
+    mqtt_everest_prefix(mqtt_everest_prefix),
+    mqtt_external_prefix(mqtt_external_prefix),
+    mqtt_client{},
+    sendbuf{},
+    recvbuf{} {
+    BOOST_LOG_FUNCTION();
+
+    EVLOG_debug << "Initializing MQTT abstraction layer...";
+
+    this->mqtt_is_connected = false;
+
+    this->mqtt_client.publish_response_callback_state = &this->message_queue;
+}
+
 MQTTAbstractionImpl::~MQTTAbstractionImpl() {
     // FIXME (aw): verify that disconnecting is thread-safe!
     if (this->mqtt_is_connected) {
@@ -60,9 +81,14 @@ MQTTAbstractionImpl::~MQTTAbstractionImpl() {
 bool MQTTAbstractionImpl::connect() {
     BOOST_LOG_FUNCTION();
 
-    EVLOG_debug << fmt::format("Connecting to MQTT broker: {}:{}", this->mqtt_server_address, this->mqtt_server_port);
-
-    return connectBroker(this->mqtt_server_address.c_str(), this->mqtt_server_port.c_str());
+    if (!this->mqtt_server_socket_path.empty()) {
+        EVLOG_debug << fmt::format("Connecting to MQTT broker: {}", this->mqtt_server_socket_path);
+        return connectBroker(this->mqtt_server_socket_path);
+    } else {
+        EVLOG_debug << fmt::format("Connecting to MQTT broker: {}:{}", this->mqtt_server_address,
+                                   this->mqtt_server_port);
+        return connectBroker(this->mqtt_server_address.c_str(), this->mqtt_server_port.c_str());
+    }
 }
 
 void MQTTAbstractionImpl::disconnect() {
@@ -178,12 +204,23 @@ std::future<void> MQTTAbstractionImpl::spawn_main_loop_thread() {
                 auto retval = ::poll(pollfds, 2, mqtt_poll_timeout_ms);
 
                 if (retval >= 0) {
-                    // check for write notification and reset it
-                    if (pollfds[1].revents & POLLIN) {
-                        // FIXME (aw): check for failure
-                        eventfd_read(this->event_fd, &eventfd_buffer);
+                    // data available to send (the notifier writes, we should be ready to read)
+                    if (retval > 0) {
+                        // check for write notification and reset it
+                        if (pollfds[1].revents & POLLIN) {
+                            // FIXME (aw): check for failure
+                            eventfd_read(this->event_fd, &eventfd_buffer);
+                        }
                     }
 
+                    if (retval == 0) {
+                        // nothing to send or receive however, need to send the keep alive message
+                        // otherwise the brocker will disconnect the client
+                        // mqtt_sync might send this automatically but ocasionally might miss it
+                        mqtt_ping(&this->mqtt_client);
+                    }
+
+                    // send and receive messages
                     MQTTErrors error = mqtt_sync(&this->mqtt_client);
                     if (error != MQTT_OK) {
                         EVLOG_error << fmt::format("Error during MQTT sync: {}", mqtt_error_str(error));
@@ -192,6 +229,8 @@ std::future<void> MQTTAbstractionImpl::spawn_main_loop_thread() {
 
                         return;
                     }
+                } else {
+                    // probably we got hit by a signal, nothing to do, just reloop
                 }
             }
         } catch (boost::exception& e) {
@@ -375,6 +414,65 @@ void MQTTAbstractionImpl::unregister_handler(const std::string& topic, const Tok
 
     const std::string handler_count = (number_of_handlers == 0) ? "None" : std::to_string(number_of_handlers);
     EVLOG_debug << fmt::format("#handler[{}] = {}", topic, handler_count);
+}
+
+bool MQTTAbstractionImpl::connectBroker(std::string& socket_path) {
+    BOOST_LOG_FUNCTION();
+
+    /* open the non-blocking TCP socket (connecting to the broker) */
+    mqtt_socket_fd = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (mqtt_socket_fd == -1) {
+        EVLOG_error << fmt::format("Failed to open socket: {}", strerror(errno));
+        return false;
+    }
+
+    // Initialize the address structure
+    struct sockaddr_un addr;
+    memset(&addr, 0, sizeof(struct sockaddr_un));
+    addr.sun_family = AF_UNIX;
+    if (socket_path.size() > (sizeof(addr.sun_path) - 1)) {
+        EVLOG_error << fmt::format("the given path for the unix domain socket: {} is too big", socket_path);
+        close(mqtt_socket_fd);
+        return false;
+    }
+    // no need to set the terminating null due to memset
+    std::strncpy(addr.sun_path, socket_path.c_str(), sizeof(addr.sun_path) - 1);
+
+    // make non-blocking
+    auto retval = fcntl(mqtt_socket_fd, F_SETFL,
+                        fcntl(mqtt_socket_fd, F_GETFL) | O_NONBLOCK); // NOLINT: We have no good alternative to fcntl
+    if (retval != 0) {
+        EVLOG_error << fmt::format("Failed to set nonblock for unix domain socket: {}", socket_path);
+        close(mqtt_socket_fd);
+        return false;
+    }
+
+    // conect the socket
+    if (::connect(mqtt_socket_fd, reinterpret_cast<struct sockaddr*>(&addr), sizeof(struct sockaddr_un)) == -1) {
+        EVLOG_error << fmt::format("Failed to connect to unix domain socket: {}", socket_path);
+        close(mqtt_socket_fd);
+        return false;
+    }
+
+    this->event_fd = eventfd(0, 0);
+    if (this->event_fd == -1) {
+        close(this->mqtt_socket_fd);
+        EVLOG_error << "Could not setup eventfd for mqttc io";
+        return false;
+    }
+
+    mqtt_init(&this->mqtt_client, mqtt_socket_fd, static_cast<uint8_t*>(this->sendbuf), sizeof(this->sendbuf),
+              static_cast<uint8_t*>(this->recvbuf), sizeof(this->recvbuf), MQTTAbstractionImpl::publish_callback);
+    uint8_t connect_flags = MQTT_CONNECT_CLEAN_SESSION;
+    /* Send connection request to the broker. */
+    if (mqtt_connect(&this->mqtt_client, nullptr, nullptr, nullptr, 0, nullptr, nullptr, connect_flags,
+                     mqtt_keep_alive) == MQTT_OK) {
+        // TODO(kai): async?
+        on_mqtt_connect();
+        return true;
+    }
+
+    return false;
 }
 
 bool MQTTAbstractionImpl::connectBroker(const char* host, const char* port) {

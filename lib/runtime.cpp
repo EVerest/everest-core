@@ -265,9 +265,24 @@ RuntimeSettings::RuntimeSettings(const std::string& prefix_, const std::string& 
         controller_rpc_timeout_ms = defaults::CONTROLLER_RPC_TIMEOUT_MS;
     }
 
+    // Unix Domain Socket configuration MUST be set in the configuration,
+    // doesn't have a default value if not provided thus it takes precedence
+    // over default values - this is to have backward compatiblity in term of configuration
+    // in case both UDS (Unix Domain Sockets) and IDS (Internet Domain Sockets) are set in config, raise exception
+    const auto settings_mqtt_broker_socket_path = settings.find("mqtt_broker_socket_path");
+    if (settings_mqtt_broker_socket_path != settings.end()) {
+        mqtt_broker_socket_path = settings_mqtt_broker_socket_path->get<std::string>();
+    }
+
     const auto settings_mqtt_broker_host_it = settings.find("mqtt_broker_host");
     if (settings_mqtt_broker_host_it != settings.end()) {
         mqtt_broker_host = settings_mqtt_broker_host_it->get<std::string>();
+        if (!mqtt_broker_socket_path.empty()) {
+            // invalid configuration, can't have both UDS and IDS
+            throw BootException(
+                fmt::format("Setting both the Unix Domain Socket {} and Internet Domain Socket {} in config is invalid",
+                            mqtt_broker_socket_path, mqtt_broker_host));
+        }
     } else {
         mqtt_broker_host = defaults::MQTT_BROKER_HOST;
     }
@@ -277,6 +292,13 @@ RuntimeSettings::RuntimeSettings(const std::string& prefix_, const std::string& 
     const char* mqtt_server_address = std::getenv("MQTT_SERVER_ADDRESS");
     if (mqtt_server_address != nullptr) {
         mqtt_broker_host = mqtt_server_address;
+        if (!mqtt_broker_socket_path.empty()) {
+            // invalid configuration, can't have both UDS and IDS
+            throw BootException(
+                fmt::format("Setting both the Unix Domain Socket {} and Internet Domain Socket {} in "
+                            "config and as environment variable respectivelly (as MQTT_SERVER_ADDRESS) is not allowed",
+                            mqtt_broker_socket_path, mqtt_broker_host));
+        }
     }
 
     const auto settings_mqtt_broker_port_it = settings.find("mqtt_broker_port");
@@ -385,16 +407,20 @@ int ModuleLoader::initialize() {
         }
         Logging::update_process_name(module_identifier);
 
-        auto everest =
-            Everest(this->module_id, config, rs->validate_schema, rs->mqtt_broker_host, rs->mqtt_broker_port,
-                    rs->mqtt_everest_prefix, rs->mqtt_external_prefix, rs->telemetry_prefix, rs->telemetry_enabled);
+        auto everest = Everest(this->module_id, config, rs->validate_schema, rs->mqtt_broker_socket_path,
+                               rs->mqtt_broker_host, rs->mqtt_broker_port, rs->mqtt_everest_prefix,
+                               rs->mqtt_external_prefix, rs->telemetry_prefix, rs->telemetry_enabled);
 
         // module import
         EVLOG_debug << fmt::format("Initializing module {}...", module_identifier);
 
         if (!everest.connect()) {
-            EVLOG_error << fmt::format("Cannot connect to MQTT broker at {}:{}", rs->mqtt_broker_host,
-                                       rs->mqtt_broker_port);
+            if (rs->mqtt_broker_socket_path.empty()) {
+                EVLOG_error << fmt::format("Cannot connect to MQTT broker at {}:{}", rs->mqtt_broker_host,
+                                           rs->mqtt_broker_port);
+            } else {
+                EVLOG_error << fmt::format("Cannot connect to MQTT broker socket at {}", rs->mqtt_broker_socket_path);
+            }
             return 1;
         }
 

@@ -6,11 +6,17 @@
 #include <utils/mqtt_abstraction_impl.hpp>
 
 namespace Everest {
-MQTTAbstraction::MQTTAbstraction(const std::string& mqtt_server_address, const std::string& mqtt_server_port,
-                                 const std::string& mqtt_everest_prefix, const std::string& mqtt_external_prefix) :
-    mqtt_abstraction(std::make_unique<MQTTAbstractionImpl>(mqtt_server_address, mqtt_server_port, mqtt_everest_prefix,
-                                                           mqtt_external_prefix)) {
+MQTTAbstraction::MQTTAbstraction(const std::string& mqtt_server_socket_path, const std::string& mqtt_server_address,
+                                 const std::string& mqtt_server_port, const std::string& mqtt_everest_prefix,
+                                 const std::string& mqtt_external_prefix) {
     EVLOG_debug << "initialized mqtt_abstraction";
+    if (mqtt_server_socket_path.empty()) {
+        mqtt_abstraction = std::make_unique<MQTTAbstractionImpl>(mqtt_server_address, mqtt_server_port,
+                                                                 mqtt_everest_prefix, mqtt_external_prefix);
+    } else {
+        mqtt_abstraction =
+            std::make_unique<MQTTAbstractionImpl>(mqtt_server_socket_path, mqtt_everest_prefix, mqtt_external_prefix);
+    }
 }
 
 MQTTAbstraction::~MQTTAbstraction() = default;

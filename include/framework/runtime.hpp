@@ -74,6 +74,7 @@ inline constexpr auto WWW_DIR = "www";
 
 inline constexpr auto CONTROLLER_PORT = 8849;
 inline constexpr auto CONTROLLER_RPC_TIMEOUT_MS = 2000;
+inline constexpr auto MQTT_BROKER_SOCKET_PATH = "/tmp/mqtt_broker.sock";
 inline constexpr auto MQTT_BROKER_HOST = "localhost";
 inline constexpr auto MQTT_BROKER_PORT = 1883;
 inline constexpr auto MQTT_EVEREST_PREFIX = "everest";
@@ -109,6 +110,7 @@ struct RuntimeSettings {
     fs::path www_dir;
     int controller_port;
     int controller_rpc_timeout_ms;
+    std::string mqtt_broker_socket_path;
     std::string mqtt_broker_host;
     int mqtt_broker_port;
     std::string mqtt_everest_prefix;

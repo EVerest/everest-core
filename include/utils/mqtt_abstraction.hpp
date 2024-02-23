@@ -20,8 +20,9 @@ class MQTTAbstractionImpl;
 ///
 class MQTTAbstraction {
 public:
-    MQTTAbstraction(const std::string& mqtt_server_address, const std::string& mqtt_server_port,
-                    const std::string& mqtt_everest_prefix, const std::string& mqtt_external_prefix);
+    MQTTAbstraction(const std::string& mqtt_server_socket_path, const std::string& mqtt_server_address,
+                    const std::string& mqtt_server_port, const std::string& mqtt_everest_prefix,
+                    const std::string& mqtt_external_prefix);
 
     // forbid copy assignment and copy construction
     MQTTAbstraction(MQTTAbstraction const&) = delete;

@@ -492,7 +492,11 @@ int boot(const po::variables_map& vm) {
     EVLOG_info << fmt::format(TERMINAL_STYLE_BLUE, " |______|   \\/ \\___|_|  \\___||___/\\__|");
     EVLOG_info << "";
 
-    EVLOG_info << "Using MQTT broker " << rs->mqtt_broker_host << ":" << rs->mqtt_broker_port;
+    if (rs->mqtt_broker_socket_path.empty()) {
+        EVLOG_info << "Using MQTT broker " << rs->mqtt_broker_host << ":" << rs->mqtt_broker_port;
+    } else {
+        EVLOG_info << "Using MQTT broker unix domain sockets:" << rs->mqtt_broker_socket_path;
+    }
     if (rs->telemetry_enabled) {
         EVLOG_info << "Telemetry enabled";
     }
@@ -588,12 +592,17 @@ int boot(const po::variables_map& vm) {
     // create StatusFifo object
     auto status_fifo = StatusFifo::create_from_path(vm["status-fifo"].as<std::string>());
 
-    auto mqtt_abstraction = MQTTAbstraction(rs->mqtt_broker_host, std::to_string(rs->mqtt_broker_port),
-                                            rs->mqtt_everest_prefix, rs->mqtt_external_prefix);
+    auto mqtt_abstraction =
+        MQTTAbstraction(rs->mqtt_broker_socket_path, rs->mqtt_broker_host, std::to_string(rs->mqtt_broker_port),
+                        rs->mqtt_everest_prefix, rs->mqtt_external_prefix);
 
     if (!mqtt_abstraction.connect()) {
-        EVLOG_error << fmt::format("Cannot connect to MQTT broker at {}:{}", rs->mqtt_broker_host,
-                                   rs->mqtt_broker_port);
+        if (rs->mqtt_broker_socket_path.empty()) {
+            EVLOG_error << fmt::format("Cannot connect to MQTT broker at {}:{}", rs->mqtt_broker_host,
+                                       rs->mqtt_broker_port);
+        } else {
+            EVLOG_error << fmt::format("Cannot connect to MQTT broker socket at {}", rs->mqtt_broker_socket_path);
+        }
         return EXIT_FAILURE;
     }
 
