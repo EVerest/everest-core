@@ -1,7 +1,7 @@
 ---
 everest-framework:
   git: https://github.com/EVerest/everest-framework.git
-  git_tag: v0.9.0
+  git_tag: v0.10.1
   options: ["BUILD_TESTING OFF"]
 sigslot:
   git: https://github.com/palacaze/sigslot
@@ -12,7 +12,7 @@ sigslot:
     - "SIGSLOT_COMPILE_TESTS OFF"
 libmodbus:
   git: https://github.com/EVerest/libmodbus.git
-  git_tag: v0.3.0
+  git_tag: v0.3.1
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBMODBUS"
 libsunspec:
   git: https://github.com/EVerest/libsunspec.git
@@ -49,7 +49,7 @@ libcurl:
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: c9827c5
+  git_tag: v0.9.8
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:
@@ -79,7 +79,7 @@ everest-utils:
 # setting it here can be misleading since it does not affect the version being used
 libevse-security:
   git: https://github.com/EVerest/libevse-security.git
-  git_tag: 69410a8
+  git_tag: v0.4.3
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBEVSE_SECURITY"
 # unit testing
 gtest:
