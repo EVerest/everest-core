@@ -50,7 +50,9 @@ RunApplication::RunApplication() :
     sae_password_called(false),
     key_mgmt_called(false),
     scan_ssid_called(false),
-    key_mgmt_value() {
+    ieee80211w_called(false),
+    key_mgmt_value(),
+    ieee80211w_value() {
     active_p = this;
 }
 
@@ -72,6 +74,9 @@ module::CmdOutput RunApplication::run_application(const std::string& name, std::
         } else if (args[4] == "key_mgmt") {
             key_mgmt_called = true;
             key_mgmt_value = args[5];
+        } else if (args[4] == "ieee80211w") {
+            ieee80211w_called = true;
+            ieee80211w_value = args[5];
         } else if (args[4] == "scan_ssid") {
             scan_ssid_called = true;
         }

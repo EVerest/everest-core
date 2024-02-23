@@ -155,6 +155,20 @@ bool WpaCliSetup::set_network(const std::string& interface, int network_id, cons
      * - psk with hex digits (PreSharedKey) doesn't work
      */
 
+    /*
+     * From wpa_supplicant/hostapd
+     * ieee80211w: Whether management frame protection (MFP) is enabled
+     * 0 = disabled (default)
+     * 1 = optional
+     * 2 = required
+     * The most common configuration options for this based on the PMF (protected
+     * management frames) certification program are:
+     * PMF enabled: ieee80211w=1 and wpa_key_mgmt=WPA-EAP WPA-EAP-SHA256
+     * PMF required: ieee80211w=2 and wpa_key_mgmt=WPA-EAP-SHA256
+     * (and similarly for WPA-PSK and WPA-PSK-SHA256 if WPA2-Personal is used)
+     * WPA3-Personal-only mode: ieee80211w=2 and wpa_key_mgmt=SAE
+     */
+
     constexpr std::uint8_t wpa2_psk_size = 64U;
 
     if (!is_wifi_interface(interface)) {
@@ -168,6 +182,7 @@ bool WpaCliSetup::set_network(const std::string& interface, int network_id, cons
 
     const char* key_mgt = nullptr;
     const char* psk_name = nullptr;
+    const char* ieee80211w = nullptr;
 
     switch (mode) {
     case network_security_t::none:
@@ -180,6 +195,7 @@ bool WpaCliSetup::set_network(const std::string& interface, int network_id, cons
     case network_security_t::wpa3_only:
         key_mgt = "SAE";
         psk_name = "sae_password";
+        ieee80211w = "2";
         break;
     case network_security_t::wpa2_and_wpa3:
     default:
@@ -191,9 +207,11 @@ bool WpaCliSetup::set_network(const std::string& interface, int network_id, cons
             // WPA2 doesn't support passphrases > 63 characters
             key_mgt = "SAE";
             psk_name = "sae_password";
+            ieee80211w = "2";
         } else {
             key_mgt = "WPA-PSK WPA-PSK-SHA256 SAE";
             psk_name = "psk";
+            ieee80211w = "1";
         }
         break;
     }
@@ -209,6 +227,11 @@ bool WpaCliSetup::set_network(const std::string& interface, int network_id, cons
 
     if (output.exit_code == 0) {
         output = run_application(wpa_cli, {"-i", interface, "set_network", network_id_string, "key_mgmt", key_mgt});
+    }
+
+    if ((output.exit_code == 0) && (ieee80211w != nullptr)) {
+        output =
+            run_application(wpa_cli, {"-i", interface, "set_network", network_id_string, "ieee80211w", ieee80211w});
     }
 
     if (hidden && (output.exit_code == 0)) {
