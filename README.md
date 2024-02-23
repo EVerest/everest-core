@@ -1,7 +1,11 @@
 # C++ implementation of OCPP
 ![Github Actions](https://github.com/EVerest/libocpp/actions/workflows/build_and_test.yaml/badge.svg)
 
-This is a C++ library implementation of OCPP for version 1.6 (https://www.openchargealliance.org/protocols/ocpp-16/) and 2.0.1 (https://www.openchargealliance.org/protocols/ocpp-201/). It enables charging stations to communicate with cloud backends for remote control, monitoring and billing of charging processes.
+This is a C++ library implementation of OCPP for version 1.6 and 2.0.1
+(see [OCPP protocols at OCA website](https://openchargealliance.org/protocols/open-charge-point-protocol/)).
+
+It enables charging stations to communicate with cloud backends for remote
+control, monitoring and billing of charging processes.
 
 Libocpp can be used for the communication of one charging station and multiple EVSE using a single websocket connection.
 
