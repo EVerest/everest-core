@@ -149,7 +149,7 @@ void Charger::run_state_machine() {
             signal_state(shared_context.current_state);
         }
 
-        auto timeInCurrentState =
+        auto time_in_current_state =
             std::chrono::duration_cast<std::chrono::milliseconds>(now - internal_context.current_state_started).count();
 
         switch (shared_context.current_state) {
@@ -180,6 +180,7 @@ void Charger::run_state_machine() {
                 shared_context.hlc_allow_close_contactor = false;
                 shared_context.max_current_cable = 0;
                 shared_context.hlc_charging_terminate_pause = HlcTerminatePause::Unknown;
+                shared_context.legacy_wakeup_done = false;
                 pwm_off();
                 deauthorize_internal();
                 shared_context.transaction_active = false;
@@ -388,7 +389,7 @@ void Charger::run_state_machine() {
                 session_log.evse(false, "Enter T_step_EF");
                 pwm_F();
             }
-            if (timeInCurrentState >= T_STEP_EF) {
+            if (time_in_current_state >= T_STEP_EF) {
                 session_log.evse(false, "Exit T_step_EF");
                 if (internal_context.t_step_EF_return_pwm == 0.) {
                     pwm_off();
@@ -404,7 +405,7 @@ void Charger::run_state_machine() {
                 session_log.evse(false, "Enter T_step_X1");
                 pwm_off();
             }
-            if (timeInCurrentState >= T_STEP_X1) {
+            if (time_in_current_state >= T_STEP_X1) {
                 session_log.evse(false, "Exit T_step_X1");
                 if (internal_context.t_step_X1_return_pwm == 0.) {
                     pwm_off();
@@ -429,6 +430,8 @@ void Charger::run_state_machine() {
 
             // Wait here until all errors are cleared
             if (errors_prevent_charging_internal()) {
+                // reset the time counter for the wake-up sequence if we are blocked by errors
+                internal_context.current_state_started = now;
                 break;
             }
 
@@ -444,29 +447,29 @@ void Charger::run_state_machine() {
                 // In AC mode BASIC, iec_allow is sufficient.  The same is true for HLC mode when nominal PWM is used as
                 // the car can do BASIC and HLC charging any time. In AC HLC with 5 percent mode, we need to wait for
                 // both iec_allow and hlc_allow.
-                if ((shared_context.iec_allow_close_contactor and not hlc_use_5percent_current_session) or
-                    (shared_context.iec_allow_close_contactor and shared_context.hlc_allow_close_contactor and
-                     hlc_use_5percent_current_session)) {
 
-                    signal_simple_event(types::evse_manager::SessionEventEnum::ChargingStarted);
+                if (not power_available()) {
+                    shared_context.current_state = EvseState::WaitingForEnergy;
+                } else {
+                    // Power is available, PWM is already enabled. Check if we can go to charging
+                    if ((shared_context.iec_allow_close_contactor and not hlc_use_5percent_current_session) or
+                        (shared_context.iec_allow_close_contactor and shared_context.hlc_allow_close_contactor and
+                         hlc_use_5percent_current_session)) {
 
-                    if (power_available()) {
+                        signal_simple_event(types::evse_manager::SessionEventEnum::ChargingStarted);
                         shared_context.current_state = EvseState::Charging;
                     } else {
-                        shared_context.current_state = EvseState::Charging;
-                        pause_charging_wait_for_power_internal();
+                        // We have power and PWM is on, but EV did not proceed to state C yet (and/or HLC is not ready)
+                        if (not shared_context.hlc_charging_active and not shared_context.legacy_wakeup_done and
+                            time_in_current_state > LEGACY_WAKEUP_TIMEOUT) {
+                            session_log.evse(false, "EV did not transition to state C, trying one legacy wakeup "
+                                                    "according to IEC61851-1 A.5.3");
+                            shared_context.legacy_wakeup_done = true;
+                            internal_context.t_step_EF_return_state = EvseState::PrepareCharging;
+                            internal_context.t_step_EF_return_pwm = ampere_to_duty_cycle(get_max_current_internal());
+                            shared_context.current_state = EvseState::T_step_EF;
+                        }
                     }
-                }
-
-                if (not shared_context.hlc_charging_active and not shared_context.legacy_wakeup_done and
-                    timeInCurrentState > LEGACY_WAKEUP_TIMEOUT) {
-                    session_log.evse(
-                        false,
-                        "EV did not transition to state C, trying one legacy wakeup according to IEC61851-1 A.5.3");
-                    shared_context.legacy_wakeup_done = true;
-                    internal_context.t_step_EF_return_state = EvseState::PrepareCharging;
-                    internal_context.t_step_EF_return_pwm = ampere_to_duty_cycle(get_max_current_internal());
-                    shared_context.current_state = EvseState::T_step_EF;
                 }
             }
 
@@ -801,6 +804,9 @@ void Charger::process_cp_events_independent(CPEvent cp_event) {
     case CPEvent::EvseReplugFinished:
         shared_context.current_state = EvseState::WaitingForAuthentication;
         break;
+    case CPEvent::CarRequestedStopPower:
+        shared_context.iec_allow_close_contactor = false;
+        break;
     case CPEvent::CarUnplugged:
         if (not shared_context.hlc_charging_active) {
             shared_context.current_state = EvseState::StoppingCharging;
@@ -808,6 +814,7 @@ void Charger::process_cp_events_independent(CPEvent cp_event) {
             shared_context.current_state = EvseState::Finished;
         }
         break;
+
     default:
         break;
     }

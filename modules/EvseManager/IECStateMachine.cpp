@@ -71,7 +71,7 @@ const std::string cpevent_to_string(CPEvent e) {
 
 IECStateMachine::IECStateMachine(const std::unique_ptr<evse_board_supportIntf>& r_bsp) : r_bsp(r_bsp) {
     // feed the state machine whenever the timer expires
-    timeout_state_c1.signal_reached.connect(&IECStateMachine::feed_state_machine, this);
+    timeout_state_c1.signal_reached.connect(&IECStateMachine::feed_state_machine_no_thread, this);
 
     // Subscribe to bsp driver to receive BspEvents from the hardware
     r_bsp->subscribe_event([this](const types::board_support_common::BspEvent event) {
@@ -111,16 +111,18 @@ void IECStateMachine::process_bsp_event(const types::board_support_common::BspEv
 }
 
 void IECStateMachine::feed_state_machine() {
-    std::thread feed([this]() {
-        auto events = state_machine();
-
-        // Process all events
-        while (not events.empty()) {
-            signal_event(events.front());
-            events.pop();
-        }
-    });
+    std::thread feed([this]() { feed_state_machine_no_thread(); });
     feed.detach();
+}
+
+void IECStateMachine::feed_state_machine_no_thread() {
+    auto events = state_machine();
+
+    // Process all events
+    while (not events.empty()) {
+        signal_event(events.front());
+        events.pop();
+    }
 }
 
 // Main IEC state machine. Needs to be called whenever:
