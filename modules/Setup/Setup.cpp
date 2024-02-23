@@ -514,17 +514,24 @@ bool Setup::rfkill_block(std::string rfkill_id) {
 
 void Setup::publish_configured_networks() {
     auto network_devices = this->get_network_devices();
+
+    WpaCliSetup::WifiNetworkStatusList all_wifi_networks;
+
     for (auto device : network_devices) {
         if (!device.wireless) {
             continue;
         }
         WifiConfigureClass wifi;
         auto network_list = wifi.list_networks_status(device.interface);
-        std::string network_list_var = this->var_base + "configured_networks";
-        json configured_networks_json = json::array();
-        configured_networks_json = network_list;
-        this->mqtt.publish(network_list_var, configured_networks_json.dump());
+        for (auto& i : network_list) {
+            all_wifi_networks.push_back(std::move(i));
+        }
     }
+
+    std::string network_list_var = this->var_base + "configured_networks";
+    json configured_networks_json = json::array();
+    configured_networks_json = all_wifi_networks;
+    this->mqtt.publish(network_list_var, configured_networks_json.dump());
 }
 
 bool Setup::add_and_enable_network(const std::string& interface, const std::string& ssid, const std::string& psk,
