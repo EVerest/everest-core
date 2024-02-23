@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
 
-project(everest-evse_security VERSION 0.4.2
+project(everest-evse_security VERSION 0.4.3
         DESCRIPTION "Implementation of EVSE related security operations"
 		LANGUAGES CXX C
 )
@@ -14,6 +14,10 @@ option(${PROJECT_NAME}_BUILD_TESTING "Build unit tests, used if included as depe
 option(BUILD_TESTING "Build unit tests, used if standalone project" OFF)
 option(EVSE_SECURITY_INSTALL "Install the library (shared data might be installed anyway)" ${EVC_MAIN_PROJECT})
 option(USING_TPM2 "Include code for using OpenSSL 3 and the tpm2 provider" OFF)
+
+if((${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME} OR ${PROJECT_NAME}_BUILD_TESTING) AND BUILD_TESTING)
+    set(LIBEVSE_SECURITY_BUILD_TESTING ON)
+endif()
 
 if(USING_TPM2)
     # OpenSSL property string when using the default provider
@@ -39,7 +43,6 @@ option(LIBEVSE_CRYPTO_SUPPLIER_OPENSSL "Default OpenSSL cryptography supplier" O
 
 # dependencies
 find_package(OpenSSL REQUIRED)
-find_package(date)
 
 add_subdirectory(lib)
 
@@ -66,7 +69,7 @@ if (EVSE_SECURITY_INSTALL)
     )
 endif()
 
-if((${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME} OR ${PROJECT_NAME}_BUILD_TESTING) AND BUILD_TESTING)
+if(LIBEVSE_SECURITY_BUILD_TESTING)
     include(CTest)
     add_subdirectory(tests)
     set(CMAKE_BUILD_TYPE Debug)
