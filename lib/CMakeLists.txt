@@ -63,8 +63,26 @@ target_include_directories(ocpp
 
 #############
 # Logging configuration
+#
+# Set EVEREST_CUSTOM_LOGGING_LIBRARY to use a custom library.
+# Alternatively set EVEREST_CUSTOM_LOGGING_INCLUDE_PATH to use a custom header file.
+#
+# Both options need to make a header file available on path "everest/logging.hpp"
+#
+# To use the normal library, don't set any of these options.
+#
 #############
-if (EVEREST_CUSTOM_LOGGING_INCLUDE_PATH)
+if (EVEREST_CUSTOM_LOGGING_LIBRARY)
+    if(NOT TARGET ${EVEREST_CUSTOM_LOGGING_LIBRARY})
+        message(FATAL_ERROR "${EVEREST_CUSTOM_LOGGING_LIBRARY} is not a valid library")
+    else()
+        target_link_libraries(ocpp
+            PUBLIC
+            ${EVEREST_CUSTOM_LOGGING_LIBRARY}
+        )
+        message(STATUS "Using custom logging library: ${EVEREST_CUSTOM_LOGGING_LIBRARY}")
+    endif()
+elseif(EVEREST_CUSTOM_LOGGING_INCLUDE_PATH)
     if (NOT EXISTS "${EVEREST_CUSTOM_LOGGING_INCLUDE_PATH}/everest/logging.hpp")
         message(FATAL_ERROR "everest/logging.hpp not found in directory ${EVEREST_CUSTOM_LOGGING_INCLUDE_PATH}")
     else()
@@ -73,18 +91,16 @@ if (EVEREST_CUSTOM_LOGGING_INCLUDE_PATH)
             include
             ${EVEREST_CUSTOM_LOGGING_INCLUDE_PATH}
         )
+        message(STATUS "Using the following logging header: ${EVEREST_CUSTOM_LOGGING_INCLUDE_PATH}/everest/logging.hpp")
     endif()
-    message(STATUS "Using the following logging header: ${EVEREST_CUSTOM_LOGGING_INCLUDE_PATH}/everest/logging.hpp")
-endif()
-
-if (NOT EVEREST_CUSTOM_LOGGING_INCLUDE_PATH)    
+else()
     target_link_libraries(ocpp
         PUBLIC
         everest::log
     )
     message(STATUS "Using the default logging header")
 endif()
-   
+
 #############
 # End logging configuration
 #############
