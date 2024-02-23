@@ -28,6 +28,7 @@ WebsocketBase::WebsocketBase() :
 }
 
 WebsocketBase::~WebsocketBase() {
+    this->cancel_reconnect_timer();
 }
 
 void WebsocketBase::set_connection_options_base(const WebsocketConnectionOptions& connection_options) {
@@ -77,12 +78,18 @@ void WebsocketBase::disconnect(websocketpp::close::status::value code) {
         EVLOG_error << "Cannot disconnect a websocket that was not initialized";
         return;
     }
-    if (code == websocketpp::close::status::normal) {
-        this->shutting_down = true;
+
+    {
+        std::lock_guard<std::mutex> lk(this->reconnect_mutex);
+        if (code == websocketpp::close::status::normal) {
+            this->shutting_down = true;
+        }
+
+        if (this->reconnect_timer) {
+            this->reconnect_timer.get()->cancel();
+        }
     }
-    if (this->reconnect_timer) {
-        this->reconnect_timer.get()->cancel();
-    }
+
     if (this->ping_timer) {
         this->ping_timer->stop();
     }

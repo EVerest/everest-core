@@ -132,6 +132,7 @@ void WebsocketTLS::set_connection_options(const WebsocketConnectionOptions& conn
 
     this->connection_options.csms_uri.set_secure(true);
 }
+
 bool WebsocketTLS::connect() {
     if (!this->initialized()) {
         return false;
@@ -151,21 +152,23 @@ bool WebsocketTLS::connect() {
                                websocketpp::lib::placeholders::_1, this->connection_options.security_profile));
 
     this->reconnect_callback = [this](const websocketpp::lib::error_code& ec) {
-        EVLOG_info << "Reconnecting to TLS websocket at uri: " << this->connection_options.csms_uri.string()
-                   << " with security profile: " << this->connection_options.security_profile;
+        if (!this->shutting_down) {
+            EVLOG_info << "Reconnecting to TLS websocket at uri: " << this->connection_options.csms_uri.string()
+                       << " with security profile: " << this->connection_options.security_profile;
 
-        // close connection before reconnecting
-        if (this->m_is_connected) {
-            try {
-                EVLOG_info << "Closing websocket connection before reconnecting";
-                this->wss_client.close(this->handle, websocketpp::close::status::normal, "");
-            } catch (std::exception& e) {
-                EVLOG_error << "Error on TLS close: " << e.what();
+            // close connection before reconnecting
+            if (this->m_is_connected) {
+                try {
+                    EVLOG_info << "Closing websocket connection before reconnecting";
+                    this->wss_client.close(this->handle, websocketpp::close::status::normal, "");
+                } catch (std::exception& e) {
+                    EVLOG_error << "Error on TLS close: " << e.what();
+                }
             }
-        }
 
-        this->cancel_reconnect_timer();
-        this->connect_tls();
+            this->cancel_reconnect_timer();
+            this->connect_tls();
+        }
     };
 
     this->connect_tls();

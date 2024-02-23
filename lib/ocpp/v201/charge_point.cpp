@@ -210,10 +210,8 @@ void ChargePoint::connect_websocket() {
 
 void ChargePoint::disconnect_websocket(websocketpp::close::status::value code) {
     if (this->websocket != nullptr) {
-        if (this->websocket->is_connected()) {
-            this->disable_automatic_websocket_reconnects = true;
-            this->websocket->disconnect(code);
-        }
+        this->disable_automatic_websocket_reconnects = true;
+        this->websocket->disconnect(code);
     }
 }
 
