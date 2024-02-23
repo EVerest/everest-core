@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
-#include <RunApplicationStub.hpp>
+#include "RunApplicationStub.hpp"
 #include <gtest/gtest.h>
 
 #include <utility>
@@ -47,8 +47,12 @@ RunApplication::RunApplication() :
     }),
     signal_poll_called(false),
     psk_called(false),
+    sae_password_called(false),
     key_mgmt_called(false),
-    scan_ssid_called(false) {
+    scan_ssid_called(false),
+    ieee80211w_called(false),
+    key_mgmt_value(),
+    ieee80211w_value() {
     active_p = this;
 }
 
@@ -65,8 +69,14 @@ module::CmdOutput RunApplication::run_application(const std::string& name, std::
     } else if (args[2] == "set_network") {
         if (args[4] == "psk") {
             psk_called = true;
+        } else if (args[4] == "sae_password") {
+            sae_password_called = true;
         } else if (args[4] == "key_mgmt") {
             key_mgmt_called = true;
+            key_mgmt_value = args[5];
+        } else if (args[4] == "ieee80211w") {
+            ieee80211w_called = true;
+            ieee80211w_value = args[5];
         } else if (args[4] == "scan_ssid") {
             scan_ssid_called = true;
         }

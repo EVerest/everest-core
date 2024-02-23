@@ -1,12 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#include <RunApplicationStub.hpp>
+#include "RunApplicationStub.hpp"
 #include <WiFiSetup.hpp>
 #include <gtest/gtest.h>
 
 namespace {
+using namespace module;
+constexpr const char* example_psk = "e3003974af901976485f3e655b455791dcc20a5380f42a7839de3bfdc9d70d71";
+constexpr const char* example_password = "LetMeIn2";
+constexpr const char* example_long_password = "e3003974af901976485f3e655b455791dcc20a5380f42a7839de3bfdc9d70d71X";
 
-class WpaCliSetupTest : public module::WpaCliSetup {
+class WpaCliSetupTest : public WpaCliSetup {
 public:
     // override to support testing
     virtual bool is_wifi_interface(const std::string& interface) override {
@@ -41,19 +45,192 @@ TEST(add_network, access_point) {
 
 //-----------------------------------------------------------------------------
 // set_network()
+TEST(set_network, none_no_psk) {
+    stub::RunApplication ra;
+    WpaCliSetupTest obj;
+    ASSERT_TRUE(obj.set_network("wlan0", 0, "PlusnetWireless", "", WpaCliSetup::network_security_t::none, false));
+    ASSERT_FALSE(ra.psk_called);
+    ASSERT_FALSE(ra.sae_password_called);
+    ASSERT_FALSE(ra.ieee80211w_called);
+    ASSERT_TRUE(ra.key_mgmt_called);
+    ASSERT_EQ(ra.key_mgmt_value, "NONE");
+    ASSERT_FALSE(ra.scan_ssid_called);
+}
+
+TEST(set_network, none_psk) {
+    stub::RunApplication ra;
+    WpaCliSetupTest obj;
+    ASSERT_TRUE(
+        obj.set_network("wlan0", 0, "PlusnetWireless", example_psk, WpaCliSetup::network_security_t::none, false));
+    ASSERT_FALSE(ra.psk_called);
+    ASSERT_FALSE(ra.sae_password_called);
+    ASSERT_FALSE(ra.ieee80211w_called);
+    ASSERT_TRUE(ra.key_mgmt_called);
+    ASSERT_EQ(ra.key_mgmt_value, "NONE");
+    ASSERT_FALSE(ra.scan_ssid_called);
+}
+
+TEST(set_network, none_password) {
+    stub::RunApplication ra;
+    WpaCliSetupTest obj;
+    ASSERT_TRUE(
+        obj.set_network("wlan0", 0, "PlusnetWireless", example_password, WpaCliSetup::network_security_t::none, false));
+    ASSERT_FALSE(ra.psk_called);
+    ASSERT_FALSE(ra.sae_password_called);
+    ASSERT_FALSE(ra.ieee80211w_called);
+    ASSERT_TRUE(ra.key_mgmt_called);
+    ASSERT_EQ(ra.key_mgmt_value, "NONE");
+    ASSERT_FALSE(ra.scan_ssid_called);
+}
+
+TEST(set_network, wpa2_no_psk) {
+    stub::RunApplication ra;
+    WpaCliSetupTest obj;
+    ASSERT_TRUE(obj.set_network("wlan0", 0, "PlusnetWireless", "", WpaCliSetup::network_security_t::wpa2_only, false));
+    ASSERT_FALSE(ra.psk_called);
+    ASSERT_FALSE(ra.sae_password_called);
+    ASSERT_FALSE(ra.ieee80211w_called);
+    ASSERT_TRUE(ra.key_mgmt_called);
+    ASSERT_EQ(ra.key_mgmt_value, "NONE");
+    ASSERT_FALSE(ra.scan_ssid_called);
+}
+
+TEST(set_network, wpa2_psk) {
+    stub::RunApplication ra;
+    WpaCliSetupTest obj;
+    ASSERT_TRUE(
+        obj.set_network("wlan0", 0, "PlusnetWireless", example_psk, WpaCliSetup::network_security_t::wpa2_only, false));
+    ASSERT_TRUE(ra.psk_called);
+    ASSERT_FALSE(ra.sae_password_called);
+    ASSERT_FALSE(ra.ieee80211w_called);
+    ASSERT_TRUE(ra.key_mgmt_called);
+    ASSERT_EQ(ra.key_mgmt_value, "WPA-PSK");
+    ASSERT_FALSE(ra.scan_ssid_called);
+}
+
+TEST(set_network, wpa2_password) {
+    stub::RunApplication ra;
+    WpaCliSetupTest obj;
+    ASSERT_TRUE(obj.set_network("wlan0", 0, "PlusnetWireless", example_password,
+                                WpaCliSetup::network_security_t::wpa2_only, false));
+    ASSERT_TRUE(ra.psk_called);
+    ASSERT_FALSE(ra.sae_password_called);
+    ASSERT_FALSE(ra.ieee80211w_called);
+    ASSERT_TRUE(ra.key_mgmt_called);
+    ASSERT_EQ(ra.key_mgmt_value, "WPA-PSK");
+    ASSERT_FALSE(ra.scan_ssid_called);
+}
+
+TEST(set_network, wpa3_no_psk) {
+    stub::RunApplication ra;
+    WpaCliSetupTest obj;
+    ASSERT_TRUE(obj.set_network("wlan0", 0, "PlusnetWireless", "", WpaCliSetup::network_security_t::wpa3_only, false));
+    ASSERT_FALSE(ra.psk_called);
+    ASSERT_FALSE(ra.sae_password_called);
+    ASSERT_FALSE(ra.ieee80211w_called);
+    ASSERT_TRUE(ra.key_mgmt_called);
+    ASSERT_EQ(ra.key_mgmt_value, "NONE");
+    ASSERT_FALSE(ra.scan_ssid_called);
+}
+
+TEST(set_network, wpa3_psk) {
+    stub::RunApplication ra;
+    WpaCliSetupTest obj;
+    ASSERT_TRUE(
+        obj.set_network("wlan0", 0, "PlusnetWireless", example_psk, WpaCliSetup::network_security_t::wpa3_only, false));
+    ASSERT_FALSE(ra.psk_called);
+    ASSERT_TRUE(ra.sae_password_called);
+    ASSERT_TRUE(ra.ieee80211w_called);
+    ASSERT_EQ(ra.ieee80211w_value, "2");
+    ASSERT_TRUE(ra.key_mgmt_called);
+    ASSERT_EQ(ra.key_mgmt_value, "SAE");
+    ASSERT_FALSE(ra.scan_ssid_called);
+}
+
+TEST(set_network, wpa3_password) {
+    stub::RunApplication ra;
+    WpaCliSetupTest obj;
+    ASSERT_TRUE(obj.set_network("wlan0", 0, "PlusnetWireless", example_password,
+                                WpaCliSetup::network_security_t::wpa3_only, false));
+    ASSERT_FALSE(ra.psk_called);
+    ASSERT_TRUE(ra.sae_password_called);
+    ASSERT_TRUE(ra.key_mgmt_called);
+    ASSERT_TRUE(ra.ieee80211w_called);
+    ASSERT_EQ(ra.ieee80211w_value, "2");
+    ASSERT_EQ(ra.key_mgmt_value, "SAE");
+    ASSERT_FALSE(ra.scan_ssid_called);
+}
+
+TEST(set_network, wpa2_and_wpa3_no_psk) {
+    stub::RunApplication ra;
+    WpaCliSetupTest obj;
+    ASSERT_TRUE(
+        obj.set_network("wlan0", 0, "PlusnetWireless", "", WpaCliSetup::network_security_t::wpa2_and_wpa3, false));
+    ASSERT_FALSE(ra.psk_called);
+    ASSERT_FALSE(ra.sae_password_called);
+    ASSERT_FALSE(ra.ieee80211w_called);
+    ASSERT_TRUE(ra.key_mgmt_called);
+    ASSERT_EQ(ra.key_mgmt_value, "NONE");
+    ASSERT_FALSE(ra.scan_ssid_called);
+}
+
+TEST(set_network, wpa2_and_wpa3_psk) {
+    // with a PSK result is same as wpa2_only
+    stub::RunApplication ra;
+    WpaCliSetupTest obj;
+    ASSERT_TRUE(obj.set_network("wlan0", 0, "PlusnetWireless", example_psk,
+                                WpaCliSetup::network_security_t::wpa2_and_wpa3, false));
+    ASSERT_TRUE(ra.psk_called);
+    ASSERT_FALSE(ra.sae_password_called);
+    ASSERT_FALSE(ra.ieee80211w_called);
+    ASSERT_TRUE(ra.key_mgmt_called);
+    ASSERT_EQ(ra.key_mgmt_value, "WPA-PSK");
+    ASSERT_FALSE(ra.scan_ssid_called);
+}
+
+TEST(set_network, wpa2_and_wpa3_password) {
+    // configure for both
+    stub::RunApplication ra;
+    WpaCliSetupTest obj;
+    ASSERT_TRUE(obj.set_network("wlan0", 0, "PlusnetWireless", example_password,
+                                WpaCliSetup::network_security_t::wpa2_and_wpa3, false));
+    ASSERT_TRUE(ra.psk_called);
+    ASSERT_FALSE(ra.sae_password_called);
+    ASSERT_TRUE(ra.ieee80211w_called);
+    ASSERT_EQ(ra.ieee80211w_value, "1");
+    ASSERT_TRUE(ra.key_mgmt_called);
+    ASSERT_EQ(ra.key_mgmt_value, "WPA-PSK WPA-PSK-SHA256 SAE");
+    ASSERT_FALSE(ra.scan_ssid_called);
+}
+
+TEST(set_network, wpa2_and_wpa3_password_long) {
+    // configure for WPA3 only
+    stub::RunApplication ra;
+    WpaCliSetupTest obj;
+    ASSERT_TRUE(obj.set_network("wlan0", 0, "PlusnetWireless", example_long_password,
+                                WpaCliSetup::network_security_t::wpa2_and_wpa3, false));
+    ASSERT_FALSE(ra.psk_called);
+    ASSERT_TRUE(ra.sae_password_called);
+    ASSERT_TRUE(ra.ieee80211w_called);
+    ASSERT_EQ(ra.ieee80211w_value, "2");
+    ASSERT_TRUE(ra.key_mgmt_called);
+    ASSERT_EQ(ra.key_mgmt_value, "SAE");
+    ASSERT_FALSE(ra.scan_ssid_called);
+}
+
 TEST(set_network, wpa2) {
     stub::RunApplication ra;
     WpaCliSetupTest obj;
-    ASSERT_TRUE(obj.set_network("wlan0", 0, "PlusnetWireless", "LetMeIn2"));
+    ASSERT_TRUE(obj.set_network("wlan0", 0, "PlusnetWireless", "LetMeIn2", false));
     ASSERT_TRUE(ra.psk_called);
-    ASSERT_FALSE(ra.key_mgmt_called);
+    ASSERT_TRUE(ra.key_mgmt_called);
     ASSERT_FALSE(ra.scan_ssid_called);
 }
 
 TEST(set_network, open) {
     stub::RunApplication ra;
     WpaCliSetupTest obj;
-    ASSERT_TRUE(obj.set_network("wlan0", 0, "OpenNet", ""));
+    ASSERT_TRUE(obj.set_network("wlan0", 0, "OpenNet", "", false));
     ASSERT_FALSE(ra.psk_called);
     ASSERT_TRUE(ra.key_mgmt_called);
     ASSERT_FALSE(ra.scan_ssid_called);
@@ -64,7 +241,7 @@ TEST(set_network, hidden_wpa2) {
     WpaCliSetupTest obj;
     ASSERT_TRUE(obj.set_network("wlan0", 0, "Hidden", "LetMeIn3", true));
     ASSERT_TRUE(ra.psk_called);
-    ASSERT_FALSE(ra.key_mgmt_called);
+    ASSERT_TRUE(ra.key_mgmt_called);
     ASSERT_TRUE(ra.scan_ssid_called);
 }
 

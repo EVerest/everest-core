@@ -11,34 +11,41 @@ namespace module {
 
 class WpaCliSetup {
 public:
-    typedef std::vector<std::string> flags_t;
+    using flags_t = std::vector<std::string>;
+
+    enum class network_security_t : std::uint8_t {
+        none,
+        wpa2_only,
+        wpa3_only,
+        wpa2_and_wpa3,
+    };
 
     struct WifiScan {
         std::string bssid;
         std::string ssid;
+        flags_t flags;
         int frequency;
         int signal_level;
-        flags_t flags;
     };
-    typedef std::vector<WifiScan> WifiScanList;
+    using WifiScanList = std::vector<WifiScan>;
 
     struct WifiNetworkStatus {
         std::string interface;
-        int network_id;
         std::string ssid;
-        bool connected;
+        int network_id;
         int signal_level;
+        bool connected;
     };
-    typedef std::vector<WifiNetworkStatus> WifiNetworkStatusList;
+    using WifiNetworkStatusList = std::vector<WifiNetworkStatus>;
 
     struct WifiNetwork {
-        int network_id;
         std::string ssid;
+        int network_id;
     };
-    typedef std::vector<WifiNetwork> WifiNetworkList;
+    using WifiNetworkList = std::vector<WifiNetwork>;
 
-    typedef std::map<std::string, std::string> Status;
-    typedef std::map<std::string, std::string> Poll;
+    using Status = std::map<std::string, std::string>;
+    using Poll = std::map<std::string, std::string>;
 
 protected:
     virtual bool do_scan(const std::string& interface);
@@ -48,11 +55,14 @@ protected:
     virtual flags_t parse_flags(const std::string& flags);
 
 public:
-    virtual ~WpaCliSetup() {
-    }
+    virtual ~WpaCliSetup() = default;
     virtual int add_network(const std::string& interface);
     virtual bool set_network(const std::string& interface, int network_id, const std::string& ssid,
-                             const std::string& psk, bool hidden = false);
+                             const std::string& psk, network_security_t mode, bool hidden);
+    virtual bool set_network(const std::string& interface, int network_id, const std::string& ssid,
+                             const std::string& psk, bool hidden) {
+        return set_network(interface, network_id, ssid, psk, network_security_t::wpa2_and_wpa3, hidden);
+    }
     virtual bool enable_network(const std::string& interface, int network_id);
     virtual bool disable_network(const std::string& interface, int network_id);
     virtual bool select_network(const std::string& interface, int network_id);
