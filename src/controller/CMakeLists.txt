@@ -38,6 +38,8 @@ target_link_libraries(controller
         everest::log
 
         ryml::ryml
+
+        ${STD_FILESYSTEM_COMPAT_LIB}
 )
 
 target_compile_features(controller PRIVATE cxx_std_17)

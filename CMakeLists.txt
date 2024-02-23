@@ -40,6 +40,13 @@ pkg_check_modules(libcap
     libcap
 )
 
+# Make sure stdc++fs is linked for GCC < 9
+if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9)
+    set(STD_FILESYSTEM_COMPAT_LIB "stdc++fs")
+else()
+    set(STD_FILESYSTEM_COMPAT_LIB "")
+endif()
+
 if(NOT DISABLE_EDM)
     evc_setup_edm()
 

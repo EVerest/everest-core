@@ -57,6 +57,7 @@ target_link_libraries(framework
         fmt::fmt
 
         everest::log
+        ${STD_FILESYSTEM_COMPAT_LIB}
     PRIVATE
         Boost::system
         Boost::thread
