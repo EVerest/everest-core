@@ -123,32 +123,80 @@ ocpp::v201::SampledValue get_sampled_value(const ocpp::v201::ReadingContextEnum&
     return sampled_value;
 }
 
+ocpp::v201::SignedMeterValue get_signed_meter_value(const types::units_signed::SignedMeterValue& signed_meter_value) {
+    ocpp::v201::SignedMeterValue ocpp_signed_meter_value;
+    ocpp_signed_meter_value.signedMeterData = signed_meter_value.signed_meter_data;
+    ocpp_signed_meter_value.signingMethod = signed_meter_value.signing_method;
+    ocpp_signed_meter_value.encodingMethod = signed_meter_value.encoding_method;
+    ocpp_signed_meter_value.publicKey = signed_meter_value.public_key.value_or("");
+
+    return ocpp_signed_meter_value;
+}
+
 ocpp::v201::MeterValue get_meter_value(const types::powermeter::Powermeter& power_meter,
-                                       const ocpp::v201::ReadingContextEnum& reading_context) {
+                                       const ocpp::v201::ReadingContextEnum& reading_context,
+                                       const std::optional<types::units_signed::SignedMeterValue> signed_meter_value) {
     ocpp::v201::MeterValue meter_value;
     meter_value.timestamp = ocpp::DateTime(power_meter.timestamp);
 
-    // Energy.Active.Import.Register
+    // signed_meter_value is intended for OCMF style blobs of signed meter value reports during transaction start or end
+    // This is interpreted as Energy.Active.Import.Register
     ocpp::v201::SampledValue sampled_value = get_sampled_value(
         reading_context, ocpp::v201::MeasurandEnum::Energy_Active_Import_Register, "Wh", std::nullopt);
     sampled_value.value = power_meter.energy_Wh_import.total;
+    // add signedMeterValue if present
+    if (signed_meter_value.has_value()) {
+        sampled_value.signedMeterValue = get_signed_meter_value(signed_meter_value.value());
+    }
     meter_value.sampledValue.push_back(sampled_value);
+
+    // individual signed meter values can be provided by the power_meter itself
+
+    // Energy.Active.Import.Register
+    if (power_meter.energy_Wh_import_signed.has_value()) {
+        sampled_value = get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Energy_Active_Import_Register,
+                                          "Wh", std::nullopt);
+        const auto& energy_Wh_import_signed = power_meter.energy_Wh_import_signed.value();
+        if (energy_Wh_import_signed.total.has_value()) {
+            sampled_value.signedMeterValue = get_signed_meter_value(energy_Wh_import_signed.total.value());
+        }
+        meter_value.sampledValue.push_back(sampled_value);
+    }
+
     if (power_meter.energy_Wh_import.L1.has_value()) {
         sampled_value = get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Energy_Active_Import_Register,
                                           "Wh", ocpp::v201::PhaseEnum::L1);
         sampled_value.value = power_meter.energy_Wh_import.L1.value();
+        if (power_meter.energy_Wh_import_signed.has_value()) {
+            const auto& energy_Wh_import_signed = power_meter.energy_Wh_import_signed.value();
+            if (energy_Wh_import_signed.L1.has_value()) {
+                sampled_value.signedMeterValue = get_signed_meter_value(energy_Wh_import_signed.L1.value());
+            }
+        }
         meter_value.sampledValue.push_back(sampled_value);
     }
     if (power_meter.energy_Wh_import.L2.has_value()) {
         sampled_value = get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Energy_Active_Import_Register,
                                           "Wh", ocpp::v201::PhaseEnum::L2);
         sampled_value.value = power_meter.energy_Wh_import.L2.value();
+        if (power_meter.energy_Wh_import_signed.has_value()) {
+            const auto& energy_Wh_import_signed = power_meter.energy_Wh_import_signed.value();
+            if (energy_Wh_import_signed.L2.has_value()) {
+                sampled_value.signedMeterValue = get_signed_meter_value(energy_Wh_import_signed.L2.value());
+            }
+        }
         meter_value.sampledValue.push_back(sampled_value);
     }
     if (power_meter.energy_Wh_import.L3.has_value()) {
         sampled_value = get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Energy_Active_Import_Register,
                                           "Wh", ocpp::v201::PhaseEnum::L3);
         sampled_value.value = power_meter.energy_Wh_import.L3.value();
+        if (power_meter.energy_Wh_import_signed.has_value()) {
+            const auto& energy_Wh_import_signed = power_meter.energy_Wh_import_signed.value();
+            if (energy_Wh_import_signed.L3.has_value()) {
+                sampled_value.signedMeterValue = get_signed_meter_value(energy_Wh_import_signed.L3.value());
+            }
+        }
         meter_value.sampledValue.push_back(sampled_value);
     }
 
@@ -157,23 +205,47 @@ ocpp::v201::MeterValue get_meter_value(const types::powermeter::Powermeter& powe
         auto sampled_value = get_sampled_value(
             reading_context, ocpp::v201::MeasurandEnum::Energy_Active_Export_Register, "Wh", std::nullopt);
         sampled_value.value = power_meter.energy_Wh_export.value().total;
+        if (power_meter.energy_Wh_export_signed.has_value()) {
+            const auto& energy_Wh_export_signed = power_meter.energy_Wh_export_signed.value();
+            if (energy_Wh_export_signed.total.has_value()) {
+                sampled_value.signedMeterValue = get_signed_meter_value(energy_Wh_export_signed.total.value());
+            }
+        }
         meter_value.sampledValue.push_back(sampled_value);
         if (power_meter.energy_Wh_export.value().L1.has_value()) {
             sampled_value = get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Energy_Active_Export_Register,
                                               "Wh", ocpp::v201::PhaseEnum::L1);
-            sampled_value.value = power_meter.energy_Wh_import.L1.value();
+            sampled_value.value = power_meter.energy_Wh_export.value().L1.value();
+            if (power_meter.energy_Wh_export_signed.has_value()) {
+                const auto& energy_Wh_export_signed = power_meter.energy_Wh_export_signed.value();
+                if (energy_Wh_export_signed.L1.has_value()) {
+                    sampled_value.signedMeterValue = get_signed_meter_value(energy_Wh_export_signed.L1.value());
+                }
+            }
             meter_value.sampledValue.push_back(sampled_value);
         }
         if (power_meter.energy_Wh_export.value().L2.has_value()) {
             sampled_value = get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Energy_Active_Export_Register,
                                               "Wh", ocpp::v201::PhaseEnum::L2);
-            sampled_value.value = power_meter.energy_Wh_import.L2.value();
+            sampled_value.value = power_meter.energy_Wh_export.value().L2.value();
+            if (power_meter.energy_Wh_export_signed.has_value()) {
+                const auto& energy_Wh_export_signed = power_meter.energy_Wh_export_signed.value();
+                if (energy_Wh_export_signed.L2.has_value()) {
+                    sampled_value.signedMeterValue = get_signed_meter_value(energy_Wh_export_signed.L2.value());
+                }
+            }
             meter_value.sampledValue.push_back(sampled_value);
         }
         if (power_meter.energy_Wh_export.value().L3.has_value()) {
             sampled_value = get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Energy_Active_Export_Register,
                                               "Wh", ocpp::v201::PhaseEnum::L3);
-            sampled_value.value = power_meter.energy_Wh_import.L3.value();
+            sampled_value.value = power_meter.energy_Wh_export.value().L3.value();
+            if (power_meter.energy_Wh_export_signed.has_value()) {
+                const auto& energy_Wh_export_signed = power_meter.energy_Wh_export_signed.value();
+                if (energy_Wh_export_signed.L3.has_value()) {
+                    sampled_value.signedMeterValue = get_signed_meter_value(energy_Wh_export_signed.L3.value());
+                }
+            }
             meter_value.sampledValue.push_back(sampled_value);
         }
     }
@@ -183,23 +255,47 @@ ocpp::v201::MeterValue get_meter_value(const types::powermeter::Powermeter& powe
         auto sampled_value =
             get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Power_Active_Import, "W", std::nullopt);
         sampled_value.value = power_meter.power_W.value().total;
+        if (power_meter.power_W_signed.has_value()) {
+            const auto& power_W_signed = power_meter.power_W_signed.value();
+            if (power_W_signed.total.has_value()) {
+                sampled_value.signedMeterValue = get_signed_meter_value(power_W_signed.total.value());
+            }
+        }
         meter_value.sampledValue.push_back(sampled_value);
         if (power_meter.power_W.value().L1.has_value()) {
             sampled_value = get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Power_Active_Import, "W",
                                               ocpp::v201::PhaseEnum::L1);
-            sampled_value.value = power_meter.energy_Wh_import.L1.value();
+            sampled_value.value = power_meter.power_W.value().L1.value();
+            if (power_meter.power_W_signed.has_value()) {
+                const auto& power_W_signed = power_meter.power_W_signed.value();
+                if (power_W_signed.L1.has_value()) {
+                    sampled_value.signedMeterValue = get_signed_meter_value(power_W_signed.L1.value());
+                }
+            }
             meter_value.sampledValue.push_back(sampled_value);
         }
         if (power_meter.power_W.value().L2.has_value()) {
             sampled_value = get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Power_Active_Import, "W",
                                               ocpp::v201::PhaseEnum::L2);
-            sampled_value.value = power_meter.energy_Wh_import.L2.value();
+            sampled_value.value = power_meter.power_W.value().L2.value();
+            if (power_meter.power_W_signed.has_value()) {
+                const auto& power_W_signed = power_meter.power_W_signed.value();
+                if (power_W_signed.L2.has_value()) {
+                    sampled_value.signedMeterValue = get_signed_meter_value(power_W_signed.L2.value());
+                }
+            }
             meter_value.sampledValue.push_back(sampled_value);
         }
         if (power_meter.power_W.value().L3.has_value()) {
             sampled_value = get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Power_Active_Import, "W",
                                               ocpp::v201::PhaseEnum::L3);
-            sampled_value.value = power_meter.energy_Wh_import.L3.value();
+            sampled_value.value = power_meter.power_W.value().L3.value();
+            if (power_meter.power_W_signed.has_value()) {
+                const auto& power_W_signed = power_meter.power_W_signed.value();
+                if (power_W_signed.L3.has_value()) {
+                    sampled_value.signedMeterValue = get_signed_meter_value(power_W_signed.L3.value());
+                }
+            }
             meter_value.sampledValue.push_back(sampled_value);
         }
     }
@@ -209,23 +305,47 @@ ocpp::v201::MeterValue get_meter_value(const types::powermeter::Powermeter& powe
         auto sampled_value =
             get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Power_Reactive_Import, "var", std::nullopt);
         sampled_value.value = power_meter.VAR.value().total;
+        if (power_meter.VAR_signed.has_value()) {
+            const auto& VAR_signed = power_meter.VAR_signed.value();
+            if (VAR_signed.total.has_value()) {
+                sampled_value.signedMeterValue = get_signed_meter_value(VAR_signed.total.value());
+            }
+        }
         meter_value.sampledValue.push_back(sampled_value);
         if (power_meter.VAR.value().L1.has_value()) {
             sampled_value = get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Power_Reactive_Import, "var",
                                               ocpp::v201::PhaseEnum::L1);
-            sampled_value.value = power_meter.energy_Wh_import.L1.value();
+            sampled_value.value = power_meter.VAR.value().L1.value();
+            if (power_meter.VAR_signed.has_value()) {
+                const auto& VAR_signed = power_meter.VAR_signed.value();
+                if (VAR_signed.L1.has_value()) {
+                    sampled_value.signedMeterValue = get_signed_meter_value(VAR_signed.L1.value());
+                }
+            }
             meter_value.sampledValue.push_back(sampled_value);
         }
         if (power_meter.VAR.value().L2.has_value()) {
             sampled_value = get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Power_Reactive_Import, "var",
                                               ocpp::v201::PhaseEnum::L2);
-            sampled_value.value = power_meter.energy_Wh_import.L2.value();
+            sampled_value.value = power_meter.VAR.value().L2.value();
+            if (power_meter.VAR_signed.has_value()) {
+                const auto& VAR_signed = power_meter.VAR_signed.value();
+                if (VAR_signed.L2.has_value()) {
+                    sampled_value.signedMeterValue = get_signed_meter_value(VAR_signed.L2.value());
+                }
+            }
             meter_value.sampledValue.push_back(sampled_value);
         }
         if (power_meter.VAR.value().L3.has_value()) {
             sampled_value = get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Power_Reactive_Import, "var",
                                               ocpp::v201::PhaseEnum::L3);
-            sampled_value.value = power_meter.energy_Wh_import.L3.value();
+            sampled_value.value = power_meter.VAR.value().L3.value();
+            if (power_meter.VAR_signed.has_value()) {
+                const auto& VAR_signed = power_meter.VAR_signed.value();
+                if (VAR_signed.L3.has_value()) {
+                    sampled_value.signedMeterValue = get_signed_meter_value(VAR_signed.L3.value());
+                }
+            }
             meter_value.sampledValue.push_back(sampled_value);
         }
     }
@@ -238,30 +358,60 @@ ocpp::v201::MeterValue get_meter_value(const types::powermeter::Powermeter& powe
             sampled_value = get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Current_Import, "A",
                                               ocpp::v201::PhaseEnum::L1);
             sampled_value.value = power_meter.current_A.value().L1.value();
+            if (power_meter.current_A_signed.has_value()) {
+                const auto& current_A_signed = power_meter.current_A_signed.value();
+                if (current_A_signed.L1.has_value()) {
+                    sampled_value.signedMeterValue = get_signed_meter_value(current_A_signed.L1.value());
+                }
+            }
             meter_value.sampledValue.push_back(sampled_value);
         }
         if (power_meter.current_A.value().L2.has_value()) {
             sampled_value = get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Current_Import, "A",
                                               ocpp::v201::PhaseEnum::L2);
             sampled_value.value = power_meter.current_A.value().L2.value();
+            if (power_meter.current_A_signed.has_value()) {
+                const auto& current_A_signed = power_meter.current_A_signed.value();
+                if (current_A_signed.L2.has_value()) {
+                    sampled_value.signedMeterValue = get_signed_meter_value(current_A_signed.L2.value());
+                }
+            }
             meter_value.sampledValue.push_back(sampled_value);
         }
         if (power_meter.current_A.value().L3.has_value()) {
             sampled_value = get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Current_Import, "A",
                                               ocpp::v201::PhaseEnum::L3);
             sampled_value.value = power_meter.current_A.value().L3.value();
+            if (power_meter.current_A_signed.has_value()) {
+                const auto& current_A_signed = power_meter.current_A_signed.value();
+                if (current_A_signed.L3.has_value()) {
+                    sampled_value.signedMeterValue = get_signed_meter_value(current_A_signed.L3.value());
+                }
+            }
             meter_value.sampledValue.push_back(sampled_value);
         }
         if (power_meter.current_A.value().DC.has_value()) {
             sampled_value =
                 get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Current_Import, "A", std::nullopt);
             sampled_value.value = power_meter.current_A.value().DC.value();
+            if (power_meter.current_A_signed.has_value()) {
+                const auto& current_A_signed = power_meter.current_A_signed.value();
+                if (current_A_signed.DC.has_value()) {
+                    sampled_value.signedMeterValue = get_signed_meter_value(current_A_signed.DC.value());
+                }
+            }
             meter_value.sampledValue.push_back(sampled_value);
         }
         if (power_meter.current_A.value().N.has_value()) {
             sampled_value = get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Current_Import, "A",
                                               ocpp::v201::PhaseEnum::N);
             sampled_value.value = power_meter.current_A.value().N.value();
+            if (power_meter.current_A_signed.has_value()) {
+                const auto& current_A_signed = power_meter.current_A_signed.value();
+                if (current_A_signed.N.has_value()) {
+                    sampled_value.signedMeterValue = get_signed_meter_value(current_A_signed.N.value());
+                }
+            }
             meter_value.sampledValue.push_back(sampled_value);
         }
     }
@@ -272,23 +422,47 @@ ocpp::v201::MeterValue get_meter_value(const types::powermeter::Powermeter& powe
             sampled_value = get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Voltage, "V",
                                               ocpp::v201::PhaseEnum::L1_N);
             sampled_value.value = power_meter.voltage_V.value().L1.value();
+            if (power_meter.voltage_V_signed.has_value()) {
+                const auto& voltage_V_signed = power_meter.voltage_V_signed.value();
+                if (voltage_V_signed.L1.has_value()) {
+                    sampled_value.signedMeterValue = get_signed_meter_value(voltage_V_signed.L1.value());
+                }
+            }
             meter_value.sampledValue.push_back(sampled_value);
         }
         if (power_meter.voltage_V.value().L2.has_value()) {
             sampled_value = get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Voltage, "V",
                                               ocpp::v201::PhaseEnum::L2_N);
             sampled_value.value = power_meter.voltage_V.value().L2.value();
+            if (power_meter.voltage_V_signed.has_value()) {
+                const auto& voltage_V_signed = power_meter.voltage_V_signed.value();
+                if (voltage_V_signed.L2.has_value()) {
+                    sampled_value.signedMeterValue = get_signed_meter_value(voltage_V_signed.L2.value());
+                }
+            }
             meter_value.sampledValue.push_back(sampled_value);
         }
         if (power_meter.voltage_V.value().L3.has_value()) {
             sampled_value = get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Voltage, "V",
                                               ocpp::v201::PhaseEnum::L3_N);
             sampled_value.value = power_meter.voltage_V.value().L3.value();
+            if (power_meter.voltage_V_signed.has_value()) {
+                const auto& voltage_V_signed = power_meter.voltage_V_signed.value();
+                if (voltage_V_signed.L3.has_value()) {
+                    sampled_value.signedMeterValue = get_signed_meter_value(voltage_V_signed.L3.value());
+                }
+            }
             meter_value.sampledValue.push_back(sampled_value);
         }
         if (power_meter.voltage_V.value().DC.has_value()) {
             sampled_value = get_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Voltage, "V", std::nullopt);
             sampled_value.value = power_meter.voltage_V.value().DC.value();
+            if (power_meter.voltage_V_signed.has_value()) {
+                const auto& voltage_V_signed = power_meter.voltage_V_signed.value();
+                if (voltage_V_signed.DC.has_value()) {
+                    sampled_value.signedMeterValue = get_signed_meter_value(voltage_V_signed.DC.value());
+                }
+            }
             meter_value.sampledValue.push_back(sampled_value);
         }
     }
@@ -866,9 +1040,9 @@ void OCPP201::ready() {
                 const auto transaction_started = session_event.transaction_started.value();
                 const auto timestamp = ocpp::DateTime(transaction_started.timestamp);
                 const auto meter_value =
-                    get_meter_value(transaction_started.meter_value, ocpp::v201::ReadingContextEnum::Transaction_Begin);
+                    get_meter_value(transaction_started.meter_value, ocpp::v201::ReadingContextEnum::Transaction_Begin,
+                                    transaction_started.signed_meter_value);
                 const auto session_id = session_event.uuid;
-                const auto signed_meter_value = transaction_started.signed_meter_value;
                 const auto reservation_id = transaction_started.reservation_id;
                 const auto remote_start_id = transaction_started.id_tag.request_id;
 
@@ -904,8 +1078,11 @@ void OCPP201::ready() {
             case types::evse_manager::SessionEventEnum::TransactionFinished: {
                 const auto transaction_finished = session_event.transaction_finished.value();
                 const auto timestamp = ocpp::DateTime(transaction_finished.timestamp);
+                const auto signed_meter_value = transaction_finished.signed_meter_value;
+
                 const auto meter_value =
-                    get_meter_value(transaction_finished.meter_value, ocpp::v201::ReadingContextEnum::Transaction_End);
+                    get_meter_value(transaction_finished.meter_value, ocpp::v201::ReadingContextEnum::Transaction_End,
+                                    signed_meter_value);
                 ocpp::v201::ReasonEnum reason = ocpp::v201::ReasonEnum::Other;
 
                 if (transaction_finished.reason.has_value()) {
@@ -917,10 +1094,7 @@ void OCPP201::ready() {
                     id_token = get_id_token(transaction_finished.id_tag.value());
                 }
 
-                const auto signed_meter_value = transaction_finished.signed_meter_value;
-
-                this->charge_point->on_transaction_finished(evse_id, timestamp, meter_value, reason, id_token,
-                                                            signed_meter_value,
+                this->charge_point->on_transaction_finished(evse_id, timestamp, meter_value, reason, id_token, "",
                                                             ocpp::v201::ChargingStateEnum::EVConnected);
                 break;
             }
@@ -968,7 +1142,8 @@ void OCPP201::ready() {
         });
 
         evse->subscribe_powermeter([this, evse_id](const types::powermeter::Powermeter& power_meter) {
-            const auto meter_value = get_meter_value(power_meter, ocpp::v201::ReadingContextEnum::Sample_Periodic);
+            const auto meter_value = get_meter_value(power_meter, ocpp::v201::ReadingContextEnum::Sample_Periodic,
+                                                     power_meter.signed_meter_value);
             this->charge_point->on_meter_value(evse_id, meter_value);
         });
 
