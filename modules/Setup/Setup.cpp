@@ -100,13 +100,10 @@ void Setup::ready() {
 
     this->discover_network_thread = std::thread([this]() {
         while (true) {
-            if (wifi_scan_enabled) {
+            if ((this->config.setup_wifi) && (wifi_scan_enabled)) {
                 this->discover_network();
             }
             this->publish_hostname();
-            if (this->config.setup_wifi) {
-                this->publish_configured_networks();
-            }
             std::this_thread::sleep_for(std::chrono::seconds(5));
         }
     });
