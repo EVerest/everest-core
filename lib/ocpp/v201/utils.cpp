@@ -34,7 +34,7 @@ bool meter_value_has_any_measurand(const MeterValue& _meter_value, const std::ve
 }
 
 MeterValue get_meter_value_with_measurands_applied(const MeterValue& _meter_value,
-                                                   const std::vector<MeasurandEnum>& measurands) {
+                                                   const std::vector<MeasurandEnum>& measurands, bool include_signed) {
     auto meter_value = _meter_value;
     for (auto it = meter_value.sampledValue.begin(); it != meter_value.sampledValue.end();) {
         auto measurand = it->measurand;
@@ -42,18 +42,23 @@ MeterValue get_meter_value_with_measurands_applied(const MeterValue& _meter_valu
             if (std::find(measurands.begin(), measurands.end(), measurand.value()) == measurands.end()) {
                 it = meter_value.sampledValue.erase(it);
             } else {
+                if (not include_signed) {
+                    it->signedMeterValue.reset();
+                }
                 ++it;
             }
         } else {
             it = meter_value.sampledValue.erase(it);
         }
     }
+
     return meter_value;
 }
 
 std::vector<MeterValue> get_meter_values_with_measurands_applied(
     const std::vector<MeterValue>& meter_values, const std::vector<MeasurandEnum>& sampled_tx_ended_measurands,
-    const std::vector<MeasurandEnum>& aligned_tx_ended_measurands, ocpp::DateTime max_timestamp) {
+    const std::vector<MeasurandEnum>& aligned_tx_ended_measurands, ocpp::DateTime max_timestamp,
+    bool include_sampled_signed, bool include_aligned_signed) {
     std::vector<MeterValue> meter_values_result;
 
     for (const auto& meter_value : meter_values) {
@@ -73,15 +78,15 @@ std::vector<MeterValue> get_meter_values_with_measurands_applied(
         case ReadingContextEnum::Interruption_End:
         case ReadingContextEnum::Sample_Periodic:
             if (meter_value_has_any_measurand(meter_value, sampled_tx_ended_measurands)) {
-                meter_values_result.push_back(
-                    get_meter_value_with_measurands_applied(meter_value, sampled_tx_ended_measurands));
+                meter_values_result.push_back(get_meter_value_with_measurands_applied(
+                    meter_value, sampled_tx_ended_measurands, include_sampled_signed));
             }
             break;
 
         case ReadingContextEnum::Sample_Clock:
             if (meter_value_has_any_measurand(meter_value, aligned_tx_ended_measurands)) {
-                meter_values_result.push_back(
-                    get_meter_value_with_measurands_applied(meter_value, aligned_tx_ended_measurands));
+                meter_values_result.push_back(get_meter_value_with_measurands_applied(
+                    meter_value, aligned_tx_ended_measurands, include_aligned_signed));
             }
             break;
 

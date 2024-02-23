@@ -381,8 +381,10 @@ bool DatabaseHandler::transaction_metervalues_insert(const std::string& transact
     stmt.reset();
 
     std::string sql2 = "INSERT INTO METER_VALUE_ITEMS (METER_VALUE_ID, VALUE, MEASURAND, PHASE, LOCATION, CUSTOM_DATA, "
-                       "UNIT_CUSTOM_DATA, UNIT_TEXT, UNIT_MULTIPLIER) VALUES (@meter_value_id, @value, @measurand, "
-                       "@phase, @location, @custom_data, @unit_custom_data, @unit_text, @unit_multiplier);";
+                       "UNIT_CUSTOM_DATA, UNIT_TEXT, UNIT_MULTIPLIER, SIGNED_METER_DATA, SIGNING_METHOD, "
+                       "ENCODING_METHOD, PUBLIC_KEY) VALUES (@meter_value_id, @value, @measurand, "
+                       "@phase, @location, @custom_data, @unit_custom_data, @unit_text, @unit_multiplier, "
+                       "@signed_meter_data, @signing_method, @encoding_method, @public_key);";
 
     if (sqlite3_exec(this->db, "BEGIN TRANSACTION", NULL, NULL, &err_msg) != SQLITE_OK) {
         throw std::runtime_error("Could not begin transaction.");
@@ -427,6 +429,16 @@ bool DatabaseHandler::transaction_metervalues_insert(const std::string& transact
             if (unitOfMeasure.multiplier.has_value()) {
                 insert_stmt.bind_int("@unit_multiplier", unitOfMeasure.multiplier.value());
             }
+        }
+
+        if (item.signedMeterValue.has_value()) {
+            const auto& signedMeterValue = item.signedMeterValue.value();
+
+            insert_stmt.bind_text("@signed_meter_data", signedMeterValue.signedMeterData.get(),
+                                  SQLiteString::Transient);
+            insert_stmt.bind_text("@signing_method", signedMeterValue.signingMethod.get(), SQLiteString::Transient);
+            insert_stmt.bind_text("@encoding_method", signedMeterValue.encodingMethod.get(), SQLiteString::Transient);
+            insert_stmt.bind_text("@public_key", signedMeterValue.publicKey.get(), SQLiteString::Transient);
         }
 
         if (insert_stmt.step() != SQLITE_DONE) {
@@ -504,6 +516,17 @@ std::vector<MeterValue> DatabaseHandler::transaction_metervalues_get_all(const s
                     unit.multiplier = select_stmt2.column_int(8);
                 }
                 sampled_value.unitOfMeasure.emplace(unit);
+            }
+
+            if (select_stmt2.column_type(9) == SQLITE_TEXT and select_stmt2.column_type(10) == SQLITE_TEXT and
+                select_stmt2.column_type(11) == SQLITE_TEXT and select_stmt2.column_type(12) == SQLITE_TEXT) {
+                SignedMeterValue signed_meter_value;
+                signed_meter_value.signedMeterData = select_stmt2.column_text(9);
+                signed_meter_value.signingMethod = select_stmt2.column_text(10);
+                signed_meter_value.encodingMethod = select_stmt2.column_text(11);
+                signed_meter_value.publicKey = select_stmt2.column_text(12);
+
+                sampled_value.signedMeterValue.emplace(signed_meter_value);
             }
 
             value.sampledValue.push_back(std::move(sampled_value));
