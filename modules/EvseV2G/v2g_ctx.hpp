@@ -31,28 +31,28 @@ void v2g_ctx_init_charging_session(struct v2g_context* const ctx, bool is_connec
  * \param physicalValue is the struct of the physical value.
  * \param unit is the unit of the physical value.
  */
-void init_physical_value(struct iso1PhysicalValueType* const physicalValue, iso1unitSymbolType unit);
+void init_physical_value(struct iso2_PhysicalValueType* const physicalValue, iso2_unitSymbolType unit);
 
 /*!
- * \brief populate_physical_value This function fills all elements of a \c iso1PhysicalValueType struct regarding the
+ * \brief populate_physical_value This function fills all elements of a \c iso2_PhysicalValueType struct regarding the
  * parameter value and unit.
  * \param pv is pointer to the physical value struct
  * \param value is the physical value
  * \param unit is the unit of the physical value
  * \return Returns \c true if the convertion was succesfull, otherwise \c false.
  */
-bool populate_physical_value(struct iso1PhysicalValueType* pv, long long int value, iso1unitSymbolType unit);
+bool populate_physical_value(struct iso2_PhysicalValueType* pv, long long int value, iso2_unitSymbolType unit);
 
 /*!
- * \brief populate_physical_value_float This function fills all elements of a \c iso1PhysicalValueType struct from a
+ * \brief populate_physical_value_float This function fills all elements of a \c iso2_PhysicalValueType struct from a
  * json object.
  * \param pv is pointer to the physical value struct
  * \param value is the physical value
  * \param decimal_places is to determine the precision
  * \param unit is the unit of the physical value
  */
-void populate_physical_value_float(struct iso1PhysicalValueType* pv, float value, uint8_t decimal_places,
-                                   iso1unitSymbolType unit);
+void populate_physical_value_float(struct iso2_PhysicalValueType* pv, float value, uint8_t decimal_places,
+                                   iso2_unitSymbolType unit);
 
 /*!
  * \brief setMinPhysicalValue This function sets the minimum value of ASrcPhyValue and ADstPhyValue in ADstPhyValue.
@@ -61,7 +61,7 @@ void populate_physical_value_float(struct iso1PhysicalValueType* pv, float value
  * \param AIsUsed If AIsUsed is \c 0 ASrcPhyValue will be used to initialize ADstPhyValue and AIsUsed will be set to
  * \c 1. Can be set to \c NULL
  */
-void setMinPhysicalValue(struct iso1PhysicalValueType* ADstPhyValue, const struct iso1PhysicalValueType* ASrcPhyValue,
+void setMinPhysicalValue(struct iso2_PhysicalValueType* ADstPhyValue, const struct iso2_PhysicalValueType* ASrcPhyValue,
                          unsigned int* AIsUsed);
 
 /*!
@@ -122,15 +122,15 @@ void publish_DC_EVTargetVoltageCurrent(struct v2g_context* ctx, const float& v2g
 /*!
  * \brief publish_DC_EVRemainingTime This function publishes the DC_EVRemainingTime
  * \param ctx is a pointer of type \c v2g_context
- * \param iso1_dc_ev_remaining_time_to_full_soc is the EV remaining time to full soc
- * \param iso1_dc_ev_remaining_time_to_full_soc_is_used is set to \c true if used, otherwise \c false
- * \param iso1_dc_ev_remaining_time_to_bulk_soc is the EV remaining time to bulk soc
- * \param iso1_dc_ev_remaining_time_to_bulk_soc_is_used is set to \c true if used, otherwise \c false
+ * \param iso2_dc_ev_remaining_time_to_full_soc is the EV remaining time to full soc
+ * \param iso2_dc_ev_remaining_time_to_full_soc_is_used is set to \c true if used, otherwise \c false
+ * \param iso2_dc_ev_remaining_time_to_bulk_soc is the EV remaining time to bulk soc
+ * \param iso2_dc_ev_remaining_time_to_bulk_soc_is_used is set to \c true if used, otherwise \c false
  */
-void publish_DC_EVRemainingTime(struct v2g_context* ctx, const float& iso1_dc_ev_remaining_time_to_full_soc,
-                                const unsigned int& iso1_dc_ev_remaining_time_to_full_soc_is_used,
-                                const float& iso1_dc_ev_remaining_time_to_bulk_soc,
-                                const unsigned int& iso1_dc_ev_remaining_time_to_bulk_soc_is_used);
+void publish_DC_EVRemainingTime(struct v2g_context* ctx, const float& iso2_dc_ev_remaining_time_to_full_soc,
+                                const unsigned int& iso2_dc_ev_remaining_time_to_full_soc_is_used,
+                                const float& iso2_dc_ev_remaining_time_to_bulk_soc,
+                                const unsigned int& iso2_dc_ev_remaining_time_to_bulk_soc_is_used);
 
 /*!
  * \brief log_selected_energy_transfer_type This function logs the selected_energy_transfer_mode
@@ -145,7 +145,7 @@ void log_selected_energy_transfer_type(int selected_energy_transfer_mode);
  * \param parameter_set_id_len is the array length of parameter_set_id
  * \return Returns \c true if it was successful, otherwise \c false.
  */
-bool add_service_to_service_list(struct v2g_context* v2g_ctx, const struct iso1ServiceType& evse_service,
+bool add_service_to_service_list(struct v2g_context* v2g_ctx, const struct iso2_ServiceType& evse_service,
                                  const int16_t* parameter_set_id = NULL, uint8_t parameter_set_id_len = 0);
 
 /*!
@@ -154,7 +154,7 @@ bool add_service_to_service_list(struct v2g_context* v2g_ctx, const struct iso1S
  * \param parameterSetId is the parameter-set-ID which belongs to the service ID.
  * \param serviceId is the service ID. Currently only service ID 2 ("Certificate") supported.
  */
-void configure_parameter_set(struct iso1ServiceParameterListType* parameterSetList, int16_t parameterSetId,
+void configure_parameter_set(struct iso2_ServiceParameterListType* parameterSetList, int16_t parameterSetId,
                              uint16_t serviceId);
 
 #endif /* V2G_CTX_H */
