@@ -2,6 +2,7 @@
 // Copyright (C) 2023 chargebyte GmbH
 // Copyright (C) 2023 Contributors to EVerest
 
+#include <cbv2g/exi_v2gtp.h> //for V2GTP_HEADER_LENGTHs
 #include <inttypes.h>
 #include <math.h>
 #include <mbedtls/base64.h>
@@ -11,7 +12,6 @@
 #include <openv2g/EXITypes.h>
 #include <openv2g/iso1EXIDatatypes.h>
 #include <openv2g/iso1EXIDatatypesEncoder.h>
-#include <openv2g/v2gtp.h> //for V2GTP_HEADER_LENGTHs
 #include <openv2g/xmldsigEXIDatatypes.h>
 #include <openv2g/xmldsigEXIDatatypesEncoder.h>
 #include <stdio.h>
@@ -1096,7 +1096,7 @@ static enum v2g_event handle_iso_payment_service_selection(struct v2g_connection
     res->ResponseCode = (selected_services_found == false) ? iso1responseCodeType_FAILED_ServiceSelectionInvalid
                                                            : res->ResponseCode; // [V2G2-467]
     res->ResponseCode = (charge_service_found == false) ? iso1responseCodeType_FAILED_NoChargeServiceSelected
-                                                        : res->ResponseCode;    // [V2G2-804]
+                                                        : res->ResponseCode; // [V2G2-804]
 
     /* Check the current response code and check if no external error has occurred */
     next_event = (v2g_event)iso_validate_response_code(&res->ResponseCode, conn);
@@ -1912,7 +1912,7 @@ static enum v2g_event handle_iso_certificate_installation(struct v2g_connection*
     int rv = 0;
     /* At first, publish the received EV request message to the customer MQTT interface */
     if (publish_iso_certificate_installation_exi_req(conn->ctx, conn->buffer + V2GTP_HEADER_LENGTH,
-                                                     conn->stream.size - V2GTP_HEADER_LENGTH) == false) {
+                                                     conn->ov2g_stream.size - V2GTP_HEADER_LENGTH) == false) {
         dlog(DLOG_LEVEL_ERROR, "Failed to send CertificateInstallationExiReq");
         goto exit;
     }

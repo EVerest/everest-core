@@ -22,8 +22,10 @@
 #else
 #include <mbedtls/net_sockets.h>
 #endif
+#include <cbv2g/app_handshake/appHand_Datatypes.h>
+#include <cbv2g/common/exi_basetypes.h>
+#include <cbv2g/common/exi_bitstream.h>
 #include <openv2g/EXITypes.h>
-#include <openv2g/appHandEXIDatatypes.h>
 
 #undef EXIFragment_ServiceScope_CHARACTERS_SIZE // Needed because of redefinition warnings (v2g and din type include)
 #undef EXIFragment_Certificate_BYTES_SIZE
@@ -36,9 +38,9 @@
 #undef EXIFragment_OEMProvisioningCert_BYTES_SIZE
 #undef EXIFragment_EVCCID_BYTES_SIZE
 #undef EXIFragment_SigMeterReading_BYTES_SIZE
+#include <cbv2g/din/din_msgDefDatatypes.h>
 #include <event2/event.h>
 #include <event2/thread.h>
-#include <openv2g/dinEXIDatatypes.h>
 
 /* timeouts in milliseconds */
 #define V2G_SEQUENCE_TIMEOUT_60S              60000 /* [V2G2-443] et.al. */
@@ -336,7 +338,7 @@ struct v2g_context {
                                       // not change during a V2G Communication Session.
 
         union {
-            struct dinDC_EVStatusType din_dc_ev_status;
+            struct din_DC_EVStatusType din_dc_ev_status;
             struct iso1DC_EVStatusType iso1_dc_ev_status;
         };
         float ev_maximum_current_limit;
@@ -378,18 +380,19 @@ struct v2g_connection {
     uint8_t* buffer;
     size_t buffer_pos;
     uint32_t payload_len;
-    bitstream_t stream;
+    bitstream_t ov2g_stream;
+    exi_bitstream_t stream;
 
-    struct appHandEXIDocument handshake_req;
-    struct appHandEXIDocument handshake_resp;
+    struct appHand_exiDocument handshake_req;
+    struct appHand_exiDocument handshake_resp;
 
     union {
-        struct dinEXIDocument* dinEXIDocument;
+        struct din_exiDocument* dinEXIDocument;
         struct iso1EXIDocument* iso1EXIDocument;
     } exi_in;
 
     union {
-        struct dinEXIDocument* dinEXIDocument;
+        struct din_exiDocument* dinEXIDocument;
         struct iso1EXIDocument* iso1EXIDocument;
     } exi_out;
 

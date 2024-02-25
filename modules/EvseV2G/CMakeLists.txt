@@ -31,6 +31,10 @@ target_link_libraries(${MODULE_NAME}
         mbedtls
         mbedx509
         everest::openv2g
+        cb_v2g::DIN
+        cb_v2g::ISO2
+        cb_v2g::ISO20
+        cb_v2g::V2GTP
 )
 
 target_sources(${MODULE_NAME}
