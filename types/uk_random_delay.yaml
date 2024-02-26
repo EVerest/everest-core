@@ -1,0 +1,20 @@
+description: UK Random delay types
+types:
+  CountDown:
+    description: Count down object
+    type: object
+    additionalProperties: false
+    required:
+      - countdown_s
+      - current_limit_after_delay_A
+      - current_limit_during_delay_A
+    properties:
+      countdown_s:
+        description: Remaining count down in seconds. It is set to zero if random delay is inactive
+        type: integer
+      current_limit_after_delay_A:
+        description: Current limit that will be used after the random delay is over
+        type: number
+      current_limit_during_delay_A:
+        description: Current limit that is used while the delay is active
+        type: number
