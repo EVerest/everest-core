@@ -129,6 +129,7 @@ private:
     std::map<std::string, std::function<void(Call<DataTransferRequest> call)>> data_transfer_pnc_callbacks;
     std::mutex data_transfer_callbacks_mutex;
     std::map<CiString<50>, std::function<void(const KeyValue& key_value)>> configuration_key_changed_callbacks;
+    std::function<void(const KeyValue& key_value)> generic_configuration_key_changed_callback;
 
     std::mutex stop_transaction_mutex;
     std::condition_variable stop_transaction_cv;
@@ -765,6 +766,13 @@ public:
     /// \param callback executed when this configuration key changed
     void register_configuration_key_changed_callback(const CiString<50>& key,
                                                      const std::function<void(const KeyValue& key_value)>& callback);
+
+    /// \brief registers a \p callback function that can be used to react on changed configuration key. This
+    /// callback is called when a configuration key and value has been changed by the CSMS, where no key based callback
+    /// is assigned
+    /// \param callback executed when this configuration key changed
+    void
+    register_generic_configuration_key_changed_callback(const std::function<void(const KeyValue& key_value)>& callback);
 
     /// \brief registers a \p callback function that can be used to react to a security event callback. This callback is
     /// called only if the SecurityEvent occured internally within libocpp

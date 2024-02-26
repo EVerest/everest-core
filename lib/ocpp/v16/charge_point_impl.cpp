@@ -1453,6 +1453,10 @@ void ChargePointImpl::handleChangeConfigurationRequest(ocpp::Call<ChangeConfigur
         response.status == ConfigurationStatus::Accepted) {
         kv.value().value = call.msg.value;
         this->configuration_key_changed_callbacks[call.msg.key](kv.value());
+    } else if (this->generic_configuration_key_changed_callback != nullptr and
+               response.status == ConfigurationStatus::Accepted) {
+        kv.value().value = call.msg.value;
+        this->generic_configuration_key_changed_callback(kv.value());
     }
 }
 
@@ -3616,6 +3620,11 @@ void ChargePointImpl::register_transaction_started_callback(
 void ChargePointImpl::register_configuration_key_changed_callback(
     const CiString<50>& key, const std::function<void(const KeyValue& key_value)>& callback) {
     this->configuration_key_changed_callbacks[key] = callback;
+}
+
+void ChargePointImpl::register_generic_configuration_key_changed_callback(
+    const std::function<void(const KeyValue& key_value)>& callback) {
+    this->generic_configuration_key_changed_callback = callback;
 }
 
 void ChargePointImpl::register_security_event_callback(
