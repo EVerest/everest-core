@@ -1,0 +1,40 @@
+name: Feature Request
+description: Thanks for taking the time to fill out this feature request!
+
+body:
+  - type: dropdown
+    id: affected-iso-version
+    attributes:
+      label: ISO Version
+      description: Which ISO is affected? Mark all if applicable.
+      options:
+        - DIN70121
+        - ISO15118-2
+        - ISO15118-20
+      multiple: true
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the problem
+      description: What problem is your feature request targeting and why is it a problem? Please describe.
+      placeholder: |
+        A clear and concise description of what the problem is.
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Describe your solution
+      description: Describe the solution you'd like
+      placeholder: |
+        A clear and concise description of what you want to happen.
+
+  - type: textarea
+    id: other
+    attributes:
+      label: Additional context
+      placeholder: Add any other context about the feature request here.
