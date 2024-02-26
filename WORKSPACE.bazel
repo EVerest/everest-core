@@ -76,8 +76,6 @@ load("@everest-framework//third-party/bazel:defs.bzl", "everest_framework_deps")
 
 everest_framework_deps()
 
-local_repository(name="everest-utils", path="/home/dima/workspace_everest/everest-utils")
-
 load("@everest-utils//third-party/bazel:defs.bzl", "everest_utils_defs")
 
 everest_utils_defs()

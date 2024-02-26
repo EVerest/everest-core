@@ -115,11 +115,12 @@ checksum = "5443807d6dff69373d433ab9ef5378ad8df50ca6298caf15de6e52e24aaf54d5"
 [[package]]
 name = "everestrs"
 version = "0.1.0"
-source = "git+https://github.com/qwello/everest-framework.git?rev=06983df646695303017137d00eea9f63b808fd71#06983df646695303017137d00eea9f63b808fd71"
+source = "git+https://github.com/qwello/everest-framework.git?rev=2306559764824a61406da6641985517e3b61f193#2306559764824a61406da6641985517e3b61f193"
 dependencies = [
  "argh",
  "cxx",
  "everestrs-build",
+ "log",
  "serde",
  "serde_json",
  "thiserror",
@@ -128,7 +129,7 @@ dependencies = [
 [[package]]
 name = "everestrs-build"
 version = "0.1.0"
-source = "git+https://github.com/qwello/everest-framework.git?rev=06983df646695303017137d00eea9f63b808fd71#06983df646695303017137d00eea9f63b808fd71"
+source = "git+https://github.com/qwello/everest-framework.git?rev=2306559764824a61406da6641985517e3b61f193#2306559764824a61406da6641985517e3b61f193"
 dependencies = [
  "anyhow",
  "argh",
@@ -175,6 +176,12 @@ checksum = "9d240c6f7e1ba3a28b0249f774e6a9dd0175054b52dfbb61b16eb8505c3785c9"
 dependencies = [
  "cc",
 ]
+
+[[package]]
+name = "log"
+version = "0.4.20"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b5e6163cb8c49088c2c36f57875e58ccd8c87c7427f7fbd50ea6710b2f3f2e8f"
 
 [[package]]
 name = "minijinja"
