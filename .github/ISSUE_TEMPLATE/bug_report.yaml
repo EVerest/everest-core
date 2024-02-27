@@ -16,7 +16,7 @@ body:
     attributes:
       label: To Reproduce
       description: |
-        If applicable describe the steps to and additional information to reproduce the behavior like message communication between CSMS, used configuration(s), compile options and your system information
+        If applicable describe the steps to and additional information to reproduce the behavior like stand alone usage, usage within the libocpp, usage with a TPM module, happens during a specific libocpp CSMS message, compile options and your system information
 
   - type: textarea
     id: other
