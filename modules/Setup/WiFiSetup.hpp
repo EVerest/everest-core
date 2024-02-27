@@ -3,6 +3,7 @@
 #ifndef WIFISETUP_HPP
 #define WIFISETUP_HPP
 
+#include <cstdint>
 #include <map>
 #include <string>
 #include <vector>
