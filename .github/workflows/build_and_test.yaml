@@ -1,6 +1,27 @@
 name: Build, Lint and Test
 on:
   pull_request: {}
+  workflow_call:  # defines it as reusable workflow
+    inputs:
+      repository:
+        description: The repo to checkout and run the workflow steps in
+        type: string
+        required: true
+      repository_ref:
+        description: The ref (branch, tag, commit-hash) of the `inputs.repository`
+        type: string
+        required: true
+      cmake_flags_extra:
+        description: additional flags to add to the common set of flags (see `.ci/build-kit/compile.sh`)
+        type: string
+      unit_tests:
+        description: Whether to run unit-tests or not
+        type: boolean
+        required: true
+      integration_tests:
+        description: Whether to run integration-tests or not
+        type: boolean
+        required: true
   workflow_dispatch:
     inputs:
       runner:
@@ -16,54 +37,110 @@ on:
 
 jobs:
   build:
-    name: Build, Lint and Test
+    name: Build and Test
     runs-on: ${{ inputs.runner || 'ubuntu-22.04' }}
+    env:
+      CACHE_PATH: cache
+      CI_REPO: EVerest/everest-core
+      CI_REPO_DIR: ci-repo
+      SOURCE_DIR: source
     steps:
       - name: Format branch name for cache key
         run: |
           BRANCH_NAME_FOR_CACHE="${GITHUB_REF_NAME//-/_}"
           echo "branch_name_for_cache=${BRANCH_NAME_FOR_CACHE}" >> "$GITHUB_ENV"
-      - name: Setup cache
-        uses: actions/cache@v3
+      - name: Restore cache
+        uses: actions/cache/restore@v3
+        id: restore-cache
         with:
-          path: cache
+          path: ${{ env.CACHE_PATH }}
           key: compile-${{ env.branch_name_for_cache }}-${{ github.sha }}
           restore-keys: |
             compile-${{ env.branch_name_for_cache }}-
             compile-
-      - name: Checkout everest-core
-        uses: actions/checkout@v3
+      - name: Checkout `${{ env.CI_REPO }}` to `${{ env.CI_REPO_DIR }}/` (for reusable workflow mode, see https://stackoverflow.com/a/74123003/1168315)
+        uses: actions/checkout@v4
         with:
-          path: source
-      - name: Run clang-format
-        uses: everest/everest-ci/github-actions/run-clang-format@v1.0.0
+          path: ${{ env.CI_REPO_DIR }}
+          repository: ${{ env.CI_REPO }}
+          ref: CI/reusable-workflow  # TODO get reference in general, see https://stackoverflow.com/questions/74784735 resp. https://github.com/actions/toolkit/issues/1264
+      - name: Checkout repo ${{ inputs.repository }} to `${{ env.SOURCE_DIR }}/`
+        uses: actions/checkout@v4
         with:
-          source-dir: source
-          extensions: hpp,cpp
-          exclude: cache
-      - name: Setup run scripts
-        run: |
-          mkdir scripts
-          rsync -a source/.ci/build-kit/ scripts
+          path: ${{ env.SOURCE_DIR }}
+          repository: ${{ inputs.repository }}
+          ref: ${{ inputs.repository_ref }}
       - name: Pull build-kit image
         run: |
           docker pull --quiet ghcr.io/everest/build-kit-alpine:latest
           docker image tag ghcr.io/everest/build-kit-alpine:latest build-kit
-      - name: Compile
+      - name: Build and install
+        env:
+          CMAKE_FLAGS_EXTRA: ${{ inputs.cmake_flags_extra || '-DEVC_ENABLE_CCACHE=1 -DISO15118_2_GENERATE_AND_INSTALL_CERTIFICATES=OFF' }}
         run: |
+          ls -hal .
           docker run \
-          --volume "$(pwd):/ext" \
-          --name compile-container \
-          build-kit run-script compile
-      - name: Create integration-image
+            --volume "${CACHE_PATH:?}:/ext/cache" \
+            --volume "$(pwd)/${CI_REPO_DIR:?}/.ci:/.ci" \
+            --volume "$(pwd)/${SOURCE_DIR:?}:/source" \
+            --workdir "/source" \
+            --env CMAKE_FLAGS_EXTRA="${CMAKE_FLAGS_EXTRA:?}" \
+            --name build-container \
+            build-kit /.ci/build-kit/build_install.sh
+      - name: upload CMake output & error logs
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-install-logs
+          path: build/CMakeFiles/
+      - name: Unit tests
+        if: ${{ inputs.unit_tests || false }}
         run: |
-          docker commit compile-container build-image
+          docker commit build-container unit-tests-image
           docker run \
-          --volume "$(pwd):/ext" \
-          --name test-container \
-          build-image run-script test_and_install
-          docker commit test-container integration-image
-      - name: Run integration tests
+            --volume "$(pwd)/${CI_REPO_DIR:?}/.ci:/.ci" \
+            --volume "$(pwd)/${SOURCE_DIR:?}:/source" \
+            --workdir "/source" \
+            --name test-container \
+            unit-tests-image /.ci/build-kit/unit_tests.sh
+      - name: Integration tests
+        if: ${{ inputs.integration_tests || true }}
         run: |
-          pushd source/.ci/e2e
-          docker-compose run e2e-test-server run-script tests
+          docker commit build-container integration-tests-image
+          docker-compose --file ${CI_REPO_DIR:?}/.ci/e2e/docker-compose.yaml \
+            run \
+            --volume "$(pwd)/${CI_REPO_DIR:?}/.ci:/.ci" \
+            --volume "$(pwd)/${SOURCE_DIR:?}:/source" \
+            --workdir "/source" \
+            e2e-test-server /.ci/e2e/scripts/tests.sh
+      - name: FIXME own all files in cache by current user and group
+        # FIXME Workaround for non-readable certs in `cache/josev/[ID]/Josev/iso15118/shared/pki/iso15118_2/certs . See https://github.com/EVerest/everest-core/actions/runs/7286554315/job/19855498928#step:13:10
+        if: always()
+        run: |
+          sudo chown --recursive $(id --user --name):$(id --user --name) ${CACHE_PATH}
+      - name: Store cache
+        uses: actions/cache/save@v3
+        if: always()
+        with:
+          path: ${{ env.CACHE_PATH }}
+          key: ${{ steps.restore-cache.outputs.cache-primary-key }}
+      - name: upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: ctest-report
+          path: ${{ env.SOURCE_DIR }}/build/Testing/Temporary/
+  lint:
+    name: Lint C++/C files
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo ${{ inputs.repository || 'EVerest/everest-core' }}
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.repository }}
+          ref: ${{ inputs.repository_ref }}
+      - name: Run clang-format
+        uses: everest/everest-ci/github-actions/run-clang-format@v1.0.0
+        with:
+          source-dir: .  # FIXME Make sure `.` is the default to remove this line.
+          extensions: hpp,cpp

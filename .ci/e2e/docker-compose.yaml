@@ -11,7 +11,7 @@ services:
       driver: none
 
   e2e-test-server:
-    image: integration-image
+    image: integration-tests-image
     depends_on:
       - mqtt-server
     environment:
@@ -20,5 +20,6 @@ services:
       - type: bind
         source: ./scripts
         target: /ext/scripts
+    working_dir: /ext/
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=0
