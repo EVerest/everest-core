@@ -8,11 +8,11 @@
 #include <cbv2g/din/din_msgDefDecoder.h>
 #include <cbv2g/din/din_msgDefEncoder.h>
 #include <cbv2g/exi_v2gtp.h>
+#include <cbv2g/iso_2/iso2_msgDefDecoder.h>
+#include <cbv2g/iso_2/iso2_msgDefEncoder.h>
+
 #include <inttypes.h>
 #include <mbedtls/base64.h>
-#include <openv2g/iso1EXIDatatypes.h>
-#include <openv2g/iso1EXIDatatypesDecoder.h>
-#include <openv2g/iso1EXIDatatypesEncoder.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -184,8 +184,7 @@ static int v2g_incoming_v2gtp(struct v2g_connection* conn) {
         return -1;
     }
     /* adjust buffer pos to decode request */
-    conn->buffer_pos = V2GTP_HEADER_LENGTH;
-    conn->ov2g_stream.size = conn->payload_len + V2GTP_HEADER_LENGTH;
+    conn->stream.byte_pos = V2GTP_HEADER_LENGTH;
     conn->stream.data_size = conn->payload_len + V2GTP_HEADER_LENGTH;
 
     return 0;
@@ -198,9 +197,7 @@ static int v2g_incoming_v2gtp(struct v2g_connection* conn) {
  */
 int v2g_outgoing_v2gtp(struct v2g_connection* conn) {
     /* fixup/create header */
-    /// \todo Once openv2g is completely replaced with cbv2g only use get_length
-    size_t len = (conn->ctx->selected_protocol == V2G_PROTO_ISO15118_2013) ? conn->buffer_pos - V2GTP_HEADER_LENGTH
-                                                                           : exi_bitstream_get_length(&conn->stream);
+    size_t len = exi_bitstream_get_length(&conn->stream);
 
     V2GTP20_WriteHeader(conn->buffer, len, V2GTP20_SAP_PAYLOAD_ID);
 
@@ -337,9 +334,6 @@ static enum v2g_event v2g_handle_apphandshake(struct v2g_connection* conn) {
     }
 
     /* encode response at the right buffer location */
-    *(conn->ov2g_stream.pos) = V2GTP_HEADER_LENGTH;
-    conn->ov2g_stream.capacity = 8; // as it should be for send
-    conn->ov2g_stream.buffer = 0;
     conn->stream.byte_pos = V2GTP_HEADER_LENGTH;
     conn->stream.bit_count = 0;
 
@@ -364,10 +358,7 @@ int v2g_handle_connection(struct v2g_connection* conn) {
         return -1;
 
     /* static setup */
-    conn->ov2g_stream.data = conn->buffer;
-    conn->ov2g_stream.pos = &conn->buffer_pos;
     conn->stream.data = conn->buffer;
-    conn->stream.byte_pos = conn->buffer_pos;
 
     /* Here is a good point to wait until the customer is ready for a resumed session,
      * because we are waiting for the incoming message of the ev */
@@ -377,9 +368,9 @@ int v2g_handle_connection(struct v2g_connection* conn) {
 
     do {
         /* setup for receive */
-        conn->ov2g_stream.buffer = 0;
-        conn->ov2g_stream.capacity = 0; // Set to 8 for send and 0 for recv
-        conn->buffer_pos = 0;
+        conn->stream.data[0] = 0;
+        conn->stream.bit_count = 0;
+        conn->stream.byte_pos = 0;
         conn->payload_len = 0;
         exi_bitstream_init(&conn->stream, conn->buffer, 0, 0, nullptr);
 
@@ -445,13 +436,15 @@ int v2g_handle_connection(struct v2g_connection* conn) {
         }
         break;
     case V2G_PROTO_ISO15118_2013:
-        conn->exi_in.iso1EXIDocument = static_cast<struct iso1EXIDocument*>(calloc(1, sizeof(struct iso1EXIDocument)));
-        if (conn->exi_in.iso1EXIDocument == NULL) {
+        conn->exi_in.iso2EXIDocument =
+            static_cast<struct iso2_exiDocument*>(calloc(1, sizeof(struct iso2_exiDocument)));
+        if (conn->exi_in.iso2EXIDocument == NULL) {
             dlog(DLOG_LEVEL_ERROR, "out-of-memory");
             goto error_out;
         }
-        conn->exi_out.iso1EXIDocument = static_cast<struct iso1EXIDocument*>(calloc(1, sizeof(struct iso1EXIDocument)));
-        if (conn->exi_out.iso1EXIDocument == NULL) {
+        conn->exi_out.iso2EXIDocument =
+            static_cast<struct iso2_exiDocument*>(calloc(1, sizeof(struct iso2_exiDocument)));
+        if (conn->exi_out.iso2EXIDocument == NULL) {
             dlog(DLOG_LEVEL_ERROR, "out-of-memory");
             goto error_out;
         }
@@ -462,9 +455,9 @@ int v2g_handle_connection(struct v2g_connection* conn) {
 
     do {
         /* setup for receive */
-        conn->ov2g_stream.buffer = 0;
-        conn->ov2g_stream.capacity = 0; // Set to 8 for send and 0 for recv
-        conn->buffer_pos = 0;
+        conn->stream.data[0] = 0;
+        conn->stream.bit_count = 0;
+        conn->stream.byte_pos = 0;
         conn->payload_len = 0;
 
         /* next call return -1 on error, 1 when peer closed connection, 0 on success */
@@ -498,25 +491,23 @@ int v2g_handle_connection(struct v2g_connection* conn) {
             }
 
             memset(conn->exi_out.dinEXIDocument, 0, sizeof(struct din_exiDocument));
-            // conn->exi_out.dinEXIDocument->V2G_Message_isUsed = 1;
 
             v2gEvent = din_handle_request(conn);
             break;
 
         case V2G_PROTO_ISO15118_2013:
-            memset(conn->exi_in.iso1EXIDocument, 0, sizeof(struct iso1EXIDocument));
-            rv = decode_iso1ExiDocument(&conn->ov2g_stream, conn->exi_in.iso1EXIDocument);
+            memset(conn->exi_in.iso2EXIDocument, 0, sizeof(struct iso2_exiDocument));
+            rv = decode_iso2_exiDocument(&conn->stream, conn->exi_in.iso2EXIDocument);
             if (rv != 0) {
-                dlog(DLOG_LEVEL_ERROR, "decode_iso1EXIDocument() (previous message \"%s\") failed: %d",
+                dlog(DLOG_LEVEL_ERROR, "decode_iso2_exiDocument() (previous message \"%s\") failed: %d",
                      v2g_msg_type[conn->ctx->last_v2g_msg], rv);
                 /* we must ignore packet which we cannot decode, so reset rv to zero to stay in loop */
                 rv = 0;
                 v2gEvent = V2G_EVENT_IGNORE_MSG;
                 break;
             }
-            conn->buffer_pos = 0; // Reset buffer pos for the case if exi msg will be configured over mqtt
-            memset(conn->exi_out.iso1EXIDocument, 0, sizeof(struct iso1EXIDocument));
-            conn->exi_out.iso1EXIDocument->V2G_Message_isUsed = 1;
+            conn->stream.byte_pos = 0; // Reset pos for the case if exi msg will be configured over mqtt
+            memset(conn->exi_out.iso2EXIDocument, 0, sizeof(struct iso2_exiDocument));
 
             v2gEvent = iso_handle_request(conn);
 
@@ -535,10 +526,10 @@ int v2g_handle_connection(struct v2g_connection* conn) {
             stop_receiving_loop = true;
         case V2G_EVENT_NO_EVENT: { // fall-through intended
             /* Reset v2g-buffer */
-            conn->ov2g_stream.buffer = 0;
-            conn->ov2g_stream.capacity = 8; // Set to 8 for send and 0 for recv
-            conn->buffer_pos = V2GTP_HEADER_LENGTH;
-            conn->ov2g_stream.size = DEFAULT_BUFFER_SIZE;
+            conn->stream.data[0] = 0;
+            conn->stream.bit_count = 0;
+            conn->stream.byte_pos = V2GTP_HEADER_LENGTH;
+            conn->stream.data_size = DEFAULT_BUFFER_SIZE;
 
             /* Configure msg and send */
             switch (selected_protocol) {
@@ -550,8 +541,8 @@ int v2g_handle_connection(struct v2g_connection* conn) {
                 }
                 break;
             case V2G_PROTO_ISO15118_2013:
-                if ((rv = encode_iso1ExiDocument(&conn->ov2g_stream, conn->exi_out.iso1EXIDocument)) != 0) {
-                    dlog(DLOG_LEVEL_ERROR, "encode_iso1ExiDocument() (message \"%s\") failed: %d",
+                if ((rv = encode_iso2_exiDocument(&conn->stream, conn->exi_out.iso2EXIDocument)) != 0) {
+                    dlog(DLOG_LEVEL_ERROR, "encode_iso2_exiDocument() (message \"%s\") failed: %d",
                          v2g_msg_type[conn->ctx->current_v2g_msg], rv);
                 }
                 break;
@@ -606,10 +597,10 @@ error_out:
             free(conn->exi_out.dinEXIDocument);
         break;
     case V2G_PROTO_ISO15118_2013:
-        if (conn->exi_in.iso1EXIDocument != NULL)
-            free(conn->exi_in.iso1EXIDocument);
-        if (conn->exi_out.iso1EXIDocument != NULL)
-            free(conn->exi_out.iso1EXIDocument);
+        if (conn->exi_in.iso2EXIDocument != NULL)
+            free(conn->exi_in.iso2EXIDocument);
+        if (conn->exi_out.iso2EXIDocument != NULL)
+            free(conn->exi_out.iso2EXIDocument);
         break;
     default:
         break;
@@ -628,8 +619,8 @@ uint64_t v2g_session_id_from_exi(bool is_iso, void* exi_in) {
     uint64_t session_id = 0;
 
     if (is_iso) {
-        struct iso1EXIDocument* req = static_cast<struct iso1EXIDocument*>(exi_in);
-        struct iso1MessageHeaderType* hdr = &req->V2G_Message.Header;
+        struct iso2_exiDocument* req = static_cast<struct iso2_exiDocument*>(exi_in);
+        struct iso2_MessageHeaderType* hdr = &req->V2G_Message.Header;
 
         /* the provided session id could be smaller (error) in case that the peer did not
          * send our full session id back to us; this is why we init the id with 0 above

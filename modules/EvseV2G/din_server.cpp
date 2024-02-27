@@ -3,6 +3,7 @@
 // Copyright (C) 2023 Contributors to EVerest
 
 #include <cbv2g/din/din_msgDefDatatypes.h>
+
 #include <inttypes.h>
 #include <string.h>
 
@@ -20,31 +21,31 @@
  * @param phy_value_source is the source struct.
  */
 void load_din_physical_value(struct din_PhysicalValueType* const phy_value_dest,
-                             struct iso1PhysicalValueType* const phy_value_source) {
+                             struct iso2_PhysicalValueType* const phy_value_source) {
     phy_value_dest->Multiplier = phy_value_source->Multiplier;
     phy_value_dest->Value = phy_value_source->Value;
     phy_value_dest->Unit_isUsed = 1;
 
     switch (phy_value_source->Unit) {
-    case iso1unitSymbolType_h:
+    case iso2_unitSymbolType_h:
         phy_value_dest->Unit = din_unitSymbolType_h;
         break;
-    case iso1unitSymbolType_m:
+    case iso2_unitSymbolType_m:
         phy_value_dest->Unit = din_unitSymbolType_m;
         break;
-    case iso1unitSymbolType_s:
+    case iso2_unitSymbolType_s:
         phy_value_dest->Unit = din_unitSymbolType_s;
         break;
-    case iso1unitSymbolType_A:
+    case iso2_unitSymbolType_A:
         phy_value_dest->Unit = din_unitSymbolType_A;
         break;
-    case iso1unitSymbolType_V:
+    case iso2_unitSymbolType_V:
         phy_value_dest->Unit = din_unitSymbolType_V;
         break;
-    case iso1unitSymbolType_W:
+    case iso2_unitSymbolType_W:
         phy_value_dest->Unit = din_unitSymbolType_W;
         break;
-    case iso1unitSymbolType_Wh:
+    case iso2_unitSymbolType_Wh:
         phy_value_dest->Unit = din_unitSymbolType_Wh;
         break;
     default:
@@ -339,8 +340,7 @@ static enum v2g_event handle_din_session_setup(struct v2g_connection* conn) {
 
     dlog(DLOG_LEVEL_INFO, "Created new session with id 0x%08" PRIu64, conn->ctx->evse_v2g_data.session_id);
 
-    res->EVSEID.bytesLen =
-        std::min((int)conn->ctx->evse_v2g_data.evse_id.bytesLen, iso1SessionSetupResType_EVSEID_CHARACTERS_SIZE);
+    res->EVSEID.bytesLen = std::min((int)conn->ctx->evse_v2g_data.evse_id.bytesLen, iso2_EVSEID_CHARACTER_SIZE);
     memcpy(res->EVSEID.bytes, conn->ctx->evse_v2g_data.evse_id.bytes, res->EVSEID.bytesLen);
 
     res->DateTimeNow_isUsed = conn->ctx->evse_v2g_data.date_time_now_is_used;
@@ -374,11 +374,11 @@ static enum v2g_event handle_din_service_discovery(struct v2g_connection* conn) 
     res->ResponseCode = din_responseCodeType_OK; // [V2G-DC-388]
 
     if ((conn->ctx->evse_v2g_data.charge_service.SupportedEnergyTransferMode.EnergyTransferMode.array[0] !=
-         iso1EnergyTransferModeType_DC_core) &&
+         iso2_EnergyTransferModeType_DC_core) &&
         (conn->ctx->evse_v2g_data.charge_service.SupportedEnergyTransferMode.EnergyTransferMode.array[0]) !=
-            iso1EnergyTransferModeType_DC_extended) {
+            iso2_EnergyTransferModeType_DC_extended) {
         conn->ctx->evse_v2g_data.charge_service.SupportedEnergyTransferMode.EnergyTransferMode.array[0] =
-            iso1EnergyTransferModeType_DC_extended;
+            iso2_EnergyTransferModeType_DC_extended;
         dlog(DLOG_LEVEL_WARNING, "Selected EnergyTransferType is not supported in DIN 70121. Correcting value of field "
                                  "SupportedEnergyTransferType0 to 'DC_extended'");
     }
@@ -501,7 +501,7 @@ static enum v2g_event handle_din_charge_parameter(struct v2g_connection* conn) {
     if (((req->EVRequestedEnergyTransferType != din_EVRequestedEnergyTransferType_DC_core) &&
          (req->EVRequestedEnergyTransferType != din_EVRequestedEnergyTransferType_DC_extended)) ||
         conn->ctx->evse_v2g_data.charge_service.SupportedEnergyTransferMode.EnergyTransferMode.array[0] !=
-            (iso1EnergyTransferModeType)req->EVRequestedEnergyTransferType) {
+            (iso2_EnergyTransferModeType)req->EVRequestedEnergyTransferType) {
         res->ResponseCode = din_responseCodeType_FAILED_WrongEnergyTransferType; // [V2G-DC-397] Failed reponse code is
                                                                                  // logged at the end of the function
     } else {
@@ -919,12 +919,6 @@ enum v2g_event din_handle_request(v2g_connection* conn) {
     struct din_exiDocument* exi_in = conn->exi_in.dinEXIDocument;
     struct din_exiDocument* exi_out = conn->exi_out.dinEXIDocument;
     enum v2g_event next_v2g_event = V2G_EVENT_TERMINATE_CONNECTION; // ERROR_UNEXPECTED_REQUEST_MESSAGE;
-
-    /* check whether we have a valid EXI document embedded within a V2G message */
-    // if (!exi_in->V2G_Message_isUsed) {
-    //     dlog(DLOG_LEVEL_ERROR, "V2G Message not used. Ignoring msg");
-    //     return V2G_EVENT_IGNORE_MSG;
-    // }
 
     /* extract session id */
     conn->ctx->ev_v2g_data.received_session_id = v2g_session_id_from_exi(false, exi_in);
