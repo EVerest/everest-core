@@ -18,3 +18,7 @@ types:
       current_limit_during_delay_A:
         description: Current limit that is used while the delay is active
         type: number
+      start_time:
+        description: UTC timestamp when this random delay was started
+        type: string
+        format: date-time

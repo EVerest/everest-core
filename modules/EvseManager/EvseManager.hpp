@@ -188,6 +188,7 @@ public:
     std::atomic_bool random_delay_enabled{false};
     std::atomic_bool random_delay_running{false};
     std::chrono::time_point<std::chrono::steady_clock> random_delay_end_time;
+    std::chrono::time_point<date::utc_clock> random_delay_start_time;
     std::atomic<std::chrono::seconds> random_delay_max_duration;
     std::atomic<std::chrono::time_point<std::chrono::steady_clock>> timepoint_ready_for_charging;
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1

@@ -228,7 +228,8 @@ SessionInfo::operator std::string() {
         json random_delay =
             json::object({{"remaining_s", uk_random_delay_remaining.countdown_s},
                           {"current_limit_after_delay_A", uk_random_delay_remaining.current_limit_after_delay_A},
-                          {"current_limit_during_delay_A", uk_random_delay_remaining.current_limit_during_delay_A}});
+                          {"current_limit_during_delay_A", uk_random_delay_remaining.current_limit_during_delay_A},
+                          {"start_time", uk_random_delay_remaining.start_time.value_or("")}});
         session_info["uk_random_delay"] = random_delay;
     }
 

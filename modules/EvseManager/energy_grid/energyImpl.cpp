@@ -315,6 +315,7 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
             // Ignore changes of less then 0.1 amps
             if (not mod->random_delay_running and random_delay_needed(last_enforced_limit, limit)) {
                 mod->random_delay_running = true;
+                mod->random_delay_start_time = date::utc_clock::now();
                 auto random_delay_s = std::rand() % mod->random_delay_max_duration.load().count();
                 mod->random_delay_end_time = std::chrono::steady_clock::now() + std::chrono::seconds(random_delay_s);
                 EVLOG_info << "UK Smart Charging regulations: Starting random delay of " << random_delay_s << "s";
@@ -333,6 +334,7 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
                 c.countdown_s = seconds_left;
                 c.current_limit_after_delay_A = enforced_limit;
                 c.current_limit_during_delay_A = limit_when_random_delay_started;
+                c.start_time = Everest::Date::to_rfc3339(mod->random_delay_start_time);
                 mod->p_random_delay->publish_countdown(c);
                 EVLOG_debug << "Random delay running, " << seconds_left
                             << "s left. Applying the limit before the random delay (" << limit_when_random_delay_started

@@ -49,7 +49,8 @@ This variable is published every second and contains a json object with informat
         "uk_random_delay": {
             "remaining_s": 34,
             "current_limit_after_delay_A": 16.0,
-            "current_limit_during_delay_A": 0.0
+            "current_limit_during_delay_A": 0.0,
+            "start_time": "2024-02-28T14:11:11.129Z"
         }
     }
 ```
