@@ -17,6 +17,10 @@ SessionInfo::SessionInfo() :
     end_energy_export_wh(0) {
     this->start_time_point = date::utc_clock::now();
     this->end_time_point = this->start_time_point;
+
+    uk_random_delay_remaining.countdown_s = 0;
+    uk_random_delay_remaining.current_limit_after_delay_A = 0.;
+    uk_random_delay_remaining.current_limit_during_delay_A = 0;
 }
 
 bool SessionInfo::is_state_charging(const SessionInfo::State current_state) {
