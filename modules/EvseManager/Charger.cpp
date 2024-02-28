@@ -1285,8 +1285,10 @@ void Charger::check_soft_over_current() {
 bool Charger::power_available() {
     if (shared_context.max_current_valid_until < date::utc_clock::now()) {
         EVLOG_warning << "Power budget expired, falling back to 0.";
-        shared_context.max_current = 0.;
-        signal_max_current(shared_context.max_current);
+        if (shared_context.max_current > 0.) {
+            shared_context.max_current = 0.;
+            signal_max_current(shared_context.max_current);
+        }
     }
     return (get_max_current_internal() > 5.9);
 }
