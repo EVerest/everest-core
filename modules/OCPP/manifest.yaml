@@ -55,6 +55,9 @@ provides:
   ocpp_generic:
     description: Generic OCPP interface.
     interface: ocpp
+  ocpp_transaction:
+    description: Transaction events
+    interface: transaction
 requires:
   evse_manager:
     interface: evse_manager

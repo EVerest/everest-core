@@ -16,6 +16,7 @@
 #include <generated/interfaces/ocpp/Implementation.hpp>
 #include <generated/interfaces/ocpp_1_6_charge_point/Implementation.hpp>
 #include <generated/interfaces/ocpp_data_transfer/Implementation.hpp>
+#include <generated/interfaces/transaction/Implementation.hpp>
 
 // headers for required interface implementations
 #include <generated/interfaces/auth/Interface.hpp>
@@ -35,12 +36,15 @@
 #include <filesystem>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <queue>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v16/charge_point.hpp>
 #include <ocpp/v16/types.hpp>
 #include <ocpp/v201/ocpp_types.hpp>
+
+#include "transactionData.hpp"
 
 using EvseConnectorMap = std::map<int32_t, std::map<int32_t, int32_t>>;
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
@@ -67,6 +71,7 @@ public:
          std::unique_ptr<auth_token_validatorImplBase> p_auth_validator,
          std::unique_ptr<auth_token_providerImplBase> p_auth_provider,
          std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer, std::unique_ptr<ocppImplBase> p_ocpp_generic,
+         std::unique_ptr<transactionImplBase> p_ocpp_transaction,
          std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager,
          std::vector<std::unique_ptr<external_energy_limitsIntf>> r_connector_zero_sink,
          std::unique_ptr<reservationIntf> r_reservation, std::unique_ptr<authIntf> r_auth,
@@ -79,6 +84,7 @@ public:
         p_auth_provider(std::move(p_auth_provider)),
         p_data_transfer(std::move(p_data_transfer)),
         p_ocpp_generic(std::move(p_ocpp_generic)),
+        p_ocpp_transaction(std::move(p_ocpp_transaction)),
         r_evse_manager(std::move(r_evse_manager)),
         r_connector_zero_sink(std::move(r_connector_zero_sink)),
         r_reservation(std::move(r_reservation)),
@@ -94,6 +100,7 @@ public:
     const std::unique_ptr<auth_token_providerImplBase> p_auth_provider;
     const std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer;
     const std::unique_ptr<ocppImplBase> p_ocpp_generic;
+    const std::unique_ptr<transactionImplBase> p_ocpp_transaction;
     const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;
     const std::vector<std::unique_ptr<external_energy_limitsIntf>> r_connector_zero_sink;
     const std::unique_ptr<reservationIntf> r_reservation;
@@ -144,6 +151,8 @@ private:
     std::mutex session_event_mutex;
     std::map<int32_t, std::queue<types::evse_manager::SessionEvent>> session_event_queue;
     void process_session_event(int32_t evse_id, const types::evse_manager::SessionEvent& session_event);
+
+    ocpp_transaction::TransactionData transaction_data;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

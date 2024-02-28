@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include "OCPP.hpp"
+#include "generated/types/ocpp.hpp"
 #include <fmt/core.h>
 #include <fstream>
 
 #include <boost/process.hpp>
 #include <conversions.hpp>
 #include <evse_security_ocpp.hpp>
+#include <optional>
 
 namespace module {
 
@@ -179,6 +181,7 @@ void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::Ses
             // this has to be negotiated beforehand or done in a custom data transfer
             signed_meter_data.emplace(signed_meter_value.value().signed_meter_data);
         }
+        this->transaction_data.transaction_start(this->p_ocpp_transaction, ocpp_connector_id, session_id);
         this->charge_point->on_transaction_started(ocpp_connector_id, session_event.uuid, id_token, energy_Wh_import,
                                                    reservation_id_opt, timestamp, signed_meter_data);
     } else if (session_event.event == types::evse_manager::SessionEventEnum::ChargingPausedEV) {
@@ -218,6 +221,7 @@ void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::Ses
             // this has to be negotiated beforehand or done in a custom data transfer
             signed_meter_data.emplace(signed_meter_value.value().signed_meter_data);
         }
+        this->transaction_data.transaction_end(this->p_ocpp_transaction, ocpp_connector_id, session_event.uuid);
         this->charge_point->on_transaction_stopped(ocpp_connector_id, session_event.uuid, reason, timestamp,
                                                    energy_Wh_import, id_tag_opt, signed_meter_data);
         // always triggered by libocpp
@@ -700,6 +704,12 @@ void OCPP::ready() {
         event.info = tech_info;
         this->p_ocpp_generic->publish_security_event(event);
     });
+
+    this->charge_point->register_transaction_started_callback(
+        [this](const int32_t connector, const int32_t transaction_id) {
+            EVLOG_info << "Transaction started connector: " << connector << " id: " << transaction_id;
+            this->transaction_data.transaction_update(this->p_ocpp_transaction, connector, transaction_id);
+        });
 
     if (!this->r_data_transfer.empty()) {
         this->charge_point->register_data_transfer_callback([this](const ocpp::v16::DataTransferRequest& request) {

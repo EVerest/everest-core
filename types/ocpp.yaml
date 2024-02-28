@@ -1,5 +1,5 @@
 description: >-
-  OCPP types (OCPP1.6 and OCPP2.0.1). The types are based more on the type definitions of OCPP201, 
+  OCPP types (OCPP1.6 and OCPP2.0.1). The types are based more on the type definitions of OCPP201,
   as these offer more flexibility and are easier to transfer to OCPP1.6 than vice versa.
 types:
   DataTransferStatus:
@@ -165,7 +165,7 @@ types:
       Type for a component with name, optional instance and optional evse
       For OCPP1.6: A definition of a Component doesn't exist in OCPP1.6; In the context of OCPP1.6
         this type may not be relevant or used.
-      For OCPP2.0.1: All properties of the Component can be used 
+      For OCPP2.0.1: All properties of the Component can be used
     type: object
     required:
       - name
@@ -182,15 +182,15 @@ types:
         maxLength: 50
       evse:
         description: >-
-          Specifies the EVSE when component is located at EVSE level, also specifies 
+          Specifies the EVSE when component is located at EVSE level, also specifies
           the connector when component is located at Connector level
         type: object
         $ref: /ocpp#/EVSE
   ComponentVariable:
     description: >-
       Type for a combination of component and variable.
-      Note that for OCPP1.6 only the Variable.name (configuration key) is sufficient to identify a 
-      configuration key. For OCPP2.0.1 all properties of the type(s) can be used. 
+      Note that for OCPP1.6 only the Variable.name (configuration key) is sufficient to identify a
+      configuration key. For OCPP2.0.1 all properties of the type(s) can be used.
     type: object
     required:
       - component
@@ -383,7 +383,7 @@ types:
       actual_value:
         description: Actual value of the variable
         type: string
-        maxLength: 2500      
+        maxLength: 2500
       event_notification_type:
         description: Type of the event notification
         type: string
@@ -451,13 +451,42 @@ types:
     properties:
       reason_code:
         description: >-
-          A predefined code for the reason why the status is returned in this response. 
+          A predefined code for the reason why the status is returned in this response.
           The string is case-insensitive.
         type: string
       additional_info:
         description: >-
           Additional text to provide detailed information
         type: string
+  TransactionEvent:
+    description: >-
+      Element providing information transactions.
+    type: object
+    required:
+      - event
+      - connector
+      - session_id
+    properties:
+      event:
+        description: >-
+          The transaction related event.
+        type: string
+        enum:
+          - Start
+          - Update
+          - End
+      connector:
+        description: >-
+          The connector associated with the transaction.
+        type: integer
+      session_id:
+        description: >-
+          The EVSE manager assigned session ID.
+        type: string
+      transaction_id:
+        description: >-
+          The CSMS assigned transaction ID (OCPP 1.6)
+        type: integer
   ChangeAvailabilityResponse:
     description: Response type to request to change the availability of the Charging Station/ an EVSE / a Connector.
     type: object
@@ -472,4 +501,3 @@ types:
         description: Detailed status information.
         type: object
         $ref: /ocpp#/StatusInfoType
-
