@@ -25,6 +25,8 @@ void energyImpl::init() {
 
     charger_state = Charger::EvseState::Disabled;
 
+    std::srand((unsigned)time(0));
+
     // UUID must be unique also beyond this charging station -> will be handled on framework level and above later
     energy_flow_request.uuid = mod->info.id;
     energy_flow_request.node_type = types::energy::NodeType::Evse;
