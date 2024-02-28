@@ -517,12 +517,21 @@ bool OpenSSLSupplier::x509_is_child(X509Handle* child, X509Handle* parent) {
 
     // If the parent is not a self-signed certificate, assume we have a partial chain
     if (x509_is_selfsigned(parent) == false) {
-        // TODO(ioan): see if this strict flag is required
-        X509_STORE_CTX_set_flags(ctx.get(), X509_V_FLAG_X509_STRICT);
+        // TODO(ioan): see if this strict flag is required, caused many problems
+        // X509_STORE_CTX_set_flags(ctx.get(), X509_V_FLAG_X509_STRICT);
+
         X509_STORE_CTX_set_flags(ctx.get(), X509_V_FLAG_PARTIAL_CHAIN);
     }
 
-    return (X509_verify_cert(ctx.get()) == 1);
+    if (X509_verify_cert(ctx.get()) != 1) {
+        int ec = X509_STORE_CTX_get_error(ctx.get());
+        const char* error = X509_verify_cert_error_string(ec);
+
+        EVLOG_debug << "Certificate issued by error: " << ((error != nullptr) ? error : "UNKNOWN");
+        return false;
+    }
+
+    return true;
 }
 
 bool OpenSSLSupplier::x509_is_selfsigned(X509Handle* handle) {
