@@ -392,8 +392,9 @@ evse_security::OCSPRequestData from_ocpp(OCSPRequestData other) {
 
 evse_security::KeyPair from_ocpp(KeyPair other) {
     evse_security::KeyPair lhs;
-    lhs.key = other.certificate_path;
-    lhs.certificate = other.key_path;
+    lhs.certificate = other.certificate_path;
+    lhs.certificate_single = other.certificate_single_path;
+    lhs.key = other.key_path;
     return lhs;
 }
 
