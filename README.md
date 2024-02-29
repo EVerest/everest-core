@@ -140,6 +140,7 @@ few CSMS and is continuously tested against OCTT2.
 Additionally, the implementation has been tested against those CSMS:
 
 -   Current
+-   Instituto Tecnológico de la Energía (ITE)
 -   [Open Charging Cloud (GraphDefined)](https://github.com/OpenChargingCloud/WWCP_OCPP)
 
 ## Integration with EVerest
