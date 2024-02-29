@@ -390,7 +390,6 @@ void WebsocketTlsTPM::client_loop() {
             provider.set_tls_mode(OpenSSLProvider::mode_t::default_provider);
         }
 
-        EVLOG_info << "Using TLS propquery: " << provider.propquery_tls_str();
         const SSL_METHOD* method = SSLv23_client_method();
         ssl_ctx = SSL_CTX_new_ex(provider, provider.propquery_tls_str(), method);
 
