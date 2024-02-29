@@ -23,3 +23,8 @@
 /modules/Setup @hikinggrass
 /modules/YetiDriver @corneliusclaussen
 /modules/simulation/ @SebaLukas
+/modules/rust_examples/ @SirVer @golovasteek @dorezyuk
+
+# Rust & Bazel
+*.rs @SirVer @golovasteek @dorezyuk
+*.bazel @SirVer @golovasteek @dorezyuk
