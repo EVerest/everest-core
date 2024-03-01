@@ -1,7 +1,0 @@
-description: >-
-  This interface defines the interface for transaction notificationa.
-vars:
-  transaction_event:
-    description: Emits events related to transactions
-    type: object
-    $ref: /ocpp#/TransactionEvent

@@ -399,6 +399,10 @@ void OCPP201::ready() {
                                                                      // ChargingStateEnum
                 }
 
+                const auto transaction_id = this->charge_point->get_evseid_transaction_id(std::get<0>(evse_connector));
+                this->transaction_start(std::get<0>(evse_connector), std::get<1>(evse_connector), session_id,
+                                        transaction_id);
+
                 break;
             }
             case types::evse_manager::SessionEventEnum::TransactionFinished: {
@@ -425,7 +429,10 @@ void OCPP201::ready() {
                     id_token_opt = id_token;
                 }
 
-                this->charge_point->on_transaction_finished(evse_id, timestamp, meter_value, reason, id_token_opt, "",
+                const auto transaction_id = this->charge_point->get_evseid_transaction_id(std::get<0>(evse_connector));
+                this->transaction_end(std::get<0>(evse_connector), std::get<1>(evse_connector), session_event.uuid,
+                                      transaction_id);
+                this->charge_point->on_transaction_finished(evse_id, timestamp, meter_value, reason, id_token, "",
                                                             ocpp::v201::ChargingStateEnum::EVConnected);
                 break;
             }
@@ -519,6 +526,22 @@ void OCPP201::ready() {
     const auto boot_reason = conversions::to_ocpp_boot_reason(this->r_system->call_get_boot_reason());
     this->charge_point->set_message_queue_resume_delay(std::chrono::seconds(this->config.MessageQueueResumeDelay));
     this->charge_point->start(boot_reason);
+}
+
+void OCPP201::transaction_start(std::int32_t evseid, int32_t connector, const std::string& session_id,
+                                const std::optional<std::string>& transaction_id) {
+    types::ocpp::OcppTransactionEvent tevent = {
+        types::ocpp::Transaction_event::Start, connector, session_id, evseid, transaction_id,
+    };
+    p_ocpp_generic->publish_ocpp_transaction_event(tevent);
+}
+
+void OCPP201::transaction_end(std::int32_t evseid, int32_t connector, const std::string& session_id,
+                              const std::optional<std::string>& transaction_id) {
+    types::ocpp::OcppTransactionEvent tevent = {
+        types::ocpp::Transaction_event::End, connector, session_id, evseid, transaction_id,
+    };
+    p_ocpp_generic->publish_ocpp_transaction_event(tevent);
 }
 
 } // namespace module
