@@ -462,6 +462,10 @@ void AuthHandler::handle_session_event(const int connector_id, const SessionEven
         this->connectors.at(connector_id)->connector.identifier.reset();
         this->connectors.at(connector_id)->connector.submit_event(ConnectorEvent::SESSION_FINISHED);
         this->connectors.at(connector_id)->timeout_timer.stop();
+        {
+            std::lock_guard<std::mutex> lk(this->plug_in_queue_mutex);
+            this->plug_in_queue.remove_if([connector_id](int value) { return value == connector_id; });
+        }
         break;
     case SessionEventEnum::AllErrorsCleared:
         if (not ignore_faults) {
