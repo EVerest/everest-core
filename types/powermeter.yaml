@@ -51,10 +51,6 @@ types:
       error:
         description: If status is not OK, a verbose error message.
         type: string
-      signed_meter_value:
-        description: The signed meter value report of the started transaction. Must be provided if status is OK.
-        type: object
-        $ref: /units_signed#/SignedMeterValue
       transaction_min_stop_time:
         description: Earliest point in time the started transaction can be stopped again (if a minimum duration is required by the meter); yields a RFC3339 timestamp.
         type: string
@@ -74,6 +70,10 @@ types:
         type: object
         description: Response status that indicates whether the transaction stop request could successfully be performed.
         $ref: /powermeter#/TransactionRequestStatus
+      start_signed_meter_value:
+        description: The signed meter value report for start of transaction. Needs to be filled if meter provides separate values for start and stop.
+        type: object
+        $ref: /units_signed#/SignedMeterValue
       signed_meter_value:
         description: The signed meter value report of the stopped transaction. Must be provided if status is OK.
         type: object
