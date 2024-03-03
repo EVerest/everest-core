@@ -56,8 +56,7 @@ LemDCBM400600Controller::start_transaction(const types::powermeter::TransactionR
 
     auto [transaction_min_stop_time, transaction_max_stop_time] = get_transaction_stop_time_bounds();
 
-    return {
-        types::powermeter::TransactionRequestStatus::OK, {}, {}, transaction_min_stop_time, transaction_max_stop_time};
+    return {types::powermeter::TransactionRequestStatus::OK, {}, transaction_min_stop_time, transaction_max_stop_time};
 }
 
 void LemDCBM400600Controller::request_device_to_start_transaction(const types::powermeter::TransactionReq& value) {
@@ -89,6 +88,7 @@ LemDCBM400600Controller::stop_transaction(const std::string& transaction_id) {
                 auto signed_meter_value =
                     types::units_signed::SignedMeterValue{fetch_ocmf_result(transaction_id), "", "OCMF"};
                 return types::powermeter::TransactionStopResponse{types::powermeter::TransactionRequestStatus::OK,
+                                                                  {}, // Empty start_signed_meter_value
                                                                   signed_meter_value};
             },
             this->config.transaction_number_of_http_retries, this->config.transaction_retry_wait_in_milliseconds);
@@ -96,13 +96,13 @@ LemDCBM400600Controller::stop_transaction(const std::string& transaction_id) {
         std::string error_message = fmt::format("Failed to stop transaction {}: {}", transaction_id, error.what());
         EVLOG_error << error_message;
         return types::powermeter::TransactionStopResponse{
-            types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR, {}, error_message};
+            types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR, {}, {}, error_message};
     } catch (HttpClientError& error) {
         std::string error_message = fmt::format("Failed to stop transaction {} - connection to device failed: {}",
                                                 transaction_id, error.what());
         EVLOG_error << error_message;
         return types::powermeter::TransactionStopResponse{
-            types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR, {}, error_message};
+            types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR, {}, {}, error_message};
     }
 }
 
