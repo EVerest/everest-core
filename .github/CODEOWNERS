@@ -28,3 +28,4 @@
 # Rust & Bazel
 *.rs @SirVer @golovasteek @dorezyuk
 *.bazel @SirVer @golovasteek @dorezyuk
+*.bzl @SirVer @golovasteek @dorezyuk
