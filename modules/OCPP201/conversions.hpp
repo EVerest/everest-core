@@ -62,9 +62,6 @@ ocpp::v201::BootReasonEnum to_ocpp_boot_reason(types::system::BootReason reason)
 /// \brief Converts a given types::evse_manager::StopTransactionReason \p reason to an ocpp::v201::ReasonEnum.
 ocpp::v201::ReasonEnum to_ocpp_reason(types::evse_manager::StopTransactionReason reason);
 
-/// \brief Converts a given types::evse_manager::StopTransactionReason \p reason to an ocpp::v201::ChargingStateEnum.
-ocpp::v201::ChargingStateEnum to_ocpp_charging_state_enum(types::evse_manager::StopTransactionReason reason);
-
 /// \brief Converts a given types::authorization::IdTokenType \p id_token_type to an ocpp::v201::IdTokenEnum.
 ocpp::v201::IdTokenEnum to_ocpp_id_token_enum(types::authorization::IdTokenType id_token_type);
 

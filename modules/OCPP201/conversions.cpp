@@ -557,34 +557,6 @@ ocpp::v201::ReasonEnum to_ocpp_reason(types::evse_manager::StopTransactionReason
     }
 }
 
-ocpp::v201::ChargingStateEnum to_ocpp_charging_state_enum(types::evse_manager::StopTransactionReason reason) {
-    switch (reason) {
-    case types::evse_manager::StopTransactionReason::DeAuthorized:
-    case types::evse_manager::StopTransactionReason::EmergencyStop:
-    case types::evse_manager::StopTransactionReason::EnergyLimitReached:
-    case types::evse_manager::StopTransactionReason::GroundFault:
-    case types::evse_manager::StopTransactionReason::HardReset:
-    case types::evse_manager::StopTransactionReason::Local:
-    case types::evse_manager::StopTransactionReason::LocalOutOfCredit:
-    case types::evse_manager::StopTransactionReason::MasterPass:
-    case types::evse_manager::StopTransactionReason::Other:
-    case types::evse_manager::StopTransactionReason::OvercurrentFault:
-    case types::evse_manager::StopTransactionReason::PowerLoss:
-    case types::evse_manager::StopTransactionReason::PowerQuality:
-    case types::evse_manager::StopTransactionReason::Reboot:
-    case types::evse_manager::StopTransactionReason::Remote:
-    case types::evse_manager::StopTransactionReason::SOCLimitReached:
-    case types::evse_manager::StopTransactionReason::StoppedByEV:
-    case types::evse_manager::StopTransactionReason::TimeLimitReached:
-    case types::evse_manager::StopTransactionReason::Timeout:
-        return ocpp::v201::ChargingStateEnum::EVConnected;
-    case types::evse_manager::StopTransactionReason::EVDisconnected:
-        return ocpp::v201::ChargingStateEnum::Idle;
-    default:
-        throw std::runtime_error("Could not convert StopTransactionReason to ocpp::v201::ChargingStateEnum");
-    }
-}
-
 ocpp::v201::IdTokenEnum to_ocpp_id_token_enum(types::authorization::IdTokenType id_token_type) {
     switch (id_token_type) {
     case types::authorization::IdTokenType::Central:

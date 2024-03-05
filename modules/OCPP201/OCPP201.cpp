@@ -410,11 +410,6 @@ void OCPP201::ready() {
                     transaction_finished.meter_value, ocpp::v201::ReadingContextEnum::Transaction_End,
                     signed_meter_value);
                 ocpp::v201::ReasonEnum reason = ocpp::v201::ReasonEnum::Other;
-                ocpp::v201::ChargingStateEnum charging_state = ocpp::v201::ChargingStateEnum::EVConnected;
-                if (transaction_finished.reason.has_value()) {
-                    reason = conversions::to_ocpp_reason(transaction_finished.reason.value());
-                    charging_state = conversions::to_ocpp_charging_state_enum(transaction_finished.reason.value());
-                }
 
                 std::optional<ocpp::v201::IdToken> id_token_opt = std::nullopt;
                 if (transaction_finished.id_tag.has_value()) {
