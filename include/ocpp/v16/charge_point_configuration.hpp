@@ -33,6 +33,7 @@ private:
     bool measurands_supported(std::string csv);
     json get_user_config();
     void setInUserConfig(std::string profile, std::string key, json value);
+    void init_supported_measurands();
 
     bool isConnectorPhaseRotationValid(std::string str);
 
@@ -84,6 +85,8 @@ public:
     bool getVerifyCsmsCommonName();
     KeyValue getVerifyCsmsCommonNameKeyValue();
     bool getUseTPM();
+    std::string getSupportedMeasurands();
+    KeyValue getSupportedMeasurandsKeyValue();
 
     int32_t getRetryBackoffRandomRange();
     void setRetryBackoffRandomRange(int32_t retry_backoff_random_range);

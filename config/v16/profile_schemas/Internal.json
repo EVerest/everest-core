@@ -245,6 +245,12 @@
             "type": "integer",
             "readOnly": true,
             "minimum": 1
+        },
+        "SupportedMeasurands": {
+            "$comment": "Comma separated list of supported measurands of the powermeter",
+            "type": "string",
+            "readOnly": true,
+            "default": "Energy.Active.Import.Register,Energy.Active.Export.Register,Power.Active.Import,Voltage,Current.Import,Frequency,Current.Offered,Power.Offered"
         }
     },
     "additionalProperties": false

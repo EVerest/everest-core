@@ -9,6 +9,7 @@
 #include <boost/algorithm/string/split.hpp>
 
 #include <ocpp/common/schemas.hpp>
+#include <ocpp/common/utils.hpp>
 #include <ocpp/v16/charge_point_configuration.hpp>
 #include <ocpp/v16/types.hpp>
 
@@ -96,17 +97,12 @@ ChargePointConfiguration::ChargePointConfiguration(const std::string& config, co
         throw std::runtime_error("Core profile not listed in SupportedFeatureProfiles. This is required.");
     }
 
-    // TODO(kai): get this from config
-    this->supported_measurands = {{Measurand::Energy_Active_Import_Register, {Phase::L1, Phase::L2, Phase::L3}}, // Wh
-                                  {Measurand::Energy_Active_Export_Register, {Phase::L1, Phase::L2, Phase::L3}}, // Wh
-                                  {Measurand::Power_Active_Import, {Phase::L1, Phase::L2, Phase::L3}},           // W
-                                  {Measurand::Voltage, {Phase::L1, Phase::L2, Phase::L3}},                       // V
-                                  {Measurand::Current_Import, {Phase::L1, Phase::L2, Phase::L3, Phase::N}},      // A
-                                  {Measurand::Frequency, {Phase::L1, Phase::L2, Phase::L3}},                     // Hz
-                                  {Measurand::Current_Offered, {}}};                                             // A
+    this->init_supported_measurands();
 
     if (!this->validate_measurands(this->config)) {
-        EVLOG_AND_THROW(std::runtime_error("Given Measurands are invalid"));
+        EVLOG_AND_THROW(std::runtime_error("Given Measurands of either MeterValuesAlignedData, MeterValuesSampledData, "
+                                           "StopTxnAlignedData or StopTxnSampledData are invalid or do not match the "
+                                           "Measurands configured in SupportedMeasurands"));
     }
 
     this->supported_message_types_from_charge_point = {
@@ -205,6 +201,49 @@ std::string to_csl(const std::vector<std::string>& vec) {
         csl += *it;
     }
     return csl;
+}
+
+void ChargePointConfiguration::init_supported_measurands() {
+    const auto _supported_measurands = ocpp::get_vector_from_csv(this->config["Internal"]["SupportedMeasurands"]);
+    for (const auto& measurand : _supported_measurands) {
+        try {
+            const auto _measurand = conversions::string_to_measurand(measurand);
+            switch (_measurand) {
+            case Measurand::Energy_Active_Export_Register:
+            case Measurand::Energy_Active_Import_Register:
+            case Measurand::Energy_Reactive_Export_Register:
+            case Measurand::Energy_Reactive_Import_Register:
+            case Measurand::Energy_Active_Export_Interval:
+            case Measurand::Energy_Active_Import_Interval:
+            case Measurand::Energy_Reactive_Export_Interval:
+            case Measurand::Energy_Reactive_Import_Interval:
+            case Measurand::Power_Active_Export:
+            case Measurand::Power_Active_Import:
+            case Measurand::Voltage:
+            case Measurand::Frequency:
+            case Measurand::Power_Reactive_Export:
+            case Measurand::Power_Reactive_Import:
+                this->supported_measurands[_measurand] = {Phase::L1, Phase::L2, Phase::L3};
+                break;
+            case Measurand::Current_Import:
+            case Measurand::Current_Export:
+                this->supported_measurands[_measurand] = {Phase::L1, Phase::L2, Phase::L3, Phase::N};
+                break;
+            case Measurand::Power_Factor:
+            case Measurand::Current_Offered:
+            case Measurand::Power_Offered:
+            case Measurand::Temperature:
+            case Measurand::SoC:
+            case Measurand::RPM:
+                this->supported_measurands[_measurand] = {};
+                break;
+            default:
+                EVLOG_AND_THROW(std::runtime_error("Given SupportedMeasurands are invalid"));
+            }
+        } catch (std::out_of_range& o) {
+            EVLOG_AND_THROW(std::runtime_error("Given SupportedMeasurands are invalid"));
+        }
+    }
 }
 
 // Internal config options
@@ -311,6 +350,10 @@ bool ChargePointConfiguration::getVerifyCsmsCommonName() {
 
 bool ChargePointConfiguration::getUseTPM() {
     return this->config["Internal"]["UseTPM"];
+}
+
+std::string ChargePointConfiguration::getSupportedMeasurands() {
+    return this->config["Internal"]["SupportedMeasurands"];
 }
 
 KeyValue ChargePointConfiguration::getChargePointIdKeyValue() {
@@ -502,6 +545,14 @@ KeyValue ChargePointConfiguration::getVerifyCsmsCommonNameKeyValue() {
     return kv;
 }
 
+KeyValue ChargePointConfiguration::getSupportedMeasurandsKeyValue() {
+    KeyValue kv;
+    kv.key = "SupportedMeasurands";
+    kv.readonly = true;
+    kv.value.emplace(this->getSupportedMeasurands());
+    return kv;
+}
+
 KeyValue ChargePointConfiguration::getWebsocketPingPayloadKeyValue() {
     KeyValue kv;
     kv.key = "WebsocketPingPayload";
@@ -581,7 +632,7 @@ std::vector<MeasurandWithPhase> ChargePointConfiguration::csv_to_measurand_with_
         MeasurandWithPhase measurand_with_phase;
         Measurand measurand = conversions::string_to_measurand(component);
         // check if this measurand can be provided on multiple phases
-        if (this->supported_measurands[measurand].size() > 0) {
+        if (this->supported_measurands.count(measurand) and this->supported_measurands.at(measurand).size() > 0) {
             // multiple phases are available
             // also add the measurand without a phase as a total value
             measurand_with_phase.measurand = measurand;
@@ -623,7 +674,7 @@ bool ChargePointConfiguration::validate_measurands(const json& config) {
     measurands_vector.push_back(config["Core"]["StopTxnAlignedData"]);
     measurands_vector.push_back(config["Core"]["StopTxnSampledData"]);
 
-    for (const auto& measurands : measurands_vector) {
+    for (const auto measurands : measurands_vector) {
         if (!this->measurands_supported(measurands)) {
             return false;
         }
@@ -2223,6 +2274,9 @@ std::optional<KeyValue> ChargePointConfiguration::get(CiString<50> key) {
     }
     if (key == "HostName") {
         return this->getHostNameKeyValue();
+    }
+    if (key == "SupportedMeasurands") {
+        return this->getSupportedMeasurandsKeyValue();
     }
 
     // Core Profile
