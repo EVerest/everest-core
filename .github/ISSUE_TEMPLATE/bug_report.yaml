@@ -26,10 +26,11 @@ body:
         - OCPP1.6
         - OCPP2.0.1
         - Simulation
-        - Slack
+        - SLAC
         - Compilation
         - Utility
         - Testing
+        - Other
       multiple: true
     validations:
       required: true
